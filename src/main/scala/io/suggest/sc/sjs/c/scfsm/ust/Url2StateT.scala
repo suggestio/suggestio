@@ -6,7 +6,7 @@ import io.suggest.sc.sjs.c.scfsm.nav.NavUtil
 import io.suggest.sc.sjs.c.scfsm.search.SearchUtil
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil, PopStateSignal}
-import io.suggest.sc.sjs.m.msearch.MTabs
+import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -220,7 +220,8 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       if (sdNext.nav.panelOpened) {
         new OnGridNavLoadListState
       } else if (sdNext.search.opened) {
-        _searchTab2state( sdNext.search.currTab )
+        _stateData.searchFsm ! MTabSwitchSignal(sdNext.search.currTab)
+        new OnGridSearchState
       } else {
         new OnPlainGridState
       }

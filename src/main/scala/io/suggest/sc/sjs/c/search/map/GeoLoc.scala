@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.c.search.map
 
 import io.suggest.sc.sjs.m.mgeo.GlLocation
-import io.suggest.sc.sjs.m.mmap.MapShowing
+import io.suggest.sjs.common.fsm.signals.Visible
 
 /**
   * Suggest.io
@@ -17,8 +17,9 @@ trait GeoLoc extends MapFsmStub {
     override def receiverPart: Receive = super.receiverPart.orElse {
       case userGeoLoc: GlLocation =>
         _handleUserGeoLoc(userGeoLoc)
-      case MapShowing =>
-        _handleMapShowing()
+      case vis: Visible =>
+        if (vis.isVisible)
+          _handleMapShowing()
     }
 
     /** Реакция на получение данных геолокации текущего юзера. */

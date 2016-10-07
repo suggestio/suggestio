@@ -83,7 +83,7 @@ trait Drag extends Ready {
         _setMovTimerId(None, sd0)
       }
 
-      // Уведомить ScFsm о необходимости перемещения root'а выдачи в новое место.
+      // Уведомить ScFsm о выборе новой геолокации
       ScFsm ! NewGeoLoc( _vm.center )
 
       // Вернутся в состояние ожидания.

@@ -19,6 +19,7 @@ object TagsFsm extends ITabFsmFactory {
 case class TagsFsm()
   extends SjsFsmImpl
   with IStart0
+  with Hidden
   with OnTags
   with ScSjsFsmLogger
 {
@@ -31,12 +32,19 @@ case class TagsFsm()
 
   /** Запуск этого FSM. */
   override def start(): Unit = {
-    become(new OnTagsState)
+    // TODO Определять текущее состояние на основе видимости
+    become(new HiddenState)
   }
 
 
   // States
 
-  class OnTagsState extends OnTagsStateT
+  class HiddenState extends HiddenStateT {
+    override def visibleState = new OnTagsState
+  }
+
+  class OnTagsState extends OnTagsStateT {
+    override def _hiddenState = new HiddenState
+  }
 
 }

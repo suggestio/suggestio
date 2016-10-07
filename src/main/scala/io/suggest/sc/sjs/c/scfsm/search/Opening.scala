@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.search
 
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
+import io.suggest.sjs.common.fsm.signals.Visible
 
 /**
   * Suggest.io
@@ -16,18 +17,20 @@ trait Opening extends OnGrid with State2UrlT {
   /** Интерфейс для получения инстанса состояния нахождения на вкладке поиска.
     * Запрашиваемое значение вкладки лежит в _stateData.search.tab.
     */
-  trait ISearchTabOpenedState {
-    def _searchTabOpenedState: FsmState
+  trait ISearchPanelOpenedState {
+    def _searchPanelOpenedState: FsmState
   }
 
   /** Состояние раскрытия боковой панели поиска. */
-  trait SearchPanelOpeningStateT extends FsmEmptyReceiverState with ISearchTabOpenedState {
+  trait SearchPanelOpeningStateT extends FsmEmptyReceiverState with ISearchPanelOpenedState {
 
     override def afterBecome(): Unit = {
       super.afterBecome()
 
       // Необходимо выполнить раскрытие панели, внести необходимые изменения в UI.
       val sd1 = SearchUtil.show( _stateData )
+
+      sd1.searchFsm ! Visible(true)
 
       // Размыть фоновую плитку, если узкий экран.
       _maybeBlurGrid(sd1)
@@ -36,14 +39,15 @@ trait Opening extends OnGrid with State2UrlT {
       _stateData = sd1
 
       // Переключить состояние, если необходимо.
-      val nextState = _searchTabOpenedState
+      val nextState = _searchPanelOpenedState
       if (nextState != null) {
         // Перещелкнуть логику работы на новое состояние согласно текущему search-табу.
-        become(_searchTabOpenedState)
+        become( _searchPanelOpenedState )
         // Сохранить состояние в URL.
         State2Url.pushCurrState()
       }
     }
+
 
   }
 

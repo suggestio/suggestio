@@ -8,6 +8,7 @@ import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msearch._
+import io.suggest.sjs.common.fsm.signals.Visible
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.KeyboardEvent
 
@@ -17,7 +18,7 @@ import org.scalajs.dom.KeyboardEvent
  * Created: 06.08.15 13:52
  * Description: FSM-Аддон для добавления поддержки состояния выдачи, когда доступна плитка и открыта панель поиска.
  */
-trait Base extends OnGrid with State2UrlT {
+trait OnSearch extends OnGrid with State2UrlT {
 
   protected trait OnSearchStateT extends OnGridStateT {
 
@@ -26,6 +27,7 @@ trait Base extends OnGrid with State2UrlT {
       val sd0 = _stateData
       _unBlurGrid()
       val sd1 = SearchUtil.hide(sd0)
+      sd0.searchFsm ! Visible(false)
       // Сменить состояние на то, где открыта панель поиска.
       become(_nextStateSearchPanelClosed, sd1)
       State2Url.pushCurrState()
@@ -79,7 +81,13 @@ trait Base extends OnGrid with State2UrlT {
       _stateData = sd1
       // Запустить плитку.
       _startFindGridAds()
+
+      // Уведомить список геотегов о потере актуальности этого самого списка.
+      for (tagsFsm <- sd1.searchFsm.tagsFsm) {
+        tagsFsm ! newGeoLoc
+      }
     }
+
 
     /**
       * Юзер гуляет по истории браузера внутри сеанса выдачи.
@@ -92,10 +100,12 @@ trait Base extends OnGrid with State2UrlT {
       val mtabNext = sdNext.search.currTab
       SearchFsm ! MTabSwitchSignal( mtabNext )
       val noFoc = sdNext.focused.isEmpty
+
       if (sdNext.search.opened && noFoc) {
-        // Переключение между табами с помощью History API.
-        become( _searchTab2state(mtabNext) )
-      } else if (noFoc && !sdNext.nav.panelOpened) {
+        // Уведомить SearchFSM о переключении на указанный таб...
+        _stateData.searchFsm ! MTabSwitchSignal(mtabNext)
+
+      } else  if (noFoc && !sdNext.nav.panelOpened) {
         // Возврат на голую плитку.
         _hideSearchPanel()
       } else {
@@ -105,8 +115,5 @@ trait Base extends OnGrid with State2UrlT {
     }
 
   }
-
-  /** Привести id таба к состоянию. */
-  protected def _searchTab2state(mtab: MTab = _stateData.search.currTab): FsmState
 
 }

@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc._
-import io.suggest.sc.sjs.m.msearch.{MTab, MTabs}
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.fsm._
@@ -22,7 +21,7 @@ object ScFsm
   with node.States
   with grid.Append with grid.Plain with grid.LoadMore
   with OnGridNav
-  with search.Opening with search.geo.OnGeo with search.tags.Opened
+  with search.Opening with search.OnSearch
   with foc.Phase
   with Url2StateT
   //with LogBecome
@@ -112,8 +111,8 @@ object ScFsm
     extends NodeWelcome_AdsWait_State
     with SearchPanelOpeningStateT
   {
-    override def _searchTabOpenedState = null
-    override def _nodeInitDoneState    = _searchTab2state()
+    override def _searchPanelOpenedState  = null
+    override def _nodeInitDoneState       = new OnGridSearchState
   }
 
   /** Welcome node выдачи с одновременной фокусировкой на какой-то карточке. */
@@ -151,7 +150,7 @@ object ScFsm
       if (sd0.nav.panelOpened) {
         new OnGridNavReadyState
       } else if (sd0.search.opened) {
-        _searchTab2state()
+        new OnGridSearchState
       } else {
         _onPlainGridState
       }
@@ -194,31 +193,17 @@ object ScFsm
   * Состояния нахождения на панели поиска.
   *--------------------------------------------------------------------------------*/
 
-  /** Превратить search-таб в соответствующее состояние. */
-  override protected def _searchTab2state(mtab: MTab = _stateData.search.currTab): FsmState = {
-    mtab match {
-      case MTabs.Geo      => new OnSearchGeoState
-      case MTabs.Tags     => new OnSearchTagsState
-    }
-  }
-
   /** Реализация интерфейса ISearchTabOpenedState. */
-  trait ISearchTabOpenedState extends super.ISearchTabOpenedState {
-    override def _searchTabOpenedState: FsmState = _searchTab2state()
+  trait ISearchPanelOpenedState extends super.ISearchPanelOpenedState {
+    override def _searchPanelOpenedState = new OnGridSearchState
   }
 
   /** Состояние раскрытия поисковой панели. */
-  class SearchPanelOpeningState extends SearchPanelOpeningStateT with ISearchTabOpenedState
+  class SearchPanelOpeningState extends SearchPanelOpeningStateT with ISearchPanelOpenedState
 
   /** Общий код для реакции на закрытие search-панели. */
-  protected[this] trait _SearchClose extends OnSearchStateT {
+  class OnGridSearchState extends OnSearchStateT with OnGridStateT {
     override def _nextStateSearchPanelClosed = _onPlainGridState
   }
-
-  /** Состояние, где и сетка есть, и поисковая панель отрыта на вкладке географии. */
-  class OnSearchGeoState extends OnGridSearchGeoStateT with _SearchClose with OnGridStateT
-
-  /** Состояние, где открыта вкладка хеш-тегов на панели поиска. */
-  class OnSearchTagsState extends OnSearchTagsStateT with _SearchClose with OnGridStateT
 
 }

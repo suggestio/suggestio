@@ -5,7 +5,7 @@ import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.vm.util.OnClick
 import io.suggest.sjs.common.view.VUtil
-import io.suggest.sjs.common.vm.content.ClearT
+import io.suggest.sjs.common.vm.content.{ChildrenIsEmpty, ClearT}
 import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.util.IInitLayout
@@ -26,7 +26,12 @@ object StList extends FindDiv {
 
 
 /** Логика работы списка живёт тут. */
-trait StListT extends OnClick with IInitLayout with ClearT {
+trait StListT
+  extends OnClick
+  with IInitLayout
+  with ClearT
+  with ChildrenIsEmpty
+{
 
   override type T = HTMLDivElement
 

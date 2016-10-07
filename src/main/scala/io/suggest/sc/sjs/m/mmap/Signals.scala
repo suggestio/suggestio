@@ -19,11 +19,6 @@ case class EnsureMap()
   extends IMapFsmMsg
 
 
-/** Сигнал о начале отображения карты на экране. */
-case object MapShowing
-  extends IMapFsmMsg
-
-
 /** Сигнал о принудительном выставлении карты на новую позицию. */
 case class SetGeoLoc(mgl: IGeoLocMin)
   extends IMapFsmMsg

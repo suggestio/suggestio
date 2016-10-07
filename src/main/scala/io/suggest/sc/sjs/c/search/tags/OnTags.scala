@@ -1,6 +1,8 @@
 package io.suggest.sc.sjs.c.search.tags
 
+import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
 import io.suggest.sc.sjs.m.msearch.TagRowClick
+import io.suggest.sc.sjs.m.mtags.MTagsSd
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sc.sjs.vm.search.fts.SInput
 import io.suggest.sc.sjs.vm.search.tabs.htag.{StList, StListRow}
@@ -22,6 +24,18 @@ trait OnTags extends TagsFsmStub {
   /** Поддержка списка тегов, поиска по ним. */
   trait OnTagsStateT extends FsmEmptyReceiverState {
 
+    protected def REQ_TAGS_LIMIT = 20
+
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+
+      val sd0 = _stateData
+      if ( !sd0.loadingDone && sd0.loadedCount == 0 ) {
+        // Запустить поисковый реквест, чтобы заполнить список тегов начальными данными.
+        _ftsLetsStartRequest()
+      }
+    }
+
     /** Запуск поискового запроса в рамках текущего состояния. */
     protected def _ftsLetsStartRequest(): Unit = {
       val sd0 = _stateData
@@ -30,14 +44,16 @@ trait OnTags extends TagsFsmStub {
       } {
         val args = MTagSearchArgs(
           faceFts = sinput.getTextOpt,
-          limit   = Some(20),
-          offset  = Some(sd0.loadedCount)
+          limit   = Some( REQ_TAGS_LIMIT ),
+          offset  = Some( sd0.loadedCount )
         )
         val fut = MTagsSearch.search(
           route = routes.controllers.Sc.tagsSearch( args.toJson )
         )
-        val lastTstamp = _sendFutResBackTimestamped(fut, MTagSearchRespTs)
-        // Видимо timestamp сохранять не надо. В состоянии предусмотрено только сохранение последнего ПОЛУЧЕННОГО timestamp.
+        val reqTstamp = _sendFutResBackTimestamped(fut, MTagSearchRespTs)
+        _stateData = sd0.copy(
+          currReqTs = Some(reqTstamp)
+        )
       }
     }
 
@@ -60,45 +76,68 @@ trait OnTags extends TagsFsmStub {
       case TagRowClick(row) =>
         _tagRowClicked(row)
 
+      // Изменилось местоположение выдачи.
+      case ngl: NewGeoLoc =>
+
+
       // TODO Нужна реакция на скроллинг списка тегов вниз: запуск подгрузки ещё тегов.
     }
 
     def _handleVisibilityChanged(vis: Visible): Unit = {
-      val sd0 = _stateData
-      if (vis.isVisible && !sd0.loadingDone && sd0.loadedCount == 0) {
-        // Запустить поисковый реквест, чтобы заполнить список тегов начальными данными.
-        _ftsLetsStartRequest()
-      }
+      if (!vis.isVisible)
+        become( _hiddenState )
     }
+
+    /** Состояние пребывания списка тегов в сокрытом от глаз виде. */
+    protected def _hiddenState: FsmState
+
 
     /** Реакция на получение ответа сервера по вопросу поиска тегов. */
     protected def _handleSearchRespTs(resp: MTagSearchResp, tstamp: Long): Unit = {
       val sd0 = _stateData
-      if (sd0.lastRcvdTs.isEmpty || sd0.lastRcvdTs.exists(_ < tstamp) ) {
+      if ( sd0.currReqTs.contains(tstamp) ) {
+        // Получен ожидаемый результат поискового запроса тегов.
         for {
           stList <- StList.find()
         } {
-          // Получен ожидаемый результат поискового запроса тегов.
-          //stList.clear()
+          // Очистить список тегов, если там есть какой-то мусор.
+          // Такое возможно, если произошла слишком резкая смена состояния, например в _hadleNewScLoc().
+          if (sd0.loadedCount == 0 && stList.nonEmpty) {
+            stList.clear()
+          }
+
+          // Отрендерить полученные теги в список тегов.
           for (render <- resp.render) {
             stList.appendElements(render)
           }
-          // Обновить состояние новыми данными. TODO Нужно выставлять no more elements.
+
+          // Обновить состояние новыми данными.
           _stateData = sd0.copy(
             loadedCount = sd0.loadedCount + resp.foundCount,
-            lastRcvdTs = Some(tstamp)
+            loadingDone = resp.foundCount < REQ_TAGS_LIMIT,
+            currReqTs   = None
           )
         }
+      } else {
+        warn( WarnMsgs.TAG_SEARCH_XHR_TS_DROP + " " + tstamp + " " + sd0.currReqTs )
       }
+    }
+
+
+    /** Внезапная смена локации выдачи во время отображения списка тегов. */
+    protected def _handleNewScLoc(): Unit = {
+      // Нужно сбросить состояние, запустить запрос тегов к серверу.
+      _stateData = MTagsSd()
+      _ftsLetsStartRequest()
     }
 
 
     /**
       * Реакция на клик по тегу в списке тегов.
       *
-      * @param row Ряд тега в списке.
+      * @param slr Сигнал о клике.
       */
-    protected def _tagRowClicked(row: StListRow): Unit = {
+    protected def _tagRowClicked(slr: StListRow): Unit = {
       // TODO Нужно выделить текущий тег в списке, заставить ScFsm перейти в гео-поиск карточек для указанного геотега, скрыть текущую панель.
       error(WarnMsgs.NOT_YET_IMPLEMENTED)
     }

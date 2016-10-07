@@ -5,7 +5,6 @@ import io.suggest.sc.sjs.m.msearch._
 import io.suggest.sc.sjs.vm.search.fts.{SInput, SInputContainer}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.{Stop, Visible}
-import org.scalajs.dom.FocusEvent
 
 /**
   * Suggest.io
@@ -30,8 +29,8 @@ trait OnSearch extends SearchFsmStub {
         _tabBtnSwitchSignal(tabBtnSignal)
 
       // Получение сигналов полнотекстового поиска.
-      case FtsFieldFocus(event) =>
-        _ftsFieldFocus(event)
+      case fff: FtsFieldFocus =>
+        _ftsFieldFocus(fff)
       case ffb: FtsFieldBlur =>
         _ftsFieldBlur(ffb)
       case ffku: FtsFieldKeyUp =>
@@ -102,7 +101,7 @@ trait OnSearch extends SearchFsmStub {
 
 
     /** Сигнал появления фокуса в поле полнотекстового поиска. */
-    protected def _ftsFieldFocus(event: FocusEvent): Unit = {
+    protected def _ftsFieldFocus(fff: FtsFieldFocus): Unit = {
       val sd0 = _stateData
       if (sd0.fts.isEmpty) {
         // первый переход на поле. Нужно активировать его визуально.
