@@ -383,11 +383,11 @@ object ScConstants {
     // Табы
 
     /** Список id табов в порядке их отображения на экране. */
-    def TAB_IDS = List(Cats.TAB_BTN_ID, Nodes.TAB_BTN_ID)
+    def TAB_IDS = List(MapTab.TAB_BTN_ID, TagsTab.TAB_BTN_ID)
 
     /** id div'а, содержащего кнопки всех tab'ов. */
     def TAB_BTNS_DIV_ID = "smNavLayerTabs"
-    
+
     /** Класс неактивной кнопки таба. */
     def TAB_BTN_INACTIVE_CSS_CLASS = "__inactive"
 
@@ -403,22 +403,15 @@ object ScConstants {
     }
 
     /** Сюда сгруппированы id, относящиеся к категориям. */
-    object Cats extends ITab {
+    object MapTab extends ITab {
+
       /** div id списка иконок категорий. Отображается под линейкой табов. */
       override def ROOT_DIV_ID = "smCategories"
 
-      /** css-класс пометка, сообщающая о том, что данный элемент должен бы подхватываться js'ом. */
-      def ONE_CAT_LINK_CSS_CLASS = "js-cat-link"
-
-      /** Название аттрибута, которое содержит id категории. */
-      def ATTR_CAT_ID = CUSTOM_ATTR_PREFIX + "cat-id"
-
-      /** css-класс категории. Для выставления в header. */
-      def ATTR_CAT_CLASS = CUSTOM_ATTR_PREFIX + "cat-class"
     }
 
     /** Сюда сгруппированы id, относящиеся к списку магазинов. */
-    object Nodes extends ITab {
+    object TagsTab extends ITab {
 
       /** div id контейнера тела вкладки списка тегов. */
       override def ROOT_DIV_ID = "smShops"
@@ -433,6 +426,13 @@ object ScConstants {
 
       /** Имя аттрибута, содержащее id узла графа N2. */
       def ATTR_NODE_ID = _ATTR_PRODUCER_ID
+
+      /** Имя css для визульаного выделения текущего ряда. */
+      def SELECTED_CSS_CLASS = "__selected"
+
+      /** Префикс DOM id для рядов тегов. */
+      def ROW_ID_PREFIX = "tag."
+
     }
 
   }

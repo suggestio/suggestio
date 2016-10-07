@@ -8,6 +8,7 @@ package io.suggest.sc
  */
 object TagSearchConstants {
 
+  /** Константы tag-реквестов. */
   object Req {
 
     /** Поле запроса полнотекстового запроса поиска тегов по имени. */
@@ -25,6 +26,7 @@ object TagSearchConstants {
   }
 
 
+  /** Константы tag-ответов сервера. */
   object Resp {
 
     def RENDERED_FN     = "a"

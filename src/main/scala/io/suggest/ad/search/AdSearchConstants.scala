@@ -35,4 +35,7 @@ object AdSearchConstants {
     */
   def AD_ID_LOOKUP_FN      = "j"
 
+  /** id узла тега. */
+  def TAG_NODE_ID_FN       = "t"
+
 }
