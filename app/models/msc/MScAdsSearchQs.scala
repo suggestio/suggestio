@@ -26,28 +26,31 @@ object MScAdsSearchQs {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAdsSearchQs]] = {
         val k = key1F(key)
         for {
-          prodIdOptE    <- esIdOptB.bind  (k(PRODUCER_ID_FN),     params)
-          rcvrIdOptE    <- esIdOptB.bind  (k(RECEIVER_ID_FN),     params)
-          locEnvE       <- locEnvB.bind   (k(LOC_ENV_FN),         params)
-          genOptE       <- longOptB.bind  (k(GENERATION_FN),      params)
-          limitOptE     <- intOptB.bind   (k(LIMIT_FN),   params)
-          offsetOptE    <- intOptB.bind   (k(OFFSET_FN),  params)
+          prodIdOptE        <- esIdOptB.bind  (k(PRODUCER_ID_FN),     params)
+          rcvrIdOptE        <- esIdOptB.bind  (k(RECEIVER_ID_FN),     params)
+          locEnvE           <- locEnvB.bind   (k(LOC_ENV_FN),         params)
+          genOptE           <- longOptB.bind  (k(GENERATION_FN),      params)
+          limitOptE         <- intOptB.bind   (k(LIMIT_FN),           params)
+          offsetOptE        <- intOptB.bind   (k(OFFSET_FN),          params)
+          tagNodeIdOptE     <- esIdOptB.bind  (k(TAG_NODE_ID_FN),     params)
         } yield {
           for {
-            prodIdOpt   <- prodIdOptE.right
-            rcvrIdOpt   <- rcvrIdOptE.right
-            locEnv      <- locEnvE.right
-            genOpt      <- genOptE.right
-            limitOpt    <- limitOptE.right
-            offsetOpt   <- offsetOptE.right
+            prodIdOpt       <- prodIdOptE.right
+            rcvrIdOpt       <- rcvrIdOptE.right
+            locEnv          <- locEnvE.right
+            genOpt          <- genOptE.right
+            limitOpt        <- limitOptE.right
+            offsetOpt       <- offsetOptE.right
+            tagNodeIdOpt    <- tagNodeIdOptE.right
           } yield {
             MScAdsSearchQs(
-              prodIdOpt = prodIdOpt,
-              rcvrIdOpt = rcvrIdOpt,
-              locEnv    = locEnv,
-              genOpt    = genOpt,
-              limitOpt  = limitOpt,
-              offsetOpt = offsetOpt
+              prodIdOpt     = prodIdOpt,
+              rcvrIdOpt     = rcvrIdOpt,
+              locEnv        = locEnv,
+              genOpt        = genOpt,
+              limitOpt      = limitOpt,
+              offsetOpt     = offsetOpt,
+              tagNodeIdOpt  = tagNodeIdOpt
             )
           }
         }
@@ -61,8 +64,9 @@ object MScAdsSearchQs {
             esIdOptB.unbind   (k(RECEIVER_ID_FN),     value.rcvrIdOpt),
             locEnvB.unbind    (k(LOC_ENV_FN),         value.locEnv),
             longOptB.unbind   (k(GENERATION_FN),      value.genOpt),
-            intOptB.unbind    (k(LIMIT_FN),   value.limitOpt),
-            intOptB.unbind    (k(OFFSET_FN),  value.offsetOpt)
+            intOptB.unbind    (k(LIMIT_FN),           value.limitOpt),
+            intOptB.unbind    (k(OFFSET_FN),          value.offsetOpt),
+            esIdOptB.unbind   (k(TAG_NODE_ID_FN),     value.tagNodeIdOpt)
           )
         }
       }
@@ -80,6 +84,9 @@ trait IScAdSearchQs {
 
   /** Опциональный id ресивера. */
   def rcvrIdOpt     : Option[MEsId]
+
+  /** Опциональный id текущего тега. */
+  def tagNodeIdOpt  : Option[MEsId]
 
   /** Возможные данные по геолокации, маячкам и прочему окружению. */
   def locEnv        : MLocEnv
@@ -99,7 +106,8 @@ trait IScAdSearchQs {
   def hasAnySearchCriterias: Boolean = {
     rcvrIdOpt.nonEmpty ||
       locEnv.nonEmpty ||
-      prodIdOpt.nonEmpty
+      prodIdOpt.nonEmpty ||
+      tagNodeIdOpt.nonEmpty
   }
 
 }
@@ -109,6 +117,7 @@ trait IScAdSearchQs {
 case class MScAdsSearchQs(
   override val prodIdOpt     : Option[MEsId]       = None,
   override val rcvrIdOpt     : Option[MEsId]       = None,
+  override val tagNodeIdOpt  : Option[MEsId]       = None,
   override val locEnv        : MLocEnv             = MLocEnv.empty,
   override val genOpt        : Option[Long]        = None,
   override val limitOpt      : Option[Int]         = None,

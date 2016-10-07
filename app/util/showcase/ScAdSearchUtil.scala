@@ -74,15 +74,32 @@ class ScAdSearchUtil {
         )
       }
 
-      // Можно искать размещения карточек в указанной точке.
-      for (geoLoc <- args.locEnv.geoLocOpt) {
+      // Поддержка геопоиска в выдаче.
+      args.tagNodeIdOpt.fold [Unit] {
+        // Геотегов не указано. Но можно искать размещения карточек в указанной точке.
+        for (geoLoc <- args.locEnv.geoLocOpt) {
+          eacc ::= Criteria(
+            predicates  = Seq( MPredicates.AdvGeoPlace ),
+            must        = someTrue,
+            gsIntersect = Some(GsCriteria(
+              levels = Seq( NodeGeoLevels.geoPlace ),
+              shapes = Seq( PointGs(geoLoc.center) )
+            ))
+          )
+        }
+
+      } { tagNodeId =>
+        // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(
-          predicates  = Seq( MPredicates.AdvGeoPlace ),
-          must        = someTrue,
-          gsIntersect = Some(GsCriteria(
-            levels = Seq( NodeGeoLevels.geoPlace ),
-            shapes = Seq( PointGs(geoLoc.center) )
-          ))
+          predicates = Seq( MPredicates.TaggedBy.Agt ),
+          nodeIds    = Seq( tagNodeId ),
+          must       = someTrue,
+          gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
+            GsCriteria(
+              levels = Seq( NodeGeoLevels.geoTag ),
+              shapes = Seq( PointGs(geoLoc.center) )
+            )
+          }
         )
       }
 

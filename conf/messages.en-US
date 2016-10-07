@@ -683,8 +683,14 @@ edge.predicate.h=Welcome logo
 edge.predicate.i=Gallery item
 edge.predicate.j=Moderated by
 edge.predicate.k=Receiver
+edge.predicate.ks=Adv on producer
+edge.predicate.ka=Adv on node
 edge.predicate.l=Tagged
+edge.predicate.lg=Adv in geotag
+edge.predicate.ls=Self-tag
 edge.predicate.m=Background
+edge.predicate.n=Node location
+edge.predicate.o=Adv in place
 
 Your.name=Your name
 First.name=First name

@@ -441,17 +441,16 @@ code
   color             #b1b0b0
   padding-top       10px
   padding-bottom    50px
-  &_letter
-    display         inline-block
-    opacity         0.5
-    font-family     'opensans-bold'
   &_row
     cursor          pointer
     padding         13px 0px
     font-size       14px
     margin          0px auto
     &.__even
-     background     default_color_w_opacity
+      background     default_color_w_opacity
+    &.__selected
+      font-family   'opensans-bold'
+      font-size     larger
 
 .geo-nodes-list
   width             100%

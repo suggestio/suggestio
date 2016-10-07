@@ -135,11 +135,12 @@ class MMapNodes @Inject() (
 
     for (resp <- nodesPointsFut) yield {
       lazy val logPrefix = s"getPoints(${System.currentTimeMillis()}):"
-      LOGGER.trace(s"$logPrefix Found ES-search ${resp.getTookInMillis}")
+      val hits = resp.getHits.getHits
+
+      LOGGER.trace(s"$logPrefix Found ${hits.length} of total ${resp.getHits.getTotalHits} hits. Took ${resp.getTookInMillis} ms.")
+
       // Собрать gj-фичи
-      resp.getHits
-        .getHits
-        .iterator
+      hits.iterator
         .flatMap { hit =>
           lazy val hitInfo = s"${hit.getIndex}/${hit.getType}/${hit.getId}"
           // формат данных здесь примерно такой: { "g.p": [30.23424234, -5.56756756] }

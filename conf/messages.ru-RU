@@ -696,9 +696,14 @@ edge.predicate.h=Логотип приветствия
 edge.predicate.i=Элемент галереи
 edge.predicate.j=Модерировал
 edge.predicate.k=Ресивер
-edge.predicate.ks=Размещение у себя
+edge.predicate.ks=Размещение на продьюсере
+edge.predicate.ka=Размещение в узле
 edge.predicate.l=Тег
+edge.predicate.lg=Размещение в геотеге
+edge.predicate.ls=Сам себе тег
 edge.predicate.m=Фон
+edge.predicate.n=Локация узла
+edge.predicate.o=Размещение в месте
 
 Your.name=Ваше имя
 First.name=Имя

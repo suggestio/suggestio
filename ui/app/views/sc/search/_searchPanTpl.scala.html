@@ -50,8 +50,8 @@
     @* Панель с кнопками табов. *@
     <div class="sm-categories-screen_tabs" id="smNavLayerTabs">
       <div class="sm-categories-screen_tabs-wrapper">
-        @__tabBtn(Search.Cats, None, isListTab, "Map", MHands.Left)
-        @__tabBtn(Search.Nodes, Some(true), !isListTab, "List", MHands.Right)
+        @__tabBtn(Search.MapTab,  None,       isListTab,  "Map",  MHands.Left )
+        @__tabBtn(Search.TagsTab, Some(true), !isListTab, "Tags", MHands.Right)
         <div class="clear"></div>
       </div>
     </div>
