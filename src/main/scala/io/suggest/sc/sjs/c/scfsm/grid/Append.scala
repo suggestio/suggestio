@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
 import io.suggest.sc.sjs.c.scfsm.grid.build.GridBuilder
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.msc.MFindAdsArgsLimOff
+import io.suggest.sc.sjs.c.scfsm.FindAdsArgsT
 import io.suggest.sc.sjs.m.msrv.tile.{MFindAdsTile, MScRespAdsTile}
 import io.suggest.sc.sjs.vm.grid.GContent
 import io.suggest.sc.sjs.vm.res.CommonRes
@@ -18,7 +17,7 @@ import scala.util.Failure
  * Created: 19.06.15 16:16
  * Description: Конечный автомат для поддержки загрузки карточек в плитку выдачи.
  */
-trait Append extends ScFsmStub {
+trait Append extends FindAdsArgsT {
 
   /** Запустить поиск карточек для выдачи, прислать результат Future в FSM.
     *

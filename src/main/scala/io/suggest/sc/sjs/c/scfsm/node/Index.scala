@@ -1,10 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.node
 
-import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.mgeo.{MGeoLoc, MLocEnv}
+import io.suggest.sc.sjs.c.scfsm.FindAdsArgsT
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.{EnsureMap, SetGeoLoc}
-import io.suggest.sc.sjs.m.msc.{MFindAdsArgsLimOff, MScSd}
+import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.index.{MScIndexArgs, MScRespIndex}
 import io.suggest.sc.sjs.m.msrv.tile.MFindAdsTile
 import io.suggest.sc.sjs.vm.layout.LayRootVm
@@ -13,6 +12,7 @@ import io.suggest.sc.sjs.vm.res.CommonRes
 import io.suggest.sc.sjs.vm.{SafeBody, SafeWnd}
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.model.loc.MGeoLoc
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -23,7 +23,7 @@ import scala.util.{Failure, Success, Try}
  * Created: 22.06.15 14:19
  * Description: Аддон центрального FSM, добавляющий трейты для сборки состояний инициализации выдачи узла.
  */
-trait Index extends ScFsmStub {
+trait Index extends FindAdsArgsT {
 
   /** Утиль для запуска запроса sc index с сервера. */
   trait GetIndexUtil {
@@ -32,9 +32,7 @@ trait Index extends ScFsmStub {
     protected def _getIndex(sd0: SD = _stateData): Future[MScRespIndex] = {
       val inxArgs = MScIndexArgs(
         adnIdOpt      = sd0.common.adnIdOpt,
-        locEnv        = MLocEnv(
-          geo = sd0.geo.lastGeoLoc
-        ),
+        locEnv        = currLocEnv,
         screen        = Some( sd0.common.screen ),
         withWelcome   = true
       )

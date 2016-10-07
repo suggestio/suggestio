@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.m.msrv.index
 
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mgeo.MLocEnv
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 import io.suggest.sc.ScConstants.ReqArgs._
+import io.suggest.sjs.common.model.loc.MLocEnv
 
 import scala.scalajs.js.{Any, Dictionary}
 

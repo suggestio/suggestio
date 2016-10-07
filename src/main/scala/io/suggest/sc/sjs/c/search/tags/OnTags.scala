@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.search.tags
 
+import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
 import io.suggest.sc.sjs.m.msearch.TagRowClick
 import io.suggest.sc.sjs.m.mtags.MTagsSd
@@ -45,7 +46,8 @@ trait OnTags extends TagsFsmStub {
         val args = MTagSearchArgs(
           faceFts = sinput.getTextOpt,
           limit   = Some( REQ_TAGS_LIMIT ),
-          offset  = Some( sd0.loadedCount )
+          offset  = Some( sd0.loadedCount ),
+          locEnv  = ScFsm.currLocEnv
         )
         val fut = MTagsSearch.search(
           route = routes.controllers.Sc.tagsSearch( args.toJson )

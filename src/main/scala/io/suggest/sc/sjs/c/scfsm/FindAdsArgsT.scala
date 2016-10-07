@@ -1,0 +1,43 @@
+package io.suggest.sc.sjs.c.scfsm
+
+import io.suggest.sc.sjs.m.mgrid.MFindGridAdsArgsLimitOffsetT
+import io.suggest.sc.sjs.m.msc.MScSd
+import io.suggest.sc.sjs.m.msrv.tile.MFindAdsReqDflt
+import io.suggest.sjs.common.model.loc.MLocEnv
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 12.07.16 17:56
+  * Description: Вспомогательные модели аргументов запроса карточек.
+  * Никакой особой ценности не представляют, их можно заинлайнить в тех немногих места, где они используются.
+  */
+
+trait FindAdsArgsT extends ScFsmStub {
+
+  /** Заполнить аргументы поиска карточек на основе данных состояния [[MScSd]] от ScFsm. */
+  trait MFindAdsArgsT extends MFindAdsReqDflt {
+
+    /** Текущее состояние ScFsm. */
+    def _sd: MScSd = _stateData
+
+    override def screenInfo = Some(_sd.common.screen)
+
+    override def generation = Some(_sd.common.generation)
+
+    override def receiverId = _sd.common.adnIdOpt
+
+    override def locEnv: MLocEnv = _getLocEnv(_sd)
+
+  }
+
+
+  /** Расширенный вариант [[MFindAdsArgsT]] с заполнением значений limit и offset. */
+  trait MFindAdsArgsLimOffT extends MFindAdsArgsT with MFindGridAdsArgsLimitOffsetT {
+    override def _mgs = _sd.grid.state
+  }
+
+  case class MFindAdsArgsLimOff(override val _sd: MScSd = _stateData)
+    extends MFindAdsArgsLimOffT
+
+}

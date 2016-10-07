@@ -4,6 +4,7 @@ import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.model.loc.MGeoLoc
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import org.scalajs.dom
 import org.scalajs.dom.{Geolocation, Position, PositionError}

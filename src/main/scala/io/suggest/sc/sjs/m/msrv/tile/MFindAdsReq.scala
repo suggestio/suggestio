@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.m.msrv.tile
 
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.sc.sjs.m.magent.IMScreen
-import io.suggest.sc.sjs.m.mgeo.MLocEnv
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
+import io.suggest.sjs.common.model.loc.MLocEnv
 
 import scala.scalajs.js.{Any, Dictionary}
 

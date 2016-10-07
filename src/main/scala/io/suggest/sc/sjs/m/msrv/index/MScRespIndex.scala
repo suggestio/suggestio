@@ -2,10 +2,11 @@ package io.suggest.sc.sjs.m.msrv.index
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
-import io.suggest.sc.sjs.m.mgeo.MGeoPoint
+import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp, MSrv}
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.model.loc.MGeoPoint
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.primo.IApplyUndef1
 import io.suggest.sjs.common.util.SjsLogger
@@ -68,7 +69,7 @@ case class MScRespIndex(json: MScRespIndexJson) extends IFocResp {
   lazy val geoPoint: Option[MGeoPoint] = {
     json.geoPoint
       .toOption
-      .map(MGeoPoint.apply)
+      .map(MGeoPointExt.apply)
   }
 
   /** toString() генерит слишком много ненужных букв по дефолту. Скрываем html-поле при рендере словаря. */

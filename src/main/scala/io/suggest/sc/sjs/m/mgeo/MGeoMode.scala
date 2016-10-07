@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.geo.GeoConstants
+import io.suggest.sjs.common.model.loc.MGeoLoc
 
 /**
  * Suggest.io

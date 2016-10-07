@@ -7,6 +7,7 @@ import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.model.loc.MGeoLoc
 
 import scala.concurrent.Promise
 

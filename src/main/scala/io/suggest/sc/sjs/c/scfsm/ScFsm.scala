@@ -45,6 +45,7 @@ object ScFsm
   /** Ресивер для всех состояний. */
   override protected val allStatesReceiver = super.allStatesReceiver
 
+  // Публичное API
 
   /** Запуск этого FSM в работу. Вызывается однократно при старте всея выдачи. */
   def start(): Unit = {

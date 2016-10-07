@@ -1,8 +1,9 @@
 package io.suggest.sc.sjs.c.search.map
 
-import io.suggest.sc.sjs.m.mgeo.{GlLocation, MGeoLoc}
+import io.suggest.sc.sjs.m.mgeo.GlLocation
 import io.suggest.sc.sjs.m.mmap.{EnsureMap, SetGeoLoc}
 import io.suggest.sc.sjs.vm.mapbox.GlMapVm
+import io.suggest.sjs.common.model.loc.MGeoLoc
 import io.suggest.sjs.mapbox.gl.event.IMapMoveSignal
 import io.suggest.sjs.mapbox.gl.map.GlMap
 

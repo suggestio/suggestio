@@ -1,5 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
+import io.suggest.sjs.common.model.loc.MGeoLoc
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

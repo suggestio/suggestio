@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.m.msc
 
 import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
-import io.suggest.sc.sjs.m.mgeo.IGeoLocMin
 import io.suggest.sjs.common.model.browser.IBrowser
+import io.suggest.sjs.common.model.loc.IGeoLocMin
 
 /**
   * Suggest.io

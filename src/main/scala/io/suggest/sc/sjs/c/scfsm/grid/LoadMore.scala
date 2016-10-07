@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
-import io.suggest.sc.sjs.m.msc.MFindAdsArgsLimOff
+import io.suggest.sc.sjs.c.scfsm.FindAdsArgsT
 import io.suggest.sc.sjs.m.msrv.tile.MFindAdsTile
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -10,7 +10,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
  * Created: 26.08.15 18:01
  * Description: Аддон для сборки grid load more состояний.
  */
-trait LoadMore extends OnGrid with Append {
+trait LoadMore extends OnGrid with Append with FindAdsArgsT {
 
   /** Происходит подгрузка карточек в плитку. */
   trait OnGridLoadingMoreStateT extends GridBlockClickStateT with GridAdsWaitLoadStateT {

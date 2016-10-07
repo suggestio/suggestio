@@ -12,7 +12,6 @@ import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
-import io.suggest.sc.sjs.m.msc.MFindAdsArgsT
 import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MScAdsFoc}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}

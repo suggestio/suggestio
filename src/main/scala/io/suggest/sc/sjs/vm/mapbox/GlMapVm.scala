@@ -3,7 +3,8 @@ package io.suggest.sc.sjs.vm.mapbox
 import io.suggest.common.maps.mapbox.MapBoxConstants.{TargetPoint, UserGeoLoc}
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
-import io.suggest.sc.sjs.m.mgeo.{MGeoLoc, MGeoPoint}
+import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
+import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPoint}
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.mapbox.gl.Filter_t
 import io.suggest.sjs.mapbox.gl.event.EventData
@@ -98,7 +99,7 @@ case class GlMapVm(glMap: GlMap) {
   }
 
   /** Прочитать центр карты в точку. */
-  def center = MGeoPoint( glMap.getCenter() )
+  def center = MGeoPointExt( glMap.getCenter() )
 
   /** Выставить центр карты из точки. */
   def center_=(mgp: MGeoPoint): Unit = {

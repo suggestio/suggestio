@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion, SjsFsm}
+import io.suggest.sjs.common.model.loc.{IGeoLocMin, MGeoLoc, MGeoPoint}
 import org.scalajs.dom.PositionError
 
 /**
