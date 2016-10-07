@@ -1,5 +1,7 @@
 package io.suggest.model.common
 
+import io.suggest.primo.IId
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,11 +10,7 @@ package io.suggest.model.common
   * Тип id вынесен в параметр, это позволяет абстрагировать статическую утиль от всех моделей.
   */
 
-trait OptId[Id_t] {
-
-  /** id текущего инстанса модели. */
-  def id: Option[Id_t]
-
+trait OptId[Id_t] extends IId[Option[Id_t]] {
 }
 
 
