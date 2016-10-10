@@ -192,7 +192,8 @@ case class MScSd(
     copy(
       common = common.copy(
         adnIdOpt  = adnIdOpt2,
-        geoLocOpt = None
+        geoLocOpt = None,
+        tagOpt    = None
       ),
       nav       = MNavState(),
       search    = MSearchSd(),
