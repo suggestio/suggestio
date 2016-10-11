@@ -11,5 +11,6 @@ project/target
 logs/
 *.orig
 *.rej
+sio2m/
 
 russianmorphology/

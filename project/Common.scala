@@ -20,7 +20,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.5.8"
+  val playVsn         = "2.5.9"
 
   /** Версия play-slick прослойки. */
   def playSlickVsn    = "2.0.2"
