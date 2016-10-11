@@ -1,6 +1,8 @@
 package io.suggest.sjs.common.xhr.ex
 
-import org.scalajs.dom.{Event, ErrorEvent, XMLHttpRequest}
+import org.scalajs.dom.{ErrorEvent, Event, XMLHttpRequest}
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -17,7 +19,11 @@ trait XhrException extends RuntimeException {
 case class XhrNetworkException(evt: ErrorEvent, xhr: XMLHttpRequest) extends XhrException {
 
   override def getMessage: String = {
-    "XHR failed: " + evt.message
+    val msg = if (evt != null && !js.isUndefined(evt))
+      evt.message
+    else
+      ""
+    "XHR failed: " + msg
   }
 
 }

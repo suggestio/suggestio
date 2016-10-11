@@ -9,8 +9,8 @@ import org.scalajs.dom.{Event, XMLHttpRequest}
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import org.scalajs.dom
 
 /**
  * Suggest.io
@@ -28,15 +28,51 @@ object Xhr extends SjsLogger {
   def HDR_CONTENT_LENGHT  = "Content-Lenght"
   def HDR_CONNECTION      = "Connection"
 
+
+  /** Флаг предпочтения генерации абсолютных ссылок из Route вместо привычных относительных.
+    * Для браузера хватает относительных ссылок, а вот cordova держит webview в локальном контексте. */
+  val PREFER_ABS_URLS: Boolean = {
+    // Подготовить Xhr к работе. Если cordova-приложение или какой-то локальный запуск, то нужно использовать absoluter urls для реквестов.
+    val lOpt = Option( dom.window.location )
+      .filterNot(js.isUndefined)
+    val protoOpt = lOpt
+      .flatMap { l =>
+        Option(l.protocol)
+      }
+    val isHttp = protoOpt.exists { proto =>
+      proto.toLowerCase.trim.startsWith("http")
+    }
+    // Если это не http/https или hostname пустоват, то активировать предпочтетение абсолютных URL.
+    val relUrlsOk = isHttp && lOpt
+      .flatMap(l => Option(l.hostname))
+      .exists(_.nonEmpty)
+    !relUrlsOk
+  }
+
+
+  /** Флаг предпочтения https над http при сборки абсолютных ссылок. */
+  lazy val PREFER_SECURE_URLS: Boolean = {
+    Option( dom.window.location )
+      .flatMap( l => Option(l.protocol) )
+      .filter { p =>
+        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"
+      }
+      .fold(true) {
+        case "http:"  => false
+        case _        => true
+      }
+  }
+
+
   /**
-   * Отправка асинхронного запроса силами голого js.
-   *
-   * @see [[http://stackoverflow.com/a/8567149 StackOverflow]]
-   * @param method HTTP-метод.
-   * @param url Ссылка.
-   * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
-   * @return Фьючерс с результатом.
-   */
+    * Отправка асинхронного запроса силами голого js.
+    *
+    * @see [[http://stackoverflow.com/a/8567149 StackOverflow]]
+    * @param method HTTP-метод.
+    * @param url Ссылка.
+    * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
+    * @return Фьючерс с результатом.
+    */
   def send(method: String, url: String, timeoutMsOpt: Option[Long] = None,
            headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
     // Собрать XHR
@@ -54,16 +90,16 @@ object Xhr extends SjsLogger {
     timeoutMsOpt.foreach { t =>
       xhr.timeout = t
       xhr.ontimeout = { (evt: Event) =>
-        p failure XhrTimeoutException(evt, xhr, t)
+        p.failure( XhrTimeoutException(evt, xhr, t) )
       }
     }
 
     // Повесить стандартные listener'ы, запустить запрос на исполнение.
     xhr.onload = { (evt: Event) =>
-      p success xhr
+      p.success( xhr )
     }
     xhr.onerror = { (evt: ErrorEvent) =>
-      p failure XhrNetworkException(evt, xhr)
+      p.failure( XhrNetworkException(evt, xhr) )
     }
 
     // Причёсываем тело, если оно есть.
@@ -74,7 +110,7 @@ object Xhr extends SjsLogger {
       xhr.send(data)
     } catch {
       case ex: Throwable =>
-        p failure ex
+        p.failure( ex )
     }
 
     // Вернуть future.
@@ -83,20 +119,19 @@ object Xhr extends SjsLogger {
 
 
   /**
-   * Фильтровать результат по http-статусу ответа сервера.
-   *
-   * @param httpStatuses Допустимые http-статусы.
-   * @param xhrFut Выполненяемый XHR, собранный в send().
-   * @return Future, где success наступает только при указанных статусах.
-   *         [[io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException]] когда статус ответа не подпадает под критерий.
-   */
+    * Фильтровать результат по http-статусу ответа сервера.
+    *
+    * @param httpStatuses Допустимые http-статусы.
+    * @param xhrFut Выполненяемый XHR, собранный в send().
+    * @return Future, где success наступает только при указанных статусах.
+    *         [[io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException]] когда статус ответа не подпадает под критерий.
+    */
   def successIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
     for (xhr <- xhrFut) yield {
       if (httpStatuses.contains(xhr.status)) {
         xhr
       } else {
-        val ex = XhrUnexpectedRespStatusException(xhr)
-        throw ex
+        throw XhrUnexpectedRespStatusException(xhr)
       }
     }
   }
@@ -112,24 +147,26 @@ object Xhr extends SjsLogger {
     }
   }
 
-
-  def askJson(route: Route): Future[XMLHttpRequest] = {
-    send(
-      method  = route.method,
-      url     = route.url,
-      headers = Seq(HDR_ACCEPT -> MIME_JSON)
-    )
+  def route2url(route: Route, preferAbsolute: Boolean): String = {
+    if (preferAbsolute)
+      route.absoluteURL( PREFER_SECURE_URLS )
+    else
+      route.url
   }
 
   /**
-   * HTTP-запрос через js-роутер и ожидание HTTP 200 Ok ответа.
-   *
-   * @param route Маршрут jsrouter'а. Он содержит данные по URL и METHOD для запроса.
-   * @return Фьючерс с десериализованным JSON.
-   */
-  def getJson(route: Route): Future[js.Dynamic] = {
-    val xhrFut = successIfStatus( HttpStatuses.OK ) {
-      askJson(route)
+    * HTTP-запрос через js-роутер и ожидание HTTP 200 Ok ответа.
+    *
+    * @param route Маршрут jsrouter'а. Он содержит данные по URL и METHOD для запроса.
+    * @return Фьючерс с десериализованным JSON.
+    */
+  def requestJson(route: Route, preferAbsUrl: Boolean = PREFER_ABS_URLS): Future[js.Dynamic] = {
+    val xhrFut = successIfStatus(HttpStatuses.OK) {
+      send(
+        method  = route.method,
+        url     = route2url( route, preferAbsUrl ),
+        headers = Seq(HDR_ACCEPT -> MIME_JSON)
+      )
     }
     for (xhr <- xhrFut) yield {
       JSON.parse {

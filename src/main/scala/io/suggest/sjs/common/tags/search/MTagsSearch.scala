@@ -2,8 +2,9 @@ package io.suggest.sjs.common.tags.search
 
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -19,8 +20,8 @@ object MTagsSearch {
    * @param route Ссылка с аргументами поиска.
    * @return Фьючерс с результатом поиска.
    */
-  def search(route: Route)(implicit ec: ExecutionContext): Future[MTagSearchResp] = {
-    val fut = Xhr.getJson(route)
+  def search(route: Route): Future[MTagSearchResp] = {
+    val fut = Xhr.requestJson(route)
 
     for (res <- fut) yield {
       MTagSearchResp.fromJson(res)
