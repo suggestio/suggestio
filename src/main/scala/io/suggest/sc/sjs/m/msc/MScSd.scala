@@ -140,9 +140,6 @@ trait IScSd {
     * None значит, что focused-выдача отключена. */
   def focused     : Option[MFocSd]
 
-  /** Контейнер с данными геолокации. Пришел на смену MGeoLocUtil. */
-  def geo         : MGeoLocSd
-
   /** @return true если открыта какая-то боковая панель.
     *         false -- ни одной панели не открыто. */
   def isAnySidePanelOpened: Boolean = {
@@ -176,8 +173,7 @@ case class MScSd(
   override val grid         : MGridData             = MGridData(),
   override val search       : MSearchSd             = MSearchSd(),
   override val nav          : MNavState             = MNavState(),
-  override val focused      : Option[MFocSd]        = None,
-  override val geo          : MGeoLocSd             = MGeoLocSd()
+  override val focused      : Option[MFocSd]        = None
 )
   extends IScSd
 {

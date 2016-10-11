@@ -38,9 +38,17 @@ trait GeoScInit extends Index { me =>
       with GetIndexUtil
       with ProcessIndexReceivedUtil
   {
+
     /** var-костыль чтобы не запихивать редкоиспользуемый mutable promise в immutable-состояние.
       * Вообще, необходимость таких переменных состояния намекает на проблемы в архитектуре FSM. */
     private var _gpsGeoLocP: Promise[MGeoLoc] = _
+
+    /**
+      * Таймер ожидания точной геолокации, нужный только в рамках данного состояния.
+      * Долгое время засорял своим присутствием _stateData: sd.geo.timer.
+      */
+    private var _geoLocTimerId: Option[Int] = None
+
 
     /** Запуск инициализации в сторону геовыдачи. */
     def _geoScInit(): Unit = {
@@ -69,14 +77,7 @@ trait GeoScInit extends Index { me =>
         _sendEventSync( GeoTimeout )
       }
 
-      _stateData = {
-        val sd0 = _stateData
-        sd0.copy(
-          geo = sd0.geo.copy(
-            timer = Some(geoLocTimerId)
-          )
-        )
-      }
+      _geoLocTimerId = Some(geoLocTimerId)
 
       val gpsGeoLocFut = _gpsGeoLocP.future
         .recover { case ex: Throwable =>
@@ -110,7 +111,7 @@ trait GeoScInit extends Index { me =>
         _handleGlLocation(glLoc)
 
       // Сигнал таймаута ожидания точной геолокации
-      case GeoTimeout if _stateData.geo.timer.nonEmpty =>
+      case GeoTimeout if _geoLocTimerId.nonEmpty =>
         _handleGpsGeoTimeout()
 
       // Сигнал об отсутствии какой-либо геолокации
@@ -128,17 +129,17 @@ trait GeoScInit extends Index { me =>
       val sd0 = _stateData
 
       // Отменить таймер таймаута геолоакции.
-      for (timerId <- sd0.geo.timer) {
+      for (timerId <- _geoLocTimerId) {
         DomQuick.clearTimeout(timerId)
         // Отменить подписку ScFsm на события геолокации. Если таймер уже отменен, то значит и подписка уже была отменена.
         _glUnSubscribe()
+        _geoLocTimerId = None
       }
 
       // Сохранить в состояние.
       _stateData = sd0.copy(
-        geo = sd0.geo.copy(
-          lastGeoLoc  = Some(glLoc.data),
-          timer       = None
+        common = sd0.common.copy(
+          geoLocOpt = Some(glLoc.data)
         )
       )
 
@@ -156,12 +157,7 @@ trait GeoScInit extends Index { me =>
       _glUnSubscribe()
 
       // Сохранить в состояние исполненный таймер.
-      val sd0 = _stateData
-      _stateData = sd0.copy(
-        geo = sd0.geo.copy(
-          timer = None
-        )
-      )
+      _geoLocTimerId = None
     }
 
 
@@ -170,15 +166,8 @@ trait GeoScInit extends Index { me =>
       // На всякий случай. По идее unsubscribe был уже выполнен в _handleGpsGeoTimeout, т.к. GlUnknown не приходит внутри subscribe.
       _glUnSubscribe()
 
-      // Обновить состояние ScFsm.
-      val sd0 = _stateData
-      _stateData = sd0.copy(
-        geo = sd0.geo.copy(
-          // lastGeoLoc пропускаем, т.к. там или None или более-менее интересная геолокация.
-          // по идее, таймера быть уже не должно. В любом случае он не интересен.
-          timer   = None
-        )
-      )
+      // Просто забыть о таймере, он уже исполнен.
+      _geoLocTimerId = None
 
       // Исполнить фьючерс геолокации
       _gpsGeoLocP.tryFailure( new NoSuchElementException() )
@@ -187,7 +176,7 @@ trait GeoScInit extends Index { me =>
 
     /** Реакция на невозможность геолокации. */
     def _handleGlError(glErr: GlError): Unit = {
-      for (timerId <- _stateData.geo.timer) {
+      for (timerId <- _geoLocTimerId) {
         DomQuick.clearTimeout(timerId)
       }
       _handleGeoLocUnknown()

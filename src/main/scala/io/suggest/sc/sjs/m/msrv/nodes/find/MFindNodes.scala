@@ -2,8 +2,9 @@ package io.suggest.sc.sjs.m.msrv.nodes.find
 
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -18,9 +19,9 @@ object MFindNodes {
    * @param args Аргументы запроса.
    * @return Фьючерс с распарсенным ответом сервера.
    */
-  def findNodes(args: MFindNodesArgs)(implicit ec: ExecutionContext): Future[MFindNodesResp] = {
+  def findNodes(args: MFindNodesArgs): Future[MFindNodesResp] = {
     val route = routes.controllers.Sc.findNodes( args.toJson )
-    for (json1 <- Xhr.getJson(route)) yield {
+    for (json1 <- Xhr.requestJson(route)) yield {
       val json2 = MFindAdsRespJson(json1)
       MFindNodesResp(json2)
     }

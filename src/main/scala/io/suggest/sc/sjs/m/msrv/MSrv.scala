@@ -29,7 +29,7 @@ object MSrv {
     */
   def doRequest(route: Route): Future[MScResp] = {
     for {
-      json <- Xhr.getJson(route)
+      json <- Xhr.requestJson(route)
     } yield {
       MScResp(json)
     }

@@ -16,8 +16,10 @@ import scala.scalajs.js.annotation.JSExport
  */
 object App extends JSApp {
 
+  /** Вся работа системы выдачи начинается прямо здесь. */
   @JSExport
   override def main(): Unit = {
+
     // Повесить перехватчик ошибок на верхнем уровне.
     GlobalErrorHandler.start()
 
