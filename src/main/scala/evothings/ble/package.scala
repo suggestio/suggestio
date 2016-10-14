@@ -1,4 +1,4 @@
-package io.suggest.sjs.cordova
+package evothings
 
 import scala.scalajs.js
 

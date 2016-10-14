@@ -1,9 +1,9 @@
-package io.suggest.sjs.cordova.ble
+package evothings.ble
 
 import scala.scalajs.js
-import scala.scalajs.js.|
 import scala.scalajs.js.annotation.JSName
 import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
+import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -13,7 +13,7 @@ import scala.scalajs.js.typedarray.{ArrayBuffer, Uint8Array}
   */
 @JSName("evothings.ble")
 @js.native
-object BLE extends js.Object {
+class BLE extends js.Object {
 
   def startScan(onDeviceFound : js.Function1[DeviceInfo, _],
                 onScanError   : ErrorCallback_t,
@@ -162,9 +162,11 @@ sealed trait DeviceInfo extends IDeviceAddress {
   var scanRecord: js.UndefOr[String] = js.native
 
   /**
-    * Object containing some
-    * of the data from the scanRecord. Available natively on iOS. Available on
-    * Android by parsing the scanRecord, which is implemented in the library EasyBLE:
+    * Object containing some of the data from the scanRecord.
+    *
+    * Available natively on iOS.
+    *
+    * Available on Android by parsing the scanRecord, which is implemented in the library EasyBLE:
     * @see [[https://github.com/evothings/evothings-libraries/blob/master/libs/evothings/easyble/easyble.js]]
     */
   var advertisementData: js.UndefOr[AdvertisementData] = js.native
@@ -209,7 +211,7 @@ sealed trait AdvertisementData extends js.Object {
     * Dictionary of strings to strings.
     * The keys are service UUIDs. The values are base-64-encoded binary data.
     */
-  var kCBAdvDataServiceData: js.Dictionary[String] = js.native
+  var kCBAdvDataServiceData: js.UndefOr[js.Dictionary[String]] = js.native
 
   /**
     * Base-64-encoded binary data.
