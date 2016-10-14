@@ -1,8 +1,11 @@
 package io.suggest.sc.sjs.c.scfsm.geo
 
+import io.suggest.ble.beaconer.fsm.BeaconerFsm
+import io.suggest.ble.beaconer.m.signals.BeaconsNearby
+import io.suggest.ble.beaconer.m.{signals => bb}
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.scfsm.node.Index
-import io.suggest.sc.sjs.m.mgeo._
+import io.suggest.sc.sjs.m.mgeo
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -54,17 +57,25 @@ trait GeoScInit extends Index { me =>
     def _geoScInit(): Unit = {
 
       // Сразу запустить получение геолокации из браузера.
-      GeoLocFsm ! Subscribe(
+      GeoLocFsm ! mgeo.Subscribe(
         receiver    = me,
         notifyZero  = true,
-        data        = SubscriberData(
-          minWatch    = GlWatchTypes.Gps,
+        data        = mgeo.SubscriberData(
+          minWatch    = mgeo.GlWatchTypes.Gps,
           withErrors  = true
         )
       )
 
       // Запустить получение js-роутера. Это просто нужно, в т.ч. для получения sc-индекса.
       val jsRouterFut = SrvRouter.getRouter()
+
+      // Запустить в фоне поиск BLE-маячков, если возможно...
+      // device ready уже должен был быть отработан.
+      val bleBeaconerFsmOpt = BeaconerFsm.applyIfPossible
+      for (bbFsm <- bleBeaconerFsmOpt) {
+        bbFsm.start()
+        bbFsm ! bb.Subscribe(me)
+      }
 
       // TODO Opt index-preload тут на случай проблем с геолокацией
       // И стоит не забыть про if ( mNodeIndex.geoAccurEnought.contains(true) ) ?
@@ -74,7 +85,7 @@ trait GeoScInit extends Index { me =>
 
       // Запустить таймер максимального ожидания геолокации.
       val geoLocTimerId = DomQuick.setTimeout(INIT_GEO_TIMEOUT_MS) { () =>
-        _sendEventSync( GeoTimeout )
+        _sendEventSync( mgeo.GeoTimeout )
       }
 
       _geoLocTimerId = Some(geoLocTimerId)
@@ -107,25 +118,28 @@ trait GeoScInit extends Index { me =>
 
     override def receiverPart: Receive = super.receiverPart.orElse {
       // Сигнал об успешных данных геолокации.
-      case glLoc: GlLocation =>
+      case glLoc: mgeo.GlLocation =>
         _handleGlLocation(glLoc)
 
       // Сигнал таймаута ожидания точной геолокации
-      case GeoTimeout if _geoLocTimerId.nonEmpty =>
+      case mgeo.GeoTimeout if _geoLocTimerId.nonEmpty =>
         _handleGpsGeoTimeout()
 
       // Сигнал об отсутствии какой-либо геолокации
-      case GlUnknown =>
+      case mgeo.GlUnknown =>
         _handleGeoLocUnknown()
 
       // Сигнал о невозможности точной геолокации на текущем юзер-агенте.
-      case glErr: GlError =>
+      case glErr: mgeo.GlError =>
         _handleGlError(glErr)
+
+      case bn: BeaconsNearby =>
+        _handleBeaconsNearby(bn)
     }
 
 
     /** Реакция на успешное получение данных геолокации. */
-    def _handleGlLocation(glLoc: GlLocation): Unit = {
+    def _handleGlLocation(glLoc: mgeo.GlLocation): Unit = {
       val sd0 = _stateData
 
       // Отменить таймер таймаута геолоакции.
@@ -137,8 +151,8 @@ trait GeoScInit extends Index { me =>
       }
 
       // Сохранить в состояние.
-      _stateData = sd0.copy(
-        common = sd0.common.copy(
+      _stateData = sd0.withCommon(
+        sd0.common.copy(
           geoLocOpt = Some(glLoc.data)
         )
       )
@@ -151,7 +165,7 @@ trait GeoScInit extends Index { me =>
     /** Реакция на таймаут точной геолокации. */
     def _handleGpsGeoTimeout(): Unit = {
       // Запросить у GeoLocFsm любую доступную геолокацию.
-      GeoLocFsm ! GetAnyGl(me)
+      GeoLocFsm ! mgeo.GetAnyGl(me)
 
       // Отказаться от событий геолоакции.
       _glUnSubscribe()
@@ -175,7 +189,7 @@ trait GeoScInit extends Index { me =>
 
 
     /** Реакция на невозможность геолокации. */
-    def _handleGlError(glErr: GlError): Unit = {
+    def _handleGlError(glErr: mgeo.GlError): Unit = {
       for (timerId <- _geoLocTimerId) {
         DomQuick.clearTimeout(timerId)
       }
@@ -183,9 +197,22 @@ trait GeoScInit extends Index { me =>
     }
 
 
+    /**
+      * Реакция на обнаружение BLE-маячков впоблизости.
+      * Маячки наверняка связаны с нашей системой.
+      */
+    def _handleBeaconsNearby(bn: BeaconsNearby): Unit = {
+      val sd0 = _stateData
+      _stateData = sd0.withCommon(
+        sd0.common.withBeacons(
+          bn.beacons
+        )
+      )
+    }
+
     /** Уведомления геолокации пока больше не интересны. */
     private def _glUnSubscribe(): Unit = {
-      GeoLocFsm ! UnSubscribe(me)
+      GeoLocFsm ! mgeo.UnSubscribe(me)
     }
 
   }

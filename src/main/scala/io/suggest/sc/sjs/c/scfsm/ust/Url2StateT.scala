@@ -172,13 +172,13 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
   /** Используя распарсенные данные состояния FSM, выбрать initial state этого FSM и применить его. */
   override def _runInitState(sd0Opt: Option[SD]): Future[_] = {
     val nextStateFut = sd0Opt.fold [Future[FsmState]] {
-      Future.successful( new GeoScInitState )
+      Future.successful( _geoInitState )
     } { sd0 =>
       _stateData = sd0
       // Выполнить переход на новое состояние FSM.
       sd0.common.adnIdOpt.fold[Future[FsmState]] {
         // Есть токены, но id узла не задан. Это возможно при TODO гулянии по координатам вне выдачи конкретного узла.
-        Future.successful( new GeoScInitState )
+        Future.successful( _geoInitState )
 
       } { onNodeId =>
         // Задан id узла выдачи, перейти в него.
@@ -243,7 +243,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       // Начинаем с отработки разных общих случаев изменения состояния.
       _parseFromUrlHash().fold [Unit] {
         // Отсутствие нового состояния, имитировать перезагрузку выдачи.
-        become( new GeoScInitState )
+        become( _geoInitState )
 
       } { sdNext =>
 

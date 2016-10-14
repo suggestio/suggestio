@@ -61,8 +61,8 @@ trait ResizeDelayed extends ScFsmStub {
       }
 
       // Сохранить обновлённое состояние FSM.
-      _stateData = sd0.copy(
-        common = sd0.common.copy(
+      _stateData = sd0.withCommon(
+        sd0.common.copy(
           resizeOpt = Some(grSd2)
         )
       )

@@ -1,6 +1,9 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
+import cordova.Cordova
 import io.suggest.sc.sjs.c.scfsm.geo.GeoScInit
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -11,7 +14,7 @@ import io.suggest.sc.sjs.c.scfsm.geo.GeoScInit
  */
 trait Phase
   extends Init
-    with GeoScInit
+  with GeoScInit
 {
 
   /** Вход в фазу начальной инициализации.*/
@@ -23,7 +26,7 @@ trait Phase
 
   /** Частичная реализация ProcessIndexReceivedUtil в целях дедубликации кода. */
   protected trait ProcessIndexReceivedUtil extends super.ProcessIndexReceivedUtil {
-    override protected def _nodeInitWelcomeState  = _initPhaseExit_OnWelcomeGridWait_State
+    override protected def _nodeInitWelcomeState = _initPhaseExit_OnWelcomeGridWait_State
   }
 
   /** Реализация состояния самой первой инициализации. */
@@ -38,9 +41,28 @@ trait Phase
     with NormalInitStateT
 
 
+  /**
+    * Состояние геоинициализации выдачи.
+    * Для cordova надо подождать наступления device ready прежде чем начинать геоинициализацию.
+    */
+  protected def _geoInitState: FsmState = {
+    if ( js.isUndefined( Cordova ) ) {
+      new GeoScInitState
+    } else {
+      new AwaitDeviceReadyState
+    }
+  }
+
+  /** Состояние ожидания device ready события из cordova. */
+  class AwaitDeviceReadyState
+    extends EnsureCordovaDeviceReadyStateT
+  {
+    override def _nextState = new GeoScInitState
+  }
+
   /** Состояние инициализации выдачи на основе геолокации. */
   class GeoScInitState
     extends GeoScInitStateT
-      with ProcessIndexReceivedUtil
+    with ProcessIndexReceivedUtil
 
 }

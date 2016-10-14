@@ -5,9 +5,9 @@ import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{IMScreen, IVpSzChanged, MScreen, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
-import io.suggest.sc.sjs.m.mtags.TagSelected
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
+import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.model.loc.MLocEnv
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -52,8 +52,8 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
       // Обновить данные состояния по текущему экрану.
       val screen = _getScreen
       val sd0 = _stateData
-      val sd1 = sd0.copy(
-        common = sd0.common.copy(
+      val sd1 = sd0.withCommon(
+        sd0.common.copy(
           screen  = screen
         )
       )
@@ -151,7 +151,18 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
   }
   protected def _getLocEnv(sd: SD): MLocEnv = {
     MLocEnv(
-      geo = sd.common.geoLocOpt
+      // Впилить геолокацию.
+      geo         = sd.common.geoLocOpt,
+      // Впилить маячки.
+      bleBeacons  = for {
+        beacon    <- sd.common.beacons
+        bUid      <- beacon.beacon.uid
+      } yield {
+        MBleBeaconInfo(
+          beaconUid  = bUid,
+          distanceCm = (beacon.accuracyM * 100).toInt
+        )
+      }
     )
   }
 

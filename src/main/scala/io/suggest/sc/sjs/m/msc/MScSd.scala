@@ -1,8 +1,6 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.mfoc.MFocSd
-import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
@@ -177,6 +175,8 @@ case class MScSd(
 )
   extends IScSd
 {
+
+  def withCommon(common2: MScCommon) = copy(common = common2)
 
   /**
    * При переключении узла надо резко менять и чистить состояние. Тут логика этого обновления.

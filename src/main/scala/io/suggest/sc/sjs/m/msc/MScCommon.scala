@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.msc
 
+import io.suggest.ble.beaconer.m.signals.BeaconReport
 import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sjs.common.model.browser.IBrowser
@@ -21,6 +22,7 @@ trait IScCommon {
   def resizeOpt    : Option[MResizeDelay]
   def geoLocOpt    : Option[IGeoLocMin]
   def tagOpt       : Option[MTagInfo]
+  def beacons      : Seq[BeaconReport]
 
 }
 
@@ -34,6 +36,7 @@ trait IScCommon {
   * @param generation "Поколение" выдачи, т.е. random seed.
   * @param adnIdOpt id текущего узла-ресивера выдачи, если есть.
   * @param tagOpt Инфа о текущем теге, если он выбран. Выставляется уведомлением из TagsFsm.
+  * @param beacons Маячки, на которые ориентирована текущая выдача.
   */
 case class MScCommon(
   override val screen       : IMScreen,
@@ -42,6 +45,12 @@ case class MScCommon(
   override val adnIdOpt     : Option[String]        = None,
   override val resizeOpt    : Option[MResizeDelay]  = None,
   override val geoLocOpt    : Option[IGeoLocMin]    = None,
-  override val tagOpt       : Option[MTagInfo]      = None
+  override val tagOpt       : Option[MTagInfo]      = None,
+  override val beacons      : Seq[BeaconReport]     = Nil
 )
   extends IScCommon
+{
+
+  def withBeacons(beacons2: Seq[BeaconReport]) = copy(beacons = beacons2)
+
+}

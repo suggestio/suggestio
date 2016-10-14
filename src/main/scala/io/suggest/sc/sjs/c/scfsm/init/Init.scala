@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
+import cordova.CordovaConstants
 import io.suggest.common.event.WndEvents
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
@@ -7,8 +8,12 @@ import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
 import io.suggest.sc.sjs.m.msc.MUrlUtil
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
-import io.suggest.sc.sjs.vm.SafeWnd
+import io.suggest.sc.sjs.vm.{SafeDoc, SafeWnd}
+import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.fsm.signals.CordovaDeviceReady
+import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.doc.DocumentVm
+import org.scalajs.dom.Event
 
 /**
  * Suggest.io
@@ -66,6 +71,65 @@ trait Init extends ScFsmStub with IUrl2State {
         }
       _runInitState( scSdOpt)
     }
+
+  }
+
+
+  /**
+    * Ожидание наступления device ready state.
+    *
+    * Это нужно сделать для доступа к bluetooth и геолокации внутри cordova.
+    * Если не дожидаться, то геолокация просто молча не будет работать,
+    * а блютус -- вообще выдавать js undefined вместо API.
+    */
+  protected trait EnsureCordovaDeviceReadyStateT extends FsmEmptyReceiverState {
+
+    /** Сигнал о таймауте ожидания device ready. */
+    case object DevRdyTimeOut
+
+    /** id таймера таймаута ожидания сигнала CordovaDeviceReady. */
+    private var _devRdyTimerId: Int = _
+
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+
+      // Подписаться на события device ready от cordova
+      SafeDoc.addEventListener( CordovaConstants.EVENT_DEVICE_READY ) { event: Event =>
+        _sendEventSync( CordovaDeviceReady(event) )
+      }
+
+      // Лимитируем ожиданием события. На debug-билде device ready наступало в течение ~500 мс.
+      _devRdyTimerId = DomQuick.setTimeout(1500) { () =>
+        _sendEventSync( DevRdyTimeOut )
+      }
+    }
+
+
+    override def receiverPart: Receive = super.receiverPart.orElse {
+
+      // Поступил ожидаемый сигнал device ready.
+      case cdr: CordovaDeviceReady =>
+        _handleDeviceReady()
+
+      // Таймаут ожидания device ready.
+      case DevRdyTimeOut =>
+        _handleTimeOut()
+    }
+
+    /** Реакция на сигнал о наступлении готовности девайса к работе. */
+    def _handleDeviceReady(): Unit = {
+      DomQuick.clearTimeout( _devRdyTimerId )
+      _becomeNextState()
+    }
+
+    /** Реакция на таймаут ожидания готовности девайса. */
+    def _handleTimeOut(): Unit = {
+      warn( WarnMsgs.CORDOVA_DEVICE_READY_WAIT_TIMEOUT )
+      _becomeNextState()
+    }
+
+    def _becomeNextState() = become(_nextState)
+    def _nextState: FsmState
 
   }
 
