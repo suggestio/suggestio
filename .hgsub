@@ -25,6 +25,11 @@ scalajs-mapboxgl        = scalajs-mapboxgl
 loc/geo/ipgeobase	= loc/geo/ipgeobase
 stat			= stat
 loc/geo/mmgeoip2	= loc/geo/mmgeoip2
+scalajs/scalajs-cordova               = scalajs/scalajs-cordova
+scalajs/scalajs-cordova-ble           = scalajs/scalajs-cordova-ble
+scalajs/scalajs-evothings-util        = scalajs/scalajs-evothings-util
+ble/ble-beaconer-sjs                  = ble/ble-beaconer-sjs
+
 
 [subpaths]
 (https?://([^/@]*@)?kallithea\.cbca\.ru/sio/v2)/root/ = \1/sub/

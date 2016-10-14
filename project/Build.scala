@@ -137,6 +137,27 @@ object SiobixBuild extends Build {
   lazy val stat = project
     .dependsOn(logsMacro, util)
 
+  /** Scala.js API для самой cordova. */
+  lazy val cordovaSjs = {
+    val name = "scalajs-cordova"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
+  /** scala.js API для evothings/cordova-ble. */
+  lazy val cordovaBleSjs = {
+    val name = "scalajs-cordova-ble"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
+  /** scala.js API + js для evothings/libs/util.js */
+  lazy val evothingsUtilSjs = {
+    val name = "scalajs-evothings-util"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlay)
+  }
+
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     val name = "scalajs-leaflet"
@@ -186,12 +207,20 @@ object SiobixBuild extends Build {
       .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvCommonSjs, lkCommonSjs)
   }
 
+  /** scala.js реализация системы мониторинга js-маячков. */
+  lazy val bleBeaconerSjs = {
+    val name = "ble-beaconer-sjs"
+    Project(id = name, base = file("ble/" + name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs, evothingsUtilSjs)
+  }
+
   /** Выдача suggest.io, написанная с помощью scala.js. */
   lazy val scSjs = {
     val name = "sc-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, mapBoxGlSjs)
+      .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs)
   }
 
   /** Внутренний форк securesocial. */
@@ -215,6 +244,7 @@ object SiobixBuild extends Build {
       .aggregate(
         common, logsMacro,
         commonSjs, leafletSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
+        evothingsUtilSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,
         ipgeobase, stat,
         web21, mbill2, svgUtil
