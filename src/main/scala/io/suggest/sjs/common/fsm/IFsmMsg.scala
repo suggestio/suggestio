@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.fsm
 
+import io.suggest.primo.IApply1
 import org.scalajs.dom.Event
 
 /**
@@ -12,8 +13,11 @@ trait IFsmMsg
 
 
 /** Интерфейс для компаньонов классов-сообщений, завящанных на event'ы. */
-trait IFsmMsgCompanion[T] {
-  def apply(e: T): IFsmMsg
+trait IFsmMsgCompanion[Arg_t] extends IApply1 {
+
+  override type ApplyArg_t = Arg_t
+  override type T = IFsmMsg
+
 }
 
 

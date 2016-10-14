@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.fsm.signals
 
-import io.suggest.sjs.common.fsm.IFsmMsg
+import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg}
+import org.scalajs.dom.Event
 
 /**
   * Suggest.io
@@ -19,3 +20,10 @@ case class Stop()
 case class Visible(isVisible: Boolean)
   extends IFsmMsg
 
+
+/** Сигнал о готовности внешнего девайса для исполнения кода системы.
+  * Сигнал появился впервые на фоне необходимости взаимодействия выдачи с cordova. */
+case class CordovaDeviceReady(event: Event)
+  extends IFsmMsg
+object CordovaDeviceReady
+  extends IFsmEventMsgCompanion

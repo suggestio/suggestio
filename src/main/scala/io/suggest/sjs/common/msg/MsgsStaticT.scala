@@ -10,7 +10,7 @@ trait MsgsStaticT {
 
   protected def _PREFIX: String
 
-  protected def E(i: Int): String = {
+  protected def E(i: Int): ErrorMsg_t = {
     _PREFIX + i
   }
 

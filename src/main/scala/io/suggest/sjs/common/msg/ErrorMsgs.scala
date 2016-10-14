@@ -56,4 +56,10 @@ object ErrorMsgs extends MsgsStaticT {
 
   def NO_CHILD_FSM_REQUESTED_FOUND = E(23)
 
+  def CANT_PARSE_IBEACON           = E(24)
+  def CANT_PARSE_EDDY_STONE        = E(25)
+  def BLE_BEACONS_API_AVAILABILITY_FAILED = E(26)
+  def BLE_BEACONS_LISTEN_ERROR     = E(26)
+  def BLE_BEACONS_API_UNAVAILABLE  = E(27)
+
 }

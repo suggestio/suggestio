@@ -69,4 +69,8 @@ object WarnMsgs extends MsgsStaticT {
   def MAP_SHUTDOWN_FAILED           = E(30)
   def MAP_DETACH_STATE_INVALID      = E(31)
 
+  def BEACON_ACCURACY_UNKNOWN       = E(32)
+
+  def CORDOVA_DEVICE_READY_WAIT_TIMEOUT     = E(33)
+
 }
