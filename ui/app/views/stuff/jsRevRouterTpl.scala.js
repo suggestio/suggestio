@@ -31,15 +31,25 @@ var @(name) = {};
       if (v1t != 'undefined' && v1 != null) {
 
         if (v1t === 'object') {
-          @* Это объект. В него надо залезать и сериализовать согласно именам полей.
-             http://stackoverflow.com/a/2869372 *@
-          for (var v1k in v1) {
-            @* skip loop if the property is from prototype *@
-            if (v1.hasOwnProperty(v1k)) {
-              var kp2 = kp1.concat(_d, v1k);
-              f(kp2, v1[v1k]);
+          if (Array.isArray(v1) && v1.length > 0) {
+            @* Это непустой массив. Нужно добавить квадратных скобочек перед текущим qs-ключом. *@
+            v1.forEach(function(e, index, arr) {
+              var kp2 = kp1.concat('[', index, ']');
+              f(kp2, e);
+            });
+
+          } else if (v1 != {}) {
+            @* Это непустой объект. В него надо залезать и сериализовать согласно именам полей.
+               http://stackoverflow.com/a/2869372 *@
+            for (var v1k in v1) {
+              @* skip loop if the property is from prototype *@
+              if (v1.hasOwnProperty(v1k)) {
+                var kp2 = kp1.concat(_d, v1k);
+                f(kp2, v1[v1k]);
+              }
             }
           }
+
         } else {
           @* Это значения. Сериализовать в текущем qs-ключе. *@
           var ap;

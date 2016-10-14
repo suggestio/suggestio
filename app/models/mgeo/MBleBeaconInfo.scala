@@ -2,8 +2,7 @@ package models.mgeo
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import io.suggest.ble.BleConstants.Beacon.Qs._
-import io.suggest.util.UuidUtil
+import io.suggest.common.radio.BleConstants.Beacon.Qs._
 
 /**
   * Suggest.io
@@ -16,34 +15,25 @@ object MBleBeaconInfo {
 
   /** Поддержка биндинга инстансов модели в play router. */
   implicit def qsb(implicit
-                   intB     : QueryStringBindable[Int],
-                   strB     : QueryStringBindable[String],
-                   doubleB  : QueryStringBindable[Double]
+                   strB         : QueryStringBindable[String],
+                   intOptB      : QueryStringBindable[Option[Int]]
                   ): QueryStringBindable[MBleBeaconInfo] = {
+
     new QueryStringBindableImpl[MBleBeaconInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MBleBeaconInfo]] = {
         val k = key1F(key)
         for {
-          uuidStrE     <- strB.bind     (k(UUID_FN),          params)
-          if uuidStrE.right.exists(UuidUtil.isUuidStrValid)
-          majorE       <- intB.bind     (k(MAJOR_FN),         params)
-          minorE       <- intB.bind     (k(MINOR_FN),         params)
-          sigPowerE    <- doubleB.bind  (k(SIG_POWER_FN),     params)
-          sigPower1mE  <- doubleB.bind  (k(SIG_POWER_1M_FN),  params)
+          uuidStrE        <- strB.bind     (k(UID_FN),          params)
+          //if uuidStrE.right.exists(UuidUtil.isUuidStrValid)
+          distanceCmE     <- intOptB.bind  (k(DISTANCE_CM_FN),  params)
         } yield {
           for {
-            uuidStr     <- uuidStrE.right
-            major       <- majorE.right
-            minor       <- minorE.right
-            sigPowerM   <- sigPowerE.right
-            sigPower1m  <- sigPower1mE.right
+            uuidStr       <- uuidStrE.right
+            distanceCm    <- distanceCmE.right
           } yield {
             MBleBeaconInfo(
-              uuidStr     = uuidStr,
-              major       = major,
-              minor       = minor,
-              sigPowerM   = sigPowerM,
-              sigPower1m  = sigPower1m
+              uid         = uuidStr,
+              distanceCm  = distanceCm
             )
           }
         }
@@ -53,11 +43,8 @@ object MBleBeaconInfo {
         _mergeUnbinded {
           val k = key1F(key)
           Iterator(
-            strB.unbind(k(UUID_FN), value.uuidStr),
-            intB.unbind(k(MAJOR_FN), value.major),
-            intB.unbind(k(MINOR_FN), value.minor),
-            doubleB.unbind(k(SIG_POWER_FN), value.sigPowerM),
-            doubleB.unbind(k(SIG_POWER_1M_FN), value.sigPower1m)
+            strB.unbind     (k(UID_FN),          value.uid),
+            intOptB.unbind  (k(DISTANCE_CM_FN),  value.distanceCm)
           )
         }
       }
@@ -69,16 +56,12 @@ object MBleBeaconInfo {
 
 /**
   * Класс для инстансов модели с инфой о наблюдаемом в эфире BLE-маячке.
-  * @param uuidStr Proximity UUID наблюдаемого маячка.
-  * @param major Major ID
-  * @param minor Minor ID
-  * @param sigPowerM Воспринимаемая устройством мощность сигнала маячка.
-  * @param sigPower1m Мощность сигнала на расстоянии 1 метра, заявленная маячком.
+  * @param uid Уникальный идентификатор наблюдаемого маячка:
+  *            iBeacon:   "$uuid:$major:$minor"
+  *            EddyStone: "$gid$bid"
+  * @param distanceCm Расстояние в сантиметрах, если известно.
   */
 case class MBleBeaconInfo(
-  uuidStr     : String,
-  major       : Int,
-  minor       : Int,
-  sigPowerM   : Double,
-  sigPower1m  : Double
+  uid         : String,
+  distanceCm  : Option[Int]     = None
 )

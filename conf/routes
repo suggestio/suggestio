@@ -15,22 +15,22 @@ GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState
 ## Унифицированный sc index на все случаи жизни.
 GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArgs)
 
-GET  /sc/blk/css                        @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
+GET  /sc/blkcss                         @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
 
-GET  /sc/tile/find                      @controllers.Sc.findAds(a: msc.MScAdsTileQs)
-GET  /sc/foc/ads                        @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)
+GET  /sc/tile                           @controllers.Sc.findAds(a: msc.MScAdsTileQs)
+GET  /sc/fads                           @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)
 ## Рендер ровно одной карточки.
 GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
 GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
 ## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
 GET  /sc/router.js                      @controllers.Sc.scJsRouter
-GET  /sc/tags/search                    @controllers.Sc.tagsSearch(t: msc.tag.MScTagsSearchQs)
+GET  /sc/tags                           @controllers.Sc.tagsSearch(t: msc.tag.MScTagsSearchQs)
 GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
 
 ## Поиск по узлам
-GET  /sc/nodes/search                   @controllers.Sc.findNodes(a: msc.MScNodeSearchArgs)
+GET  /sc/nodes                          @controllers.Sc.findNodes(a: msc.MScNodeSearchArgs)
 ## Прямой доступ к синхронной выдаче
-GET  /sc/geo/syncsite                   @controllers.Sc.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+GET  /sc/syncsite                       @controllers.Sc.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
 ## Дамп ошибок выдачи.
 POST /sc/error                          @controllers.Sc.handleScError
 
