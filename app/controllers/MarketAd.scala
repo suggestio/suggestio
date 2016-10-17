@@ -41,14 +41,14 @@ import scala.concurrent.Future
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-                           tempImgSupport                          : TempImgSupport,
-                           mNodes                                  : MNodes,
-                           sysMdrUtil                              : SysMdrUtil,
-                           lkEditorWsActors                        : LkEditorWsActors,
-                           @Named("blk") override val blkImgMaker  : IMaker,
-                           override val n2NodesUtil                : N2NodesUtil,
-                           override val marketAdFormUtil           : LkAdEdFormUtil,
-                           override val mCommonDi                  : ICommonDi
+  tempImgSupport                          : TempImgSupport,
+  mNodes                                  : MNodes,
+  sysMdrUtil                              : SysMdrUtil,
+  lkEditorWsActors                        : LkEditorWsActors,
+  @Named("blk") override val blkImgMaker  : IMaker,
+  override val n2NodesUtil                : N2NodesUtil,
+  override val marketAdFormUtil           : LkAdEdFormUtil,
+  override val mCommonDi                  : ICommonDi
 )
   extends SioController
   with PlayMacroLogsImpl
@@ -148,12 +148,11 @@ class MarketAd @Inject() (
             val mad2 = r.mad.copy(
               edges = r.mad.edges.copy(
                 out = {
-                  val currEdges = r.mad.edges.out
                   val prodE = MEdge(
                     predicate = MPredicates.OwnedBy,
                     nodeIds   = mnode.id.toSet
                   )
-                  var iter  = currEdges.valuesIterator ++ savedImgs ++ Seq(prodE)
+                  var iter  = r.mad.edges.iterator ++ savedImgs ++ Seq(prodE)
                   // Добавить эдж модератора, если карточка создаётся модератором.
                   if (request.user.isSuper)
                     iter ++= Seq( sysMdrUtil.mdrEdge() )

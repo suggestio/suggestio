@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
-import io.suggest.model.n2.edge.MEdgeInfo
+import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.meta.colors.MColors
@@ -372,11 +372,7 @@ class MarketLkAdnEdit @Inject() (
         }
         // Генерим результат
         mnode.edges.copy(
-          out = edgesIter
-            .map { medge =>
-              medge.toEmapKey -> medge
-            }
-            .toMap
+          out = MNodeEdges.edgesToMap1( edgesIter )
         )
       }
     )

@@ -60,7 +60,7 @@ trait MarketAdPreview
                     predicate = MPredicates.OwnedBy,
                     nodeIds   = request.mnode.id.toSet
                   )
-                  r.mad.edges.out.valuesIterator ++
+                  r.mad.edges.iterator ++
                     imgs ++
                     Seq( ownEdge )
                 }

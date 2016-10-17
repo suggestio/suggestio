@@ -211,12 +211,12 @@ class SysMarket @Inject() (
     // Узнаём исходящие ребра.
     val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
       val mnodesMapFut = mNodeCache.multiGetMap {
-        mnode.edges.out
-          .valuesIterator
+        mnode.edges
+          .iterator
           .flatMap(_.nodeIds)
       }
       for (nmap <- mnodesMapFut) yield {
-        val iter = for (medge <- mnode.edges.out.valuesIterator) yield {
+        val iter = for (medge <- mnode.edges.iterator) yield {
           val mnEiths = medge.nodeIds
             .iterator
             .map { nodeId =>
@@ -762,7 +762,7 @@ class SysMarket @Inject() (
     val nodesMapFut: Future[Map[String, MNode]] = {
       def _nodeIds(rcvrs: Receivers_t): Set[String] = {
         if (rcvrs.nonEmpty) {
-          rcvrs.valuesIterator
+          rcvrs.iterator
             .map(_.nodeIds)
             .reduceLeft(_ ++ _)
         } else {

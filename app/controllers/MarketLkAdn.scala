@@ -331,7 +331,7 @@ class MarketLkAdn @Inject() (
                   Some(personId)
                 }
               } else {
-                Future successful None
+                Future.successful( None )
               }
             }
 
@@ -351,7 +351,7 @@ class MarketLkAdn @Inject() (
                 mNodes.tryUpdate(mnode) { mnode0 =>
                   mnode0.copy(
                     edges = mnode0.edges.copy(
-                      out = mnode0.edges.out + (ownEdge.toEmapKey -> ownEdge)
+                      out = mnode0.edges.out ++ Seq(ownEdge)
                     )
                   )
                 }

@@ -18,7 +18,7 @@
         </tr>
       </thead>
       <tbody>
-        @rcvrs.valuesIterator.map { ri =>
+        @rcvrs.iterator.map { ri =>
           <tr>
             <td>
               @for(nodeId <- ri.nodeIds) {

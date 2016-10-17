@@ -156,7 +156,7 @@ class AdvUtil @Inject() (
             mad = acc3.mad.copy(
               edges = acc3.mad.edges.copy(
                 out = {
-                  acc3.mad.edges.out ++ MNodeEdges.edgesToMapIter(edge2)
+                  acc3.mad.edges.out ++ Seq(edge2)
                 }
               )
             )
@@ -299,8 +299,9 @@ class AdvUtil @Inject() (
     }
   }
 
+  private def _orderedRcvrs(rs: Receivers_t) = rs.sortBy(_.toString)
   def isRcvrsMapEquals(map1: Receivers_t, map2: Receivers_t): Boolean = {
-    map1 == map2
+    _orderedRcvrs(map1) == _orderedRcvrs(map2)
   }
 
 
@@ -332,7 +333,9 @@ class AdvUtil @Inject() (
     */
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
     val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
-      for (acc2 <- calculateReceiversFor(tub0.acc.mad)) yield {
+      for {
+        acc2 <- calculateReceiversFor(tub0.acc.mad)
+      } yield {
         tub0.copy(acc2)
       }
     }
@@ -348,7 +351,7 @@ class AdvUtil @Inject() (
         out = {
           val oldEdgesIter = mad.edges
             .withoutPredicateIter( MPredicates.Receiver )
-          val newRcvrEdges = rcvrs1.valuesIterator
+          val newRcvrEdges = rcvrs1.iterator
           MNodeEdges.edgesToMap1( oldEdgesIter ++ newRcvrEdges )
         }
       )

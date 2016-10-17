@@ -44,17 +44,21 @@ class NodesUtil @Inject() (
   import mCommonDi._
 
   /** Дефолтовый лимит на размещение у самого себя на главной. */
-  private val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt") getOrElse 50
+  private val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt")
+    .getOrElse(50)
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
-  private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec") getOrElse 5
+  private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec")
+    .getOrElse(5)
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
-  val ADN_IDS_INIT_ADS_SOURCE = configuration.getStringSeq("user.node.created.mads.import.from.adn_ids") getOrElse Nil
+  val ADN_IDS_INIT_ADS_SOURCE = configuration.getStringSeq("user.node.created.mads.import.from.adn_ids")
+    .getOrElse(Nil)
 
   /** Кол-во карточек для импорта из дефолтового узла. */
-  val INIT_ADS_COUNT = configuration.getInt("user.node.created.mads.import.count") getOrElse 1
+  val INIT_ADS_COUNT = configuration.getInt("user.node.created.mads.import.count")
+    .getOrElse(1)
 
 
   /** Куда отправлять юзера, когда тот создал новый узел? */
@@ -112,7 +116,7 @@ class NodesUtil @Inject() (
       ),
       edges = MNodeEdges(
         out = {
-          personIdOpt.fold[NodeEdgesMap_t] (Map.empty) { personId =>
+          personIdOpt.fold[NodeEdgesMap_t] (Nil) { personId =>
             val medge = MEdge(
               predicate = MPredicates.OwnedBy,
               nodeIds   = Set(personId)
