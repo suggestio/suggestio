@@ -5,20 +5,37 @@
 @import helper._
 
 @formAfter = {
-  @checkbox(
-    ncpf("billInit"),
-    '_label -> "Инициализировать биллинг?"
-  )
+  <table class="input-w __size-L">
+    @checkbox(
+      ncpf("billInit"),
+      '_label -> "Инициализировать биллинг?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
 
-  @checkbox(
-    ncpf("extTgsInit"),
-    '_label -> "Создать дефолтовые цели размещения (соц.сети)?"
-  )
+  <table class="input-w __size-L">
+    @checkbox(
+      ncpf("extTgsInit"),
+      '_label -> "Создать дефолтовые цели размещения (соц.сети)?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
 
-  @checkbox(
-    ncpf("withDfltMads"),
-    '_label -> "Создать дефолтовые рекламные карточки?"
-  )
+  <table class="input-w __size-L">
+    @checkbox(
+      ncpf("withDfltMads"),
+      '_label -> "Создать дефолтовые рекламные карточки?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
+
+  <table class="input-w __size-L">
+    @inputText(
+      af("id"),
+      '_label -> "Принудительный id узла",
+      'title  -> ("Обязательный для некоторых типов узлов (" + (for(mnt <- MNodeTypes.valuesT.iterator if !mnt.randomIdAllowed) yield messages(mnt.plural)).mkString(", ") + "). Иначе -- оставить пустым.")
+    )
+  </table>
 }
 
 @adnBase("Создать новый ADN-узел") {

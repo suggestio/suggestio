@@ -662,7 +662,7 @@ Ntype.a=Promo card
 Ntype.t=Tag
 Ntype.m=Media
 Ntype.i=Picture
-Ntype.w=Welcome card
+Ntype.b=BLE-beacon
 
 Ntype.p=People
 Ntype.n=Cabinets
@@ -670,7 +670,7 @@ Ntype.a=Promo cards
 Ntype.t=Tags
 Ntype.m=Medias
 Ntype.i=Pictures
-Ntype.w=Welcome cards
+Ntype.b=BLE-beacons
 Nodes=Nodes
 
 edge.predicate.a=Owner

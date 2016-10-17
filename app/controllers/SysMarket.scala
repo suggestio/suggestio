@@ -311,14 +311,6 @@ class SysMarket @Inject() (
   }
 
 
-  private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams], rs: Status)
-                                 (implicit request: IReq[_]): Future[Result] = {
-    val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
-    Future.successful( rs(html) )
-  }
-
-  private def nodeCreateParamsFormM = Form(NodeCreateParams.mappingM)
-
   /** Страница с формой создания нового узла. */
   def createAdnNode() = IsSuGet.async { implicit request =>
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
@@ -329,72 +321,94 @@ class SysMarket @Inject() (
         personIdOpt = request.user.personIdOpt
       )
     )
+
     val ncpForm = nodeCreateParamsFormM.fill( NodeCreateParams() )
+
     createAdnNodeRender(dfltFormM, ncpForm, Ok)
+  }
+
+  /** Общий код create-node-экшенов с рендером страницы с формой создания узла. */
+  private def createAdnNodeRender(nodeFormM: Form[MNode], ncpForm: Form[NodeCreateParams], rs: Status)
+                                 (implicit request: IReq[_]): Future[Result] = {
+    val html = createAdnNodeFormTpl(nodeFormM, ncpForm)
+    Future.successful( rs(html) )
   }
 
   /** Сабмит формы создания нового узла. */
   def createAdnNodeSubmit() = IsSuPost.async { implicit request =>
     val ncpForm = nodeCreateParamsFormM.bindFromRequest()
-    adnNodeFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val renderFut = createAdnNodeRender(formWithErrors, ncpForm, NotAcceptable)
-        debug("createAdnNodeSubmit(): Failed to bind form: \n" + formatFormErrors(formWithErrors))
-        renderFut
-      },
+    val nodeForm = adnNodeFormM.bindFromRequest()
+
+    def __onError(formWithErrors: Form[_], formName: String): Future[Result] = {
+      val renderFut = createAdnNodeRender(nodeForm, ncpForm, NotAcceptable)
+      debug(s"createAdnNodeSubmit(): Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
+      renderFut
+    }
+
+    nodeForm.fold(
+      __onError(_, "node"),
       {mnode0 =>
-        val mnode1 = mnode0.copy(
-          edges = mnode0.edges.copy(
-            out = {
-              val ownEdge = MEdge(
-                predicate = MPredicates.OwnedBy,
-                nodeIds   = request.user.personIdOpt.toSet
-              )
-              MNodeEdges.edgesToMap(ownEdge)
+        ncpForm.fold(
+          __onError(_, "create"),
+          {ncp =>
+            // Собрать новый инстанс узла.
+            val mnode1 = mnode0.copy(
+              edges = mnode0.edges.copy(
+                out = {
+                  val ownEdge = MEdge(
+                    predicate = MPredicates.OwnedBy,
+                    nodeIds   = request.user.personIdOpt.toSet
+                  )
+                  MNodeEdges.edgesToMap(ownEdge)
+                }
+              ),
+              // Возможно, id создаваемого документа уже задан.
+              id          = ncp.withId,
+              // Явно избегаем перезаписи уже существующих документов.
+              versionOpt  = Some(1L)
+            )
+
+            // Запустить сохранение
+            for (adnId <- mNodes.save(mnode1)) yield {
+              // Инициализировать новосозданный узел согласно заданным параметрам.
+              maybeInitializeNode(ncp, adnId)
+
+              // Отредиректить админа в созданный узел.
+              Redirect(routes.SysMarket.showAdnNode(adnId))
+                .flashing(FLASH.SUCCESS -> s"Создан узел сети: $adnId")
             }
-          )
+          }
         )
-        for (adnId <- mNodes.save(mnode1)) yield {
-          // Инициализировать новосозданный узел.
-          maybeInitializeNode(ncpForm, adnId)
-          // Отредиректить админа в созданный узел.
-          Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing(FLASH.SUCCESS -> s"Создан узел сети: $adnId")
-        }
       }
     )
   }
 
   /** При создании узла есть дополнительные отключаемые возможности по инициализации.
     * Тут фунцкия, отрабатывающая это дело. */
-  private def maybeInitializeNode(ncpForm: Form[NodeCreateParams], adnId: String)(implicit messages: Messages): Future[_] = {
+  private def maybeInitializeNode(ncp: NodeCreateParams, adnId: String)
+                                 (implicit messages: Messages): Future[_] = {
     lazy val logPrefix = s"maybeInitializeNode($adnId):"
-    ncpForm.value match {
-      case Some(ncp) =>
-        // Все флаги отрабатываются аналогично, поэтому общий код вынесен за скобки.
-        def f(flag: Boolean, errMsg: => String)(action: => Future[_]): Future[_] = {
-          if (flag) {
-            val fut: Future[_] = action
-            fut onFailure { case ex: Throwable =>
-              warn(errMsg, ex)
-            }
-            fut
-          } else {
-            Future successful None
-          }
+
+    // Все флаги отрабатываются аналогично, поэтому общий код вынесен за скобки.
+    def f(flag: Boolean, errMsg: => String)(action: => Future[_]): Future[_] = {
+      if (flag) {
+        val fut: Future[_] = action
+        fut onFailure { case ex: Throwable =>
+          warn(errMsg, ex)
         }
-        val etgsFut = f(ncp.extTgsInit, s"$logPrefix Failed to create default targets") {
-          nodesUtil.createExtDfltTargets(adnId)(messages)
-        }
-        val madsFut = f(ncp.withDfltMads, s"$logPrefix Failed to install default mads") {
-          nodesUtil.installDfltMads(adnId)(messages)
-        }
-        etgsFut.flatMap { _ =>
-          madsFut
-        }
-      case None =>
-        warn(s"$logPrefix Failed to bind ${NodeCreateParams.getClass.getSimpleName} form:\n ${formatFormErrors(ncpForm)}")
-        Future.successful(None)
+        fut
+      } else {
+        Future.successful( None )
+      }
+    }
+    val etgsFut = f(ncp.extTgsInit, s"$logPrefix Failed to create default targets") {
+      nodesUtil.createExtDfltTargets(adnId)(messages)
+    }
+    val madsFut = f(ncp.withDfltMads, s"$logPrefix Failed to install default mads") {
+      nodesUtil.installDfltMads(adnId)(messages)
+    }
+    etgsFut.flatMap { _ =>
+      madsFut
     }
   }
 

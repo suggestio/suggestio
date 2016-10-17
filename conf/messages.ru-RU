@@ -675,7 +675,7 @@ Ntype.a=Рекламная карточка
 Ntype.t=Тег
 Ntype.m=Медиа
 Ntype.i=Картинка
-Ntype.w=Карточка приветствия
+Ntype.b=Маячок BLE
 
 Ntypes.p=Люди
 Ntypes.n=Кабинеты
@@ -683,7 +683,7 @@ Ntypes.a=Рекламные карточки
 Ntypes.t=Теги
 Ntypes.m=Медия
 Ntypes.i=Картинки
-Ntypes.w=Карточки приветствия
+Ntypes.b=Маячки BLE
 Nodes=Узлы
 
 edge.predicate.a=Владелец

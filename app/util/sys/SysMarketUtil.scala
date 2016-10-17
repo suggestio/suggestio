@@ -1,12 +1,12 @@
 package util.sys
 
-import io.suggest.model.n2.extra.domain.{MDomainExtra, MDomainModes}
+import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
 import io.suggest.model.sc.common.LvlMap_t
 import models._
-import models.msys.MSysNodeInstallFormData
+import models.msys.{MSysNodeInstallFormData, NodeCreateParams}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
@@ -114,18 +114,20 @@ class SysMarketUtil extends PlayMacroLogsDyn {
 
   private def nodeCommonM: Mapping[MNodeCommon] = {
     mapping(
+      "ntype"         -> MNodeTypes.mappingM,
       "isEnabled"     -> boolean,
       "isDependent"   -> boolean
     )
-    {(isEnabled, isDependent) =>
+    {(ntype, isEnabled, isDependent) =>
       MNodeCommon(
-        ntype       = MNodeTypes.AdnNode,     // TODO Это заглушка, рождённая во время переезда на N2. Нужно дать возможность менять тип.
+        // Выставляем null, т.к. при create оно будет перезаписано в контроллере, а при edit -- проигнорировано.
+        ntype       = ntype,
         isEnabled   = isEnabled,
         isDependent = isDependent
       )
     }
     {mnc =>
-      Some((mnc.isEnabled, mnc.isDependent))
+      Some((mnc.ntype, mnc.isEnabled, mnc.isDependent))
     }
   }
 
@@ -177,14 +179,13 @@ class SysMarketUtil extends PlayMacroLogsDyn {
     )
   }
 
-  def adnExtraKM  = "adn"     -> adnExtraM
-  def metaKM      = "meta"    -> adnNodeMetaM
-  def commonKM    = "common"  -> nodeCommonM
 
   /** Сборка маппинга для формы добавления/редактирования рекламного узла. */
   def adnNodeFormM: Form[MNode] = {
     Form(mapping(
-      commonKM, adnExtraKM, metaKM
+      "common"  -> nodeCommonM,
+      "adn"     -> adnExtraM,
+      "meta"    -> adnNodeMetaM
     )
     {(common, adnExtra, meta) =>
       MNode(
@@ -226,6 +227,24 @@ class SysMarketUtil extends PlayMacroLogsDyn {
   def mDomainExtraFormM: Form[MDomainExtra] = {
     Form( MDomainExtra.mappingM )
   }
+
+  /** Маппинг для форм, содержащих [[NodeCreateParams]]. */
+  def nodeCreateParamsM: Mapping[NodeCreateParams] = {
+    val b = boolean
+    mapping(
+      "billInit"      -> b,
+      "extTgsInit"    -> b,
+      "withDfltMads"  -> b,
+      // Для админов допускаем более свободное задание id'шников. При edit это дело игнорируется внутри update-экшена.
+      "id" -> optional(text(minLength = 3, maxLength = 128))
+        .transform [Option[String]] ( emptyStrOptToNone, identity )
+    )
+    { NodeCreateParams.apply }
+    { NodeCreateParams.unapply }
+  }
+
+  def nodeCreateParamsFormM = Form(nodeCreateParamsM)
+
 
 }
 

@@ -12,15 +12,37 @@
   <table class="input-w __size-L">
     <td class="input-w_left">
       <label class="input-w_prop-name">
+        Тип узла
+      </label>
+    </td>
+    <td>
+      @defining( af("common.ntype") ) { ntypeField =>
+        <select name="@ntypeField.name">
+          @for(mnt <- MNodeTypes.values) {
+            <option value="@mnt.strId" @if( ntypeField.value.contains(mnt.strId) ) {selected}>
+              @messages( mnt.singular )
+            </option>
+          }
+        </select>
+      }
+    </td>
+  </table>
+
+
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">
         Отображаемый тип узла
       </label>
     </td>
     <td>
       @defining( af("adn.shownTypeIdOpt") ) { stiField =>
         <select name="@stiField.name">
-          <option disabled>Тип узла</option>
-          @AdnShownTypes.values.map { ast =>
-            <option value="@ast" @if(stiField.value contains ast.toString) {selected}>@messages("amt.of.type." + ast)</option>
+          <option value="">[не требуется]</option>
+          @for(ast <- AdnShownTypes.values) {
+            <option value="@ast" @if( stiField.value.contains(ast.toString) ) {selected}>
+              @messages("amt.of.type." + ast)
+            </option>
           }
         </select>
       }
@@ -102,7 +124,8 @@
   <table class="input-w __size-L">
     @checkbox(
       af("adn.showInScNl"),
-      '_label -> "Отображать в списке узлов выдачи?"
+      '_label -> "Отображать в списке узлов выдачи?",
+      '_class -> "sys-checkbox"
     )
   </table>
 
