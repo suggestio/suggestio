@@ -129,38 +129,6 @@ trait IEdge {
   /** Какие-то доп.данные текущего ребра. */
   def info      : MEdgeInfo
 
-  /** Сборка суффикса ключа эджа в карте эджей. */
-  def _extraKeyData: EdgeXKey_t = {
-    val k0 = info._extraKeyData
-    order.fold(k0)(_ :: k0)
-  }
-
-  /** Сконвертить в инстанс ключа карты эджей. */
-  def toEmapKey: NodeEdgesMapKey_t = {
-    (predicate, nodeIds, _extraKeyData)
-  }
-
-  override def toString: String = {
-    val sb = new StringBuilder(64)
-      .append("E(")
-    sb.append(predicate.strId)
-      .append(':')
-    for (nodeId <- nodeIds) {
-      sb.append(nodeId)
-        .append(',')
-    }
-    for (ord <- order) {
-      sb.append(':').append(ord)
-    }
-    if (info.nonEmpty) {
-      sb.append('{')
-        .append(info)
-        .append('}')
-    }
-    sb.append(',')
-      .toString()
-  }
-
 }
 
 

@@ -67,24 +67,11 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
     }
   }
 
-  val EMAP_FORMAT: Format[NodeEdgesMap_t] = Format(
-    Reads.of[Iterable[MEdge]]
-      .map[NodeEdgesMap_t] { edges =>
-        edges
-          .iterator
-          .map { e => e.toEmapKey -> e }
-          .toMap
-      },
-    Writes[NodeEdgesMap_t] { emap =>
-      Json.toJson( emap.values )
-    }
-  )
-
   implicit val FORMAT: Format[MNodeEdges] = {
     (__ \ Fields.OUT_FN).formatNullable[NodeEdgesMap_t]
       // Приведение опциональной карты к неопциональной.
       .inmap [NodeEdgesMap_t] (
-        opt2ImplEmpty1F( Map.empty ),
+        opt2ImplEmpty1F( Nil ),
         {mnes => if (mnes.isEmpty) None else Some(mnes) }
       )
       // Вместо apply используем inmap, т.к. только одно поле тут.
@@ -103,17 +90,11 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
     )
   }
 
-  def edgesToMapIter(edges: MEdge*): Iterator[(NodeEdgesMapKey_t, MEdge)] = {
-    edgesToMapIter1(edges)
-  }
-  def edgesToMapIter1(edges: TraversableOnce[MEdge]): Iterator[(NodeEdgesMapKey_t, MEdge)] = {
-    for (edge <- edges.toIterator) yield {
-      edge.toEmapKey -> edge
-    }
+  def edgesToMapIter(edges: MEdge*): Seq[MEdge] = {
+    edges
   }
   def edgesToMap1(edges: TraversableOnce[MEdge]): NodeEdgesMap_t = {
-    edgesToMapIter1(edges)
-      .toMap
+    edges.toSeq
   }
   def edgesToMap(edges: MEdge*): NodeEdgesMap_t = {
     edgesToMap1(edges)
@@ -129,20 +110,17 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
     val iter = edges.toIterator.flatMap(_.order)
     if (iter.isEmpty) 0 else iter.max + 1
   }
-  def nextOrderId(edgeMap: NodeEdgesMap_t): Int = {
-    nextOrderId( edgeMap.valuesIterator )
-  }
 
 }
 
 
 case class MNodeEdges(
-  out   : NodeEdgesMap_t    = Map.empty
+  out   : NodeEdgesMap_t    = Nil
 )
   extends EmptyProduct
 {
 
-  def iterator = out.valuesIterator
+  def iterator = out.iterator
 
   def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
     iterator
@@ -196,22 +174,14 @@ case class MNodeEdges(
     * @return Обновлённый экземпляр [[MNodeEdges]].
     */
   def updateFirst(findF: MEdge => Boolean)(updateF: MEdge => Option[MEdge]): MNodeEdges = {
-    val (k0, v0) = out
-      .iterator
-      .find { case (k, v) =>
-        findF(v)
-      }
-      .get
-    val v1Opt = updateF(v0)
-
-    val out1 = v1Opt.fold [NodeEdgesMap_t] {
-      out - k0
-    } { v1 =>
-      out.updated(k0, v1)
-    }
-
     copy(
-      out = out1
+      out = this.out.flatMap { e =>
+        if (findF(e)) {
+          updateF(e)
+        } else {
+          Seq(e)
+        }
+      }
     )
   }
 

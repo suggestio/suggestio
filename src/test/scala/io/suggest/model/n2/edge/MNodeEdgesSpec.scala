@@ -30,9 +30,9 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
         order     = Some(5)
       )
       MNodeEdges(
-        out = Map(
-          edge1.toEmapKey -> edge1,
-          edge2.toEmapKey -> edge2
+        out = Seq(
+          edge1,
+          edge2
         )
       )
     }
