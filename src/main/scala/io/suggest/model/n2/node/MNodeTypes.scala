@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.menum.{EnumMaybeWithName, EnumTree}
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -29,6 +30,9 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
     /** Логика генерации ntype-specific отображаемого имени для узла. */
     def guessNodeDisplayName(mnode: MNode): Option[String] = None
 
+    /** Разрешается ли использовать рандомные id'шники? [true] */
+    def randomIdAllowed: Boolean = true
+
   }
 
   /** Абстрактная класс одного элемента модели. */
@@ -39,12 +43,12 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   override type T = Val
 
-  protected sealed trait NoParent extends ValT { that: T =>
+  protected[this] sealed trait NoParent extends ValT { that: T =>
     override def parent: Option[T] = None
   }
 
   /** Реализация Val без подтипов. */
-  private class ValNoSub(strId: String) extends Val(strId) with NoParent {
+  protected[this] sealed class ValNoSub(strId: String) extends Val(strId) with NoParent {
     override def children: List[T] = Nil
   }
 
@@ -102,8 +106,17 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   }
 
-  /** Маячок BLE (iBeacon). */
-  val IBeacon: T = new ValNoSub("b")
+
+  /** Маячок BLE. iBeacon или EddyStone -- системе это не важно. */
+  val BleBeacon = new ValNoSub("b") {
+
+    /**
+      * Узлам-маячкам надо хранить свои uid'ы в _id. Так хоть и длинее,
+      * но всё-таки нет необходимости в ведении ещё одного индекса.
+      */
+    override def randomIdAllowed = false
+
+  }
 
 
   /** Поддержка binding'а из URL query string, для play router'а. */
@@ -125,6 +138,26 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
         strB.unbind(key, value.strId)
       }
     }
+  }
+
+
+
+  import play.api.data._, Forms._
+
+  /** Опциональный маппинг для play-формы. */
+  def mappingOptM: Mapping[Option[T]] = {
+    optional( nonEmptyText(minLength = 1, maxLength = 10) )
+      .transform [Option[T]] (
+        _.flatMap( maybeWithName ),
+        _.map(_.strId)
+      )
+  }
+
+  /** Обязательный маппинг для play-формы. */
+  def mappingM: Mapping[T] = {
+    mappingOptM
+      .verifying("error.required", _.isDefined)
+      .transform [T] (EmptyUtil.getF, EmptyUtil.someF)
   }
 
 }

@@ -219,13 +219,19 @@ class MNodes @Inject() (
    * @return Фьючерс с новым/текущим id.
    */
   override def save(m: T): Future[String] = {
-    val saveFut = super.save(m)
-    saveFut.onSuccess { case adnId =>
-      val mnode2 = m.copy(id = Option(adnId))
-      val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)
-      sn.publish(evt)
+    // Запретить сохранять узел без id, если его тип не подразумевает генерацию рандомных id.
+    if (m.id.isEmpty && !m.common.ntype.randomIdAllowed) {
+      throw new IllegalArgumentException(s"id == None, but node type [${m.common.ntype}] does NOT allow random ids.")
+
+    } else {
+      val saveFut = super.save(m)
+      saveFut.onSuccess { case adnId =>
+        val mnode2 = m.copy(id = Option(adnId))
+        val evt = MNodeSaved(mnode2, isCreated = m.id.isEmpty)
+        sn.publish(evt)
+      }
+      saveFut
     }
-    saveFut
   }
 
 }
