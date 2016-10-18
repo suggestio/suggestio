@@ -51,7 +51,7 @@
 
   @_sysTitleTpl() {
     @messages( mnode.common.ntype.singular )
-    @AdnShownTypes.node2valOpt(mnode).map { ast =>
+    @for(ast <- AdnShownTypes.node2valOpt(mnode)) {
       (@messages( ast.singular ))
     }:
     <strong>
@@ -78,13 +78,16 @@
 
   @if( args.outEdges.nonEmpty ) {
     @lkBlock("Исходящие связи (" + args.outEdges.size + ")") {
-      @_nodeEdgesTpl( args.outEdges, isIncoming = false )
+      @_nodeEdgesTpl( args.outEdges, arrow = "=>", onNode = Some(args.mnode) )
+      @for(mnodeId <- args.mnode.id) {
+        <a href="@routes.SysMarket.createEdgeGet(mnodeId)">@messages("Create")...</a>
+      }
     }
   }
 
   @if( args.inEdges.nonEmpty ) {
     @lkBlock("Входящие связи (" + args.inEdges.size + ")") {
-      @_nodeEdgesTpl( args.inEdges, isIncoming = true )
+      @_nodeEdgesTpl( args.inEdges, arrow = "<=" )
     }
   }
 

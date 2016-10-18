@@ -5,7 +5,7 @@ import java.util.NoSuchElementException
 import controllers.{SioController, routes}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.es.MEsId
+import io.suggest.model.es.MEsUuId
 import models._
 import models.mlu.MLookupModes
 import models.msc._
@@ -109,7 +109,7 @@ trait ScSyncSite
             MScAdsTileQs(
               search = MScAdsSearchQs(
                 genOpt    = _scState.generationOpt,
-                rcvrIdOpt = _scState.adnId.map(MEsId.apply)
+                rcvrIdOpt = _scState.adnId.map(MEsUuId.apply)
               )
             )
           }
@@ -165,8 +165,8 @@ trait ScSyncSite
           search = MScAdsSearchQs(
             offsetOpt = _scState.fadsOffsetOpt,
             limitOpt  = Some(1),
-            rcvrIdOpt = _scState.adnId.map(MEsId.apply),
-            prodIdOpt = _scState.fadsProdIdOpt.map(MEsId.apply),
+            rcvrIdOpt = _scState.adnId.map(MEsUuId.apply),
+            prodIdOpt = _scState.fadsProdIdOpt.map(MEsUuId.apply),
             genOpt    = _scState.generationOpt
           ),
           lookupMode  = MLookupModes.Around,

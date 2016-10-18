@@ -8,7 +8,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.common.OptId
-import io.suggest.model.es.MEsId
+import io.suggest.model.es.MEsUuId
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
@@ -73,6 +73,7 @@ class SysMarket @Inject() (
   with IsSuperuser
   with IsSuperuserOr404
   with SmDomains
+  with SysNodeEdges
 {
 
   import LOGGER._
@@ -121,12 +122,11 @@ class SysMarket @Inject() (
     // Считаем общее кол-во элементов указанного типа.
     val totalFut: Future[Long] = {
       ntypeStatsFut flatMap { stats =>
-        args.ntypeOpt match {
-          case Some(ntype) =>
-            val res = stats.getOrElse(ntype, 0L)
-            Future successful res
-          case None =>
-            allCountFut
+        args.ntypeOpt.fold[Future[Long]] {
+          allCountFut
+        } { ntype =>
+          val res = stats.getOrElse(ntype, 0L)
+          Future.successful(res)
         }
       }
     }
@@ -142,7 +142,7 @@ class SysMarket @Inject() (
         .iterator
         .flatMap { nt =>
           val ntype: MNodeType = nt
-          stats.get(ntype).map { count =>
+          for (count <- stats.get(ntype)) yield {
             MNodeTypeInfo(
               name      = ctx.messages( ntype.plural ),
               ntypeOpt  = Some(ntype),
@@ -214,9 +214,12 @@ class SysMarket @Inject() (
         mnode.edges
           .iterator
           .flatMap(_.nodeIds)
+          .toSet
       }
       for (nmap <- mnodesMapFut) yield {
-        val iter = for (medge <- mnode.edges.iterator) yield {
+        val iter = for {
+          (medge, index) <- mnode.edges.iterator.zipWithIndex
+        } yield {
           val mnEiths = medge.nodeIds
             .iterator
             .map { nodeId =>
@@ -224,7 +227,11 @@ class SysMarket @Inject() (
                 .toRight(nodeId)
             }
             .toSeq
-          MNodeEdgeInfo(medge, mnEiths)
+          MNodeEdgeInfo(
+            medge       = medge,
+            mnodeEiths  = mnEiths,
+            edgeId      = Some(index)
+          )
         }
         _prepareEdgeInfos(iter)
       }
@@ -247,7 +254,11 @@ class SysMarket @Inject() (
             mnode.edges
               .withNodeId( nodeId )
               .map { medge =>
-                MNodeEdgeInfo(medge, Seq(Right(mnode)))
+                MNodeEdgeInfo(
+                  medge       = medge,
+                  mnodeEiths  = Seq(Right(mnode)),
+                  edgeId      = None
+                )
               }
           }
         _prepareEdgeInfos(iter)
@@ -259,7 +270,9 @@ class SysMarket @Inject() (
       val ownerIds = mnode.edges
         .withPredicateIterIds( MPredicates.OwnedBy )
       Future.traverse( ownerIds ) { personId =>
-        for (nameOpt <- mPerson.findUsernameCached(personId)) yield {
+        for {
+          nameOpt <- mPerson.findUsernameCached(personId)
+        } yield {
           val name = nameOpt.getOrElse(personId)
           personId -> name
         }
@@ -516,7 +529,7 @@ class SysMarket @Inject() (
       }
     }
 
-    def __nodeIdsF(x: Option[MEsId]): Seq[String] = {
+    def __nodeIdsF(x: Option[MEsUuId]): Seq[String] = {
       x.iterator.map(_.id).toSeq
     }
     val producerIds = __nodeIdsF(a.prodIdOpt)

@@ -3,7 +3,7 @@ package util.acl
 import controllers.SioController
 import models.req.{IReqHdr, MReq, MNodeReq}
 import scala.concurrent.Future
-import play.api.mvc.{RequestHeader, Request, ActionBuilder, Result}
+import play.api.mvc.{Request, ActionBuilder, Result}
 
 /**
  * Suggest.io
@@ -35,7 +35,7 @@ trait IsSuNode
       val user = mSioUsers(personIdOpt)
       if (user.isSuper) {
         val mnodeOptFut = mNodeCache.getById(nodeId)
-        mnodeOptFut flatMap {
+        mnodeOptFut.flatMap {
           case Some(mnode) =>
             val req1 = MNodeReq(mnode, request, user)
             block(req1)

@@ -1,5 +1,6 @@
 package util.sys
 
+import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -10,7 +11,7 @@ import models.msys.{MSysNodeInstallFormData, NodeCreateParams}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
-import util.PlayMacroLogsDyn
+import util.{FormUtil, PlayMacroLogsDyn}
 
 /**
  * Suggest.io
@@ -236,7 +237,10 @@ class SysMarketUtil extends PlayMacroLogsDyn {
       "extTgsInit"    -> b,
       "withDfltMads"  -> b,
       // Для админов допускаем более свободное задание id'шников. При edit это дело игнорируется внутри update-экшена.
-      "id" -> optional(text(minLength = 3, maxLength = 128))
+      "id" -> optional(
+          text(minLength = 3, maxLength = 128)
+            .transform [String] ( strTrimSanitizeF, identity )
+        )
         .transform [Option[String]] ( emptyStrOptToNone, identity )
     )
     { NodeCreateParams.apply }
@@ -245,6 +249,101 @@ class SysMarketUtil extends PlayMacroLogsDyn {
 
   def nodeCreateParamsFormM = Form(nodeCreateParamsM)
 
+
+  def _setMapping[T](strMapping: Mapping[String])(f: Seq[String] => TraversableOnce[T]): Mapping[Set[T]] = {
+    optional(
+      strMapping
+        .transform(strTrimSanitizeF, strIdentityF)
+    )
+      .transform[Option[String]] ( emptyStrOptToNone, identity )
+      .transform[Set[T]] (
+        {case None    => Set.empty
+         case Some(s) => f(s.split("\\s*[,;]\\s*")).toSet
+        },
+        { ids =>
+          if (ids.isEmpty) None else Some( ids.mkString(", ") )
+        }
+      )
+  }
+
+  /** Маппинг для списка id узлов (эджа). */
+  def nodeIdsListM: Mapping[Set[String]] = {
+    _setMapping[String] (text(maxLength = 512)) (identity)
+  }
+
+  def itemIdsListM: Mapping[Set[Long]] = {
+    _setMapping[Long] (text(minLength = 1, maxLength = 128)) (_.iterator.map(_.toLong))
+  }
+
+  def tagsListM: Mapping[Set[String]] = {
+    _setMapping[String] (text(maxLength = 512)) (identity)
+  }
+
+  /** Маппинг для поля info в эдже. */
+  def edgeInfoM: Mapping[MEdgeInfo] = {
+    mapping(
+      "dynImgArgs" -> optional( nonEmptyText(minLength = 2, maxLength = 256) ),
+      "commentNi"  -> optional( text(maxLength = 256) ),
+      "flag"       -> optional( boolean ),
+      "itemIds"    -> itemIdsListM,
+      "tags"       -> tagsListM
+    )
+    { (dynImgArgsOpt, commentNiOpt, flagOpt, itemIds, tags) =>
+      MEdgeInfo(
+        dynImgArgs  = dynImgArgsOpt,
+        commentNi   = commentNiOpt,
+        flag        = flagOpt,
+        itemIds     = itemIds,
+        tags        = tags
+      )
+    }
+    { ei =>
+      Some((ei.dynImgArgs, ei.commentNi, ei.flag, ei.itemIds, ei.tags))
+    }
+  }
+
+  /** Маппинг для эджа. */
+  def edgeM: Mapping[MEdge] = {
+    mapping(
+      "predicate" -> FormUtil.predicateM,
+      "nodeIds"   -> nodeIdsListM,
+      "order"     -> optional( number ),
+      "info"      -> edgeInfoM
+    )
+    { (predicate, nodeIds, orderOpt, eInfo) =>
+      MEdge(
+        predicate = predicate,
+        nodeIds   = nodeIds,
+        order     = orderOpt,
+        info      = eInfo
+      )
+    }
+    {e =>
+      Some((e.predicate, e.nodeIds, e.order, e.info))
+    }
+  }
+
+  def edgeFormM = Form(edgeM)
+
+
+  /** Накатить результат формы edgeFormM на существующий эдж. */
+  def updateEdge(mEdge0: MEdge, e: IEdge): MEdge = {
+    mEdge0.copy(
+      predicate = e.predicate,
+      nodeIds   = e.nodeIds,
+      order     = e.order,
+      info      = {
+        val i = e.info
+        mEdge0.info.copy(
+          dynImgArgs  = i.dynImgArgs,
+          commentNi   = i.commentNi,
+          flag        = i.flag,
+          itemIds     = i.itemIds,
+          tags        = i.tags
+        )
+      }
+    )
+  }
 
 }
 

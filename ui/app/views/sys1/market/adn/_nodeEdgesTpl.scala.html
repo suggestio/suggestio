@@ -1,6 +1,8 @@
-@(eis: Seq[msys.MNodeEdgeInfo], isIncoming: Boolean)(implicit ctx: Context)
+@(eis: Seq[msys.MNodeEdgeInfo], arrow: String, onNode: Option[MNode] = None)(implicit ctx: Context)
 
-@* Табличка с эджами и прочим. *@
+@* Табличка с эджами и прочим.
+ * onNode : на каком узле лежат все эти эджи? Если эджи входящие с других узлов, то None.
+ *@
 
 @import lk.lkBlock
 @import sys1.stuff.ntable._
@@ -27,19 +29,21 @@
       @messages("Info")
     }
 
+    @if( onNode ) {
+      @_th("XS") {
+        &nbsp;
+      }
+    }
+
   } {
     @for(ei <- eis) {
       @_tr() {
 
         @_td(sz) {
-          @if( isIncoming ) {
-            &lt;=
-          } else {
-            =&gt;
-          }
+          @arrow
           @messages( ei.medge.predicate.singular )
-          @ei.medge.order.map { orderN =>
-            #@orderN
+          @for( orderN <- ei.medge.order ) {
+            &udarr;@orderN
           }
         }
 
@@ -61,6 +65,16 @@
 
         @_td(sz) {
           @ei.medge.info
+        }
+
+        @for( mnode <- onNode ) {
+          @_td("XS") {
+            @for( edgeId <- ei.edgeId;  nodeId <- mnode.id;  nodeVsn <- mnode.versionOpt ) {
+              <a href="@routes.SysMarket.editEdgeGet( msys.MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn, edgeId = edgeId) )">
+                &#x270e;
+              </a>
+            }
+          }
         }
 
       }

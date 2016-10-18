@@ -30,7 +30,8 @@ case class MSysNodeShowTplArgs(
 
 /** Модель контейнера системной информации по одном эджу. */
 case class MNodeEdgeInfo(
-                          medge     : MEdge,
-                          mnodeEiths : Seq[Either[String, MNode]]
+  medge       : MEdge,
+  mnodeEiths  : Seq[Either[String, MNode]],
+  edgeId      : Option[Int]
 )
 

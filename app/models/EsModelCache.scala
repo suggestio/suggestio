@@ -2,7 +2,7 @@ package models
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{IEsClient, IExecutionContext}
-import io.suggest.model.es.{EsModelStaticT, EsModelT, MEsId}
+import io.suggest.model.es.{EsModelStaticT, EsModelT, MEsUuId}
 import util.xplay.ICacheApi
 
 import scala.concurrent.duration.FiniteDuration
@@ -114,7 +114,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   def maybeGetByIdCached(idOpt: Option[String]): Future[Option[T1]] = {
     FutureUtil.optFut2futOpt(idOpt)(getById)
   }
-  def maybeGetByEsIdCached(esIdOpt: Option[MEsId]): Future[Option[T1]] = {
+  def maybeGetByEsIdCached(esIdOpt: Option[MEsUuId]): Future[Option[T1]] = {
     maybeGetByIdCached(
       esIdOpt.map(_.id)
     )

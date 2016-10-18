@@ -3,8 +3,9 @@ package util
 import java.net.{MalformedURLException, URL}
 import java.util.Currency
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
-import io.suggest.model.es.MEsId
+import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.sc.common.LvlMap_t
@@ -109,7 +110,7 @@ object FormUtil {
 
 
   /** Регэксп для парсинга uuid, закодированного в base64. */
-  def uuidB64Re = MEsId.uuidB64Re
+  def uuidB64Re = MEsUuId.uuidB64Re
 
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
   def esIdM = nonEmptyText(minLength=19, maxLength=30)
@@ -541,6 +542,26 @@ object FormUtil {
 
   def szMultOptM: Mapping[Option[SzMult_t]] = {
     optional(floatM)
+  }
+
+
+  /** Опциональный маппинг предиката. */
+  def predicateOptM: Mapping[Option[MPredicate]] = {
+    optional(
+      nonEmptyText(minLength = 1, maxLength = 10)
+        .transform(strTrimSanitizeF, strIdentityF)
+    )
+    .transform [Option[MPredicate]] (
+      _.flatMap(MPredicates.maybeWithName),
+      _.map(_.strId)
+    )
+  }
+
+  /** Обязательный маппинг предиката. */
+  def predicateM: Mapping[MPredicate] = {
+    predicateOptM
+      .verifying("error.required", _.nonEmpty)
+      .transform [MPredicate] ( EmptyUtil.getF, EmptyUtil.someF )
   }
 
 

@@ -1,6 +1,6 @@
 package models.msc
 
-import io.suggest.model.es.MEsId
+import io.suggest.model.es.MEsUuId
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.mgeo.MLocEnv
 import play.api.mvc.QueryStringBindable
@@ -17,7 +17,7 @@ object MScAdsSearchQs {
 
   /** Поддержка интеграции с URL query string через play router. */
   implicit def qsb(implicit
-                   esIdOptB   : QueryStringBindable[Option[MEsId]],
+                   esIdOptB   : QueryStringBindable[Option[MEsUuId]],
                    longOptB   : QueryStringBindable[Option[Long]],
                    intOptB    : QueryStringBindable[Option[Int]],
                    locEnvB    : QueryStringBindable[MLocEnv]
@@ -80,13 +80,13 @@ object MScAdsSearchQs {
 trait IScAdSearchQs {
 
   /** Опциональный id продьюсера. */
-  def prodIdOpt     : Option[MEsId]
+  def prodIdOpt     : Option[MEsUuId]
 
   /** Опциональный id ресивера. */
-  def rcvrIdOpt     : Option[MEsId]
+  def rcvrIdOpt     : Option[MEsUuId]
 
   /** Опциональный id текущего тега. */
-  def tagNodeIdOpt  : Option[MEsId]
+  def tagNodeIdOpt  : Option[MEsUuId]
 
   /** Возможные данные по геолокации, маячкам и прочему окружению. */
   def locEnv        : MLocEnv
@@ -115,13 +115,13 @@ trait IScAdSearchQs {
 
 /** Контейнер qs-аргументов для поиска карточек. */
 case class MScAdsSearchQs(
-  override val prodIdOpt     : Option[MEsId]       = None,
-  override val rcvrIdOpt     : Option[MEsId]       = None,
-  override val tagNodeIdOpt  : Option[MEsId]       = None,
-  override val locEnv        : MLocEnv             = MLocEnv.empty,
-  override val genOpt        : Option[Long]        = None,
-  override val limitOpt      : Option[Int]         = None,
-  override val offsetOpt     : Option[Int]         = None
+                           override val prodIdOpt     : Option[MEsUuId]       = None,
+                           override val rcvrIdOpt     : Option[MEsUuId]       = None,
+                           override val tagNodeIdOpt  : Option[MEsUuId]       = None,
+                           override val locEnv        : MLocEnv             = MLocEnv.empty,
+                           override val genOpt        : Option[Long]        = None,
+                           override val limitOpt      : Option[Int]         = None,
+                           override val offsetOpt     : Option[Int]         = None
 )
   extends IScAdSearchQs
   with EmptyProduct

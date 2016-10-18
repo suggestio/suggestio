@@ -2,7 +2,7 @@ package util.showcase
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.es.MEsId
+import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.IGeoFindIpResult
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
@@ -87,7 +87,7 @@ class ScStatUtil @Inject() (
     )
   }
 
-  def withNodeAction( acType: MActionType, nodeIdOpt: Option[MEsId], nodeOpt: Option[MNode])(acc0: List[MAction]): List[MAction] = {
+  def withNodeAction(acType: MActionType, nodeIdOpt: Option[MEsUuId], nodeOpt: Option[MNode])(acc0: List[MAction]): List[MAction] = {
     nodeIdOpt.fold(acc0) { nodeId =>
       MAction(
         actions   = Seq( acType ),
