@@ -113,6 +113,8 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
 
 }
 
+// TODO В модели исторически сформировалось какое-то упоротое API.
+//      Оно какое-то топорное, наверное можно придумать что-то по-лучше.
 
 case class MNodeEdges(
   out   : NodeEdgesMap_t    = Nil
@@ -121,6 +123,41 @@ case class MNodeEdges(
 {
 
   def iterator = out.iterator
+
+  /** Отковырять первый элемент из 2-кортежа с эджем.  */
+  private def _first(e: (MEdge,_)) = e._1
+
+  /** Найти эдж с указанным порядковым номером. */
+  def withIndex(i: Int): Option[MEdge] = {
+    iterator
+      .zipWithIndex
+      .find(_._2 == i)
+      .map(_first)
+  }
+
+  def withoutIndexRaw(i: Int): Iterator[(MEdge, Int)] = {
+    iterator
+      .zipWithIndex
+      .filter(_._2 != i)
+  }
+
+  def withoutIndex(i: Int): Iterator[MEdge] = {
+    withoutIndexRaw(i)
+      .map(_first)
+  }
+
+  def withIndexUpdated(i: Int)(f: MEdge => TraversableOnce[MEdge]): Iterator[MEdge] = {
+    iterator
+      .zipWithIndex
+      .flatMap { case (e, x) =>
+        if (x == i) {
+          f(e)
+        } else {
+          Seq(e)
+        }
+      }
+  }
+
 
   def withPredicateIter(preds: MPredicate*): Iterator[MEdge] = {
     iterator

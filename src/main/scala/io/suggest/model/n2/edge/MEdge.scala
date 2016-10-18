@@ -129,6 +129,28 @@ trait IEdge {
   /** Какие-то доп.данные текущего ребра. */
   def info      : MEdgeInfo
 
+
+  override def toString: String = {
+    val sb = new StringBuilder(64)
+      .append("E(")
+    sb.append(predicate.strId)
+      .append(':')
+    for (nodeId <- nodeIds) {
+      sb.append(nodeId)
+        .append(',')
+    }
+    for (ord <- order) {
+      sb.append(':').append(ord)
+    }
+    if (info.nonEmpty) {
+      sb.append('{')
+        .append(info)
+        .append('}')
+    }
+    sb.append(')')
+      .toString()
+  }
+
 }
 
 

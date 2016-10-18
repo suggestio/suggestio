@@ -274,6 +274,8 @@ case class MNode(
     guessDisplayNameOrId.getOrElse("")
   }
 
+  def withEdges(edges2: MNodeEdges) = copy(edges = edges2)
+
 }
 
 

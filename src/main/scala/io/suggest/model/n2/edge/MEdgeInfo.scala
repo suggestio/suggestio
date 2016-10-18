@@ -228,6 +228,75 @@ trait IEdgeInfo extends IIsNonEmpty {
   /** Некие опорные точки, если есть. */
   def geoPoints     : Seq[GeoPoint]
 
+
+  /** Форматирование для вывода в шаблонах. */
+  override def toString: String = {
+    val sb = new StringBuilder(32)
+
+    for (dia <- dynImgArgs) {
+      sb.append("dynImg=")
+        .append(dia)
+        .append(' ')
+    }
+
+    val _sls = sls
+    if (_sls.nonEmpty) {
+      sb.append("sls=")
+      for (sl <- _sls) {
+        sb.append(sl)
+          .append(',')
+      }
+      sb.append(' ')
+    }
+
+    for (dt <- dateNi) {
+      sb.append("dateNi=")
+        .append(dt)
+        .append(' ')
+    }
+
+    for (comment <- commentNi) {
+      sb.append("commentNi=")
+        .append(comment)
+        .append(' ')
+    }
+
+    val _itemIds = itemIds
+    if (_itemIds.nonEmpty) {
+      sb.append("itemIds=")
+      for (bgid <- _itemIds) {
+        sb.append(bgid).append(',')
+      }
+      sb.append(' ')
+    }
+
+    val _tags = tags
+    if (_tags.nonEmpty) {
+      sb.append("tags=")
+      for (tag <- _tags) {
+        sb.append(tag).append(',')
+      }
+      sb.append(' ')
+    }
+
+    val _geoShapes = geoShapes
+    if (_geoShapes.nonEmpty) {
+      sb.append(_geoShapes.size)
+        .append("gss,")
+    }
+
+    val _geoPoints = geoPoints
+    if (_geoPoints.nonEmpty) {
+      sb.append("geoPoints={")
+      for (gp <- _geoPoints) {
+        sb.append(gp.toEsStr)
+      }
+      sb.append('}')
+    }
+
+    sb.toString()
+  }
+
 }
 
 
