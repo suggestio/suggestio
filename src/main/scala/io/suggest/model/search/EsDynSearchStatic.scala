@@ -5,10 +5,9 @@ import io.suggest.model.es.{EsModelStaticT, ISearchResp}
 import io.suggest.util.MacroLogsI
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.action.search.SearchRequestBuilder
-import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -18,10 +17,23 @@ import scala.concurrent.{ExecutionContext, Future}
  * Подразумевается, что Es Query генерятся на основе экземпляра, реализующего [[DynSearchArgs]].
  */
 
+// TODO Эта вещь служит верой и правдой, но в аргументах смешаны модель с контроллером, что вызывает ряд проблем.
+// Необходимо сделать аргументы -- моделью, а сборку query вынести в отдельный статический класс-компилятор аргументов.
+// Желательно, сделать поддержку вложенных запросов или какого-то простого DSL,
+// чтобы например как-то объединять две модели аргументов в единый запрос с двумя ветками в bool:
+//   trait EsDynSearchStatic[A] {
+//     def dynSearch(args: EsQuery[A]) = ...
+//   }
+// Необходимость разделения запросов возникла при впиливании маячков, которые в поисках карточек
+// через MNodeSearchArgs живут вообще отдельно от прочих критериев, и реализованы костыльно,
+// вразрез с исходной идеей о EsDynSearchStatic.outEdges().
+
 trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLogsI {
 
+  import mCommonDi._
+
   /** Билдер поискового запроса. */
-  def dynSearchReqBuilder(dsa: A)(implicit client: Client): SearchRequestBuilder = {
+  def dynSearchReqBuilder(dsa: A): SearchRequestBuilder = {
     // Запускаем собранный запрос.
     val result = dsa.prepareSearchRequest( prepareSearch() )
     // Логгируем всё вместе с es-индексом и типом, чтобы облегчить curl-отладку на основе залоггированного.
@@ -34,7 +46,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    *
    * @return Список рекламных карточек, подходящих под требования.
    */
-  def dynSearch(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def dynSearch(dsa: A): Future[Seq[T]] = {
     dynSearchReqBuilder(dsa)
       .execute()
       .map { searchResp2list }
@@ -46,7 +58,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    * @param dsa Поисковые критерии.
    * @return Карта с найденными элементами в неопределённом порядке.
    */
-  def dynSearchMap(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Map[String, T]] = {
+  def dynSearchMap(dsa: A): Future[Map[String, T]] = {
     for (res <- dynSearch(dsa)) yield {
       OptId.els2idMap[String, T](res)
     }
@@ -58,7 +70,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    * @param dsa Аргументы поиска.
    * @return Фьючерс с Option[T] внутри.
    */
-  def dynSearchOne(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Option[T]] = {
+  def dynSearchOne(dsa: A): Future[Option[T]] = {
     dynSearch(dsa)
       .map { _.headOption }
   }
@@ -69,7 +81,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    * @param dsa Поисковый запрос.
    * @return Список id, подходящих под запрос, в неопределённом порядке.
    */
-  def dynSearchIds(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[ISearchResp[String]] = {
+  def dynSearchIds(dsa: A): Future[ISearchResp[String]] = {
     dynSearchReqBuilder(dsa)
       .setFetchSource(false)
       .setNoFields()
@@ -83,7 +95,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
    * @param dsa Экземпляр, описывающий критерии поискового запроса.
    * @return Фьючерс с кол-вом совпадений.
    */
-  def dynCount(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Long] = {
+  def dynCount(dsa: A): Future[Long] = {
     // Необходимо выкинуть из запроса ненужные части.
     countByQuery(dsa.toEsQuery)
   }
@@ -91,7 +103,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLog
 
   /** Поиск id, подходящих под запрос и последующий multiget. Используется для реалтаймого получения
     * изменчивых результатов, например поиск сразу после сохранения. */
-  def dynSearchRt(dsa: A)(implicit ec: ExecutionContext, client: Client): Future[Seq[T]] = {
+  def dynSearchRt(dsa: A): Future[Seq[T]] = {
     dynSearchReqBuilder(dsa)
       .setFetchSource(false)
       .setNoFields()

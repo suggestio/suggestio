@@ -26,8 +26,8 @@ object TextQuerySearch {
     }
     // Навешиваем поисковый запрос на исходный query-builder.
     qbOpt0
-      .flatMap { qb0 =>
-        ftsQueryOpt.map { ftsQuery =>
+      .map { qb0 =>
+        ftsQueryOpt.fold(qb0) { ftsQuery =>
           QueryBuilders.boolQuery()
             .must(qb0)
             .filter(ftsQuery)

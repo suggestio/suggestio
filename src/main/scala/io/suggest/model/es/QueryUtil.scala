@@ -17,22 +17,23 @@ object QueryUtil {
     * @param clauses Входящий список критериев и готовых QueryBuilder'ов.
     * @return Итоговый QueryBuilder.
     */
-  def maybeWrapToBool(clauses: Traversable[(IMust, QueryBuilder)]): QueryBuilder = {
-    if (clauses.size > 1 || clauses.exists(_._1.must.contains(false)) ) {
+  def maybeWrapToBool(clauses: Traversable[IWrapClause]): QueryBuilder = {
+    if (clauses.size > 1 || clauses.exists(_.must.contains(false)) ) {
       // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
       var shouldClauses = 0
       val nq = QueryBuilders.boolQuery()
 
-      for ((oe, _q) <- clauses) {
+      for (c <- clauses) {
         // Клиент может настраивать запрос с помощью must/should/mustNot.
-        oe.must match {
-          case None =>
-            nq.should(_q)
-            shouldClauses += 1
-          case Some(true) =>
-            nq.must(_q)
+        val qb = c.queryBuilder
+        c.must.fold [Unit] {
+          nq.should( qb )
+          shouldClauses += 1
+        } {
+          case true =>
+            nq.must( qb )
           case _ =>
-            nq.mustNot(_q)
+            nq.mustNot( qb )
         }
       }
       // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
@@ -41,17 +42,31 @@ object QueryUtil {
       )
 
     } else {
-      clauses.head._2
+      clauses.head.queryBuilder
     }
   }
 
 }
 
 
+/** Интерфейс для каждого clause-аргумента в maybeWrapToBool(). */
+trait IWrapClause extends IMust {
+  def queryBuilder: QueryBuilder
+}
+
+/** Дефолтовая реализация [[IWrapClause]]. */
+case class MWrapClause(
+  override val must         : Must_t,
+  override val queryBuilder : QueryBuilder
+)
+  extends IWrapClause
+
+
+/** Множество значений поля must. */
 object IMust {
-  def SHOULD: Option[Boolean]   = None
-  def MUST                      = Some(true)
-  def MUST_NOT                  = Some(false)
+  def SHOULD    : Must_t  = None
+  def MUST      : Must_t  = Some(true)
+  def MUST_NOT  : Must_t  = Some(false)
 }
 
 
@@ -66,6 +81,12 @@ trait IMust {
    *         Some(true) -- обязательный clause, должна обязательно быть истинной.
    *         Some(false) -- негативный clause, т.е. срабатывания выкидываются из выборки результатов.
    */
-  def must: Option[Boolean]
+  def must: Must_t
 
 }
+
+/** Дефолтовая реализация [[IMust]]. */
+case class MMust(
+  override val must: Must_t = IMust.SHOULD
+)
+  extends IMust

@@ -18,30 +18,52 @@ trait RandomSort extends DynSearchArgs {
    * @return None, то значит random-сортировка отключена.
    *         Some() с random seed, которое будет использовано для сортировки.
    */
-  def randomSortSeed: Option[Long]
+  def randomSort: Option[MRandomSortData]
 
   /** Собрать экземпляр ES QueryBuilder на основе имеющихся в экземпляре данных.
     * Здесь можно навешивать дополнительные фильтры, выполнять pre- и post-процессинг запроса. */
   override def toEsQuery: QueryBuilder = {
-    var query = super.toEsQuery
-    if (randomSortSeed.isDefined) {
-      // Можно и нужно сортировтать с учётом genTs. Точный скоринг не нужен, поэтому просто прикручиваем скипт для скоринга.
-      val scoreFun = ScoreFunctionBuilders.randomFunction( randomSortSeed.get )
-      query = QueryBuilders.functionScoreQuery(query, scoreFun)
+    val q0 = super.toEsQuery
+    randomSort.fold(q0) { rs =>
+      // Можно рандомно сортировать с учётом generation.
+      val scoreFun = ScoreFunctionBuilders.randomFunction( rs.generation )
+
+      // Нормировать рандомное значение. Оно гуляет до Int.MaxValue (2.14e9), а такой разбег может навредить
+      // при попытках поднять какие-либо результаты поика над остальными. Например, поиск в маячках на фоне обычного поиска.
+      for (weight <- rs.weight) {
+        scoreFun.setWeight( weight )
+      }
+
+      QueryBuilders.functionScoreQuery(q0, scoreFun)
     }
-    query
+  }
+
+  override def sbInitSize: Int = {
+    val sz0 = super.sbInitSize
+    val rs = randomSort
+    if (rs.isEmpty) sz0 else sz0 + 20
+  }
+
+  override def toStringBuilder: StringBuilder = {
+    fmtColl2sb("randomSort", randomSort, super.toStringBuilder)
   }
 
 }
 
-
+/** Дефолтовая реализация [[RandomSort]]. */
 trait RandomSortDflt extends RandomSort {
-  override def randomSortSeed: Option[Long] = None
+  override def randomSort: Option[MRandomSortData] = None
 }
 
-
+/** Враппер-реализация [[RandomSort]]. */
 trait RandomSortWrap extends RandomSort with DynSearchArgsWrapper {
   override type WT <: RandomSort
 
-  override def randomSortSeed = _dsArgsUnderlying.randomSortSeed
+  override def randomSort = _dsArgsUnderlying.randomSort
 }
+
+
+case class MRandomSortData(
+  generation  : Long,
+  weight      : Option[Float] = None
+)
