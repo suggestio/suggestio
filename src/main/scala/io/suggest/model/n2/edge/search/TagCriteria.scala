@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.model.es.IMust
+import io.suggest.model.es.{IMust, Must_t}
 
 /**
   * Suggest.io
@@ -32,6 +32,6 @@ case class TagCriteria(
   override val face         : String,
   override val isPrefix     : Boolean,
   override val exact        : Boolean         = false,
-  override val must         : Option[Boolean] = None
+  override val must         : Must_t          = IMust.SHOULD
 )
   extends ITagCriteria

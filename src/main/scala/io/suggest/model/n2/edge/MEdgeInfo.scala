@@ -234,9 +234,9 @@ trait IEdgeInfo extends IIsNonEmpty {
     val sb = new StringBuilder(32)
 
     for (dia <- dynImgArgs) {
-      sb.append("dynImg=")
+      sb.append("dynImg{")
         .append(dia)
-        .append(' ')
+        .append("} ")
     }
 
     val _sls = sls

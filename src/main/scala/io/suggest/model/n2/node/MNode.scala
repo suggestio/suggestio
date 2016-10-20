@@ -276,6 +276,8 @@ case class MNode(
 
   def withEdges(edges2: MNodeEdges) = copy(edges = edges2)
 
+  def withId(idOpt: Option[String]) = copy(id = idOpt)
+
 }
 
 

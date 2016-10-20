@@ -16,11 +16,11 @@ import io.suggest.util.{MacroLogsImpl, MacroLogsImplLazy}
  * Description: Поисковые трейты для dynSearch по [[io.suggest.model.n2.node.MNode]] закидываются сюда.
  */
 trait MNodeSearch
-  extends FtsAll
+  extends SubSearches
+  with FtsAll
   with WithIds
   with DomainsSearch
   with OutEdges
-  with BleBeacons
   with ShownTypeId
   with AdnRights
   with AdnIsTest
@@ -32,6 +32,7 @@ trait MNodeSearch
   with GeoDstSort
   with NameSort
   with RandomSort
+  with ConstScore
   with Limit
   with Offset
   with DateCreatedSort
@@ -49,11 +50,11 @@ object MNodeSearchDflt extends MacroLogsImpl
 /** Объединенные дефолтовые реализация поисковых критериев [[MNodeSearch]]. */
 trait MNodeSearchDflt
   extends MNodeSearch
+  with SubSearchesDflt
   with FtsAllDflt
   with WithIdsDflt
   with DomainsSearchDflt
   with OutEdgesDflt
-  with BleBeaconsDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
   with AdnIsTestDflt
@@ -65,6 +66,7 @@ trait MNodeSearchDflt
   with GeoDstSortDflt
   with NameSortDflt
   with RandomSortDflt
+  with ConstScoreDflt
   with LimitDflt
   with OffsetDflt
   with DateCreatedSortDflt
@@ -84,11 +86,11 @@ class MNodeSearchDfltImpl
 /** Wrapper-реализация поисковых критериев [[MNodeSearch]] узла. */
 trait MNodeSearchWrap
   extends MNodeSearch
+  with SubSearchesWrap
   with FtsAllWrap
   with WithIdsWrap
   with DomainsSearchWrap
   with OutEdgesWrap
-  with BleBeaconsWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
   with AdnIsTestWrap
@@ -100,6 +102,7 @@ trait MNodeSearchWrap
   with GeoDstSortWrap
   with NameSortWrap
   with RandomSortWrap
+  with ConstScoreWrap
   with LimitWrap
   with OffsetWrap
   with DateCreatedSortWrap
@@ -115,11 +118,4 @@ abstract class MNodeSearchWrapImpl_
   with MacroLogsImplLazy
 {
   override type WT <: MNodeSearch
-}
-
-
-abstract class MNodeSearchWrapImpl
-  extends MNodeSearchWrapImpl_
-{
-  override type WT = MNodeSearch
 }

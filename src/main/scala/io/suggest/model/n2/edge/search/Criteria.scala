@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge.search
 
 import io.suggest.common.empty.{EmptyProduct, IIsNonEmpty}
-import io.suggest.model.es.IMust
+import io.suggest.model.es.{IMust, Must_t}
 import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.sc.common.SlNameTokenStr
 
@@ -48,10 +48,9 @@ trait ICriteria extends IIsNonEmpty with IMust {
     sb.append('(')
 
     sb.append {
-      must match {
-        case None         => "should"
-        case Some(true)   => "must"
-        case Some(false)  => "mustNot"
+      must.fold ("should") {
+        case true   => "must"
+        case false  => "mustNot"
       }
     }
 
@@ -111,7 +110,7 @@ case class Criteria(
   override val predicates  : Seq[MPredicate]      = Nil,
   override val sls         : Seq[SlNameTokenStr]  = Nil,
   override val anySl       : Option[Boolean]      = None,
-  override val must        : Option[Boolean]      = None,
+  override val must        : Must_t               = IMust.SHOULD,
   override val flag        : Option[Boolean]      = None,
   override val tags        : Seq[ITagCriteria]    = Nil,
   override val gsIntersect : Option[IGsCriteria]  = None
