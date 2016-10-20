@@ -11,7 +11,7 @@
 
 @* Функция оборачивая верстки ноды в ссылку с версткой этой ноды, если используется синхронный режим работы. *@
 @nodeSyncUrl(mnode: MNode)(content: Html) = {
-  @jsStateOpt.map { jsState =>
+  @for(jsState <- jsStateOpt) {
     <a href="@syncUrl( jsState.copy(
       adnId           = mnode.id,
       navScrOpenedOpt = None,
@@ -31,13 +31,14 @@
 <div class="geo-nodes-list" id="@GN_CONTAINER_ID" @GN_ATTR_LAYERS_COUNT="@nodeLayers.size"
      xmlns="http://www.w3.org/1999/html">
 
-  @nodeLayers.iterator.zipWithIndex.map { case (nl, i) =>
+  @for( (nl, i) <- nodeLayers.iterator.zipWithIndex) {
 
     @* Если true, то рендерить селектор "районы", "города" и т.д. *@
-    @if(nl.nameOpt.isDefined) {
+    @if(nl.nameOpt) {
+
       @defining( jsStateOpt.fold(nl.expanded)(_.nglExpanded(nl)) ) { showExpanded =>
         @* Есть заголовок геослоя. Рендерим его: *@
-        @jsStateOpt.map { jsState =>
+        @for(jsState <- jsStateOpt) {
           <a href="@syncUrl( jsState.copy(navNglsMap = jsState.navNglsMap + (nl.ngl -> !showExpanded)) )">
         }
         <div class="geo-nodes-list_layer @GNL_CAPTION_CSS_CLASS @if(showExpanded) {@GNL_ACTIVE_CSS_CLASS}"
@@ -58,7 +59,7 @@
             id = GNL_BODY_DIV_ID_PREFIX + i,
             GNL_ATTR_LAYER_ID_INDEX -> i.toString
           ) {
-            @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
+            @for( (mnode, si) <- nl.nodes.iterator.zipWithIndex) {
               @nodeSyncUrl(mnode) {
                 <div class="geo-nodes-list_row @if( si+1 == nl.nodes.length ){__no-border}
                             @if(si%2 == 0){__odd}else{__even} @GN_NODE_CSS_CLASS"
@@ -74,7 +75,7 @@
 
     } else {
       @* Нет заголовка гео-слоя. Рендерим его содержимое (узлы) напрямую. *@
-      @nl.nodes.iterator.zipWithIndex.map { case (mnode, si) =>
+      @for( (mnode, si) <- nl.nodes.iterator.zipWithIndex) {
         @nodeSyncUrl(mnode) {
           <div class="geo-nodes-list_layer js-gnlayer @if( i==0 ){ __bo-border }">
             <div class="geo-nodes-list_layer-inner @GN_NODE_CSS_CLASS" @GN_ATTR_NODE_ID="@mnode.id">

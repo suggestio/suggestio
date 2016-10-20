@@ -691,6 +691,8 @@ edge.predicate.ls=Self-tag
 edge.predicate.m=Background
 edge.predicate.n=Node location
 edge.predicate.o=Adv in place
+edge.predicate.p=Placed in
+edge.predicate.q=Adv in radio-beacon
 
 Your.name=Your name
 First.name=First name

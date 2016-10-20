@@ -13,7 +13,7 @@
   <div class="sm-geo-screen_header">
 
     @* В синхронном режиме рендерим кнопку ссылкой. *@
-    @args.jsStateOpt.map { jsState =>
+    @for(jsState <- args.jsStateOpt) {
       <a href="@args.syncUrl( jsState.toggleNavScreen )">
     }
     @ScHdrBtns.NavPanelClose( args.hBtnArgs )

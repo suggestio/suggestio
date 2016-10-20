@@ -349,12 +349,13 @@ class SysMarket @Inject() (
 
   /** Сабмит формы создания нового узла. */
   def createAdnNodeSubmit() = IsSuPost.async { implicit request =>
+    def logPrefix = s"createAdnNodeSubmit():"
     val ncpForm = nodeCreateParamsFormM.bindFromRequest()
     val nodeForm = adnNodeFormM.bindFromRequest()
 
     def __onError(formWithErrors: Form[_], formName: String): Future[Result] = {
       val renderFut = createAdnNodeRender(nodeForm, ncpForm, NotAcceptable)
-      debug(s"createAdnNodeSubmit(): Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
+      debug(s"$logPrefix Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
       renderFut
     }
 
@@ -365,30 +366,40 @@ class SysMarket @Inject() (
           __onError(_, "create"),
           {ncp =>
             // Собрать новый инстанс узла.
-            val mnode1 = mnode0.copy(
-              edges = mnode0.edges.copy(
-                out = {
-                  val ownEdge = MEdge(
-                    predicate = MPredicates.OwnedBy,
-                    nodeIds   = request.user.personIdOpt.toSet
-                  )
-                  MNodeEdges.edgesToMap(ownEdge)
-                }
-              ),
-              // Возможно, id создаваемого документа уже задан.
-              id          = ncp.withId,
-              // Явно избегаем перезаписи уже существующих документов.
-              versionOpt  = Some(1L)
-            )
+            val resFut = for {
+              // Если задан id создаваемого узла, убедится что этот id свободен:
+              alreadyExistsOpt <- mNodes.maybeGetById( ncp.withId )
+              if alreadyExistsOpt.isEmpty
 
-            // Запустить сохранение
-            for (adnId <- mNodes.save(mnode1)) yield {
+              mnode1 = mnode0.copy(
+                edges = mnode0.edges.copy(
+                  out = {
+                    val ownEdge = MEdge(
+                      predicate = MPredicates.OwnedBy,
+                      nodeIds   = request.user.personIdOpt.toSet
+                    )
+                    MNodeEdges.edgesToMap(ownEdge)
+                  }
+                ),
+                // Возможно, id создаваемого документа уже задан.
+                id          = ncp.withId
+              )
+              nodeId <- mNodes.save(mnode1)
+
+            } yield {
               // Инициализировать новосозданный узел согласно заданным параметрам.
-              maybeInitializeNode(ncp, adnId)
+              maybeInitializeNode(ncp, nodeId)
 
+              val mnode2 = mnode1.withId( Some(nodeId) )
               // Отредиректить админа в созданный узел.
-              Redirect(routes.SysMarket.showAdnNode(adnId))
-                .flashing(FLASH.SUCCESS -> s"Создан узел сети: $adnId")
+              Redirect(routes.SysMarket.showAdnNode(nodeId))
+                .flashing(FLASH.SUCCESS -> s"Создан узел сети: ${mnode2.guessDisplayNameOrIdOrEmpty}")
+            }
+
+            // Отрендерить ошибку совпадения id с существующим узлом...
+            resFut.recover { case ex: NoSuchElementException =>
+              LOGGER.error(s"$logPrefix Node already exists: ${ncp.withId}", ex)
+              Conflict(s"Node with ${ncp.withId.orNull} already exists.")
             }
           }
         )

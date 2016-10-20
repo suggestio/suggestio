@@ -157,8 +157,13 @@ object FormUtil {
 
 
   def adnShownTypeOptM: Mapping[Option[AdnShownType]] = {
-    nonEmptyText(maxLength = 10)
-      .transform[Option[AdnShownType]]( AdnShownTypes.maybeWithName, _.fold("")(_.toString) )
+    optional(
+      nonEmptyText(maxLength = 10)
+    )
+      .transform[Option[AdnShownType]](
+        _.flatMap( AdnShownTypes.maybeWithName ),
+        _.map(_.toString)
+      )
   }
   def adnShownTypeIdOptM: Mapping[Option[String]] = {
     adnShownTypeOptM

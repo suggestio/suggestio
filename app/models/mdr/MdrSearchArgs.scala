@@ -1,5 +1,6 @@
 package models.mdr
 
+import io.suggest.model.es.IMust
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes
@@ -101,10 +102,12 @@ case class MdrSearchArgs(
     override def limit   = that.limit
 
     override def outEdges: Seq[ICriteria] = {
+      val must = IMust.MUST
+
       // Собираем self-receiver predicate, поиск бесплатных размещений начинается с этого
       val srp = Criteria(
         predicates  = Seq( MPredicates.Receiver.Self ),
-        must        = Some(true)
+        must        = must
       )
 
       // Любое состояние эджа модерации является значимым и определяет результат.
@@ -121,7 +124,7 @@ case class MdrSearchArgs(
         crs ::= Criteria(
           predicates  = Seq( MPredicates.OwnedBy ),
           nodeIds     = Seq( prodId ),
-          must        = Some(true)
+          must        = must
         )
       }
 

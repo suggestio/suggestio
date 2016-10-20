@@ -1,6 +1,7 @@
 package models.msc.map
 
 import com.google.inject.Inject
+import io.suggest.model.es.IMust
 import io.suggest.model.geo.{GeoPoint, GeoShapeQuerable, PointGs}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
@@ -118,7 +119,7 @@ class MMapNodes @Inject() (
             )
           ),
           // Выставляем явно should, т.к. будут ещё критерии.
-          must        = None
+          must        = IMust.SHOULD
         )
 
         // Вернуть итоговый список edge-критериев.

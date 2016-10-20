@@ -704,6 +704,8 @@ edge.predicate.ls=Сам себе тег
 edge.predicate.m=Фон
 edge.predicate.n=Локация узла
 edge.predicate.o=Размещение в месте
+edge.predicate.p=Находится внутри
+edge.predicate.q=Размещение в радио-маячке
 
 Your.name=Ваше имя
 First.name=Имя

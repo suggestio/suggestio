@@ -96,7 +96,7 @@
       @if(personIdsIter.isEmpty) {
         <p class="color-light-strong">Нет владельцев узла.</p>
       } else {
-        @personIdsIter.map { personId =>
+        @for(personId <- personIdsIter) {
           @_personLinkTpl(personId, args.personNames)
         }
       }

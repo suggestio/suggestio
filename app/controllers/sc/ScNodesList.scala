@@ -59,8 +59,11 @@ trait ScNodesListBase
 
     /** Сырые навигационные слои узлов. */
     def nglsFut: Future[Seq[GeoNodesLayer]] = {
-      nextNodeWithLayerFut.flatMap { nextNodeGdr =>
-        scNlUtil.collectLayers(Some(_nsArgs.geoMode), nextNodeGdr.node, nextNodeGdr.ngl)
+      for {
+        nextNodeGdr <- nextNodeWithLayerFut
+        ngls        <- scNlUtil.collectLayers(Some(_nsArgs.geoMode), nextNodeGdr.node, nextNodeGdr.ngl)
+      } yield {
+        ngls
       }
     }
 
@@ -96,7 +99,7 @@ trait ScNodesListBase
 
     /** Асинхронный результат рендера списка узлов. */
     def nodesListRenderedFut: Future[JsStateRenderWrapper] = {
-      renderArgsFut map { renderArgs =>
+      for (renderArgs <- renderArgsFut) yield {
         new JsStateRenderWrapper {
           override def apply(_jsStateOpt: Option[ScJsState]): Html = {
             val args1 = new NodeListRenderArgsWrapper {
@@ -124,13 +127,8 @@ trait ScNodesList
   import mCommonDi._
 
   /** Кеш ответа findNodes() на клиенте. Это существенно ускоряет навигацию. */
-  protected val FIND_NODES_CACHE_SECONDS: Int = {
-    configuration
-      .getInt("market.showcase.nodes.find.result.cache.seconds")
-      .getOrElse {
-        if (isProd)  120  else  10
-      }
-  }
+  protected val FIND_NODES_CACHE_CONTROL_SECONDS: Int = if (isProd)  120  else  10
+
 
 
   /** Поиск узлов в рекламной выдаче. */
@@ -166,8 +164,9 @@ trait ScNodesList
     
     /** Отрендеренный в HTML список узлов, минифицированый и готовый к сериализации внутри JSON. */
     def nodeListHtmlJsStrFut: Future[JsString] = {
-      nodesListRenderedFut
-        .map { r => htmlCompressUtil.html2jsStr( r() ) }
+      for (r <- nodesListRenderedFut) yield {
+        htmlCompressUtil.html2jsStr( r() )
+      }
     }
 
     /** Получение ответа, пригодного для сериализации в JSON. */
@@ -190,9 +189,9 @@ trait ScNodesList
     def resultFut: Future[Result]
 
     def resultCachedFut: Future[Result] = {
-      resultFut.map { result =>
+      for (result <- resultFut) yield {
         result.withHeaders(
-          CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_SECONDS"
+          CACHE_CONTROL -> s"public, max-age=$FIND_NODES_CACHE_CONTROL_SECONDS"
         )
       }
     }
@@ -200,8 +199,10 @@ trait ScNodesList
 
 
   /** Реализация логики для SC API v2: ответы в чистом JSON. */
-  protected class FindNodesLogicV2(val timestamp: Long, val _nsArgs: MScNodeSearchArgs)
-                                  (implicit val _request: IReq[_]) extends FindNodesLogicV {
+  protected class FindNodesLogicV2(override val timestamp: Long,
+                                   override val _nsArgs: MScNodeSearchArgs)
+                                  (implicit override val _request: IReq[_]) extends FindNodesLogicV
+  {
     override def resultFut: Future[Result] = {
       for (respArgs <- respArgsFut) yield {
         Ok(respArgs.toJson)
