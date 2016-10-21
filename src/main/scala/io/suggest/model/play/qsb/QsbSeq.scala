@@ -42,7 +42,7 @@ object QsbSeq extends MacroLogsImplLazy {
           .toSet
 
         if (keysSet.isEmpty) {
-          None
+          Some(Right(QsbSeq(Nil)))
         } else {
           // В сорцах play для каждого биндинга создают новый объект в рассчёте на возможный stateful qsb.
           // У нас stateful-binder'ов нет, поэтому кешируем инстанс биндера на весь цикл.
@@ -77,11 +77,7 @@ object QsbSeq extends MacroLogsImplLazy {
               },
               // Результаты биндинга: вернуть в прямом порядке.
               {res =>
-                if (res.isEmpty) {
-                  None
-                } else {
-                  Some( Right( QsbSeq(res.reverse) ))
-                }
+                Some( Right( QsbSeq(res.reverse) ))
               }
           )
         }
