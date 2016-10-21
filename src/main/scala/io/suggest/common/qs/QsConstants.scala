@@ -23,4 +23,11 @@ object QsConstants {
     */
   def JSRR_OBJ_TO_QS_F = "_o2qs"
 
+
+  /** Префикс индекса в индесированном qs-ключе: второй символ в "x[1]". */
+  def QS_KEY_INDEX_PREFIX = '['
+
+  /** Суффикс индекса в индексированном qs-ключе: четвертый символ в "x[1]". */
+  def QS_KEY_INDEX_SUFFIX = ']'
+
 }
