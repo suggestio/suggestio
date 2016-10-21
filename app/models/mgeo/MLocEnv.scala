@@ -1,7 +1,7 @@
 package models.mgeo
 
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable
 import io.suggest.loc.LocationConstants._
 
@@ -19,7 +19,7 @@ object MLocEnv {
 
   implicit def qsb(implicit
                    geoLocOptB: QueryStringBindable[Option[MGeoLoc]],
-                   beaconsB  : QueryStringBindable[Seq[MBleBeaconInfo]]
+                   beaconsB  : QueryStringBindable[QsbSeq[MBleBeaconInfo]]
                   ): QueryStringBindable[MLocEnv] = {
     new QueryStringBindableImpl[MLocEnv] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLocEnv]] = {
@@ -34,7 +34,7 @@ object MLocEnv {
           } yield {
             MLocEnv(
               geoLocOpt   = geoLocOpt,
-              bleBeacons  = beacons
+              bleBeacons  = beacons.items
             )
           }
         }
@@ -45,7 +45,7 @@ object MLocEnv {
           val k = key1F(key)
           Iterator(
             geoLocOptB.unbind (k(GEO_LOC_FN),     value.geoLocOpt),
-            beaconsB.unbind   (k(BLE_BEACONS_FN), value.bleBeacons)
+            beaconsB.unbind   (k(BLE_BEACONS_FN), QsbSeq(value.bleBeacons))
           )
         }
       }

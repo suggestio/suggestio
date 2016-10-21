@@ -3,7 +3,7 @@
 @* JS-шаблон генерации play js reverse router.
    Синтаксис вызова шаблона аналогичен вызову helper.javascriptRoutes(). *@
 
-@import io.suggest.common.qs.QsConstants.{KEY_PARTS_DELIM_STR, JSRR_OBJ_TO_QS_F}
+@import io.suggest.common.qs.QsConstants._
 @import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
 
 "use strict";
@@ -34,7 +34,7 @@ var @(name) = {};
           if (Array.isArray(v1) && v1.length > 0) {
             @* Это непустой массив. Нужно добавить квадратных скобочек перед текущим qs-ключом. *@
             v1.forEach(function(e, index, arr) {
-              var kp2 = kp1.concat('[', index, ']');
+              var kp2 = kp1.concat('@QS_KEY_INDEX_PREFIX', index, '@QS_KEY_INDEX_SUFFIX');
               f(kp2, e);
             });
 
