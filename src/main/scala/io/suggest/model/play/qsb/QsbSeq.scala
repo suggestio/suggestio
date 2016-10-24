@@ -23,14 +23,16 @@ object QsbSeq extends MacroLogsImplLazy {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, QsbSeq[T]]] = {
         // Интересующие нас ключи все начинаются одинаково:
         val keyPrefix = key + QS_KEY_INDEX_PREFIX
+        val keySufCh = QS_KEY_INDEX_SUFFIX
 
         // Определить множество индексированных префиксов ключей с индексами.
         val keysSet = params
           .keysIterator
+          // Только ключи, относящиеся к текущей обработке
           .filter( _.startsWith(keyPrefix) )
+          // Привести полные qs-ключи вида "x[12].a.b"  к  "x[12]"
           .flatMap { kFull =>
-            // Привести полный qs-ключ вида x[12].a.b к x[12]:
-            val closingBrakedIndex = kFull.indexOf(QS_KEY_INDEX_SUFFIX, keyPrefix.length)
+            val closingBrakedIndex = kFull.indexOf(keySufCh, keyPrefix.length)
             if (closingBrakedIndex <= 0) {
               LOGGER.warn(s"bind($key): invalid qs-key: $kFull, params =\n $params")
               Nil
@@ -39,36 +41,48 @@ object QsbSeq extends MacroLogsImplLazy {
               k :: Nil
             }
           }
+          // Отбросить неУникальные результаты.
           .toSet
 
         if (keysSet.isEmpty) {
-          Some(Right(QsbSeq(Nil)))
+          // Нет ничего интересного. Результат работы очевиден. None возвращать не следует.
+          Some(Right( QsbSeq(Nil)) )
+
         } else {
+
           // В сорцах play для каждого биндинга создают новый объект в рассчёте на возможный stateful qsb.
           // У нас stateful-binder'ов нет, поэтому кешируем инстанс биндера на весь цикл.
           val qsb1 = implicitly[QueryStringBindable[T]]
           type Acc_t = Either[List[String], List[T]]
           keysSet
+            // Восстановить порядок ключей согласно индексам.
             .toSeq
             .sorted
             .iterator
+            // Сразу раскрываем все Option'ы, т.к. они там с ведома нижележащего QSB. Будь ошибка, то вернули бы Some(Left()).
             .flatMap { k =>
               qsb1.bind(k, params)
             }
-            .foldLeft [Acc_t] (Right(Nil)) {
-              // Режим сбора положительных результатов биндинга: в обратном порядке.
-              case (acc0 @ Right(racc), eith) =>
-                eith.fold[Acc_t](
-                  { e => Left(e :: Nil) },
-                  { r => Right(r :: racc) }
-                )
-              // Режим аккамулирования ошибок: собираются только ошибки биндинга, остальное отбрасывается.
-              case (acc0 @ Left(errs), eith) =>
-                eith.fold[Acc_t](
-                  { e => Left(e :: errs) },
-                  { _ => acc0 }
-                )
+            // Собрать в кучу все полученные результаты биндов
+            .foldLeft [Acc_t] (Right(Nil)) { (acc0, eith) =>
+              acc0.fold[Acc_t](
+                // Сбор ошибок в аккамулятор ошибок.
+                { errs =>
+                  eith.fold[Acc_t](
+                    { e => Left(e :: errs) },
+                    { _ => acc0 }
+                  )
+                },
+                // Режим сбора положительных результатов биндинга: в обратном порядке.
+                { racc =>
+                  eith.fold[Acc_t](
+                    { e => Left(e :: Nil) },
+                    { r => Right(r :: racc) }
+                  )
+                }
+              )
             }
+            // Полученный аккамулятор привести к результату bind().
             .fold [Option[Either[String, QsbSeq[T]]]] (
               // Ошибки: конкатенировать в прямом порядке.
               {errsRev =>
@@ -77,6 +91,7 @@ object QsbSeq extends MacroLogsImplLazy {
               },
               // Результаты биндинга: вернуть в прямом порядке.
               {res =>
+                // Нельзя возвращать None при пустом списке результатов, т.к. пустой список с ведома нижележащих qsb -- тоже список.
                 Some( Right( QsbSeq(res.reverse) ))
               }
           )
@@ -88,17 +103,33 @@ object QsbSeq extends MacroLogsImplLazy {
           ""
         } else {
           val qsb1 = implicitly[QueryStringBindable[T]]
-          value.items
-            .iterator
-            .zipWithIndex
-            .map { case (v, i) =>
-              val k = s"$key$QS_KEY_INDEX_PREFIX$i$QS_KEY_INDEX_SUFFIX"
-              qsb1.unbind(k, v)
-            }
-            .mkString("&")
+          val kInxPrefix = QS_KEY_INDEX_PREFIX
+          val kInxSuf = QS_KEY_INDEX_SUFFIX
+          _mergeUnbinded {
+            value.items
+              .iterator
+              .zipWithIndex
+              .map { case (v, i) =>
+                val k = s"$key$kInxPrefix$i$kInxSuf"
+                qsb1.unbind(k, v)
+              }
+          }
         }
       }
+
     }
+  }
+
+
+  // Для избавления кода реальных моделей от лишнего словоблудия, скрываем все работы с QsbSeq за implicit'ами.
+  import scala.language.implicitConversions
+
+  implicit def seq2qsbSeq[T](items: Seq[T]): QsbSeq[T] = {
+    apply(items)
+  }
+
+  implicit def qsbSeq2seq[T](qsbSeq: QsbSeq[T]): Seq[T] = {
+    qsbSeq.items
   }
 
 }

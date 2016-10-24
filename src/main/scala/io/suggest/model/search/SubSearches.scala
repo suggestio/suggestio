@@ -18,7 +18,7 @@ import org.elasticsearch.index.query.QueryBuilder
 trait SubSearches extends DynSearchArgs {
 
   /** Подчиненные query. */
-  def subSearches: Seq[MSubSearch]
+  def subSearches: Iterable[MSubSearch]
 
   override def toEsQueryOpt: Option[QueryBuilder] = {
     val qOpt0 = super.toEsQueryOpt
@@ -69,7 +69,7 @@ trait SubSearches extends DynSearchArgs {
 
 /** Дефолтовая реализация [[SubSearches]]. */
 trait SubSearchesDflt extends SubSearches {
-  override def subSearches: Seq[MSubSearch] = Nil
+  override def subSearches: Iterable[MSubSearch] = Nil
 }
 
 /** Wrap-реализация [[SubSearches]]. */
