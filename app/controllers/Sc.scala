@@ -11,6 +11,7 @@ import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
+import util.ble.BleUtil
 import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
@@ -30,6 +31,7 @@ import util.stat.StatCookiesUtil
 class Sc @Inject() (
   override val logoUtil           : LogoUtil,
   override val welcomeUtil        : WelcomeUtil,
+  override val bleUtil            : BleUtil,
   override val scStatUtil         : ScStatUtil,
   override val statCookiesUtil    : StatCookiesUtil,
   override val mNodes             : MNodes,

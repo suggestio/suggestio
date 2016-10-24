@@ -1,5 +1,6 @@
 package models.mgeo
 
+import io.suggest.common.radio.BeaconData
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import io.suggest.common.radio.BleConstants.Beacon.Qs._
@@ -16,16 +17,16 @@ object MBleBeaconInfo {
   /** Поддержка биндинга инстансов модели в play router. */
   implicit def qsb(implicit
                    strB         : QueryStringBindable[String],
-                   intOptB      : QueryStringBindable[Option[Int]]
+                   intB         : QueryStringBindable[Int]
                   ): QueryStringBindable[MBleBeaconInfo] = {
 
     new QueryStringBindableImpl[MBleBeaconInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MBleBeaconInfo]] = {
         val k = key1F(key)
         for {
-          uuidStrE        <- strB.bind     (k(UID_FN),          params)
-          //if uuidStrE.right.exists(UuidUtil.isUuidStrValid)
-          distanceCmE     <- intOptB.bind  (k(DISTANCE_CM_FN),  params)
+          // TODO проверять по uuid | uuid_major_minor
+          uuidStrE        <- strB.bind  (k(UID_FN),          params)
+          distanceCmE     <- intB.bind  (k(DISTANCE_CM_FN),  params)
         } yield {
           for {
             uuidStr       <- uuidStrE.right
@@ -43,8 +44,8 @@ object MBleBeaconInfo {
         _mergeUnbinded {
           val k = key1F(key)
           Iterator(
-            strB.unbind     (k(UID_FN),          value.uid),
-            intOptB.unbind  (k(DISTANCE_CM_FN),  value.distanceCm)
+            strB.unbind (k(UID_FN),          value.uid),
+            intB.unbind (k(DISTANCE_CM_FN),  value.distanceCm)
           )
         }
       }
@@ -62,6 +63,7 @@ object MBleBeaconInfo {
   * @param distanceCm Расстояние в сантиметрах, если известно.
   */
 case class MBleBeaconInfo(
-  uid         : String,
-  distanceCm  : Option[Int]     = None
+  override val uid         : String,
+  override val distanceCm  : Int
 )
+  extends BeaconData

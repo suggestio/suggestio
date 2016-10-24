@@ -1,6 +1,7 @@
 package util.showcase
 
-import com.google.inject.Singleton
+import com.google.inject.{Inject, Singleton}
+import io.suggest.common.radio.BeaconUtil
 import io.suggest.model.es.IMust
 import io.suggest.model.geo.PointGs
 import io.suggest.model.n2.edge.MPredicates
@@ -11,6 +12,7 @@ import io.suggest.model.search.{MRandomSortData, MSubSearch}
 import io.suggest.ym.model.NodeGeoLevels
 import models.mgeo.MBleBeaconInfo
 import models.msc.IScAdSearchQs
+import util.ble.BleUtil
 
 import scala.concurrent.Future
 
@@ -24,7 +26,9 @@ import scala.concurrent.Future
   * асинхронного кода (например, в случае маячков и ).
   */
 @Singleton
-class ScAdSearchUtil {
+class ScAdSearchUtil @Inject() (
+  bleUtil: BleUtil
+) {
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
   private def LIMIT_MAX           = 50
@@ -167,57 +171,26 @@ class ScAdSearchUtil {
       Nil
 
     } else {
-      // Для прокидыния маячковых карточек в результатах наверх, нужно ориентировать на этот уровень скора:
-      val topScore = 200000000F
 
+      // Учитывать только маячки до этого расстояния.
+      val maxDistance = BeaconUtil.DIST_CM_10M
       // Нужно проквантовать расстояния до маячков, группировать маячки по расстояниям, генерить поиски по группам маячков.
-      val bcnGroups = bcns.groupBy { bcn =>
-        // В близи -- мелкая квантовка, в далеке -- не важно.
-        val max = 6
-        bcn.distanceCm.fold(max) { d =>
-          if (d < 10) {
-            1
-          } else if (d < 50) {
-            2
-          } else if (d < 100) {
-            3
-          } else if (d < 1000) {
-            4
-          } else if (d < 100000) {
-            5
-          } else {
-            max
-          }
-        }
-      }
+      val bcnGroups = bcns
+        .iterator
+        // Для вывода карточек наверх интересуют только маячки рядом.
+        .filter(_.distanceCm <= maxDistance)
+        .toSeq
+        .groupBy( BeaconUtil.distanceToDistGroup )
 
-      // Т.к. требуется вручную проставлять скоринг в зависимости от расстояния до маячка,
-      // приходиться городить пачку подзапросов с ручными значениями скора для каждой distance-группы маячков.
-      val bcnSearches = for {
-        (dstQuant, bcnsGrp)   <- bcnGroups
-      } yield {
-        val cr = Criteria(
-          predicates  = Seq( MPredicates.AdvInRadioBeacon ),
-          nodeIds     = bcnsGrp.iterator
-            .map(_.uid)
-            .toSet
-            .toSeq
-        )
-        val _constScore = topScore / dstQuant
-        val search = new MNodeSearchDfltImpl {
-          override def outEdges     = Seq(cr)
-          override def constScore   = Some(_constScore)
-        }
-        MSubSearch(
-          search    = search,
-          must      = IMust.SHOULD
-        )
-      }
-
-      // Объеденить все поиски карточек в маячках в общий OR?
-      bcnSearches
+      // Сконвертить группы маячков в search-реквесты узлов.
+      bleUtil.byBeaconGroupsSearches(
+        topScore  = 200000000F,
+        predicate = MPredicates.AdvInRadioBeacon,
+        bcnGroups = bcnGroups
+      )
     }
   }
+
 
 }
 

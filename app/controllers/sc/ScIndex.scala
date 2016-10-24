@@ -2,6 +2,7 @@ package controllers.sc
 
 import _root_.util.PlayMacroLogsI
 import _root_.util.di._
+import io.suggest.common.radio.{BeaconDistanceGroup_t, BeaconUtil}
 import io.suggest.model.geo.{CircleGs, Distance, IGeoFindIpResult}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -9,7 +10,7 @@ import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
 import io.suggest.stat.m.{MAction, MActionTypes}
 import models._
 import models.im.MImgT
-import models.mgeo.MGeoLoc
+import models.mgeo.{MBleBeaconInfo, MGeoLoc}
 import models.msc._
 import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespIndex}
 import org.elasticsearch.common.unit.DistanceUnit
@@ -17,6 +18,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
+import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
 import util.stat.IStatCookiesUtilDi
 import views.html.sc._
@@ -46,6 +48,7 @@ trait ScIndex
   with IScUtil
   with IGeoIpUtilDi
   with IScStatUtil
+  with IBleUtilDi
 {
 
   import mCommonDi._
@@ -123,26 +126,12 @@ trait ScIndex
     lazy val reqGeoLocFutVal = reqGeoLocFut
 
 
-    /** Узел, для которого будем рендерить index.
-      * Хоть какой-то узел обязательно, но не обязательно реальный существующий узел-ресивер.
-      */
-    def indexNodeFut: Future[MIndexNodeInfo] = {
-      /* Логика работы:
-       * - Поискать id желаемого ресивера внутрях reqArgs.
-       * - Если нет, попробовать поискать узлы с помощью геолокации.
-       * - С помощью геолокации можно найти как узла-ресивера, так и покрывающий узел (район, город),
-       * который может использоваться для доступа к title, welcome, дизайну выдачи.
-       * - Если узла по-прежнему не видно, то надо бы его придумать или взять из некоего пула универсальных узлов.
-       */
-
-      // Запускаем поиск узла-ресивера по возможно переданному id.
-      lazy val logPrefix2 = s"$logPrefix indexNodeFut:"
-
-      // Частоиспользуемый id узла из реквеста.
+    /** #00: поиск узла по id ресивера, указанного в qs.
+      * Future[NSEE], когда нет необходимого узла. */
+    lazy val l00_rcvrByIdFut: Future[MIndexNodeInfo] = {
       val adnIdOpt = _reqArgs.adnIdOpt
 
-      // Пытаемся пробить ресивера по переданному id узла выдачи.
-      var mnodeFut: Future[MIndexNodeInfo] = for {
+      val rFut = for {
         mnodeOpt <- mNodeCache.maybeGetByIdCached( adnIdOpt )
       } yield {
         // Если узел-ресивер запрошен, но не найден, прервать работу над index: это какая-то нештатная ситуация.
@@ -151,120 +140,194 @@ trait ScIndex
         // Может быть узел найден?
         val mnode = mnodeOpt.get
         // Узел есть, вернуть положительный результат работы.
-        LOGGER.trace(s"$logPrefix2 Found rcvr node[${mnode.idOrNull}]: ${mnode.guessDisplayNameOrIdOrEmpty}")
+        LOGGER.trace(s"$logPrefix Found rcvr node[${mnode.idOrNull}]: ${mnode.guessDisplayNameOrIdOrEmpty}")
         MIndexNodeInfo(mnode, isRcvr = true)
       }
       // Залоггировать возможное неизвестное исключение
-      mnodeFut.onFailure {
+      rFut.onFailure {
         case ex: NodeNotFoundException =>
-          LOGGER.warn(s"$logPrefix2 Rcvr node missing: $adnIdOpt! Somebody scanning our nodes? I'll try to geolocate rcvr node.")
+          LOGGER.warn(s"$logPrefix Rcvr node missing: $adnIdOpt! Somebody scanning our nodes? I'll try to geolocate rcvr node.")
         case ex: Throwable if !ex.isInstanceOf[NoSuchElementException] =>
-          LOGGER.warn(s"$logPrefix2 Unknown exception while getting rcvr node $adnIdOpt", ex)
+          LOGGER.warn(s"$logPrefix Unknown exception while getting rcvr node $adnIdOpt", ex)
       }
+      rFut
+    }
 
-      // TODO Сюда можно затолкать обработку BLE-маячков, указанных в _reqArgs.locEnv.beacons.
+
+    /** Группы маячков по дистанциями до них. */
+    def _bcnsGroups: Map[BeaconDistanceGroup_t, Seq[MBleBeaconInfo]] = {
+      _reqArgs.locEnv.bleBeacons
+        .groupBy( BeaconUtil.distanceToDistGroup )
+    }
+
+    /** #10: Определение текущего узла выдачи по ближним маячкам. */
+    lazy val l10_detectUsingNearBeacons: Future[MIndexNodeInfo] = {
+      // Ищем активные узлы-ресиверы, относящиеся к видимым маячкам.
+      val searches = bleUtil.byBeaconGroupsSearches(
+        topScore  = 100000F,
+        predicate = MPredicates.PlacedIn,
+        bcnGroups = _bcnsGroups
+      )
+      if (searches.isEmpty) {
+        Future.failed( new NoSuchElementException("no beacons") )
+      } else {
+        val msearch = new MNodeSearchDfltImpl {
+          override def subSearches  = searches
+          override def isEnabled    = Some(true)
+          override def nodeTypes    = Seq(MNodeTypes.AdnNode)
+          override def limit        = 1
+        }
+        val nearBeaconHolderOptFut = mNodes.dynSearchOne(msearch)
+        for (mnodeOpt <- nearBeaconHolderOptFut) yield {
+          LOGGER.trace(s"$logPrefix detectUsingNearBeacons: => ${mnodeOpt.flatMap(_.id)} ${mnodeOpt.flatMap(_.guessDisplayNameOrId)}")
+          val mnode = mnodeOpt.get
+          MIndexNodeInfo(
+            mnode = mnode,
+            isRcvr = true
+          )
+        }
+      }
+    }
+
+    /** поискать покрывающий ТЦ/город/район. */
+    lazy val l50_detectUsingCoords: Future[MIndexNodeInfo] = {
+      // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
+      // В понятиях старой выдачи, это поиск активного узла-здания.
+      // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
+      val _reqGeoLocFut = reqGeoLocFutVal
+
+      _reqGeoLocFut.flatMap { geoLocOpt =>
+        // Пусть будет сразу NSEE, если нет данных геолокации.
+        val geoLoc = geoLocOpt.get
+
+        // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
+        val someTrue = Some(true)
+        val nglsResultsFut = Future.traverse(NodeGeoLevels.valuesT: Iterable[NodeGeoLevel]) { ngl =>
+          val msearch = new MNodeSearchDfltImpl {
+            override def limit = 1
+            // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
+            override def withGeoDistanceSort: Option[GeoPoint] = {
+              Some(geoLoc.center)
+            }
+            // Неактивные узлы сразу вылетают из выдачи.
+            override def isEnabled = someTrue
+            override def outEdges: Seq[ICriteria] = {
+              val gsCr = GsCriteria(
+                levels = Seq(ngl),
+                shapes = Seq(
+                  CircleGs(geoLoc.center, Distance(10, DistanceUnit.METERS))
+                )
+              )
+              val cr = Criteria(
+                predicates  = Seq(MPredicates.NodeLocation),
+                gsIntersect = Some(gsCr)
+              )
+              Seq(cr)
+            }
+          }
+
+          for (mnodeOpt <- mNodes.dynSearchOne(msearch)) yield {
+            for (mnode <- mnodeOpt) yield {
+              MIndexNodeInfo(
+                mnodeOpt.get,
+                isRcvr = ngl.isLowest     // Только здания могут выступать ресиверами.
+              )
+            }
+          }
+        }
+        // Получить первый успешный результат или вернуть NSEE.
+        val fut1 = for (rs <- nglsResultsFut) yield {
+          rs.iterator
+            .flatten
+            .next
+        }
+
+        // Записываем в логи промежуточные итоги геолокации.
+        fut1.onComplete {
+          case Success(info) =>
+            LOGGER.trace(s"$logPrefix Geolocated receiver[${info.mnode.id.orNull}] ''${info.mnode.guessDisplayNameOrIdOrEmpty}'' for $geoLoc")
+          case Failure(ex2) =>
+            if (ex2.isInstanceOf[NoSuchElementException])
+              LOGGER.trace(s"$logPrefix No receivers found via geolocation: $geoLoc")
+            else
+              LOGGER.warn(s"$logPrefix Failed to geolocate for receiver node using $geoLoc", ex2)
+        }
+
+        fut1
+      }
+    }
+
+
+    /** Найти в пуле или придумать какой-то рандомный узел, желательно без id даже. */
+    lazy val l95_ephemeralNodeFromPool: Future[MIndexNodeInfo] = {
+      // Нужно выбирать эфемерный узел с учётом языка реквеста. Используем i18n как конфиг.
+      val ephNodeId = Option ( ctx.messages("conf.sc.node.ephemeral.id") )
+        .filter(_.nonEmpty)
+        .get
+      val _mnodeOptFut = mNodeCache.getById( ephNodeId )
+      LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
+
+      for (mnodeOpt <- _mnodeOptFut) yield {
+        val mnode = mnodeOpt.get
+        LOGGER.trace(s"$logPrefix Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
+        MIndexNodeInfo(
+          mnode = mnode.copy(
+            id = None,
+            versionOpt = None
+          ),
+          isRcvr = false
+        )
+      }
+    }
+
+    /** Придумывание текущего узла из головы. */
+    def l99_ephemeralNode: MIndexNodeInfo = {
+      MIndexNodeInfo(
+        mnode = nodesUtil.userNodeInstance(
+          nameOpt     = Some("iSuggest"),
+          personIdOpt = None
+        ),
+        isRcvr = false
+      )
+    }
+
+    /** Узел, для которого будем рендерить index.
+      * Хоть какой-то узел обязательно, но не обязательно реальный существующий узел-ресивер.
+      */
+    def indexNodeFut: Future[MIndexNodeInfo] = {
+      /* Логика работы:
+       * - Поискать id желаемого ресивера внутрях reqArgs.
+       * - Поискать узла-владельца ближайшего BLE-маячка.
+       * - Если нет, попробовать поискать узлы с помощью геолокации.
+       * - С помощью геолокации можно найти как узла-ресивера, так и покрывающий узел (район, город),
+       * который может использоваться для доступа к title, welcome, дизайну выдачи.
+       * - Если узла по-прежнему не видно, то надо бы его придумать или взять из некоего пула универсальных узлов.
+       */
+
+      // Пытаемся пробить ресивера по переданному id узла выдачи.
+      var mnodeFut: Future[MIndexNodeInfo] = l00_rcvrByIdFut
+
+      // Ищем на очень ближних маячках.
+      mnodeFut = mnodeFut.recoverWith { case _: NoSuchElementException =>
+        LOGGER.trace(s"$logPrefix mnode by id not found, trying to lookup for beacons nearby...")
+        l10_detectUsingNearBeacons
+      }
 
       // Надо отработать ситуацию, когда нет узла в данной точки: поискать покрывающий город/район.
       mnodeFut = mnodeFut.recoverWith { case _: NoSuchElementException =>
-        // Если с ресивером по id не фартует, но есть данные геолокации, то заодно запускаем поиск узла-ресивера по геолокации.
-        // В понятиях старой выдачи, это поиск активного узла-здания.
-        // Нет смысла выносить этот асинхронный код за пределы recoverWith(), т.к. он или не нужен, или же выполнится сразу синхронно.
-        val _reqGeoLocFut = reqGeoLocFutVal
-        LOGGER.trace(s"$logPrefix2 mnode by id not found, trying to use geoloc...")
-
-        _reqGeoLocFut.flatMap { geoLocOpt =>
-          // Пусть будет сразу NSEE, если нет данных геолокации.
-          val geoLoc = geoLocOpt.get
-
-          // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
-          val nglsResultsFut = Future.traverse(NodeGeoLevels.valuesT: Iterable[NodeGeoLevel]) { ngl =>
-            val msearch = new MNodeSearchDfltImpl {
-              override def limit = 1
-              // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
-              override def withGeoDistanceSort: Option[GeoPoint] = {
-                Some(geoLoc.center)
-              }
-              // Неактивные узлы сразу вылетают из выдачи.
-              override def isEnabled = Some(true)
-              override def outEdges: Seq[ICriteria] = {
-                val gsCr = GsCriteria(
-                  levels = Seq(ngl),
-                  shapes = Seq(
-                    CircleGs(geoLoc.center, Distance(10, DistanceUnit.METERS))
-                  )
-                )
-                val cr = Criteria(
-                  predicates  = Seq(MPredicates.NodeLocation),
-                  gsIntersect = Some(gsCr)
-                )
-                Seq(cr)
-              }
-            }
-
-            for (mnodeOpt <- mNodes.dynSearchOne(msearch)) yield {
-              for (mnode <- mnodeOpt) yield {
-                MIndexNodeInfo(
-                  mnodeOpt.get,
-                  isRcvr = ngl.isLowest     // Только здания могут выступать ресиверами.
-                )
-              }
-            }
-          }
-          // Получить первый успешный результат или вернуть NSEE.
-          val fut1 = for (rs <- nglsResultsFut) yield {
-            rs.iterator
-              .flatten
-              .next
-          }
-
-          // Записываем в логи промежуточные итоги геолокации.
-          fut1.onComplete {
-            case Success(info) =>
-              LOGGER.trace(s"$logPrefix2 Geolocated receiver[${info.mnode.id.orNull}] ''${info.mnode.guessDisplayNameOrIdOrEmpty}'' for $geoLoc")
-            case Failure(ex2) =>
-              if (ex2.isInstanceOf[NoSuchElementException])
-                LOGGER.trace(s"$logPrefix2 No receivers found via geolocation: $geoLoc")
-              else
-                LOGGER.warn(s"$logPrefix2 Failed to geolocate for receiver node using $geoLoc", ex2)
-          }
-
-          fut1
-        }
+        LOGGER.trace(s"$logPrefix no beacons nearby, trying to use geoloc...")
+        l50_detectUsingCoords
       }
 
       // Если всё ещё нет узла. Это нормально, надобно найти в пуле или придумать какой-то рандомный узел, желательно без id даже.
       mnodeFut = mnodeFut.recoverWith { case _: NoSuchElementException =>
-        // Нужно выбирать эфемерный узел с учётом языка реквеста. Используем i18n как конфиг.
-        val ephNodeId = Option ( ctx.messages("conf.sc.node.ephemeral.id") )
-          .filter(_.nonEmpty)
-          .get
-        val _mnodeOptFut = mNodeCache.getById( ephNodeId )
-        LOGGER.trace(s"$logPrefix2 Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
-
-        for (mnodeOpt <- _mnodeOptFut) yield {
-          val mnode = mnodeOpt.get
-          LOGGER.trace(s"$logPrefix2 Choosen ephemeral node[$ephNodeId]: ${mnode.guessDisplayNameOrIdOrEmpty}")
-          MIndexNodeInfo(
-            mnode = mnode.copy(
-              id = None,
-              versionOpt = None
-            ),
-            isRcvr = false
-          )
-        }
+        l95_ephemeralNodeFromPool
       }
 
       // Should never happen. Придумывание узла "на лету".
       mnodeFut = mnodeFut.recover { case ex: NoSuchElementException =>
-        LOGGER.warn(s"$logPrefix2 Unable to find index node, making new ephemeral node", ex)
-
-        MIndexNodeInfo(
-          mnode = nodesUtil.userNodeInstance(
-            nameOpt     = Some("iSuggest"),
-            personIdOpt = None
-          ),
-          isRcvr = false
-        )
+        LOGGER.warn(s"$logPrefix Unable to find index node, making new ephemeral node", ex)
+        l99_ephemeralNode
       }
 
       // Вернуть получившийся в итоге асинхронный результат
