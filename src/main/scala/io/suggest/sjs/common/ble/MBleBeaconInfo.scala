@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.ble
 
+import io.suggest.common.radio.BeaconData
 import io.suggest.common.radio.BleConstants.Beacon.Qs._
 
 import scala.scalajs.js
@@ -15,7 +16,7 @@ object MBleBeaconInfo {
   def toJson(m: MBleBeaconInfo): js.Dictionary[js.Any] = {
     val d = js.Dictionary.empty[js.Any]
 
-    d(UID_FN)          = m.beaconUid
+    d(UID_FN)          = m.uid
     d(DISTANCE_CM_FN)  = m.distanceCm
 
     d
@@ -25,6 +26,7 @@ object MBleBeaconInfo {
 
 /** Дефолтовая реализация модели отчетов по маячкам. */
 case class MBleBeaconInfo(
-  beaconUid   : String,
-  distanceCm  : Int
+  override val uid          : String,
+  override val distanceCm   : Int
 )
+  extends BeaconData
