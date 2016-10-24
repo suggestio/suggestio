@@ -7,7 +7,7 @@ package io.suggest.common.radio
   * Description: Трейт наблюдаемых данных по ровно одному маячку.
   * Изначально назывался IBeacon, но это слегка конфликтовало с ябло-брендом.
   */
-trait Beacon extends IRadioSignalInfo {
+trait BeaconSignal extends IRadioSignalInfo {
 
   /** Некий внутренний уникальный id/ключ маячка, если он вообще есть.
     *
@@ -15,5 +15,17 @@ trait Beacon extends IRadioSignalInfo {
     * Скорее всего, маячки без uid останутся бесполезны для s.io и в будущем.
     */
   def uid: Option[String]
+
+}
+
+
+/** Итоговые полезные данные по маячку: ключ маячка и расстояние до него. */
+trait BeaconData {
+
+  /** id маячка. */
+  def uid: String
+
+  /** Расстояние до маячка в сантиметрах. */
+  def distanceCm: Int
 
 }
