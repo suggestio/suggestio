@@ -159,7 +159,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
         bUid      <- beacon.beacon.uid
       } yield {
         MBleBeaconInfo(
-          beaconUid  = bUid,
+          uid        = bUid,
           distanceCm = (beacon.accuracyM * 100).toInt
         )
       }
