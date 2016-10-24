@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.m.signals
 
-import io.suggest.common.radio.Beacon
+import io.suggest.common.radio.BeaconSignal
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
 
 /**
@@ -26,7 +26,7 @@ case class UnSubscribe( fsm: SjsFsm )
 
 /** Сигнал об обнаружении одного ble-маячка. */
 case class BeaconDetected(
-  beacon  : Beacon,
+  beacon  : BeaconSignal,
   seen    : Long = System.currentTimeMillis()
 )
   extends IBeaconerInFsmMsg
@@ -38,6 +38,6 @@ case class BeaconsNearby(
 )
   extends IFsmMsg
 case class BeaconReport(
-  beacon    : Beacon,
+  beacon    : BeaconSignal,
   accuracyM : Double
 )

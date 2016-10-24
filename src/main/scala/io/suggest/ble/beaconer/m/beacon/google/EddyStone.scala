@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.m.beacon.google
 
-import io.suggest.common.radio.Beacon
+import io.suggest.common.radio.BeaconSignal
 
 /**
   * Suggest.io
@@ -20,7 +20,7 @@ case class EddyStone(
   override val uid      : Option[String]
   //url                   : Option[String] = None
 )
-  extends Beacon
+  extends BeaconSignal
 {
 
   override def distance0m = 0

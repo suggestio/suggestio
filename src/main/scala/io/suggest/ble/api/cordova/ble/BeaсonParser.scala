@@ -1,7 +1,7 @@
 package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.DeviceInfo
-import io.suggest.common.radio.Beacon
+import io.suggest.common.radio.BeaconSignal
 import io.suggest.primo.{IApply1, TypeT}
 import io.suggest.sjs.common.msg.ErrorMsg_t
 import io.suggest.sjs.common.util.ISjsLogger
@@ -16,7 +16,7 @@ import scala.scalajs.js.JSON
   */
 trait BeaconParser extends TypeT with ISjsLogger {
 
-  override type T <: Beacon
+  override type T <: BeaconSignal
 
   /** Инстанс в cordova-ble device info. */
   def dev: DeviceInfo

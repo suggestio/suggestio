@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.m.beacon.apple
 
-import io.suggest.common.radio.{Beacon, BleConstants}
+import io.suggest.common.radio.{BeaconSignal, BleConstants}
 
 /**
   * Suggest.io
@@ -16,7 +16,7 @@ case class IBeacon(
   major               : Int,
   minor               : Int
 )
-  extends Beacon
+  extends BeaconSignal
 {
 
   override def distance0m: Int = 1
