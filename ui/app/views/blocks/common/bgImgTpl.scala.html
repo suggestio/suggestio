@@ -3,15 +3,17 @@
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
+@import ctx.api.cdn
+
 @args.bgImg.filter(!_.isWide).map { bg =>
 
   @* Есть картинка в карточке. Рендерим img-тег: *@
   <img alt="@alt"
-       @cssClass.map { _cssClass => class="@_cssClass" }
-       src="@ctx.api.cdn.forCall( bg.dynImgCall )"
+       @for(_cssClass <- cssClass) { class="@_cssClass" }
+       src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall( bg.dynImgCall ) )"
        @defining( args.mad.meta.colors.bg ) { iBgColorOpt =>
          @if(iBgColorOpt || style) {
-           style="@iBgColorOpt.map { ibgColor =>background-color:#@ibgColor.code;}@style"
+           style="@for(ibgColor <- iBgColorOpt) {background-color:#@ibgColor.code;}@style"
          }
        }
        @defining( bg.szCss ) { sz =>

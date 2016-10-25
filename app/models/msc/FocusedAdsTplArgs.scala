@@ -15,7 +15,8 @@ trait IFocusedAdsTplArgs
   with ILogoRenderArgs
   with IHBtnRenderArgs
 {
-  override def title = producer.meta.basic.nameShort
+  override def title  = producer.meta.basic.nameShort
+  override def apiVsn = brArgs.apiVsn
 }
 
 

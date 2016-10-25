@@ -53,7 +53,7 @@ trait ScSiteBase
 
     // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
     lazy val domainNodeOptFut: Future[Option[MNode]] = {
-      val myHost = ctx.myHost
+      val myHost = ctx.request.host
       OptionUtil.maybeFut( !ctxUtil.isMyHostSio(myHost) ) {
         val msearch = new MNodeSearchDfltImpl {
           override def domains: Seq[DomainCriteria] = {
@@ -209,7 +209,7 @@ trait ScSiteBase
           /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
           override def domain3p: Option[String] = {
             if (_domainNodeOpt.nonEmpty) {
-              Some( ctx.myHost )
+              Some( ctx.request.host )
             } else {
               None
             }

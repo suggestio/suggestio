@@ -1,6 +1,5 @@
 package models.msc
 
-import models.im.MImgT
 import play.twirl.api.Html
 
 /**

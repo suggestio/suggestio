@@ -86,7 +86,9 @@ object LkLeftPanelLinks extends Enumeration {
 class ExternalCall(
   url     : String,
   method  : String = "GET"
-) extends Call(method = method, url = url) {
+)
+  extends Call(method = method, url = url)
+{
 
   override def absoluteURL(secure: Boolean)(implicit request: RequestHeader): String = url
   override def absoluteURL(request: Request): String = url

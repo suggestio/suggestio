@@ -14,9 +14,14 @@
     @_nodeNameTpl(args.fgColor) {
       @args.title
     }
+
   } { logoImg =>
     @* Логотип-картинка. *@
-    <img title="@args.title" class="sm-producer-header_logo" height="@HEIGHT_CSSPX" src="@cdn.dynImg(logoImg)"/>
+    <img title="@args.title"
+         class="sm-producer-header_logo"
+         height="@HEIGHT_CSSPX"
+         src="@cdn.maybeAbsUrl( args.apiVsn.forceAbsUrls )( cdn.dynImg(logoImg) )"
+    />
   }
 
 </span>

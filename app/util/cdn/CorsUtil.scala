@@ -108,22 +108,25 @@ class CorsFilter @Inject() (
 {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    var fut = f(rh)
+    val fut0 = f(rh)
     // Добавить CORS-заголовки, если необходимо.
     if ( corsUtil.IS_ENABLED && corsUtil.isAppendAllowHdrsForRequest(rh) ) {
       // Делаем замыкание независимым от окружающего тела apply(). scalac-2.12 оптимизатор сможет заменить такое синглтоном.
-      fut = fut.map { resp =>
+      for (resp <- fut0) yield {
         val st = resp.header.status
         if (st >= 400 && st <= 599) {
-          // Ошибки можно возвращать так, без этих хидеров.
+          // Ошибки можно возвращать так, без дополнительных CORS-хидеров.
           resp
         } else {
           // Успешный подходящий запрос, навешиваем хидеры.
           resp.withHeaders(corsUtil.SIMPLE_CORS_HEADERS: _*)
         }
       }
+
+    } else {
+      // CORS-изменения в ответе не требуются.
+      fut0
     }
-    fut
   }
 
 }

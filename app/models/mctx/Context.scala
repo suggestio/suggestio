@@ -10,7 +10,6 @@ import controllers.routes
 import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
 import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
-import models.req.ExtReqHdr.{firstForwarded, lastForwarded}
 import models.req.IReqHdr
 import models.usr.MSuperUsers
 import org.joda.time.DateTime
@@ -71,19 +70,8 @@ class ContextUtil @Inject() (
   /** Дефолтовый хост и порт. Используется, когда по стечению обстоятельств, нет подходящего значения для хоста. */
   val DFLT_HOST_PORT = configuration.getString("sio.hostport.dflt").getOrElse("suggest.io")
 
-  /** Протокол, используемый при генерации ссылок на suggest.io. Обычно на локалхостах нет https вообще, в
-    * то же время, на мастере только https. */
-  val DFLT_PROTO: String = configuration.getString("sio.proto.dflt").getOrElse("http")
-
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
   val SCREEN_ARG_NAME_RE = "a\\.s(creen)?".r
-
-  /** Доверять ли заголовку Host: ? Обычно нет, т.к. nginx туда втыкает localhost.
-    * Имеет смысл выставлять true на локалхостах разработчиков s.io. */
-  val TRUST_HOST_HDR = configuration.getBoolean("sio.req.headers.host.trust")
-    .contains(true) // getOrElse false
-  
-  val BACKEND_HOST_RE = "^backend\\.".r
 
   /** Бывает, что необходимо заменить локалхост на 127.0.0.1. Например, при разработке под твиттер.
     * @param source Исходная строка, т.е. ссылка, или её префикс или хостнейм.
@@ -184,46 +172,7 @@ trait Context {
   implicit val messages: Messages
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
-  def r = Some(request.path)
-
-  /** Используемый протокол. */
-  lazy val myProto: String = {
-    request.headers
-      .get(X_FORWARDED_PROTO)
-      .filter(!_.isEmpty)
-      .map { firstForwarded }
-      .getOrElse( ctxUtil.DFLT_PROTO )
-      .toLowerCase
-  }
-
-  /** Является ли текущий коннекшен шифрованным? */
-  lazy val isSecure: Boolean = myProto == "https"
-
-  /** Если порт указан, то будет вместе с портом. Значение задаётся в конфиге. */
-  lazy val myHost: String = {
-    // Попытаться извлечь запрошенный хостнейм из данных форварда.
-    var maybeHostPort = for {
-      xfhHdr0 <- request.headers.get(X_FORWARDED_HOST)
-      xfhHdr  = xfhHdr0.trim
-      if xfhHdr.nonEmpty
-    } yield {
-      val h = lastForwarded(xfhHdr)
-      // Если входящий запрос на backend, то нужно отобразить его на www.
-      ctxUtil.BACKEND_HOST_RE
-        .replaceFirstIn(h, "www.")
-        .toLowerCase
-    }
-
-    // Если форвард не найден, а конфиг разрешает доверять Host: заголовку, то дергаем его.
-    if (maybeHostPort.isEmpty && ctxUtil.TRUST_HOST_HDR) {
-      maybeHostPort = request.headers
-        .get(HOST)
-        .filter(!_.isEmpty)
-    }
-
-    // Вернуть хоть какой-нибудь хост.
-    maybeHostPort.fold(ctxUtil.DFLT_HOST_PORT)(ctxUtil.removePortFromHostPort)
-  }
+  def r = Some(request.uri)
 
   implicit lazy val now : DateTime = DateTime.now
 
@@ -254,10 +203,10 @@ trait Context {
   /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
   lazy val wsUrlPrefix: String = {
     val sb = new StringBuilder(32, "ws")
-    if (isSecure)
+    if (request.secure)
       sb.append('s')
     sb.append("://")
-      .append(myHost)
+      .append( request.host )
       .toString()
   }
 

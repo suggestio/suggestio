@@ -272,11 +272,11 @@ trait ScAdsTile
   protected object TileAdsLogicV {
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
     def apply(adSearch: MScAdsTileQs)(implicit request: IReq[_]): TileAdsLogicV = {
-      adSearch.apiVsn match {
-        case MScApiVsns.Sjs1 =>
-          new TileAdsLogicV2(adSearch)
-        case other =>
-          throw new UnsupportedOperationException("Unsupported API version: " + other.versionNumber)
+      val v = adSearch.apiVsn
+      if (v.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+        new TileAdsLogicV2(adSearch)
+      } else {
+        throw new UnsupportedOperationException("Unsupported API version: " + v)
       }
     }
   }

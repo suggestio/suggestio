@@ -69,8 +69,6 @@ trait ScFocusedAdsV2
   /** Общая логика обработки focused-выдачи v2. */
   abstract class FocusedLogicV2 extends FocusedAdsLogic {
 
-    override def apiVsn = MScApiVsns.Sjs1
-
     /** Число-отметка текущей логики обработки запроса. */
     private val _currTimeMs = System.currentTimeMillis()
 
@@ -361,7 +359,7 @@ trait ScFocusedAdsV2
   // Добавить поддержку v2-логики в getLogic()
   override def getLogicFor(qs: MScAdsFocQs)
                           (implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    if (qs.apiVsn == MScApiVsns.Sjs1) {
+    if (qs.apiVsn.majorVsn == MScApiVsns.Sjs1.majorVsn) {
       new FocusedLogicHttpV2(qs)
     } else {
       super.getLogicFor(qs)

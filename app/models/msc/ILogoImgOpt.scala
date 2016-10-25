@@ -30,3 +30,4 @@ trait ILogoRenderArgs
   extends ILogoImgOpt
   with ITitle
   with IFgColor
+  with IScApiVsn

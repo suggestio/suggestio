@@ -172,9 +172,6 @@ trait ScFocusedAdsBase
       }
     }
 
-    /** Версия API системы. Прокидывается в аргументы, которые передаются в шаблоны. */
-    def apiVsn: MScApiVsn
-
     lazy val mads2andBrArgsFut: Future[Seq[blk.RenderArgs]] = {
       val _mads2Fut = mads2Fut
       val _withCssClasses = withCssClasses
@@ -186,7 +183,7 @@ trait ScFocusedAdsBase
               cssClasses      = _withCssClasses,
               // 2015.mar.06: FIXME Это значение сейчас перезаписывается таким же через showcase.js. // TODO Они должны быть в стилях, а не тут.
               topLeft         = for (_ <- brArgs.wideBg) yield FocusedTopLeft,
-              apiVsn          = apiVsn
+              apiVsn          = _qs.apiVsn
             )
           }
         }

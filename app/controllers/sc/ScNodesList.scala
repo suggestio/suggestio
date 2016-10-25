@@ -149,9 +149,11 @@ trait ScNodesList
   protected object FindNodesLogicV {
     /** Собрать необходимую логику обработки ответа в заисимости от версии API. */
     def apply(tstamp: Long, args: MScNodeSearchArgs)(implicit request: IReq[_]): FindNodesLogicV = {
-      args.apiVsn match {
-        case MScApiVsns.Sjs1 =>
-          new FindNodesLogicV2(tstamp, args)
+      val v = args.apiVsn
+      if (v.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+        new FindNodesLogicV2(tstamp, args)
+      } else {
+        throw new UnsupportedOperationException("Unsupported API vsn: " + v)
       }
     }
   }

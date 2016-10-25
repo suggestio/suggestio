@@ -16,7 +16,7 @@
   @args.mad.ad.entities.valuesIterator.map { offer =>
 
     @defining("title") { fid =>
-    @offer.text.map { aosf =>
+    @for(aosf <- offer.text) {
       <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.id"
            @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id].@fid"}>
         <div class="@fid @fid-@offer.id">@Html(aosf.value)</div>

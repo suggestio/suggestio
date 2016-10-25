@@ -4,8 +4,8 @@ import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.ICoords2di
 import io.suggest.model.n2.ad.ent.text
 import models._
-import models.im.make.{MakeResult, IMakeResult}
-import models.msc.{MScApiVsns, MScApiVsn}
+import models.im.make.{IMakeResult, MakeResult}
+import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}
 
 /**
  * Suggest.io
@@ -14,7 +14,7 @@ import models.msc.{MScApiVsns, MScApiVsn}
  * Description: Модель для параметров рендера блоков. Изначально жила в models.Stuff.
  */
 
-trait IRenderArgs {
+trait IRenderArgs extends IScApiVsn {
 
   /** Блок. */
   def bc              : BlockConf
@@ -41,7 +41,7 @@ trait IRenderArgs {
   def topLeft         : Option[ITopLeft]
 
   /** Версия API выдачи. */
-  def apiVsn          : MScApiVsn = MScApiVsns.unknownVsn
+  override def apiVsn : MScApiVsn = MScApiVsns.unknownVsn
 
   /** Порядковый номер. Заполняется только для плитки выдачи. */
   def indexOpt        : Option[Int]
@@ -125,7 +125,10 @@ case class FieldCssRenderArgs2(
   override val isFocused : Boolean     = false,
   override val cssClasses: Seq[String] = Nil
 
-) extends FieldCssRenderArgsT with IRenderArgsWrapper0 {
+)
+  extends FieldCssRenderArgsT
+  with IRenderArgsWrapper0
+{
 
   override def xy: ICoords2di = Coords2d(38, 70*( offerN + 1) + yoff)
   override lazy val fieldCssClass: String = s"$fid-$offerN"

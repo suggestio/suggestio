@@ -37,9 +37,10 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
     compressor.setPreserveLineBreaks(PRESERVE_LINE_BREAKS_DFLT)
     compressor.setRemoveComments(REMOVE_COMMENTS_DFLT)
     compressor.setRemoveIntertagSpaces(REMOVE_INTERTAG_SPACES_DFLT)
-    // http false из-за проблем в iframe в demoWebSite.
-    compressor.setRemoveHttpProtocol(STRIP_HTTP_PROTO)
-    compressor.setRemoveHttpsProtocol(STRIP_HTTPS_PROTO)
+    // ВООБЩЕ НЕЛЬЗЯ удалять http: в начале URL, т.к. бывает дерганье HTML с левых мест (cordova-приложение, например),
+    // а этот компрессор неудачно стрипает протокол в зависимости от ситуации.
+    compressor.setRemoveHttpProtocol(false)
+    compressor.setRemoveHttpsProtocol(false)
     compressor
   }
 
@@ -63,8 +64,6 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
   private val html4jsonCompressor = {
     val compressor = getForGlobalUsing
     compressor.setPreserveLineBreaks(false)
-    compressor.setRemoveHttpProtocol(true)
-    compressor.setRemoveHttpsProtocol(false)
     compressor
   }
 
@@ -74,8 +73,6 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
     val compressor = getForGlobalUsing
     compressor.setRemoveIntertagSpaces(true)
     compressor.setRemoveMultiSpaces(true)
-    compressor.setRemoveHttpProtocol(false)
-    compressor.setRemoveHttpsProtocol(false)
     //compressor.setCompressCss(true)
     compressor.setPreserveLineBreaks(false)
     compressor
@@ -86,8 +83,6 @@ class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment
   private def html4svgCompressor = {
     val compressor = getForGlobalUsing
     compressor.setRemoveIntertagSpaces(true)
-    compressor.setRemoveHttpProtocol(false)
-    compressor.setRemoveHttpsProtocol(false)
     compressor.setPreserveLineBreaks(false)
     compressor.setRemoveComments(true)
     compressor.setRemoveMultiSpaces(true)

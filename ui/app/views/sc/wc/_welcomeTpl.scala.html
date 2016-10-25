@@ -9,6 +9,9 @@
 @import io.suggest.sc.ScConstants.Logo
 @import io.suggest.sc.ScConstants._
 
+@* Рисуем короткий код для вызова сборки абсолютных ссылок. *@
+@absUrlF(c: Call) = @{ cdn.maybeAbsUrl( args.apiVsn.forceAbsUrls )(c) }
+
 <div id="@ROOT_ID" class="sm-welcome-ad">
 
   @args.welcomeOpt.fold {
@@ -16,7 +19,7 @@
     @* Нету карточки приветствия. *@
     <span class="sm-welcome-ad_helper"></span>
     <img height="@Logo.HEIGHT_CSSPX" class="sm-welcome-div_img"
-         src="@args.logoImgOpt.fold( cdn.asset("images/market/showcase-logo.png") )( cdn.dynImg )"
+         src="@absUrlF( args.logoImgOpt.fold( cdn.asset("images/market/showcase-logo.png") )(cdn.dynImg) )"
          />
 
   } { wargs =>
@@ -29,7 +32,7 @@
            class="sm-welcome-ad_bg-img"
            @WIDTH_ATTR="@bg.meta.width"
            @HEIGHT_ATTR="@bg.meta.height"
-           src="@cdn.dynImg(bg.mimg)"/>
+           src="@absUrlF( cdn.dynImg(bg.mimg) )"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@
@@ -38,7 +41,7 @@
       <img id="@FG_IMG_ID" class="sm-welcome-ad_fg-img"
            data-width="@fgImage.meta.width"
            data-height="@fgImage.meta.height"
-           src="@cdn.dynImg(fgImage.mimg)"/>
+           src="@absUrlF( cdn.dynImg(fgImage.mimg) )"/>
     }
 
     @* Рендерим покрывающую картинку (svg/png) *@

@@ -96,21 +96,21 @@ class CdnUtil @Inject() (
     if (!HAS_ANY_CDN || c.isInstanceOf[ExternalCall]) {
       c
     } else {
-      val reqHost = ctx.myHost
+      val reqHost = ctx.request.host
       val urlPrefixOpt: Option[String] = if (DISABLED_ON_HOSTS.contains(reqHost)) {
         None
       } else {
-        val protoLc = ctx.myProto.toLowerCase
-        chooseHostForProto(protoLc)
-          .filter { _ => !DISABLED_ON_HOSTS.contains(reqHost) }
-          .filter { cdnHost => !(cdnHost equalsIgnoreCase reqHost) }
-          .map { host  =>  protoLc + "://" + host }
+        val protoLc = ctx.request.myProto
+        for {
+          cdnHost <- chooseHostForProto(protoLc)
+          if !DISABLED_ON_HOSTS.contains(reqHost) &&
+            !(cdnHost equalsIgnoreCase reqHost)
+        } yield {
+          protoLc + "://" + cdnHost
+        }
       }
-      urlPrefixOpt match {
-        case None =>
-          c
-        case Some(urlPrefix) =>
-          new ExternalCall(url = urlPrefix + c.url)
+      urlPrefixOpt.fold(c) { urlPrefix =>
+        new ExternalCall(url = urlPrefix + c.url)
       }
     }
   }
@@ -127,6 +127,21 @@ class CdnUtil @Inject() (
   def dynImg(filename: String)(implicit ctx: Context): Call = {
     val img = MImg3(filename)
     dynImg(img)
+  }
+
+  /** Бывает, что нужно в зависимости от значения флага генерить полные и относительные ссылки.
+    *
+    * @param forceAbsoluteUrl true -- нужна абсолютная ссылка. false -- хватит и относительной.
+    * @param call исходный вызов.
+    * @return Строка с ссылкой.
+    */
+  def maybeAbsUrl(forceAbsoluteUrl: Boolean)(call: Call)(implicit ctx: Context): String = {
+    if (forceAbsoluteUrl) {
+      import ctx.request
+      call.absoluteURL()
+    } else {
+      call.url
+    }
   }
 
 }

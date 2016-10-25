@@ -485,6 +485,7 @@ trait ScIndex
           override def _syncArgsUnderlying  = _syncArgs
           override def logoImgOpt           = _logoImgOpt
           override def welcomeOpt           = _welcomeOpt
+          override def apiVsn               = _reqArgs.apiVsn
         }
       }
     }
@@ -550,11 +551,11 @@ trait ScIndex
 
     /** Результат запроса. */
     protected def _resultVsn(args: MScResp): Result = {
-      _reqArgs.apiVsn match {
-        case MScApiVsns.Sjs1 =>
-          Ok( Json.toJson(args) )
-        case other =>
-          throw new UnsupportedOperationException("Unsupported API vsn: " + other)
+      val v = _reqArgs.apiVsn
+      if (v.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+        Ok(Json.toJson(args))
+      } else {
+        throw new UnsupportedOperationException("Unsupported API vsn: " + v)
       }
     }
 
