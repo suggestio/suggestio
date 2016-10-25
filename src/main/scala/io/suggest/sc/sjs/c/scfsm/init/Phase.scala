@@ -1,9 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
-import cordova.Cordova
 import io.suggest.sc.sjs.c.scfsm.geo.GeoScInit
-
-import scala.scalajs.js
+import io.suggest.sc.sjs.m.msrv.MSrv
 
 /**
  * Suggest.io
@@ -46,9 +44,10 @@ trait Phase
     * Для cordova надо подождать наступления device ready прежде чем начинать геоинициализацию.
     */
   protected def _geoInitState: FsmState = {
-    if ( js.isUndefined( Cordova ) ) {
+    if ( MSrv.IS_PLAIN_BROWSER ) {
       new GeoScInitState
     } else {
+      // Cordova: дождаться инициализации рантайма.
       new AwaitDeviceReadyState
     }
   }

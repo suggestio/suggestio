@@ -1,10 +1,13 @@
 package io.suggest.sc.sjs.m.msrv
 
+import cordova.Cordova
+import io.suggest.sc.ScConstants.Vsns
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -14,8 +17,16 @@ import scala.concurrent.Future
  */
 object MSrv {
 
+  val IS_PLAIN_BROWSER = js.isUndefined( Cordova )
+
   /** Версия API backend-сервера. Записывается в запросы к sio-серверу, везде где это возможно. */
-  def API_VSN: Int = 2
+  val API_VSN: Int = {
+    if ( IS_PLAIN_BROWSER ) {
+      Vsns.SITE_JSONHTML
+    } else {
+      Vsns.CORDOVA_JSONHTML
+    }
+  }
 
 
   /** Выполнить реквест на север по указанной роуте.
