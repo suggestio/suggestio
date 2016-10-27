@@ -51,4 +51,7 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
 
   val ScAdsFocusingOnAd   = Val("выдача: фокусировка на карточке")
 
+  /** Маячок BLE слышен где-то рядом на расстоянии, указанном в сантиметрах в count. */
+  val BleBeaconNear       = Val("BLE-маячок, см")
+
 }
