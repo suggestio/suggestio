@@ -8,6 +8,8 @@ package io.suggest.common.radio
   */
 object BeaconUtil {
 
+  // Разные оценочные расстояния до маячков.
+
   /** Расстояние "прямо вот здесь" в см. */
   def DIST_CM_HERE  = 20
 
@@ -22,28 +24,11 @@ object BeaconUtil {
 
   def DIST_CM_FAR   = 10000
 
-  /**
-    * Сгруппировать по дистанциям.
-    *
-    * @param d расстояние до маячка в сантиметрах.
-    * @return Группа маячка по расстоянию (DIST_CM_HERE..DIST_CM_FAR).
-    */
-  def distanceToDistGroup(d: Int): BeaconDistanceGroup_t = {
-    if (d < DIST_CM_HERE) {
-      DIST_CM_HERE
-    } else if (d < DIST_CM_2M) {
-      DIST_CM_2M
-    } else if (d < DIST_CM_10M) {
-      DIST_CM_10M
-    } else if (d < DIST_CM_50M) {
-      DIST_CM_50M
-    } else {
-      DIST_CM_FAR
-    }
-  }
-  def distanceToDistGroup(bcn: BeaconData): BeaconDistanceGroup_t = {
-    // В близи -- мелкая квантовка, в далеке -- не важно.
-    distanceToDistGroup( bcn.distanceCm )
+
+  /** Нормализация/оценка дистанции: подходит для подавления флуктуаций от находящихся рядом маячков. */
+  def quantedDistance(dCm: Int): Int = {
+    Math.sqrt( dCm )
+      .toInt
   }
 
 }
