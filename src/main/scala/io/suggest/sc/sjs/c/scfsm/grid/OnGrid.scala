@@ -78,8 +78,8 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       // Надо проверять наверное _isScrWidthReallyChanged() || sd0.grid.state.containerSz.contains(newSz). Где-то в коде этот трюк уже был виден.
       if (_isScrWidthReallyChanged()) {
         // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
-        val sd1 = sd0.copy(
-          grid = sd0.grid.copy(
+        val sd1 = sd0.withGrid(
+          sd0.grid.copy(
             state = MGridState(
               adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
             )

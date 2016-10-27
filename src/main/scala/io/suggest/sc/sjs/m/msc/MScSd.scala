@@ -178,6 +178,8 @@ case class MScSd(
 
   def withCommon(common2: MScCommon) = copy(common = common2)
 
+  def withGrid(grid2: MGridData) = copy(grid = grid2)
+
   /**
    * При переключении узла надо резко менять и чистить состояние. Тут логика этого обновления.
    *

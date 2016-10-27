@@ -1,6 +1,8 @@
 package io.suggest.sc.sjs.c.scfsm.grid
 
+import io.suggest.ble.beaconer.m.signals.BeaconsNearby
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
+import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
@@ -44,6 +46,9 @@ trait Plain extends OnGrid with State2UrlT {
         // Клик по кнопке возврата на выдачу предыдущего узла.
         case PrevNodeBtnClick(event) =>
           _goToPrevNodeClick(event)
+        // Сигнал об заметном изменении расположения маячков рямдо
+        case bn: BeaconsNearby =>
+          _handleBeaconsNearby(bn)
       }
       _receiverPart.orElse( super.receiverPart )
     }
@@ -88,6 +93,26 @@ trait Plain extends OnGrid with State2UrlT {
       } else {
         super._handleStateSwitch(sdNext)
       }
+    }
+
+
+    /** Реакция на какое-то важное изменение в конфигурации маячков, которое влияет на плитку. */
+    protected def _handleBeaconsNearby(bn: BeaconsNearby): Unit = {
+      // Пока просто перезагрузить плитку с поправкой на новые маячки.
+      println(bn)
+      val sd0 = _stateData
+      val sd1 = sd0.copy(
+        common = sd0.common.copy(
+          beacons = bn.beacons
+        ),
+        grid = sd0.grid.copy(
+          state = MGridState(
+            adsPerLoad = sd0.grid.state.adsPerLoad
+          )
+        )
+      )
+      _stateData = sd1
+      _startFindGridAds(sd1)
     }
 
   }
