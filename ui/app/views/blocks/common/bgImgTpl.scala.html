@@ -5,7 +5,7 @@
 
 @import ctx.api.cdn
 
-@args.bgImg.filter(!_.isWide).map { bg =>
+@for(bg <- args.bgImg if !bg.isWide) {
 
   @* Есть картинка в карточке. Рендерим img-тег: *@
   <img alt="@alt"

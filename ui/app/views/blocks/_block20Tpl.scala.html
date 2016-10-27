@@ -13,7 +13,7 @@
     @_block2BodyCommonTpl(args, bc)
 
   } else {
-    @args.mad.meta.business.siteUrl.map { href =>
+    @for(href <- args.mad.meta.business.siteUrl) {
       <a href="@href" target="_blank">
     }
 

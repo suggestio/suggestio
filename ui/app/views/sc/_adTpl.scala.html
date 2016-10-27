@@ -5,7 +5,7 @@
 @import ctx.api.cdn
 
 @* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
-@args.wideBg.map { wideBg =>
+@for(wideBg <- args.wideBg) {
   <img src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall(wideBg.dynImgCall) )"
        class="bg __id-@{args.mad.id}"
        alt=""

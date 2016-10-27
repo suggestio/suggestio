@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mproj.ICommonDi
 import models.usr.{MExtIdents, MSuperUsers}
@@ -37,21 +37,22 @@ class IdentUtil @Inject() (
         val cr = Criteria(Seq(personId), Seq(MPredicates.OwnedBy))
         Seq(cr)
       }
+      override def nodeTypes = Seq( MNodeTypes.AdnNode )
       override def limit = 2
     }
 
     for {
-      mnodes <- mNodes.dynSearch(msearch)
+      mnodeIds <- mNodes.dynSearchIds(msearch)
 
     } yield {
 
-      val rdrOrNull: Call = if (mnodes.isEmpty) {
+      val rdrOrNull: Call = if (mnodeIds.isEmpty) {
         // У юзера нет рекламных узлов во владении. Некуда его редиректить, вероятно ошибся адресом.
         null
-      } else if (mnodes.size == 1) {
+      } else if (mnodeIds.size == 1) {
         // У юзера есть один рекламный узел
-        val adnNode = mnodes.head
-        routes.MarketLkAdn.showNodeAds(adnNode.id.get)
+        val nodeId = mnodeIds.head
+        routes.MarketLkAdn.showNodeAds(nodeId)
       } else {
         // У юзера есть несколько узлов во владении. Нужно предоставить ему выбор.
         routes.MarketLkAdn.lkList()
@@ -71,7 +72,7 @@ class IdentUtil @Inject() (
 
 
   def redirectCallUserSomewhere(personId: String): Future[Call] = {
-    getMarketRdrCallFor(personId) flatMap {
+    getMarketRdrCallFor(personId).flatMap {
       // Уже ясно куда редиректить юзера
       case Some(rdr) =>
         Future.successful(rdr)
@@ -95,7 +96,8 @@ class IdentUtil @Inject() (
 
   /** Сгенерить редирект куда-нибудь для указанного юзера. */
   def redirectUserSomewhere(personId: String): Future[Result] = {
-    redirectCallUserSomewhere(personId) map { Results.Redirect }
+    redirectCallUserSomewhere(personId)
+      .map { Results.Redirect }
   }
 
   // TODO Нужен метод "инсталляции" нового юзера.

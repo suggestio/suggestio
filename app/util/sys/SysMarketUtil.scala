@@ -160,6 +160,9 @@ class SysMarketUtil extends PlayMacroLogsDyn {
   /** Накатить отмаппленные изменения на существующий интанс узла, породив новый интанс.*/
   def updateAdnNode(old: MNode, changes: MNode): MNode = {
     old.copy(
+      common = old.common.copy(
+        ntype = changes.common.ntype
+      ),
       meta = old.meta.copy(
         basic = {
           import changes.meta.basic._

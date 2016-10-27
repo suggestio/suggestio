@@ -88,7 +88,7 @@ class Ident @Inject() (
     val formFut = emailPwLoginFormStubM
     val title = ctx.messages("Login.page.title")
     val rc = _regColumnTpl(emailRegFormM, captchaShown = false)(ctx)
-    formFut.map { lf =>
+    for (lf <- formFut) yield {
       val lc = _loginColumnTpl(lf, r)(ctx)
       Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )
     }

@@ -2,15 +2,16 @@ package controllers.sc
 
 import _root_.util.PlayMacroLogsI
 import _root_.util.di._
-import io.suggest.common.radio.{BeaconDistanceGroup_t, BeaconUtil}
+import io.suggest.model.es.IMust
 import io.suggest.model.geo.{CircleGs, Distance, IGeoFindIpResult}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
+import io.suggest.model.search.MSubSearch
 import io.suggest.stat.m.{MAction, MActionTypes}
 import models._
 import models.im.MImgT
-import models.mgeo.{MBleBeaconInfo, MGeoLoc}
+import models.mgeo.MGeoLoc
 import models.msc._
 import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespIndex}
 import org.elasticsearch.common.unit.DistanceUnit
@@ -154,25 +155,23 @@ trait ScIndex
     }
 
 
-    /** Группы маячков по дистанциями до них. */
-    def _bcnsGroups: Map[BeaconDistanceGroup_t, Seq[MBleBeaconInfo]] = {
-      _reqArgs.locEnv.bleBeacons
-        .groupBy( BeaconUtil.distanceToDistGroup )
-    }
-
     /** #10: Определение текущего узла выдачи по ближним маячкам. */
     lazy val l10_detectUsingNearBeacons: Future[MIndexNodeInfo] = {
       // Ищем активные узлы-ресиверы, относящиеся к видимым маячкам.
-      val searches = bleUtil.byBeaconGroupsSearches(
-        topScore  = 100000F,
-        predicate = MPredicates.PlacedIn,
-        bcnGroups = _bcnsGroups
+      val searchOpt = bleUtil.scoredByDistanceBeaconSearch(
+        maxBoost    = 100000F,
+        predicates  = Seq( MPredicates.PlacedIn ),
+        bcns        = _reqArgs.locEnv.bleBeacons
       )
-      if (searches.isEmpty) {
+      searchOpt.fold [Future[MIndexNodeInfo] ] {
         Future.failed( new NoSuchElementException("no beacons") )
-      } else {
+      } { bcnSearch =>
+        val subSearch = MSubSearch(
+          search = bcnSearch,
+          must   = IMust.MUST
+        )
         val msearch = new MNodeSearchDfltImpl {
-          override def subSearches  = searches
+          override def subSearches  = Seq(subSearch)
           override def isEnabled    = Some(true)
           override def nodeTypes    = Seq(MNodeTypes.AdnNode)
           override def limit        = 1

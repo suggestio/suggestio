@@ -208,6 +208,25 @@ class ScStatUtil @Inject() (
     def locEnvOpt: Option[MLocEnv] = None
     def geoIpLoc: Option[IGeoFindIpResult] = None
 
+    /** Подготовка stat-action'ов по маячкам. */
+    def beaconsStats: Seq[MAction] = {
+      val bcns = locEnvOpt
+        .iterator
+        .flatMap(_.bleBeacons)
+        .toStream
+      if (bcns.isEmpty) {
+        Nil
+      } else {
+        val mact = MAction(
+          actions = Seq( MActionTypes.BleBeaconNear ),
+          nodeId  = bcns.map(_.uid),
+          count   = bcns.map(_.distanceCm)
+        )
+        Seq(mact)
+      }
+    }
+
+    /** Данные по геолокации отдельным полем. */
     def mlocation: MLocation = {
       MLocation(
         geo = {
@@ -240,7 +259,11 @@ class ScStatUtil @Inject() (
     def mstat: MStat = {
       MStat(
         common    = mcommon,
-        actions   = statActions ++ userSaOpt,
+        actions   = Seq(
+          statActions,
+          userSaOpt.toSeq,
+          beaconsStats
+        ).flatten,
         timestamp = ctx.now,
         ua        = mua,
         screen    = mscreen,

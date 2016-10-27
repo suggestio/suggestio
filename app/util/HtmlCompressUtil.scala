@@ -20,17 +20,18 @@ import play.twirl.api.{Html, Txt}
  * Description: Утиль для сжатия HTML-ответов.
  */
 @Singleton
-class HtmlCompressUtil @Inject() (configuration: Configuration, env: Environment)
+class HtmlCompressUtil @Inject() (
+  configuration   : Configuration,
+  env             : Environment
+)
   extends IsAppModes
 { outer =>
 
   override protected def appMode = env.mode
 
-  val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", isDev)
-  val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", isProd)
-  val REMOVE_INTERTAG_SPACES_DFLT = getBool("html.compress.global.remove.spaces.intertag", true)
-  val STRIP_HTTP_PROTO            = getBool("html.compress.global.remove.proto.http", false)
-  val STRIP_HTTPS_PROTO           = getBool("html.compress.global.remove.proto.https", false)
+  private val PRESERVE_LINE_BREAKS_DFLT   = getBool("html.compress.global.preserve.line.breaks", isDev)
+  private val REMOVE_COMMENTS_DFLT        = getBool("html.compress.global.remove.comments", isProd)
+  private val REMOVE_INTERTAG_SPACES_DFLT = getBool("html.compress.global.remove.spaces.intertag", true)
 
   def getForGlobalUsing = {
     val compressor = new HtmlCompressor()

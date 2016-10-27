@@ -166,28 +166,26 @@ class ScAdSearchUtil @Inject() (
 
 
   /** Генерация поисковых запросов по маячкам. */
-  def _bleBeacons2search(bcns: Iterable[MBleBeaconInfo]): Iterable[MSubSearch] = {
+  def _bleBeacons2search(bcns: Seq[MBleBeaconInfo]): Iterable[MSubSearch] = {
     if (bcns.isEmpty) {
       Nil
 
     } else {
-
-      // Учитывать только маячки до этого расстояния.
+      // Учитывать только маячки до этого расстояния. Остальные не учитывать
       val maxDistance = BeaconUtil.DIST_CM_10M
-      // Нужно проквантовать расстояния до маячков, группировать маячки по расстояниям, генерить поиски по группам маячков.
-      val bcnGroups = bcns
-        .iterator
-        // Для вывода карточек наверх интересуют только маячки рядом.
-        .filter(_.distanceCm <= maxDistance)
-        .toSeq
-        .groupBy( BeaconUtil.distanceToDistGroup )
 
-      // Сконвертить группы маячков в search-реквесты узлов.
-      bleUtil.byBeaconGroupsSearches(
-        topScore  = 200000000F,
-        predicate = MPredicates.AdvInRadioBeacon,
-        bcnGroups = bcnGroups
+      val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
+        maxBoost    = 20000000F,
+        predicates  = Seq( MPredicates.AdvInRadioBeacon ),
+        bcns        = bcns.iterator.filter(_.distanceCm <= maxDistance)
       )
+
+      val sub = MSubSearch(
+        search  = adsInBcnsSearchOpt.get,
+        must    = IMust.SHOULD
+      )
+
+      sub :: Nil
     }
   }
 

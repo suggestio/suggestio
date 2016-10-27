@@ -203,13 +203,15 @@ trait ScFocusedAdsBase
     }
     /** Карта логотипов продьюсеров, подогнанных под запрашиваемый экран. */
     lazy val prod2logoScrImgMapFut: Future[Map[String, MImgT]] = {
-      prod2logoImgMapFut flatMap { logosMap =>
-        Future.traverse( logosMap ) { case (nodeId, logoImgRaw) =>
-          logoUtil.getLogo4scr(logoImgRaw, _qs.screen)
-            .map { nodeId -> _ }
-        } map {
-          _.toMap
+      for {
+        logosMap   <- prod2logoImgMapFut
+        nodeLogos2 <- Future.traverse( logosMap ) { case (nodeId, logoImgRaw) =>
+          for (logo4scr <- logoUtil.getLogo4scr(logoImgRaw, _qs.screen)) yield {
+            nodeId -> logo4scr
+          }
         }
+      } yield {
+        nodeLogos2.toMap
       }
     }
 
@@ -279,13 +281,15 @@ trait ScFocusedAdsBase
 
     /** Что же будет рендерится в качестве текущей просматриваемой карточки? */
     lazy val focAdOptFut: Future[Option[blk.RenderArgs]] = {
-      mads2andBrArgsFut.map(_.headOption)
+      for (mads2andBrArgs <- mads2andBrArgsFut) yield {
+        mads2andBrArgs.headOption
+      }
     }
 
     /** Фьючерс продьюсера, относящегося к текущей карточке. */
     def focAdProducerOptFut: Future[Option[MNode]] = {
       val _prodsMapFut = mads2ProdsMapFut
-      focAdOptFut flatMap { focAdOpt =>
+      focAdOptFut.flatMap { focAdOpt =>
         FutureUtil.optFut2futOpt( focAdOpt ) { focMad =>
           for (prodsMap <- _prodsMapFut) yield {
             n2NodesUtil

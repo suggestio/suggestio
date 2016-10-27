@@ -39,7 +39,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImp
       * Генерить абсолютные внутренние ссылки в выдаче, где возможно.
       * На dyn-картинки, например.
       */
-    def forceAbsUrls: Boolean = true
+    def forceAbsUrls: Boolean = false
 
   }
 

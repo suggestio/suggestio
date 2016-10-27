@@ -22,7 +22,9 @@ import scala.util.matching.Regex
  * @see [[http://ru.wikipedia.org/wiki/Cross-origin_resource_sharing]]
  */
 @Singleton
-class CorsUtil @Inject() (configuration: Configuration) {
+class CorsUtil @Inject() (
+  configuration: Configuration
+) {
 
   /** Активен ли механизм CORS вообще? */
   val IS_ENABLED = configuration.getBoolean("cors.enabled").getOrElse(true)
