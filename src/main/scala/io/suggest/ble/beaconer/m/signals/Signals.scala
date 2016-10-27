@@ -37,7 +37,14 @@ case class BeaconsNearby(
   beacons: Seq[BeaconReport]
 )
   extends IFsmMsg
+{
+  override def toString: String = {
+    "BNear" + beacons.mkString("[", ",", "]")
+  }
+}
 case class BeaconReport(
   beacon    : BeaconSignal,
   accuracyM : Double
-)
+) {
+  override def toString: String = "BRpt(" + beacon + "," + accuracyM + "m" + ")"
+}

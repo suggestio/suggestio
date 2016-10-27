@@ -3,7 +3,7 @@ package io.suggest.ble.beaconer.fsm
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconSd
 import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconReport, BeaconsNearby}
-import io.suggest.common.radio.RadioUtil
+import io.suggest.common.radio.{BeaconUtil, RadioUtil}
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
@@ -24,8 +24,11 @@ trait On extends BeaconerFsmStub { thisFsm =>
   /** Запускать поиск забытых маячков каждые N миллисекунд. */
   private def GC_LOST_EVERY_MS = 5000
 
-  /** Забывать о маячке, если его не слышно более указанного промежутка. */
-  private def FORGET_UNSEEN_AFTER = GC_LOST_EVERY_MS
+  /**
+    * Забывать о маячке, если его не слышно более указанного промежутка.
+    * На тестовых маячках 5000 было маловато, были ложные срабатывания.
+    */
+  private def FORGET_UNSEEN_AFTER = 9000
 
   /**
     * Через сколько ms после получения уведомления от маячка, запускать проверку карты маячков на предмет
@@ -107,7 +110,6 @@ trait On extends BeaconerFsmStub { thisFsm =>
       )
       become( _offlineState )
     }
-
 
   }
 
@@ -273,10 +275,16 @@ trait On extends BeaconerFsmStub { thisFsm =>
         None
       } else {
         val hash = beaconsNearby
-          // Да, сортируем прямо id, чтобы раздавить флуктуации от рядом находящихся маячков.
+          .map { case (bcnUid, rep) =>
+            val distCm = (rep.accuracyM * 100).toInt
+            bcnUid -> BeaconUtil.quantedDistance(distCm)
+          }
+          // Сортируем по нормализованному кванту расстояния и по id маячка, чтобы раздавить флуктуации от рядом находящихся маячков.
+          .sortBy { case (bcnUid, distQ) =>
+            "%04d".format(distQ) + "." + bcnUid
+          }
           .map(_._1)
-          .sorted
-          .hashCode
+          .hashCode()
         Some(hash)
       }
 
