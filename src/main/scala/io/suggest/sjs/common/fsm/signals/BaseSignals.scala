@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.fsm.signals
 
 import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg}
+import org.scalajs.dom
 import org.scalajs.dom.Event
 
 /**
@@ -23,7 +24,28 @@ case class Visible(isVisible: Boolean)
 
 /** Сигнал о готовности внешнего девайса для исполнения кода системы.
   * Сигнал появился впервые на фоне необходимости взаимодействия выдачи с cordova. */
-case class CordovaDeviceReady(event: Event)
+case class PlatformReady(event: Event)
   extends IFsmMsg
-object CordovaDeviceReady
+object PlatformReady
+  extends IFsmEventMsgCompanion
+
+
+/** Интерфейс для сигналов об изменении отображенности на экране текущей вкладки/приложения. */
+trait IVisibilityChangeSignal extends IFsmMsg {
+
+  /** На какое именно состояние изменилась видимость текущего приложения?
+    * @return true  - теперь скрыто
+    *         false - теперь видимо.
+    */
+  def isHidden: Boolean
+
+}
+
+/** Изменение видимости текущей вкладки (веб-страницы). */
+case class VisibilityChange(event: Event)
+  extends IVisibilityChangeSignal
+{
+  override def isHidden = dom.document.hidden
+}
+object VisibilityChange
   extends IFsmEventMsgCompanion

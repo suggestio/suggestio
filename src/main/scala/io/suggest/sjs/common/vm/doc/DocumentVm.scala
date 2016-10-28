@@ -1,5 +1,6 @@
 package io.suggest.sjs.common.vm.doc
 
+import io.suggest.common.event.VisibilityChangeEvents
 import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
@@ -16,6 +17,9 @@ import scala.scalajs.js.UndefOr
  * Description: Враппер для объекта document для возможности более безопасного (кросс-браузерного)
  * обращения к некоторым полям.
  */
+object DocumentVm
+  extends VisibilityChangeEvents
+
 trait DocumentVmT extends EventTargetVmT {
 
   override type T = Document

@@ -73,4 +73,12 @@ object WarnMsgs extends MsgsStaticT {
 
   def CORDOVA_DEVICE_READY_WAIT_TIMEOUT     = E(33)
 
+  def UNSUPPORTED_EVENT                     = E(34)
+
+  /** Подавление повторной подписки на события со стороны какого-то листенера. */
+  def EVENT_ALREADY_LISTENED_BY             = E(35)
+
+  /** Нельзя отписаться, если не подписан на события. */
+  def CANNOT_UNSUBSCRIBE_NOT_SUBSCRIBED     = E(36)
+
 }
