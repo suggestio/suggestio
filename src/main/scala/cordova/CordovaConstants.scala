@@ -8,6 +8,24 @@ package cordova
   */
 object CordovaConstants {
 
-  def EVENT_DEVICE_READY = "deviceready"
+  object Events {
+
+    def DEVICE_READY      = "deviceready"
+
+    def PAUSE             = "pause"
+
+    def RESUME            = "resume"
+
+    def BACK_BUTTON       = "backbutton"
+
+    def MENU_BUTTON       = "menubutton"
+
+    def SEARCH_BUTTON     = "searchbutton"
+
+    def VOL_DOWN_BUTTON   = "volumedownbutton"
+
+    def VOL_UP_BUTTON     = "volumedownbutton"
+
+  }
 
 }
