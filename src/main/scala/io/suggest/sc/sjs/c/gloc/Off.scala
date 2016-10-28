@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.c.gloc
 
-import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo.Subscribe
-import org.scalajs.dom
+import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 
 /**
   * Suggest.io
@@ -45,12 +44,12 @@ trait Off extends GeoLocFsmStub {
 
   trait IHandleVisibilityChange extends FsmEmptyReceiverState {
     override def receiverPart: Receive = super.receiverPart.orElse {
-      case vc: VisibilityChange =>
-        _handleVisibilityChanged()
+      case vc: IVisibilityChangeSignal =>
+        _handleVisibilityChanged(vc)
     }
 
     /** Реакция на изменение состояния visibility страницы. */
-    def _handleVisibilityChanged(): Unit
+    def _handleVisibilityChanged(vc: IVisibilityChangeSignal): Unit
   }
 
 
@@ -74,7 +73,7 @@ trait Off extends GeoLocFsmStub {
       _switchToWatchingState()
     }
 
-    override def _handleVisibilityChanged(): Unit = {
+    override def _handleVisibilityChanged(vc: IVisibilityChangeSignal): Unit = {
       // в off-состоянии плевать на изменение видимости страницы текущей.
     }
 
@@ -88,8 +87,8 @@ trait Off extends GeoLocFsmStub {
   trait SleepingStateT extends StandByStateT {
 
     /** Реакция на изменение состояния visibility страницы. */
-    override def _handleVisibilityChanged(): Unit = {
-      if (!dom.document.hidden)
+    override def _handleVisibilityChanged(vc: IVisibilityChangeSignal): Unit = {
+      if (!vc.isHidden)
         _switchToWatchingState()
     }
 

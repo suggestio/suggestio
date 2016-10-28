@@ -17,7 +17,7 @@ import scala.scalajs.js
  */
 object MSrv {
 
-  val IS_PLAIN_BROWSER = js.isUndefined( Cordova )
+  def IS_PLAIN_BROWSER = js.isUndefined( Cordova )
 
   /** Версия API backend-сервера. Записывается в запросы к sio-серверу, везде где это возможно. */
   val API_VSN: Int = {

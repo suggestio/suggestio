@@ -8,6 +8,7 @@ libraryDependencies ++= Seq(
   Common.ORG      %%% "common-sjs"          % "0.0.0-SNAPSHOT",
   Common.ORG      %%% "scalajs-mapboxgl"    % "0.0.0-SNAPSHOT",
   Common.ORG      %%% "ble-beaconer-sjs"    % "0.0.0-SNAPSHOT",
+  Common.ORG      %%% "scalajs-cordova"     % "0.0.0-SNAPSHOT",
   "org.monifu"    %%% "minitest"            % "0.12"            % "test"
 )
 

@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.app
 
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
+import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.util.logs.GlobalErrorHandler
@@ -23,7 +24,10 @@ object App extends JSApp {
     // Повесить перехватчик ошибок на верхнем уровне.
     GlobalErrorHandler.start()
 
-    // Запуск основного FSM
+    // Запуск прослойки между платформой (браузер, cordova, etc) и системой.
+    PlatformFsm.start()
+
+    // Запуск основного FSM выдачи.
     ScFsm.start()
 
     // Фоновый запуск карты

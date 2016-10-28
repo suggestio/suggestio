@@ -10,11 +10,6 @@ import org.scalajs.dom.Event
   * Description: Стандартные сигналы от юзер-агента.
   */
 
-case class VisibilityChange(event: Event)
-  extends IFsmMsg
-object VisibilityChange
-  extends IFsmEventMsgCompanion
-
 
 /** Общий интерфейс сигналов, говорящих об изменении размеров viewport'а. */
 trait IVpSzChanged extends IFsmMsg {

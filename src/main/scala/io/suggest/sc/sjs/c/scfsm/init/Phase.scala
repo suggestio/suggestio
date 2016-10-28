@@ -44,17 +44,13 @@ trait Phase
     * Для cordova надо подождать наступления device ready прежде чем начинать геоинициализацию.
     */
   protected def _geoInitState: FsmState = {
-    if ( MSrv.IS_PLAIN_BROWSER ) {
-      new GeoScInitState
-    } else {
-      // Cordova: дождаться инициализации рантайма.
-      new AwaitDeviceReadyState
-    }
+    // Дождаться готовности платформы.
+    new AwaitDeviceReadyState
   }
 
   /** Состояние ожидания device ready события из cordova. */
   class AwaitDeviceReadyState
-    extends EnsureCordovaDeviceReadyStateT
+    extends EnsurePlatformReadyStateT
   {
     override def _nextState = new GeoScInitState
   }

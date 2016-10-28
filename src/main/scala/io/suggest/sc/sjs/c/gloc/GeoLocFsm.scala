@@ -1,10 +1,12 @@
 package io.suggest.sc.sjs.c.gloc
 
-import io.suggest.sc.sjs.m.magent.VisibilityChange
+import io.suggest.sc.sjs.c.plat.PlatformFsm
+import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
-import io.suggest.sc.sjs.vm.SafeDoc
 import io.suggest.sjs.common.fsm.SjsFsmImpl
+import io.suggest.sjs.common.fsm.signals.VisibilityChange
+import io.suggest.sjs.common.vm.doc.DocumentVm
 
 /**
   * Suggest.io
@@ -39,8 +41,9 @@ object GeoLocFsm
   /** Запуск данного FSM. Вызывается только один раз. */
   def start(): Unit = {
     become(new OffState)
-    // Подписаться FSM на события изменения видимости текущей вкладки.
-    SafeDoc.addEventListener("visibilitychange")( _signalCallbackF(VisibilityChange) )
+
+    // Подписаться FSM на события изменения видимости текущего view'а.
+    PlatformFsm ! PlatEventListen( PlatformEvents.VISIBILITY_CHANGE, this, subscribe = true )
   }
 
   /** Затычка начального состояния. */

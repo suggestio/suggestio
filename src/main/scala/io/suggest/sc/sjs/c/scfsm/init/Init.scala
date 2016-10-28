@@ -1,19 +1,19 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
-import cordova.CordovaConstants
 import io.suggest.common.event.WndEvents
+import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
+import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.msc.MUrlUtil
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
-import io.suggest.sc.sjs.vm.{SafeDoc, SafeWnd}
+import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.fsm.signals.CordovaDeviceReady
+import io.suggest.sjs.common.fsm.signals.PlatformReady
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import org.scalajs.dom.Event
 
 /**
  * Suggest.io
@@ -22,7 +22,7 @@ import org.scalajs.dom.Event
  * Description: Поддержка состояний инициализации выдачи.
  * Это обычно синхронные состояния, которые решают на какое состояние переключаться при запуске.
  */
-trait Init extends ScFsmStub with IUrl2State {
+trait Init extends ScFsmStub with IUrl2State { scFsm =>
 
   /** Трейт для сборки состояния самой первой инициализации.
     * Тут происходит normal-init, но дополнительно может быть строго одноразовая логика.
@@ -82,7 +82,7 @@ trait Init extends ScFsmStub with IUrl2State {
     * Если не дожидаться, то геолокация просто молча не будет работать,
     * а блютус -- вообще выдавать js undefined вместо API.
     */
-  protected trait EnsureCordovaDeviceReadyStateT extends FsmEmptyReceiverState {
+  protected trait EnsurePlatformReadyStateT extends FsmEmptyReceiverState {
 
     /** Сигнал о таймауте ожидания device ready. */
     case object DevRdyTimeOut
@@ -90,13 +90,15 @@ trait Init extends ScFsmStub with IUrl2State {
     /** id таймера таймаута ожидания сигнала CordovaDeviceReady. */
     private var _devRdyTimerId: Int = _
 
+    private def _platformReadySubscribe(isSubscribe: Boolean): Unit = {
+      PlatformFsm ! PlatEventListen( PlatformEvents.E_DEVICE_READY, scFsm, subscribe = isSubscribe)
+    }
+
     override def afterBecome(): Unit = {
       super.afterBecome()
 
       // Подписаться на события device ready от cordova
-      SafeDoc.addEventListener( CordovaConstants.EVENT_DEVICE_READY ) { event: Event =>
-        _sendEventSync( CordovaDeviceReady(event) )
-      }
+      _platformReadySubscribe(true)
 
       // Лимитируем ожиданием события. На debug-билде device ready наступало в течение ~500 мс.
       _devRdyTimerId = DomQuick.setTimeout(1500) { () =>
@@ -108,7 +110,7 @@ trait Init extends ScFsmStub with IUrl2State {
     override def receiverPart: Receive = super.receiverPart.orElse {
 
       // Поступил ожидаемый сигнал device ready.
-      case cdr: CordovaDeviceReady =>
+      case cdr: PlatformReady =>
         _handleDeviceReady()
 
       // Таймаут ожидания device ready.
@@ -128,7 +130,12 @@ trait Init extends ScFsmStub with IUrl2State {
       _becomeNextState()
     }
 
-    def _becomeNextState() = become(_nextState)
+    /** Переключение на следующее состояние. */
+    def _becomeNextState(): Unit = {
+      become(_nextState)
+      _platformReadySubscribe(false)
+    }
+    /** Следующее состояние. */
     def _nextState: FsmState
 
   }

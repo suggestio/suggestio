@@ -1,12 +1,11 @@
 package io.suggest.sc.sjs.c.gloc
 
-import io.suggest.sc.sjs.m.magent.VisibilityChange
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 import io.suggest.sjs.common.model.loc.MGeoLoc
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
-import org.scalajs.dom
 import org.scalajs.dom.{Geolocation, Position, PositionError}
 
 /**
@@ -78,8 +77,8 @@ trait Watching extends GeoLocFsmStub {
       case loc: GlLocation =>
         _handleLocation(loc)
       // Сигнал от браузера об изменении visibility текущего документа.
-      case vc: VisibilityChange =>
-        _handleVisibilityChanged()
+      case vc: IVisibilityChangeSignal =>
+        _handleVisibilityChanged(vc)
 
       // Сигнал срабатывания таймера подавления неточных геолокаций.
       case st: SuppressTimeout =>
@@ -190,8 +189,8 @@ trait Watching extends GeoLocFsmStub {
     }
 
     /** Реакция на изменение видимости текущей страницы. Если страница сокрыта -- пора спать. */
-    def _handleVisibilityChanged(): Unit = {
-      if (dom.document.hidden) {
+    def _handleVisibilityChanged(vc: IVisibilityChangeSignal): Unit = {
+      if (vc.isHidden) {
         _beforeOffline()
         become(_sleepingState)
       }
