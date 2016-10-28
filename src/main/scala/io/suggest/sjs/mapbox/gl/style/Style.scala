@@ -2,7 +2,7 @@ package io.suggest.sjs.mapbox.gl.style
 
 import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.layer.Layer
-import io.suggest.sjs.mapbox.gl.source.{SourceDescr, SourceDescr$}
+import io.suggest.sjs.mapbox.gl.source.SourceDescr
 import io.suggest.sjs.mapbox.gl.{Bearing_t, Pitch_t, Zoom_t}
 
 import scala.scalajs.js
@@ -14,7 +14,7 @@ import scala.scalajs.js.annotation.JSName
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 12.04.16 14:00
   * Description: MapBox style model API.
- *
+  *
   * @see [[https://www.mapbox.com/mapbox-gl-style-spec]]
   */
 object Style extends FromDict {
