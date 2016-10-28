@@ -220,7 +220,7 @@ object SiobixBuild extends Build {
     val name = "sc-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs)
+      .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
   }
 
   /** Внутренний форк securesocial. */
