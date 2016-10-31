@@ -12,8 +12,9 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   */
 trait Off extends BeaconerFsmStub {
 
+
   /** Трейт состояния ожидания подписок на мониторинг маячков. */
-  trait OffStateT extends FsmState {
+  trait OffStateT extends FsmState with IOnlineState {
 
     /** Реакция на запрос подписки на мониторинг маячков. */
     override def _handleSubscribe(s: Subscribe): Unit = {
@@ -24,9 +25,6 @@ trait Off extends BeaconerFsmStub {
         error( ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE )
       }
     }
-
-    /** Состояние мониторинга маячков. */
-    def _onlineState: FsmState
 
   }
 

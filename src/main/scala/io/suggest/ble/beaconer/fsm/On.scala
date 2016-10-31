@@ -5,6 +5,7 @@ import io.suggest.ble.beaconer.m.BeaconSd
 import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconReport, BeaconsNearby}
 import io.suggest.common.radio.{BeaconUtil, RadioUtil}
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 /**
@@ -45,12 +46,29 @@ trait On extends BeaconerFsmStub { thisFsm =>
     /** Состояние пребывания в отключке. */
     def _offlineState: FsmState
 
+    def _suspendedState: FsmState
+
   }
 
 
   /** Базовый трейт для состояний нахождения в активном состоянии поиска BLE-маячков.
     * Любое активное состояние слушает маячки и сохраняет их себе в состояние. */
   sealed trait ActiveStateBaseT extends FsmState with IOfflineState {
+
+    override def afterBecome(): Unit = {
+      super.afterBecome()
+
+      val sd0 = _stateData
+      if (sd0.listeningOn.isEmpty) {
+        // Запустить мониторинг маячков.
+        val apiOpt = IBleBeaconsApi.detectApi
+        apiOpt.get
+          .listenBeacons(thisFsm)
+
+        // Сохранить в состояние API, на сообщения которого подписаны.
+        _stateData = sd0.withListeningOn(apiOpt)
+      }
+    }
 
     override def receiverPart: Receive = {
       val r: Receive = {
@@ -100,15 +118,40 @@ trait On extends BeaconerFsmStub { thisFsm =>
 
     /** Просто уйти в отключку немедленно. */
     def _goOffline(): Unit = {
-      for (api <- IBleBeaconsApi.detectApi) {
+      val sd0 = _stateData
+
+      // Остановить мониторинг
+      for (api <- sd0.listeningOn) {
         api.unListenAllBeacons()
       }
-      val sd0 = _stateData
-      _stateData = sd0.copy(
+
+      // Обновить состояние.
+      val sd1 = sd0.copy(
         beacons         = Map.empty,
-        envFingerPrint  = None
+        envFingerPrint  = None,
+        listeningOn     = None
       )
-      become( _offlineState )
+      become( _offlineState, sd1 )
+    }
+
+    /** Реакция на сообщение об изменении visibility зависят от состояния. */
+    override def _handleVisibilityChange(vc: IVisibilityChangeSignal): Unit = {
+      if (vc.isHidden) {
+        _goSuspend()
+      } else {
+        super._handleVisibilityChange(vc)
+      }
+    }
+
+    /** Логика отправки в suspend-состояние. */
+    def _goSuspend(): Unit = {
+      val sd0 = _stateData
+      // Остановить мониторинг BLE
+      for (api <- sd0.listeningOn) {
+        api.unListenAllBeacons()
+      }
+      val sd1 = sd0.withListeningOn(None)
+      become(_suspendedState, sd1)
     }
 
   }
@@ -128,22 +171,19 @@ trait On extends BeaconerFsmStub { thisFsm =>
     case object EarlyTimeout
 
     override def afterBecome(): Unit = {
-      super.afterBecome()
-
-      // Запустить мониторинг маячков.
-      val apiOpt = IBleBeaconsApi.detectApi
       try {
-        apiOpt.get
-          .listenBeacons(thisFsm)
+        // Запустить мониторинг маячков.
+        super.afterBecome()
+
+        // Запустить таймер окончания начальной инициализации состояния.
+        _nextStateTimerId = DomQuick.setTimeout(EARLY_INIT_TIMEOUT_MS) { () =>
+          _sendEventSync(EarlyTimeout)
+        }
+
       } catch {
         case ex: Throwable =>
-          error( ErrorMsgs.BLE_BEACONS_LISTEN_ERROR + " " + apiOpt, ex )
+          error( ErrorMsgs.BLE_BEACONS_LISTEN_ERROR, ex )
           _goOffline()
-      }
-
-      // Запустить таймер окончания начальной инициализации состояния.
-      _nextStateTimerId = DomQuick.setTimeout(EARLY_INIT_TIMEOUT_MS) { () =>
-        _sendEventSync(EarlyTimeout)
       }
     }
 
@@ -303,16 +343,25 @@ trait On extends BeaconerFsmStub { thisFsm =>
     }
 
 
-    /** Уход в отключку требует некоторых действий. */
-    override def _goOffline(): Unit = {
+    private def _clearTimers(): Unit = {
       // Остановить таймер GC.
       DomQuick.clearInterval( _gcTimerId )
       // Остановить возможный таймер проверки списка маячков.
       for (dirtyTimerId <- _maybeNotifyWatchersTimerId) {
         DomQuick.clearTimeout(dirtyTimerId)
       }
+    }
+
+    /** Уход в отключку требует некоторых действий. */
+    override def _goOffline(): Unit = {
+      _clearTimers()
       // Выполнить остальный действия по уходу в оффлайн.
       super._goOffline()
+    }
+
+    override def _goSuspend(): Unit = {
+      _clearTimers()
+      super._goSuspend()
     }
   }
 

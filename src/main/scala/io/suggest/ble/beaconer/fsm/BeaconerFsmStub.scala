@@ -4,6 +4,7 @@ import io.suggest.ble.beaconer.m.MBeaconerFsmSd
 import io.suggest.ble.beaconer.m.signals.{Subscribe, UnSubscribe}
 import io.suggest.fsm.StateData
 import io.suggest.sjs.common.fsm.SjsFsm
+import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 
 /**
   * Suggest.io
@@ -13,6 +14,8 @@ import io.suggest.sjs.common.fsm.SjsFsm
   */
 trait BeaconerFsmStub extends SjsFsm with StateData {
 
+  override type SD = MBeaconerFsmSd
+
   trait FsmState extends super.FsmEmptyReceiverState {
 
     override def receiverPart: Receive = super.receiverPart.orElse {
@@ -21,6 +24,9 @@ trait BeaconerFsmStub extends SjsFsm with StateData {
         _handleSubscribe(s)
       case u: UnSubscribe =>
         _handleUnSubscribe(u)
+      // Сигнал об уходе мобильного приложения или вкладки в фон или возвращения на передний план.
+      case vc: IVisibilityChangeSignal =>
+        _handleVisibilityChange(vc)
     }
 
     /** Реакция на запрос подписки на мониторинг маячков. */
@@ -42,10 +48,20 @@ trait BeaconerFsmStub extends SjsFsm with StateData {
       }
     }
 
+    /** Реакция на сообщение об изменении visibility зависят от состояния. */
+    def _handleVisibilityChange(vc: IVisibilityChangeSignal): Unit = {}
+
   }
 
   override type State_t = FsmState
 
-  override type SD = MBeaconerFsmSd
+  protected trait IActiveState {
+    def _activeState: FsmState
+  }
+
+  trait IOnlineState {
+    /** Состояние мониторинга маячков. */
+    def _onlineState: FsmState
+  }
 
 }
