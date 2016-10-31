@@ -4,9 +4,7 @@ import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
-import io.suggest.sjs.common.fsm.SjsFsmImpl
-import io.suggest.sjs.common.fsm.signals.VisibilityChange
-import io.suggest.sjs.common.vm.doc.DocumentVm
+import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
 
 /**
   * Suggest.io
@@ -26,7 +24,7 @@ object GeoLocFsm
     with ScSjsFsmLogger
     with Off
     with Watching
-    //with LogBecome
+    with LogBecome
 {
 
   override protected var _stateData: SD   = MGeoFsmSd()
@@ -49,15 +47,20 @@ object GeoLocFsm
   /** Затычка начального состояния. */
   private class DummyState extends FsmState with FsmEmptyReceiverState
 
-  /** Состояние отключённости от системы. */
-  class OffState extends OffStateT {
+
+  protected trait IWatchingState extends super.IWatchingState {
     override def _watchingState = new WatchingState
   }
 
+  /** Состояние отключённости от системы. */
+  class OffState
+    extends OffStateT
+    with IWatchingState
+
   /** Ожидание просыпания страницы/девайса. */
-  class SleepingState extends SleepingStateT {
-    override def _watchingState = new WatchingState
-  }
+  class SleepingState
+    extends SleepingStateT
+    with IWatchingState
 
   /** Состояние наблюдения за данными геолокации. */
   class WatchingState extends WatchingStateT {
