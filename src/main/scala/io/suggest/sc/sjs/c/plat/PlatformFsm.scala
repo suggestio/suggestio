@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.plat
 import _root_.cordova.Cordova
 import io.suggest.sc.sjs.m.mdev.MPlatFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
+import io.suggest.sjs.common.fsm.LogBecome
 
 import scala.scalajs.js
 
@@ -16,6 +17,7 @@ object PlatformFsm
   extends dev.Browser
   with dev.Cordova
   with ScSjsFsmLogger
+  with LogBecome
 {
 
   override protected var _stateData = MPlatFsmSd()
@@ -25,7 +27,7 @@ object PlatformFsm
   /** Запуск этого FSM в работу. */
   def start(): Unit = {
     val st0 = if ( !js.isUndefined(Cordova) ) {
-      new CordovaS
+      new CordovaNotReadyS
     } else {
       new BrowserS
     }
@@ -40,6 +42,11 @@ object PlatformFsm
 
   /** Взаимодействие с браузером. */
   protected class BrowserS extends BrowserStateT
+
+  /** Кордова не готова. */
+  protected class CordovaNotReadyS extends CordovaNotReadyStateT {
+    override protected def _nextState = new CordovaS
+  }
 
   /** Взаимодействие с cordova webview. */
   protected class CordovaS extends CordovaStateT

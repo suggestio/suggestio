@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mdev.cordova
 
-import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
+import io.suggest.sjs.common.fsm.signals.{IMenuBtnClick, IVisibilityChangeSignal}
 import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg}
 import org.scalajs.dom.Event
 
@@ -37,5 +37,9 @@ object Resume
 /** Сигнал нажатия клавиши меню. */
 case class MenuButton(event: Event)
   extends ICordovaFsmMsg
+  with IMenuBtnClick
+{
+  override def isOpenMenu = None
+}
 object MenuButton
   extends IFsmEventMsgCompanion

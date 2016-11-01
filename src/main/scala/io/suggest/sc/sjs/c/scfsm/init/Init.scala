@@ -42,6 +42,13 @@ trait Init extends ScFsmStub with IUrl2State { scFsm =>
       w.addEventListener(WndEvents.RESIZE)( _signalCallbackF(WndResize) )
       w.addEventListener(WndEvents.ORIENTATION_CHANGE)( _signalCallbackF(OrientationChange) )
 
+      // Записываемся на события кнопок мобильных устройств.
+      PlatformFsm ! PlatEventListen(
+        event     = PlatformEvents.MENU_BTN,
+        listener  = scFsm,
+        subscribe = true
+      )
+
       // Провоцируем сохранение в состояние FSM текущих параметров экрана.
       _viewPortChanged()
     }

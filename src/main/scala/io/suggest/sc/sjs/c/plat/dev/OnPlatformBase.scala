@@ -27,23 +27,23 @@ trait OnPlatformBase extends PlatformFsmStub {
 
     protected[this] def _registerVisibilityChange(): Unit
 
+    protected[this] def _registerMenuBtn(): Unit
 
     /** Выполнить все необходимые действия, связанные с подпиской на события. */
     protected[this] def _listenEventDo(pel: PlatEventListen, sd0: SD = _stateData): Unit = {
       val sd1 = sd0.subscribers.get(pel.event).fold[SD] {
         // Нет списка подписчиков. Значит, ещё нет подписки на целевое событие.
-        if (pel.event == PlatformEvents.VISIBILITY_CHANGE) {
-          if (pel.subscribe) {
-            // Зарегать глобальный листенер события.
+        if (pel.subscribe) {
+          if (pel.event == PlatformEvents.VISIBILITY_CHANGE) {
             _registerVisibilityChange()
-            // Записать в карту листенера, да и сам факт наличия подписки на события.
-            sd0.withSubscribers(
-              subs2 = sd0.subscribers + (pel.event -> List(pel.listener))
-            )
+          } else if (pel.event == PlatformEvents.MENU_BTN) {
+            _registerMenuBtn()
           } else {
-            log( WarnMsgs.CANNOT_UNSUBSCRIBE_NOT_SUBSCRIBED + "[] " + pel.event + " " + pel.listener )
-            sd0
+            throw new UnsupportedOperationException(WarnMsgs.UNSUPPORTED_EVENT + " " + pel.event)
           }
+          sd0.withSubscribers(
+            subs2 = sd0.subscribers + (pel.event -> List(pel.listener))
+          )
         } else {
           warn( WarnMsgs.UNSUPPORTED_EVENT + " " + pel.event )
           sd0

@@ -33,6 +33,11 @@ trait Browser extends OnPlatformBase {
         .addEventListener( DocumentVm.VISIBILITY_CHANGE )( _signalCallbackF(VisibilityChange) )
     }
 
+
+    // Нет поддержки кнопки меню. Да и код этот вызываться никогда не должен тут, т.к. фильтрация сигнала идёт ещё и в _handlePlatformEventListen().
+    override protected[this] def _registerMenuBtn(): Unit = {}
+
+
     /** Реакция на сигнал подписки/отписки какого-то FSM на platform-сигнал. */
     override def _handlePlatformEventListen(pel: PlatEventListen): Unit = {
       val sd0 = _stateData
@@ -44,6 +49,9 @@ trait Browser extends OnPlatformBase {
           pel.listener ! PlatformReady(null)
         }
 
+      } else if (pel.event == PlatformEvents.MENU_BTN ) {
+        // У браузера вроде бы нет события-кнопки меню. Хотя... кто знает, можно кнопку меню с клавиатуры слушать.
+
       } else {
         _listenEventDo(pel, sd0)
       }
@@ -53,12 +61,7 @@ trait Browser extends OnPlatformBase {
     /** Реакция на событие изменения видимости текущей страницы (вкладки). */
     def _handleVisibilityChanged(vc: VisibilityChange): Unit = {
       // Разослать всем подписчикам дубликат сообщения от браузера.
-      for {
-        listeners <- _stateData.subscribers.get( PlatformEvents.VISIBILITY_CHANGE )
-        l         <- listeners
-      } {
-        l ! vc
-      }
+      _broadcastToAll( PlatformEvents.VISIBILITY_CHANGE, vc )
     }
 
   }

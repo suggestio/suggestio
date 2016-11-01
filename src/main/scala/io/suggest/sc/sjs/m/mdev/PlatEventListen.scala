@@ -26,4 +26,6 @@ object PlatformEvents extends VisibilityChangeEvents {
 
   def E_DEVICE_READY = CordovaConstants.Events.DEVICE_READY
 
+  def MENU_BTN       = CordovaConstants.Events.MENU_BUTTON
+
 }

@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
 import io.suggest.sc.sjs.c.scfsm.geo.GeoScInit
-import io.suggest.sc.sjs.m.msrv.MSrv
 
 /**
  * Suggest.io

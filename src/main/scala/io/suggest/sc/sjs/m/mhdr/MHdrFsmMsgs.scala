@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.mhdr
 
+import io.suggest.sjs.common.fsm.signals.IMenuBtnClick
 import io.suggest.sjs.common.fsm.{IFsmEventMsgCompanion, IFsmMsg}
 import org.scalajs.dom.Event
 
@@ -26,12 +27,16 @@ object ShowIndexClick extends IFsmEventMsgCompanion
 
 
 /** Сигнал о клике по кнопке открытия nav-панели. */
-case class ShowNavClick(e: Event) extends IFsmMsg
+case class ShowNavClick(e: Event) extends IMenuBtnClick {
+  override def isOpenMenu = Some(true)
+}
 object ShowNavClick extends IFsmEventMsgCompanion
 
 
 /** Сигнал о клике по кнопке сокрытия панели навигации. */
-case class HideNavClick(e: Event) extends IFsmMsg
+case class HideNavClick(e: Event) extends IMenuBtnClick {
+  override def isOpenMenu = Some(false)
+}
 object HideNavClick extends IFsmEventMsgCompanion
 
 

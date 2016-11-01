@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.nav
 
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
-import io.suggest.sc.sjs.m.mhdr.{HideNavClick, LogoClick}
+import io.suggest.sc.sjs.m.mhdr.LogoClick
 import io.suggest.sc.sjs.m.mnav.NodeListClick
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.nodes.find.{MFindNodes, MFindNodesArgsDfltImpl, MFindNodesResp}
@@ -11,6 +11,7 @@ import io.suggest.sc.sjs.vm.nav.nodelist.glay.{GlayCaption, GlayNode}
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.Vm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.fsm.signals.IMenuBtnClick
 import org.scalajs.dom.ext.KeyCode
 import org.scalajs.dom.{Event, KeyboardEvent, Node}
 
@@ -29,7 +30,7 @@ trait OnGridNav extends OnGrid with State2UrlT {
   protected trait _OnGridNav extends OnGridStateT {
 
     private def _receiverPart: Receive = {
-      case HideNavClick(event) =>
+      case m: IMenuBtnClick if m.isOpenMenu.contains(false) =>    // if isOpenMenu = None || Some(false)
         _handleHideNav()
       case _: LogoClick =>
         _handleHideNav()

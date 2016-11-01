@@ -3,10 +3,11 @@ package io.suggest.sc.sjs.c.scfsm.grid
 import io.suggest.ble.beaconer.m.signals.BeaconsNearby
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.m.mgrid.MGridState
-import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowNavClick, ShowSearchClick}
+import io.suggest.sc.sjs.m.mhdr.{PrevNodeBtnClick, ShowSearchClick}
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.vm.hdr.btns.HNodePrev
 import io.suggest.sc.sjs.vm.layout.FsLoader
+import io.suggest.sjs.common.fsm.signals.IMenuBtnClick
 import io.suggest.sjs.common.msg.WarnMsgs
 import org.scalajs.dom.Event
 
@@ -41,7 +42,7 @@ trait Plain extends OnGrid with State2UrlT {
         case _: ShowSearchClick =>
           _showSearchClick()
         // Сигнал нажатия на кнопку отображения панели навигации.
-        case _: ShowNavClick =>
+        case m: IMenuBtnClick if m.isOpenMenu.isEmpty || m.isOpenMenu.contains(true)  =>
           _showNavClick()
         // Клик по кнопке возврата на выдачу предыдущего узла.
         case PrevNodeBtnClick(event) =>
