@@ -166,12 +166,28 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
+  /** leaflet.markercluster.js scalajs API. */
+  lazy val leafletMarketClusterSjs = {
+    val name = "scalajs-leaflet-markercluster"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(leafletSjs)
+  }
+
   /** Поддержка MaxMind GeoIP2. */
   // Отложено до переезда на elasticsearch 5.x. См. mmgeoip2/README
   lazy val mmgeoip2 = {
     val name = "mmgeoip2"
     Project(id = name, base = file("loc/geo/" + name))
       .dependsOn(util, logsMacro)
+  }
+
+  /** mapbox.js API. */
+  lazy val mapBoxSjs = {
+    val name = "scalajs-mapbox"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(leafletSjs)
   }
 
   /** mapbox-gl API. */
