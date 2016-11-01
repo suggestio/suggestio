@@ -13,7 +13,7 @@ import scala.scalajs.js.annotation.JSName
  */
 @js.native
 @JSName("L.LayerGroup")
-class LayerGroup extends js.Object {
+class LayerGroup extends ILayer {
 
   def addTo(lmap: LMap): this.type = js.native
 
@@ -31,7 +31,7 @@ class LayerGroup extends js.Object {
 
   def clearLayers(): this.type = js.native
 
-  def eachLayer(f: js.Function1[ILayer, _], context: js.Object = js.native): this.type = js.native
+  def eachLayer(f: js.Function1[ILayer, _], context: js.Any = js.native): this.type = js.native
 
   def toGeoJSON(): js.Object = js.native
 

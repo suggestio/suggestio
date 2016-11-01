@@ -10,10 +10,10 @@ import scala.scalajs.js.annotation.JSName
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.11.15 12:03
-  * Description: API for L.controls.
+  * Description: API for L.control (aka controls).
   */
 @js.native
-@JSName("L.Control")
+@JSName("L.control")
 class LControl extends js.Object {
 
   /** For feature-detection. */

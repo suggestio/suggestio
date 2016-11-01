@@ -10,7 +10,7 @@ import scala.scalajs.js
  * @see [[http://leafletjs.com/reference.html#map-options]]
  */
 @js.native
-sealed trait MapOptions extends js.Object {
+class MapOptions extends js.Object {
 
   var center                : LatLng        = js.native
   var zoom                  : Double        = js.native

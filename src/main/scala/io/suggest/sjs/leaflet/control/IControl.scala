@@ -1,6 +1,10 @@
 package io.suggest.sjs.leaflet.control
 
+import io.suggest.sjs.leaflet.map.{ILayer, LMap}
+import org.scalajs.dom.raw.HTMLElement
+
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
  * Suggest.io
@@ -10,6 +14,19 @@ import scala.scalajs.js
  * @see [[http://leafletjs.com/reference.html#icontrol]]
  */
 @js.native
-class IControl extends js.Object {
-  // TODO
+@JSName("L.Control")
+class IControl extends ILayer {
+
+  //var position: String = js.native
+
+  def getPosition(): String = js.native
+
+  def setPosition(pos: String): this.type = js.native
+
+  def getContainer(): HTMLElement = js.native
+
+  def addTo(lmap: LMap): this.type = js.native
+
+  def remove(): js.native = js.native
+
 }

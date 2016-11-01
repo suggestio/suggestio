@@ -13,7 +13,7 @@ import io.suggest.sjs.leaflet.map.LMap
  * Description: API for L.TileLayer model.
  */
 @js.native
-@JSName("L.TileName")
+@JSName("L.TileLayer")
 class TileLayer extends js.Object {
 
   def addTo(map: LMap): TileLayer = js.native

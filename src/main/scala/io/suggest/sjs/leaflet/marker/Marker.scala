@@ -2,9 +2,9 @@ package io.suggest.sjs.leaflet.marker
 
 import io.suggest.sjs.leaflet.event.LEventTarget
 import io.suggest.sjs.leaflet.handler.IHandler
-import io.suggest.sjs.leaflet.map.{LatLng, LMap}
+import io.suggest.sjs.leaflet.map.{ILayer, LMap, LatLng}
 import io.suggest.sjs.leaflet.marker.icon.Icon
-import io.suggest.sjs.leaflet.popup.{PopupOptions, Popup}
+import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
@@ -20,7 +20,7 @@ import scala.scalajs.js.annotation.JSName
 
 @js.native
 @JSName("L.Marker")
-class Marker extends LEventTarget {
+class Marker extends LEventTarget with ILayer {
 
   def addTo(lmap: LMap): this.type = js.native
 

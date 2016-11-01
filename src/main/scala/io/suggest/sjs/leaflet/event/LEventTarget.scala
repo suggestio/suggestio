@@ -10,7 +10,7 @@ import scala.scalajs.js.annotation.JSName
  * Description: API for event targets.
  */
 @js.native
-class LEventTarget extends js.Object {
+trait LEventTarget extends js.Object {
 
   @JSName("addEventListener")
   def addEventListener3[T <: Event](etype: String, f: js.Function1[T,_], ctx: js.Object = js.native): this.type = js.native

@@ -9,7 +9,7 @@ import scala.scalajs.js
   * Description: ILayer API.
   */
 @js.native
-class ILayer extends js.Object {
+trait ILayer extends js.Object {
 
   def onAdd(lmap: LMap): Unit = js.native
 

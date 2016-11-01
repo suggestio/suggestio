@@ -1,6 +1,7 @@
 package io.suggest.sjs.leaflet.control.locate
 
 import io.suggest.sjs.common.model.FromDict
+import io.suggest.sjs.leaflet.control.ControlOptions
 
 import scala.scalajs.js
 import scala.scalajs.js.Dictionary
@@ -16,30 +17,27 @@ object LocateOptions extends FromDict {
 }
 
 @js.native
-trait LocateOptions extends js.Object {
-
-  // set the location of the control [topLeft]
-  var position: String
+class LocateOptions extends ControlOptions {
 
   //var layer: new L.LayerGroup(),  // use your own layer for the location marker
 
   // controls whether a circle is drawn that shows the uncertainty about the location [true]
-  var drawCircle: Boolean
+  var drawCircle: Boolean = js.native
 
   // follow the user's location [false]
-  var follow: Boolean
+  var follow: Boolean = js.native
 
   // automatically sets the map view to the user's location, enabled if `follow` is true [true]
-  var setView: Boolean
+  var setView: Boolean = js.native
 
   // keep the current map zoom level when displaying the user's location. (if `false`, use maxZoom) [false]
-  var keepCurrentZoomLevel: Boolean
+  var keepCurrentZoomLevel: Boolean = js.native
 
   // stop following when the map is dragged if `follow` is true (deprecated, see below) [false]
-  var stopFollowingOnDrag: Boolean
+  var stopFollowingOnDrag: Boolean = js.native
 
   // if true locate control remains active on click even if the user's location is in view. [false]
-  var remainActive: Boolean
+  var remainActive: Boolean = js.native
 
   //var markerClass: L.circleMarker, // L.circleMarker or L.marker
   //  circleStyle: {},  // change the style of the circle around the user's location
@@ -48,16 +46,16 @@ trait LocateOptions extends js.Object {
   //  followMarkerStyle: {},
 
   // class for icon, fa-location-arrow or fa-map-marker  ['fa fa-map-marker']
-  var icon: String
+  var icon: String = js.native
 
   // class for loading icon  ['fa fa-spinner fa-spin']
-  var iconLoading: String
+  var iconLoading: String = js.native
 
   // padding around accuracy circle, value is passed to setBounds, [0, 0]
-  var circlePadding: js.Array[Int]
+  var circlePadding: js.Array[Int] = js.native
 
   // use metric or imperial units [true]
-  var metric: Boolean
+  var metric: Boolean = js.native
 
   //onLocationError: function(err) {alert(err.message)},  // define an error callback function
 
@@ -65,9 +63,9 @@ trait LocateOptions extends js.Object {
   //          alert(context.options.strings.outsideMapBoundsMsg);
   //},
 
-  var showPopup: Boolean  // display a popup when the user click on the inner marker [true]
+  var showPopup: Boolean = js.native // display a popup when the user click on the inner marker [true]
 
-  var strings: Dictionary[String]
+  var strings: Dictionary[String] = js.native
   /*  {
         title: "Show me where I am",  // title of the locate control
         metersUnit: "meters", // string for metric units
@@ -78,6 +76,6 @@ trait LocateOptions extends js.Object {
   */
 
   // define location options e.g enableHighAccuracy: true or maxZoom: 10
-  var locateOptions: js.Object
+  var locateOptions: js.Object = js.native
 
 }

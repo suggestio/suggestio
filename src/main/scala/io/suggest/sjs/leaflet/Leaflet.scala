@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet
 
 import io.suggest.sjs.leaflet.control.LControl
-import io.suggest.sjs.leaflet.geojson.{GeoJson, GjOptions, GjOptions$}
+import io.suggest.sjs.leaflet.geojson.{GeoJson, GjOptions}
 import io.suggest.sjs.leaflet.layer.group.{FeatureGroup, LayerGroup}
 import io.suggest.sjs.leaflet.map._
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
@@ -26,7 +26,7 @@ import scala.scalajs.js.annotation.JSName
 @JSName("L")
 object Leaflet extends js.Object {
 
-  def map(target: MapTarget, options: js.Object = js.native): LMap = js.native
+  def map(target: MapTarget, options: MapOptions = js.native): LMap = js.native
 
   def tileLayer(urlTemplate: String, options: TlOptions = js.native): TileLayer = js.native
 
