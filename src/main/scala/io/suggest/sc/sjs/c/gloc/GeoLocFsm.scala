@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
 import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
-import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
+import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
   * Suggest.io
@@ -21,10 +21,10 @@ import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
   */
 object GeoLocFsm
   extends SjsFsmImpl
-    with ScSjsFsmLogger
-    with Off
-    with Watching
-    with LogBecome
+  with ScSjsFsmLogger
+  with Off
+  with Watching
+  //with LogBecome
 {
 
   override protected var _stateData: SD   = MGeoFsmSd()
