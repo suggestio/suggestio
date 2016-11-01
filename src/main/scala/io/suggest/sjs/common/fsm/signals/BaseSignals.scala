@@ -49,3 +49,10 @@ case class VisibilityChange(event: Event)
 }
 object VisibilityChange
   extends IFsmEventMsgCompanion
+
+
+/** Абстрактный сигнал об открытии/закрытии менюшки. */
+trait IMenuBtnClick extends IFsmMsg {
+  /** Если сигнал является явным сигналом открытия или закрытия. */
+  def isOpenMenu: Option[Boolean]
+}
