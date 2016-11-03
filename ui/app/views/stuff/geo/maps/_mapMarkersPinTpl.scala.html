@@ -1,0 +1,28 @@
+@()
+
+@*
+ * img-теги маркера pin-маркера, т.е. маркера втыкающегося указателя позиции/локации на карте.
+ * Рендерить это внутри _mapMarkersContTpl(), когда карте требуется отметка.
+ *@
+
+
+@import io.suggest.common.maps.MapFormConstants._
+
+@_markerImg(
+  id  = IMG_ID_MARKER,
+  baseName = "leaflet/marker-icon.png",
+  wh  = Some(Size2di(width = 25, height = 41)),
+  xy  = Some(Coords2d(x = 13, y = 41))
+)
+
+@_markerImg(
+  id  = IMG_ID_MARKER_RETINA,
+  baseName = "leaflet/marker-icon-2x.png"
+)
+
+@_markerImg(
+  id  = IMG_ID_MARKER_SHADOW,
+  baseName = "leaflet/marker-shadow.png",
+  wh  = Some(Size2di(41, 41)),
+  xy  = Some(Coords2d(x = 12, y = 41))
+)

@@ -1,9 +1,10 @@
 package util.maps
 
-import com.google.inject.Singleton
+import com.google.inject.{Inject, Singleton}
 import io.suggest.model.geo.{CircleGs, Distance}
-import models.maps.{RadMapValue, MapViewState}
+import models.maps.RadMapValue
 import org.elasticsearch.common.unit.DistanceUnit
+import io.suggest.common.maps.MapFormConstants.STATE_FN
 import io.suggest.common.maps.rad.RadMapConstants._
 import play.api.data.Forms._
 import play.api.data.Mapping
@@ -16,25 +17,13 @@ import util.FormUtil
   * Description: Утиль для форм, завязанных на rad-map, т.е. карту с заданием радиуса.
   */
 @Singleton
-class RadMapFormUtil {
+class RadMapFormUtil @Inject() (
+  mapFormUtil: MapFormUtil
+) {
 
   // TODO В ожидании DI.
   private def formUtil = FormUtil
 
-  private val centerKM  = CENTER_FN  -> formUtil.geoPointM
-
-  /** Маппинг состояния карты. Надо вынести его отсюда куда-нибудь. */
-  def mapStateM: Mapping[MapViewState] = {
-    mapping(
-      centerKM,
-      ZOOM_FN    -> mapZoomM
-    )
-    { MapViewState.apply }
-    { MapViewState.unapply }
-  }
-
-  /** Маппинг значения зума карты. */
-  def mapZoomM: Mapping[Int] = number(min = 0, max = 20)
 
   // TODO Разрешить нецелый километраж?
   def radiusM: Mapping[Distance] = {
@@ -51,7 +40,7 @@ class RadMapFormUtil {
   /** Тег размещается в области, описываемой кругом. */
   def circleM: Mapping[CircleGs] = {
     mapping(
-      centerKM,
+      mapFormUtil.centerKM,
       RADIUS_FN  -> radiusM
     )
     { CircleGs.apply }
@@ -61,7 +50,7 @@ class RadMapFormUtil {
   /** Общий состояния карты и её полезной нагрузки. */
   def radMapValM: Mapping[RadMapValue] = {
     mapping(
-      STATE_FN   -> mapStateM,
+      STATE_FN   -> mapFormUtil.mapStateM,
       CIRCLE_FN  -> circleM
     )
     { RadMapValue.apply }

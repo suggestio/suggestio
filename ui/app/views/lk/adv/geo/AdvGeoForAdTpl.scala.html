@@ -2,10 +2,10 @@
 
 @* Страница со формой размещения рекламной карточки на внешних сервисах. *@
 
-@import ctx.{messages, request}
+@import ctx.messages
 @import views.js.stuff.jsRevRouterTpl
 @import views.html.stuff.jsTpl2HtmlTpl
-@import stuff.geo.radmap._
+@import stuff.geo.maps._
 @import lk.adv.geo.agBase
 @import lk.adv.widgets._
 @import lk.lkwdgts.price._
@@ -23,6 +23,7 @@
   @* URL для рассчета стоимости размещения. *@
   @_getPriceUrlTpl( routes.LkAdvGeo.getPriceSubmit(args.adId) )
 
+
   @_advFormBlockTpl() {
 
     @* Рендер самой формы здесь. *@
@@ -31,7 +32,21 @@
     @* Контейнер карты. *@
     <br/>
     @_mapContTpl()
+
   }
+
+
+  @* Рендерим маркеры, необходимые rad-map карте. *@
+  @_mapMarkersContTpl() {
+
+    @* Нужен pin-маркер для центра круга. *@
+    @_mapMarkersPinTpl()
+
+    @* Нужен маркер для задания радиуса круга покрытия. *@
+    @_mapMarkersRadTpl()
+
+  }
+
 
   @* Рендер скрытой инфы по текущим размещения. *@
   <input type="hidden" id="@CurrShapes.DATA_CONTAINER_ID" value="@args.currAdvsJson"/>

@@ -36,15 +36,15 @@ import scala.concurrent.Future
   * Description: Контроллер размещения в гео-тегах.
   */
 class LkAdvGeo @Inject() (
-                           advGeoFormUtil                  : AdvGeoFormUtil,
-                           advGeoBillUtil                  : AdvGeoBillUtil,
-                           advFormUtil                     : AdvFormUtil,
-                           bill2Util                       : Bill2Util,
-                           advGeoLocUtil                   : AdvGeoLocUtil,
-                           override val tagSearchUtil      : LkTagsSearchUtil,
-                           override val tagsEditFormUtil   : TagsEditFormUtil,
-                           override val canAdvAdUtil       : CanAdvertiseAdUtil,
-                           override val mCommonDi          : ICommonDi
+  advGeoFormUtil                  : AdvGeoFormUtil,
+  advGeoBillUtil                  : AdvGeoBillUtil,
+  advFormUtil                     : AdvFormUtil,
+  bill2Util                       : Bill2Util,
+  advGeoLocUtil                   : AdvGeoLocUtil,
+  override val tagSearchUtil      : LkTagsSearchUtil,
+  override val tagsEditFormUtil   : TagsEditFormUtil,
+  override val canAdvAdUtil       : CanAdvertiseAdUtil,
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl

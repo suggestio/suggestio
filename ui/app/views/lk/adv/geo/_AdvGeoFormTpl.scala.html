@@ -11,6 +11,7 @@
 @import io.suggest.adv.AdvConstants._
 @import lk.dsl._
 @import views.html.stuff._labelTpl
+@import views.html.stuff.geo.maps._
 
 @form( CSRF(routes.LkAdvGeo.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
 
@@ -23,7 +24,12 @@
     @* Отдельная галочка для размещения на главном экране. *@
     @defining(args.form(OnMainScreen.FN)) { omsf =>
       @_labelTpl() {
-        <input type="checkbox" id="@OnMainScreen.ID" name="@omsf.name" value="true" @if(omsf.value.nonEmpty){checked="checked"}/>
+        <input type="checkbox"
+               id="@OnMainScreen.ID"
+               name="@omsf.name"
+               value="true"
+               @if(omsf.value.nonEmpty){checked="checked"}
+        />
         <span class="styled-checkbox"></span>
         @messages("Adv.on.main.screen")
       }
@@ -65,6 +71,14 @@
 
 
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
-  @_radMapInputsTpl( args.form(RADMAP_FN) )
+  @defining( args.form(RADMAP_FN) ) { rf =>
+
+    @* Инпуты состояния карты. *@
+    @_mapInputsStateTpl( rf(STATE_FN) )
+
+    @* Инпуты круга размещения. *@
+    @_mapInputsCircleTpl( rf(CIRCLE_FN) )
+
+  }
 
 }

@@ -1,0 +1,15 @@
+@()
+
+@*
+ * Дополнительные img-теги маркеров для карты с радиусом покрытия.
+ * Рендерить внутри _mapMarkersContTpl().
+ *@
+
+@import io.suggest.common.maps.rad.RadMapConstants._
+
+@_markerImg(
+  id        = IMG_ID_RADIUS_MARKER,
+  baseName  = "radmap/radius-marker.min.svg",
+  wh        = Some(Size2di(14, 14)),
+  xy        = Some(Coords2d(7, 7))
+)
