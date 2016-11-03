@@ -1,5 +1,7 @@
 package io.suggest.adv.geo
 
+import io.suggest.common.maps.MapFormConstants
+import io.suggest.common.maps.rad.RadMapConstants
 import io.suggest.common.qs.QsConstants
 
 /**
@@ -14,6 +16,13 @@ object AdvGeoConstants {
 
   /** id формы размещения в гео-месте. */
   def FORM_ID = "f" + PREFIX
+
+  /** Название form-поля для состояния карты. */
+  def STATE_FN    = MapFormConstants.STATE_FN
+
+  /** Название form-поля для состояния круга на карте. */
+  def CIRCLE_FN   = RadMapConstants.CIRCLE_FN
+
 
   object OnMainScreen {
 
