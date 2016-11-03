@@ -198,12 +198,20 @@ object SiobixBuild extends Build {
       .dependsOn(commonSjs)
   }
 
-  /** Модуль поддержки карты. */
+  /** Утиль для поддержки географических карт. */
+  /*lazy val mapSjs = {
+    val name = "map-sjs"
+    Project(id = name, base = file("maps/" + name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(commonSjs, leafletSjs)
+  }*/
+
+  /** Модуль поддержки карты с возможностью задания радиуса покрытия. */
   lazy val mapRadSjs = {
     val name = "map-rad-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, leafletSjs)
+      .dependsOn(commonSjs, leafletSjs)   // TODO mapSjs
   }
   
   /** Sjs-модуль редактора тегов. */
@@ -213,6 +221,14 @@ object SiobixBuild extends Build {
       .enablePlugins(ScalaJSPlay)
       .dependsOn(lkCommonSjs)
   }
+
+  /** Sjs-поддержка размещения ADN-узла на карте. */
+  /*lazy val lkAdnMapSjs = {
+    val name = "lk-adn-map-sjs"
+    Project(id = name, base = file("lk/adn/" + name))
+      .enablePlugins(ScalaJSPlay)
+      .dependsOn(lkCommonSjs)
+  }*/
 
   /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. */
   lazy val lkSjs = {

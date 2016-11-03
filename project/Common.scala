@@ -60,6 +60,19 @@ object Common {
     */
   def scalaTestVsn       = "2.2.+"
 
+  /** 
+   *  Версия react.js, используемая в проекте. 
+   *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
+   */
+  val reactJsVsn         = "15.3.2"
+
+  /** 
+   *  Версия scalajs-react, используемая в проекте.
+   *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
+   */
+  val reactSjsVsn        = "0.11.2"
+
+
   object Repo {
 
     /** Адрес внутреннего кеширующего сервера artifactory */
