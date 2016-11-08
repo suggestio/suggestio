@@ -145,7 +145,7 @@ class AdvFormUtil {
     */
   def radMapValue0(gp: GeoPoint): RadMapValue = {
     RadMapValue(
-      state = MapViewState(gp, zoom = 10),
+      state = MapViewState(gp),
       circle = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS))
     )
   }

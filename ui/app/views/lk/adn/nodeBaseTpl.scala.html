@@ -33,6 +33,11 @@
         css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
       )
 
+      @_navItemTpl(
+        title = messages("On.the.map"),
+        href  = Some( routes.LkAdnMap.forNode(nodeId) )
+      )
+
       @_navSysTpl(
         call  = routes.SysMarket.showAdnNode(nodeId)
       )

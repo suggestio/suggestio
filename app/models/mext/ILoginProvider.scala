@@ -1,9 +1,11 @@
 package models.mext
 
+import io.suggest.model.play.psb.PathBindableImpl
 import play.api.libs.json._
 import play.api.mvc.PathBindable
 import securesocial.core.AuthenticationMethod
 import securesocial.core.providers.ProviderCompanion
+
 import scala.language.implicitConversions
 
 /**
@@ -30,7 +32,7 @@ object ILoginProvider {
 
   /** Поддержка маппинга провайдера из URL path. */
   implicit def pb(implicit strB: PathBindable[String]): PathBindable[ILoginProvider] = {
-    new PathBindable[ILoginProvider] {
+    new PathBindableImpl[ILoginProvider] {
       override def bind(key: String, value: String): Either[String, ILoginProvider] = {
         strB.bind(key, value).right.flatMap { provId =>
           maybeWithName(provId) match {

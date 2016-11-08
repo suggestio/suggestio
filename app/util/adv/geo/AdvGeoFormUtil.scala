@@ -1,9 +1,10 @@
 package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.adv.AdvConstants.{PERIOD_FN, RADMAP_FN}
+import io.suggest.adv.AdvConstants.PERIOD_FN
 import io.suggest.adv.geo.AdvGeoConstants.CurrShapes._
 import io.suggest.adv.geo.AdvGeoConstants.OnMainScreen
+import io.suggest.common.maps.MapFormConstants.MAP_FN
 import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -45,7 +46,7 @@ class AdvGeoFormUtil @Inject() (
   private def _agtFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
       EXIST_TAGS_FN       -> tagsM,
-      RADMAP_FN           -> radMapFormUtil.radMapValM,
+      MAP_FN              -> radMapFormUtil.radMapValM,
       PERIOD_FN           -> advFormUtil.advPeriodM,
       OnMainScreen.FN     -> boolean
     )

@@ -9,6 +9,7 @@
 @import lk.adv.widgets._
 @import io.suggest.adv.geo.AdvGeoConstants._
 @import io.suggest.adv.AdvConstants._
+@import io.suggest.common.maps.MapFormConstants.MAP_FN
 @import lk.dsl._
 @import views.html.stuff._labelTpl
 @import views.html.stuff.geo.maps._
@@ -71,7 +72,7 @@
 
 
   @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
-  @defining( args.form(RADMAP_FN) ) { rf =>
+  @defining( args.form(MAP_FN) ) { rf =>
 
     @* Инпуты состояния карты. *@
     @_mapInputsStateTpl( rf(STATE_FN) )

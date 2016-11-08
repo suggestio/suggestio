@@ -11,5 +11,5 @@ import io.suggest.model.geo.GeoPoint
 
 case class MapViewState(
   center  : GeoPoint,
-  zoom    : Int
+  zoom    : Int = 10
 )

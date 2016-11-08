@@ -1,0 +1,49 @@
+@(args: madn.mapf.IAdnMapTplArgs)(implicit ctx: Context)
+
+@* Шаблон страницы с формой размещения узла ADN на карте. *@
+
+@import ctx.{messages, request}
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
+@import views.html.stuff.geo.maps._
+@import lk.adv.geo.agBase
+@import lk.adv.widgets._
+@import lk.lkwdgts.price._
+@import adv.tpl._
+@import io.suggest.adn.AdnMapFormConstants.FORM_ID
+
+@mapfBase(
+  title         = messages(
+    "x.on.advertisers.map",
+    args.mnode.guessDisplayNameOrId.getOrElse( messages("Current.node") )
+  ),
+  mnode         = args.mnode,
+  rightCurrEl   = NodeRightPanelLinks.RPL_ADN_MAP,
+  rightBarAfter = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
+) {
+
+  @* URL для рассчета стоимости размещения. *@
+  @_getPriceUrlTpl( routes.LkAdnMap.getPriceSubmit(args.mnode.id.get) )
+
+
+  @_advFormBlockTpl() {
+
+    @* Рендер самой формы здесь. *@
+    @_AdnMapFormTpl(args)
+
+    @* Контейнер карты. *@
+    <br/>
+    @_mapContTpl()
+
+  }
+
+
+  @* Рендерим маркеры, необходимые для размещения ADN-узла на карте. *@
+  @_mapMarkersContTpl() {
+
+    @* Нужен pin-маркер для точки размещения. *@
+    @_mapMarkersPinTpl()
+
+  }
+
+}

@@ -762,5 +762,8 @@ conf.sc.node.ephemeral.id=aeq7hpDfTi6B8x5mJpi5KQ
 
 e.required.tags.or.main.screen=Please select "on main screen" checkbox or type at least one geo-tag.
 
-Current.node.on.nodes.map=Current node on nodes map
+Current.node=Current node
+x.on.advertisers.map={0} on adverisers map
+On.the.map=On the map
+You.can.place.adn.node.on.map.below=You can place your current node on the advertisers map below.
 

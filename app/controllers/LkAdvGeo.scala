@@ -2,7 +2,6 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
-import io.suggest.common.empty.EmptyUtil
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.geo.GeoPoint
 import models.adv.form.MDatesPeriod
@@ -57,46 +56,20 @@ class LkAdvGeo @Inject() (
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
   private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[GeoPoint] = {
-    lazy val logPrefix = s"getGeoPoint0($adId ${System.currentTimeMillis()}):"
-
+    import advGeoLocUtil.Detectors._
+    val adIds = adId :: Nil
     // Ищем начальную точку среди прошлых размещений текущей карточки.
-    advGeoLocUtil.getGeoPointFromAdsGeoAdvs( Seq(adId) )
-      .map( EmptyUtil.getF )
+
+    FromAdsGeoAdvs(adIds)
       // Если не получилось, то ищем начальную точку среди размещений продьюсера карточки.
-      .recoverWith { case ex: NoSuchElementException =>
-        LOGGER.trace(s"$logPrefix Cannot find old geo points for current ad adv-geo")
-        val prodId = request.producer.id.get
-        val prodIds = {
-          val prodIds0 = List( prodId )
-          // Добавляем текущего юзера в качестве продьюсера, вдруг в будущем оно тоже будет работать.
-          request.user.personIdOpt.fold(prodIds0)(_ :: prodIds0)
-        }
-        val fut = advGeoLocUtil.getGeoPointFromProducer(prodIds, adId)
-          .map( EmptyUtil.getF )
-        fut.onFailure { case ex: NoSuchElementException =>
-          LOGGER.trace(s"$logPrefix Cannot find old geo from other producer[$prodId] geo advs")
-        }
-        fut
+      .orElse {
+        FromProducerGeoAdvs(
+          producerIds  = Seq(request.producer.id, request.user.personIdOpt).flatten,
+          excludeAdIds = adIds
+        )
       }
-      // Ищем начальную точку среди других размещений текущего юзера
-      .recoverWith { case ex: NoSuchElementException =>
-        request.user.contractIdOptFut
-          .flatMap { contractIdOpt =>
-            advGeoLocUtil.getGeoPointFromUserGeoAdvs( contractIdOpt.get )
-          }
-          .map( EmptyUtil.getF )
-      }
-      // Ищем начальную точку карты из geoip
-      .recoverWith { case ex: Throwable =>
-        LOGGER.trace(s"$logPrefix Cannot find old geo using user contract.")
-        advGeoLocUtil.getGeoPointFromRemoteAddr( request.remoteAddress )
-          .map( EmptyUtil.getF )
-      }
-      // Выставить совсем дефолтовую начальную точку.
-      .recover { case ex: Throwable =>
-        LOGGER.info(s"$logPrefix Unable to detect geoip=${request.remoteAddress}")
-        advGeoLocUtil.getGeoPointLastResort
-      }
+      .orFromReqOrDflt
+      .get
   }
 
 

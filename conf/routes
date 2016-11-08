@@ -94,6 +94,11 @@ POST /lk/mad/delete/:adId               @controllers.MarketAd.deleteSubmit(adId)
 GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 
+## ЛК: Размещение ADN-узла на карте
+POST /lk/adn/map/price/:nodeId          @controllers.LkAdnMap.getPriceSubmit(nodeId: MEsUuId)
+GET  /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNode(nodeId: MEsUuId)
+POST /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNodeSubmit(nodeId: MEsUuId)
+
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)

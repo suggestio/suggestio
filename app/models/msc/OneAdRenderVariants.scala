@@ -2,6 +2,7 @@ package models.msc
 
 import controllers.routes
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.model.play.psb.PathBindableImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.blk.OneAdQsArgs
 import play.api.mvc.{Call, PathBindable, QueryStringBindable}
@@ -85,7 +86,7 @@ object OneAdRenderVariants extends Enumeration with EnumMaybeWithName {
 
   /** path binder для маппинга кусков пути URL. */
   implicit def pb(implicit strB: PathBindable[String]): PathBindable[T] = {
-    new PathBindable[T] {
+    new PathBindableImpl[T] {
       override def bind(key: String, value: String): Either[String, T] = {
         strB.bind(key, value)
           .right

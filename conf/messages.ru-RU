@@ -774,5 +774,8 @@ Domain.mode.sc=Отображение выдачи в домене
 conf.sc.node.ephemeral.id=AU1MCCmy2A6B8K1LbX6u
 e.required.tags.or.main.screen=Требуется активировать размещение на главном экране или указать хотя бы один геотег.
 
-Current.node.on.nodes.map=Текущий узел на карте узлов
+Current.node=Текущий узел
+x.on.advertisers.map={0} на карте рекламодателей
+On.the.map=На карте
+You.can.place.adn.node.on.map.below=Вы можете разместиться на карте рекламодателей с помощью карты ниже.
 
