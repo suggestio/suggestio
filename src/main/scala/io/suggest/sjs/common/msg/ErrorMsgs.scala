@@ -62,4 +62,6 @@ object ErrorMsgs extends MsgsStaticT {
   def BLE_BEACONS_LISTEN_ERROR     = E(26)
   def BLE_BEACONS_API_UNAVAILABLE  = E(27)
 
+  def MISSING_POINT_0              = E(28)
+
 }

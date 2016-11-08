@@ -81,4 +81,6 @@ object WarnMsgs extends MsgsStaticT {
   /** Нельзя отписаться, если не подписан на события. */
   def CANNOT_UNSUBSCRIBE_NOT_SUBSCRIBED     = E(36)
 
+  def LEAFLET_LOCATE_CONTROL_MISSING        = E(37)
+
 }

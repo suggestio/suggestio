@@ -61,7 +61,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    warn("JS init target not supported: " + itg)
+    error("JS init target not supported: " + itg)
     done
   }
 
