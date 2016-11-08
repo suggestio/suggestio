@@ -31,6 +31,8 @@ scalajs/scalajs-evothings-util        = scalajs/scalajs-evothings-util
 ble/ble-beaconer-sjs                  = ble/ble-beaconer-sjs
 scalajs/scalajs-leaflet-markercluster = scalajs/scalajs-leaflet-markercluster
 scalajs/scalajs-mapbox		      = scalajs/scalajs-mapbox
+lk/adn/lk-adn-map-sjs		      = lk/adn/lk-adn-map-sjs
+maps/maps-sjs			      = maps/maps-sjs
 
 [subpaths]
 (https?://([^/@]*@)?kallithea\.cbca\.ru/sio/v2)/root/ = \1/sub/

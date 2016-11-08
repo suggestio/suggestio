@@ -7,7 +7,7 @@ import com.typesafe.sbt.web.SbtWeb.autoImport._
 import org.scalajs.sbtplugin._
 import PlayScalaJS.autoImport._
 
-object SiobixBuild extends Build {
+object Sio2Build extends Build {
 
 
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
@@ -199,19 +199,19 @@ object SiobixBuild extends Build {
   }
 
   /** Утиль для поддержки географических карт. */
-  /*lazy val mapSjs = {
-    val name = "map-sjs"
+  lazy val mapsSjs = {
+    val name = "maps-sjs"
     Project(id = name, base = file("maps/" + name))
       .enablePlugins(ScalaJSPlay)
       .dependsOn(commonSjs, leafletSjs)
-  }*/
+  }
 
   /** Модуль поддержки карты с возможностью задания радиуса покрытия. */
   lazy val mapRadSjs = {
     val name = "map-rad-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(commonSjs, leafletSjs)   // TODO mapSjs
+      .dependsOn(commonSjs, mapsSjs, leafletSjs)
   }
   
   /** Sjs-модуль редактора тегов. */
@@ -223,20 +223,21 @@ object SiobixBuild extends Build {
   }
 
   /** Sjs-поддержка размещения ADN-узла на карте. */
-  /*lazy val lkAdnMapSjs = {
+  lazy val lkAdnMapSjs = {
     val name = "lk-adn-map-sjs"
     Project(id = name, base = file("lk/adn/" + name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(lkCommonSjs)
-  }*/
+      .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
+  }
 
   /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. */
   lazy val lkSjs = {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlay)
-      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs)
-      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvCommonSjs, lkCommonSjs)
+      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdnMapSjs)
+      // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
+      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs)
   }
 
   /** scala.js реализация системы мониторинга js-маячков. */
