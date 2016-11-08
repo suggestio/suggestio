@@ -1,7 +1,8 @@
 package io.suggest.model.es
 
+import io.suggest.model.play.psb.PathBindableImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import play.api.mvc.QueryStringBindable
+import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
   * Suggest.io
@@ -18,18 +19,27 @@ object MEsUuId {
   /** Регэксп для проверки валидности id. */
   val uuidB64Re = "[_a-zA-Z0-9-]{19,25}".r
 
+
+  /** Пропарсить строку и завернуть в [[MEsUuId]] если всё ок.
+    * @param value исходная строка с id.
+    * @return Right с инстансом [[MEsUuId]].
+    *         Left с кодом ошибки.
+    */
+  def fromStringEith(value: String): Either[String, MEsUuId] = {
+    if ( uuidB64Re.pattern.matcher(value).matches() ) {
+      Right( MEsUuId(value) )
+    } else {
+      Left( "e.invalid_id" )
+    }
+  }
+
   /** Поддержка биндинга из/в qs. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MEsUuId] = {
     new QueryStringBindableImpl[MEsUuId] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsUuId]] = {
         for (esIdE <- strB.bind(key, params)) yield {
-          esIdE.right.flatMap { esId =>
-            if ( uuidB64Re.pattern.matcher(esId).matches() ) {
-              Right( MEsUuId(esId) )
-            } else {
-              Left( "e.invalid_id" )
-            }
-          }
+          esIdE.right
+            .flatMap(fromStringEith)
         }
       }
 
@@ -39,12 +49,27 @@ object MEsUuId {
     }
   }
 
+
+  /** PathBinadable для биндинга значения id прямо из URL path. */
+  implicit def psb(implicit strB: PathBindable[String]): PathBindable[MEsUuId] = {
+    new PathBindableImpl[MEsUuId] {
+      override def bind(key: String, value: String): Either[String, MEsUuId] = {
+        fromStringEith(value)
+      }
+      override def unbind(key: String, value: MEsUuId): String = {
+        value
+      }
+    }
+  }
+
+
   // TODO Переместить сюда же маппинг esIdM из FormUtil.
 
   import scala.language.implicitConversions
 
   implicit def esId2string(esId: MEsUuId): String = esId.id
   implicit def string2esId(id: String): MEsUuId   = MEsUuId(id)
+
 
 }
 
