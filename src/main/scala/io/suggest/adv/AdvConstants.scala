@@ -45,7 +45,4 @@ object AdvConstants {
   /** Имя поля верхнего уровня с периодом размещения. */
   def PERIOD_FN = "period"
 
-  /** Имя поля верхнего уровня с данными карты Rad-map. */
-  def RADMAP_FN = "map"
-
 }

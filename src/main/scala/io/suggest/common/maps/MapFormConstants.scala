@@ -16,6 +16,9 @@ object MapFormConstants {
   /** Имя поля с текущим зумом карты. */
   def ZOOM_FN   = "zoom"
 
+  /** Имя поля верхнего уровня с данными карты. */
+  def MAP_FN = "map"
+
   def STATE_FN  = "state"
 
   def INPUT_ID_LAT  = ID_PREFIX + "ma"

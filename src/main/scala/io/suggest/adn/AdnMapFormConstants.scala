@@ -11,6 +11,13 @@ import io.suggest.common.maps.MapFormConstants
   */
 object AdnMapFormConstants {
 
+  def ID_PREFIX = "amf_"
+
+  /** id HTML-формы. */
+  def FORM_ID = ID_PREFIX + "f"
+
+
+  /** Поля формы. */
   object Fields {
 
     def POINT_FN  = MapFormConstants.CENTER_FN
@@ -18,6 +25,15 @@ object AdnMapFormConstants {
     def STATE_FN  = MapFormConstants.STATE_FN
 
     def PERIOD_FN = AdvConstants.PERIOD_FN
+
+  }
+
+
+  /** Инпуты для точки размещения. */
+  object Point {
+
+    def INPUT_ID_LON = ID_PREFIX + MapFormConstants.INPUT_ID_LON
+    def INPUT_ID_LAT = ID_PREFIX + MapFormConstants.INPUT_ID_LAT
 
   }
 
