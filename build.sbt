@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
   "be.doeraene"         %%% "scalajs-jquery"      % Common.sjsJqueryVsn,
   Common.ORG            %%% "lk-adv-ext-sjs"      % "0.0.0-SNAPSHOT",
   Common.ORG            %%% "lk-adv-direct-sjs"   % "0.0.0-SNAPSHOT",
-  Common.ORG            %%% "lk-adv-geo-tags-sjs" % "0.0.0-SNAPSHOT"
+  Common.ORG            %%% "lk-adv-geo-tags-sjs" % "0.0.0-SNAPSHOT",
+  Common.ORG            %%% "lk-adn-map-sjs"      % "0.0.0-SNAPSHOT"
   //"org.monifu"  %%% "minitest" % "0.12" % "test",
 )
 

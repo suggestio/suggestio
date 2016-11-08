@@ -9,6 +9,7 @@ import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{HiddenCaptchaInit, CaptchaFormInit}
 import io.suggest.lk.popup.PopupsInitRouter
+import io.suggest.lk.adn.map.LkAdnMapFormInitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
@@ -57,3 +58,4 @@ class LkInitRouter
   with NodeEditInitRouter
   with AgtFormInitRouter
   with AdvDirectFormInitRouter
+  with LkAdnMapFormInitRouter
