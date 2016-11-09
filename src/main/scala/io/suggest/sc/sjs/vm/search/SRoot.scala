@@ -40,7 +40,7 @@ trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc with ScSjsLogger
   def initLayout(sd: IScSd): Unit = {
     initLayout(sd.common)
     for (t <- tabs) {
-      t.setIsShown( t.mtab == sd.search.currTab )
+      t.setIsShown( t.mtab == sd.search.fsm.currTab )
     }
   }
   private def initLayout(scc: IScCommon): Unit = {

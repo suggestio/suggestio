@@ -9,11 +9,9 @@ import io.suggest.sc.sjs.c.search.SearchFsm
  * Description: Контейнер данных состояния (SD, state data) поисковой вкладки.
  *
  * @param opened Открыта ли поисковая панель?
- * @param currTab Текущая вкладка в панели поиска.
  */
 case class MSearchSd(
-  opened        : Boolean               = false,
-  currTab       : MTab                  = MTabs.values.head
+  opened        : Boolean               = false
 ) {
 
   /** Для будущего class-инстанса SearchFsm здесь поле. */

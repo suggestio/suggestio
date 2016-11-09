@@ -124,10 +124,10 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
           // Определить текущую открытую вкладку поиска.
           val mtab = tokens.get(SEARCH_TAB_FN)
             .flatMap(MTabs.maybeWithName)
-            .getOrElse(sd0Search.currTab)
+            .getOrElse(sd0Search.fsm.currTab)
+          sd0Search.fsm ! MTabSwitchSignal(mtab)
           sd0Search.copy(
-            opened  = flag,
-            currTab = mtab
+            opened  = flag
           )
         }
     }
@@ -220,7 +220,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       if (sdNext.nav.panelOpened) {
         new OnGridNavLoadListState
       } else if (sdNext.search.opened) {
-        _stateData.search.fsm ! MTabSwitchSignal(sdNext.search.currTab)
+        _stateData.search.fsm ! MTabSwitchSignal(sdNext.search.fsm.currTab)
         new OnGridSearchState
       } else {
         new OnPlainGridState

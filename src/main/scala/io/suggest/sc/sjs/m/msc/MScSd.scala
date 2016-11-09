@@ -40,7 +40,7 @@ object MScSd extends ScSjsLogger {
     val spo = sd0.search.opened
     if (spo) {
       acc = CAT_SCR_OPENED_FN -> spo ::
-        SEARCH_TAB_FN -> sd0.search.currTab.strId ::
+        SEARCH_TAB_FN -> sd0.search.fsm.currTab.strId ::
         acc
     }
 

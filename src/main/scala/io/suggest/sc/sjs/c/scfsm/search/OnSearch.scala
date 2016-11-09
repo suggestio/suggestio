@@ -101,7 +101,7 @@ trait OnSearch extends OnGrid with State2UrlT {
       */
     override def _handleStateSwitch(sdNext: MScSd): Unit = {
       // Изменился текущий tab, выполнить переключение таба на экране и в sd0
-      val mtabNext = sdNext.search.currTab
+      val mtabNext = sdNext.search.fsm.currTab
       SearchFsm ! MTabSwitchSignal( mtabNext )
       val noFoc = sdNext.focused.isEmpty
 
@@ -109,7 +109,7 @@ trait OnSearch extends OnGrid with State2UrlT {
         // Уведомить SearchFSM о переключении на указанный таб...
         _stateData.search.fsm ! MTabSwitchSignal(mtabNext)
 
-      } else  if (noFoc && !sdNext.nav.panelOpened) {
+      } else if (noFoc && !sdNext.nav.panelOpened) {
         // Возврат на голую плитку.
         _hideSearchPanel()
       } else {

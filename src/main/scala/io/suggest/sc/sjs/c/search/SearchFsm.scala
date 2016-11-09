@@ -63,6 +63,8 @@ object SearchFsm
   }
 
 
+  def currTab: MTab = _stateData.currTab
+
   // States
 
   class OnSearchState extends OnSearchStateT
