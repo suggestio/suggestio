@@ -52,7 +52,6 @@ object ScJsState {
           maybeFadsOffset       <- intOptB.bind (FADS_OFFSET_FN,        params)
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
-          maybeTileCatId        <- strOptB.bind (TILES_CAT_ID_FN,       params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
         } yield {
           val res = ScJsState(
@@ -64,7 +63,6 @@ object ScJsState {
             fadsOffsetOpt       = maybeFadsOffset,
             searchTabListOpt    = noFalse( maybeSearchTab ),
             fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
-            tilesCatIdOpt       = strNonEmpty( maybeTileCatId ),
             navNglsMap          = maybeNglsMap getOrElse Map.empty
           )
           Right(res)
@@ -82,7 +80,6 @@ object ScJsState {
             intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
             boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
             strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
-            strOptB.unbind  (TILES_CAT_ID_FN,       value.tilesCatIdOpt),
             nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
           )
         }
@@ -109,7 +106,6 @@ object ScJsState {
  * @param fadsOffsetOpt текущий сдвиг в просматриваемых карточках.
  * @param searchTabListOpt Выбранная вкладка на поисковой панели.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
- * @param tilesCatIdOpt id текущей категории в плитке категорий.
  * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
  */
 case class ScJsState(
@@ -121,7 +117,6 @@ case class ScJsState(
   fadsOffsetOpt       : Option[Int]      = None,
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
-  tilesCatIdOpt       : Option[String]   = None,
   navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty
 ) { that =>
 
@@ -187,7 +182,6 @@ case class ScJsState(
     fadsOffsetOpt       = None,
     searchTabListOpt    = None,
     fadsProdIdOpt       = None,
-    tilesCatIdOpt       = None,
     navNglsMap          = Map.empty
   )
 

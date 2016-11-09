@@ -6,7 +6,7 @@
 
 @if(!args.syncRender || !args.jsStateOpt.exists(_.isAnyPanelOpened)) {
   @args.jsStateOpt.map { jsState =>
-    <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = Some(true), navScrOpenedOpt = None, tilesCatIdOpt = None, fadsProdIdOpt = None) )">
+    <a href="@args.syncUrl( jsState.copy(searchScrOpenedOpt = Some(true), navScrOpenedOpt = None, fadsProdIdOpt = None) )">
   }
   @ScHdrBtns.SearchPanelOpen( args.hBtnArgs )
   @if(args.jsStateOpt) {
