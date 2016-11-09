@@ -46,14 +46,19 @@ trait LeafletMapInit extends ISjsLogger with IInit {
 
     // После таскания карты надо сохранять новый центр карты в форму.
     val mapDragEndF = { e: Event =>
-      val mc = lmap.getCenter()
-      _vm._map.setLatLon(mc)
-      // TODO не пашет. Нужно понять, как раньше зум работал...
+      _vm._map.setLatLon(
+        lmap.getCenter()
+      )
+    }
+    lmap.on3(Events.DRAG_END, mapDragEndF)
+
+    // При изменении зума надо обновлять form-поле zoom'а.
+    val zoomEndF = { e: Event =>
       for (zoomInp <- _vm._map.zoom) {
         zoomInp.value = lmap.getZoom()
       }
     }
-    lmap.on3(Events.DRAG_END, mapDragEndF)
+    lmap.on3(Events.ZOOM_END, zoomEndF)
   }
 
 
