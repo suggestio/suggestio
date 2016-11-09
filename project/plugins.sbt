@@ -50,5 +50,5 @@ addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
 // Этот плагин зависит от sbt-web, от play он независим, несмотря на название.
 // https://github.com/vmunier/sbt-play-scalajs/pull/12
-addSbtPlugin("com.vmunier" % "sbt-play-scalajs" % "0.3.0")
+addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.3")
 

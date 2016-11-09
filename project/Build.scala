@@ -1,11 +1,11 @@
 import play.sbt.PlayScala
-import playscalajs.{PlayScalaJS, ScalaJSPlay}
+import webscalajs._
 import sbt._
 import Keys._
 import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
 import org.scalajs.sbtplugin._
-import PlayScalaJS.autoImport._
+import WebScalaJS.autoImport._
 
 object Sio2Build extends Build {
 
@@ -25,7 +25,7 @@ object Sio2Build extends Build {
     val name = "common-sjs"
     Project(id = name, base = file(name))
       .dependsOn(common)
-      .enablePlugins(ScalaJSPlugin, ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       // Хз нужен ли этот инклюд сорцов прямо здесь.
       .settings(
         List(common).map { p =>
@@ -48,7 +48,7 @@ object Sio2Build extends Build {
   lazy val lkAdvExtSjs = {
     val name = "lk-adv-ext-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -79,14 +79,14 @@ object Sio2Build extends Build {
   lazy val dateTimePickerSjs = {
     val name = "datetimepicker-scalajs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
   }
 
   /** всякая мелочь, специфчная только для личного кабинета, но используется в нескольких модулях. */
   lazy val lkCommonSjs = {
     val name = "lk-common-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -94,7 +94,7 @@ object Sio2Build extends Build {
   lazy val lkDtPeriodSjs = {
     val name = "lk-dt-period-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, dateTimePickerSjs)
   }
 
@@ -102,7 +102,7 @@ object Sio2Build extends Build {
   lazy val lkAdvCommonSjs = {
     val name = "lk-adv-common-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs, lkDtPeriodSjs)
   }
 
@@ -110,7 +110,7 @@ object Sio2Build extends Build {
   lazy val lkAdvDirectSjs = {
     val name = "lk-adv-direct-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkAdvCommonSjs)
   }
 
@@ -118,7 +118,7 @@ object Sio2Build extends Build {
   lazy val lkAdvGeoTagsSjs = {
     val name = "lk-adv-geo-tags-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs)
   }
 
@@ -141,28 +141,28 @@ object Sio2Build extends Build {
   lazy val cordovaSjs = {
     val name = "scalajs-cordova"
     Project(id = name, base = file("scalajs/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
   }
 
   /** scala.js API для evothings/cordova-ble. */
   lazy val cordovaBleSjs = {
     val name = "scalajs-cordova-ble"
     Project(id = name, base = file("scalajs/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
   }
 
   /** scala.js API + js для evothings/libs/util.js */
   lazy val evothingsUtilSjs = {
     val name = "scalajs-evothings-util"
     Project(id = name, base = file("scalajs/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
   }
 
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     val name = "scalajs-leaflet"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -170,7 +170,7 @@ object Sio2Build extends Build {
   lazy val leafletMarketClusterSjs = {
     val name = "scalajs-leaflet-markercluster"
     Project(id = name, base = file("scalajs/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(leafletSjs)
   }
 
@@ -186,7 +186,7 @@ object Sio2Build extends Build {
   lazy val mapBoxSjs = {
     val name = "scalajs-mapbox"
     Project(id = name, base = file("scalajs/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(leafletSjs)
   }
 
@@ -194,7 +194,7 @@ object Sio2Build extends Build {
   lazy val mapBoxGlSjs = {
     val name = "scalajs-mapboxgl"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -202,7 +202,7 @@ object Sio2Build extends Build {
   lazy val mapsSjs = {
     val name = "maps-sjs"
     Project(id = name, base = file("maps/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, leafletSjs)
   }
 
@@ -210,7 +210,7 @@ object Sio2Build extends Build {
   lazy val mapRadSjs = {
     val name = "map-rad-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, mapsSjs, leafletSjs)
   }
   
@@ -218,7 +218,7 @@ object Sio2Build extends Build {
   lazy val lkTagsEditSjs = {
     val name = "lk-tags-edit-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs)
   }
 
@@ -226,7 +226,7 @@ object Sio2Build extends Build {
   lazy val lkAdnMapSjs = {
     val name = "lk-adn-map-sjs"
     Project(id = name, base = file("lk/adn/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
   }
 
@@ -234,7 +234,7 @@ object Sio2Build extends Build {
   lazy val lkSjs = {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
       .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdnMapSjs)
       // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
       .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs)
@@ -244,7 +244,7 @@ object Sio2Build extends Build {
   lazy val bleBeaconerSjs = {
     val name = "ble-beaconer-sjs"
     Project(id = name, base = file("ble/" + name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs, evothingsUtilSjs)
   }
 
@@ -252,7 +252,7 @@ object Sio2Build extends Build {
   lazy val scSjs = {
     val name = "sc-sjs"
     Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlay)
+      .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
       .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
   }
 
@@ -265,9 +265,9 @@ object Sio2Build extends Build {
     .dependsOn(common, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
-      pipelineStages += scalaJSProd
+      pipelineStages in Assets += scalaJSPipeline
     )
-    .enablePlugins(PlayScala, SbtWeb, PlayScalaJS)
+    .enablePlugins(PlayScala, SbtWeb)
   
 
   /** Корневой проект. Он должен аггрегировать подпроекты. */
