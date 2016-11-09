@@ -240,9 +240,6 @@ object ScConstants {
     /** Блоки карточек рендерятся сюда. */
     def CONTAINER_DIV_ID  = ROOT_DIV_ID + DIV_CONTAINER_SUFFIX
 
-    /** Название CSS-класса для активации размывки ROOT. */
-    def BLURRED_CLASS     = "__blurred"
-
   }
 
   private def _ATTR_PRODUCER_ID = CUSTOM_ATTR_PREFIX + "producer-id"
