@@ -44,6 +44,18 @@ object MScSd extends ScSjsLogger {
         acc
     }
 
+    // Сериализация гео-точки.
+    for (geoLoc <- sd0.common.geoLocOpt) {
+      acc ::= GEO_POSITION_FN -> geoLoc.point.toString
+    }
+
+    // Сериализовать данные по тегам.
+    for (tagInfo <- sd0.common.tagOpt) {
+      acc = TAG_NODE_ID_FN -> tagInfo.nodeId ::
+        TAG_FACE_FN -> tagInfo.face ::
+        acc
+    }
+
     // Отработать focused-выдачу, если она активна.
     for (focSd <- sd0.focused) {
       acc ::= FADS_CURRENT_AD_ID_FN -> focSd.current.madId

@@ -87,6 +87,8 @@ trait OnSearch extends OnGrid with State2UrlT {
       for (tagsFsm <- sd1.search.fsm.tagsFsm) {
         tagsFsm ! newGeoLoc
       }
+
+      State2Url.pushCurrState()
     }
 
 
@@ -121,8 +123,8 @@ trait OnSearch extends OnGrid with State2UrlT {
       // Обновить состояние
       val sd0 = _stateData
       val sd1 = sd0.copy(
-        common = sd0.common.copy(
-          tagOpt = tagSel.info
+        common = sd0.common.withTagInfo(
+          tagSel.info
         ),
         grid = sd0.grid.withState(
           sd0.grid.state.nothingLoaded()
@@ -132,6 +134,8 @@ trait OnSearch extends OnGrid with State2UrlT {
 
       // Запустить ре-рендер плитки...
       _startFindGridAds()
+
+      State2Url.pushCurrState()
     }
 
   }

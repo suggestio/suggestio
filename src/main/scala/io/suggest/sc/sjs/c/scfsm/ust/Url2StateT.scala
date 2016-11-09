@@ -7,9 +7,11 @@ import io.suggest.sc.sjs.c.scfsm.search.SearchUtil
 import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
+import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPoint}
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -83,6 +85,30 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
         }
     }
 
+    // Десериализация geo-точки выдачи.
+    val sd2Common = tokens.get(GEO_POSITION_FN)
+      .flatMap( MGeoPoint.fromString )
+      .fold(sd1Common) { geoPos =>
+        val geoLoc = MGeoLoc(
+          point = geoPos
+        )
+        sd1Common.withGeoLoc( Some(geoLoc) )
+      }
+
+    // Десериализация гео-тега выдачи
+    val tagInfoOpt = for {
+      tagNodeId <- tokens.get(TAG_NODE_ID_FN)
+      tagFace   <- tokens.get(TAG_FACE_FN)
+    } yield {
+      MTagInfo(
+        nodeId = tagNodeId,
+        face   = tagFace
+      )
+    }
+    val sd3Common = tagInfoOpt.fold(sd2Common) { tagInfo =>
+      sd2Common.withTagInfo( Some(tagInfo) )
+    }
+
     // Загружаем данные состояния панели навигации.
     val sd1Nav = {
       val sd0Nav = sd0.nav
@@ -149,19 +175,16 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
     // Отрабатываем id узла из URL, если есть.
     val nodeIdOpt = tokens.get(ADN_ID_FN)
-
     // Залить новый id узла в common-состояние.
-    val sd2Common = if (nodeIdOpt != sd1Common.adnIdOpt) {
-      sd1Common.copy(
-        adnIdOpt = nodeIdOpt
-      )
+    val sd4Common = if (nodeIdOpt != sd1Common.adnIdOpt) {
+      sd3Common.withAdnId( nodeIdOpt )
     } else {
-      sd1Common
+      sd3Common
     }
 
     // Собрать итоговые данные состояния.
     sd0.copy(
-      common = sd2Common,
+      common = sd4Common,
       nav    = sd1Nav,
       search = sd1Search,
       focused = mFocSdOpt
@@ -176,16 +199,16 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
     } { sd0 =>
       _stateData = sd0
       // Выполнить переход на новое состояние FSM.
-      sd0.common.adnIdOpt.fold[Future[FsmState]] {
-        // Есть токены, но id узла не задан. Это возможно при TODO гулянии по координатам вне выдачи конкретного узла.
-        Future.successful( _geoInitState )
-
-      } { onNodeId =>
+      val c = sd0.common
+      if (c.adnIdOpt.nonEmpty || c.geoLocOpt.nonEmpty) {
         // Задан id узла выдачи, перейти в него.
         val routerFut = SrvRouter.getRouter()
         for (_ <- routerFut) yield {
           new NodeIndex_Get_Wait_State
         }
+      } else {
+        // Есть токены, но конкретные ориентиры для выдачи не заданы.
+        Future.successful( _geoInitState )
       }
     }
     for (nextState <- nextStateFut) yield {

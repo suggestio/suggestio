@@ -53,4 +53,10 @@ case class MScCommon(
 
   def withBeacons(beacons2: Seq[BeaconReport]) = copy(beacons = beacons2)
 
+  def withGeoLoc(geoLocOpt2: Option[IGeoLocMin]) = copy(geoLocOpt = geoLocOpt2)
+
+  def withTagInfo(tagInfo2: Option[MTagInfo]) = copy(tagOpt = tagInfo2)
+
+  def withAdnId(adnIdOpt2: Option[String]) = copy(adnIdOpt = adnIdOpt2)
+
 }
