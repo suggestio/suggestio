@@ -11,7 +11,7 @@ import scala.scalajs.js.annotation.JSName
   */
 @js.native
 @JSName("L.Point")
-sealed trait Point extends js.Object {
+class Point extends js.Object {
 
   var x: Int = js.native
 
