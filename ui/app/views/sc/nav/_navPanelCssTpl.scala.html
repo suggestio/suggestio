@@ -33,7 +33,8 @@
   }
 }
 
-@defining( formatRgbHexColorCss(args.bgColor, Some(0.8F)) ) { bgColorCode =>
+@* Обычно тут была прозрачность: formatRgbHexColorCss(args.bgColor, Some(0.8F)) *@
+@defining( formatRgbHexColorCss(args.bgColor) ) { bgColorCode =>
   .sm-geo-nodes {
     background-color: @bgColorCode;
     height: 83%;

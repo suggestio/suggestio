@@ -26,7 +26,8 @@
 }
 
 .sm-categories-screen_tabs {
-  background-color: @formatRgbHexColorCss( args.bgColor, Some(0.8F) );
+  @* было opacity = Some(0.8F) *@
+  background-color: @formatRgbHexColorCss( args.bgColor );
 }
 
 .sm-tab {
@@ -90,7 +91,7 @@
 @* tagsTpl *@
 .shops-list_row {
   color: #@args.fgColor;
-  opacity: 0.8;
+  @* opacity: 0.8; *@
 }
 
 @defining( colorRgb2Hsl(colorHex2rgb(args.bgColor)).toIndexedSeq ) { hslColor =>
