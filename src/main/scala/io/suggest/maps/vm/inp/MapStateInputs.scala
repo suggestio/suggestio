@@ -37,7 +37,7 @@ trait InputsHelpers {
         inpLon  <- lon
         lon     <- inpLon.value
       } yield {
-        L.latLng(lat, lng = lon)
+        L.latLng(lat = lat, lng = lon)
       }
     }
 

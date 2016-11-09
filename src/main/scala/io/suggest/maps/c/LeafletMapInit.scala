@@ -48,6 +48,10 @@ trait LeafletMapInit extends ISjsLogger with IInit {
     val mapDragEndF = { e: Event =>
       val mc = lmap.getCenter()
       _vm._map.setLatLon(mc)
+      // TODO не пашет. Нужно понять, как раньше зум работал...
+      for (zoomInp <- _vm._map.zoom) {
+        zoomInp.value = lmap.getZoom()
+      }
     }
     lmap.on3(Events.DRAG_END, mapDragEndF)
   }
@@ -57,15 +61,12 @@ trait LeafletMapInit extends ISjsLogger with IInit {
   def _earlyInitMap(lmap: LMap): LMap = {
     val _m = _vm._map
     val r = for {
-      inpLat  <- _m.lat
-      lat     <- inpLat.value
-      inpLon  <- _m.lon
-      lon     <- inpLon.value
+      latLng  <- _m.latLngOpt
       inpZoom <- _m.zoom
       zoom    <- inpZoom.value
     } yield {
       lmap.setView(
-        center = L.latLng(lat, lng = lon),
+        center = latLng,
         zoom   = zoom
       )
     }
