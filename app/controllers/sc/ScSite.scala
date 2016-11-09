@@ -227,7 +227,9 @@ trait ScSiteBase
     import views.html.sc.script._
 
     def scriptRenderArgs: IScScriptRenderArgs = {
-      __scriptRenderArgs
+      ScScriptRenderArgs(
+        apiVsn = _siteQsArgs.apiVsn
+      )
     }
 
     /** Добавки к тегу head в siteTpl. */
@@ -258,11 +260,6 @@ trait ScSiteBase
     override def _syncRender = false
 
   }
-
-  /** 2016.sep.8 Из IScScriptRenderArgs были удалены все параметры, т.к. они не использовались
-    * после выпиливания v1-выдачи. Сам контейнер для параметров пока остался тут до окончания перепиливания sc.
-    * Если он останется не нужен, но его следует удалить вообще. */
-  private val __scriptRenderArgs = ScScriptRenderArgs()
 
 }
 

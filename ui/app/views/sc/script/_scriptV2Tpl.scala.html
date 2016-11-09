@@ -20,4 +20,4 @@
 @* Ссылка для скачивания карты всех узлов системы должна проходить через CDN. *@
 <input type="hidden"
        id="@ALL_URL_INPUT_ID"
-       value="@cdn.forCall( routes.Sc.renderMapNodesAll() )"/>
+       value="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall(routes.Sc.renderMapNodesAll()) )"/>
