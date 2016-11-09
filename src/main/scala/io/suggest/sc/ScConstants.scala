@@ -588,7 +588,6 @@ object ScConstants {
     // Обозначены через val, потому что эти константы используют очень активно или не используют вообще.
     val ADN_ID_FN               = "m.id"
     val GENERATION_FN           = "a.gen"
-    val TILES_CAT_ID_FN         = "t.cat"
 
     val CAT_SCR_OPENED_FN       = "s.open"
     val SEARCH_TAB_FN           = "s.tab"
@@ -599,6 +598,13 @@ object ScConstants {
 
     val NAV_NGLS_STATE_MAP_FN   = "n.ngls"
     val GEO_SCR_OPENED_FN       = "n.open"
+
+    // Панель поиска: гео-позишен, [гео]теги.
+    val GEO_POSITION_FN         = "g"
+
+    def TAG_INFO_FN             = "t"
+    val TAG_NODE_ID_FN          = TAG_INFO_FN + ".i"
+    val TAG_FACE_FN             = TAG_INFO_FN + ".f"
 
   }
 
