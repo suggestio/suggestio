@@ -39,6 +39,15 @@ case class MGridData(
   override val builderStateOpt  : Option[MGridBuilderState]   = None
 )
   extends IGridData
+{
+
+  def withState(state2: MGridState): MGridData = {
+    copy(
+      state = state2
+    )
+  }
+
+}
 
 
 /** Утиль для анализа данных в grid-моделях. */

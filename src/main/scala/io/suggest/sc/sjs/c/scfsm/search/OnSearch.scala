@@ -4,7 +4,6 @@ import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.c.search.SearchFsm
 import io.suggest.sc.sjs.m.mgeo.NewGeoLoc
-import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mhdr.{HideSearchClick, LogoClick, ShowIndexClick}
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msearch._
@@ -76,10 +75,8 @@ trait OnSearch extends OnGrid with State2UrlT {
           adnIdOpt  = None,
           geoLocOpt = Some(newGeoLoc)
         ),
-        grid = sd0.grid.copy(
-          state = MGridState(
-            adsPerLoad = sd0.grid.state.adsPerLoad
-          )
+        grid = sd0.grid.withState(
+          sd0.grid.state.nothingLoaded()
         )
       )
       _stateData = sd1
@@ -127,10 +124,8 @@ trait OnSearch extends OnGrid with State2UrlT {
         common = sd0.common.copy(
           tagOpt = tagSel.info
         ),
-        grid = sd0.grid.copy(
-          state = MGridState(
-            adsPerLoad = sd0.grid.state.adsPerLoad
-          )
+        grid = sd0.grid.withState(
+          sd0.grid.state.nothingLoaded()
         )
       )
       _stateData = sd1
