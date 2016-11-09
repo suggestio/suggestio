@@ -32,9 +32,6 @@ trait Opening extends OnGrid with State2UrlT {
 
       sd1.search.fsm ! Visible(true)
 
-      // Размыть фоновую плитку, если узкий экран.
-      _maybeBlurGrid(sd1)
-
       // Сразу же сменить состояние на состояние таба, где сейчас открыта панель поиска.
       _stateData = sd1
 

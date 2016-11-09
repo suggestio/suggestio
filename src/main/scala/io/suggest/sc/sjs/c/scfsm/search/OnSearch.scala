@@ -25,9 +25,11 @@ trait OnSearch extends OnGrid with State2UrlT {
     /** Метод содержит логику обработки клика по кнопке сокрытия поисковой панели. */
     protected def _hideSearchPanel(): Unit = {
       val sd0 = _stateData
-      _unBlurGrid()
       val sd1 = SearchUtil.hide(sd0)
+
+      // Уведомить search fsm об изменении видимости панели.
       sd0.search.fsm ! Visible(false)
+
       // Сменить состояние на то, где открыта панель поиска.
       become(_nextStateSearchPanelClosed, sd1)
       State2Url.pushCurrState()

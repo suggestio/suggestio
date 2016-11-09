@@ -47,9 +47,6 @@ trait OnGridNav extends OnGrid with State2UrlT {
     }
 
     protected def _handleHideNav(): Unit = {
-      // Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай.
-      _unBlurGrid()
-
       val sd1 = NavUtil.hide( _stateData )
       become(_onHideNavState, sd1)
 
@@ -80,7 +77,7 @@ trait OnGridNav extends OnGrid with State2UrlT {
       }
 
       // Размыть плитку в фоне, если экран маловат.
-      _maybeBlurGrid(sd0)
+      //_maybeBlurGrid(sd0)
       val sd2 = NavUtil.show(sd0)
 
       _stateData = sd2

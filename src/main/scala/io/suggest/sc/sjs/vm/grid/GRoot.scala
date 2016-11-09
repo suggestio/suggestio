@@ -55,16 +55,6 @@ trait GRootT extends VmT with SubTagFind with SetHeight3Raw {
     }
   }
 
-  /** Отображать размыто. */
-  def blur(): Unit = {
-    addClasses( Grid.BLURRED_CLASS )
-  }
-
-  /** Убрать размывку */
-  def unblur(): Unit = {
-    removeClass( Grid.BLURRED_CLASS )
-  }
-
 }
 
 

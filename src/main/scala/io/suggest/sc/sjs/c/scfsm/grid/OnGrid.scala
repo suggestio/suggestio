@@ -92,30 +92,8 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
   }
 
 
-  protected[this] def _isNeedBlur(sd0: SD = _stateData): Boolean = {
-    !sd0.grid.state.isDesktopView
-  }
-
-  /** Размыть плитку в фоне, если экран маловат.
-    *
-    * @return true, если blurring имел место быть. Иначе false. */
-  protected[this] def _maybeBlurGrid(sd0: SD = _stateData): Unit = {
-    val needBlur = _isNeedBlur(sd0)
-    if (needBlur) {
-      _blurGrid()
-    }
-  }
-  protected[this] def _blurGrid(): Unit = {
-    for (groot <- GRoot.find()) {
-      groot.blur()
-    }
-  }
-  /** Убрать размывку плитки, если она была, не проверяя размеры экрана на всякий случай. */
-  protected[this] def _unBlurGrid(): Unit = {
-    for (groot <- GRoot.find()) {
-      groot.unblur()
-    }
-  }
+  // 2016.nov.9: Наконец было признано: blur тормозит. Пока временно отключаем, потом надо полностью рубануть.
+  // Тут было управление blur'ом до sc-sjs:9631a38bb9ae включительно.
 
 }
 
@@ -200,13 +178,6 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
 
       // Запуск основной логики подхвата карточек плитки.
       super._findAdsReady(mfa)
-
-      // Управление размывкой выдачи после ресайза.
-      val sd2 = _stateData
-      if (sd2.isAnySidePanelOpened && _isNeedBlur(sd2))
-        _blurGrid()
-      else
-        _unBlurGrid()
     }
 
     // При наличии нового размера контейнера сетки обновить его в состоянии FSM.

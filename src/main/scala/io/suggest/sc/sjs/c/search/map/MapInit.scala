@@ -75,7 +75,7 @@ trait MapInit extends GeoLoc with Early {
         // Добавить карту узлов.
         for {
           urlVm <- AllNodesUrl.find()
-          url <- urlVm.value
+          url   <- urlVm.value
         } {
           vm.initAllNodes(url)
         }
