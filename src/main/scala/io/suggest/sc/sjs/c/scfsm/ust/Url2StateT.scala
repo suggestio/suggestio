@@ -86,7 +86,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
     }
 
     // Десериализация geo-точки выдачи.
-    val sd2Common = tokens.get(GEO_POSITION_FN)
+    val sd2Common = tokens.get(LOC_ENV_FN)
       .flatMap( MGeoPoint.fromString )
       .fold(sd1Common) { geoPos =>
         val geoLoc = MGeoLoc(

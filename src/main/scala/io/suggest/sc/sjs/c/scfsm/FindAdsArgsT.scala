@@ -27,7 +27,15 @@ trait FindAdsArgsT extends ScFsmStub {
 
     override def receiverId = _sd.common.adnIdOpt
 
-    override def locEnv: MLocEnv = _getLocEnv(_sd)
+    override def locEnv: MLocEnv = {
+      // 2016.nov.10: Маячковые карточки остаются висеть после перехода на какой-то узел в выдаче.
+      // Нужно устранить этот косяк путём отказа от loc env при наличии adnId.
+      if (_sd.common.adnIdOpt.nonEmpty) {
+        MLocEnv.empty
+      } else {
+        _getLocEnv(_sd)
+      }
+    }
 
     override def tagNodeId = _sd.common.tagOpt.map(_.nodeId)
 

@@ -44,9 +44,10 @@ object MScSd extends ScSjsLogger {
         acc
     }
 
-    // Сериализация гео-точки.
+    // Сериализация loc-env.
     for (geoLoc <- sd0.common.geoLocOpt) {
-      acc ::= GEO_POSITION_FN -> geoLoc.point.toString
+      // TODO Заюзать loc env!
+      acc ::= LOC_ENV_FN -> geoLoc.point.toString
     }
 
     // Сериализовать данные по тегам.

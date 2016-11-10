@@ -79,8 +79,8 @@ trait OnGridBase extends ScFsmStub with ResizeDelayed with Append {
       if (_isScrWidthReallyChanged()) {
         // TODO Opt Если существенное по горизонтали, но оно осталось ~кратно ячейкам, то просто перестроить выдачу: _rebuildGridOnPanelChange
         val sd1 = sd0.withGrid(
-          sd0.grid.copy(
-            state = MGridState(
+          sd0.grid.withState(
+            MGridState(
               adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
             )
           )
@@ -168,9 +168,11 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
             resizeOpt = None
           ),
           grid = sd0.grid.copy(
-            state = sd0.grid.state.nothingLoaded().copy(
-              adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
-            ),
+            state = sd0.grid.state
+              .nothingLoaded()
+              .copy(
+                adsPerLoad = MGridState.getAdsPerLoad( sd0.common.screen )
+              ),
             builderStateOpt = None
           )
         )
@@ -187,8 +189,8 @@ trait OnGrid extends OnGridBase with IOnFocusBase {
       // Сохранить новые данные контейнера в состояние.
       val sd0 = _stateData
       _stateData = sd0.copy(
-        grid    = sd0.grid.copy(
-          state = sd0.grid.state.copy(
+        grid    = sd0.grid.withState(
+          sd0.grid.state.copy(
             contSz = gContSzOpt
           )
         )
