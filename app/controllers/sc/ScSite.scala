@@ -5,7 +5,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.stat.m.{MAction, MActionTypes}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import models._
 import models.mctx.IContextUtilDi
 import models.msc._
@@ -185,6 +185,7 @@ trait ScSiteBase
         _domainNodeOpt    <- _domainNodeOptFut
       } yield {
         new Stat2 {
+          override def scComponents = MComponents.Site :: super.scComponents
           override def userSaOpt = _userSaOpt
           override def statActions: List[MAction] = {
             // Возможный stat-экшен POV-просмотра сайта с т.з. карточки.

@@ -7,7 +7,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearch
-import io.suggest.stat.m.{MAction, MActionTypes}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.Lists
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
@@ -473,6 +473,7 @@ trait ScFocusedAdsBase
         }
 
         new Stat2 {
+          override def scComponents = MComponents.Open :: super.scComponents
           override def statActions  = saAcc
           override def userSaOpt    = _userSaOpt
           override def locEnvOpt    = _qs.search.locEnv.optional

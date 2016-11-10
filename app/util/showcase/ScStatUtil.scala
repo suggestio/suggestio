@@ -178,12 +178,16 @@ class ScStatUtil @Inject() (
     /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
     def domain3p: Option[String] = None
 
+    def scComponents: List[MComponent] = Nil
+
+    def uri = Option( ctx.request.uri )
+
     def mcommon: MCommon = {
       MCommon(
-        component       = MComponents.Sc,
+        components      = MComponents.Sc :: scComponents,
         ip              = Some( remoteAddr.remoteAddr ),
         clientUid       = clUidOpt,
-        uri             = Option( ctx.request.uri ),
+        uri             = uri,
         domain3p        = domain3p,
         isLocalClient   = Some(isLocalClient),
         gen             = gen
@@ -255,6 +259,8 @@ class ScStatUtil @Inject() (
       )
     }
 
+    def diag = MDiag.empty
+
     /** Инстанс (пока несохраненный) статистики. */
     def mstat: MStat = {
       MStat(
@@ -267,7 +273,8 @@ class ScStatUtil @Inject() (
         timestamp = ctx.now,
         ua        = mua,
         screen    = mscreen,
-        location  = mlocation
+        location  = mlocation,
+        diag      = diag
       )
     }
 

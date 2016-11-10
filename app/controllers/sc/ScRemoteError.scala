@@ -1,7 +1,7 @@
 package controllers.sc
 
 import controllers.SioController
-import io.suggest.stat.m.{MAction, MActionTypes}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
 import models.mctx.Context
 import models.msc.MScRemoteDiag
 import play.api.data.Forms._
@@ -89,15 +89,25 @@ trait ScRemoteError
             _geoLocOpt <- geoLocOptFut
             _userSaOpt <- userSaOptFut
 
-            stat2 = new scStatUtil.Stat2 {/** Сохраняемые stat actions. */
+            stat2 = new scStatUtil.Stat2 {
+              override def uri: Option[String] = {
+                merr0.url.orElse( super.uri )
+              }
+              override def diag: MDiag = {
+                MDiag(
+                  message = Option(merr0.message),
+                  state   = merr0.state
+                )
+              }
               override def statActions: List[MAction] = {
                 val maction = MAction(
                   actions   = Seq( MActionTypes.ScIndexCovering ),
                   nodeId    = Nil,
                   nodeName  = Nil
                 )
-                List(maction)
+                maction :: Nil
               }
+              override def scComponents = MComponents.Error :: super.scComponents
               override def userSaOpt = _userSaOpt
               override def ctx = _ctx
               override def geoIpLoc = _geoLocOpt

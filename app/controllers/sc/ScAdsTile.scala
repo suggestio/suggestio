@@ -7,7 +7,7 @@ import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.PlayMacroLogsI
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
-import io.suggest.stat.m.{MAction, MActionTypes}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponent, MComponents}
 import models.im.make.MakeResult
 import models.msc._
 import models.req.IReq
@@ -227,6 +227,7 @@ trait ScAdsTileBase
         }
 
         new Stat2 {
+          override def scComponents = MComponents.Tile :: super.scComponents
           override def statActions  = saAcc
           override def userSaOpt    = _userSaOpt
           override def locEnvOpt    = _qs.search.locEnv.optional
