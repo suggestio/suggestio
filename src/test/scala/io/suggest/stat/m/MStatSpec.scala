@@ -17,7 +17,7 @@ class MStatSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MStat(
         common  = MCommon(
-          component = MComponents.Sc
+          components = Seq(MComponents.Sc)
         ),
         actions = Nil
       )
@@ -28,7 +28,7 @@ class MStatSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MStat(
         common = MCommon(
-          component = MComponents.Sc
+          components = MComponents.Sc :: Nil
         ),
         actions = Seq(
           MAction(

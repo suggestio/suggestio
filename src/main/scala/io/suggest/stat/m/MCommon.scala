@@ -30,7 +30,7 @@ object MCommon extends IGenEsMappingProps {
   import Fields._
 
   implicit val FORMAT: OFormat[MCommon] = (
-    (__ \ COMPONENT_FN).format[MComponent] and
+    (__ \ COMPONENT_FN).format[Seq[MComponent]] and
     (__ \ CLIENT_IP_FN).formatNullable[String] and
     (__ \ CLIENT_UID_FN).formatNullable[String] and
     (__ \ REQ_URI_FN).formatNullable[String] and
@@ -59,7 +59,7 @@ object MCommon extends IGenEsMappingProps {
 
 /** Класс экземпляров моделей общей статистики. */
 case class MCommon(
-  component       : MComponent,
+  components      : Seq[MComponent],
   ip              : Option[String]        = None,
   clientUid       : Option[String]        = None,
   uri             : Option[String]        = None,
