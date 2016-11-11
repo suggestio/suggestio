@@ -78,4 +78,6 @@ object MEsUuId {
   * Инстанс модели.
   * @param id Строковой id.
   */
-case class MEsUuId(id: String)
+case class MEsUuId(id: String) {
+  override def toString = id
+}
