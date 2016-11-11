@@ -1,11 +1,11 @@
-package util.adn
+package util.adn.mapf
 
-import play.api.data._
-import Forms._
 import com.google.inject.Inject
-import util.FormUtil
 import io.suggest.adn.AdnMapFormConstants.Fields._
 import models.madn.mapf.MAdnMapFormRes
+import play.api.data.Forms._
+import play.api.data._
+import util.FormUtil
 import util.adv.AdvFormUtil
 import util.maps.MapFormUtil
 

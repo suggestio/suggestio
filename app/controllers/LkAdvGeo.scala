@@ -168,10 +168,15 @@ class LkAdvGeo @Inject() (
    * @param adId id размещаемой карточки.
    * @return 302 see other, 416 not acceptable.
    */
-  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Lk, U.PersonNode).async { implicit request =>
+  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.PersonNode).async { implicit request =>
+    lazy val logPrefix = s"forAdSubmit($adId):"
+
     advGeoFormUtil.agtFormStrict.bindFromRequest().fold(
       {formWithErrors =>
-        LOGGER.debug(s"forAdSubmit($adId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        // Запустить инициализацию U.Lk в фоне:
+        request.user.lkCtxDataFut
+        // Логгировать сразу, чтобы сообщения в логах не перемешивались.
+        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
         // Повторный биндинг с NoStrict-формой -- костыль для решения проблем с рендером локализованных
         // дат размещения. Даты форматируются через form.value.dates, а не через form("dates").value, поэтому
         // при ошибке биндинга возникает ситуация, когда form.value не определена, и появляется дырка на странице.
@@ -185,28 +190,27 @@ class LkAdvGeo @Inject() (
       },
 
       {result =>
-        LOGGER.trace("Binded: " + result)
-        // TODO Прикрутить free adv для суперпользователей.
+        LOGGER.trace(s"$logPrefix Binded: " + result)
 
         val isSuFree = advFormUtil.maybeFreeAdv()
         val status   = advFormUtil.suFree2newItemStatus(isSuFree)
 
-        val producerId = request.producer.id.get
-
         // Найти корзину юзера и добавить туда покупки.
         for {
-          // Прочитать узел юзера
+          // Прочитать узел юзера. Нужно для чтения/инциализации к контракта
           personNode0 <- request.user.personNodeFut
 
           // Узнать контракт юзера
           e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
+
+          producerId  = request.producer.id.get
 
           // Произвести добавление товаров в корзину.
           itemsAdded <- {
             // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
             val dbAction = for {
               // Найти/создать корзину
-              cart      <- bill2Util.ensureCart(
+              cart    <- bill2Util.ensureCart(
                 contractId = e.mc.id.get,
                 status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
               )
@@ -228,15 +232,16 @@ class LkAdvGeo @Inject() (
           }
 
         } yield {
+          val rCall = routes.LkAdvGeo.forAd(adId)
           if (!isSuFree) {
             implicit val messages = implicitly[Messages]
             // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
-            Redirect(routes.LkBill2.cart(producerId, r = Some(routes.LkAdvGeo.forAd(adId).url)))
+            Redirect(routes.LkBill2.cart(producerId, r = Some(rCall.url)))
               .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
 
           } else {
             // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
-            Redirect( routes.LkAdvGeo.forAd(adId) )
+            Redirect( rCall )
               .flashing(FLASH.SUCCESS -> "Ads.were.adv")
           }
         }

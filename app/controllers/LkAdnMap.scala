@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.GeoPoint
 import models.adv.form.MDatesPeriod
@@ -11,10 +12,12 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.INodeReq
 import play.api.data.Form
+import play.api.i18n.Messages
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.IsAdnNodeAdmin
-import util.adn.LkAdnMapFormUtil
+import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
+import util.adv.AdvFormUtil
 import util.adv.geo.AdvGeoLocUtil
 import util.billing.Bill2Util
 import views.html.lk.adn.mapf._
@@ -29,7 +32,9 @@ import scala.concurrent.Future
   * На карте в точках размещаются узлы ADN, и это делается за денежки.
   */
 class LkAdnMap @Inject() (
+  advFormUtil                   : AdvFormUtil,
   lkAdnMapFormUtil              : LkAdnMapFormUtil,
+  lkAdnMapBillUtil              : LkAdnMapBillUtil,
   bill2Util                     : Bill2Util,
   advGeoLocUtil                 : AdvGeoLocUtil,
   override val mCommonDi        : ICommonDi
@@ -88,7 +93,6 @@ class LkAdnMap @Inject() (
 
   /** Рендер страницы с формой узла */
   def _forNode(rs: Status, form: Form[MAdnMapFormRes])(implicit request: INodeReq[_]): Future[Result] = {
-
     // Собрать контекст для шаблонов. Оно зависит от контекста ЛК, + нужен доп.экшен для запуска js данной формы.
     val ctxFut = for {
       lkCtxData <- request.user.lkCtxDataFut
@@ -117,8 +121,71 @@ class LkAdnMap @Inject() (
 
 
   /** Сабмит формы размещения узла. */
-  def forNodeSubmit(esNodeId: MEsUuId) = IsAdnNodeAdminPost(esNodeId).async { implicit request =>
-    ???
+  def forNodeSubmit(esNodeId: MEsUuId) = IsAdnNodeAdminPost(esNodeId, U.PersonNode).async { implicit request =>
+    val nodeId: String = request.mnode.id.getOrElse(esNodeId)
+    lazy val logPrefix = s"formNodeSubmit($nodeId):"
+
+    // Биндим форму.
+    lkAdnMapFormUtil.adnMapFormM.bindFromRequest().fold(
+      // Забиндить не удалось, вернуть страницу с формой назад.
+      {formWithErrors =>
+        debug(s"$logPrefix: Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
+        _forNode(NotAcceptable, formWithErrors)
+      },
+
+      // Бинд удался. Обработать покупку.
+      {formRes =>
+        // Стандартный код для разделения отработки беслпатного размещения от суперюзеров и платных размещений.
+        val isSuFree = advFormUtil.maybeFreeAdv()
+        val status   = advFormUtil.suFree2newItemStatus(isSuFree)
+
+        // Найти или инициализировать корзину юзера, добавить туда покупки.
+        for {
+          // Прочитать узел юзера. Нужно для чтения/инциализации к контракта
+          personNode0 <- request.user.personNodeFut
+
+          // Узнать/инициализировать контракт юзера
+          e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
+
+          // Добавить в корзину размещение узла на карте
+          itemsAdded   <- {
+            val dbAction = for {
+              cart    <- bill2Util.ensureCart(
+                contractId = e.mc.id.get,
+                status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
+              )
+
+              // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
+              addRes <- lkAdnMapBillUtil.addToOrder(
+                orderId = cart.id.get,
+                nodeId  = nodeId,
+                formRes = formRes,
+                status  = status
+              )
+            } yield {
+              addRes
+            }
+            import slick.driver.api._
+            slick.db.run( dbAction.transactionally )
+          }
+
+        } yield {
+          val rCall = routes.LkAdnMap.forNode(esNodeId)
+          // Рендерить HTTP-ответ.
+          if (!isSuFree) {
+            implicit val messages = implicitly[Messages]
+            // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
+            Redirect(routes.LkBill2.cart(nodeId, r = Some(rCall.url)))
+              .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
+
+          } else {
+            // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
+            Redirect( rCall )
+              .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+          }
+        }
+      }
+    )
   }
 
 
