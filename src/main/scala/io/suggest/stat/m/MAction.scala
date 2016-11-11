@@ -31,6 +31,9 @@ object MAction extends IGenEsMappingProps {
       * Узлов, например или чего-то ещё в зависимости от экшена. */
     val COUNT_FN      = "count"
 
+    /** Какая-то доп.строка текста. По начальной задумке - не индексируется вообще никак. */
+    val TEXT_NI_FN    = "text_ni"
+
   }
 
 
@@ -56,20 +59,28 @@ object MAction extends IGenEsMappingProps {
       .inmap [Seq[Int]] (
         { _.getOrElse(Nil) },
         { counts => if (counts.isEmpty) None else Some(counts) }
+      ) and
+    (__ \ TEXT_NI_FN).formatNullable[Seq[String]]
+      .inmap [Seq[String]] (
+        { _.getOrElse(Nil) },
+        { texts => if (texts.isEmpty) None else Some(texts) }
       )
   )(apply, unlift(unapply))
 
 
   import io.suggest.util.SioEsUtil._
 
-  private def _strField(id: String) = FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+  private def _strField(id: String): FieldString = {
+    FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+  }
 
   override def generateMappingProps: List[DocField] = {
     List(
       _strField(ACTION_FN),
       _strField(NODE_ID_FN),
       _strField(NODE_NAME_FN),
-      FieldNumber(COUNT_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldNumber(COUNT_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldString(TEXT_NI_FN, index = FieldIndexingVariants.no, include_in_all = false)
     )
   }
 
@@ -80,5 +91,6 @@ case class MAction(
   actions   : Seq[MActionType],
   nodeId    : Seq[String]       = Nil,
   nodeName  : Seq[String]       = Nil,
-  count     : Seq[Int]          = Nil
+  count     : Seq[Int]          = Nil,
+  textNi    : Seq[String]       = Nil
 )
