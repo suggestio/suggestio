@@ -31,10 +31,18 @@ trait AbstractFsm {
   protected def become(nextState: State_t): Unit = {
     if (nextState != null) {
       _state = nextState
-      // Опережающий вызов afterBecome() тут вроде бы нелогичен, но даёт визуальный эффект ускорения работы в scala.js-автоматах.
-      _state.afterBecome()
-      _installReceiver(_state.receiver)
+      _afterStateChanged()
     }
+  }
+
+  /**
+    * Внутренний метод для действий апосля выставления нового состояния.
+    * Как минимум, нужно выполнить afterBecome() и выставить ресивер для обработки входящих сигналов.
+    */
+  protected def _afterStateChanged(): Unit = {
+    // Опережающий вызов afterBecome() тут вроде бы нелогичен, но даёт визуальный эффект ускорения работы в scala.js-автоматах.
+    _state.afterBecome()
+    _installReceiver(_state.receiver)
   }
 
   /** Выставление указанного ресивера в качестве обработчика событий. */
