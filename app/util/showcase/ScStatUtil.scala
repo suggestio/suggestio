@@ -178,7 +178,7 @@ class ScStatUtil @Inject() (
           ctx.request.headers
             .get( HeaderNames.X_REQUESTED_WITH )
             .fold [List[MUaType]] (Browser :: Nil) { xRqWith =>
-              val acc0 = MobileApp :: Nil
+              val acc0 = App :: Nil
               if (xRqWith.endsWith(".Sio2m")) {
                 CordovaApp :: acc0
               } else {
