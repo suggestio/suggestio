@@ -15,6 +15,7 @@ import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser}
 import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
+import play.mvc.Http.HeaderNames
 import util.PlayMacroLogsImpl
 import util.geo.GeoIpUtil
 import util.stat.StatCookiesUtil
@@ -171,7 +172,17 @@ class ScStatUtil @Inject() (
         osVsn = browserOs
           .flatMap { os => Option(os.getVersionNumber) }
           .flatMap { vsn => Option(vsn.getMajor) }
-          .filter(isStrUseful)
+          .filter(isStrUseful),
+        uaType = ctx.request.headers
+          .get( HeaderNames.X_REQUESTED_WITH )
+          .fold [Option[MUaType]] ( Some(MUaTypes.Browser) ) { xRqWith =>
+            if (xRqWith.endsWith(".Sio2m")) {
+              Some( MUaTypes.MobileApp )
+            } else {
+              debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+              None
+            }
+          }
       )
     }
 
@@ -279,6 +290,8 @@ class ScStatUtil @Inject() (
     }
 
   }
+
+  // TODO X-Requested-With:io.suggest.Sio2m
 
   /** Отправить v2-статистику на сохранение в БД. */
   def saveStat(stat2: Stat2): Future[_] = {

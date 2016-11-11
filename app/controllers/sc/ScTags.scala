@@ -6,6 +6,7 @@ import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import models.mctx.Context
 import models.msc.tag.MScTagsSearchQs
 import play.api.libs.json.Json
+import util.PlayMacroLogsI
 import util.acl.MaybeAuth
 import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
@@ -25,6 +26,7 @@ trait ScTags
   with IScTagsUtilDi
   with IGeoIpUtilDi
   with IScStatUtil
+  with PlayMacroLogsI
 {
 
   import mCommonDi._
@@ -123,6 +125,9 @@ trait ScTags
         override def scComponents = MComponents.Tags :: super.scComponents
       }
       scStatUtil.saveStat(sstat)
+        .onFailure { case ex: Throwable =>
+          LOGGER.error(s"tagsSearch($qs): Failed to save tags stats", ex)
+        }
     }
 
     // Возвращаем исходный асинхронный ответ.
