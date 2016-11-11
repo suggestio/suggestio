@@ -23,7 +23,8 @@ class MUaSpec extends FlatSpec with PlayJsonTestUtil {
         browser   = Some( "firefox" ),
         device    = Some( "desktop" ),
         osFamily  = Some( "pravoslavnaya OS" ),
-        osVsn     = Some( "1.0" )
+        osVsn     = Some( "1.0" ),
+        uaType    = Some( MUaTypes.Browser )
       )
     }
   }

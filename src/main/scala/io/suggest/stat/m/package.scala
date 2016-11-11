@@ -11,4 +11,6 @@ package object m {
 
   type MComponent  = MComponents.T
 
+  type MUaType     = MUaTypes.T
+
 }

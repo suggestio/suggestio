@@ -21,11 +21,18 @@ object MUa extends IGenEsMappingProps with IEmpty {
     /** Имя поля сырой строки юзер-агента. */
     val UA_STR_FN             = "raw"
 
+    /**
+      * Имя поля для имени браузера.
+      * Движки браузеров или приложений в любом случае представляется какими-то браузерами.
+      */
     val BROWSER_FN            = "browser"
     val DEVICE_FN             = "device"
 
     val OS_FAMILY_FN          = "osFamily"
     val OS_VSN_FN             = "osVsn"
+
+    /** Тип UA. Это может быть браузер, или мобильное приложение. */
+    val UA_TYPE_FN            = "type"
 
   }
 
@@ -37,19 +44,25 @@ object MUa extends IGenEsMappingProps with IEmpty {
     (__ \ BROWSER_FN).formatNullable[String] and
     (__ \ DEVICE_FN).formatNullable[String] and
     (__ \ OS_FAMILY_FN).formatNullable[String] and
-    (__ \ OS_VSN_FN).formatNullable[String]
+    (__ \ OS_VSN_FN).formatNullable[String] and
+    (__ \ UA_TYPE_FN).formatNullable[MUaType]
   )(apply, unlift(unapply))
 
 
   import io.suggest.util.SioEsUtil._
 
+  private def _fieldString(id: String): FieldString = {
+    FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+  }
+
   override def generateMappingProps: List[DocField] = {
     List(
       FieldString(UA_STR_FN, index = FieldIndexingVariants.no, include_in_all = true),
-      FieldString(BROWSER_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(DEVICE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(OS_FAMILY_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(OS_VSN_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      _fieldString(BROWSER_FN),
+      _fieldString(DEVICE_FN),
+      _fieldString(OS_FAMILY_FN),
+      _fieldString(OS_VSN_FN),
+      _fieldString(UA_TYPE_FN)
     )
   }
 
@@ -68,10 +81,11 @@ object MUa extends IGenEsMappingProps with IEmpty {
   * @param osVsn Версия ОС в рамках семейства.
   */
 case class MUa(
-  ua            : Option[String] = None,
-  browser       : Option[String] = None,
-  device        : Option[String] = None,
-  osFamily      : Option[String] = None,
-  osVsn         : Option[String] = None
+  ua            : Option[String]    = None,
+  browser       : Option[String]    = None,
+  device        : Option[String]    = None,
+  osFamily      : Option[String]    = None,
+  osVsn         : Option[String]    = None,
+  uaType        : Option[MUaType]   = None
 )
   extends EmptyProduct

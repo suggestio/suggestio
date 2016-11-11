@@ -28,7 +28,8 @@ class MActionSpec extends FlatSpec with PlayJsonTestUtil {
         actions   = Seq( MActionTypes.CurrUser, MActionTypes.ScIndexCovering ),
         nodeId    = Seq( "asdasdq123123123", "23sergsergserg" ),
         nodeName  = Seq( "Asd asd asd", "varvaevreverv" ),
-        count     = Seq(1, 5, 7)
+        count     = Seq(1, 5, 7),
+        textNi    = Seq("test 1 2 3", "a b c d e f", "q w erty")
       )
     }
   }
