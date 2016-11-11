@@ -2,8 +2,9 @@ package io.suggest.ble.beaconer.fsm
 
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconSd
-import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconReport, BeaconsNearby}
+import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconsNearby}
 import io.suggest.common.radio.{BeaconUtil, RadioUtil}
+import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
@@ -108,7 +109,10 @@ trait On extends BeaconerFsmStub { thisFsm =>
               lastSeenMs  = bs.seen
             )
           }
-        beaconSd1.accuracies.pushValue( distanceM )
+        // Нам проще работать с целочисленной дистанцией в сантиметрах
+        val distanceCm = (distanceM * 100).toInt
+
+        beaconSd1.accuracies.pushValue( distanceCm )
         _stateData = sd0.withBeacons(
           sd0.beacons + ((beaconUid, beaconSd1))
         )
@@ -298,14 +302,16 @@ trait On extends BeaconerFsmStub { thisFsm =>
         sd0.beacons
           .iterator
           .flatMap { case (k, v) =>
-            for (accuracyM <- v.accuracies.average) yield {
-              (k, BeaconReport(v.beacon, accuracyM))
+            for {
+              accuracyCm    <- v.accuracies.average
+              uid           <- v.beacon.uid
+            } yield {
+              (k, MBleBeaconInfo(uid, accuracyCm))
             }
           }
           // Маячки на значительном расстоянии уже неинтересны.
           .filter { tuple =>
-            val accuracy = tuple._2.accuracyM
-            accuracy < 20
+            tuple._2.distanceCm < 20
           }
           .toSeq
       }
@@ -316,8 +322,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
       } else {
         val hash = beaconsNearby
           .map { case (bcnUid, rep) =>
-            val distCm = (rep.accuracyM * 100).toInt
-            bcnUid -> BeaconUtil.quantedDistance(distCm)
+            bcnUid -> BeaconUtil.quantedDistance(rep.distanceCm)
           }
           // Сортируем по нормализованному кванту расстояния и по id маячка, чтобы раздавить флуктуации от рядом находящихся маячков.
           .sortBy { case (bcnUid, distQ) =>

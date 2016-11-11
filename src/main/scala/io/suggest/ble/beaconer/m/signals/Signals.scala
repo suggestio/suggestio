@@ -1,6 +1,7 @@
 package io.suggest.ble.beaconer.m.signals
 
 import io.suggest.common.radio.BeaconSignal
+import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
 
 /**
@@ -34,7 +35,7 @@ case class BeaconDetected(
 
 /** Исходящий сигнал о наблюдаемых маячках в текущий момент времени. */
 case class BeaconsNearby(
-  beacons: Seq[BeaconReport]
+  beacons: Seq[MBleBeaconInfo]
 )
   extends IFsmMsg
 {
@@ -42,9 +43,4 @@ case class BeaconsNearby(
     "BNear" + beacons.mkString("[", ",", "]")
   }
 }
-case class BeaconReport(
-  beacon    : BeaconSignal,
-  accuracyM : Double
-) {
-  override def toString: String = "BRpt(" + beacon + "," + accuracyM + "m" + ")"
-}
+

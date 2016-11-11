@@ -12,15 +12,16 @@ class BeaconAccuracyMeasurer
   extends TopBottomFiltered
 {
 
-  override type V = Double
+  // Изначально было Double в метрах. Но для простоты всё сменилось на Int в сантиметрах.
+  override type V = Int
 
   override def length: Int = 12
 
-  override def sum(a: Double, b: Double): Double = {
+  override def sum(a: V, b: V): V = {
     a + b
   }
 
-  override def divide(a: Double, divider: Int): Double = {
+  override def divide(a: V, divider: Int): V = {
     a / divider
   }
 
