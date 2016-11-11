@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.c.search.map
 import io.suggest.sc.sjs.m.mmap.MMapInst
 import io.suggest.sc.sjs.vm.mapbox.{AllNodesUrl, GlMapVm}
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoContent
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.mapbox.gl.event._
 
 /**
@@ -30,7 +31,7 @@ trait MapInit extends GeoLoc with Early {
         sd0.mapInst.fold[Unit] {
           // Мапы нет вообще, надо инициализировать.
           val glmap = GlMapVm.createNew(
-            container = currCont,
+            container   = currCont,
             useLocation = sd0.lastUserLoc
           )
           val mmi = MMapInst(glmap, currCont)
@@ -92,6 +93,10 @@ trait MapInit extends GeoLoc with Early {
     /** Состояние готовности инициализированной карты. */
     def _mapReadyState: FsmState
 
+    override def processFailure(ex: Throwable): Unit = {
+      error( ErrorMsgs.MAP_INIT_FAILED, ex )
+      _done()
+    }
   }
 
 }
