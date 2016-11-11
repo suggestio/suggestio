@@ -64,4 +64,10 @@ object ErrorMsgs extends MsgsStaticT {
 
   def MISSING_POINT_0              = E(28)
 
+  def MAP_INIT_FAILED              = E(29)
+
+  def UNEXPECTED_FSM_RUNTIME_ERROR = E(30)
+
+  def FSM_MSG_PROCESS_ERROR        = E(31)
+
 }

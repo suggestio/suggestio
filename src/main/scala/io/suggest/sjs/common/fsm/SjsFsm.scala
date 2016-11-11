@@ -39,6 +39,18 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
   }
 
 
+  /**
+    * Внутренний метод для действий апосля выставления нового состояния.
+    * Как минимум, нужно выполнить afterBecome() и выставить ресивер для обработки входящих сигналов.
+    */
+  override protected def _afterStateChanged(): Unit = {
+    try {
+      super._afterStateChanged()
+    } catch { case ex: Throwable =>
+      _state.processFailure(ex)
+    }
+  }
+
   /** Добавление слушателя событий отпускания кнопок клавиатуры в состояние. */
   protected trait FsmState extends super.FsmState {
 
@@ -46,9 +58,12 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
 
     /** Реакция на проблемы при обработке входящего сообщения. */
     def processEventFailed(e: Any, ex: Throwable): Unit = {
-      processFailure(ex)
+      error(ErrorMsgs.FSM_MSG_PROCESS_ERROR + " " + e, ex)
     }
-    def processFailure(ex: Throwable): Unit = {}
+    /** Реакция на ошибку в работе состояния. */
+    def processFailure(ex: Throwable): Unit = {
+      error(ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, ex)
+    }
   }
 
   /**
