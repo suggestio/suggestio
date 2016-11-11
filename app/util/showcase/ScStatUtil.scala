@@ -173,16 +173,20 @@ class ScStatUtil @Inject() (
           .flatMap { os => Option(os.getVersionNumber) }
           .flatMap { vsn => Option(vsn.getMajor) }
           .filter(isStrUseful),
-        uaType = ctx.request.headers
-          .get( HeaderNames.X_REQUESTED_WITH )
-          .fold [Option[MUaType]] ( Some(MUaTypes.Browser) ) { xRqWith =>
-            if (xRqWith.endsWith(".Sio2m")) {
-              Some( MUaTypes.MobileApp )
-            } else {
-              debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
-              None
-            }
+        uaType = {
+          import MUaTypes._
+          ctx.request.headers
+            .get( HeaderNames.X_REQUESTED_WITH )
+            .fold [List[MUaType]] (Browser :: Nil) { xRqWith =>
+              val acc0 = MobileApp :: Nil
+              if (xRqWith.endsWith(".Sio2m")) {
+                CordovaApp :: acc0
+              } else {
+                debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+                acc0
+              }
           }
+        }
       )
     }
 
