@@ -31,7 +31,7 @@ object MUa extends IGenEsMappingProps with IEmpty {
     val OS_FAMILY_FN          = "osFamily"
     val OS_VSN_FN             = "osVsn"
 
-    /** Тип UA. Это может быть браузер, или мобильное приложение. */
+    /** Имя поля типа или типов UA. Это может быть браузер, или мобильное приложение и т.д. */
     val UA_TYPE_FN            = "type"
 
   }
@@ -45,7 +45,11 @@ object MUa extends IGenEsMappingProps with IEmpty {
     (__ \ DEVICE_FN).formatNullable[String] and
     (__ \ OS_FAMILY_FN).formatNullable[String] and
     (__ \ OS_VSN_FN).formatNullable[String] and
-    (__ \ UA_TYPE_FN).formatNullable[MUaType]
+    (__ \ UA_TYPE_FN).formatNullable[Seq[MUaType]]
+      .inmap [Seq[MUaType]] (
+        { _.getOrElse(Nil) },
+        { uaTypes => if (uaTypes.isEmpty) None else Some(uaTypes) }
+      )
   )(apply, unlift(unapply))
 
 
@@ -79,6 +83,8 @@ object MUa extends IGenEsMappingProps with IEmpty {
   * @param device Устройство.
   * @param osFamily Семейство ОС.
   * @param osVsn Версия ОС в рамках семейства.
+  * @param uaType Типы UA. Изначально браузер или мобильное приложение.
+  *               Если последнее, то например на базе кордовы.
   */
 case class MUa(
   ua            : Option[String]    = None,
@@ -86,6 +92,6 @@ case class MUa(
   device        : Option[String]    = None,
   osFamily      : Option[String]    = None,
   osVsn         : Option[String]    = None,
-  uaType        : Option[MUaType]   = None
+  uaType        : Seq[MUaType]      = Nil
 )
   extends EmptyProduct

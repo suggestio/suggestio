@@ -19,9 +19,12 @@ object MUaTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdValT 
   override type T = Val
 
   /** Браузеры. */
-  val Browser: T = new Val("browser")
+  val Browser       : T = new Val("browser")
 
   /** Мобильные приложения. */
-  val MobileApp: T = new Val("mob.app")
+  val MobileApp     : T = new Val("mob.app")
+
+  /** Приложение на базе cordova. Используется в связке с MobileApp. */
+  val CordovaApp    : T = new Val("cordova")
 
 }
