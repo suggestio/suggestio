@@ -104,7 +104,7 @@ trait Plain extends OnGrid with State2UrlT {
       val sd0 = _stateData
       val sd1 = sd0.copy(
         common = sd0.common.copy(
-          beacons = bn.beacons
+          bleBeacons = bn.beacons
         ),
         grid = sd0.grid.copy(
           state = MGridState(

@@ -32,7 +32,7 @@ trait Index extends FindAdsArgsT {
     protected def _getIndex(sd0: SD = _stateData): Future[MScRespIndex] = {
       val inxArgs = MScIndexArgs(
         adnIdOpt      = sd0.common.adnIdOpt,
-        locEnv        = currLocEnv,
+        locEnv        = sd0.locEnv,
         screen        = Some( sd0.common.screen ),
         withWelcome   = true
       )

@@ -7,9 +7,8 @@ import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
 import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
-import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.fsm._
-import io.suggest.sjs.common.model.loc.MLocEnv
+import io.suggest.sjs.common.model.loc.ILocEnv
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vsz.ViewportSz
 import org.scalajs.dom.KeyboardEvent
@@ -146,24 +145,8 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
   // API, в т.ч. публичное.
 
   /** Текущая локация системы. */
-  def currLocEnv: MLocEnv = {
-    _getLocEnv( _stateData )
-  }
-  protected def _getLocEnv(sd: SD): MLocEnv = {
-    MLocEnv(
-      // Впилить геолокацию.
-      geo         = sd.common.geoLocOpt,
-      // Впилить маячки.
-      bleBeacons  = for {
-        beacon    <- sd.common.beacons
-        bUid      <- beacon.beacon.uid
-      } yield {
-        MBleBeaconInfo(
-          uid        = bUid,
-          distanceCm = (beacon.accuracyM * 100).toInt
-        )
-      }
-    )
+  def currLocEnv: ILocEnv = {
+    _stateData.locEnv
   }
 
 }

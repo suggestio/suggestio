@@ -5,6 +5,7 @@ import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sjs.common.model.loc.ILocEnv
 import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.scalajs.js.URIUtils
@@ -46,9 +47,13 @@ object MScSd extends ScSjsLogger {
 
     // Сериализация loc-env.
     for (geoLoc <- sd0.common.geoLocOpt) {
-      // TODO Заюзать loc env!
       acc ::= LOC_ENV_FN -> geoLoc.point.toString
     }
+    // TODO Использовать GeoLoc для маячков. Проблема в том, что функция-сериализатор JSON в QS _o2qs() лежит в js-роутере, а не здесь.
+    //val locEnv: ILocEnv = sd0.common
+    //if (MLocEnv.nonEmpty(locEnv)) {
+    //  acc ::= LOC_ENV_FN -> MLocEnv.toJson(locEnv)
+    //}
 
     // Сериализовать данные по тегам.
     for (tagInfo <- sd0.common.tagOpt) {
@@ -174,6 +179,8 @@ trait IScSd {
     isScRootDiffers(sd2) ||
       common.generation != sd2.common.generation
   }
+
+  def locEnv: ILocEnv = common
 
 }
 

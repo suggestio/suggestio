@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.m.mgrid.MFindGridAdsArgsLimitOffsetT
 import io.suggest.sc.sjs.m.msc.MScSd
 import io.suggest.sc.sjs.m.msrv.tile.MFindAdsReqDflt
-import io.suggest.sjs.common.model.loc.MLocEnv
+import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 /**
   * Suggest.io
@@ -27,13 +27,13 @@ trait FindAdsArgsT extends ScFsmStub {
 
     override def receiverId = _sd.common.adnIdOpt
 
-    override def locEnv: MLocEnv = {
+    override def locEnv: ILocEnv = {
       // 2016.nov.10: Маячковые карточки остаются висеть после перехода на какой-то узел в выдаче.
       // Нужно устранить этот косяк путём отказа от loc env при наличии adnId.
       if (_sd.common.adnIdOpt.nonEmpty) {
         MLocEnv.empty
       } else {
-        _getLocEnv(_sd)
+        _sd.locEnv
       }
     }
 

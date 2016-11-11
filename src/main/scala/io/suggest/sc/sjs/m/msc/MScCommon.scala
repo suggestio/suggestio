@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.ble.beaconer.m.signals.BeaconReport
 import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
+import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.model.loc.IGeoLocMin
+import io.suggest.sjs.common.model.loc.{IGeoLocMin, ILocEnv}
 
 /**
   * Suggest.io
@@ -13,7 +13,7 @@ import io.suggest.sjs.common.model.loc.IGeoLocMin
   * Description: Модель-контейнер очень общих частей FSM-состояния [[MScSd]].
   * Появилась с целью облегчения [[MScSd]] и группировки разных простых полей верхнего уровня.
   */
-trait IScCommon {
+trait IScCommon extends ILocEnv {
 
   def screen       : IMScreen
   def browser      : IBrowser
@@ -22,7 +22,7 @@ trait IScCommon {
   def resizeOpt    : Option[MResizeDelay]
   def geoLocOpt    : Option[IGeoLocMin]
   def tagOpt       : Option[MTagInfo]
-  def beacons      : Seq[BeaconReport]
+  def bleBeacons   : Seq[MBleBeaconInfo]
 
 }
 
@@ -36,7 +36,7 @@ trait IScCommon {
   * @param generation "Поколение" выдачи, т.е. random seed.
   * @param adnIdOpt id текущего узла-ресивера выдачи, если есть.
   * @param tagOpt Инфа о текущем теге, если он выбран. Выставляется уведомлением из TagsFsm.
-  * @param beacons Маячки, на которые ориентирована текущая выдача.
+  * @param bleBeacons BLE-маячки, на которые ориентирована текущая выдача.
   */
 case class MScCommon(
   override val screen       : IMScreen,
@@ -46,12 +46,12 @@ case class MScCommon(
   override val resizeOpt    : Option[MResizeDelay]  = None,
   override val geoLocOpt    : Option[IGeoLocMin]    = None,
   override val tagOpt       : Option[MTagInfo]      = None,
-  override val beacons      : Seq[BeaconReport]     = Nil
+  override val bleBeacons   : Seq[MBleBeaconInfo]   = Nil
 )
   extends IScCommon
 {
 
-  def withBeacons(beacons2: Seq[BeaconReport]) = copy(beacons = beacons2)
+  def withBeacons(beacons2: Seq[MBleBeaconInfo]) = copy(bleBeacons = beacons2)
 
   def withGeoLoc(geoLocOpt2: Option[IGeoLocMin]) = copy(geoLocOpt = geoLocOpt2)
 
