@@ -13,7 +13,7 @@ import scala.scalajs.js
   */
 object MBleBeaconInfo {
 
-  def toJson(m: MBleBeaconInfo): js.Dictionary[js.Any] = {
+  def toJson(m: BeaconData): js.Dictionary[js.Any] = {
     val d = js.Dictionary.empty[js.Any]
 
     d(UID_FN)          = m.uid
@@ -30,3 +30,6 @@ case class MBleBeaconInfo(
   override val distanceCm   : Int
 )
   extends BeaconData
+{
+  override def toString: String = "B(" + uid + "," + distanceCm + "cm)"
+}

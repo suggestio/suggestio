@@ -2,7 +2,7 @@ package io.suggest.sjs.common.tags.search
 
 import io.suggest.sc.TagSearchConstants.Req._
 import io.suggest.sjs.common.model.ToJsonDictDummyT
-import io.suggest.sjs.common.model.loc.MLocEnv
+import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -24,7 +24,7 @@ trait ITagSearchArgs extends ToJsonDictDummyT {
   def offset    : Option[Int]
 
   /** Данные по локации, если есть. */
-  def locEnv    : MLocEnv
+  def locEnv    : ILocEnv
 
   override def toJson: Dictionary[Any] = {
     val d = super.toJson
@@ -42,7 +42,7 @@ trait ITagSearchArgs extends ToJsonDictDummyT {
       d(OFFSET_FN) = _offset.get
 
     val _locEnv = locEnv
-    if (_locEnv.nonEmpty)
+    if ( MLocEnv.nonEmpty(_locEnv))
       d(LOC_ENV_FN) = MLocEnv.toJson(_locEnv)
 
     d
@@ -56,6 +56,6 @@ case class MTagSearchArgs(
   override val faceFts  : Option[String]    = None,
   override val limit    : Option[Int]       = None,
   override val offset   : Option[Int]       = None,
-  override val locEnv   : MLocEnv           = MLocEnv.empty
+  override val locEnv   : ILocEnv           = MLocEnv.empty
 )
   extends ITagSearchArgs

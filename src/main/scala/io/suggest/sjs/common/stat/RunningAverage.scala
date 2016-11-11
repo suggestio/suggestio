@@ -43,18 +43,18 @@ trait RunningAverage {
 
   def sum(a: V, b: V): V
 
-  def divide(a: V, divider: Int): Double
+  def divide(a: V, divider: Int): V
 
   def measurments: Seq[V] = {
     (_measurments: Seq[V])
       .view(I0, _countMeasured)
   }
 
-  def average: Option[Double] = {
+  def average: Option[V] = {
     val wrap = measurments
     wrap
       .reduceOption(sum)
-      .fold [Option[Double]] {
+      .fold [Option[V]] {
         wrap.headOption
           .map(divide(_, 1))
       } { sumAll =>

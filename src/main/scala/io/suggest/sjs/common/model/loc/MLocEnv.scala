@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.model.loc
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.radio.BeaconData
 import io.suggest.loc.LocationConstants._
 import io.suggest.sjs.common.ble.MBleBeaconInfo
 
@@ -12,22 +13,33 @@ import scala.scalajs.js
   * Created: 16.09.16 15:14
   * Description: Неявно-пустая модель данных для сервера о состоянии физического окружения текущего устройства.
   */
+trait ILocEnv {
+  def geoLocOpt     : Option[IGeoLocMin]
+  def bleBeacons    : Seq[BeaconData]
+}
+
+/** Дефолтовая реализация модели-контейнера [[ILocEnv]]. */
 case class MLocEnv(
-  geo           : Option[IGeoLocMin]    = None,
-  bleBeacons    : Seq[MBleBeaconInfo]   = Nil
+  override val geoLocOpt     : Option[IGeoLocMin]    = None,
+  override val bleBeacons    : Seq[BeaconData]       = Nil
 )
   extends EmptyProduct
+  with ILocEnv
 
 
 object MLocEnv {
 
   def empty = MLocEnv()
 
+  def nonEmpty(v: ILocEnv): Boolean = {
+    v.geoLocOpt.nonEmpty || v.bleBeacons.nonEmpty
+  }
+
   /** Сериализатор в JSON, понятный серваку. */
-  def toJson(v: MLocEnv): js.Dictionary[js.Any] = {
+  def toJson(v: ILocEnv): js.Dictionary[js.Any] = {
     val d = js.Dictionary[js.Any]()
 
-    for (g <- v.geo)
+    for (g <- v.geoLocOpt)
       d(GEO_LOC_FN) = IGeoLocMin.toJson(g)
 
     if (v.bleBeacons.nonEmpty)
