@@ -1,9 +1,8 @@
 package io.suggest.lk.tags.edit.fsm
 
-import io.suggest.lk.tags.edit.fsm.states.{StandBy, Add}
+import io.suggest.lk.tags.edit.fsm.states.{Add, StandBy}
 import io.suggest.lk.tags.edit.m.MStateData
 import io.suggest.lk.tags.edit.vm.TVm
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
  * Suggest.io
@@ -11,7 +10,7 @@ import io.suggest.sjs.common.util.SjsLogger
  * Created: 07.09.15 16:35
  * Description: FSM, обслуживающий подсистему редактирования тегов в формах.
  */
-abstract class TagsEditFsm extends StandBy with Add with SjsLogger {
+abstract class TagsEditFsm extends StandBy with Add {
 
   // Инициализация начальных значений состояния.
   override protected var _stateData: SD   = MStateData()

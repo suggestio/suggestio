@@ -108,7 +108,7 @@ trait Add extends TagsEditFsmStub { fsm =>
 
     /** Реакция на неожиданный ответ сервера. */
     protected def _handleUnexpectedResponse(ur: UnexpectedResponse): Unit = {
-      error( ErrorMsgs.CANT_ADD_TAG_SERVER_ERROR )
+      LOG.error( ErrorMsgs.CANT_ADD_TAG_SERVER_ERROR )
       // TODO Разморозить форму, если замаскирована.
       // TODO Уведомить о какой-то неизвестной проблеме юзера.
       become(_allDoneState)
@@ -116,7 +116,7 @@ trait Add extends TagsEditFsmStub { fsm =>
 
     /** Реакция на исключение, возникшее при выполнении запроса к серверу. */
     protected def _handleRequestError(ex: Throwable): Unit = {
-      error( ErrorMsgs.CANT_ADD_TAG_SERVER_ERROR, ex )
+      LOG.error( ErrorMsgs.CANT_ADD_TAG_SERVER_ERROR, ex )
       // TODO Уведомить юзера о проблеме.
       become(_allDoneState)
     }
