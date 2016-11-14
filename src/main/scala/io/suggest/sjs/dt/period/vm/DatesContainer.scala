@@ -2,8 +2,8 @@ package io.suggest.sjs.dt.period.vm
 
 import io.suggest.dt.interval.DatesIntervalConstants
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.vm.find.FindDiv
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 
@@ -26,7 +26,7 @@ trait DatesContainerT
   extends ShowHideDisplayT
   with IInitLayoutFsm
   with SetIsShown
-  with SjsLogger
+  with Log
 {
   override type T = Dom_t
 
@@ -40,7 +40,7 @@ trait DatesContainerT
     val argsOpt = argsInputOpt.flatMap(_.valueJson)
 
     if (argsOpt.isEmpty) {
-      warn( WarnMsgs.DT_PICKER_ARGS_MISSING )
+      LOG.warn( WarnMsgs.DT_PICKER_ARGS_MISSING )
     }
 
     val applyF = { dvm: DateVmT =>
