@@ -2,7 +2,6 @@ package io.suggest.sc.sjs.c.plat
 
 import _root_.cordova.Cordova
 import io.suggest.sc.sjs.m.mdev.MPlatFsmSd
-import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sjs.common.fsm.LogBecome
 
 import scala.scalajs.js
@@ -16,7 +15,6 @@ import scala.scalajs.js
 object PlatformFsm
   extends dev.Browser
   with dev.Cordova
-  with ScSjsFsmLogger
   with LogBecome
 {
 

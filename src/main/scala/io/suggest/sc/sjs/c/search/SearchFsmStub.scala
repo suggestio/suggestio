@@ -25,7 +25,7 @@ trait SearchFsmStub extends SjsFsm with StateData {
   }
   protected def _notifyTabFsm(signal: IFsmMsg, mtab: MTab = _stateData.currTab): Unit = {
     _subFsm(mtab).fold[Unit] {
-      error( ErrorMsgs.NO_CHILD_FSM_REQUESTED_FOUND + " " + mtab )
+      LOG.error( ErrorMsgs.NO_CHILD_FSM_REQUESTED_FOUND, msg = mtab.toString )
     } { tabFsm =>
       tabFsm ! signal
     }

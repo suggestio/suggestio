@@ -4,7 +4,7 @@ import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.loc.ILocEnv
 import io.suggest.sjs.common.msg.WarnMsgs
 
@@ -17,7 +17,7 @@ import scala.scalajs.js.URIUtils
  * Description: Модель состояния конечного автомата интерфейса выдачи.
  */
 
-object MScSd extends ScSjsLogger {
+object MScSd extends Log {
 
   import io.suggest.sc.ScConstants.ScJsState._
 
@@ -126,7 +126,7 @@ object MScSd extends ScSjsLogger {
               List(k2 -> v2)
 
             case other =>
-              warn( WarnMsgs.MSC_STATE_URL_HASH_UNKNOWN_TOKEN + " " + other )
+              LOG.warn( WarnMsgs.MSC_STATE_URL_HASH_UNKNOWN_TOKEN, msg = other )
               Iterator.empty
           }
         }

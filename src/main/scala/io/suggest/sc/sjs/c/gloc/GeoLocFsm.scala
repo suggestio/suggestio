@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.c.gloc
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.mgeo.MGeoFsmSd
-import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
@@ -21,7 +20,6 @@ import io.suggest.sjs.common.fsm.SjsFsmImpl
   */
 object GeoLocFsm
   extends SjsFsmImpl
-  with ScSjsFsmLogger
   with Off
   with Watching
   //with LogBecome
@@ -32,9 +30,9 @@ object GeoLocFsm
 
 
   /** Дополнительно можно логгировать какое-то "состояние". */
-  override protected def _logState: Option[String] = {
-    Some( _state.toString + "(" + _stateData + ")" )
-  }
+  //override protected def _logState: Option[String] = {
+  //  Some( _state.toString + "(" + _stateData + ")" )
+  //}
 
   /** Запуск данного FSM. Вызывается только один раз. */
   def start(): Unit = {

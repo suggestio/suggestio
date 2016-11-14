@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.util.grid.builder
 
 import io.suggest.sc.sjs.m.mgrid._
+import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.annotation.tailrec
 
@@ -16,7 +16,7 @@ import scala.annotation.tailrec
  *
  * @see [[http://prolll.com/pr/backpack/ Demo некоторых алгоритмов 2D-упаковки на js]]
  */
-trait V1Builder extends ISjsLogger with MutableState {
+trait V1Builder extends ILog with MutableState {
 
   /** Тип обрабатываемых блоков. */
   type BI <: IBlockInfo
@@ -118,7 +118,7 @@ trait V1Builder extends ISjsLogger with MutableState {
   @tailrec final def step(i: Int): Unit = {
     if (i >= 1000) {
       // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
-      warn( ErrorMsgs.ENDLESS_LOOP_MAYBE + " " + i )
+      LOG.warn( ErrorMsgs.ENDLESS_LOOP_MAYBE, msg = i )
     } else if (currColumn >= colsCount) {
       // Конец текущей строки -- перейти на следующую строку.
       beforeStepNextLine()

@@ -119,7 +119,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
             Some(geoPanelOpenedStr.toBoolean)
           } catch {
             case ex: Throwable =>
-              warn(WarnMsgs.NAV_PANEL_OPENED_PARSE_ERROR, ex)
+              LOG.warn(WarnMsgs.NAV_PANEL_OPENED_PARSE_ERROR, ex)
               None
           }
         }
@@ -138,7 +138,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
             Some(panelOpenedStr.toBoolean)
           } catch {
             case ex: Throwable =>
-              warn(WarnMsgs.SEARCH_PANEL_OPENED_PARSE_ERROR, ex)
+              LOG.warn(WarnMsgs.SEARCH_PANEL_OPENED_PARSE_ERROR, ex)
               None
           }
         }
@@ -259,7 +259,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
     val sdNextQsStr = MScSd.toQsStr( _stateData )
     if ( State2Url.currUrlQsEqualsTo(sdNextQsStr) ) {
-      warn( WarnMsgs.POP_STATE_TO_SAME_STATE + " " + sdNextQsStr )
+      LOG.warn( WarnMsgs.POP_STATE_TO_SAME_STATE, msg = sdNextQsStr )
 
     } else {
 

@@ -3,9 +3,9 @@ package io.suggest.sc.sjs.c.scfsm.grid.build
 import io.suggest.sc.sjs.m.mgrid.{IGridData, MGridData}
 import io.suggest.sc.sjs.m.msc.{IScSd, MScSd}
 import io.suggest.sc.sjs.util.grid.builder.V1Builder
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.grid.{GBlock, GContainer, GContent}
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.browser.IBrowser
 
 /**
@@ -17,7 +17,7 @@ import io.suggest.sjs.common.model.browser.IBrowser
  */
 
 /** Частичная реализация grid builder под нужды FSM-MVM-архитектуры. */
-trait GridBuilderT extends V1Builder with ScSjsLogger {
+trait GridBuilderT extends V1Builder with Log {
 
   override type BI = GBlock
 

@@ -133,7 +133,7 @@ trait Init extends ScFsmStub with IUrl2State { scFsm =>
 
     /** Реакция на таймаут ожидания готовности девайса. */
     def _handleTimeOut(): Unit = {
-      warn( WarnMsgs.CORDOVA_DEVICE_READY_WAIT_TIMEOUT )
+      LOG.warn( WarnMsgs.CORDOVA_DEVICE_READY_WAIT_TIMEOUT )
       _becomeNextState()
     }
 

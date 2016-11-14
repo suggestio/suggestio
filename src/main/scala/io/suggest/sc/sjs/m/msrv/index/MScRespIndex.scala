@@ -6,10 +6,10 @@ import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp, MSrv}
 import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.loc.MGeoPoint
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.primo.IApplyUndef1
-import io.suggest.sjs.common.util.SjsLogger
 
 import scala.concurrent.Future
 import scala.scalajs.js.UndefOr
@@ -21,7 +21,7 @@ import scala.scalajs.js.annotation.JSName
   * Created: 27.09.16 22:24
   * Description: Модель ответа данных по индексу.
   */
-object MScRespIndex extends SjsLogger with IApplyUndef1 {
+object MScRespIndex extends Log with IApplyUndef1 {
 
   override type ApplyArg_t = MScRespIndexJson
   override type T = MScRespIndex
@@ -41,7 +41,7 @@ object MScRespIndex extends SjsLogger with IApplyUndef1 {
       .map(_scResp2index)
 
     fut.onFailure { case ex: Throwable =>
-      error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex )
+      LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex )
     }
 
     fut

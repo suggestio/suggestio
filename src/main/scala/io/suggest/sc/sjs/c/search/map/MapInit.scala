@@ -94,7 +94,7 @@ trait MapInit extends GeoLoc with Early {
     def _mapReadyState: FsmState
 
     override def processFailure(ex: Throwable): Unit = {
-      error( ErrorMsgs.MAP_INIT_FAILED, ex )
+      LOG.error( ErrorMsgs.MAP_INIT_FAILED, ex )
       _done()
     }
   }

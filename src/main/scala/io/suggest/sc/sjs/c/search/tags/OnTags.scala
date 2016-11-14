@@ -71,7 +71,7 @@ trait OnTags extends TagsFsmStub {
           case Success(resp) =>
             _handleSearchRespTs(resp, r.timestamp)
           case Failure(ex) =>
-            error(ErrorMsgs.TAGS_SEARCH_REQ_FAILED, ex)
+            LOG.error(ErrorMsgs.TAGS_SEARCH_REQ_FAILED, ex)
         }
 
       // Клик по тегу в списке тегов.
@@ -121,7 +121,7 @@ trait OnTags extends TagsFsmStub {
           )
         }
       } else {
-        warn( WarnMsgs.TAG_SEARCH_XHR_TS_DROP + " " + tstamp + " " + sd0.currReqTs )
+        LOG.warn( WarnMsgs.TAG_SEARCH_XHR_TS_DROP, msg = tstamp + " " + sd0.currReqTs )
       }
     }
 

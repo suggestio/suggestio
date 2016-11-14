@@ -154,7 +154,7 @@ trait Append extends FindAdsArgsT {
 
 
     protected def _findAdsFailed(ex: Throwable): Unit = {
-      error(ErrorMsgs.FIND_ADS_REQ_FAILED, ex)
+      LOG.error(ErrorMsgs.FIND_ADS_REQ_FAILED, ex)
       become(_findAdsFailedState)
     }
 

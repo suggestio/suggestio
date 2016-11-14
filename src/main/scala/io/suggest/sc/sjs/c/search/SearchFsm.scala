@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.c.search
 import io.suggest.sc.sjs.c.search.map.MapFsm
 import io.suggest.sc.sjs.c.search.tags.TagsFsm
 import io.suggest.sc.sjs.m.msearch.{MSearchFsmSd, MTab, MTabs}
-import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
@@ -16,7 +15,6 @@ import io.suggest.sjs.common.fsm.SjsFsmImpl
 object SearchFsm
   extends SjsFsmImpl
   with OnSearch
-  with ScSjsFsmLogger
   //with LogBecome
 {
 

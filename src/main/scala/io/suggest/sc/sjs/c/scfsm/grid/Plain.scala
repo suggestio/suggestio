@@ -74,7 +74,7 @@ trait Plain extends OnGrid with State2UrlT {
           for (fsl <- fslOpt) {
             fsl.hide()
           }
-          warn(WarnMsgs.BACK_TO_UNDEFINED_NODE)
+          LOG.warn(WarnMsgs.BACK_TO_UNDEFINED_NODE)
       }
     }
 

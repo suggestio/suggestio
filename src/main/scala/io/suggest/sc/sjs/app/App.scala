@@ -21,6 +21,9 @@ object App extends JSApp {
   @JSExport
   override def main(): Unit = {
 
+    // TODO Запихать remote логгер в состояние логгинга. js роутер может отсутствовать.
+    //Logging.LOGGERS ::= new RmeLogAppender( ScSjsLogger.route )
+
     // Повесить перехватчик ошибок на верхнем уровне.
     GlobalErrorHandler.start()
 

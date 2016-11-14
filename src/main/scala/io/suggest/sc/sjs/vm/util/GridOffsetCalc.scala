@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.vm.util
 
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.msc.IScSd
+import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.common.vm.style.{StyleDisplayT, StyleWidth}
 import org.scalajs.dom.raw.HTMLElement
 
@@ -16,7 +16,7 @@ import org.scalajs.dom.raw.HTMLElement
  *
  * Трейт подмешивается в ModelView'ы панелей и вызывается из ScFsm для вычисления новых параметров плитки.
  */
-trait GridOffsetCalc extends StyleDisplayT with StyleWidth with ISjsLogger {
+trait GridOffsetCalc extends StyleDisplayT with StyleWidth with ILog {
 
   override type T <: HTMLElement
 
@@ -42,7 +42,7 @@ trait GridOffsetCalc extends StyleDisplayT with StyleWidth with ISjsLogger {
         (sd0.common.screen.width - contSz.cw) / 2
       }
       widthAddOpt.getOrElse {
-        warn( WarnMsgs.GRID_CONT_SZ_MISSING )
+        LOG.warn( WarnMsgs.GRID_CONT_SZ_MISSING )
         0
       }
     }

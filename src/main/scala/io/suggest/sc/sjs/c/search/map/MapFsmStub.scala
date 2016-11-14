@@ -4,7 +4,6 @@ import io.suggest.fsm.StateData
 import io.suggest.sc.sjs.m.mmap.MMapSd
 import io.suggest.sjs.common.fsm.SjsFsm
 import io.suggest.sjs.common.fsm.signals.Visible
-import io.suggest.sjs.common.util.ISjsLogger
 
 /**
   * Suggest.io
@@ -15,7 +14,6 @@ import io.suggest.sjs.common.util.ISjsLogger
 trait MapFsmStub
   extends SjsFsm
   with StateData
-  with ISjsLogger
 {
 
   override type State_t = FsmState

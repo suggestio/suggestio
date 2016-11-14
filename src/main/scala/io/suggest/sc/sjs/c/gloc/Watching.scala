@@ -36,7 +36,7 @@ trait Watching extends GeoLocFsmStub {
 
         } catch {
           case ex: Throwable =>
-            error(ErrorMsgs.GEO_WATCH_TYPE_UNSUPPORTED, ex)
+            LOG.error(ErrorMsgs.GEO_WATCH_TYPE_UNSUPPORTED, ex)
             Nil
         }
       }
@@ -98,7 +98,7 @@ trait Watching extends GeoLocFsmStub {
       val mgl1 = {
         val someLocData = Some(loc.data)
         sd0.watchers.get(loc.wtype).fold {
-          warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE + " " + loc.wtype )
+          LOG.warn( WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc.wtype.toString )
           MglWatcher( lastPos = someLocData )
         } { mgl0 =>
           mgl0.copy( lastPos = someLocData )
@@ -162,7 +162,7 @@ trait Watching extends GeoLocFsmStub {
 
       } else {
         // Данная геолокация подпадает под подавление. Скорее всего что-то пошло не так.
-        warn(WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE + " " + loc + " " + _stateData.suppressor)
+        LOG.warn(WarnMsgs.GEO_UNEXPECTED_WATCHER_TYPE, msg = loc + " " + _stateData.suppressor)
         _stateData = sd0.copy(
           watchers = watchers1Iter.toMap
         )
@@ -171,7 +171,7 @@ trait Watching extends GeoLocFsmStub {
 
     /** Реакция на ошибку геолокации. */
     def _handleLocationError(err: GlError): Unit = {
-      error( ErrorMsgs.GEO_LOC_FAILED + " " + err.wtype + " " + err.error.code + " " + err.error.message )
+      LOG.error( ErrorMsgs.GEO_LOC_FAILED, msg = err.wtype + " " + err.error.code + " " + err.error.message )
       _notifySubscribers(err)
     }
 

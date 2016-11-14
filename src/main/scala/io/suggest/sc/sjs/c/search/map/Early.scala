@@ -26,7 +26,7 @@ trait Early extends MapFsmStub {
             early = msg :: sd0.early
           )
         } else {
-          error( ErrorMsgs.QUEUE_OVERLOADED + msg )
+          LOG.error( ErrorMsgs.QUEUE_OVERLOADED, msg = msg.toString )
         }
     }
   }

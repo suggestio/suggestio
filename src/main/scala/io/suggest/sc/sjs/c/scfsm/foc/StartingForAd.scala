@@ -123,7 +123,7 @@ trait StartingForAd extends MouseMoving with Index {
         val firstAd = mfa.fads
           .find(_.madId == currAdId)
           .orElse {
-            warn( WarnMsgs.FOC_AD_NOT_FOUND_IN_RESP + " " + currAdId + " " + mfa )
+            LOG.warn( WarnMsgs.FOC_AD_NOT_FOUND_IN_RESP, msg = currAdId + " " + mfa )
             fads2.headOption
           }
           .get
@@ -181,7 +181,7 @@ trait StartingForAd extends MouseMoving with Index {
 
     protected def _focAdsRequestFailed(ex: Throwable): Unit = {
       // Если не удалось сделать начальный реквест, то надо сбросить состояние и вернутся в состояние плитки.
-      error(ErrorMsgs.FOC_FIRST_REQ_FAILED, ex)
+      LOG.error(ErrorMsgs.FOC_FIRST_REQ_FAILED, ex)
       _backToGrid()
     }
 

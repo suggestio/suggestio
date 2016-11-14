@@ -45,7 +45,7 @@ trait OnPlatformBase extends PlatformFsmStub {
             subs2 = sd0.subscribers + (pel.event -> List(pel.listener))
           )
         } else {
-          warn( WarnMsgs.UNSUPPORTED_EVENT + " " + pel.event )
+          LOG.warn( WarnMsgs.UNSUPPORTED_EVENT, msg = pel.event )
           sd0
         }
 
@@ -65,10 +65,10 @@ trait OnPlatformBase extends PlatformFsmStub {
         } else {
           if (hasCurrListener && pel.subscribe) {
             // Подавляем дублирующуюся подписку на события.
-            warn(WarnMsgs.EVENT_ALREADY_LISTENED_BY + " " + pel.event + " " + pel.listener)
+            LOG.warn(WarnMsgs.EVENT_ALREADY_LISTENED_BY, msg = pel.event + " " + pel.listener)
           } else {
             // Нельзя удалить то, чего нет. Клиент не подписан на данное событие.
-            log( WarnMsgs.CANNOT_UNSUBSCRIBE_NOT_SUBSCRIBED  + pel.event + " " + pel.listener + " " + listeners.mkString(", ") )
+            LOG.log( WarnMsgs.CANNOT_UNSUBSCRIBE_NOT_SUBSCRIBED, msg = pel.event + " " + pel.listener + " " + listeners.mkString(", ") )
           }
           sd0
         }

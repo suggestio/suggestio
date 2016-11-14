@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc._
-import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.model.browser.MBrowser
@@ -16,7 +15,6 @@ import io.suggest.sjs.common.model.browser.MBrowser
  */
 object ScFsm
   extends SjsFsmImpl
-  with ScSjsFsmLogger
   with init.Phase
   with node.States
   with grid.Append with grid.Plain with grid.LoadMore

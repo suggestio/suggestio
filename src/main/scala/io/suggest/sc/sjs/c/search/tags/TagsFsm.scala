@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.c.search.tags
 import io.suggest.primo.IStart0
 import io.suggest.sc.sjs.c.search.ITabFsmFactory
 import io.suggest.sc.sjs.m.mtags.MTagsSd
-import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
@@ -21,7 +20,6 @@ case class TagsFsm()
   with IStart0
   with Hidden
   with OnTags
-  with ScSjsFsmLogger
 {
 
   override protected var _stateData: MTagsSd = MTagsSd()

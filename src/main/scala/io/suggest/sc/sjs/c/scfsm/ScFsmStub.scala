@@ -29,7 +29,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
   protected def _getScreenOpt: Option[IMScreen] = {
     val vszOpt = ViewportSz.getViewportSize
     if (vszOpt.isEmpty)
-      warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
+      LOG.warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
     vszOpt.map( MScreen.apply )
   }
   protected def _getScreen: IMScreen = {

@@ -196,7 +196,7 @@ trait Index extends FindAdsArgsT {
     }
 
     override protected def _getNodeIndexFailed(ex: Throwable): Unit = {
-      error(ErrorMsgs.GET_NODE_INDEX_FAILED + " " + _stateData.common.adnIdOpt, ex)
+      LOG.error(ErrorMsgs.GET_NODE_INDEX_FAILED, ex, msg = _stateData.common.adnIdOpt)
       _retry(50)( _onNodeIndexFailedState )
     }
 

@@ -7,8 +7,8 @@ import io.suggest.sc.sjs.vm.search.tabs.htag.ShtRoot
 import io.suggest.sc.sjs.vm.util.GridOffsetCalc
 import io.suggest.sc.ScConstants.Search.ROOT_DIV_ID
 import io.suggest.sc.sjs.m.msc.{IScCommon, IScSd}
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.search.tabs.geo.SGeoRoot
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindDiv
@@ -31,7 +31,7 @@ object SRoot extends FindDiv {
 
 
 /** Логика экземпляра модели панели поиска живёт в этом трейте. */
-trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc with ScSjsLogger {
+trait SRootT extends VmT with StyleDisplayT with GridOffsetCalc with Log {
 
   override type T = HTMLDivElement
 

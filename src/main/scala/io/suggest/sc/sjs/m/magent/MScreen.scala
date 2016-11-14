@@ -1,10 +1,9 @@
 package io.suggest.sc.sjs.m.magent
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.sc.sjs.util.logs.ScSjsLogger
 import io.suggest.sc.sjs.vm.SafeWnd
+import io.suggest.sjs.common.log.{ILog, Log}
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.scalajs.js
 
@@ -14,7 +13,7 @@ import scala.scalajs.js
  * Created: 20.05.15 17:19
  * Description: Модель данных по экрану устройства.
  */
-trait IMScreen extends ISize2di with ISjsLogger {
+trait IMScreen extends ISize2di with ILog {
 
   def pxRatioOpt: Option[Double] = {
     SafeWnd
@@ -24,7 +23,7 @@ trait IMScreen extends ISize2di with ISjsLogger {
 
   /** Плотность пикселей экрана. */
   def pxRatio: Double = pxRatioOpt.getOrElse {
-    warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
+    LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
     1.0
   }
 
@@ -49,7 +48,7 @@ case class MScreen(
   override val height   : Int
 )
   extends IMScreen
-  with ScSjsLogger
+  with Log
 {
   override lazy val pxRatioOpt = super.pxRatioOpt
 }

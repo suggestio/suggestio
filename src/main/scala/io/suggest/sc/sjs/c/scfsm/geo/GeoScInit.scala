@@ -96,7 +96,7 @@ trait GeoScInit extends Index { me =>
       val gpsGeoLocFut = _gpsGeoLocP.future
         .recover { case ex: Throwable =>
           if (ex != null && !ex.isInstanceOf[NoSuchElementException])
-            warn( ErrorMsgs.GEO_LOC_FAILED, ex )
+            LOG.warn( ErrorMsgs.GEO_LOC_FAILED, ex )
           null
         }
 

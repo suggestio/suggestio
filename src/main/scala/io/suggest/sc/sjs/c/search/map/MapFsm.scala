@@ -5,7 +5,6 @@ import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.search.ITabFsmFactory
 import io.suggest.sc.sjs.m.mgeo.{Subscribe, SubscriberData}
 import io.suggest.sc.sjs.m.mmap.MMapSd
-import io.suggest.sc.sjs.util.logs.ScSjsFsmLogger
 import io.suggest.sjs.common.fsm.SjsFsmImpl
 
 /**
@@ -27,7 +26,6 @@ case class MapFsm()
   with MapInit
   with Ready
   with Drag
-  with ScSjsFsmLogger
 {
 
   override protected var _stateData: SD  = MMapSd()

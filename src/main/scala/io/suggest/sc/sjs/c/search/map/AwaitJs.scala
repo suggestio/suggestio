@@ -56,7 +56,7 @@ trait AwaitJs extends GeoLoc with Early {
       DomQuick.setTimeout(AWAIT_MPGLJS_MS) { () =>
         _sendEventSync(AwaitTimeout)
       }
-      log( WarnMsgs.MAPBOXLG_JS_NOT_FOUND )
+      LOG.log( WarnMsgs.MAPBOXLG_JS_NOT_FOUND )
     }
 
     /** Действия, когда js найден на странице. */

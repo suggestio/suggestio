@@ -124,7 +124,7 @@ trait OnGridNav extends OnGrid with State2UrlT {
       * Надо перещелкнуть на новое состояние */
     protected def _findNodesFailed(ex: Throwable): Unit = {
       // В логах отмечаемся и на следующее состояние переключаемся.
-      error(ErrorMsgs.FIND_ADS_REQ_FAILED, ex)
+      LOG.error(ErrorMsgs.FIND_ADS_REQ_FAILED, ex)
       become(_navPanelReadyState)
     }
 

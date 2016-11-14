@@ -248,7 +248,7 @@ trait OnFocusBase
           // Ошибка выполнения запроса.
           case Failure(ex) =>
             // выкинуть данные реквеста из состояния, если реквест тот, который и должен быть.
-            error(WarnMsgs.FOC_RESP_TS_UNEXPECTED, ex)
+            LOG.error(WarnMsgs.FOC_RESP_TS_UNEXPECTED, ex)
         }
 
         // Сохранить итоги обработки ответа сервера в состояние.
@@ -263,7 +263,7 @@ trait OnFocusBase
         _analyzeCurrentFads()
 
       } else {
-        warn(WarnMsgs.FOC_RESP_TS_UNEXPECTED + " " + focReqOpt)
+        LOG.warn(WarnMsgs.FOC_RESP_TS_UNEXPECTED, msg = focReqOpt.toString)
       }
     }
 
@@ -596,12 +596,12 @@ trait OnFocusBase
         // Если опорной карточки нет в fads (should never happen), то ругаться в логи, но добавлять карточки в конец в исходном порядке.
         // TODO Тут косяк есть: выдача не забывает о потерявшейся карточке.
         if (fadsMissingRelAdId)
-          warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
+          LOG.warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD, msg = logSuffix )
         fState0.fads ++ res.resp.fads
 
       } else {
         // Маловозможна ситуация запроса карточек после указанной, хотя там карточки почему-то уже есть.
-        warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
+        LOG.warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST, msg = logSuffix )
         // Нужно скопировать в новую коллекции все элементы, включая текущую карточку.
         var flag = false
         fState0.fads
@@ -634,17 +634,17 @@ trait OnFocusBase
     override lazy val fads2: FAdQueue = {
       if (fState0.fads.isEmpty) {
         // Should never happen: внезапно пустая очередь-кеш fads. Код написан для безопасности вызова оптимизированного fads.head
-        error( ErrorMsgs.FOC_ADS_EMPTY + logSuffix )
+        LOG.error( ErrorMsgs.FOC_ADS_EMPTY, msg = logSuffix )
         fState0.fads
       } else if (fState0.fads.head.madId == relAdId || fadsMissingRelAdId) {
         // Если первая карточка -- искомая, то запихиваем всё по-упрощенке
         // Если нет карточки, вокруг которой пляшет весь запрос, то просто запихать карточки в выдачу, ругнувшись в логи.
         if (fadsMissingRelAdId)
-          warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD + logSuffix )
+          LOG.warn( ErrorMsgs.FOC_LOOKUP_MISSING_AD, msg = logSuffix )
         res.resp.fads ++: fState0.fads
 
       } else {
-        warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST + logSuffix )
+        LOG.warn( WarnMsgs.FOC_LOOKUPED_AD_NOT_LAST, msg = logSuffix )
         // Карточка есть, но она не первая почему-то. Используем iterator + dropWhile.
         res.resp.fads
           .iterator
