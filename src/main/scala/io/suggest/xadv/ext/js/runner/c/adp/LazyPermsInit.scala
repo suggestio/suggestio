@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c.adp
 
 import io.suggest.sjs.common.async.AsyncUtil
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.log.Log
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.{IMExtTarget, MJsCtxT}
 import io.suggest.xadv.ext.js.runner.m.ex.LoginCancelledException
@@ -25,7 +25,7 @@ import scala.concurrent.{ExecutionContext, Future}
  * Подобный сценарий работы свойственен для OAuth2-приложений.
  */
 
-trait LazyPermsInit extends SjsLogger {
+trait LazyPermsInit extends Log {
 
   /** Контекст экшена. */
   implicit def actx: IActionContext
@@ -108,8 +108,8 @@ trait LazyPermsInit extends SjsLogger {
   /** Получить имеющиеся пермишшены. */
   lazy val hasPermsFut: Future[Seq[Perm_t]] = {
     val fut = earlyHasPermsFut
-    fut.onComplete { case res =>
-      log("perms = " + res)
+    fut.onComplete { res =>
+      LOG.log( msg = "perms = " + res)
     }
     fut.recoverWith { case ex: NoSuchElementException =>
       loginStatusFut

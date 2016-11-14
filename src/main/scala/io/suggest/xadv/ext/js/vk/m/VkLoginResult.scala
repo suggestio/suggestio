@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.vk.m
 
-import io.suggest.sjs.common.model.{IToJsonDict, FromJsonT}
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.model.{FromJsonT, IToJsonDict}
 import io.suggest.xadv.ext.js.vk.c.low.JSON
 
 import scala.scalajs.js
@@ -31,7 +31,7 @@ import scala.scalajs.js.WrappedDictionary
  *    nickname: ""
  */
 
-object VkLoginResult extends FromJsonT with SjsLogger {
+object VkLoginResult extends FromJsonT with Log {
 
   override type T = VkLoginResult
 
@@ -61,7 +61,7 @@ object VkLoginResult extends FromJsonT with SjsLogger {
         )
       }
     if (res.isEmpty)
-      warn("Invalid/empty answer from VK.Auth: " + d)
+      LOG.warn("Invalid/empty answer from VK.Auth: " + d)
     res
   }
   

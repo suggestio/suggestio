@@ -2,7 +2,7 @@ package io.suggest.xadv.ext.js.runner.c.adp
 
 import io.suggest.sjs.common.async.AsyncUtil
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.m.ex.{ApiInitException, DomUpdateException, UrlLoadTimeoutException}
@@ -22,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
  * Этот код унифицирует логику реакции на ensureReady() между разными адаптерами, работающими с сервисами,
  * поддерживающими асинхронную инициализацию.
  */
-trait AsyncInitAdp extends IAdapter with SjsLogger {
+trait AsyncInitAdp extends IAdapter with Log {
 
   /** Тип контекста. */
   type Ctx_t <: MJsCtxT
@@ -84,7 +84,7 @@ trait AsyncInitAdp extends IAdapter with SjsLogger {
       val initFut = serviceScriptLoaded
         // Любое исключение завернуть в ApiInitException
         .recoverWith { case ex: Throwable =>
-          error("init failed", ex)
+          LOG.error(msg = "init failed", ex = ex)
           Future.failed( ApiInitException(ex) )
         }
       p.completeWith( initFut )
@@ -98,7 +98,7 @@ trait AsyncInitAdp extends IAdapter with SjsLogger {
     } catch {
       case ex: Throwable =>
         p.failure( DomUpdateException(ex) )
-        error("addScriptTag() failed: ", ex)
+        LOG.error(msg = "addScriptTag() failed: ", ex = ex)
     }
 
     // Среагировать на слишком долгую загрузку скрипта таймаутом.
@@ -106,7 +106,7 @@ trait AsyncInitAdp extends IAdapter with SjsLogger {
     DomQuick.setTimeout(t) { () =>
       if (!scriptLoadP.isCompleted) {
         p.failure( UrlLoadTimeoutException(SCRIPT_URL, t) )
-        error("timeout " + t + " ms occured during ensureReady() script inject")
+        LOG.error(msg = "timeout " + t + " ms occured during ensureReady() script inject")
       }
     }
 
