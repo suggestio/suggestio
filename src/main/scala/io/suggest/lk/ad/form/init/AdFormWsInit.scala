@@ -4,7 +4,8 @@ import io.suggest.lk.ad.form.model.MColorPalette
 import io.suggest.lk.router.jsRoutes
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.ad.form.AdFormConstants._
-import io.suggest.sjs.common.util.ISjsLogger
+import io.suggest.sjs.common.log.ILog
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.view.CommonPage
 import org.scalajs.dom
 import org.scalajs.dom.MessageEvent
@@ -20,7 +21,7 @@ import scala.scalajs.js.JSON
  * Created: 10.08.15 17:16
  * Description: Инициализация websocket для связи с сервером по простому каналу.
  */
-trait AdFormWsInit extends IInit with ISjsLogger {
+trait AdFormWsInit extends IInit with ILog {
 
   /** Запуск инициализации текущего модуля. */
   abstract override def init(): Unit = {
@@ -29,7 +30,7 @@ trait AdFormWsInit extends IInit with ISjsLogger {
       _initWs()
     } catch {
       case ex: Throwable =>
-        error("E6754", ex)
+        LOG.error( ErrorMsgs.AD_FORM_WS_INIT_FAILED, ex )
     }
   }
 

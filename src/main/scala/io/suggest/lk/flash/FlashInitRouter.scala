@@ -1,14 +1,14 @@
 package io.suggest.lk.flash
 
 import io.suggest.sjs.common.controller.{DomQuick, InitRouter}
-import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
+import io.suggest.sjs.common.util.SafeSyncVoid
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery._
 import io.suggest.flash.FlashConstants._
+import io.suggest.sjs.common.log.Log
 
 import scala.concurrent.{Future, Promise}
-// Используем queue для перемешивания функций асихронного отображения уведомлений.
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 /**
@@ -37,7 +37,7 @@ trait FlashInitRouter extends InitRouter {
 
 
 /** Реализация контроллера, который занимается инициализацией flashing-уведомлений. */
-class FlashInit extends SafeSyncVoid with SjsLogger {
+class FlashInit extends SafeSyncVoid with Log {
 
   /** Запуск инициализации flash-уведомлений. */
   def init(): Unit = {
@@ -66,7 +66,7 @@ class FlashInit extends SafeSyncVoid with SjsLogger {
           }
         }
       // Разом удалить все уведомления из dom вместе с листенерами и т.д. для высвобождения ресурсов.
-      allFut.onComplete { case _ =>
+      allFut.onComplete { _ =>
         containers.remove()
       }
     } // if (containers)

@@ -7,13 +7,13 @@ import io.suggest.lk.adv.geo.tags.init.AgtFormInitRouter
 import io.suggest.lk.bill.txn.TxnsListInit
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
-import io.suggest.lk.ident.center.captcha.{HiddenCaptchaInit, CaptchaFormInit}
+import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
 import io.suggest.lk.popup.PopupsInitRouter
 import io.suggest.lk.adn.map.LkAdnMapFormInitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.log.Log
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
 
@@ -26,7 +26,7 @@ import scala.scalajs.js.JSApp
  * Created: 16.03.15 15:09
  * Description: Запуск js личного кабинета.
  */
-object App extends JSApp with SjsLogger {
+object App extends JSApp with Log {
 
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   @JSExport
@@ -34,7 +34,8 @@ object App extends JSApp with SjsLogger {
     new LkInitRouter()
       .init()
       .onFailure {
-        case ex  => error("Init failed", ex)
+        case ex =>
+          LOG.error(msg = "Init failed", ex = ex)
       }
   }
 
@@ -43,7 +44,7 @@ object App extends JSApp with SjsLogger {
 
 /** Stackable-реализация routed init. */
 class LkInitRouter
-  extends SjsLogger
+  extends Log
   with CenterContentInitRouter
   with TxnsListInit
   with CaptchaFormInit

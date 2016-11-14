@@ -1,13 +1,13 @@
 package io.suggest.lk.upload
 
 import io.suggest.js.UploadConstants
-import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom.raw.HTMLInputElement
-import org.scalajs.jquery.{JQuery, jQuery, JQueryEventObject, JQueryXHR}
+import org.scalajs.jquery.{JQuery, JQueryEventObject, JQueryXHR, jQuery}
 
 import scala.concurrent.Future
 import scala.scalajs.js.Dictionary
 import io.suggest.img.ImgConstants._
+import io.suggest.sjs.common.log.ILog
 
 /**
  * Suggest.io
@@ -16,7 +16,7 @@ import io.suggest.img.ImgConstants._
  * Description: Поддержка аплоада картинок с отображением результата юзеру.
  * Результат приходит от сервера в виде верстки "оверлея".
  */
-trait ImgUploadRenderOverlay extends AjaxFileUpload with ISjsLogger {
+trait ImgUploadRenderOverlay extends AjaxFileUpload with ILog {
 
   override type FileUploadRespT = Dictionary[String]
 
@@ -29,11 +29,10 @@ trait ImgUploadRenderOverlay extends AjaxFileUpload with ISjsLogger {
     // Надо залить полученную верстку от сервера в DOM.
     val htmlOpt = resp.get(JSON_OVERLAY_HTML)
 
-    htmlOpt match {
-      case Some(htmlStr) =>
-        cont.append(htmlStr)
-      case None =>
-        warn("No overlay html received from server!")
+    htmlOpt.fold {
+      LOG.warn("No overlay html received from server!")
+    } { htmlStr =>
+      cont.append(htmlStr)
     }
 
     // Нужно скрыть кнопку аплоада, если допускается загрузка максимум одной картинки.
@@ -43,7 +42,7 @@ trait ImgUploadRenderOverlay extends AjaxFileUpload with ISjsLogger {
         .hide()
     }
 
-    Future successful None
+    Future.successful( None )
   }
 
 }

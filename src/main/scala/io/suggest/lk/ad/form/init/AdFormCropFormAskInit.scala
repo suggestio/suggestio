@@ -6,9 +6,8 @@ import io.suggest.img.crop.CropConstants
 import io.suggest.lk.ad.form.input.AdFormWhInput
 import io.suggest.lk.img.CropFormAskInit
 import io.suggest.ad.form.AdFormConstants._
-import io.suggest.lk.old.Market
-import io.suggest.sjs.common.img.crop.{CropFormResp, CropFormRequestT}
-import io.suggest.sjs.common.util.{SjsLogger, TouchUtil}
+import io.suggest.sjs.common.img.crop.CropFormRequestT
+import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.raw.HTMLElement
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
 
@@ -24,7 +23,7 @@ trait AdFormCropFormAskInit extends CropFormAskInit {
 
   override protected def _cropFormRequester(el: HTMLElement, e: JQueryEventObject): CropFormRequestT = {
     val _imgIdInput = jQuery("#" + AdFormConstants.BG_IMG_CONTAINER_ID + " input." + ImgConstants.JS_IMG_ID_CLASS)
-    new CropFormRequestT with SjsLogger with AdFormWhInput {
+    new CropFormRequestT with AdFormWhInput {
       override def imgIdInput = _imgIdInput
     }
   }

@@ -2,7 +2,8 @@ package io.suggest.lk.upload
 
 import io.suggest.js.UploadConstants
 import io.suggest.sjs.common.controller.IInit
-import io.suggest.sjs.common.util.{ISjsLogger, IContainers}
+import io.suggest.sjs.common.log.ILog
+import io.suggest.sjs.common.util.IContainers
 import org.scalajs.dom.File
 import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.jquery._
@@ -23,7 +24,7 @@ trait IHandleFile4Upload {
 }
 
 
-trait InputFileUploadOnChange extends IContainers with ISjsLogger with IHandleFile4Upload {
+trait InputFileUploadOnChange extends IContainers with ILog with IHandleFile4Upload {
 
   /** Вызов инициализации события change для аплоада. */
   protected def initJsFileUploadOnChange(): Unit = {
@@ -37,11 +38,11 @@ trait InputFileUploadOnChange extends IContainers with ISjsLogger with IHandleFi
               val file = files(0)
               _handleFile4Upload(file, input, cont, e)
             } else {
-              log("No file selected for upload")
+              LOG.log(msg = "No file selected for upload")
             }
 
           } else {
-            warn("Invalid input tag binded for upload event: name=" + input.name + " " + input.value)
+            LOG.warn("Invalid input tag binded for upload event: name=" + input.name + " " + input.value)
           }
       }: ThisFunction)
     }

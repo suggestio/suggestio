@@ -5,10 +5,10 @@ import io.suggest.lk.img.JsRemoveImgInitT
 import io.suggest.lk.old.Market
 import io.suggest.lk.upload.{AjaxFileUpload, ImgUploadRenderOverlay, InitInputFileUploadOnChange}
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
-import org.scalajs.jquery.{JQueryEventObject, JQueryXHR, JQuery, jQuery}
+import org.scalajs.jquery.{JQuery, JQueryEventObject, JQueryXHR, jQuery}
 
 import scala.concurrent.Future
 import scala.scalajs.js.Dictionary
@@ -38,7 +38,7 @@ trait AdFormInitRouter extends InitRouter {
 /** Инициализатор поддержки формы создания/редактирования карточек. */
 class AdFormInit
   extends IInitDummy
-  with SjsLogger
+  with Log
   with JsRemoveImgInitT
   with InitInputFileUploadOnChange with AjaxFileUpload with ImgUploadRenderOverlay
   with AdFormCropFormAskInit

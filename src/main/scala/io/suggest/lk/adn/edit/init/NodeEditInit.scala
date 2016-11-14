@@ -3,9 +3,11 @@ package io.suggest.lk.adn.edit.init
 import io.suggest.lk.img.JsRemoveImgInitT
 import io.suggest.lk.upload._
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
-import io.suggest.sjs.common.util.{SafeSyncVoid, SjsLogger}
+import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.adn.edit.NodeEditConstants._
+import io.suggest.sjs.common.log.Log
+
 import scala.concurrent.Future
 import org.scalajs.jquery.{JQuery, jQuery}
 
@@ -34,7 +36,7 @@ trait NodeEditInitRouter extends InitRouter {
 
 /** Поддержка node для gallery. */
 class LkNodeEditFormEvents
-  extends SjsLogger
+  extends Log
   with SafeSyncVoid
   with IInitDummy
   with NodeGalleryInit

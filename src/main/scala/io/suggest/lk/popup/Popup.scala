@@ -5,9 +5,10 @@ import io.suggest.popup.PopupConstants._
 import io.suggest.sjs.common.controller.{DomQuick, InitRouter}
 import io.suggest.sjs.common.controller.jshidden.JsHidden
 import io.suggest.sjs.common.controller.vlines.VerticalLines
-import io.suggest.sjs.common.util.{SjsLogger, TouchUtil}
+import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
@@ -22,7 +23,7 @@ import scala.scalajs.js.Any
  * Description: Система управления попапами в личном кабинете.
  * В оригинале (mx_cof) компонент назывался CbcaPopup.
  */
-object Popup extends SjsLogger {
+object Popup extends Log {
 
   def containerSelector =  "#" + CONTAINER_ID
   def container = jQuery(containerSelector)
@@ -178,7 +179,7 @@ object Popup extends SjsLogger {
     if (cont.length > 0) {
       _doInit(cont)
     } else {
-      warn("Popups init() requested, but no " + containerSelector + " found.")
+      LOG.warn(msg = "Popups init() requested, but no " + containerSelector + " found.")
     }
   }
 

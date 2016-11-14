@@ -3,8 +3,8 @@ package io.suggest.lk.bill.txn
 import io.suggest.lk.router.jsRoutes
 import io.suggest.bill.TxnsListConstants._
 import io.suggest.sjs.common.controller.{DomQuick, IInit, InitRouter}
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
 import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, JQueryXHR, jQuery}
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ trait TxnsListInit extends InitRouter {
 
 
 /** Весь код инициализации страницы живет в этом классе. */
-sealed class TxnList extends IInit with SjsLogger {
+sealed class TxnList extends IInit with Log {
 
   /** Запуск инициализации текущего модуля. */
   override def init(): Unit = {
@@ -83,7 +83,7 @@ sealed class TxnList extends IInit with SjsLogger {
           }
         },
         "error" -> {(jqXHR: JQueryXHR, textStatus: String, errorThrow: String) =>
-          error("Cannot download more transactions: " + errorThrow + ": " + jqXHR.status + " " + jqXHR.statusText + "\n " + jqXHR.responseText)
+          LOG.error(msg = "Cannot download more transactions: " + errorThrow + ": " + jqXHR.status + " " + jqXHR.statusText + "\n " + jqXHR.responseText)
         }
       )
       val ajaxSettings = ajaxSettingsJson.asInstanceOf[JQueryAjaxSettings]

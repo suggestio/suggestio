@@ -3,12 +3,12 @@ package io.suggest.lk.img
 import io.suggest.lk.old.Market
 import io.suggest.lk.popup.Popup
 import io.suggest.sjs.common.controller.IInit
-import io.suggest.sjs.common.img.crop.{CropUtil, CropFormRequestT, CropFormResp}
+import io.suggest.sjs.common.img.crop.{CropFormRequestT, CropFormResp, CropUtil}
 import io.suggest.sjs.common.img.input.WhInput
-import io.suggest.sjs.common.util.{SjsLogger, ISjsLogger}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.ILog
 import org.scalajs.dom.raw.HTMLElement
-import org.scalajs.jquery.{jQuery, JQueryEventObject}
+import org.scalajs.jquery.{JQueryEventObject, jQuery}
 
 /**
  * Suggest.io
@@ -16,13 +16,13 @@ import org.scalajs.jquery.{jQuery, JQueryEventObject}
  * Created: 08.05.15 10:28
  * Description: Поддержка сборки событий, порождающих запросы за формой кропа.
  */
-trait CropFormAsk extends ISjsLogger {
+trait CropFormAsk extends ILog {
 
   protected def _cropFormRequester(el: HTMLElement, e: JQueryEventObject): CropFormRequestT = {
     val input = jQuery(e.currentTarget)
       .parent()
       .find("input")
-    new CropFormRequestT with WhInput with SjsLogger {
+    new CropFormRequestT with WhInput {
       override def whInput = input
       override def imgIdInput = input
     }
@@ -50,7 +50,7 @@ trait CropFormAsk extends ISjsLogger {
       case Some(imgName) =>
         Market.img.crop.init(imgName)
       case None =>
-        error("Cannot init img cropper, because imgName attr is undefined.")
+        LOG.error(msg = "Cannot init img cropper, because imgName attr is undefined.")
     }
   }
 

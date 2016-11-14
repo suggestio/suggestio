@@ -1,13 +1,13 @@
 package io.suggest.lk.upload
 
+import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.model.ex.XhrFailedException
-import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.dom.{File, FormData}
 import org.scalajs.dom.raw.HTMLInputElement
 import org.scalajs.jquery._
 
-import scala.concurrent.{Promise, Future}
-import scala.scalajs.js.{Dictionary, Any}
+import scala.concurrent.{Future, Promise}
+import scala.scalajs.js.{Any, Dictionary}
 
 /**
  * Suggest.io
@@ -15,7 +15,7 @@ import scala.scalajs.js.{Dictionary, Any}
  * Created: 07.05.15 14:14
  * Запуск аплоада файла на сервер по первому требованию. Параметры аплоада извлекаются из аттрибутов инпута.
  */
-trait AjaxFileUpload extends IHandleFile4Upload with ISjsLogger {
+trait AjaxFileUpload extends IHandleFile4Upload with ILog {
 
   /** Тип распарсенного ответа сервера, который будет передан в _fileUploadSuccess(). */
   type FileUploadRespT <: Any
@@ -63,7 +63,7 @@ trait AjaxFileUpload extends IHandleFile4Upload with ISjsLogger {
 
     } catch {
       case ex: Throwable =>
-        error("Failed to upload file w/ajax", ex)
+        LOG.error(msg = "Failed to upload file w/ajax", ex = ex)
         p failure ex
     }
 
