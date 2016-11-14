@@ -273,8 +273,8 @@ class LkAdvGeo @Inject() (
 
         implicit val ctx = implicitly[Context]
 
-        // Запустить рассчет стоимости размещаемого
-        val pricingFut = for {
+        // Запустить рендер ценника размещаемого контента
+        val pricingHtmlFut = for {
           advPricing <- advPricingFut
         } yield {
           LOGGER.trace(s"$logPrefix pricing => $advPricing, isSuFree = $isSuFree")
@@ -288,7 +288,7 @@ class LkAdvGeo @Inject() (
         }
 
         for {
-          pricingHtml <- pricingFut
+          pricingHtml <- pricingHtmlFut
         } yield {
           val resp = GetPriceResp(
             periodReportHtml  = periodReportHtml,

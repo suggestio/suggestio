@@ -5,14 +5,17 @@ import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.GeoPoint
 import models.adv.form.MDatesPeriod
+import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.madn.mapf.{MAdnMapFormRes, MAdnMapTplArgs}
 import models.maps.MapViewState
 import models.mctx.Context
+import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.INodeReq
 import play.api.data.Form
 import play.api.i18n.Messages
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.IsAdnNodeAdmin
@@ -21,6 +24,8 @@ import util.adv.AdvFormUtil
 import util.adv.geo.AdvGeoLocUtil
 import util.billing.Bill2Util
 import views.html.lk.adn.mapf._
+import views.html.lk.adv.widgets.period._reportTpl
+import views.html.lk.lkwdgts.price._priceValTpl
 
 import scala.concurrent.Future
 
@@ -177,7 +182,6 @@ class LkAdnMap @Inject() (
             // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
             Redirect(routes.LkBill2.cart(nodeId, r = Some(rCall.url)))
               .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
-
           } else {
             // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
             Redirect( rCall )
@@ -191,7 +195,54 @@ class LkAdnMap @Inject() (
 
   /** Сабмит формы для рассчёт стоимости размещения. */
   def getPriceSubmit(esNodeId: MEsUuId) = IsAdnNodeAdminPost(esNodeId).async { implicit request =>
-    ???
+    val nodeId: String = esNodeId
+    lazy val logPrefix = s"getPriceSubmit($nodeId):"
+
+    // TODO Код ниже практически идентичен LkAdvGeo.getPriceSubmit(). Наверное нужен дедублицирующий трейт с логикой этого экшена?
+    // Биндинг текущего состояния формы размещения.
+    lkAdnMapFormUtil.adnMapFormM.bindFromRequest().fold(
+      // Неудачно почему-то. Пусть будет ошибка.
+      {formWithErrors =>
+        LOGGER.error(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+        val err = MError(
+          msg = Some("Failed to bind form")
+        )
+        NotAcceptable( Json.toJson(err) )
+      },
+
+      // Забиндилось ок. Считаем ценник и рендерим результат...
+      {formRes =>
+        val isSuFree = advFormUtil.maybeFreeAdv()
+        val pricingFut = lkAdnMapBillUtil.getPricing(formRes, isSuFree)
+
+        implicit val ctx = implicitly[Context]
+
+        // Запустить рендер ценника размещаемого контента
+        val pricingHtmlFut = for {
+          pricing <- pricingFut
+        } yield {
+          LOGGER.trace(s"$logPrefix pricing => $pricing, isSuFree = $isSuFree")
+          val html = _priceValTpl(pricing)(ctx)
+          htmlCompressUtil.html2str4json(html)
+        }
+
+        // Отрендерить данные по периоду размещения
+        val periodReportHtml = htmlCompressUtil.html2str4json {
+          _reportTpl(formRes.period)(ctx)
+        }
+
+        // Рендер ответа.
+        for {
+          pricingHtml <- pricingHtmlFut
+        } yield {
+          val resp = GetPriceResp(
+            periodReportHtml  = periodReportHtml,
+            priceHtml         = pricingHtml
+          )
+          Ok( Json.toJson(resp) )
+        }
+      }
+    )
   }
 
 }
