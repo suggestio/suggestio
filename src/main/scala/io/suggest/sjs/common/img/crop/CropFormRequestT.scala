@@ -6,7 +6,6 @@ import io.suggest.popup.PopupConstants
 import io.suggest.sjs.common.controller.routes
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.model.ex.XhrFailedException
-import io.suggest.sjs.common.util.ISjsLogger
 import org.scalajs.jquery._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
@@ -19,7 +18,7 @@ import scala.scalajs.js.{Any, Dictionary}
  * Created: 27.04.15 16:36
  * Description: Встраиваемый код для запроса формы кроппинга изображения.
  */
-trait CropFormRequestT extends ISjsLogger with ISize2di {
+trait CropFormRequestT extends ISize2di {
 
   /** Отсюда считывать img id. */
   def imgIdInput: JQuery

@@ -1,0 +1,69 @@
+package io.suggest.sjs.common.log
+
+import io.suggest.sjs.common.msg.ErrorMsg_t
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 14.11.16 18:11
+  * Description: Поддержка логгирования второго поколения в scala.js.
+  */
+
+/** Трейт для классов-логгеров,  */
+trait LoggerT {
+
+  /** Результат getClass.getSimpleName. */
+  def classSimpleName: String
+
+  /** Состояние FSM, если есть. */
+  def fsmState: Option[String]
+
+
+  def error(errorMsg: ErrorMsg_t = null, ex: Throwable = null, msg: Any = null): Unit = {
+    doLog(Severities.Error, errorMsg, msg, ex)
+  }
+  def warn(errorMsg: ErrorMsg_t  = null, ex: Throwable = null, msg: Any = null): Unit = {
+    doLog(Severities.Warn, errorMsg, msg, ex)
+  }
+  def info(errorMsg: ErrorMsg_t  = null, ex: Throwable = null, msg: Any = null): Unit = {
+    doLog(Severities.Info, errorMsg, msg, ex)
+  }
+  def log(errorMsg: ErrorMsg_t   = null, ex: Throwable = null, msg: Any = null): Unit = {
+    doLog(Severities.Log, errorMsg, msg, ex)
+  }
+
+
+  def doLog(severity: Severity, errorMsg: ErrorMsg_t, msg: Any, ex: Throwable): Unit = {
+    val logMsg = LogMsg(
+      severity  = severity,
+      from      = classSimpleName,
+      code      = Option(errorMsg),
+      message   = Option(msg.toString),
+      exception = Option(ex),
+      fsmState  = fsmState
+    )
+    doLog(logMsg)
+  }
+  def doLog(logMsg: LogMsg): Unit = {
+    Logging.handleLogMsg(logMsg)
+  }
+
+}
+
+
+/** Самый простой логгер без интеграции с FSM. */
+class Logger(override val classSimpleName: String) extends LoggerT {
+  override def fsmState: Option[String] = None
+}
+
+
+/** Интерфейс логгирования в каком-то классе. */
+trait ILog {
+  def LOG: Logger
+}
+/** Реализация простого логгирования в каком-то классе. */
+trait Log extends ILog {
+  override def LOG: Logger = {
+    new Logger( getClass.getSimpleName )
+  }
+}

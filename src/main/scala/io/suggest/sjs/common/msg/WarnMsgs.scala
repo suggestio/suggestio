@@ -83,4 +83,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def LEAFLET_LOCATE_CONTROL_MISSING        = E(37)
 
+  def UNKNOWN_BLE_DEVICE                    = E(38)
+
 }

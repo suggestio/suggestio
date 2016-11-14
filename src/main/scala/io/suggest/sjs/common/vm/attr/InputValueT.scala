@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.vm.attr
 
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.raw.HTMLInputElement
 
@@ -57,7 +57,7 @@ trait StringInputValueT extends InputValueT[String] {
 
 
 /** Расширение [[StringInputValueT]] для поддержки парсинга JSON. */
-trait JsonStringInputValueT extends StringInputValueT with SjsLogger {
+trait JsonStringInputValueT extends StringInputValueT with Log {
 
   /** Тип возвращаемого значения из JSON.parse(). Например js.Object. */
   type JsonVal_t <: js.Any
@@ -72,7 +72,7 @@ trait JsonStringInputValueT extends StringInputValueT with SjsLogger {
       }
     } catch {
       case ex: Throwable =>
-        error(ErrorMsgs.JSON_PARSE_ERROR, ex)
+        LOG.error(ErrorMsgs.JSON_PARSE_ERROR, ex)
         None
     }
   }

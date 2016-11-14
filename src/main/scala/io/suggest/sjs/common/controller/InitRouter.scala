@@ -1,9 +1,10 @@
 package io.suggest.sjs.common.controller
 
-import io.suggest.init.routed.{MJsInitTargetsLigthT, JsInitConstants}
-import io.suggest.sjs.common.util.{ISjsLogger, SafeSyncVoid}
+import io.suggest.init.routed.{JsInitConstants, MJsInitTargetsLigthT}
+import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
 
 import scala.concurrent.Future
 
@@ -50,7 +51,7 @@ import InitRouter._
 
 /** Заготовка главного контроллера, который производит инициализацию компонентов в контексте текущей страницы.
   * Контроллеры объединяются в единый роутер через stackable trait pattern. */
-trait InitRouter extends ISjsLogger with SafeSyncVoid {
+trait InitRouter extends Log with SafeSyncVoid {
 
   /** Модель таргетов используется только в роутере, поэтому она тут и живет. */
   // TODO упразнить эту модель, сделать просто карту String -> F
@@ -61,7 +62,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    error("JS init target not supported: " + itg)
+    LOG.error(msg = "JS init target not supported: " + itg)
     done
   }
 
@@ -80,7 +81,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
           .flatMap { raw =>
             val res = MInitTargets.maybeWithName(raw)
             if (res.isEmpty)
-              warn(MInitTargets.getClass.getSimpleName + " does not contain target '" + raw + "'")
+              LOG.warn(msg = MInitTargets.getClass.getSimpleName + " does not contain target '" + raw + "'")
             res
           }
         val initFut = Future.traverse(all) { itg =>
@@ -91,7 +92,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
           }
           // Подавленеи ошибок. init must flow.
           fut recover { case ex: Throwable =>
-            error("Init failed to reach target " + itg, ex)
+            LOG.error(msg = "Init failed to reach target " + itg, ex = ex)
             None
           }
         }
@@ -100,7 +101,7 @@ trait InitRouter extends ISjsLogger with SafeSyncVoid {
         initFut
 
       case None =>
-        log("No RI data found in body (" + attrName + "). Initialization skipped.")
+        LOG.log(msg = "No RI data found in body (" + attrName + "). Initialization skipped.")
         done
     }
   }

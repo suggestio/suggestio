@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.xhr
 
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.raw.ErrorEvent
 import org.scalajs.dom.{Event, XMLHttpRequest}
@@ -18,7 +17,7 @@ import org.scalajs.dom
  * Created: 20.05.15 11:14
  * Description: Утиль для поддержки асинхронных запросов.
  */
-object Xhr extends SjsLogger {
+object Xhr {
 
   def MIME_JSON           = "application/json"
   def MIME_TEXT_HTML      = "text/html"

@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.vm.content
 
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom
 import org.scalajs.dom.Element
@@ -18,7 +18,7 @@ import scala.scalajs.js.UndefOr
  * остальные браузеры обычно поддерживают всё без проблем.
  */
 
-object OuterHtml extends SjsLogger {
+object OuterHtml extends Log {
 
   /** Константа-флаг, обозначающая умение (true) или беспомощьность(false) браузера делать outerHTML. */
   val HAS_OUTER_HTML: Boolean = {
@@ -27,7 +27,7 @@ object OuterHtml extends SjsLogger {
     val stub = OuterHtmlStub( el )
     val hasOuter = !js.isUndefined( stub.outerHTML )
     if (!hasOuter)
-      warn( WarnMsgs.NO_OUTER_HTML_SUPPORT )
+      LOG.warn( WarnMsgs.NO_OUTER_HTML_SUPPORT )
     hasOuter
   }
 

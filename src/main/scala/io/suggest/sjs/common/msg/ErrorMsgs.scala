@@ -70,4 +70,8 @@ object ErrorMsgs extends MsgsStaticT {
 
   def FSM_MSG_PROCESS_ERROR        = E(31)
 
+  def AD_FORM_WS_INIT_FAILED       = E(32)
+
+  def BLE_SCAN_ERROR               = E(33)
+
 }

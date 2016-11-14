@@ -2,13 +2,13 @@ package io.suggest.sjs.common.fsm
 
 import io.suggest.fsm.{AbstractFsm, AbstractFsmUtil}
 import io.suggest.sjs.common.controller.DomQuick
+import io.suggest.sjs.common.log.{ILog, Logger}
 import io.suggest.sjs.common.model.TimestampedCompanion
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
-import scala.scalajs.concurrent.JSExecutionContext.queue
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
  * Suggest.io
@@ -16,11 +16,21 @@ import scala.scalajs.concurrent.JSExecutionContext.queue
  * Created: 07.09.15 15:51
  * Description: Трейт для сборки конечных автомата в scala.js.
  */
-trait SjsFsm extends AbstractFsm with ISjsLogger {
+trait SjsFsm extends AbstractFsm with ILog {
 
   override type Receive = PartialFunction[Any, Unit]
 
   override type State_t <: FsmState
+
+  override val LOG: Logger = {
+    new Logger( getClass.getSimpleName ) {
+      override def fsmState: Option[String] = {
+        for (s <- Option(_state)) yield {
+          s.name
+        }
+      }
+    }
+  }
 
   /** Минимальный тип сигнала, принимаемый через FSM API. */
   // TODO Нужно реализовать поддержку неточного типа (<: IFsmMsg).
@@ -58,11 +68,11 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
 
     /** Реакция на проблемы при обработке входящего сообщения. */
     def processEventFailed(e: Any, ex: Throwable): Unit = {
-      error(ErrorMsgs.FSM_MSG_PROCESS_ERROR + " " + e, ex)
+      LOG.error(ErrorMsgs.FSM_MSG_PROCESS_ERROR, ex, e.toString)
     }
     /** Реакция на ошибку в работе состояния. */
     def processFailure(ex: Throwable): Unit = {
-      error(ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, ex)
+      LOG.error(ErrorMsgs.UNEXPECTED_FSM_RUNTIME_ERROR, ex)
     }
   }
 
@@ -83,7 +93,7 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
     // Неожиданные сообщения надо логгировать.
     case other =>
       // Пока только логгируем пришедшее событие. Потом и логгирование надо будет отрубить.
-      log("[" + _state + "] " + WarnMsgs.FSM_SIGNAL_UNEXPECTED + " " + other)
+      LOG.log(WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = other.toString)
   }
 
   /**
@@ -111,7 +121,7 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
   protected[this] def _sendEvent(e: Any): Unit = {
     Future {
       _sendEventSyncSafe(e)
-    }(queue)
+    }
   }
 
   /** Внутренняя синхронная отправка сообщения. */
@@ -131,7 +141,7 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
 
   /** Отправка или обработка не удалась. */
   protected[this] def _sendEventFailed(e: Any, ex: Throwable): Unit = {
-    error("[" + _state.name + "] " + ErrorMsgs.SC_FSM_EVENT_FAILED +": " + e, ex)
+    LOG.error(ErrorMsgs.SC_FSM_EVENT_FAILED, ex, e.toString)
     _state.processEventFailed(e, ex)
   }
 
@@ -175,8 +185,7 @@ trait SjsFsm extends AbstractFsm with ISjsLogger {
   /** Подписать фьючерс на отсылку ответа вместе с таймштампом вешанья события.
     * Полезно для определения порядка параллельных одинаковых запросов. */
   protected def _sendFutResBackTimestamped[T](fut: Future[T], model: TimestampedCompanion[T],
-                                              timestamp: Long = System.currentTimeMillis())
-                                             (implicit ec: ExecutionContext): Long = {
+                                              timestamp: Long = System.currentTimeMillis()): Long = {
     fut.onComplete { tryRes =>
       val msg = model(tryRes, timestamp)
       _sendEventSyncSafe(msg)
@@ -197,6 +206,6 @@ trait LogBecome extends SjsFsm {
   override protected def become(nextState: State_t): Unit = {
     val oldStateName = _state.name
     super.become(nextState)
-    log(oldStateName + " -> " + _state.name)
+    LOG.log(msg = oldStateName + " -> " + _state.name)
   }
 }
