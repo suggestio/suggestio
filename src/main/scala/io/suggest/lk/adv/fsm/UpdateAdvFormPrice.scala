@@ -93,14 +93,14 @@ trait UpdateAdvFormPrice extends SjsFsm with StateData with IUpdatePriceDataStar
         val sd0 = _stateData
         if ( !_upXhrGetTstamp(sd0).contains(res.timestamp) ) {
           // Принят неактуальный ответ от сервера. Ждём следующего.
-          log(WarnMsgs.ADV_DIRECT_XHR_TS_DROP + " " + res)
+          LOG.log(WarnMsgs.ADV_DIRECT_XHR_TS_DROP, msg = res)
 
         } else {
           res.result match {
             case Success(resp) =>
               _handleGetPriceXhrResp(resp)
             case Failure(ex) =>
-              error(ErrorMsgs.ADV_DIRECT_FORM_PRICE_FAIL, ex)
+              LOG.error(ErrorMsgs.ADV_DIRECT_FORM_PRICE_FAIL, ex)
               _getPriceCompleted()
           }
         }
