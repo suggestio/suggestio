@@ -116,7 +116,7 @@ trait ScRemoteError
             // Сохраняем в базу отчёт об ошибке.
             merrId <- scStatUtil.saveStat(stat2)
           } yield {
-            LOGGER.trace(logPrefix + s" Saved remote error as stat[$merrId]:\n $stat2" )
+            LOGGER.trace(logPrefix + s" Saved remote error as stat[$merrId]." )
             NoContent
           }
         }
