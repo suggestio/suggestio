@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.log
 
-import io.suggest.sjs.common.msg.ErrorMsg_t
+import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 
 /**
   * Suggest.io
@@ -20,7 +20,11 @@ object Logging {
   /** Обработка входящих [[LogMsg]] системами логгирования. */
   def handleLogMsg(logMsg: LogMsg): Unit = {
     for (l <- LOGGERS) {
-      l.logAppend(logMsg)
+      try {
+        l.logAppend(logMsg)
+      } catch { case ex: Throwable =>
+        println( ErrorMsgs.LOG_APPENDER_FAIL + " " + l + " " + ex.getClass.getName + " " + ex.getMessage)
+      }
     }
   }
 

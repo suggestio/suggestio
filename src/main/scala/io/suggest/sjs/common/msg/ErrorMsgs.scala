@@ -74,4 +74,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def BLE_SCAN_ERROR               = E(33)
 
+  def LOG_APPENDER_FAIL            = E(34)
+  def ALL_LOGGERS_FAILED           = E(35)
+
 }

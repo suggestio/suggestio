@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.log
 
-import io.suggest.sjs.common.msg.ErrorMsg_t
+import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 
 /**
   * Suggest.io
@@ -38,14 +38,19 @@ trait LoggerT {
       severity  = severity,
       from      = classSimpleName,
       code      = Option(errorMsg),
-      message   = Option(msg.toString),
+      message   = Option(msg).map(_.toString),
       exception = Option(ex),
       fsmState  = fsmState
     )
     doLog(logMsg)
   }
   def doLog(logMsg: LogMsg): Unit = {
-    Logging.handleLogMsg(logMsg)
+    try {
+      Logging.handleLogMsg(logMsg)
+    } catch { case ex: Throwable =>
+      // Подавлять ошибки внутри самих логгеров.
+      println( ErrorMsgs.ALL_LOGGERS_FAILED + " " + ex.getMessage )
+    }
   }
 
 }
@@ -64,6 +69,11 @@ trait ILog {
 /** Реализация простого логгирования в каком-то классе. */
 trait Log extends ILog {
   override def LOG: Logger = {
-    new Logger( getClass.getSimpleName )
+    val csn = try {
+      getClass.getSimpleName
+    } catch { case ex: Throwable =>
+      getClass.getName
+    }
+    new Logger( csn )
   }
 }

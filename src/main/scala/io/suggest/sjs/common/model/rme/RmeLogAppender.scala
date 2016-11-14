@@ -11,16 +11,20 @@ import scala.scalajs.js.JSON
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 14.11.16 17:40
   * Description: Поддержка логгирования на сервер в формате RemoteError.
-  * @param call Куда делать реквест.
   */
-class RmeLogAppender(call: Route) extends ILogAppender {
+abstract class RmeLogAppender extends ILogAppender {
 
-  override def logAppend(logMsg: LogMsg): Unit = {
+  /** Куда делать реквест. Функция, возвращающая route. */
+  def route: Route
+
+  def minSeverity: Int = 0
+
+  private def _logAppendInto(logMsg: LogMsg, route: Route): Unit = {
     // Организовать запрос на сервер по указанной ссылке.
     Xhr.successIfStatus( HttpStatuses.NO_CONTENT ) {
       Xhr.send(
-        method  = call.method,
-        url     = call.url,
+        method  = route.method,
+        url     = route.url,
         headers = Seq(
           Xhr.HDR_CONTENT_TYPE -> Xhr.MIME_JSON
         ),
@@ -35,6 +39,18 @@ class RmeLogAppender(call: Route) extends ILogAppender {
           Some(str)
         }
       )
+    }
+  }
+
+  override def logAppend(logMsg: LogMsg): Unit = {
+    if (logMsg.severity >= minSeverity) {
+      try {
+        _logAppendInto(logMsg, route)
+      } catch {
+        case ex: Throwable =>
+          // Бывает, что роута недоступна (js-роутер ещё не готов). Надо молча подавлять такие ошибки.
+          //println(ex.getMessage)
+      }
     }
   }
 
