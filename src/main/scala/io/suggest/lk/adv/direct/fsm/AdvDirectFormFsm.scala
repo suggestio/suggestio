@@ -3,7 +3,6 @@ package io.suggest.lk.adv.direct.fsm
 import io.suggest.lk.adv.direct.fsm.states.{GetData, StandBy}
 import io.suggest.lk.adv.direct.m.MStateData
 import io.suggest.sjs.dt.period.vm.Container
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
  * Suggest.io
@@ -15,7 +14,6 @@ import io.suggest.sjs.common.util.SjsLogger
 object AdvDirectFormFsm
   extends StandBy
   with GetData
-  with SjsLogger
 {
 
   /** Инстансы stateData храняться здесь.
