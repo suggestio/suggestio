@@ -3,8 +3,8 @@ package io.suggest.maps.c
 import io.suggest.maps.vm.MapContainer
 import io.suggest.maps.vm.inp.MapStateInputs
 import io.suggest.sjs.common.controller.IInit
+import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.leaflet.event.{Event, Events}
 import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.sjs.leaflet.tilelayer.TlOptions
@@ -16,14 +16,14 @@ import io.suggest.sjs.leaflet.{Leaflet => L}
   * Created: 07.11.16 16:20
   * Description: Трейт для инициализации leaflet-карты в указанном контейнере.
   */
-trait LeafletMapInit extends ISjsLogger with IInit {
+trait LeafletMapInit extends ILog with IInit {
 
   /** Выполнить инициализцию карты. */
   override def init(): Unit = {
     MapContainer
       .find()
       .fold[Any] {
-        warn(WarnMsgs.RAD_MAP_CONT_MISSING)
+        LOG.warn(WarnMsgs.RAD_MAP_CONT_MISSING)
       } {
         initMapOn
       }
@@ -77,7 +77,7 @@ trait LeafletMapInit extends ISjsLogger with IInit {
     }
     // Если с инициализацией не фартануло, то передать исполнение на super-инициализацию.
     if (r.isEmpty) {
-      warn( WarnMsgs.RAD_MAP_NO_START_STATE )
+      LOG.warn( WarnMsgs.RAD_MAP_NO_START_STATE )
       _earlyInitMapFallback(lmap)
     }
     // Вернуть исходную карту, чтобы можно было override'ить результат работы.

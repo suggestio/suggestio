@@ -1,7 +1,7 @@
 package io.suggest.maps.c
 
+import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.util.ISjsLogger
 import io.suggest.sjs.leaflet.event.{Event, Events, LocationEvent}
 import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.sjs.leaflet.{Leaflet => L}
@@ -15,7 +15,7 @@ import scala.scalajs.js
   * Description: Утиль для поддержки L.control.locate, который живёт в виде плагина.
   */
 trait LeafletLocateControlUtil
-  extends ISjsLogger
+  extends ILog
 {
 
   /**
@@ -42,7 +42,7 @@ trait LeafletLocateControlUtil
       lmap.on3(Events.LOCATION_FOUND, startFollowingF)
 
     } else {
-      warn( WarnMsgs.LEAFLET_LOCATE_CONTROL_MISSING )
+      LOG.warn( WarnMsgs.LEAFLET_LOCATE_CONTROL_MISSING )
     }
   }
 
