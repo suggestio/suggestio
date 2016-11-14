@@ -125,7 +125,7 @@ class SysMdrUtil @Inject() (
   /** Общий код сборки всех SQL queries для сборки items модерации карточки. */
   def itemsQuery(nodeId: String): Q_t = {
     mItems.query
-      .filter(_.adId === nodeId)
+      .filter(_.nodeId === nodeId)
   }
 
   def itemsQueryAwaiting(nodeId: String): Q_t = {
@@ -202,11 +202,11 @@ class SysMdrUtil @Inject() (
 
     val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>
       b0.filter { i =>
-        i.adId =!= hideAdId
+        i.nodeId =!= hideAdId
       }
     }
 
-    b1.map(_.adId)
+    b1.map(_.nodeId)
       //.sortBy(_.id.asc)   // TODO Нужно подумать над сортировкой возвращаемого множества adId
       .distinct
       .take( args.limit )

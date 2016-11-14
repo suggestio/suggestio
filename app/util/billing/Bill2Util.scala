@@ -13,11 +13,12 @@ import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.model.n2.node.MNodes
+import models.adv.form.MDatesPeriod
 import models.adv.price.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.{CurrencyCodeOpt, IPrice, MNode, MPrice}
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Duration, Interval}
 import slick.profile.SqlAction
 import util.PlayMacroLogsImpl
 
@@ -67,6 +68,21 @@ class Bill2Util @Inject() (
         }
       }
   }
+
+
+  /** Посчитать кол-во дней размещения для указанного периода. */
+  def getDaysCount(period: MDatesPeriod): Int = {
+    getDaysCount( period.interval )
+  }
+  /** Посчитать кол-во дней размещения для указанного joda-интервала. */
+  def getDaysCount(interval: Interval): Int = {
+    getDaysCount(interval.toDuration)
+  }
+  /** Посчитать кол-во дней размещения для указанного joda-duration. */
+  def getDaysCount(dur: Duration): Int = {
+    Math.max(1, dur.getStandardDays.toInt)
+  }
+
 
   def cbcaNodeOptFut = mNodeCache.getById(CBCA_NODE_ID)
 

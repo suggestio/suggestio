@@ -50,7 +50,7 @@ class ActivateOfflineAdvs @Inject() (
     // Ищем только карточки, у которых есть offline ads с dateStart < now
     mItems.query
       .filter(_offlineItemsSql)
-      .map(_.adId)
+      .map(_.nodeId)
       .distinct
       .take(max)
       .result
@@ -70,7 +70,7 @@ class ActivateOfflineAdvs @Inject() (
     // Нужно искать те же item'ы, что и в findAdIds, т.е. только оффлайновые и созревшие. Только в рамках карточки.
     mItems.query
       .filter { i =>
-        (i.adId === adId) &&
+        (i.nodeId === adId) &&
         (i.iTypeStr inSet itypes.map(_.strId)) && (
           _offlineItemsSql(i) || i.statusStr === MItemStatuses.Online.strId
         )

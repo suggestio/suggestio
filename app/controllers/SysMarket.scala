@@ -568,7 +568,7 @@ class SysMarket @Inject() (
             val statuses = MItemStatuses.advBusyIds.toSeq
             mItems.query
               .filter { i =>
-                (i.adId inSet adIds) && (i.statusStr inSet statuses)
+                (i.nodeId inSet adIds) && (i.statusStr inSet statuses)
               }
           }
           val items: Future[Seq[MItem]] = if (rcvrIds.nonEmpty) {
@@ -589,7 +589,7 @@ class SysMarket @Inject() (
           items
         }
       } yield {
-        advs.groupBy(_.adId)
+        advs.groupBy(_.nodeId)
       }
     }
 

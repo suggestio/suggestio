@@ -33,13 +33,13 @@ class AdvGeoBillUtil @Inject()(
   import slick.driver.api._
 
   private def _oneTag1dayPrice: MPrice = {
-    bill2Util.zeroPrice.copy(amount = 1.0)
+    bill2Util.zeroPrice.withAmount(1.0)
   }
 
   private def _oneTagPrice(geoMult: Double): MPrice = {
     val oneTag1dPrice = _oneTag1dayPrice
-    oneTag1dPrice.copy(
-      amount = oneTag1dPrice.amount * geoMult
+    oneTag1dPrice.withAmount(
+      oneTag1dPrice.amount * geoMult
     )
   }
 
@@ -50,7 +50,7 @@ class AdvGeoBillUtil @Inject()(
     * @return Double-мультипликатор цены.
     */
   def getPriceMult(res: IAdvGeoFormResult): Double = {
-    val daysCount = Math.max(1, res.period.interval.toDuration.getStandardDays) + 1
+    val daysCount = bill2Util.getDaysCount(res.period) + 1   // TODO Зачем тут +1 в конце?
 
     // Привести радиус на карте к множителю цены
     val radKm = res.radMapVal.circle.radius.kiloMeters
@@ -80,7 +80,7 @@ class AdvGeoBillUtil @Inject()(
         iType         = MItemTypes.GeoTag,
         status        = status,
         price         = p,
-        adId          = adId,
+        nodeId        = adId,
         dtIntervalOpt = Some(res.period.interval),
         rcvrIdOpt     = tag.nodeId,
         tagFaceOpt    = Some(tag.face),
@@ -96,7 +96,7 @@ class AdvGeoBillUtil @Inject()(
         iType         = MItemTypes.GeoPlace,
         status        = status,
         price         = getPricePlace(geoMult),
-        adId          = adId,
+        nodeId        = adId,
         dtIntervalOpt = Some(res.period.interval),
         rcvrIdOpt     = None,
         geoShape      = Some(res.radMapVal.circle)
@@ -123,8 +123,8 @@ class AdvGeoBillUtil @Inject()(
 
     // Посчитать цены размещения для каждого тега.
     var prices1 = List(
-      p1.copy(
-        amount = p1.amount * res.tags.size
+      p1.withAmount(
+        p1.amount * res.tags.size
       )
     )
 
@@ -162,8 +162,8 @@ class AdvGeoBillUtil @Inject()(
 
 
   private def getPricePlace(geoMult: Double): MPrice = {
-    bill2Util.zeroPrice.copy(
-      amount = geoMult * PLACE_PRICE_MULT
+    bill2Util.zeroPrice.withAmount(
+      geoMult * PLACE_PRICE_MULT
     )
   }
 
@@ -171,7 +171,7 @@ class AdvGeoBillUtil @Inject()(
   private def _findForAdQuery(adId: String) = {
     mItems.query
       .filter { i =>
-        (i.adId === adId) &&
+        (i.nodeId === adId) &&
         (i.iTypeStr inSet MItemTypes.onlyAdvGeoTypeIds.toSeq)
       }
   }

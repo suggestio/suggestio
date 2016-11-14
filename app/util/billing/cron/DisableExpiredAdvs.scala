@@ -44,7 +44,7 @@ class DisableExpiredAdvs @Inject() (
   override def findAdIds(max: Int): StreamingDBIO[Traversable[String], String] = {
     mItems.query
       .filter(_expiredItemsSql)
-      .map(_.adId)
+      .map(_.nodeId)
       .distinct
       // Избегаем скачка слишком резкой нагрузки, ограничивая кол-во обрабатываемых карточек.
       .take(max)
@@ -84,7 +84,7 @@ class DisableExpiredAdvs @Inject() (
     mItems.query
       .filter { i =>
         // Ищем item'ы для картоки в online-состоянии.
-        (i.adId === adId) &&
+        (i.nodeId === adId) &&
           (i.statusStr === MItemStatuses.Online.strId) &&
           (i.iTypeStr inSet itypes.map(_.strId))
       }

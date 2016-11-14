@@ -3,14 +3,13 @@ package util.adv.direct
 import java.{time => jat}
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.mbill2.m.balance.{MBalance => MBalance2, MBalances}
+import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models._
 import models.adv.direct.{IAdvTerms, FormResult, AdvFormEntry}
-import models.adv.price.MAdvPricing
 import models.blk.{BlockHeights, BlockWidths}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mproj.ICommonDi
@@ -19,7 +18,6 @@ import org.joda.time.LocalDate
 import util.PlayMacroLogsImpl
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
-import util.n2u.N2NodesUtil
 
 import scala.annotation.tailrec
 import scala.collection.JavaConversions._
@@ -74,7 +72,7 @@ class AdvDirectBilling @Inject() (
     mItems
       .query
       .filter { i =>
-        (i.adId === adId) &&
+        (i.nodeId === adId) &&
           (i.iTypeStr === MItemTypes.AdvDirect.strId) &&
           (i.statusStr inSet MItemStatuses.advBusyIds.toSeq)
       }
@@ -276,7 +274,7 @@ class AdvDirectBilling @Inject() (
         iType         = MItemTypes.AdvDirect,
         status        = status,
         price         = calculateAdvPrice(bmc, rcvrTfs(adv.adnId), adv, mcalsCtx),
-        adId          = mad.id.get,
+        nodeId        = mad.id.get,
         sls           = adv.showLevels,
         dtIntervalOpt = Some(adv.dtInterval),
         rcvrIdOpt     = Some(adv.adnId)

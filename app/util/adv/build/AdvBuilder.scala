@@ -88,7 +88,7 @@ trait IAdvBuilder
         .toSet
       val dbAction = mItems.query
         .filter { i =>
-          (i.adId === acc0.mad.id.get) &&
+          (i.nodeId === acc0.mad.id.get) &&
             (i.statusStr inSet statusesStr) &&
             (i.iTypeStr inSet supItmTypesStr)
         }

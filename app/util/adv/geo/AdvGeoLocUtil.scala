@@ -74,7 +74,7 @@ class AdvGeoLocUtil @Inject() (
     _getPointFromItemId(
       mItems.query
         .filter { q =>
-          (q.adId inSet adIds) &&
+          (q.nodeId inSet adIds) &&
             (q.iTypeStr inSet _geoAdvsItemTypes) &&
             q.geoShapeStrOpt.isDefined
         }

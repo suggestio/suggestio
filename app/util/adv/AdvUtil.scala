@@ -94,7 +94,7 @@ class AdvUtil @Inject() (
       val itypes = b0.supportedItemTypesStrSet
       mItems.query
         .filter { i =>
-          (i.adId === madId) &&
+          (i.nodeId === madId) &&
             (i.statusStr === MItemStatuses.Online.strId) &&
             (i.iTypeStr inSet itypes)
         }
@@ -206,7 +206,7 @@ class AdvUtil @Inject() (
     // Собрать db-эшен для получения списка затрагиваемых размещений:
     val onlineItemsAction = mItems.query
       .filter { i =>
-        (i.adId === adId) &&
+        (i.nodeId === adId) &&
           (i.iTypeStr inSet b0.supportedItemTypesStrSet) &&
           (i.statusStr === MItemStatuses.Online.strId)
       }

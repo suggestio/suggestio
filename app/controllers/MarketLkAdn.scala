@@ -204,7 +204,7 @@ class MarketLkAdn @Inject() (
       } yield {
         itemsInfos
           .iterator
-          .map { i => (i.adId, i) }
+          .map { i => (i.nodeId, i) }
           .toMap
       }
 

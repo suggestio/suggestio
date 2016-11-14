@@ -68,7 +68,7 @@ trait LkBill2Cart
 
     // Собрать все карточки, относящиеся к mitem'ам:
     val madsFut = mitemsFut.flatMap { mitems =>
-      val wantAdIds = mitems.iterator.map(_.adId).toSet
+      val wantAdIds = mitems.iterator.map(_.nodeId).toSet
       mNodeCache.multiGet(wantAdIds)
     }
 
@@ -113,7 +113,7 @@ trait LkBill2Cart
     val mItemsMapByAdFut = for {
       mitems <- mitemsFut
     } yield {
-      mitems.groupBy(_.adId)
+      mitems.groupBy(_.nodeId)
     }
 
     // Сборка списка элементов корзины.

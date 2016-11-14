@@ -235,7 +235,7 @@ trait SysMdrPaid
       res <- sysMdrUtil._processOneItem(dbAction)
     } yield {
       // Отредиректить юзера для продолжения модерации
-      Redirect( routes.SysMdr.forAd(res.mitem.adId) )
+      Redirect( routes.SysMdr.forAd(res.mitem.nodeId) )
         .flashing(FLASH.SUCCESS -> s"Размещение #$itemId одобрено.")
     }
   }
@@ -262,7 +262,7 @@ trait SysMdrPaid
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        Redirect( routes.SysMdr.forAd(request.mitem.adId) )
+        Redirect( routes.SysMdr.forAd(request.mitem.nodeId) )
           .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
       },
 
@@ -275,7 +275,7 @@ trait SysMdrPaid
           res <- sysMdrUtil._processOneItem(dbAction)
         } yield {
           // Отредиректить клиента на модерацию карточки.
-          Redirect( routes.SysMdr.forAd(request.mitem.adId) )
+          Redirect( routes.SysMdr.forAd(request.mitem.nodeId) )
             .flashing(FLASH.SUCCESS -> s"Отказано в размещении #$itemId.")
         }
       }

@@ -46,7 +46,7 @@ trait IsSuItemAd
         }
         mitemOptFut.flatMap {
           case Some(mitem) =>
-            val madOptFut = mNodeCache.getById( mitem.adId )
+            val madOptFut = mNodeCache.getById( mitem.nodeId )
             madOptFut.flatMap {
               case Some(mad) =>
                 val req1 = MItemAdReq(mitem, mad, user, request)
@@ -72,7 +72,7 @@ trait IsSuItemAd
     }
 
     def madNotFound(mitem: MItem, req: IReqHdr): Future[Result] = {
-      LOGGER.warn(s"madNotFound(${mitem.id.orNull}): ${mitem.adId}")
+      LOGGER.warn(s"madNotFound(${mitem.id.orNull}): ${mitem.nodeId}")
       errorHandler.http404Fut(req)
     }
 
