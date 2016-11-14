@@ -3,8 +3,8 @@ package io.suggest.lk.adn.map
 import io.suggest.lk.adn.map.vm.FormInputs
 import io.suggest.maps.c.{LeafletLocateControlUtil, LeafletMapInit, LeafletPinMarker}
 import io.suggest.maps.vm.MapContainer
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.SjsLogger
 import io.suggest.sjs.leaflet.event.{Event, Events}
 import io.suggest.sjs.leaflet.map.{LMap, LatLng}
 import io.suggest.sjs.leaflet.marker.Marker
@@ -12,7 +12,7 @@ import io.suggest.sjs.leaflet.marker.Marker
 
 /** Инициализатор только карты размещения ADN-узла на карте. */
 class LkAdnMapInit
-  extends SjsLogger
+  extends Log
   with LeafletMapInit
   with LeafletPinMarker
   with LeafletLocateControlUtil
@@ -31,7 +31,7 @@ class LkAdnMapInit
     val latLng = _vm.pin.latLngOpt
       .orElse { _vm._map.latLngOpt }
       .getOrElse {
-        error( ErrorMsgs.MISSING_POINT_0 )
+        LOG.error( ErrorMsgs.MISSING_POINT_0 )
         lmapCenter0
       }
 
