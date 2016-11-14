@@ -49,6 +49,9 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   /** Покупка размещения в каком-то месте на карте. */
   val GeoPlace          : T = new Val("g")
 
+  /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
+  val AdnNodeMap        : T = new Val("m")
+
   /** Покупка срочного доступа к внешнему размещению (разовая абонплата). */
   //val AdvExtFee         : T = new Val("e")
 

@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.item
 
 import io.suggest.common.slick.driver.IPgDriver
-import io.suggest.mbill2.m.item.cols.IAdId
+import io.suggest.mbill2.m.item.cols.INodeId
 import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
 import slick.jdbc.GetResult
 
@@ -18,7 +18,7 @@ trait MAdItemStatusesSlick extends IPgDriver {
   /** Десериализатор Pg RowSet'а c [[MAdItemIds]]. */
   implicit val adItemStatusesGr = GetResult { r =>
     MAdItemStatuses(
-      adId        = r.nextString(),
+      nodeId      = r.nextString(),
       statusesStr = r.<<[Seq[String]]
     )
   }
@@ -27,7 +27,7 @@ trait MAdItemStatusesSlick extends IPgDriver {
 
 
 /** Интерфейс модели. */
-trait IAdItemStatuses extends IAdId {
+trait IAdItemStatuses extends INodeId {
   /** Ключи item'ов, связанных с указанной рекламной карточкой. */
   def statusesStr: Seq[String]
 
@@ -39,11 +39,11 @@ trait IAdItemStatuses extends IAdId {
 
 /** Дефолтовая реализация модели [[IAdItemIds]].
   *
-  * @param adId id рекламной карточки.
+  * @param nodeId id рекламной карточки.
   * @param statusesStr Множество строк статусов item'ов карточки.
   */
 case class MAdItemStatuses(
-  override val adId        : String,
+  override val nodeId      : String,
   override val statusesStr : Seq[String]
 )
   extends IAdItemStatuses

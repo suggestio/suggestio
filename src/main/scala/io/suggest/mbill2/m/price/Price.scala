@@ -59,4 +59,7 @@ case class MPrice(
   extends IPrice
 {
   override def toString  = super.toString
+
+  def withAmount(amount2: Amount_t) = copy(amount = amount2)
+
 }

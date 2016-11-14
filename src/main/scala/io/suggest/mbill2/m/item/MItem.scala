@@ -26,6 +26,11 @@ import slick.profile.SqlAction
  * Description: Модель item'ов одного заказа. Это как бы абстрактная модель,
  */
 
+// TODO По таблице items:
+// - Переименовать столбец ad_id в node_id
+// - Обновить коммент к столбцу node_id.
+// - Удалить столбец sls.
+
 /** DI-контейнер для slick-модели абстрактных item'ов. */
 @Singleton
 class MItems @Inject() (
@@ -42,7 +47,7 @@ class MItems @Inject() (
   with ItemStatusSlick
   with MItemTypeSlick
   with IntervalSlick
-  with AdIdSlick
+  with NodeIdSlick
   with ReasonOptSlick
   with RcvrIdOptSlick
   with SlsOptSlick
@@ -76,7 +81,7 @@ class MItems @Inject() (
     with ItemStatusColumn
     with ItemTypeColumn
     with IntervalColumn
-    with AdIdColumn
+    with NodeIdColumn
     with ReasonOptColumn
     with RcvrIdOptColumn
     with SlsColumn
@@ -86,7 +91,7 @@ class MItems @Inject() (
   {
 
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, adId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
+      (orderId, iType, status, price, nodeId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
         dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
@@ -167,7 +172,7 @@ class MItems @Inject() (
     // Возможно, стоит попробовать эту пионерскую поделку https://github.com/tarao/slick-jdbc-extension-scala
     val adIdsStr = _mkSqlInString( adIds )
     val statusesStr = _mkSqlInString( statuses.toIterator.map(_.strId) )
-    sql"SELECT #$AD_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE ad_id IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY ad_id"
+    sql"SELECT #$NODE_ID_FN, array_agg(DISTINCT #$STATUS_FN) FROM #$TABLE_NAME WHERE ad_id IN (#$adIdsStr) AND #$STATUS_FN IN (#$statusesStr) GROUP BY ad_id"
       .as[MAdItemStatuses]
   }
 
@@ -194,7 +199,7 @@ trait IItem
   with IMItemType
   with IMItemStatus
   with IDtIntervalOpt
-  with IAdId
+  with INodeId
   with IReasonOpt
   with IRcvrIdOpt
   with ISls
@@ -209,7 +214,7 @@ case class MItem(
   override val iType          : MItemType,
   override val status         : MItemStatus,
   override val price          : MPrice,
-  override val adId           : String,
+  override val nodeId         : String,
   override val dtIntervalOpt  : Option[Interval],
   override val rcvrIdOpt      : Option[String],
   override val sls            : Set[SinkShowLevel]  = Set.empty,

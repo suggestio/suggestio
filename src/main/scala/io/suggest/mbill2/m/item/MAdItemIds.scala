@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.item
 
 import io.suggest.common.slick.driver.IPgDriver
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.cols.IAdId
+import io.suggest.mbill2.m.item.cols.INodeId
 import slick.jdbc.GetResult
 
 /**
@@ -18,7 +18,7 @@ trait MAdItemIdsSlick extends IPgDriver {
   /** Десериализатор Pg RowSet'а c [[MAdItemIds]]. */
   implicit val adItemIdsGr = GetResult { r =>
     MAdItemIds(
-      adId    = r.nextString(),
+      nodeId  = r.nextString(),
       itemIds = r.<<[Seq[Gid_t]]
     )
   }
@@ -27,7 +27,7 @@ trait MAdItemIdsSlick extends IPgDriver {
 
 
 /** Интерфейс модели. */
-trait IAdItemIds extends IAdId {
+trait IAdItemIds extends INodeId {
   /** Ключи item'ов, связанных с указанной рекламной карточкой. */
   def itemIds: Seq[Gid_t]
 }
@@ -35,11 +35,11 @@ trait IAdItemIds extends IAdId {
 
 /** Дефолтовая реализация модели [[IAdItemIds]].
   *
-  * @param adId id рекламной карточки.
+  * @param nodeId id рекламной карточки.
   * @param itemIds Ключи item'ов.
   */
 case class MAdItemIds(
-  override val adId     : String,
+  override val nodeId   : String,
   override val itemIds  : Seq[Gid_t]
 )
   extends IAdItemIds
