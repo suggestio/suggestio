@@ -22,7 +22,7 @@ trait Off extends BeaconerFsmStub {
         super._handleSubscribe(s)
         become(_onlineState)
       } else {
-        error( ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE )
+        LOG.error( ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE )
       }
     }
 

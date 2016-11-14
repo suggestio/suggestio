@@ -2,8 +2,8 @@ package io.suggest.ble.api
 
 import io.suggest.ble.api.cordova.ble.CordovaBleApi
 import io.suggest.sjs.common.fsm.SjsFsm
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
   * Suggest.io
@@ -27,7 +27,7 @@ trait IBleBeaconsApi {
 }
 
 
-object IBleBeaconsApi extends SjsLogger {
+object IBleBeaconsApi extends Log {
 
   /** Выбрать доступное API маячков. */
   val detectApi: Option[IBleBeaconsApi] = {
@@ -41,7 +41,7 @@ object IBleBeaconsApi extends SjsLogger {
       }
     } catch {
       case ex: Throwable =>
-        log( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED + " " + cordovaBleApi, ex )
+        LOG.log( ErrorMsgs.BLE_BEACONS_API_AVAILABILITY_FAILED + " " + cordovaBleApi, ex )
         None
     }
 

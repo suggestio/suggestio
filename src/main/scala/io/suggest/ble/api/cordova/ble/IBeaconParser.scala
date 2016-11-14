@@ -4,8 +4,8 @@ import evothings.EvothingsUtil
 import evothings.ble.DeviceInfo
 import io.suggest.ble.beaconer.m.beacon.apple.IBeacon
 import io.suggest.common.uuid.LowUuidUtil
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
   * Suggest.io
@@ -46,20 +46,23 @@ object IBeaconParser extends BeaconParserFactory {
   * }}}
   * которые можно распарсить по схеме, похожей на эту:
   * {{{
-  *   4C 00 # Company identifier code (0x004C == Apple)
-  *   02 # Byte 0 of iBeacon advertisement indicator
-  *   15 # Byte 1 of iBeacon advertisement indicator
-  *   e2 c5 6d b5 df fb 48 d2 b0 60 d0 f5 a7 10 96 e0 # iBeacon proximity uuid
-  *   00 00 # major
-  *   00 00 # minor
-  *   c5 # The 2's complement of the calibrated Tx Power
+  *   4C 00   # Company identifier code (0x004C == Apple)
+  *   02      # Byte 0 of iBeacon advertisement indicator
+  *   15      # Byte 1 of iBeacon advertisement indicator
+  *   e2 c5 6d b5 df fb 48 d2 b0 60 d0 f5 a7 10 96 e0   # iBeacon proximity uuid
+  *   00 00   # major
+  *   00 00   # minor
+  *   c5      # The 2's complement of the calibrated Tx Power
   * }}}
   *
   * @param dev ble-девайс.
   * @return None, если это не iBeacon или если какой-то кривой iBeacon.
   * @see [[http://stackoverflow.com/a/19040616]]
   */
-case class IBeaconParser(override val dev: DeviceInfo) extends BeaconParser with SjsLogger {
+case class IBeaconParser(override val dev: DeviceInfo)
+  extends BeaconParser
+  with Log
+{
 
   override type T = IBeacon
 

@@ -3,8 +3,8 @@ package io.suggest.ble.api.cordova.ble
 import evothings.ble.DeviceInfo
 import io.suggest.common.radio.BeaconSignal
 import io.suggest.primo.{IApply1, TypeT}
+import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsg_t
-import io.suggest.sjs.common.util.ISjsLogger
 
 import scala.scalajs.js.JSON
 
@@ -14,7 +14,7 @@ import scala.scalajs.js.JSON
   * Created: 13.10.16 11:20
   * Description: Абстрактный парсер cordova-ble-данных маячка.
   */
-trait BeaconParser extends TypeT with ISjsLogger {
+trait BeaconParser extends TypeT with ILog {
 
   override type T <: BeaconSignal
 
@@ -37,7 +37,7 @@ trait BeaconParser extends TypeT with ISjsLogger {
       parse()
     } catch {
       case ex: Throwable =>
-        error( parserErrorMsg + " " + JSON.stringify(dev), ex )
+        LOG.error( parserErrorMsg, ex, JSON.stringify(dev) )
         None
     }
   }

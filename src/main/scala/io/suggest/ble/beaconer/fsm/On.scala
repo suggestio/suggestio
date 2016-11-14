@@ -90,7 +90,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
         distanceM   <- {
           val dOpt = RadioUtil.calculateAccuracy(bs.beacon)
           if (dOpt.isEmpty)
-            log( WarnMsgs.BEACON_ACCURACY_UNKNOWN + " " + bs.beacon )
+            LOG.log( WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = bs.beacon )
           dOpt
         }
 
@@ -186,7 +186,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
 
       } catch {
         case ex: Throwable =>
-          error( ErrorMsgs.BLE_BEACONS_LISTEN_ERROR, ex )
+          LOG.error( ErrorMsgs.BLE_BEACONS_LISTEN_ERROR, ex )
           _goOffline()
       }
     }

@@ -4,7 +4,6 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.MBeaconerFsmSd
 import io.suggest.primo.IStart0
 import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
   * Suggest.io
@@ -29,7 +28,6 @@ class BeaconerFsm
   with Off
   with On
   with Suspend
-  with SjsLogger
   with IStart0
   with LogBecome
 {

@@ -5,8 +5,8 @@ import evothings.ble.DeviceInfo
 import io.suggest.ble.beaconer.m.beacon.google.EddyStone
 import io.suggest.common.radio.BleConstants
 import io.suggest.common.uuid.LowUuidUtil
+import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.util.SjsLogger
 
 /**
   * Suggest.io
@@ -22,7 +22,7 @@ object EddyStoneParser extends BeaconParserFactory {
 /** Парсер для маячков по спеке Eddy Stone. */
 case class EddyStoneParser(override val dev: DeviceInfo)
   extends BeaconParser
-  with SjsLogger
+  with Log
 {
 
   override type T = EddyStone

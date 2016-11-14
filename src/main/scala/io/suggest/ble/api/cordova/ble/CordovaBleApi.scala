@@ -5,7 +5,10 @@ import evothings.ble.{BLE, DeviceInfo}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.signals.BeaconDetected
 import io.suggest.sjs.common.fsm.SjsFsm
-import io.suggest.sjs.common.util.SjsLogger
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+
+import scala.scalajs.js.JSON
 
 /**
   * Suggest.io
@@ -16,7 +19,7 @@ import io.suggest.sjs.common.util.SjsLogger
   * @see [[https://github.com/evothings/cordova-ble]]
   */
 
-class CordovaBleApi extends IBleBeaconsApi with SjsLogger {
+class CordovaBleApi extends IBleBeaconsApi with Log {
 
   /** Динамический (через require()) инстанс cordova-plugin-ble API, если API доступно. */
   val API_OPT = {
@@ -53,20 +56,23 @@ class CordovaBleApi extends IBleBeaconsApi with SjsLogger {
     val f = { parserFactory: BeaconParserFactory =>
       parserFactory(dev).tryParse()
     }
-    for {
-      // Заинлайнен список поддерживаемых beacon-парсеров с помощью f(...) orElse f(...) orElse f(...)
-      beacon <- f( IBeaconParser )
-        .orElse( f(EddyStoneParser) )
 
-    } {
-      listener ! BeaconDetected( beacon )
-    }
+    // Заинлайнен список поддерживаемых beacon-парсеров с помощью f(...) orElse f(...) orElse f(...)
+    f( IBeaconParser )
+      .orElse( f(EddyStoneParser) )
+      // Среагировать на результат работы цепочки парсеров.
+      .fold [Unit] {
+        // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
+        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
+      } { beacon =>
+        listener ! BeaconDetected( beacon )
+      }
   }
 
 
   /** Какая-то ошибка возникла при сканировании. */
   def _handleErrorCode(errorCode: String, listener: SjsFsm): Unit = {
-    warn(errorCode)
+    LOG.warn(ErrorMsgs.BLE_SCAN_ERROR, msg = errorCode)
   }
 
 
