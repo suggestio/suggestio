@@ -9,6 +9,6 @@ package io.suggest.mbill2.m.item
 trait IMItems {
 
   /** DI-экземпляр slick-модели [[io.suggest.mbill2.m.item.MItems]]. */
-  def mItems: MItems
+  val mItems: MItems
 
 }
