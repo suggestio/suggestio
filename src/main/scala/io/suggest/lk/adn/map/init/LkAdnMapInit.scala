@@ -1,4 +1,4 @@
-package io.suggest.lk.adn.map
+package io.suggest.lk.adn.map.init
 
 import io.suggest.lk.adn.map.vm.FormInputs
 import io.suggest.maps.c.{LeafletLocateControlUtil, LeafletMapInit, LeafletPinMarker}
@@ -47,7 +47,7 @@ class LkAdnMapInit
     // После перетаскивания маркера надо его координаты сериализовать в соотв.поля формы.
     val cDragEndF = { e: Event =>
       _vm.pin.setLatLon( cm.getLatLng() )
-      onPinDragEnd(cm)
+      onPinNewPosition(cm)
     }
     cm.on3(Events.DRAG_END, cDragEndF)
 
@@ -61,7 +61,7 @@ class LkAdnMapInit
 
 
   /** Дополнительная реакция на перетаскивание маркера в новую точку. */
-  def onPinDragEnd(marker: Marker): Unit = {}
+  def onPinNewPosition(marker: Marker): Unit = {}
 
 
   /** Координаты слишком далеко друг от друга? */

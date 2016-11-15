@@ -1,7 +1,7 @@
-package io.suggest.lk.adn.map
+package io.suggest.lk.adn.map.init
 
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.controller.{IInit, InitRouter}
+import io.suggest.sjs.common.controller.InitRouter
 
 import scala.concurrent.Future
 
@@ -19,24 +19,12 @@ trait LkAdnMapFormInitRouter extends InitRouter {
   override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
     if (itg == MInitTargets.AdnMapForm) {
       Future {
-        (new FormInit)
+        (new LkAdnMapFormInit)
           .init()
       }
     } else {
       super.routeInitTarget(itg)
     }
-  }
-
-}
-
-
-/** Непосредственный инициализатор формы размещения ADN-узла на карте. */
-class FormInit extends IInit {
-
-  /** Запуск инициализации текущего модуля. */
-  override def init(): Unit = {
-    val mapInitializer = new LkAdnMapInit
-    mapInitializer.init()
   }
 
 }
