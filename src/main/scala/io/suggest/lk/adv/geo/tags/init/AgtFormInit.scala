@@ -49,9 +49,8 @@ class AgtFormInit extends IInit {
     mainFsm.start()
 
     // Привязать форму к созданному FSM.
-    val ilf = IInitLayoutFsm.f(mainFsm)
-    AgtForm.find().foreach(ilf)
-
+    AgtForm.find()
+      .foreach( IInitLayoutFsm.f(mainFsm) )
 
     // Инициализировать FSM редактора тегов.
     val tagsFsm = new TagsEditFsm {

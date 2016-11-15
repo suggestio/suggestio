@@ -10,7 +10,10 @@ import io.suggest.sjs.interval.m.PeriodEith_t
   * Created: 16.03.16 13:04
   * Description: Поддержка реакции на изменения в виджете выбора диапазона дат размещения.
   */
-trait PeriodSignals extends AgtFormFsmStub with IntervalSignalsBase {
+trait PeriodSignals
+  extends AgtFormFsmStub
+  with IntervalSignalsBase
+{
 
   override protected[this] def _sdGetPeriod(sd: SD): PeriodEith_t = {
     sd.period
