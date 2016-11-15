@@ -33,6 +33,10 @@ object ErrorConstants {
 
     def STATE_FN = "state"
 
+    def ERROR_CODE_FN = "ec"
+
+    def SEVERITY_FN   = "se"
+
   }
 
 }
