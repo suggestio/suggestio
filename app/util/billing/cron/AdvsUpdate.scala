@@ -1,6 +1,6 @@
 package util.billing.cron
 
-import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
 import io.suggest.model.es.EsModelUtil

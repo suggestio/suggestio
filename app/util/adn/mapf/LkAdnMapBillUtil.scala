@@ -37,6 +37,7 @@ class LkAdnMapBillUtil @Inject() (
 
   /** Рассчёт стоимости размещения. */
   def getPrice(formRes: MAdnMapFormRes): MPrice = {
+    // +1 потому что кол-во дней как-то неправильно считается.
     val daysCount = bill2Util.getDaysCount( formRes.period )
     val oneDayPrice = ONE_DAY_PRICE
     oneDayPrice.withAmount(

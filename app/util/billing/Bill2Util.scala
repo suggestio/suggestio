@@ -80,7 +80,7 @@ class Bill2Util @Inject() (
   }
   /** Посчитать кол-во дней размещения для указанного joda-duration. */
   def getDaysCount(dur: Duration): Int = {
-    Math.max(1, dur.getStandardDays.toInt)
+    Math.max(1, dur.getStandardDays.toInt) + 1
   }
 
 

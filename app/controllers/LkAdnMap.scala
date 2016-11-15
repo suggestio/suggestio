@@ -112,7 +112,7 @@ class LkAdnMap @Inject() (
     val rargs = MAdnMapTplArgs(
       mnode = request.mnode,
       form  = form,
-      price = bill2Util.zeroPricing
+      price = bill2Util.zeroPricing     // TODO Считать ценник на основе данных состояния формы и su-флага.
     )
 
     // Отрендерить результат запроса.
@@ -175,6 +175,12 @@ class LkAdnMap @Inject() (
           }
 
         } yield {
+          // Логгируем удачное закидывание товара в корзину.
+          LOGGER.debug {
+            val n = "\n "
+            s"$logPrefix Added ADN-map into cart ${e.mc.id.orNull}, su=$isSuFree: ${itemsAdded.mkString(n,n,"")}"
+          }
+
           val rCall = routes.LkAdnMap.forNode(esNodeId)
           // Рендерить HTTP-ответ.
           if (!isSuFree) {

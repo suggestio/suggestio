@@ -50,7 +50,7 @@ class AdvGeoBillUtil @Inject()(
     * @return Double-мультипликатор цены.
     */
   def getPriceMult(res: IAdvGeoFormResult): Double = {
-    val daysCount = bill2Util.getDaysCount(res.period) + 1   // TODO Зачем тут +1 в конце?
+    val daysCount = bill2Util.getDaysCount(res.period)
 
     // Привести радиус на карте к множителю цены
     val radKm = res.radMapVal.circle.radius.kiloMeters
