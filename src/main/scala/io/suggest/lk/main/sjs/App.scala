@@ -2,6 +2,7 @@ package io.suggest.lk.main.sjs
 
 import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
+import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.direct.init.AdvDirectFormInitRouter
 import io.suggest.lk.adv.geo.tags.init.AgtFormInitRouter
 import io.suggest.lk.bill.txn.TxnsListInit
@@ -9,7 +10,6 @@ import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
 import io.suggest.lk.popup.PopupsInitRouter
-import io.suggest.lk.adn.map.LkAdnMapFormInitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
