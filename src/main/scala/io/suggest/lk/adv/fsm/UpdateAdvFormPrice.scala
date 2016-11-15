@@ -49,10 +49,10 @@ trait UpdateAdvFormPrice extends SjsFsm with StateData with IUpdatePriceDataStar
       // Запустить отправку XHR на сервер.
       val fut0 = Xhr.successIfStatus( HttpStatuses.OK ) {
         FutureUtil.tryCatchFut {
-          Xhr.send(
+          Xhr.sendRaw(
             method = method,
-            url = priceUrl,
-            body = Some(form.formData)
+            url    = priceUrl,
+            body   = Some(form.formData)
           )
         }
       }
