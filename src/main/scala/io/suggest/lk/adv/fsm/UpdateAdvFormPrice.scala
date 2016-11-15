@@ -87,7 +87,7 @@ trait UpdateAdvFormPrice extends SjsFsm with StateData with IUpdatePriceDataStar
   protected trait GetPriceStateT extends FsmEmptyReceiverState {
 
     /** Дополнить ресивер поддержкой получения ответа по данным. */
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       // Получен ответ от сервера, необязательно он положительный.
       case res: XhrResult =>
         val sd0 = _stateData

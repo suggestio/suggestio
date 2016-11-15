@@ -13,7 +13,8 @@ trait AdvFormChangedReceiver extends SjsFsm with IUpdatePriceDataStart {
 
   /** Подмешать это в FSM-состояние, чтобы в ресивере появился вызов  */
   trait AdvFormChangedReceiverStateT extends FsmEmptyReceiverState {
-    override def receiverPart: PartialFunction[Any, Unit] = super.receiverPart orElse {
+
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case msg: IAdvFormChanged =>
         _handleAdvFormChanged(msg)
     }
