@@ -28,7 +28,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
       Option( Cordova.require[BLE](id) )
     } catch {
       case ex: Throwable =>
-        //log("require " + id + ": " + ex)
+        LOG.warn(ErrorMsgs.CORDOVA_BLE_REQUIRE_FAILED, msg = id, ex = ex)
         None
     }
   }

@@ -4,6 +4,7 @@ import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.MBeaconerFsmSd
 import io.suggest.primo.IStart0
 import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
+import io.suggest.sjs.common.log.Log
 
 /**
   * Suggest.io
@@ -11,10 +12,12 @@ import io.suggest.sjs.common.fsm.{LogBecome, SjsFsmImpl}
   * Created: 13.10.16 12:18
   * Description: Реализация FSM мониторинга BLE-маячков.
   */
-object BeaconerFsm {
+object BeaconerFsm extends Log {
 
   def applyIfPossible: Option[BeaconerFsm] = {
-    for (_ <- IBleBeaconsApi.detectApi) yield {
+    val apiOpt = IBleBeaconsApi.detectApi
+    LOG.warn(msg = "ble api = " + apiOpt)
+    for (_ <- apiOpt) yield {
       new BeaconerFsm
     }
   }
