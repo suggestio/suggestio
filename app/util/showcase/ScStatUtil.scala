@@ -293,7 +293,12 @@ class ScStatUtil @Inject() (
       )
     }
 
+    override def toString: String = {
+      s"Stat2(${mstat.toString})"
+    }
+
   }
+
 
   // TODO X-Requested-With:io.suggest.Sio2m
 
