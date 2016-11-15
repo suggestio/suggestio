@@ -63,7 +63,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
       // Среагировать на результат работы цепочки парсеров.
       .fold [Unit] {
         // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
-        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
+        LOG.warn( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
       } { beacon =>
         listener ! BeaconDetected( beacon )
       }
@@ -72,7 +72,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
 
   /** Какая-то ошибка возникла при сканировании. */
   def _handleErrorCode(errorCode: String, listener: SjsFsm): Unit = {
-    LOG.warn(ErrorMsgs.BLE_SCAN_ERROR, msg = errorCode)
+    LOG.error(ErrorMsgs.BLE_SCAN_ERROR, msg = errorCode)
   }
 
 
