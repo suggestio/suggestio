@@ -253,7 +253,6 @@ abstract class AdvsUpdate
 
           } else {
             // Какая-то инфа о размещении карточки (узла), которая уже удалена.
-            purgeItemsForAd(adId)
             warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
             purgeItemsForAd(adId)
           }

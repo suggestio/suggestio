@@ -6,6 +6,7 @@ import models.mctx.Context
 import models.msc.MScRemoteDiag
 import play.api.data.Forms._
 import play.api.data._
+import play.api.http.MimeTypes
 import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl.{BruteForceProtectCtl, MaybeAuth}
@@ -118,6 +119,9 @@ trait ScRemoteError
           } yield {
             LOGGER.trace(logPrefix + s" Saved remote error as stat[$merrId]." )
             NoContent
+              // Почему-то по дефолту приходит text/html, и firefox dev 51 пытается распарсить ответ, и выкидывает в логах
+              // ошибку, что нет root тега в ответе /sc/error.
+              .as( MimeTypes.TEXT )
           }
         }
       )

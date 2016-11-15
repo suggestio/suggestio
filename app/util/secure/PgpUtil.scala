@@ -39,7 +39,7 @@ class PgpUtil @Inject() (
   maybeInit()
 
   /** Вся возня с ключами вертится здесь. */
-  private val KF: KeyFactory = KeyFactoryFactory.newInstance()
+  private def KF: KeyFactory = KeyFactoryFactory.newInstance()
 
   /** Пароль для секретного ключа сервиса. Можно добавить префикс пароля через конфиг. */
   private val SEC_KEY_PASSWORD: String = {
@@ -54,15 +54,16 @@ class PgpUtil @Inject() (
     * browser.window.localStorage.
     * Изначально был только этот единствнный ключ в модели, и использовался для хранения пользовательских
     * данных в localStorage. */
-  val LOCAL_STOR_KEY_ID = "lsk1"
+  def LOCAL_STOR_KEY_ID = "lsk1"
 
   /** Генерация нового ключа защиты данных. */
   def genNewNormalKey(): MAsymKey = {
-    val key = KF.generateKeyPair(LOCAL_STOR_KEY_ID, getPw)
+    val keyId = LOCAL_STOR_KEY_ID
+    val key = KF.generateKeyPair(keyId, getPw)
     MAsymKey(
       pubKey = key.getPublicKey.toArmoredString,
       secKey = Some(key.toArmoredString),
-      id     = Some(LOCAL_STOR_KEY_ID)
+      id     = Some(keyId)
     )
   }
 
@@ -100,26 +101,26 @@ class PgpUtil @Inject() (
 
 
   /**
-   * Криптозащита с помощью указанного ключа и для дальнейшей расшифровки этим же ключом.
-   * Используется для надежного хранения охраняемых серверных данных на стороне клиента.
+    * Криптозащита с помощью указанного ключа и для дальнейшей расшифровки этим же ключом.
+    * Используется для надежного хранения охраняемых серверных данных на стороне клиента.
     *
     * @param data Входной поток данных.
-   * @param key Используемый ASCII-PGP-ключ зашифровки и будущей расшифровки.
-   * @param out Куда производить запись?
-   */
+    * @param key Используемый ASCII-PGP-ключ зашифровки и будущей расшифровки.
+    * @param out Куда производить запись?
+    */
   def encryptForSelf(data: InputStream, key: IAsymKey, out: OutputStream): Unit = {
     val sc = KF.parseSecretKey(key.secKey.get)
     encrypt(data, sc, key.pubKey, out)
   }
 
   /**
-   * Зашифровка входного потока байт в выходной ASCII-armored поток.
+    * Зашифровка входного потока байт в выходной ASCII-armored поток.
     *
     * @param data Входной поток данных.
-   * @param secKey Секретный ключ отправителя (для подписи).
-   * @param forPubKey Публичный ключ получателя (для зашифровки).
-   * @param out Выходной поток для записи ASCII-armored шифротекста.
-   */
+    * @param secKey Секретный ключ отправителя (для подписи).
+    * @param forPubKey Публичный ключ получателя (для зашифровки).
+    * @param out Выходной поток для записи ASCII-armored шифротекста.
+    */
   def encrypt(data: InputStream, secKey: SecretKey, forPubKey: String, out: OutputStream): Unit = {
     val transform = secKey.signEncryptFor(forPubKey)
     transform.run(getPw, data, out)
@@ -127,25 +128,25 @@ class PgpUtil @Inject() (
 
 
   /**
-   * Расшифровать pgp-контейнер, ранее зашифрованный для самого себя.
+    * Расшифровать pgp-контейнер, ранее зашифрованный для самого себя.
     *
     * @param data Поток исходных данных.
-   * @param key Экземпляр ключа.
-   * @param out Выходной поток данных.
-   */
+    * @param key Экземпляр ключа.
+    * @param out Выходной поток данных.
+    */
   def decryptFromSelf(data: InputStream, key: IAsymKey, out: OutputStream): Unit = {
     val sc = KF.parseSecretKey(key.secKey.get)
     decrypt(data, sc, key.pubKey, out)
   }
 
   /**
-   * Дешифрация данных.
+    * Дешифрация данных.
     *
     * @param data Исходный поток данных.
-   * @param secKey Секретный ключ для расшифровки.
-   * @param signPubKey Публичный ключ для проверки подписи.
-   * @param out Выходной поток данных.
-   */
+    * @param secKey Секретный ключ для расшифровки.
+    * @param signPubKey Публичный ключ для проверки подписи.
+    * @param out Выходной поток данных.
+    */
   def decrypt(data: InputStream, secKey: SecretKey, signPubKey: String, out: OutputStream): Unit = {
     val transform = secKey.decryptVerifyFrom(signPubKey)
     transform.run(getPw, data, out)
