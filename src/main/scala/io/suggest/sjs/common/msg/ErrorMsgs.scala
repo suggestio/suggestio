@@ -79,4 +79,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def CORDOVA_BLE_REQUIRE_FAILED   = E(36)
 
+  def RME_LOGGER_REQ_FAIL          = E(37)
+
 }

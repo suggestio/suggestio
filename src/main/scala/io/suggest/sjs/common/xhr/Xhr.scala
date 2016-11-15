@@ -62,6 +62,16 @@ object Xhr {
       }
   }
 
+  def send(route: Route, timeoutMsOpt: Option[Long] = None,
+           headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
+    sendRaw(
+      method        = route.method,
+      url           = route2url(route),
+      timeoutMsOpt  = timeoutMsOpt,
+      headers       = headers,
+      body          = body
+    )
+  }
 
   /**
     * Отправка асинхронного запроса силами голого js.
@@ -72,7 +82,7 @@ object Xhr {
     * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
     * @return Фьючерс с результатом.
     */
-  def send(method: String, url: String, timeoutMsOpt: Option[Long] = None,
+  def sendRaw(method: String, url: String, timeoutMsOpt: Option[Long] = None,
            headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
     // Собрать XHR
     val xhr = new XMLHttpRequest()
@@ -146,7 +156,7 @@ object Xhr {
     }
   }
 
-  def route2url(route: Route, preferAbsolute: Boolean): String = {
+  def route2url(route: Route, preferAbsolute: Boolean = PREFER_ABS_URLS): String = {
     if (preferAbsolute)
       route.absoluteURL( PREFER_SECURE_URLS )
     else
@@ -159,11 +169,10 @@ object Xhr {
     * @param route Маршрут jsrouter'а. Он содержит данные по URL и METHOD для запроса.
     * @return Фьючерс с десериализованным JSON.
     */
-  def requestJson(route: Route, preferAbsUrl: Boolean = PREFER_ABS_URLS): Future[js.Dynamic] = {
+  def requestJson(route: Route): Future[js.Dynamic] = {
     val xhrFut = successIfStatus(HttpStatuses.OK) {
       send(
-        method  = route.method,
-        url     = route2url( route, preferAbsUrl ),
+        route   = route,
         headers = Seq(HDR_ACCEPT -> MIME_JSON)
       )
     }

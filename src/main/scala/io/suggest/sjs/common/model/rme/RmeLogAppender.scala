@@ -2,8 +2,11 @@ package io.suggest.sjs.common.model.rme
 
 import io.suggest.sjs.common.log.{ILogAppender, LogMsg}
 import io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
+import scala.concurrent.Future
 import scala.scalajs.js.JSON
 
 /**
@@ -19,12 +22,11 @@ abstract class RmeLogAppender extends ILogAppender {
 
   def minSeverity: Int = 0
 
-  private def _logAppendInto(logMsg: LogMsg, route: Route): Unit = {
+  private def _logAppendInto(logMsg: LogMsg, route: Route): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.
-    Xhr.successIfStatus( HttpStatuses.NO_CONTENT ) {
+    val fut = Xhr.successIfStatus( HttpStatuses.NO_CONTENT ) {
       Xhr.send(
-        method  = route.method,
-        url     = route.url,
+        route   = route,
         headers = Seq(
           Xhr.HDR_CONTENT_TYPE -> Xhr.MIME_JSON
         ),
@@ -42,6 +44,14 @@ abstract class RmeLogAppender extends ILogAppender {
         }
       )
     }
+
+    // Залоггировать проблемы реквеста в консоль.
+    fut.onFailure { case ex: Throwable =>
+      val n = "\n"
+      println( ErrorMsgs.RME_LOGGER_REQ_FAIL + " " + logMsg + " " + ex + " " + ex.getStackTrace.mkString(n,n,n))
+    }
+
+    fut
   }
 
   override def logAppend(logMsg: LogMsg): Unit = {
@@ -51,7 +61,7 @@ abstract class RmeLogAppender extends ILogAppender {
       } catch {
         case ex: Throwable =>
           // Бывает, что роута недоступна (js-роутер ещё не готов). Надо молча подавлять такие ошибки.
-          //println(ex.getMessage)
+          println(ex.getMessage)
       }
     }
   }
