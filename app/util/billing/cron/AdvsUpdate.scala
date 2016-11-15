@@ -1,5 +1,6 @@
 package util.billing.cron
 
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
 import io.suggest.model.es.EsModelUtil
@@ -12,6 +13,7 @@ import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactoryDi
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -51,11 +53,23 @@ abstract class AdvsUpdate
   import slick.driver.api._
 
 
+  /** Частичные критерии выборки подходящих item'ов из таблицы. */
+  def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]]
+
+
   /** Поиск id карточек, которые нужно глянуть на следующей стадии.
     * Запрос идёт вне транзакций, race-conditions будут учтены в последующем коде.
     * Главное требование: чтобы adId не повторялись в рамках одного потока. Проблем по идее быть не должно, но всё же.
     */
-  def findAdIds(max: Int = MAX_ADS_PER_RUN): StreamingDBIO[Traversable[String], String]
+  def findAdIds(max: Int = MAX_ADS_PER_RUN): StreamingDBIO[Traversable[String], String] = {
+    // Ищем только карточки, у которых есть offline ads с dateStart < now
+    mItems.query
+      .filter( _itemsSql )
+      .map(_.nodeId)
+      .distinct
+      .take(max)
+      .result
+  }
 
   val now = DateTime.now
 
@@ -103,14 +117,14 @@ abstract class AdvsUpdate
 
         ress  <- {
           Future.traverse(adIds) { adId =>
-          runForAdId(adId)
-            .map(_ => true)
-            .recover { case ex: Throwable =>
-              error(s"$logPrefix Failed to process ad[$adId]", ex)
-              false
+            runForAdId(adId)
+              .map(_ => true)
+              .recover { case ex: Throwable =>
+                error(s"$logPrefix Failed to process ad[$adId]", ex)
+                false
+              }
             }
           }
-        }
 
         result <- {
           val countOk = ress.count(identity)
@@ -232,10 +246,53 @@ abstract class AdvsUpdate
     resFut.onFailure {
       // NSEE *обычно* значит, что hasItemsForProcessing() вернул false. Такое возможно, когда карточка была отработана одновременно с поиском.
       case ex: NoSuchElementException =>
-        warn(s"$logPrefix Possibly no items for ad[$adId], but they expected to be moments ago. Race conditions?")
+        // ex НЕ логгируем, оно залогируется где-нибудь уровнем выше.
+        for (madOpt <- madOptFut) {
+          if (madOpt.nonEmpty) {
+            warn(s"$logPrefix Possibly no items for ad[$adId], but they expected to be moments ago. Race conditions?")
+
+          } else {
+            // Какая-то инфа о размещении карточки (узла), которая уже удалена.
+            purgeItemsForAd(adId)
+            warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
+            purgeItemsForAd(adId)
+          }
+        }
     }
 
     resFut
+  }
+
+
+  /** С каким item-статусом гасить зомби-итемы? */
+  def purgeItemStatus: MItemStatus
+
+  /**
+    * Подавление активных item'ов для карточек, которые уже не существуют.
+    * @param adId id рекламной карточки, требующей вмешательства.
+    * @return
+    */
+  def purgeItemsForAd(adId: String): Future[Int] = {
+    val fut = slick.db.run {
+      mItems.query
+        .filter { _.nodeId === adId }
+        .filter(_itemsSql)
+        .map { i =>
+          (i.status, i.dateStatus, i.reasonOpt)
+        }
+        .update( (purgeItemStatus, DateTime.now, Some("node gone away")) )
+    }
+
+    val logPrefix = s"purgeItemsForAd($adId):"
+
+    fut.onComplete {
+      case Success(count) =>
+        info(s"$logPrefix Purged $count items for node")
+      case Failure(ex) =>
+        error(s"$logPrefix Failed to purge zombie items for current missing node", ex)
+    }
+
+    fut
   }
 
 }

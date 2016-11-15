@@ -36,19 +36,10 @@ class DisableExpiredAdvs @Inject() (
   import mCommonDi._
   import slick.driver.api._
 
-  private def _expiredItemsSql(i: mItems.MItemsTable) = {
+
+  override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {
     (i.statusStr === MItemStatuses.Online.strId) &&
       (i.dateEndOpt <= now)
-  }
-
-  override def findAdIds(max: Int): StreamingDBIO[Traversable[String], String] = {
-    mItems.query
-      .filter(_expiredItemsSql)
-      .map(_.nodeId)
-      .distinct
-      // Избегаем скачка слишком резкой нагрузки, ограничивая кол-во обрабатываемых карточек.
-      .take(max)
-      .result
   }
 
 
@@ -68,7 +59,7 @@ class DisableExpiredAdvs @Inject() (
   override def builderCtxOuterFut: Future[MCtxOuter] = {
     advBuilderUtil.prepareUnInstall {
       mItems.query
-        .filter(_expiredItemsSql)
+        .filter(_itemsSql)
     }
   }
 
@@ -130,6 +121,9 @@ class DisableExpiredAdvs @Inject() (
     // Вернуть исходный фьючерс, т.к. ребилд может длиться долго и закончится крэшем.
     runFut
   }
+
+  override def purgeItemStatus = MItemStatuses.Finished
+
 }
 
 

@@ -41,26 +41,18 @@ class ActivateOfflineAdvs @Inject() (
   /** Окно обработки можно увеличить, т.к. тут инкрементальный апдейт и мало mitem'ов запрашивается. */
   override def MAX_ADS_PER_RUN = 20
 
-  private def _offlineItemsSql(i: mItems.MItemsTable) = {
+
+  /** Ищем только карточки, у которых есть offline ads с dateStart < now. */
+  override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {
     (i.statusStr === MItemStatuses.Offline.strId) &&
       (i.dateStartOpt <= now)
-  }
-
-  override def findAdIds(max: Int): StreamingDBIO[Traversable[String], String] = {
-    // Ищем только карточки, у которых есть offline ads с dateStart < now
-    mItems.query
-      .filter(_offlineItemsSql)
-      .map(_.nodeId)
-      .distinct
-      .take(max)
-      .result
   }
 
 
   /** Фьючерс внешнего контекста для adv-билдера. */
   override def builderCtxOuterFut: Future[MCtxOuter] = {
     val sql = mItems.query
-      .filter(_offlineItemsSql)
+      .filter(_itemsSql)
     advBuilderUtil.prepareInstallNew(sql)
   }
 
@@ -72,7 +64,7 @@ class ActivateOfflineAdvs @Inject() (
       .filter { i =>
         (i.nodeId === adId) &&
         (i.iTypeStr inSet itypes.map(_.strId)) && (
-          _offlineItemsSql(i) || i.statusStr === MItemStatuses.Online.strId
+          _itemsSql(i) || i.statusStr === MItemStatuses.Online.strId
         )
       }
       .result
@@ -108,6 +100,8 @@ class ActivateOfflineAdvs @Inject() (
     // Вернуть всё-таки исходный фьючерс, т.к. в ребилд тегов может идти какое-то время.
     runFut
   }
+
+  override def purgeItemStatus = MItemStatuses.Refused
 
 }
 

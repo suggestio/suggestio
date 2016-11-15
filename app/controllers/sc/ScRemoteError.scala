@@ -73,7 +73,7 @@ trait ScRemoteError
       lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
       errorFormM.bindFromRequest().fold(
         {formWithErrors =>
-          LOGGER.debug(logPrefix + " Request body bind failed:\n " + formatFormErrors(formWithErrors))
+          LOGGER.warn(logPrefix + " Request body bind failed:\n " + formatFormErrors(formWithErrors))
           NotAcceptable("Failed to parse response. See server logs.")
         },
         {merr0 =>

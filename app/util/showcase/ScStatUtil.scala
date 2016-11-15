@@ -151,6 +151,24 @@ class ScStatUtil @Inject() (
     /** generation seed, если есть. */
     def gen: Option[Long] = None
 
+
+    /** Определяем, тут у нас браузер ли или приложение или что-то ещё. */
+    def uaTypes: List[MUaType] = {
+      import MUaTypes._
+      ctx.request.headers
+        .get( HeaderNames.X_REQUESTED_WITH )
+        .fold [List[MUaType]] (Browser :: Nil) { xRqWith =>
+        val acc0 = App :: Nil
+        if (xRqWith.endsWith(".Sio2m")) {
+          CordovaApp :: acc0
+        } else {
+          debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
+          acc0
+        }
+      }
+    }
+
+
     /** Скомпиленные под статистику данные юзер-агента. */
     def mua = {
       val _browser  = browser
@@ -169,24 +187,11 @@ class ScStatUtil @Inject() (
         osFamily = browserOs
           .flatMap { os => Option(os.getFamilyName) }
           .filter(isStrUseful),
-        osVsn = browserOs
+        osVsn    = browserOs
           .flatMap { os => Option(os.getVersionNumber) }
           .flatMap { vsn => Option(vsn.getMajor) }
           .filter(isStrUseful),
-        uaType = {
-          import MUaTypes._
-          ctx.request.headers
-            .get( HeaderNames.X_REQUESTED_WITH )
-            .fold [List[MUaType]] (Browser :: Nil) { xRqWith =>
-              val acc0 = App :: Nil
-              if (xRqWith.endsWith(".Sio2m")) {
-                CordovaApp :: acc0
-              } else {
-                debug(s"mua(): Header ${HeaderNames.X_REQUESTED_WITH} contains unknown value: $xRqWith ;;\n UA:$uaOpt\n from ${remoteAddr.remoteAddr}\n => ${ctx.request.uri}")
-                acc0
-              }
-          }
-        }
+        uaType = uaTypes
       )
     }
 
@@ -293,8 +298,10 @@ class ScStatUtil @Inject() (
       )
     }
 
+    // toString() обычно не используется.
+    // Если же будет часто вызываться, то лучше mstat сделать как lazy val вместо def.
     override def toString: String = {
-      s"Stat2(${mstat.toString})"
+      s"${classOf[Stat2].getSimpleName}(${mstat.toString})"
     }
 
   }
