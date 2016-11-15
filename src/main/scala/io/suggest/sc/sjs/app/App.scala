@@ -4,10 +4,8 @@ import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.c.search.SearchFsm
-import io.suggest.sc.sjs.util.logs.GlobalErrorHandler
-import io.suggest.sc.sjs.util.router.srv.routes
-import io.suggest.sjs.common.log.{Logging, Severities}
-import io.suggest.sjs.common.model.rme.RmeLogAppender
+import io.suggest.sc.sjs.util.logs.{GlobalErrorHandler, ScRmeLogAppender}
+import io.suggest.sjs.common.log.Logging
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.annotation.JSExport
@@ -24,11 +22,8 @@ object App extends JSApp {
   @JSExport
   override def main(): Unit = {
 
-    // TODO Запихать remote логгер в состояние логгинга. js роутер может отсутствовать.
-    Logging.LOGGERS ::= new RmeLogAppender {
-      override def route        = routes.controllers.Sc.handleScError()
-      override def minSeverity  = Severities.Warn
-    }
+    // Активировать отправку логов на сервер.
+    Logging.LOGGERS ::= new ScRmeLogAppender
 
     // Повесить перехватчик ошибок на верхнем уровне.
     GlobalErrorHandler.start()
