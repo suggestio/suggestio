@@ -17,8 +17,7 @@ object MTagAdd {
   def add(route: Route, body: FormData)(implicit ec: ExecutionContext): Future[IAddResult] = {
     // Собрать и запустить запрос:
     val respFut = Xhr.send(
-      method  = route.method,
-      url     = route.url,
+      route   = route,
       body    = Some(body)
     )
 
