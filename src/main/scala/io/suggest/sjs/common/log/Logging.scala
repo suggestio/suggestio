@@ -75,5 +75,9 @@ case class LogMsg(
 
 /** Интерфейс потребителя сообщений логгирования. */
 trait ILogAppender {
+
   def logAppend(logMsg: LogMsg): Unit
+
+  override def toString = getClass.getSimpleName
+
 }

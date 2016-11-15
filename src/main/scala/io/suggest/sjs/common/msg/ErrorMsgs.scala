@@ -77,4 +77,6 @@ object ErrorMsgs extends MsgsStaticT {
   def LOG_APPENDER_FAIL            = E(34)
   def ALL_LOGGERS_FAILED           = E(35)
 
+  def CORDOVA_BLE_REQUIRE_FAILED   = E(36)
+
 }
