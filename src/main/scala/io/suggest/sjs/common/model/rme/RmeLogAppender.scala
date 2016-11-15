@@ -30,9 +30,11 @@ abstract class RmeLogAppender extends ILogAppender {
         ),
         body    = {
           val report = MRmeReport(
+            severity = logMsg.severity,
             // TODO Рендерить в report необходиые поля, а не собирать строковой message. Чтобы на сервере индексировалось всё.
-            msg   = logMsg.toString,
-            state = logMsg.fsmState
+            msg     = logMsg.toString,
+            state   = logMsg.fsmState,
+            errCode = logMsg.code
           )
           val json = MRmeReport.toJson(report)
           val str = JSON.stringify(json)
