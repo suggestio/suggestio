@@ -77,6 +77,6 @@ case class Container(override val _underlying: Dom_t)
 
 
 trait IContainerField {
-
+  /** Контейнер интервала дат. */
   def intervalCont  = Container.find()
 }

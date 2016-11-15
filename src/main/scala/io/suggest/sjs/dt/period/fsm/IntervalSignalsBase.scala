@@ -38,7 +38,7 @@ trait IntervalSignalsBase
   /** Трейт обработки событий интерфейса виджета задания интервала размещения. */
   protected[this] trait PeriodSignalsStateT extends FsmEmptyReceiverState {
 
-    override def receiverPart: Receive = super.receiverPart orElse {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       // Юзер сменил период размещения
       case pce: PeriodChangedEvent =>
         periodChanged(pce)
