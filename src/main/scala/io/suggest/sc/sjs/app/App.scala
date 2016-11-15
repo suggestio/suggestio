@@ -4,7 +4,8 @@ import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.c.search.SearchFsm
-import io.suggest.sc.sjs.util.logs.{GlobalErrorHandler, ScSjsLogger}
+import io.suggest.sc.sjs.util.logs.GlobalErrorHandler
+import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.log.{Logging, Severities}
 import io.suggest.sjs.common.model.rme.RmeLogAppender
 
@@ -25,7 +26,7 @@ object App extends JSApp {
 
     // TODO Запихать remote логгер в состояние логгинга. js роутер может отсутствовать.
     Logging.LOGGERS ::= new RmeLogAppender {
-      override def route        = ScSjsLogger.route
+      override def route        = routes.controllers.Sc.handleScError()
       override def minSeverity  = Severities.Warn
     }
 
