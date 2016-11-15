@@ -37,6 +37,10 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     API_OPT.isDefined
   }
 
+  override def toString: String = {
+    getClass.getSimpleName + "(" + API_OPT + ")"
+  }
+
   /** Начать слушанье ble-маячков, отсылая данные в указанный fsm. */
   override def listenBeacons(listener: SjsFsm): Unit = {
     API_OPT.get.startScan(
@@ -63,7 +67,7 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
       // Среагировать на результат работы цепочки парсеров.
       .fold [Unit] {
         // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
-        LOG.warn( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
+        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
       } { beacon =>
         listener ! BeaconDetected( beacon )
       }
