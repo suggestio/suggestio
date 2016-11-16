@@ -204,6 +204,9 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     */
   val AdvInRadioBeacon: T = new Val("q")
 
+  /** Размещение ADN-узла на географической карте рекламополучателей. */
+  val AdnMap: T = new Val("r")
+
 
   /** Поддержка биндинга из routes. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
