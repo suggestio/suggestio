@@ -66,7 +66,7 @@ class AdvBuilderUtil @Inject() (
   }
 
 
-  def clearByPredicate(b0: IAdvBuilder, pred: MPredicate): IAdvBuilder = {
+  def clearByPredicate(b0: IAdvBuilder, preds: Seq[MPredicate]): IAdvBuilder = {
     // Вычистить теги из эджей карточки
     val acc2Fut = for {
       acc0 <- b0.accFut
@@ -77,7 +77,7 @@ class AdvBuilderUtil @Inject() (
             val iter = acc0.mad
               .edges
               // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
-              .withoutPredicateIter( pred )
+              .withoutPredicateIter( preds: _* )
             MNodeEdges.edgesToMap1( iter )
           }
         )

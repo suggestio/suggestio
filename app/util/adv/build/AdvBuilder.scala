@@ -5,9 +5,11 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
+import io.suggest.model.n2.edge.MPredicate
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import org.joda.time.DateTime
+import util.adn.mapf.AdnMapBuilder
 import util.adv.direct.AdvDirectBuilder
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
@@ -61,9 +63,14 @@ trait IAdvBuilder
     * @param full true Полная очистка, размещений.
     *             false Очищение строго в рамках полномочий того или иного билдера.
     */
-  def clearAd(full: Boolean = false): IAdvBuilder = {
-    this
+  def clearNode(full: Boolean = false): IAdvBuilder = {
+    di.advBuilderUtil.clearByPredicate(
+      b0    = this,
+      preds = clearNodePredicates
+    )
   }
+
+  def clearNodePredicates: List[MPredicate] = Nil
 
   /** Текущее время. Для унификации выставляемых дат. */
   def now: DateTime
@@ -263,6 +270,7 @@ case class AdvBuilder @Inject() (
   extends AdvDirectBuilder
   with AgtBuilder
   with AgpBuilder
+  with AdnMapBuilder
   with PlayMacroLogsImpl
 {
 

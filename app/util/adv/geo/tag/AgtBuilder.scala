@@ -27,15 +27,8 @@ trait AgtBuilder extends IAdvBuilder {
     _ITYPE :: super.supportedItemTypes
   }
 
-  /** Спиливание всех тегов, привязанных через биллинг.
-    *
-    * @param full ignored.
-    */
-  override def clearAd(full: Boolean): IAdvBuilder = {
-    di.advBuilderUtil.clearByPredicate(
-      b0    = super.clearAd(full),
-      pred  = _PRED
-    )
+  override def clearNodePredicates: List[MPredicate] = {
+    _PRED :: super.clearNodePredicates
   }
 
 
@@ -129,13 +122,13 @@ trait AgtBuilder extends IAdvBuilder {
       i.iType == MItemTypes.GeoTag
     }
 
-    lazy val logPrefix = s"AGT.installSql(${items.size}):"
-
     val this2 = super.installSql(others)
 
     // Собираем db-экшены для инсталляции
     if (ditems.nonEmpty) {
+      lazy val logPrefix = s"AGT.installSql(${items.size}):"
       LOGGER.trace(s"$logPrefix There are ${ditems.size} geotags for install...")
+
       this2.withAccUpdatedFut { acc0 =>
         for (outerCtx <- acc0.ctxOuterFut) yield {
           val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>

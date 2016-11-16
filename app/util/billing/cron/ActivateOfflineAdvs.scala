@@ -80,7 +80,7 @@ class ActivateOfflineAdvs @Inject() (
     val b2 = advBuilderFactory
       .builder(acc0Fut, now)
       .installSql(offline)
-      .clearAd()
+      .clearNode()
       .installNode(mitems)
 
     for {

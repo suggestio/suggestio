@@ -1,7 +1,7 @@
-package util.adv.geo.place
+package util.adn.mapf
 
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.item.typ.{MItemTypes, MItemType}
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.model.n2.edge._
 import io.suggest.ym.model.NodeGeoLevels
 import util.adv.build.IAdvBuilder
@@ -9,13 +9,19 @@ import util.adv.build.IAdvBuilder
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 30.03.16 18:44
-  * Description: Трейт поддержки размещения в гео-точке для Adv-билдера.
+  * Created: 16.11.16 14:34
+  * Description: Billing adv-builder для размещения ADN-узла на карте.
+  *
+  * Изначальная задумка сильно аналогична AgpBuilder: размещение узла в геошейпе/геоточке на карте.
+  * Максимум одна точка на один узел.
+  *
+  * Изначальная реализация: один узел может иметь много точек. Пока без отката предыдущих точек-размещений.
   */
-trait AgpBuilder extends IAdvBuilder {
+trait AdnMapBuilder extends IAdvBuilder {
 
-  private def _ITYPE = MItemTypes.GeoPlace
-  private def _PRED  = MPredicates.AdvGeoPlace
+  private def _ITYPE = MItemTypes.AdnNodeMap
+  private def _PRED  = MPredicates.AdnMap
+
 
   override def supportedItemTypes: List[MItemType] = {
     _ITYPE :: super.supportedItemTypes
@@ -25,17 +31,22 @@ trait AgpBuilder extends IAdvBuilder {
     _PRED :: super.clearNodePredicates
   }
 
+  // TODO Dedup Почти весь код ниже - копия метода AgpBuilder.installNode().
+  // Наверное надо брать только самую последнюю точку размещения и с ней плясать в installNode().
+  // А не накатывать всем покупками такого типа. См.TODO по installSql() ниже.
+
 
   override def installNode(items: Iterable[MItem]): IAdvBuilder = {
-    lazy val logPrefix = s"AGP.installNode(${System.currentTimeMillis}):"
+    // Интересуют только item'ы определённого типа...
+    lazy val logPrefix = s"LAM.installNode(${System.currentTimeMillis}):"
 
     val itype = _ITYPE
     val (gItems, other) = items.partition { i =>
-      // Интересуют только item'ы тегов, у которых всё правильно оформлено.
+      // Интересуют только item'ы adn-map с шейпами.
       i.iType == itype && {
         val r = i.geoShape.isDefined
         if (!r)
-          LOGGER.error(s"$logPrefix Invalid AGP item: geoShape is missing:\n $i")
+          LOGGER.error(s"$logPrefix Invalid AdnMap item: geoShape is missing:\n $i")
         r
       }
     }
@@ -57,6 +68,7 @@ trait AgpBuilder extends IAdvBuilder {
         }
 
       // Надо собрать опорные точки для общей статистики, записав их рядышком.
+      // По идее, все шейпы - это PointGs.
       val geoPoints = di.advBuilderUtil
         .grabGeoPoints4Stats( gItems )
         .toSeq
@@ -70,7 +82,7 @@ trait AgpBuilder extends IAdvBuilder {
         )
       )
 
-      LOGGER.trace(s"$logPrefix Found ${gItems.size} items for adn-map: ${geoShapes.size} geoshapes, ${geoPoints.size} geo points.")
+      LOGGER.trace(s"$logPrefix Found ${gItems.size} items for adv-geo-place: ${geoShapes.size} geoshapes, ${geoPoints.size} geo points.")
 
       // Собрать новую карточку, аккамулятор, билдер...
       this2.withAccUpdated { acc0 =>
@@ -86,9 +98,13 @@ trait AgpBuilder extends IAdvBuilder {
         )
       }
 
+
     } else {
       this2
     }
   }
+
+
+  // TODO Запилить installSql, который откатывает все прошлые размещения, возвращает с них неизрасходованное бабло назад.
 
 }

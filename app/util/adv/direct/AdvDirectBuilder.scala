@@ -31,9 +31,9 @@ trait AdvDirectBuilder extends IAdvBuilder {
     * @param full true -- Вычистить всех ресиверов в т.ч. саморазмещение.
     *             false -- Вычистить только платных ресиверов.
     */
-  override def clearAd(full: Boolean): IAdvBuilder = {
+  override def clearNode(full: Boolean): IAdvBuilder = {
     val accFut2 = for {
-      acc0 <- super.clearAd(full).accFut
+      acc0 <- super.clearNode(full).accFut
     } yield {
       acc0.copy(
         mad = acc0.mad.copy(

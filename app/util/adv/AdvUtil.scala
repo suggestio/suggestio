@@ -87,7 +87,7 @@ class AdvUtil @Inject() (
     val acc0 = Acc(mad)
     val b0 = advBuilderFactory
       .builder( Future.successful(acc0), DateTime.now )
-      .clearAd(full = true)  // С чистого листа, т.к. у нас полный пересчёт
+      .clearNode(full = true)  // С чистого листа, т.к. у нас полный пересчёт
 
     // TODO Opt Тут без stream(), т.к. я пока не осилил. А надо бы...
     val adItemsFut = slick.db.run {
@@ -250,7 +250,7 @@ class AdvUtil @Inject() (
         val tuDataFut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(acc0) ) { tuData0 =>
           val b1 = b0
             .withAcc( Future.successful(tuData0.acc) )
-            .clearAd(full = rcvrIds.isEmpty)
+            .clearNode(full = rcvrIds.isEmpty)
             .installNode(keepOnline)
 
           for (acc2 <- b1.accFut) yield {
