@@ -1,6 +1,7 @@
 package io.suggest.model.es
 
 import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di._
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.{CacheApiUtil, ICurrentAppHelpers, ICurrentConf}
@@ -24,6 +25,7 @@ trait IEsModelDiVal
   with ICurrentAppHelpers
   with ICacheApiUtil
   with ICurrentActorSystem
+  with IEs4sClient
 
 
 /** Интерфейс для поля с DI-инстансом контейнера общего хлама в DI-моделях. */
@@ -37,8 +39,10 @@ trait IEsModelDi {
 class MEsModelDiVal @Inject() (
   override val cacheApiUtil       : CacheApiUtil,
   override val current            : Application,
+  override val es4sClient         : ElasticClient,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI
 )
   extends IEsModelDiVal
+

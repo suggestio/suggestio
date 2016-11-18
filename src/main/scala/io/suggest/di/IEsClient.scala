@@ -9,5 +9,11 @@ import org.elasticsearch.client.Client
  * Description: Интерфейс для di-поля с es-клиентом.
  */
 trait IEsClient {
+
+  /** Инстанс стандартного elasticsearch java client'а. */
   implicit def esClient: Client
+
 }
+
+
+
