@@ -15,6 +15,7 @@ import play.api.cache.CacheApi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
+import com.sksamuel.elastic4s.ElasticClient
 import util.HtmlCompressUtil
 import util.di._
 import util.secure.SessionUtil
@@ -79,6 +80,7 @@ final class MCommonDi @Inject() (
   override val mNodeCache         : MNodeCache,
   override val sessionUtil        : SessionUtil,
   override val mSioUsers          : MSioUsers,
+  override val es4sClient         : ElasticClient,
   override val _slickConfigProvider   : DatabaseConfigProvider,
   override implicit val current   : Application,
   override implicit val mat       : Materializer,

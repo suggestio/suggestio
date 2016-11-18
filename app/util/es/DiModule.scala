@@ -1,5 +1,7 @@
 package util.es
 
+import io.suggest.es.TransportEsClient
+import org.elasticsearch.client.Client
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
 
@@ -12,6 +14,11 @@ import play.api.inject.{Binding, Module}
 class DiModule extends Module {
   override def bindings(environment: Environment, configuration: Configuration): Seq[Binding[_]] = {
     Seq(
+      // Инжектить SiowebEsUtil опережая события, чтобы тот мог инициализировать ES Client.
+      bind( classOf[Client] )
+        .toProvider( classOf[TransportEsClient]),
+
+      // Инициализировать модели надо заранее.
       bind[SiowebEsModel]
         .toSelf
         .eagerly()

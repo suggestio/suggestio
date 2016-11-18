@@ -135,6 +135,13 @@ trait CanAdvertiseAd
     with PlayMacroLogsDyn
 
   /** Запрос какой-то формы размещения рекламной карточки. */
+  case class CanAdvertiseAd(
+    override val adId       : String,
+    override val userInits  : MUserInit*
+  )
+    extends CanAdvertiseAdBase2
+
+  /** Запрос какой-то формы размещения рекламной карточки с выставление CSRF в сессию. */
   case class CanAdvertiseAdGet(
     override val adId       : String,
     override val userInits  : MUserInit*
@@ -142,7 +149,7 @@ trait CanAdvertiseAd
     extends CanAdvertiseAdBase2
     with CsrfGet[MAdProdReq]
 
-  /** Сабмит какой-то формы размещения рекламной карточки. */
+  /** Сабмит какой-то формы размещения рекламной карточки с проверкой CSRF в сессии. */
   case class CanAdvertiseAdPost(
     override val adId       : String,
     override val userInits  : MUserInit*

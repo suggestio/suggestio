@@ -3,7 +3,13 @@ package controllers
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.GeoPoint
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.ym.model.common.AdnRights
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
@@ -42,6 +48,7 @@ class LkAdvGeo @Inject() (
   advGeoLocUtil                   : AdvGeoLocUtil,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
+  mNodes                          : MNodes,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -299,5 +306,40 @@ class LkAdvGeo @Inject() (
       }
     )
   }
+
+
+  /**
+    * Получение списка маркеров-точек узлов-ресиверов для карты.
+    * @param adId id текущей размещаемой рекламной карточки.
+    *             Пока используется как основание для проверки прав доступа.
+    */
+  def advRcvrsGeoJson(adId: MEsUuId) = CanAdvertiseAd(adId).async { implicit request =>
+    // Надо найти узлы, которые оплатили размещение на карте lk-adn-map.
+    // Есть проблема с большим объемом данных для обработки, которые нужно выкачать и распарсить, поэтому наседаем на кэш узлов.
+    // Т.к. все интересующие узлы являются ADN-узлами, то это в целом это даже нормально.
+    // TODO Надо Akka streams сюда бы. Выкачивать из модели всё и конвертить в потоке.
+    val msearch = new MNodeSearchDfltImpl {
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          predicates = Seq( MPredicates.AdnMap )
+        )
+        Seq(cr)
+      }
+      override def nodeTypes = Seq( MNodeTypes.AdnNode )
+      override def withAdnRights = Seq( AdnRights.RECEIVER )
+      override def limit = 1000
+    }
+
+    // Запускаем поиск только id'шников. Сами узлы будут фетчиться пачками через кеш и перемалываться порциями.
+    val mnodeIdsFut = mNodes.dynSearchIds(msearch)
+
+    // TODO Задействовать es4sClient с последнего коммита. Тут надо что-то типа akka-streams.
+
+    //mnodeIdsFut.flatMap { mnodeIds =>
+    //}
+
+    ???
+  }
+
 
 }
