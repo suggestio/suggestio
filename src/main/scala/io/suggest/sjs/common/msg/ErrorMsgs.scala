@@ -81,4 +81,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def RME_LOGGER_REQ_FAIL          = E(37)
 
+  def LK_ADV_GEO_MAP_GJ_REQ_FAIL   = E(38)
+
 }
