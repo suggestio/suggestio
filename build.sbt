@@ -30,5 +30,5 @@ jsDependencies += RuntimeDOM % "test"
 //scalaJSOutputMode := OutputMode.ECMAScript6
 
 // Пока не нужно, ибо не минифицировано и не версия jquery у нас более старая. Но потом надо будет это заюзать.
-skip in packageJSDependencies := true
+// skip in packageJSDependencies := true
 
