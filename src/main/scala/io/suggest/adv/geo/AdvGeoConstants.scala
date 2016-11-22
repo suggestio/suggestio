@@ -23,6 +23,9 @@ object AdvGeoConstants {
   /** Название form-поля для состояния круга на карте. */
   def CIRCLE_FN   = RadMapConstants.CIRCLE_FN
 
+  /** id инпута, содержащего ссылку на карту узлов-ресиверов. */
+  def AD_ID_INPUT_ID = PREFIX + "ngu"
+
 
   object OnMainScreen {
 
@@ -68,6 +71,24 @@ object AdvGeoConstants {
 
     /** Прозрачность заливки info-шейпов. */
     def OPACITY   = 0.5F
+
+  }
+
+
+  /** Названия полей в properties, касающихся свойст отображаемого узла. */
+  object AdnNodes {
+
+    /** Имя поля с подсказкой узла. */
+    def HINT_FN       = "h"
+
+    /** Имя поля с адресом иконки узла. */
+    def ICON_URL_FN   = "i"
+
+    /** Имя поля с именем узла. */
+    def NODE_ID_FN    = "n"
+
+    /** Имя поля с цветом фона (полезно для рендера логотипа с прозрачностью, например). */
+    def BG_COLOR_FN   = "b"
 
   }
 
