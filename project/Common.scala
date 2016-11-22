@@ -20,7 +20,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.5.9"
+  val playVsn         = "2.5.10"
 
   /** Версия play-slick прослойки. */
   def playSlickVsn    = "2.0.2"
@@ -36,7 +36,7 @@ object Common {
   def sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
 
   /** Версия scalatest+play. */
-  def scalaTestPlusPlayVsn = "1.5.0"
+  def scalaTestPlusPlayVsn = "1.5.1"
 
   /** Версия используемого плагина play-mailer. */
   def playMailerVsn     = "5.0.0-M1"
@@ -58,7 +58,7 @@ object Common {
   /** Версия scalatest.
     * play-2.2..2.5 == scalatest-2.2.x
     */
-  def scalaTestVsn       = "2.2.+"
+  def scalaTestVsn       = "3.0.0"
 
   /** 
    *  Версия react.js, используемая в проекте. 
