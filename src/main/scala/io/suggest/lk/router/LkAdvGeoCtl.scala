@@ -1,7 +1,6 @@
 package io.suggest.lk.router
 
-import
-io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
 import scala.scalajs.js.{Dictionary, Any}
@@ -24,5 +23,8 @@ sealed trait LkAdvGeoCtl extends js.Object {
 
   /** Роута для поиска тегов. */
   def tagsSearch(args: Dictionary[Any]): Route = js.native
+
+  /** Роута для получения GeoJson карты adv-geo. */
+  def advRcvrsGeoJson(adId: String): Route = js.native
 
 }
