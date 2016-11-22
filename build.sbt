@@ -16,9 +16,10 @@ testFrameworks += new TestFramework("utest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "lk-adv-common-sjs"       % "0.0.0-SNAPSHOT",
-    Common.ORG      %%% "map-rad-sjs"             % "0.0.0-SNAPSHOT",
-    Common.ORG      %%% "lk-tags-edit-sjs"        % "0.0.0-SNAPSHOT",
-    "com.lihaoyi"   %%% "utest"                   % "0.3.1"  % "test"
+    Common.ORG      %%% "lk-adv-common-sjs"               % "0.0.0-SNAPSHOT",
+    Common.ORG      %%% "map-rad-sjs"                     % "0.0.0-SNAPSHOT",
+    Common.ORG      %%% "lk-tags-edit-sjs"                % "0.0.0-SNAPSHOT",
+    Common.ORG      %%% "scalajs-leaflet-markercluster"   % "0.0.0-SNAPSHOT",
+    "com.lihaoyi"   %%% "utest"                           % "0.3.1"  % "test"
 )
 
