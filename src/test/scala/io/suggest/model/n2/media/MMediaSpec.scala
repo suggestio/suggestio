@@ -15,9 +15,10 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 class MMediaSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
 
   private lazy val mMedias = app.injector.instanceOf[MMedias]
+  private lazy val MMediaImplicits = mMedias.Implicits
 
   private def t(mn: MMedia): Unit = {
-    import mMedias.mockPlayDocRespEv
+    import MMediaImplicits.mockPlayDocRespEv
     mMedias.deserializeOne2(mn)  shouldBe  mn
   }
 

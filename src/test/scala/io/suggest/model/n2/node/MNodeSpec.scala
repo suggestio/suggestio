@@ -24,7 +24,7 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
   private lazy val mNodes = app.injector.instanceOf[MNodes]
 
   private def t(mn: MNode): Unit = {
-    import mNodes.mockPlayDocRespEv
+    import mNodes.Implicits.mockPlayDocRespEv
     mNodes.deserializeOne2(mn)  shouldBe  mn
   }
 

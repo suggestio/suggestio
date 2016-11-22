@@ -162,7 +162,7 @@ class MNodes @Inject() (
    */
   def ntypeStats(dsa: MNodeSearch = new MNodeSearchDfltImpl): Future[Map[MNodeType, Long]] = {
     val aggName = "ntypeAgg"
-    dynSearchReqBuilder(dsa)
+    prepareSearch(dsa)
       .addAggregation(
         AggregationBuilders.terms(aggName)
           .field( MNodeFields.Common.NODE_TYPE_FN )
