@@ -10,8 +10,8 @@ import io.suggest.playx.ICurrentApp
  * Description: Интерфейс для DI-поля для доступа к инстансу ActorSystem.
  */
 trait IActorSystem {
-  def actorSystem: ActorSystem
+  implicit def actorSystem: ActorSystem
 }
 trait ICurrentActorSystem extends IActorSystem with ICurrentApp {
-  override def actorSystem = current.actorSystem
+  override implicit def actorSystem = current.actorSystem
 }

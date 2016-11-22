@@ -2,6 +2,9 @@ package io.suggest.model.es
 
 import java.util.concurrent.atomic.AtomicInteger
 
+import akka.NotUsed
+import akka.stream.scaladsl.Source
+import com.sksamuel.elastic4s.{HitAs, RichSearchHit, SearchDefinition}
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
 import io.suggest.util.{JacksonWrapper, SioConstants}
@@ -9,12 +12,15 @@ import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse, SearchType}
+import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
-import org.elasticsearch.search.sort.{SortBuilders, SortOrder}
+import org.elasticsearch.search.sort.SortBuilders
+import com.sksamuel.elastic4s.streams.ReactiveElastic._
+import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.fut.FutureUtil
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -27,7 +33,7 @@ import scala.concurrent.Future
  */
 
 /** Общий код для обычный и child-моделей. Был вынесен из-за разделения в логике работы обычный и child-моделей. */
-trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
+trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   override type T <: EsModelCommonT
 
@@ -44,7 +50,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   def HAS_RESOURCES: Boolean = false
 
   /** Если модели требуется выставлять routing для ключа, то можно делать это через эту функцию.
-   *
+    *
     * @param idOrNull id или null, если id отсутствует.
     * @return None если routing не требуется, иначе Some(String).
     */
@@ -54,7 +60,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   def prepareSearch(): SearchRequestBuilder = prepareSearch(esClient)
   def prepareSearch(client: Client): SearchRequestBuilder = {
-    client.prepareSearch(ES_INDEX_NAME).setTypes(ES_TYPE_NAME)
+    client
+      .prepareSearch(ES_INDEX_NAME)
+      .setTypes(ES_TYPE_NAME)
   }
 
   def prepareCount(): SearchRequestBuilder = {
@@ -461,7 +469,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   /** Для ряда задач бывает необходимо задействовать multiGet вместо обычного поиска, который не успевает за refresh.
     * Этот метод позволяет сконвертить поисковые результаты в результаты multiget.
     *
-    * @return Результат - что-то неопределённом порядке. */
+    * @return Результат - что-то неопределённом порядке.
+    */
   def searchResp2RtMultiget(searchResp: SearchResponse, acc0: List[T] = Nil): Future[List[T]] = {
     val searchHits = searchResp.getHits.getHits
     if (searchHits.isEmpty) {
@@ -491,17 +500,6 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
     }
   }
 
-
-  /** С помощью query найти результаты, но сами результаты прочитать с помощью realtime multi-get. */
-  def findQueryRt(query: QueryBuilder, maxResults: Int = 100, acc0: List[T] = Nil): Future[List[T]] = {
-    prepareSearch()
-      .setQuery(query)
-      .setFetchSource(false)
-      .setNoFields()
-      .setSize(maxResults)
-      .execute()
-      .flatMap { searchResp2RtMultiget(_, acc0) }
-  }
 
   /** Генератор реквеста для генерации запроса для getAll(). */
   def getAllReq(maxResults: Int = MAX_RESULTS_DFLT, offset: Int = OFFSET_DFLT, withVsn: Boolean = false): SearchRequestBuilder = {
@@ -717,12 +715,11 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
 
   /** Общий код моделей, которые занимаются resave'ом. */
   def resaveBase( getFut: Future[Option[T]] ): Future[Option[String]] = {
-    getFut.flatMap {
-      case Some(e) =>
+    getFut.flatMap { getResOpt =>
+      FutureUtil.optFut2futOpt(getResOpt) { e =>
         save(e)
-          .map { Some.apply }
-      case None =>
-        Future.successful(None)
+          .map { EmptyUtil.someF }
+      }
     }
   }
 
@@ -746,28 +743,79 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT {
   }
 
 
-  /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
-    * На вход он получает просто экземпляры классов моделей. */
-  implicit def mockPlayDocRespEv = new IEsDoc[T] {
-    override def id(v: T): Option[String] = {
-      v.id
-    }
-    override def version(v: T): Option[Long] = {
-      v.versionOpt
-    }
-    override def rawVersion(v: T): Long = {
-      v.versionOpt.getOrElse(-1)
-    }
-    override def bodyAsScalaMap(v: T): collection.Map[String, AnyRef] = {
-      JacksonWrapper.convert[collection.Map[String, AnyRef]]( toJson(v) )
-    }
-    override def bodyAsString(v: T): String = {
-      toJson(v)
-    }
-    override def idOrNull(v: T): String = {
-      v.idOrNull
+  /** Поточно читаем выхлоп elasticsearch.
+    *
+    * @param searchDef Одноразовый инстанс elastic4s.SearchDefinition.
+    *                  Метод будет модифицировать этот инстанс изнутри, поэтому не надо использовать его повторно.
+    *                  Можно передавать DynSearchArgs при наличии import Implicits.* в scope.
+    * @tparam To тип одного элемента.
+    * @return Source[T, NotUsed].
+    */
+  def source[To](searchDef: SearchDefinition)(implicit helper: IEsSourcingHelper[To]): Source[To, NotUsed] = {
+    // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
+    val searchDef2 = helper.prepareSearchDef(
+      searchDef.scroll( SCROLL_KEEPALIVE_DFLT.toString )
+    )
+
+    val pub = es4sClient.publisher(searchDef2)
+    for {
+      rHit <- Source.fromPublisher( pub )
+    } yield {
+      helper.as(rHit)
     }
   }
+
+  /** typeclass для source() для простой десериализации ответов в обычные элементы модели. */
+  class ElSourcingHelper extends IEsSourcingHelper[T] {
+    override def prepareSearchDef(searchDef: SearchDefinition): SearchDefinition = {
+      super.prepareSearchDef(searchDef)
+        .fetchSource(true)
+    }
+    override def as(hit: RichSearchHit): T = {
+      deserializeSearchHit( hit.java )
+    }
+  }
+
+
+  /** Implicit API модели завёрнуто в этот класс, который можно экстендить. */
+  class Implicits {
+
+    /** Mock-адаптер для тестирования сериализации-десериализации моделей на базе play.json.
+      * На вход он получает просто экземпляры классов моделей. */
+    implicit def mockPlayDocRespEv = new IEsDoc[T] {
+      override def id(v: T): Option[String] = {
+        v.id
+      }
+      override def version(v: T): Option[Long] = {
+        v.versionOpt
+      }
+      override def rawVersion(v: T): Long = {
+        v.versionOpt.getOrElse(-1)
+      }
+      override def bodyAsScalaMap(v: T): collection.Map[String, AnyRef] = {
+        JacksonWrapper.convert[collection.Map[String, AnyRef]]( toJson(v) )
+      }
+      override def bodyAsString(v: T): String = {
+        toJson(v)
+      }
+      override def idOrNull(v: T): String = {
+        v.idOrNull
+      }
+    }
+
+    /** stream-сорсинг для обычных случаев. */
+    implicit def elSourcingHelper: IEsSourcingHelper[T] = {
+      new ElSourcingHelper
+    }
+
+    override def toString: String = {
+      s"${outer.getClass.getSimpleName}.${getClass.getSimpleName}"
+    }
+
+  }
+
+  // Вызываемый конструктор для класса Implicits. Должен быть перезаписан как val в итоге.
+  def Implicits = new Implicits
 
 }
 
