@@ -69,9 +69,17 @@ class AdvGeoLocUtil @Inject() (
     MItemTypes.GeoTag.strId
   )
 
+  private def _traceAsyncRes[R](resFut: Future[R], msg: => String): Unit = {
+    if (LOGGER.underlying.isTraceEnabled()) {
+      resFut.onComplete { res =>
+        LOGGER.trace(s"$msg: => $res")
+      }
+    }
+  }
+
   /** Попытаться получить последние координаты текущей карточки из предыдущих размещений. */
   def getGeoPointFromAdsGeoAdvs(adIds: Traversable[String]): Future[Option[GeoPoint]] = {
-    _getPointFromItemId(
+    val resFut = _getPointFromItemId(
       mItems.query
         .filter { q =>
           (q.nodeId inSet adIds) &&
@@ -81,6 +89,9 @@ class AdvGeoLocUtil @Inject() (
         .map(_.id)
         .max
     )
+
+    _traceAsyncRes(resFut, s"getGeoPointFromAdsGeoAdvs($adIds)")
+    resFut
   }
 
 
@@ -129,8 +140,11 @@ class AdvGeoLocUtil @Inject() (
       override def withoutIds = excludeAdIds
     }
 
-    mNodes.dynSearchIds(prodAdsSearch)
+    val resFut = mNodes.dynSearchIds(prodAdsSearch)
       .flatMap( getGeoPointFromAdsGeoAdvs )
+
+    _traceAsyncRes(resFut, s"getGeoPointFromProducer($producerIds, excl=$excludeAdIds)")
+    resFut
   }
 
 
@@ -143,7 +157,7 @@ class AdvGeoLocUtil @Inject() (
       }
       .map(_.id)
 
-    _getPointFromItemId(
+    val resFut = _getPointFromItemId(
       mItems.query
         .filter { i =>
           (i.orderId in orderIds) &&
@@ -153,6 +167,9 @@ class AdvGeoLocUtil @Inject() (
         .map(_.id)
         .max
     )
+
+    _traceAsyncRes(resFut, s"getGeoPointFromUserGeoAdvs($contractId)")
+    resFut
   }
 
 
@@ -164,27 +181,23 @@ class AdvGeoLocUtil @Inject() (
 
     def get: Future[GeoPoint]
 
-    def name: String = {
-      // getSimpleName взрывоопасно!
-      try {
-        getClass.getSimpleName
-      } catch { case ex: Throwable =>
-        LOGGER.error("getSimpleName returned shit! Please check the code of inner classes", ex)
-        "_$$$$FIX_ME_READ_LOGS_NOW$$$$_"
-      }
-    }
-
-
     def orElse(gpd: => GeoPointDetector): GeoPointDetector = {
       new GeoPointDetector {
-        override def name = "orElse"
-        override def get: Future[GeoPoint] = that.get.recoverWith { case ex: Throwable =>
-          if (ex.isInstanceOf[NoSuchElementException]) {
-            LOGGER.trace(s"Cannot detect using ${that.name}")
-          } else {
-            LOGGER.warn(s"Failed to detect using ${that.name}", ex)
+        override def toString = s"$that.orElse($gpd)"
+        override def get: Future[GeoPoint] = {
+          val fut0 = that.get
+          // Залоггировать результат работы, если требуется
+          _traceAsyncRes(fut0, that.toString)
+
+          // Повесить recovery callback
+          fut0.recoverWith { case ex: Throwable =>
+            if (ex.isInstanceOf[NoSuchElementException]) {
+              LOGGER.trace(s"No data from $that")
+            } else {
+              LOGGER.warn(s"Failed to detect using $that", ex)
+            }
+            gpd.get
           }
-          gpd.get
         }
       }
     }

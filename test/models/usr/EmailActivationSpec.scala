@@ -12,10 +12,11 @@ import org.scalatestplus.play.PlaySpec
 class EmailActivationSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   private lazy val emailActivations = app.injector.instanceOf[EmailActivations]
+  private lazy val emailActivationsImplicits = emailActivations.Implicits
 
   "EmailActivation JSON" must {
 
-    import emailActivations.mockPlayDocRespEv
+    import emailActivationsImplicits.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val mea = EmailActivation(

@@ -1,9 +1,9 @@
 package controllers.sc
 
 import io.suggest.model.n2.node.IMNodes
-import models.msc.map.IMMapNodesDi
 import play.api.libs.json.Json
 import util.acl.MaybeAuth
+import util.showcase.IScMapUtilDi
 
 /**
   * Suggest.io
@@ -16,7 +16,7 @@ trait ScMap
   extends ScController
     with MaybeAuth
     with IMNodes
-    with IMMapNodesDi
+    with IScMapUtilDi
 {
 
   import mCommonDi._
@@ -34,7 +34,7 @@ trait ScMap
     // Начать собирать запрос поиска отображаемых на карте узлов
     // Кешируем кратковременно всё, т.к. экшен тяжеловат по RAM и CPU.
     for {
-      ptsFc   <- mMapNodes.getAllPoints()
+      ptsFc   <- scMapUtil.getAllPoints()
     } yield {
       Ok( Json.toJson(ptsFc) )
         .withHeaders(CACHE_CONTROL -> "public, max-age=20")

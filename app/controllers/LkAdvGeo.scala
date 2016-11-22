@@ -1,15 +1,12 @@
 package controllers
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.GeoPoint
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.{MNodeTypes, MNodes}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.ym.model.common.AdnRights
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
@@ -19,12 +16,12 @@ import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import play.api.i18n.Messages
-import play.api.libs.json.Json
+import play.api.libs.json.{JsNull, Json}
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
 import util.adv.AdvFormUtil
-import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil}
+import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
 import util.billing.Bill2Util
 import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
@@ -46,9 +43,9 @@ class LkAdvGeo @Inject() (
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   advGeoLocUtil                   : AdvGeoLocUtil,
+  advGeoMapUtil                   : AdvGeoMapUtil,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
-  mNodes                          : MNodes,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -314,31 +311,32 @@ class LkAdvGeo @Inject() (
     *             Пока используется как основание для проверки прав доступа.
     */
   def advRcvrsGeoJson(adId: MEsUuId) = CanAdvertiseAd(adId).async { implicit request =>
-    // Надо найти узлы, которые оплатили размещение на карте lk-adn-map.
-    // Есть проблема с большим объемом данных для обработки, которые нужно выкачать и распарсить, поэтому наседаем на кэш узлов.
-    // Т.к. все интересующие узлы являются ADN-узлами, то это в целом это даже нормально.
-    // TODO Надо Akka streams сюда бы. Выкачивать из модели всё и конвертить в потоке.
-    val msearch = new MNodeSearchDfltImpl {
-      override def outEdges: Seq[ICriteria] = {
-        val cr = Criteria(
-          predicates = Seq( MPredicates.AdnMap )
-        )
-        Seq(cr)
-      }
-      override def nodeTypes = Seq( MNodeTypes.AdnNode )
-      override def withAdnRights = Seq( AdnRights.RECEIVER )
-      override def limit = 1000
+    val nodesSource = advGeoMapUtil.rcvrNodesMap()
+
+    // Сериализуем JSON в поток. Для валидности JSON надо добавить "[" в начале, "]" в конце, и разделители между элементами.
+    val delim = ",\n"
+
+    val jsons = nodesSource.mapConcat { m =>
+      val jsonStr = Json.stringify(
+        Json.toJson( m.toGeoJson )
+      )
+      jsonStr :: delim :: Nil
     }
 
-    // Запускаем поиск только id'шников. Сами узлы будут фетчиться пачками через кеш и перемалываться порциями.
-    val mnodeIdsFut = mNodes.dynSearchIds(msearch)
+    // Собрать итоговый поток сознания.
+    // TODO Тут рукописный генератор JSON. Следует задействовать тот, что *вроде бы* есть в akka-http или где-то ещё.
+    val src = Source.single( "[" )
+      .concat(jsons)
+      .concat {
+        Source(
+          // TODO Чтобы последняя запятая не вызывала ошибки парсинга, добавляем JsNull в конец потока объектов.
+          Json.stringify(JsNull) :: "]" :: Nil
+        )
+      }
 
-    // TODO Задействовать es4sClient с последнего коммита. Тут надо что-то типа akka-streams.
-
-    //mnodeIdsFut.flatMap { mnodeIds =>
-    //}
-
-    ???
+    // Вернуть chunked-ответ наконец.
+    Ok.chunked(src)
+      .as("application/json; charset=utf8")
   }
 
 

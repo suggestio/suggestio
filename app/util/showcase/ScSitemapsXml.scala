@@ -58,7 +58,7 @@ class ScSitemapsXml @Inject() (
         Seq(cr)
       }
     }
-    var reqb = mNodes.dynSearchReqBuilder(adSearch)
+    var reqb = mNodes.prepareSearch(adSearch)
     reqb = mNodes.prepareScroll(srb = reqb)
 
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.

@@ -7,7 +7,6 @@ import io.suggest.model.n2.node.MNodes
 import models.im.make.IMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import models.msc.map.MMapNodes
 import util.PlayMacroLogsImpl
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
@@ -17,7 +16,7 @@ import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
-import util.showcase._
+import util.showcase.{ScMapUtil, _}
 import util.stat.StatCookiesUtil
 
 
@@ -41,7 +40,7 @@ class Sc @Inject() (
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
   @Named("blk") override val blkImgMaker  : IMaker,
-  override val mMapNodes          : MMapNodes,
+  override val scMapUtil          : ScMapUtil,
   override val ctxUtil            : ContextUtil,
   override val scAdSearchUtil     : ScAdSearchUtil,
   override val nodesUtil          : NodesUtil,

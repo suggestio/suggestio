@@ -15,8 +15,7 @@ class MExtTargetSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
   private lazy val mExtTargets = app.injector.instanceOf[MExtTargets]
 
   "MExtTarget JSON" must {
-
-    import mExtTargets.mockPlayDocRespEv
+    import mExtTargets.Implicits.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val mes = MExtTarget(

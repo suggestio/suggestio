@@ -12,10 +12,11 @@ import org.scalatestplus.play.PlaySpec
 class EmailPwIdentSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   private lazy val emailPwIdents = app.injector.instanceOf[EmailPwIdents]
+  private lazy val emailPwIdentsImplicits = emailPwIdents.Implicits
 
   "EmailPwIdent JSON" must {
 
-    import emailPwIdents.mockPlayDocRespEv
+    import emailPwIdentsImplicits.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val epw = EmailPwIdent(

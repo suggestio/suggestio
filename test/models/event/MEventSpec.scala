@@ -15,7 +15,7 @@ class MEventSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   "MEvent JSON" must {
 
-    import mEvents.mockPlayDocRespEv
+    import mEvents.Implicits.mockPlayDocRespEv
 
     "handle fully-filled model" in {
       val mevent = MEvent(

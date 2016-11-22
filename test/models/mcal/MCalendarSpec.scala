@@ -12,10 +12,11 @@ import org.scalatestplus.play.PlaySpec
 class MCalendarSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   private lazy val mCalendars = app.injector.instanceOf[MCalendars]
+  private lazy val Implicits = mCalendars.Implicits
 
-  import mCalendars.mockPlayDocRespEv
 
   "MCalendar JSON" must {
+    import Implicits.mockPlayDocRespEv
 
     "handle fully-filled fields" in {
       val mcal = MCalendar(

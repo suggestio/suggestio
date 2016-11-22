@@ -1,4 +1,4 @@
-package models.msc.map
+package util.showcase
 
 import com.google.inject.Inject
 import io.suggest.model.es.IMust
@@ -31,7 +31,7 @@ import scala.concurrent.duration._
   * В первой экранизации этой эпопеи была сборка просто координат узлов (ТЦ, кафе и прочее) с помощью голого _search.
   * Второй шаг был добавлением отображения георазмещений на карте.
   */
-class MMapNodes @Inject() (
+class ScMapUtil @Inject() (
   mNodes      : MNodes,
   mCommonDi   : ICommonDi
 )
@@ -39,6 +39,7 @@ class MMapNodes @Inject() (
 {
 
   import mCommonDi._
+
 
   /** Макс.число точек из всех adn-нод. */
   def MAX_ADN_NODES_POINTS = 2000
@@ -129,7 +130,7 @@ class MMapNodes @Inject() (
 
     // По идее требуется только значение geoPoint, весь узел считывать смысла нет.
     val fn = MNodeFields.Geo.POINT_FN
-    val nodesPointsFut = mNodes.dynSearchReqBuilder(msearch)
+    val nodesPointsFut = mNodes.prepareSearch(msearch)
       .setFetchSource(false)
       .addFields(fn)
       .execute()
@@ -185,7 +186,7 @@ class MMapNodes @Inject() (
     // Запустить аггрегацию точек через GeoHashGrid.
     val aggEdgesName = "edges"
     val subAggGeo = "geo"
-    val aggFut = mNodes.dynSearchReqBuilder(msearch)
+    val aggFut = mNodes.prepareSearch(msearch)
       .setSize(0)
       .addAggregation {
         AggregationBuilders.nested( aggEdgesName )
@@ -230,7 +231,8 @@ class MMapNodes @Inject() (
 
 }
 
-/** Интерфейс для поля с DI-инстансом [[MMapNodes]]. */
-trait IMMapNodesDi {
-  def mMapNodes: MMapNodes
+
+/** Интерфейс для поля с DI-инстансом [[ScMapUtil]]. */
+trait IScMapUtilDi {
+  def scMapUtil: ScMapUtil
 }

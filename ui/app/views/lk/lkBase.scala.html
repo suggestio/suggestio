@@ -5,6 +5,7 @@
 @* Базовый шаблон для личного кабинета sio-маркета (не важно: ТЦ или магазин). *@
 
 @import ctx._
+@import ctx.api.cdn.asset
 @import stuff._
 @import lk.popup._
 @import lk.left._
@@ -106,7 +107,12 @@
   <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
   <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
 
+  @* jsdeps изначально был нужен только для страниц с картами. Но он тут в надежде, что jquery сюда же потом переедет. *@
+  <script src="@asset("lk-sjs-jsdeps.js")"></script>
+
+  @* Основной управляющий скрипт для личного кабинета. *@
   @_sjsScript("lk-sjs", withLauncherJs = true)
+
 }
 </body>
 </html>
