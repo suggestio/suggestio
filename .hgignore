@@ -12,5 +12,6 @@ logs/
 *.orig
 *.rej
 sio2m/
+.project
 
 russianmorphology/

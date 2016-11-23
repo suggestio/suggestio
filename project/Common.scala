@@ -72,6 +72,15 @@ object Common {
    */
   val reactSjsVsn        = "0.11.2"
 
+  /** Версия leaflet.js. */
+  val leafletJsVsn              = "1.0.1"
+
+  /** Версия L.control.locate.js. */
+  val leafletControlLocateJsVsn = "0.56.0"
+  val leafletControlLocateWjVsn = leafletControlLocateJsVsn + "-1"
+
+  /** Версия Leaflet.markercluster.js. */
+  val leafletMarkerClusterJsVsn = "1.0.0"
 
   object Repo {
 
