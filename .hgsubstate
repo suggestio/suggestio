@@ -6,7 +6,7 @@ a4cd352a7c69d0ef28aa638883b44d327f5b0a7e common
 181b7826aade955f7bdecbd4df4984ee396ece9a lk-adv-common-sjs
 25690c76facc06ec396f7bc8a6a98f57a06a5850 lk-adv-direct-sjs
 0ac4599c4a054a2844c8ea0ce1e5f78d1fe7759e lk-adv-ext-sjs
-4c97305231ef23a7d68eb26d44a781825304b0e5 lk-adv-geo-tags-sjs
+4bcb3a833fd1c58a0b8291be27bc8cb949d717c6 lk-adv-geo-tags-sjs
 208df97224bb37c1d70a2bf0c3a03d2f745db821 lk-common-sjs
 50d8f30e1ee1c69f0bf9e944f05c2d31f4d38a94 lk-dt-period-sjs
 ee5a6027d8d1955d97f91212a05c53489fb85118 lk-sjs
@@ -32,4 +32,4 @@ c0c1b48b7d8fb7ab1d082e9ef615dfc25d34c4e3 stat
 5d7ba0080796bda4536e06ea2f79b282efb7ca8c svg-util
 e033c900b5434ebd7dc68754ec2cfedb2f8831b4 swfs
 0cf718d08b27a325d7bf5f1ddf15a5ff3b384e9c util
-12c95958feac417a479cb89f66b8f028d973cc6b web21
+7de3efff6358c652fdbfa545ee6277dee14c5f02 web21
