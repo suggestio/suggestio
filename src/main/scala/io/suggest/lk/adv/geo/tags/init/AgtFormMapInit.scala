@@ -74,13 +74,13 @@ class AgtFormMapInit extends RadMapInit with Log {
         o.iconUrl = iconInfo.url
         // Описываем размеры иконки по данным сервера.
         o.iconSize = L.point(
-          x = iconInfo.height,
-          y = iconInfo.width
+          y = iconInfo.height,
+          x = iconInfo.width
         )
         // Для иконки -- якорь прямо в середине.
         o.iconAnchor = L.point(
-          x = iconInfo.height / 2,
-          y = iconInfo.width  / 2
+          y = iconInfo.height / 2,
+          x = iconInfo.width  / 2
         )
         L.icon(o)
       }
