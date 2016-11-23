@@ -22,8 +22,16 @@ libraryDependencies ++= Seq(
   //"com.lihaoyi"   %%% "utest"            % "0.3.1"  % "test"
 )
 
-jsDependencies ++= Seq(
-  "org.webjars" % "leaflet-markercluster" % "0.4.0"   / "0.4.0/leaflet.markercluster.js",
-  RuntimeDOM % "test"
-)
+jsDependencies ++= {
+  val lmcVsn = Common.leafletMarkerClusterJsVsn
+  Seq(
+    "org.webjars.bower" % "leaflet.markercluster" % lmcVsn
+      / s"$lmcVsn/dist/leaflet.markercluster-src.js"
+      minified s"$lmcVsn/dist/leaflet.markercluster.js"
+      dependsOn s"${Common.leafletJsVsn}/dist/leaflet-src.js",
+    //"org.webjars" % "leaflet-markercluster" % "0.4.0"   / "0.4.0/leaflet.markercluster.js",
+    
+    RuntimeDOM % "test"
+  )
+}
 
