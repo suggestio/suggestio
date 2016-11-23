@@ -45,7 +45,8 @@ class AdvGeoMapUtil @Inject() (
     */
   private def NODE_LOGOS_PREPARING_PARALLELISM = 16
 
-  private def LOGO_HEIGHT_CSSPX = 12
+  /** Размер логотипа (по высоте) на карте. */
+  private val LOGO_HEIGHT_CSSPX = configuration.getInt("node.logo.on.map.height.px").getOrElse(30)
 
 
   private case class LogoInfo(logo: MImgT, wh: ISize2di)
