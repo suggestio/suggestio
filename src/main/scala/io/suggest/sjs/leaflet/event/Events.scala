@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.event
 
-import io.suggest.common.event.{Drag, Following, Location, Zoom}
+import io.suggest.common.event._
 
 /**
   * Suggest.io
@@ -13,6 +13,7 @@ object Events
   with Location
   with Following
   with Zoom
+  with Click
 {
 
   def DRAG_PRE   = "predrag"
