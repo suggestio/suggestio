@@ -85,4 +85,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def UNKNOWN_BLE_DEVICE                    = E(38)
 
+  def INIT_ROUTER_NO_TARGET_SPECIFIED       = E(39)
+
 }

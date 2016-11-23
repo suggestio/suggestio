@@ -83,4 +83,11 @@ object ErrorMsgs extends MsgsStaticT {
 
   def LK_ADV_GEO_MAP_GJ_REQ_FAIL   = E(38)
 
+  def INIT_ROUTER_TARGET_RUN_FAIL  = E(39)
+
+  def INIT_ROUTER_UNIMPLEMENTED_TARGET = E(40)
+
+  /** Таргет почему-то пролетел мимо инициализации. */
+  def INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED = E(41)
+
 }

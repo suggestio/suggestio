@@ -5,6 +5,7 @@ import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 import scala.concurrent.Future
 
@@ -62,7 +63,7 @@ trait InitRouter extends Log with SafeSyncVoid {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    LOG.error(msg = "JS init target not supported: " + itg)
+    LOG.error( ErrorMsgs.INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED, msg = itg)
     done
   }
 
@@ -71,38 +72,39 @@ trait InitRouter extends Log with SafeSyncVoid {
     val attrName = JsInitConstants.RI_ATTR_NAME
     val body = DocumentVm().body
     val attrRaw = body.getAttribute(attrName)
+
     val attrOpt = Option(attrRaw)
       .map { _.trim }
       .filter { !_.isEmpty }
-    attrOpt match {
-      case Some(attr) =>
-        val all = attr.split("\\s*;\\s*")
-          .toSeq
-          .flatMap { raw =>
-            val res = MInitTargets.maybeWithName(raw)
-            if (res.isEmpty)
-              LOG.warn(msg = MInitTargets.getClass.getSimpleName + " does not contain target '" + raw + "'")
-            res
-          }
-        val initFut = Future.traverse(all) { itg =>
-          val fut = try {
-            routeInitTarget(itg)
-          } catch {
-            case ex: Throwable => Future failed ex
-          }
-          // Подавленеи ошибок. init must flow.
-          fut recover { case ex: Throwable =>
-            LOG.error(msg = "Init failed to reach target " + itg, ex = ex)
-            None
-          }
-        }
-        // Аттрибут со спекой инициализации больше не нужен, можно удалить его.
-        body.removeAttribute(attrName)
-        initFut
 
-      case None =>
-        LOG.log(msg = "No RI data found in body (" + attrName + "). Initialization skipped.")
-        done
+    attrOpt.fold [Future[_]] {
+      LOG.log( WarnMsgs.INIT_ROUTER_NO_TARGET_SPECIFIED )
+      done
+
+    } { attr =>
+      val all = attr.split("\\s*;\\s*")
+        .toSeq
+        .flatMap { raw =>
+          val res = MInitTargets.maybeWithName(raw)
+          if (res.isEmpty)
+            LOG.warn( ErrorMsgs.INIT_ROUTER_UNIMPLEMENTED_TARGET, msg = raw )
+          res
+        }
+      val initFut = Future.traverse(all) { itg =>
+        val fut = try {
+          routeInitTarget(itg)
+        } catch {
+          case ex: Throwable => Future failed ex
+        }
+        // Подавленеи ошибок. init must flow.
+        fut.recover { case ex: Throwable =>
+          LOG.error(ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, itg)
+          None
+        }
+      }
+      // Аттрибут со спекой инициализации больше не нужен, можно удалить его.
+      body.removeAttribute(attrName)
+      initFut
     }
   }
 
