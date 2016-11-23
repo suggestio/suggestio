@@ -16,7 +16,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
-import util.img.LogoUtil
+import util.img.{DynImgUtil, LogoUtil}
 
 /**
   * Suggest.io
@@ -29,6 +29,7 @@ class AdvGeoMapUtil @Inject() (
   logoUtil    : LogoUtil,
   cdnUtil     : CdnUtil,
   mAnyImgs    : MAnyImgs,
+  dynImgUtil  : DynImgUtil,
   mCommonDi   : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -73,13 +74,15 @@ class AdvGeoMapUtil @Inject() (
     val nodesSource = mNodes.source[MNode](msearch)
     // TODO Opt направить этот поток в кэш узлов MNodeCache?
 
+    lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
     val logosAndNodeSrc = nodesSource.mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
       val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
         FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
-          for {
-            logo  <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, None)
-            whOpt <- mAnyImgs.getImageWH(logo)
+          val fut = for {
+            logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, None)
+            localImg  <- dynImgUtil.ensureImgReady(logo, cacheResult = true)
+            whOpt     <- mAnyImgs.getImageWH(localImg)
           } yield {
             whOpt.fold[Option[LogoInfo]] {
               LOGGER.warn(s"Unable to fetch WH of logo $logo for node ${mnode.idOrNull}")
@@ -87,6 +90,12 @@ class AdvGeoMapUtil @Inject() (
             } { wh =>
               Some(LogoInfo(logo, wh))
             }
+          }
+
+          // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
+          fut.recover { case ex: Throwable =>
+            LOGGER.error(s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map", ex)
+            None
           }
         }
       }
@@ -99,35 +108,34 @@ class AdvGeoMapUtil @Inject() (
 
     // Отмаппить узлы в представление, годное для GeoJSON-сериализации. Финальную сериализацию организует контроллер.
     logosAndNodeSrc.mapConcat { nodeInfo =>
-
       // Собираем url отдельно и ровно один раз, чтобы сэкономить ресурсы.
       val iconInfoOpt = for (logoInfo <- nodeInfo.logoInfoOpt) yield {
         MIconInfo(
-          url     = cdnUtil.dynImg( logoInfo.logo ).url,
-          width   = logoInfo.wh.width,
-          height  = logoInfo.wh.height
+          url    = cdnUtil.dynImg(logoInfo.logo).url,
+          width  = logoInfo.wh.width,
+          height = logoInfo.wh.height
         )
       }
       val mnode = nodeInfo.mnode
 
       val props = MAdvGeoMapNodeProps(
-        nodeId    = mnode.id.get,
-        hint      = mnode.guessDisplayName,
-        bgColor   = mnode.meta.colors.bg
+        nodeId  = mnode.id.get,
+        hint    = mnode.guessDisplayName,
+        bgColor = mnode.meta.colors.bg
           .map(_.code),
-        icon      = iconInfoOpt
+        icon    = iconInfoOpt
       )
 
       mnode.edges
         .withPredicateIter( MPredicates.AdnMap )
-        .flatMap(_.info.geoPoints)
+        .flatMap( _.info.geoPoints )
         .map { geoPoint =>
           MAdvGeoMapNode(
             point = geoPoint,
             props = props
           )
         }
-        .toStream   // Это типа toImmutableIterable
+        .toStream // Это типа toImmutableIterable
     }
   }
 
