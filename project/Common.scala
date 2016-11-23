@@ -72,8 +72,12 @@ object Common {
    */
   val reactSjsVsn        = "0.11.2"
 
-  /** Версия leaflet.js. */
-  val leafletJsVsn              = "1.0.1"
+  /** 
+   *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
+   *  Где-то в leaflet-плагинах есть зависимость от wildcard-версии вида [1.0.0,),
+   *  что может вызвать проблемы на сборке с пустым ivy2-кешем во время освежения версии в webjars.
+   */
+  val leafletJsVsn              = "1.0.2"
 
   /** Версия L.control.locate.js. */
   val leafletControlLocateJsVsn = "0.56.0"
