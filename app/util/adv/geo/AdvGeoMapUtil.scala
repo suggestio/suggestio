@@ -12,7 +12,6 @@ import io.suggest.ym.model.common.AdnRights
 import models.ISize2di
 import models.adv.geo.mapf.{MAdvGeoMapNode, MAdvGeoMapNodeProps, MIconInfo}
 import models.im.{MAnyImgs, MImgT}
-import models.im.logo.LogoOpt_t
 import models.mctx.Context
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -44,6 +43,8 @@ class AdvGeoMapUtil @Inject() (
     * Сборка логотипа в основном синхронная, поэтому можно распараллеливаться по-сильнее.
     */
   private def NODE_LOGOS_PREPARING_PARALLELISM = 16
+
+  private def LOGO_HEIGHT_CSSPX = 12
 
 
   private case class LogoInfo(logo: MImgT, wh: ISize2di)
@@ -77,7 +78,7 @@ class AdvGeoMapUtil @Inject() (
       val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
         FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
           for {
-            logo  <- logoUtil.getLogo4scr(logoRaw, None)
+            logo  <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, None)
             whOpt <- mAnyImgs.getImageWH(logo)
           } yield {
             whOpt.fold[Option[LogoInfo]] {

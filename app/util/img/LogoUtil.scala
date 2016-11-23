@@ -95,13 +95,16 @@ class LogoUtil @Inject() (
   }
 
   def getLogo4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[MImgT] = {
+    val heightCssPx = ScConstants.Logo.HEIGHT_CSSPX
+    getLogo4scr(logoImg, heightCssPx, screenOpt)
+  }
+  def getLogo4scr(logoImg: MImgT, heightCssPx: Int, screenOpt: Option[DevScreen]): Future[MImgT] = {
     // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
     // Узнаём pixelRatio для дальнейших рассчетов.
     val pxRatio = screenOpt.flatMap(_.pixelRatioOpt)
       .getOrElse(DevPixelRatios.default)
 
     // Исходя из pxRatio нужно посчитать высоту логотипа
-    val heightCssPx = ScConstants.Logo.HEIGHT_CSSPX
     val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
 
     // Вернуть скомпленную картинку.
