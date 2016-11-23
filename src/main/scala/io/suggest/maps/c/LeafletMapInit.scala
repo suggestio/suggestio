@@ -39,9 +39,9 @@ trait LeafletMapInit extends ILog with IInit {
 
     // Инициализировать слой OSM
     val tlOpts = TlOptions.empty
-    tlOpts.attribution = """&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors"""
+    tlOpts.attribution = """&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a> contributors"""
     tlOpts.detectRetina = true
-    L.tileLayer("http://{s}.tile.osm.org/{z}/{x}/{y}.png", tlOpts)
+    L.tileLayer("//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", tlOpts)
       .addTo(lmap)
 
     // После таскания карты надо сохранять новый центр карты в форму.
