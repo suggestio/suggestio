@@ -50,7 +50,7 @@ object MAdvGeoMapNodeProps {
   implicit val WRITES: OWrites[MAdvGeoMapNodeProps] = (
     (__ \ NODE_ID_FN).write[String] and
     (__ \ HINT_FN).writeNullable[String] and
-    (__ \ ICON_URL_FN).writeNullable[String] and
+    (__ \ ICON_FN).writeNullable[MIconInfo] and
     (__ \ BG_COLOR_FN).writeNullable[String]
   )(unlift(unapply))
 
@@ -60,11 +60,29 @@ object MAdvGeoMapNodeProps {
   *
   * @param nodeId id узла для возможности запроса попапа или какие-то ещё действия производить.
   * @param hint Подсказка при наведении на узел.
-  * @param iconUrl Логотип узла, отображаемый на карте.
+  * @param icon Логотип узла, отображаемый на карте.
   */
 case class MAdvGeoMapNodeProps(
   nodeId  : String,
   hint    : Option[String],
-  iconUrl : Option[String] = None,
-  bgColor : Option[String] = None
+  icon    : Option[MIconInfo] = None,
+  bgColor : Option[String]    = None
+)
+
+
+import Icon._
+
+/** Поддержка модели данных по иконке узла на карте. */
+object MIconInfo {
+  implicit val WRITES: OWrites[MIconInfo] = (
+    (__ \ URL_FN).write[String] and
+    (__ \ WIDTH_FN).write[Int] and
+    (__ \ HEIGHT_FN).write[Int]
+  )(unlift(unapply))
+}
+/** Класс JSON-модели инфы по иконке узла для карты размещений. */
+case class MIconInfo(
+  url     : String,
+  width   : Int,
+  height  : Int
 )

@@ -8,7 +8,7 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
 import io.suggest.model.search.MSubSearch
-import io.suggest.stat.m.{MAction, MActionTypes, MComponent, MComponents}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import models._
 import models.im.MImgT
 import models.mgeo.MGeoLoc

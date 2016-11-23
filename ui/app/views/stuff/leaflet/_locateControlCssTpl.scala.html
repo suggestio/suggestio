@@ -1,10 +1,7 @@
-@()
+@()(implicit ctx: Context)
+
+@import ctx.api.cdn.asset
 
 <link rel="stylesheet"
       type="text/css"
-      href="@routes.Assets.versioned("stylesheets/leaflet/L.Control.Locate.min.css")" />
-
-<!--[if lt IE 9]>
-    <link rel="stylesheet"
-          href="@routes.Assets.versioned("stylesheets/leaflet/L.Control.Locate.ie.min.css")" />
-<![endif]-->
+      href="@asset("lib/leaflet-locatecontrol/dist/L.Control.Locate.min.css")" />

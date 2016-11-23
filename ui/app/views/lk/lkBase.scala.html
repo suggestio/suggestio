@@ -19,12 +19,12 @@
   <title>@title @if(nodeOpt){ | @_nodeTitleTpl(nodeOpt) } | Suggest.io</title>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/common.css")'/>
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
+  <link rel="stylesheet" type="text/css" href='@asset("stylesheets/market/lk/common.css")'/>
+  <link rel="stylesheet" type="text/css" href='@asset("stylesheets/market/showcase.css")'/>
 
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk_new-design/lk.css")'/>
+  <link rel="stylesheet" type="text/css" href='@asset("stylesheets/market/lk_new-design/lk.css")'/>
 
-  <script src='@routes.Assets.versioned("javascripts/jquery.min.js")'></script>
+  <script src='@asset("javascripts/jquery.min.js")'></script>
 
   @static._faviconTpl()
 
@@ -36,13 +36,13 @@
 
   <header class="header">
     <a class="header_logo-link" href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
-      <img class="header_logo-image" src='@routes.Assets.versioned("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
+      <img class="header_logo-image" src='@asset("images/market/new-design/logo_retina.png")' alt="logo" width="53" height="51"/>
     </a>
 
     <div class="header_cnt">
 
       @if(nodeOpt.isEmpty) {
-        <img class="header_logo-text" src='@routes.Assets.versioned("images/market/index/logo_retina.png")' width="101" height="26"/>
+        <img class="header_logo-text" src='@asset("images/market/index/logo_retina.png")' width="101" height="26"/>
       } else {
         @nodeOpt.map { mnode =>
           <span class="header_logo-text">@mnode.meta.basic.name</span>
@@ -104,8 +104,8 @@
   </aside>
 
 
-  <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
-  <script src="@routes.Assets.versioned("javascripts/jquery-ui.custom.min.js")"></script>
+  <script src="@asset("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@asset("javascripts/jquery-ui.custom.min.js")"></script>
 
   @* jsdeps изначально был нужен только для страниц с картами. Но он тут в надежде, что jquery сюда же потом переедет. *@
   <script src="@asset("lk-sjs-jsdeps.js")"></script>

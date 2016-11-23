@@ -211,8 +211,10 @@ trait MImgsT
     // Фетчим паралельно из обеих моделей. Кто первая, от той и принимаем данные.
     val mimg2Fut = permMetaCached(mimg)
       .filter(_.isDefined)
+
     val localInst = mimg.toLocalInstance
     lazy val logPrefix = "getImageWh(" + mimg.fileName + "): "
+
     val fut = if (mLocalImgs.isExists(localInst)) {
       // Есть локальная картинка. Попробовать заодно потанцевать вокруг неё.
       val localFut = mLocalImgs.getImageWH(localInst)

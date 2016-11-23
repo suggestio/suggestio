@@ -11,6 +11,7 @@
   @_leafletCssTpl()
   @_locateControlCssTpl()
   @_jqDatePickCssTpl()
+  @_lMarkerClusterCssTpl()
   @headAfter
 }
 
@@ -26,10 +27,7 @@
 
   @content
 
-  @* TODO Заюзать jsdeps вместо этих двух скриптов во всём проекте. *@
-  @_leafletScriptTpl()
-  @_locateControlScriptTpl()
-
+  @* leaflet.js и остальные живут в jsdeps.js на уровне lkBase.html . *@
   @_jqDatePickJsTpl()
 
 }

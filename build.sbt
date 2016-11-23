@@ -90,6 +90,13 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("de.l3s.boilerpipe", "boilerpipe")
   ,
+
+  // webjars
+  // карты leaflet.(js подхватывается в scala.js через jsDeps)
+  "org.webjars.bower" % "leaflet"               % Common.leafletJsVsn,
+  "org.webjars.bower" % "leaflet.markercluster" % Common.leafletMarkerClusterJsVsn,
+  "org.webjars"       % "leaflet-locatecontrol" % Common.leafletControlLocateWjVsn,
+  
   // спаривание guice и акторов требует танцев вприсядку
   //"net.codingwell" %% "scala-guice" % "4.0.0",
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,

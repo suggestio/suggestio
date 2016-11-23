@@ -73,7 +73,7 @@ class LogoUtil @Inject() (
       .toStream
       .headOption
       .map { edge2logoImg }
-    Future successful res
+    Future.successful( res )
   }
 
   /**

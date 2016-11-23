@@ -1,7 +1,9 @@
-@()
+@()(implicit ctx: Context)
+
+@import ctx.api.cdn.asset
 
 @* css-теги для jquery.datepicker.js *@
 
 <link rel="stylesheet"
       type="text/css"
-      href="@routes.Assets.versioned("stylesheets/jq/dtpick/jquery.datetimepicker.css")"/>
+      href="@asset("stylesheets/jq/dtpick/jquery.datetimepicker.css")"/>
