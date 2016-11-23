@@ -70,7 +70,7 @@ class AgtFormInit extends IInit {
 
 
     // Инициализировать географическую карту
-    val rmapInit = new RadMapInit {
+    val rmapInit = new AgtFormMapInit {
       /** Нужно уведомлять FSM формы при изменении радиуса круга. */
       override def onRadiusChange(circle: Circle, e: Event): Unit = {
         super.onRadiusChange(circle, e)

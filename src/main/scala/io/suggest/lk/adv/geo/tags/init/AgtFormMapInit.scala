@@ -10,6 +10,12 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.leaflet.map.LMap
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.leaflet.L
+import io.suggest.sjs.leaflet.event.{Event, Events}
+import io.suggest.sjs.leaflet.marker.MarkerOptions
+import io.suggest.sjs.leaflet.marker.cluster._
+import io.suggest.sjs.leaflet.marker.icon.IconOptions
+import io.suggest.sjs.leaflet.popup.PopupOptions
 
 import scala.util.{Failure, Success}
 
@@ -51,7 +57,52 @@ class AgtFormMapInit extends RadMapInit with Log {
 
   /** Действо по рендеру полученного GeoJSON на карту размещений. */
   protected def _handleGeoJson(resp: MMapGjResp, lmap: LMap): Unit = {
-    ???
+    val mcg = L.markerClusterGroup()
+
+    val po = PopupOptions.empty
+    po.closeOnClick = true
+
+    for (gjFeature <- resp.featuresIter) {
+      // Собираем параметры отображения маркера.
+      val options = MarkerOptions.empty
+      options.draggable = false
+      options.clickable = true
+
+      // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
+      options.icon  = gjFeature.icon.fold(_pinMarkerIcon()) { iconInfo =>
+        val o = IconOptions.empty
+        o.iconUrl = iconInfo.url
+        // Описываем размеры иконки по данным сервера.
+        o.iconSize = L.point(
+          x = iconInfo.height,
+          y = iconInfo.width
+        )
+        // Для иконки -- якорь прямо в середине.
+        o.iconAnchor = L.point(
+          x = iconInfo.height / 2,
+          y = iconInfo.width  / 2
+        )
+        L.icon(o)
+      }
+
+      for (title <- gjFeature.title)
+        options.title = title
+
+      val marker = L.marker(
+        latLng  = gjFeature.pointLatLng,
+        options = options
+      )
+
+      // center marker drag start. Надо приглушить круг.
+      val onClickF = { e: Event =>
+        lmap.panTo( marker.getLatLng() )
+        marker.bindPopup("TODO", po)
+      }
+      marker.on3(Events.CLICK, onClickF)
+
+      mcg.addLayer(marker)
+    }
+    lmap.addLayer( mcg )
   }
 
 }
