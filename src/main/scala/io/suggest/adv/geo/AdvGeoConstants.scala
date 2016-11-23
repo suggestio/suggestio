@@ -81,15 +81,23 @@ object AdvGeoConstants {
     /** Имя поля с подсказкой узла. */
     def HINT_FN       = "h"
 
-    /** Имя поля с адресом иконки узла. */
-    def ICON_URL_FN   = "i"
-
     /** Имя поля с именем узла. */
     def NODE_ID_FN    = "n"
 
     /** Имя поля с цветом фона (полезно для рендера логотипа с прозрачностью, например). */
     def BG_COLOR_FN   = "b"
 
+    def ICON_FN       = "i"
+
+    object Icon {
+
+      /** Имя поля с адресом иконки узла. */
+      def URL_FN    = "u"
+
+      def WIDTH_FN  = "w"
+      def HEIGHT_FN = "h"
+
+    }
   }
 
 }
