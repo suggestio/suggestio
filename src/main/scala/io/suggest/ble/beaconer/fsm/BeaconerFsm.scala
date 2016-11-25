@@ -16,7 +16,6 @@ object BeaconerFsm extends Log {
 
   def applyIfPossible: Option[BeaconerFsm] = {
     val apiOpt = IBleBeaconsApi.detectApi
-    LOG.warn(msg = "ble api = " + apiOpt)
     for (_ <- apiOpt) yield {
       new BeaconerFsm
     }

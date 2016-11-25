@@ -13,11 +13,10 @@ libraryDependencies ++= Seq(
 
 persistLauncher in Compile := true
 
+// Tесты: только node.js. Нельзя через rhino. С 0.6.13 node.js используется по дефолту
 persistLauncher in Test := false
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 jsDependencies += RuntimeDOM % "test"
-
-scalaJSUseRhino in Global := false
 

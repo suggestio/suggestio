@@ -24,6 +24,8 @@ trait IBleBeaconsApi {
   /** Прекратить любое слушанье маячков. */
   def unListenAllBeacons(): Unit
 
+  override def toString = getClass.getSimpleName
+
 }
 
 
@@ -34,7 +36,6 @@ object IBleBeaconsApi extends Log {
     val cordovaBleApi = new CordovaBleApi
     try {
       val apiAvail = cordovaBleApi.isApiAvailable
-      LOG.log(msg = "ble api avail = " + apiAvail)
       if (apiAvail) {
         Some(cordovaBleApi)
       } else {

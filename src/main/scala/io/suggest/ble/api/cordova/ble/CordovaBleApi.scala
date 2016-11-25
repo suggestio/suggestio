@@ -62,17 +62,21 @@ class CordovaBleApi extends IBleBeaconsApi with Log {
     }
 
     // Заинлайнен список поддерживаемых beacon-парсеров с помощью f(...) orElse f(...) orElse f(...)
-    f( IBeaconParser )
-      .orElse( f(EddyStoneParser) )
+    def devStr = JSON.stringify(dev)
+    f( EddyStoneParser )
+      .orElse( f(IBeaconParser) )
       // Среагировать на результат работы цепочки парсеров.
       .fold [Unit] {
         // device found, но почему-то неподходящий под маячок. warn для отправки на сервер сообщения о подозрительной штуковине, потом надо закомментить/упростить.
-        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = JSON.stringify(dev) )
-      } { beacon =>
-        listener ! BeaconDetected( beacon )
+        LOG.log( WarnMsgs.UNKNOWN_BLE_DEVICE, msg = devStr )
+
+      } {
+        case Right(beacon) =>
+          listener ! BeaconDetected( beacon )
+        case Left(msg) =>
+          LOG.log( WarnMsgs.FILTERED_OUT_BLE_DEVICE, msg = devStr + " " + msg )
       }
   }
-
 
   /** Какая-то ошибка возникла при сканировании. */
   def _handleErrorCode(errorCode: String, listener: SjsFsm): Unit = {

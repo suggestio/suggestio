@@ -18,6 +18,10 @@ trait BeaconParser extends TypeT with ILog {
 
   override type T <: BeaconSignal
 
+  /** Алиас для типа возвращаемого результата парсинга. */
+  type ParseRes_t = Option[Either[Any, T]]
+
+
   /** Инстанс в cordova-ble device info. */
   def dev: DeviceInfo
 
@@ -26,18 +30,18 @@ trait BeaconParser extends TypeT with ILog {
     *         Some() если это маячок T.
     *         exception, если это какой-то кривой маячок или ошибка где-то в логике метода.
     */
-  def parse(): Option[T]
+  def parse(): ParseRes_t
 
-  /** Какой код сообщения рендерить при ошибке. */
-  def parserErrorMsg: ErrorMsg_t
+  /** Какой код сообщения об ошибке логгировать при исключении, возникшем при парсинге. */
+  def parserFailMsg: ErrorMsg_t
 
   /** Безопасный вызов parse(), никогда не возвращает exception. */
-  def tryParse(): Option[T] = {
+  def tryParse(): ParseRes_t = {
     try {
       parse()
     } catch {
       case ex: Throwable =>
-        LOG.error( parserErrorMsg, ex, JSON.stringify(dev) )
+        LOG.error( parserFailMsg, ex, JSON.stringify(dev) )
         None
     }
   }

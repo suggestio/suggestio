@@ -1,7 +1,6 @@
 package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.{AdvertisementData, DeviceInfo}
-import io.suggest.sjs.cordova.ble.AdvertisementData
 import minitest._
 
 import scala.scalajs.js
@@ -25,10 +24,14 @@ object IBeaconParserSpec extends SimpleTestSuite {
       ad
     }
 
-    val pr = IBeaconParser(dev).parse()
-    assertEquals(pr.isDefined, true)
+    val rEithOpt = IBeaconParser(dev).parse()
+    assert(rEithOpt.isDefined, rEithOpt.toString)
 
-    val r = pr.get
+    val rEith = rEithOpt.get
+    assert(rEith.isRight, rEith.toString)
+
+    val r = rEith.right.get
+
     assertEquals(r.rssi, -63)
     assertEquals(r.rssi0, -61)
 

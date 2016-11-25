@@ -20,6 +20,7 @@ object IBeaconParser extends BeaconParserFactory {
 /**
   * Попытаться распарсить данные по iBeacon'у из инфы по девайсу.
   *
+  * @param dev Cordova-BLE device info.
   * iBeacon Device info на андройде содержит -- это JSON в стиле:
   * {{{
   *  { "address": "C9:59:F6:28:82:CD",
@@ -30,12 +31,13 @@ object IBeaconParser extends BeaconParserFactory {
   *    }
   *  },
   *
-  *  {"address": "DE:D1:AE:A5:5E:6B",
-  *   "rssi": -63,
-  *   "scanRecord": "AgEEGv9MAAIVuUB/MPX4Rm6v+SVVa1f+bRI0ElHDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-  *   "advertisementData":{
-  *     "kCBAdvDataManufacturerData":"TAACFblAfzD1+EZur/klVWtX/m0SNBJRww=="
-  *   }
+  *  {
+  *    "address": "DE:D1:AE:A5:5E:6B",
+  *    "rssi": -63,
+  *    "scanRecord": "AgEEGv9MAAIVuUB/MPX4Rm6v+SVVa1f+bRI0ElHDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  *    "advertisementData":{
+  *      "kCBAdvDataManufacturerData":"TAACFblAfzD1+EZur/klVWtX/m0SNBJRww=="
+  *    }
   *  }
   * }}}
   *
@@ -55,7 +57,6 @@ object IBeaconParser extends BeaconParserFactory {
   *   c5      # The 2's complement of the calibrated Tx Power
   * }}}
   *
-  * @param dev ble-девайс.
   * @return None, если это не iBeacon или если какой-то кривой iBeacon.
   * @see [[http://stackoverflow.com/a/19040616]]
   */
@@ -66,9 +67,9 @@ case class IBeaconParser(override val dev: DeviceInfo)
 
   override type T = IBeacon
 
-  override def parserErrorMsg = ErrorMsgs.CANT_PARSE_IBEACON
+  override def parserFailMsg = ErrorMsgs.CANT_PARSE_IBEACON
 
-  def parse(): Option[IBeacon] = {
+  def parse(): ParseRes_t = {
     // Option тут не требуется, поэтому делаем for{} в понятиях UndefOr[] вместо Option.
     val ibeaconUnd = for {
       // Обязательно должна быть advertisementData...
@@ -87,7 +88,7 @@ case class IBeaconParser(override val dev: DeviceInfo)
       rssi <- dev.rssi
 
     } yield {
-      IBeacon(
+      val ib = IBeacon(
         rssi          = rssi,
         // TODO отформатировать в UUID с помощью дефисов.
         proximityUuid = LowUuidUtil.hexStringToUuid(
@@ -99,6 +100,7 @@ case class IBeaconParser(override val dev: DeviceInfo)
         minor         = EvothingsUtil.bigEndianToUint16(bytes, 22),
         rssi0         = EvothingsUtil.littleEndianToInt8(bytes, 24)
       )
+      Right(ib)
     }
 
     // Вернуть Option[] вместо undefined.

@@ -82,41 +82,45 @@ trait On extends BeaconerFsmStub { thisFsm =>
 
     /** Реакция на сигнал обнаружения маячка. */
     def _handleBeaconSeen(bs: BeaconDetected): Unit = {
-      for {
+      bs.beacon.uid
+        .filter(_.nonEmpty)
         // Интересуют только маячки с идентификаторами.
-        beaconUid   <- bs.beacon.uid
+        .fold[Unit] {
+          LOG.warn(WarnMsgs.BLE_BEACON_EMPTY_UID, msg = bs)
+        } { bUid =>
+          for {
+            // для которых можно оценить мгновенное расстояние...
+            distanceM <- {
+              val dOpt = RadioUtil.calculateAccuracy(bs.beacon)
+              if (dOpt.isEmpty)
+                LOG.warn(WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = bs.beacon)
+              dOpt
+            }
 
-        // для которых можно оценить мгновенное расстояние...
-        distanceM   <- {
-          val dOpt = RadioUtil.calculateAccuracy(bs.beacon)
-          if (dOpt.isEmpty)
-            LOG.log( WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = bs.beacon )
-          dOpt
-        }
+          } {
+            val sd0 = _stateData
+            val beaconSd1 = sd0.beacons
+              .get(bUid)
+              .fold[BeaconSd] {
+                BeaconSd(
+                  beacon     = bs.beacon,
+                  lastSeenMs = bs.seen
+                )
+              } { currBeaconSd =>
+                currBeaconSd.copy(
+                  beacon     = bs.beacon,
+                  lastSeenMs = bs.seen
+                )
+              }
+            // Нам проще работать с целочисленной дистанцией в сантиметрах
+            val distanceCm = (distanceM * 100).toInt
 
-      } {
-        val sd0 = _stateData
-        val beaconSd1 = sd0.beacons
-          .get(beaconUid)
-          .fold[BeaconSd] {
-            BeaconSd(
-              beacon      = bs.beacon,
-              lastSeenMs  = bs.seen
-            )
-          } { currBeaconSd =>
-            currBeaconSd.copy(
-              beacon      = bs.beacon,
-              lastSeenMs  = bs.seen
+            beaconSd1.accuracies.pushValue(distanceCm)
+            _stateData = sd0.withBeacons(
+              sd0.beacons + ((bUid, beaconSd1))
             )
           }
-        // Нам проще работать с целочисленной дистанцией в сантиметрах
-        val distanceCm = (distanceM * 100).toInt
-
-        beaconSd1.accuracies.pushValue( distanceCm )
-        _stateData = sd0.withBeacons(
-          sd0.beacons + ((beaconUid, beaconSd1))
-        )
-      }
+        }
     }
 
 
@@ -311,7 +315,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
           }
           // Маячки на значительном расстоянии уже неинтересны.
           .filter { tuple =>
-            tuple._2.distanceCm < 20
+            tuple._2.distanceCm < 2000
           }
           .toSeq
       }
