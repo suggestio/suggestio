@@ -87,4 +87,12 @@ object WarnMsgs extends MsgsStaticT {
 
   def INIT_ROUTER_NO_TARGET_SPECIFIED       = E(39)
 
+  /**
+    * BLE-девайс отсеян. т.е. например это BLE-девайс, но тип у него неподходящий
+    * т.е. BeaconParser.parse() вернуло Some(Left(...)).
+    */
+  def FILTERED_OUT_BLE_DEVICE               = E(40)
+
+  def BLE_BEACON_EMPTY_UID                  = E(41)
+
 }
