@@ -1,7 +1,6 @@
 package controllers
 
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.mbill2.m.order.MOrderStatuses
@@ -19,7 +18,7 @@ import play.api.i18n.Messages
 import play.api.libs.json.{JsNull, Json}
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil}
+import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
 import util.billing.Bill2Util
@@ -30,6 +29,7 @@ import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._priceValTpl
 
 import scala.concurrent.Future
+import scala.concurrent.duration._
 
 /**
   * Suggest.io
@@ -53,6 +53,7 @@ class LkAdvGeo @Inject() (
   with PlayMacroLogsImpl
   with CanAdvertiseAd
   with NodeTagsEdit
+  with CanThinkAboutAdvOnMapAdnNode
 {
 
   import mCommonDi._
@@ -311,7 +312,9 @@ class LkAdvGeo @Inject() (
     *             Пока используется как основание для проверки прав доступа.
     */
   def advRcvrsGeoJson(adId: MEsUuId) = CanAdvertiseAd(adId).async { implicit request =>
-    val nodesSource = advGeoMapUtil.rcvrNodesMap()
+    val nodesSource = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
+      advGeoMapUtil.rcvrNodesMap()
+    }
 
     // Сериализуем JSON в поток. Для валидности JSON надо добавить "[" в начале, "]" в конце, и разделители между элементами.
     val delim = ",\n"
@@ -339,5 +342,16 @@ class LkAdvGeo @Inject() (
       .as("application/json; charset=utf8")
   }
 
+
+  /** Рендер попапа при клике по узлу-ресиверу на карте ресиверов.
+    *
+    * @param nodeId id узла, по которому кликнул юзер.
+    * @return HTML.
+    */
+  def geoNodePopup(adId: MEsUuId, nodeId: MEsUuId) = CanThinkAboutAdvOnMapAdnNode(adId, nodeId = nodeId).async { implicit request =>
+    // Отрендерить popup html для узла и вернуть.
+
+    ???
+  }
 
 }
