@@ -30,18 +30,26 @@ object RadioUtil {
       // protocol reports the value at 0 meters. 41dBm is the signal loss that
       // occurs over 1 meter, so we subtract that from the reported txPower.
 
+      // 2016.nov.25: Всплыла проблема с eddystone-маячками от MS.spb.ru:
+      // Они сообщают неправильный txpower: -102 dBM (это rssi0).
+      val rssi0Fixed = if (distance0m == 0 && rssi0 < -60) {
+        -24
+      } else {
+        rssi0
+      }
+
       // Тут вычисляем поправку для основной формулы на основе дистанции до излучателя:
       // Для ibeacon = 0 dBm, для eddystone -41 dBm.
-      val txDiffDbm = (distance0m - 1) * -41
+      val txDiffDbm = Math.max(0, 1 - distance0m) * -41
 
-      val ratio = rssi * 1.0 / (rssi0 + txDiffDbm)
+      val ratio = rssi * 1.0 / (rssi0Fixed + txDiffDbm)
 
       val accuracy = if (ratio < 1.0) {
         Math.pow(ratio, 10)
-
       } else {
         0.89976 * Math.pow(ratio, 7.7095) + 0.111
       }
+      println( "d=" + distance0m + " rssi0=" + rssi0 + " rssi=" + rssi + " rssi0Fixed=" + rssi0Fixed + " => " + accuracy + "m")
 
       Some(accuracy)
     }

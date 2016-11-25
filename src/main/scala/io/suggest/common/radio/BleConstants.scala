@@ -26,6 +26,9 @@ object BleConstants {
     /** Разделитель частей UID. Для ibeacon нужно отделять uuid от major и minor с помощью этой строки: */
     def UID_DELIM = "_"
 
+    /** Разделитель, используемый при форматировании кусков ID. */
+    def UID_PARTS_DELIM = "-"
+
     /** Константы названий URL QS полей у BLE-маячков. */
     object Qs {
 
