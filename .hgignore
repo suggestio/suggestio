@@ -1,5 +1,6 @@
 syntax: glob
 
+node_modules/
 target/
 bixo/
 data/
