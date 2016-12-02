@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.vm.of
 
-import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw.{HTMLDivElement, HTMLElement}
 
 /**
  * Suggest.io
@@ -9,6 +9,8 @@ import org.scalajs.dom.raw.HTMLElement
  * Description: Реализация [[Of]] для DIV.
  */
 trait OfDiv extends Of {
+
+  override type Dom_t = HTMLDivElement
 
   override def _isWantedHtmlEl(el: HTMLElement): Boolean = {
     // TODO Opt Можно ведь тут выставить == вместо equalsIgnoreCase()?

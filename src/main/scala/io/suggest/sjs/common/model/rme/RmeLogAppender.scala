@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.model.rme
 
-import io.suggest.sjs.common.log.{ILogAppender, LogMsg}
+import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severities, Severity}
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
@@ -20,7 +20,7 @@ abstract class RmeLogAppender extends ILogAppender {
   /** Куда делать реквест. Функция, возвращающая route. */
   def route: Route
 
-  def minSeverity: Int = 0
+  def minSeverity: Severity = Severities.Warn
 
   private def _logAppendInto(logMsg: LogMsg, route: Route): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.

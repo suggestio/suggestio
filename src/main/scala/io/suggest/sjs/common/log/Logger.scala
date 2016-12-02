@@ -2,6 +2,9 @@ package io.suggest.sjs.common.log
 
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 
+import scala.annotation.elidable
+import scala.annotation.elidable._
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -19,15 +22,19 @@ trait LoggerT {
   def fsmState: Option[String]
 
 
+  @elidable( SEVERE )
   def error(errorMsg: ErrorMsg_t = null, ex: Throwable = null, msg: Any = null): Unit = {
     doLog(Severities.Error, errorMsg, msg, ex)
   }
+  @elidable( WARNING )
   def warn(errorMsg: ErrorMsg_t  = null, ex: Throwable = null, msg: Any = null): Unit = {
     doLog(Severities.Warn, errorMsg, msg, ex)
   }
+  @elidable( INFO )
   def info(errorMsg: ErrorMsg_t  = null, ex: Throwable = null, msg: Any = null): Unit = {
     doLog(Severities.Info, errorMsg, msg, ex)
   }
+  @elidable( FINE )
   def log(errorMsg: ErrorMsg_t   = null, ex: Throwable = null, msg: Any = null): Unit = {
     doLog(Severities.Log, errorMsg, msg, ex)
   }

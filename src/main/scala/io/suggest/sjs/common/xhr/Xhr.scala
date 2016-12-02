@@ -183,4 +183,17 @@ object Xhr {
     }
   }
 
+
+  def requestHtml(route: Route): Future[String] = {
+    val xhrFut = successIfStatus(HttpStatuses.OK) {
+      send(
+        route   = route,
+        headers = Seq(HDR_ACCEPT -> MIME_TEXT_HTML)
+      )
+    }
+    for (xhr <- xhrFut) yield {
+      xhr.responseText
+    }
+  }
+
 }

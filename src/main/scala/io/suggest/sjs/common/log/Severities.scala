@@ -17,4 +17,7 @@ object Severities {
 
   val Log   : Severity = 3
 
+
+  def ALL   : Severity = -1
+
 }
