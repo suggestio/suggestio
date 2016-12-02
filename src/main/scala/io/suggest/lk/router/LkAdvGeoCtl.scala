@@ -27,4 +27,7 @@ sealed trait LkAdvGeoCtl extends js.Object {
   /** Роута для получения GeoJson карты adv-geo. */
   def advRcvrsGeoJson(adId: String): Route = js.native
 
+  /** Роута получения содержимого попапа узла географической карты. */
+  def rcvrMapPopup(adId: String, nodeId: String): Route = js.native
+
 }
