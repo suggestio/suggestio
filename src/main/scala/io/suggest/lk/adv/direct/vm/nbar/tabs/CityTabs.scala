@@ -6,7 +6,6 @@ import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.of.{ChildrenVms, OfDiv}
 import io.suggest.sjs.common.vm.style.{SetIsShown, ShowHideDisplayT}
 import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdRawString, OfHtmlElDomIdRelated}
-import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io
@@ -16,7 +15,6 @@ import org.scalajs.dom.raw.HTMLDivElement
  */
 object CityTabs extends FindElDynIdT with OfDiv with DynDomIdRawString with DomIdPrefixed with OfHtmlElDomIdRelated {
 
-  override type Dom_t         = HTMLDivElement
   override type DomIdArg_t    = String
   override type T             = CityTabs
   override def DOM_ID_PREFIX  = AdvDirectFormConstants.CITY_TAB_BODY_PREFIX

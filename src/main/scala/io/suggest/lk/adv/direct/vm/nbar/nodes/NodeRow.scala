@@ -6,7 +6,6 @@ import io.suggest.sjs.common.vm.attr.AttrVmT
 import io.suggest.sjs.common.vm.find.FindElDynIdT
 import io.suggest.sjs.common.vm.of.OfDiv
 import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdRawString, OfHtmlElDomIdRelated}
-import org.scalajs.dom.raw.HTMLDivElement
 
 /**
  * Suggest.io
@@ -23,7 +22,6 @@ object NodeRow
 {
 
   override type DomIdArg_t    = String
-  override type Dom_t         = HTMLDivElement
   override type T             = NodeRow
   override def DOM_ID_PREFIX  = AdvDirectFormConstants.NODE_ROW_ID_PREFIX
 

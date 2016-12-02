@@ -22,7 +22,6 @@ object CityCatTab
     with OfHtmlElDomIdRelated
 {
 
-  override type Dom_t         = HTMLDivElement
   override type T             = CityCatTab
   override type DomIdArg_t    = CityNgIdOpt
   override def DOM_ID_PREFIX  = AdvDirectFormConstants.CITY_NODES_TAB_HEAD_ID_PREFIX

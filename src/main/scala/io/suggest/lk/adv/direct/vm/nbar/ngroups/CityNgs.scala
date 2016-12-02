@@ -23,7 +23,6 @@ object CityNgs
 {
 
   override type DomIdArg_t    = String
-  override type Dom_t         = HTMLDivElement
   override type T             = CityNgs
   override def DOM_ID_PREFIX  = AdvDirectFormConstants.NGRPS_CITY_CONT_ID_PREFIX
 

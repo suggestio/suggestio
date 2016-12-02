@@ -27,7 +27,6 @@ object CityCatNg
 {
 
   override type DomIdArg_t  = NgBodyId
-  override type Dom_t       = HTMLDivElement
   override type T           = CityCatNg
   override def DOM_ID_PREFIX = AdvDirectFormConstants.CITY_CAT_NODES_ID_PREFIX
 
