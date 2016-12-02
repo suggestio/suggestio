@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.tags.fsm
 
 import io.suggest.lk.adv.fsm.AdvFormChangedReceiver
+import io.suggest.lk.adv.geo.tags.fsm.states.Rcvrs
 import io.suggest.lk.adv.geo.tags.m.MAgtStateData
 import io.suggest.sjs.dt.period.vm.Container
 
@@ -10,10 +11,11 @@ import io.suggest.sjs.dt.period.vm.Container
   * Created: 15.03.16 12:17
   * Description: FSM, обслуживающий страницу/форму размещения карточки в гео-тегах.
   */
-class AgtFormFsm
+object AgtFormFsm
   extends states.UpdatePriceData
   with states.PeriodSignals
   with AdvFormChangedReceiver
+  with Rcvrs
 {
 
   override type State_t = FsmState
@@ -45,5 +47,6 @@ class AgtFormFsm
     extends AdvFormChangedReceiverStateT
     with GetPriceStateT
     with PeriodSignalsStateT
+    with RcvrsStateT
 
 }

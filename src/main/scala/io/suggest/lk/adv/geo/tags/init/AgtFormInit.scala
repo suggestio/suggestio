@@ -5,7 +5,6 @@ import io.suggest.lk.adv.geo.tags.m.signal.{RadiusChanged, TagsChanged}
 import io.suggest.lk.adv.geo.tags.vm.AgtForm
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.fsm.TagsEditFsm
-import io.suggest.maps.rad.init.RadMapInit
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.fsm.IInitLayoutFsm
 import io.suggest.sjs.common.model.Route
@@ -45,7 +44,7 @@ class AgtFormInit extends IInit {
   override def init(): Unit = {
 
     // Инициализировать основной FSM:
-    val mainFsm = new AgtFormFsm
+    val mainFsm = AgtFormFsm
     mainFsm.start()
 
     // Привязать форму к созданному FSM.

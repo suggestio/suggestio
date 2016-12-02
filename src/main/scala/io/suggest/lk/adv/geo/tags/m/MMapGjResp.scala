@@ -70,6 +70,9 @@ case class MMapGjFeature(underlying: GjFeature) {
     GeoJson.coordsToLatLng(lngLat)
   }
 
+  /** id узла, относящегося к этому маркеру. */
+  def nodeId: Option[String] = prop[String]( NODE_ID_FN )
+
 }
 
 
