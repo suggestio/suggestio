@@ -31,7 +31,7 @@ object RadioUtil {
       // occurs over 1 meter, so we subtract that from the reported txPower.
 
       // 2016.nov.25: Всплыла проблема с eddystone-маячками от MS.spb.ru:
-      // Они сообщают неправильный txpower: -102 dBM (это rssi0).
+      // Они сообщают неправильный txpower: -61 dBM в качестве rssi0 (забыли перекалибровать, т.к. ibeacon 1 метр -61 dbm).
       val rssi0Fixed = if (distance0m == 0 && rssi0 < -60) {
         -24
       } else {
@@ -49,7 +49,6 @@ object RadioUtil {
       } else {
         0.89976 * Math.pow(ratio, 7.7095) + 0.111
       }
-      println( "d=" + distance0m + " rssi0=" + rssi0 + " rssi=" + rssi + " rssi0Fixed=" + rssi0Fixed + " => " + accuracy + "m")
 
       Some(accuracy)
     }
