@@ -86,7 +86,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
         .filter(_.nonEmpty)
         // Интересуют только маячки с идентификаторами.
         .fold[Unit] {
-          LOG.warn(WarnMsgs.BLE_BEACON_EMPTY_UID, msg = bs)
+          LOG.log(WarnMsgs.BLE_BEACON_EMPTY_UID, msg = bs)
         } { bUid =>
           for {
             // для которых можно оценить мгновенное расстояние...
