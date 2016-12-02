@@ -34,6 +34,15 @@ case class MPopupRowInfo(
   onMainScreen    : Option[MOnMainScrInfo]
 )
 
-case class MTagInfo(tag: String, isOnlineNow: Boolean)
-case class MOnMainScrInfo(isOnlineNow: Boolean)
+/** Не очень-то нужный трейт. Но пусть пока будет. */
+trait IIsOnlineNow {
+  def isOnlineNow: Boolean
+}
 
+/** Инфа по размещению в теге. */
+case class MTagInfo(tag: String, isOnlineNow: Boolean)
+  extends IIsOnlineNow
+
+/** Инфа по размещению на главном экране. */
+case class MOnMainScrInfo(isOnlineNow: Boolean)
+  extends IIsOnlineNow

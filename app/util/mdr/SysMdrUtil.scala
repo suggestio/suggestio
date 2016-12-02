@@ -196,7 +196,7 @@ class SysMdrUtil @Inject() (
     val b0 = mItems
       .query
       .filter { i =>
-        (i.iTypeStr inSet MItemTypes.onlyAdvTypesIds.toSeq) &&
+        (i.iTypeStr inSet MItemTypes.advTypesIds.toSeq) &&
           (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
       }
 

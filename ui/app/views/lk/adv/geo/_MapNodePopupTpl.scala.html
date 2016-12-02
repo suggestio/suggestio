@@ -1,0 +1,75 @@
+@(args: adv.geo.mapf.MRcvrPopupTplArgs)(implicit ctx: Context)
+
+@* Шаблон для содержимого попапа карты над узлом-ресивером. *@
+
+@import helper._
+@import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Popup._
+@import views.html.stuff._inputHiddenTpl
+@import lk.adv.widgets.period._reportBodyTpl
+@import ctx.{request, messages}
+@import util.FC.checkboxFc
+
+<div>
+
+  @* Рендерим поле с id узла. Зачем? Хз... *@
+  @_inputHiddenTpl( args.form(NODE_ID_FN) )
+
+  @* Рендерим группы узлов/подузлов на основе переданного сюда маппинга формы. *@
+  @defining( args.form(GROUPS_FN) ) { groupsFld =>
+
+    @* Пройтись по порядковым id групп... *@
+    @for( grpI <- groupsFld.indexes ) {
+    @defining( groupsFld(s"[$grpI]") ) { groupFld =>
+      <div>
+        @defining( groupFld(GROUP_ID_FN) ) { groupIdFld =>
+          @* Отрендерить заголовок группы, если таковой имеется. *@
+          @for( groupId <- groupIdFld.value; ntype <- MNodeTypes.maybeWithName(groupId) ) {
+            <h3>
+              @messages( ntype.plural )
+            </h3>
+          }
+
+          @* инпут-поле с кодом группы узлов: маячки и т.д. *@
+          @_inputHiddenTpl( groupIdFld )
+        }
+
+        @* Пройтись по узлам данной группы. *@
+        <div>
+          @defining( groupFld(NODES_FN) ) { nodesFld =>
+            @for( nodeI <- nodesFld.indexes ) {
+            @defining( nodesFld(s"[$nodeI]") ) { nodeFld =>
+            @defining( nodeFld(NODE_ID_FN) ) { nodeIdFld =>
+
+              @for( nodeInfo <- nodeIdFld.value.flatMap( args.nodeInfos.get ) ) {
+                @* Всё готово к рендеру инпутов конкретного узла. *@
+                <div>
+                  @_inputHiddenTpl( nodeIdFld )
+                  @_inputHiddenTpl( nodeFld(IS_CREATE_FN) )
+
+                  @* TODO Делать styling чекбокса на основе данных флага текущей онлайновости. *@
+                  @checkbox(
+                    nodeFld(CHECKED_FN),
+                    '_label -> nodeInfo.nameOpt.getOrElse("???")
+                  )
+
+                  @* Некоторая инфа о текущем размещении из nodeInfo, если есть. *@
+                  @for( interval <- nodeInfo.intervalOpt ) {
+                    @_reportBodyTpl(interval)
+                  }
+
+                  @if(nodeInfo.isOnlineNow){&checkmark;}
+                </div>
+              }
+
+            }
+            }
+            }
+          }
+        </div>
+      </div>
+    }
+    }
+
+  }
+
+</div>

@@ -1,8 +1,9 @@
 package models.adv
 
+import io.suggest.model.es.MEsUuId
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import util.{FormUtil, PlayMacroLogsDyn}
+import util.PlayMacroLogsDyn
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -58,7 +59,7 @@ trait ExtTargetInfoParsers extends JavaTokenParsers {
 
   /** Парсер targetId. */
   def targetIdP: Parser[String] = {
-    FormUtil.uuidB64Re
+    MEsUuId.uuidB64Re
   }
 
   /** Парсер разделителя полей. */

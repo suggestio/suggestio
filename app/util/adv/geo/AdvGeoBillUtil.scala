@@ -1,9 +1,10 @@
 package util.adv.geo
 
+import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
 import models.adv.geo.IAdvGeoFormResult
@@ -12,6 +13,7 @@ import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import util.billing.Bill2Util
+import util.ble.BeaconsBilling
 
 import scala.concurrent.Future
 
@@ -21,8 +23,9 @@ import scala.concurrent.Future
  * Created: 04.12.15 13:43
  * Description: Утиль для биллинга размещений в тегах.
  */
-class AdvGeoBillUtil @Inject()(
+class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
+  beaconsBilling                      : BeaconsBilling,
   mItems                              : MItems,
   val mCommonDi                       : ICommonDi
 )
@@ -168,14 +171,6 @@ class AdvGeoBillUtil @Inject()(
   }
 
 
-  private def _findForAdQuery(adId: String) = {
-    mItems.query
-      .filter { i =>
-        (i.nodeId === adId) &&
-        (i.iTypeStr inSet MItemTypes.onlyAdvGeoTypeIds.toSeq)
-      }
-  }
-
   /**
     * Поиск уже текущих размещений для указанной карточки.
     *
@@ -183,12 +178,41 @@ class AdvGeoBillUtil @Inject()(
     * @return DBIO-экшен, возвращающий MItem'ы.
     */
   def findCurrentForAd(adId: String, limit: Int = 200): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
-    _findForAdQuery(adId)
+    mItems.query
       .filter { i =>
-        i.statusStr inSet MItemStatuses.advBusyIds.toSeq
+        i.withNodeId(adId) &&
+          i.withTypes( MItemTypes.advGeoTypes ) &&
+          i.withStatuses( MItemStatuses.advBusy )
       }
       .take(limit)
       // Сортировка пока не требуется, но возможно потребуется.
+      .result
+  }
+
+
+  /**
+    * Поиск ПРЯМЫХ размещений для рекламной карточки на указанных ресиверах.
+    *
+    * @param adId id рекламной карточки.
+    * @param rcvrIds id узлов-ресиверов.
+    * @param limitOpt Предел кол-ва результатов.
+    * @return DB-экшен, возвращающий список item'ом в неопределенном порядке.
+    */
+  def findCurrForAdToRcvrs(adId: String, rcvrIds: Traversable[String], statuses: TraversableOnce[MItemStatus], limitOpt: Option[Int] = None): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+    val q = mItems.query
+      .filter { i =>
+        // Интересует только указанная карточка...
+        i.withNodeId(adId) &&
+          // Размещаяемая на указанных узлах-ресиверах
+          i.withRcvrs( rcvrIds ) &&
+          // и только прямые размещения на узлах.
+          i.withTypes( MItemTypes.advDirectTypes ) &&
+          // и только текущие размещения (по статусам)
+          i.withStatuses( statuses )
+      }
+    // Без limit, если подразумевается стриминг всех результатов.
+    limitOpt
+      .fold(q)(q.take)
       .result
   }
 
@@ -201,12 +225,32 @@ class AdvGeoBillUtil @Inject()(
     * @return DB-Экшен
     */
   def findDraftsForAd(adId: String, limit: Int = 100): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
-    _findForAdQuery(adId)
+    mItems.query
       .filter { i =>
-        i.statusStr === MItemStatuses.Draft.strId
+        i.withNodeId(adId) &&
+          i.withTypes( MItemTypes.advGeoTypes ) &&
+          i.withStatus( MItemStatuses.Draft )
       }
       .take(limit)
       .result
+  }
+
+
+  /** Поиск всех id'шников под-узлов для указанного узла-ресивера.
+    * Это включает в себя поиск активированных BLE-маячков узла и возможно какие-то иные вещи.
+    *
+    * @param nodeId id узла-ресивера.
+    * @return Фьючерс с множеством id'шников всех как-то подчиненных узлов.
+    */
+  def findActiveSubNodeIdsOfRcvr(nodeId: String): Future[Set[String]] = {
+    // Запустить сбор маячков, активированных на узле.
+    Source.fromPublisher {
+      slick.db.stream {
+        beaconsBilling.findActiveBeaconIdsOfRcvr(nodeId)
+      }
+    }
+      .runFold( Set.newBuilder[String] )(_ += _)
+      .map( _.result() )
   }
 
 }

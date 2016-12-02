@@ -110,12 +110,20 @@ object FormUtil {
 
 
   /** Регэксп для парсинга uuid, закодированного в base64. */
-  def uuidB64Re = MEsUuId.uuidB64Re
+  val uuidB64Re = MEsUuId.charsAllowedRe.r
 
+  /** Конструктор для id-маппингов. */
+  private def _esIdM(baseM: Mapping[String]): Mapping[String] = {
+    baseM
+      .transform(strTrimSanitizeF, strIdentityF)
+      .verifying("error.invalid.id", uuidB64Re.pattern.matcher(_).matches())
+  }
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
-  def esIdM = nonEmptyText(minLength=19, maxLength=30)
-    .transform(strTrimSanitizeF, strIdentityF)
-    .verifying("error.invalid.id", uuidB64Re.pattern.matcher(_).matches())
+  def esIdM = _esIdM( nonEmptyText(minLength=19, maxLength=30) )
+
+  /** Маппинг для id узла, включая всякие маячки. */
+  // TODO Проверять по шаблонам ID: обычные es base64, ibeacon hex (46 ascii байт, удалить?), eddystone (~33 байта).
+  def esAnyNodeIdM = _esIdM( nonEmptyText(minLength=19, maxLength=50) )
 
   /** Тоже самое, что и esIdM, но пытается декодировать UUID из id.
     * id, сгенеренные es, тут не прокатят! */

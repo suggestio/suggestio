@@ -81,6 +81,7 @@ POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeo.getPriceSubmit(adI
 POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeo.tagEditorAddTag()
 GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mlk.MLkTagsSearchQs)
 GET  /lk/xadv/geo/map/rcvrs/:adId       @controllers.LkAdvGeo.advRcvrsGeoJson(adId)
+GET  /lk/xadv/geo/map/node/pop/:adId/:nodeId     @controllers.LkAdvGeo.rcvrMapPopup(adId: MEsUuId, nodeId: MEsUuId)
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)

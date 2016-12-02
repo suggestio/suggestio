@@ -45,10 +45,6 @@ module.exports = function (grunt) {
           livereload: '<%= connect.options.livereload %>'
         }
       },
-      jsTest: {
-        files: ['test/spec/{,*/}*.js'],
-        tasks: ['newer:jshint:test', 'karma']
-      },
       styles: {
         files: ['<%= yeoman.app %>/styles/{,*/}*.css'],
         tasks: ['newer:copy:styles', 'autoprefixer']
@@ -323,11 +319,11 @@ module.exports = function (grunt) {
     },
 
     // Replace Google CDN references
-    cdnify: {
-      dist: {
-        html: ['<%= yeoman.dist %>/*.html']
-      }
-    },
+    //cdnify: {
+    //  dist: {
+    //    html: ['<%= yeoman.dist %>/*.html']
+    //  }
+    //},
 
     // Copies remaining files to places other tasks can use
     copy: {
@@ -391,14 +387,6 @@ module.exports = function (grunt) {
       ]
     },
 
-    // Test settings
-    karma: {
-      unit: {
-        configFile: 'test/karma.conf.js',
-        singleRun: true
-      }
-    },
-
     coffee: {
       compile: {
         files: [{
@@ -433,6 +421,7 @@ module.exports = function (grunt) {
     grunt.task.run(['serve:' + target]);
   });
 
+  /*
   grunt.registerTask('test', [
     'clean:server',
     'concurrent:test',
@@ -440,6 +429,7 @@ module.exports = function (grunt) {
     'connect:test',
     'karma'
   ]);
+  */
 
   grunt.registerTask('build-dev', [
     'coffee:compile',

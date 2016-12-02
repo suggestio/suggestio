@@ -10,7 +10,9 @@ import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.geo.{CircleGs, GeoShape}
+import io.suggest.model.n2.node.MNodeTypes
 import models.adv.geo.cur._
+import models.adv.geo.mapf.{MNodeAdvFormInfo, MNodeAdvGroup, MRcvrPopupFormRes}
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
 import models.mctx.Context
 import models.mdt.MDateInterval
@@ -21,7 +23,7 @@ import org.joda.time.Interval
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.extras.geojson.{Feature, FeatureCollection, LatLng}
-import util.PlayMacroLogsImpl
+import util.FormUtil
 import util.adv.AdvFormUtil
 import util.maps.RadMapFormUtil
 import util.tags.TagsEditFormUtil
@@ -39,9 +41,7 @@ class AdvGeoFormUtil @Inject() (
   advFormUtil       : AdvFormUtil,
   radMapFormUtil    : RadMapFormUtil,
   mCommonDi         : ICommonDi
-)
-  extends PlayMacroLogsImpl
-{
+) {
 
   private def _agtFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
@@ -156,10 +156,55 @@ class AdvGeoFormUtil @Inject() (
 
     // Объеденить всю инфу в контейнер ряда данных попапа.
     MPopupRowInfo(
-      intervalOpt   = intervalOpt.map(MDateInterval.apply),
-      tags          = tagInfosIter.toSeq.sortBy(_.tag),
+      intervalOpt   = intervalOpt
+        .map(MDateInterval.apply),
+      tags          = tagInfosIter
+        .toSeq
+        .sortBy(_.tag),
       onMainScreen  = omsOpt
     )
+  }
+
+
+  import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Popup._
+
+
+  // Form-утиль для формы в попапах ресиверов.
+
+  /** Маппинг для полей одного доступного размещения на одном узле. */
+  def nodeAdvFormInfoM: Mapping[MNodeAdvFormInfo] = {
+    mapping(
+      NODE_ID_FN     -> FormUtil.esAnyNodeIdM,
+      IS_CREATE_FN   -> boolean,
+      CHECKED_FN     -> boolean
+    )
+    { MNodeAdvFormInfo.apply }
+    { MNodeAdvFormInfo.unapply }
+  }
+
+  /** Маппинг группы узлов в попапе. */
+  def nodesAdvGroupM: Mapping[MNodeAdvGroup] = {
+    mapping(
+      GROUP_ID_FN -> MNodeTypes.mappingOptM,
+      NODES_FN    -> list(nodeAdvFormInfoM)
+    )
+    { MNodeAdvGroup.apply }
+    { MNodeAdvGroup.unapply }
+  }
+
+  /** Маппинг модели [[models.adv.geo.mapf.MRcvrPopupFormRes]]. */
+  def rcvrPopupFormResM: Mapping[MRcvrPopupFormRes] = {
+    mapping(
+      NODE_ID_FN  -> FormUtil.esIdM,
+      GROUPS_FN   -> list(nodesAdvGroupM)
+    )
+    { MRcvrPopupFormRes.apply }
+    { MRcvrPopupFormRes.unapply }
+  }
+
+  /** Маппинг формы для попапа одного узла карты. */
+  def rcvrPopupForm: Form[MRcvrPopupFormRes] = {
+    Form(rcvrPopupFormResM)
   }
 
 }

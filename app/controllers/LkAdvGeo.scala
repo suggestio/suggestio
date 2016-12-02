@@ -3,14 +3,19 @@ package controllers
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
+import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.GeoPoint
+import io.suggest.async.StreamsUtil
 import models.adv.form.MDatesPeriod
+import models.adv.geo.mapf._
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.mctx.Context
+import models.mdt.MDateInterval
 import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
@@ -44,6 +49,7 @@ class LkAdvGeo @Inject() (
   bill2Util                       : Bill2Util,
   advGeoLocUtil                   : AdvGeoLocUtil,
   advGeoMapUtil                   : AdvGeoMapUtil,
+  streamsUtil                     : StreamsUtil,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
@@ -57,6 +63,7 @@ class LkAdvGeo @Inject() (
 {
 
   import mCommonDi._
+  import streamsUtil._
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -345,13 +352,172 @@ class LkAdvGeo @Inject() (
 
   /** Рендер попапа при клике по узлу-ресиверу на карте ресиверов.
     *
-    * @param nodeId id узла, по которому кликнул юзер.
+    * @param adIdU id текущей карточки, которую размещают.
+    * @param rcvrNodeIdU id узла, по которому кликнул юзер.
     * @return HTML.
     */
-  def geoNodePopup(adId: MEsUuId, nodeId: MEsUuId) = CanThinkAboutAdvOnMapAdnNode(adId, nodeId = nodeId).async { implicit request =>
-    // Отрендерить popup html для узла и вернуть.
+  def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
+  private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = CanThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
-    ???
+    // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
+    val subNodesIdsFut = advGeoBillUtil.findActiveSubNodeIdsOfRcvr(rcvrNodeId)
+
+    lazy val logPrefix = s"geoNodePopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
+
+    // Закинуть во множество подузлов id текущего ресивера.
+    val allNodesIdsFut = for (subNodesIds <- subNodesIdsFut) yield {
+      LOGGER.trace(s"$logPrefix Found ${subNodesIds.size} sub-nodes: ${subNodesIds.mkString(", ")}")
+      subNodesIds + rcvrNodeId
+    }
+
+    // Нужно получить все узлы из кэша.
+    val nodesFut = allNodesIdsFut.flatMap { allNodeIds =>
+      mNodeCache.multiGet( allNodeIds )
+    }
+
+    // Сгруппировать под-узлы по типам узлов, внеся туда ещё и текущий ресивер.
+    val nodesGrpsFut = for (subNodes <- nodesFut) yield {
+      subNodes
+        // Сгруппировать узлы по их типам. Для текущего узла тип будет None. Тогда он отрендерится без заголовка и в самом начале списка узлов.
+        .groupBy { mnode =>
+          if (mnode.id.contains(rcvrNodeId)) {
+            None
+          } else {
+            Some(mnode.common.ntype)
+          }
+        }
+        .toSeq
+        // Очень кривая сортировка, но для наших нужд и такой пока достаточно.
+        .sortBy( _._1.map(_.id) )
+    }
+
+    // Запустить получение списка всех текущих (черновики + busy) размещений на узле и его маячках из биллинга.
+    val currAdvsSrc = {
+      val pubFut = for {
+        allNodeIds <- allNodesIdsFut
+      } yield {
+        slick.db.stream {
+          advGeoBillUtil.findCurrForAdToRcvrs(
+            adId      = adId,
+            // TODO Добавить поддержку групп маячков ресиверов.
+            rcvrIds   = allNodeIds,
+            // Интересуют и черновики, и текущие размещения
+            statuses  = MItemStatuses.advActual,
+            // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
+            limitOpt  = Some(300)
+          )
+        }
+      }
+      // Выпрямляем Future[Publisher] в просто нормальный Source.
+      pubFut.toSource
+    }
+
+    def __src2RcvrIdsSet(src: Source[MItem,_]): Future[Set[String]] = {
+      // В текущих размещениях интересуют значения в поле rcvrId...
+      src
+        .mapConcat( _.rcvrIdOpt.toList )
+        // Перегнать все id в Future[SetBuilder[String]]
+        .toSetFut
+    }
+
+    // Запустить сбор rcvr node id'шников в потоке для текущих размещений.
+    val advRcvrIdsActualFut = __src2RcvrIdsSet(currAdvsSrc)
+    val advRcvrIdsBusyFut   = __src2RcvrIdsSet {
+      currAdvsSrc.filter { i =>
+        i.status.isAdvBusy
+      }
+    }
+
+    // Собрать маппинг формы, согласно которой пойдёт весь рендер.
+    val formFut = for {
+      advRcvrIdsActual    <- advRcvrIdsActualFut
+      advRcvrIdsBusy      <- advRcvrIdsBusyFut
+      nodesGrps           <- nodesGrpsFut
+    } yield {
+      val groupsIter = for {
+        (ntypeOpt, typedNodeIds)   <- nodesGrps.iterator
+      } yield {
+        val nodesInGroup = typedNodeIds
+          .iterator
+          .flatMap(_.id)
+          .map { typedNodeId =>
+            MNodeAdvFormInfo(
+              nodeId    = typedNodeId,
+              isCreate  = advRcvrIdsBusy.contains( typedNodeId ),
+              checked   = advRcvrIdsActual.contains( typedNodeId )
+            )
+          }
+          .toList
+
+        MNodeAdvGroup(
+          ntypeOpt = ntypeOpt,
+          nodes    = nodesInGroup
+        )
+      }
+
+      // Собрать итоговое значение для формы.
+      val formRes = MRcvrPopupFormRes(
+        nodeId = rcvrNodeId,
+        groups = groupsIter.toList
+      )
+
+      // Залить собранное значение в маппинг формы.
+      advGeoFormUtil
+        .rcvrPopupForm
+        .fill( formRes )
+    }
+
+    // Собрать множество id узлов, у которых есть хотя бы одно online-размещение.
+    val nodesHasOnlineFut = __src2RcvrIdsSet {
+      currAdvsSrc
+        .filter { _.status == MItemStatuses.Online }
+    }
+
+    // Карта интервалов размещения по id узлов.
+    val intervalsMapFut: Future[Map[String, MDateInterval]] = currAdvsSrc
+      .runFold( Map.newBuilder[String, MDateInterval] ) { (acc, i) =>
+        for {
+          dtInterval <- i.dtIntervalOpt
+          rcvrId     <- i.rcvrIdOpt
+        } {
+          acc += rcvrId -> MDateInterval(dtInterval)
+        }
+        acc
+      }
+      .map( _.result() )
+
+    // Сгенерить карты инфы по нодами для рендера какой-то человеческой инфы.
+    val nodeInfosFut: Future[Map[String, MNodeInfo]] = for {
+      subNodes            <- nodesFut
+      nodesHasOnline      <- nodesHasOnlineFut
+      intervalsMap        <- intervalsMapFut
+    } yield {
+      val subNodesIter = for {
+        mnode   <- subNodes.iterator
+        mnodeId <- mnode.id
+      } yield {
+        mnodeId -> MNodeInfo(
+          nameOpt        = mnode.guessDisplayNameOrId,
+          isOnlineNow   = nodesHasOnline.contains( mnodeId ),
+          intervalOpt    = intervalsMap.get( mnodeId )
+        )
+      }
+      subNodesIter.toMap
+    }
+
+    // Отрендерить HTTP-ответ.
+    for {
+      form      <- formFut
+      nodeInfos <- nodeInfosFut
+    } yield {
+      val tplArgs = MRcvrPopupTplArgs(
+        form      = form,
+        nodeInfos = nodeInfos
+      )
+      Ok( _MapNodePopupTpl(tplArgs) )
+        // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
+        .withHeaders(CACHE_CONTROL -> "private, max-age=5")
+    }
   }
 
 }
