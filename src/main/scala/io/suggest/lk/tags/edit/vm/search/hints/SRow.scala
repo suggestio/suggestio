@@ -15,7 +15,6 @@ import org.scalajs.dom.raw.HTMLDivElement
   */
 object SRow extends IApplyEl with OfEventTargetNode with OfDiv with OfMyCssClass {
 
-  override type Dom_t = HTMLDivElement
   override type T     = SRow
 
   override def VM_CSS_CLASS = HINT_ROW_CLASS
