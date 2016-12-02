@@ -16,8 +16,10 @@ import play.api.mvc.{PathBindable, QueryStringBindable}
   */
 object MEsUuId {
 
+  def charsAllowedRe = "[_a-zA-Z0-9-]"
+
   /** Регэксп для проверки валидности id. */
-  val uuidB64Re = "[_a-zA-Z0-9-]{19,25}".r
+  val uuidB64Re = (charsAllowedRe + "{19,25}").r
 
 
   /** Пропарсить строку и завернуть в [[MEsUuId]] если всё ок.

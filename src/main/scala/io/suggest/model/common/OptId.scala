@@ -33,6 +33,20 @@ object OptId {
       .toSet
   }
 
+  /** Приведение списка элеменов в итератору, пригодному к дальнейшему конвертацию в карту. */
+  def els2idMapIter[Id_t, T <: OptId[Id_t]](els: TraversableOnce[T]): Iterator[(Id_t, T)] = {
+    if (els.isEmpty) {
+      Iterator.empty
+    } else {
+      els
+        .toIterator
+        .flatMap { el =>
+          for (id <- el.id) yield {
+            id -> el
+          }
+        }
+    }
+  }
 
   /**
     * Приведение списка элементов к карте по id.
@@ -45,18 +59,10 @@ object OptId {
     *         Если id был пуст, то элемент будет отсутствовать в карте.
     */
   def els2idMap[Id_t, T <: OptId[Id_t]](els: TraversableOnce[T]): Map[Id_t, T] = {
-    if (els.isEmpty) {
+    if (els.isEmpty)
       Map.empty
-    } else {
-      els
-        .toIterator
-        .flatMap { el =>
-          for (id <- el.id) yield {
-            id -> el
-          }
-        }
-        .toMap
-    }
+    else
+      els2idMapIter[Id_t, T](els).toMap
   }
 
 
