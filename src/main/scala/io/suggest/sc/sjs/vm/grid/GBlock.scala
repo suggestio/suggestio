@@ -30,7 +30,6 @@ object GBlock
 {
 
   override def DOM_ID_SUFFIX  = ID_DELIM + ID_SUFFIX
-  override type Dom_t         = HTMLDivElement
   override type T             = GBlock
 
   /**

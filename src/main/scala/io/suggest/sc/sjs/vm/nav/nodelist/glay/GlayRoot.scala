@@ -17,7 +17,6 @@ import org.scalajs.dom.raw.HTMLDivElement
 
 object GlayRoot extends GlayDivStaticT with OfDiv with OfMyCssClass {
 
-  override type Dom_t = HTMLDivElement
   override type T     = GlayRoot
 
   override def VM_CSS_CLASS = GNL_BODY_CSS_CLASS

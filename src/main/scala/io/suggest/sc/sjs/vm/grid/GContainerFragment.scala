@@ -23,7 +23,6 @@ object GContainerFragment
     with OfDiv
 {
 
-  override type Dom_t = HTMLDivElement
   override type T = GContainerFragment
 
   /**
