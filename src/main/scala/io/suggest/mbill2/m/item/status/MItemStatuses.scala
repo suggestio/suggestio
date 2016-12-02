@@ -77,12 +77,16 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
     override def isMoneyWithdrawed      = false
   }
 
+  private class _ValBusyApproved(name: String)
+    extends Val(name)
+    with AdvBusyApproved
+
 
   /** Купленная услуга пока в оффлайне. */
-  val Offline             : T = new Val("f") with AdvBusyApproved
+  val Offline             : T = new _ValBusyApproved("f")
 
   /** Оплаченная услуга сейчас в онлайне. */
-  val Online              : T = new Val("o") with AdvBusyApproved
+  val Online              : T = new _ValBusyApproved("o")
 
   /** Завершена обработка item'а. Например, оплаченная услуга истекла. */
   val Finished            : T = new Val("z") with NotBusy with AdvInactual

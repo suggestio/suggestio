@@ -39,30 +39,39 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
 
   override type T = Val
 
-  /** Прямое размещение карточки на каком-то узле.
-    * Это было самый первый тип размещения в suggest.io. */
+  /**
+    * Прямое размещение карточки прямо на каком-либо узле (используя id узла).
+    * Это было самый первый тип размещения в suggest.io.
+    * Скорее всего, этот же тип будет для размещения в маячках и группах маячков.
+    */
   val AdvDirect         : T = new Val("a")
 
-  /** Заказ геотеггинга для карточки. */
+  /** Заказ геотеггинга для карточки. Размещение по шейпу и id узла-тега-ресивера. */
   val GeoTag            : T = new Val("t")
 
-  /** Покупка размещения в каком-то месте на карте. */
+  /** Покупка размещения в каком-то месте на карте: по геошейпу без ресиверов. */
   val GeoPlace          : T = new Val("g")
 
   /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
   val AdnNodeMap        : T = new Val("m")
+
+  /** Плата за активность маячка в системе s.io.
+    * Неоплаченный маячок "не работает", хотя и засоряет эфир своими сигналами. */
+  val BleBeaconActive   : T = new Val("b")
 
   /** Покупка срочного доступа к внешнему размещению (разовая абонплата). */
   //val AdvExtFee         : T = new Val("e")
 
 
   /** Типы, относящиеся к рекламным размещениям. */
-  def onlyAdvTypes        = AdvDirect :: onlyAdvGeoTypes
-  def onlyAdvTypesIds     = onlyIds( onlyAdvTypes )
+  def advTypes                = advGeoTypes reverse_::: advDirectTypes
+  def advTypesIds             = onlyIds( advTypes )
 
   /** Только типы item'ов, относящиеся к гео-размещениям. */
-  def onlyAdvGeoTypes     = List(GeoTag, GeoPlace)
-  def onlyAdvGeoTypeIds   = onlyIds( onlyAdvGeoTypes )
+  def advGeoTypes             = GeoTag :: GeoPlace :: Nil
+  def advGeoTypeIds           = onlyIds( advGeoTypes )
+
+  def advDirectTypes          = AdvDirect :: Nil
 
 
   /** Поддержка маппинга для play router. */

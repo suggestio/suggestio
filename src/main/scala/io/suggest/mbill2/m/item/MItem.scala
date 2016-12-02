@@ -5,14 +5,14 @@ import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.{InsertManyReturning, InsertOneReturning}
 import io.suggest.mbill2.m.dt._
-import io.suggest.mbill2.m.geo.shape.{IGeoShapeOpt, GeoShapeOptSlick}
+import io.suggest.mbill2.m.geo.shape.{GeoShapeOptSlick, IGeoShapeOpt}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.item.cols._
-import io.suggest.mbill2.m.item.status.{MItemStatuses, ItemStatusSlick, MItemStatus, IMItemStatus}
-import io.suggest.mbill2.m.item.typ.{MItemTypeSlick, MItemType, IMItemType}
+import io.suggest.mbill2.m.item.status.{IMItemStatus, ItemStatusSlick, MItemStatus, MItemStatuses}
+import io.suggest.mbill2.m.item.typ.{IMItemType, MItemType, MItemTypeSlick, MItemTypes}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
-import io.suggest.mbill2.m.tags.{TagFaceOptSlick, ITagFaceOpt}
+import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
 import org.joda.time.{DateTime, Interval}
@@ -95,6 +95,23 @@ class MItems @Inject() (
         dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
+    }
+
+    // DSL для быстрой сборки query.filter(...)
+    def withNodeId(nodeIds: String*): Rep[Boolean] = {
+      nodeId.inSet( nodeIds )
+    }
+    def withTypes(types: TraversableOnce[MItemType]): Rep[Boolean] = {
+      iTypeStr.inSet( MItemTypes.onlyIds(types).toTraversable )
+    }
+    def withStatus(status1: MItemStatus): Rep[Boolean] = {
+      statusStr === status1.strId
+    }
+    def withStatuses(statuses: TraversableOnce[MItemStatus]): Rep[Boolean] = {
+      statusStr.inSet( MItemStatuses.onlyIds(statuses).toTraversable )
+    }
+    def withRcvrs(rcvrIds: Traversable[String]): Rep[Option[Boolean]] = {
+      rcvrIdOpt.inSet( rcvrIds )
     }
 
   }
