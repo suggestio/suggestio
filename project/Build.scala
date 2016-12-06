@@ -95,7 +95,7 @@ object Sio2Build extends Build {
     val name = "lk-dt-period-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, dateTimePickerSjs)
+      .dependsOn(lkCommonSjs, dateTimePickerSjs)
   }
 
   /** lk-adv-common sjs. */

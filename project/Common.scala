@@ -70,7 +70,7 @@ object Common {
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  val reactSjsVsn        = "0.11.2"
+  val reactSjsVsn        = "0.11.3"
 
   /** 
    *  Версия leaflet.js. Не должна быть wildcard, потому что иначе jsDeps глючит.
