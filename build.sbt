@@ -26,7 +26,6 @@ libraryDependencies ++= Seq(
   "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn
 )
 
-// Цепляем react-зависимости. При сборке они упадут в lk-sjs-extdeps.js.
 jsDependencies ++= Seq(
   // Стандартные jsDeps:
   RuntimeDOM % "test"
