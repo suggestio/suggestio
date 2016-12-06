@@ -45,4 +45,17 @@ object AdvConstants {
   /** Имя поля верхнего уровня с периодом размещения. */
   def PERIOD_FN = "period"
 
+
+  object DtPeriod {
+
+    def QUICK_PERIOD_FN     = PERIOD_FN
+
+    def DATES_INTERVAL_FN   = "date"
+
+    def START_FN            = "start"
+
+    def END_FN              = "end"
+
+  }
+
 }

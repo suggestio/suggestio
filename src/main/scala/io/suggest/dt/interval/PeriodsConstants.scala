@@ -1,6 +1,6 @@
 package io.suggest.dt.interval
 
-import io.suggest.common.menum.ILightEnumeration
+import io.suggest.common.menum.{ILightEnumeration, StrIdValT}
 
 /**
  * Suggest.io
@@ -18,15 +18,18 @@ object PeriodsConstants {
 
   def CUSTOM    = "custom"
 
+
+  /** Префикс кода локализованного названия периода (i18n). */
+  def MESSAGES_PREFIX = "adv.period."
+
 }
 
-trait QuickAdvPeriodsT extends ILightEnumeration {
+trait QuickAdvPeriodsT extends ILightEnumeration with StrIdValT {
 
   /** Интерфейс для элемента модели. */
   protected[this] trait ValT extends super.ValT {
 
-    /** Строковое значение ISO3231-периода. */
-    def isoPeriod: String
+    def messagesCode = PeriodsConstants.MESSAGES_PREFIX + strId
 
   }
 
@@ -40,5 +43,8 @@ trait QuickAdvPeriodsT extends ILightEnumeration {
 
   /** 1 месяц. */
   val P1M: T
+
+
+  def default: T = P3D
 
 }

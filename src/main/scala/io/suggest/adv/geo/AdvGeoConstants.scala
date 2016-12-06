@@ -1,5 +1,6 @@
 package io.suggest.adv.geo
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.maps.MapFormConstants
 import io.suggest.common.maps.rad.RadMapConstants
 import io.suggest.common.qs.QsConstants
@@ -120,6 +121,19 @@ object AdvGeoConstants {
 
       /** Поставлена ли галочка? */
       def CHECKED_FN      = "f"
+
+
+      private def ID_DELIM        = QsConstants.KEY_PARTS_DELIM_STR
+
+      /** префикс DOM-id контейнера данных для попапа ресивера. */
+      def CONT_ID_PREFIX           = "prc" + ID_DELIM
+
+      /** префикс DOM-id контейнера данных одной группы для ресивера. */
+      def GRP_CONT_ID_PREFIX       = "g" + CONT_ID_PREFIX
+      def GRP_NODES_CONT_ID_PREFIX = "s" + GRP_CONT_ID_PREFIX
+
+      /** Префикс DOM-id для контейнера одного под-узла в рамках группы узлов одного ресивера. */
+      def NODE_GRP_CONT_ID_PREFIX  = "n" + GRP_CONT_ID_PREFIX
 
     }
 
