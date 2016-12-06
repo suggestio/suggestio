@@ -40,12 +40,12 @@ class MProjectInfo extends MacroLogsDyn {
             try {
               val connOpt = Option(csUrl.openConnection)
               try {
-                connOpt map {
+                connOpt.map {
                   case jaUrlConn: JarURLConnection =>
                     jaUrlConn.getJarEntry.getTime
                 }
               } finally {
-                connOpt foreach {
+                connOpt.foreach {
                   _.getInputStream.close()
                 }
               }
