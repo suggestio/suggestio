@@ -443,7 +443,7 @@ class LkAdvGeo @Inject() (
           .map { typedNodeId =>
             MNodeAdvFormInfo(
               nodeId    = typedNodeId,
-              isCreate  = advRcvrIdsBusy.contains( typedNodeId ),
+              isCreate  = !advRcvrIdsBusy.contains( typedNodeId ),
               checked   = advRcvrIdsActual.contains( typedNodeId )
             )
           }

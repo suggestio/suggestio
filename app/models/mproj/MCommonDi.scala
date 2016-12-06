@@ -16,6 +16,7 @@ import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import com.sksamuel.elastic4s.ElasticClient
+import jsmessages.JsMessagesFactory
 import util.HtmlCompressUtil
 import util.di._
 import util.secure.SessionUtil
@@ -50,6 +51,7 @@ trait ICommonDi
   // play-2.5: Это нужно инжектить иначе deprecation warning.
   val csrfAddToken                    : CSRFAddToken
   val csrfCheck                       : CSRFCheck
+  val jsMessagesFactory               : JsMessagesFactory
   // выставляем implicit, т.к. до-DI'шные websocket'ы требуют implicit application in scope.
   // TODO После перевода вёб-сокетов на akka streams, удалить implicit у current.
   override implicit val current       : Application
@@ -74,6 +76,7 @@ final class MCommonDi @Inject() (
   override val langs              : Langs,
   override val csrfAddToken       : CSRFAddToken,
   override val csrfCheck          : CSRFCheck,
+  override val jsMessagesFactory  : JsMessagesFactory,
   //override val actorSystem        : ActorSystem,
   override val cache              : CacheApi,
   override val cacheApiUtil       : CacheApiUtil,

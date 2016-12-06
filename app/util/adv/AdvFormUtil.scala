@@ -1,13 +1,14 @@
 package util.adv
 
 import com.google.inject.Singleton
+import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.dt.interval.PeriodsConstants
-import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
 import models.adv.form._
 import models.maps.{MapViewState, RadMapValue}
-import models.req.{IReqHdr, IReq}
+import models.req.{IReq, IReqHdr}
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
 import play.api.data.Forms._
@@ -39,18 +40,20 @@ class AdvFormUtil {
   }
 
 
+  import AdvConstants.DtPeriod._
+
   /** Маппинг для интервала дат размещения. Его точно нельзя заворачивать в val из-за LocalDate.now(). */
   def advDatePeriodOptM: Mapping[Option[(LocalDate, LocalDate)]] = {
     // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.
     // TODO Неправильно введённые даты надо заворачивать в None.
     val dateOptM = optional( jodaLocalDate("yyyy-MM-dd") )
     tuple(
-      "start" -> dateOptM
+      START_FN -> dateOptM
         .verifying("error.date.start.before.today", {dOpt => dOpt match {
           case Some(d)  => !d.isBefore(LocalDate.now)
           case None     => true
         }}),
-      "end"   -> dateOptM
+      END_FN   -> dateOptM
     )
     .transform [Option[(LocalDate, LocalDate)]] (
       {case (Some(dateStart), Some(dateEnd))  =>  Some(dateStart -> dateEnd)
@@ -64,7 +67,7 @@ class AdvFormUtil {
   def advPeriodM: Mapping[DatePeriod_t] = {
     val custom = PeriodsConstants.CUSTOM
     tuple(
-      "period" -> nonEmptyText(minLength = 1, maxLength = 10)
+      QUICK_PERIOD_FN -> nonEmptyText(minLength = 1, maxLength = 10)
         .transform [Option[QuickAdvPeriod]] (
           {periodRaw =>
             if (periodRaw == custom)
@@ -74,7 +77,7 @@ class AdvFormUtil {
           },
           { _.fold(custom)(_.isoPeriod) }
         ),
-      "date"  -> advDatePeriodOptM
+      DATES_INTERVAL_FN -> advDatePeriodOptM
     )
     .verifying("error.required", { m => m match {
       case (periodOpt, datesOpt)  =>  periodOpt.isDefined || datesOpt.isDefined

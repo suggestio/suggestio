@@ -1,6 +1,7 @@
 package util.adv.direct
 
 import com.google.inject.Inject
+import io.suggest.adv.AdvConstants
 import models.adv.direct.{DirectAdvFormM_t, FormResult, OneNodeInfo}
 import play.api.data.Forms._
 import play.api.data._
@@ -36,8 +37,8 @@ class DirectAdvFormUtil @Inject() (
   /** Маппинг всей формы. */
   def advFormM: Mapping[FormResult] = {
     mapping(
-      "node"   -> nodesM,
-      "period" -> advFormUtil.advPeriodM
+      "node"                 -> nodesM,
+      AdvConstants.PERIOD_FN -> advFormUtil.advPeriodM
     )
     { FormResult.apply }
     { FormResult.unapply }

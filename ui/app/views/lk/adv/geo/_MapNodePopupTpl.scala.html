@@ -9,10 +9,11 @@
 @import ctx.{request, messages}
 @import util.FC.checkboxFc
 
-<div>
+@defining( args.form(NODE_ID_FN) ) { rcvrIdFld =>
+<div id="@CONT_ID_PREFIX@rcvrIdFld.value">
 
   @* Рендерим поле с id узла. Зачем? Хз... *@
-  @_inputHiddenTpl( args.form(NODE_ID_FN) )
+  @_inputHiddenTpl( rcvrIdFld )
 
   @* Рендерим группы узлов/подузлов на основе переданного сюда маппинга формы. *@
   @defining( args.form(GROUPS_FN) ) { groupsFld =>
@@ -20,21 +21,20 @@
     @* Пройтись по порядковым id групп... *@
     @for( grpI <- groupsFld.indexes ) {
     @defining( groupsFld(s"[$grpI]") ) { groupFld =>
-      <div>
-        @defining( groupFld(GROUP_ID_FN) ) { groupIdFld =>
-          @* Отрендерить заголовок группы, если таковой имеется. *@
-          @for( groupId <- groupIdFld.value; ntype <- MNodeTypes.maybeWithName(groupId) ) {
-            <h3>
-              @messages( ntype.plural )
-            </h3>
-          }
-
-          @* инпут-поле с кодом группы узлов: маячки и т.д. *@
-          @_inputHiddenTpl( groupIdFld )
+    @defining( groupFld(GROUP_ID_FN) ) { groupIdFld =>
+      <div id="@GRP_CONT_ID_PREFIX@rcvrIdFld.value@groupIdFld.value">
+        @* Отрендерить заголовок группы, если таковой имеется. *@
+        @for( groupId <- groupIdFld.value; ntype <- MNodeTypes.maybeWithName(groupId) ) {
+          <h3>
+            @messages( ntype.plural )
+          </h3>
         }
 
+        @* инпут-поле с кодом группы узлов: маячки и т.д. *@
+        @_inputHiddenTpl( groupIdFld )
+
         @* Пройтись по узлам данной группы. *@
-        <div>
+        <div id="@GRP_NODES_CONT_ID_PREFIX@rcvrIdFld.value@groupIdFld.value">
           @defining( groupFld(NODES_FN) ) { nodesFld =>
             @for( nodeI <- nodesFld.indexes ) {
             @defining( nodesFld(s"[$nodeI]") ) { nodeFld =>
@@ -42,7 +42,7 @@
 
               @for( nodeInfo <- nodeIdFld.value.flatMap( args.nodeInfos.get ) ) {
                 @* Всё готово к рендеру инпутов конкретного узла. *@
-                <div>
+                <div id="@NODE_GRP_CONT_ID_PREFIX@rcvrIdFld.value@groupIdFld.value@nodeIdFld.value">
                   @_inputHiddenTpl( nodeIdFld )
                   @_inputHiddenTpl( nodeFld(IS_CREATE_FN) )
 
@@ -69,7 +69,9 @@
       </div>
     }
     }
+    }
 
   }
 
 </div>
+}

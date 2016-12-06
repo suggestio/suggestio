@@ -110,6 +110,8 @@
   @* jsdeps изначально был нужен только для страниц с картами. Но он тут в надежде, что jquery сюда же потом переедет. *@
   <script src="@asset("lk-sjs-jsdeps.js")"></script>
 
+  <script src="@ctx.api.cdn.forCall( ctx.lkLangJs )"></script>
+
   @* Основной управляющий скрипт для личного кабинета. *@
   @_sjsScript("lk-sjs", withLauncherJs = true)
 

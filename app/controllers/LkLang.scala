@@ -1,7 +1,9 @@
 package controllers
 
 import com.google.inject.Inject
+import controllers.clk.LkJsMessages
 import io.suggest.common.fut.FutureUtil
+import io.suggest.model.mproj.MProjectInfo
 import io.suggest.model.n2.node.MNodes
 import models.MNode
 import models.mctx.Context
@@ -25,11 +27,13 @@ import scala.concurrent.Future
  */
 class LkLang @Inject() (
   mNodes                          : MNodes,
+  override val mProjectInfo       : MProjectInfo,
   override val mCommonDi          : ICommonDi
 )
-  extends SioController
-  with PlayMacroLogsImpl
+  extends SioControllerImpl
+  with LkJsMessages
   with MaybeAuth
+  with PlayMacroLogsImpl
 {
 
   import LOGGER._
@@ -53,13 +57,16 @@ class LkLang @Inject() (
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String], rs: Status)(implicit ctx: Context): Future[Result] = {
     val langCodes = langs.availables
       .sortBy(_.code)
+
     val englishLang = langCodes
       .filter(_.language == "en")
       .sortBy(_.country == "US")
       .headOption
       .getOrElse { Lang.defaultLang }
+
     val english = ctx.messages.copy(lang = englishLang)
     val nodeOpt = None    // TODO Нужно собственную ноду получать из параметра и проверять админские права.
+
     val html = langChooserTpl(
       english = english,
       lf      = langForm,
@@ -68,6 +75,7 @@ class LkLang @Inject() (
       nodeOpt = nodeOpt,
       rr      = r
     )(ctx)
+
     rs(html)
   }
 
@@ -113,8 +121,8 @@ class LkLang @Inject() (
         }
 
         // Залоггировать ошибки.
-        saveUserLangFut onFailure {
-          case ex: Throwable  =>  error("Failed to save lang for mperson", ex)
+        saveUserLangFut.onFailure { case ex: Throwable =>
+          error("Failed to save lang for mperson", ex)
         }
 
         // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.

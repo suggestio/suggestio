@@ -10,13 +10,19 @@ object QuickAdvPeriods extends EnumMaybeWithName with QuickAdvPeriodsT {
 
   /**
    * Класс элемента этого enum'а.
-   * @param isoPeriod Строка iso-периода. Заодно является названием элемента. Заглавные буквы и цифры.
+   * @param strId id периода.
    */
-  protected class Val(override val isoPeriod: String)
-    extends super.Val(isoPeriod)
+  protected class Val(override val strId: String)
+    extends super.Val(strId)
     with super.ValT
   {
+    /**  Строка iso-периода. Заодно является названием элемента. Заглавные буквы и цифры.
+      *  @see ISO 3231
+      */
+    def isoPeriod: String = strId
+
     def toPeriod = new Period(isoPeriod)
+
   }
 
   override type T = Val
@@ -25,8 +31,6 @@ object QuickAdvPeriods extends EnumMaybeWithName with QuickAdvPeriodsT {
   override val P1W: T = new Val(P_1WEEK)
   override val P1M: T = new Val(P_1MONTH)
 
-
-  def default = P3D
 
   def ordered: Iterable[T] = {
     valuesT

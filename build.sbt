@@ -79,6 +79,8 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
+  // Поддержка JsMessages для client-side локализации сообщений
+  "org.julienrf" %% "play-jsmessages" % "2.0.0",
   // Parsers
   "org.apache.tika" % "tika-core" % tikaVsn,
   "org.apache.tika" % "tika-parsers" % tikaVsn

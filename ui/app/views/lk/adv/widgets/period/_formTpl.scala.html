@@ -24,9 +24,7 @@
 
     @lkProp( messages("Advertising.period") ) {
       <div class="input __size-S" >
-        <select id="@PERIOD_SELECT_ID"
-                data-interval="true"
-                name="@currPeriod.name">
+        <select id="@PERIOD_SELECT_ID" name="@currPeriod.name">
           @advPeriodsAvail.map { v =>
             <option value="@v"
                     @if( currPeriod.value.exists(_.equalsIgnoreCase(v)) ) {selected="selected"}>
@@ -39,13 +37,13 @@
 
     <div id="@DATES_CONT_ID"
          style="display: @if(currPeriod.value.contains(CUSTOM)) {block} else {none};">
-      @lkProp( messages("Date.start"), id = Some("advManagementDateStart") ) {
+      @lkProp( messages("Date.start") ) {
         @_inputWrapTpl("S") {
           @__inputDatePick("start", DATE_START_INPUT_ID)
         }
       }
 
-      @lkProp(messages("Date.end"), id = Some("advManagementDateEnd")) {
+      @lkProp( messages("Date.end") ) {
         @_inputWrapTpl("S") {
           @__inputDatePick("end", DATE_END_INPUT_ID)
         }

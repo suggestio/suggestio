@@ -126,6 +126,11 @@ POST /support/geo/node/:adnId           @controllers.MarketLkSupport.askGeo4Node
 GET  /lk/events/node/:adnId             @controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
 POST /lk/events/delete/:evtId           @controllers.LkEvents.nodeEventDelete(evtId)
 
+## Языки и локализация
+GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
+POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
+GET  /lk/:lang/:hash/messages.js        @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
+
 GET  /img/crop/:imgId                   @controllers.Img.imgCropForm(imgId, width:Int, height: Int)
 POST /img/crop                          @controllers.Img.imgCropSubmit
 
@@ -316,10 +321,6 @@ GET  /id/via/:provider			        @controllers.Ident.idViaProvider(provider: mext
 POST /id/via/:provider                  @controllers.Ident.idViaProviderByPost(provider: mext.ILoginProvider, r: Option[String] ?= None)
 GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
 POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
-
-## Языки и локализация
-GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
-POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
 
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession

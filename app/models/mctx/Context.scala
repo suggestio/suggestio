@@ -7,6 +7,7 @@ import _root_.models.im.DevScreen
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.model.mproj.MProjectInfo
 import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
 import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
@@ -261,6 +262,15 @@ trait Context {
   /** Кастомные данные в контексте. */
   def data: CtxData
 
+  /** Генератор ссылки на ассет lk-messages.js, который содержит локализованные сообщения для client-side i18n
+    * и кэшируется на клиенте. */
+  def lkLangJs: Call = {
+    routes.LkLang.lkMessagesJs(
+      lang = messages.lang.code.toLowerCase,
+      hash = api.mProjectInfo.PROJECT_CODE_LAST_MODIFIED.hashCode
+    )
+  }
+
 }
 
 
@@ -274,6 +284,7 @@ class ContextApi @Inject() (
   val dynImgUtil          : DynImgUtil,
   val n2NodesUtil         : N2NodesUtil,
   val mSuperUsers         : MSuperUsers,
+  val mProjectInfo        : MProjectInfo,
   override implicit val current: Application
 )
   extends ICurrentAppHelpers
