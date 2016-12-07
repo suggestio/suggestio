@@ -5,7 +5,7 @@ import models.mtag.{MTagsAddFormBinded, MTagBinded, TagsEditForm_t}
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
 import util.FormUtil
-import io.suggest.common.tags.edit.TagsEditConstants._
+import io.suggest.common.tags.edit.TagsEditConstants._, Constraints._
 
 /**
   * Suggest.io
@@ -18,15 +18,6 @@ class TagsEditFormUtil {
 
   // TODO Оставлено для DI-реализации FormUtil. Может однажды руки дойдут наконец.
   private def formUtil = FormUtil
-
-  /** Максимальная символьная длина одного тега. */
-  def TAG_LEN_MAX = 40
-
-  /** Минимальная символьная длина одного тега. */
-  def TAG_LEN_MIN = 1
-
-  /** Сколько тегов юзер может добавить за один запрос максимум. */
-  def TAGS_PER_ADD_MAX = 20
 
   /** причёсывание имени тега. */
   private def _tagNamePrepare(raw: String): String = {

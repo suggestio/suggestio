@@ -54,11 +54,21 @@ class JsMessagesUtil @Inject() (
     )
   }
 
+  /** Коды ошибок форм. */
+  private def FORM_ERRORS: TraversableOnce[String] = {
+    Iterator(
+      "error.maxLength",
+      "error.minLength",
+      "error.required"
+    )
+  }
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
       ADV_DATES_PERIOD_MSGS,
-      TAGS_EDITOR_MSGS
+      TAGS_EDITOR_MSGS,
+      FORM_ERRORS
     )
       .flatten
       .toSet
