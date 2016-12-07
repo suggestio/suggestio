@@ -27,8 +27,14 @@ object Css {
 
     object Adv {
       def FORM_PREFIX = "adv-management"
+      def FORM_OUTER_DIV = FORM_PREFIX
       def RIGHT_BAR = FORM_PREFIX + "_right-bar"
       def LEFT_BAR  = FORM_PREFIX + "_left-bar"
+
+      object Geo {
+        def MAP_CONTAINER = "radmap-" + _CONTAINER
+      }
+
     }
 
   }
@@ -78,6 +84,7 @@ object Css {
     def INPUT_SHADOW  = INPUT + "_shadow"
     def INPUT_W       = INPUT + "-w"
     def JS_INPUT_W    = JS_PREFIX + INPUT_W
+    def ERROR         = "__error"
   }
 
 
