@@ -24,14 +24,11 @@ object SRow extends IApplyEl with OfEventTargetNode with OfDiv with OfMyCssClass
 
 import SRow.Dom_t
 
-trait SRowT extends AttrVmT {
+
+case class SRow( override val _underlying: Dom_t ) extends AttrVmT {
 
   override type T = Dom_t
 
   def tagFace = getAttribute( ATTR_TAG_FACE )
 
 }
-
-
-case class SRow( override val _underlying: Dom_t )
-  extends SRowT
