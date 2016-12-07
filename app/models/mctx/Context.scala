@@ -7,7 +7,6 @@ import _root_.models.im.DevScreen
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import io.suggest.model.mproj.MProjectInfo
 import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
 import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
@@ -20,6 +19,7 @@ import play.api.i18n.Messages
 import play.api.mvc.Call
 import play.api.routing.Router.Tags._
 import util.cdn.CdnUtil
+import util.i18n.JsMessagesUtil
 import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
@@ -267,7 +267,7 @@ trait Context {
   def lkLangJs: Call = {
     routes.LkLang.lkMessagesJs(
       lang = messages.lang.code.toLowerCase,
-      hash = api.mProjectInfo.PROJECT_CODE_LAST_MODIFIED.hashCode
+      hash = api.jsMessagesUtil.hash
     )
   }
 
@@ -284,7 +284,7 @@ class ContextApi @Inject() (
   val dynImgUtil          : DynImgUtil,
   val n2NodesUtil         : N2NodesUtil,
   val mSuperUsers         : MSuperUsers,
-  val mProjectInfo        : MProjectInfo,
+  val jsMessagesUtil      : JsMessagesUtil,
   override implicit val current: Application
 )
   extends ICurrentAppHelpers

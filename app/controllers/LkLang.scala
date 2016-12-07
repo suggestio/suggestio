@@ -3,7 +3,6 @@ package controllers
 import com.google.inject.Inject
 import controllers.clk.LkJsMessages
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.mproj.MProjectInfo
 import io.suggest.model.n2.node.MNodes
 import models.MNode
 import models.mctx.Context
@@ -14,6 +13,7 @@ import play.api.mvc.Result
 import util.FormUtil.uiLangM
 import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
+import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ import scala.concurrent.Future
  */
 class LkLang @Inject() (
   mNodes                          : MNodes,
-  override val mProjectInfo       : MProjectInfo,
+  override val jsMessagesUtil     : JsMessagesUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl

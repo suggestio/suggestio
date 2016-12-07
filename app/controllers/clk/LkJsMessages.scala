@@ -1,13 +1,10 @@
 package controllers.clk
 
 import controllers.SioController
-import io.suggest.dt.interval.PeriodsConstants
 import io.suggest.i18n.I18nConstants
-import io.suggest.model.mproj.IMProjectInfo
-import jsmessages.JsMessages
-import models.adv.form.QuickAdvPeriods
 import play.api.i18n.Messages
 import util.acl.MaybeAuth
+import util.i18n.IJsMessagesUtilDi
 
 /**
   * Suggest.io
@@ -19,11 +16,8 @@ import util.acl.MaybeAuth
 trait LkJsMessages
   extends SioController
   with MaybeAuth
-  with IMProjectInfo
+  with IJsMessagesUtilDi
 {
-
-  import mCommonDi.jsMessagesFactory
-
 
   /** Глобальное имя на клиенте, в которое будет залита функция локализации. */
   private def JS_NAME = "window." + I18nConstants.LK_MESSAGES_JSNAME
@@ -31,44 +25,6 @@ trait LkJsMessages
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
   private val CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 10
 
-
-  /** Локализация для периодов рекламного размещения. */
-  private def _advPeriodMsgs: TraversableOnce[String] = {
-    val static = Iterator(
-      "Date.choosing",
-      "Advertising.period",
-      "Your.ad.will.adv",
-      "from._date",
-      "till._date",
-      "Date.start",
-      "Date.end"
-    )
-
-    val advPeriodsIter: Iterator[String] = {
-      Seq(
-        QuickAdvPeriods.valuesT
-          .iterator
-          .map(_.messagesCode),
-        Seq( PeriodsConstants.MESSAGES_PREFIX + PeriodsConstants.CUSTOM )
-      )
-        .iterator
-        .flatten
-    }
-
-    Iterator(static, advPeriodsIter)
-      .flatten
-  }
-
-
-  /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
-  private val _lkJsMsgs: JsMessages = {
-    val msgs = Iterator(
-      _advPeriodMsgs
-    )
-      .flatten
-      .toSeq
-    jsMessagesFactory.subset( msgs: _* )
-  }
 
 
   /** 2016.dec.6: Из-за опытов с react.js возникла необходимость использования client-side messages.
@@ -79,15 +35,14 @@ trait LkJsMessages
     * @return js asset с локализованными мессагами внутрях.
     */
   def lkMessagesJs(langCode: String, hash: Int) = MaybeAuth().async { implicit request =>
-    val currHash = mProjectInfo.PROJECT_CODE_LAST_MODIFIED.hashCode()
 
     // Проверить хеш
-    if (hash == currHash) {
+    if (hash == jsMessagesUtil.hash) {
       val sessionMessages = implicitly[Messages]
 
       // Проверить langCode
       if (sessionMessages.lang.code equalsIgnoreCase langCode) {
-        val js = _lkJsMsgs.apply(Some(JS_NAME))(sessionMessages)
+        val js = jsMessagesUtil.lkJsMsgsFactory.apply(Some(JS_NAME))(sessionMessages)
         Ok(js)
           .withHeaders(CACHE_CONTROL -> ("public, max-age=" + CACHE_MAX_AGE_SECONDS))
 
