@@ -21,7 +21,7 @@ object QuickAdvPeriods extends QuickAdvPeriodsT with LightEnumeration {
   val Custom      : T = Val( PeriodsConstants.CUSTOM )
 
 
-  def values: List[T] = P3D :: P1W :: P1M :: Nil
+  def values: List[T] = P3D :: P1W :: P1M :: Custom :: Nil
 
   override def maybeWithName(n: String): Option[T] = {
     n match {
