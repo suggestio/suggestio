@@ -1,7 +1,7 @@
 package io.suggest.lk.r
 
 import io.suggest.css.Css
-import japgolly.scalajs.react.{ReactComponentB, ReactElement}
+import japgolly.scalajs.react.ReactComponentB
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.raw.{HTMLTableElement, HTMLTableRowElement}
 
@@ -25,25 +25,18 @@ import org.scalajs.dom.raw.{HTMLTableElement, HTMLTableRowElement}
   */
 object PropTable {
 
-  object Outer {
-
-    val component = ReactComponentB[Unit]("PropTable")
-      .stateless
-      .render_C { children =>
-        <.table(
-          ^.`class` := Css.PropTable.TABLE,
-          <.tbody(
-            children
-          )
+  val Outer = ReactComponentB[Unit]("PropTable")
+    .stateless
+    .render_C { children =>
+      <.table(
+        ^.`class` := Css.PropTable.TABLE,
+        <.tbody(
+          children
         )
-      }
-      .domType[HTMLTableElement]
-      .build
-
-    def apply(children: ReactElement*)     = component(children)
-    //def apply(children: Seq[ReactElement]) = component(children)
-
-  }
+      )
+    }
+    .domType[HTMLTableElement]
+    .build
 
 
   /** Один ряд таблицы. */
