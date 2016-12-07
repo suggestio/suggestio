@@ -1,7 +1,7 @@
 package io.suggest.lk.vm
 
 import io.suggest.i18n.I18nConstants
-import io.suggest.sjs.common.i18n.JsMessagesSingleLang
+import io.suggest.sjs.common.i18n.{JsMessager, JsMessagesSingleLang}
 import org.scalajs.dom
 import org.scalajs.dom.Window
 
@@ -24,11 +24,11 @@ trait LkMessagesWindow extends js.Object {
 }
 
 
-object LkMessagesWindow {
+object LkMessagesWindow extends JsMessager {
 
-  val lkJsMessages = apply().lkJsMessages
+  override val Messages = fromWindow().lkJsMessages
 
-  implicit def apply(window: Window = dom.window): LkMessagesWindow = {
+  implicit def fromWindow(window: Window = dom.window): LkMessagesWindow = {
     window.asInstanceOf[LkMessagesWindow]
   }
 
