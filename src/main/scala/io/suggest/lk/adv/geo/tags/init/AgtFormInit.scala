@@ -1,5 +1,6 @@
 package io.suggest.lk.adv.geo.tags.init
 
+import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsm
 import io.suggest.lk.adv.geo.tags.m.signal.{RadiusChanged, TagsChanged}
 import io.suggest.lk.adv.geo.tags.vm.AgtForm
@@ -12,6 +13,8 @@ import io.suggest.sjs.common.tags.search.ITagSearchArgs
 import io.suggest.sjs.leaflet.event.Event
 import io.suggest.sjs.leaflet.path.circle.Circle
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.scalajs.react.ReactDOM
+import org.scalajs.dom
 
 import scala.concurrent.Future
 
@@ -26,7 +29,7 @@ trait AgtFormInitRouter extends InitRouter {
   override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
     if (itg == MInitTargets.AdvGtagForm) {
       Future {
-        new AgtFormInit()
+        new AgtFormInit2()
           .init()
       }
     } else {
@@ -77,6 +80,23 @@ class AgtFormInit extends IInit {
       }
     }
     rmapInit.init()
+  }
+
+}
+
+
+/** Инициализатор формы георазмещения второго поколения на базе react.js. */
+class AgtFormInit2 extends IInit {
+
+  /** Запуск инициализации текущего модуля. */
+  override def init(): Unit = {
+    val rform = AdvGeoFormR.apply(
+      AdvGeoFormR.Props(
+        formActionUrl = "TODO",
+        method        = "TODO"
+      )
+    )
+    ReactDOM.render(rform, dom.document.getElementById("xynta"))
   }
 
 }
