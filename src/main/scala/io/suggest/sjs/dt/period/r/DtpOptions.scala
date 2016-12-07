@@ -43,7 +43,7 @@ object DtpOptions {
       <.div(
         ^.`class` := Css.Dt.OPTIONS,
         PropTable.Outer(
-          PropTable.Row.withKey("AP")(
+          PropTable.Row(
             // Пояснение по сути
             Messages( "Advertising.period" ),
 

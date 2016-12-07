@@ -13,7 +13,7 @@ object DateInput {
 
   case class Props(fn: String, value0: Option[String])
 
-  val component = ReactComponentB[Props]("DtpDateInput")
+  val component = ReactComponentB[Props]("DateInput")
     .initialState_P(_.value0.getOrElse(""))
     .renderPS { (_, props, state) =>
       PropTable.Outer(
