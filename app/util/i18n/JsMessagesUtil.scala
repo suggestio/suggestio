@@ -49,7 +49,8 @@ class JsMessagesUtil @Inject() (
     Iterator(
       "Add",
       "Tags.choosing",
-      "Add.tags"
+      "Add.tags",
+      "Delete"
     )
   }
 
