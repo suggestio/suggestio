@@ -13,8 +13,31 @@ import scala.scalajs.js
 @js.native
 sealed trait JsMessagesSingleLang extends js.Object {
 
-  def apply(code: String): String = js.native
+  /**
+    * Рендер одного сообщения.
+    *
+    * @param code Код по messages.
+    * @param args Аргументы рендера, если есть.
+    * @return Строка с результатом.
+    */
+  def apply(code: String, args: js.Any*): String = js.native
 
-  //val messages: js.Dictionary[String] = js.native
+  /**
+    * The JavaScript function stores the messages map in a messages property that is publicly accessible
+    * so you can update the messages without reloading the page.
+    */
+  val messages: js.Dictionary[String] = js.native
+
+}
+
+
+/** Поддержка apply() метода, поглащающего инстансы [[IMessage]]. */
+trait JsMessager {
+
+  def Messages: JsMessagesSingleLang
+
+  def apply(fe: IMessage): String = {
+    Messages(fe.message, fe.args)
+  }
 
 }
