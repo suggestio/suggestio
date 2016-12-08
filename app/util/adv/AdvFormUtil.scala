@@ -26,7 +26,7 @@ class AdvFormUtil {
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
     Form(
-      Su.ADV_FOR_FREE_NAME -> optional(boolean)
+      Su.ADV_FOR_FREE_FN -> optional(boolean)
     )
   }
 
