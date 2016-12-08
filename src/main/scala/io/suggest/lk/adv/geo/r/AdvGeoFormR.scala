@@ -1,11 +1,18 @@
 package io.suggest.lk.adv.geo.r
 
+import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
+import io.suggest.lk.adv.m.IAdv4FreeProps
+import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.r.TagsEditR
 import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import react.leaflet.lmap.LMapR
+import react.leaflet.popup.PopupR
+import io.suggest.sjs.leaflet.L
+import react.leaflet.layer.TileLayerR
 
 /**
   * Suggest.io
@@ -22,8 +29,9 @@ object AdvGeoFormR {
 
   /** Модель пропертисов, приходящая свыше из инициализатора. */
   case class Props(
-    formActionUrl: String,
-    method       : String = "POST"
+    formActionUrl   : String,
+    adv4free        : Option[IAdv4FreeProps],
+    method          : String = "POST"
   )
 
   /** Модель состояния. */
@@ -42,6 +50,10 @@ object AdvGeoFormR {
       println("datePeriodChanged()")
     }
 
+    def adv4freeChanged(): Unit = {
+      println("adv4freeChanged()")
+    }
+
     /** Рендер всея формы. */
     def render(props: Props) = {
       <.div(
@@ -51,6 +63,15 @@ object AdvGeoFormR {
         <.form(
           ^.method := props.method,
           ^.action := props.formActionUrl,
+
+          for (adv4free <- props.adv4free) yield {
+            Adv4FreeR(
+              Adv4FreeR.Props(
+                onChange = adv4freeChanged,
+                config   = adv4free
+              )
+            )
+          },
 
           // Верхняя половина, левая колонка:
           <.div(
@@ -83,9 +104,28 @@ object AdvGeoFormR {
         // Тут немного пустоты нужно...
         <.br,
 
-        <.div(
-          ^.`class` := Css.Lk.Adv.Geo.MAP_CONTAINER
-          // TODO Карта должна рендерится сюда.
+        // Карта должна рендерится сюда:
+        LMapR(
+          center    = L.latLng(20, 20),
+          zoom      = 10,
+          className = Css.Lk.Adv.Geo.MAP_CONTAINER
+        )(
+
+          // Рендерим основную плитку карты.
+          TileLayerR(
+            url           = LeafletConstants.Tiles.URL_OSM_DFLT,
+            detectRetina  = LeafletConstants.Defaults.DETECT_RETINA,
+            attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
+          )(),
+
+          PopupR( position = L.latLng(50, 50) )(
+            <.div(
+              <.h1(
+                "XYNTA TEST"
+              ),
+              <.br
+            )
+          )
         )
       )
 

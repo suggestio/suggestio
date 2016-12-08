@@ -20,6 +20,7 @@ libraryDependencies ++= Seq(
     Common.ORG      %%% "map-rad-sjs"                     % "0.0.0-SNAPSHOT",
     Common.ORG      %%% "lk-tags-edit-sjs"                % "0.0.0-SNAPSHOT",
     Common.ORG      %%% "scalajs-leaflet-markercluster"   % "0.0.0-SNAPSHOT",
+    Common.ORG      %%% "scalajs-leaflet-react"           % "0.0.0-SNAPSHOT",
     "com.github.japgolly.scalajs-react" %%% "core"        % Common.reactSjsVsn,
     "com.lihaoyi"   %%% "utest"                           % "0.3.1"  % "test"
 )

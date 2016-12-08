@@ -4,6 +4,7 @@ import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsm
 import io.suggest.lk.adv.geo.tags.m.signal.{RadiusChanged, TagsChanged}
 import io.suggest.lk.adv.geo.tags.vm.AgtForm
+import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.fsm.TagsEditFsm
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
@@ -91,9 +92,14 @@ class AgtFormInit2 extends IInit {
   /** Запуск инициализации текущего модуля. */
   override def init(): Unit = {
     val rform = AdvGeoFormR.apply(
+      // TODO Заполнять пропертисы с сервера.
       AdvGeoFormR.Props(
         formActionUrl = "TODO",
-        method        = "TODO"
+        method        = "TODO",
+        adv4free = Some( new IAdv4FreeProps {
+          override def title  = "Размещать нахаляву?"
+          override def fn     = "adv4ffreee"
+        })
       )
     )
     ReactDOM.render(rform, dom.document.getElementById("xynta"))
