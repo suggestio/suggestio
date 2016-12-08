@@ -23,7 +23,7 @@ object DateInput {
           InputCont(
             <.input(
               ^.`type` := "text",
-              ^.name   := (AdvConstants.PERIOD_FN + QsConstants.KEY_PARTS_DELIM_STR + AdvConstants.DtPeriod.DATES_INTERVAL_FN + QsConstants.KEY_PARTS_DELIM_STR + props.fn),
+              ^.name   := (AdvConstants.PERIOD_FN :: AdvConstants.DtPeriod.DATES_INTERVAL_FN :: props.fn :: Nil).mkString( QsConstants.KEY_PARTS_DELIM_STR ),
               ^.value  := state
             )
           )
