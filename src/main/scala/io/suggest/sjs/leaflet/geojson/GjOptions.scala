@@ -16,21 +16,28 @@ import scala.scalajs.js
   * @see [[http://leafletjs.com/examples/geojson.html]]
   */
 object GjOptions extends FromDict {
+
   override type T = GjOptions
+
 }
 
 
 @js.native
-sealed trait GjOptions extends js.Object {
+trait GjOptions extends js.Object {
 
-  def style(feature: GjFeature): GjFeatureStyle = js.native
+  def style(feature: GjFeature): GjFeatureStyle                 = js.native
+  var style: js.Function1[GjFeature, GjFeatureStyle]            = js.native
 
-  def pointToLayer(feature: GjFeature, latLng: LatLng): js.Any = js.native
+  def pointToLayer(feature: GjFeature, latLng: LatLng): ILayer  = js.native
+  var pointToLayer: js.Function2[GjFeature, LatLng, ILayer]     = js.native
 
-  def onEachFeature(feature: GjFeature, layer: ILayer): Unit = js.native
+  def onEachFeature(feature: GjFeature, layer: ILayer): Unit    = js.native
+  var onEachFeature: js.Function2[GjFeature, ILayer, Unit]      = js.native
 
-  def filter(feature: GjFeature, layer: ILayer): Boolean = js.native
+  def filter(feature: GjFeature, layer: ILayer): Boolean        = js.native
+  var filter: js.Function2[GjFeature, ILayer, Boolean]          = js.native
 
-  def coordsToLatLng(coords: js.Array[Double]): LatLng = js.native
+  def coordsToLatLng(coords: js.Array[Double]): LatLng          = js.native
+  var coordsToLatLng: js.Function1[js.Array[Double], LatLng]    = js.native
 
 }

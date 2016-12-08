@@ -17,7 +17,7 @@ object TlOptions extends FromDict {
 }
 
 @js.native
-class TlOptions extends js.Object {
+trait TlOptions extends js.Object {
 
   var minZoom: Double = js.native
   var maxZoom: Double = js.native
