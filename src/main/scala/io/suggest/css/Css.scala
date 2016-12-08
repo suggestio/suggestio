@@ -35,6 +35,10 @@ object Css {
         def MAP_CONTAINER = "radmap-" + _CONTAINER
       }
 
+      object Su {
+        def CONTAINER = "adv-su-inputs-wrap"
+      }
+
     }
 
   }
@@ -85,6 +89,10 @@ object Css {
     def INPUT_W       = INPUT + "-w"
     def JS_INPUT_W    = JS_PREFIX + INPUT_W
     def ERROR         = "__error"
+
+    def CHECKBOX          = "checkbox"
+    def STYLED_CHECKBOX   = "styled-" + CHECKBOX
+    def CHECKBOX_TITLE    = CHECKBOX + "_title"
   }
 
 

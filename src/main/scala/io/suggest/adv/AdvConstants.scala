@@ -19,7 +19,7 @@ object AdvConstants {
     def ADV_FOR_FREE_ID   = PREFIX + "fcb"
 
     /** Имя поля галочки бесплатного размещения, сабмиттящееся на сервер. */
-    def ADV_FOR_FREE_NAME = "freeAdv"
+    def ADV_FOR_FREE_FN   = "freeAdv"
 
   }
 
