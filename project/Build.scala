@@ -115,11 +115,11 @@ object Sio2Build extends Build {
   }
 
   /** Sjs-модуль для поддержки подсистемы размещения в гео-тегах. */
-  lazy val lkAdvGeoTagsSjs = {
+  lazy val lkAdvGeoSjs = {
     val name = "lk-adv-geo-tags-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs)
   }
 
   /** Модели биллинга второго поколения. */
@@ -164,6 +164,14 @@ object Sio2Build extends Build {
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
+  }
+
+  /** Самописное leaflet-react API. */
+  lazy val leafletReactSjs = {
+    val name = "scalajs-leaflet-react"
+    Project(id = name, base = file("scalajs/scalajs-leaflet-react"))
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(commonSjs, leafletSjs)
   }
 
   /** leaflet.markercluster.js scalajs API. */
@@ -235,9 +243,9 @@ object Sio2Build extends Build {
     val name = "lk-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
-      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdnMapSjs)
+      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs)
       // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
-      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoTagsSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs)
+      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs)
   }
 
   /** scala.js реализация системы мониторинга js-маячков. */
@@ -276,7 +284,7 @@ object Sio2Build extends Build {
       .settings(Common.settingsOrg: _*)
       .aggregate(
         common, logsMacro,
-        commonSjs, leafletSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
+        commonSjs, leafletSjs, leafletReactSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
         evothingsUtilSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,
         ipgeobase, stat,
