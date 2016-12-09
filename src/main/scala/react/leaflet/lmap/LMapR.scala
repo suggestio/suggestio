@@ -1,6 +1,7 @@
 package react.leaflet.lmap
 
-import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds, Zoom_t}
+import io.suggest.sjs.leaflet.event.LocationEvent
+import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds, MapOptions, Zoom_t}
 import org.scalajs.dom.raw.HTMLDivElement
 import react.leaflet.WrapperR
 
@@ -28,6 +29,7 @@ object LMapR {
     className : UndefOr[String]        = js.undefined,
     style     : UndefOr[String]        = js.undefined,
     id        : UndefOr[String]        = js.undefined,
+    onLocationFound: UndefOr[LocationEvent => _] = js.undefined,
     useFlyTo  : UndefOr[Boolean]       = js.undefined
   ): LMapR = {
     val p = js.Dynamic.literal().asInstanceOf[LMapPropsR]
@@ -41,6 +43,7 @@ object LMapR {
     className.foreach( p.className = _ )
     style.foreach( p.style = _ )
     id.foreach( p.id = _ )
+    onLocationFound.foreach(p.onlocationfound = _)
     useFlyTo.foreach( p.useFlyTo = _ )
 
     LMapR( p )
@@ -61,18 +64,20 @@ case class LMapR(
 
 
 @js.native
-trait LMapPropsR extends js.Object {
+trait LMapPropsR extends MapOptions {
 
-  var center          : UndefOr[LatLng]         = js.native
-  var zoom            : UndefOr[Zoom_t]         = js.native
-  var animate         : UndefOr[Boolean]        = js.native
-  var bounds          : UndefOr[LatLngBounds]   = js.native
-  var boundsUndefOrs  : UndefOr[js.Object]      = js.native
-  var maxZoom         : UndefOr[Zoom_t]         = js.native
-  var minZoom         : UndefOr[Zoom_t]         = js.native
-  var className       : UndefOr[String]         = js.native
-  var style           : UndefOr[String]         = js.native
-  var id              : UndefOr[String]         = js.native
-  var useFlyTo        : UndefOr[Boolean]        = js.native
+  var animate         : Boolean        = js.native
+  var bounds          : LatLngBounds   = js.native
+  var boundsUndefOrs  : js.Object      = js.native
+  var className       : String         = js.native
+  var style           : String         = js.native
+  var id              : String         = js.native
+  var useFlyTo        : Boolean        = js.native
+
+  /**
+    * Optional reaction about detected location (L.control.locate).
+    * Handled automatically inside MapComponent.bindLeafletEvents().
+    */
+  var onlocationfound: js.Function1[LocationEvent,_] = js.native
 
 }

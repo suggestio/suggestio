@@ -1,6 +1,6 @@
 package react.leaflet.lmap
 
-import japgolly.scalajs.react.{JsComponentType, ReactElement}
+import japgolly.scalajs.react.JsComponentType
 import org.scalajs.dom.raw.HTMLElement
 import react.leaflet.Context
 
@@ -22,7 +22,9 @@ class MapComponentR[Props <: js.Any](
   extends JsComponentType[Props, js.Object, HTMLElement]
 {
 
-  protected var leafletElement: js.Object = js.native
+  type El_t <: js.Object
+
+  protected var leafletElement: El_t = js.native
 
   def componentWillMount(): Unit = js.native
 
@@ -33,14 +35,12 @@ class MapComponentR[Props <: js.Any](
 
   def componentWillUnmount(): Unit = js.native
 
-  def componentDidUnmount(): Unit = js.native
-
 
   protected var _leafletEvents: js.Dictionary[js.Function] = js.native
 
   protected def extractLeafletEvents(props: Props): js.Dictionary[js.Function] = js.native
 
-  protected def bindLeafletEvents(next: js.Object = js.native, prev: js.Object = js.native): js.Object = js.native
+  protected def bindLeafletEvents(next: js.Dictionary[js.Function] = js.native, prev: js.Dictionary[js.Function] = js.native): js.Object = js.native
 
   def fireLeafletEvent(etype: String, data: js.Any = js.native): Unit = js.native
 

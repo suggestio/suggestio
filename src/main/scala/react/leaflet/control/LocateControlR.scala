@@ -1,15 +1,11 @@
 package react.leaflet.control
 
 import io.suggest.sjs.leaflet.Leaflet
-import io.suggest.sjs.leaflet.control.locate.LocateOptions
-import io.suggest.sjs.leaflet.event.LocationEvent
-import japgolly.scalajs.react.ReactElement
+import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
 import org.scalajs.dom.raw.HTMLElement
-import react.leaflet.lmap.MapComponentR
 import react.leaflet.{Context, Wrapper0R}
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
@@ -23,22 +19,18 @@ object LocateControlR {
 
   // Костыли для js static fields inheritance, которого нет в скале, но от них теперь зависит react:
   // see https://groups.google.com/d/msg/scala-js/v3gue_-Tms4/3M5cOSbACQAJ
-  def jsConstructor = js.constructorOf[LocateControl]
+  def jsConstructor = js.constructorOf[LocateControlC]
   jsConstructor.contextTypes = MapControlR.contextTypes
 
-  def apply(
-           onLocationFound: UndefOr[LocationEvent => _] = js.undefined
-           ): LocateControlR = {
-    val p = js.Dynamic.literal().asInstanceOf[LocateControlPropsR]
-    onLocationFound.foreach(p.onlocationfound = _)
-
+  def apply(): LocateControlR = {
+    val p = js.Dynamic.literal.asInstanceOf[LocateControlPropsR]
     LocateControlR(p)
   }
 
 }
 
 
-/** Scala.js-враппер для js-класса [[LocateControl]]. */
+/** Scala.js-враппер для js-класса [[LocateControlC]]. */
 case class LocateControlR(
   override val props: LocateControlPropsR
 )
@@ -50,35 +42,20 @@ case class LocateControlR(
 
 /** Рабочий (благодаря jsConstructor) прототип фасада ES6-класса LocateControl. */
 @ScalaJSDefined
-sealed class LocateControl(props: LocateOptions, context: Context)
-  extends MapComponentR[LocateOptions](props, context)
+sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
+  extends MapControlR[LocateOptions](_props, _ctx)
 {
+
+  override type El_t = LocateControl
 
   override def componentWillMount(): Unit = {
     leafletElement = Leaflet.control.locate( props )
-    super.componentWillMount()
   }
-
-  override def componentDidMount () {
-    super.componentDidMount()
-    // TODO Нужно объеденить логику MapComponent и MapСontrol! Для LocateControl нужно сразу обе деятельности.
-    // TODO leafletElement
-    //  .asInstanceOf[LocateControl]
-    //  .addTo(context.map)
-  }
-
-  def render(): ReactElement = null
 
 }
 
 
 @js.native
 trait LocateControlPropsR extends LocateOptions {
-
-  /**
-    * Optional reaction about freshly detected location.
-    * Handled automatically inside MapComponent.bindLeafletEvents().
-    */
-  var onlocationfound: js.Function1[LocationEvent,_] = js.native
 
 }

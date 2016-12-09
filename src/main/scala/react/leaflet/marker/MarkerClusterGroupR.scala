@@ -21,7 +21,7 @@ object MarkerClusterGroupR {
 
   // Костыли для js static fields inheritance, которого нет в скале, но от них теперь зависит react:
   // see https://groups.google.com/d/msg/scala-js/v3gue_-Tms4/3M5cOSbACQAJ
-  def jsConstructor = js.constructorOf[MarkerClusterGroup]
+  def jsConstructor = js.constructorOf[MarkerClusterGroupC]
   jsConstructor.contextTypes = MapLayerR.contextTypes
 
   def apply( markers: js.Array[Marker],
@@ -51,9 +51,11 @@ case class MarkerClusterGroupR(props: MarkerClusterGroupPropsR) extends Wrapper0
 }
 
 @ScalaJSDefined
-class MarkerClusterGroup(props: MarkerClusterGroupPropsR, context: Context)
+class MarkerClusterGroupC(props: MarkerClusterGroupPropsR, context: Context)
   extends MapLayerR[MarkerClusterGroupPropsR](props, context)
 {
+
+  override type El_t = MarkerClusterGroup
 
   override def componentWillMount(): Unit = {
     val mcg = Leaflet.markerClusterGroup(props)
