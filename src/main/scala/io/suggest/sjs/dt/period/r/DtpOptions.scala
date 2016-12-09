@@ -28,7 +28,8 @@ object DtpOptions {
 
     /** Реакция на смену значения в селекте периода размещения. */
     def onQapChange(e: ReactEventI): Callback = {
-      QuickAdvPeriods.maybeWithName( e.target.value )
+      val v = e.target.value
+      QuickAdvPeriods.maybeWithName( v )
         .fold(Callback.empty) { qap2 =>
           for {
             _     <- $.modState { _.copy(qap = qap2) }

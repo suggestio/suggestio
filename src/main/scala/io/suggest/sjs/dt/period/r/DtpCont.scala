@@ -3,7 +3,7 @@ package io.suggest.sjs.dt.period.r
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.css.Css
-import japgolly.scalajs.react.{ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{ReactComponentB, ReactNode}
 
 /** Компонент внешнего контейнера виджета. */
 object DtpCont {
@@ -30,6 +30,6 @@ object DtpCont {
     }
     .build
 
-  def apply(children: ReactElement*) = component(children)
+  def apply(children: ReactNode*) = component(children: _*)
 
 }

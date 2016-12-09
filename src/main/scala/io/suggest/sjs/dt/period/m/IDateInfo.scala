@@ -20,8 +20,10 @@ trait IDateInfo {
 
 trait IDatesPeriodInfo {
 
+  /** Описание даты начала размещения. */
   def start: IDateInfo
 
+  /** Описание даты окончания размещения. */
   def end: IDateInfo
 
 }
