@@ -17,8 +17,8 @@ import scala.scalajs.js.annotation.JSName
 class LControl extends js.Object {
 
   /** For feature-detection. */
-  def locate: UndefOr[_] = js.native
+  var locate: UndefOr[_] = js.native
 
-  def locate(options: LocateOptions = js.native): LocateControl = js.native
+  def locate(options: UndefOr[LocateOptions] = js.native): LocateControl = js.native
 
 }

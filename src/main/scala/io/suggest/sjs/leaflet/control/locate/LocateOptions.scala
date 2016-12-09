@@ -17,7 +17,7 @@ object LocateOptions extends FromDict {
 }
 
 @js.native
-class LocateOptions extends ControlOptions {
+trait LocateOptions extends ControlOptions {
 
   //var layer: new L.LayerGroup(),  // use your own layer for the location marker
 
