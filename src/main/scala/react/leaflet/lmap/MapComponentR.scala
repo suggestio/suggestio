@@ -26,8 +26,6 @@ class MapComponentR[Props <: js.Any](
 
   def componentWillMount(): Unit = js.native
 
-  def render(): ReactElement = js.native    // returns null by default.
-
   def componentDidMount(): Unit = js.native
 
 
@@ -36,6 +34,18 @@ class MapComponentR[Props <: js.Any](
   def componentWillUnmount(): Unit = js.native
 
   def componentDidUnmount(): Unit = js.native
+
+
+  protected var _leafletEvents: js.Dictionary[js.Function] = js.native
+
+  protected def extractLeafletEvents(props: Props): js.Dictionary[js.Function] = js.native
+
+  protected def bindLeafletEvents(next: js.Object = js.native, prev: js.Object = js.native): js.Object = js.native
+
+  def fireLeafletEvent(etype: String, data: js.Any = js.native): Unit = js.native
+
+  /** @return ~Props with or without 'pane' field. So it can be safely casted to Props type. */
+  def getOptions(props: Props): js.Dictionary[js.Any] = js.native
 
 }
 

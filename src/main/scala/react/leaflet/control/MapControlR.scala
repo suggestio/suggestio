@@ -1,6 +1,7 @@
 package react.leaflet.control
 
 import io.suggest.sjs.leaflet.control.ControlOptions
+import japgolly.scalajs.react.ReactElement
 import react.leaflet.Context
 import react.leaflet.lmap.MapComponentR
 
@@ -26,5 +27,9 @@ object MapControlR extends js.Object {
 @js.native
 @JSName("ReactLeaflet.MapControl")
 class MapControlR[Props <: ControlOptions](props: Props, context: Context)
-  extends MapComponentR[Props](props, context)
+  extends MapComponentR[Props](props, context) {
+
+  def render(): ReactElement = js.native    // returns null by default.
+
+}
 
