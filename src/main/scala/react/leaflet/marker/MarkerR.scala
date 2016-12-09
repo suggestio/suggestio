@@ -1,5 +1,7 @@
 package react.leaflet.marker
 
+import io.suggest.sjs.leaflet.map.LatLng
+import io.suggest.sjs.leaflet.marker.MarkerOptions
 import io.suggest.sjs.leaflet.marker.icon.Icon
 import org.scalajs.dom.raw.HTMLElement
 import react.leaflet.WrapperR
@@ -17,15 +19,32 @@ import scala.scalajs.js.UndefOr
 object MarkerR {
 
   def apply(
-    icon          : UndefOr[Icon] = js.undefined,
-    opacity       : UndefOr[Int]  = js.undefined,
-    zIndexOffset  : UndefOr[Int]  = js.undefined
+    position      : LatLng,
+    icon          : UndefOr[Icon]     = js.undefined,
+    clickable     : UndefOr[Boolean]  = js.undefined,
+    draggable     : UndefOr[Boolean]  = js.undefined,
+    keyboard      : UndefOr[Boolean]  = js.undefined,
+    title         : UndefOr[String]   = js.undefined,
+    alt           : UndefOr[String]   = js.undefined,
+    zIndexOffset  : UndefOr[Int]      = js.undefined,
+    opacity       : UndefOr[Int]      = js.undefined,
+    riseOnHover   : UndefOr[Boolean]  = js.undefined,
+    riseOffset    : UndefOr[Int]      = js.undefined
   ): MarkerR = {
 
     val p = js.Dynamic.literal().asInstanceOf[MarkerPropsR]
+
+    p.position = position
     icon.foreach( p.icon = _ )
-    opacity.foreach( p.opacity = _ )
+    clickable.foreach( p.clickable = _ )
+    draggable.foreach( p.draggable = _ )
+    keyboard.foreach( p.draggable = _ )
+    title.foreach( p.title = _ )
+    alt.foreach( p.alt = _ )
     zIndexOffset.foreach( p.zIndexOffset = _ )
+    opacity.foreach( p.opacity = _ )
+    riseOnHover.foreach( p.riseOnHover = _ )
+    riseOffset.foreach( p.riseOffset = _ )
 
     MarkerR(p)
   }
@@ -44,11 +63,9 @@ case class MarkerR(
 
 
 @js.native
-trait MarkerPropsR extends js.Object {
+trait MarkerPropsR extends MarkerOptions {
 
-  var icon          : UndefOr[Icon] = js.native
-  var opacity       : UndefOr[Int]  = js.native
-  var zIndexOffset  : UndefOr[Int]  = js.native
+  var position      : LatLng
 
 }
 

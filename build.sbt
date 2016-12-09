@@ -17,20 +17,14 @@ scalacOptions += "-feature"
 
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "common-sjs"                  % "0.0.0-SNAPSHOT",
-    Common.ORG      %%% "scalajs-leaflet"             % "0.1s-SNAPSHOT",
+    Common.ORG      %%% "common-sjs"                     % "0.0.0-SNAPSHOT",
+    Common.ORG      %%% "scalajs-leaflet"                % "0.1s-SNAPSHOT",
+    Common.ORG      %%% "scalajs-leaflet-markercluster"  % "0.0.0-SNAPSHOT",
     //"org.scala-js"  %%% "scalajs-dom"               % Common.sjsDomVsn,
     "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn
 )
 
 jsDependencies ++= Seq(
-  // react-leaflet.
-  // TODO Будет доступен 8 декабря 2016 после ~15-00
-  "org.webjars.bower" % "react-leaflet" % "1.0.1"
-    / "react-leaflet.js"
-    minified "react-leaflet.min.js",
-
-  // React JS itself (Note the filenames, adjust as needed, eg. to remove addons.)
   "org.webjars.bower" % "react" % Common.reactJsVsn
     /        "react-with-addons.js"
     minified "react-with-addons.min.js"
@@ -40,7 +34,21 @@ jsDependencies ++= Seq(
     /         "react-dom.js"
     minified  "react-dom.min.js"
     dependsOn "react-with-addons.js"
-    commonJSName "ReactDOM"
+    commonJSName "ReactDOM",
+
+  // Зависим от react-leaflet:
+  // Т.к. ванильный react-leaflet не умеет плагины и написан на ES6, неполучается заимплементить недостающие классы на scala.js
+  // https://github.com/scala-js/scala-js/issues/1902 - static нужно для описания типов в context.
+  //
+  // Поэтому используем патченные самосбор, вместо webjars.
+  //
+  "org.webjars.bower" % "react-leaflet" % "1.0.1"
+    / "react-leaflet.js"
+    minified "react-leaflet.min.js"
+  //
+  //ProvidedJS / "react-leaflet.js"
+  //  minified "react-leaflet.min.js"
+  //  dependsOn "react-with-addons.js"
 
   // А нужно ли?
   /*
