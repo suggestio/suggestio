@@ -171,7 +171,7 @@ object Sio2Build extends Build {
     val name = "scalajs-leaflet-react"
     Project(id = name, base = file("scalajs/scalajs-leaflet-react"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, leafletSjs)
+      .dependsOn(commonSjs, leafletSjs, leafletMarketClusterSjs)
   }
 
   /** leaflet.markercluster.js scalajs API. */
