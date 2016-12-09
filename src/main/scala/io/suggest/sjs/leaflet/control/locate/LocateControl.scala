@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.control.locate
 
-import io.suggest.sjs.leaflet.map.LMap
+import io.suggest.sjs.leaflet.control.IControl
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -13,9 +13,7 @@ import scala.scalajs.js.annotation.JSName
   */
 @js.native
 @JSName("L.Control.Locate")
-class LocateControl extends js.Object {
-
-  def addTo(lmap: LMap): LocateControl = js.native
+class LocateControl extends IControl {
 
   def start(): LocateControl = js.native
 
