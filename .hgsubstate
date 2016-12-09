@@ -6,7 +6,7 @@ bd23a126b8004781225e03574d8b7a8b623fb679 common-sjs
 2e6967b0d85c3cb5b071cff8d7eede72874a7740 lk-adv-common-sjs
 b24fcaa2e5c0727a841d6d64e64e72f2ecbe14ef lk-adv-direct-sjs
 9ebe065d8e1eae7dcc3eb9010847e276391ac7dc lk-adv-ext-sjs
-0909922a2c080c42375cab53eec0a75ab4b66c1d lk-adv-geo-tags-sjs
+726932fdf2003c4d333ca74033ee6767f0093aad lk-adv-geo-tags-sjs
 97af4127dd0edc1c190ccc6f618b0ce2c6609de0 lk-common-sjs
 7d3493078b3979ca904ad43a8160af82f544859c lk-dt-period-sjs
 7ae5b6bc8a42f166a93bb91d43cf7a0fa3ab9766 lk-sjs
@@ -26,7 +26,7 @@ ae9b0082c2a489a1ecc676b4d7c7607359966fd6 scalajs-mapboxgl
 62110e71c3c2e4e5ce4a6fb02835c2038153cd85 scalajs/scalajs-cordova-ble
 bd9621310f02777aa604712acbbdf52278ab0f02 scalajs/scalajs-evothings-util
 e88a7853869946b6a14d9186e790819307d2cd91 scalajs/scalajs-leaflet-markercluster
-a44668d6ba4a36a415fee4c5ef8484b801ea5560 scalajs/scalajs-leaflet-react
+c46c12cbeb27af6e19602565a6e38e0480229b86 scalajs/scalajs-leaflet-react
 fa5630b3a9ce1f3dfa9942df5ba06fbe5aa0ed70 scalajs/scalajs-mapbox
 2f76401ebf0bf960131cc2df5dc1cc47396a5ece securesocial
 c0c1b48b7d8fb7ab1d082e9ef615dfc25d34c4e3 stat
