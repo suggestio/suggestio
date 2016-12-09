@@ -80,8 +80,14 @@ object AdvGeoFormR {
       println("adv4freeChanged()")
     }
 
+    // TODO Сделать Callback, без runNow()
     def onLocationFound(): Unit = {
-      println("loc found")
+      val sCb = $.modState { s0 =>
+        s0.copy(
+          locationFound = true
+        )
+      }
+      sCb.runNow()
     }
 
     def onMainScreenChanged(e: ReactEventI): Callback = {
@@ -159,7 +165,13 @@ object AdvGeoFormR {
         LMapR(
           center    = L.latLng(20, 20),
           zoom      = 10,
-          className = Css.Lk.Adv.Geo.MAP_CONTAINER
+          className = Css.Lk.Adv.Geo.MAP_CONTAINER,
+          onLocationFound = if (state.locationFound)
+            js.undefined
+          else {
+            // TODO Нужен Callback тут вместо голой функции
+            UndefOr.any2undefOrA({ _: LocationEvent => onLocationFound() })
+          }
         )(
 
           // Рендерим основную плитку карты.
@@ -169,9 +181,7 @@ object AdvGeoFormR {
             attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
           )(),
 
-          LocateControlR(
-            onLocationFound = UndefOr.any2undefOrA({ _: LocationEvent => onLocationFound() })
-          )(),
+          LocateControlR()(),
 
           PopupR( position = L.latLng(50, 50) )(
             <.div(
