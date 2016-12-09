@@ -56,7 +56,7 @@ object Adv4FreeR {
           <.input(
             ^.`type`    := "checkbox",
             ^.name      := props.config.fn,
-            ^.value     := state.value,
+            ^.checked   := state.value,
             ^.onChange  ==> onChange
           ),
           <.span(
