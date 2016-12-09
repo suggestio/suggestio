@@ -6,7 +6,6 @@ import io.suggest.sjs.leaflet.geojson.GeoJson
 import io.suggest.sjs.leaflet.map.LatLng
 
 import scala.scalajs.js
-import scala.scalajs.js.WrappedDictionary
 
 /**
   * Suggest.io

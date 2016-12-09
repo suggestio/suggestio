@@ -1,17 +1,21 @@
 package io.suggest.lk.adv.geo.r
 
+import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.r.TagsEditR
+import io.suggest.lk.vm.LkMessagesWindow.Messages
+import io.suggest.sjs.dt.period.m.IDatesPeriodInfo
 import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.lmap.LMapR
 import react.leaflet.popup.PopupR
 import io.suggest.sjs.leaflet.L
+import react.leaflet.control.LocateControlR
 import react.leaflet.layer.TileLayerR
 
 /**
@@ -35,12 +39,15 @@ object AdvGeoFormR {
   )
 
   /** Модель состояния. */
-  /*case class State(
-
-  )*/
+  case class State(
+    onMainScreen : Boolean = true
+    //datesPeriodInfo : Option[IDatesPeriodInfo] = None
+  ) {
+    def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
+  }
 
   /** Класс для компонента формы. */
-  protected class Backend($: BackendScope[Props, _]) {
+  protected class Backend($: BackendScope[Props, State]) {
 
     def tagsChanged(): Unit = {
       println("tagsChanged()")
@@ -54,8 +61,16 @@ object AdvGeoFormR {
       println("adv4freeChanged()")
     }
 
+    def onMainScreenChanged(e: ReactEventI): Callback = {
+      val oms2 = e.target.checked
+      val sCb = $.modState {
+        _.withOnMainScreen( oms2 )
+      }
+      sCb >> Callback.TODO("onMainScreenChanged()")
+    }
+
     /** Рендер всея формы. */
-    def render(props: Props) = {
+    def render(props: Props, state: State) = {
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
@@ -77,8 +92,21 @@ object AdvGeoFormR {
           <.div(
             ^.`class` := Css.Lk.Adv.LEFT_BAR,
 
-            // TODO sudo-флаг для админов: Adv4FreeReact
             // TODO Галочка размещения на главном экране
+            <.label(
+              <.input(
+                ^.`type`    := "checkbox",
+                ^.name      := AdvGeoConstants.OnMainScreen.FN,
+                ^.checked   := state.onMainScreen,
+                ^.onChange ==> onMainScreenChanged
+              ),
+              <.span(
+                ^.`class` := Css.Input.STYLED_CHECKBOX
+              ),
+              Messages( "Adv.on.main.screen" )
+            ),
+            <.br,
+            <.br,
 
             // Система выбора тегов:
             TagsEditR(
@@ -91,17 +119,17 @@ object AdvGeoFormR {
 
           // Верхняя половина, правая колонка:
           DtpCont(
-            DtpOptions.component.withKey("opts")(
+            DtpOptions(
               DtpOptions.Props(
                 onChange = datePeriodChanged
               )
             )
-            // TODO DtpResult(???)
           )
 
         ),
 
         // Тут немного пустоты нужно...
+        <.br,
         <.br,
 
         // Карта должна рендерится сюда:
@@ -117,6 +145,8 @@ object AdvGeoFormR {
             detectRetina  = LeafletConstants.Defaults.DETECT_RETINA,
             attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
           )(),
+
+          LocateControlR()(),
 
           PopupR( position = L.latLng(50, 50) )(
             <.div(
@@ -134,7 +164,7 @@ object AdvGeoFormR {
   }
 
   protected val component = ReactComponentB[Props]("AdvGeoForm")
-    .stateless
+    .initialState( State() )
     .renderBackend[Backend]
     .build
 
