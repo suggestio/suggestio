@@ -17,7 +17,7 @@ class MarkerClusterGroup extends FeatureGroup with LEventTarget {
 
   def initialize(options: MarkerClusterGroupOptions): Unit = js.native
 
-  def addLayers(layers: js.Array[ILayer]): this.type = js.native
+  def addLayers[T <: ILayer](layers: js.Array[T]): this.type = js.native
 
   def refreshClusters(what: js.Any = js.native): this.type = js.native
 
