@@ -3,6 +3,7 @@ package io.suggest.xadv.ext.js.vk.c
 import java.net.URI
 
 import io.suggest.sjs.common.model.wsproto.MAnswerStatuses
+import io.suggest.sjs.common.view.VUtil
 import io.suggest.xadv.ext.js.runner.c.IActionContext
 import io.suggest.xadv.ext.js.runner.c.adp.AsyncInitAdp
 import io.suggest.xadv.ext.js.runner.m.ex._
@@ -11,8 +12,8 @@ import io.suggest.xadv.ext.js.vk.c.hi.Vk
 import io.suggest.xadv.ext.js.vk.m._
 import org.scalajs.dom
 import io.suggest.xadv.ext.js.vk.m.VkWindow._
-import scala.scalajs.concurrent.JSExecutionContext
 
+import scala.scalajs.concurrent.JSExecutionContext
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -59,7 +60,7 @@ class VkAdapter extends AsyncInitAdp {
   /** Добавить тег скрипта по особой уличной методике вконтакта. */
   override def addScriptTag(): Unit = {
     // Требуется создавать этот div. Пруф https://vk.com/dev/openapi
-    val div = dom.document.createElement("div")
+    val div = VUtil.newDiv()
     div.setAttribute("id", "vk_api_transport")
     div.appendChild(createScriptTag())
     appendScriptTag(div)
