@@ -6,10 +6,9 @@ import io.suggest.sjs.common.controller.IInit
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.view.CommonPage
-import org.scalajs.dom
+import io.suggest.sjs.common.view.{CommonPage, VUtil}
 import org.scalajs.dom.MessageEvent
-import org.scalajs.dom.raw.{HTMLDivElement, WebSocket}
+import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
 
 import scala.scalajs.js
@@ -75,19 +74,15 @@ trait AdFormWsInit extends IInit with ILog {
 
     // Выставить основной цвет фон.
     if (pal.colors.nonEmpty) {
-      val d = dom.document
-
       // Создаём контейнер, куда будут закидываться создаваемые теги.
-      val container = d.createElement("div")
-        .asInstanceOf[HTMLDivElement]
+      val container = VUtil.newDiv()
 
       // Отрендерить палитру.
       pal.colors
         .iterator
         .zipWithIndex
         .foreach { case (color, i) =>
-          val el = d.createElement("div")
-            .asInstanceOf[HTMLDivElement]
+          val el = VUtil.newDiv()
           el.setAttribute("class",      "color-block " + CSS_JS_PALETTE_COLOR)
           el.setAttribute("data-color", color)
           el.setAttribute("style",      "background-color: #" + color + ";")
