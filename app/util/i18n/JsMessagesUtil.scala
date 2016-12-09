@@ -54,6 +54,13 @@ class JsMessagesUtil @Inject() (
     )
   }
 
+  /** Локализация для client-side нужд формы георазмещения. */
+  private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
+    Iterator(
+      "Adv.on.main.screen"
+    )
+  }
+
   /** Коды ошибок форм. */
   private def FORM_ERRORS: TraversableOnce[String] = {
     Iterator(
@@ -63,11 +70,13 @@ class JsMessagesUtil @Inject() (
     )
   }
 
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
       ADV_DATES_PERIOD_MSGS,
       TAGS_EDITOR_MSGS,
+      ADV_GEO_FORM_MSGS,
       FORM_ERRORS
     )
       .flatten
