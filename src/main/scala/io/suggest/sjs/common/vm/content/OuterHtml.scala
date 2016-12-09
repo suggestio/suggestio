@@ -2,6 +2,7 @@ package io.suggest.sjs.common.vm.content
 
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom
 import org.scalajs.dom.Element
@@ -22,8 +23,7 @@ object OuterHtml extends Log {
 
   /** Константа-флаг, обозначающая умение (true) или беспомощьность(false) браузера делать outerHTML. */
   val HAS_OUTER_HTML: Boolean = {
-    val el = dom.document
-      .createElement("div")
+    val el = VUtil.newDiv()
     val stub = OuterHtmlStub( el )
     val hasOuter = !js.isUndefined( stub.outerHTML )
     if (!hasOuter)
@@ -47,7 +47,7 @@ trait OuterHtml extends IVm {
       _underlying.outerHTML
     } else {
       // Firefox < 11 или другой браузер, не умеющий читать outerHTML.
-      val div = dom.document.createElement("div")
+      val div = VUtil.newDiv()
       div.appendChild(_underlying)
       div.innerHTML
     }
