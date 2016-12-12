@@ -12,7 +12,7 @@ import io.suggest.lk.adv.geo.tags.m.signal.RcvrChanged
 trait Rcvrs extends AgtFormFsmStub {
 
   trait RcvrsStateT extends FsmEmptyReceiverState {
-    override def receiverPart: Receive = {
+    override def receiverPart: Receive = super.receiverPart.orElse {
       case rnc: RcvrChanged =>
         _handleRcvrChanged(rnc)
     }
