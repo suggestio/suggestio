@@ -1,7 +1,7 @@
 package io.suggest.maps.c
 
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
-import io.suggest.sjs.leaflet.map.{LMap, LatLng}
+import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.{Leaflet => L}
@@ -31,7 +31,7 @@ trait LeafletStaticMarkersUtil {
     o
   }
 
-  protected def _mkMarker(latLng: LatLng, icon: Icon): Marker = {
+  protected def _mkDraggableMarker(latLng: LatLng, icon: Icon): Marker = {
     val options = MarkerOptions.empty
     options.icon = icon
     options.draggable = true
