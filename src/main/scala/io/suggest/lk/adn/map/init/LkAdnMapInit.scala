@@ -36,7 +36,7 @@ class LkAdnMapInit
       }
 
     // Собираем и устанавливаем маркер центра круга:
-    val cm = _mkMarker( latLng, _pinMarkerIcon() )
+    val cm = _mkDraggableMarker( latLng, _pinMarkerIcon() )
       .addTo(lmap)
 
     // При определении текущего местоположения следует перемещать маркер в текущее местоположение юзера.
