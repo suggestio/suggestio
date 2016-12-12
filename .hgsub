@@ -34,6 +34,7 @@ scalajs/scalajs-mapbox		      = scalajs/scalajs-mapbox
 lk/adn/lk-adn-map-sjs		      = lk/adn/lk-adn-map-sjs
 maps/maps-sjs			      = maps/maps-sjs
 scalajs/scalajs-leaflet-react	      = scalajs/scalajs-leaflet-react
+scalajs/scalajs-react-common	      = scalajs/scalajs-react-common
 
 [subpaths]
 (https?://([^/@]*@)?kallithea\.cbca\.ru/sio/v2)/root/ = \1/sub/

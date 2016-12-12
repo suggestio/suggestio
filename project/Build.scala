@@ -34,6 +34,14 @@ object Sio2Build extends Build {
       )
   }
 
+  /** Расшаренная утиль для интеграции с react.js через scalajs-react. */
+  lazy val commonReactSjs = {
+    val name = "scalajs-react-common"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(commonSjs)
+  }
+
   /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из web21. */
   lazy val svgUtil = {
     val name = "svg-util"
@@ -87,7 +95,7 @@ object Sio2Build extends Build {
     val name = "lk-common-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs)
+      .dependsOn(commonSjs, commonReactSjs)
   }
 
   /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
@@ -95,7 +103,7 @@ object Sio2Build extends Build {
     val name = "lk-dt-period-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkCommonSjs, dateTimePickerSjs)
+      .dependsOn(lkCommonSjs, dateTimePickerSjs, commonReactSjs)
   }
 
   /** lk-adv-common sjs. */
@@ -103,7 +111,7 @@ object Sio2Build extends Build {
     val name = "lk-adv-common-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkCommonSjs, lkDtPeriodSjs)
+      .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs)
   }
 
   /** Поддержка формы прямого размещения на узлах. */
@@ -119,7 +127,7 @@ object Sio2Build extends Build {
     val name = "lk-adv-geo-tags-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs)
   }
 
   /** Модели биллинга второго поколения. */
@@ -171,7 +179,7 @@ object Sio2Build extends Build {
     val name = "scalajs-leaflet-react"
     Project(id = name, base = file("scalajs/scalajs-leaflet-react"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, leafletSjs, leafletMarketClusterSjs)
+      .dependsOn(commonSjs, leafletSjs, leafletMarketClusterSjs, commonReactSjs)
   }
 
   /** leaflet.markercluster.js scalajs API. */
@@ -179,7 +187,7 @@ object Sio2Build extends Build {
     val name = "scalajs-leaflet-markercluster"
     Project(id = name, base = file("scalajs/" + name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(leafletSjs)
+      .dependsOn(leafletSjs, commonReactSjs)
   }
 
   /** Поддержка MaxMind GeoIP2. */
@@ -284,7 +292,9 @@ object Sio2Build extends Build {
       .settings(Common.settingsOrg: _*)
       .aggregate(
         common, logsMacro,
-        commonSjs, leafletSjs, leafletReactSjs, mapBoxGlSjs, mapRadSjs, lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
+        commonSjs, commonReactSjs,
+        leafletSjs, leafletReactSjs, mapBoxGlSjs, mapRadSjs,
+        lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
         evothingsUtilSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,
         ipgeobase, stat,
