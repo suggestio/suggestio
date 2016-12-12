@@ -6,6 +6,7 @@ import io.suggest.sjs.common.geo.json.GjTypes
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
+import io.suggest.lk.adv.geo.tags.m.MarkerNodeId._
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -35,7 +36,9 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
       // Собираем параметры отображения маркера.
       val options = MarkerOptions.empty
       options.draggable = false
-      options.clickable = gjFeature.nodeId.isDefined
+
+      val nodeIdOpt = gjFeature.nodeId
+      options.clickable = nodeIdOpt.isDefined
 
       // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
       options.icon = gjFeature.icon.fold(_pinMarkerIcon()) { iconInfo =>
@@ -57,10 +60,17 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
       for (title <- gjFeature.title)
         options.title = title
 
-      Leaflet.marker(
+      val m = Leaflet.marker(
         latLng  = gjFeature.pointLatLng,
         options = options
       )
+
+      // monkey-patching id узла внутрь маркера.
+      for (nodeId <- nodeIdOpt) {
+        m.nodeId = nodeId
+      }
+
+      m
     }
 
     iter2.toJSArray

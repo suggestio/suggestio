@@ -4,7 +4,6 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.tags.m.MMapGjResp
-import io.suggest.lk.adv.geo.tags.vm.AdIdInp
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.adv.r.Adv4FreeR
@@ -15,19 +14,23 @@ import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.dt.period.m.IDatesPeriodInfo
 import io.suggest.sjs.dt.period.r._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.lmap.LMapR
 import react.leaflet.popup.PopupR
 import io.suggest.sjs.leaflet.L
 import io.suggest.sjs.leaflet.event.LocationEvent
-import io.suggest.sjs.leaflet.marker.Marker
+import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
+import io.suggest.lk.adv.geo.tags.m.MarkerNodeId
 import react.leaflet.control.LocateControlR
 import react.leaflet.layer.TileLayerR
+import react.leaflet.marker.MarkerClusterGroupR
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -40,7 +43,7 @@ import scala.scalajs.js.UndefOr
   * Десериализацией стартового состояния также занимается этот компонент.
   *
   */
-object AdvGeoFormR {
+object AdvGeoFormR extends Log {
 
   /** Модель пропертисов, приходящая свыше из инициализатора. */
   case class Props(
@@ -52,7 +55,7 @@ object AdvGeoFormR {
 
   /** Модель состояния.
     * @param rcvrMarkers Маркеры точек-ресиверов для карты ресиверов, полученные с сервера.
-    *                    null -- дефолтовое состояние. Почти сразу же заменяется на
+    *                    None -- дефолтовое состояние. Почти сразу же заменяется на
     *                    Left(Future[Resp]) -- Запущен XHR за списком маркеров.
     *                    Right([Markers]) -- массив маркеров, передаваемых в MarkerCluster при рендере.
     * @param locationFound false -- значит callback нужен для геолокации.
@@ -60,11 +63,12 @@ object AdvGeoFormR {
     */
   case class State(
     onMainScreen : Boolean = true,
-    rcvrMarkers  : Either[Future[_], js.Array[Marker]] = null,
+    rcvrMarkers  : Option[Either[Future[_], js.Array[Marker]]] = None,
     locationFound: Boolean = false
     //datesPeriodInfo : Option[IDatesPeriodInfo] = None
   ) {
     def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
+    def withRcvrMarkers(rm: Option[Either[Future[_], js.Array[Marker]]]) = copy(rcvrMarkers = rm)
   }
 
   /** Класс для компонента формы. */
@@ -83,7 +87,7 @@ object AdvGeoFormR {
     }
 
     // TODO Сделать Callback, без runNow()
-    def onLocationFound(): Unit = {
+    def onLocationFound(locEvent: LocationEvent): Unit = {
       val sCb = $.modState { s0 =>
         s0.copy(
           locationFound = true
@@ -92,6 +96,7 @@ object AdvGeoFormR {
       sCb.runNow()
     }
 
+    /** Реакция на изменение галочки onMainScreen. */
     def onMainScreenChanged(e: ReactEventI): Callback = {
       val oms2 = e.target.checked
       val sCb = $.modState {
@@ -99,6 +104,16 @@ object AdvGeoFormR {
       }
       sCb >> Callback.TODO("onMainScreenChanged()")
     }
+
+    /** Реакция на клик по маркеру. */
+    def onMarkerClicked(layerEvent: MarkerEvent): Unit = {
+      val marker = layerEvent.layer
+      // TODO Почему-то тут не срабатывает implicit convertion... Приходится явно заворачивать
+      val nodeId = MarkerNodeId(marker).nodeId
+      println( "marker clicked: " + nodeId )
+      // TODO Нужно тут запускать получение попапа с сервера, попутно центрируя карту по маркеру...
+    }
+
 
     /** Рендер всея формы. */
     def render(props: Props, state: State) = {
@@ -172,7 +187,7 @@ object AdvGeoFormR {
             js.undefined
           else {
             // TODO Нужен Callback тут вместо голой функции
-            UndefOr.any2undefOrA({ _: LocationEvent => onLocationFound() })
+            onLocationFound _
           }
         )(
 
@@ -183,7 +198,20 @@ object AdvGeoFormR {
             attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
           )(),
 
+          // Плагин для геолокации текущего юзера.
           LocateControlR()(),
+
+          // MarkerCluster для списка ресиверов, если таковой имеется...
+          state.rcvrMarkers
+            .flatMap(_.right.toOption)
+            .iterator
+            .map { markers =>
+              MarkerClusterGroupR(
+                markers = markers,
+                onMarkerClick = onMarkerClicked _
+              )()
+            }
+            .toSeq,
 
           PopupR( position = L.latLng(50, 50) )(
             <.div(
@@ -220,17 +248,30 @@ object AdvGeoFormR {
       */
     def componentDidMount: Callback = {
       $.modStateCB { s0 =>
-        if (s0.rcvrMarkers == null) {
+        if (s0.rcvrMarkers.isEmpty) {
           // Требуется запустить запрос маркеров с сервера
           for (fut <- _doMarkersRequest) yield {
-            s0.copy(
-              rcvrMarkers = Left(fut)
-            )
+            fut.onComplete {
+              case Success(markersArr) =>
+                // TODO Тут надо разрулить Callback-по умному как-то.
+                markersReady(markersArr).runNow()
+              case Failure(ex) =>
+                LOG.error( ErrorMsgs.LK_ADV_GEO_MAP_GJ_REQ_FAIL, ex )
+            }
+            s0.withRcvrMarkers( Some(Left(fut)) )
           }
         } else {
           // Не требуется модификация состояния, .
           CallbackTo(s0)
         }
+      }
+    }
+
+
+    /** Реакция на успешное завершение запроса со списком ресиверов. */
+    def markersReady(markersArr: js.Array[Marker]): Callback = {
+      $.modState { s0 =>
+        s0.withRcvrMarkers( Some(Right(markersArr)) )
       }
     }
 
