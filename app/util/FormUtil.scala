@@ -110,7 +110,7 @@ object FormUtil {
 
 
   /** Регэксп для парсинга uuid, закодированного в base64. */
-  val uuidB64Re = MEsUuId.charsAllowedRe.r
+  val uuidB64Re = (MEsUuId.charsAllowedRe + "+").r
 
   /** Конструктор для id-маппингов. */
   private def _esIdM(baseM: Mapping[String]): Mapping[String] = {
