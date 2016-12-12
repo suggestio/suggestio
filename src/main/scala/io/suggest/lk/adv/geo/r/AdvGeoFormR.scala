@@ -5,6 +5,7 @@ import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.tags.m.MMapGjResp
 import io.suggest.lk.adv.geo.tags.vm.AdIdInp
+import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.router.jsRoutes
@@ -43,6 +44,7 @@ object AdvGeoFormR {
 
   /** Модель пропертисов, приходящая свыше из инициализатора. */
   case class Props(
+    adId            : String,
     formActionUrl   : String,
     adv4free        : Option[IAdv4FreeProps],
     method          : String = "POST"
@@ -198,24 +200,16 @@ object AdvGeoFormR {
 
 
     /** Запуск запроса маркеров ресиверов для рендера на карте. */
-    def _doMarkersRequest(): Unit = {
-      for {
-        adIdInp <- AdIdInp.find()
-        adId    <- adIdInp.adId
-      } {
-        val route = jsRoutes.controllers.LkAdvGeo.advRcvrsGeoJson(adId)
+    def _doMarkersRequest: CallbackTo[Future[js.Array[Marker]]] = {
+      for (props <- $.props) yield {
+        val route = jsRoutes.controllers.LkAdvGeo.advRcvrsGeoJson( props.adId )
 
         // Надо запустить запрос на сервер для получения списка узлов.
-        val gjFut = Xhr.requestJson(route)
-          .map(MMapGjResp.apply)
-
-        for {
-          gj <- gjFut
-        } yield {
-          // TODO Отрендерить маркеры.
+        for (resp <- Xhr.requestJson(route)) yield {
+          val gj = MMapGjResp(resp)
+          LkAdvGeoFormUtil.geoJsonToClusterMarkers( gj.featuresIter )
         }
       }
-
     }
 
     /**
@@ -224,23 +218,29 @@ object AdvGeoFormR {
       *
       * @see [[http://stackoverflow.com/a/27139507]]
       */
-    def componentDidMount(): Callback = {
-      $.state >>= { state =>
-        if (state.rcvrMarkers == null) {
-          // Требуется запустить запрос маркеров
-          Callback.TODO("_doMarkersRequest()")
+    def componentDidMount: Callback = {
+      $.modStateCB { s0 =>
+        if (s0.rcvrMarkers == null) {
+          // Требуется запустить запрос маркеров с сервера
+          for (fut <- _doMarkersRequest) yield {
+            s0.copy(
+              rcvrMarkers = Left(fut)
+            )
+          }
         } else {
-          Callback.empty
+          // Не требуется модификация состояния, .
+          CallbackTo(s0)
         }
       }
     }
 
   }
 
+
   protected val component = ReactComponentB[Props]("AdvGeoForm")
     .initialState( State() )
     .renderBackend[Backend]
-    .componentDidMount( _.backend.componentDidMount() )
+    .componentDidMount( _.backend.componentDidMount )
     .build
 
   def apply(props: Props) = component(props)

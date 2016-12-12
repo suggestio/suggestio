@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.tags.init
 import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsm
 import io.suggest.lk.adv.geo.tags.m.signal.{RadiusChanged, TagsChanged}
-import io.suggest.lk.adv.geo.tags.vm.AgtForm
+import io.suggest.lk.adv.geo.tags.vm.{AdIdInp, AgtForm}
 import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.fsm.TagsEditFsm
@@ -91,9 +91,15 @@ class AgtFormInit2 extends IInit {
 
   /** Запуск инициализации текущего модуля. */
   override def init(): Unit = {
+
+    val adId = AdIdInp.find()
+      .flatMap( _.adId )
+      .get
+
     val rform = AdvGeoFormR.apply(
       // TODO Заполнять пропертисы с сервера.
       AdvGeoFormR.Props(
+        adId          = adId,
         formActionUrl = "TODO",
         method        = "TODO",
         adv4free = Some( new IAdv4FreeProps {
