@@ -1,9 +1,10 @@
 package react.leaflet.control
 
+import io.suggest.react.JsWrapper0R
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
 import org.scalajs.dom.raw.HTMLElement
-import react.leaflet.{Context, Wrapper0R}
+import react.leaflet.Context
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined
@@ -34,7 +35,7 @@ object LocateControlR {
 case class LocateControlR(
   override val props: LocateControlPropsR
 )
-  extends Wrapper0R[LocateOptions, HTMLElement]
+  extends JsWrapper0R[LocateOptions, HTMLElement]
 {
   override protected def _rawComponent = LocateControlR.jsConstructor
 }

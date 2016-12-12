@@ -1,8 +1,8 @@
 package react.leaflet.popup
 
+import io.suggest.react.JsWrapper1R
 import io.suggest.sjs.leaflet.map.LatLng
 import org.scalajs.dom.raw.HTMLElement
-import react.leaflet.Wrapper1R
 
 import scala.scalajs.js
 
@@ -26,7 +26,7 @@ object PopupR {
 case class PopupR(
   override val props: PopupPropsR
 )
-  extends Wrapper1R[PopupPropsR, HTMLElement]
+  extends JsWrapper1R[PopupPropsR, HTMLElement]
 {
   override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Popup
 }

@@ -1,10 +1,10 @@
 package react.leaflet.marker
 
+import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.MarkerOptions
 import io.suggest.sjs.leaflet.marker.icon.Icon
 import org.scalajs.dom.raw.HTMLElement
-import react.leaflet.WrapperR
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -55,7 +55,7 @@ object MarkerR {
 case class MarkerR(
   override val props: MarkerPropsR
 )
-  extends WrapperR[MarkerPropsR, HTMLElement] {
+  extends JsWrapperR[MarkerPropsR, HTMLElement] {
 
   override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Marker
 

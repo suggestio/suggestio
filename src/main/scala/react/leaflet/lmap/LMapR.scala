@@ -1,9 +1,9 @@
 package react.leaflet.lmap
 
+import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.event.LocationEvent
 import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds, MapOptions, Zoom_t}
 import org.scalajs.dom.raw.HTMLDivElement
-import react.leaflet.WrapperR
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -55,7 +55,7 @@ object LMapR {
 case class LMapR(
   override val props: LMapPropsR
 )
-  extends WrapperR[LMapPropsR, HTMLDivElement]
+  extends JsWrapperR[LMapPropsR, HTMLDivElement]
 {
 
   override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Map

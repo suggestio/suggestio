@@ -1,8 +1,8 @@
 package react.leaflet.circle
 
+import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.map.LatLng
 import org.scalajs.dom.Element
-import react.leaflet.WrapperR
 
 import scala.scalajs.js
 
@@ -29,7 +29,7 @@ object CircleR {
 case class CircleR(
   override val props: CirclePropsR
 )
-  extends WrapperR[CirclePropsR, Element]
+  extends JsWrapperR[CirclePropsR, Element]
 {
 
   override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Circle

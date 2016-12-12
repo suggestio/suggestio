@@ -1,8 +1,8 @@
 package react.leaflet.layer
 
+import io.suggest.react.JsWrapper0R
 import io.suggest.sjs.leaflet.tilelayer.TlOptions
 import japgolly.scalajs.react.TopNode
-import react.leaflet.Wrapper0R
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -41,7 +41,7 @@ object TileLayerR {
 case class TileLayerR(
   override val props: TileLayerPropsR
 )
-  extends Wrapper0R[TileLayerPropsR, TopNode]
+  extends JsWrapper0R[TileLayerPropsR, TopNode]
 {
   override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.TileLayer
 }

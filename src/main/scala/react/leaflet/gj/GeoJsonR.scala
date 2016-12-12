@@ -1,10 +1,10 @@
 package react.leaflet.gj
 
+import io.suggest.react.JsWrapperR
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.leaflet.geojson.{GjFeatureStyle, GjOptions}
-import io.suggest.sjs.leaflet.map.{ILayer, LatLng}
+import io.suggest.sjs.leaflet.map.{Layer, LatLng}
 import org.scalajs.dom.raw.HTMLElement
-import react.leaflet.WrapperR
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -20,10 +20,10 @@ object GeoJsonR {
   // TODO implement args from GjOptions.
   def apply(
              data           : js.Any,
-             pointToLayer   : UndefOr[(GjFeature, LatLng) => ILayer]  = js.undefined,
-             onEachFeature  : UndefOr[(GjFeature, ILayer) => Unit]    = js.undefined,
+             pointToLayer   : UndefOr[(GjFeature, LatLng) => Layer]  = js.undefined,
+             onEachFeature  : UndefOr[(GjFeature, Layer) => Unit]    = js.undefined,
              style          : UndefOr[GjFeature => GjFeatureStyle]    = js.undefined,
-             filter         : UndefOr[(GjFeature, ILayer) => Boolean] = js.undefined,
+             filter         : UndefOr[(GjFeature, Layer) => Boolean] = js.undefined,
              coordsToLatLng : UndefOr[js.Array[Double] => LatLng]     = js.undefined
            ): GeoJsonR = {
 
@@ -42,7 +42,7 @@ object GeoJsonR {
 }
 
 
-case class GeoJsonR(override val props: GeoJsonPropsR) extends WrapperR[GeoJsonPropsR, HTMLElement] {
+case class GeoJsonR(override val props: GeoJsonPropsR) extends JsWrapperR[GeoJsonPropsR, HTMLElement] {
   override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.GeoJSON
 }
 
