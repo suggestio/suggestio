@@ -1,6 +1,6 @@
 package io.suggest.sjs.leaflet.layer.group
 
-import io.suggest.sjs.leaflet.map.{ILayer, LMap}
+import io.suggest.sjs.leaflet.map.{Layer, LMap}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -13,25 +13,25 @@ import scala.scalajs.js.annotation.JSName
  */
 @js.native
 @JSName("L.LayerGroup")
-class LayerGroup extends ILayer {
+class LayerGroup extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native
 
-  def addLayer(layer: ILayer): this.type = js.native
+  def addLayer(layer: Layer): this.type = js.native
 
-  def removeLayer(layer: ILayer): this.type = js.native
+  def removeLayer(layer: Layer): this.type = js.native
 
   def removeLayer(id: String): this.type = js.native
 
-  def hasLayer(layer: ILayer): Boolean = js.native
+  def hasLayer(layer: Layer): Boolean = js.native
 
-  def getLayer(id: String): ILayer = js.native
+  def getLayer(id: String): Layer = js.native
 
-  def getLayers(): js.Array[ILayer] = js.native
+  def getLayers(): js.Array[Layer] = js.native
 
   def clearLayers(): this.type = js.native
 
-  def eachLayer(f: js.Function1[ILayer, _], context: js.Any = js.native): this.type = js.native
+  def eachLayer(f: js.Function1[Layer, _], context: js.Any = js.native): this.type = js.native
 
   def toGeoJSON(): js.Object = js.native
 

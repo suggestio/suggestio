@@ -64,10 +64,10 @@ class LMap extends LEventTarget {
 
   // Methods for Layers and Controls
   // http://leafletjs.com/reference.html#map-stuff-methods
-  def addLayer(layer: ILayer): this.type = js.native
-  def removeLayer(layer: ILayer): this.type = js.native
-  def hasLayer(layer: ILayer): Boolean = js.native
-  def eachLayer(f: js.Function1[ILayer,_], ctx: js.Object = js.native): this.type = js.native
+  def addLayer(layer: Layer): this.type = js.native
+  def removeLayer(layer: Layer): this.type = js.native
+  def hasLayer(layer: Layer): Boolean = js.native
+  def eachLayer(f: js.Function1[Layer,_], ctx: js.Object = js.native): this.type = js.native
 
   def openPopup(popup: Popup): this.type = js.native
   def openPopup(html: String | HTMLElement, latLng: LatLng, options: PopupOptions = js.native): this.type = js.native

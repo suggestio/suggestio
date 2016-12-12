@@ -61,13 +61,13 @@ object Leaflet extends js.Object {
   def circleMarker(latLng: LatLng, options: PathOptionsRadius = js.native): CircleMarker = js.native
 
   /** Instantiate a popup. */
-  def popup(options: PopupOptions = js.native, source: ILayer = js.native): Popup = js.native
+  def popup(options: PopupOptions = js.native, source: Layer = js.native): Popup = js.native
 
   /** Instantiate new layer group. */
-  def layerGroup(layers: js.Array[ILayer] = js.native): LayerGroup = js.native
+  def layerGroup(layers: js.Array[Layer] = js.native): LayerGroup = js.native
 
   /** Instantiate new feature group. */
-  def featureGroup(layers: js.Array[ILayer] = js.native): FeatureGroup = js.native
+  def featureGroup(layers: js.Array[Layer] = js.native): FeatureGroup = js.native
 
   /** Instantiate GeoJSON layers builder. */
   def geoJson(data: js.Any = js.native, options: GjOptions = js.native): GeoJson = js.native

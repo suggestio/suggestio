@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet.geojson
 
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.leaflet.map.{ILayer, LMap, LatLng, LatLngBounds}
+import io.suggest.sjs.leaflet.map.{Layer, LMap, LatLng, LatLngBounds}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -17,7 +17,7 @@ import scala.scalajs.js.annotation.JSName
 object GeoJson extends js.Object {
 
   def geometryToLayer(feature: GjFeature,
-                      pointToLayer: js.Function2[GjFeature, LatLng, js.Object] = js.native): ILayer = js.native
+                      pointToLayer: js.Function2[GjFeature, LatLng, js.Object] = js.native): Layer = js.native
 
   def coordsToLatLng(coords: js.Array[Double], reverse: Boolean = js.native): LatLng = js.native
 
@@ -29,7 +29,7 @@ object GeoJson extends js.Object {
 
 
 @js.native
-sealed class GeoJson extends ILayer {
+sealed class GeoJson extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native
 

@@ -14,7 +14,7 @@ class MapOptions extends js.Object {
 
   var center                : LatLng        = js.native
   var zoom                  : Double        = js.native
-  var layers                : js.Array[ILayer] = js.native
+  var layers                : js.Array[Layer] = js.native
   var minZoom               : Double        = js.native
   var maxZoom               : Double        = js.native
   var maxBounds             : LatLngBounds  = js.native
