@@ -15,6 +15,13 @@ import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 trait FindAdsArgsT extends ScFsmStub {
 
+  /**
+    * compile-time флаг для разрешения/запрещания сокрытия карточек из маячков,
+    * при нахождении внутри ресиверов.
+    */
+  private def HIDE_BEACONS_ON_RECEIVERS = false
+
+
   /** Заполнить аргументы поиска карточек на основе данных состояния [[MScSd]] от ScFsm. */
   trait MFindAdsArgsT extends MFindAdsReqDflt {
 
@@ -30,11 +37,12 @@ trait FindAdsArgsT extends ScFsmStub {
     override def locEnv: ILocEnv = {
       // 2016.nov.10: Маячковые карточки остаются висеть после перехода на какой-то узел в выдаче.
       // Нужно устранить этот косяк путём отказа от loc env при наличии adnId.
-      if (_sd.common.adnIdOpt.nonEmpty) {
+      if (HIDE_BEACONS_ON_RECEIVERS && _sd.common.adnIdOpt.nonEmpty) {
         MLocEnv.empty
       } else {
         _sd.locEnv
       }
+
     }
 
     override def tagNodeId = _sd.common.tagOpt.map(_.nodeId)
