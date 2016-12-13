@@ -28,6 +28,7 @@ object MarkerClusterGroupR {
   def apply(markers: js.Array[Marker],
             onMarkerClick: js.UndefOr[MarkerEvent  => _] = js.undefined,
             onClusterClick: js.UndefOr[MarkerEvent => _] = js.undefined,
+            key: UndefOr[String] = js.undefined,
             showCoverageOnHover: UndefOr[Boolean] = js.undefined,
             zoomToBoundsOnClick: UndefOr[Boolean] = js.undefined,
             spiderfyOnMaxZoom: UndefOr[Boolean]   = js.undefined,
@@ -39,6 +40,7 @@ object MarkerClusterGroupR {
     p.markers = markers
     onMarkerClick.foreach( f => p.markerClick = UndefOr.any2undefOrA(f) )
     onClusterClick.foreach( f => p.clusterClick = UndefOr.any2undefOrA(f) )
+    key.foreach(p.key = _)
     showCoverageOnHover.foreach( p.showCoverageOnHover = _ )
     zoomToBoundsOnClick.foreach( p.zoomToBoundsOnClick = _ )
     spiderfyOnMaxZoom.foreach( p.spiderfyOnMaxZoom = _ )
@@ -85,7 +87,7 @@ trait MarkerClusterGroupPropsR extends MarkerClusterGroupOptions {
 
   var markers: js.Array[Marker] = js.native
 
-  import MarkerClusterEvents._
+  var key: String = js.native
 
   var markerClick: js.UndefOr[js.Function1[MarkerEvent,_]] = js.native
 

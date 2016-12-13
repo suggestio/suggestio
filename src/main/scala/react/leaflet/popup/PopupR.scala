@@ -5,6 +5,7 @@ import io.suggest.sjs.leaflet.map.LatLng
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -15,9 +16,13 @@ import scala.scalajs.js
 
 object PopupR {
 
-  def apply(position: LatLng): PopupR = {
+  def apply(position: LatLng,
+            key: UndefOr[String] = js.undefined ): PopupR = {
     val p = js.Dynamic.literal().asInstanceOf[PopupPropsR]
+
     p.position = position
+    key.foreach( p.key = _ )
+
     PopupR(p)
   }
 
@@ -34,5 +39,9 @@ case class PopupR(
 
 @js.native
 trait PopupPropsR extends js.Object {
+
   var position: LatLng = js.native
+
+  var key: String = js.native
+
 }
