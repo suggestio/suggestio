@@ -39,4 +39,17 @@ object DatesIntervalConstants {
   /** id input-элемента, хранящего в value json-строку с параметрами инициализации. */
   def INIT_ARGS_INPUT_ID  = "ias" + ID_PREFIX
 
+
+  object Json {
+
+    final val START_FN = "a"
+
+    final val END_FN   = "b"
+
+    final val DOW_FN   = "c"
+
+    final val DATE_FN  = "d"
+
+  }
+
 }

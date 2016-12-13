@@ -104,23 +104,32 @@ object AdvGeoConstants {
     object Popup {
 
       /** Имя поля формы с группами узлов. */
-      def GROUPS_FN       = "a"
+      final val GROUPS_FN         = "a"
 
       /** id группы узлов, алиас некой общей сути у узлов.
         * Например и изначально -- это тип узлов (ntype), но совсем не обязательно. */
-      def GROUP_ID_FN     = "b"
+      final val GROUP_ID_FN       = "b"
 
       /** Имя поля с узлами. Например, внутри группы. */
-      def NODES_FN        = "c"
+      final val NODES_FN          = "c"
 
       /** id узла. */
-      def NODE_ID_FN      = "d"
+      final val NODE_ID_FN        = "d"
 
       /** Имя поля флага направления действия: созидание или разрушение? */
-      def IS_CREATE_FN    = "e"
+      final val IS_CREATE_FN      = "e"
 
       /** Поставлена ли галочка? */
-      def CHECKED_FN      = "f"
+      final val CHECKED_FN        = "f"
+
+      /** Имя поля названия узла/группы.  */
+      final val NAME_FN           = "g"
+
+      /** Находится ли узел в онлайне прямо сейчас? */
+      final val IS_ONLINE_NOW_FN  = "h"
+
+      /** Интервал дат размещения. */
+      final val INTERVAL_FN       = "i"
 
 
       private def ID_DELIM        = QsConstants.KEY_PARTS_DELIM_STR
@@ -134,6 +143,20 @@ object AdvGeoConstants {
 
       /** Префикс DOM-id для контейнера одного под-узла в рамках группы узлов одного ресивера. */
       def NODE_GRP_CONT_ID_PREFIX  = "n" + GRP_CONT_ID_PREFIX
+
+    }
+
+
+    /** Константы полей формы для размещения на узлах-ресиверах. */
+    object Req {
+
+      def RCVR_FN     = "rcvr"
+
+      def FROM_FN     = NODE_ID_FN
+      def TO_FN       = "t"
+
+      def GROUP_ID_FN = Popup.GROUP_ID_FN
+      def VALUE_FN    = Popup.CHECKED_FN
 
     }
 

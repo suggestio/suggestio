@@ -17,6 +17,7 @@ object Css {
   def _CONTAINER  = "container"
   def NAME      = "name"
   def VALUE     = "value"
+  def HIDDEN    = "hidden"
 
   object Lk {
 
@@ -44,7 +45,7 @@ object Css {
   }
 
 
-  object Project {
+  object Colors {
     def RED = "red"
     def GREEN = "green"
   }
