@@ -90,4 +90,6 @@ object ErrorMsgs extends MsgsStaticT {
   /** Таргет почему-то пролетел мимо инициализации. */
   def INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED = E(41)
 
+  def UNEXPECTED_RCVR_POPUP_SRV_RESP   = E(42)
+
 }
