@@ -1,9 +1,10 @@
 package io.suggest.lk.adv.geo.r
 
 import io.suggest.adv.geo.AdvGeoConstants
+import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Req
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.tags.m.MMapGjResp
+import io.suggest.lk.adv.geo.tags.m._
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.adv.r.Adv4FreeR
@@ -22,14 +23,15 @@ import react.leaflet.lmap.LMapR
 import react.leaflet.popup.PopupR
 import io.suggest.sjs.leaflet.L
 import io.suggest.sjs.leaflet.event.LocationEvent
+import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
-import io.suggest.lk.adv.geo.tags.m.MarkerNodeId
 import react.leaflet.control.LocateControlR
 import react.leaflet.layer.TileLayerR
 import react.leaflet.marker.MarkerClusterGroupR
 
 import scala.concurrent.Future
 import scala.scalajs.js
+import scala.scalajs.js.JSON
 import scala.util.{Failure, Success}
 
 /**
@@ -62,14 +64,32 @@ object AdvGeoFormR extends Log {
     *                      true -- геолокация уже была, действия уже были приняты.
     */
   case class State(
-    onMainScreen : Boolean = true,
-    rcvrMarkers  : Option[Either[Future[_], js.Array[Marker]]] = None,
-    locationFound: Boolean = false
+    onMainScreen  : Boolean = true,
+    rcvrMarkers   : Option[Either[Future[_], js.Array[Marker]]] = None,
+    locationFound : Boolean = false,
+    rcvrPopup     : Option[RcvrPopupState] = None,
+    rcvrsMap      : Map[RcvrKey, Boolean] = Map.empty
     //datesPeriodInfo : Option[IDatesPeriodInfo] = None
   ) {
     def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
     def withRcvrMarkers(rm: Option[Either[Future[_], js.Array[Marker]]]) = copy(rcvrMarkers = rm)
+    def withRcvrPopup(pr: Option[RcvrPopupState]) = copy(rcvrPopup = pr)
+    def withRcvrsMap(rm: Map[RcvrKey, Boolean]) = copy(rcvrsMap = rm)
   }
+
+
+  /** Состояние попапа над ресивером на карте. */
+  case class RcvrPopupState(
+    nodeId: String,
+    latLng: LatLng,
+    resp  : Either[Future[_], IRcvrPopupResp]
+  )
+
+  /** Ключ в карте текущих ресиверов. */
+  case class RcvrKey(from: String, to: String, groupId: Option[String]) {
+    override def toString = from + "." + to + "." + groupId.getOrElse("")
+  }
+
 
   /** Класс для компонента формы. */
   protected class Backend($: BackendScope[Props, State]) {
@@ -109,9 +129,73 @@ object AdvGeoFormR extends Log {
     def onMarkerClicked(layerEvent: MarkerEvent): Unit = {
       val marker = layerEvent.layer
       // TODO Почему-то тут не срабатывает implicit convertion... Приходится явно заворачивать
-      val nodeId = MarkerNodeId(marker).nodeId
-      println( "marker clicked: " + nodeId )
-      // TODO Нужно тут запускать получение попапа с сервера, попутно центрируя карту по маркеру...
+      val nodeId = MarkerNodeId(marker).nodeId.get
+      val latLng = marker.getLatLng()
+
+      val cb = for {
+        props <- $.props
+
+        r <- {
+          val route = jsRoutes.controllers.LkAdvGeo.rcvrMapPopup(
+            adId    = props.adId,
+            nodeId  = nodeId
+          )
+          val fut = for (resp <- Xhr.requestJson(route)) yield {
+            val r = resp.asInstanceOf[IRcvrPopupResp]
+            _markerPopupRespReceived(r)
+            r
+          }
+
+          $.modState { s0 =>
+            val ps = RcvrPopupState(
+              nodeId = nodeId,
+              latLng = latLng,
+              resp   = Left(fut)
+            )
+            s0.withRcvrPopup( Some(ps) )
+          }
+        }
+      } yield {
+        r
+      }
+
+      cb.runNow()
+    }
+
+    /** Реакция на ответ */
+    def _markerPopupRespReceived(resp: IRcvrPopupResp): Unit = {
+      val cb = $.modState { s0 =>
+        s0.rcvrPopup.fold[State] {
+          LOG.warn( ErrorMsgs.UNEXPECTED_RCVR_POPUP_SRV_RESP, msg = JSON.stringify(resp) )
+          s0
+        } { rps =>
+          val rps2 = rps.copy(
+            resp = Right(resp)
+          )
+          s0.withRcvrPopup( Some(rps2) )
+        }
+      }
+      cb.runNow()
+    }
+
+    /** Реакция на изменение флага узла-ресивера в попапе узла. */
+    def rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
+      val checked = e.target.checked
+      $.modState { s0 =>
+        val ps = s0.rcvrPopup.get.resp.right.get
+        val checkedOnServerOpt = ps.groups.iterator
+          .flatMap(_.nodes)
+          .find(_.nodeId == rk.to)
+          .map(_.checked)
+
+        s0.withRcvrsMap(
+          if ( checkedOnServerOpt.contains(checked) ) {
+            s0.rcvrsMap - rk
+          } else {
+            s0.rcvrsMap + (rk -> checked)
+          }
+        )
+      }
     }
 
 
@@ -170,8 +254,25 @@ object AdvGeoFormR extends Log {
                 onChange = datePeriodChanged
               )
             )
-          )
+          ),
 
+          // Отрендерить hidden-input'ы для ресиверов (галочки в попапах на геокарте).
+          state.rcvrsMap.nonEmpty ?= <.div(
+            ^.`class` := "hidden",
+            for {
+              ((rk, enabled), i) <- state.rcvrsMap.iterator.zipWithIndex
+            } yield {
+              <.div(
+                ^.key       := rk.toString,
+                _hiddenInput(i, fn = Req.FROM_FN, v = rk.from),
+                _hiddenInput(i, fn = Req.TO_FN,   v = rk.to),
+                for (groupId <- rk.groupId) yield {
+                  _hiddenInput(i, fn = Req.GROUP_ID_FN, v = groupId)
+                },
+                _hiddenInput(i, fn = Req.VALUE_FN, v = enabled.toString)
+              )
+            }
+          )
         ),
 
         // Тут немного пустоты нужно...
@@ -180,14 +281,22 @@ object AdvGeoFormR extends Log {
 
         // Карта должна рендерится сюда:
         LMapR(
-          center    = L.latLng(20, 20),
+          center    = state.rcvrPopup
+            .map(_.latLng)
+            .getOrElse {
+              // TODO Брать откуда-то из состояния, например.
+              L.latLng(20, 20)
+            },
           zoom      = 10,
           className = Css.Lk.Adv.Geo.MAP_CONTAINER,
-          onLocationFound = if (state.locationFound)
-            js.undefined
-          else {
-            // TODO Нужен Callback тут вместо голой функции
-            onLocationFound _
+          useFlyTo  = true,
+          onLocationFound = {
+            if (state.locationFound)
+              js.undefined
+            else {
+              // TODO Нужен Callback тут вместо голой функции?
+              onLocationFound _
+            }
           }
         )(
 
@@ -202,26 +311,66 @@ object AdvGeoFormR extends Log {
           LocateControlR()(),
 
           // MarkerCluster для списка ресиверов, если таковой имеется...
+          // TODO Тут у нас хрень: scalajs-react имеет кучу косяков, в т.ч. не умеет вложенные опциональные компоненты.
+          // Зато умеет списки, что вызывает необходимость задания поля props.key.
           state.rcvrMarkers
             .flatMap(_.right.toOption)
             .iterator
             .map { markers =>
               MarkerClusterGroupR(
                 markers = markers,
-                onMarkerClick = onMarkerClicked _
+                onMarkerClick = onMarkerClicked _,
+                key = "s"   // Чисто для подавления react-warning'а из-за iterator.
               )()
             }
             .toSeq,
 
-          PopupR( position = L.latLng(50, 50) )(
-            <.div(
-              <.h1(
-                "XYNTA TEST"
-              ),
-              <.br
+          // Опять проблема с Option'ами. Чиним через iterator + key.
+          for {
+            r <- state.rcvrPopup.iterator
+            resp <- r.resp.right.toOption.iterator
+          } yield {
+            PopupR(position = r.latLng, key = "p")(
+              <.div(
+                for (g <- resp.groups.iterator) yield {
+                  // Значение key не суть важно, просто оно должно быть здесь.
+                  val groupId = g.groupId.getOrElse("0")
+                  <.div(
+                    ^.key := groupId,
+                    for (gname <- g.name.toOption) yield {
+                      <.h3(gname)
+                    },
+                    for (n <- g.nodes.iterator) yield {
+                      val rcvrKey = RcvrKey(from = r.nodeId, to = n.nodeId, groupId = g.groupId.toOption)
+                      val checked = state.rcvrsMap.getOrElse(rcvrKey, n.checked)
+
+                      <.div(
+                        ^.key := rcvrKey.toString,
+                        ^.`class` := Css.Lk.LK_FIELD,
+                        <.label(
+                          ^.classSet1(
+                            Css.Lk.LK_FIELD_NAME,
+                            Css.Colors.RED    -> (!checked && !n.isCreate),
+                            Css.Colors.GREEN  -> (checked  && n.isCreate)
+                          ),
+                          <.input(
+                            ^.`type`    := "checkbox",
+                            ^.checked   := checked,
+                            ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
+                          ),
+                          <.span,
+                          n.nameOpt.getOrElse[String]("???")
+                        )
+                      )
+                    }
+                  )
+                }
+
+              ) // Popup div
             )
-          )
-        )
+          }
+
+        ) // LMap
       )
 
     }
@@ -238,6 +387,21 @@ object AdvGeoFormR extends Log {
           LkAdvGeoFormUtil.geoJsonToClusterMarkers( gj.featuresIter )
         }
       }
+    }
+
+
+    private val _hiddenInputBase = {
+      <.input(
+        ^.`type`    := "hidden",
+        ^.readOnly  := true
+      )
+    }
+
+    private def _hiddenInput(i: Int, fn: String, v: String) = {
+      _hiddenInputBase(
+        ^.name  := Req.RCVR_FN + "[" + i + "]." + fn,
+        ^.value := v
+      )
     }
 
     /**
