@@ -1,5 +1,6 @@
 package controllers
 
+
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
@@ -15,10 +16,11 @@ import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.mctx.Context
-import models.mdt.MDateInterval
+import models.mdt.{MDateInterval, MDateStartEndStr, MDateStrInfo}
 import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
+import org.joda.time.LocalDate
 import play.api.i18n.Messages
 import play.api.libs.json.{JsNull, Json}
 import play.api.mvc.Result
@@ -29,6 +31,7 @@ import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUti
 import util.billing.Bill2Util
 import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
+import util.DateTimePrettyPrinter.{dayOfWeek, formatDateFull}
 import views.html.lk.adv.geo._
 import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._priceValTpl
@@ -428,45 +431,6 @@ class LkAdvGeo @Inject() (
       }
     }
 
-    // Собрать маппинг формы, согласно которой пойдёт весь рендер.
-    val formFut = for {
-      advRcvrIdsActual    <- advRcvrIdsActualFut
-      advRcvrIdsBusy      <- advRcvrIdsBusyFut
-      nodesGrps           <- nodesGrpsFut
-    } yield {
-      val groupsIter = for {
-        (ntypeOpt, typedNodeIds)   <- nodesGrps.iterator
-      } yield {
-        val nodesInGroup = typedNodeIds
-          .iterator
-          .flatMap(_.id)
-          .map { typedNodeId =>
-            MNodeAdvFormInfo(
-              nodeId    = typedNodeId,
-              isCreate  = !advRcvrIdsBusy.contains( typedNodeId ),
-              checked   = advRcvrIdsActual.contains( typedNodeId )
-            )
-          }
-          .toList
-
-        MNodeAdvGroup(
-          ntypeOpt = ntypeOpt,
-          nodes    = nodesInGroup
-        )
-      }
-
-      // Собрать итоговое значение для формы.
-      val formRes = MRcvrPopupFormRes(
-        nodeId = rcvrNodeId,
-        groups = groupsIter.toList
-      )
-
-      // Залить собранное значение в маппинг формы.
-      advGeoFormUtil
-        .rcvrPopupForm
-        .fill( formRes )
-    }
-
     // Собрать множество id узлов, у которых есть хотя бы одно online-размещение.
     val nodesHasOnlineFut = __src2RcvrIdsSet {
       currAdvsSrc
@@ -486,35 +450,46 @@ class LkAdvGeo @Inject() (
       }
       .map( _.result() )
 
-    // Сгенерить карты инфы по нодами для рендера какой-то человеческой инфы.
-    val nodeInfosFut: Future[Map[String, MNodeInfo]] = for {
-      subNodes            <- nodesFut
+    implicit val ctx = implicitly[Context]
+
+    // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
+    for {
       nodesHasOnline      <- nodesHasOnlineFut
       intervalsMap        <- intervalsMapFut
+      advRcvrIdsActual    <- advRcvrIdsActualFut
+      advRcvrIdsBusy      <- advRcvrIdsBusyFut
+      nodesGrps           <- nodesGrpsFut
     } yield {
-      val subNodesIter = for {
-        mnode   <- subNodes.iterator
-        mnodeId <- mnode.id
-      } yield {
-        mnodeId -> MNodeInfo(
-          nameOpt        = mnode.guessDisplayNameOrId,
-          isOnlineNow   = nodesHasOnline.contains( mnodeId ),
-          intervalOpt    = intervalsMap.get( mnodeId )
-        )
-      }
-      subNodesIter.toMap
-    }
 
-    // Отрендерить HTTP-ответ.
-    for {
-      form      <- formFut
-      nodeInfos <- nodeInfosFut
-    } yield {
-      val tplArgs = MRcvrPopupTplArgs(
-        form      = form,
-        nodeInfos = nodeInfos
+      val jsonArgs = MRcvrReactPopupJson(
+        groups = for (g <- nodesGrps) yield {
+          MNodeAdvGroupArgs(
+            groupId = g._1.map(_.strId),
+            nameOpt = for (ntype <- g._1) yield ctx.messages(ntype.plural),
+            nodes   = for (n <- g._2; nodeId <- n.id) yield {
+              MNodeAdvInfo(
+                nodeId      = nodeId,
+                isCreate    = !advRcvrIdsBusy.contains( nodeId ),
+                checked     = advRcvrIdsActual.contains( nodeId ),
+                nameOpt     = n.guessDisplayNameOrId,
+                isOnlineNow = nodesHasOnline.contains( nodeId ),
+                intervalOpt = for (ivl <- intervalsMap.get( nodeId )) yield {
+                  def __formatDate(dt: LocalDate) = MDateStrInfo(
+                    dow  = dayOfWeek(dt)(ctx),
+                    date = formatDateFull(dt)(ctx)
+                  )
+                  MDateStartEndStr(
+                    start = __formatDate(ivl.dateStart),
+                    end   = __formatDate(ivl.dateEnd)
+                  )
+                }
+              )
+            }
+          )
+        }
       )
-      Ok( _MapNodePopupTpl(tplArgs) )
+
+      Ok( Json.toJson(jsonArgs) )
         // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
         .withHeaders(CACHE_CONTROL -> "private, max-age=5")
     }

@@ -40,6 +40,7 @@ case class MDateStartEnd(
   extends MDateStartEndT
 
 
+
 /** Реализация [[IDateStartEnd]] для одного joda-интервала. */
 case class MDateInterval(override val interval: Interval) extends IDateStartEnd {
 

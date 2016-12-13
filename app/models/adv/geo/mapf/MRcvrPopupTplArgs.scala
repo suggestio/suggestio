@@ -1,8 +1,9 @@
 package models.adv.geo.mapf
 
-import models.MNodeType
-import models.mdt.IDateStartEnd
-import play.api.data.Form
+import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Popup._
+import models.mdt.MDateStartEndStr
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -19,67 +20,61 @@ import play.api.data.Form
   * на стороне самой формы: при выборе галочек надо повторно всё рендерить внутрь внешней формы
   * (вне попапа карты), но уже на клиенте и чуть иначе. Происходит дублирование кода,
   * дублирующиеся зоопарки view-model'ов и куча контроллерного кода.
+  *
+  * 2016.dec.13: v3 модель для интеграции с react.js.
+  * Только JSON, только хардкор. Старая модели временно оставлены на месте до окончания переезда вёрстки в react.js.
   */
 
-/** Модель аргументов рендера шаблона popup'а для узла карты георазмещения.
-  *
-  * @param form Забинденная форма, по которой пойдёт рендер.
-  * @param nodeInfos Карта инфы по узлам для нужд рендера каких-то человеческих данных.
-  */
-case class MRcvrPopupTplArgs(
-  form         : Form[MRcvrPopupFormRes],
-  nodeInfos    : Map[String, MNodeInfo]
+
+// v3 ----------------------------------------------------
+
+/** JSON-модель для описания содержимого попапа ресивера. */
+object MRcvrReactPopupJson {
+  implicit val WRITES: OWrites[MRcvrReactPopupJson] = {
+    (__ \ GROUPS_FN).write[Seq[MNodeAdvGroupArgs]]
+      .contramap{ a: MRcvrReactPopupJson => a.groups }
+  }
+}
+case class MRcvrReactPopupJson(
+  groups: Seq[MNodeAdvGroupArgs]
 )
 
 
-/**
-  * Модель результата биндинга формы.
-  *
-  * @param nodeId id узла, для которого отрендерена форма размещения.
-  * @param groups Группы узлов размещения внутри текущего узла: саморазмещение, маячки, теги, и т.д.
-  */
-case class MRcvrPopupFormRes(
-  nodeId  : String,
-  groups  : List[MNodeAdvGroup]
+/** Модель группы под-узлов для размещения на ресивере. */
+object MNodeAdvGroupArgs {
+  implicit val WRITES: OWrites[MNodeAdvGroupArgs] = (
+    (__ \ GROUP_ID_FN).writeNullable[String] and
+    (__ \ NAME_FN).writeNullable[String] and
+    (__ \ NODES_FN).write[Seq[MNodeAdvInfo]]
+  )(unlift(unapply))
+}
+/** Класс модели группы под-узлов для размещения на ресивере. */
+case class MNodeAdvGroupArgs(
+  groupId   : Option[String],
+  nameOpt   : Option[String],
+  nodes     : Seq[MNodeAdvInfo]
 )
 
 
-/**
-  * Группа узлов по типу для нужд формы попапа.
-  *
-  * @param ntypeOpt Типы под-узлов в группе, если требуется её обозначать.
-  *              None значит, что группа текущего узла.
-  * @param nodes Данные по конкретным узлам в рамках формы.
-  */
-case class MNodeAdvGroup(
-  ntypeOpt  : Option[MNodeType],
-  nodes     : List[MNodeAdvFormInfo]
+/** Модель JSON-описания одного узла в списке узлов для попапа размещения в ресивере. */
+object MNodeAdvInfo {
+
+  implicit val WRITES: OWrites[MNodeAdvInfo] = (
+    (__ \ NODE_ID_FN).write[String] and
+    (__ \ IS_CREATE_FN).write[Boolean] and
+    (__ \ CHECKED_FN).write[Boolean] and
+    (__ \ NAME_FN).writeNullable[String] and
+    (__ \ IS_ONLINE_NOW_FN).write[Boolean] and
+    (__ \ INTERVAL_FN).writeNullable[MDateStartEndStr]
+  )( unlift(unapply) )
+
+}
+/** Класс JSON-модели описания одного узла в списке размещения. */
+case class MNodeAdvInfo(
+  nodeId          : String,
+  isCreate        : Boolean,
+  checked         : Boolean,
+  nameOpt         : Option[String],
+  isOnlineNow     : Boolean,
+  intervalOpt     : Option[MDateStartEndStr]
 )
-
-
-/** Инфа о узле для маппинга формы.
-  *
-  * @param nodeId id узла для hidden-поля.
-  * @param isCreate Создаваемое размещение? Hidden-поле, для возможности явно создавать или удалять размещения.
-  * @param checked Значение галочки во время рендера.
-  */
-case class MNodeAdvFormInfo(
-  nodeId    : String,
-  isCreate  : Boolean,
-  checked   : Boolean
-)
-
-
-/**
-  * Инфа об одном оформленом размещении на узле.
-  *
-  * @param intervalOpt Период размещения.
-  * @param nameOpt Отображаемое имя, если есть. По идее, оно есть всегда, но на всякий пожарный передаём Option.
-  * @param isOnlineNow Есть ли хоть одно активное размещение текущей карточки на данном узле?
-  */
-case class MNodeInfo(
-  nameOpt        : Option[String],
-  isOnlineNow    : Boolean,
-  intervalOpt    : Option[IDateStartEnd]
-)
-
