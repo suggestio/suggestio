@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.vm.mapbox
 
 import io.suggest.common.maps.mapbox.MapBoxConstants.{TargetPoint, UserGeoLoc}
+import io.suggest.geo.MGeoPoint
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
 import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
-import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPoint}
+import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPointJs}
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.mapbox.gl.Filter_t
 import io.suggest.sjs.mapbox.gl.event.EventData
@@ -35,7 +36,7 @@ object GlMapVm {
 
     // Выставить начальное состояние карты.
     for (ugl <- useLocation) {
-      opts.center = ugl.point.toArray
+      opts.center = MGeoPointJs.toArray(ugl.point)
       opts.zoom   = 13
       // TODO Воткнуть сюда дефолтовый zoom на основе ugl.accuracyM
     }
@@ -59,7 +60,7 @@ case class GlMapVm(glMap: GlMap) {
   def setUserGeoLoc(mGeoLoc: MGeoLoc): this.type = {
     // Собрать слой (если ещё не собран), где будет отображена текущая геолокация.
     val srcId = UserGeoLoc.SRC_ID
-    val myPoint = mGeoLoc.point.toGjPoint
+    val myPoint = MGeoPointJs.toGjPoint(mGeoLoc.point)
 
     glMap.getSource(srcId).fold[Unit] {
       // Пока нет ни слоя, ни source. Создать их
@@ -103,7 +104,9 @@ case class GlMapVm(glMap: GlMap) {
 
   /** Выставить центр карты из точки. */
   def center_=(mgp: MGeoPoint): Unit = {
-    glMap.setCenter( LngLat.convert(mgp.toJsArray) )
+    val arr = MGeoPointJs.toJsArray(mgp)
+    val latLng = LngLat.convert(arr)
+    glMap.setCenter( latLng )
   }
 
   /**
@@ -114,7 +117,7 @@ case class GlMapVm(glMap: GlMap) {
   def setCurrentPos(point: MGeoPoint): this.type = {
     // Слой и сорс маркера обычно не существует до первого драггинга. И создаются они одновременно.
     val srcId = TargetPoint.SRC_ID
-    val gjPoint = point.toGjPoint
+    val gjPoint = MGeoPointJs.toGjPoint(point)
 
     glMap.getSource(srcId).fold [Unit] {
       // Не создано ещё пока слоя-цели для наведения.

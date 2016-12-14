@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.sjs.common.model.loc.MGeoPoint
+import io.suggest.geo.MGeoPoint
 import io.suggest.sjs.mapbox.gl.ll.LngLat
 
 import scala.scalajs.js

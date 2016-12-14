@@ -11,7 +11,7 @@ import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPoint}
+import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPointJs}
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -87,7 +87,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
 
     // Десериализация geo-точки выдачи.
     val sd2Common = tokens.get(LOC_ENV_FN)
-      .flatMap( MGeoPoint.fromString )
+      .flatMap( MGeoPointJs.fromString )
       .fold(sd1Common) { geoPos =>
         val geoLoc = MGeoLoc(
           point = geoPos
