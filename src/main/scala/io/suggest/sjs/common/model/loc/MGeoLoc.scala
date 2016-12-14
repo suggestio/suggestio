@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.model.loc
 
 import io.suggest.geo.GeoConstants.GeoLocQs._
+import io.suggest.geo.MGeoPoint
 import org.scalajs.dom.Position
 
 import scala.scalajs.js
@@ -30,7 +31,7 @@ object MGeoLoc {
 
   def apply(pos: Position): MGeoLoc = {
     MGeoLoc(
-      point     = MGeoPoint(pos.coords),
+      point     = MGeoPointJs(pos.coords),
       accuracyM = Some(pos.coords.accuracy),
       timestamp = Some(pos.timestamp.toLong)
     )
@@ -57,7 +58,7 @@ object IGeoLocMin {
 
   def toJson(v: IGeoLocMin): js.Dictionary[js.Any] = {
     val d = js.Dictionary [js.Any] (
-      CENTER_FN     -> v.point.toJsObject
+      CENTER_FN     -> MGeoPointJs.toJsObject(v.point)
     )
 
     for (accur <- v.accuracyM)

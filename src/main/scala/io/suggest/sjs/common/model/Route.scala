@@ -14,10 +14,10 @@ sealed trait Route extends js.Object {
   // def ajax() -- нельзя, т.к. deprecated и будет удалена, и зависит от jQuery.
 
   /** Используемый HTTP-метод. GET, POST и т.д. */
-  def method: String = js.native
+  val method: String = js.native
 
   /** relative URL запроса. */
-  def url: String = js.native
+  val url: String = js.native
 
   /** Абсолютный URL запроса по мнению сервера.
     * @param secure true -- использовать https вместо http. [false]
@@ -31,4 +31,5 @@ sealed trait Route extends js.Object {
    * @return Строку абсолютной ссылки на вебсокет текущего ресурса.
    */
   def webSocketURL(secure: Boolean = js.native): String = js.native
+
 }
