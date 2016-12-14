@@ -86,6 +86,18 @@ object Common {
   /** Версия Leaflet.markercluster.js. */
   val leafletMarkerClusterJsVsn = "1.0.0"
 
+  
+  /** Версия diode.
+    * @see [[https://github.com/ochrons/diode/]]
+    */
+  val diodeVsn = "1.1.0"
+
+  /** Версия сериализатора boopickle. 
+    * @see [[https://github.com/ochrons/boopickle]]
+    */
+  val boopickleVsn = "1.2.5"
+
+
   object Repo {
 
     /** Адрес внутреннего кеширующего сервера artifactory */
