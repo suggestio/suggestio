@@ -5,6 +5,7 @@
 
 @import io.suggest.common.qs.QsConstants._
 @import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
+@import ctx.request
 
 "use strict";
 
@@ -16,7 +17,32 @@ var @(name) = {};
   var _qS = function(items){var qs = ''; for(var i=0;i<items.length;i++) {if(items[i]) qs += (qs ? '&' : '') + items[i]}; return qs ? ('?' + qs) : ''}
   var _s = function(p,s){return p+((s===true||(s&&s.secure))?'s':'')+'://'}
   var hostEsc = '@esc( ctx.request.host )';
-  var _wA = function(r){return {method:r.method,type:r.method,url:r.url,absoluteURL: function(s){return _s('http',s)+hostEsc+r.url},webSocketURL: function(s){return _s('ws',s)+hostEsc+r.url}}}
+
+  @* 2016.dec.14: Запилена поддержка CSRF в JsRoutes для POST-запросов. *@
+  var csrfQs = @JavaScript( play.filters.csrf.CSRF.getToken.fold("undefined")(t => s"'${t.name}=${t.value}'") );
+
+  var _wA = function(r) {
+    var method = r.method;
+    var url;
+    if (typeof csrfQs == "string" && method == "POST") {
+      var delim;
+      var qmark = '?'
+      if (r.url.indexOf(qmark) >= 0) {
+        delim = '&';
+      } else {
+        delim = qmark;
+      }
+      url = r.url + delim + csrfQs;
+    } else {
+      url = r.url;
+    }
+    return {
+      method: method,
+      url: url,
+      absoluteURL: function(s){return _s('http',s)+hostEsc+url},
+      webSocketURL: function(s){return _s('ws',s)+hostEsc+url}
+    }
+  }
 
   @* Код сериализация JSON object-ов в qs-строку, портированный из _objQsbTpl. *@
   var _d = "@KEY_PARTS_DELIM_STR";

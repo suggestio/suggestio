@@ -3,7 +3,7 @@ package util.adv.geo
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.AdvConstants.PERIOD_FN
 import io.suggest.adv.geo.AdvGeoConstants.CurrShapes._
-import io.suggest.adv.geo.AdvGeoConstants.OnMainScreen
+import io.suggest.adv.geo.AdvGeoConstants.{AdnNodes, OnMainScreen}
 import io.suggest.common.maps.MapFormConstants.MAP_FN
 import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
 import io.suggest.mbill2.m.item.MItem
@@ -12,6 +12,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.geo.{CircleGs, GeoShape}
 import io.suggest.model.n2.node.MNodeTypes
 import models.adv.geo.cur._
+import models.adv.geo.mapf.MRcvrBindedInfo
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
 import models.mctx.Context
 import models.mdt.MDateInterval
@@ -42,23 +43,27 @@ class AdvGeoFormUtil @Inject() (
   mCommonDi         : ICommonDi
 ) {
 
-  private def _agtFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
+  /** Маппинг формы георазмещения. */
+  private def _advGeoFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
-      EXIST_TAGS_FN       -> tagsM,
-      MAP_FN              -> radMapFormUtil.radMapValM,
-      PERIOD_FN           -> advFormUtil.advPeriodM,
-      OnMainScreen.FN     -> boolean
+      EXIST_TAGS_FN           -> tagsM,
+      MAP_FN                  -> radMapFormUtil.radMapValM,
+      PERIOD_FN               -> advFormUtil.advPeriodM,
+      OnMainScreen.FN         -> boolean,
+      AdnNodes.Req.RCVR_FN    -> list(rcvrBindedInfoM)
     )
     { MAgtFormResult.apply }
     { MAgtFormResult.unapply }
   }
 
-  def agtFormTolerant: AgtForm_t = {
-    Form( _agtFormM(tagsEditFormUtil.existingsM) )
+  /** Форма для биндинга при запросе стоимости, когда всё может быть не очень хорошо. */
+  def formTolerant: AgtForm_t = {
+    Form( _advGeoFormM(tagsEditFormUtil.existingsM) )
   }
 
-  def agtFormStrict: AgtForm_t = {
-    val formM = _agtFormM(tagsEditFormUtil.existingsM)
+  /** Форма для биндинга при итоговом сабмите формы. */
+  def formStrict: AgtForm_t = {
+    val formM = _advGeoFormM(tagsEditFormUtil.existingsM)
       .verifying("e.required.tags.or.main.screen", { agtRes =>
         agtRes.onMainScreen || agtRes.tags.nonEmpty
       })
@@ -165,11 +170,22 @@ class AdvGeoFormUtil @Inject() (
   }
 
 
-
-
   // Form-утиль для формы в попапах ресиверов.
 
   import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Req._
-  // TODO
+
+  /** Маппинг формы для модели [[models.adv.geo.mapf.MRcvrBindedInfo]]. */
+  def rcvrBindedInfoM: Mapping[MRcvrBindedInfo] = {
+    mapping(
+      // 2016.dec.13: Ресивер-источкик пока бывает только на базе сгенеренного uuid b64 id.
+      FROM_FN       -> FormUtil.esIdM,
+      // 2016.dec.13: Суб-ресивер может быть любым, в частности маячком с длинным id.
+      TO_FN         -> FormUtil.esAnyNodeIdM,
+      GROUP_ID_FN   -> MNodeTypes.mappingOptM,
+      VALUE_FN      -> boolean
+    )
+    { MRcvrBindedInfo.apply }
+    { MRcvrBindedInfo.unapply }
+  }
 
 }

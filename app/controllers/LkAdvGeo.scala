@@ -98,7 +98,7 @@ class LkAdvGeo @Inject() (
     //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
     val gp0Fut = getGeoPoint0(adId)
 
-    val formEmpty = advGeoFormUtil.agtFormStrict
+    val formEmpty = advGeoFormUtil.formStrict
 
     val formFut = for (gp0 <- gp0Fut) yield {
 
@@ -109,7 +109,8 @@ class LkAdvGeo @Inject() (
         tags          = Nil,
         radMapVal     = radMapVal,
         period        = MDatesPeriod(),
-        onMainScreen  = true
+        onMainScreen  = true,
+        rcvrs         = Nil   // По идее, тут изначально всё должно быть пусто.
       )
 
       formEmpty.fill(res)
@@ -186,7 +187,7 @@ class LkAdvGeo @Inject() (
   def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.PersonNode).async { implicit request =>
     lazy val logPrefix = s"forAdSubmit($adId):"
 
-    advGeoFormUtil.agtFormStrict.bindFromRequest().fold(
+    advGeoFormUtil.formStrict.bindFromRequest().fold(
       {formWithErrors =>
         // Запустить инициализацию U.Lk в фоне:
         request.user.lkCtxDataFut
@@ -195,7 +196,7 @@ class LkAdvGeo @Inject() (
         // Повторный биндинг с NoStrict-формой -- костыль для решения проблем с рендером локализованных
         // дат размещения. Даты форматируются через form.value.dates, а не через form("dates").value, поэтому
         // при ошибке биндинга возникает ситуация, когда form.value не определена, и появляется дырка на странице.
-        val formWithErrors1 = advGeoFormUtil.agtFormTolerant
+        val formWithErrors1 = advGeoFormUtil.formTolerant
           .bindFromRequest()
           .copy(
             errors = formWithErrors.errors
@@ -273,7 +274,7 @@ class LkAdvGeo @Inject() (
     */
   def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"getPriceSubmit($adId):"
-    advGeoFormUtil.agtFormTolerant.bindFromRequest().fold(
+    advGeoFormUtil.formTolerant.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         val err = MError(

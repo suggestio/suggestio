@@ -30,7 +30,7 @@ case class MAdvGeoMapNode(
   def toGeoJson = {
     Feature(
       geometry = Point(
-        coordinates = point.toLngLat
+        coordinates = GeoPoint.toLngLat(point)
       ),
       properties = Some {
         implicitly[OWrites[MAdvGeoMapNodeProps]]

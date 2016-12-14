@@ -20,15 +20,12 @@
   rightAfter  = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
 ) {
 
-  @* URL для рассчета стоимости размещения. *@
-  @_getPriceUrlTpl( routes.LkAdvGeo.getPriceSubmit(args.adId) )
-
-  <br/>
-  <br/>
   <div id="xynta"></div>
   <br/>
   <br/>
   <br/>
+
+  @* TODO Удалить и вычистить всё, что ниже: *@
 
   @_advFormBlockTpl() {
 
@@ -68,6 +65,8 @@
       routes.javascript.LkAdvGeo.tagEditorAddTag,
       routes.javascript.LkAdvGeo.tagsSearch,
       routes.javascript.LkAdvGeo.advRcvrsGeoJson,
+      routes.javascript.LkAdvGeo.getPriceSubmit,
+      routes.javascript.LkAdvGeo.forAdSubmit,
       routes.javascript.LkAdvGeo.rcvrMapPopup
     )
   )

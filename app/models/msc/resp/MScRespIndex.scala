@@ -25,8 +25,8 @@ object MScRespIndex {
 
 
 case class MScRespIndex(
-                         indexHtml       : String,
-                         currAdnId       : Option[String],
-                         title        : Option[String]    = None,
-                         geoPoint        : Option[GeoPoint]  = None
+  indexHtml       : String,
+  currAdnId       : Option[String],
+  title           : Option[String]    = None,
+  geoPoint        : Option[GeoPoint]  = None
 )
