@@ -25,12 +25,17 @@ object LatLng extends js.Object {
 
 
 @js.native
-class LatLng extends js.Object {
+trait ILatLng extends js.Object {
 
-  var lat: Double = js.native
+  val lat: Double = js.native
 
-  var lng: Double = js.native
+  val lng: Double = js.native
 
+}
+
+
+@js.native
+class LatLng extends ILatLng {
 
   def distanceTo(other: LatLng): Double = js.native
 
