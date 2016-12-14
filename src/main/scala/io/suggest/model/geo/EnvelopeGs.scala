@@ -82,8 +82,8 @@ case class EnvelopeGs(topLeft: GeoPoint, bottomRight: GeoPoint) extends GeoShape
 
   override def toEsShapeBuilder: ShapeBuilder = {
     ShapeBuilder.newEnvelope()
-      .topLeft( topLeft.toJstCoordinate )
-      .bottomRight( bottomRight.toJstCoordinate )
+      .topLeft( GeoPoint.toJstCoordinate(topLeft) )
+      .bottomRight( GeoPoint.toJstCoordinate(bottomRight) )
   }
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
@@ -99,14 +99,15 @@ case class EnvelopeGs(topLeft: GeoPoint, bottomRight: GeoPoint) extends GeoShape
   /** Экспорт в GeoJSON Polygon.
     * Не тестировано, но по идее должно работать. */
   override def toPlayGeoJsonGeom: Geometry[LatLng] = {
+    import GeoPoint.toLatLng
     val outer = List(
-      topLeft.toLatLng,
-      topLeft.copy(lon = bottomRight.lon).toLatLng,
-      bottomRight.toLatLng,
-      bottomRight.copy(lat = topLeft.lat).toLatLng
+      toLatLng( topLeft ),
+      toLatLng( topLeft.copy(lon = bottomRight.lon) ),
+      toLatLng( bottomRight ),
+      toLatLng( bottomRight.copy(lat = topLeft.lat) )
     )
     Polygon [LatLng] (
-      List( outer )
+      outer :: Nil
     )
   }
 

@@ -15,11 +15,13 @@ import play.extras.geojson.{LatLng, MultiPoint}
  * Created: 29.08.14 17:50
  * Description: Аналог линии, но не линия, а просто множество точек.
  */
-object MultiPoingGs extends MultiPointShapeStatic {
-  override type Shape_t = MultiPoingGs
+object MultiPointGs extends MultiPointShapeStatic {
+
+  override type Shape_t = MultiPointGs
+
 }
 
-case class MultiPoingGs(coords: Seq[GeoPoint]) extends MultiPointShape {
+case class MultiPointGs(coords: Seq[GeoPoint]) extends MultiPointShape {
 
   override def shapeType = GsTypes.multipoint
 
@@ -31,7 +33,7 @@ case class MultiPoingGs(coords: Seq[GeoPoint]) extends MultiPointShape {
 
   override def toPlayGeoJsonGeom: MultiPoint[LatLng] = {
     MultiPoint(
-      coordinates = coords.iterator.map(_.toLatLng).toStream
+      coordinates = MultiPointGs.coords2latLngs(coords)
     )
   }
 
@@ -49,6 +51,14 @@ trait MultiPointShapeStatic extends GsStatic {
   override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ COORDS_ESFN).format[Seq[GeoPoint]]
       .inmap[Shape_t](apply, _.coords)
+  }
+
+  /** Сборка immutable-коллекции из инстансов LatLng. */
+  def coords2latLngs(coords: TraversableOnce[GeoPoint]): Stream[LatLng] = {
+    coords
+      .toIterator
+      .map( GeoPoint.toLatLng )
+      .toStream
   }
 
 }

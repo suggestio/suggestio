@@ -165,7 +165,7 @@ object GsTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsValT
 
   val multipoint          : T = new Val("multipoint") {
     override def geoJsonName  = Some("MultiPoint")
-    override def companion    = MultiPoingGs
+    override def companion    = MultiPointGs
   }
 
   val multilinestring     : T = new Val("multilinestring") {

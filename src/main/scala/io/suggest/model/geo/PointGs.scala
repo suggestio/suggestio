@@ -35,7 +35,7 @@ case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
   override def shapeType = GsTypes.point
 
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    List(COORDS_ESFN -> coord.toPlayGeoJson)
+    (COORDS_ESFN -> GeoPoint.toPlayGeoJson(coord)) :: Nil
   }
 
   override def toEsShapeBuilder = {
@@ -45,7 +45,7 @@ case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
   override def firstPoint = coord
 
   override def toPlayGeoJsonGeom: Point[LatLng] = {
-    Point( coord.toLatLng )
+    Point( GeoPoint.toLatLng(coord) )
   }
 
   override def centerPoint = Some(coord)

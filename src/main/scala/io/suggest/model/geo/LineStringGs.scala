@@ -17,7 +17,7 @@ object LineStringGs extends MultiPointShapeStatic {
   override type Shape_t = LineStringGs
 
   def coords2playJson(coords: Seq[GeoPoint]): JsArray = {
-    val coordsJson = coords map { _.toPlayGeoJson }
+    val coordsJson = coords.map( GeoPoint.toPlayGeoJson )
     JsArray(coordsJson)
   }
 
@@ -38,7 +38,7 @@ case class LineStringGs(coords: Seq[GeoPoint]) extends MultiPointShape {
 
   override def toPlayGeoJsonGeom: LineString[LatLng] = {
     LineString(
-      coordinates = coords.iterator.map(_.toLatLng).toStream
+      coordinates = LineStringGs.coords2latLngs(coords)
     )
   }
 

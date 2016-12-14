@@ -8,8 +8,8 @@ package io.suggest.model.geo
  */
 class MultiPointGsTest extends MultiPoingGeoShapeTest {
 
-  override type T = MultiPoingGs
-  override def companion = MultiPoingGs
+  override type T = MultiPointGs
+  override def companion = MultiPointGs
 
   override protected def JSON_EXAMPLE: String = {
     """
@@ -22,8 +22,8 @@ class MultiPointGsTest extends MultiPoingGeoShapeTest {
     """.stripMargin
   }
 
-  override protected def JSON_EXAMPLE_PARSED: MultiPoingGs = {
-    MultiPoingGs(Seq(
+  override protected def JSON_EXAMPLE_PARSED: MultiPointGs = {
+    MultiPointGs(Seq(
       GeoPoint(lat = 2.0, lon = 102.0),
       GeoPoint(lat = 2.0, lon = 103.0)
     ))

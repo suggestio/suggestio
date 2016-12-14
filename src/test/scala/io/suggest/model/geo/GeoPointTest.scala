@@ -17,30 +17,6 @@ class GeoPointTest extends FlatSpec with LatLonRnd[GeoPoint] with PlayJsonTestUt
 
   override type T = GeoPoint
 
-  "JSON (Jackson)" should "serialize/deserialize to/from JSON using GeoJSON format" in {
-    mkTests { gp =>
-      val jsonStr = Json.stringify( gp.toPlayGeoJson )
-      val jacksonJson = JacksonWrapper.deserialize [ju.ArrayList[Any]] (jsonStr)
-      GeoPoint.deserializeOpt( jacksonJson )  shouldBe  Some(gp)
-    }
-  }
-
-  it should "serialize/deserialize to/from JSON using string lat,lon representation" in {
-    mkTests { gp =>
-      val jsonStr = Json.stringify( gp.toPlayJsonEsStr )
-      val jacksonJson = JacksonWrapper.deserialize [String] (jsonStr)
-      GeoPoint.deserializeOpt( jacksonJson )  shouldBe  Some(gp)
-    }
-  }
-
-  it should "serialize/deserialize to/from JSON using JSON Object format" in {
-    mkTests { gp =>
-      val jsonStr = Json.stringify( gp.toPlayJson )
-      val jacksonJson = JacksonWrapper.deserialize [ju.HashMap[Any, Any]] (jsonStr)
-      GeoPoint.deserializeOpt( jacksonJson )  shouldBe  Some(gp)
-    }
-  }
-
   override protected def mkInstance = GeoPoint(lat = newLat, lon = newLon)
 
 

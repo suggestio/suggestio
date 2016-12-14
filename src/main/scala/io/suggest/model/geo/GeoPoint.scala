@@ -1,17 +1,16 @@
 package io.suggest.model.geo
 
-import java.{lang => jl, util => ju}
+import java.{lang => jl}
 
 import io.suggest.geo.IGeoPoint
 import io.suggest.model.es.EsModelUtil
-import EsModelUtil.doubleParser
 import com.spatial4j.core.context.SpatialContext
 import com.spatial4j.core.io.GeohashUtils
 import com.spatial4j.core.shape.Point
 import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.util.{JacksonWrapper, MacroLogsImpl}
+import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
@@ -19,17 +18,18 @@ import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 import play.extras.geojson.{LatLng, LngLat}
 
-import scala.collection.JavaConversions._
-
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 08.08.14 10:40
- * Description: Представление географической точки в рамках проекта s.io.
- * Сделано наподобии org.elasticsearch.common.geo.Geopoint с поправкой на полную неизменяемость и другие фичи.
- *
- * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]]
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 08.08.14 10:40
+  * Description: Представление географической точки в рамках проекта s.io.
+  * Сделано наподобии org.elasticsearch.common.geo.Geopoint с поправкой на полную неизменяемость и другие фичи.
+  *
+  * 2016.dec.14: Пошёл вынос класса модели в common, где уже ему было давно заготовлено место.
+  * Унификация связана с попыткой использования boopickle на js-стороне.
+  *
+  * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]]
+  */
 
 object GeoPoint extends MacroLogsImpl {
 
@@ -86,56 +86,6 @@ object GeoPoint extends MacroLogsImpl {
   val ES_LAT_FN = "lat"
   val ES_LON_FN = "lon"
 
-
-  /** Десериализатор гео-точки из представления ES или чего-то такого. */
-  val deserializeOpt: PartialFunction[Any, Option[GeoPoint]] = {
-    // Массив GeoJson в формате [LON, lat]: [12.53245, -44.43553] -- http://geojson.org/
-    case l: jl.Iterable[_] =>
-      deserializeOpt(l: Traversable[_])
-
-    case l: Traversable[_] =>
-      l.headOption.flatMap { lonRaw =>
-        l.tail.headOption.flatMap { latRaw =>
-          try {
-            val lat = doubleParser(latRaw)
-            val lon = doubleParser(lonRaw)
-            Some(GeoPoint(lat = lat, lon = lon))
-          } catch {
-            case ex: Throwable =>
-              error("Cannot deserialize geojson array into GeoPoint: [" + l.mkString(", ") + "]", ex)
-              None
-          }
-        }
-      }
-    // Строковое представление вида "41.12,-71.34" ("lat,lon")
-    case s: String =>
-      try {
-        Some(GeoPoint(s))
-      } catch {
-        case ex: Throwable =>
-          error("Cannot deserialize GeoPoint from string: " + s, ex)
-          None
-      }
-    // {"lat": 12.123, "lon": -41.542}
-    case jm: ju.Map[_,_] =>
-      Option(jm.get(ES_LAT_FN)) flatMap { latRaw =>
-        Option(jm.get(ES_LON_FN)) flatMap { lonRaw =>
-          try {
-            val lat = doubleParser(latRaw)
-            val lon = doubleParser(lonRaw)
-            val gp = GeoPoint(lat = lat, lon = lon)
-            Some(gp)
-          } catch {
-            case ex: Throwable =>
-              error("Cannot deserialize GeoPoint from JSON object:\n" + JacksonWrapper.serializePretty(jm), ex)
-              None
-          }
-        }
-      }
-
-    case null =>
-      None
-  }
 
   private def getCommaIndex(str: String) = str indexOf ','
 
@@ -250,50 +200,36 @@ object GeoPoint extends MacroLogsImpl {
     }
   }
 
-}
-
-
-case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
-
-  /** Конвертация в экземпляр ES GeoPoint. */
-  def toEsGeopoint = new EsGeoPoint(lat, lon)
-
-  override def toString: String = super.toString
+  // Экспорт инстансов IGeoPoint, вынесен из класса GeoPoint перед его депортацией в [common].
 
   /**
    * Конвертация в GeoJson-представление координат, т.е. в JSON-массив.
    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_lat_lon_as_array_5]]
    */
-  def toPlayGeoJson = {
+  def toPlayGeoJson(gp: IGeoPoint) = {
     JsArray(Seq(
-      JsNumber(lon), JsNumber(lat)
+      JsNumber(gp.lon), JsNumber(gp.lat)
     ))
   }
 
-  /** elasticseearch-представление. */
-  def toEsStr: String = toQsStr
-  def toPlayJsonEsStr = JsString(toEsStr)
-
-  /**
-   * Конвертация координат в play JSON представление.
-   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_lat_lon_as_properties_5]]
-   */
-  def toPlayJson = {
-    JsObject(Seq(
-      "lat" -> JsNumber(lat),
-      "lon" -> JsNumber(lon)
-    ))
-  }
-
-  def toLatLng: LatLng = {
-    LatLng(lat = lat, lng = lon)
-  }
-
-  def toLngLat: LngLat = {
-    LngLat(lng = lon, lat = lat)
-  }
+  def toEsStr(gp: IGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 
   /** Пространственная координата в терминах JTS. */
-  def toJstCoordinate = new Coordinate(lon, lat)
+  def toJstCoordinate(gp: IGeoPoint) = new Coordinate(gp.lon, gp.lat)
+
+  def toLngLat(gp: IGeoPoint): LngLat = {
+    LngLat(lng = gp.lon, lat = gp.lat)
+  }
+
+  def toLatLng(gp: IGeoPoint): LatLng = {
+    LatLng(lat = gp.lat, lng = gp.lon)
+  }
+
+}
+
+
+case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
+
+  override def toString: String = super.toString
 
 }
