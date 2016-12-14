@@ -289,7 +289,7 @@ trait IEdgeInfo extends IIsNonEmpty {
     if (_geoPoints.nonEmpty) {
       sb.append("geoPoints={")
       for (gp <- _geoPoints) {
-        sb.append(gp.toEsStr)
+        sb.append( GeoPoint.toEsStr(gp) )
       }
       sb.append('}')
     }
