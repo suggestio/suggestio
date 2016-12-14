@@ -1,5 +1,7 @@
 package io.suggest.lk.adv.m
 
+import scala.scalajs.js
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,12 +10,13 @@ package io.suggest.lk.adv.m
   * чтобы скрыть оригинальное имя поля и месседж от любопытных глаз.
   * Тут модель приходящих с сервера данных, разрешающих бесплатное размещение, когда у юзера прав достаточно.
   */
-trait IAdv4FreeProps {
+@js.native
+trait IAdv4FreeProps extends js.Object {
 
   /** Имя form-поля: "freeAdv" */
-  def fn: String
+  val fn: String = js.native
 
   /** Текст галочки: "Размещать бесплатно, без подтверждения?" */
-  def title: String
+  val title: String = js.native
 
 }
