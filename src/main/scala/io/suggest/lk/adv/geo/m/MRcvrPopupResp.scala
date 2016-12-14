@@ -1,10 +1,10 @@
-package io.suggest.lk.adv.geo.tags.m
+package io.suggest.lk.adv.geo.m
 
-import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Popup._
 import io.suggest.sjs.dt.period.m.IDatesPeriodInfo
 
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
 
 /**

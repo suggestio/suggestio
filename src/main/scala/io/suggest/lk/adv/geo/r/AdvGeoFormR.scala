@@ -4,6 +4,7 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Req
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
+import io.suggest.lk.adv.geo.m.{IRcvrPopupResp, MMapGjResp, MarkerNodeId}
 import io.suggest.lk.adv.geo.tags.m._
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.m.IAdv4FreeProps
@@ -16,6 +17,7 @@ import io.suggest.sjs.dt.period.m.IDatesPeriodInfo
 import io.suggest.sjs.dt.period.r._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.model.SjsRoute
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -23,7 +25,7 @@ import react.leaflet.lmap.LMapR
 import react.leaflet.popup.PopupR
 import io.suggest.sjs.leaflet.L
 import io.suggest.sjs.leaflet.event.LocationEvent
-import io.suggest.sjs.leaflet.map.LatLng
+import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import react.leaflet.control.LocateControlR
 import react.leaflet.layer.TileLayerR
@@ -50,12 +52,25 @@ object AdvGeoFormR extends Log {
   /** Модель пропертисов, приходящая свыше из инициализатора. */
   case class Props(
     adId            : String,
-    formActionUrl   : String,
-    adv4free        : Option[IAdv4FreeProps],
-    method          : String = "POST"
-  )
+    adv4free        : Option[IAdv4FreeProps]
+  ) {
+
+    /** Данные для финального сабмита формы. */
+    val submit = SjsRoute.fromJsRouteUsingXhrOpts {
+      jsRoutes.controllers.LkAdvGeo.forAdSubmit( adId )
+    }
+
+    /** Данные для POST-реквеста с формой с целью запроса стоимости размещения. */
+    val price = SjsRoute.fromJsRouteUsingXhrOpts {
+      jsRoutes.controllers.LkAdvGeo.getPriceSubmit( adId )
+    }
+
+  }
+
 
   /** Модель состояния.
+    * @param mapCenter Координаты центра карты.
+    * @param mapZoom Состояние зума карты.
     * @param rcvrMarkers Маркеры точек-ресиверов для карты ресиверов, полученные с сервера.
     *                    None -- дефолтовое состояние. Почти сразу же заменяется на
     *                    Left(Future[Resp]) -- Запущен XHR за списком маркеров.
@@ -64,6 +79,8 @@ object AdvGeoFormR extends Log {
     *                      true -- геолокация уже была, действия уже были приняты.
     */
   case class State(
+    //mapCenter     : LatLng,
+    //mapZoom       : Zoom_t,
     onMainScreen  : Boolean = true,
     rcvrMarkers   : Option[Either[Future[_], js.Array[Marker]]] = None,
     locationFound : Boolean = false,
@@ -182,10 +199,14 @@ object AdvGeoFormR extends Log {
     def rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
       val checked = e.target.checked
       $.modState { s0 =>
-        val ps = s0.rcvrPopup.get.resp.right.get
+        // Состояние попапа уже обязано быть готовым, т.к. данный сигнал другого состояние не подразумевает.
+        val ps = s0.rcvrPopup.get
+          .resp.right.get
+        // Найти узел с текущим id среди всех узлов.
         val checkedOnServerOpt = ps.groups.iterator
           .flatMap(_.nodes)
           .find(_.nodeId == rk.to)
+          // Содержит ли описание узла с сервера текущее значение чекбокса? Если да, то значит значение галочки вернулось на исходное.
           .map(_.checked)
 
         s0.withRcvrsMap(
@@ -206,8 +227,8 @@ object AdvGeoFormR extends Log {
 
         // Рендер самой формы...
         <.form(
-          ^.method := props.method,
-          ^.action := props.formActionUrl,
+          ^.method := props.submit.method,
+          ^.action := props.submit.url,
 
           for (adv4free <- props.adv4free) yield {
             Adv4FreeR(
@@ -273,6 +294,7 @@ object AdvGeoFormR extends Log {
               )
             }
           )
+
         ),
 
         // Тут немного пустоты нужно...
@@ -327,7 +349,7 @@ object AdvGeoFormR extends Log {
 
           // Опять проблема с Option'ами. Чиним через iterator + key.
           for {
-            r <- state.rcvrPopup.iterator
+            r    <- state.rcvrPopup.iterator
             resp <- r.resp.right.toOption.iterator
           } yield {
             PopupR(position = r.latLng, key = "p")(
@@ -342,30 +364,59 @@ object AdvGeoFormR extends Log {
                     },
                     for (n <- g.nodes.iterator) yield {
                       val rcvrKey = RcvrKey(from = r.nodeId, to = n.nodeId, groupId = g.groupId.toOption)
-                      val checked = state.rcvrsMap.getOrElse(rcvrKey, n.checked)
-
+                      val name = n.nameOpt.getOrElse[String]("???")
                       <.div(
                         ^.key := rcvrKey.toString,
                         ^.`class` := Css.Lk.LK_FIELD,
-                        <.label(
-                          ^.classSet1(
-                            Css.Lk.LK_FIELD_NAME,
-                            Css.Colors.RED    -> (!checked && !n.isCreate),
-                            Css.Colors.GREEN  -> (checked  && n.isCreate)
-                          ),
-                          <.input(
-                            ^.`type`    := "checkbox",
-                            ^.checked   := checked,
-                            ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
-                          ),
-                          <.span,
-                          n.nameOpt.getOrElse[String]("???")
-                        )
+                        // TODO Произвести дедубликацию кода, т.к. обе ветки очень похожи.
+                        n.intervalOpt.fold {
+                          // Нет текущего размещения. Рендерить активный рабочий чекбокс.
+                          val checked = state.rcvrsMap.getOrElse(rcvrKey, n.checked)
+
+                          <.label(
+                            ^.classSet1(
+                              Css.Lk.LK_FIELD_NAME,
+                              Css.Colors.RED    -> (!checked && !n.isCreate),
+                              Css.Colors.GREEN  -> (checked  && n.isCreate)
+                            ),
+                            <.input(
+                              ^.`type`    := "checkbox",
+                              ^.checked   := checked,
+                              ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
+                            ),
+                            <.span,
+                            name
+                          )
+                        } { ivl =>
+                          // Есть какая-то инфа по текущему размещению на данном узле.
+                          <.label(
+                            ^.classSet1(
+                              Css.Lk.LK_FIELD_NAME,
+                              Css.Colors.GREEN  -> true
+                            ),
+                            <.input(
+                              ^.`type`    := "checkbox",
+                              ^.checked   := true,
+                              ^.disabled  := true
+                            ),
+                            <.span,
+                            name,
+                            " ",
+                            <.span(
+                              ^.title := ivl.start.dow,
+                              Messages("from._date"), ivl.start.date
+                            ),
+                            " ",
+                            <.span(
+                              ^.title := ivl.end.dow,
+                              Messages("till._date"), ivl.end.date
+                            )
+                          )
+                        }
                       )
                     }
                   )
                 }
-
               ) // Popup div
             )
           }

@@ -5,6 +5,7 @@ import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsm
 import io.suggest.lk.adv.geo.tags.m.signal.{RadiusChanged, TagsChanged}
 import io.suggest.lk.adv.geo.tags.vm.{AdIdInp, AgtForm}
 import io.suggest.lk.adv.m.IAdv4FreeProps
+import io.suggest.lk.price.vm.PriceUrlInput
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.fsm.TagsEditFsm
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
@@ -18,6 +19,7 @@ import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom
 
 import scala.concurrent.Future
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -100,12 +102,11 @@ class AgtFormInit2 extends IInit {
       // TODO Заполнять пропертисы с сервера.
       AdvGeoFormR.Props(
         adId          = adId,
-        formActionUrl = "TODO",
-        method        = "TODO",
-        adv4free = Some( new IAdv4FreeProps {
+        adv4free      = None
+        /*Some( new IAdv4FreeProps {
           override def title  = "Размещать нахаляву?"
           override def fn     = "adv4ffreee"
-        })
+        })*/
       )
     )
     ReactDOM.render(rform, dom.document.getElementById("xynta"))

@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.tags.m
+package io.suggest.lk.adv.geo.m
 
 import io.suggest.sjs.leaflet.marker.Marker
 

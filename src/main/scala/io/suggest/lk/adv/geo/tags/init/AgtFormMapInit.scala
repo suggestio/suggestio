@@ -1,7 +1,7 @@
 package io.suggest.lk.adv.geo.tags.init
 
+import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsm
-import io.suggest.lk.adv.geo.tags.m.MMapGjResp
 import io.suggest.lk.adv.geo.tags.m.signal.RcvrChanged
 import io.suggest.lk.adv.geo.tags.vm.AdIdInp
 import io.suggest.lk.adv.geo.tags.vm.popup.rcvr.{NodeCheckBox, Outer}

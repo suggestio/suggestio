@@ -1,12 +1,12 @@
 package io.suggest.lk.adv.geo.u
 
-import io.suggest.lk.adv.geo.tags.m.MMapGjFeature
+import io.suggest.lk.adv.geo.m.MMapGjFeature
 import io.suggest.maps.c.LeafletPinMarker
 import io.suggest.sjs.common.geo.json.GjTypes
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
-import io.suggest.lk.adv.geo.tags.m.MarkerNodeId._
+import io.suggest.lk.adv.geo.m.MarkerNodeId._
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
