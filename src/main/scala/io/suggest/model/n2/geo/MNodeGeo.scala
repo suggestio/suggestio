@@ -1,8 +1,9 @@
 package io.suggest.model.n2.geo
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -29,7 +30,7 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
   }
 
   implicit val FORMAT: Format[MNodeGeo] = {
-    (__ \ Fields.POINT_FN).formatNullable[GeoPoint]
+    (__ \ Fields.POINT_FN).formatNullable[MGeoPoint]
       .inmap [MNodeGeo] (
         apply, _.point
       )
@@ -55,6 +56,6 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
 
 
 case class MNodeGeo(
-  point     : Option[GeoPoint]  = None
+  point     : Option[MGeoPoint]  = None
 )
   extends EmptyProduct

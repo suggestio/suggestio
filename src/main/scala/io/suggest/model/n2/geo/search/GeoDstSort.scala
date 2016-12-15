@@ -1,8 +1,9 @@
 package io.suggest.model.n2.geo.search
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.geo.GeoPoint
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
+import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.common.lucene.search.function.CombineFunction
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -17,13 +18,14 @@ import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 trait GeoDstSort extends DynSearchArgs {
 
   /** + сортировка результатов по расстоянию до указанной точки. */
-  def withGeoDistanceSort: Option[GeoPoint]
+  def withGeoDistanceSort: Option[MGeoPoint]
 
   override def toEsQuery: QueryBuilder = {
     val qb0 = super.toEsQuery
     withGeoDistanceSort.fold(qb0) { geoPoint =>
       val fn = MNodeFields.Geo.POINT_FN
-      val func = ScoreFunctionBuilders.gaussDecayFunction(fn, geoPoint.toQsStr, "1km")
+      val func = ScoreFunctionBuilders
+        .gaussDecayFunction(fn, GeoPoint.toEsStr(geoPoint), "1km")
         .setOffset("0km")
       QueryBuilders.functionScoreQuery(qb0, func)
         .boostMode(CombineFunction.REPLACE)
@@ -44,7 +46,7 @@ trait GeoDstSort extends DynSearchArgs {
 
 /** Дефолтовая реализация аддона [[GeoDstSort]]. */
 trait GeoDstSortDflt extends GeoDstSort {
-  override def withGeoDistanceSort: Option[GeoPoint] = None
+  override def withGeoDistanceSort: Option[MGeoPoint] = None
 }
 
 

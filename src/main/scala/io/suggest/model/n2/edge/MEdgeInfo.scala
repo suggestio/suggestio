@@ -1,6 +1,7 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty, IIsNonEmpty}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.SinkShowLevel
@@ -11,6 +12,7 @@ import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
 import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 
 /**
  * Suggest.io
@@ -102,8 +104,8 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         _.getOrElse(Nil),
         { geos => if (geos.nonEmpty) Some(geos) else None }
       ) and
-    (__ \ GEO_POINT_FN).formatNullable[ Seq[GeoPoint] ]
-      .inmap [Seq[GeoPoint]] (
+    (__ \ GEO_POINT_FN).formatNullable[ Seq[MGeoPoint] ]
+      .inmap [Seq[MGeoPoint]] (
         _.getOrElse(Nil),
         { gps => if (gps.nonEmpty) Some(gps) else None }
       )
@@ -226,7 +228,7 @@ trait IEdgeInfo extends IIsNonEmpty {
   def tags          : Set[String]
 
   /** Некие опорные точки, если есть. */
-  def geoPoints     : Seq[GeoPoint]
+  def geoPoints     : Seq[MGeoPoint]
 
 
   /** Форматирование для вывода в шаблонах. */
@@ -310,7 +312,7 @@ case class MEdgeInfo(
   override val itemIds      : Set[Long]             = Set.empty,
   override val tags         : Set[String]           = Set.empty,
   override val geoShapes    : List[MEdgeGeoShape]   = Nil,
-  override val geoPoints    : Seq[GeoPoint]         = Nil
+  override val geoPoints    : Seq[MGeoPoint]        = Nil
 )
   extends EmptyProduct
   with IEdgeInfo

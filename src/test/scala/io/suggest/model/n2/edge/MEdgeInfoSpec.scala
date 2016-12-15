@@ -1,7 +1,8 @@
 package io.suggest.model.n2.edge
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.geo.{Distance, GeoPoint, CircleGs}
+import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.sc.common.SinkShowLevels
 import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
@@ -38,7 +39,7 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
             id     = 5,
             glevel = NodeGeoLevels.NGL_BUILDING,
             shape  = CircleGs(
-              center = GeoPoint(10.1, 11.2),
+              center = MGeoPoint(10.1, 11.2),
               radius = Distance(10.55, DistanceUnit.KILOMETERS)
             )
           )

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.MockedEsSn
-import io.suggest.model.geo.GeoPoint
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
@@ -70,7 +70,7 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
             }
           ),
           geo = MNodeGeo(
-            point = Some(GeoPoint(10.0, 33.2))
+            point = Some(MGeoPoint(10.0, 33.2))
           ),
           ad = MNodeAd(
             blockMeta = Some(BlockMeta.DEFAULT)

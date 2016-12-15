@@ -1,5 +1,6 @@
 package io.suggest.model.n2.edge
 
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.geo._
 import io.suggest.ym.model.NodeGeoLevels
@@ -22,7 +23,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
       id     = 1,
       glevel = NodeGeoLevels.NGL_BUILDING,
       shape  = CircleGs(
-        center = GeoPoint(10.1, 11.2),
+        center = MGeoPoint(10.1, 11.2),
         radius = Distance(10.55, DistanceUnit.KILOMETERS)
       )
     )
@@ -49,7 +50,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
         glevel = NodeGeoLevels.NGL_TOWN,
         shape  = PolygonGs(
           outer = LineStringGs(Seq(
-            GeoPoint(10, 10), GeoPoint(20, 20), GeoPoint(30, 30), GeoPoint(0, 30), GeoPoint(10, 10)
+            MGeoPoint(10, 10), MGeoPoint(20, 20), MGeoPoint(30, 30), MGeoPoint(0, 30), MGeoPoint(10, 10)
           ))
         ),
         fromUrl = Some("https://x.com/asd.jpg"),
