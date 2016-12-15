@@ -1,6 +1,6 @@
 package models.mext
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 import models.adv.{MExtReturn, MExtTarget}
 import models.MNode
 import play.api.libs.oauth._
@@ -17,7 +17,7 @@ trait IOAuth1MkPostArgs {
   def acTok: RequestToken
 
   /** Геоинфа. */
-  def geo: Option[GeoPoint]
+  def geo: Option[MGeoPoint]
 
   /** Узел, с которого идёт постинг. */
   def mnode: MNode

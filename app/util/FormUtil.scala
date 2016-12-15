@@ -5,6 +5,7 @@ import java.util.Currency
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.MEsUuId
 import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
@@ -443,17 +444,17 @@ object FormUtil {
 
   /** Маппер для lat-lon координат, заданных в двух полях формы.
     * val потому что некоторые XFormUtil юзают это как val. */
-  val geoPointM: Mapping[GeoPoint] = {
+  val geoPointM: Mapping[MGeoPoint] = {
     mapping(
       "lat" -> doubleM,
       "lon" -> doubleM
     )
-    { GeoPoint.apply }
-    { GeoPoint.unapply }
+    { MGeoPoint.apply }
+    { MGeoPoint.unapply }
   }
 
   /** Опциональный маппер для lat-lon координат. */
-  def geoPointOptM: Mapping[Option[GeoPoint]] = {
+  def geoPointOptM: Mapping[Option[MGeoPoint]] = {
     optional(geoPointM)
   }
 

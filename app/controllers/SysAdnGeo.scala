@@ -14,6 +14,7 @@ import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.DateTime
 import play.api.data._
 import Forms._
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.node.MNodes
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
@@ -425,7 +426,8 @@ class SysAdnGeo @Inject() (
   def createCircle(nodeId: String) = IsSuNodeGet(nodeId).apply { implicit request =>
     val ngl = guessGeoLevel getOrElse NodeGeoLevels.default
     // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
-    val gpStub = request.mnode.geo.point getOrElse GeoPoint(0, 0)
+    val gpStub = request.mnode.geo.point
+      .getOrElse( MGeoPoint(0, 0) )
     val stub = MEdgeGeoShape(
       id      = -1,
       glevel  = ngl,
@@ -638,7 +640,7 @@ class SysAdnGeo @Inject() (
     }
 
     // Предлагаем центр имеющегося круга за точку центра.
-    val pointOpt: Option[GeoPoint] = {
+    val pointOpt: Option[MGeoPoint] = {
       shapes
         .find(_.shape.isInstanceOf[CircleGs])
         .map(_.shape.asInstanceOf[CircleGs].center)

@@ -1,6 +1,7 @@
 package models.msc.resp
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.sc.ScConstants.Resp._
@@ -18,7 +19,7 @@ object MScRespIndex {
     (__ \ HTML_FN).write[String] and
     (__ \ ADN_ID_FN).writeNullable[String] and
     (__ \ TITLE_FN).writeNullable[String] and
-    (__ \ GEO_POINT_FN).writeNullable[GeoPoint]
+    (__ \ GEO_POINT_FN).writeNullable[MGeoPoint]
   )(unlift(unapply))
 
 }
@@ -28,5 +29,5 @@ case class MScRespIndex(
   indexHtml       : String,
   currAdnId       : Option[String],
   title           : Option[String]    = None,
-  geoPoint        : Option[GeoPoint]  = None
+  geoPoint        : Option[MGeoPoint]  = None
 )

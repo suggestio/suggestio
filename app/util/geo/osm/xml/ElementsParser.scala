@@ -1,8 +1,8 @@
 package util.geo.osm.xml
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 import org.xml.sax.helpers.DefaultHandler
-import org.xml.sax.{SAXParseException, Attributes}
+import org.xml.sax.{Attributes, SAXParseException}
 import util.PlayLazyMacroLogsImpl
 import util.ai.sax.StackFsmSax
 import util.geo.osm._
@@ -137,7 +137,7 @@ trait ElementsParserT
     val getNode = {
       OsmNode(
         id = getId,
-        gp = GeoPoint(
+        gp = MGeoPoint(
           lat = thisTagAttrs.getValue(ATTR_LAT).toDouble,
           lon = thisTagAttrs.getValue(ATTR_LON).toDouble
         )

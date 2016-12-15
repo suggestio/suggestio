@@ -1,6 +1,7 @@
 package models
 
 import functional.OneAppPerSuiteNoGlobalStart
+import io.suggest.geo.MGeoPoint
 import org.scalatestplus.play._
 
 /**
@@ -13,8 +14,8 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
   // lazy, т.к. GeoPoint() дергает package, который дёргает другие модели, которые дёргают config.
   // И тогда вылетает ExceptionInInitializerError: There is no started application.
-  private val gp0 = GeoPoint(59.926185700000005, 30.2333629)
-  private def gp1 = GeoPoint(59.92626006720579, 30.233811233220834)
+  private val gp0 = MGeoPoint(59.926185700000005, 30.2333629)
+  private def gp1 = MGeoPoint(59.92626006720579, 30.233811233220834)
 
 
   "GeoMode" must {
@@ -31,12 +32,12 @@ class GeoModeSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
     "parse and bind qs 'lat,lon' value" in {
       GeoMode(Some("59.926185700000005,30.2333629"))    mustBe  GeoLocation(gp0)
-      GeoMode(Some("-66.245,30.2333629"))               mustBe  GeoLocation(GeoPoint(-66.245, 30.2333629))
+      GeoMode(Some("-66.245,30.2333629"))               mustBe  GeoLocation(MGeoPoint(-66.245, 30.2333629))
     }
 
     "parse stranger 'lat,lon' value" in {
-      GeoMode(Some("-66.,30"))    mustBe  GeoLocation(GeoPoint(-66.0, 30.0))
-      GeoMode(Some("0,-0"))       mustBe  GeoLocation(GeoPoint(0.0, 0.0))  // северный полюс.
+      GeoMode(Some("-66.,30"))    mustBe  GeoLocation(MGeoPoint(-66.0, 30.0))
+      GeoMode(Some("0,-0"))       mustBe  GeoLocation(MGeoPoint(0.0, 0.0))  // северный полюс.
     }
 
     // Для сбора статистики нужна инфа о точности.

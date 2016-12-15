@@ -1,6 +1,6 @@
 package models.madn.mapf
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 import models.adv.form.{IAdvFormResult, MDatesPeriod}
 import models.maps.MapViewState
 
@@ -15,7 +15,7 @@ import models.maps.MapViewState
   */
 
 case class MAdnMapFormRes(
-  point                     : GeoPoint,
+  point                     : MGeoPoint,
   mapState                  : MapViewState,
   override val period       : MDatesPeriod
 )

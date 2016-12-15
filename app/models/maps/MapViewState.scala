@@ -1,6 +1,6 @@
 package models.maps
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 
 /**
   * Suggest.io
@@ -10,6 +10,6 @@ import io.suggest.model.geo.GeoPoint
   */
 
 case class MapViewState(
-  center  : GeoPoint,
+  center  : MGeoPoint,
   zoom    : Int = 10
 )

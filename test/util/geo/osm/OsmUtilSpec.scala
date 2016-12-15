@@ -1,8 +1,9 @@
 package util.geo.osm
 
 import functional.{OneAppPerSuiteNoGlobalStart, WithInputStream}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.geo.GsType
-import io.suggest.model.geo.{GsTypes, LineStringGs, GeoPoint}
+import io.suggest.model.geo.{GsTypes, LineStringGs}
 import org.scalatestplus.play._
 
 /**
@@ -64,7 +65,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
 
     "parse nodes" in {
       val nodesData = Seq(
-        "node.255233500.osm.xml" -> (255233500L, GeoPoint(lat = 59.9416380, lon = 30.3098903))
+        "node.255233500.osm.xml" -> (255233500L, MGeoPoint(lat = 59.9416380, lon = 30.3098903))
       )
       nodesData foreach { case (nf, (id, gp)) =>
         withFileStream(nf) { is =>
@@ -78,8 +79,8 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
       testWay(
         "way.bolshoy-vo-part.osm.xml",
         WayResultInfo(31399147L, ndLen = 9,
-          firstNode = OsmNode(307016L, GeoPoint(lat = 59.9313858, lon = 30.2565811)),
-          lastNode  = OsmNode(307023L, GeoPoint(lat = 59.9295036, lon = 30.2502073))
+          firstNode = OsmNode(307016L, MGeoPoint(lat = 59.9313858, lon = 30.2565811)),
+          lastNode  = OsmNode(307023L, MGeoPoint(lat = 59.9295036, lon = 30.2502073))
         )
       )
     }

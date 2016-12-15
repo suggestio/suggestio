@@ -4,8 +4,9 @@ import com.google.inject.Singleton
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.dt.interval.PeriodsConstants
+import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.model.geo.{CircleGs, Distance, GeoPoint}
+import io.suggest.model.geo.{CircleGs, Distance}
 import models.adv.form._
 import models.maps.{MapViewState, RadMapValue}
 import models.req.{IReq, IReqHdr}
@@ -146,7 +147,7 @@ class AdvFormUtil {
     * @param gp Начальная точка карты. Будет в центре выделенного круга.
     * @return Экземпляр значения rad-map.
     */
-  def radMapValue0(gp: GeoPoint): RadMapValue = {
+  def radMapValue0(gp: MGeoPoint): RadMapValue = {
     RadMapValue(
       state = MapViewState(gp),
       circle = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS))

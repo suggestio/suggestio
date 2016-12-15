@@ -1,9 +1,10 @@
 package util.adv.build
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.MNodeEdges
-import models.{GeoPoint, MPredicate}
+import models.MPredicate
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -96,7 +97,7 @@ class AdvBuilderUtil @Inject() (
     * @param mitems Итемы биллинга или же итератор оных.
     * @return Итератор из награбленных точек.
     */
-  def grabGeoPoints4Stats(mitems: TraversableOnce[MItem]): Iterator[GeoPoint] = {
+  def grabGeoPoints4Stats(mitems: TraversableOnce[MItem]): Iterator[MGeoPoint] = {
     mitems
       .toIterator
       .flatMap(_.geoShape)

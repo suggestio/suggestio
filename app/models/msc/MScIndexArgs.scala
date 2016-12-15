@@ -90,6 +90,7 @@ trait MScIndexArgs {
 
   override def toString: String = {
     import QueryStringBindable._
+    import io.suggest.model.geo.GeoPoint.Implicits._
     MScIndexArgs.qsb.unbind("a", this)
   }
 }

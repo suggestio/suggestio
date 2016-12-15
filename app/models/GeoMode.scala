@@ -1,7 +1,6 @@
 package models
 
-import io.suggest.geo.GeoConstants
-import io.suggest.model.geo
+import io.suggest.geo.{GeoConstants, MGeoPoint}
 import io.suggest.model.geo.{Distance, GeoDistanceQuery, IGeoFindIpResult}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.req.ExtReqHdr
@@ -47,7 +46,7 @@ object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
     }
     val latLonP = ((doubleP <~ delimP) ~ doubleP) ^^ {
       case lat ~ lon =>
-        GeoPoint(lat = lat, lon = lon)
+        MGeoPoint(lat = lat, lon = lon)
     }
     (latLonP ~ accurOptP) ^^ {
       case gp ~ accurOpt =>
@@ -112,7 +111,7 @@ sealed trait GeoMode {
    */
   def geoSearchInfoOpt(implicit request: ExtReqHdr): Future[Option[GeoSearchInfo]]
 
-  def exactGeodata: Option[geo.GeoPoint]
+  def exactGeodata: Option[MGeoPoint]
 
   /** Уровни, по которым надо искать. */
   def nodeDetectLevels: Seq[NodeGeoLevel]
@@ -126,7 +125,7 @@ sealed trait GeoMode {
 @deprecated("Use utils.geo and others instead", "2016.sep.16")
 trait GeoSearchInfo {
   /** Географическая точка, заданная координатами и описывающая клиента. */
-  def geoPoint: geo.GeoPoint
+  def geoPoint: MGeoPoint
   /** Сборка запроса для геопоиска относительно точки.. */
   def geoDistanceQuery: GeoDistanceQuery
   /** Название города. */
@@ -134,9 +133,9 @@ trait GeoSearchInfo {
   /** Двухбуквенный код страны. */
   def countryIso2: Option[String]
   /** Точная геолокация клиента, если есть. */
-  def exactGeopoint: Option[geo.GeoPoint]
+  def exactGeopoint: Option[MGeoPoint]
   /** Координаты точки, которая набегает */
-  def ipGeopoint: Option[geo.GeoPoint]
+  def ipGeopoint: Option[MGeoPoint]
   /** Является ли браузер клиента частью cbca? */
   def isLocalClient: Boolean
 }
@@ -220,7 +219,7 @@ case object GeoIp extends GeoMode with PlayMacroLogsImpl {
     geoIpUtil.findIpCached(ip)
   }
 
-  override def exactGeodata: Option[geo.GeoPoint] = None
+  override def exactGeodata: Option[MGeoPoint] = None
 
   override def nodeDetectLevels = Seq(NodeGeoLevels.NGL_TOWN)
 }
@@ -245,7 +244,7 @@ object GeoLocation {
   * @param accuracyMeters Необязательная точность в метрах.
   */
 @deprecated("Use MGeoLoc.geo Some instead", "2016.sep.16")
-final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
+final case class GeoLocation(geoPoint: MGeoPoint, accuracyMeters: Option[Double] = None) extends GeoMode { gl =>
 
   override def isWithGeo = true
   override def toQsStringOpt = Some(geoPoint.toQsStr)
@@ -254,14 +253,14 @@ final case class GeoLocation(geoPoint: GeoPoint, accuracyMeters: Option[Double] 
     val ra = GeoIp.getRemoteAddr
     for ( _ipGeoLoc <- GeoIp.ip2rangeCity(ra)) yield {
       val res = new GeoSearchInfo {
-        override def geoPoint: geo.GeoPoint = gl.geoPoint
+        override def geoPoint: MGeoPoint = gl.geoPoint
         override def geoDistanceQuery = GeoDistanceQuery(
           center      = gl.geoPoint,
           distanceMax = GeoLocation.DISTANCE_DFLT
         )
         override def exactGeopoint = Some(gl.geoPoint)
 
-        override def ipGeopoint: Option[geo.GeoPoint] = {
+        override def ipGeopoint: Option[MGeoPoint] = {
           for (l <- _ipGeoLoc) yield {
             l.center
           }

@@ -3,11 +3,11 @@ package util.adv.geo
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.model.geo.GeoPoint
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -47,7 +47,7 @@ class AdvGeoLocUtil @Inject() (
     * @param remoteAddress Адресок клиента.
     * @return Фьючерс с начальной гео-точкой.
     */
-  def getGeoPointFromRemoteAddr(remoteAddress: String): Future[Option[GeoPoint]] = {
+  def getGeoPointFromRemoteAddr(remoteAddress: String): Future[Option[MGeoPoint]] = {
     val raInfo = geoIpUtil.fixRemoteAddr( remoteAddress )
     for {
       findIpResOpt <- geoIpUtil.findIpCached( raInfo.remoteAddr )
@@ -59,9 +59,9 @@ class AdvGeoLocUtil @Inject() (
   }
 
   /** Когда нет точки для отображения, взять её с потолка. */
-  def getGeoPointLastResort: GeoPoint = {
+  def getGeoPointLastResort: MGeoPoint = {
     // Штаб ВМФ СПб, который в центре СПб
-    GeoPoint(59.93769, 30.30887)
+    MGeoPoint(59.93769, 30.30887)
   }
 
   private def _geoAdvsItemTypes = Seq(
@@ -78,7 +78,7 @@ class AdvGeoLocUtil @Inject() (
   }
 
   /** Попытаться получить последние координаты текущей карточки из предыдущих размещений. */
-  def getGeoPointFromAdsGeoAdvs(adIds: Traversable[String]): Future[Option[GeoPoint]] = {
+  def getGeoPointFromAdsGeoAdvs(adIds: Traversable[String]): Future[Option[MGeoPoint]] = {
     val resFut = _getPointFromItemId(
       mItems.query
         .filter { q =>
@@ -101,7 +101,7 @@ class AdvGeoLocUtil @Inject() (
     *                  Чтобы избежать сортировки по id, ищем последний id ряда, содержащего геошейп.
     * @return
     */
-  private def _getPointFromItemId(itemIdRep: Rep[Option[Gid_t]]): Future[Option[GeoPoint]] = {
+  private def _getPointFromItemId(itemIdRep: Rep[Option[Gid_t]]): Future[Option[MGeoPoint]] = {
     for {
       gsOpts <- slick.db.run {
         // Извлекаем столбец последнего ряда по его id...
@@ -123,7 +123,7 @@ class AdvGeoLocUtil @Inject() (
 
 
   /** Если вдруг не найдено размещений у текущей карточки, то поискать локации других карточек этого же продьюсера. */
-  def getGeoPointFromProducer(producerIds: Seq[String], excludeAdIds: Seq[String]): Future[Option[GeoPoint]] = {
+  def getGeoPointFromProducer(producerIds: Seq[String], excludeAdIds: Seq[String]): Future[Option[MGeoPoint]] = {
     // Найти id всех карточек этого продьюсера
     val prodAdsSearch = new MNodeSearchDfltImpl {
       override def nodeTypes = Seq( MNodeTypes.Ad )
@@ -149,7 +149,7 @@ class AdvGeoLocUtil @Inject() (
 
 
   /** Попытаться найти геоточку исходя из предыдущих размещений юзера. */
-  def getGeoPointFromUserGeoAdvs(contractId: Gid_t): Future[Option[GeoPoint]] = {
+  def getGeoPointFromUserGeoAdvs(contractId: Gid_t): Future[Option[MGeoPoint]] = {
     // Найти контракт текущего юзера, по нему - id ордеров, по ордерам -- item'ы, и по ним уже точки.
     val orderIds = mOrders.query
       .filter { o =>
@@ -179,12 +179,12 @@ class AdvGeoLocUtil @Inject() (
   /** Интерфейс для одного детектора гео-точки в цепочке детекторов. */
   abstract class GeoPointDetector { that =>
 
-    def get: Future[GeoPoint]
+    def get: Future[MGeoPoint]
 
     def orElse(gpd: => GeoPointDetector): GeoPointDetector = {
       new GeoPointDetector {
         override def toString = s"$that.orElse($gpd)"
-        override def get: Future[GeoPoint] = {
+        override def get: Future[MGeoPoint] = {
           val fut0 = that.get
           // Залоггировать результат работы, если требуется
           _traceAsyncRes(fut0, that.toString)
@@ -203,8 +203,8 @@ class AdvGeoLocUtil @Inject() (
     }
   }
   abstract class GeoPointDetectorOpt extends GeoPointDetector {
-    def getOpt: Future[Option[GeoPoint]]
-    override def get: Future[GeoPoint] = {
+    def getOpt: Future[Option[MGeoPoint]]
+    override def get: Future[MGeoPoint] = {
       getOpt.map( EmptyUtil.getF )
     }
   }
@@ -214,14 +214,14 @@ class AdvGeoLocUtil @Inject() (
 
     /** Определение по предыдущим георазмещениям карточек. */
     case class FromAdsGeoAdvs(adIds: Traversable[String]) extends GeoPointDetectorOpt {
-      override def getOpt: Future[Option[GeoPoint]] = {
+      override def getOpt: Future[Option[MGeoPoint]] = {
         getGeoPointFromAdsGeoAdvs(adIds)
       }
     }
 
     /** Определение по георазмещениям продьюсера. */
     case class FromProducerGeoAdvs(producerIds: Seq[String], excludeAdIds: Seq[String] = Nil) extends GeoPointDetectorOpt {
-      override def getOpt: Future[Option[GeoPoint]] = {
+      override def getOpt: Future[Option[MGeoPoint]] = {
         getGeoPointFromProducer(producerIds, excludeAdIds)
       }
     }
@@ -231,7 +231,7 @@ class AdvGeoLocUtil @Inject() (
       * @param contractIdOptFut см. [[models.req.IReq]].user, а именно [[models.req.ISioUser]].contractIdOptFut .
       */
     case class FromContractGeoAdvs(contractIdOptFut: Future[Option[Gid_t]]) extends GeoPointDetectorOpt {
-      override def getOpt: Future[Option[GeoPoint]] = {
+      override def getOpt: Future[Option[MGeoPoint]] = {
         contractIdOptFut
           .flatMap { contractIdOpt =>
             FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
@@ -243,14 +243,14 @@ class AdvGeoLocUtil @Inject() (
 
     /** Определить по geoip */
     case class FromRemoteAddr(remoteAddr: String) extends GeoPointDetectorOpt {
-      override def getOpt: Future[Option[GeoPoint]] = {
+      override def getOpt: Future[Option[MGeoPoint]] = {
         getGeoPointFromRemoteAddr(remoteAddr)
       }
     }
 
     /** Просто вернуть какую-то точку статическую. */
     case object FromDefaultGeoPoint extends GeoPointDetector {
-      override def get: Future[GeoPoint] = {
+      override def get: Future[MGeoPoint] = {
         Future.successful( getGeoPointLastResort )
       }
     }

@@ -70,9 +70,6 @@ package object models {
 
   type AdnShownType         = AdnShownTypes.T
 
-  type GeoPoint             = geo.GeoPoint
-  val  GeoPoint             = geo.GeoPoint
-
   type SinkShowLevel        = io.suggest.model.sc.common.SinkShowLevel
   val  SinkShowLevels       = io.suggest.model.sc.common.SinkShowLevels
 

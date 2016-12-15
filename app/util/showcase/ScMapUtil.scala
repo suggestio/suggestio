@@ -1,6 +1,7 @@
 package util.showcase
 
 import com.google.inject.Inject
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.IMust
 import io.suggest.model.geo.{GeoPoint, GeoShapeQuerable, PointGs}
 import io.suggest.model.n2.edge.MPredicates
@@ -62,7 +63,7 @@ class ScMapUtil @Inject() (
   }
 
   /** Приведение одной точки к GeoJSON-представлению. */
-  private def _formatPoint(gp: GeoPoint, props: Option[JsObject]) = {
+  private def _formatPoint(gp: MGeoPoint, props: Option[JsObject]) = {
     Feature(
       geometry    = PointGs(gp).toPlayGeoJsonGeom,
       properties  = props
@@ -101,7 +102,7 @@ class ScMapUtil @Inject() (
     * @param areaOpt Область, в которой ищем точки.
     * @return Фьючерс с FeatureCollection внутри.
     */
-  def findAdnPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[Iterator[GeoPoint]] = {
+  def findAdnPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[Iterator[MGeoPoint]] = {
     // Сборка критериев поискового запроса узлов (торг.центров, магазинов и прочих), отображаемых на карте.
     val msearch = new _MNodeSearch4Points {
       override def nodeTypes    = Seq( MNodeTypes.AdnNode )
@@ -157,7 +158,7 @@ class ScMapUtil @Inject() (
 
 
   /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */
-  def findAdvPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[Iterator[GeoPoint]] = {
+  def findAdvPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[Iterator[MGeoPoint]] = {
 
     // Сборка начального поиского запроса.
     val msearch = new _MNodeSearch4Points {

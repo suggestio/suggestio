@@ -2,6 +2,7 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -66,7 +67,7 @@ class ShowcaseNodeListUtil @Inject() (
             found  <- {
               val msearch = new MNodeSearchDfltImpl {
                 override def limit = 1
-                override def withGeoDistanceSort: Option[GeoPoint] = {
+                override def withGeoDistanceSort: Option[MGeoPoint] = {
                   // 2015.jun.30 Стараемся всегда искать с учетом всех возможных опорных геоточек.
                   geoMode.exactGeodata
                     .orElse {
@@ -236,7 +237,7 @@ class ShowcaseNodeListUtil @Inject() (
 
 
   /** Выдать все города */
-  def allTowns(currGeoPoint: Option[GeoPoint]): Future[Seq[MNode]] = {
+  def allTowns(currGeoPoint: Option[MGeoPoint]): Future[Seq[MNode]] = {
     val sargs = new NodeDetectArgsT {
       override def shownTypeIds = Seq(AdnShownTypes.TOWN.name)
       override def withNameSort = if (currGeoPoint.isEmpty) Some(SortOrder.ASC) else None
@@ -299,7 +300,7 @@ class ShowcaseNodeListUtil @Inject() (
     * @param townNodeId id узла-города.
     * @return Список узлов-районов.
     */
-  def getDistrictsForTown(townNodeId: String, gravity: Option[GeoPoint]): Future[Seq[MNode]] = {
+  def getDistrictsForTown(townNodeId: String, gravity: Option[MGeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 20
       override def withAdnRights = Seq(AdnRights.RECEIVER)
@@ -314,7 +315,7 @@ class ShowcaseNodeListUtil @Inject() (
     mNodes.dynSearch(sargs)
   }
 
-  def getDistrictsLayerForTown(townNode: MNode, gravity: Option[GeoPoint], expanded: Boolean = false)
+  def getDistrictsLayerForTown(townNode: MNode, gravity: Option[MGeoPoint], expanded: Boolean = false)
                               (implicit messages: Messages): Future[GeoNodesLayer] = {
     val townNodeId = townNode.id.get
     getDistrictsForTown(townNodeId, gravity)
@@ -342,7 +343,7 @@ class ShowcaseNodeListUtil @Inject() (
     * @param districtAdnId id района.
     * @return Список узлов на раёне в алфавитном порядке.
     */
-  def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[GeoPoint]): Future[Seq[MNode]] = {
+  def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[MGeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 30
       override def withAdnRights = Seq(AdnRights.RECEIVER)
@@ -363,7 +364,7 @@ class ShowcaseNodeListUtil @Inject() (
     * @param expandOnNode Если слой содержит узел с указанным id, то развернуть выставить expanded = true.
     * @return Фьючерс со списком слоёв с узлами.
     */
-  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[GeoPoint], expandOnNode: Option[String] = None)
+  def getBuildingsLayersOfDistrict(districtAdnId: String, gravity: Option[MGeoPoint], expandOnNode: Option[String] = None)
                                   (implicit messages: Messages): Future[List[GeoNodesLayer]] = {
     getBuildingsOfDistrict(districtAdnId, gravity)
       .map { nodes =>

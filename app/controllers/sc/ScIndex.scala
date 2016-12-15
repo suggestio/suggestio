@@ -2,6 +2,7 @@ package controllers.sc
 
 import _root_.util.PlayMacroLogsI
 import _root_.util.di._
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.IMust
 import io.suggest.model.geo.{CircleGs, Distance, IGeoFindIpResult}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
@@ -205,7 +206,7 @@ trait ScIndex
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
             // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
-            override def withGeoDistanceSort: Option[GeoPoint] = {
+            override def withGeoDistanceSort: Option[MGeoPoint] = {
               Some(geoLoc.center)
             }
             // Неактивные узлы сразу вылетают из выдачи.

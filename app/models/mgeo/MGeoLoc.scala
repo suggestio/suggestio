@@ -1,8 +1,8 @@
 package models.mgeo
 
-import io.suggest.model.geo.GeoPoint
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.geo.GeoConstants.GeoLocQs._
+import io.suggest.geo.MGeoPoint
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -18,7 +18,7 @@ object MGeoLoc {
 
   /** Поддержка биндинга внутри play-router. */
   implicit def qsb(implicit
-                   geoPointB  : QueryStringBindable[GeoPoint],
+                   geoPointB  : QueryStringBindable[MGeoPoint],
                    doubleOptB : QueryStringBindable[Option[Double]]
                   ): QueryStringBindable[MGeoLoc] = {
     new QueryStringBindableImpl[MGeoLoc] {
@@ -61,6 +61,6 @@ object MGeoLoc {
   * @param accuracyOptM Радиус точности, если есть.
   */
 case class MGeoLoc(
-  center        : GeoPoint,
+  center        : MGeoPoint,
   accuracyOptM  : Option[Double] = None
 )

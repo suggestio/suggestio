@@ -1,11 +1,14 @@
 package util.geo.osm
 
-import java.io.{FileInputStream, File, InputStream}
+import java.io.{File, FileInputStream, InputStream}
+
 import OsmElemTypes.OsmElemType
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.geo._
 import org.xml.sax.SAXParseException
 import util.PlayLazyMacroLogsImpl
 import util.parse.SaxParseUtil
+
 import scala.annotation.tailrec
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -198,7 +201,7 @@ trait OsmObject {
   def lastNode: OsmNode
 }
 
-case class OsmNode(id: Long, gp: GeoPoint, visible: Boolean = true) extends OsmObject {
+case class OsmNode(id: Long, gp: MGeoPoint, visible: Boolean = true) extends OsmObject {
   override def osmElemType = OsmElemTypes.NODE
   override def toGeoShape = PointGs(gp)
   override def firstNode: OsmNode = this

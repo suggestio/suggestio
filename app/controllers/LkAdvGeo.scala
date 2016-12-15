@@ -1,6 +1,5 @@
 package controllers
 
-
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
@@ -8,8 +7,8 @@ import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
-import io.suggest.model.geo.GeoPoint
 import io.suggest.async.StreamsUtil
+import io.suggest.geo.MGeoPoint
 import models.adv.form.MDatesPeriod
 import models.adv.geo.mapf._
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
@@ -70,7 +69,7 @@ class LkAdvGeo @Inject() (
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
-  private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[GeoPoint] = {
+  private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[MGeoPoint] = {
     import advGeoLocUtil.Detectors._
     val adIds = adId :: Nil
     // Ищем начальную точку среди прошлых размещений текущей карточки.
