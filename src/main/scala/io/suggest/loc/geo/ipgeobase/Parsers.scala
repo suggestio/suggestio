@@ -1,6 +1,6 @@
 package io.suggest.loc.geo.ipgeobase
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -73,7 +73,7 @@ class CityParsers extends CityIdParser {
           cityId    = cityId,
           cityName  = cityName,
           region    = Option(region),
-          center    = GeoPoint(lat = lat, lon = lon)
+          center    = MGeoPoint(lat = lat, lon = lon)
         )
     }
   }

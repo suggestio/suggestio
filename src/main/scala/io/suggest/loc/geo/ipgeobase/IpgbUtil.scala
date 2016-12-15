@@ -1,8 +1,9 @@
 package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.IEsModelDiVal
-import io.suggest.model.geo.{GeoPoint, IGeoFindIp, IGeoFindIpResult}
+import io.suggest.model.geo.{IGeoFindIp, IGeoFindIpResult}
 import io.suggest.util.MacroLogsImpl
 
 import scala.concurrent.Future
@@ -70,7 +71,7 @@ class IpgbUtil @Inject() (
 /** Реализация модели результата работы [[IpgbUtil]].findId(). */
 case class MGeoFindIpResult(city: MCity, range: MIpRange) extends IGeoFindIpResult {
 
-  override def center: GeoPoint = {
+  override def center: MGeoPoint = {
     city.center
   }
 

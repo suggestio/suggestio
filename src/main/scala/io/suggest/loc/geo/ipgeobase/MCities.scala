@@ -2,8 +2,9 @@ package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es._
-import io.suggest.model.geo.GeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 import io.suggest.util.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -42,7 +43,7 @@ object MCity {
     (__ \ CITY_ID_FN).format[CityId_t] and
     (__ \ NAME_FN).format[String] and
     (__ \ REGION_FN).formatNullable[String] and
-    (__ \ CENTER_FN).format[GeoPoint]
+    (__ \ CENTER_FN).format[MGeoPoint]
   )(apply, unlift(unapply))
 
 }
@@ -146,7 +147,7 @@ case class MCity(
   cityId    : CityId_t,
   cityName  : String,
   region    : Option[String],
-  center    : GeoPoint
+  center    : MGeoPoint
 )
   extends EsModelT
 {
