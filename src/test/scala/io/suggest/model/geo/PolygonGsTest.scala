@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.scalatest._
 import org.scalatest.Matchers._
 import play.api.libs.json.Json
@@ -30,11 +31,11 @@ class PolygonGsTest extends FlatSpec with CoordLineRnd {
     assert(jsr.isSuccess, jsr)
     jsr.get shouldBe PolygonGs(
       LineStringGs(Seq(
-        GeoPoint(0.0, lon = 100.0),
-        GeoPoint(0.0, lon = 101.0),
-        GeoPoint(1.0, lon = 101.0),
-        GeoPoint(1.0, lon = 100.0),
-        GeoPoint(0.0, lon = 100.0)
+        MGeoPoint(0.0, lon = 100.0),
+        MGeoPoint(0.0, lon = 101.0),
+        MGeoPoint(1.0, lon = 101.0),
+        MGeoPoint(1.0, lon = 100.0),
+        MGeoPoint(0.0, lon = 100.0)
       ))
     )
   }
@@ -55,19 +56,19 @@ class PolygonGsTest extends FlatSpec with CoordLineRnd {
     assert( jsr.isSuccess, jsr )
     jsr.get shouldBe PolygonGs(
       outer = LineStringGs(Seq(
-        GeoPoint(0.0, lon = 100.0),
-        GeoPoint(0.0, lon = 101.0),
-        GeoPoint(1.0, lon = 101.0),
-        GeoPoint(1.0, lon = 100.0),
-        GeoPoint(0.0, lon = 100.0)
+        MGeoPoint(0.0, lon = 100.0),
+        MGeoPoint(0.0, lon = 101.0),
+        MGeoPoint(1.0, lon = 101.0),
+        MGeoPoint(1.0, lon = 100.0),
+        MGeoPoint(0.0, lon = 100.0)
       )),
       holes = List(
         LineStringGs(Seq(
-          GeoPoint(0.2, lon = 100.2),
-          GeoPoint(0.2, lon = 100.8),
-          GeoPoint(0.8, lon = 100.8),
-          GeoPoint(0.8, lon = 100.2),
-          GeoPoint(0.2, lon = 100.2)
+          MGeoPoint(0.2, lon = 100.2),
+          MGeoPoint(0.2, lon = 100.8),
+          MGeoPoint(0.8, lon = 100.8),
+          MGeoPoint(0.8, lon = 100.2),
+          MGeoPoint(0.2, lon = 100.2)
         ))
       )
     )

@@ -2,6 +2,7 @@ package io.suggest.model.geo
 
 import org.elasticsearch.common.unit.DistanceUnit
 import DistanceUnit.{Distance => EsDistance}
+import io.suggest.geo.MGeoPoint
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.libs.json._
 
@@ -67,7 +68,7 @@ trait IToEsQueryFn {
 
 /** Описание того, как надо фильтровать по дистанции относительно какой-то точки на поверхности планеты. */
 case class GeoDistanceQuery(
-  center      : GeoPoint,
+  center      : MGeoPoint,
   distanceMax : Distance
 )
   extends IToEsQueryFn

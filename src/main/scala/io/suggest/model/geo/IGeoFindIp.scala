@@ -1,5 +1,7 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
+
 import scala.concurrent.Future
 
 /**
@@ -27,7 +29,7 @@ trait IGeoFindIp {
 trait IGeoFindIpResult {
 
   /** Точка на карте. */
-  def center: GeoPoint
+  def center: MGeoPoint
 
   /** Имя города, если известно. */
   def cityName: Option[String]

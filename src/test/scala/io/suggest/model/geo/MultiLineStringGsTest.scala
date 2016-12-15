@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.scalatest._
 import org.scalatest.Matchers._
 import play.api.libs.json.Json
@@ -31,12 +32,12 @@ class MultiLineStringGsTest extends FlatSpec with CoordLineRnd {
     assert( jsr.isSuccess, jsr )
     val mlsGs = jsr.get
     mlsGs.lines.size  shouldBe  3
-    mlsGs.lines.head.firstPoint shouldBe GeoPoint(lat = 2.0, lon = 102.0)
+    mlsGs.lines.head.firstPoint shouldBe MGeoPoint(lat = 2.0, lon = 102.0)
     for (line <- mlsGs.lines) {
       line.coords.size shouldBe 4
     }
-    mlsGs.lines.head.coords.last shouldBe GeoPoint(lat = 3.0, lon = 102.0)
-    mlsGs.lines.last.coords.last shouldBe GeoPoint(lat = 0.8, lon = 100.2)
+    mlsGs.lines.head.coords.last shouldBe MGeoPoint(lat = 3.0, lon = 102.0)
+    mlsGs.lines.last.coords.last shouldBe MGeoPoint(lat = 0.8, lon = 100.2)
   }
 
 }

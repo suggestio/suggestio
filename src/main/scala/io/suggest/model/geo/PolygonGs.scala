@@ -6,7 +6,8 @@ import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-
+import io.suggest.geo.MGeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 import play.extras.geojson.{LatLng, Polygon}
 
 /**
@@ -21,14 +22,14 @@ object PolygonGs extends GsStatic {
   override type Shape_t = PolygonGs
 
   override def DATA_FORMAT: Format[PolygonGs] = {
-    (__ \ COORDS_ESFN).format[List[Seq[GeoPoint]]]
+    (__ \ COORDS_ESFN).format[List[Seq[MGeoPoint]]]
       .inmap [PolygonGs] (
         apply,
         _.toMpGss
       )
   }
 
-  def apply(lsgss: List[Seq[GeoPoint]]): PolygonGs = {
+  def apply(lsgss: List[Seq[MGeoPoint]]): PolygonGs = {
     PolygonGs(
       outer = LineStringGs( lsgss.head ),
       holes = lsgss.tail.map(LineStringGs.apply)

@@ -1,6 +1,7 @@
 package io.suggest.model.geo
 
 import io.suggest.geo.GeoConstants.Qs
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import org.elasticsearch.common.geo.builders.ShapeBuilder
@@ -8,6 +9,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 import play.extras.geojson.{Geometry, LatLng, Polygon}
+import io.suggest.model.geo.GeoPoint.Implicits._
 
 /**
   * Suggest.io
@@ -24,7 +26,7 @@ object EnvelopeGs extends GsStatic {
 
   override val DATA_FORMAT: OFormat[EnvelopeGs] = {
     (__ \ GeoShape.COORDS_ESFN)
-      .format[Seq[GeoPoint]]
+      .format[Seq[MGeoPoint]]
       .inmap[EnvelopeGs] (
         { case Seq(c1, c3) =>
             EnvelopeGs(c1, c3)
@@ -39,7 +41,7 @@ object EnvelopeGs extends GsStatic {
 
 
   /** Поддержка биндинга этой простой фигуры в play router. */
-  implicit def qsb(implicit geoPointB: QueryStringBindable[GeoPoint]): QueryStringBindable[EnvelopeGs] = {
+  implicit def qsb(implicit geoPointB: QueryStringBindable[MGeoPoint]): QueryStringBindable[EnvelopeGs] = {
     new QueryStringBindableImpl[EnvelopeGs] {
 
       override def KEY_DELIM = Qs.DELIM
@@ -76,7 +78,11 @@ object EnvelopeGs extends GsStatic {
 
 }
 
-case class EnvelopeGs(topLeft: GeoPoint, bottomRight: GeoPoint) extends GeoShapeQuerable {
+case class EnvelopeGs(
+  topLeft: MGeoPoint,
+  bottomRight: MGeoPoint
+)
+  extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.envelope
 
@@ -94,7 +100,7 @@ case class EnvelopeGs(topLeft: GeoPoint, bottomRight: GeoPoint) extends GeoShape
       .toList
   }
 
-  override def firstPoint: GeoPoint = topLeft
+  override def firstPoint: MGeoPoint = topLeft
 
   /** Экспорт в GeoJSON Polygon.
     * Не тестировано, но по идее должно работать. */
@@ -111,10 +117,10 @@ case class EnvelopeGs(topLeft: GeoPoint, bottomRight: GeoPoint) extends GeoShape
     )
   }
 
-  override def centerPoint: Some[GeoPoint] = {
+  override def centerPoint: Some[MGeoPoint] = {
     // TODO Код не тестирован и не использовался с момента запиливания
     // Тут чисто-арифметическое определение центра, без [возможных] поправок на форму геойда и прочее.
-    val c = GeoPoint(
+    val c = MGeoPoint(
       lat = (bottomRight.lat + topLeft.lat) / 2,
       lon = (bottomRight.lon + topLeft.lon) / 2
     )

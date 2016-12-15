@@ -3,8 +3,9 @@ package io.suggest.model.geo
 import GeoShape.COORDS_ESFN
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
+import io.suggest.geo.MGeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
-
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.extras.geojson.{LatLng, MultiPoint}
@@ -21,7 +22,7 @@ object MultiPointGs extends MultiPointShapeStatic {
 
 }
 
-case class MultiPointGs(coords: Seq[GeoPoint]) extends MultiPointShape {
+case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
   override def shapeType = GsTypes.multipoint
 
@@ -46,15 +47,15 @@ trait MultiPointShapeStatic extends GsStatic {
 
   override type Shape_t <: MultiPointShape
 
-  def apply(coords: Seq[GeoPoint]): Shape_t
+  def apply(coords: Seq[MGeoPoint]): Shape_t
 
   override def DATA_FORMAT: Format[Shape_t] = {
-    (__ \ COORDS_ESFN).format[Seq[GeoPoint]]
+    (__ \ COORDS_ESFN).format[Seq[MGeoPoint]]
       .inmap[Shape_t](apply, _.coords)
   }
 
   /** Сборка immutable-коллекции из инстансов LatLng. */
-  def coords2latLngs(coords: TraversableOnce[GeoPoint]): Stream[LatLng] = {
+  def coords2latLngs(coords: TraversableOnce[MGeoPoint]): Stream[LatLng] = {
     coords
       .toIterator
       .map( GeoPoint.toLatLng )
@@ -67,7 +68,7 @@ trait MultiPointShapeStatic extends GsStatic {
 /** Общий код linestring и multipoint здеся. */
 trait MultiPointShape extends GeoShapeQuerable {
 
-  def coords: Seq[GeoPoint]
+  def coords: Seq[MGeoPoint]
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {

@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.scalatest._
 import org.scalatest.Matchers._
 import org.elasticsearch.common.unit.DistanceUnit
@@ -30,7 +31,7 @@ class CircleGsTest extends FlatSpec with CoordRnd {
     assert( res.isSuccess, res )
     val cgs = res.get
     cgs shouldBe CircleGs(
-      center = GeoPoint(lon = -45.0, lat = 45.0),
+      center = MGeoPoint(lon = -45.0, lat = 45.0),
       radius = Distance(100, DistanceUnit.METERS)
     )
   }

@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.scalatest.FlatSpec
 import org.scalatest.Matchers._
 import play.api.libs.json.Json
@@ -25,15 +26,15 @@ class EnvelopeGsSpec extends FlatSpec {
     assert(jsr.isSuccess, jsr)
     val pgs = jsr.get
     pgs shouldBe EnvelopeGs(
-      topLeft     = GeoPoint(lon = -77.03653, lat = 38.897676),
-      bottomRight = GeoPoint(lon = -67.03653, lat = 48.897676)
+      topLeft     = MGeoPoint(lon = -77.03653, lat = 38.897676),
+      bottomRight = MGeoPoint(lon = -67.03653, lat = 48.897676)
     )
   }
 
   it should "serialize-deserialize" in {
     val gs = EnvelopeGs(
-      topLeft     = GeoPoint(lon = -77.03653, lat = 38.897676),
-      bottomRight = GeoPoint(lon = -67.03653, lat = 48.897676)
+      topLeft     = MGeoPoint(lon = -77.03653, lat = 38.897676),
+      bottomRight = MGeoPoint(lon = -67.03653, lat = 48.897676)
     )
     val fmt = EnvelopeGs.DATA_FORMAT
     val jsr = Json.toJson(gs)(fmt)

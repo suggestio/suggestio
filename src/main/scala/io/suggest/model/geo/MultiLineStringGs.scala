@@ -6,7 +6,8 @@ import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuild
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-
+import io.suggest.geo.MGeoPoint
+import io.suggest.model.geo.GeoPoint.Implicits._
 import play.extras.geojson.{LatLng, MultiLineString}
 
 
@@ -22,7 +23,7 @@ object MultiLineStringGs extends GsStatic {
   override type Shape_t = MultiLineStringGs
 
   override def DATA_FORMAT: Format[MultiLineStringGs] = {
-    (__ \ COORDS_ESFN).format[Seq[Seq[GeoPoint]]]
+    (__ \ COORDS_ESFN).format[Seq[Seq[MGeoPoint]]]
       .inmap [MultiLineStringGs] (
         { ss => apply( ss.map(LineStringGs.apply)) },
         { _.lines.map(_.coords) }

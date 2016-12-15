@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.scalatest._
 import org.scalatest.Matchers._
 import play.api.libs.json.Json
@@ -26,8 +27,8 @@ class LineStringGsTest extends MultiPoingGeoShapeTest {
 
   override protected def JSON_EXAMPLE_PARSED: LineStringGs = {
     LineStringGs(Seq(
-      GeoPoint(lat = 38.897676, lon = -77.03653),
-      GeoPoint(lat = 38.889939, lon = -77.009051)
+      MGeoPoint(lat = 38.897676, lon = -77.03653),
+      MGeoPoint(lat = 38.889939, lon = -77.009051)
     ))
   }
 

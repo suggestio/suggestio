@@ -1,12 +1,13 @@
 package io.suggest.model.geo
 
 import io.suggest.model.es.EsModelUtil
+import io.suggest.model.geo.GeoPoint.Implicits._
 import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-
+import io.suggest.geo.MGeoPoint
 import play.extras.geojson.{LatLng, MultiPolygon}
 
 /**
@@ -20,7 +21,7 @@ object MultiPolygonGs extends GsStatic {
   override type Shape_t = MultiPolygonGs
 
   override def DATA_FORMAT: Format[MultiPolygonGs] = {
-    (__ \ COORDS_ESFN).format[Seq[List[Seq[GeoPoint]]]]
+    (__ \ COORDS_ESFN).format[Seq[List[Seq[MGeoPoint]]]]
       .inmap [MultiPolygonGs] (
         {polyGss =>
           MultiPolygonGs(

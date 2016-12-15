@@ -3,8 +3,8 @@ package io.suggest.model.geo
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
-
 import GeoShape._
+import io.suggest.geo.MGeoPoint
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.extras.geojson.{LatLng, Point}
@@ -30,7 +30,7 @@ object PointGs extends GsStatic {
 }
 
 
-case class PointGs(coord: GeoPoint) extends GeoShapeQuerable {
+case class PointGs(coord: MGeoPoint) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.point
 

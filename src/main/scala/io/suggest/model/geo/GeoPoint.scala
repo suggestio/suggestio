@@ -2,8 +2,7 @@ package io.suggest.model.geo
 
 import java.{lang => jl}
 
-import io.suggest.geo.IGeoPoint
-import io.suggest.model.es.EsModelUtil
+import io.suggest.geo.{IGeoPoint, MGeoPoint}
 import com.spatial4j.core.context.SpatialContext
 import com.spatial4j.core.io.GeohashUtils
 import com.spatial4j.core.shape.Point
@@ -35,7 +34,7 @@ object GeoPoint extends MacroLogsImpl {
 
   import LOGGER._
 
-  def apply(v: String): GeoPoint = {
+  def apply(v: String): MGeoPoint = {
     val commaIndex = getCommaIndex(v)
     if (commaIndex != -1) {
       fromLatLonComma(v, commaIndex)
@@ -44,16 +43,16 @@ object GeoPoint extends MacroLogsImpl {
     }
   }
 
-  def apply(esgp: EsGeoPoint): GeoPoint = {
-    GeoPoint(lat = esgp.lat,  lon = esgp.lon)
+  def apply(esgp: EsGeoPoint): MGeoPoint = {
+    MGeoPoint(lat = esgp.lat,  lon = esgp.lon)
   }
 
-  def apply(point: Point): GeoPoint = {
-    GeoPoint(lon = point.getX, lat = point.getY)
+  def apply(point: Point): MGeoPoint = {
+    MGeoPoint(lon = point.getX, lat = point.getY)
   }
 
   /** Бывает, что идёт выковыривание сырых значений из документов elasticsearch. */
-  def fromArraySeq(lonLatColl: TraversableOnce[Any]): Option[GeoPoint] = {
+  def fromArraySeq(lonLatColl: TraversableOnce[Any]): Option[MGeoPoint] = {
     lazy val logPrefix = s"fromArraySeq(${System.currentTimeMillis()}):"
     val doubleSeq = lonLatColl
       .toIterator
@@ -73,12 +72,12 @@ object GeoPoint extends MacroLogsImpl {
     jsRes.asOpt
   }
 
-  def fromLatLon(latLon: String): GeoPoint = {
+  def fromLatLon(latLon: String): MGeoPoint = {
     val commaInx = getCommaIndex(latLon)
     fromLatLonComma(latLon, commaInx)
   }
 
-  def fromGeoHash(geoHash: String): GeoPoint = {
+  def fromGeoHash(geoHash: String): MGeoPoint = {
     val esgp = GeohashUtils.decode(geoHash, SpatialContext.GEO)
     apply(esgp)
   }
@@ -92,15 +91,15 @@ object GeoPoint extends MacroLogsImpl {
   private def fromLatLonComma(latLon: String, commaIndex: Int) = {
     val lat = jl.Double.parseDouble(latLon.substring(0, commaIndex).trim)
     val lon = jl.Double.parseDouble(latLon.substring(commaIndex + 1).trim)
-    GeoPoint(
+    MGeoPoint(
       lat = fixLat(lat),
       lon = fixLon(lon)
     )
   }
 
-  val READS_GEO_ARRAY = Reads[GeoPoint] {
+  val READS_GEO_ARRAY = Reads[MGeoPoint] {
     case JsArray(Seq(lonV, latV)) =>
-      val gp = GeoPoint(
+      val gp = MGeoPoint(
         lat = fixLat( latV.as[Double] ),
         lon = fixLon( lonV.as[Double] )
       )
@@ -109,7 +108,7 @@ object GeoPoint extends MacroLogsImpl {
       JsError( ValidationError("expected.jsarray", other) )
   }
 
-  val WRITES_GEO_ARRAY = Writes[GeoPoint] { gp =>
+  val WRITES_GEO_ARRAY = Writes[MGeoPoint] { gp =>
     JsArray(
       Seq(
         JsNumber(gp.lon),
@@ -119,10 +118,10 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** Десериализация из js-массива вида [-13.22,45.34]. */
-  val FORMAT_GEO_ARRAY = Format[GeoPoint](READS_GEO_ARRAY, WRITES_GEO_ARRAY)
+  val FORMAT_GEO_ARRAY = Format[MGeoPoint](READS_GEO_ARRAY, WRITES_GEO_ARRAY)
 
   /** Десериализация из строки вида "45.34,-13.22". */
-  val READS_STRING = Reads[GeoPoint] {
+  val READS_STRING = Reads[MGeoPoint] {
     case JsString(raw) =>
       JsSuccess( apply(raw) )
     case other =>
@@ -130,13 +129,13 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
-  val FORMAT_OBJECT: Format[GeoPoint] = (
+  val FORMAT_OBJECT: Format[MGeoPoint] = (
     (__ \ ES_LAT_FN).format[Double] and
     (__ \ ES_LON_FN).format[Double]
-  )(apply(_, _), unlift(unapply))
+  )(MGeoPoint.apply, unlift(MGeoPoint.unapply))
 
   /** Десериализация из JSON из различных видов представления геоточки. */
-  val READS_ANY: Reads[GeoPoint] = {
+  val READS_ANY: Reads[MGeoPoint] = {
     FORMAT_GEO_ARRAY
       .orElse( FORMAT_OBJECT )
       .orElse( READS_STRING )
@@ -144,10 +143,7 @@ object GeoPoint extends MacroLogsImpl {
 
   /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
     * но сериализации в JSON object с полями lat и lon. */
-  implicit val FORMAT_ANY_TO_ARRAY: Format[GeoPoint] = {
-    Format[GeoPoint](READS_ANY, FORMAT_GEO_ARRAY)
-  }
-
+  val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, FORMAT_GEO_ARRAY)
 
   def fixLon(lon: Double): Double = {
     _forceBetween(-180d, lon, 180d)
@@ -163,42 +159,6 @@ object GeoPoint extends MacroLogsImpl {
     )
   }
 
-
-  /** Поддержка биндинга из/в Query string в play router. */
-  implicit def qsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[GeoPoint] = {
-    new QueryStringBindableImpl[GeoPoint] {
-
-      override def KEY_DELIM = Qs.DELIM
-
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, GeoPoint]] = {
-        val k = key1F(key)
-        for {
-          lonEith <- doubleB.bind( k(Qs.LON_FN), params )
-          latEith <- doubleB.bind( k(Qs.LAT_FN), params )
-        } yield {
-          for {
-            lon <- lonEith.right
-            lat <- latEith.right
-          } yield {
-            GeoPoint(
-              lat = fixLat(lat),
-              lon = fixLon(lon)
-            )
-          }
-        }
-      }
-
-      override def unbind(key: String, value: GeoPoint): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Seq(
-            doubleB.unbind(k(Qs.LON_FN), value.lon),
-            doubleB.unbind(k(Qs.LAT_FN), value.lat)
-          )
-        }
-      }
-    }
-  }
 
   // Экспорт инстансов IGeoPoint, вынесен из класса GeoPoint перед его депортацией в [common].
 
@@ -225,11 +185,48 @@ object GeoPoint extends MacroLogsImpl {
     LatLng(lat = gp.lat, lng = gp.lon)
   }
 
-}
 
+  /** Всякие неявности изолированы в отдельном namespace. */
+  object Implicits {
 
-case class GeoPoint(lat: Double, lon: Double) extends IGeoPoint {
+    implicit def GEO_POINT_FORMAT: Format[MGeoPoint] = FORMAT_ANY_TO_ARRAY
 
-  override def toString: String = super.toString
+    /** Поддержка биндинга из/в Query string в play router. */
+    implicit def geoPointQsb(implicit doubleB: QueryStringBindable[Double]): QueryStringBindable[MGeoPoint] = {
+      new QueryStringBindableImpl[MGeoPoint] {
+
+        override def KEY_DELIM = Qs.DELIM
+
+        override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGeoPoint]] = {
+          val k = key1F(key)
+          for {
+            lonEith <- doubleB.bind( k(Qs.LON_FN), params )
+            latEith <- doubleB.bind( k(Qs.LAT_FN), params )
+          } yield {
+            for {
+              lon <- lonEith.right
+              lat <- latEith.right
+            } yield {
+              MGeoPoint(
+                lat = fixLat(lat),
+                lon = fixLon(lon)
+              )
+            }
+          }
+        }
+
+        override def unbind(key: String, value: MGeoPoint): String = {
+          _mergeUnbinded {
+            val k = key1F(key)
+            Seq(
+              doubleB.unbind(k(Qs.LON_FN), value.lon),
+              doubleB.unbind(k(Qs.LAT_FN), value.lat)
+            )
+          }
+        }
+      }
+    }
+
+  }
 
 }

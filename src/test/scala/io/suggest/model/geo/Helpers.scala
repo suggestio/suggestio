@@ -1,5 +1,7 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
+
 import scala.util.Random
 
 /**
@@ -42,10 +44,10 @@ trait CoordLineRnd extends CoordRnd {
   val minCoordLineLen = 50
   val coordLineLenRnd = 200
 
-  protected def rndCoordRow: Seq[GeoPoint] = {
+  protected def rndCoordRow: Seq[MGeoPoint] = {
     val len = rnd.nextInt(coordLineLenRnd) + minCoordLineLen
     (0 to len).map { j =>
-      GeoPoint(lat = newLat, lon = newLon)
+      MGeoPoint(lat = newLat, lon = newLon)
     }
   }
 

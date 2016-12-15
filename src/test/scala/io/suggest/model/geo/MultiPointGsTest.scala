@@ -1,5 +1,7 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -24,8 +26,8 @@ class MultiPointGsTest extends MultiPoingGeoShapeTest {
 
   override protected def JSON_EXAMPLE_PARSED: MultiPointGs = {
     MultiPointGs(Seq(
-      GeoPoint(lat = 2.0, lon = 102.0),
-      GeoPoint(lat = 2.0, lon = 103.0)
+      MGeoPoint(lat = 2.0, lon = 102.0),
+      MGeoPoint(lat = 2.0, lon = 103.0)
     ))
   }
 }

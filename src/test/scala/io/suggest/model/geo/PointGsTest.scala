@@ -1,5 +1,6 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.scalatest._
 import org.scalatest.Matchers._
 import play.api.libs.json.Json
@@ -26,7 +27,7 @@ class PointGsTest extends FlatSpec {
     val jsr = Json.parse(jsonStr).validate(PointGs.DATA_FORMAT)
     assert(jsr.isSuccess, jsr)
     val pgs = jsr.get
-    pgs shouldBe PointGs(GeoPoint(lon = -77.03653, lat = 38.897676))
+    pgs shouldBe PointGs(MGeoPoint(lon = -77.03653, lat = 38.897676))
   }
 
 }

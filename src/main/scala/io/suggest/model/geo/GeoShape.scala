@@ -3,13 +3,13 @@ package io.suggest.model.geo
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
-
 import play.extras.geojson.{Geometry, LatLng}
 
 /**
@@ -83,14 +83,14 @@ trait GeoShape {
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc
 
-  def firstPoint: GeoPoint
+  def firstPoint: MGeoPoint
 
   /**
     * Центральная точка фигуры.
     * По идее, эта точка всегда существует, но тут Option.
     * None означает, что код поддержки вычисления центральной точки не заимплеменчен.
     */
-  def centerPoint: Option[GeoPoint] = None
+  def centerPoint: Option[MGeoPoint] = None
 
   /** Отображаемое для пользователя имя шейпа. */
   def displayTypeName: String = {

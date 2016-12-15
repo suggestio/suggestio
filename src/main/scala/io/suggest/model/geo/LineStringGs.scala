@@ -1,8 +1,8 @@
 package io.suggest.model.geo
 
+import io.suggest.geo.MGeoPoint
 import org.elasticsearch.common.geo.builders.{LineStringBuilder, ShapeBuilder}
 import play.api.libs.json.JsArray
-
 import play.extras.geojson.{LatLng, LineString}
 
 /**
@@ -16,7 +16,7 @@ object LineStringGs extends MultiPointShapeStatic {
 
   override type Shape_t = LineStringGs
 
-  def coords2playJson(coords: Seq[GeoPoint]): JsArray = {
+  def coords2playJson(coords: Seq[MGeoPoint]): JsArray = {
     val coordsJson = coords.map( GeoPoint.toPlayGeoJson )
     JsArray(coordsJson)
   }
@@ -24,7 +24,7 @@ object LineStringGs extends MultiPointShapeStatic {
 }
 
 
-case class LineStringGs(coords: Seq[GeoPoint]) extends MultiPointShape {
+case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
   override def shapeType = GsTypes.linestring
 
