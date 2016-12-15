@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 import org.scalatest.FlatSpec
 
 /**
@@ -20,7 +20,7 @@ class MGeoLocDataSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support full-filled model" in {
     jsonTest {
       MGeoLocData(
-        coords    = Some( GeoPoint(33, 55) ),
+        coords    = Some( MGeoPoint(33, 55) ),
         accuracy  = Some( 155 ),
         town      = Some( "Engozero" ),
         country   = Some( "RU" )

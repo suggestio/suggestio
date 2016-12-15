@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.MGeoPoint
 import org.scalatest.FlatSpec
 
 /**
@@ -21,10 +21,10 @@ class MLocationSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MLocation(
         geo = MGeoLocData(
-          coords = Some(GeoPoint(11, 22))
+          coords = Some(MGeoPoint(11, 22))
         ),
         geoIp = MGeoLocData(
-          coords  = Some(GeoPoint(44, 55)),
+          coords  = Some(MGeoPoint(44, 55)),
           town    = Some("Xata")
         )
       )

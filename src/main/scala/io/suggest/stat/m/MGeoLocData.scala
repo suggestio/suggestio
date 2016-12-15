@@ -1,10 +1,11 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.geo.GeoPoint
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.model.geo.GeoPoint.Implicits._
 
 /**
   * Suggest.io
@@ -29,7 +30,8 @@ object MGeoLocData extends IGenEsMappingProps with IEmpty {
   import Fields._
 
   implicit val FORMAT: OFormat[MGeoLocData] = (
-    (__ \ COORDS_FN).formatNullable[GeoPoint] and
+    // TODO Почему-то этот код не видит GeoPoint.Implicits.FORMAT, поэтому тут он вписан явно.
+    (__ \ COORDS_FN).formatNullable[MGeoPoint] and
     (__ \ ACCURACY_FN).formatNullable[Int] and
     (__ \ TOWN_FN).formatNullable[String] and
     (__ \ COUNTRY_FN).formatNullable[String]
@@ -55,7 +57,7 @@ object MGeoLocData extends IGenEsMappingProps with IEmpty {
 
 /** Класс модели геоинформации. */
 case class MGeoLocData(
-  coords    : Option[GeoPoint]  = None,
+  coords    : Option[MGeoPoint] = None,
   accuracy  : Option[Int]       = None,
   town      : Option[String]    = None,
   country   : Option[String]    = None
