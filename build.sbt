@@ -98,7 +98,11 @@ libraryDependencies ++= {
   "org.webjars.bower" % "leaflet"               % Common.leafletJsVsn,
   "org.webjars.bower" % "leaflet.markercluster" % Common.leafletMarkerClusterJsVsn,
   "org.webjars"       % "leaflet-locatecontrol" % Common.leafletControlLocateWjVsn,
-  
+
+  // Прогрессивная интеграция с js client-side:
+  //"me.chrons"         %% "boopickle"            % Common.boopickleVsn, // вынесенов в [common]
+  //"com.lihaoyi" %% "autowire" % "0.2.6",
+
   // спаривание guice и акторов требует танцев вприсядку
   //"net.codingwell" %% "scala-guice" % "4.0.0",
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,

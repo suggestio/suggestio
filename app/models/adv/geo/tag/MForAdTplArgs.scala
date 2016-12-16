@@ -10,7 +10,7 @@ import play.api.libs.json.JsValue
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.11.15 15:05
-  * Description: Модель аргументов шаблона [[views.html.lk.adv.geo.tag.AgtForAdTpl]].
+  * Description: Модель аргументов шаблона [[views.html.lk.adv.geo.AdvGeoForAdTpl]].
   */
 trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplArgs {
 
@@ -20,6 +20,12 @@ trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplAr
   /** Текущие размещения карточки. */
   def currAdvsJson  : JsValue
 
+  /**
+    * Сериализованное состояние js-react-diode-формы.
+    * Изначально тут был boopickle + base64 с инстансом [[io.suggest.adv.geo.MRoot]] внутри.
+    */
+  def formState    : String
+
 }
 
 
@@ -28,6 +34,7 @@ case class MForAdTplArgs(
   override val producer         : MNode,
   override val form             : AgtForm_t,
   override val price            : IAdvPricing,
-  override val currAdvsJson      : JsValue
+  override val currAdvsJson     : JsValue,
+  override val formState        : String
 )
   extends IForAdTplArgs

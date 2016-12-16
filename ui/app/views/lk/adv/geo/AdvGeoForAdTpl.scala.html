@@ -11,6 +11,7 @@
 @import lk.lkwdgts.price._
 @import io.suggest.adv.geo.AdvGeoConstants._
 @import adv.tpl._
+@import io.suggest.common.spa.SpaConst.STATE_CONT_ID
 
 @agBase(
   title       = messages("Adv.in.geo.tags"),
@@ -19,6 +20,9 @@
   rightLink   = LkAdvRightLinks.TAGS_GEO,
   rightAfter  = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
 ) {
+
+  @* Скрытый рендер как-то сериализованного состояния формы. *@
+  <input type="hidden" id="@STATE_CONT_ID" value="@args.formState"/>
 
   <div id="xynta"></div>
   <br/>

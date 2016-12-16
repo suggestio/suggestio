@@ -1,13 +1,18 @@
 package controllers
 
+import java.util.Base64
+
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
+import io.suggest.adv.AdvConstants
+import io.suggest.adv.geo._
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import models.adv.form.MDatesPeriod
 import models.adv.geo.mapf._
@@ -68,6 +73,15 @@ class LkAdvGeo @Inject() (
   import streamsUtil._
 
 
+  /** Base64-сериализатор для js-состояния diode-react-формы. */
+  private def _pickle(mroot: MFormS): String = {
+    val bytes = MFormS.pickle(mroot)
+    val data = Array.ofDim[Byte](bytes.remaining())
+    bytes.get(data)
+    Base64.getEncoder
+      .encodeToString( data )
+  }
+
   /** Асинхронный детектор начальной точки для карты георазмещения. */
   private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[MGeoPoint] = {
     import advGeoLocUtil.Detectors._
@@ -95,11 +109,11 @@ class LkAdvGeo @Inject() (
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk, U.ContractId).async { implicit request =>
     // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
     //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
-    val gp0Fut = getGeoPoint0(adId)
+    val resLogic = new ForAdLogic()
 
     val formEmpty = advGeoFormUtil.formStrict
 
-    val formFut = for (gp0 <- gp0Fut) yield {
+    val formFut = for (gp0 <- resLogic._geoPointFut) yield {
 
       val radMapVal = advFormUtil.radMapValue0(gp0)
 
@@ -115,66 +129,111 @@ class LkAdvGeo @Inject() (
       formEmpty.fill(res)
     }
 
-    _forAd(formFut, Ok)
+    resLogic.result(formFut, Ok)
   }
+
 
   /**
    * common-код экшенов GET'а и POST'а формы forAdTpl.
    *
-   * @param formFut Маппинг формы.
-   * @param rs Статус ответа HTTP.
    * @return Фьючерс с ответом.
    */
-  private def _forAd(formFut: Future[AgtForm_t], rs: Status)
-                    (implicit request: IAdProdReq[_]): Future[Result] = {
-    lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
+  private class ForAdLogic()(implicit request: IAdProdReq[_]) {
 
-    // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
-    val currAdvsFut = slick.db.run {
-      advGeoBillUtil.findCurrentForAd(request.mad.id.get)
+    val _geoPointFut: Future[MGeoPoint] = {
+      getGeoPoint0(request.mad.id.get)
     }
 
-    val ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
+    val _ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.AdvGtagForm)
       )
       implicitly[Context]
     }
 
-    val isSuFree = advFormUtil.maybeFreeAdv()
-    val advPricingFut = formFut.flatMap { form =>
-      advGeoBillUtil.getPricing(form.value, isSuFree)
+    val _isSuFree = advFormUtil.maybeFreeAdv()
+
+
+    /** Рендер ответа.
+      *
+      * @param formFut Маппинг формы.
+      * @param rs Статус ответа HTTP.
+      */
+    def result(formFut: Future[AgtForm_t], rs: Status): Future[Result] = {
+      lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
+
+      // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
+      val currAdvsFut = slick.db.run {
+        advGeoBillUtil.findCurrentForAd(request.mad.id.get)
+      }
+
+      val advPricingFut = formFut.flatMap { form =>
+        advGeoBillUtil.getPricing(form.value, _isSuFree)
+      }
+
+      // Заварить JSON-кашу из текущих размещений. Они будут скрыто отрендерены в шаблоне.
+      val currAdvsJsonFut = for {
+        ctx       <- _ctxFut
+        currAdvs  <- currAdvsFut
+      } yield {
+        LOGGER.trace(s"$logPrefix Found ${currAdvs.size} current advs")
+        val fcoll = advGeoFormUtil.items2geoJson(currAdvs)(ctx)
+        Json.toJson(fcoll)
+      }
+
+      // Отрендерить текущие радиусные размещения в форму MRoot.
+      val formStateSerFut: Future[String] = for {
+        ctx           <- _ctxFut
+        gp0           <- _geoPointFut
+        // TODO Отрендерить в состояние текущие георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
+      } yield {
+        // Собираем исходную root-модель формы.
+        val mroot = MFormS(
+          adId = request.mad.id.get,
+          mapState = MMapS(
+            center = gp0,
+            zoom   = 10
+          ),
+          adv4free = OptionUtil.maybe(_isSuFree) {
+            MAdv4FreeS(
+              props = MAdv4FreeProps(
+                fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
+                title = ctx.messages( "Adv.for.free.without.moderation" )
+              ),
+              checked = true
+            )
+          }
+        )
+        // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
+        _pickle(mroot)
+      }
+
+      // Собираем итоговый ответ на запрос: аргументы рендера, рендер html, рендер http-ответа.
+      for {
+        ctx           <- _ctxFut
+        advPricing    <- advPricingFut
+        form          <- formFut
+        currAdvsJson  <- currAdvsJsonFut
+        formStateSer  <- formStateSerFut
+      } yield {
+
+        val rargs = MForAdTplArgs(
+          mad           = request.mad,
+          producer      = request.producer,
+          form          = form,
+          price         = advPricing,
+          currAdvsJson  = currAdvsJson,
+          formState     = formStateSer
+        )
+
+        val html = AdvGeoForAdTpl(rargs)(ctx)
+        rs(html)
+      }
     }
 
-    // Заварить JSON-кашу из текущих размещений. Они будут скрыто отрендерены в шаблоне.
-    val currAdvsJsonFut = for {
-      ctx       <- ctxFut
-      currAdvs  <- currAdvsFut
-    } yield {
-      LOGGER.trace(s"$logPrefix Found ${currAdvs.size} current advs")
-      val fcoll = advGeoFormUtil.items2geoJson(currAdvs)(ctx)
-      Json.toJson(fcoll)
-    }
-
-    for {
-      ctx           <- ctxFut
-      advPricing    <- advPricingFut
-      form          <- formFut
-      currAdvsJson  <- currAdvsJsonFut
-    } yield {
-
-      val rargs = MForAdTplArgs(
-        mad           = request.mad,
-        producer      = request.producer,
-        form          = form,
-        price         = advPricing,
-        currAdvsJson  = currAdvsJson
-      )
-
-      val html = AdvGeoForAdTpl(rargs)(ctx)
-      rs(html)
-    }
   }
+
+
 
 
   /**
@@ -201,7 +260,9 @@ class LkAdvGeo @Inject() (
             errors = formWithErrors.errors
           )
         val fweFut = Future.successful(formWithErrors1)
-        _forAd(fweFut, NotAcceptable)
+        // Рендер результата.
+        new ForAdLogic()
+          .result(fweFut, NotAcceptable)
       },
 
       {result =>

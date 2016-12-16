@@ -77,6 +77,7 @@ Approve=Approve
 Delete.all=Delete all
 Something.gone.wrong=Something gone wrong
 Center=Center
+Please.wait=Please wait...
 
 requisites=Payment details for withdrawal
 
@@ -767,4 +768,7 @@ Current.node=Current node
 x.on.advertisers.map={0} on adverisers map
 On.the.map=On the map
 You.can.place.adn.node.on.map.below=You can place your current node on the advertisers map below.
+
+
+Adv.for.free.without.moderation=Advertise for free, without moderation?
 

@@ -77,6 +77,7 @@ Approve=Одобрить
 Delete.all=Удалить все
 Something.gone.wrong=Что-то пошло не так
 Center=Центр
+Please.wait=Пожалуйста, подождите...
 
 
 requisites=Платёжные реквизиты для вывода средств
@@ -779,4 +780,7 @@ Current.node=Текущий узел
 x.on.advertisers.map={0} на карте рекламодателей
 On.the.map=На карте
 You.can.place.adn.node.on.map.below=Вы можете разместиться на карте рекламодателей с помощью карты ниже.
+
+
+Adv.for.free.without.moderation=Размещать бесплатно, без подтверждения?
 
