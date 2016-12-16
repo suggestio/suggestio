@@ -19,7 +19,7 @@ libraryDependencies ++= {
   Seq(
     "com.google.inject"     %  "guice"                % "4.0",
     "joda-time"             %  "joda-time"            % "2.8.+",
-    Common.ORG              %% "common"               % "0.0.0-SNAPSHOT",
+    //Common.ORG              %% "commonJVM"            % "0.0.0-SNAPSHOT",
     Common.ORG              %% "common-slick-driver"  % Common.sioSlickDrvVsn,
     // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
     "com.typesafe.slick"    %% "slick"                % Common.slickVsn,
