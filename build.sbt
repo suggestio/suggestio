@@ -27,7 +27,7 @@ libraryDependencies ++= {
   val akkaVsn       = "2.4.+"
   val morphVsn      = "1.3-SNAPSHOT"
   Seq(
-    Common.ORG  %% "common"       % "0.0.0-SNAPSHOT",
+    //Common.ORG  %% "commonJVM"    % "0.0.0-SNAPSHOT",
     Common.ORG  %% "logs-macro"   % "0.0.0-SNAPSHOT",
     "org.slf4j" % "slf4j-api" % slf4jVsn,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
