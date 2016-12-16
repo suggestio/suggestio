@@ -1,0 +1,49 @@
+package io.suggest.lk.tags.edit.r
+
+import diode.react.ModelProxy
+import io.suggest.css.Css
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.vm.LkMessagesWindow.Messages
+import io.suggest.sjs.common.spa.DAction
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 16.12.16 20:32
+  * Description: Пока-статическая кнопка добавления введенного тега с очень толстым handler'ом.
+  */
+object TagAddBtnR {
+
+  type Props = ModelProxy[_]
+
+  protected class Backend($: BackendScope[Props, _]) {
+
+    def onAddBtnClick: Callback = {
+      $.props >>= { p =>
+        p.dispatchCB(AddCurrentTag)
+      }
+    }
+
+    def render(p: Props) = {
+      <.input(
+        ^.`class`  := (Css.Buttons.BTN :: Css.Size.M :: Css.Buttons.MAJOR :: Nil).mkString(" "),
+        ^.value    := Messages("Add"),
+        ^.`type`   := "submit",
+        ^.onClick --> onAddBtnClick
+      )
+    }
+
+  }
+
+  val component = ReactComponentB[Props]("TagAddBtn")
+    .stateless
+    .renderBackend[Backend]
+    .build
+
+  def apply(proxy: Props) = component(proxy)
+
+}
+
+/** Экшен добавления текущего теста в existing-теги. */
+case object AddCurrentTag extends DAction
