@@ -1,0 +1,75 @@
+package io.suggest.lk.adv.geo.r.oms
+
+import diode.{ActionHandler, ActionResult, ModelRW}
+import diode.react.ModelProxy
+import io.suggest.adv.geo.AdvGeoConstants
+import io.suggest.css.Css
+import io.suggest.lk.adv.geo.a.AdvGeoFormAction
+import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
+import io.suggest.lk.vm.LkMessagesWindow.Messages
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 16.12.16 16:50
+  * Description: React-компонент тривиального чекбокса размещения на главном экране.
+  */
+object OnMainScreenR {
+
+  type Props = ModelProxy[Boolean]
+
+  protected class Backend($: BackendScope[Props, _]) {
+
+    /** Реакция на изменение галочки onMainScreen. */
+    def onMainScreenChanged(e: ReactEventI): Callback = {
+      val oms2 = e.target.checked
+      $.props >>= { p =>
+        p.dispatchCB( SetOnMainScreen(oms2) )
+      }
+    }
+
+    def render(p: Props) = {
+      <.label(
+        <.input(
+          ^.`type`    := "checkbox",
+          ^.name      := AdvGeoConstants.OnMainScreen.FN,
+          ^.checked   := p(),
+          ^.onChange ==> onMainScreenChanged
+        ),
+        <.span(
+          ^.`class` := Css.Input.STYLED_CHECKBOX
+        ),
+        Messages( "Adv.on.main.screen" )
+      )
+    }
+
+  }
+
+  val component = ReactComponentB[ModelProxy[Boolean]]("OnMainScreen")
+    .renderBackend[Backend]
+    .build
+
+  def apply(props: Props) = component(props)
+
+}
+
+
+/** Экшен замены значения галочки размещения на главном экране. */
+case class SetOnMainScreen(checked: Boolean)
+  extends AdvGeoFormAction
+
+
+/** Action handler для галочки размещения на главном экране. */
+class OnMainScreenActionHandler[M](modelRW: ModelRW[M, Boolean]) extends ActionHandler(modelRW) {
+  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+    case SetOnMainScreen(checked2) =>
+      val checked0 = value
+      if (checked0 != checked2) {
+        // TODO Нужен опциональный эффект пересчёта стоимости.
+        updated(checked2)
+      } else {
+        noChange
+      }
+  }
+}

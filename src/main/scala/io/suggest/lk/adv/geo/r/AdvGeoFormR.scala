@@ -1,34 +1,31 @@
 package io.suggest.lk.adv.geo.r
 
-import io.suggest.adv.geo.AdvGeoConstants
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Req
+import io.suggest.adv.geo.{MAdv4FreeS, RcvrKey}
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.{IRcvrPopupResp, MMapGjResp, MarkerNodeId}
-import io.suggest.lk.adv.geo.tags.m._
+import io.suggest.lk.adv.geo.m.{IRcvrPopupResp, MMapGjResp, MRoot, MarkerNodeId}
+import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.lk.adv.m.IAdv4FreeProps
 import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.lk.vm.LkMessagesWindow.Messages
-import io.suggest.sjs.common.xhr.Xhr
-import io.suggest.sjs.dt.period.m.IDatesPeriodInfo
-import io.suggest.sjs.dt.period.r._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.model.SjsRoute
 import io.suggest.sjs.common.msg.ErrorMsgs
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-import react.leaflet.lmap.LMapR
-import react.leaflet.popup.PopupR
+import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.sjs.dt.period.r._
 import io.suggest.sjs.leaflet.L
 import io.suggest.sjs.leaflet.event.LocationEvent
-import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
+import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
+import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR
 import react.leaflet.layer.TileLayerR
+import react.leaflet.lmap.LMapR
 import react.leaflet.marker.MarkerClusterGroupR
 
 import scala.concurrent.Future
@@ -49,79 +46,22 @@ import scala.util.{Failure, Success}
   */
 object AdvGeoFormR extends Log {
 
-  /** Модель пропертисов, приходящая свыше из инициализатора. */
-  case class Props(
-    adId            : String,
-    adv4free        : Option[IAdv4FreeProps]
-  ) {
-
-    /** Данные для финального сабмита формы. */
-    val submit = SjsRoute.fromJsRouteUsingXhrOpts {
-      jsRoutes.controllers.LkAdvGeo.forAdSubmit( adId )
-    }
-
-    /** Данные для POST-реквеста с формой с целью запроса стоимости размещения. */
-    val price = SjsRoute.fromJsRouteUsingXhrOpts {
-      jsRoutes.controllers.LkAdvGeo.getPriceSubmit( adId )
-    }
-
-  }
+  type Props = ModelProxy[MRoot]
 
 
-  /** Модель состояния.
-    * @param mapCenter Координаты центра карты.
-    * @param mapZoom Состояние зума карты.
-    * @param rcvrMarkers Маркеры точек-ресиверов для карты ресиверов, полученные с сервера.
-    *                    None -- дефолтовое состояние. Почти сразу же заменяется на
-    *                    Left(Future[Resp]) -- Запущен XHR за списком маркеров.
-    *                    Right([Markers]) -- массив маркеров, передаваемых в MarkerCluster при рендере.
-    * @param locationFound false -- значит callback нужен для геолокации.
-    *                      true -- геолокация уже была, действия уже были приняты.
-    */
   case class State(
-    //mapCenter     : LatLng,
-    //mapZoom       : Zoom_t,
-    onMainScreen  : Boolean = true,
-    rcvrMarkers   : Option[Either[Future[_], js.Array[Marker]]] = None,
-    locationFound : Boolean = false,
-    rcvrPopup     : Option[RcvrPopupState] = None,
-    rcvrsMap      : Map[RcvrKey, Boolean] = Map.empty
-    //datesPeriodInfo : Option[IDatesPeriodInfo] = None
-  ) {
-    def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
-    def withRcvrMarkers(rm: Option[Either[Future[_], js.Array[Marker]]]) = copy(rcvrMarkers = rm)
-    def withRcvrPopup(pr: Option[RcvrPopupState]) = copy(rcvrPopup = pr)
-    def withRcvrsMap(rm: Map[RcvrKey, Boolean]) = copy(rcvrsMap = rm)
-  }
-
-
-  /** Состояние попапа над ресивером на карте. */
-  case class RcvrPopupState(
-    nodeId: String,
-    latLng: LatLng,
-    resp  : Either[Future[_], IRcvrPopupResp]
-  )
-
-  /** Ключ в карте текущих ресиверов. */
-  case class RcvrKey(from: String, to: String, groupId: Option[String]) {
-    override def toString = from + "." + to + "." + groupId.getOrElse("")
-  }
+                  adv4freeConn    : ReactConnectProxy[Option[MAdv4FreeS]],
+                  onMainScrConn   : ReactConnectProxy[Boolean]
+                  )
 
 
   /** Класс для компонента формы. */
-  protected class Backend($: BackendScope[Props, State]) {
-
-    def tagsChanged(): Unit = {
-      println("tagsChanged()")
-    }
+  protected class Backend($: BackendScope[Props, _]) {
 
     def datePeriodChanged(): Unit = {
       println("datePeriodChanged()")
     }
 
-    def adv4freeChanged(): Unit = {
-      println("adv4freeChanged()")
-    }
 
     // TODO Сделать Callback, без runNow()
     def onLocationFound(locEvent: LocationEvent): Unit = {
@@ -133,14 +73,6 @@ object AdvGeoFormR extends Log {
       sCb.runNow()
     }
 
-    /** Реакция на изменение галочки onMainScreen. */
-    def onMainScreenChanged(e: ReactEventI): Callback = {
-      val oms2 = e.target.checked
-      val sCb = $.modState {
-        _.withOnMainScreen( oms2 )
-      }
-      sCb >> Callback.TODO("onMainScreenChanged()")
-    }
 
     /** Реакция на клик по маркеру. */
     def onMarkerClicked(layerEvent: MarkerEvent): Unit = {
@@ -195,77 +127,28 @@ object AdvGeoFormR extends Log {
       cb.runNow()
     }
 
-    /** Реакция на изменение флага узла-ресивера в попапе узла. */
-    def rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
-      val checked = e.target.checked
-      $.modState { s0 =>
-        // Состояние попапа уже обязано быть готовым, т.к. данный сигнал другого состояние не подразумевает.
-        val ps = s0.rcvrPopup.get
-          .resp.right.get
-        // Найти узел с текущим id среди всех узлов.
-        val checkedOnServerOpt = ps.groups.iterator
-          .flatMap(_.nodes)
-          .find(_.nodeId == rk.to)
-          // Содержит ли описание узла с сервера текущее значение чекбокса? Если да, то значит значение галочки вернулось на исходное.
-          .map(_.checked)
-
-        s0.withRcvrsMap(
-          if ( checkedOnServerOpt.contains(checked) ) {
-            s0.rcvrsMap - rk
-          } else {
-            s0.rcvrsMap + (rk -> checked)
-          }
-        )
-      }
-    }
-
 
     /** Рендер всея формы. */
-    def render(props: Props, state: State) = {
+    def render(p: Props, s: State) = {
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
-        // Рендер самой формы...
-        <.form(
-          ^.method := props.submit.method,
-          ^.action := props.submit.url,
+        s.adv4freeConn( Adv4FreeR.apply ),
 
-          for (adv4free <- props.adv4free) yield {
-            Adv4FreeR(
-              Adv4FreeR.Props(
-                onChange = adv4freeChanged,
-                config   = adv4free
-              )
-            )
-          },
+        // Рендер самой формы (без <form>, т.к. форма теперь сущетсвует на уровне JS в состояние diode)...
 
           // Верхняя половина, левая колонка:
           <.div(
             ^.`class` := Css.Lk.Adv.LEFT_BAR,
 
-            // TODO Галочка размещения на главном экране
-            <.label(
-              <.input(
-                ^.`type`    := "checkbox",
-                ^.name      := AdvGeoConstants.OnMainScreen.FN,
-                ^.checked   := state.onMainScreen,
-                ^.onChange ==> onMainScreenChanged
-              ),
-              <.span(
-                ^.`class` := Css.Input.STYLED_CHECKBOX
-              ),
-              Messages( "Adv.on.main.screen" )
-            ),
+            // Галочка размещения на главном экране
+            s.onMainScrConn( OnMainScreenR.apply ),
+
             <.br,
             <.br,
 
-            // Система выбора тегов:
-            TagsEditR(
-              TagsEditR.Props(
-                tagSearchRoute  = jsRoutes.controllers.LkAdvGeo.tagsSearch,
-                onChange        = tagsChanged
-              )
-            )
+            // Подсистема выбора тегов:
+            p.wrap(m => TagsEditR.PropsVal(m.tagsFound, m.form.tags) )( TagsEditR.apply )
           ),
 
           // Верхняя половина, правая колонка:
@@ -278,7 +161,8 @@ object AdvGeoFormR extends Log {
           ),
 
           // Отрендерить hidden-input'ы для ресиверов (галочки в попапах на геокарте).
-          state.rcvrsMap.nonEmpty ?= <.div(
+          // TODO Кажется hidden-поля не нужны благодаря поддержки сериализации состояния всей формы.
+          /*state.rcvrsMap.nonEmpty ?= <.div(
             ^.`class` := "hidden",
             for {
               ((rk, enabled), i) <- state.rcvrsMap.iterator.zipWithIndex
@@ -293,9 +177,8 @@ object AdvGeoFormR extends Log {
                 _hiddenInput(i, fn = Req.VALUE_FN, v = enabled.toString)
               )
             }
-          )
+          )*/
 
-        ),
 
         // Тут немного пустоты нужно...
         <.br,
@@ -352,7 +235,8 @@ object AdvGeoFormR extends Log {
             r    <- state.rcvrPopup.iterator
             resp <- r.resp.right.toOption.iterator
           } yield {
-            PopupR(position = r.latLng, key = "p")(
+            <.div() // TODO Попап ниже уже обёрнут в diode-react-компонент.
+            /*PopupR(position = r.latLng, key = "p")(
               <.div(
                 for (g <- resp.groups.iterator) yield {
                   // Значение key не суть важно, просто оно должно быть здесь.
@@ -419,6 +303,7 @@ object AdvGeoFormR extends Log {
                 }
               ) // Popup div
             )
+            */
           }
 
         ) // LMap
@@ -494,7 +379,12 @@ object AdvGeoFormR extends Log {
 
 
   protected val component = ReactComponentB[Props]("AdvGeoForm")
-    .initialState( State() )
+    .initialState_P { p =>
+      State(
+        adv4freeConn  = p.connect(_.form.adv4free),
+        onMainScrConn = p.connect(_.form.onMainScreen)
+      )
+    }
     .renderBackend[Backend]
     .componentDidMount( _.backend.componentDidMount )
     .build
