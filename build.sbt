@@ -6,8 +6,20 @@ version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
   "org.scala-js"        %%% "scalajs-dom"         % Common.sjsDomVsn,
-  Common.ORG            %%  "common"              % "0.0.0-SNAPSHOT",
+  //Common.ORG            %%% "commonJS"            % "0.0.0-SNAPSHOT",
+  
+  // Некоторые небольшие скрипты для личного кабинета зависят от jquery. А тут живёт jq-утиль для них.
+  // В будущем можно будет избавиться от них и удалить jquery из проекта.
   "be.doeraene"         %%% "scalajs-jquery"      % Common.sjsJqueryVsn,
+  //"com.lihaoyi"         %%% "autowire"            % "0.2.6",
+  
+  // Диод нужен, т.к. он постепенно появится во всех js-частях системы.
+  // Здесь common-утиль для diode.
+  // В выдаче оно пока не задействовано, но это и не важно: будет пострипано.
+  // Потом сюда же надо и diode-react запихать.
+  "me.chrons"           %%% "diode"               % Common.diodeVsn,
+
+  // Тестирование...
   "org.monifu"          %%% "minitest"            % "0.12"            % "test"
 )
 

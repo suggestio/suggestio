@@ -2,25 +2,29 @@ package io.suggest.sjs.common.xhr
 
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.ex._
-import org.scalajs.dom.raw.ErrorEvent
-import org.scalajs.dom.{Event, XMLHttpRequest}
+import org.scalajs.dom.XMLHttpRequest
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSON
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom
+import org.scalajs.dom.ext.Ajax
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 20.05.15 11:14
- * Description: Утиль для поддержки асинхронных запросов.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 20.05.15 11:14
+  * Description: Утиль для поддержки асинхронных запросов.
+  *
+  * 2016.dec.15: Низкоуровневый код работы с XMLHttpRequest удалён. Теперь просто вызывается scalajs.ext.Ajax().
+  * Тут остались только обёртки над штатным Ajax.
+  */
 object Xhr {
 
   def MIME_JSON           = "application/json"
   def MIME_TEXT_HTML      = "text/html"
+  def MIME_OCTET_STREAM   = "application/octet-stream"
 
   def HDR_ACCEPT          = "Accept"
   def HDR_CONTENT_TYPE    = "Content-Type"
@@ -62,7 +66,7 @@ object Xhr {
       }
   }
 
-  def send(route: Route, timeoutMsOpt: Option[Long] = None,
+  def send(route: Route, timeoutMsOpt: Option[Int] = None,
            headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
     sendRaw(
       method        = route.method,
@@ -82,48 +86,17 @@ object Xhr {
     * @param timeoutMsOpt Таймаут запроса в миллисекундах, если необходимо.
     * @return Фьючерс с результатом.
     */
-  def sendRaw(method: String, url: String, timeoutMsOpt: Option[Long] = None,
+  def sendRaw(method: String, url: String, timeoutMsOpt: Option[Int] = None,
            headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
-    // Собрать XHR
-    val xhr = new XMLHttpRequest()
-    xhr.open(method, url, async = true)
-
-    // Запилить хидеры в запрос.
-    for ((k, v) <- headers) {
-      xhr.setRequestHeader(k, v)
-    }
-
-    val p = Promise[XMLHttpRequest]()
-
-    // Отработать возможный timeout.
-    timeoutMsOpt.foreach { t =>
-      xhr.timeout = t
-      xhr.ontimeout = { (evt: Event) =>
-        p.failure( XhrTimeoutException(evt, xhr, t) )
-      }
-    }
-
-    // Повесить стандартные listener'ы, запустить запрос на исполнение.
-    xhr.onload = { (evt: Event) =>
-      p.success( xhr )
-    }
-    xhr.onerror = { (evt: ErrorEvent) =>
-      p.failure( XhrNetworkException(evt, xhr) )
-    }
-
-    // Причёсываем тело, если оно есть.
-    val data: js.Any = body.orNull
-
-    // Запустить запрос
-    try {
-      xhr.send(data)
-    } catch {
-      case ex: Throwable =>
-        p.failure( ex )
-    }
-
-    // Вернуть future.
-    p.future
+    Ajax(
+      method = method,
+      url    = url,
+      data   = body.asInstanceOf[Ajax.InputData],
+      timeout = timeoutMsOpt.getOrElse(0),
+      headers = headers.toMap,
+      withCredentials = false,
+      responseType = ""
+    )
   }
 
 

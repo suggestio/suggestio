@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.i18n
 
+import io.suggest.i18n.IMessage
+
 import scala.scalajs.js
 
 /**
