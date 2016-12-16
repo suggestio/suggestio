@@ -40,9 +40,7 @@ object AdFormConstants {
   def AD_BG_COLOR_ID                = "adBgColor"
 
   // Названия корневых полей формы редактирования.
-  def CAT_ID_K    = "catId"
   def OFFER_K     = "offer"
-  def TAGS_K      = "tags"
   def PATTERN_K   = "pattern"
   def DESCR_K     = "descr"
   def BG_COLOR_K  = "bgColor"

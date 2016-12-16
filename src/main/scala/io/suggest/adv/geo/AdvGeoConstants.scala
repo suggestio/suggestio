@@ -1,6 +1,5 @@
 package io.suggest.adv.geo
 
-import io.suggest.common.html.HtmlConstants
 import io.suggest.common.maps.MapFormConstants
 import io.suggest.common.maps.rad.RadMapConstants
 import io.suggest.common.qs.QsConstants

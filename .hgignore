@@ -35,3 +35,5 @@ ui/.tmp
 ui/.sass-cache
 ui/bower_components
 ui/twirl
+.js
+.jvm
