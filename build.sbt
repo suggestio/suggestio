@@ -5,7 +5,6 @@ name := "lk-adv-ext-sjs"
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %% "common"           % "0.0.0-SNAPSHOT",
   "be.doeraene"   %%% "scalajs-jquery"  % Common.sjsJqueryVsn,
   Common.ORG      %%% "common-sjs"      % "0.0.0-SNAPSHOT",
   //"com.lihaoyi"   %%% "upickle"       % "0.2.+",
