@@ -97,6 +97,11 @@ object Common {
     */
   val boopickleVsn = "1.2.5"
 
+  /** Версия autowire для клиента и сервера.
+    *  @see [[https://github.com/lihaoyi/autowire]]
+    */
+  //val autowireVsn  = "0.2.6"
+
 
   object Repo {
 

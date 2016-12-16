@@ -6,32 +6,39 @@ import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
 import org.scalajs.sbtplugin._
 import WebScalaJS.autoImport._
+import ScalaJSPlugin.autoImport._
 
 object Sio2Build extends Build {
 
-
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
-  lazy val common = {
-    val name = "common"
-    Project(id = name, base = file(name))
-  }
+  lazy val common = (crossProject.crossType( CrossType.Pure ) in file("common"))
+    .settings(
+      scalaVersion := Common.SCALA_VSN,
+      libraryDependencies += "me.chrons" %%% "boopickle" % Common.boopickleVsn
+    )
+    .jsConfigure(_ enablePlugins ScalaJSWeb)
+
+  lazy val commonJVM = common.jvm.settings(name := "commonJVM")
+
+  lazy val commonJS = common.js.settings(name := "commonJS")
+
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
-    .dependsOn(common, logsMacro)
+    .dependsOn(commonJVM, logsMacro)
 
   /** Кое-какие общие вещи для js. */
   lazy val commonSjs = {
     val name = "common-sjs"
     Project(id = name, base = file(name))
-      .dependsOn(common)
+      .dependsOn(commonJS)
       .enablePlugins(ScalaJSPlugin)
       // Хз нужен ли этот инклюд сорцов прямо здесь.
-      .settings(
-        List(common).map { p =>
+      /*.settings(
+        List(commonJS).map { p =>
           unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)
         } : _*
-      )
+      )*/
   }
 
   /** Расшаренная утиль для интеграции с react.js через scalajs-react. */
@@ -127,12 +134,12 @@ object Sio2Build extends Build {
     val name = "lk-adv-geo-tags-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs, evothingsUtilSjs)
   }
 
   /** Модели биллинга второго поколения. */
   lazy val mbill2 = project
-    .dependsOn(logsMacro, common, util)
+    .dependsOn(logsMacro, commonJVM, util)
 
   /** Утиль и модели для поддержки интеграции с БД ipgeobase. */
   lazy val ipgeobase = {
@@ -278,7 +285,7 @@ object Sio2Build extends Build {
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
-    .dependsOn(common, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
+    .dependsOn(commonJVM, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages in Assets += scalaJSPipeline
@@ -291,7 +298,7 @@ object Sio2Build extends Build {
     Project(id = "root", base = file("."))
       .settings(Common.settingsOrg: _*)
       .aggregate(
-        common, logsMacro,
+        commonJS, commonJVM, logsMacro,
         commonSjs, commonReactSjs,
         leafletSjs, leafletReactSjs, mapBoxGlSjs, mapRadSjs,
         lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
