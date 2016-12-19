@@ -18,7 +18,7 @@ object TagNameInpR {
 
   type Props = ModelProxy[MTagsSearchS]
 
-  protected class Backend($: BackendScope[Props, _]) {
+  protected class Backend($: BackendScope[Props, Unit]) {
 
     /**
       * Коллбэк ввода текста в поле имени нового тега.
@@ -67,7 +67,8 @@ object TagNameInpR {
   }
 
 
-  val component = ReactComponentB[Backend]("TagNameInp")
+  val component = ReactComponentB[Props]("TagNameInp")
+    .stateless
     .renderBackend[Backend]
     .build
 

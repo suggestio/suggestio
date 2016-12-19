@@ -18,7 +18,7 @@ object MTagAdd {
     // Собрать и запустить запрос:
     val respFut = Xhr.send(
       route   = route,
-      body    = Some(body)
+      body    = body
     )
 
     // Результат запроса распарсить и завернуть в IAddResult.

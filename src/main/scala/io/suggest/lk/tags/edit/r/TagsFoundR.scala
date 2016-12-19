@@ -7,7 +7,7 @@ import io.suggest.common.tags.edit.{MTagsFoundResp, TagsEditConstants}
 import io.suggest.css.Css
 import io.suggest.lk.tags.edit.vm.search.hints.SRow
 import io.suggest.sjs.common.spa.DAction
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventH}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventH}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
@@ -20,8 +20,7 @@ object TagsFoundR {
 
   type Props = ModelProxy[Pot[MTagsFoundResp]]
 
-
-  protected class Backend($: BackendScope[Props, _]) {
+  protected class Backend($: BackendScope[Props, Unit]) {
 
     /** Коллбэк выбора найденного тега с помощью клика по нему в списке тегов. */
     def onTagFoundClick(e: ReactEventH): Option[Callback] = {
@@ -37,8 +36,9 @@ object TagsFoundR {
       }
     }
 
-    def render(p: Props) = {
-      p().exists(_.tags.nonEmpty) ?= <.div(
+    def render(props: Props): ReactElement = {
+      val v = props()
+      /*v.exists(_.tags.nonEmpty) ?=*/ <.div(
         ^.`class`       := Css.HintList.CONTAINER,
         <.div(
           ^.`class`     := Css.HintList.OUTER,
@@ -47,7 +47,10 @@ object TagsFoundR {
             ^.onClick   ==>? onTagFoundClick,
 
             // Отрендерить список найденных тегов
-            for (tagFound <- p().get.tags) yield {
+            for {
+              state     <- v.iterator
+              tagFound  <- state.tags.iterator
+            } yield {
               <.div(
                 ^.key := tagFound.name,
                 ^.`class` := (Css.HintList.ROW + " " + TagsEditConstants.Search.Hints.HINT_ROW_CLASS),
@@ -67,7 +70,6 @@ object TagsFoundR {
                 )
               )
             }
-
           )
         )
       )
@@ -77,6 +79,7 @@ object TagsFoundR {
 
 
   val component = ReactComponentB[Props]("TagsFound")
+    .stateless
     .renderBackend[Backend]
     .build
 

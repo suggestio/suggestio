@@ -24,7 +24,7 @@ class TagsEditActionHandler[M](
       val v0 = value
       val tagFaces = TagFacesUtil.query2tags(tagFace)
       // Если после добавления тега (тегов) множество тегов не изменилось внутри, то поддерживаем исходную референсную целостность.
-      val te2 = SetUtil.addToSetOrKeepRef(v0.tagsExists, tagFaces)
+      val te2 = SetUtil.addToSetOrKeepRef1(v0.tagsExists, tagFaces)
 
       // Собрать и сохранить новое состояние редактора тегов, сбросив поисковое поле.
       val v1 = v0.copy(
@@ -62,11 +62,11 @@ class TagsEditActionHandler[M](
         faces.flatMap { q =>
           val ql = q.length
           if (ql < minLen) {
-            MMessage("error.minLength", minLen) :: Nil
+            MMessage.a("error.minLength", minLen) :: Nil
           } else {
             // Проверяем максимальную длину.
             if (ql > maxLen) {
-              MMessage("error.maxLength", maxLen) :: Nil
+              MMessage.a("error.maxLength", maxLen) :: Nil
             } else {
               Nil
             }
@@ -76,7 +76,7 @@ class TagsEditActionHandler[M](
 
       val v2 = if (errors.isEmpty) {
         // Ошибок валидации нет. Заливаем в старое множество новые теги...
-        val te2 = SetUtil.addToSetOrKeepRef(v.tagsExists, faces)
+        val te2 = SetUtil.addToSetOrKeepRef1(v.tagsExists, faces)
         // TODO Если te2 != te0, то запустить эффект пересчёта стоимости.
         v.copy(
           query       = MTagsSearchS(),

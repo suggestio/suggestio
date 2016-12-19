@@ -2,7 +2,7 @@ package io.suggest.lk.tags.edit.r
 
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.sjs.common.spa.DAction
@@ -17,7 +17,7 @@ object TagsExistsR {
 
   type Props = ModelProxy[Set[String]]
 
-  class Backend($: BackendScope[Props, _]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     /** Клик по кнопке удаления exists-тега. */
     def onTagDeleteClick(tagName: String): Callback = {
@@ -27,10 +27,10 @@ object TagsExistsR {
     }
 
 
-    def render(tagsExists: Props) = {
+    def render(tagsExists: Props): ReactElement = {
       val SPACE = " "
       // tagExistsCont: Уже добавленные к заказу гео-теги.
-      tagsExists().nonEmpty ?= <.div(
+      /*tagsExists().nonEmpty ?=*/ <.div(
         for {
           (tagName, i) <- tagsExists().toSeq.sorted.iterator.zipWithIndex
         } yield {
@@ -65,6 +65,7 @@ object TagsExistsR {
   }
 
   val component = ReactComponentB[Props]("TagsExist")
+    .stateless
     .renderBackend[Backend]
     .build
 

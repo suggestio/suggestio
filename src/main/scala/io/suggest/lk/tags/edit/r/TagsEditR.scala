@@ -7,7 +7,7 @@ import io.suggest.common.tags.edit.{MTagsEditS, MTagsFoundResp, MTagsSearchS}
 import io.suggest.css.Css
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB}
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 
 /**
   * Suggest.io
@@ -49,7 +49,7 @@ object TagsEditR {
   protected class Backend($: BackendScope[Props, State]) {
 
     /** Выполнить рендер редактора тегов. */
-    def render(p: Props, s: State) = {
+    def render(p: Props, s: State): ReactElement = {
       <.div(
         // Локализованный заголовок виджета
         <.h2(
