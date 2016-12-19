@@ -52,7 +52,7 @@ trait UpdateAdvFormPrice extends SjsFsm with StateData with IUpdatePriceDataStar
           Xhr.sendRaw(
             method = method,
             url    = priceUrl,
-            body   = Some(form.formData)
+            body   = form.formData
           )
         }
       }

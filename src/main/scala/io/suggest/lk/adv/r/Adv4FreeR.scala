@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.adv.geo.MAdv4FreeS
 import io.suggest.css.Css
 import io.suggest.sjs.common.spa.DAction
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
@@ -16,10 +16,10 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object Adv4FreeR {
 
-  type Props = ModelProxy[Option[MAdv4FreeS]]
+  type Props = ModelProxy[MAdv4FreeS]
 
 
-  protected class Backend($: BackendScope[Props, _]) {
+  protected class Backend($: BackendScope[Props, Unit]) {
 
     /** Реакция на изменение состояния галочки. */
     def onChange(e: ReactEventI): Callback = {
@@ -29,33 +29,33 @@ object Adv4FreeR {
       }
     }
 
-    def render(props: Props) = {
-      for (p <- props()) yield {
-        <.div(
-          ^.`class` := Css.Lk.Adv.Su.CONTAINER,
+    def render(props: Props): ReactElement = {
+      val v = props()
+      <.div(
+        ^.`class` := Css.Lk.Adv.Su.CONTAINER,
 
-          <.label(
-            <.input(
-              ^.`type`    := "checkbox",
-              ^.name      := p.static.fn,
-              ^.checked   := p.checked,
-              ^.onChange ==> onChange
-            ),
-            <.span(
-              ^.`class` := Css.Input.STYLED_CHECKBOX
-            ),
-            <.span(
-              ^.`class` := (Css.Input.CHECKBOX_TITLE :: Css.Buttons.MAJOR :: Nil).mkString(" "),
-              p.static.title
-            )
+        <.label(
+          <.input(
+            ^.`type`    := "checkbox",
+            ^.name      := v.static.fn,
+            ^.checked   := v.checked,
+            ^.onChange ==> onChange
+          ),
+          <.span(
+            ^.`class` := Css.Input.STYLED_CHECKBOX
+          ),
+          <.span(
+            ^.`class` := (Css.Input.CHECKBOX_TITLE :: Css.Buttons.MAJOR :: Nil).mkString(" "),
+            v.static.title
           )
         )
-      }
+      )
     }
 
   }
 
   val component = ReactComponentB[Props]("Adv4Free")
+    .stateless
     .renderBackend[Backend]
     .build
 
