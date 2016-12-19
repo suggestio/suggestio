@@ -13,14 +13,14 @@ object MRcvrPopupResp {
   implicit val pickler: Pickler[MRcvrPopupResp] = generatePickler[MRcvrPopupResp]
 }
 /** Модель ответа сервера на запрос попапа для ресивера. */
-case class MRcvrPopupResp(groups: List[MRcvrPopupGroup])
+case class MRcvrPopupResp(groups: Seq[MRcvrPopupGroup])
 
 
 /** JSON данных одной группы в ответе сервера [[MRcvrPopupResp]]. */
 case class MRcvrPopupGroup(
-                          name      : Option[String],
+                          nameOpt   : Option[String],
                           groupId   : Option[String],
-                          nodes     : List[MRcvrPopupNode] )
+                          nodes     : Seq[MRcvrPopupNode] )
 
 
 /** JSON с данными одного узла в ответе [[MRcvrPopupResp]] в рамках одной группы [[MRcvrPopupGroup]]. */
@@ -30,7 +30,7 @@ case class MRcvrPopupNode(
   checked         : Boolean,
   nameOpt         : Option[String],
   isOnlineNow     : Boolean,
-  dateRange       : List[MDateFormatted]
+  dateRange       : Seq[MDateFormatted]
   //TODO intervalOpt     : Option[IDatesPeriodInfo]
 )
 

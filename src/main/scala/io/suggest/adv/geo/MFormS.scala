@@ -29,6 +29,7 @@ object MFormS {
 
 }
 
+
 /** Корневая модель состояния формы георазмещения на базе diode circuit.
   * Этот класс пошарен между сервером и клиентом, поэтому
   *
@@ -61,6 +62,8 @@ case class MFormS(
   def withAdv4Free(a4fOpt: Option[MAdv4FreeS]) = copy(adv4free = a4fOpt)
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
   def withTags(tags2: MTagsEditS) = copy(tags = tags2)
+  def withMapState(ms2: MMapS) = copy(mapState = ms2)
+  def withRcvrPopup(rcvrPopup2: Option[MRcvrPopupState]) = copy(rcvrPopup = rcvrPopup2)
 
 }
 
@@ -94,7 +97,9 @@ case class MAdv4FreeS(
 case class MMapS(
   center  : MGeoPoint,
   zoom    : Int
-)
+) {
+  def withCenter(center2: MGeoPoint) = copy(center = center2)
+}
 
 
 /** Модели описания состояния одного круга на географической карте.
