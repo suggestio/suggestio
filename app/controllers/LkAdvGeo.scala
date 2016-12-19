@@ -73,15 +73,6 @@ class LkAdvGeo @Inject() (
   import streamsUtil._
 
 
-  /** Base64-сериализатор для js-состояния diode-react-формы. */
-  private def _pickle(mroot: MFormS): String = {
-    val bytes = MFormS.pickle(mroot)
-    val data = Array.ofDim[Byte](bytes.remaining())
-    bytes.get(data)
-    Base64.getEncoder
-      .encodeToString( data )
-  }
-
   /** Асинхронный детектор начальной точки для карты георазмещения. */
   private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[MGeoPoint] = {
     import advGeoLocUtil.Detectors._
@@ -196,7 +187,7 @@ class LkAdvGeo @Inject() (
           ),
           adv4free = OptionUtil.maybe(_isSuFree) {
             MAdv4FreeS(
-              props = MAdv4FreeProps(
+              static = MAdv4FreeProps(
                 fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
                 title = ctx.messages( "Adv.for.free.without.moderation" )
               ),
@@ -418,7 +409,7 @@ class LkAdvGeo @Inject() (
     *
     * @param adIdU id текущей карточки, которую размещают.
     * @param rcvrNodeIdU id узла, по которому кликнул юзер.
-    * @return HTML.
+    * @return Бинарь для boopickle на стороне JS.
     */
   def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
   private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = CanThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
@@ -522,27 +513,24 @@ class LkAdvGeo @Inject() (
       nodesGrps           <- nodesGrpsFut
     } yield {
 
-      val jsonArgs = MRcvrReactPopupJson(
+      val resp = MRcvrPopupResp(
         groups = for (g <- nodesGrps) yield {
-          MNodeAdvGroupArgs(
+          MRcvrPopupGroup(
             groupId = g._1.map(_.strId),
             nameOpt = for (ntype <- g._1) yield ctx.messages(ntype.plural),
             nodes   = for (n <- g._2; nodeId <- n.id) yield {
-              MNodeAdvInfo(
+              MRcvrPopupNode(
                 nodeId      = nodeId,
                 isCreate    = !advRcvrIdsBusy.contains( nodeId ),
                 checked     = advRcvrIdsActual.contains( nodeId ),
                 nameOpt     = n.guessDisplayNameOrId,
                 isOnlineNow = nodesHasOnline.contains( nodeId ),
-                intervalOpt = for (ivl <- intervalsMap.get( nodeId )) yield {
-                  def __formatDate(dt: LocalDate) = MDateStrInfo(
+                dateRange   = intervalsMap.get( nodeId ).fold[List[MDateFormatted]] (Nil) { ivl =>
+                  def __formatDate(dt: LocalDate) = MDateFormatted(
                     dow  = dayOfWeek(dt)(ctx),
                     date = formatDateFull(dt)(ctx)
                   )
-                  MDateStartEndStr(
-                    start = __formatDate(ivl.dateStart),
-                    end   = __formatDate(ivl.dateEnd)
-                  )
+                  __formatDate(ivl.dateStart) :: __formatDate(ivl.dateEnd) :: Nil
                 }
               )
             }
@@ -550,10 +538,31 @@ class LkAdvGeo @Inject() (
         }
       )
 
-      Ok( Json.toJson(jsonArgs) )
+      import MRcvrPopupResp.pickler
+
+      Ok( _pickle2(resp) )
         // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
         .withHeaders(CACHE_CONTROL -> "private, max-age=5")
     }
+  }
+
+
+  import boopickle.Default._
+
+  /** Base64-сериализатор для js-состояния diode-react-формы. */
+  private def _pickle(mroot: MFormS): String = {
+    val bytes = MFormS.pickle(mroot)
+    val data = Array.ofDim[Byte](bytes.remaining())
+    bytes.get(data)
+    Base64.getEncoder
+      .encodeToString( data )
+  }
+
+  private def _pickle2[T](m: T)(implicit pickler: Pickler[T]): Array[Byte] = {
+    val bytes = Pickle.intoBytes(m)
+    val data = Array.ofDim[Byte](bytes.remaining())
+    bytes.get(data)
+    data
   }
 
 }
