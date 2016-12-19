@@ -102,46 +102,18 @@ object AdvGeoConstants {
     /** Константы для попапа, выпрыгивающего при клике по узлу. */
     object Popup {
 
-      /** Имя поля формы с группами узлов. */
-      final val GROUPS_FN         = "a"
-
       /** id группы узлов, алиас некой общей сути у узлов.
         * Например и изначально -- это тип узлов (ntype), но совсем не обязательно. */
       final val GROUP_ID_FN       = "b"
 
-      /** Имя поля с узлами. Например, внутри группы. */
-      final val NODES_FN          = "c"
-
-      /** id узла. */
-      final val NODE_ID_FN        = "d"
-
-      /** Имя поля флага направления действия: созидание или разрушение? */
-      final val IS_CREATE_FN      = "e"
-
       /** Поставлена ли галочка? */
       final val CHECKED_FN        = "f"
-
-      /** Имя поля названия узла/группы.  */
-      final val NAME_FN           = "g"
-
-      /** Находится ли узел в онлайне прямо сейчас? */
-      final val IS_ONLINE_NOW_FN  = "h"
-
-      /** Интервал дат размещения. */
-      final val INTERVAL_FN       = "i"
 
 
       private def ID_DELIM        = QsConstants.KEY_PARTS_DELIM_STR
 
       /** префикс DOM-id контейнера данных для попапа ресивера. */
       def CONT_ID_PREFIX           = "prc" + ID_DELIM
-
-      /** префикс DOM-id контейнера данных одной группы для ресивера. */
-      def GRP_CONT_ID_PREFIX       = "g" + CONT_ID_PREFIX
-      def GRP_NODES_CONT_ID_PREFIX = "s" + GRP_CONT_ID_PREFIX
-
-      /** Префикс DOM-id для контейнера одного под-узла в рамках группы узлов одного ресивера. */
-      def NODE_GRP_CONT_ID_PREFIX  = "n" + GRP_CONT_ID_PREFIX
 
     }
 
