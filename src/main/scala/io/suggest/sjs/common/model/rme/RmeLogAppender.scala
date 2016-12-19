@@ -39,8 +39,7 @@ abstract class RmeLogAppender extends ILogAppender {
             errCode = logMsg.code
           )
           val json = MRmeReport.toJson(report)
-          val str = JSON.stringify(json)
-          Some(str)
+          JSON.stringify(json)
         }
       )
     }

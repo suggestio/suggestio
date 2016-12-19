@@ -47,9 +47,13 @@ object MGeoPointJs {
     }
   }
 
+  /** Массив координат в стандартной нотации: [lon,lat] т.е. [x,y]. */
   def toArray(gp: IGeoPoint) = js.Array[Double](gp.lon, gp.lat)
 
   def toJsArray(gp: IGeoPoint) = toArray(gp).asInstanceOf[ js.Array[js.Any] ]
+
+  /** leaflet использовать массивы в традиционной нотации: [y, x] то бишь [lat, lon]. */
+  def toLatLngArray(gp: IGeoPoint) = js.Array[Double](gp.lat, gp.lon)
 
   def toGjPoint(gp: IGeoPoint) = GjGeometry(
     gtype       = GjTypes.Geom.POINT,

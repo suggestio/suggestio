@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.xhr
 
+import java.nio.ByteBuffer
+
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
@@ -10,6 +12,8 @@ import scala.scalajs.js.JSON
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom
 import org.scalajs.dom.ext.Ajax
+
+import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
 
 /**
   * Suggest.io
@@ -67,7 +71,7 @@ object Xhr {
   }
 
   def send(route: Route, timeoutMsOpt: Option[Int] = None,
-           headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
+           headers: TraversableOnce[(String, String)] = Nil, body: Ajax.InputData = null): Future[XMLHttpRequest] = {
     sendRaw(
       method        = route.method,
       url           = route2url(route),
@@ -87,17 +91,18 @@ object Xhr {
     * @return Фьючерс с результатом.
     */
   def sendRaw(method: String, url: String, timeoutMsOpt: Option[Int] = None,
-           headers: TraversableOnce[(String, String)] = Nil, body: Option[js.Any] = None): Future[XMLHttpRequest] = {
+              headers: TraversableOnce[(String, String)] = Nil, body: Ajax.InputData = null): Future[XMLHttpRequest] = {
     Ajax(
       method = method,
       url    = url,
-      data   = body.asInstanceOf[Ajax.InputData],
+      data   = body,
       timeout = timeoutMsOpt.getOrElse(0),
       headers = headers.toMap,
       withCredentials = false,
       responseType = ""
     )
   }
+
 
 
   /**
@@ -166,6 +171,30 @@ object Xhr {
     }
     for (xhr <- xhrFut) yield {
       xhr.responseText
+    }
+  }
+
+  /**
+    * Запрос бинарщины с сервера. Ответ обычно подхватывается через boopickle.
+    *
+    * @see По мотивам autowire-клиента из [[https://github.com/ochrons/scalajs-spa-tutorial/blob/290c3f7cb3f0c9168cbb61d2b39cc330a09ebe4c/client/src/main/scala/spatutorial/client/services/AjaxClient.scala#L12]]
+    *
+    * @param route Роута
+    * @param body Опциональное тело запроса.
+    * @return Фьючерс с блобом.
+    */
+  def requestBinary(route: Route, body: Ajax.InputData = null): Future[ByteBuffer] = {
+    val fut = dom.ext.Ajax(
+      method          = route.method,
+      url             = route2url(route),
+      data            = body.asInstanceOf[Ajax.InputData],
+      timeout         = 0,
+      headers         = Map(HDR_CONTENT_TYPE -> MIME_OCTET_STREAM),
+      withCredentials = false,
+      responseType    = "arraybuffer"
+    )
+    for (resp <- successIfStatus(200)(fut)) yield {
+      TypedArrayBuffer.wrap( resp.response.asInstanceOf[ArrayBuffer] )
     }
   }
 

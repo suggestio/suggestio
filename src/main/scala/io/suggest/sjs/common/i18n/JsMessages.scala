@@ -33,7 +33,7 @@ sealed trait JsMessagesSingleLang extends js.Object {
 }
 
 
-/** Поддержка apply() метода, поглащающего инстансы [[IMessage]]. */
+/** Поддержка apply() метода, поглащающего инстансы [[io.suggest.i18n.IMessage]]. */
 trait JsMessager {
 
   def Messages: JsMessagesSingleLang
