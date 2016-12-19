@@ -1,9 +1,9 @@
-package io.suggest.lk.adv.geo.r.pop.rcvr
+package io.suggest.lk.adv.geo.r.rcvr
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, ModelR, ModelRW}
-import io.suggest.adv.geo.{MRcvrPopupResp, RcvrKey, RcvrsMap_t}
-import io.suggest.lk.adv.geo.a.AdvGeoFormAction
+import io.suggest.adv.geo.{MRcvrPopupResp, RcvrsMap_t}
+import io.suggest.lk.adv.geo.a.SetRcvrStatus
 
 /**
   * Suggest.io
@@ -12,10 +12,11 @@ import io.suggest.lk.adv.geo.a.AdvGeoFormAction
   * Description: Поддержка экшенов (сигналов) и реакции на экшены rcvr-попапа.
   */
 
-class RcvrPopupActionHandler[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
-                                rcvrMapRW: ModelRW[M, RcvrsMap_t]) extends ActionHandler(rcvrMapRW) {
+class RcvrInputsAH[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
+                      rcvrMapRW: ModelRW[M, RcvrsMap_t]) extends ActionHandler(rcvrMapRW) {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
     // Изменилось состояние галочки ресивера в rcvr-попапе.
     case e: SetRcvrStatus =>
       respPot().fold( noChange ) { resp =>
@@ -40,8 +41,3 @@ class RcvrPopupActionHandler[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
   }
 
 }
-
-
-/** Экшен на тему изменения статуса ресивера. */
-case class SetRcvrStatus(rcvrKey: RcvrKey, checked: Boolean)
-  extends AdvGeoFormAction

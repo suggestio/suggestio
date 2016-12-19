@@ -95,22 +95,7 @@ class AgtFormInit2 extends IInit {
     // Для эксперимента сразу активируем url#-роутер внутри одной страницы с одним содержимым.
     // Это наподобии того, что реализовано в scalajs-spa-tutorial.
 
-
-    val adId = AdIdInp.find()
-      .flatMap( _.adId )
-      .get
-
-    val rform = AdvGeoFormR.apply(
-      // TODO Заполнять пропертисы с сервера.
-      AdvGeoFormR.Props(
-        adId          = adId,
-        adv4free      = None
-        /*Some( new IAdv4FreeProps {
-          override def title  = "Размещать нахаляву?"
-          override def fn     = "adv4ffreee"
-        })*/
-      )
-    )
+    val rform = LkAdvGeoFormCircuit.wrap(m => m)(AdvGeoFormR.apply)
     ReactDOM.render(rform, dom.document.getElementById("xynta"))
   }
 

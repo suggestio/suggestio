@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import diode.react.ModelProxy
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.a.AdvGeoFormAction
+import io.suggest.lk.adv.geo.a.SetOnMainScreen
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
 import io.suggest.lk.vm.LkMessagesWindow.Messages
@@ -17,9 +17,11 @@ import io.suggest.lk.vm.LkMessagesWindow.Messages
   */
 object OnMainScreenR {
 
-  type Props = ModelProxy[Boolean]
+  case class PropsVal(value: Boolean)
 
-  protected class Backend($: BackendScope[Props, _]) {
+  type Props = ModelProxy[PropsVal]
+
+  protected class Backend($: BackendScope[Props, Unit]) {
 
     /** Реакция на изменение галочки onMainScreen. */
     def onMainScreenChanged(e: ReactEventI): Callback = {
@@ -34,7 +36,7 @@ object OnMainScreenR {
         <.input(
           ^.`type`    := "checkbox",
           ^.name      := AdvGeoConstants.OnMainScreen.FN,
-          ^.checked   := p(),
+          ^.checked   := p().value,
           ^.onChange ==> onMainScreenChanged
         ),
         <.span(
@@ -46,7 +48,8 @@ object OnMainScreenR {
 
   }
 
-  val component = ReactComponentB[ModelProxy[Boolean]]("OnMainScreen")
+  val component = ReactComponentB[Props]("OnMainScreen")
+    .stateless
     .renderBackend[Backend]
     .build
 
@@ -55,13 +58,8 @@ object OnMainScreenR {
 }
 
 
-/** Экшен замены значения галочки размещения на главном экране. */
-case class SetOnMainScreen(checked: Boolean)
-  extends AdvGeoFormAction
-
-
 /** Action handler для галочки размещения на главном экране. */
-class OnMainScreenActionHandler[M](modelRW: ModelRW[M, Boolean]) extends ActionHandler(modelRW) {
+class OnMainScreenAH[M](modelRW: ModelRW[M, Boolean]) extends ActionHandler(modelRW) {
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
     case SetOnMainScreen(checked2) =>
       val checked0 = value

@@ -4,9 +4,12 @@ import diode.Circuit
 import diode.react.ReactConnector
 import evothings.EvothingsUtil
 import io.suggest.adv.geo.MFormS
+import io.suggest.lk.adv.geo.a.{LetsInitRcvrMarkers, ReqRcvrPopup}
 import io.suggest.lk.adv.geo.m.MRoot
-import io.suggest.lk.adv.geo.r.oms.OnMainScreenActionHandler
-import io.suggest.lk.adv.geo.r.pop.rcvr.RcvrPopupActionHandler
+import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
+import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapAH
+import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
+import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
 import io.suggest.lk.tags.edit.r.TagsEditActionHandler
 import io.suggest.sjs.common.spa.StateInp
@@ -34,8 +37,6 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
           val buf = TypedArrayBuffer.wrap(arr.buffer)
           MFormS.unPickler.fromBytes( buf )
         }
-        // TODO Запустить в фоне экшен проверки необходимости запуска ранних эффектов запроса ресиверов с сервера.
-        // Например, если задано root.form.rcvrState, а root.rcvrResp == Pot.Empty, но нужно стартануть эффект получения данных с сервера.
       )
     }
 
@@ -43,14 +44,38 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
   }
 
 
-  /** RW-доступ к полю с формой. */
-  private val formZoomRW = zoomRW(_.form) { _.withForm(_) }
+  val API = new LkAdvGeoApiImpl
 
   /** Обработчики экшенов объединяются прямо здесь: */
   override protected val actionHandler: HandlerFunction = {
 
-    val rcvrPopupAh = new RcvrPopupActionHandler(
-      respPot = zoom(_.rcvrPopup),
+    // RW-доступ к полю с формой.
+    val formZoomRW  = zoomRW(_.form) { _.withForm(_) }
+
+    val adIdZoom    = formZoomRW.zoom(_.adId)
+    val rcvrPopupRW = zoomRW(_.rcvrPopup) { _.withRcvrPopup(_) }
+
+    val mapStateRW  = formZoomRW.zoomRW(_.mapState) { _.withMapState(_) }
+
+    // Собираем handler'ы
+
+    val rcvrsMarkerPopupAh = {
+      val p1 = new RcvrsMarkerPopupAH(
+        api       = API,
+        adIdProxy = adIdZoom,
+        rcvrsRW   = rcvrPopupRW // zoomRW(_.rcvrPopup) { _.withRcvrPopup(_) }
+      )
+      val p2 = new RcvrMarkerOnMapAH(
+        mapStateRW = mapStateRW
+      )
+      val p3 = new RcvrMarkerPopupState(
+        popStateRW = formZoomRW.zoomRW(_.rcvrPopup) { _.withRcvrPopup(_) }
+      )
+      foldHandlers(p1, p2, p3)
+    }
+
+    val rcvrInputsAh = new RcvrInputsAH(
+      respPot   = rcvrPopupRW,
       rcvrMapRW = formZoomRW.zoomRW(_.rcvrsMap) { _.withRcvrMap(_) }
     )
 
@@ -58,8 +83,12 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
       modelRW = formZoomRW.zoomRW(_.tags) { _.withTags(_) }
     )
 
-    val onMainScreenAh = new OnMainScreenActionHandler(
+    val onMainScreenAh = new OnMainScreenAH(
       modelRW = formZoomRW.zoomRW(_.onMainScreen) { _.withOnMainScreen(_) }
+    )
+
+    val mapAh = new AdvGeoMapAH(
+      mapStateRW = mapStateRW
     )
 
     val adv4freeAh = new Adv4FreeActionHandler(
@@ -72,7 +101,52 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
       }
     )
 
-    composeHandlers(rcvrPopupAh, tagsEditAh, onMainScreenAh, adv4freeAh)
+    val rcvrsMapInitAh = new RcvrMarkersInitAH(
+      api       = API,
+      adIdProxy = adIdZoom,
+      modelRW   = zoomRW(_.rcvrMarkers) { _.withRcvrMarkers(_) }
+    )
+
+    // Склеить все handler'ы.
+    composeHandlers(
+      rcvrsMarkerPopupAh, rcvrInputsAh,
+      tagsEditAh,
+      onMainScreenAh,
+      mapAh,
+      adv4freeAh,
+      // init-вызовы в конце, т.к. они довольно редкие.
+      rcvrsMapInitAh
+    )
   }
+
+
+  // Запустить инициализацию карты ресиверов после окончания инициализации circuit.
+  dispatch( LetsInitRcvrMarkers )
+
+  // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.
+  for {
+    rcvrPopupState <- zoom(_.form.rcvrPopup).value
+    pot = zoom(_.rcvrPopup).value
+    if pot.isEmpty && !pot.isPending
+  } {
+    // Есть повод устроить запрос.
+    val a = ReqRcvrPopup(
+      nodeId    = rcvrPopupState.nodeId,
+      geoPoint  = rcvrPopupState.latLng
+    )
+    dispatch(a)
+  }
+
+
+  // TODO Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
+  /*{
+    val tagSearch = zoom(_.form.tags.query).value
+    if (tagSearch.text.nonEmpty) {
+      val pot = zoom(_.tagsFound).value
+      if (pot.isEmpty && !pot.isPending) {
+        dispatch( TagsFoundR )
+      }
+    }
+  }*/
 
 }
