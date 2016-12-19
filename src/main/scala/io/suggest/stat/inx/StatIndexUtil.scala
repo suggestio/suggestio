@@ -133,8 +133,6 @@ class StatIndexUtil @Inject() (
         // Проверка на нормальность текущей обстановки фейлиться, если:
         // - индекса не найдено вообще (should never happen)
         // - в индексе уже слишком много документов
-        // - это старый индекс "-siostat", пятишардовый и зашкваренный устаревшими маппингами с TTL
-        //   TODO Можно удалить индекс -siostat после окончания 2016 г. Сам код проверки префикса имени индекса можно удалить хоть в октябре 2016г.
         val info = infoOpt.get
         val docCountLimitOk = info.docCount < MAX_DOC_COUNT_PER_INDEX
         docCountLimitOk && info.inxName.startsWith( mStatIndexes.INDEX_ALIAS_NAME )
