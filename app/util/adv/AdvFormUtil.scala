@@ -3,7 +3,7 @@ package util.adv
 import com.google.inject.Singleton
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
-import io.suggest.dt.interval.PeriodsConstants
+import io.suggest.dt.interval.{PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.model.geo.{CircleGs, Distance}
@@ -33,11 +33,8 @@ class AdvFormUtil {
 
   /** Генератор списка шаблонных периодов размещения. */
   def advPeriodsAvailable = {
-    val isoPeriodsIter = QuickAdvPeriods.ordered
-      .iterator
-      .map(_.isoPeriod)
-    val iter = isoPeriodsIter ++ Iterator(PeriodsConstants.CUSTOM)
-    iter.toSeq
+    QuickAdvPeriods.values
+      .map(_.strId)
   }
 
 
@@ -65,18 +62,18 @@ class AdvFormUtil {
   }
 
   /** Форма исповедует select, который имеет набор предустановленных интервалов, а также имеет режим задания дат вручную. */
-  def advPeriodM: Mapping[DatePeriod_t] = {
+  def advPeriodM: Mapping[MDatesPeriod] = {
     val custom = PeriodsConstants.CUSTOM
     tuple(
       QUICK_PERIOD_FN -> nonEmptyText(minLength = 1, maxLength = 10)
-        .transform [Option[QuickAdvPeriod]] (
+        .transform [Option[QuickAdvIsoPeriod]] (
           {periodRaw =>
             if (periodRaw == custom)
               None
             else
-              QuickAdvPeriods.maybeWithName(periodRaw)
+              QuickAdvPeriods.withNameOptionIso(periodRaw)
           },
-          { _.fold(custom)(_.isoPeriod) }
+          { _.fold(custom)(_.strId) }   // TODO Тут было .isoPeriod, но он тут недоступен, поэтому strId.
         ),
       DATES_INTERVAL_FN -> advDatePeriodOptM
     )
@@ -91,7 +88,7 @@ class AdvFormUtil {
        case _ => true
     }})
 
-    .transform [DatePeriod_t] (
+    .transform [MDatesPeriod] (
       // В зависимости от имеющихся значений полей выбираем реальный период.
       { case (Some(qap), _) =>
           MDatesPeriod(qap)

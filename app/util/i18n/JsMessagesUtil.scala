@@ -1,9 +1,8 @@
 package util.i18n
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.dt.interval.PeriodsConstants
+import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
 import jsmessages.{JsMessages, JsMessagesFactory}
-import models.adv.form.QuickAdvPeriods
 
 /**
   * Suggest.io
@@ -30,7 +29,7 @@ class JsMessagesUtil @Inject() (
 
     val advPeriodsIter: Iterator[String] = {
       Seq(
-        QuickAdvPeriods.valuesT
+        QuickAdvPeriods.values
           .iterator
           .map(_.messagesCode),
         Seq( PeriodsConstants.MESSAGES_PREFIX + PeriodsConstants.CUSTOM )

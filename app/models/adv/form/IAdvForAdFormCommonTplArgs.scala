@@ -1,6 +1,6 @@
 package models.adv.form
 
-import io.suggest.dt.interval.PeriodsConstants
+import io.suggest.dt.interval.QuickAdvPeriods
 
 /**
   * Suggest.io
@@ -12,11 +12,8 @@ trait IAdvForAdFormCommonTplArgs {
 
   /** Доступные для рендера периоды. */
   def advPeriodsAvail: Seq[String] = {
-    val isoPeriodsIter = QuickAdvPeriods.ordered
-      .iterator
-      .map(_.isoPeriod)
-    val iter = isoPeriodsIter ++ Iterator(PeriodsConstants.CUSTOM)
-    iter.toSeq
+    QuickAdvPeriods.values
+      .map(_.strId)
   }
 
 }
