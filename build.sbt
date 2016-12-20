@@ -10,8 +10,6 @@ persistLauncher in Compile := false
 
 persistLauncher in Test := false
 
-testFrameworks += new TestFramework("utest.runner.Framework")
-
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
@@ -25,9 +23,6 @@ libraryDependencies ++= Seq(
 
     // 2016.dec.14: diode, boopickle. Внедрение этих велосипедов началось для нужд унифицированной сериализации/десериализации.
     //"me.chrons"     %%% "diode-devtools"                  % Common.diodeVsn,
-    "com.github.japgolly.scalajs-react" %%% "extra"       % Common.reactSjsVsn,
-
-    // test
-    "com.lihaoyi"   %%% "utest"                           % "0.3.1"  % "test"
+    "com.github.japgolly.scalajs-react" %%% "extra"       % Common.reactSjsVsn
 )
 
