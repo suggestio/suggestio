@@ -5,7 +5,7 @@ Common.settingsOrg
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(
-  "org.monifu"    %% "minitest"            % "0.12"            % "test"
+  "io.monix"      %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
