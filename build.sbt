@@ -1,6 +1,6 @@
 //import org.scalajs.core.tools.javascript.OutputMode
 
-Common.settingsOrg
+Common.settingsOrgJS
 
 name := "lk-sjs"
 
