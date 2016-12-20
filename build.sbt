@@ -8,7 +8,7 @@ libraryDependencies ++= Seq(
   Common.ORG      %%% "common-sjs"          % "0.0.0-SNAPSHOT",
   Common.ORG      %%% "scalajs-cordova"     % "0.0.0-SNAPSHOT",
   Common.ORG      %%% "scalajs-cordova-ble" % "0.0.0-SNAPSHOT",
-  "org.monifu"    %%% "minitest"            % "0.12"            % "test"
+  "io.monix"      %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
 persistLauncher in Compile := true
