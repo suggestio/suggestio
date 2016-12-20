@@ -10,8 +10,6 @@ persistLauncher in Compile := false
 
 persistLauncher in Test := false
 
-//testFrameworks += new TestFramework("utest.runner.Framework")
-
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
