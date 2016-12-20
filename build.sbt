@@ -20,7 +20,7 @@ libraryDependencies ++= Seq(
   "me.chrons"           %%% "diode"               % Common.diodeVsn,
 
   // Тестирование...
-  "org.monifu"          %%% "minitest"            % "0.12"            % "test"
+  "io.monix"            %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
 persistLauncher in Compile := false
