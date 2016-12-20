@@ -19,6 +19,8 @@ object Common {
     organization := ORG
   )
 
+  val settingsOrgJS = settingsOrg
+
   /** Версия play. */
   val playVsn         = "2.5.10"
 
@@ -101,6 +103,16 @@ object Common {
     *  @see [[https://github.com/lihaoyi/autowire]]
     */
   //val autowireVsn  = "0.2.6"
+
+  /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
+    * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]
+    */
+  val enumeratumVsn = "1.5.3"
+
+  /** Версия wix accord validation.
+    * @see [[http://wix.github.io/accord/index.html#getting-started]]
+    */
+  val wixAccordVsn = "0.6.1"
 
 
   object Repo {

@@ -14,7 +14,11 @@ object Sio2Build extends Build {
   lazy val common = (crossProject.crossType( CrossType.Pure ) in file("common"))
     .settings(
       scalaVersion := Common.SCALA_VSN,
-      libraryDependencies += "me.chrons" %%% "boopickle" % Common.boopickleVsn
+      libraryDependencies ++= Seq(
+        "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
+        "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
+        "com.wix"      %%% "accord-core" % Common.wixAccordVsn
+      )
     )
     .jsConfigure(_ enablePlugins ScalaJSWeb)
 
