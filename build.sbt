@@ -1,4 +1,4 @@
-Common.settingsOrg
+Common.settingsOrgJS
 
 name := "ble-beaconer-sjs"
 
