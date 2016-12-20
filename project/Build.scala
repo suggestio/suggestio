@@ -13,7 +13,6 @@ object Sio2Build extends Build {
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
   lazy val common = (crossProject.crossType( CrossType.Pure ) in file("common"))
     .settings(
-      scalaVersion := Common.SCALA_VSN,
       libraryDependencies ++= Seq(
         "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
         "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
@@ -22,9 +21,15 @@ object Sio2Build extends Build {
     )
     .jsConfigure(_ enablePlugins ScalaJSWeb)
 
-  lazy val commonJVM = common.jvm.settings(name := "commonJVM")
+  lazy val commonJVM = common.jvm.settings(
+    name := "commonJVM",
+    scalaVersion := Common.SCALA_VSN
+  )
 
-  lazy val commonJS = common.js.settings(name := "commonJS")
+  lazy val commonJS = common.js.settings(
+    name := "commonJS",
+    scalaVersion := Common.SCALA_VSN_JS
+  )
 
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */

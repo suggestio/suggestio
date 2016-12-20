@@ -10,6 +10,7 @@ import Keys._
 object Common {
 
   val SCALA_VSN = "2.11.8"
+  val SCALA_VSN_JS = "2.12.1"
 
   val ORG = "io.suggest"
 
@@ -19,7 +20,10 @@ object Common {
     organization := ORG
   )
 
-  val settingsOrgJS = settingsOrg
+  val settingsOrgJS = Seq[Setting[_]](
+    scalaVersion := SCALA_VSN_JS,
+    organization := ORG
+  )
 
   /** Версия play. */
   val playVsn         = "2.5.10"
@@ -47,7 +51,7 @@ object Common {
   /** Версия jquery-фасада для scalajs.
    * @see [[https://github.com/scala-js/scala-js-jquery]]
    */
-  def sjsJqueryVsn      = "0.9.0"
+  def sjsJqueryVsn      = "0.9.1"
 
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
@@ -113,6 +117,11 @@ object Common {
     * @see [[http://wix.github.io/accord/index.html#getting-started]]
     */
   val wixAccordVsn = "0.6.1"
+
+  /** Версия minitest, используемого для простых кросс-платформенных тестов.
+    * @see [[https://github.com/monix/minitest]]
+    */
+  val minitestVsn  = "0.27"
 
 
   object Repo {
