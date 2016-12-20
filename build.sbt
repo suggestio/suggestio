@@ -16,7 +16,7 @@ libraryDependencies ++= Seq(
   Common.ORG            %%% "lk-adv-direct-sjs"   % "0.0.0-SNAPSHOT",
   Common.ORG            %%% "lk-adv-geo-tags-sjs" % "0.0.0-SNAPSHOT",
   Common.ORG            %%% "lk-adn-map-sjs"      % "0.0.0-SNAPSHOT"
-  //"org.monifu"  %%% "minitest" % "0.12" % "test",
+  //"io.monix"      %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
 persistLauncher in Compile := true
