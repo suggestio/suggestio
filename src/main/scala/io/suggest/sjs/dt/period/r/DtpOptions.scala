@@ -3,10 +3,10 @@ package io.suggest.sjs.dt.period.r
 import io.suggest.adv.AdvConstants
 import io.suggest.common.qs.QsConstants
 import io.suggest.css.Css
+import io.suggest.dt.interval.{QuickAdvPeriod, QuickAdvPeriods}
 import io.suggest.lk.r.PropTable
 import io.suggest.lk.r.Forms.InputCont
 import io.suggest.lk.vm.LkMessagesWindow.Messages
-import io.suggest.sjs.common.dt.interval.{QuickAdvPeriod, QuickAdvPeriods}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -29,7 +29,7 @@ object DtpOptions {
     /** Реакция на смену значения в селекте периода размещения. */
     def onQapChange(e: ReactEventI): Callback = {
       val v = e.target.value
-      QuickAdvPeriods.maybeWithName( v )
+      QuickAdvPeriods.withNameOption( v )
         .fold(Callback.empty) { qap2 =>
           for {
             _     <- $.modState { _.copy(qap = qap2) }
@@ -40,7 +40,7 @@ object DtpOptions {
         }
     }
 
-    def render(state: State) = {
+    def render(state: State): ReactElement = {
       <.div(
         ^.`class` := Css.Dt.OPTIONS,
         PropTable.Outer(
