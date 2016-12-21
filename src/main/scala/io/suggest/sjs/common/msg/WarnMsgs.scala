@@ -95,4 +95,6 @@ object WarnMsgs extends MsgsStaticT {
 
   def BLE_BEACON_EMPTY_UID                  = E(41)
 
+  def DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL = E(42)
+
 }

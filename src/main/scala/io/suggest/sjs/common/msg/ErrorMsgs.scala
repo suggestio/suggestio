@@ -92,4 +92,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def UNEXPECTED_RCVR_POPUP_SRV_RESP   = E(42)
 
+  def JS_DATE_PARSE_FAILED             = E(43)
+
 }
