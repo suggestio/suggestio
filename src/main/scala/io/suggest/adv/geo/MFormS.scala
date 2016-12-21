@@ -3,6 +3,7 @@ package io.suggest.adv.geo
 import io.suggest.geo.MGeoPoint
 import boopickle.Default._
 import io.suggest.common.tags.edit.MTagsEditS
+import io.suggest.dt.MAdvPeriod
 
 /**
   * Suggest.io
@@ -19,7 +20,10 @@ object MFormS {
   // TODO Opt Можно проверсти тюнинг boopickle на предмет скорости.
   // https://github.com/ochrons/boopickle#optimizations-strategies
 
-  implicit val pickler: Pickler[MFormS] = generatePickler[MFormS]
+  implicit val pickler: Pickler[MFormS] = {
+    implicit val dateIntervalPickler = MAdvPeriod.pickler
+    generatePickler[MFormS]
+  }
 
   /** Сериализация модели. */
   def pickle(mroot: MFormS) = Pickle.intoBytes(mroot)
@@ -51,8 +55,8 @@ case class MFormS(
                    rcvrPopup     : Option[MRcvrPopupState]  = None,
                    locationFound : Option[Boolean]          = None,
                    rcvrsMap      : RcvrsMap_t               = Map.empty,
-                   tags          : MTagsEditS               = MTagsEditS()
-                   // TODO dates state: quickAdvPeriod, dateRange
+                   tags          : MTagsEditS               = MTagsEditS(),
+                   datePeriod    : MAdvPeriod               = MAdvPeriod()
                    // TODO existCircles  : List[MCircleInfo + id exist-размещения + цвет]       = Nil
                    // TODO exist circle popup Option[...]
                    // TODO price, currency?
@@ -64,6 +68,7 @@ case class MFormS(
   def withTags(tags2: MTagsEditS) = copy(tags = tags2)
   def withMapState(ms2: MMapS) = copy(mapState = ms2)
   def withRcvrPopup(rcvrPopup2: Option[MRcvrPopupState]) = copy(rcvrPopup = rcvrPopup2)
+  def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
 
 }
 

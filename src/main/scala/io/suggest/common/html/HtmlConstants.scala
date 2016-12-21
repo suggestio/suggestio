@@ -14,4 +14,7 @@ object HtmlConstants {
   /** Имя атрибута с id узла. */
   def ATTR_NODE_ID            = ATTR_PREFIX + "node-id"
 
+  /** Обычный пробел. Он используется в куче мест. */
+  val SPACE                   = " "
+
 }

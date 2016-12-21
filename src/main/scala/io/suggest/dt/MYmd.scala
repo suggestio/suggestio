@@ -1,7 +1,5 @@
 package io.suggest.dt
 
-import boopickle.Default._
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,7 +9,7 @@ import boopickle.Default._
   */
 object MYmd {
 
-  implicit val pickler: Pickler[MYmd] = generatePickler[MYmd]
+  //implicit val pickler: Pickler[MYmd] = generatePickler[MYmd]
 
   /** Отрендерить в строку, используя указанный разделитель. */
   def ymdToString(ymd: MYmd, sep: String): String = {
@@ -21,8 +19,11 @@ object MYmd {
     ymd.year.toString + sep + m + sep + d
   }
 
-  /** "2016.01.01" */
-  def ymdToStringDot(ymd: MYmd) = ymdToString(ymd, ".")
+  /**
+    * "2016-01-01" стандартный человеческий формат, понимаемый браузерами.
+    * Точки в качестве разделителей не понимаются.
+    */
+  def ymdToStringStd(ymd: MYmd) = ymdToString(ymd, "-")
 
 }
 
@@ -43,7 +44,7 @@ case class MYmd(
     throw new IllegalArgumentException( toString )
 
   override def toString: String = {
-    MYmd.ymdToStringDot(this)
+    MYmd.ymdToStringStd(this)
   }
 
 }

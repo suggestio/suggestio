@@ -3,6 +3,8 @@ package io.suggest.dt.interval
 import boopickle.CompositePickler
 import enumeratum._
 import io.suggest.primo.IStrId
+import boopickle.Default._
+import io.suggest.dt.IDtHelper
 
 /**
   * Suggest.io
@@ -12,11 +14,11 @@ import io.suggest.primo.IStrId
   */
 object QuickAdvPeriod {
 
-  import boopickle.Default._
   import QuickAdvPeriods._
 
   implicit val pickler: CompositePickler[QuickAdvPeriod] = {
-    // TODO Есть проблема с sealed: boopickle не видит реализации sealed-класса внутри модели.
+    // TODO Есть проблема с sealed и автогенерацией в scala-2.11: boopickle не видит реализации sealed-класса внутри модели.
+    // На scala-2.12 проблема отчасти решена, т.е. можно выкрутиться с помощью generatePickler[] внутри QuickAdvPeriods.
     compositePickler[QuickAdvPeriod]
       .addConcreteType[P3D.type]
       .addConcreteType[P1W.type]
@@ -26,6 +28,7 @@ object QuickAdvPeriod {
 
 }
 
+/** Класс этой enum-модели. */
 sealed abstract class QuickAdvPeriod extends EnumEntry with IStrId {
 
   // Из-за IStrId странность происходит: case object корректно реализуют .toString(),
@@ -43,15 +46,30 @@ sealed abstract class QuickAdvPeriod extends EnumEntry with IStrId {
 
 /** Реальные (не кастомные) период имеют поле isoPeriod с обязательным значением. */
 sealed abstract class QuickAdvIsoPeriod extends QuickAdvPeriod {
+
   def isoPeriod = strId
   override def isoPeriodOpt = Some(isoPeriod)
-  def isCustom = false
+  override def isCustom = false
+
+  /** Накладывание периода на абстрактную дату.
+    * Метод абстрагирован от конкретной реализации, поэтому можно заюзать как с js.Date,
+    * так и на стороне jvm с joda или jvm8-datetime-api.
+    * @param date Исходная дата. Может быть модифицирована изнутри в зависимости от используемой платформы.
+    * @return Обновлённая дата.
+    *         Возможно, тот же самый, но модифицированный инстанс, если исходная тип даты есть mutable по своей природе (js.Date).
+    */
+  def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t
+
 }
 
 
+/** Статическая enum-модель быстрых периодов размещения. */
 object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
 
   override val values = findValues
+
+  // TODO scala-2.12: Можно автоматом сгенерить всё необходимое с помощью вот этого: (вместо мануального перечисления выше по коду). Но там кажется внутри будет кое-какой лишний мусор (не важно).
+  // val pickler = generatePickler[QuickAdvPeriod]
 
   def default: QuickAdvIsoPeriod = P3D
 
@@ -65,16 +83,28 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
   /** 3 дня. */
   case object P3D extends QuickAdvIsoPeriod {
     override def strId = PeriodsConstants.P_3DAYS
+
+    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
+      dateHelper.plusDays(date, 3)
+    }
   }
 
   /** 1 неделя. */
   case object P1W extends QuickAdvIsoPeriod {
     override def strId = PeriodsConstants.P_1WEEK
+
+    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
+      dateHelper.plusWeeks(date, 1)
+    }
   }
 
   /** 1 месяц. */
   case object P1M extends QuickAdvIsoPeriod {
     override def strId = PeriodsConstants.P_1MONTH
+
+    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
+      dateHelper.plusMonths(date, 1)
+    }
   }
 
   /** Заданный вручную период размещения. */
