@@ -15,8 +15,8 @@ object Sio2Build extends Build {
     .settings(
       libraryDependencies ++= Seq(
         "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
-        "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
-        "com.wix"      %%% "accord-core" % Common.wixAccordVsn
+        "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn
+        //"com.wix"      %%% "accord-core" % Common.wixAccordVsn
       )
     )
     .jsConfigure(_ enablePlugins ScalaJSWeb)
