@@ -6,6 +6,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEle
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.sjs.common.spa.DAction
+import io.suggest.common.html.HtmlConstants.SPACE
 
 /**
   * Suggest.io
@@ -28,7 +29,6 @@ object TagsExistsR {
 
 
     def render(tagsExists: Props): ReactElement = {
-      val SPACE = " "
       // tagExistsCont: Уже добавленные к заказу гео-теги.
       /*tagsExists().nonEmpty ?=*/ <.div(
         for {

@@ -7,6 +7,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEve
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.sjs.common.spa.DAction
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.common.html.HtmlConstants.SPACE
 
 /**
   * Suggest.io
@@ -33,8 +34,6 @@ object TagNameInpR {
 
 
     def render(p: Props) = {
-      val SPACE = " "
-
       // tagsAddForm: поле ввода имени тега.
       <.div(
         ^.`class` := Css.Input.INPUT_W,

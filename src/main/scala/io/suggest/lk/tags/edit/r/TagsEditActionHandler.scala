@@ -1,6 +1,6 @@
 package io.suggest.lk.tags.edit.r
 
-import diode.{ActionHandler, ActionResult, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.coll.SetUtil
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.edit.{MTagsEditS, MTagsSearchS, TagsEditConstants}
@@ -13,7 +13,8 @@ import io.suggest.i18n.MMessage
   * Description: Action handler для подсистемы редактора тегов на базе react+diode.
   */
 class TagsEditActionHandler[M](
-  modelRW     : ModelRW[M, MTagsEditS]
+  modelRW       : ModelRW[M, MTagsEditS],
+  priceUpdateFx : Effect
 )
   extends ActionHandler(modelRW) {
 
@@ -31,8 +32,7 @@ class TagsEditActionHandler[M](
         query       = MTagsSearchS(),
         tagsExists  = te2
       )
-      // TODO Нужно запускать эффект пересчёта стоимости, а точнее дёргать какой-то соответствующий callback.
-      updated(v1)
+      updated(v1, priceUpdateFx)
 
 
     // Замена текста поискового запроса тегов.
@@ -74,20 +74,26 @@ class TagsEditActionHandler[M](
         }
       }
 
-      val v2 = if (errors.isEmpty) {
+      if (errors.isEmpty) {
         // Ошибок валидации нет. Заливаем в старое множество новые теги...
         val te2 = SetUtil.addToSetOrKeepRef1(v.tagsExists, faces)
-        // TODO Если te2 != te0, то запустить эффект пересчёта стоимости.
-        v.copy(
+        val v2 = v.copy(
           query       = MTagsSearchS(),
           tagsExists  = te2
         )
+        // Если что-то реально изменилось (te2 != te0), то запустить эффект пересчёта стоимости.
+        if (te2 != v.tagsExists) {
+          updated(v2, priceUpdateFx)
+        } else {
+          updated(v2)
+        }
       } else {
         // Есть хотя бы одна ошибка. Закинуть ошибки в состояние.
-        v.withQuery(
-          v.query.withErrors( errors ))
+        updated {
+          v.withQuery(
+            v.query.withErrors(errors))
+        }
       }
-      updated(v2)
 
 
     // Удаление тега из списка добавленных ранее (existing) тегов.
@@ -96,8 +102,7 @@ class TagsEditActionHandler[M](
       val te0 = v.tagsExists
       val te1 = te0 - tagFace
       if (te1.size < te0.size) {
-        // TODO Запустить пересчёт стоимости размещения.
-        updated(v.withTagsExists(te1))
+        updated(v.withTagsExists(te1), priceUpdateFx)
       } else {
         noChange
       }
