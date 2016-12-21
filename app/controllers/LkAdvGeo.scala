@@ -99,7 +99,9 @@ class LkAdvGeo @Inject() (
   def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk, U.ContractId).async { implicit request =>
     // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
     //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
-    val resLogic = new ForAdLogic()
+    val resLogic = new ForAdLogic(
+      _isSuFree = request.user.isSuper
+    )
 
     val formEmpty = advGeoFormUtil.formStrict
 
@@ -128,7 +130,7 @@ class LkAdvGeo @Inject() (
    *
    * @return Фьючерс с ответом.
    */
-  private class ForAdLogic()(implicit request: IAdProdReq[_]) {
+  private class ForAdLogic( _isSuFree: Boolean )(implicit request: IAdProdReq[_]) {
 
     val _geoPointFut: Future[MGeoPoint] = {
       getGeoPoint0(request.mad.id.get)
@@ -140,8 +142,6 @@ class LkAdvGeo @Inject() (
       )
       implicitly[Context]
     }
-
-    val _isSuFree = advFormUtil.maybeFreeAdv()
 
 
     /** Рендер ответа.
@@ -184,13 +184,13 @@ class LkAdvGeo @Inject() (
             center = gp0,
             zoom   = 10
           ),
-          adv4free = OptionUtil.maybe(_isSuFree) {
+          adv4free = OptionUtil.maybe( request.user.isSuper ) {
             MAdv4FreeS(
               static = MAdv4FreeProps(
                 fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
                 title = ctx.messages( "Adv.for.free.without.moderation" )
               ),
-              checked = true
+              checked = _isSuFree
             )
           }
         )
@@ -251,7 +251,9 @@ class LkAdvGeo @Inject() (
           )
         val fweFut = Future.successful(formWithErrors1)
         // Рендер результата.
-        new ForAdLogic()
+        new ForAdLogic(
+          _isSuFree = advFormUtil.maybeFreeAdv()
+        )
           .result(fweFut, NotAcceptable)
       },
 

@@ -719,6 +719,20 @@ Month.N.10=October
 Month.N.11=November
 Month.N.12=December
 
+ofMonth.N.1=January
+ofMonth.N.2=Febrary
+ofMonth.N.3=March
+ofMonth.N.4=April
+ofMonth.N.5=May
+ofMonth.N.6=June
+ofMonth.N.7=July
+ofMonth.N.8=August
+ofMonth.N.9=September
+ofMonth.N.10=October
+ofMonth.N.11=November
+ofMonth.N.12=December
+
+
 DayOfW.N.1=Mo
 DayOfW.N.2=Tu
 DayOfW.N.3=We
@@ -726,6 +740,16 @@ DayOfW.N.4=Th
 DayOfW.N.5=Fr
 DayOfW.N.6=Sa
 DayOfW.N.7=Su
+
+DayOfWeek.N.1=Monday
+DayOfWeek.N.2=Tuesday
+DayOfWeek.N.3=Wednesday
+DayOfWeek.N.4=Thursday
+DayOfWeek.N.5=Friday
+DayOfWeek.N.6=Saturday
+DayOfWeek.N.7=Sunday
+
+year_abbrevated=
 
 Several.seconds.later=Several seconds later
 Several.seconds.ago=Several seconds ago

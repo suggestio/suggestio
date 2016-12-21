@@ -732,6 +732,20 @@ Month.N.10=Октябрь
 Month.N.11=Ноябрь
 Month.N.12=Декабрь
 
+ofMonth.N.1=Января
+ofMonth.N.2=Февраля
+ofMonth.N.3=Марта
+ofMonth.N.4=Апреля
+ofMonth.N.5=Мая
+ofMonth.N.6=Июня
+ofMonth.N.7=Июля
+ofMonth.N.8=Августа
+ofMonth.N.9=Сентября
+ofMonth.N.10=Октября
+ofMonth.N.11=Ноября
+ofMonth.N.12=Декабря
+
+
 DayOfW.N.1=Пн
 DayOfW.N.2=Вт
 DayOfW.N.3=Ср
@@ -739,6 +753,16 @@ DayOfW.N.4=Чт
 DayOfW.N.5=Пт
 DayOfW.N.6=Сб
 DayOfW.N.7=Вс
+
+DayOfWeek.N.1=Понедельник
+DayOfWeek.N.2=Вторник
+DayOfWeek.N.3=Среда
+DayOfWeek.N.4=Четверг
+DayOfWeek.N.5=Пятница
+DayOfWeek.N.6=Суббота
+DayOfWeek.N.7=Воскресенье
+
+year_abbrevated=г.
 
 Several.seconds.later=Через несколько секунд
 Several.seconds.ago=Несколько секунд назад

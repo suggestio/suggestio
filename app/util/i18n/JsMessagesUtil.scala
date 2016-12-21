@@ -53,6 +53,24 @@ class JsMessagesUtil @Inject() (
     )
   }
 
+  private def DAYS_OF_WEEK_MSGS: Traversable[String] = {
+    for (i <- 1 to 7) yield {
+      "DayOfWeek.N." + i
+    }
+  }
+
+  private def OF_MONTHS_OF_YEAR: Traversable[String] = {
+    for (m <- 1 to 12) yield {
+      "ofMonth.N." + m
+    }
+  }
+
+  private def DATE_TIME_ABBREVATIONS: TraversableOnce[String] = {
+    Iterator(
+      "year_abbrevated"
+    )
+  }
+
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
     Iterator(
@@ -77,7 +95,10 @@ class JsMessagesUtil @Inject() (
       ADV_DATES_PERIOD_MSGS,
       TAGS_EDITOR_MSGS,
       ADV_GEO_FORM_MSGS,
-      FORM_ERRORS
+      FORM_ERRORS,
+      OF_MONTHS_OF_YEAR,
+      DAYS_OF_WEEK_MSGS,
+      DATE_TIME_ABBREVATIONS
     )
       .flatten
       .toSet
