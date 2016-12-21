@@ -1,10 +1,10 @@
 package io.suggest.lk.adv.geo
 
-import diode.Circuit
+import diode.{Circuit, Effect}
 import diode.react.ReactConnector
 import evothings.EvothingsUtil
 import io.suggest.adv.geo.MFormS
-import io.suggest.lk.adv.geo.a.{LetsInitRcvrMarkers, ReqRcvrPopup}
+import io.suggest.lk.adv.geo.a.{LetsInitRcvrMarkers, ReqRcvrPopup, SetPrice}
 import io.suggest.lk.adv.geo.m.MRoot
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapAH
@@ -13,7 +13,10 @@ import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
 import io.suggest.lk.tags.edit.r.TagsEditActionHandler
 import io.suggest.sjs.common.spa.StateInp
+import io.suggest.sjs.dt.period.r.DtpAh
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
+import scala.concurrent.Future
 import scala.scalajs.js.typedarray.TypedArrayBuffer
 
 /**
@@ -43,6 +46,13 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
     mrootOpt.get
   }
 
+  /** Эффект пересчёта стоимости размещения с помощью сервера. */
+  private val priceUpdateEffect: Effect = {
+    Effect {
+      // TODO Реализовать запрос к серверу и получения ответа с ценником.
+      Future.successful( SetPrice("TODO") )
+    }
+  }
 
   val API = new LkAdvGeoApiImpl
 
@@ -80,7 +90,8 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
     )
 
     val tagsEditAh = new TagsEditActionHandler(
-      modelRW = formZoomRW.zoomRW(_.tags) { _.withTags(_) }
+      modelRW       = formZoomRW.zoomRW(_.tags) { _.withTags(_) },
+      priceUpdateFx = priceUpdateEffect
     )
 
     val onMainScreenAh = new OnMainScreenAH(
@@ -89,6 +100,11 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
 
     val mapAh = new AdvGeoMapAH(
       mapStateRW = mapStateRW
+    )
+
+    val datePeriodAh = new DtpAh(
+      modelRW = formZoomRW.zoomRW(_.datePeriod) { _.withDatePeriod(_) },
+      priceUpdateFx = priceUpdateEffect
     )
 
     val adv4freeAh = new Adv4FreeActionHandler(
@@ -113,6 +129,7 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
       tagsEditAh,
       onMainScreenAh,
       mapAh,
+      datePeriodAh,
       adv4freeAh,
       // init-вызовы в конце, т.к. они довольно редкие.
       rcvrsMapInitAh

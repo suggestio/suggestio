@@ -41,3 +41,7 @@ case class InstallRcvrMarkers(rcvrMarkers: js.Array[Marker]) extends AdvGeoFormA
 
 /** Экшен выставления центра карты на указанную гео-точку. */
 case class SetMapCenter(gp: MGeoPoint) extends AdvGeoFormAction
+
+
+/** Выставить новое значение стоимости размещения. */
+case class SetPrice(price: String) extends AdvGeoFormAction

@@ -56,11 +56,6 @@ object AdvGeoFormR extends Log {
   /** Класс для компонента формы. */
   protected class Backend($: BackendScope[Props, _]) {
 
-    def datePeriodChanged(): Unit = {
-      println("datePeriodChanged()")
-    }
-
-
     /** Рендер всея формы. */
     def render(p: Props, s: State) = {
       // без <form>, т.к. форма теперь сущетсвует на уровне JS в состояние diode.
@@ -88,13 +83,7 @@ object AdvGeoFormR extends Log {
         ),
 
         // Верхняя половина, правая колонка:
-        DtpCont(
-          DtpOptions(
-            DtpOptions.Props(
-              onChange = datePeriodChanged
-            )
-          )
-        ),
+        p.wrap(_.form.datePeriod)( DatePeriodR.apply ),
 
         // Тут немного пустоты нужно...
         <.br,
