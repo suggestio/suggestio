@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo
 
-import diode.{Circuit, Effect}
+import diode.Effect
 import diode.react.ReactConnector
 import io.suggest.adv.geo.MFormS
 import io.suggest.adv.geo.MFormS.pickler
@@ -13,12 +13,12 @@ import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
 import io.suggest.lk.tags.edit.c.TagsEditAh
-import io.suggest.lk.tags.edit.m.MTagsEditData
+import io.suggest.lk.tags.edit.m.{MTagsEditData, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.evothings.util.EvoBase64JsUtil.EvoBase64JsDecoder
 
@@ -30,7 +30,7 @@ import scala.concurrent.Future
   * Created: 14.12.16 16:45
   * Description: Diode circuit мудрёной формы георазмещения, которая для view используется react.
   */
-object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] with Log {
+object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
   /** Сборка начальной корневой модели. */
   override protected def initialModel: MRoot = {
@@ -166,23 +166,16 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] wit
 
 
   // TODO Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
-  /*{
-    val tagSearch = zoom(_.form.tags.query).value
-    if (tagSearch.text.nonEmpty) {
-      val pot = zoom(_.tagsFound).value
+  {
+    val tagSearchText = zoom(_.form.tags.query).value.text
+    if (tagSearchText.nonEmpty) {
+      val pot = zoom(_.tagsEditState).value.found
       if (pot.isEmpty && !pot.isPending) {
-        dispatch( TagsFoundR )
+        dispatch( SetTagSearchQuery(tagSearchText) )
       }
     }
-  }*/
-  override def handleError(msg: String): Unit = {
-    LOG.warn( ErrorMsgs.ADV_GEO_FORM_ERROR, msg = msg )
-    super.handleError(msg)
   }
 
-  override def handleFatal(action: Any, e: Throwable): Unit = {
-    LOG.error(ErrorMsgs.ADV_GEO_FORM_ERROR, e, action)
-    super.handleFatal(action, e)
-  }
+  override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.ADV_GEO_FORM_ERROR
 
 }
