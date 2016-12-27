@@ -5,8 +5,8 @@ import io.suggest.css.Css
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.vm.LkMessagesWindow.Messages
-import io.suggest.sjs.common.spa.DAction
 import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.lk.tags.edit.m.RmTag
 
 /**
   * Suggest.io
@@ -38,14 +38,6 @@ object TagsExistsR {
             ^.`class` := (Css.TagsEdit.JS_TAG_EDITABLE + SPACE + Css.TagsEdit.CONTAINER),
             ^.key     := tagName,
 
-            // Инпут текушего тега
-            // TODO Не нужно наверное, удалить? Теги теперь через сериализацию состояния diode-формы передаются на сервер.
-            /*<.input(
-              ^.`type` := "hidden",
-              ^.name   := ( TagsEditConstants.EXIST_TAGS_FN + QsConstants.KEY_PARTS_DELIM_STR + "[" + i + "]" + QsConstants.KEY_PARTS_DELIM_STR + TagsEditConstants.EXIST_TAG_NAME_FN),
-              ^.value  := tagName
-            ),*/
-
             // Имя тега
             tagName,
 
@@ -73,5 +65,4 @@ object TagsExistsR {
 
 }
 
-/** Акшен удаления тега из множества existing-тегов. */
-case class RmTag(tagFace: String) extends DAction
+

@@ -2,6 +2,7 @@ package io.suggest.lk.tags.edit.r
 
 import diode.react.ModelProxy
 import io.suggest.css.Css
+import io.suggest.lk.tags.edit.m.AddCurrentTag
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.vm.LkMessagesWindow.Messages
@@ -45,5 +46,4 @@ object TagAddBtnR {
 
 }
 
-/** Экшен добавления текущего теста в existing-теги. */
-case object AddCurrentTag extends DAction
+

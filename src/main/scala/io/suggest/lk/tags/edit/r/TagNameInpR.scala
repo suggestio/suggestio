@@ -1,13 +1,14 @@
 package io.suggest.lk.tags.edit.r
 
 import diode.react.ModelProxy
-import io.suggest.common.tags.edit.{MTagsSearchS, TagsEditConstants}
+import io.suggest.common.tags.edit.{MTagsEditQueryProps, TagsEditConstants}
 import io.suggest.css.Css
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.sjs.common.spa.DAction
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.lk.tags.edit.m.SetTagSearchQuery
 
 /**
   * Suggest.io
@@ -17,7 +18,7 @@ import io.suggest.common.html.HtmlConstants.SPACE
   */
 object TagNameInpR {
 
-  type Props = ModelProxy[MTagsSearchS]
+  type Props = ModelProxy[MTagsEditQueryProps]
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
@@ -76,5 +77,4 @@ object TagNameInpR {
 }
 
 
-/** Экшен обновления имени тега. */
-case class SetTagSearchQuery(query: String) extends DAction
+

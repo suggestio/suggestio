@@ -3,10 +3,13 @@ package io.suggest.lk.tags.edit.r
 import diode.data.Pot
 import io.suggest.common.tags.edit.TagsEditConstants.Search.Hints.ATTR_TAG_FACE
 import diode.react.ModelProxy
-import io.suggest.common.tags.edit.{MTagsFoundResp, TagsEditConstants}
+import io.suggest.common.tags.edit.TagsEditConstants
+import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
+import io.suggest.lk.tags.edit.m.AddTagFound
 import io.suggest.lk.tags.edit.vm.search.hints.SRow
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.lk.vm.LkMessagesWindow.Messages
+import io.suggest.sjs.common.vm.spa.PreLoaderLk
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventH}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -18,7 +21,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object TagsFoundR {
 
-  type Props = ModelProxy[Pot[MTagsFoundResp]]
+  type Props = ModelProxy[Pot[MTagsFound]]
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
@@ -38,13 +41,30 @@ object TagsFoundR {
 
     def render(props: Props): ReactElement = {
       val v = props()
-      /*v.exists(_.tags.nonEmpty) ?=*/ <.div(
-        ^.`class`       := Css.HintList.CONTAINER,
-        <.div(
+      val isShown = v.exists(_.tags.nonEmpty) || v.isFailed
+      <.div(
+        ^.classSet1(
+          Css.HintList.CONTAINER,
+          Css.HIDDEN -> !isShown
+        ),
+        isShown ?= <.div(
           ^.`class`     := Css.HintList.OUTER,
           <.div(
             ^.`class`   := Css.HintList.CONTENT,
-            ^.onClick   ==>? onTagFoundClick,
+            // Клик активен только когда есть по чему кликать.
+            v.exists(_.tags.nonEmpty) ?= ^.onClick ==>? onTagFoundClick,
+
+            // Если снова идёт поиск, то пусть будет спиннер прямо в текущем отображаемом контейнере.
+            v.isPending ?= {
+              val pleaseWait = Messages("Please.wait")
+              PreLoaderLk.PRELOADER_IMG_URL.fold[TagMod](pleaseWait) { preloaderUrl =>
+                <.img(
+                  ^.src := preloaderUrl,
+                  ^.alt := pleaseWait,
+                  ^.width := 16
+                )
+              }
+            },
 
             // Отрендерить список найденных тегов
             for {
@@ -52,9 +72,9 @@ object TagsFoundR {
               tagFound  <- state.tags.iterator
             } yield {
               <.div(
-                ^.key := tagFound.name,
+                ^.key := tagFound.face,
                 ^.`class` := (Css.HintList.ROW + " " + TagsEditConstants.Search.Hints.HINT_ROW_CLASS),
-                ATTR_TAG_FACE.reactAttr := tagFound.name,
+                ATTR_TAG_FACE.reactAttr := tagFound.face,
 
                 <.div(
                   ^.`class` := Css.NAME,
@@ -62,14 +82,21 @@ object TagsFoundR {
                     ^.`class` := Css._PREFIX,
                     "#"
                   ),
-                  tagFound.name
+                  tagFound.face
                 ),
                 <.div(
-                  ^.value := Css.VALUE,
+                  ^.`class` := Css.VALUE,
                   tagFound.count
                 )
               )
-            }
+            },
+
+            // При ошибке надо тоже надо не молчать, чтобы эту ошибку быстрее обнаружили и устранили.
+            v.isFailed ?= <.div(
+              ^.`class` := Css.Colors.RED,
+              Messages("Something.gone.wrong")
+            )
+
           )
         )
       )
@@ -86,6 +113,3 @@ object TagsFoundR {
   def apply(resp: Props) = component(resp)
 
 }
-
-
-case class AddTagFound(tagFace: String) extends DAction

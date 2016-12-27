@@ -3,7 +3,8 @@ package io.suggest.lk.tags.edit.r
 import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.tags.edit.{MTagsEditS, MTagsFoundResp, MTagsSearchS}
+import io.suggest.common.tags.edit.{MTagsEditProps, MTagsEditQueryProps}
+import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -25,8 +26,8 @@ object TagsEditR {
 
   /** Пропертисы компонента -- отзумленный контейнер некоторых полей root-модели. */
   case class PropsVal(
-                     tagsFound  : Pot[MTagsFoundResp],
-                     state      : MTagsEditS
+                      tagsFound  : Pot[MTagsFound],
+                      state      : MTagsEditProps
                      )
 
   implicit object PropsValFastEq extends FastEq[PropsVal] {
@@ -39,8 +40,8 @@ object TagsEditR {
 
   /** Состояние компонента содержит только immutable-инстансы коннекшенов до суб-моделей.  */
   case class State(
-                    tagQueryConn  : ReactConnectProxy[MTagsSearchS], // = p.connect(_.state.query)
-                    tagsFoundConn : ReactConnectProxy[Pot[MTagsFoundResp]],
+                    tagQueryConn  : ReactConnectProxy[MTagsEditQueryProps], // = p.connect(_.state.query)
+                    tagsFoundConn : ReactConnectProxy[Pot[MTagsFound]],
                     tagsExistConn : ReactConnectProxy[Set[String]]
                   )
 

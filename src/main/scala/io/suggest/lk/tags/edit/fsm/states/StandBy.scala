@@ -9,7 +9,7 @@ import io.suggest.lk.tags.edit.vm.search.hints.SContainer
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.tags.search.{ITagSearchArgs, MTagSearchArgs, MTagSearchRespTs, MTagsSearch}
+import io.suggest.sjs.common.tags.search.{MTagSearchArgs, MTagSearchRespTs, MTagsSearch}
 import org.scalajs.dom.Event
 
 import scala.util.{Failure, Success}
@@ -23,7 +23,7 @@ import scala.util.{Failure, Success}
 trait StandBy extends TagsEditFsmStub {
 
   /** js-роута для поиска тегов. */
-  def tagsSearchRoute(args: ITagSearchArgs): Route
+  def tagsSearchRoute(args: MTagSearchArgs): Route
 
   /** Упрощенное состояние ожидания.*/
   protected trait SimpleStandByStateT extends FsmEmptyReceiverState {
