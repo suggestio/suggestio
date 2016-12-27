@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.tags.search
 
 import io.suggest.sc.TagSearchConstants.Req._
-import io.suggest.sjs.common.model.ToJsonDictDummyT
 import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 import scala.scalajs.js.{Any, Dictionary}
@@ -12,36 +11,27 @@ import scala.scalajs.js.{Any, Dictionary}
  * Created: 18.09.15 20:43
  * Description: Модель аргументов для поиска тегов.
  */
-trait ITagSearchArgs extends ToJsonDictDummyT {
+object MTagSearchArgs {
 
-  /** Полнотекстовый поиск по человеческим названиям тегов. */
-  def faceFts   : Option[String]
+  /**
+    * Рендер инстанса модели в JSON.
+    *
+    * @param args Аргументы для рендера.
+    * @return JSON-объект, для дальнейшего рендера в ?query=string на стороне JS-роутера.
+    */
+  def toJson(args: MTagSearchArgs): Dictionary[Any] = {
+    val d = Dictionary.empty[Any]
 
-  /** Лимит выборки. */
-  def limit     : Option[Int]
+    for (_faceFts <- args.faceFts)
+      d(FACE_FTS_QUERY_FN) = _faceFts
 
-  /** Абсолютный сдвиг выборки. */
-  def offset    : Option[Int]
+    for (_limit <- args.limit)
+      d(LIMIT_FN) = _limit
 
-  /** Данные по локации, если есть. */
-  def locEnv    : ILocEnv
+    for (_offset <- args.offset)
+      d(OFFSET_FN) = _offset
 
-  override def toJson: Dictionary[Any] = {
-    val d = super.toJson
-
-    val _faceFts = faceFts
-    if (_faceFts.isDefined)
-      d(FACE_FTS_QUERY_FN) = _faceFts.get
-
-    val _limit = limit
-    if (_limit.isDefined)
-      d(LIMIT_FN) = _limit.get
-
-    val _offset = offset
-    if (_offset.isDefined)
-      d(OFFSET_FN) = _offset.get
-
-    val _locEnv = locEnv
+    val _locEnv = args.locEnv
     if ( MLocEnv.nonEmpty(_locEnv))
       d(LOC_ENV_FN) = MLocEnv.toJson(_locEnv)
 
@@ -53,9 +43,8 @@ trait ITagSearchArgs extends ToJsonDictDummyT {
 
 /** Дефолтовая реализация модели аргументов поискового запроса тегов. */
 case class MTagSearchArgs(
-  override val faceFts  : Option[String]    = None,
-  override val limit    : Option[Int]       = None,
-  override val offset   : Option[Int]       = None,
-  override val locEnv   : ILocEnv           = MLocEnv.empty
+  faceFts  : Option[String]    = None,
+  limit    : Option[Int]       = None,
+  offset   : Option[Int]       = None,
+  locEnv   : ILocEnv           = MLocEnv.empty
 )
-  extends ITagSearchArgs

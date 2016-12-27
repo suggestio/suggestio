@@ -23,3 +23,7 @@ object DAction {
   implicit object DActionType extends DActionType
 
 }
+
+
+/** Унифицированный для всех NOP-экшен, который не должен нигде отрабатываться. */
+case object DoNothing extends DAction

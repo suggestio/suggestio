@@ -2,6 +2,7 @@ package io.suggest.sjs.common.xhr
 
 import java.nio.ByteBuffer
 
+import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
@@ -123,6 +124,9 @@ object Xhr {
     }
   }
 
+  def successIf200(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
+    successIfStatus( HttpStatuses.OK )(xhrFut)
+  }
 
   def someIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[Option[XMLHttpRequest]] = {
     for (xhr <- xhrFut) yield {
@@ -148,7 +152,7 @@ object Xhr {
     * @return Фьючерс с десериализованным JSON.
     */
   def requestJson(route: Route): Future[js.Dynamic] = {
-    val xhrFut = successIfStatus(HttpStatuses.OK) {
+    val xhrFut = successIf200 {
       send(
         route   = route,
         headers = Seq(HDR_ACCEPT -> MIME_JSON)
@@ -163,7 +167,7 @@ object Xhr {
 
 
   def requestHtml(route: Route): Future[String] = {
-    val xhrFut = successIfStatus(HttpStatuses.OK) {
+    val xhrFut = successIf200 {
       send(
         route   = route,
         headers = Seq(HDR_ACCEPT -> MIME_TEXT_HTML)
@@ -193,8 +197,26 @@ object Xhr {
       withCredentials = false,
       responseType    = "arraybuffer"
     )
-    for (resp <- successIfStatus(200)(fut)) yield {
+    for (resp <- successIf200(fut)) yield {
       TypedArrayBuffer.wrap( resp.response.asInstanceOf[ArrayBuffer] )
+    }
+  }
+
+
+  import boopickle.Default._
+
+  /**
+    * Декодировать будущий ответ сервера в инстанс какой-то модели с помощью boopickle и десериализатора,
+    * переданного в implicit typeclass'е.
+    *
+    * @param respFut Фьючерс с ответом сервера.
+    * @param u Модуль сериализации boopickle.
+    * @tparam T Тип отрабатываемой модели.
+    * @return Фьючерс с десериализованным инстансом произвольной модели.
+    */
+  def unBooPickleResp[T](respFut: Future[ByteBuffer])(implicit u: Pickler[T]): Future[T] = {
+    for (bbuf <- respFut) yield {
+      PickleUtil.unpickle[T](bbuf)
     }
   }
 

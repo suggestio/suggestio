@@ -94,4 +94,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def JS_DATE_PARSE_FAILED             = E(43)
 
+  def ADV_GEO_FORM_ERROR               = E(44)
+
 }
