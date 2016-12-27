@@ -2,9 +2,9 @@ package io.suggest.lk.adv.geo
 
 import diode.{Circuit, Effect}
 import diode.react.ReactConnector
-import evothings.EvothingsUtil
 import io.suggest.adv.geo.MFormS
 import io.suggest.adv.geo.MFormS.pickler
+import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.geo.a.{LetsInitRcvrMarkers, ReqRcvrPopup, SetPrice}
 import io.suggest.lk.adv.geo.m.MRoot
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
@@ -12,7 +12,6 @@ import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapAH
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
-import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.MTagsEditData
 import io.suggest.pick.PickleUtil
@@ -21,9 +20,9 @@ import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.evothings.util.EvoBase64JsUtil.EvoBase64JsDecoder
 
 import scala.concurrent.Future
-import scala.scalajs.js.typedarray.TypedArrayBuffer
 
 /**
   * Suggest.io
@@ -41,11 +40,7 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] wit
       base64   <- stateInp.value
     } yield {
       MRoot(
-        form = {
-          val arr = EvothingsUtil.base64DecToArr(base64)
-          val buf = TypedArrayBuffer.wrap(arr.buffer)
-          PickleUtil.unpickle[MFormS](buf)
-        }
+        form = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MFormS](base64)
       )
     }
 
