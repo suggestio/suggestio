@@ -60,18 +60,26 @@ class TagsEditAh[M](
       val v0 = value
       // Сначала подготовить пропертисы...
       val p0 = v0.props
-      val p2 = p0.withQuery(
-        p0.query.withText( q )
-      )
-      val v1 = v0.withProps(p2)
+
+      val text0 = p0.query.text
+      // Проверяем тут, изменился ли текст на самом деле:
+      val v1 = if (q != text0) {
+        v0.withProps(
+          p0.withQuery(
+            p0.query.withText( q )
+          )
+        )
+      } else {
+        v0
+      }
 
       // Затем запланировать поисковый запрос к серверу, если необходимо.
-      val s0 = v0.state
+      val s0 = v1.state
       val qtrim = q.trim
       if (qtrim.isEmpty) {
         updated( v1.withState(s0.reset) )
 
-      } else if (qtrim == p0.query.text) {
+      } else if (qtrim == text0) {
         // Текст вроде бы не изменился относительно предыдущего шага.
         updated( v1 )
 
