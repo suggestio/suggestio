@@ -7,20 +7,22 @@ import io.suggest.i18n.MMessage
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 16.12.16 17:37
   * Description: Клиент-серверная модель js-состояния формы редактирования/выставления тегов.
+  * Props -- потому что это состояние, которое ближе по смыслу и использованию к react props,
+  * а так же сериализуются на сервер.
   */
-case class MTagsEditS(
-  query       : MTagsSearchS    = MTagsSearchS(),
-  tagsExists  : Set[String]     = Set.empty
+case class MTagsEditProps(
+                           query       : MTagsEditQueryProps    = MTagsEditQueryProps(),
+                           tagsExists  : Set[String]            = Set.empty
 ) {
 
-  def withQuery(q: MTagsSearchS) = copy( query = q )
+  def withQuery(q: MTagsEditQueryProps) = copy( query = q )
   def withTagsExists(te: Set[String]) = copy( tagsExists = te )
 
 }
 
 
 /** Состояние поиска. */
-case class MTagsSearchS(
+case class MTagsEditQueryProps(
   text    : String = "",
   errors  : Seq[MMessage] = Nil
 ) {

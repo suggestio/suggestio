@@ -2,7 +2,7 @@ package io.suggest.adv.geo
 
 import io.suggest.geo.MGeoPoint
 import boopickle.Default._
-import io.suggest.common.tags.edit.MTagsEditS
+import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.dt.MAdvPeriod
 
 /**
@@ -28,9 +28,6 @@ object MFormS {
   /** Сериализация модели. */
   def pickle(mroot: MFormS) = Pickle.intoBytes(mroot)
 
-  /** Десериализатор. */
-  def unPickler = Unpickle[MFormS]
-
 }
 
 
@@ -55,7 +52,7 @@ case class MFormS(
                    rcvrPopup     : Option[MRcvrPopupState]  = None,
                    locationFound : Option[Boolean]          = None,
                    rcvrsMap      : RcvrsMap_t               = Map.empty,
-                   tags          : MTagsEditS               = MTagsEditS(),
+                   tags          : MTagsEditProps           = MTagsEditProps(),
                    datePeriod    : MAdvPeriod               = MAdvPeriod()
                    // TODO existCircles  : List[MCircleInfo + id exist-размещения + цвет]       = Nil
                    // TODO exist circle popup Option[...]
@@ -65,7 +62,7 @@ case class MFormS(
   def withRcvrMap(rcvrsMap2: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap2)
   def withAdv4Free(a4fOpt: Option[MAdv4FreeS]) = copy(adv4free = a4fOpt)
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
-  def withTags(tags2: MTagsEditS) = copy(tags = tags2)
+  def withTags(tags2: MTagsEditProps) = copy(tags = tags2)
   def withMapState(ms2: MMapS) = copy(mapState = ms2)
   def withRcvrPopup(rcvrPopup2: Option[MRcvrPopupState]) = copy(rcvrPopup = rcvrPopup2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)

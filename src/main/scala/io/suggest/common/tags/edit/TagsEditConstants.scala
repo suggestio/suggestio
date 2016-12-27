@@ -62,6 +62,9 @@ object TagsEditConstants {
     /** На сколько миллисекунд откладывать запуск поискового запроса тегов. */
     def START_SEARCH_TIMER_MS       = 400
 
+    /** Макс. кол-во тегов в ответе. */
+    def LIVE_SEARCH_RESULTS_LIMIT   = 5
+
     /** Константы выпадающих подсказок поиска тегов в редакторе. */
     object Hints {
 
