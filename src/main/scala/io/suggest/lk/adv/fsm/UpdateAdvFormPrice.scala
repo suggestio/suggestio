@@ -10,7 +10,7 @@ import io.suggest.sjs.common.vm.find.IFindEl
 import io.suggest.sjs.common.vm.input.FormDataVmT
 import io.suggest.sjs.dt.period.vm.InfoContainer
 import io.suggest.sjs.common.msg.{WarnMsgs, ErrorMsgs}
-import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
+import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Promise
@@ -47,7 +47,7 @@ trait UpdateAdvFormPrice extends SjsFsm with StateData with IUpdatePriceDataStar
       priceUrl      <- priceUrlInput.url
     } yield {
       // Запустить отправку XHR на сервер.
-      val fut0 = Xhr.successIfStatus( HttpStatuses.OK ) {
+      val fut0 = Xhr.successIf200 {
         FutureUtil.tryCatchFut {
           Xhr.sendRaw(
             method = method,
