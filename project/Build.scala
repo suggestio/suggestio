@@ -143,7 +143,8 @@ object Sio2Build extends Build {
     val name = "lk-adv-geo-tags-sjs"
     Project(id = name, base = file(name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs, evothingsUtilSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs,
+        commonReactSjs, evothingsUtilSioSjs)
   }
 
   /** Модели биллинга второго поколения. */
@@ -180,6 +181,14 @@ object Sio2Build extends Build {
     val name = "scalajs-evothings-util"
     Project(id = name, base = file("scalajs/" + name))
       .enablePlugins(ScalaJSPlugin)
+  }
+
+  /** Внутренние sio-надстройки над evothings-util. */
+  lazy val evothingsUtilSioSjs = {
+    val name = "scalajs-evothings-util-sio"
+    Project(id = name, base = file("scalajs/" + name))
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(commonSjs, evothingsUtilSjs)
   }
 
   /** Самописное leaflet API. */
@@ -311,7 +320,7 @@ object Sio2Build extends Build {
         commonSjs, commonReactSjs,
         leafletSjs, leafletReactSjs, mapBoxGlSjs, mapRadSjs,
         lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
-        evothingsUtilSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
+        evothingsUtilSjs, evothingsUtilSioSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,
         ipgeobase, stat,
         web21, mbill2, svgUtil
