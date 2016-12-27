@@ -4,16 +4,17 @@ import io.suggest.lk.adv.geo.LkAdvGeoFormCircuit
 import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.tags.fsm.AgtFormFsm
 import io.suggest.lk.adv.geo.tags.m.signal.{RadiusChanged, TagsChanged}
-import io.suggest.lk.adv.geo.tags.vm.{AdIdInp, AgtForm}
+import io.suggest.lk.adv.geo.tags.vm.AgtForm
 import io.suggest.lk.router.jsRoutes
 import io.suggest.lk.tags.edit.fsm.TagsEditFsm
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.fsm.IInitLayoutFsm
 import io.suggest.sjs.common.model.Route
-import io.suggest.sjs.common.tags.search.ITagSearchArgs
+import io.suggest.sjs.common.tags.search.MTagSearchArgs
 import io.suggest.sjs.leaflet.event.Event
 import io.suggest.sjs.leaflet.path.circle.Circle
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.vm.spa.PreLoaderLk
 import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom
 
@@ -60,8 +61,8 @@ class AgtFormInit extends IInit {
       override def _addTagRoute: Route = {
         jsRoutes.controllers.LkAdvGeo.tagEditorAddTag()
       }
-      override def tagsSearchRoute(args: ITagSearchArgs): Route = {
-        jsRoutes.controllers.LkAdvGeo.tagsSearch(args.toJson)
+      override def tagsSearchRoute(args: MTagSearchArgs): Route = {
+        jsRoutes.controllers.LkAdvGeo.tagsSearch( MTagSearchArgs.toJson(args) )
       }
       override def _tagsChanged(): Unit = {
         super._tagsChanged()
@@ -91,6 +92,9 @@ class AgtFormInit2 extends IInit {
 
   /** Запуск инициализации текущего модуля. */
   override def init(): Unit = {
+
+    // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт в ходе react-рендера.
+    PreLoaderLk.PRELOADER_IMG_URL
 
     // Для эксперимента сразу активируем url#-роутер внутри одной страницы с одним содержимым.
     // Это наподобии того, что реализовано в scalajs-spa-tutorial.

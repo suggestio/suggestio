@@ -79,7 +79,7 @@ object AdvGeoFormR extends Log {
           <.br,
 
           // Компонент подсистемы выбора тегов:
-          p.wrap(m => TagsEditR.PropsVal(m.tagsFound, m.form.tags) )( TagsEditR.apply )
+          p.wrap(m => TagsEditR.PropsVal(m.tagsEditState.found, m.form.tags) )( TagsEditR.apply )
         ),
 
         // Верхняя половина, правая колонка:

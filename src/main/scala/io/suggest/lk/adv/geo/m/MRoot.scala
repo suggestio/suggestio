@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.m
 
 import diode.data.Pot
 import io.suggest.adv.geo.{MFormS, MRcvrPopupResp}
-import io.suggest.common.tags.edit.MTagsFoundResp
+import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.sjs.leaflet.marker.Marker
 
 import scala.scalajs.js
@@ -21,15 +21,15 @@ import scala.scalajs.js
   * @param rcvrMarkers Маркеры карты ресиверов.
   */
 case class MRoot(
-  form          : MFormS,
-  rcvrPopup     : Pot[MRcvrPopupResp]     = Pot.empty,
-  tagsFound     : Pot[MTagsFoundResp]     = Pot.empty,
-  rcvrMarkers   : Pot[js.Array[Marker]]   = Pot.empty
-  // TODO areaPopup: Pot[???] = Pot.empty
+                  form          : MFormS,
+                  rcvrPopup     : Pot[MRcvrPopupResp]     = Pot.empty,
+                  tagsEditState : MTagsEditState          = MTagsEditState.empty,
+                  rcvrMarkers   : Pot[js.Array[Marker]]   = Pot.empty
+                  // TODO areaPopup: Pot[???] = Pot.empty
 ) {
 
   def withForm(form2: MFormS) = copy(form = form2)
-  def withTagsFound(tf: Pot[MTagsFoundResp]) = copy(tagsFound = tf)
+  def withTagsEditState(tes: MTagsEditState) = copy(tagsEditState = tes)
   def withRcvrPopup(rcvrPopupResp: Pot[MRcvrPopupResp]) = copy(rcvrPopup = rcvrPopupResp)
   def withRcvrMarkers(rcvrMarkers2: Pot[js.Array[Marker]]) = copy(rcvrMarkers = rcvrMarkers2)
 

@@ -5,6 +5,7 @@ import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.tags.search.{ITagsApi, TagsApiImplXhr}
 
 import scala.concurrent.Future
 
@@ -19,7 +20,7 @@ import scala.concurrent.Future
   *
   * @see [[https://geirsson.com/post/2015/10/autowire-acl/]] - почему не autowire.
   */
-trait ILkAdvGeoApi {
+trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
   def rcvrsGeoJson(adId: String): Future[MMapGjResp]
@@ -31,9 +32,12 @@ trait ILkAdvGeoApi {
 
 
 /** Реализация [[ILkAdvGeoApi]]. */
-class LkAdvGeoApiImpl extends ILkAdvGeoApi {
+class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
   import boopickle.Default._
+
+  /** Функция-генератор роуты поиска тегов на сервере. */
+  override protected def _tagsSearchRoute = jsRoutes.controllers.LkAdvGeo.tagsSearch2
 
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
@@ -51,8 +55,8 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi {
       adId    = adId,
       nodeId  = nodeId
     )
-    for (bbuf <- Xhr.requestBinary(route)) yield {
-      Unpickle[MRcvrPopupResp].fromBytes(bbuf)
+    Xhr.unBooPickleResp[MRcvrPopupResp] {
+      Xhr.requestBinary(route)
     }
   }
 

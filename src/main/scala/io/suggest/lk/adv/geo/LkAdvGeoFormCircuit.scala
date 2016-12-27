@@ -4,6 +4,7 @@ import diode.{Circuit, Effect}
 import diode.react.ReactConnector
 import evothings.EvothingsUtil
 import io.suggest.adv.geo.MFormS
+import io.suggest.adv.geo.MFormS.pickler
 import io.suggest.lk.adv.geo.a.{LetsInitRcvrMarkers, ReqRcvrPopup, SetPrice}
 import io.suggest.lk.adv.geo.m.MRoot
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
@@ -11,10 +12,15 @@ import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapAH
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
-import io.suggest.lk.tags.edit.r.TagsEditActionHandler
+import io.suggest.lk.router.jsRoutes
+import io.suggest.lk.tags.edit.c.TagsEditAh
+import io.suggest.lk.tags.edit.m.MTagsEditData
+import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.concurrent.Future
 import scala.scalajs.js.typedarray.TypedArrayBuffer
@@ -25,7 +31,7 @@ import scala.scalajs.js.typedarray.TypedArrayBuffer
   * Created: 14.12.16 16:45
   * Description: Diode circuit мудрёной формы георазмещения, которая для view используется react.
   */
-object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
+object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] with Log {
 
   /** Сборка начальной корневой модели. */
   override protected def initialModel: MRoot = {
@@ -38,7 +44,7 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
         form = {
           val arr = EvothingsUtil.base64DecToArr(base64)
           val buf = TypedArrayBuffer.wrap(arr.buffer)
-          MFormS.unPickler.fromBytes( buf )
+          PickleUtil.unpickle[MFormS](buf)
         }
       )
     }
@@ -89,9 +95,18 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
       rcvrMapRW = formZoomRW.zoomRW(_.rcvrsMap) { _.withRcvrMap(_) }
     )
 
-    val tagsEditAh = new TagsEditActionHandler(
-      modelRW       = formZoomRW.zoomRW(_.tags) { _.withTags(_) },
-      priceUpdateFx = priceUpdateEffect
+    // Единое RW-представление для props и state подсистемы редактора тегов.
+    val tagsEditDataRW = zoomRW { mroot => MTagsEditData(mroot.form.tags, mroot.tagsEditState) } { (mroot, ted) =>
+      mroot.copy(
+        form          = mroot.form.withTags( ted.props ),
+        tagsEditState = ted.state
+      )
+    }
+
+    val tagsAh = new TagsEditAh(
+      modelRW         = tagsEditDataRW,
+      api             = API,
+      priceUpdateFx   = priceUpdateEffect
     )
 
     val onMainScreenAh = new OnMainScreenAH(
@@ -126,7 +141,7 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
     // Склеить все handler'ы.
     composeHandlers(
       rcvrsMarkerPopupAh, rcvrInputsAh,
-      tagsEditAh,
+      tagsAh,
       onMainScreenAh,
       mapAh,
       datePeriodAh,
@@ -165,5 +180,14 @@ object LkAdvGeoFormCircuit extends Circuit[MRoot] with ReactConnector[MRoot] {
       }
     }
   }*/
+  override def handleError(msg: String): Unit = {
+    LOG.warn( ErrorMsgs.ADV_GEO_FORM_ERROR, msg = msg )
+    super.handleError(msg)
+  }
+
+  override def handleFatal(action: Any, e: Throwable): Unit = {
+    LOG.error(ErrorMsgs.ADV_GEO_FORM_ERROR, e, action)
+    super.handleFatal(action, e)
+  }
 
 }
