@@ -28,6 +28,7 @@ loc/geo/mmgeoip2	= loc/geo/mmgeoip2
 scalajs/scalajs-cordova               = scalajs/scalajs-cordova
 scalajs/scalajs-cordova-ble           = scalajs/scalajs-cordova-ble
 scalajs/scalajs-evothings-util        = scalajs/scalajs-evothings-util
+scalajs/scalajs-evothings-util-sio    = scalajs/scalajs-evothings-util-sio
 ble/ble-beaconer-sjs                  = ble/ble-beaconer-sjs
 scalajs/scalajs-leaflet-markercluster = scalajs/scalajs-leaflet-markercluster
 scalajs/scalajs-mapbox		      = scalajs/scalajs-mapbox

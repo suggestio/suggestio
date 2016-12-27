@@ -6,7 +6,7 @@ ec199de25dfe6732d340e0910e689cf4685dd957 datetimepicker-scalajs
 4d610208ab4ab78e75ea99b7857840a92a423477 lk-adv-common-sjs
 9337b3f4d24cf46ad86c64af350c5631a62a8d88 lk-adv-direct-sjs
 9f9d1335016f3e7007d0d2914ddb3646f272725a lk-adv-ext-sjs
-24def40d71b576cec45bf0afd33e6c9029e42547 lk-adv-geo-tags-sjs
+d55fe3c023e0f8f5a4449eefa5828c5f7243e804 lk-adv-geo-tags-sjs
 471eab17133877596c52ad93a53f872e7f0ff758 lk-common-sjs
 be2cd0ccacf6d8b6027a9ec637c136a856112d40 lk-dt-period-sjs
 08cfd70cc15bf2c3bc9828716d4ef6c7e6b0531b lk-sjs
@@ -25,6 +25,7 @@ e39e923c54d9be8068e685be2178d870edf6981f scalajs-mapboxgl
 a9d178bbcbb3285f59912d54c8c0bd421ebde762 scalajs/scalajs-cordova
 37801f6c4120d8c358addab2aa692f9700acddfe scalajs/scalajs-cordova-ble
 6e5ab2b5be7e0347b8d9e32b5591e065f93eec77 scalajs/scalajs-evothings-util
+deb29676b6610dc9da9ecdf225b67b01af4195d5 scalajs/scalajs-evothings-util-sio
 643bbc799d6f4405266f07b0ced32feb327bf271 scalajs/scalajs-leaflet-markercluster
 ac1da80794aa74566a3c247f9e9a23874f1f12f1 scalajs/scalajs-leaflet-react
 7a2cf69670e436b0cedcfaf5a21a275708c92442 scalajs/scalajs-mapbox
