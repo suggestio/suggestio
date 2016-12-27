@@ -80,6 +80,7 @@ POST /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAdSubmit(adId)
 POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeo.getPriceSubmit(adId)
 POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeo.tagEditorAddTag()
 GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mlk.MLkTagsSearchQs)
+GET  /lk/xadv/geo/tag/tags2             @controllers.LkAdvGeo.tagsSearch2(s: mlk.MLkTagsSearchQs)
 GET  /lk/xadv/geo/map/rcvrs/:adId       @controllers.LkAdvGeo.advRcvrsGeoJson(adId)
 GET  /lk/xadv/geo/map/node/pop/:adId/:nodeId     @controllers.LkAdvGeo.rcvrMapPopup(adId: MEsUuId, nodeId: MEsUuId)
 

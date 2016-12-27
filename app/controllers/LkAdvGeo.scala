@@ -1,8 +1,7 @@
 package controllers
 
-import java.util.Base64
-
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.AdvConstants
@@ -12,8 +11,10 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
+import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
+import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import models.adv.form.MDatesPeriod
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
@@ -56,6 +57,7 @@ class LkAdvGeo @Inject() (
   advGeoLocUtil                   : AdvGeoLocUtil,
   advGeoMapUtil                   : AdvGeoMapUtil,
   streamsUtil                     : StreamsUtil,
+  pickleSrvUtil                   : PickleSrvUtil,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
@@ -70,6 +72,11 @@ class LkAdvGeo @Inject() (
 
   import mCommonDi._
   import streamsUtil._
+
+  // Сериализация:
+  import MRcvrPopupResp.pickler
+  import MFormS.pickler
+  import pickleSrvUtil.Base64ByteBufEncoder
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -178,7 +185,7 @@ class LkAdvGeo @Inject() (
         // TODO Отрендерить в состояние текущие георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
       } yield {
         // Собираем исходную root-модель формы.
-        val mroot = MFormS(
+        val mform = MFormS(
           adId = request.mad.id.get,
           mapState = MMapS(
             center = gp0,
@@ -195,7 +202,7 @@ class LkAdvGeo @Inject() (
           }
         )
         // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
-        _pickle(mroot)
+        PickleUtil.pickleConv[MFormS, ConvCodecs.Base64, String](mform)
       }
 
       // Собираем итоговый ответ на запрос: аргументы рендера, рендер html, рендер http-ответа.
@@ -222,7 +229,6 @@ class LkAdvGeo @Inject() (
     }
 
   }
-
 
 
 
@@ -539,31 +545,10 @@ class LkAdvGeo @Inject() (
         }
       )
 
-      import MRcvrPopupResp.pickler
-
-      Ok( _pickle2(resp) )
+      Ok( ByteString( PickleUtil.pickle(resp) ) )
         // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
         .withHeaders(CACHE_CONTROL -> "private, max-age=5")
     }
-  }
-
-
-  import boopickle.Default._
-
-  /** Base64-сериализатор для js-состояния diode-react-формы. */
-  private def _pickle(mroot: MFormS): String = {
-    val bytes = MFormS.pickle(mroot)
-    val data = Array.ofDim[Byte](bytes.remaining())
-    bytes.get(data)
-    Base64.getEncoder
-      .encodeToString( data )
-  }
-
-  private def _pickle2[T](m: T)(implicit pickler: Pickler[T]): Array[Byte] = {
-    val bytes = Pickle.intoBytes(m)
-    val data = Array.ofDim[Byte](bytes.remaining())
-    bytes.get(data)
-    data
   }
 
 }

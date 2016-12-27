@@ -12,6 +12,7 @@
 @import io.suggest.adv.geo.AdvGeoConstants._
 @import adv.tpl._
 @import io.suggest.common.spa.SpaConst.STATE_CONT_ID
+@import views.html.stuff._preLoaderLkTpl
 
 @agBase(
   title       = messages("Adv.in.geo.tags"),
@@ -24,12 +25,16 @@
   @* Скрытый рендер как-то сериализованного состояния формы. *@
   <input type="hidden" id="@STATE_CONT_ID" value="@args.formState"/>
 
-  <div id="xynta"></div>
+  <div id="xynta">
+    @_preLoaderLkTpl()
+  </div>
+
+
+  @* TODO Удалить и вычистить всё, что ниже: *@
   <br/>
   <br/>
   <br/>
 
-  @* TODO Удалить и вычистить всё, что ниже: *@
 
   @_advFormBlockTpl() {
 
@@ -68,6 +73,7 @@
     jsRevRouterTpl("jsRoutes")(
       routes.javascript.LkAdvGeo.tagEditorAddTag,
       routes.javascript.LkAdvGeo.tagsSearch,
+      routes.javascript.LkAdvGeo.tagsSearch2,
       routes.javascript.LkAdvGeo.advRcvrsGeoJson,
       routes.javascript.LkAdvGeo.getPriceSubmit,
       routes.javascript.LkAdvGeo.forAdSubmit,

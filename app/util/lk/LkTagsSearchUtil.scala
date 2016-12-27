@@ -4,12 +4,12 @@ import javax.inject.Inject
 
 import com.google.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
+import io.suggest.common.tags.search.{MTagFound, MTagsFound}
 import io.suggest.model.es.IEsModelDiVal
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.n2.tag.{MTagFoundInfo, MTagsSearchResult}
 import models.mlk.MLkTagsSearchQs
 
 import scala.concurrent.Future
@@ -69,7 +69,7 @@ class LkTagsSearchUtil @Inject() (
     * @param nodeSearch Критерии поиска тегов.
     * @return
     */
-  def tagsSearchHint(nodeSearch: MNodeSearch): Future[MTagsSearchResult] = {
+  def tagsSearchHint(nodeSearch: MNodeSearch): Future[MTagsFound] = {
     for {
       found <- mNodes.dynSearch(nodeSearch)
     } yield {
@@ -81,13 +81,13 @@ class LkTagsSearchUtil @Inject() (
         tFace   <- tagEdge.info.tags.headOption
         tCount  <- tagEdge.order
       } yield {
-        MTagFoundInfo(
+        MTagFound(
           face  = tFace,
           count = tCount
         )
       }
 
-      MTagsSearchResult(
+      MTagsFound(
         tags = infos
       )
     }
@@ -95,7 +95,7 @@ class LkTagsSearchUtil @Inject() (
 
 
   /** Комбо из liveSearchTags() и qs2TagNodesSearch(). */
-  def liveSearchTagsFromQs(qs: MLkTagsSearchQs): Future[MTagsSearchResult] = {
+  def liveSearchTagsFromQs(qs: MLkTagsSearchQs): Future[MTagsFound] = {
     qs2TagNodesSearch(qs)
       .flatMap(tagsSearchHint)
   }

@@ -1,7 +1,10 @@
 package controllers.ctag
 
+import akka.util.ByteString
 import controllers.SioController
+import io.suggest.common.tags.search.MTagsFound.pickler
 import io.suggest.model.n2.tag.MTagSearchResp
+import io.suggest.pick.PickleUtil
 import models.mctx.Context
 import models.mlk.MLkTagsSearchQs
 import models.mtag._
@@ -82,6 +85,7 @@ trait NodeTagsEdit
     *
     * @return JSON с inline-версткой для отображения в качестве выпадающего списка.
     */
+  // TODO Кажется, что это можно удалить вместе со без-react'ной формой lk-adv-geo.
   def tagsSearch(tsearch: MLkTagsSearchQs) = IsAuth.async { implicit request =>
     for {
       found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
@@ -95,6 +99,21 @@ trait NodeTagsEdit
         )
         Ok( Json.toJson(resp) )
       }
+    }
+  }
+
+
+  /** Поиск тегов по полубинарному протоколу (ответ бинарный).
+    *
+    * @param tsearch query string.
+    * @return Сериализованная модель MTagsFound.
+    */
+  def tagsSearch2(tsearch: MLkTagsSearchQs) = IsAuth.async { implicit request =>
+    for {
+      found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
+    } yield {
+      LOGGER.trace(s"tagSearch2(${request.rawQueryString}): Found ${found.tags.size} tags: ${found.tags.iterator.map(_.face).mkString(", ")}")
+      Ok( ByteString(PickleUtil.pickle(found)) )
     }
   }
 
