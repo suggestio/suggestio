@@ -23,6 +23,8 @@ sealed trait LkAdvGeoCtl extends js.Object {
 
   /** Роута для поиска тегов. */
   def tagsSearch(args: Dictionary[Any]): Route = js.native
+  /** Роута для поиска тегов  */
+  def tagsSearch2(args: Dictionary[Any]): Route = js.native
 
   /** Роута для получения GeoJson карты ресиверов adv-geo. */
   def advRcvrsGeoJson(adId: String): Route = js.native
