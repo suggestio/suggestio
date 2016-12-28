@@ -16,6 +16,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import models.adv.form.MDatesPeriod
+import models.adv.geo.mapf.MAdvGeoShapeInfo
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
@@ -26,7 +27,7 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import org.joda.time.LocalDate
 import play.api.i18n.Messages
-import play.api.libs.json.{JsNull, Json}
+import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
 import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
@@ -71,7 +72,7 @@ class LkAdvGeo @Inject() (
 {
 
   import mCommonDi._
-  import streamsUtil._
+  import streamsUtil.Implicits._
 
   // Сериализация:
   import MRcvrPopupResp.pickler
@@ -174,7 +175,7 @@ class LkAdvGeo @Inject() (
         currAdvs  <- currAdvsFut
       } yield {
         LOGGER.trace(s"$logPrefix Found ${currAdvs.size} current advs")
-        val fcoll = advGeoFormUtil.items2geoJson(currAdvs)(ctx)
+        val fcoll = advGeoFormUtil.shapeItems2geoJson(currAdvs)(ctx)
         Json.toJson(fcoll)
       }
 
@@ -182,7 +183,7 @@ class LkAdvGeo @Inject() (
       val formStateSerFut: Future[String] = for {
         ctx           <- _ctxFut
         gp0           <- _geoPointFut
-        // TODO Отрендерить в состояние текущие георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
+        // TODO Отрендерить в состояние текущих георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
       } yield {
         // Собираем исходную root-модель формы.
         val mform = MFormS(
@@ -380,35 +381,49 @@ class LkAdvGeo @Inject() (
     * @param adId id текущей размещаемой рекламной карточки.
     *             Пока используется как основание для проверки прав доступа.
     */
-  def advRcvrsGeoJson(adId: MEsUuId) = CanAdvertiseAd(adId).async { implicit request =>
-    val nodesSource = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
+  def advRcvrsMap(adId: MEsUuId) = CanAdvertiseAdPost(adId).async { implicit request =>
+    val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
       advGeoMapUtil.rcvrNodesMap()
     }
-
-    // Сериализуем JSON в поток. Для валидности JSON надо добавить "[" в начале, "]" в конце, и разделители между элементами.
-    val delim = ",\n"
-
-    val jsons = nodesSource.mapConcat { m =>
-      val jsonStr = Json.stringify(
+    // Сериализовать поток данных в JSON:
+    val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(
+      nodesSrc.map { m =>
         Json.toJson( m.toGeoJson )
-      )
-      jsonStr :: delim :: Nil
-    }
+      }
+    )
+    // Вернуть chunked-ответ с потоком из JSON внутрях.
+    Ok.chunked(jsonStrSrc)
+      .as( withCharset(JSON) )
+  }
 
-    // Собрать итоговый поток сознания.
-    // TODO Тут рукописный генератор JSON. Следует задействовать тот, что *вроде бы* есть в akka-http или где-то ещё.
-    val src = Source.single( "[" )
-      .concat(jsons)
-      .concat {
-        Source(
-          // TODO Чтобы последняя запятая не вызывала ошибки парсинга, добавляем JsNull в конец потока объектов.
-          Json.stringify(JsNull) :: "]" :: Nil
-        )
+
+  /** Текущие георазмещения карточки, т.е. размещения на карте в кружках.
+    *
+    * @param adId id интересующей рекламной карточки.
+    * @return js.Array[GjFeature].
+    */
+  def currGeoAdvsMap(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+    // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
+    val currAdvsSrc = slick.db
+      .stream {
+        val query = advGeoBillUtil.findCurrentForAdQ(request.mad.id.get)
+        advGeoBillUtil.onlyGeoShapesInfo(query)
+      }
+      .toSource
+      // Каждый элемент нужно скомпилить в пригодную для сериализации модель.
+      .map { raw =>
+        // Причесать сырой выхлоп базы
+        val si = MAdvGeoShapeInfo(raw)
+        // Сконвертить в GeoJSON и сериализовать в промежуточное JSON-представление.
+        val gj = advGeoFormUtil.shapeInfo2geoJson(si)
+        Json.toJson(gj)
       }
 
-    // Вернуть chunked-ответ наконец.
-    Ok.chunked(src)
-      .as("application/json; charset=utf8")
+    // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
+    val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
+
+    Ok.chunked(jsonStrSrc)
+      .as( withCharset(JSON) )
   }
 
 

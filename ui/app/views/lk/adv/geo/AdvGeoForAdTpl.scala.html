@@ -70,14 +70,18 @@
 
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
   @jsTpl2HtmlTpl( withScriptTag = true )(
-    jsRevRouterTpl("jsRoutes")(
+    jsRevRouterTpl("jsRoutes", csrfAll = true)(
       routes.javascript.LkAdvGeo.tagEditorAddTag,
       routes.javascript.LkAdvGeo.tagsSearch,
       routes.javascript.LkAdvGeo.tagsSearch2,
-      routes.javascript.LkAdvGeo.advRcvrsGeoJson,
+
       routes.javascript.LkAdvGeo.getPriceSubmit,
       routes.javascript.LkAdvGeo.forAdSubmit,
-      routes.javascript.LkAdvGeo.rcvrMapPopup
+
+      routes.javascript.LkAdvGeo.advRcvrsMap,
+      routes.javascript.LkAdvGeo.rcvrMapPopup,
+
+      routes.javascript.LkAdvGeo.currGeoAdvsMap
     )
   )
 

@@ -60,7 +60,6 @@ trait ICommonDi
   override val cacheApiUtil           : CacheApiUtil
   override val mNodeCache             : MNodeCache
   override val _slickConfigProvider   : DatabaseConfigProvider
-  implicit val mat                    : Materializer
 }
 
 

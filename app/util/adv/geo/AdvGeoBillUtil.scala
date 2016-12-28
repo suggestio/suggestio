@@ -4,10 +4,11 @@ import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
 import models.adv.geo.IAdvGeoFormResult
+import models.adv.geo.mapf.AdvGeoShapeInfo_t
 import models.adv.geo.tag.IAgtFormResult
 import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
@@ -26,8 +27,8 @@ import scala.concurrent.Future
 class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   beaconsBilling                      : BeaconsBilling,
-  mItems                              : MItems,
-  val mCommonDi                       : ICommonDi
+  protected val mItems                : MItems,
+  protected val mCommonDi             : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
@@ -170,6 +171,15 @@ class AdvGeoBillUtil @Inject() (
     )
   }
 
+  /** Сборка query для поиска текущих item'ов карточки. */
+  def findCurrentForAdQ(adId: String): Query[mItems.MItemsTable, MItem, Seq] = {
+    mItems.query
+      .filter { i =>
+        i.withNodeId(adId) &&
+          i.withTypes( MItemTypes.advGeoTypes ) &&
+          i.withStatuses( MItemStatuses.advBusy )
+      }
+  }
 
   /**
     * Поиск уже текущих размещений для указанной карточки.
@@ -178,17 +188,32 @@ class AdvGeoBillUtil @Inject() (
     * @return DBIO-экшен, возвращающий MItem'ы.
     */
   def findCurrentForAd(adId: String, limit: Int = 200): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
-    mItems.query
-      .filter { i =>
-        i.withNodeId(adId) &&
-          i.withTypes( MItemTypes.advGeoTypes ) &&
-          i.withStatuses( MItemStatuses.advBusy )
-      }
+    findCurrentForAdQ(adId)
       .take(limit)
       // Сортировка пока не требуется, но возможно потребуется.
       .result
   }
 
+
+  /** Собрать минимальную и достаточную геоинфу для рендера разноцветных кружочков на карте размещений. */
+  def onlyGeoShapesInfo(query: Query[mItems.MItemsTable, MItem, Seq], limit: Int = 200): DBIOAction[Seq[AdvGeoShapeInfo_t], Streaming[AdvGeoShapeInfo_t], Effect.Read] = {
+    query
+      // WHERE не пустой geo_shape
+      .filter(_.geoShapeOpt.isDefined)
+      // GROUP BY geo_shape
+      .groupBy(_.geoShapeStrOpt)
+      .map { case (geoShapeStrOpt, group) =>
+        // Делаем правильный кортеж: ключ -- строка шейпа, id - любой, status -- только максимальный
+        (geoShapeStrOpt.get,
+          group.map(_.id).max.get,
+          (group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.strId).get
+          )
+      }
+      // LIMIT 200
+      .take(limit)
+      .result
+    // TODO Нужно зашейпить эти кортежи в MAdvGeoShapeInfo. .map() не котируем, т.к. это ломает streaming.
+  }
 
   /**
     * Поиск ПРЯМЫХ размещений для рекламной карточки на указанных ресиверах.

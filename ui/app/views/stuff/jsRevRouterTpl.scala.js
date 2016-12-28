@@ -1,7 +1,9 @@
-@(name: String)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
+@(name: String, csrfAll: Boolean = false)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
 
 @* JS-шаблон генерации play js reverse router.
-   Синтаксис вызова шаблона аналогичен вызову helper.javascriptRoutes(). *@
+   Синтаксис вызова шаблона аналогичен вызову helper.javascriptRoutes().
+   csrfAll: true заставляет все запросы подписывать по CSRF, а не только POST`ы [false].
+ *@
 
 @import io.suggest.common.qs.QsConstants._
 @import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
@@ -24,7 +26,7 @@ var @(name) = {};
   var _wA = function(r) {
     var method = r.method;
     var url;
-    if (typeof csrfQs == "string" && method == "POST") {
+    if (typeof csrfQs == "string"@if(!csrfAll){ && method == "POST"}) {
       var delim;
       var qmark = '?'
       if (r.url.indexOf(qmark) >= 0) {

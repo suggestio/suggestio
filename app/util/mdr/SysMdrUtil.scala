@@ -111,7 +111,7 @@ class SysMdrUtil @Inject() (
   type Q_t = Query[mItems.MItemsTable, MItem, Seq]
 
   def onlyReqs(q: Q_t): Q_t = {
-    q.filter( _.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+    q.filter( _.statusStr === MItemStatuses.AwaitingMdr.strId)
   }
 
   def onlyStatuses(q: Q_t, statuses: Seq[MItemStatus]): Q_t = {
@@ -197,7 +197,7 @@ class SysMdrUtil @Inject() (
       .query
       .filter { i =>
         (i.iTypeStr inSet MItemTypes.advTypesIds.toSeq) &&
-          (i.statusStr === MItemStatuses.AwaitingSioAuto.strId)
+          (i.statusStr === MItemStatuses.AwaitingMdr.strId)
       }
 
     val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>

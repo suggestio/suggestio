@@ -1,6 +1,7 @@
 package models.adv.geo.cur
 
 import io.suggest.adv.geo.AdvGeoConstants.GjFtPropsC._
+import io.suggest.mbill2.m.gid.Gid_t
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -15,10 +16,11 @@ object GjFtProps {
 
   /** Поддержка JSON. По факту системе нужен только Writes. */
   implicit val FORMAT: OFormat[GjFtProps] = (
+    (__ \ ITEM_ID_FN).format[Gid_t] and
     (__ \ FILL_COLOR_FN).formatNullable[String] and
     (__ \ FILL_OPACITY_FN).formatNullable[Float] and
-    (__ \ RADIUS_FN).formatNullable[Double] and
-    (__ \ POPUP_CONTENT_FN).formatNullable[String]
+    (__ \ RADIUS_FN).formatNullable[Double]
+    //(__ \ POPUP_CONTENT_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 }
@@ -27,8 +29,9 @@ object GjFtProps {
 /** Класс модели пропертисов внутри GeoJSON Feature, описывающих элемент для рендера
   * в рамках формы-карты размещения на карте. */
 case class GjFtProps(
+  itemId          : Gid_t,
   fillColor       : Option[String]  = None,
   fillOpacity     : Option[Float]   = None,
-  radiusM         : Option[Double]  = None,
-  popupContent    : Option[String]  = None
+  radiusM         : Option[Double]  = None
+  //popupContent    : Option[String]  = None
 )

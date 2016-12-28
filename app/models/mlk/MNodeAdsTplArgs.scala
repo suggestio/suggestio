@@ -41,7 +41,7 @@ trait INodeAdInfo {
   def isOnline    = _hs( Online )
   def isOffline   = _hs( Offline )
   def isApproved  = isOnline || isOffline
-  def isReq       = _hs( AwaitingSioAuto )
+  def isReq       = _hs( AwaitingMdr )
   def isBusy      = isApproved || isReq
 
 }

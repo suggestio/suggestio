@@ -602,7 +602,7 @@ class Bill2Util @Inject() (
     for {
       mitemOpt0 <- {
         mItems
-          .getByIdStatusAction(itemId, MItemStatuses.AwaitingSioAuto)
+          .getByIdStatusAction(itemId, MItemStatuses.AwaitingMdr)
           .forUpdate
       }
     } yield {
