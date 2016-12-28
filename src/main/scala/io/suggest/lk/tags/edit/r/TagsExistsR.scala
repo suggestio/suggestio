@@ -30,7 +30,7 @@ object TagsExistsR {
 
     def render(tagsExists: Props): ReactElement = {
       // tagExistsCont: Уже добавленные к заказу гео-теги.
-      /*tagsExists().nonEmpty ?=*/ <.div(
+      <.div(
         for {
           (tagName, i) <- tagsExists().toSeq.sorted.iterator.zipWithIndex
         } yield {

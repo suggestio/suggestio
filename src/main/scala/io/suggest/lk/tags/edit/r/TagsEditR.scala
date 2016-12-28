@@ -1,11 +1,11 @@
 package io.suggest.lk.tags.edit.r
 
-import diode.FastEq
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.tags.edit.{MTagsEditProps, MTagsEditQueryProps}
+import io.suggest.common.tags.edit.MTagsEditQueryProps
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
+import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
@@ -21,21 +21,7 @@ import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
   */
 object TagsEditR {
 
-  type Props = ModelProxy[PropsVal]
-
-
-  /** Пропертисы компонента -- отзумленный контейнер некоторых полей root-модели. */
-  case class PropsVal(
-                      tagsFound  : Pot[MTagsFound],
-                      state      : MTagsEditProps
-                     )
-
-  implicit object PropsValFastEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.tagsFound eq b.tagsFound) &&
-        (a.state eq b.state)
-    }
-  }
+  type Props = ModelProxy[MTagsEditState]
 
 
   /** Состояние компонента содержит только immutable-инстансы коннекшенов до суб-моделей.  */
@@ -80,9 +66,9 @@ object TagsEditR {
     .initialState_P { p =>
       // Инициализировать связи до модели для нужд суб-компонентов:
       State(
-        tagQueryConn  = p.connect(_.state.query),
-        tagsFoundConn = p.connect(_.tagsFound),
-        tagsExistConn = p.connect(_.state.tagsExists)
+        tagQueryConn  = p.connect(_.props.query),
+        tagsFoundConn = p.connect(_.found),
+        tagsExistConn = p.connect(_.props.tagsExists)
       )
     }
     .renderBackend[Backend]

@@ -22,7 +22,7 @@ import scala.concurrent.Future
   * Description: Action handler для подсистемы редактора тегов на базе react+diode.
   */
 class TagsEditAh[M](
-                     modelRW         : ModelRW[M, MTagsEditData],
+                     modelRW         : ModelRW[M, MTagsEditState],
                      api             : ITagsApi,
                      priceUpdateFx   : Effect
 )
@@ -47,11 +47,7 @@ class TagsEditAh[M](
       )
 
       // И надо забыть обо всех найденных тегах:
-      val s2 = v0.state.reset
-      val v2 = v0.copy(
-        state = s2,
-        props = p2
-      )
+      val v2 = v0.reset.withProps(p2)
       updated( v2, priceUpdateFx )
 
 
@@ -74,10 +70,10 @@ class TagsEditAh[M](
       }
 
       // Затем запланировать поисковый запрос к серверу, если необходимо.
-      val s0 = v1.state
       val qtrim = q.trim
       if (qtrim.isEmpty) {
-        updated( v1.withState(s0.reset) )
+        // Пусто в поисковом запросе. Сбросить состояние поиска.
+        updated( v1.reset )
 
       } else if (qtrim == text0) {
         // Текст вроде бы не изменился относительно предыдущего шага.
@@ -90,8 +86,7 @@ class TagsEditAh[M](
           .after( TagsEditConstants.Search.START_SEARCH_TIMER_MS.milliseconds )
 
         // Залить в состояние итоги запуска запроса:
-        val s2 = s0.withSearchTimer( Some(now) )
-        val v2 = v1.withState(s2)
+        val v2 = v1.withSearchTimer( Some(now) )
 
         updated(v2, awaitFx)
       }
@@ -100,12 +95,10 @@ class TagsEditAh[M](
     // Настала пора запуска реквеста
     case StartSearchReq(now0) =>
       val v0 = value
-      val s0 = value.state
-      if ( s0.searchTimer.contains(now0) ) {
+      if ( v0.searchTimer.contains(now0) ) {
         // Можно начинать искать теги на сервере...
         val fx = Effect( startTagsSearch(now0) )
-        val s1 = s0.withFound( s0.found.pending() )
-        val v1 = v0.withState(s1)
+        val v1 = v0.withFound( v0.found.pending() )
         updated( v1, fx )
 
       } else {
@@ -118,14 +111,13 @@ class TagsEditAh[M](
     // Среагировать на ответ сервера по поводу поиска тегов.
     case HandleTagsFound(resp, now0) =>
       val v0 = value
-      val s0 = value.state
-      if (s0.searchTimer.contains(now0)) {
+      if (v0.searchTimer.contains(now0)) {
         // Это ожидаемый запрос, обновить состояние.
-        val s1 = s0.copy(
-          found = s0.found.ready(resp),
+        val v1 = v0.copy(
+          found       = v0.found.ready(resp),
           searchTimer = None
         )
-        updated( v0.withState(s1) )
+        updated( v1 )
 
       } else {
         // Этот ответ не является ожидаемым. Скорее всего, он устарел или race-conditions на линии
