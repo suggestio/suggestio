@@ -5,6 +5,7 @@ import io.suggest.sjs.leaflet.map.LatLng
 import org.scalajs.dom.Element
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -12,19 +13,6 @@ import scala.scalajs.js
   * Created: 08.12.16 17:06
   * Description: react-leaflet API wrapper for Circle component.
   */
-object CircleR {
-
-  def apply(
-    center  : LatLng,
-    radius  : Double
-  ): CircleR = {
-    val p = js.Dynamic.literal().asInstanceOf[CirclePropsR]
-    p.center = center
-    p.radius = radius
-    CircleR(p)
-  }
-
-}
 
 case class CircleR(
   override val props: CirclePropsR
@@ -37,8 +25,12 @@ case class CircleR(
 }
 
 
-@js.native
+@ScalaJSDefined
 trait CirclePropsR extends js.Object {
-  var center  : LatLng  = js.native
-  var radius  : Double  = js.native
+
+  val center  : LatLng
+  val radius  : Double
+
+  // sjs-0.6.14 позволяет описывать тут всякие undefined-значения...
+
 }

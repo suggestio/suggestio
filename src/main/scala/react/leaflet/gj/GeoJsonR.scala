@@ -22,9 +22,9 @@ object GeoJsonR {
              data           : js.Any,
              pointToLayer   : UndefOr[(GjFeature, LatLng) => Layer]  = js.undefined,
              onEachFeature  : UndefOr[(GjFeature, Layer) => Unit]    = js.undefined,
-             style          : UndefOr[GjFeature => GjFeatureStyle]    = js.undefined,
+             style          : UndefOr[GjFeature => GjFeatureStyle]   = js.undefined,
              filter         : UndefOr[(GjFeature, Layer) => Boolean] = js.undefined,
-             coordsToLatLng : UndefOr[js.Array[Double] => LatLng]     = js.undefined
+             coordsToLatLng : UndefOr[js.Array[Double] => LatLng]    = js.undefined
            ): GeoJsonR = {
 
     val p = js.Dynamic.literal().asInstanceOf[GeoJsonPropsR]
