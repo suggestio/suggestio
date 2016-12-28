@@ -1,5 +1,6 @@
 package io.suggest.model.es
 
+import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di._
@@ -26,6 +27,9 @@ trait IEsModelDiVal
   with ICacheApiUtil
   with ICurrentActorSystem
   with IEs4sClient
+{
+  implicit val mat                 : Materializer
+}
 
 
 /** Интерфейс для поля с DI-инстансом контейнера общего хлама в DI-моделях. */
@@ -42,7 +46,8 @@ class MEsModelDiVal @Inject() (
   override val es4sClient         : ElasticClient,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+  override implicit val sn        : SioNotifierStaticClientI,
+  override implicit val mat       : Materializer
 )
   extends IEsModelDiVal
 

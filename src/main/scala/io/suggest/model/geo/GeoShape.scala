@@ -24,6 +24,11 @@ import play.extras.geojson.{Geometry, LatLng}
 
 object GeoShape extends MacroLogsDyn {
 
+  /** Распарсить шейп из json-выхлопа. */
+  def parse(raw: String): GeoShape = {
+    Json.parse(raw).as[GeoShape]
+  }
+
   val COORDS_ESFN = "coordinates"
   val TYPE_ESFN   = "type"
 
