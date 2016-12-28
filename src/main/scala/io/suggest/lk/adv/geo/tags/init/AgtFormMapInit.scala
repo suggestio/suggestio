@@ -41,7 +41,7 @@ class AgtFormMapInit extends RadMapInit with Log {
       adIdInp <- AdIdInp.find()
       adId    <- adIdInp.adId
     } {
-      val route = jsRoutes.controllers.LkAdvGeo.advRcvrsGeoJson(adId)
+      val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap(adId)
 
       // Надо запустить запрос на сервер для получения списка узлов.
       val gjFut = Xhr.requestJson( route )

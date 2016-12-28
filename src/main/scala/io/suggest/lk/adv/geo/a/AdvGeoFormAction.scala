@@ -2,6 +2,7 @@ package io.suggest.lk.adv.geo.a
 
 import io.suggest.adv.geo.{MRcvrPopupResp, RcvrKey}
 import io.suggest.geo.MGeoPoint
+import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.spa.DAction
 import io.suggest.sjs.leaflet.marker.Marker
 
@@ -33,7 +34,7 @@ case class SetRcvrStatus(rcvrKey: RcvrKey, checked: Boolean) extends AdvGeoFormA
 
 
 /** Экшен запуска инициализации карты маркеров ресиверов. */
-case object LetsInitRcvrMarkers extends AdvGeoFormAction
+case object RcvrMarkersInit extends AdvGeoFormAction
 
 /** Экшен выставления указанных recevier-маркеров в состояние. */
 case class InstallRcvrMarkers(rcvrMarkers: js.Array[Marker]) extends AdvGeoFormAction
@@ -45,3 +46,9 @@ case class SetMapCenter(gp: MGeoPoint) extends AdvGeoFormAction
 
 /** Выставить новое значение стоимости размещения. */
 case class SetPrice(price: String) extends AdvGeoFormAction
+
+
+/** Команда инициализации кружчков и др.фигурок текущего размещния. */
+case object CurrGeoAdvsInit extends AdvGeoFormAction
+/** Выставить указанные данные размещения в состояние. */
+case class SetCurrGeoAdvs(resp: js.Array[GjFeature]) extends AdvGeoFormAction

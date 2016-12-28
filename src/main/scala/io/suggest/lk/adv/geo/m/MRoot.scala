@@ -1,11 +1,9 @@
 package io.suggest.lk.adv.geo.m
 
-import diode.data.Pot
-import io.suggest.adv.geo.{MFormS, MRcvrPopupResp}
+import diode.FastEq
+import io.suggest.adv.geo.MFormS
+import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
-import io.suggest.sjs.leaflet.marker.Marker
-
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -15,22 +13,37 @@ import scala.scalajs.js
   * В ней хранится вообще всё, но сериализуемые для отправки на сервер данные хранятся в отдельных полях.
   *
   * @param form Состояние формы размещения, пригодное для сериализации на сервер или десериализации с сервера.
-  * @param rcvrPopup Потенциальные данные попапа над маркером (точкой) ресивера.
-  *                  Приходят с сервера по запросу, однако сам факт наличия/необходимости
-  *                  такого запроса отражается в form.rcvrPopup.
-  * @param rcvrMarkers Маркеры карты ресиверов.
+  * @param currGeoAdvs Данные по текущим георазмещениям на карте.
+  * @param tags Контейнер данных по тегам.
   */
 case class MRoot(
                   form          : MFormS,
-                  rcvrPopup     : Pot[MRcvrPopupResp]     = Pot.empty,
-                  tagsEditState : MTagsEditState          = MTagsEditState.empty,
-                  rcvrMarkers   : Pot[js.Array[Marker]]   = Pot.empty
+                  tags          : MTagsEditState          = MTagsEditState.empty,
+                  rcvr          : MRcvr                   = MRcvr(),
+                  currGeoAdvs   : MCurrGeoAdvs            = MCurrGeoAdvs(),
+                  datePeriod    : MAdvPeriod              = MAdvPeriod()
                   // TODO areaPopup: Pot[???] = Pot.empty
 ) {
 
   def withForm(form2: MFormS) = copy(form = form2)
-  def withTagsEditState(tes: MTagsEditState) = copy(tagsEditState = tes)
-  def withRcvrPopup(rcvrPopupResp: Pot[MRcvrPopupResp]) = copy(rcvrPopup = rcvrPopupResp)
-  def withRcvrMarkers(rcvrMarkers2: Pot[js.Array[Marker]]) = copy(rcvrMarkers = rcvrMarkers2)
+  def withTagsEditState(tes: MTagsEditState) = copy(tags = tes)
+  def withRcvr(rcvr2: MRcvr) = copy(rcvr = rcvr2)
+  def withCurrGeoAdvs(cga2: MCurrGeoAdvs) = copy(currGeoAdvs = cga2)
+  def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
+
+}
+
+object MRoot {
+
+  /** Реализация поддержки FastEq для инстансов [[MRoot]]. */
+  implicit object MRootFastEq extends FastEq[MRoot] {
+    override def eqv(a: MRoot, b: MRoot): Boolean = {
+      (a.form eq b.form) &&
+        (a.tags eq b.tags) &&
+        (a.rcvr eq b.rcvr) &&
+        (a.currGeoAdvs eq b.currGeoAdvs) &&
+        (a.datePeriod eq b.datePeriod)
+    }
+  }
 
 }

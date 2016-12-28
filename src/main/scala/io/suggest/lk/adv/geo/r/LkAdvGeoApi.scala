@@ -5,9 +5,12 @@ import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.tags.search.{ITagsApi, TagsApiImplXhr}
 
 import scala.concurrent.Future
+import scala.scalajs.js
+import scala.scalajs.js.Array
 
 /**
   * Suggest.io
@@ -23,10 +26,13 @@ import scala.concurrent.Future
 trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  def rcvrsGeoJson(adId: String): Future[MMapGjResp]
+  def rcvrsMap(adId: String): Future[MMapGjResp]
 
   /** Запрос с сервера попапа над ресивером. */
   def rcvrPopup(adId: String, nodeId: String): Future[MRcvrPopupResp]
+
+  /** Запрос карты текущий георазмещений с сервера. */
+  def currAdvsMap(adId: String): Future[js.Array[GjFeature]]
 
 }
 
@@ -41,9 +47,9 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def rcvrsGeoJson(adId: String): Future[MMapGjResp] = {
+  override def rcvrsMap(adId: String): Future[MMapGjResp] = {
     // Надо запустить запрос на сервер для получения списка узлов.
-    val route = jsRoutes.controllers.LkAdvGeo.advRcvrsGeoJson(adId)
+    val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap(adId)
     Xhr.requestJson( route )
       .map(MMapGjResp.apply)
   }
@@ -58,6 +64,12 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     Xhr.unBooPickleResp[MRcvrPopupResp] {
       Xhr.requestBinary(route)
     }
+  }
+
+  override def currAdvsMap(adId: String): Future[js.Array[GjFeature]] = {
+    val route = jsRoutes.controllers.LkAdvGeo.currGeoAdvsMap(adId)
+    Xhr.requestJson(route)
+      .asInstanceOf[Future[js.Array[GjFeature]]]
   }
 
 }

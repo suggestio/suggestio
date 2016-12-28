@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.lk.adv.geo.a.{InstallRcvrMarkers, LetsInitRcvrMarkers}
+import io.suggest.lk.adv.geo.a.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.marker.Marker
@@ -23,10 +23,10 @@ class RcvrMarkersInitAH[M](api: ILkAdvGeoApi,
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал запуска инициализации маркеров с сервера.
-    case LetsInitRcvrMarkers =>
+    case RcvrMarkersInit =>
       val fx = Effect {
         for {
-          resp <- api.rcvrsGeoJson(adIdProxy())
+          resp <- api.rcvrsMap(adIdProxy())
         } yield {
           // Привести результат к js.Array[Markers].
           val markersArr = LkAdvGeoFormUtil.geoJsonToClusterMarkers(resp.featuresIter)

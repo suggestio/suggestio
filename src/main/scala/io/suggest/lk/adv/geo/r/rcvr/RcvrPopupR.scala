@@ -1,12 +1,11 @@
 package io.suggest.lk.adv.geo.r.rcvr
 
-import diode.FastEq
-import diode.data.Pot
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.adv.geo._
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
+import io.suggest.lk.adv.geo.m.MRcvr
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -23,26 +22,7 @@ import react.leaflet.popup.PopupR
 
 object RcvrPopupR {
 
-  type Props = ModelProxy[PropsVal]
-
-
-  /** Содержимое ModelProxy. */
-  case class PropsVal(
-                       rcvrsMap   : RcvrsMap_t,
-                       state      : Option[MRcvrPopupState],
-                       resp       : Pot[MRcvrPopupResp]
-                     )
-
-
-
-  /** Поддержка быстрого сравнения содержимого сложного контейнера для diode circuit. */
-  implicit object PropsValEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.rcvrsMap eq b.rcvrsMap) &&
-        (a.state eq b.state) &&
-        (a.resp eq b.resp)
-    }
-  }
+  type Props = ModelProxy[MRcvr]
 
 
   /** Backend для react-sjs компонена. */
@@ -69,15 +49,15 @@ object RcvrPopupR {
     /** react render. */
     def render(props: Props): ReactElement = {
       val v = props()
-      v.state.fold[ReactElement](null) { state =>
+      v.popupState.fold[ReactElement](null) { state =>
         PopupR(
           position = LkAdvGeoFormUtil.geoPoint2LatLng( state.latLng )
         )(
           <.div(
-            v.resp.renderEmpty {
+            v.popupResp.renderEmpty {
               Messages("Please.wait")
             },
-            v.resp.renderReady { resp =>
+            v.popupResp.renderReady { resp =>
               for (g <- resp.groups.iterator) yield {
                 // Значение key не суть важно, просто оно должно быть здесь.
                 val groupId = g.groupId.getOrElse("0")

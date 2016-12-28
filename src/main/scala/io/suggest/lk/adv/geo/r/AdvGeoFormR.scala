@@ -5,7 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.geo.MAdv4FreeS
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.MRoot
+import io.suggest.lk.adv.geo.m.{MRcvr, MRoot}
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
@@ -45,11 +45,11 @@ object AdvGeoFormR extends Log {
     * [[https://github.com/scala/scala/pull/4017]]
     */
   case class State(
-                  adv4freeConn    : ReactConnectProxy[Option[MAdv4FreeS]],
-                  onMainScrConn   : ReactConnectProxy[OnMainScreenR.PropsVal],
-                  rcvrMarkersConn : ReactConnectProxy[Pot[js.Array[Marker]]],
-                  rcvrPopupConn   : ReactConnectProxy[RcvrPopupR.PropsVal],
-                  mapPropsConn    : ReactConnectProxy[AdvGeoMapR.PropsVal]
+                    adv4freeConn    : ReactConnectProxy[Option[MAdv4FreeS]],
+                    onMainScrConn   : ReactConnectProxy[OnMainScreenR.PropsVal],
+                    rcvrMarkersConn : ReactConnectProxy[Pot[js.Array[Marker]]],
+                    rcvrPopupConn   : ReactConnectProxy[MRcvr],
+                    mapPropsConn    : ReactConnectProxy[AdvGeoMapR.PropsVal]
                   )
 
 
@@ -79,11 +79,11 @@ object AdvGeoFormR extends Log {
           <.br,
 
           // Компонент подсистемы выбора тегов:
-          p.wrap(m => TagsEditR.PropsVal(m.tagsEditState.found, m.form.tags) )( TagsEditR.apply )
+          p.wrap( _.tags )( TagsEditR.apply )
         ),
 
         // Верхняя половина, правая колонка:
-        p.wrap(_.form.datePeriod)( DatePeriodR.apply ),
+        p.wrap(_.datePeriod)( DatePeriodR.apply ),
 
         // Тут немного пустоты нужно...
         <.br,
@@ -127,14 +127,8 @@ object AdvGeoFormR extends Log {
             mroot.form.onMainScreen
           )
         },
-        rcvrMarkersConn = p.connect(_.rcvrMarkers),
-        rcvrPopupConn   = p.connect { mroot =>
-          RcvrPopupR.PropsVal(
-            rcvrsMap = mroot.form.rcvrsMap,
-            state    = mroot.form.rcvrPopup,
-            resp     = mroot.rcvrPopup
-          )
-        },
+        rcvrMarkersConn = p.connect(_.rcvr.markers),
+        rcvrPopupConn   = p.connect(_.rcvr),
         mapPropsConn = p.connect { mroot =>
           AdvGeoMapR.PropsVal(
             mapState      = mroot.form.mapState,
