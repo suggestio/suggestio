@@ -2,6 +2,7 @@ package io.suggest.mbill2.m.geo.shape
 
 import io.suggest.common.slick.driver.IDriver
 import io.suggest.model.geo.GeoShape
+import io.suggest.primo.IApplyOpt1
 import play.api.libs.json.Json
 
 /**
@@ -10,13 +11,13 @@ import play.api.libs.json.Json
   * Created: 03.02.16 17:32
   * Description: Поддержка поля, содержащего строковой геошейп.
   */
-object GeoShapeOptSlick {
+object GeoShapeOptSlick extends IApplyOpt1 {
 
-  def applyOpt(gsStrOpt: Option[String]): Option[GeoShape] = {
-    for (gsStr <- gsStrOpt) yield {
-      Json.parse(gsStr)
-          .as[GeoShape]
-    }
+  override type ApplyArg_t = String
+  override type T = GeoShape
+
+  override def apply(gsStr: String): GeoShape = {
+    GeoShape.parse(gsStr)
   }
 
   def unapplyOpt(gsOpt: Option[GeoShape]): Option[Option[String]] = {

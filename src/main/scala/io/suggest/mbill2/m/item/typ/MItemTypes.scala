@@ -19,7 +19,7 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
     with ValT
   {
     /** Новый статус item'а после оплаты заказа. */
-    def orderClosedStatus   : MItemStatus = MItemStatuses.AwaitingSioAuto
+    def orderClosedStatus   : MItemStatus = MItemStatuses.AwaitingMdr
 
     /** Какой статус выставлять item'у после получения оплаты? */
     def sioApprovedStatus   : MItemStatus = MItemStatuses.Offline

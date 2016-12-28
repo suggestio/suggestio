@@ -58,15 +58,17 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   override type T = Val
 
 
+  // ДЛЯ strId НАДО ПОДДЕРЖИВАТЬ АЛФАВИТНЫЙ ПОРЯДОК ЭЛЕМЕНТОВ, И ЧЁТКО соответствующий хронологическому!
+  // Это связано со всякими SQL-оборотами типа "SELECT max(status) ..."
+
   /** Item лежит в корзине, т.е. в черновике заказа. */
   val Draft               : T = new Val("a") with NotBusy {
     /** Пока товар в корзине, ничего никуда не списано. */
     override def isMoneyWithdrawed      = false
   }
 
-  /** Item оплачен. Ожидается какая-то автоматическая реакция suggest.io.
-    * Например, юзер оплатил размещение карточки. Sio должен разместить карточку и обновить статус. */
-  val AwaitingSioAuto     : T = new Val("b") {
+  /** Item оплачен. Ожидается подтверждение со стороны suggest.io: модерация. */
+  val AwaitingMdr     : T = new Val("b") {
     /** Деньги списаны с доступного баланса на заблокированный. */
     override def isMoneyBlockedOnBuyer  = true
   }
