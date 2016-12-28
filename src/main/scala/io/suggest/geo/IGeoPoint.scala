@@ -1,5 +1,6 @@
 package io.suggest.geo
 
+import boopickle.Default._
 import io.suggest.geo.GeoConstants.Qs
 
 /**
@@ -26,6 +27,12 @@ trait IGeoPoint {
 
 }
 
+
+object MGeoPoint {
+
+  implicit val pickler: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
+
+}
 
 
 /** Дефолтовая, пошаренная между клиентом и сервером, реализация [[IGeoPoint]]. */

@@ -13,6 +13,11 @@ import io.suggest.bin.{IConvCodec, IDataConv}
   */
 object PickleUtil {
 
+  /** Имя поля с какими-то сериализованными данными.
+    * Например, если надо внутри JSON вставить base64-строку. */
+  final val PICKED_FN = "_"
+
+
   def pickle[From](v: From)(implicit u: Pickler[From]): ByteBuffer = {
     Pickle.intoBytes(v)
   }
