@@ -41,3 +41,9 @@ case class MGeoPoint(
   override val lon: Double
 )
   extends IGeoPoint
+
+
+/** Интерфейс для моделей с полем geoPoint. */
+trait IGeoPointField {
+  def geoPoint: MGeoPoint
+}
