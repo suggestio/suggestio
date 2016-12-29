@@ -2,7 +2,7 @@ package io.suggest.sjs.mapbox.gl.layer
 
 import io.suggest.sjs.common.geo.json.GjFeature
 
-import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -10,9 +10,9 @@ import scala.scalajs.js
   * Created: 12.04.16 14:48
   * Description: API for map.queryRenderedFeatures() results.
   */
-@js.native
-class LayerFeature extends GjFeature {
+@ScalaJSDefined
+trait LayerFeature extends GjFeature {
 
-  var layer: Layer = js.native
+  var layer: Layer
 
 }
