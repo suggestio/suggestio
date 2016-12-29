@@ -2,9 +2,11 @@ package io.suggest.sjs.leaflet.geojson
 
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.model.FromDict
-import io.suggest.sjs.leaflet.map.{Layer, LatLng}
+import io.suggest.sjs.leaflet.map.{LatLng, Layer}
+import io.suggest.sjs.leaflet.path.PathOptions
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -14,6 +16,8 @@ import scala.scalajs.js
   *
   * @see [[http://leafletjs.com/reference.html#geojson]]
   * @see [[http://leafletjs.com/examples/geojson.html]]
+  *
+  * Need scala 0.6.14+.
   */
 object GjOptions extends FromDict {
 
@@ -22,22 +26,17 @@ object GjOptions extends FromDict {
 }
 
 
-@js.native
+@ScalaJSDefined
 trait GjOptions extends js.Object {
 
-  def style(feature: GjFeature): GjFeatureStyle                 = js.native
-  var style: js.Function1[GjFeature, GjFeatureStyle]            = js.native
+  val style: js.UndefOr[js.Function1[GjFeature, PathOptions]]          = js.undefined
 
-  def pointToLayer(feature: GjFeature, latLng: LatLng): Layer  = js.native
-  var pointToLayer: js.Function2[GjFeature, LatLng, Layer]     = js.native
+  val pointToLayer: js.UndefOr[js.Function2[GjFeature, LatLng, Layer]]    = js.undefined
 
-  def onEachFeature(feature: GjFeature, layer: Layer): Unit    = js.native
-  var onEachFeature: js.Function2[GjFeature, Layer, Unit]      = js.native
+  val onEachFeature: js.UndefOr[js.Function2[GjFeature, Layer, Unit]]     = js.undefined
 
-  def filter(feature: GjFeature, layer: Layer): Boolean        = js.native
-  var filter: js.Function2[GjFeature, Layer, Boolean]          = js.native
+  val filter: js.UndefOr[js.Function2[GjFeature, Layer, Boolean]]         = js.undefined
 
-  def coordsToLatLng(coords: js.Array[Double]): LatLng          = js.native
-  var coordsToLatLng: js.Function1[js.Array[Double], LatLng]    = js.native
+  val coordsToLatLng: js.UndefOr[js.Function1[js.Array[Double], LatLng]]  = js.undefined
 
 }

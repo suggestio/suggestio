@@ -1,8 +1,7 @@
 package io.suggest.sjs.leaflet.path
 
-import io.suggest.sjs.leaflet.event.LEventTarget
-import io.suggest.sjs.leaflet.map.{LatLngBounds, LatLng, LMap}
-import io.suggest.sjs.leaflet.popup.{PopupOptions, Popup}
+import io.suggest.sjs.leaflet.map.{LMap, LatLng, LatLngBounds, Layer}
+import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
@@ -18,7 +17,7 @@ import scala.scalajs.js.annotation.JSName
 
 @js.native
 @JSName("L.Path")
-class Path extends LEventTarget {
+class Path extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native
 

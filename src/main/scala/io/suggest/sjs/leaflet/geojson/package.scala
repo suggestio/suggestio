@@ -10,8 +10,6 @@ import scala.scalajs.js.Any
   */
 package object geojson {
 
-  type GjFeatureStyle       = js.Object
-
   type GjCoordsDeepArray    = js.Array[Any]
 
   type GjLatLngDeepArray    = js.Array[Any]

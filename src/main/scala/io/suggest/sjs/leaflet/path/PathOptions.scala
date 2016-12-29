@@ -3,6 +3,7 @@ package io.suggest.sjs.leaflet.path
 import io.suggest.sjs.common.model.FromDict
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -15,49 +16,53 @@ object PathOptions extends FromDict {
 }
 
 
-@js.native
+/** JSON for declaring Path style.
+  *
+  * For scala 0.6.14+.
+  */
+@ScalaJSDefined
 trait PathOptions extends js.Object {
 
   //true   Whether to draw stroke along the path. Set it to false to disable borders on polygons or circles.
-  var stroke          : Boolean   = js.native
+  val stroke          : js.UndefOr[Boolean]   = js.undefined
 
   //'#03f' 	Stroke color.
-  var color           : String    = js.native
+  val color           : js.UndefOr[String]    = js.undefined
 
   //5 	Stroke width in pixels.
-  var weight          : Int       = js.native
+  val weight          : js.UndefOr[Int]       = js.undefined
 
   //0.5 	Stroke opacity.
-  var opacity         : Double    = js.native
+  val opacity         : js.UndefOr[Double]    = js.undefined
 
   //depends 	Whether to fill the path with color. Set it to false to disable filling on polygons or circles.
-  var fill            : Boolean   = js.native
+  val fill            : js.UndefOr[Boolean]   = js.undefined
 
   //[same as color] 	Fill color.
-  var fillColor       : String    = js.native
+  val fillColor       : js.UndefOr[String]    = js.undefined
 
   //0.2 	Fill opacity.
-  var fillOpacity     : Double    = js.native
+  val fillOpacity     : js.UndefOr[Double]    = js.undefined
 
   //'evenodd' 	A string that defines how the inside of a shape is determined.
-  var fillRule        : String 	  = js.native
+  val fillRule        : js.UndefOr[String]    = js.undefined
 
   //null 	A string that defines the stroke dash pattern. Doesn't work on canvas-powered layers (e.g. Android 2).
-  var dashArray       : String 	  = js.native
+  val dashArray       : js.UndefOr[String]    = js.undefined
 
   //null 	A string that defines shape to be used at the end of the stroke.
-  var lineCap         : String 	  = js.native
+  val lineCap         : js.UndefOr[String]    = js.undefined
 
   //null 	A string that defines shape to be used at the corners of the stroke.
-  var lineJoin        : String    = js.native
+  val lineJoin        : js.UndefOr[String]    = js.undefined
 
   //true 	If false, the vector will not emit mouse events and will act as a part of the underlying map.
-  var clickable       : Boolean   = js.native
+  val clickable       : js.UndefOr[Boolean]   = js.undefined
 
   //null 	Sets the pointer-events attribute on the path if SVG backend is used.
-  var pointerEvents   : String 	  = js.native
+  val pointerEvents   : js.UndefOr[String]    = js.undefined
 
   //'' 	Custom class name set on an element.
-  var className       : String    = js.native
+  val className       : js.UndefOr[String]    = js.undefined
 
 }

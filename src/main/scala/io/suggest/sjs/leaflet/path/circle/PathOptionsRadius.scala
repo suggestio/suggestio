@@ -3,7 +3,7 @@ package io.suggest.sjs.leaflet.path.circle
 import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.leaflet.path.PathOptions
 
-import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -16,10 +16,10 @@ object PathOptionsRadius extends FromDict {
 }
 
 
-@js.native
+@ScalaJSDefined
 trait PathOptionsRadius extends PathOptions {
 
   /** Radius in css-pixels. */
-  var radius: Double = js.native
+  val radius: Double
 
 }
