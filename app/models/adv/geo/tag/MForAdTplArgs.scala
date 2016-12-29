@@ -4,7 +4,6 @@ import models.MNode
 import models.adv.IAdvForAdCommonTplArgs
 import models.adv.form.IAdvForAdFormCommonTplArgs
 import models.adv.price.IAdvPricing
-import play.api.libs.json.JsValue
 
 /**
   * Suggest.io
@@ -17,12 +16,9 @@ trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplAr
   /** Экземпляр маппинга формы размещения карточки в теге с географией. */
   def form          : AgtForm_t
 
-  /** Текущие размещения карточки. */
-  def currAdvsJson  : JsValue
-
   /**
     * Сериализованное состояние js-react-diode-формы.
-    * Изначально тут был boopickle + base64 с инстансом [[io.suggest.adv.geo.MRoot]] внутри.
+    * Изначально тут был boopickle + base64 с инстансом MFormS внутри.
     */
   def formState    : String
 
@@ -34,7 +30,6 @@ case class MForAdTplArgs(
   override val producer         : MNode,
   override val form             : AgtForm_t,
   override val price            : IAdvPricing,
-  override val currAdvsJson     : JsValue,
   override val formState        : String
 )
   extends IForAdTplArgs

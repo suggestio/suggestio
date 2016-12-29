@@ -158,25 +158,10 @@ class LkAdvGeo @Inject() (
       * @param rs Статус ответа HTTP.
       */
     def result(formFut: Future[AgtForm_t], rs: Status): Future[Result] = {
-      lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
-
-      // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
-      val currAdvsFut = slick.db.run {
-        advGeoBillUtil.findCurrentForAd(request.mad.id.get)
-      }
+      //lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
 
       val advPricingFut = formFut.flatMap { form =>
         advGeoBillUtil.getPricing(form.value, _isSuFree)
-      }
-
-      // Заварить JSON-кашу из текущих размещений. Они будут скрыто отрендерены в шаблоне.
-      val currAdvsJsonFut = for {
-        ctx       <- _ctxFut
-        currAdvs  <- currAdvsFut
-      } yield {
-        LOGGER.trace(s"$logPrefix Found ${currAdvs.size} current advs")
-        val fcoll = advGeoFormUtil.shapeItems2geoJson(currAdvs)(ctx)
-        Json.toJson(fcoll)
       }
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
@@ -211,7 +196,6 @@ class LkAdvGeo @Inject() (
         ctx           <- _ctxFut
         advPricing    <- advPricingFut
         form          <- formFut
-        currAdvsJson  <- currAdvsJsonFut
         formStateSer  <- formStateSerFut
       } yield {
 
@@ -220,7 +204,6 @@ class LkAdvGeo @Inject() (
           producer      = request.producer,
           form          = form,
           price         = advPricing,
-          currAdvsJson  = currAdvsJson,
           formState     = formStateSer
         )
 
@@ -402,7 +385,7 @@ class LkAdvGeo @Inject() (
     * @param adId id интересующей рекламной карточки.
     * @return js.Array[GjFeature].
     */
-  def currGeoAdvsMap(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def existGeoAdvsMap(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
     val currAdvsSrc = slick.db
       .stream {
@@ -410,10 +393,10 @@ class LkAdvGeo @Inject() (
         advGeoBillUtil.onlyGeoShapesInfo(query)
       }
       .toSource
+      // Причесать сырой выхлоп базы, состоящий из пачки Option'ов.
+      .mapConcat( MAdvGeoShapeInfo.applyOpt(_).toList )
       // Каждый элемент нужно скомпилить в пригодную для сериализации модель.
-      .map { raw =>
-        // Причесать сырой выхлоп базы
-        val si = MAdvGeoShapeInfo(raw)
+      .map { si =>
         // Сконвертить в GeoJSON и сериализовать в промежуточное JSON-представление.
         val gj = advGeoFormUtil.shapeInfo2geoJson(si)
         Json.toJson(gj)

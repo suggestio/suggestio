@@ -83,7 +83,7 @@ GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mlk.
 GET  /lk/xadv/geo/tag/tags2             @controllers.LkAdvGeo.tagsSearch2(s: mlk.MLkTagsSearchQs)
 GET  /lk/xadv/geo/map/rcvrs/:adId       @controllers.LkAdvGeo.advRcvrsMap(adId)
 GET  /lk/xadv/geo/map/rcvr/pop/:adId/:nodeId     @controllers.LkAdvGeo.rcvrMapPopup(adId: MEsUuId, nodeId: MEsUuId)
-GET  /lk/xadv/geo/map/shapes/:adId      @controllers.LkAdvGeo.currGeoAdvsMap(adId)
+GET  /lk/xadv/geo/map/shapes/:adId      @controllers.LkAdvGeo.existGeoAdvsMap(adId)
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)

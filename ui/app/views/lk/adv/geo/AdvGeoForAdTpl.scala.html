@@ -60,9 +60,6 @@
   }
 
 
-  @* Рендер скрытой инфы по текущим размещения. *@
-  <input type="hidden" id="@CurrShapes.DATA_CONTAINER_ID" value="@args.currAdvsJson"/>
-
   @* Рендер скрытой ссылки на наполнение карты узлами-ресиверами. *@
   @for(adId <- args.mad.id) {
     <input type="hidden" id="@AD_ID_INPUT_ID" value="@adId"/>
@@ -81,7 +78,7 @@
       routes.javascript.LkAdvGeo.advRcvrsMap,
       routes.javascript.LkAdvGeo.rcvrMapPopup,
 
-      routes.javascript.LkAdvGeo.currGeoAdvsMap
+      routes.javascript.LkAdvGeo.existGeoAdvsMap
     )
   )
 

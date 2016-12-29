@@ -1,6 +1,6 @@
 package models.adv.geo.mapf
 
-import io.suggest.adv.geo.MAdvGeoShapeProps
+import io.suggest.mbill2.m.gid.Gid_t
 
 /**
   * Suggest.io
@@ -12,9 +12,15 @@ object MAdvGeoShapeInfo {
 
   /** Собрать инстанс из аналогичного корежа.
     * Такие кортежи генерит slick на сервере. */
-  def apply(tuple: AdvGeoShapeInfo_t): MAdvGeoShapeInfo = {
-    val (gsStr, id, statusStr) = tuple
-    apply(gsStr, MAdvGeoShapeProps(id, statusStr))
+  def applyOpt(tuple: AdvGeoShapeInfo_t): Option[MAdvGeoShapeInfo] = {
+    val (gsStrOpt, idOpt, statusStrOpt) = tuple
+    for {
+      gsStr <- gsStrOpt
+      id    <- idOpt
+      statusStr <- statusStrOpt
+    } yield {
+      apply(gsStr, id, statusStr)
+    }
   }
 
 }
@@ -29,5 +35,6 @@ object MAdvGeoShapeInfo {
   */
 case class MAdvGeoShapeInfo(
                              geoShapeStr : String,
-                             props       : MAdvGeoShapeProps
+                             itemId      : Gid_t,
+                             hasApproved : Boolean
                            )

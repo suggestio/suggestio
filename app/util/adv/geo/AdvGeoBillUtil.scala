@@ -195,24 +195,31 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
-  /** Собрать минимальную и достаточную геоинфу для рендера разноцветных кружочков на карте размещений. */
-  def onlyGeoShapesInfo(query: Query[mItems.MItemsTable, MItem, Seq], limit: Int = 200): DBIOAction[Seq[AdvGeoShapeInfo_t], Streaming[AdvGeoShapeInfo_t], Effect.Read] = {
+  /** Собрать минимальную и достаточную геоинфу для рендера разноцветных кружочков на карте размещений.
+    *
+    * @param query Исходный запрос item'ов. Например, выхлоп от findCurrentForAdQ().
+    *
+    * @return Пачка из Option'ов, т.к. все затрагиваемые столбцы базы заявлены как NULLable,
+    *         и slick не может это проигнорить:
+    *         (geo_shape, id, isAwaitingMdr).
+    */
+  def onlyGeoShapesInfo(query: Query[mItems.MItemsTable, MItem, Seq], limit: Int = 500): DBIOAction[Seq[AdvGeoShapeInfo_t], Streaming[AdvGeoShapeInfo_t], Effect.Read] = {
     query
       // WHERE не пустой geo_shape
-      .filter(_.geoShapeOpt.isDefined)
+      .filter(_.geoShapeStrOpt.isDefined)
       // GROUP BY geo_shape
       .groupBy(_.geoShapeStrOpt)
       .map { case (geoShapeStrOpt, group) =>
         // Делаем правильный кортеж: ключ -- строка шейпа, id - любой, status -- только максимальный
-        (geoShapeStrOpt.get,
-          group.map(_.id).max.get,
-          (group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.strId).get
+        (geoShapeStrOpt,
+          group.map(_.id).max,
+          group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.strId
           )
       }
       // LIMIT 200
       .take(limit)
       .result
-    // TODO Нужно зашейпить эти кортежи в MAdvGeoShapeInfo. .map() не котируем, т.к. это ломает streaming.
+    // TODO Нужно завернуть кортежи в MAdvGeoShapeInfo. .map() не котируем, т.к. ломает streaming.
   }
 
   /**
