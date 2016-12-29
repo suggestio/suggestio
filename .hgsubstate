@@ -1,14 +1,14 @@
 46d367e66b449de39b0cc3f02b989f599cc2709d ble/ble-beaconer-sjs
-ba2b6397268593e795c7ed632d371daf52b2b726 common
+517081ce5eb5d58488a85fab73897ee5a72c370d common
 868ab2a49e5b23072e4ed457f7f2eb76ae974de5 common-sjs
 2a5c2c4cb7aa9f78ba891e84b5ece7934eb40456 common-slick-driver
 ec199de25dfe6732d340e0910e689cf4685dd957 datetimepicker-scalajs
 4d610208ab4ab78e75ea99b7857840a92a423477 lk-adv-common-sjs
 9337b3f4d24cf46ad86c64af350c5631a62a8d88 lk-adv-direct-sjs
 9f9d1335016f3e7007d0d2914ddb3646f272725a lk-adv-ext-sjs
-46a4d7cb17ca02a23d756524051cd4ea52e175e4 lk-adv-geo-tags-sjs
+39cee8fb3739da7069f451befd805fa7521aa920 lk-adv-geo-tags-sjs
 8d7f58093047fc58cc69a4a86be3dc30ff82e11f lk-common-sjs
-be2cd0ccacf6d8b6027a9ec637c136a856112d40 lk-dt-period-sjs
+6f4ad831e4eb493bc8eb159a09de74ce5de823e6 lk-dt-period-sjs
 08cfd70cc15bf2c3bc9828716d4ef6c7e6b0531b lk-sjs
 69b82ef10d6968085ba076a0a38fb36cc45737ae lk-tags-edit-sjs
 52abd51210f05e232f1e21005dad7cf871d3f8a2 lk/adn/lk-adn-map-sjs
@@ -34,4 +34,4 @@ a0ae6e87b3851dc2f4b8261db3398804433c9414 scalajs/scalajs-react-common
 5d7ba0080796bda4536e06ea2f79b282efb7ca8c svg-util
 e033c900b5434ebd7dc68754ec2cfedb2f8831b4 swfs
 2a0d68b64ea9be511daf39b0639e4eb8e988a9be util
-c62981a4ed0ec8074ab02ffd777c9baff1254e62 web21
+bd3538e171c7e1e49359a6e7f69ca760b69b36de web21
