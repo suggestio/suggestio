@@ -44,7 +44,7 @@ object AdvGeoConstants {
   object GjFtPropsC {
 
     /** Имя поля радиуса круга. */
-    def RADIUS_FN         = "r"
+    final val CIRCLE_RADIUS_M_FN   = "r"
 
     /** Имя поля для содержимое попапа. */
     def POPUP_CONTENT_FN  = "p"
@@ -56,7 +56,10 @@ object AdvGeoConstants {
     def FILL_OPACITY_FN   = "o"
 
     /** id item'а шейпа. Это id, по которому можно получить доступ ко всем остальным id. */
-    def ITEM_ID_FN        = "i"
+    final val ITEM_ID_FN        = "i"
+
+    /** Есть ли хоть одно подтвержденное размещение? */
+    final val HAS_APPROVED_FN   = "a"
 
   }
 
@@ -73,7 +76,7 @@ object AdvGeoConstants {
     def OK_COLOR  = "#1ABC8A"
 
     /** Прозрачность заливки info-шейпов. */
-    def OPACITY   = 0.5F
+    def OPACITY   = 0.5
 
   }
 
