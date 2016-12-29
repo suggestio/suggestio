@@ -19,7 +19,7 @@ import scala.scalajs.js.annotation.JSName
 object MPickledProps {
 
   /** Акт опциональной десериализации опциональных пропертисов. */
-  def applyOpt[P](raw: js.UndefOr[js.Object])(implicit pickler: Pickler[P]): Option[P] = {
+  def applyOpt[P](raw: js.UndefOr[js.Any])(implicit pickler: Pickler[P]): Option[P] = {
     for {
       props0 <- raw.toOption
       propsPick = props0.asInstanceOf[MPickledProps]

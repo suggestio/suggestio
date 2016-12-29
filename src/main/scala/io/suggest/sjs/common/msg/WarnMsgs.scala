@@ -97,4 +97,8 @@ object WarnMsgs extends MsgsStaticT {
 
   def DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL = E(42)
 
+  def GJ_PROPS_EMPTY_OR_MISS                = E(43)
+
+  def GEO_JSON_GEOM_COORD_UNEXPECTED_ELEMENT = E(44)
+
 }

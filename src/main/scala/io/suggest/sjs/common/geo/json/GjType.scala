@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.geo.json
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -9,9 +10,9 @@ import scala.scalajs.js
   * Description: Интерфейс типа GeoJSON объекта, который есть у всех объектов там.
   */
 
-@js.native
-class GjType extends js.Object {
+@ScalaJSDefined
+trait GjType extends js.Object {
 
-  var `type`: String = js.native
+  val `type`: String
 
 }

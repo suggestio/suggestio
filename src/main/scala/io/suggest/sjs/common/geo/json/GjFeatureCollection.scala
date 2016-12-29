@@ -1,8 +1,7 @@
 package io.suggest.sjs.common.geo.json
 
-import io.suggest.sjs.common.model.FromDict
-
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,23 +10,21 @@ import scala.scalajs.js
   * Description: Модель GeoJSON features.
   */
 
-object GjFeatureCollection extends FromDict {
+object GjFeatureCollection {
 
-  override type T = GjFeatureCollection
-
-  def apply(features: js.Array[GjFeature] = js.Array()): GjFeatureCollection = {
-    val fc = empty
-    fc.`type` = GjTypes.FEATURE_COLLECTION
-    fc.features = features
-    fc
+  def apply(fcFeatures: js.Array[GjFeature] = js.Array()): GjFeatureCollection = {
+    new GjFeatureCollection {
+      override val `type`   = GjTypes.FEATURE_COLLECTION
+      override val features = fcFeatures
+    }
   }
 
 }
 
 
-@js.native
-class GjFeatureCollection extends GjType {
+@ScalaJSDefined
+trait GjFeatureCollection extends GjType {
 
-  var features: js.Array[GjFeature] = js.native
+  val features: js.Array[GjFeature]
 
 }

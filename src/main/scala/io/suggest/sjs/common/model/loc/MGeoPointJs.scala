@@ -52,13 +52,22 @@ object MGeoPointJs {
 
   def toJsArray(gp: IGeoPoint) = toArray(gp).asInstanceOf[ js.Array[js.Any] ]
 
+  def fromGjArray(arr: js.Array[Double]): MGeoPoint = {
+    MGeoPoint(
+      lon = arr(0),
+      lat = arr(1)
+    )
+  }
+
   /** leaflet использовать массивы в традиционной нотации: [y, x] то бишь [lat, lon]. */
   def toLatLngArray(gp: IGeoPoint) = js.Array[Double](gp.lat, gp.lon)
 
-  def toGjPoint(gp: IGeoPoint) = GjGeometry(
-    gtype       = GjTypes.Geom.POINT,
-    coordinates = toJsArray(gp)
-  )
+  def toGjPoint(gp: IGeoPoint): GjGeometry = {
+    GjGeometry(
+      gtype        = GjTypes.Geom.POINT,
+      gcoordinates = toJsArray(gp)
+    )
+  }
 
   def toJsObject(gp: IGeoPoint) = js.Dictionary[Double](
     Qs.LAT_FN -> gp.lat,

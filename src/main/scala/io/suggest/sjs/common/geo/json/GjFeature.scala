@@ -1,8 +1,7 @@
 package io.suggest.sjs.common.geo.json
 
-import io.suggest.sjs.common.model.FromDict
-
 import scala.scalajs.js
+import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.scalajs.js.{Any, Dictionary, UndefOr}
 
 /**
@@ -10,29 +9,29 @@ import scala.scalajs.js.{Any, Dictionary, UndefOr}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 11.04.16 16:11
   * Description: Модель GeoJSON Feature.
+  *
+  * Requires scala-js 0.6.14+.
   */
 
-object GjFeature extends FromDict {
+object GjFeature {
 
-  override type T = GjFeature
-
-  def apply(geometry: GjGeometry, properties: UndefOr[Dictionary[Any]] = js.undefined): GjFeature = {
-    val gf = empty
-    gf.`type` = GjTypes.FEATURE
-    gf.geometry = geometry
-    if (properties.nonEmpty)
-      gf.properties = properties
-    gf
+  def apply(fGeometry: GjGeometry,
+            fProperties: UndefOr[Dictionary[Any]] = js.undefined): GjFeature = {
+    new GjFeature {
+      override val `type`       = GjTypes.FEATURE
+      override val geometry     = fGeometry
+      override val properties   = fProperties
+    }
   }
 
 }
 
 
-@js.native
-class GjFeature extends GjType {
+@ScalaJSDefined
+trait GjFeature extends GjType {
 
-  var properties: UndefOr[ Dictionary[Any] ] = js.native
+  val properties: UndefOr[ Dictionary[Any] ] = js.undefined
 
-  var geometry: GjGeometry = js.native
+  val geometry: GjGeometry
 
 }
