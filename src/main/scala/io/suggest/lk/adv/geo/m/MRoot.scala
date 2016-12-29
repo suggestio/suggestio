@@ -13,14 +13,14 @@ import io.suggest.lk.tags.edit.m.MTagsEditState
   * В ней хранится вообще всё, но сериализуемые для отправки на сервер данные хранятся в отдельных полях.
   *
   * @param form Состояние формы размещения, пригодное для сериализации на сервер или десериализации с сервера.
-  * @param currGeoAdvs Данные по текущим георазмещениям на карте.
+  * @param geoAdv Данные по текущим георазмещениям на карте.
   * @param tags Контейнер данных по тегам.
   */
 case class MRoot(
                   form          : MFormS,
                   tags          : MTagsEditState          = MTagsEditState.empty,
                   rcvr          : MRcvr                   = MRcvr(),
-                  currGeoAdvs   : MCurrGeoAdvs            = MCurrGeoAdvs(),
+                  geoAdv        : MGeoAdvs                = MGeoAdvs(),
                   datePeriod    : MAdvPeriod              = MAdvPeriod()
                   // TODO areaPopup: Pot[???] = Pot.empty
 ) {
@@ -28,7 +28,7 @@ case class MRoot(
   def withForm(form2: MFormS) = copy(form = form2)
   def withTagsEditState(tes: MTagsEditState) = copy(tags = tes)
   def withRcvr(rcvr2: MRcvr) = copy(rcvr = rcvr2)
-  def withCurrGeoAdvs(cga2: MCurrGeoAdvs) = copy(currGeoAdvs = cga2)
+  def withCurrGeoAdvs(cga2: MGeoAdvs) = copy(geoAdv = cga2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
 
 }
@@ -41,7 +41,7 @@ object MRoot {
       (a.form eq b.form) &&
         (a.tags eq b.tags) &&
         (a.rcvr eq b.rcvr) &&
-        (a.currGeoAdvs eq b.currGeoAdvs) &&
+        (a.geoAdv eq b.geoAdv) &&
         (a.datePeriod eq b.datePeriod)
     }
   }

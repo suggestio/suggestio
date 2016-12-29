@@ -67,7 +67,7 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
   }
 
   override def currAdvsMap(adId: String): Future[js.Array[GjFeature]] = {
-    val route = jsRoutes.controllers.LkAdvGeo.currGeoAdvsMap(adId)
+    val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsMap(adId)
     Xhr.requestJson(route)
       .asInstanceOf[Future[js.Array[GjFeature]]]
   }

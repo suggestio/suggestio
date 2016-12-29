@@ -52,3 +52,7 @@ case class SetPrice(price: String) extends AdvGeoFormAction
 case object CurrGeoAdvsInit extends AdvGeoFormAction
 /** Выставить указанные данные размещения в состояние. */
 case class SetCurrGeoAdvs(resp: js.Array[GjFeature]) extends AdvGeoFormAction
+
+
+/** Команда к открытию попапа над гео-шейпом (кружком) по уже существующими размещениям. */
+case class OpenAdvGeoExistPopup(itemId: Double, at: MGeoPoint) extends AdvGeoFormAction

@@ -1,11 +1,11 @@
-package io.suggest.lk.adv.geo.r.crcl
+package io.suggest.lk.adv.geo.a.geo.adv
 
 import diode._
 import diode.data.Pot
 import io.suggest.lk.adv.geo.a.{CurrGeoAdvsInit, SetCurrGeoAdvs}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
-import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
 
@@ -15,12 +15,12 @@ import scala.scalajs.js
   * Created: 28.12.16 17:23
   * Description: Обработчик сигнал (пере)инициализации кружочков текущего размещения.
   */
-class CurrAdvsInitAh[M](
-                         api: ILkAdvGeoApi,
-                         adIdProxy: ModelRO[String],
-                         modelRW: ModelRW[M, Pot[js.Array[GjFeature]]]
-                       )
-  extends ActionHandler(modelRW)
+class GeoAdvExistInitAh[M](
+                          api         : ILkAdvGeoApi,
+                          adIdProxy   : ModelRO[String],
+                          existAdvsRW : ModelRW[M, Pot[js.Array[GjFeature]]]
+                        )
+  extends ActionHandler(existAdvsRW)
 {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
@@ -36,7 +36,9 @@ class CurrAdvsInitAh[M](
 
     // Получен ответ сервера на тему текущих размещений.
     case SetCurrGeoAdvs(resp) =>
-      updated(  value.ready(resp) )
+      // Надо бы отфильтровать null'ы, т.к. сервер генерит chunked с "особенностями" из-за проблем с овладеванием akka-streams Source.
+      val resp2 = resp.filter(_ != null)
+      updated(  value.ready(resp2) )
 
   }
 

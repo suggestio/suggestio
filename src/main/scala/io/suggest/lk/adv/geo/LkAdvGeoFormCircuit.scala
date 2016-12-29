@@ -5,10 +5,10 @@ import diode.react.ReactConnector
 import io.suggest.adv.geo.MFormS
 import io.suggest.adv.geo.MFormS.pickler
 import io.suggest.bin.ConvCodecs
-import io.suggest.lk.adv.geo.a.{CurrGeoAdvsInit, RcvrMarkersInit, ReqRcvrPopup, SetPrice}
+import io.suggest.lk.adv.geo.a._
+import io.suggest.lk.adv.geo.a.geo.adv.GeoAdvExistInitAh
 import io.suggest.lk.adv.geo.m.MRoot
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
-import io.suggest.lk.adv.geo.r.crcl.CurrAdvsInitAh
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapAH
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.r.rcvr._
@@ -122,12 +122,12 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       }
     )
 
-    val currGeoAdvsRW = zoomRW(_.currGeoAdvs) { _.withCurrGeoAdvs(_) }
+    val geoAdvRW = zoomRW(_.geoAdv) { _.withCurrGeoAdvs(_) }
 
-    val currAdvsInitAh = new CurrAdvsInitAh(
+    val currAdvsInitAh = new GeoAdvExistInitAh(
       api       = API,
       adIdProxy = adIdZoom,
-      modelRW   = currGeoAdvsRW.zoomRW(_.resp) { _.withResp(_) }
+      existAdvsRW   = geoAdvRW.zoomRW(_.existResp) { _.withExistResp(_) }
     )
 
     val rcvrsMapInitAh = new RcvrMarkersInitAH(

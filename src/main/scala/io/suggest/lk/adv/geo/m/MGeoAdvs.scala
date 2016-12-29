@@ -11,10 +11,10 @@ import scala.scalajs.js
   * Created: 28.12.16 21:50
   * Description: Корневая модель данных по каким-то текущим размещениям.
   */
-case class MCurrGeoAdvs(
-                         resp   : Pot[js.Array[GjFeature]]  = Pot.empty
-                       ) {
+case class MGeoAdvs(
+                     existResp   : Pot[js.Array[GjFeature]]  = Pot.empty
+                   ) {
 
-  def withResp(resp2: Pot[js.Array[GjFeature]]) = copy(resp = resp2)
+  def withExistResp(resp2: Pot[js.Array[GjFeature]]) = copy(existResp = resp2)
 
 }
