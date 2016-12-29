@@ -26,11 +26,13 @@ sealed trait LkAdvGeoCtl extends js.Object {
   /** Роута для поиска тегов  */
   def tagsSearch2(args: Dictionary[Any]): Route = js.native
 
+
   /** Роута для запроса ценника текущего размещения. */
   def getPriceSubmit(adId: String): Route = js.native
 
   /** Роута для итогового сабмита формы. */
   def forAdSubmit(adId: String): Route = js.native
+
 
   /** Роута для получения GeoJson карты ресиверов adv-geo. */
   def advRcvrsMap(adId: String): Route = js.native
@@ -38,7 +40,8 @@ sealed trait LkAdvGeoCtl extends js.Object {
   /** Роута получения содержимого попапа узла географической карты. */
   def rcvrMapPopup(adId: String, nodeId: String): Route = js.native
 
+
   /** Роута получения карты текущих георазмещений. */
-  def currGeoAdvsMap(adId: String): Route = js.native
+  def existGeoAdvsMap(adId: String): Route = js.native
 
 }
