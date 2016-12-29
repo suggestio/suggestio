@@ -26,7 +26,7 @@ class DtpAh[M](
 
     // Выставление нового значения quick adv period.
     case SetQap(qap2) =>
-      val v0 = modelRW()
+      val v0 = value
       val oldVal = v0.quickAdvPeriod
       if (qap2 == oldVal) {
         noChange
@@ -46,7 +46,7 @@ class DtpAh[M](
 
     // Замена значения кастомной даты.
     case s: SetDateStartEnd =>
-      val v0 = modelRW()
+      val v0 = value
       v0.customRange.fold {
         LOG.warn( WarnMsgs.DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL )
         noChange
