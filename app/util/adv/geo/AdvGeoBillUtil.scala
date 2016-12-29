@@ -8,7 +8,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models.MPrice
 import models.adv.geo.IAdvGeoFormResult
-import models.adv.geo.mapf.AdvGeoShapeInfo_t
+import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.adv.geo.tag.IAgtFormResult
 import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
@@ -221,6 +221,33 @@ class AdvGeoBillUtil @Inject() (
       .result
     // TODO Нужно завернуть кортежи в MAdvGeoShapeInfo. .map() не котируем, т.к. ломает streaming.
   }
+
+
+  /**
+    * Найти item'ы с таким же гео-шейпом, как у указанного item'а.
+    * @param query Исходный запрос item'ов. Например, выхлоп от findCurrentForAdQ().
+    * @param itemId id item'а, содержащего необходимый шейп.
+    * @param limit Макс.кол-во результатов.
+    * @return Streamable-результаты.
+    */
+  def withSameGeoShapeAs(query: Query[mItems.MItemsTable, MItem, Seq], itemId: Gid_t, limit: Int = 500)
+  : DBIOAction[Seq[AdvGeoBasicInfo_t], Streaming[AdvGeoBasicInfo_t], Effect.Read] = {
+    query
+      .filter { i =>
+        val itemShapeQ = mItems.query
+          .filter(_.id === itemId)
+          .map(_.geoShapeStrOpt)
+          .filter(_.isDefined)
+        i.geoShapeStrOpt in itemShapeQ
+      }
+      .map { i =>
+        (i.id, i.iType, i.status, i.dtIntervalOpt, i.tagFaceOpt)
+      }
+      .take(limit)
+      // Без сортировки, т.к. будет последующая группировка на стороне клиента.
+      .result
+  }
+
 
   /**
     * Поиск ПРЯМЫХ размещений для рекламной карточки на указанных ресиверах.

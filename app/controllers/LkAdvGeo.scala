@@ -6,17 +6,20 @@ import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.geo._
-import io.suggest.mbill2.m.item.MItem
+import io.suggest.adv.geo.MGeoAdvExistPopupResp.pickler
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
 import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
+import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import models.adv.form.MDatesPeriod
-import models.adv.geo.mapf.MAdvGeoShapeInfo
+import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
@@ -30,7 +33,7 @@ import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
-import util.acl.{CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
+import util.acl.{CanAccessItem, CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
 import util.billing.Bill2Util
@@ -59,6 +62,8 @@ class LkAdvGeo @Inject() (
   advGeoMapUtil                   : AdvGeoMapUtil,
   streamsUtil                     : StreamsUtil,
   pickleSrvUtil                   : PickleSrvUtil,
+  override val mItems             : MItems,
+  override val mOrders            : MOrders,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
@@ -69,6 +74,7 @@ class LkAdvGeo @Inject() (
   with CanAdvertiseAd
   with NodeTagsEdit
   with CanThinkAboutAdvOnMapAdnNode
+  with CanAccessItem
 {
 
   import mCommonDi._
@@ -377,6 +383,7 @@ class LkAdvGeo @Inject() (
     // Вернуть chunked-ответ с потоком из JSON внутрях.
     Ok.chunked(jsonStrSrc)
       .as( withCharset(JSON) )
+      .withHeaders(CACHE_10)
   }
 
 
@@ -407,6 +414,86 @@ class LkAdvGeo @Inject() (
 
     Ok.chunked(jsonStrSrc)
       .as( withCharset(JSON) )
+      .withHeaders(CACHE_10)
+  }
+
+  /**
+    * Экшен получения данных для рендера попапа по размещениям.
+    * @param itemId id по таблице mitem.
+    * @return Бинарный выхлоп с данными для react-рендера попапа.
+    */
+  def existGeoAdvsShapePopup(itemId: Gid_t) = CanAccessItemPost(itemId, edit = false).async { implicit request =>
+    // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
+    // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
+    if (request.mitem.iType != MItemTypes.GeoPlace)
+      throw new IllegalArgumentException(s"MItem[itemId] type is ${request.mitem.iType}, but here we need GeoPlace ${MItemTypes.GeoPlace}")
+
+    // Наврядли можно отрендерить в попапе даже это количество...
+    val itemsMax = 50
+
+    // Запросить у базы инфы по размещениям в текущем месте...
+    val itemsSrc = slick.db
+      .stream {
+        advGeoBillUtil.withSameGeoShapeAs(
+          query   = advGeoBillUtil.findCurrentForAdQ( request.mitem.nodeId ),
+          itemId  = itemId,
+          limit   = itemsMax
+        )
+      }
+      .toSource
+
+    val rowsMsFut = itemsSrc
+      // Причесать кортежи в нормальные инстансы
+      .map( MAdvGeoBasicInfo.apply )
+      // Сгруппировать и объеденить по периодам размещения.
+      .groupBy(itemsMax, _.intervalOpt)
+      .fold( List.empty[MAdvGeoBasicInfo] ) { (acc, e) => e :: acc }
+      .map { infos =>
+        // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
+        val ivlOpt = infos.head.intervalOpt.map(MDateInterval.apply)
+        val row = MGeoAdvExistRow(
+          dateRange = __formatDtInterval( ivlOpt ),
+          items = infos
+            .sortBy(m => (m.tagFaceOpt, m.id) )
+            .map { m =>
+              MGeoItemInfo(
+                itemId        = m.id,
+                isOnlineNow   = m.status == MItemStatuses.Online,
+                payload       = m.iType match {
+                  case MItemTypes.GeoTag    => InGeoTag( m.tagFaceOpt.get )
+                  case MItemTypes.GeoPlace  => OnMainScreen
+                }
+              )
+            }
+        )
+        val startMs = ivlOpt.map(_.dtStart.getMillis)
+        startMs -> row
+      }
+      // Вернуться на уровень основного потока...
+      .mergeSubstreams
+      // Собрать все имеющиеся результаты в единую коллекцию.
+      .runFold( List.empty[(Option[Long], MGeoAdvExistRow)] ) { (acc, row) => row :: acc }
+
+    // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
+    val itemsCountFut = itemsSrc.runFold(0) { (counter, e) => counter + 1 }
+
+    // Сборка непоточного бинарного ответа.
+    for {
+      rowsMs      <- rowsMsFut
+      itemsCount  <- itemsCountFut
+    } yield {
+      // Отсортировать ряды по датам, собрать итоговую модель ответа...
+      val mresp = MGeoAdvExistPopupResp(
+        rows = rowsMs
+          .sortBy(_._1)
+          .map(_._2),
+        haveMore = itemsCount >= itemsMax
+      )
+      // Сериализовать и вернуть результат:
+      val pickled = PickleUtil.pickle(mresp)
+      Ok( ByteString(pickled) )
+        .withHeaders(CACHE_10)
+    }
   }
 
 
@@ -530,13 +617,7 @@ class LkAdvGeo @Inject() (
                 checked     = advRcvrIdsActual.contains( nodeId ),
                 nameOpt     = n.guessDisplayNameOrId,
                 isOnlineNow = nodesHasOnline.contains( nodeId ),
-                dateRange   = intervalsMap.get( nodeId ).fold[List[MDateFormatted]] (Nil) { ivl =>
-                  def __formatDate(dt: LocalDate) = MDateFormatted(
-                    dow  = dayOfWeek(dt)(ctx),
-                    date = formatDateFull(dt)(ctx)
-                  )
-                  __formatDate(ivl.dateStart) :: __formatDate(ivl.dateEnd) :: Nil
-                }
+                dateRange   = __formatDtInterval( intervalsMap.get( nodeId ) )(ctx)
               )
             }
           )
@@ -545,7 +626,21 @@ class LkAdvGeo @Inject() (
 
       Ok( ByteString( PickleUtil.pickle(resp) ) )
         // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
-        .withHeaders(CACHE_CONTROL -> "private, max-age=5")
+        .withHeaders(CACHE_10)
+    }
+  }
+
+  /** Хидер короткого кеша, в основном для защиты от повторяющихся запросов. */
+  private def CACHE_10 = CACHE_CONTROL -> "private, max-age=10"
+
+  /** Рендер MDateInterval в MDateFormatted. */
+  private def __formatDtInterval(ivlOpt: Option[MDateInterval])(implicit ctx: Context): Seq[MDateFormatted] = {
+    ivlOpt.fold [List[MDateFormatted]] (Nil) { ivl =>
+      def __formatDate(dt: LocalDate) = MDateFormatted(
+        dow  = dayOfWeek(dt)(ctx),
+        date = formatDateFull(dt)(ctx)
+      )
+      __formatDate(ivl.dateStart) :: __formatDate(ivl.dateEnd) :: Nil
     }
   }
 

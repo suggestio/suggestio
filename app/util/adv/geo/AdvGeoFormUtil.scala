@@ -11,8 +11,9 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.geo.{CircleGs, GeoShape}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.pick.PickleSrvUtil
+import models.adv.geo.cur
 import models.adv.geo.cur._
-import models.adv.geo.mapf.{MAdvGeoShapeInfo, MRcvrBindedInfo}
+import models.adv.geo.mapf.MRcvrBindedInfo
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
 import models.mdt.MDateInterval
 import models.mproj.ICommonDi
@@ -70,7 +71,7 @@ class AdvGeoFormUtil @Inject() (
   }
 
 
-  /** Рендер выхлопа [[models.adv.geo.mapf.MAdvGeoShapeInfo]] в более простое кросс-платформенной представление.
+  /** Рендер выхлопа [[cur.MAdvGeoShapeInfo]] в более простое кросс-платформенной представление.
     * Этот костыль связан с тем, что GeoShape не является кросс-платформенной моделью, а сырой GeoJSON пропихнуть
     * Это во многом аналогично обычному shapeItems2geoJson, но более лениво в плане рендера попапа:
     * js должен обращаться к серверу за попапом. Поэтому, это легковеснее, быстрее, и Context здесь не нужен.
