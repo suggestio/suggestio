@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.adv.geo.{MMapS, MRcvrPopupResp, MRcvrPopupState}
+import io.suggest.adv.geo.{MRcvrPopupResp, MRcvrPopupState}
 import io.suggest.lk.adv.geo.a.{AdvGeoFormAction, HandleRcvrPopup, HandleRcvrPopupError, ReqRcvrPopup}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -28,7 +28,7 @@ class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
     // Сигнал запуска запроса с сервера содержимого попапа для ресивера.
     case rrp: ReqRcvrPopup =>
       // TODO Проверить содержимое rcvrsRW, может там уже есть правильный ответ, и запрос делать не надо.
-      val nextState = rcvrsRW().pending()
+      val nextState = value.pending()
       val fx = Effect[AdvGeoFormAction] {
         api.rcvrPopup(adIdProxy(), nodeId = rrp.nodeId)
           .map { HandleRcvrPopup.apply }
@@ -42,27 +42,15 @@ class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
     // Есть ответ от сервера на запрос попапа, надо закинуть ответ в состояние.
     case hrp: HandleRcvrPopup =>
       // Нужно залить в состояние ответ сервера
-      val pot2 = rcvrsRW().ready( hrp.resp )
+      val pot2 = value.ready( hrp.resp )
       updated( pot2 )
 
     // Среагировать как-то на ошибку выполнения запроса.
     case hre: HandleRcvrPopupError =>
-      val pot = rcvrsRW()
+      val pot = value
       LOG.error( ErrorMsgs.UNEXPECTED_RCVR_POPUP_SRV_RESP, hre.ex, pot )
       val pot2 = pot.fail(hre.ex)
       updated(pot2)
-  }
-
-}
-
-
-/** Action-handler центровки карты по попапу во время наступающих событий.  */
-class RcvrMarkerOnMapAH[M](mapStateRW: ModelRW[M, MMapS]) extends ActionHandler(mapStateRW) {
-
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-    // При клике по маркеру выставлять центр на него.
-    case rrp: ReqRcvrPopup =>
-      updated( mapStateRW.value.withCenter( rrp.geoPoint ) )
   }
 
 }

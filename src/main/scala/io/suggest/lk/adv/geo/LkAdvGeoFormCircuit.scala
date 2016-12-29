@@ -6,10 +6,10 @@ import io.suggest.adv.geo.MFormS
 import io.suggest.adv.geo.MFormS.pickler
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.geo.a._
-import io.suggest.lk.adv.geo.a.geo.adv.GeoAdvExistInitAh
+import io.suggest.lk.adv.geo.a.geo.adv.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.m.MRoot
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
-import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapAH
+import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapCommonAh
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
@@ -79,13 +79,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
         adIdProxy = adIdZoom,
         rcvrsRW   = rcvrPopupRW // zoomRW(_.rcvrPopup) { _.withRcvrPopup(_) }
       )
-      val p2 = new RcvrMarkerOnMapAH(
-        mapStateRW = mapStateRW
-      )
       val p3 = new RcvrMarkerPopupState(
         popStateRW = rcvrRW.zoomRW(_.popupState) { _.withPopupState(_) }
       )
-      foldHandlers(p1, p2, p3)
+      foldHandlers(p1, p3)
     }
 
     val rcvrInputsAh = new RcvrInputsAH(
@@ -103,7 +100,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = formRW.zoomRW(_.onMainScreen) { _.withOnMainScreen(_) }
     )
 
-    val mapAh = new AdvGeoMapAH(
+    val mapAh = new AdvGeoMapCommonAh(
       mapStateRW = mapStateRW
     )
 
@@ -124,10 +121,14 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val geoAdvRW = zoomRW(_.geoAdv) { _.withCurrGeoAdvs(_) }
 
-    val currAdvsInitAh = new GeoAdvExistInitAh(
+    val geoAdvsInitAh = new GeoAdvExistInitAh(
       api       = API,
       adIdProxy = adIdZoom,
       existAdvsRW   = geoAdvRW.zoomRW(_.existResp) { _.withExistResp(_) }
+    )
+
+    val geoAdvsPopupAh = new GeoAdvsPopupAh(
+      modelRW = geoAdvRW
     )
 
     val rcvrsMapInitAh = new RcvrMarkersInitAH(
@@ -137,17 +138,20 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     // Склеить все handler'ы.
-    composeHandlers(
+    val h1 = composeHandlers(
       rcvrsMarkerPopupAh, rcvrInputsAh,
       tagsAh,
       onMainScreenAh,
-      mapAh,
       datePeriodAh,
+      geoAdvsPopupAh,
       adv4freeAh,
       // init-вызовы в конце, т.к. они довольно редкие.
-      currAdvsInitAh,
+      geoAdvsInitAh,
       rcvrsMapInitAh
     )
+
+    // Приклеить common-обработчики, которые вызываются параллельно со всеми остальными
+    foldHandlers(h1, mapAh)
   }
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.ADV_GEO_FORM_ERROR

@@ -16,9 +16,12 @@ import scala.scalajs.js
   * Created: 19.12.16 16:36
   * Description: Diode action handler для инициализации карты ресиверов.
   */
-class RcvrMarkersInitAH[M](api: ILkAdvGeoApi,
-                           adIdProxy: ModelRO[String],
-                           modelRW: ModelRW[M, Pot[js.Array[Marker]]]) extends ActionHandler(modelRW) {
+class RcvrMarkersInitAH[M](
+                            api: ILkAdvGeoApi,
+                            adIdProxy: ModelRO[String],
+                            modelRW: ModelRW[M, Pot[js.Array[Marker]]]
+                          )
+  extends ActionHandler(modelRW) {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -33,11 +36,11 @@ class RcvrMarkersInitAH[M](api: ILkAdvGeoApi,
           InstallRcvrMarkers( markersArr )
         }
       }
-      updated( modelRW().pending(), fx )
+      updated( value.pending(), fx )
 
     // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
     case InstallRcvrMarkers(markersArr) =>
-      updated( modelRW().ready(markersArr) )
+      updated( value.ready(markersArr) )
 
   }
 }

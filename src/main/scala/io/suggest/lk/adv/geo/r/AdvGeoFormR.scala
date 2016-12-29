@@ -5,8 +5,8 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.geo.MAdv4FreeS
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.{MRcvr, MRoot}
-import io.suggest.lk.adv.geo.r.geo.adv.GeoAdvExistShapesR
+import io.suggest.lk.adv.geo.m.{MGeoAdvs, MRcvr, MRoot}
+import io.suggest.lk.adv.geo.r.geo.adv.{GeoAdvExistPopupR, GeoAdvExistShapesR}
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
@@ -52,7 +52,8 @@ object AdvGeoFormR extends Log {
                     rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
                     rcvrPopupConn       : ReactConnectProxy[MRcvr],
                     mapPropsConn        : ReactConnectProxy[AdvGeoMapR.PropsVal],
-                    geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]]
+                    geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
+                    geoAdvConn          : ReactConnectProxy[MGeoAdvs]
                   )
 
 
@@ -105,8 +106,13 @@ object AdvGeoFormR extends Log {
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
 
+
             // Рендер кружочков текущих размещений.
             s.geoAdvExistRespConn( GeoAdvExistShapesR.apply ),
+
+            // Рендер попапа над кружочком георазмещения:
+            s.geoAdvConn( GeoAdvExistPopupR.apply ),
+
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
             s.rcvrMarkersConn( RcvrMarkersR.apply ),
@@ -141,7 +147,8 @@ object AdvGeoFormR extends Log {
             locationFound = mroot.form.locationFound
           )
         },
-        geoAdvExistRespConn = p.connect(_.geoAdv.existResp)
+        geoAdvExistRespConn = p.connect(_.geoAdv.existResp),
+        geoAdvConn          = p.connect(_.geoAdv)
       )
     }
     .renderBackend[Backend]

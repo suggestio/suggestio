@@ -38,7 +38,7 @@ class GeoAdvExistInitAh[M](
     case SetCurrGeoAdvs(resp) =>
       // Надо бы отфильтровать null'ы, т.к. сервер генерит chunked с "особенностями" из-за проблем с овладеванием akka-streams Source.
       val resp2 = resp.filter(_ != null)
-      updated(  value.ready(resp2) )
+      updated( value.ready(resp2) )
 
   }
 
