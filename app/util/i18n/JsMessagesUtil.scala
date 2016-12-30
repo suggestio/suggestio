@@ -76,6 +76,7 @@ class JsMessagesUtil @Inject() (
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
     Iterator(
       "Main.screen",
+      "GeoTag",
       "_adv.Online.now",
       "Adv.on.main.screen",
       "Please.wait"

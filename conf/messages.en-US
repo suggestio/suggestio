@@ -642,6 +642,7 @@ Please.close.this.wnd.if.not.closed.auto=Please, close this window, if it not cl
 e.sz.mult.too.low=Size multiplifier is too low.
 e.sz.mult.too.high=Size multiplifier is too high.
 
+GeoTag=Geo-tag
 Tags=Tags
 Tags.choosing=Tags choosing
 e.tag.len.min=Tag too short.

@@ -655,6 +655,7 @@ Image=Изображение
 Background=Фон
 Foreground=Передний план
 
+GeoTag=Гео-тег
 Tags=Теги
 Tags.choosing=Выбор тегов
 e.tag.len.min=Слишком короткий тег.
