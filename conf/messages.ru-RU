@@ -553,6 +553,7 @@ Adv.levels=Уровни размещения
 Main.screen=Главный экран
 Product.categories=Категории товаров
 Categories=Категории
+_adv.Online.now=Отображается сейчас
 Catalog=Каталог
 List=Список
 advertised=размещено
@@ -562,6 +563,7 @@ Date.start=Дата начала
 Date.end=Дата окончания
 Your.ad.will.adv=Ваша карточка будет размещена
 from._date=с
+From._date=С
 till._date=по
 Your.ad.will.see.all.sio.users.in.geolocs=Вашу рекламу на главном экране увидят все пользователи Sugest.io, которые находятся в заданных локациях.
 Ad.will.seen.by.interested.in.cats.users=Рекламу в категориях увидят наиболее заинтересованные пользователи, которые ищут конкретные товары и услуги.
@@ -668,7 +670,6 @@ No.changes=Без изменений.
 Your.msg.sent=Ваше сообщение отправлено.
 Your.req.sent=Ваш запрос отправлен.
 Activation.impossible=Активация невозможна.
-
 
 Ntype.p=Человек
 Ntype.n=Кабинет

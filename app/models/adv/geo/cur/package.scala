@@ -16,7 +16,7 @@ package object cur {
   /** Тип сырых данных по шейпу, приходит из базы в таком вот виде. */
   type AdvGeoShapeInfo_t = (Option[String], Option[Gid_t], Option[Boolean])
 
-
+  /** Выхлоп отчёта по размещения в указанной гео-области. */
   type AdvGeoBasicInfo_t = (Gid_t, MItemType, MItemStatus, Option[Interval], Option[String])
 
 }

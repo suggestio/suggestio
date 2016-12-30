@@ -5,9 +5,6 @@ import io.suggest.adv.AdvConstants.PERIOD_FN
 import io.suggest.adv.geo.AdvGeoConstants.{AdnNodes, OnMainScreen}
 import io.suggest.common.maps.MapFormConstants.MAP_FN
 import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
-import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.geo.{CircleGs, GeoShape}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.pick.PickleSrvUtil
@@ -15,10 +12,8 @@ import models.adv.geo.cur
 import models.adv.geo.cur._
 import models.adv.geo.mapf.MRcvrBindedInfo
 import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
-import models.mdt.MDateInterval
 import models.mproj.ICommonDi
 import models.mtag.MTagBinded
-import org.joda.time.Interval
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.extras.geojson.{Feature, LatLng}
@@ -92,40 +87,6 @@ class AdvGeoFormUtil @Inject() (
       geometry    = gs.toPlayGeoJsonGeom,
       // Собрать пропертисы для этой feature:
       properties  = Some( GjFtProps.FORMAT.writes(props) )
-    )
-  }
-
-
-  /** Конверсия одного набора item'ов в рамках шейпа и периода размещения в инфу по ряду данных
-    * в попапе шейпа на карте шейпов. */
-  def ivlItems2popupInfo(intervalOpt: Option[Interval], ivlItems: Iterable[MItem]): MPopupRowInfo = {
-    // Готовим iterator инфы по геотегам размещения
-    val tagInfosIter = for {
-      itm     <- ivlItems.iterator
-      if itm.iType == MItemTypes.GeoTag
-      tagFace <- itm.tagFaceOpt.iterator
-    } yield {
-      MTagInfo(
-        tag         = tagFace,
-        isOnlineNow = itm.status == MItemStatuses.Online
-      )
-    }
-
-    // Собрать инфу по размещению на главном экране.
-    val omsOpt = ivlItems
-      .find(_.iType == MItemTypes.GeoPlace)
-      .map { gpItm =>
-        MOnMainScrInfo(gpItm.status == MItemStatuses.Online)
-      }
-
-    // Объеденить всю инфу в контейнер ряда данных попапа.
-    MPopupRowInfo(
-      intervalOpt   = intervalOpt
-        .map(MDateInterval.apply),
-      tags          = tagInfosIter
-        .toSeq
-        .sortBy(_.tag),
-      onMainScreen  = omsOpt
     )
   }
 

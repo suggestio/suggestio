@@ -21,6 +21,7 @@ class JsMessagesUtil @Inject() (
       "Date.choosing",
       "Advertising.period",
       "Your.ad.will.adv",
+      "From._date",
       "from._date",
       "till._date",
       "Date.start",
@@ -74,6 +75,8 @@ class JsMessagesUtil @Inject() (
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
     Iterator(
+      "Main.screen",
+      "_adv.Online.now",
       "Adv.on.main.screen",
       "Please.wait"
     )

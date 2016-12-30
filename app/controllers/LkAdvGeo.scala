@@ -6,7 +6,6 @@ import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.geo._
-import io.suggest.adv.geo.MGeoAdvExistPopupResp.pickler
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
@@ -14,6 +13,7 @@ import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
+import io.suggest.dt.MRangeYmdJvm
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -62,6 +62,7 @@ class LkAdvGeo @Inject() (
   advGeoMapUtil                   : AdvGeoMapUtil,
   streamsUtil                     : StreamsUtil,
   pickleSrvUtil                   : PickleSrvUtil,
+  mRangeYmdJvm                    : MRangeYmdJvm,
   override val mItems             : MItems,
   override val mOrders            : MOrders,
   override val tagSearchUtil      : LkTagsSearchUtil,
@@ -84,6 +85,7 @@ class LkAdvGeo @Inject() (
   import MRcvrPopupResp.pickler
   import MFormS.pickler
   import pickleSrvUtil.Base64ByteBufEncoder
+  import MGeoAdvExistPopupResp.pickler
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -425,7 +427,7 @@ class LkAdvGeo @Inject() (
   def existGeoAdvsShapePopup(itemId: Gid_t) = CanAccessItemPost(itemId, edit = false).async { implicit request =>
     // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
     // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
-    if (request.mitem.iType != MItemTypes.GeoPlace)
+    if ( !MItemTypes.advGeoTypes.contains( request.mitem.iType ) )
       throw new IllegalArgumentException(s"MItem[itemId] type is ${request.mitem.iType}, but here we need GeoPlace ${MItemTypes.GeoPlace}")
 
     // Наврядли можно отрендерить в попапе даже это количество...
@@ -442,6 +444,8 @@ class LkAdvGeo @Inject() (
       }
       .toSource
 
+    //implicit val ctx = implicitly[Context]
+
     val rowsMsFut = itemsSrc
       // Причесать кортежи в нормальные инстансы
       .map( MAdvGeoBasicInfo.apply )
@@ -450,9 +454,10 @@ class LkAdvGeo @Inject() (
       .fold( List.empty[MAdvGeoBasicInfo] ) { (acc, e) => e :: acc }
       .map { infos =>
         // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
-        val ivlOpt = infos.head.intervalOpt.map(MDateInterval.apply)
+        val jodaIvlOpt = infos.head.intervalOpt
+        val ivlOpt = jodaIvlOpt.map(MDateInterval.apply)
         val row = MGeoAdvExistRow(
-          dateRange = __formatDtInterval( ivlOpt ),
+          dateRange = jodaIvlOpt.map(mRangeYmdJvm.apply),
           items = infos
             .sortBy(m => (m.tagFaceOpt, m.id) )
             .map { m =>
