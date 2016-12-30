@@ -1,7 +1,7 @@
 package react.leaflet.lmap
 
 import io.suggest.react.JsWrapperR
-import io.suggest.sjs.leaflet.event.LocationEvent
+import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.{LatLng, LatLngBounds, MapOptions, Zoom_t}
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -29,7 +29,8 @@ object LMapR {
     className : UndefOr[String]        = js.undefined,
     style     : UndefOr[String]        = js.undefined,
     id        : UndefOr[String]        = js.undefined,
-    onLocationFound: UndefOr[LocationEvent => _] = js.undefined,
+    onLocationFound : UndefOr[LocationEvent => _] = js.undefined,
+    onPopupClose    : UndefOr[PopupEvent => _] = js.undefined,
     useFlyTo  : UndefOr[Boolean]       = js.undefined
   ): LMapR = {
     val p = js.Dynamic.literal().asInstanceOf[LMapPropsR]
@@ -44,6 +45,7 @@ object LMapR {
     style.foreach( p.style = _ )
     id.foreach( p.id = _ )
     onLocationFound.foreach(p.onlocationfound = _)
+    onPopupClose.foreach(p.onpopupclose = _)
     useFlyTo.foreach( p.useFlyTo = _ )
 
     LMapR( p )
@@ -79,5 +81,7 @@ trait LMapPropsR extends MapOptions {
     * Handled automatically inside MapComponent.bindLeafletEvents().
     */
   var onlocationfound: js.Function1[LocationEvent,_] = js.native
+
+  var onpopupclose: js.Function1[PopupEvent, _] = js.native
 
 }
