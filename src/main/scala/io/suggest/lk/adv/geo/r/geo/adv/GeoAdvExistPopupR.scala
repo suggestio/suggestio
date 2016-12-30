@@ -52,6 +52,8 @@ object GeoAdvExistPopupR {
           <.ul(
             for (row <- popResp.rows) yield {
               <.li(
+                ^.key := row.dateRange.toString,
+
                 // Рендер диапазона дат, если указан...
                 for (rangeYmd <- row.dateRange) yield {
                   RangeYmdR(
