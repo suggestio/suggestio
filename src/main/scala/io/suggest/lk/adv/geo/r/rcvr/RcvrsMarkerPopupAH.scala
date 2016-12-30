@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 import diode._
 import diode.data.Pot
 import io.suggest.adv.geo.{MRcvrPopupResp, MRcvrPopupState}
-import io.suggest.lk.adv.geo.a.{IAdvGeoFormAction, HandleRcvrPopup, HandleRcvrPopupError, ReqRcvrPopup}
+import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -15,6 +15,8 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   * Created: 19.12.16 13:05
   * Description: Action handler для карты ресиверов.
   */
+
+// TODO Объединить эти два Ah под моделью MRcvr.
 
 class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
                             adIdProxy: ModelRO[String],

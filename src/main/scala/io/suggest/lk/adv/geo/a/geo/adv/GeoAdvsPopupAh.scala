@@ -1,7 +1,8 @@
 package io.suggest.lk.adv.geo.a.geo.adv
 
+import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.lk.adv.geo.a.{HandleAdvGeoExistPopupResp, OpenAdvGeoExistPopup}
+import io.suggest.lk.adv.geo.a.{HandleAdvGeoExistPopupResp, HandlePopupClose, OpenAdvGeoExistPopup}
 import io.suggest.lk.adv.geo.m.{MGeoAdvPopupState, MGeoAdvs}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -52,6 +53,14 @@ class GeoAdvsPopupAh[M](
         // Какой-то неактуальный ответ сервера пришёл.
         noChange
       }
+
+    // Реакция на сигнал закрытия попапа, когда он открыт.
+    case HandlePopupClose if value.popupState.nonEmpty =>
+      val v2 = value.copy(
+        popupResp  = Pot.empty,
+        popupState = None
+      )
+      updated(v2)
 
   }
 

@@ -4,9 +4,9 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.adv.geo.MMapS
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.a.SetMapCenter
+import io.suggest.lk.adv.geo.a.{HandlePopupClose, SetMapCenter}
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.sjs.leaflet.event.LocationEvent
+import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ReactComponentB, ReactElement}
 import react.leaflet.lmap.LMapR
 
@@ -47,6 +47,13 @@ object AdvGeoMapR {
       cb.runNow()
     }
 
+    def onPopupClose(popEvent: PopupEvent): Unit = {
+      val cb = $.props >>= { props =>
+        props.dispatchCB( HandlePopupClose )
+      }
+      cb.runNow()
+    }
+
     def render(props: Props, children: PropsChildren) = {
       val v = props()
       // Карта должна рендерится сюда:
@@ -62,7 +69,8 @@ object AdvGeoMapR {
             // TODO Нужен Callback тут вместо голой функции?
             onLocationFound _
           }
-        }
+        },
+        onPopupClose = js.defined( onPopupClose )
       )(children: _*)
     }
 

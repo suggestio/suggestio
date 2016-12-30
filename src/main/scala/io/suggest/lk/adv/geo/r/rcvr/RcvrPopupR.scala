@@ -49,7 +49,8 @@ object RcvrPopupR {
     /** react render. */
     def render(props: Props): ReactElement = {
       val v = props()
-      v.popupState.fold[ReactElement](null) { state =>
+
+      val rOpt = for (state <- v.popupState) yield {
         PopupR(
           position = LkAdvGeoFormUtil.geoPoint2LatLng( state.latLng )
         )(
@@ -125,6 +126,8 @@ object RcvrPopupR {
           ) // Popup div
         )
       }
+
+      rOpt.orNull
     }
 
   }

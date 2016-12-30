@@ -64,3 +64,8 @@ case class OpenAdvGeoExistPopup(itemId: Double, geoPoint: MGeoPoint) extends ISe
 /** Команда к реакции на полученние попапа над гео-областью. */
 case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvExistPopupResp)
   extends IAdvGeoFormAction
+
+
+sealed trait IHandlePopupClose extends IAdvGeoFormAction
+/** Команда среагировать на сокрытие произвольного попапа карты на стороне leaflet. */
+case object HandlePopupClose extends IHandlePopupClose

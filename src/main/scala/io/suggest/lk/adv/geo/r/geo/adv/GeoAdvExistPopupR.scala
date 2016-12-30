@@ -22,15 +22,20 @@ object GeoAdvExistPopupR {
 
   type Props = ModelProxy[MGeoAdvs]
 
-  val _tagPrefix = <.span(
+
+  /** Тег с префиксом тега. */
+  lazy val _tagPrefix = <.span(
     ^.`class` := Css.Colors.LIGHT_GRAY,
+    ^.title   := Messages("GeoTag"),
     TAG_PREFIX
   )
 
-  val _onlineNow = <.span(
+  /** Тег с постфиком-галочкой. */
+  lazy val _onlineNow = <.span(
     ^.title := Messages("_adv.Online.now"),
     CHECKMARK
   )
+
 
   /** Рендерер содержимого попапа. */
   class Backend($: BackendScope[Props, Unit]) {
