@@ -48,6 +48,7 @@ object Css {
   object Colors {
     def RED = "red"
     def GREEN = "green"
+    def LIGHT_GRAY = "light-gray"
   }
 
 

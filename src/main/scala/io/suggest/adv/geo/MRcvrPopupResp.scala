@@ -41,7 +41,6 @@ case class MRcvrPopupNode(
   nameOpt         : Option[String],
   isOnlineNow     : Boolean,
   dateRange       : Seq[MDateFormatted]
-  //TODO intervalOpt     : Option[IDatesPeriodInfo]
 )
 object MRcvrPopupNode {
   implicit val pickler: Pickler[MRcvrPopupNode] = {

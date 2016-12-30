@@ -1,5 +1,7 @@
 package io.suggest.dt
 
+import boopickle.Default._
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -9,7 +11,7 @@ package io.suggest.dt
   */
 object MYmd {
 
-  //implicit val pickler: Pickler[MYmd] = generatePickler[MYmd]
+  implicit val pickler: Pickler[MYmd] = generatePickler[MYmd]
 
   /** Отрендерить в строку, используя указанный разделитель. */
   def ymdToString(ymd: MYmd, sep: String): String = {

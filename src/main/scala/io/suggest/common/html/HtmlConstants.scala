@@ -16,5 +16,10 @@ object HtmlConstants {
 
   /** Обычный пробел. Он используется в куче мест. */
   val SPACE                   = " "
+  val COMMA                   = ","
+
+  val CHECKMARK               = "✓"
+
+  val TAG_PREFIX              = "&#35;"
 
 }

@@ -1,6 +1,7 @@
 package io.suggest.adv.geo
 
 import boopickle.Default._
+import io.suggest.dt.interval.MRangeYmd
 
 /**
   * Suggest.io
@@ -31,14 +32,14 @@ case class MGeoAdvExistPopupResp(
 
 object MGeoAdvExistRow {
   implicit val pickler: Pickler[MGeoAdvExistRow] = {
-    implicit val dateRangeP = MDateFormatted.pickler
+    implicit val dateRangeP = MRangeYmd.pickler
     implicit val geoItemInfoP = MGeoItemInfo.pickler
     generatePickler[MGeoAdvExistRow]
   }
 }
 /** Кроссплатформенная модель данных по одному ряду в списке рядов просматриваемого шейпа. */
 case class MGeoAdvExistRow(
-                            dateRange       : Seq[MDateFormatted],
+                            dateRange       : Option[MRangeYmd],
                             items           : Seq[MGeoItemInfo]
                           )
 
