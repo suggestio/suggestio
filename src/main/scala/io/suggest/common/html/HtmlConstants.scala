@@ -20,6 +20,6 @@ object HtmlConstants {
 
   val CHECKMARK               = "✓"
 
-  val TAG_PREFIX              = "&#35;"
+  val TAG_PREFIX              = "#"
 
 }
