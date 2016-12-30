@@ -101,4 +101,7 @@ object WarnMsgs extends MsgsStaticT {
 
   def GEO_JSON_GEOM_COORD_UNEXPECTED_ELEMENT = E(44)
 
+  /** Получен ответ сервера на уже неактуальный запрос. Чисто информационная мессага. */
+  def SRV_RESP_INACTUAL_ANYMORE              = E(45)
+
 }
