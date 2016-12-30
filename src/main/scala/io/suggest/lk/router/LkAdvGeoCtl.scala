@@ -44,4 +44,7 @@ sealed trait LkAdvGeoCtl extends js.Object {
   /** Роута получения карты текущих георазмещений. */
   def existGeoAdvsMap(adId: String): Route = js.native
 
+  /** Роута для получения содержимого попапа над указанной областью георазмещения. */
+  def existGeoAdvsShapePopup(itemId: Double): Route = js.native
+
 }
