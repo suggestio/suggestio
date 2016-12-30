@@ -1,7 +1,7 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
-import io.suggest.geo.MGeoPoint
+import io.suggest.lk.adv.geo.a.OpenAdvGeoExistPopup
 
 /**
   * Suggest.io
@@ -13,7 +13,7 @@ object MGeoAdvPopupState {
 
   implicit object MGeoAdvPopupStateFastEq extends FastEq[MGeoAdvPopupState] {
     override def eqv(a: MGeoAdvPopupState, b: MGeoAdvPopupState): Boolean = {
-      a.position eq b.position
+      a.open eq b.open
     }
   }
 
@@ -22,9 +22,9 @@ object MGeoAdvPopupState {
 
 /**
   * Класс модели состояния попапа.
-  * @param position точка втыкания попапа.
+  * @param open исходный инстанс сообщения с данными для открытия попапа.
   */
 case class MGeoAdvPopupState(
-                              position: MGeoPoint
+                              open: OpenAdvGeoExistPopup
                             )
 

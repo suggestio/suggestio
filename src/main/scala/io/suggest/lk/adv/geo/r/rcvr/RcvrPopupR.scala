@@ -78,7 +78,6 @@ object RcvrPopupR {
                       ^.key := rcvrKey.toString,
                       ^.`class` := Css.Lk.LK_FIELD,
 
-                      // TODO Произвести дедубликацию кода, т.к. обе ветки очень похожи.
                       if (n.dateRange.size == 2) {
                         // Есть какая-то инфа по текущему размещению на данном узле.
                         <.label(

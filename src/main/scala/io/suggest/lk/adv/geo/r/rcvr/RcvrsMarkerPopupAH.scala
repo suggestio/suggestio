@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 import diode._
 import diode.data.Pot
 import io.suggest.adv.geo.{MRcvrPopupResp, MRcvrPopupState}
-import io.suggest.lk.adv.geo.a.{AdvGeoFormAction, HandleRcvrPopup, HandleRcvrPopupError, ReqRcvrPopup}
+import io.suggest.lk.adv.geo.a.{IAdvGeoFormAction, HandleRcvrPopup, HandleRcvrPopupError, ReqRcvrPopup}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -29,7 +29,7 @@ class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
     case rrp: ReqRcvrPopup =>
       // TODO Проверить содержимое rcvrsRW, может там уже есть правильный ответ, и запрос делать не надо.
       val nextState = value.pending()
-      val fx = Effect[AdvGeoFormAction] {
+      val fx = Effect[IAdvGeoFormAction] {
         api.rcvrPopup(adIdProxy(), nodeId = rrp.nodeId)
           .map { HandleRcvrPopup.apply }
           .recover { case ex: Throwable =>

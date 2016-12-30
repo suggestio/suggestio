@@ -128,6 +128,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val geoAdvsPopupAh = new GeoAdvsPopupAh(
+      api     = API,
       modelRW = geoAdvRW
     )
 
@@ -140,10 +141,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     // Склеить все handler'ы.
     val h1 = composeHandlers(
       rcvrsMarkerPopupAh, rcvrInputsAh,
+      geoAdvsPopupAh,
       tagsAh,
       onMainScreenAh,
       datePeriodAh,
-      geoAdvsPopupAh,
       adv4freeAh,
       // init-вызовы в конце, т.к. они довольно редкие.
       geoAdvsInitAh,

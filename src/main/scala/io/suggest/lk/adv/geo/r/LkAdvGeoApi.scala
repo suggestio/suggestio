@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.r
 
-import io.suggest.adv.geo.MRcvrPopupResp
+import io.suggest.adv.geo.{MGeoAdvExistPopupResp, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.sjs.common.xhr.Xhr
@@ -10,7 +10,6 @@ import io.suggest.sjs.common.tags.search.{ITagsApi, TagsApiImplXhr}
 
 import scala.concurrent.Future
 import scala.scalajs.js
-import scala.scalajs.js.Array
 
 /**
   * Suggest.io
@@ -32,7 +31,10 @@ trait ILkAdvGeoApi extends ITagsApi {
   def rcvrPopup(adId: String, nodeId: String): Future[MRcvrPopupResp]
 
   /** Запрос карты текущий георазмещений с сервера. */
-  def currAdvsMap(adId: String): Future[js.Array[GjFeature]]
+  def existGeoAdvsMap(adId: String): Future[js.Array[GjFeature]]
+
+  /** Запрос содержимого попапа над указанной гео-областью. */
+  def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp]
 
 }
 
@@ -40,7 +42,8 @@ trait ILkAdvGeoApi extends ITagsApi {
 /** Реализация [[ILkAdvGeoApi]]. */
 class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
-  import boopickle.Default._
+  import MRcvrPopupResp.pickler
+  import MGeoAdvExistPopupResp.pickler
 
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = jsRoutes.controllers.LkAdvGeo.tagsSearch2
@@ -66,10 +69,18 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     }
   }
 
-  override def currAdvsMap(adId: String): Future[js.Array[GjFeature]] = {
+
+  override def existGeoAdvsMap(adId: String): Future[js.Array[GjFeature]] = {
     val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsMap(adId)
     Xhr.requestJson(route)
       .asInstanceOf[Future[js.Array[GjFeature]]]
+  }
+
+  override def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
+    val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId)
+    Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
+      Xhr.requestBinary(route)
+    }
   }
 
 }
