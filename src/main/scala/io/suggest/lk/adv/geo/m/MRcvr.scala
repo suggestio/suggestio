@@ -48,4 +48,9 @@ case class MRcvr(
   def withPopupState(rcvrPopup2: Option[MRcvrPopupState]) = copy(popupState = rcvrPopup2)
   def withRcvrMap(rcvrsMap2: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap2)
 
+  def withPopup(resp: Pot[MRcvrPopupResp], state: Option[MRcvrPopupState]) = copy(
+    popupResp  = resp,
+    popupState = state
+  )
+
 }

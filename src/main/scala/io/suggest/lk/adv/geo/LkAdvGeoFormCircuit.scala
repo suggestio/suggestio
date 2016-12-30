@@ -73,17 +73,12 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     // Собираем handler'ы
 
-    val rcvrsMarkerPopupAh = {
-      val p1 = new RcvrsMarkerPopupAH(
-        api       = API,
-        adIdProxy = adIdZoom,
-        rcvrsRW   = rcvrPopupRW // zoomRW(_.rcvrPopup) { _.withRcvrPopup(_) }
-      )
-      val p3 = new RcvrMarkerPopupState(
-        popStateRW = rcvrRW.zoomRW(_.popupState) { _.withPopupState(_) }
-      )
-      foldHandlers(p1, p3)
-    }
+    val rcvrsMarkerPopupAh = new RcvrsMarkerPopupAH(
+      api       = API,
+      adIdProxy = adIdZoom,
+      rcvrsRW   = rcvrRW
+    )
+
 
     val rcvrInputsAh = new RcvrInputsAH(
       respPot   = rcvrPopupRW,

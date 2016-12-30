@@ -2,8 +2,9 @@ package io.suggest.lk.adv.geo.r.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.adv.geo.{MRcvrPopupResp, MRcvrPopupState}
+import io.suggest.adv.geo.MRcvrPopupState
 import io.suggest.lk.adv.geo.a._
+import io.suggest.lk.adv.geo.m.MRcvr
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -20,7 +21,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 
 class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
                             adIdProxy: ModelRO[String],
-                            rcvrsRW: ModelRW[M, Pot[MRcvrPopupResp]])
+                            rcvrsRW: ModelRW[M, MRcvr])
   extends ActionHandler(rcvrsRW)
   with Log
 {
@@ -30,7 +31,6 @@ class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
     // Сигнал запуска запроса с сервера содержимого попапа для ресивера.
     case rrp: ReqRcvrPopup =>
       // TODO Проверить содержимое rcvrsRW, может там уже есть правильный ответ, и запрос делать не надо.
-      val nextState = value.pending()
       val fx = Effect[IAdvGeoFormAction] {
         api.rcvrPopup(adIdProxy(), nodeId = rrp.nodeId)
           .map { HandleRcvrPopup.apply }
@@ -38,34 +38,42 @@ class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
             HandleRcvrPopupError(ex)
           }
       }
-      // Перемещение карты в указанную (текущую) точку идёт в другом action-handler'е: RcvrMarkerOnMapAH.
-      updated(nextState, fx)
+      val v0 = value
+      // Перемещение карты в указанную (текущую) точку в maps common-Ah
+      // Выставить состояние popup'а.
+      val v2 = v0.withPopup(
+        resp  = v0.popupResp.pending(),
+        state = Some(MRcvrPopupState(rrp.nodeId, rrp.geoPoint))
+      )
+      updated(v2, fx)
 
     // Есть ответ от сервера на запрос попапа, надо закинуть ответ в состояние.
     case hrp: HandleRcvrPopup =>
       // Нужно залить в состояние ответ сервера
-      val pot2 = value.ready( hrp.resp )
-      updated( pot2 )
+      val v0 = value
+      val v2 = v0.withPopupResp(
+        v0.popupResp.ready( hrp.resp )
+      )
+      updated( v2 )
 
     // Среагировать как-то на ошибку выполнения запроса.
     case hre: HandleRcvrPopupError =>
-      val pot = value
-      LOG.error( ErrorMsgs.UNEXPECTED_RCVR_POPUP_SRV_RESP, hre.ex, pot )
-      val pot2 = pot.fail(hre.ex)
-      updated(pot2)
+      val v0 = value
+      LOG.error( ErrorMsgs.UNEXPECTED_RCVR_POPUP_SRV_RESP, hre.ex, v0.popupState )
+      val v2 = v0.withPopup(
+        resp  = v0.popupResp.fail(hre.ex),
+        state = None
+      )
+      updated(v2)
+
+    // Среагировать на закрытие попапа, если он открыт сейчас.
+    case HandlePopupClose if value.popupState.nonEmpty =>
+      val v2 = value.withPopup(
+        resp  = Pot.empty,
+        state = None
+      )
+      updated(v2)
+
   }
 
-}
-
-
-/** Action handler, меняющий состояние попапа. */
-class RcvrMarkerPopupState[M](popStateRW: ModelRW[M, Option[MRcvrPopupState]]) extends ActionHandler(popStateRW) {
-
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-
-    case rrp: ReqRcvrPopup =>
-      updated( Some(MRcvrPopupState(rrp.nodeId, rrp.geoPoint)) )
-
-    // TODO Очищать состояние при закрытии попапа.
-  }
 }
