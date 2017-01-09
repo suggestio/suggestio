@@ -1,0 +1,12 @@
+common-slick-driver
+=================================================================
+
+Расширенный slick-драйвер postgres'а.
+
+Custom driver требует костыля в виде отдельного jar'а для play-slick.
+Нужно или патчить play-slick, или выностить из проекта.
+
+https://github.com/tminglei/slick-pg/issues/163#issuecomment-108873843
+
+Поэтому нужно публиковать отдельным jar'ом и юзать как бинарную зависимость,
+иначе class loader'ы slick'а не будут правильно цеплять файлы из play classLoader.
