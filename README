@@ -1,0 +1,5 @@
+Scala.js API and .js sources of
+https://github.com/evothings/evothings-libraries/blob/master/libs/evothings/util/util.js
+https://github.com/evothings/evothings-libraries/blob/master/libs/evothings/eddystone/eddystone.js
+
+TODO Rewrite it into plain SCALA.
