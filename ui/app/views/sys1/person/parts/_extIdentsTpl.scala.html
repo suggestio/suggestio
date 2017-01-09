@@ -1,0 +1,54 @@
+@(extIdents: Seq[usr.MExtIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+
+@* Рендер таблицы со списком ext-идентов.  *@
+
+@import sys1.stuff.ntable._
+@import ctx.messages
+
+<h1>Идентификации через внешние сервисы (@extIdents.size)</h1>
+
+@if( extIdents.isEmpty ) {
+  <div>Нет внешних идентов.</div>
+
+} else {
+@defining("M") { sz =>
+  @_ntable() {
+    @_th(sz, title = Some("Провайдер идентификации, т.е. какой-то сервис (сайт) в интернете, поддерживаемый suggest.io.")) {
+      @messages("Provider")
+    }
+    @_th(sz, title = Some("ID пользователя на стороне провайдера идентификации.") ) {
+      user_id
+    }
+    @_th(sz, title = Some("Email-адрес, если доступен.")) {
+      email
+    }
+    @if(showPersonId) {
+      @_th(sz, title = Some("Уникальный id пользователя suggest.io")) {
+        person_id
+      }
+    }
+
+  } {
+
+    @extIdents.map { ei =>
+      @_tr() {
+        @_td(sz) {
+          @ei.provider
+        }
+        @_td(sz) {
+          @ei.userId
+        }
+        @_td(sz) {
+          @ei.email.map(_emailTpl(_))
+        }
+        @if(showPersonId) {
+          @_td(sz) {
+            @_personLinkTpl(ei.personId, personNames)
+          }
+        }
+      }
+    }
+  }
+
+} @* defining sz *@
+} @* if extIdents nonEmpty *@

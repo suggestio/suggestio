@@ -1,0 +1,16 @@
+@(btnText: String, name: String, imgKey: String, imgPreviewUrl: Call, divCss: TraversableOnce[String] = Nil,
+  btnCss: Seq[String] = Nil, whOpt: Option[ISize2di] = None)(implicit ctx: Context)
+
+@* Шаблон для перекрывания картинок с помощью  *@
+
+@import io.suggest.img.ImgConstants._
+
+<div class="image @JS_PREVIEW_CLASS@divCss.toIterator.map { s => @s}">
+  <input class="@JS_IMG_ID_CLASS" type="hidden" name="@name" value="@imgKey"
+         @whOpt.map { wh => data-width="@wh.width" data-height="@wh.height" }
+  />
+  <img class="image_src" src="@imgPreviewUrl" />
+  <a @if(btnCss.nonEmpty) {class="@btnCss.mkString(" ")" }title="@btnText">
+    <span></span>
+  </a>
+</div>

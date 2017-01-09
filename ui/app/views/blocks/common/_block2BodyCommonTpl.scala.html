@@ -1,0 +1,43 @@
+@(args: blk.IRenderArgs, bc: util.blocks.BlocksConf.CommonBlock2T)(implicit ctx: Context)
+
+@* Базовый шаблон тела block'ов версии 2.0. *@
+
+@import views.txt.blocks.common._
+@import io.suggest.ad.form.AdFormConstants._
+
+@defining( args.inlineStyles || args.mad.id.isEmpty ) { isStylesInline =>
+
+  @bgImgTpl(bc, args,  cssClass = Some("bg") )
+
+  @if(isStylesInline) {
+    <style>@Html(_blockCss(args).toString.trim)</style>
+  }
+
+  @args.mad.ad.entities.valuesIterator.map { offer =>
+
+    @defining("title") { fid =>
+    @for(aosf <- offer.text) {
+      <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.id"
+           @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id].@fid"}>
+        <div class="@fid @fid-@offer.id">@Html(aosf.value)</div>
+      </div>
+      @if(isStylesInline) {
+        <style>
+          @Html(_textCss(blk.FieldCssRenderArgs2(
+            aovf    = aosf,
+            bf      = bc.titleBf,
+            brArgs  = args,
+            offerN  = offer.id,
+            yoff    = 0,
+            fid     = fid,
+            cssClasses = args.cssClasses,
+            isFocused  = args.isFocused
+          )).toString.trim)
+        </style>
+      }
+    }
+    }
+
+  }
+
+}

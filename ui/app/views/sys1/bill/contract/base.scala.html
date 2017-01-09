@@ -1,0 +1,15 @@
+@(title: String, nodeOpt: Option[MNode] = None, mContractOpt: Option[MContract] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для шаблонов редактирования контракта. *@
+
+@hPathAfter1 = {
+  @mContractOpt.map { mc =>
+    / @mc.legalContractId
+  }
+}
+
+@sys1.bill.base(
+  title       = title,
+  hPathAfter  = Some(hPathAfter1),
+  nodeOpt     = nodeOpt
+)(content)

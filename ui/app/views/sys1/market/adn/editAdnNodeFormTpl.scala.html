@@ -1,0 +1,16 @@
+@(mnode: MNode, af: Form[MNode])(implicit ctx: Context)
+
+@* Редактирования узла ADN. *@
+@import ctx._
+@import helper._
+
+@adnBase("Редактирование", nodeOpt = Some(mnode)) {
+
+  @stuff._deleteSmthFormBtnTpl( CSRF(routes.SysMarket.deleteAdnNodeSubmit(mnode.id.get)) )
+
+  @_adnNodeFormTpl(
+    af	      = af,
+    call      = routes.SysMarket.editAdnNodeSubmit(mnode.id.get),
+    btnText   = messages("Save")
+  )
+}

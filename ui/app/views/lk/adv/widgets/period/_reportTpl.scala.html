@@ -1,0 +1,20 @@
+@(dates: mdt.IDateStartEnd)(implicit ctx: Context)
+
+@* Итог по датам размещения.
+   Шаблон имеет фатальный недостаток: он завязан не маппинг формы, а на готовые распарсенные даты.
+   При этом шаблон завязан на значения в полях форм. Это порождает костыли в контроллере при ошибках маппинга. *@
+
+@import ctx.messages
+@import io.suggest.dt.interval.DatesIntervalConstants._
+
+<div id="@INFO_CONT_ID" class="date-widget_result">
+
+  <div class="block __margin-S">
+    @messages("Your.ad.will.adv")
+  </div>
+
+  <div class="date-widget_result-value">
+    @_reportBodyTpl(dates)
+  </div>
+
+</div>

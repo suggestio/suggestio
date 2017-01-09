@@ -1,0 +1,15 @@
+@(af: blk.ed.AdFormM, mnode: MNode, withBC: Option[BlockConf] = None)(implicit ctx: Context)
+
+@* Рендер страницы с формой создания рекламы. *@
+@import ctx._
+
+@adFormBase(messages("Ad.card.create"), mnode) {
+
+  @_adFormTpl(
+    af      = af,
+    call    = routes.MarketAd.createAdSubmit(mnode.id.get),
+    withBC  = withBC,
+    mnode   = mnode
+  )
+
+}

@@ -1,0 +1,30 @@
+@(eAct: usr.EmailActivation)(implicit ctx: Context)
+
+@* html-письмо восстановления пароля. Отправляется юзеру, когда тот просит восстановить пароль. *@
+@import ctx.messages
+@import ctx.api.ctxUtil
+@import views.html.email._
+
+@emailBaseTpl( messages("Password.recovery.in", "Suggest.io") ) {
+
+  @_rowTpl("padding: 20px 0; border-bottom: 1px dashed #878787;") {
+    @messages("Sys.rcvd.pw.recover.request", "Suggest.io")
+    <br/>
+    <strong>@eAct.email</strong>
+  }
+
+  @_rowTpl("padding: 20px 0 10px;") {
+    @Html(messages(
+      "To.recover.password.use.this.link",
+      s"""<a style="color: #7b89a4;" href="${ctxUtil.LK_URL_PREFIX}${routes.Ident.recoverPwReturn(eAct.id.get)}">""",
+      "</a>"
+    ))
+  }
+
+  @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
+    @messages("If.link.not.open.cp.link.to.browser")
+    <br/>
+    <span style="color: #7b89a4;">@ctxUtil.LK_URL_PREFIX@routes.Ident.recoverPwReturn(eAct.id.get)</span>
+  }
+
+}

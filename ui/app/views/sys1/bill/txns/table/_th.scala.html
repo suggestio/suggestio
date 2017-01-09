@@ -1,0 +1,5 @@
+@(styled: Boolean = true)(content: Html = HtmlFormat.empty)(implicit ctx: Context)
+
+@* Ячейка заголовка таблицы транзакций. *@
+
+<th @if(styled){class="siom-cell-head __bg-head"}>@content</th>

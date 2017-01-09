@@ -1,0 +1,36 @@
+@(af: blk.ed.AdFormM, withBC: Option[BlockConf] = None)(implicit ctx: Context)
+
+@import util.blocks._
+@import io.suggest.ad.form.AdFormConstants._
+@import lk.dsl._
+
+@defining( OFFER_K ) { nameBase =>
+  @defining(withBC getOrElse BlocksConf.DEFAULT) { bc =>
+
+    <div class="ad-block-editor">
+      @for(bf <- bc.blockFields(af)) {
+
+        <div class="edit-ad_block-field __@bf.name js-ad-editor_field-@bf.name">
+          @bf.renderEditorField(
+            af = af,
+            bfNameBase = nameBase + bf.offerNopt.map(".offer[" + _ + "]").getOrElse("") + "." + bf.name,
+            bc = bc
+          )
+        </div>
+
+        @if(bf.name == "bgImg" || bf.name == "addTextField") {
+	  @_delimTpl()
+        }
+
+      }
+
+      @* Исходный id блока. Необходим при переключении блоков. *@
+      <input type="hidden" name="@{nameBase}.oldBlockId" value="@bc.id"/>
+
+      @* Новый/текущий id блока. При переключении сюда втыкается новый id блока и происходит submit для получения новой формы. *@
+      <input type="hidden" name="@{nameBase}.blockId" value="@bc.id"/>
+
+    </div>
+
+  }
+}

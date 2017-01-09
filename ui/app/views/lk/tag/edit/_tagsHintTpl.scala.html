@@ -1,0 +1,27 @@
+@(tagsInfo: io.suggest.common.tags.search.MTagsFound)(implicit ctx: Context)
+
+@* Верстка выпадающей подсказки с тегами, подходящими под запрос. *@
+
+@import io.suggest.common.tags.edit.TagsEditConstants.Search.Hints._
+
+<div class="hint-list_outer">
+
+  <div class="hint-list_content">
+
+    @for(t <- tagsInfo.tags) {
+      <div class="row @HINT_ROW_CLASS" @(ATTR_TAG_FACE)="@t.face">
+        <div class="name">
+          <span class="prefix">#</span>
+          @t.face
+        </div>
+
+        <div class="value">
+          @t.count
+        </div>
+      </div>
+    }
+
+  </div>
+
+</div>
+

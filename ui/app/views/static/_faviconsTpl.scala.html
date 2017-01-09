@@ -1,0 +1,18 @@
+@()(implicit ctx: Context)
+
+@* Все иконки в метатегах для страниц. В т.ч. og:image и т.д. *@
+
+@import ctx.api.cdn
+
+@_faviconTpl()
+
+<link href="@cdn.asset("images/favicon/57.png")" rel="apple-touch-icon" sizes="57x57" type="image/png" />
+<link href="@cdn.asset("images/favicon/72.png")" rel="apple-touch-icon" sizes="72x72" type="image/png" />
+<link href="@cdn.asset("images/favicon/114.png")" rel="apple-touch-icon" sizes="114x114" type="image/png" />
+<link href="@cdn.asset("images/favicon/144.png")" rel="apple-touch-icon" sizes="144x144" type="image/png" />
+
+<link href="@cdn.asset("images/favicon/rus.svg")" rel="icon" type="image/svg+xml" />
+<link href="@cdn.asset("images/favicon/228.png")" rel="icon" sizes="228x228" type="image/png" />
+
+@* windows 8+ metro: *@
+<meta name="msapplication-TileImage" content="@cdn.asset("images/favicon/144.png")" />

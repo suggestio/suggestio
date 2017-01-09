@@ -1,0 +1,70 @@
+@(bf: BfImage, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@import ctx._
+@import io.suggest.img.ImgConstants._
+@import io.suggest.js.UploadConstants._
+@import io.suggest.ad.form.AdFormConstants._
+@import views.html.stuff._
+@import lk.ad._
+@import io.suggest.img.crop.CropConstants
+@import blk.PrepareBlkImgArgs
+
+@* Форма для загрузки картинки *@
+<div class="lk-file-field">
+
+  <div style="overflow: hidden;">
+
+    @defining( af(bfNameBase) ) { afield =>
+      <div class="f-left" id="@BG_IMG_CONTAINER_ID">
+        <div class="image __size-L f-left @JS_IMG_UPLOAD_CLASS" @if(afield.value) {style="display: none;"}>
+          @_fileUploadTpl(
+	    fieldName     = afield.name,
+            call          = routes.MarketAd.prepareBlockImg( PrepareBlkImgArgs(bc, bf.bimKey, Some(ctx.ctxIdStr)) )
+          )
+          <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.file", " ")">
+            <span>@Html( messages("Upload.file", "<br/>") )</span>
+          </a>
+        </div>
+        @afield.value.map { imgId =>
+          @_bgImgOvlTpl(imgId)
+        }
+      </div>
+    }
+
+    <div class="edit-ad_image-upload-helper">
+
+      <div id="blockImage@bf.name">
+
+        @* В аттрибутах data-width и data-height указываются размеры, до которых нужно отресайзить и обкропить исходное изображение *@
+        <a class="btn __size-M __minor __crop @CropConstants.CROP_IMAGE_BTN_CLASS"
+	    data-width="@af(bc.widthBf.name).value.getOrElse("300")"
+	    data-height="@af(bc.heightBf.name).value.getOrElse("300")"
+	    >@messages("Crop")</a>
+      </div>
+
+      <div class="sm-note">@messages("Ad.large.bg.img.info")</div>
+
+    </div>
+  </div>
+
+  <div class="lk-file-field_choose-color-pre-text">@messages("or")</div>
+
+  <div class="lk-file-field_choose-color-w">
+    <div class="lk-file-field_choose-color-btn-w">
+      @defining( af(BG_COLOR_K) ) { bgColorField =>
+      @defining( bgColorField.value.getOrElse("DAD9D9") ) { color =>
+        <a class="btn __size-L __minor js-custom-color" style='background-color: #@color;'>
+          @* Фоновый цвет картинки. Это первый цвет из палитры, приходящей по WebSocket. *@
+          <input id="@AD_BG_COLOR_ID" type="hidden" name="@bgColorField.name" value='@color' />
+          @messages("Choose.color")
+        </a>
+      }
+      }
+    </div>
+    <div class="lk-file-field_choose-color-btn-t">@messages("Fill.by.single.color")</div>
+  </div>
+
+</div>
+
+
+

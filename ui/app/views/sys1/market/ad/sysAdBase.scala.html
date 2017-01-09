@@ -1,0 +1,35 @@
+@(title: String, madOpt: Option[MNode], nodeOpt: Option[MNode], hPathAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Подложка для страниц, работающих с унифицированными adn-узлами. *@
+@import sys1.market._
+@import ctx._
+@import msc._
+
+@hPathAfter1 = {
+  /
+  @defining( nodeOpt.flatMap(_.id).orElse( madOpt.flatMap(ctx.api.n2NodesUtil.madProducerId) ) ) { adnIdOpt =>
+    @for( adnId <- adnIdOpt ) {
+      <a href="@routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(prodIdOpt = Some(adnId)) )">
+    }
+    Карточки
+    @if(adnIdOpt) {
+      </a>
+    }
+  }
+  @madOpt.flatMap(_.id).map { madId =>
+    / <a href="@routes.SysMarket.showAd(madId)">@madId</a>
+  }
+  @hPathAfter.getOrElse {
+    / @title
+  }
+}
+
+@views.html.sys1.market.adn.adnBase(
+  title         = title + madOpt
+    .flatMap(_.guessDisplayNameOrId)
+    .fold("")(" | " + _) + " | Карточки",
+  hPathAfter    = Some(hPathAfter1),
+  nodeOpt       = nodeOpt,
+  headAfter     = headAfter
+)(content)

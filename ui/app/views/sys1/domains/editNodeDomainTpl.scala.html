@@ -1,0 +1,25 @@
+@(args: msys.MSysNodeDomainEditFormTplArgs)(implicit ctx: Context)
+
+@* Страница с формой редактирования домена для узла. *@
+
+@import views.html.stuff._
+
+@base(
+  title     = "Редактирование домена узла",
+  mnodeOpt  = Some( args.mnode )
+) {
+
+  @defining(args.mnode.id.get) { mnodeId =>
+
+    @* Кнопка для удаления текущего домена. *@
+    @_deleteSmthFormBtnTpl( routes.SysMarket.deleteNodeDomainFormSubmit( mnodeId, dkey = args.mdx.dkey ) )
+
+    @_nodeDomainFormTpl(
+      args        = args,
+      submitCall  = routes.SysMarket.editNodeDomainFormSubmit(mnodeId, dkey = args.mdx.dkey),
+      btnText     = "Save"
+    )
+
+  }
+
+}

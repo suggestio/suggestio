@@ -1,0 +1,27 @@
+@(args: msc.ILogoRenderArgs, withId: Boolean)(implicit ctx: Context)
+
+@* Рендер логотипа узла в заголовке. *@
+
+@import ctx.api.cdn
+@import io.suggest.sc.ScConstants.Logo._
+@import views.html.sc.stuff._
+
+<span @if(withId) { id="@LOGO_CONT_ID" }
+      class="@HDR_LOGO_DIV_CLASS">
+
+  @args.logoImgOpt.fold {
+    @* Нет картинки, рендерим текстовый логотип на основе названия. *@
+    @_nodeNameTpl(args.fgColor) {
+      @args.title
+    }
+
+  } { logoImg =>
+    @* Логотип-картинка. *@
+    <img title="@args.title"
+         class="sm-producer-header_logo"
+         height="@HEIGHT_CSSPX"
+         src="@cdn.maybeAbsUrl( args.apiVsn.forceAbsUrls )( cdn.dynImg(logoImg) )"
+    />
+  }
+
+</span>

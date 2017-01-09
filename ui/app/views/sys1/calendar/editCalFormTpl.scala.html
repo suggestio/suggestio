@@ -1,0 +1,14 @@
+@(cal: mcal.MCalendar, cf: Form[_])(implicit ctx: Context)
+
+@* Страница редактирования календаря. *@
+
+@import ctx._
+
+@calBase("Редактировать календарь " + cal.name) {
+
+  @calFormTpl(
+    cf = cf,
+    submitCall = routes.SysCalendar.editCalendarSubmit(cal.id.get),
+    btnText = messages("Save")
+  )
+}

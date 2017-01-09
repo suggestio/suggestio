@@ -1,0 +1,21 @@
+@()(implicit ctx: Context)
+
+@* Инпуты для суперюзера при размещении. *@
+
+@import io.suggest.adv.AdvConstants.Su._
+
+@if(ctx.user.isSuper) {
+  <div class="adv-su-inputs-wrap">
+    <label>
+      @_checkBoxTpl(
+        "id"      -> ADV_FOR_FREE_ID,
+        "name"    -> ADV_FOR_FREE_FN,
+        "value"   -> "true",
+        "checked" -> "checked"
+      )
+      @_checkBoxTitleTpl() {
+        @ctx.messages("Adv.for.free.without.moderation")
+      }
+    </label>
+  </div>
+}

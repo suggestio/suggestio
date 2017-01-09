@@ -1,0 +1,31 @@
+@(cf: Form[_], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Форма создания/редактирования календаря. *@
+@import helper._
+@import ctx.{request, messages}
+@import mcal.MCalTypes
+
+@form( CSRF(submitCall) ) {
+
+  @inputText(
+    cf("name"),
+    '_label -> "Название календаря",
+    'size   -> 80
+  )
+
+  @select(
+    cf("type"),
+    options = MCalTypes.valuesT.iterator.map(mct => mct.strId -> messages(mct.name)).toSeq,
+    '_label -> "Отображаемый тип"
+  )
+
+  @textarea(
+    cf("data"),
+    '_label -> "Содержимое календаря",
+    'cols   -> 120,
+    'rows   -> 50
+  )
+
+  <input type="submit" value="@btnText" />
+
+}

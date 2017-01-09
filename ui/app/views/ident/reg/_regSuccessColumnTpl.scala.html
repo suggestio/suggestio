@@ -1,0 +1,18 @@
+@(args: madn.INodeRegSuccess)(implicit ctx: Context)
+
+@* Колонка рендерится, когда регистрация по email завершена успешно. *@
+
+@import util.adn._
+@import ctx.messages
+
+<div class="reg-success_t">@messages("Your.identity.accepted.saved").</div>
+
+<div class="reg-success_text">
+  @messages("In.seconds.you.ll.rdr.to.your.shop")
+  <br/>
+  @Html(messages(
+    "If.no.rdr.click.here",
+    s"""<a class="link" href="${args.rdrCall}">""",
+    "</a>"
+  ))
+</div>

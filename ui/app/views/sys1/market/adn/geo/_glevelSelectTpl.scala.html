@@ -1,0 +1,18 @@
+@(gField: Field)(implicit ctx: Context)
+
+@* Рендер селекта для выбора уровня сохранения геообъекта. *@
+
+@import helper._
+@import util.FC.tdFc
+@import ctx.messages
+
+<table class="input-w __size-L">
+  @select(
+    gField,
+    options = options( NodeGeoLevels.values
+      .iterator
+      .map( ngl => ngl.esfn -> s"""${messages(ngl.l10nSingular)} (~${ngl.precision})""" )
+      .toMap
+    )
+  )
+</table>

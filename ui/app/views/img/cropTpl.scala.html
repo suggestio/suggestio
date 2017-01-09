@@ -1,0 +1,65 @@
+@(imgId: String, width: Int, height: Int, imeta: ISize2di, id: String, cropOpt: Option[ImgCrop])(implicit ctx: Context)
+
+@import ctx._
+@import helper._
+@import ctx.api.dynImgUtil
+@import io.suggest.popup.PopupConstants
+@import io.suggest.img.ImgConstants
+@import lk.popup._
+@import lk.dsl._
+
+@_popupTpl(
+  css   = Seq( "__size-M" ),
+  attrs = Seq(
+    "id"          -> id,
+    "data-width"  -> width,
+    "data-height" -> height
+  )
+) {
+
+  @_popupHdrTpl() {
+    @_popupCloseBtnTpl(PopupConstants.REMOVE_CSS_CLASS)
+  }
+
+  @_minorTitleTpl() {
+    @messages("Picture.editing")
+  }
+
+  @_popupCntTpl() {
+
+    <div class="market-crop-tool__container js-crop-container" style="width: @width; height: @height;">
+
+      @* Рендер превьшки, но с реальными размерами. *@
+      <div>
+        <img class="bg abs" data-width="@imeta.width" data-height="@imeta.height" src="@dynImgUtil.thumb256Call(imgId, fillArea = true)" />
+      </div>
+
+    </div>
+
+    @form(routes.Img.imgCropSubmit) {
+      <input type="hidden" name="imgId" value="@imgId"/>
+
+      @* Запрошенные данные по кропу. Они переданы на сервер клиентом, когда тот запросил форму кропа. *@
+      <input type="hidden" name="target.height" value="@height" />
+      <input type="hidden" name="target.width" value="@width" />
+
+      <input type="hidden" name="crop" value="@cropOpt.map(_.toCropStr)"/>
+
+      @* TODO в value, судя по всему, нужно что-то добавить *@
+      <input type="hidden" name="resize" value=""/>
+
+      <div class="block __margin-M">
+        Передвигая изображения вверх вниз вы выделяете<br/>
+        видимую область картинки
+      </div>
+
+      <div class="btn-w __size-M">
+        <button class="btn __minor __size-M @ImgConstants.JS_REMOVE_IMG_CLASS">@messages("Delete")</button>
+        <button class="btn __major __size-M __list" type="submit">@messages("Save")</button>
+      </div>
+
+    }
+
+  } @* popupCnt *@
+
+}

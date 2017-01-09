@@ -1,0 +1,24 @@
+@(args: msys.ISysNodeDomainFormTplArgs, submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Страница с формой связанных с узлом доменов. *@
+
+@import helper._
+@import ctx.{messages, request}
+@import io.suggest.model.n2.extra.domain.MDomainModes
+
+@form( CSRF(submitCall) ) {
+
+  @inputText(
+    args.form("dkey"),
+    '_label -> "Ключ домена",
+    'title  -> "Нормализованное доменное имя, без www вначале, маленькими латинскими буквами."
+  )
+
+  @select(
+    args.form("mode"),
+    options = MDomainModes.valuesT.iterator.map(m => m.strId -> messages(m.i18nCode)).toSeq
+  )
+
+  <input type="submit" value="@messages(btnText)"/>
+
+}

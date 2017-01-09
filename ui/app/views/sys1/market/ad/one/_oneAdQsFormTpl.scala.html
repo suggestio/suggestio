@@ -1,0 +1,43 @@
+@(args: msys.IShowOneAdFormTplArgs)(implicit ctx: Context)
+
+@* Верстка формы для задания значений полей модели OneAdQsArgs.
+   Это нужно для отображения страницы или картинки с рендером результата. *@
+
+@import helper._
+@import im.OutImgFmts.{values => imgFmts}
+@import ctx._
+
+@form( CSRF(routes.SysMarket.oneAdFormSubmit(args.madId, args.rvar)) ) {
+
+  @inputText(
+    args.qf("szMult"),
+    '_label -> "Коэфф.масштабирования",
+    'title  -> "1.0 значит, что будет размер 1:1 по высоте, т.к. как в превьюшке редактора."
+  )
+
+  @inputText(
+    args.qf("vsn"),
+    '_label -> "ES-версия карточки",
+    'title  -> "Необязательно. Нужно для обхода кеша на клиенте. Можно вообще никогда менять, используя F5 или CTRL+F5."
+  )
+
+  @if(args.rvar.isToImage) {
+    @select(
+      args.qf("imgFmt"),
+      options = imgFmts.iterator.map(_.name).map(v => v -> v).toSeq,
+      '_label -> "Формат картинки",
+      'title  -> "Если рендер в картинку, то формат. Если нет, то значение игнорируется."
+    )
+  } else {
+    <input type="hidden" name="imgFmt" value="@imgFmts.head.name" />
+  }
+
+  @inputText(
+    args.qf("wide.width"),
+    '_label -> "Ширина wide-рендера",
+    'title  -> "Для широкоформатного рендера: ширина экрана в css-пикселях. Если не задано, то будет block-рендер по ширине карточки."
+  )
+
+  <input type="submit" value="@messages(args.rvar.nameI18n)"/>
+
+}

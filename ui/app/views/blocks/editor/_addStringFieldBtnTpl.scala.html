@@ -1,0 +1,9 @@
+@(bf: BfNoValueT, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@* Кнопка для ajax-добавления блока текста.
+   В _adFormTpl в jsRoutes был добавлен доступ к MarketAd.newTextField(n).
+   Нужно чтобы по этой кнопке делался туда запрос. *@
+
+@import ctx.messages
+
+<a class="btn __size-M __major js-ad-editor_add-text-field-btn" href="#">@messages("Add.text.block")</a>

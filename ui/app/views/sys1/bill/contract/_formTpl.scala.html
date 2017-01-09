@@ -1,0 +1,38 @@
+@(cf: Form[MContract], btnText: String, submitCall: Call)(implicit ctx: Context)
+
+@* Шаблон формы добавления/редактирования контракта. *@
+@import helper._
+@import util.FC.tdFc
+@import fc._tdFcTableTpl
+@import ctx.{messages, request}
+@import sys1.stuff.sform._
+
+@form( CSRF(submitCall) ) {
+
+  @_tdFcTableTpl("L") {
+    @inputText(
+      cf("dateCreated"),
+      '_label -> "Дата подписания",
+      'title  -> "Дата в удобном формате, например '12 апреля 2014' или '12.04.2014'."
+    )
+  }
+
+  @_tdFcTableTpl("L") {
+    @inputText(
+      cf("suffix"),
+      '_label -> "Суффикс нумерации контракта.",
+      'title  -> "Например суффикс 'СЕО' превратит '001' в '001/СЕО'."
+    )
+  }
+
+  @_tdFcTableTpl("L") {
+    @textarea(
+      cf("hiddenInfo"),
+      '_label -> "Служебные заметки",
+      'title  -> "Отображаются только вам и другим администраторам suggest.io."
+    )
+  }
+
+  @_submitTpl(btnText)
+
+}

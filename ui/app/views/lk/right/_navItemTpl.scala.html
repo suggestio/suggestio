@@ -1,0 +1,12 @@
+@(title: String, href: Option[Call] = None, css: TraversableOnce[String] = Nil, delimAfter: Boolean = true)(implicit ctx: Context)
+
+@* Шаблон одного item'а правой панели. *@
+
+@import util.tpl.CssFormat._
+
+<a class="right-bar_menu-i@classesPreSpaced(css)"@href.map { href1 => href="@href1"}>
+  <span>@title</span>
+</a>
+@if(delimAfter) {
+  <hr class="delimiter"/>
+}

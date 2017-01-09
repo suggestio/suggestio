@@ -1,0 +1,31 @@
+@()(implicit ctx: Context)
+
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn(href: Call, paddingPx: Int)(btnText: Html) = {
+  <div class="i __btn">
+
+    <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
+      @btnText
+    </a>
+  </div>
+}
+
+
+@sysBase("index") {
+
+  <div class="page-cnt">
+
+    <div class="i-list">
+
+      @btn(routes.SysMarket.index(), 52) { МАРКЕТ }
+      @btn(routes.SysAi.index(), 52) { AI }
+      @btn(routes.SysImg.index(), 52) { КАРТИНКИ }
+      @btn(routes.SysPerson.index(), 52) { ЮЗЕРЫ }
+      @btn(routes.SysDebug.index(), 52) { ОТЛАДКА }
+
+    </div>
+
+  </div>
+
+}

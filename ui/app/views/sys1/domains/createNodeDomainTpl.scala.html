@@ -1,0 +1,16 @@
+@(args: msys.MSysNodeDomainCreateFormTplArgs)(implicit ctx: Context)
+
+@* Страница с формой создания домена для узла. *@
+
+@base(
+  title     = "Добавить домен к узлу",
+  mnodeOpt  = Some( args.mnode )
+) {
+
+  @_nodeDomainFormTpl(
+    args        = args,
+    submitCall  = routes.SysMarket.createNodeDomainFormSubmit( args.mnode.id.get ),
+    btnText     = "Add"
+  )
+
+}

@@ -1,0 +1,10 @@
+@(prf: PwResetForm_t, ea: usr.EmailActivation)(implicit ctx: Context)
+
+@* Колонка с формой восстановления пароля. Шаг 1: ввод email. *@
+
+@import ctx.messages
+
+<div class="auth-page_column">
+  <h2 class="auth-page_column-t __color-2">@messages("New.password")</h2>
+  @_pwResetFormTpl(prf, ea)
+</div>

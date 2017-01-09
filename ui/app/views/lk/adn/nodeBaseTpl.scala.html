@@ -1,0 +1,58 @@
+@(title: String, mnode: MNode, rightCurrEl: NodeRightPanelLink, popupContent:Option[Html] = None,
+  rightBarAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Какой-то базовый шаблон узла в личном кабинете. *@
+
+@import lk.adn.node._
+@import ctx._
+@import NodeRightPanelLinks._
+@import lk.right._
+@import util.tpl.CssFormat._
+
+
+@* Билдим содержимое правой панели. *@
+@rightBar1 = {
+  @_navTpl() {
+    @for(nodeId <- mnode.id) {
+
+      @_navItemTpl(
+        title = messages("Profile"),
+        href  = Some( routes.MarketLkAdn.showAdnNode(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_NODE, "__show-profile")
+      )
+
+      @_navItemTpl(
+        title = messages("Edit.profile"),
+        href  = Some( routes.MarketLkAdnEdit.editAdnNode(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_NODE_EDIT, "__edit-profile")
+      )
+
+      @_navItemTpl(
+        title = messages("Password.change"),
+        href  = Some( routes.MarketLkAdn.userProfileEdit(nodeId, r = ctx.r) ),
+        css   = classesAct(rightCurrEl == RPL_USER_EDIT, "__change-pass")
+      )
+
+      @_navItemTpl(
+        title = messages("On.the.map"),
+        href  = Some( routes.LkAdnMap.forNode(nodeId) )
+      )
+
+      @_navSysTpl(
+        call  = routes.SysMarket.showAdnNode(nodeId)
+      )
+    }
+  }
+
+  @rightBarAfter
+}
+
+
+@lk.lkBaseLayout(
+  title         = title,
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_NODE),
+  nodeOpt       = Some(mnode),
+  rightBar      = Some(rightBar1),
+  popupContent  = popupContent,
+  headAfter	= headAfter
+)(content)

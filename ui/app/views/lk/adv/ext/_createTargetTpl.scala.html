@@ -1,0 +1,33 @@
+@(adnId: String, tf: Form[_], tgOpt: Option[adv.MExtTarget] = None)(implicit ctx: Context)
+
+@* div, появляющийся при добавлении новой внешней PR-цели. *@
+
+@import ctx._
+@import helper._
+@import util.FC.tdRadialFc
+@import io.suggest.adv.ext.view.FormPage._
+
+@* div.social-target формы одной цели в списке + чекбоксы для внешней формы. *@
+<div class="@CLASS_ONE_TARGET_CONTAINER">
+
+  @_targetFormTpl(adnId, tf, tgOpt)
+
+  <div class="social-target_right">
+
+    <div class="social-target_option-lst">
+
+      @defining( tf("return").value ) { v =>
+        @adv.MExtReturns.values.iterator.map { mret =>
+          <label class="social-target_option" title="@messages(mret.i18nCode + ".hint")">
+            <input class="@CLASS_ONE_TARGET_INPUT_RETURN_CHECKBOX" type="checkbox" value="@mret"
+                   name="return" @if(v contains mret.strId) {checked="checked"}/>
+            <span class="styled-checkbox"></span>&nbsp;@messages(mret.i18nCode)
+          </label>
+        }
+      }
+
+    </div>
+
+  </div> @* .social-target-right *@
+
+</div> @* .social-target *@

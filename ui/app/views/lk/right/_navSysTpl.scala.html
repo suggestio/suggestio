@@ -1,0 +1,11 @@
+@(call: Call)(implicit ctx: Context)
+
+@* Кнопка system на правой панели навигации ЛК *@
+
+@* Для суперюзеров надо отображать всегда возможность перехода в /sys/ *@
+@if(ctx.user.isSuper) {
+  @_navItemTpl(
+    title = "System",
+    href  = Some(call)
+  )
+}

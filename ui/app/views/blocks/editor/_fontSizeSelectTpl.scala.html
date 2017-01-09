@@ -1,0 +1,17 @@
+@(bf: BlockAOValueFieldT, bfNameBase: String, af: Form[_])(implicit ctx: Context)
+
+@* Шаблон, где надо выбрать размер шрифта. *@
+
+@defining( bfNameBase + ".font.size" ) { fsName =>
+
+  <div class="lk-field-tools__editor">
+    <select class="js-custom-font-select" name="@fsName">
+      @defining( af(fsName).value.filter(!_.isEmpty).map(_.toInt).orElse(bf.fontSizeDflt).orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt: Option[Int] =>
+        @for(fsz <- blk.FontSizes.valuesSorted) {
+          <option value="@fsz.size" @if(fsValueOpt.exists(_ == fsz.size)) {selected="selected"}>@fsz.size</option>
+        }
+      }
+    </select>
+  </div>
+
+}

@@ -1,0 +1,29 @@
+@(title: String, mimgOpt: Option[im.MImgT] = None, hPathAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для шаблонов img-раздела системной админки. *@
+
+@import sys1._
+@import sys1.stuff.hpath._
+
+@hPathAfter1 = {
+  /
+  @_blueLink( routes.SysImg.index() ) {
+    img
+  }
+
+  @for(mimg <- mimgOpt) {
+    /
+    @_blueLink( routes.SysImg.showOne(mimg) ) {
+      @mimg.rowKeyStr
+    }
+  }
+
+  @if(hPathAfter.isEmpty) {/ @title} else {@hPathAfter}
+}
+
+@sysBase(
+  title       = title + mimgOpt.fold("")(i => " | " + i.rowKeyStr) + " | Картинки",
+  hPathAfter  = Some(hPathAfter1),
+  headAfter   = headAfter
+)(content)

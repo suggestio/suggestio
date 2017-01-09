@@ -1,0 +1,10 @@
+@(isName: Boolean, attrs: (Symbol, Any)*)(content: Html)
+
+@* Шаблон одной ячейки prop-таблицы. Напрямую обычно не вызывается, а только через name/value-шаблоны. *@
+
+@attrsMap = @{ attrs.toMap }
+
+<td class="prop_@if(isName) {name} else {value} @attrsMap.get('class)"
+    @toHtmlArgs( attrsMap.filterKeys(_ != 'class) )>
+  @content
+</td>

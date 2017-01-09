@@ -1,0 +1,13 @@
+@(title: String, mnode: MNode, mad: MNode, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для страниц внешнего размещения карточек. *@
+
+@import adv.tpl.LkAdvRightLinks
+
+@lk.adv.advBase(
+  title     = title,
+  mad       = mad,
+  producer  = mnode,
+  rightLink = LkAdvRightLinks.LARL_EXT,
+  headAfter = headAfter
+)(content)

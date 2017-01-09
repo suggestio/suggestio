@@ -1,0 +1,9 @@
+@(attrs: (Symbol, Any)*)(content: Html)
+
+@* Один ряд ЛК-prop-таблицы. *@
+
+<tr @toHtmlArgs(attrs.toMap)>
+  @content
+</tr>
+
+

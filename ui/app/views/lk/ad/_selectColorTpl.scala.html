@@ -1,0 +1,12 @@
+@(colorField: Field, label: String)(implicit ctx: Context)
+
+@* Селектор цветов для различных полей формы. *@
+@import ctx._
+
+@* Дополнительная фильтрация значения формы из-за возможных пустых значений Some("") невыясненной природы. *@
+@defining( colorField.value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
+  <div class="ad-field-editor_color-btn f-left js-custom-color"  data-current-value="#@colorValue" style="background-color: #@colorValue;">
+    <input type="hidden" id="@colorField.id" name="@colorField.name" value="@colorValue"/>
+  </div>
+}
+<label class="input-w_prop-name __right" for="@colorField.id">@label</label>

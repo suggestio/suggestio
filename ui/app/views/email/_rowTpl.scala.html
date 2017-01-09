@@ -1,0 +1,9 @@
+@(style: String = "", style2: Option[String] = None)(content: Html)(implicit ctx: Context)
+
+@* Верстка одного блока (абзаца) в письме. *@
+
+<tr>
+  <td style="width: 40px;@style2"></td>
+  <td@if(!style.isEmpty){ style="@style"}>@content</td>
+  <td style="width: 40px;@style2"></td>
+</tr>

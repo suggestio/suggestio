@@ -1,0 +1,96 @@
+@(args: msys.IShowAdRcvrsTplArgs)(implicit ctx: Context)
+
+@* Отображение доп.инфы по карточке. *@
+
+@import helper._
+@import ctx._
+
+@_rcvrsMap(rcvrs: Receivers_t) = {
+  @if(rcvrs.isEmpty) {
+    Карта пуста. Карточка нигде не отображается.
+
+  } else {
+    <table>
+      <thead>
+        <tr>
+          <td title="Узел, на котором размещается эта карточка">Узел-получатель</td>
+          <td title="Первая буква - sink, вторая - show level.">Уровни размещения</td>
+        </tr>
+      </thead>
+      <tbody>
+        @rcvrs.iterator.map { ri =>
+          <tr>
+            <td>
+              @for(nodeId <- ri.nodeIds) {
+                <a href="@routes.SysMarket.showAdnNode(nodeId)">
+                  @args.nodesMap.get(nodeId).fold {
+                    @nodeId
+                  } { rcvrNode =>
+                    @rcvrNode.meta.basic.name
+                    <span title="@rcvrNode.meta.address.address">
+                      / @rcvrNode.meta.address.town
+                    </span>
+                  }
+                </a>
+              }
+            </td>
+            <td>
+              @ri.info.sls.iterator.map { ssl =>
+                @messages("adn.sink." + ssl.adnSink.longName): @messages("lk.sl." + ssl.sl)
+                <br/>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+}
+
+
+@sysAdBase(
+  title   = "Карта ресиверов",
+  madOpt  = Some(args.mad),
+  nodeOpt = args.nodeOpt
+) {
+
+  <h2>Текущая карта ресиверов</h2>
+
+  @_rcvrsMap( args.rcvrsMap )
+
+  @if( args.rcvrsMapOk ) {
+    <p><strong>Карта соответствует расчетной.</strong></p>
+  } else {
+    <br/>
+    <p><strong>Рассчетная карта ресиверов отличается от текущей!</strong></p>
+    <br/>
+    @_rcvrsMap( args.newRcvrsMap )
+  }
+
+
+  <br/><br/>
+
+  @form( CSRF(routes.SysMarket.resetReceivers(args.mad.id.get, r = ctx.r)) ) {
+    <input type="submit" value="Сохранить расчетную карту ресиверов в карточку."/>
+  }
+
+  <br/><br/>
+
+  @form( CSRF(routes.SysMarket.cleanReceivers(args.mad.id.get, r = ctx.r)) ) {
+    <input type="submit" value="Очистить карту ресиверов карточки." />
+    Очистку карты ресиверов приведёт к сокрытию карточки на всех узлах.<br/>
+    Очистку можно отменить на 90% кнопкой сохранения рассчетной карты ресиверов.<br/>
+    Саморазмещение у самого себя (через галочки) в таком случае НЕ будут восстановлены.
+  }
+
+  <br/><br/>
+
+  @form( CSRF(routes.SysMarket.removeAdRcvr(adId = args.mad.id.get, r = ctx.r)) ) {
+    <input type="submit" value="Уничтожить все размещения (НЕЛЬЗЯ ОТМЕНИТЬ)." />
+    Карта размещений будет стёрта.<br/>
+    Все одобренные размещениями этой карточки будут закрыты текущей датой.<br/>
+    Все запросы размещения карточки будут отменены.<br/>
+    <strong>Действие нельзя отменить.</strong>
+  }
+
+}

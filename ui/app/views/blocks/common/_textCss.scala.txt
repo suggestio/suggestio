@@ -1,0 +1,28 @@
+@(args: blk.FieldCssRenderArgsT)
+
+@* Стили для одного текстового поля одного оффера одного блока. *@
+
+@import args._
+@import blk.Fonts
+
+.sm-block@{mad.id}@cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
+  position: absolute;
+  @defining(aovf.coords getOrElse xy) { c =>
+    left: @{c.x * szMult}px;
+    top: @{c.y * szMult}px;
+  }
+}
+
+.sm-block@{mad.id}@cssClasses.map{c =>.@c } .@{fieldCssClass} {
+  color: #@aovf.font.color!important;
+  @aovf.font.size.flatMap(blk.FontSizes.maybeWithSize).map { fsz =>
+    font-size: @{fsz.size * szMult}px!important;
+    @* TODO возможно стоит сделать font-size и line-height одинаковыми *@
+    line-height: @{fsz.lineHeight * szMult}px!important;
+  }
+
+  @* TODO Fonts.maybeWithName должно жить на уровне десериализации модели, а не здесь. *@
+  @aovf.font.family.flatMap(Fonts.maybeWithName).map {ff =>font-family: @(ff.fileName)!important;}
+
+  @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
+}

@@ -1,0 +1,156 @@
+@(args: adv.direct.IAdvFormTplArgs)(implicit ctx: Context)
+
+@* Форма для размещения рекламы (ADVertising) на узлах-получателях рекламной сети.
+   Отображается на странице управления рекламной карточкой.
+   TODO form unapply не работает из-за использования list mapping. *@
+
+@import ctx._
+@import helper._
+@import util.FC.tdFc
+@import util.DateTimePrettyPrinter._
+@import args._
+@import AdnShownTypes._
+@import lk.dsl._
+@import lk.adv.widgets._
+@import io.suggest.adv.direct.AdvDirectFormConstants._
+@import io.suggest.adv.AdvConstants.PERIOD_FN
+@import lk.lkwdgts._
+
+
+@* Глобальная ошибка в форме проявляется, если например недостаточно денег на счете. *@
+@args.af.globalError.map { ge =>
+  <p>@messages("Problem.occured"): @messages(ge.message, ge.args : _*)</p>
+}
+
+@form(CSRF( routes.MarketAdv.advFormSubmit(adId) ),
+      'id     -> FORM_ID,
+      'class  -> "adv-management_main-form") {
+
+  @* Опциональный рендер инструментов суперюзеров. *@
+  @_advSuTpl()
+
+
+  @_barTpl(MHands.Left, id = Some(NODES_BAR_ID)) {
+
+    @_minorTitleTpl() {
+      @messages("City.place.choose")
+    }
+
+    @* Список городов. *@
+    @lk.lkBlockNewDesign( open = false ) {
+      <div class="js-city">
+        @_checkBoxTitleTpl(id = Some(CITY_CURR_TITLE_ID), hasInput = false) {
+          @messages("Select.town")
+        }
+      </div>
+    } {
+      @_citiesHeadsTpl() {
+        @for(city <- args.cities; cityId <- city.node.id) {
+          @_cityTabHeadTpl(
+            title   = city.node.meta.basic.name,
+            cityId  = cityId
+          )
+        }
+      }
+    }
+
+    @* Списки-вкладки категорий в городах. *@
+    @_citiesBodiesTpl() {
+      @for(city <- args.cities; cityId <- city.node.id) {
+        @_cityTabsTpl(cityId) {
+
+          @_tabTitleTpl(
+            title   = messages("All.places"),
+            cityId  = cityId
+          ) {
+            @_checkBoxTpl(
+              "id" -> (CITY_NODES_TAB_HEAD_CHECKBOX_ID_PREFIX + CityNgIdOpt(cityId))
+            )
+          }
+
+          @for(cat <- city.cats) {
+            @defining( Some(cat.id) ) { someCatId =>
+              @_tabTitleTpl(
+                title       = cat.name,
+                cityId      = cityId,
+                catId       = someCatId,
+                withCounter = args.totalAvailOptCat(cat)
+              ) {
+                @_checkBoxTpl(
+                  "id" -> (CITY_NODES_TAB_HEAD_CHECKBOX_ID_PREFIX + CityNgIdOpt(cityId, someCatId))
+                )
+              }
+            }
+          }   @* for cat *@
+
+        }     @* cityTabs *@
+      }       @* for city, cityId *@
+    }         @* citiesBodiesTpl *@
+
+    @* Рендер списков узлов в городах. *@
+    @_ngsBodiesAllTpl() {
+      @for(city <- args.cities; cityId <- city.node.id) {
+        @_ngsBodiesCityTpl(cityId) {
+          @for(cat <- city.cats) {
+            @_nodesTabContTpl(cat.name, cityId, catId = cat.id) {
+              @for(an <- cat.nodes; nodeId <- an.node.id) {
+
+                @_slideBlkTitleTpl(
+                  isOpen  = false,
+                  jsSlide = false,
+                  "id" -> (NODE_ROW_ID_PREFIX + nodeId),
+                  Nodes.ATTR_NODE_ID -> nodeId
+                ) {
+                  @if( args.busyAdvs.get(nodeId).isEmpty ) {
+                    @defining( args.adnId2formIndex.get(nodeId) ) { midOpt =>
+                      <label>
+                        @_checkBoxTpl(
+                          "id"      -> (NODE_CHECK_BOX_ID_PREFIX + nodeId),
+                          "name"    -> s"node[${midOpt.get}].advertise",
+                          "value"   -> false
+                        )
+                        @_checkBoxTitleTpl() {
+                          @an.node.meta.basic.name
+                        }
+                      </label>
+                      <input type="hidden" name="node[@midOpt].adnId" value="@nodeId"/>
+                      <a class="slide-block_info-btn js-btn" href="@routes.LkBill2._rcvrInfoWnd(nodeId)">i</a>
+                    } @* midOpt *@
+                  } else {
+                    @_checkBoxTitleTpl() {
+                      @an.node.meta.basic.name
+                    }
+                    <span class="ft-S light-gray"> (@messages("advertised"))</span>
+                  }
+                } @* slideBlkTitleTpl *@
+
+              }   @* for an in nodes *@
+            }     @* _nodesTabTpl *@
+          }       @* cat in cats *@
+        }         @* _ngsBodiesCityTpl *@
+      }           @* city *@
+    }             @* _ngsBodiesAllTpl *@
+
+  } @* adv-management_left-bar *@
+
+
+  @* Правая колонка содержит виджет работы с датами. *@
+  @_barTpl(MHands.Right) {
+
+    @* Даты (период) размещения. *@
+    @_minorTitleTpl() {
+      @messages("Date.choosing")
+    }
+
+    @* Инфа о текущем размещении. *@
+    @period._contTpl() {
+      @period._formTpl( args.af(PERIOD_FN), args.advPeriodsAvail )
+      @for(v <- args.af.value) {
+        @period._reportTpl(v.period)
+      }
+    }
+
+  }
+
+}
+

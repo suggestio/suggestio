@@ -1,0 +1,47 @@
+@(args: mbill.ILkBillNodeTplArgs)(implicit ctx: Context)
+
+@* Страница с информацией по биллингу для узла рекламной сети. *@
+@import ctx._
+@import util.TplDataFormatUtil._
+@import datetime._
+@import lk.dsl._
+@import dsl._
+
+@billingBaseTpl(
+  title         = messages("Billing"),
+  mnode         = args.mnode,
+  rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
+) {
+
+  @for( mbb <- ctx.data.mUsrBalances) {
+    @_delimTpl()
+
+    @_moneyCntTpl() {
+      @_moneyTpl("all", messages("Total.funds")) {
+        @formatPrice(mbb.price.amount + mbb.blocked, mbb.price.currency)
+      }
+      @_moneyTpl("available", messages("Available.funds")) {
+        @formatPrice(mbb.price)
+      }
+      @_moneyTpl("locked", messages("Blocked")) {
+        @formatPrice(mbb.blocked, mbb.price.currency)
+      }
+    }
+
+  }
+
+  @* Посуточная тарифная сетка текущего узла-ресивера. Если не ресивер, то в шаблон придёт пустой список. *@
+  @for(dailyTfArgs <- args.dailyTfArgs) {
+
+    @_minorTitleTpl() {
+      @messages("My.node.tariff.rate")
+    }
+
+    @_delimTpl()
+
+    @_tariffCntTpl() {
+      @_dailyTfTpl(dailyTfArgs)
+    }
+  }
+
+}

@@ -1,0 +1,49 @@
+@(af: Form[MNode], ncpf: Form[msys.NodeCreateParams])(implicit ctx: Context)
+
+@* Страница с формой создания нового узла рекламной сети. *@
+@import ctx._
+@import helper._
+
+@formAfter = {
+  <table class="input-w __size-L">
+    @checkbox(
+      ncpf("billInit"),
+      '_label -> "Инициализировать биллинг?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(
+      ncpf("extTgsInit"),
+      '_label -> "Создать дефолтовые цели размещения (соц.сети)?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(
+      ncpf("withDfltMads"),
+      '_label -> "Создать дефолтовые рекламные карточки?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
+
+  <table class="input-w __size-L">
+    @inputText(
+      af("id"),
+      '_label -> "Принудительный id узла",
+      'title  -> ("Обязательный для некоторых типов узлов (" + (for(mnt <- MNodeTypes.valuesT.iterator if !mnt.randomIdAllowed) yield messages(mnt.plural)).mkString(", ") + "). Иначе -- оставить пустым.")
+    )
+  </table>
+}
+
+@adnBase("Создать новый ADN-узел") {
+
+  @_adnNodeFormTpl(
+    af	      = af,
+    call      = routes.SysMarket.createAdnNodeSubmit(),
+    btnText   = messages("Create"),
+    formAfter = Some(formAfter)
+  )
+}

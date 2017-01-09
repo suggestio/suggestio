@@ -1,0 +1,33 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон для ext.adv-событий об ошибке при обработке цели. *@
+
+@import lk.event._
+@import ctx._
+@import io.suggest.adv.ext.view.RunnerPage._
+
+@_errorEvtBase(rargs) {
+
+  @rargs.errors.map { err =>
+    <p class="event_err-text">@messages("e.adv.ext.service.startup.error")
+      @rargs.extServiceOpt.map { esrv => &quot;@messages(esrv.nameI18N)&quot;}:
+      @messages(err.msg, err.args: _*)
+    </p>
+  }
+
+  <div>
+    @messages("Following.targets.skipped"):
+    <ul>
+      @rargs.advExtTgs.map { esrv =>
+        <li>
+          <a href="@esrv.url" target="_blank">@esrv.name.getOrElse(esrv.url)</a>
+        </li>
+      }
+    </ul>
+  </div>
+
+  @rargs.errors.map { err =>
+    @_techErrorTpl(err)
+  }
+
+}

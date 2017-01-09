@@ -1,0 +1,11 @@
+@(cityId: String)(content: Html)
+
+@* Контейнер для табов нод в рамках города. *@
+
+@import io.suggest.adv.direct.AdvDirectFormConstants._
+
+<div id="@CITY_TAB_BODY_PREFIX@cityId"
+     class="select-tab_lst js-select-type_w"
+     @ATTR_CITY_ID="@cityId" >
+  @content
+</div>

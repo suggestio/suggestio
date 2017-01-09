@@ -1,0 +1,85 @@
+@(args: adv.geo.tag.IForAdTplArgs)(implicit ctx: Context)
+
+@* Шаблон формы размещения карточки в тегах с географией. *@
+
+@import ctx.{messages, request}
+@import helper._
+@import util.FC.tdRadialFc
+@import lk.tag.edit._
+@import lk.adv.widgets._
+@import io.suggest.adv.geo.AdvGeoConstants._
+@import io.suggest.adv.AdvConstants._
+@import io.suggest.common.maps.MapFormConstants.MAP_FN
+@import lk.dsl._
+@import views.html.stuff._labelTpl
+@import views.html.stuff.geo.maps._
+
+@form( CSRF(routes.LkAdvGeo.forAdSubmit(args.mad.id.get)), 'id -> FORM_ID) {
+
+  @_advSuTpl()
+
+
+  @* Левая колонка. *@
+  @_barTpl(MHands.Left) {
+
+    @* Отдельная галочка для размещения на главном экране. *@
+    @defining(args.form(OnMainScreen.FN)) { omsf =>
+      @_labelTpl() {
+        <input type="checkbox"
+               id="@OnMainScreen.ID"
+               name="@omsf.name"
+               value="true"
+               @if(omsf.value.nonEmpty){checked="checked"}
+        />
+        <span class="styled-checkbox"></span>
+        @messages("Adv.on.main.screen")
+      }
+    }
+    <br/><br/>
+
+    @* Теги *@
+    @_minorTitleTpl() {
+      @messages("Tags.choosing")
+    }
+
+    @* js-форма добавления тегов. *@
+    @_addFormTpl(args.form)
+
+    @* Кнопка добавления тега. Вне формы, т.к. форма перезаписывается после сабмитов. *@
+    @_addBtnTpl()
+
+    @* Рендер сохранённых тегов. *@
+    @_existTagsContTpl() {
+      @_tagsExistTpl(args.form)
+    }
+
+  }
+
+
+  @* Даты (период) размещения. *@
+  @_barTpl(MHands.Right) {
+    @_minorTitleTpl() {
+      @messages("Date.choosing")
+    }
+
+    @period._contTpl() {
+      @period._formTpl(args.form(PERIOD_FN), args.advPeriodsAvail)
+      @for(v <- args.form.value) {
+        @period._reportTpl(v.period)
+      }
+    }
+  }
+
+
+  @* Для сохранения и восстановления состояния карты при POST нужны hidden-поля в рамках формы. *@
+  @defining( args.form(MAP_FN) ) { rf =>
+
+    @* Инпуты состояния карты. *@
+    @_mapInputsStateTpl( rf(STATE_FN) )
+
+    @* Инпуты круга размещения. *@
+    @_mapInputsCircleTpl( rf(CIRCLE_FN) )
+
+  }
+
+}

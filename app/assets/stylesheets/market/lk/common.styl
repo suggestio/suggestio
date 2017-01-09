@@ -1,0 +1,2422 @@
+.clear
+  clear: both
+
+siomBlueColor = #07a1ca
+
+screen1024 = 'screen and (max-width: 1024px)'
+screen768 = 'screen and (max-width: 767px)'
+lk_sprite = url('/vassets/images/market-lk-sprite.png') no-repeat left top
+
+.colorpicker
+  z-index: 10000000!important
+
+
+i
+ font-style: italic
+
+u
+ text-decoration: underline
+
+blockquote
+ padding-left: 30px
+
+ul
+  padding-left: 30px
+
+li
+  list-style: disc
+
+.ovh
+  overflow                    hidden
+
+.lk
+  font-size: 14px
+  font-family: 'Arial'
+  color: #676666
+
+
+.color-block
+  float   left
+  margin-left  10px
+  width   24px
+  height  24px
+  cursor  pointer
+
+  &_lst
+    float left
+    margin-left 20px
+    overflow hidden
+    padding-left 15px
+    border-left 1px solid #cbcbcb
+
+.input-w.__pass
+
+  td
+    padding: 5px 0
+
+  .input
+    width: 278px
+
+  .pass-text
+    vertical-align: middle
+    font-size: 12px
+    font-family: 'Arial'
+    color: #b4b4b4
+    width: 250px
+    padding-left: 45px
+
+
+
+@import "../reset"
+@import "../mixins"
+@import "fonts"
+@import "base"
+
+@import "ads-list"
+@import "buttons"
+@import "inputs"
+
+
+.sm-note
+  position: relative
+  padding: 10px 0px
+  font-size: 12px
+  color: #959595
+
+.sm-note__q-mark
+  color: #208bae
+  font-family: Arial
+  font-size: 13px
+  padding: 0px
+  cursor: help
+  border-bottom: 1px #208bae solid
+
+.sm-note__message
+  display: none
+
+.sm-note__link
+  color: #5088aa
+
+.sm-light-text
+  color: #959595
+
+.g-sm-strong
+  font-size: 14px
+  font-weight: bold
+
+.superuser-link
+  font-size: 10px
+  color: #999
+
+.g-price
+  font-family: 'PT Sans Narrow','sans-serif'
+  font-size: 24px
+  color: #676666
+
+.sm-large-button
+  font-family: 'pf-din-comp-pro-medium'
+  border: 1px #9c9c9c solid
+  color: #676666
+  text-decoration: none
+  font-size: 30px
+  display: inline-block
+  border-radius( 4px )
+
+  span
+    border-radius( 4px )
+    padding: 4px 15px 0px 15px
+    display: inline-block
+    background: #e2e1e1
+    border-bottom: 1px #cbcbcb solid
+    border-top: 1px #f7f7f7 solid
+    text-shadow( 1px 1px 1px #fff )
+
+
+.sm-large-button:hover
+  color: #4f88a9
+
+.sm-large-button:active
+  color: #676666
+
+  span
+    background: #cfcfcf
+    box-shadow(inset 0px 0px 14px #a9a9a9)
+
+.sm-large-button_disabled
+  opacity: 0.5
+  cursor: default
+
+.sm-large-button_disabled:hover
+  color: #676666
+
+.sm-large-button_disabled:active
+  color: #676666
+
+  span
+    background: #e2e1e1
+    box-shadow: none
+
+
+/* Разные окошки, которые нужно отображать поверх всего */
+.lk-overlay-data
+  display: none
+  position: fixed
+  left: 0px
+  top: 0px
+  width: 100%
+  height: 100%
+  z-index: 10000
+  overflow-y: scroll
+  background: rgba(0, 0, 0, 0.6)
+  text-align: center
+
+.lk-overlay-data__window
+  width: 700px
+  margin-top: 50px
+  margin-bottom: 50px
+  background: #e1e1e1
+
+/* Окошко для кадрирования картинок */
+.market-crop-tool__container
+  margin: 0 auto
+  border: 1px #ccc solid
+  overflow: hidden
+  position: relative
+  cursor: move
+
+/* Мелкая ссылка */
+.lk-small-link
+  font-size: 12px
+
+.lk-small-link_gray
+  color: #333
+
+/* Инпут для загрузки картинки */
+.lk-file-input
+  position: relative
+  height: 30px
+  display: inline-block
+
+.lk-file-input__div
+  cursor: pointer
+  position: absolute
+  left: 0px
+  top: 0px
+  color: #959595
+  font-size: 12px
+  border: 1px #b2b2b2 solid
+  border-radius( 20px )
+
+.lk-file-input__div-inner
+  cursor: pointer
+  border-top: 1px #fff solid
+  border-radius( 20px )
+  padding: 4px 10px
+  width: 160px
+  text-align: center
+  background: #e2e2e2
+
+  background: -moz-linear-gradient(top,  #efefef 0%, #e2e2e2 100%)
+  background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#efefef), color-stop(100%,#e2e2e2));
+  background: -webkit-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: -o-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: -ms-linear-gradient(top,  #efefef 0%,#e2e2e2 100%)
+  background: linear-gradient(to bottom,  #efefef 0%,#e2e2e2 100%)
+
+.lk-file-input:hover
+
+  .lk-file-input__div-inner
+    color: #2e2e2e
+    background: #f6f6f6
+
+.lk-file-input:active
+
+  .lk-file-input__div-inner
+    background: -moz-linear-gradient(bottom,  #efefef 0%, #e2e2e2 100%)
+    background: -webkit-gradient(linear, left bottom, left top, color-stop(0%,#efefef), color-stop(100%,#e2e2e2));
+    background: -webkit-linear-gradient(bottom,  #efefef 0%,#e2e2e2 100%)
+    background: -o-linear-gradient(bottom,  #efefef 0%,#e2e2e2 100%)
+    background: -ms-linear-gradient(bottom,  #efefef 0%,#e2e2e2 100%)
+    background: linear-gradient(to top,  #efefef 0%,#e2e2e2 100%)
+
+.lk-file-input__input
+  opacity: 0
+  cursor: pointer
+
+/* Инструмент для установки выравнивания текста */
+.align-editor__button
+  background: #e0e0e0 url('/vassets/images/align-editor-sprite.png') no-repeat 4px 6px
+  width: 25px
+  height: 23px
+  float: left
+  border-left: 1px #f5f5f5 solid
+  border-right: 1px #cbcbcb solid
+  cursor: pointer
+
+.align-editor__button_active
+  background-color: #d6d3d3
+
+.align-editor__button_center
+  background-position: -23px 6px
+
+.align-editor__button_right
+  background-position: -50px 6px
+
+/* Поля ввода */
+.lk-text-field
+  border: 1px #b2b2b2 solid
+  padding: 1px
+
+  div
+    border-top: 1px #d3d3d3 solid
+    border-left: 1px #fbfbfb solid
+    border-right: 1px #fbfbfb solid
+    padding: 10px 15px
+    background: #fff
+
+    input,
+    textarea
+      width: 100%
+      outline: none
+
+.lk-color-select
+  width: 100px
+
+.lk-color-select__label,
+.lk-color-select__color
+  float: left
+
+.lk-color-select__label
+  padding-top: 6px
+  width: 54px
+  color: #959595
+  font-size: 12px
+  font-family: Arial
+
+.lk-color-select__label_hidden
+  display: none
+
+.lk-color-select__color
+  cursor: pointer
+  position: relative
+  width: 27px
+  height: 27px
+  border: 1px #b2b2b2 solid
+
+.lk-color-select__color_custom
+  div
+    position: absolute
+    left: 0px
+    top: 0px
+    width: 27px
+    height: 27px
+    background: lk_sprite
+    background-position: left -190px
+
+.lk-field-w-tools
+  position: relative
+
+.lk-field-w-tools__tools
+  background: #dad9d9
+  width: 100%
+
+/* Field tools */
+
+.js-mvbl
+  cursor: move
+
+.lk-field-tools__top-white-line
+  background: #eaeaea
+  height: 1px
+  width: 100%
+
+.lk-field-tools__inner
+  display table
+
+.lk-field-tools__editor
+  display table-cell
+  vertical-align middle
+  height 30px
+  padding 0px 7px
+  color: #959595
+
+  select
+    padding 0 5px
+    border  0
+    font-size 12px
+    color #000
+    background-color white
+
+.lk-field-tools__editor.lk-color-select
+  width: 30px
+
+.lk-field-w-tools__field
+  position: relative
+
+
+.lk-field-w-colorpicker__left,
+.lk-field-w-colorpicker__right 
+  float: left
+
+.lk-field-w-colorpicker__right
+  padding-left: 20px
+
+.lk-fieldeset_wide
+  width: 360px
+
+/* Общие стили */
+.lk-edit-form__block
+  margin-bottom: 10px
+
+.lk-edit-form__block_title
+  background: #dad9d9
+  color: #676666
+  font-weight: bold
+
+  .js-g-slide-toggle
+    margin: 7px 11px
+
+  .js-close-btn
+    margin-top: 7px
+    margin-right: 11px
+
+.attention-icon
+  display: block
+  position: absolute
+  left: -50px
+  top: 0
+  background-image: url('/vassets/images/market/lk/attention-icon.png')
+  background-repeat: no-repeat
+  width: 31px
+  height: 11px
+  padding: 10px 0
+  text-align: center
+  text-shadow: none
+  font-size: 12px
+  line-height: 16px
+  margin-top: -5px
+  color: white
+
+.lk-edit-form__block_title
+
+  .attention-icon
+    display: none
+
+.lk-edit-form__block_title.attention
+  position: relative
+  background-color: #e24a4a
+  color: white
+
+  .attention-icon
+    display: block
+
+.lk-edit-form__block_title_span
+  display: inline-block
+  padding: 7px 11px
+
+.lk-edit-form__block_body
+  background: #efefef
+  box-shadow(0px 1px 0px 0px #acadad)
+
+  .lk-edit-form__block_body
+    box-shadow: none
+
+.lk-edit-form__block_body_inner
+  padding: 10px 22px
+  overflow: hidden
+
+.lk-h2
+  color: #676666
+  font-size: 14px
+  font-weight: bold
+  padding: 10px 0px
+
+/* Список блоков в виде иконок */
+.lk-edit-form__blocks-list-icons
+  padding: 0px
+
+.blocks-list-icons__single-icon
+  float: left
+  cursor: pointer
+  background: #efefef
+  width: 60px
+  height: 60px
+  margin-right: 10px
+  margin-bottom: 15px
+  border: 1px transparent solid
+  background-image: url('/vassets/images/block-icons-sprite.png')
+  background-repeat: no-repeat
+
+.blocks-list-icons__single-icon_active
+  cursor: default
+  border-color: #a2a2a2
+  background-color: #e1e1e1
+  box-shadow( inset 0px 2px 3px #a8acaf )
+
+.block-list-icon-1
+  background-position: left -959px
+
+.block-list-icon-2,
+.block-list-icon-7
+  background-position: left -1039px
+
+.block-list-icon-3
+  background-position: left -879px
+
+.block-list-icon-4
+  background-position: left -1599px
+
+.block-list-icon-5
+  background-position: left -1359px
+
+.block-list-icon-6
+  background-position: left -1439px
+
+.block-list-icon-8
+  background-position: left -639px
+
+.block-list-icon-9
+  background-position: left -799px
+
+.block-list-icon-10
+  background-position: left -79px
+
+.block-list-icon-11
+  background-position: left -160px
+
+.block-list-icon-12
+  background-position: left -239px
+
+.block-list-icon-13
+  background-position: 0px -1519px
+
+.block-list-icon-14
+  background-position: 0px -1199px
+
+.block-list-icon-15
+  background-position: 0px -400px
+
+.block-list-icon-16
+  background-position: 0px -1680px
+
+.block-list-icon-17
+  background-position: left -1280px
+
+.block-list-icon-18
+  background-position: 0px -480px
+
+.block-list-icon-19
+  background-position: 0px -1120px
+
+.block-list-icon-20
+  background-position: 0px -1760px
+
+.block-list-icon-21
+  background-position: 0px -1840px
+
+.block-list-icon-22
+  background-position: 0px -2000px
+
+.block-list-icon-23
+  background-position: 0px -1919px
+
+.block-list-icon-24
+  background-position: 0px -558px
+
+.lk-ad-block-edit-form
+  padding-top 15px
+
+/* Блок с превьюшкой и редактором блока */
+.lk-ad-block-edit-form__preview
+  width: 340px
+  min-height: 100px
+  float: left
+
+.lk-ad-block-edit-form__preview_container
+  /*background: url('/vassets/images/ld-ad-block-size-grid.png') no-repeat left top*/
+  float: left
+  min-height: 140px
+  min-width: 140px
+
+  .sio-mart__single-offer
+    position: relative
+
+
+.lk-ad-block-edit-form__editor
+  overflow  hidden
+
+/* Блока редактора блока с полями ввода */
+.edit-ad_block-field
+  margin  20px 0
+  clear both
+
+  &.__width,
+  &.__height
+    float left
+    margin-top 0
+    width 200px
+
+  &.__bgImg
+    margin-top 0
+    margin-bottom 15px
+    overflow  hidden
+    clear none
+
+  &.__title
+    margin 15px 0
+
+.ad-block-editor__fieldset_label
+  display: block
+  padding: 5px 0px 5px 0px
+  color: #838383
+  font-family: Arial
+  font-size: 12px
+  font-weight: bold
+
+.lk-file-field_choose-color-pre-text
+  position relative
+  margin 10px 0
+  line-height 10px
+  color #cbcbcb
+  text-align center
+
+  &:before,
+  &:after
+    position absolute
+    top 50%
+    transform translate3d(0,-50%,0)
+
+    width 45%
+    height 1px
+
+    content " "
+    font-size 10px
+    background-color #cbcbcb
+
+  &:before
+    left 0
+
+  &:after
+    right 0
+
+.lk-file-field_choose-color-w
+  display table
+  width 100%
+
+.lk-file-field_choose-color-btn-w,
+.lk-file-field_choose-color-btn-t
+  display table-cell
+  vertical-align middle
+
+.lk-file-field_choose-color-btn-w
+  width 140px
+
+.lk-file-field_choose-color-btn-t
+  text-align center
+
+.lk-file-field_choose-color-btn-t
+  color #838383
+  font-size 14px
+
+
+/* Редактор высоты блока */
+.block-height-editor
+  height: 21px
+
+.block-height-editor__button
+  float: left
+  border-top: 1px #c4c4c4 solid
+  border-bottom: 1px #f7f7f7 solid
+  margin-right: 8px
+
+  div
+    width: 22px
+    height: 21px
+    background: #efefef lk_sprite
+    background-position: 4px -165px
+    border: 1px #c4c4c4 solid
+    border-top: 1px #f7f7f7 solid
+    cursor: pointer
+
+.block-height-editor__button:hover
+  div
+    background-position: -40px -165px
+
+.block-height-editor__button_increase
+  div
+    background-position: -18px -165px
+
+.block-height-editor__button_increase:hover
+  div
+    background-position: -62px -165px
+
+/***********************/
+/* Размещение карточек */
+/***********************/
+.advs-info-block
+  padding: 0px
+
+.advs-info-block__section
+  border-right: 1px #cccccb solid
+  border-left: 1px #f8f8f8 solid
+  float: left
+  margin: 20px 0px
+  font-size: 12px
+  padding: 0px 20px
+
+.advs-info-block__section_left
+  border-left: 0px
+  width: 242px
+  padding-left: 30px
+
+.advs-info-block__section_center
+  width: 274px
+
+.advs-info-block__section_right
+  width: 160px
+  border-right: 0px
+
+.advs-info-block__price
+  font-family: 'PT Sans Narrow','sans-serif'
+  font-size: 24px
+  color: #676666
+
+.advs-form-block
+  padding: 27px 30px
+
+.advs-form-block__tabs
+  border-bottom: 3px #208bae solid
+
+.advs-form-block__tabs-single-tab
+  cursor: pointer
+  background: #dad9d9
+  font-family: Arial
+  font-size: 14px
+  font-weight: bold
+  padding: 17px 26px
+  color: #676666
+  display: block
+  float: left
+  margin-right: 5px
+
+.advs-form-block__tabs-single-tab_active
+  cursor: default
+  background: #208bae
+  color: #e1e1e1
+
+
+/*************************/
+/* Предпросмотр карточки */
+/*************************/
+.ad-full-preview
+  position: relative
+  width: 624px
+  margin: 0px auto
+  padding: 20px 0px
+
+  .sio-mart-showcase
+    position: relative
+
+.ad-full-preview__close-cross
+  position: absolute
+  right: -40px
+  top: 20px
+  width: 24px
+  height: 27px
+  cursor: pointer
+  background: url('/vassets/images/market/ad-form-popup-close-cross.png')
+
+
+/*********************************/
+/* Статусы рассмотрения карточек */
+/*********************************/
+.advs-statuses__status
+  position: relative
+  padding: 5px 0px 5px 30px
+
+.advs-statuses__status-icon
+  position: absolute
+  left: 0px
+  top: 0px
+  width: 30px
+  height: 30px
+  background: lk_sprite
+
+.advs-statuses__status-icon_approved
+  background-position: -340px 3px
+
+.advs-statuses__status-icon_pending
+  background-position: -340px -90px
+
+.advs-statuses__status-icon_declined
+  background-position: -340px -43px
+
+.advs-statuses_in-popup
+  padding-left: 30px
+  color: #676666
+  font-size: 12px
+
+.advs-statuses__status_in-popup
+  display: inline-block
+  padding: 10px 0px 10px 30px
+
+.advs-statuses__status__date
+  color: #959595
+
+.advs-statuses__transactions-btn
+  margin: 20px 0
+
+/* Блок с подтверждением размешения карточки */
+
+.adv-submit-block
+  text-align: center
+  padding: 20px 0px
+  font-size: 12px
+
+.adv-submit-block__button
+  margin: 20px auto
+
+.adv-submit-block__price
+  color: #000
+  font-size: 30px
+  padding: 10px 0px
+
+/* Список источников / приемников */
+.advs-nodes
+  border: 1px #b2b2b2 solid
+
+.advs-nodes__node
+  position: relative
+  padding: 12px 16px
+  background: #fff
+  border-bottom: 1px #cbcbcb solid
+
+.advs-nodes__node:last-child
+  border-bottom: none !important
+
+.advs-nodes__node_even
+  background: #f5f5f5
+
+.advs-nodes__node_active
+  background: #d6fecf
+
+.advs-nodes_lk-mode
+  margin: 25px 0
+
+.advs-nodes__node-link
+  font-family: Arial
+  font-weight: bold
+  color: #4f88a9
+  text-decoration: none
+
+.advs-nodes__node-link:hover
+  text-decoration: underline
+
+.advs-nodes__hat
+  color: #efefef
+  position: relative
+  padding: 12px 16px
+  background: #cbcbcb
+  border-bottom: 1px #b2b2b2 solid
+
+.advs-nodes__node-options
+  position: absolute
+  width: 200px
+  right: 20px
+  top: 12px
+  font-size: 12px
+  color: #676666
+  padding-bottom: 20px
+
+.advs-nodes__node-options_hidden
+  display: none
+
+.advs-nodes__node-dates
+  color: #959595
+  font-family: Arial
+  font-size: 12px
+  padding: 12px 0px 5px 6px
+
+.advs-nodes__node-dates_hidden
+  display: none
+
+.advs-node-dates__elt
+  float: left
+  padding: 5px 10px
+.advs-node-dates__input
+  width: 70px
+  border: 1px #b2b2b2 solid
+  color: #676666
+
+.lk-adv-reqs-count
+  position: relative
+  float: right
+  left: auto
+  right: 0
+  top: 0
+  margin-left: 10px
+
+
+.advertising-management_td
+  vertical-align: middle
+  padding: 10px 25px
+
+.advertising-requests_text
+  float: left
+  width: 150px
+  padding-right: 50px
+
+  p
+    margin: 5px 0
+
+.advertising-requests_items
+  overflow: hidden
+
+  .sm-block
+    position: relative
+    margin: 0 auto
+
+.advertising-requests_item
+  float: left
+  margin-bottom: 20px
+  margin-right: 40px
+
+  .ads-list-block__link:hover
+    background-color: black
+    background-image: url('/vassets/images/market/lk/info-icon.png')
+    background-repeat: no-repeat
+    background-position: 70px 50px
+
+.line-gray
+  height: 1px
+  background: #9a9b9b
+
+.adv-req-wind
+  text-align: center
+
+  &_price
+    color: #23313d
+    font-family: 'PT Sans Narrow','sans-serif'
+
+.daily-mmps-window
+  width: 908px !important
+  margin-left: -454px !important
+
+
+.login-popup__submit-wrap
+  margin-top: 40px
+  text-align: center
+
+.login-popup__recover-password
+  display         block
+  margin-top      30px
+  color           #f44040
+  text-align      center
+  text-decoration none
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color           #dc3a36
+
+.popup-title
+  padding-bottom: 25px
+  color: #676666
+  font-size: 30px
+  font-family: 'pf-din-comp-pro-medium'
+  text-align: center
+
+.popup-title_without_padding
+  padding: 0
+
+.popup__back-btn
+  display: block
+  background: url('/vassets/images/market/lk/popup-back.png') no-repeat
+  background-position: 0 -67px
+  width: 21px
+  height: 17px
+
+.popup__back-btn:hover
+  background-position: 0 0
+
+.popup__back-btn:active
+  background-position: 0 1px
+
+.lk-field
+  margin-bottom: 10px
+
+.lk-field__name
+  font-family: 'Arial'
+  font-size: 12px
+  line-height: 12px
+  color: #959595
+
+.error-msg
+  color: #e23131
+
+.recover-popup
+  font-family: 'Arial'
+  font-size: 14px
+  color: #959595
+
+.recover-popup__submit-wrap
+  margin-top: 50px
+  text-align: center
+
+.recover-failed-popup__content
+
+  p
+    margin-top: 18px
+    margin-bottom: 18px
+    margin-left: 70px
+
+.error-label
+  overflow: hidden
+
+  &__icon
+    float: left
+    background: url('/vassets/images/market/lk/error-icon.png') no-repeat left center
+    width: 45px
+    height: 46px
+
+  &__title
+    padding-top: 12px
+    padding-left: 15px
+    overflow: hidden
+    font-family: 'Arial'
+    font-size: 18px
+    font-weight: bold
+    color: #e24a4a
+    text-shadow(1px 1px 1px white)
+
+.success-label
+  overflow: hidden
+
+  &__icon
+    float: left
+    background: url('/vassets/images/market/lk/ok.png') no-repeat left center
+    width: 53px
+    height: 49px
+
+  &__title
+    padding-top: 12px
+    padding-left: 15px
+    overflow: hidden
+    font-family: 'Arial'
+    font-size: 18px
+    font-weight: bold
+    color: #48ab38
+    text-shadow(1px 1px 1px white)
+
+  &__adn-invite-accept
+    margin-left: -65px
+    margin-top: 25px
+    margin-bottom: 25px
+
+.wifi-page
+
+  &__left-column
+    float: left
+    width: 350px
+
+  &__mid-column
+    float: left
+    width: 350px
+    margin-left: 20px
+
+  &__right-column
+    float: left
+    margin-left: 20px
+    width: 350px
+
+.visibility-hidden
+  visibility: hidden
+
+.hidden
+  display: none
+
+.quiz__td
+  vertical-align: middle
+
+.quiz__checkbox-wrap
+  padding: 10px 20px
+
+.js-quiz__checkbox
+  margin-right: 15px
+
+.join-success
+  margin-top: 30px
+
+.pargraph_join-success
+  padding-left: 70px
+
+.wave-pattern
+  background: url('/vassets/images/market/lk/wave-pattern.png') repeat !important
+
+.blue-pattern
+  background-color: #23313D !important
+  background-image: url('/vassets/images/market/lk/blue patern_retina.png') !important
+  background-repeat: repeat
+  background-size: 500px 333px !important
+
+
+.about-page
+  margin-bottom: 40px
+  color: white
+  font-family: "helios-thin"
+  font-size: 24px
+  line-height: 24px
+  text-align: center
+
+  &__title
+    font-family: "aa-higherup"
+    font-size: 42px
+    line-height: 40px
+    letter-spacing: 2px
+
+  &__title__big-btn
+    font-size: 48px
+    line-height: 46px
+
+  &__circle-wrap
+    display: inline-block
+    margin: 25px 0
+    padding: 6px
+    background-color: rgba( 107, 126, 133, 0.5)
+    border-radius(50%)
+
+  &__circle
+    display: inline-block
+    padding: 90px 20px 80px
+    width: 232px
+    height: 96px
+    border-radius(50%)
+    border: 1px solid white
+
+.dot
+  background: url('/vassets/images/market/lk/dot.png') no-repeat
+  width: 8px
+  height: 8px
+
+.bot-arrow
+  background: url('/vassets/images/market/lk/bot-arrow.png') no-repeat
+  width: 19px
+  height: 11px
+
+.about-page__dot
+  margin: 0 auto 10px
+
+.about-page__bot-arrow
+  margin: 10px auto 0
+
+.about-page__under-btn
+  font-family: 'Arial'
+  color: #6b7e85
+  font-size: 12px
+
+.submit-wrap
+  overflow: hidden
+  width: 100%
+
+.submit-wrap_padding10
+  padding: 10px 0
+
+.market-base
+  position: relative
+
+.common-login
+  width: 475px
+  margin: 0 auto
+
+.common-login__logo
+  display: block
+  margin: 0 auto
+  background: url('/vassets/images/market/lk/common_login_logo.png') no-repeat
+  width: 120px
+  height: 124px
+
+.common-login__title
+  font-family: 'pf-din-comp-pro-medium'
+  font-size: 30px
+  line-height: 30px
+  text-align: center
+  color: #676666
+  margin-bottom: 15px
+
+.common-login__input
+  margin-left: -120px
+  width: 595px !important
+
+.common-login__password-recover
+  text-align: center
+  padding-left: 0
+
+.common-login__submit-wrap
+  position: relative
+  height: 34px
+
+.common-login__submit
+  position: relative
+  display: inline-block
+  margin: 0 auto
+  padding: 0 15px
+  z-index: 5
+
+.common-login__submit__line
+  position: absolute
+  margin-top: -1px
+  top: 50%
+  left: 0
+
+.contract_invite-form
+  height: 400px
+  padding: 15px
+  overflow-y: scroll
+  overflow-x: hidden
+
+.contract-page
+  overflow: hidden
+
+.contract__h1
+  margin: 15px 0
+  font-size: 20px
+  text-align: center
+
+.contract-widget
+  margin-bottom: 25px
+
+.contract-widget__input
+  margin-right: 10px
+  margin-top: 10px
+  margin-bottom: 10px
+
+@media screen1024
+
+  .about-page
+    font-size: 16px
+
+  .about-page__circle
+    font-size: 24px
+
+  .login-page_content
+    width: 300px
+
+  .login-page__join-adv
+    padding-right: 50px
+
+  .login-page__join-wifi
+    padding-right: 50px
+
+  .copyright-block
+    padding-left: 10px !important
+
+
+
+
+/********************************************************************************************************************/
+/* refactoring to MCSS  TODO убрать все important, когда весь css будет написан по методологии */
+/********************************************************************************************************************/
+
+.color-error
+  color: #e12d2d !important
+
+.color-success
+  color: #48ab38 !important
+
+.color-strong
+  color: #676666
+
+.color-light-strong
+  color: #959595
+
+.color-link
+  color: siomBlueColor
+
+.blue-link
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #007b56
+    border-color: #c6c6c6
+
+.link
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    color: #007b56
+    border-color: #c6c6c6
+
+.submit-w
+  overflow: hidden /* т.к. все внутренние блоки со свойством float */
+  text-align: center
+
+  &.__size-XS
+    padding: 10px 20%
+
+  &.__size-S
+    padding: 25px 20%
+
+  &.__size-M
+    padding: 10px 0
+
+  &.__size-L
+    padding: 25px 0
+
+  &.__size-XL
+    padding: 50px 0
+
+  &.__size-XXL
+    width: 100%
+    padding: 25px 0
+
+  &.__invite-form
+    width: 100%
+    padding-left: 120px
+
+  &.__align-by-inputs
+    padding-left 120px
+
+.paragraph
+  display: block
+
+  &.__size-M
+    margin: 13px 0
+
+  &.__size-L
+    margin: 20px 0
+
+  &.__text-1
+    text-align: center
+
+
+.error-label
+  overflow: hidden
+
+  &_icon
+    float: left
+    width: 45px
+    height: 46px
+    background: url('/vassets/images/market/lk/error-icon.png') no-repeat left center
+
+  &_title
+    padding-top: 12px /* чтобы однострочный текст был по середине иконки */
+    padding-left: 60px
+
+    font-family: 'Arial'
+    font-size: 18px
+    font-weight: bold
+    color: #e24a4a
+    text-shadow(1px 1px 1px white)
+
+  &.__position-def
+    margin-left: -60px
+
+  &.__size-M
+    padding: 25px 0
+
+
+.captcha-table_left
+  vertical-align: bottom
+  width: 180px
+  padding-right: 10px
+
+.captcha-table_right
+  vertical-align: bottom
+  padding-bottom: 10px
+
+.captcha-table_image
+  float: left
+  display: block
+
+.captcha
+  margin    15px 0
+  overflow  hidden
+
+  &_img
+    display block
+    float   left
+    width   200px
+    height  50px
+
+  &_reload-btn
+    float               left
+    margin-left         15px
+    width               29px
+    height              50px
+    cursor              pointer
+
+    background-image    url('/vassets/images/market/new-design/refresh-captcha_retina.png')
+    background-repeat   no-repeat
+    background-size     29px auto
+    background-position 0 9px
+
+    &:hover
+      background-position 0 -47px
+
+    &:active
+      background-position 0 -46px
+
+.lk-field_error-text
+  color: #e24a4a
+  font-family: 'Arial'
+  font-size: 12px
+  line-height: 12px
+  
+.required-icon
+  color: #e23131
+
+/********************************************************************************************************************/
+/* Разделительные линии */
+/********************************************************************************************************************/
+.border-line
+  overflow: hidden
+  width: 100%
+  border-top: 1px solid #cbcbcb
+  border-bottom: 1px solid #eeeeee
+
+  &.__margin-M
+    margin-top: 25px
+
+  &.__vertical
+    width: 0
+    border-left: 1px solid #cbcbcb
+    border-right: 1px solid #eeeeee
+
+  &.__vertical-light
+    width: 0
+    border-left: 1px solid #cbcbcb
+
+  &.__separator
+    margin: 0 50px
+
+
+/********************************************************************************************************************/
+/* Таблицы SioMarket */
+/********************************************************************************************************************/
+.siom-table
+
+  &.__size-XL
+    width: 100%
+
+  &.__size-M
+    margin: 10px 0
+
+  &_vertical-cnt
+    vertical-align: middle
+
+  &_top-cnt
+    vertical-align: top
+
+.table-cell-cnt
+  display: inline-block
+
+  &.__size-XS
+    padding: 10px
+
+  &.__size-S
+    padding: 5px 20px
+
+  &.__size-M
+    padding: 10px 20px
+
+  &.__size-XL
+    width: 100%
+    padding: 10px 20px
+
+  &.__centered
+    text-align: center
+
+th.__bg-head
+  background-color: #dad9d9
+
+
+/********************************************************************************************************************/
+/* Стандартный блок SioMarket */
+/********************************************************************************************************************/
+.siom-block
+  margin-bottom: 10px
+
+  &_title
+    background: #dad9d9
+    padding: 7px 11px
+
+  &_cnt-w
+    background: #efefef
+
+  &_cnt
+    padding: 10px 0
+    overflow: hidden
+
+  &_cnt.__innerVisible
+    overflow: visible
+
+.siom-block-child
+  display: none
+  margin-top: -10px
+
+/********************************************************************************************************************/
+/* Кнопка Свернуть/Развернуть */
+/********************************************************************************************************************/
+.slide-btn
+  display: inline-block
+  cursor: pointer
+  width: 20px
+  height: 20px
+
+  background: url('/vassets/images/market/lk/angle.png') no-repeat
+  background-position: right -115px
+
+  text-decoration: none
+  font-size: 12px
+  line-height: 14px
+  font-family: 'Arial'
+  color: #959595
+
+  &:hover
+    color: #5088aa
+    background-position: right 3px
+
+  &.__js-open
+    background-position: right -176px
+
+    &:hover
+      background-position: right -58px
+
+
+/********************************************************************************************************************/
+/* Всплывающие окна SIoMarket */
+/********************************************************************************************************************/
+.popups-container
+  position    fixed
+  top         0
+  left        0
+  z-index     40
+
+  visibility  hidden
+  width       100%
+  height      100%
+  overflow-y  auto
+  background  rgba(0,0,0,0.5)
+
+  text-align  center
+
+.slider-w
+  position    fixed
+  top         0
+  left        0
+  z-index     40
+
+  width       100%
+  height      100%
+  overflow-y  auto
+  background  rgba(0,0,0,0.5)
+
+  text-align  center
+
+.cards-w
+  position    absolute
+  top         0
+  left        0
+  z-index     40
+
+  visibility  hidden
+  width       100%
+  height      100%
+  overflow-y  auto
+  background  rgba(0,0,0,0.5)
+
+  text-align  center
+
+
+.popup
+  position: relative
+  top: 0
+  z-index: 20000
+  display: inline-block
+  background: #e1e1e1
+
+  &_border
+    height            1px
+    background-color  #d7d7d7
+
+  &.__index
+    background-color  white
+    border-radius(10px)
+
+  &_close
+    opacity             0.6
+    padding             10px
+
+    font-size           20px
+    color               #5c5c5c
+    cursor              pointer
+    text-decoration     none
+    transition(opacity 0.2s ease-in-out 0s)
+
+    &:before
+      content "\e605"
+
+    &:hover
+      opacity 1
+
+  &_success-icon
+    margin-bottom 25px
+
+  &_error-icon
+    margin-bottom 25px
+
+  &_header
+    background: #efefef
+    border-bottom: 1px solid #9a9b9b
+    overflow: hidden
+    padding: 10px
+
+  &_header.__index
+    padding           0
+    background-color  white
+    border-radius(10px 10px 0 0)
+
+  &_header.__card
+    padding           0
+    background-color  white
+    border-bottom     none
+    border-radius(10px 10px 0 0)
+
+  &_footer
+    border-top  1px solid #9a9b9b
+    padding     0 25px
+
+  &._footer.__index
+    background-color  white
+    border-radius(10px 10px 0 0)
+
+  &_cnt
+    padding: 25px
+
+    .sio-mart-showcase
+      position: relative !important
+      height: auto !important
+
+    .dotted-pattern
+      top 0
+
+    .sio-mart-showcase.__wide
+      overflow hidden
+
+      .focused-ad_offer
+        position absolute
+        top 0
+        left 50%
+        transform translate3d(-50%,0,0)
+
+  &_cnt.__with-label
+    padding-left: 85px
+
+  &_cnt.__preview
+    width: 622px
+
+  &_cnt.__text-center
+    text-align: center
+
+  &_cnt.__index
+    min-width 250px
+
+  &_cnt.__index-fix
+    width 250px
+
+  &_t
+    padding-bottom: 25px
+    color: #676666
+    ft(30px)
+    font-family: 'pf-din-comp-pro-medium'
+    text-align: center
+
+  &_t.__index
+    color           #494949
+    font-family     'opensans-light'
+    font-size       16px
+    text-transform  uppercase
+
+  &_t.__inner
+    padding-top: 25px
+
+
+/********************************************************************************************************************/
+/*  Списки SIoMarket */
+/********************************************************************************************************************/
+
+.lst
+
+  &_node
+    display: block
+    padding: 5px 10px
+    margin: 2px 0
+    text-decoration: none
+
+    &:hover
+      background: #efefef
+
+  &_node-name
+    padding-left: 100px
+    color: #23313d
+    font-family: 'PT Sans Narrow'
+
+
+
+/********************************************************************************************************************/
+/* Общие элементы */
+/********************************************************************************************************************/
+
+.abs
+  position: absolute
+
+.f-left
+  float: left
+
+.f-right
+  float: right
+
+
+.categories-select
+  padding 0 10px
+
+.invite-form_description
+  padding-left: 120px
+
+.node-name
+  font-family: 'PT Sans Narrow','sans-serif'
+  padding-right: 20px
+
+.__with-place-icon
+  display: inline-block
+  line-height: 30px
+  background: url('/vassets/images/market/lk/location-icon.png') no-repeat left center
+  padding-left: 30px
+
+.install-script
+
+  textarea
+    height: 250px !important
+    ft(12px !important)
+
+.billing-prop-name
+  width: 100px
+
+.billing-prop-value
+  color: #23313d
+  font-family: 'pt-sans-narrow'
+
+.close
+  display             block
+  width               20px
+  height              20px
+  opacity             0.6
+  padding             10px
+
+  font-size           20px
+  color               #5c5c5c
+  cursor              pointer
+  text-decoration     none
+  transition(opacity 0.2s ease-in-out 0s)
+
+
+.adn-title-buttons
+  position: absolute
+  top: 4px
+  right: 60px
+
+.captcha_image
+  width: 200px
+  height: 50px
+
+.test-version-icon
+  width: 53px
+  height: 31px
+  margin-bottom: 7px
+
+.feedback_phone-text
+  text-align: left
+
+.success-icon
+  display             block
+  height              32px
+  background-image    url('/vassets/images/market/new-design/success_retina.png')
+  background-repeat   no-repeat
+  background-size     32px 32px
+  background-position center center
+
+.error-icon
+  display             block
+  height              32px
+  background-image    url('/vassets/images/market/new-design/error_retina.png')
+  background-repeat   no-repeat
+  background-size     32px 32px
+  background-position center center
+
+.block
+  display block
+
+  &.__margin-M
+    margin  13px 0
+
+  &.__margin-L
+    margin  25px 0
+
+  &.__text-C
+    text-align center
+
+  &.__text-justify
+    text-align justify
+
+.geo-icon
+  width   25px
+  height  25px
+
+.phone-btn
+  display             block
+  width               140px
+  padding-top         100px
+  height              40px
+
+  border              2px solid transparent
+  background-color    #f44040
+  background-image    url('/vassets/images/market/new-design/phone-icon_retina.png')
+  background-size     35px auto
+  background-repeat   no-repeat
+  background-position center 20px
+
+  cursor              pointer
+  color               white
+  text-align          center
+  text-decoration     none
+  border-radius(10px)
+
+.mail-icon
+  min-width           102px
+  min-height          39px
+  background-image    url('/vassets/images/market/new-design/mail-icon_retina.png')
+  background-repeat   no-repeat
+  background-size     102px 103px
+  background-position center 0
+
+  &.__white
+    background-position center -64px
+
+.geolocation-icon
+
+  &:before
+    content "\e604"
+
+.wifi-icon
+
+  &:before
+    content "\e603"
+
+/********************************************************************************************************************/
+/* Главная страница */
+/********************************************************************************************************************/
+
+.index-page
+
+  .body_cnt
+    padding-top 60px
+
+.index-page
+  color       #aaaaaa
+  font-size   14px
+  font-family 'opensans-light'
+
+  &_cnt
+    background-image  url('/vassets/images/market/index/bg_retina.jpg')
+    background-repeat no-repeat
+    background-size   cover
+    text-align        center
+
+  &_color-1
+    color #f44040
+
+  &_title
+    font-size       30px
+    font-family     'opensans-bold'
+    text-transform  uppercase
+    color           white
+    letter-spacing  30px
+    padding-left    30px
+
+  &_logo-link
+    display         inline-block
+    cursor          pointer
+    text-decoration none
+
+  &_logo-image
+    display     block
+    width       101px
+
+  &_adv-btn
+    width   200px
+    margin  50px auto 0
+
+  &_login-btn
+    width   200px
+    margin  25px auto 0
+
+  &_wifi-points
+    margin-top  50px
+
+  &_how-it-works-btn
+    margin  0 auto
+    width   200px
+
+  &_geo
+    margin  40px auto 0
+
+.wifi-points
+
+  &_title
+    font-size       12px
+    letter-spacing  1px
+    color           #929292
+
+  &_lst
+    margin-top    30px
+    margin-bottom 30px
+
+  &_i-w
+    display inline-block
+    width   50px
+    margin  0 15px
+
+  &_i
+    position        relative
+    display         table-cell
+    vertical-align  middle
+    overflow        hidden
+    width           50px
+    height          50px
+
+    cursor          pointer
+    text-decoration none
+    border          2px solid transparent
+    border-radius(50%)
+
+    img
+      display block
+      width   100%
+
+    &:hover
+      border-color      white
+
+    &:active
+
+      .wifi-points_i-hover
+        background-position center 52%
+
+.def-transition
+  -webkit-backface-visibility   hidden
+  -moz-backface-visibility      hidden
+  transition(all 0.2s ease-in-out 0s)
+
+.card
+  position          relative
+  margin            0 auto
+  display           block
+  width             300px
+  background-color  #9e9e9e
+  border-radius(4px)
+
+  &_photo
+    width               100%
+    height              150px
+    background-size     cover
+    background-position center
+
+  &_location
+    position    absolute
+    top         90px
+    padding-top 50px
+    width       100%
+
+    color       white
+    font-size   12px
+    text-align  center
+
+  &_logo-w
+    display inline-block
+    margin  -34px 20px 0
+    -webkit-backface-visibility   hidden
+    -moz-backface-visibility      hidden
+
+  &_logo
+    position        relative
+    display         table-cell
+    vertical-align  middle
+    overflow        hidden
+    width           60px
+    height          60px
+
+    text-decoration none
+    border          4px solid white
+    -webkit-background-clip       padding-box
+    background-clip               padding-box
+    -webkit-backface-visibility   hidden
+    backface-visibility      hidden
+    border-radius(50%)
+
+    img
+      display block
+      width   100%
+
+  &_title
+    position        absolute
+    top             160px
+    width           100%
+
+    font-family     'helios-thin'
+    font-size       16px
+    text-transform  uppercase
+    text-align      center
+    color           #ffffff
+
+  &_town
+    margin        20px 0
+    font-size     12px
+    text-align    center
+    color         #3d3d3d
+
+  &_prop
+    overflow      hidden
+    padding       10px 30px
+    border-top    1px solid #aaaaaa
+    text-align    left
+
+  &_prop.__last
+    border-bottom 1px solid #aaaaaa
+
+  &_prop-name
+    float         left
+    margin-right  10px
+
+    display       block
+    overflow      hidden
+    width         150px
+
+    font-size     12px
+    color         #494848
+
+  &_prop-value
+    display       block
+    overflow      hidden
+
+    font-size     18px
+    color         #ffffff
+    text-align    right
+    text-overflow ellipsis
+
+  &_type
+    margin-top  10px
+    font-size   14px
+    color       #ffffff
+    text-align  center
+
+  &_icons
+    margin-top  10px
+    color       white
+    font-size   20px
+
+
+@media screen1024
+
+  .slider-w
+    position                    absolute
+    top                         0
+    bottom                      0
+    height                      auto
+    -webkit-overflow-scrolling  touch
+
+  .popups-container
+    display                     none
+    position                    absolute
+    top                         0
+    bottom                      -30px
+    height                      auto
+    -webkit-overflow-scrolling  touch
+
+  .flex
+    width                       100%
+    -webkit-box-orient          vertical
+    -webkit-box-align           stretch
+    -webkit-box-flex            1
+    display                     -webkit-flex
+    -webkit-justify-content     center
+
+  .overflow-scrolling
+    -webkit-overflow-scrolling  touch
+    overflow-y                  scroll
+    margin-bottom               -1px
+
+@media screen768
+
+  .body_cnt
+    padding-top  0
+
+  .index-page_title
+    letter-spacing  10px
+    padding-left    10px
+
+  .index-page_adv-btn
+    margin-top  40px
+
+  .footer_wifi
+    display none
+
+  .card
+    width 300px
+
+  .copyright-block
+    display none
+
+
+
+/********************************************************************************************************************/
+/* Страница регистрации */
+/********************************************************************************************************************/
+.phone-visible
+  display none
+
+.adv-req-page
+  overflow        hidden
+  padding-top     20px
+  padding-bottom  80px
+
+  &_left
+    color       white
+    overflow    hidden
+    padding-top 80px
+    text-align  center
+
+  &_welcome
+    margin-top      50px
+    font-size       16px
+    text-transform  uppercase
+
+  &_text
+    margin-top  25px
+
+  &_btn-lst
+    margin-top  50px
+    display table
+    width 100%
+    border-spacing 10px
+
+  &_btn-w
+    display table-cell
+
+  &_phone
+    float       right
+    display     inline-block
+    width       120px
+    height      120px
+    padding-top 90px
+    box-sizing  border-box
+
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNS4wLjIsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iMzUuMDE2cHgiIGhlaWdodD0iMTc4cHgiIHZpZXdCb3g9Ii0wLjUxNiAtMC41IDM1LjAxNiAxNzgiIGVuYWJsZS1iYWNrZ3JvdW5kPSJuZXcgLTAuNTE2IC0wLjUgMzUuMDE2IDE3OCINCgkgeG1sOnNwYWNlPSJwcmVzZXJ2ZSI+DQo8Zz4NCgk8cGF0aCBmaWxsPSIjRUQzNjQ1IiBkPSJNMjMuNDg0LTAuNWgtMTNjLTYuMDY1LDAtMTEsNS4wMTgtMTEsMTEuMDgzdjQyYzAsNi4wNjUsNC45MzUsMTAuOTE3LDExLDEwLjkxN2gxM2M2LjA2NSwwLDExLTQuOTM1LDExLTExDQoJCXYtNDJDMzQuNDg0LDQuNDM1LDI5LjU1LTAuNSwyMy40ODQtMC41eiBNMzIuNTgzLDUyLjY2N2MwLDQuOTYzLTQuMTM2LDguODMzLTkuMDk5LDguODMzaC0xM2MtNC45NjIsMC05LTQuMDM3LTktOXYtNDINCgkJYzAtNC45NjIsNC4wMzgtOSw5LTloMTNjNC45NjIsMCw5LjA5OSw0LjIwNCw5LjA5OSw5LjE2N1Y1Mi42Njd6Ii8+DQoJPHBhdGggZmlsbD0iI0VEMzY0NSIgZD0iTTIzLjQ4NCw3LjVoLTEzQzUuNzc0LDcuNSwzLjUsOS45MTUsMy41LDE0LjYyNXYyMy40MjRjMCw1LjI5LDIuNjY3LDguNDUxLDYuOTg0LDguNDUxaDEzDQoJCWM0LjMxOCwwLDctMy4yODYsNy04LjU3NlYxNC41QzMwLjQ4NCw5Ljc5LDI4LjE5NSw3LjUsMjMuNDg0LDcuNXogTTI4LjUsMzcuODgzYzAsMS45NzctMC41MDMsNi42MTctNS4wMTYsNi42MTdoLTEzDQoJCWMtNC41MTMsMC01LTQuNTk5LTUtNi41NzZWMTQuNWMwLTMuNjQ1LDEuMzU1LTUsNS01aDEzYzMuNjQ1LDAsNS4wMTYsMS4zMTMsNS4wMTYsNC45NThWMzcuODgzeiIvPg0KCTxwYXRoIGZpbGw9IiNFRDM2NDUiIGQ9Ik0xNi45ODQsNTAuNWMtMS45MywwLTMuNDAxLDEuNTI5LTMuNDAxLDMuNDU4czEuNDcxLDMuNTQyLDMuNDAxLDMuNTQyczMuNS0xLjU3LDMuNS0zLjUNCgkJUzE4LjkxNCw1MC41LDE2Ljk4NCw1MC41eiBNMTcuMDQyLDU1LjU4M2MtMC44MjcsMC0xLjU1Ny0wLjc1Ni0xLjU1Ny0xLjU4M3MwLjY3My0xLjUsMS41LTEuNXMxLjUsMC42NzMsMS41LDEuNQ0KCQlTMTcuODY5LDU1LjU4MywxNy4wNDIsNTUuNTgzeiIvPg0KPC9nPg0KPGc+DQoJPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTIzLjQ4NCwxMTMuNTEyaC0xM2MtNi4wNjUsMC0xMSw1LjAxOC0xMSwxMS4wODR2NDEuOTQ2YzAsNi4wNjQsNC45NSwxMC45NTgsMTEuMDE2LDEwLjk1OGgxMw0KCQljNi4wNjUsMCwxMC45ODQtNC45MjMsMTAuOTg0LTEwLjk4OHYtNDJDMzQuNDg0LDExOC40NDYsMjkuNTUsMTEzLjUxMiwyMy40ODQsMTEzLjUxMnogTTMyLjU4MywxNjYuNjc4DQoJCWMwLDQuOTYzLTQuMTM2LDguODM0LTkuMDk5LDguODM0aC0xM2MtNC45NjIsMC05LTQuMDM3LTktOXYtNDJjMC00Ljk2Myw0LjA1MS05LjAxNCw5LjAxNC05LjAxNGgxMw0KCQljNC45NjIsMCw5LjA4NSw0LjIxOCw5LjA4NSw5LjE4VjE2Ni42Nzh6Ii8+DQoJPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTIzLjQ4NCwxMjEuNTEyaC0xM2MtNC43MSwwLTYuOTg0LDIuNDE0LTYuOTg0LDcuMTI1djIzLjQyNGMwLDUuMjksMi42ODIsOC40MzksNyw4LjQzOWgxMw0KCQljNC4zMTgsMCw2Ljk4NC0zLjI3NCw2Ljk4NC04LjU2NHYtMjMuNDI0QzMwLjQ4NCwxMjMuODAxLDI4LjE5NSwxMjEuNTEyLDIzLjQ4NCwxMjEuNTEyeiBNMjguNSwxNTEuODk1DQoJCWMwLDEuOTc3LTAuNTAzLDYuNjE3LTUuMDE2LDYuNjE3aC0xM2MtNC41MTMsMC01LTQuNTk5LTUtNi41NzZ2LTIzLjQyNGMwLTMuNjQ1LDEuMzY5LTUuMDE0LDUuMDE0LTUuMDE0aDEzDQoJCWMzLjY0NSwwLDUuMDAyLDEuMzI3LDUuMDAyLDQuOTczVjE1MS44OTV6Ii8+DQoJPHBhdGggZmlsbD0iI0ZGRkZGRiIgZD0iTTE2Ljk4NCwxNjQuNTEyYy0xLjkzLDAtMy40MDEsMS41MjktMy40MDEsMy40NTlzMS40NzEsMy41NDEsMy40MDEsMy41NDFzMy41LTEuNTcsMy41LTMuNQ0KCQlTMTguOTE0LDE2NC41MTIsMTYuOTg0LDE2NC41MTJ6IE0xNy4wNDIsMTY5LjU5NmMtMC44MjcsMC0xLjU1Ny0wLjc1Ny0xLjU1Ny0xLjU4NHMwLjY3My0xLjUsMS41LTEuNXMxLjUsMC42NzMsMS41LDEuNQ0KCQlTMTcuODY5LDE2OS41OTYsMTcuMDQyLDE2OS41OTZ6Ii8+DQo8L2c+DQo8L3N2Zz4NCg==')
+    background-repeat   no-repeat
+    background-position center -95px
+
+    &:hover
+      color #f44040
+
+      border        2px solid #f44040
+
+      background-color    white
+      background-position center 21px
+
+  &_mail
+    float       left
+    display     inline-block
+    width       120px
+    height      120px
+    box-sizing  border-box
+    padding-top 90px
+
+    border        2px solid #f44040
+    border-radius 10px
+
+    text-decoration none
+
+    color white
+
+    background-color    #f44040
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNS4wLjIsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNThweCIgaGVpZ2h0PSIxMjhweCIgdmlld0JveD0iMCAwIDU4IDEyOCIgZW5hYmxlLWJhY2tncm91bmQ9Im5ldyAwIDAgNTggMTI4IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxwYXRoIGZpbGw9IiNFRDM2NDUiIGQ9Ik01NC40NjQsMEgzLjY5MUMxLjkwNywwLDAuMDc5LDEuMTgzLDAuMDc5LDMuNDU1TDAsMzUuMzAyQzAsMzcuMjA3LDIuMDk1LDM5LDQsMzloNTBjMS45MDUsMCw0LTIuMDk1LDQtNFYzDQoJQzU4LDAuMDM1LDU1LjUyMSwwLDU0LjQ2NCwweiBNNTQuMjczLDIuMDA0TDI5LjMwNSwyMC4wOThMNCwybDUwLjA3Ny0wLjAyOUM1NC4xODgsMS45NzEsNTQuMTY3LDEuOTgzLDU0LjI3MywyLjAwNHoNCgkgTTU2LjAyNiwzNS4zMDJjMCwwLjkwNS0wLjY1NiwxLjc5OC0xLjU2MiwxLjc5OEwzLjY5MSwzNy4wMjFDMi43ODYsMzcuMDIxLDIsMzUuOTA1LDIsMzVWNGMwLTAuMjAzLDAuMDkyLTAuNjgyLDAuMTU5LTAuODYxDQoJTDI4Ljc3LDIyLjMxN2MwLjE1OSwwLjExNiwwLjM0NywwLjE3NSwwLjUzNSwwLjE3NWMwLjE4OCwwLDAuMzc1LTAuMDU5LDAuNTM1LTAuMTc1TDU2LjA3NSwzLjQxMw0KCWMwLjAxOCwwLjA5NywwLjAzLTAuMDYxLDAuMDMsMC4wNDJMNTYuMDI2LDM1LjMwMnoiLz4NCjxwYXRoIGZpbGw9IiNGRkZGRkYiIGQ9Ik01NC40NjQsODlIMy42OTFjLTEuNzg0LDAtMy42MTIsMS4xODMtMy42MTIsMy40NTVMMCwxMjQuMzAyQzAsMTI2LjIwNywyLjA5NSwxMjgsNCwxMjhoNTANCgljMS45MDUsMCw0LTIuMDk1LDQtNFY5MkM1OCw4OS4wMzUsNTUuNTIxLDg5LDU0LjQ2NCw4OXogTTU0LjI3Myw5MS4wMDRsLTI0Ljk2OCwxOC4wOTRMNCw5MWw1MC4wNzctMC4wMjkNCglDNTQuMTg4LDkwLjk3MSw1NC4xNjcsOTAuOTgyLDU0LjI3Myw5MS4wMDR6IE01Ni4wMjYsMTI0LjMwMmMwLDAuOTA1LTAuNjU2LDEuNzk4LTEuNTYyLDEuNzk4bC01MC43NzMtMC4wNzgNCglDMi43ODYsMTI2LjAyMSwyLDEyNC45MDUsMiwxMjRWOTNjMC0wLjIwMywwLjA5Mi0wLjY4MiwwLjE1OS0wLjg2MWwyNi42MTEsMTkuMTc5YzAuMTU5LDAuMTE2LDAuMzQ3LDAuMTc1LDAuNTM1LDAuMTc1DQoJYzAuMTg4LDAsMC4zNzUtMC4wNTksMC41MzUtMC4xNzVsMjYuMjM0LTE4LjkwNGMwLjAxOCwwLjA5NywwLjAzLTAuMDYyLDAuMDMsMC4wNDJMNTYuMDI2LDEyNC4zMDJ6Ii8+DQo8L3N2Zz4NCg==')
+    background-repeat   no-repeat
+    background-position center -53px
+
+    &:hover
+      color #f44040
+
+      background-color    white
+      background-position center 35px
+
+  &_right
+    position          relative
+    float             right
+    width             480px
+    overflow          hidden
+    background-color  white
+    border-radius(10px)
+    backface(hidden)
+    webkitContainerBorderRadiusFix()
+
+    &:before
+      position  absolute
+      top       0
+
+      display   block
+      width     100%
+      height    30px
+
+      backface(hidden)
+
+      content " "
+      gradient   top, white 30%, rgba(255,255,255,0.9) 60%, rgba(255,255,255,0.6) 90%, rgba(255,255,255,0) 100%
+
+    &:after
+      position  absolute
+      bottom    0
+
+      display   block
+      width     100%
+      height    30px
+
+      backface(hidden)
+
+      content " "
+      gradient   bottom, white 30%, rgba(255,255,255,0.9) 60%, rgba(255,255,255,0.6) 90%, rgba(255,255,255,0) 100%
+
+  &_call-back-btn
+    margin  60px auto 0
+    width   200px
+
+  &_call-btn
+    margin  0 auto
+    display block
+    width   65px
+    height  65px
+
+    cursor              pointer
+    background-image    url('data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxNi4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+DQo8c3ZnIHZlcnNpb249IjEuMSIgaWQ9IkxheWVyXzEiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIHg9IjBweCIgeT0iMHB4Ig0KCSB3aWR0aD0iNjUuMzM0cHgiIGhlaWdodD0iNjUuMzM0cHgiIHZpZXdCb3g9IjAgMCA2NS4zMzQgNjUuMzM0IiBlbmFibGUtYmFja2dyb3VuZD0ibmV3IDAgMCA2NS4zMzQgNjUuMzM0IiB4bWw6c3BhY2U9InByZXNlcnZlIj4NCjxjaXJjbGUgZmlsbD0iIzhBRDc3MiIgY3g9IjMyLjY2NyIgY3k9IjMyLjMzMyIgcj0iMjkuOTk5Ii8+DQo8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNDcuMjA3LDQyLjg1OWwwLjUxNC0yLjcxOWMwLDAtNS43MzMtMy40OTItNi40MDYtMy45MjNjLTAuNjc0LTAuNDMyLTEuNDA5LDAuMTczLTEuNDA5LDAuMTczbC0yLjk2NSwyLjc2MQ0KCWMtMi4xODctMC44MjctMy45NC0yLjAwMy01LjM1NS0zLjI3NWMtMS4yNzItMS40MTYtMi40NDYtMy4xNjgtMy4yNzQtNS4zNTVsMi43NjEtMi45NjRjMCwwLDAuNjA0LTAuNzM2LDAuMTczLTEuNDENCgljLTAuNDMyLTAuNjczLTMuOTI0LTYuNDA3LTMuOTI0LTYuNDA3bC0yLjcxNywwLjUxNGMwLDAtMy41MjYsMi4wNC0zLjE5Miw0Ljc0YzAuNDExLDMuMzAzLDEuNjgxLDguODc3LDYuNDM3LDEzLjk4NWwtMC4wMTksMC4wMTgNCgljMC4xMDgsMC4xMDcsMC4yMTgsMC4yMDQsMC4zMjcsMC4zMDljMC4xMDQsMC4xMDksMC4yLDAuMjE4LDAuMzA5LDAuMzI1bDAuMDE3LTAuMDE3YzUuMTA3LDQuNzU0LDEwLjY4Myw2LjAyNSwxMy45ODUsNi40MzYNCglDNDUuMTY3LDQ2LjM4NSw0Ny4yMDcsNDIuODU5LDQ3LjIwNyw0Mi44NTl6Ii8+DQo8L3N2Zz4NCg==')
+    background-repeat   no-repeat
+    background-position center
+
+  &_call-time-t
+    margin-bottom 15px
+    color         #676767
+
+  &_call-time-btn-lst
+    height  40px
+    border  1px solid #ccc
+    border-radius(6px)
+
+  &_call-time-btn
+    float       left
+    display     inline-block
+    width       50%
+    line-height 40px
+    cursor      pointer
+
+    color       #474747
+    text-align  center
+
+    &:first-child
+      border-radius(6px 0 0 6px)
+
+    &:last-child
+      border-radius(0 6px 6px 0)
+
+  &_call-time-btn:hover,
+  &_call-time-btn.__js-act
+    color             white
+    background-color  #676767
+
+  &_call-back
+    overflow  hidden
+    transform( translatez(0) )
+
+  &_call-back-form
+    margin-top        15px
+    padding           30px 20px
+
+    background-color    #9e9e9e
+    border-radius(4px)
+
+  &_or-text
+    font-size     12px
+    margin-top    50px
+    margin-bottom 40px
+
+  &_how-it-works
+    margin  40px auto 0
+    width   200px
+    border  1px solid white
+    border-radius(4px)
+
+.adv-req-form
+
+  &_text
+    overflow-y  auto
+    max-height  500px
+    padding     20px 40px
+
+    text-align  left
+
+    color #848484
+    backface(hidden)
+
+    &::-webkit-scrollbar
+      width 0 !important
+
+    h3
+      margin-top  40px
+
+      color           #f44040
+      font-family     'helios-thin'
+      font-size       24px
+      line-height     24px
+      text-align      center
+
+
+  &_fields
+    padding 20px 80px
+
+  &_title
+    color           #494949
+    font-family     'opensans-light'
+    font-size       16px
+    text-transform  uppercase
+
+.join-success
+
+  &_mail
+    margin-top  70px
+    margin-left -15px
+
+  &_text
+    margin-top  45px
+    color       #e0e0e0
+
+@media screen768
+
+  .phone-hidden
+    display none
+
+  .phone-visible
+    display block
+
+  .adv-req-page
+
+    &_left
+      display none
+
+    &_right
+      float none
+      width 100%
+
+  .adv-req-form
+
+    &_fields
+      padding 20px
+
+/********************************************************************************************************************/
+/* Slider */
+/********************************************************************************************************************/
+.slider
+
+  &_window
+    display     none
+    overflow    hidden
+    position    relative
+    width       560px
+    min-height  100%
+    margin      0 auto
+
+  &_cnt
+    position                      relative
+    width                         50000px
+    -webkit-backface-visibility   hidden
+    -moz-backface-visibility      hidden
+
+  &_i
+    float     left
+    position  relative
+    height    100%
+
+  &_preloader
+    position            relative
+    margin              0 auto
+
+    width               300px
+    height              430px
+
+    background-image    url('/vassets/images/market/new-design/spinner.gif')
+    background-repeat   no-repeat
+    background-position center
+    background-color    #9e9e9e
+    border-radius(10px)
+
+  &_controls
+    position    absolute
+    top         50%
+    left        50%
+    margin-top  -26px
+    margin-left -280px
+
+    width       560px
+    height      52px
+
+  &_control
+    position  absolute
+    top       0
+    opacity   0.6
+
+    color       white
+    font-size   52px
+    text-align  center
+
+    cursor    pointer
+    transition(opacity 0.2s ease-in-out 0s)
+
+    &:hover
+      opacity 1
+
+    &:active
+      top 1px
+
+  &_control.__left-arrow
+    left 0
+
+    &:before
+      content "\e601"
+
+  &_control.__right-arrow
+    right 0
+
+    &:before
+      content "\e602"
+
+
+@media screen1024
+
+  .slider_window
+    width 100%
+
+@media screen768
+
+  .slider
+
+    &_controls
+      display none

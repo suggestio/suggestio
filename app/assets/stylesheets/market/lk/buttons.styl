@@ -1,0 +1,625 @@
+screenForTransitions = 'screen and (min-width: 1024px)'
+
+.gray-but-smallest
+  margin-left: 1px
+  display: inline-block
+  overflow: hidden
+  border: 1px solid #b2b2b2
+  box-shadow(1px 1px 0 0 #676767)
+
+  .white-border-top
+    display: inline-block
+    border-top: 1px solid #fbfbfb
+    padding: 4px 15px
+    color: #959595
+    text-decoration: none
+    font-size: 12px
+    font-family: 'Arial'
+
+.gray-but-smallest.inline
+  display: inline
+
+@css {
+  .gray-but-smallest .white-border-top {
+      background: #eeeeee;
+      background: -moz-linear-gradient(top, #eeeeee 0%, #d7d7d7 100%);
+      background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#d7d7d7));
+      background: -webkit-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
+      background: -o-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
+      background: -ms-linear-gradient(top, #eeeeee 0%,#d7d7d7 100%);
+      background: linear-gradient(to bottom, #eeeeee 0%,#d7d7d7 100%);
+      filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#eeeeee', endColorstr='#d7d7d7',GradientType=0 );
+  }
+
+  .gray-but-smallest:hover .white-border-top {
+    background: #f0f0f0
+  }
+
+  .gray-but-smallest:active .white-border-top  {
+    background: #d7d7d7;
+    background: -moz-linear-gradient(top, #d7d7d7 0%, #ebebeb 100%);
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#d7d7d7), color-stop(100%,#ebebeb));
+    background: -webkit-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
+    background: -o-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
+    background: -ms-linear-gradient(top, #d7d7d7 0%,#ebebeb 100%);
+    background: linear-gradient(to bottom, #d7d7d7 0%,#ebebeb 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#d7d7d7', endColorstr='#ebebeb',GradientType=0 );
+  }
+
+}
+
+
+.js-close-btn
+  cursor: pointer
+  width: 17px
+  height: 17px
+  text-decoration: none
+  background: url('/vassets/images/market/lk/close-icon.png') no-repeat
+  background-position: 0 -67px
+.js-close-btn:hover
+  background-position: 0 0
+.js-close-btn:active
+  background-position: 0 1px
+
+
+.captcha-reload-btn
+  cursor: pointer
+  display: inline-block
+  width: 24px
+  height: 23px
+  margin-left: 15px
+  margin-bottom: 13px
+  background: url('/vassets/images/market/lk/captcha-reload-icon.png') no-repeat
+  background-position: 0 0
+
+.captcha-reload-btn:hover
+  background-position: 0 -73px
+
+.captcha-reload-btn:active
+  margin-bottom: 12px
+
+
+
+/********************************************************************************************************************/
+/* refactoring to MCSS */
+/********************************************************************************************************************/
+
+.btn-w
+  overflow   hidden /* внутри лежат элементы со свойством float */
+  text-align center
+
+  &.__size-M
+    padding 25px 0
+
+  &.__size-S
+    padding  25px 20%
+
+  &.__size-XS
+    padding  10px 0
+
+  &.__align-by-inputs
+    padding-left 120px
+
+  &.__card
+    padding 15px 0 10px
+
+.create-ad
+
+  .remove-btn
+    margin-left: 22px
+
+  .save-btn
+    margin-right: 35px
+
+  .preview-btn
+    margin-right: 20px
+
+
+.index_help-btn
+  float: right
+  margin-right: -50px
+
+/********************************************************************************************************************/
+/* SioMarket default action button */
+/********************************************************************************************************************/
+
+siomAcBtnHoverGradient(innerColor, defColor)
+  background: #feffff
+  background: -moz-radial-gradient(center, ellipse cover,  #feffff 0%, innerColor 0%, defColor 100%)
+  background: -webkit-gradient(radial, center center, 0px, center center, 100%, color-stop(0%,#feffff), color-stop(0%,innerColor), color-stop(100%,defColor))
+  background: -webkit-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
+  background: -o-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
+  background: -ms-radial-gradient(center, ellipse cover,  #feffff 0%,innerColor 0%,defColor 100%)
+  background: radial-gradient(ellipse at center,  #feffff 0%,innerColor 0%,defColor 100%)
+
+siomAcBtnColor1 = #48ab38 /* зелёный */
+siomAcBtnColor2 = #4f88a9 /* синий */
+siomAcBtnColor3 = #9a9d9e /* серый */
+siomAcBtnColor4 = #e24a4a /* красный */
+siomAcBtnColor5 = #b6c2c5 /* серо-синий */
+
+.siom-ac-btn
+  display: inline-block
+
+  border: none
+  outline: none
+  cursor: pointer
+
+  text-decoration: none
+  text-align: center
+  text-shadow(1px 1px 1px #363636)
+
+  &.__list
+    margin-right: 25px
+
+  &.__list-vertical
+    margin: 5px 0
+
+  &.__color-1
+    color: white
+    background: siomAcBtnColor1
+
+    &:hover
+      siomAcBtnHoverGradient(#67CE52, siomAcBtnColor1)
+
+    &:active
+      background: siomAcBtnColor1
+      box-shadow(0 0 30px 0 #2e7921 inset)
+      color: #a4c59e
+
+  &.__color-2
+    color: white
+    background: siomAcBtnColor2
+
+    &:hover
+      siomAcBtnHoverGradient(#62AAD1, siomAcBtnColor2)
+
+    &:active
+      background: siomAcBtnColor2
+      box-shadow(0 0 30px 0 #30607c inset)
+      color: #a9beca
+
+  &.__color-3
+    color: white
+    background: siomAcBtnColor3
+
+    &:hover
+      siomAcBtnHoverGradient(#A9ACAD, siomAcBtnColor3)
+
+    &:active
+      background: siomAcBtnColor3
+      box-shadow(0 0 30px 0 #76797a inset)
+      color: #d2d1d1
+
+  &.__color-4
+    color: white
+    background: siomAcBtnColor4
+
+    &:hover
+      siomAcBtnHoverGradient(#FC5353, siomAcBtnColor4)
+
+    &:active
+      background: siomAcBtnColor4
+      box-shadow(0 0 30px 0 #b43232 inset)
+      color: #ffa1a1
+
+  &.__color-5
+    color: white
+    background: siomAcBtnColor5
+
+    &:hover
+      siomAcBtnHoverGradient(#C9D5D8, siomAcBtnColor5)
+
+    &:active
+      background: siomAcBtnColor5
+      box-shadow(0 0 30px 0 #9EA9AA inset)
+      color: #d2d1d1
+
+  &.__size-S
+    padding: 5px 25px
+
+    &:active
+      padding: 6px 25px 4px
+
+  &.__size-M
+    padding: 10px 25px
+
+    &:active
+      padding: 11px 25px 9px
+
+  &.__size-XL
+    display: block
+    padding: 10px 0
+
+    &:active
+      padding: 11px 0 9px
+
+  &.__ft-M
+    font-family: 'Arial'
+    ft(14px)
+
+  &.__ft-XM
+    font-family: 'helios-thin'
+    ft(16px)
+
+  &.__ft-L
+    font-family: 'helios-thin'
+    ft(20px)
+
+  &.__ft-XL
+    font-family: 'pt-sans-narrow'
+    ft(24px)
+
+  &.__billing
+    float: right
+    margin-right: 12px
+    margin-top: 10px
+    text-shadow(none)
+
+  &_ft-S
+    font-family: 'Arial'
+    font-size: 12px
+
+/********************************************************************************************************************/
+/* SioMarket default link button */
+/********************************************************************************************************************/
+
+siomLinkBtnColor1 = #6b7e85
+siomLinkBtnColor2 = #b6c2c5
+siomLinkBtnColor3 = #4f88a9
+siomLinkBtnColor4 = #48ab38
+siomLinkBtnColor5 = #9a9b9b
+
+.siom-link-btn
+  display: inline-block
+  cursor: pointer
+  text-align: center
+  text-decoration: none
+  transition(color 0.2s ease-in-out 0s)
+
+  &.__list-vertical
+    margin: 5px 0
+
+  &.__size-XS
+    width: 24px
+    padding: 7px
+
+    &:active
+      padding: 8px 7px 6px
+
+  &.__size-M
+    padding: 10px 20px
+
+    &:active
+      padding: 11px 20px 9px
+
+  &.__size-XL
+    display: block
+    padding: 10px 0
+
+    &:active
+      padding: 11px 0 9px
+
+  &.__ft-M
+    font-family: 'Arial'
+    ft(14px)
+
+  &.__ft-XM
+    font-family: 'pt-sans-narrow'
+    ft(24px)
+
+
+  &.__ft-L
+    padding-top: 12px /* особенности шрифта */
+    padding-bottom: 8px /* особенности шрифта */
+
+    font-family: 'pf-din-comp-pro-medium'
+    ft(30px)
+    text-shadow( 1px 1px 1px #fff )
+
+    &:active
+      padding-top: 13px /* особенности шрифта */
+      padding-bottom: 7px /* особенности шрифта */
+
+  &.__color-1
+    border: 1px solid siomLinkBtnColor1
+    color: siomLinkBtnColor1
+
+    &:hover
+      color: #4c4c4c
+      border-color: #4c4c4c
+
+    &:active
+      background: #b6c2c5
+
+  &.__color-2
+    border: 1px solid siomLinkBtnColor2
+    color: siomLinkBtnColor2
+
+    &:hover
+      color: #4c4c4c
+      border-color: #4c4c4c
+
+    &:active
+      background: #b6c2c5
+
+  &.__color-3
+    border: 1px solid siomLinkBtnColor3
+    color: siomLinkBtnColor3
+
+    &:hover
+      border: 1px solid siomLinkBtnColor3
+      background: siomLinkBtnColor3
+      color: white
+
+    &:active
+      background: siomLinkBtnColor3
+      border: 1px solid #2f5d79
+      box-shadow(0 0 30px 0 #2f5d79 inset)
+      color: #98b2c1
+
+  &.__color-4
+    border: 1px solid siomLinkBtnColor4
+    color: siomLinkBtnColor4
+
+    &:hover
+      border: 1px solid siomLinkBtnColor4
+      background: siomLinkBtnColor4
+      color: white
+
+    &:active
+      background: siomLinkBtnColor4
+      border: 1px solid #2c751f
+      box-shadow(0 0 30px 0 #2c751f inset)
+      color: #92bb8b
+
+  &.__color-5
+    box-shadow(0 1px 0 0 white inset)
+    border: 1px solid siomLinkBtnColor5
+    color: #676666
+    font-family: 'pf-din-comp-pro-medium'
+    text-shadow(1px 1px 1px #F8F8F8)
+
+    &:hover
+      border-color: #4f88a9
+      color: #4f88a9
+
+    &:active
+      box-shadow(none)
+      border-color: #9a9b9b
+      background: #cbcbcb
+      color: #676666
+
+  &.__radial
+    border-radius(50%)
+
+  &.__list-element
+    margin: 0 15px
+
+/********************************************************************************************************************/
+/* SioMarket add/remove/zoom images buttons */
+/********************************************************************************************************************/
+
+.siom-add-image-btn
+  display: inline-block
+  width: 45px
+  height: 45px
+
+  cursor: pointer
+  background-image: url('/vassets/images/market/lk/add-file-icon_retina.png')
+  background-size: 45px 115px
+  background-repeat: no-repeat
+  background-position: 0 0
+
+  &.__hover
+    background-position: 0 -70px
+
+  &.__active
+    background-position: 0 -69px
+
+.siom-remove-image-btn
+  display: block
+  width: 100%
+  height: 100%
+
+  &.__hover
+    border: 1px solid white
+
+    background-color: rgba(219,98,98,0.9)
+    background-image: url('/vassets/images/market/lk/basket-icon_retina.png')
+    background-size: 18px 20px
+    background-repeat: no-repeat
+    background-position: center center
+
+  &.__active
+    background-position: center 13px
+
+
+.siom-zoom-image-btn
+  display: block
+  width: 100%
+  height: 100%
+
+  &.__hover
+    background-color: rgba(239,239,239,0.9)
+    background-image: url('/vassets/images/market/lk/zoom-icon_retina.png')
+    background-size: 45px 45px
+    background-repeat: no-repeat
+    background-position: 0 0
+
+  &.__active
+    background-position: 0 1px
+
+/********************************************************************************************************************/
+/* Edit btn */
+/********************************************************************************************************************/
+
+.edit-btn
+  background: url('/vassets/images/market/lk/edit-but.png') no-repeat
+  background-position: 0 -64px
+  padding-left: 15px
+  padding-top: 5px
+  text-decoration: none
+
+  &:hover
+    background-position: 0 0
+
+  &.__ft-XS
+    font-family: 'Arial'
+    ft(10px)
+
+  &.__color-1
+    color: #959595
+
+    &:hover
+      color: #5088aa
+
+/********************************************************************************************************************/
+/* Back btn */
+/********************************************************************************************************************/
+
+.back-btn
+  display: block
+  margin-left: 11px
+  margin-right: 15px
+  width: 35px
+  height: 35px
+  float: left
+  text-decoration: none
+  background: url('/vassets/images/market/lk/back-btn_retina.png') no-repeat
+  background-size: 35px 95px
+  background-position: 0 0
+
+  &:hover
+    background-position: 0 -60px
+
+  &:active
+    background-position: 0 -59px
+
+  &.__hidden
+    visibility: hidden
+
+  &.__centered
+    position: relative
+    float: none
+    margin: 0 auto
+    top: 10px
+
+/********************************************************************************************************************/
+/* Logout btn */
+/********************************************************************************************************************/
+
+.logout-btn
+  float: right
+  margin-top: 5px
+
+  display: inline-block
+  width: 49px
+  height: 49px
+
+  cursor: pointer
+  background: url('/vassets/images/market/lk/logout-btn_retina.png') no-repeat
+  background-size: 47px 191px
+  background-position: 0 0
+
+  &:hover
+    background-position: 0 -144px
+
+  &:active
+    background-position: 0 -72px
+
+/********************************************************************************************************************/
+/* Siom btns new design */
+/********************************************************************************************************************/
+.siom-new-btn
+  display         inline-block
+
+  outline         none
+  cursor          pointer
+
+  text-decoration none
+  text-align      center
+  font-size       14px
+  font-family     'opensans-light'
+  color           white
+
+  -webkit-appearance none
+  border-radius(4px)
+
+  &:hover
+    background-color  white
+    border-color      white
+    color             #f44040
+
+  &.__size-XS
+    padding 10px 40px
+
+
+  &.__size-S
+    padding 16px 20px
+
+
+  &.__size-M
+    padding 10px 40px
+
+  &.__size-L
+    display block
+    padding 10px 0
+
+  &.__color-1
+    color   #dddddd
+
+    &:hover
+      background-color  white
+      color             #f44040
+
+  &.__border
+    border-width 1px
+    border-style solid
+    border-radius(4px)
+
+  &.__vertical-first
+    border-width 1px
+    border-style solid
+    border-radius(4px 4px 0 0)
+
+  &.__vertical-last
+    border-width 0 1px 1px 1px
+    border-style solid
+    border-radius(0 0 4px 4px)
+
+  &.__fill-1
+    background-color  #f44040
+    border-color      #f44040
+
+    &:hover
+      background-color  #dc3a36
+      border-color      #dc3a36
+      color             white
+
+  &.__list
+    margin-left 20px
+
+  &.__color-2
+    border-color  #c2c2c2
+    color         #7a7a7a
+
+    &:hover
+      background-color  #c2c2c2
+      border-color      #c2c2c2
+      color             white
+
+@media screenForTransitions
+
+  .siom-new-btn
+    -webkit-backface-visibility:  hidden
+    -moz-backface-visibility:     hidden
+    transition(background-color 0.2s ease-in-out 0s)
+
+@media screen768
+
+  .siom-new-btn.__size-XS
+    padding 10px 20px
+
+    &:active
+      padding 11px 20px 9px

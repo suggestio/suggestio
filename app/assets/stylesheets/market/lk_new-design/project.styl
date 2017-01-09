@@ -1,0 +1,958 @@
+@import "mixins"
+
+.sm-block
+  position  relative
+
+/********************************************************************************************************************/
+/* Fonts */
+/********************************************************************************************************************/
+
+.ft-XS
+  font-size 11px
+
+.ft-S
+	font-size 13px
+
+.ft-M
+  font-size 16px
+
+.ft-L
+  font-size 18px
+
+.white
+  color white
+
+.black
+  color black
+
+.light-gray
+  color lightGray
+
+.dark-gray
+  color darkGray
+
+.red
+  color red
+
+.green
+  color green
+
+.minor-title
+  margin-bottom 10px
+  clear         both
+  color         darkGray
+  font-size     16px
+
+/********************************************************************************************************************/
+/* Ссылки */
+/********************************************************************************************************************/
+.link
+  color           #00b994
+  text-decoration none
+  border-bottom   1px solid rgba(0, 185, 148, 0.3)
+  transition(all 0.2s ease-in-out 0s)
+
+  &:hover
+    cursor: pointer
+    color: #007b56
+    border-color: #c6c6c6
+
+.dark-link
+  text-decoration none
+  transition(color 0.2s ease-in-out 0s)
+
+  &:hover
+    cursor pointer
+    color white
+
+/********************************************************************************************************************/
+/* Полосы разделители  */
+/********************************************************************************************************************/
+.delimiter
+  clear             both
+  height            1px
+  background-color  #636363
+
+  &.__light
+    background-color #d7d7d7
+
+  &.__vertical
+    width   1px
+    height  auto
+
+/********************************************************************************************************************/
+/* Вывод полей в формате Имя поля -> значение || input  */
+/********************************************************************************************************************/
+
+.prop
+  overflow    hidden
+  margin      15px 0
+  width       100%
+  text-align  left
+
+  &_name
+    width         125px
+    padding-right 25px
+    font-size     12px
+    color         lightGray
+
+  &_name.__block
+    display       block
+    width         auto
+
+  &_value
+    font-size   13px
+    color       darkGray
+
+  &_helper
+    margin-top    5px
+    font-size     11px
+    color         lightGray
+
+/* значение поля цвет */
+.color
+  width   40px
+  height  40px
+  border-radius     50%
+  background-color  red
+
+  &.__select
+    cursor  pointer
+
+
+/********************************************************************************************************************/
+/* Таблицы  */
+/********************************************************************************************************************/
+.table
+
+  &.__width-XL
+    width  100%
+
+.td
+  vertical-align  middle
+
+  &.__padding-S
+    padding 0 10px
+
+  &.__color-title
+    padding-right 10px
+
+  &.__gray
+    background-color  #e5e5e5
+
+  &.__white
+    background-color  white
+
+  &.__radial-first
+    border-radius 4px 0 0 4px
+
+  &.__radial-last
+    border-radius 0 4px 4px 0
+
+  &.__size-M
+    box-sizing  border-box
+    height      50px
+    padding     5px 10px
+
+  &.__delimiter
+    height  5px
+
+/********************************************************************************************************************/
+/* Стандартный блок SioMarket */
+/********************************************************************************************************************/
+.slide-block
+  margin 10px 0
+
+  &.__ad-editor
+
+    .slide-block_cnt
+      background none
+      border-radius(0)
+
+  &_title
+    position    relative
+    height      28px
+    padding     10px
+
+    font-size   18px
+    color       #575757
+
+    margin-top  3px
+    background  #c0c0c0
+    border-radius 4px
+    transition(all 0.2s ease-in-out 0s)
+
+    &:hover
+
+      .slide-block_btn
+        background-color    #f3f3f3
+
+  &_info-btn
+    position  absolute
+    right 50px
+    top 10px
+
+    display block
+    box-sizing border-box
+    width 28px
+    height 28px
+    line-height 24px
+
+    border 2px solid #d6d6d6
+    border-radius 4px
+    cursor pointer
+
+    transition(all 0.2s ease-in-out 0s)
+
+    color #707070
+
+    font-size 18px
+    font-weight bold
+    text-align center
+    text-decoration none
+
+    &:hover
+      background-color  #9ad0b0
+      border-color  #9ad0b0
+      color white
+
+
+  &_title.__js-open
+    background-color  white
+
+  &_cnt
+    overflow    hidden
+    margin-top  5px
+    padding     0
+    background  white
+    border-radius 4px
+    webkitContainerBorderRadiusFix()
+
+    .tariff_illustration-w
+      padding-top 35px
+
+  &_btn
+    position            absolute
+    top                 10px
+    right               10px
+
+    display             block
+    height              28px
+    width               28px
+
+    cursor              pointer
+    background-color    #d7d7d7
+    background-position -6px -96px
+    border-radius       4px
+    transition(background-color 0.2s ease-in-out 0s)
+
+    &:hover
+      background-color    #f3f3f3
+
+  &_btn.__js-open
+    background-color    #d7d7d7
+    background-position -6px -6px
+
+    &:hover
+      background-color    #f3f3f3
+
+/********************************************************************************************************************/
+/* Табы  */
+/********************************************************************************************************************/
+
+.tab
+
+  &_lst
+    margin  25px 0
+
+  &_i
+    display           inline-block
+    margin-right      20px
+    padding           10px
+
+    cursor            pointer
+    color             #959697
+    background-color  white
+
+    border-radius 4px
+    transition(all 0.2s ease-in-out 0s)
+
+    &:hover
+      color             white
+      background-color  #959697
+
+  &_i.__js-act
+    color             white
+    background-color  #959697
+
+/********************************************************************************************************************/
+/* Всплывающие окна  */
+/********************************************************************************************************************/
+
+.popups
+  position    fixed
+  top         0
+  left        0
+  z-index     2000
+
+  visibility  hidden
+  width       100%
+  height      100%
+  overflow-y  auto
+  background  rgba(0,0,0,0.8)
+
+  text-align  center
+
+.popup
+  position  relative
+  top       0
+  z-index   3000
+
+  overflow  hidden /* потому что попап в попапе - это странно */
+  display   inline-block
+  max-width 100%
+
+  background-color white
+  border-radius 10px
+
+  &.__size-M
+    min-width 300px
+
+  &_header
+    padding       0
+    border-bottom none /* TODO убрать эти стили, когда будет отключен common.css */
+    background    transparent
+
+  &_cnt
+    padding 0 25px
+
+  &_cnt.__preview
+    width 300px
+
+/********************************************************************************************************************/
+/* Чекбоксы  */
+/********************************************************************************************************************/
+
+.checkbox
+
+  &_w
+    display block
+
+  &_title
+    color           #575757
+    padding-left    10px
+    font-size       14px
+
+  &_title.__major
+    padding-left  20px
+    font-size     16px
+
+  &_title.__no-input
+    padding-left  0
+
+  &_title.__disabled
+    color #8c8c8c
+
+label
+  input[type=checkbox],
+  input[type=radio]
+    display none
+
+  input[type=checkbox] + .checkbox_title:before
+    display         inline-block
+    height          16px
+    width           16px
+    margin          0 5px 0 0
+    line-height     16px
+    vertical-align  middle
+    border          1px solid #acacac
+
+    content         "\0020"
+    color           #00b893
+    background-color  white
+    font-size       16px
+    text-align      center
+    border-radius   4px
+
+  input[type=checkbox] + .checkbox_title.__bg-1:before
+    background-color  #cfcfcf
+
+  input[type=checkbox]:checked + .checkbox_title:before
+    content "\2713"
+
+  input[type=checkbox]:disabled + .checkbox_title:before
+    color #acacac
+
+  input[type=checkbox] + span:before,
+  input[type=radio] + span:before
+    margin-right    20px
+    display         inline-block
+    height          16px
+    width           16px
+    line-height     16px
+    vertical-align  middle
+    border          1px solid #acacac
+
+    content         "\0020"
+    color           #00b893
+    background-color white
+    font-size       16px
+    text-align      center
+    border-radius   4px
+
+  input[type=checkbox]:checked + span:before,
+  input[type=radio]:checked + span:before
+    content "\2713"
+
+  input[type=checkbox]:disabled + span:before,
+  input[type=radio]:disabled + span:before
+    color #acacac
+
+
+/********************************************************************************************************************/
+/* Ценовой виджет в правой панели  */
+/********************************************************************************************************************/
+
+.right-bar-price-widget
+  position    absolute
+  bottom      150px
+  width       100%
+  padding     0 20px
+  box-sizing  border-box
+
+  &_title
+    margin-bottom 20px
+    color         darkGray
+    font-size     18px
+    text-align    center
+
+  &_cnt
+    padding           15px 10px 15px
+    background-color  #efefef
+    width             100%
+    box-sizing        border-box
+    border-radius     10px
+
+  &_price-value
+    font-size     24px
+    text-align    center
+    color         darkGray
+
+  &_request-btn
+    margin-top  20px
+
+/********************************************************************************************************************/
+/* Виджет выбора даты  */
+/********************************************************************************************************************/
+
+.date-widget
+  padding-top 5px
+  background-color  white
+  border-radius 10px 10px 0 0
+
+  &_options
+    padding 0 10px
+
+  &_result
+    overflow hidden
+    padding 0 10px 15px
+    border-radius(0px 0px 10px 10px)
+
+    color black
+    background-color #c1c1c1
+
+  &_result-value
+    font-size   15px
+
+/********************************************************************************************************************/
+/* Виджет выбора уровней размещения  */
+/********************************************************************************************************************/
+.levels-widget
+  margin  15px 0
+
+  &_t
+    color #484848
+    font-size 18px
+    font-weight normal
+
+  &_lst
+    margin-top 10px
+    padding 10px 20px
+    border-radius 10px
+    background-color #b9ead6
+
+  &_i
+    list-style none
+
+  &_i-descr
+    margin-bottom 10px
+    padding-left 35px
+    font-size 11px
+
+  &_gray
+    color #8d8d8d
+
+
+/********************************************************************************************************************/
+/* No photo  */
+/********************************************************************************************************************/
+.no-photo
+  height: 100%
+  background-color: #e2e2e2
+
+/********************************************************************************************************************/
+/* События  */
+/********************************************************************************************************************/
+.event
+  position relative
+  margin 15px 0
+
+  overflow hidden
+  padding-top 25px
+  padding-bottom  25px
+  padding-right 35px
+  padding-left  100px
+  min-height 50px
+
+  cursor pointer
+  border-radius 10px
+  transition(all 0.2s ease-in-out)
+
+  &.__with-preview-ad
+    padding-right 225px
+
+  &.__with-preview-ad.__act
+    height 140px
+
+    .event_ad-preview
+      height 150px
+
+  &.__bg-1
+    background-color white
+
+  &.__bg-2
+    background-color #91debc
+
+  &.__bg-3
+    background-color  #fbf2ce
+
+  &.__bg-4
+    background-color  #f0c5bb
+
+  &.__icon-6
+    background-image url("/vassets/images/market/new-design/social_in-process.gif")
+    background-repeat no-repeat
+    background-position left 30px top 20px
+
+  &_w
+    text-decoration none
+
+  &_close
+    position absolute
+    top 5px
+    right 5px
+
+    box-sizing  border-box
+    padding 0
+    width 40px
+    height  40px
+
+    background-color  transparent
+
+  &_t
+    font-size 16px
+    color #404040
+
+  &_err-text
+    color #cb2228
+
+  &_ad-preview
+    position absolute
+    right  45px
+    bottom 0
+
+    width 150px
+    height  60px
+
+/********************************************************************************************************************/
+/* Авторизация/регистрация  */
+/********************************************************************************************************************/
+.auth-page
+  text-align  center
+  background-image url("/vassets/images/market/registration/bg_retina.jpg")
+  background-repeat no-repeat
+  background-size cover
+
+  .captcha_img
+    width 120px
+    height 30px
+
+  &_logo-icon
+    width 53px
+
+    img
+      width inherit
+
+  &_logo-text
+    margin-top 10px
+    width 101px
+
+    img
+      width inherit
+
+  &_column-lst
+    display table
+    margin 60px auto 0
+    overflow hidden
+
+  &_column
+    display table-cell
+    box-sizing  border-box
+    width 320px
+    padding 0 50px
+    border-right 1px solid #555555
+    text-align left
+
+    &:last-of-type
+      border-color transparent
+
+  &_descr
+    margin 16px 0
+    padding 0 5px
+    text-align left
+    font-size 10px
+    color #9c9c9c
+
+  &_recover-password
+    float right
+    font-size 10px
+
+  &_delimiter
+    margin-bottom 30px
+    color #9c9c9c
+    position relative
+    text-align center
+
+    &:before
+      position absolute
+      top 50%
+      left 0
+      transform translate3d(0,-50%,0)
+
+      content " "
+      width 40%
+      height 1px
+
+      background-color #9c9c9c
+
+    &:after
+      position absolute
+      top 50%
+      right 0
+      transform translate3d(0,-50%,0)
+
+      content " "
+      width 40%
+      height 1px
+
+      background-color #9c9c9c
+
+  &_social-btn-lst
+    text-align center
+
+  &_social-btn
+    margin 0 12px
+    display inline-block
+    width 34px
+    height 34px
+
+  &_social-btn.__facebook
+
+
+  &_link
+    color #7b89a4
+    text-decoration none
+
+    &:hover
+      text-decoration underline
+
+  &_column-t
+    margin-bottom 40px
+    font-size 16px
+    letter-spacing 8px
+    font-weight bold
+    text-transform uppercase
+    text-align center
+
+  &_adv-link
+    margin-left 20px
+    display inline-block
+    padding 0 10px
+    line-height 20px
+
+    text-decoration none
+
+    border 2px solid #9c9c9c
+    border-radius 6px
+    color #9c9c9c
+
+    transition(all 0.2s ease-in-out)
+
+    &:hover
+      border-color #00B994
+      color #00B994
+
+  &_column-t.__color-1
+    color #68b894
+
+  &_column-t.__color-2
+    color #dc3333
+
+  &_input
+    display block
+    margin 10px 0
+    overflow hidden
+
+    input
+      display block
+      width 100%
+      box-sizing border-box
+      padding 0 10px
+      line-height 26px
+      border 2px solid #cbcbcb
+
+      font-size 12px
+      color #cbcbcb
+      background transparent
+
+      outline none
+      appearance(none)
+
+      &:focus
+        border-color #7B89A4
+        background-color white
+        color #363636
+
+    input[type = checkbox] + span
+      font-size 10px
+
+    input[type = checkbox] + span:before
+      background-color transparent
+
+    input[type = checkbox]:checked + span:before
+      color #cbcbcb
+
+  &_input.__error
+
+    input
+      background-color  white
+      border-color      #f44040
+      color             #f44040
+
+.copyright-block
+  margin-right 20px
+  color #d0d0d0
+
+.reg-success
+
+  &_t
+    margin-bottom 20px
+    padding-top 60px
+
+
+.email-success
+
+  &_t
+    margin-bottom 20px
+    padding-top 60px
+
+@media screen768
+
+  .auth-page
+
+    &_column
+      display block
+      width 100%
+      padding 0 10px
+      border-right none
+
+      &:last-of-type
+        margin-top 50px
+
+/********************************************************************************************************************/
+/* Список узлов */
+/********************************************************************************************************************/
+.node-list
+  counter-reset list
+
+  &_size
+    position absolute
+    top 5px
+    right 0
+
+    font-size 12px
+    color #484848
+
+  &_add-btn
+    margin-top 50px
+    margin-left 50px
+
+  &_i
+    line-height 38px
+    border-top 1px solid #d6d6d6
+
+    &:last-of-type
+      border-bottom 1px solid #d6d6d6
+
+  &_i-link
+    margin 2px 0
+
+    display block
+
+    font-size 16px
+    color #484848
+    text-decoration none
+
+    transition(all 0.2s ease-in-out)
+
+    &:hover
+      cursor pointer
+      background-color #f8f8f8
+
+    &:before
+      float left
+
+      display block
+      width 50px
+      padding-left 15px
+      box-sizing border-box
+
+      font-size 12px
+      font-weight normal
+      color #878787
+
+      counter-increment list
+      content           counter(list)
+
+  &_i-link.__current
+    font-weight bold
+
+/********************************************************************************************************************/
+/* Политика конфиденциальности */
+/********************************************************************************************************************/
+.privacy-policy
+  margin 0 auto 50px
+
+  border-radius 10px
+  min-width 320px
+  max-width 1024px
+  padding 20px 40px
+
+  background-color white
+  color #848484
+  text-align left
+
+  &_t
+    margin-bottom 40px
+
+    line-height 24px
+
+    font-family "helios-thin"
+    text-align center
+
+    color #F44040
+    font-size 24px
+
+  p
+    margin 13px 0
+
+  strong
+    font-weight bold
+    font-size 16px
+
+  li
+    margin 13px 0
+    list-style none
+
+  ol
+    counter-reset list1
+
+    li:before
+      counter-increment list1
+      content           counter(list1) ". "
+
+    ol
+      padding-left 30px
+      counter-reset list2
+
+      li:before
+        counter-increment list2
+        content           counter(list1) "." counter(list2) ". "
+
+      ol
+        counter-reset list3
+
+        li:before
+          counter-increment list3
+          content           counter(list1) "." counter(list2) "." counter(list3) ". "
+
+
+  ul
+    padding-left 30px
+
+    li:before
+      content "- " !important
+
+/********************************************************************************************************************/
+/* Редактор */
+/********************************************************************************************************************/
+.block-height-editor
+
+  &_btn
+    float left
+    margin-right 10px
+
+    width 32px
+    height 32px
+    cursor pointer
+
+  &_label
+    float left
+    width 70px
+    line-height 30px
+    font-size 14px
+    color #838383
+
+
+.ad-field-editor
+
+  &_textarea
+    max-width 660px
+    min-width 660px
+    box-sizing border-box
+    padding 10px 15px
+    min-height 100px
+
+  &_color-btn
+    display inline-block
+    width 24px
+    height 22px
+    cursor pointer
+
+  &_align-text-btn
+    margin 0 7px
+    display inline-block
+    width 16px
+    height 14px
+    cursor pointer
+
+.preview-btn
+  margin-right 20px
+
+.tag
+  &_container
+    float: left;
+    line-height: 30px;
+    font-size: 14px;
+    color: #838383;
+    padding: 10px;

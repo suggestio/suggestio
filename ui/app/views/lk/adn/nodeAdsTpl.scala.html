@@ -1,0 +1,60 @@
+@(args: mlk.INodeAdsTplArgs)(implicit ctx: Context)
+
+@* Страница в ЛК, которая отображает карточки узла.
+   TODO Распилить этот шаблон по флагу isMyNode: чтобы логика была в контроллере,
+        а тут только прямолинейный рендер без всяких логических разветвлений.
+*@
+
+@import ctx._
+@import ctx.api.ctxUtil
+@import node._
+@import lk.right._
+@import args.mnode
+
+@rightBar = {
+  @_navTpl() {
+    @_navItemTpl(
+      title = messages("Ads.all"),
+      css   = Seq("__all-cards", "__act")
+    )
+
+    @_navItemTpl(
+      title = messages("Ads.on.review"),
+      css   = Seq("__in-process")
+    )
+
+    @_navItemTpl(
+      title = messages("Ads.published"),
+      css   = Seq("__active-cards")
+    )
+
+    @for(nodeId <- mnode.id) {
+      @_navSysTpl(
+        call  = routes.SysMarket.showAdnNode(nodeId)
+      )
+    }
+  }
+}
+
+
+@lk.lkBaseLayout(
+  title         = messages("Ad.cards"),
+  nodeOpt       = Some(mnode),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  rightBar      = Some(rightBar)
+) {
+
+  @if( mnode.extras.adn.exists(_.isProducer) ) {
+    @_myAdsTpl(args)
+
+    @* Ссылка на demo web site. *@
+    <div class="sm-note">
+      @if( mnode.extras.adn.exists(_.isReceiver) ) {
+        @messages("You.can.look.on.ads.in")
+        <a class="blue-link" href="@ctxUtil.SC_URL_PREFIX@routes.Sc.geoSite(msc.ScJsState(adnId = mnode.id))"
+           target="_blank">@messages("_ad.showcase.link")</a>.
+      }
+    </div>
+  }
+
+}

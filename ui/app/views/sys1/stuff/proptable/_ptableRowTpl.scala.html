@@ -1,0 +1,14 @@
+@(key: String, title: Option[String] = None)(value: Html)
+
+@* Один ряд таблицы _proptable. *@
+
+<tr @if(title) {title="@title"}>
+  <td class="siom-cell __size-S __inner-S">
+    @key
+  </td>
+  <td class="siom-cell __inner-S">
+    <strong class="color-strong">
+      @value
+    </strong>
+  </td>
+</tr>

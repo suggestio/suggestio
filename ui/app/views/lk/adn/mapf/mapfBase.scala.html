@@ -1,0 +1,31 @@
+@(title: String, mnode: MNode, rightCurrEl: NodeRightPanelLink, rightBarAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон страниц ADN map forms. *@
+
+@import views.html.stuff.leaflet._
+@import static.date.picker._
+
+
+@headAfter1 = {
+  @_leafletCssTpl()
+  @_locateControlCssTpl()
+  @_jqDatePickCssTpl()
+  @headAfter
+}
+
+
+@lk.adn.nodeBaseTpl(
+  title         = title,
+  mnode         = mnode,
+  rightCurrEl   = rightCurrEl,
+  rightBarAfter = rightBarAfter,
+  headAfter     = Some(headAfter1)
+) {
+
+  @content
+
+  @* leaflet.js и остальные живут в jsdeps.js на уровне lkBase.html . *@
+  @_jqDatePickJsTpl()
+
+}

@@ -1,0 +1,58 @@
+@import "../market/lk_new-design/mixins"
+
+.storage-edit-enabled
+  .custom-ui
+    display: block
+
+.custom-ui
+  display   none
+  position  absolute
+  top       60px
+  left      100px
+  z-index   100
+
+  &_btn-lst
+    overflow          hidden
+    margin-bottom     5px
+    background-color  white
+
+  &_btn
+    float             left
+    margin            0
+
+    display           inline-block
+    width             100px
+    height            40px
+    padding           0 10px
+    vertical-align    middle
+    box-sizing        border-box
+
+    background        white
+    border            none
+    cursor            pointer
+
+    color             black
+    font-family       'Arial'
+    font-size         13px
+    text-align        center
+
+    outline           none
+    appearance(none)
+    backface(hidden)
+
+  &_btn:hover,
+  &_btn.js-act
+    background-color  #e6e6e6
+
+  select
+    font-family 'Arial'
+    font-size   13px
+
+    option
+      font-family 'Arial'
+      font-size   13px
+
+
+
+
+

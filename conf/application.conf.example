@@ -1,0 +1,226 @@
+## Хосты с hbase-серверами
+#hbase.quorum = "localhost"
+
+###############################################################################
+## Html Compressor
+###############################################################################
+#html.compress.global.preserve.line.breaks = isDev
+#html.compress.global.remove.comments = isProd
+#html.compress.global.remove.spaces.intertag = true
+#html.compress.global.remove.proto.http = true
+#html.compress.global.remove.proto.https = true
+
+
+## домен ограниченного доступа: WWW.suggest.io
+sio.sc.hostport = "www.suggest.io"
+sio.sc.proto = "http"
+
+## Домен публичного доступа: MY.suggest.io
+sio.lk.hostport = "my.suggest.io"
+sio.lk.proto = "https"
+
+## Протокол, хост и порт, используемые при генерации ссылок на сайт suggest.io, когда больше ничего уже нет.
+sio.proto.dflt = "http"
+sio.hostport.dflt = "suggest.io"
+
+
+###############################################################################
+## Storage
+###############################################################################
+# Используемое хранилище. Модели могут использовать "DFS" или "HBase". Регистр
+# символов значения не имеет значение. [DFS]
+storage = "DFS"
+
+
+###############################################################################
+## CDN
+###############################################################################
+## Что приписывать перед ссылкой на CDN-барахло?
+#cdn.protocols   = ["http", "https"]
+#cdn.hosts.http  = ["localhost:9000"]
+#cdn.hosts.https = ["vasya.cdnvideo.ru"]
+
+
+###############################################################################
+## EMAIL
+###############################################################################
+smtp.host="192.168.101.9"
+#smtp.port=465
+##smtp.ssl=yes
+smtp.user="no-reply@suggest.io"
+smtp.password="BedCenEnakJidLilfEp"
+
+
+###############################################################################
+## Akka
+###############################################################################
+## TODO Use akka clustering instead of remoting in future.
+## Отключено пока siobix не используется.
+#akka {
+# actor {
+#  provider = "akka.remote.RemoteActorRefProvider"
+# }
+# remote {
+#  enabled-transports = ["akka.remote.netty.tcp"]
+#  netty.tcp {
+#   hostname = "127.0.0.1"
+#   port = 2552
+#  }
+# }
+#}
+
+
+###############################################################################
+## Общение с siobix-нодой.
+###############################################################################
+## akka url до супервизора кравлера. Меняется в зависимости от deployment'а.
+siobix.akka.url.prefix="akka.tcp://siobix@127.0.0.1:2553"
+
+## Используемый клиент к siobix. По умолчанию и почти всегда - akka, но можно использовать fake-клиенты
+## AKKA  - Работает по-настоящему.
+## FAKE+ - Отвечает всем, что всё ок. Подходит для отладки добавления сайтов без запущенного siobix.
+#siobix.client = "FAKE+"
+
+## Адрес top-level супервизора.
+siobix.akka.sup.path="sup"
+
+## akka путь до супервизора кравлеров.
+siobix.akka.crawler.sup.path="sup/CrawlersSup"
+
+## Сколько времени ждать ответа от кравлера по поводу добавления нового сайта. [2000]
+siobix.akka.bootstrap.ask_timeout_ms = 2500
+
+
+###############################################################################
+## Domain Requester (подсистема валидации сайтов)
+###############################################################################
+## Set the maximum time in millisecond an AsyncHttpClient wait for a response. [15000]
+domain.requester.http.request.timeout_ms = 15000
+
+## Maximum time in millisecond an AsyncHttpClient will keep connection idle in pool. [5000]
+domain.requester.pool.idle.timeout_ms = 5000
+
+## Maximum number of connections per hosts an AsyncHttpClient can handle. [1]
+domain.requester.pool.max_per_host = 1
+
+## Maximum number of connections an AsyncHttpClient can handle. [5]
+domain.requester.pool.max_size = 5
+
+
+###############################################################################
+## Mozilla Persona (Login)
+###############################################################################
+# Куда редиректить юзера после авторизации в persona. Обязательный параметр.
+persona.audience.url = "http://localhost:9000"
+#persona.audience.url = "https://suggest.io:443"
+
+# Через какой сервис проверять сессию юзера. [https://verifier.login.persona.org/verify]
+persona.verify.url = "https://verifier.login.persona.org/verify"
+
+
+###############################################################################
+## Search
+###############################################################################
+# Название кластера, к которму должен коннктится ES-клиент. [o.es.cluster.ClusterName.DEFAULT]
+es.cluster.name = "elasticsearch"
+
+## Можно включить юникаст для es-клиента, указав хотя бы один хост.
+#es.unicast.hosts = ["osm01", "localhost:9300"]
+
+# Макс кол-во тегов, которое пользователь может указать к одному запросу. [5]
+search.facet.invlink.request.tags.max = 5
+
+# Если true, то перезаписывать существующие маппинги при старте
+es.mapping.model.ignore_exist = false
+
+
+###############################################################################
+## Play framework
+###############################################################################
+# The secret key is used to secure cryptographics functions.
+# If you deploy your application to several instances be sure to use the same key!
+play.crypto.secret = "t6]=<]3/5pf19dTae_K?_DemwXGVK12<:6tnlL^7vVV9q>ZW<]jhh8[pH]YIJY=8"
+
+# The application languages
+application.langs="ru,en"
+
+#application.global=Global
+
+# Эволюция схем БД как всегда не нужна.
+evolutionplugin=disabled
+
+
+session.username = "p"
+session.cookieName = "s"
+session.maxAge = 600000
+session.httpOnly = true
+#session.secure = true
+
+
+
+# Переименовать длинный палевный "PLAY_LANG" в "l". Это скроет play.
+application.lang.cookie = "l"
+
+
+###############################################################################
+## SQL DBMS
+###############################################################################
+db.default.driver = org.postgresql.Driver
+db.default.url = "jdbc:postgresql://localhost/postgres?searchpath=sio2"
+db.default.username = "sio2"
+db.default.password = "Rjvfhjdj&"
+
+
+###############################################################################
+## Billing
+###############################################################################
+## Тарификацию по накопленным данных по stat-биллингу производить не чаще этого интервала времени.
+billing.stat.queue.flush.interval.seconds = 10
+
+
+market.demo.adn.id=aeq7hpDfTi6B8x5mJpi5KQ
+
+market.join.request.notify.superusers.emails = ["support@suggest.io"]
+
+## Отображать ли пустые категории в выдаче? [false]
+#market.frontend.cats.empty.show = false
+
+
+###############################################################################
+## Radius
+###############################################################################
+## Включать при запуске tinyradius server? [false]
+radius.server.tiny.enabled = true
+
+## Включать ли периодический импорт ipgeobase? Первая итерация при старте, потом по таймеру. [false]
+ipgeobase.import.enabled = true
+
+
+###############################################################################
+## DynImg: настройки отображаемых картинок под экраны
+###############################################################################
+## Настройки сжатия динамических картинок.
+## device pixel ratio ~ 1.0
+dpr.MDPI.bg.quality = 70
+dpr.MDPI.bg.chroma.ss = b
+#dpr.MDPI.bg.blur.gauss = 0.05
+
+dpr.MDPI.fg.quality = 80
+dpr.MDPI.fg.chroma.ss = a
+#dpr.MDPI.fg.blur.gauss = 0.05
+
+## device pixel ratio ~ 1.5
+dpr.HDPI.bg.quality = 70
+dpr.HDPI.fg.quality = 72
+dpr.HDPI.fg.chroma.ss = c
+
+## device pixel ratio ~ 2.0
+dpr.XHDPI.bg.quality = 55
+dpr.XHDPI.fg.quality = 60
+dpr.XHDPI.fg.chroma.ss = a
+
+## device pixel ratio ~ 3.0
+dpr.DPR3.bg.quality = 50
+dpr.DPR3.fg.quality = 55
+dpr.DPR3.fg.chroma.ss = d
+

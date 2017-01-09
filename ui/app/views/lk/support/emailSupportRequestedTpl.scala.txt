@@ -1,0 +1,19 @@
+@(userName: String, lsr: MLkSupportRequest, adnIdOpt: Option[String], r: Option[String])(implicit ctx: Context)
+
+@import ctx.api.ctxUtil
+
+@* Шаблон письма для уведомления админов s.io о запросе техподдержки. *@
+
+Вопрос от пользователя @lsr.name @userName:
+
+------------------------------------------
+@lsr.msg
+
+--
+@lsr.name
+@lsr.phoneOpt
+@lsr.replyEmail
+------------------------------------------
+
+@adnIdOpt.map { adnId => Узел сети: @ctxUtil.LK_URL_PREFIX@routes.MarketLkAdn.showAdnNode(adnId)}
+@if(r.isDefined) { URL страницы: @ctxUtil.SC_URL_PREFIX@r }

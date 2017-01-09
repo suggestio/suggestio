@@ -1,0 +1,44 @@
+@(nodeIdOpt: Option[String], leftCurrEl: Option[LkLeftPanelLink])(implicit ctx: Context)
+
+@* Реализация левой панели для ноды. *@
+
+@import ctx.messages
+@import LkLeftPanelLinks._
+@import util.tpl.CssFormat._
+
+@_leftBarTpl() {
+  @for(nodeId <- nodeIdOpt) {
+
+    @_leftBarItemTpl(
+      title = messages("Ad.cards"),
+      href  = routes.MarketLkAdn.showNodeAds(nodeId),
+      css   = classesAct(leftCurrEl contains LPL_ADS, "__cards")
+    )()
+
+    @_leftBarItemTpl(
+      title = messages("Profile"),
+      href  = routes.MarketLkAdn.showAdnNode(nodeId),
+      css   = classesAct(leftCurrEl contains LPL_NODE, "__profile")
+    )()
+
+    @_leftBarItemTpl(
+      title = messages("Billing"),
+      href  = routes.LkBill2.onNode(nodeId),
+      css   = classesAct(leftCurrEl contains LPL_BILLING, "__billing")
+    )()
+
+    @_leftBarItemTpl(
+      title = messages("Events"),
+      href  = routes.LkEvents.nodeIndex(nodeId),
+      css   = classesAct(leftCurrEl contains LPL_EVENTS, "__events")
+    ) {
+      @* Заметный кружок с кол-вом непрочитанных сообщений. *@
+      @for( cnt <- ctx.data.evtsCount) {
+        @if(cnt > 0) {
+          <span class="left-bar_menu-bubble" title="@messages("New.events.cnt", cnt)">@cnt</span>
+        }
+      }
+    }
+
+  } @* nodeId *@
+} @* leftBar *@

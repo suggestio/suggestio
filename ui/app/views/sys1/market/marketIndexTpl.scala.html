@@ -1,0 +1,61 @@
+@()(implicit ctx: Context)
+
+@* Список ссылок на страницы управления магазинной частью. *@
+
+@import msys._
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn(href: Call, paddingPx: Int)(btnText: Html)(afterBtn: Html) = {
+  <div class="i __btn">
+
+    <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
+      @btnText
+    </a>
+
+    @afterBtn
+  </div>
+}
+
+@hPathAfter = {
+  @* Ничего не дописываем в заголовочный путь. *@
+}
+
+@marketBase("index", hPathAfter = Some(hPathAfter)) {
+
+    <div class="page-cnt">
+
+      <div class="info-label __outer">
+        <div class="info-label_icon"></div>
+        <div class="info-label_t">
+          Страница маркета содержит ссылки<br/>
+          на административные страницы,<br/>
+          касающие магазинной части.
+        </div>
+      </div>
+
+      <div class="i-list __market-index">
+
+        <div class="paragraph __size-M ovh">
+          @btn(routes.SysMdr.index, 52) { МОДЕРАЦИЯ } { }
+
+          @btn(routes.SysMarket.adnNodesList( MSysNodeListArgs(Some(MNodeTypes.AdnNode)) ), 52) { ADNetwork } {
+            <a href="@routes.SysMarket.createAdnNode()" class="siom-ac-btn __color-1 __size-XL __ft-XM __sys-market-index">
+              +добавить<br/>узел верхнего<br/>уровня
+            </a>
+          }
+
+          @btn(routes.SysBilling.overview(), 52) { БИЛЛИНГ } { }
+
+          @btn(routes.SysCalendar.showCalendars, 28) { КАЛЕНДАРИ<br/>ПРАЗДНИКОВ/<br/>ВЫХОДНЫХ } { }
+
+        </div>
+
+        <div class="paragraph __size-M ovh">
+          @btn(routes.Umap.getAdnNodesMap(), 28) { КАРТА<br/>ПОКРЫТИЯ } { }
+        </div>
+
+      </div>
+
+   </div>
+
+}

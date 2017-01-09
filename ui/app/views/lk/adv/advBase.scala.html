@@ -1,0 +1,19 @@
+@(title: String, mad: MNode, producer: MNode, rightLink: adv.tpl.LkAdvRightLink, rightAfter: Option[Html] = None,
+  headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для adv-раздела ЛК. *@
+
+@rightBar1 = {
+  @for(madId <- mad.id) {
+    @_rightNavTpl(madId, Some(rightLink))
+  }
+  @rightAfter
+}
+
+@lk.lkBaseLayout(
+  title         = title,
+  nodeOpt       = Some(producer),
+  rightBar      = Some(rightBar1),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  headAfter     = headAfter
+)(content)

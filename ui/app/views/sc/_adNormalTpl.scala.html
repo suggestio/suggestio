@@ -1,0 +1,20 @@
+@(args: blk.IRenderArgs, isWithAction: Boolean = false)(implicit ctx: Context)
+
+@* compat-шаблон для выдачи v1. Работает как обертка над отрендеренными блоками.
+   TODO Скорее всего, после удаления v1 оно станет более не нужно. *@
+
+@import util.TplDataFormatUtil._
+@import util.blocks._
+@import args.mad
+
+<div
+  @if( isWithAction && (!args.bc.hrefBlock || !mad.meta.business.siteUrl.nonEmpty) ) {
+    class="js-shop-link"
+    @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
+      data-producer-id="@producerId"
+    }
+    data-ad-id="@mad.id"
+  }
+>
+  @args.bc.renderBlock(args)
+</div>

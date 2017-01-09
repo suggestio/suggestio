@@ -1,0 +1,23 @@
+@(af: Form[_])(implicit ctx: Context)
+
+@import util.FC.divFc
+@import io.suggest.common.tags.edit.TagsEditConstants._
+@import io.suggest.common.tags.edit.TagsEditConstants.Search._
+@import helper._
+@import ctx.{messages, request}
+
+@* js-only форма с поддержкой создания нового тега: input для ввода текста и кнопка добавления.
+   Форма не умеет самбиттиться, её полностью обслуживает js. *@
+
+<div id="@ADD_FORM_ID">
+
+  @inputText(
+    af(ADD_TAGS_FN),
+    '_label -> messages("Add.tags"),
+    'id     -> ADD_NAME_INPUT_ID
+  )
+
+  <div id="@FOUND_TAGS_CONT_ID"
+       class="hint-list_container"></div>
+
+</div>

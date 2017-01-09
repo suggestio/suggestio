@@ -1,0 +1,92 @@
+@(args: msys.IShowAdTplArgs)(implicit ctx: Context)
+
+@import models.im.OutImgFmts.JPEG
+@import ctx.messages
+@import msc.OneAdRenderVariants._
+
+@hPathAfter = { }
+
+@sysAdBase(
+  title       = "Карточка",
+  madOpt      = Some(args.mad),
+  hPathAfter  = Some(hPathAfter),
+  nodeOpt     = args.producerOpt
+) {
+
+  <h1>Управление рекламной карточкой @args.mad.id</h1>
+
+  <p>Продьюсер карточки:
+    @args.madProducerIdOpt.map { producerId =>
+      <a href="@routes.SysMarket.showAdnNode(producerId)">
+    }
+      @args.producerOpt.fold {
+        ошибочен!
+      } { prod =>
+        Узел: @prod.meta.basic.name / @prod.meta.address.town
+      }
+    @if( args.madProducerIdOpt ) {
+      </a>
+    }
+  </p>
+
+  @args.mad.ad.blockMeta.map { bm =>
+    <p>Размеры карточки: ширина=@bm.width высота=@bm.height css-пикселей.</p>
+  }
+
+  <p>
+    <a href="@routes.MarketAd.editAd(args.mad.id.get)">Редактор карточки...</a>
+  </p>
+
+    <p>Эта карточка сейчас
+      @if(args.rcvrsCount > 0) {
+        размещена на @args.rcvrsCount узлах
+      } else {
+        нигде не отображается
+      }.
+      <a href="@routes.SysMarket.analyzeAdRcvrs(args.mad.id.get)">Проанализировать...</a>
+    </p>
+
+  <br/>
+
+  <div>
+    Отрендерить карточку в
+    <ul>
+      @defining( 1.0F ) { szMult =>
+      @defining( blk.OneAdQsArgs(args.mad.id.get, szMult, args.mad.versionOpt, JPEG) ) { qsArgs =>
+        <li>
+           - <a href="@routes.Sc.onlyOneAd(qsArgs)">HTML x@szMult</a>
+           или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToHtml)">кастомно</a>.
+        </li>
+        <li>
+          - <a href="@routes.Sc.onlyOneAdAsImage(qsArgs)">PNG x@szMult</a>
+          или <a href="@routes.SysMarket.showOneAdForm(args.mad.id.get, ToImage)">кастомно</a>.
+        </li>
+      }
+      }
+    </ul>
+  </div>
+
+  <br/>
+
+  <div>
+    Картинки карточки:
+    @if(args.imgs.isEmpty) {
+      отсутствуют.
+    } else {
+      <ul>
+        @args.imgs.map { ei =>
+          <li>
+            -
+            <a href="@routes.SysImg.showOne(ei.img)">
+              <strong>@messages(ei.edge.predicate.singular)</strong>
+            </a>
+            <a href="@routes.SysImg.makeForm(ei.img, args.mad.ad.blockMeta)">
+              [make]
+            </a>
+          </li>
+        }
+      </ul>
+    }
+  <div>
+
+}

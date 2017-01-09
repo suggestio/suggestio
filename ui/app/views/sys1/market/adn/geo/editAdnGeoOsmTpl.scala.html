@@ -1,0 +1,27 @@
+@(args: msys.ISysNodeGeoOsmEditTplArgs)(implicit ctx: Context)
+
+@import ctx._
+@import stuff._
+@import helper._
+@import mgeo.MGsPtr
+
+@geoBase(
+  title   = "Редактировать OSM-производную",
+  nodeOpt = Some(args.mnode)
+) {
+
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(args.mGsPtr)) )
+
+  <p>Для импорта фигуры надо указать ссылку на сайт openstreetmap.org. Ссылка должна содержать указатель на конкретную фигуру.</p>
+
+  <p>Вместо импорта OSM-фигуры можно
+    <a href="@routes.SysAdnGeo.createCircle(args.mGsPtr.nodeId)">создать круг.</a>
+  </p>
+
+  @_osmGeoFormTpl(
+    gf          = args.gf,
+    submitCall  = routes.SysAdnGeo.editNodeOsmSubmit(args.mGsPtr),
+    btnText     = messages("Update")
+  )
+
+}

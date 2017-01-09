@@ -1,0 +1,16 @@
+@(btn: msc.ScHdrBtn, args: msc.IhBtnArgs)
+
+@* Шаблон обертки для отображения svg-кнопки. *@
+
+@import io.suggest.sc.ScConstants.Header._
+
+<div class="sm-button sm-producer-header_btn
+            @* Отрендерить кастомные css-классы, разделяя пробелами. *@
+            @btn.divCss.iterator.map { css => @css}
+            __@(btn.align.name)-aligned
+            @if(btn.abs){abs}
+            @if(args.hidden){hidden}"
+     @if(args.adnId) { @ATTR_ADN_ID="@args.adnId" }
+     id="@btn.domId">
+  @btn.renderSvg(args.fgColor)
+</div>

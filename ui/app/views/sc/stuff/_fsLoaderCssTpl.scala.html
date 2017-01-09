@@ -1,0 +1,9 @@
+@(args: msc.IColors)(implicit ctx: Context)
+
+@* Динамический CSS для fsLoader. *@
+
+@import util.TplDataFormatUtil._
+
+.fs-loader {
+  background: @formatRgbHexColorCss(args.bgColor, Some(0.3F));
+}

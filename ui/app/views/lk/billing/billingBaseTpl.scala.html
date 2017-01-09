@@ -1,0 +1,56 @@
+@(title: String, mnode: MNode, rightCurrEl: BillingRightPanelLink, rightAfter: Option[Html] = None
+)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для шаблонов биллинга в личном кабинете. *@
+
+@import ctx._
+@import BillingRightPanelLinks._
+@import lk.right._
+@import util.tpl.CssFormat._
+
+@rightBar = {
+  @for(nodeId <- mnode.id) {
+    @_navTpl() {
+      @_navItemTpl(
+        title = messages("Bill.account.and.tariffs"),
+        href  = Some( routes.LkBill2.onNode(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_BILLING, "__node-billing")
+      )
+
+      @_navItemTpl(
+        title = messages("Transactions.history"),
+        href  = Some( routes.LkBill2.txnsList(nodeId, inline = false) ),
+        css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
+      )
+
+      @_navItemTpl(
+        title = messages("Cart"),
+        href  = Some( routes.LkBill2.cart(nodeId, r = ctx.r) ),
+        css   = classesAct(rightCurrEl == RPL_CART)
+      )
+
+      @_navSysTpl(
+        call  = routes.SysBilling.forNode(nodeId)
+      )
+    }
+  }
+
+  @rightAfter
+}
+
+@headAfter1 = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+}
+
+
+@lk.lkBaseLayout(
+  title       = title,
+  leftCurrEl  = Some(LkLeftPanelLinks.LPL_BILLING),
+  nodeOpt     = Some(mnode),
+  rightBar    = Some(rightBar),
+  headAfter   = Some(headAfter1)
+) {
+  @content
+
+  <script src="@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+}

@@ -1,0 +1,801 @@
+I=I
+When=When
+Sum=Sum
+Reason=Reason
+All=All
+Add=Add
+Companies=Companies
+Company=Company
+Name=Name
+Address=Address
+Delete=Delete
+Owner=Owner
+Mart=Shopping center
+Marts=Shopping centers
+Address=Address
+Created=Create
+Created=Created
+Edit=Edit
+Shop=Shop
+Shops=Shops
+Save=Save
+Continue=Continue
+Next=Next
+Site=Site
+Floor.number=Floor number
+Section.number=Section number
+Close=Close
+Your=Your
+Preview=Preview
+Install=Install
+Uninstall=Uninstall
+Town=Town
+Phone=Phone
+tel.=tel.
+Photo=Photo
+Node.photos=Shop photos
+Welcome.screen=Welcome screen
+Logo=Logo
+Other=Other
+Others=Others
+Privacy.policy=Privacy policy
+Status=Status
+Error=Error
+Page.link=Link to web-page
+Problem.occured=A problem occured
+without.confirmation=without confirmation
+Cancel=Cancel
+Description=Description
+Height=Height
+Width=Width
+Profile=Profile
+Billing=Billing
+Events=Events
+Logout=Logout
+Help=Help
+Logout.suggest.io=Escape Suggest.io?
+Balance=Balance
+Info.about.prods.and.svcs=Information about products and services
+Date=Date
+Amount._money=Amount
+Bill.id=ID
+Bill.details=Details
+Show.more=Show more
+Show.all=Show all
+No.records=No records
+Nothing.found=Nothing found
+Quick.search.for.offers=Quick search for offers
+Provider=Provider
+Page=Page
+Signup.confirmation=Signup confirmation
+Signup.finished=Signup finished.
+Predicate=Predicate
+Edited=Edited
+Currency=Currency
+Refuse=Refuse
+Approve=Approve
+Delete.all=Delete all
+Something.gone.wrong=Something gone wrong
+Center=Center
+Please.wait=Please wait...
+
+requisites=Payment details for withdrawal
+
+Type.password=Type password
+Retype.password=Retype password
+Password.change=Password change
+Password.recovery=Password recovery
+Type.current.password=Type current password
+Password.reset=Password reset
+Type.new.password=Type new password
+Confirm.new.password=Confirm new password
+Confirm.password=Confirm password
+New.password=New password
+New.password.saved=New password saved.
+
+Color=Color
+Colors=Colors
+Manufacturer=Manufacturer
+Size=Size
+Sizes=Sizes
+Price=Price
+Information=Information
+Write=Write
+
+slaves.of.m=RENTERS
+slaves.of.R=RESTAURANTS
+
+add.to.other.s=Add to other shop
+add.to.other.r=Add to other restaurant
+add.to.other.m=Add to other mart
+add.to.other.R=Add to other restaurant net
+
+amt.of.type.s=Shop
+amt.of.type.m=Mart
+amt.of.type.r=Restaurant
+amt.of.type.R=Restaurant chain
+amt.of.type.a=Transport
+amt.of.type.b=Metro station
+amt.of.type.c=Town district
+amt.of.type.d=Town
+amt.of.type.e=Sport
+amt.of.type.f=Town area
+amt.of.type.g=Other building
+
+amts.of.type.s=Shops
+amts.of.type.m=Marts
+amts.of.type.r=Restaurants
+amts.of.type.R=Restaurant chains
+amts.of.type.a=Transport
+amts.of.type.b=Metro stations
+amts.of.type.c=Town districts
+amts.of.type.d=Towns
+amts.of.type.e=Sports
+amts.of.type.f=Town areas
+amts.of.type.g=Others buildings
+
+editing.of.amt.profile.s=Shop profile edit
+editing.of.amt.profile.m=Mart profile edit
+editing.of.amt.profile.r=Restaurant profile edit
+editing.of.amt.profile.R=Supervisor profile edit
+editing.of.amt.profile.a=Transport node profile edit
+editing.of.amt.profile.b=Metro station profile edit
+
+District=District
+Districts=Districts
+Area=Area
+Areas=Areas
+
+adv.period.custom=Custom
+adv.period.P3D=Three days
+adv.period.P1W=Week
+adv.period.P1M=Month
+
+_x.asking.for.adv=запрашивает размещение.
+
+adn.sink.wifi=Wi-Fi
+adn.sink.geo=Geolocation
+
+
+ngl.bu=Building
+ngl.td=Town district
+ngl.to=Town
+
+ngls.bu=Buildings
+ngls.td=Town districts
+ngls.to=Towns
+
+bf.text.example=Text {0}
+
+Input.text.from.picture=Input text from the picture
+error.captcha=Invalid human-check code
+
+blocks.field.isWide=Display wide?
+blocks.field.title=Title
+blocks.field.bgColor=Background color
+blocks.field.href=External url address
+Add.text.block=Add text block
+
+ad.stat.action.v=View
+ad.stat.action.c=Click
+
+mir.type.a=Advertiser
+mir.type.w=Wi-Fi AP owner
+
+lk.sl.enable_ad=Display ad
+lk.sl.d=First page
+lk.sl.h=Categorizator
+lk.sl.m=My catalog
+
+nth.floor={0}th floor
+
+username.unknown=Who?
+
+adv.mode.o=Accepted
+adv.mode.r=Requested
+adv.mode.e=Refused
+
+join.qsn.haveWifi=Do you have Wi-Fi?
+join.qsn.fullCoverage=Your Wi-Fi equipment covers all needed room?
+join.qsn.knownEquipment=Do you know technical information about your Wi-Fi equipment?
+join.qsn.altFw=Your Wi-Fi equipment operates on alternative firmware?
+join.qsn.isWrtFw=Your Wi-Fi equipment operates on firmwares provided by OpenWRT, DD-WRT or RouterOS projects?
+join.qsn.landlineInet=Do you have landline internet?
+join.qsn.smallRoom=Do you have small-size room without any solid concrete partitions inbetween?
+join.qsn.audienceSz=Assumed count of wireless devices connected at the same time:
+join.qsn.audienceSz.lt20=< 20
+join.qsn.audienceSz.lt50=< 50
+join.qsn.audienceSz.gt50=> 50
+Request.invite=Request invite
+Audience.descr=Audience descriptio
+Daily.people.traffic=Daily traffic
+N.humans.per.day={0} humans every day.
+Office.phone.number=Office phone number
+Your.IR.accepted=Your connection request accepted successfully.
+
+
+error.gallery.too.large=Too many pictures in gallery.
+error.no.money=No money
+error.invalid=Invalid value
+error.invalid.java.util.Date=Invalid date value
+error.required=This field is required
+error.number=Numeric value expected
+error.real=Real number value expected
+error.real.precision=Real number value with no more than {0} digit(s) including {1} decimal(s) expected
+error.min=Must be greater or equal to {0}
+error.min.strict=Must be strictly greater than {0}
+error.max=Must be less or equal to {0}
+error.max.strict=Must be strictly less than {0}
+error.minLength=Minimum length is {0}
+error.maxLength=Maximum length is {0}
+error.unknown.email_pw=Invalid email/password.
+error.contract.not.agreed=Agreement is not accepted. Please carefully read the contract and click on checkbox below, if you agreed.
+
+constraint.required=Required
+constraint.min=Minimum value: {0}
+constraint.max=Maximum value: {0}
+constraint.minLength=Minimum length: {0}
+constraint.maxLength=Maximum length: {0}
+constraint.email=Email
+
+
+im.op.a=Crop abs
+im.op.b=Gravity
+im.op.c=Resize abs
+im.op.d=Interlacing
+im.op.e=Gauss blur
+im.op.f=Compression quality
+im.op.g=Extent
+im.op.h=Strip meta
+im.op.i=Filter
+im.op.j=Sampling
+im.op.k=Crop percent
+
+
+stuff.menu.ABOUT=ABOUT
+stuff.menu.HELP=HELP
+stuff.menu.LIVE=LIVE
+stuff.menu.CONTACTS=CONTACTS
+
+
+live_search_for_your_website=Live search for your website
+site_indexation_caption_initial=LAUNCHING INDEXATION
+site_indexation_caption=INDEXATION IN PROGRESS
+All.rights.reserved=All rights reserved
+locale=en_US
+about_link=ABOUT
+feedback_link=CONTACTS
+undefined_event=undefined event
+crawler_activity_label=Crawler status:
+indexation_in_progress=indexation in progress
+indexation_complete=all known existing pages crawled, standby mode
+nxdomain=non existent domain
+too_complex_content_or_overloaded_system=crawler error — too complex content, or system currently overloaded, please, try again later
+unexpected_response_content=unexpected response content
+
+econnrefused=connection error (econnrefused)
+econnreset=connection error (econnreset)
+econnaborted=connection error (econnaborted)
+crawler_error=general crawler error
+indexation_error=crawler message
+page_deduplicated=Page reduplicated
+page_crawled=Page crawled
+url_crawled=Url crawled
+average_response_time=average server response time
+
+stat_10min=pages crawled last 10 minutes
+stat_hour=pages crawled last hour
+stat_day=pages crawled last day
+stat_week=pages crawled last week
+stat_month=pages crawled last month
+stat_year=pages crawled last year
+
+email_us_at=Email us at
+
+or_fill_the_form=or fill the form below
+your_name=Your name
+your_message=Your message
+about_step_one=We are Suggest.io. We are working on the best user search.
+about_step_two=Just type in your website address to start using Suggest.io. Our robots will crawl your website automaticly.
+about_step_three=Copy javascript code and paste in in you templates just before </body> tag.
+unknown_character_encoding=Character encoding cannot be detected
+message_sent=You message successfully delivered to Suggest.io team!
+install_success=That's it. Now you can use live search on your website.
+http_500=Internal server error<br/>(HTTP 500)
+hostname_prohibited=Hostname prohibited
+
+zuck=Mark, is that you?
+durov=Pavel, is that you?
+
+invalid_url=Invalid url
+
+Yes=Yes
+No=No
+
+
+please=Please
+
+reindex_launched=Indexation launched
+reindex_try_later=Over limit. Please, try later.
+
+saved_successfully=Settings saved
+img_site_preferences=Site configuration
+overloaded_message=Temporarily overloaded. Try again later.
+
+copy_js_code_to_your_site=Copy the following JavaScript code and paste in into your site pages
+custom_search_solutions_br=Custom<br/>search<br/>solutions<br/>development.
+
+blog=Blog
+help=Help
+
+and=and
+or=or
+
+s.bb.title=Browser check
+
+
+mappers.url.invalid_url=Invalid URL.
+mappers.url.only_http_https_allowed=Only HTTP and HTTPS protocols are allowed.
+mappers.url.hostname_prohibited=This site cannot be indexed.
+
+
+f.feedback_sent_success=Thank you! Your message is sent to suggest.io developers.
+Send=Send
+
+
+c.s.search_query.empty=Empty search query. What are you looking for?
+
+
+weather.sky.state.Clear=Clear sky
+weather.sky.state.PartlyCloudy=Partly cloudy
+weather.sky.state.Cloudy=Cloudy
+weather.sky.state.VaryCloudy=Variable cloudness
+
+
+wind.direction.north=north
+wind.direction.south=south
+wind.direction.east=east
+wind.direction.west=west
+wind.direction.north-west=north-west
+wind.direction.north-east=north-east
+wind.direction.south-west=south-west
+wind.direction.south-east=south-east
+
+
+adv.ext.i.at.vk=My VKontakte
+adv.ext.i.at.fb=My Facebook
+adv.ext.i.at.tw=My twitter
+
+error.service.unknown=This website is not supported.
+error.required.at.least.one.adv.service=Choose at least one service from the list above.
+e.url.load.failed=Unable to load "{0}". Timeout occured ({1} ms).
+
+error.adv.ext.s2s.img.upload.refused=Remote server {0} refused to upload image.
+error.adv.ext.s2s.img.upload.failed=Failed to establish connection to remote server {0}. Unable to upload image.
+error.sio.internal=Internal suggest.io error. {0} {1}
+error.adv.ext.js.refused=Advertising refused or cancelled.
+
+e.event.not.found=Event not exists.
+
+reg.emailpw.email.subj=Confirm your registration in Suggest.io network
+
+adv.ext.ret.sc=My showcase
+adv.ext.ret.sc.hint=Link to your shop's showcase will be attached to deployed content.
+adv.ext.ret.ad=This ad
+adv.ext.ret.ad.hint=Link to current (this) promo-card will be attached to deployed content.
+
+e.ext.adv.unathorized=User not authorized.
+e.ext.adv.permissions=User have not permissions.
+e.ext.adv.permissions.group=No permissions for posting on the page "{0}".
+e.ext.adv.target.url.invalid=Invalid url.
+e.adv.ext.api.login=Failed to complete login procedure.
+e.adv.ext.api.init=Failed to get remote service client online.
+e.adv.ext.api=Error during talking with remote service.
+e.adv.ext.adp.internal=Internal error in {1} client.
+e.adv.ext.dom.update=Cannot update current page.
+e.adv.ext.your.browser.block.popups=Your browser is blocking popup windows. You need to allow all popups on Suggest.io and retry.
+e.adv.ext.unknown.tg.url=Suggest.io cannot understand target link you provided. Please check link correctness.
+New.target=New target
+in.progress=in progress...
+status.success=success
+Show.tech.error.info=Show technical error
+e.adv.ext.service.startup.error=Service startup error
+Following.targets.skipped=The following targets has been skipped
+Adv.on.ext.services.running=Deploying promo-card to external services
+Adv.ext=External promo-card deployment
+Add.target=Add target
+Adv.deploy.now=Deploy now
+adv.ext.tg.name.hint=Target name, any you want. Displayed only for current shop owner (owners).
+adv.ext.tg.url.hint=Link to any supported profile/page/group/event/etc in Facebook or vk.com. Copy-paste it from your browser location bar.
+
+Adv.deploy.in.process=Promo-card deployment in process.
+Do.not.close.current.page.until.deploy.finish=Do not close current page until deployment finishes.
+
+Adv.in.ext.services=Deploy into social networks
+Adv.in.geo.node=Advertise in geolocations
+Adv.history=Advertising history
+Ads.were.adv=Promo-cards has been published.
+Adv.reqs.sent=Advertising requests have been sent.
+Adv.req.refused=Advertising request refused.
+Adv.req.accepted=Ad will be advertised.
+
+Create.ad=Create{0}promo-card
+Ad.cards=Promotional cards
+You.can.look.on.ads.in=You can look on your ads in
+_ad.showcase.link=your promo showcase
+
+Ads.all=All cards
+Ads.on.review=On review
+Ads.published=Published
+
+Click.to.see.information=Click to see information
+Adv.accepted=Advertising accepted
+Adv.right.now=Advertising now
+
+
+ad.Manage=Manage
+
+passwords.do.not.match=Passwords does not match. Please try again.
+
+Checking.your.browser=Checking your browser...
+
+
+Ad.card.edit=Editing promo-card
+Ad.card.create=Creating promo-card
+Ad.card.will.be.deleted=Promo-card will be removed.
+Ad.deleted=Promo-card removed.
+Choose.category=Choose category
+Ad.layout=Promo-card layout
+Ad.edit.pattern=Pattern
+Ad.edit.pattern.color=Pattern color
+Bg.color=Background color
+Upload.file=Upload file
+Crop=Crop
+Choose.color=Choose color
+Fill.by.single.color=Fill by single color
+Ad.large.bg.img.info=Note that on most devices displayed cards may increase in size by half. Therefore, we advise to choose image, at least twice larger than the block size.
+
+Disable.reason=Disable reason
+
+Switch.shop=Switch shop
+New.shop.created.fill.info=New shop created. Please fill some necessary fields.
+Ad.cards=Promo cards
+
+My.ad.net=My ad network
+Choose.node=Choose shop
+Create.node=Create shop
+You.have.no.nodes.create.first=Currently you have no shops in your account. It's time to create first shop.
+Node.name=Shop name
+Node.name.hint=Shop name may be changed any time later.
+
+Main.color=Main{0}color
+Bg.color.of.sc.hint=Background color of showcase body and header, where logo displayed.
+
+Content.color=Content{0}color
+Fg.color.of.sc.hint=Color of text, icons and buttons in showcase.
+Text.color=Text color
+Edit.profile=Edit profile
+Advertisers=Advertisers
+
+Info.about.D0.choosing.color.solution=How to choose{0}color solution
+
+Upload.logo=Upload{0} logo
+Upload.photo=Upload{0} photo
+Upload.image=Upload{0} image
+Add.photo=Add{0} photo
+Welcome.bg.hint=Welcome background: your logo will be displayed ahead of it.
+
+Color.of.text.and.icons=Color of{0} text and{0} icons
+Color.of.bg.and.caption=Color of{0} background{0} and caption
+Use.contrast.colors.hint=For maximum readability of your content{0} you should use contrast colors.
+
+Payment=Payment
+Payment.comment=Payment comment
+Bill.account.and.tariffs=Account and tariffs
+Transactions.history=Transactions history
+Add.funds=Add funds
+Total.funds=Total funds
+Available.funds=Available funds
+Blocked=Blocked
+Tariff.rate=Tariff plan rate
+My.node.tariff.rate=My shop tariff plan rate
+Adv.tariff.rates=Ad deployment tariff plan rates
+Holidays.primetime=Holidays/primetime
+Week.days=Weekdays
+Weekend=Weekend
+All.week=All week
+Minimal.module=Minimal{0}module
+scheme.left=scheme{0}left
+Agreement.btw.CBCA.and.node.tariffs.for.year=Agreement between the company CBCA and {0} "{1}" identified tariff plans for {2}.
+
+day24h=day
+
+dow.mo=mo
+dow.th=th
+dow.fr=fr
+dow.su=su
+
+New.events.cnt={0} new events
+User.profile.edit=Edit user profile
+
+Under.consideration=Under consideration
+This.page.contains.incoming.adv.reqs=Incoming promo-card placement requests apper in this page.
+Adv.rates.wrote.in.CBCA.contract=Prices for placement prescribed in the contract with the company CBCA.
+Click.on.card.for.info.consider=Click on promo-card for detailed information, and for approving or refusing placement.
+Click.for.more.info=Click to{0} see more{0} information
+
+Ad.adv.history=Promo-card advertising history
+Geo.adv=Advertising in geolocation
+Send.request=Send request
+Total.amount._money=Total amount
+No.history=No history present
+Denied=Denied
+Approved._adv=Approved
+Adv.request.from=Advertising request from
+Adv.in.cats=Advertising in products/services categories
+Adv.on.main.screen=Advertising on the main screen
+Write.refuse.reason=Reason of rejection
+Approve._adv=Approve
+Send.rejection=Send rejection
+Cancel.adv=Refuse advertising
+Select.town=Select town
+All.places=All places
+Adv.levels=Advertising levels
+Main.screen=Main screen
+Product.categories=Product categories
+Categories=Categories
+_adv.Online.now=Visible now
+Catalog=Catalog
+List=List
+advertised=advertised
+Date.choosing=Date choosing
+Advertising.period=Advertising period
+Date.start=Start date
+Date.end=End date
+Your.ad.will.adv=Your promo-card will be advertised
+from._date=from
+From._date=From
+till._date=till
+Your.ad.will.see.all.sio.users.in.geolocs=Your ad will be seen by all Suggest.io users in requested locations.
+Ad.will.seen.by.interested.in.cats.users=Ad in categories will be seen by interested Suggest.io users, whom looking for specific products and services.
+Catalog.ads.will.be.seen.by.walkers=Ads from your personal catalog is displayed to users during horizontal listing of opened promo-cards and during full-text searching.
+refused.adv=refused advertising
+approved.adv=accepted advertising
+
+Using.add.shop.btn.you.can=Using "add shop" button, you always can create new shop with new showcase, new promo-cards and different design.
+Start.your.work.with.ads.mgr=Start your work with simple and clever ad manager. Using it, you can rapidly create and update your promo-cards, advertise them on other Suggest Ad Network nodes and deploy into popular social networking services like Facebook.
+Hide.event=Hide event
+Geotargeted.ad=Geotargeted ad
+Advertise=Advertise
+How.it.works=How it works
+
+Select.your.lang=Select your language
+This.lang=English
+Switch.lang=Switch language
+
+Login.page.title=Login
+Login=Sign in
+Login.to.sio=Login to suggest.io
+Remember.me=Remember me
+Forgot.password=Forgot{0} password?
+Recover.password=Recover password?
+Password.recovery=Password recovery
+Recovery.key.expired=Recovery key expired
+or.used.cannot.recover.pw=or already used. Cannot continue password recovery.
+Sign.up=Sign up
+Password=Password
+Go.back=Go back
+Epw.reg.msg.sent=Email message with sign-up confirmation link sent to your mailbox.
+Epw.follow.msg.link.to.finish=Follow link from sent message to finish registration.
+Sign.up.to=Sign-up on {0}
+Hello=Hello
+Msg.sent.auto.noreply=This message is sent automatically. Please, do NOT reply.
+Your.reg.in.sio.confirmed=Your sign-up request in {0} geotargeted ad system approved successfully.
+Follow.this.link.to.complete.epw.reg=Follow {0}this link{1} to complete registration procedure.
+If.link.not.open.cp.link.to.browser=If link do not open, copy-n-paste following string into browser location bar:
+If.you.not.epw.reg.delete.msg=If you not requested registration on {0}, just delete this message.
+Password.recovery.in=Password recovery in {0}
+Sys.rcvd.pw.recover.request={0} geotargeted ad system received password restore request for your account:
+To.recover.password.use.this.link=Open {0}this link{1} to reset password for your account.
+
+Type=Type
+
+To.addr.msg.sent.with.recover.link=To emai {0} message will be sent{1}, containing link for password recovery.
+Check.your.mailbox=Please, check your mailbox.
+Email.used.during.registration=Email address, used during registration
+Your.identity.accepted.saved=Your identity data accepted and saved
+In.seconds.you.ll.rdr.to.your.shop=In several seconds you will be redirected into your shop.
+If.no.rdr.click.here=If redirection doesn't occur, click {0}here{1}.
+Mailbox.ll.be.mailed.with.reg.confirm.msg=Your mailbox will be mailed with sign-up confirmation message.
+Getting.started.with.sio.you.agreed.with.policy=Getting started with Suggest.io, you agree to the {0}privacy policy{1}.
+Your.email.addr=Your email address
+
+Clothing=Clothing
+Footwear=Footwear
+Tourism.and.recreation=Tourism & recreation
+Electronics=Electronics
+Sporting.goods=Sporting goods
+Cosmetics=Cosmetics
+Homeware=Homeware
+Cafes.and.restaurants=Cafes & restaurants
+Gastronomy=Gastronomy
+Info=Info
+Fitness=Fitness
+Services=Services
+Theatres=Theatres
+Sport=Sport
+Spa.and.massage=SPA & massage
+Realty=Realty
+Museums.and.exhibitions=Museus & exhibitions
+Cinema=Cinema
+Banking=Banking
+
+About.sio=About s.io
+Detect.geolocation=Detect geolocation
+
+i=i
+suggest=suggest
+isuggest=isuggest
+
+Please.close.this.wnd.if.not.closed.auto=Please, close this window, if it not closed automatically.
+
+e.sz.mult.too.low=Size multiplifier is too low.
+e.sz.mult.too.high=Size multiplifier is too high.
+
+GeoTag=Geo-tag
+Tags=Tags
+Tags.choosing=Tags choosing
+e.tag.len.min=Tag too short.
+e.tag.len.max=Tag too long.
+Add.tags=Add tags
+
+Overwrite.all=Overwrite all
+
+Ad.created=Promo-card created.
+Changes.saved=Changes saved.
+No.changes=No changes.
+
+Your.msg.sent=Your message has been sent.
+Your.req.sent=Your request has been sent.
+Activation.impossible=Activation impossible.
+
+
+Ntype.p=Person
+Ntype.n=Cabinet
+Ntype.a=Promo card
+Ntype.t=Tag
+Ntype.m=Media
+Ntype.i=Picture
+Ntype.b=BLE-beacon
+
+Ntype.p=People
+Ntype.n=Cabinets
+Ntype.a=Promo cards
+Ntype.t=Tags
+Ntype.m=Medias
+Ntype.i=Pictures
+Ntype.b=BLE-beacons
+Nodes=Nodes
+
+edge.predicate.a=Owner
+edge.predicate.c=Adv mdr dg
+edge.predicate.d=Creator
+edge.predicate.e=Logo
+edge.predicate.f=GeoParent
+edge.predicate.g=Direct GeoParent
+edge.predicate.h=Welcome logo
+edge.predicate.i=Gallery item
+edge.predicate.j=Moderated by
+edge.predicate.k=Receiver
+edge.predicate.ks=Adv on producer
+edge.predicate.ka=Adv on node
+edge.predicate.l=Tagged
+edge.predicate.lg=Adv in geotag
+edge.predicate.ls=Self-tag
+edge.predicate.m=Background
+edge.predicate.n=Node location
+edge.predicate.o=Adv in place
+edge.predicate.p=Placed in
+edge.predicate.q=Adv in radio-beacon
+edge.predicate.r=Advertisers map
+
+Your.name=Your name
+First.name=First name
+Last.name=Last name
+
+Type.digits.from.picture=Please type digits from the picture.
+
+Adv.in.geo.tags=Advertising in geotags
+No.enought.deposit=Not enought money on deposit
+City.place.choose=City/place choose
+
+Month.N.1=January
+Month.N.2=Febrary
+Month.N.3=March
+Month.N.4=April
+Month.N.5=May
+Month.N.6=June
+Month.N.7=July
+Month.N.8=August
+Month.N.9=September
+Month.N.10=October
+Month.N.11=November
+Month.N.12=December
+
+ofMonth.N.1=January
+ofMonth.N.2=Febrary
+ofMonth.N.3=March
+ofMonth.N.4=April
+ofMonth.N.5=May
+ofMonth.N.6=June
+ofMonth.N.7=July
+ofMonth.N.8=August
+ofMonth.N.9=September
+ofMonth.N.10=October
+ofMonth.N.11=November
+ofMonth.N.12=December
+
+
+DayOfW.N.1=Mo
+DayOfW.N.2=Tu
+DayOfW.N.3=We
+DayOfW.N.4=Th
+DayOfW.N.5=Fr
+DayOfW.N.6=Sa
+DayOfW.N.7=Su
+
+DayOfWeek.N.1=Monday
+DayOfWeek.N.2=Tuesday
+DayOfWeek.N.3=Wednesday
+DayOfWeek.N.4=Thursday
+DayOfWeek.N.5=Friday
+DayOfWeek.N.6=Saturday
+DayOfWeek.N.7=Sunday
+
+year_abbrevated=
+
+Several.seconds.later=Several seconds later
+Several.seconds.ago=Several seconds ago
+
+Less.than.minute.later=Less than a minute later
+Less.than.minute.ago=Less than a minute ago
+
+Cart=Cart
+Added.n.items.to.cart={0} items added into cart.
+Item=Item
+Your.cart.is.empty=Your cart is empty
+Thanks.for.buy=Thank you for your purchase!
+Your.order.is.being.processed=Your order is being processed by Suggest.io. Please be patient.
+Return.to.my.ads=Return to my ads
+Payment.for.order.N=Payment for order #{0}
+
+Item.type.a=Direct advertisement
+Item.type.t=Geo-tag advertisement
+Item.type.e=External deployment
+Item.type.g=In-the-place advertising
+
+Moderation=Moderation
+Picture.editing=Picture editing
+
+Refuse.mode.i=Only this adv
+Refuse.mode.req=This and any requested advs
+Refuse.mode.all=All current and requested advs
+
+Map=Map
+Map.settings.save.unsupported=Saved.
+Adv.in.place=Advertise in place
+
+Domain.mode.sc=Showcase display in domain
+
+conf.sc.node.ephemeral.id=aeq7hpDfTi6B8x5mJpi5KQ
+
+e.required.tags.or.main.screen=Please select "on main screen" checkbox or type at least one geo-tag.
+
+Current.node=Current node
+x.on.advertisers.map={0} on adverisers map
+On.the.map=On the map
+You.can.place.adn.node.on.map.below=You can place your current node on the advertisers map below.
+
+
+Adv.for.free.without.moderation=Advertise for free, without moderation?
+

@@ -1,0 +1,24 @@
+@(bc: util.blocks.SaveBgImgI,  args: blk.IRenderArgs,  cssClass: Option[String] = None,
+  dfltImg: Option[String] = None,  alt: Option[String] = None,  style: Option[String] = None)(implicit ctx: Context)
+
+@* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
+
+@import ctx.api.cdn
+
+@for(bg <- args.bgImg if !bg.isWide) {
+
+  @* Есть картинка в карточке. Рендерим img-тег: *@
+  <img alt="@alt"
+       @for(_cssClass <- cssClass) { class="@_cssClass" }
+       src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall( bg.dynImgCall ) )"
+       @defining( args.mad.meta.colors.bg ) { iBgColorOpt =>
+         @if(iBgColorOpt || style) {
+           style="@for(ibgColor <- iBgColorOpt) {background-color:#@ibgColor.code;}@style"
+         }
+       }
+       @defining( bg.szCss ) { sz =>
+         width="@sz.width" height="@sz.height"
+       }
+  />
+
+}

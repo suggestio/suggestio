@@ -1,0 +1,9 @@
+@(attrs: (String, Any)*)(content: Html)(implicit ctx: Context)
+
+@* Верстка div'а заголовка выдачи узла. *@
+
+@import stuff._kvAttrsTpl
+
+<div class="sm-producer-header abs" @_kvAttrsTpl(attrs)>
+  @content
+</div>

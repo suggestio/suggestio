@@ -1,0 +1,330 @@
+@import "mixins"
+
+/********************************************************************************************************************/
+/* Reset */
+/********************************************************************************************************************/
+
+*
+  margin          0
+  padding         0
+  border          0
+  font-size       100%
+  font            inherit
+  vertical-align  baseline
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section
+  display block
+
+html,
+body
+  height  100%
+
+ol,
+ul
+  list-style  none
+
+blockquote,
+q
+  quotes  none
+
+blockquote:before,
+blockquote:after,
+q:before,
+q:after
+  content ''
+  content none
+
+table
+  border-collapse collapse
+  border-spacing  0
+
+/********************************************************************************************************************/
+/* Стандартные классы, используются во всех проектах */
+/********************************************************************************************************************/
+.abs
+  position  absolute
+
+.relative
+  position  relative
+
+.ovh
+  overflow hidden
+
+.f-left
+  float left
+
+.f-right
+  float right
+
+.clear
+  clear both
+
+strong
+  font-weight bold
+
+.inline-block
+  display inline-block
+
+.block
+  display block
+
+  &.__margin-XS
+    margin  5px 0
+
+  &.__margin-S
+    margin  10px 0
+
+  &.__margin-M
+    margin  13px 0
+
+  &.__margin-L
+    margin  25px 0
+
+.def-transition
+  backface(hidden)
+  transition(all 0.2s ease-in-out 0s)
+
+/********************************************************************************************************************/
+/* Основная сетка проекта */
+/********************************************************************************************************************/
+
+projectMinWidth = 1100px
+contentWidth    = 790px
+headerHeight    = 60
+rightMenuWidth  = 210
+leftMenuWidth   = 60
+
+.lk
+  font-family 'opensans-light'
+  font-size   13px
+  min-width   projectMinWidth
+
+  &::-webkit-scrollbar
+    width 0
+
+.page
+  position          relative
+  min-height        100%
+  min-width         projectMinWidth
+  background-color  #efefef
+
+  &_cnt
+    position  relative
+    margin    0 auto
+    width     contentWidth
+
+  &_cnt.__ad-editor
+    width 1000px
+
+  &_title
+    color         #464646
+    font-size     18px
+    margin-bottom 35px
+    clear         both
+
+.header
+  min-width         830px /* TODO убрать эту строку после отключения файла common.css */
+  position          fixed
+  top               0
+  left              0
+  right             0
+  z-index           1000
+
+  height            (headerHeight)px
+  padding-left      (leftMenuWidth)px
+  padding-right     (rightMenuWidth)px
+  background-color  #303030
+
+  &_cnt
+    position  relative
+    margin    0 auto
+    width     contentWidth
+
+  &_logo-link
+    position    absolute
+    top         0
+    left        0
+
+    display     inline-block
+    line-height (headerHeight)px
+    width       (leftMenuWidth)px
+    text-align  center
+
+  &_logo-image
+    display         inline-block
+    vertical-align  middle
+
+  &_logo-text
+    position  absolute
+    top       18px
+    left      0
+    color     white
+    font-size 20px
+
+  &_billing
+    position  absolute
+    top       20px
+    right     0
+
+    color white
+    text-decoration none
+    transition(color 0.2s ease-in-out)
+
+    &:hover
+      color #00B994
+
+  &_billing-t
+    padding-right 30px
+
+  &_logout
+    position      absolute
+    top           20px
+    right         10px
+
+    display       inline-block
+    line-height   22px
+
+    overflow      hidden
+    padding-right 40px
+    width         135px
+    text-overflow ellipsis
+
+  &_change-node
+    position      absolute
+    top           10px
+    right         30px
+
+.left-bar
+  position          fixed
+  top               0
+  bottom            0
+  left              0
+  z-index           900
+
+  width             (leftMenuWidth)px
+  background-color  #464646
+
+  &_menu
+    padding-top (headerHeight)px
+
+  &_menu-i
+    position      relative
+    display       block
+    height        60px
+    color         #818284
+
+    background-repeat   no-repeat
+    transition(background-color 0.2s ease-in-out 0s)
+
+    &:hover
+      cursor            pointer
+      color             white
+      border-left       5px solid #f44040
+      background-color  #58585a
+
+  &_menu-i.__act
+    color             white
+    border-left       5px solid #f44040
+    background-color  #58585a
+
+  &_menu-bubble
+    position absolute
+    top 5px
+    right 0px
+
+    display inline-block
+    width 21px
+    line-height 21px
+
+    text-align center
+    font-size 9px
+    color white
+
+
+  &_bottom
+    position absolute
+    bottom 0
+    left 0
+    width 100%
+
+  &_exit,
+  &_help
+    display block
+
+    cursor  pointer
+    color   #818284
+
+    font-size 12px
+    line-height 26px
+    text-transform  uppercase
+    text-decoration none
+    text-align  center
+
+    &:hover
+      color white
+
+  &_exit
+    padding-top 30px
+
+
+.right-bar
+  position          fixed
+  top               0
+  bottom            0
+  right             0
+  z-index           900
+
+  width             (rightMenuWidth)px
+  background-color  #3e3e3e
+
+  &_menu
+    padding-top (headerHeight)px
+
+  &_menu-i
+    display       inline-block
+    box-sizing    border-box
+    line-height   60px
+    width         100%
+    padding-left  70px
+
+    color         #a5a5a5
+    font-size     14px
+    transition(background-color 0.2s ease-in-out 0s)
+
+    span
+      display         inline-block
+      line-height     14px
+      vertical-align  middle
+
+    &:hover
+      cursor            pointer
+      color             white
+      border-right      5px solid #f44040
+      background-color  #58585a
+
+  &_menu-i.__act
+    color             white
+    border-right      5px solid #f44040
+    background-color  #58585a
+
+  &_bottom
+    position    absolute
+    bottom      70px
+    width       100%
+    text-align  center
+
+.viewport
+  padding-top     (headerHeight + 40)px
+  padding-left    (leftMenuWidth + 20)px
+  padding-right   (rightMenuWidth + 20)px
+  padding-bottom  60px

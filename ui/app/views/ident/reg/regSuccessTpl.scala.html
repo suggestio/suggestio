@@ -1,0 +1,15 @@
+@(args: madn.INodeRegSuccess)(implicit ctx: Context)
+
+@* Страница отображения успеха регистрации нового юзера и нового магаза. *@
+
+@import ctx.messages
+
+@headAfter1 = {
+  <meta http-equiv="refresh" content="@args.autoRdrAfterSeconds; url=@args.rdrCall"/>
+}
+
+@views.html.ident.mySioStartTpl(
+  title     = messages("Sign.up"),
+  columns   = Seq(_regSuccessColumnTpl(args)),
+  headAfter = Some(headAfter1)
+)

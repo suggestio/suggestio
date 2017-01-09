@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+<channel>
+<title>Гидрометцентр России: О погоде - из первых рук</title>
+<link>http://www.meteoinfo.ru</link>
+<description>Прогноз погоды для городов России и мира</description>
+<ttl>60</ttl>
+<item><title>Санкт-Петербург, 1 декабря</title>
+<link>http://meteoinfo.ru/forecasts5000/russia/leningrad-region/sankt-peterburg#686611430</link>
+<description>Облачно, небольшой снег. Температура ночью -2°, днём -1°. Ветер северный, 2 м/с. Атмосферное давление ночью 772 мм рт.ст., днём 773 мм рт.ст. Вероятность осадков 78%</description>
+<category>Погода</category>
+<source url="http://meteoinfo.ru/rss/forecasts/26063">meteoinfo.ru: Санкт-Петербург, прогноз обновлён 1.12.2014 в 10:35(моск.врем.)</source>
+<guid>686611430</guid>
+</item>
+<item><title>Санкт-Петербург, 2 декабря</title>
+<link>http://meteoinfo.ru/forecasts5000/russia/leningrad-region/sankt-peterburg#686611431</link>
+<description>Переменная облачность, без осадков. Температура ночью -5°, днём -2°. Ветер юго-западный, 4 м/с. Атмосферное давление ночью 773 мм рт.ст., днём 770 мм рт.ст. Вероятность осадков 22%</description>
+<category>Погода</category>
+<source url="http://meteoinfo.ru/rss/forecasts/26063">meteoinfo.ru: Санкт-Петербург, прогноз обновлён 1.12.2014 в 10:35(моск.врем.)</source>
+<guid>686611431</guid>
+</item>
+<item><title>Санкт-Петербург, 3 декабря</title>
+<link>http://meteoinfo.ru/forecasts5000/russia/leningrad-region/sankt-peterburg#686611432</link>
+<description>Переменная облачность, без осадков. Температура ночью -4°, днём 2°. Ветер западный, 6 м/с. Атмосферное давление ночью 764 мм рт.ст., днём 761 мм рт.ст. Вероятность осадков 41%</description>
+<category>Погода</category>
+<source url="http://meteoinfo.ru/rss/forecasts/26063">meteoinfo.ru: Санкт-Петербург, прогноз обновлён 1.12.2014 в 10:35(моск.врем.)</source>
+<guid>686611432</guid>
+</item>
+</channel></rss>

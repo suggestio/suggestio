@@ -1,0 +1,15 @@
+@(css: TraversableOnce[String] = Nil, hidden: Boolean = true, jsPopup: Boolean = true, attrs: Seq[(String, Any)] = Nil)(content: Html)
+
+@* Все попапы в ЛК имеют что-то общее. Тут общая верстка всех попапов. *@
+
+@import util.tpl.CssFormat._
+@import helper._
+@import io.suggest.popup.PopupConstants._
+@import stuff._kvAttrsTpl
+
+<div class="@POPUP_CLASS
+            @if(jsPopup){@JS_POPUP_CLASS}
+            @if(hidden){js-hidden}@classesPreSpaced(css)"
+     @_kvAttrsTpl(attrs)>
+  @content
+</div>

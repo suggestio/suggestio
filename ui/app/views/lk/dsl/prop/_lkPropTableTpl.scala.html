@@ -1,0 +1,10 @@
+@(attrs: (Symbol, Any)*)(content: Html)
+
+@* внешняя обёртка prop-таблицы личного кабинета. *@
+
+@attrsMap = @{ attrs.toMap }
+
+<table class="prop @attrsMap.get('class)"
+       @toHtmlArgs( attrsMap.filterKeys(_ != 'class) )>
+  @content
+</table>

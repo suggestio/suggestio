@@ -1,0 +1,23 @@
+@(lf: usr.EmailPwLoginForm_t, rr: Option[String])(implicit ctx: Context)
+
+@* Колонка с формой логина через email-pw и соц.сети. *@
+
+@import ctx._
+
+<div class="auth-page_column">
+
+  <h2 class="auth-page_column-t __color-1">@messages("Login.page.title")</h2>
+
+  @_loginFormTpl(lf, rr)
+
+
+  <div class="auth-page_delimiter">@messages("or")</div>
+
+
+  <div class="auth-page_social-btn-lst">
+    @mext.MExtServices.values.iterator.flatMap(_.loginProvider).map { idp =>
+      <a class="auth-page_social-btn __@idp.ssProvName" href="@routes.Ident.idViaProvider(idp)"></a>
+    }
+  </div>
+
+</div>

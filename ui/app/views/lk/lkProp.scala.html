@@ -1,0 +1,12 @@
+@(name: String, propClass: Option[String] = None, id: Option[String] = None)(value: Html)
+
+<table class="prop @propClass" @if(id){id="@id"}>
+  <tr>
+    <td class="prop_name">
+      @name
+    </td>
+    <td class="prop_value">
+      @value
+    </td>
+  </tr>
+</table>

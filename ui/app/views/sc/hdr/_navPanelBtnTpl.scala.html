@@ -1,0 +1,11 @@
+@(args: msc.ISyncRenderInfo with msc.IHBtnArgsFieldImpl)(implicit ctx: Context)
+
+@* Шаблон кнопки отображения/сокрытия панели геонавигации. *@
+
+@import msc.ScHdrBtns.NavPanelOpen
+
+@_toggleNavScreenSyncWrapTpl(args) { jsStateOpt =>
+  @NavPanelOpen(
+    args.hBtnArgs.copy( hidden = args.syncRender && jsStateOpt )
+  )
+}

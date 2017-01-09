@@ -1,0 +1,14 @@
+@(className: String, id: String, attrs: (String, String) *)(data: Html)(implicit ctx: Context)
+
+@import io.suggest.sc.ScConstants._
+@import stuff._kvAttrsTpl
+
+<div id="@id"
+     class="sm-flex @if( ctx.isIpad || ctx.isIphone ) {sm-overflow-scrolling} @className"
+     @_kvAttrsTpl(attrs)>
+  <div id="@id@DIV_WRAPPER_SUFFIX" class="sm-flex sm-overflow-scrolling">
+    <div id="@id@DIV_CONTENT_SUFFIX" class="@{className}_content">
+      @data
+    </div>
+  </div>
+</div>

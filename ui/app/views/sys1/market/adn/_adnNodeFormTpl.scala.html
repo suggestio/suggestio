@@ -1,0 +1,138 @@
+@(af: Form[MNode], call: Call, btnText: String, formAfter: Option[Html] = None)(implicit ctx: Context)
+
+@* Форма для создания/редактирования узла рекламной сети.
+   При верстке шаблона следует помнить, что mcompany.id может быть None. *@
+
+@import helper._
+@import ctx._
+@import util.FC.tdFc
+
+@form( CSRF(call) ) {
+
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">
+        Тип узла
+      </label>
+    </td>
+    <td>
+      @defining( af("common.ntype") ) { ntypeField =>
+        <select name="@ntypeField.name">
+          @for(mnt <- MNodeTypes.values) {
+            <option value="@mnt.strId" @if( ntypeField.value.contains(mnt.strId) ) {selected}>
+              @messages( mnt.singular )
+            </option>
+          }
+        </select>
+      }
+    </td>
+  </table>
+
+
+  <table class="input-w __size-L">
+    <td class="input-w_left">
+      <label class="input-w_prop-name">
+        Отображаемый тип узла
+      </label>
+    </td>
+    <td>
+      @defining( af("adn.shownTypeIdOpt") ) { stiField =>
+        <select name="@stiField.name">
+          <option value="">[не требуется]</option>
+          @for(ast <- AdnShownTypes.values) {
+            <option value="@ast" @if( stiField.value.contains(ast.toString) ) {selected}>
+              @messages("amt.of.type." + ast)
+            </option>
+          }
+        </select>
+      }
+    </td>
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(af("common.isEnabled"), '_label -> "Включён?", '_class -> "sys-checkbox")
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(
+      af("common.isDependent"),
+      '_label -> "Подчинён?",
+      '_class -> "sys-checkbox",
+      '_title -> "Узел должен существовать, имея родительский узел N2?"
+    )
+  </table>
+
+
+  @* meta *@
+  <table class="input-w __size-L">
+    @inputText(af("meta.name"),    '_label -> "Название")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.nameShort"),    '_label -> "Короткое название")
+  </table>
+  <table class="input-w __size-L">
+      @textarea(af("meta.hiddenDescr"),  '_label -> "Скрытое описание", 'title -> "Доступно только администрации suggest.io.")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.town"),    '_label -> "Город")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.address"), 'placeholder -> "пр.Ленина, д.1",  '_label -> "Адрес в городе")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.phone"),   'placeholder -> "+78121234567",    '_label -> "Номер телефона")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.floor"),   'placeholder -> 1,                 '_label -> "Этаж")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.section"), 'placeholder -> 101,               '_label -> "Номер секции")
+  </table>
+  <table class="input-w __size-L">
+    @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
+  </table>
+
+  @AdnRights.values.map { adnRight =>
+    <table class="input-w __size-L">
+      @checkbox(af(s"adn.rights.${adnRight.longName}"), '_label -> adnRight.longName, '_class -> "sys-checkbox")
+    </table>
+  }
+
+  <div>
+    <table class="input-w __size-L">
+      @inputText(af("adn.sls"), '_label -> "Исходящие уровни отображения и лимиты")
+    </table>
+
+    <p>
+      Формат: 'd = 1, m = 20, h = 5'.
+      <br/>
+      @AdShowLevels.values.map { sl =>
+        @sl.name -- @messages("lk.sl." + sl.name),
+      }
+    </p>
+  </div>
+
+
+  <table class="input-w __size-L">
+    @checkbox(af("adn.testNode"), '_label -> "Тестовый узел?", '_class -> "sys-checkbox")
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(af("adn.isUser"), '_label -> "Пользовательский узел?", '_class -> "sys-checkbox")
+  </table>
+
+  <table class="input-w __size-L">
+    @checkbox(
+      af("adn.showInScNl"),
+      '_label -> "Отображать в списке узлов выдачи?",
+      '_class -> "sys-checkbox"
+    )
+  </table>
+
+  @formAfter
+
+  <div class="btn-w __size-M">
+    <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right" value="@btnText" type="submit" />
+  </div>
+
+}

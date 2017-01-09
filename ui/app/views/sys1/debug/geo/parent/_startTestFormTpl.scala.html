@@ -1,0 +1,12 @@
+@()(implicit ctx: Context)
+
+@* Подшаблон для sys/debug/index для добавления кнопки тестирования. *@
+
+@import helper._
+@import ctx._
+
+@form( CSRF(routes.SysDebug.testNodesAllGeoParents()) ) {
+
+  <input type="submit" value="Протестировать геосвязность всех узлов..." />
+
+}

@@ -1,0 +1,15 @@
+@(nodeId: String)(implicit ctx: Context)
+
+@* Рисуем баланс на счете, если есть счёт. *@
+
+@import util.TplDataFormatUtil._
+@import ctx.messages
+
+@for(mbb <- ctx.data.mUsrBalances.headOption) {
+
+  <a class="header_billing" href="@routes.LkBill2.onNode(nodeId)">
+    <span class="ft-S header_billing-t">@messages("Balance")</span>
+    <span class=" ft-L">@formatPrice(mbb.price)</span>
+  </a>
+
+}

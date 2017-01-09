@@ -1,0 +1,21 @@
+@(args: msc.IFocusedAdsTplArgs)(implicit ctx: Context)
+
+@* API v1 (deprecated).
+   Рендер под-выдачи для просмотра развёрных карточек.
+   Появляется поверх при клике по какой-то карточке в общей плитке. *@
+
+@import msc._
+@import views.html.sc.stuff._
+@import io.suggest.sc.ScConstants.Focused._
+
+@_controlsTpl(args)
+
+@* Контейнер с прокручивающимися офферами *@
+<div id="@CONTAINER_ID" class="sm-focused-ads_container __animated" data-x-offset="0" data-ads-count="@args.adsCount">
+  <span id="ads0">
+    @_adTpl(args)
+  </span>
+  @if(!args.syncRender) {
+    @_loaderTpl(args)
+  }
+</div>

@@ -1,0 +1,35 @@
+@(martId: String, mf: Form[_])(implicit ctx: Context)
+
+@* Форма для выставления приветственной картинки-карточки. *@
+@import ovl._
+@import ctx.messages
+@import helper._
+@import io.suggest.adn.edit.NodeEditConstants
+@import io.suggest.js.UploadConstants.JS_IMG_UPLOAD_CLASS
+@import madn.EditConstants.WELCOME_IMG_FN
+
+<table class="prop">
+  <tr>
+    <td class="prop_name td">@messages("Welcome.bg.hint")</td>
+    <td class="td" id="@NodeEditConstants.NODE_WELCOME_DIV_ID">
+      @defining(mf(WELCOME_IMG_FN).value) { imgIdOpt =>
+
+        @imgIdOpt.map { imgId =>
+          @_welcomeOvlTpl(imgId)
+        }
+
+        <div class="image __size-M f-left @JS_IMG_UPLOAD_CLASS" @if(!imgIdOpt.isEmpty) {style="display: none;"}>
+          @stuff._fileUploadTpl(
+            call          = routes.MarketLkAdnEdit.uploadWelcomeImg(),
+            fieldName     = WELCOME_IMG_FN
+          )
+          <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.image")">
+            <span>@Html( messages("Upload.image", "<br/>") )</span>
+          </a>
+        </div>
+      }
+    </td>
+
+    <td class="td"></td>
+  </tr>
+</table>

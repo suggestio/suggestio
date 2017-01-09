@@ -1,0 +1,84 @@
+@(mnode: MNode, eAct: usr.EmailActivation, iaf: Form[_], withOfferText: Boolean)(implicit ctx: Context)
+
+@* Страница с формой подтверждения регистрации в качестве управляющего узлом ADN.
+   Новый пользователь здесь может ввести пароль. Уже залогиненный - просто подтвердить себя. *@
+
+@import helper._
+@import market.contract._
+@import ctx._
+
+@table_fieldset(label: String, clazz: String)(input:Html) = {
+<table class="input-w __size-L @clazz">
+  <td class="input-w_left">
+    <label class="input-w_prop-name" for="mnodeName">@label:</label>
+  </td>
+
+  <td>
+    <div class="input clearfix">
+      <div class="input_shadow">
+        @input
+      </div>
+
+    </div>
+  </td>
+</table>
+}
+
+@lk.lkBase(
+  title   = messages("Signup.confirmation"),
+  nodeOpt = Some(mnode)
+) {
+
+  <div class="page-title">
+    <div class="page-title_cnt">
+      @messages("Signup.confirmation").toUpperCase
+    </div>
+  </div>
+
+  <div class="body_cnt">
+    <div class="success-label success-label__adn-invite-accept">
+      <div class="success-label__icon"></div>
+      <div class="success-label__title">Вы приглашены к участию в системе iSuggest.ru</div>
+    </div>
+
+    @form( CSRF(routes.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(mnode.id.get, eAct.id.get)) ) {
+
+      @* Рендер текста открытой оферты. *@
+      @if(withOfferText) {
+        @market.contract._inviteWidgetTpl(iaf)
+      }
+
+      @table_fieldset(messages( AdnShownTypes.node2val(mnode).singular), "__disabled"){
+        <input id="mnodeName" type="text" disabled value="@mnode.meta.basic.name"/>
+      }
+
+      @table_fieldset("E-mail:", "__disabled"){
+        <input id="mnodeEmail" type="text" disabled value="@eAct.email"/>
+      }
+
+      @* Если юзер - анонимус, то надо показать поля ввода паролей. *@
+      @if(!ctx.user.isAuth) {
+
+        @table_fieldset(messages("Password"), ""){
+          <input type="password" name="password.pw1"/>
+        }
+
+        @table_fieldset(messages("Confirm.password"), ""){
+          <input type="password" name="password.pw2"/>
+        }
+        @* TODO Нужна ссылка с формой для логина в систему, если юзер уже зареган, но ещё не залогинен. *@
+      }
+
+      <div class="ft-XS color-light-strong invite-form_description">
+        Используйте указанные e-mail и пароль в дальшейнем для авторизации в системе iSuggest.
+      </div>
+
+      <div class="submit-w __size-L __invite-form">
+        <input class="siom-ac-btn __color-2 __size-M __ft-XM f-left" type="submit" value="@messages("Continue")" />
+      </div>
+    }
+
+  </div>
+
+}
+

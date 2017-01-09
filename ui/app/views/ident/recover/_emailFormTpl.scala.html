@@ -1,0 +1,49 @@
+@(rf: EmailPwRegReqForm_t)(implicit ctx: Context)
+
+@* Форма восстановления пароля: ввод email и капчи. *@
+
+@import ctx._
+@import helper._
+@import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
+@import io.suggest.util.StringUtil.randomId
+@import util.FC.authFc
+@import io.suggest.captcha.CaptchaConstants._
+
+
+@defining(routes.Ident.recoverPwFormSubmit()) { submitCall =>
+@form( CSRF(submitCall), 'class -> "recover-popup__content__form") {
+
+  @defining( messages("Email.used.during.registration") ) { msg =>
+    @inputText(
+      rf("email"),
+      '_label       -> (msg + ":"),
+      'placeholder  -> msg,
+      'type         -> "email"
+    )
+  }
+
+  @* Капча *@
+  <div class="captcha">
+    @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+      <input id="captchaId" type="hidden" name="captchaId" value="@captchaId"/>
+      <img class="captcha_img" id="captchaImage" src="@routes.Captcha.getDigitalCaptcha(captchaId, submitCall.url)" alt=""/>
+      <a class="captcha_reload-btn __small" id="@CAPTCHA_RELOAD_BTN_ID" @ATTR_RELOAD_FOR="#captchaImage" href=""></a>
+    }
+  </div>
+
+  @defining( messages("Input.text.from.picture") ) { msg =>
+    @inputText(
+      rf(CAPTCHA_TYPED_FN),
+      '_label       -> msg,
+      'type         -> "tel",
+      'placeholder  -> msg,
+      'id	    -> CAPTCHA_TYPED_INPUT_ID
+    )
+  }
+
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __minor" type="submit" value="@messages("Send")"/>
+  </div>
+
+} @* form *@
+} @* defining submitCall *@

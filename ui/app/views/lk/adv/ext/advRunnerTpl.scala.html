@@ -1,0 +1,27 @@
+@(args: adv.ext.IAdvRunnerTplArgs)(implicit ctx: Context)
+
+@* Страница с идущими размещениями на внешних сервисах. *@
+
+@import io.suggest.adv.ext.view.RunnerPage._
+@import ctx._
+@import helper._
+
+@base(
+  title = messages("Adv.on.ext.services.running"),
+  mnode = args.mnode,
+  mad   = args.mad
+) {
+
+  @messages("Adv.deploy.in.process")...
+  @messages("Do.not.close.current.page.until.deploy.finish").
+
+  <input id="@ID_WS_URL" type="hidden" value="@ctx.wsUrlPrefix@routes.LkAdvExt.wsRun(args.wsCallArgs).url" />
+
+  <div id="@ID_EVTS_CONTAINER"></div>
+
+  @* Скрипты, необходимые для работы системы. *@
+  @javascriptRouter("jsRoutes")(
+    routes.javascript.Static.popupCheckContent
+  )
+
+}

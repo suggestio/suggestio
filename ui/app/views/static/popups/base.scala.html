@@ -1,0 +1,15 @@
+@(title: String)(content: Html)(implicit ctx: Context)
+
+@* Чтобы протестировать браузер на возможность открывания popup window, нужно открыть попап.
+   Тут страница с содержимым попапа. *@
+
+@import ctx._
+
+<html>
+  <head>
+    <title>@title</title>
+  </head>
+  <body>
+    @content
+  </body>
+</html>

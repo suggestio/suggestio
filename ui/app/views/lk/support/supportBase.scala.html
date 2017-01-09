@@ -1,0 +1,10 @@
+@(title: String, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None, r: Option[String] = None)(content: Html)(implicit ctx: Context)
+
+@* Шаблон-подложка для шаблонов саппорта в ЛК. *@
+
+@lk.lkBaseLayout(
+  title         = title,
+  headAfter     = headAfter,
+  nodeOpt       = nodeOpt,
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_SUPPORT)
+)(content)

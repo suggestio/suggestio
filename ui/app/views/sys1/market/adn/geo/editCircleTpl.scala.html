@@ -1,0 +1,22 @@
+@(args: msys.ISysNodeGeoCircleEditTplArgs)(implicit ctx: Context)
+
+@* Страница с формой редактирования круга. *@
+
+@import ctx._
+@import stuff._
+@import helper._
+
+@geoBase(
+  title   = "Редактировать гео.круг",
+  nodeOpt = Some(args.mnode)
+) {
+
+  @_deleteSmthFormBtnTpl( CSRF(routes.SysAdnGeo.deleteSubmit(args.args0)) )
+
+  @_circleFormTpl(
+    cf          = args.cf,
+    submitCall  = routes.SysAdnGeo.editCircleSubmit(args.args0),
+    btnText     = messages("Save")
+  )
+
+}

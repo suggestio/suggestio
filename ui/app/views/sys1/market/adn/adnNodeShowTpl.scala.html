@@ -1,0 +1,189 @@
+@(args: msys.ISysNodeShowTplArgs)(implicit ctx: Context)
+
+@* Страница, отображающая информацию по торговому центру. *@
+
+@import ctx._
+@import ctx.api.ctxUtil
+@import lk.lkBlock
+@import sys1.person.parts._personLinkTpl
+@import models.mdr._
+@import args.mnode
+@import sys1.stuff.hpath._
+@import sys1.stuff.dsl._
+@import sys1.domains._nodeDomainsTpl
+@import msc._
+
+
+@* Подшаблон генерации квадратной кнопки. *@
+@btn1(href: String, paddingPx: Int)(btnText: Html) = {
+  <div class="i __btn">
+    <a class="siom-link-btn __color-5 __size-XL __ft-XM" href="@href" style="padding: @{paddingPx}px 0;">
+      @btnText
+    </a>
+  </div>
+}
+@btn(href: Call, paddingPx: Int)(btnText: Html) = {
+  @btn1(href.url, paddingPx)(btnText)
+}
+
+
+@tableRow(title: String)(value: Html) = {
+  <tr>
+    <td class="siom-cell __size-S __inner-S">
+      @title
+    </td>
+    <td class="siom-cell __inner-S">
+      @value
+    </td>
+  </tr>
+}
+
+
+@* Обязательно нужен пустой токен пути заголовка, иначе будет дублирование названия узла в пути заголовка. *@
+@hPathAfter = { }
+
+
+@adnBase(
+  title       = mnode.guessDisplayNameOrId.getOrElse("???"),
+  hPathAfter  = Some(hPathAfter),
+  nodeOpt     = Some(mnode)
+) {
+
+  @_sysTitleTpl() {
+    @messages( mnode.common.ntype.singular )
+    @for(ast <- AdnShownTypes.node2valOpt(mnode)) {
+      (@messages( ast.singular ))
+    }:
+    <strong>
+      @mnode.guessDisplayNameOrId
+    </strong>
+
+    <a class="edit-btn __color-1 __ft-XS" href="@routes.SysMarket.editAdnNode(mnode.id.get)">
+      @messages("Edit")
+    </a>
+  }
+
+  @for(nodeId <- mnode.id) {
+    <div class="i-list">
+      @btn(routes.MarketLkAdn.showNodeAds(nodeId), 28) { ЛИЧНЫЙ<br/>КАБИНЕТ<br/>УЗЛА }
+      @btn1(ctxUtil.SC_URL_PREFIX + routes.Sc.geoSite( ScJsState(adnId = Some(nodeId)) ).url, 52) { ВЫДАЧА }
+      @btn(routes.SysBilling.forNode(nodeId), 52) { БИЛЛИНГ }
+      @btn(routes.SysAdnGeo.forNode(nodeId), 52) { GEO }
+    </div>
+  }
+
+  @lkBlock("Метаданные") {
+    @_nodeMetaTpl(mnode.meta)
+  }
+
+  @if( args.outEdges.nonEmpty ) {
+    @lkBlock("Исходящие связи (" + args.outEdges.size + ")") {
+      @_nodeEdgesTpl( args.outEdges, arrow = "=>", onNode = Some(args.mnode) )
+      @for(mnodeId <- args.mnode.id) {
+        <a href="@routes.SysMarket.createEdgeGet(mnodeId)">@messages("Create")...</a>
+      }
+    }
+  }
+
+  @if( args.inEdges.nonEmpty ) {
+    @lkBlock("Входящие связи (" + args.inEdges.size + ")") {
+      @_nodeEdgesTpl( args.inEdges, arrow = "<=" )
+    }
+  }
+
+  @lkBlock("Владельцы") {
+    @defining( mnode.edges.withPredicateIterIds( MPredicates.OwnedBy ) ) { personIdsIter =>
+      @if(personIdsIter.isEmpty) {
+        <p class="color-light-strong">Нет владельцев узла.</p>
+      } else {
+        @for(personId <- personIdsIter) {
+          @_personLinkTpl(personId, args.personNames)
+        }
+      }
+    }
+  }
+
+  @lkBlock("Участие в рекламной сети") {
+    <table class="color-light-strong">
+
+      @mnode.extras.adn.map { adn =>
+        @tableRow("Права:") {
+          <strong class="color-strong">
+            @adn.rights.map(_.longName).mkString(", ")
+          </strong>
+        }
+      }
+
+      @* TODO Надо бы отображать как-то showLevelsInfo. *@
+      @tableRow("isEnabled:") {
+        <strong class="color-strong">@mnode.common.isEnabled</strong>
+      }
+
+      @mnode.common.disableReason.map { dr =>
+        @tableRow("disableReason:") {
+          <strong class="color-strong">@dr</strong>
+        }
+      }
+
+    </table>
+  }
+
+  @lkBlock("Связанные домены") {
+    @_nodeDomainsTpl(mnode)
+  }
+
+  @lkBlock("Управление") {
+
+    @btn(
+      href = routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(prodIdOpt = Some(mnode.id.get)) ),
+      paddingPx = 28
+    ) { Собственные<br/>рекламные<br/>карточки }
+
+    @btn(
+      href = routes.SysMarket.showAdnNodeAds( MScAdsSearchQs(rcvrIdOpt = Some(mnode.id.get))  ),
+      paddingPx  = 28
+    ) { Рекламные<br/>карточки<br/>в выдаче }
+
+    @btn(
+      href = routes.SysMarket.nodeOwnerInviteForm(mnode.id.get),
+      paddingPx = 28
+    ) { Инвайты на<br/>управление<br/>узлом }
+
+    @btn(
+      href = routes.SysMarket.installDfltMads(mnode.id.get),
+      paddingPx = 28
+    ) { Установка<br/>дефолтовых<br/>карточек }
+
+  }
+
+
+  @lkBlock("Модерация бесплатного размещения") {
+
+    <a class="siom-ac-btn __color-2 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(producerId = mnode.id) )">
+      Очередь на модерацию
+    </a>
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(true), producerId = mnode.id) )">
+      Одобренные
+    </a>
+    <a class="siom-ac-btn __color-4 __size-M __ft-XM __list f-left"
+       href="@routes.SysMdr.freeAdvs( MdrSearchArgs(isAllowed = Some(false), producerId = mnode.id) )">
+      Отклонённые
+    </a>
+  }
+
+
+  @lkBlock("Отладка") {
+
+    <p class="color-light-strong">
+      Отобразить email-письмо инвайта:
+      @_blueLink( routes.SysMarket.showEmailInviteMsg(mnode.id.get) ) {
+        HTML
+      }
+    </p>
+
+  }
+
+}
+

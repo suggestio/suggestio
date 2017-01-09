@@ -1,0 +1,77 @@
+@(title: String, mnode: MNode, bottomLeft: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Страница с внешней версткой для формы _adFormTpl. *@
+
+@import ctx.{messages, request}
+@import helper._
+@import io.suggest.ad.form.AdFormConstants._
+
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+}
+
+@lk.lkBase(
+  title         = title,
+  nodeOpt       = Some(mnode),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  headAfter     = Some(headAfter)
+) {
+
+  <div class="viewport">
+    <article class="page_cnt __ad-editor">
+      <h1 class="page_title">@title</h1>
+      @content
+
+      @* Снизу отображаются кнопки общего управления карточкой в целом. *@
+      <div class="submit-w __size-M">
+        @bottomLeft
+        <div class="f-right save-btn">
+          <a class="btn __size-M __major js-submit-btn" data-for="#promoOfferForm">@messages("Save")</a>
+        </div>
+        <div class="f-right preview-btn">
+          <a class="btn __size-M __minor js-ad-preview-button">@messages("Preview")</a>
+        </div>
+      </div>
+
+    </article>
+  </div>
+
+  @* jsRoutes для всей формы здесь. *@
+  @helper.javascriptRouter("jsRoutes")(
+    routes.javascript.Img.imgCropForm,
+    routes.javascript.MarketAd.newTextField,
+    routes.javascript.MarketAd.ws
+  )
+
+  <script src="@routes.Assets.versioned("javascripts/lib/tinymce/js/tinymce/tinymce.min.js")"></script>
+  <script src="@routes.Assets.versioned("javascripts/lib/colorpicker/js/colorpicker.js")"></script>
+
+  <input type="hidden" id="@WS_ID_INPUT_ID" value="@ctx.ctxIdStr" />
+
+  <script>
+    tinymce.init({
+      selector: 'textarea.js-tinymce',
+      width: 660,
+      height: 300,
+      menubar: false,
+      statusbar: false,
+      plugins: 'link, textcolor, paste, colorpicker',
+      toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat"],
+      content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
+      fontsize_formats: '@blk.FontSizes.values.iterator.map {fs =>@{fs.size}px@if(!fs.isLast){ }}',
+      style_formats: @Html(blk.Fonts.valuesJsonTinyMce.toString),
+      @if(messages.lang.language != "en") {
+        @defining( messages.lang.toLocale ) { locale =>
+          language: '@{locale.getCountry}_@{locale.getLanguage}',
+        }
+      }
+      font_size_style_values: '1px,2px',
+      setup: function(editor) {
+        return editor.on('init', function(e) {
+          return market.ad_form.set_descr_editor_bg();
+        });
+      }
+    });
+  </script>
+
+}

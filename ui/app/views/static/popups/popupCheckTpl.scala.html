@@ -1,0 +1,15 @@
+@()(implicit ctx: Context)
+
+@* Чтобы протестировать браузер на возможность открывания popup window, нужно открыть попап.
+   Тут страница с содержимым попапа. *@
+
+@import ctx._
+
+@base("Suggest.io") {
+  <p>@messages("Checking.your.browser")</p>
+  <script type="text/javascript">
+    window.opener.postMessage("reloaded", "*");
+    window.close();
+  </script>
+}
+

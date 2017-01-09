@@ -1,0 +1,10 @@
+@(rargs: event.RenderArgs)(content: Html)(implicit ctx: Context)
+
+@* Событие абстрактного успеха.
+   В дизайне от jan.2015: галочка зеленая слева, белый фон. *@
+
+@_oneEvtBase(rargs, Some("__bg-1 __icon-4 __with-ad-preview")) {
+
+  @* Какое-то содержимое уведомления *@
+  @content
+}

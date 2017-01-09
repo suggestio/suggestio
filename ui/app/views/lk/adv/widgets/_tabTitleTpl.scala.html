@@ -1,0 +1,23 @@
+@(title: String, cityId: String, catId: Option[String] = None, withCounter: Option[Int] = None)(content: Html)
+
+@* Верстка заголовка таба, используемого в форме. *@
+
+@import io.suggest.adv.direct.AdvDirectFormConstants._
+
+@idSuffix = { CityNgIdOpt(cityId, catId) }
+
+<div id="@CITY_NODES_TAB_HEAD_ID_PREFIX@idSuffix"
+     class="select-tab_i js-select-type"
+     @ATTR_CITY_ID="@cityId"
+     @if(catId) {@ATTR_CAT_ID="@catId"} >
+
+  @content
+
+  <span class="select-tab_i-title">@title</span>
+
+  @for(totalAvail <- withCounter) {
+    <span id="@Tabs.COUNTER_ID_PREFIX@idSuffix"
+          @(Tabs.TOTAL_AVAIL_ATTR)="@totalAvail"></span>
+  }
+
+</div>

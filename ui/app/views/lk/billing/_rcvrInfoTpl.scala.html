@@ -1,0 +1,45 @@
+@(args: mbill.IRcvrInfoTplArgs)(implicit ctx: Context)
+
+@* Рендер списка тарифных сеток (посуточная mmp-тарификация). *@
+
+@import util.TplDataFormatUtil._
+@import util.FormUtil.replaceEOLwithBR
+@import lk.lkProp
+@import ctx.messages
+@import lk.adn.node._galleryTpl
+@import lk.dsl._
+
+@if( args.gallery.nonEmpty ) {
+  <div class="tariff_photo-lst">
+    @_galleryTpl(args.gallery, "tariff_photo-i")
+  </div>
+}
+
+@_dailyTfTpl(args)
+
+<div class="ovh">
+
+  @args.mnode.meta.address.address.map { address =>
+    @lkProp( messages("Address")) {
+      @Html(replaceEOLwithBR(address))
+      @args.mnode.meta.address.phone.map { phone =>
+        @messages("tel.") @phone
+      }
+    }
+    @_delimTpl()
+  }
+
+  @args.mnode.meta.business.humanTrafficAvg.map { htAvg =>
+    @lkProp( messages("Daily.people.traffic")) {
+      @messages("N.humans.per.day", formatIntHtml(htAvg))
+    }
+    @_delimTpl()
+  }
+
+  @args.mnode.meta.business.audienceDescr.map { audDescr =>
+    @lkProp( messages("Audience.descr")) {
+      @Html(audDescr)
+    }
+  }
+
+</div>

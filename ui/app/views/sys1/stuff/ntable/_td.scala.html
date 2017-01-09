@@ -1,0 +1,10 @@
+@(sz: String, title: Option[String] = None)(content: Html)
+
+<td@if(title){ title="@title"}>
+  <div class="siom-cell-cnt __size-@sz">
+    @content
+  </div>
+  <div class="border-line"></div>
+</td>
+
+

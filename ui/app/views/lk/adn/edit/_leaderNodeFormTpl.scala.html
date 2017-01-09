@@ -1,0 +1,172 @@
+@(args: mlk.INodeEditArgs, btnText: String, submitCall: Call)(implicit ctx: Context)
+
+@* Форма для создания/редактирования торгового центра через личный кабинет. *@
+@import ovl._
+@import helper._
+@import util.FC.tdRadialFc
+@import ctx._
+@import io.suggest.vlines.VLines
+@import io.suggest.img.ImgConstants
+@import io.suggest.img.crop.CropConstants._
+@import io.suggest.adn.edit.NodeEditConstants
+@import io.suggest.js.UploadConstants
+@import views.html.lk.forms.img._
+@import madn.EditConstants._
+@import args.mf
+@import lk.dsl._
+
+@form(CSRF(submitCall), 'id -> "profileEdit") {
+
+  <div class="profile_logo-bar" id="@NodeEditConstants.NODE_LOGO_DIV_ID">
+    @defining(mf(LOGO_IMG_FN).value) { logoImgIdOpt =>
+      @logoImgIdOpt.map { imgId =>
+        <style class="custom-color-style" data-for=".__logo">
+          .__logo {
+            background-color: #@mf("meta.color").value;
+          }
+        </style>
+        @_logoOvlTpl(imgId)
+      }
+
+      <div class="image __size-L @UploadConstants.JS_IMG_UPLOAD_CLASS" @if(logoImgIdOpt) {style="display: none;"}>
+        @stuff._fileUploadTpl(
+          call          = routes.MarketLkAdnEdit.handleTempLogo(),
+          fieldName     = LOGO_IMG_FN
+        )
+        <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.logo", " ")">
+          <span>@Html( messages("Upload.logo", "<br/>") )</span>
+        </a>
+      </div>
+
+    }
+  </div>
+
+  <div class="profile_info-bar">
+    @_delimTpl()
+
+    @mf.globalError.map { errors =>
+      <p class="block __margin-M red">@messages("Error"): @messages(errors.message)</p>
+    }
+
+    @inputText(
+      mf("meta.name"),
+      '_label -> messages("Name")
+    )
+
+    @inputText(
+      mf("meta.town"),
+      '_label -> messages("Town")
+    )
+
+    @textarea(
+      mf("meta.address"),
+      '_label -> messages("Address")
+    )
+
+    @inputText(
+      mf("meta.siteUrl"),
+      '_label -> messages("Site")
+    )
+
+    @if( args.mnode.extras.adn.exists(a => a.isProducer || a.isReceiver) ) {
+      @textarea(
+        mf("meta.info"),
+        '_label -> messages("Info.about.prods.and.svcs")
+      )
+    }
+
+    @_delimTpl()
+
+    @if( args.mnode.extras.adn.exists(_.isReceiver) ) {
+      @inputText(
+        mf("meta.humanTrafficAvg"),
+        '_label -> messages("Daily.people.traffic")
+      )
+
+      @textarea(
+        mf("meta.audienceDescr"),
+        '_label -> messages("Audience.descr")
+      )
+      @_delimTpl()
+
+      <div class="prop" >
+        <p class="prop_name __block">@messages("Welcome.screen"):</p>
+        @_welcomeAdFormTpl(args.mnode.id.get, mf)
+      </div>
+
+      @_delimTpl()
+
+
+      @defining( mf(GALLERY_FN) ) { gf =>
+      <div class="prop" id="@NodeEditConstants.NODE_GALLERY_DIV_ID">
+        <p class="prop_name __block">@messages("Node.photos"):</p>
+
+        @gf.errors.map { error =>
+          <p class="block __margin-M red">@messages("Error"): @messages(error.message, error.args: _*)</p>
+        }
+
+        <div class="image __size-M f-left @UploadConstants.JS_IMG_UPLOAD_CLASS" >
+          @stuff._fileUploadTpl(
+            call          = routes.MarketLkAdnEdit.handleGalleryImg(),
+            fieldName     = GALLERY_FN,
+            multiUploadCounter = gf.indexes.lastOption.orElse( Some(-1) ),
+            whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
+          )
+          <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.photo")">
+            <span>@Html( messages("Add.photo", "<br/>") )</span>
+          </a>
+        </div>
+
+        @* Рендерим существующие значения галереи. *@
+        @gf.indexes.map { gfi =>
+          @defining( galleryFn(gfi) ) { gfn =>
+            @mf(gfn).value.map { imgId =>
+              @_galOvlTpl(imgId, fn = gfn)
+            }
+          }
+        }
+      </div>
+      }
+
+      @_delimTpl()
+
+    }
+
+    <table class="prop">
+      <tr>
+        <td class="prop_name td">
+          @messages("Bg.color.of.sc.hint")
+        </td>
+        <td class="td __color-title">
+	        <span class="dark-gray ft-S">@Html( messages("Main.color", "<br/>") )</span>
+        </td>
+        <td class="td __padding-S">
+          @defining( mf("meta.color").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
+            <div class="color __select js-custom-color" data-for=".__logo" style="background-color: #@colorValue;">
+              <input type="hidden" name="meta.color" value="@colorValue"/>
+            </div>
+          }
+        </td>
+        <td class="td __padding-S">
+          <div class="delimiter __light __vertical @VLines.JSVL_CLASS"></div>
+        </td>
+        <td class="td __padding-S prop_name">
+          @messages("Fg.color.of.sc.hint")
+          <a class="link js-btn" href="#editHelp">?</a>
+        </td>
+        <td class="td __color-title">
+          <span class="dark-gray ft-S">@Html( messages("Content.color", "<br/>") )</span>
+        </td>
+        <td class="td __padding-S dark-gray">
+          @defining( mf("meta.fgColor").value.map(_.trim).filter(!_.isEmpty).getOrElse("FFFFFF") ) { colorValue =>
+            <div class="color __select js-custom-color" style="background-color: #@colorValue;">
+              <input id="meta_color" type="hidden" name="meta.fgColor" value="@colorValue"/>
+            </div>
+          }
+        </td>
+      </tr>
+    </table>
+
+  </div>
+
+}

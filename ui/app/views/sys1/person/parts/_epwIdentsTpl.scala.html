@@ -1,0 +1,52 @@
+@(epwIdents: Seq[usr.EmailPwIdent], showPersonId: Boolean, personNames: Map[String, String] = Map.empty)(implicit ctx: Context)
+
+@* Рендер таблицы со список email+pw идентов. *@
+
+@import sys1.stuff.ntable._
+@import views.html.stuff._yesNoTpl
+
+<h1>Идентификации через email+password (@epwIdents.size)</h1>
+
+@if( epwIdents.isEmpty ) {
+  <div>Нет email+password идентов.<div>
+
+} else {
+
+@defining("M") { sz =>
+  @_ntable() {
+    @_th(sz, title = Some("Адрес электронной почты пользователя.")) {
+      E-mail
+    }
+    @_th(sz, title = Some("Достоверно известно о принадлежности адреса этому пользователю?")) {
+      Verified?
+    }
+    @if(showPersonId) {
+      @_th(sz, title = Some("Технический внутренний id пользователя suggest.io.")) {
+        person_id
+      }
+    }
+
+  } {
+    @epwIdents.map { epw =>
+      @_tr() {
+        @_td(sz) {
+          @_emailTpl(epw.email)
+          @if( ctx.api.mSuperUsers.isSuperuserId(epw.personId) ) {
+            <span title="Это суперпользователь.">&#9889;</span>
+          }
+        }
+        @_td(sz) {
+          @_yesNoTpl(epw.isVerified)
+        }
+        @if(showPersonId) {
+          @_td(sz) {
+            @_personLinkTpl(epw.personId, personNames)
+          }
+        }
+      } @* _tr() *@
+    }
+
+  } @* ntable.content *@
+
+} @* defining sz *@
+} @* if nonEmpty *@

@@ -1,0 +1,10 @@
+@()(implicit ctx: Context)
+
+@import io.suggest.common.maps.mapbox.MapBoxConstants._
+
+<script async src='@ctx.api.cdn.asset("javascripts/mapbox/gl/mapbox-gl.js")'></script>
+
+@* Тут сразу втыкаем access token. TODO Вынести в конфиг или ещё куда-нить... *@
+<input type="hidden"
+       id="@ACCESS_TOKEN_INPUT_ID"
+       value="pk.eyJ1Ijoia29uc3RhbnRpbjIiLCJhIjoiY2ltb2xlYWcyMDAxN3ZjbTRwYjg3Z3NqbiJ9.7ls6nsfHopoz8pxt34yjbg"/>

@@ -1,0 +1,5 @@
+@(style: String)(content: Html = HtmlFormat.empty)(implicit ctx: Context)
+
+<tr>
+  <td colspan="3"@if(!style.isEmpty){ style="@style"}>@content</td>
+</tr>

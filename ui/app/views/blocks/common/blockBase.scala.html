@@ -1,0 +1,35 @@
+@(args: blk.IRenderArgs, bc: util.blocks.ValT)(content: Html)(implicit ctx: Context)
+
+@import models.blk.szMulted
+@import args.mad
+@import io.suggest.sc.ScConstants._
+@import io.suggest.sc.ScConstants.Block._
+@import io.suggest.sc.ScConstants.Focused.FAd
+@import views.txt.blocks.common._
+
+@* Тут постоянная часть верстки блоков карточек в выдаче.
+   __rel класс - центровка div'а по центру.  *@
+<div class="sm-block sio-mart__single-offer sm-block-tpl@bc.id @if(mad.id){sm-block@mad.id} @if(args.isFocused){__rel} @args.cssClasses"
+     @if(mad.id) {
+       @MAD_ID_ATTR="@mad.id"
+       id="@mad.id@ID_DELIM@(if (args.isFocused) FAd.BLOCK_ID_SUFFIX else ID_SUFFIX)"
+       @for(index <- args.indexOpt) {
+         @BLK_INDEX_ATTR="@index"
+       }
+     }
+     @* Рендерить id-продьюсера карточки для v2-плитки. *@
+     @if( !args.isFocused ) {
+       @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
+         @PRODUCER_ID_ATTR="@producerId"
+       }
+     }
+     @for(bm <- mad.ad.blockMeta) {
+       @WIDTH_ATTR="@szMulted(bm.width, args.szMult)"
+       @HEIGHT_ATTR="@szMulted(bm.height, args.szMult)"
+     }
+     data-wide-bg="@args.wideBg.isDefined"
+     @for(tl <- args.topLeft if tl.inlineStyle) {
+       style="@_focTopLeftCss(tl)"
+     }>
+  @content
+</div>

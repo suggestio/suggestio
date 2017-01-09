@@ -1,0 +1,35 @@
+@(testResults: Seq[msys.NodeProblem])(implicit ctx: Context)
+
+@* Страница с результатами тестирования геосвязности узлов. *@
+
+@import sys1.debug._
+
+@dbgBase("Результаты проверки гео-связности узлов") {
+
+  @if(testResults.isEmpty) {
+    Узлы выверены, всё впорядке.
+
+  } else {
+    <p>Обнаружено @testResults.size проблем!</p>
+
+    <ul>
+      @testResults.iterator.map { tr =>
+        <li>
+          @tr.mnode.id.map { adnId =>
+            <a href="@routes.SysMarket.showAdnNode(adnId)">
+              @tr.mnode.meta.basic.name
+              / @tr.mnode.meta.address.town
+            </a>
+            / <a href="@routes.SysAdnGeo.forNode(adnId)">geo</a>
+            / <strong><a href="@routes.SysAdnGeo.editAdnNodeGeodata(adnId)">EDIT</a></strong>
+          }
+          <br/>
+          <strong>@tr.ex</strong>
+          <br/>
+          @tr.ex.getStackTrace()
+        </li>
+      }
+    </ul>
+  }
+
+}

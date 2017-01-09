@@ -1,0 +1,32 @@
+@(gf: Form[_], submitCall: Call, btnText: String, nodesMap: Map[String, MNode])(implicit ctx: Context)
+
+@* Форма для редактирования geo-части узла ADN. *@
+
+@import ctx._
+@import helper._
+@import util.FC.tdFc
+@import org.elasticsearch.common.unit.DistanceUnit
+
+@form( CSRF(submitCall) ) {
+
+  <table class="input-w __size-L">
+    @inputText(gf("point.lat"),  '_label -> "Широта")
+    @inputText(gf("point.lon"),  '_label -> "Долгота")
+  </table>
+
+  @select(
+    gf("parentAdnId"),
+    options = options(
+      ("" -> "") ::
+      nodesMap.mapValues(mnode =>
+        messages(AdnShownTypes.node2val(mnode).singular) + ": " +
+        mnode.meta.basic.name + mnode.meta.address.town.fold("")(" (" + _ + ")")
+      ).toList.sortBy(_._2) :  _*
+    ),
+    'title -> "id узла-геородителя"
+  )
+
+  <div class="btn-w __size-M">
+    <a class="siom-ac-btn __color-1 __size-M __ft-XM f-right js-submit-btn">@btnText</a>
+  </div>
+}

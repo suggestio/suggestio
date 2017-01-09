@@ -1,0 +1,105 @@
+@(args: mlk.bill.ICartTplArgs)(implicit ctx: Context)
+
+@* Шаблон с корзиной. *@
+
+@import lk.billing.billingBaseTpl
+@import ctx.{request, messages}
+@import sys1.stuff.ntable._
+@import util.TplDataFormatUtil.formatPrice
+@import views.html.sc._adNormalTpl
+@import lk.lkwdgts.price._
+@import helper._
+@import io.suggest.common.cart.CartConstants._
+
+@billingBaseTpl(
+  title       = messages("Cart"),
+  mnode       = args.mnode,
+  rightCurrEl = BillingRightPanelLinks.RPL_CART,
+  rightAfter  = args.items
+    .headOption
+    .map { _ => _rightPriceTpl(args.totalPricing, formId = FORM_ID) }
+) {
+
+  @for(r <- args.r) {
+    <a href="@r">@messages("Go.back")</a>
+  }
+
+
+  @if( args.items.isEmpty ) {
+    <h2>@messages("Your.cart.is.empty").</h2>
+
+    @for( mnodeId <- args.mnode.id ) {
+      <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
+        @messages("Return.to.my.ads")
+      </a>
+    }
+
+  } else {
+
+    @_ntable() {
+
+      @_th("S") {
+        &nbsp;
+      }
+      @_th("M") {
+        @messages("Item")
+      }
+      @_th("S") {
+        @messages("Price")
+      }
+
+    } {
+
+      @* TODO Дедублицировать рендер карточки *@
+      @for(itm <- args.items) {
+
+        @_tr() {
+          @* Нарисовать тут маленькую рекламную карточку *@
+          @_td("S") {
+            @_adNormalTpl(itm.brArgs)
+            @* TODO А если у нас оплата на ADN-узел (не карточку), то что рендерить? *@
+          }
+
+          @* Суть оффера. Инфа по заказанным тегам например. *@
+          @_td("M") {
+            @for(mitem <- itm.mitems; tag <- mitem.tagFaceOpt) {
+              <span>#@tag</span>
+              <br/>
+            }
+          }
+
+          @* Рендер стоимости item'а *@
+          @_td("S") {
+            @for(mitem <- itm.mitems) {
+              @formatPrice(mitem.price)
+              @* Кнопка-ссылка удаления этого элемента. *@
+              @for(itemId <- mitem.id) {
+                @form( CSRF(routes.LkBill2.cartDeleteItem(itemId, r = ctx.request.path)), 'class -> "f-right" ) {
+                  <a class="btn __negative js-submit-btn" title="@messages("Delete")" href="#">
+                    &cross;
+                  </a>
+                }
+              }
+              <br/>
+            }
+          }
+        }
+
+      } @* for itm *@
+
+    }
+
+    @for( mnodeId <- args.mnode.id ) {
+      @form( CSRF(routes.LkBill2.cartClear(mnodeId)) ) {
+        <input type="submit" value="@messages("Delete.all")"/>
+      }
+    }
+  }
+
+
+  @* Форма для возможности сабмита. *@
+  @form( CSRF(routes.LkBill2.cartSubmit(args.mnode.id.get)), 'id -> FORM_ID ) {
+    &nbsp;
+  }
+
+}

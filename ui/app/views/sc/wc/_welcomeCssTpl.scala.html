@@ -1,0 +1,26 @@
+@(args: msc.ScRenderArgs)(implicit ctx: Context)
+
+@* Динамический css для экрана приветствия конкретного узла. *@
+
+@args.welcomeOpt.fold {
+  .sm-welcome-ad {
+    background: #@args.bgColor;
+  }
+
+} { wc =>
+  @wc.bg match {
+    case Left(color) => {
+      @* Доступен только цвет фона. *@
+      .sm-welcome-ad {
+        background-color: @color;
+      }
+    }
+
+    case Right(bg) => {
+      @* Есть реальные стили, рендерим их... *@
+      .sm-welcome-ad_bg-img {
+        background-color: #@args.bgColor;
+      }
+    }
+  }
+}

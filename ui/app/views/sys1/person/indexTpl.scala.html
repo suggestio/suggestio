@@ -1,0 +1,39 @@
+@(personsCnt: Long, epwIdsCnt: Long, extIdsCnt: Long, suCnt: Int)(implicit ctx: Context)
+
+@* Заглавная страница раздела про юзеров s.io. *@
+
+@import sys1.stuff.proptable._
+
+@hPathAfter1 = {}
+
+@sysPersonBase(
+  title = "index",
+  hPathAfter = Some(hPathAfter1)
+) {
+
+  @_ptableTpl() {
+    @_ptableRowTpl("Пользователей") {
+      @personsCnt юзеров
+    }
+    @_ptableRowTpl("Email+pw иденты") {
+      <a href="@routes.SysPerson.allEpws()">
+        @epwIdsCnt идентов
+      </a>
+    }
+    @_ptableRowTpl("Внешние иденты") {
+      <a href="@routes.SysPerson.allExtIdents()">
+        @extIdsCnt идентов
+      </a>
+    }
+    @_ptableRowTpl("Суперпользователи") {
+      @suCnt юзеров
+    }
+  }
+
+  <br/>
+  <br/>
+  Показать:
+  <a href="@routes.SysPerson.showRegEmail()">email-сообщение регистрации</a>, и
+  <a href="@routes.SysPerson.showRecoverEmail()">email-сообщение восстановления пароля</a>.
+
+}

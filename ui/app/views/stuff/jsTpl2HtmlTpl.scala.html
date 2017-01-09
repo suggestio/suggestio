@@ -1,0 +1,26 @@
+@(withScriptTag: Boolean = true)(content: JavaScript)
+
+@*
+ * Шаблон для рендера js-шаблона внутрь html-шаблона.
+ * У простого рендера две проблемы: строки экранируются, и надо добавлять script-тег вручную.
+ * Необходимость это делать вручную засоряет шаблоны и синтаксис в общем.
+ *
+ * withScriptTag: Можно отключить рендер script-тега.
+ *
+ * Вызывать из HTML-шаблонов как-то так:
+ *   @jsTpl2HtmlTpl( withScriptTag = true )(
+ *     jsRevRouterTpl(...)
+ *   )
+ * Следует обращать внимание на круглые скобки везде.
+*@
+
+@if(withScriptTag) {
+  <script type="text/javascript">
+}
+
+@* Боремся с экранированием втупую: *@
+@Html( content.body )
+
+@if(withScriptTag) {
+  </script>
+}

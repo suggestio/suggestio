@@ -1,0 +1,12 @@
+@(href: Call, attrs: (String, String)*)(content: Html)(implicit ctx: Context)
+
+@* Верстка часто-используемой в sys ссылки, отображаемой внутри hPathAfter. *@
+
+@import stuff._kvAttrsTpl
+
+<a class="blue-link"
+   href="@href"
+   @_kvAttrsTpl(attrs)
+>
+  @content
+</a>

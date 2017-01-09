@@ -1,0 +1,34 @@
+@(title: String, columns: Seq[Html], headAfter: Option[Html] = None)(implicit ctx: Context)
+
+@* Начальная страница для юзера, заходящего на my.suggest.io: логин или регистрация на одной странице.
+   Страница по дефолту отображает обе колонки, но это не обязательно.
+   Если одна из форм не передана контроллером, то оставшаяся колонка должна отображаться по центру. *@
+
+@import ctx.api.cdn
+
+@identBase(title, headAfter = headAfter) {
+
+  @* Сюда приходят отрендеренные колонки. Нужно их расположить как-то на экране. *@
+  <div class="body __responsive auth-page">
+
+    <div class="body_cnt __responsive" id="centerContent">
+
+      <a class="index-page_logo-link auth-page_logo-icon" href="@routes.Ident.mySioStartPage()" >
+        <img src='@cdn.asset("/images/market/new-design/logo_retina.png")'/>
+      </a>
+
+      <br/>
+
+      <a class="index-page_logo-link auth-page_logo-text" href="@routes.Ident.mySioStartPage()" >
+        <img src='@cdn.asset("/images/market/index/logo_retina.png")'/>
+      </a>
+
+      <div class="auth-page_column-lst">
+        @columns
+      </div>
+
+    </div>
+
+  </div>
+
+}

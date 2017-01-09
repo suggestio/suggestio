@@ -1,0 +1,171 @@
+@(args: msys.bill.IForNodeTplArgs)(implicit ctx: Context)
+
+@* Страница биллинга узла второго поколения. *@
+
+@import ctx.messages
+@import lk.lkBlock
+@import lk.dsl._
+@import sys1.stuff.ntable._
+@import datetime._
+
+@hPathAfter = { }
+
+@base(
+  title       = messages("Billing"),
+  nodeOpt     = Some(args.mnode),
+  hPathAfter  = Some(hPathAfter)
+) {
+
+  @lkBlock("Тарифы и цены") {
+
+    Тариф для входящих размещений:
+    <br/>
+
+    @args.mnode.billing.tariffs.daily.fold {
+      по умолчанию
+      @for(cbca <- args.cbcaNodeOpt; cbcaNodeId <- cbca.id) {
+        (как у <a href="@routes.SysBilling.forNode(cbcaNodeId)">@cbca.guessDisplayNameOrId</a>)
+      }
+    } { tf =>
+      <strong>другой: @tf</strong>
+    }
+
+    <a href="@routes.SysBilling.editNodeTfDaily(args.mnode.id.get)">
+      @messages("Edit")...
+    </a>
+
+  }
+
+
+  @lkBlock("Плательщики") {
+
+    @defining( args.mnode.common.ntype ) { ntype =>
+      <p>
+        Текущий узел --
+        <strong>@messages(ntype.singular)</strong>.
+      </p>
+
+      <div>
+        @if( ntype == MNodeTypes.Person ) {
+          @args.mContractOpt.fold {
+            @* Человеку желательно бы иметь контракт и кошелёк. *@
+            Необходимо @* создать контракт *@
+          } { mc =>
+            С человеком заключен контракт @mc.legalContractId.
+          }
+
+        } else {
+          @args.mContractOpt.fold {
+            Контракт этому узлу <strong>не</strong> нужен,
+            но если есть веские причины, то можно @* создать контракт *@
+          } { mc =>
+            Внимание: данный узел имеет контракт @mc.legalContractId, не являсь пользователем!
+          }
+        }
+
+        @for(nodeId <- args.mnode.id) {
+          @args.mContractOpt.fold {
+            <a href="@routes.SysBilling.createContract(nodeId)">создать контракт</a>.
+          } { mc =>
+            <a href="@routes.SysBilling.editContract(nodeId)">Изменить...</a>
+
+            @* Отрендерить данные по текущему контракту. *@
+            @defining("M") { sz =>
+              @_ntable() {
+                @_th(sz, title = Some("Уникальный id контракта")) {
+                  #
+                }
+                @_th(sz) {
+                  Номер
+                }
+                @_th(sz) {
+                  Создан
+                }
+                @_th("L", title = Some("Инфа для служебного пользования.")) {
+                  Инфо
+                }
+              } {
+                @_tr() {
+                  @_td(sz) {
+                    @mc.id
+                  }
+                  @_td(sz) {
+                    @mc.legalContractId
+                  }
+                  @_td(sz) {
+                    @_prettyDate( mc.dateCreated, withSpan = true)
+                  }
+                  @_td("L") {
+                    @mc.hiddenInfo.getOrElse {
+                      &nbsp;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      </div>
+    }       @* defining ntype *@
+
+  } @* lkBlock плательщики *@
+
+
+  @* Когда есть заключенный контракт, то есть и кошельки (балансы). *@
+  @for(mc <- args.mContractOpt) {
+    @lkBlock("Остатки на балансах") {
+      @if( args.mBalances.isEmpty )  {
+        Пока нет кошельков. Балансы можно считать нулевыми.
+
+      } else {
+        @defining("L") { sz =>
+          @_ntable() {
+            @_th(sz, title = Some("Уникальный id кошелька в БД")) {
+              #
+            }
+            @_th(sz) {
+              Валюта
+            }
+            @_th(sz) {
+              Доступно
+            }
+            @_th(sz) {
+              Заблокировано
+            }
+            @_th(sz) {
+              Овердрафт
+            }
+          } {
+            @for(mb <- args.mBalances) {
+              @_tr() {
+                @_td(sz) {
+                  @mb.id
+                }
+                @_td(sz) {
+                  @mb.price.currencyCode
+                }
+                @_td(sz) {
+                  @mb.price.amount
+                }
+                @_td(sz) {
+                  @mb.blocked
+                }
+                @_td(sz) {
+                  @mb.low
+                }
+              }
+            }
+          } @* ntable body *@
+        }   @* defining sz *@
+
+      }     @* if mBalances *@
+
+      @* На узле с контрактом доступны внутренние платежи. *@
+      @for(nodeId <- args.mnode.id) {
+        <a href="@routes.SysBilling.payment(nodeId)">Провести платеж...</a>
+      }
+
+    }       @* lkBlock балансы *@
+  }         @* for mc *@
+
+}

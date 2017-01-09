@@ -1,0 +1,10 @@
+@()(implicit ctx: Context)
+
+@* Кусок страницы с кнопкой  *@
+
+@import helper._
+@import ctx._
+
+@form( CSRF(routes.SysDebug.resetAllRcvrs()) ) {
+  <input type="submit" value="Найти и исправить карты ресиверов в карточках..." />
+}

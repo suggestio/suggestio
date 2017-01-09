@@ -1,0 +1,45 @@
+@(iea: usr.IEaEmailId, s2f: EmailPwConfirmForm_t)(implicit ctx: Context)
+
+@* Шаблон для формы ВТОРОГО ШАГА регистрации по email password.
+   Юзер вводит пароль и прочую минимальную инфу, необходимую для завершения реги. *@
+
+@import helper._
+@import ctx._
+@import util.FC.authFc
+
+@form(CSRF( routes.Ident.emailConfirmSubmit(iea) )) {
+
+  @* Выводить ошибку неправильного ввода пароля. *@
+  @s2f("pw").errors.map { fe =>
+    @messages(fe.message, fe.args)
+  }
+
+  @defining( messages("Type.password") ) { msg =>
+    @inputPassword(
+      s2f("pw.pw1"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
+
+  @defining( messages("Retype.password") ) { msg =>
+    @inputPassword(
+      s2f("pw.pw2"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
+
+  @defining( messages("Node.name") ) { msg =>
+    @inputText(
+      s2f("nodeName"),
+      '_label       -> msg,
+      'placeholder  -> msg
+    )
+  }
+
+  <div class="btn-w __size-M">
+    <input class="btn __size-M1 __major" type="submit" value="@messages("Save")" />
+  </div>
+
+}

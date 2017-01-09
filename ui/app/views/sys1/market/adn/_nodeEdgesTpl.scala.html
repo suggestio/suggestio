@@ -1,0 +1,85 @@
+@(eis: Seq[msys.MNodeEdgeInfo], arrow: String, onNode: Option[MNode] = None)(implicit ctx: Context)
+
+@* Табличка с эджами и прочим.
+ * onNode : на каком узле лежат все эти эджи? Если эджи входящие с других узлов, то None.
+ *@
+
+@import lk.lkBlock
+@import sys1.stuff.ntable._
+@import ctx.messages
+
+@if( eis.isEmpty ) {
+
+  <p class="color-light-strong">Связи отсутствуют.</p>
+
+} else {
+
+  @defining("M") { sz =>
+  @_ntable() {
+
+    @_th(sz) {
+      @messages("Predicate")
+    }
+
+    @_th(sz) {
+      @messages("Name")
+    }
+
+    @_th(sz) {
+      @messages("Info")
+    }
+
+    @if( onNode ) {
+      @_th("XS") {
+        &hellip;
+      }
+    }
+
+  } {
+    @for(ei <- eis) {
+      @_tr() {
+
+        @_td(sz) {
+          @arrow
+          @messages( ei.medge.predicate.singular )
+          @for( orderN <- ei.medge.order ) {
+            &udarr;@orderN
+          }
+        }
+
+        @_td(sz) {
+          @for(eith <- ei.mnodeEiths) {
+            @eith.right.toOption.map { mnode =>
+              <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
+                @mnode.guessDisplayName.fold {
+                  @mnode.id
+                } { name =>
+                  <strong>@name</strong>
+                }
+              </a>
+            }
+            @eith.left.toOption
+            <br/>
+          }
+        }
+
+        @_td(sz) {
+          @Option(ei.medge.info).filter(_.nonEmpty).getOrElse(Html("&nbsp;"))
+        }
+
+        @for( mnode <- onNode ) {
+          @_td("XS") {
+            @for( edgeId <- ei.edgeId;  nodeId <- mnode.id;  nodeVsn <- mnode.versionOpt ) {
+              <a href="@routes.SysMarket.editEdgeGet( msys.MNodeEdgeIdQs(nodeId = nodeId, nodeVsn = nodeVsn, edgeId = edgeId) )">
+                &#x270e;
+              </a>
+            }
+          }
+        }
+
+      }
+    }
+  } @* ntable *@
+  } @* defining sz *@
+
+}   @* if nonEmpty *@

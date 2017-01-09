@@ -1,0 +1,40 @@
+@(ea: Option[usr.EmailActivation])(implicit ctx: Context)
+
+@* Страница, которая появляется, когда юзер успешно сабмиттит свой email на сервак. *@
+
+@import ctx.api.cdn
+@import ctx.messages
+
+@base("Password.recovery") {
+
+  <div class="body __responsive auth-page">
+
+    <div class="body_cnt __responsive" id="centerContent">
+
+      <a class="index-page_logo-link auth-page_logo-icon" href="@routes.Ident.mySioStartPage()" >
+        <img src='@cdn.asset("images/market/new-design/logo_retina.png")'/>
+      </a>
+
+      <br/>
+
+      <a class="index-page_logo-link auth-page_logo-text" href="@routes.Ident.mySioStartPage()" >
+        <img src='@cdn.asset("images/market/index/logo_retina.png")'/>
+      </a>
+
+      <div class="auth-page_column-lst">
+        <div class="email-success_t">
+          @messages("Epw.reg.msg.sent")
+        </div>
+        <div class="email-success_text">
+          @messages("Epw.follow.msg.link.to.finish")
+        </div>
+        <div class="btn-w __size-M">
+          <a class="btn __size-M1 __major" href="@routes.Ident.mySioStartPage()">@messages("Go.back")</a>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+}

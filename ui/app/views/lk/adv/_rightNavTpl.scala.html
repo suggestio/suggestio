@@ -1,0 +1,32 @@
+@(madId: String, curr: Option[adv.tpl.LkAdvRightLink] = None)(implicit ctx: Context)
+
+@import adv.tpl.LkAdvRightLinks._
+@import ctx.messages
+@import lk.right._
+@import util.tpl.CssFormat._
+
+@_navTpl() {
+
+  @_navItemTpl(
+    title = messages("Adv.in.ext.services"),
+    href  = Some( routes.LkAdvExt.forAd(madId) ),
+    css   = classesAct(curr.contains(LARL_EXT), "__social")
+  )
+
+  @_navItemTpl(
+    title = messages("Adv.in.geo.node"),
+    href  = Some( routes.MarketAdv.advForAd(madId) ),
+    css   = classesAct(curr.contains(LARL_GEO), "__geo")
+  )
+
+  @_navItemTpl(
+    title = messages("Adv.in.geo.tags"),
+    href  = Some( routes.LkAdvGeo.forAd(madId) ),
+    css   = classesAct(curr.contains(TAGS_GEO), "__geotag")
+  )
+
+  @_navSysTpl(
+    call  = routes.SysMarket.showAd(madId)
+  )
+
+}

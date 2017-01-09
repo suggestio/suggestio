@@ -1,0 +1,52 @@
+@import "mixins"
+
+.social-target
+  position relative
+  margin  10px 0
+
+  display table
+  overflow hidden
+  padding 15px 10px
+  width 100%
+
+  background-color  white
+  border-radius 10px
+
+  &_left
+    display table-cell
+    box-sizing border-box
+    width 70%
+    padding-right 25px
+
+    .prop
+      margin 0 0 10px 0
+
+      &:last-of-type
+        width 90%
+        margin 0
+
+  &_right
+    display table-cell
+    border-left 1px solid #e9e9e9
+    padding-left 25px
+    overflow hidden
+
+  &_icon
+    float right
+    width 28px
+    height 34px
+
+  &_option
+    margin 10px
+    display block
+
+  &_delete
+    position  absolute
+    top 0
+    right 0
+    z-index 10
+
+.add-target
+  margin-top  15px
+  margin-left 10px
+  margin-bottom 35px

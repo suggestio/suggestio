@@ -1,0 +1,49 @@
+@(args: msys.ISysMdrFreeAdvsTplArgs)(implicit ctx: Context)
+
+@* Страница для отображения списка карточек, бесплатно размещенных и требующих пост-модерации s.io. *@
+@import ctx._
+@import views.html.lk.ad._
+@import models.mdr._
+@import sys1.stuff.pager._
+@import sys1.stuff.dsl._
+
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/ads-list.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
+}
+
+@mdrBase(
+  title       = "Free Advs",
+  headAfter   = Some(headAfter),
+  mnodeOpt    = args.producerOpt
+) {
+
+  @_sysTitleTpl() {
+    Саморазмещённые (бесплатные) карточки, подлежащие модерации
+  }
+
+  @* Рендерим список рекламных карточек. *@
+  <div class="ads-list">
+
+    @for( (brArgs, i) <- args.mads.iterator.zipWithIndex) {
+      @_adInListTpl(brArgs, i) {
+        <div class="clear"></div>
+        <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.SysMdr.forAd(brArgs.mad.id.get)">
+          Модерировать
+        </a>
+      }
+    }
+
+  </div>
+
+  @* Рендерим переключение страниц. *@
+  @_simple3pTpl(
+    count = args.mads.size,
+    limit = args.args0.limit,
+    offset = args.args0.offset,
+    urlF   = { offset1 =>
+      routes.SysMdr.freeAdvs( args.args0.copy(offsetOpt = Some(offset1)) )
+    }
+  )
+
+}

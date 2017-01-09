@@ -1,0 +1,52 @@
+@(title: String, lf: Option[Form[_]] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Подложка для внешней (по отношению к ЛК) страниц sio-маркета. *@
+
+@import ctx._
+@import stuff._
+@import ctx.api.cdn
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>@if(!title.isEmpty){@title | }Suggest.io</title>
+  <meta name="description" content="Система размещения таргетированной мобильной интернет-рекламы. Более 150 рекламных локаций в Москве и Санкт-Петербурге."/>
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"/>
+  <meta name="format-detection" content="telephone=no">
+
+
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("svgfonts/icomoon/style.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk/common.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/svg-icons.css")'/>
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/showcase.css")'/>
+
+  <script src='@cdn.asset("javascripts/jquery.min.js")'></script>
+
+  @static._faviconTpl()
+
+  @headAfter
+</head>
+
+
+<body class="index-page" @_initRouterAttrsTpl()>
+
+  @content
+
+  <div class="footer __responsive __fill-1">
+    <div class="footer_cnt __index">
+
+      <span class="copyright-block">
+        @_copyrightTextTpl(withLink = false)
+      </span>
+
+    </div>
+  </div>
+
+  <script src="@cdn.asset("javascripts/market/lk/mx_cof.js")"></script>
+  <script src="@cdn.asset("javascripts/jquery-ui.custom.min.js")"></script>
+  @_sjsScript("lk-sjs", withLauncherJs = true)
+
+</body>
+</html>

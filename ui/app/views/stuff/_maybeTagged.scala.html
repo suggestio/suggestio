@@ -1,0 +1,4 @@
+@(tag: String, isTagged: Boolean)(content: Html)
+
+@* Опциональное обрамление тегами указанного контента. *@
+@if(isTagged){<@tag>}@content@if(isTagged){</@tag>}

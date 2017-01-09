@@ -1,0 +1,97 @@
+@(args: msys.bill.IBillTxnsListTplArgs)(implicit ctx: Context)
+
+@* Верстка таблицы транзакций, переданных в args вместе с остальными реквизитами. *@
+
+@import ctx.messages
+@import table._
+@import datetime._prettyDate
+@import util.TplDataFormatUtil.formatPrice
+
+@_table() {
+
+  @* Ряд заголовка, без бордюров. *@
+  @_tr() {
+    @_th() {
+      @_cellCnt("S") {
+        @messages("When")
+      }
+    }
+    @_th(false)()
+    @_th() {
+      @_cellCnt("S") {
+        @messages("Sum")
+      }
+    }
+    @_th(false)()
+    @_th() {
+      @_cellCnt("S") {
+        @messages("Reason")
+      }
+    }
+    @_th(false)()
+    @_th() {
+      @_cellCnt("S") {
+        Плательщик
+      }
+    }
+  } @* tr заголовка *@
+
+  @* Рендерим транзакции в рядах. *@
+  @for(txn <- args.txns) {
+    @_tr() {
+
+      @_td() {
+        @_cellCnt("L") {
+          @_prettyDate(txn.dateProcessed, withSpan = true)
+        }
+        @_borderLine(false)
+      }
+
+      @_td() {
+        @_borderLine(true)
+      }
+
+      @_td() {
+        @_cellCnt("L") {
+          @_priceCnt( txn.amount >= 0 ) {
+            @args.balancesMap.get(txn.balanceId).fold {
+              @txn.amount ?
+            } { balance =>
+              @formatPrice(txn.amount, balance.price.currency)
+            }
+          }
+        }
+        @_borderLine(false)
+      }
+
+      @_td() {
+        @_borderLine(true)
+      }
+
+      @_td() {
+        @_cellCnt("L") {
+          @for(orderId <- txn.orderIdOpt) {
+            @messages("Payment.for.order.N", orderId)
+          }
+          @for(c <- txn.paymentComment) {
+            <p>@c</p>
+          }
+        }
+        @_borderLine(false)
+      }
+
+      @_td() {
+        @_borderLine(true)
+      }
+
+      @_td() {
+        @_cellCnt("L") {
+          TODO Инфа о плательщике/платеже.
+        }
+        @_borderLine(false)
+      }
+
+    } @* tr *@
+  }   @* for *@
+
+}     @* table *@

@@ -1,0 +1,8 @@
+@(title: String, href: Call, css: TraversableOnce[String] = Nil)(content: Html = HtmlFormat.empty)(implicit ctx: Context)
+
+@* Шаблон одного элемента левой панели. *@
+
+@import util.tpl.CssFormat._
+
+<a class="left-bar_menu-i@classesPreSpaced(css)" href="@href" title="@title">@content</a>
+<hr class="delimiter"/>

@@ -1,0 +1,26 @@
+@(mnode: MNode)(implicit ctx: Context)
+
+@* Страница "спасибо за покупку". *@
+
+@import lk.billing.billingBaseTpl
+@import ctx.messages
+
+@billingBaseTpl(
+  title       = messages("Thanks.for.buy"),
+  mnode       = mnode,
+  rightCurrEl = BillingRightPanelLinks.RPL_CART
+) {
+
+  <p>
+    @messages("Your.order.is.being.processed")
+  </p>
+
+  <p>
+    @for(mnodeId <- mnode.id) {
+      <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
+        &lt;&lt;&lt;
+        @messages("Return.to.my.ads")...
+      </a>
+    }
+  </p>
+}

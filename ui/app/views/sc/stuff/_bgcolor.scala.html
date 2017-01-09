@@ -1,0 +1,4 @@
+@(headerColor: String, withOpacity: Option[Float] = None)(implicit ctx: Context)
+@import util.TplDataFormatUtil._
+
+background-color: @formatRgbHexColorCss(headerColor, withOpacity);

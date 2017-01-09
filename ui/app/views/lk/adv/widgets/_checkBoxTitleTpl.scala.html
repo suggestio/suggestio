@@ -1,0 +1,6 @@
+@(id: Option[String] = None, hasInput: Boolean = true)(content: Html)
+
+<span @if(id){id="@id"}
+      class="checkbox_title __major @if(!hasInput){__no-input}">
+  @content
+</span>

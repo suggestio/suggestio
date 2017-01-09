@@ -1,0 +1,88 @@
+@(af: blk.ed.AdFormM, call: Call, withBC: Option[BlockConf], mnode: MNode)(implicit ctx: Context)
+
+@* Рендер формы редактирования произвольной рекламы.
+ * offerType - предпочитаемый тип оффера, когда он неизвестен. *@
+
+@import ctx._
+@import helper._
+@import util.blocks._
+@import util.FC.checkboxFc
+@import io.suggest.ad.form.AdFormConstants._
+
+@* Определяем текущий тип оффера (тип формы). Используем данные формы и аргумент offerType как fallback. *@
+@form(CSRF(call), 'id -> "promoOfferForm") {
+
+  @* Бывает, что у формы задана ошибка верхнего уровня. TODO А такое теперь возможно вообще?
+    @af.globalError
+  *@
+
+  @* Для блока : превьюшка + редактор *@
+  @_edLkBlkTpl( messages("Ad.layout") ) {
+
+    @* Форма редактирования блока *@
+    <div class="lk-ad-block-edit-form">
+
+      @* Отображение превьюшки *@
+      <div class="lk-ad-block-edit-form__preview">
+
+        <input class="js-ad-block-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(mnode.id.get, isFull = false))"/>
+        <input class="js-ad-block-full-preview-action" type="hidden" value="@CSRF(routes.MarketAd.adFormPreviewSubmit(mnode.id.get, isFull = true))"/>
+
+        <div class="lk-ad-block-edit-form__preview_container" id="adFormBlockPreview"></div>
+
+        <div class="clear"></div>
+      </div>
+
+      @* Отображение нужного редактора *@
+      <div class="lk-ad-block-edit-form__editor" id="adFormBlockEditor">
+
+        @blocks.editor._blockEditorTpl(af, withBC = withBC)
+
+        @* 2014.nov.26: Новая галочка "паттерн" для задания покрывающей сетки указанного цвета. *@
+        <div class="edit-ad_pattern-w input-w">
+          <div class="edit-ad_pattern-option">
+            @checkbox(af(PATTERN_K + ".enabled"), '_label -> messages("Ad.edit.pattern") )
+          </div>
+          <div class="edit-ad_pattern-color">
+            @_selectColorTpl(af(PATTERN_K + ".color"), label = messages("Ad.edit.pattern.color") )
+          </div>
+        </div>
+      </div>
+
+      <div class="clear"></div>
+
+    </div>
+
+  }
+
+
+  @* HTML-редактор для ввода текстового описания. *@
+  @_edLkBlkTpl( messages("Description") ) {
+
+    <table class="input-w __size-L tinymce" id="adFormDescriptionTable">
+      <tr>
+        <td>
+          @* Селектор цвета фона ad description. *@
+          @_selectColorTpl(
+            af(DESCR_K + ".bgColor"),
+            label     = messages("Bg.color")
+          )
+          @* Контейнер для палитры цветов, предлагаемых сервером через ws. *@
+          <div id="@COLORS_DIV_ID" class="color-block_lst"></div>
+        </td>
+
+        @* Поля для ввода содержимого description *@
+        <td class="input-w_tinymce-editor">
+          @defining( DESCR_K + ".text" ) { name =>
+            <textarea class="js-tinymce" id="ad_descr_text" name="@name">
+              @af(name).value
+            </textarea>
+          }
+        </td>
+      </tr>
+    </table>
+
+  }
+
+}
+

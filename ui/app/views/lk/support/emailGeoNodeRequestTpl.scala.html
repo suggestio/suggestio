@@ -1,0 +1,38 @@
+@(emails: Seq[String], mnode: MNode, msg: String)(implicit ctx: Context)
+
+@* email-уведомление админам sio о том, что юзер запрашивает поддержку геолокации для узла. *@
+
+<div>
+  <p>
+    Пользователь @emails.headOption.fold {
+      @ctx.user.personIdOpt
+    } { email =>
+      <a href="mailto:@email">@email</a>
+    }
+    запросил поддержку геолокации на узле:
+  </p>
+
+  <p><a href="@routes.SysMarket.showAdnNode(mnode.id.get)">
+    @mnode.meta.basic.name / @mnode.meta.address.town
+  </a>.</p>
+
+  @if(emails.size > 1) {
+    <p>Пользователь также доступен по следующим email:
+      @emails.map { email =>
+        <a href="mailto:@email">@email</a>
+      }
+    </p>
+  }
+
+  @if(emails.isEmpty) {
+    <p><strong>У пользователя нет известного системе адреса email для обратной связи.</strong></p>
+  }
+
+  <p>Пользователь сообщает также следующую информацию:</p>
+  <p>------------------------------------------</p>
+  <div>
+    @Html(msg)
+  </div>
+  <p>------------------------------------------</p>
+
+</div>

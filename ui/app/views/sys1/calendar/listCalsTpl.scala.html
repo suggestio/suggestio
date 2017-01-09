@@ -1,0 +1,35 @@
+@(cals: Seq[mcal.MCalendar], cf: Form[_])(implicit ctx: Context)
+
+@* Системная страница работы с календарями.
+   cf: Маппинг формы. Можно создавать календари на базе локальных календарей из списка. *@
+
+@import helper._
+@import de.jollyday.HolidayCalendar.{values => hcs}
+@import ctx.messages
+@import lk.dsl._
+
+@calBase(
+  title = messages("All") + " (" + cals.size + ")"
+) {
+  <ul>
+    @cals.map { cal =>
+      <li>
+        <a href="@routes.SysCalendar.editCalendar(cal.id.get)">@cal.name</a>
+      </li>
+    }
+  </ul>
+
+  <br/><br/>
+
+  <strong>
+    Создать новый календарь
+  </strong>
+  @form(routes.SysCalendar.newCalendarFromTemplateSubmit) {
+    @select(
+      cf("tplId"),
+      options = hcs.toSeq.map(hk => hk.toString -> hk.toString),
+      '_label -> "Исходный шаблон календаря"
+    )
+    <input type="submit" value="Далее" />
+  }
+}

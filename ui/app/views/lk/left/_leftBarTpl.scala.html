@@ -1,0 +1,19 @@
+@()(content: Html)(implicit ctx: Context)
+
+@* Шаблон левой панели, вынесен из lkBase. *@
+
+@import ctx.messages
+
+<aside class="left-bar">
+  <nav class="left-bar_menu">
+    @content
+  </nav>
+
+  <div class="left-bar_bottom">
+    @if(ctx.user.isAuth) {
+      <a class="left-bar_exit js-btn" href="#logoutPopup">@messages("Logout")</a>
+      <hr class="delimiter"/>
+    }
+    <a class="left-bar_help">@messages("Help")</a>
+  </div>
+</aside>

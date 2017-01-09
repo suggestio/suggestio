@@ -1,0 +1,9 @@
+@(bf: BfText, bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context)
+
+@_textInputBaseTpl(bf, bc, bfNameBase, af, colorWithLabel = true) {
+  @defining( af(bfNameBase + ".value") ) { ff =>
+
+        <textarea class="ad-field-editor_textarea js-input-w-block-preview" name="@ff.name" maxlength="@bf.maxLen">@ff.value</textarea>
+
+  }
+}

@@ -1,0 +1,19 @@
+@()(implicit ctx: Context)
+
+@* Верстка flashing-уведомления. *@
+
+@import ctx.messages
+@import io.suggest.flash.FlashConstants._
+
+@* Отрендерить уведомления, которые появляются после сабмитов с последующими редиректами. *@
+@if( !ctx.request.flash.isEmpty ) {
+  <div id="@CONTAINER_ID">
+    @ctx.request.flash.data.iterator.map { case (status, msg) =>
+      <div style="display: none;" class="@BAR_CLASS ft-L __@status">
+        <div class="status-bar_cnt">
+          @messages(msg)
+        </div>
+      </div>
+    }
+  </div>
+}

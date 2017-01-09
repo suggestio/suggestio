@@ -1,0 +1,19 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон для ext.adv-событий об ошибке при обработке цели. *@
+
+@import lk.event._
+@import ctx._
+@import io.suggest.adv.ext.view.RunnerPage._
+
+@_errorEvtBase(rargs) {
+
+  @rargs.advExtTgs.map { advExtTg =>
+    @_hrefTitleTpl(advExtTg)
+  }
+
+  @rargs.errors.map { err =>
+    <p class="event_err-text">@messages("Error"): @messages(err.msg, err.args: _*)</p>
+    @_techErrorTpl(err)
+  }
+}

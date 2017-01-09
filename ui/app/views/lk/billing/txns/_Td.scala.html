@@ -1,0 +1,6 @@
+@(isHeader: Boolean, classes: String*)(content: Html)
+
+@* Верстка одной ячейки таблицы транзакций. *@
+<td class="td __@if(isHeader){gray}else{white} __size-M @classes.mkString(" ")">
+  @content
+</td>

@@ -1,0 +1,19 @@
+@(elements: helper.FieldElements)
+
+@* field constructor, использующий блочную div-верстку для инпутов. *@
+
+@import play.api.i18n._
+@import views.html.helper._
+
+
+<div class="lk-field @elements.args.get('_class) @if(elements.hasErrors) {__error}">
+
+  <label class="lk-field__name">
+    @elements.input
+    @elements.label
+  </label>
+
+  @elements.errors.map { errorMsg =>
+    <span class="lk-field_error-text">@errorMsg</span>
+  }
+</div>

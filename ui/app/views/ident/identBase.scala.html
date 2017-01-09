@@ -1,0 +1,19 @@
+@(title: String, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для раздела /id/
+   Судя по исходному дизайну: надо просто дёргать дизайн вышестоящего шаблона. *@
+
+@import market._
+@import ctx.api.cdn
+
+@headAfter1 = {
+  <link rel="stylesheet" type="text/css" href='@cdn.asset("stylesheets/market/lk_new-design/lk.css")'/>
+
+  @static._faviconsTpl()
+  @headAfter
+}
+
+@marketBase(
+  title     = title,
+  headAfter = Some(headAfter1)
+)(content)

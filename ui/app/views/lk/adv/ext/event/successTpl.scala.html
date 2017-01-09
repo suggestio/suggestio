@@ -1,0 +1,17 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон события успешного внешнего размещения. *@
+
+@import ctx.messages
+@import lk.event._
+@import io.suggest.util.UrlUtil
+
+@_successEvtBase(rargs) {
+
+  @rargs.advExtTgs.map { advExtTg =>
+    @_hrefTitleTpl(advExtTg)
+  }
+
+  @messages("Status"): @messages("status.success")
+
+}

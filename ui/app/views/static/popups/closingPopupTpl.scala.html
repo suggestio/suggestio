@@ -1,0 +1,14 @@
+@()(implicit ctx: Context)
+
+@* Чтобы протестировать браузер на возможность открывания popup window, нужно открыть попап.
+   Тут страница с содержимым попапа. *@
+
+@import ctx._
+
+@base("Suggest.io") {
+  <p>@messages("Please.close.this.wnd.if.not.closed.auto")</p>
+  <script type="text/javascript">
+    window.close();
+  </script>
+}
+

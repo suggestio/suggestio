@@ -1,0 +1,32 @@
+@(args: msys.ISysNodeGeoEditDataTplArgs)(implicit ctx: Context)
+
+@import ctx._
+
+@geoBase(
+  title   = "Редактирование геоданных узла",
+  nodeOpt = Some(args.mnode)
+) {
+
+  @defining( args.mnode.id.get ) { nodeId =>
+    @if( !args.isProposed ) {
+      <a href="@routes.SysAdnGeo.editAdnNodeGeodataPropose(nodeId)">
+        Предложить автозаполнение формы...
+      </a>
+    } else {
+      <p>
+          Эта форма заполнена автоматически. Эти данные могут быть неверны, и пока не сохранены.
+          <a href="@routes.SysAdnGeo.editAdnNodeGeodata(nodeId)">
+            Вернутся к редактированию существующих данных...
+          </a>
+      </p>
+    }
+
+    @_nodeGeodataFormTpl(
+      submitCall  = routes.SysAdnGeo.editAdnNodeGeodataSubmit(nodeId),
+      gf          = args.gf,
+      btnText     = messages("Save"),
+      nodesMap    = args.nodesMap
+    )
+  }
+
+}

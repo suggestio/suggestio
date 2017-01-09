@@ -1,0 +1,38 @@
+@(args: msys.bill.IPaymentTplArgs)(implicit ctx: Context)
+
+@* Верстка формы закидывания денег на баланс. *@
+
+@import helper._
+@import ctx.{request, messages}
+@import msys.bill.MPaymentFormResult._
+@import util.FC.tdFc
+@import fc._tdFcTableTpl
+
+@form( CSRF(routes.SysBilling.paymentSubmit(args.mnode.id.get)) ) {
+
+  @_tdFcTableTpl("L") {
+    @inputText(
+      field    = args.bf(AMOUNT_FN),
+      '_label -> messages("Amount._money")
+    )
+  }
+
+  @_tdFcTableTpl("L") {
+    @select(
+      field     = args.bf(CURRENCY_CODE_FN),
+      options   = args.currencyOpts,
+      '_label  -> messages("Currency")
+    )
+  }
+
+  @_tdFcTableTpl("L") {
+    @inputText(
+      field    = args.bf(COMMENT_FN),
+      '_label -> messages("Payment.comment")
+    )
+  }
+
+  <div class="btn-w __size-M">
+    <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right"  type="submit" value="@messages("Add.funds")" />
+  </div>
+}

@@ -1,0 +1,104 @@
+@(args: msys.IShowNodeAdsTplArgs)(implicit ctx: Context)
+
+@* Список реклам и сервисных функций. *@
+
+@import util.TplDataFormatUtil._
+@import models.stat.AdStatActionsTpl._
+@import ctx._
+@import helper._
+@import views.html.lk.ad._
+@import datetime._
+@import sys1.stuff.pager._
+@import sys1.stuff.hpath._
+
+@hPathAfter1 = {
+  / Реклама
+}
+
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/lk/ads-list.css")'/>
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/market/showcase.css")'/>
+}
+
+@adnBase(
+  title	      = messages("Ad.cards"),
+  headAfter   = Some(headAfter),
+  hPathAfter  = Some(hPathAfter1),
+  nodeOpt     = args.nodeOpt
+) {
+  <div class="ovh">
+    @for((brArgs, i) <- args.mads.iterator.zipWithIndex; mad = brArgs.mad; madId <- mad.id) {
+    @_adInListTpl(brArgs, i) {
+
+      <a class="siom-ac-btn __color-2 __size-XL __ft-XM __list-vertical" href="@routes.MarketAd.editAd(madId)">
+        Редактор карточки
+      </a>
+
+      @for(producerId <- ctx.api.n2NodesUtil.madProducerId(mad)) {
+        <a class="siom-link-btn __color-3 __size-XL __ft-XM __list-vertical" href="@routes.MarketLkAdn.showAdnNode(producerId)">
+          ЛК создателя карточки
+        </a>
+      }
+
+      <p>Отобразить email-сообщение о деактивации:
+        @_blueLink( routes.SysMarket.showShopEmailAdDisableMsg(madId) ) {
+          HTML
+        }
+      </p>
+
+      @for( rcvrs <- args.rcvrsMap.get(madId) ) {
+        <br/>
+        @rcvrs.map { rcvr =>
+          @form( CSRF(routes.SysMarket.removeAdRcvr(adId = madId, rcvrId = rcvr.id, r = ctx.r)) ) {
+            <a class="siom-ac-btn __color-3 __size-XL __ft-XM __list-vertical js-submit-btn">
+              Убрать из выдачи<br/>
+              на узле<br/>
+              <strong>&laquo;@rcvr.meta.basic.name / @rcvr.meta.address.town &raquo;</strong>
+            </a>
+          }
+        }
+      }
+
+      @if( args.nodeOpt.flatMap(_.id).exists { adnId =>
+        ctx.api.n2NodesUtil.findReceiver(mad, adnId)
+          .exists(_.info.sls.nonEmpty)
+      } ) {
+        <p>Саморазмещение</p>
+      }
+
+      @for( advs <- args.ad2advMap.get(madId).toSeq;  adv <- advs) {
+        <p>
+          @messages( adv.iType.nameI18n )
+          @for(dti <- adv.dtIntervalOpt) {
+            c [@_prettyDate(dti.getStart, withSpan = true)]
+            по [@_prettyDate(dti.getEnd, withSpan = true)]
+          }
+          @for(rcvrId <- adv.rcvrIdOpt) {
+            @_blueLink( routes.SysMarket.showAdnNode(rcvrId) ) {
+              сюда
+            }
+          }
+          за @formatPrice(adv.price)
+        </p>
+      }
+      <a href="@routes.SysMarket.analyzeAdRcvrs(madId)">Карта ресиверов...</a>
+      <a href="@routes.SysMarket.showAd(madId)">sys-страница карточки</a>
+      <br/><br/>
+    }
+    }
+  </div>
+
+  <br/><br/>
+
+
+  @* Рендерим переключение страниц. *@
+  @_simple3pTpl(
+    count   = args.mads.size,
+    limit   = args.msearch.limit,
+    offset  = args.msearch.offset,
+    urlF    = { offset1 =>
+      routes.SysMarket.showAdnNodeAds( args.qs.copy(offsetOpt = Some(offset1)) )
+    }
+  )
+
+}

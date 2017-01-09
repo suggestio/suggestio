@@ -1,0 +1,9 @@
+@(attrs: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Контейнер для списка существующих тегов. *@
+
+@import io.suggest.common.tags.edit.TagsEditConstants.EXIST_CONT_ID
+
+<div id="@EXIST_CONT_ID" @attrs>
+  @content
+</div>

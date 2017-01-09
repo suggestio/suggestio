@@ -1,0 +1,319 @@
+package controllers.ident
+
+import com.google.inject.Inject
+import controllers.{SioController, routes}
+import io.suggest.common.fut.FutureUtil
+import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
+import models.mctx.ContextUtil
+import models.mext.{ILoginProvider, MExtServices}
+import models.mproj.ICommonDi
+import models.msession.{CustomTtl, Keys}
+import models.req.IReq
+import models.usr._
+import models.{ExtRegConfirmForm_t, ExternalCall, MNode, MNodeTypes}
+import play.api.data.Form
+import play.api.mvc._
+import play.twirl.api.Html
+import securesocial.controllers.ProviderControllerHelper._
+import securesocial.core.RuntimeEnvironment.Default
+import securesocial.core._
+import securesocial.core.services.RoutesService
+import util.acl._
+import util.di.{IIdentUtil, INodesUtil}
+import util.ident.IdentUtil
+import util.xplay.SetLangCookieUtil
+import util.{FormUtil, PlayMacroLogsDyn, PlayMacroLogsI}
+import views.html.ident.reg._
+import views.html.ident.reg.ext._
+
+import scala.collection.immutable.ListMap
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 30.01.15 17:16
+ * Description: Поддержка логина через соц.сети или иные внешние сервисы.
+ */
+
+class ExternalLogin_ @Inject() (
+  routesSvc                       : SsRoutesService,
+  ssUserService                   : SsUserService,
+  override val identUtil          : IdentUtil,
+  mCommonDi                       : ICommonDi
+)
+  extends PlayMacroLogsDyn
+  with IIdentUtil
+{
+
+  import mCommonDi._
+
+  /** Фильтровать присылаемый ttl. */
+  val MAX_SESSION_TTL_SECONDS = {
+    configuration.getInt("login.ext.session.ttl.max.minutes")
+      .getOrElse(86400)
+      .minutes
+      .toSeconds
+  }
+
+  /** secure-social настраивается через этот Enviroment. */
+  implicit val env: RuntimeEnvironment[SsUser] = {
+    new Default[SsUser] {
+      override lazy val routes = routesSvc
+      override def userService = ssUserService
+      override lazy val providers: ListMap[String, IdentityProvider] = {
+        // Аккуратная инициализация доступных провайдеров и без дубликации кода.
+        val provs = MExtServices.values
+          .iterator
+          .flatMap { _.loginProvider }
+          .flatMap { prov =>
+            val provSt = prov.ssProvider
+            try {
+              Seq( provSt(routes, cacheService, httpService) )
+            } catch {
+              case ex: Throwable =>
+                LOGGER.warn("Cannot initialize " + provSt.getClass.getSimpleName, ex)
+                Nil
+            }
+          }
+          .map(include)
+          .toSeq
+        ListMap(provs : _*)
+      }
+    }
+  }
+
+  /**
+   * Извлечь из сессии исходную ссылку для редиректа.
+   * Если ссылки нет, то отправить в ident-контроллер.
+   * @param ses Сессия.
+   * @param personId id залогиненного юзера.
+   * @return Ссылка в виде строки.
+   */
+  def toUrl2(ses: Session, personId: String): Future[String] = {
+    FutureUtil.opt2future( ses.get(Keys.OrigUrl.name) ) {
+      identUtil.redirectCallUserSomewhere(personId)
+        .map(_.url)
+    }
+  }
+
+
+  /** Маппинг формы подтверждения регистрации через id-провайдера. */
+  def extRegConfirmFormM: ExtRegConfirmForm_t = {
+    Form(
+      "nodeName" -> FormUtil.nameM
+    )
+  }
+
+}
+
+
+trait ExternalLogin
+  extends SioController
+  with PlayMacroLogsI
+  with SetLangCookieUtil
+  with CanConfirmIdpReg
+  with INodesUtil
+  with MaybeAuth
+  with IMExtIdentsDi
+{
+
+  import mCommonDi._
+
+  /** Доступ к DI-инстансу */
+  val externalLogin: ExternalLogin_ = current.injector.instanceOf[ExternalLogin_]
+
+  import externalLogin.env
+
+  /**
+   * GET-запрос идентификации через внешнего провайдера.
+   * @param provider провайдер идентификации.
+   * @param r Обратный редирект.
+   * @return Redirect.
+   */
+  def idViaProvider(provider: ILoginProvider, r: Option[String]) = handleAuth1(provider, r)
+
+  /**
+   * POST-запрос идентификации через внешнего провайдера.
+   * @param provider Провайдер идентификации.
+   * @param r Редирект обратно.
+   * @return Redirect.
+   */
+  def idViaProviderByPost(provider: ILoginProvider, r: Option[String]) = handleAuth1(provider, r)
+
+  // Код handleAuth() спасён из умирающего securesocial c целью отпиливания от грёбаных authentificator'ов,
+  // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
+  protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = MaybeAuth().async { implicit request =>
+    lazy val logPrefix = s"handleAuth1($provider):"
+    env.providers.get(provider.ssProvName).map {
+      _.authenticate().flatMap {
+        case denied: AuthenticationResult.AccessDenied =>
+          val res = Redirect( routes.Ident.mySioStartPage() )
+            .flashing(FLASH.ERROR -> "securesocial.login.accessDenied")
+          Future successful res
+        case failed: AuthenticationResult.Failed =>
+          LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
+          throw AuthenticationException()
+        case flow: AuthenticationResult.NavigationFlow => Future.successful {
+          redirectTo.map { url =>
+            flow.result
+              .addingToSession(Keys.OrigUrl.name -> url)
+          } getOrElse flow.result
+        }
+        case authenticated: AuthenticationResult.Authenticated =>
+          // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
+          val profile = authenticated.profile
+          mExtIdents.getByUserIdProv(provider, profile.userId).flatMap { maybeExisting =>
+            // Сохраняем, если требуется. В результате приходит также новосохранный person MNode.
+            val saveFut: Future[(MExtIdent, Option[MNode])] = maybeExisting match {
+              case None =>
+                val mperson0 = MNode(
+                  common = MNodeCommon(
+                    ntype       = MNodeTypes.Person,
+                    isDependent = false
+                  ),
+                  meta = MMeta(
+                    basic = MBasicMeta(
+                      nameOpt   = profile.fullName,
+                      techName  = Some(profile.providerId + ":" + profile.userId),
+                      langs     = List(request2lang.code)
+                    ),
+                    person  = MPersonMeta(
+                      nameFirst   = profile.firstName,
+                      nameLast    = profile.lastName,
+                      extAvaUrls  = profile.avatarUrl.toList,
+                      emails      = profile.email.toList
+                    )
+                    // Ссылку на страничку юзера в соц.сети можно генерить на ходу через ident'ы и костыли самописные.
+                  )
+                )
+                val mpersonSaveFut = mNodes.save(mperson0)
+                val meiFut = mpersonSaveFut.flatMap { personId =>
+                  // Сохранить данные идентификации через соц.сеть.
+                  val mei = MExtIdent(
+                    personId  = personId,
+                    provider  = provider,
+                    userId    = profile.userId,
+                    email     = profile.email
+                  )
+                  val save2Fut = mExtIdents.save(mei)
+                  LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
+                  save2Fut.map { savedId => mei }
+                }
+                val mpersonFut = mpersonSaveFut.map { personId =>
+                  mperson0.copy(id = Some(personId))
+                }
+                for {
+                  mei       <- meiFut
+                  mperson   <- mpersonFut
+                } yield {
+                  (mei, Some(mperson))
+                }
+
+              // Регистрация юзера не требуется. Возвращаем то, что есть в наличии.
+              case Some(ident) =>
+                LOGGER.trace(s"$logPrefix Existing user[${ident.personId}] logged-in from ${profile.userId}")
+                Future successful (ident -> None)
+            }
+            saveFut.flatMap { case (ident, newMpersonOpt) =>
+              // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
+              val mpersonOptFut = newMpersonOpt match {
+                case None =>
+                  mNodes.getByIdType(ident.personId, MNodeTypes.Person)
+                case some =>
+                  Future successful some
+              }
+              val isNew = newMpersonOpt.isDefined
+              val rdrFut: Future[Result] = if (isNew) {
+                Redirect(routes.Ident.idpConfirm())
+              } else {
+                val rdrUrlFut = externalLogin.toUrl2(request.session, ident.personId)
+                rdrUrlFut map { url =>
+                  Redirect(url)
+                }
+              }
+              // Сборка новой сессии: чистка исходника, добавление новых ключей, относящихся к идентификации.
+              var addToSessionAcc: List[(String, String)] = List(Keys.PersonId.name -> ident.personId)
+              addToSessionAcc = authenticated.profile.oAuth2Info
+                .flatMap { _.expiresIn }
+                .filter { _ <= externalLogin.MAX_SESSION_TTL_SECONDS }
+                .map { ein => CustomTtl(ein.toLong).addToSessionAcc(addToSessionAcc) }
+                .getOrElse { addToSessionAcc }
+              val session1 = addToSessionAcc.foldLeft(cleanupSession(request.session))(_ + _)
+              val resFut = rdrFut
+                .map { _.withSession(session1) }
+              setLangCookie2(resFut, mpersonOptFut)
+            }
+          }
+
+      } recover {
+        case e =>
+          LOGGER.error("Unable to log user in. An exception was thrown", e)
+          Redirect(routes.Ident.mySioStartPage())
+            .flashing(FLASH.ERROR -> "securesocial.login.errorLoggingIn")
+      }
+    } getOrElse {
+      Future.successful(NotFound)
+    }
+  }
+
+
+  /**
+   * Юзер, залогинившийся через провайдера, хочет создать ноду.
+   * @return Страницу с колонкой подтверждения реги.
+   */
+  def idpConfirm = CanConfirmIdpRegGet { implicit request =>
+    val form = externalLogin.extRegConfirmFormM
+    Ok( _idpConfirm(form) )
+  }
+
+  /** Общий код рендера idpConfig вынесен сюда. */
+  protected def _idpConfirm(form: ExtRegConfirmForm_t)(implicit request: IReq[_]): Html = {
+    confirmTpl(form)
+  }
+
+  /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
+  def idpConfirmSubmit = CanConfirmIdpRegPost.async { implicit request =>
+    externalLogin.extRegConfirmFormM.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+        NotAcceptable( _idpConfirm(formWithErrors) )
+      },
+      {nodeName =>
+        // Развернуть узел для юзера, отобразить страницу успехоты.
+        for {
+          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.user.personIdOpt.get)
+        } yield {
+          val args = nodesUtil.nodeRegSuccessArgs( mnode )
+          Ok( regSuccessTpl(args) )
+        }
+      }
+    )
+  }
+
+}
+
+
+class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService.Default {
+
+  override def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
+    if(call.isInstanceOf[ExternalCall])
+      call.url
+    else
+      ctxUtil.LK_URL_PREFIX + call.url
+  }
+
+  override def authenticationUrl(providerId: String, redirectTo: Option[String])
+                                (implicit req: RequestHeader): String = {
+    val prov = ILoginProvider.maybeWithName(providerId).get
+    val relUrl = routes.Ident.idViaProvider(prov, redirectTo)
+    absoluteUrl(relUrl)
+  }
+
+  override def loginPageUrl(implicit req: RequestHeader): String = {
+    absoluteUrl( routes.Ident.emailPwLoginForm() )
+  }
+
+}

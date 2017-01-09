@@ -1,0 +1,34 @@
+@(brArgs: blk.IRenderArgs, pos: Int, coverDisableReason: Boolean = true,
+  itemsPerLine: Int = 4)(content: Html)(implicit ctx: Context)
+
+@* Шаблон для рендера одной карточки в списке карточек.
+   pos - позиция, т.е. например index или index + 1, если нулевая позиция списка рендериться вне этого списка.
+
+   Изначально был _adsListTpl, который страннен и неудобен, включал в себя цикл.
+   В этом шаблоне живёт тело того цикла.
+*@
+
+@import views.html.sc._
+@import blk.BlockHeights.adsListMinZzHeight
+
+<div class="adv-item @if(pos % itemsPerLine == 0){ __first-in-line }">
+
+  <div class="adv-item_preview">
+    @if(coverDisableReason) {
+      @_adDisableReasonCoverTpl( brArgs.mad.common.disableReason )
+    }
+    <div class="adv-item_preview-container">
+      @_adNormalTpl(brArgs)
+    </div>
+    @if( brArgs.mad.ad.blockMeta.exists(_.height > adsListMinZzHeight.heightPx) ) {
+      <div class="adv-item_preview-border"></div>
+    }
+  </div>
+
+  @content
+
+</div>
+
+@if( pos % itemsPerLine == itemsPerLine - 1 ) {
+  <div class="adv-lst_delimiter"></div>
+}

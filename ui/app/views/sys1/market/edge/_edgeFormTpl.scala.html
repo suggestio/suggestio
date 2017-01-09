@@ -1,0 +1,68 @@
+@(ef: Form[MEdge], submitCall: Call, btnText: String)(implicit ctx: Context)
+
+@* Верстка sys-формы создания/редактирования одного эджа. *@
+
+@import helper._
+@import ctx.{request, messages}
+
+@form( CSRF(submitCall) ) {
+
+  @select(
+    ef("predicate"),
+    options = MPredicates.valuesT
+      .iterator
+      .map { p =>
+        p.strId -> messages(p.singular)
+      }
+      .toSeq,
+    '_label -> messages("Predicate")
+  )
+
+  @textarea(
+    ef("nodeIds"),
+    '_label -> "Список id узлов, через запятую."
+  )
+
+  @inputText(
+    ef("order"),
+    '_label -> "Целое число для сортировки, если требуется."
+  )
+
+
+  @defining( ef("info") ) { eif =>
+
+    @textarea(
+      eif("dynImgArgs"),
+      '_label -> "Операции над изображением, если есть."
+    )
+
+    @textarea(
+      eif("commentNi"),
+      '_label -> "Неидексируемый служебный комментарий, если необходим."
+    )
+
+    @select(
+      eif("flag"),
+      options = ("" -> "пусто") :: Iterator(true, false).map(_.toString).map(b => b -> b).toList,
+      '_label -> "Абстрактный флаг, если есть."
+    )
+
+    @inputText(
+      eif("itemIds"),
+      '_label -> "Список id биллинга оплаченный item'ов"
+    )
+
+    @textarea(
+      eif("tags"),
+      '_label -> "Список названий тегов, через запятую."
+    )
+
+  }
+
+  <p>[Остальные функции пока не реализованы]</p>
+
+  <div class="btn-w __size-M">
+    <input class="siom-ac-btn __color-1 __size-M __ft-XM f-right" value="@btnText" type="submit" />
+  </div>
+
+}

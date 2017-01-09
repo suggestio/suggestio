@@ -1,0 +1,3 @@
+echo Testing $1 ...
+ot-sanitise $1
+echo

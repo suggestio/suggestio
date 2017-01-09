@@ -1,0 +1,67 @@
+@(title: String, hPathAfter: Option[Html] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@import views.html.stuff._
+@import stuff._
+@import ctx._
+@import helper._
+@import io.suggest.popup.PopupConstants
+@import sys1.stuff.hpath._
+@import views.html.stuff._
+
+@* base-шаблон для системной панели suggest.io. *@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>@title | system | s.io</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("stylesheets/sys.css")'/>
+    @static._faviconTpl()
+    <script src="@routes.Assets.versioned("javascripts/jquery.min.js")"></script>
+    @headAfter
+  </head>
+
+  <body class="sys" @_initRouterAttrsTpl()>
+
+     <div class="header">
+
+        <div class="header_cnt">
+          <a class="siom-logo-def" href="@routes.SysMarket.sysIndex()">
+            <img src='@routes.Assets.versioned("images/market/sio-logo.png")' alt="logo" width="65" height="47"/>
+          </a>
+          <a class="logout-btn" href="@CSRF(routes.Ident.logout())"></a>
+        </div>
+
+      </div>
+
+     <div class="body">
+
+        @_flashMsgTpl()
+
+        <div class="page-title">
+          <div class="page-title_cnt">
+            @_blueLink( routes.SysMarket.sysIndex() ) {
+              sys
+            }
+            @hPathAfter
+          </div>
+        </div>
+
+        <div class="body_cnt">
+          @content
+        </div>
+
+     </div>
+
+    <div class="popups-container" id="@PopupConstants.CONTAINER_ID">
+      <div class="overlay" id="overlay"></div>
+    </div>
+
+    <div class="footer-wrap"></div>
+
+    <script src="@routes.Assets.versioned("javascripts/market/lk/mx_cof.js")"></script>
+
+    @_sjsScript("lk-sjs", withLauncherJs = true)
+  </body>
+
+</html>

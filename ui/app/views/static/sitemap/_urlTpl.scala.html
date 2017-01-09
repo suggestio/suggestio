@@ -1,0 +1,10 @@
+@(sxu: crawl.SiteMapUrlT)
+
+@import util.TplDataFormatUtil.w3cDate
+
+<url>
+  <loc>@sxu.loc</loc>
+  @sxu.lastMod.map { lastMod =><lastmod>@w3cDate(lastMod)</lastmod>}
+  @if(sxu.changeFreq) {<changefreq>@sxu.changeFreq</changefreq>}
+  @if(sxu.priority) {<priority>@sxu.priority</priority>}
+</url>

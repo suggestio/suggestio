@@ -1,0 +1,18 @@
+@(rargs: event.RenderArgs)(implicit ctx: Context)
+
+@* Шаблон события о идущем внешнего размещения по одной цели. *@
+
+@import ctx.messages
+@import lk.event._
+@import io.suggest.util.UrlUtil
+
+@_oneEvtBase(rargs, Some("__bg-1 __icon-6")) {
+
+  @rargs.advExtTgs.map { advExtTg =>
+    @_hrefTitleTpl(advExtTg, withAnchor = false)
+  }
+
+  @messages("Status"): @messages("in.progress")
+
+}
+

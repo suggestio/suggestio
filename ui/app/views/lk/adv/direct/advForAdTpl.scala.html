@@ -1,0 +1,33 @@
+@(args: adv.direct.IAdvForAdTplArgs)(implicit ctx: Context)
+
+@* Страница управления размещением рекламной карточки. *@
+
+@import adv.tpl.LkAdvRightLinks
+@import ctx._
+@import lk.adv._
+@import lk.adv.widgets._
+@import lk.lkwdgts.price._
+@import static.date.picker._
+@import io.suggest.adv.direct.AdvDirectFormConstants.FORM_ID
+
+@advBase(
+  title         = messages("Geo.adv"),
+  mad           = args.mad,
+  producer      = args.producer,
+  rightLink     = LkAdvRightLinks.LARL_GEO,
+  rightAfter    = Some( _rightPriceTpl(args.price, formId = FORM_ID) ),
+  headAfter     = Some( _jqDatePickCssTpl() )
+) {
+
+  @* URL для рассчета стоимости размещения. *@
+  @for( adId <- args.mad.id ) {
+    @_getPriceUrlTpl( routes.MarketAdv.getAdvPriceSubmit(adId) )
+  }
+
+  @_advFormBlockTpl(id = Some("advsFormBlock")) {
+    @_advFormTpl(args.formArgs)
+  }
+
+  @_jqDatePickJsTpl()
+
+}

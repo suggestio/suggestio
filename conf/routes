@@ -1,0 +1,342 @@
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+## Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
+## Без этого костыля, запрос html'ки просто подвисает. Регэксп нужен на случай обработки со стороны simple-url-replace.
+GET  /vassets/javascripts/lib/tinymce/js/tinymce/plugins/colorpicker/$fn<[^/]*index\.html>      @controllers.Static.tinymceColorpicker(fn)
+## 2015.mar.04: Запрет доступа простых смертных к служебным ассетам, типа исходников и js-мапов. Внизу routes есть тоже самое для /assets/
+GET  /vassets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.vassetsSudo(path="/public", file: Asset)
+
+## Map static resources from the /public folder to the /assets URL path
+GET  /vassets/*file                     @controllers.Assets.versioned(path="/public", file: Asset)
+
+## Home page
+GET  /                                  @controllers.Sc.geoSite(a: msc.ScJsState ?= msc.ScJsState.veryEmpty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+## Унифицированный sc index на все случаи жизни.
+GET  /sc/index                          @controllers.Sc.index(a: msc.MScIndexArgs)
+
+GET  /sc/blkcss                         @controllers.Sc.serveBlockCss(c: Seq[msc.AdCssArgs])
+
+GET  /sc/tile                           @controllers.Sc.findAds(a: msc.MScAdsTileQs)
+GET  /sc/fads                           @controllers.Sc.focusedAds(a: msc.MScAdsFocQs)
+## Рендер ровно одной карточки.
+GET  /sc/one/html                       @controllers.Sc.onlyOneAd(o: blk.OneAdQsArgs)
+GET  /sc/one/img                        @controllers.Sc.onlyOneAdAsImage(o: blk.OneAdQsArgs)
+## Этот path к js-роутеру захардкожен в сорцах sc-sjs SrvRouter, и его лучше не менять никогда вообще.
+GET  /sc/router.js                      @controllers.Sc.scJsRouter
+GET  /sc/tags                           @controllers.Sc.tagsSearch(t: msc.tag.MScTagsSearchQs)
+GET  /sc/map/nodes/all                  @controllers.Sc.renderMapNodesAll
+
+## Поиск по узлам
+GET  /sc/nodes                          @controllers.Sc.findNodes(a: msc.MScNodeSearchArgs)
+## Прямой доступ к синхронной выдаче
+GET  /sc/syncsite                       @controllers.Sc.syncGeoSite(a: msc.ScJsState ?= msc.ScJsState.empty, x: msc.SiteQsArgs ?= msc.SiteQsArgs.empty)
+## Дамп ошибок выдачи.
+POST /sc/error                          @controllers.Sc.handleScError
+
+GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
+
+## Обслуживание около-статических ответов.
+## Cross-Origin resource sharing: preflight request:
+OPTIONS /*path                          @controllers.Static.corsPreflight(path)
+GET  /robots.txt                        @controllers.Static.robotsTxt
+GET  /sitemap.xml                       @controllers.Static.siteMapXml
+
+## Входы в личные кабинеты
+GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)
+GET  /lk/node/create                    @controllers.MarketLkAdn.createNode
+POST /lk/node/create                    @controllers.MarketLkAdn.createNodeSubmit
+GET  /lk/node/profile/:nodeId           @controllers.MarketLkAdn.showAdnNode(nodeId)
+GET  /lk/node/mads/:adnId               @controllers.MarketLkAdn.showNodeAds(adnId, mode: mlk.MNodeAdsMode ?= mlk.MNodeAdsModes.ALL_ADS, newAdId: Option[String] ?= None)
+GET  /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNode(adnId)
+POST /lk/node/edit/:adnId               @controllers.MarketLkAdnEdit.editAdnNodeSubmit(adnId)
+POST /lk/node/img/gal/prepare           @controllers.MarketLkAdnEdit.handleGalleryImg
+POST /lk/node/img/welcome               @controllers.MarketLkAdnEdit.uploadWelcomeImg
+POST /lk/node/img/logo                  @controllers.MarketLkAdnEdit.handleTempLogo
+
+## Редактирования профиля юзера из личного кабинета узла.
+GET  /lk/own/edit/:adnId                @controllers.MarketLkAdn.userProfileEdit(adnId, r: Option[String] ?= None)
+POST /lk/own/pwchange/:adnId            @controllers.MarketLkAdn.changePasswordSubmit(adnId, r: Option[String] ?= None)
+
+## Размещение рекламы (adv) на узлах-получателях
+GET  /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advForAd(adId)
+POST /lk/xadv/geo/for/:adId             @controllers.MarketAdv.advFormSubmit(adId)
+POST /lk/xadv/geo/price/for/:adId       @controllers.MarketAdv.getAdvPriceSubmit(adId)
+
+## Размещение рекламы на внешних сервисах
+GET  /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTarget(adnId)
+POST /lk/xadv/ext/tg/write/:adnId       @controllers.LkAdvExt.writeTargetSubmit(adnId)
+GET  /ws/lk/xadv/ext/run                @controllers.LkAdvExt.wsRun(x: adv.MExtAdvQs)
+POST /lk/xadv/ext/tg/delete/:tgId       @controllers.LkAdvExt.deleteTargetSubmit(tgId)
+GET  /lk/xadv/ext/mad/:adId             @controllers.LkAdvExt.forAd(adId)
+POST /lk/xadv/ext/mad/:adId             @controllers.LkAdvExt.forAdSubmit(adId)
+GET  /lk/xadv/ext/runner/:adId          @controllers.LkAdvExt.runner(adId, x: Option[adv.MExtAdvQs])
+GET  /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnGet(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
+POST /lk/xadv/ext/oauth1/ret/:adnId     @controllers.LkAdvExt.oauth1PopupReturnPost(adnId, actorInfoQs: adv.ext.act.ActorPathQs)
+
+## Размещение в теге с учетом географии.
+GET  /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAd(adId)
+POST /lk/xadv/geo/tag/for/:adId         @controllers.LkAdvGeo.forAdSubmit(adId)
+POST /lk/xadv/geo/tag/price/:adId       @controllers.LkAdvGeo.getPriceSubmit(adId)
+POST /lk/xadv/geo/tag/add               @controllers.LkAdvGeo.tagEditorAddTag()
+GET  /lk/xadv/geo/tag/tags              @controllers.LkAdvGeo.tagsSearch(s: mlk.MLkTagsSearchQs)
+GET  /lk/xadv/geo/tag/tags2             @controllers.LkAdvGeo.tagsSearch2(s: mlk.MLkTagsSearchQs)
+GET  /lk/xadv/geo/map/rcvrs/:adId       @controllers.LkAdvGeo.advRcvrsMap(adId)
+GET  /lk/xadv/geo/map/rcvr/pop/:adId/:nodeId     @controllers.LkAdvGeo.rcvrMapPopup(adId: MEsUuId, nodeId: MEsUuId)
+GET  /lk/xadv/geo/map/shapes/:adId      @controllers.LkAdvGeo.existGeoAdvsMap(adId)
+GET  /lk/xadv/geo/map/shape/pop/:itemId @controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId: Gid_t)
+
+## ЛК: Рекламные карточки
+GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)
+POST /lk/mad/new/:adnId                 @controllers.MarketAd.createAdSubmit(adnId)
+POST /lk/mad/preview/:adnId             @controllers.MarketAd.adFormPreviewSubmit(adnId, isFull: Boolean)
+POST /lk/mad/img/prepare                @controllers.MarketAd.prepareBlockImg(h: blk.PrepareBlkImgArgs)
+POST /lk/mad/sa/:adId                   @controllers.MarketAd.updateShowLevelSubmit(adId)
+GET  /lk/mad/edit/:adId                 @controllers.MarketAd.editAd(adId)
+POST /lk/mad/edit/:adId                 @controllers.MarketAd.editAdSubmit(adId)
+GET  /lk/mad/delete/:adId               @controllers.MarketAd.deleteWnd(adId)
+POST /lk/mad/delete/:adId               @controllers.MarketAd.deleteSubmit(adId)
+GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
+GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
+
+## ЛК: Размещение ADN-узла на карте
+POST /lk/adn/map/price/:nodeId          @controllers.LkAdnMap.getPriceSubmit(nodeId: MEsUuId)
+GET  /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNode(nodeId: MEsUuId)
+POST /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNodeSubmit(nodeId: MEsUuId)
+
+## lk.bill2
+GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
+POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
+GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
+GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
+GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
+GET  /lk/bill/pricing/wnd/:nodeId       @controllers.LkBill2._rcvrInfoWnd(nodeId)
+POST /lk/cart/clear/:nodeId             @controllers.LkBill2.cartClear(nodeId, r: Option[String] ?= None)
+POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(itemId: Gid_t, r: String)
+
+## Принятие приглашения на управления узлом.
+GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)
+POST /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
+
+## Обращение в тех.поддерку зареганного клиента sio-market.
+GET  /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
+POST /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
+GET  /support                           @controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
+POST /support                           @controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
+POST /support/geo/node/:adnId           @controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
+
+## ЛК: нотификации (события)
+GET  /lk/events/node/:adnId             @controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)
+POST /lk/events/delete/:evtId           @controllers.LkEvents.nodeEventDelete(evtId)
+
+## Языки и локализация
+GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
+POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
+GET  /lk/:lang/:hash/messages.js        @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
+
+GET  /img/crop/:imgId                   @controllers.Img.imgCropForm(imgId, width:Int, height: Int)
+POST /img/crop                          @controllers.Img.imgCropSubmit
+
+## Генераторы капч
+GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId, cp: String)
+GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
+
+
+# sys
+GET  /sys                               @controllers.SysMarket.sysIndex
+# sys.market
+GET  /sys/market                        @controllers.SysMarket.index
+# sys.market.adn
+GET  /sys/market/adn/:adnId             @controllers.SysMarket.showAdnNode(adnId)
+GET  /sys/market/adns                   @controllers.SysMarket.adnNodesList(w: msys.MSysNodeListArgs ?= msys.MSysNodeListArgs.default)
+GET  /sys/market/create/adn             @controllers.SysMarket.createAdnNode()
+POST /sys/market/create/adn             @controllers.SysMarket.createAdnNodeSubmit()
+POST /sys/market/adn/:adnId/delete      @controllers.SysMarket.deleteAdnNodeSubmit(adnId)
+GET  /sys/market/ads                    @controllers.SysMarket.showAdnNodeAds(a: msc.MScAdsSearchQs)
+POST /sys/market/mad/rm/rcvr/:adId      @controllers.SysMarket.removeAdRcvr(adId, rcvrId: Option[String] ?= None, r: Option[String] ?= None)
+GET  /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNode(adnId)
+POST /sys/market/adn/edit/:adnId        @controllers.SysMarket.editAdnNodeSubmit(adnId)
+# sys.market.mart
+GET  /sys/market/adn/invite/:id         @controllers.SysMarket.nodeOwnerInviteForm(id: String)
+POST /sys/market/adn/invite/:id         @controllers.SysMarket.nodeOwnerInviteFormSubmit(id: String)
+GET  /sys/market/adn/invite/email/:id   @controllers.SysMarket.showNodeOwnerEmailInvite(id)
+# sys.market.shop
+GET  /sys/market/shop/eact/:id          @controllers.SysMarket.showEmailInviteMsg(id)
+GET  /sys/market/mad/email/:adId        @controllers.SysMarket.showShopEmailAdDisableMsg(adId)
+
+# sys.ad
+GET  /sys/mad/:adId/show                @controllers.SysMarket.showAd(adId)
+GET  /sys/mad/:adId/rcvrs/analyze       @controllers.SysMarket.analyzeAdRcvrs(adId)
+POST /sys/mad/:adId/rcvrs/reset         @controllers.SysMarket.resetReceivers(adId, r: Option[String] ?= None)
+POST /sys/mad/:adId/rcvrs/clean         @controllers.SysMarket.cleanReceivers(adId, r: Option[String] ?= None)
+# sys.ad.render - диагностический рендер одиночных карточек в html и картинки.
+GET  /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.showOneAdForm(adId, rvar: msc.OneAdRenderVariant)
+POST /sys/mad/:adId/one/render/:rvar    @controllers.SysMarket.oneAdFormSubmit(adId, rvar: msc.OneAdRenderVariant)
+
+## SmDomains - управлением доменами узла.
+GET  /sys/node/domain/add/:nodeId       @controllers.SysMarket.createNodeDomain(nodeId)
+POST /sys/node/domain/add/:nodeId       @controllers.SysMarket.createNodeDomainFormSubmit(nodeId)
+GET  /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomain(nodeId, dkey)
+POST /sys/node/domain/edit/:nodeId/dkey @controllers.SysMarket.editNodeDomainFormSubmit(nodeId, dkey)
+POST /sys/node/domain/del/:nodeId/dkey  @controllers.SysMarket.deleteNodeDomainFormSubmit(nodeId, dkey)
+
+## SysNodeEdges: работа с эджами узлов
+POST /sys/node/edge/del                 @controllers.SysMarket.deleteEdgePost(e: msys.MNodeEdgeIdQs)
+GET  /sys/node/edge/add/:nodeId         @controllers.SysMarket.createEdgeGet(nodeId)
+POST /sys/node/edge/add/:nodeId         @controllers.SysMarket.createEdgePost(nodeId)
+GET  /sys/node/edge/edit                @controllers.SysMarket.editEdgeGet(e: msys.MNodeEdgeIdQs)
+POST /sys/node/edge/edit                @controllers.SysMarket.editEdgePost(e: msys.MNodeEdgeIdQs)
+
+
+## sys: Календари
+GET  /sys/cal                            @controllers.SysCalendar.showCalendars
+POST /sys/cal/new/tpl                    @controllers.SysCalendar.newCalendarFromTemplateSubmit
+POST /sys/cal/new                        @controllers.SysCalendar.createCalendarSubmit
+GET  /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendar(calId)
+POST /sys/cal/edit/:calId                @controllers.SysCalendar.editCalendarSubmit(calId)
+GET  /sys/cal/get/:calId                 @controllers.SysCalendar.getCalendarXml(calId)
+
+## sys: mdr - модерация контента
+GET  /sys/mdr                            @controllers.SysMdr.index
+GET  /sys/mdr/free/list                  @controllers.SysMdr.freeAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+GET  /sys/mdr/free/refuse/popup/:adId    @controllers.SysMdr.refuseFreeAdvPopup(adId)
+POST /sys/mdr/free/accept/:adId          @controllers.SysMdr.freeAdvMdrAccept(adId)
+POST /sys/mdr/free/refuse/:adId          @controllers.SysMdr.freeAdvMdrBan(adId)
+GET  /sys/mdr/node/:nodeId               @controllers.SysMdr.forAd(nodeId)
+GET  /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItemPopup(itemId: Gid_t)
+POST /sys/mdr/item/approve/:itemId       @controllers.SysMdr.approveItemSubmit(itemId: Gid_t)
+POST /sys/mdr/item/refuse/:itemId        @controllers.SysMdr.refuseItemSubmit(itemId: Gid_t)
+GET  /sys/mdr/list/paid                  @controllers.SysMdr.paidAdvs(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+GET  /sys/mdr/next                       @controllers.SysMdr.rdrToNextAd(a: mdr.MdrSearchArgs ?= mdr.MdrSearchArgs.default)
+POST /sys/mdr/items/approve/:adId        @controllers.SysMdr.approveAllItemsSubmit(adId)
+GET  /sys/mdr/items/refuse/:adId         @controllers.SysMdr.refuseAllItems(adId)
+POST /sys/mdr/items/refuse/:adId         @controllers.SysMdr.refuseAllItemsSubmit(adId)
+POST /sys/mdr/itemstype/approve/:adId    @controllers.SysMdr.approveAllItemsTypeSubmit(adId, itype: MItemType)
+GET  /sys/mdr/itemstype/refuse/:adId     @controllers.SysMdr.refuseAllItemsType(adId, itype: MItemType)
+POST /sys/mdr/itemstype/refuse/:adId     @controllers.SysMdr.refuseAllItemsTypeSubmit(adId, itype: MItemType)
+
+## sys node geo
+GET  /sys/adn/geo/all/:nodeId            @controllers.SysAdnGeo.forNode(nodeId)
+## sys node geo shape
+GET  /sys/adn/geo/add/osm/:nodeId        @controllers.SysAdnGeo.createForNodeOsm(nodeId)
+POST /sys/adn/geo/add/osm/:nodeId        @controllers.SysAdnGeo.createForNodeOsmSubmit(nodeId)
+POST /sys/adn/geo/delete                 @controllers.SysAdnGeo.deleteSubmit(g: mgeo.MGsPtr)
+GET  /sys/adn/geo/edit/osm               @controllers.SysAdnGeo.editNodeOsm(g: mgeo.MGsPtr)
+POST /sys/adn/geo/edit/osm               @controllers.SysAdnGeo.editNodeOsmSubmit(g: mgeo.MGsPtr)
+GET  /sys/adn/geo/add/circl/:nodeId      @controllers.SysAdnGeo.createCircle(nodeId)
+POST /sys/adn/geo/add/circl/:nodeId      @controllers.SysAdnGeo.createCircleSubmit(nodeId)
+GET  /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircle(g: mgeo.MGsPtr)
+POST /sys/adn/geo/edit/circl             @controllers.SysAdnGeo.editCircleSubmit(g: mgeo.MGsPtr)
+GET  /sys/adn/geo/json                   @controllers.SysAdnGeo.showGeoJson(g: mgeo.MGsPtr)
+## node geodata
+GET  /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeodata(nodeId)
+GET  /sys/adn/geodata/propose/:nodeId    @controllers.SysAdnGeo.editAdnNodeGeodataPropose(nodeId)
+POST /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeodataSubmit(nodeId)
+
+## Карта umap
+GET  /sys/umap/nodes                     @controllers.Umap.getAdnNodesMap
+GET  /sys/umap/nodes/datalayer           @controllers.Umap.getDataLayerGeoJson(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/settings            @controllers.Umap.saveMapSettingsSubmit
+POST /sys/umap/nodes/datalayer           @controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/datalayer/new       @controllers.Umap.createMapDataLayer
+GET  /sys/umap/node/:adnId               @controllers.Umap.getAdnNodeMap(adnId)
+GET  /sys/umap/node/:adnId/datalayer     @controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
+POST /sys/umap/node/:adnId/datalayer     @controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
+
+## sys/Картинки
+GET  /sys/img                            @controllers.SysImg.index(q: Option[String] ?= None)
+POST /sys/img/search                     @controllers.SysImg.searchFormSubmit
+GET  /sys/img/show                       @controllers.SysImg.showOne(i: im.MImgT)
+POST /sys/img/delete                     @controllers.SysImg.deleteOneSubmit(i: im.MImgT)
+## sys.img.make
+GET  /sys/img/make                       @controllers.SysImg.makeForm(i: im.MImgT, bm: Option[blk.BlockMeta] ?= None)
+POST /sys/img/make                       @controllers.SysImg.makeFormSubmit(i: im.MImgT)
+
+## sys/AI
+GET  /sys/ai                             @controllers.SysAi.index
+GET  /sys/ai/mad                         @controllers.SysAi.madIndex
+GET  /sys/ai/mad/create                  @controllers.SysAi.createMadAi
+POST /sys/ai/mad/create                  @controllers.SysAi.createMadAiSubmit
+GET  /sys/ai/mad/edit/:id                @controllers.SysAi.editMadAi(id)
+POST /sys/ai/mad/edit/:id                @controllers.SysAi.editMadAiSubmit(id)
+POST /sys/ai/mad/run/:id                 @controllers.SysAi.runMadAi(id)
+POST /sys/ai/mad/delete/:id              @controllers.SysAi.deleteMadAi(id)
+
+## sys.adn.install
+GET  /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMads(adnId)
+POST /sys/adn/inst/mads/:adnId           @controllers.SysMarket.installDfltMadsSubmit(adnId)
+
+## sys/person
+GET  /sys/person                         @controllers.SysPerson.index
+GET  /sys/person/reg/email/show          @controllers.SysPerson.showRegEmail
+GET  /sys/person/recover/email/show      @controllers.SysPerson.showRecoverEmail
+GET  /sys/person/show/:personId          @controllers.SysPerson.showPerson(personId)
+GET  /sys/person/epws                    @controllers.SysPerson.allEpws(offset: Int ?= 0)
+GET  /sys/person/extids                  @controllers.SysPerson.allExtIdents(offset: Int ?= 0)
+
+
+## sys/billing v2 -- Весь новый биллинг разом в этом контроллере.
+GET  /sys/bill/node/:nodeId              @controllers.SysBilling.forNode(nodeId)
+## посуточные тарифы
+GET  /sys/bill/tf/daily/:nodeId          @controllers.SysBilling.editNodeTfDaily(nodeId)
+POST /sys/bill/tf/daily/:nodeId          @controllers.SysBilling.editNodeTfDailySubmit(nodeId)
+POST /sys/bill/tf/daily/del/:nodeId      @controllers.SysBilling.deleteNodeTfDaily(nodeId)
+## контракты v2
+GET  /sys/bill/contract/new/:nodeId      @controllers.SysBilling.createContract(nodeId)
+POST /sys/bill/contract/new/:nodeId      @controllers.SysBilling.createContractSubmit(nodeId)
+GET  /sys/bill/contract/edit/:nodeId     @controllers.SysBilling.editContract(nodeId)
+POST /sys/bill/contract/edit/:nodeId     @controllers.SysBilling.editContractSubmit(nodeId)
+POST /sys/bill/contract/delete/:nodeId   @controllers.SysBilling.deleteContractSubmit(nodeId)
+## Балансы v2
+GET  /sys/bill/payment/:nodeId           @controllers.SysBilling.payment(nodeId)
+POST /sys/bill/payment/:nodeId           @controllers.SysBilling.paymentSubmit(nodeId)
+## Обзор системы балансов v2
+GET  /sys/bill                           @controllers.SysBilling.overview
+
+
+## sys/debug
+GET  /sys/debug                          @controllers.SysDebug.index
+POST /sys/debug/geo/parent/execute       @controllers.SysDebug.testNodesAllGeoParents
+POST /sys/debug/adv/rcvrs/reset          @controllers.SysDebug.resetAllRcvrs
+
+## ident: логины/логауты
+GET  /id                                @controllers.Ident.mySioStartPage(r: Option[String] ?= None)
+GET  /id/epw/login                      @controllers.Ident.emailPwLoginForm(r: Option[String] ?= None)
+POST /id/epw/login                      @controllers.Ident.emailPwLoginFormSubmit(r: Option[String] ?= None)
+GET  /id/logout                         @controllers.Ident.logout
+## ident: Восстановление пароля.
+GET  /id/epw/recover                    @controllers.Ident.recoverPwForm
+POST /id/epw/recover                    @controllers.Ident.recoverPwFormSubmit
+GET  /id/epw/recover/sent               @controllers.Ident.recoverPwAccepted(email: String)
+GET  /id/epw/resetpw/:eActId            @controllers.Ident.recoverPwReturn(eActId)
+POST /id/epw/resetpw/:eActId            @controllers.Ident.pwResetSubmit(eActId)
+## ident: Сменить пароль
+GET  /id/epw/chpw                       @controllers.Ident.changePassword
+POST /id/epw/chpw                       @controllers.Ident.changePasswordSubmit(r: Option[String] ?= None)
+GET  /id/rdr/me/somewhere               @controllers.Ident.rdrUserSomewhere
+## ident: рега по email и паролю
+GET  /id/epw/reg                        @controllers.Ident.emailReg
+POST /id/epw/reg                        @controllers.Ident.emailRegSubmit
+GET  /id/epw/reg/return                 @controllers.Ident.emailReturn(e: usr.IEaEmailId)
+POST /id/epw/reg/return                 @controllers.Ident.emailConfirmSubmit(e: usr.IEaEmailId)
+## ident: вход через внешнего провайдера
+GET  /id/via/:provider			        @controllers.Ident.idViaProvider(provider: mext.ILoginProvider, r: Option[String] ?= None)
+POST /id/via/:provider                  @controllers.Ident.idViaProviderByPost(provider: mext.ILoginProvider, r: Option[String] ?= None)
+GET  /id/reg/ext/confirm                @controllers.Ident.idpConfirm
+POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
+
+## compat
+GET  /app/session/keepalive             @controllers.Static.keepAliveSession
+## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
+GET     /privacy                        @controllers.Static.privacyPolicy
+GET     /st/popup/check                 @controllers.Static.popupCheckContent
+
+## yeoman-play
+#GET     /ui         com.tuplejump.playYeoman.Yeoman.index
+#->	     /ui/	     yeoman.Routes
+#GET     /           com.tuplejump.playYeoman.Yeoman.redirectRoot(base="/ui/")
+
+## Редкие обращения к ассетам напрямую. На момент перемещения вниз, это использовалось только в одном редком месте в коде.
+GET  /assets/$file<.+\.(src\.js|js\.map|scala|java|conf|-fastopt\.js).*>       @controllers.Static.assetsSudo(path="/public", file: Asset)
+GET  /assets/*file                      @controllers.Assets.at(path="/public", file)
+

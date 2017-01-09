@@ -1,0 +1,63 @@
+@(args: msc.ScSiteArgs)(implicit ctx: Context)
+
+@* Шаблон для рендеринга демо выдачи. Содержит предполагаемый сайт ТЦ, поверх которого рисуется Sio.Market *@
+
+@import _root_.views.html.stuff._
+@import ctx.api.{cdn, ctxUtil, n2NodesUtil}
+@import io.suggest.sc.ScConstants.{Site => C}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>
+    @* SEO: Пытаемся рисовать разные заголовки на разных страницах. *@
+    @_nodeTitleTpl(args.nodeOpt)
+    @if(args.nodeOpt) { | }
+    Suggest.io</title>
+
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+  @if(!ctx.isIpad) {
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  }
+
+  <meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui" />
+
+  @for(jsState <- args.jsStateOpt) {
+    <link rel="canonical"
+          href="@args.nodeOpt.flatMap(n2NodesUtil.urlPrefixOf).getOrElse(ctxUtil.SC_URL_PREFIX)@routes.Sc.geoSite()#!?@jsState.canonical.toQs()" />
+  }
+  @if(!args.syncRender) {
+    <meta name="fragment" content="!"/>
+  }
+
+  @static._faviconsTpl()
+
+  @* fb, vk, pinterest, ff-android home-screen, etc.
+     TODO: У OSM.org стоит тут 120х120px. Надо разобраться, какой размер сюда стоит втыкать.
+     + og:image допускает несколько размеров. *@
+  <meta property="og:image" content="@cdn.asset("images/favicon/228.png")" />
+
+  @* CDN может быть отключен в конфиге, чтобы Same-Origin не резал webfonts. CORS работает как-то ненадежно на ^старых^ iOS на iphone через webapp. *@
+  @defining( "stylesheets/market/showcase.css" ) { scCss =>
+    <link type="text/css" rel="stylesheet" media="screen"
+          href="@(if(cdn.FONTS_ENABLED) cdn.asset(scCss) else routes.Assets.versioned(scCss))"/>
+  }
+
+  @args.headAfter
+</head>
+
+<body class="sm-body __@ctx.messages.lang.language @if(args.syncRender){ __sync }">
+
+  @if(!args.syncRender) {
+    @args.scriptHtml
+  }
+
+  @* TODO В else нужно выводить нескрываемую плашку, что следует включить js в браузере, иначе всё будет хреново
+          выглядеть и работать. Но не для кравлеров. *@
+
+  @args.inlineIndex
+</body>
+
+</html>

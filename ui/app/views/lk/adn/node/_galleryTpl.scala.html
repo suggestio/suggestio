@@ -1,0 +1,9 @@
+@(gallery: Seq[im.MImgT], imgClass: String)(implicit ctx: Context)
+
+@import ctx.api.galleryUtil
+
+<div class="js-photo-slider">
+  @gallery.map { mimg =>
+    <img class="@imgClass" src="@galleryUtil.dynLkBigCall(mimg)" />
+  }
+</div>

@@ -1,0 +1,105 @@
+@(meta: MMeta)(implicit ctx: Context)
+
+@* Блок верстки, отображающий поля метаданных узла. *@
+@import ctx._
+@import datetime._
+@import util.TplDataFormatUtil._
+@import io.suggest.util.UrlUtil._
+@import sys1.stuff.proptable._
+
+
+@_ptableTpl() {
+
+  @for(name <- meta.basic.nameOpt) {
+    @_ptableRowTpl(messages("Name") + ":") {
+      @name
+    }
+  }
+
+  @for(tn <- meta.basic.techName) {
+    @_ptableRowTpl("Техническое имя:") {
+      @tn
+    }
+  }
+
+  @for(descr <- meta.basic.hiddenDescr) {
+    @_ptableRowTpl( "Скрытое описание:" ) {
+      @descr
+    }
+  }
+
+  @_ptableRowTpl( messages("Created")+":") {
+    @_prettyDate(meta.basic.dateCreated, withSpan = true)
+  }
+
+  @for(de <- meta.basic.dateEdited) {
+    @_ptableRowTpl( messages("Edited") + ":") {
+      @_prettyDate(de, withSpan = true)
+    }
+  }
+
+  @for(town <- meta.address.town) {
+    @_ptableRowTpl( "Город:") {
+      @town
+    }
+  }
+
+  @for(audDescr <- meta.business.audienceDescr) {
+    @_ptableRowTpl( "Описание аудитории:") {
+      @audDescr
+    }
+  }
+
+  @for(htAvg <- meta.business.humanTrafficAvg) {
+    @_ptableRowTpl( "Человеческий трафик:") {
+      @formatIntHtml(htAvg) чел. в день
+    }
+  }
+
+  @for(info <- meta.business.info) {
+    @_ptableRowTpl( "Информация о товарах/услугах:") {
+      @info
+    }
+  }
+
+  @for(address <- meta.address.address) {
+    @_ptableRowTpl( messages("Address") + ":") {
+      @address
+    }
+  }
+
+  @for(phone <- meta.address.phone) {
+    @_ptableRowTpl( messages("Phone") + ":") {
+      @phone
+    }
+  }
+
+  @for(floor <- meta.address.floor) {
+    @_ptableRowTpl( messages("Floor") + ":") {
+      @floor
+    }
+  }
+
+  @for(section <- meta.address.section) {
+    @_ptableRowTpl( messages("Section") + ":") {
+      @section
+    }
+  }
+
+  @for(siteUrl <- meta.business.siteUrl) {
+    @_ptableRowTpl( "Сайт:") {
+      <a class="blue-link" href="http://anonym.to/?@siteUrl" target="_blank" title="@humanizeUrl(siteUrl)">
+        @humanizeUrlAggressive(siteUrl)
+      </a>
+    }
+  }
+
+  @if( meta.colors.nonEmpty ) {
+    @_ptableRowTpl( messages("Colors") ) {
+      @_colorInfoTpl("Bg", meta.colors.bg)
+      @_colorInfoTpl("Fg", meta.colors.fg)
+      @_colorInfoTpl("Pattern", meta.colors.pattern)
+    }
+  }
+
+}

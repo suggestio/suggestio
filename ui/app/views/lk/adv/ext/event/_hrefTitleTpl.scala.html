@@ -1,0 +1,13 @@
+@(tg: adv.IExtTarget, withAnchor: Boolean = true)
+
+@* Шаблон типичного заголовка данных по цели. *@
+
+@import io.suggest.util.UrlUtil
+
+<div class="event_t">
+  @if(withAnchor) {<a href="@tg.url" target="_blank">}
+    @tg.name.getOrElse {
+      @UrlUtil.humanizeUrlAggressive( tg.url )
+    }
+  @if(withAnchor) {</a>}
+</div>

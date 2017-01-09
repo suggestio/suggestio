@@ -1,0 +1,30 @@
+@(tags: TraversableOnce[MNode], syncRender: Option[msc.ISyncRenderInfo] = None)(implicit ctx: Context)
+
+@* Рендер содержимого списка тегов.
+   Код эвакуирован из views.sc._shopsListTpl.
+   TODO Прикрутить *@
+
+@import io.suggest.sc.ScConstants.Search.TagsTab._
+
+@* Верстка нечетных css-классов. *@
+@_mayOdd(i: Int) = {
+  @if(i%2 == 0){__odd}
+}
+
+@for( (mnode,i) <- tags.toIterator.zipWithIndex) {
+
+  @for(sr <- syncRender; jsState <- sr.jsStateOpt) {
+    <a href="@sr.syncUrl( jsState.copy(fadsProdIdOpt = mnode.id) )">
+  }
+
+  <div id="@ROW_ID_PREFIX@mnode.id"
+       class="shops-list_row @_mayOdd(i) @ROW_DIV_CLASS"
+       @ATTR_NODE_ID="@mnode.id">
+    @mnode.edges.iterator.flatMap(_.info.tags).toStream.headOption
+  </div>
+
+  @if(syncRender && syncRender.get.jsStateOpt) {
+    </a>
+  }
+
+}
