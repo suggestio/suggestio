@@ -16,7 +16,7 @@ scalacOptions += "-feature"
 libraryDependencies ++= Seq(
     Common.ORG      %%% "lk-adv-common-sjs"               % "0.0.0-SNAPSHOT",
     Common.ORG      %%% "scalajs-react-common"            % "0.0.0-SNAPSHOT",
-    Common.ORG      %%% "map-rad-sjs"                     % "0.0.0-SNAPSHOT",
+    //Common.ORG      %%% "map-rad-sjs"                     % "0.0.0-SNAPSHOT",
     Common.ORG      %%% "lk-tags-edit-sjs"                % "0.0.0-SNAPSHOT",
     Common.ORG      %%% "scalajs-leaflet-markercluster"   % "0.0.0-SNAPSHOT",
     Common.ORG      %%% "scalajs-leaflet-react"           % "0.0.0-SNAPSHOT",

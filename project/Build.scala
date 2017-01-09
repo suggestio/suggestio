@@ -10,8 +10,10 @@ import ScalaJSPlugin.autoImport._
 
 object Sio2Build extends Build {
 
+  val DIR0 = "src1/"
+
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
-  lazy val common = (crossProject.crossType( CrossType.Pure ) in file("common"))
+  lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shared/common"))
     .settings(
       libraryDependencies ++= Seq(
         "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
@@ -34,12 +36,13 @@ object Sio2Build extends Build {
 
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
+    .in( file(DIR0 + "server/util/util") )
     .dependsOn(commonJVM, logsMacro)
 
   /** Кое-какие общие вещи для js. */
   lazy val commonSjs = {
     val name = "common-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/" ++ name))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonJS, evothingsUtilSjs)
       // Хз нужен ли этот инклюд сорцов прямо здесь.
@@ -52,8 +55,7 @@ object Sio2Build extends Build {
 
   /** Расшаренная утиль для интеграции с react.js через scalajs-react. */
   lazy val commonReactSjs = {
-    val name = "scalajs-react-common"
-    Project(id = name, base = file("scalajs/" + name))
+    Project(id = "scalajs-react-common", base = file(DIR0 + "client/scalajs/react-common"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
@@ -61,7 +63,7 @@ object Sio2Build extends Build {
   /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из web21. */
   lazy val svgUtil = {
     val name = "svg-util"
-    Project(name, base = file(name))
+    Project(name, base = file(DIR0 + "server/media/" + name))
       .dependsOn(logsMacro)
   }
 
@@ -71,7 +73,7 @@ object Sio2Build extends Build {
    */
   lazy val lkAdvExtSjs = {
     val name = "lk-adv-ext-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/lk/adv/ext"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
@@ -79,15 +81,17 @@ object Sio2Build extends Build {
   /** Трейты для поддержки простых логов. */
   lazy val logsMacro = {
     val name = "logs-macro"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "server/util/" + name))
   }
 
   /** Поддержка seaweedfs */
   lazy val swfs = project
+    .in( file(DIR0 + "server/media/swfs") )
     .dependsOn(util)
 
   /** Поддержка моделей n2. */
   lazy val n2 = project
+    .in( file(DIR0 + "server/nodes/n2") )
     .dependsOn(util, swfs)
 
   /** 
@@ -96,20 +100,20 @@ object Sio2Build extends Build {
    */
   lazy val commonSlickDriver = {
     val name = "common-slick-driver"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "server/util/" ++ name))
   }
 
   /** Scala.js API для доступа к jquery.datetimepicker.js от xdsoft. */
   lazy val dateTimePickerSjs = {
-    val name = "datetimepicker-scalajs"
-    Project(id = name, base = file(name))
+    val name = "jquery-datetimepicker"
+    Project(id = name, base = file(DIR0 + "client/scalajs/jquery/jquery-datetimepicker"))
       .enablePlugins(ScalaJSPlugin)
   }
 
   /** всякая мелочь, специфчная только для личного кабинета, но используется в нескольких модулях. */
   lazy val lkCommonSjs = {
     val name = "lk-common-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/lk/common"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, commonReactSjs)
   }
@@ -117,7 +121,7 @@ object Sio2Build extends Build {
   /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
   lazy val lkDtPeriodSjs = {
     val name = "lk-dt-period-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/lk/dt-period"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs, dateTimePickerSjs, commonReactSjs)
   }
@@ -125,7 +129,7 @@ object Sio2Build extends Build {
   /** lk-adv-common sjs. */
   lazy val lkAdvCommonSjs = {
     val name = "lk-adv-common-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs)
   }
@@ -133,75 +137,72 @@ object Sio2Build extends Build {
   /** Поддержка формы прямого размещения на узлах. */
   lazy val lkAdvDirectSjs = {
     val name = "lk-adv-direct-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/lk/adv/direct"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkAdvCommonSjs)
   }
 
   /** Sjs-модуль для поддержки подсистемы размещения в гео-тегах. */
   lazy val lkAdvGeoSjs = {
-    val name = "lk-adv-geo-tags-sjs"
-    Project(id = name, base = file(name))
+    val name = "lk-adv-geo-sjs"
+    Project(id = name, base = file(DIR0 + "client/lk/adv/geo"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, mapRadSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs)
   }
 
   /** Модели биллинга второго поколения. */
   lazy val mbill2 = project
+    .in( file(DIR0 + "server/bill/mbill2") )
     .dependsOn(logsMacro, commonJVM, util)
 
   /** Утиль и модели для поддержки интеграции с БД ipgeobase. */
   lazy val ipgeobase = {
     val name = "ipgeobase"
-    Project(id = name, base = file("loc/geo/" + name))
+    Project(id = name, base = file(DIR0 + "server/geo/" + name))
       .dependsOn(logsMacro, util)
   }
 
   /** Подсистема сбора статистики. */
   lazy val stat = project
+    .in( file(DIR0 + "server/stat/mstat") )
     .dependsOn(logsMacro, util)
 
   /** Scala.js API для самой cordova. */
   lazy val cordovaSjs = {
     val name = "scalajs-cordova"
-    Project(id = name, base = file("scalajs/" + name))
+    Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
       .enablePlugins(ScalaJSPlugin)
   }
 
   /** scala.js API для evothings/cordova-ble. */
   lazy val cordovaBleSjs = {
-    val name = "scalajs-cordova-ble"
-    Project(id = name, base = file("scalajs/" + name))
+    Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))
       .enablePlugins(ScalaJSPlugin)
   }
 
   /** scala.js API + js для evothings/libs/util.js */
   lazy val evothingsUtilSjs = {
-    val name = "scalajs-evothings-util"
-    Project(id = name, base = file("scalajs/" + name))
+    Project(id = "scalajs-evothings-util", base = file(DIR0 + "client/ble/evothings-util"))
       .enablePlugins(ScalaJSPlugin)
   }
   
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
-    val name = "scalajs-leaflet"
-    Project(id = name, base = file(name))
+    Project(id = "scalajs-leaflet", base = file(DIR0 + "client/geo/leaflet/main"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
   /** Самописное leaflet-react API. */
   lazy val leafletReactSjs = {
-    val name = "scalajs-leaflet-react"
-    Project(id = name, base = file("scalajs/scalajs-leaflet-react"))
+    Project(id = "scalajs-leaflet-react", base = file(DIR0 + "client/geo/leaflet/react"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, leafletSjs, leafletMarketClusterSjs, commonReactSjs)
   }
 
   /** leaflet.markercluster.js scalajs API. */
   lazy val leafletMarketClusterSjs = {
-    val name = "scalajs-leaflet-markercluster"
-    Project(id = name, base = file("scalajs/" + name))
+    Project(id = "scalajs-leaflet-markercluster", base = file(DIR0 + "client/geo/leaflet/markercluster"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(leafletSjs, commonReactSjs)
   }
@@ -210,22 +211,21 @@ object Sio2Build extends Build {
   // Отложено до переезда на elasticsearch 5.x. См. mmgeoip2/README
   lazy val mmgeoip2 = {
     val name = "mmgeoip2"
-    Project(id = name, base = file("loc/geo/" + name))
+    Project(id = name, base = file(DIR0 + "server/geo/" + name))
       .dependsOn(util, logsMacro)
   }
 
   /** mapbox.js API. */
-  lazy val mapBoxSjs = {
-    val name = "scalajs-mapbox"
-    Project(id = name, base = file("scalajs/" + name))
-      .enablePlugins(ScalaJSPlugin)
-      .dependsOn(leafletSjs)
-  }
+  //lazy val mapBoxSjs = {
+  //  val name = "scalajs-mapbox"
+  //  Project(id = name, base = file("scalajs/" + name))
+  //    .enablePlugins(ScalaJSPlugin)
+  //    .dependsOn(leafletSjs)
+  //}
 
   /** mapbox-gl API. */
   lazy val mapBoxGlSjs = {
-    val name = "scalajs-mapboxgl"
-    Project(id = name, base = file(name))
+    Project(id = "scalajs-mapboxgl", base = file(DIR0 + "client/geo/mapboxgl"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
@@ -233,39 +233,29 @@ object Sio2Build extends Build {
   /** Утиль для поддержки географических карт. */
   lazy val mapsSjs = {
     val name = "maps-sjs"
-    Project(id = name, base = file("maps/" + name))
+    Project(id = name, base = file(DIR0 + "client/geo/common-maps"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, leafletSjs)
-  }
-
-  /** Модуль поддержки карты с возможностью задания радиуса покрытия. */
-  lazy val mapRadSjs = {
-    val name = "map-rad-sjs"
-    Project(id = name, base = file(name))
-      .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, mapsSjs, leafletSjs)
   }
   
   /** Sjs-модуль редактора тегов. */
   lazy val lkTagsEditSjs = {
     val name = "lk-tags-edit-sjs"
-    Project(id = name, base = file(name))
+    Project(id = name, base = file(DIR0 + "client/lk/tags-edit"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs)
   }
 
   /** Sjs-поддержка размещения ADN-узла на карте. */
   lazy val lkAdnMapSjs = {
-    val name = "lk-adn-map-sjs"
-    Project(id = name, base = file("lk/adn/" + name))
+    Project(id = "lk-adn-map-sjs", base = file(DIR0 + "client/lk/adn/lk-adn-map"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
   }
 
   /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. */
   lazy val lkSjs = {
-    val name = "lk-sjs"
-    Project(id = name, base = file(name))
+    Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
       .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
       .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs)
       // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
@@ -274,26 +264,27 @@ object Sio2Build extends Build {
 
   /** scala.js реализация системы мониторинга js-маячков. */
   lazy val bleBeaconerSjs = {
-    val name = "ble-beaconer-sjs"
-    Project(id = name, base = file("ble/" + name))
+    val name = "ble-beaconer"
+    Project(id = name, base = file(DIR0 + "client/ble/" + name))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs, evothingsUtilSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
   lazy val scSjs = {
-    val name = "sc-sjs"
-    Project(id = name, base = file(name))
+    Project(id = "sc-sjs", base = file(DIR0 + "client/sc/main"))
       .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
       .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
   }
 
   /** Внутренний форк securesocial. */
   lazy val securesocial = project
+    .in( file(DIR0 + "server/id/securesocial") )
     .enablePlugins(PlayScala, SbtWeb)
 
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
+    .in( file(DIR0 + "server/www") )
     .dependsOn(commonJVM, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
@@ -309,7 +300,7 @@ object Sio2Build extends Build {
       .aggregate(
         commonJS, commonJVM, logsMacro,
         commonSjs, commonReactSjs,
-        leafletSjs, leafletReactSjs, mapBoxGlSjs, mapRadSjs,
+        leafletSjs, leafletReactSjs, mapBoxGlSjs,
         lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
         evothingsUtilSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,

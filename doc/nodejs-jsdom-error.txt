@@ -1,6 +1,3 @@
-SiO2 - suggest.io v2.
-
-
 == Ошибка JSDOM в scala.js-проекте ==
 
 scalajs-project> test
@@ -16,4 +13,3 @@ scalajs-project> test
 
 Нужно сделать npm install jsdom в корне проекта.
 https://github.com/scala-js/scala-js/issues/2642
-
