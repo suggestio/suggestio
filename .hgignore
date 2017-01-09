@@ -1,0 +1,18 @@
+syntax: glob
+
+node_modules/
+target/
+bixo/
+data/
+.idea*/
+.history
+project/project
+project/target
+*.swp
+logs/
+*.orig
+*.rej
+sio2m/
+.project
+
+russianmorphology/
