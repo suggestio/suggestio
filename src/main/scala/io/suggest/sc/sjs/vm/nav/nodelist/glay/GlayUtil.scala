@@ -1,0 +1,69 @@
+package io.suggest.sc.sjs.vm.nav.nodelist.glay
+
+import io.suggest.sc.ScConstants.NavPane.{GNL_ATTR_LAYER_ID_INDEX, GNL_BODY_DIV_ID_PREFIX}
+import io.suggest.sc.sjs.vm.nav.nodelist.NlContainer
+import io.suggest.sjs.common.vm.child.ISubTag
+import io.suggest.sjs.common.vm.find.{FindElDynIdT, IApplyEl}
+import io.suggest.sjs.common.vm.{IVm, VmT}
+import io.suggest.sjs.common.vm.attr.AttrVmT
+import io.suggest.sjs.common.vm.util.{DomIdPrefixed, DynDomIdToString}
+import org.scalajs.dom.Node
+import org.scalajs.dom.raw.HTMLDivElement
+
+/**
+ * Suggest.io
+ * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: 10.08.15 11:57
+ * Description: Утиль для сборки vm'ок, относящихся к подспискам узлов списка навигационной панели.
+ */
+trait GlayDivStaticT extends FindElDynIdT with DynDomIdToString with DomIdPrefixed {
+  override type DomIdArg_t    = Int
+  override type Dom_t         = HTMLDivElement
+  override def DOM_ID_PREFIX  = GNL_BODY_DIV_ID_PREFIX
+}
+
+
+/** [[GlayDivStaticT]] с поддержкой суффиксов. */
+trait GlayDivStaticSuffixedT extends GlayDivStaticT {
+
+  protected def _DOM_ID_SUFFIX: String
+
+  override def getDomId(arg: Int): String = {
+    super.getDomId(arg) + _DOM_ID_SUFFIX
+  }
+}
+
+
+/** Трейт для сборки классов vm'ок, имеющих быстрый доступ к нижележащим элементам. */
+trait GlayT extends VmT with ISubTag {
+
+  override type T = HTMLDivElement
+
+  protected def _subtagCompanion: IApplyEl { type T = SubTagVm_t; type Dom_t = HTMLDivElement }
+
+  protected def _findSubtag(): Option[SubTagVm_t] = {
+    val el = _underlying.firstChild.asInstanceOf[HTMLDivElement]
+    val opt = Option( el )
+    opt.map { _subtagCompanion.apply }
+  }
+
+}
+
+
+/** API для чтения значения из аттрибута data-index="1". */
+trait LayerIndex extends AttrVmT {
+  def layerIndexOpt = getIntAttributeStrict(GNL_ATTR_LAYER_ID_INDEX)
+  def layerIndex    = layerIndexOpt.get
+}
+
+
+trait GlayContainerT extends IVm {
+
+  override type T <: Node
+
+  def container: NlContainer = {
+    val parentEl = _underlying.parentNode.asInstanceOf[HTMLDivElement]
+    NlContainer(parentEl)
+  }
+
+}
