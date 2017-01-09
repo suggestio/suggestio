@@ -4,7 +4,7 @@ import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
 import io.suggest.lk.adv.direct.init.AdvDirectFormInitRouter
-import io.suggest.lk.adv.geo.tags.init.AdvGeoFormInitRouter
+import io.suggest.lk.adv.geo.AdvGeoFormInitRouter
 import io.suggest.lk.bill.txn.TxnsListInit
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
@@ -33,9 +33,9 @@ object App extends JSApp with Log {
   override def main(): Unit = {
     new LkInitRouter()
       .init()
-      .onFailure {
-        case ex =>
-          LOG.error(msg = "Init failed", ex = ex)
+      .failed
+      .foreach { ex =>
+        LOG.error(msg = "Init failed", ex = ex)
       }
   }
 
