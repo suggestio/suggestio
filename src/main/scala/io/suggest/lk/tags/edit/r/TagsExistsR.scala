@@ -1,0 +1,68 @@
+package io.suggest.lk.tags.edit.r
+
+import diode.react.ModelProxy
+import io.suggest.css.Css
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.vm.LkMessagesWindow.Messages
+import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.lk.tags.edit.m.RmTag
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 16.12.16 21:16
+  * Description: Компонент списка текущих, добавленных в заказ, тегов.
+  */
+object TagsExistsR {
+
+  type Props = ModelProxy[Set[String]]
+
+  class Backend($: BackendScope[Props, Unit]) {
+
+    /** Клик по кнопке удаления exists-тега. */
+    def onTagDeleteClick(tagName: String): Callback = {
+      $.props >>= { p =>
+        p.dispatchCB( RmTag(tagName) )
+      }
+    }
+
+
+    def render(tagsExists: Props): ReactElement = {
+      // tagExistsCont: Уже добавленные к заказу гео-теги.
+      <.div(
+        for {
+          (tagName, i) <- tagsExists().toSeq.sorted.iterator.zipWithIndex
+        } yield {
+          <.div(
+            ^.`class` := (Css.TagsEdit.JS_TAG_EDITABLE + SPACE + Css.TagsEdit.CONTAINER),
+            ^.key     := tagName,
+
+            // Имя тега
+            tagName,
+
+            // Кнопка удаления тега из списка.
+            <.span(
+              ^.`class`  := (Css.TagsEdit.JS_TAG_DELETE :: Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Nil).mkString(SPACE),
+              ^.title    := Messages( "Delete" ),
+              // TODO Брать tagName из key или содержимого div'а выше на уровне Callback'а, а не здесь.
+              ^.onClick --> onTagDeleteClick(tagName),
+              "[x]"
+            )
+          )
+        }
+      )
+    }
+
+  }
+
+  val component = ReactComponentB[Props]("TagsExist")
+    .stateless
+    .renderBackend[Backend]
+    .build
+
+  def apply(tagsExists: Props) = component(tagsExists)
+
+}
+
+
