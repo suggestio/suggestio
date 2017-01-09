@@ -36,3 +36,10 @@ ui/bower_components
 ui/twirl
 app-2.11/
 conf/log*.xml
+
+
+src1/server/www/conf/application.conf
+src1/server/www/conf/application.conf.dev
+src1/server/www/conf/elasticsearch.yml
+src1/server/www/conf/logback.xml
+

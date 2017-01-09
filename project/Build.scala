@@ -147,7 +147,7 @@ object Sio2Build extends Build {
     val name = "lk-adv-geo-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/geo"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
   }
 
   /** Модели биллинга второго поколения. */
@@ -294,8 +294,8 @@ object Sio2Build extends Build {
   
 
   /** Корневой проект. Он должен аггрегировать подпроекты. */
-  lazy val root = {
-    Project(id = "root", base = file("."))
+  lazy val sio2 = {
+    Project(id = "sio2", base = file("."))
       .settings(Common.settingsOrg: _*)
       .aggregate(
         commonJS, commonJVM, logsMacro,

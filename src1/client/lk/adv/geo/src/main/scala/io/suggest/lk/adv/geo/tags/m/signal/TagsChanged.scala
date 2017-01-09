@@ -1,7 +1,6 @@
 package io.suggest.lk.adv.geo.tags.m.signal
 
 import io.suggest.lk.adv.m.IAdvFormChanged
-import io.suggest.maps.rad.m.signal.IRadMapChanged
 import io.suggest.sjs.common.fsm.IFsmEventMsgCompanion
 import org.scalajs.dom.Event
 
@@ -18,7 +17,7 @@ case object TagsChanged extends IAgtFormChanged
 
 
 /** Сигнал изменений каких-то данных, задаваемых на карте. */
-trait IMapDataChanged extends IAgtFormChanged with IRadMapChanged
+trait IMapDataChanged extends IAgtFormChanged
 
 /** Сигнал об изменении радиуса на карте. */
 case object RadiusChanged extends IMapDataChanged
