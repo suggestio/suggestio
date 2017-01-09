@@ -24,17 +24,21 @@ object GeoAdvExistPopupR {
 
 
   /** Тег с префиксом тега. */
-  lazy val _tagPrefix = <.span(
-    ^.`class` := Css.Colors.LIGHT_GRAY,
-    ^.title   := Messages("GeoTag"),
-    TAG_PREFIX
-  )
+  private lazy val _tagPrefix = {
+    <.span(
+      ^.`class` := Css.Colors.LIGHT_GRAY,
+      ^.title   := Messages("GeoTag"),
+      TAG_PREFIX
+    )
+  }
 
   /** Тег с постфиком-галочкой. */
-  lazy val _onlineNow = <.span(
-    ^.title := Messages("_adv.Online.now"),
-    CHECKMARK
-  )
+  private lazy val _onlineNow = {
+    <.span(
+      ^.title := Messages("_adv.Online.now"),
+      CHECKMARK
+    )
+  }
 
 
   /** Рендерер содержимого попапа. */
@@ -72,11 +76,13 @@ object GeoAdvExistPopupR {
                   <.span(
                     ^.key := itm.itemId,
                     itm.payload match {
-                      case OnMainScreen   => Messages("Main.screen")
-                      case InGeoTag(face) => <.span(
-                        _tagPrefix,
-                        face
-                      )
+                      case OnMainScreen   =>
+                        Messages("Main.screen")
+                      case InGeoTag(face) =>
+                        <.span(
+                          _tagPrefix,
+                          face
+                        )
                     },
                     itm.isOnlineNow ?= _onlineNow,
                     COMMA, SPACE
