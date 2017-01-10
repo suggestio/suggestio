@@ -39,15 +39,15 @@ case class MMapGjResp(arr: IndexedSeq[GjFeature]) {
 
 case class MMapGjFeature(underlying: GjFeature) {
 
-  val propsOpt = underlying.properties.toOption
+  val props = underlying.properties.toOption
 
   private def prop[T](name: String): Option[T] = {
-    propsOpt
+    props
       .flatMap( _.get(name) )
       .asInstanceOf[Option[T]]
   }
 
-  def title: Option[String] = prop[String]( HINT_FN )
+  def title = prop[String]( HINT_FN )
 
   def icon: Option[MMapGjIconProp] = {
     for {

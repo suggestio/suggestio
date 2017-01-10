@@ -25,38 +25,18 @@ object MarkerClusterGroupR {
   def jsConstructor = js.constructorOf[MarkerClusterGroupC]
   jsConstructor.contextTypes = MapLayerR.contextTypes
 
-  def apply(markers: js.Array[Marker],
-            onMarkerClick: js.UndefOr[MarkerEvent  => _] = js.undefined,
-            onClusterClick: js.UndefOr[MarkerEvent => _] = js.undefined,
-            key: UndefOr[String] = js.undefined,
-            showCoverageOnHover: UndefOr[Boolean] = js.undefined,
-            zoomToBoundsOnClick: UndefOr[Boolean] = js.undefined,
-            spiderfyOnMaxZoom: UndefOr[Boolean]   = js.undefined,
-            removeOutsideVisibleBounds: UndefOr[Boolean] = js.undefined,
-            spiderLegPolylineOptions: UndefOr[js.Object] = js.undefined ): MarkerClusterGroupR = {
-
-    val p = js.Dynamic.literal().asInstanceOf[MarkerClusterGroupPropsR]
-
-    p.markers = markers
-    onMarkerClick.foreach( f => p.markerClick = UndefOr.any2undefOrA(f) )
-    onClusterClick.foreach( f => p.clusterClick = UndefOr.any2undefOrA(f) )
-    key.foreach(p.key = _)
-    showCoverageOnHover.foreach( p.showCoverageOnHover = _ )
-    zoomToBoundsOnClick.foreach( p.zoomToBoundsOnClick = _ )
-    spiderfyOnMaxZoom.foreach( p.spiderfyOnMaxZoom = _ )
-    removeOutsideVisibleBounds.foreach( p.removeOutsideVisibleBounds = _ )
-    spiderLegPolylineOptions.foreach( p.spiderLegPolylineOptions = _ )
-
-    MarkerClusterGroupR(p)
-  }
-
 }
 
-
-case class MarkerClusterGroupR(props: MarkerClusterGroupPropsR) extends JsWrapper0R[MarkerClusterGroupPropsR, TopNode] {
+/**
+  * Реализация sjs-react-враппера для react-js-компонента [[MarkerClusterGroupC]].
+  * sealed, чтобы можно было делать инстанс только через companion object, у которого есть очень нужный конструктор.
+  */
+sealed case class MarkerClusterGroupR(props: MarkerClusterGroupPropsR) extends JsWrapper0R[MarkerClusterGroupPropsR, TopNode] {
   override protected def _rawComponent = MarkerClusterGroupR.jsConstructor
 }
 
+
+/** Реализация компонента, овладевающего кластерами из маркеров. */
 @ScalaJSDefined
 class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
   extends MapLayerR[MarkerClusterGroupPropsR](_props, _ctx)
@@ -68,11 +48,12 @@ class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
     val markers = props.markers
     val mcg = Leaflet.markerClusterGroup(props)
     mcg.addLayers( markers )
-    props.markerClick.foreach { f =>
+    // TODO Сделать обработчики событий аналогично react-leaflet? Все, начинающиеся с "on" подхватывать и навешивать?
+    for (f <- props.markerClick) {
       mcg.on3(MarkerClusterEvents.CLICK, f)
     }
-    props.clusterClick.foreach { f =>
-      mcg.on3( MarkerClusterEvents.CLUSTER_CLICK, f )
+    for (f <- props.clusterClick) {
+      mcg.on3( MarkerClusterEvents.CLUSTER_CLICK, f)
     }
     leafletElement = mcg
   }
@@ -82,15 +63,15 @@ class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
 }
 
 
-@js.native
+@ScalaJSDefined
 trait MarkerClusterGroupPropsR extends MarkerClusterGroupOptions {
 
-  var markers: js.Array[Marker] = js.native
+  val markers       : js.Array[Marker]
 
-  var key: String = js.native
+  val key           : UndefOr[String]                         = js.undefined
 
-  var markerClick: js.UndefOr[js.Function1[MarkerEvent,_]] = js.native
+  val markerClick   : js.UndefOr[js.Function1[MarkerEvent,_]] = js.undefined
 
-  var clusterClick: js.UndefOr[js.Function1[MarkerEvent,_]] = js.native
+  val clusterClick  : js.UndefOr[js.Function1[MarkerEvent,_]] = js.undefined
 
 }

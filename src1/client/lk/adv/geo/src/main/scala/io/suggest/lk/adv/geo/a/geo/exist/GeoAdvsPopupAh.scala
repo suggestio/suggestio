@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.a.geo.adv
+package io.suggest.lk.adv.geo.a.geo.exist
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}

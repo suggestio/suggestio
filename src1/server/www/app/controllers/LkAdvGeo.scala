@@ -154,7 +154,7 @@ class LkAdvGeo @Inject() (
 
     val _ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
       implicit val ctxData = ctxData0.copy(
-        jsiTgs = Seq(MTargets.AdvGtagForm)
+        jsiTgs = Seq(MTargets.AdvGeoForm)
       )
       implicitly[Context]
     }
@@ -186,7 +186,7 @@ class LkAdvGeo @Inject() (
             zoom   = 10
           ),
           adv4free = OptionUtil.maybe( request.user.isSuper ) {
-            MAdv4FreeS(
+            MAdv4Free(
               static = MAdv4FreeProps(
                 fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
                 title = ctx.messages( "Adv.for.free.without.moderation" )

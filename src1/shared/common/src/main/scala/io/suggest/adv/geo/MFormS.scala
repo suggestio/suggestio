@@ -28,6 +28,8 @@ object MFormS {
     implicit val dateIntervalPickler = MAdvPeriod.pickler
     implicit val mmapsP = MMapS.pickler
     implicit val rpsP = MRcvrPopupState.pickler
+    implicit val circleP = MCircleS.pickler
+    implicit val a4fsP = MAdv4Free.pickler
     generatePickler[MFormS]
   }
 
@@ -47,8 +49,8 @@ object MFormS {
 case class MFormS(
                    adId          : String,
                    mapState      : MMapS,
-                   onMainScreen  : Boolean                  = true,
-                   adv4free      : Option[MAdv4FreeS]       = None,
+                   onMainScreen  : Boolean                 = true,
+                   adv4free      : Option[MAdv4Free]       = None,
                    // rcvrPopup : Option[MRcvrPopupState]  // -> MRoot.rcvr.popupState
                    locationFound : Option[Boolean]          = None
                    // rcvrsMap    : RcvrsMap_t            // -> MRoot.rcvr.rcvrMap
@@ -59,7 +61,7 @@ case class MFormS(
                    // TODO price, currency?
 ) {
 
-  def withAdv4Free(a4fOpt: Option[MAdv4FreeS]) = copy(adv4free = a4fOpt)
+  def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
   def withMapState(ms2: MMapS) = copy(mapState = ms2)
 
@@ -75,16 +77,25 @@ case class MAdv4FreeProps(
   fn      : String,
   title   : String
 )
+object MAdv4FreeProps {
+  implicit val pickler: Pickler[MAdv4FreeProps] = generatePickler[MAdv4FreeProps]
+}
 
 
 /** Модель diode-состояния суперюзерской формочки.
   * @param checked Состояние галочки: true/false.
   */
-case class MAdv4FreeS(
+case class MAdv4Free(
   static  : MAdv4FreeProps,
   checked : Boolean         = true
 ) {
   def withChecked(checked2: Boolean) = copy(checked = checked2)
+}
+object MAdv4Free {
+  implicit val pickler: Pickler[MAdv4Free] = {
+    implicit val propsP = MAdv4FreeProps.pickler
+    generatePickler[MAdv4Free]
+  }
 }
 
 
@@ -121,5 +132,18 @@ object MRcvrPopupState {
   implicit val pickler: Pickler[MRcvrPopupState] = {
     implicit val mgpPickler = MGeoPoint.pickler
     generatePickler[MRcvrPopupState]
+  }
+}
+
+
+/** Состояние круга. */
+case class MCircleS(center: MGeoPoint, radiusM: Double = 3000) {
+  def withCenter(center2: MGeoPoint) = copy(center = center2)
+  def withRadius(radius2: Double) = copy(radiusM = radius2)
+}
+object MCircleS {
+  implicit val pickler: Pickler[MCircleS] = {
+    implicit val mgpPickler = MGeoPoint.pickler
+    generatePickler[MCircleS]
   }
 }

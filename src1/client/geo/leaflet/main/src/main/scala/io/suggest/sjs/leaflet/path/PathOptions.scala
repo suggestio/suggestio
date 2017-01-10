@@ -1,7 +1,5 @@
 package io.suggest.sjs.leaflet.path
 
-import io.suggest.sjs.common.model.FromDict
-
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined
 
@@ -9,14 +7,7 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 20.11.15 14:26
-  * Description: API for path options.
-  */
-object PathOptions extends FromDict {
-  override type T = PathOptions
-}
-
-
-/** JSON for declaring Path style.
+  * Description: JSON for declaring Path style.
   *
   * For scala 0.6.14+.
   */

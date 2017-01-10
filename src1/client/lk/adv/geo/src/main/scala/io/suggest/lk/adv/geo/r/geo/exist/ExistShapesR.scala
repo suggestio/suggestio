@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.r.geo.adv
+package io.suggest.lk.adv.geo.r.geo.exist
 
 import diode.data.Pot
 import diode.react.ModelProxy
@@ -25,7 +25,7 @@ import scala.scalajs.js.{Function1, Function2, JSON, UndefOr}
   * Created: 29.12.16 10:38
   * Description: React-компонент рендера на карте фигурок существующих гео-размещений карточки.
   */
-object GeoAdvExistShapesR extends Log {
+object ExistShapesR extends Log {
 
   type Props = ModelProxy[Pot[js.Array[GjFeature]]]
 

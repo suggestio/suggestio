@@ -69,3 +69,14 @@ case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvE
 sealed trait IHandlePopupClose extends IAdvGeoFormAction
 /** Команда среагировать на сокрытие произвольного попапа карты на стороне leaflet. */
 case object HandlePopupClose extends IHandlePopupClose
+
+
+// Rad-события
+/** Экшен начала таскания центра круга. */
+case object RadCenterDragStart extends IAdvGeoFormAction
+
+/** Экшен модификации центра rad-круга в ходе продолжающегося драггинга. */
+case class RadCenterDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction
+
+/** Экшен завершения перетаскивания rad-круга за его центр. */
+case class RadCenterDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction

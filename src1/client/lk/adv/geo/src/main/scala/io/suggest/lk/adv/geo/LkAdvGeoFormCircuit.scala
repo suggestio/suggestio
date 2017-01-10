@@ -6,12 +6,13 @@ import io.suggest.adv.geo.MFormS
 import io.suggest.adv.geo.MFormS.pickler
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.geo.a._
-import io.suggest.lk.adv.geo.a.geo.adv.{GeoAdvExistInitAh, GeoAdvsPopupAh}
+import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
+import io.suggest.lk.adv.geo.a.geo.rad.RadAh
+import io.suggest.lk.adv.geo.a.mapf.MapCommonAh
+import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.m.MRoot
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
-import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapCommonAh
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
-import io.suggest.lk.adv.geo.r.rcvr._
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.SetTagSearchQuery
@@ -73,14 +74,14 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     // Собираем handler'ы
 
-    val rcvrsMarkerPopupAh = new RcvrsMarkerPopupAH(
+    val rcvrsMarkerPopupAh = new RcvrsMarkerPopupAh(
       api       = API,
       adIdProxy = adIdZoom,
       rcvrsRW   = rcvrRW
     )
 
 
-    val rcvrInputsAh = new RcvrInputsAH(
+    val rcvrInputsAh = new RcvrInputsAh(
       respPot   = rcvrPopupRW,
       rcvrMapRW = rcvrRW.zoomRW(_.rcvrsMap) { _.withRcvrMap(_) }
     )
@@ -95,7 +96,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = formRW.zoomRW(_.onMainScreen) { _.withOnMainScreen(_) }
     )
 
-    val mapAh = new AdvGeoMapCommonAh(
+    val mapAh = new MapCommonAh(
       mapStateRW = mapStateRW
     )
 
@@ -117,8 +118,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     val geoAdvRW = zoomRW(_.geoAdv) { _.withCurrGeoAdvs(_) }
 
     val geoAdvsInitAh = new GeoAdvExistInitAh(
-      api       = API,
-      adIdProxy = adIdZoom,
+      api           = API,
+      adIdProxy     = adIdZoom,
       existAdvsRW   = geoAdvRW.zoomRW(_.existResp) { _.withExistResp(_) }
     )
 
@@ -127,14 +128,20 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = geoAdvRW
     )
 
-    val rcvrsMapInitAh = new RcvrMarkersInitAH(
+    val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = API,
       adIdProxy = adIdZoom,
       modelRW   = rcvrRW.zoomRW(_.markers) { _.withMarkers(_) }
     )
 
+    val radAh = new RadAh(
+      modelRW       = zoomRW(_.rad) { _.withRad(_) },
+      priceUpdateFx = priceUpdateEffect
+    )
+
     // Склеить все handler'ы.
     val h1 = composeHandlers(
+      radAh,
       rcvrsMarkerPopupAh, rcvrInputsAh,
       geoAdvsPopupAh,
       tagsAh,

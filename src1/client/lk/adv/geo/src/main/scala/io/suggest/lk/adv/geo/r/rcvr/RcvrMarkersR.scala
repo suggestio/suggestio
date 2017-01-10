@@ -7,7 +7,7 @@ import io.suggest.lk.adv.geo.m.MarkerNodeId
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import react.leaflet.marker.MarkerClusterGroupR
+import react.leaflet.marker.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 
 import scala.scalajs.js
 
@@ -39,10 +39,14 @@ object RcvrMarkersR {
     }
 
     def render(p: Props): ReactElement = {
-      p().toOption.fold [ReactElement] (null) { markers =>
+      p().toOption.fold [ReactElement] (null) { markers1 =>
         MarkerClusterGroupR(
-          markers         = markers,
-          onMarkerClick   = onMarkerClicked _
+          new MarkerClusterGroupPropsR {
+            override val markers      = markers1
+            override val markerClick: js.UndefOr[js.Function1[MarkerEvent,_]] = {
+              js.defined { onMarkerClicked _ }
+            }
+          }
         )()
       }
     }

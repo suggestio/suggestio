@@ -1,6 +1,8 @@
 package io.suggest.sjs.leaflet.marker.cluster
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -8,17 +10,17 @@ import scala.scalajs.js
   * Created: 31.10.16 19:28
   * Description: API for [[MarkerClusterGroup]] constructor: L.markerClusterGroup(options).
   */
-@js.native
-class MarkerClusterGroupOptions extends js.Object {
+@ScalaJSDefined
+trait MarkerClusterGroupOptions extends js.Object {
 
-  var showCoverageOnHover: Boolean = js.native
+  val showCoverageOnHover         : UndefOr[Boolean]    = js.undefined
 
-  var zoomToBoundsOnClick: Boolean = js.native
+  val zoomToBoundsOnClick         : UndefOr[Boolean]    = js.undefined
 
-  var spiderfyOnMaxZoom: Boolean = js.native
+  val spiderfyOnMaxZoom           : UndefOr[Boolean]    = js.undefined
 
-  var removeOutsideVisibleBounds: Boolean = js.native
+  val removeOutsideVisibleBounds  : UndefOr[Boolean]    = js.undefined
 
-  var spiderLegPolylineOptions: js.Object = js.native
+  val spiderLegPolylineOptions    : UndefOr[js.Object]  = js.undefined
 
 }

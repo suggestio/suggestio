@@ -23,7 +23,7 @@ libraryDependencies ++= Seq(
 
 jsDependencies ++= Seq(
   // Зависим от ванильного react-leaflet:
-  "org.webjars.bower" % "react-leaflet" % "1.0.1"
+  "org.webjars.bower" % "react-leaflet" % "1.0.3"
     / "react-leaflet.js"
     minified "react-leaflet.min.js"
 )

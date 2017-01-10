@@ -29,7 +29,7 @@ object GjOptions extends FromDict {
 @ScalaJSDefined
 trait GjOptions extends js.Object {
 
-  val style: js.UndefOr[js.Function1[GjFeature, PathOptions]]          = js.undefined
+  val style: js.UndefOr[js.Function1[GjFeature, PathOptions]]             = js.undefined
 
   val pointToLayer: js.UndefOr[js.Function2[GjFeature, LatLng, Layer]]    = js.undefined
 

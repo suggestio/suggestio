@@ -1,9 +1,10 @@
 package io.suggest.sjs.leaflet.marker
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.leaflet.marker.icon.Icon
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -11,32 +12,28 @@ import scala.scalajs.js
  * Created: 23.11.15 15:47
  * Description: API for marker options.
  */
-object MarkerOptions extends FromDict {
-  override type T = MarkerOptions
-}
 
-
-@js.native
+@ScalaJSDefined
 trait MarkerOptions extends js.Object {
 
-  var icon        : Icon    = js.native
+  val icon          : UndefOr[Icon]     = js.undefined
 
-  var clickable   : Boolean = js.native
+  val clickable     : UndefOr[Boolean]  = js.undefined
 
-  var draggable   : Boolean = js.native
+  val draggable     : UndefOr[Boolean]  = js.undefined
 
-  var keyboard    : Boolean = js.native
+  val keyboard      : UndefOr[Boolean]  = js.undefined
 
-  var title       : String  = js.native
+  val title         : UndefOr[String]   = js.undefined
 
-  var alt         : String  = js.native
+  val alt           : UndefOr[String]   = js.undefined
 
-  var zIndexOffset: Int     = js.native
+  val zIndexOffset  : UndefOr[Int]      = js.undefined
 
-  var opacity     : Double  = js.native
+  val opacity       : UndefOr[Double]   = js.undefined
 
-  var riseOnHover : Boolean = js.native
+  val riseOnHover   : UndefOr[Boolean]  = js.undefined
 
-  var riseOffset  : Int     = js.native
+  val riseOffset    : UndefOr[Int]      = js.undefined
 
 }

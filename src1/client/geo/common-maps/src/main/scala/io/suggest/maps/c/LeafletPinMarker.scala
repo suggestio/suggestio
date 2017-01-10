@@ -31,10 +31,11 @@ trait LeafletStaticMarkersUtil {
     o
   }
 
-  protected def _mkDraggableMarker(latLng: LatLng, icon: Icon): Marker = {
-    val options = MarkerOptions.empty
-    options.icon = icon
-    options.draggable = true
+  protected def _mkDraggableMarker(latLng: LatLng, icon1: Icon): Marker = {
+    val options = new MarkerOptions {
+      override val icon       = icon1
+      override val draggable  = true
+    }
     L.marker(latLng, options)
   }
 

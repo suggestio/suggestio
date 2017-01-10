@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.r.rcvr
+package io.suggest.lk.adv.geo.a.rcvr
 
 import diode._
 import diode.data.Pot
@@ -19,7 +19,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 
 // TODO Объединить эти два Ah под моделью MRcvr.
 
-class RcvrsMarkerPopupAH[M](api: ILkAdvGeoApi,
+class RcvrsMarkerPopupAh[M](api: ILkAdvGeoApi,
                             adIdProxy: ModelRO[String],
                             rcvrsRW: ModelRW[M, MRcvr])
   extends ActionHandler(rcvrsRW)

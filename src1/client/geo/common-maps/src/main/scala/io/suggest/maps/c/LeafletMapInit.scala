@@ -38,9 +38,10 @@ trait LeafletMapInit extends ILog with IInit {
     _earlyInitMap(lmap)
 
     // Инициализировать слой OSM
-    val tlOpts = TlOptions.empty
-    tlOpts.attribution = """&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a> contributors"""
-    tlOpts.detectRetina = true
+    val tlOpts = new TlOptions {
+      override val attribution  = """&copy; <a href="//www.openstreetmap.org/copyright">OpenStreetMap</a> contributors"""
+      override val detectRetina = true
+    }
     L.tileLayer("//{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", tlOpts)
       .addTo(lmap)
 

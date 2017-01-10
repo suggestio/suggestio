@@ -1,10 +1,10 @@
 package io.suggest.sjs.leaflet.tilelayer
 
-import io.suggest.sjs.leaflet.map.LatLngBounds
-import io.suggest.sjs.common.model.FromDict
+import io.suggest.sjs.leaflet.map.{LatLngBounds, Zoom_t}
 
 import scala.scalajs.js
-import scala.scalajs.js.`|`
+import scala.scalajs.js.{UndefOr, `|`}
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -12,31 +12,28 @@ import scala.scalajs.js.`|`
   * Created: 19.11.15 18:04
   * Description: Interface for TileLayer options model.
   */
-object TlOptions extends FromDict {
-  override type T = TlOptions
-}
 
-@js.native
+@ScalaJSDefined
 trait TlOptions extends js.Object {
 
-  var minZoom: Double = js.native
-  var maxZoom: Double = js.native
-  var maxNativeZoom: Double = js.native
-  var tileSize: Double = js.native
-  var subdomains: String | js.Array[String] = js.native
-  var errorTileUrl: String = js.native
-  var attribution: String = js.native
-  var tms: Boolean = js.native
-  var continuousWorld: Boolean = js.native
-  var noWrap: Boolean = js.native
-  var zoomOffset: Double = js.native
-  var zoomReverse: Boolean = js.native
-  var opacity: Double = js.native
-  var zIndex: Double = js.native
-  var unloadInvisibleTiles: Boolean = js.native
-  var updateWhenIdle: Boolean = js.native
-  var detectRetina: Boolean = js.native
-  var reuseTiles: Boolean = js.native
-  var bounds: LatLngBounds = js.native
+  val minZoom             : UndefOr[Zoom_t]         = js.undefined
+  val maxZoom             : UndefOr[Zoom_t]         = js.undefined
+  val maxNativeZoom       : UndefOr[Zoom_t]         = js.undefined
+  val tileSize            : UndefOr[Double]         = js.undefined
+  val subdomains          : UndefOr[String | js.Array[String]] = js.undefined
+  val errorTileUrl        : UndefOr[String]         = js.undefined
+  val attribution         : UndefOr[String]         = js.undefined
+  val tms                 : UndefOr[Boolean]        = js.undefined
+  val continuousWorld     : UndefOr[Boolean]        = js.undefined
+  val noWrap              : UndefOr[Boolean]        = js.undefined
+  val zoomOffset          : UndefOr[Double]         = js.undefined
+  val zoomReverse         : UndefOr[Boolean]        = js.undefined
+  val opacity             : UndefOr[Double]         = js.undefined
+  val zIndex              : UndefOr[Double]         = js.undefined
+  val unloadInvisibleTiles: UndefOr[Boolean]        = js.undefined
+  val updateWhenIdle      : UndefOr[Boolean]        = js.undefined
+  val detectRetina        : UndefOr[Boolean]        = js.undefined
+  val reuseTiles          : UndefOr[Boolean]        = js.undefined
+  val bounds              : UndefOr[LatLngBounds]   = js.undefined
 
 }

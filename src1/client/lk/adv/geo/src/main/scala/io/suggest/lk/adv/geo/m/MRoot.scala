@@ -20,6 +20,7 @@ case class MRoot(
                   form          : MFormS,
                   tags          : MTagsEditState          = MTagsEditState.empty,
                   rcvr          : MRcvr                   = MRcvr(),
+                  rad           : Option[MRad]            = None,
                   geoAdv        : MGeoAdvs                = MGeoAdvs(),
                   datePeriod    : MAdvPeriod              = MAdvPeriod()
                   // TODO areaPopup: Pot[???] = Pot.empty
@@ -27,6 +28,7 @@ case class MRoot(
 
   def withForm(form2: MFormS) = copy(form = form2)
   def withTagsEditState(tes: MTagsEditState) = copy(tags = tes)
+  def withRad(radOpt: Option[MRad]) = copy(rad = radOpt)
   def withRcvr(rcvr2: MRcvr) = copy(rcvr = rcvr2)
   def withCurrGeoAdvs(cga2: MGeoAdvs) = copy(geoAdv = cga2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
@@ -41,6 +43,7 @@ object MRoot {
       (a.form eq b.form) &&
         (a.tags eq b.tags) &&
         (a.rcvr eq b.rcvr) &&
+        (a.rad eq b.rad) &&
         (a.geoAdv eq b.geoAdv) &&
         (a.datePeriod eq b.datePeriod)
     }

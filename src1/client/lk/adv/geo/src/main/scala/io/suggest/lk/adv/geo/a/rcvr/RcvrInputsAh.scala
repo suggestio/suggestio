@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.r.rcvr
+package io.suggest.lk.adv.geo.a.rcvr
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, ModelR, ModelRW}
@@ -12,7 +12,7 @@ import io.suggest.lk.adv.geo.a.SetRcvrStatus
   * Description: Поддержка экшенов (сигналов) и реакции на экшены rcvr-попапа.
   */
 
-class RcvrInputsAH[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
+class RcvrInputsAh[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
                       rcvrMapRW: ModelRW[M, RcvrsMap_t]) extends ActionHandler(rcvrMapRW) {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {

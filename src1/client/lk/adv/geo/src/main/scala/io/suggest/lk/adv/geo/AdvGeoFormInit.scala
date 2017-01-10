@@ -18,7 +18,7 @@ import scala.concurrent.Future
 trait AdvGeoFormInitRouter extends InitRouter {
 
   override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.AdvGtagForm) {
+    if (itg == MInitTargets.AdvGeoForm) {
       Future {
         new AdvGeoFormInit()
           .init()

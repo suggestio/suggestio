@@ -1,15 +1,15 @@
-package io.suggest.lk.adv.geo.r.geo.adv
+package io.suggest.lk.adv.geo.r.geo.exist
 
 import diode.react.ModelProxy
 import io.suggest.adv.geo.{InGeoTag, OnMainScreen}
-import io.suggest.lk.adv.geo.m.MGeoAdvs
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.react.r.RangeYmdR
-import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import io.suggest.lk.adv.geo.m.MGeoAdvs
+import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
+import io.suggest.lk.vm.LkMessagesWindow.Messages
+import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.popup.PopupR
 
 /**
@@ -18,7 +18,7 @@ import react.leaflet.popup.PopupR
   * Created: 29.12.16 16:13
   * Description: React-компонент содержимого попапа над георазмещением на карте.
   */
-object GeoAdvExistPopupR {
+object ExistPopupR {
 
   type Props = ModelProxy[MGeoAdvs]
 

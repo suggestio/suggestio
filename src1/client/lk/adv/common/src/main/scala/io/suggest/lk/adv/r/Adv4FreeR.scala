@@ -2,7 +2,7 @@ package io.suggest.lk.adv.r
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import diode.react.ModelProxy
-import io.suggest.adv.geo.MAdv4FreeS
+import io.suggest.adv.geo.MAdv4Free
 import io.suggest.css.Css
 import io.suggest.sjs.common.spa.DAction
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
@@ -16,7 +16,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object Adv4FreeR {
 
-  type Props = ModelProxy[MAdv4FreeS]
+  type Props = ModelProxy[MAdv4Free]
 
 
   protected class Backend($: BackendScope[Props, Unit]) {

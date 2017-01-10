@@ -7,7 +7,7 @@ import io.suggest.sjs.leaflet.map._
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.path.PathOptions
-import io.suggest.sjs.leaflet.path.circle.{Circle, CircleMarker, PathOptionsRadius}
+import io.suggest.sjs.leaflet.path.circle.{Circle, CircleMarker, CircleMarkerOptions}
 import io.suggest.sjs.leaflet.path.poly._
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
@@ -58,7 +58,7 @@ object Leaflet extends js.Object {
   /** Instantiate a circle. */
   def circle(latLng: LatLng, radiusMeters: Double, pathOptions: PathOptions = js.native): Circle = js.native
 
-  def circleMarker(latLng: LatLng, options: PathOptionsRadius = js.native): CircleMarker = js.native
+  def circleMarker(latLng: LatLng, options: CircleMarkerOptions = js.native): CircleMarker = js.native
 
   /** Instantiate a popup. */
   def popup(options: PopupOptions = js.native, source: Layer = js.native): Popup = js.native

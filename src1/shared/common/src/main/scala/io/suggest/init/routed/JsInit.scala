@@ -41,7 +41,7 @@ object JsInitConstants {
   /** id таргета js-инициализации страницы списка транзакций биллинга. */
   def ID_BILL_TXNS_LIST           = "l"
   /** id таргета инициализации страницы формой размещения в геотегах. */
-  def ADV_GTAG_FORM               = "m"
+  def ADV_GEO_FORM                = "m"
   /** id таргета инициализации формы прямого размещения карточки на узлах сети. */
   def ADV_DIRECT_FORM             = "n"
   /** id таргета формы размещения ADN-узла на географической карте. */
@@ -101,7 +101,7 @@ trait MInitTargetsBaseT extends ILightEnumeration with StrIdValT {
   val BillTxnsList: T = instance(ID_BILL_TXNS_LIST)
 
   /** Цель для инициализации страницы размещения в геотегах. */
-  val AdvGtagForm: T = instance(ADV_GTAG_FORM)
+  val AdvGeoForm: T = instance(ADV_GEO_FORM)
 
   /** Цель инициализации формы прямого размещения карточки на узлах. */
   val AdvDirectForm: T = instance(ADV_DIRECT_FORM)
@@ -149,7 +149,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case CaptchaForm.strId          => Some(CaptchaForm)
       case HiddenCaptcha.strId        => Some(HiddenCaptcha)
       case BillTxnsList.strId         => Some(BillTxnsList)
-      case AdvGtagForm.strId          => Some(AdvGtagForm)
+      case AdvGeoForm.strId          => Some(AdvGeoForm)
       case AdvDirectForm.strId        => Some(AdvDirectForm)
       case AdnMapForm.strId           => Some(AdnMapForm)
       case _                          => None

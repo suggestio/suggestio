@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.r.mapf
+package io.suggest.lk.adv.geo.a.mapf
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.adv.geo.MMapS
@@ -12,7 +12,7 @@ import io.suggest.lk.adv.geo.a.{ISetMapCenter, ISetMapCenterForPopup}
   * Description: Diode action handler для экшенов очень общих воздействий на геокарту формы.
   * Экшены вызываются параллельно с остальными экшенами, т.к. эти common-экшены носят интерфейсный характер.
   */
-class AdvGeoMapCommonAh[M](mapStateRW: ModelRW[M, MMapS]) extends ActionHandler(mapStateRW) {
+class MapCommonAh[M](mapStateRW: ModelRW[M, MMapS]) extends ActionHandler(mapStateRW) {
 
   private def _setMapCenter(ismc: IGeoPointField) = {
     val v2 = value.withCenter( ismc.geoPoint )

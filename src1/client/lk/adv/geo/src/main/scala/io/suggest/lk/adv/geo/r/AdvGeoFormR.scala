@@ -2,11 +2,12 @@ package io.suggest.lk.adv.geo.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.adv.geo.MAdv4FreeS
+import io.suggest.adv.geo.MAdv4Free
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.{MGeoAdvs, MRcvr, MRoot}
-import io.suggest.lk.adv.geo.r.geo.adv.{GeoAdvExistPopupR, GeoAdvExistShapesR}
+import io.suggest.lk.adv.geo.m.{MGeoAdvs, MRad, MRcvr, MRoot}
+import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
+import io.suggest.lk.adv.geo.r.geo.rad.RadR
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
@@ -19,7 +20,7 @@ import io.suggest.sjs.leaflet.marker.Marker
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR
-import react.leaflet.layer.TileLayerR
+import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
 
 import scala.scalajs.js
 
@@ -47,15 +48,27 @@ object AdvGeoFormR extends Log {
     * [[https://github.com/scala/scala/pull/4017]]
     */
   case class State(
-                    adv4freeConn        : ReactConnectProxy[Option[MAdv4FreeS]],
+                    adv4freeConn        : ReactConnectProxy[Option[MAdv4Free]],
                     onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
                     rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
                     rcvrPopupConn       : ReactConnectProxy[MRcvr],
                     mapPropsConn        : ReactConnectProxy[AdvGeoMapR.PropsVal],
                     geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
-                    geoAdvConn          : ReactConnectProxy[MGeoAdvs]
+                    geoAdvConn          : ReactConnectProxy[MGeoAdvs],
+                    radOptConn          : ReactConnectProxy[Option[MRad]]
                   )
 
+
+  /** Константный инстанс TileLayer компонента лежит в памяти отдельно, т.к. никаких изменений в нём не требуется. */
+  private val _tileLayerU = {
+    TileLayerR(
+      new TileLayerPropsR {
+        override val url           = LeafletConstants.Tiles.URL_OSM_DFLT
+        override val detectRetina  = LeafletConstants.Defaults.DETECT_RETINA
+        override val attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
+      }
+    )()
+  }
 
   /** Класс для компонента формы. */
   protected class Backend($: BackendScope[Props, _]) {
@@ -67,9 +80,11 @@ object AdvGeoFormR extends Log {
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
         s.adv4freeConn { prox =>
-          prox().fold[ReactElement](null) { _ =>
-            Adv4FreeR(prox.zoom(_.get))
-          }
+          prox()
+            .map[ReactElement] { _ =>
+              Adv4FreeR(prox.zoom(_.get))
+            }
+            .orNull
         },
 
         // Верхняя половина, левая колонка:
@@ -93,32 +108,29 @@ object AdvGeoFormR extends Log {
         <.br,
         <.br,
 
-        // Карта должна рендерится сюда:
+        // Рендер географической карты:
         s.mapPropsConn { mapProps =>
           AdvGeoMapR(mapProps)(
+
             // Рендерим основную плитку карты.
-            TileLayerR(
-              url           = LeafletConstants.Tiles.URL_OSM_DFLT,
-              detectRetina  = LeafletConstants.Defaults.DETECT_RETINA,
-              attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
-            )(),
+            _tileLayerU,
 
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
 
+            // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
+            s.radOptConn( RadR.apply ),
 
             // Рендер кружочков текущих размещений.
-            s.geoAdvExistRespConn( GeoAdvExistShapesR.apply ),
-
+            s.geoAdvExistRespConn( ExistShapesR.apply ),
             // Рендер попапа над кружочком георазмещения:
-            s.geoAdvConn( GeoAdvExistPopupR.apply ),
-
+            s.geoAdvConn( ExistPopupR.apply ),
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
             s.rcvrMarkersConn( RcvrMarkersR.apply ),
-
             // Рендер опционального попапа над ресивером.
             s.rcvrPopupConn( RcvrPopupR.apply )
+
           )
         }
 
@@ -148,7 +160,8 @@ object AdvGeoFormR extends Log {
           )
         },
         geoAdvExistRespConn = p.connect(_.geoAdv.existResp),
-        geoAdvConn          = p.connect(_.geoAdv)
+        geoAdvConn          = p.connect(_.geoAdv),
+        radOptConn          = p.connect(_.rad)
       )
     }
     .renderBackend[Backend]
