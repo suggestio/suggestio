@@ -1,13 +1,13 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
-import io.suggest.adv.geo.MCircleS
+import io.suggest.geo.MGeoCircle
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.01.17 13:25
-  * Description:
+  * Description: Модель-контейнер данных по компоненту настройки нового георазмещения.
   */
 object MRad {
 
@@ -21,17 +21,18 @@ object MRad {
 
 }
 
+
 /**
   * Класс модели с кругом.
   * @param circle Состояние текущих параметров георазмещения в радиусе на карте.
   * @param state Состояние rad-компонентов.
   */
 case class MRad(
-  circle      : MCircleS,
-  state       : MRadS
-) {
+                 circle      : MGeoCircle,
+                 state       : MRadS
+               ) {
 
-  def withCircle(circle2: MCircleS) = copy(circle = circle2)
+  def withCircle(circle2: MGeoCircle) = copy(circle = circle2)
   def withState(state2: MRadS) = copy(state = state2)
 
 }

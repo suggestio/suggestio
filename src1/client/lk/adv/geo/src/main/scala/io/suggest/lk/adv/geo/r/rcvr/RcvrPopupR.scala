@@ -3,6 +3,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.adv.geo._
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
 import io.suggest.lk.adv.geo.m.MRcvr

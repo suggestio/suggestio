@@ -2,20 +2,21 @@ package io.suggest.lk.adv.geo
 
 import diode.Effect
 import diode.react.ReactConnector
-import io.suggest.adv.geo.MFormS
-import io.suggest.adv.geo.MFormS.pickler
+import io.suggest.adv.free.MAdv4Free
+import io.suggest.adv.geo.MFormInit
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.geo.rad.RadAh
 import io.suggest.lk.adv.geo.a.mapf.MapCommonAh
 import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
-import io.suggest.lk.adv.geo.m.MRoot
+import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
+import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.r.Adv4FreeActionHandler
 import io.suggest.lk.tags.edit.c.TagsEditAh
-import io.suggest.lk.tags.edit.m.SetTagSearchQuery
+import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
@@ -41,13 +42,42 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       stateInp <- StateInp.find()
       base64   <- stateInp.value
     } yield {
+      val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MFormInit](base64)
+      // Собираем начальный инстанс MRoot на основе данных, переданных с сервера...
       MRoot(
-        form = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MFormS](base64)
+        mmap = MMap(
+          props = mFormInit.form.mapProps
+        ),
+        other = MOther(
+          adId = mFormInit.adId
+        ),
+        adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
+          MAdv4Free(
+            static  = a4fProps,
+            checked = mFormInit.form.adv4freeChecked.contains(true)   // getOrElse(false)
+          )
+        },
+        tags = MTagsEditState(
+          props = mFormInit.form.tagsEdit
+        ),
+        rcvr = MRcvr(
+          rcvrsMap = mFormInit.form.rcvrsMap
+        ),
+        rad  = for (radCircle <- mFormInit.form.radCircle) yield {
+          MRad(
+            circle = radCircle,
+            state  = MRadS(
+              radiusMarkerCoords = LkAdvGeoFormUtil.radiusMarkerLatLng(radCircle)
+            )
+          )
+        },
+        datePeriod = mFormInit.form.datePeriod
       )
     }
 
     mrootOpt.get
   }
+
 
   /** Эффект пересчёта стоимости размещения с помощью сервера. */
   private val priceUpdateEffect: Effect = {
@@ -57,20 +87,21 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     }
   }
 
+
   val API = new LkAdvGeoApiImpl
 
   /** Обработчики экшенов объединяются прямо здесь: */
   override protected val actionHandler: HandlerFunction = {
 
-    // RW-доступ к полю с формой.
-    val formRW  = zoomRW(_.form) { _.withForm(_) }
-
     val rcvrRW  = zoomRW(_.rcvr) { _.withRcvr(_) }
 
-    val adIdZoom    = formRW.zoom(_.adId)
+    val otherRW = zoomRW(_.other) { _.withOther(_) }
+
+    val adIdZoom    = otherRW.zoom(_.adId)
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }
 
-    val mapStateRW  = formRW.zoomRW(_.mapState) { _.withMapState(_) }
+    val mmapRW  = zoomRW(_.mmap) { _.withMapState(_) }
+    val mapPropsRW = mmapRW.zoomRW(_.props) { _.withProps(_) }
 
     // Собираем handler'ы
 
@@ -93,11 +124,11 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val onMainScreenAh = new OnMainScreenAH(
-      modelRW = formRW.zoomRW(_.onMainScreen) { _.withOnMainScreen(_) }
+      modelRW = otherRW.zoomRW(_.onMainScreen) { _.withOnMainScreen(_) }
     )
 
     val mapAh = new MapCommonAh(
-      mapStateRW = mapStateRW
+      mapStateRW = mapPropsRW
     )
 
     val datePeriodAh = new DtpAh(
@@ -106,7 +137,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val adv4freeAh = new Adv4FreeActionHandler(
-      modelRW = formRW.zoomMapRW(_.adv4free)(_.checked) { (m, checkedOpt) =>
+      modelRW = zoomMapRW(_.adv4free)(_.checked) { (m, checkedOpt) =>
         m.withAdv4Free(
           for (a4f0 <- m.adv4free; checked2 <- checkedOpt) yield {
             a4f0.withChecked(checked2)

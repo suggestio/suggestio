@@ -5,6 +5,7 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.AdvConstants
+import io.suggest.adv.free.{MAdv4Free, MAdv4FreeProps}
 import io.suggest.adv.geo._
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -178,10 +179,29 @@ class LkAdvGeo @Inject() (
         gp0           <- _geoPointFut
         // TODO Отрендерить в состояние текущих георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
       } yield {
+        val a4fPropsOpt = OptionUtil.maybe( request.user.isSuper ) {
+          MAdv4FreeProps(
+            fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
+            title = ctx.messages( "Adv.for.free.without.moderation" )
+          )
+        }
         // Собираем исходную root-модель формы.
+        val mFormInit = MFormInit(
+          adId = request.mad.id.get,
+          adv4FreeProps = a4fPropsOpt,
+          form = MFormS(
+            mapProps = MMapProps(
+              center = gp0,
+              zoom   = 10
+            ),
+            onMainScreen = true,
+            adv4freeChecked = a4fPropsOpt.map(_ => true),
+
+          )
+        )
         val mform = MFormS(
           adId = request.mad.id.get,
-          mapState = MMapS(
+          mapProps = MMapProps(
             center = gp0,
             zoom   = 10
           ),

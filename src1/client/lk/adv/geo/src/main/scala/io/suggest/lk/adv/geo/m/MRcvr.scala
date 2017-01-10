@@ -2,7 +2,8 @@ package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.adv.geo.{MRcvrPopupResp, MRcvrPopupState, RcvrsMap_t}
+import io.suggest.adv.geo.{MRcvrPopupResp, RcvrsMap_t}
+import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.sjs.leaflet.marker.Marker
 
 import scala.scalajs.js
@@ -39,16 +40,16 @@ object MRcvr {
 case class MRcvr(
                   popupResp   : Pot[MRcvrPopupResp]     = Pot.empty,
                   markers     : Pot[js.Array[Marker]]   = Pot.empty,
-                  popupState  : Option[MRcvrPopupState] = None,
+                  popupState  : Option[MRcvrPopupS] = None,
                   rcvrsMap    : RcvrsMap_t              = Map.empty
 ) {
 
   def withPopupResp(rcvrPopupResp: Pot[MRcvrPopupResp]) = copy(popupResp = rcvrPopupResp)
   def withMarkers(rcvrMarkers2: Pot[js.Array[Marker]]) = copy(markers = rcvrMarkers2)
-  def withPopupState(rcvrPopup2: Option[MRcvrPopupState]) = copy(popupState = rcvrPopup2)
+  def withPopupState(rcvrPopup2: Option[MRcvrPopupS]) = copy(popupState = rcvrPopup2)
   def withRcvrMap(rcvrsMap2: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap2)
 
-  def withPopup(resp: Pot[MRcvrPopupResp], state: Option[MRcvrPopupState]) = copy(
+  def withPopup(resp: Pot[MRcvrPopupResp], state: Option[MRcvrPopupS]) = copy(
     popupResp  = resp,
     popupState = state
   )

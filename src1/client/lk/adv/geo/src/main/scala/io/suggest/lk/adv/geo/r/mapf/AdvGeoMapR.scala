@@ -1,10 +1,9 @@
 package io.suggest.lk.adv.geo.r.mapf
 
-import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.adv.geo.MMapS
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.{HandlePopupClose, SetMapCenter}
+import io.suggest.lk.adv.geo.m.MMap
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ReactComponentB, ReactElement}
@@ -21,19 +20,7 @@ import scala.scalajs.js
   */
 object AdvGeoMapR {
 
-  type Props = ModelProxy[PropsVal]
-
-  case class PropsVal(
-                     mapState: MMapS,
-                     locationFound: Option[Boolean]
-                     )
-
-  implicit object PropsValEq extends FastEq[PropsVal] {
-    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.mapState eq b.mapState) &&
-        (a.locationFound eq b.locationFound)
-    }
-  }
+  type Props = ModelProxy[MMap]
 
 
   class Backend($: BackendScope[Props, Unit]) {
@@ -58,8 +45,8 @@ object AdvGeoMapR {
       val v = props()
       // Карта должна рендерится сюда:
       LMapR(
-        center    = LkAdvGeoFormUtil.geoPoint2LatLng( v.mapState.center ),
-        zoom      = v.mapState.zoom,
+        center    = LkAdvGeoFormUtil.geoPoint2LatLng( v.props.center ),
+        zoom      = v.props.zoom,
         className = Css.Lk.Adv.Geo.MAP_CONTAINER,
         useFlyTo  = true,
         onLocationFound = {

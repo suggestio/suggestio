@@ -1,6 +1,7 @@
 package io.suggest.adv.geo
 
 import boopickle.Default._
+import io.suggest.adv.free.MAdv4FreeProps
 
 /**
   * Suggest.io
@@ -14,7 +15,8 @@ import boopickle.Default._
 object MFormInit {
 
   implicit val pickler: Pickler[MFormInit] = {
-    implicit val a4fP = MAdv4FreeProps.pickler
+    implicit val a4fP   = MAdv4FreeProps.pickler
+    implicit val formP  = MFormS.pickler
     generatePickler[MFormInit]
   }
 
@@ -22,6 +24,6 @@ object MFormInit {
 
 case class MFormInit(
   adId          : String,
-  adv4FreeProps : MAdv4FreeProps
-  // TODO Начальные данные формы - сюда же отдельным полем.
+  adv4FreeProps : Option[MAdv4FreeProps],
+  form          : MFormS
 )

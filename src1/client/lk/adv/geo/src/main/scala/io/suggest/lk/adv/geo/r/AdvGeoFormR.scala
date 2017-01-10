@@ -2,10 +2,10 @@ package io.suggest.lk.adv.geo.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.adv.geo.MAdv4Free
+import io.suggest.adv.free.MAdv4Free
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.{MGeoAdvs, MRad, MRcvr, MRoot}
+import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
 import io.suggest.lk.adv.geo.r.geo.rad.RadR
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
@@ -52,7 +52,7 @@ object AdvGeoFormR extends Log {
                     onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
                     rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
                     rcvrPopupConn       : ReactConnectProxy[MRcvr],
-                    mapPropsConn        : ReactConnectProxy[AdvGeoMapR.PropsVal],
+                    mmapConn            : ReactConnectProxy[MMap],
                     geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
                     geoAdvConn          : ReactConnectProxy[MGeoAdvs],
                     radOptConn          : ReactConnectProxy[Option[MRad]]
@@ -109,7 +109,7 @@ object AdvGeoFormR extends Log {
         <.br,
 
         // Рендер географической карты:
-        s.mapPropsConn { mapProps =>
+        s.mmapConn { mapProps =>
           AdvGeoMapR(mapProps)(
 
             // Рендерим основную плитку карты.
@@ -144,21 +144,16 @@ object AdvGeoFormR extends Log {
     .initialState_P { p =>
       State(
         adv4freeConn    = {
-          p.connect(_.form.adv4free)
+          p.connect(_.adv4free)
         },
         onMainScrConn   = p.connect { mroot =>
           OnMainScreenR.PropsVal(
-            mroot.form.onMainScreen
+            mroot.other.onMainScreen
           )
         },
-        rcvrMarkersConn = p.connect(_.rcvr.markers),
-        rcvrPopupConn   = p.connect(_.rcvr),
-        mapPropsConn = p.connect { mroot =>
-          AdvGeoMapR.PropsVal(
-            mapState      = mroot.form.mapState,
-            locationFound = mroot.form.locationFound
-          )
-        },
+        rcvrMarkersConn     = p.connect(_.rcvr.markers),
+        rcvrPopupConn       = p.connect(_.rcvr),
+        mmapConn            = p.connect(_.mmap),
         geoAdvExistRespConn = p.connect(_.geoAdv.existResp),
         geoAdvConn          = p.connect(_.geoAdv),
         radOptConn          = p.connect(_.rad)

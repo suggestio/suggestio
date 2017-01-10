@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.u
 
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.lk.adv.geo.m.MMapGjFeature
 import io.suggest.maps.c.LeafletPinMarker
 import io.suggest.sjs.common.geo.json.GjTypes
@@ -36,6 +36,23 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
     Leaflet.latLng( MGeoPointJs.toLatLngArray(gp) )
   }
 
+  /**
+    * Посчитать дефолтовые координаты маркера радиуса на основе указанного круга.
+    * @param geoCircle Текущий круг.
+    * @return Гео-точка.
+    */
+  def radiusMarkerLatLng(geoCircle: MGeoCircle): MGeoPoint = {
+    // Создаём в голове круг, т.к. доступа к кругу карты у нас тут нет...
+    val lCircle = Leaflet.circle(
+      latLng        = geoPoint2LatLng(geoCircle.center),
+      radiusMeters  = geoCircle.radiusM
+    )
+    val circleBounds = lCircle.getBounds()
+    MGeoPoint(
+      lat = (circleBounds.getNorth() + circleBounds.getSouth()) / 2,
+      lon = circleBounds.getNorthEast().lng
+    )
+  }
 
   /** Скомпилировать GeoJSON-маркеров в маркеры для кластеризации.
     * @param gjFeatures Исходный набор точек с сервера.

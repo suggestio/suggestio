@@ -1,5 +1,7 @@
 package io.suggest.adv
 
+import io.suggest.adv.rcvr.RcvrKey
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

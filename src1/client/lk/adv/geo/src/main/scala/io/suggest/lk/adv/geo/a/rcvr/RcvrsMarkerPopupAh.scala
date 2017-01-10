@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.a.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.adv.geo.MRcvrPopupState
+import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m.MRcvr
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
@@ -16,8 +16,6 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   * Created: 19.12.16 13:05
   * Description: Action handler для карты ресиверов.
   */
-
-// TODO Объединить эти два Ah под моделью MRcvr.
 
 class RcvrsMarkerPopupAh[M](api: ILkAdvGeoApi,
                             adIdProxy: ModelRO[String],
@@ -43,7 +41,7 @@ class RcvrsMarkerPopupAh[M](api: ILkAdvGeoApi,
       // Выставить состояние popup'а.
       val v2 = v0.withPopup(
         resp  = v0.popupResp.pending(),
-        state = Some(MRcvrPopupState(rrp.nodeId, rrp.geoPoint))
+        state = Some(MRcvrPopupS(rrp.nodeId, rrp.geoPoint))
       )
       updated(v2, fx)
 
