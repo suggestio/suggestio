@@ -72,12 +72,15 @@ sealed trait IHandlePopupClose extends IAdvGeoFormAction
 case object HandlePopupClose extends IHandlePopupClose
 
 
-// Rad-события
+// Rad-события для маркера центра круга
 /** Экшен начала таскания центра круга. */
 case object RadCenterDragStart extends IAdvGeoFormAction
-
 /** Экшен модификации центра rad-круга в ходе продолжающегося драггинга. */
-case class RadCenterDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction
-
+case class RadCenterDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
 /** Экшен завершения перетаскивания rad-круга за его центр. */
-case class RadCenterDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction
+case class RadCenterDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
+
+// Rad-события для маркера радиуса круга.
+case object RadiusDragStart extends IAdvGeoFormAction
+case class RadiusDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
+case class RadiusDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField

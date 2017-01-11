@@ -5,9 +5,10 @@ import io.suggest.lk.adv.geo.m.MMapGjFeature
 import io.suggest.maps.c.LeafletPinMarker
 import io.suggest.sjs.common.geo.json.GjTypes
 import io.suggest.sjs.leaflet.Leaflet
-import io.suggest.sjs.leaflet.marker.icon.IconOptions
+import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.lk.adv.geo.m.MarkerNodeId._
+import io.suggest.lk.adv.geo.vm.rad.RadiusMarkerIcon
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.model.loc.MGeoPointJs
 import io.suggest.sjs.leaflet.map.LatLng
@@ -36,23 +37,45 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
     Leaflet.latLng( MGeoPointJs.toLatLngArray(gp) )
   }
 
+  /** Сборка данных для иконки маркера радиуса круга. */
+  def radiusMarkerIcon(): Icon = {
+    val o = _markerIconBase(RadiusMarkerIcon)
+    Leaflet.icon(o)
+  }
+
+  /** Посчитать расстояние между двумя точками. */
+  def distanceBetween(gp0: MGeoPoint, gp1: MGeoPoint): Double = {
+    geoPoint2LatLng(gp0)
+      .distanceTo( geoPoint2LatLng(gp1) )
+  }
+
+
   /**
     * Посчитать дефолтовые координаты маркера радиуса на основе указанного круга.
     * @param geoCircle Текущий круг.
     * @return Гео-точка.
+    * @see [[http://gis.stackexchange.com/a/2980]]
     */
   def radiusMarkerLatLng(geoCircle: MGeoCircle): MGeoPoint = {
-    // Создаём в голове круг, т.к. доступа к кругу карты у нас тут нет...
-    val lCircle = Leaflet.circle(
-      latLng        = geoPoint2LatLng(geoCircle.center),
-      radiusMeters  = geoCircle.radiusM
+    // Считаем чисто математичеки координаты маркера радиуса. По дефолту, просто восточнее от центра на расстоянии радиуса.
+    val earthRadiusM = 6378137
+
+    // offsets in meters: north = +0; east = +radiusM
+    // Coord.offsets in radians:
+    //val dLat = 0   // пока тут у нас нет смещения на север. Поэтому просто ноль.
+    val D180 = 180
+    // Изображаем дробь:
+    val dLon = geoCircle.radiusM / (
+      earthRadiusM * Math.cos(
+        Math.PI * geoCircle.center.lat / D180
+      )
     )
-    val circleBounds = lCircle.getBounds()
-    MGeoPoint(
-      lat = (circleBounds.getNorth() + circleBounds.getSouth()) / 2,
-      lon = circleBounds.getNorthEast().lng
+    geoCircle.center.withLon(
+      // OffsetPosition, decimal degrees
+      geoCircle.center.lon + dLon * D180 / Math.PI
     )
   }
+
 
   /** Скомпилировать GeoJSON-маркеров в маркеры для кластеризации.
     * @param gjFeatures Исходный набор точек с сервера.

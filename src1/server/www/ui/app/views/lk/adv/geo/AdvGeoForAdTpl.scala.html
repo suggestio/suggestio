@@ -25,27 +25,10 @@
   @* Скрытый рендер как-то сериализованного состояния формы. *@
   <input type="hidden" id="@STATE_CONT_ID" value="@args.formState"/>
 
-  <div id="xynta">
+  <div id="@REACT_FORM_TARGET_ID">
     @_preLoaderLkTpl()
   </div>
 
-
-  @* TODO Удалить и вычистить всё, что ниже: *@
-  <br/>
-  <br/>
-  <br/>
-
-
-  @_advFormBlockTpl() {
-
-    @* Рендер самой формы здесь. *@
-    @_AdvGeoFormTpl(args)
-
-    @* Контейнер карты. *@
-    <br/>
-    @_mapContTpl()
-
-  }
 
 
   @* Рендерим маркеры, необходимые rad-map карте. *@
@@ -60,16 +43,10 @@
   }
 
 
-  @* Рендер скрытой ссылки на наполнение карты узлами-ресиверами. *@
-  @for(adId <- args.mad.id) {
-    <input type="hidden" id="@AD_ID_INPUT_ID" value="@adId"/>
-  }
-
   @* При добавлении тегов запросы add-tag-формы отправляются сюда. *@
   @jsTpl2HtmlTpl( withScriptTag = true )(
     jsRevRouterTpl("jsRoutes", csrfAll = true)(
       routes.javascript.LkAdvGeo.tagEditorAddTag,
-      routes.javascript.LkAdvGeo.tagsSearch,
       routes.javascript.LkAdvGeo.tagsSearch2,
 
       routes.javascript.LkAdvGeo.getPriceSubmit,

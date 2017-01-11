@@ -1,11 +1,14 @@
 package io.suggest.lk.adv.geo
 
+import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
+import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.PreLoaderLk
 import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom
+import org.scalajs.dom.raw.HTMLDivElement
 
 import scala.concurrent.Future
 
@@ -44,7 +47,8 @@ class AdvGeoFormInit extends IInit {
     // Это наподобии того, что реализовано в scalajs-spa-tutorial.
 
     val rform = LkAdvGeoFormCircuit.wrap(m => m)(AdvGeoFormR.apply)
-    ReactDOM.render(rform, dom.document.getElementById("xynta"))
+    val target = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvGeoConstants.REACT_FORM_TARGET_ID )
+    ReactDOM.render( rform, target )
   }
 
 }

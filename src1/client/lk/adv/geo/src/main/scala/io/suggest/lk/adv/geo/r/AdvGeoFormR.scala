@@ -13,6 +13,7 @@ import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
 import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.tags.edit.r.TagsEditR
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.dt.period.r._
@@ -80,11 +81,9 @@ object AdvGeoFormR extends Log {
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
         s.adv4freeConn { prox =>
-          prox()
-            .map[ReactElement] { _ =>
-              Adv4FreeR(prox.zoom(_.get))
-            }
-            .orNull
+          for (_ <- prox()) yield {
+            Adv4FreeR(prox.zoom(_.get))
+          }
         },
 
         // Верхняя половина, левая колонка:
@@ -118,13 +117,18 @@ object AdvGeoFormR extends Log {
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
 
-            // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
-            s.radOptConn( RadR.apply ),
-
             // Рендер кружочков текущих размещений.
             s.geoAdvExistRespConn( ExistShapesR.apply ),
             // Рендер попапа над кружочком георазмещения:
             s.geoAdvConn( ExistPopupR.apply ),
+
+            // Запрешаем рендер красного круга пока не нарисованы все остальные. Так надо, чтобы он был поверх их всех.
+            s.geoAdvExistRespConn { potProx =>
+              // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
+              for (_ <- potProx().toOption) yield {
+                s.radOptConn( RadR.apply )
+              }
+            },
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
             s.rcvrMarkersConn( RcvrMarkersR.apply ),

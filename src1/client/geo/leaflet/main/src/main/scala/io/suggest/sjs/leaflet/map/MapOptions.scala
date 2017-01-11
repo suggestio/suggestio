@@ -1,56 +1,60 @@
 package io.suggest.sjs.leaflet.map
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 19.11.15 16:54
- * Description: L.map() options object.
+ * User: UndefOr[Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+ * Created: UndefOr[19.11.15 16:54
+ * Description: UndefOr[L.map() options object.
  * @see [[http://leafletjs.com/reference.html#map-options]]
+ *
+ * scalajs-0.6.14+ required.
  */
-@js.native
-class MapOptions extends js.Object {
+@ScalaJSDefined
+trait MapOptions extends js.Object {
 
-  var center                : LatLng        = js.native
-  var zoom                  : Double        = js.native
-  var layers                : js.Array[Layer] = js.native
-  var minZoom               : Double        = js.native
-  var maxZoom               : Double        = js.native
-  var maxBounds             : LatLngBounds  = js.native
+  val center                : UndefOr[LatLng]           = js.undefined
+  val zoom                  : UndefOr[Double]           = js.undefined
+  val layers                : UndefOr[js.Array[Layer]]  = js.undefined
+  val minZoom               : UndefOr[Double]           = js.undefined
+  val maxZoom               : UndefOr[Double]           = js.undefined
+  val maxBounds             : UndefOr[LatLngBounds]     = js.undefined
 
   // Interaction Options
-  var dragging              : Boolean       = js.native
-  var touchZoom             : Boolean       = js.native
-  var scrollWheelZoom       : Boolean       = js.native
-  var doubleClickZoom       : Boolean       = js.native
-  var boxZoom               : Boolean       = js.native
-  var tap                   : Boolean       = js.native
-  var tapTolerance          : Int           = js.native
-  var trackResize           : Boolean       = js.native
-  var worldCopyJump         : Boolean       = js.native
-  var closePopupOnClick     : Boolean       = js.native
-  var bounceAtZoomLimits    : Boolean       = js.native
+  val dragging              : UndefOr[Boolean]          = js.undefined
+  val touchZoom             : UndefOr[Boolean]          = js.undefined
+  val scrollWheelZoom       : UndefOr[Boolean]          = js.undefined
+  val doubleClickZoom       : UndefOr[Boolean]          = js.undefined
+  val boxZoom               : UndefOr[Boolean]          = js.undefined
+  val tap                   : UndefOr[Boolean]          = js.undefined
+  val tapTolerance          : UndefOr[Int]              = js.undefined
+  val trackResize           : UndefOr[Boolean]          = js.undefined
+  val worldCopyJump         : UndefOr[Boolean]          = js.undefined
+  val closePopupOnClick     : UndefOr[Boolean]          = js.undefined
+  val bounceAtZoomLimits    : UndefOr[Boolean]          = js.undefined
 
   // Keyboard Navigation Options
-  var keyboard              : Boolean       = js.native
-  var keyboardPanOffset     : Int           = js.native
-  var keyboardZoomOffset    : Int           = js.native
+  val keyboard              : UndefOr[Boolean]          = js.undefined
+  val keyboardPanOffset     : UndefOr[Int]              = js.undefined
+  val keyboardZoomOffset    : UndefOr[Int]              = js.undefined
 
   // Panning Inertia Options
-  var inertia               : Boolean       = js.native
-  var inertiaDeceleration   : Double        = js.native
-  var inertiaMaxSpeed       : Double        = js.native
-  var inertiaThreshold      : Double        = js.native
+  val inertia               : UndefOr[Boolean]          = js.undefined
+  val inertiaDeceleration   : UndefOr[Double]           = js.undefined
+  val inertiaMaxSpeed       : UndefOr[Double]           = js.undefined
+  val inertiaThreshold      : UndefOr[Double]           = js.undefined
 
   // Control options
-  var zoomControl           : Boolean       = js.native
-  var attributionControl    : Boolean       = js.native
+  val zoomControl           : UndefOr[Boolean]          = js.undefined
+  val attributionControl    : UndefOr[Boolean]          = js.undefined
 
   // Animation options
-  var fadeAnimation         : Boolean       = js.native
-  var zoomAnimation         : Boolean       = js.native
-  var zoomAnimationThreshold: Double        = js.native
-  var markerZoomAnimation   : Boolean       = js.native
+  val fadeAnimation         : UndefOr[Boolean]          = js.undefined
+  val zoomAnimation         : UndefOr[Boolean]          = js.undefined
+  val zoomAnimationThreshold: UndefOr[Double]           = js.undefined
+  val markerZoomAnimation   : UndefOr[Boolean]          = js.undefined
 
 }

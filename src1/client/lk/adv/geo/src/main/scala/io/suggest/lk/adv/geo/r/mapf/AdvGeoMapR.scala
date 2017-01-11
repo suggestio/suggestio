@@ -6,8 +6,9 @@ import io.suggest.lk.adv.geo.a.{HandlePopupClose, SetMapCenter}
 import io.suggest.lk.adv.geo.m.MMap
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
-import japgolly.scalajs.react.{BackendScope, PropsChildren, ReactComponentB, ReactElement}
-import react.leaflet.lmap.LMapR
+import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactComponentB, ReactElement}
+import react.leaflet.lmap.{LMapPropsR, LMapR}
+import io.suggest.react.ReactCommonUtil.callBackFun2jsCallback
 
 import scala.scalajs.js
 
@@ -25,39 +26,40 @@ object AdvGeoMapR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def onLocationFound(locEvent: LocationEvent): Unit = {
+    def onLocationFound(locEvent: LocationEvent): Callback = {
       val gp = LkAdvGeoFormUtil.latLng2geoPoint( locEvent.latLng )
-      val cb = $.props >>= { props =>
+      $.props >>= { props =>
         props.dispatchCB( SetMapCenter(gp) )
       }
-      // TODO Надо бы возвращать Callback, но react-leaflet пока это не умеет.
-      cb.runNow()
     }
 
-    def onPopupClose(popEvent: PopupEvent): Unit = {
-      val cb = $.props >>= { props =>
+    def onPopupClose(popEvent: PopupEvent): Callback = {
+      $.props >>= { props =>
         props.dispatchCB( HandlePopupClose )
       }
-      cb.runNow()
     }
+
+    private val onLocationFoundF = callBackFun2jsCallback( onLocationFound )
+    private val onPopupCloseF = callBackFun2jsCallback( onPopupClose )
 
     def render(props: Props, children: PropsChildren) = {
       val v = props()
       // Карта должна рендерится сюда:
       LMapR(
-        center    = LkAdvGeoFormUtil.geoPoint2LatLng( v.props.center ),
-        zoom      = v.props.zoom,
-        className = Css.Lk.Adv.Geo.MAP_CONTAINER,
-        useFlyTo  = true,
-        onLocationFound = {
-          if (v.locationFound.contains(true)) {
-            js.undefined
-          } else {
-            // TODO Нужен Callback тут вместо голой функции?
-            onLocationFound _
+        new LMapPropsR {
+          override val center    = LkAdvGeoFormUtil.geoPoint2LatLng( v.props.center )
+          override val zoom      = v.props.zoom
+          override val className = Css.Lk.Adv.Geo.MAP_CONTAINER
+          override val useFlyTo  = true
+          override val onLocationFound = {
+            if ( v.locationFound.contains(true) ) {
+              js.undefined
+            } else {
+              js.defined( onLocationFoundF )
+            }
           }
-        },
-        onPopupClose = js.defined( onPopupClose )
+          override val onPopupClose = js.defined( onPopupCloseF )
+        }
       )(children: _*)
     }
 

@@ -6,8 +6,10 @@ import io.suggest.lk.adv.geo.a.ReqRcvrPopup
 import io.suggest.lk.adv.geo.m.MarkerNodeId
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import react.leaflet.marker.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
+import io.suggest.react.ReactCommonUtil.callBackFun2jsCallback
+import io.suggest.react.ReactCommonUtil.Implicits._
 
 import scala.scalajs.js
 
@@ -23,29 +25,26 @@ object RcvrMarkersR {
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
-    def onMarkerClicked(e: MarkerEvent): Unit = {
+    def onMarkerClicked(e: MarkerEvent): Callback = {
       val marker = e.layer
       // TODO Почему-то тут не срабатывает implicit convertion... Приходится явно заворачивать
       val nodeId = MarkerNodeId(marker).nodeId.get
       val latLng = marker.getLatLng()
 
-      val cb = $.props >>= { p =>
+      $.props >>= { p =>
         val gp = LkAdvGeoFormUtil.latLng2geoPoint(latLng)
         p.dispatchCB( ReqRcvrPopup(nodeId, gp) )
       }
-
-      // TODO Как сделать callback нормальный для анонимной функции?
-      cb.runNow()
     }
 
+    private val _onMarkerClickedF = callBackFun2jsCallback( onMarkerClicked )
+
     def render(p: Props): ReactElement = {
-      p().toOption.fold [ReactElement] (null) { markers1 =>
+      for (markers1 <- p().toOption) yield {
         MarkerClusterGroupR(
           new MarkerClusterGroupPropsR {
             override val markers      = markers1
-            override val markerClick: js.UndefOr[js.Function1[MarkerEvent,_]] = {
-              js.defined { onMarkerClicked _ }
-            }
+            override val markerClick  = _onMarkerClickedF
           }
         )()
       }

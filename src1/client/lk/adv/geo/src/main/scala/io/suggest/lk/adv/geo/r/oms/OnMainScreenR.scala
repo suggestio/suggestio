@@ -2,7 +2,6 @@ package io.suggest.lk.adv.geo.r.oms
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import diode.react.ModelProxy
-import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.SetOnMainScreen
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -35,7 +34,6 @@ object OnMainScreenR {
       <.label(
         <.input(
           ^.`type`    := "checkbox",
-          ^.name      := AdvGeoConstants.OnMainScreen.FN,
           ^.checked   := p().value,
           ^.onChange ==> onMainScreenChanged
         ),

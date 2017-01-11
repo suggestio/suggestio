@@ -12,9 +12,9 @@ import models.mtag.MTagBinded
  * Created: 19.11.15 22:35
  * Description: Результат маппинга формы размещения.
  */
+@deprecated("Use MFormS/MFormInit instead", "2016.jan.11")
 trait IAgtFormResult
   extends IAdvGeoFormResult
-  with IFormTags
 {
 
   /** Также разместить вне тегов на главном экране выдачи в указанном месте. */
@@ -23,18 +23,13 @@ trait IAgtFormResult
   /** 2016.dec.13: Инфа по прямому размещению доступна через эту форму. */
   def rcvrs: Seq[MRcvrBindedInfo]
 
-}
-
-
-/** Интерфейс для поля тегов. */
-trait IFormTags {
-
   /** Теги, заданные юзером. */
   def tags      : List[MTagBinded]
 
 }
 
 
+@deprecated("Use MFormS/MFormInit instead", "2016.jan.11")
 case class MAgtFormResult(
   override val tags         : List[MTagBinded],
   override val radMapVal    : RadMapValue,

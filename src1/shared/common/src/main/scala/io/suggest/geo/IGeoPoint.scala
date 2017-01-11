@@ -41,6 +41,12 @@ case class MGeoPoint(
   override val lon: Double
 )
   extends IGeoPoint
+{
+
+  def withLat(lat2: Double) = copy(lat = lat2)
+  def withLon(lon2: Double) = copy(lon = lon2)
+
+}
 
 
 /** Интерфейс для моделей с полем geoPoint. */

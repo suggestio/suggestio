@@ -68,10 +68,10 @@ trait MarkerClusterGroupPropsR extends MarkerClusterGroupOptions {
 
   val markers       : js.Array[Marker]
 
-  val key           : UndefOr[String]                         = js.undefined
+  val key           : UndefOr[String]                               = js.undefined
 
-  val markerClick   : js.UndefOr[js.Function1[MarkerEvent,_]] = js.undefined
+  val markerClick   : js.UndefOr[js.Function1[MarkerEvent, Unit]]   = js.undefined
 
-  val clusterClick  : js.UndefOr[js.Function1[MarkerEvent,_]] = js.undefined
+  val clusterClick  : js.UndefOr[js.Function1[MarkerEvent, Unit]]   = js.undefined
 
 }

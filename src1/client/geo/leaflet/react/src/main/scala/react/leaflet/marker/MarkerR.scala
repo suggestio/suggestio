@@ -33,15 +33,15 @@ trait MarkerPropsR extends MarkerOptions {
   /** lat-lng coordinates for marker position. */
   val position      : LatLng
 
-  val onDragStart   : UndefOr[js.Function1[Event, _]]         = js.undefined
+  val onDragStart   : UndefOr[js.Function1[Event, Unit]]         = js.undefined
 
-  val onMoveStart   : UndefOr[js.Function1[Event, _]]         = js.undefined
+  val onMoveStart   : UndefOr[js.Function1[Event, Unit]]         = js.undefined
 
-  val onDrag        : UndefOr[js.Function1[Event, _]]         = js.undefined
+  val onDrag        : UndefOr[js.Function1[Event, Unit]]         = js.undefined
 
-  val onDragEnd     : UndefOr[js.Function1[DragEndEvent, _]]  = js.undefined
+  val onDragEnd     : UndefOr[js.Function1[DragEndEvent, Unit]]  = js.undefined
 
-  val onMoveEnd     : UndefOr[js.Function1[Event, _]]         = js.undefined
+  val onMoveEnd     : UndefOr[js.Function1[Event, Unit]]         = js.undefined
 
 }
 

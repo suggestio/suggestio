@@ -21,8 +21,6 @@ sealed trait LkAdvGeoCtl extends js.Object {
   /* Роута запроса рассчета стоимости текущего размещения. */
   //def getPriceSubmit(adId: String): Route = js.native
 
-  /** Роута для поиска тегов. */
-  def tagsSearch(args: Dictionary[Any]): Route = js.native
   /** Роута для поиска тегов  */
   def tagsSearch2(args: Dictionary[Any]): Route = js.native
 

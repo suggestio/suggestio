@@ -9,6 +9,7 @@ import io.suggest.lk.adv.geo.a.SetRcvrStatus
 import io.suggest.lk.adv.geo.m.MRcvr
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.vm.LkMessagesWindow.Messages
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import react.leaflet.popup.PopupR
@@ -51,7 +52,7 @@ object RcvrPopupR {
     def render(props: Props): ReactElement = {
       val v = props()
 
-      val rOpt = for (state <- v.popupState) yield {
+      for (state <- v.popupState) yield {
         PopupR(
           position = LkAdvGeoFormUtil.geoPoint2LatLng( state.latLng )
         )(
@@ -120,16 +121,15 @@ object RcvrPopupR {
                       }
 
                     )
-                  }
+                  }   // n in g.nodes
                 )
-              }
+              }       // g in groups
             }
-          ) // Popup div
+          )           // Popup div
         )
-      }
+      }               // popupState
 
-      rOpt.orNull
-    }
+    } // render()
 
   }
 

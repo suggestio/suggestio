@@ -14,14 +14,14 @@ import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.MRangeYmdJvm
-import io.suggest.geo.MGeoPoint
+import io.suggest.common.tags.edit.MTagsEditProps
+import io.suggest.dt.{MAdvPeriod, MRangeYmdJvm}
+import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
-import models.adv.form.MDatesPeriod
 import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
-import models.adv.geo.tag.{AgtForm_t, MAgtFormResult, MForAdTplArgs}
+import models.adv.geo.tag.MForAdTplArgs
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.mctx.Context
@@ -120,22 +120,34 @@ class LkAdvGeo @Inject() (
       _isSuFree = request.user.isSuper
     )
 
-    val formEmpty = advGeoFormUtil.formStrict
+    val formFut = for {
+      gp0         <- resLogic._geoPointFut
+      a4fPropsOpt <- resLogic._a4fPropsOptFut
+    } yield {
 
-    val formFut = for (gp0 <- resLogic._geoPointFut) yield {
-
+      // TODO Распилить это на MMapProps и MGeoCircle.
       val radMapVal = advFormUtil.radMapValue0(gp0)
 
       // Залить начальные данные в маппинг формы.
-      val res = MAgtFormResult(
-        tags          = Nil,
-        radMapVal     = radMapVal,
-        period        = MDatesPeriod(),
-        onMainScreen  = true,
-        rcvrs         = Nil   // По идее, тут изначально всё должно быть пусто.
+      MFormS(
+        mapProps = MMapProps(
+          center = radMapVal.state.center,
+          zoom   = radMapVal.state.zoom
+        ),
+        // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
+        onMainScreen = true,
+        adv4freeChecked = a4fPropsOpt.map(_ => true),
+        // TODO Найти текущие ресиверы в draft items (в корзине неоплаченных).
+        rcvrsMap = Map.empty,
+        // TODO Найти текущие теги в draft items (в корзине неоплаченных).
+        tagsEdit = MTagsEditProps(),
+        datePeriod = MAdvPeriod(),
+        // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
+        radCircle = Some(MGeoCircle(
+          center  = radMapVal.circle.center,
+          radiusM = radMapVal.circle.radius.meters
+        ))
       )
-
-      formEmpty.fill(res)
     }
 
     resLogic.result(formFut, Ok)
@@ -160,77 +172,57 @@ class LkAdvGeo @Inject() (
       implicitly[Context]
     }
 
+    val _a4fPropsOptFut = for (ctx <- _ctxFut) yield {
+      OptionUtil.maybe( request.user.isSuper ) {
+        MAdv4FreeProps(
+          fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
+          title = ctx.messages( "Adv.for.free.without.moderation" )
+        )
+      }
+    }
 
     /** Рендер ответа.
       *
       * @param formFut Маппинг формы.
       * @param rs Статус ответа HTTP.
       */
-    def result(formFut: Future[AgtForm_t], rs: Status): Future[Result] = {
+    def result(formFut: Future[MFormS], rs: Status): Future[Result] = {
       //lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
 
-      val advPricingFut = formFut.flatMap { form =>
-        advGeoBillUtil.getPricing(form.value, _isSuFree)
-      }
+      // TODO Нужна считалочка ценника для новой формы.
+      val advPricingFut = bill2Util.zeroPricingFut
+      //val advPricingFut = formFut.flatMap { form =>
+      //  advGeoBillUtil.getPricing(form.value, _isSuFree)
+      //}
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
       val formStateSerFut: Future[String] = for {
-        ctx           <- _ctxFut
-        gp0           <- _geoPointFut
+        a4fPropsOpt   <- _a4fPropsOptFut
+        formS         <- formFut
         // TODO Отрендерить в состояние текущих георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
       } yield {
-        val a4fPropsOpt = OptionUtil.maybe( request.user.isSuper ) {
-          MAdv4FreeProps(
-            fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
-            title = ctx.messages( "Adv.for.free.without.moderation" )
-          )
-        }
+
         // Собираем исходную root-модель формы.
         val mFormInit = MFormInit(
-          adId = request.mad.id.get,
+          adId          = request.mad.id.get,
           adv4FreeProps = a4fPropsOpt,
-          form = MFormS(
-            mapProps = MMapProps(
-              center = gp0,
-              zoom   = 10
-            ),
-            onMainScreen = true,
-            adv4freeChecked = a4fPropsOpt.map(_ => true),
+          form          = formS
+        )
 
-          )
-        )
-        val mform = MFormS(
-          adId = request.mad.id.get,
-          mapProps = MMapProps(
-            center = gp0,
-            zoom   = 10
-          ),
-          adv4free = OptionUtil.maybe( request.user.isSuper ) {
-            MAdv4Free(
-              static = MAdv4FreeProps(
-                fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
-                title = ctx.messages( "Adv.for.free.without.moderation" )
-              ),
-              checked = _isSuFree
-            )
-          }
-        )
         // Сериализуем модель через boopickle + base64 для рендера бинаря прямо в HTML.
-        PickleUtil.pickleConv[MFormS, ConvCodecs.Base64, String](mform)
+        PickleUtil.pickleConv[MFormInit, ConvCodecs.Base64, String](mFormInit)
       }
 
       // Собираем итоговый ответ на запрос: аргументы рендера, рендер html, рендер http-ответа.
       for {
         ctx           <- _ctxFut
         advPricing    <- advPricingFut
-        form          <- formFut
         formStateSer  <- formStateSerFut
       } yield {
 
         val rargs = MForAdTplArgs(
           mad           = request.mad,
           producer      = request.producer,
-          form          = form,
           price         = advPricing,
           formState     = formStateSer
         )
@@ -253,7 +245,7 @@ class LkAdvGeo @Inject() (
   def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.PersonNode).async { implicit request =>
     lazy val logPrefix = s"forAdSubmit($adId):"
 
-    advGeoFormUtil.formStrict.bindFromRequest().fold(
+    /*advGeoFormUtil.formStrict.bindFromRequest().fold(
       {formWithErrors =>
         // Запустить инициализацию U.Lk в фоне:
         request.user.lkCtxDataFut
@@ -332,7 +324,8 @@ class LkAdvGeo @Inject() (
           }
         }
       }
-    )
+    )*/
+    ???
   }
 
 
@@ -344,7 +337,7 @@ class LkAdvGeo @Inject() (
     */
   def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"getPriceSubmit($adId):"
-    advGeoFormUtil.formTolerant.bindFromRequest().fold(
+    /*advGeoFormUtil.formTolerant.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         val err = MError(
@@ -383,7 +376,8 @@ class LkAdvGeo @Inject() (
           Ok( Json.toJson(resp) )
         }
       }
-    )
+    )*/
+    ???
   }
 
 

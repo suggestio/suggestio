@@ -4,5 +4,20 @@ SiO2 - suggest.io v2.
 с сохранением вообще всей истории.
 Кравлер и кое-какие неиспользовуемые/нежелательные подпроекты были пока остались в hg.
 
-README живёт теперь внутри docs, т.к. иногда бывает, что у дерева сорцов появляется новый
-корень с конфликтующим README в корне при мерже истории по http://stackoverflow.com/a/14470212 .
+Первая сборка:
+
+$ git clone ... sio2
+$ cd sio2
+$ npm install jsdom
+$ sbt
+> project web21
+> npm install
+> bower install
+
+Первый запуск:
+$ cd src1/server/www/conf
+Инициализировать application.conf, elasticsearch.yml, logger.xml на основе файлов-примеров.
+$ cd ../../../..
+$ sbt
+> run
+

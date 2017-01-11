@@ -1,7 +1,5 @@
 package io.suggest.adv.geo
 
-import io.suggest.common.maps.MapFormConstants
-import io.suggest.common.maps.rad.RadMapConstants
 import io.suggest.common.qs.QsConstants
 
 /**
@@ -17,24 +15,14 @@ object AdvGeoConstants {
   /** id формы размещения в гео-месте. */
   def FORM_ID = "f" + PREFIX
 
-  /** Название form-поля для состояния карты. */
-  def STATE_FN    = MapFormConstants.STATE_FN
+  /** id элемента, в который будет отрендерена react-форма. */
+  def REACT_FORM_TARGET_ID = PREFIX + "rft"
 
-  /** Название form-поля для состояния круга на карте. */
-  def CIRCLE_FN   = RadMapConstants.CIRCLE_FN
+  object Rad {
 
-  /** id инпута, содержащего ссылку на карту узлов-ресиверов. */
-  def AD_ID_INPUT_ID = PREFIX + "ngu"
-
-
-  object OnMainScreen {
-
-    def FN = "oms"
-
-    def ID = FORM_ID + QsConstants.KEY_PARTS_DELIM_STR + FN
+    def IMG_ID_RADIUS_MARKER = PREFIX + "irm"
 
   }
-
 
   /** Константы инфы о текущих гео-размещениях.
     * Для передачи данных в Leaflet используется GeoJSON FeatureCollection.
@@ -46,15 +34,6 @@ object AdvGeoConstants {
     /** Имя поля радиуса круга. */
     final val CIRCLE_RADIUS_M_FN   = "r"
 
-    /** Имя поля для содержимое попапа. */
-    def POPUP_CONTENT_FN  = "p"
-
-    /** Имя поля для цвета заливки геом.фигуры. */
-    def FILL_COLOR_FN     = "f"
-
-    /** Имя поля непрозрачности заливки шейпа. */
-    def FILL_OPACITY_FN   = "o"
-
     /** id item'а шейпа. Это id, по которому можно получить доступ ко всем остальным id. */
     final val ITEM_ID_FN        = "i"
 
@@ -65,9 +44,6 @@ object AdvGeoConstants {
 
   /** Константы заливки шейпов на карте гео-размещений. */
   object CurrShapes {
-
-    /** id элемента, содержащего JSON-описалово текущих размещений. */
-    def DATA_CONTAINER_ID = PREFIX + "csi"
 
     /** Цвет заливки запрошенных размещений. */
     def REQ_COLOR = "#4C88A9"

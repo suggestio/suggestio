@@ -3,12 +3,12 @@ package io.suggest.lk.tags.edit.r
 import diode.react.ModelProxy
 import io.suggest.common.tags.edit.{MTagsEditQueryProps, TagsEditConstants}
 import io.suggest.css.Css
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI, ReactKeyboardEventI}
 import io.suggest.lk.vm.LkMessagesWindow.Messages
-import io.suggest.sjs.common.spa.DAction
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
-import io.suggest.lk.tags.edit.m.SetTagSearchQuery
+import io.suggest.lk.tags.edit.m.{AddCurrentTag, SetTagSearchQuery}
+import org.scalajs.dom.ext.KeyCode
 
 /**
   * Suggest.io
@@ -33,6 +33,16 @@ object TagNameInpR {
       }
     }
 
+    /** Коллбек для реакции на нажатие некоторых особых клавиш на клавиатуре во время ввода. */
+    def onKeyUp(e: ReactKeyboardEventI): Callback = {
+      if (e.keyCode == KeyCode.Enter) {
+        $.props >>= { p =>
+          p.dispatchCB( AddCurrentTag )
+        }
+      } else {
+        Callback.empty
+      }
+    }
 
     def render(p: Props) = {
       // tagsAddForm: поле ввода имени тега.
@@ -56,7 +66,8 @@ object TagNameInpR {
                 ^.`type`   := "text",
                 ^.name     := TagsEditConstants.ADD_TAGS_FN,
                 ^.value    := p().text,
-                ^.onChange ==> onQueryChange
+                ^.onChange ==> onQueryChange,
+                ^.onKeyUp  ==> onKeyUp
               )
             )
           )

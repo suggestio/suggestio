@@ -10,6 +10,7 @@ import play.api.data.Form
 package object tag {
 
   /** Тип для маппинга формы размещения в теге с геогафией. */
+  @deprecated("Use MFormS/MFormInit + boopickle instead", "2016.jan.11")
   type AgtForm_t  = Form[MAgtFormResult]
 
 }

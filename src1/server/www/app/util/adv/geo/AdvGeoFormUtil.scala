@@ -1,25 +1,18 @@
 package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.adv.AdvConstants.PERIOD_FN
-import io.suggest.adv.geo.AdvGeoConstants.{AdnNodes, OnMainScreen}
-import io.suggest.common.maps.MapFormConstants.MAP_FN
-import io.suggest.common.tags.edit.TagsEditConstants.EXIST_TAGS_FN
 import io.suggest.model.geo.{CircleGs, GeoShape}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.pick.PickleSrvUtil
 import models.adv.geo.cur
 import models.adv.geo.cur._
 import models.adv.geo.mapf.MRcvrBindedInfo
-import models.adv.geo.tag.{AgtForm_t, MAgtFormResult}
 import models.mproj.ICommonDi
-import models.mtag.MTagBinded
 import play.api.data.Forms._
-import play.api.data.{Form, Mapping}
+import play.api.data.Mapping
 import play.extras.geojson.{Feature, LatLng}
 import util.FormUtil
 import util.adv.AdvFormUtil
-import util.maps.RadMapFormUtil
 import util.tags.TagsEditFormUtil
 
 /**
@@ -32,14 +25,13 @@ import util.tags.TagsEditFormUtil
 class AdvGeoFormUtil @Inject() (
   tagsEditFormUtil  : TagsEditFormUtil,
   advFormUtil       : AdvFormUtil,
-  radMapFormUtil    : RadMapFormUtil,
   pickleSrvUtil     : PickleSrvUtil,
   mCommonDi         : ICommonDi
 ) {
 
 
   /** Маппинг формы георазмещения. */
-  private def _advGeoFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
+  /*private def _advGeoFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
     mapping(
       EXIST_TAGS_FN           -> tagsM,
       MAP_FN                  -> radMapFormUtil.radMapValM,
@@ -49,21 +41,21 @@ class AdvGeoFormUtil @Inject() (
     )
     { MAgtFormResult.apply }
     { MAgtFormResult.unapply }
-  }
+  }*/
 
   /** Форма для биндинга при запросе стоимости, когда всё может быть не очень хорошо. */
-  def formTolerant: AgtForm_t = {
+  /*def formTolerant: AgtForm_t = {
     Form( _advGeoFormM(tagsEditFormUtil.existingsM) )
-  }
+  }*/
 
   /** Форма для биндинга при итоговом сабмите формы. */
-  def formStrict: AgtForm_t = {
+  /*def formStrict: AgtForm_t = {
     val formM = _advGeoFormM(tagsEditFormUtil.existingsM)
       .verifying("e.required.tags.or.main.screen", { agtRes =>
         agtRes.onMainScreen || agtRes.tags.nonEmpty
       })
     Form(formM)
-  }
+  }*/
 
 
   /** Рендер выхлопа [[cur.MAdvGeoShapeInfo]] в более простое кросс-платформенной представление.

@@ -13,9 +13,6 @@ import models.adv.price.IAdvPricing
   */
 trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplArgs {
 
-  /** Экземпляр маппинга формы размещения карточки в теге с географией. */
-  def form          : AgtForm_t
-
   /**
     * Сериализованное состояние js-react-diode-формы.
     * Изначально тут был boopickle + base64 с инстансом MFormS внутри.
@@ -26,10 +23,9 @@ trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplAr
 
 
 case class MForAdTplArgs(
-  override val mad              : MNode,
-  override val producer         : MNode,
-  override val form             : AgtForm_t,
-  override val price            : IAdvPricing,
-  override val formState        : String
-)
+                          override val mad              : MNode,
+                          override val producer         : MNode,
+                          override val price            : IAdvPricing,
+                          override val formState        : String
+                        )
   extends IForAdTplArgs

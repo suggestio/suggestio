@@ -8,6 +8,7 @@ import io.suggest.lk.adv.geo.m.MGeoAdvs
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.react.r.RangeYmdR
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.popup.PopupR
@@ -46,7 +47,8 @@ object ExistPopupR {
 
     def render(p: Props): ReactElement = {
       val p0 = p()
-      val elOpt = for {
+
+      for {
         popResp   <- p0.popupResp.toOption
         popState  <- p0.popupState
       } yield {
@@ -94,7 +96,7 @@ object ExistPopupR {
           )
         )
       }
-      elOpt.orNull
+
     }
 
   }
