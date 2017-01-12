@@ -79,6 +79,8 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
   ,
+  // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
+  "com.wix"      %% "accord-core"     % Common.wixAccordVsn,
   // Поддержка JsMessages для client-side локализации сообщений
   "org.julienrf" %% "play-jsmessages" % "2.0.0",
   // Parsers

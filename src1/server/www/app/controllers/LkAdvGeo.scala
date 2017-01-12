@@ -325,6 +325,27 @@ class LkAdvGeo @Inject() (
     ???
   }
 
+  /** Body parser для реквестов, содержащих внутри себя сериализованный инстанс MFormS. */
+  private def formPostBP = parse.raw(maxLength = 1024 * 10)
+    // Десериализовать тело реквеста...
+    .validate { rawBuf =>
+      lazy val logPrefix = "formPostBP:"
+
+      rawBuf.asBytes()
+        .toRight[Result]( EntityTooLarge("missing body") )
+        .right.flatMap { bStr =>
+          try {
+            val bbuf = bStr.asByteBuffer
+            val mfs = PickleUtil.unpickle[MFormS](bbuf)
+            Right( mfs )
+          } catch { case ex: Throwable =>
+            LOGGER.error(s"$logPrefix unable to deserialize req.body", ex)
+            Left( BadRequest("invalid body") )
+          }
+        }
+        // TODO Провалидировать десериализованные данные. Тут нужно подключить accord или что-то в этом роде.
+    }
+
 
   /**
     * Экшн рассчета стоимости текущего размещения.
@@ -332,8 +353,22 @@ class LkAdvGeo @Inject() (
     * @param adId id рекламной карточки.
     * @return 200 / 416 + JSON
     */
-  def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async(formPostBP) { implicit request =>
     lazy val logPrefix = s"getPriceSubmit($adId):"
+
+    advGeoFormUtil.validateForm( request.body ).fold [Future[Result]] (
+      { violations =>
+        LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
+        NotAcceptable( violations.toString )
+      },
+      { mFormS =>
+        LOGGER.debug(s"$logPrefix request body =\n $mFormS")
+        val isSuFree = advFormUtil.maybeFreeAdv()
+        // Надо обратиться к биллингу за рассчётом ценника...
+        ???
+      }
+    )
+
     /*advGeoFormUtil.formTolerant.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
@@ -374,7 +409,6 @@ class LkAdvGeo @Inject() (
         }
       }
     )*/
-    ???
   }
 
 

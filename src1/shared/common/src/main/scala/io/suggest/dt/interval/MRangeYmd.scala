@@ -19,5 +19,9 @@ object MRangeYmd {
 }
 
 case class MRangeYmd(dateStart: MYmd, dateEnd: MYmd) {
+
   override def toString = "[" + dateStart + ".." + dateEnd + "]"
+
+  def toSeq = dateStart :: dateEnd :: Nil
+
 }

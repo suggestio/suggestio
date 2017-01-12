@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.a.geo.rad
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.adv.geo.AdvGeoConstants.Rad
 import io.suggest.geo.IGeoPointField
 import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m.MRad
@@ -19,24 +20,40 @@ class RadAh[M](
   extends ActionHandler(modelRW) {
 
   /** Действия работы с радиусом очень одинаковы как при drag, так и при drag end. */
-  private def _handleNewRadiusXY(rd: IGeoPointField, stillDragging: Boolean) = {
+  private def _handleNewRadiusXY(rd: IGeoPointField, stillDragging: Boolean): Option[MRad] = {
     val v0 = value.get
 
     // Посчитать радиус:
-    val rmGp2 = rd.geoPoint
+    val rmGp1 = rd.geoPoint
 
     // Считаем расстояние между новым радиусом и исходным центром.
-    val distanceM = LkAdvGeoFormUtil.distanceBetween(v0.circle.center, rmGp2)
+    val distanceM = Math.abs(
+      LkAdvGeoFormUtil.distanceBetween(v0.circle.center, rmGp1)
+    )
+
+    // Принудительно запихиваем в границы.
+    val radius2m = Math.max( Rad.RADIUS_MIN_M,
+      Math.min( Rad.RADIUS_MAX_M, distanceM )
+    )
+
+    // Не двигать радиус, вылезающий за пределы допустимых значений:
+    val rmGp2 = if (radius2m != distanceM) {
+      // TODO нужно подправлять координаты, чтобы радиус, ушедший за пределы, оставался на границе круга. Бывает, что он оказывается рядом.
+      // Для этого нужно с помощью угла и нового радиуса попытаться вычислить правильные геокоординаты маркера радиуса.
+      v0.state.radiusMarkerCoords
+    } else {
+      rmGp1
+    }
 
     val v2 = v0.copy(
-      circle  = v0.circle.withRadiusM( Math.abs(distanceM) ),
+      circle  = v0.circle.withRadiusM( radius2m ),
       state   = v0.state.copy(
         radiusDragging      = stillDragging,
         radiusMarkerCoords  = rmGp2
       )
     )
 
-    updated( Some(v2) )
+    Some(v2)
   }
 
 
@@ -53,7 +70,8 @@ class RadAh[M](
 
     // Происходит таскание маркера радиуса.
     case rd: RadiusDragging =>
-      _handleNewRadiusXY(rd, stillDragging = true)
+      val v2Opt = _handleNewRadiusXY(rd, stillDragging = true)
+      updated(v2Opt)
 
     // Теперь разовые действия, порядок обработки которых не важен:
 
@@ -100,7 +118,8 @@ class RadAh[M](
 
     // Окончание таскания радиуса.
     case rde: RadiusDragEnd =>
-      _handleNewRadiusXY(rde, stillDragging = false)
+      val v2Opt = _handleNewRadiusXY(rde, stillDragging = false)
+      updated(v2Opt, priceUpdateFx)
 
   }
 

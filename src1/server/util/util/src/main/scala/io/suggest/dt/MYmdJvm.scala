@@ -6,7 +6,7 @@ import org.joda.time.{LocalDate, ReadableDateTime}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 30.12.16 11:24
-  * Description:
+  * Description: Server-side утиль для работы с кросс-платформенными датами.
   */
 class MYmdJvm {
 
@@ -24,6 +24,10 @@ class MYmdJvm {
       month = dt.getMonthOfYear,
       day   = dt.getDayOfMonth
     )
+  }
+
+  def toJodaLocalDate(ymd: MYmd): LocalDate = {
+    new LocalDate(ymd.year, ymd.month, ymd.day)
   }
 
 }

@@ -27,6 +27,12 @@ object MYmd {
     */
   def ymdToStringStd(ymd: MYmd) = ymdToString(ymd, "-")
 
+  implicit object MYmdOrd extends Ordering[MYmd] {
+    override def compare(x: MYmd, y: MYmd): Int = {
+      if (x < y) -1 else if (x > y) 1 else 0
+    }
+  }
+
 }
 
 
@@ -41,9 +47,6 @@ case class MYmd(
   month : Int,
   day   : Int
 ) {
-
-  if (year < 2016 || year > 2222 || month < 1 || month > 12 || day < 1 || day > 31)
-    throw new IllegalArgumentException( toString )
 
   override def toString: String = {
     MYmd.ymdToStringStd(this)

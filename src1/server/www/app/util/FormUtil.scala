@@ -113,18 +113,27 @@ object FormUtil {
   /** Регэксп для парсинга uuid, закодированного в base64. */
   val uuidB64Re = (MEsUuId.charsAllowedRe + "+").r
 
+  /** Проверить id по допустимым символам. У uuid и any id алфавиты одинаковые, только длина разная. */
+  def isEsIdValid(id: String): Boolean = uuidB64Re.pattern.matcher(id).matches()
+
   /** Конструктор для id-маппингов. */
   private def _esIdM(baseM: Mapping[String]): Mapping[String] = {
     baseM
       .transform(strTrimSanitizeF, strIdentityF)
-      .verifying("error.invalid.id", uuidB64Re.pattern.matcher(_).matches())
+      .verifying("error.invalid.id", isEsIdValid(_))
   }
+
+  def ID_LEN_MIN = 19
+  def ID_LEN_MAX_ANY = 50
+  def ID_LEN_MAX_UUID = 30
+
   /** id'шники в ES-моделях генерятся силами ES. Тут маппер для полей, содержащих ES-id. */
-  def esIdM = _esIdM( nonEmptyText(minLength=19, maxLength=30) )
+  def esIdM = _esIdM( nonEmptyText(minLength=ID_LEN_MIN, maxLength=ID_LEN_MAX_UUID) )
 
   /** Маппинг для id узла, включая всякие маячки. */
   // TODO Проверять по шаблонам ID: обычные es base64, ibeacon hex (46 ascii байт, удалить?), eddystone (~33 байта).
-  def esAnyNodeIdM = _esIdM( nonEmptyText(minLength=19, maxLength=50) )
+  def esAnyNodeIdM = _esIdM( nonEmptyText(minLength=ID_LEN_MIN, maxLength=ID_LEN_MAX_ANY) )
+    .verifying("error.invalid.id", isEsIdValid(_))
 
   /** Тоже самое, что и esIdM, но пытается декодировать UUID из id.
     * id, сгенеренные es, тут не прокатят! */

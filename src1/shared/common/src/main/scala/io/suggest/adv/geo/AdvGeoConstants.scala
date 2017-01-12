@@ -22,6 +22,10 @@ object AdvGeoConstants {
 
     def IMG_ID_RADIUS_MARKER = PREFIX + "irm"
 
+    def RADIUS_MIN_M = 5
+
+    def RADIUS_MAX_M = 1000000
+
   }
 
   /** Константы инфы о текущих гео-размещениях.
@@ -59,6 +63,9 @@ object AdvGeoConstants {
 
   /** Названия полей в properties, касающихся свойст отображаемого узла. */
   object AdnNodes {
+
+    /** Максимальное кол-во изменений галочек за один раз. */
+    def MAX_RCVRS_PER_TIME = 100
 
     /** Имя поля с подсказкой узла. */
     def HINT_FN       = "h"

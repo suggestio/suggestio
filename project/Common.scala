@@ -118,7 +118,7 @@ object Common {
     * 
     * v[,0.6.1] имеют серьезную проблему: https://github.com/wix/accord/issues/97
     */
-  //val wixAccordVsn = "0.7-SNAPSHOT"
+  val wixAccordVsn = "0.7-SNAPSHOT"
 
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]
