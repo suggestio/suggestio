@@ -1,8 +1,9 @@
 package io.suggest.lk.adv.geo.r
 
-import io.suggest.adv.geo.{MGeoAdvExistPopupResp, MRcvrPopupResp}
+import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
+import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
@@ -35,6 +36,9 @@ trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запрос содержимого попапа над указанной гео-областью. */
   def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp]
+
+  /** Запросить у сервера рассчёт цены. */
+  def getPrice(adId: String, mFormS: MFormS): Future[_]
 
 }
 
@@ -81,6 +85,14 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
       Xhr.requestBinary(route)
     }
+  }
+
+  /** Запросить у сервера рассчёт цены. */
+  override def getPrice(adId: String, mFormS: MFormS): Future[_] = {
+    val route = jsRoutes.controllers.LkAdvGeo.getPriceSubmit(adId)
+    val bbuf = PickleUtil.pickle(mFormS)
+    // TODO Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
+    Xhr.requestBinary(route, bbuf)
   }
 
 }

@@ -2,7 +2,7 @@ package io.suggest.model.geo
 
 import java.{lang => jl}
 
-import io.suggest.geo.{IGeoPoint, MGeoPoint}
+import io.suggest.geo.{IGeoPoint, Lat, Lon, MGeoPoint}
 import com.spatial4j.core.context.SpatialContext
 import com.spatial4j.core.io.GeohashUtils
 import com.spatial4j.core.shape.Point
@@ -82,28 +82,35 @@ object GeoPoint extends MacroLogsImpl {
     apply(esgp)
   }
 
-  val ES_LAT_FN = "lat"
-  val ES_LON_FN = "lon"
-
 
   private def getCommaIndex(str: String) = str indexOf ','
 
-  private def fromLatLonComma(latLon: String, commaIndex: Int) = {
+  private def fromLatLonComma(latLon: String, commaIndex: Int): MGeoPoint = {
     val lat = jl.Double.parseDouble(latLon.substring(0, commaIndex).trim)
     val lon = jl.Double.parseDouble(latLon.substring(commaIndex + 1).trim)
     MGeoPoint(
-      lat = fixLat(lat),
-      lon = fixLon(lon)
+      lat = Lat.ensureInBounds(lat),
+      lon = Lon.ensureInBounds(lon)
     )
   }
 
   val READS_GEO_ARRAY = Reads[MGeoPoint] {
     case JsArray(Seq(lonV, latV)) =>
-      val gp = MGeoPoint(
-        lat = fixLat( latV.as[Double] ),
-        lon = fixLon( lonV.as[Double] )
-      )
-      JsSuccess(gp)
+      val latOpt = latV.asOpt[Double]
+      if ( !latOpt.exists(Lat.isValid) ) {
+        JsError( Lat.E_INVALID )
+      } else {
+        val lonOpt = lonV.asOpt[Double]
+        if ( !lonOpt.exists(Lon.isValid) ) {
+          JsError( Lon.E_INVALID )
+        } else {
+          val gp = MGeoPoint(
+            lat = latOpt.get,
+            lon = lonOpt.get
+          )
+          JsSuccess(gp)
+        }
+      }
     case other =>
       JsError( ValidationError("expected.jsarray", other) )
   }
@@ -130,8 +137,8 @@ object GeoPoint extends MacroLogsImpl {
 
   /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
   val FORMAT_OBJECT: Format[MGeoPoint] = (
-    (__ \ ES_LAT_FN).format[Double] and
-    (__ \ ES_LON_FN).format[Double]
+    (__ \ Lat.ES_FN).format[Double] and
+    (__ \ Lon.ES_FN).format[Double]
   )(MGeoPoint.apply, unlift(MGeoPoint.unapply))
 
   /** Десериализация из JSON из различных видов представления геоточки. */
@@ -144,20 +151,6 @@ object GeoPoint extends MacroLogsImpl {
   /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
     * но сериализации в JSON object с полями lat и lon. */
   val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, FORMAT_GEO_ARRAY)
-
-  def fixLon(lon: Double): Double = {
-    _forceBetween(-180d, lon, 180d)
-  }
-
-  def fixLat(lat: Double): Double = {
-    _forceBetween(-90d, lat, 90)
-  }
-
-  private def _forceBetween(min: Double, value: Double, max: Double): Double = {
-    Math.min(max,
-      Math.max(min, value)
-    )
-  }
 
 
   // Экспорт инстансов IGeoPoint, вынесен из класса GeoPoint перед его депортацией в [common].
@@ -185,7 +178,6 @@ object GeoPoint extends MacroLogsImpl {
     LatLng(lat = gp.lat, lng = gp.lon)
   }
 
-
   /** Всякие неявности изолированы в отдельном namespace. */
   object Implicits {
 
@@ -200,17 +192,43 @@ object GeoPoint extends MacroLogsImpl {
         override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGeoPoint]] = {
           val k = key1F(key)
           for {
-            lonEith <- doubleB.bind( k(Qs.LON_FN), params )
-            latEith <- doubleB.bind( k(Qs.LAT_FN), params )
+            latEith <- doubleB.bind( k(Lat.QS_FN), params )
+            lonEith <- doubleB.bind( k(Lon.QS_FN), params )
           } yield {
-            for {
-              lon <- lonEith.right
-              lat <- latEith.right
-            } yield {
-              MGeoPoint(
-                lat = fixLat(lat),
-                lon = fixLon(lon)
-              )
+            // TODO play-2.6: scala-2.12+ syntax:
+            /*latEith
+              .filterOrElse( Lat.isValid, E_INVALID_LAT )
+              .flatMap { lat =>
+                lonEith
+                  .filterOrElse( Lon.isValid, E_INVALID_LON )
+                  .map { lon =>
+                    MGeoPoint(
+                      lat = lat,
+                      lon = lon
+                    )
+                  }
+              }*/
+
+            // scala 2.11 syntax: TODO Заменить верхним синтаксисом после апдейта сервера до scala-2.12 (см. TODO выше).
+            latEith match {
+              case Right(lat) =>
+                if (Lat.isValid(lat)) {
+                  lonEith match {
+                    case Right(lon) =>
+                      if (Lon.isValid(lon)) {
+                        Right(MGeoPoint(
+                          lat = lat,
+                          lon = lon
+                        ))
+                      } else {
+                        Left( Lon.E_INVALID )
+                      }
+                    case Left(e) => Left(e)
+                  }
+                } else {
+                  Left( Lat.E_INVALID )
+                }
+              case Left(e) => Left(e)
             }
           }
         }
@@ -219,8 +237,8 @@ object GeoPoint extends MacroLogsImpl {
           _mergeUnbinded {
             val k = key1F(key)
             Seq(
-              doubleB.unbind(k(Qs.LON_FN), value.lon),
-              doubleB.unbind(k(Qs.LAT_FN), value.lat)
+              doubleB.unbind(k(Lat.QS_FN), value.lat),
+              doubleB.unbind(k(Lon.QS_FN), value.lon)
             )
           }
         }

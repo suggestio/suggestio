@@ -116,9 +116,9 @@ object Common {
   /** Версия wix accord validation.
     * @see [[http://wix.github.io/accord/index.html#getting-started]]
     * 
-    * !!! Проблема: https://github.com/wix/accord/issues/97 , и accord был отключён.
+    * v[,0.6.1] имеют серьезную проблему: https://github.com/wix/accord/issues/97
     */
-  //val wixAccordVsn = "0.6.1"
+  //val wixAccordVsn = "0.7-SNAPSHOT"
 
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]

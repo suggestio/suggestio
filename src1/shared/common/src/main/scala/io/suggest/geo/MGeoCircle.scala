@@ -15,6 +15,19 @@ object MGeoCircle {
     generatePickler[MGeoCircle]
   }
 
+
+  /*
+  import com.wix.accord.Validator
+  import com.wix.accord.dsl._
+
+  implicit val VALIDATOR: Validator[MGeoCircle] = {
+    validator[MGeoCircle] { mgc =>
+      mgc.center is valid
+      mgc.radiusM should be >= 1d
+    }
+  }
+  */
+
 }
 
 

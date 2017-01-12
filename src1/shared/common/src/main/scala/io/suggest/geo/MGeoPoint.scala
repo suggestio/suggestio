@@ -32,6 +32,23 @@ object MGeoPoint {
 
   implicit val pickler: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
 
+  /** Проверить точку на валидность координат. */
+  def isValid(gp: MGeoPoint): Boolean = {
+    Lat.isValid(gp.lat) && Lon.isValid(gp.lon)
+  }
+
+  /*
+  import com.wix.accord.Validator
+  import com.wix.accord.dsl._
+
+  implicit val VALIDATOR: Validator[MGeoPoint] = {
+    validator[MGeoPoint] { mgp =>
+      mgp.lat is between(-LAT_BOUND, LAT_BOUND)
+      mgp.lon is between(-LON_BOUND, LON_BOUND)
+    }
+  }
+  */
+
 }
 
 

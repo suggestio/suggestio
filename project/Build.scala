@@ -15,6 +15,7 @@ object Sio2Build extends Build {
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
   lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shared/common"))
     .settings(
+      resolvers += "sonatype-oss-snapshots" at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL,    // Нужно только для wix accord *-SNAPSHOT.
       libraryDependencies ++= Seq(
         "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
         "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn

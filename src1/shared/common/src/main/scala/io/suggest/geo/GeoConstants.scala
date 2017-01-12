@@ -14,16 +14,24 @@ object GeoConstants {
   @deprecated("use loc env option None instead", "2016.sep.16")
   def GEO_MODE_IP = "ip"
 
+
+  /** Географические константы для планеты. */
+  object Earth {
+
+    /**
+      * Если считать геойд сферой, то сфера будет иметь указанный радиус.
+      * @return Радиус сферической Земли в метрах.
+      */
+    def RADIUS_M = 6378137
+
+  }
+
+
   /** Контейнер констант первого поколения [[GeoConstants]]. */
   object Qs {
 
     /** Разделитель. */
     def DELIM             = QsConstants.KEY_PARTS_DELIM_STR
-
-    /** Географическая широта. */
-    def LAT_FN            = "a"
-    /** Географическая долгота. */
-    def LON_FN            = "o"
 
     def TOP_LEFT_FN       = "t"
     def BOTTOM_RIGHT_FN   = "b"

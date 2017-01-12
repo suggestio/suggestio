@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.u
 
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
+import io.suggest.geo.{GeoConstants, MGeoCircle, MGeoPoint}
 import io.suggest.lk.adv.geo.m.MMapGjFeature
 import io.suggest.maps.c.LeafletPinMarker
 import io.suggest.sjs.common.geo.json.GjTypes
@@ -58,7 +58,7 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
     */
   def radiusMarkerLatLng(geoCircle: MGeoCircle): MGeoPoint = {
     // Считаем чисто математичеки координаты маркера радиуса. По дефолту, просто восточнее от центра на расстоянии радиуса.
-    val earthRadiusM = 6378137
+    val earthRadiusM = GeoConstants.Earth.RADIUS_M
 
     // offsets in meters: north = +0; east = +radiusM
     // Coord.offsets in radians:

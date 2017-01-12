@@ -83,10 +83,7 @@ class LkAdvGeo @Inject() (
   import streamsUtil.Implicits._
 
   // Сериализация:
-  import MRcvrPopupResp.pickler
-  import MFormS.pickler
   import pickleSrvUtil.Base64ByteBufEncoder
-  import MGeoAdvExistPopupResp.pickler
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */

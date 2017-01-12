@@ -1,10 +1,9 @@
 package io.suggest.sjs.common.model.loc
 
-import io.suggest.geo.IGeoPoint
+import io.suggest.geo.{IGeoPoint, Lat, Lon, MGeoPoint}
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.sjs.common.geo.json.{GjGeometry, GjTypes}
 import org.scalajs.dom.Coordinates
-import io.suggest.geo.MGeoPoint
 
 import scala.scalajs.js
 
@@ -70,8 +69,8 @@ object MGeoPointJs {
   }
 
   def toJsObject(gp: IGeoPoint) = js.Dictionary[Double](
-    Qs.LAT_FN -> gp.lat,
-    Qs.LON_FN -> gp.lon
+    Lat.QS_FN -> gp.lat,
+    Lon.QS_FN -> gp.lon
   )
 
 }
