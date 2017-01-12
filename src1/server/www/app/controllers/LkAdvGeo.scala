@@ -364,7 +364,11 @@ class LkAdvGeo @Inject() (
       { mFormS =>
         LOGGER.debug(s"$logPrefix request body =\n $mFormS")
         val isSuFree = advFormUtil.maybeFreeAdv()
+
         // Надо обратиться к биллингу за рассчётом ценника...
+        val advPricingFut = advGeoBillUtil.getPricing(mFormS, isSuFree)
+
+
         ???
       }
     )

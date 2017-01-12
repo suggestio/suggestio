@@ -22,4 +22,6 @@ object HtmlConstants {
 
   val TAG_PREFIX              = "#"
 
+  val NBSP                    = '\u00A0'
+
 }

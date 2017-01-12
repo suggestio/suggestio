@@ -17,6 +17,10 @@ object Distance {
       dist
   }
 
+  def meters(distance: Double): Distance = {
+    apply(distance, DistanceUnit.METERS)
+  }
+
   def apply(esDistance: EsDistance): Distance = {
     Distance(esDistance.value, esDistance.unit)
   }

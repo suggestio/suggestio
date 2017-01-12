@@ -3,6 +3,7 @@ package util
 import java.text.{DecimalFormat, NumberFormat}
 import java.util.Currency
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.text.StringUtil
 import io.suggest.mbill2.m.price.{IPrice, MPrice}
 import models.mctx.Context
@@ -104,19 +105,25 @@ object TplDataFormatUtil {
 
   }
 
+  import HtmlConstants.NBSP
+
+  def NUMBER_GROUPING_THRESHOLD = 10000
+
   /** Постпроцессинг цен. Использовать неразрывные пробелы вместо обычных. */
   def pricePostprocess(priceStr: String): String = {
-    priceStr.replace('\u0020', '\u00A0')
+    priceStr.replace('\u0020', NBSP)
   }
 
   def formatPrice(price: IPrice)(implicit ctx: Context): String = {
     val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
     currFmt.setCurrency(price.currency)
-    val dcs = currFmt.getDecimalFormatSymbols
     val currencySymbol = formatCurrency(price.currency)
+    val dcs = currFmt.getDecimalFormatSymbols
     dcs.setCurrencySymbol(currencySymbol)
+    dcs.setGroupingSeparator(NBSP)
+    // TODO выставить остальные сепараторы, чтобы не вызывать pricePostprocess()
     currFmt.setDecimalFormatSymbols(dcs)
-    currFmt.setGroupingUsed(price.amount >= 10000)
+    currFmt.setGroupingUsed(price.amount >= NUMBER_GROUPING_THRESHOLD)
     val formatted = currFmt.format(price.amount)
     pricePostprocess(formatted)
   }
@@ -150,8 +157,7 @@ object TplDataFormatUtil {
       val dcf = currFmt.getDecimalFormatSymbols
       dcf.setCurrencySymbol("")
       currFmt.setDecimalFormatSymbols(dcf)
-      if (price <= 9999)
-        currFmt.setGroupingUsed(false)
+      currFmt.setGroupingUsed( price >= NUMBER_GROUPING_THRESHOLD )
       currFmt
     }
     val formatted = formatPriceDigitsDF.format(price)

@@ -93,6 +93,11 @@ class JsMessagesUtil @Inject() (
     )
   }
 
+  private def PRICING: TraversableOnce[String] = {
+    Iterable("RUB", "EUR", "USD")
+      .map("price." + _)
+  }
+
 
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {

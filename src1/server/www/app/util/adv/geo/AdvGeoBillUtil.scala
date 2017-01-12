@@ -2,16 +2,19 @@ package util.adv.geo
 
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
+import io.suggest.adv.geo.MFormS
+import io.suggest.dt.MAdvPeriodJvm
+import io.suggest.geo.MGeoCircle
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.geo.CircleGs
 import models.MPrice
-import models.adv.geo.IAdvGeoFormResult
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
-import models.adv.geo.tag.IAgtFormResult
 import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
+import org.joda.time.Interval
 import util.PlayMacroLogsImpl
 import util.billing.Bill2Util
 import util.ble.BeaconsBilling
@@ -19,14 +22,15 @@ import util.ble.BeaconsBilling
 import scala.concurrent.Future
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 04.12.15 13:43
- * Description: Утиль для биллинга размещений в тегах.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 04.12.15 13:43
+  * Description: Утиль для биллинга размещений в тегах.
+  */
 class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   beaconsBilling                      : BeaconsBilling,
+  mAdvPeriodJvm                       : MAdvPeriodJvm,
   protected val mItems                : MItems,
   protected val mCommonDi             : ICommonDi
 )
@@ -50,14 +54,15 @@ class AdvGeoBillUtil @Inject() (
   /**
     * Посчитать мультипликатор стоимости на основе даты и радиуса размещения.
     *
-    * @param res Результат маппинга формы.
+    * @param circle Гео-круг, заданный юзером в форме георазмещения.
+    * @param ivl Период размещения.
     * @return Double-мультипликатор цены.
     */
-  def getPriceMult(res: IAdvGeoFormResult): Double = {
-    val daysCount = bill2Util.getDaysCount(res.period)
+  def getPriceMult(circle: MGeoCircle, ivl: Interval): Double = {
+    val daysCount = bill2Util.getDaysCount(ivl)
 
     // Привести радиус на карте к множителю цены
-    val radKm = res.radMapVal.circle.radius.kiloMeters
+    val radKm = circle.radiusM / 1000   // метры -> км
     val radMult = radKm / 1.5
 
     radMult * daysCount
@@ -72,46 +77,59 @@ class AdvGeoBillUtil @Inject() (
     * @param res     Данные по размещаемым тегам.
     * @return Фьючерс c результатом.
     */
-  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: IAgtFormResult, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: MFormS, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
-    val geoMult = getPriceMult(res)
-    val p = _oneTagPrice(geoMult)
+    lazy val ivl = mAdvPeriodJvm.toJodaInterval( res.datePeriod )
 
-    // Пройтись по тегам
-    val mitemsTagActs = for (tag <- res.tags) yield {
-      val itm0 = MItem(
-        orderId       = orderId,
-        iType         = MItemTypes.GeoTag,
-        status        = status,
-        price         = p,
-        nodeId        = adId,
-        dtIntervalOpt = Some(res.period.interval),
-        rcvrIdOpt     = tag.nodeId,
-        tagFaceOpt    = Some(tag.face),
-        geoShape      = Some(res.radMapVal.circle)
-      )
-      mItems.insertOne(itm0)
-    }
+    val geoActsIter = res.radCircle
+      .iterator
+      .flatMap { radCircle =>
+        val geoMult = getPriceMult(radCircle, ivl)
+        val p = _oneTagPrice(geoMult)
+        val someGs = Some( CircleGs( radCircle ) )
+        val someIvl = Some(ivl)
 
-    // Если галочка главного экрана выставлена, то ещё разместить и так просто, в месте на карте.
-    val mitemsActs = if (res.onMainScreen) {
-      val itmP = MItem(
-        orderId       = orderId,
-        iType         = MItemTypes.GeoPlace,
-        status        = status,
-        price         = getPricePlace(geoMult),
-        nodeId        = adId,
-        dtIntervalOpt = Some(res.period.interval),
-        rcvrIdOpt     = None,
-        geoShape      = Some(res.radMapVal.circle)
-      )
-      mItems.insertOne(itmP) :: mitemsTagActs
+        // Пройтись по тегам
+        val mitemsTagActsIter = for (tagFace <- res.tagsEdit.tagsExists.iterator) yield {
+          MItem(
+            orderId       = orderId,
+            iType         = MItemTypes.GeoTag,
+            status        = status,
+            price         = p,
+            nodeId        = adId,
+            dtIntervalOpt = someIvl,
+            rcvrIdOpt     = None,   // Было раньше tag.nodeId, но надо вроде бы от него отказались...
+            tagFaceOpt    = Some(tagFace),
+            geoShape      = someGs
+          )
+        }
 
-    } else {
-      mitemsTagActs
-    }
+        // Если галочка главного экрана выставлена, то ещё разместить и так просто, в месте на карте.
+        val mitemsActs = if (res.onMainScreen) {
+          val itmP = MItem(
+            orderId       = orderId,
+            iType         = MItemTypes.GeoPlace,
+            status        = status,
+            price         = getPricePlace(geoMult),
+            nodeId        = adId,
+            dtIntervalOpt = someIvl,
+            rcvrIdOpt     = None,
+            geoShape      = someGs
+          )
+          itmP :: Nil
+        } else {
+          Nil
+        }
 
-    DBIO.sequence(mitemsActs)
+        (mitemsTagActsIter ++ mitemsActs)
+          .map { mItems.insertOne }
+      }
+
+    // TODO Нужно пройтись по карте ресиверов, накатить необходимые изменения.
+
+    val itemActs = geoActsIter.toSeq
+
+    DBIO.sequence(itemActs)
   }
 
 
@@ -121,22 +139,30 @@ class AdvGeoBillUtil @Inject() (
     * @param res Запрашиваемое юзером размещение.
     * @return
     */
-  def getPricing(res: IAgtFormResult): Future[MAdvPricing] = {
-    val geoMult = getPriceMult(res)
-    val p1 = _oneTagPrice(geoMult)
+  def getPricing(res: MFormS): Future[MAdvPricing] = {
+    lazy val ivl = mAdvPeriodJvm.toJodaInterval( res.datePeriod )
 
-    // Посчитать цены размещения для каждого тега.
-    var prices1 = List(
-      p1.withAmount(
-        p1.amount * res.tags.size
-      )
-    )
+    val geoPricesIter = res.radCircle
+      .iterator
+      .flatMap { _ =>
+        val geoMult = getPriceMult(res.radCircle.get, ivl)
+        val p1 = _oneTagPrice(geoMult)
 
-    if (res.onMainScreen)
-      prices1 ::= getPricePlace(geoMult)
+        // Посчитать цены размещения для каждого тега.
+        var prices1 = List(
+          p1.withAmount(
+            p1.amount * res.tagsEdit.tagsExists.size
+          )
+        )
 
-    LOGGER.trace(s"computePricing(): $res => $prices1")
+        if (res.onMainScreen)
+          prices1 ::= getPricePlace(geoMult)
 
+        LOGGER.trace(s"computePricing(): $res => $prices1")
+        prices1
+      }
+
+    val prices1 = geoPricesIter.toSeq
     val prices2 = MPrice.sumPricesByCurrency(prices1).toSeq
 
     val result = bill2Util.getAdvPricing( prices2 )
@@ -144,14 +170,14 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
-  def getPricing(res: IAgtFormResult, forceFree: Boolean): Future[MAdvPricing] = {
+  def getPricing(res: MFormS, forceFree: Boolean): Future[MAdvPricing] = {
     if (forceFree)
       bill2Util.zeroPricingFut
     else
       getPricing(res)
   }
 
-  def getPricing(resOpt: Option[IAgtFormResult], forceFree: Boolean): Future[MAdvPricing] = {
+  def getPricing(resOpt: Option[MFormS], forceFree: Boolean): Future[MAdvPricing] = {
     resOpt.fold {
       bill2Util.zeroPricingFut
     } { res =>

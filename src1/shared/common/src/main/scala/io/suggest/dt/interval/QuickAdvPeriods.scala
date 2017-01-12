@@ -87,6 +87,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
     override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
       dateHelper.plusDays(date, 3)
     }
+    override def toString = super.toString
   }
 
   /** 1 неделя. */
@@ -96,6 +97,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
     override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
       dateHelper.plusWeeks(date, 1)
     }
+    override def toString = super.toString
   }
 
   /** 1 месяц. */
@@ -105,6 +107,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
     override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
       dateHelper.plusMonths(date, 1)
     }
+    override def toString = super.toString
   }
 
   /** Заданный вручную период размещения. */
@@ -112,6 +115,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
     override def strId        = PeriodsConstants.CUSTOM
     override def isoPeriodOpt = None
     override def isCustom     = true
+    override def toString = super.toString
   }
 
 }

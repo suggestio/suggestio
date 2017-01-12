@@ -4,6 +4,8 @@ import java.util.Currency
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.dt.MAdvPeriod
+import io.suggest.dt.interval.QuickAdvIsoPeriod
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -18,7 +20,7 @@ import models.adv.price.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.{CurrencyCodeOpt, IPrice, MNode, MPrice}
-import org.joda.time.{DateTime, Duration, Interval}
+import org.joda.time.{DateTime, Duration, Interval, Period}
 import slick.profile.SqlAction
 import util.PlayMacroLogsImpl
 
@@ -82,7 +84,6 @@ class Bill2Util @Inject() (
   def getDaysCount(dur: Duration): Int = {
     Math.max(1, dur.getStandardDays.toInt) + 1
   }
-
 
   def cbcaNodeOptFut = mNodeCache.getById(CBCA_NODE_ID)
 

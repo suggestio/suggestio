@@ -30,4 +30,6 @@ class MYmdJvm {
     new LocalDate(ymd.year, ymd.month, ymd.day)
   }
 
+  def toJodaDateTime(ymd: MYmd) = toJodaLocalDate(ymd).toDateTimeAtStartOfDay()
+
 }

@@ -19,4 +19,12 @@ class MRangeYmdJvm @Inject() (mYmdJvm: MYmdJvm) {
     )
   }
 
+
+  def toJodaInterval(rymd: MRangeYmd): Interval = {
+    new Interval(
+      mYmdJvm.toJodaDateTime(rymd.dateStart),
+      mYmdJvm.toJodaDateTime(rymd.dateEnd)
+    )
+  }
+
 }

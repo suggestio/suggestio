@@ -6,7 +6,7 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import GeoShape.COORDS_ESFN
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.model.geo.GeoPoint.Implicits._
 import play.extras.geojson.{LatLng, Point}
 
@@ -26,6 +26,13 @@ object CircleGs extends GsStatic {
     (__ \ COORDS_ESFN).format[MGeoPoint] and
     (__ \ RADIUS_ESFN).format[Distance]
   )(apply, unlift(unapply))
+
+  def apply(geoCircle: MGeoCircle): CircleGs = {
+    CircleGs(
+      center = geoCircle.center,
+      radius = Distance.meters( geoCircle.radiusM )
+    )
+  }
 
 }
 

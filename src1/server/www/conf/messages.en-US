@@ -799,3 +799,7 @@ You.can.place.adn.node.on.map.below=You can place your current node on the adver
 
 Adv.for.free.without.moderation=Advertise for free, without moderation?
 
+price.RUB={0}₽
+price.USD=${0}
+price.EUR=€{0}
+
