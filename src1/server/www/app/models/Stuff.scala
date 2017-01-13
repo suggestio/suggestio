@@ -1,12 +1,9 @@
 package models
 
-import java.util.Currency
 import models.mctx.Context
 import play.api.mvc.{RequestHeader, Call}
-import _root_.util.PlayLazyMacroLogsImpl
 import play.mvc.Http.Request
 import play.twirl.api.Html
-import scala.collection.JavaConversions._
 
 /**
  * Suggest.io
@@ -14,39 +11,6 @@ import scala.collection.JavaConversions._
  * Created: 16.04.14 17:09
  * Description: Моделе-подобное барахло, которые в основном нужно для шаблонов.
  */
-
-object CurrencyCodeOpt extends PlayLazyMacroLogsImpl {
-  val CURRENCY_CODE_DFLT = "RUB"
-}
-
-
-trait CurrencyCode {
-  import CurrencyCodeOpt.LOGGER._
-
-  def currencyCode: String
-
-  def currency: Currency = {
-    try {
-      Currency.getInstance(currencyCode)
-    } catch {
-      case ex: Exception =>
-        error("Unsupported/unknown currency code: " + currencyCode + "; Supported are " + Currency.getAvailableCurrencies.toSeq.map(_.getCurrencyCode).mkString(", "), ex)
-        throw ex
-    }
-  }
-}
-
-/** Опциональное поле currencyCode, подразумевающее дефолтовую валюту. */
-trait CurrencyCodeOpt extends CurrencyCode {
-  def currencyCodeOpt : Option[String]
-  def currencyCode = currencyCodeOpt getOrElse CurrencyCodeOpt.CURRENCY_CODE_DFLT
-}
-
-object CurrencyCodeDflt extends CurrencyCode {
-  override def currencyCode = CurrencyCodeOpt.CURRENCY_CODE_DFLT
-}
-
-
 
 /** Экземпляр запроса помощи через обратную связь в ЛК. */
 case class MLkSupportRequest(

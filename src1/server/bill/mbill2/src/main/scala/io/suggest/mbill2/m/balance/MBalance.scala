@@ -1,12 +1,11 @@
 package io.suggest.mbill2.m.balance
 
-import java.util.Currency
-
 import com.google.inject.{Inject, Singleton}
+import io.suggest.bill.{Amount_t, MCurrency, MPrice}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.contract.{FindByContractId, MContracts, ContractIdSlickIdx, ContractIdSlickFk}
+import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, FindByContractId, MContracts}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -101,17 +100,14 @@ class MBalances @Inject() (
     *         Или None, если баланс не найден в таблице.
     */
   def incrAmountAndBlockedBy(balance0: MBalance, delta: Amount_t): DBIOAction[Option[MBalance], NoStream, Effect.Write] = {
-    incrAmountAndBlockedBy(balance0.id.get, delta)
-      .map { resOpt =>
-        resOpt.map { case (amount2, blocked2) =>
-          balance0.copy(
-            blocked = blocked2,
-            price   = balance0.price.copy(
-              amount = amount2
-            )
-          )
-        }
+    for (resOpt <- incrAmountAndBlockedBy(balance0.id.get, delta)) yield {
+      for ( (amount2, blocked2) <- resOpt ) yield {
+        balance0.copy(
+          blocked = blocked2,
+          price   = balance0.price.withAmount( amount2 )
+        )
       }
+    }
   }
 
   /** Изменить значение blocked для указанного баланса. */
@@ -135,23 +131,20 @@ class MBalances @Inject() (
     *         None, если в таблице нет указанного баланса.
     */
   def incrAmountBy(balance0: MBalance, delta: Amount_t): DBIOAction[Option[MBalance], NoStream, Effect.Write] = {
-    incrAmountBy(balance0.id.get, delta)
-      .map { resOpt =>
-        resOpt.map { case amount2 =>
-          balance0.copy(
-            price   = balance0.price.copy(
-              amount = amount2
-            )
-          )
-        }
+    for (resOpt <- incrAmountBy(balance0.id.get, delta)) yield {
+      for (amount2 <- resOpt) yield {
+        balance0.withPrice(
+          balance0.price.withAmount( amount2 )
+        )
       }
+    }
   }
 
   /** Приведение списка балансов к карте оных по валютам. */
-  def balances2curMap(balances: TraversableOnce[MBalance]): Map[String, MBalance] = {
+  def balances2curMap(balances: TraversableOnce[MBalance]): Map[MCurrency, MBalance] = {
     balances
       .toIterator
-      .map { b => b.price.currencyCode -> b }
+      .map { b => b.price.currency -> b }
       .toMap
   }
 
@@ -161,13 +154,13 @@ class MBalances @Inject() (
     * Эта комбинация является уникальным ключом в рамках таблицы, поэтому максимум один результат.
     *
     * @param contractId id контракта.
-    * @param currencyCode Код валюты.
+    * @param currency Валюта.
     * @return Опциональных [[MBalance]].
     */
-  def getByContractCurrency(contractId: Gid_t, currencyCode: String): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
+  def getByContractCurrency(contractId: Gid_t, currency: MCurrency): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
     query
       .filter { b =>
-        (b.contractId === contractId) && (b.currencyCode === currencyCode)
+        (b.contractId === contractId) && (b.currencyCode === currency.currencyCode)
       }
       .result
       .headOption
@@ -180,10 +173,10 @@ class MBalances @Inject() (
     * @param currency валюта кошелька.
     * @return DBIOAction, возвращающий экземпляр созданного кошелька.
     */
-  def initByContractCurrency(contractId: Gid_t, currency: Currency): DBIOAction[MBalance, NoStream, Effect.Write] = {
+  def initByContractCurrency(contractId: Gid_t, currency: MCurrency): DBIOAction[MBalance, NoStream, Effect.Write] = {
     val mb = MBalance(
-      contractId = contractId,
-      price = MPrice(0.0, currency)
+      contractId  = contractId,
+      price       = MPrice(0.0, currency)
     )
     insertOne(mb)
   }
@@ -203,5 +196,7 @@ case class MBalance(
 {
 
   def low = lowOpt.getOrElse( 0.0 )
+
+  def withPrice(price2: MPrice) = copy(price = price2)
 
 }

@@ -1,16 +1,15 @@
 package models.mlk.bill
 
+import io.suggest.bill.MGetPriceResp
 import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.price.MPrice
 import models.MNode
-import models.adv.price.IAdvPricing
 import models.blk.IRenderArgs
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 03.02.16 17:07
-  * Description: Аргументы для вызова [[views.html.lk.billing.order.cartTpl]].
+  * Description: Аргументы для вызова [[views.html.lk.billing.cart.cartTpl]].
   */
 trait ICartTplArgs {
 
@@ -24,8 +23,7 @@ trait ICartTplArgs {
   def r: Option[String]
 
   /** Итоговая стоимость заказа. */
-  def totalPricing: IAdvPricing
-
+  def totalPricing: MGetPriceResp
 
 }
 
@@ -34,7 +32,7 @@ case class MCartTplArgs(
   override val mnode        : MNode,
   override val items        : Seq[MCartItem],
   override val r            : Option[String],
-  override val totalPricing : IAdvPricing
+  override val totalPricing : MGetPriceResp
 )
   extends ICartTplArgs
 

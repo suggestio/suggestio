@@ -1,8 +1,6 @@
 package models.msys.bill
 
-import java.util.Currency
-
-import io.suggest.mbill2.m.price.{MPrice, Amount_t}
+import io.suggest.bill.{Amount_t, MCurrency, MPrice}
 
 /**
   * Suggest.io
@@ -22,10 +20,10 @@ object MPaymentFormResult {
 
 case class MPaymentFormResult(
   amount        : Amount_t,
-  currencyCode  : String,
+  currencyCode  : MCurrency,
   comment       : Option[String]
 ) {
 
-  def price = MPrice(amount, Currency.getInstance(currencyCode))
+  def price = MPrice(amount, currencyCode)
 
 }

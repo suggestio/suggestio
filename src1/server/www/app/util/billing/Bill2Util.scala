@@ -1,11 +1,8 @@
 package util.billing
 
-import java.util.Currency
-
 import com.google.inject.{Inject, Singleton}
+import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.dt.MAdvPeriod
-import io.suggest.dt.interval.QuickAdvIsoPeriod
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -16,11 +13,10 @@ import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.model.n2.node.MNodes
 import models.adv.form.MDatesPeriod
-import models.adv.price.MAdvPricing
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
-import models.{CurrencyCodeOpt, IPrice, MNode, MPrice}
-import org.joda.time.{DateTime, Duration, Interval, Period}
+import models.MNode
+import org.joda.time.{DateTime, Duration, Interval}
 import slick.profile.SqlAction
 import util.PlayMacroLogsImpl
 
@@ -260,22 +256,21 @@ class Bill2Util @Inject() (
 
   /** Нулевая цена. */
   def zeroPrice: MPrice = {
-    val curr = Currency.getInstance(CurrencyCodeOpt.CURRENCY_CODE_DFLT)
-    MPrice(0.0, curr)
+    MPrice(0.0, MCurrencies.default)
   }
 
   /** Нулевой прайсинг размещения. */
-  def zeroPricing: MAdvPricing = {
+  def zeroPricing: MGetPriceResp = {
     val prices = Seq(zeroPrice)
-    MAdvPricing(prices, hasEnoughtMoney = true)
+    MGetPriceResp(prices)
   }
   def zeroPricingFut = Future.successful( zeroPricing )
 
 
-  def getAdvPricing(prices: Seq[MPrice]): MAdvPricing = {
+  def getAdvPricing(prices: Seq[MPrice]): MGetPriceResp = {
     // Если есть разные валюты, то операция уже невозможна.
     if (prices.nonEmpty) {
-      MAdvPricing(prices, hasEnoughtMoney = true)
+      MGetPriceResp(prices)
     } else {
       zeroPricing
     }
@@ -316,7 +311,7 @@ class Bill2Util @Inject() (
     mitems.toIterator
       .map { _.price }
       .toSeq
-      .groupBy(_.currency.getCurrencyCode)
+      .groupBy(_.currency)
       .valuesIterator
       .map { prices =>
         prices.head.copy(
@@ -343,7 +338,7 @@ class Bill2Util @Inject() (
     * @param prices Список цен для анализа.
     * @return true, если хотя бы одна цена не бесплатная.
     */
-  def hasPositivePrice(prices: TraversableOnce[IPrice]): Boolean = {
+  def hasPositivePrice(prices: TraversableOnce[MPrice]): Boolean = {
     prices.exists { price =>
       price.amount > 0.0
     }
@@ -431,10 +426,10 @@ class Bill2Util @Inject() (
 
           totalPrices.foldLeft ((balActionsAcc, notEnougtAcc)) {
             case (acc0 @ (enought0, notEnough0), totalPrice) =>
-              import totalPrice.currencyCode
-              balancesMap.get( currencyCode ).fold {
+              import totalPrice.currency
+              balancesMap.get( currency ).fold {
                 // Пока ещё нет такой валюты на балансах юзера. Юзеру нужно оплатить всю стоимость в валюте.
-                LOGGER.trace(s"$logPrefix Balance for currency $currencyCode is missing. Guessing as zero amount.")
+                LOGGER.trace(s"$logPrefix Balance for currency $currency is missing. Guessing as zero amount.")
                 (enought0, totalPrice :: notEnough0)
 
               } { balance0 =>
@@ -442,7 +437,7 @@ class Bill2Util @Inject() (
                 if (balAmount2 < balance0.low) {
                   // Баблишко-то вроде есть, но его не хватает. Юзеру нужно доплатить разность.
                   val needAmount = -balAmount2
-                  LOGGER.trace(s"$logPrefix User needs to pay some money: $needAmount $currencyCode")
+                  LOGGER.trace(s"$logPrefix User needs to pay some money: $needAmount $currency")
                   val needPrice = totalPrice.copy(amount = needAmount)
                   (enought0, needPrice :: notEnough0)
 
@@ -535,12 +530,12 @@ class Bill2Util @Inject() (
     * @param price Общая цена пополнения в валюте.
     * @return DBIOAction создания/обновления кошелька узла.
     */
-  def increaseBalance(orderIdOpt: Option[Gid_t], rcvrContractId: Gid_t, balancesMap: Map[String, MBalance],
+  def increaseBalance(orderIdOpt: Option[Gid_t], rcvrContractId: Gid_t, balancesMap: Map[MCurrency, MBalance],
                       price: MPrice): DBIOAction[MTxn, NoStream, Effect.Write] = {
     lazy val logPrefix = s"increaseBalance($orderIdOpt->$rcvrContractId,$price): "
     // Залить средства на баланс CBCA.
     val cbcaBalanceAction = balancesMap
-      .get( price.currencyCode )
+      .get( price.currency )
       .fold [DBIOAction[MBalance, NoStream, Effect.Write]] {
         val cb0 = MBalance(rcvrContractId, price)
         LOGGER.trace(logPrefix + "Initializing new balance for this currency: " + cb0)
@@ -623,7 +618,7 @@ class Bill2Util @Inject() (
       // Прочитать текущий баланс
       balanceOpt0 <- {
         mBalances
-          .getByContractCurrency(contractId, mitem.price.currencyCode)
+          .getByContractCurrency(contractId, mitem.price.currency)
           .forUpdate
       }
     } yield {
@@ -703,7 +698,7 @@ class Bill2Util @Inject() (
 
       // Запустить обновление полностью на стороне БД.
       mitem2 <- {
-        LOGGER.debug(s"$logPrefix Buyer blocked balance[${balance0.id.orNull}] freed ${mitem0.price.amount}: ${balance0.blocked} => ${usrAmtBlocked2.orNull} ${balance0.price.currencyCode}")
+        LOGGER.debug(s"$logPrefix Buyer blocked balance[${balance0.id.orNull}] freed ${mitem0.price.amount}: ${balance0.blocked} => ${usrAmtBlocked2.orNull} ${balance0.price.currency}")
         val mitem1 = mitem0.copy(
           status = MItemStatuses.Offline,
           dateStatus = DateTime.now()
@@ -741,7 +736,7 @@ class Bill2Util @Inject() (
             // Возможно, транзакции потом будут храниться в elasticsearch, в т.ч. для статистики.
           } yield {
             val mrAmount2 = mrAmount2Opt.get
-            LOGGER.debug(s"$logPrefix Money receiver[${mrInfo.mnode.id.orNull}] contract[${mrInfo.mc.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${price.amount} => $mrAmount2 ${mrBalance0.price.currencyCode}")
+            LOGGER.debug(s"$logPrefix Money receiver[${mrInfo.mnode.id.orNull}] contract[${mrInfo.mc.id.orNull}] balance[${mrBalance0.id.orNull}] updated: ${mrBalance0.blocked} + ${price.amount} => $mrAmount2 ${mrBalance0.price.currency}")
             val mrBalance1 = mrBalance0.copy(
               price = mrBalance0.price.copy(
                 amount = mrAmount2
@@ -765,13 +760,12 @@ class Bill2Util @Inject() (
     * @param currency Валюта баланса.
     * @return Экшен, возвращающий баланс, готовый к обновлению.
     */
-  def ensureBalanceFor(contractId: Gid_t, currency: Currency): DBIOAction[MBalance, NoStream, RW] = {
-    val currencyCode = currency.getCurrencyCode
-    lazy val logPrefix = s"ensureBalanceFor($contractId,$currencyCode):"
+  def ensureBalanceFor(contractId: Gid_t, currency: MCurrency): DBIOAction[MBalance, NoStream, RW] = {
+    lazy val logPrefix = s"ensureBalanceFor($contractId,$currency):"
     for {
       // Считать баланс получателя...
       balanceOpt <- {
-        mBalances.getByContractCurrency(contractId, currencyCode)
+        mBalances.getByContractCurrency(contractId, currency)
           .forUpdate
       }
 
@@ -815,7 +809,7 @@ class Bill2Util @Inject() (
 
       // Отметить item как отказанный в размещении
       mitem2 <- {
-        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price.amount}: ${balance0.price.amount} => $amount2 ${balance0.price.currencyCode}")
+        LOGGER.debug(s"$logPrefix Unlocked user balance[${balance0.id.orNull}] amount ${mitem0.price.amount}: ${balance0.price.amount} => $amount2 ${balance0.price.currency}")
 
         // Чтобы вернуть новый item, не считывая его из таблицы повторно, имитируем его прямо тут...
         val mi2 = mitem0.copy(

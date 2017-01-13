@@ -3,13 +3,14 @@ package util.adv.direct
 import java.{time => jat}
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.bill.MPrice
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models._
-import models.adv.direct.{IAdvTerms, FormResult, AdvFormEntry}
+import models.adv.direct.{AdvFormEntry, FormResult, IAdvTerms}
 import models.blk.{BlockHeights, BlockWidths}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mproj.ICommonDi
@@ -165,7 +166,7 @@ class AdvDirectBilling @Inject() (
         .map(_._1)
         .getOrElse(clauseDflt)
 
-      trace(s"$logPrefix $day -> ${clause4day.name} +${clause4day.amount} ${tf.currencyCode}")
+      trace(s"$logPrefix $day -> ${clause4day.name} +${clause4day.amount} ${tf.currency}")
       clause4day.amount
     }
 

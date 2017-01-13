@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.price
 
+import io.suggest.bill.MPrice
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

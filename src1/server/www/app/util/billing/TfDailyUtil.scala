@@ -3,12 +3,13 @@ package util.billing
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.bill.tariff.daily.{MDailyTf, MDayClause}
-import models.{CurrencyCodeDflt, MNode}
+import models.MNode
 import models.mproj.ICommonDi
 import play.api.data._
 import Forms._
+import io.suggest.bill.MCurrencies
 import io.suggest.model.n2.node.MNodes
-import util.FormUtil.{currencyCodeM, doubleM, esIdM}
+import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -36,7 +37,7 @@ class TfDailyUtil @Inject()(
   def VERY_DEFAULT_FT = {
     val clause = VERY_DEFAULT_WEEKDAY_CLAUSE
     MDailyTf(
-      currencyCode  = CurrencyCodeDflt.currencyCode,
+      currency      = MCurrencies.default,
       clauses       = Map(
         clause.name -> clause
       ),
@@ -59,7 +60,7 @@ class TfDailyUtil @Inject()(
   def tfDailyClausesM = {
     list( optional(tfDailyClauseM) )
       .transform [List[MDayClause]] (
-        _.flatMap(identity(_)),
+        _.flatten,
         _.map(Some.apply)
       )
       .transform [Map[String, MDayClause]] (
@@ -71,7 +72,7 @@ class TfDailyUtil @Inject()(
   /** Маппинг инстанса MDailyTf. */
   def tfDailyM: Mapping[MDailyTf] = {
     mapping(
-      "currencyCode"  -> currencyCodeM,
+      "currencyCode"  -> currencyM,
       "clauses"       -> tfDailyClausesM,
       "comission"     -> optional(doubleM)
     )

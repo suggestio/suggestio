@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.bill.MPrice
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrderWithItems}
 import io.suggest.model.common.OptId

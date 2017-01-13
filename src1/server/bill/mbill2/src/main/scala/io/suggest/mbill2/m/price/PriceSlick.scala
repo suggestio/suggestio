@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.price
 
-import java.util.Currency
+import io.suggest.bill.{Amount_t, MCurrencies, MCurrency, MPrice}
 import io.suggest.common.slick.driver.IDriver
 import slick.lifted.MappedProjection
 
@@ -15,7 +15,7 @@ trait PriceSlick extends IDriver {
   import driver.api._
 
   trait ICurrencyProjection {
-    def currency: MappedProjection[Currency, _]
+    def currency: MappedProjection[MCurrency, _]
   }
 
   /** Аддон для добавления отмаппленного варианта currencyCode. */
@@ -24,8 +24,8 @@ trait PriceSlick extends IDriver {
     def currencyCode: Rep[String]
 
     override def currency = currencyCode <> (
-      Currency.getInstance(_: String),
-      { c: Currency => Some(c.getCurrencyCode) }
+      MCurrencies.withName(_: String),
+      { c: MCurrency => Some(c.currencyCode) }
     )
 
   }
@@ -37,7 +37,7 @@ trait PriceSlick extends IDriver {
     def amount: Rep[Amount_t]
 
     def price = {
-      (amount, currency) <> ((MPrice.apply _).tupled, MPrice.unapply)
+      (amount, currency) <> ((MPrice.apply2 _).tupled, MPrice.unapply2)
     }
 
   }

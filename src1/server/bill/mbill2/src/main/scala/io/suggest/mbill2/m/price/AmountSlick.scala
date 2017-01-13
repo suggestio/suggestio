@@ -1,5 +1,6 @@
 package io.suggest.mbill2.m.price
 
+import io.suggest.bill.Amount_t
 import io.suggest.common.slick.driver.IDriver
 
 /**

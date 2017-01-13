@@ -1,4 +1,4 @@
-@(advPricing: adv.price.IAdvPricing)(implicit ctx: Context)
+@(advPricing: io.suggest.bill.MGetPriceResp)(implicit ctx: Context)
 
 @* Рендер плашки с ценой. *@
 @import ctx.messages
@@ -6,8 +6,4 @@
 
 @for(price <- advPricing.prices) {
   @formatPrice(price)
-}
-
-@if( !advPricing.hasEnoughtMoney ) {
-  (@messages("No.enought.deposit"))
 }

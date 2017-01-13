@@ -1,10 +1,10 @@
 package io.suggest.model.n2.bill.tariff.daily
 
-import java.util.Currency
-
+import io.suggest.bill.MCurrency
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.bill.MCurrenciesJvm.CURRENCY_FORMAT
 
 /**
  * Suggest.io
@@ -20,7 +20,7 @@ object MDailyTf extends IGenEsMappingProps {
 
 
   implicit val FORMAT: OFormat[MDailyTf] = (
-    (__ \ CURRENCY_CODE_FN).format[String] and
+    (__ \ CURRENCY_CODE_FN).format[MCurrency] and
     (__ \ CLAUSES_FN).format[Seq[MDayClause]]
       .inmap [Map[String, MDayClause]] (
         _.iterator.map { v => v.name -> v }.toMap,
@@ -47,7 +47,7 @@ object MDailyTf extends IGenEsMappingProps {
 /**
  * Экземпляр тарифа посуточного размещения на узле.
  *
- * @param currencyCode Валюта тарифа.
+ * @param currency Валюта тарифа.
  * @param clauses Описание дней и их тарификации.
  *                Должна быть хотя бы одна кляуза без календаря, т.е. дефолтовая.
  * @param comissionPc Комиссия suggest.io за размещение.
@@ -55,7 +55,7 @@ object MDailyTf extends IGenEsMappingProps {
  *                    None означает 1.0
  */
 case class MDailyTf(
-  currencyCode  : String,
+  currency      : MCurrency,
   clauses       : ClausesMap_t,
   comissionPc   : Option[Double] = None
 ) {
@@ -72,10 +72,8 @@ case class MDailyTf(
     _err("Too many default clauses with empty calId field.")
 
   override def toString: String = {
-    s"$currencyCode(${clauses.valuesIterator.map(_.amount).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
+    s"$currency(${clauses.valuesIterator.map(_.amount).mkString(";")})-${comissionPc.fold("")(_ + "%%")}"
   }
-
-  def currency = Currency.getInstance(currencyCode)
 
   def calIdsIter: Iterator[String] = {
     clauses

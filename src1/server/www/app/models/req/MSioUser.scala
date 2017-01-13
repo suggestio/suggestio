@@ -2,14 +2,14 @@ package models.req
 
 import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
+import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
-import io.suggest.mbill2.m.price.MPrice
 import io.suggest.model.n2.node.MNodeTypes
 import models.jsm.init.MTarget
 import models.mctx.CtxData
-import models.{CurrencyCodeDflt, MNode, MNodeCache}
+import models.{MNode, MNodeCache}
 import models.event.MEvents
 import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers
@@ -153,7 +153,7 @@ trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
   override def evtsCountFut: Future[Option[Int]] = {
     FutureUtil.optFut2futOpt(personIdOpt) { personId =>
       // TODO Нужно портировать события на MNode и тут искать их.
-      val search = new MEventsSearchArgs(ownerId = Some(personId))
+      val search = MEventsSearchArgs(ownerId = Some(personId))
       for (cnt <- mEvents.dynCount(search)) yield {
         Some(cnt.toInt)
       }
@@ -174,7 +174,7 @@ trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
         balances
       } else {
         // Вернуть эфемерный баланс, пригодный для отображения в шаблонах.
-        val mb = MBalance(-1L, MPrice(0.0, CurrencyCodeDflt.currency))
+        val mb = MBalance(-1L, MPrice(0.0, MCurrencies.default))
         Seq(mb)
       }
     }

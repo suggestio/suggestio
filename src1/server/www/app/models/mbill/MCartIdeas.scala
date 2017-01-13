@@ -1,8 +1,8 @@
 package models.mbill
 
+import io.suggest.bill.MPrice
 import io.suggest.mbill2.m.order.IOrderWithItems
 import io.suggest.mbill2.m.balance.{MBalance => MBalance2}
-import models.MPrice
 
 /**
   * Suggest.io
@@ -22,6 +22,7 @@ object MCartIdeas {
   final case class OrderClosed(cart: IOrderWithItems, newBalances: Seq[MBalance2]) extends Idea
 
   /** Недостаточно бабла для проведения платежа в корзине. */
+  // TODO Зaюзать MGetPriceResp вместо Seq[MPrice]?
   final case class NeedMoney(howMany: Seq[MPrice]) extends Idea
 
 }

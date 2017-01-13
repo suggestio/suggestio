@@ -1,11 +1,11 @@
 package controllers.cbill
 
 import controllers.{SioController, routes}
+import io.suggest.bill.MGetPriceResp
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{MOrderStatuses, OrderStatusChanged}
-import models.adv.price.MAdvPricing
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill.MCartIdeas
 import models.mctx.Context
@@ -133,8 +133,8 @@ trait LkBill2Cart
     val totalPricingFut = for {
       mitems <- mitemsFut
     } yield {
-      MAdvPricing(
-        prices = bill2Util.items2pricesIter(mitems).toIterable
+      MGetPriceResp(
+        prices = bill2Util.items2pricesIter(mitems).toSeq
       )
     }
 

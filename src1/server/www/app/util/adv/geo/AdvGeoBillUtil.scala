@@ -3,6 +3,7 @@ package util.adv.geo
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
+import io.suggest.bill.{MGetPriceResp, MPrice}
 import io.suggest.dt.MAdvPeriodJvm
 import io.suggest.geo.MGeoCircle
 import io.suggest.mbill2.m.gid.Gid_t
@@ -10,9 +11,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.geo.CircleGs
-import models.MPrice
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
-import models.adv.price.MAdvPricing
 import models.mproj.ICommonDi
 import org.joda.time.Interval
 import util.PlayMacroLogsImpl
@@ -139,7 +138,7 @@ class AdvGeoBillUtil @Inject() (
     * @param res Запрашиваемое юзером размещение.
     * @return
     */
-  def getPricing(res: MFormS): Future[MAdvPricing] = {
+  def getPricing(res: MFormS): Future[MGetPriceResp] = {
     lazy val ivl = mAdvPeriodJvm.toJodaInterval( res.datePeriod )
 
     val geoPricesIter = res.radCircle
@@ -170,14 +169,14 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
-  def getPricing(res: MFormS, forceFree: Boolean): Future[MAdvPricing] = {
+  def getPricing(res: MFormS, forceFree: Boolean): Future[MGetPriceResp] = {
     if (forceFree)
       bill2Util.zeroPricingFut
     else
       getPricing(res)
   }
 
-  def getPricing(resOpt: Option[MFormS], forceFree: Boolean): Future[MAdvPricing] = {
+  def getPricing(resOpt: Option[MFormS], forceFree: Boolean): Future[MGetPriceResp] = {
     resOpt.fold {
       bill2Util.zeroPricingFut
     } { res =>

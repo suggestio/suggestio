@@ -1,8 +1,8 @@
 package models.madn.mapf
 
+import io.suggest.bill.MGetPriceResp
 import io.suggest.model.n2.node.MNode
 import models.adv.form.IAdvForAdFormCommonTplArgs
-import models.adv.price.{IAdvPricing, MAdvPricing}
 import play.api.data.Form
 
 /**
@@ -21,7 +21,7 @@ trait IAdnMapTplArgs extends IAdvForAdFormCommonTplArgs {
   def form    : Form[MAdnMapFormRes]
 
   /** Текущая стоимость размещения. */
-  def price   : IAdvPricing
+  def price   : MGetPriceResp
 
 }
 
@@ -30,6 +30,6 @@ trait IAdnMapTplArgs extends IAdvForAdFormCommonTplArgs {
 case class MAdnMapTplArgs(
   override val mnode      : MNode,
   override val form       : Form[MAdnMapFormRes],
-  override val price      : MAdvPricing
+  override val price      : MGetPriceResp
 )
   extends IAdnMapTplArgs

@@ -1,7 +1,7 @@
 package models.adv
 
-import models.adv.price.IAdvPricing
-import models.mbase.{IProducer, IMad}
+import io.suggest.bill.MGetPriceResp
+import models.mbase.{IMad, IProducer}
 
 /**
   * Suggest.io
@@ -26,6 +26,6 @@ trait IAdvFreeForAdCommonTplArgs
 trait IAdvForAdCommonTplArgs extends IAdvFreeForAdCommonTplArgs {
 
   /** Начальная отображаемая цена. */
-  def price: IAdvPricing
+  def price: MGetPriceResp
 
 }

@@ -1,8 +1,8 @@
 package models.adv.direct
 
+import io.suggest.bill.MGetPriceResp
 import models.MNode
 import models.adv.IAdvForAdCommonTplArgs
-import models.adv.price.MAdvPricing
 
 /**
   * Suggest.io
@@ -22,6 +22,6 @@ case class MAdvForAdTplArgs(
   override val mad       : MNode,
   override val producer  : MNode,
   override val formArgs  : IAdvFormTplArgs,
-  override val price     : MAdvPricing
+  override val price     : MGetPriceResp
 )
   extends IAdvForAdTplArgs

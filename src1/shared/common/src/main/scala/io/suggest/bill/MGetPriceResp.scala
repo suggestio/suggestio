@@ -15,7 +15,7 @@ import boopickle.Default._
 object MGetPriceResp {
 
   implicit val pickler: Pickler[MGetPriceResp] = {
-    implicit val priceP = MPrice.pickler
+    implicit val priceP = MPrice.mPriceBp
     generatePickler[MGetPriceResp]
   }
 

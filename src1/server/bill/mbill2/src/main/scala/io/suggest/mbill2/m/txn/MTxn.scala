@@ -1,13 +1,14 @@
 package io.suggest.mbill2.m.txn
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.bill.Amount_t
 import io.suggest.common.slick.driver.ExPgSlickDriverT
-import io.suggest.mbill2.m.balance.{FindByBalanceId, MBalances, BalanceIdInxSlick, BalanceIdFkSlick}
+import io.suggest.mbill2.m.balance.{BalanceIdFkSlick, BalanceIdInxSlick, FindByBalanceId, MBalances}
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.gid.{IGid, GetById, Gid_t, GidSlick}
-import io.suggest.mbill2.m.item.{MItems, ItemIdOptInxSlick, ItemIdOptFkSlick, ItemIdOptSlick}
-import io.suggest.mbill2.m.order.{MOrders, OrderIdOptInxSlick, OrderIdOptFkSlick, OrderIdOptSlick}
-import io.suggest.mbill2.m.price.{Amount_t, AmountSlick}
+import io.suggest.mbill2.m.gid.{GetById, GidSlick, Gid_t, IGid}
+import io.suggest.mbill2.m.item.{ItemIdOptFkSlick, ItemIdOptInxSlick, ItemIdOptSlick, MItems}
+import io.suggest.mbill2.m.order.{MOrders, OrderIdOptFkSlick, OrderIdOptInxSlick, OrderIdOptSlick}
+import io.suggest.mbill2.m.price.AmountSlick
 import io.suggest.mbill2.util.PgaNamesMaker
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape

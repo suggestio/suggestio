@@ -1,13 +1,12 @@
 package util.adn.mapf
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.bill.{MGetPriceResp, MPrice}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.geo.PointGs
-import models.MPrice
-import models.adv.price.MAdvPricing
 import models.madn.mapf.MAdnMapFormRes
 import models.mproj.ICommonDi
 import util.billing.Bill2Util
@@ -76,14 +75,14 @@ class LkAdnMapBillUtil @Inject() (
   // TODO Подумать на тему максимум одной покупки и отката других adn-map размещений ПОСЛЕ оплаты.
 
   /** Рассчёт ценника размещения. */
-  def getPricing(formRes: MAdnMapFormRes, isSuFree: Boolean): Future[MAdvPricing] = {
+  def getPricing(formRes: MAdnMapFormRes, isSuFree: Boolean): Future[MGetPriceResp] = {
     if (isSuFree) {
       bill2Util.zeroPricingFut
     } else {
       getPricing(formRes)
     }
   }
-  def getPricing(formRes: MAdnMapFormRes): Future[MAdvPricing] = {
+  def getPricing(formRes: MAdnMapFormRes): Future[MGetPriceResp] = {
     val price = getPrice(formRes)
     val pricing = bill2Util.getAdvPricing(Seq(price))
     Future.successful(pricing)

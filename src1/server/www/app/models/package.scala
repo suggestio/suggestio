@@ -1,5 +1,4 @@
 import controllers.routes
-import io.suggest.model.geo
 import io.suggest.model.n2
 import io.suggest.ym
 import models.usr.EmailPwConfirmInfo
@@ -139,10 +138,6 @@ package object models {
 
   val  MEntity              = n2.ad.ent.MEntity
   type MEntity              = n2.ad.ent.MEntity
-
-  type IPrice               = io.suggest.mbill2.m.price.IPrice
-  type MPrice               = io.suggest.mbill2.m.price.MPrice
-  val  MPrice               = io.suggest.mbill2.m.price.MPrice
 
   type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MDailyTf
   type MContract            = io.suggest.mbill2.m.contract.MContract

@@ -1,11 +1,10 @@
 package util
 
 import java.text.{DecimalFormat, NumberFormat}
-import java.util.Currency
 
+import io.suggest.bill.{MCurrencies, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.text.StringUtil
-import io.suggest.mbill2.m.price.{IPrice, MPrice}
 import models.mctx.Context
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{ReadableInstant, ReadablePartial}
@@ -114,9 +113,9 @@ object TplDataFormatUtil {
     priceStr.replace('\u0020', NBSP)
   }
 
-  def formatPrice(price: IPrice)(implicit ctx: Context): String = {
+  def formatPrice(price: MPrice)(implicit ctx: Context): String = {
     val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
-    currFmt.setCurrency(price.currency)
+    currFmt.setCurrency(price.currency.toJavaCurrency)
     val currencySymbol = formatCurrency(price.currency)
     val dcs = currFmt.getDecimalFormatSymbols
     dcs.setCurrencySymbol(currencySymbol)
@@ -129,14 +128,14 @@ object TplDataFormatUtil {
   }
 
   /** Напечатать цену согласно локали и валюте. */
-  def formatPrice(price: Float, currency: Currency)(implicit ctx: Context): String = {
+  def formatPrice(price: Float, currency: MCurrency)(implicit ctx: Context): String = {
     formatPrice(price.toDouble, currency)
   }
-  def formatPrice(price: Double, currency: Currency)(implicit ctx: Context): String = {
+  def formatPrice(price: Double, currency: MCurrency)(implicit ctx: Context): String = {
     formatPrice( MPrice(price, currency) )
   }
   def formatPrice(price: Double, currencyCode: String)(implicit ctx: Context): String = {
-    formatPrice(price, Currency.getInstance(currencyCode))
+    formatPrice(price, MCurrencies.withName(currencyCode))
   }
 
   /** Рендер целого числа. */
@@ -166,14 +165,14 @@ object TplDataFormatUtil {
 
 
   /** Отформатировать валюту. */
-  def formatCurrency(currency: Currency)(implicit ctx: Context): String = {
+  def formatCurrency(currency: MCurrency)(implicit ctx: Context): String = {
     // TODO Надо бы дедублицировать это с частями formatPrice()
     val lang = ctx.messages.lang
-    currency.getCurrencyCode match {
+    currency.currencyCode match {
       case "RUB" if lang.language == "ru" =>
         "р."    // Заменяем "руб." на "р."
       case other =>
-        currency.getSymbol(lang.toLocale)
+        currency.toJavaCurrency.getSymbol(lang.toLocale)
     }
   }
 

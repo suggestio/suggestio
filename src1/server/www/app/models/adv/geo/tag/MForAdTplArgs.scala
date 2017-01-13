@@ -1,9 +1,9 @@
 package models.adv.geo.tag
 
+import io.suggest.bill.MGetPriceResp
 import models.MNode
 import models.adv.IAdvForAdCommonTplArgs
 import models.adv.form.IAdvForAdFormCommonTplArgs
-import models.adv.price.IAdvPricing
 
 /**
   * Suggest.io
@@ -25,7 +25,7 @@ trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplAr
 case class MForAdTplArgs(
                           override val mad              : MNode,
                           override val producer         : MNode,
-                          override val price            : IAdvPricing,
+                          override val price            : MGetPriceResp,
                           override val formState        : String
                         )
   extends IForAdTplArgs

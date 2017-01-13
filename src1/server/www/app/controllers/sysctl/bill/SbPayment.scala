@@ -7,7 +7,7 @@ import models.req.INodeContractReq
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.mvc.Result
-import util.FormUtil.{currencyCodeOrDfltM, doubleM, toStrOptM}
+import util.FormUtil.{currencyOrDfltM, doubleM, toStrOptM}
 import util.PlayMacroLogsI
 import util.acl.IsSuNodeContract
 import util.billing.IBill2UtilDi
@@ -36,7 +36,7 @@ trait SbPayment
     Form(
       mapping(
         AMOUNT_FN         -> doubleM,
-        CURRENCY_CODE_FN  -> currencyCodeOrDfltM,
+        CURRENCY_CODE_FN  -> currencyOrDfltM,
         COMMENT_FN        -> toStrOptM( text(maxLength = 256) )
       )
       { MPaymentFormResult.apply }

@@ -1,8 +1,8 @@
 package util
 
 import java.net.{MalformedURLException, URL}
-import java.util.Currency
 
+import io.suggest.bill.{MCurrencies, MCurrency}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.geo.MGeoPoint
@@ -434,20 +434,21 @@ object FormUtil {
     pgi.toString.replaceAll("0([.,]0+)?\\s+[a-z]+", "").trim
   }
 
-  def currencyCodeM: Mapping[String] = {
+  def currencyOptM: Mapping[Option[MCurrency]] = {
     text(minLength = 3, maxLength = 3)
       .transform[String](_.toUpperCase, identity)
-      .verifying("error.currency.code", {cc =>
-        try {
-          Currency.getInstance(cc)
-          true
-        } catch {
-          case ex: Exception => false
-        }
-      })
+      .transform[Option[MCurrency]](
+        MCurrencies.withNameOption,
+        _.fold("")(_.currencyCode)
+      )
   }
-  def currencyCodeOrDfltM: Mapping[String] = {
-    default(currencyCodeM, CurrencyCodeOpt.CURRENCY_CODE_DFLT)
+  def currencyM: Mapping[MCurrency] = {
+    currencyOptM
+      .verifying("error.currency.code", _.nonEmpty)
+      .transform[MCurrency]( EmptyUtil.getF, EmptyUtil.someF )
+  }
+  def currencyOrDfltM: Mapping[MCurrency] = {
+    default(currencyM, MCurrencies.default)
   }
 
 
