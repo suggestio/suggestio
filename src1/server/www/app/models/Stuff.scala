@@ -1,8 +1,6 @@
 package models
 
 import models.mctx.Context
-import play.api.mvc.{RequestHeader, Call}
-import play.mvc.Http.Request
 import play.twirl.api.Html
 
 /**
@@ -39,28 +37,6 @@ object LkLeftPanelLinks extends Enumeration {
   type T = Value
   val LPL_NODE, LPL_ADS, LPL_BILLING, LPL_SUPPORT, LPL_EVENTS  =  Value : T
 }
-
-
-/**
- * Экземпляр хранит вызов к внешнему серверу. Кроме как для индикации этого факта, класс ни для чего
- * больше не используется.
- * @param url Ссылка для вызова.
- * @param method - Обычно "GET", который по умолчанию и есть.
- */
-class ExternalCall(
-  url     : String,
-  method  : String = "GET"
-)
-  extends Call(method = method, url = url)
-{
-
-  override def absoluteURL(secure: Boolean)(implicit request: RequestHeader): String = url
-  override def absoluteURL(request: Request): String = url
-  override def absoluteURL(request: Request, secure: Boolean): String = url
-  override def absoluteURL(secure: Boolean, host: String): String = url
-
-}
-
 
 
 /** Интерфейс для возможности задания моделей, умеющих рендер в html. */

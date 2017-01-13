@@ -114,7 +114,8 @@ object TplDataFormatUtil {
   }
 
   def formatPrice(price: MPrice)(implicit ctx: Context): String = {
-    val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
+    val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
+      .asInstanceOf[DecimalFormat]
     currFmt.setCurrency(price.currency.toJavaCurrency)
     val currencySymbol = formatCurrency(price.currency)
     val dcs = currFmt.getDecimalFormatSymbols
@@ -149,17 +150,32 @@ object TplDataFormatUtil {
     Html(formatInt(number).replaceAll(" ", "&nbsp;"))
   }
 
-  // Пока локали не поддерживаются, используется один форматтер на всех.
-  def formatPriceDigits(price: Float)(implicit ctx: Context): String = {
+  /**
+    * Форматирование amount стоимости в строку БЕЗ символа валюты.
+    * @param mprice Сумма.
+    * @param ctx Контекст рендера.
+    * @return Строка вида "10 034"
+    */
+  def formatPriceAmount(mprice: MPrice)(implicit ctx: Context): String = {
     val formatPriceDigitsDF = {
-      val currFmt = NumberFormat.getCurrencyInstance.asInstanceOf[DecimalFormat]
-      val dcf = currFmt.getDecimalFormatSymbols
-      dcf.setCurrencySymbol("")
-      currFmt.setDecimalFormatSymbols(dcf)
-      currFmt.setGroupingUsed( price >= NUMBER_GROUPING_THRESHOLD )
+      val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
+        .asInstanceOf[DecimalFormat]
+      val dcs = currFmt.getDecimalFormatSymbols
+      currFmt.setCurrency( mprice.currency.toJavaCurrency )
+      dcs.setCurrencySymbol("")
+      dcs.setGroupingSeparator(NBSP)
+      currFmt.setDecimalFormatSymbols(dcs)
+      currFmt.setGroupingUsed( mprice.amount >= NUMBER_GROUPING_THRESHOLD )
+      // Рендерить 99.31, 100.5, 5421 без копеек.
+      currFmt.setMaximumFractionDigits(
+        if (mprice.amount < 100) 2
+        else if (mprice.amount < 1000) 1
+        else 0
+      )
       currFmt
     }
-    val formatted = formatPriceDigitsDF.format(price)
+    val formatted = formatPriceDigitsDF.format(mprice.amount)
+      .trim
     pricePostprocess(formatted)
   }
 

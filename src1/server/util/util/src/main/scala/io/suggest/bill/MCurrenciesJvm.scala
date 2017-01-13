@@ -11,7 +11,7 @@ import play.api.libs.functional.syntax._
   */
 object MCurrenciesJvm {
 
-  /** Поддержка форматирования валюты. */
+  /** Поддержка play JSON для инстансов MCurrencies. */
   implicit val CURRENCY_FORMAT: Format[MCurrency] = {
     __.format[String]
       .inmap[MCurrency](

@@ -33,7 +33,7 @@ import org.joda.time.LocalDate
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import util.PlayMacroLogsImpl
+import util.{PlayMacroLogsImpl, TplDataFormatUtil}
 import util.acl.{CanAccessItem, CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
@@ -356,63 +356,38 @@ class LkAdvGeo @Inject() (
   def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async(formPostBP) { implicit request =>
     lazy val logPrefix = s"getPriceSubmit($adId):"
 
-    advGeoFormUtil.validateForm( request.body ).fold [Future[Result]] (
-      { violations =>
+    advGeoFormUtil.validateForm( request.body ).fold(
+      {violations =>
         LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
         NotAcceptable( violations.toString )
       },
-      { mFormS =>
+      {mFormS =>
         LOGGER.debug(s"$logPrefix request body =\n $mFormS")
         val isSuFree = advFormUtil.maybeFreeAdv()
 
-        // Надо обратиться к биллингу за рассчётом ценника...
-        val advPricingFut = advGeoBillUtil.getPricing(mFormS, isSuFree)
+        // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
+        val pricingFut = advGeoBillUtil.getPricing(mFormS, isSuFree)
 
-
-        ???
-      }
-    )
-
-    /*advGeoFormUtil.formTolerant.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        val err = MError(
-          msg = Some("Failed to bind form")
-        )
-        NotAcceptable( Json.toJson(err) )
-      },
-
-      {result =>
-        val isSuFree = advFormUtil.maybeFreeAdv()
-        val advPricingFut = advGeoBillUtil.getPricing(result, isSuFree)
-
+        // Для рендера потребуется контекст, собираем его...
         implicit val ctx = implicitly[Context]
 
-        // Запустить рендер ценника размещаемого контента
-        val pricingHtmlFut = for {
-          advPricing <- advPricingFut
-        } yield {
-          LOGGER.trace(s"$logPrefix pricing => $advPricing, isSuFree = $isSuFree")
-          val html = _priceValTpl(advPricing)(ctx)
-          htmlCompressUtil.html2str4json(html)
-        }
-
-        // Отрендерить данные по периоду размещения
-        val periodReportHtml = htmlCompressUtil.html2str4json {
-          _reportTpl(result.period)(ctx)
-        }
-
         for {
-          pricingHtml <- pricingHtmlFut
+          pricing <- pricingFut
         } yield {
-          val resp = GetPriceResp(
-            periodReportHtml  = periodReportHtml,
-            priceHtml         = pricingHtml
+          // Нужно здесь отрендерить amount для каждой суммы, т.к. на стороне scala.js это геморно.
+          val pricing2 = pricing.withPrices(
+            for (mprice <- pricing.prices) yield {
+              val amountStr = TplDataFormatUtil.formatPriceAmount(mprice)(ctx)
+              mprice.withValueStrOpt( Some(amountStr) )
+            }
           )
-          Ok( Json.toJson(resp) )
+          // Сериализация результата.
+          LOGGER.trace(s"$logPrefix => $pricing2")
+          val bbuf = PickleUtil.pickle(pricing2)
+          Ok( ByteString(bbuf) )
         }
       }
-    )*/
+    )
   }
 
 

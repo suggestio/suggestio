@@ -90,8 +90,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       val adId = adIdRW.value
       val mFormS = mFormDataRO.value
       for (resp <- API.getPrice(adId, mFormS)) yield {
-        // TODO Реализовать обработку ответа
-        SetPrice(resp.toString)
+        SetPrice(resp)
       }
     }
   }

@@ -2,6 +2,7 @@ package io.suggest.lk.adv.geo.a
 
 import io.suggest.adv.geo.{MGeoAdvExistPopupResp, MRcvrPopupResp}
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.bill.MGetPriceResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.spa.DAction
@@ -50,7 +51,7 @@ case class SetMapCenter(override val geoPoint: MGeoPoint) extends ISetMapCenter
 
 
 /** Выставить новое значение стоимости размещения. */
-case class SetPrice(price: String) extends IAdvGeoFormAction
+case class SetPrice(pricing: MGetPriceResp) extends IAdvGeoFormAction
 
 
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */

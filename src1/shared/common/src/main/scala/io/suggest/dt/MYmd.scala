@@ -29,7 +29,7 @@ object MYmd {
 
   implicit object MYmdOrd extends Ordering[MYmd] {
     override def compare(x: MYmd, y: MYmd): Int = {
-      if (x < y) -1 else if (x > y) 1 else 0
+      x.sortKey - y.sortKey
     }
   }
 
@@ -51,5 +51,8 @@ case class MYmd(
   override def toString: String = {
     MYmd.ymdToStringStd(this)
   }
+
+  /** Целочисленный ключ для сортировки. */
+  def sortKey = (year - 2016) * 365 + month * 12 + day
 
 }

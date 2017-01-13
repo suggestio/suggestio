@@ -2,7 +2,7 @@ package util.cdn
 
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
-import models.ExternalCall
+import io.suggest.playx.ExternalCall
 import models.mctx.Context
 import models.im.{MImg3, MImgT}
 import play.api.Configuration

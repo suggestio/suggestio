@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.r
 
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp, MRcvrPopupResp}
+import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
@@ -88,11 +89,12 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
   }
 
   /** Запросить у сервера рассчёт цены. */
-  override def getPrice(adId: String, mFormS: MFormS): Future[_] = {
+  override def getPrice(adId: String, mFormS: MFormS): Future[MGetPriceResp] = {
     val route = jsRoutes.controllers.LkAdvGeo.getPriceSubmit(adId)
     val bbuf = PickleUtil.pickle(mFormS)
-    // TODO Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
-    Xhr.requestBinary(route, bbuf)
+    Xhr.unBooPickleResp[MGetPriceResp] {
+      Xhr.requestBinary(route, bbuf)
+    }
   }
 
 }

@@ -28,4 +28,12 @@ object MGetPriceResp {
   */
 case class MGetPriceResp(
                           prices: Seq[MPrice]
-                        )
+                        ) {
+
+  def withPrices(prices2: Seq[MPrice]) = copy(prices = prices2)
+
+  override def toString: String = {
+    prices.mkString("$[", ",", "]")
+  }
+
+}

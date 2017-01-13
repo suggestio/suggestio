@@ -47,7 +47,7 @@ object MPrice {
   }
 
   /** Вернуть строковое значение цены без какой-либо валюты. */
-  def valueStr(m: MPrice): String = {
+  def amountStr(m: MPrice): String = {
     m.valueStrOpt
       .getOrElse( "%1.2f".format(m.amount) )
   }
@@ -82,7 +82,7 @@ case class MPrice(
   def withValueStrOpt(valueStrOpt2: Option[String]) = copy(valueStrOpt = valueStrOpt2)
 
   override def toString: String = {
-    amount + currency.currencyCode
+    MPrice.amountStr(this) + currency.currencyCode
   }
 
 }
