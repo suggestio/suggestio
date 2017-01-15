@@ -50,10 +50,6 @@ case class InstallRcvrMarkers(rcvrMarkers: js.Array[Marker]) extends IAdvGeoForm
 case class SetMapCenter(override val geoPoint: MGeoPoint) extends ISetMapCenter
 
 
-/** Выставить новое значение стоимости размещения. */
-case class SetPrice(pricing: MGetPriceResp) extends IAdvGeoFormAction
-
-
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */
 case object CurrGeoAdvsInit extends IAdvGeoFormAction
 /** Выставить указанные данные размещения в состояние. */

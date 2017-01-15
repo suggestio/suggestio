@@ -5,6 +5,7 @@ import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormInit
 import io.suggest.bin.ConvCodecs
+import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.geo.rad.RadAh
@@ -14,7 +15,7 @@ import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.lk.adv.r.Adv4FreeActionHandler
+import io.suggest.lk.adv.m.SetPrice
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
@@ -100,8 +101,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   override protected val actionHandler: HandlerFunction = {
 
     val rcvrRW  = zoomRW(_.rcvr) { _.withRcvr(_) }
-
-
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }
 
     val mmapRW  = zoomRW(_.mmap) { _.withMapState(_) }
@@ -140,14 +139,16 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       priceUpdateFx = priceUpdateEffect
     )
 
-    val adv4freeAh = new Adv4FreeActionHandler(
+    val adv4freeAh = new Adv4FreeAh(
+      // Для оптимального подхвата Option[] используем zoomMap:
       modelRW = zoomMapRW(_.adv4free)(_.checked) { (m, checkedOpt) =>
         m.withAdv4Free(
           for (a4f0 <- m.adv4free; checked2 <- checkedOpt) yield {
             a4f0.withChecked(checked2)
           }
         )
-      }
+      },
+      priceUpdateFx = priceUpdateEffect
     )
 
     val geoAdvRW = zoomRW(_.geoAdv) { _.withCurrGeoAdvs(_) }
@@ -174,9 +175,14 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       priceUpdateFx = priceUpdateEffect
     )
 
+    val priceAh = new PriceAh(
+      modelRW = otherRW.zoomRW(_.priceResp) { _.withPriceResp(_) }
+    )
+
     // Склеить все handler'ы.
     val h1 = composeHandlers(
       radAh,
+      priceAh,
       rcvrsMarkerPopupAh, rcvrInputsAh,
       geoAdvsPopupAh,
       tagsAh,

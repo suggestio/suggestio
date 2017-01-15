@@ -1,10 +1,12 @@
 package io.suggest.lk.adv.r
 
-import diode.{ActionHandler, ActionResult, ModelRW}
-import diode.react.ModelProxy
+import diode._
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.free.MAdv4Free
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.lk.adv.m.SetAdv4Free
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -13,74 +15,67 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 07.12.16 18:17
   * Description: Реализация reusable-компонента поддержки бесплатного размещения для суперюзеров.
+  *
+  * Реализована для использования с помощью react-diode M.wrap().
   */
 object Adv4FreeR {
 
-  type Props = ModelProxy[MAdv4Free]
+  type Props = ModelProxy[Option[MAdv4Free]]
 
+  /** Состояние является просто коннекшеном до значения галочки в опциональных пропертисах. */
+  protected[this] type State = /*checkedConn: */ ReactConnectProxy[Option[Boolean]]
 
-  protected class Backend($: BackendScope[Props, Unit]) {
+  protected class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на изменение состояния галочки. */
     def onChange(e: ReactEventI): Callback = {
       val v2 = e.target.checked
       $.props >>= { props =>
-        props.dispatchCB(Adv4FreeChanged(v2))
+        props.dispatchCB(SetAdv4Free(v2))
       }
     }
 
-    def render(props: Props): ReactElement = {
-      val v = props()
-      <.div(
-        ^.`class` := Css.Lk.Adv.Su.CONTAINER,
+    def render(props: Props, checkedOptConn: State): ReactElement = {
+      for (v <- props()) yield {
+        <.div(
+          ^.`class` := Css.Lk.Adv.Su.CONTAINER,
 
-        <.label(
-          <.input(
-            ^.`type`    := "checkbox",
-            ^.name      := v.static.fn,
-            ^.checked   := v.checked,
-            ^.onChange ==> onChange
-          ),
-          <.span(
-            ^.`class` := Css.Input.STYLED_CHECKBOX
-          ),
-          <.span(
-            ^.`class` := (Css.Input.CHECKBOX_TITLE :: Css.Buttons.MAJOR :: Nil).mkString(" "),
-            v.static.title
+          <.label(
+            // Единственная динамическая часть компонента: input-галочка
+            checkedOptConn { checkedOptProx =>
+              for (checked <- checkedOptProx()) yield {
+                <.input(
+                  ^.`type`    := "checkbox",
+                  ^.name      := v.static.fn,
+                  ^.checked   := checked,
+                  ^.onChange ==> onChange
+                ): ReactElement
+              }
+            },
+            <.span(
+              ^.`class` := Css.Input.STYLED_CHECKBOX
+            ),
+            <.span(
+              ^.`class` := (Css.Input.CHECKBOX_TITLE :: Css.Buttons.MAJOR :: Nil)
+                .mkString( HtmlConstants.SPACE ),
+              v.static.title
+            )
           )
-        )
-      )
+        ): ReactElement
+      }
     }
 
   }
 
   val component = ReactComponentB[Props]("Adv4Free")
-    .stateless
+    .initialState_P { p =>
+      // Коннекшен каждый раз генерит новый инстанс Option[Boolean], но это оптимизируется с помощью ValueEq O(1):
+      // теперь паразитный рендер подавляется, несмотря на постоянную пересборку результата zoom-функции.
+      p.connect( _.map(_.checked) )( FastEq.ValueEq )
+    }
     .renderBackend[Backend]
     .build
 
   def apply(props: Props) = component(props)
 
-}
-
-
-/** Сигнал-экшен для diode-системы об изменении состояния галочки su-бесплатного размещения. */
-case class Adv4FreeChanged(checked: Boolean) extends DAction
-
-
-/**
-  * Diode Action handler для реакции на галочку бесплатного размещения для суперюзеров.
-  * Зуммировать доступ желательно прямо до поля галочки.
-  */
-class Adv4FreeActionHandler[M](modelRW: ModelRW[M, Option[Boolean]]) extends ActionHandler(modelRW) {
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-    case e: Adv4FreeChanged =>
-      val checked0 = value.contains(true)
-      val checked2 = e.checked
-      if (checked0 != checked2) {
-        updated( Some(checked2) )
-      } else {
-        noChange
-      }
-  }
 }

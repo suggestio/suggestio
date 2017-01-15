@@ -49,7 +49,6 @@ object AdvGeoFormR extends Log {
     * [[https://github.com/scala/scala/pull/4017]]
     */
   case class State(
-                    adv4freeConn        : ReactConnectProxy[Option[MAdv4Free]],
                     onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
                     rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
                     rcvrPopupConn       : ReactConnectProxy[MRcvr],
@@ -76,14 +75,13 @@ object AdvGeoFormR extends Log {
 
     /** Рендер всея формы. */
     def render(p: Props, s: State) = {
-      // без <form>, т.к. форма теперь сущетсвует на уровне JS в состояние diode.
+      // без <form>, т.к. форма теперь сущетсвует на уровне JS в состоянии diode.
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
-        s.adv4freeConn { prox =>
-          for (_ <- prox()) yield {
-            Adv4FreeR(prox.zoom(_.get))
-          }
+        // Галочка бесплатного размещения для суперюзеров.
+        p.wrap(_.adv4free) { a4fOptProx =>
+          Adv4FreeR(a4fOptProx)
         },
 
         // Верхняя половина, левая колонка:
@@ -147,9 +145,6 @@ object AdvGeoFormR extends Log {
   protected val component = ReactComponentB[Props]("AdvGeoForm")
     .initialState_P { p =>
       State(
-        adv4freeConn    = {
-          p.connect(_.adv4free)
-        },
         onMainScrConn   = p.connect { mroot =>
           OnMainScreenR.PropsVal(
             mroot.other.onMainScreen

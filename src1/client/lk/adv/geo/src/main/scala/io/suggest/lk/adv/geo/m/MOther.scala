@@ -1,6 +1,8 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
+import diode.data.Pot
+import io.suggest.bill.MGetPriceResp
 
 /**
   * Suggest.io
@@ -31,12 +33,15 @@ object MOther {
   *                     Передаётся на сервер внутри URL.
   *
   * @param onMainScreen Текущее Состояние галочки размещения на главном экране.
+  * @param priceResp Состояние ответа на запрос стоимости размещения.
   */
 case class MOther(
   adId          : String,
-  onMainScreen  : Boolean   = true
+  onMainScreen  : Boolean             = true,
+  priceResp     : Pot[MGetPriceResp]  = Pot.empty
 ) {
 
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
+  def withPriceResp(priceResp2: Pot[MGetPriceResp]) = copy(priceResp = priceResp2)
 
 }
