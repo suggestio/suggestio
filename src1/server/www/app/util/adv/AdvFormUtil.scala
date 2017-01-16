@@ -3,17 +3,20 @@ package util.adv
 import com.google.inject.Singleton
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
+import io.suggest.bill.MGetPriceResp
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.model.geo.{CircleGs, Distance}
 import models.adv.form._
 import models.maps.{MapViewState, RadMapValue}
+import models.mctx.Context
 import models.req.{IReq, IReqHdr}
 import org.elasticsearch.common.unit.DistanceUnit
 import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data.{Form, _}
+import util.TplDataFormatUtil
 
 /**
  * Suggest.io
@@ -148,6 +151,17 @@ class AdvFormUtil {
     RadMapValue(
       state = MapViewState(gp),
       circle = CircleGs(gp, radius = Distance(10000, DistanceUnit.METERS))
+    )
+  }
+
+
+  /** Нужно здесь отрендерить amount для каждой суммы, т.к. на стороне scala.js это геморно. */
+  def prepareAdvPricing(pricing: MGetPriceResp)(implicit ctx: Context): MGetPriceResp = {
+    pricing.withPrices(
+      for (mprice <- pricing.prices) yield {
+        val amountStr = TplDataFormatUtil.formatPriceAmount(mprice)
+        mprice.withValueStrOpt( Some(amountStr) )
+      }
     )
   }
 

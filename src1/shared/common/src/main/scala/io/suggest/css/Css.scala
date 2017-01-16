@@ -21,6 +21,10 @@ object Css {
   def VALUE     = "value"
   def HIDDEN    = "hidden"
 
+  object Text {
+    def CENTERED = "centered"
+  }
+
   object Lk {
 
     def PREFIX = "lk-"

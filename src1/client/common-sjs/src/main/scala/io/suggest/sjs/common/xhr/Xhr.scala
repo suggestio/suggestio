@@ -27,11 +27,17 @@ import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArrayBuffer}
   */
 object Xhr {
 
+  object RespTypes {
+    def ARRAY_BUF = "arraybuffer"
+    def ANY       = ""
+  }
+
   def MIME_JSON           = "application/json"
   def MIME_TEXT_HTML      = "text/html"
   def MIME_OCTET_STREAM   = "application/octet-stream"
 
   def HDR_ACCEPT          = "Accept"
+  def HDR_LOCATION        = "Location"
   def HDR_CONTENT_TYPE    = "Content-Type"
   def HDR_CONTENT_LENGHT  = "Content-Lenght"
   def HDR_CONNECTION      = "Connection"
@@ -115,17 +121,22 @@ object Xhr {
     *         [[io.suggest.sjs.common.xhr.ex.XhrUnexpectedRespStatusException]] когда статус ответа не подпадает под критерий.
     */
   def successIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
+    successIfStatusF( httpStatuses.contains )(xhrFut)
+  }
+  def successIf200(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
+    successIfStatus( HttpStatuses.OK )(xhrFut)
+  }
+  def successIf30(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
+    successIfStatusF(_ / 10 == 30)(xhrFut)
+  }
+  def successIfStatusF(isOkF: Int => Boolean)(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
     for (xhr <- xhrFut) yield {
-      if (httpStatuses.contains(xhr.status)) {
+      if ( isOkF(xhr.status) ) {
         xhr
       } else {
         throw XhrUnexpectedRespStatusException(xhr)
       }
     }
-  }
-
-  def successIf200(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
-    successIfStatus( HttpStatuses.OK )(xhrFut)
   }
 
   def someIfStatus(httpStatuses: Int*)(xhrFut: Future[XMLHttpRequest]): Future[Option[XMLHttpRequest]] = {
@@ -188,17 +199,28 @@ object Xhr {
     * @return Фьючерс с блобом.
     */
   def requestBinary(route: Route, body: Ajax.InputData = null): Future[ByteBuffer] = {
-    val fut = dom.ext.Ajax(
+    respAsBinary {
+      successIf200 {
+        sendBinary(route, body, "arraybuffer")
+      }
+    }
+  }
+
+  def sendBinary(route: Route, body: Ajax.InputData, respType: String): Future[XMLHttpRequest] = {
+    dom.ext.Ajax(
       method          = route.method,
       url             = route2url(route),
       data            = body.asInstanceOf[Ajax.InputData],
       timeout         = 0,
       headers         = Map(HDR_CONTENT_TYPE -> MIME_OCTET_STREAM),
       withCredentials = false,
-      responseType    = "arraybuffer"
+      responseType    = respType
     )
-    for (resp <- successIf200(fut)) yield {
-      TypedArrayBuffer.wrap( resp.response.asInstanceOf[ArrayBuffer] )
+  }
+
+  def respAsBinary(xhrFut: Future[XMLHttpRequest]): Future[ByteBuffer] = {
+    for (xhr <- xhrFut) yield {
+      TypedArrayBuffer.wrap( xhr.response.asInstanceOf[ArrayBuffer] )
     }
   }
 

@@ -39,7 +39,10 @@ trait ILkAdvGeoApi extends ITagsApi {
   def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp]
 
   /** Запросить у сервера рассчёт цены. */
-  def getPrice(adId: String, mFormS: MFormS): Future[_]
+  def getPrice(adId: String, mFormS: MFormS): Future[MGetPriceResp]
+
+  /** Окончательный сабмит формы георазмещения. */
+  def formSubmit(adId: String, mFormS: MFormS): Future[String]
 
 }
 
@@ -94,6 +97,17 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     val bbuf = PickleUtil.pickle(mFormS)
     Xhr.unBooPickleResp[MGetPriceResp] {
       Xhr.requestBinary(route, bbuf)
+    }
+  }
+
+  override def formSubmit(adId: String, mFormS: MFormS): Future[String] = {
+    val route = jsRoutes.controllers.LkAdvGeo.forAdSubmit(adId)
+    val bbuf = PickleUtil.pickle(mFormS)
+    val fut = Xhr.successIf200 {
+      Xhr.sendBinary(route, bbuf, Xhr.RespTypes.ANY)
+    }
+    for (xhr <- fut) yield {
+      xhr.responseText
     }
   }
 

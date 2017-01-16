@@ -185,7 +185,9 @@ class LkAdvGeo @Inject() (
       //lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
 
       // Считаем в фоне начальный ценник для размещения...
-      val advPricingFut = formFut.flatMap( advGeoBillUtil.getPricing )
+      val advPricingFut = formFut
+        .flatMap { advGeoBillUtil.getPricing(_, _isSuFree) }
+        .map { advFormUtil.prepareAdvPricing }
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
       val formStateSerFut: Future[String] = for {
@@ -232,38 +234,22 @@ class LkAdvGeo @Inject() (
    * @param adId id размещаемой карточки.
    * @return 302 see other, 416 not acceptable.
    */
-  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.PersonNode).async { implicit request =>
+  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.PersonNode).async(formPostBP) { implicit request =>
     lazy val logPrefix = s"forAdSubmit($adId):"
 
-    /*advGeoFormUtil.formStrict.bindFromRequest().fold(
-      {formWithErrors =>
-        // Запустить инициализацию U.Lk в фоне:
-        request.user.lkCtxDataFut
-        // Логгировать сразу, чтобы сообщения в логах не перемешивались.
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        // Повторный биндинг с NoStrict-формой -- костыль для решения проблем с рендером локализованных
-        // дат размещения. Даты форматируются через form.value.dates, а не через form("dates").value, поэтому
-        // при ошибке биндинга возникает ситуация, когда form.value не определена, и появляется дырка на странице.
-        val formWithErrors1 = advGeoFormUtil.formTolerant
-          .bindFromRequest()
-          .copy(
-            errors = formWithErrors.errors
-          )
-        val fweFut = Future.successful(formWithErrors1)
-        // Рендер результата.
-        new ForAdLogic(
-          _isSuFree = advFormUtil.maybeFreeAdv()
-        )
-          .result(fweFut, NotAcceptable)
+    // Хватаем бинарные данные из тела запроса...
+    advGeoFormUtil.validateForm( request.body ).fold(
+      {violations =>
+        LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString("\n", "\n ", "")}")
+        NotAcceptable( violations.toString )
       },
 
-      {result =>
-        LOGGER.trace(s"$logPrefix Binded: " + result)
+      {mFormS =>
+        LOGGER.trace(s"$logPrefix Binded: $mFormS")
 
-        val isSuFree = advFormUtil.maybeFreeAdv()
-        val status   = advFormUtil.suFree2newItemStatus(isSuFree)
+        val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
+        val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
 
-        // Найти корзину юзера и добавить туда покупки.
         for {
           // Прочитать узел юзера. Нужно для чтения/инциализации к контракта
           personNode0 <- request.user.personNodeFut
@@ -288,7 +274,7 @@ class LkAdvGeo @Inject() (
                 orderId     = cart.id.get,
                 producerId  = producerId,
                 adId        = adId,
-                res         = result,
+                res         = mFormS,
                 status      = status
               )
             } yield {
@@ -301,22 +287,25 @@ class LkAdvGeo @Inject() (
 
         } yield {
           val rCall = routes.LkAdvGeo.forAd(adId)
-          if (!isSuFree) {
-            implicit val messages = implicitly[Messages]
+          val retCall = if (!isSuFree) {
+            routes.LkBill2.cart(producerId, r = Some(rCall.url))
+            //implicit val messages = implicitly[Messages]
             // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
-            Redirect(routes.LkBill2.cart(producerId, r = Some(rCall.url)))
-              .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
+            //Redirect()
+            //  .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
 
           } else {
             // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
-            Redirect( rCall )
-              .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+            //Redirect( rCall )
+            //  .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+            rCall
           }
+          Ok(retCall.url)
         }
       }
-    )*/
-    ???
+    )
   }
+
 
   /** Body parser для реквестов, содержащих внутри себя сериализованный инстанс MFormS. */
   private def formPostBP = parse.raw(maxLength = 1024 * 10)
@@ -336,7 +325,6 @@ class LkAdvGeo @Inject() (
             Left( BadRequest("invalid body") )
           }
         }
-        // TODO Провалидировать десериализованные данные. Тут нужно подключить accord или что-то в этом роде.
     }
 
 
@@ -356,27 +344,18 @@ class LkAdvGeo @Inject() (
       },
       {mFormS =>
         LOGGER.debug(s"$logPrefix request body =\n $mFormS")
-        val isSuFree = advFormUtil.maybeFreeAdv()
+        val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
         // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
         val pricingFut = advGeoBillUtil.getPricing(mFormS, isSuFree)
-
-        // Для рендера потребуется контекст, собираем его...
-        implicit val ctx = implicitly[Context]
+          .map { advFormUtil.prepareAdvPricing }
 
         for {
           pricing <- pricingFut
         } yield {
-          // Нужно здесь отрендерить amount для каждой суммы, т.к. на стороне scala.js это геморно.
-          val pricing2 = pricing.withPrices(
-            for (mprice <- pricing.prices) yield {
-              val amountStr = TplDataFormatUtil.formatPriceAmount(mprice)(ctx)
-              mprice.withValueStrOpt( Some(amountStr) )
-            }
-          )
           // Сериализация результата.
-          LOGGER.trace(s"$logPrefix => $pricing2")
-          val bbuf = PickleUtil.pickle(pricing2)
+          LOGGER.trace(s"$logPrefix => $pricing")
+          val bbuf = PickleUtil.pickle(pricing)
           Ok( ByteString(bbuf) )
         }
       }

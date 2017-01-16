@@ -4,7 +4,7 @@ import diode.Effect
 import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
-import io.suggest.adv.geo.MFormInit
+import io.suggest.adv.geo.{MFormInit, MFormS}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
@@ -27,6 +27,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
+import org.scalajs.dom.XMLHttpRequest
 
 import scala.concurrent.Future
 
@@ -92,13 +93,20 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   private val adIdRW = otherRW.zoom(_.adId)
   val mFormDataRO = zoom(_.toFormData)
 
-  /** Функция запуска запроса на сервер для перерасчёта ценника. */
-  private def priceAskFut(): Future[MGetPriceResp] = {
+  private def _apiF2fut[T]( apiF: (String, MFormS) => Future[T] ): Future[T] = {
     val adId = adIdRW.value
     val mFormS = mFormDataRO.value
-    API.getPrice(adId, mFormS)
+    apiF(adId, mFormS)
   }
 
+  /** Функция запуска запроса на сервер для перерасчёта ценника. */
+  private def priceAskFut(): Future[MGetPriceResp] = {
+    _apiF2fut( API.getPrice )
+  }
+
+  private def submitFormFut(): Future[String] = {
+    _apiF2fut( API.formSubmit )
+  }
 
   /** Обработчики экшенов объединяются прямо здесь: */
   override protected val actionHandler: HandlerFunction = {
@@ -183,7 +191,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val priceAh = new PriceAh(
       modelRW       = otherRW.zoomRW(_.price) { _.withPriceS(_) },
-      priceAskFutF  = priceAskFut
+      priceAskFutF  = priceAskFut,
+      doSubmitF     = submitFormFut
     )
 
     // Склеить все handler'ы.

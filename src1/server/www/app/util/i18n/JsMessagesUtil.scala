@@ -87,6 +87,7 @@ class JsMessagesUtil @Inject() (
   /** Коды ошибок форм. */
   private def FORM_ERRORS: TraversableOnce[String] = {
     Iterator(
+      "Error",
       "Something.gone.wrong",
       "error.maxLength",
       "error.minLength",
