@@ -42,8 +42,6 @@ import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
 import util.DateTimePrettyPrinter.{dayOfWeek, formatDateFull}
 import views.html.lk.adv.geo._
-import views.html.lk.adv.widgets.period._reportTpl
-import views.html.lk.lkwdgts.price._priceValTpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -193,10 +191,8 @@ class LkAdvGeo @Inject() (
       val formStateSerFut: Future[String] = for {
         a4fPropsOpt   <- _a4fPropsOptFut
         formS         <- formFut
-        // TODO Отрендерить в состояние текущих георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
         advPricing    <- advPricingFut
       } yield {
-
         // Собираем исходную root-модель формы.
         val mFormInit = MFormInit(
           adId          = request.mad.id.get,

@@ -5,6 +5,7 @@ import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormInit
+import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.geo.a._
@@ -16,7 +17,7 @@ import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.lk.adv.m.{MPriceS, SetPrice}
+import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
@@ -26,6 +27,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
+
+import scala.concurrent.Future
 
 
 /**
@@ -89,20 +92,19 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   private val adIdRW = otherRW.zoom(_.adId)
   val mFormDataRO = zoom(_.toFormData)
 
-  /** Эффект пересчёта стоимости размещения с помощью сервера. */
-  private val priceUpdateEffect: Effect = {
-    Effect {
-      val adId = adIdRW.value
-      val mFormS = mFormDataRO.value
-      for (resp <- API.getPrice(adId, mFormS)) yield {
-        SetPrice(resp)
-      }
-    }
+  /** Функция запуска запроса на сервер для перерасчёта ценника. */
+  private def priceAskFut(): Future[MGetPriceResp] = {
+    val adId = adIdRW.value
+    val mFormS = mFormDataRO.value
+    API.getPrice(adId, mFormS)
   }
 
 
   /** Обработчики экшенов объединяются прямо здесь: */
   override protected val actionHandler: HandlerFunction = {
+
+    // Эффект пересчёта стоимости размещения с помощью сервера.
+    val priceUpdateEffect = Effect.action( ResetPrice )
 
     val rcvrRW  = zoomRW(_.rcvr) { _.withRcvr(_) }
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }
@@ -180,7 +182,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val priceAh = new PriceAh(
-      modelRW = otherRW.zoomRW(_.price) { _.withPriceS(_) }
+      modelRW       = otherRW.zoomRW(_.price) { _.withPriceS(_) },
+      priceAskFutF  = priceAskFut
     )
 
     // Склеить все handler'ы.

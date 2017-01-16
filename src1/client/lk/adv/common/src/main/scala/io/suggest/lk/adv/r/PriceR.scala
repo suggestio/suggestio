@@ -47,13 +47,19 @@ object PriceR {
               HtmlConstants.ELLIPSIS
             },
 
-            pricePot.renderReady { resp =>
+            pricePot.render { resp =>
               for (p <- resp.prices) yield {
                 Messages(p.currency.i18nPriceCode, MPrice.amountStr(p))
               }
-            }
+            },
 
-            // TODO renderPending: рендерить loader-крутилку поверх блеклой цены, например.
+            // Отрендерить loader, если происходит пересчёт ценника.
+            pricePot.renderPending { _ =>
+              <.div(
+                ^.`class` := Price.WIDGET_LOADER,
+                ^.title   := Messages("Please.wait")
+              )
+            }
           )
         },
 
@@ -62,6 +68,7 @@ object PriceR {
             .mkString(HtmlConstants.SPACE),
           Messages("Send.request")
         )
+
       )
     }
   }

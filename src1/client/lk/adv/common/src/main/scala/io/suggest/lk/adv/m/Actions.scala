@@ -8,5 +8,12 @@ import io.suggest.sjs.common.spa.DAction
 /** Сигнал-экшен для diode-системы об изменении состояния галочки su-бесплатного размещения. */
 case class SetAdv4Free(checked: Boolean) extends DAction
 
-/** Выставить новое значение стоимости размещения. */
-case class SetPrice(pricing: MGetPriceResp) extends DAction
+
+/** Команда к пересчёту ценника размещения. */
+case object ResetPrice extends DAction
+
+/** Выставить новое значение стоимости размещения.
+  * @param ts Timestamp запуска запроса.
+  * @param resp Ответ сервера, готовый к употреблению.
+  */
+case class SetPrice(resp: MGetPriceResp, ts: Long) extends DAction

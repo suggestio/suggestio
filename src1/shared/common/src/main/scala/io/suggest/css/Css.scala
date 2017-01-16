@@ -56,6 +56,7 @@ object Css {
           def _PRICE = "price"
           def WIDGET = RIGHT_BAR + "-" + _PRICE + "-" + _WIDGET
           def WIDGET_CNT = WIDGET + "_cnt"
+          def WIDGET_LOADER = WIDGET + "_loader"
           def WIDGET_TITLE = WIDGET + "_" + _TITLE
           def WIDGET_PRICE_VALUE = WIDGET + "_" + _PRICE + "-" + VALUE
           def WIDGET_REQ_BTN     = WIDGET + "_" + "request-btn"

@@ -127,7 +127,7 @@ class AdvGeoFormUtil @Inject() (
     val now = new LocalDate()
     validator[MYmd] { ymd =>
       // TODO Opt Тут два раза вызывается toJodaLocalDate из-за проблем между макросами и переменными внутри validator{}.
-      mYmdJvm.toJodaLocalDate(ymd).isAfter(now) is equalTo(true)
+      !mYmdJvm.toJodaLocalDate(ymd).isBefore(now) is equalTo(true)
       mYmdJvm.toJodaLocalDate(ymd).isBefore( now.plusYears(1) ) is equalTo(true)
     }
   }
@@ -138,8 +138,9 @@ class AdvGeoFormUtil @Inject() (
   }
 
   implicit val datePeriodV = validator[MAdvPeriod] { dp =>
-    (dp.quickAdvPeriod.isCustom is equalTo(false)) and (dp.customRange is empty)
-    dp.customRange.each is valid
+    ((dp.quickAdvPeriod.isCustom is equalTo(false)) and (dp.customRange is empty)) or (
+      (dp.quickAdvPeriod.isCustom is equalTo(true)) and (dp.customRange is notEmpty) and (dp.customRange.each is valid)
+    )
   }
 
   implicit val rcvrKeyV = validator[RcvrKey] { rk =>
