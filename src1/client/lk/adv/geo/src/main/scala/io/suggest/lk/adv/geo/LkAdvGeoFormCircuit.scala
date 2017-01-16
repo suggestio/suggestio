@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo
 
 import diode.Effect
+import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormInit
@@ -15,7 +16,7 @@ import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.lk.adv.m.SetPrice
+import io.suggest.lk.adv.m.{MPriceS, SetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
@@ -51,7 +52,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
           props = mFormInit.form.mapProps
         ),
         other = MOther(
-          adId = mFormInit.adId
+          adId = mFormInit.adId,
+          price = MPriceS(
+            resp = Ready( mFormInit.advPricing )
+          )
         ),
         adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
           MAdv4Free(
@@ -176,7 +180,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val priceAh = new PriceAh(
-      modelRW = otherRW.zoomRW(_.priceResp) { _.withPriceResp(_) }
+      modelRW = otherRW.zoomRW(_.price) { _.withPriceS(_) }
     )
 
     // Склеить все handler'ы.
@@ -208,23 +212,23 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   // Запустить инициализацию карты ресиверов после окончания инициализации circuit.
   dispatch( RcvrMarkersInit )
 
-  // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.
-  for {
-    rcvrPopupState <- zoom(_.rcvr.popupState).value
-    pot = zoom(_.rcvr.popupResp).value
-    if pot.isEmpty && !pot.isPending
-  } {
-    // Есть повод устроить запрос.
-    val a = ReqRcvrPopup(
-      nodeId    = rcvrPopupState.nodeId,
-      geoPoint  = rcvrPopupState.latLng
-    )
-    dispatch(a)
-  }
 
-
-  // Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
+  // post-constructor
   {
+    // Если задано состояние rcvr-popup'а, то надо запустить в фоне запрос popup'а с сервера.
+    val pot = zoom(_.rcvr.popupResp).value
+    if (pot.isEmpty && !pot.isPending) {
+      for (rcvrPopupState <- zoom(_.rcvr.popupState).value) yield {
+        // Есть повод устроить запрос.
+        val a = ReqRcvrPopup(
+          nodeId    = rcvrPopupState.nodeId,
+          geoPoint  = rcvrPopupState.latLng
+        )
+        dispatch(a)
+      }
+    }
+
+    // Если задано состояние поиска тегов, запустить запрос поиска тегов на сервер.
     val tagSearchText = zoom(_.tags.props.query).value.text
     if (tagSearchText.nonEmpty) {
       val pot = zoom(_.tags).value.found
@@ -232,6 +236,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
         dispatch( SetTagSearchQuery(tagSearchText) )
       }
     }
+
   }
 
 }

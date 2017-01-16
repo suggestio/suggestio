@@ -48,7 +48,7 @@ object MPrice {
 
   /** Вернуть строковое значение цены без какой-либо валюты. */
   def amountStr(m: MPrice): String = {
-    m.valueStrOpt
+    m.amountStrOpt
       .getOrElse( "%1.2f".format(m.amount) )
   }
 
@@ -68,26 +68,21 @@ object MPrice {
   * Инстанс данных по цене.
   * @param amount Числовое значение цены.
   * @param currency Валюта.
-  * @param valueStrOpt Отформатированное для рендера значение value, если требуется.
+  * @param amountStrOpt Отформатированное для рендера значение value, если требуется.
   *                    Это поле -- долговременный костыль для scala-js, который наверное будет удалён в будущем.
   */
 case class MPrice(
                    amount         : Amount_t,
                    currency       : MCurrency,
-                   valueStrOpt    : Option[String] = None
+                   amountStrOpt   : Option[String] = None
                  )
 {
 
-  def withAmount(value2: Amount_t) = copy(amount = value2, valueStrOpt = None)
-  def withValueStrOpt(valueStrOpt2: Option[String]) = copy(valueStrOpt = valueStrOpt2)
+  def withAmount(value2: Amount_t) = copy(amount = value2, amountStrOpt = None)
+  def withValueStrOpt(valueStrOpt2: Option[String]) = copy(amountStrOpt = valueStrOpt2)
 
   override def toString: String = {
     MPrice.amountStr(this) + currency.currencyCode
   }
 
 }
-
-
-
-
-

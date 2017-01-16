@@ -1,0 +1,10 @@
+@(id: Option[String] = None)(content: Html = HtmlFormat.empty)
+
+@* Котейнер для виджета ценника. *@
+
+@import io.suggest.css.Css.Lk.Bars.RightBar.Price
+
+<div class="@Price.WIDGET"
+     @if(id){id="@id"}>
+  @content
+</div>

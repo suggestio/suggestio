@@ -1,6 +1,6 @@
 package io.suggest.lk.price.m
 
-import io.suggest.adv.AdvConstants.PriceJson
+import io.suggest.adv.AdvConstants.Price.Json.{PRICE_HTML_FN, PERIOD_REPORT_HTML_FN}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
@@ -24,8 +24,8 @@ object Resp {
     val json1 = json0.asInstanceOf[js.Dictionary[String]]
 
     apply(
-      priceHtml  = json1(PriceJson.PRICE_HTML_FN),
-      periodHtml = json1(PriceJson.PERIOD_REPORT_HTML_FN)
+      priceHtml  = json1(PRICE_HTML_FN),
+      periodHtml = json1(PERIOD_REPORT_HTML_FN)
     )
   }
 

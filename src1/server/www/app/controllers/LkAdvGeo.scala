@@ -186,23 +186,22 @@ class LkAdvGeo @Inject() (
     def result(formFut: Future[MFormS], rs: Status): Future[Result] = {
       //lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
 
-      // TODO Нужна считалочка ценника для новой формы.
-      val advPricingFut = bill2Util.zeroPricingFut
-      //val advPricingFut = formFut.flatMap { form =>
-      //  advGeoBillUtil.getPricing(form.value, _isSuFree)
-      //}
+      // Считаем в фоне начальный ценник для размещения...
+      val advPricingFut = formFut.flatMap( advGeoBillUtil.getPricing )
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
       val formStateSerFut: Future[String] = for {
         a4fPropsOpt   <- _a4fPropsOptFut
         formS         <- formFut
         // TODO Отрендерить в состояние текущих георазмещения в радиусах. currAdvsJson  <- currAdvsJsonFut
+        advPricing    <- advPricingFut
       } yield {
 
         // Собираем исходную root-модель формы.
         val mFormInit = MFormInit(
           adId          = request.mad.id.get,
           adv4FreeProps = a4fPropsOpt,
+          advPricing    = advPricing,
           form          = formS
         )
 
@@ -213,14 +212,12 @@ class LkAdvGeo @Inject() (
       // Собираем итоговый ответ на запрос: аргументы рендера, рендер html, рендер http-ответа.
       for {
         ctx           <- _ctxFut
-        advPricing    <- advPricingFut
         formStateSer  <- formStateSerFut
       } yield {
 
         val rargs = MForAdTplArgs(
           mad           = request.mad,
           producer      = request.producer,
-          price         = advPricing,
           formState     = formStateSer
         )
 

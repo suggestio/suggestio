@@ -2,6 +2,7 @@ package io.suggest.adv.geo
 
 import boopickle.Default._
 import io.suggest.adv.free.MAdv4FreeProps
+import io.suggest.bill.MGetPriceResp
 
 /**
   * Suggest.io
@@ -25,5 +26,6 @@ object MFormInit {
 case class MFormInit(
   adId          : String,
   adv4FreeProps : Option[MAdv4FreeProps],
+  advPricing    : MGetPriceResp,
   form          : MFormS
 )

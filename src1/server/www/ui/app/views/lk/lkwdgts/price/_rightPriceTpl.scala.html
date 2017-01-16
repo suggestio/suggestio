@@ -4,23 +4,23 @@
 
 @import ctx.messages
 @import io.suggest.common.price.PriceConstants.Widget._
+@import io.suggest.css.Css
+@import io.suggest.css.Css.Lk.Bars.RightBar.Price
 
-<div class="right-bar-price-widget">
-  <div class="right-bar-price-widget_cnt">
+@_rightPriceContTpl() {
+  <div class="@Price.WIDGET_CNT">
 
-    <h2 class="right-bar-price-widget_title">
+    <h2 class="@Price.WIDGET_TITLE">
       @messages("Total.amount._money")
     </h2>
 
-    <p id="@PRICE_INFO_CONT_ID" class="right-bar-price-widget_price-value">
+    <p id="@PRICE_INFO_CONT_ID" class="@Price.WIDGET_PRICE_VALUE">
       @_priceValTpl(price)
     </p>
 
-    <button class="right-bar-price-widget_request-btn btn __major __size-L js-submit-btn" data-for="#@formId">
+    <button class="@Price.WIDGET_REQ_BTN @Css.Buttons.BTN @Css.Buttons.MAJOR @Css.Size.L js-submit-btn" data-for="#@formId">
       @messages("Send.request")
     </button>
 
   </div>
-</div>
-
-
+}

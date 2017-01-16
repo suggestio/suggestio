@@ -1,5 +1,6 @@
 package util
 
+import io.suggest.common.html.HtmlConstants
 import org.scalatestplus.play._
 
 /**
@@ -35,7 +36,7 @@ class TplDataFormatUtilSpec extends PlaySpec {
     def t(x: String, l: Int = 10, hard: Boolean = false): String = {
       TplDataFormatUtil.strLimitLenNoTrailingWordPart(x, l, hard)
     }
-    def ttt: String = TplDataFormatUtil.ELLIPSIS
+    def ttt: String = HtmlConstants.ELLIPSIS
 
     "keep short strings" in {
       t("asdasd")           mustBe "asdasd"

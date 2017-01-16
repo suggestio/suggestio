@@ -1,8 +1,7 @@
 package models.adv.geo.tag
 
-import io.suggest.bill.MGetPriceResp
 import models.MNode
-import models.adv.IAdvForAdCommonTplArgs
+import models.adv.IAdvFreeForAdCommonTplArgs
 import models.adv.form.IAdvForAdFormCommonTplArgs
 
 /**
@@ -11,7 +10,7 @@ import models.adv.form.IAdvForAdFormCommonTplArgs
   * Created: 18.11.15 15:05
   * Description: Модель аргументов шаблона [[views.html.lk.adv.geo.AdvGeoForAdTpl]].
   */
-trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplArgs {
+trait IForAdTplArgs extends IAdvFreeForAdCommonTplArgs with IAdvForAdFormCommonTplArgs {
 
   /**
     * Сериализованное состояние js-react-diode-формы.
@@ -25,7 +24,6 @@ trait IForAdTplArgs extends IAdvForAdCommonTplArgs with IAdvForAdFormCommonTplAr
 case class MForAdTplArgs(
                           override val mad              : MNode,
                           override val producer         : MNode,
-                          override val price            : MGetPriceResp,
                           override val formState        : String
                         )
   extends IForAdTplArgs

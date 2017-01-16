@@ -13,6 +13,8 @@ object Css {
   def CLEAR     = "clear"
   def CLEARFIX  = CLEAR + "fix"
 
+  def _TITLE      = "title"
+  def _WIDGET     = "widget"
   def _PREFIX     = "prefix"
   def _CONTAINER  = "container"
   def NAME      = "name"
@@ -22,14 +24,14 @@ object Css {
   object Lk {
 
     def PREFIX = "lk-"
-    def MINOR_TITLE = "minor-title"
+    def MINOR_TITLE = "minor-" + _TITLE
     def LK_FIELD = PREFIX + "field"
     def LK_FIELD_NAME = LK_FIELD + "__" + NAME
 
     object Adv {
       def FORM_PREFIX = "adv-management"
       def FORM_OUTER_DIV = FORM_PREFIX
-      def RIGHT_BAR = FORM_PREFIX + "_right-bar"
+      def RIGHT_BAR = FORM_PREFIX + "_" + Bars.RightBar.RIGHT_BAR
       def LEFT_BAR  = FORM_PREFIX + "_left-bar"
 
       object Geo {
@@ -38,6 +40,31 @@ object Css {
 
       object Su {
         def CONTAINER = "adv-su-inputs-wrap"
+      }
+
+    }
+
+    object Bars {
+
+      def BAR_SUFFIX = "-bar"
+
+      object RightBar {
+        def PREFIX = "right"
+        def RIGHT_BAR = PREFIX + BAR_SUFFIX
+
+        object Price {
+          def _PRICE = "price"
+          def WIDGET = RIGHT_BAR + "-" + _PRICE + "-" + _WIDGET
+          def WIDGET_CNT = WIDGET + "_cnt"
+          def WIDGET_TITLE = WIDGET + "_" + _TITLE
+          def WIDGET_PRICE_VALUE = WIDGET + "_" + _PRICE + "-" + VALUE
+          def WIDGET_REQ_BTN     = WIDGET + "_" + "request-btn"
+        }
+      }
+
+      object LeftBar {
+        def PREFIX = "left"
+        def LEFT_BAR = PREFIX + BAR_SUFFIX
       }
 
     }
@@ -70,6 +97,7 @@ object Css {
     def PREFIX = "__" + PREFIX_ROOT + "-"
     def S = PREFIX + "S"
     def M = PREFIX + "M"
+    def L = PREFIX + "L"
   }
 
 

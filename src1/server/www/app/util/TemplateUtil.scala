@@ -4,6 +4,7 @@ import java.text.{DecimalFormat, NumberFormat}
 
 import io.suggest.bill.{MCurrencies, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.common.text.StringUtil
 import models.mctx.Context
 import org.joda.time.format.DateTimeFormat
@@ -21,8 +22,6 @@ import scala.annotation.tailrec
  * Description: Разная мелкая утиль для шаблонов.
  */
 object TplDataFormatUtil {
-
-  val ELLIPSIS = "…"
 
   /** Сконвертить "ffffff" в List(255,255,255). */
   def colorHex2rgb(hex: String): List[Int] = {

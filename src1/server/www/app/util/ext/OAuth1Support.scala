@@ -1,8 +1,8 @@
 package util.ext
 
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
+import io.suggest.common.html.HtmlConstants
 import io.suggest.di.IWsClient
-import io.suggest.primo.IStrId
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.MImgSizeT
 import models.mctx.IContextUtilDi
@@ -88,7 +88,7 @@ trait OAuth1Support
   def rdescr2tweetLeadingText(s: String): String = {
     val s1 = FormUtil.stripHtml(s)
       .replaceAll("(?U)\\s+", " ")
-      .replaceAllLiterally("...", TplDataFormatUtil.ELLIPSIS)
+      .replaceAllLiterally("...", HtmlConstants.ELLIPSIS)
       .trim
     TplDataFormatUtil.strLimitLenNoTrailingWordPart(s1, LEAD_TEXT_LEN, hard = true)
   }

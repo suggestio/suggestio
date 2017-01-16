@@ -25,19 +25,26 @@ object AdvConstants {
 
 
   /** Константы JSON-ответов сервера на запросы рассчета стоимости размещения. */
-  object PriceJson {
+  object Price {
 
-    /** id инпута, который содержит URL для сабмита формы для рассчета цены и прочего. */
-    def GET_PRICE_URL_INPUT_ID = "gpuiadv"
+    /** id контейнера для price-виджета. Используется в react. */
+    def OUTER_CONT_ID = "prouc"
 
-    /** Имя аттрибута, который содержит HTTP-метод для обращения к URL. */
-    def ATTR_METHOD = ScConstants.CUSTOM_ATTR_PREFIX + "method"
+    object Json {
 
-    /** Имя поля в JSON-ответе цены, содержащее отрендеренную цену. */
-    def PRICE_HTML_FN          = "a"
+      /** id инпута, который содержит URL для сабмита формы для рассчета цены и прочего. */
+      def GET_PRICE_URL_INPUT_ID = "gpuiadv"
 
-    /** Имя поля в JSON-ответе цены, содержащее отрендеренную инфу по периоду размещения. */
-    def PERIOD_REPORT_HTML_FN  = "b"
+      /** Имя аттрибута, который содержит HTTP-метод для обращения к URL. */
+      def ATTR_METHOD = ScConstants.CUSTOM_ATTR_PREFIX + "method"
+
+      /** Имя поля в JSON-ответе цены, содержащее отрендеренную цену. */
+      def PRICE_HTML_FN = "a"
+
+      /** Имя поля в JSON-ответе цены, содержащее отрендеренную инфу по периоду размещения. */
+      def PERIOD_REPORT_HTML_FN = "b"
+
+    }
 
   }
 

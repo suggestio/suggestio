@@ -18,6 +18,8 @@ object HtmlConstants {
   val SPACE                   = " "
   val COMMA                   = ","
 
+  val ELLIPSIS                = "…"
+
   val CHECKMARK               = "✓"
 
   val TAG_PREFIX              = "#"

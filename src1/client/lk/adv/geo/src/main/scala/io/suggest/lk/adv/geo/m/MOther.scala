@@ -1,8 +1,7 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
-import diode.data.Pot
-import io.suggest.bill.MGetPriceResp
+import io.suggest.lk.adv.m.MPriceS
 
 /**
   * Suggest.io
@@ -18,7 +17,8 @@ object MOther {
   implicit object MOtherFastEq extends FastEq[MOther] {
     override def eqv(a: MOther, b: MOther): Boolean = {
       (a.adId eq b.adId) &&
-        (a.onMainScreen == b.onMainScreen)
+        (a.onMainScreen == b.onMainScreen) &&
+        (a.price eq b.price)
     }
   }
 
@@ -33,15 +33,15 @@ object MOther {
   *                     Передаётся на сервер внутри URL.
   *
   * @param onMainScreen Текущее Состояние галочки размещения на главном экране.
-  * @param priceResp Состояние ответа на запрос стоимости размещения.
+  * @param price Состояние ценника.
   */
 case class MOther(
   adId          : String,
   onMainScreen  : Boolean             = true,
-  priceResp     : Pot[MGetPriceResp]  = Pot.empty
+  price         : MPriceS             = MPriceS()
 ) {
 
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
-  def withPriceResp(priceResp2: Pot[MGetPriceResp]) = copy(priceResp = priceResp2)
+  def withPriceS(price2: MPriceS) = copy(price = price2)
 
 }

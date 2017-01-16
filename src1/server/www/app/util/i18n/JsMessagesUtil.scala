@@ -1,6 +1,7 @@
 package util.i18n
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.bill.MCurrencies
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
 import jsmessages.{JsMessages, JsMessagesFactory}
 
@@ -93,9 +94,17 @@ class JsMessagesUtil @Inject() (
     )
   }
 
-  private def PRICING: TraversableOnce[String] = {
-    Iterable("RUB", "EUR", "USD")
-      .map("price." + _)
+
+  /** Коды платежных вещей в формах размещения. */
+  private def ADV_PRICING: TraversableOnce[String] = {
+    val prices = MCurrencies.values
+      .iterator
+      .map(_.i18nPriceCode)
+    val msgs = Iterator(
+      "Total.amount._money",
+      "Send.request"
+    )
+    prices ++ msgs
   }
 
 
@@ -108,7 +117,8 @@ class JsMessagesUtil @Inject() (
       FORM_ERRORS,
       OF_MONTHS_OF_YEAR,
       DAYS_OF_WEEK_MSGS,
-      DATE_TIME_ABBREVATIONS
+      DATE_TIME_ABBREVATIONS,
+      ADV_PRICING
     )
       .flatten
       .toSet

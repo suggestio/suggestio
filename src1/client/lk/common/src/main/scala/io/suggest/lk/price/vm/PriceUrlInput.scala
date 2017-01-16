@@ -1,6 +1,6 @@
 package io.suggest.lk.price.vm
 
-import io.suggest.adv.AdvConstants.PriceJson
+import io.suggest.adv.AdvConstants.Price.Json.{GET_PRICE_URL_INPUT_ID, ATTR_METHOD}
 import io.suggest.sjs.common.vm.attr.{AttrVmT, StringInputValueT}
 import io.suggest.sjs.common.vm.find.FindElT
 import io.suggest.sjs.common.vm.rm.SelfRemoveT
@@ -15,7 +15,7 @@ import org.scalajs.dom.raw.HTMLInputElement
 object PriceUrlInput extends FindElT {
   override type Dom_t = HTMLInputElement
   override type T     = PriceUrlInput
-  override def DOM_ID = PriceJson.GET_PRICE_URL_INPUT_ID
+  override def DOM_ID = GET_PRICE_URL_INPUT_ID
 }
 
 
@@ -27,7 +27,7 @@ trait PriceUrlInputT extends StringInputValueT with SelfRemoveT with AttrVmT {
   override type T = Dom_t
 
   /** Прочитать HTTP-метод из соотв.аттрибута. */
-  def method = getAttribute(PriceJson.ATTR_METHOD)
+  def method = getAttribute(ATTR_METHOD)
 
   /** Вернуть URL для запроса цены. */
   def url = value

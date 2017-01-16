@@ -1,6 +1,6 @@
 package models.adv.price
 
-import io.suggest.adv.AdvConstants.PriceJson._
+import io.suggest.adv.AdvConstants.Price.Json._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
