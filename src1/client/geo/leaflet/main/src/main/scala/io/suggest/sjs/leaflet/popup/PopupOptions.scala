@@ -1,10 +1,10 @@
 package io.suggest.sjs.leaflet.popup
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.leaflet.map.Point
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -12,38 +12,34 @@ import scala.scalajs.js.UndefOr
  * Created: 20.11.15 14:42
  * Description: API for popup options JSON.
  */
-object PopupOptions extends FromDict {
-  override type T = PopupOptions
-}
 
-
-@js.native
+@ScalaJSDefined
 trait PopupOptions extends js.Object {
 
-  var maxWidth: Int = js.native
+  val maxWidth: UndefOr[Int] = js.undefined
 
-  var minWidth: Int = js.native
+  val minWidth: UndefOr[Int] = js.undefined
 
-  var maxHeight: UndefOr[Int] = js.native
+  val maxHeight: UndefOr[Int] = js.undefined
 
-  var autoPan: Boolean = js.native
+  val autoPan: UndefOr[Boolean] = js.undefined
 
-  var keepInView: Boolean = js.native
+  val keepInView: UndefOr[Boolean] = js.undefined
 
-  var closeButton: Boolean = js.native
+  val closeButton: UndefOr[Boolean] = js.undefined
 
-  var offset: Point = js.native
+  val offset: UndefOr[Point] = js.undefined
 
-  var autoPanPaddingTopLeft: Point = js.native
+  val autoPanPaddingTopLeft: UndefOr[Point] = js.undefined
 
-  var autoPanPaddingBottomRight: Point = js.native
+  val autoPanPaddingBottomRight: UndefOr[Point] = js.undefined
 
-  var autoPanPadding: Point = js.native
+  val autoPanPadding: UndefOr[Point] = js.undefined
 
-  var zoomAnimation: Boolean = js.native
+  val zoomAnimation: UndefOr[Boolean] = js.undefined
 
-  var closeOnClick: UndefOr[Boolean] = js.native
+  val closeOnClick: UndefOr[Boolean] = js.undefined
 
-  var className: String = js.native
+  val className: UndefOr[String] = js.undefined
 
 }

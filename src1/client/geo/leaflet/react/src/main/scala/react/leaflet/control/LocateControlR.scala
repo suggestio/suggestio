@@ -56,7 +56,6 @@ sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
 }
 
 
-@js.native
+@ScalaJSDefined
 trait LocateControlPropsR extends LocateOptions {
-
 }

@@ -1,8 +1,8 @@
 package io.suggest.sjs.mapbox.gl.anim
 
-import io.suggest.sjs.common.model.FromDict
-
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,20 +11,15 @@ import scala.scalajs.js
   * Description: Animation options API.
   */
 
-object AnimationOptions extends FromDict {
-  override type T = AnimationOptions
-}
-
-
-@js.native
+@ScalaJSDefined
 trait AnimationOptions extends js.Object {
 
-  var duration: Double          = js.native
+  val duration  : UndefOr[Double]                         = js.undefined
 
-  var easing: js.Function1[Double, Double] = js.native
+  val easing    : UndefOr[js.Function1[Double, Double]]   = js.undefined
 
-  var offset: js.Array[js.Any]  = js.native
+  val offset    : UndefOr[js.Array[js.Any]]               = js.undefined
 
-  var animate: Boolean          = js.native
+  val animate   : UndefOr[Boolean]                        = js.undefined
 
 }

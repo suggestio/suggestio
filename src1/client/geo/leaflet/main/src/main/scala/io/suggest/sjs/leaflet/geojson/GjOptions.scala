@@ -1,7 +1,6 @@
 package io.suggest.sjs.leaflet.geojson
 
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.leaflet.map.{LatLng, Layer}
 import io.suggest.sjs.leaflet.path.PathOptions
 
@@ -19,12 +18,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   *
   * Need scala 0.6.14+.
   */
-object GjOptions extends FromDict {
-
-  override type T = GjOptions
-
-}
-
 
 @ScalaJSDefined
 trait GjOptions extends js.Object {

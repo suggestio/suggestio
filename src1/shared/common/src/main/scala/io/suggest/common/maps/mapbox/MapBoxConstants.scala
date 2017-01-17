@@ -35,27 +35,33 @@ object MapBoxConstants {
 
   }
 
-
-  /** Константы пользовательской геолокации. */
-  object UserGeoLoc {
-
-    def LAYER_ID = "a"
+  sealed trait ILayerConst {
+    def LAYER_ID: String
     def SRC_ID   = LAYER_ID
 
-    def CENTER_RADIUS_PX = 5
-    def CENTER_COLOR     = "#007cbf"
+    def CENTER_RADIUS_PX: Int
+    def CENTER_COLOR: String
+
+  }
+
+  /** Константы пользовательской геолокации. */
+  object UserGeoLoc extends ILayerConst {
+
+    override def LAYER_ID = "a"
+
+    override def CENTER_RADIUS_PX = 5
+    override def CENTER_COLOR     = "#007cbf"
 
   }
 
 
   /** Константы ручного наведения точки для геолокации. */
-  object TargetPoint {
+  object TargetPoint extends ILayerConst {
 
-    def LAYER_ID  = "t"
-    def SRC_ID    = LAYER_ID
+    override def LAYER_ID  = "t"
 
-    def CENTER_RADIUS_PX = 3
-    def CENTER_COLOR     = "#454545"
+    override def CENTER_RADIUS_PX = 3
+    override def CENTER_COLOR     = "#454545"
 
   }
 

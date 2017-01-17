@@ -1,10 +1,10 @@
 package io.suggest.sjs.leaflet.control.locate
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.leaflet.control.ControlOptions
 
 import scala.scalajs.js
-import scala.scalajs.js.Dictionary
+import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.{Dictionary, UndefOr}
 
 /**
   * Suggest.io
@@ -12,50 +12,47 @@ import scala.scalajs.js.Dictionary
   * Created: 20.11.15 12:07
   * Description: Locate constructor options model.
   */
-object LocateOptions extends FromDict {
-  override type T = LocateOptions
-}
 
-@js.native
+@ScalaJSDefined
 trait LocateOptions extends ControlOptions {
 
-  //var layer: new L.LayerGroup(),  // use your own layer for the location marker
+  //val layer: new L.LayerGroup(),  // use your own layer for the location marker
 
   // controls whether a circle is drawn that shows the uncertainty about the location [true]
-  var drawCircle: Boolean = js.native
+  val drawCircle: UndefOr[Boolean] = js.undefined
 
   // follow the user's location [false]
-  var follow: Boolean = js.native
+  val follow: UndefOr[Boolean] = js.undefined
 
   // automatically sets the map view to the user's location, enabled if `follow` is true [true]
-  var setView: Boolean = js.native
+  val setView: UndefOr[Boolean] = js.undefined
 
   // keep the current map zoom level when displaying the user's location. (if `false`, use maxZoom) [false]
-  var keepCurrentZoomLevel: Boolean = js.native
+  val keepCurrentZoomLevel: UndefOr[Boolean] = js.undefined
 
   // stop following when the map is dragged if `follow` is true (deprecated, see below) [false]
-  var stopFollowingOnDrag: Boolean = js.native
+  val stopFollowingOnDrag: UndefOr[Boolean] = js.undefined
 
   // if true locate control remains active on click even if the user's location is in view. [false]
-  var remainActive: Boolean = js.native
+  val remainActive: UndefOr[Boolean] = js.undefined
 
-  //var markerClass: L.circleMarker, // L.circleMarker or L.marker
+  //val markerClass: L.circleMarker, // L.circleMarker or L.marker
   //  circleStyle: {},  // change the style of the circle around the user's location
   //  markerStyle: {},
   //  followCircleStyle: {},  // set difference for the style of the circle around the user's location while following
   //  followMarkerStyle: {},
 
   // class for icon, fa-location-arrow or fa-map-marker  ['fa fa-map-marker']
-  var icon: String = js.native
+  val icon: UndefOr[String] = js.undefined
 
   // class for loading icon  ['fa fa-spinner fa-spin']
-  var iconLoading: String = js.native
+  val iconLoading: UndefOr[String] = js.undefined
 
   // padding around accuracy circle, value is passed to setBounds, [0, 0]
-  var circlePadding: js.Array[Int] = js.native
+  val circlePadding: js.UndefOr[js.Array[Int]] = js.undefined
 
   // use metric or imperial units [true]
-  var metric: Boolean = js.native
+  val metric: js.UndefOr[Boolean] = js.undefined
 
   //onLocationError: function(err) {alert(err.message)},  // define an error callback function
 
@@ -63,9 +60,9 @@ trait LocateOptions extends ControlOptions {
   //          alert(context.options.strings.outsideMapBoundsMsg);
   //},
 
-  var showPopup: Boolean = js.native // display a popup when the user click on the inner marker [true]
+  val showPopup: UndefOr[Boolean] = js.undefined // display a popup when the user click on the inner marker [true]
 
-  var strings: Dictionary[String] = js.native
+  val strings: UndefOr[Dictionary[String]] = js.undefined
   /*  {
         title: "Show me where I am",  // title of the locate control
         metersUnit: "meters", // string for metric units
@@ -76,6 +73,6 @@ trait LocateOptions extends ControlOptions {
   */
 
   // define location options e.g enableHighAccuracy: true or maxZoom: 10
-  var locateOptions: js.Object = js.native
+  val locateOptions: js.UndefOr[js.Object] = js.undefined
 
 }

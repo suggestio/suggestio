@@ -5,7 +5,7 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.AdvConstants
-import io.suggest.adv.free.{MAdv4Free, MAdv4FreeProps}
+import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.adv.geo._
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -22,18 +22,15 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.adv.geo.tag.MForAdTplArgs
-import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mdt.MDateInterval
-import models.merr.MError
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import org.joda.time.LocalDate
-import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import util.{PlayMacroLogsImpl, TplDataFormatUtil}
+import util.PlayMacroLogsImpl
 import util.acl.{CanAccessItem, CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
@@ -154,6 +151,7 @@ class LkAdvGeo @Inject() (
    *
    * @return Фьючерс с ответом.
    */
+  // TODO Замёржить в forAd(), если эта дедубликация кода больше не требуется.
   private class ForAdLogic( _isSuFree: Boolean )(implicit request: IAdProdReq[_]) {
 
     val _geoPointFut: Future[MGeoPoint] = {

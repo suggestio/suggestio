@@ -28,7 +28,7 @@ libraryDependencies ++= {
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
-  "com.mohiva" %% "play-html-compressor" % "0.6.1",  // https://github.com/mohiva/play-html-compressor
+  "com.mohiva" %% "play-html-compressor" % "0.6.3",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
   Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",

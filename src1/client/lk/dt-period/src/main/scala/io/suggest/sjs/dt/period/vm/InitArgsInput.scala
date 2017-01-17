@@ -7,8 +7,6 @@ import io.suggest.sjs.common.vm.rm.SelfRemoveT
 import io.suggest.sjs.jqdtpick.Options
 import org.scalajs.dom.raw.HTMLInputElement
 
-import scala.scalajs.js
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

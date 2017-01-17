@@ -1,11 +1,12 @@
 package io.suggest.sjs.mapbox.gl.map
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.Zoom_t
 import io.suggest.sjs.mapbox.gl.anim.AnimationOptions
 import io.suggest.sjs.mapbox.gl.camera.CameraOptions
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -15,20 +16,16 @@ import scala.scalajs.js
   *
   * FlyOptions = CameraOptions | AnimationOptions + [real fly options]
   */
-object FlyOptions extends FromDict {
-  override type T = FlyOptions
-}
 
+@ScalaJSDefined
+trait FlyOptions extends AnimationOptions with CameraOptions {
 
-@js.native
-class FlyOptions extends AnimationOptions with CameraOptions {
+  val curve   : UndefOr[Double]   = js.undefined
 
-  var curve: Double = js.native
+  val minZoom : UndefOr[Zoom_t]   = js.undefined
 
-  var minZoom: Zoom_t = js.native
+  val speed   : UndefOr[Double]   = js.undefined
 
-  var speed  : Double = js.native
-
-  var screenSpeed: Double = js.native
+  val screenSpeed : UndefOr[Double] = js.undefined
 
 }

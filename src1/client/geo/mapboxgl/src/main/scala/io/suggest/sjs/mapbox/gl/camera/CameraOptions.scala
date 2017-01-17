@@ -1,10 +1,11 @@
 package io.suggest.sjs.mapbox.gl.camera
 
-import io.suggest.sjs.common.model.FromDict
-import io.suggest.sjs.mapbox.gl.{Bearing_t, Zoom_t, Pitch_t}
+import io.suggest.sjs.mapbox.gl.{Pitch_t, Zoom_t}
 import io.suggest.sjs.mapbox.gl.ll.LngLat
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,22 +14,18 @@ import scala.scalajs.js
   * Description: Camera options API.
   */
 
-object CameraOptions extends FromDict {
-  override type T = CameraOptions
-}
-
-@js.native
+@ScalaJSDefined
 trait CameraOptions extends js.Object {
 
-  var center    : LngLat      = js.native
+  val center    : UndefOr[LngLat]      = js.undefined
 
-  var zoom      : Zoom_t      = js.native
+  val zoom      : UndefOr[Zoom_t]      = js.undefined
 
-  var bearing   : Pitch_t   = js.native
+  val bearing   : UndefOr[Pitch_t]     = js.undefined
 
-  var pitch     : Double      = js.native
+  val pitch     : UndefOr[Double]      = js.undefined
 
-  var around    : LngLat      = js.native
+  val around    : UndefOr[LngLat]      = js.undefined
 
 }
 

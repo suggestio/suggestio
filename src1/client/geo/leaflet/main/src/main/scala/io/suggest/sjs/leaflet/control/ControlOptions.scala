@@ -1,6 +1,8 @@
 package io.suggest.sjs.leaflet.control
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -8,10 +10,10 @@ import scala.scalajs.js
   * Created: 31.10.16 18:56
   * Description: API for common control options.
   */
-@js.native
-class ControlOptions extends js.Object {
+@ScalaJSDefined
+trait ControlOptions extends js.Object {
 
   /** @see [[ControlPositions]]. */
-  var position: String = js.native
+  val position: UndefOr[String] = js.undefined
 
 }

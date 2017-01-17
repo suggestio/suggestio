@@ -1,13 +1,13 @@
 package io.suggest.sc.sjs.vm.mapbox
 
-import io.suggest.common.maps.mapbox.MapBoxConstants.{TargetPoint, UserGeoLoc}
+import io.suggest.common.maps.mapbox.MapBoxConstants.{TargetPoint, UserGeoLoc, ILayerConst}
 import io.suggest.geo.MGeoPoint
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
 import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPointJs}
 import io.suggest.sjs.common.vm.IVm
-import io.suggest.sjs.mapbox.gl.Filter_t
+import io.suggest.sjs.mapbox.gl.{Color_t, Filter_t}
 import io.suggest.sjs.mapbox.gl.event.EventData
 import io.suggest.sjs.mapbox.gl.geojson.{GeoJsonSource, GeoJsonSourceDescr}
 import io.suggest.sjs.mapbox.gl.layer.circle.CirclePaintProps
@@ -18,6 +18,7 @@ import io.suggest.sjs.mapbox.gl.map.{GlMap, GlMapOptions}
 import org.scalajs.dom.Element
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -52,6 +53,16 @@ case class GlMapVm(glMap: GlMap) {
 
   // ! Инстанс может кешироваться какое-то время, поэтому в нём не должно быть val'ов кроме тех, что в конструкторе.
 
+  private def _circlePaintProps(ilc: ILayerConst): CirclePaintProps = {
+    _circlePaintProps(ilc.CENTER_RADIUS_PX, ilc.CENTER_COLOR)
+  }
+  private def _circlePaintProps(radius: Int, color: Color_t): CirclePaintProps = {
+    new CirclePaintProps {
+      override val circleRadius: UndefOr[Int]      = radius
+      override val circleColor : UndefOr[Color_t]  = color
+    }
+  }
+
   /**
     * Выставить в карту новую геолокацию
     *
@@ -74,12 +85,7 @@ case class GlMapVm(glMap: GlMap) {
       lay.id      = UserGeoLoc.LAYER_ID
       lay.`type`  = LayerTypes.CIRCLE
       lay.source  = srcId
-      lay.paint   = {
-        val paint = CirclePaintProps.empty
-        paint.circleRadius = UserGeoLoc.CENTER_RADIUS_PX
-        paint.circleColor  = UserGeoLoc.CENTER_COLOR
-        paint
-      }
+      lay.paint   = _circlePaintProps(UserGeoLoc)
       glMap.addLayer(lay)
 
     } { srcObj =>
@@ -130,12 +136,7 @@ case class GlMapVm(glMap: GlMap) {
       lay.id      = TargetPoint.LAYER_ID
       lay.`type`  = LayerTypes.CIRCLE
       lay.source  = srcId
-      lay.paint   = {
-        val paint = CirclePaintProps.empty
-        paint.circleRadius = TargetPoint.CENTER_RADIUS_PX
-        paint.circleColor  = TargetPoint.CENTER_COLOR
-        paint
-      }
+      lay.paint   = _circlePaintProps(TargetPoint)
       glMap.addLayer(lay)
 
     } { srcRaw =>
@@ -166,12 +167,7 @@ case class GlMapVm(glMap: GlMap) {
       layP.id = L.NON_CLUSTERED_LAYER_ID
       layP.`type` = LayerTypes.CIRCLE
       layP.source = srcId
-      layP.paint = {
-        val paint = CirclePaintProps.empty
-        paint.circleRadius = Sources.MARKER_RADIUS_PX
-        paint.circleColor  = Sources.FILL_COLOR
-        paint
-      }
+      layP.paint = _circlePaintProps(Sources.MARKER_RADIUS_PX, Sources.FILL_COLOR)
       layP
     }
     // Собрать слой единичек, т.к. кластеризация пашет криво как-то.
@@ -206,12 +202,7 @@ case class GlMapVm(glMap: GlMap) {
           layC.id = L.clusterLayerId(i)
           layC.`type` = LayerTypes.CIRCLE
           layC.source = srcId
-          layC.paint = {
-            val cpp = CirclePaintProps.empty
-            cpp.circleColor   = color
-            cpp.circleRadius  = Sources.MARKER_RADIUS_PX
-            cpp
-          }
+          layC.paint = _circlePaintProps(Sources.MARKER_RADIUS_PX, color)
           layC.filter = {
             val f0: Filter_t = js.Array(Filters.>=, pcFn, minCount)
             prevMinCountOpt.fold [Filter_t] {
