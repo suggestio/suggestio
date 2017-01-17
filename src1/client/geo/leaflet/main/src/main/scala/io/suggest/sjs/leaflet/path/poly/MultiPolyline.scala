@@ -4,7 +4,7 @@ import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.Path
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -13,8 +13,8 @@ import scala.scalajs.js.annotation.JSName
  * Description: Extends FeatureGroup to allow creating multi-polylines
  * (single layer that consists of several polylines that share styling/popup).
  */
+@JSImport("leaflet", "MultiPolyline")
 @js.native
-@JSName("L.MultiPolyline")
 class MultiPolyline extends Path {
 
   def setLatLngs(latLngs: js.Array[js.Array[LatLng]]): this.type = js.native

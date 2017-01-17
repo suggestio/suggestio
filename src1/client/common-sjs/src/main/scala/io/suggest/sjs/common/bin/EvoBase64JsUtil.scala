@@ -3,7 +3,6 @@ package io.suggest.sjs.common.bin
 import java.nio.ByteBuffer
 
 import io.suggest.bin.{ConvCodecs, IDataConv}
-import evothings.EvothingsUtil
 
 import scala.scalajs.js.typedarray.TypedArrayBuffer
 
@@ -18,7 +17,7 @@ object EvoBase64JsUtil {
   /** js-only base64-декодер в рамках интерфейса конвертеров данных. */
   implicit case object EvoBase64JsDecoder extends IDataConv[String, ConvCodecs.Base64, ByteBuffer] {
     override def convert(base64: String): ByteBuffer = {
-      val arr = EvothingsUtil.base64DecToArr(base64)
+      val arr = JsBinaryUtil.base64DecToArr(base64)
       TypedArrayBuffer.wrap(arr.buffer)
     }
   }

@@ -3,7 +3,7 @@ package io.suggest.sjs.leaflet.path.poly
 import io.suggest.sjs.leaflet.map.LatLngBounds
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -11,8 +11,8 @@ import scala.scalajs.js.annotation.JSName
  * Created: 20.11.15 23:08
  * Description: API for rectangles.
  */
+@JSImport("leaflet", "Rectangle")
 @js.native
-@JSName("L.Rectangle")
 class Rectangle extends Polygon {
 
   def setBounds(bounds: LatLngBounds): this.type = js.native

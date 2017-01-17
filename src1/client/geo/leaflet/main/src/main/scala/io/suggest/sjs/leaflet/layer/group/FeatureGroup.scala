@@ -5,7 +5,7 @@ import io.suggest.sjs.leaflet.path.PathOptions
 import io.suggest.sjs.leaflet.popup.PopupOptions
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -13,8 +13,8 @@ import scala.scalajs.js.annotation.JSName
  * Created: 20.11.15 22:56
  * Description: API for L.FeatureGroup instances.
  */
+@JSImport("leaflet", "FeatureGroup")
 @js.native
-@JSName("L.FeatureGroup")
 class FeatureGroup extends LayerGroup {
 
   def bindPopup(htmlContent: String, options: PopupOptions = js.native): this.type = js.native

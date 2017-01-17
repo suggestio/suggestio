@@ -2,10 +2,12 @@ package react.leaflet.popup
 
 import io.suggest.react.JsWrapper1R
 import io.suggest.sjs.leaflet.map.LatLng
+import japgolly.scalajs.react.{JsComponentType, TopNode}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -33,8 +35,12 @@ case class PopupR(
 )
   extends JsWrapper1R[PopupPropsR, HTMLElement]
 {
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Popup
+  override protected def _rawComponent = js.constructorOf[Popup]
 }
+
+@JSImport("react-leaflet", "Popup")
+@js.native
+sealed class Popup extends JsComponentType[PopupPropsR, js.Object, TopNode]
 
 
 @js.native

@@ -3,7 +3,7 @@ package io.suggest.sjs.leaflet.control.locate
 import io.suggest.sjs.leaflet.control.IControl
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -11,8 +11,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 20.11.15 12:06
   * Description: API for location control.
   */
+@JSImport("leaflet.locatecontrol", "L.Control.Locate")
 @js.native
-@JSName("L.Control.Locate")
 class LocateControl extends IControl {
 
   def start(): LocateControl = js.native

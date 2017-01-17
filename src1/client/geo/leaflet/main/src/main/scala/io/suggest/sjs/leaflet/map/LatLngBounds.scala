@@ -2,7 +2,7 @@ package io.suggest.sjs.leaflet.map
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -10,8 +10,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 19.11.15 17:03
   * Description: API for LatLngBounds model.
   */
+@JSImport("leaflet", "LatLngBounds")
 @js.native
-@JSName("L.LatLngBounds")
 class LatLngBounds extends js.Object {
 
   def extend(latLng: LatLng | LatLngBounds): this.type = js.native

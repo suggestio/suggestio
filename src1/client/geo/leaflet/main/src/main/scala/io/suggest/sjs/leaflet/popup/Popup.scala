@@ -1,12 +1,12 @@
 package io.suggest.sjs.leaflet.popup
 
 import io.suggest.sjs.leaflet.event.LEventTarget
-import io.suggest.sjs.leaflet.map.{LatLng, LMap}
+import io.suggest.sjs.leaflet.map.{LMap, LatLng}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -15,8 +15,8 @@ import scala.scalajs.js.annotation.JSName
  * Description: API for popup instances.
  */
 
+@JSImport("leaflet", "Popup")
 @js.native
-@JSName("L.Popup")
 class Popup extends LEventTarget {
 
   def addTo(lmap: LMap): this.type = js.native

@@ -3,7 +3,7 @@ package io.suggest.sjs.leaflet.marker.cluster
 import io.suggest.sjs.leaflet.map.Point
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -11,8 +11,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 01.11.16 12:37
   * Description: API for internal class distance grid.
   */
+@JSImport("leaflet", "DistanceGrid")
 @js.native
-@JSName("L.DistanceGrid")
 class DistanceGrid extends js.Object {
 
   def addObject(obj: js.Any, point: Point): Unit = js.native

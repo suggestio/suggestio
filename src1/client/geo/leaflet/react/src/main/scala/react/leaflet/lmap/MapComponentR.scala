@@ -5,7 +5,7 @@ import org.scalajs.dom.raw.HTMLElement
 import react.leaflet.Context
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -13,8 +13,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 09.12.16 13:37
   * Description: Facade API for ReactLeaflet.MapComponent.
   */
+@JSImport("react-leaflet", "MapComponent")
 @js.native
-@JSName("ReactLeaflet.MapComponent")
 class MapComponentR[Props <: js.Any](
   val props: Props,
   val context: Context

@@ -6,7 +6,7 @@ import react.leaflet.Context
 import react.leaflet.lmap.MapComponentR
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -14,9 +14,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 09.12.16 12:41
   * Description: Facade API for react MapControl class.
   */
-
+@JSImport("react-leaflet", "MapControl")
 @js.native
-@JSName("ReactLeaflet.MapControl")
 object MapControlR extends js.Object {
 
   val contextTypes: js.Object = js.native
@@ -24,8 +23,8 @@ object MapControlR extends js.Object {
 }
 
 
+@JSImport("react-leaflet", "MapControl")
 @js.native
-@JSName("ReactLeaflet.MapControl")
 class MapControlR[Props <: ControlOptions](props: Props, context: Context)
   extends MapComponentR[Props](props, context) {
 

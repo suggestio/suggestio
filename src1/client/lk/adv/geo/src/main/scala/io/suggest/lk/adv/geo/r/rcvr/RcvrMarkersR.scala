@@ -7,9 +7,9 @@ import io.suggest.lk.adv.geo.m.MarkerNodeId
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import react.leaflet.marker.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 import io.suggest.react.ReactCommonUtil.callBackFun2jsCallback
 import io.suggest.react.ReactCommonUtil.Implicits._
+import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 
 import scala.scalajs.js
 

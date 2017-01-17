@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet.map
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -10,9 +10,8 @@ import scala.scalajs.js.annotation.JSName
  * Description: APIs for LatLng static and instances.
  * LatLng instance is a geo coordinates.
  */
-
+@JSImport("leaflet", "LatLng")
 @js.native
-@JSName("L.LatLng")
 object LatLng extends js.Object {
 
   val DEG_TO_RAD: Double = js.native
@@ -41,7 +40,7 @@ class LatLng extends ILatLng {
 
   def equals(other: LatLng): Boolean = js.native
 
-  override def toString(): String = js.native
+  override def toString: String = js.native
 
   def wrap(left: Double, right: Double): LatLng = js.native
 

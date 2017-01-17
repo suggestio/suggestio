@@ -18,5 +18,6 @@ persistLauncher in Test := false
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // требуется DOM в тестах. http://www.scala-js.org/doc/tutorial.html
-jsDependencies += RuntimeDOM
+//jsDependencies += RuntimeDOM
+requiresDOM in Test := true
 

@@ -4,11 +4,12 @@ import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.MarkerOptions
+import japgolly.scalajs.react.{JsComponentType, TopNode}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
   * Suggest.io
@@ -22,10 +23,12 @@ case class MarkerR(
 )
   extends JsWrapperR[MarkerPropsR, HTMLElement] {
 
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Marker
-
+  override protected def _rawComponent = js.constructorOf[Marker]
 }
 
+@JSImport("react-leaflet", "Marker")
+@js.native
+sealed class Marker extends JsComponentType[MarkerPropsR, js.Object, TopNode]
 
 @ScalaJSDefined
 trait MarkerPropsR extends MarkerOptions {

@@ -2,6 +2,8 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSPlugin)
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 name := "scalajs-react-common"
 
 version := "0.0.0-SNAPSHOT"
@@ -19,6 +21,12 @@ libraryDependencies ++= Seq(
     "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn
 )
 
+npmDependencies in Compile ++= Seq(
+  "react"     -> Common.reactJsVsn,
+  "react-dom" -> Common.reactJsVsn
+)
+
+/*
 jsDependencies ++= Seq(
   // React JS itself (Note the filenames, adjust as needed, eg. to remove addons.)
   "org.webjars.bower" % "react" % Common.reactJsVsn
@@ -38,4 +46,5 @@ jsDependencies ++= Seq(
     dependsOn "react-dom.js"
     commonJSName "ReactDOMServer"
 )
+*/
 

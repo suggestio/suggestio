@@ -1,9 +1,9 @@
 package io.suggest.sjs.leaflet.layer.group
 
-import io.suggest.sjs.leaflet.map.{Layer, LMap}
+import io.suggest.sjs.leaflet.map.{LMap, Layer}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -11,8 +11,8 @@ import scala.scalajs.js.annotation.JSName
  * Created: 20.11.15 22:49
  * Description: API for layer groups.
  */
+@JSImport("leaflet", "LayerGroup")
 @js.native
-@JSName("L.LayerGroup")
 class LayerGroup extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native

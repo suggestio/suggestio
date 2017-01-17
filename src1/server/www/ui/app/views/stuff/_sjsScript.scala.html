@@ -2,7 +2,7 @@
 
 @import ctx.api.cdn
 
-<script src="@cdn.asset(prefix + (if(ctx.api.isProd) "-" else "-fast") + "opt.js")"></script>
-@if( withLauncherJs ) {
+<script src="@cdn.asset(prefix + (if(ctx.api.isProd) "-" else "-fast") + "opt-bundle.js")"></script>
+@*if( withLauncherJs ) {
   <script src="@cdn.asset(prefix + "-launcher.js")"></script>
-}
+}*@

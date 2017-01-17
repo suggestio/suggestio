@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet.map
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -9,8 +9,8 @@ import scala.scalajs.js.annotation.JSName
  * Created: 23.11.15 16:27
  * Description: API for pixel bounds.
  */
+@JSImport("leaflet", "Bounds")
 @js.native
-@JSName("L.Bounds")
 class Bounds extends js.Object {
 
   var min: Point = js.native

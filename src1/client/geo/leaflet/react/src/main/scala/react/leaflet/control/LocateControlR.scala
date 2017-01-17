@@ -23,17 +23,12 @@ object LocateControlR {
   def jsConstructor = js.constructorOf[LocateControlC]
   jsConstructor.contextTypes = MapControlR.contextTypes
 
-  def apply(): LocateControlR = {
-    val p = js.Dynamic.literal.asInstanceOf[LocateControlPropsR]
-    LocateControlR(p)
-  }
-
 }
 
 
 /** Scala.js-враппер для js-класса [[LocateControlC]]. */
 case class LocateControlR(
-  override val props: LocateControlPropsR
+  override val props: LocateControlPropsR = new LocateControlPropsR {}
 )
   extends JsWrapper0R[LocateOptions, HTMLElement]
 {
@@ -50,7 +45,7 @@ sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
   override type El_t = LocateControl
 
   override def componentWillMount(): Unit = {
-    leafletElement = Leaflet.control.locate( props )
+    leafletElement = Leaflet.control.locate(props)
   }
 
 }

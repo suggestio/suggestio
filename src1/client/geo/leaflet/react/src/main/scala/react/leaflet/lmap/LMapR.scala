@@ -3,11 +3,12 @@ package react.leaflet.lmap
 import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.{LatLngBounds, MapOptions}
+import japgolly.scalajs.react.{JsComponentType, TopNode}
 import org.scalajs.dom.raw.HTMLDivElement
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
   * Suggest.io
@@ -22,11 +23,12 @@ case class LMapR(
 )
   extends JsWrapperR[LMapPropsR, HTMLDivElement]
 {
-
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Map
-
+  override protected def _rawComponent = js.constructorOf[Map]
 }
 
+@JSImport("react-leaflet", "Map")
+@js.native
+sealed class Map extends JsComponentType[LMapPropsR, js.Object, TopNode]
 
 @ScalaJSDefined
 trait LMapPropsR extends MapOptions {

@@ -45,7 +45,7 @@ object Sio2Build extends Build {
     val name = "common-sjs"
     Project(id = name, base = file(DIR0 + "client/" ++ name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonJS, evothingsUtilSjs)
+      .dependsOn(commonJS)
       // Хз нужен ли этот инклюд сорцов прямо здесь.
       /*.settings(
         List(commonJS).map { p =>
@@ -105,7 +105,7 @@ object Sio2Build extends Build {
   }
 
   /** Scala.js API для доступа к jquery.datetimepicker.js от xdsoft. */
-  lazy val dateTimePickerSjs = {
+  lazy val jqDateTimePickerSjs = {
     val name = "jquery-datetimepicker"
     Project(id = name, base = file(DIR0 + "client/scalajs/jquery/jquery-datetimepicker"))
       .enablePlugins(ScalaJSPlugin)
@@ -119,12 +119,19 @@ object Sio2Build extends Build {
       .dependsOn(commonSjs, commonReactSjs)
   }
 
+  /** Фасады и врапперы scala.js для react date-picker'а. */
+  lazy val reactDatePickerSjs = {
+    Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(commonReactSjs)
+  }
+
   /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
   lazy val lkDtPeriodSjs = {
     val name = "lk-dt-period-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/dt-period"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkCommonSjs, dateTimePickerSjs, commonReactSjs)
+      .dependsOn(lkCommonSjs, jqDateTimePickerSjs, commonReactSjs)
   }
 
   /** lk-adv-common sjs. */
@@ -181,12 +188,6 @@ object Sio2Build extends Build {
       .enablePlugins(ScalaJSPlugin)
   }
 
-  /** scala.js API + js для evothings/libs/util.js */
-  lazy val evothingsUtilSjs = {
-    Project(id = "scalajs-evothings-util", base = file(DIR0 + "client/ble/evothings-util"))
-      .enablePlugins(ScalaJSPlugin)
-  }
-  
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     Project(id = "scalajs-leaflet", base = file(DIR0 + "client/geo/leaflet/main"))
@@ -268,7 +269,7 @@ object Sio2Build extends Build {
     val name = "ble-beaconer"
     Project(id = name, base = file(DIR0 + "client/ble/" + name))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs, evothingsUtilSjs)
+      .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
@@ -302,8 +303,8 @@ object Sio2Build extends Build {
         commonJS, commonJVM, logsMacro,
         commonSjs, commonReactSjs,
         leafletSjs, leafletReactSjs, mapBoxGlSjs,
-        lkSjs, scSjs, dateTimePickerSjs, lkDtPeriodSjs,
-        evothingsUtilSjs, cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
+        lkSjs, scSjs, jqDateTimePickerSjs, reactDatePickerSjs, lkDtPeriodSjs,
+        cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,
         ipgeobase, stat,
         web21, mbill2, svgUtil

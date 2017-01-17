@@ -4,7 +4,7 @@ import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.Path
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -12,9 +12,8 @@ import scala.scalajs.js.annotation.JSName
  * Created: 20.11.15 14:22
  * Description: API for circles.
  */
-
+@JSImport("leaflet", "Circle")
 @js.native
-@JSName("L.Circle")
 class Circle extends Path {
 
   def getLatLng(): LatLng = js.native

@@ -1,7 +1,6 @@
 package io.suggest.sjs.leaflet.marker.icon
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -10,5 +9,4 @@ import scala.scalajs.js.annotation.JSName
   * Description: API for icons.
   */
 @js.native
-@JSName("L.Marker.Icon")
 class Icon extends js.Object

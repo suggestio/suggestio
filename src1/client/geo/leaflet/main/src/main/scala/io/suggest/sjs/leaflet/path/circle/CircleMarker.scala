@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet.path.circle
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -10,6 +10,6 @@ import scala.scalajs.js.annotation.JSName
  * Description: API for L.CircleMarker.
  * Here radius in pixels, not meters.
  */
+@JSImport("leaflet", "CircleMarker")
 @js.native
-@JSName("L.CircleMarker")
 class CircleMarker extends Circle

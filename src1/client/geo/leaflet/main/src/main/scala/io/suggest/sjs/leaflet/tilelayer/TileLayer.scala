@@ -3,7 +3,7 @@ package io.suggest.sjs.leaflet.tilelayer
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 import io.suggest.sjs.leaflet.map.LMap
 
 /**
@@ -12,8 +12,8 @@ import io.suggest.sjs.leaflet.map.LMap
  * Created: 19.11.15 18:26
  * Description: API for L.TileLayer model.
  */
+@JSImport("leaflet", "TileLayer")
 @js.native
-@JSName("L.TileLayer")
 class TileLayer extends js.Object {
 
   def addTo(map: LMap): TileLayer = js.native

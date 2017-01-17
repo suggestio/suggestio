@@ -1,7 +1,7 @@
 package io.suggest.sjs.leaflet.path.poly
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -10,6 +10,6 @@ import scala.scalajs.js.annotation.JSName
  * Description: API for polygon.
  */
 
+@JSImport("leaflet", "Polygon")
 @js.native
-@JSName("L.Polygon")
 class Polygon extends Polyline

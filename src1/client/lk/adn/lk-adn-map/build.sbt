@@ -21,8 +21,3 @@ libraryDependencies ++= Seq(
   "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn
 )
 
-jsDependencies ++= Seq(
-  // Стандартные jsDeps:
-  RuntimeDOM % "test"
-)
-

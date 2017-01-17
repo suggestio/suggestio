@@ -2,10 +2,10 @@ package react.leaflet.layer
 
 import io.suggest.react.JsWrapper0R
 import io.suggest.sjs.leaflet.tilelayer.TlOptions
-import japgolly.scalajs.react.TopNode
+import japgolly.scalajs.react.{JsComponentType, TopNode}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
   * Suggest.io
@@ -19,8 +19,12 @@ case class TileLayerR(
 )
   extends JsWrapper0R[TileLayerPropsR, TopNode]
 {
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.TileLayer
+  override protected def _rawComponent = js.constructorOf[TileLayer]
 }
+
+@JSImport("react-leaflet", "TileLayer")
+@js.native
+sealed class TileLayer extends JsComponentType[TileLayerPropsR, js.Object, TopNode]
 
 
 @ScalaJSDefined

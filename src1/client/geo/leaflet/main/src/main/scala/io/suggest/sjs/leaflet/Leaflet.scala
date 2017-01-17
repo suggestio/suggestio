@@ -14,7 +14,7 @@ import io.suggest.sjs.leaflet.tilelayer.{TileLayer, TlOptions}
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -22,8 +22,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 19.11.15 16:51
   * Description: Core interface of leaflet.
   */
+@JSImport("leaflet", JSImport.Namespace)
 @js.native
-@JSName("L")
 object Leaflet extends js.Object {
 
   def map(target: MapTarget, options: MapOptions = js.native): LMap = js.native

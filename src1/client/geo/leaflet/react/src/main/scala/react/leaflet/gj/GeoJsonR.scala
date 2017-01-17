@@ -2,10 +2,11 @@ package react.leaflet.gj
 
 import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.geojson.GjOptions
+import japgolly.scalajs.react.JsComponentType
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
   * Suggest.io
@@ -15,8 +16,12 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   */
 
 case class GeoJsonR(override val props: GeoJsonPropsR) extends JsWrapperR[GeoJsonPropsR, HTMLElement] {
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.GeoJSON
+  override protected def _rawComponent = js.constructorOf[GeoJSON]
 }
+
+@JSImport("react-leaflet", "GeoJSON")
+@js.native
+sealed class GeoJSON extends JsComponentType[GeoJsonPropsR, js.Object, HTMLElement]
 
 
 @ScalaJSDefined

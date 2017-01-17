@@ -1,9 +1,10 @@
 package react.leaflet.layer
 
 import io.suggest.react.JsWrapperNoPropsR
-import japgolly.scalajs.react.TopNode
+import japgolly.scalajs.react.{JsComponentType, TopNode}
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -12,7 +13,9 @@ import scala.scalajs.js
   * Description: Layer group for react-leaflet wrappers and APIs.
   */
 case class LayerGroupR() extends JsWrapperNoPropsR[TopNode] {
-
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.LayerGroup
-
+  override protected def _rawComponent = js.constructorOf[LayerGroup]
 }
+
+@JSImport("react-leaflet", "LayerGroup")
+@js.native
+sealed class LayerGroup extends JsComponentType[js.Object, js.Object, TopNode]

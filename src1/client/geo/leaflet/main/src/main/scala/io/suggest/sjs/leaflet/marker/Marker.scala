@@ -1,14 +1,14 @@
 package io.suggest.sjs.leaflet.marker
 
 import io.suggest.sjs.leaflet.handler.IHandler
-import io.suggest.sjs.leaflet.map.{Layer, LMap, LatLng}
+import io.suggest.sjs.leaflet.map.{LMap, LatLng, Layer}
 import io.suggest.sjs.leaflet.marker.icon.Icon
 import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -17,8 +17,8 @@ import scala.scalajs.js.annotation.JSName
  * Description: Маркер на карте.
  */
 
+@JSImport("leaflet", "Marker")
 @js.native
-@JSName("L.Marker")
 class Marker extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native

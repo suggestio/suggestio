@@ -4,7 +4,7 @@ import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -12,8 +12,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 20.11.15 12:03
   * Description: API for L.control (aka controls).
   */
+@JSImport("leaflet", "control")
 @js.native
-@JSName("L.control")
 class LControl extends js.Object {
 
   /** For feature-detection. */

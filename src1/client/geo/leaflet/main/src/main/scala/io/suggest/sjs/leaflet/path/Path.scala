@@ -6,7 +6,7 @@ import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -14,9 +14,8 @@ import scala.scalajs.js.annotation.JSName
  * Created: 20.11.15 14:38
  * Description: Basic API for paths.
  */
-
+@JSImport("leaflet", "Path")
 @js.native
-@JSName("L.Path")
 class Path extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native

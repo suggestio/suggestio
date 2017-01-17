@@ -1,9 +1,9 @@
-package react.leaflet.marker
+package react.leaflet.marker.cluster
 
 import io.suggest.react.JsWrapper0R
 import io.suggest.sjs.leaflet.Leaflet
-import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import io.suggest.sjs.leaflet.marker.cluster._
+import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import japgolly.scalajs.react.TopNode
 import react.leaflet.Context
 import react.leaflet.layer.MapLayerR

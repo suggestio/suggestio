@@ -1,9 +1,9 @@
 package io.suggest.ble.api.cordova.ble
 
-import evothings.EvothingsUtil
 import evothings.ble.DeviceInfo
 import io.suggest.ble.beaconer.m.beacon.apple.IBeacon
 import io.suggest.common.uuid.LowUuidUtil
+import io.suggest.sjs.common.bin.JsBinaryUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 
@@ -79,7 +79,7 @@ case class IBeaconParser(override val dev: DeviceInfo)
       manufDataB64    <- advData.kCBAdvDataManufacturerData
 
       // Десериализация из base64 в байтовый массив.
-      bytes = EvothingsUtil.base64DecToArr(manufDataB64)
+      bytes = JsBinaryUtil.base64DecToArr(manufDataB64)
 
       // Проверить содержимое, там вначале обычно 4 стабильных байта: 4c 00 02 15
       if bytes(0) == 0x4c && bytes(1) == 0x00 &&    // if apple and...
@@ -92,13 +92,13 @@ case class IBeaconParser(override val dev: DeviceInfo)
         rssi          = rssi,
         // TODO отформатировать в UUID с помощью дефисов.
         proximityUuid = LowUuidUtil.hexStringToUuid(
-          EvothingsUtil.typedArrayToHexString(
+          JsBinaryUtil.typedArrayToHexString(
             bytes.subarray(4, 20)
           )
         ),
-        major         = EvothingsUtil.bigEndianToUint16(bytes, 20),
-        minor         = EvothingsUtil.bigEndianToUint16(bytes, 22),
-        rssi0         = EvothingsUtil.littleEndianToInt8(bytes, 24)
+        major         = JsBinaryUtil.bigEndianToUint16(bytes, 20),
+        minor         = JsBinaryUtil.bigEndianToUint16(bytes, 22),
+        rssi0         = JsBinaryUtil.littleEndianToInt8(bytes, 24)
       )
       Right(ib)
     }

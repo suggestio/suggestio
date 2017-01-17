@@ -6,6 +6,8 @@ name := "lk-sjs"
 
 version := "0.0.0-SNAPSHOT"
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 //resolvers ++= Seq(
 //  "sonatype-oss-snapshots" at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL
 //)
@@ -19,13 +21,13 @@ libraryDependencies ++= Seq(
   //"io.monix"      %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
-persistLauncher in Compile := true
+persistLauncher in Compile := false
 
 persistLauncher in Test := false
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
-jsDependencies += RuntimeDOM % "test"
+requiresDOM in Test := true
 
 //scalaJSOutputMode := OutputMode.ECMAScript6
 

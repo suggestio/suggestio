@@ -1,10 +1,10 @@
 package io.suggest.sjs.leaflet.control
 
-import io.suggest.sjs.leaflet.map.{Layer, LMap}
+import io.suggest.sjs.leaflet.map.{LMap, Layer}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
  * Suggest.io
@@ -13,8 +13,8 @@ import scala.scalajs.js.annotation.JSName
  * Description: API for controls.
  * @see [[http://leafletjs.com/reference.html#icontrol]]
  */
+@JSImport("leaflet", "Control")
 @js.native
-@JSName("L.Control")
 class IControl extends Layer {
 
   //var position: String = js.native

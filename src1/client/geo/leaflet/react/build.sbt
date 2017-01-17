@@ -2,6 +2,8 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSPlugin)
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 name := "scalajs-leaflet-react"
 
 version := "0.0.0-SNAPSHOT"
@@ -21,10 +23,7 @@ libraryDependencies ++= Seq(
     Common.ORG      %%% "scalajs-react-common"           % "0.0.0-SNAPSHOT"
 )
 
-jsDependencies ++= Seq(
-  // Зависим от ванильного react-leaflet:
-  "org.webjars.bower" % "react-leaflet" % "1.0.3"
-    / "react-leaflet.js"
-    minified "react-leaflet.min.js"
+npmDependencies in Compile ++= Seq(
+  "react-leaflet" -> "1.0.3"
 )
 

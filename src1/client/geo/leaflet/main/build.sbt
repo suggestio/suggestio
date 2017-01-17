@@ -3,6 +3,8 @@ Common.settingsOrgJS
 // Turn this project into a Scala.js project by importing these settings
 enablePlugins(ScalaJSPlugin)
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 name := "scalajs-leaflet"
 
 version := "0.1s-SNAPSHOT"
@@ -19,6 +21,14 @@ libraryDependencies ++= Seq(
     "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn
 )
 
+npmDependencies in Compile ++= Seq(
+  "leaflet"               -> Common.leafletJsVsn,
+  "leaflet.locatecontrol" -> Common.leafletControlLocateJsVsn
+)
+
+requiresDOM in Test := true
+
+/*
 jsDependencies ++= {
   val leafletVsn = Common.leafletJsVsn
   val llcVsn     = Common.leafletControlLocateJsVsn
@@ -39,4 +49,5 @@ jsDependencies ++= {
     RuntimeDOM    % "test"
   )
 }
+*/
 

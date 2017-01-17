@@ -5,7 +5,7 @@ import io.suggest.sjs.leaflet.marker.Marker
 import io.suggest.sjs.leaflet.marker.icon.Icon
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -13,8 +13,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 01.11.16 12:24
   * Description: MarkerCluster API.
   */
+@JSImport("leaflet", "MarkerCluster")
 @js.native
-@JSName("L.MarkerCluster")
 class MarkerCluster extends Marker {
 
   def getChildCount(): Int = js.native
@@ -37,6 +37,6 @@ class MarkerCluster extends Marker {
 
 }
 
+@JSImport("leaflet", "MarkerClusterNonAnimated")
 @js.native
-@JSName("L.MarkerClusterNonAnimated")
 class MarkerClusterNonAnimated extends MarkerCluster

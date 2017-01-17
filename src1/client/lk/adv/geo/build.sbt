@@ -2,6 +2,8 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSPlugin)
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 name := "lk-adv-geo-tags-sjs"
 
 version := "0.0.0-SNAPSHOT"

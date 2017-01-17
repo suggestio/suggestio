@@ -3,10 +3,11 @@ package react.leaflet.circle
 import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.PathOptions
+import japgolly.scalajs.react.{JsComponentType, TopNode}
 import org.scalajs.dom.Element
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
   * Suggest.io
@@ -22,10 +23,12 @@ case class CircleR(
 )
   extends JsWrapperR[CirclePropsR, Element]
 {
-
-  override protected def _rawComponent = js.Dynamic.global.ReactLeaflet.Circle
-
+  override protected def _rawComponent = js.constructorOf[Circle]
 }
+
+@JSImport("react-leaflet", "Circle")
+@js.native
+sealed class Circle extends JsComponentType[CirclePropsR, js.Object, TopNode]
 
 
 @ScalaJSDefined

@@ -3,7 +3,7 @@ package io.suggest.sjs.leaflet.map
 import io.suggest.sjs.leaflet.event.LEventTarget
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -11,8 +11,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 19.11.15 17:00
   * Description: Abstract Layer API.
   */
+@JSImport("leaflet", "Layer")
 @js.native
-@JSName("L.Layer")
 class Layer extends LEventTarget {
 
   def onAdd(lmap: LMap): this.type = js.native

@@ -7,6 +7,8 @@ import com.tuplejump.sbt.yeoman.Yeoman
 
 Common.settingsOrg
 
+enablePlugins(WebScalaJSBundlerPlugin)
+
 name := "sioweb21"
 
 version := "1.0-SNAPSHOT"

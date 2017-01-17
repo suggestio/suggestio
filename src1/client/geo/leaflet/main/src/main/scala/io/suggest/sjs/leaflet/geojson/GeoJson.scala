@@ -1,10 +1,10 @@
 package io.suggest.sjs.leaflet.geojson
 
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.leaflet.map.{Layer, LMap, LatLng, LatLngBounds}
+import io.suggest.sjs.leaflet.map.{LMap, LatLng, LatLngBounds, Layer}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -12,8 +12,8 @@ import scala.scalajs.js.annotation.JSName
   * Created: 11.04.16 14:44
   * Description: GeoJSON layer model.
   */
+@JSImport("leaflet", "GeoJSON")
 @js.native
-@JSName("L.GeoJSON")
 object GeoJson extends js.Object {
 
   def geometryToLayer(feature: GjFeature,

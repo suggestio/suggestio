@@ -1,10 +1,10 @@
 package io.suggest.ble.api.cordova.ble
 
-import evothings.EvothingsUtil
 import evothings.ble.DeviceInfo
 import io.suggest.ble.beaconer.m.beacon.google.EddyStone
 import io.suggest.common.radio.BleConstants
 import io.suggest.common.uuid.LowUuidUtil
+import io.suggest.sjs.common.bin.JsBinaryUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 
@@ -85,7 +85,7 @@ case class EddyStoneParser(override val dev: DeviceInfo)
 
       // Это EddyStone 100%. Но нас интересует только EddyStone-UID. Для остальных возвращать Left().
       // Загнать данные eddystone-сервиса в байтовый массив...
-      val bytes = EvothingsUtil.base64DecToArr(b64data)
+      val bytes = JsBinaryUtil.base64DecToArr(b64data)
       val frameCode = bytes(0)
 
       if (frameCode == 0x00 && bytes.byteLength <= 18) {
@@ -94,10 +94,10 @@ case class EddyStoneParser(override val dev: DeviceInfo)
 
         val eddyStone = EddyStone(
           rssi    = rssi,
-          txPower = EvothingsUtil.littleEndianToInt8(bytes, 1),
+          txPower = JsBinaryUtil.littleEndianToInt8(bytes, 1),
           uid     = Some(
             LowUuidUtil.hexStringToEddyUid(
-              EvothingsUtil.typedArrayToHexString( bytes.subarray(2, 18) )
+              JsBinaryUtil.typedArrayToHexString( bytes.subarray(2, 18) )
             )
           )
         )
