@@ -17,6 +17,7 @@ object MFormInit {
 
   implicit val pickler: Pickler[MFormInit] = {
     implicit val a4fP   = MAdv4FreeProps.pickler
+    implicit val advPricingP = MGetPriceResp.pickler
     implicit val formP  = MFormS.pickler
     generatePickler[MFormInit]
   }

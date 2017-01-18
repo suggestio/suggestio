@@ -15,9 +15,11 @@ import io.suggest.geo.MGeoPoint
  */
 class GeoPointTest extends FlatSpec with LatLonRnd[MGeoPoint] with PlayJsonTestUtil {
 
+  import GeoPoint.Implicits._
+
   override type T = MGeoPoint
 
-  override protected def mkInstance = GeoPoint(lat = newLat, lon = newLon)
+  override protected def mkInstance = MGeoPoint(lat = newLat, lon = newLon)
 
 
   "JSON (play)" should "simply support model" in {

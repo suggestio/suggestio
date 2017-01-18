@@ -24,7 +24,7 @@ class MUaSpec extends FlatSpec with PlayJsonTestUtil {
         device    = Some( "desktop" ),
         osFamily  = Some( "pravoslavnaya OS" ),
         osVsn     = Some( "1.0" ),
-        uaType    = Some( MUaTypes.Browser )
+        uaType    = Seq( MUaTypes.Browser )
       )
     }
   }

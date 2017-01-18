@@ -1,6 +1,6 @@
 package io.suggest.model.n2.media.storage
 
-import io.suggest.model.PlayJsonTestUtil
+import io.suggest.model.{MockedEsSn, PlayJsonTestUtil}
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import io.suggest.swfs.client.proto.fid.Fid
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
@@ -11,7 +11,7 @@ import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
  * Created: 30.09.15 11:23
  * Description: Тесты для абстрактной модели [[IMediaStorage]].
  */
-class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUtil {
+class IMediaStorageSpec extends PlaySpec with OneAppPerSuite with PlayJsonTestUtil with MockedEsSn {
 
   override type T = IMediaStorage
 

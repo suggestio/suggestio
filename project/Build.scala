@@ -15,10 +15,14 @@ object Sio2Build extends Build {
   /** Общий код серверной и клиентской частей подсистемы внешнего размещения. */
   lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shared/common"))
     .settings(
-      resolvers += "sonatype-oss-snapshots" at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL,    // Нужно только для wix accord *-SNAPSHOT.
+      //resolvers += "sonatype-oss-snapshots" at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL,    // Нужно только для wix accord *-SNAPSHOT.
+      Common.settingsOrg,
+      version := "0.0.0-SNAPSHOT",
+      testFrameworks += new TestFramework("minitest.runner.Framework"),
       libraryDependencies ++= Seq(
         "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
-        "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn
+        "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
+        "io.monix"      %%% "minitest"   % Common.minitestVsn  % Test
         //"com.wix"      %%% "accord-core" % Common.wixAccordVsn
       )
     )

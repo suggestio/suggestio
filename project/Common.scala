@@ -42,7 +42,7 @@ object Common {
   def sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
 
   /** Версия scalatest+play. */
-  def scalaTestPlusPlayVsn = "1.5.1"
+  def scalaTestPlusPlayVsn = "2.0.0-M1"
 
   /** Версия используемого плагина play-mailer. */
   def playMailerVsn     = "5.0.0-M1"
@@ -61,10 +61,8 @@ object Common {
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.4"
 
-  /** Версия scalatest.
-    * play-2.2..2.5 == scalatest-2.2.x
-    */
-  def scalaTestVsn       = "3.0.0"
+  /** Версия scalatest. */
+  def scalaTestVsn       = "3.0.1"
 
   /** 
    *  Версия react.js, используемая в проекте. 

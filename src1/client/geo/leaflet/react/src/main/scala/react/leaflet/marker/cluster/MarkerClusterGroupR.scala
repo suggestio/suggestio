@@ -46,7 +46,7 @@ class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
 
   override def componentWillMount(): Unit = {
     val markers = props.markers
-    val mcg = Leaflet.markerClusterGroup(props)
+    val mcg = MarkerClusterGroup(props)
     mcg.addLayers( markers )
     // TODO Сделать обработчики событий аналогично react-leaflet? Все, начинающиеся с "on" подхватывать и навешивать?
     for (f <- props.markerClick) {

@@ -1,7 +1,7 @@
 package functional
 
-import org.scalatest.Suite
-import org.scalatestplus.play._
+import org.scalatest.TestSuite
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.{Application, Mode}
 
@@ -11,7 +11,7 @@ import play.api.{Application, Mode}
  * Created: 09.09.15 10:10
  * Description: Поддержка бесстартового запуска приложения для ускорения нестирования.
  */
-trait OneAppPerSuiteNoGlobalStart extends OneAppPerSuite { this: Suite =>
+trait OneAppPerSuiteNoGlobalStart extends GuiceOneAppPerSuite { this: TestSuite =>
 
   /**
     * Штатный Global производит долгую инициализацию, которая нам не нужна.

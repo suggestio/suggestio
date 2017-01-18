@@ -14,7 +14,7 @@ import scala.concurrent.Future
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.09.15 18:53
- * Description: Данные по backend-хранилищу, задействованному в
+ * Description: Данные по backend-хранилищу, задействованному в хранении файлов.
  */
 class IMediaStorages @Inject() (
   injector  : Injector

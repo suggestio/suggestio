@@ -11,9 +11,9 @@ import scala.scalajs.js.annotation.JSImport
   * Created: 20.11.15 12:06
   * Description: API for location control.
   */
-@JSImport("leaflet.locatecontrol", "L.Control.Locate")
+@JSImport("leaflet.locatecontrol", JSImport.Namespace)
 @js.native
-class LocateControl extends IControl {
+class LocateControl(options: LocateOptions) extends IControl {
 
   def start(): LocateControl = js.native
 

@@ -45,7 +45,7 @@ sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
   override type El_t = LocateControl
 
   override def componentWillMount(): Unit = {
-    leafletElement = Leaflet.control.locate(props)
+    leafletElement = new LocateControl(props)
   }
 
 }

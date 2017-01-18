@@ -727,7 +727,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
   def toEsJsonDoc(e: T): String = {
     import io.suggest.util.SioConstants._
-     var kvs = List[String] (s""" "$FIELD_SOURCE": ${toJson(e)}""")
+    var kvs = List[String] (s""" "$FIELD_SOURCE": ${toJson(e)}""")
     if (e.versionOpt.isDefined)
       kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
     if (e.id.isDefined)

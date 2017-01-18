@@ -5,7 +5,7 @@ import io.suggest.sjs.mapbox.gl.layer.PaintProps
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSName, ScalaJSDefined}
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -17,23 +17,17 @@ import scala.scalajs.js.annotation.{JSName, ScalaJSDefined}
 @ScalaJSDefined
 trait CirclePaintProps extends PaintProps {
 
-  @JSName("circle-radius")
-  val circleRadius          : UndefOr[Int]            = js.undefined
+  val `circle-radius`          : UndefOr[Int]            = js.undefined
 
-  @JSName("circle-color")
-  val circleColor           : UndefOr[Color_t]        = js.undefined
+  val `circle-color`           : UndefOr[Color_t]        = js.undefined
 
-  @JSName("circle-blur")
-  val circleBlur            : UndefOr[Double]         = js.undefined
+  val `circle-blur`            : UndefOr[Double]         = js.undefined
 
-  @JSName("circle-opacity")
-  val circleOpacity         : UndefOr[Double]         = js.undefined
+  val `circle-opacity`         : UndefOr[Double]         = js.undefined
 
-  @JSName("circle-translate")
-  val circleTranslate       : UndefOr[js.Array[Int]]  = js.undefined
+  val `circle-translate`       : UndefOr[js.Array[Int]]  = js.undefined
 
-  @JSName("circle-translate-anchor")
   /** @see [[CircleTranslateAnchors]]. */
-  val circleTranslateAnchor : UndefOr[String]         = js.undefined
+  val `circle-translate-anchor` : UndefOr[String]         = js.undefined
 
 }

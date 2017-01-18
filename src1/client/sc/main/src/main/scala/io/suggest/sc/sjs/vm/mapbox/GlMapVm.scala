@@ -58,8 +58,8 @@ case class GlMapVm(glMap: GlMap) {
   }
   private def _circlePaintProps(radius: Int, color: Color_t): CirclePaintProps = {
     new CirclePaintProps {
-      override val circleRadius: UndefOr[Int]      = radius
-      override val circleColor : UndefOr[Color_t]  = color
+      override val `circle-radius`  : UndefOr[Int]      = radius
+      override val `circle-color`   : UndefOr[Color_t]  = color
     }
   }
 

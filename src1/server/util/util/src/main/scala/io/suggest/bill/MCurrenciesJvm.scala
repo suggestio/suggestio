@@ -13,7 +13,7 @@ object MCurrenciesJvm {
 
   /** Поддержка play JSON для инстансов MCurrencies. */
   implicit val CURRENCY_FORMAT: Format[MCurrency] = {
-    __.format[String]
+    implicitly[Format[String]]
       .inmap[MCurrency](
         MCurrencies.withName,
         _.currencyCode
