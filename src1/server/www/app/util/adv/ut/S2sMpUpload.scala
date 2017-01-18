@@ -3,6 +3,7 @@ package util.adv.ut
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.di.IWsClient
 import io.suggest.fsm.FsmActor
+import io.suggest.primo.IToPublicString
 import models.adv.ext.act.ExtActorEnv
 import models.event.{ErrorInfo, MEventTypes}
 import models.mproj.IMCommonDi
@@ -131,7 +132,7 @@ trait S2sMpUploadRender
       val err = ErrorInfo(
         msg  = "error.adv.ext.s2s.img.upload.failed",
         args = Seq(getDomain),
-        info = Some(s"[$replyTo] ${ex.getMessage}")
+        info = Some(s"[$replyTo] ${IToPublicString.getPublicString(ex)}")
       )
       val rargs = evtRenderArgs(MEventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)

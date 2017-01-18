@@ -1,17 +1,19 @@
 package util.adr
 
-import java.io.{File, StringWriter}
+import java.io.File
+import java.nio.file.Files
 
 import io.suggest.async.IAsyncUtilDi
+import io.suggest.primo.IToPublicString
 import models.MImgSizeT
 import models.adr.IAdRenderArgs
 import models.im.OutImgFmt
 import models.mproj.IMCommonDi
-import org.apache.commons.io.IOUtils
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.collection.JavaConversions._
 
 /**
   * Suggest.io
@@ -67,21 +69,32 @@ abstract class IAdRrr
 
   protected def exec(args: Array[String]): Unit = {
     val now = System.currentTimeMillis()
-    val p = Runtime.getRuntime.exec(args)
 
-    // Запустить чтение из stderr
-    val stdErr = new StringWriter()
-    IOUtils.copy( p.getErrorStream, stdErr)
+    val stdOutFile = File.createTempFile("ad-rrr-stdouterr", ".log")
 
-    val result = p.waitFor()
-    val tookMs = System.currentTimeMillis() - now
+    try {
+      val p = new ProcessBuilder(args: _*)
+        .redirectErrorStream(true)
+        .redirectOutput(stdOutFile)
+        .start()
 
-    lazy val cmd = args.mkString(" ")
-    lazy val stdErrStr = stdErr.toString
+      val result = p.waitFor()
+      val tookMs = System.currentTimeMillis() - now
 
-    LOGGER.trace(s"$cmd  ===>>>  $result ; took = $tookMs ms\n$stdErrStr")
-    if (result != 0) {
-      throw AdRrrFailedException(s"Cannot execute command (result: $result)", cmd + "\n" + stdErrStr)
+      lazy val logMsg = {
+        val cmd = args.mkString(" ")
+        val stdOutStr = new String( Files.readAllLines(stdOutFile.toPath).mkString(" | ", "\n | ", "\n") )
+        s"[$now] $cmd  ===>>>  $result ; took = $tookMs ms\n $stdOutStr"
+      }
+
+      if (result == 0) {
+        LOGGER.debug(logMsg)
+      } else {
+        LOGGER.error(logMsg)
+        throw AdRrrFailedException(now, s"Cannot execute shell command (result: $result)", logMsg)
+      }
+    } finally {
+      stdOutFile.delete()
     }
   }
 
@@ -105,7 +118,10 @@ abstract class IAdRrr
 }
 
 /** Экзепшен при запуске рендера. */
-case class AdRrrFailedException(msg: String, privateMsg: String) extends RuntimeException
+case class AdRrrFailedException(now: Long, msg: String, privateMsg: String) extends RuntimeException with IToPublicString {
+  override def getMessage = msg + "\n" + privateMsg
+  override def toPublicString = s"Ad renderer[$now] internal error."
+}
 
 /** Трейт для реализации статической утили рендереров. */
 trait IAdRrrUtil {

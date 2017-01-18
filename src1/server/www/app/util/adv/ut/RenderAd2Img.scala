@@ -3,6 +3,7 @@ package util.adv.ut
 import java.io.File
 
 import io.suggest.fsm.FsmActor
+import io.suggest.primo.IToPublicString
 import models.MNode
 import models.blk.OneAdQsArgs
 import models.event.{ErrorInfo, MEventTypes}
@@ -76,7 +77,7 @@ trait RenderAd2ImgRender
     override def rendererError(ex: Throwable): Unit = {
       val err = ErrorInfo(
         msg  = "error.sio.internal",
-        info = Some(s"[$replyTo] ${ex.getMessage}")
+        info = Some(s"[$replyTo] ${IToPublicString.getPublicString(ex)}")
       )
       val rargs = evtRenderArgs(MEventTypes.AdvExtTgError, err)
       renderEventReplace(rargs)

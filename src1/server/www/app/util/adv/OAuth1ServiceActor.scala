@@ -9,6 +9,7 @@ import com.google.inject.assistedinject.Assisted
 import controllers.routes
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
+import io.suggest.primo.IToPublicString
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
 import models.adv.js.ctx.MStorageKvCtx
@@ -141,10 +142,11 @@ class OAuth1ServiceActor @Inject() (
    * @param ex Исключение. Как правило, это экземпляр OAuthException.
    */
   protected def renderInitFailed(ex: Throwable): Unit = {
+
     serviceInitFailedRender(
       errors = Seq(ErrorInfo(
         msg = "e.adv.ext.api.init",
-        info = Some(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+        info = Some(s"${ex.getClass.getSimpleName}: ${IToPublicString.getPublicString(ex)}")
       ))
     )
   }

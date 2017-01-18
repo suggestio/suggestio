@@ -203,7 +203,7 @@ case class ExtAdvWsActor @Inject() (
       super.afterBecome()
       // Повесить callback'и на фьючерс с таргетами.
       eactx.targetsFut onComplete {
-        case Success(targets) => self ! TargetsReady(targets.toList)
+        case Success(targets) => self ! TargetsReady(targets)
         case Failure(ex)      => self ! TargetsFailed(ex)
       }
     }
