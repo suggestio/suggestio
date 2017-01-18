@@ -1,12 +1,13 @@
 package util.adr
 
-import java.io.File
+import java.io.{File, StringWriter}
 
 import io.suggest.async.IAsyncUtilDi
 import models.MImgSizeT
 import models.adr.IAdRenderArgs
 import models.im.OutImgFmt
 import models.mproj.IMCommonDi
+import org.apache.commons.io.IOUtils
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -67,12 +68,20 @@ abstract class IAdRrr
   protected def exec(args: Array[String]): Unit = {
     val now = System.currentTimeMillis()
     val p = Runtime.getRuntime.exec(args)
+
+    // Запустить чтение из stderr
+    val stdErr = new StringWriter()
+    IOUtils.copy( p.getErrorStream, stdErr)
+
     val result = p.waitFor()
     val tookMs = System.currentTimeMillis() - now
+
     lazy val cmd = args.mkString(" ")
-    LOGGER.trace(cmd + "  ===>>>  " + result + " ; took = " + tookMs + "ms")
+    lazy val stdErrStr = stdErr.toString
+
+    LOGGER.trace(s"$cmd  ===>>>  $result ; took = $tookMs ms\n$stdErrStr")
     if (result != 0) {
-      throw new RuntimeException(s"Cannot execute shell command (result: $result) : $cmd")
+      throw AdRrrFailedException(s"Cannot execute command (result: $result)", cmd + "\n" + stdErrStr)
     }
   }
 
@@ -95,6 +104,8 @@ abstract class IAdRrr
 
 }
 
+/** Экзепшен при запуске рендера. */
+case class AdRrrFailedException(msg: String, privateMsg: String) extends RuntimeException
 
 /** Трейт для реализации статической утили рендереров. */
 trait IAdRrrUtil {
