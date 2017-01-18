@@ -10,9 +10,10 @@ import io.suggest.lk.r.PropTable
 import io.suggest.lk.r.Forms.InputCont
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.sjs.common.spa.OptFastEq
-import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetQap}
+import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 
 /** Рендер Options-раздела целиком. */
 object DtpOptions {
@@ -38,9 +39,23 @@ object DtpOptions {
       }
     }
 
+    def onCustomDateChange(fn: DtpInputFn)(e: ReactEventI): Callback = {
+      val newStr = e.target.value
+      $.props >>= { props =>
+        props.dispatchCB(
+          SetDateStartEnd(
+            fn      = fn,
+            ymdStr  = newStr
+          )
+        )
+      }
+    }
+
     def render(state: State): ReactElement = {
       <.div(
         ^.`class` := Css.Dt.OPTIONS,
+
+        // Выбор периода размещения...
         PropTable.Outer(
           PropTable.Row(
             // Пояснение по сути
@@ -72,28 +87,44 @@ object DtpOptions {
           )
         ),
 
+        // Выбор диапазона дат размещения в случае кастомности исходного периода:
         state.customRangeConn { customRangeProxy =>
           <.div(
             customRangeProxy().nonEmpty ?= <.div(
-              _renderDateInput(DtpInputFns.start, state.dateStartConn),
-              _renderDateInput(DtpInputFns.end,   state.dateEndConn)
+              for {
+                (fn, dateOptConn) <- Seq [(DtpInputFn, ReactConnectProxy[Option[MYmd]])] (
+                  DtpInputFns.start -> state.dateStartConn,
+                  DtpInputFns.end   -> state.dateEndConn
+                )
+              } yield {
+                dateOptConn { dateOptProx =>
+                  for (ymd <- dateOptProx()) yield {
+                    PropTable.Outer(
+                      PropTable.Row(
+                        Messages( "Date." + fn.strId ),
+
+                        InputCont(
+                          // TODO DatePickerR
+                          <.input(
+                            ^.`type`  := "text",
+                            ^.name    := (AdvConstants.PERIOD_FN :: AdvConstants.DtPeriod.DATES_INTERVAL_FN :: fn :: Nil)
+                              .mkString(QsConstants.KEY_PARTS_DELIM_STR),
+                            ^.value   := ymd.toString,
+                            ^.onChange ==> onCustomDateChange(fn)
+                          )
+                        )
+                      )
+                    )
+                  }  // for ymd
+                }
+              }   // for (fn, dateOptConn)
             )
           )
-        }
+        } // customRangeProxy
+
       )
-    }
+    } // render()
 
-  }
-
-  /** Дедублицированный код рендера инпута одной даты. */
-  private def _renderDateInput(fn: DtpInputFn, dateConn: ReactConnectProxy[Option[MYmd]]) = {
-    dateConn { dateProxy =>
-      dateProxy().fold[ReactElement](null) { _ =>
-        DateInput(
-          DateInput.Props(fn, dateProxy.zoom(_.get))
-        )
-      }
-    }
   }
 
 

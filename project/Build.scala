@@ -22,7 +22,7 @@ object Sio2Build extends Build {
       libraryDependencies ++= Seq(
         "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
         "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
-        "io.monix"      %%% "minitest"   % Common.minitestVsn  % Test
+        "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
         //"com.wix"      %%% "accord-core" % Common.wixAccordVsn
       )
     )
@@ -123,11 +123,17 @@ object Sio2Build extends Build {
       .dependsOn(commonSjs, commonReactSjs)
   }
 
+  /** Самопальные биндинги для moment.js. */
+  lazy val momentSjs = {
+    Project(id = "moment-sjs", base = file(DIR0 + "client/scalajs/moment"))
+      .enablePlugins(ScalaJSPlugin)
+  }
+
   /** Фасады и врапперы scala.js для react date-picker'а. */
   lazy val reactDatePickerSjs = {
     Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonReactSjs)
+      .dependsOn(commonReactSjs, momentSjs)
   }
 
   /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
@@ -135,7 +141,7 @@ object Sio2Build extends Build {
     val name = "lk-dt-period-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/dt-period"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkCommonSjs, jqDateTimePickerSjs, commonReactSjs)
+      .dependsOn(lkCommonSjs, jqDateTimePickerSjs, commonReactSjs, reactDatePickerSjs)
   }
 
   /** lk-adv-common sjs. */
@@ -307,7 +313,7 @@ object Sio2Build extends Build {
         commonJS, commonJVM, logsMacro,
         commonSjs, commonReactSjs,
         leafletSjs, leafletReactSjs, mapBoxGlSjs,
-        lkSjs, scSjs, jqDateTimePickerSjs, reactDatePickerSjs, lkDtPeriodSjs,
+        lkSjs, scSjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
         cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
         util, swfs, n2, securesocial,
         ipgeobase, stat,

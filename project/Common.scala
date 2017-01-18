@@ -9,6 +9,15 @@ import Keys._
 
 object Common {
 
+  /** Контейнер версий зависимостей. Вместо свалки полей в форме, записывать их надо в Vsn. */
+  object Vsn {
+
+    /** Версия moment.js. */
+    def momentJs = "2.17.1"
+
+  }
+
+
   val SCALA_VSN = "2.11.8"
   val SCALA_VSN_JS = "2.12.1"
 
