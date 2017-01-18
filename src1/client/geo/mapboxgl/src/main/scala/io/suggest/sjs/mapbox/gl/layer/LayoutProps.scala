@@ -1,9 +1,8 @@
 package io.suggest.sjs.mapbox.gl.layer
 
-import io.suggest.sjs.common.model.FromDict
-
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,14 +10,10 @@ import scala.scalajs.js.UndefOr
   * Created: 13.04.16 18:59
   * Description: Common API for layout properties.
   */
-object LayoutProps extends FromDict {
-  override type T = LayoutProps
-}
 
-
-@js.native
+@ScalaJSDefined
 trait LayoutProps extends js.Object {
 
-  var visibility: UndefOr[String] = js.native
+  val visibility: UndefOr[String] = js.undefined
 
 }

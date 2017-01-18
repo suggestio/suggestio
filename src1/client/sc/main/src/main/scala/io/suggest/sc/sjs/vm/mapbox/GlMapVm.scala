@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.mapbox
 
-import io.suggest.common.maps.mapbox.MapBoxConstants.{TargetPoint, UserGeoLoc, ILayerConst}
+import io.suggest.common.maps.mapbox.MapBoxConstants.{ILayerConst, TargetPoint, UserGeoLoc}
 import io.suggest.geo.MGeoPoint
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
@@ -12,7 +12,7 @@ import io.suggest.sjs.mapbox.gl.event.EventData
 import io.suggest.sjs.mapbox.gl.geojson.{GeoJsonSource, GeoJsonSourceDescr}
 import io.suggest.sjs.mapbox.gl.layer.circle.CirclePaintProps
 import io.suggest.sjs.mapbox.gl.layer.symbol.SymbolLayoutProps
-import io.suggest.sjs.mapbox.gl.layer.{Clusters, Filters, Layer, LayerTypes}
+import io.suggest.sjs.mapbox.gl.layer._
 import io.suggest.sjs.mapbox.gl.ll.LngLat
 import io.suggest.sjs.mapbox.gl.map.{GlMap, GlMapOptions}
 import org.scalajs.dom.Element
@@ -81,11 +81,14 @@ case class GlMapVm(glMap: GlMap) {
       glMap.addSource(srcId, src)
 
       // Сборка layer'а.
-      val lay = Layer.empty
-      lay.id      = UserGeoLoc.LAYER_ID
-      lay.`type`  = LayerTypes.CIRCLE
-      lay.source  = srcId
-      lay.paint   = _circlePaintProps(UserGeoLoc)
+      val lay = new Layer {
+        override val id     = UserGeoLoc.LAYER_ID
+        override val `type` = LayerTypes.CIRCLE
+        override val source = srcId
+        override val paint: UndefOr[PaintProps] = {
+          _circlePaintProps(UserGeoLoc)
+        }
+      }
       glMap.addLayer(lay)
 
     } { srcObj =>
@@ -132,11 +135,14 @@ case class GlMapVm(glMap: GlMap) {
       glMap.addSource(srcId, src)
 
       // Сборка слоя с точкой прицеливания.
-      val lay = Layer.empty
-      lay.id      = TargetPoint.LAYER_ID
-      lay.`type`  = LayerTypes.CIRCLE
-      lay.source  = srcId
-      lay.paint   = _circlePaintProps(TargetPoint)
+      val lay = new Layer {
+        override val id = TargetPoint.LAYER_ID
+        override val `type` = LayerTypes.CIRCLE
+        override val source = srcId
+        override val paint: UndefOr[PaintProps] = {
+          _circlePaintProps(TargetPoint)
+        }
+      }
       glMap.addLayer(lay)
 
     } { srcRaw =>
@@ -163,25 +169,27 @@ case class GlMapVm(glMap: GlMap) {
 
     // Собрать слой просто точек. Он будет внизу.
     glMap.addLayer {
-      val layP = Layer.empty
-      layP.id = L.NON_CLUSTERED_LAYER_ID
-      layP.`type` = LayerTypes.CIRCLE
-      layP.source = srcId
-      layP.paint = _circlePaintProps(Sources.MARKER_RADIUS_PX, Sources.FILL_COLOR)
-      layP
+      new Layer {
+        override val id = L.NON_CLUSTERED_LAYER_ID
+        override val `type` = LayerTypes.CIRCLE
+        override val source = srcId
+        override val paint: UndefOr[PaintProps] = {
+          _circlePaintProps(Sources.MARKER_RADIUS_PX, Sources.FILL_COLOR)
+        }
+      }
     }
     // Собрать слой единичек, т.к. кластеризация пашет криво как-то.
     glMap.addLayer {
-      val lay1 = Layer.empty
-      lay1.id = L.NON_CLUSTERED_LAYER_LABELS_ID
-      lay1.`type` = LayerTypes.SYMBOL
-      lay1.source = srcId
-      lay1.layout = {
-        val slp = SymbolLayoutProps.empty
-        slp.textField = "1"
-        slp
+      new Layer {
+        override val id = L.NON_CLUSTERED_LAYER_LABELS_ID
+        override val `type` = LayerTypes.SYMBOL
+        override val source = srcId
+        override val layout: UndefOr[LayoutProps] = {
+          new SymbolLayoutProps {
+            override val `text-field` = "1"
+          }
+        }
       }
-      lay1
     }
 
     // Спека для слоёв. Скопирована из https://www.mapbox.com/mapbox-gl-js/example/cluster/
@@ -198,39 +206,41 @@ case class GlMapVm(glMap: GlMap) {
     layers.iterator.zipWithIndex.foldLeft(Option.empty[Int]) {
       case (prevMinCountOpt, ((minCount, color), i)) =>
         glMap.addLayer {
-          val layC = Layer.empty
-          layC.id = L.clusterLayerId(i)
-          layC.`type` = LayerTypes.CIRCLE
-          layC.source = srcId
-          layC.paint = _circlePaintProps(Sources.MARKER_RADIUS_PX, color)
-          layC.filter = {
-            val f0: Filter_t = js.Array(Filters.>=, pcFn, minCount)
-            prevMinCountOpt.fold [Filter_t] {
-              f0
-            } { prevMinCount =>
-              js.Array(Filters.all,
-                f0,
-                js.Array(Filters.<, pcFn, prevMinCount)
-              )
+          new Layer {
+            override val id = L.clusterLayerId(i)
+            override val `type` = LayerTypes.CIRCLE
+            override val source = srcId
+            override val paint: UndefOr[PaintProps] = {
+              _circlePaintProps(Sources.MARKER_RADIUS_PX, color)
+            }
+            override val filter: UndefOr[Filter_t] = {
+              val f0: Filter_t = js.Array(Filters.>=, pcFn, minCount)
+              prevMinCountOpt.fold [Filter_t] {
+                f0
+              } { prevMinCount =>
+                js.Array(Filters.all,
+                  f0,
+                  js.Array(Filters.<, pcFn, prevMinCount)
+                )
+              }
             }
           }
-          layC
         }
         Some(minCount)
     }
 
     // Собрать слой cо счетчиком кол-ва узлов.
     glMap.addLayer {
-      val layU = Layer.empty
-      layU.id     = L.COUNT_LABELS_LAYER_ID
-      layU.`type` = LayerTypes.SYMBOL
-      layU.source = srcId
-      layU.layout = {
-        val slp = SymbolLayoutProps.empty
-        slp.textField = "{" + pcFn + "}"
-        slp
+      new Layer {
+        override val id = L.COUNT_LABELS_LAYER_ID
+        override val `type` = LayerTypes.SYMBOL
+        override val source = srcId
+        override val layout: UndefOr[LayoutProps] = {
+          new SymbolLayoutProps {
+            override val `text-field`: UndefOr[String] = "{" + pcFn + "}"
+          }
+        }
       }
-      layU
     }
   }
 

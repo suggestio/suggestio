@@ -1,11 +1,10 @@
 package io.suggest.sjs.mapbox.gl.layer
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.{Filter_t, Zoom_t}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,43 +12,38 @@ import scala.scalajs.js.annotation.JSName
   * Created: 12.04.16 13:57
   * Description: API for layer instances.
   */
-object Layer extends FromDict {
-  override type T = Layer
-}
 
-
-@js.native
+@ScalaJSDefined
 trait Layer extends js.Object {
 
-  var id: String = js.native
-
-  var source: String = js.native
-
-  @JSName("source-layer")
-  var sourceLayer: String = js.native
+  val id: String
 
   /** @see [[LayerTypes]]. */
-  var `type`: UndefOr[String] = js.native
+  val `type`: String
 
-  var metadata: UndefOr[js.Dictionary[js.Any]] = js.native
+  val source: String
 
-  var ref: UndefOr[String] = js.native
+  val `source-layer`: UndefOr[String] = js.undefined
 
-  var minzoom: UndefOr[Zoom_t] = js.native
+  val metadata: UndefOr[js.Dictionary[js.Any]] = js.undefined
 
-  var maxzoom: UndefOr[Zoom_t] = js.native
+  val ref: UndefOr[String] = js.undefined
 
-  var interactive: UndefOr[Boolean] = js.native
+  val minzoom: UndefOr[Zoom_t] = js.undefined
+
+  val maxzoom: UndefOr[Zoom_t] = js.undefined
+
+  val interactive: UndefOr[Boolean] = js.undefined
 
   /**
     * @see [[Filters]]
     * @see [[Clusters]]
     */
-  var filter: UndefOr[Filter_t] = js.native
+  val filter: UndefOr[Filter_t] = js.undefined
 
   // https://www.mapbox.com/mapbox-gl-style-spec/#layers-background
-  var layout: UndefOr[LayoutProps] = js.native
+  val layout: UndefOr[LayoutProps] = js.undefined
 
-  var paint: UndefOr[PaintProps] = js.native
+  val paint: UndefOr[PaintProps] = js.undefined
 
 }

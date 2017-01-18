@@ -1,11 +1,10 @@
 package io.suggest.sjs.mapbox.gl.layer.symbol
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.layer.LayoutProps
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,18 +12,12 @@ import scala.scalajs.js.annotation.JSName
   * Created: 20.04.16 16:10
   * Description: Model of Symbol layout properties.
   */
-object SymbolLayoutProps extends FromDict {
-  override type T = SymbolLayoutProps
-}
 
-
-@js.native
+@ScalaJSDefined
 trait SymbolLayoutProps extends LayoutProps {
 
-  @JSName("text-field")
-  var textField: UndefOr[String] = js.native
+  val `text-field`: UndefOr[String] = js.undefined
 
-  @JSName("text-size")
-  var textSize: UndefOr[Int] = js.native
+  val `text-size`: UndefOr[Int] = js.undefined
 
 }
