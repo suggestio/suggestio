@@ -87,7 +87,7 @@ abstract class IAdRrr
         s"[$now] $cmd  ===>>>  $result ; took = $tookMs ms\n $stdOutStr"
       }
 
-      if (result == 0) {
+      if ( isFinishedOk(result) ) {
         LOGGER.debug(logMsg)
       } else {
         LOGGER.error(logMsg)
@@ -96,6 +96,10 @@ abstract class IAdRrr
     } finally {
       stdOutFile.delete()
     }
+  }
+
+  def isFinishedOk(returnCode: Int): Boolean = {
+    returnCode == 0
   }
 
   /** Запустить рендер карточки. В зависимости от реализации и используемого рендерера, могут быть варианты. */

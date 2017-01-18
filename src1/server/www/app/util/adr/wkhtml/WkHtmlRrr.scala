@@ -117,6 +117,11 @@ class WkHtmlRrr @Inject() (
   }
 
 
+  override def isFinishedOk(returnCode: Int): Boolean = {
+    // TODO 2016.jan.18 Почему-то на wkhtmltoimage-xvfb серверах возвращает 1, хотя судя по stdout всё ок.
+    returnCode == 1 || super.isFinishedOk(returnCode)
+  }
+
   /** Синхронный рендер с помощью WkHtml2image. */
   override def renderSync(dstFile: File): Unit = {
     val cmdargs = toCmdLine(List(dstFile.getAbsolutePath))
