@@ -127,6 +127,13 @@ object DtpOptions {
                               }
                               // Для end-даты показывать сразу два месяца.
                               override val monthsShown: UndefOr[Int] = fn.monthsShown
+
+                              override val todayButton: UndefOr[String] = {
+                                if (fn.withTodayBtn)
+                                  Messages("Today")
+                                else
+                                  js.undefined
+                              }
                             }
                           )()
                         )

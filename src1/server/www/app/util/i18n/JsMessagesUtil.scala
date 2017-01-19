@@ -19,6 +19,7 @@ class JsMessagesUtil @Inject() (
   /** Локализация для периодов рекламного размещения. */
   private def ADV_DATES_PERIOD_MSGS: TraversableOnce[String] = {
     val static = Iterator(
+      "Today",
       "Date.choosing",
       "Advertising.period",
       "Your.ad.will.adv",
