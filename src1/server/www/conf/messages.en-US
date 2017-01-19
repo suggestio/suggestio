@@ -263,7 +263,10 @@ live_search_for_your_website=Live search for your website
 site_indexation_caption_initial=LAUNCHING INDEXATION
 site_indexation_caption=INDEXATION IN PROGRESS
 All.rights.reserved=All rights reserved
+
 locale=en_US
+locale.momentjs=en-gb
+
 about_link=ABOUT
 feedback_link=CONTACTS
 undefined_event=undefined event

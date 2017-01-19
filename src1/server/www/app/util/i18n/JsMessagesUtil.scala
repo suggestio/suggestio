@@ -27,7 +27,8 @@ class JsMessagesUtil @Inject() (
       "from._date",
       "till._date",
       "Date.start",
-      "Date.end"
+      "Date.end",
+      "locale.momentjs"
     )
 
     val advPeriodsIter: Iterator[String] = {

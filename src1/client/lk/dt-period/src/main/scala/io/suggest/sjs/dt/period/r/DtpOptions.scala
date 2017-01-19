@@ -21,7 +21,7 @@ import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
 
 import scala.scalajs.js
-import scala.scalajs.js.{Array, UndefOr}
+import scala.scalajs.js.UndefOr
 
 /** Рендер Options-раздела целиком. */
 object DtpOptions {
@@ -98,6 +98,7 @@ object DtpOptions {
         // Выбор диапазона дат размещения в случае кастомности исходного периода:
         state.customRangeConn { customRangeOptProxy =>
           val customRangeOpt = customRangeOptProxy()
+          val momentLocale = Messages("locale.momentjs")
           <.div(
             customRangeOpt.nonEmpty ?= <.div(
               for {
@@ -115,6 +116,8 @@ object DtpOptions {
                         InputCont(
                           DatePickerR(
                             new DatePickerPropsR {
+                              override val locale: UndefOr[String] = momentLocale
+                              
                               override val selected: js.UndefOr[Date_t] = ymd.to[Moment]
                               override val minDate: UndefOr[Date_t] = fn.minDate(customRangeOpt)
 

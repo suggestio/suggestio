@@ -62,6 +62,9 @@ object Moment extends js.Object {
 
   def invalid(data: js.Object): Moment = js.native
 
+  /** Set locale globally. */
+  def locale(localeName: String): Unit = js.native
+
 }
 
 

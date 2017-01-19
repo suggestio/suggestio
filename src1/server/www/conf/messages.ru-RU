@@ -272,6 +272,7 @@ site_indexation_caption=ИНДЕКСАЦИЯ САЙТА
 All.rights.reserved=Все права защищены
 
 locale=ru_RU
+locale.momentjs=ru
 
 about_link=О ПРОЕКТЕ
 feedback_link=КОНТАКТЫ
