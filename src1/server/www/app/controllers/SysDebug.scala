@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import models.mproj.ICommonDi
 import util.acl.IsSuperuser
-import util.adv.AdvUtil
+import util.adv.direct.AdvRcvrsUtil
 import util.health.AdnGeoParentsHealth
 import views.html.sys1.debug._
 
@@ -14,9 +14,9 @@ import views.html.sys1.debug._
  * Description: Sys-контроллер для отладки.
  */
 class SysDebug @Inject() (
-  geoParentsHealth              : AdnGeoParentsHealth,
-  advUtil                       : AdvUtil,
-  override val mCommonDi        : ICommonDi
+                           geoParentsHealth              : AdnGeoParentsHealth,
+                           advRcvrsUtil                  : AdvRcvrsUtil,
+                           override val mCommonDi        : ICommonDi
 )
   extends SioController
   with IsSuperuser
@@ -48,7 +48,7 @@ class SysDebug @Inject() (
 
   /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
   def resetAllRcvrs = IsSuPost.async { implicit request =>
-    for (count <- advUtil.resetAllReceivers()) yield {
+    for (count <- advRcvrsUtil.resetAllReceivers()) yield {
       Ok(count + " ads updated.")
     }
   }

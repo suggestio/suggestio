@@ -1,4 +1,4 @@
-package util.adv.ut
+package util.adv.ext.ut
 
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.di.IWsClient
@@ -81,7 +81,7 @@ trait S2sMpUpload
 /** Реализация [[S2sMpUpload]] с рендером типичных ошибок на экран юзеру. */
 trait S2sMpUploadRender
   extends S2sMpUpload
-    with ExtTargetActorUtil
+    with AdvExtTargetActorUtil
 {
 
   /** Состояние аплоада. */

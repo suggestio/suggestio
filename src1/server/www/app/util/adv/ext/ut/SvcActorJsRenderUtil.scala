@@ -1,11 +1,11 @@
-package util.adv.ut
+package util.adv.ext.ut
 
 import models.adv.{IExtAdvServiceActorArgs, JsExtTarget, MExtTargetInfoFull}
 import models.adv.js.JsCmd
 import models.event.{IErrorInfo, MEventTmp, MEventTypes, RenderArgs}
 import models.mctx.IContextUtilDi
 import play.api.libs.json.JsString
-import util.adv.ext.IAeFormUtilDi
+import util.adv.ext.IAdvExtFormUtilDi
 import util.jsa.JsAppendById
 
 /**
@@ -16,7 +16,7 @@ import util.jsa.JsAppendById
  */
 trait SvcActorJsRenderUtil
   extends ISendCommand
-  with IAeFormUtilDi
+  with IAdvExtFormUtilDi
   with IContextUtilDi
 {
 
@@ -42,7 +42,7 @@ trait SvcActorJsRenderUtil
     )
     val html = rargs.mevent.etype.render(rargs)(args.ctx)
     val htmlStr = JsString(html.body) // TODO Вызывать для рендера туже бадягу, что и контроллер вызывает.
-    val jsa = JsAppendById(aeFormUtil.RUNNER_EVENTS_DIV_ID, htmlStr)
+    val jsa = JsAppendById(advExtFormUtil.RUNNER_EVENTS_DIV_ID, htmlStr)
     val jsCmd = JsCmd(
       jsCode = jsa.renderToString()
     )

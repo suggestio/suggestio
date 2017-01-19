@@ -8,7 +8,6 @@ import models.ai.MAiMadJmx
 import models.event.MEventsJmx
 import models.mcal.MCalendarJmx
 import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
-import util.adv.AdvUtilJmx
 import java.lang.management.ManagementFactory
 
 import io.suggest.loc.geo.ipgeobase.{MCitiesJmx, MIpRangesJmx}
@@ -17,6 +16,7 @@ import io.suggest.util.JMXBase
 import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
 import play.api.inject.ApplicationLifecycle
+import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.es.SiowebEsModelJmx
 
@@ -30,23 +30,23 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 class JMXImpl @Inject() (
-  mMediasJmx                    : MMediasJmx,
-  siowebEsModelJmx              : SiowebEsModelJmx,
-  advUtilJmx                    : AdvUtilJmx,
-  mCalendarJmx                  : MCalendarJmx,
-  mNodesJmx                     : MNodesJmx,
-  geoTagsUtilJmx                : GeoTagsUtilJmx,
-  mExtTargetsJmx                : MExtTargetsJmx,
-  mEventsJmx                    : MEventsJmx,
-  mAiMadJmx                     : MAiMadJmx,
-  emailPwIdentsJmx              : EmailPwIdentsJmx,
-  emailActivationsJmx           : EmailActivationsJmx,
-  mExtIdentJmx                  : MExtIdentJmx,
-  mIpRangesJmx                  : MIpRangesJmx,
-  mCitiesJmx                    : MCitiesJmx,
-  mStatsJmx                     : MStatsJmx,
-  lifecycle                     : ApplicationLifecycle,
-  implicit private val ec       : ExecutionContext
+                          mMediasJmx                    : MMediasJmx,
+                          siowebEsModelJmx              : SiowebEsModelJmx,
+                          advUtilJmx                    : AdvRcvrsUtilJmx,
+                          mCalendarJmx                  : MCalendarJmx,
+                          mNodesJmx                     : MNodesJmx,
+                          geoTagsUtilJmx                : GeoTagsUtilJmx,
+                          mExtTargetsJmx                : MExtTargetsJmx,
+                          mEventsJmx                    : MEventsJmx,
+                          mAiMadJmx                     : MAiMadJmx,
+                          emailPwIdentsJmx              : EmailPwIdentsJmx,
+                          emailActivationsJmx           : EmailActivationsJmx,
+                          mExtIdentJmx                  : MExtIdentJmx,
+                          mIpRangesJmx                  : MIpRangesJmx,
+                          mCitiesJmx                    : MCitiesJmx,
+                          mStatsJmx                     : MStatsJmx,
+                          lifecycle                     : ApplicationLifecycle,
+                          implicit private val ec       : ExecutionContext
 )
   extends PlayLazyMacroLogsImpl
 {

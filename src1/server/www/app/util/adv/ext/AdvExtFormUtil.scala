@@ -18,7 +18,7 @@ import util.ext.{ExtServicesUtil, IExtServiceHelper}
   * Description: Adv Ext Form Util
   * Утиль для поддержки форм внешнего размещения.
   */
-class AeFormUtil @Inject() (
+class AdvExtFormUtil @Inject()(
   extServicesUtil: ExtServicesUtil
 ) {
 
@@ -113,7 +113,7 @@ class AeFormUtil @Inject() (
 }
 
 
-/** Интерфейс для DI-поля, содержащего инстанс [[AeFormUtil]]. */
-trait IAeFormUtilDi {
-  def aeFormUtil    : AeFormUtil
+/** Интерфейс для DI-поля, содержащего инстанс [[AdvExtFormUtil]]. */
+trait IAdvExtFormUtilDi {
+  def advExtFormUtil    : AdvExtFormUtil
 }

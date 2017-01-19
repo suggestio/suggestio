@@ -1,9 +1,9 @@
-package util.adv
+package util.adv.direct
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.MNodes
@@ -15,7 +15,6 @@ import models.mproj.ICommonDi
 import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactory
-import util.adv.direct.AdvDirectBilling
 import util.n2u.N2NodesUtil
 
 import scala.concurrent.Future
@@ -26,8 +25,11 @@ import scala.concurrent.Future
  * Created: 11.09.14 18:19
  * Description: Утиль для работы с размещениями рекламных карточек.
  */
+
+// TODO Всё круто, но этот код потерял актуальность с момента его написания, т.к. всё изменилось. Надо заново отладить всё тут.
+
 @Singleton
-class AdvUtil @Inject() (
+class AdvRcvrsUtil @Inject()(
   mItems                  : MItems,
   override val mNodes     : MNodes,
   advDirectBilling        : AdvDirectBilling,
@@ -412,10 +414,10 @@ trait AdvUtilJmxMBean {
 
 
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
-final class AdvUtilJmx @Inject() (
-  advUtil                 : AdvUtil,
-  mCommonDi               : ICommonDi
-)
+final class AdvRcvrsUtilJmx @Inject()(
+                                       advRcvrsUtil            : AdvRcvrsUtil,
+                                       mCommonDi               : ICommonDi
+                                     )
   extends AdvUtilJmxMBean
   with JMXBase
 {
@@ -425,7 +427,7 @@ final class AdvUtilJmx @Inject() (
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 
   override def resetAllReceivers(): String = {
-    val countFut = advUtil.resetAllReceivers()
+    val countFut = advRcvrsUtil.resetAllReceivers()
     val fut = for (cnt <- countFut) yield {
       "Total updated: " + cnt
     }
@@ -435,7 +437,7 @@ final class AdvUtilJmx @Inject() (
   override def resetReceiversForAd(adId: String): String = {
     val s = mNodeCache.getById(adId).flatMap {
       case Some(mad) =>
-        for (_ <- advUtil.resetReceiversFor(mad)) yield {
+        for (_ <- advRcvrsUtil.resetReceiversFor(mad)) yield {
           "Successfully reset receivers for " + adId
         }
       case None =>
@@ -454,7 +456,7 @@ final class AdvUtilJmx @Inject() (
   }
 
   private def _depublishAd(adId: String, rcvrIdOpt: Option[String]): String = {
-    val rmFut = advUtil.depublishAdOn(adId, rcvrIdOpt)
+    val rmFut = advRcvrsUtil.depublishAdOn(adId, rcvrIdOpt)
     val fut = for (isOk <- rmFut) yield {
       "Result: " + isOk
     }

@@ -1,19 +1,19 @@
-package util.adv
+package util.adv.ext
 
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeoutException
 
 import akka.actor.Props
-import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
+import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
-import models.adv.js.ctx.MStorageKvCtx
 import models.adv.js._
+import models.adv.js.ctx.MStorageKvCtx
 import models.event.ErrorInfo
 import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
@@ -27,8 +27,7 @@ import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSClient
 import util.PlayMacroLogsImpl
-import util.adv.ext.AeFormUtil
-import util.adv.ut._
+import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
 import util.secure.PgpUtil
@@ -59,17 +58,17 @@ trait OAuth1ServiceActorFactory
   * @see [[https://www.playframework.com/documentation/2.4.x/ScalaOAuth]]
   */
 class OAuth1ServiceActor @Inject() (
-  @Assisted override val args : IExtAdvServiceActorArgs,
-  oa1TgActorFactory           : OAuth1TargetActorFactory,
-  mCommonDi                   : ICommonDi,
-  oa1SvcActorUtil             : OAuth1SvcActorUtil,
-  pgpUtil                     : PgpUtil,
-  mAsymKeys                   : MAsymKeys,
-  asyncUtil                   : AsyncUtil,
-  override val extServicesUtil: ExtServicesUtil,
-  override val ctxUtil        : ContextUtil,
-  override val aeFormUtil     : AeFormUtil,
-  implicit val wsClient       : WSClient
+                                     @Assisted override val args : IExtAdvServiceActorArgs,
+                                     oa1TgActorFactory           : OAuth1TargetActorFactory,
+                                     mCommonDi                   : ICommonDi,
+                                     oa1SvcActorUtil             : OAuth1SvcActorUtil,
+                                     pgpUtil                     : PgpUtil,
+                                     mAsymKeys                   : MAsymKeys,
+                                     asyncUtil                   : AsyncUtil,
+                                     override val extServicesUtil: ExtServicesUtil,
+                                     override val ctxUtil        : ContextUtil,
+                                     override val advExtFormUtil     : AdvExtFormUtil,
+                                     implicit val wsClient       : WSClient
 )
   extends FsmActor
   with ReplyTo

@@ -1,4 +1,4 @@
-package util.adv.ut
+package util.adv.ext.ut
 
 import akka.actor.Actor
 import models.adv.WsMediatorRef

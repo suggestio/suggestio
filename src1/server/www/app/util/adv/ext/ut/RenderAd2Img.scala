@@ -1,4 +1,4 @@
-package util.adv.ut
+package util.adv.ext.ut
 
 import java.io.File
 
@@ -70,7 +70,7 @@ trait RenderAd2Img
 /** Частичная реализация [[RenderAd2Img]], которая рисует ошибку на экране юзера. */
 trait RenderAd2ImgRender
   extends RenderAd2Img
-  with ExtTargetActorUtil
+  with AdvExtTargetActorUtil
 {
 
   trait RenderAd2ImgStateT extends super.RenderAd2ImgStateT {

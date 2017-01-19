@@ -4,7 +4,7 @@ import models.adv._
 import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsDyn
-import util.adv.ext.IAeFormUtilDi
+import util.adv.ext.IAdvExtFormUtilDi
 
 import scala.concurrent.Future
 
@@ -23,7 +23,7 @@ trait CanSubmitExtTargetForNode
   extends OnUnauthNodeCtl
   with IsAdnNodeAdminUtilCtl
   with Csrf
-  with IAeFormUtilDi
+  with IAdvExtFormUtilDi
   with IMExtTargets
 {
 
@@ -46,7 +46,7 @@ trait CanSubmitExtTargetForNode
       val user = mSioUsers(personIdOpt)
 
       val isAdnNodeAdmFut = isAdnNodeAdmin(nodeId, user)
-      val formBinded = aeFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
+      val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
 
       // Запускаем сразу в фоне поиск уже сохранённой цели.
       val tgIdOpt = formBinded.apply("id").value

@@ -117,7 +117,7 @@ object DtpOptions {
                           DatePickerR(
                             new DatePickerPropsR {
                               override val locale: UndefOr[String] = momentLocale
-                              
+
                               override val selected: js.UndefOr[Date_t] = ymd.to[Moment]
                               override val minDate: UndefOr[Date_t] = fn.minDate(customRangeOpt)
 

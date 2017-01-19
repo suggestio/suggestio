@@ -1,4 +1,4 @@
-package util.adv
+package util.adv.ext
 
 import java.io.File
 
@@ -6,19 +6,17 @@ import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
 import io.suggest.fsm.FsmActor
+import models.adv.IOAuth1AdvTargetActorArgs
 import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
-import models.adv.IOAuth1AdvTargetActorArgs
 import models.blk.OneAdQsArgs
 import models.mctx.ContextUtil
 import models.mext._
 import models.mproj.ICommonDi
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.PlayMacroLogsImpl
-import util.adv.ext.AeFormUtil
-import util.adv.ut.ExtTargetActorUtil
-import ut._
 import util.adr.AdRenderUtil
+import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
 
@@ -41,17 +39,17 @@ trait OAuth1TargetActorFactory {
 
 
 class OAuth1TargetActor @Inject() (
-  @Assisted override val args   : IOAuth1AdvTargetActorArgs,
-  override val n2NodesUtil      : N2NodesUtil,
-  override val aeFormUtil       : AeFormUtil,
-  override val adRenderUtil     : AdRenderUtil,
-  override val extServicesUtil  : ExtServicesUtil,
-  override val ctxUtil          : ContextUtil,
-  implicit val wsClient         : WSClient,
-  override val mCommonDi        : ICommonDi
+                                    @Assisted override val args   : IOAuth1AdvTargetActorArgs,
+                                    override val n2NodesUtil      : N2NodesUtil,
+                                    override val advExtFormUtil       : AdvExtFormUtil,
+                                    override val adRenderUtil     : AdRenderUtil,
+                                    override val extServicesUtil  : ExtServicesUtil,
+                                    override val ctxUtil          : ContextUtil,
+                                    implicit val wsClient         : WSClient,
+                                    override val mCommonDi        : ICommonDi
 )
   extends FsmActor
-  with ExtTargetActorUtil
+  with AdvExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl

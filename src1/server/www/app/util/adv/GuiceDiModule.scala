@@ -3,7 +3,8 @@ package util.adv
 import akka.actor.Actor
 import com.google.inject.AbstractModule
 import com.google.inject.assistedinject.FactoryModuleBuilder
-import util.adv.build.{AdvBuilder, IAdvBuilder, AdvBuilderFactory}
+import util.adv.build.{AdvBuilder, AdvBuilderFactory, IAdvBuilder}
+import util.adv.ext._
 
 /**
  * Suggest.io
@@ -17,7 +18,7 @@ class GuiceDiModule extends AbstractModule {
     // adv ext root actor
     install(
       new FactoryModuleBuilder()
-        .build( classOf[ExtAdvWsActorFactory] )
+        .build( classOf[AdvExtWsActorFactory] )
     )
 
     // adv builder
@@ -35,8 +36,8 @@ class GuiceDiModule extends AbstractModule {
     )
     install(
       new FactoryModuleBuilder()
-        .implement( classOf[Actor], classOf[ExtServiceActor] )
-        .build( classOf[ExtServiceActorFactory] )
+        .implement( classOf[Actor], classOf[AdvExtServiceActor] )
+        .build( classOf[AdvExtServiceActorFactory] )
     )
 
     // adv ext targets
@@ -46,7 +47,7 @@ class GuiceDiModule extends AbstractModule {
     )
     install(
       new FactoryModuleBuilder()
-        .build( classOf[AeTgJsAdpActorFactory] )
+        .build( classOf[AdvExtTargetActorFactory] )
     )
   }
 

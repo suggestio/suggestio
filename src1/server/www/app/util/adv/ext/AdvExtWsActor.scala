@@ -1,17 +1,15 @@
-package util.adv
+package util.adv.ext
 
 import _root_.util.PlayMacroLogsImpl
-import _root_.util.adv.ext.AeFormUtil
 import _root_.util.jsa.JsAppendById
-import _root_.util.ws.SubscribeToWsDispatcher
-import _root_.util.ws.WsDispatcherActors
+import _root_.util.ws.{SubscribeToWsDispatcher, WsDispatcherActors}
 import akka.actor.{Actor, ActorRef, Props, SupervisorStrategy}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.fsm.FsmActor
 import models.adv._
-import models.adv.js.ctx.MJsCtx
 import models.adv.js._
+import models.adv.js.ctx.MJsCtx
 import models.event.{MEventTmp, MEventTypes, RenderArgs}
 import models.mws.AnswerStatuses
 import play.api.inject.Injector
@@ -29,8 +27,8 @@ import scala.util.{Failure, Random, Success}
  * Created: 26.12.14 16:24
  * Description: Утиль и код актора, который занимается общением с js api размещения рекламных карточек на клиенте.
  */
-class ExtAdvWsActors @Inject() (
-  factory: ExtAdvWsActorFactory
+class AdvExtWsActors @Inject()(
+  factory: AdvExtWsActorFactory
 ) {
 
   /** Сборка конфигурации актора. */
@@ -42,20 +40,20 @@ class ExtAdvWsActors @Inject() (
 
 
 /** Интерфейс сборщика экземпляров ExtAdvWsActor. */
-trait ExtAdvWsActorFactory {
+trait AdvExtWsActorFactory {
   /** Сборка экземпляра класса актора. */
-  def create(out: ActorRef, eactx: IExtWsActorArgs): ExtAdvWsActor
+  def create(out: ActorRef, eactx: IExtWsActorArgs): AdvExtWsActor
 }
 
 
 /** ws-актор, готовый к использованию websocket api. */
-case class ExtAdvWsActor @Inject() (
-  @Assisted out     : ActorRef,
-  @Assisted eactx   : IExtWsActorArgs,
-  override val wsDispatcherActors: WsDispatcherActors,
-  injector          : Injector,
-  aeFormUtil        : AeFormUtil,
-  implicit val ec   : ExecutionContext
+case class AdvExtWsActor @Inject()(
+                                     @Assisted out     : ActorRef,
+                                     @Assisted eactx   : IExtWsActorArgs,
+                                     override val wsDispatcherActors: WsDispatcherActors,
+                                     injector          : Injector,
+                                     aeFormUtil        : AdvExtFormUtil,
+                                     implicit val ec   : ExecutionContext
 )
   extends FsmActor
   with SubscribeToWsDispatcher

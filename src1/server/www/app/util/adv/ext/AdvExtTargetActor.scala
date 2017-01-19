@@ -1,15 +1,15 @@
-package util.adv
+package util.adv.ext
 
 import java.io.File
 
-import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
+import com.google.inject.{Inject, Singleton}
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.fsm.FsmActor
+import models.adv._
 import models.adv.ext.act._
 import models.adv.js._
-import models.adv._
 import models.adv.js.ctx._
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
@@ -17,10 +17,8 @@ import models.mws.AnswerStatuses
 import play.api.Configuration
 import play.api.libs.ws.{WSClient, WSResponse}
 import util.PlayMacroLogsImpl
-import util.adv.ext.AeFormUtil
-import util.adv.ut.ExtTargetActorUtil
-import ut._
 import util.adr.AdRenderUtil
+import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.n2u.N2NodesUtil
 
@@ -32,8 +30,8 @@ import util.n2u.N2NodesUtil
   * с унифицирующим JS-адаптером на клиенте (lk-adv-ext-sjs).
   */
 
-trait AeTgJsAdpActorFactory {
-  def apply(args: IExtAdvTargetActorArgs): ExtTargetActor
+trait AdvExtTargetActorFactory {
+  def apply(args: IExtAdvTargetActorArgs): AdvExtTargetActor
 }
 
 
@@ -42,19 +40,19 @@ trait AeTgJsAdpActorFactory {
   *
   * @param args Аргументы для выполнения задач обработки таргета.
   */
-class ExtTargetActor @Inject() (
-  @Assisted override val args   : IExtAdvTargetActorArgs,
-  aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
-  override val n2NodesUtil      : N2NodesUtil,
-  override val adRenderUtil     : AdRenderUtil,
-  override val aeFormUtil       : AeFormUtil,
-  override val extServicesUtil  : ExtServicesUtil,
-  override val ctxUtil          : ContextUtil,
-  implicit val wsClient         : WSClient,
-  override val mCommonDi        : ICommonDi
+class AdvExtTargetActor @Inject()(
+                                 @Assisted override val args   : IExtAdvTargetActorArgs,
+                                 aeTgJsAdpActorUtil            : AeTgJsAdpActorUtil,
+                                 override val n2NodesUtil      : N2NodesUtil,
+                                 override val adRenderUtil     : AdRenderUtil,
+                                 override val advExtFormUtil       : AdvExtFormUtil,
+                                 override val extServicesUtil  : ExtServicesUtil,
+                                 override val ctxUtil          : ContextUtil,
+                                 implicit val wsClient         : WSClient,
+                                 override val mCommonDi        : ICommonDi
 )
   extends FsmActor
-  with ExtTargetActorUtil
+  with AdvExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
   with PlayMacroLogsImpl
@@ -339,7 +337,7 @@ class ExtTargetActor @Inject() (
 }
 
 
-/** Shared-утиль для акторов [[ExtTargetActor]]. */
+/** Shared-утиль для акторов [[AdvExtTargetActor]]. */
 @Singleton
 class AeTgJsAdpActorUtil @Inject()(
   configuration: Configuration

@@ -14,7 +14,7 @@ import util.adv.AdvFormUtil
  * Created: 03.12.15 14:09
  * Description: Утиль для маппингов формы прямого размещения.
  */
-class DirectAdvFormUtil @Inject() (
+class AdvDirectFormUtil @Inject()(
   advFormUtil: AdvFormUtil
 ) {
 

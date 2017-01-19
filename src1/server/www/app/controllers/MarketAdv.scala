@@ -18,7 +18,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, Result}
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.adv.direct.{AdvDirectBilling, DirectAdvFormUtil}
+import util.adv.direct.{AdvDirectBilling, AdvDirectFormUtil}
 import util.adv.AdvFormUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.cal.CalendarUtil
@@ -37,16 +37,16 @@ import scala.concurrent.Future
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
 class MarketAdv @Inject() (
-  override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  advDirectBilling                : AdvDirectBilling,
-  directAdvFormUtil               : DirectAdvFormUtil,
-  advFormUtil                     : AdvFormUtil,
-  bill2Util                       : Bill2Util,
-  mItems                          : MItems,
-  mNodes                          : MNodes,
-  tfDailyUtil                     : TfDailyUtil,
-  calendarUtil                    : CalendarUtil,
-  override val mCommonDi          : ICommonDi
+                            override val canAdvAdUtil       : CanAdvertiseAdUtil,
+                            advDirectBilling                : AdvDirectBilling,
+                            advDirectFormUtil               : AdvDirectFormUtil,
+                            advFormUtil                     : AdvFormUtil,
+                            bill2Util                       : Bill2Util,
+                            mItems                          : MItems,
+                            mNodes                          : MNodes,
+                            tfDailyUtil                     : TfDailyUtil,
+                            calendarUtil                    : CalendarUtil,
+                            override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -59,7 +59,7 @@ class MarketAdv @Inject() (
 
   /** Страница управления размещением рекламной карточки. */
   def advForAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
-    val form0 = directAdvFormUtil.advForm
+    val form0 = advDirectFormUtil.advForm
     // Залить в форму начальные данные.
     val res = FormResult()
     val formFilled = form0.fill(res)
@@ -246,7 +246,7 @@ class MarketAdv @Inject() (
     */
   def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
     lazy val logPrefix = s"getAdvPriceSubmit($adId)#${System.currentTimeMillis}:"
-    directAdvFormUtil.advForm.bindFromRequest().fold(
+    advDirectFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
         NotAcceptable("Cannot bind form.")
@@ -369,7 +369,7 @@ class MarketAdv @Inject() (
   /** Сабмит формы размещения рекламной карточки. */
   def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Contract, U.PersonNode).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
-    val formBinded = directAdvFormUtil.advForm.bindFromRequest()
+    val formBinded = advDirectFormUtil.advForm.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
         debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")

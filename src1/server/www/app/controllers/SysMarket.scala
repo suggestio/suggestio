@@ -28,7 +28,7 @@ import play.api.mvc.{AnyContent, Call, Result}
 import util.PlayMacroLogsImpl
 import util.acl._
 import util.adn.NodesUtil
-import util.adv.AdvUtil
+import util.adv.direct.AdvRcvrsUtil
 import util.lk.LkAdUtil
 import util.mail.IMailerWrapper
 import util.n2u.N2NodesUtil
@@ -49,19 +49,19 @@ import scala.concurrent.Future
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
 class SysMarket @Inject() (
-  override val nodesUtil          : NodesUtil,
-  lkAdUtil                        : LkAdUtil,
-  advUtil                         : AdvUtil,
-  override val sysMarketUtil      : SysMarketUtil,
-  override val mailer             : IMailerWrapper,
-  override val n2NodesUtil        : N2NodesUtil,
-  override val sysAdRenderUtil    : SysAdRenderUtil,
-  emailActivations                : EmailActivations,
-  mPerson                         : MPerson,
-  mItems                          : MItems,
-  scAdSearchUtil                  : ScAdSearchUtil,
-  override val mNodes             : MNodes,
-  override val mCommonDi          : ICommonDi
+                            override val nodesUtil          : NodesUtil,
+                            lkAdUtil                        : LkAdUtil,
+                            advRcvrsUtil                    : AdvRcvrsUtil,
+                            override val sysMarketUtil      : SysMarketUtil,
+                            override val mailer             : IMailerWrapper,
+                            override val n2NodesUtil        : N2NodesUtil,
+                            override val sysAdRenderUtil    : SysAdRenderUtil,
+                            emailActivations                : EmailActivations,
+                            mPerson                         : MPerson,
+                            mItems                          : MItems,
+                            scAdSearchUtil                  : ScAdSearchUtil,
+                            override val mNodes             : MNodes,
+                            override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -655,7 +655,7 @@ class SysMarket @Inject() (
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = {
     IsSuMadPost(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
-      val madSavedFut = advUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
+      val madSavedFut = advRcvrsUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
 
       lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
       // Радуемся в лог.
@@ -774,7 +774,7 @@ class SysMarket @Inject() (
 
     val newRcvrsMapFut = for {
       producerOpt <- producerOptFut
-      acc2 <- advUtil.calculateReceiversFor(mad, producerOpt)
+      acc2 <- advRcvrsUtil.calculateReceiversFor(mad, producerOpt)
     } yield {
       // Нужна только карта ресиверов. Дроп всей остальной инфы...
       acc2.mad.edges.out
@@ -809,7 +809,7 @@ class SysMarket @Inject() (
 
     // Узнать, совпадает ли рассчетная карта ресиверов с текущей.
     val rcvrsMapOkFut = for (newRcvrsMap <- newRcvrsMapFut) yield {
-      advUtil.isRcvrsMapEquals(newRcvrsMap, rcvrsMap)
+      advRcvrsUtil.isRcvrsMapEquals(newRcvrsMap, rcvrsMap)
     }
 
     for {
@@ -827,7 +827,7 @@ class SysMarket @Inject() (
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
   def resetReceivers(adId: String, r: Option[String]) = IsSuMadPost(adId).async { implicit request =>
     for {
-      _ <- advUtil.resetReceiversFor(request.mad)
+      _ <- advRcvrsUtil.resetReceiversFor(request.mad)
     } yield {
       // Когда всё будет сделано, отредиректить юзера назад на страницу ресиверов.
       RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
@@ -840,7 +840,7 @@ class SysMarket @Inject() (
     * Это действие можно откатить через resetReceivers. */
   def cleanReceivers(adId: String, r: Option[String]) = IsSuMadPost(adId).async { implicit request =>
     for {
-      _ <- advUtil.cleanReceiverFor(request.mad)
+      _ <- advRcvrsUtil.cleanReceiverFor(request.mad)
     } yield {
       RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
         .flashing(FLASH.SUCCESS -> "Из узла вычищены все ребра ресиверов. Биллинг не затрагивался.")

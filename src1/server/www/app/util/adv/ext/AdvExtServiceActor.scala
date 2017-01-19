@@ -1,4 +1,4 @@
-package util.adv
+package util.adv.ext
 
 import akka.actor.Props
 import com.google.inject.Inject
@@ -11,8 +11,7 @@ import models.adv.js._
 import models.mctx.ContextUtil
 import models.mws.AnswerStatuses
 import util.PlayMacroLogsImpl
-import util.adv.ext.AeFormUtil
-import ut._
+import util.adv.ext.ut.{ISendCommand, MediatorSendCommand, ReplyTo, SvcActorJsRenderUtil}
 import util.ext.ExtServicesUtil
 
 /**
@@ -26,7 +25,7 @@ import util.ext.ExtServicesUtil
 
 /** Очень базовая логика service-актора. Вынесена из актора, чтобы была возможность заюзать эту логику
   * ещё в каком-нибудь акторе. */
-trait ExtServiceActorLogic
+trait AdvExtServiceActorLogic
   extends FsmActor
   with ISendCommand
   with ExtServiceActorEnv
@@ -85,18 +84,18 @@ trait ExtServiceActorLogic
 }
 
 
-/** Guice-factory для сборки инстансов [[ExtServiceActor]]. */
-trait ExtServiceActorFactory
-  extends IApplyServiceActor[ExtServiceActor]
+/** Guice-factory для сборки инстансов [[AdvExtServiceActor]]. */
+trait AdvExtServiceActorFactory
+  extends IApplyServiceActor[AdvExtServiceActor]
 
-class ExtServiceActor @Inject() (
-  @Assisted override val args : IExtAdvServiceActorArgs,
-  aeTgJsAdpActorFactory       : AeTgJsAdpActorFactory,
-  override val ctxUtil        : ContextUtil,
-  override val extServicesUtil: ExtServicesUtil,
-  override val aeFormUtil     : AeFormUtil
+class AdvExtServiceActor @Inject()(
+                                    @Assisted override val args : IExtAdvServiceActorArgs,
+                                    aeTgJsAdpActorFactory       : AdvExtTargetActorFactory,
+                                    override val ctxUtil        : ContextUtil,
+                                    override val extServicesUtil: ExtServicesUtil,
+                                    override val advExtFormUtil     : AdvExtFormUtil
 )
-  extends ExtServiceActorLogic
+  extends AdvExtServiceActorLogic
   with ExtServiceActorEnv
   with ReplyTo
   with PlayMacroLogsImpl

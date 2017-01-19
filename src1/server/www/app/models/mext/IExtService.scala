@@ -1,8 +1,8 @@
 package models.mext
 
 import akka.actor.Actor
-import util.adv.{ExtServiceActorFactory, IApplyServiceActor}
 import io.suggest.primo.IStrId
+import util.adv.ext.{AdvExtServiceActorFactory, IApplyServiceActor}
 import util.ext.IExtServiceHelper
 
 import scala.reflect.ClassTag
@@ -51,5 +51,5 @@ trait IExtService extends IStrId {
 
 
 trait IJsActorExtService extends IExtService {
-  override def extAdvServiceActorFactoryCt  = ClassTag( classOf[ExtServiceActorFactory] )
+  override def extAdvServiceActorFactoryCt  = ClassTag( classOf[AdvExtServiceActorFactory] )
 }

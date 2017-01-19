@@ -6,6 +6,7 @@ import models.adv.ext.MExtServiceInfo
 import models.mctx.IContextUtilDi
 import models.mext.MExtService
 import util.PlayMacroLogsI
+import util.adv.ext.AdvExtTargetActor
 import util.ext.IExtServicesUtilDi
 import util.n2u.IN2NodesUtilDi
 
@@ -53,7 +54,7 @@ trait ExtServiceActorEnv extends ExtActorEnv {
 
 
 /**
- * Базовое описание окружения актора [[util.adv.ExtTargetActor]].
+ * Базовое описание окружения актора [[ExtTargetActor]].
  * Нужно для описания внутренних моделей, имеющие доступ к этому окружению.
  */
 trait ExtTargetActorEnv

@@ -1,7 +1,7 @@
 package models.mext.tw
 
 import models.mext.IExtService
-import util.adv.OAuth1ServiceActorFactory
+import util.adv.ext.OAuth1ServiceActorFactory
 import util.ext.tw.TwitterHelper
 
 import scala.reflect.ClassTag

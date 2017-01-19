@@ -20,8 +20,7 @@ import play.api.mvc.{Result, WebSocket}
 import util.FormUtil._
 import util.PlayMacroLogsImpl
 import util.acl._
-import util.adv.ExtAdvWsActors
-import util.adv.ext.AeFormUtil
+import util.adv.ext.{AdvExtFormUtil, AdvExtWsActors}
 import views.html.helper.CSRF
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
@@ -37,12 +36,12 @@ import scala.concurrent.Future
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
 class LkAdvExt @Inject() (
-  override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  mNodes                          : MNodes,
-  extAdvWsActors                  : ExtAdvWsActors,
-  override val mExtTargets        : MExtTargets,
-  override val aeFormUtil         : AeFormUtil,
-  override val mCommonDi          : ICommonDi
+                           override val canAdvAdUtil       : CanAdvertiseAdUtil,
+                           mNodes                          : MNodes,
+                           advExtWsActors                  : AdvExtWsActors,
+                           override val mExtTargets        : MExtTargets,
+                           override val advExtFormUtil     : AdvExtFormUtil,
+                           override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with PlayMacroLogsImpl
@@ -121,7 +120,7 @@ class LkAdvExt @Inject() (
         producer    = request.producer,
         targets     = targets,
         advForm     = form,
-        oneTgForm   = aeFormUtil.formForTarget
+        oneTgForm   = advExtFormUtil.formForTarget
       )
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.LkAdvExtForm)
@@ -261,7 +260,7 @@ class LkAdvExt @Inject() (
 
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtWsActorArgs(qsArgs, req1, targetsFut)
-      val hp: HandlerProps = extAdvWsActors.props(_, eaArgs)
+      val hp: HandlerProps = advExtWsActors.props(_, eaArgs)
       Right(hp)
     }
 
@@ -282,7 +281,7 @@ class LkAdvExt @Inject() (
    */
   def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
     val ctx = implicitly[Context]
-    val form0 = aeFormUtil.oneRawTargetFullFormM(adnId)
+    val form0 = advExtFormUtil.oneRawTargetFullFormM(adnId)
       .fill( ("", Some(ctx.messages("New.target")), None) )
     Ok( _createTargetTpl(adnId, form0)(ctx) )
   }
