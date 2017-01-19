@@ -18,7 +18,9 @@ object MomentJsUtil {
   object Implicits {
 
     implicit class MomentUtil(val m: Moment) extends AnyVal {
-      def tomorrow: Moment = m.add(1, Units.day)
+      def tomorrow: Moment = plusDays(1)
+      def plusDays(days: Int) = m.add(days, Units.day)
+      def plusYears(years: Int) = m.add(years, Units.year)
     }
 
 

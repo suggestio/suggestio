@@ -18,9 +18,10 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
+import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
+import scala.scalajs.js.{Array, UndefOr}
 
 /** Рендер Options-раздела целиком. */
 object DtpOptions {
@@ -95,9 +96,10 @@ object DtpOptions {
         ),
 
         // Выбор диапазона дат размещения в случае кастомности исходного периода:
-        state.customRangeConn { customRangeProxy =>
+        state.customRangeConn { customRangeOptProxy =>
+          val customRangeOpt = customRangeOptProxy()
           <.div(
-            customRangeProxy().nonEmpty ?= <.div(
+            customRangeOpt.nonEmpty ?= <.div(
               for {
                 (fn, dateOptConn) <- Seq [(DtpInputFn, ReactConnectProxy[Option[MYmd]])] (
                   DtpInputFns.start -> state.dateStartConn,
@@ -114,26 +116,33 @@ object DtpOptions {
                           DatePickerR(
                             new DatePickerPropsR {
                               override val selected: js.UndefOr[Date_t] = ymd.to[Moment]
+                              override val minDate: UndefOr[Date_t] = fn.minDate(customRangeOpt)
 
-                              override val minDate: UndefOr[Date_t] = fn.minDate
+                              // date range через два поля:
+                              override val selectsStart: UndefOr[Boolean] = fn.selectsStart
+                              override val selectsEnd: UndefOr[Boolean] = fn.selectsEnd
+                              override val startDate: UndefOr[Date_t] = {
+                                customRangeOpt.map(_.dateStart.to[Moment])
+                              }
+                              override val endDate: UndefOr[Date_t] = {
+                                customRangeOpt.map(_.dateEnd.to[Moment])
+                              }
 
-                              // TODO Opt инстансы callback-функций можно прооптимизировать, вынеся в val-карту функций.
-                              override val onChange: js.UndefOr[js.Function2[Date_t, ReactEvent, Unit]] = {
-                                js.defined {
-                                  cbFun2TojsCallback { (newDate, _) =>
-                                    onCustomDateChange(fn, newDate)
-                                  }
+                              // TODO Opt инстансы callback-функций можно прооптимизировать, вынеся в val-карту функций или в state, например.
+                              override val onChange: js.UndefOr[js.Function2[Date_t, ReactEvent, Unit]] = js.defined {
+                                cbFun2TojsCallback { (newDate, _) =>
+                                  onCustomDateChange(fn, newDate)
                                 }
                               }
                               // Для end-даты показывать сразу два месяца.
                               override val monthsShown: UndefOr[Int] = fn.monthsShown
-
                               override val todayButton: UndefOr[String] = {
                                 if (fn.withTodayBtn)
                                   Messages("Today")
                                 else
                                   js.undefined
                               }
+                              override val maxDate: UndefOr[Date_t] = fn.maxDate
                             }
                           )()
                         )
