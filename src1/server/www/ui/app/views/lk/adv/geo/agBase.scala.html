@@ -5,14 +5,15 @@
 
 @import views.html.stuff.leaflet._
 @import static.date.picker._
+@import ctx.api.cdn.asset
 
 
 @headAfter1 = {
   @_leafletCssTpl()
   @_locateControlCssTpl()
-  @_jqDatePickCssTpl()
   @_lMarkerClusterCssTpl()
   @headAfter
+  <link rel="stylesheet" type="text/css" href="@asset("react-datepicker/dist/react-datepicker.min.css")"/>
 }
 
 
@@ -26,8 +27,5 @@
 ) {
 
   @content
-
-  @* leaflet.js и остальные живут в jsdeps.js на уровне lkBase.html . *@
-  @_jqDatePickJsTpl()
 
 }

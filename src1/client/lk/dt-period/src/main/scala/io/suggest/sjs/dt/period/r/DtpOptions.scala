@@ -1,5 +1,7 @@
 package io.suggest.sjs.dt.period.r
 
+import com.github.hacker0x01.react.date.picker.{DatePickerPropsR, DatePickerR, Date_t}
+import com.momentjs.Moment
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.AdvConstants
 import io.suggest.common.qs.QsConstants
@@ -14,6 +16,11 @@ import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, Set
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
+import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
+
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /** Рендер Options-раздела целиком. */
 object DtpOptions {
@@ -39,17 +46,17 @@ object DtpOptions {
       }
     }
 
-    def onCustomDateChange(fn: DtpInputFn)(e: ReactEventI): Callback = {
-      val newStr = e.target.value
+    def onCustomDateChange(fn: DtpInputFn, newDate: Moment): Callback = {
       $.props >>= { props =>
         props.dispatchCB(
           SetDateStartEnd(
             fn      = fn,
-            ymdStr  = newStr
+            moment  = newDate
           )
         )
       }
     }
+
 
     def render(state: State): ReactElement = {
       <.div(
@@ -104,20 +111,33 @@ object DtpOptions {
                         Messages( "Date." + fn.strId ),
 
                         InputCont(
-                          // TODO DatePickerR
-                          <.input(
-                            ^.`type`  := "text",
-                            ^.name    := (AdvConstants.PERIOD_FN :: AdvConstants.DtPeriod.DATES_INTERVAL_FN :: fn :: Nil)
-                              .mkString(QsConstants.KEY_PARTS_DELIM_STR),
-                            ^.value   := ymd.toString,
-                            ^.onChange ==> onCustomDateChange(fn)
-                          )
+                          DatePickerR(
+                            new DatePickerPropsR {
+                              override val selected: js.UndefOr[Date_t] = ymd.to[Moment]
+
+                              override val minDate: UndefOr[Date_t] = fn.minDate
+
+                              // TODO Opt инстансы callback-функций можно прооптимизировать, вынеся в val-карту функций.
+                              override val onChange: js.UndefOr[js.Function2[Date_t, ReactEvent, Unit]] = {
+                                js.defined {
+                                  cbFun2TojsCallback { (newDate, _) =>
+                                    onCustomDateChange(fn, newDate)
+                                  }
+                                }
+                              }
+                              // Для end-даты показывать сразу два месяца.
+                              override val monthsShown: UndefOr[Int] = fn.monthsShown
+                            }
+                          )()
                         )
+
                       )
                     )
                   }  // for ymd
+
                 }
               }   // for (fn, dateOptConn)
+
             )
           )
         } // customRangeProxy

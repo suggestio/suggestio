@@ -8,7 +8,7 @@ import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactComponentB, ReactElement}
 import react.leaflet.lmap.{LMapPropsR, LMapR}
-import io.suggest.react.ReactCommonUtil.callBackFun2jsCallback
+import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 
 import scala.scalajs.js
 
@@ -39,8 +39,8 @@ object AdvGeoMapR {
       }
     }
 
-    private val onLocationFoundF = callBackFun2jsCallback( onLocationFound )
-    private val onPopupCloseF = callBackFun2jsCallback( onPopupClose )
+    private val onLocationFoundF = cbFun1TojsCallback( onLocationFound )
+    private val onPopupCloseF = cbFun1TojsCallback( onPopupClose )
 
     def render(props: Props, children: PropsChildren) = {
       val v = props()

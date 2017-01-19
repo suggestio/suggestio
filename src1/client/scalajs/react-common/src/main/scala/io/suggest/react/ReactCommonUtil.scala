@@ -26,9 +26,17 @@ object ReactCommonUtil {
     *
     * @see [[https://github.com/japgolly/scalajs-react/issues/210#issuecomment-149991727]]
     */
-  def callBackFun2jsCallback[Arg, Res](fun: Arg => CallbackTo[Res]): js.Function1[Arg, Res] = {
+  def cbFun1TojsCallback[Arg, Res](fun: Arg => CallbackTo[Res]): js.Function1[Arg, Res] = {
     fun
       .andThen( _.runNow() )
+  }
+
+  // unused
+  def cbFun2TojsCallback[Arg1, Arg2, Res](fun: (Arg1, Arg2) => CallbackTo[Res]): js.Function2[Arg1, Arg2, Res] = {
+    { (arg1, arg2) =>
+      fun(arg1, arg2)
+        .runNow()
+    }
   }
 
 

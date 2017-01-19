@@ -1,5 +1,6 @@
 package io.suggest.sjs.dt.period.m
 
+import com.momentjs.Moment
 import io.suggest.dt.interval.QuickAdvPeriod
 import io.suggest.sjs.common.spa.DAction
 
@@ -12,7 +13,7 @@ import io.suggest.sjs.common.spa.DAction
 sealed trait DtpAction extends DAction
 
 /** Действие обновление какой-то даты. */
-case class SetDateStartEnd(fn: DtpInputFn, ymdStr: String) extends DtpAction
+case class SetDateStartEnd(fn: DtpInputFn, moment: Moment) extends DtpAction
 
 /** Действие выставления нового значения QuickAdvPeriod. */
 case class SetQap(qap: QuickAdvPeriod) extends DtpAction

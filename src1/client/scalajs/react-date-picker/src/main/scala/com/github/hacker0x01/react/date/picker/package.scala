@@ -1,6 +1,6 @@
 package com.github.hacker0x01.react.date
 
-import scala.scalajs.js
+import com.momentjs.Moment
 
 /**
   * Suggest.io
@@ -9,6 +9,6 @@ import scala.scalajs.js
   */
 package object picker {
 
-  type Date_t = js.Object
+  type Date_t = Moment
 
 }

@@ -3,7 +3,7 @@ package com.github.hacker0x01.react.date.picker
 import io.suggest.react.JsWrapperR
 import org.scalajs.dom.Element
 import org.scalajs.dom.raw.HTMLDivElement
-import japgolly.scalajs.react.ReactEvent
+import japgolly.scalajs.react.{JsComponentType, ReactEvent, TopNode}
 
 import scala.scalajs.js
 import scala.scalajs.js.{Dynamic, UndefOr, |}
@@ -21,9 +21,9 @@ case class DatePickerR(props: DatePickerPropsR) extends JsWrapperR[DatePickerPro
 
 
 /** Native component facade. */
-@JSImport("react-datepicker", "DatePicker")
+@JSImport("react-datepicker", JSImport.Namespace)
 @js.native
-class DatePicker extends js.Object
+class DatePicker extends JsComponentType[DatePickerPropsR, js.Object, TopNode]
 
 
 /** Component properties. */

@@ -134,6 +134,7 @@ class AdvGeoFormUtil @Inject() (
 
   implicit val dateRangeYmdV = validator[MRangeYmd] { r =>
     r.toSeq.each is valid
+    // TODO XXX Это глючный валидатор. Надо как-то переписать его через нормальные даты вместо YMD-контейнеров...
     r.dateStart should be < r.dateEnd
   }
 

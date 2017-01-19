@@ -7,7 +7,7 @@ import io.suggest.lk.adv.geo.m.MarkerNodeId
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import io.suggest.react.ReactCommonUtil.callBackFun2jsCallback
+import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.react.ReactCommonUtil.Implicits._
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 
@@ -37,7 +37,7 @@ object RcvrMarkersR {
       }
     }
 
-    private val _onMarkerClickedF = callBackFun2jsCallback( onMarkerClicked )
+    private val _onMarkerClickedF = cbFun1TojsCallback( onMarkerClicked )
 
     def render(p: Props): ReactElement = {
       for (markers1 <- p().toOption) yield {

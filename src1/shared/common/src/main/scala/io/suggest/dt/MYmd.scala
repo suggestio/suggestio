@@ -33,6 +33,10 @@ object MYmd {
     }
   }
 
+  def from[T](date: T)(implicit ev: IDtHelper[T]): MYmd = {
+    ev.toYmd(date)
+  }
+
 }
 
 
@@ -54,5 +58,9 @@ case class MYmd(
 
   /** Целочисленный ключ для сортировки. */
   def sortKey = (year - 2016) * 365 + month * 12 + day
+
+  def to[T](implicit ev: IDtHelper[T]): T = {
+    ev.fromYmd(this)
+  }
 
 }

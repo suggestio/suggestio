@@ -1,12 +1,14 @@
 package io.suggest.sjs.dt.period.r
 
+import com.momentjs.Moment
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.MAdvPeriod
-import io.suggest.sjs.common.dt.{JsDateUtil, MYmdJs}
+import io.suggest.dt.{MAdvPeriod, MYmd}
+import io.suggest.sjs.common.dt.JsDateUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.dt.period.m.{DtpInputFns, SetDateStartEnd, SetQap}
+import io.suggest.dt.moment.MomentJsUtil.Implicits._
 
 /**
   * Suggest.io
@@ -52,12 +54,23 @@ class DtpAh[M](
         noChange
 
       } { oldRange =>
-        // Нужно распарсить новую строку с датой и выставить её в нужное поле.
-        val ymd2 = MYmdJs.parse(s.ymdStr).get
+        // Нужно выставить новую строку с датой в состояние.
+        val now = Moment()
+
+        val start1 = if (s.fn == DtpInputFns.start) s.moment else oldRange.dateStart.to[Moment]
+        val end1   = if (s.fn == DtpInputFns.end) s.moment else oldRange.dateEnd.to[Moment]
+
+        // Нужно убедится, что дата начала идёт ПЕРЕД датой окончания.
+        val start2 = Moment.max(now, start1)
+
+        // Надо убедится, что дата окончания хотя бы на день впереди даты начала.
+        val tomorrow = Moment(now).tomorrow
+        val startTomorrow = Moment(start2).tomorrow
+        val end2 = Moment.max(end1, tomorrow, startTomorrow)
 
         val range2 = oldRange.copy(
-          dateStart = if (s.fn == DtpInputFns.start) ymd2 else oldRange.dateStart,
-          dateEnd   = if (s.fn == DtpInputFns.end) ymd2 else oldRange.dateEnd
+          dateStart = MYmd.from(start2),
+          dateEnd   = MYmd.from(end2)
         )
 
         updated( v0.withCustomRange(Some(range2)), priceUpdateFx )

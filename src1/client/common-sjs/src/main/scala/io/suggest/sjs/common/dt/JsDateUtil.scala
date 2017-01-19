@@ -2,7 +2,7 @@ package io.suggest.sjs.common.dt
 
 import diode.FastEq
 import io.suggest.dt.interval.MRangeYmd
-import io.suggest.dt.{IDtHelper, MYmd}
+import io.suggest.dt.{MYmd, Month0Indexed}
 
 import scala.scalajs.js.Date
 
@@ -34,7 +34,7 @@ object JsDateUtil {
 
 
   /** typeclass для поддержки датовой арифметики на базе js.Date. */
-  implicit object JsDateHelper extends IDtHelper[Date] {
+  implicit object JsDateHelper extends Month0Indexed[Date] {
 
     override def now: Date = new Date()
 
@@ -49,25 +49,13 @@ object JsDateUtil {
     override def fromYmd(ymd: MYmd): Date = {
       new Date(
         year  = ymd.year,
-        month = month12ToPlatformMonth(ymd.month),
+        month = ymdMonthToDateMonth(ymd.month),
         date  = ymd.day
       )
     }
 
-    override def month12ToPlatformMonth(month: Int): Int = {
-      month - 1
-    }
-
-    override def toYmd(date: Date): MYmd = {
-      MYmd(
-        year  = getYear(date),
-        month = getMonthOfYear(date),
-        day   = getDayOfMonth(date)
-      )
-    }
-
-    override def getMonthOfYear(date: Date): Int = {
-      date.getMonth() + 1
+    override def getDateMonthOfYear(date: Date): Int = {
+      date.getMonth()
     }
 
     override def getYear(date: Date): Int = {

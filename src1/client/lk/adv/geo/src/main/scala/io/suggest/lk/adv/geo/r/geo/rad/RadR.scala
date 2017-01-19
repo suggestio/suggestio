@@ -5,7 +5,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m.MRad
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.react.ReactCommonUtil.callBackFun2jsCallback
+import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
 import io.suggest.sjs.leaflet.marker.Marker
@@ -67,14 +67,14 @@ object RadR {
 
     // Стабильные инстансы функций, чтобы точно избежать их перебиндинга при каждом рендере...
     // Функции-коллбеки для маркера центра круга.
-    private val _centerDragStartF = callBackFun2jsCallback { _: Event => _dragStart(RadCenterDragStart) }
-    private val _centerDraggingF  = callBackFun2jsCallback( _dragging(_: Event, RadCenterDragging) )
-    private val _centerDragEndF   = callBackFun2jsCallback( _dragEnd(_: DragEndEvent, RadCenterDragEnd) )
+    private val _centerDragStartF = cbFun1TojsCallback { _: Event => _dragStart(RadCenterDragStart) }
+    private val _centerDraggingF  = cbFun1TojsCallback( _dragging(_: Event, RadCenterDragging) )
+    private val _centerDragEndF   = cbFun1TojsCallback( _dragEnd(_: DragEndEvent, RadCenterDragEnd) )
 
     // Стабильные инстансы callback-функций для маркера радиуса.
-    private val _radiusDragStartF = callBackFun2jsCallback { _: Event => _dragStart(RadiusDragStart) }
-    private val _radiusDraggingF  = callBackFun2jsCallback( _dragging(_: Event, RadiusDragging) )
-    private val _radiusDragEndF   = callBackFun2jsCallback( _dragEnd(_: DragEndEvent, RadiusDragEnd) )
+    private val _radiusDragStartF = cbFun1TojsCallback { _: Event => _dragStart(RadiusDragStart) }
+    private val _radiusDraggingF  = cbFun1TojsCallback( _dragging(_: Event, RadiusDragging) )
+    private val _radiusDragEndF   = cbFun1TojsCallback( _dragEnd(_: DragEndEvent, RadiusDragEnd) )
 
 
     def render(p: Props): ReactElement = {

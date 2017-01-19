@@ -20,3 +20,9 @@ npmDependencies in Compile ++= Seq(
   "moment" -> Common.Vsn.momentJs
 )
 
+libraryDependencies ++= Seq(
+  "io.monix" %%% "minitest" % Common.minitestVsn  % Test
+)
+
+testFrameworks += new TestFramework("minitest.runner.Framework")
+

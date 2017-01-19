@@ -7,7 +7,8 @@ import com.tuplejump.sbt.yeoman.Yeoman
 
 Common.settingsOrg
 
-enablePlugins(WebScalaJSBundlerPlugin)
+// npmAssets в Build.scala тихо конфликтует с этой строкой. ЕЁ НЕЛЬЗЯ РАСКОММЕНЧИВАТЬ, ТУТ КАК НАПОМИНАНИЕ.
+//enablePlugins(WebScalaJSBundlerPlugin)
 
 name := "sioweb21"
 

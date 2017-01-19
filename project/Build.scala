@@ -8,6 +8,9 @@ import org.scalajs.sbtplugin._
 import WebScalaJS.autoImport._
 import ScalaJSPlugin.autoImport._
 
+import scalajsbundler.sbtplugin.{ScalaJSBundlerPlugin, WebScalaJSBundlerPlugin}
+import WebScalaJSBundlerPlugin.autoImport._
+
 object Sio2Build extends Build {
 
   val DIR0 = "src1/"
@@ -125,15 +128,22 @@ object Sio2Build extends Build {
 
   /** Самопальные биндинги для moment.js. */
   lazy val momentSjs = {
-    Project(id = "moment-sjs", base = file(DIR0 + "client/scalajs/moment"))
+    Project(id = "moment-sjs", base = file(DIR0 + "client/dt/moment"))
       .enablePlugins(ScalaJSPlugin)
+  }
+
+  /** sio-утиль для moment.js. */
+  lazy val momentSioSjs = {
+    Project(id = "moment-sio-sjs", base = file(DIR0 + "client/dt/moment-sio"))
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(momentSjs, commonSjs)
   }
 
   /** Фасады и врапперы scala.js для react date-picker'а. */
   lazy val reactDatePickerSjs = {
     Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
-      .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonReactSjs, momentSjs)
+      .enablePlugins(ScalaJSBundlerPlugin)
+      .dependsOn(commonReactSjs, momentSioSjs)
   }
 
   /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
@@ -297,13 +307,16 @@ object Sio2Build extends Build {
   /** веб-интерфейс suggest.io v2. */
   lazy val web21 = project
     .in( file(DIR0 + "server/www") )
+    .enablePlugins(PlayScala, SbtWeb, WebScalaJSBundlerPlugin)
     .dependsOn(commonJVM, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
-      pipelineStages in Assets += scalaJSPipeline
+      pipelineStages in Assets += scalaJSPipeline,
+      npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
+        (nodeModules / "react-datepicker" / "dist") * "*.css"
+      }.value
     )
-    .enablePlugins(PlayScala, SbtWeb)
-  
+
 
   /** Корневой проект. Он должен аггрегировать подпроекты. */
   lazy val sio2 = {
