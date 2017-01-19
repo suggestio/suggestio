@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.tags.edit.{MTagsEditProps, TagsEditConstants}
-import io.suggest.dt.{MAdvPeriod, MRangeYmdJvm, MYmd, MYmdJvm}
+import io.suggest.dt._
 import io.suggest.dt.interval.MRangeYmd
 import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.model.geo.{CircleGs, GeoShape}
@@ -35,8 +35,11 @@ class AdvGeoFormUtil @Inject() (
   pickleSrvUtil     : PickleSrvUtil,
   mYmdJvm           : MYmdJvm,
   mRangeYmdJvm      : MRangeYmdJvm,
+  dtUtilJvm         : DtUtilJvm,
   mCommonDi         : ICommonDi
 ) {
+
+  import dtUtilJvm.Implicits._
 
   /** Маппинг формы георазмещения. */
   /*private def _advGeoFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
@@ -135,7 +138,8 @@ class AdvGeoFormUtil @Inject() (
   implicit val dateRangeYmdV = validator[MRangeYmd] { r =>
     r.toSeq.each is valid
     // TODO XXX Это глючный валидатор. Надо как-то переписать его через нормальные даты вместо YMD-контейнеров...
-    r.dateStart should be < r.dateEnd
+    //r.dateStart should be < r.dateEnd
+    r.dateStart.to[LocalDate].isBefore( r.dateEnd.to[LocalDate] ) should equalTo(true)
   }
 
   implicit val datePeriodV = validator[MAdvPeriod] { dp =>

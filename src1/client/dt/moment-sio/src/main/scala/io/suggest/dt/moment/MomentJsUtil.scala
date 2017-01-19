@@ -1,7 +1,7 @@
 package io.suggest.dt.moment
 
 import com.momentjs.{Moment, Units}
-import io.suggest.dt.{MYmd, Month0Indexed}
+import io.suggest.dt.Month0Indexed
 
 import scala.scalajs.js
 
@@ -35,11 +35,8 @@ object MomentJsUtil {
         date.add(months, Units.month)
       }
 
-      override def fromYmd(ymd: MYmd): Moment = {
-        val year = ymd.year
-        val month = ymdMonthToDateMonth(ymd.month)
-        val day = ymd.day
-        Moment( js.Array(year, month, day) )
+      override def yearDmonDay2date(year: Int, dateMonth: Int, day: Int): Moment = {
+        Moment( js.Array(year, dateMonth, day) )
       }
 
       override def getDateMonthOfYear(date: Moment): Int = {

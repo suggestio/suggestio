@@ -16,7 +16,7 @@ object MAdvPeriod {
     generatePickler[MAdvPeriod]
   }
 
-  def toRange[Date_t](ap: MAdvPeriod)(implicit dtHelp: IDtHelper[Date_t]): MRangeYmd = {
+  def toRange[Date_t](ap: MAdvPeriod)(implicit dtHelp: IYmdHelper[Date_t]): MRangeYmd = {
     ap.quickAdvPeriod match {
       // Стандартный период. Считаем относительно now.
       case isoPeriod: QuickAdvIsoPeriod =>

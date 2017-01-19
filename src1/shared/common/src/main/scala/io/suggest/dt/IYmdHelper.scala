@@ -6,8 +6,17 @@ package io.suggest.dt
   * Created: 21.12.16 19:31
   * Description: Интерфейс typeclass'ов для датовой арифметики без конкретного знания информации о типах.
   * На js одни даты, на сервере - другие. Тут общий интерфейс.
+  *
+  * Трейт различает понятия month и dateMonth:
+  * Исторически, браузеры разрабатывались дикими человекообразными обезьянами с неизвестной планеты,
+  * которые декабрь обозначали как 11, а январь - 0.
+  * Трейт отрабатывает ситуацию связи с внеземными месяцеисчислениями с помощью MONTH_INDEX_OFFSET.
+  * dateMonth -- номер месяца в понятиях Date_t. 1..12 или 0..11 или что-то ещё.
+  * month -- человеческий номер месяца: 1..12.
+  *
+  * @tparam Date_t Тип инстансов платформенной даты.
   */
-trait IDtHelper[Date_t] {
+trait IYmdHelper[Date_t] {
 
   def now: Date_t
 
@@ -17,8 +26,16 @@ trait IDtHelper[Date_t] {
 
   def plusMonths(date: Date_t, months: Int): Date_t
 
-  def fromYmd(ymd: MYmd): Date_t
+  /** Конверсия [[MYmd]] в Date_t. */
+  def toDate(ymd: MYmd): Date_t = {
+    yearDmonDay2date(
+      year      = ymd.year,
+      dateMonth = ymdMonthToDateMonth(ymd.month),
+      day       = ymd.day
+    )
+  }
 
+  /** Конверсия из Date_t в [[MYmd]]. */
   def toYmd(date: Date_t): MYmd = {
     MYmd(
       year  = getYear(date),
@@ -26,6 +43,8 @@ trait IDtHelper[Date_t] {
       day   = getDayOfMonth(date)
     )
   }
+
+  def yearDmonDay2date(year: Int, dateMonth: Int, day: Int): Date_t
 
   def getDateMonthOfYear(date: Date_t): Int
   def getYmdMonthOfYear(date: Date_t): Int = {
@@ -57,6 +76,6 @@ trait IDtHelper[Date_t] {
 
 }
 
-trait Month0Indexed[Date_t] extends IDtHelper[Date_t] {
+trait Month0Indexed[Date_t] extends IYmdHelper[Date_t] {
   override def MONTH_INDEX_OFFSET = -1
 }

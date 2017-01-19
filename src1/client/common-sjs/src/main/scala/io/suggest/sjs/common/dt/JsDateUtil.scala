@@ -2,7 +2,7 @@ package io.suggest.sjs.common.dt
 
 import diode.FastEq
 import io.suggest.dt.interval.MRangeYmd
-import io.suggest.dt.{MYmd, Month0Indexed}
+import io.suggest.dt.Month0Indexed
 
 import scala.scalajs.js.Date
 
@@ -46,11 +46,11 @@ object JsDateUtil {
       date.plusMonths(months)
     }
 
-    override def fromYmd(ymd: MYmd): Date = {
+    override def yearDmonDay2date(year: Int, dateMonth: Int, day: Int): Date = {
       new Date(
-        year  = ymd.year,
-        month = ymdMonthToDateMonth(ymd.month),
-        date  = ymd.day
+        year  = year,
+        month = dateMonth,
+        date  = day
       )
     }
 

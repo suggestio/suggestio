@@ -106,7 +106,7 @@ object DtpOptions {
               } yield {
                 dateOptConn { dateOptProx =>
                   for (ymd <- dateOptProx()) yield {
-                    PropTable.Outer(
+                    PropTable.Outer.withKey(fn.strId)(
                       PropTable.Row(
                         Messages( "Date." + fn.strId ),
 

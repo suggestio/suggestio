@@ -39,7 +39,7 @@ object MYmdJs extends Log {
   }
 
   def toJsDate(ymd: MYmd): js.Date = {
-    JsDateHelper.fromYmd(ymd)
+    JsDateHelper.toDate(ymd)
   }
 
 }

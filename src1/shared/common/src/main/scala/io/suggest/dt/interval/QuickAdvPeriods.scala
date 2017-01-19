@@ -4,7 +4,7 @@ import boopickle.CompositePickler
 import enumeratum._
 import io.suggest.primo.IStrId
 import boopickle.Default._
-import io.suggest.dt.IDtHelper
+import io.suggest.dt.IYmdHelper
 
 /**
   * Suggest.io
@@ -58,7 +58,7 @@ sealed abstract class QuickAdvIsoPeriod extends QuickAdvPeriod {
     * @return Обновлённая дата.
     *         Возможно, тот же самый, но модифицированный инстанс, если исходная тип даты есть mutable по своей природе (js.Date).
     */
-  def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t
+  def updateDate[Date_t](date: Date_t)(implicit dateHelper: IYmdHelper[Date_t]): Date_t
 
 }
 
@@ -84,7 +84,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
   case object P3D extends QuickAdvIsoPeriod {
     override def strId = PeriodsConstants.P_3DAYS
 
-    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
+    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IYmdHelper[Date_t]): Date_t = {
       dateHelper.plusDays(date, 3)
     }
     override def toString = super.toString
@@ -94,7 +94,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
   case object P1W extends QuickAdvIsoPeriod {
     override def strId = PeriodsConstants.P_1WEEK
 
-    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
+    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IYmdHelper[Date_t]): Date_t = {
       dateHelper.plusWeeks(date, 1)
     }
     override def toString = super.toString
@@ -104,7 +104,7 @@ object QuickAdvPeriods extends Enum[QuickAdvPeriod] {
   case object P1M extends QuickAdvIsoPeriod {
     override def strId = PeriodsConstants.P_1MONTH
 
-    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IDtHelper[Date_t]): Date_t = {
+    override def updateDate[Date_t](date: Date_t)(implicit dateHelper: IYmdHelper[Date_t]): Date_t = {
       dateHelper.plusMonths(date, 1)
     }
     override def toString = super.toString
