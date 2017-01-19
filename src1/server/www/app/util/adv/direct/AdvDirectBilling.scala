@@ -11,12 +11,12 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models._
 import models.adv.direct.{AdvFormEntry, FormResult, IAdvTerms}
-import models.blk.{BlockHeights, BlockWidths}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mproj.ICommonDi
 import org.joda.time.DateTimeConstants._
 import org.joda.time.LocalDate
 import util.PlayMacroLogsImpl
+import util.adv.AdvUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
 
@@ -33,6 +33,7 @@ import scala.concurrent.Future
 @Singleton
 class AdvDirectBilling @Inject() (
   tfDailyUtil             : TfDailyUtil,
+  advUtil                 : AdvUtil,
   calendarUtil            : CalendarUtil,
   mCalendars              : MCalendars,
   mBalances               : MBalances,
@@ -192,27 +193,6 @@ class AdvDirectBilling @Inject() (
 
 
   /**
-   * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
-   * другой одноимённый метод.
-   *
-   * @param mad Рекламная карточка или иная реализация блочного документа.
-   * @return Площадь карточки.
-   */
-  def getAdModulesCount(mad: MNode): Int = {
-    val bm = mad.ad.blockMeta.get   // TODO Следует ли отрабатывать ситуацию, когда нет BlockMeta?
-    // Мультипликатор по ширине
-    val wmul = BlockWidths(bm.width).relSz
-    // Мультипликатор по высоте
-    val hmul = BlockHeights(bm.height).relSz
-    val blockModulesCount: Int = wmul * hmul
-    trace(
-      s"getAdModulesCount(${mad.id.getOrElse("?")}): blockModulesCount = $wmul * $hmul = $blockModulesCount ;; blockId = ${bm.blockId}"
-    )
-    blockModulesCount
-  }
-
-
-  /**
    * Посчитать цену размещения рекламной карточки согласно переданной спеке.
    *
    * @param mad Размещаемая рекламная карточка.
@@ -236,7 +216,7 @@ class AdvDirectBilling @Inject() (
     }
 
     // Пока посчитать размеры карточки
-    val bmc = getAdModulesCount(mad)
+    val bmc = advUtil.getAdModulesCount(mad)
 
     // Когда всё будет готово, нужно нагенерить результатов.
     for {
@@ -267,7 +247,7 @@ class AdvDirectBilling @Inject() (
     */
   def mkAdvReqItems(orderId: Gid_t, mad: MNode, advs: TraversableOnce[AdvFormEntry], status: MItemStatus,
                     rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx): Iterator[MItem] = {
-    val bmc = getAdModulesCount(mad)
+    val bmc = advUtil.getAdModulesCount(mad)
 
     for (adv <- advs.toIterator if adv.advertise) yield {
       MItem(

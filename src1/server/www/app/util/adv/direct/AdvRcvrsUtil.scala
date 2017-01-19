@@ -363,28 +363,9 @@ class AdvRcvrsUtil @Inject()(
 }
 
 
-/** Интерфейс для модулей рассчета extra-ресиверов карточки. */
-trait AdvExtraRcvrsCalculator {
-
-  /** Метод для проверки активности модуля. */
-  def isEnabled: Boolean
-
-  /**
-    * Рассчет доп.ресиверов на основе карты прямых (непосредственных) ресиверов карточки.
-    *
-    * @param allDirectRcvrs Карта непосредственных ресиверов.
-    * @param producerIdOpt id продьюсера.
-    * @return Фьючерс с картой extra-ресиверов.
-    */
-  def calcForDirectRcvrs(allDirectRcvrs: Receivers_t, producerIdOpt: Option[String]): Future[Receivers_t]
-
-}
-
-
-
 // JMX утиль
 /** MBean-интерфейс для доступа к сабжу. */
-trait AdvUtilJmxMBean {
+trait AdvRcvrsUtilJmxMBean {
 
   /** Пройтись по карточкам, пересчитать всех ресиверов для каждой карточки и сохранить в хранилище. */
   def resetAllReceivers(): String
@@ -418,7 +399,7 @@ final class AdvRcvrsUtilJmx @Inject()(
                                        advRcvrsUtil            : AdvRcvrsUtil,
                                        mCommonDi               : ICommonDi
                                      )
-  extends AdvUtilJmxMBean
+  extends AdvRcvrsUtilJmxMBean
   with JMXBase
 {
 
