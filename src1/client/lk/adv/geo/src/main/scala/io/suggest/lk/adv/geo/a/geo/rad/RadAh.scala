@@ -36,17 +36,20 @@ class RadAh[M](
       Math.min( Rad.RADIUS_MAX_M, distanceM )
     )
 
+    val circle2 = v0.circle.withRadiusM( radius2m )
+
     // Не двигать радиус, вылезающий за пределы допустимых значений:
     val rmGp2 = if (radius2m != distanceM) {
-      // TODO нужно подправлять координаты, чтобы радиус, ушедший за пределы, оставался на границе круга. Бывает, что он оказывается рядом.
-      // Для этого нужно с помощью угла и нового радиуса попытаться вычислить правильные геокоординаты маркера радиуса.
-      v0.state.radiusMarkerCoords
+      // TODO нужно подправлять координаты радиуса, чтобы учитывать угол на окружности.
+      // Сейчас выехавший за пределы радиус оказывается на западе от центра независимо от угла.
+      //v0.state.radiusMarkerCoords
+      LkAdvGeoFormUtil.radiusMarkerLatLng(circle2)
     } else {
       rmGp1
     }
 
     val v2 = v0.copy(
-      circle  = v0.circle.withRadiusM( radius2m ),
+      circle  = circle2,
       state   = v0.state.copy(
         radiusDragging      = stillDragging,
         radiusMarkerCoords  = rmGp2
@@ -120,6 +123,21 @@ class RadAh[M](
     case rde: RadiusDragEnd =>
       val v2Opt = _handleNewRadiusXY(rde, stillDragging = false)
       updated(v2Opt, priceUpdateFx)
+
+
+    // Найдена геолокация юзера. Переместить круг в новую точку, даже если происходит перетаскивание.
+    // Карта ведь всё равно переедет на геолокацию.
+    case hlf: HandleLocationFound =>
+      value.fold (noChange) { mrad =>
+        val center2 = hlf.geoPoint
+        val mgc2 = mrad.circle.withCenter(center2)
+        val radiusXy = LkAdvGeoFormUtil.radiusMarkerLatLng(mgc2)
+        val mrad2 = mrad.copy(
+          circle = mgc2,
+          state  = mrad.state.withRadiusMarkerCoords(radiusXy)
+        )
+        updated( Some(mrad2) )
+      }
 
   }
 

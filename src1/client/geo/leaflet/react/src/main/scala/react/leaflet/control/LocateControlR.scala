@@ -1,7 +1,6 @@
 package react.leaflet.control
 
 import io.suggest.react.JsWrapper0R
-import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
 import org.scalajs.dom.raw.HTMLElement
 import react.leaflet.Context

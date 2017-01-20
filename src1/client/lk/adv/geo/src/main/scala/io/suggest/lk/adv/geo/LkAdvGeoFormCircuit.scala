@@ -118,7 +118,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }
 
     val mmapRW  = zoomRW(_.mmap) { _.withMapState(_) }
-    val mapPropsRW = mmapRW.zoomRW(_.props) { _.withProps(_) }
 
     // Собираем handler'ы
 
@@ -145,7 +144,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val mapAh = new MapCommonAh(
-      mapStateRW = mapPropsRW
+      mmapRW = mmapRW
     )
 
     val datePeriodAh = new DtpAh(

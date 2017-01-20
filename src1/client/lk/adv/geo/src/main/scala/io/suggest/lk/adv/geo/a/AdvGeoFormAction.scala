@@ -47,7 +47,7 @@ case class InstallRcvrMarkers(rcvrMarkers: js.Array[Marker]) extends IAdvGeoForm
 
 
 /** Экшен выставления центра карты на указанную гео-точку. */
-case class SetMapCenter(override val geoPoint: MGeoPoint) extends ISetMapCenter
+case class HandleLocationFound(override val geoPoint: MGeoPoint) extends ISetMapCenter
 
 
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */

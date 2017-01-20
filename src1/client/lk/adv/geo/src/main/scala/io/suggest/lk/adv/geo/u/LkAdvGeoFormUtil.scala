@@ -60,6 +60,7 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
     // Считаем чисто математичеки координаты маркера радиуса. По дефолту, просто восточнее от центра на расстоянии радиуса.
     val earthRadiusM = GeoConstants.Earth.RADIUS_M
 
+    // TODO Добавить поддержку угла. Сейчас угол всегда равен 0. Для этого нужно проецировать вектор на OX и OY через sin() и cos().
     // offsets in meters: north = +0; east = +radiusM
     // Coord.offsets in radians:
     //val dLat = 0   // пока тут у нас нет смещения на север. Поэтому просто ноль.
