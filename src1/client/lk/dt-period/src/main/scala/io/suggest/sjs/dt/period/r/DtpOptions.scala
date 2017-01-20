@@ -171,10 +171,10 @@ object DtpOptions {
     .initialState_P { props =>
       import OptFastEq.optFastEqImpl
       State(
-        qapConn             = props.connect(_.quickAdvPeriod),
-        customRangeConn     = props.connect(_.customRange),
-        dateStartConn       = props.connect(_.customRange.map(_.dateStart)),
-        dateEndConn         = props.connect(_.customRange.map(_.dateEnd))
+        qapConn             = props.connect(_.info.quickAdvPeriod),
+        customRangeConn     = props.connect(_.info.customRangeOpt),
+        dateStartConn       = props.connect(_.info.customRangeOpt.map(_.dateStart)),
+        dateEndConn         = props.connect(_.info.customRangeOpt.map(_.dateEnd))
       )
     }
     .renderBackend[Backend]

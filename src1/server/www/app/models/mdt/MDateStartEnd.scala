@@ -31,27 +31,3 @@ trait MDateStartEndT extends IDateStartEnd {
     new Interval(dtStart, dtEnd)
   }
 }
-
-/** Реализация [[IDateStartEnd]] для двух joda-дат. */
-case class MDateStartEnd(
-  override val dateStart  : LocalDate,
-  override val dateEnd    : LocalDate
-)
-  extends MDateStartEndT
-
-
-
-/** Реализация [[IDateStartEnd]] для одного joda-интервала. */
-case class MDateInterval(override val interval: Interval) extends IDateStartEnd {
-
-  override def dateStart: LocalDate = {
-    dtStart.toLocalDate
-  }
-  override def dtStart = interval.getStart
-
-  override def dateEnd: LocalDate = {
-    dtEnd.toLocalDate
-  }
-  override def dtEnd = interval.getEnd
-
-}

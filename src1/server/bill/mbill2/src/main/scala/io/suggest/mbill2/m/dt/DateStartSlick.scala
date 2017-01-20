@@ -22,3 +22,6 @@ trait DateStartSlick extends IPgDriver {
 
 }
 
+trait IDateStartOpt {
+  def dateStartOpt: Option[DateTime]
+}

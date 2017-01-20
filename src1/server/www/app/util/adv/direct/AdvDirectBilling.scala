@@ -10,8 +10,9 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import models._
-import models.adv.direct.{AdvFormEntry, FormResult, IAdvTerms}
+import models.adv.direct.{AdvFormEntry, FormResult}
 import models.mcal.{ICalsCtx, MCalendars}
+import models.mdt.IDateStartEnd
 import models.mproj.ICommonDi
 import org.joda.time.DateTimeConstants._
 import org.joda.time.LocalDate
@@ -84,7 +85,7 @@ class AdvDirectBilling @Inject() (
   def findBusyRcvrsExact(adId: String, fr: FormResult): DBIOAction[Set[String], NoStream, Effect.Read] = {
     // Подготовить значения аргументов для вызова экшена
     val dtStart = fr.period.dateStart.toDateTimeAtStartOfDay
-    val dtEnd   = fr.period.dateEnd.toDateTimeAtStartOfDay().plusDays(1).minusSeconds(1)
+    val dtEnd   = fr.period.dateEnd.toDateTimeAtStartOfDay()
 
     // Сборка логики db-экшена
     val dbAction = sqlForAd(adId)
@@ -116,13 +117,13 @@ class AdvDirectBilling @Inject() (
    *
    * @return
    */
-  def calculateAdvPrice(blockModulesCount: Int, tf: MDailyTf, advTerms: IAdvTerms, mcalsCtx: ICalsCtx): MPrice = {
+  def calculateAdvPrice(blockModulesCount: Int, tf: MDailyTf, ivl: IDateStartEnd, mcalsCtx: ICalsCtx): MPrice = {
     // Инициализация логгирования
     lazy val logPrefix = s"calculateAdvPrice(${System.currentTimeMillis}):"
-    trace(s"$logPrefix rcvr: square=$blockModulesCount from=${advTerms.dateStart} to=${advTerms.dateEnd} sls=${advTerms.showLevels}")
+    trace(s"$logPrefix rcvr: square=$blockModulesCount dates=${ivl.dateStart}..${ivl.dateEnd}")
 
-    val dateStart = advTerms.dateStart
-    val dateEnd = advTerms.dateEnd
+    val dateStart = ivl.dateStart
+    val dateEnd = ivl.dateEnd
     // Проверять dateStart <= dateEnd не требуется, т.к. цикл суммирования проверяет это на каждом шаге.
     //assert(!(dateStart isAfter dateEnd), "dateStart must not be after dateEnd")
 
@@ -198,10 +199,11 @@ class AdvDirectBilling @Inject() (
    * @param mad Размещаемая рекламная карточка.
    * @param adves2 Требования по размещению карточки на узлах.
    */
-  def getAdvPrices(mad: MNode, adves2: List[AdvFormEntry]): Future[Seq[MPrice]] = {
+  def getAdvPrices(mad: MNode, adves2: Seq[AdvFormEntry]): Future[Seq[MPrice]] = {
     // 2016 Перепись на новую архитектуру биллинга v2. И производительность серьезно ускорена.
     val rcvrsFut = mNodeCache.multiGet {
-      adves2.iterator
+      adves2
+        .iterator
         .map(_.adnId)
         .toSet
     }
@@ -224,7 +226,8 @@ class AdvDirectBilling @Inject() (
       calsCtx <- calsCtxFut
     } yield {
       // Выдать список цен из списка запрашиваемых размещений.
-      adves2.iterator
+      adves2
+        .iterator
         .map { adve =>
           val tf = tfsMap( adve.adnId )
           calculateAdvPrice(bmc, tf, adve, calsCtx)
@@ -257,7 +260,8 @@ class AdvDirectBilling @Inject() (
         price         = calculateAdvPrice(bmc, rcvrTfs(adv.adnId), adv, mcalsCtx),
         nodeId        = mad.id.get,
         sls           = adv.showLevels,
-        dtIntervalOpt = Some(adv.dtInterval),
+        dateStartOpt  = Some(adv.dateStart.toDateTimeAtStartOfDay),
+        dateEndOpt    = Some(adv.dateEnd.toDateTimeAtStartOfDay),
         rcvrIdOpt     = Some(adv.adnId)
       )
     }

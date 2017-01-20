@@ -21,3 +21,7 @@ trait DateEndSlick extends IPgDriver {
   }
 
 }
+
+trait IDateEndOpt {
+  def dateEndOpt: Option[DateTime]
+}

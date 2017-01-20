@@ -16,7 +16,7 @@ import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
-import org.joda.time.{DateTime, Interval}
+import org.joda.time.{DateTime, Interval, LocalDate}
 import slick.lifted.ProvenShape
 import slick.profile.SqlAction
 
@@ -47,7 +47,8 @@ class MItems @Inject() (
   with FindByOrderId
   with ItemStatusSlick
   with MItemTypeSlick
-  with IntervalSlick
+  with DateStartSlick
+  with DateEndSlick
   with NodeIdSlick
   with ReasonOptSlick
   with RcvrIdOptSlick
@@ -81,7 +82,8 @@ class MItems @Inject() (
     with OrderIdFk with OrderIdInx
     with ItemStatusColumn
     with ItemTypeColumn
-    with IntervalColumn
+    with DateStartOpt
+    with DateEndOpt
     with NodeIdColumn
     with ReasonOptColumn
     with RcvrIdOptColumn
@@ -92,7 +94,7 @@ class MItems @Inject() (
   {
 
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, nodeId, dtIntervalOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
+      (orderId, iType, status, price, nodeId, dateStartOpt, dateEndOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
         dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
@@ -216,7 +218,8 @@ trait IItem
   with IMPrice
   with IMItemType
   with IMItemStatus
-  with IDtIntervalOpt
+  with IDateStartOpt
+  with IDateEndOpt
   with INodeId
   with IReasonOpt
   with IRcvrIdOpt
@@ -233,7 +236,9 @@ case class MItem(
   override val status         : MItemStatus,
   override val price          : MPrice,
   override val nodeId         : String,
-  override val dtIntervalOpt  : Option[Interval],
+  override val dateStartOpt   : Option[DateTime],
+  override val dateEndOpt     : Option[DateTime],
+  //override val dtIntervalOpt  : Option[Interval],
   override val rcvrIdOpt      : Option[String],
   override val sls            : Set[SinkShowLevel]  = Set.empty,
   override val reasonOpt      : Option[String]      = None,
@@ -251,6 +256,10 @@ case class MItem(
       status      = iType.orderClosedStatus,
       dateStatus  = DateTime.now()
     )
+  }
+
+  def dtIntervalOpt: Option[Interval] = {
+    JodaInterval.applyOpt(dateStartOpt, dateEndOpt)
   }
 
 }

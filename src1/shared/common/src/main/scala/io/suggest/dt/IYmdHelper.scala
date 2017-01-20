@@ -28,7 +28,7 @@ trait IYmdHelper[Date_t] {
 
   /** Конверсия [[MYmd]] в Date_t. */
   def toDate(ymd: MYmd): Date_t = {
-    yearDmonDay2date(
+    yearDmonthDay2date(
       year      = ymd.year,
       dateMonth = ymdMonthToDateMonth(ymd.month),
       day       = ymd.day
@@ -44,7 +44,7 @@ trait IYmdHelper[Date_t] {
     )
   }
 
-  def yearDmonDay2date(year: Int, dateMonth: Int, day: Int): Date_t
+  def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): Date_t
 
   def getDateMonthOfYear(date: Date_t): Int
   def getYmdMonthOfYear(date: Date_t): Int = {
@@ -75,6 +75,7 @@ trait IYmdHelper[Date_t] {
   }
 
 }
+
 
 trait Month0Indexed[Date_t] extends IYmdHelper[Date_t] {
   override def MONTH_INDEX_OFFSET = -1

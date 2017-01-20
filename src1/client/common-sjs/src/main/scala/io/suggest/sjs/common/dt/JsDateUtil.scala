@@ -46,7 +46,7 @@ object JsDateUtil {
       date.plusMonths(months)
     }
 
-    override def yearDmonDay2date(year: Int, dateMonth: Int, day: Int): Date = {
+    override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): Date = {
       new Date(
         year  = year,
         month = dateMonth,

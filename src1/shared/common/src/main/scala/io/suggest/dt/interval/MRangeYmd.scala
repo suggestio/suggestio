@@ -7,12 +7,24 @@ import io.suggest.dt.MYmd
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 21.12.16 12:25
-  * Description: Интервал дат (ymd).
+  * Description: Интервал дат (ymd) с чёткими и определёнными краями.
+  * Его стало не хватать, поэтому появился [[MRangeYmdOpt]].
+  * Возможно, в будущем, этот range будет удалён.
   */
 object MRangeYmd {
 
-  implicit val pickler: Pickler[MRangeYmd] = {
-    implicit val mymdP = MYmd.pickler
+  /** Утиль для необратимого рендера диапазонов в строки. */
+  object ToString {
+    def PREFIX = "["
+    def DELIM = ".."
+    def SUFFIX = "]"
+    def format(start: String, end: String): String = {
+      PREFIX + start + DELIM + end + SUFFIX
+    }
+  }
+
+  implicit val mRangeYmdPickler: Pickler[MRangeYmd] = {
+    implicit val mymdP = MYmd.mYmdPickler
     generatePickler[MRangeYmd]
   }
 
@@ -20,8 +32,17 @@ object MRangeYmd {
 
 case class MRangeYmd(dateStart: MYmd, dateEnd: MYmd) {
 
-  override def toString = "[" + dateStart + ".." + dateEnd + "]"
+  override def toString: String = {
+    MRangeYmd.ToString.format(dateStart.toString, end = dateEnd.toString)
+  }
 
   def toSeq = dateStart :: dateEnd :: Nil
+
+  def toRangeYmdOpt: MRangeYmdOpt = {
+    MRangeYmdOpt(
+      dateStartOpt = Some(dateStart),
+      dateEndOpt   = Some(dateEnd)
+    )
+  }
 
 }

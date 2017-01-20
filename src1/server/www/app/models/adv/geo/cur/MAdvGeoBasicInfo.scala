@@ -3,7 +3,7 @@ package models.adv.geo.cur
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
-import org.joda.time.Interval
+import org.joda.time.DateTime
 
 /**
   * Suggest.io
@@ -15,12 +15,13 @@ object MAdvGeoBasicInfo {
 
   /** Собрать на базе кортежа от slick'а. */
   def apply(t: AdvGeoBasicInfo_t): MAdvGeoBasicInfo = {
-    val (id, iType, status, intervalOpt, tagFaceOpt) = t
+    val (id, iType, status, dtStartOpt, dtEndOpt, tagFaceOpt) = t
     apply(
       id          = id,
       iType       = iType,
       status      = status,
-      intervalOpt = intervalOpt,
+      dtStartOpt  = dtStartOpt,
+      dtEndOpt    = dtEndOpt,
       tagFaceOpt  = tagFaceOpt
     )
   }
@@ -31,6 +32,7 @@ case class MAdvGeoBasicInfo(
                              id           : Gid_t,
                              iType        : MItemType,
                              status       : MItemStatus,
-                             intervalOpt  : Option[Interval],
+                             dtStartOpt   : Option[DateTime],
+                             dtEndOpt     : Option[DateTime],
                              tagFaceOpt   : Option[String]
                            )

@@ -30,43 +30,16 @@ import util.tags.TagsEditFormUtil
  */
 @Singleton
 class AdvGeoFormUtil @Inject() (
-  tagsEditFormUtil  : TagsEditFormUtil,
-  advFormUtil       : AdvFormUtil,
-  pickleSrvUtil     : PickleSrvUtil,
-  mYmdJvm           : MYmdJvm,
-  mRangeYmdJvm      : MRangeYmdJvm,
-  dtUtilJvm         : DtUtilJvm,
-  mCommonDi         : ICommonDi
+                                 tagsEditFormUtil  : TagsEditFormUtil,
+                                 advFormUtil       : AdvFormUtil,
+                                 pickleSrvUtil     : PickleSrvUtil,
+                                 mYmdJvm           : MYmdJvm,
+                                 mRangeYmdJvm      : MRangeYmdJvm,
+                                 dtUtilJvm         : YmdHelpersJvm,
+                                 mCommonDi         : ICommonDi
 ) {
 
   import dtUtilJvm.Implicits._
-
-  /** Маппинг формы георазмещения. */
-  /*private def _advGeoFormM(tagsM: Mapping[List[MTagBinded]]): Mapping[MAgtFormResult] = {
-    mapping(
-      EXIST_TAGS_FN           -> tagsM,
-      MAP_FN                  -> radMapFormUtil.radMapValM,
-      PERIOD_FN               -> advFormUtil.advPeriodM,
-      OnMainScreen.FN         -> boolean,
-      AdnNodes.Req.RCVR_FN    -> list(rcvrBindedInfoM)
-    )
-    { MAgtFormResult.apply }
-    { MAgtFormResult.unapply }
-  }*/
-
-  /** Форма для биндинга при запросе стоимости, когда всё может быть не очень хорошо. */
-  /*def formTolerant: AgtForm_t = {
-    Form( _advGeoFormM(tagsEditFormUtil.existingsM) )
-  }*/
-
-  /** Форма для биндинга при итоговом сабмите формы. */
-  /*def formStrict: AgtForm_t = {
-    val formM = _advGeoFormM(tagsEditFormUtil.existingsM)
-      .verifying("e.required.tags.or.main.screen", { agtRes =>
-        agtRes.onMainScreen || agtRes.tags.nonEmpty
-      })
-    Form(formM)
-  }*/
 
 
   /** Рендер выхлопа [[cur.MAdvGeoShapeInfo]] в более простое кросс-платформенной представление.
@@ -137,15 +110,15 @@ class AdvGeoFormUtil @Inject() (
 
   implicit val dateRangeYmdV = validator[MRangeYmd] { r =>
     r.toSeq.each is valid
-    // TODO XXX Это глючный валидатор. Надо как-то переписать его через нормальные даты вместо YMD-контейнеров...
-    //r.dateStart should be < r.dateEnd
     r.dateStart.to[LocalDate].isBefore( r.dateEnd.to[LocalDate] ) should equalTo(true)
   }
 
-  implicit val datePeriodV = validator[MAdvPeriod] { dp =>
-    ((dp.quickAdvPeriod.isCustom is equalTo(false)) and (dp.customRange is empty)) or (
-      (dp.quickAdvPeriod.isCustom is equalTo(true)) and (dp.customRange is notEmpty) and (dp.customRange.each is valid)
-    )
+  implicit val periodInfoV = validator[IPeriodInfo] { p =>
+    p.customRangeOpt.each is valid
+  }
+
+  implicit val datePeriodV = validator[MAdvPeriod] { advPeriod =>
+    advPeriod.info is valid
   }
 
   implicit val rcvrKeyV = validator[RcvrKey] { rk =>

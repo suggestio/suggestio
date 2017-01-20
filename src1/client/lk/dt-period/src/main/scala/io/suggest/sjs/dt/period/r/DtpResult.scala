@@ -56,9 +56,9 @@ object DtpResult {
         SPACE,
         RangeYmdR(
           RangeYmdR.Props(
-            capFirst = false,
-            rangeYmd = v,
-            Messages = Messages
+            capFirst    = false,
+            rangeYmdOpt = v.toRangeYmdOpt,
+            Messages    = Messages
           )
         )
       )

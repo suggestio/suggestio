@@ -1,8 +1,11 @@
 package util.billing
 
+import java.time.LocalDate
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.dt.{IPeriodInfo, YmdHelpersJvm}
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -44,6 +47,7 @@ class Bill2Util @Inject() (
   mBalances                       : MBalances,
   mTxns                           : MTxns,
   mNodes                          : MNodes,
+  ymdHelpersJvm                   : YmdHelpersJvm,
   val mCommonDi                   : ICommonDi
 )
   extends PlayMacroLogsImpl
@@ -51,6 +55,7 @@ class Bill2Util @Inject() (
 
   import mCommonDi._
   import slick.driver.api._
+  import ymdHelpersJvm.Implicits._
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   val CBCA_NODE_ID: String = {
@@ -79,6 +84,13 @@ class Bill2Util @Inject() (
   /** Посчитать кол-во дней размещения для указанного joda-duration. */
   def getDaysCount(dur: Duration): Int = {
     Math.max(1, dur.getStandardDays.toInt) + 1
+  }
+  def getDaysCount(periodInfo: IPeriodInfo): Int = {
+    val dur = new Duration(
+      periodInfo.dateStart[DateTime],
+      periodInfo.dateEnd[DateTime]
+    )
+    getDaysCount(dur)
   }
 
   def cbcaNodeOptFut = mNodeCache.getById(CBCA_NODE_ID)

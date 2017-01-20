@@ -11,7 +11,7 @@ import boopickle.Default._
   */
 object MYmd {
 
-  implicit val pickler: Pickler[MYmd] = generatePickler[MYmd]
+  implicit val mYmdPickler: Pickler[MYmd] = generatePickler[MYmd]
 
   /** Отрендерить в строку, используя указанный разделитель. */
   def ymdToString(ymd: MYmd, sep: String): String = {
@@ -24,6 +24,7 @@ object MYmd {
   /**
     * "2016-01-01" стандартный человеческий формат, понимаемый браузерами.
     * Точки в качестве разделителей не понимаются.
+    * TODO Это кажется уже не актуально, можно будет точку вернуть назад.
     */
   def ymdToStringStd(ymd: MYmd) = ymdToString(ymd, "-")
 
@@ -35,6 +36,10 @@ object MYmd {
 
   def from[T](date: T)(implicit ev: IYmdHelper[T]): MYmd = {
     ev.toYmd(date)
+  }
+
+  def toStringOpt(ymdOpt: Option[MYmd]): String = {
+    ymdOpt.fold("")(_.toString)
   }
 
 }

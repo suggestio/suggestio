@@ -20,7 +20,7 @@ case class MMapProps(
 
 object MMapProps {
 
-  implicit val pickler: Pickler[MMapProps] = {
+  implicit val mmapsPickler: Pickler[MMapProps] = {
     implicit val mgpPickler = MGeoPoint.pickler
     generatePickler[MMapProps]
   }

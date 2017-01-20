@@ -1,7 +1,7 @@
 package io.suggest.sjs.dt.period.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.dt.MAdvPeriod
+import io.suggest.dt.{IPeriodInfo, MAdvPeriod}
 import io.suggest.dt.interval.MRangeYmd
 import japgolly.scalajs.react.ReactComponentB
 import io.suggest.sjs.common.dt.JsDateUtil._
@@ -25,7 +25,7 @@ object DatePeriodR {
     .initialState_P { props =>
       State(
         dateRangeConn = props.connect { r =>
-          MAdvPeriod.toRange(r)(JsDateHelper)
+          r.info.rangeYmd(JsDateHelper)
         }(MRangeYmdFastEq)
       )
     }

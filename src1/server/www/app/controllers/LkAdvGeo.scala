@@ -15,6 +15,7 @@ import io.suggest.async.StreamsUtil
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.tags.edit.MTagsEditProps
+import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.dt.{MAdvPeriod, MRangeYmdJvm}
 import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -24,10 +25,8 @@ import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.adv.geo.tag.MForAdTplArgs
 import models.jsm.init.MTargets
 import models.mctx.Context
-import models.mdt.MDateInterval
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
-import org.joda.time.LocalDate
 import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.PlayMacroLogsImpl
@@ -37,8 +36,8 @@ import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUti
 import util.billing.Bill2Util
 import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
-import util.DateTimePrettyPrinter.{dayOfWeek, formatDateFull}
 import views.html.lk.adv.geo._
+import io.suggest.dt.YmdHelpersJvm
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -59,6 +58,7 @@ class LkAdvGeo @Inject() (
   streamsUtil                     : StreamsUtil,
   pickleSrvUtil                   : PickleSrvUtil,
   mRangeYmdJvm                    : MRangeYmdJvm,
+  ymdHelpersJvm                   : YmdHelpersJvm,
   override val mItems             : MItems,
   override val mOrders            : MOrders,
   override val tagSearchUtil      : LkTagsSearchUtil,
@@ -76,6 +76,7 @@ class LkAdvGeo @Inject() (
 
   import mCommonDi._
   import streamsUtil.Implicits._
+  import ymdHelpersJvm.Implicits._
 
   // Сериализация:
   import pickleSrvUtil.Base64ByteBufEncoder
@@ -444,14 +445,13 @@ class LkAdvGeo @Inject() (
       // Причесать кортежи в нормальные инстансы
       .map( MAdvGeoBasicInfo.apply )
       // Сгруппировать и объеденить по периодам размещения.
-      .groupBy(itemsMax, _.intervalOpt)
+      .groupBy(itemsMax, { m => (m.dtStartOpt, m.dtEndOpt) })
       .fold( List.empty[MAdvGeoBasicInfo] ) { (acc, e) => e :: acc }
       .map { infos =>
         // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
-        val jodaIvlOpt = infos.head.intervalOpt
-        val ivlOpt = jodaIvlOpt.map(MDateInterval.apply)
+        val info0 = infos.head
         val row = MGeoAdvExistRow(
-          dateRange = jodaIvlOpt.map(mRangeYmdJvm.apply),
+          dateRange = MRangeYmdOpt.applyFrom( info0.dtStartOpt, info0.dtEndOpt ),
           items = infos
             .sortBy(m => (m.tagFaceOpt, m.id) )
             .map { m =>
@@ -465,7 +465,7 @@ class LkAdvGeo @Inject() (
               )
             }
         )
-        val startMs = ivlOpt.map(_.dtStart.getMillis)
+        val startMs = info0.dtStartOpt.map(_.getMillis)
         startMs -> row
       }
       // Вернуться на уровень основного потока...
@@ -580,20 +580,20 @@ class LkAdvGeo @Inject() (
         .filter { _.status == MItemStatuses.Online }
     }
 
+    implicit val ctx = implicitly[Context]
+
     // Карта интервалов размещения по id узлов.
-    val intervalsMapFut: Future[Map[String, MDateInterval]] = currAdvsSrc
-      .runFold( Map.newBuilder[String, MDateInterval] ) { (acc, i) =>
+    val intervalsMapFut: Future[Map[String, MRangeYmdOpt]] = currAdvsSrc
+      .runFold( Map.newBuilder[String, MRangeYmdOpt]) { (acc, i) =>
         for {
-          dtInterval <- i.dtIntervalOpt
           rcvrId     <- i.rcvrIdOpt
         } {
-          acc += rcvrId -> MDateInterval(dtInterval)
+          val rymd = MRangeYmdOpt.applyFrom(i.dateStartOpt, dateEndOpt = i.dateEndOpt)
+          acc += rcvrId -> rymd
         }
         acc
       }
       .map( _.result() )
-
-    implicit val ctx = implicitly[Context]
 
     // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
     for {
@@ -616,7 +616,7 @@ class LkAdvGeo @Inject() (
                 checked     = advRcvrIdsActual.contains( nodeId ),
                 nameOpt     = n.guessDisplayNameOrId,
                 isOnlineNow = nodesHasOnline.contains( nodeId ),
-                dateRange   = __formatDtInterval( intervalsMap.get( nodeId ) )(ctx)
+                dateRange   = intervalsMap.getOrElse( nodeId , MRangeYmdOpt.empty )
               )
             }
           )
@@ -631,16 +631,5 @@ class LkAdvGeo @Inject() (
 
   /** Хидер короткого кеша, в основном для защиты от повторяющихся запросов. */
   private def CACHE_10 = CACHE_CONTROL -> "private, max-age=10"
-
-  /** Рендер MDateInterval в MDateFormatted. */
-  private def __formatDtInterval(ivlOpt: Option[MDateInterval])(implicit ctx: Context): Seq[MDateFormatted] = {
-    ivlOpt.fold [List[MDateFormatted]] (Nil) { ivl =>
-      def __formatDate(dt: LocalDate) = MDateFormatted(
-        dow  = dayOfWeek(dt)(ctx),
-        date = formatDateFull(dt)(ctx)
-      )
-      __formatDate(ivl.dateStart) :: __formatDate(ivl.dateEnd) :: Nil
-    }
-  }
 
 }

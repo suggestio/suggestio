@@ -26,9 +26,9 @@ object MFormS {
   // https://github.com/ochrons/boopickle#optimizations-strategies
 
   implicit val pickler: Pickler[MFormS] = {
-    implicit val mmapsP = MMapProps.pickler
-    implicit val datePeriodP = MAdvPeriod.pickler
-    implicit val circleP = MGeoCircle.pickler
+    implicit val mmapsP = MMapProps.mmapsPickler
+    implicit val datePeriodP = MAdvPeriod.mAdvPeriodPickler
+    implicit val circleP = MGeoCircle.mGeoCirlePickler
     generatePickler[MFormS]
   }
 

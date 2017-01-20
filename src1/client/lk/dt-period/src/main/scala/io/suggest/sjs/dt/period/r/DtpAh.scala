@@ -2,8 +2,8 @@ package io.suggest.sjs.dt.period.r
 
 import com.momentjs.Moment
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.{MAdvPeriod, MYmd}
+import io.suggest.dt.interval.{QuickAdvIsoPeriod, QuickAdvPeriods}
+import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd}
 import io.suggest.sjs.common.dt.JsDateUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -29,27 +29,30 @@ class DtpAh[M](
     // Выставление нового значения quick adv period.
     case SetQap(qap2) =>
       val v0 = value
-      val oldVal = v0.quickAdvPeriod
+      val oldVal = v0.info.quickAdvPeriod
       if (qap2 == oldVal) {
         noChange
       } else {
-        val customDates2 = OptionUtil.maybe(qap2.isCustom) {
-          // Переключение на custom-режим. Сгенерить корректные даты автоматом.
-          MAdvPeriod.toRange(v0)( JsDateUtil.JsDateHelper )
+        // Подготовить изменения в info-поле...
+        val info2: IPeriodInfo = qap2 match {
+          case isoPeriod: QuickAdvIsoPeriod =>
+            v0.info.withIsoPeriod(isoPeriod)
+
+          case QuickAdvPeriods.Custom =>
+            // Переключение на custom-режим. Сгенерить корректные даты автоматом.
+            v0.info.withCustomRange(
+              v0.info.rangeYmd( JsDateUtil.JsDateHelper )
+            )
         }
 
-        val v2 = v0.copy(
-          quickAdvPeriod  = qap2,
-          customRange     = customDates2
-        )
-
+        val v2 = v0.withInfo( info2 )
         updated(v2, priceUpdateFx)
       }
 
     // Замена значения кастомной даты.
     case s: SetDateStartEnd =>
       val v0 = value
-      v0.customRange.fold {
+      v0.info.customRangeOpt.fold {
         LOG.warn( WarnMsgs.DATE_RANGE_FIELD_CHANGED_BUT_NO_CURRENT_RANGE_VAL )
         noChange
 
@@ -73,7 +76,11 @@ class DtpAh[M](
           dateEnd   = MYmd.from(end2)
         )
 
-        updated( v0.withCustomRange(Some(range2)), priceUpdateFx )
+        val v2 = v0.withInfo(
+          v0.info.withCustomRange( range2 )
+        )
+
+        updated( v2, priceUpdateFx )
       }
   }
 

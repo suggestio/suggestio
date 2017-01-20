@@ -1,6 +1,7 @@
 package io.suggest.adv.geo
 
 import boopickle.Default._
+import io.suggest.dt.interval.MRangeYmdOpt
 
 /**
   * Suggest.io
@@ -22,9 +23,10 @@ case class MRcvrPopupResp(groups: Seq[MRcvrPopupGroup])
 
 /** JSON данных одной группы в ответе сервера [[MRcvrPopupResp]]. */
 case class MRcvrPopupGroup(
-                          nameOpt   : Option[String],
-                          groupId   : Option[String],
-                          nodes     : Seq[MRcvrPopupNode] )
+                            nameOpt   : Option[String],
+                            groupId   : Option[String],
+                            nodes     : Seq[MRcvrPopupNode]
+                          )
 object MRcvrPopupGroup {
   implicit val pickler: Pickler[MRcvrPopupGroup] = {
     implicit val rpnP = MRcvrPopupNode.pickler
@@ -35,26 +37,16 @@ object MRcvrPopupGroup {
 
 /** JSON с данными одного узла в ответе [[MRcvrPopupResp]] в рамках одной группы [[MRcvrPopupGroup]]. */
 case class MRcvrPopupNode(
-  nodeId          : String,
-  isCreate        : Boolean,
-  checked         : Boolean,
-  nameOpt         : Option[String],
-  isOnlineNow     : Boolean,
-  dateRange       : Seq[MDateFormatted]
+                           nodeId          : String,
+                           isCreate        : Boolean,
+                           checked         : Boolean,
+                           nameOpt         : Option[String],
+                           isOnlineNow     : Boolean,
+                           dateRange       : MRangeYmdOpt
 )
 object MRcvrPopupNode {
   implicit val pickler: Pickler[MRcvrPopupNode] = {
-    implicit val mdfP = MDateFormatted.pickler
+    implicit val mRangeOptP = MRangeYmdOpt.mRangeYmdOptPickler
     generatePickler[MRcvrPopupNode]
   }
 }
-
-
-/** Отформатированная дата. */
-object MDateFormatted {
-  implicit val pickler: Pickler[MDateFormatted] = generatePickler[MDateFormatted]
-}
-case class MDateFormatted(
-  date: String,
-  dow: String
-)

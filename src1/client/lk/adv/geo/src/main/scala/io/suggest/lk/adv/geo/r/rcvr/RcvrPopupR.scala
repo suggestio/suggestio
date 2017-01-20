@@ -2,14 +2,15 @@ package io.suggest.lk.adv.geo.r.rcvr
 
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.suggest.adv.geo._
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
 import io.suggest.lk.adv.geo.m.MRcvr
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import react.leaflet.popup.PopupR
@@ -29,15 +30,6 @@ object RcvrPopupR {
 
   /** Backend для react-sjs компонена. */
   protected[this] class Backend($: BackendScope[Props, _]) {
-
-    def _date(msg: String, dateFmt: MDateFormatted) = {
-      <.span(
-        ^.title := dateFmt.dow,
-        Messages(msg),
-        dateFmt.date
-      )
-    }
-
 
     /** Реакция на изменение флага узла-ресивера в попапе узла. */
     def rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
@@ -81,7 +73,7 @@ object RcvrPopupR {
                       ^.key := rcvrKey.toString,
                       ^.`class` := Css.Lk.LK_FIELD,
 
-                      if (n.dateRange.size == 2) {
+                      if (n.dateRange.nonEmpty) {
                         // Есть какая-то инфа по текущему размещению на данном узле.
                         <.label(
                           ^.classSet1(
@@ -89,16 +81,22 @@ object RcvrPopupR {
                             Css.Colors.GREEN -> true
                           ),
                           <.input(
-                            ^.`type` := "checkbox",
-                            ^.checked := true,
+                            ^.`type`   := "checkbox",
+                            ^.checked  := true,
                             ^.disabled := true
                           ),
                           <.span,
+
                           name,
-                          " ",
-                          _date("from._date", n.dateRange.head),
-                          " ",
-                          _date("till._date", n.dateRange.last)
+
+                          HtmlConstants.SPACE,
+                          RangeYmdR(
+                            RangeYmdR.Props(
+                              capFirst    = true,
+                              rangeYmdOpt = n.dateRange,
+                              Messages    = Messages
+                            )
+                          )
                         )
                       } else {
                         // Нет текущего размещения. Рендерить активный рабочий чекбокс.

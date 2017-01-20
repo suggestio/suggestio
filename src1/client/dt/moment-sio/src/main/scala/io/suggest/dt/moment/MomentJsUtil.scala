@@ -37,7 +37,7 @@ object MomentJsUtil {
         date.add(months, Units.month)
       }
 
-      override def yearDmonDay2date(year: Int, dateMonth: Int, day: Int): Moment = {
+      override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): Moment = {
         Moment( js.Array(year, dateMonth, day) )
       }
 

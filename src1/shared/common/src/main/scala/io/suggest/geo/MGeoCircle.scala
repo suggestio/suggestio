@@ -10,7 +10,7 @@ import boopickle.Default._
   */
 object MGeoCircle {
 
-  implicit val pickler: Pickler[MGeoCircle] = {
+  implicit val mGeoCirlePickler: Pickler[MGeoCircle] = {
     implicit val mgpP = MGeoPoint.pickler
     generatePickler[MGeoCircle]
   }

@@ -61,15 +61,13 @@ object ExistPopupR {
                 ^.key := row.dateRange.toString,
 
                 // Рендер диапазона дат, если указан...
-                for (rangeYmd <- row.dateRange) yield {
-                  RangeYmdR(
-                    RangeYmdR.Props(
-                      capFirst = true,
-                      rangeYmd = rangeYmd,
-                      Messages = Messages
-                    )
+                row.dateRange.nonEmpty ?= RangeYmdR(
+                  RangeYmdR.Props(
+                    capFirst = true,
+                    rangeYmdOpt = row.dateRange,
+                    Messages = Messages
                   )
-                },
+                ),
 
                 SPACE,
 

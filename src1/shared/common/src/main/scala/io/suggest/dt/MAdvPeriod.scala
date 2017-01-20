@@ -1,55 +1,38 @@
 package io.suggest.dt
 
-import io.suggest.dt.interval.{MRangeYmd, QuickAdvIsoPeriod, QuickAdvPeriod, QuickAdvPeriods}
 import boopickle.Default._
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 21.12.16 11:23
-  * Description: Модель периода размещения.
+  * Description: Модель описания временнОго периода размещения.
   */
+
 object MAdvPeriod {
 
-  implicit val pickler: Pickler[MAdvPeriod] = {
-    implicit val qapPickler = QuickAdvPeriod.pickler
+  implicit val mAdvPeriodPickler: Pickler[MAdvPeriod] = {
+    implicit val mappPickler = IPeriodInfo.periodInfoPickler
     generatePickler[MAdvPeriod]
-  }
-
-  def toRange[Date_t](ap: MAdvPeriod)(implicit dtHelp: IYmdHelper[Date_t]): MRangeYmd = {
-    ap.quickAdvPeriod match {
-      // Стандартный период. Считаем относительно now.
-      case isoPeriod: QuickAdvIsoPeriod =>
-        val start = dtHelp.now
-        // учитывая, что результат now() **может быть mutable**, сразу считаем стартовый MYmd.
-        val startYmd = dtHelp.toYmd(start)
-        val end = isoPeriod.updateDate(start)
-        val endYmd = dtHelp.toYmd(end)
-        MRangeYmd(
-          dateStart = startYmd,
-          dateEnd = endYmd
-        )
-
-      // Кастомный период активен. Значит date range уже должен быть в соседнем поле.
-      case _ =>
-        ap.customRange.get
-    }
   }
 
 }
 
 
 /**
-  * Класс модели с инфой по периоду размещения.
-  *
-  * @param quickAdvPeriod Выбранный шаблон периода размещения.
-  * @param customRange Список из 2 или 0 элементов, описывает кастомные даты начала и окончания размещения.
+  * Класс модели периода размещения.
+  * @param info Данные периода времени. Могут быть заданы по-разному.
+  * @param isProlongable Пролонгируемый?
+  *                      Если да, то система попытается автоматом по окончанию периода размещения продлить его снова.
   */
 case class MAdvPeriod(
-  quickAdvPeriod  : QuickAdvPeriod        = QuickAdvPeriods.default,
-  customRange     : Option[MRangeYmd]     = None
-) {
+                       info           : IPeriodInfo         = IPeriodInfo.default,
+                       isProlongable  : Boolean             = false
+                     ) {
 
-  def withCustomRange(cr2: Option[MRangeYmd]) = copy(customRange = cr2)
+  def withInfo(pi: IPeriodInfo) = copy(info = pi)
+  def withProlongable(p: Boolean) = copy(isProlongable = p)
 
 }
+
+

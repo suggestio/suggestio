@@ -55,13 +55,15 @@ class LkAdnMapBillUtil @Inject() (
     * @return DB-экшен добавления заказа в ордер.
     */
   def addToOrder(orderId: Gid_t, nodeId: String, formRes: MAdnMapFormRes, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+    val ivl = formRes.period.interval
     val mitem = MItem(
       orderId       = orderId,
       iType         = MItemTypes.AdnNodeMap,
       status        = status,
       price         = getPrice(formRes),
       nodeId        = nodeId,
-      dtIntervalOpt = Some(formRes.period.interval),
+      dateStartOpt  = Some( ivl.getStart ),
+      dateEndOpt    = Some( ivl.getEnd ),
       rcvrIdOpt     = None,
       geoShape      = Some( PointGs(formRes.point) )
     )
