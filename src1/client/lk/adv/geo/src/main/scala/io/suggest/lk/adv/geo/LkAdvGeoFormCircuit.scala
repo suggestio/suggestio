@@ -27,7 +27,6 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
-import org.scalajs.dom.XMLHttpRequest
 
 import scala.concurrent.Future
 

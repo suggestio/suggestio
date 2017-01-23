@@ -1,8 +1,8 @@
 package io.suggest.sjs.mapbox.gl.map
 
-import io.suggest.sjs.common.model.FromDict
-
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,13 +11,9 @@ import scala.scalajs.js
   * Description: API for options of mapboxgl.supported().
   */
 
-object SupportedOptions extends FromDict {
-  override type T = SupportedOptions
-}
-
-@js.native
+@ScalaJSDefined
 trait SupportedOptions extends js.Object {
 
-  var failIfMajorPerformanceCaveat: Boolean = js.native
+  val failIfMajorPerformanceCaveat: UndefOr[Boolean] = js.undefined
 
 }

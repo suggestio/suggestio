@@ -1,12 +1,12 @@
 package io.suggest.sjs.mapbox.gl.map
 
-import io.suggest.sjs.common.model.FromDict
 import io.suggest.sjs.mapbox.gl.{Bearing_t, Zoom_t}
 import io.suggest.sjs.mapbox.gl.ll.LngLatBounds
 import org.scalajs.dom.Element
 
 import scala.scalajs.js
-import scala.scalajs.js.|
+import scala.scalajs.js.annotation.ScalaJSDefined
+import scala.scalajs.js.{UndefOr, |}
 
 /**
   * Suggest.io
@@ -15,51 +15,47 @@ import scala.scalajs.js.|
   * Description: API for map constructor options JSON.
   * @see [[https://www.mapbox.com/mapbox-gl-js/api/#Map]]
   */
-object GlMapOptions extends FromDict {
-  override type T = GlMapOptions
-}
 
+@ScalaJSDefined
+trait GlMapOptions extends SupportedOptions {
 
-@js.native
-sealed trait GlMapOptions extends SupportedOptions {
+  val touchZoomRotate: UndefOr[Boolean] = js.undefined
 
-  var touchZoomRotate: Boolean = js.native
+  val minZoom: UndefOr[Zoom_t] = js.undefined
+  val maxZoom: UndefOr[Zoom_t] = js.undefined
 
-  var minZoom: Zoom_t = js.native
-  var maxZoom: Zoom_t = js.native
+  val style: js.UndefOr[js.Object | String] = js.undefined
 
-  var style: js.Object | String = js.native
+  val hash: js.UndefOr[Boolean] = js.undefined
 
-  var hash: Boolean = js.native
+  val interactive: js.UndefOr[Boolean] = js.undefined
 
-  var interactive: Boolean = js.native
+  val bearingSnap: js.UndefOr[Bearing_t] = js.undefined
 
-  var bearingSnap: Bearing_t = js.native
+  val classes: js.UndefOr[js.Array[String]] = js.undefined
 
-  var classes: js.Array[String] = js.native
+  val attributionControl: js.UndefOr[Boolean] = js.undefined
 
-  var attributionControl: Boolean = js.native
+  val container: js.UndefOr[String | Element] = js.undefined
 
-  var container: String | Element = js.native
+  val preserveDrawingBuffer: js.UndefOr[Boolean] = js.undefined
 
-  var preserveDrawingBuffer: Boolean = js.native
+  val maxBounds: js.UndefOr[LngLatBounds | js.Array[js.Array[Double]]] = js.undefined
 
-  var maxBounds: LngLatBounds | js.Array[js.Array[Double]] = js.native
+  val scrollZoom: js.UndefOr[Boolean] = js.undefined
 
-  var scrollZoom: Boolean = js.native
+  val boxZoom: js.UndefOr[Boolean] = js.undefined
 
-  var boxZoom: Boolean = js.native
+  val dragRotate: js.UndefOr[Boolean] = js.undefined
 
-  var dragRotate: Boolean = js.native
+  val dragPan: js.UndefOr[Boolean] = js.undefined
 
-  var dragPan: Boolean = js.native
+  val keyboard: js.UndefOr[Boolean] = js.undefined
 
-  var keyboard: Boolean = js.native
+  val doubleClickZoom: js.UndefOr[Boolean] = js.undefined
 
-  var doubleClickZoom: Boolean = js.native
+  var center: js.UndefOr[js.Array[Double]] = js.undefined
 
-  var center: js.Array[Double] = js.native
-
-  var zoom: Zoom_t = js.native
+  var zoom: js.UndefOr[Zoom_t] = js.undefined
 
 }

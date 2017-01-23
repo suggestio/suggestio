@@ -5,6 +5,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
 import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
+import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPointJs}
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.mapbox.gl.{Color_t, Filter_t}
@@ -31,18 +32,24 @@ object GlMapVm {
   def createNew(container: IVm { type T <: Element },
                 useLocation: Option[MGeoLoc]): GlMap = {
     // Собираем опции для работы.
-    val opts = GlMapOptions.empty
-    opts.container  = container._underlying
-    opts.style      = "mapbox://styles/konstantin2/cimolhvu600f4cunjtnyk1hs6"
-
-    // Выставить начальное состояние карты.
-    for (ugl <- useLocation) {
-      opts.center = MGeoPointJs.toArray(ugl.point)
-      opts.zoom   = 13
-      // TODO Воткнуть сюда дефолтовый zoom на основе ugl.accuracyM
+    val contUnd = container._underlying
+    val opts = new GlMapOptions {
+      override val container  = contUnd
+      override val style      = "mapbox://styles/konstantin2/cimolhvu600f4cunjtnyk1hs6"
     }
 
-    // Инициализировать карту.
+    // Выставить начальное состояние карты, если возможно.
+    for (ugl <- useLocation) {
+      opts.center = JsOptionUtil.opt2undef {
+        for (ugl <- useLocation) yield {
+          MGeoPointJs.toArray(ugl.point)
+        }
+      }
+      // TODO Воткнуть сюда дефолтовый zoom на основе ugl.accuracyM
+      opts.zoom = js.defined( 13 )
+    }
+
+    // Инициализировать карту. Тут нужен webpack/require:
     new GlMap(opts)
   }
 
