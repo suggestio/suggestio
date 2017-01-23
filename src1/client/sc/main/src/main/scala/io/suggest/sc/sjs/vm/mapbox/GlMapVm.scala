@@ -199,49 +199,44 @@ case class GlMapVm(glMap: GlMap) {
       0   -> "#51bbd6"
     )
 
-    // Имя поля с кол-вом кластеризованных точек.
-    val pcFn = Clusters.POINT_COUNT
-
     // Проходим спецификацию слоёв, создавая различные слои.
     layers.iterator.zipWithIndex.foldLeft(Option.empty[Int]) {
       case (prevMinCountOpt, ((minCount, color), i)) =>
-        glMap.addLayer {
-          new Layer {
-            override val id = L.clusterLayerId(i)
-            override val `type` = LayerTypes.CIRCLE
-            override val source = srcId
-            override val paint: UndefOr[PaintProps] = {
-              _circlePaintProps(Sources.MARKER_RADIUS_PX, color)
-            }
-            override val filter: UndefOr[Filter_t] = {
-              val f0: Filter_t = js.Array(Filters.>=, pcFn, minCount)
-              prevMinCountOpt.fold [Filter_t] {
-                f0
-              } { prevMinCount =>
-                js.Array(Filters.all,
-                  f0,
-                  js.Array(Filters.<, pcFn, prevMinCount)
-                )
-              }
+        val coloredLaySpec = new Layer {
+          override val id = L.clusterLayerId(i)
+          override val `type` = LayerTypes.CIRCLE
+          override val source = srcId
+          override val paint: UndefOr[PaintProps] = {
+            _circlePaintProps(Sources.MARKER_RADIUS_PX, color)
+          }
+          override val filter: UndefOr[Filter_t] = {
+            val f0: Filter_t = js.Array(Filters.>=, Clusters.POINT_COUNT, minCount)
+            prevMinCountOpt.fold [Filter_t] {
+              f0
+            } { prevMinCount =>
+              js.Array(Filters.all,
+                f0,
+                js.Array(Filters.<, Clusters.POINT_COUNT, prevMinCount)
+              )
             }
           }
         }
+        glMap.addLayer(coloredLaySpec)
         Some(minCount)
     }
 
     // Собрать слой cо счетчиком кол-ва узлов.
-    glMap.addLayer {
-      new Layer {
-        override val id = L.COUNT_LABELS_LAYER_ID
-        override val `type` = LayerTypes.SYMBOL
-        override val source = srcId
-        override val layout: UndefOr[LayoutProps] = {
-          new SymbolLayoutProps {
-            override val `text-field`: UndefOr[String] = "{" + pcFn + "}"
-          }
+    val countLaySpec = new Layer {
+      override val id = L.COUNT_LABELS_LAYER_ID
+      override val `type` = LayerTypes.SYMBOL
+      override val source = srcId
+      override val layout: UndefOr[LayoutProps] = {
+        new SymbolLayoutProps {
+          override val `text-field`: UndefOr[String] = "{" + Clusters.POINT_COUNT + "}"
         }
       }
     }
+    glMap.addLayer(countLaySpec)
   }
 
 }
