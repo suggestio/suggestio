@@ -1,6 +1,7 @@
 package util.adv.ext
 
 import java.io.ByteArrayOutputStream
+import java.time.OffsetDateTime
 import java.util.concurrent.TimeoutException
 
 import akka.actor.Props
@@ -22,7 +23,6 @@ import models.mproj.ICommonDi
 import models.sec.{MAsymKey, MAsymKeys}
 import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
-import org.joda.time.DateTime
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSClient
@@ -321,7 +321,7 @@ class OAuth1ServiceActor @Inject() (
     override def receiverPart: Receive = {
       // Верификация прошла успешно. Перезаписать на клиенте проверенный access_token с новым временем последней проверки.
       case true =>
-        val info1 = oa1Info.copy(verified = Some(DateTime.now))
+        val info1 = oa1Info.copy(verified = Some(OffsetDateTime.now))
         saveOa1Info(info1)
         trace("Access token verified successfully.")
         become( new StartTargetActorsState(oa1Info.acTok) )
@@ -512,7 +512,7 @@ class OAuth1SvcActorUtil {
   def isStoredTokenNeedReverify(lsOAuth1Info: LsOAuth1Info): Boolean = {
     val lastVerified = lsOAuth1Info.verified
       .getOrElse( lsOAuth1Info.created )
-    DateTime.now
+    OffsetDateTime.now()
       .minusSeconds(VERIFY_TTL_SECONDS)
       .isAfter( lastVerified )
   }

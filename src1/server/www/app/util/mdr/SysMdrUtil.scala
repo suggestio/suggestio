@@ -1,5 +1,7 @@
 package util.mdr
 
+import java.time.OffsetDateTime
+
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
@@ -12,7 +14,6 @@ import models.MNode
 import models.mdr.{MRefuseFormRes, MRefuseModes, MdrSearchArgs, RefuseForm_t}
 import models.mproj.ICommonDi
 import models.req.{IAdReq, IReqHdr}
-import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -33,7 +34,7 @@ class SysMdrUtil @Inject() (
 
   import mCommonDi._
 
-  def someNow = Some(DateTime.now)
+  def someNow = Some(OffsetDateTime.now)
 
   /** Сборка эджа от текущего модератора.
     *

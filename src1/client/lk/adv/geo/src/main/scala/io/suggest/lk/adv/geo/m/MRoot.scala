@@ -6,6 +6,8 @@ import io.suggest.adv.geo.MFormS
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
 
+import scala.scalajs.js.Date
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -41,6 +43,7 @@ case class MRoot(
     * @return Состояние формы размещения, пригодное для сериализации и отправки на сервер.
     */
   def toFormData: MFormS = {
+    val tzOffsetMinutes = new Date().getTimezoneOffset()
     MFormS(
       mapProps        = mmap.props,
       onMainScreen    = other.onMainScreen,
@@ -48,7 +51,8 @@ case class MRoot(
       rcvrsMap        = rcvr.rcvrsMap,
       tagsEdit        = tags.props,
       datePeriod      = datePeriod,
-      radCircle       = rad.map(_.circle)
+      radCircle       = rad.map(_.circle),
+      tzOffsetMinutes = tzOffsetMinutes
     )
   }
 

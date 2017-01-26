@@ -1,9 +1,8 @@
 package io.suggest.dt
 
-import java.time.{LocalDate => Java8LocalDate}
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset, LocalDate => Java8LocalDate}
 
 import com.google.inject.Singleton
-import org.joda.time.{DateTime => JodaDateTime, LocalDate => JodaLocalDate}
 
 /**
   * Suggest.io
@@ -53,75 +52,78 @@ class YmdHelpersJvm {
     }
 
 
-    /** Поддержка Связывания Joda-time с контейнером MYmd. */
-    implicit object JodaLocalDateYmdHelper extends IYmdHelper[JodaLocalDate] {
+    /** Недо-хелпер для интеграции MYmd с local-time вместо голых дат, где время может быть любым. */
+    @deprecated("Do not use this", "2016.jan.26")
+    object LocalDateTimeYmdHelper extends IYmdHelper[LocalDateTime] {
 
-      override def now: JodaLocalDate = JodaLocalDate.now()
+      private def _localDateHelper = implicitly[IYmdHelper[Java8LocalDate]]
 
-      override def plusDays(date: JodaLocalDate, days: Int): JodaLocalDate = {
+      override def now: LocalDateTime = LocalDateTime.now()
+
+      override def plusDays(date: LocalDateTime, days: Int): LocalDateTime = {
         date.plusDays(days)
       }
 
-      override def plusMonths(date: JodaLocalDate, months: Int): JodaLocalDate = {
+      override def plusMonths(date: LocalDateTime, months: Int): LocalDateTime = {
         date.plusMonths(months)
       }
 
-      override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): JodaLocalDate = {
-        new JodaLocalDate(year, dateMonth, day)
+      override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): LocalDateTime = {
+        _localDateHelper
+          .yearDmonthDay2date(year = year, dateMonth = dateMonth, day = day)
+          .atStartOfDay()
       }
 
-      override def getDateMonthOfYear(date: JodaLocalDate): Int = {
-        date.getMonthOfYear
+      override def getDateMonthOfYear(date: LocalDateTime): Int = {
+        date.getMonthValue
       }
 
-      override def getYear(date: JodaLocalDate): Int = {
+      override def getYear(date: LocalDateTime): Int = {
         date.getYear
       }
 
-      override def getDayOfMonth(date: JodaLocalDate): Int = {
+      override def getDayOfMonth(date: LocalDateTime): Int = {
         date.getDayOfMonth
       }
 
-      /** Joda-time использует человеческую нумерацию месяцев. Сдвига нет. */
-      override def MONTH_INDEX_OFFSET = 0
+      override def MONTH_INDEX_OFFSET = _localDateHelper.MONTH_INDEX_OFFSET
 
     }
 
+    @deprecated("Do not use this", "2016.jan.26")
+    implicit object OffsetDateTimeYmdHelper extends IYmdHelper[OffsetDateTime] {
 
-    /** Недо-хелпер для интеграции MYmd с joda-time датами в режиме даты-времени, где время может быть любым. */
-    implicit object JodaDateTimeYmdHelper extends IYmdHelper[JodaDateTime] {
+      private def _localDateHelper = LocalDateTimeYmdHelper //implicitly[IYmdHelper[LocalDateTime]]
 
-      private def _localDateHelper = implicitly[IYmdHelper[JodaLocalDate]]
+      override def now: OffsetDateTime = OffsetDateTime.now()
 
-      override def now: JodaDateTime = JodaDateTime.now()
-
-      override def plusDays(date: JodaDateTime, days: Int): JodaDateTime = {
+      override def plusDays(date: OffsetDateTime, days: Int): OffsetDateTime = {
         date.plusDays(days)
       }
 
-      override def plusMonths(date: JodaDateTime, months: Int): JodaDateTime = {
+      override def plusMonths(date: OffsetDateTime, months: Int): OffsetDateTime = {
         date.plusMonths(months)
       }
 
-      override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): JodaDateTime = {
+      override def yearDmonthDay2date(year: Int, dateMonth: Int, day: Int): OffsetDateTime = {
         _localDateHelper
           .yearDmonthDay2date(year = year, dateMonth = dateMonth, day = day)
-          .toDateTimeAtStartOfDay
+          .atOffset( ZoneOffset.UTC )
       }
 
-      override def getDateMonthOfYear(date: JodaDateTime): Int = {
-        date.getMonthOfYear
+      override def getDateMonthOfYear(date: OffsetDateTime): Int = {
+        date.getMonthValue
       }
 
-      override def getYear(date: JodaDateTime): Int = {
+      override def getYear(date: OffsetDateTime): Int = {
         date.getYear
       }
 
-      override def getDayOfMonth(date: JodaDateTime): Int = {
+      override def getDayOfMonth(date: OffsetDateTime): Int = {
         date.getDayOfMonth
       }
 
-      override def MONTH_INDEX_OFFSET: Int = 0
+      override def MONTH_INDEX_OFFSET = _localDateHelper.MONTH_INDEX_OFFSET
 
     }
 

@@ -1,6 +1,6 @@
 package models.crawl
 
-import org.joda.time.LocalDate
+import java.time.LocalDate
 
 /**
  * Suggest.io

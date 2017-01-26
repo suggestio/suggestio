@@ -1,5 +1,7 @@
 package util.health
 
+import java.time.{ZoneId, ZonedDateTime}
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
@@ -9,7 +11,6 @@ import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import models.msys.NodeProblem
 import models.usr.MSuperUsers
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.i18n.Lang
 import util.mail.IMailerWrapper
 import util.showcase.ShowcaseNodeListUtil
@@ -52,11 +53,11 @@ class AdnGeoParentsHealth @Inject() (
     var acc: List[ICronTask] = Nil
 
     val logVerb = if (GEO_PARENTS_AUTO) {
-      val tz = DateTimeZone.forID("Europe/Moscow")
+      val tz = ZoneId.of("Europe/Moscow")
       val h24 = 24
       val t = MCronTask(
         // Тестировать надо ночью или утром наверное. Тест тяжеловат по нагрузке.
-        startDelay  = (h24 - DateTime.now().withZone(tz).getHourOfDay).hours,
+        startDelay  = (h24 - ZonedDateTime.now().withZoneSameLocal(tz).getHour).hours,
         every       = h24.hours,
         displayName = "testAllGeoParents()"
       )(testAllPerdiodic())

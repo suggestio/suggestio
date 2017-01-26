@@ -1,6 +1,7 @@
 package controllers
 
 import java.io.File
+import java.time.{Instant, ZoneOffset}
 
 import _root_.util._
 import com.google.inject.{ImplementedBy, Inject, Singleton}
@@ -18,7 +19,6 @@ import models.mproj.ICommonDi
 import models.req.IReq
 import net.sf.jmimemagic.Magic
 import org.apache.commons.io.FileUtils
-import org.joda.time.{DateTime, ReadableInstant}
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.Files.TemporaryFile
@@ -82,7 +82,7 @@ class Img @Inject() (
 
   // TODO Объеденить все эти serveImgFromFile, задействовать MLocalImg.mime для определения MIME.
 
-  private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: ReadableInstant): Result = {
+  private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: Instant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
     val resultRaw = Ok.sendFile(file, inline = true)
     trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
@@ -102,7 +102,9 @@ class Img @Inject() (
     resultRaw
       .as(ct)
       .withHeaders(
-        LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.print(modelInstant),
+        // Если форматтить просто modelInstant, то будет экзепшен: java.time.temporal.UnsupportedTemporalTypeException: Unsupported field: DayOfMonth
+        // Это всплывает наружу излишне динамически-типизированная сущность такого API.
+        LAST_MODIFIED -> DateTimeUtil.rfcDtFmt.format( modelInstant.atOffset(ZoneOffset.UTC) ),
         CACHE_CONTROL -> ("public, max-age=" + cacheSeconds + ", immutable, never-revalidate")
       )
   }
@@ -193,7 +195,7 @@ class Img @Inject() (
         .fold( Future.successful(false) ) { ims =>
           for (imetaOpt <- mImgs3.rawImgMeta(args)) yield {
             imetaOpt.fold(false) { imeta =>
-              val newModelInstant = withoutMs(imeta.dateCreated.getMillis)
+              val newModelInstant = withoutMs(imeta.dateCreated.toInstant.toEpochMilli)
               isModifiedSinceCached(newModelInstant, ims)
             }
           }
@@ -214,7 +216,7 @@ class Img @Inject() (
           serveImgFromFile(
             file          = imgFile,
             cacheSeconds  = CACHE_ORIG_CLIENT_SECONDS,
-            modelInstant  = new DateTime(imgFile.lastModified)
+            modelInstant  = Instant.ofEpochMilli( imgFile.lastModified() )
           )
         }
 

@@ -1,10 +1,10 @@
 package util.ai.sax
 
 import java.net.URL
+import java.time.ZoneId
 
 import functional.WithInputStream
 import models.ai.MAiParserCtxT
-import org.joda.time.DateTimeZone
 import org.scalatestplus.play._
 import org.xml.sax.helpers.DefaultHandler
 import util.ai.AiContentHandler
@@ -49,7 +49,7 @@ abstract class AiSaxPlaySpec extends PlaySpec with WithInputStream {
       )
       override def openInputStream = info.stream
       override def name = getClass.getSimpleName
-      override def tz = DateTimeZone.getDefault
+      override def tz = ZoneId.systemDefault()
       override def id = None
     }
     val saxHandler = getHandler(ctx)

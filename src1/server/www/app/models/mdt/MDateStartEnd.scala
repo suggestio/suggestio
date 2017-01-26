@@ -1,7 +1,8 @@
 package models.mdt
 
+import java.time.{LocalDate, Period}
+
 import io.suggest.dt.{IPeriodInfo, IYmdHelper}
-import org.joda.time.{Interval, LocalDate}
 
 /**
  * Suggest.io
@@ -32,18 +33,15 @@ trait IDateStartEnd {
 
   /** Дата начала. */
   def dateStart: LocalDate
-
-  def dtStart = dateStart.toDateTimeAtStartOfDay
+  def dtStart = dateStart.atStartOfDay()
 
 
   /** Дата окончания. */
   def dateEnd: LocalDate
+  def dtEnd = dateEnd.atStartOfDay()
 
-  def dtEnd = dateEnd.toDateTimeAtStartOfDay
-
-
-  def interval: Interval = {
-    new Interval(dtStart, dtEnd)
+  def daysPeriod: Period = {
+    Period.between(dateStart, dateEnd)
   }
 
   override def toString: String = s"$dateStart..$dateEnd"

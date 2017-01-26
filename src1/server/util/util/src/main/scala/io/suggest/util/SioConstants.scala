@@ -71,7 +71,4 @@ object SioConstants {
   def SUBFIELD_ENGRAM     = "gram"
   def SUBFIELD_FTS        = "fts"
 
-  //v1: Дата храниться в виде инстанта. Нужно убирать лишние нули.
-  def DATE_INSTANT_ZEROES = 1000000
-
 }

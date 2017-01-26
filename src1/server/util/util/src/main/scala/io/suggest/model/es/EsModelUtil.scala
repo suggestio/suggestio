@@ -1,5 +1,8 @@
 package io.suggest.model.es
 
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
+import java.time._
 import java.{lang => jl, util => ju}
 
 import io.suggest.event.SioNotifierStaticClientI
@@ -13,9 +16,6 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.common.xcontent.{ToXContent, XContentFactory}
 import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.search.SearchHits
-import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone, ReadableInstant}
-import play.api.libs.json.Reads.IsoDateReads
 import play.api.libs.json._
 
 import scala.collection.JavaConversions._
@@ -124,34 +124,40 @@ object EsModelUtil extends MacroLogsImpl {
     throw new IllegalArgumentException(s"unable to parse '$v' as $as.")
   }
 
+  // TODO Это устаревший код. Его нужно удалять, MEvent и MExtTarget тянут за собой эти старинные парсеры.
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
   def intParser: PartialFunction[Any, Int] = {
-    case n @ null => _parseEx("int")
+    case null =>
+      _parseEx("int")
     case is: jl.Iterable[_] =>
       intParser(is.head.asInstanceOf[AnyRef])
-    case i: Integer => i.intValue()
+    case i: Integer =>
+      i.intValue()
   }
   def longParser: PartialFunction[Any, Long] = {
-    case n @ null =>
+    case null =>
       _parseEx("long")
     case ls: jl.Iterable[_] =>
       longParser(ls.head.asInstanceOf[AnyRef])
-    case l: jl.Number => l.longValue()
+    case l: jl.Number =>
+      l.longValue()
   }
   def floatParser: PartialFunction[Any, Float] = {
     case null =>
       _parseEx("float")
     case fs: jl.Iterable[_] =>
       floatParser(fs.head.asInstanceOf[AnyRef])
-    case f: jl.Number => f.floatValue()
+    case f: jl.Number =>
+      f.floatValue()
   }
   def doubleParser: PartialFunction[Any, Double] = {
-    case n @ null =>
-      _parseEx("double", n)
+    case null =>
+      _parseEx("double")
     case fs: jl.Iterable[_] =>
       doubleParser(fs.head.asInstanceOf[AnyRef])
-    case f: jl.Number => f.doubleValue()
+    case f: jl.Number =>
+      f.doubleValue()
   }
   def stringParser: PartialFunction[Any, String] = {
     case null =>
@@ -165,41 +171,23 @@ object EsModelUtil extends MacroLogsImpl {
       _parseEx("bool")
     case bs: jl.Iterable[_] =>
       booleanParser(bs.head.asInstanceOf[AnyRef])
-    case b: jl.Boolean => b.booleanValue()
+    case b: jl.Boolean =>
+      b.booleanValue()
   }
-  def dateTimeParser: PartialFunction[Any, DateTime] = {
+  def dateTimeParser: PartialFunction[Any, OffsetDateTime] = {
     case null => null
     case dates: jl.Iterable[_] =>
       dateTimeParser(dates.head.asInstanceOf[AnyRef])
-    case s: String           => new DateTime(s)
-    case d: ju.Date          => new DateTime(d)
-    case d: DateTime         => d
-    case ri: ReadableInstant => new DateTime(ri)
+    case s: String           => OffsetDateTime.parse(s)
+    case d: ju.Date          => dateTimeParser( d.toInstant )
+    case dt: OffsetDateTime  => dt
+    case zdt: ZonedDateTime  => zdt.toOffsetDateTime
+    case ri: Instant         => ri.atOffset( ZoneOffset.UTC )
   }
-
-
-  /** Неявные парсеры собраны тут и импортируются при необходимости. */
-  object Implicits {
-
-    /** Стандартный joda DateTime парсер в play разработан через одно место, поэтому тут собираем свой. */
-    implicit val jodaDateTimeReads: Reads[DateTime] = {
-      IsoDateReads
-        .map { new DateTime(_) }
-    }
-
-    implicit val jodaDateTimeWrites: Writes[DateTime] = new Writes[DateTime] {
-      def df = ISODateTimeFormat.dateTime()
-      def writes(d: DateTime): JsValue = {
-        JsString( d.toString(df) )
-      }
-    }
-
-
-    implicit val jodaDateTimeFormat: Format[DateTime] = {
-      Format(jodaDateTimeReads, jodaDateTimeWrites)
-    }
-
-  }
+  // Сериализация дат
+  private def dateFormatterDflt = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+  def date2str(dateTime: TemporalAccessor): String = dateFormatterDflt.format(dateTime)
+  def date2JsStr(dateTime: TemporalAccessor): JsString = JsString( date2str(dateTime) )
 
 
   /** Парсер json-массивов. */
@@ -412,12 +400,6 @@ object EsModelUtil extends MacroLogsImpl {
       }
     }
   }
-
-  // Сериализация дат
-  val dateFormatterDflt = ISODateTimeFormat.dateTime().withZone(DateTimeZone.UTC)
-
-  def date2str(dateTime: ReadableInstant): String = dateFormatterDflt.print(dateTime)
-  def date2JsStr(dateTime: ReadableInstant): JsString = JsString( date2str(dateTime) )
 
 
   /** Десериализовать тело документа внутри GetResponse в строку. */

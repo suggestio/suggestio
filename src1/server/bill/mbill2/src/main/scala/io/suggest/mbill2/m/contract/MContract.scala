@@ -1,12 +1,13 @@
 package io.suggest.mbill2.m.contract
 
+import java.time.OffsetDateTime
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt.DateCreatedSlick
-import io.suggest.mbill2.m.gid.{DeleteById, GetById, Gid_t, GidSlick}
-import org.joda.time.DateTime
+import io.suggest.mbill2.m.gid.{DeleteById, GetById, GidSlick, Gid_t}
 import slick.lifted.ProvenShape
 import play.api.Configuration
 
@@ -108,7 +109,7 @@ class MContracts @Inject()(
 case class MContract(
   id            : Option[Gid_t]   = None,
   crand         : Int             = MContract.crand(),
-  dateCreated   : DateTime        = DateTime.now(),
+  dateCreated   : OffsetDateTime  = OffsetDateTime.now(),
   hiddenInfo    : Option[String]  = None,
   suffix        : Option[String]  = None
 )

@@ -3,7 +3,6 @@ package io.suggest.stat.m
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
 
 /**
   * Suggest.io

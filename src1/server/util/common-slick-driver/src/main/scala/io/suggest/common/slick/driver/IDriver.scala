@@ -1,6 +1,6 @@
 package io.suggest.common.slick.driver
 
-import slick.driver.JdbcProfile
+import slick.jdbc.JdbcProfile
 
 /**
  * Suggest.io

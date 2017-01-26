@@ -1,14 +1,14 @@
 package util
 
 import java.text.{DecimalFormat, NumberFormat}
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAccessor
 
 import io.suggest.bill.{MCurrencies, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.common.text.StringUtil
 import models.mctx.Context
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{ReadableInstant, ReadablePartial}
 import play.twirl.api.{Html, HtmlFormat}
 import views.html.fc._
 import views.html.helper.FieldConstructor
@@ -268,20 +268,18 @@ object TplDataFormatUtil {
   }
 
 
-  private val numericDateFormat = DateTimeFormat.forPattern("dd.MM.yyyy")
-  def numericDate(dt: ReadableInstant) = numericDateFormat.print(dt)
-  def numericDate(d: ReadablePartial)  = numericDateFormat.print(d)
+  private val numericDateFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy")
+  def numericDate(dt: TemporalAccessor) = numericDateFormat.format(dt)
 
-  private val w3cDateFormat = DateTimeFormat.forPattern("yyyy-MM-dd")
-  def w3cDate(d: ReadablePartial) = w3cDateFormat.print(d)
-  def w3cDate(dt: ReadableInstant) = w3cDateFormat.print(dt)
+  private val w3cDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+  def w3cDate(d: TemporalAccessor) = w3cDateFormat.format(d)
 
-  private val numericDtFormat = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
+  private val numericDtFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
   // TODO Нужно прикрутить поддержку timezone, используя context
-  def numericDt(dt: ReadableInstant)(implicit ctx: Context) = numericDtFormat.print(dt)
+  def numericDt(dt: TemporalAccessor)(implicit ctx: Context) = numericDtFormat.format(dt)
 
-  private val numericTimeFormat = DateTimeFormat.forPattern("HH:mm:ss")
-  def numericTime(dt: ReadableInstant)(implicit ctx: Context) = numericTimeFormat.print(dt)
+  private val numericTimeFormat = DateTimeFormatter.ofPattern("HH:mm:ss")
+  def numericTime(dt: TemporalAccessor)(implicit ctx: Context) = numericTimeFormat.format(dt)
 
 
   val firstWordRe = "(?iU)^(\\w+)\\s?(.*)$".r

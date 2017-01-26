@@ -1,12 +1,13 @@
 package io.suggest.model.n2.edge
 
+import java.time.OffsetDateTime
+
 import io.suggest.geo.MGeoPoint
 import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.sc.common.SinkShowLevels
 import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
-import org.joda.time.DateTime
 import org.scalatest.FlatSpec
 
 /**
@@ -29,7 +30,7 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
       MEdgeInfo(
         dynImgArgs  = Some("afaW?Fa234f9843w5f=63.,h56423&&#456"),
         sls         = Set( SinkShowLevels.GEO_PRODUCER_SL ),
-        dateNi      = Some(DateTime.now().minusDays(3)),
+        dateNi      = Some( OffsetDateTime.now().minusDays(3) ),
         commentNi   = Some("test test 2"),
         flag        = Some(true),
         itemIds     = Set(13242134L),

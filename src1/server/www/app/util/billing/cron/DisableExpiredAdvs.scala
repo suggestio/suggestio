@@ -7,7 +7,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.node.MNodes
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
-import org.joda.time.Interval
+import org.threeten.extra.Interval
 import slick.dbio.Effect.Read
 import slick.sql.SqlAction
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
@@ -46,7 +46,6 @@ class DisableExpiredAdvs @Inject() (
   override def hasItemsForProcessing(mitems: Iterable[MItem]): Boolean = {
     super.hasItemsForProcessing(mitems) && {
       // Если есть хотя бы один item с истекшей dateEnd, то можно продолжать обработку.
-      // TODO Есть ложные срабатывания. Возможно, есть проблема с десериализацией прямо в joda.interval.
       val res = mitems
         .flatMap(_.dtIntervalOpt)
         .exists(_isExpired)
@@ -66,8 +65,11 @@ class DisableExpiredAdvs @Inject() (
 
   private def _isExpired(ivl: Interval): Boolean = {
     // используем !isAfter вместо isBefore, т.к. при тестировании как-то удалось попасть пальцем в небо.
-    !ivl.getEnd.isAfter(now)
+    !ivl.getEnd
+      .isAfter( nowInstant )
   }
+
+  val nowInstant = now.toInstant
 
   override def findItemsForAdId(adId: String, itypes: List[MItemType]): SqlAction[Iterable[MItem], NoStream, Read] = {
     // Собираем ВСЕ online-item'ы: и истекшие, и ещё нет.

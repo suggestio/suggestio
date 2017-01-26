@@ -1,12 +1,14 @@
 package io.suggest.stat.inx
 
+import java.time.Instant
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.es.{EsIndexUtil, IEsModelDiVal}
 import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsTmpFactory}
 import io.suggest.util.MacroLogsImpl
-import org.joda.time.{DateTime, Duration}
+import org.threeten.extra.Interval
 
 import scala.concurrent.Future
 
@@ -183,8 +185,8 @@ class StatIndexUtil @Inject() (
 
           } { latestDt =>
             // Индекс не пустой, и на руках есть дата последней записи из него. Проверить её старость.
-            val dur = new Duration(latestDt, DateTime.now())
-            val daysAgo = dur.getStandardDays
+            val ivl = Interval.of(latestDt.toInstant, Instant.now())
+            val daysAgo = ivl.toDuration.toDays
             val maxDaysAgo = MAX_INDEX_DAYS
             def __logMsg(result: String) = s"$logPrefix Index[$oldestInxName] is $result. Latest record is $latestDt. It is $daysAgo days ago, limit is $maxDaysAgo days."
             if (daysAgo > maxDaysAgo) {

@@ -1,5 +1,7 @@
 package util.adv
 
+import java.time.LocalDate
+
 import com.google.inject.Singleton
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
@@ -13,7 +15,6 @@ import models.maps.{MapViewState, RadMapValue}
 import models.mctx.Context
 import models.req.{IReq, IReqHdr}
 import org.elasticsearch.common.unit.DistanceUnit
-import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data.{Form, _}
 import util.TplDataFormatUtil
@@ -47,7 +48,7 @@ class AdvFormUtil {
   def advDatePeriodOptM: Mapping[Option[(LocalDate, LocalDate)]] = {
     // option используется, чтобы избежать ошибок маппинга, если галочка isAdv убрана для текущего ресивера, и дата не выставлена одновременно.
     // TODO Неправильно введённые даты надо заворачивать в None.
-    val dateOptM = optional( jodaLocalDate("yyyy-MM-dd") )
+    val dateOptM = optional( localDate("yyyy-MM-dd") )
     tuple(
       START_FN -> dateOptM
         .verifying("error.date.start.before.today", {dOpt => dOpt match {

@@ -33,7 +33,7 @@ libraryDependencies ++= {
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn,
     "com.typesafe.scala-logging" %% "scala-logging-slf4j" % "2.+",
     "org.gnu.inet" % "libidn" % "1.15",
-    "com.github.nscala-time" %% "nscala-time" % "1.+",
+    //"com.github.nscala-time" %% "nscala-time" % "1.+",
     "org.apache.commons" % "commons-lang3" % "3.+",
     "org.im4java" % "im4java" % "1.+",
 
@@ -42,7 +42,7 @@ libraryDependencies ++= {
 
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.+",
-    "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.8.+",
+    //"com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.8.+",
     //"org.json4s" %% "json4s-native" % "3.+",
     PlayImport.json,
     PlayImport.ws,

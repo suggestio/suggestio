@@ -1,12 +1,13 @@
 package models.ai
 
+import java.time.ZoneId
+
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
 import models.mproj.ICommonDi
-import org.joda.time.DateTimeZone
 import play.api.libs.json.{JsArray, JsString}
 import util.PlayMacroLogsImpl
 
@@ -83,7 +84,7 @@ class MAiMads @Inject() (
       descr = m.get(DESCR_ESFN)
         .map(stringParser),
       tz = m.get(TIMEZONE_ESFN)
-        .fold(DateTimeZone.getDefault) { tzRaw => DateTimeZone.forID(stringParser(tzRaw)) },
+        .fold(ZoneId.systemDefault()) { tzRaw => ZoneId.of(stringParser(tzRaw)) },
       id = id,
       versionOpt = version
     )
@@ -97,7 +98,7 @@ class MAiMads @Inject() (
       SOURCES_ESFN            -> JsArray(sources.map(_.toPlayJson)) ::
       TPL_AD_ID_ESFN          -> JsString(tplAdId) ::
       TARGET_AD_IDS_ESFN      -> JsArray( targetAdIds.map(JsString.apply) ) ::
-      TIMEZONE_ESFN           -> JsString(tz.getID) ::
+      TIMEZONE_ESFN           -> JsString(tz.getId) ::
       acc
     if (renderers.nonEmpty)
       acc1 ::= RENDERERS_ESFN -> JsArray(renderers.map(rr => JsString(rr.name)))
@@ -114,15 +115,15 @@ trait IMAiMads {
 
 
 case class MAiMad(
-  name            : String,
-  sources         : Seq[AiSource],
-  tplAdId         : String,
-  renderers       : Seq[MAiRenderer],
-  targetAdIds     : Seq[String],
-  tz              : DateTimeZone,
-  descr           : Option[String] = None,
-  id              : Option[String] = None,
-  versionOpt      : Option[Long] = None
+                   name            : String,
+                   sources         : Seq[AiSource],
+                   tplAdId         : String,
+                   renderers       : Seq[MAiRenderer],
+                   targetAdIds     : Seq[String],
+                   tz              : ZoneId,
+                   descr           : Option[String] = None,
+                   id              : Option[String] = None,
+                   versionOpt      : Option[Long] = None
 )
   extends EsModelT
     with MAiCtx
@@ -145,7 +146,7 @@ final class MAiMadJmx @Inject() (
 /** Интерфейс разных MAi-моделей: [[MAiMad]] и возможных других в будущем.
   * Нужен, чтобы абстрагироваться от конкретных моделей на уровне общих полей этих моделей. */
 trait MAiCtx extends OptStrId {
-  def tz: DateTimeZone
+  def tz: ZoneId
   def name: String
 }
 /** Враппер для трейта [[MAiCtx]]. Позволяет переопределять значения некоторых полей. */

@@ -1,9 +1,15 @@
 package util
 
+import java.time.ZoneId
+
 import models.mctx.Context
-import org.joda.time.format.{DateTimeFormatter, PeriodFormatter, DateTimeFormatterBuilder, PeriodFormatterBuilder}
+import org.joda.time.format.{DateTimeFormatter, DateTimeFormatterBuilder, PeriodFormatter, PeriodFormatterBuilder}
 import org.joda.time._
 import java.util.Locale
+
+// FIXME Тут просто адовый быдлокод с очень древних времён.
+// TODO Нужно переписать всё на Messages, выкинув всякие PeriodFormatters, т.к. в java8 их как бы нет.
+// TODO Выкинуть joda-time отсюда.
 
 /**
  * Suggest.io
@@ -16,18 +22,13 @@ object DateTimePrettyPrinter {
 
   // Потом локаль можно вынести из модуля
 
-  private val locale = new Locale("ru", "RU")
+  private val LOCALE_RUSSIAN = new Locale("ru", "RU")
 
-  private val seconds_ms = 1000
-  private val minute = 60 * seconds_ms
-  private val hour = minute * 60
-  private val day  = hour * 24
-
-  private val dur_10sec  = new Duration(10 * seconds_ms)
-  private val dur_minute = new Duration(minute)
-  private val dur_hour   = new Duration(hour)
-  private val dur_6hours = new Duration(6 * hour)
-  private val dur_2days  = new Duration(2 * day)
+  private val dur_10sec  = Duration.standardSeconds(10)
+  private val dur_minute = Duration.standardMinutes(1)
+  private val dur_hour   = Duration.standardHours(1)
+  private val dur_6hours = Duration.standardHours(6)
+  private val dur_2days  = Duration.standardDays(2)
 
   private type Formatters_t = (PeriodFormatter, PeriodFormatter, PeriodFormatter)
 
@@ -47,11 +48,11 @@ object DateTimePrettyPrinter {
       .appendMinutes.appendSuffix(suffix)
       .printZeroNever
       .toFormatter
-      .withLocale(locale)
+      .withLocale(LOCALE_RUSSIAN)
   }
 
   // TODO i18n Нужна локализация тут через ctx.messages:
-  private def hoursFormatterRu(hSuffix:String, isFuture:Boolean) = {
+  private def hoursFormatterRu(hSuffix: String, isFuture: Boolean) = {
     val builder = new PeriodFormatterBuilder()
     if (isFuture) {
       builder.appendPrefix("Через ").appendHours().appendSuffix(" час" + hSuffix)
@@ -60,7 +61,7 @@ object DateTimePrettyPrinter {
     }
     builder.printZeroNever()
       .toFormatter
-      .withLocale(locale)
+      .withLocale(LOCALE_RUSSIAN)
   }
 
 
@@ -71,7 +72,7 @@ object DateTimePrettyPrinter {
 
 
   // TODO i18n Нужна локализация окончаний тут через ctx.messages:
-  private def hourFormatters(isFuture:Boolean) : Formatters_t = {
+  private def hourFormatters(isFuture: Boolean) : Formatters_t = {
     val hf = hoursFormatterRu(_: String, isFuture)
     (hf(""), hf("а"), hf("ов"))
   }
@@ -113,21 +114,21 @@ object DateTimePrettyPrinter {
     .appendHourOfDay(1).appendLiteral(':')
     .appendMinuteOfHour(2)
     .toFormatter
-    .withLocale(locale)
+    .withLocale(LOCALE_RUSSIAN)
 
   private val dtFormatterOld = new DateTimeFormatterBuilder()
     .appendDayOfMonth(1).appendLiteral(' ')
     .appendMonthOfYearShortText().appendLiteral(' ')
     .appendYear(4, 4)
     .toFormatter
-    .withLocale(locale)
+    .withLocale(LOCALE_RUSSIAN)
 
   private val dateFormatterFull = new DateTimeFormatterBuilder()
     .appendDayOfMonth(1).appendLiteral(' ')
     .appendMonthOfYearText().appendLiteral(' ')
     .appendYear(4, 4)
     .toFormatter
-    .withLocale(locale)
+    .withLocale(LOCALE_RUSSIAN)
 
   /** "пятница". */
   val dayOfWeekFmt = {
@@ -148,15 +149,26 @@ object DateTimePrettyPrinter {
     }
   }
 
+  def toJodaTime(dt8: java.time.OffsetDateTime): DateTime = {
+    new DateTime( dt8.toInstant.toEpochMilli )
+  }
+  def toJodaTime(dt8: java.time.ZonedDateTime): DateTime = {
+    toJodaTime( dt8.toOffsetDateTime )
+  }
+
   /**
    * Выполнить форматирование даты относительно "сейчас", опустив незначительные детали.
    * @param dt Указанное время
    * @return Человеческое время.
    */
-  def humanizeDt(dt: DateTime, isCapitalized: Boolean = true)(implicit ctx: Context) : String = {
+  def humanizeDt(dt: java.time.OffsetDateTime, isCapitalized: Boolean)(implicit ctx: Context) : String = {
+    humanizeDt(toJodaTime(dt), isCapitalized)
+  }
+  def humanizeDt(dt: DateTime, isCapitalized: Boolean)(implicit ctx: Context) : String = {
     import ctx.messages
 
-    val now = ctx.now
+    val now = toJodaTime( ctx.now )
+
     val isFuture = dt.isAfter(now)
     val d = if (isFuture)
       new Duration(now, dt)
@@ -216,11 +228,19 @@ object DateTimePrettyPrinter {
   }
 
   /** 21 января 2015 */
+  def formatDateFull(d: java.time.LocalDate)(implicit ctx: Context): String = {
+    val jld = new LocalDate(d.getYear, d.getMonthValue, d.getDayOfMonth)
+    formatDateFull(jld)
+  }
   def formatDateFull(d: LocalDate)(implicit ctx: Context): String = {
     _formatPartialWith(d, dateFormatterFull)
   }
 
   /** пятница, friday. */
+  def dayOfWeek(d: java.time.LocalDate)(implicit ctx: Context): String = {
+    val jld = new LocalDate( d.getYear, d.getMonthValue, d.getDayOfMonth )
+    dayOfWeek(jld)
+  }
   def dayOfWeek(d: LocalDate)(implicit ctx: Context): String = {
     _formatPartialWith(d, dayOfWeekFmt)
   }
@@ -245,4 +265,5 @@ object DateTimePrettyPrinter {
   def formatDateDeficedYYYYmmDD(d: LocalDate): String = {
     yyyyMMddFmt.print(d)
   }
+
 }

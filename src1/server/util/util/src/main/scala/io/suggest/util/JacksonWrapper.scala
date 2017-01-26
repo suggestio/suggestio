@@ -3,9 +3,9 @@ package io.suggest.util
 import java.lang.reflect.{Type, ParameterizedType}
 import com.fasterxml.jackson.core.`type`.TypeReference
 import java.io.{OutputStream, InputStream, StringWriter}
-import com.fasterxml.jackson.databind.{ObjectWriter, SerializationFeature, ObjectMapper}
+import com.fasterxml.jackson.databind.{SerializationFeature, ObjectMapper}
 import com.fasterxml.jackson.module.scala.DefaultScalaModule
-import com.fasterxml.jackson.datatype.joda.JodaModule
+
 
 /**
  * Suggest.io
@@ -15,14 +15,13 @@ import com.fasterxml.jackson.datatype.joda.JodaModule
  */
 
 object JacksonWrapper {
+
   val mapper : ObjectMapper = {
     new ObjectMapper()
       .registerModule(DefaultScalaModule)
-      .registerModule(new JodaModule())
       .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
   }
 
-  // 2.5: надо заменить на .writer[ObjectWriter]()
   def prettyWriter = mapper.writer().withDefaultPrettyPrinter()
 
 

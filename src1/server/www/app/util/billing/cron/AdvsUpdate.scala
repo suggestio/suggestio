@@ -1,5 +1,7 @@
 package util.billing.cron
 
+import java.time.OffsetDateTime
+
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
@@ -7,7 +9,6 @@ import io.suggest.model.es.EsModelUtil
 import models.MNode
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi
-import org.joda.time.DateTime
 import slick.sql.SqlAction
 import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactoryDi
@@ -71,7 +72,7 @@ abstract class AdvsUpdate
       .result
   }
 
-  val now = DateTime.now
+  val now = OffsetDateTime.now()
 
 
   /** Обработка одной карточки обычно тяжелая асинхронная операция,
@@ -279,7 +280,7 @@ abstract class AdvsUpdate
         .map { i =>
           (i.status, i.dateStatus, i.reasonOpt)
         }
-        .update( (purgeItemStatus, DateTime.now, Some("node gone away")) )
+        .update( (purgeItemStatus, OffsetDateTime.now(), Some("node gone away")) )
     }
 
     val logPrefix = s"purgeItemsForAd($adId):"

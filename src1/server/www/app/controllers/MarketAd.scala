@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.OffsetDateTime
+
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import io.suggest.ad.form.AdFormConstants._
@@ -17,7 +19,6 @@ import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, INodeReq, IReq}
-import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.json.JsValue
@@ -268,7 +269,7 @@ class MarketAd @Inject() (
               meta = mad0.meta.copy(
                 colors = r.mad.meta.colors,
                 basic  = mad0.meta.basic.copy(
-                  dateEdited = Some( DateTime.now )
+                  dateEdited = Some( OffsetDateTime.now() )
                 ),
                 business = mad0.meta.business.copy(
                   siteUrl = r.mad.meta.business.siteUrl

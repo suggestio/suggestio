@@ -1,12 +1,10 @@
 package models.ai
 
-import org.joda.time.{DateTime, LocalDate}
-import play.api.i18n.Messages
+import java.time.{LocalDate, OffsetDateTime}
+
 import util.TplDataFormatUtil
 
-import scala.annotation.meta.getter
 import scala.beans.BeanProperty
-import java.{lang => jl}
 
 /**
  * Suggest.io
@@ -68,11 +66,11 @@ trait WeatherForecastT extends ContentHandlerResult {
   def getAfterTomorrow: Option[DayWeatherBean]
 
   /** Локальное время в точке, к которой относится этот прогноз. */
-  def getLocalTime: DateTime = DateTime.now
+  def getLocalTime: OffsetDateTime = OffsetDateTime.now()
 
   /** В зависимости от текущего времени нужно сгенерить прогноз погоды на день и ночь или наоборот. */
   def getH24: DayWeatherBean = {
-    val hod = getLocalTime.getHourOfDay
+    val hod = getLocalTime.getHour
     if (hod > 18 || hod < 5) {
       // Если ночь, то надо отобразить сегодняшнюю ночь и завтрашний день
       val today = getToday

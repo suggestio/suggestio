@@ -1,11 +1,12 @@
 package io.suggest.model.n2.edge
 
+import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
+
 import io.suggest.geo.MGeoPoint
 import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.geo._
 import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
-import org.joda.time.DateTime
 import org.scalatest.FlatSpec
 
 /**
@@ -38,7 +39,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
       _gs0.copy(
         id          = 2,
         fromUrl     = Some("https://ag.ru/nomad"),
-        dateEdited  = Some(DateTime.now)
+        dateEdited  = Some( OffsetDateTime.now() )
       )
     }
   }
@@ -54,7 +55,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
           ))
         ),
         fromUrl = Some("https://x.com/asd.jpg"),
-        dateEdited = Some( new DateTime(2015, 1, 2, 3, 4, 5, 6) )
+        dateEdited = Some( LocalDateTime.of(2015, 1, 2, 3, 4, 5, 6).atOffset( ZoneOffset.UTC ) )
       )
     }
   }

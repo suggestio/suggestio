@@ -1,8 +1,9 @@
 package models.adv.direct
 
+import java.time.LocalDate
+
 import models.SinkShowLevel
 import models.mdt.IDateStartEnd
-import org.joda.time.{Interval, LocalDate}
 
 /**
  * Suggest.io
@@ -17,6 +18,6 @@ trait IAdvTerms extends IDateStartEnd {
   def dateEnd: LocalDate
 
   // TODO Как-то так получилось, что на обе даты размещается включительно
-  override def dtEnd   = dateEnd.plusDays(1).toDateTimeAtStartOfDay.minusSeconds(1)
+  override def dtEnd   = dateEnd.plusDays(1).atStartOfDay().minusSeconds(1)
 
 }

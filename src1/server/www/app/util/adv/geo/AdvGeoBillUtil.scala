@@ -1,5 +1,8 @@
 package util.adv.geo
 
+import java.time.temporal.ChronoUnit
+import java.time.{LocalDate, ZoneOffset}
+
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
@@ -13,7 +16,6 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.geo.CircleGs
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import util.billing.Bill2Util
 import util.ble.BeaconsBilling
@@ -77,8 +79,15 @@ class AdvGeoBillUtil @Inject() (
   def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: MFormS, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
     val ymdPeriod = res.datePeriod.info
-    val dtStartOpt = Some( ymdPeriod.dateStart[DateTime] )
-    val dtEndOpt   = Some( ymdPeriod.dateEnd[DateTime] )
+
+    val dateStart = ymdPeriod.dateStart[LocalDate]
+    val dateEnd = ymdPeriod.dateEnd[LocalDate]
+
+    // Инновация: берём временную зону прямо из браузера!
+    val tzOffset = ZoneOffset.ofTotalSeconds( res.tzOffsetMinutes * 60 )
+
+    val dtStartOpt = Some( dateStart.atStartOfDay().atOffset(tzOffset) )
+    val dtEndOpt   = Some( dateEnd.atStartOfDay().atOffset(tzOffset) )
 
     val daysCount = bill2Util.getDaysCount( res.datePeriod.info )
 

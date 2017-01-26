@@ -1,15 +1,14 @@
 package controllers
 
-import com.github.nscala_time.time.OrderingImplicits._
+import java.time.OffsetDateTime
+
 import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodes
 import models._
 import models.adv.MExtTargets
 import models.event.MEvents
 import models.event.search.MEventsSearchArgs
-import models.mctx.Context
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.twirl.api.Html
 import util.PlayMacroLogsImpl
@@ -71,16 +70,16 @@ class LkEvents @Inject() (
     val eventsFut = mEvents.dynSearch(eventsSearch)
 
     val ctxFut = request.user.lkCtxDataFut.map { implicit ctxData =>
-      implicitly[Context]
+      getContext2
     }
 
     // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
-    val geoWelcomeFut: Future[Option[(Html, DateTime)]] = ctxFut.flatMap { implicit ctx =>
+    val geoWelcomeFut: Future[Option[(Html, OffsetDateTime)]] = ctxFut.flatMap { implicit ctx =>
       val mnode = request.mnode
       if (offset == 0  &&  mnode.extras.adn.exists(_.isReceiver)) {
         lkEventsUtil.getGeoWelcome(mnode)(ctx)
       } else {
-        Future successful None
+        Future.successful( None )
       }
     }
 

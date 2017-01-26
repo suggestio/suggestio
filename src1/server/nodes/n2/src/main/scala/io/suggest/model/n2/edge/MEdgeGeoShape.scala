@@ -1,11 +1,11 @@
 package io.suggest.model.n2.edge
 
+import java.time.OffsetDateTime
+
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
-import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
-import io.suggest.ym.model.{NodeGeoLevels, NodeGeoLevel}
-import org.joda.time.DateTime
+import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -49,7 +49,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[NodeGeoLevel]
     val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
     val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
-    val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[DateTime]
+    val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime]
     val ID_FORMAT           = (__ \ ID_FN).formatNullable[Int]
       // TODO Возникла проблема во время запиливания, id стал опционален, потом снова обязательным, это вызвало проблемы.
       // Удалять Nullable можно сразу после обновления мастера (с апреля 2016).
@@ -161,6 +161,6 @@ case class MEdgeGeoShape(
   id            : Int,
   glevel        : NodeGeoLevel,
   shape         : GeoShape,
-  fromUrl       : Option[String]    = None,
-  dateEdited    : Option[DateTime]  = None
+  fromUrl       : Option[String]          = None,
+  dateEdited    : Option[OffsetDateTime]  = None
 )

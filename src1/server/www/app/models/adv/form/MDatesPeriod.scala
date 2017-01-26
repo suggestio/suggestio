@@ -1,8 +1,9 @@
 package models.adv.form
 
+import java.time.{LocalDate, Period}
+
 import io.suggest.dt.interval.{QuickAdvIsoPeriod, QuickAdvPeriods}
 import models.mdt.IDateStartEnd
-import org.joda.time.{LocalDate, Period}
 
 /**
  * Suggest.io
@@ -19,7 +20,7 @@ object MDatesPeriod {
       quickPeriod     = Some(period),
       dateStart       = dateStart,
       dateEnd         = dateStart.plus {
-        new Period(period.isoPeriod)
+        Period.parse( period.isoPeriod )
           .minusDays(1)
       }
     )

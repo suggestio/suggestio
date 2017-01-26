@@ -1,5 +1,7 @@
 package util.adv.geo
 
+import java.time.LocalDate
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
 import io.suggest.adv.rcvr.RcvrKey
@@ -14,7 +16,6 @@ import models.adv.geo.cur
 import models.adv.geo.cur._
 import models.adv.geo.mapf.MRcvrBindedInfo
 import models.mproj.ICommonDi
-import org.joda.time.LocalDate
 import play.api.data.Forms._
 import play.api.data.Mapping
 import play.extras.geojson.{Feature, LatLng}
@@ -34,7 +35,6 @@ class AdvGeoFormUtil @Inject() (
                                  advFormUtil       : AdvFormUtil,
                                  pickleSrvUtil     : PickleSrvUtil,
                                  mYmdJvm           : MYmdJvm,
-                                 mRangeYmdJvm      : MRangeYmdJvm,
                                  dtUtilJvm         : YmdHelpersJvm,
                                  mCommonDi         : ICommonDi
 ) {
@@ -86,7 +86,7 @@ class AdvGeoFormUtil @Inject() (
 
 
   // Экспериментируем с валидацией полученного из формы инстанса MFormS.
-  // TODO Если такие валидаторы приживутся, то нужно будет разспихать их по моделям, предварительно отвязав от joda time.
+  // TODO Если такие валидаторы приживутся, то нужно будет распихать их по моделям.
 
   import com.wix.accord.dsl._
 
@@ -100,11 +100,11 @@ class AdvGeoFormUtil @Inject() (
   }
 
   implicit def ymdV = {
-    val now = new LocalDate()
+    val now = LocalDate.now
     validator[MYmd] { ymd =>
       // TODO Opt Тут два раза вызывается toJodaLocalDate из-за проблем между макросами и переменными внутри validator{}.
-      !mYmdJvm.toJodaLocalDate(ymd).isBefore(now) is equalTo(true)
-      mYmdJvm.toJodaLocalDate(ymd).isBefore( now.plusYears(1) ) is equalTo(true)
+      !implicitly[IYmdHelper[LocalDate]].toDate(ymd).isBefore(now) is equalTo(true)
+      implicitly[IYmdHelper[LocalDate]].toDate(ymd).isBefore( now.plusYears(1) ) is equalTo(true)
     }
   }
 

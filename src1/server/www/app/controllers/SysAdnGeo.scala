@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.OffsetDateTime
+
 import com.google.inject.Inject
 import io.suggest.model.common.OptId
 import io.suggest.model.geo.{CircleGs, Distance, GeoShapeQuerable}
@@ -11,7 +13,6 @@ import models.mproj.ICommonDi
 import models.msys._
 import models.req.INodeReq
 import org.elasticsearch.common.unit.DistanceUnit
-import org.joda.time.DateTime
 import play.api.data._
 import Forms._
 import io.suggest.geo.MGeoPoint
@@ -328,7 +329,7 @@ class SysAdnGeo @Inject() (
         },
 
         {case (glevel2, urlPrOpt) =>
-          val someNow = Some( DateTime.now() )
+          val someNow = Some( OffsetDateTime.now() )
 
           val adnGeo2Fut = urlPrOpt match {
             // Админ задал новую ссылку для скачивания контура.
@@ -521,7 +522,7 @@ class SysAdnGeo @Inject() (
           val mgs2 = mgs.copy(
             glevel      = geoStub.glevel,
             shape       = geoStub.shape,
-            dateEdited  = Some( DateTime.now() )
+            dateEdited  = Some( OffsetDateTime.now() )
           )
 
           // Обновить шейпы узла

@@ -1,9 +1,9 @@
 package util.ai.sax.weather.gidromet
 
+import java.time.LocalDate
+
 import functional.RegexParsersTesting
 import models.ai._
-import org.apache.lucene.store.WindowsDirectory
-import org.joda.time.LocalDate
 import org.scalatestplus.play._
 
 /**

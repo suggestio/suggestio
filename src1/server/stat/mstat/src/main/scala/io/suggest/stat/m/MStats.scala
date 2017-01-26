@@ -1,6 +1,7 @@
 package io.suggest.stat.m
 
-import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
+import java.time.{LocalDateTime, OffsetDateTime, ZoneId}
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
@@ -12,7 +13,6 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.metrics.max.Max
 import org.elasticsearch.search.sort.SortOrder
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -62,7 +62,7 @@ object MStat {
     (__ \ COMMON_FN).format[MCommon] and
       //.inmap[MCommon] ( EmptyUtil.opt2ImplMEmptyF(MCommon), EmptyUtil.implEmpty2OptF ) and
     (__ \ ACTIONS_FN).format[Seq[MAction]] and
-    (__ \ TIMESTAMP_FN).format[DateTime] and
+    (__ \ TIMESTAMP_FN).format[OffsetDateTime] and
     (__ \ UA_FN).formatNullable[MUa]
       .inmap[MUa] ( EmptyUtil.opt2ImplMEmptyF(MUa), EmptyUtil.implEmpty2OptF ) and
     (__ \ SCREEN_FN).formatNullable[MScreen]
@@ -130,19 +130,19 @@ abstract class MStatsAbstract
 
   import MStat.Fields.TIMESTAMP_FN
 
-  def beforeDtQuery(dt: DateTime) = {
+  def beforeDtQuery(dt: OffsetDateTime) = {
     QueryBuilders.rangeQuery(TIMESTAMP_FN)
-      .from(new DateTime(1970, 1, 1, 0, 0))
+      .from( LocalDateTime.of(1970, 1, 1, 0, 0) )
       .to(dt)
   }
 
   /** Подсчёт кол-ва вхождений до указанной даты. */
-  def countBefore(dt: DateTime): Future[Long] = {
+  def countBefore(dt: OffsetDateTime): Future[Long] = {
     countByQuery( beforeDtQuery(dt) )
   }
 
   /** Найти все вхождения до указанной даты. */
-  def findBefore(dt: DateTime, maxResults: Int = MAX_RESULTS_DFLT): Future[Seq[T]] = {
+  def findBefore(dt: OffsetDateTime, maxResults: Int = MAX_RESULTS_DFLT): Future[Seq[T]] = {
     prepareSearch()
       .setQuery( beforeDtQuery(dt) )
       .setSize(maxResults)
@@ -152,7 +152,7 @@ abstract class MStatsAbstract
   }
 
   /** Удалить все данные до указанной даты. */
-  def deleteBefore(dt: DateTime): Future[Int] = {
+  def deleteBefore(dt: OffsetDateTime): Future[Int] = {
     trace(s"deleteBefore($dt): Statring...")
     val scroller = startScroll(
       queryOpt          = Some(beforeDtQuery(dt)),
@@ -170,7 +170,7 @@ abstract class MStatsAbstract
     *
     * @return Фьючерс с опциональной датой. Если там None, наверное в индексе нет данных вообще.
     */
-  def findMaxTimestamp(): Future[Option[DateTime]] = {
+  def findMaxTimestamp(): Future[Option[OffsetDateTime]] = {
     val aggName = "dtMax"
     for {
       resp <- {
@@ -201,7 +201,9 @@ abstract class MStatsAbstract
           Option( agg.getValueAsString )
         }
       } yield {
-        val dtRes = EsModelUtil.Implicits.jodaDateTimeFormat.reads( JsString(dtStr) )
+        // Тут был код на базе joda-time вида:
+        // val dtRes = EsModelUtil.Implicits.jodaDateTimeFormat.reads( JsString(dtStr) )
+        val dtRes = implicitly[Reads[OffsetDateTime]].reads( JsString(dtStr) )
         if (dtRes.isError)
           error(s"$logPrefix Failed to parse JSON date: $dtRes")
         dtRes.get
@@ -242,7 +244,7 @@ trait MStatsTmpFactory {
 case class MStat(
   common            : MCommon,
   actions           : Seq[MAction],
-  timestamp         : DateTime        = DateTime.now(),
+  timestamp         : OffsetDateTime  = OffsetDateTime.now(),
   ua                : MUa             = MUa.empty,
   screen            : MScreen         = MScreen.empty,
   location          : MLocation       = MLocation.empty,
@@ -288,11 +290,11 @@ final class MStatsJmx @Inject() (
 
   import LOGGER._
 
-  protected def dtParse(dtStr: String): DateTime = {
-    val sdf = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss")
-    val d = sdf.parse(dtStr)
-    new DateTime(d)
-      .withZone(DateTimeZone.forID("Europe/Moscow"))
+  protected def dtParse(dtStr: String): OffsetDateTime = {
+    val sdf = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm:ss")
+    LocalDateTime.parse(dtStr, sdf)
+      .atZone( ZoneId.of("Europe/Moscow") )
+      .toOffsetDateTime
   }
 
   override def deleteBefore(dtStr: String): String = {

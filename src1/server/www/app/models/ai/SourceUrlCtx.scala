@@ -1,6 +1,7 @@
 package models.ai
 
-import org.joda.time.{LocalDate, DateTime}
+import java.time.{LocalDate, OffsetDateTime}
+
 import util.TplDataFormatUtil
 
 /**
@@ -12,18 +13,18 @@ import util.TplDataFormatUtil
  * Тут интерфейс JavaBean, пригодный для передачи в scalasti.
  */
 trait UrlRenderContextBeanT {
-  def getNow: DateTimeBeanT = DateTimeBeanImpl( DateTime.now() )
+  def getNow: DateTimeBeanT = DateTimeBeanImpl( OffsetDateTime.now() )
 }
 class UrlRenderContextBeanImpl extends UrlRenderContextBeanT
 
 /** JavaBean для описания даты и времени. */
 trait DateTimeBeanT {
-  def getDateTime: DateTime
+  def getDateTime: OffsetDateTime
   def getTomorrow: DateTimeBeanT = DateTimeBeanImpl( getDateTime.minusDays(1) )
   def getYesterday: DateTimeBeanT = DateTimeBeanImpl( getDateTime.plusDays(1) )
   def getDate: DateBeanT = DateBeanImpl( getDateTime.toLocalDate )
 }
-case class DateTimeBeanImpl(getDateTime: DateTime) extends DateTimeBeanT
+case class DateTimeBeanImpl(override val getDateTime: OffsetDateTime) extends DateTimeBeanT
 
 
 /** JavaBean для доступа к дате. */

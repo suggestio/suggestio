@@ -1,7 +1,8 @@
 package io.suggest.mbill2.m.dt
 
+import java.time.OffsetDateTime
+
 import io.suggest.common.slick.driver.IPgDriver
-import org.joda.time.DateTime
 
 /**
   * Suggest.io
@@ -17,12 +18,12 @@ trait DateStatusSlick extends IPgDriver {
 
   /** Трейт, добавляющий поддержку колонки date_status. */
   trait DateStatusColumn { that: Table[_] =>
-    def dateStatus    = column[DateTime](DATE_STATUS_FN)
+    def dateStatus    = column[OffsetDateTime](DATE_STATUS_FN)
   }
 
 }
 
 
 trait IDateStatus {
-  def dateStatus: DateTime
+  def dateStatus: OffsetDateTime
 }

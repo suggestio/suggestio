@@ -1,5 +1,7 @@
 package util.billing
 
+import java.time.{Duration, LocalDate, OffsetDateTime, Period}
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
@@ -17,7 +19,8 @@ import models.adv.form.MDatesPeriod
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.MNode
-import org.joda.time.{DateTime, Duration, Interval}
+import models.mdt.IDateStartEnd
+import org.threeten.extra.Interval
 import slick.sql.SqlAction
 import util.PlayMacroLogsImpl
 
@@ -70,25 +73,31 @@ class Bill2Util @Inject() (
       }
   }
 
+  private def _getDaysCountFix(days0: Int) = {
+    Math.max(1, days0) + 1
+  }
 
   /** Посчитать кол-во дней размещения для указанного периода. */
-  def getDaysCount(period: MDatesPeriod): Int = {
-    getDaysCount( period.interval )
+  def getDaysCount(period: IDateStartEnd): Int = {
+    getDaysCount( period.daysPeriod )
   }
-  /** Посчитать кол-во дней размещения для указанного joda-интервала. */
+  def getDaysCount(daysPeriod: Period): Int = {
+    _getDaysCountFix( daysPeriod.getDays )
+  }
+  /** Посчитать кол-во дней размещения для указанного интервала. */
   def getDaysCount(interval: Interval): Int = {
     getDaysCount(interval.toDuration)
   }
-  /** Посчитать кол-во дней размещения для указанного joda-duration. */
+  /** Посчитать кол-во дней размещения для указанного Duration. */
   def getDaysCount(dur: Duration): Int = {
-    Math.max(1, dur.getStandardDays.toInt) + 1
+    _getDaysCountFix( dur.toDays.toInt )
   }
   def getDaysCount(periodInfo: IPeriodInfo): Int = {
-    val dur = new Duration(
-      periodInfo.dateStart[DateTime],
-      periodInfo.dateEnd[DateTime]
+    val p = Period.between(
+      periodInfo.dateStart[LocalDate],
+      periodInfo.dateEnd[LocalDate]
     )
-    getDaysCount(dur)
+    getDaysCount( p )
   }
 
   def cbcaNodeOptFut = mNodeCache.getById(CBCA_NODE_ID)
@@ -710,8 +719,8 @@ class Bill2Util @Inject() (
       mitem2 <- {
         LOGGER.debug(s"$logPrefix Buyer blocked balance[${balance0.id.orNull}] freed ${mitem0.price.amount}: ${balance0.blocked} => ${usrAmtBlocked2.orNull} ${balance0.price.currency}")
         val mitem1 = mitem0.copy(
-          status = MItemStatuses.Offline,
-          dateStatus = DateTime.now()
+          status      = MItemStatuses.Offline,
+          dateStatus  = OffsetDateTime.now()
         )
         mItems.query
           .filter(_.id === itemId)
@@ -824,7 +833,7 @@ class Bill2Util @Inject() (
         // Чтобы вернуть новый item, не считывая его из таблицы повторно, имитируем его прямо тут...
         val mi2 = mitem0.copy(
           status      = MItemStatuses.Refused,
-          dateStatus  = DateTime.now(),
+          dateStatus  = OffsetDateTime.now(),
           reasonOpt   = reasonOpt
         )
         mItems.query

@@ -1,5 +1,7 @@
 package models.adv
 
+import java.time.OffsetDateTime
+
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.model.es._
 import EsModelUtil.FieldsJsonAcc
@@ -7,7 +9,6 @@ import io.suggest.model.search.EsDynSearchStatic
 import io.suggest.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtService, MExtServices}
-import org.joda.time.DateTime
 import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -93,8 +94,7 @@ class MExtTargets @Inject() (
       name        = m.get(NAME_ESFN)
         .map(stringParser),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .orElse(m.get("dc"))    // TODO 5.apr.2016: Удалить старый dc после апдейта схемы модели.
-        .fold(DateTime.now)(EsModelUtil.dateTimeParser)
+        .fold(OffsetDateTime.now)(EsModelUtil.dateTimeParser)
     )
   }
 
@@ -104,7 +104,7 @@ class MExtTargets @Inject() (
     (__ \ SERVICE_ID_ESFN).read[MExtService] and
     (__ \ ADN_ID_ESFN).read[String] and
     (__ \ NAME_ESFN).readNullable[String] and
-    (__ \ DATE_CREATED_ESFN).read[DateTime]
+    (__ \ DATE_CREATED_ESFN).read[OffsetDateTime]
   }
 
   /** JSON deserializer. */
@@ -157,7 +157,7 @@ case class MExtTarget(
   service       : MExtService,
   adnId         : String,
   name          : Option[String]    = None,
-  dateCreated   : DateTime          = DateTime.now,
+  dateCreated   : OffsetDateTime    = OffsetDateTime.now,
   versionOpt    : Option[Long]      = None,
   id            : Option[String]    = None
 )

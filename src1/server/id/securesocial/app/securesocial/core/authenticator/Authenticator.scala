@@ -16,8 +16,10 @@
  */
 package securesocial.core.authenticator
 
-import org.joda.time.DateTime
-import play.api.mvc.{ Result, RequestHeader }
+import java.time.OffsetDateTime
+
+import play.api.mvc.{RequestHeader, Result}
+
 import scala.concurrent.Future
 
 /**
@@ -39,17 +41,17 @@ trait Authenticator[U] {
   /**
    * The creation time
    */
-  def creationDate: DateTime
+  def creationDate: OffsetDateTime
 
   /**
    * The last used time
    */
-  def lastUsed: DateTime
+  def lastUsed: OffsetDateTime
 
   /**
    * The expiration date
    */
-  def expirationDate: DateTime
+  def expirationDate: OffsetDateTime
 
   /**
    * Checks if this authenticator is valid.

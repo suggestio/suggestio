@@ -1,5 +1,7 @@
 package util.adn.mapf
 
+import java.time.ZoneId
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MGetPriceResp, MPrice}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -55,15 +57,14 @@ class LkAdnMapBillUtil @Inject() (
     * @return DB-экшен добавления заказа в ордер.
     */
   def addToOrder(orderId: Gid_t, nodeId: String, formRes: MAdnMapFormRes, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
-    val ivl = formRes.period.interval
     val mitem = MItem(
       orderId       = orderId,
       iType         = MItemTypes.AdnNodeMap,
       status        = status,
       price         = getPrice(formRes),
       nodeId        = nodeId,
-      dateStartOpt  = Some( ivl.getStart ),
-      dateEndOpt    = Some( ivl.getEnd ),
+      dateStartOpt  = Some( formRes.period.dateStart.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime ),
+      dateEndOpt    = Some( formRes.period.dateEnd.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime ),
       rcvrIdOpt     = None,
       geoShape      = Some( PointGs(formRes.point) )
     )

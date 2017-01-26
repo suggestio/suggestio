@@ -1,6 +1,6 @@
 package io.suggest.dt
 
-import org.joda.time.{LocalDate, ReadableDateTime}
+import java.time.{LocalDate, OffsetDateTime}
 
 /**
   * Suggest.io
@@ -13,23 +13,17 @@ class MYmdJvm {
   def apply(ld: LocalDate): MYmd = {
     MYmd(
       year  = ld.getYear,
-      month = ld.getMonthOfYear,
+      month = ld.getMonthValue,
       day   = ld.getDayOfMonth
     )
   }
 
-  def apply(dt: ReadableDateTime): MYmd = {
+  def apply(dt: OffsetDateTime): MYmd = {
     MYmd(
       year  = dt.getYear,
-      month = dt.getMonthOfYear,
+      month = dt.getMonthValue,
       day   = dt.getDayOfMonth
     )
   }
-
-  def toJodaLocalDate(ymd: MYmd): LocalDate = {
-    new LocalDate(ymd.year, ymd.month, ymd.day)
-  }
-
-  def toJodaDateTime(ymd: MYmd) = toJodaLocalDate(ymd).toDateTimeAtStartOfDay()
 
 }

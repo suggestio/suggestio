@@ -2,10 +2,10 @@ package io.suggest.model.mproj
 
 import java.io.File
 import java.net.JarURLConnection
+import java.time.Instant
 
 import com.google.inject.Singleton
 import io.suggest.util.MacroLogsDyn
-import org.joda.time.DateTime
 
 /**
   * Suggest.io
@@ -20,7 +20,7 @@ import org.joda.time.DateTime
 class MProjectInfo extends MacroLogsDyn {
 
   /** Дата последней модификации кода проекта. Берется на основе текущего кода. */
-  val PROJECT_CODE_LAST_MODIFIED: DateTime = {
+  val PROJECT_CODE_LAST_MODIFIED: Instant = {
     Option(getClass.getProtectionDomain)
       .flatMap { pd => Option(pd.getCodeSource) }
       .flatMap[Long] { cs =>
@@ -59,7 +59,7 @@ class MProjectInfo extends MacroLogsDyn {
             None
         }
       }
-      .fold(DateTime.now) { new DateTime(_) }
+      .fold(Instant.now) { Instant.ofEpochMilli }
   }
 
 }

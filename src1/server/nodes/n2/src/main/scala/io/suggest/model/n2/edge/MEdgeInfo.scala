@@ -1,5 +1,7 @@
 package io.suggest.model.n2.edge
 
+import java.time.OffsetDateTime
+
 import io.suggest.common.empty.{EmptyProduct, IEmpty, IIsNonEmpty}
 import io.suggest.geo.MGeoPoint
 import io.suggest.model.PrefixedFn
@@ -7,10 +9,8 @@ import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.util.SioConstants
 import io.suggest.ym.model.NodeGeoLevel
-import org.joda.time.DateTime
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
 import io.suggest.model.geo.GeoPoint
 import io.suggest.model.geo.GeoPoint.Implicits._
 
@@ -86,7 +86,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         _.getOrElse(Set.empty),
         { ssls => if (ssls.nonEmpty) Some(ssls) else None }
       ) and
-    (__ \ DATE_NI_FN).formatNullable[DateTime] and
+    (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
     (__ \ ITEM_IDS_FN).formatNullable[Set[Long]]
@@ -201,7 +201,7 @@ trait IEdgeInfo extends IIsNonEmpty {
   def sls          : Set[SinkShowLevel]
 
   /** Неиднексируемая дата. */
-  def dateNi       : Option[DateTime]
+  def dateNi       : Option[OffsetDateTime]
 
   /** Неиндексируемый комментарий. */
   def commentNi    : Option[String]
@@ -304,15 +304,15 @@ trait IEdgeInfo extends IIsNonEmpty {
 
 /** Класс экземпляров модели [[IEdgeInfo]]. */
 case class MEdgeInfo(
-  override val dynImgArgs   : Option[String]        = None,
-  override val sls          : Set[SinkShowLevel]    = Set.empty,
-  override val dateNi       : Option[DateTime]      = None,
-  override val commentNi    : Option[String]        = None,
-  override val flag         : Option[Boolean]       = None,
-  override val itemIds      : Set[Long]             = Set.empty,
-  override val tags         : Set[String]           = Set.empty,
-  override val geoShapes    : List[MEdgeGeoShape]   = Nil,
-  override val geoPoints    : Seq[MGeoPoint]        = Nil
+  override val dynImgArgs   : Option[String]          = None,
+  override val sls          : Set[SinkShowLevel]      = Set.empty,
+  override val dateNi       : Option[OffsetDateTime]  = None,
+  override val commentNi    : Option[String]          = None,
+  override val flag         : Option[Boolean]         = None,
+  override val itemIds      : Set[Long]               = Set.empty,
+  override val tags         : Set[String]             = Set.empty,
+  override val geoShapes    : List[MEdgeGeoShape]     = Nil,
+  override val geoPoints    : Seq[MGeoPoint]          = Nil
 )
   extends EmptyProduct
   with IEdgeInfo

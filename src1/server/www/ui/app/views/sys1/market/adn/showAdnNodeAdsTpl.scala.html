@@ -70,8 +70,8 @@
         <p>
           @messages( adv.iType.nameI18n )
           @for(dti <- adv.dtIntervalOpt) {
-            c [@_prettyDate(dti.getStart, withSpan = true)]
-            по [@_prettyDate(dti.getEnd, withSpan = true)]
+            c [@_prettyDate( ctx.toOffsetTime(dti.getStart), withSpan = true)]
+            по [@_prettyDate( ctx.toOffsetTime(dti.getEnd), withSpan = true)]
           }
           @for(rcvrId <- adv.rcvrIdOpt) {
             @_blueLink( routes.SysMarket.showAdnNode(rcvrId) ) {

@@ -1,6 +1,7 @@
 package models.im
 
 import java.io.File
+import java.time.{Instant, ZoneOffset}
 import java.util.UUID
 
 import com.google.inject.{Inject, Singleton}
@@ -12,7 +13,6 @@ import models.IImgMeta
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
-import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
 import util._
 import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
@@ -137,7 +137,10 @@ class MLocalImgs @Inject() (
       for (metaOpt <- getImageWH(mimg)) yield {
         for (meta <- metaOpt) yield {
           val file = fileOf(mimg)
-          ImgSzDated(meta, new DateTime(file.lastModified()))
+          val dt = Instant
+            .ofEpochMilli( file.lastModified() )
+            .atOffset( ZoneOffset.UTC )
+          ImgSzDated(meta, dt)
         }
       }
     } else {

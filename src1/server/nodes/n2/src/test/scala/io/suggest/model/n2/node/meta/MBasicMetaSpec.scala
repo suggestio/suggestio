@@ -1,7 +1,8 @@
 package io.suggest.model.n2.node.meta
 
+import java.time.OffsetDateTime
+
 import io.suggest.model.PlayJsonTestUtil
-import org.joda.time.DateTime
 import org.scalatest.FlatSpec
 
 /**
@@ -25,8 +26,8 @@ class MBasicMetaSpec extends FlatSpec with PlayJsonTestUtil {
         nameShortOpt  = Some("ЯПредлагаю"),
         techName    = Some("nomad.jpg"),
         hiddenDescr   = Some("Все свои, всё схвачено."),
-        dateCreated   = DateTime.now.minusMinutes(5),
-        dateEdited    = Some( DateTime.now.plusSeconds(1) ),
+        dateCreated   = OffsetDateTime.now.minusMinutes(5),
+        dateEdited    = Some( OffsetDateTime.now.plusSeconds(1) ),
         langs         = List("ru")
       )
     }

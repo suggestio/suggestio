@@ -1,10 +1,11 @@
 package models.ls
 
 // ЭТОТ import НУЖЕН!
+import java.time.OffsetDateTime
+
 import models.usr.OAuthReqTokUtil.{reads => oartReads, writes => oartWrites}
 // ЭТОТ import НУЖЕН!
 
-import org.joda.time.DateTime
 import play.api.libs.oauth.RequestToken
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -28,8 +29,8 @@ object LsOAuth1Info {
     LsDataTypes.readsKv and
     (__ \ ACCESS_TOKEN_FN).read[RequestToken] and
     (__ \ PERSON_ID_FN).read[String] and
-    (__ \ TIMESTAMP_FN).read[DateTime] and
-    (__ \ LAST_VERIFIED_FN).readNullable[DateTime]
+    (__ \ TIMESTAMP_FN).read[OffsetDateTime] and
+    (__ \ LAST_VERIFIED_FN).readNullable[OffsetDateTime]
   ) {
     (lsdt, acTok, personId, timestamp, lastVerified) =>
       // Обязательно делать проверку id модели от считываемых данных. Дабы юзеры не подсовывали сюда данные из других моделей.
@@ -44,8 +45,8 @@ object LsOAuth1Info {
     LsDataTypes.writesKv and
     (__ \ ACCESS_TOKEN_FN).write[RequestToken] and
     (__ \ PERSON_ID_FN).write[String] and
-    (__ \ TIMESTAMP_FN).write[DateTime] and
-    (__ \ LAST_VERIFIED_FN).writeNullable[DateTime]
+    (__ \ TIMESTAMP_FN).write[OffsetDateTime] and
+    (__ \ LAST_VERIFIED_FN).writeNullable[OffsetDateTime]
   ) { info: LsOAuth1Info =>
     // Записывать идентификатор модели в сериализуемые данные.
     (info.lsDataType, info.acTok, info.personId, info.created, info.verified)
@@ -63,8 +64,8 @@ object LsOAuth1Info {
 case class LsOAuth1Info(
   acTok     : RequestToken,
   personId  : String,
-  created   : DateTime          = DateTime.now(),
-  verified  : Option[DateTime]  = None
+  created   : OffsetDateTime          = OffsetDateTime.now(),
+  verified  : Option[OffsetDateTime]  = None
 ) extends ILsModel {
 
   override def lsDataType = LsDataTypes.OAuth1AccessToken

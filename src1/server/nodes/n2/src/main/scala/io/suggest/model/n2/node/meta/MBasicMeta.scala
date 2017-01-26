@@ -1,9 +1,9 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
-import EsModelUtil.Implicits.jodaDateTimeFormat
+import java.time.OffsetDateTime
+
+import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
-import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -44,9 +44,9 @@ object MBasicMeta extends IGenEsMappingProps {
   /** Изначально поле date created не индексировалось, что вызывало проблемы с сортировкой.
     * Тут лежит комбинированный маппинг для старого и нового формата поля date created. */
   // TODO 2015.nov.16 Можно удалить через какое-то время, после migrateMads() на n2.
-  val DATE_CREATED_FORMAT: OFormat[DateTime] = {
-    val normal = (__ \ DATE_CREATED_FN).format(jodaDateTimeFormat)
-    val old = (__ \ DATE_CREATED_OLD_FN).read(jodaDateTimeFormat)
+  val DATE_CREATED_FORMAT: OFormat[OffsetDateTime] = {
+    val normal = (__ \ DATE_CREATED_FN).format[OffsetDateTime]
+    val old = (__ \ DATE_CREATED_OLD_FN).read[OffsetDateTime]
     OFormat(normal.orElse(old), normal)
   }
 
@@ -57,7 +57,7 @@ object MBasicMeta extends IGenEsMappingProps {
     (__ \ TECHNICAL_NAME_FN).formatNullable[String] and
     (__ \ HIDDEN_DESCR_FN).formatNullable[String] and
     DATE_CREATED_FORMAT and
-    (__ \ DATE_EDITED_FN).formatNullable(jodaDateTimeFormat) and
+    (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime] and
     (__ \ LANGS_ESFN).formatNullable[List[String]]
       .inmap[List[String]](
         { _ getOrElse Nil },
@@ -98,13 +98,13 @@ object MBasicMeta extends IGenEsMappingProps {
  * @param langs Названия языков.
  */
 case class MBasicMeta(
-  nameOpt       : Option[String]    = None,
-  nameShortOpt  : Option[String]    = None,
-  techName      : Option[String]    = None,
-  hiddenDescr   : Option[String]    = None,
-  dateCreated   : DateTime          = DateTime.now,
-  dateEdited    : Option[DateTime]  = None,
-  langs         : List[String]      = Nil
+  nameOpt       : Option[String]          = None,
+  nameShortOpt  : Option[String]          = None,
+  techName      : Option[String]          = None,
+  hiddenDescr   : Option[String]          = None,
+  dateCreated   : OffsetDateTime          = OffsetDateTime.now(),
+  dateEdited    : Option[OffsetDateTime]  = None,
+  langs         : List[String]            = Nil
 )
   extends MBasicMetaUtil
 {
@@ -115,7 +115,7 @@ case class MBasicMeta(
       .orElse( techName )
   }
 
-  def dateEditedOrCreated: DateTime = {
+  def dateEditedOrCreated: OffsetDateTime = {
     dateEdited getOrElse dateCreated
   }
 

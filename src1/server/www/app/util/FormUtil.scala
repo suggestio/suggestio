@@ -1,6 +1,7 @@
 package util
 
 import java.net.{MalformedURLException, URL}
+import java.time.{LocalDate, ZoneId}
 
 import io.suggest.bill.{MCurrencies, MCurrency}
 import io.suggest.common.empty.EmptyUtil
@@ -11,14 +12,11 @@ import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.sc.common.LvlMap_t
 import io.suggest.util.{DateParseUtil, UrlUtil, UuidUtil}
-import io.suggest.ym.YmParsers
 import io.suggest.ym.model.common.MImgSizeT
 import models._
 import models.blk.SzMult_t
 import org.apache.commons.lang3.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
-import org.joda.time.format.ISOPeriodFormat
-import org.joda.time.{DateTimeZone, LocalDate, Period}
 import org.postgresql.util.PGInterval
 import play.api.data.Forms._
 import play.api.data.Mapping
@@ -86,27 +84,27 @@ object FormUtil {
   }
 
   /** Маппер поля формы для опциональной time-зоны. */
-  def timeZoneOptM: Mapping[Option[DateTimeZone]] = {
+  def timeZoneOptM: Mapping[Option[ZoneId]] = {
     val ntm = nonEmptyText(minLength = 2, maxLength = 64)
     toStrOptM(ntm, strTrimSanitizeF)
-      .transform [Option[DateTimeZone]] (
+      .transform [Option[ZoneId]] (
         {tzRawOpt =>
           tzRawOpt.flatMap { tzRaw =>
             try {
-              Option( DateTimeZone.forID(tzRaw) )
+              Option( ZoneId.of(tzRaw) )
             } catch {
               case ex: Exception => None
             }
           }
         },
-        { _.map(_.getID) }
+        { _.map(_.getId) }
       )
   }
   /** Маппер поля формы для обязательной time-зоны. */
-  def timeZoneM: Mapping[DateTimeZone] = {
+  def timeZoneM: Mapping[ZoneId] = {
     timeZoneOptM
       .verifying("error.invalid", { _.isDefined })
-      .transform [DateTimeZone] (_.get, Some.apply)
+      .transform [ZoneId] ( EmptyUtil.getF, EmptyUtil.someF )
   }
 
 
@@ -393,26 +391,11 @@ object FormUtil {
           .headOption
       },
       {ldOpt =>
-        ldOpt.fold(""){ DateTimeUtil.simpleLocalDateFmt.print }
+        ldOpt.fold(""){ DateTimeUtil.simpleLocalDateFmt.format }
       }
     )
     .verifying("error.required", _.isDefined)
     .transform[LocalDate](_.get, Some.apply)
-
-  /** ISO-период в виде стандартной строки P1Y3M... */
-  def isoPeriodM: Mapping[Period] = {
-    val parsers = new YmParsers
-    val p = parsers.ISO_PERIOD_PARSER
-    val formatter = ISOPeriodFormat.standard()
-    text(minLength = 3, maxLength = 64)
-      .transform[Option[Period]](
-        { str => Option(parsers.parse(p, str).getOrElse(null)) },
-        { case Some(period) => period.toString(formatter)
-          case None => "" }
-      )
-      .verifying("error.invalid", _.isDefined)
-      .transform[Period](_.get, Some.apply)
-  }
 
 
   // География

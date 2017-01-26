@@ -1,7 +1,8 @@
 package io.suggest.mbill2.m.dt
 
+import java.time.OffsetDateTime
+
 import io.suggest.common.slick.driver.IPgDriver
-import org.joda.time.DateTime
 
 /**
  * Suggest.io
@@ -18,7 +19,7 @@ trait DateCreatedSlick extends IPgDriver {
 
   /** Добавить колонку dateCreated. */
   trait DateCreated { that: Table[_] =>
-    def dateCreated = column[DateTime](DATE_CREATED_FN)
+    def dateCreated = column[OffsetDateTime](DATE_CREATED_FN)
   }
 
 }

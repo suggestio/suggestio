@@ -1,5 +1,7 @@
 package util.adv.direct
 
+import java.time.OffsetDateTime
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -12,7 +14,6 @@ import io.suggest.util.JMXBase
 import models._
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactory
 import util.n2u.N2NodesUtil
@@ -88,7 +89,7 @@ class AdvRcvrsUtil @Inject()(
     // Заготавливаем билдер, нужно это заранее сделать для выборки item'ов только поддерживаемых типов.
     val acc0 = Acc(mad)
     val b0 = advBuilderFactory
-      .builder( Future.successful(acc0), DateTime.now )
+      .builder( Future.successful(acc0), OffsetDateTime.now )
       .clearNode(full = true)  // С чистого листа, т.к. у нас полный пересчёт
 
     // TODO Opt Тут без stream(), т.к. я пока не осилил. А надо бы...
@@ -202,7 +203,7 @@ class AdvRcvrsUtil @Inject()(
     }
 
     val acc0 = Acc(mad)
-    val now = DateTime.now
+    val now = OffsetDateTime.now
     val b0 = advBuilderFactory.builder( Future.successful(acc0), now )
 
     // Собрать db-эшен для получения списка затрагиваемых размещений:

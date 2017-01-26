@@ -1,5 +1,7 @@
 package util.event
 
+import java.time.OffsetDateTime
+
 import com.google.inject.Inject
 import io.suggest.model.es.{EsModelStaticT, EsModelT}
 import models._
@@ -7,7 +9,6 @@ import models.event._
 import models.event.search.MEventsSearchArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import play.twirl.api.Html
 
 import scala.concurrent.Future
@@ -32,7 +33,7 @@ class LkEventsUtil @Inject() (
    * @param ctx Контекст рендера.
    * @return Фьючерс, если есть чего рендерить.
    */
-  def getGeoWelcome(mnode: MNode)(implicit ctx: Context): Future[Option[(Html, DateTime)]] = {
+  def getGeoWelcome(mnode: MNode)(implicit ctx: Context): Future[Option[(Html, OffsetDateTime)]] = {
     val nodeHasGss = mnode.edges
       .withPredicateIter( MPredicates.NodeLocation )
       .flatMap(_.info.geoShapes)

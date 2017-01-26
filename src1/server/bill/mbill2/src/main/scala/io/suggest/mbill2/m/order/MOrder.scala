@@ -1,14 +1,15 @@
 package io.suggest.mbill2.m.order
 
+import java.time.OffsetDateTime
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.contract.{ContractIdSlickIdx, ContractIdSlickFk, MContracts}
-import io.suggest.mbill2.m.dt.{DateStatusSlick, DateCreatedSlick}
+import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, MContracts}
+import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateStatusSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.util.PgaNamesMaker
-import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 
 /**
@@ -90,7 +91,7 @@ class MOrders @Inject() (
     query
       .filter { _.id === id }
       .map { o => (o.status, o.dateStatus) }
-      .update { (status, DateTime.now()) }
+      .update { (status, OffsetDateTime.now()) }
   }
 
   /**
@@ -112,9 +113,9 @@ class MOrders @Inject() (
 case class MOrder(
   status        : MOrderStatus,
   contractId    : Gid_t,
-  dateCreated   : DateTime      = DateTime.now,
-  dateStatus    : DateTime      = DateTime.now,
-  id            : Option[Gid_t] = None
+  dateCreated   : OffsetDateTime    = OffsetDateTime.now(),
+  dateStatus    : OffsetDateTime    = OffsetDateTime.now(),
+  id            : Option[Gid_t]     = None
 )
   extends IGid
 {
@@ -122,7 +123,7 @@ case class MOrder(
   def withStatus(status1: MOrderStatus): MOrder = {
     copy(
       status      = status1,
-      dateStatus  = DateTime.now()
+      dateStatus  = OffsetDateTime.now()
     )
   }
 

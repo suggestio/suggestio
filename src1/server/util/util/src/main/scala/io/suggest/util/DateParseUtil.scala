@@ -1,11 +1,12 @@
 package io.suggest.util
 
+import java.time.format.DateTimeFormatter
+import java.time._
+
 import scala.util.matching.Regex
-import com.github.nscala_time.time.Imports._
 import java.util.Locale
+
 import collection.mutable
-import scala.util.Random
-import org.joda.time.DateMidnight
 import SioRandom.rnd
 
 /**
@@ -105,7 +106,7 @@ object DateParseUtil extends Logs {
             parseMonthF(_dtokens(1)) match {
               // Есть месяц. Сгенерить дату и закинуть в аккамулятор.
               case Some(month_short) =>
-                val ld = new LocalDate(_dtokens(0).toInt, month_short, _dtokens(2).toInt)
+                val ld = LocalDate.of(_dtokens(0).toInt, month_short, _dtokens(2).toInt)
                 ld :: _acc
 
               // Месяц не удалось определить. Пожаловаться в лог и забыть.
@@ -160,9 +161,11 @@ object DateParseUtil extends Logs {
    * @param locale локаль
    */
   def monthNamesLocalized(monthNum:Short, locale:Locale) : List[String] = {
-    val dt = DateTime.now.withMonth(monthNum)
+    val dt = OffsetDateTime.now.withMonth(monthNum)
     Array("MMM", "MMMM").foldLeft(List[String]()) { (_acc, _fmt) =>
-      val monthLoc = DateTimeFormat.forPattern(_fmt).withLocale(locale).print(dt)
+      val monthLoc = DateTimeFormatter.ofPattern(_fmt)
+        .withLocale(locale)
+        .format(dt)
       TextUtil.normalize(monthLoc) :: _acc
     }
   }
@@ -183,7 +186,7 @@ object DateParseUtil extends Logs {
     }
     Lists
       .insideOut(monthTrgms.toMap)
-      .filter { case (trgmStr, months) => months.size <= 10 }
+      .filter { case (_ /*trgmStr*/, months) => months.size <= 10 }
   }
 
 
@@ -224,13 +227,19 @@ object DateParseUtil extends Logs {
   }
 
 
+  //v1: Дата хранится в виде инстанта. Нужно убирать лишние нули.
+  private def DATE_INSTANT_ZEROES = 1000000
+
   /**
    * Превратить дату в короткое целое число.
-   * @param ld Дата joda.
+   * @param ld Дата.
    * @return килосекунды от 0 н.э.
    */
-  def date2kilosec(ld:LocalDate) : Long = {
-    ld.toDateTimeAtStartOfDay.toInstant.getMillis / SioConstants.DATE_INSTANT_ZEROES
+  def date2kilosec(ld: LocalDate): Long = {
+    ld.atStartOfDay()
+      .atZone( ZoneId.systemDefault() )
+      .toInstant
+      .toEpochMilli / DATE_INSTANT_ZEROES
   }
 
   /**
@@ -238,8 +247,10 @@ object DateParseUtil extends Logs {
    * @param n килосекунды
    * @return LocalDate
    */
-  def kilosec2date(n:Long) : LocalDate = {
-    new LocalDate(n * SioConstants.DATE_INSTANT_ZEROES)
+  def kilosec2date(n: Long) : LocalDate = {
+    Instant.ofEpochMilli( n * DATE_INSTANT_ZEROES )
+      .atOffset( ZoneOffset.UTC )
+      .toLocalDate
   }
 
 
@@ -263,22 +274,26 @@ object DateParseUtil extends Logs {
     val year = min_year + rnd.nextInt(curr_year - min_year + 1)
     // Генерим месяц
     val maxMonth = if (year == curr_year)
-      now.getMonthOfYear
+      now.getMonthValue
     else
       12
     val month = rnd.nextInt(maxMonth) + 1
     // Генерим день
-    val maxDay = if (year == curr_year && month == now.getMonthOfYear)
+    val maxDay = if (year == curr_year && month == now.getMonthValue)
       now.getDayOfMonth
     else
       28
     val day = rnd.nextInt(maxDay) + 1
     // Генерим конечную дату.
-    new LocalDate(year, month, day)
+    LocalDate.of(year, month, day)
   }
 
 
-  private val SINSE_YEAR_DFLT_INSTANT_MS = new DateTime(1980, 1, 1, 0, 0).getMillis
+  private val SINSE_YEAR_DFLT_INSTANT_MS = {
+    LocalDateTime.of(1980, 1, 1, 0, 0)
+      .toInstant( ZoneOffset.UTC )
+      .toEpochMilli
+  }
   private val MS_PER_DAY: Long = 24L * 3600L * 1000L
 
   /**
@@ -288,7 +303,7 @@ object DateParseUtil extends Logs {
    * @return
    */
   def toDaysCount(d: LocalDate) : Int = {
-    val dms = d.toDateTimeAtStartOfDay.getMillis
+    val dms = d.atStartOfDay().toInstant( ZoneOffset.UTC ).toEpochMilli
     if (dms <= SINSE_YEAR_DFLT_INSTANT_MS) {
       0
     } else {
@@ -305,7 +320,9 @@ object DateParseUtil extends Logs {
    */
   def dateFromDaysCount(dc: Int): LocalDate = {
     val ms = dc * MS_PER_DAY
-    new LocalDate(SINSE_YEAR_DFLT_INSTANT_MS + ms)
+    Instant.ofEpochMilli( ms + SINSE_YEAR_DFLT_INSTANT_MS )
+      .atOffset( ZoneOffset.UTC )
+      .toLocalDate
   }
 
 }

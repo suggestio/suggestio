@@ -1,6 +1,7 @@
 package models.mctx
 
 import java.net.IDN
+import java.time.{Instant, OffsetDateTime, ZoneId}
 import java.util.UUID
 
 import _root_.models.im.DevScreen
@@ -12,7 +13,6 @@ import io.suggest.util.UuidUtil
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
-import org.joda.time.DateTime
 import play.api.Application
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
@@ -175,7 +175,21 @@ trait Context {
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.uri)
 
-  implicit lazy val now : DateTime = DateTime.now
+  /** Объект-timestamp текущего контекста. */
+  lazy val instant = Instant.now()
+
+  /** Целочисленный timestamp текущего контекста в миллисекундах. */
+  lazy val timestamp: Long = instant.toEpochMilli
+
+  /** Текущие дата-время. */
+  implicit lazy val now: OffsetDateTime = {
+    OffsetDateTime.now()
+    // TODO Текущее время сейчас привязано к часовому поясу сервера/jvm. Это не хорошо.
+    // TODO Нужно выбирать часовой пояс исходя из текущего клиента. Но это наверное будет Future[OffsetDateTime/ZonedDateTime]?
+    instant
+      .atZone( ZoneId.systemDefault() )
+      .toOffsetDateTime
+  }
 
   def userAgent: Option[String] = request.headers.get(USER_AGENT)
 
@@ -185,13 +199,18 @@ trait Context {
     }
   }
 
+  def timeZone = ZoneId.systemDefault() // TODO Это не очень-то хорошая идея. Нужен надежный источник time-zone'ы.
+  
+  def toOffsetTime(i: Instant): OffsetDateTime = {
+    i.atZone( timeZone ).toOffsetDateTime
+  }
+
   lazy val isMobile : Boolean = uaMatches(ctxUtil.mobileUaPattern)
   lazy val isIpad: Boolean = uaMatches(ctxUtil.isIpadRe)
   lazy val isIphone: Boolean = uaMatches(ctxUtil.isIphoneRe)
 
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
-  lazy val timestamp: Long = now.toInstant.getMillis
 
   /** Локальный ГСЧ, иногда нужен. */
   lazy val PRNG = new Random(System.currentTimeMillis())

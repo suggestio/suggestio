@@ -16,7 +16,8 @@
  */
 package securesocial.core.authenticator
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
 import play.api.Play
 import play.api.mvc._
 
@@ -38,9 +39,9 @@ import scala.concurrent.Future
  * @see AuthenticatorStore
  * @see RuntimeEnvironment
  */
-case class HttpHeaderAuthenticator[U](id: String, user: U, expirationDate: DateTime,
-    lastUsed: DateTime,
-    creationDate: DateTime,
+case class HttpHeaderAuthenticator[U](id: String, user: U, expirationDate: OffsetDateTime,
+    lastUsed: OffsetDateTime,
+    creationDate: OffsetDateTime,
     @transient store: AuthenticatorStore[HttpHeaderAuthenticator[U]]) extends StoreBackedAuthenticator[U, HttpHeaderAuthenticator[U]] {
 
   override def idleTimeoutInMinutes = HttpHeaderAuthenticator.idleTimeout
@@ -51,7 +52,7 @@ case class HttpHeaderAuthenticator[U](id: String, user: U, expirationDate: DateT
    * @param time the new time
    * @return the modified authenticator
    */
-  def withLastUsedTime(time: DateTime): HttpHeaderAuthenticator[U] = this.copy[U](lastUsed = time)
+  def withLastUsedTime(time: OffsetDateTime): HttpHeaderAuthenticator[U] = this.copy[U](lastUsed = time)
 
   /**
    * Returns a copy of this Authenticator with the given user
@@ -108,7 +109,7 @@ class HttpHeaderAuthenticatorBuilder[U](store: AuthenticatorStore[HttpHeaderAuth
     import scala.concurrent.ExecutionContext.Implicits.global
     generator.generate.flatMap {
       id =>
-        val now = DateTime.now()
+        val now = OffsetDateTime.now()
         val expirationDate = now.plusMinutes(HttpHeaderAuthenticator.absoluteTimeout)
         val authenticator = HttpHeaderAuthenticator(id, user, expirationDate, now, now, store)
         store.save(authenticator, HttpHeaderAuthenticator.absoluteTimeoutInSeconds)

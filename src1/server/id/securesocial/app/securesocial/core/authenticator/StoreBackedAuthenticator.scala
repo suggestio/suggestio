@@ -16,10 +16,12 @@
  */
 package securesocial.core.authenticator
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
 import securesocial.util.LoggerImpl
+
 import scala.annotation.meta.getter
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.mvc.Result
 
 /**
@@ -49,7 +51,7 @@ trait StoreBackedAuthenticator[U, T <: Authenticator[U]] extends Authenticator[U
    * @param time the new time
    * @return the modified authenticator
    */
-  def withLastUsedTime(time: DateTime): T
+  def withLastUsedTime(time: OffsetDateTime): T
 
   /**
    * Returns a copy of this Authenticator with the given user
@@ -65,7 +67,7 @@ trait StoreBackedAuthenticator[U, T <: Authenticator[U]] extends Authenticator[U
    * @return a future with the updated authenticator
    */
   override def touch: Future[T] = {
-    val updated = withLastUsedTime(DateTime.now())
+    val updated = withLastUsedTime( OffsetDateTime.now() )
     logger.debug(s"touched: lastUsed = $lastUsed")
     store.save(updated, absoluteTimeoutInSeconds)
   }
@@ -88,7 +90,7 @@ trait StoreBackedAuthenticator[U, T <: Authenticator[U]] extends Authenticator[U
    *
    * @return true if the authenticator has expired, false otherwise.
    */
-  def expired: Boolean = expirationDate.isBeforeNow
+  def expired: Boolean = expirationDate.isBefore( OffsetDateTime.now() )
 
   /**
    * Checks if the time elapsed since the last time the authenticator was used is longer than
@@ -96,7 +98,7 @@ trait StoreBackedAuthenticator[U, T <: Authenticator[U]] extends Authenticator[U
    *
    * @return true if the authenticator timed out, false otherwise.
    */
-  def timedOut: Boolean = lastUsed.plusMinutes(CookieAuthenticator.idleTimeout).isBeforeNow
+  def timedOut: Boolean = lastUsed.plusMinutes(CookieAuthenticator.idleTimeout).isBefore( OffsetDateTime.now() )
 
   /**
    * Checks if the authenticator is valid.  For this implementation it means that the

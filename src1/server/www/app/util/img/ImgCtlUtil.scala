@@ -1,9 +1,10 @@
 package util.img
 
+import java.time.Instant
+
 import io.suggest.model.es.EsModelUtil
 import EsModelUtil.FieldsJsonAcc
 import com.google.inject.Inject
-import org.joda.time.{Instant, ReadableInstant}
 import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.{Call, RequestHeader}
 import play.twirl.api.Html
@@ -43,22 +44,21 @@ class ImgCtlUtil @Inject() (htmlCompressUtil: HtmlCompressUtil) {
    * Проверить значение If-Modified-Since в реквесте.
    * true - not modified, false иначе.
    */
-  def isModifiedSinceCached(modelTstampMs: ReadableInstant)(implicit request: RequestHeader): Boolean = {
+  def isModifiedSinceCached(modelTstampMs: Instant)(implicit request: RequestHeader): Boolean = {
     request.headers
       .get(IF_MODIFIED_SINCE)
       .fold(false)(isModifiedSinceCached(modelTstampMs, _))
   }
 
-  def isModifiedSinceCached(modelTstampMs: ReadableInstant, ims: String): Boolean = {
+  def isModifiedSinceCached(modelTstampMs: Instant, ims: String): Boolean = {
     DateTimeUtil.parseRfcDate(ims)
-      .exists { dt => !(modelTstampMs isAfter dt) }
+      .exists { dt => !modelTstampMs.isAfter(dt.toInstant) }
   }
 
 
   /** rfc date не содержит миллисекунд. Нужно округлять таймштамп, чтобы был 000 в конце. */
   def withoutMs(timestampMs: Long): Instant = {
-    val ims = timestampMs % 1000L
-    new Instant(timestampMs - ims)
+    Instant.ofEpochSecond(timestampMs / 1000)
   }
 
 }

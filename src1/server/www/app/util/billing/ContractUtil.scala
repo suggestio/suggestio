@@ -1,10 +1,12 @@
 package util.billing
 
+import java.time.{LocalDateTime, ZoneId}
+
 import com.google.inject.Singleton
 import io.suggest.mbill2.m.contract.MContract
-import org.joda.time.DateTime
-import play.api.data._, Forms._
-import util.FormUtil.{localDateM, strTrimSanitizeF, strIdentityF, strFmtTrimF}
+import play.api.data._
+import Forms._
+import util.FormUtil.{localDateM, strFmtTrimF, strIdentityF, strTrimSanitizeF}
 
 /**
  * Suggest.io
@@ -17,7 +19,7 @@ class ContractUtil {
 
   /** Внутренний маппинг для даты LocalDate. */
   def bDate = localDateM
-    .transform[DateTime](_.toDateTimeAtStartOfDay, _.toLocalDate)
+    .transform[LocalDateTime](_.atStartOfDay(), _.toLocalDate)
 
   def suffixOptM: Mapping[Option[String]] = {
     optional(
@@ -44,13 +46,13 @@ class ContractUtil {
     )
     {(dateCreated, suffix, hiddenInfo) =>
       MContract(
-        dateCreated = dateCreated,
+        dateCreated = dateCreated.atZone(ZoneId.systemDefault()).toOffsetDateTime,
         suffix      = suffix,
         hiddenInfo  = hiddenInfo
       )
     }
     {mc =>
-      Some((mc.dateCreated, mc.suffix, mc.hiddenInfo))
+      Some((mc.dateCreated.toLocalDateTime, mc.suffix, mc.hiddenInfo))
     }
   }
 

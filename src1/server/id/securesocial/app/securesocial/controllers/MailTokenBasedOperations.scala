@@ -16,15 +16,15 @@
  */
 package securesocial.controllers
 
+import java.time.OffsetDateTime
 import java.util.UUID
 
-import org.joda.time.DateTime
 import play.api.Play
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.data.validation.Constraints._
 import play.api.i18n.Messages
-import play.api.mvc.{ RequestHeader, Result }
+import play.api.mvc.{RequestHeader, Result}
 import securesocial.core.SecureSocial
 import securesocial.core.providers.MailToken
 
@@ -54,7 +54,7 @@ abstract class MailTokenBasedOperations[U] extends SecureSocial[U] {
    * @return a MailToken instance
    */
   def createToken(email: String, isSignUp: Boolean): Future[MailToken] = {
-    val now = DateTime.now
+    val now = OffsetDateTime.now()
 
     Future.successful(MailToken(
       UUID.randomUUID().toString, email.toLowerCase, now, now.plusMinutes(TokenDuration), isSignUp = isSignUp

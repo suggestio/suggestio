@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.item
 
+import java.time.OffsetDateTime
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MPrice
 import io.suggest.common.m.sql.ITableName
@@ -16,7 +18,7 @@ import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
-import org.joda.time.{DateTime, Interval}
+import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
 import slick.sql.SqlAction
 
@@ -146,12 +148,12 @@ class MItems @Inject() (
       query
         .filter { _.id inSet ids }
         .map { i => (i.status, i.dateStatus) }
-        .update((status, DateTime.now()))
+        .update((status, OffsetDateTime.now))
     }
   }
 
   /** Поиск рядов, относящихся как-то текущей дате. */
-  def findCurrent(now: DateTime = DateTime.now) = {
+  def findCurrent( now: OffsetDateTime = OffsetDateTime.now() ) = {
     query.filter { mitem =>
       mitem.dateStartOpt >= now &&
       mitem.dateEndOpt < now
@@ -236,15 +238,14 @@ case class MItem(
   override val status         : MItemStatus,
   override val price          : MPrice,
   override val nodeId         : String,
-  override val dateStartOpt   : Option[DateTime],
-  override val dateEndOpt     : Option[DateTime],
-  //override val dtIntervalOpt  : Option[Interval],
+  override val dateStartOpt   : Option[OffsetDateTime],
+  override val dateEndOpt     : Option[OffsetDateTime],
   override val rcvrIdOpt      : Option[String],
   override val sls            : Set[SinkShowLevel]  = Set.empty,
   override val reasonOpt      : Option[String]      = None,
   override val geoShape       : Option[GeoShape]    = None,
   override val tagFaceOpt     : Option[String]      = None,
-  override val dateStatus     : DateTime            = DateTime.now(),
+  override val dateStatus     : OffsetDateTime      = OffsetDateTime.now(),
   override val id             : Option[Gid_t]       = None
 )
   extends IItem
@@ -254,13 +255,13 @@ case class MItem(
   def withStatus(status1: MItemStatus): MItem = {
     copy(
       status      = iType.orderClosedStatus,
-      dateStatus  = DateTime.now()
+      dateStatus  = OffsetDateTime.now()
     )
   }
 
   def dtIntervalOpt: Option[Interval] = {
     for (start <- dateStartOpt; end <- dateEndOpt) yield {
-      new Interval(start, end)
+      Interval.of(start.toInstant, end.toInstant)
     }
   }
 

@@ -1,9 +1,10 @@
 package models.adv.geo
 
+import java.time.OffsetDateTime
+
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
-import org.joda.time.DateTime
 
 /**
   * Suggest.io
@@ -17,6 +18,6 @@ package object cur {
   type AdvGeoShapeInfo_t = (Option[String], Option[Gid_t], Option[Boolean])
 
   /** Выхлоп отчёта по размещения в указанной гео-области. */
-  type AdvGeoBasicInfo_t = (Gid_t, MItemType, MItemStatus, Option[DateTime], Option[DateTime], Option[String])
+  type AdvGeoBasicInfo_t = (Gid_t, MItemType, MItemStatus, Option[OffsetDateTime], Option[OffsetDateTime], Option[String])
 
 }

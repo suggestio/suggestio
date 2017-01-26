@@ -52,6 +52,10 @@ libraryDependencies ++= {
     exclude("log4j",    "log4j")
     exclude("commons-logging", "commons-logging")
   ,
+
+  // TODO DateTimePrettyPrinter -- последний компонент в проекте, который тянет joda-time:
+  "joda-time"             %  "joda-time"            % "2.8.+",
+
   //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   "com.google.guava" % "guava" % "18.+",

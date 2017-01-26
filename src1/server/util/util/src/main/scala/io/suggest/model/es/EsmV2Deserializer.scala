@@ -34,6 +34,4 @@ trait EsmV2Deserializer extends EsModelCommonStaticT {
     parseResult.get
   }
 
-  implicit protected[this] def jodaDateTimeFormat = EsModelUtil.Implicits.jodaDateTimeFormat
-
 }

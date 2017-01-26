@@ -1,7 +1,8 @@
 package models.adv.direct
 
+import java.time.LocalDate
+
 import models.SinkShowLevel
-import org.joda.time.LocalDate
 
 /**
  * Suggest.io

@@ -32,6 +32,8 @@ object MFormS {
     generatePickler[MFormS]
   }
 
+  def TZ_OFFSET_IGNORE = Int.MinValue
+
 }
 
 
@@ -40,6 +42,10 @@ object MFormS {
   *
   * param mapState id георазмещаемой рекламной карточки.
   * param existCircles Текущие кружки, если есть.
+  *
+  * @param tzOffsetMinutes С сервера на клиент -- вообще любое число (игнорится клиентом).
+  *                        На клиенте: вычисляется на лету и отсылается на сервер.
+  *                        Т.е. оно типа обязательное с клиента на сервер, но ненужное с сервера на клиент.
   */
 case class MFormS(
                    mapProps         : MMapProps,
@@ -48,5 +54,6 @@ case class MFormS(
                    rcvrsMap         : RcvrsMap_t,
                    tagsEdit         : MTagsEditProps,
                    datePeriod       : MAdvPeriod,
-                   radCircle        : Option[MGeoCircle]
+                   radCircle        : Option[MGeoCircle],
+                   tzOffsetMinutes  : Int
                  )

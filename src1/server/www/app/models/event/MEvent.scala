@@ -1,5 +1,7 @@
 package models.event
 
+import java.time.OffsetDateTime
+
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
 import io.suggest.model.search.EsDynSearchStatic
@@ -8,7 +10,6 @@ import io.suggest.event.SioNotifier.{Classifier, Event}
 import EsModelUtil.{FieldsJsonAcc, stringParser}
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
-import org.joda.time.DateTime
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import _root_.util.PlayMacroLogsImpl
@@ -41,7 +42,7 @@ object MEvent {
   def TTL_DAYS_SEEN   = 30
 
   def isCloseableDflt = true
-  def dateCreatedDflt = DateTime.now()
+  def dateCreatedDflt = OffsetDateTime.now()
   def argsDflt        = EmptyArgsInfo
 
 
@@ -111,7 +112,7 @@ class MEvents @Inject() (
       argsInfo    = m.get(ARGS_ESFN)
         .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(DateTime.now)(EsModelUtil.dateTimeParser),
+        .fold(OffsetDateTime.now)(EsModelUtil.dateTimeParser),
       isCloseable = m.get(IS_CLOSEABLE_ESFN)
         .fold(isCloseableDflt)(EsModelUtil.booleanParser),
       isUnseen    = m.get(IS_UNSEEN_ESFN)
@@ -127,8 +128,8 @@ class MEvents @Inject() (
     (__ \ OWNER_ID_ESFN).read[String] and
     (__ \ ARGS_ESFN).readNullable[ArgsInfo]
       .map(_.getOrElse(EmptyArgsInfo)) and
-    (__ \ DATE_CREATED_ESFN).readNullable[DateTime]
-      .map(_.getOrElse(DateTime.now)) and
+    (__ \ DATE_CREATED_ESFN).readNullable[OffsetDateTime]
+      .map(_.getOrElse( OffsetDateTime.now )) and
     (__ \ IS_CLOSEABLE_ESFN).readNullable[Boolean]
       .map(_ getOrElse isCloseableDflt) and
     (__ \ IS_UNSEEN_ESFN).readNullable[Boolean]
@@ -183,7 +184,7 @@ case class MEvent(
   etype         : MEventType,
   ownerId       : String,
   argsInfo      : ArgsInfo        = MEvent.argsDflt,
-  dateCreated   : DateTime        = MEvent.dateCreatedDflt,
+  dateCreated   : OffsetDateTime  = MEvent.dateCreatedDflt,
   isCloseable   : Boolean         = MEvent.isCloseableDflt,
   isUnseen      : Boolean         = true,
   ttlDays       : Option[Int]     = Some(MEvent.TTL_DAYS_UNSEEN),
@@ -212,7 +213,7 @@ trait IEvent extends OptStrId with Event {
   def etype         : MEventType
   def ownerId       : String
   def argsInfo      : ArgsInfo
-  def dateCreated   : DateTime
+  def dateCreated   : OffsetDateTime
   def isCloseable   : Boolean
   def isUnseen      : Boolean
 }
@@ -239,7 +240,7 @@ case class MEventTmp(
   etype       : MEventType,
   ownerId     : String,
   argsInfo    : ArgsInfo        = EmptyArgsInfo,
-  dateCreated : DateTime        = DateTime.now(),
+  dateCreated : OffsetDateTime  = OffsetDateTime.now(),
   isCloseable : Boolean         = false,
   isUnseen    : Boolean         = true,
   id          : Option[String]  = None

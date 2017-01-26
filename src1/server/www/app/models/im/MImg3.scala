@@ -1,5 +1,6 @@
 package models.im
 
+import java.time.OffsetDateTime
 import java.util.{NoSuchElementException, UUID}
 
 import com.google.inject.{Inject, Singleton}
@@ -16,7 +17,6 @@ import io.suggest.util.UuidUtil
 import models.{IImgMeta, _}
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import play.api.libs.iteratee.Enumerator
 import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import util.img.ImgFileNameParsersImpl
@@ -122,7 +122,7 @@ class MImgs3 @Inject() (
           basic = MBasicMeta(
             techName    = Some(fname),
             dateCreated = perm.map(_.dateCreated)
-              .getOrElse { DateTime.now() }
+              .getOrElse { OffsetDateTime.now() }
           )
         )
       )

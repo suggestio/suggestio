@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.OffsetDateTime
+
 import com.google.inject.Inject
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
@@ -16,7 +18,6 @@ import models.mctx.Context
 import models.mlk.{FormMapResult, NodeEditArgs}
 import models.mproj.ICommonDi
 import models.req.{INodeReq, IReq}
-import org.joda.time.DateTime
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
 import play.api.libs.Files.TemporaryFile
@@ -318,8 +319,8 @@ class MarketLkAdnEdit @Inject() (
     mnode.copy(
       meta = mnode.meta.copy(
         basic = mnode.meta.basic.copy(
-          nameOpt = meta2.basic.nameOpt,
-          dateEdited = Some( DateTime.now )
+          nameOpt     = meta2.basic.nameOpt,
+          dateEdited  = Some( OffsetDateTime.now() )
         ),
         address = mnode.meta.address.copy(
           town    = meta2.address.town,

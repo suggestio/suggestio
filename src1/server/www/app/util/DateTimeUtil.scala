@@ -1,7 +1,7 @@
 package util
 
-import org.joda.time.{DateTimeZone, DateTime}
-import org.joda.time.format.{DateTimeFormatter, DateTimeFormat}
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
@@ -12,42 +12,24 @@ import java.util.Locale
  */
 object DateTimeUtil {
 
-  implicit def dateTimeOrdering: Ordering[DateTime] = Ordering.fromLessThan(_ isBefore _)
-
   // Обработка rfc-дат для реквестов и запросов.
 
-  private val timeZoneCode = "GMT"
-
   /** Форматирование RFC даты, пригодную для отправки/получения внутри http-заголовка. */
-  val rfcDtFmt: DateTimeFormatter = {
-    DateTimeFormat
-      .forPattern("EEE, dd MMM yyyy HH:mm:ss '" + timeZoneCode + "'")
-      .withLocale(java.util.Locale.ENGLISH)
-      .withZone(DateTimeZone.forID(timeZoneCode))
-  }
-
-  /** Аналог rfcDtFmt, но без таймзоны. */
-  val rfcDtNoTzFmt: DateTimeFormatter = {
-    DateTimeFormat
-      .forPattern("EEE, dd MMM yyyy HH:mm:ss")
-      .withLocale(java.util.Locale.ENGLISH)
-      .withZone(DateTimeZone.forID(timeZoneCode))
+  def rfcDtFmt: DateTimeFormatter = {
+    DateTimeFormatter.RFC_1123_DATE_TIME
   }
 
   /** Простое челове-читабельное форматирование значения LocalDate. */
   val simpleLocalDateFmt: DateTimeFormatter = {
-    DateTimeFormat
-      .forPattern("dd MMM yyyy")
+    DateTimeFormatter
+      .ofPattern( "dd MMM yyyy" )
       .withLocale(Locale.getDefault)
-      .withZone(DateTimeZone.forID(timeZoneCode))
   }
 
-  private val parsableTimezoneCode = " " + timeZoneCode
-
-  def parseRfcDate(date: String): Option[DateTime] = {
+  def parseRfcDate(date: String): Option[OffsetDateTime] = {
     try {
-      //jodatime does not parse timezones, so we handle that manually
-      val d = rfcDtNoTzFmt.parseDateTime(date.replace(parsableTimezoneCode, ""))
+      // Тут GMT резалось из-за каких-то проблем с joda-time. Сейчас всё упрощено, и должно бы работать.
+      val d = OffsetDateTime.parse(date, rfcDtFmt)
       Some(d)
 
     } catch {

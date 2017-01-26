@@ -1,5 +1,7 @@
 package util.showcase
 
+import java.time.LocalDate
+
 import com.google.inject.Inject
 import controllers.routes
 import io.suggest.model.es.EsModelUtil
@@ -13,7 +15,6 @@ import models.mctx.{Context, ContextUtil}
 import models.mproj.MCommonDi
 import models.msc.ScJsState
 import org.elasticsearch.common.unit.TimeValue
-import org.joda.time.LocalDate
 import play.api.libs.iteratee.Enumerator
 import play.api.mvc.QueryStringBindable
 import util.n2u.N2NodesUtil

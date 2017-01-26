@@ -16,11 +16,13 @@
  */
 package securesocial.controllers
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
 import play.api.i18n.MessagesApi
 import securesocial.core._
 import play.api.mvc.Action
-import scala.concurrent.{ ExecutionContext, Future }
+
+import scala.concurrent.{ExecutionContext, Future}
 import securesocial.core.AuthenticationResult.Authenticated
 import securesocial.core._
 import securesocial.core.services.SaveMode
@@ -39,11 +41,8 @@ trait BaseLoginApi[U] extends SecureSocial[U] {
 
   import play.api.libs.json._
 
-  case class TokenResponse(token: String, expiresOn: DateTime)
+  case class TokenResponse(token: String, expiresOn: OffsetDateTime)
 
-  implicit val jodaDateWrites: Writes[org.joda.time.DateTime] = new Writes[org.joda.time.DateTime] {
-    def writes(d: org.joda.time.DateTime): JsValue = JsString(d.toString)
-  }
   implicit val HeaderTokenWrites = Json.writes[TokenResponse]
   val logger = play.api.Logger("securesocial.controllers.BaseLoginApi")
 

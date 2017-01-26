@@ -1,5 +1,7 @@
 package util.adn
 
+import java.time.OffsetDateTime
+
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -15,7 +17,6 @@ import models.adv.MExtTargets
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
 import models.mproj.ICommonDi
-import org.joda.time.DateTime
 import play.api.i18n.Messages
 import play.api.mvc.Call
 import util.PlayMacroLogsImpl
@@ -212,8 +213,8 @@ class NodesUtil @Inject() (
             versionOpt = None,
             meta = mad0.meta.copy(
               basic = mad0.meta.basic.copy(
-                dateCreated = DateTime.now,
-                dateEdited = None
+                dateCreated = OffsetDateTime.now(),
+                dateEdited  = None
               )
             ),
             edges = MNodeEdges(

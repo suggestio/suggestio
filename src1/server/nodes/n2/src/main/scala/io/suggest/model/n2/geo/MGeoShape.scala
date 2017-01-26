@@ -1,14 +1,14 @@
 package io.suggest.model.n2.geo
 
+import java.time.OffsetDateTime
+
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.n2.edge.MEdgeGeoShape
-import io.suggest.ym.model.{NodeGeoLevels, NodeGeoLevel}
-import org.joda.time.DateTime
+import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.model.es.EsModelUtil.Implicits.jodaDateTimeFormat
 
 /**
  * Suggest.io
@@ -35,7 +35,7 @@ object MGeoShape extends IGenEsMappingProps {
   val GLEVEL_FORMAT       = (__ \ Fields.GLEVEL_FN).format[NodeGeoLevel]
   val GJC_FORMAT          = (__ \ Fields.GEO_JSON_COMPATIBLE_FN).format[Boolean]
   val FROM_URL_FORMAT     = (__ \ Fields.FROM_URL_FN).formatNullable[String]
-  val DATE_EDITED_FORMAT  = (__ \ Fields.DATE_EDITED_FN).format[DateTime]
+  val DATE_EDITED_FORMAT  = (__ \ Fields.DATE_EDITED_FN).format[OffsetDateTime]
 
   private def _shapeFormat(ngl: NodeGeoLevel): OFormat[GeoShape] = {
     (__ \ ngl.esfn).format[GeoShape]
@@ -127,7 +127,7 @@ case class MGeoShape(
   glevel        : NodeGeoLevel,
   shape         : GeoShape,
   fromUrl       : Option[String]  = None,
-  dateEdited    : DateTime        = DateTime.now()
+  dateEdited    : OffsetDateTime  = OffsetDateTime.now()
 ) {
 
   def toEdgeGs = {

@@ -16,10 +16,12 @@
  */
 package securesocial.core.authenticator
 
-import org.joda.time.DateTime
-import play.api.mvc.{ Cookie, Result, DiscardingCookie, RequestHeader }
+import java.time.OffsetDateTime
+
+import play.api.mvc.{Cookie, DiscardingCookie, RequestHeader, Result}
 import securesocial.core.IdentityProvider
-import scala.concurrent.{ ExecutionContext, Future }
+
+import scala.concurrent.{ExecutionContext, Future}
 import play.api.Play
 
 /**
@@ -38,9 +40,9 @@ import play.api.Play
  * @see AuthenticatorStore
  * @see RuntimeEnvironment
  */
-case class CookieAuthenticator[U](id: String, user: U, expirationDate: DateTime,
-    lastUsed: DateTime,
-    creationDate: DateTime,
+case class CookieAuthenticator[U](id: String, user: U, expirationDate: OffsetDateTime,
+    lastUsed: OffsetDateTime,
+    creationDate: OffsetDateTime,
     @transient store: AuthenticatorStore[CookieAuthenticator[U]]) extends StoreBackedAuthenticator[U, CookieAuthenticator[U]] {
   @transient
   override val idleTimeoutInMinutes = CookieAuthenticator.idleTimeout
@@ -54,7 +56,7 @@ case class CookieAuthenticator[U](id: String, user: U, expirationDate: DateTime,
    * @param time the new time
    * @return the modified authenticator
    */
-  def withLastUsedTime(time: DateTime): CookieAuthenticator[U] = this.copy[U](lastUsed = time)
+  def withLastUsedTime(time: OffsetDateTime): CookieAuthenticator[U] = this.copy[U](lastUsed = time)
 
   /**
    * Returns a copy of this Authenticator with the given user
@@ -156,7 +158,7 @@ class CookieAuthenticatorBuilder[U](store: AuthenticatorStore[CookieAuthenticato
     import ExecutionContext.Implicits.global
     generator.generate.flatMap {
       id =>
-        val now = DateTime.now()
+        val now = OffsetDateTime.now()
         val expirationDate = now.plusMinutes(CookieAuthenticator.absoluteTimeout)
         val authenticator = CookieAuthenticator(id, user, expirationDate, now, now, store)
         store.save(authenticator, CookieAuthenticator.absoluteTimeoutInSeconds)

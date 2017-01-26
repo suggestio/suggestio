@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.txn
 
+import java.time.OffsetDateTime
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.Amount_t
 import io.suggest.common.slick.driver.ExPgSlickDriverT
@@ -10,7 +12,6 @@ import io.suggest.mbill2.m.item.{ItemIdOptFkSlick, ItemIdOptInxSlick, ItemIdOptS
 import io.suggest.mbill2.m.order.{MOrders, OrderIdOptFkSlick, OrderIdOptInxSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.AmountSlick
 import io.suggest.mbill2.util.PgaNamesMaker
-import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 
 /**
@@ -61,8 +62,8 @@ class MTxns @Inject() (
     with ItemIdOpt with ItemIdOptFk with ItemIdOptInx
   {
 
-    def datePaidOpt     = column[Option[DateTime]](DATE_PAID_FN)
-    def dateProcessed   = column[DateTime](DATE_PROCESSED_FN)
+    def datePaidOpt     = column[Option[OffsetDateTime]](DATE_PAID_FN)
+    def dateProcessed   = column[OffsetDateTime](DATE_PROCESSED_FN)
     def paymentComment  = column[Option[String]](PAYMENT_COMMENT_FN)
 
     def psTxnUidOpt     = column[Option[String]](PS_TXN_UID_FN)
@@ -108,12 +109,12 @@ case class MTxn(
   balanceId         : Gid_t,
   amount            : Amount_t,
   txType            : MTxnType,
-  orderIdOpt        : Option[Gid_t]       = None,
-  itemId            : Option[Gid_t]       = None,
-  paymentComment    : Option[String]      = None,
-  psTxnUidOpt       : Option[String]      = None,
-  datePaid          : Option[DateTime]    = None,
-  dateProcessed     : DateTime            = DateTime.now(),
-  id                : Option[Gid_t]       = None
+  orderIdOpt        : Option[Gid_t]             = None,
+  itemId            : Option[Gid_t]             = None,
+  paymentComment    : Option[String]            = None,
+  psTxnUidOpt       : Option[String]            = None,
+  datePaid          : Option[OffsetDateTime]    = None,
+  dateProcessed     : OffsetDateTime            = OffsetDateTime.now(),
+  id                : Option[Gid_t]             = None
 )
   extends IGid

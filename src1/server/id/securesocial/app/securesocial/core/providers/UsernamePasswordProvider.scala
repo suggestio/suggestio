@@ -16,18 +16,19 @@
  */
 package securesocial.core.providers
 
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
 import play.api.Play.current
 import play.api.data.Form
 import play.api.data.Forms._
 import play.api.mvc._
 import securesocial.controllers.ViewTemplates
-import securesocial.core.AuthenticationResult.{ Authenticated, NavigationFlow }
+import securesocial.core.AuthenticationResult.{Authenticated, NavigationFlow}
 import securesocial.core._
 import securesocial.core.providers.utils.PasswordHasher
-import securesocial.core.services.{ AvatarService, UserService }
+import securesocial.core.services.{AvatarService, UserService}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * A username password provider
@@ -142,6 +143,6 @@ object UsernamePasswordProvider {
  * @param expirationTime the expiration time
  * @param isSignUp a boolean indicating wether the token was created for a sign up action or not
  */
-case class MailToken(uuid: String, email: String, creationTime: DateTime, expirationTime: DateTime, isSignUp: Boolean) {
-  def isExpired = expirationTime.isBeforeNow
+case class MailToken(uuid: String, email: String, creationTime: OffsetDateTime, expirationTime: OffsetDateTime, isSignUp: Boolean) {
+  def isExpired = expirationTime.isBefore( OffsetDateTime.now() )
 }

@@ -1,7 +1,8 @@
 package io.suggest.model.img
 
-import io.suggest.common.geom.d2.{ISize2diWrap, ISize2di}
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
+import io.suggest.common.geom.d2.{ISize2di, ISize2diWrap}
 
 /**
  * Suggest.io
@@ -11,14 +12,14 @@ import org.joda.time.DateTime
  */
 trait IImgMeta extends ISize2di {
 
-  def dateCreated: DateTime
+  def dateCreated: OffsetDateTime
 
 }
 
 
 case class ImgSzDated(
   sz          : ISize2di,
-  dateCreated : DateTime
+  dateCreated : OffsetDateTime
 )
   extends IImgMeta
   with ISize2diWrap

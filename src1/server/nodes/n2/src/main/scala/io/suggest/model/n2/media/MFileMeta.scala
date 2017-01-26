@@ -1,7 +1,8 @@
 package io.suggest.model.n2.media
 
-import io.suggest.model.es.{IGenEsMappingProps, EsModelUtil}
-import org.joda.time.DateTime
+import java.time.OffsetDateTime
+
+import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,7 +26,7 @@ object MFileMeta extends IGenEsMappingProps {
     (__ \ SIZE_B_FN).format[Long] and
     (__ \ IS_ORIGINAL_FN).format[Boolean] and
     (__ \ SHA1_FN).formatNullable[String] and
-    (__ \ DATE_CREATED_FN).format(EsModelUtil.Implicits.jodaDateTimeFormat)
+    (__ \ DATE_CREATED_FN).format[OffsetDateTime]
   )(apply, unlift(unapply))
 
 
@@ -49,5 +50,5 @@ case class MFileMeta(
   sizeB         : Long,
   isOriginal    : Boolean,
   sha1          : Option[String],
-  dateCreated   : DateTime = DateTime.now()
+  dateCreated   : OffsetDateTime = OffsetDateTime.now()
 )

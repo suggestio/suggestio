@@ -1,6 +1,6 @@
 package util.adv.direct
 
-import java.{time => jat}
+import java.time.{DayOfWeek, LocalDate, ZoneId, ZoneOffset}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MPrice
@@ -15,8 +15,6 @@ import models.adv.direct.{AdvFormEntry, FormResult}
 import models.mcal.{ICalsCtx, MCalendars}
 import models.mdt.IDateStartEnd
 import models.mproj.ICommonDi
-import org.joda.time.DateTimeConstants._
-import org.joda.time.LocalDate
 import util.PlayMacroLogsImpl
 import util.adv.AdvUtil
 import util.billing.TfDailyUtil
@@ -53,7 +51,7 @@ class AdvDirectBilling @Inject() (
   private val WEEKEND_DAYS: Set[Int] = {
     configuration.getIntList("weekend.days")
       .map(_.map(_.intValue).toSet)
-      .getOrElse( Set(FRIDAY, SATURDAY, SUNDAY) )
+      .getOrElse( Set( DayOfWeek.FRIDAY.getValue, DayOfWeek.SATURDAY.getValue, DayOfWeek.SUNDAY.getValue) )
   }
 
   /** Довольно грубый метод поиска уже занятых карточкой ресиверов.
@@ -85,8 +83,8 @@ class AdvDirectBilling @Inject() (
   /** Поиск занятых ресиверов для карточки среди запрошенных для размещения. */
   def findBusyRcvrsExact(adId: String, fr: FormResult): DBIOAction[Set[String], NoStream, Effect.Read] = {
     // Подготовить значения аргументов для вызова экшена
-    val dtStart = fr.period.dateStart.toDateTimeAtStartOfDay
-    val dtEnd   = fr.period.dateEnd.toDateTimeAtStartOfDay()
+    val dtStart = fr.period.dateStart.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime
+    val dtEnd   = fr.period.dateEnd.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime
 
     // Сборка логики db-экшена
     val dbAction = sqlForAd(adId)
@@ -157,14 +155,12 @@ class AdvDirectBilling @Inject() (
 
     // Рассчет стоимости для одной даты (дня) размещения.
     def calculateDateAdvPrice(day: LocalDate): Double = {
-      // jollyday работает с java 8 time, а у нас пока joda-time. Конвертим руками:
-      val dayJat = jat.LocalDate.of(day.getYear, day.getMonthOfYear, day.getDayOfMonth)
       val dayOfWeek = day.getDayOfWeek
 
       // Пройтись по праздничным календарям, попытаться найти подходящий
       val clause4day = clausesWithCals
         .find { case (clause, calCtx) =>
-          calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(dayJat)
+          calCtx.mcal.calType.maybeWeekend(dayOfWeek.getValue, weekendDays) || calCtx.mgr.isHoliday(day)
         }
         .map(_._1)
         .getOrElse(clauseDflt)
@@ -260,8 +256,9 @@ class AdvDirectBilling @Inject() (
         price         = calculateAdvPrice(bmc, rcvrTfs(adv.adnId), adv, mcalsCtx),
         nodeId        = mad.id.get,
         sls           = adv.showLevels,
-        dateStartOpt  = Some(adv.dateStart.toDateTimeAtStartOfDay),
-        dateEndOpt    = Some(adv.dateEnd.toDateTimeAtStartOfDay),
+        // TODO Тут java.time-словоблудие. Всё равно весь класс будет удалён вместе с формой, поэтому точность и дубликация кода тут не важна, лишь бы по-быстрее двигаться:
+        dateStartOpt  = Some( adv.dateStart.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime ),
+        dateEndOpt    = Some( adv.dateEnd.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime ),
         rcvrIdOpt     = Some(adv.adnId)
       )
     }

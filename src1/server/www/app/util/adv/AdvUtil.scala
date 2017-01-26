@@ -1,5 +1,7 @@
 package util.adv
 
+import java.time.{DayOfWeek, LocalDate}
+
 import com.google.inject.Inject
 import io.suggest.bill.MPrice
 import io.suggest.model.n2.bill.tariff.daily.ITfClauses
@@ -7,7 +9,6 @@ import models.MNode
 import models.adv.MAdvBillCtx
 import models.blk.{BlockHeights, BlockMeta, BlockWidths}
 import models.mproj.ICommonDi
-import org.joda.time.LocalDate
 import util.PlayMacroLogsImpl
 import util.billing.TfDailyUtil
 
@@ -30,12 +31,16 @@ class AdvUtil @Inject() (
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
-    import org.joda.time.DateTimeConstants._
     import scala.collection.JavaConversions._
 
     configuration.getIntList("weekend.days")
-      .map(_.map(_.intValue).toSet)
-      .getOrElse( Set(FRIDAY, SATURDAY, SUNDAY) )
+      .fold[TraversableOnce[Int]] {
+        Iterator(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+          .map(_.getValue)
+      } {
+        _.iterator().map(_.intValue)
+      }
+      .toSet
   }
 
 
@@ -108,14 +113,12 @@ class AdvUtil @Inject() (
 
     // Рассчет стоимости для одной даты (дня) размещения.
     def calculateDateAdvPrice(day: LocalDate): Double = {
-      // jollyday работает с java 8 time, а у нас пока joda-time. Конвертим руками:
-      val dayJat = java.time.LocalDate.of(day.getYear, day.getMonthOfYear, day.getDayOfMonth)
-      val dayOfWeek = day.getDayOfWeek
+      val dayOfWeek = day.getDayOfWeek.getValue
 
       // Пройтись по праздничным календарям, попытаться найти подходящий
       val clause4day = clausesWithCals
         .find { case (clause, calCtx) =>
-          calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(dayJat)
+          calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
         }
         .map(_._1)
         .getOrElse(clauseDflt)

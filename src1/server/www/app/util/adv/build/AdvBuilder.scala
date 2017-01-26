@@ -1,5 +1,7 @@
 package util.adv.build
 
+import java.time.OffsetDateTime
+
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
@@ -8,7 +10,6 @@ import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
 import io.suggest.model.n2.edge.MPredicate
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
-import org.joda.time.DateTime
 import util.adn.mapf.AdnMapBuilder
 import util.adv.direct.AdvDirectBuilder
 import util.adv.geo.place.AgpBuilder
@@ -32,7 +33,7 @@ import scala.concurrent.Future
 /** Трейт для guice-фабрики инстансов [[IAdvBuilder]]. */
 trait AdvBuilderFactory {
   /** Вернуть инстанс билдера, готового к работе. */
-  def builder(acc0Fut: Future[Acc], now: DateTime): IAdvBuilder
+  def builder(acc0Fut: Future[Acc], now: OffsetDateTime): IAdvBuilder
 }
 
 /** Интерфейс для DI-поля с инстансом [[AdvBuilderFactory]]. */
@@ -73,7 +74,7 @@ trait IAdvBuilder
   def clearNodePredicates: List[MPredicate] = Nil
 
   /** Текущее время. Для унификации выставляемых дат. */
-  def now: DateTime
+  def now: OffsetDateTime
 
   /** Сюда закидываются типы item'ов, поддерживаемых этим билдером,
     * в любом порядке, желательно через "::" . */
@@ -160,7 +161,7 @@ trait IAdvBuilder
         val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>
           val dbAction = {
             val dateStart2 = now
-            val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toPeriod )
+            val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toDuration )
             val mitemId = mitem.id.get
             mItems.query
               .filter { _.id === mitemId }
@@ -264,7 +265,7 @@ class AdvBuilderDi @Inject() (
 /** Финальная реализация [[IAdvBuilder]]. */
 case class AdvBuilder @Inject() (
   @Assisted override val accFut   : Future[Acc],
-  @Assisted override val now      : DateTime,
+  @Assisted override val now      : OffsetDateTime,
   override val di                 : AdvBuilderDi
 )
   extends AdvDirectBuilder

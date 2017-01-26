@@ -1,9 +1,10 @@
 package models.adv.geo.cur
 
+import java.time.OffsetDateTime
+
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
-import org.joda.time.DateTime
 
 /**
   * Suggest.io
@@ -32,7 +33,7 @@ case class MAdvGeoBasicInfo(
                              id           : Gid_t,
                              iType        : MItemType,
                              status       : MItemStatus,
-                             dtStartOpt   : Option[DateTime],
-                             dtEndOpt     : Option[DateTime],
+                             dtStartOpt   : Option[OffsetDateTime],
+                             dtEndOpt     : Option[OffsetDateTime],
                              tagFaceOpt   : Option[String]
                            )

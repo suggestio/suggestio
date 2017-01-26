@@ -16,7 +16,7 @@ import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.dt.interval.MRangeYmdOpt
-import io.suggest.dt.{MAdvPeriod, MRangeYmdJvm}
+import io.suggest.dt.MAdvPeriod
 import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -57,7 +57,6 @@ class LkAdvGeo @Inject() (
   advGeoMapUtil                   : AdvGeoMapUtil,
   streamsUtil                     : StreamsUtil,
   pickleSrvUtil                   : PickleSrvUtil,
-  mRangeYmdJvm                    : MRangeYmdJvm,
   ymdHelpersJvm                   : YmdHelpersJvm,
   override val mItems             : MItems,
   override val mOrders            : MOrders,
@@ -139,7 +138,8 @@ class LkAdvGeo @Inject() (
         radCircle = Some(MGeoCircle(
           center  = radMapVal.circle.center,
           radiusM = radMapVal.circle.radius.meters
-        ))
+        )),
+        tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE
       )
     }
 
@@ -465,7 +465,7 @@ class LkAdvGeo @Inject() (
               )
             }
         )
-        val startMs = info0.dtStartOpt.map(_.getMillis)
+        val startMs = info0.dtStartOpt.map(_.toInstant.toEpochMilli)
         startMs -> row
       }
       // Вернуться на уровень основного потока...

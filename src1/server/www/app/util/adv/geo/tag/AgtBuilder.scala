@@ -134,7 +134,7 @@ trait AgtBuilder extends IAdvBuilder {
           val dbas1 = ditems.foldLeft(acc0.dbActions) { (dbas0, mitem) =>
             val dbAction = {
               val dateStart2 = now
-              val dateEnd2 = dateStart2.plus(mitem.dtIntervalOpt.get.toPeriod)
+              val dateEnd2 = dateStart2.plus( mitem.dtIntervalOpt.get.toDuration )
               val mitemId = mitem.id.get
               // Определяем заодно id узла-тега. Это облегчит поиск в таблице на этапе перекомпиляции узлов-тегов.
               val rcvrIdOpt = mitem.tagFaceOpt

@@ -1,7 +1,8 @@
 package io.suggest.mbill2.m.dt
 
+import java.time.OffsetDateTime
+
 import io.suggest.common.slick.driver.IPgDriver
-import org.joda.time.DateTime
 
 /**
  * Suggest.io
@@ -17,11 +18,11 @@ trait DateStartSlick extends IPgDriver {
 
   /** Добавить колонку dateStart. */
   trait DateStartOpt { that: Table[_] =>
-    def dateStartOpt = column[Option[DateTime]](DATE_START_FN)
+    def dateStartOpt = column[Option[OffsetDateTime]](DATE_START_FN)
   }
 
 }
 
 trait IDateStartOpt {
-  def dateStartOpt: Option[DateTime]
+  def dateStartOpt: Option[OffsetDateTime]
 }

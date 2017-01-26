@@ -1,6 +1,7 @@
 package util.ai.sax.weather.gidromet
 
 import java.io.CharArrayReader
+import java.time.{LocalDate, OffsetDateTime}
 
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
@@ -12,7 +13,6 @@ import org.apache.lucene.analysis.snowball.SnowballFilter
 import org.apache.lucene.analysis.standard.StandardFilter
 import org.apache.lucene.analysis.{TokenStream, Tokenizer}
 import org.apache.lucene.analysis.pattern.PatternTokenizer
-import org.joda.time.{LocalDate, DateTime}
 import org.tartarus.snowball.ext.RussianStemmer
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
@@ -60,7 +60,7 @@ class GidrometRssSax(maim: MAiCtx)
   var accRev: List[DayWeatherBean] = Nil
 
   /** Дата-время во время запуска этой канители. */
-  val now = DateTime.now
+  val now = OffsetDateTime.now()
   val today = now.toLocalDate
 
   val DAY_OF_MONTH_RE = DateParseUtil.RE_DAY.r
@@ -242,9 +242,10 @@ class GidrometRssSax(maim: MAiCtx)
    */
   override def getParseResult: WeatherForecastT = {
     new WeatherForecastT {
-      override def getLocalTime: DateTime = {
+      override def getLocalTime: OffsetDateTime = {
         super.getLocalTime
-          .withZone(maim.tz)
+          .atZoneSameInstant( maim.tz )
+          .toOffsetDateTime
       }
 
       override val getToday: DayWeatherBean = accRev.find(_.date == today).get

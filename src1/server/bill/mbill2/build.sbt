@@ -18,7 +18,7 @@ resolvers ++= {
 libraryDependencies ++= {
   Seq(
     "com.google.inject"     %  "guice"                % Common.Vsn.GUICE,
-    "joda-time"             %  "joda-time"            % "2.8.+",
+    //"joda-time"             %  "joda-time"            % "2.8.+",
     //Common.ORG              %% "commonJVM"            % "0.0.0-SNAPSHOT",
     Common.ORG              %% "common-slick-driver"  % Common.Vsn.Sio.COMMON_SLICK_DRIVER,
     // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
