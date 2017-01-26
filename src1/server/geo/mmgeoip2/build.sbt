@@ -18,7 +18,7 @@ resolvers ++= {
 
 libraryDependencies ++= {
   Seq(
-    "com.google.inject"     %  "guice"                % "4.0",
+    "com.google.inject"     %  "guice"                % Common.Vsn.GUICE,
     "com.maxmind.geoip2"    %  "geoip2"               % "2.+",
     Common.ORG              %% "util"                 % "2.0.1-SNAPSHOT"
       exclude("org.jruby", "jruby-complete")

@@ -76,6 +76,7 @@ case class MPrice(
                    currency       : MCurrency,
                    amountStrOpt   : Option[String] = None
                  )
+  extends IMCurrency
 {
 
   def withAmount(value2: Amount_t) = copy(amount = value2, amountStrOpt = None)

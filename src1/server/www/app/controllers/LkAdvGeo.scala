@@ -280,7 +280,7 @@ class LkAdvGeo @Inject() (
               addRes
             }
             // Запустить экшен добавления в корзину на исполнение.
-            import slick.driver.api._
+            import slick.profile.api._
             slick.db.run( dbAction.transactionally )
           }
 

@@ -43,7 +43,7 @@ class AdvRcvrsUtil @Inject()(
 
   import LOGGER._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */

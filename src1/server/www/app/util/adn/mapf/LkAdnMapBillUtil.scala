@@ -27,7 +27,7 @@ class LkAdnMapBillUtil @Inject() (
 ) {
 
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
 
   /** Цена размещения за одни сутки. */

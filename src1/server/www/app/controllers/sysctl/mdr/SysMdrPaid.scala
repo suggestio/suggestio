@@ -36,7 +36,7 @@ trait SysMdrPaid
 {
 
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
   override val bill2Util  : Bill2Util
   override val sysMdrUtil : SysMdrUtil

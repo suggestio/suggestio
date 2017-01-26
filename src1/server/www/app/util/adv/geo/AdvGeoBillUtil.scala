@@ -24,7 +24,9 @@ import scala.concurrent.Future
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 04.12.15 13:43
-  * Description: Утиль для биллинга размещений в тегах.
+  * Description: Утиль для биллинга размещений прямо на гео-карте.
+  *
+  *
   */
 class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
@@ -37,7 +39,7 @@ class AdvGeoBillUtil @Inject() (
 {
 
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
   import ymdHelpersJvm.Implicits._
 
   private def _oneTag1dayPrice: MPrice = {
@@ -147,8 +149,8 @@ class AdvGeoBillUtil @Inject() (
 
     val geoPricesIter = res.radCircle
       .iterator
-      .flatMap { _ =>
-        val geoMult = getPriceMult(res.radCircle.get) * daysCount
+      .flatMap { rc =>
+        val geoMult = getPriceMult(rc) * daysCount
         val p1 = _oneTagPrice(geoMult)
 
         // Посчитать цены размещения для каждого тега.

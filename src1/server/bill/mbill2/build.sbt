@@ -17,12 +17,12 @@ resolvers ++= {
 
 libraryDependencies ++= {
   Seq(
-    "com.google.inject"     %  "guice"                % "4.0",
+    "com.google.inject"     %  "guice"                % Common.Vsn.GUICE,
     "joda-time"             %  "joda-time"            % "2.8.+",
     //Common.ORG              %% "commonJVM"            % "0.0.0-SNAPSHOT",
-    Common.ORG              %% "common-slick-driver"  % Common.sioSlickDrvVsn,
+    Common.ORG              %% "common-slick-driver"  % Common.Vsn.Sio.COMMON_SLICK_DRIVER,
     // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
-    "com.typesafe.slick"    %% "slick"                % Common.slickVsn,
+    "com.typesafe.slick"    %% "slick"                % Common.Vsn.SLICK,
     Common.ORG              %% "util"                 % "2.0.1-SNAPSHOT"
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")

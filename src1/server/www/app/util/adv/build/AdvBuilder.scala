@@ -50,7 +50,7 @@ trait IAdvBuilder
 
   import di._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
   /** Аккамулятор результатов.
     * Используется для доступа к результатам работы билдера.

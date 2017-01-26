@@ -105,7 +105,7 @@ class SysMdrUtil @Inject() (
   }
 
 
-  import slick.driver.api._
+  import slick.profile.api._
 
 
   type Q_t = Query[mItems.MItemsTable, MItem, Seq]

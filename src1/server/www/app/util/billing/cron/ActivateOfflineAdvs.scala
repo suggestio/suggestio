@@ -8,7 +8,7 @@ import io.suggest.model.n2.node.MNodes
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import slick.dbio.Effect.Read
-import slick.profile.SqlAction
+import slick.sql.SqlAction
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 import util.adv.geo.tag.GeoTagsUtil
 
@@ -35,7 +35,7 @@ class ActivateOfflineAdvs @Inject() (
 {
 
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
 
   /** Окно обработки можно увеличить, т.к. тут инкрементальный апдейт и мало mitem'ов запрашивается. */

@@ -1,7 +1,5 @@
 package util.billing
 
-import java.time.LocalDate
-
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
@@ -20,7 +18,7 @@ import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.MNode
 import org.joda.time.{DateTime, Duration, Interval}
-import slick.profile.SqlAction
+import slick.sql.SqlAction
 import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
@@ -54,7 +52,7 @@ class Bill2Util @Inject() (
 {
 
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
   import ymdHelpersJvm.Implicits._
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */

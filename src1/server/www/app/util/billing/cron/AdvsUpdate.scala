@@ -8,7 +8,7 @@ import models.MNode
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi
 import org.joda.time.DateTime
-import slick.profile.SqlAction
+import slick.sql.SqlAction
 import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactoryDi
 
@@ -50,7 +50,7 @@ abstract class AdvsUpdate
 
   import LOGGER._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
 
   /** Частичные критерии выборки подходящих item'ов из таблицы. */

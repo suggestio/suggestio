@@ -562,7 +562,7 @@ class SysMarket @Inject() (
       for {
         mads <- madsFut
         advs <- {
-          import slick.driver.api._
+          import slick.profile.api._
           lazy val adIds = mads.flatMap(_.id)
           val q0 = {
             val statuses = MItemStatuses.advBusyIds.toSeq

@@ -15,6 +15,28 @@ object Common {
     /** Версия moment.js. */
     def momentJs = "2.17.1"
 
+    val GUICE = "4.0"
+
+    /** Версия typesafe slick. */
+    val SLICK        = "3.2.0-M2"
+
+    /** Версия slick-pg.
+      * @see [[https://github.com/tminglei/slick-pg#install]]
+      */
+    val SLICK_PG     = "0.15.0-M3"
+
+    /** Версия play-slick прослойки. */
+    val PLAY_SLICK   = "2.1.0-SNAPSHOT"
+
+
+    object Sio {
+
+      /** Версия драйвера common-slick-driver.
+        * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
+      val COMMON_SLICK_DRIVER = "0.4.0-SNAPSHOT"
+
+    }
+
   }
 
 
@@ -37,18 +59,9 @@ object Common {
   /** Версия play. */
   val playVsn         = "2.5.10"
 
-  /** Версия play-slick прослойки. */
-  def playSlickVsn    = "2.0.2"
 
   /** Версия bouncy castle. */
   def bcVsn           = "1.54"
-
-  /** Версия typesafe slick. */
-  def slickVsn        = "3.1.1"
-
-  /** Версия драйвера common-slick-driver.
-   * Он идёт как бинарная зависимость, поэтому зависимые подпроекты. */
-  def sioSlickDrvVsn  = "0.3.0-SNAPSHOT"
 
   /** Версия scalatest+play. */
   def scalaTestPlusPlayVsn = "2.0.0-M1"

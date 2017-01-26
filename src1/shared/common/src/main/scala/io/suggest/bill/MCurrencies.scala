@@ -82,3 +82,9 @@ object MCurrencies extends Enum[MCurrency] {
   }
 
 }
+
+
+/** Интерфейс для обязательного поля currency. */
+trait IMCurrency {
+  def currency: MCurrency
+}

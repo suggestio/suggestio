@@ -1,6 +1,6 @@
 package io.suggest.model.n2.bill.tariff.daily
 
-import io.suggest.bill.MCurrency
+import io.suggest.bill.{IMCurrency, MCurrency}
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -44,6 +44,17 @@ object MDailyTf extends IGenEsMappingProps {
 }
 
 
+/** Интерфейс для тарифного поля с описаловом тарифа размещения. */
+trait ITfClauses extends IMCurrency {
+  def clauses       : ClausesMap_t
+}
+
+/** Интерфейс для поля с %комиссией. */
+trait ITfComissionPc extends IMCurrency {
+  def comissionPc   : Option[Double]
+}
+
+
 /**
  * Экземпляр тарифа посуточного размещения на узле.
  *
@@ -55,10 +66,13 @@ object MDailyTf extends IGenEsMappingProps {
  *                    None означает 1.0
  */
 case class MDailyTf(
-  currency      : MCurrency,
-  clauses       : ClausesMap_t,
-  comissionPc   : Option[Double] = None
-) {
+  override val currency      : MCurrency,
+  override val clauses       : ClausesMap_t,
+  override val comissionPc   : Option[Double] = None
+)
+  extends ITfClauses
+  with ITfComissionPc
+{
 
   private def _err(msg: String) = throw new IllegalArgumentException(msg)
 

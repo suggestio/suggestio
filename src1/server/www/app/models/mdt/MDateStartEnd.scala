@@ -1,5 +1,6 @@
 package models.mdt
 
+import io.suggest.dt.{IPeriodInfo, IYmdHelper}
 import org.joda.time.{Interval, LocalDate}
 
 /**
@@ -8,6 +9,25 @@ import org.joda.time.{Interval, LocalDate}
  * Created: 28.01.16 18:47
  * Description: Интерфейс для моделей, описывающих период из двух дат.
  */
+trait IDateStartEndJ8t {
+  def dateStart: java.time.LocalDate
+  def dateEnd: java.time.LocalDate
+}
+case class MDateStartEndJ8t(
+                           override val dateStart : java.time.LocalDate,
+                           override val dateEnd   : java.time.LocalDate
+                         )
+  extends IDateStartEndJ8t
+object MDateStartEndJ8t {
+  def apply(m: IPeriodInfo)(implicit ymdHelper: IYmdHelper[LocalDate]): MDateStartEnd = {
+    MDateStartEnd(
+      dateStart = m.dateStart[LocalDate],
+      dateEnd   = m.dateEnd[LocalDate]
+    )
+  }
+}
+
+
 trait IDateStartEnd {
 
   /** Дата начала. */
@@ -22,12 +42,31 @@ trait IDateStartEnd {
   def dtEnd = dateEnd.toDateTimeAtStartOfDay
 
 
-  def interval: Interval
+  def interval: Interval = {
+    new Interval(dtStart, dtEnd)
+  }
+
+  override def toString: String = s"$dateStart..$dateEnd"
+}
+
+
+object MDateStartEnd {
+
+  def apply(m: IPeriodInfo)(implicit ymdHelper: IYmdHelper[LocalDate]): MDateStartEnd = {
+    MDateStartEnd(
+      dateStart = m.dateStart[LocalDate],
+      dateEnd   = m.dateEnd[LocalDate]
+    )
+  }
 
 }
 
-trait MDateStartEndT extends IDateStartEnd {
-  override def interval: Interval = {
-    new Interval(dtStart, dtEnd)
-  }
+/** Дефолтовая реализация [[IDateStartEnd]]. */
+case class MDateStartEnd(override val dateStart : LocalDate,
+                         override val dateEnd   : LocalDate)
+  extends IDateStartEnd
+{
+
+  override def toString = super.toString
+
 }

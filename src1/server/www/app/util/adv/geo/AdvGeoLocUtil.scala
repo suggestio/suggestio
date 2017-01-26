@@ -38,7 +38,7 @@ class AdvGeoLocUtil @Inject() (
 {
 
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
 
   /**

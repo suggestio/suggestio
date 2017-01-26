@@ -9,8 +9,8 @@ import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, Find
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
-import slick.lifted.ProvenShape
-import slick.profile.SqlAction
+import slick.lifted._
+import slick.sql.SqlAction
 
 import scala.concurrent.ExecutionContext
 

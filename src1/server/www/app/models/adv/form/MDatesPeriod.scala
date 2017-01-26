@@ -1,7 +1,7 @@
 package models.adv.form
 
 import io.suggest.dt.interval.{QuickAdvIsoPeriod, QuickAdvPeriods}
-import models.mdt.MDateStartEndT
+import models.mdt.IDateStartEnd
 import org.joda.time.{LocalDate, Period}
 
 /**
@@ -33,4 +33,4 @@ case class MDatesPeriod(
   override val dateStart  : LocalDate,
   override val dateEnd    : LocalDate
 )
-  extends MDateStartEndT
+  extends IDateStartEnd

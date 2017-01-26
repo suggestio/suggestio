@@ -19,6 +19,4 @@ trait IAdvTerms extends IDateStartEnd {
   // TODO Как-то так получилось, что на обе даты размещается включительно
   override def dtEnd   = dateEnd.plusDays(1).toDateTimeAtStartOfDay.minusSeconds(1)
 
-  override def interval = new Interval(dtStart, dtEnd)
-
 }

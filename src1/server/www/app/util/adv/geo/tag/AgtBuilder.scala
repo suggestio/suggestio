@@ -17,7 +17,7 @@ trait AgtBuilder extends IAdvBuilder {
 
   import di._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
   private def _PRED   = MPredicates.TaggedBy.Agt
   private def _ITYPE  = MItemTypes.GeoTag

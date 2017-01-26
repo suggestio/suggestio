@@ -442,7 +442,7 @@ class MarketAdv @Inject() (
             } yield {
               MOrderWithItems(cartOrder, itemsSaved)
             }
-            import slick.driver.api._
+            import slick.profile.api._
             slick.db.run( dbAction.transactionally )
           }
 

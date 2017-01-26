@@ -9,6 +9,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.n2.bill.tariff.daily.ITfClauses
 import models._
 import models.adv.direct.{AdvFormEntry, FormResult}
 import models.mcal.{ICalsCtx, MCalendars}
@@ -46,7 +47,7 @@ class AdvDirectBilling @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
@@ -117,7 +118,7 @@ class AdvDirectBilling @Inject() (
    *
    * @return
    */
-  def calculateAdvPrice(blockModulesCount: Int, tf: MDailyTf, ivl: IDateStartEnd, mcalsCtx: ICalsCtx): MPrice = {
+  def calculateAdvPrice(blockModulesCount: Int, tf: ITfClauses, ivl: IDateStartEnd, mcalsCtx: ICalsCtx): MPrice = {
     // Инициализация логгирования
     lazy val logPrefix = s"calculateAdvPrice(${System.currentTimeMillis}):"
     trace(s"$logPrefix rcvr: square=$blockModulesCount dates=${ivl.dateStart}..${ivl.dateEnd}")
@@ -200,7 +201,6 @@ class AdvDirectBilling @Inject() (
    * @param adves2 Требования по размещению карточки на узлах.
    */
   def getAdvPrices(mad: MNode, adves2: Seq[AdvFormEntry]): Future[Seq[MPrice]] = {
-    // 2016 Перепись на новую архитектуру биллинга v2. И производительность серьезно ускорена.
     val rcvrsFut = mNodeCache.multiGet {
       adves2
         .iterator

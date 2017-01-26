@@ -25,9 +25,8 @@ libraryDependencies ++= {
   //"com.typesafe.play" %% "anorm" % "2.5.0",
   cache,
   json,
-  "com.typesafe.play"   %% "play-slick" % Common.playSlickVsn,
-  // slick повторно инклюдится здесь, т.к. что-то свежая версия не цеплялась через common-slick-driver
-  //"com.typesafe.slick"  %% "slick"      % Common.slickVsn,
+  "com.typesafe.play"   %% "play-slick" % Common.Vsn.PLAY_SLICK,
+
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
@@ -62,7 +61,7 @@ libraryDependencies ++= {
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
   // Драйвер postgresql 1201 потому что см. https://github.com/tminglei/slick-pg/issues/220#issuecomment-162137786
   // Нужно выпилить joda-time из проекта, перейти на java 8 datetime api, дождаться когда починят драйвер jdbc и можно будет обновляться.
-  "org.postgresql" % "postgresql" % "9.4-1201-jdbc41",
+  "org.postgresql" % "postgresql" % "9.4.1212",
   // webjars
   // geo
   "com.spatial4j" % "spatial4j" % "0.4.+",
@@ -108,8 +107,6 @@ libraryDependencies ++= {
   //"me.chrons"         %% "boopickle"            % Common.boopickleVsn, // вынесенов в [common]
   //"com.lihaoyi" %% "autowire" % "0.2.6",
 
-  // спаривание guice и акторов требует танцев вприсядку
-  //"net.codingwell" %% "scala-guice" % "4.0.0",
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
   // test
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % "test"

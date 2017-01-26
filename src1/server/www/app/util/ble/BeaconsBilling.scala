@@ -22,7 +22,7 @@ class BeaconsBilling @Inject() (
   extends PlayMacroLogsImpl
 {
 
-  import mCommonDi.slick.driver.api._
+  import mCommonDi.slick.profile.api._
 
 
   /** Поиск всех маячков и прочих узлов для указанного ресивера. */

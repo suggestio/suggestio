@@ -27,7 +27,7 @@ class AdvBuilderUtil @Inject() (
 {
 
   import mCommonDi._
-  import slick.driver.api.Query
+  import slick.profile.api.Query
 
 
   /**

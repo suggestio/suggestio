@@ -37,6 +37,9 @@ libraryDependencies ++= {
     "org.apache.commons" % "commons-lang3" % "3.+",
     "org.im4java" % "im4java" % "1.+",
 
+    // Date-time
+    "org.threeten" % "threeten-extra" % "1.0",
+
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.+",
     "com.fasterxml.jackson.datatype" % "jackson-datatype-joda" % "2.8.+",

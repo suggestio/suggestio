@@ -41,7 +41,7 @@ class GeoTagsUtil @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
   /** Предикат эджей, используемых в рамках этого модуля. */
   private def _PRED = MPredicates.TaggedBy.Self

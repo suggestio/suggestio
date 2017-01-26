@@ -170,7 +170,7 @@ class LkAdnMap @Inject() (
             } yield {
               addRes
             }
-            import slick.driver.api._
+            import slick.profile.api._
             slick.db.run( dbAction.transactionally )
           }
 

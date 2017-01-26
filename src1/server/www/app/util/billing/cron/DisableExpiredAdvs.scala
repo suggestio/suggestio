@@ -9,7 +9,7 @@ import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import org.joda.time.Interval
 import slick.dbio.Effect.Read
-import slick.profile.SqlAction
+import slick.sql.SqlAction
 import util.adv.build.{AdvBuilderFactory, AdvBuilderUtil}
 
 import scala.concurrent.Future
@@ -34,7 +34,7 @@ class DisableExpiredAdvs @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import slick.driver.api._
+  import slick.profile.api._
 
 
   override def _itemsSql(i: mItems.MItemsTable): Rep[Option[Boolean]] = {

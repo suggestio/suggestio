@@ -16,9 +16,9 @@ import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
 import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
-import org.joda.time.{DateTime, Interval, LocalDate}
+import org.joda.time.{DateTime, Interval}
 import slick.lifted.ProvenShape
-import slick.profile.SqlAction
+import slick.sql.SqlAction
 
 /**
  * Suggest.io
@@ -259,7 +259,9 @@ case class MItem(
   }
 
   def dtIntervalOpt: Option[Interval] = {
-    JodaInterval.applyOpt(dateStartOpt, dateEndOpt)
+    for (start <- dateStartOpt; end <- dateEndOpt) yield {
+      new Interval(start, end)
+    }
   }
 
 }

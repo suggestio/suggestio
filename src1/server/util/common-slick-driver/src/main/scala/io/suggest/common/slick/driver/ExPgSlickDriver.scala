@@ -1,7 +1,7 @@
 package io.suggest.common.slick.driver
 
-import com.github.tminglei.slickpg.{ExPostgresDriver, PgArraySupport, PgDateSupportJoda}
-import slick.profile.SqlAction
+import com.github.tminglei.slickpg.{ExPostgresProfile, PgArraySupport, PgDateSupportJoda}
+import slick.sql.SqlAction
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import slick.profile.SqlAction
  * @see [[https://github.com/tminglei/slick-pg#usage]]
  */
 trait ExPgSlickDriverT
-  extends ExPostgresDriver
+  extends ExPostgresProfile
   with PgArraySupport
   with PgDateSupportJoda
 {
