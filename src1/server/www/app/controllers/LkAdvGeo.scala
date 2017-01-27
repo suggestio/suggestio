@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.{LocalDate, OffsetDateTime}
+
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
@@ -163,7 +165,7 @@ class LkAdvGeo @Inject() (
       implicit val ctxData = ctxData0.copy(
         jsiTgs = Seq(MTargets.AdvGeoForm)
       )
-      implicitly[Context]
+      getContext2
     }
 
     val _a4fPropsOptFut = for (ctx <- _ctxFut) yield {
@@ -439,7 +441,7 @@ class LkAdvGeo @Inject() (
       }
       .toSource
 
-    //implicit val ctx = implicitly[Context]
+    implicit val ctx = implicitly[Context]
 
     val rowsMsFut = itemsSrc
       // Причесать кортежи в нормальные инстансы
@@ -451,7 +453,10 @@ class LkAdvGeo @Inject() (
         // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
         val info0 = infos.head
         val row = MGeoAdvExistRow(
-          dateRange = MRangeYmdOpt.applyFrom( info0.dtStartOpt, info0.dtEndOpt ),
+          dateRange = MRangeYmdOpt.applyFrom(
+            dateStartOpt = _offDate2localDateOpt(info0.dtStartOpt)(ctx),
+            dateEndOpt   = _offDate2localDateOpt(info0.dtEndOpt)(ctx)
+          ),
           items = infos
             .sortBy(m => (m.tagFaceOpt, m.id) )
             .map { m =>
@@ -493,6 +498,11 @@ class LkAdvGeo @Inject() (
       Ok( ByteString(pickled) )
         .withHeaders(CACHE_10)
     }
+  }
+
+  private def _offDate2localDateOpt(offDateOpt: Option[OffsetDateTime])(implicit ctx: Context): Option[LocalDate] = {
+    // TODO Выставлять local-date на основе текущего offset'а юзера через ctx.
+    offDateOpt.map(_.toLocalDate)
   }
 
 
@@ -588,7 +598,10 @@ class LkAdvGeo @Inject() (
         for {
           rcvrId     <- i.rcvrIdOpt
         } {
-          val rymd = MRangeYmdOpt.applyFrom(i.dateStartOpt, dateEndOpt = i.dateEndOpt)
+          val rymd = MRangeYmdOpt.applyFrom(
+            dateStartOpt  = _offDate2localDateOpt(i.dateStartOpt)(ctx),
+            dateEndOpt    = _offDate2localDateOpt(i.dateEndOpt)(ctx)
+          )
           acc += rcvrId -> rymd
         }
         acc

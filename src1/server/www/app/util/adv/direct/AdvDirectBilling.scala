@@ -1,27 +1,23 @@
 package util.adv.direct
 
-import java.time.{DayOfWeek, LocalDate, ZoneId, ZoneOffset}
+import java.time.ZoneId
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MPrice
-import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.bill.tariff.daily.ITfClauses
 import models._
+import models.adv.MAdvBillCtx
 import models.adv.direct.{AdvFormEntry, FormResult}
-import models.mcal.{ICalsCtx, MCalendars}
-import models.mdt.IDateStartEnd
+import models.mcal.ICalsCtx
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import util.adv.AdvUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
 
-import scala.annotation.tailrec
-import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
 /**
@@ -35,24 +31,15 @@ class AdvDirectBilling @Inject() (
   tfDailyUtil             : TfDailyUtil,
   advUtil                 : AdvUtil,
   calendarUtil            : CalendarUtil,
-  mCalendars              : MCalendars,
-  mBalances               : MBalances,
   mItems                  : MItems,
   val mCommonDi           : ICommonDi
 )
   extends PlayMacroLogsImpl
 {
 
-  import LOGGER._
   import mCommonDi._
   import slick.profile.api._
 
-  /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
-  private val WEEKEND_DAYS: Set[Int] = {
-    configuration.getIntList("weekend.days")
-      .map(_.map(_.intValue).toSet)
-      .getOrElse( Set( DayOfWeek.FRIDAY.getValue, DayOfWeek.SATURDAY.getValue, DayOfWeek.SUNDAY.getValue) )
-  }
 
   /** Довольно грубый метод поиска уже занятых карточкой ресиверов.
     * Нужно переписать форму, чтобы можно было размещать в незанятые даты. */
@@ -111,86 +98,6 @@ class AdvDirectBilling @Inject() (
 
 
   /**
-   * Рассчитать ценник размещения рекламной карточки.
-   * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
-   *
-   * @return
-   */
-  def calculateAdvPrice(blockModulesCount: Int, tf: ITfClauses, ivl: IDateStartEnd, mcalsCtx: ICalsCtx): MPrice = {
-    // Инициализация логгирования
-    lazy val logPrefix = s"calculateAdvPrice(${System.currentTimeMillis}):"
-    trace(s"$logPrefix rcvr: square=$blockModulesCount dates=${ivl.dateStart}..${ivl.dateEnd}")
-
-    val dateStart = ivl.dateStart
-    val dateEnd = ivl.dateEnd
-    // Проверять dateStart <= dateEnd не требуется, т.к. цикл суммирования проверяет это на каждом шаге.
-    //assert(!(dateStart isAfter dateEnd), "dateStart must not be after dateEnd")
-
-    // Разбиваем правила tf.clauses на дефолтовое и остальные, привязанные к календарям.
-    // По будним (~некалендарным) дням используется это правило:
-    val clauseDflt = tf.clauses
-      .valuesIterator
-      .find(_.calId.isEmpty)
-      .getOrElse {
-        // Should not happen: посуточный тариф без дефолтового правила
-        LOGGER.error(s"$logPrefix WeekDay clause is undefined for $tf. This is a configuration error in rcvr-node.")
-        tfDailyUtil.VERY_DEFAULT_WEEKDAY_CLAUSE
-      }
-
-    // Собрать правила с календарями для остальных дней. Правил календарных может и не быть вообще.
-    val clausesWithCals = tf.clauses
-      .valuesIterator
-      .flatMap { clause =>
-        for {
-          calId   <- clause.calId
-          calCtx  <- mcalsCtx.calsMap.get(calId)
-        } yield {
-          clause -> calCtx
-        }
-      }
-      .toSeq
-
-    // Кешируем тут значение списка выходных, на всякий случай.
-    val weekendDays = WEEKEND_DAYS
-
-    // Рассчет стоимости для одной даты (дня) размещения.
-    def calculateDateAdvPrice(day: LocalDate): Double = {
-      val dayOfWeek = day.getDayOfWeek
-
-      // Пройтись по праздничным календарям, попытаться найти подходящий
-      val clause4day = clausesWithCals
-        .find { case (clause, calCtx) =>
-          calCtx.mcal.calType.maybeWeekend(dayOfWeek.getValue, weekendDays) || calCtx.mgr.isHoliday(day)
-        }
-        .map(_._1)
-        .getOrElse(clauseDflt)
-
-      trace(s"$logPrefix $day -> ${clause4day.name} +${clause4day.amount} ${tf.currency}")
-      clause4day.amount
-    }
-
-    // Цикл суммирования стоимости дат, начиная с $1 и заканчивая dateEnd.
-    @tailrec def walkDaysAndPrice(day: LocalDate, acc: Double): Double = {
-      val acc1 = calculateDateAdvPrice(day) + acc
-      val day1 = day.plusDays(1)
-      if (day1.isAfter(dateEnd)) {
-        acc1
-      } else {
-        walkDaysAndPrice(day1, acc1)
-      }
-    }
-
-    // amount1 - минимальная оплата одного минимального блока по времени
-    val amount1 = walkDaysAndPrice(dateStart, 0.0)
-    // amountN -- amount1 домноженная на кол-во блоков.
-    val amountN = blockModulesCount * amount1
-
-    trace(s"$logPrefix amount (min/full) = $amount1 / $amountN")
-    MPrice(amountN, tf.currency)
-  }
-
-
-  /**
    * Посчитать цену размещения рекламной карточки согласно переданной спеке.
    *
    * @param mad Размещаемая рекламная карточка.
@@ -225,8 +132,9 @@ class AdvDirectBilling @Inject() (
       adves2
         .iterator
         .map { adve =>
+          val abc = MAdvBillCtx(bmc, calsCtx, adve)
           val tf = tfsMap( adve.adnId )
-          calculateAdvPrice(bmc, tf, adve, calsCtx)
+          advUtil.calculateAdvPrice(tf, abc)
         }
         .toSeq
       // Для суммирования списка по валютам и получения итоговой цены надо использовать MPrice.sumPricesByCurrency().
@@ -249,11 +157,12 @@ class AdvDirectBilling @Inject() (
     val bmc = advUtil.getAdModulesCount(mad)
 
     for (adv <- advs.toIterator if adv.advertise) yield {
+      val abc = MAdvBillCtx(bmc, mcalsCtx, adv)
       MItem(
         orderId       = orderId,
         iType         = MItemTypes.AdvDirect,
         status        = status,
-        price         = calculateAdvPrice(bmc, rcvrTfs(adv.adnId), adv, mcalsCtx),
+        price         = advUtil.calculateAdvPrice(rcvrTfs(adv.adnId), abc),
         nodeId        = mad.id.get,
         sls           = adv.showLevels,
         // TODO Тут java.time-словоблудие. Всё равно весь класс будет удалён вместе с формой, поэтому точность и дубликация кода тут не важна, лишь бы по-быстрее двигаться:

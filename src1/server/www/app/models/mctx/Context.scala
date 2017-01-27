@@ -1,7 +1,7 @@
 package models.mctx
 
 import java.net.IDN
-import java.time.{Instant, OffsetDateTime, ZoneId}
+import java.time.{Instant, OffsetDateTime, ZoneId, ZoneOffset}
 import java.util.UUID
 
 import _root_.models.im.DevScreen
@@ -183,7 +183,6 @@ trait Context {
 
   /** Текущие дата-время. */
   implicit lazy val now: OffsetDateTime = {
-    OffsetDateTime.now()
     // TODO Текущее время сейчас привязано к часовому поясу сервера/jvm. Это не хорошо.
     // TODO Нужно выбирать часовой пояс исходя из текущего клиента. Но это наверное будет Future[OffsetDateTime/ZonedDateTime]?
     instant
@@ -199,8 +198,8 @@ trait Context {
     }
   }
 
-  def timeZone = ZoneId.systemDefault() // TODO Это не очень-то хорошая идея. Нужен надежный источник time-zone'ы.
-  
+  def timeZone = ZoneId.systemDefault() // TODO Это не очень-то хорошая идея. Нужно из кукисов брать.
+
   def toOffsetTime(i: Instant): OffsetDateTime = {
     i.atZone( timeZone ).toOffsetDateTime
   }

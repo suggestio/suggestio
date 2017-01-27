@@ -65,15 +65,12 @@ class AdvUtil @Inject() (
   }
 
 
-
-
   /**
    * Рассчитать ценник размещения рекламной карточки.
    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
    *
    * @return
    */
-  // TODO Переписать с joda-time окончательно на jsr310.
   def calculateAdvPrice(tf: ITfClauses, abc: MAdvBillCtx): MPrice = {
     // Инициализация логгирования
     lazy val logPrefix = s"calculateAdvPrice(${System.currentTimeMillis}):"
