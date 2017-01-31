@@ -15,6 +15,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
 import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
+import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.tags.edit.MTagsEditProps
@@ -31,7 +32,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import play.api.libs.json.Json
-import play.api.mvc.Result
+import play.api.mvc.{BodyParser, Result}
 import util.PlayMacroLogsImpl
 import util.acl.{CanAccessItem, CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
 import util.adv.AdvFormUtil
@@ -43,6 +44,7 @@ import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.model.n2.node.MNodes
 import models.MNode
+import util.adn.NodesUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -54,6 +56,7 @@ import scala.concurrent.duration._
   * Description: Контроллер размещения в гео-тегах.
   */
 class LkAdvGeo @Inject() (
+  nodesUtil                       : NodesUtil,
   advGeoFormUtil                  : AdvGeoFormUtil,
   advGeoBillUtil                  : AdvGeoBillUtil,
   advFormUtil                     : AdvFormUtil,
@@ -151,6 +154,29 @@ class LkAdvGeo @Inject() (
     resLogic.result(formFut, Ok)
   }
 
+  private def _getPricing(isSuFree: Boolean, mFormS: MFormS)(implicit request: IAdProdReq[_]): Future[MGetPriceResp] = {
+    bill2Util.maybeFreePricing(isSuFree) {
+      // Найти все узлы, принадлежащие текущему юзеру:
+      val freeTargetsFut = for {
+        ownedNodeIdsSeq <- mNodes.dynSearchIds {
+          nodesUtil.personNodesSearch(request.user.personIdOpt.get)
+        }
+      } yield {
+        val b = Set.newBuilder[String]
+        b ++= ownedNodeIdsSeq
+        b ++= request.producer.id
+        b.result()
+      }
+
+      for {
+        freeTargets <- freeTargetsFut
+        billCtx     <- advGeoBillUtil.advBillCtx(request.mad, mFormS, freeTargets)
+        pricing     <- advGeoBillUtil.getPricing(mFormS, billCtx)
+      } yield {
+        pricing
+      }
+    }
+  }
 
   /**
    * common-код экшенов GET'а и POST'а формы forAdTpl.
@@ -190,7 +216,7 @@ class LkAdvGeo @Inject() (
 
       // Считаем в фоне начальный ценник для размещения...
       val advPricingFut = formFut
-        .flatMap { advGeoBillUtil.getPricing(_, _isSuFree) }
+        .flatMap { _getPricing(_isSuFree, _) }
         .map { advFormUtil.prepareAdvPricing }
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
@@ -333,24 +359,26 @@ class LkAdvGeo @Inject() (
 
 
   /** Body parser для реквестов, содержащих внутри себя сериализованный инстанс MFormS. */
-  private def formPostBP = parse.raw(maxLength = 1024 * 10)
-    // Десериализовать тело реквеста...
-    .validate { rawBuf =>
+  private def formPostBP: BodyParser[MFormS] = {
+    parse.raw(maxLength = 1024 * 10)
+      // Десериализовать тело реквеста...
+      .validate { rawBuf =>
       lazy val logPrefix = "formPostBP:"
 
       rawBuf.asBytes()
         .toRight[Result]( EntityTooLarge("missing body") )
         .right.flatMap { bStr =>
-          try {
-            val bbuf = bStr.asByteBuffer
-            val mfs = PickleUtil.unpickle[MFormS](bbuf)
-            Right( mfs )
-          } catch { case ex: Throwable =>
-            LOGGER.error(s"$logPrefix unable to deserialize req.body", ex)
-            Left( BadRequest("invalid body") )
-          }
+        try {
+          val bbuf = bStr.asByteBuffer
+          val mfs = PickleUtil.unpickle[MFormS](bbuf)
+          Right( mfs )
+        } catch { case ex: Throwable =>
+          LOGGER.error(s"$logPrefix unable to deserialize req.body", ex)
+          Left( BadRequest("invalid body") )
         }
+      }
     }
+  }
 
 
   /**
@@ -372,7 +400,7 @@ class LkAdvGeo @Inject() (
         val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
         // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
-        val pricingFut = advGeoBillUtil.getPricing(mFormS, isSuFree)
+        val pricingFut = _getPricing(isSuFree, mFormS)
           .map { advFormUtil.prepareAdvPricing }
 
         for {

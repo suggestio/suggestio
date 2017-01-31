@@ -16,8 +16,10 @@ import io.suggest.model.geo.CircleGs
 import io.suggest.model.n2.node.MNode
 import models.adv.MAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
+import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
+import util.adv.AdvUtil
 import util.billing.Bill2Util
 import util.ble.BeaconsBilling
 
@@ -35,6 +37,7 @@ class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
   beaconsBilling                      : BeaconsBilling,
   ymdHelpersJvm                       : YmdHelpersJvm,
+  advUtil                             : AdvUtil,
   protected val mItems                : MItems,
   protected val mCommonDi             : ICommonDi
 )
@@ -57,6 +60,13 @@ class AdvGeoBillUtil @Inject() (
   }
 
   /**
+    * id узла, с которого надо брать посуточный тариф для размещения на карте.
+    * По идее, тут всегда узел CBCA.
+    */
+  private def GEO_TF_SRC_NODE_ID = bill2Util.CBCA_NODE_ID
+
+
+  /**
     * Посчитать мультипликатор стоимости на основе даты и радиуса размещения.
     *
     * @param circle Гео-круг, заданный юзером в форме георазмещения.
@@ -64,26 +74,51 @@ class AdvGeoBillUtil @Inject() (
     */
   def getPriceMult(circle: MGeoCircle): Double = {
     // Привести радиус на карте к множителю цены
-    val radKm = circle.radiusM / 1000   // метры -> км
+    val radKm = circle.radiusM / 1000d   // метры -> км
     radKm * radKm / 1.5
   }
 
 
   /** Сборка контекста для direct-биллинга поверх географии.
-    * from-ресиверы -- тарифы форсируются.
-    * to-ресиверы -- тарифы опциональный, могут лишь переопределять политику from-ресиверов.
+    *
+    * @param mad рекламная карточка.
+    * @param res Содержимое формы.
+    * @param freeNodeIds id узлов, которые доступны для бесплатного размещения.
+    * @return Фьючерс с контекстом биллинга.
     */
-  def advBillCtx(mad: MNode, res: MFormS): Future[MAdvBillCtx] = {
-    // Собираем id основных узлов. Пока именно на верхних узлах живут тарифы.
-    val adnIdsSet = res.rcvrsMap
-      .keysIterator
-      .map(_.head)
-      .toSet
+  def advBillCtx(mad: MNode, res: MFormS, freeNodeIds: Set[String]): Future[MAdvBillCtx] = {
+    // Собираем id всех интересующих узлов. Из этих узлов затем будут получены тарифы...
+    val rcvrIdsSet = {
+      val b = Set.newBuilder[String]
 
-    val rcvrsFut = mNodeCache.multiGet(adnIdsSet)
+      // Закинуть все id узлов прямого размещения.
+      if (res.rcvrsMap.nonEmpty) {
+        b ++= res.rcvrsMap
+          .keysIterator
+          // Выкинуть ресиверов, которые упоминаются среди бесплатных.
+          // Тогда, тарифы на них не будут получены, и система выставит им нулевые цены. TODO Что с валютой? Откуда взять нормальное значение оной?
+          .filter { rk =>
+            !rk.exists(freeNodeIds.contains)
+          }
+          // Собрать в кучу все id всех упомянутых узлов, дедублицировав их...
+          .flatten
+      }
 
-    ???
+      // Если активно георазмещение просто на карте, то надо добавить узел-источник геоценника:
+      if (res.radCircle.nonEmpty)
+        b += GEO_TF_SRC_NODE_ID
+
+      // Собрать итоговое множество id узлов для сборки карты тарифов.
+      b.result()
+    }
+
+    // Подготовить интервал размещения...
+    val ivl = MDateStartEnd(res.datePeriod.info)
+
+    // Передать краткие итоги работы в сборку.
+    advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
   }
+
 
   /**
     * Закинуть в корзину bill-v2.
@@ -140,7 +175,7 @@ class AdvGeoBillUtil @Inject() (
             orderId       = orderId,
             iType         = MItemTypes.GeoPlace,
             status        = status,
-            price         = getPricePlace(geoMult),
+            price         = getPricePlaceOms(geoMult),
             nodeId        = adId,
             dateStartOpt  = dtStartOpt,
             dateEndOpt    = dtEndOpt,
@@ -166,65 +201,97 @@ class AdvGeoBillUtil @Inject() (
 
   /**
     * Рассчет общей стоимости для результата маппинга формы.
+    * Для суперюзеров с бесплатным размещением этот метод НЕ должен вызываться вообще:
+    * метод игнорит состояние флага бесплатного размещения.
     *
-    * @param res Запрашиваемое юзером размещение.
-    * @return
+    * @param res Снимок состояния формы.
+    * @param abc Контекст биллинга для рассчёта ценника. См. [[advBillCtx()]].
+    * @return Фьючерс с данными прайсинга, пригодными для сериализации и отправки на клиент.
     */
-  def getPricing(res: MFormS): Future[MGetPriceResp] = {
-    val daysCount = bill2Util.getDaysCount( res.datePeriod.info )
+  def getPricing(res: MFormS, abc: MAdvBillCtx): Future[MGetPriceResp] = {
 
-    val geoPricesIter = res.radCircle
-      .iterator
-      .flatMap { rc =>
-        val geoMult = getPriceMult(rc) * daysCount
-        val p1 = _oneTagPrice(geoMult)
+    lazy val logPrefix = s"getPricing[${System.currentTimeMillis()}]:"
 
-        // Посчитать цены размещения для каждого тега.
-        var prices1 = List(
-          p1.withAmount(
-            p1.amount * res.tagsEdit.tagsExists.size
-          )
-        )
+    var pricesAcc: List[MPrice] = Nil
 
-        if (res.onMainScreen)
-          prices1 ::= getPricePlace(geoMult)
+    val tagsCount = res.tagsEdit.tagsExists.size
 
-        LOGGER.trace(s"computePricing(): $res => $prices1")
-        prices1
+    // Посчитать стоимость размещения указанных элементов (oms, теги) в гео-круге.
+    for (radCircle <- res.radCircle) {
+      var multAcc: List[Double] = Nil
+
+      // Посчитать стоимость данного гео-круга:
+      val circleGeoMult = getPriceMult(radCircle)
+
+      // Накинуть за гео-круг + главный экран:
+      if (res.onMainScreen) {
+        val omsMult = circleGeoMult * ON_MAIN_SCREEN_MULT
+        LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult")
+        multAcc ::= omsMult
       }
 
-    val prices1 = geoPricesIter.toSeq
-    val prices2 = MPrice.sumPricesByCurrency(prices1).toSeq
+      // Накинуть за гео-круг + теги
+      if (tagsCount > 0) {
+        val tagsCount = tagsCount
+        val tgsMult = circleGeoMult * tagsCount
+        LOGGER.trace(s"$logPrefix geo + $tagsCount tags => multAcc ::= $circleGeoMult * $tagsCount = $tgsMult" )
+        multAcc ::= tgsMult
+      }
+
+      // Сконвертить собранные мультипликаторы в цены.
+      if (multAcc.nonEmpty) {
+        val geoAllDaysPrice = advUtil.calculateAdvPriceOnRcvr(GEO_TF_SRC_NODE_ID, abc)
+        for (mult <- multAcc) {
+          val geoAllDaysPriceMulted = geoAllDaysPrice.withAmount(
+            geoAllDaysPrice.amount * mult
+          )
+          LOGGER.trace(s"$logPrefix mult=$mult * $geoAllDaysPrice => prices += $geoAllDaysPriceMulted")
+          pricesAcc ::= geoAllDaysPriceMulted
+        }
+      }
+    }
+
+    // Отработать ресиверы, если заданы.
+    if (res.rcvrsMap.nonEmpty) {
+      for {
+        (rcvrKey, rcvrProps) <- res.rcvrsMap
+        // TODO Отработать rcvrProps. Возможно, отмена размещения вместо создания.
+      } {
+        // Накинуть за ресивер
+        val rcvrPrice = advUtil.calculateAdvPriceOnRcvr( rcvrKey.last, abc )
+        val rcvrPriceOms = rcvrPrice.withAmount(
+          rcvrPrice.amount * ON_MAIN_SCREEN_MULT
+        )
+        LOGGER.trace(s"$logPrefix Rcvr ${rcvrKey.mkString(".")}: prices += $rcvrPriceOms")
+        pricesAcc ::= rcvrPriceOms
+
+        // Накинуть за ресивер + теги.
+        if (tagsCount > 0) {
+          val tagsPrice = rcvrPrice.withAmount(
+            rcvrPrice.amount * tagsCount
+          )
+          LOGGER.trace(s"$logPrefix Rcvr + $tagsCount tags: prices += $tagsPrice")
+          pricesAcc ::= tagsPrice
+        }
+      }
+    }
+
+    // TODO Просуммировать/причесать, и удалить страшный код ниже:
+    val prices2 = MPrice.sumPricesByCurrency(pricesAcc).toSeq
 
     val result = bill2Util.getAdvPricing( prices2 )
     Future.successful(result)
   }
 
 
-  def getPricing(res: MFormS, forceFree: Boolean): Future[MGetPriceResp] = {
-    if (forceFree)
-      bill2Util.zeroPricingFut
-    else
-      getPricing(res)
-  }
-
-  def getPricing(resOpt: Option[MFormS], forceFree: Boolean): Future[MGetPriceResp] = {
-    resOpt.fold {
-      bill2Util.zeroPricingFut
-    } { res =>
-      getPricing(res, forceFree)
-    }
-  }
-
-
 
   /** Базовый множитель цены. */
-  def PLACE_PRICE_MULT = 3.0
+  private def ON_MAIN_SCREEN_MULT = 3.0
 
 
-  private def getPricePlace(geoMult: Double): MPrice = {
+  private def getPricePlaceOms(geoMult: Double): MPrice = {
     bill2Util.zeroPrice.withAmount(
-      geoMult * PLACE_PRICE_MULT
+      geoMult * ON_MAIN_SCREEN_MULT
     )
   }
 

@@ -11,7 +11,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
-import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import models._
 import models.adv.MExtTargets
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
@@ -75,6 +75,21 @@ class NodesUtil @Inject() (
       NODE_CREATED_SUCCESS_RDR_AFTER
     )
   }
+
+
+  /** Собрать критерии поиска узлов, прямо принадлежащих текущему юзеру. */
+  def personNodesSearch(personId: String, limit1: Int = 100): MNodeSearch = {
+    new MNodeSearchDfltImpl {
+      override def outEdges = Seq(
+        Criteria(
+          nodeIds     = personId :: Nil,
+          predicates  = MPredicates.OwnedBy :: Nil
+        )
+      )
+      override def limit      = limit1
+    }
+  }
+
 
   /**
     * Создать новый инстанс узла для юзера без сохранения узла в хранилище.

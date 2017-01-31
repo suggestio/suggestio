@@ -887,6 +887,18 @@ class Bill2Util @Inject() (
       .headOption
   }
 
+
+  /**
+    * У админов есть бесплатное размещение.
+    * Код обработки бесплатного размещения вынесен сюда.
+    */
+  def maybeFreePricing(forceFree: Boolean)(f: => Future[MGetPriceResp]): Future[MGetPriceResp] = {
+    if (forceFree)
+      zeroPricingFut
+    else
+      f
+  }
+
 }
 
 

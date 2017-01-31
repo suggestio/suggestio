@@ -155,7 +155,10 @@ class AdvDirectBilling @Inject() (
                     rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx): Iterator[MItem] = {
     val bmc = advUtil.getAdModulesCount(mad)
 
-    for (adv <- advs.toIterator if adv.advertise) yield {
+    for {
+      adv <- advs.toIterator
+      if adv.advertise
+    } yield {
       val abc = MAdvBillCtx(bmc, mcalsCtx, rcvrTfs, adv)
       MItem(
         orderId       = orderId,
