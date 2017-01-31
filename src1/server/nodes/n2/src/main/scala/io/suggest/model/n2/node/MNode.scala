@@ -42,7 +42,7 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 
 @Singleton
-class MNodes @Inject() (
+final class MNodes @Inject() (
   override val mCommonDi: MEsModelDiVal
 )
   extends EsModelStatic
@@ -55,7 +55,7 @@ class MNodes @Inject() (
   import mCommonDi._
 
   override type T = MNode
-  override val ES_TYPE_NAME = "n2"
+  override def ES_TYPE_NAME = MNodeFields.ES_TYPE_NAME
 
   def Fields = MNodeFields
 

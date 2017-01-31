@@ -1,5 +1,6 @@
 package models.adv
 
+import models.MDailyTf
 import models.mcal.ICalsCtx
 import models.mdt.IDateStartEnd
 
@@ -12,6 +13,8 @@ import models.mdt.IDateStartEnd
   * Использутся на стадии формы для рассчёта стоимости в качестве данных для рассчёта стоимости по тарифу.
   */
 trait IAdvBillCtx {
+
+  def tfsMap              : Map[String, MDailyTf]
 
   /** Кол-во блоков карточки (площадь карточки). */
   def blockModulesCount   : Int
@@ -27,8 +30,9 @@ trait IAdvBillCtx {
 
 /** Дефолтовая реализация контейнера [[IAdvBillCtx]]. */
 case class MAdvBillCtx(
-                        blockModulesCount   : Int,
-                        mcalsCtx            : ICalsCtx,
-                        ivl                 : IDateStartEnd
+                        override val blockModulesCount   : Int,
+                        override val mcalsCtx            : ICalsCtx,
+                        override val tfsMap              : Map[String, MDailyTf],
+                        override val ivl                 : IDateStartEnd
                       )
   extends IAdvBillCtx

@@ -90,7 +90,7 @@ class TfDailyUtil @Inject()(
   def getNodesTfsMap(nodes: TraversableOnce[MNode]): Future[Map[String, MDailyTf]] = {
     for {
       dailyTfsOpts  <- Future.traverse(nodes) { mnode =>
-        for (tf <- nodeTf(mnode)) yield {
+        for (tf <- forcedNodeTf(mnode)) yield {
           mnode.id.get -> tf
         }
       }
@@ -108,9 +108,17 @@ class TfDailyUtil @Inject()(
       .toSet
   }
 
-  /** Вернуть тариф размещения для узла. */
-  def nodeTf(mnode: MNode): Future[MDailyTf] = {
-    nodeTf( mnode.billing.tariffs.daily )
+  /** Вернуть тариф узла, если таковой имеется. */
+  def nodeTfOpt(mnode: MNode): Option[MDailyTf] = {
+    mnode.billing.tariffs.daily
+  }
+
+  /**
+    * Вернуть тариф узла для размещения на узле.
+    * Если тариф на узле отсутствует, то будет использован дефолтовый тариф.
+    */
+  def forcedNodeTf(mnode: MNode): Future[MDailyTf] = {
+    forcedNodeTf( nodeTfOpt(mnode) )
   }
 
   /**
@@ -119,7 +127,7 @@ class TfDailyUtil @Inject()(
    * @param nodeTfOpt Тариф узла, если есть.
    * @return Фьючерс с тарифом.
    */
-  def nodeTf(nodeTfOpt: Option[MDailyTf]): Future[MDailyTf] = {
+  def forcedNodeTf(nodeTfOpt: Option[MDailyTf]): Future[MDailyTf] = {
     // Вычисляем текущий реальный тариф узла.
     FutureUtil.opt2future(nodeTfOpt) {
       for (cbcaNodeOpt <- mNodeCache.getById( bill2Util.CBCA_NODE_ID )) yield {

@@ -6,9 +6,9 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 05.12.14 22:34
- * Description: Поисковые аддоны для отрицательной фильтрации es-документов по id.
+ * Description: Отрицательная фильтрация es-документов по их _id.
  */
-trait WithoutIds extends DynSearchArgs {
+trait WithoutIds extends DynSearchArgs with IEsTypes {
 
   /** Отбрасывать документы, имеющие указанные id'шники. */
   def withoutIds: Seq[String]
@@ -22,7 +22,8 @@ trait WithoutIds extends DynSearchArgs {
       QueryBuilders.boolQuery()
         .must(query3)
         .mustNot {
-          QueryBuilders.idsQuery(withoutIds: _*)
+          QueryBuilders.idsQuery(esTypes: _*)
+            .ids(withoutIds: _*)
         }
     } else {
       query3

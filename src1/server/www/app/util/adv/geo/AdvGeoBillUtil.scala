@@ -1,6 +1,5 @@
 package util.adv.geo
 
-import java.time.temporal.ChronoUnit
 import java.time.{LocalDate, ZoneOffset}
 
 import akka.stream.scaladsl.Source
@@ -14,6 +13,8 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.geo.CircleGs
+import io.suggest.model.n2.node.MNode
+import models.adv.MAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -28,7 +29,7 @@ import scala.concurrent.Future
   * Created: 04.12.15 13:43
   * Description: Утиль для биллинга размещений прямо на гео-карте.
   *
-  *
+  * Через год сюда приехал биллинг ресиверов в попапах.
   */
 class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
@@ -67,6 +68,23 @@ class AdvGeoBillUtil @Inject() (
     radKm * radKm / 1.5
   }
 
+
+  /** Сборка контекста для direct-биллинга поверх географии.
+    * from-ресиверы -- тарифы форсируются.
+    * to-ресиверы -- тарифы опциональный, могут лишь переопределять политику from-ресиверов.
+    */
+  def advBillCtx(mad: MNode, res: MFormS): Future[MAdvBillCtx] = {
+    // Собираем id основных узлов. Пока именно на верхних узлах живут тарифы.
+    val adnIdsSet = res.rcvrsMap
+      .keysIterator
+      .map(_.head)
+      .toSet
+
+    val rcvrsFut = mNodeCache.multiGet(adnIdsSet)
+
+    ???
+  }
+
   /**
     * Закинуть в корзину bill-v2.
     *
@@ -79,9 +97,8 @@ class AdvGeoBillUtil @Inject() (
   def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: MFormS, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
     val ymdPeriod = res.datePeriod.info
-
     val dateStart = ymdPeriod.dateStart[LocalDate]
-    val dateEnd = ymdPeriod.dateEnd[LocalDate]
+    val dateEnd   = ymdPeriod.dateEnd[LocalDate]
 
     // Инновация: берём временную зону прямо из браузера!
     val tzOffset = ZoneOffset.ofTotalSeconds( res.tzOffsetMinutes * 60 )
@@ -342,6 +359,7 @@ class AdvGeoBillUtil @Inject() (
     * @return Фьючерс с множеством id'шников всех как-то подчиненных узлов.
     */
   def findActiveSubNodeIdsOfRcvr(nodeId: String): Future[Set[String]] = {
+    // TODO Можно рекурсивно искать просто подчинённые enabled-ресиверы без использования БД биллинга?
     // Запустить сбор маячков, активированных на узле.
     Source.fromPublisher {
       slick.db.stream {

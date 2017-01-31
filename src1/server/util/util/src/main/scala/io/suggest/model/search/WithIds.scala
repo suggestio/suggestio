@@ -6,9 +6,9 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 08.12.14 10:42
- * Description: Поиск/фильтрация по списку значений _id.
+ * Description: Поиск/фильтрация по списку допустимых значений _id.
  */
-trait WithIds extends DynSearchArgs {
+trait WithIds extends DynSearchArgs with IEsTypes {
 
   /** Искать только результаты, имеющие указанные _id. */
   def withIds: Seq[String]
@@ -21,15 +21,14 @@ trait WithIds extends DynSearchArgs {
       qbOpt0
 
     } else {
+      val idf = QueryBuilders.idsQuery(esTypes: _*)
+        .ids( _withIds: _* )
       qbOpt0.map { qb =>
-        val idf = QueryBuilders.idsQuery(_withIds: _*)
         QueryBuilders.boolQuery()
           .must( qb )
           .filter( idf )
       }.orElse {
-        val qb = QueryBuilders.idsQuery()
-          .ids(_withIds: _*)
-        Some(qb)
+        Some(idf)
       }
     }
   }

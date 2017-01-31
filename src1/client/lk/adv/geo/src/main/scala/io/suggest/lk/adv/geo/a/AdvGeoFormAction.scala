@@ -1,8 +1,7 @@
 package io.suggest.lk.adv.geo.a
 
-import io.suggest.adv.geo.{MGeoAdvExistPopupResp, MRcvrPopupResp}
-import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.bill.MGetPriceResp
+import io.suggest.adv.geo.MGeoAdvExistPopupResp
+import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.spa.DAction

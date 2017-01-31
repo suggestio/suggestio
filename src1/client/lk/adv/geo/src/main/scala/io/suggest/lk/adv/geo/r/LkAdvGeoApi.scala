@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.r
 
-import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp, MRcvrPopupResp}
+import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
+import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes

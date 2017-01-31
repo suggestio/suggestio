@@ -4,6 +4,7 @@ import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
 import io.suggest.model.n2.extra.search._
 import io.suggest.model.n2.geo.search._
+import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
 import io.suggest.model.search._
@@ -37,6 +38,9 @@ trait MNodeSearch
   with Offset
   with DateCreatedSort
   with HasGeoPoint
+{
+  override final def esTypes = MNodeFields.ES_TYPE_NAMES
+}
 
 /** Реализация [[MNodeSearch]] для упрошения жизни компилятору. */
 abstract class MNodeSearchImpl

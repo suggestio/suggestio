@@ -9,6 +9,7 @@ import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.adv.geo._
+import io.suggest.adv.rcvr._
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
@@ -40,6 +41,8 @@ import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
+import io.suggest.model.n2.node.MNodes
+import models.MNode
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -56,10 +59,11 @@ class LkAdvGeo @Inject() (
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   advGeoLocUtil                   : AdvGeoLocUtil,
-  advGeoMapUtil                   : AdvGeoMapUtil,
+  override val advGeoMapUtil      : AdvGeoMapUtil,
   streamsUtil                     : StreamsUtil,
   pickleSrvUtil                   : PickleSrvUtil,
   ymdHelpersJvm                   : YmdHelpersJvm,
+  override val mNodes             : MNodes,
   override val mItems             : MItems,
   override val mOrders            : MOrders,
   override val tagSearchUtil      : LkTagsSearchUtil,
@@ -81,7 +85,6 @@ class LkAdvGeo @Inject() (
 
   // Сериализация:
   import pickleSrvUtil.Base64ByteBufEncoder
-
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
   private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[MGeoPoint] = {
@@ -248,6 +251,23 @@ class LkAdvGeo @Inject() (
       {mFormS =>
         LOGGER.trace(s"$logPrefix Binded: $mFormS")
 
+        val mFromS2Fut = if (mFormS.rcvrsMap.nonEmpty) {
+          for {
+            keys2 <- advGeoMapUtil.checkRcvrs(mFormS.rcvrsMap.keys)
+          } yield {
+            val rcvrsMap2: RcvrsMap_t = keys2
+              .iterator
+              .map { key2 =>
+                key2 -> mFormS.rcvrsMap(key2)
+              }
+              .toMap
+            LOGGER.trace(s"$logPrefix Rcvrs map updated:\n OLD = ${mFormS.rcvrsMap}\n NEW = $rcvrsMap2")
+            mFormS.withRcvrsMap(rcvrsMap2)
+          }
+        } else {
+          Future.successful(mFormS)
+        }
+
         val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
         val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
 
@@ -260,8 +280,11 @@ class LkAdvGeo @Inject() (
 
           producerId  = request.producer.id.get
 
+          // Дождаться окончания апдейтов в форме.
+          mFormS2     <- mFromS2Fut
+
           // Произвести добавление товаров в корзину.
-          itemsAdded <- {
+          (itemsCart, itemsAdded) <- {
             // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
             val dbAction = for {
               // Найти/создать корзину
@@ -275,11 +298,11 @@ class LkAdvGeo @Inject() (
                 orderId     = cart.id.get,
                 producerId  = producerId,
                 adId        = adId,
-                res         = mFormS,
+                res         = mFormS2,
                 status      = status
               )
             } yield {
-              addRes
+              (cart, addRes)
             }
             // Запустить экшен добавления в корзину на исполнение.
             import slick.profile.api._
@@ -287,6 +310,7 @@ class LkAdvGeo @Inject() (
           }
 
         } yield {
+          LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.mc.id.orNull} with item status '$status'.")
           val rCall = routes.LkAdvGeo.forAd(adId)
           val retCall = if (!isSuFree) {
             routes.LkBill2.cart(producerId, r = Some(rCall.url))
@@ -371,7 +395,8 @@ class LkAdvGeo @Inject() (
     */
   def advRcvrsMap(adId: MEsUuId) = CanAdvertiseAdPost(adId).async { implicit request =>
     val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
-      advGeoMapUtil.rcvrNodesMap()
+      val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
+      advGeoMapUtil.rcvrNodesMap( msearch )
     }
     // Сериализовать поток данных в JSON:
     val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(
@@ -415,6 +440,7 @@ class LkAdvGeo @Inject() (
       .as( withCharset(JSON) )
       .withHeaders(CACHE_10)
   }
+
 
   /**
     * Экшен получения данных для рендера попапа по размещениям.
@@ -515,10 +541,17 @@ class LkAdvGeo @Inject() (
   def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
   private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = CanThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
+    import request.{mnode => rcvrNode}
+
     // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
     val subNodesIdsFut = advGeoBillUtil.findActiveSubNodeIdsOfRcvr(rcvrNodeId)
 
     lazy val logPrefix = s"geoNodePopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
+
+    // Нужно получить все суб-узлы из кэша. Текущий узел традиционно уже есть в request'е.
+    val subNodesFut = subNodesIdsFut.flatMap { subNodesIds =>
+      mNodeCache.multiGet( subNodesIds )
+    }
 
     // Закинуть во множество подузлов id текущего ресивера.
     val allNodesIdsFut = for (subNodesIds <- subNodesIdsFut) yield {
@@ -526,25 +559,18 @@ class LkAdvGeo @Inject() (
       subNodesIds + rcvrNodeId
     }
 
-    // Нужно получить все узлы из кэша.
-    val nodesFut = allNodesIdsFut.flatMap { allNodeIds =>
-      mNodeCache.multiGet( allNodeIds )
-    }
-
     // Сгруппировать под-узлы по типам узлов, внеся туда ещё и текущий ресивер.
-    val nodesGrpsFut = for (subNodes <- nodesFut) yield {
+    val subNodesGrpsFut = for {
+      subNodes <- subNodesFut
+    } yield {
       subNodes
         // Сгруппировать узлы по их типам. Для текущего узла тип будет None. Тогда он отрендерится без заголовка и в самом начале списка узлов.
         .groupBy { mnode =>
-          if (mnode.id.contains(rcvrNodeId)) {
-            None
-          } else {
-            Some(mnode.common.ntype)
-          }
+          mnode.common.ntype
         }
         .toSeq
         // Очень кривая сортировка, но для наших нужд и такой пока достаточно.
-        .sortBy( _._1.map(_.id) )
+        .sortBy( _._1.id )
     }
 
     // Запустить получение списка всех текущих (черновики + busy) размещений на узле и его маячках из биллинга.
@@ -614,26 +640,49 @@ class LkAdvGeo @Inject() (
       intervalsMap        <- intervalsMapFut
       advRcvrIdsActual    <- advRcvrIdsActualFut
       advRcvrIdsBusy      <- advRcvrIdsBusyFut
-      nodesGrps           <- nodesGrpsFut
+      subNodesGrps        <- subNodesGrpsFut
     } yield {
 
+      def __mkCheckBoxMeta(mnode: MNode): MRcvrPopupMeta = {
+        val nodeId = mnode.id.get
+        MRcvrPopupMeta(
+          isCreate    = !advRcvrIdsBusy.contains( nodeId ),
+          checked     = advRcvrIdsActual.contains( nodeId ),
+          name        = mnode.guessDisplayNameOrId.getOrElse("???"),
+          isOnlineNow = nodesHasOnline.contains( nodeId ),
+          dateRange   = intervalsMap.getOrElse( nodeId , MRangeYmdOpt.empty )
+        )
+      }
+
       val resp = MRcvrPopupResp(
-        groups = for (g <- nodesGrps) yield {
-          MRcvrPopupGroup(
-            groupId = g._1.map(_.strId),
-            nameOpt = for (ntype <- g._1) yield ctx.messages(ntype.plural),
-            nodes   = for (n <- g._2; nodeId <- n.id) yield {
-              MRcvrPopupNode(
-                nodeId      = nodeId,
-                isCreate    = !advRcvrIdsBusy.contains( nodeId ),
-                checked     = advRcvrIdsActual.contains( nodeId ),
-                nameOpt     = n.guessDisplayNameOrId,
-                isOnlineNow = nodesHasOnline.contains( nodeId ),
-                dateRange   = intervalsMap.getOrElse( nodeId , MRangeYmdOpt.empty )
-              )
-            }
-          )
-        }
+        node = Some(MRcvrPopupNode(
+          nodeId    = rcvrNodeId,
+
+          // Чекбокс у данного узла можно отображать, если он является узлом-ресивером.
+          // isReceiver здесь пока дублирует такую же проверку в ACL. Посмотрим, как дальше пойдёт...
+          checkbox  = for {
+            adn <- rcvrNode.extras.adn
+            if adn.isReceiver
+          } yield {
+            __mkCheckBoxMeta( rcvrNode )
+          },
+
+          // Под-группы просто строим из под-узлов.
+          subGroups = for {
+            (ntype, nodes) <- subNodesGrps
+          } yield {
+            MRcvrPopupGroup(
+              title = Some( ctx.messages( ntype.plural ) ),
+              nodes = for (n <- nodes) yield {
+                MRcvrPopupNode(
+                  nodeId    = n.id.get,
+                  checkbox  = Some( __mkCheckBoxMeta(n) ),
+                  subGroups = Nil
+                )
+              }
+            )
+          }
+        ))
       )
 
       Ok( ByteString( PickleUtil.pickle(resp) ) )

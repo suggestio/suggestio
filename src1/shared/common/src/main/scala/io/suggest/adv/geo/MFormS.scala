@@ -56,4 +56,8 @@ case class MFormS(
                    datePeriod       : MAdvPeriod,
                    radCircle        : Option[MGeoCircle],
                    tzOffsetMinutes  : Int
-                 )
+                 ) {
+
+  def withRcvrsMap(rcvrsMap2: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap2)
+
+}

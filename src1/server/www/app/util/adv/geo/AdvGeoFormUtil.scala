@@ -10,14 +10,10 @@ import io.suggest.dt._
 import io.suggest.dt.interval.MRangeYmd
 import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import io.suggest.model.geo.{CircleGs, GeoShape}
-import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.pick.PickleSrvUtil
 import models.adv.geo.cur
 import models.adv.geo.cur._
-import models.adv.geo.mapf.MRcvrBindedInfo
 import models.mproj.ICommonDi
-import play.api.data.Forms._
-import play.api.data.Mapping
 import play.extras.geojson.{Feature, LatLng}
 import util.FormUtil
 import util.adv.AdvFormUtil
@@ -67,24 +63,6 @@ class AdvGeoFormUtil @Inject() (
   }
 
 
-  // Form-утиль для формы в попапах ресиверов.
-
-  /** Маппинг формы для модели [[models.adv.geo.mapf.MRcvrBindedInfo]]. */
-  def rcvrBindedInfoM: Mapping[MRcvrBindedInfo] = {
-    import io.suggest.adv.geo.AdvGeoConstants.AdnNodes.Req._
-    mapping(
-      // 2016.dec.13: Ресивер-источкик пока бывает только на базе сгенеренного uuid b64 id.
-      FROM_FN       -> FormUtil.esIdM,
-      // 2016.dec.13: Суб-ресивер может быть любым, в частности маячком с длинным id.
-      TO_FN         -> FormUtil.esAnyNodeIdM,
-      GROUP_ID_FN   -> MNodeTypes.mappingOptM,
-      VALUE_FN      -> boolean
-    )
-    { MRcvrBindedInfo.apply }
-    { MRcvrBindedInfo.unapply }
-  }
-
-
   // Экспериментируем с валидацией полученного из формы инстанса MFormS.
   // TODO Если такие валидаторы приживутся, то нужно будет распихать их по моделям.
 
@@ -121,12 +99,12 @@ class AdvGeoFormUtil @Inject() (
     advPeriod.info is valid
   }
 
+  val rcvrIdV = validator[String] { esId =>
+    FormUtil.isEsIdValid(esId) should equalTo(true)
+  }
+
   implicit val rcvrKeyV = validator[RcvrKey] { rk =>
-    FormUtil.isEsIdValid( rk.from ) is equalTo(true)
-    FormUtil.isEsIdValid( rk.to ) is equalTo(true)
-    // TODO Если groupId не задан, то from должен быть равен to.
-    //(rk.groupId is empty) and (rk.from is equalTo(rk.to))
-    // TODO Провалидировать опциональный groupId, чтобы соответствовал допустимым значениями.
+    rk.each.is( valid(rcvrIdV) )
   }
 
   implicit val rcvrsMapV = validator[RcvrsMap_t] { rm =>

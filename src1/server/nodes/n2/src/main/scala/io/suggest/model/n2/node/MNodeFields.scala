@@ -20,6 +20,9 @@ import io.suggest.ym.model.NodeGeoLevel
 
 object MNodeFields {
 
+  val ES_TYPE_NAME = "n2"
+  def ES_TYPE_NAMES = ES_TYPE_NAME :: Nil
+
   /** Абсолютные имена ES-полей в .common */
   object Common extends PrefixedFn {
     def COMMON_FN = FieldNamesL1.Common.name

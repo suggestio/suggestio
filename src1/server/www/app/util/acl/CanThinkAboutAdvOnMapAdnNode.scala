@@ -1,11 +1,11 @@
 package util.acl
 
 import controllers.SioController
-import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
 import models.req.{MAdProdRcvrReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.PlayMacroLogsI
+import util.adv.geo.IAdvGeoMapUtilDi
 import util.di.ICanAdvAdUtil
 
 import scala.concurrent.Future
@@ -23,6 +23,8 @@ trait CanThinkAboutAdvOnMapAdnNode
   with OnUnauthNodeCtl
   with PlayMacroLogsI
   with ICanAdvAdUtil
+  with IMNodes
+  with IAdvGeoMapUtilDi
 {
 
   import mCommonDi._
@@ -50,31 +52,20 @@ trait CanThinkAboutAdvOnMapAdnNode
 
       } { personId =>
         // Юзер залогинен. Сразу же собираем все параллельные задачи...
-        // НЕ используем multiget, т.к. очень вероятна ситуация, что хотя бы один узел уже в кэше.
         val madOptFut   = mNodeCache.getByIdType(adId,   MNodeTypes.Ad)
-        val nodeOptFut  = mNodeCache.getByIdType(nodeId, MNodeTypes.AdnNode)
+
+        // Ищем целевой узел, проверяя права размещения на узле прямо в рамках ES-запроса:
+        val nodeOptFut = mNodes.dynSearchOne(
+          advGeoMapUtil.onMapRcvrsSearch(
+            limit1      = 1,
+            onlyWithIds = nodeId :: Nil
+          )
+        )
 
         // Подготовить синхронные данные:
         val user = mSioUsers(personIdOpt)
         val reqBlank = MReq(request, user)
         lazy val logPrefix = s"${getClass.getSimpleName}[${reqBlank.remoteAddress}]:"
-
-        // Для снижения уровней вложенности, узел проверяем отдельно от карточки.
-        val nodeCheckedOptFut = for (nodeOpt <- nodeOptFut) yield {
-          val nodeOpt2 = nodeOpt.filter { mnode =>
-            // Запрошенный узел существует. Проверить, размещён ли узел на карте adn-map
-            mnode.edges
-              .withPredicateIter( MPredicates.AdnMap )
-              .nonEmpty
-          }
-          // Логгировать возможный результат.
-          if (nodeOpt.isEmpty) {
-            LOGGER.warn(s"$logPrefix Node $nodeId missing.")
-          } else if (nodeOpt2.isEmpty) {
-            LOGGER.warn(s"$logPrefix Node $nodeId do not have adn-map edge.")
-          }
-          nodeOpt2
-        }
 
         // Когда придёт ответ от БД по запрошенной карточке...
         madOptFut.flatMap {
@@ -82,7 +73,7 @@ trait CanThinkAboutAdvOnMapAdnNode
             canAdvAdUtil.maybeAllowed(mad, reqBlank).flatMap {
               // Есть карточка, проверка прав на неё ок.
               case Some(req1) =>
-                nodeCheckedOptFut.flatMap {
+                nodeOptFut.flatMap {
                   // Всё ок и с узлом. Запускаем экшен.
                   case Some(mnode) =>
                     val req2 = MAdProdRcvrReq(

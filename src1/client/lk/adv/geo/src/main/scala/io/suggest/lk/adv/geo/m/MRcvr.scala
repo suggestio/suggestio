@@ -2,8 +2,8 @@ package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.adv.geo.{MRcvrPopupResp, RcvrsMap_t}
-import io.suggest.adv.rcvr.MRcvrPopupS
+import io.suggest.adv.geo.RcvrsMap_t
+import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
 import io.suggest.sjs.leaflet.marker.Marker
 
 import scala.scalajs.js
@@ -40,7 +40,7 @@ object MRcvr {
 case class MRcvr(
                   popupResp   : Pot[MRcvrPopupResp]     = Pot.empty,
                   markers     : Pot[js.Array[Marker]]   = Pot.empty,
-                  popupState  : Option[MRcvrPopupS] = None,
+                  popupState  : Option[MRcvrPopupS]     = None,
                   rcvrsMap    : RcvrsMap_t              = Map.empty
 ) {
 

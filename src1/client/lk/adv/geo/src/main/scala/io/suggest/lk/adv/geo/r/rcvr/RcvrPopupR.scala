@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 
 import diode.react.ModelProxy
 import diode.react.ReactPot._
-import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.adv.rcvr.{IRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
@@ -44,7 +44,96 @@ object RcvrPopupR {
     def render(props: Props): ReactElement = {
       val v = props()
 
+      // Погружаемся в состояние попапа ресивера, если оно задано...
       for (state <- v.popupState) yield {
+
+        // Функция для рендера узла и его под-групп. Рекурсивна, т.к. в группах тоже могут быть узлы.
+        // node -- узел для рендера
+        // parentRcvrKeyRev обратный rcvrKey родительского узла или Nil для рендера top-level узла.
+        def __renderNode(node: IRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): ReactElement = {
+          val rcvrKeyRev = node.nodeId :: parentRcvrKeyRev
+          val rcvrKey = rcvrKeyRev.reverse
+
+          <.div(
+            ^.key := node.nodeId,
+
+            // Рендер галочки текущего узла, если она задана.
+            for (n <- node.checkbox) yield {
+              <.div(
+                //^.key     := rcvrKey.mkString("."),
+                ^.`class` := Css.Lk.LK_FIELD,
+
+                if (n.dateRange.nonEmpty) {
+                  // Есть какая-то инфа по текущему размещению на данном узле.
+                  // TODO Пока что рендерится неактивный чекбокс. Когда на сервере будет поддержка отмены размещений, то надо удалить эту ветвь if, оставив только тело else.
+                  <.label(
+                    ^.classSet1(
+                      Css.Lk.LK_FIELD_NAME,
+                      Css.Colors.GREEN -> true
+                    ),
+                    <.input(
+                      ^.`type`   := "checkbox",
+                      ^.checked  := true,
+                      ^.disabled := true
+                    ),
+                    <.span,
+
+                    n.name,
+
+                    HtmlConstants.SPACE,
+                    RangeYmdR(
+                      RangeYmdR.Props(
+                        capFirst    = true,
+                        rangeYmdOpt = n.dateRange,
+                        Messages    = Messages
+                      )
+                    )
+                  )
+                } else {
+                  // Нет текущего размещения. Рендерить активный рабочий чекбокс.
+                  val checked = v.rcvrsMap.getOrElse(rcvrKey, n.checked)
+
+                  <.label(
+                    ^.classSet1(
+                      Css.Lk.LK_FIELD_NAME,
+                      Css.Colors.RED -> (!checked && !n.isCreate),
+                      Css.Colors.GREEN -> (checked && n.isCreate)
+                    ),
+                    <.input(
+                      ^.`type` := "checkbox",
+                      ^.checked := checked,
+                      ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
+                    ),
+                    <.span,
+                    n.name
+                  )
+                }
+
+              )
+            },
+
+            // Рендер подгрупп узла
+            for {
+              (subGrp, i) <- node.subGroups.iterator.zipWithIndex
+            } yield {
+              <.div(
+                ^.key := subGrp.title.getOrElse(i.toString),
+
+                // Заголовок текущей группы, если требуется...
+                for (grpTitle <- subGrp.title) yield {
+                  <.h3( grpTitle )
+                },
+
+                // Рендер под-узлов данной группы узлов.
+                for (subNode <- subGrp.nodes) yield {
+                  __renderNode(subNode, rcvrKeyRev)
+                }
+              )
+            }
+
+          )
+        }
+
         PopupR(
           position = LkAdvGeoFormUtil.geoPoint2LatLng( state.latLng )
         )(
@@ -53,75 +142,11 @@ object RcvrPopupR {
               Messages("Please.wait")
             },
             v.popupResp.renderReady { resp =>
-              for (g <- resp.groups.iterator) yield {
-                // Значение key не суть важно, просто оно должно быть здесь.
-                val groupId = g.groupId.getOrElse("0")
-                <.div(
-                  ^.key := groupId,
-                  for (gname <- g.nameOpt) yield {
-                    <.h3(gname)
-                  },
-                  for (n <- g.nodes.iterator) yield {
-                    val rcvrKey = RcvrKey(
-                      from = state.nodeId,
-                      to = n.nodeId,
-                      groupId = g.groupId
-                    )
-                    val name = n.nameOpt.getOrElse[String]("???")
-
-                    <.div(
-                      ^.key := rcvrKey.toString,
-                      ^.`class` := Css.Lk.LK_FIELD,
-
-                      if (n.dateRange.nonEmpty) {
-                        // Есть какая-то инфа по текущему размещению на данном узле.
-                        <.label(
-                          ^.classSet1(
-                            Css.Lk.LK_FIELD_NAME,
-                            Css.Colors.GREEN -> true
-                          ),
-                          <.input(
-                            ^.`type`   := "checkbox",
-                            ^.checked  := true,
-                            ^.disabled := true
-                          ),
-                          <.span,
-
-                          name,
-
-                          HtmlConstants.SPACE,
-                          RangeYmdR(
-                            RangeYmdR.Props(
-                              capFirst    = true,
-                              rangeYmdOpt = n.dateRange,
-                              Messages    = Messages
-                            )
-                          )
-                        )
-                      } else {
-                        // Нет текущего размещения. Рендерить активный рабочий чекбокс.
-                        val checked = v.rcvrsMap.getOrElse(rcvrKey, n.checked)
-
-                        <.label(
-                          ^.classSet1(
-                            Css.Lk.LK_FIELD_NAME,
-                            Css.Colors.RED -> (!checked && !n.isCreate),
-                            Css.Colors.GREEN -> (checked && n.isCreate)
-                          ),
-                          <.input(
-                            ^.`type` := "checkbox",
-                            ^.checked := checked,
-                            ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
-                          ),
-                          <.span,
-                          name
-                        )
-                      }
-
-                    )
-                  }   // n in g.nodes
-                )
-              }       // g in groups
+              <.div(
+                for (topNode <- resp.node) yield {
+                  __renderNode(topNode)
+                }
+              )
             }
           )           // Popup div
         )

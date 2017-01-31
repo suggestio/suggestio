@@ -4,7 +4,6 @@ import java.time.{DayOfWeek, LocalDate}
 
 import com.google.inject.Inject
 import io.suggest.bill.MPrice
-import io.suggest.model.n2.bill.tariff.daily.ITfClauses
 import models.MNode
 import models.adv.MAdvBillCtx
 import models.blk.{BlockHeights, BlockMeta, BlockWidths}
@@ -71,7 +70,11 @@ class AdvUtil @Inject() (
    *
    * @return
    */
-  def calculateAdvPrice(tf: ITfClauses, abc: MAdvBillCtx): MPrice = {
+  def calculateAdvPriceOnRcvr(rcvrId: String, abc: MAdvBillCtx): MPrice = {
+
+    // Извлечь подходящий тариф из карты тарифов узлов.
+    val tf = abc.tfsMap(rcvrId)
+
     // Инициализация логгирования
     lazy val logPrefix = s"calculateAdvPrice(${System.currentTimeMillis}):"
     LOGGER.trace(s"$logPrefix abc = $abc")
