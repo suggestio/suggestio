@@ -32,6 +32,10 @@ trait IAdvBillCtx {
   /** Упрощённый доступ к id рекламной карточки. */
   def adId = mad.id.get
 
+  override def toString: String = {
+    s"${getClass.getSimpleName}(${tfsMap.size}tfs,bmc=$blockModulesCount,$mcalsCtx,mad#${mad.id.orNull})"
+  }
+
 }
 
 

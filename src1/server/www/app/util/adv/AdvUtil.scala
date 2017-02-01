@@ -7,6 +7,7 @@ import io.suggest.bill.{MCurrencies, MPrice}
 import models.MNode
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.blk.{BlockHeights, BlockMeta, BlockWidths}
+import models.mcal.MCalsCtx
 import models.mdt.IDateStartEnd
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
@@ -75,7 +76,7 @@ class AdvUtil @Inject() (
    * @return Стоимость размещения.
    */
   def calculateAdvPriceOnRcvr(rcvrId: String, abc: IAdvBillCtx): MPrice = {
-    lazy val logPrefix = s"calculateAdvPrice(${System.currentTimeMillis}):"
+    lazy val logPrefix = s"calculateAdvPrice($rcvrId)[${System.currentTimeMillis}]:"
 
     // Извлечь подходящий тариф из карты тарифов узлов.
     abc.tfsMap.get(rcvrId).fold[MPrice] {
@@ -86,7 +87,7 @@ class AdvUtil @Inject() (
 
     } { tf =>
 
-      LOGGER.trace(s"$logPrefix abc = $abc")
+      LOGGER.trace(s"$logPrefix tf = $tf")
 
       val dateStart = abc.ivl.dateStart
       val dateEnd = abc.ivl.dateEnd
@@ -195,6 +196,19 @@ class AdvUtil @Inject() (
         mad       = mad
       )
     }
+  }
+
+
+  /** Контекст для бесплатного размещения. */
+  def freeRcvrBillCtx(mad: MNode, ivl: IDateStartEnd): MAdvBillCtx = {
+    val bmc = getAdModulesCount(mad)
+    MAdvBillCtx(
+      blockModulesCount = bmc,
+      mcalsCtx          = MCalsCtx.empty,
+      tfsMap            = Map.empty,
+      ivl               = ivl,
+      mad               = mad
+    )
   }
 
 }

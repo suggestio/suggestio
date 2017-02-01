@@ -13,15 +13,25 @@ trait ICalsCtx {
   /** Карта доступных для работы календарей.. */
   def calsMap: Map[String, ICalCtx]
 
+  override def toString: String = {
+    s"${getClass.getSimpleName}(${calsMap.size}cals)"
+  }
+
 }
 
+
+object MCalsCtx {
+  def empty = MCalsCtx( Map.empty )
+}
 
 /** Дефолтовая реализация модели контекстов календарей [[ICalsCtx]]. */
 case class MCalsCtx(
   override val calsMap: Map[String, MCalCtx]
 )
   extends ICalsCtx
-
+{
+  override def toString = super.toString
+}
 
 /** Контекст одного календаря. */
 trait ICalCtx {

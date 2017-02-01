@@ -13,12 +13,14 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.geo.CircleGs
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNode, MNodes}
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
+import models.req.IAdProdReq
 import util.PlayMacroLogsImpl
+import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.Bill2Util
 import util.ble.BeaconsBilling
@@ -38,6 +40,8 @@ class AdvGeoBillUtil @Inject() (
   beaconsBilling                      : BeaconsBilling,
   ymdHelpersJvm                       : YmdHelpersJvm,
   advUtil                             : AdvUtil,
+  nodesUtil                           : NodesUtil,
+  mNodes                              : MNodes,
   protected val mItems                : MItems,
   protected val mCommonDi             : ICommonDi
 )
@@ -48,16 +52,6 @@ class AdvGeoBillUtil @Inject() (
   import slick.profile.api._
   import ymdHelpersJvm.Implicits._
 
-  private def _oneTag1dayPrice: MPrice = {
-    bill2Util.zeroPrice.withAmount(1.0)
-  }
-
-  private def _oneTagPrice(geoMult: Double): MPrice = {
-    val oneTag1dPrice = _oneTag1dayPrice
-    oneTag1dPrice.withAmount(
-      oneTag1dPrice.amount * geoMult
-    )
-  }
 
   /**
     * id узла, с которого надо брать посуточный тариф для размещения на карте.
@@ -83,42 +77,58 @@ class AdvGeoBillUtil @Inject() (
     *
     * @param mad рекламная карточка.
     * @param res Содержимое формы.
-    * @param freeNodeIds id узлов, которые доступны для бесплатного размещения.
+    * @param request реквест. Биллинг зависит от юзера и продьсера, которые лежат в реквесте.
     * @return Фьючерс с контекстом биллинга.
     */
-  def advBillCtx(mad: MNode, res: MFormS, freeNodeIds: Set[String]): Future[MGeoAdvBillCtx] = {
-    // Собираем id всех интересующих узлов. Из этих узлов затем будут получены тарифы...
-    val rcvrIdsSet = {
-      val b = Set.newBuilder[String]
-
-      // Закинуть все id узлов прямого размещения.
-      if (res.rcvrsMap.nonEmpty) {
-        b ++= res.rcvrsMap
-          .keysIterator
-          // Выкинуть ресиверов, которые упоминаются среди бесплатных.
-          // Тогда, тарифы на них не будут получены, и система выставит им нулевые цены. TODO Что с валютой? Откуда взять нормальное значение оной?
-          .filter { rk =>
-            !rk.exists(freeNodeIds.contains)
-          }
-          // Собрать в кучу все id всех упомянутых узлов, дедублицировав их...
-          .flatten
-      }
-
-      // Если активно георазмещение просто на карте, то надо добавить узел-источник геоценника:
-      if (res.radCircle.nonEmpty)
-        b += GEO_TF_SRC_NODE_ID
-
-      // Собрать итоговое множество id узлов для сборки карты тарифов.
-      b.result()
-    }
-
+  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS)(implicit request: IAdProdReq[_]): Future[MGeoAdvBillCtx] = {
     // Подготовить интервал размещения...
     val ivl = MDateStartEnd(res.datePeriod.info)
 
+    val abcFut = if (isSuFree) {
+      val freeAbc = advUtil.freeRcvrBillCtx(mad, ivl)
+      Future.successful( freeAbc )
+
+    } else {
+
+      for {
+        freeNodeIds <- freeAdvNodeIds(
+          personIdOpt   = request.user.personIdOpt,
+          producerIdOpt = request.producer.id
+        )
+
+        // Собираем id всех интересующих узлов. Из этих узлов затем будут получены тарифы...
+        rcvrIdsSet = {
+          val b = Set.newBuilder[String]
+
+          // Закинуть все id узлов прямого размещения.
+          if (res.rcvrsMap.nonEmpty) {
+            b ++= res.rcvrsMap
+              .keysIterator
+              // Выкинуть ресиверов, которые упоминаются среди бесплатных.
+              // Тогда, тарифы на них не будут получены, и система выставит им нулевые цены. TODO Что с валютой? Откуда взять нормальное значение оной?
+              .filter { rk =>
+                !rk.exists(freeNodeIds.contains)
+              }
+              // Собрать в кучу все id всех упомянутых узлов, дедублицировав их...
+              .flatten
+          }
+
+          // Если активно георазмещение просто на карте, то надо добавить узел-источник геоценника:
+          if (res.radCircle.nonEmpty)
+            b += GEO_TF_SRC_NODE_ID
+
+          // Собрать итоговое множество id узлов для сборки карты тарифов.
+          b.result()
+        }
+
+        abc <- advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
+      } yield {
+        abc
+      }
+    }
+
     // Передать краткие итоги работы в сборку.
-    for {
-      abc <- advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
-    } yield {
+    for (abc <- abcFut) yield {
       MGeoAdvBillCtx(abc, res)
     }
   }
@@ -289,6 +299,9 @@ class AdvGeoBillUtil @Inject() (
     * Не секрет, что getPrice и submit имеют общую для обоих фазу рассчёта стоимости размещения.
     * Однако, результат рассчёта в одном случае цена, в другом -- items'ы в базе.
     * Этот класс содержит общую логику рассчёта стоимости в отвязке от типа конкретного результата.
+    *
+    * @tparam T Тип накапливаемых результатов.
+    * @param abc Контекст гео-биллинга.
     */
   private abstract class Calc[T]( val abc: MGeoAdvBillCtx ) {
 
@@ -338,7 +351,7 @@ class AdvGeoBillUtil @Inject() (
           val omsMult = circleGeoMult * ON_MAIN_SCREEN_MULT
           val priceOms = geoAllDaysPrice.multiplifiedBy(omsMult)
           val geoOmsRes = geoOms(gs, priceOms)
-          LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult\n $geoOmsRes")
+          LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult => $geoAllDaysPrice * $priceOms => $geoOmsRes")
           _acc ::= geoOmsRes
         }
 
@@ -389,11 +402,31 @@ class AdvGeoBillUtil @Inject() (
   private def ON_MAIN_SCREEN_MULT = 3.0
 
 
-  private def getPricePlaceOms(geoMult: Double): MPrice = {
-    bill2Util.zeroPrice.withAmount(
-      geoMult * ON_MAIN_SCREEN_MULT
-    )
+  def freeAdvNodeIds(personIdOpt: Option[String], producerIdOpt: Option[String]): Future[Set[String]] = {
+    lazy val logPrefix = s"_freeAdvNodeIds(u=${personIdOpt.orNull},prod=${producerIdOpt.orNull}):"
+    personIdOpt.fold {
+      LOGGER.warn(s"$logPrefix called on unauthorized user")
+      Future.successful( Set.empty[String] )
+
+    } { personId =>
+      for {
+        ownedNodeIdsSeq <- mNodes.dynSearchIds {
+          nodesUtil.personNodesSearch(personId)
+        }
+      } yield {
+        val b = Set.newBuilder[String]
+
+        b ++= ownedNodeIdsSeq
+        b ++= personIdOpt
+        b += personId
+
+        val res = b.result()
+        LOGGER.trace(s"$logPrefix => ${res.mkString(", ")}")
+        res
+      }
+    }
   }
+
 
   /** Сборка query для поиска текущих item'ов карточки. */
   def findCurrentForAdQ(adId: String): Query[mItems.MItemsTable, MItem, Seq] = {

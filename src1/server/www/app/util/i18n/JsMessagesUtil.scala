@@ -78,6 +78,7 @@ class JsMessagesUtil @Inject() (
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
     Iterator(
+      "Adv.on.map", "Adv.on.map.hint",
       "Main.screen",
       "GeoTag",
       "_adv.Online.now",

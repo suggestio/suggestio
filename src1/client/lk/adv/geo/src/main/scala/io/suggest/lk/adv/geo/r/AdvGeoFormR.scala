@@ -2,12 +2,11 @@ package io.suggest.lk.adv.geo.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.adv.free.MAdv4Free
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
-import io.suggest.lk.adv.geo.r.geo.rad.RadR
+import io.suggest.lk.adv.geo.r.geo.rad.{RadEnabledR, RadR}
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
@@ -55,7 +54,8 @@ object AdvGeoFormR extends Log {
                     mmapConn            : ReactConnectProxy[MMap],
                     geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
                     geoAdvConn          : ReactConnectProxy[MGeoAdvs],
-                    radOptConn          : ReactConnectProxy[Option[MRad]]
+                    mRadOptConn         : ReactConnectProxy[Option[MRad]],
+                    radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal]
                   )
 
 
@@ -87,6 +87,11 @@ object AdvGeoFormR extends Log {
         // Верхняя половина, левая колонка:
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
+
+          // Галочка активности георазмещения на карте.
+          s.radEnabledPropsConn( RadEnabledR.apply ),
+          <.br,
+          <.br,
 
           // Галочка размещения на главном экране
           s.onMainScrConn( OnMainScreenR.apply ),
@@ -124,7 +129,7 @@ object AdvGeoFormR extends Log {
             s.geoAdvExistRespConn { potProx =>
               // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
               for (_ <- potProx().toOption) yield {
-                s.radOptConn( RadR.apply )
+                s.mRadOptConn( RadR.apply )
               }
             },
 
@@ -144,6 +149,7 @@ object AdvGeoFormR extends Log {
 
   protected val component = ReactComponentB[Props]("AdvGeoForm")
     .initialState_P { p =>
+      val mradOptZoomF = { r: MRoot => r.rad }
       State(
         onMainScrConn   = p.connect { mroot =>
           OnMainScreenR.PropsVal(
@@ -155,7 +161,12 @@ object AdvGeoFormR extends Log {
         mmapConn            = p.connect(_.mmap),
         geoAdvExistRespConn = p.connect(_.geoAdv.existResp),
         geoAdvConn          = p.connect(_.geoAdv),
-        radOptConn          = p.connect(_.rad)
+        // Для рендера подходит только radEnabled, а он у нас генерится заново каждый раз.
+        mRadOptConn         = p.connect(mradOptZoomF),
+        radEnabledPropsConn = RadEnabledR.radEnabledPropsConn(
+          p.zoom(mradOptZoomF),
+          renderHintAsText = false
+        )
       )
     }
     .renderBackend[Backend]

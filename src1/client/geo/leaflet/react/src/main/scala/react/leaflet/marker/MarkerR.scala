@@ -36,6 +36,8 @@ trait MarkerPropsR extends MarkerOptions {
   /** lat-lng coordinates for marker position. */
   val position      : LatLng
 
+  val onClick       : UndefOr[js.Function1[Event, Unit]]         = js.undefined
+
   val onDragStart   : UndefOr[js.Function1[Event, Unit]]         = js.undefined
 
   val onMoveStart   : UndefOr[js.Function1[Event, Unit]]         = js.undefined

@@ -174,7 +174,6 @@ class AdvGeoMapUtil @Inject() (
     * @return Прочищенная коллекция RcvrKey, содержащая только выверенные элементы.
     */
   def checkRcvrs(rcvrKeys: Iterable[RcvrKey]): Future[Iterable[RcvrKey]] = {
-
     val topRcvrIdsSet = rcvrKeys
       .map(_.head)
       .toSet
@@ -183,12 +182,15 @@ class AdvGeoMapUtil @Inject() (
 
     // Это валидируется на уровне AdvGeoFormUtil. Здесь просто проверка, что всё правильно, чисто на всякий случай.
     assert(topRcvrsCount <= AdvGeoConstants.AdnNodes.MAX_RCVRS_PER_TIME, "Too many rcvrs in map")
+    assert(topRcvrsCount > 0, "Top rcvrs is empty")
 
     val idsSeq2Fut = mNodes.dynSearchIds {
       onMapRcvrsSearch( topRcvrsCount, topRcvrIdsSet.toSeq )
     }
 
-    lazy val logPrefix = s"checkSubmittedRcvrs(${rcvrKeys.size}/$topRcvrsCount)[${System.currentTimeMillis()}]:"
+    lazy val logPrefix = s"checkRcvrs(${rcvrKeys.size}/$topRcvrsCount)[${System.currentTimeMillis()}]:"
+
+    LOGGER.trace(s"$logPrefix RcvrKeys0 = ${rcvrKeys.iterator.map(_.mkString(".")).mkString("[\n ", "\n ", "\n]")}")
 
     // Собрать множество очищенных ресиверов, т.е. ресиверов, в которых действительно можно размещаться...
     val rcvrKeys2Fut = for {
@@ -206,7 +208,7 @@ class AdvGeoMapUtil @Inject() (
         val rks2 = rcvrKeys.filter { rk =>
           ids2.contains(rk.head)
         }
-        LOGGER.warn(s"$logPrefix There are ${rks2.size} after re-filtering using cleared FROM rcvrs set.")
+        LOGGER.warn(s"$logPrefix There are ${rks2.size} top-nodes after re-filtering using cleared FROM rcvrs set: $rks2\n Was: ${rcvrKeys.size}: $rcvrKeys")
         rks2
       }
 
@@ -217,7 +219,12 @@ class AdvGeoMapUtil @Inject() (
     // Нужно поискать в базе суб-ресиверов, в которых можно размещаться.
     // Это может быть как размещение на самом ресивере, так и какие-то под-узлы (маячки, или что-то ещё...).
     rcvrKeys2Fut.flatMap { rcvrKeys2 =>
-      checkSubRcvrs(rcvrKeys2)
+      if (rcvrKeys2.nonEmpty) {
+        checkSubRcvrs(rcvrKeys2)
+      } else {
+        LOGGER.debug(s"$logPrefix No more rcvrs keys.")
+        Future.successful( Nil )
+      }
     }
   }
 
@@ -226,84 +233,93 @@ class AdvGeoMapUtil @Inject() (
     *
     * @param rcvrKeys Ключи ресиверов.
     *                 На нулевой позиции id над-ресиверов, которые считаются уже провренными и валидными.
-    * @param currLevel
+    * @param currLevel Счётчик уровней погружения и одновременно итераций.
     * @return Выверенный список RcvrKey, где суб-ресиверы верны. Порядок считается неопределённым.
     */
   def checkSubRcvrs(rcvrKeys: Iterable[RcvrKey], currLevel: Int = 1): Future[Iterable[RcvrKey]] = {
+
+    lazy val logPrefix = s"checkSubRcvrs(L$currLevel)[${System.currentTimeMillis()}]:"
+    if (currLevel > RCVR_TREE_MAX_DEEP)
+      throw new IllegalStateException(s"$logPrefix It's too deep, possibly erroneous recursion. Preventing SOE. Last data was:\n rcvrKeys0 = $rcvrKeys")
+
     // Пока проверяем просто пакетным поиском по базе на основе всех id и эджей в сторону родительских узлов.
     val (noChildRcvrKeys, hasChildRcvrKeys) = rcvrKeys.partition(_.tail.isEmpty)
 
-    // Собираем id родительских узлов:
-    val parentIds = hasChildRcvrKeys.iterator
-      .flatMap(_.headOption)
-      .toSet
+    if (hasChildRcvrKeys.isEmpty) {
+      LOGGER.trace(s"$logPrefix No more rcvrs with children. Rest = $noChildRcvrKeys")
+      Future.successful(rcvrKeys)
 
-    // Собираем id дочерних узлов:
-    val subIds = hasChildRcvrKeys.iterator
-      .flatMap { _.tail.headOption }
-      .toSet
-    val subIdsSize = subIds.size
+    } else {
+      // Собираем id родительских узлов:
+      val parentIds = hasChildRcvrKeys.iterator
+        .flatMap(_.headOption)
+        .toSet
 
-    lazy val logPrefix = s"checkSubRcvrs(${hasChildRcvrKeys.size}|p[${parentIds.size}|s$subIdsSize|L$currLevel)[${System.currentTimeMillis()}]:"
-    if (currLevel > RCVR_TREE_MAX_DEEP)
-      throw new IllegalStateException(s"$logPrefix It's too deep, possibly erroneous recursion. Preventing SOE. Last data was:\n rcvrKeys = $hasChildRcvrKeys")
+      // Собираем id дочерних узлов:
+      val subIds = hasChildRcvrKeys.iterator
+        .flatMap { _.tail.headOption }
+        .toSet
+      val subIdsSize = subIds.size
 
-    // Запихиваем всё в поисковый запрос для ES:
-    val msearch = new MNodeSearchDfltImpl {
-      override def isEnabled = Some(true)
-      override def outEdges: Seq[ICriteria] = {
-        val cr = Criteria(
-          nodeIds    = parentIds.toSeq,
-          predicates = MPredicates.OwnedBy :: Nil
-        )
-        cr :: Nil
-      }
-      override def withAdnRights  = AdnRights.RECEIVER :: Nil
-      override def limit          = subIdsSize
-      override def withIds        = subIds.toSeq
-    }
+      LOGGER.trace(s"$logPrefix ${hasChildRcvrKeys.size}|p[${parentIds.size}|s$subIdsSize ,, RcvrKeys with children: $hasChildRcvrKeys")
 
-    // TODO Sec Мы тут не перепроверяем отношения parent-child. Просто пакетный ответ получаем, он нас устраивает.
-    // Система сейчас не отрабатывает ситуацию, когда клиент переместил child id к другому parent'у.
-    // Но в будущем возможно надо будет получать узлы полностью и перепроверять их по значению эджу OwnedBy.
-    val subIds2Fut = mNodes.dynSearchIds(msearch)
-
-    val rcvrKeys2Fut = for (subIdsSeq2 <- subIds2Fut) yield {
-      val subIds2 = subIdsSeq2.toSet
-
-      // Сравнить два множества суб-ресиверов. Сравнить их и сделать выводы...
-      val isOk = compareIdsSets(subIds, subIds2)
-
-      if (isOk) {
-        LOGGER.trace(s"$logPrefix Sub-receivers matched ok.")
-        hasChildRcvrKeys
-      } else {
-        val rks2 = hasChildRcvrKeys.filter { rk =>
-          subIds2.contains( rk.tail.head )
+      // Запихиваем всё в поисковый запрос для ES:
+      val msearch = new MNodeSearchDfltImpl {
+        override def isEnabled = Some(true)
+        override def outEdges: Seq[ICriteria] = {
+          val cr = Criteria(
+            nodeIds    = parentIds.toSeq,
+            predicates = MPredicates.OwnedBy :: Nil
+          )
+          cr :: Nil
         }
-        LOGGER.warn(s"$logPrefix There are differences between expected and obtained receivers on level $currLevel.\n Source = $hasChildRcvrKeys\n Filtered = $rks2")
-        rks2
+        override def withAdnRights  = AdnRights.RECEIVER :: Nil
+        override def limit          = subIdsSize
+        override def withIds        = subIds.toSeq
       }
-    }
 
-    // Надо проверить под-ресиверы данных подресиверов, если таковые имеются.
-    for {
-      rcvrKeys2 <- rcvrKeys2Fut
-      rcvrKeys3 <- {
-        // Погружение на уровень вниз требует некоторых телодвижений: убрать одну голову у каждого RcvrKey, а потом вернуть её назад для результатов.
-        val rcvrKeysGrpByParent = rcvrKeys2.groupBy(_.head)
-        val currLevelPlus1 = currLevel + 1
-        Future.traverse(rcvrKeysGrpByParent.toSeq) { case (parentId, pRcvrKeys) =>
-          val cRcvrKeys = pRcvrKeys.map(_.tail)
-          for (cRcvrKeys2 <- checkSubRcvrs( cRcvrKeys, currLevelPlus1 )) yield {
-            cRcvrKeys2.map(parentId :: _)
+      // TODO Sec Мы тут не перепроверяем отношения parent-child. Просто пакетный ответ получаем, он нас устраивает.
+      // Система сейчас не отрабатывает ситуацию, когда клиент переместил child id к другому parent'у.
+      // Но в будущем возможно надо будет получать узлы полностью и перепроверять их по значению эджу OwnedBy.
+      val subIds2Fut = mNodes.dynSearchIds(msearch)
+
+      val rcvrKeys2Fut = for (subIdsSeq2 <- subIds2Fut) yield {
+        val subIds2 = subIdsSeq2.toSet
+
+        // Сравнить два множества суб-ресиверов. Сравнить их и сделать выводы...
+        val isOk = compareIdsSets(subIds, subIds2)
+
+        if (isOk) {
+          LOGGER.trace(s"$logPrefix Sub-receivers matched ok.")
+          hasChildRcvrKeys
+        } else {
+          val rks2 = hasChildRcvrKeys.filter { rk =>
+            subIds2.contains( rk.tail.head )
           }
+          LOGGER.warn(s"$logPrefix There are differences between expected and obtained receivers on level $currLevel.\n Source = $hasChildRcvrKeys\n Filtered = $rks2")
+          rks2
         }
-        checkSubRcvrs(rcvrKeys2, currLevel + 1)
       }
-    } yield {
-      // Закинуть исходные бездетные ресиверы в общую финальную кучу.
-      noChildRcvrKeys ++ rcvrKeys3
+
+      // Надо проверить под-ресиверы данных подресиверов, если таковые имеются.
+      for {
+        rcvrKeys2 <- rcvrKeys2Fut
+        rcvrKeys3 <- {
+          // Погружение на уровень вниз требует некоторых телодвижений: убрать одну голову у каждого RcvrKey, а потом вернуть её назад для результатов.
+          val rcvrKeysGrpByParent = rcvrKeys2.groupBy(_.head)
+          val currLevelPlus1 = currLevel + 1
+          Future.traverse(rcvrKeysGrpByParent.toSeq) { case (parentId, pRcvrKeys) =>
+            val cRcvrKeys = pRcvrKeys.map(_.tail)
+            for (cRcvrKeys2 <- checkSubRcvrs( cRcvrKeys, currLevelPlus1 )) yield {
+              cRcvrKeys2.map(parentId :: _)
+            }
+          }
+          checkSubRcvrs(rcvrKeys2, currLevel + 1)
+        }
+      } yield {
+        // Закинуть исходные бездетные ресиверы в общую финальную кучу.
+        noChildRcvrKeys ++ rcvrKeys3
+      }
     }
   }
 
@@ -340,7 +356,7 @@ class AdvGeoMapUtil @Inject() (
 
     // Получаем на руки обновлённый список на базе исходных rcvrKeys.
     // Почти всегда, он идентичен исходному, поэтому сравниваем множество FROM-ресиверов с исходным:
-    isect != expected
+    isect == expected
   }
 
 }

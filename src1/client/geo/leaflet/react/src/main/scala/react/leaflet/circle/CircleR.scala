@@ -1,12 +1,14 @@
 package react.leaflet.circle
 
 import io.suggest.react.JsWrapperR
+import io.suggest.sjs.leaflet.event.Event
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.PathOptions
 import japgolly.scalajs.react.{JsComponentType, TopNode}
 import org.scalajs.dom.Element
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
@@ -39,5 +41,7 @@ trait CirclePropsR extends PathOptions {
 
   /** Circle radius. */
   val radius  : Double
+
+  val onClick       : UndefOr[js.Function1[Event, Unit]]         = js.undefined
 
 }

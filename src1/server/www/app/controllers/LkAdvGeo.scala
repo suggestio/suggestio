@@ -155,33 +155,11 @@ class LkAdvGeo @Inject() (
   }
 
 
-  /** Найти все узлы верхнего уровня, принадлежащие текущему юзеру и доступные для бесплатного размещения. */
-  private def _freeAdvNodeIds()(implicit request: IAdProdReq[_]): Future[Set[String]] = {
-    request.user.personIdOpt.fold {
-      LOGGER.warn(s"_freeAdvNodeIds() called on unauthorized user: $request")
-      Future.successful( Set.empty[String] )
-
-    } { personId =>
-      for {
-        ownedNodeIdsSeq <- mNodes.dynSearchIds {
-          nodesUtil.personNodesSearch(personId)
-        }
-      } yield {
-        val b = Set.newBuilder[String]
-        b ++= ownedNodeIdsSeq
-        b ++= request.producer.id
-        b += personId
-        b.result()
-      }
-    }
-  }
-
   private def _getPricing(isSuFree: Boolean, mFormS: MFormS)(implicit request: IAdProdReq[_]): Future[MGetPriceResp] = {
     bill2Util.maybeFreePricing(isSuFree) {
       // Найти все узлы, принадлежащие текущему юзеру:
       for {
-        freeTargets <- _freeAdvNodeIds()
-        billCtx     <- advGeoBillUtil.advBillCtx(request.mad, mFormS, freeTargets)
+        billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS)
         pricing     <- advGeoBillUtil.getPricing(billCtx)
       } yield {
         pricing
@@ -267,6 +245,24 @@ class LkAdvGeo @Inject() (
 
   }
 
+  private def _checkFormRcvrs(mFormS0: MFormS): Future[MFormS] = {
+    if (mFormS0.rcvrsMap.nonEmpty) {
+      val rcvrKeys2Fut = advGeoMapUtil.checkRcvrs(mFormS0.rcvrsMap.keys)
+      lazy val logPrefix = s"_checkFormRcvrs(${mFormS0.hashCode()})[${System.currentTimeMillis()}]:"
+      for (keys2 <- rcvrKeys2Fut) yield {
+        val rcvrsMap2: RcvrsMap_t = keys2
+          .iterator
+          .map { key2 =>
+            key2 -> mFormS0.rcvrsMap(key2)
+          }
+          .toMap
+        LOGGER.trace(s"$logPrefix Rcvrs map updated:\n OLD = ${mFormS0.rcvrsMap}\n NEW = $rcvrsMap2")
+        mFormS0.withRcvrsMap(rcvrsMap2)
+      }
+    } else {
+      Future.successful(mFormS0)
+    }
+  }
 
 
   /**
@@ -288,24 +284,13 @@ class LkAdvGeo @Inject() (
       {mFormS =>
         LOGGER.trace(s"$logPrefix Binded: $mFormS")
 
-        val mFromS2Fut = if (mFormS.rcvrsMap.nonEmpty) {
-          for {
-            keys2 <- advGeoMapUtil.checkRcvrs(mFormS.rcvrsMap.keys)
-          } yield {
-            val rcvrsMap2: RcvrsMap_t = keys2
-              .iterator
-              .map { key2 =>
-                key2 -> mFormS.rcvrsMap(key2)
-              }
-              .toMap
-            LOGGER.trace(s"$logPrefix Rcvrs map updated:\n OLD = ${mFormS.rcvrsMap}\n NEW = $rcvrsMap2")
-            mFormS.withRcvrsMap(rcvrsMap2)
-          }
-        } else {
-          Future.successful(mFormS)
+        val mFormS2Fut = _checkFormRcvrs(mFormS)
+        val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
+
+        val abcFut = mFormS2Fut.flatMap { mFormS2 =>
+          advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2)
         }
 
-        val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
         val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
 
         for {
@@ -315,12 +300,8 @@ class LkAdvGeo @Inject() (
           // Узнать контракт юзера
           e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
 
-          // Дождаться окончания апдейтов в форме.
-          mFormS2     <- mFromS2Fut
-
-          // Собрать контекст биллинга:
-          freeAdvNodeIds  <- _freeAdvNodeIds()
-          abc             <- advGeoBillUtil.advBillCtx(request.mad, mFormS2, freeAdvNodeIds)
+          // Дождаться готовности контекста биллинга:
+          abc         <- abcFut
 
           // Произвести добавление товаров в корзину.
           (itemsCart, itemsAdded) <- {
@@ -409,11 +390,16 @@ class LkAdvGeo @Inject() (
       },
       {mFormS =>
         LOGGER.debug(s"$logPrefix request body =\n $mFormS")
+        val mFromS2Fut = _checkFormRcvrs(mFormS)
         val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
         // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
-        val pricingFut = _getPricing(isSuFree, mFormS)
-          .map { advFormUtil.prepareAdvPricing }
+        val pricingFut = for {
+          mFormS2 <- mFromS2Fut
+          pricing <- _getPricing(isSuFree, mFormS2)
+        } yield {
+          advFormUtil.prepareAdvPricing(pricing)
+        }
 
         for {
           pricing <- pricingFut

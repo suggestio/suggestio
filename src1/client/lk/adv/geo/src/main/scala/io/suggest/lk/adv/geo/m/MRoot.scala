@@ -38,6 +38,8 @@ case class MRoot(
   def withCurrGeoAdvs(cga2: MGeoAdvs) = copy(geoAdv = cga2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
 
+  def radEnabled = rad.filter(_.enabled)
+
   /**
     * Заворачивание основных данных модели в инстанс MFormS.
     * @return Состояние формы размещения, пригодное для сериализации и отправки на сервер.
@@ -51,7 +53,7 @@ case class MRoot(
       rcvrsMap        = rcvr.rcvrsMap,
       tagsEdit        = tags.props,
       datePeriod      = datePeriod,
-      radCircle       = rad.map(_.circle),
+      radCircle       = radEnabled.map(_.circle),
       tzOffsetMinutes = tzOffsetMinutes
     )
   }

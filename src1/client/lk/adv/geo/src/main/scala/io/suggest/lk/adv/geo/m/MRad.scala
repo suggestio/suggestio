@@ -15,7 +15,9 @@ object MRad {
   implicit object MRadFastEq extends FastEq[MRad] {
     override def eqv(a: MRad, b: MRad) = {
       (a.circle eq b.circle) &&
-        (a.state eq b.state)
+        (a.state eq b.state) &&
+        (a.enabled == b.enabled) &&
+        (a.centerPopup == b.centerPopup)
     }
   }
 
@@ -29,10 +31,14 @@ object MRad {
   */
 case class MRad(
                  circle      : MGeoCircle,
-                 state       : MRadS
+                 state       : MRadS,
+                 enabled     : Boolean    = true,
+                 centerPopup : Boolean    = false
                ) {
 
   def withCircle(circle2: MGeoCircle) = copy(circle = circle2)
   def withState(state2: MRadS) = copy(state = state2)
+  def withEnabled(enabled2: Boolean) = copy(enabled = enabled2)
+  def withCenterPopup(enabled2: Boolean) = copy(centerPopup = enabled2)
 
 }

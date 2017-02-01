@@ -63,13 +63,7 @@ class Bill2Util @Inject() (
     configuration
       .getString("bill.cbca.node.id")
       .getOrElse {
-        if (isProd) {
-          // узел cbca в кластере sio2prod.
-          "-vr-hrgNRd6noyQ3_teu_A"
-        } else {
-          // test-узел какой-то в кластере sio2dev.
-          "AUzledEIITehtyXq7GtI"
-        }
+        "-vr-hrgNRd6noyQ3_teu_A"
       }
   }
 

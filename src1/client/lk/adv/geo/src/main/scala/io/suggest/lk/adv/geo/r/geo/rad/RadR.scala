@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.r.geo.rad
 
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
 import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m.MRad
@@ -10,9 +10,13 @@ import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
 import io.suggest.sjs.leaflet.marker.Marker
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
+import react.leaflet.popup.PopupR
+
+import scala.scalajs.js.{Function1, UndefOr}
 
 /**
   * Suggest.io
@@ -40,7 +44,20 @@ object RadR {
   private val _pinIcon = LkAdvGeoFormUtil._pinMarkerIcon()
   private val _radiusIcon = LkAdvGeoFormUtil.radiusMarkerIcon()
 
-  protected class Backend($: BackendScope[Props, _]) {
+  case class State(
+                    centerPopupConn     : ReactConnectProxy[Option[Boolean]],
+                    radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal]
+                  )
+
+
+
+  protected class Backend($: BackendScope[Props, State]) {
+
+    private def radClick: Callback = {
+      $.props >>= { p =>
+        p.dispatchCB( RadClick )
+      }
+    }
 
     /** Событие начала перетаскивания маркера. */
     private def _dragStart(msg: IAdvGeoFormAction): Callback = {
@@ -67,6 +84,7 @@ object RadR {
 
     // Стабильные инстансы функций, чтобы точно избежать их перебиндинга при каждом рендере...
     // Функции-коллбеки для маркера центра круга.
+    private val _radClickF        = cbFun1TojsCallback { _: Event => radClick }
     private val _centerDragStartF = cbFun1TojsCallback { _: Event => _dragStart(RadCenterDragStart) }
     private val _centerDraggingF  = cbFun1TojsCallback( _dragging(_: Event, RadCenterDragging) )
     private val _centerDragEndF   = cbFun1TojsCallback( _dragEnd(_: DragEndEvent, RadCenterDragEnd) )
@@ -77,7 +95,7 @@ object RadR {
     private val _radiusDragEndF   = cbFun1TojsCallback( _dragEnd(_: DragEndEvent, RadiusDragEnd) )
 
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props, s: State): ReactElement = {
       for ( v <- p() ) yield {
 
         val centerLatLng = LkAdvGeoFormUtil.geoPoint2LatLng {
@@ -87,71 +105,95 @@ object RadR {
 
         // Рендер группы слоёв одной пачкой, чтобы можно было всё скопом вернуть наверх.
         LayerGroupR()(
-          // Основной круг для описания слоя:
-          CircleR(
-            new CirclePropsR {
-              override val center  = centerLatLng
-                // Таскаемый центр хранится в состоянии отдельно от основного, т.к. нужно для кое-какие рассчётов апосля.
-              override val radius  = v.circle.radiusM
-              override val color   = Const.FILL_COLOR
 
-              // Прозрачность меняется на время перетаскивания.
-              override val fillOpacity = {
-                if (v.state.centerDragging.nonEmpty)
-                  Const.DRAG_OPACITY
-                else
-                  Const.OPACITY0
-              }
+          // Слой с кругом и маркерами управления оными.
+          if (v.enabled) {
+            LayerGroupR()(
+              // Основной круг для описания слоя:
+              CircleR(
+                new CirclePropsR {
+                  override val center  = centerLatLng
+                    // Таскаемый центр хранится в состоянии отдельно от основного, т.к. нужно для кое-какие рассчётов апосля.
+                  override val radius  = v.circle.radiusM
+                  override val color   = Const.FILL_COLOR
 
-              // Прозрачность абриса зависит от текущей деятельности юзера.
-              override val opacity = {
-                if (v.state.radiusDragging)
-                  Const.RESIZE_PATH_OPACITY
-                else if (v.state.centerDragging.nonEmpty)
-                  Const.DRAG_PATH_OPACITY
-                else
-                  Const.PATH_OPACITY0
-              }
-            }
-          )(),
+                  // Прозрачность меняется на время перетаскивания.
+                  override val fillOpacity = {
+                    if (v.state.centerDragging.nonEmpty)
+                      Const.DRAG_OPACITY
+                    else
+                      Const.OPACITY0
+                  }
 
-          // Маркер центра круга.
-          // TODO Скрывать маркер центра, если расстояние в пикселях до радиуса < 5
-          MarkerR(
-            new MarkerPropsR {
-              // Параметры рендера:
-              override val position    = centerLatLng
-              override val draggable   = true
-              override val icon        = _pinIcon
-
-              // Привязка событий:
-              override val onDragStart = _centerDragStartF
-              override val onDrag      = _centerDraggingF
-              override val onDragEnd   = _centerDragEndF
-            }
-          )(),
-
-          // Маркер радиуса круга. Сделан в виде circle-marker'а.
-          if (v.state.centerDragging.isEmpty) {
-            MarkerR(
-              new MarkerPropsR {
-                override val position    = LkAdvGeoFormUtil.geoPoint2LatLng {
-                  v.state.radiusMarkerCoords
+                  // Прозрачность абриса зависит от текущей деятельности юзера.
+                  override val opacity = {
+                    if (v.state.radiusDragging)
+                      Const.RESIZE_PATH_OPACITY
+                    else if (v.state.centerDragging.nonEmpty)
+                      Const.DRAG_PATH_OPACITY
+                    else
+                      Const.PATH_OPACITY0
+                  }
+                  override val onClick   = _radClickF
+                  override val clickable = true
                 }
-                override val draggable   = true
-                override val icon        = _radiusIcon
+              )(),
 
-                // Привязка событий:
-                override val onDragStart = _radiusDragStartF
-                override val onDrag      = _radiusDraggingF
-                override val onDragEnd   = _radiusDragEndF
+              // Маркер центра круга.
+              // TODO Скрывать маркер центра, если расстояние в пикселях до радиуса < 5
+              MarkerR(
+                new MarkerPropsR {
+                  // Параметры рендера:
+                  override val position    = centerLatLng
+                  override val draggable   = true
+                  override val icon        = _pinIcon
+
+                  // Привязка событий:
+                  override val onClick     = _radClickF
+                  override val onDragStart = _centerDragStartF
+                  override val onDrag      = _centerDraggingF
+                  override val onDragEnd   = _centerDragEndF
+                }
+              )(),
+
+              // Маркер радиуса круга. Сделан в виде circle-marker'а.
+              if (v.state.centerDragging.isEmpty) {
+                MarkerR(
+                  new MarkerPropsR {
+                    override val position    = LkAdvGeoFormUtil.geoPoint2LatLng {
+                      v.state.radiusMarkerCoords
+                    }
+                    override val draggable   = true
+                    override val icon        = _radiusIcon
+
+                    // Привязка событий:
+                    override val onDragStart = _radiusDragStartF
+                    override val onDrag      = _radiusDraggingF
+                    override val onDragEnd   = _radiusDragEndF
+                  }
+                )()
+              } else {
+                null
               }
-            )()
-          } else {
-            null
+            )
+          } else null,
+
+          // Попап управления центром.
+          s.centerPopupConn { popupEnabledOpt =>
+            if (popupEnabledOpt().contains(true)) {
+              PopupR(
+                position = centerLatLng
+              )(
+                <.div(
+                  s.radEnabledPropsConn( RadEnabledR.apply )
+                )
+              )
+            } else
+              null
           }
 
         )
+
       }
     }
 
@@ -159,7 +201,14 @@ object RadR {
 
 
   val component = ReactComponentB[Props]("Rad")
-    .stateless
+    .initialState_P { mradOptProxy =>
+      State(
+        centerPopupConn = mradOptProxy.connect { mradOpt =>
+          mradOpt.map(_.centerPopup)
+        },
+        radEnabledPropsConn = RadEnabledR.radEnabledPropsConn(mradOptProxy, renderHintAsText = true)
+      )
+    }
     .renderBackend[Backend]
     .build
 

@@ -75,6 +75,12 @@ case object RadCenterDragStart extends IAdvGeoFormAction
 case class RadCenterDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
 /** Экшен завершения перетаскивания rad-круга за его центр. */
 case class RadCenterDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
+/** Экшен клика по центру круга. */
+case object RadClick extends IAdvGeoFormAction
+
+
+/** Экшен включения/выключени режима размещения прямо на карте. */
+case class RadOnOff(enabled: Boolean) extends IAdvGeoFormAction
 
 // Rad-события для маркера радиуса круга.
 case object RadiusDragStart extends IAdvGeoFormAction

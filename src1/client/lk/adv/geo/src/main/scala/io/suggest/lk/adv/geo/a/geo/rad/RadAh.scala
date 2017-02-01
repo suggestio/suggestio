@@ -128,7 +128,7 @@ class RadAh[M](
     // Найдена геолокация юзера. Переместить круг в новую точку, даже если происходит перетаскивание.
     // Карта ведь всё равно переедет на геолокацию.
     case hlf: HandleLocationFound =>
-      value.fold (noChange) { mrad =>
+      _valueFold { mrad =>
         val center2 = hlf.geoPoint
         val mgc2 = mrad.circle.withCenter(center2)
         val radiusXy = LkAdvGeoFormUtil.radiusMarkerLatLng(mgc2)
@@ -139,6 +139,32 @@ class RadAh[M](
         updated( Some(mrad2) )
       }
 
+    // Сигнал включения/выключения rad-подсистемы.
+    case RadOnOff(isEnabled) =>
+      _valueFold { mrad0 =>
+        val mrad1 = mrad0.withEnabled(isEnabled)
+        updated( Some(mrad1), priceUpdateFx )
+      }
+
+    // Сигнал клика по некоторым rad-элементам.
+    case RadClick =>
+      _valueFold { mrad0 =>
+        if (mrad0.centerPopup) {
+          noChange
+        } else {
+          val mrad1 = mrad0.withCenterPopup( !mrad0.centerPopup )
+          updated( Some(mrad1) )
+        }
+      }
+
+    // Сигнал закрытия попапа.
+    case HandlePopupClose if value.exists(_.centerPopup) =>
+      val mrad0 = value.get
+      val mrad1 = mrad0.withCenterPopup(false)
+      updated( Some(mrad1) )
+
   }
+
+  private def _valueFold(f: MRad => ActionResult[M]) = value.fold(noChange)(f)
 
 }
