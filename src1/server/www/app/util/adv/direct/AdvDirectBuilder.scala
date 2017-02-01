@@ -11,19 +11,61 @@ import util.adv.build.IAdvBuilder
   * Created: 18.02.16 21:23
   * Description: adv-билдер bill2-mitem прямых размещений на узлах.
   */
+object AdvDirectBuilder {
+
+  /** Поддерживаемые типы узлов. */
+  def SUPPORTED_TYPES: List[MItemType] = {
+    MItemTypes.AdvDirect ::
+      MItemTypes.AdvInRadioBeacon ::
+      MItemTypes.DirectTag ::
+      Nil
+  }
+
+  /** Общий код сборки списка предикатов вынесен в этот метод. */
+  def PREDICATES0: List[MPredicate] = {
+    MPredicates.TaggedBy.DirectTag :: Nil
+  }
+
+  /** Точный список порождаемых этим билдером предикатов. */
+  def PREDICATES_STRICT: List[MPredicate] = {
+    MPredicates.Receiver.AdvDirect ::
+      MPredicates.Receiver.AdvInRadioBeacon ::
+      PREDICATES0
+  }
+
+  /** Список предикатов для полнейшей очистки direct-размещений. */
+  def PREDICATES_FULL: List[MPredicate] = {
+    MPredicates.Receiver ::
+      PREDICATES0
+  }
+
+  /**
+    * Маппер поддерживаемых типов item'ов на предикаты эджей размещения.
+    */
+  def itypeToPredicate(ntype: MItemType): MPredicate = {
+    ntype match {
+      case MItemTypes.AdvDirect           => MPredicates.Receiver.AdvDirect
+      case MItemTypes.AdvInRadioBeacon    => MPredicates.Receiver.AdvInRadioBeacon
+      case MItemTypes.DirectTag           => MPredicates.TaggedBy.DirectTag
+
+      // should never happen:
+      case other =>
+        throw new IllegalArgumentException("Unsupported item type: " + other)
+    }
+  }
+
+}
+
 trait AdvDirectBuilder extends IAdvBuilder {
 
   import di._
   import mCommonDi._
-
-  /** Предикат, с которым работает этот трейт. */
-  private def _PRED   = MPredicates.Receiver.AdvDirect
-  /** Тип item'а, который фигурирует в работе этого трейта. */
-  private def _ITYPE  = MItemTypes.AdvDirect
+  import AdvDirectBuilder._
 
   override def supportedItemTypes: List[MItemType] = {
-    _ITYPE :: super.supportedItemTypes
+    SUPPORTED_TYPES reverse_::: super.supportedItemTypes
   }
+
 
   /** Очистить все прямые размещения карточки по биллингу.
     * Используется для рассчета состояния с нуля, вместо обновления существующего состояния.
@@ -40,11 +82,15 @@ trait AdvDirectBuilder extends IAdvBuilder {
           edges = acc0.mad.edges.copy(
             out = {
               // Полная чистка удаляет всех ресиверов. Обычная -- касается только AdvDirect.
-              val p = if (full) MPredicates.Receiver else _PRED
+              val preds = if (full) {
+                PREDICATES_FULL
+              } else {
+                PREDICATES_STRICT
+              }
               // Собрать новую карту эджей.
               MNodeEdges.edgesToMap1(
                 acc0.mad.edges
-                  .withoutPredicateIter(p)
+                  .withoutPredicateIter( preds : _* )
               )
             }
           )
@@ -56,9 +102,9 @@ trait AdvDirectBuilder extends IAdvBuilder {
 
 
   override def installNode(items: Iterable[MItem]): IAdvBuilder = {
-    val itype = _ITYPE
+    val itypes = SUPPORTED_TYPES    // Без .toSet, т.к. коллекция типов очень маленькая.
     val (ditems, others) = items.partition { i =>
-      i.iType == itype && i.rcvrIdOpt.nonEmpty && i.sls.nonEmpty
+      itypes.contains(i.iType)
     }
 
     val this2 = super.installNode(others)
@@ -66,23 +112,28 @@ trait AdvDirectBuilder extends IAdvBuilder {
     if (ditems.isEmpty) {
       this2
     } else {
-      // TODO Opt Сделать medge.nodeIdOpt списком, группировать тут по show-levels, потом каждую группу перегонять в единственный эдж.
-      val eiter = ditems
+      // Группировать тут по устаревшему show-levels, потом каждую группу перегонять в единственный эдж. Это снизит кол-во эджей.
+      val edgesIter = ditems
+        .toSeq
+        .groupBy { i =>
+          (i.iType, i.sls)
+        }
         .iterator
-        .map { mitem =>
+        .map { case ((iType, sls), slsItems) =>
           MEdge(
-            predicate = MPredicates.Receiver.AdvDirect,
-            nodeIds   = mitem.rcvrIdOpt.toSet,
+            predicate = itypeToPredicate(iType),
+            nodeIds   = slsItems.iterator.flatMap(_.rcvrIdOpt).toSet,
             info = MEdgeInfo(
-              sls = mitem.sls
+              sls = sls
             )
           )
         }
+
       this2.withAccUpdated { acc0 =>
         acc0.copy(
           mad = acc0.mad.copy(
             edges = acc0.mad.edges.copy(
-              out = MNodeEdges.edgesToMap1( acc0.mad.edges.iterator ++ eiter )
+              out = MNodeEdges.edgesToMap1( acc0.mad.edges.iterator ++ edgesIter )
             )
           )
         )

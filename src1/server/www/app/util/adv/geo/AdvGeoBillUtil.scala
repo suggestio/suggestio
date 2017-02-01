@@ -2,7 +2,6 @@ package util.adv.geo
 
 import java.time.{LocalDate, ZoneOffset}
 
-import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
 import io.suggest.bill.{MGetPriceResp, MPrice}
@@ -23,7 +22,6 @@ import util.PlayMacroLogsImpl
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.Bill2Util
-import util.ble.BeaconsBilling
 
 import scala.concurrent.Future
 
@@ -37,7 +35,6 @@ import scala.concurrent.Future
   */
 class AdvGeoBillUtil @Inject() (
   bill2Util                           : Bill2Util,
-  beaconsBilling                      : BeaconsBilling,
   ymdHelpersJvm                       : YmdHelpersJvm,
   advUtil                             : AdvUtil,
   nodesUtil                           : NodesUtil,
@@ -549,26 +546,6 @@ class AdvGeoBillUtil @Inject() (
       }
       .take(limit)
       .result
-  }
-
-
-  /** Поиск всех id'шников под-узлов для указанного узла-ресивера.
-    * Это включает в себя поиск активированных BLE-маячков узла и возможно какие-то иные вещи.
-    *
-    * @param nodeId id узла-ресивера.
-    * @return Фьючерс с множеством id'шников всех как-то подчиненных узлов.
-    */
-  def findActiveSubNodeIdsOfRcvr(nodeId: String): Future[Set[String]] = {
-    // TODO Можно рекурсивно искать просто подчинённые enabled-ресиверы без использования БД биллинга?
-
-    // Запустить сбор маячков, активированных на узле.
-    Source.fromPublisher {
-      slick.db.stream {
-        beaconsBilling.findActiveBeaconIdsOfRcvr(nodeId)
-      }
-    }
-      .runFold( Set.newBuilder[String] )(_ += _)
-      .map( _.result() )
   }
 
 }

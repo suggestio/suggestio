@@ -176,7 +176,7 @@ class ScAdSearchUtil @Inject() (
 
       val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
         maxBoost    = 20000000F,
-        predicates  = Seq( MPredicates.AdvInRadioBeacon ),
+        predicates  = Seq( MPredicates.Receiver.AdvInRadioBeacon ),
         bcns        = bcns.iterator.filter(_.distanceCm <= maxDistance)
       )
 

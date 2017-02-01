@@ -150,10 +150,14 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     /** Проплаченный узел-ресивер, купленный через подсистемы adv. */
     val AdvDirect: T = new Val("ka") with _Child
 
-    // TODO Наверное здесь будет тривиальный ресивер карточки в bluetooth-маячке, который является узлом.
+    /**
+      * Размещение в радио-маячке (Изначально - BLE, но необязательно).
+      * Очень напоминает прямое размещение на узле, но есть ряд тонкостей.
+      */
+    val AdvInRadioBeacon: T = new Val("q") with _Child
 
     override def children: List[T] = {
-      Self :: AdvDirect :: super.children
+      Self :: AdvDirect :: AdvInRadioBeacon :: super.children
     }
   }
 
@@ -169,11 +173,16 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
       * В этом же эдже должна лежать пачка гео-шейпов со всех размещенных карточек. */
     val Self: T = new Val("ls") with _Child
 
-    // TODO Запихать сюда ещё предикат для размещения всего узла-здания в теге? А в нём ещё и основного тега (категории).
+    /**
+      * Прямое размещение тега на каком-то узле.
+      * Появилось как побочный продукт интеграции ресиверов в форму георазмещения.
+      */
+    val DirectTag: T = new Val("ld") with _Child
 
     override def children: List[T] = {
       Agt :: Self :: super.children
     }
+
   }
 
 
@@ -197,12 +206,6 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     * Например, маячок "лежит" внутри ТЦ или магазина. Т.е. %предмет% -в-> %контейнере%.
     */
   val PlacedIn: T = new Val("p")
-
-  /**
-    * Размещение в радио-маячке (Изначально - BLE, но необязательно).
-    * Очень напоминает прямое размещение на узле, но есть целый ряд тонкостей.
-    */
-  val AdvInRadioBeacon: T = new Val("q")
 
   /** Размещение ADN-узла на географической карте рекламополучателей. */
   val AdnMap: T = new Val("r")
