@@ -27,7 +27,7 @@ class BleUtil {
 
     } else {
 
-      // Строим карту маячков, где ключ -- Uid маячка, а
+      // Строим карту маячков, где ключ -- Uid маячка
       val bcnsMap = bcns
         .toIterator
         .map { bcn =>

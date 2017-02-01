@@ -16,8 +16,7 @@ object AdvDirectBuilder {
   /** Поддерживаемые типы узлов. */
   def SUPPORTED_TYPES: List[MItemType] = {
     MItemTypes.AdvDirect ::
-      MItemTypes.AdvInRadioBeacon ::
-      MItemTypes.DirectTag ::
+      MItemTypes.TagDirect ::
       Nil
   }
 
@@ -29,7 +28,6 @@ object AdvDirectBuilder {
   /** Точный список порождаемых этим билдером предикатов. */
   def PREDICATES_STRICT: List[MPredicate] = {
     MPredicates.Receiver.AdvDirect ::
-      MPredicates.Receiver.AdvInRadioBeacon ::
       PREDICATES0
   }
 
@@ -45,8 +43,7 @@ object AdvDirectBuilder {
   def itypeToPredicate(ntype: MItemType): MPredicate = {
     ntype match {
       case MItemTypes.AdvDirect           => MPredicates.Receiver.AdvDirect
-      case MItemTypes.AdvInRadioBeacon    => MPredicates.Receiver.AdvInRadioBeacon
-      case MItemTypes.DirectTag           => MPredicates.TaggedBy.DirectTag
+      case MItemTypes.TagDirect           => MPredicates.TaggedBy.DirectTag
 
       // should never happen:
       case other =>
@@ -116,15 +113,16 @@ trait AdvDirectBuilder extends IAdvBuilder {
       val edgesIter = ditems
         .toSeq
         .groupBy { i =>
-          (i.iType, i.sls)
+          (i.iType, i.sls, i.tagFaceOpt)
         }
         .iterator
-        .map { case ((iType, sls), slsItems) =>
+        .map { case ((iType, sls, tagFaceOpt), slsItems) =>
           MEdge(
             predicate = itypeToPredicate(iType),
             nodeIds   = slsItems.iterator.flatMap(_.rcvrIdOpt).toSet,
             info = MEdgeInfo(
-              sls = sls
+              sls  = sls,
+              tags = tagFaceOpt.toSet
             )
           )
         }

@@ -216,7 +216,7 @@ class AdvGeoBillUtil @Inject() (
         for (tagFace <- abc.res.tagsEdit.tagsExists) {
           _acc ::= MItem(
             orderId       = orderId,
-            iType         = MItemTypes.DirectTag,
+            iType         = MItemTypes.TagDirect,
             status        = status,
             price         = oneTagPrice,
             nodeId        = adId,

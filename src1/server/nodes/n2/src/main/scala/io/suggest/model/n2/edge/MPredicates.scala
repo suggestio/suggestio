@@ -154,10 +154,12 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
       * Размещение в радио-маячке (Изначально - BLE, но необязательно).
       * Очень напоминает прямое размещение на узле, но есть ряд тонкостей.
       */
+    // TODO Нужно удалить из БД старый предикат, заменив его обычным AdvDirect.
+    @deprecated("Use AdvDirect instead", "2016.feb.01")
     val AdvInRadioBeacon: T = new Val("q") with _Child
 
     override def children: List[T] = {
-      Self :: AdvDirect :: AdvInRadioBeacon :: super.children
+      Self :: AdvDirect :: super.children
     }
   }
 

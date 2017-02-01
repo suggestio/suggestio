@@ -6,12 +6,14 @@ import io.suggest.model.es.IMust
 import io.suggest.model.geo.PointGs
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.search.{MRandomSortData, MSubSearch}
 import io.suggest.ym.model.NodeGeoLevels
 import models.mgeo.MBleBeaconInfo
+import models.mproj.ICommonDi
 import models.msc.IScAdSearchQs
+import util.PlayMacroLogsImpl
 import util.ble.BleUtil
 
 import scala.concurrent.Future
@@ -27,8 +29,14 @@ import scala.concurrent.Future
   */
 @Singleton
 class ScAdSearchUtil @Inject() (
-  bleUtil: BleUtil
-) {
+  mNodes    : MNodes,
+  bleUtil   : BleUtil,
+  mCommonDi : ICommonDi
+)
+  extends PlayMacroLogsImpl
+{
+
+  import mCommonDi.ec
 
   /** Максимальное число результатов в ответе на запрос (макс. результатов на странице). */
   private def LIMIT_MAX           = 50
@@ -57,8 +65,8 @@ class ScAdSearchUtil @Inject() (
       // Поиск карточек у указанного узла-ресивера.
       for (rcvrId <- args.rcvrIdOpt) {
         eacc ::= Criteria(
-          nodeIds     = Seq( rcvrId.id ),
-          predicates  = Seq( MPredicates.Receiver ),
+          nodeIds     = rcvrId.id :: Nil,
+          predicates  = MPredicates.Receiver :: Nil,
           anySl       = must,   // = Some(true)
           must        = must
         )
@@ -67,8 +75,8 @@ class ScAdSearchUtil @Inject() (
       // Поиск карточек от указанного узла-продьюсера.
       for (prodId <- args.prodIdOpt) {
         eacc ::= Criteria(
-          nodeIds     = Seq( prodId.id ),
-          predicates  = Seq( MPredicates.OwnedBy ),
+          nodeIds     = prodId.id :: Nil,
+          predicates  = MPredicates.OwnedBy :: Nil,
           must        = must
         )
       }
@@ -78,11 +86,11 @@ class ScAdSearchUtil @Inject() (
         // Геотегов не указано. Но можно искать размещения карточек в указанной точке.
         for (geoLoc <- args.locEnv.geoLocOpt) {
           eacc ::= Criteria(
-            predicates  = Seq( MPredicates.AdvGeoPlace ),
+            predicates  = MPredicates.AdvGeoPlace :: Nil,
             must        = must,
             gsIntersect = Some(GsCriteria(
-              levels = Seq( NodeGeoLevels.geoPlace ),
-              shapes = Seq( PointGs(geoLoc.center) )
+              levels = NodeGeoLevels.geoPlace :: Nil,
+              shapes = PointGs(geoLoc.center) :: Nil
             ))
           )
         }
@@ -90,13 +98,13 @@ class ScAdSearchUtil @Inject() (
       } { tagNodeId =>
         // Указан тег. Ищем по тегу с учетом геолокации:
         eacc ::= Criteria(
-          predicates = Seq( MPredicates.TaggedBy.Agt ),
-          nodeIds    = Seq( tagNodeId ),
+          predicates = MPredicates.TaggedBy.Agt :: Nil,
+          nodeIds    = tagNodeId :: Nil,
           must       = must,
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
             GsCriteria(
-              levels = Seq( NodeGeoLevels.geoTag ),
-              shapes = Seq( PointGs(geoLoc.center) )
+              levels = NodeGeoLevels.geoTag :: Nil,
+              shapes = PointGs(geoLoc.center) :: Nil
             )
           }
         )
@@ -108,7 +116,7 @@ class ScAdSearchUtil @Inject() (
 
     // Общие константы выносим за скобки.
 
-    val _nodeTypes  = Seq( MNodeTypes.Ad )
+    val _nodeTypes  = MNodeTypes.Ad :: Nil
     val someTrue    = Some(true)
 
     val normalSearches = if (_outEdges.nonEmpty) {
@@ -134,7 +142,7 @@ class ScAdSearchUtil @Inject() (
     // Карточки в маячках ищутся отдельно от основного набора параметров, вне всяких продьюсеров-ресиверов-географии.
     // Результаты объединяются в общий выхлоп, но маячковые результаты -- поднимаются в начало этого списка.
     // Причём, чем ближе маячок -- тем выше результат.
-    val bcnsSearches = _bleBeacons2search( args.locEnv.bleBeacons )
+    val bcnsSearchesFut = _bleBeacons2search( args.locEnv.bleBeacons )
 
     // Собрать итоговый запрос.
     val _limit = args.limitOpt.fold(LIMIT_DFLT) {
@@ -145,47 +153,87 @@ class ScAdSearchUtil @Inject() (
       Math.min(OFFSET_MAX_ABS, _)
     }
 
-    val _subSearches = Seq(
-      normalSearches,
-      bcnsSearches
-    )
-      .flatten
+    for {
+      bcnsSearches <- bcnsSearchesFut
+    } yield {
+      val _subSearches = Seq(
+        normalSearches,
+        bcnsSearches
+      )
+        .flatten
 
-    // Собрать и вернуть результат.
-    // Пока что всё работает синхронно.
-    // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
-    val msearch = new MNodeSearchDfltImpl {
-      override def limit            = _limit
-      override def offset           = _offset
-      override def nodeTypes        = _nodeTypes
-      override def subSearches      = _subSearches
+      // Собрать и вернуть результат.
+      // Пока что всё работает синхронно.
+      // Но для маячков скорее всего потребуется фоновая асинхронная работа по поиску id нод ble-маячков.
+      new MNodeSearchDfltImpl {
+        override def limit            = _limit
+        override def offset           = _offset
+        override def nodeTypes        = _nodeTypes
+        override def subSearches      = _subSearches
+      }
     }
-
-    Future.successful(msearch)
   }
 
 
   /** Генерация поисковых запросов по маячкам. */
-  def _bleBeacons2search(bcns: Seq[MBleBeaconInfo]): Iterable[MSubSearch] = {
+  def _bleBeacons2search(bcns: Seq[MBleBeaconInfo]): Future[Iterable[MSubSearch]] = {
     if (bcns.isEmpty) {
-      Nil
+      Future.successful( Nil )
 
     } else {
-      // Учитывать только маячки до этого расстояния. Остальные не учитывать
-      val maxDistance = BeaconUtil.DIST_CM_10M
-
-      val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
-        maxBoost    = 20000000F,
-        predicates  = Seq( MPredicates.Receiver.AdvInRadioBeacon ),
-        bcns        = bcns.iterator.filter(_.distanceCm <= maxDistance)
+      val uids = bcns.iterator
+        .map(_.uid)
+        .toSet
+      // Проверить id маячков: они должны быть существующими enabled узлами и иметь тип радио-маячков.
+      val bcnUidsClearedFut = mNodes.dynSearchIds(
+        new MNodeSearchDfltImpl {
+          override def withIds    = uids.toSeq
+          override def limit      = uids.size
+          override def nodeTypes  = MNodeTypes.BleBeacon :: Nil
+          override def isEnabled  = Some(true)
+        }
       )
 
-      val sub = MSubSearch(
-        search  = adsInBcnsSearchOpt.get,
-        must    = IMust.SHOULD
-      )
+      lazy val logPrefix = s"_bleBeacons2search(${bcns.size}bcns)[${System.currentTimeMillis()}]:"
+      LOGGER.trace(s"$logPrefix Beacons = ${bcns.mkString(", ")}.\n Dirty bcn uids set: ${uids.mkString(", ")}")
 
-      sub :: Nil
+      for {
+        bcnsUidsClear <- bcnUidsClearedFut
+      } yield {
+        val uids = bcnsUidsClear.toSet
+        LOGGER.trace(s"$logPrefix Cleared beacons set: ${uids.mkString(", ")}")
+
+        // Учитывать только маячки до этого расстояния. Остальные не учитывать
+        val maxDistance = BeaconUtil.DIST_CM_10M
+
+        val bcns2Iter = bcns
+          .iterator
+          .filter { bcn =>
+            val isExistBcn = uids.contains( bcn.uid )
+            if (!isExistBcn)
+              LOGGER.trace(s"$logPrefix Beacon uid'''${bcn.uid}''' is unknown. Dropped.")
+            isExistBcn && bcn.distanceCm <= maxDistance
+          }
+          // Не группируем тут по uid, т.к. это будет сделано внутри scoredByDistanceBeaconSearch()
+
+        if (bcns2Iter.isEmpty) {
+          LOGGER.debug(s"$logPrefix Beacon uids was passed, but there are no known beacons.")
+          Nil
+        } else {
+          val adsInBcnsSearchOpt = bleUtil.scoredByDistanceBeaconSearch(
+            maxBoost = 20000000F,
+            predicates = MPredicates.Receiver.AdvDirect :: Nil,
+            bcns = bcns2Iter
+          )
+
+          val sub = MSubSearch(
+            search = adsInBcnsSearchOpt.get,
+            must = IMust.SHOULD
+          )
+
+          sub :: Nil
+        }
+      }
     }
   }
 

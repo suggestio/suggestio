@@ -60,15 +60,7 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   val BleBeaconActive   : T = new Val("b")
 
   /** Прямое размещение тега на узле. */
-  val DirectTag         : T = new Val("d")
-
-  /** Размещение в радиомаячке (Bluetooth LE, изначально).
-    * Отдельный тип item'а. Изначально он отличался только предикатом эджа,
-    * но в будущем могут быть новые особенности: появление диапазонов допустимых расстояний размещения,
-    * групп/объединений маячков/зон и т.д.
-    */
-  val AdvInRadioBeacon  : T = new Val("e")
-
+  val TagDirect         : T = new Val("d")
 
   /** Покупка срочного доступа к внешнему размещению (разовая абонплата). */
   //val AdvExtFee         : T = new Val("e")
