@@ -154,24 +154,35 @@ class LkAdvGeo @Inject() (
     resLogic.result(formFut, Ok)
   }
 
-  private def _getPricing(isSuFree: Boolean, mFormS: MFormS)(implicit request: IAdProdReq[_]): Future[MGetPriceResp] = {
-    bill2Util.maybeFreePricing(isSuFree) {
-      // Найти все узлы, принадлежащие текущему юзеру:
-      val freeTargetsFut = for {
+
+  /** Найти все узлы верхнего уровня, принадлежащие текущему юзеру и доступные для бесплатного размещения. */
+  private def _freeAdvNodeIds()(implicit request: IAdProdReq[_]): Future[Set[String]] = {
+    request.user.personIdOpt.fold {
+      LOGGER.warn(s"_freeAdvNodeIds() called on unauthorized user: $request")
+      Future.successful( Set.empty[String] )
+
+    } { personId =>
+      for {
         ownedNodeIdsSeq <- mNodes.dynSearchIds {
-          nodesUtil.personNodesSearch(request.user.personIdOpt.get)
+          nodesUtil.personNodesSearch(personId)
         }
       } yield {
         val b = Set.newBuilder[String]
         b ++= ownedNodeIdsSeq
         b ++= request.producer.id
+        b += personId
         b.result()
       }
+    }
+  }
 
+  private def _getPricing(isSuFree: Boolean, mFormS: MFormS)(implicit request: IAdProdReq[_]): Future[MGetPriceResp] = {
+    bill2Util.maybeFreePricing(isSuFree) {
+      // Найти все узлы, принадлежащие текущему юзеру:
       for {
-        freeTargets <- freeTargetsFut
+        freeTargets <- _freeAdvNodeIds()
         billCtx     <- advGeoBillUtil.advBillCtx(request.mad, mFormS, freeTargets)
-        pricing     <- advGeoBillUtil.getPricing(mFormS, billCtx)
+        pricing     <- advGeoBillUtil.getPricing(billCtx)
       } yield {
         pricing
       }
@@ -304,10 +315,12 @@ class LkAdvGeo @Inject() (
           // Узнать контракт юзера
           e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
 
-          producerId  = request.producer.id.get
-
           // Дождаться окончания апдейтов в форме.
           mFormS2     <- mFromS2Fut
+
+          // Собрать контекст биллинга:
+          freeAdvNodeIds  <- _freeAdvNodeIds()
+          abc             <- advGeoBillUtil.advBillCtx(request.mad, mFormS2, freeAdvNodeIds)
 
           // Произвести добавление товаров в корзину.
           (itemsCart, itemsAdded) <- {
@@ -322,10 +335,8 @@ class LkAdvGeo @Inject() (
               // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
               addRes  <- advGeoBillUtil.addToOrder(
                 orderId     = cart.id.get,
-                producerId  = producerId,
-                adId        = adId,
-                res         = mFormS2,
-                status      = status
+                status      = status,
+                abc         = abc
               )
             } yield {
               (cart, addRes)
@@ -339,6 +350,7 @@ class LkAdvGeo @Inject() (
           LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.mc.id.orNull} with item status '$status'.")
           val rCall = routes.LkAdvGeo.forAd(adId)
           val retCall = if (!isSuFree) {
+            val producerId  = request.producer.id.get
             routes.LkBill2.cart(producerId, r = Some(rCall.url))
             //implicit val messages = implicitly[Messages]
             // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.

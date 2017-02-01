@@ -1,7 +1,7 @@
 package io.suggest.lk.adv.geo.a.rcvr
 
 import diode.data.Pot
-import diode.{ActionHandler, ActionResult, ModelR, ModelRW}
+import diode._
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{IRcvrPopupNode, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
@@ -13,8 +13,12 @@ import io.suggest.lk.adv.geo.a.SetRcvrStatus
   * Description: Поддержка экшенов (сигналов) и реакции на экшены rcvr-попапа.
   */
 
-class RcvrInputsAh[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
-                      rcvrMapRW: ModelRW[M, RcvrsMap_t]) extends ActionHandler(rcvrMapRW) {
+class RcvrInputsAh[M](
+                       respPot        : ModelR[M, Pot[MRcvrPopupResp]],
+                       rcvrMapRW      : ModelRW[M, RcvrsMap_t],
+                       priceUpdateFx  : Effect
+                     )
+  extends ActionHandler(rcvrMapRW) {
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -36,8 +40,8 @@ class RcvrInputsAh[M](respPot: ModelR[M, Pot[MRcvrPopupResp]],
           rcvrMap0 + (e.rcvrKey -> e.checked)
         }
 
-        // TODO Нужно прямо/косвенно запустить effect пересчёта стоимости размещения.
-        updated(rcvrMap1)
+        // И заодно запустить effect пересчёта стоимости размещения...
+        updated(rcvrMap1, priceUpdateFx)
       }
   }
 

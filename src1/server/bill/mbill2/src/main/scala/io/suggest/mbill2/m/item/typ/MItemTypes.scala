@@ -59,6 +59,10 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
     * Неоплаченный маячок "не работает", хотя и засоряет эфир своими сигналами. */
   val BleBeaconActive   : T = new Val("b")
 
+  /** Прямое размещение тега на узле. */
+  val DirectTag         : T = new Val("d")
+
+
   /** Покупка срочного доступа к внешнему размещению (разовая абонплата). */
   //val AdvExtFee         : T = new Val("e")
 

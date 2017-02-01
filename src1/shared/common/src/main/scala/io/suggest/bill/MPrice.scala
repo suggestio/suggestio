@@ -86,4 +86,7 @@ case class MPrice(
     MPrice.amountStr(this) + currency.currencyCode
   }
 
+  /** Домножить amount на какой-то коэффициент. */
+  def multiplifiedBy(mult: Double) = withAmount(amount * mult)
+
 }

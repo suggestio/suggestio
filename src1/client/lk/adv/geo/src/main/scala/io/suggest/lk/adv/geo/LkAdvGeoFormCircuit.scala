@@ -128,8 +128,9 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
 
     val rcvrInputsAh = new RcvrInputsAh(
-      respPot   = rcvrPopupRW,
-      rcvrMapRW = rcvrRW.zoomRW(_.rcvrsMap) { _.withRcvrMap(_) }
+      respPot       = rcvrPopupRW,
+      rcvrMapRW     = rcvrRW.zoomRW(_.rcvrsMap) { _.withRcvrMap(_) },
+      priceUpdateFx = priceUpdateEffect
     )
 
     val tagsAh = new TagsEditAh(

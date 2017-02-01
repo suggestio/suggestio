@@ -14,7 +14,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.geo.CircleGs
 import io.suggest.model.n2.node.MNode
-import models.adv.MAdvBillCtx
+import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
@@ -86,7 +86,7 @@ class AdvGeoBillUtil @Inject() (
     * @param freeNodeIds id узлов, которые доступны для бесплатного размещения.
     * @return Фьючерс с контекстом биллинга.
     */
-  def advBillCtx(mad: MNode, res: MFormS, freeNodeIds: Set[String]): Future[MAdvBillCtx] = {
+  def advBillCtx(mad: MNode, res: MFormS, freeNodeIds: Set[String]): Future[MGeoAdvBillCtx] = {
     // Собираем id всех интересующих узлов. Из этих узлов затем будут получены тарифы...
     val rcvrIdsSet = {
       val b = Set.newBuilder[String]
@@ -116,7 +116,11 @@ class AdvGeoBillUtil @Inject() (
     val ivl = MDateStartEnd(res.datePeriod.info)
 
     // Передать краткие итоги работы в сборку.
-    advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
+    for {
+      abc <- advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
+    } yield {
+      MGeoAdvBillCtx(abc, res)
+    }
   }
 
 
@@ -125,75 +129,104 @@ class AdvGeoBillUtil @Inject() (
     *
     * @param orderId id-ордера-корзины, т.е. текущего заказа. Туда надо добавить возможную покупку.
     *                Например, выхлоп [[util.billing.Bill2Util.ensureCartOrder()]].
-    * @param adId    id узла-цели размещения тегов, обычно рекламная карточка.
-    * @param res     Данные по размещаемым тегам.
     * @return Фьючерс c результатом.
     */
-  def addToOrder(orderId: Gid_t, producerId: String, adId: String, res: MFormS, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
-    val ymdPeriod = res.datePeriod.info
+    val ymdPeriod = abc.res.datePeriod.info
     val dateStart = ymdPeriod.dateStart[LocalDate]
     val dateEnd   = ymdPeriod.dateEnd[LocalDate]
 
     // Инновация: берём временную зону прямо из браузера!
-    val tzOffset = ZoneOffset.ofTotalSeconds( res.tzOffsetMinutes * 60 )
+    val tzOffset = ZoneOffset.ofTotalSeconds( abc.res.tzOffsetMinutes * 60 )
 
     val dtStartOpt = Some( dateStart.atStartOfDay().atOffset(tzOffset) )
     val dtEndOpt   = Some( dateEnd.atStartOfDay().atOffset(tzOffset) )
 
-    val daysCount = bill2Util.getDaysCount( res.datePeriod.info )
+    val adId = abc.adId
 
-    val geoActsIter = res.radCircle
-      .iterator
-      .flatMap { radCircle =>
-        val geoMult = getPriceMult(radCircle) * daysCount
-        val p = _oneTagPrice(geoMult)
-        val someGs = Some( CircleGs( radCircle ) )
+    // TODO Впилить сюда новую считалку стоимости
+    val calc = new Calc[MItem](abc) {
 
-        // Пройтись по тегам
-        val mitemsTagActsIter = for {
-          tagFace <- res.tagsEdit.tagsExists.iterator
-        } yield {
-          MItem(
+      override def logPrefixPrefix: String = s"addToOrder(ord=$orderId,ad=$adId,st=$status)"
+
+      override type CircleGs_t = Option[CircleGs]
+      override def mkCircleGs(circle: MGeoCircle): CircleGs_t = {
+        Some( CircleGs( circle ) )
+      }
+
+      /** Сборка item'а для geo + onMainScreen. */
+      override def geoOms(circleGs: CircleGs_t, price: MPrice): MItem = {
+        MItem(
+          orderId       = orderId,
+          iType         = MItemTypes.GeoPlace,
+          status        = status,
+          price         = price,
+          nodeId        = adId,
+          dateStartOpt  = dtStartOpt,
+          dateEndOpt    = dtEndOpt,
+          rcvrIdOpt     = None,
+          geoShape      = circleGs
+        )
+      }
+
+      /** Добавить в _acc информацию по геотегам. */
+      override def addGeoTags(circleGs: CircleGs_t, oneTagPrice: MPrice): Unit = {
+        for (tagFace <- abc.res.tagsEdit.tagsExists) {
+          _acc ::= MItem(
             orderId       = orderId,
             iType         = MItemTypes.GeoTag,
             status        = status,
-            price         = p,
+            price         = oneTagPrice,
             nodeId        = adId,
             dateStartOpt  = dtStartOpt,
             dateEndOpt    = dtEndOpt,
             // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
             rcvrIdOpt     = None,
             tagFaceOpt    = Some(tagFace),
-            geoShape      = someGs
+            geoShape      = circleGs
           )
         }
+      }
 
-        // Если галочка главного экрана выставлена, то ещё разместить и так просто, в месте на карте.
-        val mitemsActs = if (res.onMainScreen) {
-          val itmP = MItem(
+      /** Собрать item'а для размещения на одном ресивере на его главном экране. */
+      override def rcvrOms(rcvrId: String, price: MPrice): MItem = {
+        MItem(
+          orderId       = orderId,
+          iType         = MItemTypes.AdvDirect,
+          status        = status,
+          price         = price,
+          nodeId        = adId,
+          dateStartOpt  = dtStartOpt,
+          dateEndOpt    = dtEndOpt,
+          rcvrIdOpt     = Some(rcvrId),
+          geoShape      = None
+        )
+      }
+
+      /** Добавить в _acc данные по размещениям всех тегов на ресивере. */
+      override def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit = {
+        for (tagFace <- abc.res.tagsEdit.tagsExists) {
+          _acc ::= MItem(
             orderId       = orderId,
-            iType         = MItemTypes.GeoPlace,
+            iType         = MItemTypes.DirectTag,
             status        = status,
-            price         = getPricePlaceOms(geoMult),
+            price         = oneTagPrice,
             nodeId        = adId,
             dateStartOpt  = dtStartOpt,
             dateEndOpt    = dtEndOpt,
+            // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
             rcvrIdOpt     = None,
-            geoShape      = someGs
+            tagFaceOpt    = Some(tagFace),
+            geoShape      = None
           )
-          itmP :: Nil
-        } else {
-          Nil
         }
-
-        (mitemsTagActsIter ++ mitemsActs)
-          .map { mItems.insertOne }
       }
 
-    // TODO Нужно пройтись по карте ресиверов, накатить необходимые изменения.
+    }
 
-    val itemActs = geoActsIter.toSeq
+    val itemsAcc = calc.execute()
+    val itemActs = itemsAcc.map { mItems.insertOne }
 
     DBIO.sequence(itemActs)
   }
@@ -204,77 +237,44 @@ class AdvGeoBillUtil @Inject() (
     * Для суперюзеров с бесплатным размещением этот метод НЕ должен вызываться вообще:
     * метод игнорит состояние флага бесплатного размещения.
     *
-    * @param res Снимок состояния формы.
-    * @param abc Контекст биллинга для рассчёта ценника. См. [[advBillCtx()]].
+    * @param abc Контекст гео-биллинга для рассчёта ценника. См. [[advBillCtx()]].
     * @return Фьючерс с данными прайсинга, пригодными для сериализации и отправки на клиент.
     */
-  def getPricing(res: MFormS, abc: MAdvBillCtx): Future[MGetPriceResp] = {
+  def getPricing(abc: MGeoAdvBillCtx): Future[MGetPriceResp] = {
 
-    lazy val logPrefix = s"getPricing[${System.currentTimeMillis()}]:"
+    val calc = new Calc[MPrice](abc) {
 
-    var pricesAcc: List[MPrice] = Nil
+      override def logPrefixPrefix = "getPricing"
 
-    val tagsCount = res.tagsEdit.tagsExists.size
+      override type CircleGs_t = MGeoCircle
+      override def mkCircleGs(circle: CircleGs_t): CircleGs_t = circle
 
-    // Посчитать стоимость размещения указанных элементов (oms, теги) в гео-круге.
-    for (radCircle <- res.radCircle) {
-      var multAcc: List[Double] = Nil
-
-      // Посчитать стоимость данного гео-круга:
-      val circleGeoMult = getPriceMult(radCircle)
-
-      // Накинуть за гео-круг + главный экран:
-      if (res.onMainScreen) {
-        val omsMult = circleGeoMult * ON_MAIN_SCREEN_MULT
-        LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult")
-        multAcc ::= omsMult
+      /** Сборка item'а для geo + onMainScreen. */
+      override def geoOms(circleGs: CircleGs_t, price: MPrice): MPrice = {
+        price
       }
 
-      // Накинуть за гео-круг + теги
-      if (tagsCount > 0) {
-        val tagsCount = tagsCount
-        val tgsMult = circleGeoMult * tagsCount
-        LOGGER.trace(s"$logPrefix geo + $tagsCount tags => multAcc ::= $circleGeoMult * $tagsCount = $tgsMult" )
-        multAcc ::= tgsMult
+      /** Добавить в _acc информацию по геотегам. */
+      override def addGeoTags(circleGs: CircleGs_t, oneTagPrice: MPrice): Unit = {
+        _handleTags(oneTagPrice)
       }
 
-      // Сконвертить собранные мультипликаторы в цены.
-      if (multAcc.nonEmpty) {
-        val geoAllDaysPrice = advUtil.calculateAdvPriceOnRcvr(GEO_TF_SRC_NODE_ID, abc)
-        for (mult <- multAcc) {
-          val geoAllDaysPriceMulted = geoAllDaysPrice.withAmount(
-            geoAllDaysPrice.amount * mult
-          )
-          LOGGER.trace(s"$logPrefix mult=$mult * $geoAllDaysPrice => prices += $geoAllDaysPriceMulted")
-          pricesAcc ::= geoAllDaysPriceMulted
-        }
+      /** Собрать item'а для размещения на одном ресивере на его главном экране. */
+      override def rcvrOms(rcvrId: String, price: MPrice): MPrice = {
+        price
+      }
+
+      /** Добавить в _acc данные по размещениям всех тегов на ресивере. */
+      override def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit = {
+        _handleTags(oneTagPrice)
+      }
+
+      private def _handleTags(oneTagPrice: MPrice): Unit = {
+        _acc ::= oneTagPrice.multiplifiedBy(tagsCount)
       }
     }
 
-    // Отработать ресиверы, если заданы.
-    if (res.rcvrsMap.nonEmpty) {
-      for {
-        (rcvrKey, rcvrProps) <- res.rcvrsMap
-        // TODO Отработать rcvrProps. Возможно, отмена размещения вместо создания.
-      } {
-        // Накинуть за ресивер
-        val rcvrPrice = advUtil.calculateAdvPriceOnRcvr( rcvrKey.last, abc )
-        val rcvrPriceOms = rcvrPrice.withAmount(
-          rcvrPrice.amount * ON_MAIN_SCREEN_MULT
-        )
-        LOGGER.trace(s"$logPrefix Rcvr ${rcvrKey.mkString(".")}: prices += $rcvrPriceOms")
-        pricesAcc ::= rcvrPriceOms
-
-        // Накинуть за ресивер + теги.
-        if (tagsCount > 0) {
-          val tagsPrice = rcvrPrice.withAmount(
-            rcvrPrice.amount * tagsCount
-          )
-          LOGGER.trace(s"$logPrefix Rcvr + $tagsCount tags: prices += $tagsPrice")
-          pricesAcc ::= tagsPrice
-        }
-      }
-    }
+    val pricesAcc = calc.execute()
 
     // TODO Просуммировать/причесать, и удалить страшный код ниже:
     val prices2 = MPrice.sumPricesByCurrency(pricesAcc).toSeq
@@ -284,8 +284,108 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
+  /**
+    * Вычислитель результата абстрактной биллинговой операции в контексте формы георазмещения.
+    * Не секрет, что getPrice и submit имеют общую для обоих фазу рассчёта стоимости размещения.
+    * Однако, результат рассчёта в одном случае цена, в другом -- items'ы в базе.
+    * Этот класс содержит общую логику рассчёта стоимости в отвязке от типа конкретного результата.
+    */
+  private abstract class Calc[T]( val abc: MGeoAdvBillCtx ) {
 
-  /** Базовый множитель цены. */
+    import abc.res
+
+    val tagsCount = res.tagsEdit.tagsExists.size
+
+    // Бывает, что нужно передавать в geo-методы круг в модифицированном виде.
+    type CircleGs_t
+    def mkCircleGs(circle: MGeoCircle): CircleGs_t
+
+    var _acc: List[T] = Nil
+
+    /** Префикс для сообщений логгера, вызывается лишь один раз для сборки полного log-префикса. */
+    def logPrefixPrefix: String
+    lazy val logPrefix = s"$logPrefixPrefix#Calc[${System.currentTimeMillis()}]:"
+
+    /** Сборка item'а для geo + onMainScreen. */
+    def geoOms(circleGs: CircleGs_t, price: MPrice): T
+
+    /** Добавить в _acc информацию по геотегам. */
+    def addGeoTags(circleGs: CircleGs_t, oneTagPrice: MPrice): Unit
+
+    /** Собрать item'а для размещения на одном ресивере на его главном экране. */
+    def rcvrOms(rcvrId: String, price: MPrice): T
+
+    /** Добавить в _acc данные по размещениям всех тегов на ресивере. */
+    def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit
+
+
+    /** Запуск этого калькулятора результата. */
+    def execute(): List[T] = {
+      LOGGER.trace(s"$logPrefix $res")
+
+      // Посчитать стоимость размещения указанных элементов (oms, теги) в гео-круге.
+      for {
+        radCircle <- res.radCircle
+        if res.onMainScreen || res.tagsEdit.tagsExists.nonEmpty
+      } {
+        // Посчитать стоимость данного гео-круга:
+        val circleGeoMult = getPriceMult(radCircle)
+        val gs = mkCircleGs(radCircle)
+        val geoAllDaysPrice = advUtil.calculateAdvPriceOnRcvr(GEO_TF_SRC_NODE_ID, abc)
+
+        // Накинуть за гео-круг + главный экран:
+        if (res.onMainScreen) {
+          val omsMult = circleGeoMult * ON_MAIN_SCREEN_MULT
+          val priceOms = geoAllDaysPrice.multiplifiedBy(omsMult)
+          val geoOmsRes = geoOms(gs, priceOms)
+          LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult\n $geoOmsRes")
+          _acc ::= geoOmsRes
+        }
+
+        // Накинуть за гео-круг + теги
+        if (tagsCount > 0) {
+          val oneTagPrice = geoAllDaysPrice.multiplifiedBy( circleGeoMult )
+          LOGGER.trace(s"$logPrefix geo + $tagsCount tags, geo=$circleGeoMult * $geoAllDaysPrice = $oneTagPrice per each tag" )
+          addGeoTags(gs, geoAllDaysPrice)
+        }
+      }
+
+      // Отработать ресиверы, если заданы.
+      if (res.rcvrsMap.nonEmpty) {
+        // Отработать прямые размещения на ресиверах
+        for {
+          (rcvrKey, rcvrProps) <- res.rcvrsMap
+          // TODO Отработать rcvrProps. Возможно, отмена размещения вместо создания.
+        } {
+          // Накинуть за ресивер (главный экран ресивера)
+          val rcvrId = rcvrKey.last
+          val rcvrPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc)
+          val rcvrPriceOms = rcvrPrice.multiplifiedBy( ON_MAIN_SCREEN_MULT )
+          val rcvrOmsRes = rcvrOms(rcvrId, rcvrPriceOms)
+          LOGGER.trace(s"$logPrefix Rcvr ${rcvrKey.mkString(".")}: price $rcvrPrice, oms => $rcvrPriceOms,\n $rcvrOmsRes")
+          _acc ::= rcvrOmsRes
+        }
+
+        // Отработать теги на ресиверах: теги размещаются только на верхних узлах.
+        val topRcvrIds = res.rcvrsMap
+          // TODO Отработать rcvrProps. Возможна отмена размещения вместо создания.
+          .keysIterator
+          .flatMap(_.headOption)
+          .toSet
+        for (rcvrId <- topRcvrIds) {
+          val rcvrTagPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc)
+          LOGGER.trace(s"$logPrefix Top-rcvr $rcvrId + $tagsCount tags, $rcvrTagPrice per tag")
+          addRcvrTags(rcvrId, rcvrTagPrice)
+        }
+      }
+
+      // И вернуть наверх финальный аккамулятор.
+      _acc
+    }
+
+  }
+
+  /** Базовый множитель цены для размещения на главном экране (ресивера, карты). */
   private def ON_MAIN_SCREEN_MULT = 3.0
 
 

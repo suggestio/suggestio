@@ -1,6 +1,6 @@
 package models.adv
 
-import models.MDailyTf
+import models.{MDailyTf, MNode}
 import models.mcal.ICalsCtx
 import models.mdt.IDateStartEnd
 
@@ -25,6 +25,27 @@ trait IAdvBillCtx {
   /** Период размещения. */
   def ivl                 : IDateStartEnd
 
+  /** Рекламная карточка. */
+  def mad                 : MNode
+
+
+  /** Упрощённый доступ к id рекламной карточки. */
+  def adId = mad.id.get
+
+}
+
+
+/** wrap-реализация [[IAdvBillCtx]]. */
+trait IAdvBillCtxWrap extends IAdvBillCtx {
+
+  /** Нижележащий инстанс [[IAdvBillCtx]], который враппится этим трейтом. */
+  def wrapped: IAdvBillCtx
+
+  override def tfsMap             = wrapped.tfsMap
+  override def blockModulesCount  = wrapped.blockModulesCount
+  override def mcalsCtx           = wrapped.mcalsCtx
+  override def ivl                = wrapped.ivl
+  override def mad                = wrapped.mad
 }
 
 
@@ -33,6 +54,7 @@ case class MAdvBillCtx(
                         override val blockModulesCount   : Int,
                         override val mcalsCtx            : ICalsCtx,
                         override val tfsMap              : Map[String, MDailyTf],
-                        override val ivl                 : IDateStartEnd
+                        override val ivl                 : IDateStartEnd,
+                        override val mad                 : MNode
                       )
   extends IAdvBillCtx
