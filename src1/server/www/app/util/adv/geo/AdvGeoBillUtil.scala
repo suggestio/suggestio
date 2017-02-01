@@ -560,6 +560,7 @@ class AdvGeoBillUtil @Inject() (
     */
   def findActiveSubNodeIdsOfRcvr(nodeId: String): Future[Set[String]] = {
     // TODO Можно рекурсивно искать просто подчинённые enabled-ресиверы без использования БД биллинга?
+
     // Запустить сбор маячков, активированных на узле.
     Source.fromPublisher {
       slick.db.stream {

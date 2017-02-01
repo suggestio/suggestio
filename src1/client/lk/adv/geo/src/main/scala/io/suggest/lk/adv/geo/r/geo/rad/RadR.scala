@@ -16,8 +16,6 @@ import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 import react.leaflet.popup.PopupR
 
-import scala.scalajs.js.{Function1, UndefOr}
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -146,6 +144,7 @@ object RadR {
                   // Параметры рендера:
                   override val position    = centerLatLng
                   override val draggable   = true
+                  override val clickable   = true
                   override val icon        = _pinIcon
 
                   // Привязка событий:

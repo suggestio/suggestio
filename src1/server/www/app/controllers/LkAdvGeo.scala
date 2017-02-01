@@ -42,6 +42,7 @@ import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
+import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNodes
 import models.MNode
 import util.adn.NodesUtil
@@ -570,14 +571,12 @@ class LkAdvGeo @Inject() (
     import request.{mnode => rcvrNode}
 
     // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
-    val subNodesIdsFut = advGeoBillUtil.findActiveSubNodeIdsOfRcvr(rcvrNodeId)
+    val subNodesFut = advGeoMapUtil.findSubRcvrsOf(rcvrNodeId)
 
     lazy val logPrefix = s"geoNodePopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
 
     // Нужно получить все суб-узлы из кэша. Текущий узел традиционно уже есть в request'е.
-    val subNodesFut = subNodesIdsFut.flatMap { subNodesIds =>
-      mNodeCache.multiGet( subNodesIds )
-    }
+    val subNodesIdsFut = subNodesFut.map(OptId.els2idsSet)
 
     // Закинуть во множество подузлов id текущего ресивера.
     val allNodesIdsFut = for (subNodesIds <- subNodesIdsFut) yield {

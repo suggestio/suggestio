@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import com.sksamuel.elastic4s.{HitAs, RichSearchHit, SearchDefinition}
+import com.sksamuel.elastic4s.{RichSearchHit, SearchDefinition}
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
 import io.suggest.util.{JacksonWrapper, SioConstants}
@@ -684,7 +684,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     val typeName = esTypeName(m)
     val idOrNull = m.idOrNull
     val json = toJson(m)
-    LOGGER.trace(s"indexRequestBuilder($indexName/$typeName/$idOrNull): $json")
+    //LOGGER.trace(s"prepareIndexNoVsn($indexName/$typeName/$idOrNull): $json")
     client
       .prepareIndex(indexName, typeName, idOrNull)
       .setSource(json)

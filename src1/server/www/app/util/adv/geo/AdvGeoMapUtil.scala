@@ -264,19 +264,11 @@ class AdvGeoMapUtil @Inject() (
       LOGGER.trace(s"$logPrefix ${hasChildRcvrKeys.size}|p[${parentIds.size}|s$subIdsSize ,, RcvrKeys with children: $hasChildRcvrKeys")
 
       // Запихиваем всё в поисковый запрос для ES:
-      val msearch = new MNodeSearchDfltImpl {
-        override def isEnabled = Some(true)
-        override def outEdges: Seq[ICriteria] = {
-          val cr = Criteria(
-            nodeIds    = parentIds.toSeq,
-            predicates = MPredicates.OwnedBy :: Nil
-          )
-          cr :: Nil
-        }
-        override def withAdnRights  = AdnRights.RECEIVER :: Nil
-        override def limit          = subIdsSize
-        override def withIds        = subIds.toSeq
-      }
+      val msearch = subRcvrsSearch(
+        parentIds   = parentIds.toSeq,
+        onlyWithIds = subIds.toSeq,
+        limit1      = subIdsSize
+      )
 
       // TODO Sec Мы тут не перепроверяем отношения parent-child. Просто пакетный ответ получаем, он нас устраивает.
       // Система сейчас не отрабатывает ситуацию, когда клиент переместил child id к другому parent'у.
@@ -311,10 +303,11 @@ class AdvGeoMapUtil @Inject() (
           Future.traverse(rcvrKeysGrpByParent.toSeq) { case (parentId, pRcvrKeys) =>
             val cRcvrKeys = pRcvrKeys.map(_.tail)
             for (cRcvrKeys2 <- checkSubRcvrs( cRcvrKeys, currLevelPlus1 )) yield {
-              cRcvrKeys2.map(parentId :: _)
+              for (crk <- cRcvrKeys2) yield {
+                parentId :: crk : RcvrKey
+              }
             }
-          }
-          checkSubRcvrs(rcvrKeys2, currLevel + 1)
+          }.map { _.flatten }
         }
       } yield {
         // Закинуть исходные бездетные ресиверы в общую финальную кучу.
@@ -323,6 +316,28 @@ class AdvGeoMapUtil @Inject() (
     }
   }
 
+  /** Поиск под-ресиверов по отношению к указанным ресиверам. */
+  def subRcvrsSearch(parentIds: Seq[String], onlyWithIds: Seq[String] = Nil, limit1: Int = 100 ): MNodeSearch = {
+    new MNodeSearchDfltImpl {
+      override def isEnabled = Some(true)
+      override def outEdges: Seq[ICriteria] = {
+        val cr = Criteria(
+          nodeIds    = parentIds,
+          predicates = MPredicates.OwnedBy :: Nil
+        )
+        cr :: Nil
+      }
+      override def withAdnRights  = AdnRights.RECEIVER :: Nil
+      override def limit          = limit1
+      override def withIds        = onlyWithIds
+    }
+  }
+
+  /** Поиск под-ресиверов у указанного ресивера. */
+  def findSubRcvrsOf(rcvrId: String): Future[Seq[MNode]] = {
+    val search = subRcvrsSearch(parentIds = rcvrId :: Nil)
+    mNodes.dynSearch(search)
+  }
 
   /** Аккуратное сравнение множеств id ресиверов. */
   private def compareIdsSets(expected: Set[String], obtained: Set[String]): Boolean = {
