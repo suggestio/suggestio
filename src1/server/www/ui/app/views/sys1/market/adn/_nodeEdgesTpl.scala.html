@@ -40,7 +40,16 @@
       @_tr() {
 
         @_td(sz) {
-          @arrow
+          @defining( ei.mnodeEiths.headOption.flatMap(_.right.toOption) ) { mnodeOpt =>
+            @for(mnode <- mnodeOpt) {
+              <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
+            }
+            @arrow
+            @if(mnodeOpt) {
+              </a>
+            }
+          }
+
           @messages( ei.medge.predicate.singular )
           @for( orderN <- ei.medge.order ) {
             &udarr;@orderN

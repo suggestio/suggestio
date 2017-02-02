@@ -17,6 +17,13 @@
   @for(mnode <- nodeOpt) {
     /
     @_blueLink(
+      href    = routes.SysMarket.adnNodesList( msys.MSysNodeListArgs(ntypeOpt = Some( mnode.common.ntype )) )
+    ) {
+      @messages( mnode.common.ntype.plural )
+    }
+
+    /
+    @_blueLink(
       href    = routes.SysMarket.showAdnNode(mnode.id.get),
       "title" -> s"$messages( AdnShownTypes.node2val(mnode).singular) / ${mnode.meta.address.town}"
     ) {
