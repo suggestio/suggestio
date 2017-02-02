@@ -5,6 +5,8 @@ import diode._
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{IRcvrPopupNode, MRcvrPopupResp}
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.WarnMsgs
 
 /**
   * Suggest.io
@@ -18,13 +20,18 @@ class RcvrInputsAh[M](
                        rcvrMapRW      : ModelRW[M, RcvrsMap_t],
                        priceUpdateFx  : Effect
                      )
-  extends ActionHandler(rcvrMapRW) {
+  extends ActionHandler(rcvrMapRW)
+  with Log
+{
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Изменилось состояние галочки ресивера в rcvr-попапе.
     case e: SetRcvrStatus =>
-      respPot().fold( noChange ) { resp =>
+      respPot().fold {
+        LOG.warn( WarnMsgs.FSM_SIGNAL_UNEXPECTED, msg = e )
+        noChange
+      } { resp =>
         // Найти узел с текущим id среди всех узлов.
         val checkedOnServerOpt = resp.node
           // Можно заменить .flatMap на .get: Ведь если это событие обрабатывается, значит хоть одна нода точно должна быть.
@@ -34,6 +41,7 @@ class RcvrInputsAh[M](
           .map(_.checked)
 
         val rcvrMap0 = value
+
         val rcvrMap1 = if ( checkedOnServerOpt.contains(e.checked) ) {
           rcvrMap0 - e.rcvrKey
         } else {

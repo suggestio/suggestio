@@ -11,8 +11,11 @@ import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.r.RangeYmdR
+import io.suggest.sjs.common.vm.spa.PreLoaderLk
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
+import react.leaflet.layer.LayerGroupR
+import react.leaflet.marker.{MarkerPropsR, MarkerR}
 import react.leaflet.popup.PopupR
 
 /**
@@ -96,12 +99,12 @@ object RcvrPopupR {
                   <.label(
                     ^.classSet1(
                       Css.Lk.LK_FIELD_NAME,
-                      Css.Colors.RED -> (!checked && !n.isCreate),
+                      Css.Colors.RED   -> (!checked && !n.isCreate),
                       Css.Colors.GREEN -> (checked && n.isCreate)
                     ),
                     <.input(
-                      ^.`type` := "checkbox",
-                      ^.checked := checked,
+                      ^.`type`    := "checkbox",
+                      ^.checked   := checked,
                       ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
                     ),
                     <.span,
@@ -134,22 +137,42 @@ object RcvrPopupR {
           )
         }
 
-        PopupR(
-          position = LkAdvGeoFormUtil.geoPoint2LatLng( state.latLng )
-        )(
-          <.div(
-            v.popupResp.renderEmpty {
-              Messages("Please.wait")
-            },
-            v.popupResp.renderReady { resp =>
+        val latLng = LkAdvGeoFormUtil.geoPoint2LatLng( state.latLng )
+
+
+        LayerGroupR()(
+
+          // Рендер маркера-крутилки на карте в ожидании рендера.
+          v.popupResp.renderPending { _: Int =>
+            for (iconUrl <- PreLoaderLk.PRELOADER_IMG_URL) yield {
+              val icon1 = LkAdvGeoFormUtil.pendingIcon(iconUrl, 16)
+              MarkerR(
+                new MarkerPropsR {
+                  override val position  = latLng
+                  override val draggable = false
+                  override val clickable = false
+                  override val icon      = icon1
+                  override val title     = Messages("Please.wait")
+                }
+              )()
+            }
+          },
+
+          // Рендер попапа. когда всё готово.
+          v.popupResp.renderReady { resp =>
+            PopupR(
+              position = latLng
+            )(
               <.div(
                 for (topNode <- resp.node) yield {
                   __renderNode(topNode)
                 }
               )
-            }
-          )           // Popup div
+            )
+          }
+
         )
+
       }               // popupState
 
     } // render()

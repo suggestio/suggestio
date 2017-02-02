@@ -13,7 +13,17 @@ object SpaConst {
   /** id тега на странице, value которого содержит сериализованное состояние формы. */
   def STATE_CONT_ID = PREFIX + "s"
 
-  /** id элемента-картинки, которая содержит красный анимированный прелоадер. */
-  def PRE_LOADER_LK_DOM_ID = "pl_ri"
+  object LkPreLoader {
+
+    /** id элемента-картинки, которая содержит красный анимированный прелоадер. */
+    def DOM_ID = "pl_ri"
+
+    def WIDTH_PX = 64
+    def HEIGHT_PX = WIDTH_PX
+
+    def CENTER_X = WIDTH_PX / 2
+    def CENTER_Y = HEIGHT_PX / 2
+
+  }
 
 }

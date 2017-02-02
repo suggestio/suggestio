@@ -56,6 +56,7 @@ object IRcvrPopupNode {
       parent.subGroups
         .iterator
         .flatMap(_.nodes)
+        .filter { _.nodeId == rcvrKey.head }
         .flatMap { subNode =>
           findSubNode(childRcvrKey, subNode)
         }
@@ -77,6 +78,7 @@ object IRcvrPopupNode {
       findSubNode(rcvrKey.tail, node)
     else
       None
+    // TODO Нужен test надо для этого метода.
   }
 
 }

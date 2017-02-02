@@ -1,5 +1,6 @@
 package io.suggest.lk.adv.geo.u
 
+import io.suggest.common.spa.SpaConst.LkPreLoader
 import io.suggest.geo.{GeoConstants, MGeoCircle, MGeoPoint}
 import io.suggest.lk.adv.geo.m.MMapGjFeature
 import io.suggest.maps.c.LeafletPinMarker
@@ -41,6 +42,15 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
   def radiusMarkerIcon(): Icon = {
     val o = _markerIconBase(RadiusMarkerIcon)
     Leaflet.icon(o)
+  }
+
+  def pendingIcon(url: String, sidePx: Int = LkPreLoader.WIDTH_PX): Icon = {
+    val io = IconOptions.empty
+    io.iconUrl = url
+    io.iconSize = Leaflet.point(x = sidePx, y = sidePx)
+    val center = sidePx/2
+    io.iconAnchor = Leaflet.point(x = center, y = center)
+    Leaflet.icon(io)
   }
 
   /** Посчитать расстояние между двумя точками. */

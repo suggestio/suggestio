@@ -1,9 +1,9 @@
 @()(implicit ctx: Context)
 
-@import io.suggest.common.spa.SpaConst.PRE_LOADER_LK_DOM_ID
+@import io.suggest.common.spa.SpaConst.LkPreLoader.DOM_ID
 
 @* Отрендерить прелоадер асинхронного контента для личного кабинета. *@
 
-<img id="@PRE_LOADER_LK_DOM_ID"
+<img id="@DOM_ID"
      src="@ctx.api.cdn.asset("images/market/new-design/spinner.gif")"
      alt="@ctx.messages("Please.wait")"/>
