@@ -7,11 +7,9 @@
 @import views.html.stuff.jsTpl2HtmlTpl
 @import stuff.geo.maps._
 @import lk.adv.geo.agBase
-@import lk.adv.widgets._
 @import lk.lkwdgts.price._
 @import io.suggest.adv.geo.AdvGeoConstants._
 @import io.suggest.adv.AdvConstants.Price
-@import adv.tpl._
 @import io.suggest.common.spa.SpaConst.STATE_CONT_ID
 @import views.html.stuff._preLoaderLkTpl
 
@@ -19,7 +17,6 @@
   title       = messages("Adv.in.geo.tags"),
   mnode       = args.producer,
   mad         = args.mad,
-  rightLink   = LkAdvRightLinks.TAGS_GEO,
   rightAfter  = Some( _rightPriceContTpl(id = Some(Price.OUTER_CONT_ID))() )
 ) {
 

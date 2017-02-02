@@ -78,7 +78,6 @@ object IRcvrPopupNode {
       findSubNode(rcvrKey.tail, node)
     else
       None
-    // TODO Нужен test надо для этого метода.
   }
 
 }

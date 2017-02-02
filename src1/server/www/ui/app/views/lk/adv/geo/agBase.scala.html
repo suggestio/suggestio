@@ -1,4 +1,4 @@
-@(title: String, mnode: MNode, mad: MNode, rightLink: adv.tpl.LkAdvRightLink, headAfter: Option[Html] = None,
+@(title: String, mnode: MNode, mad: MNode, headAfter: Option[Html] = None,
   rightAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон Adv Geo Base нужен для шаблонов страниц, содержащих osm-карту rad map. *@
@@ -6,6 +6,7 @@
 @import views.html.stuff.leaflet._
 @import static.date.picker._
 @import ctx.api.cdn.asset
+@import adv.tpl._
 
 
 @headAfter1 = {
@@ -21,7 +22,7 @@
   title       = title,
   mad         = mad,
   producer    = mnode,
-  rightLink   = rightLink,
+  rightLink   = LkAdvRightLinks.GEO,
   headAfter   = Some(headAfter1),
   rightAfter  = rightAfter
 ) {
