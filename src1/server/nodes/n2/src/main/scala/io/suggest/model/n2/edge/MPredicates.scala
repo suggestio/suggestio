@@ -66,7 +66,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
           _READS.reads(arr.value.head)
       case str: JsString =>
         _READS.reads(str)
-      case other =>
+      case _ =>
         JsError("expected.jsstring.or.jsarray")
     }
   }
@@ -149,14 +149,6 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
     /** Проплаченный узел-ресивер, купленный через подсистемы adv. */
     val AdvDirect: T = new Val("ka") with _Child
-
-    /**
-      * Размещение в радио-маячке (Изначально - BLE, но необязательно).
-      * Очень напоминает прямое размещение на узле, но есть ряд тонкостей.
-      */
-    // TODO Нужно удалить из БД старый предикат, заменив его обычным AdvDirect.
-    @deprecated("Use AdvDirect instead", "2016.feb.01")
-    val AdvInRadioBeacon: T = new Val("q") with _Child
 
     override def children: List[T] = {
       Self :: AdvDirect :: super.children

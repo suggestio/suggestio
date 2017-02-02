@@ -40,16 +40,7 @@
       @_tr() {
 
         @_td(sz) {
-          @defining( ei.mnodeEiths.headOption.flatMap(_.right.toOption) ) { mnodeOpt =>
-            @for(mnode <- mnodeOpt) {
-              <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
-            }
-            @arrow
-            @if(mnodeOpt) {
-              </a>
-            }
-          }
-
+          @arrow
           @messages( ei.medge.predicate.singular )
           @for( orderN <- ei.medge.order ) {
             &udarr;@orderN
@@ -57,23 +48,44 @@
         }
 
         @_td(sz) {
-          @for(eith <- ei.mnodeEiths) {
-            @eith.right.toOption.map { mnode =>
-              <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">
-                @mnode.guessDisplayName.fold {
-                  @mnode.id
-                } { name =>
-                  <strong>@name</strong>
-                }
-              </a>
+          @defining(ei.mnodeEiths.size) { eithsCount =>
+          @for((eith, i)<- ei.mnodeEiths.iterator.zipWithIndex) {
+            @* На втором и последующих узлах надо начинать с новой строки. *@
+            @if(i >= 1) {
+              <br/>
+            }
+
+            @* Рендерить порядковый номер узла по списку, если список длинее одного элемента. *@
+            @if(eithsCount > 1) {
+              @(i+1).
+            }
+
+            @for(mnode <- eith.right.toOption) {
+              @* nbsp внутри ссылки нужны для случая, когда название узла невидимое, чтобы ссылка НЕ рендерилась невидимой. *@
+              <a href="@routes.SysMarket.showAdnNode( mnode.id.get )">&nbsp;@mnode.guessDisplayName.fold {
+                @mnode.id
+              } { name =>
+                <strong>@name</strong>
+              }&nbsp;</a>
             }
             @eith.left.toOption
             <br/>
           }
+          }
         }
 
         @_td(sz) {
-          @Option(ei.medge.info).filter(_.nonEmpty).getOrElse(Html("&nbsp;"))
+          @Option(ei.medge.info).filter(_.nonEmpty).fold(Html("&nbsp;")) { ei =>
+            @defining( ei.toString() ) { eiStr =>
+              <span title="@eiStr">
+                @if(eiStr.length > 25) {
+                  @eiStr.substring(0, 25)&hellip;
+                } else {
+                  @eiStr
+                }
+              </span>
+            }
+          }
         }
 
         @for( mnode <- onNode ) {
