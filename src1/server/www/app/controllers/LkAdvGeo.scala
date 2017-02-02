@@ -45,7 +45,6 @@ import io.suggest.dt.YmdHelpersJvm
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNodes
 import models.MNode
-import util.adn.NodesUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -57,7 +56,6 @@ import scala.concurrent.duration._
   * Description: Контроллер размещения в гео-тегах.
   */
 class LkAdvGeo @Inject() (
-  nodesUtil                       : NodesUtil,
   advGeoFormUtil                  : AdvGeoFormUtil,
   advGeoBillUtil                  : AdvGeoBillUtil,
   advFormUtil                     : AdvFormUtil,

@@ -16,11 +16,4 @@ object LeafletConstants {
 
   }
 
-
-  object Defaults {
-
-    def DETECT_RETINA = true
-
-  }
-
 }

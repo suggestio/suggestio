@@ -15,6 +15,8 @@ import io.suggest.lk.tags.edit.r.TagsEditR
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.dt.period.r._
 import io.suggest.sjs.leaflet.marker.Marker
 import japgolly.scalajs.react._
@@ -23,6 +25,7 @@ import react.leaflet.control.LocateControlR
 import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
 
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -64,7 +67,16 @@ object AdvGeoFormR extends Log {
     TileLayerR(
       new TileLayerPropsR {
         override val url           = LeafletConstants.Tiles.URL_OSM_DFLT
-        override val detectRetina  = LeafletConstants.Defaults.DETECT_RETINA
+
+        override val detectRetina: UndefOr[Boolean] = {
+          WindowVm().devicePixelRatio.fold {
+            LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
+            false
+          } { pxRatio =>
+            pxRatio >= 1.4
+          }
+        }
+
         override val attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
       }
     )()
