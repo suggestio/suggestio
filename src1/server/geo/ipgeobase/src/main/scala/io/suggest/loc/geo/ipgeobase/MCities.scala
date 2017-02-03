@@ -2,8 +2,8 @@ package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model._
 import io.suggest.geo.MGeoPoint
-import io.suggest.model.es._
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.MacroLogsImpl
 import play.api.libs.json._
@@ -68,7 +68,7 @@ abstract class MCitiesAbstract
     throw new UnsupportedOperationException("Deprecated API not implemented.")
   }
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
   override def generateMappingStaticFields: List[Field] = {
     List(
       FieldAll(enabled = false),

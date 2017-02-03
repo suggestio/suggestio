@@ -1,11 +1,11 @@
 package io.suggest.model.n2.node.meta
 
 import io.suggest.model.PrefixedFn
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.node.meta.colors.MColors
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 
 /**
  * Suggest.io
@@ -87,7 +87,7 @@ object MMeta extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     // Сформировать анализируемые поля-объекты.

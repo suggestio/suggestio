@@ -4,12 +4,12 @@ import java.time.LocalDate
 
 import com.google.inject.Inject
 import controllers.routes
-import io.suggest.model.es.EsModelUtil
+import io.suggest.es.model.EsModelUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.{Context, ContextUtil}
 import models.mproj.ICommonDi

@@ -2,8 +2,8 @@ package io.suggest.model.n2.geo
 
 import java.time.OffsetDateTime
 
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.GeoShape
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.edge.MEdgeGeoShape
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.data.validation.ValidationError
@@ -92,7 +92,7 @@ object MGeoShape extends IGenEsMappingProps {
   implicit val FORMAT = Format[MGeoShape](READS, WRITES)
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   /** ES-маппинги полей. */
   override def generateMappingProps: List[DocField] = {

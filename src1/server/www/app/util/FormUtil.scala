@@ -6,8 +6,8 @@ import java.time.{LocalDate, ZoneId}
 import io.suggest.bill.{MCurrencies, MCurrency}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
+import io.suggest.es.model.MEsUuId
 import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
-import io.suggest.model.es.MEsUuId
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.sc.common.LvlMap_t
 import io.suggest.util.{DateParseUtil, UrlUtil, UuidUtil}

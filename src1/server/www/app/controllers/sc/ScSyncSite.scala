@@ -5,7 +5,7 @@ import java.util.NoSuchElementException
 import controllers.{SioController, routes}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.es.MEsUuId
+import io.suggest.es.model.MEsUuId
 import models._
 import models.mlu.MLookupModes
 import models.msc._

@@ -2,7 +2,7 @@ package io.suggest.model.n2.media
 
 import java.time.OffsetDateTime
 
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -30,7 +30,7 @@ object MFileMeta extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

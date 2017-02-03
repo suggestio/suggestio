@@ -2,7 +2,7 @@ package io.suggest.model.n2.media.storage
 
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.swfs.client.proto.fid.Fid
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 
 /**
  * Suggest.io

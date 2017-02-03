@@ -23,7 +23,6 @@ resolvers ++= {
 
 libraryDependencies ++= {
   val slf4jVsn      = Common.Vsn.SLF4J 
-  val esVsn         = "2.3.5"
   val akkaVsn       = "2.4.+"
   val morphVsn      = "1.3-SNAPSHOT"
   Seq(
@@ -43,17 +42,10 @@ libraryDependencies ++= {
     PlayImport.ws,
     PlayImport.cache,
 
-    // ElasticSearch:
-    "org.elasticsearch" % "elasticsearch" % esVsn,
-    "com.sksamuel.elastic4s" %% "elastic4s-core"    % "2.4.0",
-    "com.sksamuel.elastic4s" %% "elastic4s-streams" % "2.4.0",
-
-    // Полу-официальная поддержка GeoJSON для play:
-    //"com.typesafe.play.extras" %% "play-geojson" % "1.4.+",
-
-    // play 2.5.1: AHC-2.0 там кривой RC16, https://github.com/AsyncHttpClient/async-http-client/issues/1123
-    // TODO После 2.5.2 или 2.6.0 можно удалить, т.к. в git уже -RC19 проставлен.
-    //"org.asynchttpclient" % "async-http-client" % "2.0.+",
+    // ElasticSearch (Lucene):
+    "org.elasticsearch" % "elasticsearch" % Common.Vsn.ELASTIC_SEARCH,
+    //"com.sksamuel.elastic4s" %% "elastic4s-core"    % "2.4.0",
+    //"com.sksamuel.elastic4s" %% "elastic4s-streams" % "2.4.0",
 
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
@@ -62,12 +54,8 @@ libraryDependencies ++= {
     // Морфология
     //"org.apache.lucene.morphology" % "russian" % morphVsn,
     //"org.apache.lucene.morphology" % "english" % morphVsn,
-    // geo
-    //"com.spatial4j" % "spatial4j" % "0.4.+",
-    //"com.vividsolutions" % "jts" % "1.13",
 
     // TEST
-    //"net.databinder.dispatch" %% "dispatch-core" % "0.11.+" % "test",
     "org.slf4j" % "slf4j-api" % slf4jVsn % Test,
     "org.slf4j" % "slf4j-log4j12" % slf4jVsn % Test,
     "org.scalatest" %% "scalatest" % Common.scalaTestVsn % Test

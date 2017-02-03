@@ -1,8 +1,8 @@
 package io.suggest.model.n2.geo
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MGeoPoint
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.geo.GeoPoint.Implicits._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -37,7 +37,7 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

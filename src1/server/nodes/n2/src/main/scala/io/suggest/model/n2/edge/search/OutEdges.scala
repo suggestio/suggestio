@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge.search
 
+import io.suggest.es.model.{MWrapClause, QueryUtil}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
-import io.suggest.model.es.{MWrapClause, QueryUtil}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.util.MacroLogsI

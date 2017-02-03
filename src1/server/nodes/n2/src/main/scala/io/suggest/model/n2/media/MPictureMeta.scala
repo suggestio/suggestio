@@ -1,7 +1,7 @@
 package io.suggest.model.n2.media
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -24,7 +24,7 @@ object MPictureMeta extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     def _n(fn: String) = {

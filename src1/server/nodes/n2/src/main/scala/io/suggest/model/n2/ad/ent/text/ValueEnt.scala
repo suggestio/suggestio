@@ -1,8 +1,8 @@
 package io.suggest.model.n2.ad.ent.text
 
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.n2.ad.ent.Coords2d
-import io.suggest.util.SioEsUtil.{DocField, FieldObject}
+import io.suggest.es.util.SioEsUtil.{DocField, FieldObject}
 
 /**
  * Suggest.io

@@ -1,8 +1,8 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
@@ -79,7 +79,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   private def _obj(fn: String, model: IGenEsMappingProps): FieldObject = {
     FieldObject(fn, enabled = true, properties = model.generateMappingProps)

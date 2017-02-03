@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.rd
 
-import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.util.SioEsUtil.{DocField, FieldIndexingVariants, FieldString}
+import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.es.util.SioEsUtil.{DocField, FieldIndexingVariants, FieldString}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 

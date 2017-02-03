@@ -1,7 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.geom.d2.MOrientation2d
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -34,7 +34,7 @@ object MScreen extends IGenEsMappingProps with IEmpty {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     val vportFields = MViewPort.generateMappingProps

@@ -4,7 +4,6 @@ import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import controllers.{ErrorHandler, IErrorHandler}
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.model.es.IEsModelDiVal
 import io.suggest.playx.CacheApiUtil
 import models.mctx.Context2Factory
 import models.req.MSioUsers
@@ -16,6 +15,7 @@ import play.api.i18n.{Langs, MessagesApi}
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di.ICacheApi
+import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.node.{INodeCache, MNodesCache}
 import io.suggest.pay.u.di.ISlickDbConfig
 import util.HtmlCompressUtil

@@ -1,7 +1,7 @@
 package models.adv.search.etg
 
+import io.suggest.es.model.EsModelUtil
 import io.suggest.es.search.{DynSearchArgs, Limit, Offset}
-import io.suggest.model.es.EsModelUtil
 import models.adv.MExtTargetFields
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}

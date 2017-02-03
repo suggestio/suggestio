@@ -1,10 +1,10 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.AdShowLevel
-import io.suggest.ym.model.common.{AdnRights, AdnRight}
+import io.suggest.ym.model.common.{AdnRight, AdnRights}
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -68,7 +68,7 @@ object MAdnExtra extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     import FieldIndexingVariants._

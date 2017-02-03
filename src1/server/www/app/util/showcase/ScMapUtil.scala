@@ -1,13 +1,13 @@
 package util.showcase
 
 import com.google.inject.Inject
+import io.suggest.es.model.IMust
 import io.suggest.geo.{GeoPoint, GeoShapeQuerable, MGeoPoint, PointGs}
-import io.suggest.model.es.IMust
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
-import io.suggest.util.SioEsUtil.laFuture2sFuture
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
 import org.elasticsearch.search.aggregations.AggregationBuilders

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.sc.common.AdShowLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -23,7 +23,7 @@ object MSlInfo extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   /** Сборка настроек ES-индекса. */
   override def generateMappingProps: List[DocField] = {

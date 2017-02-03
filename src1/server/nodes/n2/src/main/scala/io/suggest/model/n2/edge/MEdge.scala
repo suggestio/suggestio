@@ -1,8 +1,8 @@
 package io.suggest.model.n2.edge
 
 import io.suggest.model.PrefixedFn
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -96,7 +96,7 @@ object MEdge extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     // Все поля эджей должны быть include_in_all = false, ибо это сугубо техническая вещь.

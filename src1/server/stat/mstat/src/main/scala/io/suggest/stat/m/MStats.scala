@@ -7,7 +7,7 @@ import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import com.sun.org.glassfish.gmbal.{Description, Impact, ManagedOperation}
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.model.es._
+import io.suggest.es.model._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.search.aggregations.AggregationBuilders
@@ -98,7 +98,7 @@ abstract class MStatsAbstract
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingStaticFields: List[Field] = {
     List(

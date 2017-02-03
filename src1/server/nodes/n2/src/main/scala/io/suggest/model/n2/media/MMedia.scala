@@ -1,8 +1,8 @@
 package io.suggest.model.n2.media
 
-import com.google.inject.{Singleton, Inject}
-import io.suggest.model.es._
-import io.suggest.model.n2.media.storage.{IMediaStorages, IMediaStorage}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model._
+import io.suggest.model.n2.media.storage.{IMediaStorage, IMediaStorages}
 import io.suggest.util.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -75,7 +75,7 @@ class MMedias @Inject() (
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingStaticFields: List[Field] = {
     List(

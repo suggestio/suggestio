@@ -1,6 +1,6 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
-import play.api.libs.json.{Reads, Json}
+import play.api.libs.json.{Json, Reads}
 
 /**
  * Suggest.io

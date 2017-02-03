@@ -1,7 +1,7 @@
 package io.suggest.stat.saver
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.es.IEsModelDiVal
+import io.suggest.es.model.IEsModelDiVal
 import io.suggest.util.MacroLogsDyn
 import play.api.inject.ApplicationLifecycle
 

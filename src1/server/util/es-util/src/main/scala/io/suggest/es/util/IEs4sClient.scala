@@ -1,10 +1,10 @@
-package io.suggest.di
+package io.suggest.es.util
 
 import com.google.inject.{Inject, Provider, Singleton}
 import com.sksamuel.elastic4s.ElasticClient
 import org.elasticsearch.client.Client
-import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}
+import play.api.{Configuration, Environment}
 
 /**
   * Интерфейс для поля с инжектируемым инстансом scala4s-клиента для elasticsearch.

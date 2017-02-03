@@ -53,7 +53,7 @@ addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.3")
 
 // Плагины для интеграции scalajs + npm + webpack.
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.5.0-SNAPSHOT")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.5.0")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.5.0-SNAPSHOT")
+addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.5.0")
 

@@ -1,11 +1,11 @@
 package models.sec
 
-import io.suggest.model.es._
 import util.PlayMacroLogsImpl
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model._
 import io.suggest.util.JacksonParsing
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

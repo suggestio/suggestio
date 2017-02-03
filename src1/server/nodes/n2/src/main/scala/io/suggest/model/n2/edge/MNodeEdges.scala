@@ -1,9 +1,9 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.model.PrefixedFn
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -82,7 +82,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

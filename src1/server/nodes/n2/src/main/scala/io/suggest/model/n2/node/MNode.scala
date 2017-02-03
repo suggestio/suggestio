@@ -1,7 +1,6 @@
 package io.suggest.model.n2.node
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.es._
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.MNodeEdges
@@ -11,9 +10,10 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.MacroLogsImpl
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms

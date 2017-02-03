@@ -1,7 +1,7 @@
 package models.mdr
 
+import io.suggest.es.model.IMust
 import io.suggest.es.search.{ILimit, IOffset}
-import io.suggest.model.es.IMust
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes

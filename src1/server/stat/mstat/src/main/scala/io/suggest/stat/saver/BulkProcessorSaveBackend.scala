@@ -2,7 +2,7 @@ package io.suggest.stat.saver
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
-import io.suggest.model.es.IEsModelDiVal
+import io.suggest.es.model.IEsModelDiVal
 import io.suggest.stat.m.{MStat, MStats}
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}

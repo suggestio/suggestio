@@ -2,10 +2,10 @@ package models.usr
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.model.es.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT, EsModelUtil}
-import EsModelUtil._
+import io.suggest.es.model.EsModelUtil._
 import com.google.inject.{Inject, Singleton}
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.model.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT}
+import io.suggest.es.util.SioEsUtil._
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json.{JsBoolean, JsString}

@@ -1,8 +1,8 @@
 package models.usr
 
-import io.suggest.model.es._
-import EsModelUtil._
+import io.suggest.es.model.EsModelUtil._
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model._
 import io.suggest.util.JacksonParsing
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl

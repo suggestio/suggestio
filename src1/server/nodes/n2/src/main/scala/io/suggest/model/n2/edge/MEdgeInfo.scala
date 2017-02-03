@@ -3,10 +3,10 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty, IIsNonEmpty}
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{GeoPoint, MGeoPoint}
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.util.SioConstants
 import io.suggest.ym.model.NodeGeoLevel
@@ -113,7 +113,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   /** Сборка полей ES-маппинга. */
   override def generateMappingProps: List[DocField] = {

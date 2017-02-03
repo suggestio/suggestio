@@ -13,7 +13,6 @@ import io.suggest.adv.rcvr._
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
-import io.suggest.model.es.MEsUuId
 import io.suggest.async.StreamsUtil
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
@@ -42,6 +41,7 @@ import util.lk.LkTagsSearchUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
+import io.suggest.es.model.MEsUuId
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNodes
 import models.MNode

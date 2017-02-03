@@ -3,7 +3,7 @@ package util.event
 import java.time.OffsetDateTime
 
 import com.google.inject.Inject
-import io.suggest.model.es.{EsModelStaticT, EsModelT}
+import io.suggest.es.model.{EsModelStaticT, EsModelT}
 import models._
 import models.event._
 import models.event.search.MEventsSearchArgs

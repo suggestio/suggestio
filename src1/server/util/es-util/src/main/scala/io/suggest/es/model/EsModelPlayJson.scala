@@ -1,7 +1,7 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import play.api.libs.json.{Json, JsString, JsObject}
+import play.api.libs.json.{JsObject, JsString, Json}
 
 /**
  * Suggest.io

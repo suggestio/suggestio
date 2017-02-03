@@ -1,7 +1,7 @@
 package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.es._
+import io.suggest.es.model._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.common.settings.Settings
 

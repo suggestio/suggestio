@@ -1,6 +1,6 @@
 package models.adv
 
-import io.suggest.model.es.MEsUuId
+import io.suggest.es.model.MEsUuId
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 import util.PlayMacroLogsDyn

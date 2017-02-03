@@ -1,6 +1,6 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import io.suggest.util._
 import org.elasticsearch.common.xcontent.XContentBuilder
 

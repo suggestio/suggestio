@@ -1,10 +1,10 @@
 package io.suggest.model.n2.bill.tariff.daily
 
 import io.suggest.bill.{IMCurrency, MCurrency}
-import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.bill.MCurrenciesJvm.CURRENCY_FORMAT
+import io.suggest.es.model.IGenEsMappingProps
 
 /**
  * Suggest.io
@@ -30,7 +30,7 @@ object MDailyTf extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
 
   override def generateMappingProps: List[DocField] = {

@@ -1,7 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -53,7 +53,7 @@ object MUa extends IGenEsMappingProps with IEmpty {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   private def _fieldString(id: String): FieldString = {
     FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = true)

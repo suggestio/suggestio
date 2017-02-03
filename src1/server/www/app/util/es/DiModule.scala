@@ -1,6 +1,6 @@
 package util.es
 
-import io.suggest.es.TransportEsClient
+import io.suggest.es.util.TransportEsClient
 import org.elasticsearch.client.Client
 import play.api.{Configuration, Environment}
 import play.api.inject.{Binding, Module}

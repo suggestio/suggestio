@@ -1,7 +1,7 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -38,7 +38,7 @@ object MLocation extends IGenEsMappingProps with IEmpty {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     val glDataProps = MGeoLocData.generateMappingProps

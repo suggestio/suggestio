@@ -1,7 +1,7 @@
 package io.suggest.model.n2.edge.search
 
 import io.suggest.common.empty.{EmptyProduct, IIsNonEmpty}
-import io.suggest.model.es.{IMust, Must_t}
+import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.sc.common.SlNameTokenStr
 

@@ -1,8 +1,8 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import io.suggest.util.MacroLogsI
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.common.settings.Settings
-import io.suggest.util.SioEsUtil.laFuture2sFuture
 
 import scala.concurrent.Future
 

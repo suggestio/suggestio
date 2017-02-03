@@ -1,8 +1,8 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.MGeoPoint
-import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.geo.GeoPoint.Implicits._
@@ -41,7 +41,7 @@ object MGeoLocData extends IGenEsMappingProps with IEmpty {
   override def empty = MGeoLocData()
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

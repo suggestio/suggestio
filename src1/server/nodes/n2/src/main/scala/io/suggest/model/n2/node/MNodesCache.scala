@@ -1,8 +1,8 @@
 package io.suggest.model.n2.node
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model.EsModelCache
 import io.suggest.event.SioNotifier.Event
-import io.suggest.model.es.EsModelCache
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import org.elasticsearch.client.Client
 import play.api.Configuration

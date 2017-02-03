@@ -1,9 +1,9 @@
 package io.suggest.model.n2.ad.ent
 
 import io.suggest.common.empty.IIsNonEmpty
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.n2.ad.ent.text.TextEnt
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

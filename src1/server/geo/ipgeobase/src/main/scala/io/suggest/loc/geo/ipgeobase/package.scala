@@ -1,6 +1,6 @@
 package io.suggest.loc.geo
 
-import io.suggest.util.SioEsUtil
+import io.suggest.es.util.SioEsUtil
 
 /**
   * Suggest.io

@@ -1,14 +1,17 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
 import com.sksamuel.elastic4s.{RichSearchHit, SearchDefinition}
+import com.sksamuel.elastic4s.streams.ReactiveElastic._
+import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.fut.FutureUtil
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
+import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.{JacksonWrapper, SioConstants}
-import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}
 import org.elasticsearch.action.index.IndexRequestBuilder
@@ -18,9 +21,6 @@ import org.elasticsearch.common.unit.TimeValue
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.sort.SortBuilders
-import com.sksamuel.elastic4s.streams.ReactiveElastic._
-import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.fut.FutureUtil
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -35,9 +35,9 @@ import scala.concurrent.Future
 /** Общий код для обычный и child-моделей. Был вынесен из-за разделения в логике работы обычный и child-моделей. */
 trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
-  override type T <: EsModelCommonT
-
   import mCommonDi._
+
+  override type T <: EsModelCommonT
 
   // Кое-какие константы, которые можно переопределить в рамках конкретных моделей.
   def MAX_RESULTS_DFLT = EsModelUtil.MAX_RESULTS_DFLT

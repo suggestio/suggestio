@@ -1,4 +1,4 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import com.sksamuel.elastic4s.{HitAs, RichSearchHit, SearchDefinition}
 import org.elasticsearch.search.SearchHit
@@ -9,6 +9,7 @@ import org.elasticsearch.search.SearchHit
   * Created: 22.11.16 12:35
   * Description: Интерфейс для хелперов typeclass'ов, обслуживающих нужды source() (akka.streams).
   */
+
 object IEsSourcingHelper {
 
   implicit def idsHelper = new IdsSourcingHelper

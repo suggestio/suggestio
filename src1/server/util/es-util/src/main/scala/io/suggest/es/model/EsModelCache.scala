@@ -1,4 +1,4 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import akka.actor.ActorContext
 import io.suggest.common.fut.FutureUtil

@@ -1,12 +1,12 @@
 package io.suggest.stat.m
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.es._
+import io.suggest.es.model._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.common.settings.Settings
-import io.suggest.util.SioEsUtil.laFuture2sFuture
-import scala.collection.JavaConversions._
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 
+import scala.collection.JavaConversions._
 import scala.concurrent.Future
 
 /**

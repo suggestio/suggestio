@@ -150,7 +150,7 @@ routesImport ++= Seq(
   "util.qsb.QSBs._",
   "models.im.ImOp._",
   "models.msc.AdCssArgs._",
-  "io.suggest.model.es.MEsUuId",
+  "io.suggest.es.model.MEsUuId",
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
   // 2016.dec.15: GeoPoint class унифицирован на уровне [common], поэтому для его QSB теперь требуется особое приглашение:

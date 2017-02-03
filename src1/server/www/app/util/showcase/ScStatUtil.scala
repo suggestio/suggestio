@@ -2,8 +2,8 @@ package util.showcase
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.MEsUuId
 import io.suggest.geo.IGeoFindIpResult
-import io.suggest.model.es.MEsUuId
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil

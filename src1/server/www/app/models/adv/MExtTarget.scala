@@ -3,9 +3,8 @@ package models.adv
 import java.time.OffsetDateTime
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
-import io.suggest.model.es._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtService, MExtServices}
 import play.api.i18n.Messages
@@ -14,6 +13,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.util.JacksonParsing
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import models.mproj.ICommonDi
 

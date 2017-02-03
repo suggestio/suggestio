@@ -1,7 +1,7 @@
 package io.suggest.model.n2.bill.tariff
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.n2.bill.tariff.daily.MDailyTf
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -28,7 +28,7 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

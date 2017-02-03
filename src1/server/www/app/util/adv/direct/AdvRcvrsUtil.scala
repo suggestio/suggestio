@@ -4,9 +4,9 @@ import java.time.OffsetDateTime
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.es.EsModelUtil
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl

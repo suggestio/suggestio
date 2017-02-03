@@ -1,9 +1,9 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.model.es.MEsUuId
 import models.adv.form.MDatesPeriod
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets

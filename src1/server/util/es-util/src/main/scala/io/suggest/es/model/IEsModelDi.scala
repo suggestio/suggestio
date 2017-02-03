@@ -1,9 +1,10 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di._
+import io.suggest.es.util.IEs4sClient
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.{ICommonDiValBase, IMCommonDiBase}
 import io.suggest.playx.CacheApiUtil

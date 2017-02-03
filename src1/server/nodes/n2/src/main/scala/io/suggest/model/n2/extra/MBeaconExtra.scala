@@ -2,7 +2,7 @@ package io.suggest.model.n2.extra
 
 import java.util.UUID
 
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -32,7 +32,7 @@ object MBeaconExtra extends IGenEsMappingProps {
     (__ \ MINOR_FN).format[Int]
   )(apply, unlift(unapply))
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   private def _fieldNumber(fn: String) = {
     FieldNumber(

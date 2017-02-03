@@ -1,4 +1,4 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import io.suggest.model.play.psb.PathBindableImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl

@@ -1,10 +1,10 @@
 package io.suggest.model.n2.node.common
 
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.n2.node.MNodeType
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 
 /**
  * Suggest.io
@@ -29,7 +29,7 @@ object MNodeCommon extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   /** ES-схема полей модели. */
   override def generateMappingProps: List[DocField] = {

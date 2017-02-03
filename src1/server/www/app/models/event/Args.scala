@@ -117,7 +117,7 @@ object ArgsInfo {
     case _ => EmptyArgsInfo
   }
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   /** Поля аргументов тоже индексируются. В первую очередь, чтобы их можно было легко и быстро удалять. */
   def generateMappingProps: List[DocField] = List(

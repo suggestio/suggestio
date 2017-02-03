@@ -1,20 +1,19 @@
-package io.suggest.util
+package io.suggest.es.util
 
+import io.suggest.util.MacroLogsImpl
+import io.suggest.util.SioConstants._
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
+import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
+import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
+import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
-import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
-import org.elasticsearch.client.Client
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
 import org.elasticsearch.common.xcontent.XContentBuilder
-import SioConstants._
+import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
 
-import scala.concurrent.{Future, Promise}
-import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
-
-import scala.concurrent.ExecutionContext
-import org.elasticsearch.common.bytes.BytesArray
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 // TODO Как показала практика, XContentBuilder слегка взрывоопасен и слишком изменяем. Следует тут задействовать
 //      статически-типизированный play.json для генерации json-маппингов.
@@ -28,10 +27,10 @@ import org.elasticsearch.common.bytes.BytesArray
 
 object SioEsUtil extends MacroLogsImpl {
 
-  import LOGGER._
-  import FieldIndexingVariants.FieldIndexingVariant
-  import TermVectorVariants.TermVectorVariant
   import DocFieldTypes.DocFieldType
+  import FieldIndexingVariants.FieldIndexingVariant
+  import LOGGER._
+  import TermVectorVariants.TermVectorVariant
 
   // _FN - Filter Name. _AN - Analyzer Name, _TN - Tokenizer Name
 

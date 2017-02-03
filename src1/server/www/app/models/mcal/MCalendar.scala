@@ -1,10 +1,10 @@
 package models.mcal
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.model.es._
 import io.suggest.util.JacksonParsing
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.functional.syntax._
 import util.PlayMacroLogsImpl

@@ -2,10 +2,10 @@ package util.billing.cron
 
 import java.time.OffsetDateTime
 
+import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
-import io.suggest.model.es.EsModelUtil
 import models.MNode
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi

@@ -1,6 +1,6 @@
 package io.suggest.es.search
 
-import io.suggest.model.es._
+import io.suggest.es.model.{IMust, MWrapClause, Must_t, QueryUtil}
 import org.elasticsearch.index.query.QueryBuilder
 
 /**

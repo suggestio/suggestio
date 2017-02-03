@@ -1,7 +1,7 @@
 package controllers.sysctl
 
 import controllers.{SioController, routes}
-import io.suggest.model.es.MEsUuId
+import io.suggest.es.model.MEsUuId
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.model.n2.node.IMNodes
 import models.msys.MNodeEdgeIdQs

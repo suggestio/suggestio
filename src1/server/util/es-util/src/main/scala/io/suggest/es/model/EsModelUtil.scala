@@ -1,7 +1,8 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
+import io.suggest.es.util.SioEsUtil
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.util.SioEsUtil._
 import io.suggest.util._
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchResponse

@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import java.time.OffsetDateTime
 
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -65,7 +65,7 @@ object MBasicMeta extends IGenEsMappingProps {
       )
   )(apply, unlift(unapply))
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

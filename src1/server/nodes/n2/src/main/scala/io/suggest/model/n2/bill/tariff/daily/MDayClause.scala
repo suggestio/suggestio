@@ -1,6 +1,6 @@
 package io.suggest.model.n2.bill.tariff.daily
 
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -47,7 +47,7 @@ object MDayClause extends IGenEsMappingProps {
       .toSeq
   }
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
     List(

@@ -1,11 +1,11 @@
 package models.msc
 
-import io.suggest.model.es.MEsUuId
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.mgeo.MLocEnv
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.es.model.MEsUuId
 
 /**
   * Suggest.io

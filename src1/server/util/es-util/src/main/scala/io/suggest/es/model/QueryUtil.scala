@@ -1,4 +1,4 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 

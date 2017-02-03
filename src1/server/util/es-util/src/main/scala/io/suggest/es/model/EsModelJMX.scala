@@ -1,4 +1,4 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import io.suggest.util.{JacksonWrapper, SioConstants}
 import org.elasticsearch.common.bytes.BytesArray

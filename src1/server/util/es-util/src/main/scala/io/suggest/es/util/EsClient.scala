@@ -1,4 +1,4 @@
-package io.suggest.es
+package io.suggest.es.util
 
 import java.net.InetSocketAddress
 

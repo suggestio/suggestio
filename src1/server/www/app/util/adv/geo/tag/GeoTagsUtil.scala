@@ -1,6 +1,7 @@
 package util.adv.geo.tag
 
 import com.google.inject.Inject
+import io.suggest.es.util.SioEsUtil
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -11,7 +12,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.util.{JMXBase, SioEsUtil}
+import io.suggest.util.JMXBase
 import io.suggest.ym.model.NodeGeoLevels
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi

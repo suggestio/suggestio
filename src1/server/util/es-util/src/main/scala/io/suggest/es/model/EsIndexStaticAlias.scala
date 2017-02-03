@@ -1,12 +1,12 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
 import io.suggest.util.MacroLogsI
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.ResourceNotFoundException
-import io.suggest.util.SioEsUtil.laFuture2sFuture
 
+import scala.collection.JavaConversions._
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
-import scala.collection.JavaConversions._
 
 /**
   * Suggest.io

@@ -1,10 +1,10 @@
 package io.suggest.model.n2.media.storage
 
 import com.google.inject.Inject
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.fio.{IReadResponse, IWriteRequest}
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.primo.TypeT
-import io.suggest.util.SioEsUtil.DocField
+import io.suggest.es.util.SioEsUtil.DocField
 import play.api.inject.Injector
 import play.api.libs.json._
 

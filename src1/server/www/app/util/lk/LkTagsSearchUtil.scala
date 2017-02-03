@@ -5,7 +5,7 @@ import javax.inject.Inject
 import com.google.inject.Singleton
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.common.tags.search.{MTagFound, MTagsFound}
-import io.suggest.model.es.IEsModelDiVal
+import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}

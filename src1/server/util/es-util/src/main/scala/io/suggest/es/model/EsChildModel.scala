@@ -1,7 +1,7 @@
-package io.suggest.model.es
+package io.suggest.es.model
 
+import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import org.elasticsearch.action.index.IndexRequestBuilder
-import io.suggest.util.SioEsUtil.laFuture2sFuture
 
 import scala.concurrent.Future
 

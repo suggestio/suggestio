@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -41,7 +41,7 @@ object MAddress extends IGenEsMappingProps with IEmpty {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
   override def generateMappingProps: List[DocField] = {
     List(
       FieldString(TOWN_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),

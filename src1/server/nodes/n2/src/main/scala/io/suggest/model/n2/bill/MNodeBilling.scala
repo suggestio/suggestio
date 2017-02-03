@@ -1,11 +1,11 @@
 package io.suggest.model.n2.bill
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
-import io.suggest.model.es.IGenEsMappingProps
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 
 /**
  * Suggest.io
@@ -39,7 +39,7 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
   override def generateMappingProps: List[DocField] = {
     List(
       FieldNumber(CONTRACT_ID_FN, fieldType = DocFieldTypes.long, index = FieldIndexingVariants.not_analyzed, include_in_all = false),

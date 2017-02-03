@@ -1,8 +1,8 @@
 package io.suggest.model.n2.ad.blk
 
-import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.ym.model.common.MImgSizeT
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -33,7 +33,7 @@ object BlockMeta extends IGenEsMappingProps {
   )(apply, unlift(unapply))
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
 
   private def _fint(fn: String) = {
     FieldNumber(

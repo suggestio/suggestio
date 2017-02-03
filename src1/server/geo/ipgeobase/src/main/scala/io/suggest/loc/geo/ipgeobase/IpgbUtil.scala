@@ -1,8 +1,8 @@
 package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model.IEsModelDiVal
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoPoint}
-import io.suggest.model.es.IEsModelDiVal
 import io.suggest.util.MacroLogsImpl
 
 import scala.concurrent.Future

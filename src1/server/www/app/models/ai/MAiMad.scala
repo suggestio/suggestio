@@ -3,13 +3,13 @@ package models.ai
 import java.time.ZoneId
 
 import io.suggest.model.common.OptStrId
-import io.suggest.model.es._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
-import io.suggest.util.SioEsUtil._
+import io.suggest.es.model._
+import io.suggest.es.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.json.{JsArray, JsString}
-import io.suggest.util.JacksonParsing.{stringParser, strListParser, iteratorParser}
+import io.suggest.util.JacksonParsing.{iteratorParser, strListParser, stringParser}
 import util.PlayMacroLogsImpl
 
 import scala.collection.Map

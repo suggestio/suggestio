@@ -2,7 +2,7 @@ package io.suggest.loc.geo.ipgeobase
 
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.es._
+import io.suggest.es.model._
 import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
@@ -63,7 +63,7 @@ abstract class MIpRangesAbstract
   }
 
 
-  import io.suggest.util.SioEsUtil._
+  import io.suggest.es.util.SioEsUtil._
   import MIpRange.Fields._
   import mCommonDi._
 
