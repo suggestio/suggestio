@@ -4,8 +4,7 @@ import java.time.OffsetDateTime
 
 import io.suggest.adv.ext.model.ctx.MExtTargetT
 import io.suggest.model.es._
-import EsModelUtil.FieldsJsonAcc
-import io.suggest.model.search.EsDynSearchStatic
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtService, MExtServices}
@@ -13,8 +12,9 @@ import play.api.i18n.Messages
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import EsModelUtil.stringParser
+import io.suggest.util.JacksonParsing
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.search.EsDynSearchStatic
 import models.mproj.ICommonDi
 
 import scala.collection.Map
@@ -88,13 +88,13 @@ class MExtTargets @Inject() (
     MExtTarget(
       id          = id,
       versionOpt  = version,
-      url         = stringParser(m(URL_ESFN)),
-      service     = MExtServices.withName( stringParser(m(SERVICE_ID_ESFN)) ),
-      adnId       = stringParser(m(ADN_ID_ESFN)),
+      url         = JacksonParsing.stringParser(m(URL_ESFN)),
+      service     = MExtServices.withName( JacksonParsing.stringParser(m(SERVICE_ID_ESFN)) ),
+      adnId       = JacksonParsing.stringParser(m(ADN_ID_ESFN)),
       name        = m.get(NAME_ESFN)
-        .map(stringParser),
+        .map( JacksonParsing.stringParser ),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(OffsetDateTime.now)(EsModelUtil.dateTimeParser)
+        .fold(OffsetDateTime.now)(JacksonParsing.dateTimeParser)
     )
   }
 
@@ -140,7 +140,7 @@ class MExtTargets @Inject() (
     import m._
     SERVICE_ID_ESFN   -> JsString(service.strId) ::
     ADN_ID_ESFN       -> JsString(adnId) ::
-    DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated) ::
+    DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated) ::
     toJsTargetPlayJsonFields
   }
 

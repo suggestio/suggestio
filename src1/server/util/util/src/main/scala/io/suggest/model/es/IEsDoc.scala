@@ -59,7 +59,7 @@ object IEsDoc {
 trait IEsDoc[-T] {
 
   def rawVersion(v: T): Long
-  
+
   def version(v: T): Option[Long] = {
     val vraw = rawVersion(v)
     if (vraw < 0L) None else Some(vraw)

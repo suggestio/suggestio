@@ -43,7 +43,7 @@ class CanAdvertiseAdUtil @Inject() (
   def maybeAllowed[A](mad: MNode, req: IReq[A]): Future[Option[MAdProdReq[A]]] = {
     val prodIdOpt = n2NodeUtil.madProducerId(mad)
     // TODO Далее говнокод какой-то, переписать.
-    def prodOptFut = mNodeCache.maybeGetByIdCached(prodIdOpt)
+    def prodOptFut = mNodesCache.maybeGetByIdCached(prodIdOpt)
     def req2(mnode: MNode) = MAdProdReq(mad, mnode, req, req.user)
     if (req.user.isSuper) {
       prodOptFut.map { prodOpt =>
@@ -102,7 +102,7 @@ trait CanAdvertiseAd
 
     def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
-      val madFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+      val madFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
       val user = mSioUsers(personIdOpt)
 
       // Оптимистично запустить сбор запрошенных данных MSioUser.

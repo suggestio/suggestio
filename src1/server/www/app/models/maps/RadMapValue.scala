@@ -1,6 +1,6 @@
 package models.maps
 
-import io.suggest.model.geo.CircleGs
+import io.suggest.geo.CircleGs
 
 /**
   * Suggest.io

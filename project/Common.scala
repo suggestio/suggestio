@@ -28,6 +28,23 @@ object Common {
     /** Версия play-slick прослойки. */
     val PLAY_SLICK   = "2.1.0-SNAPSHOT"
 
+    /** Версия yandex-money-sdk-java.
+     *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
+     */
+    //val YA_MONEY_SDK = "6.1.+"
+
+    /** Версия elasticsearch. */
+    val ELASTIC_SEARCH = "2.4.1"
+
+    /** Версия elastic4s. */
+    val ELASTIC4S = "2.4.0"
+
+    /** Бывает, что используется slf4j. Тут его версия.
+      * По-хорошему, у нас на сервере logback, на клиенте -- самописный логгинг.
+      * И SLF4J депендится только в некоторых тестах.
+      */
+    val SLF4J      = "1.7.+"
+
 
     object Sio {
 
@@ -48,12 +65,16 @@ object Common {
   /** Очень общие сеттинги для проектов. */
   val settingsOrg = Seq[Setting[_]](
     scalaVersion := SCALA_VSN,
-    organization := ORG
+    organization := ORG,
+    sources in (Compile, doc) := Seq.empty,
+    publishArtifact in (Compile, packageDoc) := false
   )
 
   val settingsOrgJS = Seq[Setting[_]](
     scalaVersion := SCALA_VSN_JS,
-    organization := ORG
+    organization := ORG,
+    sources in (Compile, doc) := Seq.empty,
+    publishArtifact in (Compile, packageDoc) := false
   )
 
   /** Версия play. */
@@ -158,7 +179,9 @@ object Common {
     val SONATYPE_OSS_SNAPSHOTS_URL    = ARTIFACTORY_URL + "sonatype-oss-snapshots"
     val SONATYPE_GROUPS_FORGE_URL     = ARTIFACTORY_URL + "sonatype-groups-forge"
 
-    val APACHE_RELEASES_URL           = ARTIFACTORY_URL + "apache-releases"
+    def APACHE_RELEASES_URL           = ARTIFACTORY_URL + "apache-releases"
+
+    def JCENTER_URL                   = ARTIFACTORY_URL + "jcenter"
 
     //val CONJARS_REPO_URL            = ARTIFACTORY_URL + "conjars-repo"
     //val MAVEN_TWTTR_COM_URL         = ARTIFACTORY_URL + "maven-twttr-com"

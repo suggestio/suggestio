@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta.search
 
+import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.sort.SortOrder
 

@@ -1,8 +1,9 @@
 package models.mcal
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.model.es._
+import io.suggest.util.JacksonParsing
 import io.suggest.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.functional.syntax._
@@ -58,12 +59,12 @@ class MCalendars @Inject() (
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MCalendar(
       id          = id,
-      name        = m.get(NAME_FN).fold("WTF?")(EsModelUtil.stringParser),
+      name        = m.get(NAME_FN).fold("WTF?")(JacksonParsing.stringParser),
       calType     = m.get(CAL_TYPE_FN)
-        .map(EsModelUtil.stringParser)
+        .map(JacksonParsing.stringParser)
         .flatMap(MCalTypes.maybeWithName)
         .getOrElse( _dfltCalType(id) ),
-      data        = EsModelUtil.stringParser( m(DATA_FN) ),
+      data        = JacksonParsing.stringParser( m(DATA_FN) ),
       versionOpt  = version
     )
   }

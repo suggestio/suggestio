@@ -2,13 +2,13 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.radio.BeaconUtil
+import io.suggest.es.search.{MRandomSortData, MSubSearch}
+import io.suggest.geo.PointGs
 import io.suggest.model.es.IMust
-import io.suggest.model.geo.PointGs
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.model.search.{MRandomSortData, MSubSearch}
 import io.suggest.ym.model.NodeGeoLevels
 import models.mgeo.MBleBeaconInfo
 import models.mproj.ICommonDi

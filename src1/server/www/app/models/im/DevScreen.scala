@@ -1,7 +1,6 @@
 package models.im
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.stat.m.MViewPort
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
@@ -105,15 +104,6 @@ case class DevScreen(
         .append( dpr.pixelRatio )
     }
     sb.toString()
-  }
-
-  /** Конвертация модели в инстанс MViewPort для моделей статистики. */
-  def toStatViewPort: MViewPort = {
-    MViewPort(
-      widthPx   = width,
-      heightPx  = height,
-      pxRatio   = pixelRatioOpt.map(_.pixelRatio)
-    )
   }
 
 }

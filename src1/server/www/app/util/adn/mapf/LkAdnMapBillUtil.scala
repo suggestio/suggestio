@@ -4,11 +4,11 @@ import java.time.ZoneId
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MGetPriceResp, MPrice}
+import io.suggest.geo.PointGs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.geo.PointGs
 import models.madn.mapf.MAdnMapFormRes
 import models.mproj.ICommonDi
 import util.billing.Bill2Util

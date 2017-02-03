@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.geo.shape
 
 import io.suggest.common.slick.driver.IDriver
-import io.suggest.model.geo.GeoShape
+import io.suggest.geo.GeoShape
 import io.suggest.primo.IApplyOpt1
 import play.api.libs.json.Json
 

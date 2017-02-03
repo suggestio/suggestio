@@ -210,7 +210,7 @@ class SysMarket @Inject() (
 
     // Узнаём исходящие ребра.
     val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
-      val mnodesMapFut = mNodeCache.multiGetMap {
+      val mnodesMapFut = mNodesCache.multiGetMap {
         mnode.edges
           .iterator
           .flatMap(_.nodeIds)
@@ -555,7 +555,7 @@ class SysMarket @Inject() (
         }
     }
 
-    val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodeCache.getById )
+    val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodesCache.getById )
 
     // Собираем карту размещений рекламных карточек.
     val ad2advMapFut: Future[Map[String, Seq[MItem]]] = {
@@ -597,7 +597,7 @@ class SysMarket @Inject() (
     val rcvrsFut: Future[Map[String, Seq[MNode]]] = if (rcvrIds.nonEmpty) {
       // Используем только переданные ресиверы.
       Future
-        .traverse(rcvrIds) { mNodeCache.getById }
+        .traverse(rcvrIds) { mNodesCache.getById }
         .flatMap { rcvrOpts =>
           val rcvrs = rcvrOpts.flatten
           madsFut map { mads =>
@@ -616,7 +616,7 @@ class SysMarket @Inject() (
             .flatten
             .flatMap(_.rcvrIdOpt)
             .toSet
-          mNodeCache.multiGet(allRcvrIdsSet)
+          mNodesCache.multiGet(allRcvrIdsSet)
         }
 
       } yield {
@@ -739,7 +739,7 @@ class SysMarket @Inject() (
 
     // Определить узла-продьюсера
     val producerIdOpt = n2NodesUtil.madProducerId( mad )
-    val producerOptFut = mNodeCache.maybeGetByIdCached( producerIdOpt )
+    val producerOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
 
     // Собрать инфу по картинкам.
     val imgs = {
@@ -770,7 +770,7 @@ class SysMarket @Inject() (
   def analyzeAdRcvrs(adId: String) = IsSuMadGet(adId).async { implicit request =>
     import request.mad
     val producerId = n2NodesUtil.madProducerId(mad).get
-    val producerOptFut = mNodeCache.getById(producerId)
+    val producerOptFut = mNodesCache.getById(producerId)
 
     val newRcvrsMapFut = for {
       producerOpt <- producerOptFut
@@ -795,11 +795,11 @@ class SysMarket @Inject() (
       }
       val adnIds1 = _nodeIds(rcvrsMap)
       for {
-        adns1       <- mNodeCache.multiGet(adnIds1)
+        adns1       <- mNodesCache.multiGet(adnIds1)
         newRcvrsMap <- newRcvrsMapFut
         newAdns     <- {
           val newRcvrIds = _nodeIds(newRcvrsMap)
-          mNodeCache.multiGet(newRcvrIds -- adnIds1)
+          mNodesCache.multiGet(newRcvrIds -- adnIds1)
         }
       } yield {
         val iter = adns1.iterator ++ newAdns.iterator

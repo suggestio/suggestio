@@ -3,8 +3,7 @@ package util.geo.osm
 import java.io.{File, FileInputStream, InputStream}
 
 import OsmElemTypes.OsmElemType
-import io.suggest.geo.MGeoPoint
-import io.suggest.model.geo._
+import io.suggest.geo._
 import org.xml.sax.SAXParseException
 import util.PlayLazyMacroLogsImpl
 import util.parse.SaxParseUtil

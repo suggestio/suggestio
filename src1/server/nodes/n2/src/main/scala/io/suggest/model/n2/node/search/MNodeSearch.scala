@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node.search
 
+import io.suggest.es.search._
 import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
 import io.suggest.model.n2.extra.search._
@@ -7,7 +8,6 @@ import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
-import io.suggest.model.search._
 import io.suggest.util.{MacroLogsImpl, MacroLogsImplLazy}
 
 /**

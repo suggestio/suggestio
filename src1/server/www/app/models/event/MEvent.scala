@@ -4,16 +4,17 @@ import java.time.OffsetDateTime
 
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
-import io.suggest.model.search.EsDynSearchStatic
 import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import EsModelUtil.{FieldsJsonAcc, stringParser}
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import _root_.util.PlayMacroLogsImpl
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.util.JacksonParsing
 import models.mproj.ICommonDi
 
 import scala.concurrent.duration._
@@ -103,20 +104,20 @@ class MEvents @Inject() (
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     MEvent(
       etype       = m.get(EVT_TYPE_ESFN)
-        .map(stringParser)
+        .map( JacksonParsing.stringParser )
         .flatMap(MEventTypes.maybeWithName)
         .get,
       ownerId     = m.get(OWNER_ID_ESFN)
-        .map(stringParser)
+        .map( JacksonParsing.stringParser )
         .get,
       argsInfo    = m.get(ARGS_ESFN)
         .fold [ArgsInfo] (EmptyArgsInfo) (ArgsInfo.fromJacksonJson),
       dateCreated = m.get(DATE_CREATED_ESFN)
-        .fold(OffsetDateTime.now)(EsModelUtil.dateTimeParser),
+        .fold(OffsetDateTime.now)(JacksonParsing.dateTimeParser),
       isCloseable = m.get(IS_CLOSEABLE_ESFN)
-        .fold(isCloseableDflt)(EsModelUtil.booleanParser),
+        .fold(isCloseableDflt)(JacksonParsing.booleanParser),
       isUnseen    = m.get(IS_UNSEEN_ESFN)
-        .fold(false)(EsModelUtil.booleanParser),
+        .fold(false)(JacksonParsing.booleanParser),
       id          = id,
       versionOpt  = version
     )
@@ -159,7 +160,7 @@ class MEvents @Inject() (
     var acc: FieldsJsonAcc = List(
       EVT_TYPE_ESFN     -> JsString(etype.strId),
       OWNER_ID_ESFN     -> JsString(ownerId),
-      DATE_CREATED_ESFN -> EsModelUtil.date2JsStr(dateCreated)
+      DATE_CREATED_ESFN -> JacksonParsing.date2JsStr(dateCreated)
     )
     if (isUnseen)
       acc ::= IS_UNSEEN_ESFN -> JsBoolean(isUnseen)

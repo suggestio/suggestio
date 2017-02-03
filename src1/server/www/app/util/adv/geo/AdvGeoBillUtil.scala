@@ -6,12 +6,11 @@ import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
 import io.suggest.bill.{MGetPriceResp, MPrice}
 import io.suggest.dt.YmdHelpersJvm
-import io.suggest.geo.MGeoCircle
+import io.suggest.geo.{CircleGs, MGeoCircle}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.geo.CircleGs
 import io.suggest.model.n2.node.{MNode, MNodes}
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}

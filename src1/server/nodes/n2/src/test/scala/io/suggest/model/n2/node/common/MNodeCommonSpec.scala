@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.common
 
-import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
 /**

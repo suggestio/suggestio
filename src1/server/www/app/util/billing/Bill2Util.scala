@@ -94,7 +94,7 @@ class Bill2Util @Inject() (
     getDaysCount( p )
   }
 
-  def cbcaNodeOptFut = mNodeCache.getById(CBCA_NODE_ID)
+  def cbcaNodeOptFut = mNodesCache.getById(CBCA_NODE_ID)
 
   sealed case class EnsuredNodeContract(mc: MContract, mnode: MNode)
 
@@ -650,7 +650,7 @@ class Bill2Util @Inject() (
   def prepareMoneyReceiver(nodeId: String): Future[Option[EnsuredNodeContract]] = {
     // Организовать сборку данных по контракту получателя.
     val fut0 = for {
-      rcvrNodeOpt <- mNodeCache.getById( nodeId )
+      rcvrNodeOpt <- mNodesCache.getById( nodeId )
       rcvrNode    =  rcvrNodeOpt.get
       enc         <- ensureNodeContract(rcvrNode)
     } yield {

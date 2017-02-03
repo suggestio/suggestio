@@ -7,9 +7,8 @@ import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.bill.MGetPriceResp
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.model.geo.{CircleGs, Distance}
 import models.adv.form._
 import models.maps.{MapViewState, RadMapValue}
 import models.mctx.Context

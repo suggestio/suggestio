@@ -69,7 +69,7 @@ trait LkBill2Cart
     // Собрать все карточки, относящиеся к mitem'ам:
     val madsFut = mitemsFut.flatMap { mitems =>
       val wantAdIds = mitems.iterator.map(_.nodeId).toSet
-      mNodeCache.multiGet(wantAdIds)
+      mNodesCache.multiGet(wantAdIds)
     }
 
     // Параллельно собираем контекст рендера

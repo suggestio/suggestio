@@ -87,7 +87,7 @@ trait ScSiteBase
       val _domainNodeOptFut = domainNodeOptFut
 
       // Поиска id узла среди параметров URL QS.
-      val qsNodeOptFut = mNodeCache.maybeGetByIdCached( _siteQsArgs.adnId )
+      val qsNodeOptFut = mNodesCache.maybeGetByIdCached( _siteQsArgs.adnId )
 
       // Опционально объеденить оба фьючерса.
       OptionUtil.orElseFut( _domainNodeOptFut )( qsNodeOptFut )
@@ -97,7 +97,7 @@ trait ScSiteBase
 
     /** Добавки к тегу head в siteTpl. */
     def headAfterFut: Future[List[Html]] = {
-      mNodeCache.maybeGetByIdCached( _siteQsArgs.povAdId )
+      mNodesCache.maybeGetByIdCached( _siteQsArgs.povAdId )
         .map { _.get }
         // Интересует только карточка с ресивером. TODO И отмодерированная?
         .filter { mad =>

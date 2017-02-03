@@ -1,6 +1,6 @@
 package models.event.search
 
-import io.suggest.model.search.{ReturnVersion, Offset, Limit}
+import io.suggest.es.search.{Limit, Offset, ReturnVersion}
 
 /**
  * Suggest.io

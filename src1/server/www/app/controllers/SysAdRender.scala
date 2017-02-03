@@ -91,7 +91,7 @@ trait SysAdRender
   private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant, rs: Status)
                                   (implicit request: IAdReq[_]): Future[Result] = {
     val producerIdOpt = n2NodesUtil.madProducerId(request.mad)
-    val nodeOptFut = mNodeCache.maybeGetByIdCached( producerIdOpt )
+    val nodeOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
     for {
       nodeOpt <- nodeOptFut
     } yield {

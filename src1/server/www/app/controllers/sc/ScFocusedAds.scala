@@ -113,7 +113,7 @@ trait ScFocusedAdsBase
     def firstAdsFut: Future[Seq[MNode]] = {
       firstAdIdsFut.flatMap { firstAdIds =>
         if (firstAdIds.nonEmpty) {
-          for (mads <- mNodeCache.multiGet(firstAdIds)) yield {
+          for (mads <- mNodesCache.multiGet(firstAdIds)) yield {
             // Залоггировать недостающие элементы.
             logMissingFirstIds(mads, firstAdIds)
             // 2016.jul.5 Восстановить исходный порядок first-элементов. v2-выдача плавно переехала на них.
@@ -161,7 +161,7 @@ trait ScFocusedAdsBase
       * Порядок продьюсеров в списке неопределён. */
     lazy val mads2ProdsFut: Future[Seq[MNode]] = {
       prodIdsFut.flatMap { prodIds =>
-        mNodeCache.multiGet(prodIds)
+        mNodesCache.multiGet(prodIds)
       }
     }
 
@@ -426,8 +426,8 @@ trait ScFocusedAdsBase
 
     /** Контекстно-зависимая сборка данных статистики. */
     override def scStat: Future[Stat2] = {
-      val _rcvrOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
-      val _prodOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
+      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
+      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
 
       val _userSaOptFut = scStatUtil.userSaOptFutFromRequest()
 

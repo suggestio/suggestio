@@ -161,7 +161,7 @@ class ShowcaseNodeListUtil @Inject() (
       .recoverWith {
         case ex: NoSuchElementException =>
           // Запускаем чтение из кеша уже известного узла.
-          mNodeCache.maybeGetByIdCached(currAdnIdOpt)
+          mNodesCache.maybeGetByIdCached(currAdnIdOpt)
             .filter(_.nonEmpty)
             .map(_.get)
 

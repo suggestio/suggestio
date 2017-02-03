@@ -8,8 +8,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.tags.edit.{MTagsEditProps, TagsEditConstants}
 import io.suggest.dt._
 import io.suggest.dt.interval.MRangeYmd
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
-import io.suggest.model.geo.{CircleGs, GeoShape}
+import io.suggest.geo.{CircleGs, GeoShape, MGeoCircle, MGeoPoint}
 import io.suggest.pick.PickleSrvUtil
 import models.adv.geo.cur
 import models.adv.geo.cur._

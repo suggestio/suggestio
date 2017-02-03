@@ -30,7 +30,7 @@ trait AdnNodeMaybeAuth
     def nodeId: String
 
     override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-      val mnodeOptFut = mNodeCache.getById(nodeId)
+      val mnodeOptFut = mNodesCache.getById(nodeId)
 
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)

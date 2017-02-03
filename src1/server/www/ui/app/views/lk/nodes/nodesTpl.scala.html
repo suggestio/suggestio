@@ -1,0 +1,15 @@
+@(producer: MNode)(implicit ctx: Context)
+
+@* Страница-заготовка для формы управления узлами. *@
+
+@import ctx.messages
+
+@nodesBaseTpl(
+  title     = messages("Nodes.management"),
+  mnode     = producer
+) {
+
+  TODO Рендер сериализованных данных для начального состояния.
+  TODO Базовая вёрстка.
+
+}

@@ -1,8 +1,7 @@
 package io.suggest.model.n2.node
 
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
 import io.suggest.model.MockedEsSn
-import io.suggest.model.geo.{CircleGs, Distance}
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.edge._

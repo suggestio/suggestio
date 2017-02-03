@@ -1,7 +1,7 @@
 package models
 
-import io.suggest.geo.{GeoConstants, MGeoPoint}
-import io.suggest.model.geo.{Distance, GeoDistanceQuery, IGeoFindIpResult}
+import io.suggest.geo._
+import io.suggest.geo.{GeoDistanceQuery, IGeoFindIpResult}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.req.ExtReqHdr
 import play.api.libs.concurrent.Execution.Implicits.defaultContext

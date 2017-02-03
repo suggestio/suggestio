@@ -1,0 +1,9 @@
+@(title: String, mnode: MNode, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для nodes-подсистемы. *@
+
+@lk.lkBaseLayout(
+  title         = title,
+  nodeOpt       = Some(mnode),
+  headAfter     = headAfter
+)(content)

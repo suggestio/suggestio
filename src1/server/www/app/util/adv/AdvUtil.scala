@@ -170,7 +170,7 @@ class AdvUtil @Inject() (
   def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
 
     // Собираем все упомянутые узлы.
-    val rcvrsFut = mNodeCache.multiGet(rcvrIds)
+    val rcvrsFut = mNodesCache.multiGet(rcvrIds)
 
     // Собираем карту тарифов размещения на узлах.
     val tfsMapFut = rcvrsFut.flatMap( tfDailyUtil.getNodesTfsMap )

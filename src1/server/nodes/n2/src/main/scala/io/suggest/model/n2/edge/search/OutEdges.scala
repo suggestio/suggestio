@@ -1,9 +1,9 @@
 package io.suggest.model.n2.edge.search
 
+import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.es.{MWrapClause, QueryUtil}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
-import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.util.MacroLogsI
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilder, QueryBuilders}

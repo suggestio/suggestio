@@ -1,6 +1,7 @@
 package models.usr
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.model.es.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT, EsModelUtil}
 import EsModelUtil._
 import com.google.inject.{Inject, Singleton}

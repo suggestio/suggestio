@@ -94,7 +94,7 @@ class MImgs3 @Inject() (
   /** Убедится, что в хранилищах существует сохраненный экземпляр MNode.
     * Если нет, то создрать и сохранить. */
   def ensureMnode(mimg: MImgT): Future[MNode] = {
-    mNodeCache
+    mNodesCache
       .getById( mimg.rowKeyStr )
       .map(_.get)
       .recoverWith { case ex: NoSuchElementException =>

@@ -44,7 +44,7 @@ trait ScIndexAdOpen
       }
 
       // Прочитать из хранилища указанную карточку.
-      madOpt <- mNodeCache.getById( logic._qs.lookupAdId )
+      madOpt <- mNodesCache.getById( logic._qs.lookupAdId )
 
       // .get приведёт к NSEE, это нормально.
       producerId = {
@@ -72,7 +72,7 @@ trait ScIndexAdOpen
           mNodes.dynCount(args)
         }
 
-        val prodFut = mNodeCache.getById(producerId)
+        val prodFut = mNodesCache.getById(producerId)
           .map(_.get)
         // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
         prodFut.onFailure { case ex =>

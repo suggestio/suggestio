@@ -39,7 +39,7 @@ trait IsSuNodeEdge
       val _qs = qs
 
       if (user.isSuper) {
-        val mnodeOptFut = mNodeCache.getById(_qs.nodeId)
+        val mnodeOptFut = mNodesCache.getById(_qs.nodeId)
         mnodeOptFut.flatMap {
 
           // Запрошенный узел найден.

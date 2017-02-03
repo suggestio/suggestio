@@ -42,7 +42,7 @@ trait IsSuperuserPerson
           if (personIdOpt.contains(_personId)) {
             user.personNodeOptFut
           } else {
-            mNodeCache.getByIdType(_personId, MNodeTypes.Person)
+            mNodesCache.getByIdType(_personId, MNodeTypes.Person)
           }
         }
 

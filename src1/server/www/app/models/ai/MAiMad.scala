@@ -4,11 +4,12 @@ import java.time.ZoneId
 
 import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
 import io.suggest.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.json.{JsArray, JsString}
+import io.suggest.util.JacksonParsing.{stringParser, strListParser, iteratorParser}
 import util.PlayMacroLogsImpl
 
 import scala.collection.Map
@@ -70,7 +71,6 @@ class MAiMads @Inject() (
    * @return Экземпляр модели.
    */
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
-    import EsModelUtil.{stringParser, strListParser, iteratorParser}
     MAiMad(
       name = stringParser(m(NAME_ESFN)),
       sources = iteratorParser( m(SOURCES_ESFN) )

@@ -5,7 +5,7 @@ import java.{util => ju}
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.event.SioNotifier.{Classifier, Event}
-import io.suggest.model.es.EsModelUtil
+import io.suggest.util.JacksonParsing
 import models._
 import models.adv.MExtTarget
 import models.mext.MExtService
@@ -99,13 +99,13 @@ object ArgsInfo {
         EmptyArgsInfo
       } else {
         val f = ArgsInfo(
-          adnIdOpt      = Option(jm get AdnId.strId).map(EsModelUtil.stringParser),
+          adnIdOpt      = Option(jm get AdnId.strId).map(JacksonParsing.stringParser),
           advExtTgIds = Option(jm get AdvExtTarget.strId)
             .iterator
-            .flatMap(EsModelUtil.iteratorParser)
-            .map(EsModelUtil.stringParser)
+            .flatMap(JacksonParsing.iteratorParser)
+            .map(JacksonParsing.stringParser)
             .toSeq,
-          adIdOpt       = Option(jm get AdId.strId).map(EsModelUtil.stringParser)
+          adIdOpt       = Option(jm get AdId.strId).map(JacksonParsing.stringParser)
         )
         // На случай появления мусора в карте...
         if (f.isEmpty)

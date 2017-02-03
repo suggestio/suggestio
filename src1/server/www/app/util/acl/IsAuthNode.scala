@@ -44,7 +44,7 @@ trait IsAuthNode
 
       } else {
         // Юзер залогинен, нужно продолжать запрос.
-        val nodeOptFut = mNodeCache.getById( nodeId )
+        val nodeOptFut = mNodesCache.getById( nodeId )
         val _ntypes = ntypes
         nodeOptFut flatMap {
           case Some(mnode) if _ntypes.isEmpty || _ntypes.contains(mnode.common.ntype) =>

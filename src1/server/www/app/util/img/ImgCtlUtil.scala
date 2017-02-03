@@ -2,8 +2,7 @@ package util.img
 
 import java.time.Instant
 
-import io.suggest.model.es.EsModelUtil
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.Inject
 import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.{Call, RequestHeader}

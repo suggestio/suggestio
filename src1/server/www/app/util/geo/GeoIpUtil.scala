@@ -3,8 +3,8 @@ package util.geo
 import java.net.InetAddress
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
-import io.suggest.model.geo.{IGeoFindIp, IGeoFindIpResult}
 import models.mgeo.MGeoLoc
 import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, MRemoteAddrInfo}

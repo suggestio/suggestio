@@ -1,13 +1,13 @@
 package models.usr
 
 import io.suggest.model.es._
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.SioEsUtil._
 import models.mext.ILoginProvider
 import org.elasticsearch.index.query.QueryBuilders
 import securesocial.core.IProfileDflt
 import _root_.util.PlayMacroLogsImpl
-import EsModelUtil.stringParser
+import io.suggest.util.JacksonParsing.stringParser
 import com.google.inject.{Inject, Singleton}
 import models.mproj.ICommonDi
 import play.api.libs.json._

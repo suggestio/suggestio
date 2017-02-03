@@ -197,7 +197,7 @@ abstract class AdvsUpdate
     * @param adId id обрабатываемой карточки.
     */
   def runForAdId(adId: String): Future[_] = {
-    val madOptFut = mNodeCache.getById(adId)
+    val madOptFut = mNodesCache.getById(adId)
 
     lazy val logPrefix = s"runForAdId($adId/${System.currentTimeMillis}):"
     trace(s"$logPrefix Starting...")

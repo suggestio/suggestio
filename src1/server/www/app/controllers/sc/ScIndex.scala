@@ -2,13 +2,12 @@ package controllers.sc
 
 import _root_.util.PlayMacroLogsI
 import _root_.util.di._
-import io.suggest.geo.MGeoPoint
+import io.suggest.es.search.MSubSearch
+import io.suggest.geo.{CircleGs, Distance, IGeoFindIpResult, MGeoPoint}
 import io.suggest.model.es.IMust
-import io.suggest.model.geo.{CircleGs, Distance, IGeoFindIpResult}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
-import io.suggest.model.search.MSubSearch
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import models._
 import models.im.MImgT
@@ -20,6 +19,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
+import util.adn.INodesUtil
 import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
 import util.stat.IStatCookiesUtilDi
@@ -134,7 +134,7 @@ trait ScIndex
       val adnIdOpt = _reqArgs.adnIdOpt
 
       val rFut = for {
-        mnodeOpt <- mNodeCache.maybeGetByIdCached( adnIdOpt )
+        mnodeOpt <- mNodesCache.maybeGetByIdCached( adnIdOpt )
       } yield {
         // Если узел-ресивер запрошен, но не найден, прервать работу над index: это какая-то нештатная ситуация.
         if (mnodeOpt.isEmpty && adnIdOpt.nonEmpty)
@@ -264,7 +264,7 @@ trait ScIndex
       val ephNodeId = Option ( ctx.messages("conf.sc.node.ephemeral.id") )
         .filter(_.nonEmpty)
         .get
-      val _mnodeOptFut = mNodeCache.getById( ephNodeId )
+      val _mnodeOptFut = mNodesCache.getById( ephNodeId )
       LOGGER.trace(s"$logPrefix Index node not geolocated. Trying to get ephemeral covering node[$ephNodeId] for lang=${ctx.messages.lang.code}.")
 
       for (mnodeOpt <- _mnodeOptFut) yield {

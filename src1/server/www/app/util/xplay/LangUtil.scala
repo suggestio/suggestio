@@ -19,7 +19,7 @@ trait SetLangCookieUtil extends I18nSupport with IMCommonDi {
 
   /** Выставить lang.cookie. */
   def setLangCookie1(resFut: Future[Result], personId: String): Future[Result] = {
-    setLangCookie2(resFut, mNodeCache.getByIdType(personId, MNodeTypes.Person))
+    setLangCookie2(resFut, mNodesCache.getByIdType(personId, MNodeTypes.Person))
   }
 
   def setLangCookie2(resFut: Future[Result], mpersonOptFut: Future[Option[MNode]]): Future[Result] = {

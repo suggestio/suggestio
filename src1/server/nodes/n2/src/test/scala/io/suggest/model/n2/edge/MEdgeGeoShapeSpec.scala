@@ -2,9 +2,8 @@ package io.suggest.model.n2.edge
 
 import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 
-import io.suggest.geo.MGeoPoint
-import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.geo._
+import io.suggest.geo._
+import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
 import org.scalatest.FlatSpec

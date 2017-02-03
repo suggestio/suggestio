@@ -1,12 +1,12 @@
 package models.mdr
 
+import io.suggest.es.search.{ILimit, IOffset}
 import io.suggest.model.es.IMust
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.model.search.{ILimit, IOffset}
 import play.api.mvc.QueryStringBindable
 
 /**

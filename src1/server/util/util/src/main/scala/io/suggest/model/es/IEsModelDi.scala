@@ -5,7 +5,8 @@ import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di._
 import io.suggest.event.SioNotifierStaticClientI
-import io.suggest.playx.{CacheApiUtil, ICurrentAppHelpers, ICurrentConf}
+import io.suggest.model.{ICommonDiValBase, IMCommonDiBase}
+import io.suggest.playx.CacheApiUtil
 import org.elasticsearch.client.Client
 import play.api.Application
 
@@ -19,22 +20,14 @@ import scala.concurrent.ExecutionContext
   */
 @ImplementedBy( classOf[MEsModelDiVal] )
 trait IEsModelDiVal
-  extends IExecutionContext
+  extends ICommonDiValBase
   with IEsClient
-  with ISioNotifier
-  with ICurrentConf
-  with ICurrentAppHelpers
-  with ICacheApiUtil
-  with ICurrentActorSystem
   with IEs4sClient
-{
-  implicit val mat                 : Materializer
-}
 
 
 /** Интерфейс для поля с DI-инстансом контейнера общего хлама в DI-моделях. */
-trait IEsModelDi {
-  val mCommonDi: IEsModelDiVal
+trait IEsModelDi extends IMCommonDiBase {
+  override val mCommonDi: IEsModelDiVal
 }
 
 

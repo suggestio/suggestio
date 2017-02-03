@@ -1,7 +1,7 @@
 package io.suggest.model.n2.bill.tariff.daily
 
 import io.suggest.bill.MCurrencies
-import io.suggest.model.PlayJsonTestUtil
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
 /**

@@ -1,7 +1,6 @@
 package models.adv.js.ctx
 
-import io.suggest.model.es.EsModelUtil
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import models.event.IErrorInfo
 import play.api.libs.json._
 import io.suggest.adv.ext.model.ctx.MErrorInfo._

@@ -5,7 +5,7 @@ import util._
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import akka.util.Timeout
 import com.google.inject.{Inject, Singleton}
-import models.MNodeCache
+import io.suggest.model.n2.node.MNodesCache
 
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext
@@ -45,7 +45,7 @@ class SiowebNotifier @Inject() (
   // TODO Вынести это отсюда?
   protected def getStaticSubscribers: Seq[SNStaticSubscriber] = {
     List(
-      injector.instanceOf[MNodeCache],
+      injector.instanceOf[MNodesCache],
       injector.instanceOf[AdnNodeEvents]
     )
   }

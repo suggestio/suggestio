@@ -36,7 +36,7 @@ trait IsSuNodeNoContract
       def reqErr = MReq(request, user)
 
       if (user.isSuper) {
-        val mnodeOptFut = mNodeCache.getById(nodeId)
+        val mnodeOptFut = mNodesCache.getById(nodeId)
         mnodeOptFut flatMap {
           case Some(mnode) =>
             if ( mnode.billing.contractId.isEmpty ) {

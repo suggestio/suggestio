@@ -1,7 +1,7 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.sc.common.AdShowLevels
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
 /**

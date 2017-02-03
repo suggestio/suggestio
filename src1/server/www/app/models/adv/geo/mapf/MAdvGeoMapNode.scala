@@ -1,8 +1,7 @@
 package models.adv.geo.mapf
 
 import io.suggest.adv.geo.AdvGeoConstants.AdnNodes._
-import io.suggest.geo.MGeoPoint
-import io.suggest.model.geo.GeoPoint
+import io.suggest.geo.{GeoPoint, MGeoPoint}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.extras.geojson.{Feature, Point}

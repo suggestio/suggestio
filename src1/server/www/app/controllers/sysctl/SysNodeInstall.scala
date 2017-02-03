@@ -9,7 +9,7 @@ import play.api.i18n.Messages
 import play.api.mvc.Result
 import util.PlayMacroLogsI
 import util.acl.IsSuNode
-import util.di.INodesUtil
+import util.adn.INodesUtil
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.market.adn.install._
 
@@ -48,7 +48,7 @@ trait SysNodeInstall
   private def _installRender(form: Form[MSysNodeInstallFormData], rs: Status)
                             (implicit ctx: Context, request: INodeReq[_]): Future[Result] = {
     for {
-      srcNodes <- mNodeCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
+      srcNodes <- mNodesCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
       val allLangs = langs.availables.sortBy(_.code)
       val html = installDfltMadsTpl(allLangs, request.mnode, form, srcNodes)(ctx)

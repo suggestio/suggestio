@@ -2,7 +2,7 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.model.geo.{CircleGs, Distance}
+import io.suggest.geo.{CircleGs, Distance}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}

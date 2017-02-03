@@ -45,7 +45,7 @@ object Sio2Build extends Build {
   /** Утиль, была когда-то расшарена между siobix и sioweb. Постепенно стала просто свалкой. */
   lazy val util = project
     .in( file(DIR0 + "server/util/util") )
-    .dependsOn(commonJVM, logsMacro)
+    .dependsOn(commonJVM, logsMacro, srvTestUtil % Test)
 
   /** Кое-какие общие вещи для js. */
   lazy val commonSjs = {
@@ -68,7 +68,7 @@ object Sio2Build extends Build {
       .dependsOn(commonSjs)
   }
 
-  /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из web21. */
+  /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из www. */
   lazy val svgUtil = {
     val name = "svg-util"
     Project(name, base = file(DIR0 + "server/media/" + name))
@@ -100,9 +100,9 @@ object Sio2Build extends Build {
   /** Поддержка моделей n2. */
   lazy val n2 = project
     .in( file(DIR0 + "server/nodes/n2") )
-    .dependsOn(util, swfs)
+    .dependsOn(esUtil, swfs, mgeo, srvTestUtil % Test)
 
-  /** 
+  /**
    * Расширенный pg-драйвер для slick-based моделей в подпроектах.
    * Из-за проблем с classLoader'ами в play и slick, этот подпроект живёт изолировано.
    */
@@ -178,26 +178,31 @@ object Sio2Build extends Build {
       .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
   }
 
+  /** Поддержка тестов для server-side тестов. Использовать так: .dependsOn(srvTestUtil % Test) */
+  lazy val srvTestUtil = {
+    Project(id = "srv-test-util", base = file(DIR0 + "server/util/test-util"))
+      .dependsOn(logsMacro, commonJVM)
+  }
+
   /** Модели биллинга второго поколения. */
   lazy val mbill2 = project
     .in( file(DIR0 + "server/bill/mbill2") )
-    .dependsOn(logsMacro, commonJVM, util)
+    .dependsOn(logsMacro, commonJVM, util, mgeo)
 
   /** Утиль и модели для поддержки интеграции с БД ipgeobase. */
   lazy val ipgeobase = {
     val name = "ipgeobase"
     Project(id = name, base = file(DIR0 + "server/geo/" + name))
-      .dependsOn(logsMacro, util)
+      .dependsOn(logsMacro, esUtil, mgeo)
   }
 
   /** Подсистема сбора статистики. */
   lazy val stat = project
     .in( file(DIR0 + "server/stat/mstat") )
-    .dependsOn(logsMacro, util)
+    .dependsOn(logsMacro, esUtil, mgeo)
 
   /** Scala.js API для самой cordova. */
   lazy val cordovaSjs = {
-    val name = "scalajs-cordova"
     Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
       .enablePlugins(ScalaJSPlugin)
   }
@@ -259,7 +264,7 @@ object Sio2Build extends Build {
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs, leafletSjs)
   }
-  
+
   /** Sjs-модуль редактора тегов. */
   lazy val lkTagsEditSjs = {
     val name = "lk-tags-edit-sjs"
@@ -304,11 +309,37 @@ object Sio2Build extends Build {
     .in( file(DIR0 + "server/id/securesocial") )
     .enablePlugins(PlayScala, SbtWeb)
 
+  /** Модели, связывающие географию, es и sio. */
+  lazy val mgeo = project
+    .in( file(DIR0 + "server/geo/mgeo") )
+    .dependsOn(esUtil, logsMacro, srvTestUtil % Test)
+
+  /** Пошаренная утиль для сборки www-кусков. */
+  lazy val commonWww = project
+    .in( file(DIR0 + "server/util/common-www") )
+    .dependsOn(util, logsMacro, n2, mbill2)
+
+  /** Разная поддержка узлов для вёб-морды. */
+  lazy val nodesWww = project
+    .in( file(DIR0 + "server/nodes/nodes-www") )
+    .dependsOn(commonWww, n2)
+
+  /** Утиль для поддержки ElasticSearch. */
+  lazy val esUtil = project
+    .in( file(DIR0 + "server/util/es-util") )
+    .dependsOn(util)
+
+  /** Платежная поддержка для веб-интерфейса. */
+  lazy val payWww = project
+    .in( file(DIR0 + "server/bill/pay-www") )
+    .dependsOn(commonWww, mbill2)
+
+
   /** веб-интерфейс suggest.io v2. */
-  lazy val web21 = project
+  lazy val www = project
     .in( file(DIR0 + "server/www") )
     .enablePlugins(PlayScala, SbtWeb, WebScalaJSBundlerPlugin)
-    .dependsOn(commonJVM, util, securesocial, n2, mbill2, svgUtil, ipgeobase, stat)
+    .dependsOn(securesocial, esUtil, mgeo, n2, mbill2, nodesWww, payWww, svgUtil, ipgeobase, stat)
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages in Assets += scalaJSPipeline,
@@ -328,9 +359,10 @@ object Sio2Build extends Build {
         leafletSjs, leafletReactSjs, mapBoxGlSjs,
         lkSjs, scSjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
         cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
-        util, swfs, n2, securesocial,
+        util, esUtil, swfs, n2, securesocial,
         ipgeobase, stat,
-        web21, mbill2, svgUtil
+        mgeo, commonWww, nodesWww,
+        www, mbill2, payWww, svgUtil
       )
   }
 

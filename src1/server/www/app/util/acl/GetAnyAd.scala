@@ -28,7 +28,7 @@ trait GetAnyAd
     def adId: String
 
     override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
-      val madOptFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+      val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
 
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)

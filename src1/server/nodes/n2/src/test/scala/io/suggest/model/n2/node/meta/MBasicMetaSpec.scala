@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import java.time.OffsetDateTime
 
-import io.suggest.model.PlayJsonTestUtil
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
 /**

@@ -1,8 +1,8 @@
 package io.suggest.model.n2.extra.domain
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**

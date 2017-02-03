@@ -3,6 +3,7 @@ package models.usr
 import io.suggest.model.es._
 import EsModelUtil._
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.JacksonParsing
 import models.mproj.ICommonDi
 import util.PlayMacroLogsImpl
 import play.api.libs.json._
@@ -36,11 +37,11 @@ class EmailPwIdents @Inject() (
   @deprecated("Delete it, deserializeOne2() is ready here.", "2015.sep.08")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     EmailPwIdent(
-      email       = stringParser( m(KEY_ESFN) ),
-      pwHash      = stringParser( m(VALUE_ESFN) ),
+      email       = JacksonParsing.stringParser( m(KEY_ESFN) ),
+      pwHash      = JacksonParsing.stringParser( m(VALUE_ESFN) ),
       isVerified  = m.get(IS_VERIFIED_ESFN)
-        .fold(false)(booleanParser),
-      personId    = stringParser( m(PERSON_ID_ESFN) )
+        .fold(false)( JacksonParsing.booleanParser ),
+      personId    = JacksonParsing.stringParser( m(PERSON_ID_ESFN) )
     )
   }
 

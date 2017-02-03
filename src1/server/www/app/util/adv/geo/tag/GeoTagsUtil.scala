@@ -364,7 +364,7 @@ class GeoTagsUtil @Inject() (
       tagIds = OptId.optIds2ids(tagIdsOpts).toSet
 
       // Получить узлы через кеш
-      tagNodesMap <- mNodeCache.multiGetMap(tagIds)
+      tagNodesMap <- mNodesCache.multiGetMap(tagIds)
 
     } yield {
       val tnMapSize = tagNodesMap.size

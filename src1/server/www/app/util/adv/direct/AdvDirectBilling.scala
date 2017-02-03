@@ -104,7 +104,7 @@ class AdvDirectBilling @Inject() (
    * @param adves2 Требования по размещению карточки на узлах.
    */
   def getAdvPrices(mad: MNode, adves2: Seq[AdvFormEntry]): Future[Seq[MPrice]] = {
-    val rcvrsFut = mNodeCache.multiGet {
+    val rcvrsFut = mNodesCache.multiGet {
       adves2
         .iterator
         .map(_.adnId)

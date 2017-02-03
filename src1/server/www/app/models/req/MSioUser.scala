@@ -6,17 +6,17 @@ import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
-import io.suggest.model.n2.node.MNodeTypes
+import io.suggest.model.n2.node.{MNodeTypes, MNodesCache}
+import io.suggest.pay.u.di.ISlickDbConfig
 import models.jsm.init.MTarget
 import models.mctx.CtxData
-import models.{MNode, MNodeCache}
+import models.MNode
 import models.event.MEvents
 import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
 import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
-import util.di.ISlickDbConfig
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -211,15 +211,15 @@ trait MSioUserLazyFactory {
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
 @Singleton
 class MsuStatic @Inject()(
-  val mSuperUsers               : MSuperUsers,
-  val mContracts                : MContracts,
-  val mBalances                 : MBalances,
-  val mEvents                   : MEvents,
-  // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
-  val mNodeCache                : MNodeCache,
-  override val _slickConfigProvider : DatabaseConfigProvider,
-  implicit val ec               : ExecutionContext,
-  implicit val esClient         : Client
+                           val mSuperUsers               : MSuperUsers,
+                           val mContracts                : MContracts,
+                           val mBalances                 : MBalances,
+                           val mEvents                   : MEvents,
+                           // Не следует тут юзать MCommonDi, т.к. тут живёт слишком фундаментальный для проекта компонент.
+                           val mNodeCache                : MNodesCache,
+                           override val _slickConfigProvider : DatabaseConfigProvider,
+                           implicit val ec               : ExecutionContext,
+                           implicit val esClient         : Client
 )
   extends ISlickDbConfig
 

@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MPrice
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.geo.GeoShape
 import io.suggest.mbill2.m.common.{InsertManyReturning, InsertOneReturning}
 import io.suggest.mbill2.m.dt._
 import io.suggest.mbill2.m.geo.shape.{GeoShapeOptSlick, IGeoShapeOpt}
@@ -16,7 +17,6 @@ import io.suggest.mbill2.m.item.typ.{IMItemType, MItemType, MItemTypeSlick, MIte
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
-import io.suggest.model.geo.GeoShape
 import io.suggest.model.sc.common.SinkShowLevel
 import org.threeten.extra.Interval
 import slick.lifted.ProvenShape

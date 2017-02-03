@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.model.geo.IToEsQueryFn
+import io.suggest.geo.IToEsQueryFn
 import io.suggest.ym.model.NodeGeoLevel
 
 /**

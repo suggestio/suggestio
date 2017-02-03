@@ -56,7 +56,7 @@ trait SysMdrPaid
     val madsFut = slick.db
       .run( dbAction )
       .flatMap { madIds =>
-        mNodeCache.multiGet( madIds )
+        mNodesCache.multiGet( madIds )
       }
 
     // Передать управление в _adsPage(), не дожидаясь ничего.
@@ -146,7 +146,7 @@ trait SysMdrPaid
         val nodeIdsSet = nodeIdsSetB.result()
 
         // Запустить запрос карты узлов
-        mNodeCache.multiGetMap( nodeIdsSet )
+        mNodesCache.multiGetMap( nodeIdsSet )
       }
 
       // Нужно выводить item'ы сгруппированными по смыслу.

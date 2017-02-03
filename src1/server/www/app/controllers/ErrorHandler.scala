@@ -68,3 +68,9 @@ class ErrorHandler @Inject() (
   }
 
 }
+
+
+/** DI-доступ к инстансу контроллеру обработчика ошибок. */
+trait IErrorHandler {
+  def errorHandler    : ErrorHandler
+}

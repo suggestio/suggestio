@@ -1,7 +1,7 @@
 package models.msc.resp
 
 import io.suggest.geo.MGeoPoint
-import io.suggest.model.geo.GeoPoint.Implicits._
+import io.suggest.geo.GeoPoint.Implicits._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.sc.ScConstants.Resp._

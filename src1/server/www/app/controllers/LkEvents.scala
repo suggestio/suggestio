@@ -119,7 +119,7 @@ class LkEvents @Inject() (
               _ != adnId
             } // Текущую ноду фетчить не надо -- она уже в request лежит.
             .toSet
-          mNodeCache.multiGetMap(allNodeIds, List(request.mnode))
+          mNodesCache.multiGetMap(allNodeIds, List(request.mnode))
         }
 
         for {

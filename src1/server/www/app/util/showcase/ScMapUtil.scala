@@ -1,9 +1,8 @@
 package util.showcase
 
 import com.google.inject.Inject
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{GeoPoint, GeoShapeQuerable, MGeoPoint, PointGs}
 import io.suggest.model.es.IMust
-import io.suggest.model.geo.{GeoPoint, GeoShapeQuerable, PointGs}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl

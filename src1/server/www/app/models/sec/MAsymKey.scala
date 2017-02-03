@@ -2,8 +2,9 @@ package models.sec
 
 import io.suggest.model.es._
 import util.PlayMacroLogsImpl
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.JacksonParsing
 import io.suggest.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.json._
@@ -63,8 +64,8 @@ class MAsymKeys @Inject() (
     MAsymKey(
       id          = id,
       versionOpt  = version,
-      pubKey      = EsModelUtil.stringParser( m(PUB_KEY_FN) ),
-      secKey      = m.get(SEC_KEY_FN).map(EsModelUtil.stringParser)
+      pubKey      = JacksonParsing.stringParser( m(PUB_KEY_FN) ),
+      secKey      = m.get(SEC_KEY_FN).map(JacksonParsing.stringParser)
     )
   }
 

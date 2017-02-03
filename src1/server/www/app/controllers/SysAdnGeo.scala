@@ -4,7 +4,6 @@ import java.time.OffsetDateTime
 
 import com.google.inject.Inject
 import io.suggest.model.common.OptId
-import io.suggest.model.geo.{CircleGs, Distance, GeoShapeQuerable}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -15,7 +14,7 @@ import models.req.INodeReq
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._
 import Forms._
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{CircleGs, Distance, GeoShapeQuerable, MGeoPoint}
 import io.suggest.model.n2.node.MNodes
 import play.api.mvc.Result
 import util.PlayLazyMacroLogsImpl
@@ -81,7 +80,7 @@ class SysAdnGeo @Inject() (
       val parentIdsIter = request.mnode
         .edges
         .withPredicateIterIds( MPredicates.GeoParent )
-      mNodeCache.multiGetMap(parentIdsIter)
+      mNodesCache.multiGetMap(parentIdsIter)
     }
 
     val geos = request.mnode
@@ -581,7 +580,7 @@ class SysAdnGeo @Inject() (
 
     for {
       nodeIds <- mNodes.dynSearchIds(msearch)
-      nodes   <- mNodeCache.multiGet( nodeIds.iterator.toSet )
+      nodes   <- mNodesCache.multiGet( nodeIds.iterator.toSet )
     } yield {
       nodes
     }
@@ -726,7 +725,7 @@ class SysAdnGeo @Inject() (
               Future successful Set.empty[String]
             } { parentNodeId =>
               for {
-                Some(parentNode) <- mNodeCache.getById(parentNodeId)
+                Some(parentNode) <- mNodesCache.getById(parentNodeId)
               } yield {
                 parentNode.edges
                   .withPredicateIterIds( MPredicates.GeoParent )

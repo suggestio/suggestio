@@ -38,7 +38,7 @@ trait IsSuNodeContract
       def reqErr = MReq(request, user)
 
       if (user.isSuper) {
-        val mnodeOptFut = mNodeCache.getById(nodeId)
+        val mnodeOptFut = mNodesCache.getById(nodeId)
         mnodeOptFut flatMap {
           case Some(mnode) =>
             val mcOptFut = FutureUtil.optFut2futOpt( mnode.billing.contractId ) { contractId =>

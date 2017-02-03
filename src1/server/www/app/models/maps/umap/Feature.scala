@@ -1,6 +1,6 @@
 package models.maps.umap
 
-import io.suggest.model.geo.GeoShape
+import io.suggest.geo.GeoShape
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

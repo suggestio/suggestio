@@ -5,7 +5,7 @@ import java.io.FileInputStream
 import _root_.util.acl._
 import _root_.util.geo.umap._
 import com.google.inject.Inject
-import io.suggest.model.geo.{GsTypes, PointGs}
+import io.suggest.geo.{GsTypes, PointGs}
 import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
@@ -251,7 +251,7 @@ class Umap @Inject() (
         .groupBy(getAdnIdF)
 
       // Собираем карту узлов.
-      val mnodesMapFut = mNodeCache.multiGetMap( nodeFeatures.keysIterator )
+      val mnodesMapFut = mNodesCache.multiGetMap( nodeFeatures.keysIterator )
 
       val updAllFut = mnodesMapFut.flatMap { mnodesMap =>
         // Для каждого узла произвести персональное обновление.

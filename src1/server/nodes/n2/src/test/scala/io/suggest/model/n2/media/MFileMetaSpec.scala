@@ -1,6 +1,6 @@
 package io.suggest.model.n2.media
 
-import io.suggest.model.PlayJsonTestUtil
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
 /**

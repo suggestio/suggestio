@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.meta.search
 
+import io.suggest.es.search.{NameSortBase, NameSortBaseDflt, NameSortBaseWrap}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.search.{NameSortBaseWrap, NameSortBaseDflt, NameSortBase}
 
 /**
  * Suggest.io

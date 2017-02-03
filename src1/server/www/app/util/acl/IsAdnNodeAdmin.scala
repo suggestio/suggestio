@@ -73,7 +73,7 @@ trait IsAdnNodeAdminUtilCtl
     }
 
     def isAdnNodeAdmin(adnId: String, user: ISioUser): Future[Option[MNode]] = {
-      val fut = mNodeCache.getById(adnId)
+      val fut = mNodesCache.getById(adnId)
       checkAdnNodeCredsOpt(fut, adnId, user)
     }
 

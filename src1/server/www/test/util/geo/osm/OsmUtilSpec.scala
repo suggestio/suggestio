@@ -1,9 +1,7 @@
 package util.geo.osm
 
 import functional.{OneAppPerSuiteNoGlobalStart, WithInputStream}
-import io.suggest.geo.MGeoPoint
-import io.suggest.model.geo.GsType
-import io.suggest.model.geo.{GsTypes, LineStringGs}
+import io.suggest.geo.{GsTypes, LineStringGs, MGeoPoint, GsType}
 import org.scalatestplus.play._
 
 /**

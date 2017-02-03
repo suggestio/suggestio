@@ -187,8 +187,8 @@ trait ScAdsTileBase
 
     /** Статистика этой вот плитки. */
     override def scStat: Future[Stat2] = {
-      val _rcvrOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
-      val _prodOptFut   = mNodeCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
+      val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
+      val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
 
       val _userSaOptFut = scStatUtil.userSaOptFutFromRequest()
       val _madsFut      = madsFut

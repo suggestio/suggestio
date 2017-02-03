@@ -1,7 +1,7 @@
 package util.geo.umap
 
 import com.google.inject.Inject
-import io.suggest.model.geo.{GsTypes, MultiPolygonGs}
+import io.suggest.geo.{GsTypes, MultiPolygonGs}
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import models.MNode
 import play.api.Configuration

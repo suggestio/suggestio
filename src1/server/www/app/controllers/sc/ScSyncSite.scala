@@ -283,7 +283,7 @@ trait ScSyncSite
       // Использовать любой заданный id узла, если возможно.
       val adnIdOpt = _scState.adnId
         .orElse(_siteArgs.adnId)
-      mNodeCache.maybeGetByIdCached( adnIdOpt )
+      mNodesCache.maybeGetByIdCached( adnIdOpt )
     }
 
 

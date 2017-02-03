@@ -39,7 +39,7 @@ trait IsAdnNodeAdminOptOrAuth
       val personIdOpt = sessionUtil.getPersonId(request)
 
       personIdOpt.fold (onUnauth(request)) { personId =>
-        val mnodeOptFut = mNodeCache.maybeGetByIdCached(adnIdOpt)
+        val mnodeOptFut = mNodesCache.maybeGetByIdCached(adnIdOpt)
         val user = mSioUsers(personIdOpt)
 
         // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку

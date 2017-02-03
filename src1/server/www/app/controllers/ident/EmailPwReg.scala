@@ -16,10 +16,10 @@ import play.api.mvc.Result
 import play.twirl.api.Html
 import util.captcha.CaptchaUtil._
 import util.captcha.ICaptchaUtilDi
-import util.di.INodesUtil
 import util.mail.IMailerWrapperDi
 import util.{FormUtil, PlayMacroLogsI}
 import util.acl._
+import util.adn.INodesUtil
 import util.secure.IScryptUtilDi
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._

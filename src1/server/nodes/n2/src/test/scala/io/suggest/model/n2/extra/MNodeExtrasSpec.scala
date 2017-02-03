@@ -2,8 +2,8 @@ package io.suggest.model.n2.extra
 
 import java.util.UUID
 
-import io.suggest.model.PlayJsonTestUtil
 import io.suggest.model.n2.extra.domain.{MDomainExtra, MDomainModes}
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
 /**

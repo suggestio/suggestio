@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.{Context, ContextUtil}
-import models.mproj.MCommonDi
+import models.mproj.ICommonDi
 import models.msc.ScJsState
 import org.elasticsearch.common.unit.TimeValue
 import play.api.libs.iteratee.Enumerator
@@ -35,7 +35,7 @@ class ScSitemapsXml @Inject() (
   n2NodesUtil                   : N2NodesUtil,
   mNodes                        : MNodes,
   ctxUtil                       : ContextUtil,
-  mCommonDi                     : MCommonDi
+  mCommonDi                     : ICommonDi
 )
   extends SiteMapXmlCtl
 {

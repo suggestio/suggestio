@@ -14,8 +14,6 @@ import scala.concurrent.{Future, Promise}
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}
 
 import scala.concurrent.ExecutionContext
-import org.elasticsearch.node.{Node, NodeBuilder}
-import org.elasticsearch.cluster.ClusterName
 import org.elasticsearch.common.bytes.BytesArray
 
 // TODO Как показала практика, XContentBuilder слегка взрывоопасен и слишком изменяем. Следует тут задействовать
@@ -1481,75 +1479,6 @@ case class FieldGeoShape(
 // END: DSL полей документа --------------------------------------------------------------------------------------------
 
 } // END: object SioEsUtil
-
-
-/** Неабстрактный трейт для подмешивания клиенского функционала в произольный объект.
-  * Для управления именем кластера, нужно переопределить метод getEsClusterName.  */
-trait SioEsClient extends MacroLogsI {
-
-  /** Тут хранится клиент к кластеру. В инициализаторе класса надо закинуть сюда начальный экземпляр клиент.
-    * Это переменная для возможности остановки клиента. */
-  protected var _node: Node = createNode
-
-  /** Имя кластера elasticsearch, к которому будет коннектиться клиент. */
-  def getEsClusterName: String = ClusterName.DEFAULT.value()
-
-  /** Если нужен юникаст, то нужно передать непустой список из host или host:port */
-  def unicastHosts: List[String] = Nil
-
-  /** Убедиться, что клиент запущен. Обычно вызывается при запуске системы. */
-  def ensureNode() = {
-    synchronized {
-      if (_node == null) {
-        _node = createNode
-      }
-    }
-    _node.start()
-    _node
-  }
-
-  /** Собрать и запустить клиентскую ноду. */
-  def createNode = {
-    val nb = NodeBuilder.nodeBuilder()
-      .client(true)
-      .clusterName(getEsClusterName)
-    // На продакшене бывает полезно задать адреса узла/узлов кластера по юникасту.
-    val uh = unicastHosts
-    if (uh.nonEmpty) {
-      println("ES-client: using unicast cluster discovery: " + uh.mkString(", "))
-      nb.getSettings
-        .put("discovery.zen.ping.multicast.enabled", false)
-        .put("discovery.zen.ping.unicast.enabled", true)
-        .putArray("discovery.zen.ping.unicast.hosts", uh: _*)
-    }
-    nb.node
-  }
-
-  /** Остановить клиентскую ноду, если запущена. */
-  def stopNode() {
-    synchronized {
-      if (_node != null) {
-        _node.close()
-        _node = null
-      }
-    }
-  }
-
-  /** Инстанс локальной client-ноды ES. Отсюда начинаются все поисковые и другие запросы. */
-  implicit def client = _node.client()
-
-
-
-  /** Перед вычищением из памяти класса следует убедится, что нода остановлена.
-    * Маловероятно, что от этой функции есть какой-то толк. */
-  override def finalize() {
-    if (!_node.isClosed) {
-      LOGGER.error(s"finalize(): ES client ${_node} was not closed!")
-      _node.close()
-    }
-  }
-
-}
 
 
 

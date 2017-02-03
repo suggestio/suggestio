@@ -2,13 +2,12 @@ package models.mproj
 
 import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import controllers.ErrorHandler
+import controllers.{ErrorHandler, IErrorHandler}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.es.IEsModelDiVal
 import io.suggest.playx.CacheApiUtil
 import models.mctx.Context2Factory
 import models.req.MSioUsers
-import models.MNodeCache
 import org.elasticsearch.client.Client
 import play.api.Application
 import play.api.cache.CacheApi
@@ -16,10 +15,12 @@ import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import com.sksamuel.elastic4s.ElasticClient
+import io.suggest.di.ICacheApi
+import io.suggest.model.n2.node.{INodeCache, MNodesCache}
+import io.suggest.pay.u.di.ISlickDbConfig
 import util.HtmlCompressUtil
 import util.di._
 import util.secure.SessionUtil
-import util.xplay.ICacheApi
 
 import scala.concurrent.ExecutionContext
 
@@ -58,7 +59,6 @@ trait ICommonDi
   override implicit val ec            : ExecutionContext
   override val cache                  : CacheApi
   override val cacheApiUtil           : CacheApiUtil
-  override val mNodeCache             : MNodeCache
   override val _slickConfigProvider   : DatabaseConfigProvider
 }
 
@@ -66,26 +66,26 @@ trait ICommonDi
 /** Дефолтовая реализация модели common-компонентов. */
 @Singleton
 final class MCommonDi @Inject() (
-  override val errorHandler       : ErrorHandler,
-  override val contextFactory     : Context2Factory,
-  override val messagesApi        : MessagesApi,
-  override val htmlCompressUtil   : HtmlCompressUtil,
-  override val langs              : Langs,
-  override val csrfAddToken       : CSRFAddToken,
-  override val csrfCheck          : CSRFCheck,
-  //override val actorSystem        : ActorSystem,
-  override val cache              : CacheApi,
-  override val cacheApiUtil       : CacheApiUtil,
-  override val mNodeCache         : MNodeCache,
-  override val sessionUtil        : SessionUtil,
-  override val mSioUsers          : MSioUsers,
-  override val es4sClient         : ElasticClient,
-  override val _slickConfigProvider   : DatabaseConfigProvider,
-  override implicit val current   : Application,
-  override implicit val mat       : Materializer,
-  override implicit val ec        : ExecutionContext,
-  override implicit val esClient  : Client,
-  override implicit val sn        : SioNotifierStaticClientI
+                                  override val errorHandler       : ErrorHandler,
+                                  override val contextFactory     : Context2Factory,
+                                  override val messagesApi        : MessagesApi,
+                                  override val htmlCompressUtil   : HtmlCompressUtil,
+                                  override val langs              : Langs,
+                                  override val csrfAddToken       : CSRFAddToken,
+                                  override val csrfCheck          : CSRFCheck,
+                                  //override val actorSystem        : ActorSystem,
+                                  override val cache              : CacheApi,
+                                  override val cacheApiUtil       : CacheApiUtil,
+                                  override val mNodesCache        : MNodesCache,
+                                  override val sessionUtil        : SessionUtil,
+                                  override val mSioUsers          : MSioUsers,
+                                  override val es4sClient         : ElasticClient,
+                                  override val _slickConfigProvider   : DatabaseConfigProvider,
+                                  override implicit val current   : Application,
+                                  override implicit val mat       : Materializer,
+                                  override implicit val ec        : ExecutionContext,
+                                  override implicit val esClient  : Client,
+                                  override implicit val sn        : SioNotifierStaticClientI
 )
   extends ICommonDi
 

@@ -5,7 +5,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.model.es.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.model.geo.GeoPoint.Implicits._
+import io.suggest.geo.GeoPoint.Implicits._
 
 /**
   * Suggest.io

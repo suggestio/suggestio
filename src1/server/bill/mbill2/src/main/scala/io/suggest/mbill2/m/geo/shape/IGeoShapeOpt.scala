@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.geo.shape
 
-import io.suggest.model.geo.GeoShape
+import io.suggest.geo.GeoShape
 
 /**
   * Suggest.io

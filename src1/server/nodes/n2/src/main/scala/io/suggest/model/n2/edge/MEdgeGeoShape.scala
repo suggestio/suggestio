@@ -3,8 +3,8 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.geo.GeoShape
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.geo.GeoShape
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._

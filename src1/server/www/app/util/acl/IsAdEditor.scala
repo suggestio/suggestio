@@ -71,7 +71,7 @@ trait CanEditAd
       val personIdOpt = sessionUtil.getPersonId(request)
 
       personIdOpt.fold (onUnauth(request)) { personId =>
-        val madOptFut = mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+        val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
         val user = mSioUsers(personIdOpt)
 
         maybeInitUser(user)
@@ -79,7 +79,7 @@ trait CanEditAd
         madOptFut.flatMap {
           case Some(mad) =>
             val prodIdOpt = n2NodesUtil.madProducerId(mad)
-            val prodNodeOptFut = mNodeCache.maybeGetByIdCached( prodIdOpt )
+            val prodNodeOptFut = mNodesCache.maybeGetByIdCached( prodIdOpt )
 
             prodNodeOptFut.flatMap {
               case Some(producer) =>

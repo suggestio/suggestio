@@ -42,7 +42,7 @@ trait NodeEact
     /** Запуск логики экшена. */
     override def invokeBlock[A](request: Request[A], block: (MNodeEactReq[A]) => Future[Result]): Future[Result] = {
       val eaOptFut = emailActivations.getById(eaId)
-      val nodeOptFut = mNodeCache.getById(nodeId)
+      val nodeOptFut = mNodesCache.getById(nodeId)
 
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)

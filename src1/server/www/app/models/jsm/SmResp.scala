@@ -1,7 +1,6 @@
 package models.jsm
 
-import io.suggest.model.es.EsModelUtil
-import EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import models.MNode
 import play.api.libs.json._
 import io.suggest.sc.ScConstants.Resp._

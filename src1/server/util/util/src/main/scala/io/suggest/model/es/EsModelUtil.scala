@@ -1,10 +1,5 @@
 package io.suggest.model.es
 
-import java.time.format.DateTimeFormatter
-import java.time.temporal.TemporalAccessor
-import java.time._
-import java.{lang => jl, util => ju}
-
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.util.SioEsUtil._
 import io.suggest.util._
@@ -18,7 +13,6 @@ import org.elasticsearch.index.engine.VersionConflictEngineException
 import org.elasticsearch.search.SearchHits
 import play.api.libs.json._
 
-import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
@@ -117,97 +111,7 @@ object EsModelUtil extends MacroLogsImpl {
   /** number of actions, после которого bulk processor делает flush. */
   def BULK_PROCESSOR_BULK_SIZE_DFLT = 100
 
-  /** Тип аккамулятора, который используется во EsModelPlayJsonT.writeJsonFields(). */
-  type FieldsJsonAcc = List[(String, JsValue)]
 
-  private def _parseEx(as: String, v: Any = null) = {
-    throw new IllegalArgumentException(s"unable to parse '$v' as $as.")
-  }
-
-  // TODO Это устаревший код. Его нужно удалять, MEvent и MExtTarget тянут за собой эти старинные парсеры.
-  // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
-  // Следует помнить, что любое поле может быть списком значений.
-  def intParser: PartialFunction[Any, Int] = {
-    case null =>
-      _parseEx("int")
-    case is: jl.Iterable[_] =>
-      intParser(is.head.asInstanceOf[AnyRef])
-    case i: Integer =>
-      i.intValue()
-  }
-  def longParser: PartialFunction[Any, Long] = {
-    case null =>
-      _parseEx("long")
-    case ls: jl.Iterable[_] =>
-      longParser(ls.head.asInstanceOf[AnyRef])
-    case l: jl.Number =>
-      l.longValue()
-  }
-  def floatParser: PartialFunction[Any, Float] = {
-    case null =>
-      _parseEx("float")
-    case fs: jl.Iterable[_] =>
-      floatParser(fs.head.asInstanceOf[AnyRef])
-    case f: jl.Number =>
-      f.floatValue()
-  }
-  def doubleParser: PartialFunction[Any, Double] = {
-    case null =>
-      _parseEx("double")
-    case fs: jl.Iterable[_] =>
-      doubleParser(fs.head.asInstanceOf[AnyRef])
-    case f: jl.Number =>
-      f.doubleValue()
-  }
-  def stringParser: PartialFunction[Any, String] = {
-    case null =>
-      _parseEx("string")
-    case strings: jl.Iterable[_] =>
-      stringParser(strings.head.asInstanceOf[AnyRef])
-    case s: String  => s
-  }
-  def booleanParser: PartialFunction[Any, Boolean] = {
-    case null =>
-      _parseEx("bool")
-    case bs: jl.Iterable[_] =>
-      booleanParser(bs.head.asInstanceOf[AnyRef])
-    case b: jl.Boolean =>
-      b.booleanValue()
-  }
-  def dateTimeParser: PartialFunction[Any, OffsetDateTime] = {
-    case null => null
-    case dates: jl.Iterable[_] =>
-      dateTimeParser(dates.head.asInstanceOf[AnyRef])
-    case s: String           => OffsetDateTime.parse(s)
-    case d: ju.Date          => dateTimeParser( d.toInstant )
-    case dt: OffsetDateTime  => dt
-    case zdt: ZonedDateTime  => zdt.toOffsetDateTime
-    case ri: Instant         => ri.atOffset( ZoneOffset.UTC )
-  }
-  // Сериализация дат
-  private def dateFormatterDflt = DateTimeFormatter.ISO_OFFSET_DATE_TIME
-  def date2str(dateTime: TemporalAccessor): String = dateFormatterDflt.format(dateTime)
-  def date2JsStr(dateTime: TemporalAccessor): JsString = JsString( date2str(dateTime) )
-
-
-  /** Парсер json-массивов. */
-  def iteratorParser: PartialFunction[Any, Iterator[Any]] = {
-    case null =>
-      Iterator.empty
-    case l: jl.Iterable[_] =>
-      l.iterator()
-  }
-
-  /** Парсер список строк. */
-  def strListParser: PartialFunction[Any, List[String]] = {
-    iteratorParser andThen { iter =>
-      iter.foldLeft( List.empty[String] ) {
-        (acc,e) => EsModelUtil.stringParser(e) :: acc
-      }.reverse
-    }
-  }
-  
-  
   val SHARDS_COUNT_DFLT   = MyConfig.CONFIG.getInt("es.model.shards.count.dflt") getOrElse 5
   val REPLICAS_COUNT_DFLT = MyConfig.CONFIG.getInt("es.model.replicas.count.dflt") getOrElse 1
 

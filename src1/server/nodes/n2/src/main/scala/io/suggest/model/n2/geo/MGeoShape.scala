@@ -2,8 +2,8 @@ package io.suggest.model.n2.geo
 
 import java.time.OffsetDateTime
 
+import io.suggest.geo.GeoShape
 import io.suggest.model.es.IGenEsMappingProps
-import io.suggest.model.geo.GeoShape
 import io.suggest.model.n2.edge.MEdgeGeoShape
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.data.validation.ValidationError

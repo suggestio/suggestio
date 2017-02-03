@@ -1,9 +1,9 @@
 package io.suggest.model.n2.extra.search
 
+import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.search.{DynSearchArgsWrapper, DynSearchArgs}
 import io.suggest.ym.model.common.AdnRight
-import org.elasticsearch.index.query.{QueryBuilders, QueryBuilder}
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io

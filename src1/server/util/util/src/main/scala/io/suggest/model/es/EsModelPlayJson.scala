@@ -1,6 +1,6 @@
 package io.suggest.model.es
 
-import io.suggest.model.es.EsModelUtil.FieldsJsonAcc
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import play.api.libs.json.{Json, JsString, JsObject}
 
 /**

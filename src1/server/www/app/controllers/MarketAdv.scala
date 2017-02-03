@@ -492,7 +492,7 @@ class MarketAdv @Inject() (
 
 
   private def collectRcvrsFromIds(ids: TraversableOnce[String]): Future[Seq[MNode]] = {
-    for (mnodes <- mNodeCache.multiGet(ids)) yield {
+    for (mnodes <- mNodesCache.multiGet(ids)) yield {
       collectRcvrsFromNodes(mnodes)
     }
   }

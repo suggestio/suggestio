@@ -130,7 +130,7 @@ class TfDailyUtil @Inject()(
   def forcedNodeTf(nodeTfOpt: Option[MDailyTf]): Future[MDailyTf] = {
     // Вычисляем текущий реальный тариф узла.
     FutureUtil.opt2future(nodeTfOpt) {
-      for (cbcaNodeOpt <- mNodeCache.getById( bill2Util.CBCA_NODE_ID )) yield {
+      for (cbcaNodeOpt <- mNodesCache.getById( bill2Util.CBCA_NODE_ID )) yield {
         cbcaNodeOpt
           .flatMap(_.billing.tariffs.daily)
           .getOrElse( VERY_DEFAULT_FT )

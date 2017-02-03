@@ -2,8 +2,8 @@ package util.showcase
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
+import io.suggest.geo.IGeoFindIpResult
 import io.suggest.model.es.MEsUuId
-import io.suggest.model.geo.IGeoFindIpResult
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil
@@ -224,7 +224,13 @@ class ScStatUtil @Inject() (
       val devScrOpt = devScreenOpt
       MScreen(
         orientation   = devScrOpt.map(_.orientation),
-        vportPhys     = devScrOpt.map(_.toStatViewPort),
+        vportPhys     = for (dso <- devScrOpt) yield {
+          MViewPort(
+            widthPx   = dso.width,
+            heightPx  = dso.height,
+            pxRatio   = dso.pixelRatioOpt.map(_.pixelRatio)
+          )
+        },
         vportQuanted  = vportQuanted
       )
     }

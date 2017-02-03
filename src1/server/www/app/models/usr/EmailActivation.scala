@@ -4,7 +4,7 @@ import io.suggest.model.common.OptStrId
 import io.suggest.model.es._
 import EsModelUtil._
 import io.suggest.util.SioEsUtil._
-import io.suggest.util.StringUtil
+import io.suggest.util.{JacksonParsing, StringUtil}
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -45,8 +45,8 @@ class EmailActivations @Inject() (
   override def deserializeOne(id: Option[String], m: scala.collection.Map[String, AnyRef], version: Option[Long]): T = {
     EmailActivation(
       id    = id,
-      key   = stringParser(m(KEY_ESFN)),
-      email = stringParser(m(PERSON_ID_ESFN))
+      key   = JacksonParsing.stringParser(m(KEY_ESFN)),
+      email = JacksonParsing.stringParser(m(PERSON_ID_ESFN))
     )
   }
 

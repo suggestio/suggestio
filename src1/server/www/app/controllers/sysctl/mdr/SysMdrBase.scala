@@ -51,7 +51,7 @@ trait SysMdrBase
           .flatMap { n2NodesUtil.madProducerId }
           .++( args.producerId )
           .toSet
-        mNodeCache.multiGet( prodIds )
+        mNodesCache.multiGet( prodIds )
       }
     } yield {
       OptId.els2idMap[String, MNode](prods)

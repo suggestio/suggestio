@@ -281,3 +281,9 @@ class NodesUtil @Inject() (
   }
 
 }
+
+
+/** Интерфейс для DI-поля, содержащего инжектируемый экземпляр [[util.adn.NodesUtil]]. */
+trait INodesUtil {
+  def nodesUtil: NodesUtil
+}

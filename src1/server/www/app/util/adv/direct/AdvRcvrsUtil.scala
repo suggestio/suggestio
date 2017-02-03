@@ -79,7 +79,7 @@ class AdvRcvrsUtil @Inject()(
         // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
         .filter { _.id == prodIdOpt }
       FutureUtil.opt2future(_prodOpt) {
-        mNodeCache.maybeGetByIdCached(prodIdOpt)
+        mNodesCache.maybeGetByIdCached(prodIdOpt)
           .map(_.get)
       }
     } else {
@@ -179,7 +179,7 @@ class AdvRcvrsUtil @Inject()(
     * @return Boolean, который обычно не имеет смысла.
     */
   def depublishAdOn(adId: String, rcvrIdOpt: Option[String]): Future[MNode] = {
-    mNodeCache.getByIdType(adId, MNodeTypes.Ad)
+    mNodesCache.getByIdType(adId, MNodeTypes.Ad)
       .map(_.get)
       .flatMap(depublishAdOn(_, rcvrIdOpt.toSet))
   }
@@ -417,7 +417,7 @@ final class AdvRcvrsUtilJmx @Inject()(
   }
 
   override def resetReceiversForAd(adId: String): String = {
-    val s = mNodeCache.getById(adId).flatMap {
+    val s = mNodesCache.getById(adId).flatMap {
       case Some(mad) =>
         for (_ <- advRcvrsUtil.resetReceiversFor(mad)) yield {
           "Successfully reset receivers for " + adId

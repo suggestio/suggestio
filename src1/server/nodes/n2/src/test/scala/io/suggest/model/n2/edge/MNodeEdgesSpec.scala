@@ -2,10 +2,9 @@ package io.suggest.model.n2.edge
 
 import java.time.OffsetDateTime
 
-import io.suggest.geo.MGeoPoint
-import io.suggest.model.PlayJsonTestUtil
-import io.suggest.model.geo.{CircleGs, Distance}
+import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
 import io.suggest.model.sc.common.SinkShowLevels
+import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.ym.model.NodeGeoLevels
 import org.scalatest.FlatSpec
 

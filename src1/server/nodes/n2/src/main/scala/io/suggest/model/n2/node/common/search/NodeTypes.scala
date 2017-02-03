@@ -1,7 +1,7 @@
 package io.suggest.model.n2.node.common.search
 
+import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.{MNodeFields, MNodeType}
-import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**

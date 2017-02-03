@@ -46,7 +46,7 @@ trait IsSuItemAd
         }
         mitemOptFut.flatMap {
           case Some(mitem) =>
-            val madOptFut = mNodeCache.getById( mitem.nodeId )
+            val madOptFut = mNodesCache.getById( mitem.nodeId )
             madOptFut.flatMap {
               case Some(mad) =>
                 val req1 = MItemAdReq(mitem, mad, user, request)

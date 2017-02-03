@@ -1,9 +1,8 @@
 package io.suggest.model.n2.geo.search
 
-import io.suggest.geo.MGeoPoint
-import io.suggest.model.geo.GeoPoint
+import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.geo.{GeoPoint, MGeoPoint}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.model.search.{DynSearchArgs, DynSearchArgsWrapper}
 import org.elasticsearch.common.lucene.search.function.CombineFunction
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders

@@ -1,8 +1,9 @@
 package io.suggest.model.n2.media.storage
 
-import io.suggest.model.{MockedEsSn, PlayJsonTestUtil}
+import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import io.suggest.swfs.client.proto.fid.Fid
+import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
 /**

@@ -25,7 +25,6 @@ libraryDependencies ++= {
   //"com.typesafe.play" %% "anorm" % "2.5.0",
   cache,
   json,
-  "com.typesafe.play"   %% "play-slick" % Common.Vsn.PLAY_SLICK,
 
   ws exclude("commons-logging", "commons-logging"),
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
@@ -33,17 +32,17 @@ libraryDependencies ++= {
   "com.mohiva" %% "play-html-compressor" % "0.6.3",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
-  Common.ORG %% "svg-util" % "0.0.0-SNAPSHOT",
-  Common.ORG %% "ipgeobase" % "0.0.0-SNAPSHOT",
-  Common.ORG %% "stat" % "0.0.0-SNAPSHOT",
+  //Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
+  //Common.ORG %% "svg-util" % "0.0.0-SNAPSHOT",
+  //Common.ORG %% "ipgeobase" % "0.0.0-SNAPSHOT",
+  //Common.ORG %% "stat" % "0.0.0-SNAPSHOT",
   Common.ORG %% "util" % "2.0.1-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
     exclude("log4j", "log4j")
     exclude("org.slf4j", "log4j-over-slf4j")
   ,
-  Common.ORG %% "n2" % "0.0.0-SNAPSHOT",
+  //Common.ORG %% "n2" % "0.0.0-SNAPSHOT",
   // для разбора upload-частей, нужна помощь mime magic bytes
   "jmimemagic" % "jmimemagic" % "0.1.2"
     exclude("xml-apis", "xml-apis")
@@ -101,6 +100,8 @@ libraryDependencies ++= {
     exclude("de.l3s.boilerpipe", "boilerpipe")
   ,
 
+  //"com.yandex.money.api" % "yandex-money-sdk-java" % Common.Vsn.YA_MONEY_SDK,
+
   // webjars
   // карты leaflet.(js подхватывается в scala.js через jsDeps)
   "org.webjars.bower" % "leaflet"               % Common.leafletJsVsn,
@@ -137,6 +138,7 @@ resolvers ++= {
     // kaptcha:
     "sonatype-groups-forge"   at SONATYPE_GROUPS_FORGE_URL,
     "apache-releases"         at APACHE_RELEASES_URL
+    //"jcenter"                 at JCENTER_URL
   )
 }
 
@@ -152,7 +154,7 @@ routesImport ++= Seq(
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
   // 2016.dec.15: GeoPoint class унифицирован на уровне [common], поэтому для его QSB теперь требуется особое приглашение:
-  "io.suggest.model.geo.GeoPoint.Implicits._"
+  "io.suggest.geo.GeoPoint.Implicits._"
 )
 
 

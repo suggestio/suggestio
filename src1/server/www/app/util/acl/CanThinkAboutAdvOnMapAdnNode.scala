@@ -52,7 +52,7 @@ trait CanThinkAboutAdvOnMapAdnNode
 
       } { personId =>
         // Юзер залогинен. Сразу же собираем все параллельные задачи...
-        val madOptFut   = mNodeCache.getByIdType(adId,   MNodeTypes.Ad)
+        val madOptFut   = mNodesCache.getByIdType(adId,   MNodeTypes.Ad)
 
         // Ищем целевой узел, проверяя права размещения на узле прямо в рамках ES-запроса:
         val nodeOptFut = mNodes.dynSearchOne(

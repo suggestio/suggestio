@@ -3,7 +3,8 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty, IIsNonEmpty}
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{GeoPoint, MGeoPoint}
+import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
 import io.suggest.model.es.IGenEsMappingProps
 import io.suggest.model.sc.common.SinkShowLevel
@@ -11,8 +12,6 @@ import io.suggest.util.SioConstants
 import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import io.suggest.model.geo.GeoPoint
-import io.suggest.model.geo.GeoPoint.Implicits._
 
 /**
  * Suggest.io
