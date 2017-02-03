@@ -1,7 +1,7 @@
 package io.suggest.fsm
 
 import akka.actor.Actor
-import io.suggest.util.MacroLogsI
+import io.suggest.util.logs.IMacroLogs
 
 /**
  * Suggest.io
@@ -11,7 +11,7 @@ import io.suggest.util.MacroLogsI
  * конечные автоматы на базе обычных akka-акторов.
  */
 
-trait FsmActor extends Actor with MacroLogsI with AbstractFsm {
+trait FsmActor extends Actor with IMacroLogs with AbstractFsm {
 
   /**
    * Переключение на новое состояние. Старое состояние будет отброшено.

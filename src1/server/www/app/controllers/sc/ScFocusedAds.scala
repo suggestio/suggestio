@@ -9,13 +9,13 @@ import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearch
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.Lists
+import io.suggest.util.logs.IMacroLogs
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.PlayMacroLogsI
 import util.acl._
 import views.html.sc.foc._
 import models._
@@ -33,7 +33,7 @@ import scala.concurrent.Future
  */
 trait ScFocusedAdsBase
   extends ScController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IScUtil
   with ScCssUtil
   with IN2NodesUtilDi

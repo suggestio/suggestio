@@ -12,12 +12,12 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.node.{MNode, MNodes}
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
-import util.PlayMacroLogsImpl
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.Bill2Util
@@ -41,7 +41,7 @@ class AdvGeoBillUtil @Inject() (
   protected val mItems                : MItems,
   protected val mCommonDi             : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

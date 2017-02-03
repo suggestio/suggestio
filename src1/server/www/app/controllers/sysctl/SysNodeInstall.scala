@@ -1,13 +1,13 @@
 package controllers.sysctl
 
 import controllers.{SioController, routes}
+import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.msys.MSysNodeInstallFormData
 import models.req.INodeReq
 import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.mvc.Result
-import util.PlayMacroLogsI
 import util.acl.IsSuNode
 import util.adn.INodesUtil
 import util.sys.ISysMarketUtilDi
@@ -23,7 +23,7 @@ import scala.concurrent.Future
  */
 trait SysNodeInstall
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with INodesUtil
   with IsSuNode
   with ISysMarketUtilDi

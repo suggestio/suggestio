@@ -15,6 +15,7 @@ import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.form.MDatesPeriod
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
@@ -22,7 +23,6 @@ import models.MNode
 import models.mdt.IDateStartEnd
 import org.threeten.extra.Interval
 import slick.sql.SqlAction
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -51,7 +51,7 @@ class Bill2Util @Inject() (
   ymdHelpersJvm                   : YmdHelpersJvm,
   val mCommonDi                   : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

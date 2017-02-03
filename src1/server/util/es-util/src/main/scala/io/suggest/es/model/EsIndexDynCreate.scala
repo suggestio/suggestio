@@ -1,7 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.util.MacroLogsI
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.settings.Settings
 
 import scala.concurrent.Future
@@ -15,7 +15,7 @@ import scala.util.{Failure, Success}
   * Используется в index-моделях со "скользящими" во времени индексами: ipgeobase, статистика, логи.
   */
 
-trait EsIndexDynCreate extends IEsModelDi with MacroLogsI {
+trait EsIndexDynCreate extends IEsModelDi with IMacroLogs {
 
   import mCommonDi._
 

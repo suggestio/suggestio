@@ -1,6 +1,5 @@
 package controllers.sc
 
-import _root_.util.PlayMacroLogsI
 import _root_.util.di._
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
@@ -9,6 +8,7 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
+import io.suggest.util.logs.IMacroLogs
 import models._
 import models.im.MImgT
 import models.mgeo.MGeoLoc
@@ -41,7 +41,7 @@ import scala.util.{Failure, Success}
   */
 trait ScIndex
   extends ScController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IStatCookiesUtilDi
   with MaybeAuth
   with IMNodes

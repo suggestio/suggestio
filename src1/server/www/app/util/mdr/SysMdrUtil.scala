@@ -10,11 +10,11 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.util.effect.RW
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.mdr.{MRefuseFormRes, MRefuseModes, MdrSearchArgs, RefuseForm_t}
 import models.mproj.ICommonDi
 import models.req.{IAdReq, IReqHdr}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -29,7 +29,7 @@ class SysMdrUtil @Inject() (
   mNodes            : MNodes,
   val mCommonDi     : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

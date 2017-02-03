@@ -1,11 +1,12 @@
 package util.acl
 
-import controllers.{SioController, MyConfName}
+import controllers.{MyConfName, SioController}
+import io.suggest.util.logs.IMacroLogs
 import models.mproj.IMCommonDi
 import models.req.ExtReqHdr
 import play.api.mvc._
-import util.PlayMacroLogsI
-import scala.concurrent.{Promise, Future}
+
+import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
 import play.api.mvc.Result
 
@@ -22,7 +23,7 @@ import play.api.mvc.Result
  */
 
 trait BruteForceProtectBase
-  extends PlayMacroLogsI
+  extends IMacroLogs
   with MyConfName
   with IMCommonDi
 {

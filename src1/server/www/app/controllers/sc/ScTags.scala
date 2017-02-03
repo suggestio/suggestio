@@ -3,10 +3,10 @@ package controllers.sc
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.tag.MTagSearchResp
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
+import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.msc.tag.MScTagsSearchQs
 import play.api.libs.json.Json
-import util.PlayMacroLogsI
 import util.acl.MaybeAuth
 import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
@@ -26,7 +26,7 @@ trait ScTags
   with IScTagsUtilDi
   with IGeoIpUtilDi
   with IScStatUtil
-  with PlayMacroLogsI
+  with IMacroLogs
 {
 
   import mCommonDi._

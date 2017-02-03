@@ -6,11 +6,14 @@ import akka.actor._
 import akka.actor.ActorDSL._
 import SioNotifier._
 import akka.pattern.ask
+
 import scala.concurrent.duration._
 import akka.util.Timeout
+
 import scala.concurrent.Await
-import io.suggest.util.Logs
 import io.suggest.event.subscriber.SnActorRefSubscriber
+import io.suggest.util.logs.MacroLogsImpl
+
 import scala.concurrent.ExecutionContext.global
 
 /**
@@ -28,7 +31,7 @@ import scala.concurrent.ExecutionContext.global
   turned off or adjusted with configuration settings 'akka.log-dead-letters' and 'akka.log-dead-letters-during-shutdown'.
   */
 
-class SioNotifierTest extends FlatSpec with Logs {
+class SioNotifierTest extends FlatSpec with MacroLogsImpl {
 
   // Определяем контекст тестов
   def fixture = new {
@@ -39,7 +42,7 @@ class SioNotifierTest extends FlatSpec with Logs {
       protected def getSystem: ActorSystem = asys
 
       def startLink(arf: ActorRefFactory): ActorRef = {
-        val props = Props(new SioNotifier with Logs {
+        val props = Props(new SioNotifier {
           override def ec = global
         })
         asys.actorOf(props, name=actorName)

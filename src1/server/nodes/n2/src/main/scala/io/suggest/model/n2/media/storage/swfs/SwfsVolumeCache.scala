@@ -1,11 +1,11 @@
 package io.suggest.model.n2.media.storage.swfs
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.VolumeId_t
 import io.suggest.swfs.client.proto.lookup.{IVolumeLocation, LookupRequest}
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.cache.CacheApi
 

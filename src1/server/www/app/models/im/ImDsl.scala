@@ -5,9 +5,10 @@ import java.text.DecimalFormat
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.IStrId
+import io.suggest.util.logs.MacroLogsImpl
 import org.im4java.core.IMOperation
 import models._
-import util.{FormUtil, PlayMacroLogsImpl}
+import util.FormUtil
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -19,7 +20,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Что-то подобное было в зотонике, где список qs биндился в список im-действий над картинкой.
  */
 
-object ImOp extends PlayMacroLogsImpl with JavaTokenParsers {
+object ImOp extends MacroLogsImpl with JavaTokenParsers {
 
   val SPLIT_ON_BRACKETS_RE = "[\\[\\]]+".r
 

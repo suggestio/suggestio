@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.stat.m.{MStat, MStats}
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.common.unit.{ByteSizeValue, TimeValue}
 

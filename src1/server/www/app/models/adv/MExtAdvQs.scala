@@ -1,8 +1,8 @@
 package models.adv
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
-import util.PlayLazyMacroLogsImpl
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
 import play.api.Play._
@@ -19,7 +19,7 @@ object MExtAdvQs {
 
   /** Статический секретный ключ для подписывания запросов. */
   private val SIGN_SECRET: String = {
-    val sg = new SecretGetter with PlayLazyMacroLogsImpl {
+    val sg = new SecretGetter with MacroLogsImplLazy {
       override val confKey = "ext.adv.qs.sign.key"
       override def useRandomIfMissing = isProd
     }

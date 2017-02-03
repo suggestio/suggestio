@@ -5,11 +5,11 @@ import java.net.InetAddress
 import com.google.inject.{Inject, Singleton}
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.mgeo.MGeoLoc
 import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, MRemoteAddrInfo}
 import play.api.mvc.RequestHeader
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -29,7 +29,7 @@ class GeoIpUtil @Inject() (
   mCommonDi   : ICommonDi
 )
   extends IGeoFindIp
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   override type FindIpRes_t = IGeoFindIpResult

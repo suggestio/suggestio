@@ -1,5 +1,6 @@
 package controllers
 
+import io.suggest.util.logs.IMacroLogs
 import models.blk.{OneAdQsArgs, OneAdWideQsArgs}
 import models.im.OutImgFmts
 import models.msc.OneAdRenderVariant
@@ -9,7 +10,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
 import util.acl.IsSuperuserMad
 import util.n2u.IN2NodesUtilDi
-import util.{FormUtil, PlayMacroLogsI}
+import util.FormUtil
 import views.html.sys1.market.ad.one._
 
 import scala.concurrent.Future
@@ -49,7 +50,7 @@ class SysAdRenderUtil {
 /** Аддон для sys-контроллера для добавления экшенов, связанных с рендером карточки. */
 trait SysAdRender
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IsSuperuserMad
   with IN2NodesUtilDi
 {

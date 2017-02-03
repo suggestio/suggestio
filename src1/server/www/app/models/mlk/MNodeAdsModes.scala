@@ -2,7 +2,7 @@ package models.mlk
 
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.util.MacroLogsImplLazy
+import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
 
 import scala.language.implicitConversions

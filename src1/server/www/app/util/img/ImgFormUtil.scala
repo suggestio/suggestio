@@ -5,13 +5,13 @@ import java.util.UUID
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
 import models.im._
-import util.PlayMacroLogsImpl
 import io.suggest.img.SioImageUtilT
 
 import scala.concurrent.Future
 import java.lang
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mproj.ICommonDi
 
@@ -27,7 +27,7 @@ class ImgFormUtil @Inject() (
   mLocalImgs  : MLocalImgs,
   mCommonDi   : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import play.api.data.Forms._
@@ -273,7 +273,7 @@ class ImgFormUtil @Inject() (
 /** Резайзилка картинок, используемая для генерация "оригиналов", т.е. картинок, которые затем будут кадрироваться. */
 class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
   extends SioImageUtilT
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import mCommonDi.configuration

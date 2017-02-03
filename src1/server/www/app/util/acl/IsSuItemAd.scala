@@ -2,10 +2,10 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{MItem, IMItems}
-import models.req.{MReq, IReqHdr, MItemAdReq}
-import play.api.mvc.{Result, Request, ActionBuilder}
-import util.PlayMacroLogsI
+import io.suggest.mbill2.m.item.{IMItems, MItem}
+import io.suggest.util.logs.IMacroLogs
+import models.req.{IReqHdr, MItemAdReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -20,7 +20,7 @@ trait IsSuItemAd
   with IsSuperuserUtilCtl
   with Csrf
   with IMItems
-  with PlayMacroLogsI
+  with IMacroLogs
 {
 
   import mCommonDi._

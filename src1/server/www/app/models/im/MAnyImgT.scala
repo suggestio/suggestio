@@ -3,10 +3,10 @@ package models.im
 import java.util.UUID
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.{IImgMeta, ISize2di, ImgCrop}
 import play.api.libs.iteratee.Enumerator
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -134,7 +134,7 @@ class MAnyImgs @Inject() (
   mCommonDi   : ICommonDi
 )
   extends MAnyImgsT[MAnyImgT]
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import mCommonDi._

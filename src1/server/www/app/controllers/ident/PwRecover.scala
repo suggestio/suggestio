@@ -2,6 +2,7 @@ package controllers.ident
 
 import controllers._
 import io.suggest.common.fut.FutureUtil
+import io.suggest.util.logs.IMacroLogs
 import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
 import models.msession.Keys
@@ -9,7 +10,6 @@ import models.req.{IRecoverPwReq, IReq}
 import models.usr._
 import play.api.data._
 import play.twirl.api.Html
-import util.PlayMacroLogsI
 import util.acl._
 import util.di.IIdentUtil
 import util.mail.IMailerWrapperDi
@@ -36,7 +36,7 @@ trait SendPwRecoverEmail
   extends SioController
   with IMailerWrapperDi
   with MaybeAuth
-  with PlayMacroLogsI
+  with IMacroLogs
   with IMPersonIdents
   with IEmailPwIdentsDi
   with IEmailActivationsDi
@@ -118,7 +118,7 @@ trait SendPwRecoverEmail
 
 trait PwRecover
   extends SendPwRecoverEmail
-  with PlayMacroLogsI
+  with IMacroLogs
   with CaptchaValidator
   with BruteForceProtectCtl
   with SetLangCookieUtil

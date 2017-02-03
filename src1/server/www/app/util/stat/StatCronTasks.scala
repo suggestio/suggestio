@@ -2,9 +2,9 @@ package util.stat
 
 import com.google.inject.Inject
 import io.suggest.stat.inx.StatIndexUtil
+import io.suggest.util.logs.MacroLogsDyn
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import util.PlayMacroLogsDyn
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.duration._
@@ -19,7 +19,7 @@ class StatCronTasks @Inject()(
   mCommonDi : ICommonDi
 )
   extends ICronTasksProvider
-  with PlayMacroLogsDyn
+  with MacroLogsDyn
 {
 
   import mCommonDi._

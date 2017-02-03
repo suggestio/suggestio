@@ -4,8 +4,9 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import util.{PlayMacroLogsImpl, SiowebSup}
+import util.SiowebSup
 
 import scala.collection.mutable
 import scala.concurrent.Future
@@ -52,7 +53,7 @@ trait IWsDispatcherActorsDi {
 /** Актор, управляющий картой веб-сокетов.
   * ws-акторы запускаются и живут полностью асинхронно и довольно изолированно, поэтому нужна система связи с ними.
   * Карта с ключами wsId позволяет наладить связь между wsId на клиенте и актором тут. */
-class WsDispatcherActor extends Actor with PlayMacroLogsImpl {
+class WsDispatcherActor extends Actor with MacroLogsImpl {
 
   import LOGGER._
 

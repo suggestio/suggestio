@@ -8,6 +8,7 @@ import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
 import org.elasticsearch.search.aggregations.AggregationBuilders
@@ -15,7 +16,6 @@ import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import play.api.libs.json.JsObject
 import play.extras.geojson.{Feature, FeatureCollection, LatLng}
-import util.PlayMacroLogsImpl
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -35,7 +35,7 @@ class ScMapUtil @Inject() (
   mNodes      : MNodes,
   mCommonDi   : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

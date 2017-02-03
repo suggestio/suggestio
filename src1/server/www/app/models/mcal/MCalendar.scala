@@ -5,9 +5,9 @@ import io.suggest.es.model._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.JacksonParsing
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.functional.syntax._
-import util.PlayMacroLogsImpl
 import play.api.libs.json._
 
 import scala.collection.Map
@@ -24,7 +24,7 @@ class MCalendars @Inject() (
   override val mCommonDi: ICommonDi
 )
   extends EsModelStatic
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with EsmV2Deserializer
   with EsModelPlayJsonStaticT
 {

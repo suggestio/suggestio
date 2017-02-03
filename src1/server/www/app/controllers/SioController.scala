@@ -16,6 +16,7 @@ import play.api.mvc.Result
 
 import scala.language.implicitConversions
 import io.suggest.flash.FlashConstants
+import io.suggest.util.logs.IMacroLogs
 
 import scala.util.{Failure, Success}
 
@@ -121,7 +122,7 @@ trait MyConfName {
 
 
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
-trait NotifyWs extends SioController with PlayMacroLogsI with MyConfName with IWsDispatcherActorsDi {
+trait NotifyWs extends SioController with IMacroLogs with MyConfName with IWsDispatcherActorsDi {
 
   import mCommonDi._
 

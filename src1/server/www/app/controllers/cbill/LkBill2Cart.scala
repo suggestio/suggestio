@@ -6,11 +6,11 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{MOrderStatuses, OrderStatusChanged}
+import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mlk.bill.{MCartItem, MCartTplArgs}
-import util.PlayMacroLogsI
 import util.acl.{CanAccessItem, IsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
@@ -27,7 +27,7 @@ import scala.concurrent.Future
 trait LkBill2Cart
   extends SioController
   with IBill2UtilDi
-  with PlayMacroLogsI
+  with IMacroLogs
   with IsAdnNodeAdmin
   with CanAccessItem
   with IBlkImgMakerDI

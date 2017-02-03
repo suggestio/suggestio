@@ -2,6 +2,7 @@ package util.ext.tw
 
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.Mad2ImgUrlCalc
 import models.im.OutImgFmts
 import models.mctx.{Context, ContextUtil}
@@ -11,7 +12,6 @@ import models.mext.tw.card.{PhotoCardArgs, TwImgSizes}
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
 import play.twirl.api.Html
-import util.PlayMacroLogsImpl
 import util.ext.{IExtServiceHelper, OAuth1Support}
 import util.n2u.N2NodesUtil
 
@@ -33,7 +33,7 @@ class TwitterHelper @Inject() (
   extends IExtServiceHelper
   with OAuth1Support
   with TwMpUpload
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
   that =>
 

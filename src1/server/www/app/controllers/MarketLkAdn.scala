@@ -10,6 +10,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mctx.Context
 import models.mlk.{MNodeAdInfo, MNodeAdsMode, MNodeAdsTplArgs, MNodeShowArgs}
@@ -29,7 +30,7 @@ import util.img.{GalleryUtil, LogoUtil}
 import util.lk.LkAdUtil
 import util.secure.ScryptUtil
 import util.showcase.ShowcaseUtil
-import util.{FormUtil, PlayMacroLogsImpl}
+import util.FormUtil
 import views.html.lk.adn._
 import views.html.lk.usr._
 import views.html.lk.{lkList => lkListTpl}
@@ -58,7 +59,7 @@ class MarketLkAdn @Inject() (
   override val mCommonDi              : ICommonDi
 )
   extends SioController
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with BruteForceProtectCtl
   with ChangePwAction
   with NodeEact

@@ -2,9 +2,9 @@ package util.acl
 
 import controllers.SioController
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
+import io.suggest.util.logs.IMacroLogs
 import models.req.{MAdProdRcvrReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.PlayMacroLogsI
 import util.adv.geo.IAdvGeoMapUtilDi
 import util.di.ICanAdvAdUtil
 
@@ -21,7 +21,7 @@ trait CanThinkAboutAdvOnMapAdnNode
   with Csrf
   with OnUnauthUtilCtl
   with OnUnauthNodeCtl
-  with PlayMacroLogsI
+  with IMacroLogs
   with ICanAdvAdUtil
   with IMNodes
   with IAdvGeoMapUtilDi

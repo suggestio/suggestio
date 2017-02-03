@@ -3,8 +3,8 @@ package controllers.sysctl.bill
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{IMBalances, MBalance}
 import io.suggest.mbill2.m.contract.IMContracts
+import io.suggest.util.logs.IMacroLogs
 import models.msys.bill.MForNodeTplArgs
-import util.PlayMacroLogsI
 import util.acl.IsSuNode
 import util.billing.{IBill2UtilDi, ITfDailyUtilDi}
 import views.html.sys1.bill._
@@ -19,7 +19,7 @@ import scala.concurrent.Future
  */
 trait SbNode
   extends IsSuNode
-  with PlayMacroLogsI
+  with IMacroLogs
   with IMContracts
   with IMBalances
   with IBill2UtilDi

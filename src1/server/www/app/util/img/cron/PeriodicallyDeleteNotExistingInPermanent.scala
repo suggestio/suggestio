@@ -5,11 +5,11 @@ import java.nio.file.Files
 import com.google.inject.Inject
 import io.suggest.async.AsyncUtil
 import io.suggest.util.UuidUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.im.{MImgs3, MLocalImg, MLocalImgs}
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
-import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
@@ -31,7 +31,7 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
   mCommonDi   : ICommonDi
 )
   extends ICronTasksProvider
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import mCommonDi._

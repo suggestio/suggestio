@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.jsm.init.{MTarget, MTargets}
 import models.mctx.{Context, CtxData}
@@ -45,7 +46,7 @@ class Ident @Inject() (
   override val mCommonDi            : ICommonDi
 )
   extends SioController
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with EmailPwLogin
   with CaptchaValidator
   with ChangePw

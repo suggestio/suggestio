@@ -1,7 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.util.MacroLogsI
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.ResourceNotFoundException
 
 import scala.concurrent.Future
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success}
   * Created: 23.09.16 12:09
   * Description: Трейт для добавления API удаления удаления динамического индекса.
   */
-trait EsIndexDynDelete extends IEsModelDi with MacroLogsI {
+trait EsIndexDynDelete extends IEsModelDi with IMacroLogs {
 
   import mCommonDi._
 

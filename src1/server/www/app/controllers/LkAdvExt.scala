@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
@@ -18,7 +19,6 @@ import play.api.libs.json.JsValue
 import play.api.mvc.WebSocket.HandlerProps
 import play.api.mvc.{Result, WebSocket}
 import util.FormUtil._
-import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.ext.{AdvExtFormUtil, AdvExtWsActors}
 import views.html.helper.CSRF
@@ -44,7 +44,7 @@ class LkAdvExt @Inject() (
                            override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with CanAccessExtTarget
   with CanAdvertiseAd
   with CanSubmitExtTargetForNode

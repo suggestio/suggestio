@@ -5,6 +5,7 @@ import java.time.{LocalDate, OffsetDateTime}
 
 import io.suggest.an.ReplaceMischarsAnalyzer
 import io.suggest.util.DateParseUtil
+import io.suggest.util.logs.MacroLogsImplLazy
 import io.suggest.ym.{NormTokensOutAnStream, YmStringAnalyzerT}
 import models.ai.AiParsers.AiParser
 import models.ai._
@@ -16,7 +17,6 @@ import org.apache.lucene.analysis.pattern.PatternTokenizer
 import org.tartarus.snowball.ext.RussianStemmer
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
-import util.PlayLazyMacroLogsImpl
 import util.ai.AiContentHandler
 import util.ai.sax.StackFsmSax
 
@@ -32,7 +32,7 @@ class GidrometRssSax(maim: MAiCtx)
   extends DefaultHandler
   with StackFsmSax
   with AiContentHandler
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
 {
 
   override def stiResKey = "weather"

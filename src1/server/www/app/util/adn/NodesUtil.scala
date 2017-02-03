@@ -12,6 +12,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.MExtTargets
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
@@ -19,7 +20,6 @@ import models.mext.MExtServices
 import models.mproj.ICommonDi
 import play.api.i18n.Messages
 import play.api.mvc.Call
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.util.Random
@@ -38,7 +38,7 @@ class NodesUtil @Inject() (
   mExtTargets             : MExtTargets,
   mCommonDi               : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

@@ -8,7 +8,7 @@ import com.google.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 

@@ -1,9 +1,9 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models.adv.IMExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.PlayMacroLogsDyn
 
 import scala.concurrent.Future
 
@@ -25,7 +25,7 @@ trait CanAccessExtTarget
   /** Базовая логика [[CanAccessExtTarget]] живёт в этом трейте. */
   trait CanAccessExtTargetBase
     extends ActionBuilder[MExtTargetNodeReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
     with OnUnauthNode
     with IsAdnNodeAdminUtil
   {

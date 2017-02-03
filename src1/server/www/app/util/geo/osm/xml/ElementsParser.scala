@@ -1,9 +1,9 @@
 package util.geo.osm.xml
 
 import io.suggest.geo.MGeoPoint
+import io.suggest.util.logs.MacroLogsImplLazy
 import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.{Attributes, SAXParseException}
-import util.PlayLazyMacroLogsImpl
 import util.ai.sax.StackFsmSax
 import util.geo.osm._
 
@@ -43,7 +43,7 @@ trait ElementParserConstants {
 trait ElementsParserT
   extends DefaultHandler
   with StackFsmSax
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
   with ElementParserConstants
 {
 

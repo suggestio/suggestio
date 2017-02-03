@@ -3,10 +3,10 @@ package util.secure
 import java.io.{InputStream, OutputStream}
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
 import models.mproj.ICommonDi
 import models.sec.{IAsymKey, MAsymKey, MAsymKeys}
-import util.PlayMacroLogsDyn
 
 import scala.concurrent.Future
 
@@ -31,7 +31,7 @@ class PgpUtil @Inject() (
   mAsymKeys   : MAsymKeys,
   mCommonDi   : ICommonDi
 )
-  extends PlayMacroLogsDyn
+  extends MacroLogsDyn
 {
 
   import mCommonDi._

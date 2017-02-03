@@ -7,11 +7,11 @@ import io.suggest.model.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
 import io.suggest.swfs.client.proto.assign.AssignRequest
-import io.suggest.swfs.client.proto.delete.{IDeleteResponse, DeleteRequest}
+import io.suggest.swfs.client.proto.delete.{DeleteRequest, IDeleteResponse}
 import io.suggest.swfs.client.proto.fid.Fid
-import io.suggest.swfs.client.proto.get.{IGetResponse, GetRequest}
+import io.suggest.swfs.client.proto.get.{GetRequest, IGetResponse}
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.libs.functional.syntax._
 import play.api.libs.json._

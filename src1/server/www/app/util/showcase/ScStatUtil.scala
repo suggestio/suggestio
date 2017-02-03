@@ -7,6 +7,7 @@ import io.suggest.geo.IGeoFindIpResult
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im.DevScreen
 import models.mctx.Context
@@ -16,7 +17,6 @@ import models.req.{IReqHdr, ISioUser}
 import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
 import play.mvc.Http.HeaderNames
-import util.PlayMacroLogsImpl
 import util.geo.GeoIpUtil
 import util.stat.StatCookiesUtil
 
@@ -36,7 +36,7 @@ class ScStatUtil @Inject() (
   geoIpUtil               : GeoIpUtil,
   mCommonDi               : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

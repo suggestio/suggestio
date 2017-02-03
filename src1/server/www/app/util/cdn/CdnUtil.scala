@@ -3,11 +3,11 @@ package util.cdn
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.playx.ExternalCall
+import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.im.{MImg3, MImgT}
 import play.api.Configuration
 import play.api.mvc.Call
-import util.PlayMacroLogsImpl
 import util.img.DynImgUtil
 
 import scala.collection.JavaConversions._
@@ -24,7 +24,7 @@ class CdnUtil @Inject() (
   configuration   : Configuration,
   corsUtil        : CorsUtil
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

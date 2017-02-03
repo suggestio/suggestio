@@ -6,9 +6,9 @@ import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.{Classifier, Event, Subscriber}
 import io.suggest.event.subscriber.SnClassSubscriber
 import io.suggest.model.n2.node.event.MNodeSaved
+import io.suggest.util.logs.MacroLogsImpl
 import models.event.{MEvent, MEventType, MEventTypes, MEvents}
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -26,7 +26,7 @@ class AdnNodeEvents @Inject() (
 )
   extends SNStaticSubscriber
   with SnClassSubscriber
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import LOGGER._

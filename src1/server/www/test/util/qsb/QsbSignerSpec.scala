@@ -1,9 +1,9 @@
 package util.qsb
 
 import functional.OneAppPerSuiteNoGlobalStart
+import io.suggest.util.logs.MacroLogsImpl
 import org.scalatestplus.play._
 import play.core.parsers.FormUrlEncodedParser
-import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import util.PlayMacroLogsImpl
  * Description: Тесты для HMAC-подписывалки qs-аргументов.
  * Нужно подписывать аргументы, затем успешно проверять их подпись.
  */
-class QsbSignerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with PlayMacroLogsImpl {
+class QsbSignerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with MacroLogsImpl {
 
   import LOGGER._
 

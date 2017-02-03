@@ -4,10 +4,10 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.util.logs.MacroLogsImpl
 import models.MPredicate
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.adv.geo.tag.GeoTagsUtil
 
 import scala.concurrent.Future
@@ -23,7 +23,7 @@ class AdvBuilderUtil @Inject() (
   geoTagsUtil : GeoTagsUtil,
   mCommonDi   : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

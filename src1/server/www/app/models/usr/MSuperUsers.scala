@@ -4,8 +4,8 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.secure.ScryptUtil
 
 import scala.concurrent.Future
@@ -24,7 +24,7 @@ class MSuperUsers @Inject()(
   scryptUtil      : ScryptUtil,
   mCommonDi       : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

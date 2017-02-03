@@ -2,8 +2,8 @@ package io.suggest.model.sc.common
 
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
-import io.suggest.util.MacroLogsImplLazy
 import AdShowLevels._
+import io.suggest.util.logs.MacroLogsImplLazy
 import io.suggest.ym.model.common.AdnSinks._
 import io.suggest.ym.model.common._
 

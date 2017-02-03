@@ -2,13 +2,13 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.mproj.ICommonDi
 import models.{ImgCrop, MImgSizeT}
-import util.PlayMacroLogsImpl
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -27,7 +27,7 @@ class ScWideMaker @Inject() (
   mCommonDi : ICommonDi
 )
   extends IMaker
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
 {
 
   import LOGGER._

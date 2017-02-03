@@ -1,10 +1,10 @@
 package util.ws
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.{Actor, ActorRef}
 import models.im.Histogram
-import play.api.libs.json.{JsValue, JsArray, JsString, JsObject}
-import util.PlayMacroLogsI
-import io.suggest.ad.form.AdFormConstants.{WS_MSG_DATA_FN, WS_MSG_TYPE_FN, TYPE_COLOR_PALETTE}
+import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
+import io.suggest.ad.form.AdFormConstants.{TYPE_COLOR_PALETTE, WS_MSG_DATA_FN, WS_MSG_TYPE_FN}
+import io.suggest.util.logs.IMacroLogs
 import util.img.detect.main.{ImgBgColorUpdateAction, Update}
 
 /**
@@ -14,7 +14,7 @@ import util.img.detect.main.{ImgBgColorUpdateAction, Update}
  * Description: Уведомление об определении цвета картинки лежит здесь.
  */
 
-trait ColorDetectedWsNotifyActor extends Actor with PlayMacroLogsI {
+trait ColorDetectedWsNotifyActor extends Actor with IMacroLogs {
 
   def out: ActorRef
 

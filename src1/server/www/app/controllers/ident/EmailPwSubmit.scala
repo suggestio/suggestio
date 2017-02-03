@@ -2,6 +2,7 @@ package controllers.ident
 
 import controllers.SioController
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
 import models.MNodeTypes
 import models.msession.{Keys, LongTtl, ShortTtl, Ttl}
@@ -28,7 +29,7 @@ import util.secure.IScryptUtilDi
 
 trait EmailPwSubmit
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with BruteForceProtectCtl
   with SetLangCookieUtil
   with IsAnon

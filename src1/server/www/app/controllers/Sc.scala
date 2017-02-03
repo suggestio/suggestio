@@ -4,10 +4,10 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.IMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
 import util.ble.BleUtil
@@ -50,7 +50,7 @@ class Sc @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with ScSiteGeo
   with ScIndex
   with ScSyncSite

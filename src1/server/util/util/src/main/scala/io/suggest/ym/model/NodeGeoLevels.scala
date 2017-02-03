@@ -2,7 +2,6 @@ package io.suggest.ym.model
 
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName}
 import io.suggest.model.menum.EnumJsonReadsT
-import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -66,7 +65,7 @@ object NodeGeoLevels extends Enumeration(1) with EnumMaybeWithName with EnumMayb
     def osmMapScale: Int
 
     /** Точность в метрах, в рамках которой имеет смысл детектить что-либо на этом уровне. */
-    def accuracyMetersMax: Option[Int] = CONFIG.getInt(s"geo.node.level.$esfn.accuracy.max.meters")
+    def accuracyMetersMax: Option[Int] = None //CONFIG.getInt(s"geo.node.level.$esfn.accuracy.max.meters")
   }
 
   override type T = Val

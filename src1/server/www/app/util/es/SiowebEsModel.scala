@@ -7,6 +7,7 @@ import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.stat.m.MStats
 import io.suggest.util.JMXBase
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
 import models.ai.MAiMads
 import models.event.MEvents
@@ -15,7 +16,6 @@ import models.mproj.ICommonDi
 import models.sec.MAsymKeys
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
-import util.PlayLazyMacroLogsImpl
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -41,7 +41,7 @@ class SiowebEsModel @Inject() (
   mStats              : MStats,
   mCommonDi           : ICommonDi
 )
-  extends PlayLazyMacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   import mCommonDi._
@@ -169,7 +169,7 @@ final class SiowebEsModelJmx @Inject() (
 )
   extends JMXBase
   with SiowebEsModelJmxMBean
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
 {
 
   import LOGGER._

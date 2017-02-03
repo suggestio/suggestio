@@ -1,9 +1,12 @@
 package io.suggest.util
 
-import java.net.{URLDecoder, MalformedURLException, URL}
+import java.net.{MalformedURLException, URL, URLDecoder}
 import java.io.UnsupportedEncodingException
+
 import collection.SortedSet
 import gnu.inet.encoding.IDNA
+import io.suggest.util.logs.MacroLogsImplLazy
+
 import scala.util.matching.Regex
 import scala.annotation.tailrec
 
@@ -13,9 +16,8 @@ import scala.annotation.tailrec
  * Created: 05.03.13 14:05
  * Description: Переписанный на Scala неподдерживаемый bixo.utils.UrlUtils.
  */
-object UrlUtil extends Serializable {
+object UrlUtil extends Serializable with MacroLogsImplLazy  {
 
-  @transient private lazy val LOGGER = new LogsImpl(getClass)
   import LOGGER._
 
   // Ссылки, которые не должны преобразовываться при абсолютизации ссылки.

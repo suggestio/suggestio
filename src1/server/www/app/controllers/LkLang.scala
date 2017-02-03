@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import controllers.clk.LkJsMessages
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -11,7 +12,6 @@ import play.api.data.Form
 import play.api.i18n.Lang
 import play.api.mvc.Result
 import util.FormUtil.uiLangM
-import util.PlayMacroLogsImpl
 import util.acl.MaybeAuth
 import util.i18n.JsMessagesUtil
 import views.html.lk.lang._
@@ -33,7 +33,7 @@ class LkLang @Inject() (
   extends SioControllerImpl
   with LkJsMessages
   with MaybeAuth
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import LOGGER._

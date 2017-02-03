@@ -7,9 +7,9 @@ import io.suggest.mbill2.m.contract.MContracts
 import io.suggest.mbill2.m.gid.GidUtil
 import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.billing.{Bill2Util, ContractUtil, TfDailyUtil}
 
 /**
@@ -32,7 +32,7 @@ class SysBilling @Inject() (
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with SbNode
   with SbNodeTfDaily
   with SbNodeContract

@@ -5,11 +5,11 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
 import models.req.MReq
 import models.usr.IMExtIdentsDi
 import play.api.mvc.{ActionBuilder, Request, Result}
 import util.di.IIdentUtil
-import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 import scala.concurrent.Future
 
@@ -34,7 +34,7 @@ trait CanConfirmIdpReg
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
   trait CanConfirmIdpRegBase
     extends ActionBuilder[MReq]
-    with PlayMacroLogsI
+    with IMacroLogs
     with OnUnauthUtil
   {
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
@@ -98,7 +98,7 @@ trait CanConfirmIdpReg
   sealed abstract class CanConfirmIdpRegBase2
     extends CanConfirmIdpRegBase
     with ExpireSession[MReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
 
   /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */
   object CanConfirmIdpRegGet

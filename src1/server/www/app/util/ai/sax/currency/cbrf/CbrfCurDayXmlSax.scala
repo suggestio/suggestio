@@ -1,10 +1,10 @@
 package util.ai.sax.currency.cbrf
 
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.ai.AiParsers.AiParser
 import models.ai._
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
-import util.PlayLazyMacroLogsImpl
 import util.ai.AiContentHandler
 import util.ai.sax.StackFsmSax
 
@@ -20,7 +20,7 @@ class CbrfCurDayXmlSax
   extends DefaultHandler
   with StackFsmSax
   with AiContentHandler
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
 {
 
   var _accRev: List[AiCurrency] = Nil

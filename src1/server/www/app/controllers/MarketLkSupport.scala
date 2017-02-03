@@ -1,6 +1,7 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImplLazy
 import models._
 import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}
@@ -13,7 +14,7 @@ import util.di.IIdentUtil
 import util.ident.IdentUtil
 import util.mail.{IMailerWrapper, IMailerWrapperDi}
 import util.support.SupportUtil
-import util.{FormUtil, PlayLazyMacroLogsImpl}
+import util.FormUtil
 import views.html.lk.support._
 
 import scala.concurrent.Future
@@ -32,7 +33,7 @@ class MarketLkSupport @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioController
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
   with IMailerWrapperDi
   with IIdentUtil
   with IsAdnNodeAdmin

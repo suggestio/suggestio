@@ -1,8 +1,8 @@
 package io.suggest.model.play.qsb
 
-import io.suggest.util.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
 import io.suggest.common.qs.QsConstants._
+import io.suggest.util.logs.MacroLogsImplLazy
 
 /**
   * Suggest.io

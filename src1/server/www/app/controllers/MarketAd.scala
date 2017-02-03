@@ -10,6 +10,7 @@ import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
@@ -25,7 +26,6 @@ import play.api.libs.json.JsValue
 import play.api.mvc.{Call, Request, Result, WebSocket}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
-import util.PlayMacroLogsImpl
 import util.acl._
 import util.ad.LkAdEdFormUtil
 import util.blocks.{BgImg, ListBlock, LkEditorWsActors}
@@ -52,7 +52,7 @@ class MarketAd @Inject() (
   override val mCommonDi                  : ICommonDi
 )
   extends SioController
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with BruteForceProtectCtl
   with MarketAdPreview
   with CanEditAd

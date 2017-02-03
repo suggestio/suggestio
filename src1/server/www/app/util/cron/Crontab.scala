@@ -2,10 +2,10 @@ package util.cron
 
 import akka.actor.{Cancellable, Scheduler}
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mcron.ICronTask
 import models.mproj.ICommonDi
 import play.api.inject.ApplicationLifecycle
-import util.PlayLazyMacroLogsImpl
 import util.billing.cron.BillingCronTasks
 import util.geo.IpGeoBaseImport
 import util.health.AdnGeoParentsHealth
@@ -38,7 +38,7 @@ class Crontab @Inject() (
   lifecycle                     : ApplicationLifecycle,
   mCommonDi                     : ICommonDi
 )
-  extends PlayLazyMacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   import LOGGER._

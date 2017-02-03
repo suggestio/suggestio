@@ -7,13 +7,14 @@ import io.suggest.model.n2.ad.{MNodeAd, ent}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo}
+import io.suggest.util.logs.MacroLogsImpl
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.blk.{AdColorFns, _}
 import models.{MColorData, _}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
-import util.{PlayMacroLogsImpl, TplDataFormatUtil}
+import util.TplDataFormatUtil
 
 /**
  * Suggest.io
@@ -22,7 +23,7 @@ import util.{PlayMacroLogsImpl, TplDataFormatUtil}
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
 @Singleton
-class LkAdEdFormUtil extends PlayMacroLogsImpl {
+class LkAdEdFormUtil extends MacroLogsImpl {
 
   /** Маппинг для выравнивания текста в рамках поля. */
   def textAlignOptM: Mapping[Option[TextAlign]] = {

@@ -13,10 +13,10 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevels
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -37,7 +37,7 @@ class GeoTagsUtil @Inject() (
   mItems        : MItems,
   mCommonDi     : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

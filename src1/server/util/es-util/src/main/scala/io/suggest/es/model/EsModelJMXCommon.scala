@@ -1,6 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.util.{JMXBase, JacksonWrapper, MacroLogsImplLazy}
+import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.util.{JMXBase, JacksonWrapper}
 
 import scala.concurrent.ExecutionContext
 

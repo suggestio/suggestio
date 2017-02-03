@@ -6,6 +6,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.playx.ExternalCall
+import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
 import models.mctx.ContextUtil
 import models.mext.{ILoginProvider, MExtServices}
 import models.mproj.ICommonDi
@@ -25,7 +26,7 @@ import util.adn.INodesUtil
 import util.di.IIdentUtil
 import util.ident.IdentUtil
 import util.xplay.SetLangCookieUtil
-import util.{FormUtil, PlayMacroLogsDyn, PlayMacroLogsI}
+import util.FormUtil
 import views.html.ident.reg._
 import views.html.ident.reg.ext._
 
@@ -46,7 +47,7 @@ class ExternalLogin_ @Inject() (
   override val identUtil          : IdentUtil,
   mCommonDi                       : ICommonDi
 )
-  extends PlayMacroLogsDyn
+  extends MacroLogsDyn
   with IIdentUtil
 {
 
@@ -114,7 +115,7 @@ class ExternalLogin_ @Inject() (
 
 trait ExternalLogin
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with SetLangCookieUtil
   with CanConfirmIdpReg
   with INodesUtil

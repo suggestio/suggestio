@@ -2,13 +2,13 @@ package controllers.sc
 
 import controllers.SioController
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents, MDiag}
+import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
 import models.msc.MScRemoteDiag
 import play.api.data.Forms._
 import play.api.data._
 import play.api.http.MimeTypes
 import util.FormUtil._
-import util.PlayMacroLogsImpl
 import util.acl.{BruteForceProtectCtl, MaybeAuth}
 import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
@@ -22,7 +22,7 @@ import util.geo.IGeoIpUtilDi
  */
 trait ScRemoteError
   extends SioController
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with BruteForceProtectCtl
   with MaybeAuth
   with IGeoIpUtilDi

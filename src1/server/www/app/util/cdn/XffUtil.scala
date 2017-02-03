@@ -2,9 +2,9 @@ package util.cdn
 
 import akka.stream.Materializer
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
@@ -25,7 +25,7 @@ class DumpXffHeaders @Inject() (
   override implicit val mat : Materializer
 )
   extends Filter
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
 {
 
   /** Какие заголовки дампить? Если фильтр отключён, то эта настройка всё равно прочитается. */

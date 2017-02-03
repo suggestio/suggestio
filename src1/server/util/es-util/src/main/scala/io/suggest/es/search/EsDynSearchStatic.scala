@@ -3,8 +3,8 @@ package io.suggest.es.search
 import com.sksamuel.elastic4s.{IndexesAndTypes, SearchDefinition}
 import io.suggest.es.model.{EsModelStaticT, ISearchResp}
 import io.suggest.model.common.OptId
-import io.suggest.util.MacroLogsI
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -25,7 +25,7 @@ import scala.language.implicitConversions
   * - typeclass'ы и search[X](args: A)(implicit typeclass: Helper[X]) => Future[X]
   */
 
-trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with MacroLogsI {
+trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLogs {
 
   import mCommonDi._
 

@@ -1,13 +1,13 @@
 package util.acl
 
 import com.google.inject.Inject
+import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs, MacroLogsImpl}
 import models._
 import models.mproj.ICommonDi
 import models.req._
 import play.api.mvc._
 import util.di.ICanAdvAdUtil
 import util.n2u.N2NodesUtil
-import util.{PlayMacroLogsDyn, PlayMacroLogsI, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
 
@@ -22,7 +22,7 @@ class CanAdvertiseAdUtil @Inject() (
   n2NodeUtil                      : N2NodesUtil,
   mCommonDi                       : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._
@@ -92,7 +92,7 @@ trait CanAdvertiseAd
   /** Редактировать карточку может только владелец магазина. */
   sealed trait CanAdvertiseAdBase
     extends ActionBuilder[MAdProdReq]
-    with PlayMacroLogsI
+    with IMacroLogs
     with OnUnauthNode
     with InitUserCmds
   {
@@ -132,7 +132,7 @@ trait CanAdvertiseAd
   sealed abstract class CanAdvertiseAdBase2
     extends CanAdvertiseAdBase
     with ExpireSession[MAdProdReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
 
   /** Запрос какой-то формы размещения рекламной карточки. */
   case class CanAdvertiseAd(

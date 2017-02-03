@@ -4,6 +4,7 @@ import controllers.{CaptchaValidator, SioController}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.util.logs.IMacroLogs
 import models._
 import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
@@ -17,7 +18,7 @@ import play.twirl.api.Html
 import util.captcha.CaptchaUtil._
 import util.captcha.ICaptchaUtilDi
 import util.mail.IMailerWrapperDi
-import util.{FormUtil, PlayMacroLogsI}
+import util.FormUtil
 import util.acl._
 import util.adn.INodesUtil
 import util.secure.IScryptUtilDi
@@ -60,7 +61,7 @@ trait EmailPwRegUtil extends ICaptchaUtilDi {
 
 trait EmailPwReg
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with CaptchaValidator
   with SendPwRecoverEmail
   with IMailerWrapperDi

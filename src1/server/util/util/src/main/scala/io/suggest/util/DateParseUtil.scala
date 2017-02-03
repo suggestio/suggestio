@@ -8,6 +8,7 @@ import java.util.Locale
 
 import collection.mutable
 import SioRandom.rnd
+import io.suggest.util.logs.MacroLogsImpl
 
 /**
  * Suggest.io
@@ -17,7 +18,9 @@ import SioRandom.rnd
  * Это порт модулей sio_text_dates.erl и sio_text_dates_month.erl на scala/java.
  */
 
-object DateParseUtil extends Logs {
+object DateParseUtil extends MacroLogsImpl {
+
+  import LOGGER._
 
   // Заготовки для простого составления сложных регэкспов.
   // Пунктуация

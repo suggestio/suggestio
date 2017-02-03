@@ -6,13 +6,13 @@ import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
+import io.suggest.util.logs.IMacroLogs
 import models._
 import models.mctx.IContextUtilDi
 import models.msc._
 import models.req.IReq
 import play.api.mvc._
 import play.twirl.api.Html
-import util.PlayMacroLogsI
 import util.acl._
 import util.di.{IScStatUtil, IScUtil}
 import util.ext.IExtServicesUtilDi
@@ -32,7 +32,7 @@ import scala.util.{Failure, Success}
 /** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
 trait ScSiteBase
   extends ScController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IScStatUtil
   with IScUtil
   with IExtServicesUtilDi

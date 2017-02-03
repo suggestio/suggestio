@@ -5,13 +5,13 @@ import java.{util => ju}
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+
 import com.google.inject.{Inject, Singleton}
 import play.api.Configuration
 import io.suggest.util.UuidUtil._
-
+import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.codec.binary.Base64
-import play.api.mvc.{Cookie, Result, RequestHeader}
-import util.PlayMacroLogsImpl
+import play.api.mvc.{Cookie, RequestHeader, Result}
 
 /**
  * Suggest.io
@@ -26,7 +26,7 @@ import util.PlayMacroLogsImpl
 class StatCookiesUtil @Inject()(
   configuration: Configuration
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

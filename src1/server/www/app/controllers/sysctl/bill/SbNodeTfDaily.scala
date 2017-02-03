@@ -1,13 +1,13 @@
 package controllers.sysctl.bill
 
 import controllers.routes
+import io.suggest.util.logs.IMacroLogs
 import models.mcal.IMCalendars
 import models.msys.bill.MTfDailyEditTplArgs
 import models.req.INodeReq
 import models.MDailyTf
 import play.api.data.Form
 import play.api.mvc.Result
-import util.PlayMacroLogsI
 import util.acl.IsSuNode
 import util.billing.ITfDailyUtilDi
 import views.html.sys1.bill.daily._
@@ -23,7 +23,7 @@ import scala.concurrent.Future
  */
 trait SbNodeTfDaily
   extends IsSuNode
-  with PlayMacroLogsI
+  with IMacroLogs
   with ITfDailyUtilDi
   with IMCalendars
 {

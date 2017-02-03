@@ -1,12 +1,12 @@
 package util.adv.ext
 
-import _root_.util.PlayMacroLogsImpl
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.{SubscribeToWsDispatcher, WsDispatcherActors}
 import akka.actor.{Actor, ActorRef, Props, SupervisorStrategy}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.fsm.FsmActor
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.js._
 import models.adv.js.ctx.MJsCtx
@@ -57,7 +57,7 @@ case class AdvExtWsActor @Inject()(
 )
   extends FsmActor
   with SubscribeToWsDispatcher
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 { actor =>
 
   import LOGGER._

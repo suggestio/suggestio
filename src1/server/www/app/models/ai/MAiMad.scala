@@ -10,7 +10,7 @@ import io.suggest.es.util.SioEsUtil._
 import models.mproj.ICommonDi
 import play.api.libs.json.{JsArray, JsString}
 import io.suggest.util.JacksonParsing.{iteratorParser, strListParser, stringParser}
-import util.PlayMacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -29,7 +29,7 @@ class MAiMads @Inject() (
   override val mCommonDi: ICommonDi
 )
   extends EsModelStatic
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
     with EsModelPlayJsonStaticT
 {
 

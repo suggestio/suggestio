@@ -3,12 +3,13 @@ package controllers
 import java.net.{MalformedURLException, URL}
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
 import play.api.data.Forms._
 import play.api.data._
 import util.acl.IsSuperuser
-import util.{FormUtil, PlayMacroLogsImpl}
+import util.FormUtil
 import views.html.sys1.img._
 
 /**
@@ -26,7 +27,7 @@ class SysImg @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with SysImgMake
   with IsSuperuser
 {

@@ -5,13 +5,13 @@ import java.io.FileInputStream
 import com.google.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.ai._
 import models.mproj.ICommonDi
 import org.apache.tika.metadata.{Metadata, TikaMetadataKeys}
 import org.apache.tika.sax.TeeContentHandler
 import org.clapper.scalasti.ST
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -26,7 +26,7 @@ class MadAiUtil @Inject() (
   httpGetToFile           : HttpGetToFile,
   mCommonDi               : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi.ec

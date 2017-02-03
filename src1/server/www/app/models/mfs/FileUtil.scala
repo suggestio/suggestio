@@ -2,9 +2,9 @@ package models.mfs
 
 import java.io.{File, FileInputStream}
 
+import io.suggest.util.logs.MacroLogsImpl
 import net.sf.jmimemagic.{Magic, MagicMatch, MagicMatchNotFoundException}
 import org.apache.commons.codec.digest.DigestUtils
-import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import util.PlayMacroLogsImpl
  * Created: 29.09.15 11:49
  * Description: Утиль для работы с файлами в файловой системе.
  */
-object FileUtil extends PlayMacroLogsImpl {
+object FileUtil extends MacroLogsImpl {
 
   /**
    * Рассчитать чек-сумму, которую можно использовать для ETag например.

@@ -3,6 +3,7 @@ package models
 import io.suggest.geo._
 import io.suggest.geo.{GeoDistanceQuery, IGeoFindIpResult}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.{MacroLogsImplLazy, MacroLogsImpl}
 import models.req.ExtReqHdr
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import org.elasticsearch.common.unit.DistanceUnit
@@ -10,7 +11,6 @@ import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
 import play.api.Play.{configuration, current}
 import util.geo.GeoIpUtil
-import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -23,7 +23,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  */
 
 @deprecated("Use MGeoLoc.geo instead", "2016.sep.16")
-object GeoMode extends PlayLazyMacroLogsImpl with JavaTokenParsers {
+object GeoMode extends MacroLogsImplLazy with JavaTokenParsers {
 
   import LOGGER._
 
@@ -160,7 +160,7 @@ case object GeoNone extends GeoMode {
 
 /** Геолокация по ip. */
 @deprecated("Use MGeoLoc.geo None instead", "2016.sep.16")
-case object GeoIp extends GeoMode with PlayMacroLogsImpl {
+case object GeoIp extends GeoMode with MacroLogsImpl {
 
   private val geoIpUtil  = current.injector.instanceOf[GeoIpUtil]
 

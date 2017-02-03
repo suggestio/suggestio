@@ -3,13 +3,13 @@ package util.img
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MEdgeInfo
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im._
 import models.madn.EditConstants
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.msc.{MWelcomeRenderArgs, WelcomeRenderArgsT}
-import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.showcase.ShowcaseUtil
 
@@ -29,7 +29,7 @@ class WelcomeUtil @Inject() (
   imgFormUtil            : ImgFormUtil,
   mCommonDi              : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

@@ -1,7 +1,7 @@
 package io.suggest.es.util
 
-import io.suggest.util.MacroLogsImpl
 import io.suggest.util.SioConstants._
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest
 import org.elasticsearch.action.admin.indices.settings.put.UpdateSettingsResponse
 import org.elasticsearch.action.{ActionListener, ListenableActionFuture}

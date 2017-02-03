@@ -4,8 +4,8 @@ import java.io.{File, FileInputStream, InputStream}
 
 import OsmElemTypes.OsmElemType
 import io.suggest.geo._
+import io.suggest.util.logs.MacroLogsImplLazy
 import org.xml.sax.SAXParseException
-import util.PlayLazyMacroLogsImpl
 import util.parse.SaxParseUtil
 
 import scala.annotation.tailrec
@@ -18,7 +18,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Description: Вспомогательная утиль для работы с osm.
  */
 
-object OsmUtil extends PlayLazyMacroLogsImpl {
+object OsmUtil extends MacroLogsImplLazy {
 
   import LOGGER._
 

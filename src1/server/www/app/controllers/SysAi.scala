@@ -1,13 +1,13 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.ai._
 import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.ws.WSClient
 import util.FormUtil._
-import util.PlayLazyMacroLogsImpl
 import util.acl.{IsSuperuser, IsSuperuserAiMad}
 import util.ai.mad.MadAiUtil
 import views.html.sys1.ai._
@@ -29,7 +29,7 @@ class SysAi @Inject() (
   implicit private val ws         : WSClient
 )
   extends SioControllerImpl
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
   with IsSuperuserAiMad
   with IsSuperuser
 {

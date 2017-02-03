@@ -1,10 +1,10 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models.msession.Keys._
 import models.msession._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.mvc.{Result, Request, ActionBuilder}
-import util.PlayMacroLogsDyn
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 import scala.language.higherKinds
@@ -23,7 +23,7 @@ import scala.language.higherKinds
  * Трейт, добавляющий в сессию TTL. Добавляется в конце реализации ActionBuilder'а.
  * @tparam R тип реквеста, с которым работаем. Просто форвардится из декларации класса ActionBuilder'а.
  */
-trait ExpireSession[R[_]] extends ActionBuilder[R] with PlayMacroLogsDyn {
+trait ExpireSession[R[_]] extends ActionBuilder[R] with MacroLogsDyn {
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
     super.invokeBlock(request, block) map { result =>

@@ -4,10 +4,10 @@ import java.nio.file.{Files, Path}
 
 import com.google.inject.Inject
 import io.suggest.async.AsyncUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.im.MLocalImgs
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
   mCommonDi     : ICommonDi
 )
   extends ICronTasksProvider
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import mCommonDi._

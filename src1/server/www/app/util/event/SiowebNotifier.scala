@@ -68,4 +68,3 @@ class SiowebNotifierActor @Inject() (
   override val ec: ExecutionContext
 )
   extends SioNotifier
-    with SioutilLogs

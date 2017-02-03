@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.order.MOrderStatuses
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.form.MDatesPeriod
 import models.adv.price.GetPriceResp
 import models.jsm.init.MTargets
@@ -17,7 +18,6 @@ import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import util.PlayMacroLogsImpl
 import util.acl.IsAdnNodeAdmin
 import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
 import util.adv.AdvFormUtil
@@ -45,7 +45,7 @@ class LkAdnMap @Inject() (
   override val mCommonDi        : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with IsAdnNodeAdmin
 {
 

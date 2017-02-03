@@ -4,12 +4,12 @@ import java.io.File
 
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
-import util.PlayMacroLogsImpl
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -29,7 +29,7 @@ class DynImgUtil @Inject() (
   mLocalImgs                : MLocalImgs,
   mCommonDi                 : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

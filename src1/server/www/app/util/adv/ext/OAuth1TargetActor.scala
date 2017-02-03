@@ -6,6 +6,7 @@ import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
 import io.suggest.fsm.FsmActor
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.IOAuth1AdvTargetActorArgs
 import models.adv.ext.act.EtaCustomArgsBase
 import models.adv.js.ctx.JsErrorInfo
@@ -14,7 +15,6 @@ import models.mctx.ContextUtil
 import models.mext._
 import models.mproj.ICommonDi
 import play.api.libs.ws.{WSClient, WSResponse}
-import util.PlayMacroLogsImpl
 import util.adr.AdRenderUtil
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
@@ -52,7 +52,7 @@ class OAuth1TargetActor @Inject() (
   with AdvExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with RenderAd2ImgRender
   with S2sMpUploadRender
   with EtaCustomArgsBase

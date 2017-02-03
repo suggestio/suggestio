@@ -2,6 +2,7 @@ package io.suggest.es.model
 
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util._
+import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.xcontent.XContentBuilder
 
 import scala.concurrent.Future
@@ -46,7 +47,7 @@ trait EsModelStaticMappingGenerators extends IGenEsMappingProps {
 
 
 /** Трейт содержит статические хелперы для работы с маппингами. */
-trait EsModelStaticMapping extends EsModelStaticMappingGenerators with MacroLogsI with IEsModelDi {
+trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLogs with IEsModelDi {
 
   import mCommonDi._
 

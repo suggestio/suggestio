@@ -7,7 +7,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
 import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsTmpFactory}
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.threeten.extra.Interval
 
 import scala.concurrent.Future

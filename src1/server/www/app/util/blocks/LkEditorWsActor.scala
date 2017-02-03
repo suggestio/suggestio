@@ -3,7 +3,7 @@ package util.blocks
 import akka.actor.{ActorRef, Props}
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
-import util.PlayLazyMacroLogsImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import util.ws._
 
 /**
@@ -42,7 +42,7 @@ case class LkEditorWsActor @Inject() (
   extends WsActorDummy
   with SubscribeToWsDispatcher
   with ColorDetectedWsNotifyActor
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
 {
 
   import LOGGER._

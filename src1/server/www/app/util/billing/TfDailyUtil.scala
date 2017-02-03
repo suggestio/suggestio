@@ -9,8 +9,8 @@ import play.api.data._
 import Forms._
 import io.suggest.bill.MCurrencies
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import util.FormUtil.{currencyM, doubleM, esIdM}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -27,7 +27,7 @@ class TfDailyUtil @Inject()(
   mNodes   : MNodes,
   mCommonDi: ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

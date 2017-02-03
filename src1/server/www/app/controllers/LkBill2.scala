@@ -6,12 +6,12 @@ import controllers.cbill.{LkBill2Cart, LkBillTxns}
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.MTxns
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.im.make.IMaker
 import models.mbill.{MDailyTfTplArgs, MLkBillNodeTplArgs, MRcvrInfoTplArgs}
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.acl.IsAuthNode
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.GalleryUtil
@@ -38,7 +38,7 @@ class LkBill2 @Inject() (
   override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with LkBill2Cart
   with LkBillTxns
   with IsAuthNode

@@ -4,7 +4,7 @@ import io.suggest.es.model.{MWrapClause, QueryUtil}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
-import io.suggest.util.MacroLogsI
+import io.suggest.util.logs.IMacroLogs
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilder, QueryBuilders}
 
@@ -14,7 +14,7 @@ import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilder, QueryBuil
  * Created: 02.10.15 14:45
  * Description: Поиск по nested-документам в out-эджах.
  */
-trait OutEdges extends DynSearchArgs with MacroLogsI {
+trait OutEdges extends DynSearchArgs with IMacroLogs {
 
   /** Поиск/фильтрация по out-эджам согласно описанным критериям. */
   def outEdges: Seq[ICriteria]

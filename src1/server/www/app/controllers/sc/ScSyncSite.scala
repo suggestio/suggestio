@@ -6,13 +6,13 @@ import controllers.{SioController, routes}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
+import io.suggest.util.logs.IMacroLogs
 import models._
 import models.mlu.MLookupModes
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.{Html, HtmlFormat}
-import util.PlayMacroLogsI
 import util.acl.MaybeAuth
 
 import scala.concurrent.Future
@@ -27,7 +27,7 @@ import scala.concurrent.Future
 
 trait ScSyncSite
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with ScSiteGeo
   with ScIndex
   with ScAdsTileBase

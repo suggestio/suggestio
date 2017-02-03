@@ -1,9 +1,9 @@
 package util.secure
 
 import com.google.inject.Singleton
-import models.msession.{LoginTimestamp, Keys}
+import io.suggest.util.logs.MacroLogsImpl
+import models.msession.{Keys, LoginTimestamp}
 import play.api.mvc.{RequestHeader, Session}
-import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -13,7 +13,7 @@ import util.PlayMacroLogsImpl
  * Появилась при упорядочивании разбросанных по всему проекту
  */
 @Singleton
-class SessionUtil extends PlayMacroLogsImpl {
+class SessionUtil extends MacroLogsImpl {
 
   /**
    * Очень часто сюда передаётся реквест, а не сессия. Это укорачивает код.

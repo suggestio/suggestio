@@ -1,12 +1,12 @@
 package controllers
 
 import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.util.logs.IMacroLogs
 import models.blk.SzMult_t
 import models.mctx.Context
 import models.msc.AdBodyTplArgs
 import models.req.INodeReq
 import play.twirl.api.Html
-import util.PlayMacroLogsI
 import models._
 import util.acl._
 import util.ad.ILkAdEdFormUtil
@@ -27,7 +27,7 @@ import views.html.sc.foc._adFullTpl
 
 trait MarketAdPreview
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IsAdnNodeAdmin
   with IBlkImgMakerDI
   with ILkAdEdFormUtil

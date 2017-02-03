@@ -5,7 +5,7 @@ import java.io.File
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{IExecutionContext, IWsClient}
-import io.suggest.util.MacroLogsI
+import io.suggest.util.logs.IMacroLogs
 import org.asynchttpclient.AsyncHttpClient
 import org.asynchttpclient.request.body.multipart.{FilePart, Part}
 import play.api.http.HeaderNames
@@ -51,7 +51,7 @@ trait IMpUploadSupport {
 /** Дефолтовая реализация multi-part upload. */
 trait MpUploadSupportDflt
   extends IMpUploadSupport
-    with MacroLogsI
+    with IMacroLogs
     with IExecutionContext
     with IWsClient
 {

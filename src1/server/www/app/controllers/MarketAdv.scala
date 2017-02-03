@@ -7,6 +7,7 @@ import io.suggest.mbill2.m.order.{MOrderStatuses, MOrderWithItems}
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.direct._
 import models.adv.price.GetPriceResp
@@ -16,7 +17,6 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import play.api.libs.json.Json
 import play.api.mvc.{AnyContent, Result}
-import util.PlayMacroLogsImpl
 import util.acl._
 import util.adv.direct.{AdvDirectBilling, AdvDirectFormUtil}
 import util.adv.AdvFormUtil
@@ -49,7 +49,7 @@ class MarketAdv @Inject() (
                             override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with CanAdvertiseAd
 {
 

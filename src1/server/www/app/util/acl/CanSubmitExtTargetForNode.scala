@@ -1,9 +1,9 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models.adv._
 import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.PlayMacroLogsDyn
 import util.adv.ext.IAdvExtFormUtilDi
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ trait CanSubmitExtTargetForNode
     * id которого возможно задан в теле POST'а. */
   trait CanSubmitExtTargetForNodeBase
     extends ActionBuilder[MNodeExtTgSubmitReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
     with OnUnauthNode
     with IsAdnNodeAdminUtil
   {

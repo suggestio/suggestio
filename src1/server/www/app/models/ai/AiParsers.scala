@@ -1,13 +1,14 @@
 package models.ai
 
 import java.io.InputStream
+
 import io.suggest.common.menum.EnumMaybeWithName
-import org.apache.tika.parser.html.{IdentityHtmlMapper, HtmlMapper}
-import org.apache.tika.parser.{ParseContext, AutoDetectParser}
+import io.suggest.util.logs.MacroLogsImplLazy
+import org.apache.tika.parser.html.{HtmlMapper, IdentityHtmlMapper}
+import org.apache.tika.parser.{AutoDetectParser, ParseContext}
 import org.xml.sax.InputSource
 import org.xml.sax.helpers.DefaultHandler
-import util.PlayLazyMacroLogsImpl
-import util.parse.{TikaParseUtil, SaxParseUtil}
+import util.parse.{SaxParseUtil, TikaParseUtil}
 
 
 /**
@@ -17,7 +18,7 @@ import util.parse.{TikaParseUtil, SaxParseUtil}
  * Description: Парсеры, используемые для Ai-функционала.
  */
 
-object AiParsers extends Enumeration with EnumMaybeWithName with PlayLazyMacroLogsImpl {
+object AiParsers extends Enumeration with EnumMaybeWithName with MacroLogsImplLazy {
 
   /**
    * Экземпляр модели парсера.

@@ -8,13 +8,13 @@ import io.suggest.es.util.SioEsUtil._
 import models.adv.search.etg.IExtTargetSearchArgs
 import models.mext.{MExtService, MExtServices}
 import play.api.i18n.Messages
-import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.util.JacksonParsing
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
 import scala.collection.Map
@@ -51,7 +51,7 @@ class MExtTargets @Inject() (
   override val mCommonDi: ICommonDi
 )
   extends EsModelStatic
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with EsDynSearchStatic[IExtTargetSearchArgs]
   with EsmV2Deserializer
   with EsModelPlayJsonStaticT

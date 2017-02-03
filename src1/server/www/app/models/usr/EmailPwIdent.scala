@@ -4,8 +4,8 @@ import io.suggest.es.model.EsModelUtil._
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,7 +25,7 @@ class EmailPwIdents @Inject() (
   override val mCommonDi: ICommonDi
 )
   extends MPersonIdentSubmodelStatic
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
     with EsmV2Deserializer
     with EsModelJsonWrites
 {

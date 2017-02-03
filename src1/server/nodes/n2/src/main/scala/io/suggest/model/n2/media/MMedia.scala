@@ -3,7 +3,7 @@ package io.suggest.model.n2.media
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.model.n2.media.storage.{IMediaStorage, IMediaStorages}
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

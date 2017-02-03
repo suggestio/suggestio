@@ -4,12 +4,12 @@ import java.net.URL
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
+import io.suggest.util.logs.MacroLogsImpl
 import models.im.{OutImgFmt, OutImgFmts}
 import models.mext.MExtServices
 import models.mext.vk.VkImgSizes
 import models.mproj.ICommonDi
 import play.api.libs.ws.WSClient
-import util.PlayMacroLogsImpl
 import util.ext.IExtServiceHelper
 
 /**
@@ -25,7 +25,7 @@ class VkontakteHelper @Inject() (
 )
   extends IExtServiceHelper
   with VkMpUpload
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   override def mExtService = MExtServices.VKONTAKTE

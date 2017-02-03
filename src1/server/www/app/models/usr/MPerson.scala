@@ -1,8 +1,8 @@
 package models.usr
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -25,7 +25,7 @@ class MPerson @Inject() (
   mPersonIdents : MPersonIdents,
   mCommonDi     : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

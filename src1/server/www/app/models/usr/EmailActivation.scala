@@ -8,10 +8,10 @@ import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
-import _root_.util.PlayMacroLogsImpl
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,7 +31,7 @@ class EmailActivations @Inject() (
   override val mCommonDi: ICommonDi
 )
   extends EsModelStaticIdentT
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
     with EsmV2Deserializer
 {
   import mCommonDi._

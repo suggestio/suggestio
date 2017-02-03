@@ -1,10 +1,11 @@
 package util.acl
 
 import controllers.SioController
+import io.suggest.util.logs.{MacroLogsImplLazy, MacroLogsDyn, IMacroLogs}
 import models._
 import models.mproj.IMCommonDi
 import models.req._
-import util.{PlayMacroLogsI, PlayMacroLogsDyn, PlayLazyMacroLogsImpl}
+
 import scala.concurrent.Future
 import play.api.mvc._
 import play.api.mvc.Result
@@ -40,7 +41,7 @@ trait IsAdnNodeAdminUtilCtl
 
   import mCommonDi._
 
-  trait IsAdnNodeAdminUtil extends PlayMacroLogsDyn {
+  trait IsAdnNodeAdminUtil extends MacroLogsDyn {
 
     def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
       adnNodeOptFut map {
@@ -81,7 +82,7 @@ trait IsAdnNodeAdminUtilCtl
 }
 
 
-object IsAdnNodeAdmin extends PlayLazyMacroLogsImpl {
+object IsAdnNodeAdmin extends MacroLogsImplLazy {
 
   /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
   def isAdnNodeAdminCheck(adnNode: MNode, user: ISioUser): Boolean = {
@@ -112,7 +113,7 @@ trait IsAdnNodeAdmin
   /** В реквесте содержится администрируемый узел, если всё ок. */
   sealed trait IsAdnNodeAdminBase
     extends ActionBuilder[MNodeReq]
-    with PlayMacroLogsI
+    with IMacroLogs
     with IsAdnNodeAdminUtil
     with OnUnauthNode
     with InitUserCmds

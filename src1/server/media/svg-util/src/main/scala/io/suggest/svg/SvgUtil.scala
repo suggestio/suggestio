@@ -2,7 +2,7 @@ package io.suggest.svg
 
 import java.io.{File, FileInputStream, InputStream}
 
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.apache.batik.dom.svg.SAXSVGDocumentFactory
 import org.apache.batik.util.XMLResourceDescriptor
 

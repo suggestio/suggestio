@@ -11,10 +11,10 @@ import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactory
 import util.n2u.N2NodesUtil
 
@@ -38,7 +38,7 @@ class AdvRcvrsUtil @Inject()(
   n2NodesUtil             : N2NodesUtil,
   mCommonDi               : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
   with AdvMNodesTryUpdateBuilderT
 {
 

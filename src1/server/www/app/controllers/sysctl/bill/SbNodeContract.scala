@@ -3,10 +3,10 @@ package controllers.sysctl.bill
 import controllers.routes
 import io.suggest.mbill2.m.contract.{IMContracts, MContract}
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.util.logs.IMacroLogs
 import models.req.{INodeContractReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
-import util.PlayMacroLogsI
 import util.acl.{IsSuNodeContract, IsSuNodeNoContract}
 import util.billing.IContractUtilDi
 import views.html.sys1.bill.contract._
@@ -22,7 +22,7 @@ import scala.concurrent.Future
 trait SbNodeContract
   extends IsSuNodeNoContract
   with IsSuNodeContract
-  with PlayMacroLogsI
+  with IMacroLogs
   with IContractUtilDi
   with IMContracts
   with IMNodes

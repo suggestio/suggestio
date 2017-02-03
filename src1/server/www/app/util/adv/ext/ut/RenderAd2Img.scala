@@ -4,11 +4,11 @@ import java.io.File
 
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
+import io.suggest.util.logs.IMacroLogs
 import models.MNode
 import models.blk.OneAdQsArgs
 import models.event.{ErrorInfo, MEventTypes}
 import models.mproj.IMCommonDi
-import util.PlayMacroLogsI
 import util.adr.IAdRenderUtilDi
 
 import scala.util.{Failure, Success}
@@ -21,7 +21,7 @@ import scala.util.{Failure, Success}
  */
 trait RenderAd2Img
   extends FsmActor
-  with PlayMacroLogsI
+  with IMacroLogs
   with IAdRenderUtilDi
   with IMCommonDi
 {

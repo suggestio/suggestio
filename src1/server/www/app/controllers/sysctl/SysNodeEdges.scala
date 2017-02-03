@@ -4,11 +4,11 @@ import controllers.{SioController, routes}
 import io.suggest.es.model.MEsUuId
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges}
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.util.logs.IMacroLogs
 import models.msys.MNodeEdgeIdQs
 import models.req.{INodeEdgeReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
-import util.PlayMacroLogsI
 import util.acl.{IsSuNode, IsSuNodeEdge}
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.market.edge._
@@ -27,7 +27,7 @@ import scala.concurrent.Future
   */
 trait SysNodeEdges
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IsSuNode
   with IsSuNodeEdge
   with IMNodes

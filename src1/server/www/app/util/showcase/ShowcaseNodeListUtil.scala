@@ -6,11 +6,11 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevels
 import models.msc.{GeoDetectResult, GeoNodesLayer}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.Messages
-import util.PlayMacroLogsImpl
 import models._
 import models.mproj.ICommonDi
 
@@ -28,7 +28,7 @@ class ShowcaseNodeListUtil @Inject() (
   mNodes                  : MNodes,
   mCommonDi               : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

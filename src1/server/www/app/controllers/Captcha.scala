@@ -3,15 +3,16 @@ package controllers
 import java.io.ByteArrayOutputStream
 import java.util.Properties
 import javax.imageio.ImageIO
+
 import com.google.code.kaptcha.util.Config
 import com.google.inject.Inject
 import io.suggest.util.TextUtil
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
+import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import play.api.data.Form
 import play.api.mvc._
 import util.captcha.{CaptchaUtil, ICaptchaUtilDi}
-import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 import util.captcha.CaptchaUtil._
 
 import scala.util.Random
@@ -26,13 +27,13 @@ class Captcha @Inject() (
   override val captchaUtil: CaptchaUtil
 )
   extends KaptchaGenerator
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 
 
 /** Абстрактный кусок контроллера для генерации капч с помощью какой-то неопределённой библиотеки. */
 trait CaptchaGeneratorBase
   extends Controller
-  with PlayMacroLogsI
+  with IMacroLogs
   with ICaptchaUtilDi
 {
 
@@ -123,7 +124,7 @@ trait KaptchaGenerator extends CaptchaGeneratorBase {
 
 
 /** Проверка капчи, миксуемая в трейт для проверки введённой капчи. */
-trait CaptchaValidator extends PlayMacroLogsI with ICaptchaUtilDi {
+trait CaptchaValidator extends IMacroLogs with ICaptchaUtilDi {
 
   /** Проверить капчу, присланную в форме. Вызывается перез Form.fold().
     * @param form Маппинг формы.

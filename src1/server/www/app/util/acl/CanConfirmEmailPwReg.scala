@@ -1,10 +1,10 @@
 package util.acl
 
 import controllers.SioController
+import io.suggest.util.logs.MacroLogsDyn
 import models.req.MEmailActivationReq
 import models.usr.{IEaEmailId, IEmailActivationsDi}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.PlayMacroLogsDyn
 import util.di.IIdentUtil
 
 import scala.concurrent.Future
@@ -39,7 +39,7 @@ trait CanConfirmEmailPwRegCtl
   /** Код проверки возможности подтверждения регистрации по email. */
   trait CanConfirmEmailPwRegBase
     extends ActionBuilder[MEmailActivationReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
     with OnUnauthUtil
   {
 

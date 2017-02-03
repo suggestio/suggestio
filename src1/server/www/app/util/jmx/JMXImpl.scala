@@ -13,8 +13,8 @@ import java.lang.management.ManagementFactory
 import io.suggest.loc.geo.ipgeobase.{MCitiesJmx, MIpRangesJmx}
 import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JMXBase
-import util.PlayLazyMacroLogsImpl
 import io.suggest.util.JMXHelpers._
+import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
@@ -48,7 +48,7 @@ class JMXImpl @Inject() (
                           lifecycle                     : ApplicationLifecycle,
                           implicit private val ec       : ExecutionContext
 )
-  extends PlayLazyMacroLogsImpl
+  extends MacroLogsImplLazy
 {
 
   import LOGGER._

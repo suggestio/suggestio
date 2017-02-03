@@ -1,9 +1,9 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models.mproj.IMCommonDi
-import models.req.{MUserInit, MNodeOptReq}
+import models.req.{MNodeOptReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.PlayMacroLogsDyn
 
 import scala.concurrent.Future
 
@@ -27,7 +27,7 @@ trait IsAdnNodeAdminOptOrAuth
   /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
   trait IsAdnNodeAdminOptOrAuthBase
     extends ActionBuilder[MNodeOptReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
     with OnUnauthUtil
     with InitUserCmds
   {

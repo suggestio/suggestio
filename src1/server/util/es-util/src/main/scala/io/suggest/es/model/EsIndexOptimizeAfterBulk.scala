@@ -1,7 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.util.MacroLogsI
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.settings.Settings
 
 import scala.concurrent.Future
@@ -12,7 +12,7 @@ import scala.concurrent.Future
   * Created: 23.09.16 12:12
   * Description: API для оптимизации индекса после bulk load'а данных.
   */
-trait EsIndexOptimizeAfterBulk extends IEsModelDi with MacroLogsI {
+trait EsIndexOptimizeAfterBulk extends IEsModelDi with IMacroLogs {
 
   import mCommonDi._
 

@@ -10,11 +10,11 @@ import io.suggest.es.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import _root_.util.PlayMacroLogsImpl
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.util.JacksonParsing
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
 import scala.concurrent.duration._
@@ -70,7 +70,7 @@ class MEvents @Inject() (
   override val mCommonDi: ICommonDi
 )
   extends EsModelStatic
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
     with EsDynSearchStatic[IEventsSearchArgs]
     with EsmV2Deserializer
     with EsModelPlayJsonStaticT

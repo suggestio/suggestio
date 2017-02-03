@@ -1,8 +1,9 @@
 package models.msession
 
-import play.api.Play.{current, configuration}
+import io.suggest.util.logs.MacroLogsDyn
+import play.api.Play.{configuration, current}
 import play.api.mvc.Session
-import util.PlayMacroLogsDyn
+
 import scala.concurrent.duration._
 
 /**
@@ -12,7 +13,7 @@ import scala.concurrent.duration._
  * Description: Модель допустимых значений ttl в сессии.
  */
 
-object Ttl extends PlayMacroLogsDyn {
+object Ttl extends MacroLogsDyn {
 
   def apply(session: Session): Ttl = {
     apply(session.get(Keys.RememberMe.name))

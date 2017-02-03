@@ -1,11 +1,11 @@
 package models.adv.ext.act
 
 import io.suggest.util.UrlUtil
+import io.suggest.util.logs.IMacroLogs
 import models.adv._
 import models.adv.ext.MExtServiceInfo
 import models.mctx.IContextUtilDi
 import models.mext.MExtService
-import util.PlayMacroLogsI
 import util.adv.ext.AdvExtTargetActor
 import util.ext.IExtServicesUtilDi
 import util.n2u.IN2NodesUtilDi
@@ -18,7 +18,7 @@ import util.n2u.IN2NodesUtilDi
  */
 
 trait ExtActorEnv
-  extends PlayMacroLogsI
+  extends IMacroLogs
   with IExtServicesUtilDi
 {
 

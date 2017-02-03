@@ -1,10 +1,10 @@
 package util.qsb
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsImplLazy
 import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
-import util.PlayLazyMacroLogsImpl
 import util.img.PicSzParsers
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -99,7 +99,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   type NglsStateMap_t = Map[NodeGeoLevel, Boolean]
 
   implicit def nglsMapQsb: QueryStringBindable[NglsStateMap_t] = {
-    new QueryStringBindableImpl[NglsStateMap_t] with PlayLazyMacroLogsImpl {
+    new QueryStringBindableImpl[NglsStateMap_t] with MacroLogsImplLazy {
       import LOGGER._
 
       def vP: Parser[Boolean] = opt("_" ^^^ false) ^^ { _ getOrElse true }

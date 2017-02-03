@@ -1,8 +1,8 @@
 package controllers
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.acl.IsAdnNodeAdmin
 
 /**
@@ -23,7 +23,7 @@ class LkNodes @Inject() (
                           override val mCommonDi: ICommonDi
                         )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with IsAdnNodeAdmin
 {
 

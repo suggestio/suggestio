@@ -6,11 +6,11 @@ import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi
 import slick.sql.SqlAction
-import util.PlayMacroLogsImpl
 import util.adv.build.AdvBuilderFactoryDi
 
 import scala.concurrent.Future
@@ -42,7 +42,7 @@ import scala.util.{Failure, Success}
   * 5. Сохранение итоговой карточки.
   */
 abstract class AdvsUpdate
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
   with IMCommonDi
   with AdvBuilderFactoryDi
   with IMItems

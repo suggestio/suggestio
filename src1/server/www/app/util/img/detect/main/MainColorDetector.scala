@@ -4,11 +4,11 @@ import java.io.File
 import java.nio.file.Files
 import java.text.ParseException
 
-import com.google.inject.{Singleton, Inject}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -25,7 +25,7 @@ class MainColorDetector @Inject() (
   mLocalImgs    : MLocalImgs,
   mCommonDi     : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._

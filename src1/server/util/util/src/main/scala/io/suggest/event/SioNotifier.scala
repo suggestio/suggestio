@@ -1,14 +1,15 @@
 package io.suggest.event
 
 import akka.event.{EventBus, SubchannelClassification}
-import akka.util.{Timeout, Subclassification}
+import akka.util.{Subclassification, Timeout}
 import akka.actor._
 import akka.actor.Terminated
 import io.suggest.di.IExecutionContext
 import subscriber._
 import akka.pattern.ask
-import scala.concurrent.{ExecutionContext, Future}
-import io.suggest.util.LogsAbstract
+import io.suggest.util.logs.MacroLogsImpl
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -212,7 +213,9 @@ trait SNStaticSubscriptionManager extends SioNotifierStaticClientI {
 
 
 /** Реализация механизма SioNotifier в виде актора. */
-trait SioNotifier extends Actor with LogsAbstract with IExecutionContext {
+trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
+
+  import LOGGER._
 
   // Шина сообщений. Делает все дела.
   protected val bus = new SNBus

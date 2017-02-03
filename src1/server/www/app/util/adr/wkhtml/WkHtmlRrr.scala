@@ -5,12 +5,12 @@ import java.io.File
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
+import io.suggest.util.logs.MacroLogsDyn
 import models.MImgSizeT
 import models.adr._
 import models.im.{OutImgFmt, OutImgFmts}
 import models.mproj.ICommonDi
 import play.api.Configuration
-import util.PlayMacroLogsDyn
 import util.adr.{IAdRrr, IAdRrrDiFactory, IAdRrrUtil}
 
 /**
@@ -24,7 +24,7 @@ class WkHtmlRrrUtil @Inject() (
   configuration: Configuration
 )
   extends IAdRrrUtil
-  with PlayMacroLogsDyn
+  with MacroLogsDyn
 {
 
   /** Название/путь к утили, вызываемой из командной строки. */

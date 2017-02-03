@@ -6,12 +6,13 @@ import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
 import io.suggest.model.sc.common.LvlMap_t
+import io.suggest.util.logs.MacroLogsDyn
 import models._
 import models.msys.{MSysNodeInstallFormData, NodeCreateParams}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
-import util.{FormUtil, PlayMacroLogsDyn}
+import util.FormUtil
 
 /**
  * Suggest.io
@@ -19,7 +20,7 @@ import util.{FormUtil, PlayMacroLogsDyn}
  * Created: 06.04.15 21:37
  * Description: Утиль для контроллеров Sys-Market. Формы, код и т.д.
  */
-class SysMarketUtil extends PlayMacroLogsDyn {
+class SysMarketUtil extends MacroLogsDyn {
 
   /** Форма для маппинг метаданных произвольного узла ADN. */
   private def adnNodeMetaM: Mapping[MMeta] = mapping(

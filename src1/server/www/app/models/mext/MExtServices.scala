@@ -1,9 +1,9 @@
 package models.mext
 
-import _root_.util.PlayLazyMacroLogsImpl
 import io.suggest.adv.ext.model.MServices._
 import io.suggest.adv.ext.model._
 import io.suggest.model.menum.EnumJsonReadsT
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.mext.fb.FacebookService
 import models.mext.tw.TwitterService
 import models.mext.vk.VkService
@@ -15,7 +15,7 @@ import models.mext.vk.VkService
  * Description: Мегамодель сервисов для внешнего размещения рекламных карточек.
  */
 
-object MExtServices extends MServicesT with PlayLazyMacroLogsImpl with EnumJsonReadsT {
+object MExtServices extends MServicesT with MacroLogsImplLazy with EnumJsonReadsT {
 
   override type T = Val
 

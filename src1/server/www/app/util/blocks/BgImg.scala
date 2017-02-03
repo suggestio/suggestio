@@ -2,12 +2,12 @@ package util.blocks
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.MNode
 import models.blk._
 import models.blk.ed._
 import models.im.{DevScreen, MImg3, MImgT}
 import models.im.make._
-import util.PlayLazyMacroLogsImpl
 import util.n2u.N2NodesUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -24,7 +24,7 @@ import play.api.Play.current
  *   Утиль для генерации фоновых картинок вынесена в BlkImgMaker и ScWideMaker.
  */
 
-object BgImg extends PlayLazyMacroLogsImpl {
+object BgImg extends MacroLogsImplLazy {
 
   val BG_IMG_FN = "bgImg"
 

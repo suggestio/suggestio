@@ -11,10 +11,10 @@ import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.util.MacroLogsImpl
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import play.api.libs.functional.syntax._

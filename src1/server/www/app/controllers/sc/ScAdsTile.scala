@@ -4,10 +4,10 @@ import _root_.util.blocks.BgImg
 import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
 import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.IScAdSearchUtilDi
-import _root_.util.PlayMacroLogsI
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
 import io.suggest.stat.m.{MAction, MActionTypes, MComponent, MComponents}
+import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
 import models.msc._
 import models.req.IReq
@@ -30,7 +30,7 @@ import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespAdsTi
  */
 trait ScAdsTileBase
   extends ScController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IScNlUtil
   with IScUtil
   with ScCssUtil

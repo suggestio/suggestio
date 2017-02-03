@@ -1,8 +1,9 @@
 package util.secure
 
 import java.security.SecureRandom
-import play.api.Play.{current, configuration, isProd}
-import util.PlayMacroLogsI
+
+import io.suggest.util.logs.IMacroLogs
+import play.api.Play.{configuration, current, isProd}
 
 import scala.annotation.tailrec
 import scala.util.Random
@@ -14,7 +15,7 @@ import scala.util.Random
  * Description: Доставатель секретных ключей из конфига. Если ключа в конфиге нет,
  * то будет предложено значение.
  */
-trait SecretGetter extends PlayMacroLogsI {
+trait SecretGetter extends IMacroLogs {
   
   def confKey: String
   

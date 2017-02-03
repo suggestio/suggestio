@@ -2,7 +2,7 @@ package io.suggest.stat.saver
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model.IEsModelDiVal
-import io.suggest.util.MacroLogsDyn
+import io.suggest.util.logs.MacroLogsDyn
 import play.api.inject.ApplicationLifecycle
 
 import scala.reflect.ClassTag

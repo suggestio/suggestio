@@ -2,13 +2,13 @@ package models.usr
 
 import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.MPersonMeta
 import models.mext.ILoginProvider
 import models.mproj.ICommonDi
 import securesocial.core.{IProfile, PasswordInfo}
 import securesocial.core.providers.MailToken
 import securesocial.core.services.{SaveMode, UserService}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -24,7 +24,7 @@ class SsUserService @Inject() (
   mCommonDi   : ICommonDi
 )
   extends UserService[SsUser]
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import mCommonDi._

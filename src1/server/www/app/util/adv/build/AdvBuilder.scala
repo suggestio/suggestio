@@ -8,6 +8,7 @@ import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
 import io.suggest.model.n2.edge.MPredicate
+import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
 import util.adn.mapf.AdnMapBuilder
@@ -15,7 +16,6 @@ import util.adv.direct.AdvDirectBuilder
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
-import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
 
@@ -45,7 +45,7 @@ trait AdvBuilderFactoryDi {
 /** Интерфейс adv-билдеров. Они все очень похожи. */
 @ImplementedBy( classOf[AdvBuilder] )
 trait IAdvBuilder
-  extends PlayMacroLogsI
+  extends IMacroLogs
 {
   val di: AdvBuilderDi
 
@@ -272,7 +272,7 @@ case class AdvBuilder @Inject() (
   with AgtBuilder
   with AgpBuilder
   with AdnMapBuilder
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   override def withAcc(accFut2: Future[Acc]): IAdvBuilder = {

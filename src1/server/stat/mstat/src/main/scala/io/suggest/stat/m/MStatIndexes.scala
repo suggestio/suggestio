@@ -2,9 +2,9 @@ package io.suggest.stat.m
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.util.MacroLogsImpl
 import org.elasticsearch.common.settings.Settings
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.util.logs.MacroLogsImpl
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future

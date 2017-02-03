@@ -2,11 +2,11 @@ package controllers.sc
 
 import controllers.SioController
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.util.logs.IMacroLogs
 import models.msc.AdCssArgs
 import models.blk
 import play.api.mvc.Action
 import play.twirl.api.Txt
-import util.PlayMacroLogsI
 import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common._
 
@@ -22,7 +22,7 @@ import scala.concurrent.Future
  */
 trait ScBlockCss
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IN2NodesUtilDi
   with IMNodes
 {

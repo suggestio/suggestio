@@ -1,10 +1,10 @@
 package util.billing.cron
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
-import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.duration._
@@ -23,7 +23,7 @@ class BillingCronTasks @Inject()(
   mCommonDi               : ICommonDi
 )
   extends ICronTasksProvider
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import LOGGER._

@@ -14,11 +14,11 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
+import io.suggest.util.logs.{MacroLogsImplLazy, MacroLogsImpl}
 import models.{IImgMeta, _}
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import play.api.libs.iteratee.Enumerator
-import util.{PlayLazyMacroLogsImpl, PlayMacroLogsImpl}
 import util.img.ImgFileNameParsersImpl
 
 import scala.concurrent.Future
@@ -40,7 +40,7 @@ class MImgs3 @Inject() (
   val mCommonDi             : ICommonDi
 )
   extends MImgsT
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
 {
 
   import mCommonDi._
@@ -258,7 +258,7 @@ class MImgs3 @Inject() (
 
 
 /** Статические расширения сборки инстансов модели [[MImg3]]. */
-object MImg3 extends PlayMacroLogsImpl with IMImgCompanion {
+object MImg3 extends MacroLogsImpl with IMImgCompanion {
 
   override type T = MImg3
 

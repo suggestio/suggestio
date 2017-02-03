@@ -5,7 +5,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.geo.MGeoPoint
 import io.suggest.geo.GeoPoint.Implicits._
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

@@ -2,8 +2,8 @@ package models.adv
 
 import io.suggest.es.model.MEsUuId
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsDyn
 
 import scala.util.parsing.combinator.JavaTokenParsers
 
@@ -15,7 +15,7 @@ import scala.util.parsing.combinator.JavaTokenParsers
  * Передаются в веб-сокет через qsb. А оттуда попадает в ext-adv-акторы.
  */
 
-object MExtTargetInfo extends ExtTargetInfoParsers with PlayMacroLogsDyn {
+object MExtTargetInfo extends ExtTargetInfoParsers with MacroLogsDyn {
 
   /** Разделитель полей в сериализованной форме. */
   def DELIMITER = ','

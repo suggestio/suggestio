@@ -3,12 +3,12 @@ package controllers.sc
 import java.util.NoSuchElementException
 
 import _root_.util.di.{IScNlUtil, IScStatUtil}
+import io.suggest.util.logs.IMacroLogs
 import models.jsm.NodeListResp
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.PlayMacroLogsI
 import util.acl._
 import views.html.sc.nav._
 import play.api.libs.json._
@@ -24,7 +24,7 @@ import scala.concurrent.Future
  */
 trait ScNodesListBase
   extends ScController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IScNlUtil
 {
 

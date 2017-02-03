@@ -1,9 +1,9 @@
 package models.msc
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsDyn
 import models.blk.SzMult_t
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsDyn
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
 
@@ -27,7 +27,7 @@ object AdCssArgs {
 
   /** Ключ для подписи ссылок. */
   private val SIGN_SECRET: String = {
-    val sg = new SecretGetter with PlayMacroLogsDyn {
+    val sg = new SecretGetter with MacroLogsDyn {
       import play.api.Play.{current, isProd}
       override val confKey = "ads.css.url.sign.key"
       override def useRandomIfMissing = isProd

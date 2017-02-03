@@ -5,11 +5,11 @@ import controllers.SioController
 import io.suggest.common.tags.search.MTagsFound.pickler
 import io.suggest.model.n2.tag.MTagSearchResp
 import io.suggest.pick.PickleUtil
+import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.mlk.MLkTagsSearchQs
 import models.mtag._
 import play.api.libs.json.Json
-import util.PlayMacroLogsI
 import util.acl.IsAuth
 import util.lk.ITagSearchUtilDi
 import util.tags.ITagsEditFormUtilDi
@@ -24,7 +24,7 @@ import views.html.lk.tag.edit._
 
 trait NodeTagsEdit
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IsAuth
   with ITagsEditFormUtilDi
   with ITagSearchUtilDi

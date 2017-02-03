@@ -8,6 +8,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.IImgMeta
 import models.mfs.FileUtil
@@ -42,7 +43,7 @@ class MLocalImgs @Inject() (
   mCommonDi     : ICommonDi
 )
   extends MAnyImgsT[MLocalImg]
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import mCommonDi._

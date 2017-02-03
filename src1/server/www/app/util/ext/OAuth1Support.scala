@@ -3,6 +3,7 @@ package util.ext
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
 import io.suggest.common.html.HtmlConstants
 import io.suggest.di.IWsClient
+import io.suggest.util.logs.IMacroLogs
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.MImgSizeT
 import models.mctx.IContextUtilDi
@@ -12,7 +13,7 @@ import models.msc.SiteQsArgs
 import org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth._
 import util.n2u.IN2NodesUtilDi
-import util.{FormUtil, PlayMacroLogsI, TplDataFormatUtil}
+import util.{FormUtil, TplDataFormatUtil}
 
 import scala.concurrent.Future
 
@@ -59,7 +60,7 @@ trait IOAuth1Support {
 /** Реализация поддержки OAuth1 для сервиса. */
 trait OAuth1Support
   extends IOAuth1Support
-  with PlayMacroLogsI
+  with IMacroLogs
   with IMCommonDi
   with IContextUtilDi
   with IN2NodesUtilDi

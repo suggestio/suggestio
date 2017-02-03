@@ -10,12 +10,12 @@ import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.util.UuidUtil
+import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.{IImgMeta, _}
 import models.mproj.IMCommonDi
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
-import util.{PlayMacroLogsI, PlayMacroLogsImpl}
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -35,7 +35,7 @@ import scala.concurrent.duration._
   * Не знаю, насколько это всё актуально в августе 2016, но модель пока здесь.
   */
 
-object MImgT extends PlayMacroLogsImpl { model =>
+object MImgT extends MacroLogsImpl { model =>
 
   import play.api.Play.{current, isProd}
 
@@ -137,7 +137,7 @@ object MImgT extends PlayMacroLogsImpl { model =>
   * кода из MImgT в статику. */
 trait MImgsT
   extends MAnyImgsT[MImgT]
-    with PlayMacroLogsI
+    with IMacroLogs
     with ICacheApiUtil
     with IMMedias
     with IMCommonDi

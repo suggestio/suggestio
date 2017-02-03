@@ -4,13 +4,13 @@ import java.time.{DayOfWeek, LocalDate}
 
 import com.google.inject.Inject
 import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.blk.{BlockHeights, BlockMeta, BlockWidths}
 import models.mcal.MCalsCtx
 import models.mdt.IDateStartEnd
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
 
@@ -28,7 +28,7 @@ class AdvUtil @Inject() (
                           calendarUtil            : CalendarUtil,
                           mCommonDi               : ICommonDi
                         )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

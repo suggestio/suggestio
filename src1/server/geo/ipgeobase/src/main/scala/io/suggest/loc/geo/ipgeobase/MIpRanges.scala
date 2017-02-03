@@ -3,7 +3,7 @@ package io.suggest.loc.geo.ipgeobase
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

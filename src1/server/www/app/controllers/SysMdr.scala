@@ -4,9 +4,9 @@ import com.google.inject.Inject
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.acl.IsSuperuser
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
@@ -34,7 +34,7 @@ class SysMdr @Inject() (
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with IsSuperuser
   with SysMdrFree
   with SysMdrPaid

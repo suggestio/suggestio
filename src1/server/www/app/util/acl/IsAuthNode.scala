@@ -1,9 +1,9 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models.MNodeType
-import models.req.{MReq, MNodeReq}
-import play.api.mvc.{Result, Request, ActionBuilder}
-import util.PlayMacroLogsDyn
+import models.req.{MNodeReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -23,7 +23,7 @@ trait IsAuthNode
   trait IsAuthNodeBase
     extends ActionBuilder[MNodeReq]
     with OnUnauthUtil
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
   {
 
     /** id запрашиваемого узла. */

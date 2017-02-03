@@ -3,12 +3,12 @@ package controllers.sysctl.mdr
 import controllers.SioController
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.common.OptId
+import io.suggest.util.logs.IMacroLogs
 import models._
 import models.mdr._
 import models.msys.MSysMdrFreeAdvsTplArgs
 import models.req.IReq
 import play.api.mvc.Result
-import util.PlayMacroLogsI
 import util.lk.ILkAdUtilDi
 import util.mdr.ISysMdrUtilDi
 import util.n2u.IN2NodesUtilDi
@@ -24,7 +24,7 @@ import scala.concurrent.Future
   */
 trait SysMdrBase
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IN2NodesUtilDi
   with ILkAdUtilDi
   with ISysMdrUtilDi

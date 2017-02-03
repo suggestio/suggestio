@@ -1,7 +1,7 @@
 package models.msession
 
+import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.Session
-import util.PlayMacroLogsDyn
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import util.PlayMacroLogsDyn
  * Description: session timestamp - модель для доступа к таймштампу, сохраненному в сессии.
  */
 
-object LoginTimestamp extends PlayMacroLogsDyn {
+object LoginTimestamp extends MacroLogsDyn {
 
   /** Чтобы не делать лишних движений, фиксируем начало времён, вычитая его из всех timestamp'ов. */
   def TSAMP_SUBSTRACT = 1402927907242L

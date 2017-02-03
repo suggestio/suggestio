@@ -13,6 +13,7 @@ import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -25,7 +26,6 @@ import org.elasticsearch.search.sort.SortOrder
 import play.api.data._
 import play.api.i18n.Messages
 import play.api.mvc.{AnyContent, Call, Result}
-import util.PlayMacroLogsImpl
 import util.acl._
 import util.adn.NodesUtil
 import util.adv.direct.AdvRcvrsUtil
@@ -64,7 +64,7 @@ class SysMarket @Inject() (
                             override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with SysNodeInstall
   with SmSendEmailInvite
   with SysAdRender

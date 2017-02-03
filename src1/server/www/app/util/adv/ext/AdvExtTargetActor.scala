@@ -7,6 +7,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.fsm.FsmActor
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act._
 import models.adv.js._
@@ -16,7 +17,6 @@ import models.mproj.ICommonDi
 import models.mws.AnswerStatuses
 import play.api.Configuration
 import play.api.libs.ws.{WSClient, WSResponse}
-import util.PlayMacroLogsImpl
 import util.adr.AdRenderUtil
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
@@ -55,7 +55,7 @@ class AdvExtTargetActor @Inject()(
   with AdvExtTargetActorUtil
   with ReplyTo
   with MediatorSendCommand
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with EtaCustomArgsBase
   with RenderAd2ImgRender
   with S2sMpUploadRender

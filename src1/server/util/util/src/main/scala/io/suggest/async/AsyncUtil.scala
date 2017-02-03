@@ -3,7 +3,7 @@ package io.suggest.async
 import akka.ConfigurationException
 import akka.actor.ActorSystem
 import com.google.inject.{Inject, Singleton}
-import io.suggest.util.MacroLogsImplLazy
+import io.suggest.util.logs.MacroLogsImplLazy
 
 import scala.concurrent.ExecutionContext
 

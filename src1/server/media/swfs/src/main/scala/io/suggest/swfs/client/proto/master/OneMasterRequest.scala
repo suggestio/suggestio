@@ -3,7 +3,7 @@ package io.suggest.swfs.client.proto.master
 import io.suggest.di.{IExecutionContext, IWsClient}
 import io.suggest.swfs.client.play.SwfsClientWs
 import io.suggest.swfs.client.proto.IToQs
-import io.suggest.util.MacroLogsI
+import io.suggest.util.logs.IMacroLogs
 import play.api.libs.ws.WSResponse
 
 import scala.concurrent.Future
@@ -16,7 +16,7 @@ import scala.concurrent.Future
  * с простеньким fail-over'ом на последующие мастеры.
  */
 trait OneMasterRequest
-  extends MacroLogsI
+  extends IMacroLogs
     with IExecutionContext
     with IWsClient
 {

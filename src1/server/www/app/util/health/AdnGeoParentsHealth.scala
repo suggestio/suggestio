@@ -5,6 +5,7 @@ import java.time.{ZoneId, ZonedDateTime}
 import com.google.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.AdnShownTypes
 import models.mcron.{ICronTask, MCronTask}
 import models.mctx.ContextUtil
@@ -14,7 +15,6 @@ import models.usr.MSuperUsers
 import play.api.i18n.Lang
 import util.mail.IMailerWrapper
 import util.showcase.ShowcaseNodeListUtil
-import util.PlayMacroLogsImpl
 import util.cron.ICronTasksProvider
 import views.html.sys1.debug.geo.parent._
 
@@ -38,7 +38,7 @@ class AdnGeoParentsHealth @Inject() (
   mCommonDi             : ICommonDi
 )
   extends ICronTasksProvider
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
 {
 
   import LOGGER._

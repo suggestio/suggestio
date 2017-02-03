@@ -8,7 +8,7 @@ import io.suggest.model.n2.geo.search._
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.common.search._
 import io.suggest.model.n2.node.meta.search._
-import io.suggest.util.{MacroLogsImpl, MacroLogsImplLazy}
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 
 /**
  * Suggest.io

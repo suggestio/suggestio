@@ -2,8 +2,8 @@ package models.adv.ext.act
 
 import akka.actor.ActorPath
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsDyn
 import util.qsb.QsbSigner
 import util.secure.SecretGetter
 
@@ -13,7 +13,7 @@ import util.secure.SecretGetter
  * Created: 03.04.15 16:57
  * Description: Бывает, что нужно передавать actor path в URL. Тут qsb-модель для этой задачи.
  */
-object ActorPathQs extends PlayMacroLogsDyn {
+object ActorPathQs extends MacroLogsDyn {
 
   // Суффиксы имен qs-аргументов
   def PATH_FN  = "p"

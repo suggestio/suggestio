@@ -11,6 +11,7 @@ import controllers.routes
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
 import models.adv.js._
@@ -26,7 +27,6 @@ import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSClient
-import util.PlayMacroLogsImpl
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
@@ -74,7 +74,7 @@ class OAuth1ServiceActor @Inject() (
   with ReplyTo
   with ExtServiceActorEnv
   with MediatorSendCommand
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with SvcActorJsRenderUtil
 {
 

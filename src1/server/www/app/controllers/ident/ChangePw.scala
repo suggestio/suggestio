@@ -12,6 +12,7 @@ import util.di.IIdentUtil
 
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
+import io.suggest.util.logs.IMacroLogs
 import util.secure.IScryptUtilDi
 import views.html.ident.changePasswordTpl
 
@@ -60,7 +61,7 @@ trait ChangePw
   * Реализации должны оборачивать логику экшена в экшен, выставляя обработчики для ошибок и успехов. */
 trait ChangePwAction
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IIdentUtil
   with IMPersonIdents
   with IEmailPwIdentsDi

@@ -1,10 +1,10 @@
 package util.acl
 
 import controllers.SioController
+import io.suggest.util.logs.IMacroLogs
 import models.req.{MNodeEactReq, MReq}
 import models.usr.{IEmailActivationsDi, IEmailPwIdentsDi}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.PlayMacroLogsI
 import views.html.lk.adn.invite.inviteInvalidTpl
 
 import scala.concurrent.Future
@@ -18,7 +18,7 @@ import scala.concurrent.Future
  */
 trait NodeEact
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with OnUnauthUtilCtl
   with Csrf
   with IEmailPwIdentsDi

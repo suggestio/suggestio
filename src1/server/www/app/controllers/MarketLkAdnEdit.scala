@@ -9,6 +9,7 @@ import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im.logo.LogoOpt_t
 import models.im.{MImg3, MImgT}
@@ -25,7 +26,6 @@ import play.api.mvc.{MultipartFormData, Result}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.FormUtil._
-import util.PlayMacroLogsImpl
 import util.acl._
 import util.img.ImgFormUtil
 import util.img._
@@ -51,7 +51,7 @@ class MarketLkAdnEdit @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioController
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with BruteForceProtectCtl
   with IsAdnNodeAdmin
   with IsAuth

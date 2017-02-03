@@ -5,12 +5,12 @@ import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.fsm.FsmActor
 import io.suggest.util.UrlUtil
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv
 import models.adv.js._
 import models.mctx.ContextUtil
 import models.mws.AnswerStatuses
-import util.PlayMacroLogsImpl
 import util.adv.ext.ut.{ISendCommand, MediatorSendCommand, ReplyTo, SvcActorJsRenderUtil}
 import util.ext.ExtServicesUtil
 
@@ -98,7 +98,7 @@ class AdvExtServiceActor @Inject()(
   extends AdvExtServiceActorLogic
   with ExtServiceActorEnv
   with ReplyTo
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with MediatorSendCommand
 { actor =>
 

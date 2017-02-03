@@ -3,13 +3,13 @@ package controllers.sysctl.domain
 import controllers.{SioController, routes}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.util.logs.IMacroLogs
 import models.MNode
 import models.msys.{MSysNodeDomainCreateFormTplArgs, MSysNodeDomainEditFormTplArgs}
 import models.req.INodeReq
 import play.api.data.Form
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.PlayMacroLogsI
 import util.acl.IsSuNode
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.domains._
@@ -22,7 +22,7 @@ import views.html.sys1.domains._
   */
 trait SmDomains
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with IsSuNode
   with ISysMarketUtilDi
   with IMNodes

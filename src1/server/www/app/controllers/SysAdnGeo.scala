@@ -16,8 +16,8 @@ import play.api.data._
 import Forms._
 import io.suggest.geo.{CircleGs, Distance, GeoShapeQuerable, MGeoPoint}
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.Result
-import util.PlayLazyMacroLogsImpl
 import util.FormUtil._
 import util.acl._
 import util.geo.osm.{OsmClient, OsmClientStatusCodeInvalidException}
@@ -40,7 +40,7 @@ class SysAdnGeo @Inject() (
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
   with IsSuNode
 {
 

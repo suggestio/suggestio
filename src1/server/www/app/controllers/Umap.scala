@@ -10,6 +10,7 @@ import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.maps.umap._
 import models.mproj.ICommonDi
@@ -18,7 +19,6 @@ import play.api.http.HttpVerbs
 import play.api.i18n.Messages
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc.{Call, MultipartFormData, RequestHeader, Result}
-import util.PlayMacroLogsImpl
 import play.api.libs.json._
 import views.html.helper.CSRF
 import views.html.umap._
@@ -37,7 +37,7 @@ class Umap @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with IsSuNode
   with IsSuperuser
 {

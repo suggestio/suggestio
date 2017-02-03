@@ -12,9 +12,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.IReqHdr
-import util.PlayMacroLogsImpl
 import util.geo.GeoIpUtil
 
 import scala.concurrent.Future
@@ -34,7 +34,7 @@ class AdvGeoLocUtil @Inject() (
   mNodes            : MNodes,
   mCommonDi         : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

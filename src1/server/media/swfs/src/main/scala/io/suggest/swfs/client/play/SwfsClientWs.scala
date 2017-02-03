@@ -3,7 +3,7 @@ package io.suggest.swfs.client.play
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.di.IWsClient
 import io.suggest.swfs.client.ISwfsClient
-import io.suggest.util.{MacroLogsI, MacroLogsImpl}
+import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import play.api.Configuration
 import play.api.libs.ws.WSClient
 
@@ -35,7 +35,7 @@ import SwfsClientWs._
 @ImplementedBy( classOf[SwfsClientWs] )
 trait ISwfsClientWs
   extends ISwfsClient
-    with MacroLogsI
+    with IMacroLogs
     with IWsClient
 {
 

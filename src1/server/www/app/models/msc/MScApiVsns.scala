@@ -3,8 +3,8 @@ package models.msc
 import io.suggest.common.menum.EnumMaybeWithId
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import util.PlayMacroLogsImpl
 import io.suggest.sc.ScConstants.Vsns
+import io.suggest.util.logs.MacroLogsImpl
 
 /**
   * Suggest.io
@@ -25,7 +25,7 @@ import io.suggest.sc.ScConstants.Vsns
   *
   * В будущем наверняка переедем на react.js и client-side render, который потребует нового json API без HTML внутри.
   */
-object MScApiVsns extends Enumeration with EnumMaybeWithId with PlayMacroLogsImpl {
+object MScApiVsns extends Enumeration with EnumMaybeWithId with MacroLogsImpl {
 
   /** Экземпляр модели версий. */
   protected[this] class Val(val versionNumber: Int) extends super.Val(versionNumber) {

@@ -1,10 +1,11 @@
 package util.acl
 
 import models.req.MReq
-import play.api.mvc.{Request, ActionBuilder, Result, RequestHeader}
-import util.{PlayMacroLogsI, PlayMacroLogsImpl}
+import play.api.mvc.{ActionBuilder, Request, RequestHeader, Result}
+
 import scala.concurrent.Future
 import controllers.{SioController, routes}
+import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 
 /**
  * Suggest.io
@@ -39,7 +40,7 @@ trait IsAuth
 
   import mCommonDi._
 
-  trait IsAuthBase extends ActionBuilder[MReq] with PlayMacroLogsI {
+  trait IsAuthBase extends ActionBuilder[MReq] with IMacroLogs {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
@@ -74,7 +75,7 @@ trait IsAuth
   sealed class IsAuthC
     extends IsAuthBase
     with ExpireSession[MReq]
-    with PlayMacroLogsImpl
+    with MacroLogsImpl
 
 
   /** Проверка на залогиненность юзера без CSRF-дейстий. */

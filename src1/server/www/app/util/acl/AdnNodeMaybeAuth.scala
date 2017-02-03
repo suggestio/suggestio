@@ -1,10 +1,10 @@
 package util.acl
 
+import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
 import models.MNode
 import models.mproj.IMCommonDi
-import models.req.{IReqHdr, INodeReq, MReq, MNodeReq}
+import models.req.{INodeReq, IReqHdr, MNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 import scala.concurrent.Future
 
@@ -23,7 +23,7 @@ trait AdnNodeMaybeAuth
   /** Общий код проверок типа AdnNodeMaybeAuth. */
   sealed trait AdnNodeMaybeAuthBase
     extends ActionBuilder[MNodeReq]
-    with PlayMacroLogsI
+    with IMacroLogs
   {
 
     /** id запрашиваемого узла. */
@@ -67,7 +67,7 @@ trait AdnNodeMaybeAuth
   sealed abstract class AdnNodeMaybeAuthAbstract
     extends AdnNodeMaybeAuthBase
     with ExpireSession[MNodeReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
 
 
   /**

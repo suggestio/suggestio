@@ -8,7 +8,7 @@ import com.spatial4j.core.shape.Point
 import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._

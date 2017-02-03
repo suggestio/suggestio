@@ -32,7 +32,6 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, Result}
-import util.PlayMacroLogsImpl
 import util.acl.{CanAccessItem, CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
@@ -44,6 +43,7 @@ import io.suggest.dt.YmdHelpersJvm
 import io.suggest.es.model.MEsUuId
 import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 
 import scala.concurrent.Future
@@ -74,7 +74,7 @@ class LkAdvGeo @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with CanAdvertiseAd
   with NodeTagsEdit
   with CanThinkAboutAdvOnMapAdnNode

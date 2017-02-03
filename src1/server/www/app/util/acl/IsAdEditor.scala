@@ -1,11 +1,11 @@
 package util.acl
 
 import controllers.SioController
+import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
 import models._
-import models.req.{MUserInit, MReq, IReqHdr, MAdProdReq}
+import models.req.{IReqHdr, MAdProdReq, MReq, MUserInit}
 import play.api.mvc._
 import util.n2u.IN2NodesUtilDi
-import util.{PlayMacroLogsDyn, PlayMacroLogsI}
 
 import scala.concurrent.Future
 
@@ -23,7 +23,7 @@ trait AdEditBaseCtl
   import mCommonDi._
 
   /** Кое какая утиль для action builder'ов, редактирующих карточку. */
-  trait AdEditBase extends PlayMacroLogsI {
+  trait AdEditBase extends IMacroLogs {
     /** id рекламной карточки, которую клиент хочет поредактировать. */
     def adId: String
 
@@ -108,7 +108,7 @@ trait CanEditAd
   sealed abstract class CanEditAd
     extends CanEditAdBase
     with ExpireSession[MAdProdReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
 
   /** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
   case class CanEditAdGet(override val adId: String,

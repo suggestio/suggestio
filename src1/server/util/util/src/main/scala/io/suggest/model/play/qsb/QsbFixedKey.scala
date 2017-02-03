@@ -1,6 +1,6 @@
 package io.suggest.model.play.qsb
 
-import io.suggest.util.MacroLogsI
+import io.suggest.util.logs.IMacroLogs
 
 /**
   * Suggest.io
@@ -8,7 +8,7 @@ import io.suggest.util.MacroLogsI
   * Created: 19.04.16 23:03
   * Description: Бывает, что нужно зафиксировать ключ константой.
   */
-trait QsbFixedKeyOuter extends MacroLogsI {
+trait QsbFixedKeyOuter extends IMacroLogs {
 
   /** Фиксированное значение key. */
   protected def _FIXED_KEY: String

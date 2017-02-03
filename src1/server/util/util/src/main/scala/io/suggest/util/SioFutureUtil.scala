@@ -1,12 +1,14 @@
 package io.suggest.util
 
-import java.util.concurrent.{Executor, ExecutionException}
+import java.util.concurrent.{ExecutionException, Executor}
 
-import scala.concurrent.{ExecutionContext, Promise, Future}
-import scala.util.{Success, Failure}
+import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.util.{Failure, Success}
 import scala.concurrent.duration.FiniteDuration
 import java.util.TimerTask
+
 import com.google.common.util.concurrent.{ListenableFuture => GListenableFuture}
+import io.suggest.util.logs.MacroLogsImpl
 
 /**
  * Suggest.io
@@ -14,7 +16,9 @@ import com.google.common.util.concurrent.{ListenableFuture => GListenableFuture}
  * Created: 17.07.13 10:29
  * Description: Дополнительные функции для фьючерсов.
  */
-object SioFutureUtil extends Logs {
+object SioFutureUtil extends MacroLogsImpl {
+
+  import LOGGER._
 
   /**
    * Функция последовательного неблокирующего обхода последовательности.

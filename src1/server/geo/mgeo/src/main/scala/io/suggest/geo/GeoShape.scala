@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import io.suggest.util.MacroLogsDyn
+import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.data.validation.ValidationError

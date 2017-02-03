@@ -5,11 +5,11 @@ import java.nio.file.Files
 
 import io.suggest.async.IAsyncUtilDi
 import io.suggest.primo.IToPublicString
+import io.suggest.util.logs.MacroLogsImpl
 import models.MImgSizeT
 import models.adr.IAdRenderArgs
 import models.im.OutImgFmt
 import models.mproj.IMCommonDi
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -23,7 +23,7 @@ import scala.collection.JavaConversions._
   * Renderer = Rrr
   */
 abstract class IAdRrr
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
   with IMCommonDi
   with IAsyncUtilDi
 {

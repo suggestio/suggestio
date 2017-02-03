@@ -8,12 +8,12 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.MAdvBillCtx
 import models.adv.direct.{AdvFormEntry, FormResult}
 import models.mcal.ICalsCtx
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.adv.AdvUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
@@ -34,7 +34,7 @@ class AdvDirectBilling @Inject() (
   mItems                  : MItems,
   val mCommonDi           : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

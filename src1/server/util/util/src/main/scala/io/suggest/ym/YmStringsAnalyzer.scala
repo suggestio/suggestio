@@ -15,7 +15,6 @@ import java.util
 import scala.collection.JavaConversions._
 import scala.util.parsing.combinator.JavaTokenParsers
 import io.suggest.an.ReplaceMischarsAnalyzer
-import io.suggest.util.MyConfig.CONFIG
 
 /**
  * Suggest.io
@@ -28,7 +27,7 @@ import io.suggest.util.MyConfig.CONFIG
 object YmStringsAnalyzer extends JavaTokenParsers {
 
   /** Фильтровать слова из названия категорий, если длина слова длинее n символов. */
-  val MAX_TOKEN_LEN = CONFIG.getInt("ym.string.an.token.len.max") getOrElse 40
+  def MAX_TOKEN_LEN = 40
 
   /** Дефолтовые русские и английские стоп-слова содержат лишние слова. Тут отфильтровываем их из исходного списка. */
   private def filterStops(cas: CharArraySet, nonStop:List[String]) = {

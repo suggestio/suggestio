@@ -5,7 +5,8 @@ import java.io.{ByteArrayInputStream, StringWriter}
 import com.google.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
-import models.mcal.{MCalTypes, MCalendars, MCalendar}
+import io.suggest.util.logs.MacroLogsImpl
+import models.mcal.{MCalTypes, MCalendar, MCalendars}
 import models.mproj.ICommonDi
 import models.req.ICalendarReq
 import org.apache.commons.io.IOUtils
@@ -14,7 +15,6 @@ import play.api.data._
 import play.api.mvc._
 import util.FormUtil._
 import util.acl._
-import util.PlayMacroLogsImpl
 import views.html.sys1.calendar._
 
 import scala.concurrent.Future
@@ -32,7 +32,7 @@ class SysCalendar @Inject() (
   override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with IsSuperuser
   with IsSuperuserCalendar
   with CalendarAccessAny

@@ -8,6 +8,7 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.model.n2.node.{MNodeTypes, MNodesCache}
 import io.suggest.pay.u.di.ISlickDbConfig
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models.jsm.init.MTarget
 import models.mctx.CtxData
 import models.MNode
@@ -16,7 +17,6 @@ import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers
 import org.elasticsearch.client.Client
 import play.api.db.slick.DatabaseConfigProvider
-import util.{PlayMacroLogsDyn, PlayMacroLogsImpl}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -104,7 +104,7 @@ class MSioUserEmpty extends ISioUser {
 
 
 /** Частичная реализация [[ISioUser]] для дальнейших ижектируемых реализаций. */
-trait ISioUserT extends ISioUser with PlayMacroLogsDyn {
+trait ISioUserT extends ISioUser with MacroLogsDyn {
 
   // DI-инжектируемые контейнер со статическими моделями.
   protected val msuStatics: MsuStatic
@@ -260,7 +260,7 @@ case class MSioUserLazy @Inject() (
 class MSioUsers @Inject() (
   factory: MSioUserLazyFactory
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   val empty = new MSioUserEmpty

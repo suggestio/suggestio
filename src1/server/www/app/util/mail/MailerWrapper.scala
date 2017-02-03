@@ -5,11 +5,11 @@ import javax.mail.Authenticator
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{ImplementedBy, Inject, Singleton}
 import io.suggest.async.AsyncUtil
+import io.suggest.util.logs.MacroLogsImplLazy
 import org.apache.commons.mail.{DefaultAuthenticator, HtmlEmail, SimpleEmail}
 import play.api.Configuration
 import play.api.inject.Injector
 import play.api.libs.mailer.{Email, MailerClient}
-import util.PlayLazyMacroLogsImpl
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
 import scala.concurrent.Future
@@ -115,7 +115,7 @@ class CommonsEmailBuilder @Inject() (
   asyncUtil       : AsyncUtil
 )
   extends EmailBuilderShared
-  with PlayLazyMacroLogsImpl
+  with MacroLogsImplLazy
 {
 
   override def send(): Unit = {

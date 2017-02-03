@@ -10,13 +10,13 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.common.AdnRights
 import models.ISize2di
 import models.adv.geo.mapf.{MAdvGeoMapNode, MAdvGeoMapNodeProps, MIconInfo}
 import models.im.{MAnyImgs, MImgT}
 import models.mctx.Context
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, LogoUtil}
 
@@ -36,7 +36,7 @@ class AdvGeoMapUtil @Inject() (
   dynImgUtil  : DynImgUtil,
   mCommonDi   : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._

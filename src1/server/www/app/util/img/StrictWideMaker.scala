@@ -1,13 +1,13 @@
 package util.img
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImplLazy
 import models.ImgCrop
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.im._
 import models.mproj.ICommonDi
-import util.PlayLazyMacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -32,7 +32,7 @@ class StrictWideMaker @Inject() (
   mCommonDi: ICommonDi
 )
   extends IMaker
-    with PlayLazyMacroLogsImpl
+    with MacroLogsImplLazy
 {
 
   import mCommonDi._

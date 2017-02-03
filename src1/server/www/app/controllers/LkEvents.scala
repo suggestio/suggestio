@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 
 import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodes
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.MExtTargets
 import models.event.MEvents
@@ -11,7 +12,6 @@ import models.event.search.MEventsSearchArgs
 import models.mproj.ICommonDi
 import play.api.i18n.Messages
 import play.twirl.api.Html
-import util.PlayMacroLogsImpl
 import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
 import util.event.LkEventsUtil
 import util.lk.LkAdUtil
@@ -36,7 +36,7 @@ class LkEvents @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with HasNodeEventAccess
   with IsAdnNodeAdmin
 {

@@ -9,11 +9,11 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevels
 import models.mgeo.MBleBeaconInfo
 import models.mproj.ICommonDi
 import models.msc.IScAdSearchQs
-import util.PlayMacroLogsImpl
 import util.ble.BleUtil
 
 import scala.concurrent.Future
@@ -33,7 +33,7 @@ class ScAdSearchUtil @Inject() (
   bleUtil   : BleUtil,
   mCommonDi : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi.ec

@@ -2,13 +2,13 @@ package controllers.sysctl.bill
 
 import controllers.routes
 import io.suggest.mbill2.m.balance.IMBalances
+import io.suggest.util.logs.IMacroLogs
 import models.msys.bill.{MPaymentFormResult, MPaymentTplArgs}
 import models.req.INodeContractReq
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.mvc.Result
 import util.FormUtil.{currencyOrDfltM, doubleM, toStrOptM}
-import util.PlayMacroLogsI
 import util.acl.IsSuNodeContract
 import util.billing.IBill2UtilDi
 import views.html.sys1.bill.contract.balance._
@@ -23,7 +23,7 @@ import scala.concurrent.Future
   */
 trait SbPayment
   extends IsSuNodeContract
-  with PlayMacroLogsI
+  with IMacroLogs
   with IMBalances
   with IBill2UtilDi
 {

@@ -1,9 +1,10 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models.req.{IReqHdr, ISioUser, MReq}
+
 import scala.concurrent.Future
-import util.PlayMacroLogsDyn
-import play.api.mvc.{Request, ActionBuilder, Result}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 /**
  * Suggest.io
@@ -13,7 +14,7 @@ import play.api.mvc.{Request, ActionBuilder, Result}
  */
 trait IsSuperuserUtilCtl extends OnUnauthUtilCtl {
 
-  trait IsSuperuserUtil extends OnUnauthUtil with PlayMacroLogsDyn {
+  trait IsSuperuserUtil extends OnUnauthUtil with MacroLogsDyn {
 
     def supOnUnauthFut(req: IReqHdr): Future[Result] = {
       import req._

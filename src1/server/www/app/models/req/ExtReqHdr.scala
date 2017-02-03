@@ -2,11 +2,11 @@ package models.req
 
 import java.net.InetAddress
 
+import io.suggest.util.logs.MacroLogsImpl
 import models.msc.ScJsState
 import play.api.http.HeaderNames
 import play.api.mvc.RequestHeader
 import play.core.parsers.FormUrlEncodedParser
-import util.PlayMacroLogsImpl
 
 /**
  * Suggest.io
@@ -14,7 +14,7 @@ import util.PlayMacroLogsImpl
  * Created: 17.12.15 21:52
  * Description: Extended Request Header -- расширение API RequestHeader для нужд sio.
  */
-object ExtReqHdr extends PlayMacroLogsImpl {
+object ExtReqHdr extends MacroLogsImpl {
 
   import LOGGER._
 

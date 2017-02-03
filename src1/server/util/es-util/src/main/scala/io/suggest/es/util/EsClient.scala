@@ -4,7 +4,7 @@ import java.net.InetSocketAddress
 
 import com.google.inject.{Inject, Provider, Singleton}
 import io.suggest.di.IEsClient
-import io.suggest.util.MacroLogsImpl
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.settings.Settings

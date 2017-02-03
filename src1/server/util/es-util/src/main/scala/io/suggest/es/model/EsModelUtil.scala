@@ -3,7 +3,7 @@ package io.suggest.es.model
 import io.suggest.es.util.SioEsUtil
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.util._
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.action.search.SearchResponse
 import org.elasticsearch.client.Client
@@ -89,7 +89,7 @@ object EsModelUtil extends MacroLogsImpl {
   }
 
   /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
-  val UPDATE_RETRIES_MAX_DFLT = MyConfig.CONFIG.getInt("es.model.update.retries.max.dflt") getOrElse 5
+  def UPDATE_RETRIES_MAX_DFLT = 5
 
   /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей.
     * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
@@ -113,8 +113,8 @@ object EsModelUtil extends MacroLogsImpl {
   def BULK_PROCESSOR_BULK_SIZE_DFLT = 100
 
 
-  val SHARDS_COUNT_DFLT   = MyConfig.CONFIG.getInt("es.model.shards.count.dflt") getOrElse 5
-  val REPLICAS_COUNT_DFLT = MyConfig.CONFIG.getInt("es.model.replicas.count.dflt") getOrElse 1
+  def SHARDS_COUNT_DFLT   = 5
+  def REPLICAS_COUNT_DFLT = 1
 
 
   /**

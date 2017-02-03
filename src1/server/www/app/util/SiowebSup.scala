@@ -61,7 +61,9 @@ class SiowebSup @Inject() (
 class SiowebSupActor @Inject() (
   wsDispatcherActors  : WsDispatcherActors,
   siowebNotifier      : SiowebNotifier
-) extends Actor with Logs {
+)
+  extends Actor
+{
 
   import SiowebSupActor.{GetChildRef, GetChildRefReply_t}
 

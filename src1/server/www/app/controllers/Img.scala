@@ -11,6 +11,7 @@ import io.suggest.img.ConvertModes
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.svg.SvgUtil
+import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.mctx.Context
@@ -56,7 +57,7 @@ class Img @Inject() (
   override val mCommonDi          : ICommonDi
 )
   extends SioController
-  with PlayMacroLogsImpl
+  with MacroLogsImpl
   with TempImgSupport
   with BruteForceProtectCtl
   with IsAuth
@@ -241,7 +242,7 @@ class Img @Inject() (
 @ImplementedBy( classOf[Img] )
 trait TempImgSupport
   extends SioController
-  with PlayMacroLogsI
+  with IMacroLogs
   with NotifyWs
   with MyConfName
   with IDynImgUtil

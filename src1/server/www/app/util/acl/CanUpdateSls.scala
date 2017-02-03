@@ -1,9 +1,9 @@
 package util.acl
 
+import io.suggest.util.logs.MacroLogsDyn
 import models._
 import models.req.{MAdProdReq, MReq}
 import play.api.mvc._
-import util.PlayMacroLogsDyn
 import util.n2u.IN2NodesUtilDi
 
 import scala.concurrent.Future
@@ -90,6 +90,6 @@ trait CanUpdateSls
   case class CanUpdateSls(adId: String)
     extends CanUpdateSlsBase
     with ExpireSession[MAdProdReq]
-    with PlayMacroLogsDyn
+    with MacroLogsDyn
 
 }

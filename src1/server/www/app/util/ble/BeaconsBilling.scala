@@ -3,8 +3,8 @@ package util.ble
 import com.google.inject.Inject
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import util.PlayMacroLogsImpl
 import util.billing.Bill2Util
 
 /**
@@ -19,7 +19,7 @@ class BeaconsBilling @Inject() (
   mItems                              : MItems,
   val mCommonDi                       : ICommonDi
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi.slick.profile.api._

@@ -6,10 +6,10 @@ import io.suggest.es.model.EsModelUtil._
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT}
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json.{JsBoolean, JsString}
-import util.PlayMacroLogsImpl
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,7 +28,7 @@ class MPersonIdents @Inject() (
   emailActivations  : EmailActivations,
   mExtIdents        : MExtIdents
 )
-  extends PlayMacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import LOGGER._
