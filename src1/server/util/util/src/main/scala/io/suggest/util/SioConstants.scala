@@ -1,7 +1,5 @@
 package io.suggest.util
 
-import org.elasticsearch.index.mapper.internal._
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -22,16 +20,6 @@ object SioConstants {
   def FIELD_PAGE_TAGS     = "pageTags"
   def FIELD_DKEY          = "dkey"
 
-  // Имена системных полей, все в одном месте.
-  def FIELD_ALL           = AllFieldMapper.NAME
-  def FIELD_SOURCE        = SourceFieldMapper.NAME
-  def FIELD_ROUTING       = RoutingFieldMapper.NAME
-  def FIELD_ID            = IdFieldMapper.NAME
-  def FIELD_UID           = UidFieldMapper.NAME
-  def FIELD_TTL           = TTLFieldMapper.NAME
-  def FIELD_VERSION       = VersionFieldMapper.NAME
-  def FIELD_PARENT        = ParentFieldMapper.NAME
-  def FIELD_DOC           = "_doc"
 
   def CURRENCY_CODE_DFLT  = "RUB"
 

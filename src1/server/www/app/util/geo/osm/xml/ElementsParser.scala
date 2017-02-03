@@ -1,10 +1,10 @@
 package util.geo.osm.xml
 
 import io.suggest.geo.MGeoPoint
+import io.suggest.text.sax.StackFsmSax
 import io.suggest.util.logs.MacroLogsImplLazy
 import org.xml.sax.helpers.DefaultHandler
 import org.xml.sax.{Attributes, SAXParseException}
-import util.ai.sax.StackFsmSax
 import util.geo.osm._
 
 /**

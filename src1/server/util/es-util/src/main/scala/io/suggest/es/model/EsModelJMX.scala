@@ -1,6 +1,7 @@
 package io.suggest.es.model
 
-import io.suggest.util.{JacksonWrapper, SioConstants}
+import io.suggest.es.util.SioEsUtil
+import io.suggest.util.JacksonWrapper
 import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.search.lookup.SourceLookup
 
@@ -128,12 +129,13 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
   }
 
   override def putAll(all: String): String = {
+    import SioEsUtil.StdFns._
     info("putAll(): " + all)
     try {
       val raws = JacksonWrapper.deserialize[List[Map[String, AnyRef]]](all)
       val idsFut = Future.traverse(raws) { tmap =>
-        val idOpt = tmap.get( SioConstants.FIELD_ID ).map(_.toString.trim)
-        val sourceStr = JacksonWrapper.serialize(tmap.get(SioConstants.FIELD_SOURCE))
+        val idOpt = tmap.get( FIELD_ID ).map(_.toString.trim)
+        val sourceStr = JacksonWrapper.serialize(tmap.get( FIELD_SOURCE ))
         val br = new BytesArray(sourceStr)
         val dataMap = SourceLookup.sourceAsMap(br)
         _saveOne(idOpt, dataMap)

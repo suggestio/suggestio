@@ -4,7 +4,7 @@ import akka.actor.Props
 import com.google.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.fsm.FsmActor
-import io.suggest.util.UrlUtil
+import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.ExtServiceActorEnv

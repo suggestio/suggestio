@@ -3,7 +3,7 @@ package models.usr
 import io.suggest.model.common.OptStrId
 import io.suggest.es.model.EsModelUtil._
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.util.{JacksonParsing, StringUtil}
+import io.suggest.util.JacksonParsing
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,6 +11,7 @@ import play.api.mvc.QueryStringBindable
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.text.util.StringUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 

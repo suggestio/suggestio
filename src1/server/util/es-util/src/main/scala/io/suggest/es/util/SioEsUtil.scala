@@ -51,6 +51,20 @@ object SioEsUtil extends MacroLogsImpl {
   def STD_TN        = "tStd"
   def DEEP_NGRAM_TN = "deepNgramTn"
 
+  /** Стандартные имена полей ES. */
+  object StdFns {
+    import org.elasticsearch.index.mapper.internal._
+    def FIELD_ALL           = AllFieldMapper.NAME
+    def FIELD_SOURCE        = SourceFieldMapper.NAME
+    def FIELD_ROUTING       = RoutingFieldMapper.NAME
+    def FIELD_ID            = IdFieldMapper.NAME
+    def FIELD_UID           = UidFieldMapper.NAME
+    def FIELD_TTL           = TTLFieldMapper.NAME
+    def FIELD_VERSION       = VersionFieldMapper.NAME
+    def FIELD_PARENT        = ParentFieldMapper.NAME
+    def FIELD_DOC           = "_doc"
+  }
+
   /**
     * Версия документов, только что добавленных в elasticsearch.
     *
@@ -1034,6 +1048,7 @@ case class FieldIp(
   override def fieldType = DocFieldTypes.ip
 }
 
+import StdFns._
 
 /** Трейт для поля doc_values. */
 trait FieldDocValues extends Field {

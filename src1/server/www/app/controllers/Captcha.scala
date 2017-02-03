@@ -6,9 +6,9 @@ import javax.imageio.ImageIO
 
 import com.google.code.kaptcha.util.Config
 import com.google.inject.Inject
-import io.suggest.util.TextUtil
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
+import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import play.api.data.Form
 import play.api.mvc._

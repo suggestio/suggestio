@@ -2,7 +2,8 @@ package io.suggest.es.model
 
 import akka.actor.ActorContext
 import io.suggest.common.fut.FutureUtil
-import io.suggest.di.{ICacheApi, IEsClient, IExecutionContext}
+import io.suggest.di.{ICacheApi, IExecutionContext}
+import io.suggest.es.util.IEsClient
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber

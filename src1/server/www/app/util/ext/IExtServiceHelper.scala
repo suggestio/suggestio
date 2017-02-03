@@ -3,7 +3,7 @@ package util.ext
 import java.net.URL
 
 import io.suggest.common.geom.d2.INamedSize2di
-import io.suggest.util.UrlUtil
+import io.suggest.text.util.UrlUtil
 import models.blk.{OneAdWideQsArgs, SzMult_t, szMulted}
 import models.im.{OutImgFmt, OutImgFmts}
 import models.mext.MExtService

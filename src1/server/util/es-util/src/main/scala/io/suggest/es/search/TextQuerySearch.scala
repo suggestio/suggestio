@@ -1,6 +1,6 @@
 package io.suggest.es.search
 
-import io.suggest.util.text.TextQueryV2Util
+import io.suggest.text.util.TextQueryV2Util
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**

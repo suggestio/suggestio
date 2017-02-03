@@ -24,7 +24,6 @@ import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
 
-import scala.util.Random
 import scala.util.matching.Regex
 
 /**
@@ -210,9 +209,6 @@ trait Context {
 
   lazy val isDebug: Boolean     = request.getQueryString("debug").isDefined
 
-
-  /** Локальный ГСЧ, иногда нужен. */
-  lazy val PRNG = new Random(System.currentTimeMillis())
 
   /** Рандомный id, существующий в рамках контекста.
     * Использутся, когда необходимо как-то индентифицировать весь текущий рендер (вебсокеты, например). */

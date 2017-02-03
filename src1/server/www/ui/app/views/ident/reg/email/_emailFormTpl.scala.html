@@ -2,7 +2,7 @@
 
 @import helper._
 @import util.captcha.CaptchaUtil.{CAPTCHA_ID_FN, CAPTCHA_TYPED_FN}
-@import io.suggest.util.StringUtil.randomId
+@import io.suggest.text.util.StringUtil.randomId
 @import ctx._
 @import util.FC.authFc
 @import io.suggest.err.ErrorConstants._
@@ -26,7 +26,7 @@
   <div @if(!captchaShown){style="display: none;" id="@HIDDEN_CAPTCHA_DIV_ID"}>
     <div class="auth-page_input">
       @* Капча, которая появляется, когда есть активность, связанная с полем регистрации или долбления на кнопку "отправить". *@
-      @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6, ctx.PRNG)) ) { captchaId =>
+      @defining( rf(CAPTCHA_ID_FN).value.filter(!_.isEmpty).getOrElse(randomId(6)) ) { captchaId =>
         <input id="captchaId" type="hidden" name="@CAPTCHA_ID_FN" value="@captchaId"/>
         <img class="captcha_img" id="captchaImageRegistrationForm" alt=""
              @defining( routes.Captcha.getDigitalCaptcha(captchaId, submitCall.url) ) { call =>

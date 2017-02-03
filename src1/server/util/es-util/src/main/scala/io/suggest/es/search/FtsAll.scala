@@ -1,6 +1,6 @@
 package io.suggest.es.search
 
-import io.suggest.util.SioConstants
+import io.suggest.es.util.SioEsUtil
 import org.elasticsearch.index.query.QueryBuilder
 
 /**
@@ -12,7 +12,7 @@ import org.elasticsearch.index.query.QueryBuilder
 
 trait FtsAll extends DynSearchArgs {
 
-  private def qOptField = SioConstants.FIELD_ALL
+  private def qOptField = SioEsUtil.StdFns.FIELD_ALL
 
   /** Произвольный текстовый запрос, если есть. */
   def qOpt: Option[String]

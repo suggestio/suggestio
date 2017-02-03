@@ -45,6 +45,9 @@ object Common {
       */
     val SLF4J      = "1.7.+"
 
+    /** Версия авторских аддонов для JSR-310: threeten-extra. */
+    val THREETEN_EXTRA = "1.0"
+
 
     object Sio {
 

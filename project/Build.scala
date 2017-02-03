@@ -327,7 +327,12 @@ object Sio2Build extends Build {
   /** Утиль для поддержки ElasticSearch. */
   lazy val esUtil = project
     .in( file(DIR0 + "server/util/es-util") )
-    .dependsOn(util)
+    .dependsOn(util, textUtil)
+
+  /** Текстовая утиль, выносимая из util и других мест. */
+  lazy val textUtil = project
+    .in( file(DIR0 + "server/util/text-util") )
+    .dependsOn(util, logsMacro)    // TODO Возможно, зависимость от util не потребуется после окончания рефакторинга. Проверить.
 
   /** Платежная поддержка для веб-интерфейса. */
   lazy val payWww = project
@@ -339,7 +344,13 @@ object Sio2Build extends Build {
   lazy val www = project
     .in( file(DIR0 + "server/www") )
     .enablePlugins(PlayScala, SbtWeb, WebScalaJSBundlerPlugin)
-    .dependsOn(securesocial, esUtil, mgeo, n2, mbill2, nodesWww, payWww, svgUtil, ipgeobase, stat)
+    .dependsOn(
+      securesocial,
+      esUtil, mgeo, n2, mbill2,
+      nodesWww, payWww,
+      textUtil,
+      svgUtil, ipgeobase, stat
+    )
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages in Assets += scalaJSPipeline,
@@ -359,7 +370,7 @@ object Sio2Build extends Build {
         leafletSjs, leafletReactSjs, mapBoxGlSjs,
         lkSjs, scSjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
         cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
-        util, esUtil, swfs, n2, securesocial,
+        util, esUtil, textUtil, swfs, n2, securesocial,
         ipgeobase, stat,
         mgeo, commonWww, nodesWww,
         www, mbill2, payWww, svgUtil

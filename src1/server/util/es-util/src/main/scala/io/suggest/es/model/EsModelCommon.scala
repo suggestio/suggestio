@@ -8,6 +8,7 @@ import com.sksamuel.elastic4s.{RichSearchHit, SearchDefinition}
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.es.util.SioEsUtil
 import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil._
@@ -169,7 +170,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     srb
       .setScroll(keepAlive)
       // Elasticsearch-2.1+: вместо search_type=SCAN желательно юзать сортировку по полю _doc.
-      .addSort( SortBuilders.fieldSort( SioConstants.FIELD_DOC ) )
+      .addSort( SortBuilders.fieldSort( StdFns.FIELD_DOC ) )
   }
 
   /** Запуск поискового запроса и парсинг результатов в представление этой модели. */
@@ -726,7 +727,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   /** Отрендерить экземпляр модели в JSON, обёрнутый в некоторое подобие метаданных ES (без _index и без _type). */
   def toEsJsonDoc(e: T): String = {
-    import io.suggest.util.SioConstants._
+    import StdFns._
+
     var kvs = List[String] (s""" "$FIELD_SOURCE": ${toJson(e)}""")
     if (e.versionOpt.isDefined)
       kvs ::= s""" "$FIELD_VERSION": ${e.versionOpt.get}"""
