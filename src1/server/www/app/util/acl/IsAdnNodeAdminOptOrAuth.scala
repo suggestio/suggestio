@@ -18,7 +18,6 @@ import scala.concurrent.Future
 
 trait IsAdnNodeAdminOptOrAuth
   extends IMCommonDi
-  with OnUnauthUtilCtl
   with Csrf
 {
 

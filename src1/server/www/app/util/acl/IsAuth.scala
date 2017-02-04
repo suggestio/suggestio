@@ -1,11 +1,14 @@
 package util.acl
 
 import models.req.MReq
-import play.api.mvc.{ActionBuilder, Request, RequestHeader, Result}
+import play.api.mvc._
 
 import scala.concurrent.Future
-import controllers.{SioController, routes}
+import controllers.routes
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
+import io.suggest.common.fut.FutureUtil.HellImplicits._
+
+// TODO Сделать всё это действо injectable. Возможно даже объеденить оба трейта в один класс.
 
 /**
  * Suggest.io
@@ -14,33 +17,33 @@ import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
  * Description: Убедится, что юзер является авторизованным пользователем. Иначе - отправить на страницу логина или в иное место.
  */
 
-trait OnUnauthUtilCtl extends SioController {
-  trait OnUnauthUtil {
-    /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
-    def obeyReturnPath: Boolean = true
+trait OnUnauthUtil {
 
-    def onUnauthBase(request: RequestHeader): Result = {
-      val rOpt = if (obeyReturnPath) Some(request.path) else None
-      Redirect( routes.Ident.emailPwLoginForm(r = rOpt) )
-    }
-
-    /** Что делать, когда юзер не авторизован? */
-    def onUnauth(request: RequestHeader): Future[Result] = {
-      onUnauthBase(request)
-    }
+  /** Основная синхронная реакция на выявленную необходимость залогинится.
+    *
+    * @param request реквест.
+    * @return Ответ с редиректом.
+    */
+  def onUnauthBase(request: RequestHeader): Result = {
+    val rOpt = Some(request.path)
+    Results.Redirect( routes.Ident.emailPwLoginForm(r = rOpt) )
   }
-}
 
+  /** Что делать, когда юзер не авторизован? Асинхронная реакция. */
+  def onUnauth(request: RequestHeader): Future[Result] = {
+    onUnauthBase(request)
+  }
+
+}
 
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
 trait IsAuth
-  extends OnUnauthUtilCtl
-  with Csrf
+  extends Csrf
 {
 
   import mCommonDi._
 
-  trait IsAuthBase extends ActionBuilder[MReq] with IMacroLogs {
+  trait IsAuthBase extends ActionBuilder[MReq] with IMacroLogs with OnUnauthUtil {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
@@ -54,19 +57,6 @@ trait IsAuth
         LOGGER.debug("invokeBlock(): anonymous access prohibited. path = " + request.path)
         onUnauth(request)
       }
-    }
-
-    /** Подчинятся редиректу назад? Если false, то юзер будет куда-то отредиректен, заведомо неизвестно куда. */
-    def obeyReturnPath: Boolean = true
-
-    def onUnauthBase(request: RequestHeader): Result = {
-      val r = if (obeyReturnPath) Some(request.path) else None
-      Redirect( routes.Ident.emailPwLoginForm(r = r) )
-    }
-
-    /** Что делать, когда юзер не авторизован? */
-    def onUnauth(request: RequestHeader): Future[Result] = {
-      Future successful onUnauthBase(request)
     }
 
   }

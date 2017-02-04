@@ -1,6 +1,7 @@
 package io.suggest.common.fut
 
 import scala.concurrent.Future
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -9,6 +10,22 @@ import scala.concurrent.Future
  * Description: Утиль для Future.
  */
 object FutureUtil {
+
+  /** Жесткие implicit'ы. Следует юзать аккуратно, т.к. могут быть проблемы. */
+  object HellImplicits {
+
+    implicit def ex2fut[T](ex: Throwable): Future[T] = {
+      Future.failed(ex)
+    }
+
+    implicit def any2fut[T](x: T): Future[T] = {
+      Future.successful(x)
+    }
+
+  }
+
+
+  import HellImplicits._
 
   /**
    * Перехват синхронных ошибок для вызовов, которые должны возвращать их асинхронно.
@@ -21,7 +38,7 @@ object FutureUtil {
       f
     } catch {
       case ex: Throwable =>
-        Future.failed(ex)
+        ex
     }
   }
 
@@ -36,8 +53,8 @@ object FutureUtil {
    * @return Фьючерс с опциональным результатом.
    */
   def optFut2futOpt[T, R](opt: Option[T])(defined: T => Future[Option[R]]): Future[Option[R]] = {
-    opt.fold {
-      Future.successful( Option.empty[R] )
+    opt.fold [Future[Option[R]]] {
+      Option.empty[R]
     } { v =>
       defined(v)
     }
@@ -54,5 +71,6 @@ object FutureUtil {
   def opt2future[T](x: Option[T])(ifEmpty: => Future[T]): Future[T] = {
     x.fold(ifEmpty)(Future.successful)
   }
+
 
 }

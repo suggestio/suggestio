@@ -20,7 +20,6 @@ import scala.concurrent.Future
 trait CanAccessItem
   extends SioController
   with Csrf
-  with OnUnauthUtilCtl
   with IMItems
   with IMOrders
   with IMacroLogs

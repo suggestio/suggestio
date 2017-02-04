@@ -1,9 +1,10 @@
 package util.acl
 
-import controllers.SioController
-import models.mcal.IMCalendars
+import com.google.inject.Inject
+import models.mcal.MCalendars
+import models.mproj.ICommonDi
 import models.req.MCalendarReq
-import play.api.mvc.{Result, Request, ActionBuilder}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
 
 import scala.concurrent.Future
 
@@ -13,9 +14,10 @@ import scala.concurrent.Future
  * Created: 18.12.15 17:48
  * Description: Доступ к календарю вообще без проверки ACL.
  */
-trait CalendarAccessAny
-  extends SioController
-  with IMCalendars
+class CalendarAccessAny @Inject() (
+                                    mCalendars  : MCalendars,
+                                    mCommonDi   : ICommonDi
+                                  )
 {
 
   import mCommonDi._
@@ -25,7 +27,8 @@ trait CalendarAccessAny
     def calId: String
 
     def calNotFound(request: Request[_]): Future[Result] = {
-      NotFound(s"Calendar $calId does not exist.")
+      val r = Results.NotFound(s"Calendar $calId does not exist.")
+      Future.successful(r)
     }
 
     override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {

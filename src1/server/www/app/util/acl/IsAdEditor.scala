@@ -48,7 +48,6 @@ trait AdEditBaseCtl
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
 trait CanEditAd
   extends AdEditBaseCtl
-  with OnUnauthUtilCtl
   with IN2NodesUtilDi
   with Csrf
 {

@@ -1,4 +1,4 @@
-package io.suggest.pay.u.di
+package io.suggest.www.util.di
 
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import play.api.db.slick.DatabaseConfigProvider

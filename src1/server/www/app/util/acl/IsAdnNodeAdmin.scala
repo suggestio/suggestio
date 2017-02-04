@@ -19,7 +19,6 @@ import play.api.mvc.Result
 
 trait OnUnauthNodeCtl
   extends SioController
-  with OnUnauthUtilCtl
 {
   trait OnUnauthNode extends OnUnauthUtil {
     /** Что делать, когда юзер не авторизован, но долбится в ЛК? */

@@ -29,7 +29,6 @@ import util.acl.CanConfirmEmailPwReg._
 trait CanConfirmEmailPwRegCtl
   extends SioController
   with IIdentUtil
-  with OnUnauthUtilCtl
   with Csrf
   with IEmailActivationsDi
 {

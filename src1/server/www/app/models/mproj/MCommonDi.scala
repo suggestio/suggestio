@@ -17,9 +17,8 @@ import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di.ICacheApi
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.node.{INodeCache, MNodesCache}
-import io.suggest.pay.u.di.ISlickDbConfig
+import io.suggest.www.util.di.ISlickDbConfig
 import util.HtmlCompressUtil
-import util.di._
 import util.secure.SessionUtil
 
 import scala.concurrent.ExecutionContext

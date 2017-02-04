@@ -23,7 +23,6 @@ import scala.concurrent.Future
 trait CanConfirmIdpReg
   extends SioController
   with IIdentUtil
-  with OnUnauthUtilCtl
   with Csrf
   with IMNodes
   with IMExtIdentsDi

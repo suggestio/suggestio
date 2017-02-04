@@ -19,7 +19,6 @@ import scala.concurrent.Future
 trait CanThinkAboutAdvOnMapAdnNode
   extends SioController
   with Csrf
-  with OnUnauthUtilCtl
   with OnUnauthNodeCtl
   with IMacroLogs
   with ICanAdvAdUtil

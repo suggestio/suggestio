@@ -13,6 +13,7 @@ import org.apache.commons.io.IOUtils
 import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc._
+import play.mvc.Http.MimeTypes
 import util.FormUtil._
 import util.acl._
 import views.html.sys1.calendar._
@@ -29,17 +30,18 @@ import scala.concurrent.Future
  */
 class SysCalendar @Inject() (
   override val mCalendars     : MCalendars,
+  calendarAccessAny           : CalendarAccessAny,
   override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
   with IsSuperuser
   with IsSuperuserCalendar
-  with CalendarAccessAny
 {
 
   import LOGGER._
   import mCommonDi._
+  import calendarAccessAny.CalendarAccessAny
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(
@@ -78,7 +80,9 @@ class SysCalendar @Inject() (
             stream.close()
           }
         } catch {
-          case ex: Exception => false
+          case ex: Exception =>
+            LOGGER.error("calFormM failed to stream calendar data.", ex)
+            false
         }
     }
   )
@@ -208,7 +212,7 @@ class SysCalendar @Inject() (
    */
   def getCalendarXml(calId: String) = CalendarAccessAny(calId) { implicit request =>
     Ok(request.mcal.data)
-      .as("text/xml")
+      .as( MimeTypes.XML )
   }
 
 }

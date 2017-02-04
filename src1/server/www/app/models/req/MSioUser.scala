@@ -7,8 +7,8 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.model.n2.node.{MNodeTypes, MNodesCache}
-import io.suggest.pay.u.di.ISlickDbConfig
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
+import io.suggest.www.util.di.ISlickDbConfig
 import models.jsm.init.MTarget
 import models.mctx.CtxData
 import models.MNode

@@ -2,6 +2,7 @@ package util.acl
 
 import io.suggest.util.logs.MacroLogsDyn
 import models.MNodeType
+import models.mproj.IMCommonDi
 import models.req.{MNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
@@ -13,9 +14,7 @@ import scala.concurrent.Future
  * Created: 26.10.15 16:15
  * Description: Аддон для контроллеров c гибридом IsAuth и тривиального чтения узла MNode.
  */
-trait IsAuthNode
-  extends OnUnauthUtilCtl
-{
+trait IsAuthNode extends IMCommonDi {
 
   import mCommonDi._
 

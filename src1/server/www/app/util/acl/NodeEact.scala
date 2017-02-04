@@ -19,7 +19,6 @@ import scala.concurrent.Future
 trait NodeEact
   extends SioController
   with IMacroLogs
-  with OnUnauthUtilCtl
   with Csrf
   with IEmailPwIdentsDi
   with IEmailActivationsDi
