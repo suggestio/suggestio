@@ -1,6 +1,5 @@
 package util.acl
 
-import controllers.SioController
 import io.suggest.util.logs.MacroLogsDyn
 import models.req.{IReqHdr, ISioUser, MReq}
 
@@ -13,28 +12,24 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  * Created: 16.10.13 13:48
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
-trait IsSuperuserUtilCtl extends SioController {
 
-  trait IsSuperuserUtil extends OnUnauthUtil with MacroLogsDyn {
+trait IsSuperuserUtil extends OnUnauthUtil with MacroLogsDyn {
 
-    def supOnUnauthFut(req: IReqHdr): Future[Result] = {
-      import req._
-      LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=${req.user.personIdOpt}")
-      supOnUnauthResult(req)
-    }
+  def supOnUnauthFut(req: IReqHdr): Future[Result] = {
+    import req._
+    LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=${req.user.personIdOpt}")
+    supOnUnauthResult(req)
+  }
 
-    def supOnUnauthResult(req: IReqHdr): Future[Result] = {
-      onUnauth(req)
-    }
-
+  def supOnUnauthResult(req: IReqHdr): Future[Result] = {
+    onUnauth(req)
   }
 
 }
 
 
 trait IsSuperuser
-  extends IsSuperuserUtilCtl
-  with CookieCleanupSupport
+  extends CookieCleanupSupport
   with Csrf
 {
 

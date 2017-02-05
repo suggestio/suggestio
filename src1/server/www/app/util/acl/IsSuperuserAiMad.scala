@@ -15,7 +15,6 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  */
 trait IsSuperuserAiMad
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
   with IMAiMads
 {

@@ -17,7 +17,6 @@ import scala.concurrent.Future
   */
 trait IsSuItemAd
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
   with IMItems
   with IMacroLogs

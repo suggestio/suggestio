@@ -17,7 +17,6 @@ import scala.concurrent.Future
 
 trait IsSuperuserPerson
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
 {
 

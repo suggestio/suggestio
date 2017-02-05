@@ -5,6 +5,7 @@ import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.req.MCalendarReq
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits._
 
 import scala.concurrent.Future
 
@@ -24,17 +25,18 @@ class CalendarAccessAny @Inject() (
 
   trait CalendarAccessAnyBase extends ActionBuilder[MCalendarReq] {
 
+    /** id календаря, с которым происходит взаимодействие. */
     def calId: String
 
     def calNotFound(request: Request[_]): Future[Result] = {
-      val r = Results.NotFound(s"Calendar $calId does not exist.")
-      Future.successful(r)
+      Results.NotFound(s"Calendar $calId does not exist.")
     }
 
     override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
       val mcalOptFut = mCalendars.getById(calId)
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
+
       mcalOptFut.flatMap {
         case Some(mcal) =>
           val req1 = MCalendarReq(mcal, request, user)

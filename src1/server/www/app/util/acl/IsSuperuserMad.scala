@@ -16,7 +16,6 @@ import scala.concurrent.Future
  */
 trait IsSuperuserMad
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
 {
 

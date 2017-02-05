@@ -1,5 +1,6 @@
 package controllers.sysctl.bill
 
+import controllers.SioController
 import io.suggest.mbill2.m.balance.IMBalances
 import io.suggest.mbill2.m.gid.IGidUtilDi
 import io.suggest.mbill2.m.txn.IMTxns
@@ -15,7 +16,8 @@ import views.html.sys1.bill._
   * Изначально, тут был только обзор биллинга. Возможно, потом появятся ещё экшены.
   */
 trait SbOverview
-  extends IsSuperuser
+  extends SioController
+  with IsSuperuser
   with IMTxns
   with IMBalances
   with IGidUtilDi

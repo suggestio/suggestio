@@ -16,7 +16,6 @@ import scala.concurrent.Future
   */
 trait IsSuItem
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
   with IMItems
 {

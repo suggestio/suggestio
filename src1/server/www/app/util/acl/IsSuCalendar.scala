@@ -1,8 +1,11 @@
 package util.acl
 
-import models.mcal.IMCalendars
-import models.req.{MReq, MCalendarReq}
-import play.api.mvc.{Result, Request, ActionBuilder}
+import com.google.inject.Inject
+import models.mcal.MCalendars
+import models.req.{MCalendarReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits._
+import models.mproj.ICommonDi
 
 import scala.concurrent.Future
 
@@ -13,10 +16,11 @@ import scala.concurrent.Future
  * Description: Поддержка контроля доступа к календарям для суперюзеров.
  * Долгое время это счастье жило прямо в контроллере.
  */
-trait IsSuperuserCalendar
-  extends IsSuperuserUtilCtl
-  with Csrf
-  with IMCalendars
+class IsSuCalendar @Inject()(
+                              mCalendars: MCalendars,
+                              override val mCommonDi: ICommonDi
+                            )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -26,19 +30,20 @@ trait IsSuperuserCalendar
     with IsSuperuserUtil
   {
 
+    /** id календаря, вокруг которого идёт работа. */
     def calId: String
 
     override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
       if (user.isSuper) {
-        mCalendars.getById(calId) flatMap {
+        mCalendars.getById(calId).flatMap {
           case Some(mcal) =>
             val req1 = MCalendarReq(mcal, request, user)
             block(req1)
 
           case None =>
-            NotFound("Calendar not found: " + calId)
+            Results.NotFound("Calendar not found: " + calId)
         }
 
       } else {

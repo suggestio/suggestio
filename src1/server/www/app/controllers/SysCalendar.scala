@@ -29,19 +29,20 @@ import scala.concurrent.Future
  * @see [[http://jollyday.sourceforge.net/index.html]]
  */
 class SysCalendar @Inject() (
-  override val mCalendars     : MCalendars,
-  calendarAccessAny           : CalendarAccessAny,
-  override val mCommonDi      : ICommonDi
+                              mCalendars                  : MCalendars,
+                              isSuCalendar                : IsSuCalendar,
+                              calendarAccessAny           : CalendarAccessAny,
+                              override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
   with IsSuperuser
-  with IsSuperuserCalendar
 {
 
   import LOGGER._
   import mCommonDi._
   import calendarAccessAny.CalendarAccessAny
+  import isSuCalendar.{IsSuCalendarGet, IsSuCalendarPost}
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(
@@ -51,7 +52,9 @@ class SysCalendar @Inject() (
           try {
             Some(HolidayCalendar.valueOf(code))
           } catch {
-            case ex: Exception => None
+            case ex: Exception =>
+              debug("newCalTplFormM.tplId: Failed to bind form field, value = " + code, ex)
+              None
           }
         },
         { _.fold("")(_.toString) }
@@ -72,16 +75,12 @@ class SysCalendar @Inject() (
           try {
             new XMLUtil().unmarshallConfiguration(stream)
             true
-          } catch {
-            case ex: Exception =>
-              warn("Failed to parse calendar", ex)
-              false
           } finally {
             stream.close()
           }
         } catch {
           case ex: Exception =>
-            LOGGER.error("calFormM failed to stream calendar data.", ex)
+            error("calFormM failed to parse calendar data", ex)
             false
         }
     }

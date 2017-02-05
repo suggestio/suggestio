@@ -15,7 +15,6 @@ import scala.concurrent.Future
   */
 trait IsSuNodeEdge
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
 {
 

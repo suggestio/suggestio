@@ -15,7 +15,6 @@ import play.api.mvc.{Request, ActionBuilder, Result}
  */
 trait IsSuNode
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
 {
 

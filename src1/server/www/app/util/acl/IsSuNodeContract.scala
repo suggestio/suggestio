@@ -16,7 +16,6 @@ import scala.concurrent.Future
  */
 trait IsSuNodeContract
   extends SioController
-  with IsSuperuserUtilCtl
   with Csrf
   with IMContracts
 {
