@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import java.time.{LocalDate, ZoneOffset}
+import java.time.LocalDate
 
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS

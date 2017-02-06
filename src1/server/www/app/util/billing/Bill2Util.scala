@@ -1,11 +1,11 @@
 package util.billing
 
-import java.time.{Duration, LocalDate, OffsetDateTime, Period}
+import java.time.{Duration, OffsetDateTime}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.dt.{IPeriodInfo, YmdHelpersJvm}
+import io.suggest.dt.YmdHelpersJvm
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -16,12 +16,9 @@ import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
-import models.adv.form.MDatesPeriod
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.MNode
-import models.mdt.IDateStartEnd
-import org.threeten.extra.Interval
 import slick.sql.SqlAction
 
 import scala.concurrent.Future

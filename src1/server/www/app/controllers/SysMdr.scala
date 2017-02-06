@@ -62,7 +62,7 @@ class SysMdr @Inject() (
     slick.db
       // Ищем следующую карточку через биллинг и очередь на модерацию.
       .run {
-        sysMdrUtil._findPaidAdIds4MdrAction(args1)
+        sysMdrUtil.findPaidAdIds4MdrAction(args1)
       }
       .map(_.headOption.get)    // почему-то .head не возвращает NSEE.
       // Ищем след. карточку через бесплатные размещения.

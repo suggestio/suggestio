@@ -23,6 +23,7 @@ import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
 import util.adv.AdvFormUtil
 import util.adv.geo.AdvGeoLocUtil
 import util.billing.Bill2Util
+import util.mdr.MdrUtil
 import views.html.lk.adn.mapf._
 import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._priceValTpl
@@ -42,6 +43,7 @@ class LkAdnMap @Inject() (
   lkAdnMapBillUtil              : LkAdnMapBillUtil,
   bill2Util                     : Bill2Util,
   advGeoLocUtil                 : AdvGeoLocUtil,
+  mdrUtil                       : MdrUtil,
   override val mCommonDi        : ICommonDi
 )
   extends SioControllerImpl
@@ -153,12 +155,16 @@ class LkAdnMap @Inject() (
           e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
 
           // Добавить в корзину размещение узла на карте
-          itemsAdded   <- {
+          (itemsAdded, isMdrNotifyNeeded) <- {
             val dbAction = for {
+              // Инициализировать корзину, если требуется...
               cart    <- bill2Util.ensureCart(
                 contractId = e.mc.id.get,
                 status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
               )
+
+              // Узнать, потребуется ли отправлять письмо модераторам по итогам работы...
+              mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
               // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
               addRes <- lkAdnMapBillUtil.addToOrder(
@@ -168,7 +174,7 @@ class LkAdnMap @Inject() (
                 status  = status
               )
             } yield {
-              addRes
+              (addRes, mdrNotifyNeeded)
             }
             import slick.profile.api._
             slick.db.run( dbAction.transactionally )
@@ -180,6 +186,8 @@ class LkAdnMap @Inject() (
             val n = "\n "
             s"$logPrefix Added ADN-map into cart ${e.mc.id.orNull}, su=$isSuFree: ${itemsAdded.mkString(n,n,"")}"
           }
+
+          mdrUtil.maybeSendMdrNotify( isMdrNotifyNeeded )
 
           val rCall = routes.LkAdnMap.forNode(esNodeId)
           // Рендерить HTTP-ответ.

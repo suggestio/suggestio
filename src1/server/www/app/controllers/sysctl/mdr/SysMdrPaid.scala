@@ -50,7 +50,7 @@ trait SysMdrPaid
     */
   def paidAdvs(args: MdrSearchArgs) = IsSuGet.async { implicit request =>
     // Залезть в items, найти там размещения, ожидающие подтверждения.
-    val dbAction = sysMdrUtil._findPaidAdIds4MdrAction(args)
+    val dbAction = sysMdrUtil.findPaidAdIds4MdrAction(args)
 
     // Запустить поиск id карточек по биллингу, а затем и поиск самих карточек.
     val madsFut = slick.db

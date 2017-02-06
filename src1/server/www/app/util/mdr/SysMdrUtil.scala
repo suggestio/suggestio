@@ -2,9 +2,9 @@ package util.mdr
 
 import java.time.OffsetDateTime
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
+import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItem, ItemStatusChanged, MItem, MItems}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.util.effect.RW
@@ -24,8 +24,10 @@ import scala.concurrent.Future
   * Created: 03.03.16 11:13
   * Description: Всякая утиль для контроллера [[controllers.SysMdr]]: формы, фунции и прочее.
   */
+@Singleton
 class SysMdrUtil @Inject() (
   val mItems        : MItems,
+  mdrUtil           : MdrUtil,
   mNodes            : MNodes,
   val mCommonDi     : ICommonDi
 )
@@ -191,14 +193,10 @@ class SysMdrUtil @Inject() (
     }
   }
 
+
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
-  def _findPaidAdIds4MdrAction(args: MdrSearchArgs) = {
-    val b0 = mItems
-      .query
-      .filter { i =>
-        //(i.iTypeStr inSet  MItemTypes.advTypesIds.toSeq) &&   // Закоменчено, т.к. AwaitingMdr подразумевает неизбежность модерации.
-          (i.statusStr === MItemStatuses.AwaitingMdr.strId)
-      }
+  def findPaidAdIds4MdrAction(args: MdrSearchArgs): DBIOAction[Seq[String], Streaming[String], Effect.Read] = {
+    val b0 = mdrUtil.awaitingPaidMdrItemsSql
 
     val b1 = args.hideAdIdOpt.fold(b0) { hideAdId =>
       b0.filter { i =>

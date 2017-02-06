@@ -25,7 +25,8 @@ import scala.concurrent.Future
  * @see [[https://commons.apache.org/proper/commons-email/userguide.html]]
  */
 
-trait EmailBuilder {
+sealed abstract class EmailBuilder extends MacroLogsImplLazy {
+
   type T = this.type
 
   def setSubject(s: String): T
@@ -35,7 +36,27 @@ trait EmailBuilder {
   def setText(text: String): T
   def setRecipients(rcpts: String*): T
 
-  def send(): Unit
+  /**
+    * Полностью асинхронная отправка сообщения.
+    * Тело реализуемой логики должно исполняться асихронно в принудительном порядке:
+    * это избавит от задержек в исполнении основных экшенов и защитит от ошибок.
+    *
+    * @return Фьючерс с неопределённым значением любого типа.
+    */
+  final def send(): Future[_] = {
+    val fut = Future {
+      _doSend()
+    }
+      .flatMap(identity)
+    fut.onFailure { case ex: Throwable =>
+      LOGGER.error("Failed to send email message:\n" + this, ex)
+    }
+    fut
+  }
+
+  /** Реализация отправки письма. Логика эта обычно синхронная, но это тут не важно. */
+  protected def _doSend(): Future[_]
+
 }
 
 
@@ -46,7 +67,7 @@ trait EmailBuilderShared extends EmailBuilder {
   protected var _html: Option[String]     = None
   protected var _text: Option[String]     = None
   protected var _replyTo: Option[String]  = None
-  protected var _recipients: Seq[String]  = Seq.empty
+  protected var _recipients: Seq[String]  = Nil
   protected var _from: Option[String]     = None
   protected var _subject: Option[String]  = None
 
@@ -91,7 +112,10 @@ class PlayMailerEmailBuilder @Inject() (
 )
   extends EmailBuilderShared
 {
-  override def send(): Unit = {
+
+
+  /** Реализация отправки письма. Логика эта обычно синхронная, но это тут не важно. */
+  override protected def _doSend(): Future[_] = {
     val email = Email(
       subject   = _subject.get,
       from      = _from.get,
@@ -100,8 +124,10 @@ class PlayMailerEmailBuilder @Inject() (
       bodyHtml  = _html,
       replyTo   = _replyTo
     )
-    mailClient.send(email)
+    val mailId = mailClient.send(email)
+    Future.successful(mailId)
   }
+
 }
 /** Интерфейс для Guice factory, собирающей инстансы [[PlayMailerEmailBuilder]]. */
 trait PlayMailerEmailBuildersFactory {
@@ -118,7 +144,8 @@ class CommonsEmailBuilder @Inject() (
   with MacroLogsImplLazy
 {
 
-  override def send(): Unit = {
+  /** Реализация отправки письма. Логика эта обычно синхронная, но это тут не важно. */
+  override protected def _doSend(): Future[_] = {
     // В зависимости от наличия/отсутствия html-части нужно дергать те или иные классы:
     val email = if (_html.isDefined) {
       val _email = new HtmlEmail()
@@ -133,6 +160,7 @@ class CommonsEmailBuilder @Inject() (
     } else {
       undefinedBodyException
     }
+
     // Расставить заголовки сообщения.
     email.setHostName(state.host)
     email.setAuthenticator(state.auth)
@@ -144,13 +172,11 @@ class CommonsEmailBuilder @Inject() (
       email.addReplyTo(_replyTo.get)
     if (_recipients.nonEmpty)
       email.addTo(_recipients : _*)
+
     // Отправить собранное сообщение куда надо. Нужно освобождать текущий поток как можно скорее.
-    val fut = Future {
+    Future {
       email.send()
     }(asyncUtil.singleThreadIoContext)
-    fut onFailure { case ex: Throwable =>
-      LOGGER.error(s"${getClass.getSimpleName}.send() Exception occured while trying to send msg", ex)
-    }
   }
 
 }

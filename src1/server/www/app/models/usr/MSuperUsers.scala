@@ -32,7 +32,7 @@ class MSuperUsers @Inject()(
 
   /** Список емейлов админов suggest.io.
     * Раньше жил в конфигах, что вызывало больше неудобств, чем пользы. */
-  def SU_EMAILS: Seq[String] = {
+  val SU_EMAILS: Seq[String] = {
     Seq(
       "konstantin.nikiforov@cbca.ru",
       //"ilya@shuma.ru",

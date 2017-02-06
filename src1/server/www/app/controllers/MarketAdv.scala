@@ -22,6 +22,7 @@ import util.adv.direct.{AdvDirectBilling, AdvDirectFormUtil}
 import util.adv.AdvFormUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.cal.CalendarUtil
+import util.mdr.MdrUtil
 import views.html.lk.adv.direct._
 import views.html.lk.adv.widgets.period._reportTpl
 import views.html.lk.lkwdgts.price._
@@ -44,6 +45,7 @@ class MarketAdv @Inject() (
                             bill2Util                       : Bill2Util,
                             mItems                          : MItems,
                             mNodes                          : MNodes,
+                            mdrUtil                         : MdrUtil,
                             tfDailyUtil                     : TfDailyUtil,
                             calendarUtil                    : CalendarUtil,
                             override val mCommonDi          : ICommonDi
@@ -428,25 +430,32 @@ class MarketAdv @Inject() (
           personContract    <- personContractFut
 
           // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
-          billRes <- {
+          (billRes, isMdrNotifyNeeded) <- {
             val dbAction = for {
               cartOrder  <- bill2Util.ensureCart(
                 contractId  = personContract.mc.id.get,
                 status0     = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
               )
 
+              mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
+
               itemsSaved <- {
                 val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
                 mItems.insertMany(items0)
               }
+
             } yield {
-              MOrderWithItems(cartOrder, itemsSaved)
+              MOrderWithItems(cartOrder, itemsSaved) -> mdrNotifyNeeded
             }
             import slick.profile.api._
             slick.db.run( dbAction.transactionally )
           }
 
         } yield {
+          LOGGER.debug(s"$logPrefix Successfully created items, mdrNotifyNeeded=$isMdrNotifyNeeded, res = $billRes")
+
+          mdrUtil.maybeSendMdrNotify(isMdrNotifyNeeded)
+
           // Всё сделано, отредиректить юзера
           if (!isSuFree) {
             // Обычные юзеры отправляются в корзину.
