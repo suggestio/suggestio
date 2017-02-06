@@ -34,11 +34,11 @@ import scala.concurrent.Future
 class Umap @Inject() (
   umapUtil                        : UmapUtil,
   mNodes                          : MNodes,
+  isSuNode                        : IsSuNode,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSuNode
   with IsSuperuser
 {
 
@@ -80,7 +80,7 @@ class Umap @Inject() (
    * @param nodeId id узла.
    * @return 200 OK и страница с картой.
    */
-  def getAdnNodeMap(nodeId: String) = IsSuNodeGet(nodeId) { implicit request =>
+  def getAdnNodeMap(nodeId: String) = isSuNode.Get(nodeId) { implicit request =>
     // TODO Нужно задействовать reverse-роутер.
     val dlUrl = s"/sys/umap/node/$nodeId/datalayer?ngl={pk}"
     val args = UmapTplArgs(
@@ -178,7 +178,7 @@ class Umap @Inject() (
 
 
   /** Получение геослоя в рамках карты одного узла. */
-  def getDataLayerNodeGeoJson(nodeId: String, ngl: NodeGeoLevel) = IsSuNode(nodeId).async { implicit request =>
+  def getDataLayerNodeGeoJson(nodeId: String, ngl: NodeGeoLevel) = isSuNode(nodeId).async { implicit request =>
     val adnIdOpt = request.mnode.id
     val nodes = Seq(request.mnode)
     _getDataLayerGeoJson(adnIdOpt, ngl, nodes)
@@ -215,7 +215,7 @@ class Umap @Inject() (
 
   /** Сабмит одного слоя на карте узла. */
   def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = {
-    IsSuNodePost(adnId).async(parse.multipartFormData) { implicit request =>
+    isSuNode.Post(adnId).async(parse.multipartFormData) { implicit request =>
       _saveMapDataLayer(ngl, request.mnode.id){ _ => adnId }
     }
   }

@@ -1,9 +1,11 @@
 package util.acl
 
-import controllers.SioController
-import models.req.{IReqHdr, MReq, MNodeReq}
+import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
+import models.req.{IReqHdr, MNodeReq, MReq}
+
 import scala.concurrent.Future
-import play.api.mvc.{Request, ActionBuilder, Result}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 /**
  * Suggest.io
@@ -13,9 +15,9 @@ import play.api.mvc.{Request, ActionBuilder, Result}
  *
  * 2015.dec.23: Изначально назывался IsSuperuserAdnNode и обслуживал только MAdnNode.
  */
-trait IsSuNode
-  extends SioController
-  with Csrf
+@Singleton
+class IsSuNode @Inject() ( override val mCommonDi: ICommonDi )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -66,15 +68,20 @@ trait IsSuNode
    */
   case class IsSuNode(override val nodeId: String)
     extends IsSuNodeBase2
+  def apply(nodeId: String) = IsSuNode(nodeId)
 
   /** Аналог [[IsSuNode]] с выставлением CSRF-токена. */
-  case class IsSuNodeGet(override val nodeId: String)
+  case class Get(override val nodeId: String)
     extends IsSuNodeBase2
     with CsrfGet[MNodeReq]
 
   /** Аналог [[IsSuNode]] с проверкой CSRF-токена при сабмитах. */
-  case class IsSuNodePost(override val nodeId: String)
+  case class Post(override val nodeId: String)
     extends IsSuNodeBase2
     with CsrfPost[MNodeReq]
 
+}
+
+trait IIsSuNodeDi {
+  val isSuNode: IsSuNode
 }

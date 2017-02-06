@@ -9,7 +9,7 @@ import models.msys.MNodeEdgeIdQs
 import models.req.{INodeEdgeReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
-import util.acl.{IsSuNode, IsSuNodeEdge}
+import util.acl.{IIsSuNodeDi, IsSuNodeEdge}
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.market.edge._
 
@@ -28,7 +28,7 @@ import scala.concurrent.Future
 trait SysNodeEdges
   extends SioController
   with IMacroLogs
-  with IsSuNode
+  with IIsSuNodeDi
   with IsSuNodeEdge
   with IMNodes
   with ISysMarketUtilDi
@@ -64,7 +64,7 @@ trait SysNodeEdges
 
 
   /** Экшен запроса страницы с формой создания нового эджа на указанном узле. */
-  def createEdgeGet(nodeId: MEsUuId) = IsSuNodeGet(nodeId).async { implicit request =>
+  def createEdgeGet(nodeId: MEsUuId) = isSuNode.Get(nodeId).async { implicit request =>
     val form = sysMarketUtil.edgeFormM
     _createEdgeBody(Ok, form)
   }
@@ -75,7 +75,7 @@ trait SysNodeEdges
   }
 
   /** Сабмит формы создания нового эджа на узле. */
-  def createEdgePost(nodeId: MEsUuId) = IsSuNodeGet(nodeId).async { implicit request =>
+  def createEdgePost(nodeId: MEsUuId) = isSuNode.Get(nodeId).async { implicit request =>
     def logPrefix = s"createEdgePost(${nodeId.id}):"
 
     sysMarketUtil.edgeFormM.bindFromRequest().fold(

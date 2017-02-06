@@ -1,6 +1,6 @@
 package controllers.sysctl.bill
 
-import controllers.routes
+import controllers.{SioController, routes}
 import io.suggest.util.logs.IMacroLogs
 import models.mcal.IMCalendars
 import models.msys.bill.MTfDailyEditTplArgs
@@ -8,7 +8,7 @@ import models.req.INodeReq
 import models.MDailyTf
 import play.api.data.Form
 import play.api.mvc.Result
-import util.acl.IsSuNode
+import util.acl.IIsSuNodeDi
 import util.billing.ITfDailyUtilDi
 import views.html.sys1.bill.daily._
 
@@ -22,7 +22,8 @@ import scala.concurrent.Future
  * Description: Трейт с экшенами контроллера sys billing редактирования полуточных тарифов.
  */
 trait SbNodeTfDaily
-  extends IsSuNode
+  extends SioController
+  with IIsSuNodeDi
   with IMacroLogs
   with ITfDailyUtilDi
   with IMCalendars
@@ -35,7 +36,7 @@ trait SbNodeTfDaily
    *
    * @param nodeId id узла, для которого редактируется тариф.
    */
-  def editNodeTfDaily(nodeId: String) = IsSuNodeGet(nodeId).async { implicit request =>
+  def editNodeTfDaily(nodeId: String) = isSuNode.Get(nodeId).async { implicit request =>
     // Вычисляем эффективный тариф узла.
     val realTfFut = tfDailyUtil.forcedNodeTf(request.mnode)
 
@@ -73,7 +74,7 @@ trait SbNodeTfDaily
    * @param nodeId id редактируемого узла.
    * @return редирект на forNode().
    */
-  def editNodeTfDailySubmit(nodeId: String) = IsSuNodePost(nodeId).async { implicit request =>
+  def editNodeTfDailySubmit(nodeId: String) = isSuNode.Post(nodeId).async { implicit request =>
     tfDailyUtil.tfDailyForm.bindFromRequest().fold(
       {formWithErrors =>
         val respFut = _editNodeTfDaily(Future.successful(formWithErrors), NotAcceptable)
@@ -98,7 +99,7 @@ trait SbNodeTfDaily
    * @param nodeId id редактируемого узла.
    * @return Редирект на forNode().
    */
-  def deleteNodeTfDaily(nodeId: String) = IsSuNodePost(nodeId).async { implicit request =>
+  def deleteNodeTfDaily(nodeId: String) = isSuNode.Post(nodeId).async { implicit request =>
     // Запустить стирание посуточного тарифа узла.
     val saveFut = tfDailyUtil.updateNodeTf(request.mnode, newTf = None)
 

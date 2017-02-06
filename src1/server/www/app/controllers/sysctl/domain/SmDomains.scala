@@ -10,7 +10,7 @@ import models.req.INodeReq
 import play.api.data.Form
 import play.api.mvc.Result
 import play.twirl.api.Html
-import util.acl.IsSuNode
+import util.acl.IIsSuNodeDi
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.domains._
 
@@ -23,7 +23,7 @@ import views.html.sys1.domains._
 trait SmDomains
   extends SioController
   with IMacroLogs
-  with IsSuNode
+  with IIsSuNodeDi
   with ISysMarketUtilDi
   with IMNodes
 {
@@ -32,7 +32,7 @@ trait SmDomains
 
 
   /** Запрос страницы добавления домена к узлу. */
-  def createNodeDomain(nodeId: String) = IsSuNodeGet(nodeId) { implicit request =>
+  def createNodeDomain(nodeId: String) = isSuNode.Get(nodeId) { implicit request =>
     Ok( _createNodeDomainBody(sysMarketUtil.mDomainExtraFormM) )
   }
 
@@ -47,7 +47,7 @@ trait SmDomains
   }
 
   /** Сабмит формы добавления домена к узлу. */
-  def createNodeDomainFormSubmit(nodeId: String) = IsSuNodePost(nodeId).async { implicit request =>
+  def createNodeDomainFormSubmit(nodeId: String) = isSuNode.Post(nodeId).async { implicit request =>
     lazy val logPrefix = s"createNodeDomainFormSubmit($nodeId):"
     sysMarketUtil.mDomainExtraFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -79,7 +79,7 @@ trait SmDomains
     * @param dkey ключ редактируемого узла.
     * @return 200, 403/302.
     */
-  def editNodeDomain(nodeId: String, dkey: String) = IsSuNodeGet(nodeId) { implicit request =>
+  def editNodeDomain(nodeId: String, dkey: String) = isSuNode.Get(nodeId) { implicit request =>
     _editNodeDomainBody(dkey, Ok) { sysMarketUtil.mDomainExtraFormM.fill }
   }
 
@@ -97,7 +97,7 @@ trait SmDomains
   }
 
   /** Реакция на сабмит формы редактирования одного домена, относящегося к узлу. */
-  def editNodeDomainFormSubmit(nodeId: String, dkey: String) = IsSuNodePost(nodeId).async { implicit request =>
+  def editNodeDomainFormSubmit(nodeId: String, dkey: String) = isSuNode.Post(nodeId).async { implicit request =>
     lazy val logPrefix = s"editNodeDomainFormSubmit($nodeId, $dkey):"
     sysMarketUtil.mDomainExtraFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -124,7 +124,7 @@ trait SmDomains
 
 
   /** Реакция на сабмит формы-кнопки удаления домена из узла. */
-  def deleteNodeDomainFormSubmit(nodeId: String, dkey: String) = IsSuNodePost(nodeId).async { implicit request =>
+  def deleteNodeDomainFormSubmit(nodeId: String, dkey: String) = isSuNode.Post(nodeId).async { implicit request =>
     val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
       _updateNodeDomains(mnode) {
         mnode.extras.domains

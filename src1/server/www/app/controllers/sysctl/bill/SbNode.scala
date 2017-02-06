@@ -1,12 +1,13 @@
 package controllers.sysctl.bill
 
+import controllers.SioController
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{IMBalances, MBalance}
 import io.suggest.mbill2.m.contract.IMContracts
 import io.suggest.util.logs.IMacroLogs
 import models.msys.bill.MForNodeTplArgs
-import util.acl.IsSuNode
-import util.billing.{IBill2UtilDi, ITfDailyUtilDi}
+import util.acl.IIsSuNodeDi
+import util.billing.IBill2UtilDi
 import views.html.sys1.bill._
 
 import scala.concurrent.Future
@@ -18,7 +19,8 @@ import scala.concurrent.Future
  * Description: Трейт с экшенами sys-биллинга узла второго поколения.
  */
 trait SbNode
-  extends IsSuNode
+  extends SioController
+  with IIsSuNodeDi
   with IMacroLogs
   with IMContracts
   with IMBalances
@@ -32,7 +34,7 @@ trait SbNode
    *
    * @param nodeId id просматриваемого узла.
    */
-  def forNode(nodeId: String) = IsSuNodeGet(nodeId).async { implicit request =>
+  def forNode(nodeId: String) = isSuNode.Get(nodeId).async { implicit request =>
     val contractIdOpt = request.mnode.billing.contractId
 
     val mContractOptFut = FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>

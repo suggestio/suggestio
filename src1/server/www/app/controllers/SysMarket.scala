@@ -59,6 +59,7 @@ class SysMarket @Inject() (
                             emailActivations                : EmailActivations,
                             mPerson                         : MPerson,
                             mItems                          : MItems,
+                            override val isSuNode           : IsSuNode,
                             scAdSearchUtil                  : ScAdSearchUtil,
                             override val mNodes             : MNodes,
                             override val mCommonDi          : ICommonDi
@@ -69,7 +70,6 @@ class SysMarket @Inject() (
   with SmSendEmailInvite
   with SysAdRender
   with IsSuperuserMad
-  with IsSuNode
   with IsSuperuser
   with IsSuperuserOr404
   with SmDomains
@@ -189,7 +189,7 @@ class SysMarket @Inject() (
    *
    * @param nodeId id узла
    */
-  def showAdnNode(nodeId: String) = IsSuNodeGet(nodeId).async { implicit request =>
+  def showAdnNode(nodeId: String) = isSuNode.Get(nodeId).async { implicit request =>
     import request.mnode
 
     def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
@@ -300,7 +300,7 @@ class SysMarket @Inject() (
 
   /** Безвозвратное удаление узла рекламной сети. */
   def deleteAdnNodeSubmit(nodeId: String) = {
-    val ab = IsSuNodePost(nodeId)
+    val ab = isSuNode.Post(nodeId)
     ab.async { implicit request =>
       import request.mnode
       lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
@@ -316,7 +316,7 @@ class SysMarket @Inject() (
             .flashing(FLASH.SUCCESS -> s"""Узел "${mnode.guessDisplayNameOrIdOrEmpty}" удалён.""")
         }
         .recoverWith {
-          case nse: NoSuchElementException =>
+          case _: NoSuchElementException =>
             warn(s"deleteAdnNodeSubmit($nodeId): Node not found. Anyway, resources re-erased.")
             ab.nodeNotFound(request)
         }
@@ -438,7 +438,7 @@ class SysMarket @Inject() (
 
 
   /** Страница с формой редактирования узла ADN. */
-  def editAdnNode(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
+  def editAdnNode(adnId: String) = isSuNode.Get(adnId).async { implicit request =>
     import request.mnode
     val formFilled = adnNodeFormM.fill(mnode)
     editAdnNodeBody(adnId, formFilled, Ok)
@@ -451,7 +451,7 @@ class SysMarket @Inject() (
   }
 
   /** Самбит формы редактирования узла. */
-  def editAdnNodeSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
+  def editAdnNodeSubmit(adnId: String) = isSuNode.Post(adnId).async { implicit request =>
     import request.mnode
     val formBinded = adnNodeFormM.bindFromRequest()
     formBinded.fold(
@@ -474,7 +474,7 @@ class SysMarket @Inject() (
   // Инвайты на управление ТЦ
 
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
-  def nodeOwnerInviteForm(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
+  def nodeOwnerInviteForm(adnId: String) = isSuNode.Get(adnId).async { implicit request =>
     _nodeOwnerInviteFormSubmit(nodeOwnerInviteFormM, Ok)
   }
 
@@ -487,7 +487,7 @@ class SysMarket @Inject() (
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
-  def nodeOwnerInviteFormSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
+  def nodeOwnerInviteFormSubmit(adnId: String) = isSuNode.Post(adnId).async { implicit request =>
     import request.mnode
     nodeOwnerInviteFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -514,7 +514,7 @@ class SysMarket @Inject() (
   // отладка email-сообщений
 
   /** Отобразить html/txt email-сообщение активации без отправки куда-либо чего-либо. Нужно для отладки. */
-  def showEmailInviteMsg(adnId: String) = IsSuNode(adnId) { implicit request =>
+  def showEmailInviteMsg(adnId: String) = isSuNode(adnId) { implicit request =>
     import request.mnode
     val eAct = EmailActivation("test@test.com", id = Some("asdQE123_"))
     Ok( emailNodeOwnerInviteTpl(mnode, eAct) )
@@ -659,9 +659,10 @@ class SysMarket @Inject() (
 
       lazy val logPrefix = s"removeAdRcvr(ad[$adId]${rcvrIdOpt.fold("")(", rcvr[" + _ + "]")}): "
       // Радуемся в лог.
-      rcvrIdOpt match {
-        case Some(rcvrId) => info(logPrefix + "Starting removing for single rcvr...")
-        case None         => warn(logPrefix + "Starting removing ALL rcvrs...")
+      rcvrIdOpt.fold {
+        warn(logPrefix + "Starting removing ALL rcvrs...")
+      } { _ =>
+        info(logPrefix + "Starting removing for single rcvr...")
       }
 
       // Начинаем асинхронно генерить ответ клиенту.
@@ -683,7 +684,7 @@ class SysMarket @Inject() (
       // Дождаться завершения всех операций.
       for {
         rdr  <- rdrToFut
-        mad2 <- madSavedFut
+        _    <- madSavedFut
       } yield {
         // Вернуть редирект с результатом работы.
         rdr.flashing( FLASH.SUCCESS -> "Карточка убрана из выдачи." )
@@ -723,7 +724,7 @@ class SysMarket @Inject() (
   }
 
   /** Отрендериить тела email-сообщений инвайта передачи прав на ТЦ. */
-  def showNodeOwnerEmailInvite(adnId: String) = IsSuNode(adnId) { implicit request =>
+  def showNodeOwnerEmailInvite(adnId: String) = isSuNode(adnId) { implicit request =>
     val eAct = EmailActivation("asdasd@kde.org", key=adnId, id = Some("123123asdasd_-123"))
     Ok( emailNodeOwnerInviteTpl(request.mnode, eAct) )
   }

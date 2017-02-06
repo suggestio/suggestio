@@ -8,7 +8,7 @@ import models.req.INodeReq
 import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.mvc.Result
-import util.acl.IsSuNode
+import util.acl.IIsSuNodeDi
 import util.adn.INodesUtil
 import util.sys.ISysMarketUtilDi
 import views.html.sys1.market.adn.install._
@@ -25,7 +25,7 @@ trait SysNodeInstall
   extends SioController
   with IMacroLogs
   with INodesUtil
-  with IsSuNode
+  with IIsSuNodeDi
   with ISysMarketUtilDi
 {
 
@@ -33,7 +33,7 @@ trait SysNodeInstall
 
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
-  def installDfltMads(adnId: String) = IsSuNodeGet(adnId).async { implicit request =>
+  def installDfltMads(adnId: String) = isSuNode.Get(adnId).async { implicit request =>
     implicit val ctx = implicitly[Context]
     val fd = MSysNodeInstallFormData(
       count = nodesUtil.INIT_ADS_COUNT,
@@ -58,7 +58,7 @@ trait SysNodeInstall
 
 
   /** Сабмит формы установки дефолтовых карточек. */
-  def installDfltMadsSubmit(adnId: String) = IsSuNodePost(adnId).async { implicit request =>
+  def installDfltMadsSubmit(adnId: String) = isSuNode.Post(adnId).async { implicit request =>
     lazy val logPrefix = s"installDfltMadsSubmit($adnId):"
     sysMarketUtil.nodeInstallForm.bindFromRequest().fold(
       {formWithErrors =>
