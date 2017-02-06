@@ -700,6 +700,7 @@ edge.predicate.ka=Adv on node
 edge.predicate.l=Tagged
 edge.predicate.lg=Adv in geotag
 edge.predicate.ls=Self-tag
+edge.predicate.ld=Directly tagged
 edge.predicate.m=Background
 edge.predicate.n=Node location
 edge.predicate.o=Adv in place

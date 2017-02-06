@@ -19,6 +19,7 @@ import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.es.SiowebEsModelJmx
+import util.secure.SCryptUtilJmx
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -45,6 +46,7 @@ class JMXImpl @Inject() (
                           mIpRangesJmx                  : MIpRangesJmx,
                           mCitiesJmx                    : MCitiesJmx,
                           mStatsJmx                     : MStatsJmx,
+                          sCryptUtilJmx                 : SCryptUtilJmx,
                           lifecycle                     : ApplicationLifecycle,
                           implicit private val ec       : ExecutionContext
 )
@@ -70,7 +72,8 @@ class JMXImpl @Inject() (
       mIpRangesJmx,
       mCitiesJmx,
       mMediasJmx,
-      mStatsJmx
+      mStatsJmx,
+      sCryptUtilJmx
     )
   }
 

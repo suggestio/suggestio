@@ -1,7 +1,8 @@
 package util.secure
 
-import com.google.inject.Singleton
+import com.google.inject.{Inject, Singleton}
 import com.lambdaworks.crypto.SCryptUtil
+import io.suggest.util.JMXBase
 
 /**
   * Suggest.io
@@ -70,4 +71,35 @@ class ScryptUtil {
 /** Интерфейс для DI-поля с инстансом [[ScryptUtil]]. */
 trait IScryptUtilDi {
   def scryptUtil: ScryptUtil
+}
+
+
+/** Интерфейс для JMX MBean'а для [[ScryptUtil]]. */
+trait SCryptUtilJmxMBean {
+
+  def mkHash(password: String): String
+
+  def checkPasswordHash(password: String, hash: String): Boolean
+
+}
+
+
+/** Реализация JMX Mbean'а [[SCryptUtilJmx]] для [[SCryptUtil]]. */
+class SCryptUtilJmx @Inject() (
+                                scryptUtil: ScryptUtil
+                              )
+  extends JMXBase
+  with SCryptUtilJmxMBean
+{
+
+  override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  override def mkHash(password: String): String = {
+    scryptUtil.mkHash(password)
+  }
+
+  override def checkPasswordHash(password: String, hash: String): Boolean = {
+    scryptUtil.checkHash(password, hash = hash)
+  }
+
 }

@@ -56,12 +56,14 @@ class CanAdvertiseAdUtil @Inject() (
       }
 
     } else {
-      prodIdOpt.fold {
+      req.user.personIdOpt.fold {
         trace(s"maybeAllowed(${mad.id.get}): anonymous access prohibited")
-        Future successful Option.empty[MAdProdReq[A]]
+        val r = Option.empty[MAdProdReq[A]]
+        Future.successful(r)
+
       } { personId =>
-        prodOptFut.map { adnNodeOpt =>
-          val resOpt = adnNodeOpt
+        for (prodOpt <- prodOptFut) yield {
+          val resOpt = prodOpt
             .filter { mnode =>
               val isOwnedByMe = mnode.edges
                 .withPredicateIterIds( MPredicates.OwnedBy )

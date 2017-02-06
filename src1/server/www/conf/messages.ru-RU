@@ -710,6 +710,7 @@ edge.predicate.ka=Размещение в узле
 edge.predicate.l=Тег
 edge.predicate.lg=Размещение в геотеге
 edge.predicate.ls=Сам себе тег
+edge.predicate.ld=Прямой теггинг
 edge.predicate.m=Фон
 edge.predicate.n=Локация узла
 edge.predicate.o=Размещение в месте
