@@ -10,9 +10,9 @@ import io.suggest.adv.AdvConstants
 import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
-import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.order.{MOrderStatuses, MOrders}
+import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.async.StreamsUtil
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
@@ -68,8 +68,7 @@ class LkAdvGeo @Inject() (
   ymdHelpersJvm                   : YmdHelpersJvm,
   mdrUtil                         : MdrUtil,
   override val mNodes             : MNodes,
-  override val mItems             : MItems,
-  override val mOrders            : MOrders,
+  canAccessItem                   : CanAccessItem,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,
@@ -80,12 +79,12 @@ class LkAdvGeo @Inject() (
   with CanAdvertiseAd
   with NodeTagsEdit
   with CanThinkAboutAdvOnMapAdnNode
-  with CanAccessItem
 {
 
   import mCommonDi._
   import streamsUtil.Implicits._
   import ymdHelpersJvm.Implicits._
+  import canAccessItem.CanAccessItemPost
 
   // Сериализация:
   import pickleSrvUtil.Base64ByteBufEncoder

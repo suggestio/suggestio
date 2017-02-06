@@ -1,11 +1,12 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.item.{IMItems, MItem}
-import io.suggest.mbill2.m.order.IMOrders
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.m.order.MOrders
+import io.suggest.util.logs.MacroLogsImpl
+import models.mproj.ICommonDi
 import models.req.{MItemReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
@@ -17,12 +18,14 @@ import scala.concurrent.Future
   * Created: 17.03.16 10:15
   * Description: Аддон для контроллеров с поддержкой проверки прав доступа на изменение item'а.
   */
-trait CanAccessItem
-  extends SioController
-  with Csrf
-  with IMItems
-  with IMOrders
-  with IMacroLogs
+@Singleton
+class CanAccessItem @Inject() (
+                                mItems                  : MItems,
+                                mOrders                 : MOrders,
+                                override val mCommonDi  : ICommonDi
+                              )
+  extends Csrf
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -119,7 +122,7 @@ trait CanAccessItem
             unaccessableOpt.fold {
               LOGGER.debug(s"$logPrefix item not exists")
             } { mitem =>
-              LOGGER.warn(s"$logPrefix Item exists, but not accessable.")
+              LOGGER.warn(s"$logPrefix Item exists, but not accessable: $mitem")
             }
             // Возвращаем 403, чтобы защититься от сканирования id ордеров.
             itemForbidden(request)
@@ -174,4 +177,9 @@ trait CanAccessItem
     extends CanAccessItemAbstract
     with CsrfPost[MItemReq]
 
+}
+
+
+trait ICanAccessItemDi {
+  val canAccessItem: CanAccessItem
 }

@@ -4,14 +4,14 @@ import controllers.{SioController, routes}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{ItemStatusChanged, MItem}
+import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{MOrderStatuses, OrderStatusChanged}
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mlk.bill.{MCartItem, MCartTplArgs}
-import util.acl.{CanAccessItem, IsAdnNodeAdmin}
+import util.acl.{ICanAccessItemDi, IsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
 import views.html.lk.billing.cart._
@@ -29,11 +29,13 @@ trait LkBill2Cart
   with IBill2UtilDi
   with IMacroLogs
   with IsAdnNodeAdmin
-  with CanAccessItem
+  with IMItems
+  with ICanAccessItemDi
   with IBlkImgMakerDI
 {
 
   import mCommonDi._
+  import canAccessItem.CanAccessItemPost
 
   /** Отображение карточек в таком вот размере. */
   private def ADS_SZ_MULT = 0.25F

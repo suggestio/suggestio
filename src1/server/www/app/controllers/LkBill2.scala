@@ -4,7 +4,6 @@ import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.cbill.{LkBill2Cart, LkBillTxns}
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
@@ -12,7 +11,7 @@ import models.im.make.IMaker
 import models.mbill.{MDailyTfTplArgs, MLkBillNodeTplArgs, MRcvrInfoTplArgs}
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.acl.IsAuthNode
+import util.acl.{CanAccessItem, IsAuthNode}
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.GalleryUtil
 import views.html.lk.billing._
@@ -30,9 +29,9 @@ class LkBill2 @Inject() (
   tfDailyUtil                 : TfDailyUtil,
   mCalendars                  : MCalendars,
   galleryUtil                 : GalleryUtil,
+  override val canAccessItem  : CanAccessItem,
   @Named("blk") override val blkImgMaker  : IMaker,
   override val mItems         : MItems,
-  override val mOrders        : MOrders,
   override val bill2Util      : Bill2Util,
   override val mTxns          : MTxns,
   override val mCommonDi      : ICommonDi
