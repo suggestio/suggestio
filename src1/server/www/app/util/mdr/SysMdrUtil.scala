@@ -191,13 +191,12 @@ class SysMdrUtil @Inject() (
     }
   }
 
-
   /** SQL для экшена поиска id карточек, нуждающихся в модерации. */
   def _findPaidAdIds4MdrAction(args: MdrSearchArgs) = {
     val b0 = mItems
       .query
       .filter { i =>
-        (i.iTypeStr inSet MItemTypes.advTypesIds.toSeq) &&
+        //(i.iTypeStr inSet  MItemTypes.advTypesIds.toSeq) &&   // Закоменчено, т.к. AwaitingMdr подразумевает неизбежность модерации.
           (i.statusStr === MItemStatuses.AwaitingMdr.strId)
       }
 

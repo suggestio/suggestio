@@ -67,6 +67,7 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
 
 
   /** Типы, относящиеся к рекламным размещениям. */
+  // TODO Перенести TagDirect в advDirectTypes, если это безопасно.
   def advTypes                = advGeoTypes reverse_::: advDirectTypes
   def advTypesIds             = onlyIds( advTypes )
 
@@ -74,8 +75,7 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   def advGeoTypes             = GeoTag :: GeoPlace :: Nil
   def advGeoTypeIds           = onlyIds( advGeoTypes )
 
-  def advDirectTypes          = AdvDirect :: Nil
-
+  def advDirectTypes          = AdvDirect :: TagDirect :: Nil
 
   /** Поддержка маппинга для play router. */
   implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
