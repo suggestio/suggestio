@@ -1,7 +1,7 @@
 package util.acl
 
-import controllers.SioController
-import models.req.MReq
+import com.google.inject.Inject
+import models.req.{MReq, MSioUsers}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
@@ -14,9 +14,7 @@ import scala.concurrent.Future
  * Полезно, когда нужен нормальный реквест, но абсолютно не важно, какой именно.
  */
 
-trait IgnoreAuth extends SioController {
-
-  import mCommonDi._
+class IgnoreAuth @Inject() (mSioUsers: MSioUsers) {
 
   object IgnoreAuth extends ActionBuilder[MReq] {
 
@@ -28,4 +26,8 @@ trait IgnoreAuth extends SioController {
 
   }
 
+}
+
+trait IIgnoreAuth {
+  val ignoreAuth: IgnoreAuth
 }

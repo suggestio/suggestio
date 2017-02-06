@@ -1,8 +1,9 @@
 package controllers.cstatic
 
+import controllers.SioController
 import models.mctx.Context
 import play.api.libs.iteratee.Enumerator
-import util.acl.IgnoreAuth
+import util.acl.IIgnoreAuth
 import util.seo.SiteMapUtil
 import views.html.static.sitemap._
 
@@ -12,11 +13,13 @@ import views.html.static.sitemap._
  * Created: 17.12.15 11:45
  * Description: Трейт для контроллера для поддержки экшена с раздачей sitemap'ов.
  */
-trait SiteMapsXml extends IgnoreAuth {
-
-  def siteMapUtil: SiteMapUtil
+trait SiteMapsXml extends SioController with IIgnoreAuth {
 
   import mCommonDi._
+  import ignoreAuth.IgnoreAuth
+
+
+  def siteMapUtil: SiteMapUtil
 
   /** Время кеширования /sitemap.xml ответа на клиенте. */
   private val SITEMAP_XML_CACHE_TTL_SECONDS: Int = {

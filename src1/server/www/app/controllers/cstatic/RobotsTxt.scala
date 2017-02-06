@@ -1,6 +1,7 @@
 package controllers.cstatic
 
-import util.acl.IgnoreAuth
+import controllers.SioController
+import util.acl.IIgnoreAuth
 import views.txt.static.robotsTxtTpl
 
 /**
@@ -9,9 +10,10 @@ import views.txt.static.robotsTxtTpl
  * Created: 17.12.15 11:18
  * Description: Трейт для контроллеров с экшеном поддержки раздачи robots.txt.
  */
-trait RobotsTxt extends IgnoreAuth {
+trait RobotsTxt extends SioController with IIgnoreAuth {
 
   import mCommonDi._
+  import ignoreAuth.IgnoreAuth
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS: Int = {
