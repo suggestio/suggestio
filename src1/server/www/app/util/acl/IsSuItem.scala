@@ -1,10 +1,11 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.IMItems
-import models.req.{IReqHdr, MReq, MItemReq}
-import play.api.mvc.{Result, Request, ActionBuilder}
+import io.suggest.mbill2.m.item.MItems
+import models.mproj.ICommonDi
+import models.req.{IReqHdr, MItemReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -14,10 +15,11 @@ import scala.concurrent.Future
   * Created: 26.02.16 16:17
   * Description: ACL-аддон для isSuperuser + mItems.getById()
   */
-trait IsSuItem
-  extends SioController
-  with Csrf
-  with IMItems
+class IsSuItem @Inject() (
+                           mItems                   : MItems,
+                           override val mCommonDi   : ICommonDi
+                         )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -65,14 +67,14 @@ trait IsSuItem
     extends IsSuItemBase
     with ExpireSession[MItemReq]
 
-  case class IsSuItem(override val itemId: Gid_t)
-    extends IsSuItemAbstract
+  //case class IsSuItem(override val itemId: Gid_t)
+  //  extends IsSuItemAbstract
 
-  case class IsSuItemGet(override val itemId: Gid_t)
+  case class Get(override val itemId: Gid_t)
     extends IsSuItemAbstract
     with CsrfGet[MItemReq]
 
-  case class IsSuItemPost(override val itemId: Gid_t)
+  case class Post(override val itemId: Gid_t)
     extends IsSuItemAbstract
     with CsrfPost[MItemReq]
 

@@ -27,7 +27,6 @@ import scala.concurrent.Future
   */
 trait SysMdrPaid
   extends SysMdrBase
-  with IsSuItem
   with IsSuperuser
   with IsSuItemAd
   with IsSuperuserMad
@@ -35,11 +34,13 @@ trait SysMdrPaid
   with IScUtil
 {
 
-  import mCommonDi._
-  import slick.profile.api._
-
   override val bill2Util  : Bill2Util
   override val sysMdrUtil : SysMdrUtil
+  val isSuItem: IsSuItem
+
+
+  import mCommonDi._
+  import slick.profile.api._
 
 
   /**
@@ -257,7 +258,7 @@ trait SysMdrPaid
 
 
   /** Модератор отвергает оплаченный item с указанием причины отказа. */
-  def refuseItemSubmit(itemId: Gid_t) = IsSuItemPost(itemId).async { implicit request =>
+  def refuseItemSubmit(itemId: Gid_t) = isSuItem.Post(itemId).async { implicit request =>
     lazy val logPrefix = s"refuseItem($itemId):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>

@@ -7,7 +7,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
-import util.acl.IsSuperuser
+import util.acl.{IsSuItem, IsSuperuser}
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
 import util.mdr.SysMdrUtil
@@ -29,6 +29,7 @@ class SysMdr @Inject() (
   override val scUtil               : ShowcaseUtil,
   override val n2NodesUtil          : N2NodesUtil,
   override val mItems               : MItems,
+  override val isSuItem             : IsSuItem,
   override val bill2Util            : Bill2Util,
   override val sysMdrUtil           : SysMdrUtil,
   override val mCommonDi            : ICommonDi
