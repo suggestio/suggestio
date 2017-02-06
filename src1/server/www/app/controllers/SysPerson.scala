@@ -73,17 +73,17 @@ class SysPerson @Inject() (
   }
 
   /** Отрендерить на экран email-сообщение регистрации юзера. */
-  def showRegEmail = IsSu { implicit request =>
+  def showRegEmail = IsSuGet { implicit request =>
     Ok(emailRegMsgTpl(dummyEa))
   }
 
   /** Отрендерить email-сообщение восстановления пароля. */
-  def showRecoverEmail = IsSu { implicit request =>
+  def showRecoverEmail = IsSuGet { implicit request =>
     Ok(emailPwRecoverTpl(dummyEa))
   }
 
   /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
-  def allEpws(offset: Int) = IsSu.async { implicit request =>
+  def allEpws(offset: Int) = IsSuGet.async { implicit request =>
     val limit = 20
     val epwsFut = emailPwIdents.getAll(limit, offset = offset)
     for {
@@ -98,7 +98,7 @@ class SysPerson @Inject() (
   }
 
   /** Отрендерить страницу с листингом внешних идентов. */
-  def allExtIdents(offset: Int) = IsSu.async { implicit request =>
+  def allExtIdents(offset: Int) = IsSuGet.async { implicit request =>
     val limit = 20
     val extIdentsFut = mExtIdents.getAll(limit, offset = offset)
     for {
