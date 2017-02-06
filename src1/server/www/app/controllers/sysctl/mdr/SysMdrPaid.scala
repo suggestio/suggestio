@@ -48,7 +48,7 @@ trait SysMdrPaid
     * @param args Аргументы поиска модерируемых карточек.
     * @return Страница с плиткой карточек, которые нужно модерировать по-платному направлению.
     */
-  def paidAdvs(args: MdrSearchArgs) = IsSu.async { implicit request =>
+  def paidAdvs(args: MdrSearchArgs) = IsSuGet.async { implicit request =>
     // Залезть в items, найти там размещения, ожидающие подтверждения.
     val dbAction = sysMdrUtil._findPaidAdIds4MdrAction(args)
 

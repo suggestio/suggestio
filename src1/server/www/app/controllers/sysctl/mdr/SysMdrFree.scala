@@ -37,7 +37,7 @@ trait SysMdrFree
     *
     * @param args Аргументы для поиска (QSB).
     */
-  def freeAdvs(args: MdrSearchArgs) = IsSu.async { implicit request =>
+  def freeAdvs(args: MdrSearchArgs) = IsSuGet.async { implicit request =>
     // Необходимо искать карточки, требующие модерации/обработки.
     val madsFut = mNodes.dynSearch( args.toNodeSearch )
     _adsPage(madsFut, args)
