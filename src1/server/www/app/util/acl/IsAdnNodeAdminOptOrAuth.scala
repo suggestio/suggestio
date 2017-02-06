@@ -1,7 +1,8 @@
 package util.acl
 
+import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsDyn
-import models.mproj.IMCommonDi
+import models.mproj.ICommonDi
 import models.req.{MNodeOptReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
@@ -16,15 +17,16 @@ import scala.concurrent.Future
  * Появилось для lkList, где по дизайну было наличие текущей ноды, но для шаблона это было необязательно.
  */
 
-trait IsAdnNodeAdminOptOrAuth
-  extends IMCommonDi
-  with Csrf
+class IsAdnNodeAdminOptOrAuth @Inject() (
+                                          override val mCommonDi: ICommonDi
+                                        )
+  extends Csrf
 {
 
   import mCommonDi._
 
   /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
-  trait IsAdnNodeAdminOptOrAuthBase
+  sealed trait IsAdnNodeAdminOptOrAuthBase
     extends ActionBuilder[MNodeOptReq]
     with MacroLogsDyn
     with OnUnauthUtil

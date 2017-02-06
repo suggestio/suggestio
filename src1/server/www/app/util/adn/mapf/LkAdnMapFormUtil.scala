@@ -26,9 +26,10 @@ class LkAdnMapFormUtil @Inject() (
   /** Form-маппинг для [[MAdnMapFormRes]]. */
   def adnMapFormResM: Mapping[MAdnMapFormRes] = {
     mapping(
-      POINT_FN  -> FormUtil.geoPointM,
-      STATE_FN  -> mapFormUtil.mapStateM,
-      PERIOD_FN -> advFormUtil.advPeriodM
+      POINT_FN      -> FormUtil.geoPointM,
+      STATE_FN      -> mapFormUtil.mapStateM,
+      PERIOD_FN     -> advFormUtil.advPeriodM,
+      TZ_OFFSET_FN  -> number
     )
     { MAdnMapFormRes.apply }
     { MAdnMapFormRes.unapply }

@@ -1,6 +1,6 @@
 package models.mdt
 
-import java.time.{LocalDate, Period}
+import java.time.LocalDate
 
 import io.suggest.dt.{IPeriodInfo, IYmdHelper}
 
@@ -21,10 +21,6 @@ trait IDateStartEnd {
   /** Дата окончания. */
   def dateEnd: LocalDate
   def dtEnd = dateEnd.atStartOfDay()
-
-  def daysPeriod: Period = {
-    Period.between(dateStart, dateEnd)
-  }
 
   override def toString: String = s"$dateStart..$dateEnd"
 }

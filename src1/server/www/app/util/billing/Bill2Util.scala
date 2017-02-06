@@ -71,27 +71,9 @@ class Bill2Util @Inject() (
     Math.max(1, days0) + 1
   }
 
-  /** Посчитать кол-во дней размещения для указанного периода. */
-  def getDaysCount(period: IDateStartEnd): Int = {
-    getDaysCount( period.daysPeriod )
-  }
-  def getDaysCount(daysPeriod: Period): Int = {
-    _getDaysCountFix( daysPeriod.getDays )
-  }
-  /** Посчитать кол-во дней размещения для указанного интервала. */
-  def getDaysCount(interval: Interval): Int = {
-    getDaysCount(interval.toDuration)
-  }
   /** Посчитать кол-во дней размещения для указанного Duration. */
   def getDaysCount(dur: Duration): Int = {
     _getDaysCountFix( dur.toDays.toInt )
-  }
-  def getDaysCount(periodInfo: IPeriodInfo): Int = {
-    val p = Period.between(
-      periodInfo.dateStart[LocalDate],
-      periodInfo.dateEnd[LocalDate]
-    )
-    getDaysCount( p )
   }
 
   def cbcaNodeOptFut = mNodesCache.getById(CBCA_NODE_ID)

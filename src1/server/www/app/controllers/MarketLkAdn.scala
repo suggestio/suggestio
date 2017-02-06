@@ -55,6 +55,7 @@ class MarketLkAdn @Inject() (
   override val emailActivations       : EmailActivations,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
+  isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
   override val scryptUtil             : ScryptUtil,
   override val mCommonDi              : ICommonDi
 )
@@ -63,13 +64,13 @@ class MarketLkAdn @Inject() (
   with BruteForceProtectCtl
   with ChangePwAction
   with NodeEact
-  with IsAdnNodeAdminOptOrAuth
   with IsAdnNodeAdmin
   with IsAuth
 {
 
   import LOGGER._
   import mCommonDi._
+  import isAdnNodeAdminOptOrAuth.IsAdnNodeAdminOptOrAuthGet
 
   /** Список личных кабинетов юзера. */
   def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId, U.Lk).async { implicit request =>

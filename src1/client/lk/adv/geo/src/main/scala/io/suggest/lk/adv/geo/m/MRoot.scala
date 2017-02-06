@@ -5,6 +5,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormS
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
+import io.suggest.sjs.common.controller.DomQuick
 
 import scala.scalajs.js.Date
 
@@ -45,7 +46,6 @@ case class MRoot(
     * @return Состояние формы размещения, пригодное для сериализации и отправки на сервер.
     */
   def toFormData: MFormS = {
-    val tzOffsetMinutes = new Date().getTimezoneOffset()
     MFormS(
       mapProps        = mmap.props,
       onMainScreen    = other.onMainScreen,
@@ -54,7 +54,7 @@ case class MRoot(
       tagsEdit        = tags.props,
       datePeriod      = datePeriod,
       radCircle       = radEnabled.map(_.circle),
-      tzOffsetMinutes = tzOffsetMinutes
+      tzOffsetMinutes = DomQuick.tzOffsetMinutes
     )
   }
 

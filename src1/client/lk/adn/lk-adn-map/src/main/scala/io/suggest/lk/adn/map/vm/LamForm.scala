@@ -27,12 +27,16 @@ case class LamForm(override val _underlying: Dom_t)
   with Adv4FreeInside
   with IContainerField
 {
+
   override type T = Dom_t
+
+  def tzOffField = InpTzOffset.find()
 
   override def initLayout(fsm: SjsFsm): Unit = {
     super.initLayout(fsm)
     val f = IInitLayoutFsm.f(fsm)
     intervalCont.foreach(f)
+    tzOffField.foreach(f)
   }
 
 }

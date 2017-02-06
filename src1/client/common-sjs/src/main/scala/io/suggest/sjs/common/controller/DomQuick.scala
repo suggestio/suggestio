@@ -4,6 +4,7 @@ import io.suggest.sjs.common.model.TimeoutPromise
 import org.scalajs.dom
 
 import scala.concurrent.Promise
+import scala.scalajs.js.Date
 
 /**
   * Suggest.io
@@ -54,5 +55,8 @@ object DomQuick {
   def clearInterval(timer: Int): Unit = {
     dom.window.clearInterval(timer)
   }
+
+  /** Описать текущий сдвиг времени в минутах. */
+  def tzOffsetMinutes: Int = new Date().getTimezoneOffset()
 
 }

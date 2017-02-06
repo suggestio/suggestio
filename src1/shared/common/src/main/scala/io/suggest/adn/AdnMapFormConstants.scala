@@ -20,11 +20,14 @@ object AdnMapFormConstants {
   /** Поля формы. */
   object Fields {
 
-    def POINT_FN  = MapFormConstants.CENTER_FN
+    def POINT_FN      = MapFormConstants.CENTER_FN
 
-    def STATE_FN  = MapFormConstants.STATE_FN
+    def STATE_FN      = MapFormConstants.STATE_FN
 
-    def PERIOD_FN = AdvConstants.PERIOD_FN
+    def PERIOD_FN     = AdvConstants.PERIOD_FN
+
+    def TZ_OFFSET_FN  = "tz"
+    def TZ_OFFSET_ID  = ID_PREFIX + TZ_OFFSET_FN
 
   }
 

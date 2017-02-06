@@ -149,7 +149,7 @@ trait MJsInitTargetsLigthT extends MInitTargetsBaseT with LightEnumeration {
       case CaptchaForm.strId          => Some(CaptchaForm)
       case HiddenCaptcha.strId        => Some(HiddenCaptcha)
       case BillTxnsList.strId         => Some(BillTxnsList)
-      case AdvGeoForm.strId          => Some(AdvGeoForm)
+      case AdvGeoForm.strId           => Some(AdvGeoForm)
       case AdvDirectForm.strId        => Some(AdvDirectForm)
       case AdnMapForm.strId           => Some(AdnMapForm)
       case _                          => None

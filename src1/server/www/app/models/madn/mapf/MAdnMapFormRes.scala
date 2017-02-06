@@ -12,11 +12,13 @@ import models.maps.MapViewState
   * @param point Точка, в которой размещаемся.
   * @param mapState Состояние карты: центр, зум и т.д.
   * @param period Период размещения узла на карте.
+  * @param tzOffMinutes Сдвиг времени в браузере в минутах относительно UTC.
   */
 
 case class MAdnMapFormRes(
-  point                     : MGeoPoint,
-  mapState                  : MapViewState,
-  override val period       : MDatesPeriod
+                           point                     : MGeoPoint,
+                           mapState                  : MapViewState,
+                           override val period       : MDatesPeriod,
+                           tzOffMinutes              : Int = 0
 )
   extends IAdvFormResult

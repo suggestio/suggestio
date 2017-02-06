@@ -1,6 +1,6 @@
 package util.adn.mapf
 
-import java.time.ZoneId
+import java.time.Duration
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MGetPriceResp, MPrice}
@@ -9,6 +9,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.www.util.dt.DateTimeUtil
 import models.madn.mapf.MAdnMapFormRes
 import models.mproj.ICommonDi
 import util.billing.Bill2Util
@@ -39,7 +40,10 @@ class LkAdnMapBillUtil @Inject() (
   /** Рассчёт стоимости размещения. */
   def getPrice(formRes: MAdnMapFormRes): MPrice = {
     // +1 потому что кол-во дней как-то неправильно считается.
-    val daysCount = bill2Util.getDaysCount( formRes.period )
+    val period = formRes.period
+    val dur = Duration.between( period.dtStart, period.dtEnd )
+
+    val daysCount = bill2Util.getDaysCount( dur )
     val oneDayPrice = ONE_DAY_PRICE
     oneDayPrice.withAmount(
       daysCount * oneDayPrice.amount
@@ -57,14 +61,15 @@ class LkAdnMapBillUtil @Inject() (
     * @return DB-экшен добавления заказа в ордер.
     */
   def addToOrder(orderId: Gid_t, nodeId: String, formRes: MAdnMapFormRes, status: MItemStatus): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+    val tzOffset = DateTimeUtil.minutesOffset2TzOff( formRes.tzOffMinutes )
     val mitem = MItem(
       orderId       = orderId,
       iType         = MItemTypes.AdnNodeMap,
       status        = status,
       price         = getPrice(formRes),
       nodeId        = nodeId,
-      dateStartOpt  = Some( formRes.period.dateStart.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime ),
-      dateEndOpt    = Some( formRes.period.dateEnd.atStartOfDay(ZoneId.systemDefault()).toOffsetDateTime ),
+      dateStartOpt  = Some( formRes.period.dtStart.atOffset(tzOffset) ),
+      dateEndOpt    = Some( formRes.period.dtEnd.atOffset(tzOffset) ),
       rcvrIdOpt     = None,
       geoShape      = Some( PointGs(formRes.point) )
     )

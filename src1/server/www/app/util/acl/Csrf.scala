@@ -35,12 +35,17 @@ trait Csrf extends IMCommonDi {
 
   import mCommonDi.{ec, csrfAddToken, csrfCheck}
 
+  private def withNoCacheFut(resFut: Future[Result]): Future[Result] = {
+    resFut.map { withNoCache }
+  }
+
   /** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
   trait CsrfGet[R[_]] extends ActionBuilder[R] {
 
     abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-      super.invokeBlock(request, block)
-        .map { withNoCache }
+      withNoCacheFut {
+        super.invokeBlock(request, block)
+      }
     }
 
     override protected def composeAction[A](action: Action[A]): Action[A] = {
@@ -53,8 +58,9 @@ trait Csrf extends IMCommonDi {
   trait CsrfPost[R[_]] extends ActionBuilder[R] {
 
     abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-      super.invokeBlock(request, block)
-        .map { withNoCache }
+      withNoCacheFut {
+        super.invokeBlock(request, block)
+      }
     }
 
     override protected def composeAction[A](action: Action[A]): Action[A] = {

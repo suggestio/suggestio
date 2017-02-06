@@ -227,7 +227,7 @@ class LkAdnMap @Inject() (
         val pricingHtmlFut = for {
           pricing <- pricingFut
         } yield {
-          LOGGER.trace(s"$logPrefix pricing => $pricing, isSuFree = $isSuFree")
+          LOGGER.trace(s"$logPrefix formRes = $formRes, $isSuFree, pricing => $pricing")
           val html = _priceValTpl(pricing)(ctx)
           htmlCompressUtil.html2str4json(html)
         }

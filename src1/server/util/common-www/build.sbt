@@ -13,8 +13,8 @@ disablePlugins(PlayLayoutPlugin)
 
 libraryDependencies ++= {
   Seq(
-    "com.typesafe.play"   %% "play-slick" % Common.Vsn.PLAY_SLICK
-    //"org.scalatest"       %% "scalatest"            % Common.scalaTestVsn % "test"
+    "com.typesafe.play"   %% "play-slick"           % Common.Vsn.PLAY_SLICK,
+    "org.scalatest"       %% "scalatest"            % Common.scalaTestVsn     % Test
   )
 }
 

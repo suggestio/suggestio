@@ -13,6 +13,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.dt.DateTimeUtil
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
 import models.mdt.MDateStartEnd
@@ -144,7 +145,7 @@ class AdvGeoBillUtil @Inject() (
     val dateEnd   = ymdPeriod.dateEnd[LocalDate]
 
     // Инновация: берём временную зону прямо из браузера!
-    val tzOffset = ZoneOffset.ofTotalSeconds( abc.res.tzOffsetMinutes * 60 )
+    val tzOffset = DateTimeUtil.minutesOffset2TzOff( abc.res.tzOffsetMinutes )
 
     val dtStartOpt = Some( dateStart.atStartOfDay().atOffset(tzOffset) )
     val dtEndOpt   = Some( dateEnd.atStartOfDay().atOffset(tzOffset) )

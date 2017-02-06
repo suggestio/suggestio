@@ -10,6 +10,7 @@
 @import lk.dsl._
 @import views.html.stuff.geo.maps._
 @import views.html.stuff.geo._hiddenLatLonTpl
+@import views.html.stuff._inputHiddenTpl
 
 @form( CSRF(routes.LkAdnMap.forNodeSubmit(args.mnode.id.get)), 'id -> FORM_ID) {
 
@@ -18,9 +19,7 @@
 
   @* Левая колонка. *@
   @_barTpl(MHands.Left) {
-
     @messages("You.can.place.adn.node.on.map.below")
-
   }
 
 
@@ -52,6 +51,12 @@
     args.form( Fields.POINT_FN ),
     latId = Some( Point.INPUT_ID_LAT ),
     lonId = Some( Point.INPUT_ID_LON )
+  )
+
+  @* Поле для рендера сдвига временной зоны. *@
+  @_inputHiddenTpl(
+    args.form( Fields.TZ_OFFSET_FN ),
+    id = Some( Fields.TZ_OFFSET_ID )
   )
 
 }
