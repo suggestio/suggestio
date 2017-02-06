@@ -1,9 +1,10 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.{IMItems, MItem}
-import io.suggest.util.logs.IMacroLogs
+import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.util.logs.MacroLogsImpl
+import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemAdReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
@@ -15,11 +16,12 @@ import scala.concurrent.Future
   * Created: 01.03.16 11:15
   * Description: Аддон для контроллеров для поддержки получения MItem вместе со связанной mad.
   */
-trait IsSuItemAd
-  extends SioController
-  with Csrf
-  with IMItems
-  with IMacroLogs
+class IsSuItemAd @Inject() (
+                             mItems                 : MItems,
+                             override val mCommonDi : ICommonDi
+                           )
+  extends Csrf
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -82,14 +84,14 @@ trait IsSuItemAd
     extends IsSuItemAdBase
     with ExpireSession[MItemAdReq]
 
-  case class IsSuItemAd(override val itemId: Gid_t)
-    extends IsSuItemAdAbstract
+  //case class IsSuItemAd(override val itemId: Gid_t)
+  //  extends IsSuItemAdAbstract
 
-  case class IsSuItemAdGet(override val itemId: Gid_t)
+  case class Get(override val itemId: Gid_t)
     extends IsSuItemAdAbstract
     with CsrfGet[MItemAdReq]
 
-  case class IsSuItemAdPost(override val itemId: Gid_t)
+  case class Post(override val itemId: Gid_t)
     extends IsSuItemAdAbstract
     with CsrfPost[MItemAdReq]
 

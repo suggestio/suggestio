@@ -28,7 +28,6 @@ import scala.concurrent.Future
 trait SysMdrPaid
   extends SysMdrBase
   with IsSuperuser
-  with IsSuItemAd
   with IsSuperuserMad
   with IBill2UtilDi
   with IScUtil
@@ -37,6 +36,7 @@ trait SysMdrPaid
   override val bill2Util  : Bill2Util
   override val sysMdrUtil : SysMdrUtil
   val isSuItem: IsSuItem
+  val isSuItemAd: IsSuItemAd
 
 
   import mCommonDi._
@@ -252,7 +252,7 @@ trait SysMdrPaid
   }
 
   /** Запрос попапам с формой отказа в размещение item'а. */
-  def refuseItemPopup(itemId: Gid_t) = IsSuItemAdGet(itemId).async { implicit request =>
+  def refuseItemPopup(itemId: Gid_t) = isSuItemAd.Get(itemId).async { implicit request =>
     _refusePopup(routes.SysMdr.refuseItemSubmit(itemId))
   }
 

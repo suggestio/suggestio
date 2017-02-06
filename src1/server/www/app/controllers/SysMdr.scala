@@ -2,12 +2,11 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
-import io.suggest.mbill2.m.item.MItems
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
-import util.acl.{IsSuItem, IsSuperuser}
+import util.acl.{IsSuItem, IsSuItemAd, IsSuperuser}
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
 import util.mdr.SysMdrUtil
@@ -28,8 +27,8 @@ class SysMdr @Inject() (
   override val mNodes               : MNodes,
   override val scUtil               : ShowcaseUtil,
   override val n2NodesUtil          : N2NodesUtil,
-  override val mItems               : MItems,
   override val isSuItem             : IsSuItem,
+  override val isSuItemAd           : IsSuItemAd,
   override val bill2Util            : Bill2Util,
   override val sysMdrUtil           : SysMdrUtil,
   override val mCommonDi            : ICommonDi
