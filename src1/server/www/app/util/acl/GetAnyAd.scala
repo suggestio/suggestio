@@ -1,9 +1,11 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodeTypes
+import models.mproj.ICommonDi
 import models.req.MAdReq
-import play.api.mvc.{Result, Request, ActionBuilder}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
 
@@ -13,14 +15,12 @@ import scala.concurrent.Future
  * Created: 14.10.15 17:32
  * Description: ActionBuild для запроса действия над любой карточкой без проверки прав.
  */
-trait GetAnyAd
-  extends SioController
-{
+class GetAnyAd @Inject() (mCommonDi: ICommonDi) {
 
   import mCommonDi._
 
   /** Комбинация из MaybeAuth и читалки adId из [[models.MNode]]. */
-  trait GetAnyAdBase
+  sealed trait GetAnyAdBase
     extends ActionBuilder[MAdReq]
   {
 
@@ -33,7 +33,7 @@ trait GetAnyAd
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      madOptFut flatMap {
+      madOptFut.flatMap {
         case Some(mad) =>
           val req1 = MAdReq(mad, request, user)
           block(req1)
@@ -44,10 +44,11 @@ trait GetAnyAd
 
     /** Что возвращать, если карточка не найдена. */
     def adNotFound(request: Request[_]): Future[Result] = {
-      val res = NotFound("Ad not found: " + adId)
-      Future successful res
+      Results.NotFound("Ad not found: " + adId)
     }
+
   }
+
 
   /**
    * Публичный доступ к указанной рекламной карточке.

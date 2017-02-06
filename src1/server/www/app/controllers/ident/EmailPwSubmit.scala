@@ -10,7 +10,6 @@ import models.usr._
 import play.api.data._
 import play.api.data.Forms._
 import util.acl._
-import util._
 import play.api.mvc._
 import util.di.IIdentUtil
 import util.xplay.SetLangCookieUtil
@@ -32,7 +31,7 @@ trait EmailPwSubmit
   with IMacroLogs
   with BruteForceProtectCtl
   with SetLangCookieUtil
-  with IsAnon
+  with IIsAnonAcl
   with IIdentUtil
   with IMNodes
   with IEmailPwIdentsDi
@@ -82,7 +81,7 @@ trait EmailPwSubmit
   def emailSubmitError(lf: EmailPwLoginForm_t, r: Option[String])(implicit request: IReq[_]): Future[Result]
 
   /** Самбит формы логина по email и паролю. */
-  def emailPwLoginFormSubmit(r: Option[String]) = IsAnonPost.async { implicit request =>
+  def emailPwLoginFormSubmit(r: Option[String]) = isAnon.Post.async { implicit request =>
     bruteForceProtected {
       val formBinded = emailPwLoginFormM.bindFromRequest()
       formBinded.fold(
@@ -130,7 +129,7 @@ trait EmailPwLogin extends EmailPwSubmit {
   import mCommonDi._
 
   /** Рендер страницы с возможностью логина по email и паролю. */
-  def emailPwLoginForm(r: Option[String]) = IsAnonGet.async { implicit request =>
+  def emailPwLoginForm(r: Option[String]) = isAnon.Get.async { implicit request =>
     for (lf <- emailPwLoginFormStubM) yield {
       epwLoginPage(lf, r)
     }

@@ -25,7 +25,7 @@ trait CanUpdateSls
   import mCommonDi._
 
   /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
-  trait CanUpdateSlsBase
+  sealed trait CanUpdateSlsBase
     extends ActionBuilder[MAdProdReq]
     with AdEditBase
     with OnUnauthNode
@@ -44,7 +44,7 @@ trait CanUpdateSls
         onUnauthNode(reqErr)
 
       } else {
-        madOptFut flatMap {
+        madOptFut.flatMap {
           // Найдена запрошенная рекламная карточка
           case Some(mad) =>
             // Модер может запретить бесплатное размещение карточки. Если стоит черная метка, то на этом можно закончить.
@@ -61,10 +61,9 @@ trait CanUpdateSls
             } else {
 
               val producerIdOpt = n2NodesUtil.madProducerId(mad)
-              mNodesCache.maybeGetByIdCached(producerIdOpt) flatMap { producerOpt =>
-                val isNodeAdmin = producerOpt.exists {
-                  producer =>
-                    IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+              mNodesCache.maybeGetByIdCached(producerIdOpt).flatMap { producerOpt =>
+                val isNodeAdmin = producerOpt.exists { producer =>
+                  IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
                 }
                 if (isNodeAdmin) {
                   // Юзер является админом. Всё ок.

@@ -12,7 +12,6 @@ import models.msession.Keys
 import models.req.IReqHdr
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents, MPersonIdents}
 import play.api.mvc._
-import util._
 import util.acl._
 import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
@@ -33,17 +32,18 @@ import views.html.ident.reg.email._regColumnTpl
  */
 
 class Ident @Inject() (
-  override val mNodes               : MNodes,
-  override val mailer               : IMailerWrapper,
-  override val identUtil            : IdentUtil,
-  override val nodesUtil            : NodesUtil,
-  override val captchaUtil          : CaptchaUtil,
-  override val mPersonIdents        : MPersonIdents,
-  override val emailPwIdents        : EmailPwIdents,
-  override val emailActivations     : EmailActivations,
-  override val mExtIdents           : MExtIdents,
-  override val scryptUtil           : ScryptUtil,
-  override val mCommonDi            : ICommonDi
+                        override val mNodes               : MNodes,
+                        override val mailer               : IMailerWrapper,
+                        override val identUtil            : IdentUtil,
+                        override val nodesUtil            : NodesUtil,
+                        override val captchaUtil          : CaptchaUtil,
+                        override val mPersonIdents        : MPersonIdents,
+                        override val emailPwIdents        : EmailPwIdents,
+                        override val emailActivations     : EmailActivations,
+                        override val mExtIdents           : MExtIdents,
+                        override val scryptUtil           : ScryptUtil,
+                        override val isAnon            : IsAnon,
+                        override val mCommonDi            : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
@@ -80,7 +80,7 @@ class Ident @Inject() (
    * @return 200 Ok для анонимуса.
    *         Иначе редирект в личный кабинет.
    */
-  def mySioStartPage(r: Option[String]) = IsAnonGet.async { implicit request =>
+  def mySioStartPage(r: Option[String]) = isAnon.Get.async { implicit request =>
     implicit val ctxData = CtxData(
       jsiTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
     )

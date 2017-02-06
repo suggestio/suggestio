@@ -65,7 +65,7 @@ trait EmailPwReg
   with CaptchaValidator
   with SendPwRecoverEmail
   with IMailerWrapperDi
-  with IsAnon
+  with IIsAnonAcl
   with CanConfirmEmailPwRegCtl
   with INodesUtil
   with EmailPwRegUtil
@@ -78,7 +78,8 @@ trait EmailPwReg
 
   import mCommonDi._
 
-  def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Unit = {
+
+  def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Future[_] = {
     val msg = mailer.instance
     msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
@@ -104,7 +105,7 @@ trait EmailPwReg
     *
     * @return 200 OK со страницей начала регистрации по email.
     */
-  def emailReg = IsAnonGet { implicit request =>
+  def emailReg = isAnon.Get { implicit request =>
     Ok(_epwRender(emailRegFormM))
   }
 
@@ -115,7 +116,7 @@ trait EmailPwReg
     * @return emailRegFormBindFailed() при проблеме с маппингом формы.
     *         emailRequestOk() когда сообщение отправлено почтой.
     */
-  def emailRegSubmit = IsAnonPost.async { implicit request =>
+  def emailRegSubmit = isAnon.Post.async { implicit request =>
     val form1 = checkCaptcha( emailRegFormM.bindFromRequest() )
     form1.fold(
       {formWithErrors =>
@@ -132,19 +133,22 @@ trait EmailPwReg
               email = email1,
               key = CanConfirmEmailPwReg.EPW_ACT_KEY
             )
-            emailActivations.save(ea0)
-              .flatMap { eaId =>
-                // отправить письмо на указанную почту
-                val ea1 = ea0.copy(id = Some(eaId))
-                sendEmailAct(ea1)
-                // Вернуть ответ юзеру
-                emailRequestOk(Some(ea1))
-              }
+            for {
+              eaId <- emailActivations.save(ea0)
+              // отправить письмо на указанную почту
+              ea1 = ea0.copy(id = Some(eaId))
+              _ <- sendEmailAct(ea1)
+            } yield {
+              // Вернуть ответ юзеру
+              emailRequestOk(Some(ea1))
+            }
 
           // Уже есть такой email в базе. Выслать восстановление пароля.
-          case idents =>
+          case _ =>
             LOGGER.error(s"emailRegSubmit($email1): Email already exists.")
-            sendRecoverMail(email1) flatMap { _ =>
+            for {
+              _ <- sendRecoverMail(email1)
+            } yield {
               emailRequestOk(None)
             }
         }
@@ -153,7 +157,7 @@ trait EmailPwReg
   }
 
   /** Что возвращать юзеру, когда сообщение отправлено на почту? */
-  protected def emailRequestOk(ea: Option[EmailActivation])(implicit ctx: Context): Future[Result] = {
+  protected def emailRequestOk(ea: Option[EmailActivation])(implicit ctx: Context): Result = {
     Ok(sentTpl(ea)(ctx))
   }
 
@@ -198,8 +202,8 @@ trait EmailPwReg
           // Развернуть узел-магазин для юзера
           mnodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
 
-          // Запустить сохранение ident'а юзера.
-          identIdFut = {
+          // Запустить сохранение ident'а юзера, дождаться сохранения.
+          _ <- {
             val epw0 = EmailPwIdent(
               email       = eaInfo.email,
               personId    = personId,
@@ -208,9 +212,6 @@ trait EmailPwReg
             )
             emailPwIdents.save(epw0)
           }
-
-          // Дождаться ident'а
-          identId <- identIdFut
 
           // Удалить email activation
           _ <- emailActivations.deleteById( request.eact.id.get )

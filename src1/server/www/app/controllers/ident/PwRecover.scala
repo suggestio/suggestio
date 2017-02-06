@@ -104,7 +104,7 @@ trait SendPwRecoverEmail
     }
 
     // Отрабатываем ситуацию, когда юзера нет совсем.
-    fut.recover { case ex: NoSuchElementException =>
+    fut.recover { case _: NoSuchElementException =>
       // TODO Если юзера нет, то создать его и тоже отправить письмецо с активацией? или что-то иное вывести?
       LOGGER.warn(s"$logPrefix No email idents found for recovery")
       // None вместо Unit(), чтобы 2.11 компилятор не ругался.
@@ -123,7 +123,7 @@ trait PwRecover
   with BruteForceProtectCtl
   with SetLangCookieUtil
   with CanRecoverPw
-  with IsAnon
+  with IIsAnonAcl
   with IIdentUtil
   with EmailPwRegUtil
   with IEmailPwIdentsDi
@@ -157,12 +157,12 @@ trait PwRecover
   }
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
-  def recoverPwForm = IsAnonGet { implicit request =>
+  def recoverPwForm = isAnon.Get { implicit request =>
     Ok(_recoverPwStep1(recoverPwFormM))
   }
 
   /** Сабмит формы восстановления пароля. */
-  def recoverPwFormSubmit = IsAnonPost.async { implicit request =>
+  def recoverPwFormSubmit = isAnon.Post.async { implicit request =>
     bruteForceProtected {
       val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
       formBinded.fold(

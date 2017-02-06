@@ -19,11 +19,13 @@ import views.html.sc._adTpl
 trait ScOnlyOneAd
   extends SioController
   with IMacroLogs
-  with GetAnyAd
   with IAdRenderUtilDi
 {
 
+  protected val getAnyAd: GetAnyAd
+
   import mCommonDi._
+  import getAnyAd.GetAnyAd
 
   /**
    * Отрендерить одну указанную карточку как веб-страницу.

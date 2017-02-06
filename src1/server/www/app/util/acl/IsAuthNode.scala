@@ -19,7 +19,7 @@ trait IsAuthNode extends IMCommonDi {
   import mCommonDi._
 
   /** Трейт с логикой проверки залогиненности вкупе с доступом к узлу. */
-  trait IsAuthNodeBase
+  sealed trait IsAuthNodeBase
     extends ActionBuilder[MNodeReq]
     with OnUnauthUtil
     with MacroLogsDyn
@@ -63,7 +63,7 @@ trait IsAuthNode extends IMCommonDi {
 
 
   /** Абстрактный класс с недореализацией IsAuthNodeBase. */
-  abstract class IsAuthNodeAbstract
+  sealed abstract class IsAuthNodeAbstract
     extends IsAuthNodeBase
     with ExpireSession[MNodeReq]
 

@@ -26,12 +26,12 @@ import scala.language.higherKinds
 trait ExpireSession[R[_]] extends ActionBuilder[R] with MacroLogsDyn {
 
   abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-    super.invokeBlock(request, block) map { result =>
+    for (result <- super.invokeBlock(request, block)) yield {
       val session0 = result.session(request)
       val tstampOpt = LoginTimestamp.fromSession(session0)
       // Отработать отсутствие таймштампа в сессии.
       if (tstampOpt.isEmpty) {
-        if (session0.data contains PersonId.name) {
+        if ( session0.data.contains(PersonId.name) ) {
           // Сессия была только что выставлена в контроллере. Там же и ttl выставлен.
           val session1 = session0 + (Timestamp.name -> LoginTimestamp.currentTstamp.toString)
           result.withSession(session1)
@@ -45,23 +45,23 @@ trait ExpireSession[R[_]] extends ActionBuilder[R] with MacroLogsDyn {
         val newTsOpt = tstampOpt
           // Отфильтровать устаревшие timestamp'ы.
           .filter { _.isTimestampValid(currTstamp) }
-        val session1 = newTsOpt match {
-          case None =>
-            // Таймштамп истёк -- стереть из сессии таймштамп и username.
-            LOGGER.trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.name))
-            val filteredKeySet = Keys.onlyLoginIter
-              .map(_.name)
-              .toSet
-            session0.copy(
-              data = session0.data
-                .filterKeys { k => !(filteredKeySet contains k) }
-            )
+        val session1 = newTsOpt.fold {
+          // Таймштамп истёк -- стереть из сессии таймштамп и username.
+          LOGGER.trace("invokeBlock(): Erasing expired session for person " + session0.get(PersonId.name))
+          val filteredKeySet = Keys.onlyLoginIter
+            .map(_.name)
+            .toSet
+          session0.copy(
+            data = session0
+              .data
+              .filterKeys { k => !filteredKeySet.contains(k) }
+          )
           // Есть таймштамп, значит пора залить новый (текущий) таймштамп в сессию.
-          case Some(ts) =>
-            ts.withTstamp(currTstamp)
-              .addToSession(session0)
+        }{ ts =>
+          ts.withTstamp(currTstamp)
+            .addToSession(session0)
         }
-        result withSession session1
+        result.withSession( session1 )
       }
     }
   }
