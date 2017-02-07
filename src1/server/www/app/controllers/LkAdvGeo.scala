@@ -42,7 +42,6 @@ import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.es.model.MEsUuId
 import io.suggest.model.common.OptId
-import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import util.mdr.MdrUtil
@@ -62,13 +61,13 @@ class LkAdvGeo @Inject() (
   advFormUtil                     : AdvFormUtil,
   bill2Util                       : Bill2Util,
   advGeoLocUtil                   : AdvGeoLocUtil,
-  override val advGeoMapUtil      : AdvGeoMapUtil,
+  advGeoMapUtil                   : AdvGeoMapUtil,
   streamsUtil                     : StreamsUtil,
   pickleSrvUtil                   : PickleSrvUtil,
   ymdHelpersJvm                   : YmdHelpersJvm,
   mdrUtil                         : MdrUtil,
-  override val mNodes             : MNodes,
   canAccessItem                   : CanAccessItem,
+  canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
   override val isAuth             : IsAuth,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
@@ -79,7 +78,6 @@ class LkAdvGeo @Inject() (
   with MacroLogsImpl
   with CanAdvertiseAd
   with NodeTagsEdit
-  with CanThinkAboutAdvOnMapAdnNode
 {
 
   import mCommonDi._
@@ -573,7 +571,7 @@ class LkAdvGeo @Inject() (
     * @return Бинарь для boopickle на стороне JS.
     */
   def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
-  private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = CanThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
+  private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = canThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
     import request.{mnode => rcvrNode}
 

@@ -1,12 +1,12 @@
 package util.acl
 
-import controllers.SioController
-import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
-import io.suggest.util.logs.IMacroLogs
+import com.google.inject.Inject
+import io.suggest.model.n2.node.{MNodeTypes, MNodes}
+import io.suggest.util.logs.MacroLogsImpl
+import models.mproj.ICommonDi
 import models.req.{MAdProdRcvrReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.adv.geo.IAdvGeoMapUtilDi
-import util.di.ICanAdvAdUtil
+import util.adv.geo.AdvGeoMapUtil
 
 import scala.concurrent.Future
 
@@ -16,13 +16,14 @@ import scala.concurrent.Future
   * Created: 24.11.16 15:31
   * Description: ACL для проверок возможности размещения
   */
-trait CanThinkAboutAdvOnMapAdnNode
-  extends SioController
-  with Csrf
-  with IMacroLogs
-  with ICanAdvAdUtil
-  with IMNodes
-  with IAdvGeoMapUtilDi
+class CanThinkAboutAdvOnMapAdnNode @Inject() (
+                                               mNodes                 : MNodes,
+                                               canAdvAdUtil           : CanAdvertiseAdUtil,
+                                               advGeoMapUtil          : AdvGeoMapUtil,
+                                               override val mCommonDi : ICommonDi
+                                             )
+  extends Csrf
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -117,10 +118,11 @@ trait CanThinkAboutAdvOnMapAdnNode
     override val nodeId : String
   )
     extends CanThinkAboutAdvOnMapAdnNodeAbstract
+  def apply(adId: String, nodeId: String) = CanThinkAboutAdvOnMapAdnNode(adId = adId, nodeId = nodeId)
 
 
   /** Реализация CanThinkAboutAdvOnMapAdnNodeAbstract с выставлениме CSRF-токена. */
-  case class CanThinkAboutAdvOnMapAdnNodeGet(
+  case class Get(
     override val adId   : String,
     override val nodeId : String
   )
@@ -129,7 +131,7 @@ trait CanThinkAboutAdvOnMapAdnNode
 
 
   /** Реализация CanThinkAboutAdvOnMapAdnNodeAbstract с проверкой CSRF-токена. */
-  case class CanThinkAboutAdvOnMapAdnNodePost(
+  case class Post(
     override val adId   : String,
     override val nodeId : String
   )
