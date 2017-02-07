@@ -1,8 +1,9 @@
 package util.acl
 
+import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsDyn
 import models.MNodeType
-import models.mproj.IMCommonDi
+import models.mproj.ICommonDi
 import models.req.{MNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
 
@@ -14,7 +15,7 @@ import scala.concurrent.Future
  * Created: 26.10.15 16:15
  * Description: Аддон для контроллеров c гибридом IsAuth и тривиального чтения узла MNode.
  */
-trait IsAuthNode extends IMCommonDi {
+class IsAuthNode @Inject() (mCommonDi: ICommonDi) {
 
   import mCommonDi._
 
@@ -71,5 +72,8 @@ trait IsAuthNode extends IMCommonDi {
   case class IsAuthNode(override val nodeId: String,
                         override val ntypes: MNodeType*)
     extends IsAuthNodeAbstract
+
+  @inline
+  def apply(nodeId: String, ntypes: MNodeType*) = IsAuthNode(nodeId, ntypes: _*)
 
 }

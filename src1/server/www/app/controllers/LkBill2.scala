@@ -31,6 +31,7 @@ class LkBill2 @Inject() (
   galleryUtil                 : GalleryUtil,
   override val canAccessItem  : CanAccessItem,
   @Named("blk") override val blkImgMaker  : IMaker,
+  isAuthNode                  : IsAuthNode,
   override val mItems         : MItems,
   override val bill2Util      : Bill2Util,
   override val mTxns          : MTxns,
@@ -40,7 +41,6 @@ class LkBill2 @Inject() (
   with MacroLogsImpl
   with LkBill2Cart
   with LkBillTxns
-  with IsAuthNode
 {
 
   import mCommonDi._
@@ -111,7 +111,7 @@ class LkBill2 @Inject() (
     * @return 200 Ок с версткой окошка.
     *         404 если узел не найден или не является ресивером.
     */
-  def _rcvrInfoWnd(nodeId: String) = IsAuthNode(nodeId).async { implicit request =>
+  def _rcvrInfoWnd(nodeId: String) = isAuthNode(nodeId).async { implicit request =>
     val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode)
     val galleryFut = galleryUtil.galleryImgs(request.mnode)
 

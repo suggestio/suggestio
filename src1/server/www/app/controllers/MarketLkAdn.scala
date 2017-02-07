@@ -70,10 +70,9 @@ class MarketLkAdn @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import isAdnNodeAdminOptOrAuth.IsAdnNodeAdminOptOrAuthGet
 
   /** Список личных кабинетов юзера. */
-  def lkList(fromAdnId: Option[String]) = IsAdnNodeAdminOptOrAuthGet(fromAdnId, U.Lk).async { implicit request =>
+  def lkList(fromAdnId: Option[String]) = isAdnNodeAdminOptOrAuth.Get(fromAdnId, U.Lk).async { implicit request =>
     val personId = request.user.personIdOpt.get
 
     val mnodesFut = mNodes.dynSearch(

@@ -1,10 +1,11 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
-import io.suggest.mbill2.m.contract.IMContracts
-import models.req.{IReqHdr, MReq, MNodeContractReq}
-import play.api.mvc.{Request, Result, ActionBuilder}
+import io.suggest.mbill2.m.contract.MContracts
+import models.mproj.ICommonDi
+import models.req.{IReqHdr, MNodeContractReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -14,10 +15,11 @@ import scala.concurrent.Future
  * Created: 25.12.15 11:59
  * Description: Доступ к узлу и его контракту для суперюзера.
  */
-trait IsSuNodeContract
-  extends SioController
-  with Csrf
-  with IMContracts
+class IsSuNodeContract @Inject() (
+                                   mContracts               : MContracts,
+                                   override val mCommonDi   : ICommonDi
+                                 )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -38,7 +40,7 @@ trait IsSuNodeContract
 
       if (user.isSuper) {
         val mnodeOptFut = mNodesCache.getById(nodeId)
-        mnodeOptFut flatMap {
+        mnodeOptFut.flatMap {
           case Some(mnode) =>
             val mcOptFut = FutureUtil.optFut2futOpt( mnode.billing.contractId ) { contractId =>
               val act = mContracts.getById(contractId)
@@ -76,18 +78,18 @@ trait IsSuNodeContract
     extends IsSuNodeContractBase
     with ExpireSession[MNodeContractReq]
 
-  /** Доступ к узлу с контрактом. */
-  case class IsSuNodeContract(override val nodeId: String)
-    extends IsSuNodeContractAbstract
-
   /** Доступ к узлу с контрактом с выставлением CSRF-токена. */
-  case class IsSuNodeContractGet(override val nodeId: String)
+  case class Get(override val nodeId: String)
     extends IsSuNodeContractAbstract
     with CsrfGet[MNodeContractReq]
 
   /** Доступ к узлу с контрактом с проверкой CSRF-токена при сабмитах. */
-  case class IsSuNodeContractPost(override val nodeId: String)
+  case class Post(override val nodeId: String)
     extends IsSuNodeContractAbstract
     with CsrfPost[MNodeContractReq]
 
+}
+
+trait IIsSuNodeContract {
+  val isSuNodeContract: IsSuNodeContract
 }

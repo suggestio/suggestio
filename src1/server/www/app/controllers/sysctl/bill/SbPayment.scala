@@ -1,6 +1,6 @@
 package controllers.sysctl.bill
 
-import controllers.routes
+import controllers.{SioController, routes}
 import io.suggest.mbill2.m.balance.IMBalances
 import io.suggest.util.logs.IMacroLogs
 import models.msys.bill.{MPaymentFormResult, MPaymentTplArgs}
@@ -9,7 +9,7 @@ import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.mvc.Result
 import util.FormUtil.{currencyOrDfltM, doubleM, toStrOptM}
-import util.acl.IsSuNodeContract
+import util.acl.IIsSuNodeContract
 import util.billing.IBill2UtilDi
 import views.html.sys1.bill.contract.balance._
 
@@ -22,7 +22,8 @@ import scala.concurrent.Future
   * Description: Аддон для [[controllers.SysBilling]]-контроллера, добавляющий поддержку взаимодействия с балансами.
   */
 trait SbPayment
-  extends IsSuNodeContract
+  extends SioController
+  with IIsSuNodeContract
   with IMacroLogs
   with IMBalances
   with IBill2UtilDi
@@ -53,7 +54,7 @@ trait SbPayment
     * @param nodeId id узла, чей баланс пополняется.
     * @return 200 Ок со страницей-результатом.
     */
-  def payment(nodeId: String) = IsSuNodeContractGet(nodeId).async { implicit request =>
+  def payment(nodeId: String) = isSuNodeContract.Get(nodeId).async { implicit request =>
     _payment(_paymentFormM, Ok)
   }
 
@@ -73,7 +74,7 @@ trait SbPayment
     * @param nodeId id узла, на кошельках которого барабаним.
     * @return Редирект в биллинг узла, если всё ок.
     */
-  def paymentSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
+  def paymentSubmit(nodeId: String) = isSuNodeContract.Post(nodeId).async { implicit request =>
     _paymentFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"paymentSubmit($nodeId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

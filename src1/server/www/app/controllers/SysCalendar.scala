@@ -42,7 +42,6 @@ class SysCalendar @Inject() (
   import LOGGER._
   import mCommonDi._
   import calendarAccessAny.CalendarAccessAny
-  import isSuCalendar.{IsSuCalendarGet, IsSuCalendarPost}
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(
@@ -164,7 +163,7 @@ class SysCalendar @Inject() (
    *
    * @param calId id календаря.
    */
-  def editCalendar(calId: String) = IsSuCalendarGet(calId).async { implicit request =>
+  def editCalendar(calId: String) = isSuCalendar.Get(calId).async { implicit request =>
     val cf = calFormM fill request.mcal
     editCalendarRespBody(calId, cf, Ok)
   }
@@ -180,7 +179,7 @@ class SysCalendar @Inject() (
     *
     * @param calId id календаря.
     */
-  def editCalendarSubmit(calId: String) = IsSuCalendarPost(calId).async { implicit request =>
+  def editCalendarSubmit(calId: String) = isSuCalendar.Post(calId).async { implicit request =>
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")

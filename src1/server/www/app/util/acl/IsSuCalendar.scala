@@ -17,8 +17,8 @@ import scala.concurrent.Future
  * Долгое время это счастье жило прямо в контроллере.
  */
 class IsSuCalendar @Inject()(
-                              mCalendars: MCalendars,
-                              override val mCommonDi: ICommonDi
+                              mCalendars              : MCalendars,
+                              override val mCommonDi  : ICommonDi
                             )
   extends Csrf
 {
@@ -59,11 +59,11 @@ class IsSuCalendar @Inject()(
     extends IsSuperuserCalendarBase
     with ExpireSession[MCalendarReq]
 
-  case class IsSuCalendarGet(override val calId: String)
+  case class Get(override val calId: String)
     extends IsSuperuserCalendarAbstract
     with CsrfGet[MCalendarReq]
 
-  case class IsSuCalendarPost(override val calId: String)
+  case class Post(override val calId: String)
     extends IsSuperuserCalendarAbstract
     with CsrfPost[MCalendarReq]
 

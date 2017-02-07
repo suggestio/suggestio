@@ -1,13 +1,13 @@
 package controllers.sysctl.bill
 
-import controllers.routes
+import controllers.{SioController, routes}
 import io.suggest.mbill2.m.contract.{IMContracts, MContract}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.req.{INodeContractReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
-import util.acl.{IsSuNodeContract, IsSuNodeNoContract}
+import util.acl.{IIsSuNodeContract, IsSuNodeNoContract}
 import util.billing.IContractUtilDi
 import views.html.sys1.bill.contract._
 
@@ -20,8 +20,8 @@ import scala.concurrent.Future
  * Description: Трейт для sys billing контроллера для поддержки редактирования контрактов.
  */
 trait SbNodeContract
-  extends IsSuNodeNoContract
-  with IsSuNodeContract
+  extends SioController
+  with IIsSuNodeContract
   with IMacroLogs
   with IContractUtilDi
   with IMContracts
@@ -30,6 +30,8 @@ trait SbNodeContract
 
   import mCommonDi._
 
+  val isSuNodeNoContract: IsSuNodeNoContract
+
   // ----------------------------- Создание контракта ----------------------------------
 
   /**
@@ -37,7 +39,7 @@ trait SbNodeContract
    *
    * @param nodeId id узла, для которого создаётся контракт.
    */
-  def createContract(nodeId: String) = IsSuNodeNoContractGet(nodeId).async { implicit request =>
+  def createContract(nodeId: String) = isSuNodeNoContract.Get(nodeId).async { implicit request =>
     val form0 = contractUtil.contractForm
 
     val formDummy = form0.fill(
@@ -62,7 +64,7 @@ trait SbNodeContract
    *
    * @param nodeId id узла, для которого создаётся контракт.
    */
-  def createContractSubmit(nodeId: String) = IsSuNodeNoContractPost(nodeId).async { implicit request =>
+  def createContractSubmit(nodeId: String) = isSuNodeNoContract.Post(nodeId).async { implicit request =>
     contractUtil.contractForm.bindFromRequest().fold(
       {formWithErrors =>
         val respFut = _createContract(formWithErrors, NotAcceptable)
@@ -94,8 +96,8 @@ trait SbNodeContract
             val deleteFut = slick.db.run(deleteAct)
             LOGGER.warn("Rollbacking contract save because of node save error", ex)
             if (LOGGER.underlying.isTraceEnabled) {
-              deleteFut.onComplete { case result =>
-                LOGGER.trace(s"Deleted recently created contract $contractId.")
+              deleteFut.onComplete { result =>
+                LOGGER.trace(s"Deleted recently created contract $contractId. res => $result")
               }
             }
           }
@@ -121,7 +123,7 @@ trait SbNodeContract
    *
    * @param nodeId id изменяемого узла.
    */
-  def editContract(nodeId: String) = IsSuNodeContractGet(nodeId).async { implicit request =>
+  def editContract(nodeId: String) = isSuNodeContract.Get(nodeId).async { implicit request =>
     val cf = contractUtil.contractForm.fill( request.mcontract )
     _editContract(cf, Ok)
   }
@@ -137,7 +139,7 @@ trait SbNodeContract
    *
    * @param nodeId id узла.
    */
-  def editContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
+  def editContractSubmit(nodeId: String) = isSuNodeContract.Post(nodeId).async { implicit request =>
     contractUtil.contractForm.bindFromRequest().fold(
       {formWithErrors =>
         val fut = _editContract(formWithErrors, NotAcceptable)
@@ -174,7 +176,7 @@ trait SbNodeContract
    * @param nodeId id узла.
    * @return Редирект на forNode().
    */
-  def deleteContractSubmit(nodeId: String) = IsSuNodeContractPost(nodeId).async { implicit request =>
+  def deleteContractSubmit(nodeId: String) = isSuNodeContract.Post(nodeId).async { implicit request =>
     val contractId = request.mcontract.id.get
     val act = mContracts.deleteById(contractId)
     val deleteFut = slick.db.run(act)

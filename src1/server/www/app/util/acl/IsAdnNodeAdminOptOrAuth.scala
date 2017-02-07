@@ -39,7 +39,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
     override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
 
-      personIdOpt.fold (onUnauth(request)) { personId =>
+      personIdOpt.fold (onUnauth(request)) { _ =>
         val mnodeOptFut = mNodesCache.maybeGetByIdCached(adnIdOpt)
         val user = mSioUsers(personIdOpt)
 
@@ -63,7 +63,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
     with ExpireSession[MNodeOptReq]
 
 
-  case class IsAdnNodeAdminOptOrAuthGet(
+  case class Get(
     override val adnIdOpt   : Option[String],
     override val userInits  : MUserInit*
   )

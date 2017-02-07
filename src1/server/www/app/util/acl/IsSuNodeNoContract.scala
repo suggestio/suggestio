@@ -1,9 +1,10 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import models.MNode
-import models.req.{IReqHdr, MReq, MNodeReq}
-import play.api.mvc.{Result, Request, ActionBuilder}
+import models.mproj.ICommonDi
+import models.req.{IReqHdr, MNodeReq, MReq}
+import play.api.mvc.{ActionBuilder, Request, Result}
 
 import scala.concurrent.Future
 
@@ -13,9 +14,10 @@ import scala.concurrent.Future
  * Created: 25.12.15 12:15
  * Description: Доступ суперюзера к узлу, обязательно БЕЗ контракта.
  */
-trait IsSuNodeNoContract
-  extends SioController
-  with Csrf
+class IsSuNodeNoContract @Inject() (
+                                     override val mCommonDi: ICommonDi
+                                   )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -36,7 +38,7 @@ trait IsSuNodeNoContract
 
       if (user.isSuper) {
         val mnodeOptFut = mNodesCache.getById(nodeId)
-        mnodeOptFut flatMap {
+        mnodeOptFut.flatMap {
           case Some(mnode) =>
             if ( mnode.billing.contractId.isEmpty ) {
               val req1 = MNodeReq(mnode, request, user)
@@ -69,18 +71,15 @@ trait IsSuNodeNoContract
     extends IsSuNodeNoContractBase
     with ExpireSession[MNodeReq]
 
-  /** Доступ суперюзера к узлу без контракта. */
-  case class IsSuNodeNoContract(override val nodeId: String)
-    extends IsSuNodeNoContractAbstract
-
   /** Доступ суперюзера к узлу без контракта с выставлением CSRF-токена. */
-  case class IsSuNodeNoContractGet(override val nodeId: String)
+  case class Get(override val nodeId: String)
     extends IsSuNodeNoContractAbstract
     with CsrfGet[MNodeReq]
 
   /** Доступ суперюзера к узлу без контракта с проверкой CSRF-токена при сабмитах. */
-  case class IsSuNodeNoContractPost(override val nodeId: String)
+  case class Post(override val nodeId: String)
     extends IsSuNodeNoContractAbstract
     with CsrfPost[MNodeReq]
 
 }
+
