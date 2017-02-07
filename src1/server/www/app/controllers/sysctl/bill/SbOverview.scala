@@ -5,7 +5,7 @@ import io.suggest.mbill2.m.balance.IMBalances
 import io.suggest.mbill2.m.gid.IGidUtilDi
 import io.suggest.mbill2.m.txn.IMTxns
 import models.msys.bill.MBillOverviewTplArgs
-import util.acl.IsSu
+import util.acl.IIsSu
 import views.html.sys1.bill._
 
 /**
@@ -17,7 +17,7 @@ import views.html.sys1.bill._
   */
 trait SbOverview
   extends SioController
-  with IsSu
+  with IIsSu
   with IMTxns
   with IMBalances
   with IGidUtilDi
@@ -30,7 +30,7 @@ trait SbOverview
     *
     * @return 200 Ok со страницей инфы по биллингу.
     */
-  def overview = IsSuGet.async { implicit request =>
+  def overview = isSu.Get.async { implicit request =>
     // Поиск последних финансовых транзакций для отображения таблицы оных.
     val txnsBalancesFut = slick.db.run {
       for {

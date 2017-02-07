@@ -6,7 +6,6 @@ import models.ai._
 import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
-import play.api.libs.ws.WSClient
 import util.FormUtil._
 import util.acl.{IsSu, IsSuAiMad}
 import util.ai.mad.MadAiUtil
@@ -26,11 +25,11 @@ class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
   mAiMads                         : MAiMads,
   isSuAiMad                       : IsSuAiMad,
+  isSu                            : IsSu,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImplLazy
-  with IsSu
 {
 
   import LOGGER._
@@ -38,13 +37,13 @@ class SysAi @Inject() (
 
 
   /** Раздача страницы с оглавлением по ai-подсистемам. */
-  def index = IsSuGet { implicit request =>
+  def index = isSu.Get { implicit request =>
     Ok(indexTpl())
   }
 
 
   /** Заглавная страница генераторов рекламных карточек. */
-  def madIndex = IsSuGet.async { implicit request =>
+  def madIndex = isSu.Get.async { implicit request =>
     val aisFut = mAiMads.getAll()
     aisFut map { ais =>
       Ok(madIndexTpl(ais))
@@ -147,12 +146,12 @@ class SysAi @Inject() (
 
 
   /** Запрос страницы с формой создания генератора рекламных карточек. */
-  def createMadAi = IsSuGet { implicit request =>
+  def createMadAi = isSu.Get { implicit request =>
     Ok(createTpl(formM))
   }
 
   /** Сабмит формы создания генерата рекламнах карточек. */
-  def createMadAiSubmit = IsSuPost.async { implicit request =>
+  def createMadAiSubmit = isSu.Post.async { implicit request =>
     val formBinded = formM.bindFromRequest()
     lazy val logPrefix = "createMadAiSubmit(): "
     formBinded.fold(

@@ -24,12 +24,12 @@ class SysImg @Inject() (
   mImgs3                          : MImgs3,
   override val sysImgMakeUtil     : SysImgMakeUtil,
   mImgs                           : MAnyImgs,
+  override val isSu               : IsSu,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
   with SysImgMake
-  with IsSu
 {
 
   import LOGGER._
@@ -72,7 +72,7 @@ class SysImg @Inject() (
 
 
   /** Рендер главной страницы sys.img-раздела админки. */
-  def index(q: Option[String]) = IsSuGet { implicit request =>
+  def index(q: Option[String]) = isSu.Get { implicit request =>
     val imgs = Seq.empty[MImgT]
     // TODO Нужно искать все картинки или по указанному в q запросу.
     Ok( indexTpl(imgs, imgFormM) )
@@ -83,7 +83,7 @@ class SysImg @Inject() (
    *
    * @return Редирект на urlFormSubmitGet(), если есть подходящая картинка. Или какую-то иную инфу.
    */
-  def searchFormSubmit = IsSuPost { implicit request =>
+  def searchFormSubmit = isSu.Post { implicit request =>
     imgFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("searchFormSubmit(): Failed to bind search form:\n " + formatFormErrors(formWithErrors))
@@ -100,7 +100,7 @@ class SysImg @Inject() (
    *
    * @param im Данные по запрашиваемой картинке.
    */
-  def showOne(im: MImgT) = IsSuGet.async { implicit request =>
+  def showOne(im: MImgT) = isSu.Get.async { implicit request =>
     // TODO Искать, где используется эта картинка.
     for (metaOpt <- mImgs3.permMetaCached(im)) yield {
       Ok(showOneTpl(im, metaOpt))
@@ -113,7 +113,7 @@ class SysImg @Inject() (
    * @param im Картинка.
    * @return Редирект.
    */
-  def deleteOneSubmit(im: MImgT) = IsSuPost.async { implicit request =>
+  def deleteOneSubmit(im: MImgT) = isSu.Post.async { implicit request =>
     // TODO Удалять на ВСЕХ НОДАХ из кеша /picture/local/
     for (_ <- mImgs.delete(im)) yield {
       val (msg, rdr) = if (im.isOriginal) {

@@ -11,7 +11,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
 import util.blocks.BlocksConf
 import util.FormUtil
-import util.acl.IsSu
+import util.acl.IIsSu
 import views.html.sys1.img.make._
 
 import scala.concurrent.Future
@@ -57,7 +57,7 @@ class SysImgMakeUtil @Inject() (
 trait SysImgMake
   extends SioController
   with IMacroLogs
-  with IsSu
+  with IIsSu
 {
 
   import mCommonDi._
@@ -70,7 +70,7 @@ trait SysImgMake
    * @param bmDflt Необязательные дефолтовые данные полей block-meta. Заливаются в начальную форму.
    * @return 200 ok со страницей с формой описания img make-задачи.
    */
-  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = IsSuGet.async { implicit request =>
+  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = isSu.Get.async { implicit request =>
     implicit val ctx = implicitly[Context]
     // Забиндить дефолтовые данные в форму
     val form = sysImgMakeUtil.makeFormM(img).fill((
@@ -106,7 +106,7 @@ trait SysImgMake
    * @param img Обрабатываемая картинка.
    * @return Получившаяся картинка.
    */
-  def makeFormSubmit(img: MImgT) = IsSuPost.async { implicit request =>
+  def makeFormSubmit(img: MImgT) = isSu.Post.async { implicit request =>
     sysImgMakeUtil.makeFormM(img).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

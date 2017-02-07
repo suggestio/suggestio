@@ -10,7 +10,7 @@ import models.mctx.Context
 import models.mdr._
 import models.req.IReq
 import play.api.mvc.{Call, Result}
-import util.acl.{IsSuItem, IsSuItemAd, IsSu, IIsSuMad}
+import util.acl._
 import util.billing.{Bill2Util, IBill2UtilDi}
 import util.di.IScUtil
 import util.mdr.SysMdrUtil
@@ -27,7 +27,7 @@ import scala.concurrent.Future
   */
 trait SysMdrPaid
   extends SysMdrBase
-  with IsSu
+  with IIsSu
   with IIsSuMad
   with IBill2UtilDi
   with IScUtil
@@ -49,7 +49,7 @@ trait SysMdrPaid
     * @param args Аргументы поиска модерируемых карточек.
     * @return Страница с плиткой карточек, которые нужно модерировать по-платному направлению.
     */
-  def paidAdvs(args: MdrSearchArgs) = IsSuGet.async { implicit request =>
+  def paidAdvs(args: MdrSearchArgs) = isSu.Get.async { implicit request =>
     // Залезть в items, найти там размещения, ожидающие подтверждения.
     val dbAction = sysMdrUtil.findPaidAdIds4MdrAction(args)
 
@@ -230,7 +230,7 @@ trait SysMdrPaid
   }
 
   /** Модератор подтверждает оплаченный item. */
-  def approveItemSubmit(itemId: Gid_t) = IsSuPost.async { implicit request =>
+  def approveItemSubmit(itemId: Gid_t) = isSu.Post.async { implicit request =>
     val dbAction = bill2Util.approveItemAction(itemId)
     for {
       res <- sysMdrUtil._processOneItem(dbAction)

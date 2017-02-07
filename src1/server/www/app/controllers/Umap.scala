@@ -34,12 +34,12 @@ import scala.concurrent.Future
 class Umap @Inject() (
   umapUtil                        : UmapUtil,
   mNodes                          : MNodes,
+  isSu                            : IsSu,
   isSuNode                        : IsSuNode,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSu
 {
 
   import mCommonDi._
@@ -53,7 +53,7 @@ class Umap @Inject() (
 
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
-  def getAdnNodesMap = IsSuGet.apply { implicit request =>
+  def getAdnNodesMap = isSu.Get.apply { implicit request =>
     // TODO Нужно задействовать reverse-роутер
     val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
     val args = UmapTplArgs(
@@ -102,7 +102,7 @@ class Umap @Inject() (
 
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */
-  def getDataLayerGeoJson(ngl: NodeGeoLevel) = IsSu.async { implicit request =>
+  def getDataLayerGeoJson(ngl: NodeGeoLevel) = isSu().async { implicit request =>
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
         // Ищем только с node-location'ами на текущем уровне.
@@ -188,7 +188,7 @@ class Umap @Inject() (
   /** Обработка запроса сохранения сеттингов карты.
     * Само сохранение не реализовано, поэтому тут просто ответ 200 OK.
     */
-  def saveMapSettingsSubmit = IsSuPost(parse.multipartFormData) { implicit request =>
+  def saveMapSettingsSubmit = isSu.Post(parse.multipartFormData) { implicit request =>
     val msgs = implicitly[Messages]
     val resp = MapSettingsSaved(
       url  = routes.Umap.getAdnNodesMap().url,
@@ -200,7 +200,7 @@ class Umap @Inject() (
 
 
   /** Сабмит одного слоя на глобальной карте. */
-  def saveMapDataLayer(ngl: NodeGeoLevel) = IsSuPost.async(parse.multipartFormData) { implicit request =>
+  def saveMapDataLayer(ngl: NodeGeoLevel) = isSu.Post.async(parse.multipartFormData) { implicit request =>
     // Банальная проверка на доступ к этому экшену.
     if (!GLOBAL_MAP_EDIT_ALLOWED)
       throw new IllegalAccessException("Global map editing is not allowed.")
@@ -320,7 +320,7 @@ class Umap @Inject() (
   }
 
 
-  def createMapDataLayer = IsSuPost(parse.multipartFormData) { implicit request =>
+  def createMapDataLayer = isSu.Post(parse.multipartFormData) { implicit request =>
     Ok("asdasd")
   }
 

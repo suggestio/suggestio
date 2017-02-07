@@ -31,12 +31,12 @@ import scala.concurrent.Future
 class SysCalendar @Inject() (
                               mCalendars                  : MCalendars,
                               isSuCalendar                : IsSuCalendar,
+                              isSu                        : IsSu,
                               calendarAccessAny           : CalendarAccessAny,
                               override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSu
 {
 
   import LOGGER._
@@ -97,7 +97,7 @@ class SysCalendar @Inject() (
 
 
   /** Отобразить список всех сохранённых календарей. */
-  def showCalendars = IsSuGet.async { implicit request =>
+  def showCalendars = isSu.Get.async { implicit request =>
     val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
     mCalendars.getAll(maxResults = 500).map { cals =>
       Ok(listCalsTpl(cals, createFormM))
@@ -106,7 +106,7 @@ class SysCalendar @Inject() (
 
   /** Рендер страницы с заполненной формой нового календаря на основе шаблона. На странице можно выбрать шаблон.
     * Ничего никуда не сохраняется. */
-  def newCalendarFromTemplateSubmit = IsSuGet.async { implicit request =>
+  def newCalendarFromTemplateSubmit = isSu.Get.async { implicit request =>
     newCalTplFormM.bindFromRequest().fold(
       {formWithErrors =>
         val calsFut = mCalendars.getAll(maxResults = 500)
@@ -142,7 +142,7 @@ class SysCalendar @Inject() (
 
 
   /** Сохранять в базу новый календарь. */
-  def createCalendarSubmit = IsSuPost.async { implicit request =>
+  def createCalendarSubmit = isSu.Post.async { implicit request =>
     calFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("createCalendarSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))

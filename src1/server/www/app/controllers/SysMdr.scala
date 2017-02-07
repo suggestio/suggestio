@@ -30,13 +30,13 @@ class SysMdr @Inject() (
   override val isSuItem             : IsSuItem,
   override val isSuItemAd           : IsSuItemAd,
   override val isSuMad              : IsSuMad,
+  override val isSu                 : IsSu,
   override val bill2Util            : Bill2Util,
   override val sysMdrUtil           : SysMdrUtil,
   override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSu
   with SysMdrFree
   with SysMdrPaid
 {
@@ -45,7 +45,7 @@ class SysMdr @Inject() (
 
 
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
-  def index = IsSuGet { implicit request =>
+  def index = isSu.Get { implicit request =>
     Ok( mdrIndexTpl() )
   }
 
@@ -54,7 +54,7 @@ class SysMdr @Inject() (
     *
     * @return Редирект на страницу модерации какой-то карточки, требующей модерации.
     */
-  def rdrToNextAd(args: MdrSearchArgs) = IsSu.async { implicit request =>
+  def rdrToNextAd(args: MdrSearchArgs) = isSu().async { implicit request =>
     // Выставляем в аргументы limit = 1, т.к. нам нужна только одна карточка.
     val args1 = args.copy(
       limitOpt = Some(1)

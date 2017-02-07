@@ -16,16 +16,16 @@ import views.html.sys1.debug._
 class SysDebug @Inject() (
                            geoParentsHealth              : AdnGeoParentsHealth,
                            advRcvrsUtil                  : AdvRcvrsUtil,
+                           isSu                          : IsSu,
                            override val mCommonDi        : ICommonDi
 )
   extends SioController
-  with IsSu
 {
 
   import mCommonDi._
 
   /** Экшен для отображения индексной страницы. */
-  def index = IsSuGet { implicit request =>
+  def index = isSu.Get { implicit request =>
     Ok( indexTpl() )
   }
 
@@ -34,12 +34,11 @@ class SysDebug @Inject() (
     *
     * @return 200 Ок со страницей-отчетом.
     */
-  def testNodesAllGeoParents = IsSuPost.async { implicit request =>
-    // Организуем тестирование
-    val testResultsFut = geoParentsHealth.testAll()
-
-    // Запустить рендер, когда результаты тестирования будут готовы.
-    testResultsFut.map { testResults =>
+  def testNodesAllGeoParents = isSu.Post.async { implicit request =>
+    for {
+      // Организуем тестирование
+      testResults <- geoParentsHealth.testAll()
+    } yield {
       val render = geo.parent.resultsTpl(testResults)
       Ok(render)
     }
@@ -47,7 +46,7 @@ class SysDebug @Inject() (
 
 
   /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
-  def resetAllRcvrs = IsSuPost.async { implicit request =>
+  def resetAllRcvrs = isSu.Post.async { implicit request =>
     for (count <- advRcvrsUtil.resetAllReceivers()) yield {
       Ok(count + " ads updated.")
     }

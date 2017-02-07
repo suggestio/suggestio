@@ -62,6 +62,7 @@ class SysMarket @Inject() (
                             override val isSuNodeEdge       : IsSuNodeEdge,
                             override val isSuNode           : IsSuNode,
                             override val isSuMad            : IsSuMad,
+                            isSu                            : IsSu,
                             isSuOr404                       : IsSuOr404,
                             scAdSearchUtil                  : ScAdSearchUtil,
                             override val mNodes             : MNodes,
@@ -72,7 +73,6 @@ class SysMarket @Inject() (
   with SysNodeInstall
   with SmSendEmailInvite
   with SysAdRender
-  with IsSu
   with SmDomains
   with SysNodeEdges
 {
@@ -92,12 +92,12 @@ class SysMarket @Inject() (
   }
 
   /** Корень /sys/marker/. Тут ссылки на дальнейшие страницы в рамках market. */
-  def index = IsSuGet { implicit request =>
+  def index = isSu.Get { implicit request =>
     Ok(marketIndexTpl())
   }
 
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
-  def adnNodesList(args: MSysNodeListArgs) = IsSuGet.async { implicit request =>
+  def adnNodesList(args: MSysNodeListArgs) = isSu.Get.async { implicit request =>
     // Запустить сбор статистики по типам N2-узлов:
     val ntypeStatsFut = mNodes.ntypeStats()
 
@@ -326,7 +326,7 @@ class SysMarket @Inject() (
 
 
   /** Страница с формой создания нового узла. */
-  def createAdnNode() = IsSuGet.async { implicit request =>
+  def createAdnNode() = isSu.Get.async { implicit request =>
     // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
     // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
     val dfltFormM = adnNodeFormM.fill(
@@ -349,7 +349,7 @@ class SysMarket @Inject() (
   }
 
   /** Сабмит формы создания нового узла. */
-  def createAdnNodeSubmit() = IsSuPost.async { implicit request =>
+  def createAdnNodeSubmit() = isSu.Post.async { implicit request =>
     def logPrefix = s"createAdnNodeSubmit():"
     val ncpForm = nodeCreateParamsFormM.bindFromRequest()
     val nodeForm = adnNodeFormM.bindFromRequest()
@@ -523,7 +523,7 @@ class SysMarket @Inject() (
 
 
   /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(a: MScAdsSearchQs) = IsSuGet.async { implicit request =>
+  def showAdnNodeAds(a: MScAdsSearchQs) = isSu.Get.async { implicit request =>
 
     // Ищем все рекламные карточки, подходящие под запрос.
     val msearchFut = scAdSearchUtil.qsArgs2nodeSearch(a)

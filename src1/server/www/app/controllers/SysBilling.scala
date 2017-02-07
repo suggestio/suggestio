@@ -10,7 +10,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.acl.{IsSuNode, IsSuNodeContract, IsSuNodeNoContract}
+import util.acl.{IsSu, IsSuNode, IsSuNodeContract, IsSuNodeNoContract}
 import util.billing.{Bill2Util, ContractUtil, TfDailyUtil}
 
 /**
@@ -28,6 +28,7 @@ class SysBilling @Inject() (
   override val mBalances            : MBalances,
   override val mTxns                : MTxns,
   override val contractUtil         : ContractUtil,
+  override val isSu                 : IsSu,
   override val isSuNode             : IsSuNode,
   override val isSuNodeContract     : IsSuNodeContract,
   override val isSuNodeNoContract   : IsSuNodeNoContract,

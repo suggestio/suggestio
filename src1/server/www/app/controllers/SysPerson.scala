@@ -31,11 +31,11 @@ class SysPerson @Inject() (
   mSuperUsers               : MSuperUsers,
   emailPwIdents             : EmailPwIdents,
   mExtIdents                : MExtIdents,
+  isSu                      : IsSu,
   isSuPerson                : IsSuPerson,
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
-  with IsSu
 {
 
   import mCommonDi._
@@ -47,7 +47,7 @@ class SysPerson @Inject() (
     id    = Some("IdIdIdIdId888")
   )
 
-  def index = IsSuGet.async { implicit request =>
+  def index = isSu.Get.async { implicit request =>
     val personsCntFut: Future[Long] = {
       val psearch = new MNodeSearchDfltImpl {
         override def nodeTypes  = Seq(MNodeTypes.Person)
@@ -73,17 +73,17 @@ class SysPerson @Inject() (
   }
 
   /** Отрендерить на экран email-сообщение регистрации юзера. */
-  def showRegEmail = IsSuGet { implicit request =>
+  def showRegEmail = isSu.Get { implicit request =>
     Ok(emailRegMsgTpl(dummyEa))
   }
 
   /** Отрендерить email-сообщение восстановления пароля. */
-  def showRecoverEmail = IsSuGet { implicit request =>
+  def showRecoverEmail = isSu.Get { implicit request =>
     Ok(emailPwRecoverTpl(dummyEa))
   }
 
   /** Отрендерить страницу, которая будет содержать таблицу со всеми email+pw идентами. */
-  def allEpws(offset: Int) = IsSuGet.async { implicit request =>
+  def allEpws(offset: Int) = isSu.Get.async { implicit request =>
     val limit = 20
     val epwsFut = emailPwIdents.getAll(limit, offset = offset)
     for {
@@ -98,7 +98,7 @@ class SysPerson @Inject() (
   }
 
   /** Отрендерить страницу с листингом внешних идентов. */
-  def allExtIdents(offset: Int) = IsSuGet.async { implicit request =>
+  def allExtIdents(offset: Int) = isSu.Get.async { implicit request =>
     val limit = 20
     val extIdentsFut = mExtIdents.getAll(limit, offset = offset)
     for {

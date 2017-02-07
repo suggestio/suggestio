@@ -1,6 +1,8 @@
 package util.acl
 
+import com.google.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsDyn
+import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
 
 import scala.concurrent.Future
@@ -28,14 +30,15 @@ trait IsSuUtil extends OnUnauthUtil with MacroLogsDyn {
 }
 
 
-trait IsSu
+@Singleton
+final class IsSu @Inject() (override val mCommonDi: ICommonDi)
   extends CookieCleanupSupport
   with Csrf
 {
 
   import mCommonDi._
 
-  trait IsSuBase
+  trait Base
     extends ActionBuilder[MReq]
     with IsSuUtil
   {
@@ -60,21 +63,27 @@ trait IsSu
   }
 
 
-  sealed abstract class IsSuAbstract
-    extends IsSuBase
+  sealed abstract class BaseAbstract
+    extends Base
     with ExpireSession[MReq]
     with CookieCleanup[MReq]
 
   object IsSu
-    extends IsSuAbstract
+    extends BaseAbstract
+  @inline
+  def apply() = IsSu
 
-  object IsSuGet
-    extends IsSuAbstract
+  object Get
+    extends BaseAbstract
     with CsrfGet[MReq]
 
-  object IsSuPost
-    extends IsSuAbstract
+  object Post
+    extends BaseAbstract
     with CsrfPost[MReq]
 
 }
 
+/** Интерфейс для DI-поля с инстансом [[IsSu]]. */
+trait IIsSu {
+  val isSu: IsSu
+}

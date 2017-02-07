@@ -5,7 +5,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.node.IMNodes
 import models.mdr._
-import util.acl.{IsSu, IIsSuMad}
+import util.acl.{IIsSu, IIsSuMad}
 import util.billing.IBill2UtilDi
 import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
@@ -18,7 +18,7 @@ import views.html.sys1.mdr._
   */
 trait SysMdrFree
   extends SysMdrBase
-  with IsSu
+  with IIsSu
   with IIsSuMad
   with IBill2UtilDi
   with IMNodes
@@ -37,7 +37,7 @@ trait SysMdrFree
     *
     * @param args Аргументы для поиска (QSB).
     */
-  def freeAdvs(args: MdrSearchArgs) = IsSuGet.async { implicit request =>
+  def freeAdvs(args: MdrSearchArgs) = isSu.Get.async { implicit request =>
     // Необходимо искать карточки, требующие модерации/обработки.
     val madsFut = mNodes.dynSearch( args.toNodeSearch )
     _adsPage(madsFut, args)
