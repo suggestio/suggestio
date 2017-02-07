@@ -9,6 +9,7 @@ import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
 import models.usr._
 import play.api.data._
+import play.api.mvc.Result
 import play.twirl.api.Html
 import util.acl._
 import util.di.IIdentUtil
@@ -120,9 +121,8 @@ trait PwRecover
   extends SendPwRecoverEmail
   with IMacroLogs
   with CaptchaValidator
-  with BruteForceProtectCtl
+  with BruteForceProtect
   with SetLangCookieUtil
-  with CanRecoverPw
   with IIsAnonAcl
   with IIdentUtil
   with EmailPwRegUtil
@@ -132,11 +132,17 @@ trait PwRecover
 
   import mCommonDi._
 
+  val canRecoverPw: CanRecoverPw
+
   /** Маппинг формы восстановления пароля. */
   private def recoverPwFormM: EmailPwRecoverForm_t = {
     emailRegFormM
   }
 
+  private def _recoverKeyNotFound(req: IReq[_]): Future[Result] = {
+    implicit val req1 = req
+    NotFound( failedColTpl() )
+  }
 
   // TODO Сделать это шаблоном!
   protected def _outer(html: Html)(implicit ctx: Context): Html = {
@@ -201,13 +207,13 @@ trait PwRecover
   }
 
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
-  def recoverPwReturn(eActId: String) = CanRecoverPwGet(eActId) { implicit request =>
+  def recoverPwReturn(eActId: String) = canRecoverPw.Get(eActId)(_recoverKeyNotFound) { implicit request =>
     Ok(_pwReset(pwResetFormM))
   }
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
     * удалить запись из EmailActivation и отредиректить куда-нибудь. */
-  def pwResetSubmit(eActId: String) = CanRecoverPwPost(eActId, U.PersonNode).async { implicit request =>
+  def pwResetSubmit(eActId: String) = canRecoverPw.Post(eActId, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
     pwResetFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

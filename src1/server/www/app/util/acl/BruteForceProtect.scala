@@ -1,10 +1,11 @@
 package util.acl
 
-import controllers.{MyConfName, SioController}
+import controllers.MyConfName
 import io.suggest.util.logs.IMacroLogs
 import models.mproj.IMCommonDi
 import models.req.ExtReqHdr
 import play.api.mvc._
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.{Future, Promise}
 import scala.concurrent.duration._
@@ -22,7 +23,7 @@ import play.api.mvc.Result
  *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
  */
 
-trait BruteForceProtectBase
+trait BruteForceProtect
   extends IMacroLogs
   with MyConfName
   with IMCommonDi
@@ -132,14 +133,8 @@ trait BruteForceProtectBase
     bruteForceProtected(f)(request)
   }
 
-  def bruteForceRequestDrop: Future[Result]
-
-}
-
-
-/** Для использования на уровне контроллера, можно юзать этот трейт. */
-trait BruteForceProtectCtl extends BruteForceProtectBase with SioController {
-  override def bruteForceRequestDrop: Future[Result] = {
-    TooManyRequests("Too many requests. Do not want.")
+  def bruteForceRequestDrop: Future[Result] = {
+    Results.TooManyRequests("Too many requests. Do not want.")
   }
+
 }

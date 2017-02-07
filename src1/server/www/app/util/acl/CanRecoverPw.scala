@@ -1,11 +1,13 @@
 package util.acl
 
+import com.google.inject.Inject
 import controllers.SioController
+import io.suggest.util.logs.MacroLogsImpl
+import models.mproj.ICommonDi
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
-import models.usr.{EmailActivation, EmailPwIdent, IEmailActivationsDi, IEmailPwIdentsDi}
+import models.usr._
 import play.api.mvc._
-import util.di.IIdentUtil
-import views.html.ident.recover._
+import util.ident.IdentUtil
 
 import scala.concurrent.Future
 
@@ -20,26 +22,31 @@ import scala.concurrent.Future
  * Всё сделано в виде аддона для контроллера, т.к. DI-зависимость так проще всего разрулить.
  */
 
-trait CanRecoverPw
+class CanRecoverPw @Inject() (
+                               identUtil              : IdentUtil,
+                               emailPwIdents          : EmailPwIdents,
+                               emailActivations       : EmailActivations,
+                               override val mCommonDi : ICommonDi
+                             )
   extends SioController
-  with BruteForceProtectBase
-  with IIdentUtil
+  with BruteForceProtect
   with Csrf
-  with IEmailPwIdentsDi
-  with IEmailActivationsDi
+  with MacroLogsImpl
 {
 
   import mCommonDi._
 
   /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
-  trait CanRecoverPwBase extends ActionBuilder[MRecoverPwReq] with InitUserCmds {
+  sealed abstract class CanRecoverPwBase
+    extends ActionBuilder[MRecoverPwReq]
+    with InitUserCmds
+  {
 
     /** id активатора. */
     def eActId: String
 
-    protected def keyNotFound(implicit req: IReq[_]): Future[Result] = {
-      NotFound( failedColTpl() )
-    }
+    /** Не найден ключ для восстановления. */
+    def keyNotFoundF: IReq[_] => Future[Result]
 
     override def invokeBlock[A](request: Request[A], block: (MRecoverPwReq[A]) => Future[Result]): Future[Result] = {
       lazy val logPrefix = s"CanRecoverPw($eActId): "
@@ -71,7 +78,7 @@ trait CanRecoverPw
               // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
               case None =>
                 LOGGER.error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $personIdOpt ;; eAct = $eAct")
-                keyNotFound(_reqErr)
+                keyNotFoundF( _reqErr )
             }
 
           // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
@@ -85,7 +92,7 @@ trait CanRecoverPw
               .recover {
                 // should never occur
                 case ex: NoSuchElementException =>
-                  LOGGER.warn("Oops, superuser access for unknown epw! " + personId + " Mocking...")
+                  LOGGER.warn("Oops, superuser access for unknown epw! " + personId + " Mocking...", ex)
                   EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
               }
             val ea = result getOrElse {
@@ -106,7 +113,7 @@ trait CanRecoverPw
               // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
               case None =>
                 LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + personIdOpt)
-                keyNotFound(_reqErr)
+                keyNotFoundF( _reqErr )
             }
         }
       }
@@ -114,13 +121,15 @@ trait CanRecoverPw
   }
 
   /** Реализация [[CanRecoverPwBase]] с выставлением CSRF-токена. */
-  case class CanRecoverPwGet(override val eActId: String, override val userInits: MUserInit*)
+  case class Get(override val eActId: String, override val userInits: MUserInit*)
+                (override val keyNotFoundF: IReq[_] => Future[Result])
     extends CanRecoverPwBase
     with CsrfGet[MRecoverPwReq]
     with ExpireSession[MRecoverPwReq]
 
   /** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
-  case class CanRecoverPwPost(override val eActId: String, override val userInits: MUserInit*)
+  case class Post(override val eActId: String, override val userInits: MUserInit*)
+                 (override val keyNotFoundF: IReq[_] => Future[Result])
     extends CanRecoverPwBase
     with CsrfPost[MRecoverPwReq]
     with ExpireSession[MRecoverPwReq]

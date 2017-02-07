@@ -61,7 +61,7 @@ class Img @Inject() (
   extends SioController
   with MacroLogsImpl
   with TempImgSupport
-  with BruteForceProtectCtl
+  with BruteForceProtect
 {
 
   import LOGGER._

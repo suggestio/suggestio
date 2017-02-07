@@ -29,7 +29,7 @@ import util.secure.IScryptUtilDi
 trait EmailPwSubmit
   extends SioController
   with IMacroLogs
-  with BruteForceProtectCtl
+  with BruteForceProtect
   with SetLangCookieUtil
   with IIsAnonAcl
   with IIdentUtil

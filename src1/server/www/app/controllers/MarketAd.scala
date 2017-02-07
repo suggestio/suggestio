@@ -54,7 +54,7 @@ class MarketAd @Inject() (
 )
   extends SioController
   with MacroLogsImpl
-  with BruteForceProtectCtl
+  with BruteForceProtect
   with MarketAdPreview
   with CanEditAd
   with CanUpdateSls

@@ -9,7 +9,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.http.MimeTypes
 import util.FormUtil._
-import util.acl.{BruteForceProtectCtl, MaybeAuth}
+import util.acl.{BruteForceProtect, MaybeAuth}
 import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
 
@@ -23,7 +23,7 @@ import util.geo.IGeoIpUtilDi
 trait ScRemoteError
   extends SioController
   with MacroLogsImpl
-  with BruteForceProtectCtl
+  with BruteForceProtect
   with MaybeAuth
   with IGeoIpUtilDi
   with IScStatUtil
