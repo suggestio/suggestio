@@ -15,11 +15,10 @@ import scala.concurrent.Future
  */
 @Singleton
 class MaybeAuth @Inject() (
+                            val cookieCleanup       : CookieCleanup,
                             val csrf                : Csrf,
-                            override val mCommonDi  : ICommonDi
-                          )
-  extends CookieCleanupSupport
-{
+                            mCommonDi               : ICommonDi
+                          ) {
 
   import mCommonDi._
 
@@ -53,7 +52,7 @@ class MaybeAuth @Inject() (
   sealed abstract class MaybeAuthAbstract
     extends MaybeAuthBase
     with ExpireSession[MReq]
-    with CookieCleanup[MReq]
+    with cookieCleanup.CookieCleanup[MReq]
 
   /** Сборка данных по текущей сессии юзера в реквест. */
   case class MaybeAuth(override val userInits: MUserInit*)

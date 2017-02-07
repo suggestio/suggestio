@@ -1,10 +1,10 @@
 package util.acl
 
-import models.mproj.IMCommonDi
-import play.api.mvc.{DiscardingCookie, Result, Request, ActionBuilder}
+import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
+import play.api.mvc.{ActionBuilder, DiscardingCookie, Request, Result}
 
 import scala.concurrent.Future
-
 import scala.language.higherKinds
 
 /**
@@ -14,18 +14,16 @@ import scala.language.higherKinds
  * Description: Вычищать всякие _boss_session и прочие куки, которые уже не нужны.
  */
 
-object CookieCleanupUtil {
-
-  /** Какие кукисы удалять? Можно задать через конфиг список имён. По умолчанию выпиливается только _boss_session. */
-  val BAD_NAMES = Set("_boss_session")
-
-}
-
-
-trait CookieCleanupSupport extends IMCommonDi {
+@Singleton
+class CookieCleanup @Inject() (mCommonDi: ICommonDi) {
 
   import mCommonDi._
-  import CookieCleanupUtil._
+
+
+  /** Какие кукисы удалять? Можно задать через конфиг список имён. По умолчанию выпиливается только _boss_session. */
+  val BAD_NAMES = Set(
+    "_boss_session"
+  )
 
   /** Подмешивание этого трейта к action-builder'ам позволяет запустить чистку кукисов. */
   trait CookieCleanup[R[_]] extends ActionBuilder[R] {

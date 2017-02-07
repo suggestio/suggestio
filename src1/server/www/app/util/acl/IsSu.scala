@@ -32,10 +32,10 @@ trait IsSuUtil extends OnUnauthUtil with MacroLogsDyn {
 
 @Singleton
 final class IsSu @Inject() (
-                             val csrf               : Csrf,
-                             override val mCommonDi : ICommonDi
+                             val cookieCleanup  : CookieCleanup,
+                             val csrf           : Csrf,
+                             mCommonDi          : ICommonDi
                            )
-  extends CookieCleanupSupport
 {
 
   import mCommonDi._
@@ -68,7 +68,7 @@ final class IsSu @Inject() (
   sealed abstract class BaseAbstract
     extends Base
     with ExpireSession[MReq]
-    with CookieCleanup[MReq]
+    with cookieCleanup.CookieCleanup[MReq]
 
   object IsSu
     extends BaseAbstract
