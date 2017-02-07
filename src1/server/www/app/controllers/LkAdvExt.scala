@@ -36,7 +36,7 @@ import scala.concurrent.Future
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
 class LkAdvExt @Inject() (
-                           override val canAdvAdUtil       : CanAdvertiseAdUtil,
+                           canAdvAd                        : CanAdvAd,
                            mNodes                          : MNodes,
                            advExtWsActors                  : AdvExtWsActors,
                            override val mExtTargets        : MExtTargets,
@@ -46,7 +46,6 @@ class LkAdvExt @Inject() (
   extends SioControllerImpl
   with MacroLogsImpl
   with CanAccessExtTarget
-  with CanAdvertiseAd
   with CanSubmitExtTargetForNode
   with IsAdnNodeAdmin
 {
@@ -96,7 +95,7 @@ class LkAdvExt @Inject() (
    * @param adId id рекламной карточки.
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
-  def forAd(adId: String) = CanAdvertiseAdGet(adId).async { implicit request =>
+  def forAd(adId: String) = canAdvAd.Get(adId).async { implicit request =>
     _forAdRender(adId, advsFormM, Ok)
   }
 
@@ -139,7 +138,7 @@ class LkAdvExt @Inject() (
    * @param adId id размещаемой рекламной карточки.
    * @return 200 Ok со страницей деятельности по размещению.
    */
-  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def forAdSubmit(adId: String) = canAdvAd.Post(adId).async { implicit request =>
     advsFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
@@ -165,7 +164,7 @@ class LkAdvExt @Inject() (
    *                  Если не заданы, то будет редирект на форму размещения.
    * @return Страница с системой размещения.
    */
-  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = CanAdvertiseAdPost(adId, U.Lk).async { implicit request =>
+  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = canAdvAd.Post(adId, U.Lk).async { implicit request =>
     wsArgsOpt.fold [Future[Result]] {
       // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
       Redirect(routes.LkAdvExt.forAd(adId))
@@ -246,7 +245,7 @@ class LkAdvExt @Inject() (
       //
       adProdReq <- {
         val req1 = MReqNoBody(requestHeader, user) // RequestHeaderAsRequest(requestHeader)
-        canAdvAdUtil.maybeAllowed(mad, req1)
+        canAdvAd.maybeAllowed(mad, req1)
           .map(_.get)
           .recoverWith { case _: NoSuchElementException =>
             val ex2 = ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))

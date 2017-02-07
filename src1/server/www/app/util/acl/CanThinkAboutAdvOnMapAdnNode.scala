@@ -18,7 +18,7 @@ import scala.concurrent.Future
   */
 class CanThinkAboutAdvOnMapAdnNode @Inject() (
                                                mNodes                 : MNodes,
-                                               canAdvAdUtil           : CanAdvertiseAdUtil,
+                                               canAdvAd               : CanAdvAd,
                                                advGeoMapUtil          : AdvGeoMapUtil,
                                                override val mCommonDi : ICommonDi
                                              )
@@ -69,7 +69,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
         // Когда придёт ответ от БД по запрошенной карточке...
         madOptFut.flatMap {
           case Some(mad) =>
-            canAdvAdUtil.maybeAllowed(mad, reqBlank).flatMap {
+            canAdvAd.maybeAllowed(mad, reqBlank).flatMap {
               // Есть карточка, проверка прав на неё ок.
               case Some(req1) =>
                 nodeOptFut.flatMap {

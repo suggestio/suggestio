@@ -56,27 +56,26 @@ import scala.concurrent.duration._
   * Description: Контроллер размещения в гео-тегах.
   */
 class LkAdvGeo @Inject() (
-  advGeoFormUtil                  : AdvGeoFormUtil,
-  advGeoBillUtil                  : AdvGeoBillUtil,
-  advFormUtil                     : AdvFormUtil,
-  bill2Util                       : Bill2Util,
-  advGeoLocUtil                   : AdvGeoLocUtil,
-  advGeoMapUtil                   : AdvGeoMapUtil,
-  streamsUtil                     : StreamsUtil,
-  pickleSrvUtil                   : PickleSrvUtil,
-  ymdHelpersJvm                   : YmdHelpersJvm,
-  mdrUtil                         : MdrUtil,
-  canAccessItem                   : CanAccessItem,
-  canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
-  override val isAuth             : IsAuth,
-  override val tagSearchUtil      : LkTagsSearchUtil,
-  override val tagsEditFormUtil   : TagsEditFormUtil,
-  override val canAdvAdUtil       : CanAdvertiseAdUtil,
-  override val mCommonDi          : ICommonDi
+                           advGeoFormUtil                  : AdvGeoFormUtil,
+                           advGeoBillUtil                  : AdvGeoBillUtil,
+                           advFormUtil                     : AdvFormUtil,
+                           bill2Util                       : Bill2Util,
+                           advGeoLocUtil                   : AdvGeoLocUtil,
+                           advGeoMapUtil                   : AdvGeoMapUtil,
+                           streamsUtil                     : StreamsUtil,
+                           pickleSrvUtil                   : PickleSrvUtil,
+                           ymdHelpersJvm                   : YmdHelpersJvm,
+                           mdrUtil                         : MdrUtil,
+                           canAccessItem                   : CanAccessItem,
+                           canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
+                           canAdvAd                        : CanAdvAd,
+                           override val isAuth             : IsAuth,
+                           override val tagSearchUtil      : LkTagsSearchUtil,
+                           override val tagsEditFormUtil   : TagsEditFormUtil,
+                           override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with CanAdvertiseAd
   with NodeTagsEdit
 {
 
@@ -112,7 +111,7 @@ class LkAdvGeo @Inject() (
     *
     * @param adId id отрабатываемой карточки.
     */
-  def forAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk, U.ContractId).async { implicit request =>
+  def forAd(adId: String) = canAdvAd.Get(adId, U.Lk, U.ContractId).async { implicit request =>
     // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
     //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
     val resLogic = new ForAdLogic(
@@ -270,7 +269,7 @@ class LkAdvGeo @Inject() (
    * @param adId id размещаемой карточки.
    * @return 302 see other, 416 not acceptable.
    */
-  def forAdSubmit(adId: String) = CanAdvertiseAdPost(adId, U.PersonNode).async(formPostBP) { implicit request =>
+  def forAdSubmit(adId: String) = canAdvAd.Post(adId, U.PersonNode).async(formPostBP) { implicit request =>
     lazy val logPrefix = s"forAdSubmit($adId):"
 
     // Хватаем бинарные данные из тела запроса...
@@ -386,7 +385,7 @@ class LkAdvGeo @Inject() (
     * @param adId id рекламной карточки.
     * @return 200 / 416 + JSON
     */
-  def getPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async(formPostBP) { implicit request =>
+  def getPriceSubmit(adId: String) = canAdvAd.Post(adId).async(formPostBP) { implicit request =>
     lazy val logPrefix = s"getPriceSubmit($adId):"
 
     advGeoFormUtil.validateForm( request.body ).fold(
@@ -425,7 +424,7 @@ class LkAdvGeo @Inject() (
     * @param adId id текущей размещаемой рекламной карточки.
     *             Пока используется как основание для проверки прав доступа.
     */
-  def advRcvrsMap(adId: MEsUuId) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def advRcvrsMap(adId: MEsUuId) = canAdvAd.Post(adId).async { implicit request =>
     val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
       val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
       advGeoMapUtil.rcvrNodesMap( msearch )
@@ -448,7 +447,7 @@ class LkAdvGeo @Inject() (
     * @param adId id интересующей рекламной карточки.
     * @return js.Array[GjFeature].
     */
-  def existGeoAdvsMap(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def existGeoAdvsMap(adId: String) = canAdvAd.Post(adId).async { implicit request =>
     // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
     val currAdvsSrc = slick.db
       .stream {

@@ -1,12 +1,11 @@
 package util.acl
 
-import com.google.inject.Inject
-import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs, MacroLogsImpl}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn, MacroLogsImpl}
 import models._
 import models.mproj.ICommonDi
 import models.req._
 import play.api.mvc._
-import util.di.ICanAdvAdUtil
 import util.n2u.N2NodesUtil
 
 import scala.concurrent.Future
@@ -18,15 +17,18 @@ import scala.concurrent.Future
  * Description: Проверка прав на размещение рекламной карточки.
  */
 
-class CanAdvertiseAdUtil @Inject() (
-  n2NodeUtil                      : N2NodesUtil,
-  mCommonDi                       : ICommonDi
-)
-  extends MacroLogsImpl
+/** Аддон для контроллеров для проверки права размещать рекламную карточку. */
+@Singleton
+class CanAdvAd @Inject()(
+                          n2NodeUtil              : N2NodesUtil,
+                          override val mCommonDi  : ICommonDi
+                        )
+  extends Csrf
+  with MacroLogsImpl
 {
 
-  import LOGGER._
   import mCommonDi._
+
 
   /** Является ли указанный узел рекламодателем? */
   def isAdvertiserNode(mnode: MNode): Boolean = {
@@ -57,7 +59,7 @@ class CanAdvertiseAdUtil @Inject() (
 
     } else {
       req.user.personIdOpt.fold {
-        trace(s"maybeAllowed(${mad.id.get}): anonymous access prohibited")
+        LOGGER.trace(s"maybeAllowed(${mad.id.get}): anonymous access prohibited")
         val r = Option.empty[MAdProdReq[A]]
         Future.successful(r)
 
@@ -70,23 +72,13 @@ class CanAdvertiseAdUtil @Inject() (
             }
             .map { req2 }
           if (resOpt.isEmpty)
-            debug(s"maybeAllowed($personId, ${mad.id.get}): User is not node $prodIdOpt admin or node is not a producer.")
+            LOGGER.debug(s"maybeAllowed($personId, ${mad.id.get}): User is not node $prodIdOpt admin or node is not a producer.")
           resOpt
         }
       }
     }
   }
 
-}
-
-
-/** Аддон для контроллеров для  */
-trait CanAdvertiseAd
-  extends ICanAdvAdUtil
-  with Csrf
-{
-
-  import mCommonDi._
 
   /** Редактировать карточку может только владелец магазина. */
   sealed trait CanAdvertiseAdBase
@@ -112,7 +104,7 @@ trait CanAdvertiseAd
       madFut.flatMap {
         // Карточка найден, проверить доступ...
         case Some(mad) =>
-          canAdvAdUtil.maybeAllowed(mad, reqBlank).flatMap {
+          maybeAllowed(mad, reqBlank).flatMap {
             case Some(req1) =>
               block(req1)
             case None =>
@@ -128,7 +120,7 @@ trait CanAdvertiseAd
     }
   }
 
-  sealed abstract class CanAdvertiseAdBase2
+  sealed abstract class CanAdvertiseAdAbstract
     extends CanAdvertiseAdBase
     with ExpireSession[MAdProdReq]
     with MacroLogsDyn
@@ -138,22 +130,24 @@ trait CanAdvertiseAd
     override val adId       : String,
     override val userInits  : MUserInit*
   )
-    extends CanAdvertiseAdBase2
+    extends CanAdvertiseAdAbstract
+  @inline
+  def apply(adId: String, userInits: MUserInit*) = CanAdvertiseAd(adId, userInits: _*)
 
   /** Запрос какой-то формы размещения рекламной карточки с выставление CSRF в сессию. */
-  case class CanAdvertiseAdGet(
+  case class Get(
     override val adId       : String,
     override val userInits  : MUserInit*
   )
-    extends CanAdvertiseAdBase2
+    extends CanAdvertiseAdAbstract
     with CsrfGet[MAdProdReq]
 
   /** Сабмит какой-то формы размещения рекламной карточки с проверкой CSRF в сессии. */
-  case class CanAdvertiseAdPost(
+  case class Post(
     override val adId       : String,
     override val userInits  : MUserInit*
   )
-    extends CanAdvertiseAdBase2
+    extends CanAdvertiseAdAbstract
     with CsrfPost[MAdProdReq]
 
 }

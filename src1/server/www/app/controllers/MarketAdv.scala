@@ -38,7 +38,7 @@ import scala.concurrent.Future
  * - узелы-получатели одобряют или отсеивают входящие рекламные карточки.
  */
 class MarketAdv @Inject() (
-                            override val canAdvAdUtil       : CanAdvertiseAdUtil,
+                            canAdvAd                        : CanAdvAd,
                             advDirectBilling                : AdvDirectBilling,
                             advDirectFormUtil               : AdvDirectFormUtil,
                             advFormUtil                     : AdvFormUtil,
@@ -52,7 +52,6 @@ class MarketAdv @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with CanAdvertiseAd
 {
 
   import LOGGER._
@@ -60,7 +59,7 @@ class MarketAdv @Inject() (
 
 
   /** Страница управления размещением рекламной карточки. */
-  def advForAd(adId: String) = CanAdvertiseAdGet(adId, U.Lk).async { implicit request =>
+  def advForAd(adId: String) = canAdvAd.Get(adId, U.Lk).async { implicit request =>
     val form0 = advDirectFormUtil.advForm
     // Залить в форму начальные данные.
     val res = FormResult()
@@ -246,7 +245,7 @@ class MarketAdv @Inject() (
     * @param adId id размещаемой рекламной карточки.
     * @return Инлайновый рендер отображаемой цены.
     */
-  def getAdvPriceSubmit(adId: String) = CanAdvertiseAdPost(adId).async { implicit request =>
+  def getAdvPriceSubmit(adId: String) = canAdvAd.Post(adId).async { implicit request =>
     lazy val logPrefix = s"getAdvPriceSubmit($adId)#${System.currentTimeMillis}:"
     advDirectFormUtil.advForm.bindFromRequest().fold(
       {formWithErrors =>
@@ -369,7 +368,7 @@ class MarketAdv @Inject() (
   }
 
   /** Сабмит формы размещения рекламной карточки. */
-  def advFormSubmit(adId: String) = CanAdvertiseAdPost(adId, U.Contract, U.PersonNode).async { implicit request =>
+  def advFormSubmit(adId: String) = canAdvAd.Post(adId, U.Contract, U.PersonNode).async { implicit request =>
     lazy val logPrefix = s"advFormSubmit($adId): "
     val formBinded = advDirectFormUtil.advForm.bindFromRequest()
     formBinded.fold(
