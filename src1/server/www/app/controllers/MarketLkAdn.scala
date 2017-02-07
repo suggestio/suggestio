@@ -57,6 +57,7 @@ class MarketLkAdn @Inject() (
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
   isAuth                              : IsAuth,
+  isAdnNodeAdmin                      : IsAdnNodeAdmin,
   isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
   nodeEact                            : NodeEact,
   override val scryptUtil             : ScryptUtil,
@@ -66,7 +67,6 @@ class MarketLkAdn @Inject() (
   with MacroLogsImpl
   with BruteForceProtect
   with ChangePwAction
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -95,7 +95,7 @@ class MarketLkAdn @Inject() (
    *
    * @param nodeId id узла.
    */
-  def showAdnNode(nodeId: String) = IsAdnNodeAdminGet(nodeId, U.Lk).async { implicit request =>
+  def showAdnNode(nodeId: String) = isAdnNodeAdmin.Get(nodeId, U.Lk).async { implicit request =>
     val mnode = request.mnode
     val logoOptFut = logoUtil.getLogoOfNode(mnode)
     val galleryFut = galleryUtil.galleryImgs( mnode )
@@ -132,7 +132,7 @@ class MarketLkAdn @Inject() (
    * @return 200 Ok + страница ЛК со списком карточек.
    */
   def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = {
-    IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+    isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
       import request.mnode
 
       // Для узла нужно отобразить его рекламу.
@@ -374,7 +374,7 @@ class MarketLkAdn @Inject() (
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+  def userProfileEdit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
     _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
   }
 
@@ -391,7 +391,7 @@ class MarketLkAdn @Inject() (
   }
 
   /** Сабмит формы смены пароля. */
-  def changePasswordSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
+  def changePasswordSubmit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
       _userProfileEdit(formWithErrors, r, NotAcceptable)
     }

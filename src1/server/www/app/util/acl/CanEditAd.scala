@@ -21,6 +21,7 @@ import scala.concurrent.Future
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
 @Singleton
 class CanEditAd @Inject() (
+                            isAdnNodeAdmin          : IsAdnNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
                             override val mCommonDi  : ICommonDi
                           )
@@ -80,7 +81,7 @@ class CanEditAd @Inject() (
 
             prodNodeOptFut.flatMap {
               case Some(producer) =>
-                val allowed = user.isSuper || IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                val allowed = user.isSuper || isAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
 
                 if (!allowed) {
                   LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")

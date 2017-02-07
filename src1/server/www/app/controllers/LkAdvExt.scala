@@ -39,19 +39,20 @@ class LkAdvExt @Inject() (
                            canAdvAd                        : CanAdvAd,
                            mNodes                          : MNodes,
                            advExtWsActors                  : AdvExtWsActors,
-                           override val mExtTargets        : MExtTargets,
-                           override val advExtFormUtil     : AdvExtFormUtil,
+                           isAdnNodeAdmin                  : IsAdnNodeAdmin,
+                           mExtTargets                     : MExtTargets,
+                           canSubmitExtTargetForNode       : CanSubmitExtTargetForNode,
+                           advExtFormUtil                  : AdvExtFormUtil,
+                           canAccessExtTarget              : CanAccessExtTarget,
                            override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with CanAccessExtTarget
-  with CanSubmitExtTargetForNode
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
   import mCommonDi._
+
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
   private val WS_BEST_BEFORE_SECONDS = configuration
@@ -278,7 +279,7 @@ class LkAdvExt @Inject() (
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
-  def writeTarget(adnId: String) = IsAdnNodeAdminGet(adnId) { implicit request =>
+  def writeTarget(adnId: String) = isAdnNodeAdmin.Get(adnId) { implicit request =>
     val ctx = implicitly[Context]
     val form0 = advExtFormUtil.oneRawTargetFullFormM(adnId)
       .fill( ("", Some(ctx.messages("New.target")), None) )
@@ -293,7 +294,7 @@ class LkAdvExt @Inject() (
    * @return 200 Ok если цель создана.
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
    */
-  def writeTargetSubmit(adnId: String) = CanSubmitExtTargetForNodePost(adnId).async { implicit request =>
+  def writeTargetSubmit(adnId: String) = canSubmitExtTargetForNode.Post(adnId).async { implicit request =>
     request.newTgForm.fold(
       {formWithErrors =>
         debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
@@ -320,7 +321,7 @@ class LkAdvExt @Inject() (
    *         403 при проблемах с доступом.
    *         Редирект, если сессия истекла.
    */
-  def deleteTargetSubmit(tgId: String) = CanAccessExtTarget(tgId).async { implicit request =>
+  def deleteTargetSubmit(tgId: String) = canAccessExtTarget(tgId).async { implicit request =>
     for {
       isDeleted <- mExtTargets.deleteById( tgId )
     } yield {
@@ -343,7 +344,7 @@ class LkAdvExt @Inject() (
    * @return Что актор пожелает.
    *         В норме -- закрытие попапа с выставление шифрованного access-token'а в куку.
    */
-  private def oauth1PopupReturn(adnId: String, actorInfoQs: ActorPathQs) = IsAdnNodeAdmin(adnId).async { implicit request =>
+  private def oauth1PopupReturn(adnId: String, actorInfoQs: ActorPathQs) = isAdnNodeAdmin(adnId).async { implicit request =>
     trace(s"${request.method} oauth1return($adnId, $actorInfoQs): " + request.uri)
     val msg = OAuthVerifier(
       request.getQueryString("oauth_verifier")

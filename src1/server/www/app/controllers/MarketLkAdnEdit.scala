@@ -48,13 +48,13 @@ class MarketLkAdnEdit @Inject() (
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
   imgFormUtil                     : ImgFormUtil,
+  isAdnNodeAdmin                  : IsAdnNodeAdmin,
   isAuth                          : IsAuth,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
   with BruteForceProtect
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -218,7 +218,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
-  def editAdnNode(adnId: String) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+  def editAdnNode(adnId: String) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
     import request.mnode
 
     // Запуск асинхронной сборки данных из моделей.
@@ -273,7 +273,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
-  def editAdnNodeSubmit(adnId: String) = IsAdnNodeAdminPost(adnId, U.Lk).async { implicit request =>
+  def editAdnNodeSubmit(adnId: String) = isAdnNodeAdmin.Post(adnId, U.Lk).async { implicit request =>
     import request.mnode
     lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
     nodeFormM(mnode.extras.adn.get).bindFromRequest().fold(

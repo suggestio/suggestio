@@ -20,6 +20,7 @@ import scala.concurrent.Future
 /** Аддон для контроллеров для проверки права размещать рекламную карточку. */
 @Singleton
 class CanAdvAd @Inject()(
+                          isAdnNodeAdmin          : IsAdnNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
                           override val mCommonDi  : ICommonDi
                         )
@@ -67,7 +68,7 @@ class CanAdvAd @Inject()(
         for (prodOpt <- prodOptFut) yield {
           val resOpt = prodOpt
             .filter { mnode =>
-              val isOwnedByMe = IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(mnode, req.user)
+              val isOwnedByMe = isAdnNodeAdmin.isAdnNodeAdminCheckStrict(mnode, req.user)
               isOwnedByMe  &&  isAdvertiserNode(mnode)
             }
             .map { req2 }

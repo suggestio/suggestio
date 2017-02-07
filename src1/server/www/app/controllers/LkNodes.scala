@@ -20,11 +20,11 @@ import util.acl.IsAdnNodeAdmin
   * - массового создания маячков с целью занять чужие id'шники.
   */
 class LkNodes @Inject() (
-                          override val mCommonDi: ICommonDi
+                          isAdnNodeAdmin            : IsAdnNodeAdmin,
+                          override val mCommonDi    : ICommonDi
                         )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsAdnNodeAdmin
 {
 
   /**
@@ -34,7 +34,7 @@ class LkNodes @Inject() (
     * @param nodeId id узла, с которым идёт взаимодействие.
     * @return 200 + HTML, если у юзера достаточно прав для управления узлом.
     */
-  def onNode(nodeId: String) = IsAdnNodeAdminGet(nodeId).async { implicit request =>
+  def onNode(nodeId: String) = isAdnNodeAdmin.Get(nodeId).async { implicit request =>
     ???
   }
 

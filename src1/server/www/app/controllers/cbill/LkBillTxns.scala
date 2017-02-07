@@ -6,7 +6,7 @@ import io.suggest.mbill2.m.txn.{IMTxns, MTxn}
 import models.jsm.init.MTargets
 import models.mbill.{MLkTxnsListTplArgs, MLkTxnsPageTplArgs}
 import play.twirl.api.Html
-import util.acl.IsAdnNodeAdmin
+import util.acl.IIsAdnNodeAdmin
 import views.html.lk.billing.txns._
 
 import scala.concurrent.Future
@@ -19,7 +19,7 @@ import scala.concurrent.Future
   */
 trait LkBillTxns
   extends SioController
-  with IsAdnNodeAdmin
+  with IIsAdnNodeAdmin
   with IMTxns
 {
 
@@ -29,7 +29,7 @@ trait LkBillTxns
 
 
   /** Подгрузка страницы из списка транзакций. */
-  def txnsList(adnId: String, page: Int, inline: Boolean) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+  def txnsList(adnId: String, page: Int, inline: Boolean) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
     // Получить доступ к списку балансов юзера, который уже должен бы запрашиваться в фоне.
     val balancesFut = request.user.mBalancesFut
 

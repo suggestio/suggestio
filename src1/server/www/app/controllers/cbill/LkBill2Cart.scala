@@ -11,7 +11,7 @@ import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mlk.bill.{MCartItem, MCartTplArgs}
-import util.acl.{ICanAccessItemDi, IsAdnNodeAdmin}
+import util.acl.{ICanAccessItemDi, IIsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
 import views.html.lk.billing.cart._
@@ -28,7 +28,7 @@ trait LkBill2Cart
   extends SioController
   with IBill2UtilDi
   with IMacroLogs
-  with IsAdnNodeAdmin
+  with IIsAdnNodeAdmin
   with IMItems
   with ICanAccessItemDi
   with IBlkImgMakerDI
@@ -47,7 +47,7 @@ trait LkBill2Cart
     * @param r Куда производить возврат из корзины.
     * @return 200 ОК с html страницей корзины.
     */
-  def cart(onNodeId: String, r: Option[String]) = IsAdnNodeAdminGet(onNodeId, U.Lk, U.ContractId).async { implicit request =>
+  def cart(onNodeId: String, r: Option[String]) = isAdnNodeAdmin.Get(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
     // Узнать id контракта юзера. Сам контракт не важен.
     val mcIdOptFut = request.user.contractIdOptFut
@@ -168,7 +168,7 @@ trait LkBill2Cart
     * @param onNodeId На каком узле сейчас находимся?
     * @return Редирект или страница оплаты.
     */
-  def cartSubmit(onNodeId: String) = IsAdnNodeAdminPost(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
+  def cartSubmit(onNodeId: String) = isAdnNodeAdmin.Post(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
     // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
     // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
     for {
@@ -223,7 +223,7 @@ trait LkBill2Cart
     *          Если пусто, то юзер будет отправлен на страницу своей пустой корзины.
     * @return Редирект.
     */
-  def cartClear(onNodeId: String, r: Option[String]) = IsAdnNodeAdminPost(onNodeId, U.ContractId).async { implicit request =>
+  def cartClear(onNodeId: String, r: Option[String]) = isAdnNodeAdmin.Post(onNodeId, U.ContractId).async { implicit request =>
     lazy val logPrefix = s"cartClear($onNodeId):"
 
     request.user

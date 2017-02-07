@@ -1,10 +1,12 @@
 package util.acl
 
+import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsDyn
-import models.adv.IMExtTargets
+import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import models.mproj.ICommonDi
 
 import scala.concurrent.Future
 
@@ -15,10 +17,11 @@ import scala.concurrent.Future
  * Description: ActionBuilder для экшенов доступа к записям [[models.adv.MExtTarget]] по id.
  */
 
-trait CanAccessExtTarget
-  extends IsAdnNodeAdminUtilCtl
-  with IMExtTargets
-{
+class CanAccessExtTarget @Inject() (
+                                     mExtTargets        : MExtTargets,
+                                     val isAdnNodeAdmin : IsAdnNodeAdmin,
+                                     mCommonDi          : ICommonDi
+                                   ) {
 
   import mCommonDi._
 
@@ -27,7 +30,7 @@ trait CanAccessExtTarget
     extends ActionBuilder[MExtTargetNodeReq]
     with MacroLogsDyn
     with OnUnauthNode
-    with IsAdnNodeAdminUtil
+    with isAdnNodeAdmin.IsAdnNodeAdminUtil
   {
 
     /** id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
@@ -43,7 +46,7 @@ trait CanAccessExtTarget
         case Some(tg) =>
           val user = mSioUsers(personIdOpt)
           val adnNodeOptFut = isAdnNodeAdmin(tg.adnId, user)
-          adnNodeOptFut flatMap {
+          adnNodeOptFut.flatMap {
             // У юзера есть права на узел. Запускаем экшен на исполнение.
             case Some(mnode) =>
               val req1 = MExtTargetNodeReq(tg, mnode, request, user)
@@ -73,5 +76,7 @@ trait CanAccessExtTarget
   case class CanAccessExtTarget(override val tgId: String)
     extends CanAccessExtTargetBase
     with ExpireSession[MExtTargetNodeReq]
+  @inline
+  def apply(tgId: String) = CanAccessExtTarget(tgId)
 
 }

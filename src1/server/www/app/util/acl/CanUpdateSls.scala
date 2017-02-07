@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mproj.ICommonDi
 import models.req.{MAdProdReq, MReq}
@@ -9,8 +9,6 @@ import play.api.mvc._
 import util.n2u.N2NodesUtil
 
 import scala.concurrent.Future
-
-// TODO НУЖНА ПОДДЕРЖКА CSRF ТУТ!
 
 /**
  * Suggest.io
@@ -21,6 +19,7 @@ import scala.concurrent.Future
  */
 
 class CanUpdateSls @Inject() (
+                               isAdnNodeAdmin         : IsAdnNodeAdmin,
                                val canEditAd          : CanEditAd,
                                n2NodesUtil            : N2NodesUtil,
                                override val mCommonDi : ICommonDi
@@ -70,7 +69,7 @@ class CanUpdateSls @Inject() (
               val producerIdOpt = n2NodesUtil.madProducerId(mad)
               mNodesCache.maybeGetByIdCached(producerIdOpt).flatMap { producerOpt =>
                 val isNodeAdmin = producerOpt.exists { producer =>
-                  IsAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                  isAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
                 }
                 if (isNodeAdmin) {
                   // Юзер является админом. Всё ок.

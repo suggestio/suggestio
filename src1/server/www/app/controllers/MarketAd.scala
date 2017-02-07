@@ -51,6 +51,7 @@ class MarketAd @Inject() (
   @Named("blk") override val blkImgMaker  : IMaker,
   n2NodesUtil                             : N2NodesUtil,
   canUpdateSls                            : CanUpdateSls,
+  override val isAdnNodeAdmin             : IsAdnNodeAdmin,
   override val marketAdFormUtil           : LkAdEdFormUtil,
   override val mCommonDi                  : ICommonDi
 )
@@ -58,8 +59,6 @@ class MarketAd @Inject() (
   with MacroLogsImpl
   with BruteForceProtect
   with MarketAdPreview
-
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -109,7 +108,7 @@ class MarketAd @Inject() (
     *
     * @param adnId id узла рекламной сети.
     */
-  def createAd(adnId: String) = IsAdnNodeAdminGet(adnId, U.Balance).async { implicit request =>
+  def createAd(adnId: String) = isAdnNodeAdmin.Get(adnId, U.Balance).async { implicit request =>
     _renderCreateFormWith(
       af      = adFormM,
       adnNode = request.mnode,
@@ -130,7 +129,7 @@ class MarketAd @Inject() (
     *
     * @param adnId id магазина.
     */
-  def createAdSubmit(adnId: String) = IsAdnNodeAdminPost(adnId).async(parse.urlFormEncoded) { implicit request =>
+  def createAdSubmit(adnId: String) = isAdnNodeAdmin.Post(adnId).async(parse.urlFormEncoded) { implicit request =>
     import request.mnode
     lazy val logPrefix = s"createAdSubmit($adnId): "
     val bc = BlocksConf.DEFAULT

@@ -44,11 +44,11 @@ class LkAdnMap @Inject() (
   bill2Util                     : Bill2Util,
   advGeoLocUtil                 : AdvGeoLocUtil,
   mdrUtil                       : MdrUtil,
+  isAdnNodeAdmin                : IsAdnNodeAdmin,
   override val mCommonDi        : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -72,7 +72,7 @@ class LkAdnMap @Inject() (
     * Рендер страницы с формой размещения ADN-узла в точке на карте.
     * @param esNodeId id текущего ADN-узла.
     */
-  def forNode(esNodeId: MEsUuId) = IsAdnNodeAdminGet(esNodeId, U.Lk).async { implicit request =>
+  def forNode(esNodeId: MEsUuId) = isAdnNodeAdmin.Get(esNodeId, U.Lk).async { implicit request =>
     // TODO Заполнить форму начальными данными: положение карты, начальная точка, начальный период размещения
     val nodeId: String = esNodeId
     val geoPointFut = getGeoPoint0(nodeId)
@@ -128,7 +128,7 @@ class LkAdnMap @Inject() (
 
 
   /** Сабмит формы размещения узла. */
-  def forNodeSubmit(esNodeId: MEsUuId) = IsAdnNodeAdminPost(esNodeId, U.PersonNode).async { implicit request =>
+  def forNodeSubmit(esNodeId: MEsUuId) = isAdnNodeAdmin.Post(esNodeId, U.PersonNode).async { implicit request =>
     val nodeId: String = request.mnode.id.getOrElse(esNodeId)
     lazy val logPrefix = s"formNodeSubmit($nodeId):"
 
@@ -208,7 +208,7 @@ class LkAdnMap @Inject() (
 
 
   /** Сабмит формы для рассчёт стоимости размещения. */
-  def getPriceSubmit(esNodeId: MEsUuId) = IsAdnNodeAdminPost(esNodeId).async { implicit request =>
+  def getPriceSubmit(esNodeId: MEsUuId) = isAdnNodeAdmin.Post(esNodeId).async { implicit request =>
     val nodeId: String = esNodeId
     lazy val logPrefix = s"getPriceSubmit($nodeId):"
 

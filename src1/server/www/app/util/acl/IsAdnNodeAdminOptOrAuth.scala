@@ -18,7 +18,8 @@ import scala.concurrent.Future
  */
 
 class IsAdnNodeAdminOptOrAuth @Inject() (
-                                          override val mCommonDi: ICommonDi
+                                          isAdnNodeAdmin          : IsAdnNodeAdmin,
+                                          override val mCommonDi  : ICommonDi
                                         )
   extends Csrf
 {
@@ -48,7 +49,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
 
         mnodeOptFut.flatMap { mnodeOpt =>
           val mnodeOpt1 = mnodeOpt.filter { mnode =>
-            IsAdnNodeAdmin.isAdnNodeAdminCheck(mnode, user)
+            isAdnNodeAdmin.isAdnNodeAdminCheck(mnode, user)
           }
           val req1 = MNodeOptReq(mnodeOpt1, request, user)
           block(req1)

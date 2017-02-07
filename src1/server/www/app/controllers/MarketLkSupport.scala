@@ -10,9 +10,8 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.mvc.Result
 import util.acl._
-import util.di.IIdentUtil
 import util.ident.IdentUtil
-import util.mail.{IMailerWrapper, IMailerWrapperDi}
+import util.mail.IMailerWrapper
 import util.support.SupportUtil
 import util.FormUtil
 import views.html.lk.support._
@@ -26,18 +25,16 @@ import scala.concurrent.Future
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class MarketLkSupport @Inject() (
-  override val mailer             : IMailerWrapper,
-  override val identUtil          : IdentUtil,
+  mailer                          : IMailerWrapper,
+  identUtil                       : IdentUtil,
   mPersonIdents                   : MPersonIdents,
   supportUtil                     : SupportUtil,
   isAuth                          : IsAuth,
+  isAdnNodeAdmin                  : IsAdnNodeAdmin,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MacroLogsImplLazy
-  with IMailerWrapperDi
-  with IIdentUtil
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -67,7 +64,7 @@ class MarketLkSupport @Inject() (
     *
     * @return 200 Ок и страница с формой.
    */
-  def supportFormNode(adnId: String, r: Option[String]) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+  def supportFormNode(adnId: String, r: Option[String]) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
     val mnodeOpt = Some(request.mnode)
     _supportForm(mnodeOpt, r)
   }
@@ -108,7 +105,7 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
-  def supportFormNodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
+  def supportFormNodeSubmit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
     val mnodeOpt = Some(request.mnode)
     _supportFormSubmit(mnodeOpt, r)
   }
@@ -167,7 +164,7 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы запроса выставления географии узла. */
-  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = IsAdnNodeAdminPost(adnId).async { implicit request =>
+  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
     lazy val logPrefix = s"addNodeGeoSubmit($adnId): "
     geoNodeFormM.bindFromRequest().fold(
       {formWithErrors =>

@@ -1,6 +1,8 @@
 package util.acl
 
-import models.event.IMEvents
+import com.google.inject.Inject
+import models.event.MEvents
+import models.mproj.ICommonDi
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 
@@ -13,21 +15,25 @@ import scala.concurrent.Future
  * Description: Контроль доступа к событиям.
  */
 
-trait CanAccessEvent
-  extends IsAdnNodeAdminUtilCtl
-  with Csrf
-  with IMEvents
+class CanAccessEvent @Inject() (
+                                 val isAdnNodeAdmin     : IsAdnNodeAdmin,
+                                 mEvents                : MEvents,
+                                 override val mCommonDi : ICommonDi
+                               )
+  extends Csrf
 {
 
   import mCommonDi._
 
   /** Проверка доступа к событию, которое относится к узлу. */
-  trait HasNodeEventAccessBase
+  sealed trait Base
     extends ActionBuilder[MNodeEventReq]
     with OnUnauthNode
-    with IsAdnNodeAdminUtil
+    with isAdnNodeAdmin.IsAdnNodeAdminUtil
     with InitUserCmds
   {
+
+    /** id обрабатываемого события. */
     def eventId: String
 
     /** Разрешить это только для закрывабельных событий? */
@@ -43,7 +49,7 @@ trait CanAccessEvent
 
       val reqErr = MReq(request, user)
       personIdOpt.fold ( forbidden(reqErr) ) { personId =>
-        eventOptFut flatMap {
+        eventOptFut.flatMap {
           // Нет такого события в модели.
           case None =>
             eventNotFound(reqErr)
@@ -82,8 +88,8 @@ trait CanAccessEvent
     }
   }
 
-  abstract class HasNodeEventAccessAbstract
-    extends HasNodeEventAccessBase
+  abstract class Abstract
+    extends Base
     with ExpireSession[MNodeEventReq]
 
 
@@ -92,22 +98,22 @@ trait CanAccessEvent
     override val onlyCloseable    : Boolean,
     override val userInits        : MUserInit*
   )
-    extends HasNodeEventAccessAbstract
+    extends Abstract
 
-  case class HasNodeEventAccessGet(
+  case class Get(
     override val eventId          : String,
     override val onlyCloseable    : Boolean,
     override val userInits        : MUserInit*
   )
-    extends HasNodeEventAccessAbstract
+    extends Abstract
     with CsrfGet[MNodeEventReq]
 
-  case class HasNodeEventAccessPost(
+  case class Post(
     override val eventId          : String,
     override val onlyCloseable    : Boolean,
     override val userInits        : MUserInit*
   )
-    extends HasNodeEventAccessAbstract
+    extends Abstract
     with CsrfPost[MNodeEventReq]
 
 }

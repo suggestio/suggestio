@@ -11,7 +11,7 @@ import models.im.make.IMaker
 import models.mbill.{MDailyTfTplArgs, MLkBillNodeTplArgs, MRcvrInfoTplArgs}
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.acl.{CanAccessItem, IsAuthNode}
+import util.acl.{CanAccessItem, IsAuthNode, IsAdnNodeAdmin}
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.GalleryUtil
 import views.html.lk.billing._
@@ -32,6 +32,7 @@ class LkBill2 @Inject() (
   override val canAccessItem  : CanAccessItem,
   @Named("blk") override val blkImgMaker  : IMaker,
   isAuthNode                  : IsAuthNode,
+  override val isAdnNodeAdmin : IsAdnNodeAdmin,
   override val mItems         : MItems,
   override val bill2Util      : Bill2Util,
   override val mTxns          : MTxns,
@@ -73,7 +74,7 @@ class LkBill2 @Inject() (
     * @param nodeId id узла.
     * @return 200 Ок со страницей биллинга узла.
     */
-  def onNode(nodeId: String) = IsAdnNodeAdminGet(nodeId, U.Lk).async { implicit request =>
+  def onNode(nodeId: String) = isAdnNodeAdmin.Get(nodeId, U.Lk).async { implicit request =>
     val dailyTfArgsFut = _dailyTfArgsFut(request.mnode)
 
     // Отрендерить результаты, когда всё получено:
@@ -98,7 +99,7 @@ class LkBill2 @Inject() (
     * @param onNodeId В рамках ЛК какой ноды происходит движуха.
     * @return Страница "спасибо за покупку".
     */
-  def thanksForBuy(onNodeId: String) = IsAdnNodeAdminGet(onNodeId, U.Lk).async { implicit request =>
+  def thanksForBuy(onNodeId: String) = isAdnNodeAdmin.Get(onNodeId, U.Lk).async { implicit request =>
     request.user.lkCtxDataFut.flatMap { implicit ctxData =>
       Ok(ThanksForBuyTpl(request.mnode))
     }

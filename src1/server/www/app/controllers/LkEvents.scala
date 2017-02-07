@@ -32,13 +32,13 @@ class LkEvents @Inject() (
   lkAdUtil                        : LkAdUtil,
   mNodes                          : MNodes,
   mExtTargets                     : MExtTargets,
-  override val mEvents            : MEvents,
+  isAdnNodeAdmin                  : IsAdnNodeAdmin,
+  canAccessEvent                  : CanAccessEvent,
+  mEvents                         : MEvents,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with CanAccessEvent
-  with IsAdnNodeAdmin
 {
 
   import LOGGER._
@@ -56,7 +56,7 @@ class LkEvents @Inject() (
    * @param inline Инлайновый рендер ответа, вместо страницы? Для ajax-вызовов.
    * @return 200 OK + страница со списком уведомлений.
    */
-  def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = IsAdnNodeAdminGet(adnId, U.Lk).async { implicit request =>
+  def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
     val limit = Math.min(LIMIT_MAX, limit0)
     val offset = Math.min(OFFSET_MAX, offset0)
     // Запустить фетчинг событий из хранилища.
@@ -191,7 +191,7 @@ class LkEvents @Inject() (
     * @param eventId id события.
     * @return 2хх если всё ок. Иначе 4xx.
     */
-  def nodeEventDelete(eventId: String) = HasNodeEventAccessPost(eventId, onlyCloseable = true).async { implicit request =>
+  def nodeEventDelete(eventId: String) = canAccessEvent.Post(eventId, onlyCloseable = true).async { implicit request =>
     for {
       isDeleted <- mEvents.deleteById(eventId)
     } yield {

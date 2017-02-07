@@ -1,10 +1,12 @@
 package util.acl
 
+import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsDyn
 import models.adv._
+import models.mproj.ICommonDi
 import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
-import util.adv.ext.IAdvExtFormUtilDi
+import util.adv.ext.AdvExtFormUtil
 
 import scala.concurrent.Future
 
@@ -19,11 +21,13 @@ import scala.concurrent.Future
 
 
 /** Аддон для контроллера для добавления поддержки */
-trait CanSubmitExtTargetForNode
-  extends IsAdnNodeAdminUtilCtl
-  with Csrf
-  with IAdvExtFormUtilDi
-  with IMExtTargets
+class CanSubmitExtTargetForNode @Inject() (
+                                            advExtFormUtil          : AdvExtFormUtil,
+                                            mExtTargets             : MExtTargets,
+                                            val isAdnNodeAdmin      : IsAdnNodeAdmin,
+                                            override val mCommonDi  : ICommonDi
+                                          )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -34,7 +38,7 @@ trait CanSubmitExtTargetForNode
     extends ActionBuilder[MNodeExtTgSubmitReq]
     with MacroLogsDyn
     with OnUnauthNode
-    with IsAdnNodeAdminUtil
+    with isAdnNodeAdmin.IsAdnNodeAdminUtil
   {
 
     /** id узла, заявленного клиентом. */
@@ -98,7 +102,7 @@ trait CanSubmitExtTargetForNode
 
   }
 
-  case class CanSubmitExtTargetForNodePost(override val nodeId: String)
+  case class Post(override val nodeId: String)
     extends CanSubmitExtTargetForNodeBase
     with ExpireSession[MNodeExtTgSubmitReq]
     with CsrfPost[MNodeExtTgSubmitReq]

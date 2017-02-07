@@ -1,8 +1,9 @@
 package util.acl
 
-import io.suggest.util.logs.{MacroLogsImplLazy, MacroLogsDyn, IMacroLogs}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsDyn
 import models._
-import models.mproj.IMCommonDi
+import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
@@ -29,12 +30,13 @@ trait OnUnauthNode extends OnUnauthUtil {
 }
 
 
-/** Аддон для сборки ctl-аддонов с проверкой admin-доступа на узел. */
-trait IsAdnNodeAdminUtilCtl
-  extends IMCommonDi
+/** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
+@Singleton
+class IsAdnNodeAdmin @Inject() (override val mCommonDi: ICommonDi) extends Csrf
 {
 
   import mCommonDi._
+
 
   trait IsAdnNodeAdminUtil extends MacroLogsDyn {
 
@@ -49,7 +51,7 @@ trait IsAdnNodeAdminUtilCtl
         LOGGER.warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
         Left(None)
       } { adnNode =>
-        val isAllowed = IsAdnNodeAdmin.isAdnNodeAdminCheck(adnNode, user)
+        val isAllowed = isAdnNodeAdminCheck(adnNode, user)
         if (isAllowed) {
           Right(adnNode)
         } else {
@@ -74,10 +76,7 @@ trait IsAdnNodeAdminUtilCtl
     }
 
   }
-}
 
-
-object IsAdnNodeAdmin extends MacroLogsImplLazy {
 
   /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
   def isAdnNodeAdminCheck(adnNode: MNode, user: ISioUser): Boolean = {
@@ -93,21 +92,9 @@ object IsAdnNodeAdmin extends MacroLogsImplLazy {
     }
   }
 
-}
-
-
-/** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
-trait IsAdnNodeAdmin
-  extends IsAdnNodeAdminUtilCtl
-  with Csrf
-{
-
-  import mCommonDi._
-
   /** В реквесте содержится администрируемый узел, если всё ок. */
-  sealed trait IsAdnNodeAdminBase
+  sealed trait Base
     extends ActionBuilder[MNodeReq]
-    with IMacroLogs
     with IsAdnNodeAdminUtil
     with OnUnauthNode
     with InitUserCmds
@@ -136,33 +123,40 @@ trait IsAdnNodeAdmin
     }
   }
 
-  /** Трейт [[IsAdnNodeAdminBase]], обвешанный всеми необходимыми для работы надстройками. */
-  sealed abstract class IsAdnNodeAdminBase2
-    extends IsAdnNodeAdminBase
+  /** Трейт [[Base]], обвешанный всеми необходимыми для работы надстройками. */
+  sealed abstract class BaseAbstract
+    extends Base
     with ExpireSession[MNodeReq]
 
 
   /** Просто проверка прав на узел перед запуском экшена. */
   case class IsAdnNodeAdmin(
-    override val nodeId: String,
-    override val userInits: MUserInit*
+    override val nodeId     : String,
+    override val userInits  : MUserInit*
   )
-    extends IsAdnNodeAdminBase2
+    extends BaseAbstract
+  @inline
+  def apply(nodeId: String, userInits: MUserInit*) = IsAdnNodeAdmin(nodeId, userInits: _*)
 
   /** Рендер формы редактирования требует защиты от CSRF. */
-  case class IsAdnNodeAdminGet(
-    override val nodeId: String,
-    override val userInits: MUserInit*
+  case class Get(
+    override val nodeId     : String,
+    override val userInits  : MUserInit*
   )
-    extends IsAdnNodeAdminBase2
+    extends BaseAbstract
     with CsrfGet[MNodeReq]
 
   /** Сабмит формы редактирования требует проверки CSRF-Token'а. */
-  case class IsAdnNodeAdminPost(
-    override val nodeId: String,
-    override val userInits: MUserInit*
+  case class Post(
+    override val nodeId     : String,
+    override val userInits  : MUserInit*
   )
-    extends IsAdnNodeAdminBase2
+    extends BaseAbstract
     with CsrfPost[MNodeReq]
 
+}
+
+/** Интерфейс для поля c DI-инстансом [[IsAdnNodeAdmin]]. */
+trait IIsAdnNodeAdmin {
+  val isAdnNodeAdmin: IsAdnNodeAdmin
 }
