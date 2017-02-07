@@ -17,10 +17,10 @@ import scala.concurrent.Future
  * Долгое время это счастье жило прямо в контроллере.
  */
 class IsSuCalendar @Inject()(
+                              val csrf                : Csrf,
                               mCalendars              : MCalendars,
-                              override val mCommonDi  : ICommonDi
+                              mCommonDi               : ICommonDi
                             )
-  extends Csrf
 {
 
   import mCommonDi._
@@ -61,10 +61,10 @@ class IsSuCalendar @Inject()(
 
   case class Get(override val calId: String)
     extends IsSuCalendarAbstract
-    with CsrfGet[MCalendarReq]
+    with csrf.Get[MCalendarReq]
 
   case class Post(override val calId: String)
     extends IsSuCalendarAbstract
-    with CsrfPost[MCalendarReq]
+    with csrf.Post[MCalendarReq]
 
 }

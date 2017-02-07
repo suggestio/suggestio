@@ -22,10 +22,10 @@ import scala.concurrent.Future
 class CanAccessItem @Inject() (
                                 mItems                  : MItems,
                                 mOrders                 : MOrders,
-                                override val mCommonDi  : ICommonDi
+                                val csrf                : Csrf,
+                                mCommonDi               : ICommonDi
                               )
-  extends Csrf
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -171,11 +171,11 @@ class CanAccessItem @Inject() (
 
   case class CanAccessItemGet(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
     extends CanAccessItemAbstract
-    with CsrfGet[MItemReq]
+    with csrf.Get[MItemReq]
 
   case class CanAccessItemPost(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
     extends CanAccessItemAbstract
-    with CsrfPost[MItemReq]
+    with csrf.Post[MItemReq]
 
 }
 

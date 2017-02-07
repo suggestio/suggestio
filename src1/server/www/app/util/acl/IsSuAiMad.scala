@@ -16,11 +16,10 @@ import play.api.mvc.{ActionBuilder, Request, Result, Results}
  * Description: Аддон для контроллеров для IsSuperuser + доступ к AiMad по id.
  */
 class IsSuAiMad @Inject() (
+                            val csrf                : Csrf,
                             mAiMads                 : MAiMads,
-                            override val mCommonDi  : ICommonDi
-                          )
-  extends Csrf
-{
+                            mCommonDi               : ICommonDi
+                          ) {
 
   import mCommonDi._
 
@@ -71,10 +70,10 @@ class IsSuAiMad @Inject() (
 
   case class Get(override val aiMadId: String)
     extends IsSuAiMadAbstract
-    with CsrfGet[MAiMadReq]
+    with csrf.Get[MAiMadReq]
 
   case class Post(override val aiMadId: String)
     extends IsSuAiMadAbstract
-    with CsrfPost[MAiMadReq]
+    with csrf.Post[MAiMadReq]
 
 }

@@ -30,10 +30,9 @@ import util.acl.CanConfirmEmailPwReg._
 class CanConfirmEmailPwReg @Inject()(
                                       identUtil               : IdentUtil,
                                       emailActivations        : EmailActivations,
-                                      override val mCommonDi  : ICommonDi
-                                    )
-  extends Csrf
-{
+                                      val csrf                : Csrf,
+                                      mCommonDi               : ICommonDi
+                                    ) {
 
   import mCommonDi._
 
@@ -80,12 +79,12 @@ class CanConfirmEmailPwReg @Inject()(
   case class Get(override val eaInfo: IEaEmailId)
                 (override val eaNotFoundF: IReq[_] => Future[Result])
     extends Base
-    with CsrfGet[MEmailActivationReq]
+    with csrf.Get[MEmailActivationReq]
 
   /** Реализация с проверкой выставленного ранее CSRF-токена. */
   case class Post(override val eaInfo: IEaEmailId)
                  (override val eaNotFoundF: IReq[_] => Future[Result])
     extends Base
-    with CsrfPost[MEmailActivationReq]
+    with csrf.Post[MEmailActivationReq]
 
 }

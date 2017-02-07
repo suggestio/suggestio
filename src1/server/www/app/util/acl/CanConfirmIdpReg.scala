@@ -26,10 +26,9 @@ class CanConfirmIdpReg @Inject() (
                                    identUtil                : IdentUtil,
                                    mNodes                   : MNodes,
                                    mExtIdents               : MExtIdents,
-                                   override val mCommonDi   : ICommonDi
-                                 )
-  extends Csrf
-{
+                                   val csrf                 : Csrf,
+                                   mCommonDi                : ICommonDi
+                                 ) {
 
   import mCommonDi._
 
@@ -106,11 +105,11 @@ class CanConfirmIdpReg @Inject() (
   /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */
   object Get
     extends CanConfirmIdpRegBase2
-    with CsrfGet[MReq]
+    with csrf.Get[MReq]
 
   /** Реализация [[CanConfirmIdpRegBase]] с проверкой CSRF-токена. */
   object Post
     extends CanConfirmIdpRegBase2
-    with CsrfPost[MReq]
+    with csrf.Post[MReq]
 
 }

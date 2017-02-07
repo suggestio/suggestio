@@ -17,11 +17,11 @@ import scala.concurrent.Future
   * Description: Аддон для контроллеров для поддержки получения MItem вместе со связанной mad.
   */
 class IsSuItemAd @Inject() (
+                             val csrf               : Csrf,
                              mItems                 : MItems,
-                             override val mCommonDi : ICommonDi
+                             mCommonDi              : ICommonDi
                            )
-  extends Csrf
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -89,10 +89,10 @@ class IsSuItemAd @Inject() (
 
   case class Get(override val itemId: Gid_t)
     extends IsSuItemAdAbstract
-    with CsrfGet[MItemAdReq]
+    with csrf.Get[MItemAdReq]
 
   case class Post(override val itemId: Gid_t)
     extends IsSuItemAdAbstract
-    with CsrfPost[MItemAdReq]
+    with csrf.Post[MItemAdReq]
 
 }

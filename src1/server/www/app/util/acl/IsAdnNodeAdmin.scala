@@ -32,8 +32,10 @@ trait OnUnauthNode extends OnUnauthUtil {
 
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 @Singleton
-class IsAdnNodeAdmin @Inject() (override val mCommonDi: ICommonDi) extends Csrf
-{
+class IsAdnNodeAdmin @Inject() (
+                                 val csrf         : Csrf,
+                                 mCommonDi        : ICommonDi
+                               ) {
 
   import mCommonDi._
 
@@ -144,7 +146,7 @@ class IsAdnNodeAdmin @Inject() (override val mCommonDi: ICommonDi) extends Csrf
     override val userInits  : MUserInit*
   )
     extends BaseAbstract
-    with CsrfGet[MNodeReq]
+    with csrf.Get[MNodeReq]
 
   /** Сабмит формы редактирования требует проверки CSRF-Token'а. */
   case class Post(
@@ -152,7 +154,7 @@ class IsAdnNodeAdmin @Inject() (override val mCommonDi: ICommonDi) extends Csrf
     override val userInits  : MUserInit*
   )
     extends BaseAbstract
-    with CsrfPost[MNodeReq]
+    with csrf.Post[MNodeReq]
 
 }
 

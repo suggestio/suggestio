@@ -26,11 +26,11 @@ class CanRecoverPw @Inject() (
                                identUtil              : IdentUtil,
                                emailPwIdents          : EmailPwIdents,
                                emailActivations       : EmailActivations,
+                               val csrf               : Csrf,
                                override val mCommonDi : ICommonDi
                              )
   extends SioController
   with BruteForceProtect
-  with Csrf
   with MacroLogsImpl
 {
 
@@ -124,14 +124,14 @@ class CanRecoverPw @Inject() (
   case class Get(override val eActId: String, override val userInits: MUserInit*)
                 (override val keyNotFoundF: IReq[_] => Future[Result])
     extends CanRecoverPwBase
-    with CsrfGet[MRecoverPwReq]
+    with csrf.Get[MRecoverPwReq]
     with ExpireSession[MRecoverPwReq]
 
   /** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
   case class Post(override val eActId: String, override val userInits: MUserInit*)
                  (override val keyNotFoundF: IReq[_] => Future[Result])
     extends CanRecoverPwBase
-    with CsrfPost[MRecoverPwReq]
+    with csrf.Post[MRecoverPwReq]
     with ExpireSession[MRecoverPwReq]
 
 }

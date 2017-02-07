@@ -19,10 +19,10 @@ import scala.concurrent.Future
 class NodeEact @Inject() (
                            emailPwIdents          : EmailPwIdents,
                            emailActivations       : EmailActivations,
-                           override val mCommonDi : ICommonDi
+                           val csrf               : Csrf,
+                           mCommonDi              : ICommonDi
                          )
-  extends Csrf
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -105,12 +105,12 @@ class NodeEact @Inject() (
   case class Get(override val nodeId: String, override val eaId: String)
                 (override val notFoundF: (String, MReq[_]) => Future[Result])
     extends NodeEactAbstract
-    with CsrfGet[MNodeEactReq]
+    with csrf.Get[MNodeEactReq]
 
   /** Реализация NodeEactBase для CSRF+POST-запросов. */
   case class Post(override val nodeId: String, override val eaId: String)
                  (override val notFoundF: (String, MReq[_]) => Future[Result])
     extends NodeEactAbstract
-    with CsrfPost[MNodeEactReq]
+    with csrf.Post[MNodeEactReq]
 
 }

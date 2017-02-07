@@ -25,10 +25,9 @@ class CanSubmitExtTargetForNode @Inject() (
                                             advExtFormUtil          : AdvExtFormUtil,
                                             mExtTargets             : MExtTargets,
                                             val isAdnNodeAdmin      : IsAdnNodeAdmin,
-                                            override val mCommonDi  : ICommonDi
-                                          )
-  extends Csrf
-{
+                                            val csrf                : Csrf,
+                                            mCommonDi               : ICommonDi
+                                          ) {
 
   import mCommonDi._
 
@@ -105,6 +104,6 @@ class CanSubmitExtTargetForNode @Inject() (
   case class Post(override val nodeId: String)
     extends CanSubmitExtTargetForNodeBase
     with ExpireSession[MNodeExtTgSubmitReq]
-    with CsrfPost[MNodeExtTgSubmitReq]
+    with csrf.Post[MNodeExtTgSubmitReq]
 
 }

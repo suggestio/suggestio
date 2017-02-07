@@ -16,9 +16,10 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  * 2015.dec.23: Изначально назывался IsSuperuserAdnNode и обслуживал только MAdnNode.
  */
 @Singleton
-class IsSuNode @Inject() ( override val mCommonDi: ICommonDi )
-  extends Csrf
-{
+class IsSuNode @Inject() (
+                           val csrf   : Csrf,
+                           mCommonDi  : ICommonDi
+                         ) {
 
   import mCommonDi._
 
@@ -73,12 +74,12 @@ class IsSuNode @Inject() ( override val mCommonDi: ICommonDi )
   /** Аналог [[IsSuNode]] с выставлением CSRF-токена. */
   case class Get(override val nodeId: String)
     extends IsSuNodeBase2
-    with CsrfGet[MNodeReq]
+    with csrf.Get[MNodeReq]
 
   /** Аналог [[IsSuNode]] с проверкой CSRF-токена при сабмитах. */
   case class Post(override val nodeId: String)
     extends IsSuNodeBase2
-    with CsrfPost[MNodeReq]
+    with csrf.Post[MNodeReq]
 
 }
 

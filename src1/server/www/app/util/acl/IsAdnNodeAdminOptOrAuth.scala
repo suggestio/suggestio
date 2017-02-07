@@ -19,10 +19,9 @@ import scala.concurrent.Future
 
 class IsAdnNodeAdminOptOrAuth @Inject() (
                                           isAdnNodeAdmin          : IsAdnNodeAdmin,
-                                          override val mCommonDi  : ICommonDi
-                                        )
-  extends Csrf
-{
+                                          val csrf                : Csrf,
+                                          mCommonDi               : ICommonDi
+                                        ) {
 
   import mCommonDi._
 
@@ -69,6 +68,6 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
     override val userInits  : MUserInit*
   )
     extends IsAdnNodeAdminOptOrAuthBase2
-    with CsrfGet[MNodeOptReq]
+    with csrf.Get[MNodeOptReq]
 
 }

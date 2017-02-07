@@ -16,11 +16,10 @@ import scala.concurrent.Future
  * Description: Доступ к узлу и его контракту для суперюзера.
  */
 class IsSuNodeContract @Inject() (
-                                   mContracts               : MContracts,
-                                   override val mCommonDi   : ICommonDi
-                                 )
-  extends Csrf
-{
+                                   val csrf     : Csrf,
+                                   mContracts   : MContracts,
+                                   mCommonDi    : ICommonDi
+                                 ) {
 
   import mCommonDi._
 
@@ -81,12 +80,12 @@ class IsSuNodeContract @Inject() (
   /** Доступ к узлу с контрактом с выставлением CSRF-токена. */
   case class Get(override val nodeId: String)
     extends IsSuNodeContractAbstract
-    with CsrfGet[MNodeContractReq]
+    with csrf.Get[MNodeContractReq]
 
   /** Доступ к узлу с контрактом с проверкой CSRF-токена при сабмитах. */
   case class Post(override val nodeId: String)
     extends IsSuNodeContractAbstract
-    with CsrfPost[MNodeContractReq]
+    with csrf.Post[MNodeContractReq]
 
 }
 

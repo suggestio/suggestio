@@ -22,10 +22,10 @@ import scala.concurrent.Future
 class CanAdvAd @Inject()(
                           isAdnNodeAdmin          : IsAdnNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
-                          override val mCommonDi  : ICommonDi
+                          val csrf                : Csrf,
+                          mCommonDi               : ICommonDi
                         )
-  extends Csrf
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -141,7 +141,7 @@ class CanAdvAd @Inject()(
     override val userInits  : MUserInit*
   )
     extends CanAdvertiseAdAbstract
-    with CsrfGet[MAdProdReq]
+    with csrf.Get[MAdProdReq]
 
   /** Сабмит какой-то формы размещения рекламной карточки с проверкой CSRF в сессии. */
   case class Post(
@@ -149,6 +149,6 @@ class CanAdvAd @Inject()(
     override val userInits  : MUserInit*
   )
     extends CanAdvertiseAdAbstract
-    with CsrfPost[MAdProdReq]
+    with csrf.Post[MAdProdReq]
 
 }

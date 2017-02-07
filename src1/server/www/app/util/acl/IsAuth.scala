@@ -39,9 +39,10 @@ trait OnUnauthUtil {
 }
 
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
-class IsAuth @Inject() (override val mCommonDi: ICommonDi)
-  extends Csrf
-{
+class IsAuth @Inject() (
+                         val csrf               : Csrf,
+                         mCommonDi              : ICommonDi
+                       ) {
 
   import mCommonDi._
 
@@ -79,12 +80,12 @@ class IsAuth @Inject() (override val mCommonDi: ICommonDi)
   /** Проверка на залогиненность юзера с выставлением CSRF-токена. */
   object Get
     extends IsAuthC
-    with CsrfGet[MReq]
+    with csrf.Get[MReq]
 
   /** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
   object Post
     extends IsAuthC
-    with CsrfPost[MReq]
+    with csrf.Post[MReq]
 
 }
 

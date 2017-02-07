@@ -18,9 +18,9 @@ import scala.concurrent.Future
 class CanAccessEvent @Inject() (
                                  val isAdnNodeAdmin     : IsAdnNodeAdmin,
                                  mEvents                : MEvents,
-                                 override val mCommonDi : ICommonDi
+                                 val csrf               : Csrf,
+                                 mCommonDi              : ICommonDi
                                )
-  extends Csrf
 {
 
   import mCommonDi._
@@ -106,7 +106,7 @@ class CanAccessEvent @Inject() (
     override val userInits        : MUserInit*
   )
     extends Abstract
-    with CsrfGet[MNodeEventReq]
+    with csrf.Get[MNodeEventReq]
 
   case class Post(
     override val eventId          : String,
@@ -114,7 +114,7 @@ class CanAccessEvent @Inject() (
     override val userInits        : MUserInit*
   )
     extends Abstract
-    with CsrfPost[MNodeEventReq]
+    with csrf.Post[MNodeEventReq]
 
 }
 

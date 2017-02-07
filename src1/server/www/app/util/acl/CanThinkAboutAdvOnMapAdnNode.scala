@@ -20,10 +20,10 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
                                                mNodes                 : MNodes,
                                                canAdvAd               : CanAdvAd,
                                                advGeoMapUtil          : AdvGeoMapUtil,
-                                               override val mCommonDi : ICommonDi
+                                               val csrf               : Csrf,
+                                               mCommonDi              : ICommonDi
                                              )
-  extends Csrf
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -127,7 +127,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
     override val nodeId : String
   )
     extends CanThinkAboutAdvOnMapAdnNodeAbstract
-    with CsrfGet[MAdProdRcvrReq]
+    with csrf.Get[MAdProdRcvrReq]
 
 
   /** Реализация CanThinkAboutAdvOnMapAdnNodeAbstract с проверкой CSRF-токена. */
@@ -136,6 +136,6 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
     override val nodeId : String
   )
     extends CanThinkAboutAdvOnMapAdnNodeAbstract
-    with CsrfPost[MAdProdRcvrReq]
+    with csrf.Post[MAdProdRcvrReq]
 
 }

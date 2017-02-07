@@ -31,9 +31,11 @@ trait IsSuUtil extends OnUnauthUtil with MacroLogsDyn {
 
 
 @Singleton
-final class IsSu @Inject() (override val mCommonDi: ICommonDi)
+final class IsSu @Inject() (
+                             val csrf               : Csrf,
+                             override val mCommonDi : ICommonDi
+                           )
   extends CookieCleanupSupport
-  with Csrf
 {
 
   import mCommonDi._
@@ -75,11 +77,11 @@ final class IsSu @Inject() (override val mCommonDi: ICommonDi)
 
   object Get
     extends BaseAbstract
-    with CsrfGet[MReq]
+    with csrf.Get[MReq]
 
   object Post
     extends BaseAbstract
-    with CsrfPost[MReq]
+    with csrf.Post[MReq]
 
 }
 

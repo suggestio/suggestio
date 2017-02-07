@@ -14,9 +14,11 @@ import scala.concurrent.Future
  * Description: ActionBuilder для определения залогиненности юзера.
  */
 @Singleton
-class MaybeAuth @Inject() (override val mCommonDi: ICommonDi)
+class MaybeAuth @Inject() (
+                            val csrf                : Csrf,
+                            override val mCommonDi  : ICommonDi
+                          )
   extends CookieCleanupSupport
-  with Csrf
 {
 
   import mCommonDi._
@@ -61,11 +63,11 @@ class MaybeAuth @Inject() (override val mCommonDi: ICommonDi)
 
   case class Get(override val userInits: MUserInit*)
     extends MaybeAuthAbstract
-    with CsrfGet[MReq]
+    with csrf.Get[MReq]
 
   case class Post(override val userInits: MUserInit*)
     extends MaybeAuthAbstract
-    with CsrfPost[MReq]
+    with csrf.Post[MReq]
 
 }
 

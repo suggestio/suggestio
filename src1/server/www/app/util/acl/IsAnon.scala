@@ -16,10 +16,9 @@ import scala.concurrent.Future
  */
 class IsAnon @Inject()(
                         identUtil              : IdentUtil,
-                        override val mCommonDi : ICommonDi
-                      )
-  extends Csrf
-{
+                        val csrf               : Csrf,
+                        mCommonDi              : ICommonDi
+                      ) {
 
   import mCommonDi._
 
@@ -46,12 +45,12 @@ class IsAnon @Inject()(
   /** GET-запросы с выставлением CSRF-токена. */
   object Get
     extends IsAnonBase2
-    with CsrfGet[MReq]
+    with csrf.Get[MReq]
 
-  /** POST-запросы с проверкой CSRF-токена, выставленного ранее через [[Get]] или иной [[CsrfGet]]. */
+  /** POST-запросы с проверкой CSRF-токена, выставленного ранее через csrf.Get. */
   object Post
     extends IsAnonBase2
-    with CsrfPost[MReq]
+    with csrf.Post[MReq]
 
 }
 

@@ -15,9 +15,10 @@ import scala.concurrent.Future
   * Created: 17.10.16 16:26
   * Description: ACL-аддон для sys-контроллеров для экшенов управления эджами.
   */
-class IsSuNodeEdge @Inject() (override val mCommonDi: ICommonDi)
-  extends Csrf
-{
+class IsSuNodeEdge @Inject() (
+                               val csrf   : Csrf,
+                               mCommonDi  : ICommonDi
+                             ) {
 
   import mCommonDi._
 
@@ -101,11 +102,11 @@ class IsSuNodeEdge @Inject() (override val mCommonDi: ICommonDi)
   /** Доступ к node edge для суперюзеров в рамках CSRF GET. */
   case class Get(override val qs: MNodeEdgeIdQs)
     extends IsSuNodeEdgeAbstract
-    with CsrfGet[MNodeEdgeReq]
+    with csrf.Get[MNodeEdgeReq]
 
   /** Доступ к node edge для суперюзеров во время CSRF POST. */
   case class Post(override val qs: MNodeEdgeIdQs)
     extends IsSuNodeEdgeAbstract
-    with CsrfPost[MNodeEdgeReq]
+    with csrf.Post[MNodeEdgeReq]
 
 }

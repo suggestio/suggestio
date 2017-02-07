@@ -22,10 +22,10 @@ class CanUpdateSls @Inject() (
                                isAdnNodeAdmin         : IsAdnNodeAdmin,
                                val canEditAd          : CanEditAd,
                                n2NodesUtil            : N2NodesUtil,
-                               override val mCommonDi : ICommonDi
+                               val csrf               : Csrf,
+                               mCommonDi              : ICommonDi
                              )
   extends MacroLogsImpl
-  with Csrf
 {
 
   import mCommonDi._
@@ -97,6 +97,6 @@ class CanUpdateSls @Inject() (
 
   case class Post(adId: String)
     extends CanUpdateSlsAbstract
-    with CsrfPost[MAdProdReq]
+    with csrf.Post[MAdProdReq]
 
 }

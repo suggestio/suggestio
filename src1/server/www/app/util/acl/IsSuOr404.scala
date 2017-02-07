@@ -32,18 +32,17 @@ class IsSuOr404Ctl @Inject() (
 
 
 class IsSuOr404 @Inject() (
-                            val isSuOr404Ctl        : IsSuOr404Ctl,
-                            override val mCommonDi  : ICommonDi
-                          )
-  extends Csrf
-{
+                            val isSuOr404Ctl  : IsSuOr404Ctl,
+                            val csrf          : Csrf,
+                            mCommonDi         : ICommonDi
+                          ) {
 
   abstract class IsSuOr404Abstract
     extends isSuOr404Ctl.Base
     with ExpireSession[MReq]
 
-  object Get extends IsSuOr404Abstract with CsrfGet[MReq]
-  object Post extends IsSuOr404Abstract with CsrfPost[MReq]
+  object Get extends IsSuOr404Abstract with csrf.Get[MReq]
+  object Post extends IsSuOr404Abstract with csrf.Post[MReq]
 
 }
 

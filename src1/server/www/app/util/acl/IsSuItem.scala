@@ -16,11 +16,10 @@ import scala.concurrent.Future
   * Description: ACL-аддон для isSuperuser + mItems.getById()
   */
 class IsSuItem @Inject() (
-                           mItems                   : MItems,
-                           override val mCommonDi   : ICommonDi
-                         )
-  extends Csrf
-{
+                           val csrf    : Csrf,
+                           mItems      : MItems,
+                           mCommonDi   : ICommonDi
+                         ) {
 
   import mCommonDi._
 
@@ -72,10 +71,10 @@ class IsSuItem @Inject() (
 
   case class Get(override val itemId: Gid_t)
     extends IsSuItemAbstract
-    with CsrfGet[MItemReq]
+    with csrf.Get[MItemReq]
 
   case class Post(override val itemId: Gid_t)
     extends IsSuItemAbstract
-    with CsrfPost[MItemReq]
+    with csrf.Post[MItemReq]
 
 }

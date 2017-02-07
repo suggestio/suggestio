@@ -17,9 +17,10 @@ import scala.concurrent.Future
  * Description: Гибрид IsSuperuser и чтения произвольного юзера из хранилища по id.
  */
 
-class IsSuPerson @Inject()(override val mCommonDi: ICommonDi)
-  extends Csrf
-{
+class IsSuPerson @Inject()(
+                            val csrf  : Csrf,
+                            mCommonDi : ICommonDi
+                          ) {
 
   import mCommonDi._
 
@@ -76,10 +77,10 @@ class IsSuPerson @Inject()(override val mCommonDi: ICommonDi)
 
   case class Get(override val personId: String)
     extends IsSuPersonAbstract
-    with CsrfGet[MPersonReq]
+    with csrf.Get[MPersonReq]
 
   case class Post(override val personId: String)
     extends IsSuPersonAbstract
-    with CsrfPost[MPersonReq]
+    with csrf.Post[MPersonReq]
 
 }

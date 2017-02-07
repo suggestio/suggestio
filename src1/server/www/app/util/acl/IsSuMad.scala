@@ -16,9 +16,10 @@ import scala.concurrent.Future
  * Description:
  * Абстрактная логика обработки запроса суперюзера на какое-либо действие с рекламной карточкой.
  */
-class IsSuMad @Inject()(override val mCommonDi: ICommonDi)
-  extends Csrf
-{
+class IsSuMad @Inject()(
+                         val csrf   : Csrf,
+                         mCommonDi  : ICommonDi
+                       ) {
 
   import mCommonDi._
 
@@ -70,13 +71,13 @@ class IsSuMad @Inject()(override val mCommonDi: ICommonDi)
   /** ACL action builder на действия с указанной рекламной карточкой. + CSRF выставление токена в сессию. */
   case class Get(override val adId: String)
     extends IsSuMadAbstract
-    with CsrfGet[MAdReq]
+    with csrf.Get[MAdReq]
 
 
   /** ACL action builder на действия с указанной рекламной карточкой. + Проверка CSRF-токена. */
   case class Post(override val adId: String)
     extends IsSuMadAbstract
-    with CsrfPost[MAdReq]
+    with csrf.Post[MAdReq]
 
 }
 

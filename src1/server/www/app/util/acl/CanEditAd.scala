@@ -23,10 +23,10 @@ import scala.concurrent.Future
 class CanEditAd @Inject() (
                             isAdnNodeAdmin          : IsAdnNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
-                            override val mCommonDi  : ICommonDi
+                            val csrf                : Csrf,
+                            mCommonDi               : ICommonDi
                           )
-  extends Csrf
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -111,12 +111,12 @@ class CanEditAd @Inject() (
   case class Get(override val adId: String,
                           override val userInits: MUserInit*)
     extends CanEditAdAbstract
-    with CsrfGet[MAdProdReq]
+    with csrf.Get[MAdProdReq]
 
   /** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
   case class Post(override val adId: String,
                            override val userInits: MUserInit*)
     extends CanEditAdAbstract
-    with CsrfPost[MAdProdReq]
+    with csrf.Post[MAdProdReq]
 
 }
