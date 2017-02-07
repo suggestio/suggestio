@@ -30,6 +30,7 @@ class MarketLkSupport @Inject() (
   override val identUtil          : IdentUtil,
   mPersonIdents                   : MPersonIdents,
   supportUtil                     : SupportUtil,
+  isAuth                          : IsAuth,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
@@ -37,7 +38,6 @@ class MarketLkSupport @Inject() (
   with IMailerWrapperDi
   with IIdentUtil
   with IsAdnNodeAdmin
-  with IsAuth
 {
 
   import LOGGER._
@@ -78,7 +78,7 @@ class MarketLkSupport @Inject() (
     * @param r Адрес для возврата.
    * @return 200 Ok и страница с формой.
    */
-  def supportForm(r: Option[String]) = IsAuth.async { implicit request =>
+  def supportForm(r: Option[String]) = isAuth().async { implicit request =>
     _supportForm(None, r)
   }
 
@@ -114,7 +114,7 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы обращения за помощью вне узла. */
-  def supportFormSubmit(r: Option[String]) = IsAuth.async { implicit request =>
+  def supportFormSubmit(r: Option[String]) = isAuth().async { implicit request =>
     _supportFormSubmit(None, r)
   }
 

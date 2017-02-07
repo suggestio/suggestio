@@ -10,7 +10,7 @@ import models.mctx.Context
 import models.mlk.MLkTagsSearchQs
 import models.mtag._
 import play.api.libs.json.Json
-import util.acl.IsAuth
+import util.acl.IIsAuth
 import util.lk.ITagSearchUtilDi
 import util.tags.ITagsEditFormUtilDi
 import views.html.lk.tag.edit._
@@ -25,7 +25,7 @@ import views.html.lk.tag.edit._
 trait NodeTagsEdit
   extends SioController
   with IMacroLogs
-  with IsAuth
+  with IIsAuth
   with ITagsEditFormUtilDi
   with ITagSearchUtilDi
 {
@@ -37,7 +37,7 @@ trait NodeTagsEdit
    * Этот экшен не трогает никакие текущие данные в моделях,
    * а просто анализирует теги, добавляет новый, сортирует и рендерит.
    */
-  def tagEditorAddTag = IsAuth.apply { implicit request =>
+  def tagEditorAddTag = isAuth() { implicit request =>
     val formBinded = tagsEditFormUtil.addTagsForm.bindFromRequest()
     formBinded.fold(
       {formWithErrors =>
@@ -86,7 +86,7 @@ trait NodeTagsEdit
     * @return JSON с inline-версткой для отображения в качестве выпадающего списка.
     */
   // TODO Кажется, что это можно удалить вместе со без-react'ной формой lk-adv-geo.
-  def tagsSearch(tsearch: MLkTagsSearchQs) = IsAuth.async { implicit request =>
+  def tagsSearch(tsearch: MLkTagsSearchQs) = isAuth().async { implicit request =>
     for {
       found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
     } yield {
@@ -108,7 +108,7 @@ trait NodeTagsEdit
     * @param tsearch query string.
     * @return Сериализованная модель MTagsFound.
     */
-  def tagsSearch2(tsearch: MLkTagsSearchQs) = IsAuth.async { implicit request =>
+  def tagsSearch2(tsearch: MLkTagsSearchQs) = isAuth().async { implicit request =>
     for {
       found <-  tagSearchUtil.liveSearchTagsFromQs( tsearch )
     } yield {

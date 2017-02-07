@@ -42,7 +42,8 @@ class Ident @Inject() (
                         override val emailActivations     : EmailActivations,
                         override val mExtIdents           : MExtIdents,
                         override val scryptUtil           : ScryptUtil,
-                        override val isAnon            : IsAnon,
+                        override val isAnon               : IsAnon,
+                        override val isAuth               : IsAuth,
                         override val mCommonDi            : ICommonDi
 )
   extends SioController
@@ -53,7 +54,6 @@ class Ident @Inject() (
   with PwRecover
   with EmailPwReg
   with ExternalLogin
-  with IsAuth
 {
 
   import mCommonDi._
@@ -70,7 +70,7 @@ class Ident @Inject() (
 
 
   /** Отредиректить юзера куда-нибудь. */
-  def rdrUserSomewhere = IsAuth.async { implicit request =>
+  def rdrUserSomewhere = isAuth().async { implicit request =>
     identUtil.redirectUserSomewhere(request.user.personIdOpt.get)
   }
 

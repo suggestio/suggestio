@@ -40,15 +40,15 @@ import ChangePw._
 /** Ident-контроллер придерживается этих экшенов. */
 trait ChangePw
   extends ChangePwAction
-  with IsAuth
+  with IIsAuth
 {
 
   /** Страница с формой смены пароля. */
-  def changePassword = IsAuth { implicit request =>
+  def changePassword = isAuth() { implicit request =>
     Ok(changePasswordTpl(changePasswordFormM))
   }
 
-  def changePasswordSubmit(r: Option[String]) = IsAuth.async { implicit request =>
+  def changePasswordSubmit(r: Option[String]) = isAuth().async { implicit request =>
     _changePasswordSubmit(r) { formWithErrors =>
       NotAcceptable(changePasswordTpl(formWithErrors))
     }

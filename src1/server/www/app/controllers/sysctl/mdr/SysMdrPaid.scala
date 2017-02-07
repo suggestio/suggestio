@@ -10,7 +10,7 @@ import models.mctx.Context
 import models.mdr._
 import models.req.IReq
 import play.api.mvc.{Call, Result}
-import util.acl.{IsSuItem, IsSuItemAd, IsSuperuser, IsSuperuserMad}
+import util.acl.{IsSuItem, IsSuItemAd, IsSuperuser, IIsSuMad}
 import util.billing.{Bill2Util, IBill2UtilDi}
 import util.di.IScUtil
 import util.mdr.SysMdrUtil
@@ -28,7 +28,7 @@ import scala.concurrent.Future
 trait SysMdrPaid
   extends SysMdrBase
   with IsSuperuser
-  with IsSuperuserMad
+  with IIsSuMad
   with IBill2UtilDi
   with IScUtil
 {
@@ -72,7 +72,7 @@ trait SysMdrPaid
     * @param nodeId id карточки.
     * @return Страница
     */
-  def forAd(nodeId: String) = IsSuMadGet(nodeId).async { implicit request =>
+  def forAd(nodeId: String) = isSuMad.Get(nodeId).async { implicit request =>
     // Константа лимита отображаемых модератору mitems
     val ITEMS_LIMIT = 20
 
@@ -198,7 +198,7 @@ trait SysMdrPaid
     * @param nodeId id узла-карточки.
     * @return Редирект на модерацию следующей карточки.
     */
-  def approveAllItemsSubmit(nodeId: String) = IsSuMadPost(nodeId).async { implicit request =>
+  def approveAllItemsSubmit(nodeId: String) = isSuMad.Post(nodeId).async { implicit request =>
     _processItemsForAd(
       nodeId  = nodeId,
       q       = sysMdrUtil.itemsQueryAwaiting(nodeId)
@@ -289,7 +289,7 @@ trait SysMdrPaid
     * @param nodeId id узла-карточки, которая модерируется в данный момент.
     * @return HTML попапа с формой отказа в размещении.
     */
-  def refuseAllItems(nodeId: String) = IsSuMadGet(nodeId).async { implicit request =>
+  def refuseAllItems(nodeId: String) = isSuMad.Get(nodeId).async { implicit request =>
     _refusePopup( routes.SysMdr.refuseAllItemsSubmit(nodeId) )
   }
 
@@ -299,7 +299,7 @@ trait SysMdrPaid
     * @param nodeId id узла.
     * @return
     */
-  def refuseAllItemsSubmit(nodeId: String) = IsSuMadPost(nodeId).async { implicit request =>
+  def refuseAllItemsSubmit(nodeId: String) = isSuMad.Post(nodeId).async { implicit request =>
     lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -327,18 +327,18 @@ trait SysMdrPaid
     * @param itype id типа item'ов.
     * @return Редирект на текущую карточку.
     */
-  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuMadPost(nodeId).async { implicit request =>
+  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = isSuMad.Post(nodeId).async { implicit request =>
     _processItemsForAd(
       nodeId = nodeId,
       q = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype )
     )(bill2Util.approveItemAction)
   }
 
-  def refuseAllItemsType(nodeId: String, itype: MItemType) = IsSuMadGet(nodeId).async { implicit request =>
+  def refuseAllItemsType(nodeId: String, itype: MItemType) = isSuMad.Get(nodeId).async { implicit request =>
     _refusePopup( routes.SysMdr.refuseAllItemsTypeSubmit(nodeId, itype) )
   }
 
-  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = IsSuMadPost(nodeId).async { implicit request =>
+  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = isSuMad.Post(nodeId).async { implicit request =>
     lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>

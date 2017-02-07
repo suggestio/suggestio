@@ -21,12 +21,12 @@ class Static @Inject() (
   override val ignoreAuth         : IgnoreAuth,
   override val corsUtil           : CorsUtil,
   override val siteMapUtil        : SiteMapUtil,
+  isAuth                          : IsAuth,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MaybeAuth
   with IsSuperuserOrDevelOr404
-  with IsAuth
   with RobotsTxt
   with SiteMapsXml
   with CorsPreflight
@@ -87,7 +87,7 @@ class Static @Inject() (
    * @return 204 No Content - всё ок.
    *         Другой код - сессия истекла.
    */
-  def keepAliveSession = IsAuth { implicit request =>
+  def keepAliveSession = isAuth() { implicit request =>
     NoContent
   }
 

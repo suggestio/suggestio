@@ -1,9 +1,11 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodeTypes
+import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
 
@@ -14,9 +16,8 @@ import scala.concurrent.Future
  * Description:
  * Абстрактная логика обработки запроса суперюзера на какое-либо действие с рекламной карточкой.
  */
-trait IsSuperuserMad
-  extends SioController
-  with Csrf
+class IsSuMad @Inject()(override val mCommonDi: ICommonDi)
+  extends Csrf
 {
 
   import mCommonDi._
@@ -51,7 +52,7 @@ trait IsSuperuserMad
     }
 
     def madNotFound(request: Request[_]): Future[Result] = {
-      NotFound("ad not found: " + adId)
+      Results.NotFound("ad not found: " + adId)
     }
   }
 
@@ -64,16 +65,21 @@ trait IsSuperuserMad
   /** ACL action builder на действия с указанной рекламной карточкой. */
   case class IsSuMad(override val adId: String)
     extends IsSuMadAbstract
+  def apply(adId: String) = IsSuMad(adId)
 
   /** ACL action builder на действия с указанной рекламной карточкой. + CSRF выставление токена в сессию. */
-  case class IsSuMadGet(override val adId: String)
+  case class Get(override val adId: String)
     extends IsSuMadAbstract
     with CsrfGet[MAdReq]
 
 
   /** ACL action builder на действия с указанной рекламной карточкой. + Проверка CSRF-токена. */
-  case class IsSuMadPost(override val adId: String)
+  case class Post(override val adId: String)
     extends IsSuMadAbstract
     with CsrfPost[MAdReq]
 
+}
+
+trait IIsSuMad {
+  val isSuMad: IsSuMad
 }

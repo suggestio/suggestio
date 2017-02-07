@@ -8,7 +8,7 @@ import models.msys.MShowOneAdFormTplArgs
 import models.req.IAdReq
 import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
-import util.acl.IsSuperuserMad
+import util.acl.IIsSuMad
 import util.n2u.IN2NodesUtilDi
 import util.FormUtil
 import views.html.sys1.market.ad.one._
@@ -51,7 +51,7 @@ class SysAdRenderUtil {
 trait SysAdRender
   extends SioController
   with IMacroLogs
-  with IsSuperuserMad
+  with IIsSuMad
   with IN2NodesUtilDi
 {
 
@@ -70,7 +70,7 @@ trait SysAdRender
    *         Редиректы в остальных случаях.
    *         404 если указанная карточка не найдена.
    */
-  def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = IsSuMadGet(madId).async { implicit request =>
+  def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = isSuMad.Get(madId).async { implicit request =>
     // Забиндить форму дефолтовыми данными для отправки в шаблон.
     val formArgs = OneAdQsArgs(
       adId    = madId,
@@ -109,7 +109,7 @@ trait SysAdRender
    * @param rvar Интересующий render variant.
    * @return Редирект на результат рендера карточки согласно переданным параметрам.
    */
-  def oneAdFormSubmit(madId: String, rvar: OneAdRenderVariant) = IsSuMadPost(madId).async { implicit request =>
+  def oneAdFormSubmit(madId: String, rvar: OneAdRenderVariant) = isSuMad.Post(madId).async { implicit request =>
     oneAdQsArgsFormM(madId).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"oneAdFormSubmit($madId, ${rvar.nameI18n}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")

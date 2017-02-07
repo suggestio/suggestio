@@ -29,18 +29,19 @@ trait SysNodeEdges
   extends SioController
   with IMacroLogs
   with IIsSuNodeDi
-  with IsSuNodeEdge
   with IMNodes
   with ISysMarketUtilDi
 {
 
   import mCommonDi._
 
+  val isSuNodeEdge: IsSuNodeEdge
+
   /**
     * Сабмит формы-кнопки удаления эджа из узла.
     * @return Редирект, если всё ок.
     */
-  def deleteEdgePost(qs: MNodeEdgeIdQs) = IsSuNodeEdgePost(qs).async { implicit request =>
+  def deleteEdgePost(qs: MNodeEdgeIdQs) = isSuNodeEdge.Post(qs).async { implicit request =>
     LOGGER.trace(s"deleteEdgePost($qs): Deleting edge ${request.medge} of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
 
     val mnode2 = request.mnode.withEdges(
@@ -102,7 +103,7 @@ trait SysNodeEdges
 
 
   /** Экшен запроса страницы с формой редактирования эджа на узле. */
-  def editEdgeGet(qs: MNodeEdgeIdQs) = IsSuNodeEdgeGet(qs).async { implicit request =>
+  def editEdgeGet(qs: MNodeEdgeIdQs) = isSuNodeEdge.Get(qs).async { implicit request =>
     val eform = sysMarketUtil.edgeFormM
       .fill( request.medge )
     _editEdgeBody(qs, Ok, eform)
@@ -114,7 +115,7 @@ trait SysNodeEdges
   }
 
   /** Экшен сабмита формы редактирования эджа. */
-  def editEdgePost(qs: MNodeEdgeIdQs) = IsSuNodeEdgePost(qs).async { implicit request =>
+  def editEdgePost(qs: MNodeEdgeIdQs) = isSuNodeEdge.Post(qs).async { implicit request =>
     def logPrefix = s"editEdgePost($qs):"
     sysMarketUtil.edgeFormM.bindFromRequest().fold(
       {formWithErrors =>

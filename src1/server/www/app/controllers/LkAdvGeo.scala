@@ -32,7 +32,7 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, Result}
-import util.acl.{CanAccessItem, CanAdvertiseAd, CanAdvertiseAdUtil, CanThinkAboutAdvOnMapAdnNode}
+import util.acl._
 import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
 import util.billing.Bill2Util
@@ -69,6 +69,7 @@ class LkAdvGeo @Inject() (
   mdrUtil                         : MdrUtil,
   override val mNodes             : MNodes,
   canAccessItem                   : CanAccessItem,
+  override val isAuth             : IsAuth,
   override val tagSearchUtil      : LkTagsSearchUtil,
   override val tagsEditFormUtil   : TagsEditFormUtil,
   override val canAdvAdUtil       : CanAdvertiseAdUtil,

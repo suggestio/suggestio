@@ -55,6 +55,7 @@ class MarketLkAdn @Inject() (
   override val emailActivations       : EmailActivations,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
+  isAuth                              : IsAuth,
   isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
   override val scryptUtil             : ScryptUtil,
   override val mCommonDi              : ICommonDi
@@ -65,7 +66,6 @@ class MarketLkAdn @Inject() (
   with ChangePwAction
   with NodeEact
   with IsAdnNodeAdmin
-  with IsAuth
 {
 
   import LOGGER._
@@ -403,13 +403,13 @@ class MarketLkAdn @Inject() (
   }
 
   /** Рендер страницы с формой создания нового узла (магазина). */
-  def createNode = IsAuthGet { implicit request =>
+  def createNode = isAuth.Get { implicit request =>
     val form = createNodeFormM
     Ok(createTpl(form))
   }
 
   /** Сабмит формы создания нового узла для юзера. */
-  def createNodeSubmit = IsAuthPost.async { implicit request =>
+  def createNodeSubmit = isAuth.Post.async { implicit request =>
     createNodeFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("createNodeSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))

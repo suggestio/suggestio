@@ -1,11 +1,13 @@
 package util.acl
 
-import controllers.SioController
-import models.ai.IMAiMads
+import com.google.inject.Inject
+import models.ai.MAiMads
+import models.mproj.ICommonDi
 import models.req.{MAiMadReq, MReq}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
 
 /**
  * Suggest.io
@@ -13,10 +15,11 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  * Created: 15.10.15 14:24
  * Description: Аддон для контроллеров для IsSuperuser + доступ к AiMad по id.
  */
-trait IsSuperuserAiMad
-  extends SioController
-  with Csrf
-  with IMAiMads
+class IsSuAiMad @Inject() (
+                            mAiMads                 : MAiMads,
+                            override val mCommonDi  : ICommonDi
+                          )
+  extends Csrf
 {
 
   import mCommonDi._
@@ -50,7 +53,7 @@ trait IsSuperuserAiMad
     }
 
     def aiMadNotFound: Future[Result] = {
-      NotFound(s"MAiMad($aiMadId) not found.")
+      Results.NotFound(s"MAiMad($aiMadId) not found.")
     }
 
   }
@@ -63,12 +66,14 @@ trait IsSuperuserAiMad
 
   case class IsSuAiMad(override val aiMadId: String)
     extends IsSuAiMadAbstract
+  @inline
+  def apply(aiMadId: String) = IsSuAiMad(aiMadId)
 
-  case class IsSuAiMadGet(override val aiMadId: String)
+  case class Get(override val aiMadId: String)
     extends IsSuAiMadAbstract
     with CsrfGet[MAiMadReq]
 
-  case class IsSuAiMadPost(override val aiMadId: String)
+  case class Post(override val aiMadId: String)
     extends IsSuAiMadAbstract
     with CsrfPost[MAiMadReq]
 

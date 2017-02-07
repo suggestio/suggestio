@@ -59,7 +59,9 @@ class SysMarket @Inject() (
                             emailActivations                : EmailActivations,
                             mPerson                         : MPerson,
                             mItems                          : MItems,
+                            override val isSuNodeEdge       : IsSuNodeEdge,
                             override val isSuNode           : IsSuNode,
+                            override val isSuMad            : IsSuMad,
                             scAdSearchUtil                  : ScAdSearchUtil,
                             override val mNodes             : MNodes,
                             override val mCommonDi          : ICommonDi
@@ -69,7 +71,6 @@ class SysMarket @Inject() (
   with SysNodeInstall
   with SmSendEmailInvite
   with SysAdRender
-  with IsSuperuserMad
   with IsSuperuser
   with IsSuperuserOr404
   with SmDomains
@@ -653,7 +654,7 @@ class SysMarket @Inject() (
 
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
   def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = {
-    IsSuMadPost(adId).async { implicit request =>
+    isSuMad.Post(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
       val madSavedFut = advRcvrsUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
 
@@ -694,7 +695,7 @@ class SysMarket @Inject() (
 
 
   /** Отобразить email-уведомление об отключении указанной рекламы. */
-  def showShopEmailAdDisableMsg(adId: String) = IsSuMad(adId).async { implicit request =>
+  def showShopEmailAdDisableMsg(adId: String) = isSuMad(adId).async { implicit request =>
     import request.mad
 
     // Получить ТЦ.
@@ -735,7 +736,7 @@ class SysMarket @Inject() (
    *
    * @param adId id рекламной карточки.
    */
-  def showAd(adId: String) = IsSuMadGet(adId).async { implicit request =>
+  def showAd(adId: String) = isSuMad.Get(adId).async { implicit request =>
     import request.mad
 
     // Определить узла-продьюсера
@@ -768,7 +769,7 @@ class SysMarket @Inject() (
 
 
   /** Вывести результат анализа ресиверов рекламной карточки. */
-  def analyzeAdRcvrs(adId: String) = IsSuMadGet(adId).async { implicit request =>
+  def analyzeAdRcvrs(adId: String) = isSuMad.Get(adId).async { implicit request =>
     import request.mad
     val producerId = n2NodesUtil.madProducerId(mad).get
     val producerOptFut = mNodesCache.getById(producerId)
@@ -826,7 +827,7 @@ class SysMarket @Inject() (
 
 
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
-  def resetReceivers(adId: String, r: Option[String]) = IsSuMadPost(adId).async { implicit request =>
+  def resetReceivers(adId: String, r: Option[String]) = isSuMad.Post(adId).async { implicit request =>
     for {
       _ <- advRcvrsUtil.resetReceiversFor(request.mad)
     } yield {
@@ -839,7 +840,7 @@ class SysMarket @Inject() (
 
   /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
     * Это действие можно откатить через resetReceivers. */
-  def cleanReceivers(adId: String, r: Option[String]) = IsSuMadPost(adId).async { implicit request =>
+  def cleanReceivers(adId: String, r: Option[String]) = isSuMad.Post(adId).async { implicit request =>
     for {
       _ <- advRcvrsUtil.cleanReceiverFor(request.mad)
     } yield {

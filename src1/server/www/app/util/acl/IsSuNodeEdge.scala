@@ -1,9 +1,11 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
+import models.mproj.ICommonDi
 import models.msys.MNodeEdgeIdQs
 import models.req._
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
 
@@ -13,9 +15,8 @@ import scala.concurrent.Future
   * Created: 17.10.16 16:26
   * Description: ACL-аддон для sys-контроллеров для экшенов управления эджами.
   */
-trait IsSuNodeEdge
-  extends SioController
-  with Csrf
+class IsSuNodeEdge @Inject() (override val mCommonDi: ICommonDi)
+  extends Csrf
 {
 
   import mCommonDi._
@@ -80,34 +81,30 @@ trait IsSuNodeEdge
 
     /** Запрошенная версия узла неактуальна. */
     def nodeVsnInvalid(req: INodeReq[_]): Future[Result] = {
-      Conflict(s"Node ${qs.nodeId} has been changed by someone, requested version ${qs.nodeVsn} is outdated.")
+      Results.Conflict(s"Node ${qs.nodeId} has been changed by someone, requested version ${qs.nodeVsn} is outdated.")
     }
 
     /** Не найден эдж с указанным id. */
     def edgeNotFound(req: INodeReq[_]): Future[Result] = {
-      NotFound(s"Node ${qs.nodeId} does NOT have edge #${qs.edgeId}.")
+      Results.NotFound(s"Node ${qs.nodeId} does NOT have edge #${qs.edgeId}.")
     }
 
   }
 
 
   /** Неполная реализация IsSuNodeBase для снижения объемов кодогенерации. */
-  abstract class IsSuNodeEdgeAbstract
+  sealed abstract class IsSuNodeEdgeAbstract
     extends IsSuNodeEdgeBase
     with ExpireSession[MNodeEdgeReq]
 
 
-  /** Доступ к node edge для суперюзеров. */
-  case class IsSuNodeEdge(override val qs: MNodeEdgeIdQs)
-    extends IsSuNodeEdgeAbstract
-
   /** Доступ к node edge для суперюзеров в рамках CSRF GET. */
-  case class IsSuNodeEdgeGet(override val qs: MNodeEdgeIdQs)
+  case class Get(override val qs: MNodeEdgeIdQs)
     extends IsSuNodeEdgeAbstract
     with CsrfGet[MNodeEdgeReq]
 
   /** Доступ к node edge для суперюзеров во время CSRF POST. */
-  case class IsSuNodeEdgePost(override val qs: MNodeEdgeIdQs)
+  case class Post(override val qs: MNodeEdgeIdQs)
     extends IsSuNodeEdgeAbstract
     with CsrfPost[MNodeEdgeReq]
 

@@ -46,6 +46,7 @@ class MarketAd @Inject() (
   mNodes                                  : MNodes,
   sysMdrUtil                              : SysMdrUtil,
   lkEditorWsActors                        : LkEditorWsActors,
+  isAuth                                  : IsAuth,
   @Named("blk") override val blkImgMaker  : IMaker,
   override val n2NodesUtil                : N2NodesUtil,
   override val marketAdFormUtil           : LkAdEdFormUtil,
@@ -58,7 +59,6 @@ class MarketAd @Inject() (
   with CanEditAd
   with CanUpdateSls
   with IsAdnNodeAdmin
-  with IsAuth
 {
 
   import LOGGER._
@@ -473,7 +473,7 @@ class MarketAd @Inject() (
     * @param width Текущая ширина карточки.
     * @return 200 ok с инлайновым рендером нового текстового поля формы редактора карточек.
     */
-  def newTextField(offerN: Int, height: Int, width: Int) = IsAuth { implicit request =>
+  def newTextField(offerN: Int, height: Int, width: Int) = isAuth() { implicit request =>
     val bfText = ListBlock.mkBfText(offerNopt = Some(offerN))
     // Чтобы залить в форму необходимые данные, надо сгенерить экземпляр рекламной карточки.
     implicit val ctx = implicitly[Context]
@@ -513,31 +513,33 @@ class MarketAd @Inject() (
 
   // ============================== common-методы =================================
 
+  private def blockImgBp = parse.multipartFormData(
+    Multipart.handleFilePartAsTemporaryFile,
+    maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong
+  )
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(args: PrepareBlkImgArgs) = {
-    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong)
-    IsAuth.async(bp) { implicit request =>
-      bruteForceProtected {
-        args.bc.getImgFieldForName(args.bimKey) match {
-          case Some(bfi) =>
-            val resultFut = tempImgSupport._handleTempImg(
-              preserveUnknownFmt = false,
-              runEarlyColorDetector = bfi.preDetectMainColor,
-              wsId   = args.wsId,
-              ovlRrr = Some { (imgId, ctx) =>
-                _bgImgOvlTpl(imgId)(ctx)
-              }
-            )
-            resultFut
+  def prepareBlockImg(args: PrepareBlkImgArgs) = isAuth().async(blockImgBp) { implicit request =>
+    bruteForceProtected {
+      args.bc.getImgFieldForName(args.bimKey) match {
+        case Some(bfi) =>
+          val resultFut = tempImgSupport._handleTempImg(
+            preserveUnknownFmt = false,
+            runEarlyColorDetector = bfi.preDetectMainColor,
+            wsId   = args.wsId,
+            ovlRrr = Some { (imgId, ctx) =>
+              _bgImgOvlTpl(imgId)(ctx)
+            }
+          )
+          resultFut
 
-          case _ =>
-            warn(s"prepareBlockImg($args): Unknown img field requested. 404")
-            NotFound
-        }
+        case _ =>
+          warn(s"prepareBlockImg($args): Unknown img field requested. 404")
+          NotFound
       }
     }
   }
+
 
 }
 

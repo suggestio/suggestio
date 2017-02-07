@@ -5,7 +5,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.node.IMNodes
 import models.mdr._
-import util.acl.{IsSuperuser, IsSuperuserMad}
+import util.acl.{IsSuperuser, IIsSuMad}
 import util.billing.IBill2UtilDi
 import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
@@ -19,7 +19,7 @@ import views.html.sys1.mdr._
 trait SysMdrFree
   extends SysMdrBase
   with IsSuperuser
-  with IsSuperuserMad
+  with IIsSuMad
   with IBill2UtilDi
   with IMNodes
 {
@@ -45,7 +45,7 @@ trait SysMdrFree
 
 
   /** Страница для модерации одной карточки. */
-  def refuseFreeAdvPopup(adId: String) = IsSuMadGet(adId).apply { implicit request =>
+  def refuseFreeAdvPopup(adId: String) = isSuMad.Get(adId).apply { implicit request =>
     val form = sysMdrUtil.refuseFormM.fill(
       MRefuseFormRes(
         reason  = "",
@@ -64,7 +64,7 @@ trait SysMdrFree
 
   /** Сабмит одобрения пост-модерации бесплатного размещения.
     * Нужно выставить в карточку данные о модерации. */
-  def freeAdvMdrAccept(adId: String) = IsSuMadPost(adId).async { implicit request =>
+  def freeAdvMdrAccept(adId: String) = isSuMad.Post(adId).async { implicit request =>
     // Запускаем сохранение данных модерации.
     val updFut = sysMdrUtil.updMdrEdge {
       MEdgeInfo(
@@ -82,7 +82,7 @@ trait SysMdrFree
 
 
   /** Сабмит формы блокирования бесплатного размещения рекламной карточки. */
-  def freeAdvMdrBan(adId: String) = IsSuMadPost(adId).async { implicit request =>
+  def freeAdvMdrBan(adId: String) = isSuMad.Post(adId).async { implicit request =>
     lazy val logPrefix = s"freeAdvMdrBan($adId u:${request.user.personIdOpt.orNull}):"
     sysMdrUtil.refuseFormM.bindFromRequest().fold(
       {formWithErrors =>

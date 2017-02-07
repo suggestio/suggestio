@@ -54,6 +54,7 @@ class Img @Inject() (
   override val wsDispatcherActors : WsDispatcherActors,
   override val origImageUtil      : OrigImageUtil,
   override val asyncUtil          : AsyncUtil,
+  isAuth                          : IsAuth,
   imgFormUtil                     : ImgFormUtil,
   override val mCommonDi          : ICommonDi
 )
@@ -61,7 +62,6 @@ class Img @Inject() (
   with MacroLogsImpl
   with TempImgSupport
   with BruteForceProtectCtl
-  with IsAuth
 {
 
   import LOGGER._
@@ -112,7 +112,7 @@ class Img @Inject() (
   }
 
   /** Отрендерить оконный интерфейс для кадрирования картинки. */
-  def imgCropForm(imgId: String, width: Int, height: Int) = IsAuth.async { implicit request =>
+  def imgCropForm(imgId: String, width: Int, height: Int) = isAuth().async { implicit request =>
     val iik = MImg3(imgId).original
     for {
       imetaOpt <- mImgs3.getImageWH(iik)
@@ -137,7 +137,7 @@ class Img @Inject() (
   ))
 
   /** Сабмит запроса на кадрирование картинки. В сабмите данные по исходной картинке и данные по кропу. */
-  def imgCropSubmit = IsAuth.async { implicit request =>
+  def imgCropSubmit = isAuth().async { implicit request =>
     imgCropFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("imgCropSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))

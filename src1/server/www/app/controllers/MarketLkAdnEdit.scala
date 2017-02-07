@@ -48,13 +48,13 @@ class MarketLkAdnEdit @Inject() (
   tempImgSupport                  : TempImgSupport,
   galleryUtil                     : GalleryUtil,
   imgFormUtil                     : ImgFormUtil,
+  isAuth                          : IsAuth,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
   with BruteForceProtectCtl
   with IsAdnNodeAdmin
-  with IsAuth
 {
 
   import LOGGER._
@@ -384,7 +384,7 @@ class MarketLkAdnEdit @Inject() (
   /**
    * Экшен загрузки картинки для логотипа магазина.
    * Права на доступ к магазину проверяем для защиты от несанкциронированного доступа к lossless-компрессиям.
- *
+   *
    * @return Тот же формат ответа, что и для просто temp-картинок.
    */
   def handleTempLogo = _imgUploadBase { implicit request =>
@@ -399,7 +399,7 @@ class MarketLkAdnEdit @Inject() (
 
   /**
    * Экшен для загрузки картинки приветствия.
- *
+   *
    * @return JSON с тем же форматом ответа, что и для других img upload'ов.
    */
   def uploadWelcomeImg = _imgUpload { (imgId, ctx) =>
@@ -417,10 +417,13 @@ class MarketLkAdnEdit @Inject() (
   }
 
 
+  private def imgUploadBp = parse.multipartFormData(
+    Multipart.handleFilePartAsTemporaryFile,
+    maxLength = IMG_GALLERY_MAX_LEN_BYTES
+  )
   /** Обертка экшена для всех экшенов загрузки картинков. */
   private def _imgUploadBase(f: IReq[MultipartFormData[TemporaryFile]] => Future[Result]) = {
-    val bp = parse.multipartFormData(Multipart.handleFilePartAsTemporaryFile, maxLength = IMG_GALLERY_MAX_LEN_BYTES)
-    IsAuth.async(bp) { implicit request =>
+    isAuth().async(imgUploadBp) { implicit request =>
       bruteForceProtected {
         f(request)
       }
@@ -429,7 +432,7 @@ class MarketLkAdnEdit @Inject() (
 
   /**
    * Общий код загрузки картинок для узла.
- *
+   *
    * @param ovlRrr Функция-рендерер html оверлея картинки.
    * @return Action.
    */

@@ -8,7 +8,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.ws.WSClient
 import util.FormUtil._
-import util.acl.{IsSuperuser, IsSuperuserAiMad}
+import util.acl.{IsSuperuser, IsSuAiMad}
 import util.ai.mad.MadAiUtil
 import views.html.sys1.ai._
 import views.html.sys1.ai.mad._
@@ -24,13 +24,12 @@ import scala.util.matching.Regex
  */
 class SysAi @Inject() (
   madAiUtil                       : MadAiUtil,
-  override val mAiMads            : MAiMads,
-  override val mCommonDi          : ICommonDi,
-  implicit private val ws         : WSClient
+  mAiMads                         : MAiMads,
+  isSuAiMad                       : IsSuAiMad,
+  override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImplLazy
-  with IsSuperuserAiMad
   with IsSuperuser
 {
 
@@ -183,14 +182,14 @@ class SysAi @Inject() (
   }
 
   /** Запрос страницы редактирования ранее сохранённого [[models.ai.MAiMad]]. */
-  def editMadAi(aiMadId: String) = IsSuAiMadGet(aiMadId) { implicit request =>
+  def editMadAi(aiMadId: String) = isSuAiMad.Get(aiMadId) { implicit request =>
     import request.aiMad
     val form = formM.fill(aiMad)
     Ok(editTpl(aiMad, form))
   }
 
   /** Сабмит формы редактирования существующей [[models.ai.MAiMad]]. */
-  def editMadAiSubmit(aiMadId: String) = IsSuAiMadPost(aiMadId).async { implicit request =>
+  def editMadAiSubmit(aiMadId: String) = isSuAiMad.Post(aiMadId).async { implicit request =>
     import request.aiMad
     val formBinded = formM.bindFromRequest()
     lazy val logPrefix = s"editMadAiSubmit($aiMadId): "
@@ -213,7 +212,7 @@ class SysAi @Inject() (
         // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
         val resFut = for {
           _         <- madAiUtil.dryRun(aim2)
-          savedId   <- mAiMads.save(aim2)
+          _         <- mAiMads.save(aim2)
         } yield {
           Redirect( routes.SysAi.madIndex() )
             .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
@@ -230,25 +229,27 @@ class SysAi @Inject() (
   }
 
   /** Запуск одного [[models.ai.MAiMad]] на исполнение. Результат запроса содержит инфу о проблеме. */
-  def runMadAi(aiMadId: String) = IsSuAiMad(aiMadId).async { implicit request =>
-    trace(s"runMadAi($aiMadId): Starting by user ${request.user.personIdOpt}")
+  def runMadAi(aiMadId: String) = isSuAiMad(aiMadId).async { implicit request =>
+    lazy val logPrefix = s"runMadAi($aiMadId):"
+    trace(s"$logPrefix: Starting by user ${request.user.personIdOpt}")
     madAiUtil.run(request.aiMad)
       // Рендерим результаты работы:
       .map { res =>
+        trace(s"$logPrefix Done, res = $res")
         Redirect( routes.SysAi.madIndex() )
           .flashing(FLASH.SUCCESS -> (request.aiMad.name + ": Выполнено без ошибок."))
       }
       .recover {
         case ex: Exception =>
           val msg = s"Failed to run MAiMad($aiMadId)"
-          error(msg, ex)
+          error(s"$logPrefix $msg", ex)
           NotAcceptable(msg + ":\n" + ex.getClass.getSimpleName + ": " + ex.getMessage + "\n" + ex.getStackTrace.mkString("", "\n", "\n"))
       }
   }
 
 
   /** Сабмит удаления [[models.ai.MAiMad]]. */
-  def deleteMadAi(aiMadId: String) = IsSuAiMadPost(aiMadId).async { implicit request =>
+  def deleteMadAi(aiMadId: String) = isSuAiMad.Post(aiMadId).async { implicit request =>
     val deleteFut = mAiMads.deleteById(aiMadId)
     trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
     for (isDeleted <- deleteFut) yield {
