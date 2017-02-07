@@ -9,7 +9,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.usr._
 import org.elasticsearch.search.sort.SortOrder
-import util.acl.{IsSuperuser, IsSuperuserPerson}
+import util.acl.{IsSuperuser, IsSuPerson}
 import views.html.ident.recover.emailPwRecoverTpl
 import views.html.ident.reg.email.emailRegMsgTpl
 import views.html.sys1.market.adn._adnNodesListTpl
@@ -31,10 +31,10 @@ class SysPerson @Inject() (
   mSuperUsers               : MSuperUsers,
   emailPwIdents             : EmailPwIdents,
   mExtIdents                : MExtIdents,
+  isSuPerson                : IsSuPerson,
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
-  with IsSuperuserPerson
   with IsSuperuser
 {
 
@@ -118,7 +118,7 @@ class SysPerson @Inject() (
    * @param personId id просматриваемого юзера.
    * @return Страница с кучей ссылок на ресурсы, относящиеся к юзеру.
    */
-  def showPerson(personId: String) = IsSuPersonGet(personId).async { implicit request =>
+  def showPerson(personId: String) = isSuPerson.Get(personId).async { implicit request =>
     // Сразу запускаем поиск узлов: он самый тяжелый тут.
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges  = {

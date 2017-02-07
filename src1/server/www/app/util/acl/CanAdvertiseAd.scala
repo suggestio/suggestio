@@ -46,7 +46,7 @@ class CanAdvertiseAdUtil @Inject() (
     def prodOptFut = mNodesCache.maybeGetByIdCached(prodIdOpt)
     def req2(mnode: MNode) = MAdProdReq(mad, mnode, req, req.user)
     if (req.user.isSuper) {
-      prodOptFut.map { prodOpt =>
+      for (prodOpt <- prodOptFut) yield {
         val resOpt = prodOpt
           .filter { isAdvertiserNode }
           .map { req2 }
@@ -65,9 +65,7 @@ class CanAdvertiseAdUtil @Inject() (
         for (prodOpt <- prodOptFut) yield {
           val resOpt = prodOpt
             .filter { mnode =>
-              val isOwnedByMe = mnode.edges
-                .withPredicateIterIds( MPredicates.OwnedBy )
-                .contains(personId)
+              val isOwnedByMe = IsAdnNodeAdmin.isAdnNodeAdminCheckStrict(mnode, req.user)
               isOwnedByMe  &&  isAdvertiserNode(mnode)
             }
             .map { req2 }
@@ -84,8 +82,7 @@ class CanAdvertiseAdUtil @Inject() (
 
 /** Аддон для контроллеров для  */
 trait CanAdvertiseAd
-  extends OnUnauthNodeCtl
-  with ICanAdvAdUtil
+  extends ICanAdvAdUtil
   with Csrf
 {
 

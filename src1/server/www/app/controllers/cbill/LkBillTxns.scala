@@ -1,9 +1,10 @@
 package controllers.cbill
 
+import controllers.SioController
 import io.suggest.bill.TxnsListConstants
 import io.suggest.mbill2.m.txn.{IMTxns, MTxn}
 import models.jsm.init.MTargets
-import models.mbill.{MLkTxnsPageTplArgs, MLkTxnsListTplArgs}
+import models.mbill.{MLkTxnsListTplArgs, MLkTxnsPageTplArgs}
 import play.twirl.api.Html
 import util.acl.IsAdnNodeAdmin
 import views.html.lk.billing.txns._
@@ -17,7 +18,8 @@ import scala.concurrent.Future
   * Description: Аддон для контроллера [[controllers.LkBill2]] для работы со списком транзакций.
   */
 trait LkBillTxns
-  extends IsAdnNodeAdmin
+  extends SioController
+  with IsAdnNodeAdmin
   with IMTxns
 {
 

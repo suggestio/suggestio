@@ -1,11 +1,11 @@
 package util.acl
 
-import controllers.SioController
-import io.suggest.util.logs.IMacroLogs
+import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
+import models.mproj.ICommonDi
 import models.req.{MNodeEactReq, MReq}
-import models.usr.{IEmailActivationsDi, IEmailPwIdentsDi}
+import models.usr.{EmailActivations, EmailPwIdents}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import views.html.lk.adn.invite.inviteInvalidTpl
 
 import scala.concurrent.Future
 
@@ -16,12 +16,13 @@ import scala.concurrent.Future
  * Description: ActionBuilder'ы для доступа к инвайтам на управление узлом через email.
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
-trait NodeEact
-  extends SioController
-  with IMacroLogs
-  with Csrf
-  with IEmailPwIdentsDi
-  with IEmailActivationsDi
+class NodeEact @Inject() (
+                           emailPwIdents          : EmailPwIdents,
+                           emailActivations       : EmailActivations,
+                           override val mCommonDi : ICommonDi
+                         )
+  extends Csrf
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -31,6 +32,12 @@ trait NodeEact
     extends ActionBuilder[MNodeEactReq]
     with OnUnauthUtil
   {
+
+    /** Что делать при проблемах?
+      * $1 - reason
+      * $2 - sio-реквест.
+      */
+    def notFoundF: (String, MReq[_]) => Future[Result]
 
     /** id в модели EmailActivation. */
     def eaId: String
@@ -49,7 +56,7 @@ trait NodeEact
       /** Общий код рендера отрицательного ответа на запрос вынесен сюда. */
       def _renderInvalidTpl(reason: String): Future[Result] = {
         implicit val req = MReq(request, user)
-        NotFound( inviteInvalidTpl(reason) )
+        notFoundF(reason, req)
       }
 
       eaOptFut.flatMap {
@@ -80,7 +87,7 @@ trait NodeEact
 
         case other =>
           // Неверный код активации или id магазина. Если None, то код скорее всего истёк. Либо кто-то брутфорсит.
-          LOGGER.debug(s"nodeOwnerInviteAcceptCommon($nodeId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired?")
+          LOGGER.debug(s"nodeOwnerInviteAcceptCommon($nodeId, eaId=$eaId): Invalid activation code (eaId): code not found. Expired? $other")
           // TODO Надо проверить, есть ли у юзера права на узел, и если есть, то значит юзер дважды засабмиттил форму, и надо его сразу отредиректить в его магазин.
           // TODO Может и быть ситуация, что юзер всё ещё не залогинен, а второй сабмит уже тут. Нужно это тоже как-то обнаруживать. Например через временную сессионную куку из формы.
           LOGGER.warn(s"TODO I need to handle already activated requests!!!")
@@ -95,12 +102,14 @@ trait NodeEact
     with ExpireSession[MNodeEactReq]
 
   /** Реализация NodeEactBase для CSRF+GET-запросов. */
-  case class NodeEactGet(override val nodeId: String, override val eaId: String)
+  case class Get(override val nodeId: String, override val eaId: String)
+                (override val notFoundF: (String, MReq[_]) => Future[Result])
     extends NodeEactAbstract
     with CsrfGet[MNodeEactReq]
 
   /** Реализация NodeEactBase для CSRF+POST-запросов. */
-  case class NodeEactPost(override val nodeId: String, override val eaId: String)
+  case class Post(override val nodeId: String, override val eaId: String)
+                 (override val notFoundF: (String, MReq[_]) => Future[Result])
     extends NodeEactAbstract
     with CsrfPost[MNodeEactReq]
 

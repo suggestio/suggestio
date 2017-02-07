@@ -18,7 +18,6 @@ import scala.concurrent.Future
 
 trait CanUpdateSls
   extends AdEditBaseCtl
-  with OnUnauthNodeCtl
   with IN2NodesUtilDi
 {
 

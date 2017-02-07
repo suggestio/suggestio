@@ -3,7 +3,7 @@ package util.acl
 import io.suggest.util.logs.MacroLogsDyn
 import models.adv._
 import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import util.adv.ext.IAdvExtFormUtilDi
 
 import scala.concurrent.Future
@@ -20,8 +20,7 @@ import scala.concurrent.Future
 
 /** Аддон для контроллера для добавления поддержки */
 trait CanSubmitExtTargetForNode
-  extends OnUnauthNodeCtl
-  with IsAdnNodeAdminUtilCtl
+  extends IsAdnNodeAdminUtilCtl
   with Csrf
   with IAdvExtFormUtilDi
   with IMExtTargets
@@ -93,7 +92,7 @@ trait CanSubmitExtTargetForNode
 
     def breakInAttempted(user: ISioUser, request: Request[_], tg: MExtTarget): Future[Result] = {
       LOGGER.warn(s"FORBIDDEN: User[${user.personIdOpt}] @${request.remoteAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
-      val res = Forbidden(s"Target ${tg.id.get} doesn't belongs to node[$nodeId].")
+      val res = Results.Forbidden(s"Target ${tg.id.get} doesn't belongs to node[$nodeId].")
       Future successful res
     }
 

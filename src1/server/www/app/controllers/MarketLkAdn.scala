@@ -16,7 +16,7 @@ import models.mctx.Context
 import models.mlk.{MNodeAdInfo, MNodeAdsMode, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
 import models.msession.Keys
-import models.req.INodeReq
+import models.req.{INodeReq, MReq}
 import models.usr.{EmailActivations, EmailPwIdent, EmailPwIdents, MPersonIdents}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Form
@@ -32,6 +32,7 @@ import util.secure.ScryptUtil
 import util.showcase.ShowcaseUtil
 import util.FormUtil
 import views.html.lk.adn._
+import views.html.lk.adn.invite.inviteInvalidTpl
 import views.html.lk.usr._
 import views.html.lk.{lkList => lkListTpl}
 
@@ -52,11 +53,12 @@ class MarketLkAdn @Inject() (
   override val identUtil              : IdentUtil,
   override val emailPwIdents          : EmailPwIdents,
   override val mPersonIdents          : MPersonIdents,
-  override val emailActivations       : EmailActivations,
+  emailActivations                    : EmailActivations,
   logoUtil                            : LogoUtil,
   galleryUtil                         : GalleryUtil,
   isAuth                              : IsAuth,
   isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
+  nodeEact                            : NodeEact,
   override val scryptUtil             : ScryptUtil,
   override val mCommonDi              : ICommonDi
 )
@@ -64,7 +66,6 @@ class MarketLkAdn @Inject() (
   with MacroLogsImpl
   with BruteForceProtectCtl
   with ChangePwAction
-  with NodeEact
   with IsAdnNodeAdmin
 {
 
@@ -263,13 +264,18 @@ class MarketLkAdn @Inject() (
     "password" -> optional(passwordWithConfirmM)
   ))
 
+  private def eactNotFound(reason: String, mreq: MReq[_]): Future[Result] = {
+    implicit val request = mreq
+    NotFound( inviteInvalidTpl(reason) )
+  }
+
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = NodeEactGet(adnId, eActId) { implicit request =>
+  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = nodeEact.Get(adnId, eActId)(eactNotFound) { implicit request =>
     Ok(invite.inviteAcceptFormTpl(request.mnode, request.eact, nodeOwnerInviteAcceptM, withOfferText = true))
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = NodeEactPost(adnId, eActId).async { implicit request =>
+  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = nodeEact.Post(adnId, eActId)(eactNotFound).async { implicit request =>
     import request.{eact, mnode}
     // Если юзер залогинен, то форму биндить не надо
     val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()

@@ -3,7 +3,8 @@ package util.acl
 import io.suggest.util.logs.MacroLogsDyn
 import models.adv.IMExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
 
@@ -15,8 +16,7 @@ import scala.concurrent.Future
  */
 
 trait CanAccessExtTarget
-  extends OnUnauthNodeCtl
-  with IsAdnNodeAdminUtilCtl
+  extends IsAdnNodeAdminUtilCtl
   with IMExtTargets
 {
 
@@ -63,8 +63,7 @@ trait CanAccessExtTarget
 
     /** Что делать и что возвращать юзеру, если цель не найдена? */
     def tgNotFound(request: Request[_]): Future[Result] = {
-      val res = NotFound("Target does not exist: " + tgId)
-      Future successful res
+      Results.NotFound("Target does not exist: " + tgId)
     }
 
   }

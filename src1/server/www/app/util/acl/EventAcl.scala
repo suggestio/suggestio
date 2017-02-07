@@ -2,7 +2,7 @@ package util.acl
 
 import models.event.IMEvents
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
 
 import scala.concurrent.Future
 
@@ -14,8 +14,7 @@ import scala.concurrent.Future
  */
 
 trait HasNodeEventAccess
-  extends OnUnauthNodeCtl
-  with IsAdnNodeAdminUtilCtl
+  extends IsAdnNodeAdminUtilCtl
   with Csrf
   with IMEvents
 {
@@ -78,7 +77,7 @@ trait HasNodeEventAccess
     }
 
     def eventNotFound(req: IReq[_]): Future[Result] = {
-      val res = NotFound("Event not found: " + eventId)
+      val res = Results.NotFound("Event not found: " + eventId)
       Future successful res
     }
   }

@@ -1,10 +1,12 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodeTypes
 import models.MNode
 import models.req.{MPersonReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import models.mproj.ICommonDi
 
 import scala.concurrent.Future
 
@@ -15,17 +17,17 @@ import scala.concurrent.Future
  * Description: Гибрид IsSuperuser и чтения произвольного юзера из хранилища по id.
  */
 
-trait IsSuperuserPerson
-  extends SioController
-  with Csrf
+class IsSuPerson @Inject()(override val mCommonDi: ICommonDi)
+  extends Csrf
 {
 
   import mCommonDi._
 
-  trait IsSuPersonBase
+  sealed trait IsSuPersonBase
     extends ActionBuilder[MPersonReq]
     with IsSuperuserUtil
   {
+
     /** id юзера. */
     def personId: String
 
@@ -61,25 +63,22 @@ trait IsSuperuserPerson
 
     /** Юзер не найден. */
     def personNotFound(request: Request[_]): Future[Result] = {
-      NotFound("person not exists: " + personId)
+      Results.NotFound("person not exists: " + personId)
     }
 
   }
 
 
-  abstract class IsSuPersonAbstract
+  sealed abstract class IsSuPersonAbstract
     extends IsSuPersonBase
     with ExpireSession[MPersonReq]
 
-  /** Дефолтовая реализация [[IsSuPersonBase]]. */
-  case class IsSuPerson(override val personId: String)
-    extends IsSuPersonAbstract
 
-  case class IsSuPersonGet(override val personId: String)
+  case class Get(override val personId: String)
     extends IsSuPersonAbstract
     with CsrfGet[MPersonReq]
 
-  case class IsSuPersonPost(override val personId: String)
+  case class Post(override val personId: String)
     extends IsSuPersonAbstract
     with CsrfPost[MPersonReq]
 

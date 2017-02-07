@@ -1,10 +1,10 @@
 package util.acl
 
-import controllers.SioController
 import io.suggest.util.logs.{MacroLogsImplLazy, MacroLogsDyn, IMacroLogs}
 import models._
 import models.mproj.IMCommonDi
 import models.req._
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -17,17 +17,13 @@ import play.api.mvc.Result
  * Description: Проверка прав на управление абстрактным узлом рекламной сети.
  */
 
-trait OnUnauthNodeCtl
-  extends SioController
-{
-  trait OnUnauthNode extends OnUnauthUtil {
-    /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
-    def onUnauthNode(req: IReqHdr): Future[Result] = {
-      if (req.user.isAuth) {
-        Forbidden(FORBIDDEN + " Forbidden")
-      } else {
-        onUnauth(req)
-      }
+trait OnUnauthNode extends OnUnauthUtil {
+  /** Что делать, когда юзер не авторизован, но долбится в ЛК? */
+  def onUnauthNode(req: IReqHdr): Future[Result] = {
+    if (req.user.isAuth) {
+      Results.Forbidden("403 Forbidden")
+    } else {
+      onUnauth(req)
     }
   }
 }
@@ -43,7 +39,7 @@ trait IsAdnNodeAdminUtilCtl
   trait IsAdnNodeAdminUtil extends MacroLogsDyn {
 
     def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
-      adnNodeOptFut map {
+      adnNodeOptFut.map {
         checkAdnNodeCreds(_, adnId, user)
       }
     }
@@ -66,7 +62,7 @@ trait IsAdnNodeAdminUtilCtl
     }
 
     def checkAdnNodeCredsOpt(adnNodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Option[MNode]] = {
-      checkAdnNodeCredsFut(adnNodeOptFut, adnId, user) map {
+      checkAdnNodeCredsFut(adnNodeOptFut, adnId, user).map {
         case Right(adnNode) => Some(adnNode)
         case _ => None
       }
@@ -103,7 +99,6 @@ object IsAdnNodeAdmin extends MacroLogsImplLazy {
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 trait IsAdnNodeAdmin
   extends IsAdnNodeAdminUtilCtl
-  with OnUnauthNodeCtl
   with Csrf
 {
 
