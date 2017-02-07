@@ -42,6 +42,7 @@ class Ident @Inject() (
                         override val emailActivations     : EmailActivations,
                         override val mExtIdents           : MExtIdents,
                         override val scryptUtil           : ScryptUtil,
+                        override val canConfirmIdpReg     : CanConfirmIdpReg,
                         override val canRecoverPw         : CanRecoverPw,
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,

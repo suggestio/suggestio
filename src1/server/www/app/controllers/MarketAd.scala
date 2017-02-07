@@ -98,8 +98,8 @@ class MarketAd @Inject() (
         tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
       }
     } catch {
-      case ex: Exception =>
-        warn("detectMainColorBg(): Cannot start color detection for im = " + vOpt, ex)
+      case ex: Throwable =>
+        error("detectMainColorBg(): Cannot start color detection for im = " + vOpt, ex)
     }
   }
 

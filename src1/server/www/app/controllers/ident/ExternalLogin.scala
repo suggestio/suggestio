@@ -3,10 +3,11 @@ package controllers.ident
 import com.google.inject.Inject
 import controllers.{SioController, routes}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.playx.ExternalCall
-import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
+import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
 import models.mctx.ContextUtil
 import models.mext.{ILoginProvider, MExtServices}
 import models.mproj.ICommonDi
@@ -117,13 +118,15 @@ trait ExternalLogin
   extends SioController
   with IMacroLogs
   with SetLangCookieUtil
-  with CanConfirmIdpReg
   with INodesUtil
+  with IMNodes
   with MaybeAuth
   with IMExtIdentsDi
 {
 
   import mCommonDi._
+
+  val canConfirmIdpReg: CanConfirmIdpReg
 
   /** Доступ к DI-инстансу */
   val externalLogin: ExternalLogin_ = current.injector.instanceOf[ExternalLogin_]
@@ -155,7 +158,7 @@ trait ExternalLogin
         case denied: AuthenticationResult.AccessDenied =>
           val res = Redirect( routes.Ident.mySioStartPage() )
             .flashing(FLASH.ERROR -> "securesocial.login.accessDenied")
-          Future successful res
+          res
         case failed: AuthenticationResult.Failed =>
           LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
           throw AuthenticationException()
@@ -267,7 +270,7 @@ trait ExternalLogin
    * Юзер, залогинившийся через провайдера, хочет создать ноду.
    * @return Страницу с колонкой подтверждения реги.
    */
-  def idpConfirm = CanConfirmIdpRegGet { implicit request =>
+  def idpConfirm = canConfirmIdpReg.Get { implicit request =>
     val form = externalLogin.extRegConfirmFormM
     Ok( _idpConfirm(form) )
   }
@@ -278,7 +281,7 @@ trait ExternalLogin
   }
 
   /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
-  def idpConfirmSubmit = CanConfirmIdpRegPost.async { implicit request =>
+  def idpConfirmSubmit = canConfirmIdpReg.Post.async { implicit request =>
     externalLogin.extRegConfirmFormM.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))

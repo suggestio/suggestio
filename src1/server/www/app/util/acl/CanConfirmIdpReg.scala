@@ -1,15 +1,17 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
+import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import models.mproj.ICommonDi
 import models.req.MReq
-import models.usr.IMExtIdentsDi
+import models.usr.MExtIdents
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.di.IIdentUtil
+import util.ident.IdentUtil
 
 import scala.concurrent.Future
 
@@ -20,18 +22,19 @@ import scala.concurrent.Future
  * Description: Юзер, залогинившийся через внешнего провайдера идентификакции, требует
  * подтверждения регистрации (создания первой ноды).
  */
-trait CanConfirmIdpReg
-  extends SioController
-  with IIdentUtil
-  with Csrf
-  with IMNodes
-  with IMExtIdentsDi
+class CanConfirmIdpReg @Inject() (
+                                   identUtil                : IdentUtil,
+                                   mNodes                   : MNodes,
+                                   mExtIdents               : MExtIdents,
+                                   override val mCommonDi   : ICommonDi
+                                 )
+  extends Csrf
 {
 
   import mCommonDi._
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
-  trait CanConfirmIdpRegBase
+  sealed trait CanConfirmIdpRegBase
     extends ActionBuilder[MReq]
     with IMacroLogs
     with OnUnauthUtil
@@ -47,7 +50,8 @@ trait CanConfirmIdpReg
         val user = mSioUsers(personIdOpt)
         // Разрешить суперюзеру доступ, чтобы можно было верстать и проверять форму без шаманств.
         val hasAccess: Future[Boolean] = if (user.isSuper) {
-          Future successful true
+          true
+
         } else {
           // Запустить подсчет имеющихся у юзера магазинов
           val msearch = new MNodeSearchDfltImpl {
@@ -62,21 +66,21 @@ trait CanConfirmIdpReg
           val hasExtIdent = mExtIdents.countByPersonId(personId)
             .map(_ > 0L)
           // Дождаться результата поиска узлов.
-          pcntFut flatMap { pcnt =>
+          pcntFut.flatMap { pcnt =>
             if (pcnt > 0L) {
               LOGGER.debug(s"User[$personId] already have $pcnt or more nodes. Refusing reg.confirmation.")
-              Future.successful(false)
+              false
             } else {
               // Юзер пока не имеет узлов. Проверить наличие идентов.
               hasExtIdent.filter(identity).onFailure {
-                case ex: NoSuchElementException =>
+                case _: NoSuchElementException =>
                   LOGGER.debug(s"User[$personId] has no MExtIdents. IdP reg not allowed.")
               }
               hasExtIdent
             }
           }
         }
-        hasAccess flatMap {
+        hasAccess.flatMap {
           case true =>
             val req1 = MReq(request, user)
             block(req1)
@@ -100,12 +104,12 @@ trait CanConfirmIdpReg
     with MacroLogsDyn
 
   /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */
-  object CanConfirmIdpRegGet
+  object Get
     extends CanConfirmIdpRegBase2
     with CsrfGet[MReq]
 
   /** Реализация [[CanConfirmIdpRegBase]] с проверкой CSRF-токена. */
-  object CanConfirmIdpRegPost
+  object Post
     extends CanConfirmIdpRegBase2
     with CsrfPost[MReq]
 
