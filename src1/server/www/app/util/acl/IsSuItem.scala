@@ -26,7 +26,7 @@ class IsSuItem @Inject() (
 
   sealed trait IsSuItemBase
     extends ActionBuilder[MItemReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** Ключ item'а в таблице MItems. */

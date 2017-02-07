@@ -29,7 +29,7 @@ class IsSuItemAd @Inject() (
 
   sealed trait IsSuItemAdBase
     extends ActionBuilder[MItemAdReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** Ключ item'а в таблице MItems. */

@@ -12,7 +12,7 @@ import models.event.search.MEventsSearchArgs
 import models.mproj.ICommonDi
 import play.api.i18n.Messages
 import play.twirl.api.Html
-import util.acl.{HasNodeEventAccess, IsAdnNodeAdmin}
+import util.acl.{CanAccessEvent, IsAdnNodeAdmin}
 import util.event.LkEventsUtil
 import util.lk.LkAdUtil
 import views.html.lk.event._
@@ -37,7 +37,7 @@ class LkEvents @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with HasNodeEventAccess
+  with CanAccessEvent
   with IsAdnNodeAdmin
 {
 

@@ -8,7 +8,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.ws.WSClient
 import util.FormUtil._
-import util.acl.{IsSuperuser, IsSuAiMad}
+import util.acl.{IsSu, IsSuAiMad}
 import util.ai.mad.MadAiUtil
 import views.html.sys1.ai._
 import views.html.sys1.ai.mad._
@@ -30,7 +30,7 @@ class SysAi @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImplLazy
-  with IsSuperuser
+  with IsSu
 {
 
   import LOGGER._

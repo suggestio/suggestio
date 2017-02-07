@@ -3,7 +3,7 @@ package controllers
 import com.google.inject.Inject
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import models.mproj.ICommonDi
-import util.acl.{IgnoreAuth, IsAuth, IsSuperuserOrDevelOr404, MaybeAuth}
+import util.acl.{IgnoreAuth, IsAuth, IsSuOrDevelOr404, MaybeAuth}
 import util.cdn.CorsUtil
 import util.seo.SiteMapUtil
 import util.xplay.SecHeadersFilter
@@ -22,11 +22,11 @@ class Static @Inject() (
   override val corsUtil           : CorsUtil,
   override val siteMapUtil        : SiteMapUtil,
   isAuth                          : IsAuth,
+  isSuOrDevelOr404                : IsSuOrDevelOr404,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MaybeAuth
-  with IsSuperuserOrDevelOr404
   with RobotsTxt
   with SiteMapsXml
   with CorsPreflight
@@ -69,7 +69,7 @@ class Static @Inject() (
    * @param asset filename.
    * @return Экшен раздачи ассетов с сильно урезанным кешированием на клиенте.
    */
-  def vassetsSudo(path: String, asset: Assets.Asset) = IsSuOrDevelOr404.async { implicit request =>
+  def vassetsSudo(path: String, asset: Assets.Asset) = isSuOrDevelOr404().async { implicit request =>
     // TODO Запретить раздачу привелигированных ассетов через CDN в продакшене? Чтобы отладка главной страницы шла только по vpn.
     val resFut = Assets.versioned(path, asset)(request)
     // Для привелегированных ассетов нужно запретить промежуточные кеширования.

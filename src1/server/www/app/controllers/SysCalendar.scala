@@ -36,7 +36,7 @@ class SysCalendar @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSuperuser
+  with IsSu
 {
 
   import LOGGER._

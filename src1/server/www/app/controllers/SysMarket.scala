@@ -62,6 +62,7 @@ class SysMarket @Inject() (
                             override val isSuNodeEdge       : IsSuNodeEdge,
                             override val isSuNode           : IsSuNode,
                             override val isSuMad            : IsSuMad,
+                            isSuOr404                       : IsSuOr404,
                             scAdSearchUtil                  : ScAdSearchUtil,
                             override val mNodes             : MNodes,
                             override val mCommonDi          : ICommonDi
@@ -71,8 +72,7 @@ class SysMarket @Inject() (
   with SysNodeInstall
   with SmSendEmailInvite
   with SysAdRender
-  with IsSuperuser
-  with IsSuperuserOr404
+  with IsSu
   with SmDomains
   with SysNodeEdges
 {
@@ -87,7 +87,7 @@ class SysMarket @Inject() (
    * Изначально оно жило в ctl.Sys, который был замёржен в ctl.Application,
    * который тоже был упразднён 2015.dec.17.
    */
-  def sysIndex = IsSuOr404Get { implicit request =>
+  def sysIndex = isSuOr404.Get { implicit request =>
     Ok( views.html.sys1.indexTpl() )
   }
 

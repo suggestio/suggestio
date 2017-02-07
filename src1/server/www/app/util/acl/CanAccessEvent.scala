@@ -13,7 +13,7 @@ import scala.concurrent.Future
  * Description: Контроль доступа к событиям.
  */
 
-trait HasNodeEventAccess
+trait CanAccessEvent
   extends IsAdnNodeAdminUtilCtl
   with Csrf
   with IMEvents

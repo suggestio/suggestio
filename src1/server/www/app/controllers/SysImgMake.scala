@@ -11,7 +11,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
 import util.blocks.BlocksConf
 import util.FormUtil
-import util.acl.IsSuperuser
+import util.acl.IsSu
 import views.html.sys1.img.make._
 
 import scala.concurrent.Future
@@ -57,7 +57,7 @@ class SysImgMakeUtil @Inject() (
 trait SysImgMake
   extends SioController
   with IMacroLogs
-  with IsSuperuser
+  with IsSu
 {
 
   import mCommonDi._

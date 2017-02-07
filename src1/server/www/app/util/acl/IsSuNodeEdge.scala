@@ -25,7 +25,7 @@ class IsSuNodeEdge @Inject() (override val mCommonDi: ICommonDi)
   /** Комбинация IsSuperuser + IsAdnAdmin + доступ к эджу по индексу. */
   sealed trait IsSuNodeEdgeBase
     extends ActionBuilder[MNodeEdgeReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** query string. */

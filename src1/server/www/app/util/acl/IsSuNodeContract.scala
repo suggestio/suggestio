@@ -26,7 +26,7 @@ class IsSuNodeContract @Inject() (
 
   sealed trait IsSuNodeContractBase
     extends ActionBuilder[MNodeContractReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** id запрашиваемого узла. */

@@ -24,7 +24,7 @@ class IsSuMad @Inject()(override val mCommonDi: ICommonDi)
 
   sealed trait IsSuMadBase
     extends ActionBuilder[MAdReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** id запрашиваемой рекламной карточки. */

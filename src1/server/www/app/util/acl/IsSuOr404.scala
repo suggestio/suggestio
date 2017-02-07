@@ -1,5 +1,7 @@
 package util.acl
 
+import com.google.inject.Inject
+import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
 import play.api.mvc.Result
 
@@ -11,8 +13,8 @@ import scala.concurrent.Future
  * Created: 15.10.15 15:56
  * Description: Трейты-аддоны для контроллеров для IsSuperuser or 404.
  */
-trait IsSuperuserOr404Ctl
-  extends IsSuperuser
+trait IsSuOr404Ctl
+  extends IsSu
 {
   import mCommonDi._
 
@@ -26,17 +28,18 @@ trait IsSuperuserOr404Ctl
 }
 
 
-trait IsSuperuserOr404 extends IsSuperuserOr404Ctl {
+class IsSuOr404 @Inject() ( override val mCommonDi: ICommonDi )
+  extends IsSuOr404Ctl
+{
 
   abstract class IsSuOr404Abstract extends IsSuOr404Base with ExpireSession[MReq]
-  object IsSuOr404 extends IsSuOr404Abstract
-  object IsSuOr404Get extends IsSuOr404Abstract with CsrfGet[MReq]
-  object IsSuOr404Post extends IsSuOr404Abstract with CsrfPost[MReq]
+  object Get extends IsSuOr404Abstract with CsrfGet[MReq]
+  object Post extends IsSuOr404Abstract with CsrfPost[MReq]
 
 }
 
 
-trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
+class IsSuOrDevelOr404 @Inject() (override val mCommonDi: ICommonDi) extends IsSuOr404Ctl {
 
   import mCommonDi._
 
@@ -47,5 +50,8 @@ trait IsSuperuserOrDevelOr404 extends IsSuperuserOr404Ctl {
       super.isAllowed(user) || isDev
     }
   }
+
+  @inline
+  def apply() = IsSuOrDevelOr404
 
 }

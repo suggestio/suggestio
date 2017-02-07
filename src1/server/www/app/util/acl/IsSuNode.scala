@@ -25,7 +25,7 @@ class IsSuNode @Inject() ( override val mCommonDi: ICommonDi )
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
   sealed trait IsSuNodeBase
     extends ActionBuilder[MNodeReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** id запрашиваемого узла. */

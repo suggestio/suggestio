@@ -6,7 +6,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
-import util.acl.{IsSuItem, IsSuItemAd, IsSuMad, IsSuperuser}
+import util.acl.{IsSuItem, IsSuItemAd, IsSuMad, IsSu}
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
 import util.mdr.SysMdrUtil
@@ -36,7 +36,7 @@ class SysMdr @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSuperuser
+  with IsSu
   with SysMdrFree
   with SysMdrPaid
 {

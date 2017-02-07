@@ -5,7 +5,7 @@ import io.suggest.mbill2.m.balance.IMBalances
 import io.suggest.mbill2.m.gid.IGidUtilDi
 import io.suggest.mbill2.m.txn.IMTxns
 import models.msys.bill.MBillOverviewTplArgs
-import util.acl.IsSuperuser
+import util.acl.IsSu
 import views.html.sys1.bill._
 
 /**
@@ -17,7 +17,7 @@ import views.html.sys1.bill._
   */
 trait SbOverview
   extends SioController
-  with IsSuperuser
+  with IsSu
   with IMTxns
   with IMBalances
   with IGidUtilDi

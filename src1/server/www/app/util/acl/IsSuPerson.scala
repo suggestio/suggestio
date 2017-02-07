@@ -25,7 +25,7 @@ class IsSuPerson @Inject()(override val mCommonDi: ICommonDi)
 
   sealed trait IsSuPersonBase
     extends ActionBuilder[MPersonReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** id юзера. */

@@ -10,7 +10,7 @@ import models.mctx.Context
 import models.mdr._
 import models.req.IReq
 import play.api.mvc.{Call, Result}
-import util.acl.{IsSuItem, IsSuItemAd, IsSuperuser, IIsSuMad}
+import util.acl.{IsSuItem, IsSuItemAd, IsSu, IIsSuMad}
 import util.billing.{Bill2Util, IBill2UtilDi}
 import util.di.IScUtil
 import util.mdr.SysMdrUtil
@@ -27,7 +27,7 @@ import scala.concurrent.Future
   */
 trait SysMdrPaid
   extends SysMdrBase
-  with IsSuperuser
+  with IsSu
   with IIsSuMad
   with IBill2UtilDi
   with IScUtil

@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import models.mproj.ICommonDi
-import util.acl.IsSuperuser
+import util.acl.IsSu
 import util.adv.direct.AdvRcvrsUtil
 import util.health.AdnGeoParentsHealth
 import views.html.sys1.debug._
@@ -19,7 +19,7 @@ class SysDebug @Inject() (
                            override val mCommonDi        : ICommonDi
 )
   extends SioController
-  with IsSuperuser
+  with IsSu
 {
 
   import mCommonDi._

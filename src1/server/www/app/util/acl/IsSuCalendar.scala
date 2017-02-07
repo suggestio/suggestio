@@ -25,9 +25,9 @@ class IsSuCalendar @Inject()(
 
   import mCommonDi._
 
-  sealed trait IsSuperuserCalendarBase
+  sealed trait IsSuCalendarBase
     extends ActionBuilder[MCalendarReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** id календаря, вокруг которого идёт работа. */
@@ -54,17 +54,17 @@ class IsSuCalendar @Inject()(
   }
 
 
-  /** Частичная реализация [[IsSuperuserCalendarBase]] с поддержкой [[util.acl.ExpireSession]]. */
-  sealed abstract class IsSuperuserCalendarAbstract
-    extends IsSuperuserCalendarBase
+  /** Частичная реализация [[IsSuCalendarBase]] с поддержкой [[util.acl.ExpireSession]]. */
+  sealed abstract class IsSuCalendarAbstract
+    extends IsSuCalendarBase
     with ExpireSession[MCalendarReq]
 
   case class Get(override val calId: String)
-    extends IsSuperuserCalendarAbstract
+    extends IsSuCalendarAbstract
     with CsrfGet[MCalendarReq]
 
   case class Post(override val calId: String)
-    extends IsSuperuserCalendarAbstract
+    extends IsSuCalendarAbstract
     with CsrfPost[MCalendarReq]
 
 }

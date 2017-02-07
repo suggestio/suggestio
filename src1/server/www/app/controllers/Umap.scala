@@ -39,7 +39,7 @@ class Umap @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with IsSuperuser
+  with IsSu
 {
 
   import mCommonDi._

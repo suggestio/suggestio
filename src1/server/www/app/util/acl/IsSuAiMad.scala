@@ -27,7 +27,7 @@ class IsSuAiMad @Inject() (
   /** IsSuperuser + доступ к указанному MAiMad. */
   trait IsSuAiMadBase
     extends ActionBuilder[MAiMadReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     /** id описания карточки. */

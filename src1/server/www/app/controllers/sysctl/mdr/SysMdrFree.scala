@@ -5,7 +5,7 @@ import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.node.IMNodes
 import models.mdr._
-import util.acl.{IsSuperuser, IIsSuMad}
+import util.acl.{IsSu, IIsSuMad}
 import util.billing.IBill2UtilDi
 import util.mdr.SysMdrUtil
 import views.html.sys1.mdr._
@@ -18,7 +18,7 @@ import views.html.sys1.mdr._
   */
 trait SysMdrFree
   extends SysMdrBase
-  with IsSuperuser
+  with IsSu
   with IIsSuMad
   with IBill2UtilDi
   with IMNodes

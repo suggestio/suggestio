@@ -9,7 +9,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.usr._
 import org.elasticsearch.search.sort.SortOrder
-import util.acl.{IsSuperuser, IsSuPerson}
+import util.acl.{IsSu, IsSuPerson}
 import views.html.ident.recover.emailPwRecoverTpl
 import views.html.ident.reg.email.emailRegMsgTpl
 import views.html.sys1.market.adn._adnNodesListTpl
@@ -35,7 +35,7 @@ class SysPerson @Inject() (
   override val mCommonDi    : ICommonDi
 )
   extends SioControllerImpl
-  with IsSuperuser
+  with IsSu
 {
 
   import mCommonDi._

@@ -13,7 +13,7 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
 
-trait IsSuperuserUtil extends OnUnauthUtil with MacroLogsDyn {
+trait IsSuUtil extends OnUnauthUtil with MacroLogsDyn {
 
   def supOnUnauthFut(req: IReqHdr): Future[Result] = {
     import req._
@@ -28,7 +28,7 @@ trait IsSuperuserUtil extends OnUnauthUtil with MacroLogsDyn {
 }
 
 
-trait IsSuperuser
+trait IsSu
   extends CookieCleanupSupport
   with Csrf
 {
@@ -37,7 +37,7 @@ trait IsSuperuser
 
   trait IsSuBase
     extends ActionBuilder[MReq]
-    with IsSuperuserUtil
+    with IsSuUtil
   {
 
     protected def isAllowed(user: ISioUser): Boolean = {

@@ -8,7 +8,7 @@ import models.mproj.ICommonDi
 import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
 import play.api.data.Forms._
 import play.api.data._
-import util.acl.IsSuperuser
+import util.acl.IsSu
 import util.FormUtil
 import views.html.sys1.img._
 
@@ -29,7 +29,7 @@ class SysImg @Inject() (
   extends SioControllerImpl
   with MacroLogsImpl
   with SysImgMake
-  with IsSuperuser
+  with IsSu
 {
 
   import LOGGER._
