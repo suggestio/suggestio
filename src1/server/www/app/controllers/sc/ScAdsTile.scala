@@ -6,7 +6,7 @@ import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.IScAdSearchUtilDi
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
-import io.suggest.stat.m.{MAction, MActionTypes, MComponent, MComponents}
+import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
 import models.msc._
@@ -246,7 +246,7 @@ trait ScAdsTileBase
 trait ScAdsTile
   extends ScAdsTileBase
   with IScStatUtil
-  with MaybeAuth
+  with IMaybeAuth
 {
 
   import mCommonDi._
@@ -256,7 +256,7 @@ trait ScAdsTile
     * @param adSearch Поисковый запрос.
     * @return JSONP с рекламными карточками для рендера в выдаче.
     */
-  def findAds(adSearch: MScAdsTileQs) = MaybeAuth().async { implicit request =>
+  def findAds(adSearch: MScAdsTileQs) = maybeAuth().async { implicit request =>
     // В зависимости от версии API, используем ту или иную реализацию логики.
     val logic = TileAdsLogicV(adSearch)
     val resultFut = logic.resultFut

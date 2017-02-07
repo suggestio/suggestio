@@ -7,7 +7,7 @@ import io.suggest.util.logs.IMacroLogs
 import models.mctx.Context
 import models.msc.tag.MScTagsSearchQs
 import play.api.libs.json.Json
-import util.acl.MaybeAuth
+import util.acl.IMaybeAuth
 import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
 import util.showcase.IScTagsUtilDi
@@ -21,7 +21,7 @@ import views.html.sc.search._
  */
 trait ScTags
   extends ScController
-  with MaybeAuth
+  with IMaybeAuth
   with IMNodes
   with IScTagsUtilDi
   with IGeoIpUtilDi
@@ -37,7 +37,7 @@ trait ScTags
     * @param qs Аргументы поиска из URL query string.
     * @return Рендер куска списка тегов, который раньше был списком узлов.
     */
-  def tagsSearch(qs: MScTagsSearchQs) = MaybeAuth().async { implicit request =>
+  def tagsSearch(qs: MScTagsSearchQs) = maybeAuth().async { implicit request =>
 
     // Результат геолокации понадобиться как минимум для статистики. Запускаем в фоне.
     val geoIpResOptFut = geoIpUtil.findIpCached(

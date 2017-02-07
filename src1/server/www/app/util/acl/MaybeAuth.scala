@@ -1,5 +1,7 @@
 package util.acl
 
+import com.google.inject.{Inject, Singleton}
+import models.mproj.ICommonDi
 import models.req.{MReq, MUserInit}
 import play.api.mvc._
 
@@ -11,7 +13,8 @@ import scala.concurrent.Future
  * Created: 09.10.13 15:10
  * Description: ActionBuilder для определения залогиненности юзера.
  */
-trait MaybeAuth
+@Singleton
+class MaybeAuth @Inject() (override val mCommonDi: ICommonDi)
   extends CookieCleanupSupport
   with Csrf
 {
@@ -53,13 +56,20 @@ trait MaybeAuth
   /** Сборка данных по текущей сессии юзера в реквест. */
   case class MaybeAuth(override val userInits: MUserInit*)
     extends MaybeAuthAbstract
+  @inline
+  def apply(userInits: MUserInit*) = MaybeAuth(userInits: _*)
 
-  case class MaybeAuthGet(override val userInits: MUserInit*)
+  case class Get(override val userInits: MUserInit*)
     extends MaybeAuthAbstract
     with CsrfGet[MReq]
 
-  case class MaybeAuthPost(override val userInits: MUserInit*)
+  case class Post(override val userInits: MUserInit*)
     extends MaybeAuthAbstract
     with CsrfPost[MReq]
 
+}
+
+/** Интерфейс для поля с DI-инстансом [[MaybeAuth]]. */
+trait IMaybeAuth {
+  val maybeAuth: MaybeAuth
 }

@@ -27,12 +27,12 @@ import scala.concurrent.Future
  */
 class LkLang @Inject() (
   mNodes                          : MNodes,
+  override val maybeAuth          : MaybeAuth,
   override val jsMessagesUtil     : JsMessagesUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with LkJsMessages
-  with MaybeAuth
   with MacroLogsImpl
 {
 
@@ -47,7 +47,7 @@ class LkLang @Inject() (
 
 
   /** Рендер страницы выбора языка. */
-  def showLangSwitcher(r: Option[String]) = MaybeAuthGet(U.Lk).async { implicit request =>
+  def showLangSwitcher(r: Option[String]) = maybeAuth.Get(U.Lk).async { implicit request =>
     val ctx = implicitly[Context]
     val l0 = ctx.messages.lang
     val langForm = chooseLangFormM(l0).fill(l0)
@@ -81,7 +81,7 @@ class LkLang @Inject() (
 
 
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
-  def selectLangSubmit(r: Option[String]) = MaybeAuthPost().async { implicit request =>
+  def selectLangSubmit(r: Option[String]) = maybeAuth.Post().async { implicit request =>
     chooseLangFormM.bindFromRequest().fold(
       {formWithErrors =>
         debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))

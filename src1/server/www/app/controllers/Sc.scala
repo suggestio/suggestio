@@ -8,7 +8,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.IMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import util.acl.GetAnyAd
+import util.acl.{GetAnyAd, MaybeAuth}
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
 import util.ble.BleUtil
@@ -41,6 +41,7 @@ class Sc @Inject() (
   override val cdnUtil            : CdnUtil,
   override val n2NodesUtil        : N2NodesUtil,
   override val getAnyAd           : GetAnyAd,
+  override val maybeAuth          : MaybeAuth,
   @Named("blk") override val blkImgMaker  : IMaker,
   override val scMapUtil          : ScMapUtil,
   override val ctxUtil            : ContextUtil,

@@ -13,7 +13,7 @@ import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
 import play.twirl.api.{Html, HtmlFormat}
-import util.acl.MaybeAuth
+import util.acl.IMaybeAuth
 
 import scala.concurrent.Future
 
@@ -34,7 +34,7 @@ trait ScSyncSite
   with ScFocusedAdsV2
   with ScNodesListBase
   with ScSiteBase
-  with MaybeAuth
+  with IMaybeAuth
 {
 
   import mCommonDi._
@@ -53,7 +53,7 @@ trait ScSyncSite
   }
 
   /** Прямой доступ к синхронному сайту выдачи. */
-  def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth().async { implicit request =>
+  def syncGeoSite(scState: ScJsState, siteArgs: SiteQsArgs) = maybeAuth().async { implicit request =>
     _syncGeoSite(scState, siteArgs) { jsSt =>
       routes.Sc.syncGeoSite(jsSt).url
     }

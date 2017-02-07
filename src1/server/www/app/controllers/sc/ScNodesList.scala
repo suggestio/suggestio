@@ -121,7 +121,7 @@ trait ScNodesListBase
 trait ScNodesList
   extends ScNodesListBase
   with IScStatUtil
-  with MaybeAuth
+  with IMaybeAuth
 {
 
   import mCommonDi._
@@ -132,7 +132,7 @@ trait ScNodesList
 
 
   /** Поиск узлов в рекламной выдаче. */
-  def findNodes(args: MScNodeSearchArgs) = MaybeAuth().async { implicit request =>
+  def findNodes(args: MScNodeSearchArgs) = maybeAuth().async { implicit request =>
     // Загрубляем timestamp, на всякий случай.
     val tstamp = System.currentTimeMillis() / 50L
     val logic = FindNodesLogicV(tstamp, args)

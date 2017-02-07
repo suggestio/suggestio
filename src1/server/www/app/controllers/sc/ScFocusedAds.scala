@@ -518,14 +518,14 @@ trait ScFocusedAdsBase
 trait ScFocusedAds
   extends ScFocusedAdsBase
   with IScStatUtil
-  with MaybeAuth {
+  with IMaybeAuth {
 
   /** Экшен для рендера горизонтальной выдачи карточек.
     *
     * @param qs URL-аргументы запроса.
     * @return JSONP с отрендеренными карточками.
     */
-  def focusedAds(qs: MScAdsFocQs) = MaybeAuth().async { implicit request =>
+  def focusedAds(qs: MScAdsFocQs) = maybeAuth().async { implicit request =>
     val logic = getLogicFor(qs)
     // Запустить изменябельное тело экшена на исполнение.
     _focusedAds(logic)

@@ -36,7 +36,6 @@ import util.secure.IScryptUtilDi
 trait SendPwRecoverEmail
   extends SioController
   with IMailerWrapperDi
-  with MaybeAuth
   with IMacroLogs
   with IMPersonIdents
   with IEmailPwIdentsDi
@@ -125,6 +124,7 @@ trait PwRecover
   with SetLangCookieUtil
   with IIsAnonAcl
   with IIdentUtil
+  with IMaybeAuth
   with EmailPwRegUtil
   with IEmailPwIdentsDi
   with IScryptUtilDi
@@ -190,7 +190,7 @@ trait PwRecover
 
   /** Рендер страницы, отображаемой когда запрос восстановления пароля принят.
     * CSRF используется, чтобы никому нельзя было слать ссылку с сообщением "ваш пароль выслан вам на почту". */
-  def recoverPwAccepted(email1: String) = MaybeAuthPost() { implicit request =>
+  def recoverPwAccepted(email1: String) = maybeAuth.Post() { implicit request =>
     val ctx = implicitly[Context]
     val colHtml = _acceptedColTpl(email1)(ctx)
     val html = _outer(colHtml)(ctx)

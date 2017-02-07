@@ -23,10 +23,10 @@ class Static @Inject() (
   override val siteMapUtil        : SiteMapUtil,
   isAuth                          : IsAuth,
   isSuOrDevelOr404                : IsSuOrDevelOr404,
+  maybeAuth                       : MaybeAuth,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
-  with MaybeAuth
   with RobotsTxt
   with SiteMapsXml
   with CorsPreflight
@@ -39,13 +39,13 @@ class Static @Inject() (
    * Страница с политикой приватности.
    * @return 200 Ok и много букв.
    */
-  def privacyPolicy = MaybeAuth() { implicit request =>
+  def privacyPolicy = maybeAuth() { implicit request =>
     Ok( privacyPolicyTpl() )
       .withHeaders( CACHE_CONTROL -> "public, max-age=600" )
   }
 
   /** Содержимое проверочного попап-окна. */
-  def popupCheckContent = MaybeAuth() { implicit request =>
+  def popupCheckContent = maybeAuth() { implicit request =>
     Ok(popups.popupCheckTpl()).withHeaders(
       CACHE_CONTROL -> "public, max-age=86400"
     )
@@ -55,7 +55,7 @@ class Static @Inject() (
    * Костыль в связи с проблемами в play-html-compressor в play-2.3 https://github.com/mohiva/play-html-compressor/issues/20
    * Без этого костыля, запрос html'ки просто подвисает.
    */
-  def tinymceColorpicker(filename: String) = MaybeAuth() { implicit request =>
+  def tinymceColorpicker(filename: String) = maybeAuth() { implicit request =>
     Ok(tinymce.colorpicker.indexTpl())
       .withHeaders(
         CACHE_CONTROL -> "public, max-age=3600",

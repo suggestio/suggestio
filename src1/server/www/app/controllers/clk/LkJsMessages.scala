@@ -3,7 +3,7 @@ package controllers.clk
 import controllers.SioController
 import io.suggest.i18n.I18nConstants
 import play.api.i18n.Messages
-import util.acl.MaybeAuth
+import util.acl.IMaybeAuth
 import util.i18n.IJsMessagesUtilDi
 
 /**
@@ -15,7 +15,7 @@ import util.i18n.IJsMessagesUtilDi
   */
 trait LkJsMessages
   extends SioController
-  with MaybeAuth
+  with IMaybeAuth
   with IJsMessagesUtilDi
 {
 
@@ -34,7 +34,7 @@ trait LkJsMessages
     * @param langCode Изначальное не проверяется, но для решения проблем с кешированием вбит в адрес ссылки.
     * @return js asset с локализованными мессагами внутрях.
     */
-  def lkMessagesJs(langCode: String, hash: Int) = MaybeAuth().async { implicit request =>
+  def lkMessagesJs(langCode: String, hash: Int) = maybeAuth().async { implicit request =>
 
     // Проверить хеш
     if (hash == jsMessagesUtil.hash) {

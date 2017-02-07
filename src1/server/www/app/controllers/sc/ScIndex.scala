@@ -43,7 +43,7 @@ trait ScIndex
   extends ScController
   with IMacroLogs
   with IStatCookiesUtilDi
-  with MaybeAuth
+  with IMaybeAuth
   with IMNodes
   with INodesUtil
   with IWelcomeUtil
@@ -65,7 +65,7 @@ trait ScIndex
     * @return 200 OK + index выдачи в виде JSON.
     */
   // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
-  def index(args: MScIndexArgs) = MaybeAuth(U.PersonNode).async { implicit request =>
+  def index(args: MScIndexArgs) = maybeAuth(U.PersonNode).async { implicit request =>
     val logic = new ScIndexUniLogicImpl {
       override def _reqArgs  = args
       override def _syncArgs = MScIndexSyncArgs.empty

@@ -2,7 +2,7 @@ package controllers.sc
 
 import io.suggest.model.n2.node.IMNodes
 import play.api.libs.json.Json
-import util.acl.MaybeAuth
+import util.acl.IMaybeAuth
 import util.showcase.IScMapUtilDi
 
 /**
@@ -14,7 +14,7 @@ import util.showcase.IScMapUtilDi
   */
 trait ScMap
   extends ScController
-    with MaybeAuth
+    with IMaybeAuth
     with IMNodes
     with IScMapUtilDi
 {
@@ -30,7 +30,7 @@ trait ScMap
     *
     * @return GeoJSON.
     */
-  def renderMapNodesAll = MaybeAuth().async { implicit request =>
+  def renderMapNodesAll = maybeAuth().async { implicit request =>
     // Начать собирать запрос поиска отображаемых на карте узлов
     // Кешируем кратковременно всё, т.к. экшен тяжеловат по RAM и CPU.
     for {

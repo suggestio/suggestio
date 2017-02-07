@@ -9,7 +9,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.http.MimeTypes
 import util.FormUtil._
-import util.acl.{BruteForceProtect, MaybeAuth}
+import util.acl.{BruteForceProtect, IMaybeAuth}
 import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
 
@@ -24,7 +24,7 @@ trait ScRemoteError
   extends SioController
   with MacroLogsImpl
   with BruteForceProtect
-  with MaybeAuth
+  with IMaybeAuth
   with IGeoIpUtilDi
   with IScStatUtil
 {
@@ -69,7 +69,7 @@ trait ScRemoteError
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleScError = MaybeAuth(U.PersonNode).async { implicit request =>
+  def handleScError = maybeAuth(U.PersonNode).async { implicit request =>
     bruteForceProtected {
       lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
       errorFormM.bindFromRequest().fold(

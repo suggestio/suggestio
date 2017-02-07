@@ -269,12 +269,12 @@ trait ScSiteBase
 trait ScSiteGeo
   extends ScSiteBase
   with IScStatUtil
-  with MaybeAuth
+  with IMaybeAuth
 {
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
-  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = MaybeAuth(U.PersonNode).async { implicit request =>
+  def geoSite(maybeJsState: ScJsState, siteArgs: SiteQsArgs) = maybeAuth(U.PersonNode).async { implicit request =>
     if (maybeJsState.nonEmpty) {
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
