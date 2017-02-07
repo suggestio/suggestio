@@ -47,8 +47,10 @@ class MarketAd @Inject() (
   sysMdrUtil                              : SysMdrUtil,
   lkEditorWsActors                        : LkEditorWsActors,
   isAuth                                  : IsAuth,
+  canEditAd                               : CanEditAd,
   @Named("blk") override val blkImgMaker  : IMaker,
-  override val n2NodesUtil                : N2NodesUtil,
+  n2NodesUtil                             : N2NodesUtil,
+  canUpdateSls                            : CanUpdateSls,
   override val marketAdFormUtil           : LkAdEdFormUtil,
   override val mCommonDi                  : ICommonDi
 )
@@ -56,8 +58,7 @@ class MarketAd @Inject() (
   with MacroLogsImpl
   with BruteForceProtect
   with MarketAdPreview
-  with CanEditAd
-  with CanUpdateSls
+
   with IsAdnNodeAdmin
 {
 
@@ -98,7 +99,7 @@ class MarketAd @Inject() (
       }
     } catch {
       case ex: Exception =>
-        debug("detectMainColorBg(): Cannot start color detection for im = " + vOpt)
+        warn("detectMainColorBg(): Cannot start color detection for im = " + vOpt, ex)
     }
   }
 
@@ -199,7 +200,7 @@ class MarketAd @Inject() (
     *
     * @param adId id рекламной карточки.
     */
-  def editAd(adId: String) = CanEditAdGet(adId, U.Lk).async { implicit request =>
+  def editAd(adId: String) = canEditAd.Get(adId, U.Lk).async { implicit request =>
     import request.mad
     val bc = n2NodesUtil.bc(mad)
 
@@ -236,7 +237,7 @@ class MarketAd @Inject() (
     *
     * @param adId id рекламной карточки.
     */
-  def editAdSubmit(adId: String) = CanEditAdPost(adId).async(parse.urlFormEncoded) { implicit request =>
+  def editAdSubmit(adId: String) = canEditAd.Post(adId).async(parse.urlFormEncoded) { implicit request =>
     lazy val logPrefix = s"editShopAdSubmit($adId): "
     adFormM.bindFromRequest().fold(
       {formWithErrors =>
@@ -316,7 +317,7 @@ class MarketAd @Inject() (
   }
 
   /** Рендер окошка с подтверждением удаления рекламной карточки. */
-  def deleteWnd(adId: String) = CanEditAdGet(adId).async { implicit request =>
+  def deleteWnd(adId: String) = canEditAd.Get(adId).async { implicit request =>
     Ok(_deleteWndTpl(request.mad))
   }
 
@@ -326,7 +327,7 @@ class MarketAd @Inject() (
     * @param adId id рекламы.
     * @return Редирект в магазин или ТЦ.
     */
-  def deleteSubmit(adId: String) = CanEditAdPost(adId).async { implicit request =>
+  def deleteSubmit(adId: String) = canEditAd.Post(adId).async { implicit request =>
     for {
       isDeleted <- mNodes.deleteById(adId)
     } yield {
@@ -358,7 +359,7 @@ class MarketAd @Inject() (
    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl.
    */
   // TODO Sec Нужна поддержка CSRF тут. Её пока нет из-за работы через jsRouter.
-  def updateShowLevelSubmit(adId: String) = CanUpdateSls(adId).async { implicit request =>
+  def updateShowLevelSubmit(adId: String) = canUpdateSls.Post(adId).async { implicit request =>
     lazy val logPrefix = s"updateShowLevelSubmit($adId): "
     adShowLevelFormM.bindFromRequest().fold(
       {formWithErrors =>

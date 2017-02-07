@@ -154,9 +154,10 @@ PersonalCabinet =
         adId = $this.attr 'data-adid'
         value = $this.is ':checked'
 
-
-        jsRoutes.controllers.MarketAd.updateShowLevelSubmit(adId).ajax
-          type: 'post'
+        r = jsRoutes.controllers.MarketAd.updateShowLevelSubmit(adId)
+        $.ajax
+          url: r.url
+          type: r.method
           data:
             levelId: lvl
             levelEnabled: value

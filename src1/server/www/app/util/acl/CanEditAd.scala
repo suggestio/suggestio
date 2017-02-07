@@ -1,11 +1,13 @@
 package util.acl
 
-import controllers.SioController
-import io.suggest.util.logs.{MacroLogsDyn, IMacroLogs}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.req.{IReqHdr, MAdProdReq, MReq, MUserInit}
 import play.api.mvc._
-import util.n2u.IN2NodesUtilDi
+import util.n2u.N2NodesUtil
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import models.mproj.ICommonDi
 
 import scala.concurrent.Future
 
@@ -16,24 +18,31 @@ import scala.concurrent.Future
  * Description: Проверка прав на управление рекламной карточкой.
  */
 
-trait AdEditBaseCtl
-  extends SioController
+/** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
+@Singleton
+class CanEditAd @Inject() (
+                            n2NodesUtil             : N2NodesUtil,
+                            override val mCommonDi  : ICommonDi
+                          )
+  extends Csrf
+  with MacroLogsImpl
 {
 
   import mCommonDi._
 
+
   /** Кое какая утиль для action builder'ов, редактирующих карточку. */
-  trait AdEditBase extends IMacroLogs {
+  trait AdEditBase {
+
     /** id рекламной карточки, которую клиент хочет поредактировать. */
     def adId: String
 
     def forbidden[A](msg: String, request: Request[A]): Result = {
-      Forbidden(s"Forbidden access for ad[$adId]: $msg")
+      Results.Forbidden(s"Forbidden access for ad[$adId]: $msg")
     }
 
     def forbiddenFut[A](msg: String, request: Request[A]): Future[Result] = {
-      val resp = forbidden(msg, request)
-      Future.successful(resp)
+      forbidden(msg, request)
     }
 
     def adNotFound(req: IReqHdr): Future[Result] = {
@@ -42,20 +51,9 @@ trait AdEditBaseCtl
     }
   }
 
-}
-
-
-/** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
-trait CanEditAd
-  extends AdEditBaseCtl
-  with IN2NodesUtilDi
-  with Csrf
-{
-
-  import mCommonDi._
 
   /** Редактировать карточку может только владелец магазина. */
-  trait CanEditAdBase
+  sealed trait CanEditAdBase
     extends ActionBuilder[MAdProdReq]
     with AdEditBase
     with OnUnauthUtil
@@ -63,7 +61,7 @@ trait CanEditAd
   {
 
     def prodNotFound(nodeIdOpt: Option[String]): Future[Result] = {
-      NotFound("Ad producer not found: " + nodeIdOpt)
+      Results.NotFound("Ad producer not found: " + nodeIdOpt)
     }
 
     override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
@@ -104,21 +102,20 @@ trait CanEditAd
     }
   }
 
-  sealed abstract class CanEditAd
+  sealed abstract class CanEditAdAbstract
     extends CanEditAdBase
     with ExpireSession[MAdProdReq]
-    with MacroLogsDyn
 
   /** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
-  case class CanEditAdGet(override val adId: String,
+  case class Get(override val adId: String,
                           override val userInits: MUserInit*)
-    extends CanEditAd
+    extends CanEditAdAbstract
     with CsrfGet[MAdProdReq]
 
   /** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
-  case class CanEditAdPost(override val adId: String,
+  case class Post(override val adId: String,
                            override val userInits: MUserInit*)
-    extends CanEditAd
+    extends CanEditAdAbstract
     with CsrfPost[MAdProdReq]
 
 }

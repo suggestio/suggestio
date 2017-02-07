@@ -6,9 +6,14 @@
 @import ctx._
 @import args._
 @import ctx.api.{n2NodesUtil => n2n}
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
 
-@helper.javascriptRouter("jsRoutes")(
-  routes.javascript.MarketAd.updateShowLevelSubmit
+
+@jsTpl2HtmlTpl()(
+  jsRevRouterTpl("jsRoutes")(
+    routes.javascript.MarketAd.updateShowLevelSubmit
+  )
 )
 
 @* Флаг single переименовывает единственную галочку "Выводить". *@

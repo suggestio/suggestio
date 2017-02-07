@@ -1,12 +1,16 @@
 package util.acl
 
-import io.suggest.util.logs.MacroLogsDyn
+import com.google.inject.Inject
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import models._
+import models.mproj.ICommonDi
 import models.req.{MAdProdReq, MReq}
 import play.api.mvc._
-import util.n2u.IN2NodesUtilDi
+import util.n2u.N2NodesUtil
 
 import scala.concurrent.Future
+
+// TODO НУЖНА ПОДДЕРЖКА CSRF ТУТ!
 
 /**
  * Suggest.io
@@ -16,9 +20,13 @@ import scala.concurrent.Future
  * на редактирование в рамках узла ad show levels.
  */
 
-trait CanUpdateSls
-  extends AdEditBaseCtl
-  with IN2NodesUtilDi
+class CanUpdateSls @Inject() (
+                               val canEditAd          : CanEditAd,
+                               n2NodesUtil            : N2NodesUtil,
+                               override val mCommonDi : ICommonDi
+                             )
+  extends MacroLogsImpl
+  with Csrf
 {
 
   import mCommonDi._
@@ -26,7 +34,7 @@ trait CanUpdateSls
   /** Проверка прав на возможность обновления уровней отображения рекламной карточки. */
   sealed trait CanUpdateSlsBase
     extends ActionBuilder[MAdProdReq]
-    with AdEditBase
+    with canEditAd.AdEditBase
     with OnUnauthNode
   {
 
@@ -84,10 +92,12 @@ trait CanUpdateSls
     }
   }
 
-  /** Реализация [[CanUpdateSlsBase]] с истечением времени сессии. */
-  case class CanUpdateSls(adId: String)
+  sealed abstract class CanUpdateSlsAbstract
     extends CanUpdateSlsBase
     with ExpireSession[MAdProdReq]
-    with MacroLogsDyn
+
+  case class Post(adId: String)
+    extends CanUpdateSlsAbstract
+    with CsrfPost[MAdProdReq]
 
 }
