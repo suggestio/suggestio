@@ -1,11 +1,12 @@
 package util.acl
 
-import controllers.SioController
+import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsDyn
-import models.req.MEmailActivationReq
-import models.usr.{IEaEmailId, IEmailActivationsDi}
+import models.mproj.ICommonDi
+import models.req.{IReq, MEmailActivationReq, MReq}
+import models.usr.{EmailActivations, IEaEmailId}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.di.IIdentUtil
+import util.ident.IdentUtil
 
 import scala.concurrent.Future
 
@@ -26,17 +27,18 @@ object CanConfirmEmailPwReg {
 import util.acl.CanConfirmEmailPwReg._
 
 
-trait CanConfirmEmailPwRegCtl
-  extends SioController
-  with IIdentUtil
-  with Csrf
-  with IEmailActivationsDi
+class CanConfirmEmailPwReg @Inject()(
+                                      identUtil               : IdentUtil,
+                                      emailActivations        : EmailActivations,
+                                      override val mCommonDi  : ICommonDi
+                                    )
+  extends Csrf
 {
 
   import mCommonDi._
 
   /** Код проверки возможности подтверждения регистрации по email. */
-  trait CanConfirmEmailPwRegBase
+  sealed abstract class Base
     extends ActionBuilder[MEmailActivationReq]
     with MacroLogsDyn
     with OnUnauthUtil
@@ -44,6 +46,9 @@ trait CanConfirmEmailPwRegCtl
 
     /** Инфа по активации, присланная через URL qs. */
     def eaInfo: IEaEmailId
+
+    /** Что делать, когда нет искомой email activation. */
+    def eaNotFoundF: IReq[_] => Future[Result]
 
     override def invokeBlock[A](request: Request[A], block: (MEmailActivationReq[A]) => Future[Result]): Future[Result] = {
       val eaFut = emailActivations.maybeGetById(eaInfo.id)
@@ -60,15 +65,7 @@ trait CanConfirmEmailPwRegCtl
         // Активация не подходит. Может юзер повторно проходит по ссылке из письма? Но это не важно, по сути.
         case None =>
           LOGGER.debug(s"Client requested activation for $eaInfo , but it doesn't exists. Redirecting...")
-          val rdrFut = personIdOpt.fold {
-            onUnauth(request)
-          } { personId =>
-            identUtil.redirectUserSomewhere(personId)
-          }
-          // TODO Отправлять на страницу, где описание проблема, а не туда, куда взбредёт.
-          rdrFut map { rdr =>
-            rdr.flashing(FLASH.ERROR -> "Activation.impossible")
-          }
+          eaNotFoundF( MReq(request, user) )
 
         // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
         case Some(ea) =>
@@ -79,14 +76,16 @@ trait CanConfirmEmailPwRegCtl
   }
 
 
-  /** Реализация [[CanConfirmEmailPwRegBase]] c выставлением CSRF-token'а. */
-  case class CanConfirmEmailPwRegGet(override val eaInfo: IEaEmailId)
-    extends CanConfirmEmailPwRegBase
+  /** Реализация c выставлением CSRF-token'а. */
+  case class Get(override val eaInfo: IEaEmailId)
+                (override val eaNotFoundF: IReq[_] => Future[Result])
+    extends Base
     with CsrfGet[MEmailActivationReq]
 
-  /** Реализация [[CanConfirmEmailPwRegBase]] с проверкой выставленного ранее CSRF-токена. */
-  case class CanConfirmEmailPwRegPost(override val eaInfo: IEaEmailId)
-    extends CanConfirmEmailPwRegBase
+  /** Реализация с проверкой выставленного ранее CSRF-токена. */
+  case class Post(override val eaInfo: IEaEmailId)
+                 (override val eaNotFoundF: IReq[_] => Future[Result])
+    extends Base
     with CsrfPost[MEmailActivationReq]
 
 }

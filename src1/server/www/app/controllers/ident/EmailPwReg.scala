@@ -1,6 +1,6 @@
 package controllers.ident
 
-import controllers.{CaptchaValidator, SioController}
+import controllers.{CaptchaValidator, SioController, routes}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
@@ -21,6 +21,7 @@ import util.mail.IMailerWrapperDi
 import util.FormUtil
 import util.acl._
 import util.adn.INodesUtil
+import util.di.IIdentUtil
 import util.secure.IScryptUtilDi
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
@@ -66,7 +67,7 @@ trait EmailPwReg
   with SendPwRecoverEmail
   with IMailerWrapperDi
   with IIsAnonAcl
-  with CanConfirmEmailPwRegCtl
+  with IIdentUtil
   with INodesUtil
   with EmailPwRegUtil
   with IMNodes
@@ -78,6 +79,7 @@ trait EmailPwReg
 
   import mCommonDi._
 
+  val canConfirmEmailPwReg: CanConfirmEmailPwReg
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Future[_] = {
     val msg = mailer.instance
@@ -161,15 +163,26 @@ trait EmailPwReg
     Ok(sentTpl(ea)(ctx))
   }
 
+  private def _eaNotFound(req: IReq[_]): Future[Result] = {
+    val rdrFut = req.user.personIdOpt.fold[Future[Result]] {
+      Redirect( routes.Ident.emailPwLoginForm() )
+    } { personId =>
+      identUtil.redirectUserSomewhere(personId)
+    }
+    // TODO Отправлять на страницу, где описание проблема, а не туда, куда взбредёт.
+    for (rdr <- rdrFut) yield {
+      rdr.flashing(FLASH.ERROR -> "Activation.impossible")
+    }
+  }
 
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
-  def emailReturn(eaInfo: IEaEmailId) = CanConfirmEmailPwRegGet(eaInfo) { implicit request =>
+  def emailReturn(eaInfo: IEaEmailId) = canConfirmEmailPwReg.Get(eaInfo)(_eaNotFound) { implicit request =>
     // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
     Ok(confirmTpl(request.eact, epwRegConfirmFormM))
   }
 
   /** Сабмит формы подтверждения регистрации по email. */
-  def emailConfirmSubmit(eaInfo: IEaEmailId) = CanConfirmEmailPwRegPost(eaInfo).async { implicit request =>
+  def emailConfirmSubmit(eaInfo: IEaEmailId) = canConfirmEmailPwReg.Post(eaInfo)(_eaNotFound).async { implicit request =>
     // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
     epwRegConfirmFormM.bindFromRequest().fold(
       {formWithErrors =>
