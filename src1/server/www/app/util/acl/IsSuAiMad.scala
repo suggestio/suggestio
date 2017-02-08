@@ -18,6 +18,7 @@ import play.api.mvc.{ActionBuilder, Request, Result, Results}
 class IsSuAiMad @Inject() (
                             val csrf                : Csrf,
                             mAiMads                 : MAiMads,
+                            isSu                    : IsSu,
                             mCommonDi               : ICommonDi
                           ) {
 
@@ -26,7 +27,6 @@ class IsSuAiMad @Inject() (
   /** IsSuperuser + доступ к указанному MAiMad. */
   trait IsSuAiMadBase
     extends ActionBuilder[MAiMadReq]
-    with IsSuUtil
   {
 
     /** id описания карточки. */
@@ -47,7 +47,7 @@ class IsSuAiMad @Inject() (
 
       } else {
         val req1 = MReq(request, user)
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
 

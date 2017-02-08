@@ -9,6 +9,7 @@ import io.suggest.lk.bill.txn.TxnsListInit
 import io.suggest.lk.flash.FlashInitRouter
 import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
+import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.lk.popup.PopupsInitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
@@ -60,3 +61,4 @@ class LkInitRouter
   with AdvGeoFormInitRouter
   with AdvDirectFormInitRouter
   with LkAdnMapFormInitRouter
+  with LkNodesInitRouter

@@ -16,6 +16,7 @@ import scala.concurrent.Future
  */
 class IsSuNodeNoContract @Inject() (
                                      val csrf   : Csrf,
+                                     isSu       : IsSu,
                                      mCommonDi  : ICommonDi
                                    ) {
 
@@ -23,7 +24,6 @@ class IsSuNodeNoContract @Inject() (
 
   sealed trait IsSuNodeNoContractBase
     extends ActionBuilder[MNodeReq]
-    with IsSuUtil
   {
 
     /** id запрашиваемого узла. */
@@ -51,7 +51,7 @@ class IsSuNodeNoContract @Inject() (
         }
 
       } else {
-        supOnUnauthFut(reqErr)
+        isSu.supOnUnauthFut(reqErr)
       }
     }
 

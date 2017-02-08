@@ -35,7 +35,14 @@
 
       @_navItemTpl(
         title = messages("On.the.map"),
-        href  = Some( routes.LkAdnMap.forNode(nodeId) )
+        href  = Some( routes.LkAdnMap.forNode(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_ADN_MAP, "__adn-map")
+      )
+
+      @_navItemTpl(
+        title = messages("Nodes"),
+        href  = Some( routes.LkNodes.subNodesOf(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_NODES, "__nodes")
       )
 
       @_navSysTpl(

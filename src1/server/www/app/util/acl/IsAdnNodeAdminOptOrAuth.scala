@@ -20,6 +20,7 @@ import scala.concurrent.Future
 class IsAdnNodeAdminOptOrAuth @Inject() (
                                           isAdnNodeAdmin          : IsAdnNodeAdmin,
                                           val csrf                : Csrf,
+                                          isAuth                  : IsAuth,
                                           mCommonDi               : ICommonDi
                                         ) {
 
@@ -29,7 +30,6 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
   sealed trait IsAdnNodeAdminOptOrAuthBase
     extends ActionBuilder[MNodeOptReq]
     with MacroLogsDyn
-    with OnUnauthUtil
     with InitUserCmds
   {
 
@@ -39,7 +39,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
     override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
 
-      personIdOpt.fold (onUnauth(request)) { _ =>
+      personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
         val mnodeOptFut = mNodesCache.maybeGetByIdCached(adnIdOpt)
         val user = mSioUsers(personIdOpt)
 

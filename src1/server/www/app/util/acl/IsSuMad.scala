@@ -1,6 +1,6 @@
 package util.acl
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import io.suggest.model.n2.node.MNodeTypes
 import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
@@ -16,8 +16,10 @@ import scala.concurrent.Future
  * Description:
  * Абстрактная логика обработки запроса суперюзера на какое-либо действие с рекламной карточкой.
  */
+@Singleton
 class IsSuMad @Inject()(
                          val csrf   : Csrf,
+                         isSu       : IsSu,
                          mCommonDi  : ICommonDi
                        ) {
 
@@ -25,7 +27,6 @@ class IsSuMad @Inject()(
 
   sealed trait IsSuMadBase
     extends ActionBuilder[MAdReq]
-    with IsSuUtil
   {
 
     /** id запрашиваемой рекламной карточки. */
@@ -48,7 +49,7 @@ class IsSuMad @Inject()(
 
       } else {
         val req1 = MReq(request, user)
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
 

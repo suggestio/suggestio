@@ -21,11 +21,13 @@ class IsSuOr404Ctl @Inject() (
 
   import mCommonDi._
 
-  trait Base extends isSu.Base with ExpireSession[MReq] {
+  sealed trait Base extends isSu.Base with ExpireSession[MReq] {
 
-    override def supOnUnauthResult(req: IReqHdr): Future[Result] = {
+    override protected def _onUnauth(req: IReqHdr): Future[Result] = {
+      isSu.logBlockedAccess(req)
       errorHandler.http404Fut(req)
     }
+
   }
 
 }

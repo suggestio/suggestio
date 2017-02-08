@@ -96,4 +96,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def ADV_GEO_FORM_ERROR               = E(44)
 
+  def LK_NODES_FORM_ERROR              = E(45)
+
 }

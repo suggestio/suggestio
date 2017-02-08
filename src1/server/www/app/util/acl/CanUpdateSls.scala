@@ -34,7 +34,6 @@ class CanUpdateSls @Inject() (
   sealed trait CanUpdateSlsBase
     extends ActionBuilder[MAdProdReq]
     with canEditAd.AdEditBase
-    with OnUnauthNode
   {
 
     override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
@@ -47,7 +46,7 @@ class CanUpdateSls @Inject() (
 
       if (user.isAnon) {
         LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
-        onUnauthNode(reqErr)
+        isAdnNodeAdmin.onUnauthNode(reqErr)
 
       } else {
         madOptFut.flatMap {

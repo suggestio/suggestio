@@ -44,9 +44,6 @@ class AdvGeoFormInit extends IInit {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     PreLoaderLk.PRELOADER_IMG_URL
 
-    // Для эксперимента сразу активируем url#-роутер внутри одной страницы с одним содержимым.
-    // Это наподобии того, что реализовано в scalajs-spa-tutorial.
-
     val circuit = LkAdvGeoFormCircuit
 
     // Рендер всей формы:

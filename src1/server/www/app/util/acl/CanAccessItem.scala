@@ -22,6 +22,7 @@ import scala.concurrent.Future
 class CanAccessItem @Inject() (
                                 mItems                  : MItems,
                                 mOrders                 : MOrders,
+                                isAuth                  : IsAuth,
                                 val csrf                : Csrf,
                                 mCommonDi               : ICommonDi
                               )
@@ -34,7 +35,6 @@ class CanAccessItem @Inject() (
     * Нужно просто реализовать метод isItemAccessable(). */
   sealed trait CanItemBase
     extends ActionBuilder[MItemReq]
-    with OnUnauthUtil
     with InitUserCmds
   {
 
@@ -53,7 +53,7 @@ class CanAccessItem @Inject() (
       if (user.isAnon) {
         // Анонимус по определению не может иметь доступа к биллингу.
         LOGGER.trace(s"$logPrefix Not logged in")
-        onUnauth(request)
+        isAuth.onUnauth(request)
 
       } else {
         // Получить на руки запрашиваемый MItem. Его нужно передать в action внутри реквеста.
@@ -133,7 +133,7 @@ class CanAccessItem @Inject() (
 
     /** Результат с отказом доступа к item'у. */
     def itemForbidden(request: Request[_]): Future[Result] = {
-      onUnauth(request)
+      isAuth.onUnauth(request)
     }
 
     protected def isItemAccessable(mitem: MItem): Boolean

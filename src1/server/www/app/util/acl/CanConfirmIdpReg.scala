@@ -26,6 +26,7 @@ class CanConfirmIdpReg @Inject() (
                                    identUtil                : IdentUtil,
                                    mNodes                   : MNodes,
                                    mExtIdents               : MExtIdents,
+                                   isAuth                   : IsAuth,
                                    val csrf                 : Csrf,
                                    mCommonDi                : ICommonDi
                                  ) {
@@ -36,14 +37,13 @@ class CanConfirmIdpReg @Inject() (
   sealed trait CanConfirmIdpRegBase
     extends ActionBuilder[MReq]
     with IMacroLogs
-    with OnUnauthUtil
   {
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
 
       personIdOpt.fold {
         LOGGER.trace("User not logged in.")
-        onUnauth(request)
+        isAuth.onUnauth(request)
 
       } { personId =>
         val user = mSioUsers(personIdOpt)

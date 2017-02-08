@@ -19,6 +19,7 @@ import scala.concurrent.Future
 
 class IsSuPerson @Inject()(
                             val csrf  : Csrf,
+                            isSu      : IsSu,
                             mCommonDi : ICommonDi
                           ) {
 
@@ -26,7 +27,6 @@ class IsSuPerson @Inject()(
 
   sealed trait IsSuPersonBase
     extends ActionBuilder[MPersonReq]
-    with IsSuUtil
   {
 
     /** id юзера. */
@@ -58,7 +58,7 @@ class IsSuPerson @Inject()(
 
       } else {
         val req1 = MReq(request, user)
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
 

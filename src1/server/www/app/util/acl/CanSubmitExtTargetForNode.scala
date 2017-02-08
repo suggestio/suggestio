@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.mproj.ICommonDi
 import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
@@ -24,10 +24,12 @@ import scala.concurrent.Future
 class CanSubmitExtTargetForNode @Inject() (
                                             advExtFormUtil          : AdvExtFormUtil,
                                             mExtTargets             : MExtTargets,
-                                            val isAdnNodeAdmin      : IsAdnNodeAdmin,
+                                            isAdnNodeAdmin          : IsAdnNodeAdmin,
                                             val csrf                : Csrf,
                                             mCommonDi               : ICommonDi
-                                          ) {
+                                          )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -35,9 +37,6 @@ class CanSubmitExtTargetForNode @Inject() (
     * id которого возможно задан в теле POST'а. */
   trait CanSubmitExtTargetForNodeBase
     extends ActionBuilder[MNodeExtTgSubmitReq]
-    with MacroLogsDyn
-    with OnUnauthNode
-    with isAdnNodeAdmin.IsAdnNodeAdminUtil
   {
 
     /** id узла, заявленного клиентом. */
@@ -47,7 +46,7 @@ class CanSubmitExtTargetForNode @Inject() (
       val personIdOpt = sessionUtil.getPersonId(request)
       val user = mSioUsers(personIdOpt)
 
-      val isAdnNodeAdmFut = isAdnNodeAdmin(nodeId, user)
+      val isAdnNodeAdmFut = isAdnNodeAdmin.isAdnNodeAdmin(nodeId, user)
       val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
 
       // Запускаем сразу в фоне поиск уже сохранённой цели.
@@ -89,7 +88,7 @@ class CanSubmitExtTargetForNode @Inject() (
         // Нет прав на узел.
         case None =>
           val req1 = MReq(request, user)
-          onUnauthNode(req1)
+          isAdnNodeAdmin.onUnauthNode(req1)
       }
     }
 

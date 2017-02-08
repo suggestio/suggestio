@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.util.logs.MacroLogsImpl
 import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
@@ -19,18 +19,17 @@ import scala.concurrent.Future
 
 class CanAccessExtTarget @Inject() (
                                      mExtTargets        : MExtTargets,
-                                     val isAdnNodeAdmin : IsAdnNodeAdmin,
+                                     isAdnNodeAdmin     : IsAdnNodeAdmin,
                                      mCommonDi          : ICommonDi
-                                   ) {
+                                   )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
   /** Базовая логика [[CanAccessExtTarget]] живёт в этом трейте. */
   trait CanAccessExtTargetBase
     extends ActionBuilder[MExtTargetNodeReq]
-    with MacroLogsDyn
-    with OnUnauthNode
-    with isAdnNodeAdmin.IsAdnNodeAdminUtil
   {
 
     /** id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
@@ -45,7 +44,7 @@ class CanAccessExtTarget @Inject() (
         // Запрошенная цель существует. Нужно проверить права на её узел.
         case Some(tg) =>
           val user = mSioUsers(personIdOpt)
-          val adnNodeOptFut = isAdnNodeAdmin(tg.adnId, user)
+          val adnNodeOptFut = isAdnNodeAdmin.isAdnNodeAdmin(tg.adnId, user)
           adnNodeOptFut.flatMap {
             // У юзера есть права на узел. Запускаем экшен на исполнение.
             case Some(mnode) =>
@@ -55,7 +54,7 @@ class CanAccessExtTarget @Inject() (
             // Нет прав на узел.
             case None =>
               val req1 = MReq(request, user)
-              onUnauthNode(req1)
+              isAdnNodeAdmin.onUnauthNode(req1)
           }
 
         case None =>

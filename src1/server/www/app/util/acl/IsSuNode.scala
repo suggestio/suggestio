@@ -18,6 +18,7 @@ import play.api.mvc.{ActionBuilder, Request, Result}
 @Singleton
 class IsSuNode @Inject() (
                            val csrf   : Csrf,
+                           isSu       : IsSu,
                            mCommonDi  : ICommonDi
                          ) {
 
@@ -26,7 +27,6 @@ class IsSuNode @Inject() (
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
   sealed trait IsSuNodeBase
     extends ActionBuilder[MNodeReq]
-    with IsSuUtil
   {
 
     /** id запрашиваемого узла. */
@@ -49,7 +49,7 @@ class IsSuNode @Inject() (
 
       } else {
         val req1 = MReq(request, user)
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
 

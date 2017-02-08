@@ -1,6 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
+import io.suggest.util.logs.MacroLogsImpl
 import models.event.MEvents
 import models.mproj.ICommonDi
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
@@ -16,11 +17,12 @@ import scala.concurrent.Future
  */
 
 class CanAccessEvent @Inject() (
-                                 val isAdnNodeAdmin     : IsAdnNodeAdmin,
+                                 isAdnNodeAdmin         : IsAdnNodeAdmin,
                                  mEvents                : MEvents,
                                  val csrf               : Csrf,
                                  mCommonDi              : ICommonDi
                                )
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -28,8 +30,6 @@ class CanAccessEvent @Inject() (
   /** Проверка доступа к событию, которое относится к узлу. */
   sealed trait Base
     extends ActionBuilder[MNodeEventReq]
-    with OnUnauthNode
-    with isAdnNodeAdmin.IsAdnNodeAdminUtil
     with InitUserCmds
   {
 
@@ -59,7 +59,7 @@ class CanAccessEvent @Inject() (
             // Для наличия прав на событие нужны права на узел.
             maybeInitUser(user)
 
-            isAdnNodeAdmin(mevent.ownerId, user) flatMap {
+            isAdnNodeAdmin.isAdnNodeAdmin(mevent.ownerId, user).flatMap {
               case Some(mnode) =>
                 // Юзер имеет доступ к узлу. Значит, и к событию узла тоже.
                 val req1 = MNodeEventReq(mevent, mnode, request, user)
@@ -79,7 +79,7 @@ class CanAccessEvent @Inject() (
     }
 
     def forbidden(req: IReq[_]): Future[Result] = {
-      onUnauthNode(req)
+      isAdnNodeAdmin.onUnauthNode(req)
     }
 
     def eventNotFound(req: IReq[_]): Future[Result] = {

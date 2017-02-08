@@ -6,6 +6,7 @@ import models.msys.MNodeEdgeIdQs
 import models.req._
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.util.logs.MacroLogsImpl
 
 import scala.concurrent.Future
 
@@ -17,8 +18,11 @@ import scala.concurrent.Future
   */
 class IsSuNodeEdge @Inject() (
                                val csrf   : Csrf,
+                               isSu       : IsSu,
                                mCommonDi  : ICommonDi
-                             ) {
+                             )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -26,7 +30,6 @@ class IsSuNodeEdge @Inject() (
   /** Комбинация IsSuperuser + IsAdnAdmin + доступ к эджу по индексу. */
   sealed trait IsSuNodeEdgeBase
     extends ActionBuilder[MNodeEdgeReq]
-    with IsSuUtil
   {
 
     /** query string. */
@@ -71,7 +74,7 @@ class IsSuNodeEdge @Inject() (
 
       } else {
         val req1 = MReq(request, user)
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
 

@@ -1,6 +1,6 @@
 package util.acl
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import models.req.MReq
 import play.api.mvc._
 
@@ -19,7 +19,15 @@ import models.mproj.ICommonDi
  * Description: Убедится, что юзер является авторизованным пользователем. Иначе - отправить на страницу логина или в иное место.
  */
 
-trait OnUnauthUtil {
+/** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
+@Singleton
+class IsAuth @Inject() (
+                         val csrf               : Csrf,
+                         mCommonDi              : ICommonDi
+                       ) {
+
+  import mCommonDi._
+
 
   /** Основная синхронная реакция на выявленную необходимость залогинится.
     *
@@ -36,17 +44,8 @@ trait OnUnauthUtil {
     onUnauthBase(request)
   }
 
-}
 
-/** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
-class IsAuth @Inject() (
-                         val csrf               : Csrf,
-                         mCommonDi              : ICommonDi
-                       ) {
-
-  import mCommonDi._
-
-  trait IsAuthBase extends ActionBuilder[MReq] with IMacroLogs with OnUnauthUtil {
+  trait IsAuthBase extends ActionBuilder[MReq] with IMacroLogs {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)

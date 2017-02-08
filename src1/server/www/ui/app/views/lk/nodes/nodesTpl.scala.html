@@ -1,15 +1,30 @@
-@(producer: MNode)(implicit ctx: Context)
+@(args: mlk.nodes.MLkNodesTplArgs)(implicit ctx: Context)
 
 @* Страница-заготовка для формы управления узлами. *@
 
 @import ctx.messages
+@import io.suggest.lk.nodes.LkNodesConst.FORM_CONT_ID
+@import io.suggest.common.spa.SpaConst.STATE_CONT_ID
+@import views.html.stuff._preLoaderLkTpl
 
 @nodesBaseTpl(
   title     = messages("Nodes.management"),
-  mnode     = producer
+  mnode     = args.mnode
 ) {
 
-  TODO Рендер сериализованных данных для начального состояния.
-  TODO Базовая вёрстка.
+  @* Рендер сериализованных данных для начального состояния. *@
+  <input type="hidden" id="@STATE_CONT_ID" value="@args.formState"/>
+
+  @* Верстка контейнера формы. *@
+  <div id="@FORM_CONT_ID">
+    @_preLoaderLkTpl()
+  </div>
+
+
+  @* JS-роутер. *@
+  @*jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl("jsRoutes", csrfAll = true)(
+    )
+  )*@
 
 }

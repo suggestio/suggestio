@@ -30,6 +30,7 @@ import util.acl.CanConfirmEmailPwReg._
 class CanConfirmEmailPwReg @Inject()(
                                       identUtil               : IdentUtil,
                                       emailActivations        : EmailActivations,
+                                      isAuth                  : IsAuth,
                                       val csrf                : Csrf,
                                       mCommonDi               : ICommonDi
                                     ) {
@@ -40,7 +41,6 @@ class CanConfirmEmailPwReg @Inject()(
   sealed abstract class Base
     extends ActionBuilder[MEmailActivationReq]
     with MacroLogsDyn
-    with OnUnauthUtil
   {
 
     /** Инфа по активации, присланная через URL qs. */
@@ -69,7 +69,7 @@ class CanConfirmEmailPwReg @Inject()(
         // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
         case Some(ea) =>
           LOGGER.warn(s"Client ip[${request.remoteAddress}] User[$personIdOpt] tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
-          onUnauth(request)
+          isAuth.onUnauth(request)
       }
     }
   }

@@ -178,6 +178,14 @@ object Sio2Build extends Build {
       .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
   }
 
+  /** Sjs поддержки формы управления узлами/под-узлами в ЛК узла. */
+  lazy val lkNodesFormSjs = {
+    val name = "lk-nodes-form-sjs"
+    Project(id = name, base = file(DIR0 + "client/lk/nodes/form"))
+      .enablePlugins(ScalaJSPlugin)
+      .dependsOn(lkAdvCommonSjs, commonReactSjs)
+  }
+
   /** Поддержка тестов для server-side тестов. Использовать так: .dependsOn(srvTestUtil % Test) */
   lazy val srvTestUtil = {
     Project(id = "srv-test-util", base = file(DIR0 + "server/util/test-util"))
@@ -284,9 +292,9 @@ object Sio2Build extends Build {
   lazy val lkSjs = {
     Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
       .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
-      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs)
+      .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs)
       // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
-      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs)
+      .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs, lkNodesFormSjs)
   }
 
   /** scala.js реализация системы мониторинга js-маячков. */
@@ -315,29 +323,39 @@ object Sio2Build extends Build {
     .dependsOn(esUtil, logsMacro, srvTestUtil % Test)
 
   /** Пошаренная утиль для сборки www-кусков. */
-  lazy val commonWww = project
-    .in( file(DIR0 + "server/util/common-www") )
-    .dependsOn(util, logsMacro, n2, mbill2)
+  lazy val commonWww = {
+    val id = "common-www"
+    Project(id = id, base = file(DIR0 + "server/util/" + id))
+      .dependsOn(util, logsMacro, n2, mbill2)
+  }
 
   /** Разная поддержка узлов для вёб-морды. */
-  lazy val nodesWww = project
-    .in( file(DIR0 + "server/nodes/nodes-www") )
-    .dependsOn(commonWww, n2)
+  lazy val nodesWww = {
+    val id = "nodes-www"
+    Project(id = id, base = file(DIR0 + "server/nodes/" + id))
+      .dependsOn(commonWww, n2)
+  }
 
   /** Утиль для поддержки ElasticSearch. */
-  lazy val esUtil = project
-    .in( file(DIR0 + "server/util/es-util") )
-    .dependsOn(util, textUtil)
+  lazy val esUtil = {
+    val id = "es-util"
+    Project(id = id, base = file(DIR0 + "server/util/" + id))
+      .dependsOn(util, textUtil)
+  }
 
   /** Текстовая утиль, выносимая из util и других мест. */
-  lazy val textUtil = project
-    .in( file(DIR0 + "server/util/text-util") )
-    .dependsOn(util, logsMacro)    // TODO Возможно, зависимость от util не потребуется после окончания рефакторинга. Проверить.
+  lazy val textUtil = {
+    val id = "text-util"
+    Project(id = id, base = file(DIR0 + "server/util/" + id))
+      .dependsOn(util, logsMacro)
+  }    // TODO Возможно, зависимость от util не потребуется после окончания рефакторинга. Проверить.
 
   /** Платежная поддержка для веб-интерфейса. */
-  lazy val payWww = project
-    .in( file(DIR0 + "server/bill/pay-www") )
-    .dependsOn(commonWww, mbill2)
+  lazy val payWww = {
+    val id = "pay-www"
+    Project(id = id, base = file(DIR0 + "server/bill/" + id))
+      .dependsOn(commonWww, mbill2)
+  }
 
 
   /** веб-интерфейс suggest.io v2. */

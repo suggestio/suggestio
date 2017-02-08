@@ -15,14 +15,16 @@ import scala.concurrent.Future
  * Created: 26.10.15 16:15
  * Description: Аддон для контроллеров c гибридом IsAuth и тривиального чтения узла MNode.
  */
-class IsAuthNode @Inject() (mCommonDi: ICommonDi) {
+class IsAuthNode @Inject() (
+                             isAuth                 : IsAuth,
+                             mCommonDi              : ICommonDi
+                           ) {
 
   import mCommonDi._
 
   /** Трейт с логикой проверки залогиненности вкупе с доступом к узлу. */
   sealed trait IsAuthNodeBase
     extends ActionBuilder[MNodeReq]
-    with OnUnauthUtil
     with MacroLogsDyn
   {
 
@@ -40,7 +42,7 @@ class IsAuthNode @Inject() (mCommonDi: ICommonDi) {
 
       if (!user.isAuth) {
         // Не залогинен.
-        onUnauth(request)
+        isAuth.onUnauth(request)
 
       } else {
         // Юзер залогинен, нужно продолжать запрос.

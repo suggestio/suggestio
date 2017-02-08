@@ -85,7 +85,6 @@ class CanAdvAd @Inject()(
   sealed trait CanAdvertiseAdBase
     extends ActionBuilder[MAdProdReq]
     with IMacroLogs
-    with OnUnauthNode
     with InitUserCmds
   {
 
@@ -110,13 +109,13 @@ class CanAdvAd @Inject()(
               block(req1)
             case None =>
               LOGGER.debug(s"invokeBlock(): maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
-              onUnauthNode(reqBlank)
+              isAdnNodeAdmin.onUnauthNode(reqBlank)
           }
 
         // Нет запрашиваем карточки, отработать и этот вариант.
         case None =>
           LOGGER.debug("invokeBlock(): MAd not found: " + adId)
-          onUnauthNode(reqBlank)
+          isAdnNodeAdmin.onUnauthNode(reqBlank)
       }
     }
   }

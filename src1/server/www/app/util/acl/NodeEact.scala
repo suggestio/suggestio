@@ -19,6 +19,7 @@ import scala.concurrent.Future
 class NodeEact @Inject() (
                            emailPwIdents          : EmailPwIdents,
                            emailActivations       : EmailActivations,
+                           isAuth                 : IsAuth,
                            val csrf               : Csrf,
                            mCommonDi              : ICommonDi
                          )
@@ -30,7 +31,6 @@ class NodeEact @Inject() (
   /** Абстрактная логика ActionBuider'ов, обрабатывающих запросы активации инвайта на узел. */
   sealed trait NodeEactBase
     extends ActionBuilder[MNodeEactReq]
-    with OnUnauthUtil
   {
 
     /** Что делать при проблемах?
@@ -69,7 +69,7 @@ class NodeEact @Inject() (
                 // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
                 case Some(epwIdent) if epwIdent.isVerified && !personIdOpt.contains(epwIdent.personId) =>
                   LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = $personIdOpt :: Rdr user to login...")
-                  val result = onUnauthBase(request)
+                  val result = isAuth.onUnauthBase(request)
                   val res2 = if (user.isAuth) result.withNewSession else result
                   Future successful res2
 

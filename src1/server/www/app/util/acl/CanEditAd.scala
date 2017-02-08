@@ -23,6 +23,7 @@ import scala.concurrent.Future
 class CanEditAd @Inject() (
                             isAdnNodeAdmin          : IsAdnNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
+                            isAuth                  : IsAuth,
                             val csrf                : Csrf,
                             mCommonDi               : ICommonDi
                           )
@@ -57,7 +58,6 @@ class CanEditAd @Inject() (
   sealed trait CanEditAdBase
     extends ActionBuilder[MAdProdReq]
     with AdEditBase
-    with OnUnauthUtil
     with InitUserCmds
   {
 
@@ -68,7 +68,7 @@ class CanEditAd @Inject() (
     override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
 
-      personIdOpt.fold (onUnauth(request)) { personId =>
+      personIdOpt.fold (isAuth.onUnauth(request)) { personId =>
         val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
         val user = mSioUsers(personIdOpt)
 

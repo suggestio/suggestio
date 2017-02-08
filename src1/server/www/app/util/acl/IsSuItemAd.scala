@@ -18,6 +18,7 @@ import scala.concurrent.Future
   */
 class IsSuItemAd @Inject() (
                              val csrf               : Csrf,
+                             isSu                   : IsSu,
                              mItems                 : MItems,
                              mCommonDi              : ICommonDi
                            )
@@ -29,7 +30,6 @@ class IsSuItemAd @Inject() (
 
   sealed trait IsSuItemAdBase
     extends ActionBuilder[MItemAdReq]
-    with IsSuUtil
   {
 
     /** Ключ item'а в таблице MItems. */
@@ -62,7 +62,7 @@ class IsSuItemAd @Inject() (
         }
 
       } else {
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
 

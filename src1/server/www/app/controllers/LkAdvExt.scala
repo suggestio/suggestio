@@ -96,7 +96,7 @@ class LkAdvExt @Inject() (
    * @param adId id рекламной карточки.
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
-  def forAd(adId: String) = canAdvAd.Get(adId).async { implicit request =>
+  def forAd(adId: String) = canAdvAd.Get(adId, U.Lk).async { implicit request =>
     _forAdRender(adId, advsFormM, Ok)
   }
 

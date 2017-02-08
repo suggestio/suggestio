@@ -19,6 +19,7 @@ import scala.concurrent.Future
 class IsSuCalendar @Inject()(
                               val csrf                : Csrf,
                               mCalendars              : MCalendars,
+                              isSu                    : IsSu,
                               mCommonDi               : ICommonDi
                             )
 {
@@ -27,7 +28,6 @@ class IsSuCalendar @Inject()(
 
   sealed trait IsSuCalendarBase
     extends ActionBuilder[MCalendarReq]
-    with IsSuUtil
   {
 
     /** id календаря, вокруг которого идёт работа. */
@@ -48,7 +48,7 @@ class IsSuCalendar @Inject()(
 
       } else {
         val req1 = MReq(request, user)
-        supOnUnauthFut(req1)
+        isSu.supOnUnauthFut(req1)
       }
     }
   }

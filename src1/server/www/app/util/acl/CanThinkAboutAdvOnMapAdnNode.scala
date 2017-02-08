@@ -20,6 +20,8 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
                                                mNodes                 : MNodes,
                                                canAdvAd               : CanAdvAd,
                                                advGeoMapUtil          : AdvGeoMapUtil,
+                                               isAdnNodeAdmin         : IsAdnNodeAdmin,
+                                               isAuth                 : IsAuth,
                                                val csrf               : Csrf,
                                                mCommonDi              : ICommonDi
                                              )
@@ -30,8 +32,6 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
   sealed trait CanThinkAboutAdvOnMapAdnNodeBase
     extends ActionBuilder[MAdProdRcvrReq]
-    with OnUnauthUtil
-    with OnUnauthNode
   {
 
     /** id рекламной карточки, которую юзер хочет разместить на узле. */
@@ -47,7 +47,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
     override def invokeBlock[A](request: Request[A], block: (MAdProdRcvrReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       personIdOpt.fold {
-        onUnauth(request)
+        isAuth.onUnauth(request)
 
       } { personId =>
         // Юзер залогинен. Сразу же собираем все параллельные задачи...
@@ -86,19 +86,19 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
                   // Нет узла или нельзя на него размещать. Логгирование уже выполнено внутри nodeCheckedOptFut.
                   case None =>
-                    onUnauthNode(reqBlank)
+                    isAdnNodeAdmin.onUnauthNode(reqBlank)
                 }
 
               // Нет доступа к карточке. Обычно, когда сессия истекла.
               case None =>
                 LOGGER.debug(s"$logPrefix: maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
-                onUnauthNode(reqBlank)
+                isAdnNodeAdmin.onUnauthNode(reqBlank)
             }
 
           // Нет карточки такой вообще.
           case None =>
             LOGGER.debug(s"$logPrefix: MAd not found: " + adId)
-            onUnauthNode(reqBlank)
+            isAdnNodeAdmin.onUnauthNode(reqBlank)
         }
       }
     }

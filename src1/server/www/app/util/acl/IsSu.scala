@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
 
@@ -15,34 +15,31 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  * Description: Суперпользователи сервиса имеют все необходимые права, в т.ч. для доступа в /sys/.
  */
 
-trait IsSuUtil extends OnUnauthUtil with MacroLogsDyn {
-
-  def supOnUnauthFut(req: IReqHdr): Future[Result] = {
-    import req._
-    LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=${req.user.personIdOpt}")
-    supOnUnauthResult(req)
-  }
-
-  def supOnUnauthResult(req: IReqHdr): Future[Result] = {
-    onUnauth(req)
-  }
-
-}
-
-
 @Singleton
 final class IsSu @Inject() (
                              val cookieCleanup  : CookieCleanup,
                              val csrf           : Csrf,
+                             isAuth             : IsAuth,
                              mCommonDi          : ICommonDi
                            )
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
 
+  def logBlockedAccess(req: IReqHdr): Unit = {
+    import req._
+    LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=${req.user.personIdOpt}")
+  }
+
+  def supOnUnauthFut(req: IReqHdr): Future[Result] = {
+    logBlockedAccess(req)
+    isAuth.onUnauth(req)
+  }
+
+
   trait Base
     extends ActionBuilder[MReq]
-    with IsSuUtil
   {
 
     protected def isAllowed(user: ISioUser): Boolean = {
@@ -60,6 +57,10 @@ final class IsSu @Inject() (
       } else {
         supOnUnauthFut(req1)
       }
+    }
+
+    protected def _onUnauth(req: IReqHdr): Future[Result] = {
+      supOnUnauthFut(req)
     }
 
   }

@@ -820,3 +820,4 @@ price.RUB={0} ₽
 price.USD=${0}
 price.EUR=€{0}
 
+Nodes.management=Управление узлами
