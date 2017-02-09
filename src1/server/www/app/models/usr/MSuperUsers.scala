@@ -1,12 +1,12 @@
 package models.usr
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
-import util.secure.ScryptUtil
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -22,7 +22,7 @@ class MSuperUsers @Inject()(
   emailPwIdents   : EmailPwIdents,
   mNodes          : MNodes,
   scryptUtil      : ScryptUtil,
-  mCommonDi       : ICommonDi
+  mCommonDi       : IEsModelDiVal
 )
   extends MacroLogsImpl
 {
@@ -35,7 +35,6 @@ class MSuperUsers @Inject()(
   val SU_EMAILS: Seq[String] = {
     Seq(
       "konstantin.nikiforov@cbca.ru",
-      //"ilya@shuma.ru",
       "sasha@cbca.ru",
       "alexander.pestrikov@cbca.ru"
     )

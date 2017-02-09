@@ -4,12 +4,13 @@ import com.google.inject.Inject
 import controllers.ident._
 import io.suggest.init.routed.{MJsiTg, MJsiTgs}
 import io.suggest.model.n2.node.MNodes
+import io.suggest.sec.m.msession.Keys
+import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.m.mctx.CtxData
 import models._
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.msession.Keys
 import models.req.IReqHdr
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents, MPersonIdents}
 import play.api.mvc._
@@ -18,7 +19,6 @@ import util.adn.NodesUtil
 import util.captcha.CaptchaUtil
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
-import util.secure.ScryptUtil
 import views.html.ident._
 import views.html.ident.login.epw._loginColumnTpl
 import views.html.ident.reg.email._regColumnTpl

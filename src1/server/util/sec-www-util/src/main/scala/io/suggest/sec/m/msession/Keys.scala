@@ -1,7 +1,7 @@
-package models.msession
+package io.suggest.sec.m.msession
 
-import securesocial.core.SecureSocial
 import enumeratum._
+import securesocial.core.SecureSocial
 
 /**
  * Suggest.io
@@ -32,11 +32,11 @@ object Keys extends Enum[SessionKey] {
   }
 
   /** Костыль к secure-social сохраняет ссылку для возврата юзера через session.
-    * Менять на что-то отличное от оригинала можно только после проверки [[controllers.ident.ExternalLogin]]
+    * Менять на что-то отличное от оригинала можно только после проверки controllers.ident.ExternalLogin.
     * на безопасность переименования. */
   case object OrigUrl extends SessionKey {
     override def toString = SecureSocial.OriginalUrlKey
-    override def isLogin = false
+    override def isLogin  = false
   }
 
   override val values = findValues

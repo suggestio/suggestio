@@ -1,8 +1,8 @@
 package controllers
 
 import _root_.util.jsa.init.ITargetsEmpty
-import _root_.util.secure.SessionUtil
 import com.google.inject.{Inject, Provider, Singleton}
+import io.suggest.sec.util.SessionUtil
 import io.suggest.www.m.mctx.CtxData
 import models.mctx.{Context, Context2Factory}
 import models.req.{IReqHdr, MReqHdr, MSioUsers}

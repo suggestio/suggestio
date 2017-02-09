@@ -2,10 +2,11 @@ package controllers.ident
 
 import controllers.SioController
 import io.suggest.model.n2.node.IMNodes
+import io.suggest.sec.m.msession.{Keys, LongTtl, ShortTtl, Ttl}
+import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import models.req.IReq
 import models.MNodeTypes
-import models.msession.{Keys, LongTtl, ShortTtl, Ttl}
 import models.usr._
 import play.api.data._
 import play.api.data.Forms._
@@ -17,7 +18,6 @@ import views.html.ident.login.epw._
 
 import scala.concurrent.Future
 import util.FormUtil.passwordM
-import util.secure.IScryptUtilDi
 
 /**
  * Suggest.io

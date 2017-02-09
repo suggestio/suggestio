@@ -1,6 +1,6 @@
 package models.usr
 
-import models.msession.Ttl
+import io.suggest.sec.m.msession.Ttl
 
 /**
  * Suggest.io

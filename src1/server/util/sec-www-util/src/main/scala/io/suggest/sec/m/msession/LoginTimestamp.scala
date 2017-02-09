@@ -1,4 +1,4 @@
-package models.msession
+package io.suggest.sec.m.msession
 
 import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.Session
@@ -46,7 +46,6 @@ object LoginTimestamp extends MacroLogsDyn {
   }
 
 }
-
 
 import LoginTimestamp._
 

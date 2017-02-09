@@ -326,7 +326,14 @@ object Sio2Build extends Build {
   lazy val commonWww = {
     val id = "common-www"
     Project(id = id, base = file(DIR0 + "server/util/" + id))
-      .dependsOn(util, logsMacro, n2, mbill2, securesocial)
+      .dependsOn(util, logsMacro, n2, mbill2, secWwwUtil)
+  }
+
+  /** security-утиль для веб-морды. */
+  lazy val secWwwUtil = {
+    val id = "sec-www-util"
+    Project(id = id, base = file(DIR0 + "server/util/" + id))
+      .dependsOn(util, esUtil, logsMacro, securesocial)
   }
 
   /** Разная поддержка узлов для вёб-морды. */
@@ -391,7 +398,7 @@ object Sio2Build extends Build {
         util, esUtil, textUtil, swfs, n2, securesocial,
         ipgeobase, stat,
         mgeo, commonWww, nodesWww,
-        www, mbill2, payWww, svgUtil
+        www, mbill2, payWww, secWwwUtil, svgUtil
       )
   }
 

@@ -1,12 +1,12 @@
-package util.secure
+package io.suggest.sec.util
 
 import java.io.{InputStream, OutputStream}
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.es.model.IEsModelDiVal
+import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
-import models.mproj.ICommonDi
-import models.sec.{IAsymKey, MAsymKey, MAsymKeys}
 
 import scala.concurrent.Future
 
@@ -29,7 +29,7 @@ import scala.concurrent.Future
 @Singleton
 class PgpUtil @Inject() (
   mAsymKeys   : MAsymKeys,
-  mCommonDi   : ICommonDi
+  mCommonDi   : IEsModelDiVal
 )
   extends MacroLogsDyn
 {
@@ -77,8 +77,10 @@ class PgpUtil @Inject() (
         // TODO проверять, что пароль соответствует ключу. Нужно пытаться зашифровать какие-то простые данные.
         .filter { _.isDefined }
         .onFailure {
-          case ex: NoSuchElementException => LOGGER.warn("PGP key does not exists and creation is disabled on this node: " + cfk)
-          case ex: Throwable              => LOGGER.error("Failed to check status of server's pgp key.", ex)
+          case _ : NoSuchElementException =>
+            LOGGER.warn("PGP key does not exists and creation is disabled on this node: " + cfk)
+          case ex: Throwable =>
+            LOGGER.error("Failed to check status of server's pgp key.", ex)
         }
       None
     }

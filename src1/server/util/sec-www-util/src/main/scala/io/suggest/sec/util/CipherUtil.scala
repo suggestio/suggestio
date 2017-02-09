@@ -1,4 +1,4 @@
-package util.secure
+package io.suggest.sec.util
 
 import java.security.{MessageDigest, SecureRandom, Security}
 import javax.crypto.Cipher

@@ -5,6 +5,7 @@ import models.mcal.MCalendars
 import models.req.{MCalendarReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.sec.util.ExpireSession
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -54,7 +55,7 @@ class IsSuCalendar @Inject()(
   }
 
 
-  /** Частичная реализация [[IsSuCalendarBase]] с поддержкой [[util.acl.ExpireSession]]. */
+  /** Частичная реализация [[IsSuCalendarBase]] с поддержкой [[ExpireSession]]. */
   sealed abstract class IsSuCalendarAbstract
     extends IsSuCalendarBase
     with ExpireSession[MCalendarReq]

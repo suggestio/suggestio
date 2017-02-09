@@ -1,12 +1,12 @@
 package util.captcha
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.sec.util.CipherUtil
 import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.mvc.{RequestHeader, Session}
 import play.api.data.Forms._
 import util.FormUtil._
-import util.secure.CipherUtil
 
 /**
  * Suggest.io

@@ -2,10 +2,10 @@ package models.adv.ext.act
 
 import akka.actor.ActorPath
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsDyn
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
-import util.secure.SecretGetter
 
 /**
  * Suggest.io

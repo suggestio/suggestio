@@ -5,6 +5,7 @@ import io.suggest.es.model.{CopyContentResult, EsModelCommonStaticT, EsModelUtil
 import io.suggest.es.util.{EsClientUtil, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
+import io.suggest.sec.m.MAsymKeys
 import io.suggest.stat.m.MStats
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -13,7 +14,6 @@ import models.ai.MAiMads
 import models.event.MEvents
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import models.sec.MAsymKeys
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
 

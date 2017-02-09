@@ -57,7 +57,10 @@ class LkAdvExt @Inject() (
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
   private val WS_BEST_BEFORE_SECONDS = configuration
     .getInt("adv.ext.ws.api.best.before.seconds")
-    .getOrElse(30)
+    .getOrElse(200)
+
+
+  private def _nowSec = System.currentTimeMillis() / 1000L
 
   /** Маппинг одной выбранной цели. */
   private def advM: Mapping[Option[MExtTargetInfo]] = {
@@ -149,7 +152,7 @@ class LkAdvExt @Inject() (
         val wsArgs = MExtAdvQs(
           adId          = adId,
           targets       = advs,
-          bestBeforeSec = WS_BEST_BEFORE_SECONDS,
+          bestBeforeSec = _nowSec + WS_BEST_BEFORE_SECONDS,
           wsId          = "" // TODO Это не нужно на данном этапе. runner() был вынесен в отдельнй экшен.
         )
         Redirect( CSRF(routes.LkAdvExt.runner(adId, Some(wsArgs))) )
@@ -202,8 +205,8 @@ class LkAdvExt @Inject() (
     val resFut = for {
       // Сначала нужно синхронно проверить права доступа всякие.
       _ <- {
-        if (qsArgs.bestBeforeSec <= BestBefore.nowSec) {
-          Future successful None
+        if (qsArgs.bestBeforeSec <= _nowSec) {
+          Future.successful(None)
         } else {
           val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
           Future.failed( ExceptionWithResult(res) )

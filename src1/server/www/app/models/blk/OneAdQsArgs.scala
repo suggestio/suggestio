@@ -1,12 +1,12 @@
 package models.blk
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.im.{OutImgFmt, OutImgFmts}
 import play.api.Play._
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
-import util.secure.SecretGetter
 
 import scala.language.implicitConversions   // конверсий тут по факту нет.
 

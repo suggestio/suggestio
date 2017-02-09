@@ -12,8 +12,8 @@ import util.di.IIdentUtil
 
 import scala.concurrent.Future
 import FormUtil.{passwordM, passwordWithConfirmM}
+import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
-import util.secure.IScryptUtilDi
 import views.html.ident.changePasswordTpl
 
 /**

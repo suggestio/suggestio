@@ -1,4 +1,4 @@
-package util.secure
+package io.suggest.sec.m
 
 import java.security.SecureRandom
 
@@ -38,7 +38,7 @@ trait SecretGetter extends IMacroLogs {
       else
         next
     }
-    for(i <- 1 to len) {
+    for (i <- 1 to len) {
       sb append nextPrintableCharNonQuote
     }
     sb.toString()

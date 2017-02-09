@@ -1,14 +1,13 @@
-package models.sec
+package io.suggest.sec.m
 
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
-import io.suggest.util.JacksonParsing
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.util.JacksonParsing
+import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 import scala.collection.Map
 
@@ -23,12 +22,12 @@ import scala.collection.Map
  */
 @Singleton
 class MAsymKeys @Inject() (
-  override val mCommonDi: ICommonDi
+  override val mCommonDi: IEsModelDiVal
 )
   extends EsModelStatic
-    with MacroLogsImpl
-    with EsmV2Deserializer
-    with EsModelPlayJsonStaticT
+  with MacroLogsImpl
+  with EsmV2Deserializer
+  with EsModelPlayJsonStaticT
 {
 
   override type T = MAsymKey

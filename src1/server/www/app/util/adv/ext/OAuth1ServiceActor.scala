@@ -11,6 +11,8 @@ import controllers.routes
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
 import io.suggest.primo.IToPublicString
+import io.suggest.sec.m.{MAsymKey, MAsymKeys}
+import io.suggest.sec.util.PgpUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, ExtServiceActorEnv, OAuthVerifier}
@@ -21,7 +23,6 @@ import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import models.sec.{MAsymKey, MAsymKeys}
 import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
@@ -30,7 +31,6 @@ import play.api.libs.ws.WSClient
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
-import util.secure.PgpUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._

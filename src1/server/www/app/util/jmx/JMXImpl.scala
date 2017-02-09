@@ -11,6 +11,7 @@ import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
 import java.lang.management.ManagementFactory
 
 import io.suggest.loc.geo.ipgeobase.{MCitiesJmx, MIpRangesJmx}
+import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JMXBase
 import io.suggest.util.JMXHelpers._
@@ -19,7 +20,6 @@ import play.api.inject.ApplicationLifecycle
 import util.adv.direct.AdvRcvrsUtilJmx
 import util.adv.geo.tag.GeoTagsUtilJmx
 import util.es.SiowebEsModelJmx
-import util.secure.SCryptUtilJmx
 
 import scala.concurrent.{ExecutionContext, Future}
 

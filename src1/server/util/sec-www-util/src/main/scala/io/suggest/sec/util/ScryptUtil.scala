@@ -1,4 +1,4 @@
-package util.secure
+package io.suggest.sec.util
 
 import com.google.inject.{Inject, Singleton}
 import com.lambdaworks.crypto.SCryptUtil

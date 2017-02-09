@@ -5,11 +5,12 @@ import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.sec.m.msession.Keys
+import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import io.suggest.www.m.mctx.CtxData
 import models._
 import models.mctx.Context
-import models.msession.Keys
 import models.req.IReq
 import models.usr._
 import play.api.data.Form
@@ -23,7 +24,6 @@ import util.FormUtil
 import util.acl._
 import util.adn.INodesUtil
 import util.di.IIdentUtil
-import util.secure.IScryptUtilDi
 import views.html.ident.reg.regSuccessTpl
 import views.html.ident.reg.email._
 

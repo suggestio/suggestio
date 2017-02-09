@@ -58,7 +58,6 @@ libraryDependencies ++= {
   //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
   "org.slf4j" % "log4j-over-slf4j" % "1.+",
   "com.google.guava" % "guava" % "18.+",
-  "com.lambdaworks" % "scrypt" % "1.4.0",     // Чтобы хешировать пароли (models.EmailPwIdent например)
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.5.+",
   "com.google.code.kaptcha" % "kaptcha" % "2.3" classifier "jdk15",
@@ -74,18 +73,10 @@ libraryDependencies ++= {
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",
   // scalasti - это простой гибкий динамический шаблонизатор строк. Нужен для генерации динамических карточек.
   "org.clapper" %% "scalasti" % "2.+",
-  // bouncy castle используется для шифрования. pg используется для стойкого шифрования с подписью.
-  "org.bouncycastle" % "bcpg-jdk15on"   % Common.bcVsn,
-  "org.bouncycastle" % "bcmail-jdk15on" % Common.bcVsn,
-  "org.bouncycastle" % "bcprov-jdk15on" % Common.bcVsn,
-  "io.trbl.bcpg" % "bcpg-simple-jdk15on" % "1.51.0",
-  // Логин через соц.сети
-  Common.ORG %% "securesocial" % "3.4.0sio-SNAPSHOT"
-    exclude("commons-logging", "commons-logging")
-    exclude("org.w3c.css", "sac")
-  ,
+  
   // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
   "com.wix"      %% "accord-core"     % Common.wixAccordVsn,
+
   // Поддержка JsMessages для client-side локализации сообщений
   "org.julienrf" %% "play-jsmessages" % "2.0.0",
   // Parsers
@@ -114,7 +105,7 @@ libraryDependencies ++= {
 
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
   // test
-  "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % "test"
+  "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % Test
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
 )}

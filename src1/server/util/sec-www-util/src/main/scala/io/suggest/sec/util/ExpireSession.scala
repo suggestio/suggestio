@@ -1,8 +1,8 @@
-package util.acl
+package io.suggest.sec.util
 
+import io.suggest.sec.m.msession.Keys._
+import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
 import io.suggest.util.logs.MacroLogsDyn
-import models.msession.Keys._
-import models.msession._
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.mvc.{ActionBuilder, Request, Result}
 
@@ -10,13 +10,14 @@ import scala.concurrent.Future
 import scala.language.higherKinds
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 16.06.14 17:57
- * Description: Функции для сброса сессии при наступлении таймаута, и соотв.утиль для пролонгации сессии.
- * 2014.feb.06: Из-за добавления в сессию securesocial, csrf-token и т.д. нужно аккуратнее работать с сессией,
- * без использования withNewSession().
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 16.06.14 17:57
+  * Description: Функции для сброса сессии при наступлении таймаута, и соотв.утиль для пролонгации сессии.
+  *
+  * 2014.feb.06: Из-за добавления в сессию securesocial, csrf-token и т.д. нужно аккуратнее работать с сессией,
+  * без использования withNewSession().
+  */
 
 
 /**

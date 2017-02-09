@@ -1,6 +1,7 @@
 package models.sec
 
 import functional.OneAppPerSuiteNoGlobalStart
+import io.suggest.sec.m.{MAsymKey, MAsymKeys}
 import org.scalatestplus.play.PlaySpec
 
 /**

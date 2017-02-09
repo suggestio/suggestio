@@ -10,12 +10,13 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.sec.m.msession.Keys
+import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mctx.Context
 import models.mlk.{MNodeAdInfo, MNodeAdsMode, MNodeAdsTplArgs, MNodeShowArgs}
 import models.mproj.ICommonDi
-import models.msession.Keys
 import models.req.{INodeReq, MReq}
 import models.usr.{EmailActivations, EmailPwIdent, EmailPwIdents, MPersonIdents}
 import org.elasticsearch.search.sort.SortOrder
@@ -28,7 +29,6 @@ import util.adn.NodesUtil
 import util.ident.IdentUtil
 import util.img.{GalleryUtil, LogoUtil}
 import util.lk.LkAdUtil
-import util.secure.ScryptUtil
 import util.showcase.ShowcaseUtil
 import util.FormUtil
 import views.html.lk.adn._

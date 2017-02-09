@@ -3,10 +3,11 @@ package controllers.ident
 import controllers._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.init.routed.MJsiTgs
+import io.suggest.sec.m.msession.Keys
+import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
 import io.suggest.www.m.mctx.CtxData
 import models.mctx.Context
-import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
 import models.usr._
 import play.api.data._
@@ -23,7 +24,6 @@ import views.html.ident.recover._
 import scala.concurrent.Future
 import models._
 import util.FormUtil.passwordWithConfirmM
-import util.secure.IScryptUtilDi
 
 /**
  * Suggest.io
