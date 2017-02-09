@@ -26,7 +26,6 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.adv.geo.tag.MForAdTplArgs
-import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
@@ -41,6 +40,7 @@ import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.es.model.MEsUuId
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.common.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
@@ -178,8 +178,8 @@ class LkAdvGeo @Inject() (
     }
 
     val _ctxFut = for (ctxData0 <- request.user.lkCtxDataFut) yield {
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs = Seq(MTargets.AdvGeoForm)
+      implicit val ctxData = ctxData0.withJsiTgs(
+        MJsiTgs.AdvGeoForm :: ctxData0.jsiTgs
       )
       getContext2
     }

@@ -5,6 +5,7 @@ import java.time.OffsetDateTime
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.node.MNodes
@@ -16,7 +17,6 @@ import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3
 import models.im.make.IMaker
-import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, INodeReq, IReq}
@@ -184,10 +184,10 @@ class MarketAd @Inject() (
     for {
       ctxData0      <- request.user.lkCtxDataFut
     } yield {
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs        = Seq(MTargets.AdForm)
+      implicit val ctxData = ctxData0.withJsiTgs(
+        MJsiTgs.AdForm :: ctxData0.jsiTgs
       )
-      implicit val ctx = implicitly[Context]
+      implicit val ctx = getContext2
       detectMainColorBg(af)(ctx)
       rs(f(ctx))
     }

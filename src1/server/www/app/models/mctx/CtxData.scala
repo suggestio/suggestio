@@ -1,7 +1,7 @@
 package models.mctx
 
+import io.suggest.init.routed.MJsiTg
 import io.suggest.mbill2.m.balance.MBalance
-import models.jsm.init.MTarget
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import models.jsm.init.MTarget
 
 trait ICtxData {
 
-  def jsiTgs          : Seq[MTarget]
+  def jsiTgs          : List[MJsiTg]
   def mUsrBalances    : Seq[MBalance]
   def evtsCount       : Option[Int]
 
@@ -26,22 +26,24 @@ trait ICtxData {
  * @param evtsCount Отображаемое кол-во непрочитанных событий.
  */
 case class CtxData(
-  override val jsiTgs           : Seq[MTarget]    = Nil,
+  override val jsiTgs           : List[MJsiTg]    = Nil,
   override val mUsrBalances     : Seq[MBalance]   = Nil,
   override val evtsCount        : Option[Int]     = None
 )
   extends ICtxData
 {
 
+  def withJsiTgs(jsiTgs2: List[MJsiTg]) = copy(jsiTgs = jsiTgs2)
+
   /**
    * builder-метод, враппер над copy. Приписывает новые цели js-инициализации перед текущими.
    * @param jsiTgss Списки новых целей js-инициализации.
    * @return Экземпляр [[CtxData]], этот либо обновлённый.
    */
-  def prependJsiTgs(jsiTgss: Seq[MTarget]*): CtxData = {
+  def prependJsiTgs(jsiTgss: List[MJsiTg]*): CtxData = {
     if (jsiTgss.exists(_.nonEmpty)) {
       copy(
-        jsiTgs = (jsiTgs.iterator ++ jsiTgss.iterator.flatten).toSeq
+        jsiTgs = jsiTgss.iterator.flatten.toList
       )
     } else {
       this

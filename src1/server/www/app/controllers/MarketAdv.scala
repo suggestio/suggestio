@@ -2,6 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.bill.MPrice
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrderWithItems}
 import io.suggest.model.common.OptId
@@ -11,7 +12,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.direct._
 import models.adv.price.GetPriceResp
-import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
@@ -118,8 +118,8 @@ class MarketAdv @Inject() (
     val ctxFut = for {
       lkCtxData <- request.user.lkCtxDataFut
     } yield {
-      implicit val ctxData = lkCtxData.copy(
-        jsiTgs = Seq( MTargets.AdvDirectForm )
+      implicit val ctxData = lkCtxData.withJsiTgs(
+        MJsiTgs.AdvDirectForm :: lkCtxData.jsiTgs
       )
       implicitly[Context]
     }

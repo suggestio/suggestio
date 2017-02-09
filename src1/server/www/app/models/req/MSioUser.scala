@@ -4,12 +4,12 @@ import com.google.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.init.routed.MJsiTg
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.model.n2.node.{MNodeTypes, MNodesCache}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import io.suggest.www.util.di.ISlickDbConfig
-import models.jsm.init.MTarget
 import models.mctx.CtxData
 import models.MNode
 import models.event.MEvents
@@ -74,7 +74,7 @@ trait ISioUser {
   def evtsCountFut: Future[Option[Int]]
 
   /** Дополнительные цели js-инициализации по мнению ActionBuilder'а. */
-  def jsiTgs: List[MTarget]
+  def jsiTgs: List[MJsiTg]
 
   /** Частый экземпяр CtxData для нужд ЛК. */
   def lkCtxDataFut: Future[CtxData]
@@ -205,7 +205,7 @@ trait MSioUserLazyFactory {
     * @param jsiTgs js init targets, выставленные ActionBuilder'ом, если есть.
     */
   def apply(personIdOpt: Option[String],
-            jsiTgs: List[MTarget]): MSioUserLazy
+            jsiTgs: List[MJsiTg]): MSioUserLazy
 }
 
 /** Контейнер со статическими моделями для инстансов [[MSioUserLazy]]. */
@@ -233,7 +233,7 @@ class MsuStatic @Inject()(
   */
 case class MSioUserLazy @Inject() (
   @Assisted override val personIdOpt  : Option[String],
-  @Assisted override val jsiTgs       : List[MTarget],
+  @Assisted override val jsiTgs       : List[MJsiTg],
   override val msuStatics             : MsuStatic
 )
   extends ISioUserT
@@ -272,14 +272,14 @@ class MSioUsers @Inject() (
     * @param jsiTgs Список целей js-инициализации [Nil].
     * @return Инстанс какой-то реализации [[ISioUser]].
     */
-  def apply(personIdOpt: Option[String], jsiTgs: List[MTarget] = Nil): ISioUser = {
+  def apply(personIdOpt: Option[String], jsiTgs: List[MJsiTg] = Nil): ISioUser = {
     // Частые анонимные запросы можно огулять одним общим инстансом ISioUser.
     if (personIdOpt.isEmpty && jsiTgs.isEmpty) {
       empty
     } else {
       factory(
         personIdOpt = personIdOpt,
-        jsiTgs = jsiTgs
+        jsiTgs      = jsiTgs
       )
     }
   }

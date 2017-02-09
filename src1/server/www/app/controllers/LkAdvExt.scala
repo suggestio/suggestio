@@ -2,13 +2,13 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.search.etg.ExtTargetSearchArgs
-import models.jsm.init.MTargets
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, MReqNoBody}
@@ -122,8 +122,8 @@ class LkAdvExt @Inject() (
         advForm     = form,
         oneTgForm   = advExtFormUtil.formForTarget
       )
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs = Seq(MTargets.LkAdvExtForm)
+      implicit val ctxData = ctxData0.withJsiTgs(
+        MJsiTgs.LkAdvExtForm :: ctxData0.jsiTgs
       )
       rs( forAdTpl(args) )
     }
@@ -172,8 +172,8 @@ class LkAdvExt @Inject() (
 
     } { wsArgs =>
       for (ctxData0 <- request.user.lkCtxDataFut) yield {
-        implicit val ctxData = ctxData0.copy(
-          jsiTgs = Seq(MTargets.AdvExtRunner)
+        implicit val ctxData = ctxData0.withJsiTgs(
+          MJsiTgs.AdvExtRunner :: ctxData0.jsiTgs
         )
         implicit val ctx = implicitly[Context]
         val wsArgs2 = wsArgs.copy(

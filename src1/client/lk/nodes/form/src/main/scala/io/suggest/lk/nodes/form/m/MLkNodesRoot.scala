@@ -20,11 +20,19 @@ object MLkNodesRoot {
 }
 
 
+/**
+  * Класс корневой модели формы управления под-узлами.
+  * @param tree Модель-контейнер для отображаемых поддеревьев узлов.
+  */
 case class MLkNodesRoot(
-                         tree: MTree
+                         tree       : MTree
                        )
 {
 
+  def withTree(tree2: MTree) = copy(tree = tree2)
+
+
+  /** Извлечь данные из разных моделей в инстанс, пригодный для сабмита. */
   def toForm: MLknForm = ???
 
 }

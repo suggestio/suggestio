@@ -2,10 +2,10 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.ident._
+import io.suggest.init.routed.{MJsiTg, MJsiTgs}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models._
-import models.jsm.init.{MTarget, MTargets}
 import models.mctx.{Context, CtxData}
 import models.mproj.ICommonDi
 import models.msession.Keys
@@ -86,7 +86,7 @@ class Ident @Inject() (
    */
   def mySioStartPage(r: Option[String]) = isAnon.Get.async { implicit request =>
     implicit val ctxData = CtxData(
-      jsiTgs = Seq(MTargets.CaptchaForm, MTargets.HiddenCaptcha)
+      jsiTgs = MJsiTgs.CaptchaForm :: MJsiTgs.HiddenCaptcha :: Nil
     )
     // TODO Затолкать это в отдельный шаблон!
     val ctx = implicitly[Context]
@@ -102,8 +102,8 @@ class Ident @Inject() (
 
   /** Вернуть список целей инициализации js.
     * Страницы ident-контроллера нуждаются в доп.центровке колонок по вертикали. */
-  override def jsiTgs(req: IReqHdr): List[MTarget] = {
-    MTargets.IdentVCenterContent :: super.jsiTgs(req)
+  override def jsiTgs(req: IReqHdr): List[MJsiTg] = {
+    MJsiTgs.IdentVCenterContent :: super.jsiTgs(req)
   }
 
 }

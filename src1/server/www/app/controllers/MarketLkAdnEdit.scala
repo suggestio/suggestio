@@ -3,6 +3,7 @@ package controllers
 import java.time.OffsetDateTime
 
 import com.google.inject.Inject
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.extra.MAdnExtra
@@ -13,7 +14,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im.logo.LogoOpt_t
 import models.im.{MImg3, MImgT}
-import models.jsm.init.MTargets
 import models.madn.EditConstants._
 import models.mctx.Context
 import models.mlk.{FormMapResult, NodeEditArgs}
@@ -257,13 +257,11 @@ class MarketLkAdnEdit @Inject() (
       mf            = form
     )
 
-    val jsiTgs1 = Seq(MTargets.LkNodeEditForm)
-
     for {
       ctxData0  <- request.user.lkCtxDataFut
     } yield {
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs        = jsiTgs1
+      implicit val ctxData = ctxData0.withJsiTgs(
+        MJsiTgs.LkNodeEditForm :: ctxData0.jsiTgs
       )
       val render = nodeEditTpl(args)
       rs(render)

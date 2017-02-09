@@ -2,11 +2,11 @@ package controllers
 
 import com.google.inject.Inject
 import io.suggest.bin.ConvCodecs
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes.{MLknForm, MLknFormInit, MLknSubNodesResp, MLknTreeNode}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import io.suggest.util.logs.MacroLogsImpl
-import models.jsm.init.MTargets
 import models.mlk.nodes.MLkNodesTplArgs
 import models.mproj.ICommonDi
 import util.acl.IsAdnNodeAdmin
@@ -86,8 +86,8 @@ class LkNodes @Inject() (
     val ctxFut = for {
       lkCtxData <- request.user.lkCtxDataFut
     } yield {
-      implicit val lkCtxData2 = lkCtxData.copy(
-        jsiTgs = lkCtxData.jsiTgs ++ (MTargets.LkNodesForm :: Nil)
+      implicit val lkCtxData2 = lkCtxData.withJsiTgs(
+        MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
       )
       getContext2
     }

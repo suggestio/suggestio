@@ -3,6 +3,7 @@ package io.suggest.sjs.common.spa
 import io.suggest.common.spa.SpaConst
 import io.suggest.sjs.common.vm.attr.StringInputValueT
 import io.suggest.sjs.common.vm.find.FindElT
+import io.suggest.sjs.common.vm.rm.SelfRemoveT
 import org.scalajs.dom.raw.HTMLInputElement
 
 /**
@@ -21,7 +22,7 @@ object StateInp extends FindElT {
 
 import StateInp.Dom_t
 
-case class StateInp(override val _underlying: Dom_t) extends StringInputValueT {
+case class StateInp(override val _underlying: Dom_t) extends StringInputValueT with SelfRemoveT {
 
   override type T = Dom_t
 

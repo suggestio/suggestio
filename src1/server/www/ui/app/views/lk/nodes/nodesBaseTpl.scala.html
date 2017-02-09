@@ -2,8 +2,9 @@
 
 @* Базовый шаблон для nodes-подсистемы. *@
 
-@lk.lkBaseLayout(
+@lk.adn.nodeBaseTpl(
   title         = title,
-  nodeOpt       = Some(mnode),
+  mnode         = mnode,
+  rightCurrEl   = NodeRightPanelLinks.RPL_NODES,
   headAfter     = headAfter
 )(content)

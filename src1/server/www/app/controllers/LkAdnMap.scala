@@ -3,11 +3,11 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.form.MDatesPeriod
 import models.adv.price.GetPriceResp
-import models.jsm.init.MTargets
 import models.madn.mapf.{MAdnMapFormRes, MAdnMapTplArgs}
 import models.maps.MapViewState
 import models.mctx.Context
@@ -104,8 +104,8 @@ class LkAdnMap @Inject() (
     val ctxFut = for {
       lkCtxData <- request.user.lkCtxDataFut
     } yield {
-      implicit val ctx = lkCtxData.copy(
-        jsiTgs = Seq(MTargets.AdnMapForm)
+      implicit val ctx = lkCtxData.withJsiTgs(
+        MJsiTgs.AdnMapForm :: lkCtxData.jsiTgs
       )
       implicitly[Context]
     }

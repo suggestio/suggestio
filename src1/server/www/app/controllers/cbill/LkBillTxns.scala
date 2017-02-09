@@ -2,8 +2,8 @@ package controllers.cbill
 
 import controllers.SioController
 import io.suggest.bill.TxnsListConstants
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.txn.{IMTxns, MTxn}
-import models.jsm.init.MTargets
 import models.mbill.{MLkTxnsListTplArgs, MLkTxnsPageTplArgs}
 import play.twirl.api.Html
 import util.acl.IIsAdnNodeAdmin
@@ -71,8 +71,8 @@ trait LkBillTxns
     } yield {
 
       // Подготовить данные контекста
-      implicit val ctxData = ctxData0.copy(
-        jsiTgs = Seq(MTargets.BillTxnsList)
+      implicit val ctxData = ctxData0.withJsiTgs(
+        MJsiTgs.BillTxnsList :: ctxData0.jsiTgs
       )
 
       // Подготовить тело ответа.

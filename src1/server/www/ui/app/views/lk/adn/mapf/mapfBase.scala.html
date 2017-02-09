@@ -1,4 +1,4 @@
-@(title: String, mnode: MNode, rightCurrEl: NodeRightPanelLink, rightBarAfter: Option[Html] = None,
+@(title: String, mnode: MNode, rightBarAfter: Option[Html] = None,
   headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон страниц ADN map forms. *@
@@ -18,7 +18,7 @@
 @lk.adn.nodeBaseTpl(
   title         = title,
   mnode         = mnode,
-  rightCurrEl   = rightCurrEl,
+  rightCurrEl   = NodeRightPanelLinks.RPL_ADN_MAP,
   rightBarAfter = rightBarAfter,
   headAfter     = Some(headAfter1)
 ) {

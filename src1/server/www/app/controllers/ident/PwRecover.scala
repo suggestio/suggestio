@@ -2,8 +2,8 @@ package controllers.ident
 
 import controllers._
 import io.suggest.common.fut.FutureUtil
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.util.logs.IMacroLogs
-import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.{IRecoverPwReq, IReq}
@@ -155,7 +155,7 @@ trait PwRecover
   /** Рендер содержимого страницы с формой восстановления пароля. */
   protected def _recoverPwStep1(form: EmailPwRecoverForm_t)(implicit request: IReq[_]): Html = {
     implicit val ctxData = CtxData(
-      jsiTgs = Seq(MTargets.CaptchaForm)
+      jsiTgs = MJsiTgs.CaptchaForm :: Nil
     )
     val ctx = implicitly[Context]
     val colHtml = _emailColTpl(form)(ctx)

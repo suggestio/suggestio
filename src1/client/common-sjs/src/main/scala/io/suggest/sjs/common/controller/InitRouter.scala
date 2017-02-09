@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.controller
 
-import io.suggest.init.routed.{JsInitConstants, MJsInitTargetsLigthT}
+import io.suggest.init.routed.{JsInitConstants, MJsiTg, MJsiTgs}
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -56,10 +56,10 @@ trait InitRouter extends Log with SafeSyncVoid {
 
   /** Модель таргетов используется только в роутере, поэтому она тут и живет. */
   // TODO упразнить эту модель, сделать просто карту String -> F
-  object MInitTargets extends MJsInitTargetsLigthT
+  val MInitTargets = MJsiTgs
 
   /** Тип одного экземпляра модели целей инициализации. Вынесен сюда для удобства построения API. */
-  final type MInitTarget = MInitTargets.T
+  final type MInitTarget = MJsiTg
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
   protected def routeInitTarget(itg: MInitTarget): Future[_] = {
@@ -83,18 +83,20 @@ trait InitRouter extends Log with SafeSyncVoid {
 
     } { attr =>
       val all = attr.split("\\s*;\\s*")
-        .toSeq
+        .iterator
         .flatMap { raw =>
-          val res = MInitTargets.maybeWithName(raw)
+          val res = MJsiTgs.withNameOption(raw)
           if (res.isEmpty)
             LOG.warn( ErrorMsgs.INIT_ROUTER_UNIMPLEMENTED_TARGET, msg = raw )
           res
         }
+        .toSeq
       val initFut = Future.traverse(all) { itg =>
         val fut = try {
           routeInitTarget(itg)
         } catch {
-          case ex: Throwable => Future failed ex
+          case ex: Throwable =>
+            Future.failed(ex)
         }
         // Подавленеи ошибок. init must flow.
         fut.recover { case ex: Throwable =>

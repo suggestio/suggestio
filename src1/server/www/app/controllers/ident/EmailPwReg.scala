@@ -1,12 +1,12 @@
 package controllers.ident
 
 import controllers.{CaptchaValidator, SioController, routes}
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.util.logs.IMacroLogs
 import models._
-import models.jsm.init.MTargets
 import models.mctx.{Context, CtxData}
 import models.msession.Keys
 import models.req.IReq
@@ -97,7 +97,7 @@ trait EmailPwReg
   /** Рендер страницы регистрации по email. */
   private def _epwRender(form: EmailPwRegReqForm_t)(implicit request: IReq[_]): Html = {
     implicit val ctxData = CtxData(
-      jsiTgs = Seq(MTargets.CaptchaForm)
+      jsiTgs = MJsiTgs.CaptchaForm :: Nil
     )
     epwRegTpl(form, captchaShown = true)
   }
