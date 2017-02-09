@@ -1,4 +1,4 @@
-package util.showcase
+package util.stat
 
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
@@ -18,19 +18,19 @@ import net.sf.uadetector.service.UADetectorServiceFactory
 import play.api.http.HeaderNames.USER_AGENT
 import play.mvc.Http.HeaderNames
 import util.geo.GeoIpUtil
-import util.stat.StatCookiesUtil
 
 import scala.concurrent.Future
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 13.10.14 14:37
- * Description: Утиль для построения сборщиков статистики по разным экшенам SM-выдачи. + Сами сборщики статистики.
- * Этот велосипед возник из-за необъятности модели MAdStat и необходимости заполнять её немного по-разному
- * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
- */
-class ScStatUtil @Inject() (
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 13.10.14 14:37
+  * Description: Утиль для упрощённой сборки статистики по HTTP-экшенам.
+  *
+  * Этот велосипед возник из-за необъятности модели MStat и необходимости заполнять её немного по-разному
+  * в разных случаях ситуациях, при этом с минимальной дубликацией кода и легкой расширяемостью оного.
+  */
+class StatUtil @Inject()(
   statCookiesUtil         : StatCookiesUtil,
   playStatSaver           : PlayStatSaver,
   geoIpUtil               : GeoIpUtil,
@@ -327,3 +327,8 @@ class ScStatUtil @Inject() (
 
 }
 
+
+/** Интерфейс DI-поля для доступа к [[StatUtil]]. */
+trait IStatUtil {
+  val statUtil: StatUtil
+}

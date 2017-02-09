@@ -23,7 +23,7 @@ class IsAnon @Inject()(
 
   import mCommonDi._
 
-  sealed trait IsAnonBase extends ActionBuilder[MReq] {
+  sealed trait Base extends ActionBuilder[MReq] {
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       personIdOpt.fold {
@@ -38,19 +38,24 @@ class IsAnon @Inject()(
     }
   }
 
-  sealed abstract class IsAnonBase2
-    extends IsAnonBase
+  sealed abstract class Abstract
+    extends Base
     with ExpireSession[MReq]
+
+  /** Без CSRF. */
+  object NoCsrf extends Abstract
+  @inline
+  def apply() = NoCsrf
 
   // CSRF:
   /** GET-запросы с выставлением CSRF-токена. */
   object Get
-    extends IsAnonBase2
+    extends Abstract
     with csrf.Get[MReq]
 
   /** POST-запросы с проверкой CSRF-токена, выставленного ранее через csrf.Get. */
   object Post
-    extends IsAnonBase2
+    extends Abstract
     with csrf.Post[MReq]
 
 }

@@ -295,4 +295,17 @@ object Lists {
     (acc1, seqb.result())
   }
 
+
+  /** Опционально добавить элемент во главу списка.
+    *
+    * @param xOpt Опциональный добавляемый элемент.
+    * @param tail Хвост списка.
+    * @tparam T Тип элементов всех участвующих коллекций.
+    * @return Если xOpt == None, то tail.
+    *         Если Some(x), то x::tail.
+    */
+  def prependOpt[T](xOpt: Option[T])(tail: List[T]): List[T] = {
+    xOpt.fold(tail)(_ :: tail)
+  }
+
 }

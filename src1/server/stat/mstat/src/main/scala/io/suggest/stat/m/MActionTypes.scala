@@ -56,4 +56,9 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
 
   val ScTags              = Val("выдача: теги")
 
+
+  val PayCheck            = Val("pay: check")
+
+  val UnexpectedCookies   = Val("cookies: unexpected")
+
 }

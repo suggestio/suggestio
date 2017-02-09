@@ -1,9 +1,10 @@
 package controllers.sc
 
 import _root_.util.blocks.BgImg
-import _root_.util.di.{IScNlUtil, IScStatUtil, IScUtil}
+import _root_.util.di.{IScNlUtil, IScUtil}
 import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.IScAdSearchUtilDi
+import _root_.util.stat.IStatUtil
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
@@ -190,7 +191,7 @@ trait ScAdsTileBase
       val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
       val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
 
-      val _userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+      val _userSaOptFut = statUtil.userSaOptFutFromRequest()
       val _madsFut      = madsFut
       val _adSearchFut  = adSearch2Fut
 
@@ -207,7 +208,7 @@ trait ScAdsTileBase
         val statActionsAcc0 = List[MAction](
 
           // Подготовить данные статистики по отрендеренным карточкам:
-          scStatUtil.madsAction(_mads, MActionTypes.ScAdsTile),
+          statUtil.madsAction(_mads, MActionTypes.ScAdsTile),
 
           // Сохранить фактический search limit
           MAction(
@@ -222,8 +223,8 @@ trait ScAdsTileBase
           )
         )
 
-        val saAcc = scStatUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
-          scStatUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(statActionsAcc0)
+        val saAcc = statUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
+          statUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(statActionsAcc0)
         }
 
         new Stat2 {
@@ -245,7 +246,7 @@ trait ScAdsTileBase
 /** Поддержка ответов на выдачу v1. */
 trait ScAdsTile
   extends ScAdsTileBase
-  with IScStatUtil
+  with IStatUtil
   with IMaybeAuth
 {
 

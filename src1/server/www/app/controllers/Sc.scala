@@ -18,7 +18,7 @@ import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScMapUtil, _}
-import util.stat.StatCookiesUtil
+import util.stat.{StatUtil, StatCookiesUtil}
 
 
 /**
@@ -29,28 +29,28 @@ import util.stat.StatCookiesUtil
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
 class Sc @Inject() (
-  override val logoUtil           : LogoUtil,
-  override val welcomeUtil        : WelcomeUtil,
-  override val bleUtil            : BleUtil,
-  override val scStatUtil         : ScStatUtil,
-  override val statCookiesUtil    : StatCookiesUtil,
-  override val mNodes             : MNodes,
-  override val scNlUtil           : ShowcaseNodeListUtil,
-  override val scUtil             : ShowcaseUtil,
-  override val adRenderUtil       : AdRenderUtil,
-  override val cdnUtil            : CdnUtil,
-  override val n2NodesUtil        : N2NodesUtil,
-  override val getAnyAd           : GetAnyAd,
-  override val maybeAuth          : MaybeAuth,
-  @Named("blk") override val blkImgMaker  : IMaker,
-  override val scMapUtil          : ScMapUtil,
-  override val ctxUtil            : ContextUtil,
-  override val scAdSearchUtil     : ScAdSearchUtil,
-  override val nodesUtil          : NodesUtil,
-  override val scTagsUtil         : ScTagsUtil,
-  override val geoIpUtil          : GeoIpUtil,
-  override val extServicesUtil    : ExtServicesUtil,
-  override val mCommonDi          : ICommonDi
+                     override val logoUtil           : LogoUtil,
+                     override val welcomeUtil        : WelcomeUtil,
+                     override val bleUtil            : BleUtil,
+                     override val statUtil         : StatUtil,
+                     override val statCookiesUtil    : StatCookiesUtil,
+                     override val mNodes             : MNodes,
+                     override val scNlUtil           : ShowcaseNodeListUtil,
+                     override val scUtil             : ShowcaseUtil,
+                     override val adRenderUtil       : AdRenderUtil,
+                     override val cdnUtil            : CdnUtil,
+                     override val n2NodesUtil        : N2NodesUtil,
+                     override val getAnyAd           : GetAnyAd,
+                     override val maybeAuth          : MaybeAuth,
+                     @Named("blk") override val blkImgMaker  : IMaker,
+                     override val scMapUtil          : ScMapUtil,
+                     override val ctxUtil            : ContextUtil,
+                     override val scAdSearchUtil     : ScAdSearchUtil,
+                     override val nodesUtil          : NodesUtil,
+                     override val scTagsUtil         : ScTagsUtil,
+                     override val geoIpUtil          : GeoIpUtil,
+                     override val extServicesUtil    : ExtServicesUtil,
+                     override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl

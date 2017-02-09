@@ -8,9 +8,9 @@ import models.mctx.Context
 import models.msc.tag.MScTagsSearchQs
 import play.api.libs.json.Json
 import util.acl.IMaybeAuth
-import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
 import util.showcase.IScTagsUtilDi
+import util.stat.IStatUtil
 import views.html.sc.search._
 
 /**
@@ -25,7 +25,7 @@ trait ScTags
   with IMNodes
   with IScTagsUtilDi
   with IGeoIpUtilDi
-  with IScStatUtil
+  with IStatUtil
   with IMacroLogs
 {
 
@@ -79,13 +79,13 @@ trait ScTags
     val _ctx = implicitly[Context]
 
     // Готовим статистику.
-    val userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+    val userSaOptFut = statUtil.userSaOptFutFromRequest()
     for {
       found         <- tagsFoundFut
       _userSaOpt    <- userSaOptFut
       geoIpResOpt   <- geoIpResOptFut
     } {
-      val sstat = new scStatUtil.Stat2 {
+      val sstat = new statUtil.Stat2 {
         override def statActions: List[MAction] = {
           val acc0: List[MAction] = Nil
 
@@ -124,7 +124,7 @@ trait ScTags
         override def geoIpLoc     = geoIpResOpt
         override def scComponents = MComponents.Tags :: super.scComponents
       }
-      scStatUtil.saveStat(sstat)
+      statUtil.saveStat(sstat)
         .onFailure { case ex: Throwable =>
           LOGGER.error(s"tagsSearch($qs): Failed to save tags stats", ex)
         }

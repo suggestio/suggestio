@@ -15,7 +15,6 @@ import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 
 import scala.concurrent.duration._
 import scala.collection.Map
@@ -33,7 +32,7 @@ import scala.concurrent.ExecutionContext
 object MEvent {
 
   val EVT_TYPE_ESFN     = "et"
-  val OWNER_ID_ESFN     = "ownerId"     // Такая же, как в MMartCategory
+  val OWNER_ID_ESFN     = "ownerId"
   val ARGS_ESFN         = "args"
   val DATE_CREATED_ESFN = "dc"
   val IS_CLOSEABLE_ESFN = "ic"
@@ -67,7 +66,7 @@ object MEvent {
 
 @Singleton
 class MEvents @Inject() (
-  override val mCommonDi: ICommonDi
+  override val mCommonDi: IEsModelDiVal
 )
   extends EsModelStatic
     with MacroLogsImpl

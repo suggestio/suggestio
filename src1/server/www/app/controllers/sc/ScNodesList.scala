@@ -2,7 +2,8 @@ package controllers.sc
 
 import java.util.NoSuchElementException
 
-import _root_.util.di.{IScNlUtil, IScStatUtil}
+import _root_.util.di.IScNlUtil
+import _root_.util.stat.IStatUtil
 import io.suggest.util.logs.IMacroLogs
 import models.jsm.NodeListResp
 import models.msc._
@@ -120,7 +121,7 @@ trait ScNodesListBase
 /** Аддон к Showcase-контроллеру, добавляющий обработку запроса списка узлов. */
 trait ScNodesList
   extends ScNodesListBase
-  with IScStatUtil
+  with IStatUtil
   with IMaybeAuth
 {
 

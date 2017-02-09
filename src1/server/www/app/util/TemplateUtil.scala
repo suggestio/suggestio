@@ -3,8 +3,9 @@ package util
 import java.text.{DecimalFormat, NumberFormat}
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
+import java.util.Locale
 
-import io.suggest.bill.{MCurrencies, MCurrency, MPrice}
+import io.suggest.bill.{MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.common.text.StringUtil
@@ -128,15 +129,10 @@ object TplDataFormatUtil {
   }
 
   /** Напечатать цену согласно локали и валюте. */
-  def formatPrice(price: Float, currency: MCurrency)(implicit ctx: Context): String = {
-    formatPrice(price.toDouble, currency)
-  }
   def formatPrice(price: Double, currency: MCurrency)(implicit ctx: Context): String = {
     formatPrice( MPrice(price, currency) )
   }
-  def formatPrice(price: Double, currencyCode: String)(implicit ctx: Context): String = {
-    formatPrice(price, MCurrencies.withName(currencyCode))
-  }
+
 
   /** Рендер целого числа. */
   def formatInt(number: Int)(implicit ctx: Context): String = {
@@ -159,11 +155,13 @@ object TplDataFormatUtil {
     val formatPriceDigitsDF = {
       val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
         .asInstanceOf[DecimalFormat]
-      val dcs = currFmt.getDecimalFormatSymbols
       currFmt.setCurrency( mprice.currency.toJavaCurrency )
+
+      val dcs = currFmt.getDecimalFormatSymbols
       dcs.setCurrencySymbol("")
       dcs.setGroupingSeparator(NBSP)
       currFmt.setDecimalFormatSymbols(dcs)
+
       currFmt.setGroupingUsed( mprice.amount >= NUMBER_GROUPING_THRESHOLD )
       // Рендерить 99.31, 100.5, 5421 без копеек.
       currFmt.setMaximumFractionDigits(
@@ -176,6 +174,28 @@ object TplDataFormatUtil {
     val formatted = formatPriceDigitsDF.format(mprice.amount)
       .trim
     pricePostprocess(formatted)
+  }
+
+
+  /** Отрендерить amount цены в сухом формате. */
+  def priceAmountPlainFmt(mprice: MPrice): DecimalFormat = {
+    val currFmt = NumberFormat.getNumberInstance( Locale.ROOT )
+      .asInstanceOf[DecimalFormat]
+    currFmt.setDecimalSeparatorAlwaysShown(true)
+
+    val dcs = currFmt.getDecimalFormatSymbols
+    dcs.setDecimalSeparator('.')
+    currFmt.setDecimalFormatSymbols(dcs)
+
+    val frac = mprice.currency.exponent
+    currFmt.setMaximumFractionDigits( frac )
+    currFmt.setMinimumFractionDigits( frac )
+    currFmt.setGroupingUsed(false)
+    currFmt
+  }
+  def formatPriceAmountPlain(mprice: MPrice): String = {
+    priceAmountPlainFmt(mprice)
+      .format(mprice.amount)
   }
 
 

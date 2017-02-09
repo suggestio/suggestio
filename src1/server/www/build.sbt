@@ -10,7 +10,7 @@ Common.settingsOrg
 // npmAssets в Build.scala тихо конфликтует с этой строкой. ЕЁ НЕЛЬЗЯ РАСКОММЕНЧИВАТЬ, ТУТ КАК НАПОМИНАНИЕ.
 //enablePlugins(WebScalaJSBundlerPlugin)
 
-name := "sioweb21"
+name := "www"
 
 version := "1.0-SNAPSHOT"
 

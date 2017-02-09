@@ -7,7 +7,6 @@ import JsInitConstants._
 
 /** Трейт для всех инстансов модели. */
 sealed trait MJsiTg extends EnumEntry with IStrId {
-  override final def entryName = toString
   override final def strId = toString
 }
 

@@ -1,5 +1,6 @@
 package util
 
+import io.suggest.bill.{Amount_t, MCurrencies, MPrice}
 import io.suggest.common.html.HtmlConstants
 import org.scalatestplus.play._
 
@@ -79,6 +80,30 @@ class TplDataFormatUtilSpec extends PlaySpec {
       val text = """РАЗРАБОТКА И ПРОВЕДЕНИЕ"""
       val res = t(text, l, hard = true)
       res.length must be <= l
+    }
+
+  }
+
+
+  "formatPriceAmountPlain()" must {
+
+    import TplDataFormatUtil.{formatPriceAmountPlain => f}
+    def t(amount: Amount_t) = f( MPrice(amount, MCurrencies.default) )
+
+    "zero price" in {
+      t(0.00) mustBe "0.00"
+    }
+    "1 RUB => 1.00" in {
+      t(1d) mustBe "1.00"
+    }
+    "100500 RUB => 100500.00" in {
+      t(100500d) mustBe "100500.00"
+    }
+    "100 500 100 500.10 RUB => 100500100500.10" in {
+      t(100500100500.10) mustBe "100500100500.10"
+    }
+    "100 500 100 500.001 RUB => 100500100500.00" in {
+      t(100500100500.001) mustBe "100500100500.00"
     }
 
   }

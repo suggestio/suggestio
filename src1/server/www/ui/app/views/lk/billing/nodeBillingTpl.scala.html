@@ -18,7 +18,7 @@
 
     @_moneyCntTpl() {
       @_moneyTpl("all", messages("Total.funds")) {
-        @formatPrice(mbb.price.amount + mbb.blocked, mbb.price.currency)
+        @formatPrice( mbb.price.plusAmount(mbb.blocked) )
       }
       @_moneyTpl("available", messages("Available.funds")) {
         @formatPrice(mbb.price)

@@ -47,6 +47,14 @@ sealed abstract class MCurrency extends EnumEntry with IStrId {
   /** Символ валюты в виде строки. */
   def symbol: String
 
+  /** Код валюты согласно ISO 4217.
+    * @see [[https://en.wikipedia.org/wiki/ISO_4217]]
+    */
+  def iso4217: Int
+
+  /** Копейки/центы после десятичной запятой. */
+  def exponent: Int = 2
+
 }
 
 
@@ -57,29 +65,40 @@ object MCurrencies extends Enum[MCurrency] {
 
   def default: MCurrency = values.head
 
-  /** Российский рубль. */
+  /** Российский рубль.
+    * @see [[https://en.wikipedia.org/wiki/Russian_ruble]]
+    */
   case object RUB extends MCurrency {
     override def strId      = "RUB"
     override def toString   = super.toString
     override def htmlSymbol = "&#8381;"
     override def symbol     = "₽"
+    override def iso4217    = 643
   }
 
-  /** Евро. */
+  /** Евро.
+    * @see [[https://en.wikipedia.org/wiki/Euro]]
+    */
   case object EUR extends MCurrency {
     override def strId      = "EUR"
     override def toString   = super.toString
     override def htmlSymbol = "&#8364;"
     override def symbol     = "€"
+    override def iso4217    = 978
   }
 
-  /** Доллары. */
+  /** Доллары США.
+    * @see [[https://en.wikipedia.org/wiki/United_States_dollar]]
+    */
   case object USD extends MCurrency {
     override def strId      = "USD"
     override def toString   = super.toString
     override def htmlSymbol = symbol
     override def symbol     = "$"
+    override def iso4217    = 840
   }
+
+  def withIso4217(code: Int) = values.find(_.iso4217 == code)
 
 }
 

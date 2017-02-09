@@ -10,8 +10,8 @@ import play.api.data._
 import play.api.http.MimeTypes
 import util.FormUtil._
 import util.acl.{BruteForceProtect, IMaybeAuth}
-import util.di.IScStatUtil
 import util.geo.IGeoIpUtilDi
+import util.stat.IStatUtil
 
 /**
  * Suggest.io
@@ -26,7 +26,7 @@ trait ScRemoteError
   with BruteForceProtect
   with IMaybeAuth
   with IGeoIpUtilDi
-  with IScStatUtil
+  with IStatUtil
 {
 
   import mCommonDi._
@@ -83,14 +83,14 @@ trait ScRemoteError
           // Запустить геолокацию текущего юзера по IP.
           val geoLocOptFut = geoIpUtil.findIpCached( remoteAddrFixed.remoteAddr )
           // Запустить получение инфы о юзере. Без https тут всегда None.
-          val userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+          val userSaOptFut = statUtil.userSaOptFutFromRequest()
           val _ctx = implicitly[Context]
 
           for {
             _geoLocOpt <- geoLocOptFut
             _userSaOpt <- userSaOptFut
 
-            stat2 = new scStatUtil.Stat2 {
+            stat2 = new statUtil.Stat2 {
               override def uri: Option[String] = {
                 merr0.url.orElse( super.uri )
               }
@@ -115,7 +115,7 @@ trait ScRemoteError
             }
 
             // Сохраняем в базу отчёт об ошибке.
-            merrId <- scStatUtil.saveStat(stat2)
+            merrId <- statUtil.saveStat(stat2)
           } yield {
             LOGGER.trace(logPrefix + s" Saved remote error as stat[$merrId]." )
             NoContent

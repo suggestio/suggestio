@@ -14,8 +14,9 @@ import models.req.IReq
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
-import util.di.{IScStatUtil, IScUtil}
+import util.di.IScUtil
 import util.ext.IExtServicesUtilDi
+import util.stat.IStatUtil
 import views.html.sc._
 
 import scala.concurrent.Future
@@ -33,7 +34,7 @@ import scala.util.{Failure, Success}
 trait ScSiteBase
   extends ScController
   with IMacroLogs
-  with IScStatUtil
+  with IStatUtil
   with IScUtil
   with IExtServicesUtilDi
   with IMNodes
@@ -176,7 +177,7 @@ trait ScSiteBase
     }
 
     override def scStat: Future[Stat2] = {
-      val _userSaOptFut     = scStatUtil.userSaOptFutFromRequest()
+      val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
       val _nodeOptFut       = nodeOptFutVal
       val _domainNodeOptFut = domainNodeOptFut
       for {
@@ -268,7 +269,7 @@ trait ScSiteBase
 /** Поддержка гео-сайта. */
 trait ScSiteGeo
   extends ScSiteBase
-  with IScStatUtil
+  with IStatUtil
   with IMaybeAuth
 {
 

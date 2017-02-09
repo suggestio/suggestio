@@ -1,6 +1,6 @@
 package models.req
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.{ImplementedBy, Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
@@ -99,11 +99,12 @@ class MSioUserEmpty extends ISioUser {
     Future.failed( new NoSuchElementException("personIdOpt is empty") )
   }
 
-  override implicit def lkCtxDataFut = Future.successful(CtxData.empty)
+  override def lkCtxDataFut = Future.successful(CtxData.empty)
 }
 
 
 /** Частичная реализация [[ISioUser]] для дальнейших ижектируемых реализаций. */
+@ImplementedBy( classOf[MSioUserLazy] )
 trait ISioUserT extends ISioUser with MacroLogsDyn {
 
   // DI-инжектируемые контейнер со статическими моделями.

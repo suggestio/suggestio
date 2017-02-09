@@ -12,14 +12,14 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin
  */
 object TextHashUtil {
 
-  private def HASH_LEN_MD5_HEX = 32   // == len(MD4)
-  private def HASH_LEN_SHA1_HEX = 40  // == len(RIPEMD-160)
-  private def HASH_LEN_SHA224_HEX = 56
-  private def HASH_LEN_SHA256_HEX = 65
-  private def HASH_LEN_SHA384_HEX = 96
-  private def HASH_LEN_SHA512_HEX = 128
-  private def HASH_LENS = Set(HASH_LEN_MD5_HEX, HASH_LEN_SHA1_HEX, HASH_LEN_SHA224_HEX, HASH_LEN_SHA256_HEX, HASH_LEN_SHA384_HEX, HASH_LEN_SHA512_HEX)
-  private def HASH_PATTERN = "(?i)[a-f0-9]+".r.pattern
+  def HASH_LEN_MD5_HEX = 32   // == len(MD4)
+  def HASH_LEN_SHA1_HEX = 40  // == len(RIPEMD-160)
+  def HASH_LEN_SHA224_HEX = 56
+  def HASH_LEN_SHA256_HEX = 65
+  def HASH_LEN_SHA384_HEX = 96
+  def HASH_LEN_SHA512_HEX = 128
+  def HASH_LENS = Set(HASH_LEN_MD5_HEX, HASH_LEN_SHA1_HEX, HASH_LEN_SHA224_HEX, HASH_LEN_SHA256_HEX, HASH_LEN_SHA384_HEX, HASH_LEN_SHA512_HEX)
+  def HASH_PATTERN = "(?i)[a-f0-9]+".r.pattern
 
   def isHexHash(qv:String) : Boolean = {
     HASH_LENS.contains(qv.length) && HASH_PATTERN.matcher(qv).matches

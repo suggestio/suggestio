@@ -22,7 +22,7 @@ import util.acl._
 import util.adn.INodesUtil
 import util.ble.IBleUtilDi
 import util.geo.IGeoIpUtilDi
-import util.stat.IStatCookiesUtilDi
+import util.stat.{IStatCookiesUtilDi, IStatUtil}
 import views.html.sc._
 
 import scala.concurrent.Future
@@ -49,7 +49,7 @@ trait ScIndex
   with IWelcomeUtil
   with IScUtil
   with IGeoIpUtilDi
-  with IScStatUtil
+  with IStatUtil
   with IBleUtilDi
 {
 
@@ -562,7 +562,7 @@ trait ScIndex
 
     override def scStat: Future[Stat2] = {
       // Запуск асинхронных задач в фоне.
-      val _userSaOptFut     = scStatUtil.userSaOptFutFromRequest()
+      val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
       val _indexNodeFut     = indexNodeFutVal
       val _geoIpResOptFut   = logic.geoIpResOptFut
 

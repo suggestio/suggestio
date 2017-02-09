@@ -4,7 +4,8 @@ import controllers.SioController
 import models.mctx.Context
 import models.req.IReq
 import util.cdn.ICdnUtilDi
-import util.di.{ILogoUtilDi, IScStatUtil}
+import util.di.ILogoUtilDi
+import util.stat.IStatUtil
 
 import scala.concurrent.Future
 
@@ -18,7 +19,7 @@ trait ScController
   extends SioController
   with ICdnUtilDi
   with ILogoUtilDi
-  with IScStatUtil
+  with IStatUtil
 {
 
   import mCommonDi.ec
@@ -37,7 +38,7 @@ trait ScController
   protected trait LogicCommonT extends LazyContext { logic =>
 
     /** Частичная реализация Stat2 под нужды sc-логик. */
-    abstract class Stat2 extends scStatUtil.Stat2 {
+    abstract class Stat2 extends statUtil.Stat2 {
       override def ctx: Context = logic.ctx
     }
 
@@ -47,7 +48,7 @@ trait ScController
     /** Сохранение подготовленной статистики обычно везде очень одинаковое. */
     def saveScStat(): Future[_] = {
       scStat
-        .flatMap(scStatUtil.saveStat)
+        .flatMap(statUtil.saveStat)
     }
 
   }

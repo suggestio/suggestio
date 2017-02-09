@@ -1,6 +1,6 @@
 package controllers.sc
 
-import _root_.util.di.{IScStatUtil, IScUtil}
+import _root_.util.di.IScUtil
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
@@ -21,6 +21,7 @@ import views.html.sc.foc._
 import models._
 import models.mlu.MLookupModes
 import util.showcase.IScAdSearchUtilDi
+import util.stat.IStatUtil
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -429,7 +430,7 @@ trait ScFocusedAdsBase
       val _rcvrOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.rcvrIdOpt )
       val _prodOptFut   = mNodesCache.maybeGetByEsIdCached( _qs.search.prodIdOpt )
 
-      val _userSaOptFut = scStatUtil.userSaOptFutFromRequest()
+      val _userSaOptFut = statUtil.userSaOptFutFromRequest()
 
       val _madsFut      = mads2Fut
       val _adSearchFut  = mAdsSearchFut
@@ -442,7 +443,7 @@ trait ScFocusedAdsBase
         _adSearch   <- _adSearchFut
       } yield {
         var saAcc = List[MAction](
-          scStatUtil.madsAction(_mads, MActionTypes.ScAdsFocused),
+          statUtil.madsAction(_mads, MActionTypes.ScAdsFocused),
 
           // Сохранить фактический search limit
           MAction(
@@ -468,8 +469,8 @@ trait ScFocusedAdsBase
           }
         }
 
-        saAcc = scStatUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
-          scStatUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(saAcc)
+        saAcc = statUtil.withNodeAction(MActionTypes.ScRcvrAds, _qs.search.rcvrIdOpt, _rcvrOpt) {
+          statUtil.withNodeAction( MActionTypes.ScProdAds, _qs.search.prodIdOpt, _prodOpt )(saAcc)
         }
 
         new Stat2 {
@@ -517,7 +518,7 @@ trait ScFocusedAdsBase
 /** Поддержка экшена для focused-ads API v1. */
 trait ScFocusedAds
   extends ScFocusedAdsBase
-  with IScStatUtil
+  with IStatUtil
   with IMaybeAuth {
 
   /** Экшен для рендера горизонтальной выдачи карточек.
