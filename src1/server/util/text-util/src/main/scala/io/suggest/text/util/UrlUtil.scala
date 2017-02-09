@@ -381,7 +381,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
             case i  =>
               val (qk, _qv) = queryPart.splitAt(i)
               val qv = _qv.tail // из-за символа '=' в начале
-              if (CryptoUtil.isHexHash(qv))
+              if (TextHashUtil.isHexHash(qv))
                 sb
               else
                 sb.append('&')

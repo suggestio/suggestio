@@ -24,7 +24,7 @@ object LoginTimestamp extends MacroLogsDyn {
       Some(tstampStr.toLong)
     } catch {
       case ex: Exception =>
-        LOGGER.warn(s"invokeBlock(): Failed to parse session timestamp: raw = $tstampStr")
+        LOGGER.warn(s"invokeBlock(): Failed to parse session timestamp: raw = $tstampStr", ex)
         None
     }
   }

@@ -5,8 +5,9 @@ import controllers.ident._
 import io.suggest.init.routed.{MJsiTg, MJsiTgs}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.m.mctx.CtxData
 import models._
-import models.mctx.{Context, CtxData}
+import models.mctx.Context
 import models.mproj.ICommonDi
 import models.msession.Keys
 import models.req.IReqHdr

@@ -8,9 +8,9 @@ import com.sun.org.apache.xerces.internal.impl.dv.util.HexBin
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 07.03.13 10:31
- * Description:
+ * Description: Выявление хешей в текстах/строках.
  */
-object CryptoUtil {
+object TextHashUtil {
 
   private def HASH_LEN_MD5_HEX = 32   // == len(MD4)
   private def HASH_LEN_SHA1_HEX = 40  // == len(RIPEMD-160)

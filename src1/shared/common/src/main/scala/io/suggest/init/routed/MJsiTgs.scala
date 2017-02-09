@@ -1,6 +1,6 @@
 package io.suggest.init.routed
 
-import io.suggest.primo.{IStrId, TypeT}
+import io.suggest.primo.IStrId
 import enumeratum._
 import JsInitConstants._
 
@@ -13,7 +13,7 @@ sealed trait MJsiTg extends EnumEntry with IStrId {
 
 
 /** Кросс-платформенная модель целей js-инициализации. */
-object MJsiTgs extends Enum[MJsiTg] with TypeT {
+object MJsiTgs extends Enum[MJsiTg] {
 
   /** Активация всплывающих уведомлений. */
   case object Flashing extends MJsiTg {

@@ -1,4 +1,4 @@
-package models.mctx
+package io.suggest.www.m.mctx
 
 import io.suggest.init.routed.MJsiTg
 import io.suggest.mbill2.m.balance.MBalance
@@ -7,7 +7,7 @@ import io.suggest.mbill2.m.balance.MBalance
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 21.12.15 8:26
- * Description: Модель дополнительных произвольных данных, передаваемых по шаблонам внутри [[Context]].
+ * Description: Модель дополнительных произвольных данных, передаваемых по шаблонам внутри Context.
  */
 
 trait ICtxData {

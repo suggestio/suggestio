@@ -326,7 +326,7 @@ object Sio2Build extends Build {
   lazy val commonWww = {
     val id = "common-www"
     Project(id = id, base = file(DIR0 + "server/util/" + id))
-      .dependsOn(util, logsMacro, n2, mbill2)
+      .dependsOn(util, logsMacro, n2, mbill2, securesocial)
   }
 
   /** Разная поддержка узлов для вёб-морды. */

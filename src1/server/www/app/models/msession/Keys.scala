@@ -1,7 +1,7 @@
 package models.msession
 
-import io.suggest.common.menum.EnumMaybeWithName
 import securesocial.core.SecureSocial
+import enumeratum._
 
 /**
  * Suggest.io
@@ -9,26 +9,37 @@ import securesocial.core.SecureSocial
  * Created: 18.02.15 14:21
  * Description: Модель для хранения ключей доступа к сессии.
  */
-object Keys extends Enumeration with EnumMaybeWithName {
+sealed abstract class SessionKey extends EnumEntry {
+  def isLogin: Boolean = true
+  def name = toString
+}
 
-  protected sealed class Val(val name: String, val isLogin: Boolean) extends super.Val(name)
-
-  override type T = Val
+object Keys extends Enum[SessionKey] {
 
   /** Session-поле timestamp'а для контроля истечения сессии. */
-  val Timestamp     : T = new Val("t", true)
+  case object Timestamp extends SessionKey {
+    override def toString = "t"
+  }
 
   /** Session-поле для хранения текущего person_id. */
-  val PersonId      : T = new Val("p", true)
+  case object PersonId extends SessionKey {
+    override def toString = "p"
+  }
 
   /** Флаг для долгого хранения залогиненности.*/
-  val RememberMe    : T = new Val("r", true)
+  case object RememberMe extends SessionKey {
+    override def toString = "r"
+  }
 
   /** Костыль к secure-social сохраняет ссылку для возврата юзера через session.
     * Менять на что-то отличное от оригинала можно только после проверки [[controllers.ident.ExternalLogin]]
     * на безопасность переименования. */
-  val OrigUrl       : T = new Val(SecureSocial.OriginalUrlKey, false)
+  case object OrigUrl extends SessionKey {
+    override def toString = SecureSocial.OriginalUrlKey
+    override def isLogin = false
+  }
 
+  override val values = findValues
 
   def onlyLoginIter = values.iterator.filter(_.isLogin)
 
