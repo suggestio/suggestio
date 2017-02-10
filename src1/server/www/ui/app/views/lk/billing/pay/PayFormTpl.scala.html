@@ -1,0 +1,13 @@
+@(mnode: MNode)(formContent: Html)(implicit ctx: Context)
+
+@* Страница для рендера страницы оплаты с отправкой юзера в платежную систему. *@
+
+@PayBase(
+  mnode = mnode
+) {
+
+  @formContent
+
+}
+
+

@@ -10,7 +10,7 @@
 @billingBaseTpl(
   title         = messages("Billing"),
   mnode         = args.mnode,
-  rightCurrEl   = BillingRightPanelLinks.RPL_BILLING
+  rightCurrEl   = Some( BillingRightPanelLinks.RPL_BILLING )
 ) {
 
   @for( mbb <- ctx.data.mUsrBalances) {

@@ -1,11 +1,11 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import models.mproj.ICommonDi
 import play.api.http.HeaderNames
 import play.api.mvc._
+import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
 /**
@@ -16,9 +16,12 @@ import scala.language.higherKinds
  */
 
 @Singleton
-class Csrf @Inject() (mCommonDi: ICommonDi) {
+class Csrf @Inject() (
+                      csrfAddToken            : CSRFAddToken,
+                      csrfCheck               : CSRFCheck,
+                      implicit private val ec : ExecutionContext
+                     ) {
 
-  import mCommonDi.{ec, csrfAddToken, csrfCheck}
 
   /** Доп.заголовки, чтобы не пересобирать их при каждом запросе. */
   val HEADERS = List(

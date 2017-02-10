@@ -47,9 +47,6 @@ trait ICommonDi
   val htmlCompressUtil                : HtmlCompressUtil
   // DI-модель языков Langs необходима внутри SioController (и следовательно почти везде):
   val langs                           : Langs
-  // play-2.5: Это нужно инжектить иначе deprecation warning.
-  val csrfAddToken                    : CSRFAddToken
-  val csrfCheck                       : CSRFCheck
   // выставляем implicit, т.к. до-DI'шные websocket'ы требуют implicit application in scope.
   // TODO После перевода вёб-сокетов на akka streams, удалить implicit у current.
   override implicit val current       : Application
@@ -70,8 +67,6 @@ final class MCommonDi @Inject() (
                                   override val messagesApi        : MessagesApi,
                                   override val htmlCompressUtil   : HtmlCompressUtil,
                                   override val langs              : Langs,
-                                  override val csrfAddToken       : CSRFAddToken,
-                                  override val csrfCheck          : CSRFCheck,
                                   //override val actorSystem        : ActorSystem,
                                   override val cache              : CacheApi,
                                   override val cacheApiUtil       : CacheApiUtil,

@@ -23,6 +23,6 @@ object MCartIdeas {
 
   /** Недостаточно бабла для проведения платежа в корзине. */
   // TODO Зaюзать MGetPriceResp вместо Seq[MPrice]?
-  final case class NeedMoney(howMany: Seq[MPrice]) extends Idea
+  final case class NeedMoney(cart: IOrderWithItems, howMany: Seq[MPrice]) extends Idea
 
 }

@@ -1,19 +1,29 @@
 package controllers.pay
 
+import com.google.inject.Inject
 import controllers.SioControllerImpl
-import io.suggest.bill.MPrice
+import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.es.model.MEsUuId
+import io.suggest.mbill2.m.balance.MBalances
+import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.mbill2.m.item.MItems
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.Lists
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.mpay.yaka.MYakaReq
+import models.mpay.yaka.MYakaFormData
 import models.mproj.ICommonDi
-import models.req.IReqHdr
-import play.api.data.Form
-import play.api.mvc.BodyParser
-import util.acl.MaybeAuth
+import models.req.{INodeOrderReq, IReqHdr}
+import models.usr.MPersonIdents
+import play.api.mvc.Result
+import util.acl.{CanPayOrder, MaybeAuth}
+import util.billing.Bill2Util
 import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
+import views.html.lk.billing.pay._
+import views.html.lk.billing.pay.yaka._
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -24,17 +34,119 @@ import util.stat.StatUtil
   * @see Прямая ссылка: [[https://github.com/yandex-money/yandex-money-joinup/blob/master/demo/010%20%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%B8%D1%81%D0%BD%D1%8B%D1%85%20%D1%81%D0%B0%D0%B9%D1%82%D0%BE%D0%B2.md#%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8]]
   *      Короткая ссылка: [[https://goo.gl/Zfwt15]]
   */
-class PayYaka(
+class PayYaka @Inject() (
                maybeAuth                : MaybeAuth,
+               canPayOrder              : CanPayOrder,
                statUtil                 : StatUtil,
+               mItems                   : MItems,
                yakaUtil                 : YakaUtil,
+               mBalances                : MBalances,
+               bill2Util                : Bill2Util,
+               mPersonIdents            : MPersonIdents,
                override val mCommonDi   : ICommonDi
              )
   extends SioControllerImpl
   with MacroLogsImpl
 {
 
-  import mCommonDi.{ec, errorHandler}
+  import mCommonDi.{ec, errorHandler, slick}
+
+
+  /**
+    * Реакция контроллера на невозможность оплатить ордер, т.к. ордер уже оплачен или не требует оплаты.
+    * @param request Реквест c ордером.
+    * @return Редирект.
+    */
+  private def _alreadyPaid(request: INodeOrderReq[_]): Future[Result] = {
+    NotImplemented("Order already paid. TODO")    // TODO Редиректить? На страницу подтверждения оплаты или куда?
+  }
+
+
+  /** Подготовиться к оплате через яндекс-кассу.
+    * Юзеру рендерится неизменяемая форма с данными для оплаты.
+    * Экшен можно вызывать несколько раз, он не влияет на БД.
+    *
+    * @param orderId id заказа-корзины.
+    * @param onNodeId На каком узле сейчас находимся?
+    * @return Страница с формой оплаты, отправляющей юзера в яндекс.кассу.
+    */
+  def payForm(orderId: Gid_t, onNodeId: MEsUuId) = canPayOrder.Get(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
+    val personId = request.user.personIdOpt.get
+
+    // Рассчитать стоимость текущих item'ов текущего заказа.
+    val orderPricesFut = slick.db.run {
+      bill2Util.getOrderPrices(orderId)
+    }
+
+    // Узнать, сколько остатков денег у юзера на балансах. Сгруппировать по валютам.
+    val userBalancesFut = request.user.mBalancesFut
+    val userBalancesMapFut = for (ubs <- userBalancesFut) yield {
+      mBalances.balances2curMap(ubs)
+    }
+
+    // Посчитать, сколько юзеру надо доплатить за вычетом остатков по балансам.
+    val payPricesFut = for {
+      orderPrices   <- orderPricesFut
+      ubsMap        <- userBalancesMapFut
+    } yield {
+      bill2Util.pricesMinusBalances(orderPrices, ubsMap)
+    }
+
+    // Попытаться определить email клиента.
+    val userEmailOptFut = for {
+      // TODO Надо бы искать максимум 1 элемент.
+      epws <- mPersonIdents.findAllEmails(personId)
+    } yield {
+      epws.headOption
+    }
+
+    lazy val logPrefix = s"payForm($orderId):"
+
+    // Собираем данные для рендера формы отправки в платёжку.
+    for {
+      payPrices     <- payPricesFut
+      ubsMap        <- userBalancesMapFut
+      userEmailOpt  <- userEmailOptFut
+    } yield {
+      val ppsSize = payPrices.length
+      if (ppsSize == 0) {
+        // Нечего платить. По идее, деньги должны были списаться на предыдущем шаге
+        throw new IllegalStateException(s"$logPrefix Nothing to pay remotely via yaka. User balances are enought: $ubsMap")
+
+      } else if (ppsSize == 1) {
+        implicit val ctx = implicitly[Context]
+
+        val pp = payPrices.head
+        if (pp.currency == MCurrencies.RUB) {
+          // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
+          // Собрать аргументы для рендера, отрендерить страницу с формой.
+          val formData = MYakaFormData(
+            shopId          = yakaUtil.SHOP_ID,
+            scId            = yakaUtil.SC_ID,
+            sumRub          = pp.amount,
+            customerNumber  = request.user.personIdOpt.get,
+            orderNumber     = Some(orderId),
+            clientEmail     = userEmailOpt
+          )
+          // Отрендерить шаблон страницы.
+          val html = PayFormTpl(request.mnode) {
+            // Отрендерить саму форму в HTML. Форма может меняться от платежки к платёжке, поэтому вставляется в общую страницу в виде HTML.
+            _YakaFormTpl(formData)(ctx)
+          }(ctx)
+          Ok(html)
+
+        } else {
+          // Какая-то валюта, которая не поддерживается яндекс-кассой.
+          throw new IllegalArgumentException(s"$logPrefix Yaka unsupported currency: ${pp.currency}. Price = $pp")
+        }
+
+      } else {
+        // Сразу несколько валют. Не поддерживается яндекс.кассой.
+        throw new UnsupportedOperationException(s"$logPrefix too many currencies need to pay, but yaka supports only RUB:\n$payPrices")
+      }
+    }
+  }
+
 
   /**
     * Логгировать, если неуклюжие ксакепы ковыряются в API сайта.
@@ -64,18 +176,8 @@ class PayYaka(
   }
 
 
-  /** Body-parser для обыденных HTTP-запросов яндекс-кассы. */
-  private def _yakaReqBp: BodyParser[MYakaReq] = {
-    parse.form(
-      yakaUtil.md5Form,
-      maxLength = Some(4096L),
-      onErrors = { formWithErrors: Form[MYakaReq] =>
-        LOGGER.error(s"Failed to bind yaka request: ${formatFormErrors(formWithErrors)}")
-        BadRequest
-      }
-    )
-  }
-
+  /** id узла платежной системы. Узел не существует, просто нужен был идентифицируемый id для статистики. */
+  private def PAY_SYS_NODE_ID = "Yandex.Kassa"
 
   /**
     * Экшен проверки платежа яндекс-кассой.
@@ -86,28 +188,34 @@ class PayYaka(
   def check = maybeAuth().async { implicit request =>
     lazy val logPrefix = s"check[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix ${request.remoteAddress} ${request.body}")
+    implicit val ctx1 = implicitly[Context]
 
     // Надо забиндить тело запроса в форму.
     yakaUtil.md5Form.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind yaka request: ${formatFormErrors(formWithErrors)}")
         // Скрываемся за страницей 404. Для снижения потока мусора от URL-сканнеров.
-        errorHandler.http404Fut
+        errorHandler.http404ctx(ctx1)
       },
 
       {yReq =>
-
         // Реквест похож на денежный. Сначала можно просто пересчитать md5:
         val yPrice = MPrice(yReq.amount, yReq.currency)
         val expMd5 = yakaUtil.getMd5(yReq, yPrice)
-        val res = if ( expMd5.equalsIgnoreCase(yReq.md5) ) {
-          // Реквест послан от того, кто знает пароль. TODO Проверить данные в реквесте
-          ???
+        val (maRes, res): (MAction, Future[Result]) = {
+          if ( expMd5.equalsIgnoreCase(yReq.md5) ) {
+            // Реквест послан от того, кто знает пароль. TODO Проверить данные в реквесте, пересчитав сумму заказа, и md5.
+            ???
 
-        } else {
-          LOGGER.error(s"$logPrefix yaka req binded, but md5 is invalid:\n $yReq\n calculated = $expMd5 , but provided = ${yReq.md5}")
-          // TODO Записывать в статистику.
-          errorHandler.http404Fut
+          } else {
+            LOGGER.error(s"$logPrefix yaka req binded, but md5 is invalid:\n $yReq\n calculated = $expMd5 , but provided = ${yReq.md5}")
+            // TODO Записывать в статистику.
+            val maErr = MAction(
+              actions = MActionTypes.PayBadReq :: Nil,
+              textNi  = s"$expMd5\nMD5 != $expMd5" :: Nil
+            )
+            maErr -> errorHandler.http404ctx(ctx1)
+          }
         }
 
         // Запустить подготовку статистики. Тут Future[], но в данном случае этот код синхронный O(1).
@@ -116,16 +224,16 @@ class PayYaka(
         val sa0Opt = _logIfHasCookies
         // Записать в статистику результат этой работы
         // Используем mstat для логгирования, чтобы всё стало видно в kibana.
-        val ma1 = MAction(
-          actions = MActionTypes.PayCheck :: Nil
+        val maPc = MAction(
+          actions = MActionTypes.PayCheck :: Nil,
+          nodeId  = PAY_SYS_NODE_ID :: Nil
         )
-        implicit val ctx1 = implicitly[Context]
         userSaOptFut
           .flatMap { userSaOpt1 =>
             val s2 = new statUtil.Stat2 {
               override def statActions = {
                 Lists.prependOpt(sa0Opt) {
-                  ma1 :: Nil
+                  maPc :: maRes :: Nil
                 }
               }
               override def userSaOpt = userSaOpt1
@@ -138,7 +246,7 @@ class PayYaka(
             saveFut
           }
 
-        ???
+        res
       }
     )
   }

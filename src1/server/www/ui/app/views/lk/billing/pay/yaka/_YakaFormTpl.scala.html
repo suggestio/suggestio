@@ -1,0 +1,28 @@
+@(args: mpay.yaka.MYakaFormData)(implicit ctx: Context)
+
+@* Рендер формы, отправляющей юзера в платежку яндекс-кассы. *@
+
+@import ctx.messages
+
+@__input(k: String, v: Any) = {
+  <input type="hidden" name="@k" value="@v"/>
+}
+
+<form method="POST" action="https://demomoney.yandex.ru/eshop.xml">
+
+  @__input("shopId",          args.shopId)
+  @__input("scid",            args.scId)
+  @__input("sum",             args.sumRub)
+  @__input("customerNumber",  args.customerNumber)
+  @for(orderId <- args.orderNumber) {
+    @__input("orderNumber",   orderId)
+  }
+  @for(email <- args.clientEmail) {
+    @__input("cps_email",     email)
+  }
+
+  <input type="submit" value="@messages("Pay")"/>
+
+</form>
+
+

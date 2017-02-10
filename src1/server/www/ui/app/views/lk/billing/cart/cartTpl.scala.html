@@ -14,7 +14,7 @@
 @billingBaseTpl(
   title       = messages("Cart"),
   mnode       = args.mnode,
-  rightCurrEl = BillingRightPanelLinks.RPL_CART,
+  rightCurrEl = Some( BillingRightPanelLinks.RPL_CART ),
   rightAfter  = args.items
     .headOption
     .map { _ => _rightPriceTpl(args.totalPricing, formId = FORM_ID) }

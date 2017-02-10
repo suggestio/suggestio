@@ -1,0 +1,11 @@
+@(mnode: MNode)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для платежки. *@
+
+@import ctx.messages
+@import views.html.lk.billing.billingBaseTpl
+
+@billingBaseTpl(
+  title       = messages("Payment"),
+  mnode       = mnode
+)(content)

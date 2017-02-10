@@ -6,7 +6,7 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 import controllers.routes
-import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.sec.util.ExpireSession
 import models.mproj.ICommonDi
@@ -25,7 +25,9 @@ import models.mproj.ICommonDi
 class IsAuth @Inject() (
                          val csrf               : Csrf,
                          mCommonDi              : ICommonDi
-                       ) {
+                       )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
 
@@ -46,7 +48,7 @@ class IsAuth @Inject() (
   }
 
 
-  trait IsAuthBase extends ActionBuilder[MReq] with IMacroLogs {
+  sealed trait Base extends ActionBuilder[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
@@ -64,27 +66,25 @@ class IsAuth @Inject() (
 
   }
 
-  /** Реализация IsAuth с возможностью задания значения поля obeyReturnPath. */
-  sealed class IsAuthC
-    extends IsAuthBase
+  /** Абстрактная реализация action-builder'а с поддержкой автоматического управления сессией. */
+  sealed class Impl
+    extends Base
     with ExpireSession[MReq]
-    with MacroLogsImpl
 
 
   /** Проверка на залогиненность юзера без CSRF-дейстий. */
-  object IsAuth
-    extends IsAuthC
+  val IsAuth = new Impl
   @inline
   def apply() = IsAuth
 
   /** Проверка на залогиненность юзера с выставлением CSRF-токена. */
   object Get
-    extends IsAuthC
+    extends Impl
     with csrf.Get[MReq]
 
   /** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
   object Post
-    extends IsAuthC
+    extends Impl
     with csrf.Post[MReq]
 
 }

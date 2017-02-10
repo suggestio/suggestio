@@ -192,7 +192,7 @@ trait LkBill2Cart
 
         // Недостаточно бабла на балансах юзера в sio, это нормально. TODO Отправить в платежную систему...
         case r: MCartIdeas.NeedMoney =>
-          ???
+          Redirect( controllers.pay.routes.PayYaka.payForm(r.cart.morder.id.get, onNodeId) )
 
         // Хватило денег на балансах или они не потребовались. Такое бывает в т.ч. после возврата юзера из платежной системы.
         // Ордер был исполнен вместе с его наполнением.

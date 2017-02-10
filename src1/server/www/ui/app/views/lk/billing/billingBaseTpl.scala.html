@@ -1,4 +1,4 @@
-@(title: String, mnode: MNode, rightCurrEl: BillingRightPanelLink, rightAfter: Option[Html] = None
+@(title: String, mnode: MNode, rightCurrEl: Option[BillingRightPanelLink] = None, rightAfter: Option[Html] = None
 )(content: Html)(implicit ctx: Context)
 
 @* Базовый шаблон для шаблонов биллинга в личном кабинете. *@

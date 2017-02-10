@@ -110,12 +110,15 @@ POST /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNodeSubmit(node
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)
 POST /lk/cart/:nodeId                   @controllers.LkBill2.cartSubmit(nodeId)
-GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, page: Int ?= 0, inline: Boolean ?= false)
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
 GET  /lk/bill/pricing/wnd/:nodeId       @controllers.LkBill2._rcvrInfoWnd(nodeId)
 POST /lk/cart/clear/:nodeId             @controllers.LkBill2.cartClear(nodeId, r: Option[String] ?= None)
 POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(itemId: Gid_t, r: String)
+
+## lk pay systems
+GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId: Gid_t, onNodeId: MEsUuId)
+GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 
 ## Принятие приглашения на управления узлом.
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)

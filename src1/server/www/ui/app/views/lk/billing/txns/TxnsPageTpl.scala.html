@@ -11,7 +11,7 @@
 @billingBaseTpl(
   title         = messages("Transactions.history"),
   mnode         = args.mnode,
-  rightCurrEl   = BillingRightPanelLinks.RPL_TRANSACTIONS
+  rightCurrEl   = Some( BillingRightPanelLinks.RPL_TRANSACTIONS )
 ) {
 
   @defining( args.txns.size ) { txnsCount =>

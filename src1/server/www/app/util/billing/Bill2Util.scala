@@ -5,7 +5,6 @@ import java.time.{Duration, OffsetDateTime}
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
-import io.suggest.dt.YmdHelpersJvm
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -45,7 +44,6 @@ class Bill2Util @Inject() (
   mBalances                       : MBalances,
   mTxns                           : MTxns,
   mNodes                          : MNodes,
-  ymdHelpersJvm                   : YmdHelpersJvm,
   val mCommonDi                   : ICommonDi
 )
   extends MacroLogsImpl
@@ -53,15 +51,25 @@ class Bill2Util @Inject() (
 
   import mCommonDi._
   import slick.profile.api._
-  import ymdHelpersJvm.Implicits._
 
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   val CBCA_NODE_ID: String = {
-    configuration
-      .getString("bill.cbca.node.id")
+    val ck = "bill.cbca.node.id"
+    val res = configuration
+      .getString(ck)
       .getOrElse {
-        "-vr-hrgNRd6noyQ3_teu_A"
+        val r = "-vr-hrgNRd6noyQ3_teu_A"
+        LOGGER.debug("CBCA node id defaulted to " + r)
+        r
       }
+    // Проверить в фоне, существует ли узел.
+    for (_ <- mNodesCache.getById(res).map(_.get).failed) {
+      // Что-то пошло не так, надо застрелиться, ругнувшись в логи.
+      LOGGER.error(s"CBCA NODE[$res] IS MISSING! Billing will work wrong, giving up. Check conf.key: $ck")
+      mCommonDi.actorSystem.terminate()
+    }
+    // Вернуть id узла.
+    res
   }
 
   private def _getDaysCountFix(days0: Int) = {
@@ -475,7 +483,7 @@ class Bill2Util @Inject() (
             // Юзеру на балансах не хватает денег по как минимум одной валюте.
             // Вернуть наверх требование сначала доплатить сколько-то недостающих денег.
             DBIO.successful {
-              MCartIdeas.NeedMoney(notEnoughtPrices)
+              MCartIdeas.NeedMoney(order, notEnoughtPrices)
             }
 
           } else {
@@ -870,6 +878,78 @@ class Bill2Util @Inject() (
       zeroPricingFut
     else
       f
+  }
+
+
+  /** Посчитать стоимость одного ордера.
+    * Используется при подведении итогов заказа перед уходом на оплату в платежную систему.
+    *
+    * @param orderId id заказа. Обычно это заказ-корзина.
+    * @return db-экшен со списком цен по валютам на выходе.
+    */
+  def getOrderPrices(orderId: Gid_t): DBIOAction[Seq[MPrice], NoStream, Effect.Read] = {
+    for {
+      pairs <- {
+        mItems.query
+          .filter { i =>
+            i.orderId === orderId
+          }
+          .map { i =>
+            (i.currencyCode, i.amount)
+          }
+          .groupBy(_._1)
+          .map { case (currencyCode, grp) =>
+            (currencyCode, grp.map(_._2).sum)
+          }
+          .result
+      }
+    } yield {
+      val pricesIter = for {
+        (currencyCode, amountOpt) <- pairs.iterator
+        amount                    <- amountOpt
+      } yield {
+        // Пусть будет ошибка, если валюта неизвестна.
+        val currency = MCurrencies.withName(currencyCode)
+        MPrice(amount, currency)
+      }
+      pricesIter.toSeq
+    }
+  }
+
+
+  /** Вычесть из цен остатки по балансам.
+    *
+    * @param prices Цены БЕЗ повторяющихся валют, иначе будет AssertionError.
+    *               См. getOrderPrices() для получения подходящего списка цен.
+    * @param balsMap Карта балансов по валютам.
+    *                См. request.user.mBalancesFut и MBalances.balances2curMap() для получения подходящей карты остатоков по валютам.
+    * @return Ценники: сколько надо доплатить за вычетом остатков по балансам.
+    */
+  def pricesMinusBalances(prices: Seq[MPrice], balsMap: Map[MCurrency, MBalance]): Seq[MPrice] = {
+    assert(
+      prices.iterator.map(_.currency).toSet.size == prices.size,
+      s"Prices contains duplicates by currency: $prices"
+    )
+
+    prices
+      .flatMap { op =>
+        // Поискать в карте балансов остатки по текущей валюте.
+        balsMap
+          .get(op.currency)
+          .filter(_.price.amount > 0)
+          .fold[Option[MPrice]] (Some(op)) { curBal =>
+          // Есть какие-то деньги на валютном балансе юзера. Посчитать остаток.
+          val needAmount = op.amount - curBal.price.amount
+          if (needAmount > 0) {
+            val op2 = op.withAmount(
+              op.amount - curBal.price.amount
+            )
+            Some(op2)
+          } else {
+            None
+          }
+        }
+      }
   }
 
 }

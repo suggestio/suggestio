@@ -7,11 +7,11 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT}
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.logs.MacroLogsImpl
-import org.elasticsearch.client.Client
+import models.mproj.ICommonDi
 import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json.{JsBoolean, JsString}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -26,12 +26,14 @@ import scala.concurrent.{ExecutionContext, Future}
 class MPersonIdents @Inject() (
   emailPwIdents     : EmailPwIdents,
   emailActivations  : EmailActivations,
-  mExtIdents        : MExtIdents
+  mExtIdents        : MExtIdents,
+  mCommonDi         : ICommonDi
 )
   extends MacroLogsImpl
 {
 
   import LOGGER._
+  import mCommonDi.{ec, esClient}
 
   def IDENT_MODELS = List[EsModelStaticIdentT](emailPwIdents, mExtIdents)
   def MODELS: List[EsModelStaticIdentT] = emailActivations :: IDENT_MODELS
@@ -43,12 +45,12 @@ class MPersonIdents @Inject() (
    * @param email Адрес электронной почты, который является _id в ident-моделях.
    * @return Список абстрактных результатов в неопределённом порядке.
    */
-  def findIdentsByEmail(email: String)(implicit ec: ExecutionContext, client: Client): Future[List[MPersonIdent]] = {
+  def findIdentsByEmail(email: String): Future[List[MPersonIdent]] = {
     val identModels = IDENT_MODELS
     val identModelTypes = identModels.map(_.ES_TYPE_NAME)
     val iq = QueryBuilders.idsQuery(identModelTypes : _*).addIds(email)
     val indices = identModels.map(_.ES_INDEX_NAME).distinct
-    client.prepareSearch(indices : _*)
+    esClient.prepareSearch(indices : _*)
       .setQuery(iq)
       .execute()
       .map { searchResp =>
@@ -77,12 +79,12 @@ class MPersonIdents @Inject() (
     * @param personId id юзера
     * @return Список email'ов юзера в неопределённом порядке, возможно даже с дубликатами.
     */
-  def findAllEmails(personId: String)(implicit ec: ExecutionContext, client: Client): Future[Seq[String]] = {
+  def findAllEmails(personId: String): Future[Seq[String]] = {
     val personIdQuery = QueryBuilders.termQuery(PERSON_ID_ESFN, personId)
     val identModels = IDENT_MODELS
     val identTypes = identModels.map(_.ES_TYPE_NAME)
     val indices = identModels.map(_.ES_INDEX_NAME).distinct
-    client.prepareSearch(indices : _*)
+    esClient.prepareSearch(indices : _*)
       .setTypes(identTypes : _*)
       .setQuery(personIdQuery)
       // TODO ограничить возвращаемые поля только необходимыми
