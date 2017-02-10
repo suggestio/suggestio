@@ -39,7 +39,7 @@ class MdrUtil @Inject() (
           .instanceOf[MSuperUsers]
           .SU_EMAILS
       } { notifyEmails =>
-        LOGGER.trace("Successfully aquired moderators emails from cfg.")
+        LOGGER.trace(s"Successfully aquired moderators emails from $confKey")
         import scala.collection.JavaConversions._
         notifyEmails
       }
@@ -90,7 +90,7 @@ class MdrUtil @Inject() (
   def sendMdrNotify(): Unit = {
     mailerWrapper
       .instance
-      .setFrom("mdr@suggest.io")
+      .setFrom("no-reply@suggest.io")
       .setSubject("Требуется модерация")
       .setRecipients( MDR_NOTIFY_EMAILS: _* )
       .setHtml( _mdrNeededEmailTpl().body )

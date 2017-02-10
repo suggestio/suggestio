@@ -31,6 +31,7 @@ class CanPayOrder @Inject() (
 
   import mCommonDi._
 
+
   /** Ядро логики текущего ACL-модуля в этом трейте. */
   sealed trait Base extends ActionBuilder[MNodeOrderReq] with InitUserCmds {
 

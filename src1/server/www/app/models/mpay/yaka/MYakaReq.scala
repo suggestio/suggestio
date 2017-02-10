@@ -1,6 +1,7 @@
 package models.mpay.yaka
 
 import io.suggest.bill.MCurrency
+import io.suggest.mbill2.m.gid.Gid_t
 
 /**
   * Suggest.io
@@ -58,6 +59,7 @@ case class MYakaReq(
                      override val shopId          : Long,
                      override val invoiceId       : Long,
                      override val personId        : String,
-                     override val md5             : String
+                     override val md5             : String,
+                     orderId                      : Gid_t
                    )
   extends IYakaReq

@@ -429,14 +429,14 @@ class MarketAdv @Inject() (
           personContract    <- personContractFut
 
           // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
-          (billRes, isMdrNotifyNeeded) <- {
+          billRes <- {
             val dbAction = for {
               cartOrder  <- bill2Util.ensureCart(
                 contractId  = personContract.mc.id.get,
                 status0     = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
               )
 
-              mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
+              //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
               itemsSaved <- {
                 val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
@@ -444,16 +444,14 @@ class MarketAdv @Inject() (
               }
 
             } yield {
-              MOrderWithItems(cartOrder, itemsSaved) -> mdrNotifyNeeded
+              MOrderWithItems(cartOrder, itemsSaved)
             }
             import slick.profile.api._
             slick.db.run( dbAction.transactionally )
           }
 
         } yield {
-          LOGGER.debug(s"$logPrefix Successfully created items, mdrNotifyNeeded=$isMdrNotifyNeeded, res = $billRes")
-
-          mdrUtil.maybeSendMdrNotify(isMdrNotifyNeeded)
+          LOGGER.debug(s"$logPrefix Successfully created items, res = $billRes")
 
           // Всё сделано, отредиректить юзера
           if (!isSuFree) {

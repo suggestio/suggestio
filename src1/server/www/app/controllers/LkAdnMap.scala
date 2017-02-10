@@ -155,7 +155,7 @@ class LkAdnMap @Inject() (
           e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
 
           // Добавить в корзину размещение узла на карте
-          (itemsAdded, isMdrNotifyNeeded) <- {
+          itemsAdded <- {
             val dbAction = for {
               // Инициализировать корзину, если требуется...
               cart    <- bill2Util.ensureCart(
@@ -164,7 +164,7 @@ class LkAdnMap @Inject() (
               )
 
               // Узнать, потребуется ли отправлять письмо модераторам по итогам работы...
-              mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
+              //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
               // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
               addRes <- lkAdnMapBillUtil.addToOrder(
@@ -174,7 +174,7 @@ class LkAdnMap @Inject() (
                 status  = status
               )
             } yield {
-              (addRes, mdrNotifyNeeded)
+              addRes
             }
             import slick.profile.api._
             slick.db.run( dbAction.transactionally )
@@ -186,8 +186,6 @@ class LkAdnMap @Inject() (
             val n = "\n "
             s"$logPrefix Added ADN-map into cart ${e.mc.id.orNull}, su=$isSuFree: ${itemsAdded.mkString(n,n,"")}"
           }
-
-          mdrUtil.maybeSendMdrNotify( isMdrNotifyNeeded )
 
           val rCall = routes.LkAdnMap.forNode(esNodeId)
           // Рендерить HTTP-ответ.

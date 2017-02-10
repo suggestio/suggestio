@@ -103,7 +103,8 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
       "shopId"                    -> shopIdM,
       "invoiceId"                 -> invoiceIdM,
       "customerNumber"            -> personIdM,
-      "md5"                       -> md5M
+      "md5"                       -> md5M,
+      "orderNumber"               -> longNumber
     )
     { MYakaReq.apply }
     { MYakaReq.unapply }

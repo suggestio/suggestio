@@ -952,6 +952,34 @@ class Bill2Util @Inject() (
       }
   }
 
+
+  /**
+    * Вычислить стоимости оплаты заказа в валютах заказа.
+    *
+    * @param orderId id заказа.
+    * @param mBalancesFut Балансы из request.user.mBalancesFut
+    * @return Фьючерс с ценниками по валютам на оплату.
+    */
+  def getPayPrices(orderId: Gid_t, mBalancesFut: Future[Seq[MBalance]]): Future[Seq[MPrice]] = {
+     // Рассчитать стоимость текущих item'ов текущего заказа.
+    val orderPricesFut = slick.db.run {
+      getOrderPrices(orderId)
+    }
+
+    // Узнать, сколько остатков денег у юзера на балансах. Сгруппировать по валютам.
+    val balsMapFut = for (ubs <- mBalancesFut) yield {
+      mBalances.balances2curMap(ubs)
+    }
+
+    // Посчитать, сколько юзеру надо доплатить за вычетом остатков по балансам.
+    for {
+      orderPrices   <- orderPricesFut
+      ubsMap        <- balsMapFut
+    } yield {
+      pricesMinusBalances(orderPrices, ubsMap)
+    }
+  }
+
 }
 
 

@@ -302,7 +302,7 @@ class LkAdvGeo @Inject() (
           abc         <- abcFut
 
           // Произвести добавление товаров в корзину.
-          (itemsCart, itemsAdded, isMdrNotifyNeeded) <- {
+          (itemsCart, itemsAdded) <- {
             // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
             val dbAction = for {
               // Найти/создать корзину
@@ -312,7 +312,7 @@ class LkAdvGeo @Inject() (
               )
 
               // Узнать, потребуется ли послать письмецо модераторам после добавления item'ов.
-              mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
+              //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
               // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
               addRes  <- advGeoBillUtil.addToOrder(
@@ -321,7 +321,7 @@ class LkAdvGeo @Inject() (
                 abc         = abc
               )
             } yield {
-              (cart, addRes, mdrNotifyNeeded)
+              (cart, addRes)
             }
             // Запустить экшен добавления в корзину на исполнение.
             import slick.profile.api._
@@ -330,9 +330,6 @@ class LkAdvGeo @Inject() (
 
         } yield {
           LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.mc.id.orNull} with item status '$status'.")
-
-          // Разослать письмецо модераторам о необходимости начать работу над модерацией
-          mdrUtil.maybeSendMdrNotify(isMdrNotifyNeeded)
 
           val rCall = routes.LkAdvGeo.forAd(adId)
           val retCall = if (!isSuFree) {
