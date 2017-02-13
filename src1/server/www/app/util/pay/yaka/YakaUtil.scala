@@ -36,6 +36,15 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     demoScId
   }
 
+
+  object ErrorCodes {
+    def NO_ERROR    = 0
+    def MD5_ERROR   = 1
+    def ORDER_ERROR = 100
+    def BAD_REQUEST = 200
+  }
+
+
   /** Пароль для подписывания данных при MD5-режиме. Задаётся только в конфиге. */
   private val YAKA_MD5_PASSWORD: Option[String] = {
     val ck = "sio.pay.yaka.password"

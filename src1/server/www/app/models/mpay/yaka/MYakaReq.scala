@@ -1,6 +1,6 @@
 package models.mpay.yaka
 
-import io.suggest.bill.MCurrency
+import io.suggest.bill.{IPrice, MCurrency}
 import io.suggest.mbill2.m.gid.Gid_t
 
 /**
@@ -12,16 +12,10 @@ import io.suggest.mbill2.m.gid.Gid_t
 
 
 /** Интерфейс с подписанными полями яндекс-кассы. */
-trait IYakaReqSigned {
+trait IYakaReqSigned extends IPrice {
 
   /** Экшен: чек, aviso. */
   val action          : MYakaAction
-
-  /** orderSumAmount, объем денег в рамках транзакции. */
-  val amount          : Double
-
-  /** orderSumCurrencyPaycash, валюта транзакции. */
-  val currency        : MCurrency
 
   /** id банка в системе яндекс-кассы. */
   val bankId          : Int

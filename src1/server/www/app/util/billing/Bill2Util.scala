@@ -3,7 +3,7 @@ package util.billing
 import java.time.{Duration, OffsetDateTime}
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.bill.{MCurrencies, MCurrency, MGetPriceResp, MPrice}
+import io.suggest.bill._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
@@ -416,7 +416,7 @@ class Bill2Util @Inject() (
         balances     <- mBalances.findByContractId( order.morder.contractId ).forUpdate
 
         // Строим карту полученных балансов юзера для удобства работы:
-        balancesMap = mBalances.balances2curMap(balances)
+        balancesMap = MCurrencies.hardMapByCurrency(balances)
 
         // Считаем полную стоимость заказа-корзины.
         totalPrices = items2pricesIter(order.mitems).toSeq
@@ -510,7 +510,7 @@ class Bill2Util @Inject() (
     val dba = for {
       // TODO Можно сразу находить баланс в нужной валюте или же создавать его...
       balances    <- mBalances.findByContractId(contractId)
-      balancesMap =  mBalances.balances2curMap(balances)
+      balancesMap =  MCurrencies.hardMapByCurrency(balances)
       txn         <- increaseBalance(
         orderIdOpt      = None,
         rcvrContractId  = contractId,
@@ -971,7 +971,7 @@ class Bill2Util @Inject() (
 
     // Узнать, сколько остатков денег у юзера на балансах. Сгруппировать по валютам.
     val balsMapFut = for (ubs <- mBalancesFut) yield {
-      mBalances.balances2curMap(ubs)
+      MCurrencies.hardMapByCurrency(ubs)
     }
 
     // Посчитать, сколько юзеру надо доплатить за вычетом остатков по балансам.
@@ -991,38 +991,82 @@ class Bill2Util @Inject() (
     * но хочет проверить присланные юзером данные по оплачиваемому заказу.
     * S.io проверяет ордер и "холдит" его, чтобы защититься от изменений до окончания оплаты.
     *
-    * @param orderId Заявленный платежной системой order_id.
-    * @param validContractId Действительный contract_id юзера.
-    * @param assertPricesF Функция проверки вычисленных цен.
+    * @param orderId Заявленный платежной системой order_id. Ордер будет проверен на связь с контрактом.
+    * @param validContractId Действительный contract_id юзера, выверенный по максимуму.
+    * @param claimedOrderPrices Цены заказа по мнению платежной системы.
+    *                           Map: валюта -> цена.
     * @return DB-экшен.
     */
-  def checkHoldOrder(orderId: Gid_t, validContractId: Gid_t)
-                    (assertPricesF: Seq[MPrice] => Unit): DBIOAction[_, NoStream, RWT] = {
+  def checkHoldOrder(orderId: Gid_t, validContractId: Gid_t,
+                     claimedOrderPrices: Map[MCurrency, IPrice]): DBIOAction[_, NoStream, RWT] = {
+    lazy val logPrefix = s"checkHoldOrder(o=$orderId,c=$validContractId):"
+
     val a = for {
 
       // Прочитать запрошенный ордер.
       mOrderOpt <- mOrders.getById(orderId).forUpdate
+
       // Проверить, что ордер существет, что относится к контракту юзера и доступен для оплаты.
       mOrder = mOrderOpt.get
-      if mOrder.contractId == validContractId && mOrder.status.canGoToPaySys
+      if {
+        val isContractOk = mOrder.contractId == validContractId
+        val isOk = isContractOk && mOrder.status.canGoToPaySys
+        if (!isOk)
+          LOGGER.error(s"Order $orderId exists, but not for paying.\n Contract ok? $isContractOk\nAll else ok? $isOk\n$mOrder")
+        isOk
+      }
 
       // Прочитать балансы юзера по контракту, завернув их в мапу по валютам.
       uBals <- mBalances.findByContractId( validContractId )
-      uBalsMap = mBalances.balances2curMap(uBals)
+      uBalsMap = MCurrencies.hardMapByCurrency( uBals )
 
       // Посчитать стоимость item'ов в ордере.
       orderPrices <- getOrderPrices(orderId)
 
       // Вычислить итоговые стоимости заказа в валютах.
       payPrices = pricesMinusBalances(orderPrices, uBalsMap)
-      // Убедится, что всё ок с ценником.
-      _ = assertPricesF(payPrices)
+
+      // Убедится, что всё ок с ценами, что они совпадают с заявленными платежной системой.
+      if {
+        payPrices.forall { payPrice =>
+          val claimedPrice = claimedOrderPrices( payPrice.currency )
+          // Double сравнивать -- дело неблагодатное. Поэтому сравниваем в рамках погрешности:
+          // 1 копейка или 0.01 рубля -- это предел, после которого цены не совпадают.
+          val maxDiff = Math.pow(10, -payPrice.currency.exponent)
+          val matches = Math.abs(payPrice.amount - claimedPrice.amount) < maxDiff
+          if (!matches)
+            LOGGER.error(s"$logPrefix Claimed price = ${claimedPrice.amount} ${claimedPrice.currency}\n ReCalculated price = $payPrice\n They are NOT match.")
+          matches
+        }
+      }
+
+      // Цены и ордер считаются успешно выверенными.
+      // Нужно захолдить ордер, если он ещё не захолжен.
+      mOrder2 <- {
+        val holdStatus = MOrderStatuses.Hold
+        if (mOrder.status == holdStatus) {
+          LOGGER.debug(s"$logPrefix Not holding order[$orderId], because already hold since ${mOrder.dateStatus}: $mOrder")
+          DBIO.successful(mOrder)
+        } else {
+          // Ордер не является замороженным. Заменяем ему статус.
+          val o2 = mOrder.withStatus( holdStatus )
+          for {
+            rowsUpdated <- mOrders.saveStatus( o2 )
+            if rowsUpdated == 1
+          } yield {
+            LOGGER.debug(s"$logPrefix Order[$orderId] marked as HOLD.")
+            o2
+          }
+        }
+      }
 
     } yield {
-      ???
+      // Вернуть что-нибудь...
+      mOrder2
     }
+
+    // Транзакция обязательна, т.к. тут вопрос в безопасности: иначе возможно внезапное изменение ордера в рамках race-conditions.
     a.transactionally
-    ???
   }
 
 }

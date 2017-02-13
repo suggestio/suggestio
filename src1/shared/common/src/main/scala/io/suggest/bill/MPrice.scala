@@ -63,6 +63,18 @@ object MPrice {
 
 }
 
+/** Интерфейс для поля amount Double. */
+trait IAmount {
+  def amount: Amount_t
+}
+
+/** Интерфейс к базовым полям моделей, котрорые описывают или включают в себя описание цены/стоимости.
+  * Для этого требуется только пара полей: amount и currency.
+  */
+trait IPrice
+  extends IAmount
+  with IMCurrency
+
 
 /**
   * Инстанс данных по цене.
@@ -76,7 +88,7 @@ case class MPrice(
                    currency       : MCurrency,
                    amountStrOpt   : Option[String] = None
                  )
-  extends IMCurrency
+  extends IPrice
 {
 
   def withAmount(value2: Amount_t) = copy(amount = value2, amountStrOpt = None)

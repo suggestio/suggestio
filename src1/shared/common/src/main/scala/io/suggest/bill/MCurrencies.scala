@@ -100,6 +100,19 @@ object MCurrencies extends Enum[MCurrency] {
 
   def withIso4217(code: Int) = values.find(_.iso4217 == code)
 
+
+  /** Список моделей "цен" (или чего-то ещё) превращаем в карту цен по валютами.
+    * Если валюты повторяются, то будет неправильная мапа на выходе.
+    *
+    * @param prices Исходные валютные модели.
+    * @return Карта исходных моделей по валютам БЕЗ учёта дубликатов.
+    */
+  def hardMapByCurrency[T <: IMCurrency](prices: TraversableOnce[T]): Map[MCurrency, T] = {
+    prices.toIterator
+      .map { p => p.currency -> p }
+      .toMap
+  }
+
 }
 
 

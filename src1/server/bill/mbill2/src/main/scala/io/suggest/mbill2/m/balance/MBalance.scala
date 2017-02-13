@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.balance
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.bill.{Amount_t, MCurrency, MPrice}
+import io.suggest.bill.{Amount_t, IMCurrency, MCurrency, MPrice}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
@@ -140,14 +140,6 @@ class MBalances @Inject() (
     }
   }
 
-  /** Приведение списка балансов к карте оных по валютам. */
-  def balances2curMap(balances: TraversableOnce[MBalance]): Map[MCurrency, MBalance] = {
-    balances
-      .toIterator
-      .map { b => b.price.currency -> b }
-      .toMap
-  }
-
 
   /**
     * Поиск по id контракта и валюте.
@@ -193,10 +185,13 @@ case class MBalance(
   id          : Option[Gid_t]     = None
 )
   extends IGid
+  with IMCurrency
 {
 
   def low = lowOpt.getOrElse( 0.0 )
 
   def withPrice(price2: MPrice) = copy(price = price2)
+
+  override def currency = price.currency
 
 }

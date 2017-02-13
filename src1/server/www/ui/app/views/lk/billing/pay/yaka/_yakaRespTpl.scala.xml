@@ -1,0 +1,14 @@
+@(yakaAction: mpay.yaka.MYakaAction, errCode: Int, shopId: Long, invoiceId: Option[Long],
+  now: java.time.OffsetDateTime = java.time.OffsetDateTime.now, errMsg: Option[String] = None)
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<@(yakaAction)Response
+  performedDatetime="@now"
+  code="@errCode"
+  invoiceId="@invoiceId"
+  shopId="@shopId"
+  @for(msg <- errMsg) {
+    message="@errMsg"
+  }
+  />

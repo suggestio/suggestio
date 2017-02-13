@@ -118,6 +118,7 @@ POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(item
 
 ## lk pay systems
 GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId: Gid_t, onNodeId: MEsUuId)
+POST /pay/yaka/check                    @controllers.pay.PayYaka.check
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 
 ## Принятие приглашения на управления узлом.

@@ -2,7 +2,7 @@ package controllers.pay
 
 import com.google.inject.Inject
 import controllers.SioControllerImpl
-import io.suggest.bill.MPrice
+import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalances
@@ -18,12 +18,14 @@ import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.MPersonIdents
 import play.api.mvc.Result
+import play.twirl.api.Xml
 import util.acl.{CanPayOrder, MaybeAuth}
 import util.billing.Bill2Util
 import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
 import views.html.lk.billing.pay._
 import views.html.lk.billing.pay.yaka._
+import views.xml.lk.billing.pay.yaka._yakaRespTpl
 
 import scala.concurrent.Future
 
@@ -169,132 +171,145 @@ class PayYaka @Inject() (
   def check = maybeAuth().async { implicit request =>
     lazy val logPrefix = s"check[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix ${request.remoteAddress} ${request.body}")
-    implicit val ctx1 = implicitly[Context]
+
+    val yakaAction = MYakaActions.Check
+    val shopId = yakaUtil.SHOP_ID
 
     // Надо забиндить тело запроса в форму.
     yakaUtil.md5Form.bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind yaka request: ${formatFormErrors(formWithErrors)}")
-        // Скрываемся за страницей 404. Для снижения потока мусора от URL-сканнеров.
-        errorHandler.http404ctx(ctx1)
+        val xml = _yakaRespTpl(
+          yakaAction = yakaAction,
+          errCode   = yakaUtil.ErrorCodes.BAD_REQUEST,
+          shopId    = shopId,
+          invoiceId = None
+        )
+        Ok(xml)
       },
 
       {yReq =>
         // Реквест похож на денежный. Сначала можно просто пересчитать md5:
         val yPrice = MPrice(yReq.amount, yReq.currency)
         val expMd5 = yakaUtil.getMd5(yReq, yPrice)
-        val (maRes, res): (MAction, Future[Result]) = {
+        val resDataFut: Future[(List[MAction], Xml)] = {
           // Проверяем shopId и md5 одновременно, чтобы по-лучше идентифицировать реквест.
           if ( expMd5.equalsIgnoreCase(yReq.md5) &&
-            yReq.shopId == yakaUtil.SC_ID &&
-            yReq.action == MYakaActions.Check
+            yReq.shopId == shopId &&
+            yReq.action == yakaAction
           ) {
-            // Реквест послан от того, кто знает пароль, shopId. TODO Проверить данные в реквесте, пересчитав сумму заказа/юзера.
-            // Пересчитываем ценник...
-            val payPriceFut = _getPayPrice(yReq.orderId)
 
             // Проверяем связь юзера и ордера: Узнать id контракта юзера.
             val usrNodeOptFut = mNodesCache.getById(yReq.personId)
-            // Прочитать ордер из БД, это понадобиться на следующих шагах:
-            val yReqOrderOptFut = slick.db.run {
-              mOrders.getById( yReq.orderId )
+
+            // Собрать stat-экшен для записи текущего юзера.
+            val statMas0: List[MAction] = {
+              MAction(
+                actions = MActionTypes.Person :: Nil,
+                nodeId  = yReq.personId :: Nil
+              ) :: Nil
             }
 
-            // Узнать id контракта.
-            val yReqContractIdOptFut = for (yReqOrderOpt <- yReqOrderOptFut) yield {
-              LOGGER.trace(s"$logPrefix YaKa req order: $yReqOrderOpt")
-              yReqOrderOpt.map(_.contractId)
-            }
+            val resFut = for {
+              // Дождаться получения ноды обрабатываемого юзера.
+              usrNodeOpt <- usrNodeOptFut
 
-            // Ордер должен иметь открытый для начала платежа статус.
-            val isOrderStatusOkFut: Future[Boolean] = for (yReqOrderOpt <- yReqOrderOptFut) yield {
-              yReqOrderOpt.exists(_.status.canGoToPaySys)
-            }
+              // Проверить ордер, цену, захолдить ордер если требуется.
+              _ <- slick.db.run {
+                bill2Util.checkHoldOrder(
+                  orderId             = yReq.orderId,
+                  validContractId     = usrNodeOpt.get.billing.contractId.get,
+                  claimedOrderPrices  = MCurrencies.hardMapByCurrency( yReq :: Nil )
+                )
+              }
 
-            // Объединяем все предыдущие измышления в единственный ответ.
-            val isOrderOkExFut = for {
-              isOrderStatusOk         <- isOrderStatusOkFut
-              if isOrderStatusOk
-              usrNodeOpt              <- usrNodeOptFut
-              usrNode = usrNodeOpt.get
-              yReqOrderContractIdOpt  <- yReqContractIdOptFut
             } yield {
-              // Тут неленивые вычисления, но маловерятно, что вторая часть выражения не будет вычислена.
-              yReqOrderContractIdOpt.exists { yReqOrderContractId =>
-                usrNode.billing.contractId.contains(yReqOrderContractId)
-              }
-            }
-            val isOrderOkFut = isOrderOkExFut.recover { case ex: NoSuchElementException =>
-              LOGGER.trace(s"$logPrefix isOrderOk throwed NSEE => false", ex)
-              false
-            }
-
-            // Проверяем стоимость размещения.
-            val isPayPriceOkFut = for (payPrice <- payPriceFut) yield {
-              // Сопоставить валюты...
-              val matches = payPrice.currency == yReq.currency && {
-                // Double сравнивать -- дело неблагодатное. Поэтому сравниваем в рамках погрешности: а это - 1 копейка
-                val maxDiff = Math.pow(10, -payPrice.currency.exponent)
-                Math.abs(payPrice.amount - yReq.amount) < maxDiff
-              }
-              LOGGER.trace(s"$logPrefix YakaReq price = ${yReq.amount} ${yReq.currency}\n ReCalculated price = $payPrice\n Prices matching? $matches")
-              matches
+              // Всё ок. Вернуть 200 + XML без ошибок.
+              val xml = _yakaRespTpl(
+                yakaAction = yakaAction,
+                errCode    = 0,
+                invoiceId  = Some( yReq.invoiceId ),
+                shopId     = shopId
+              )
+              val checkMa = MAction(
+                actions = MActionTypes.Success :: Nil
+              )
+              (checkMa :: statMas0, xml)
             }
 
-            for {
-              isOrderOk     <- isOrderOkFut
-              isPayPriceOk  <- isPayPriceOkFut
-            } yield {
-              if (isOrderOk && isPayPriceOk) {
-                // Всё ок, TODO холдим ордер, возращаем 200 + XML
-                ???
-              } else {
-                //BadRequest("invalid data")
-                ???
-              }
+            resFut.recover { case ex: Throwable =>
+              LOGGER.error(s"$logPrefix billing failed to check current order.", ex)
+              // Вернуть ошибку 100, понятную для яндекс-кассы:
+              val xml = _yakaRespTpl(
+                yakaAction  = yakaAction,
+                errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
+                invoiceId   = Some( yReq.invoiceId ),
+                shopId      = shopId,
+                errMsg      = Some( ex.getMessage )
+              )
+              val statMas2 = MAction(
+                actions = MActionTypes.PayBadOrder :: Nil,
+                textNi  = ex.toString :: Nil
+              ) :: statMas0
+              (statMas2, xml)
             }
-            ???   // TODO MAction -> Future[Result]
 
           } else {
             LOGGER.error(s"$logPrefix yaka req binded, but md5 or shopId is invalid:\n $yReq\n calculated = $expMd5 , but provided = ${yReq.md5} shopId=${yakaUtil.SHOP_ID}")
-            // TODO Записывать в статистику.
+            // Записывать в статистику.
             val maErr = MAction(
               actions = MActionTypes.PayBadReq :: Nil,
               textNi  = s"$expMd5\nMD5 != $expMd5" :: Nil
             )
-            maErr -> errorHandler.http404ctx(ctx1)
+            val xml = _yakaRespTpl(
+              yakaAction  = yakaAction,
+              errCode     = yakaUtil.ErrorCodes.MD5_ERROR,
+              invoiceId   = Some( yReq.invoiceId ),
+              shopId      = shopId
+            )
+            val statMas2 = maErr :: Nil
+            Future.successful((statMas2, xml))
           }
         }
 
         // Запустить подготовку статистики. Тут Future[], но в данном случае этот код синхронный O(1).
         val userSaOptFut = statUtil.userSaOptFutFromRequest()
 
-        val sa0Opt = _logIfHasCookies
-        // Записать в статистику результат этой работы
-        // Используем mstat для логгирования, чтобы всё стало видно в kibana.
-        val maPc = MAction(
-          actions = MActionTypes.PayCheck :: Nil,
-          nodeId  = PAY_SYS_NODE_ID :: Nil
-        )
-        userSaOptFut
-          .flatMap { userSaOpt1 =>
+        for {
+          (statsMas, res) <- resDataFut
+          userSaOpt1      <- userSaOptFut
+        } yield {
+
+          // В фоне завершаем работу со статистикой.
+          // Future{} -- чтобы не задерживаться, надежно изолировав работу платежки от работы статистики, не всегда безглючной.
+          Future {
+            val sa0Opt = _logIfHasCookies
+            // Записать в статистику результат этой работы
+            // Используем mstat для логгирования, чтобы всё стало видно в kibana.
+            val maPc = MAction(
+              actions = MActionTypes.PayCheck :: Nil,
+              nodeId = PAY_SYS_NODE_ID :: Nil,
+              textNi = yReq.toString :: Nil
+            )
+            implicit val ctx1 = implicitly[Context]
             val s2 = new statUtil.Stat2 {
               override def statActions = {
                 Lists.prependOpt(sa0Opt) {
-                  maPc :: maRes :: Nil
+                  maPc :: statsMas
                 }
               }
               override def userSaOpt = userSaOpt1
               override def ctx = ctx1
             }
-            val saveFut = statUtil.saveStat(s2)
-            saveFut.onFailure { case ex: Throwable =>
-              LOGGER.error(s"$logPrefix Unable to save stat $s2", ex)
-            }
-            saveFut
+            statUtil.saveStat(s2)
+              .onFailure { case ex: Throwable =>
+                LOGGER.error(s"$logPrefix Unable to save stat $s2", ex)
+              }
           }
 
-        res
+          // Вернуть XML-ответ яндекс-кассе. Тут всегда 200, судя по докам.
+          Ok(res)
+        }
       }
     )
   }
