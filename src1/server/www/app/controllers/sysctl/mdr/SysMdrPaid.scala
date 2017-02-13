@@ -4,7 +4,6 @@ import controllers.routes
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.IMItem
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
-import io.suggest.mbill2.util.effect.RW
 import models._
 import models.mctx.Context
 import models.mdr._
@@ -208,7 +207,7 @@ trait SysMdrPaid
 
   /** Обработка пачек item'ов унифицирована. */
   private def _processItemsForAd[Res_t <: IMItem](nodeId: String, q: sysMdrUtil.Q_t)
-                                                 (f: Gid_t => DBIOAction[Res_t, NoStream, RW]): Future[Result] = {
+                                                 (f: Gid_t => DBIOAction[Res_t, NoStream, _]): Future[Result] = {
     lazy val logPrefix = s"_processItemsForAd($nodeId ${System.currentTimeMillis}):"
     for {
       saveRes <- sysMdrUtil._processItemsForAd(nodeId, q)(f)

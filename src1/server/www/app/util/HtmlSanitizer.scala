@@ -20,19 +20,22 @@ object HtmlSanitizer {
     .toFactory
 
   /** Из писем юзеров нужно стрипать всё кроме текста, переносов строк и ссылок. */
-  val supportMsgPolicy = new HtmlPolicyBuilder()
+  lazy val supportMsgPolicy = new HtmlPolicyBuilder()
     .allowElements("br", "a")
     .allowAttributes("href", "target").onElements("a")
     .toFactory
 
   /** Из оформления стрипать html, оставляя только базовое форматирование. */
   val textFmtPolicy =  new HtmlPolicyBuilder()
-    .allowCommonBlockElements()
+    // 2017.feb.17: Тут был вызов allowCommonBlockElements(), который добавлял h1..h6 теги,
+    // Это приводило к проблемам с копипастингом текста с других страниц: например h1 выставлял
+    // font-weight по дефолту в bold, тихо ломая рендер всех шрифтов в описании к карточкам.
+    // При этом в tinyMCE нельзя было избавиться от этого. Пока просто запрещаем все h#-теги.
+    .allowElements("p", "div", "ul", "ol", "li", "blockquote", "a")
     .allowAttributes("style").onElements("span", "p", "div")
     .requireRelNofollowOnLinks()
     .allowUrlProtocols("http", "https")
     .allowCommonInlineFormattingElements()
-    .allowElements("a")
     .allowAttributes("href", "target").onElements("a")
     .toFactory
 

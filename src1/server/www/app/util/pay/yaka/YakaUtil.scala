@@ -4,7 +4,7 @@ import models.mpay.yaka.{IYakaReqSigned, MYakaAction, MYakaActions, MYakaReq}
 import play.api.data._
 import Forms._
 import com.google.inject.Inject
-import io.suggest.bill.MPrice
+import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.text.util.TextHashUtil
@@ -127,5 +127,36 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     DigestUtils.md5Hex(str)
   }
 
+
+  /**
+    * Проверить собранные биллингом цены на предмет возможности оплаты такого ордера через яндекс-кассу.
+    *
+    * @param payPrices Собранные цены в валютах. По идее тут только одна цена в одной валюте.
+    * @return Инстанс MPrice с ценником.
+    *         Exception, если хоть одна из проверок не пройдена.
+    */
+  def assertPricesForPay(payPrices: Seq[MPrice]): MPrice = {
+    lazy val logPrefix = s"_getPayPrice():"
+    val ppsSize = payPrices.length
+      if (ppsSize == 0) {
+        // Нечего платить. По идее, деньги должны были списаться на предыдущем шаге биллинга.
+        throw new IllegalStateException(s"$logPrefix Nothing to pay remotely via yaka. User reserve are enought?")
+
+      } else if (ppsSize == 1) {
+        val pp = payPrices.head
+        if (pp.currency == MCurrencies.RUB) {
+          // Цена в одной единственной валюте, которая поддерживается яндекс-кассой. Вернуть её наверх.
+          pp
+
+        } else {
+          // Какая-то валюта, которая не поддерживается яндекс-кассой.
+          throw new IllegalArgumentException(s"$logPrefix Yaka unsupported currency: ${pp.currency}. Price = $pp")
+        }
+
+      } else {
+        // Сразу несколько валют. Не поддерживается яндекс.кассой.
+        throw new UnsupportedOperationException(s"$logPrefix too many currencies need to pay, but yaka supports only RUB:\n$payPrices")
+      }
+  }
 
 }

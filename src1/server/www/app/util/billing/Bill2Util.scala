@@ -221,14 +221,16 @@ class Bill2Util @Inject() (
   }
 
   /** Найти корзину и очистить её. */
-  def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RW] = {
-    for {
+  def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RWT] = {
+    val a = for {
       cartOrderOpt    <- getLastOrder(contractId, MOrderStatuses.Draft)
       cartOrderIdOpt  = cartOrderOpt.flatMap(_.id)
       itemsDeleted    <- maybeDeleteOrder( cartOrderIdOpt )
     } yield {
       itemsDeleted
     }
+    // Явно требуем транзакцию, чтобы избежать смены состояния items/orders во время обработки.
+    a.transactionally
   }
 
   def ensureCart(contractId: Gid_t, status0: MOrderStatus = MOrderStatuses.Draft): DBIOAction[MOrder, NoStream, RW] = {
@@ -663,10 +665,10 @@ class Bill2Util @Inject() (
     * @param itemId id обрабатываемого item'а.
     * @return Экшен с результатом работы.
     */
-  def approveItemAction(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RW] = {
+  def approveItemAction(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RWT] = {
     lazy val logPrefix = s"approveItemAction($itemId):"
 
-    for {
+    val a = for {
       // Получить и заблокировать обрабатываемый item.
       mitem0 <- _prepareAwaitingItem(itemId)
 
@@ -750,6 +752,7 @@ class Bill2Util @Inject() (
     } yield {
       ApproveItemResult( mitem2 )
     }
+    a.transactionally
   }
 
 
@@ -978,6 +981,48 @@ class Bill2Util @Inject() (
     } yield {
       pricesMinusBalances(orderPrices, ubsMap)
     }
+  }
+
+
+  /** Проверить и заморозить ордер для платежной системы.
+    * Работы идут в виде транзакции, которая завершается исключением при любой проблеме.
+    *
+    * Метод дёргается на check-стадии оплаты: платежная система ещё не списала деньги,
+    * но хочет проверить присланные юзером данные по оплачиваемому заказу.
+    * S.io проверяет ордер и "холдит" его, чтобы защититься от изменений до окончания оплаты.
+    *
+    * @param orderId Заявленный платежной системой order_id.
+    * @param validContractId Действительный contract_id юзера.
+    * @param assertPricesF Функция проверки вычисленных цен.
+    * @return DB-экшен.
+    */
+  def checkHoldOrder(orderId: Gid_t, validContractId: Gid_t)
+                    (assertPricesF: Seq[MPrice] => Unit): DBIOAction[_, NoStream, RWT] = {
+    val a = for {
+
+      // Прочитать запрошенный ордер.
+      mOrderOpt <- mOrders.getById(orderId).forUpdate
+      // Проверить, что ордер существет, что относится к контракту юзера и доступен для оплаты.
+      mOrder = mOrderOpt.get
+      if mOrder.contractId == validContractId && mOrder.status.canGoToPaySys
+
+      // Прочитать балансы юзера по контракту, завернув их в мапу по валютам.
+      uBals <- mBalances.findByContractId( validContractId )
+      uBalsMap = mBalances.balances2curMap(uBals)
+
+      // Посчитать стоимость item'ов в ордере.
+      orderPrices <- getOrderPrices(orderId)
+
+      // Вычислить итоговые стоимости заказа в валютах.
+      payPrices = pricesMinusBalances(orderPrices, uBalsMap)
+      // Убедится, что всё ок с ценником.
+      _ = assertPricesF(payPrices)
+
+    } yield {
+      ???
+    }
+    a.transactionally
+    ???
   }
 
 }

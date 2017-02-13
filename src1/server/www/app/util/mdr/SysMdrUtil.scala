@@ -7,7 +7,6 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItem, ItemStatusChanged, MItem, MItems}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.mbill2.util.effect.RW
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
@@ -139,7 +138,7 @@ class SysMdrUtil @Inject() (
 
 
   /** Логика поштучной обработки item'ов. */
-  def _processOneItem[Res_t <: IMItem](dbAction: DBIOAction[Res_t, NoStream, RW]): Future[Res_t] = {
+  def _processOneItem[Res_t <: IMItem](dbAction: DBIOAction[Res_t, NoStream, _]): Future[Res_t] = {
     // Запуск обновления MItems.
     val saveFut = slick.db.run {
       dbAction.transactionally
@@ -159,7 +158,7 @@ class SysMdrUtil @Inject() (
 
   /** Логика массовой обработки item'ов. */
   def _processItemsForAd[Res_t <: IMItem](nodeId: String, q: Q_t)
-                                         (f: Gid_t => DBIOAction[Res_t, NoStream, RW]): Future[ProcessItemsRes] = {
+                                         (f: Gid_t => DBIOAction[Res_t, NoStream, _]): Future[ProcessItemsRes] = {
     // TODO Opt Тут можно db.stream применять
     val itemIdsFut = slick.db.run {
       q.map(_.id)

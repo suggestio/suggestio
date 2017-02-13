@@ -2,7 +2,7 @@ package controllers.pay
 
 import com.google.inject.Inject
 import controllers.SioControllerImpl
-import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.bill.MPrice
 import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalances
@@ -70,38 +70,16 @@ class PayYaka @Inject() (
     * @param request Текущий реквест.
     * @return MPrice или exception.
     */
+  // TODO Удалить, вынеся логику на уровень биллинга в виде транзакции.
   private def _getPayPrice(orderId: Gid_t)(implicit request: IReq[_]): Future[MPrice] = {
     // Посчитать, сколько юзеру надо доплатить за вычетом остатков по балансам.
     val payPricesFut = bill2Util.getPayPrices(orderId, request.user.mBalancesFut)
-
-    lazy val logPrefix = s"_getPayPrice($orderId):"
 
     // Собираем данные для рендера формы отправки в платёжку.
     for {
       payPrices     <- payPricesFut
     } yield {
-      val ppsSize = payPrices.length
-      if (ppsSize == 0) {
-        // Нечего платить. По идее, деньги должны были списаться на предыдущем шаге
-        throw new IllegalStateException(s"$logPrefix Nothing to pay remotely via yaka. User balances are enought.")
-
-      } else if (ppsSize == 1) {
-        implicit val ctx = implicitly[Context]
-
-        val pp = payPrices.head
-        if (pp.currency == MCurrencies.RUB) {
-          // Цена в одной единственной валюте, которая поддерживается яндекс-кассой. Вернуть её наверх.
-          pp
-
-        } else {
-          // Какая-то валюта, которая не поддерживается яндекс-кассой.
-          throw new IllegalArgumentException(s"$logPrefix Yaka unsupported currency: ${pp.currency}. Price = $pp")
-        }
-
-      } else {
-        // Сразу несколько валют. Не поддерживается яндекс.кассой.
-        throw new UnsupportedOperationException(s"$logPrefix too many currencies need to pay, but yaka supports only RUB:\n$payPrices")
-      }
+      yakaUtil.assertPricesForPay(payPrices)
     }
 
   }
@@ -215,43 +193,59 @@ class PayYaka @Inject() (
             // Пересчитываем ценник...
             val payPriceFut = _getPayPrice(yReq.orderId)
 
-            // Проверяем связь юзера и ордера...
+            // Проверяем связь юзера и ордера: Узнать id контракта юзера.
             val usrNodeOptFut = mNodesCache.getById(yReq.personId)
-            val yReqOrderContractIdOptFut = slick.db.run {
-              mOrders.getContractId( yReq.orderId )
+            // Прочитать ордер из БД, это понадобиться на следующих шагах:
+            val yReqOrderOptFut = slick.db.run {
+              mOrders.getById( yReq.orderId )
             }
 
-            // Ордер должен иметь открытый статус.
-            val isOrderStatusOkFut: Future[Boolean] = ???
+            // Узнать id контракта.
+            val yReqContractIdOptFut = for (yReqOrderOpt <- yReqOrderOptFut) yield {
+              LOGGER.trace(s"$logPrefix YaKa req order: $yReqOrderOpt")
+              yReqOrderOpt.map(_.contractId)
+            }
 
-            val isOrderMatchUserFut = for {
-              usrNodeOpt <- usrNodeOptFut
-              yReqOrderContractIdOpt <- yReqOrderContractIdOptFut
+            // Ордер должен иметь открытый для начала платежа статус.
+            val isOrderStatusOkFut: Future[Boolean] = for (yReqOrderOpt <- yReqOrderOptFut) yield {
+              yReqOrderOpt.exists(_.status.canGoToPaySys)
+            }
+
+            // Объединяем все предыдущие измышления в единственный ответ.
+            val isOrderOkExFut = for {
+              isOrderStatusOk         <- isOrderStatusOkFut
+              if isOrderStatusOk
+              usrNodeOpt              <- usrNodeOptFut
+              usrNode = usrNodeOpt.get
+              yReqOrderContractIdOpt  <- yReqContractIdOptFut
             } yield {
-              val opt = for {
-                usrNode             <- usrNodeOpt
-                yReqOrderContractId <- yReqOrderContractIdOpt
-              } yield {
-                usrNode.billing.contractId.contains( yReqOrderContractId )
+              // Тут неленивые вычисления, но маловерятно, что вторая часть выражения не будет вычислена.
+              yReqOrderContractIdOpt.exists { yReqOrderContractId =>
+                usrNode.billing.contractId.contains(yReqOrderContractId)
               }
-              opt.contains(true)
+            }
+            val isOrderOkFut = isOrderOkExFut.recover { case ex: NoSuchElementException =>
+              LOGGER.trace(s"$logPrefix isOrderOk throwed NSEE => false", ex)
+              false
             }
 
             // Проверяем стоимость размещения.
             val isPayPriceOkFut = for (payPrice <- payPriceFut) yield {
               // Сопоставить валюты...
-              payPrice.currency == yReq.currency && {
+              val matches = payPrice.currency == yReq.currency && {
                 // Double сравнивать -- дело неблагодатное. Поэтому сравниваем в рамках погрешности: а это - 1 копейка
                 val maxDiff = Math.pow(10, -payPrice.currency.exponent)
                 Math.abs(payPrice.amount - yReq.amount) < maxDiff
               }
+              LOGGER.trace(s"$logPrefix YakaReq price = ${yReq.amount} ${yReq.currency}\n ReCalculated price = $payPrice\n Prices matching? $matches")
+              matches
             }
 
             for {
-              isOrderMatchUser <- isOrderMatchUserFut
-              isPayPriceOk     <- isPayPriceOkFut
+              isOrderOk     <- isOrderOkFut
+              isPayPriceOk  <- isPayPriceOkFut
             } yield {
-              if (isOrderMatchUser && isPayPriceOk) {
+              if (isOrderOk && isPayPriceOk) {
                 // Всё ок, TODO холдим ордер, возращаем 200 + XML
                 ???
               } else {

@@ -81,4 +81,11 @@ object MOrderStatuses extends EnumMaybeWithName with EnumApply {
     if (isSuFree) SuTrash else Draft
   }
 
+
+  def canGoToPaySys: Iterator[T] = {
+    values.iterator
+      .map(value2val)
+      .filter(_.canGoToPaySys)
+  }
+
 }
