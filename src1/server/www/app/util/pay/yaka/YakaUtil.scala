@@ -4,7 +4,7 @@ import models.mpay.yaka.{IYakaReqSigned, MYakaAction, MYakaActions, MYakaReq}
 import play.api.data._
 import Forms._
 import com.google.inject.Inject
-import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.bill.{MCurrencies, MCurrency, MPrice}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.text.util.TextHashUtil
@@ -27,14 +27,22 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     */
   def SHOP_ID = 84780L
 
-  /** id витрины. На продакшене задаётся в конфиге.
-    * 548806 -- демо-витрина, выданная при первом подключении.
-    */
-  val SC_ID: Long = configuration.getLong("sio.pay.yaka.scid").getOrElse {
-    val demoScId = 548806L
-    LOGGER.info("DEMO pay mode, scid = " + demoScId)
-    demoScId
+  /** 548806 -- демо-витрина, выданная при первом подключении. */
+  private def DEMO_SC_ID = 548806L
+
+  private def CONF_PREFIX = "sio.pay.yaka."
+
+  /** id витрины. На продакшене задаётся в конфиге. */
+  val SC_ID: Long = {
+    configuration.getLong( CONF_PREFIX + "scid").getOrElse {
+      val demoScId = DEMO_SC_ID
+      LOGGER.info("DEMO pay mode, scid = " + demoScId)
+      demoScId
+    }
   }
+
+  /** Флаг демо-режима, по умолчанию = true. */
+  val IS_DEMO: Boolean = configuration.getBoolean(CONF_PREFIX + "demo").getOrElse(true)
 
 
   object ErrorCodes {
@@ -47,7 +55,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
 
   /** Пароль для подписывания данных при MD5-режиме. Задаётся только в конфиге. */
   private val YAKA_MD5_PASSWORD: Option[String] = {
-    val ck = "sio.pay.yaka.password"
+    val ck = CONF_PREFIX + "password"
     val resOpt = configuration.getString(ck)
     if (resOpt.isEmpty)
       LOGGER.error("Yandex.Kassa password is not defined in application.conf: " + ck)
@@ -102,12 +110,21 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     nonEmptyText(len, len)
   }
 
+
+  def currencyM: Mapping[MCurrency] = {
+    // В демо-режиме только демо-рубли допустимы. И их код 10643.
+    // https://tech.yandex.ru/money/doc/payment-solution/deposition/test-data-docpage/
+    // В обычном режиме -- используется стандартный код валюты.
+    val currencyOffset = if (IS_DEMO) 10000 else 0
+    FormUtil.currency_iso4217(currencyOffset)
+  }
+
   /** Маппинг для данных запроса check и aviso. */
   def md5Form: Form[MYakaReq] = {
     val m = mapping(
       "action"                    -> yakaActionM,
       "orderSumAmount"            -> amountM,
-      "orderSumCurrencyPaycash"   -> FormUtil.currencyM,
+      "orderSumCurrencyPaycash"   -> currencyM,
       "orderSumBankPaycash"       -> number,
       "shopId"                    -> shopIdM,
       "invoiceId"                 -> invoiceIdM,

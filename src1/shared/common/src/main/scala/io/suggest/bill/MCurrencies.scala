@@ -98,7 +98,7 @@ object MCurrencies extends Enum[MCurrency] {
     override def iso4217    = 840
   }
 
-  def withIso4217(code: Int) = values.find(_.iso4217 == code)
+  def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
 
 
   /** Список моделей "цен" (или чего-то ещё) превращаем в карту цен по валютами.

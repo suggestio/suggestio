@@ -437,6 +437,32 @@ object FormUtil {
   }
 
 
+  // Валюты по ISO 4217. Там целые 0..~1000.
+  // Но в яндекс-кассе в демо-режиме используются "демо-рубли", которые имеют код 10643. Возможно, у других ПС похожий прикол бывает.
+  def currencyOpt_iso4217(offset: Int): Mapping[Option[MCurrency]] = {
+    val m0 = number(min = offset, max = offset + 9999)
+    val m1 = if (offset == 0) {
+      m0
+    } else {
+      m0.transform[Int](_ - offset, _ + offset)
+    }
+    m1.transform[Option[MCurrency]](
+      MCurrencies.withIso4217Option,
+      _.getOrElse(MCurrencies.default).iso4217
+    )
+  }
+  def currencyOpt_iso4217: Mapping[Option[MCurrency]] = {
+    currencyOpt_iso4217(0)
+  }
+  def currency_iso4217: Mapping[MCurrency] = {
+    currency_iso4217(0)
+  }
+  def currency_iso4217(offset: Int): Mapping[MCurrency] = {
+    currencyOpt_iso4217(offset)
+      .verifying("error.required", _.nonEmpty)
+      .transform[MCurrency](EmptyUtil.getF, EmptyUtil.someF)
+  }
+
   /** Маппер для lat-lon координат, заданных в двух полях формы.
     * val потому что некоторые XFormUtil юзают это как val. */
   val geoPointM: Mapping[MGeoPoint] = {
