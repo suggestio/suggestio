@@ -314,4 +314,35 @@ class PayYaka @Inject() (
     )
   }
 
+
+  /** Уведомление о прошедшем платеже.
+    *
+    * @return 200 + XML.
+    */
+  def payment = maybeAuth().async { implicit request =>
+    lazy val logPrefix = s"payment[${System.currentTimeMillis()}]:"
+    LOGGER.trace(s"$logPrefix ${request.remoteAddress} ${request.body}")
+
+    val yakaAction = MYakaActions.Payment
+    val shopId = yakaUtil.SHOP_ID
+
+    // Надо забиндить тело запроса в форму.
+    yakaUtil.md5Form.bindFromRequest().fold(
+      {formWithErrors =>
+        LOGGER.debug(s"$logPrefix unable to bind form: ${formatFormErrors(formWithErrors)}")
+        val xml = _yakaRespTpl(
+          yakaAction = yakaAction,
+          errCode    = yakaUtil.ErrorCodes.BAD_REQUEST,
+          shopId     = shopId,
+          invoiceId  = None
+        )
+        Ok(xml)
+      },
+
+      {yReq =>
+        ???
+      }
+    )
+  }
+
 }
