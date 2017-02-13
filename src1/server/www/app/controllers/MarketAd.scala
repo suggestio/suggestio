@@ -92,7 +92,7 @@ class MarketAd @Inject() (
   private def detectMainColorBg(form: AdFormM)(implicit ctx: Context): Unit = {
     val vOpt = form(bgImgFullK).value
     try {
-      vOpt.foreach { v =>
+      for (v <- vOpt) {
         val im = MImg3(v)
         tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
       }

@@ -3,6 +3,7 @@ package controllers.pay
 import com.google.inject.Inject
 import controllers.SioControllerImpl
 import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
@@ -161,9 +162,9 @@ class PayYaka @Inject() (
     *         None если всё ок.
     */
   private def _logIfHasCookies(implicit request: IReqHdr): Option[MAction] = {
-    if (mCommonDi.isProd && request.cookies.nonEmpty) {
+    OptionUtil.maybe( mCommonDi.isProd && request.cookies.nonEmpty ) {
       LOGGER.error(s"_logIfHasCookies[${System.currentTimeMillis()}]: Unexpected cookies ${request.cookies} from client ${request.remoteAddress}, personId = ${request.user.personIdOpt}")
-      val ma = MAction(
+      MAction(
         actions = MActionTypes.UnexpectedCookies :: Nil,
         textNi  = {
           val hdrStr = request.headers
@@ -174,10 +175,6 @@ class PayYaka @Inject() (
           request.cookies.toString() :: hdrStr :: Nil
         }
       )
-      Some(ma)
-
-    } else {
-      None
     }
   }
 
@@ -223,6 +220,9 @@ class PayYaka @Inject() (
             val yReqOrderContractIdOptFut = slick.db.run {
               mOrders.getContractId( yReq.orderId )
             }
+
+            // Ордер должен иметь открытый статус.
+            val isOrderStatusOkFut: Future[Boolean] = ???
 
             val isOrderMatchUserFut = for {
               usrNodeOpt <- usrNodeOptFut
