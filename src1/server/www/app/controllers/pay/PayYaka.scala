@@ -4,6 +4,7 @@ import com.google.inject.Inject
 import controllers.SioControllerImpl
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
@@ -15,6 +16,7 @@ import io.suggest.util.Lists
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MCartIdeas
 import models.mctx.Context
+import models.mdr.MSysMdrEmailTplArgs
 import models.mpay.yaka.{MYakaAction, MYakaActions, MYakaFormData, MYakaReq}
 import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
@@ -383,6 +385,7 @@ class PayYaka @Inject() (
             // Базовые поля реквеста и md5 совпадают с ожидаемыми. Зачислить на баланс юзера оплаченные бабки, попытаться исполнить ордер.
             // Узнать узел юзера, для его contract_id и человеческого названия.
             val usrNodeOptFut = mNodesCache.getById( yReq.personId )
+            val mprice = MPrice(yReq)
 
             // Собрать начальные stat-экшены.
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)
@@ -394,20 +397,18 @@ class PayYaka @Inject() (
               contractId = usrNode.billing.contractId.get
 
               // Выполнить действия в биллинге, связанные с проведением платежа.
-              (isMdrNotifyNeeded, cartIdea) <- slick.db.run {
+              (balTxn, isMdrNotifyNeeded, cartIdea) <- slick.db.run {
                 import slick.profile.api._
                 val a = for {
                   // Проверить ордер, что он в статусе HOLD или DRAFT.
                   mOrder0  <- bill2Util.getOpenedOrderForUpdate(yReq.orderId, validContractId = contractId)
-                  mprice   = MPrice(yReq)
 
                   // Закинуть объем перечисленных денег на баланс указанного юзера.
-                  _ <- {
+                  balTxn <- {
                     bill2Util.incrUserBalanceFromPaySys(
                       contractId  = contractId,
                       mprice      = mprice,
                       psTxnUid    = yReq.invoiceId.toString,
-                      orderIdOpt  = Some( yReq.orderId ),
                       comment     = Some( "Yandex.Kassa" )
                     )
                   }
@@ -422,7 +423,7 @@ class PayYaka @Inject() (
                   cartIdea <- bill2Util.maybeExecuteCart(owi)
 
                 } yield {
-                  (isMdrNotifyNeeded1, cartIdea)
+                  (balTxn, isMdrNotifyNeeded1, cartIdea)
                 }
 
                 a.transactionally
@@ -436,11 +437,27 @@ class PayYaka @Inject() (
                 case _: MCartIdeas.OrderClosed =>
                   LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
                   // Уведомить модераторов, если необходимо.
-                  mdrUtil.maybeSendMdrNotify(isMdrNotifyNeeded)
+                  if (isMdrNotifyNeeded) {
+                    val usrDisplayNameOptFut = FutureUtil.opt2futureOpt( usrNode.guessDisplayName ) {
+                      for (usrEmails <- mPersonIdents.findAllEmails( yReq.personId )) yield {
+                        usrEmails.headOption
+                      }
+                    }
+                    for (usrDisplayNameOpt <- usrDisplayNameOptFut) {
+                      mdrUtil.sendMdrNotify(MSysMdrEmailTplArgs(
+                        paid        = Some( mprice ),
+                        orderId     = Some( yReq.orderId ),
+                        txn         = Some( balTxn ),
+                        personId    = Some( yReq.personId ),
+                        personName  = usrDisplayNameOpt
+                      ))
+                    }
+                  }
                   // Собрать stat-экшен.
                   MAction(
                     actions = MActionTypes.Success :: Nil
                   )
+
                 case _ =>
                   val cartIdeaStr = cartIdea.toString
                   LOGGER.error(s"$logPrefix Unable to close order ${yReq.orderId}. something gone wrong: $cartIdeaStr")

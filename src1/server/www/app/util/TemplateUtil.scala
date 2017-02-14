@@ -113,7 +113,7 @@ object TplDataFormatUtil {
     priceStr.replace('\u0020', NBSP)
   }
 
-  def formatPrice(price: MPrice)(implicit ctx: Context): String = {
+  def formatPrice(price: IPrice)(implicit ctx: Context): String = {
     val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
       .asInstanceOf[DecimalFormat]
     currFmt.setCurrency(price.currency.toJavaCurrency)

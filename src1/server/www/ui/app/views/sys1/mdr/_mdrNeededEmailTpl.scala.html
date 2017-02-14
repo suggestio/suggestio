@@ -1,7 +1,49 @@
-@()
+@(args: mdr.MSysMdrEmailTplArgs)(implicit ctx: Context)
 
 @* Тело email-письма о необходимости заняться модерацией. *@
 
+@import ctx.api.ctxUtil.LK_URL_PREFIX
+@import util.TplDataFormatUtil.formatPrice
+
+@if(args.nonEmpty) {
+  <p>
+    @if(args.personId || args.personName) {
+      От пользователя
+      @for(personId <- args.personId) {
+        <a href="@LK_URL_PREFIX@routes.SysMarket.showAdnNode(personId)">
+      }
+      @args.personName.orElse( args.personId ).getOrElse("???")
+      @if(args.personId) {
+        </a>
+      }
+    }
+    Поступила оплата
+    @for(price <- args.paid) {
+      <strong>@formatPrice(price)</strong>
+    }
+    @for(orderId <- args.orderId) {
+      по заказу #@orderId.
+    }
+  </p>
+
+  @for(txn <- args.txn) {
+    <p>
+      Транзакция #@txn.id
+      @for(psTxnUid <- txn.psTxnUidOpt) {
+        инвойс @psTxnUid
+      }
+      баланс #@txn.balanceId
+      <br/>
+      @for(comment <- txn.paymentComment) {
+        <strong>@comment</strong>
+      }
+    </p>
+  }
+}
+
 <p>
-  <a href="@routes.SysMdr.rdrToNextAd()">Перейдите по ссылке</a> для начала модерации.
+  Для начала модерации
+  <a href="@LK_URL_PREFIX@routes.SysMdr.rdrToNextAd()">
+    перейдите по ссылке.
+  </a>
 </p>

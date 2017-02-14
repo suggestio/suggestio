@@ -73,4 +73,8 @@ object FutureUtil {
   }
 
 
+  def opt2futureOpt[T](x: Option[T])(ifEmpty: => Future[Option[T]]): Future[Option[T]] = {
+    x.fold(ifEmpty)(_ => Future.successful(x))
+  }
+
 }

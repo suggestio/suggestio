@@ -4,6 +4,8 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.util.logs.MacroLogsImpl
+import models.mctx.Context
+import models.mdr.MSysMdrEmailTplArgs
 import models.mproj.ICommonDi
 import models.usr.MSuperUsers
 import util.mail.IMailerWrapper
@@ -74,25 +76,13 @@ class MdrUtil @Inject() (
   }
 
 
-  /** Отправить уведомления модераторам, если требуется.
-    *
-    * @param isNeeded Результат экшена isMdrNotifyNeeded().
-    */
-  def maybeSendMdrNotify(isNeeded: Boolean): Unit = {
-    if (isNeeded) {
-      LOGGER.trace(s"maybeSendMdrNotify(): mdrNeeded = $isNeeded")
-      sendMdrNotify()
-    }
-  }
-
-
   /** Отправить уведомление модератором о необходимости модерации чего-либо. */
-  def sendMdrNotify(): Unit = {
+  def sendMdrNotify(tplArgs: MSysMdrEmailTplArgs = MSysMdrEmailTplArgs.empty)(implicit ctx: Context): Unit = {
     mailerWrapper
       .instance
       .setSubject("Требуется модерация")
       .setRecipients( MDR_NOTIFY_EMAILS: _* )
-      .setHtml( _mdrNeededEmailTpl().body )
+      .setHtml( _mdrNeededEmailTpl(tplArgs).body )
       .send()
   }
 

@@ -1114,7 +1114,7 @@ class Bill2Util @Inject() (
     * @return MTxn.
     */
   def incrUserBalanceFromPaySys(contractId: Gid_t, mprice: MPrice, psTxnUid: String, orderIdOpt: Option[Gid_t] = None,
-                                comment: Option[String] = None): DBIOAction[_, NoStream, RWT] = {
+                                comment: Option[String] = None): DBIOAction[MTxn, NoStream, RWT] = {
     // Найти баланс юзера для текущей валюты.
     val a = for {
       // Узнать текущий баланс юзера
