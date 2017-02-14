@@ -92,7 +92,6 @@ trait SendPwRecoverEmail
       )
       // Можно отправлять письмецо на ящик.
       val msg = mailer.instance
-      msg.setFrom("no-reply@suggest.io")
       msg.setRecipients(email1)
       val ctx = implicitly[Context]
       msg.setSubject("Suggest.io | " + ctx.messages("Password.recovery"))

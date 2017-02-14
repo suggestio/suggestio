@@ -129,7 +129,6 @@ class MarketLkSupport @Inject() (
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
-        msg.setFrom("no-reply@suggest.io")
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
         userEmailsFut.map { ues =>
           val username = ues.headOption getOrElse personId
@@ -184,7 +183,6 @@ class MarketLkSupport @Inject() (
             mnode.meta.address.town.fold("")(" / " + _)
         )
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
-        msg.setFrom("no-reply@suggest.io")
         emailsFut map { emails =>
           val emailOpt = emails.headOption
           if (emailOpt.isDefined)

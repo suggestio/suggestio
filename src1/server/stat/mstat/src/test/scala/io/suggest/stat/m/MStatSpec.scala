@@ -32,7 +32,7 @@ class MStatSpec extends FlatSpec with PlayJsonTestUtil {
         ),
         actions = Seq(
           MAction(
-            actions = Seq( MActionTypes.CurrUser ),
+            actions = Seq( MActionTypes.Person ),
             nodeId  = Seq( "asdasdasdasdasdasdasd" ),
             nodeName = Nil
           )

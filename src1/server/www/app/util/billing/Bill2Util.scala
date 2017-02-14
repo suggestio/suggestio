@@ -287,19 +287,30 @@ class Bill2Util @Inject() (
   }
 
 
+  def prepareOpenedItems(orderId: Gid_t): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
+    mItems.findByOrderIdBuilder(orderId)
+      .filter(_.statusStr === MItemStatuses.Draft.strId)
+      .result
+      .forUpdate
+  }
+  def prepareCartOrderItems(order: MOrder): DBIOAction[MOrderWithItems, NoStream, Effect.Read] = {
+    val orderId       = order.id.get
+    for {
+      mitems        <- prepareOpenedItems(orderId)
+    } yield {
+      LOGGER.trace(s"prepareCartItems($orderId): cart contains ${mitems.size} items.")
+      MOrderWithItems(order, mitems)
+    }
+  }
+
   /** Подготовится к транзакции внутри корзины. */
   def prepareCartTxn(contractId: Gid_t): DBIOAction[MOrderWithItems, NoStream, Effect.Read] = {
     for {
       cartOrderOpt  <- getLastOrder(contractId, MOrderStatuses.Draft).forUpdate
       order         = cartOrderOpt.get
-      orderId       = order.id.get
-      mitems        <- mItems.findByOrderIdBuilder(orderId)
-        .filter(_.statusStr === MItemStatuses.Draft.strId)
-        .result
-        .forUpdate
+      res           <- prepareCartOrderItems(order)
     } yield {
-      LOGGER.trace(s"prepareCartTxn($contractId): cart order[$orderId] contains ${mitems.size} items.")
-      MOrderWithItems(order, mitems)
+      res
     }
   }
 
@@ -984,6 +995,34 @@ class Bill2Util @Inject() (
   }
 
 
+  /**
+    * Найти гарантированно открытый для оплаты ордер, принадлежащий к указанному контракту.
+    * @param orderId id возможного ордера.
+    * @param validContractId Гарантированно корректный id контракта.
+    * @return Ордер.
+    *         NSEE, если ордер не найден или не является корректным.
+    */
+  def getOpenedOrderForUpdate(orderId: Gid_t, validContractId: Gid_t): DBIOAction[MOrder, NoStream, Effect.Read] = {
+    for {
+      // Прочитать запрошенный ордер, одновременно проверяя необходимые поля.
+      mOrderOpt <- {
+        mOrders.query
+          .filter { o =>
+            (o.id === orderId) &&
+              (o.contractId === validContractId) &&
+              (o.statusStr inSet MOrderStatuses.canGoToPaySys.map(_.strId).toTraversable)
+          }
+          .result
+          .headOption
+          .forUpdate
+      }
+
+      // Проверить, что ордер существет, что относится к контракту юзера и доступен для оплаты.
+    } yield {
+      mOrderOpt.get
+    }
+  }
+
   /** Проверить и заморозить ордер для платежной системы.
     * Работы идут в виде транзакции, которая завершается исключением при любой проблеме.
     *
@@ -997,24 +1036,14 @@ class Bill2Util @Inject() (
     *                           Map: валюта -> цена.
     * @return DB-экшен.
     */
-  def checkHoldOrder(orderId: Gid_t, validContractId: Gid_t,
-                     claimedOrderPrices: Map[MCurrency, IPrice]): DBIOAction[_, NoStream, RWT] = {
+  def checkOrder(orderId: Gid_t, validContractId: Gid_t,
+                 claimedOrderPrices: Map[MCurrency, IPrice]): DBIOAction[MOrder, NoStream, RWT] = {
     lazy val logPrefix = s"checkHoldOrder(o=$orderId,c=$validContractId):"
 
     val a = for {
 
-      // Прочитать запрошенный ордер.
-      mOrderOpt <- mOrders.getById(orderId).forUpdate
-
-      // Проверить, что ордер существет, что относится к контракту юзера и доступен для оплаты.
-      mOrder = mOrderOpt.get
-      if {
-        val isContractOk = mOrder.contractId == validContractId
-        val isOk = isContractOk && mOrder.status.canGoToPaySys
-        if (!isOk)
-          LOGGER.error(s"Order $orderId exists, but not for paying.\n Contract ok? $isContractOk\nAll else ok? $isOk\n$mOrder")
-        isOk
-      }
+      // Прочитать и проверить запрошенный ордер.
+      mOrder <- getOpenedOrderForUpdate(orderId, validContractId = validContractId)
 
       // Прочитать балансы юзера по контракту, завернув их в мапу по валютам.
       uBals <- mBalances.findByContractId( validContractId )
@@ -1040,32 +1069,65 @@ class Bill2Util @Inject() (
         }
       }
 
-      // Цены и ордер считаются успешно выверенными.
-      // Нужно захолдить ордер, если он ещё не захолжен.
-      mOrder2 <- {
-        val holdStatus = MOrderStatuses.Hold
-        if (mOrder.status == holdStatus) {
-          LOGGER.debug(s"$logPrefix Not holding order[$orderId], because already hold since ${mOrder.dateStatus}: $mOrder")
-          DBIO.successful(mOrder)
-        } else {
-          // Ордер не является замороженным. Заменяем ему статус.
-          val o2 = mOrder.withStatus( holdStatus )
-          for {
-            rowsUpdated <- mOrders.saveStatus( o2 )
-            if rowsUpdated == 1
-          } yield {
-            LOGGER.debug(s"$logPrefix Order[$orderId] marked as HOLD.")
-            o2
-          }
-        }
-      }
-
     } yield {
       // Вернуть что-нибудь...
-      mOrder2
+      mOrder
     }
 
     // Транзакция обязательна, т.к. тут вопрос в безопасности: иначе возможно внезапное изменение ордера в рамках race-conditions.
+    a.transactionally
+  }
+
+
+  /** Захолдить ордер, если ещё не захолжен.
+    *
+    * @param mOrder Исходный ордер.
+    * @return DB-экшен, возвращающий обновлённый ордер.
+    */
+  def holdOrder(mOrder: MOrder): DBIOAction[MOrder, NoStream, Effect.Write] = {
+    val holdStatus = MOrderStatuses.Hold
+    def logPrefix = s"holdOrder(${mOrder.id.orNull}):"
+    if (mOrder.status == holdStatus) {
+      LOGGER.debug(s"$logPrefix Not holding order, because already hold since ${mOrder.dateStatus}: $mOrder")
+      DBIO.successful(mOrder)
+    } else {
+      // Ордер не является замороженным. Заменяем ему статус.
+      val o2 = mOrder.withStatus( holdStatus )
+      for {
+        rowsUpdated <- mOrders.saveStatus( o2 )
+        if rowsUpdated == 1
+      } yield {
+        LOGGER.debug(s"$logPrefix Order marked as HOLD.")
+        o2
+      }
+    }
+  }
+
+
+  /** Враппер вокруг maybeExecuteCart(), который выполняет действия для проведения платежа в платежной системе.
+    *
+    * @param orderId id ордера.
+    * @param contractId id контракта.
+    * @param mprice Объем платежа, проведённый в платежной системе.
+    * @return RWT-db-экшен, возвращающий MCartIdea.
+    */
+  def handlePaySysPayment(orderId: Gid_t, contractId: Gid_t, mprice: MPrice): DBIOAction[MCartIdeas.Idea, NoStream, RWT] = {
+    val a = for {
+    // Проверить ордер, что он в статусе HOLD или DRAFT.
+      mOrder0 <- getOpenedOrderForUpdate(orderId, validContractId = contractId)
+
+      // Закинуть объем перечисленных денег на баланс юзера.
+      _ <- increaseBalanceSimple(contractId, mprice)
+
+      // Подготовить ордер корзины к исполнению.
+      owi <- prepareCartOrderItems(mOrder0)
+
+      // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
+      cartIdea <- maybeExecuteCart(owi)
+
+    } yield {
+      cartIdea
+    }
     a.transactionally
   }
 

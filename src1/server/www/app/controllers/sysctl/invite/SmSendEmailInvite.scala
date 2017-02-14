@@ -31,7 +31,6 @@ trait SmSendEmailInvite
       ctx.messages("Your") + " " +
       ctx.messages(ast.singular)
     )
-    msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setHtml {
       htmlCompressUtil.html4email {

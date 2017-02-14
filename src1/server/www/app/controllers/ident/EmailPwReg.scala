@@ -84,7 +84,6 @@ trait EmailPwReg
 
   def sendEmailAct(ea: EmailActivation)(implicit ctx: Context): Future[_] = {
     val msg = mailer.instance
-    msg.setFrom("no-reply@suggest.io")
     msg.setRecipients(ea.email)
     msg.setSubject("Suggest.io | " + ctx.messages("reg.emailpw.email.subj"))
     msg.setHtml {

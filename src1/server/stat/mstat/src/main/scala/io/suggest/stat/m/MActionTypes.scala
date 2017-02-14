@@ -20,7 +20,7 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
   override type T = Val
 
   /** Экшен логгирования данных текущего юзера. */
-  val CurrUser            = Val("юзер")
+  val Person              = Val("юзер")
 
   /** Обращение к /sc/site */
   val ScSite              = Val("выдача: сайт")
@@ -63,10 +63,10 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
 
   val PayBadOrder         = Val("pay: bad order")
 
+  val PayBadIdea          = Val("pay: bad idea")
+
   val UnexpectedCookies   = Val("cookies: unexpected")
 
   val Success             = Val("успех")
-
-  val Person              = Val("юзер")
 
 }

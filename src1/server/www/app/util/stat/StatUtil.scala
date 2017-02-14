@@ -63,16 +63,20 @@ class StatUtil @Inject()(
   def userSaOptFut(user: ISioUser): Future[Option[MAction]] = {
     FutureUtil.optFut2futOpt( user.personIdOpt ) { personId =>
       for (personNodeOpt <- user.personNodeOptFut) yield {
-        val maction = MAction(
-          actions   = Seq( MActionTypes.CurrUser ),
-          nodeId    = Seq( personId ),
-          nodeName  = personNodeOpt.fold [Seq[String]] (Nil) (_.guessDisplayName.toSeq)
-        )
+        val maction = personNodeStat(personId, personNodeOpt)
         Some(maction)
       }
     }
   }
 
+  /** Собрать stat action для записи данных по текущему юзеру. */
+  def personNodeStat(personId: String, personNodeOpt: Option[MNode]): MAction = {
+    MAction(
+      actions   = MActionTypes.Person :: Nil,
+      nodeId    = personId :: Nil,
+      nodeName  = personNodeOpt.fold [Seq[String]] (Nil) (_.guessDisplayName.toSeq)
+    )
+  }
 
   /** Завернуть данные по карточкам в stat-экшен. */
   def madsAction(mads: Seq[MNode], acType: MActionType): MAction = {

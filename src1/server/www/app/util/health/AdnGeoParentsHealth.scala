@@ -127,7 +127,6 @@ class AdnGeoParentsHealth @Inject() (
         warn("Selt-test problems detected: " + tryRes)
 
         mailer.instance
-          .setFrom("health@suggest.io")
           .setRecipients(mSuperUsers.SU_EMAILS : _*)
           .setSubject("Suggest.io: Обнаружены проблемы геосвязности узлов")
           .setHtml {

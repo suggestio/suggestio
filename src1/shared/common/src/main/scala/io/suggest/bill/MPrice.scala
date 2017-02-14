@@ -59,6 +59,16 @@ object MPrice {
     apply(amount, currency)
   }
 
+  /** Приведение IPrice к MPrice. */
+  def apply(iprice: IPrice): MPrice = {
+    iprice match {
+      case mprice: MPrice =>
+        mprice
+      case _ =>
+        MPrice(iprice.amount, iprice.currency)
+    }
+  }
+
   def unapply2(m: MPrice) = unapply(m).map { case (amount,curr,_) => (amount,curr) }
 
 }

@@ -90,7 +90,6 @@ class MdrUtil @Inject() (
   def sendMdrNotify(): Unit = {
     mailerWrapper
       .instance
-      .setFrom("no-reply@suggest.io")
       .setSubject("Требуется модерация")
       .setRecipients( MDR_NOTIFY_EMAILS: _* )
       .setHtml( _mdrNeededEmailTpl().body )

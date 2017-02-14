@@ -25,6 +25,19 @@ import scala.concurrent.Future
  * @see [[https://commons.apache.org/proper/commons-email/userguide.html]]
  */
 
+object MailerWrapper {
+
+  def SUBJECT_DFLT = "(No subject)"
+
+  /** Основной адресок почты, чтобы везде setFrom() не вызывать. */
+  def EMAIL_NO_REPLY = "no-reply@suggest.io"
+
+}
+
+import MailerWrapper._
+
+
+/** Класс-сырец для билдера писем. */
 sealed abstract class EmailBuilder extends MacroLogsImplLazy {
 
   type T = this.type
@@ -62,7 +75,7 @@ sealed abstract class EmailBuilder extends MacroLogsImplLazy {
 
 /** Абстрактная реализация set-методов [[EmailBuilder]], которая работает в виде билдера,
   * который накапливает все данные у себя в состоянии. Она потоко-НЕбезопасна. */
-trait EmailBuilderShared extends EmailBuilder {
+sealed abstract class EmailBuilderShared extends EmailBuilder {
 
   protected var _html: Option[String]     = None
   protected var _text: Option[String]     = None
@@ -90,11 +103,13 @@ trait EmailBuilderShared extends EmailBuilder {
     _from = Some(f)
     this
   }
+  protected def _getFrom: String = _from.getOrElse(EMAIL_NO_REPLY)
 
   override def setSubject(s: String): T = {
     _subject = Some(s)
     this
   }
+  protected def _getSubject = _subject.getOrElse(SUBJECT_DFLT)
 
   override def setRecipients(rcpts: String*): T = {
     _recipients = rcpts
@@ -117,8 +132,8 @@ class PlayMailerEmailBuilder @Inject() (
   /** Реализация отправки письма. Логика эта обычно синхронная, но это тут не важно. */
   override protected def _doSend(): Future[_] = {
     val email = Email(
-      subject   = _subject.get,
-      from      = _from.get,
+      subject   = _getSubject,
+      from      = _getFrom,
       to        = _recipients,
       bodyText  = _text,
       bodyHtml  = _html,
@@ -162,14 +177,12 @@ class CommonsEmailBuilder @Inject() (
     }
 
     // Расставить заголовки сообщения.
-    email.setHostName(state.host)
-    email.setAuthenticator(state.auth)
-    if (_from.isDefined)
-      email.setFrom(_from.get)
-    if (_subject.isDefined)
-      email.setSubject(_subject.get)
-    if (_replyTo.isDefined)
-      email.addReplyTo(_replyTo.get)
+    email.setHostName( state.host )
+    email.setAuthenticator( state.auth )
+    email.setFrom( _getFrom )
+    email.setSubject( _getSubject )
+    for (r <- _replyTo)
+      email.addReplyTo(r)
     if (_recipients.nonEmpty)
       email.addTo(_recipients : _*)
 
@@ -188,7 +201,12 @@ trait CommonsEmailBuildersFactory {
 
 @ImplementedBy(classOf[MailerWrapper])
 trait IMailerWrapper {
+
   def instance: EmailBuilder
+
+  /** Адреса получателей, если требуется отправлять письмо программерам. */
+  final def EMAILS_PROGRAMMERS = "konstantin.nikiforov@cbca.ru" :: Nil
+
 }
 
 @Singleton
