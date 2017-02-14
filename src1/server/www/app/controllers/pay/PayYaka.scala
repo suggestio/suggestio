@@ -24,6 +24,7 @@ import play.twirl.api.Xml
 import util.acl.{CanPayOrder, MaybeAuth}
 import util.billing.Bill2Util
 import util.mail.IMailerWrapper
+import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
 import views.html.lk.billing.pay._
@@ -52,6 +53,7 @@ class PayYaka @Inject() (
                bill2Util                : Bill2Util,
                mailerWrapper            : IMailerWrapper,
                mPersonIdents            : MPersonIdents,
+               mdrUtil                  : MdrUtil,
                override val mCommonDi   : ICommonDi
              )
   extends SioControllerImpl
@@ -392,12 +394,38 @@ class PayYaka @Inject() (
               contractId = usrNode.billing.contractId.get
 
               // Выполнить действия в биллинге, связанные с проведением платежа.
-              cartIdea <- slick.db.run {
-                bill2Util.handlePaySysPayment(
-                  orderId     = yReq.orderId,
-                  contractId  = contractId,
-                  mprice      = MPrice(yReq)
-                )
+              (isMdrNotifyNeeded, cartIdea) <- slick.db.run {
+                import slick.profile.api._
+                val a = for {
+                  // Проверить ордер, что он в статусе HOLD или DRAFT.
+                  mOrder0  <- bill2Util.getOpenedOrderForUpdate(yReq.orderId, validContractId = contractId)
+                  mprice   = MPrice(yReq)
+
+                  // Закинуть объем перечисленных денег на баланс указанного юзера.
+                  _ <- {
+                    bill2Util.incrUserBalanceFromPaySys(
+                      contractId  = contractId,
+                      mprice      = mprice,
+                      psTxnUid    = yReq.invoiceId.toString,
+                      orderIdOpt  = Some( yReq.orderId ),
+                      comment     = Some( "Yandex.Kassa" )
+                    )
+                  }
+
+                  // Подготовить ордер корзины к исполнению.
+                  owi <- bill2Util.prepareCartOrderItems(mOrder0)
+
+                  // Узнать, потребуется ли уведомлять модеров по email при успешном завершении транзакции.
+                  isMdrNotifyNeeded1 <- mdrUtil.isMdrNotifyNeeded
+
+                  // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
+                  cartIdea <- bill2Util.maybeExecuteCart(owi)
+
+                } yield {
+                  (isMdrNotifyNeeded1, cartIdea)
+                }
+
+                a.transactionally
               }
 
               // Узнать начальные данные для статистики.
@@ -405,8 +433,11 @@ class PayYaka @Inject() (
 
             } yield {
               val maPaym = cartIdea match {
-                case oc: MCartIdeas.OrderClosed =>
+                case _: MCartIdeas.OrderClosed =>
                   LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
+                  // Уведомить модераторов, если необходимо.
+                  mdrUtil.maybeSendMdrNotify(isMdrNotifyNeeded)
+                  // Собрать stat-экшен.
                   MAction(
                     actions = MActionTypes.Success :: Nil
                   )
@@ -415,8 +446,8 @@ class PayYaka @Inject() (
                   LOGGER.error(s"$logPrefix Unable to close order ${yReq.orderId}. something gone wrong: $cartIdeaStr")
                   Future {
                     mailerWrapper.instance
-                      .setSubject(s"[YaKa] Проблемы с завершением платежа order#${yReq.orderId} инвойс#{${yReq.invoiceId}")
-                      .setText(cartIdeaStr + "\n\n\n" + request)
+                      .setSubject(s"[YaKa] Проблемы с завершением платежа ${yReq.invoiceId}")
+                      .setText(s"order ${yReq.orderId}\n\ninvoice ${yReq.invoiceId}\n\n$cartIdeaStr\n\n\n $request\n\n$yReq")
                       .setRecipients(mailerWrapper.EMAILS_PROGRAMMERS: _*)
                       .send()
                   }

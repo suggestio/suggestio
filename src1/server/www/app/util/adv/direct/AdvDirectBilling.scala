@@ -134,6 +134,7 @@ class AdvDirectBilling @Inject() (
         .map { adve =>
           val abc = MAdvBillCtx(bmc, calsCtx, tfsMap, adve, mad)
           advUtil.calculateAdvPriceOnRcvr(adve.adnId, abc)
+            .normalizeAmountByExponent
         }
         .toSeq
       // Для суммирования списка по валютам и получения итоговой цены надо использовать MPrice.sumPricesByCurrency().
@@ -164,7 +165,8 @@ class AdvDirectBilling @Inject() (
         orderId       = orderId,
         iType         = MItemTypes.AdvDirect,
         status        = status,
-        price         = advUtil.calculateAdvPriceOnRcvr(adv.adnId, abc),
+        price         = advUtil.calculateAdvPriceOnRcvr(adv.adnId, abc)
+          .normalizeAmountByExponent,
         nodeId        = mad.id.get,
         sls           = adv.showLevels,
         // TODO Тут java.time-словоблудие. Всё равно весь класс будет удалён вместе с формой, поэтому точность и дубликация кода тут не важна, лишь бы по-быстрее двигаться:

@@ -152,7 +152,6 @@ class AdvGeoBillUtil @Inject() (
 
     val adId = abc.adId
 
-    // TODO Впилить сюда новую считалку стоимости
     val calc = new Calc[MItem](abc) {
 
       override def logPrefixPrefix: String = s"addToOrder(ord=$orderId,ad=$adId,st=$status)"
@@ -347,6 +346,7 @@ class AdvGeoBillUtil @Inject() (
         if (res.onMainScreen) {
           val omsMult = circleGeoMult * ON_MAIN_SCREEN_MULT
           val priceOms = geoAllDaysPrice.multiplifiedBy(omsMult)
+            .normalizeAmountByExponent
           val geoOmsRes = geoOms(gs, priceOms)
           LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult => $geoAllDaysPrice * $priceOms => $geoOmsRes")
           _acc ::= geoOmsRes
@@ -355,8 +355,9 @@ class AdvGeoBillUtil @Inject() (
         // Накинуть за гео-круг + теги
         if (tagsCount > 0) {
           val oneTagPrice = geoAllDaysPrice.multiplifiedBy( circleGeoMult )
+            .normalizeAmountByExponent
           LOGGER.trace(s"$logPrefix geo + $tagsCount tags, geo=$circleGeoMult * $geoAllDaysPrice = $oneTagPrice per each tag" )
-          addGeoTags(gs, geoAllDaysPrice)
+          addGeoTags(gs, oneTagPrice)
         }
       }
 
@@ -371,6 +372,7 @@ class AdvGeoBillUtil @Inject() (
           val rcvrId = rcvrKey.last
           val rcvrPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc)
           val rcvrPriceOms = rcvrPrice.multiplifiedBy( ON_MAIN_SCREEN_MULT )
+            .normalizeAmountByExponent
           val rcvrOmsRes = rcvrOms(rcvrId, rcvrPriceOms)
           LOGGER.trace(s"$logPrefix Rcvr ${rcvrKey.mkString(".")}: price $rcvrPrice, oms => $rcvrPriceOms,\n $rcvrOmsRes")
           _acc ::= rcvrOmsRes
@@ -384,6 +386,7 @@ class AdvGeoBillUtil @Inject() (
           .toSet
         for (rcvrId <- topRcvrIds) {
           val rcvrTagPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc)
+            .normalizeAmountByExponent
           LOGGER.trace(s"$logPrefix Top-rcvr $rcvrId + $tagsCount tags, $rcvrTagPrice per tag")
           addRcvrTags(rcvrId, rcvrTagPrice)
         }

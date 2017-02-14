@@ -1104,30 +1104,57 @@ class Bill2Util @Inject() (
   }
 
 
-  /** Враппер вокруг maybeExecuteCart(), который выполняет действия для проведения платежа в платежной системе.
+  /** Штатное зачисление денег на баланс какого-то юзера через внешнюю платежную систему.
     *
-    * @param orderId id ордера.
-    * @param contractId id контракта.
-    * @param mprice Объем платежа, проведённый в платежной системе.
-    * @return RWT-db-экшен, возвращающий MCartIdea.
+    * @param contractId id контракта юзера.
+    * @param mprice Объём средств.
+    * @param psTxnUid Уникальный id инвойса или что-то в этом роде на стороне платежной системы.
+    * @param orderIdOpt id ордера, если платёж связан с заказом.
+    * @param comment Коммент к платежу. Например, название платёжной системы.
+    * @return MTxn.
     */
-  def handlePaySysPayment(orderId: Gid_t, contractId: Gid_t, mprice: MPrice): DBIOAction[MCartIdeas.Idea, NoStream, RWT] = {
+  def incrUserBalanceFromPaySys(contractId: Gid_t, mprice: MPrice, psTxnUid: String, orderIdOpt: Option[Gid_t] = None,
+                                comment: Option[String] = None): DBIOAction[_, NoStream, RWT] = {
+    // Найти баланс юзера для текущей валюты.
     val a = for {
-    // Проверить ордер, что он в статусе HOLD или DRAFT.
-      mOrder0 <- getOpenedOrderForUpdate(orderId, validContractId = contractId)
+      // Узнать текущий баланс юзера
+      usrBalance0Opt <- mBalances.getByContractCurrency(contractId, mprice.currency)
+        .forUpdate
 
-      // Закинуть объем перечисленных денег на баланс юзера.
-      _ <- increaseBalanceSimple(contractId, mprice)
+      // Инициализировать/обновить баланс.
+      usrBalance2 <- {
+        usrBalance0Opt.fold[DBIOAction[MBalance, NoStream, Effect.Write]] {
+          val b = MBalance(
+            contractId = contractId,
+            price = mprice
+          )
+          mBalances.insertOne(b)
 
-      // Подготовить ордер корзины к исполнению.
-      owi <- prepareCartOrderItems(mOrder0)
+        } { usrBalance0 =>
+          mBalances.incrAmountBy(usrBalance0, mprice.amount)
+            .map(_.get)   // Этот баланс уже существует и передан в параметре, Option можно смело игнорировать.
+        }
+      }
 
-      // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
-      cartIdea <- maybeExecuteCart(owi)
+      // Записать в БД транзакцию зачисления денег на баланс юзера.
+      balIncrTxn <- {
+        val txn0 = MTxn(
+          balanceId       = usrBalance2.id.get,
+          amount          = mprice.amount,
+          txType          = MTxnTypes.PaySysTxn,
+          orderIdOpt      = orderIdOpt,
+          paymentComment  = comment,
+          psTxnUidOpt     = Some(psTxnUid),
+          datePaid        = Some( OffsetDateTime.now() )
+        )
+        mTxns.insertOne(txn0)
+      }
 
     } yield {
-      cartIdea
+      LOGGER.debug(s"incrUserBalanceFromPaySys($contractId, $mprice, $psTxnUid, $orderIdOpt): done, comment=$comment")
+      balIncrTxn
     }
+    // Нужна транзакция, т.к. очень денежные тут дела.
     a.transactionally
   }
 

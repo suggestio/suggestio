@@ -114,4 +114,17 @@ case class MPrice(
   /** Увеличить (уменьшить) объем средств на указанное число. */
   def plusAmount(plusAmount: Amount_t) = withAmount(amount + plusAmount)
 
+  /** Нормировать значение amount согласно экспоненте валюты.
+    * Иными словами, отбросить доли копеек и прочего.
+    */
+  def normalizeAmountByExponent: MPrice = {
+    val expMult = Math.pow(10, currency.exponent).toLong
+    val amount2 = (amount * expMult).toLong.toDouble / expMult
+    if (amount2 != amount) {
+      withAmount(amount2)
+    } else {
+      this
+    }
+  }
+
 }

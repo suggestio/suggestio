@@ -27,6 +27,10 @@ object MTxnTypes extends EnumMaybeWithName with EnumApply {
   /** Входящий профит. К продавку. */
   val Income   = new Val("i")
 
+  /** Копия транзакции на стороне платежной системы.
+    * Юзер оплатил на счёт CBCA в ПС, и ему закидываются деньги на баланс в S.io. */
+  val PaySysTxn = new Val("s")
+
   /** Возмещение денег за некачественно-оказанные услуги. */
   //val Refund   = new Val("e")
 

@@ -45,9 +45,11 @@ class LkAdnMapBillUtil @Inject() (
 
     val daysCount = bill2Util.getDaysCount( dur )
     val oneDayPrice = ONE_DAY_PRICE
-    oneDayPrice.withAmount(
-      daysCount * oneDayPrice.amount
-    )
+    oneDayPrice
+      .withAmount(
+        daysCount * oneDayPrice.amount
+      )
+      .normalizeAmountByExponent
   }
 
 
