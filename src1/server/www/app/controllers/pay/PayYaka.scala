@@ -162,15 +162,17 @@ class PayYaka @Inject() (
   /** id узла платежной системы. Узел не существует, просто нужен был идентифицируемый id для статистики. */
   private def PAY_SYS_NODE_ID = "Yandex.Kassa"
 
+  def YREQ_BP = parse.urlFormEncoded(60000)
+
   /**
     * Экшен проверки платежа яндекс-кассой.
     *
     * @see Пример с CURL: [[https://github.com/yandex-money/yandex-money-joinup/blob/master/demo/010%20%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%B8%D1%81%D0%BD%D1%8B%D1%85%20%D1%81%D0%B0%D0%B9%D1%82%D0%BE%D0%B2.md#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80-curl]]
     * @return 200 OK + XML, когда всё нормально.
     */
-  def check = maybeAuth().async { implicit request =>
+  def check = maybeAuth().async(YREQ_BP) { implicit request =>
     lazy val logPrefix = s"check[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix ${request.remoteAddress} ${request.body}")
+    LOGGER.trace(s"$logPrefix ${request.remoteAddress} body:\n ${request.body.mkString("\n ")}")
 
     val yakaAction = MYakaActions.Check
     val shopId = yakaUtil.SHOP_ID
@@ -188,10 +190,10 @@ class PayYaka @Inject() (
         Ok(xml)
       },
 
+      // Всё ок забиндилось. Выверяем все данные.
       {yReq =>
         // Реквест похож на денежный. Сначала можно просто пересчитать md5:
-        val yPrice = MPrice(yReq.amount, yReq.currency)
-        val expMd5 = yakaUtil.getMd5(yReq, yPrice)
+        val expMd5 = yakaUtil.getMd5(yReq)
         val resDataFut: Future[(List[MAction], Xml)] = {
           // Проверяем shopId и md5 одновременно, чтобы по-лучше идентифицировать реквест.
           if ( expMd5.equalsIgnoreCase(yReq.md5) &&
@@ -319,7 +321,7 @@ class PayYaka @Inject() (
     *
     * @return 200 + XML.
     */
-  def payment = maybeAuth().async { implicit request =>
+  def payment = maybeAuth().async(YREQ_BP) { implicit request =>
     lazy val logPrefix = s"payment[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix ${request.remoteAddress} ${request.body}")
 

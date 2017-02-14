@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAccessor
 import java.util.Locale
 
-import io.suggest.bill.{MCurrency, MPrice}
+import io.suggest.bill.{IMCurrency, IPrice, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.common.text.StringUtil
@@ -178,7 +178,7 @@ object TplDataFormatUtil {
 
 
   /** Отрендерить amount цены в сухом формате. */
-  def priceAmountPlainFmt(mprice: MPrice): DecimalFormat = {
+  def priceAmountPlainFmt(mprice: IMCurrency): DecimalFormat = {
     val currFmt = NumberFormat.getNumberInstance( Locale.ROOT )
       .asInstanceOf[DecimalFormat]
     currFmt.setDecimalSeparatorAlwaysShown(true)
@@ -193,7 +193,7 @@ object TplDataFormatUtil {
     currFmt.setGroupingUsed(false)
     currFmt
   }
-  def formatPriceAmountPlain(mprice: MPrice): String = {
+  def formatPriceAmountPlain(mprice: IPrice): String = {
     priceAmountPlainFmt(mprice)
       .format(mprice.amount)
   }

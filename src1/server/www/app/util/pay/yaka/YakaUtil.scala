@@ -4,7 +4,7 @@ import models.mpay.yaka.{IYakaReqSigned, MYakaAction, MYakaActions, MYakaReq}
 import play.api.data._
 import Forms._
 import com.google.inject.Inject
-import io.suggest.bill.{MCurrencies, MCurrency, MPrice}
+import io.suggest.bill.{IPrice, MCurrencies, MCurrency, MPrice}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.text.util.TextHashUtil
@@ -112,12 +112,16 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
 
 
   def currencyM: Mapping[MCurrency] = {
-    // В демо-режиме только демо-рубли допустимы. И их код 10643.
-    // https://tech.yandex.ru/money/doc/payment-solution/deposition/test-data-docpage/
-    // В обычном режиме -- используется стандартный код валюты.
-    val currencyOffset = if (IS_DEMO) 10000 else 0
-    FormUtil.currency_iso4217(currencyOffset)
+    FormUtil.currency_iso4217(currencyIdOffset)
   }
+
+  /**
+    * В демо-режиме только демо-рубли. И их код 10643.
+    * В prod-режиме: рубли и код 643.
+    * https://tech.yandex.ru/money/doc/payment-solution/deposition/test-data-docpage/
+    * В обычном режиме -- используется стандартный код валюты.
+    */
+  def currencyIdOffset = if (IS_DEMO) 10000 else 0
 
   /** Маппинг для данных запроса check и aviso. */
   def md5Form: Form[MYakaReq] = {
@@ -145,12 +149,29 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     * @param price Рассчётная стоимость заказа.
     * @return Рассчётная строка.
     */
-  def getMd5(yReq: IYakaReqSigned, price: MPrice): String = {
+  def getMd5(yReq: IYakaReqSigned, price: IPrice): String = {
     assertEnabled()
     // MD5(action;суммазаказа;orderSumCurrencyPaycash;orderSumBankPaycash;shopId;invoiceId;customerNumber;shopPassword)
     val amount = TplDataFormatUtil.formatPriceAmountPlain(price)
-    val str = s"${yReq.action};$amount;${price.currency.iso4217};${yReq.bankId};${yReq.shopId};${yReq.invoiceId};${yReq.personId};${YAKA_MD5_PASSWORD.get}"
-    DigestUtils.md5Hex(str)
+
+    val d = ';'
+    val str = new StringBuilder(128)    // ~106-112 примерная макс.длина этой строки в нашем случае.
+      .append( yReq.action.strId ).append(d)
+      .append( amount ).append(d)
+      .append( price.currency.iso4217 + currencyIdOffset ).append(d)
+      .append( yReq.bankId ).append(d)
+      .append( SHOP_ID ).append(d)
+      .append( yReq.invoiceId ).append(d)
+      .append( yReq.personId ).append(d)
+      .append( YAKA_MD5_PASSWORD.get )
+      .toString()
+
+    val md5Str = DigestUtils.md5Hex(str).toUpperCase()
+    LOGGER.trace(s"getMd5($yReq, $price): done:\n text for md5 = $str\n md5 = $md5Str")
+    md5Str
+  }
+  def getMd5(yReq: IYakaReqSigned): String = {
+    getMd5(yReq, yReq)
   }
 
 
