@@ -1,7 +1,9 @@
 package models.mpay.yaka
 
 import enumeratum._
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.IStrId
+import play.api.mvc.QueryStringBindable
 
 /**
   * Suggest.io
@@ -28,5 +30,45 @@ object MYakaActions extends Enum[MYakaAction] {
   }
 
   override def values = findValues
+
+}
+
+
+/** Модель return-экшенов. Там только успехи и ошибки. */
+object MYakaReturnActions extends Enum[MYakaAction] {
+
+  /** Юзер возвращается в /success. */
+  case object Success extends MYakaAction {
+    override def toString = "PaymentSuccess"
+  }
+
+  /** Юзера отправили в /fail. */
+  case object Fail extends MYakaAction {
+    override def toString = "PaymentFail"
+  }
+
+  override def values = findValues
+
+
+  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MYakaAction] = {
+    new QueryStringBindableImpl[MYakaAction] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]) = {
+        for {
+          strIdEith <- strB.bind(key, params)
+        } yield {
+          strIdEith.right.flatMap { strId =>
+            withNameOption(strId)
+              .toRight("e.invalid.yaka.action")
+          }
+        }
+      }
+
+      override def unbind(key: String, value: MYakaAction) = {
+        strB.unbind(key, value.strId)
+      }
+
+    }
+  }
 
 }

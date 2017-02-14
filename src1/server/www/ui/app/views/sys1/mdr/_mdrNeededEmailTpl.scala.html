@@ -7,22 +7,25 @@
 
 @if(args.nonEmpty) {
   <p>
-    @if(args.personId || args.personName) {
-      От пользователя
-      @for(personId <- args.personId) {
-        <a href="@LK_URL_PREFIX@routes.SysMarket.showAdnNode(personId)">
-      }
-      @args.personName.orElse( args.personId ).getOrElse("???")
-      @if(args.personId) {
-        </a>
-      }
-    }
     Поступила оплата
     @for(price <- args.paid) {
       <strong>@formatPrice(price)</strong>
     }
     @for(orderId <- args.orderId) {
-      по заказу #@orderId.
+      по заказу #@orderId
+    }
+
+    @if(args.personId || args.personName) {
+      <br/>
+      от
+      @for(personId <- args.personId) {
+        <a href="@LK_URL_PREFIX@routes.SysBilling.forNode(personId)">
+      }
+          пользователя
+          @args.personName.orElse( args.personId ).getOrElse("???")
+      @if(args.personId) {
+        </a>
+      }
     }
   </p>
 

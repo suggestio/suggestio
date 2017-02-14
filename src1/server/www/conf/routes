@@ -120,6 +120,9 @@ POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(item
 GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId: Gid_t, onNodeId: MEsUuId)
 POST /pay/yaka/check                    @controllers.pay.PayYaka.check
 POST /pay/yaka/payment                  @controllers.pay.PayYaka.payment
+GET  /pay/yaka/success                  @controllers.pay.PayYaka.success(qs: mpay.yaka.MYakaReturnQs)
+GET  /pay/yaka/fail                     @controllers.pay.PayYaka.fail(qs: Option[mpay.yaka.MYakaReturnQs])
+POST /pay/yaka/fail                     @controllers.pay.PayYaka.failPost(qs: Option[mpay.yaka.MYakaReturnQs])
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 
 ## Принятие приглашения на управления узлом.

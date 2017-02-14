@@ -17,7 +17,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mdr.MSysMdrEmailTplArgs
-import models.mpay.yaka.{MYakaAction, MYakaActions, MYakaFormData, MYakaReq}
+import models.mpay.yaka._
 import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.MPersonIdents
@@ -45,19 +45,19 @@ import scala.concurrent.Future
   *      Короткая ссылка: [[https://goo.gl/Zfwt15]]
   */
 class PayYaka @Inject() (
-               maybeAuth                : MaybeAuth,
-               canPayOrder              : CanPayOrder,
-               statUtil                 : StatUtil,
-               mItems                   : MItems,
-               yakaUtil                 : YakaUtil,
-               mBalances                : MBalances,
-               mOrders                  : MOrders,
-               bill2Util                : Bill2Util,
-               mailerWrapper            : IMailerWrapper,
-               mPersonIdents            : MPersonIdents,
-               mdrUtil                  : MdrUtil,
-               override val mCommonDi   : ICommonDi
-             )
+                          maybeAuth                : MaybeAuth,
+                          canPayOrder              : CanPayOrder,
+                          statUtil                 : StatUtil,
+                          mItems                   : MItems,
+                          yakaUtil                 : YakaUtil,
+                          mBalances                : MBalances,
+                          mOrders                  : MOrders,
+                          bill2Util                : Bill2Util,
+                          mailerWrapper            : IMailerWrapper,
+                          mPersonIdents            : MPersonIdents,
+                          mdrUtil                  : MdrUtil,
+                          override val mCommonDi   : ICommonDi
+                        )
   extends SioControllerImpl
   with MacroLogsImpl
 {
@@ -182,41 +182,6 @@ class PayYaka @Inject() (
     * Экшен проверки платежа яндекс-кассой.
     *
     * POST body содержит вот такие данные:
-    *
-    * {{{
-    *   orderNumber -> 617
-    *   orderSumAmount -> 2379.07
-    *   cdd_exp_date -> 1117
-    *   shopArticleId -> 391660
-    *   paymentPayerCode -> 4100322062290
-    *   cdd_rrn -> 217175135289
-    *   external_id -> deposit
-    *   paymentType -> AC
-    *   requestDatetime -> 2017-02-14T10:38:38.971+03:00
-    *   depositNumber -> 97QmIfZ5P9JSF-mqD0uEbYeRXY0Z.001f.201702
-    *   nst_eplPayment -> true
-    *   cps_user_country_code -> PL
-    *   cdd_response_code -> 00
-    *   orderCreatedDatetime -> 2017-02-14T10:38:38.780+03:00
-    *   sk -> yde0255436f276b59f1642648b119b0d0
-    *   action -> checkOrder
-    *   shopId -> 84780
-    *   scid -> 548806
-    *   shopSumBankPaycash -> 1003
-    *   shopSumCurrencyPaycash -> 10643
-    *   rebillingOn -> false
-    *   orderSumBankPaycash -> 1003
-    *   cps_region_id -> 2
-    *   orderSumCurrencyPaycash -> 10643
-    *   merchant_order_id -> 617_140217103753_00000_84780
-    *   unilabel -> 2034c791-0009-5000-8000-00001cc939aa
-    *   cdd_pan_mask -> 444444|4448
-    *   customerNumber -> rosOKrUOT4Wu0Bj139F1WA
-    *   yandexPaymentId -> 2570071018240
-    *   invoiceId -> 2000001037346
-    *   shopSumAmount -> 2295.80
-    *   md5 -> AD3E905D6F489F1AD7F2F302D2982B1B
-    * }}}
     *
     * @see Пример с CURL: [[https://github.com/yandex-money/yandex-money-joinup/blob/master/demo/010%20%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%B8%D1%81%D0%BD%D1%8B%D1%85%20%D1%81%D0%B0%D0%B9%D1%82%D0%BE%D0%B2.md#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80-curl]]
     * @return 200 OK + XML, когда всё нормально.
@@ -579,6 +544,52 @@ class PayYaka @Inject() (
     fut
   }
 
-  // TODO success(): https://my.suggest.io/pay/yaka/success?orderNumber=617&orderSumAmount=2379.07&cdd_exp_date=1117&shopArticleId=391660&paymentPayerCode=4100322062290&paymentDatetime=2017-02-14T10%3A38%3A39.751%2B03%3A00&cdd_rrn=217175135289&external_id=deposit&paymentType=AC&requestDatetime=2017-02-14T10%3A38%3A39.663%2B03%3A00&depositNumber=97QmIfZ5P9JSF-mqD0uEbYeRXY0Z.001f.201702&nst_eplPayment=true&cdd_response_code=00&cps_user_country_code=PL&orderCreatedDatetime=2017-02-14T10%3A38%3A38.780%2B03%3A00&sk=yde0255436f276b59f1642648b119b0d0&action=PaymentSuccess&shopId=84780&scid=548806&rebillingOn=false&orderSumBankPaycash=1003&cps_region_id=2&orderSumCurrencyPaycash=10643&merchant_order_id=617_140217103753_00000_84780&unilabel=2034c791-0009-5000-8000-00001cc939aa&cdd_pan_mask=444444%7C4448&customerNumber=rosOKrUOT4Wu0Bj139F1WA&yandexPaymentId=2570071018240&invoiceId=2000001037346
+
+  /** Яндекс.касса вернула сюда юзера после удачной оплаты.
+    * Сессия юзера могла истечь, пока он платил, поэтому тут maybeAuth.
+    * @param qs QS-аргументы запроса.
+    */
+  def success(qs: MYakaReturnQs) = maybeAuth() { implicit request =>
+    lazy val logPrefix = s"success[${System.currentTimeMillis()}]:"
+    LOGGER.trace(s"$logPrefix User returned with $qs")
+    if (qs.action != MYakaReturnActions.Success) {
+      LOGGER.warn(s"$logPrefix unexpected qs action: ${qs.action}")
+      BadRequest(s"No success: ${qs.action}")
+
+    } else if (qs.shopId != yakaUtil.SHOP_ID) {
+      LOGGER.warn(s"$logPrefix Unexpected shopId for returned user: ${qs.shopId}")
+      BadRequest("Invalid shop.")
+
+    } else if (request.user.personIdOpt.nonEmpty && !request.user.personIdOpt.contains(qs.personId)) {
+      LOGGER.warn(s"$logPrefix Unexpected personId for returned user: ${qs.personId}, but expected ${request.user.personIdOpt}")
+      Forbidden("Invalid user.")
+
+    } else {
+      // Юзер либо аноним, либо правильный. Надо отредиректить юзера на его узел, где он может просмотреть итоги оплаты.
+      NotImplemented("success: Not implemented")
+    }
+  }
+
+
+  /** Аналог success() для POST-запросов.
+    *
+    * Судя по докам, возможен переход на этот экшен через POST из яндекс-кошелька.
+    * @see [[https://tech.yandex.ru/money/doc/payment-solution/shop-config/parameters-docpage/]]
+    */
+  def failPost(qsOpt: Option[MYakaReturnQs]) = fail(qsOpt)
+
+
+  /** Яндекс.касса вернула юзера сюда из-за ошибки оплаты.
+    * Сессия юзера могла закончится, пока он платил, поэтому тут maybeAuth.
+    *
+    * @param qsOpt QS-аргументы запроса, если есть.
+    *              None, если яндекс-касса не понимает, что за юзер и по какой причине к ней лезет с оплатой.
+    *              Такое возможно, если закрыть браузер с открытой вкладкой оплаты, потом снова запустить браузер
+    *              с сохраненной вкладкой.
+    */
+  def fail(qsOpt: Option[MYakaReturnQs]) = maybeAuth() { implicit request =>
+    LOGGER.trace(s"fail(): $qsOpt")
+    NotImplemented("fail: Not impl.")
+  }
 
 }

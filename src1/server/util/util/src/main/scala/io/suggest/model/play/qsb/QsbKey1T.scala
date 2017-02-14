@@ -34,6 +34,9 @@ trait QsbKey1T {
       .filter(_.nonEmpty)
       .mkString("&")
   }
+  def _mergeUnbinded1(unbinded: String*): String = {
+    _mergeUnbinded(unbinded)
+  }
 
 }
 

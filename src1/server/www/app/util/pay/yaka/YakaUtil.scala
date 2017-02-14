@@ -123,18 +123,56 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     */
   def currencyIdOffset = if (IS_DEMO) 10000 else 0
 
-  /** Маппинг для данных запроса check и aviso. */
+  /** Маппинг для данных запроса check и aviso.
+    *
+    * Тело запроса содержит данные формы такого вида:
+    * {{{
+    *   orderNumber -> 617
+    *   orderSumAmount -> 2379.07
+    *   cdd_exp_date -> 1117
+    *   shopArticleId -> 391660
+    *   paymentPayerCode -> 4100322062290
+    *   cdd_rrn -> 217175135289
+    *   external_id -> deposit
+    *   paymentType -> AC
+    *   requestDatetime -> 2017-02-14T10:38:38.971+03:00
+    *   depositNumber -> 97QmIfZ5P9JSF-mqD0uEbYeRXY0Z.001f.201702
+    *   nst_eplPayment -> true
+    *   cps_user_country_code -> PL
+    *   cdd_response_code -> 00
+    *   orderCreatedDatetime -> 2017-02-14T10:38:38.780+03:00
+    *   sk -> yde0255436f276b59f1642648b119b0d0
+    *   action -> checkOrder
+    *   shopId -> 84780
+    *   scid -> 548806
+    *   shopSumBankPaycash -> 1003
+    *   shopSumCurrencyPaycash -> 10643
+    *   rebillingOn -> false
+    *   orderSumBankPaycash -> 1003
+    *   cps_region_id -> 2
+    *   orderSumCurrencyPaycash -> 10643
+    *   merchant_order_id -> 617_140217103753_00000_84780
+    *   unilabel -> 2034c791-0009-5000-8000-00001cc939aa
+    *   cdd_pan_mask -> 444444|4448
+    *   customerNumber -> rosOKrUOT4Wu0Bj139F1WA
+    *   yandexPaymentId -> 2570071018240
+    *   invoiceId -> 2000001037346
+    *   shopSumAmount -> 2295.80
+    *   md5 -> AD3E905D6F489F1AD7F2F302D2982B1B
+    * }}}
+    */
   def md5Form: Form[MYakaReq] = {
+    import io.suggest.pay.yaka.YakaConst._
     val m = mapping(
-      "action"                    -> yakaActionM,
-      "orderSumAmount"            -> amountM,
-      "orderSumCurrencyPaycash"   -> currencyM,
-      "orderSumBankPaycash"       -> number,
-      "shopId"                    -> shopIdM,
-      "invoiceId"                 -> invoiceIdM,
-      "customerNumber"            -> personIdM,
-      "md5"                       -> md5M,
-      "orderNumber"               -> longNumber
+      ACTION_FN                   -> yakaActionM,
+      AMOUNT_FN                   -> amountM,
+      CURRENCY_FN                 -> currencyM,
+      BANK_ID_FN                  -> number,
+      SHOP_ID_FN                  -> shopIdM,
+      INVOICE_ID_FN               -> invoiceIdM,
+      PERSON_ID_FN                -> personIdM,
+      MD5_FN                      -> md5M,
+      ORDER_ID_FN                 -> longNumber
     )
     { MYakaReq.apply }
     { MYakaReq.unapply }
