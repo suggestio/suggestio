@@ -3,25 +3,73 @@
 @* Рендер формы, отправляющей юзера в платежку яндекс-кассы. *@
 
 @import ctx.messages
+@import io.suggest.pay.yaka.YakaConst._
+@import util.TplDataFormatUtil.formatPrice
 
 @__input(k: String, v: Any) = {
   <input type="hidden" name="@k" value="@v"/>
 }
 
-<form method="POST" action="https://demomoney.yandex.ru/eshop.xml">
+@__td(isKey: Boolean)(content: Html) = {
+  <td class="td __white __size-M @if(isKey) {ft-M dark-gray} else {ft-L}">
+    @content
+  </td>
+}
 
-  @__input("shopId",          args.shopId)
-  @__input("scid",            args.scId)
-  @__input("sum",             args.sumRub)
-  @__input("customerNumber",  args.customerNumber)
-  @for(orderId <- args.orderNumber) {
-    @__input("orderNumber",   orderId)
-  }
+<form method="POST" action="https://@if(args.isDemo){demo}money.yandex.ru/eshop.xml">
+
+  @__input(SHOP_ID_FN,        args.shopId)
+  @__input(SC_ID_FN,          args.scId)
+  @__input(PERSON_ID_FN,      args.customerNumber)
+
+  <table class="table">
+    <tbody>
+      @for(orderId <- args.orderNumber) {
+        <tr>
+          @__td(true) {
+            @messages("Order.number")
+          }
+          @__td(false) {
+            @orderId
+            @__input(ORDER_ID_FN,     orderId)
+          }
+        </tr>
+      }
+
+      <tr>
+        @__td(true) {
+          @messages("Payment.method")
+        }
+        @__td(false) {
+          @messages("Yandex.Kassa")
+        }
+      </tr>
+
+      <tr>
+        @__td(true) {
+          @messages("Total.to.pay")
+        }
+        @__td(false) {
+          <strong>
+            @formatPrice( args )
+          </strong>
+          @__input(SUM_FN,      args.amount)
+        }
+      </tr>
+
+    </tbody>
+  </table>
+
   @for(email <- args.clientEmail) {
-    @__input("cps_email",     email)
+    @__input(CLIENT_EMAIL_FN, email)
   }
 
-  <input type="submit" value="@messages("Pay")"/>
+  @__input(SIO_NODE_ID_FN,    args.onNodeId)
+
+  <input class="right-bar-price-widget_request-btn btn __major __size-L sm-large-button"
+         type="submit"
+         value="@messages("Pay")"
+  />
 
 </form>
 

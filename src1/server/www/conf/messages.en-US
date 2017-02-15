@@ -80,6 +80,7 @@ Something.gone.wrong=Something gone wrong
 Center=Center
 Please.wait=Please wait...
 Today=Today
+Any=Any
 
 requisites=Payment details for withdrawal
 
@@ -777,6 +778,9 @@ Thanks.for.buy=Thank you for your purchase!
 Your.order.is.being.processed=Your order is being processed by Suggest.io. Please be patient.
 Return.to.my.ads=Return to my ads
 Payment.for.order.N=Payment for order #{0}
+Order.number=Order number
+Total.to.pay=Total to pay
+Payment.method=Payment method
 
 Item.type.a=Direct advertisement
 Item.type.t=Geo-tag advertisement

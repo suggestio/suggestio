@@ -209,5 +209,8 @@ dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
 excludeFilter in gzip := "*.woff" || "*.woff2"
 
 // Дополнительные импорты для twirl-шаблонов.
-TwirlKeys.templateImports += "models.mctx.Context"
+TwirlKeys.templateImports ++= Seq(
+  "io.suggest.mbill2.m.gid.Gid_t",
+  "models.mctx.Context"
+)
 

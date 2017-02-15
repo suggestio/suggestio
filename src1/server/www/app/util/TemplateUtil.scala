@@ -151,7 +151,7 @@ object TplDataFormatUtil {
     * @param ctx Контекст рендера.
     * @return Строка вида "10 034"
     */
-  def formatPriceAmount(mprice: MPrice)(implicit ctx: Context): String = {
+  def formatPriceAmount(mprice: IPrice)(implicit ctx: Context): String = {
     val formatPriceDigitsDF = {
       val currFmt = NumberFormat.getCurrencyInstance( ctx.messages.lang.locale )
         .asInstanceOf[DecimalFormat]

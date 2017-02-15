@@ -1,8 +1,11 @@
-@(mnode: MNode)(formContent: Html)(implicit ctx: Context)
+@(orderId: Gid_t, mnode: MNode)(formContent: Html)(implicit ctx: Context)
+
+@import ctx.messages
 
 @* Страница для рендера страницы оплаты с отправкой юзера в платежную систему. *@
 
 @PayBase(
+  title = messages("Payment.for.order.N", orderId),
   mnode = mnode
 ) {
 

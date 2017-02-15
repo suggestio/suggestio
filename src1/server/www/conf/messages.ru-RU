@@ -80,6 +80,7 @@ Something.gone.wrong=Что-то пошло не так
 Center=Центр
 Please.wait=Пожалуйста, подождите...
 Today=Сегодня
+Any=Любой
 
 
 requisites=Платёжные реквизиты для вывода средств
@@ -787,6 +788,11 @@ Thanks.for.buy=Спасибо за покупку!
 Your.order.is.being.processed=Ваш заказ обрабатывается системой Suggest.io.
 Return.to.my.ads=Назад к рекламным карточкам
 Payment.for.order.N=Оплата заказа №{0}
+Order.number=Номер заказа
+Total.to.pay=Итого к оплате
+Payment.method=Метод оплаты
+Yandex.Kassa=Яндекс.Касса
+
 
 Item.type.a=Прямое размещение
 Item.type.t=Размещение в геотеге

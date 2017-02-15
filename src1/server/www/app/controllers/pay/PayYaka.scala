@@ -19,7 +19,7 @@ import models.mctx.Context
 import models.mdr.MSysMdrEmailTplArgs
 import models.mpay.yaka._
 import models.mproj.ICommonDi
-import models.req.{INodeOrderReq, IReq, IReqHdr}
+import models.req.{INodeOrderReq, IReqHdr}
 import models.usr.MPersonIdents
 import play.api.mvc.Result
 import play.twirl.api.Xml
@@ -74,26 +74,6 @@ class PayYaka @Inject() (
     NotImplemented("Order already paid. TODO")    // TODO Редиректить? На страницу подтверждения оплаты или куда?
   }
 
-  /** Узнать цену для оплаты.
-    *
-    * @param orderId id ордера.
-    * @param request Текущий реквест.
-    * @return MPrice или exception.
-    */
-  // TODO Удалить, вынеся логику на уровень биллинга в виде транзакции.
-  private def _getPayPrice(orderId: Gid_t)(implicit request: IReq[_]): Future[MPrice] = {
-    // Посчитать, сколько юзеру надо доплатить за вычетом остатков по балансам.
-    val payPricesFut = bill2Util.getPayPrices(orderId, request.user.mBalancesFut)
-
-    // Собираем данные для рендера формы отправки в платёжку.
-    for {
-      payPrices     <- payPricesFut
-    } yield {
-      yakaUtil.assertPricesForPay(payPrices)
-    }
-
-  }
-
 
   /** Подготовиться к оплате через яндекс-кассу.
     * Юзеру рендерится неизменяемая форма с данными для оплаты.
@@ -106,7 +86,11 @@ class PayYaka @Inject() (
   def payForm(orderId: Gid_t, onNodeId: MEsUuId) = canPayOrder.Get(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
     val personId = request.user.personIdOpt.get
 
-    val payPriceFut = _getPayPrice(orderId)
+    val payPriceFut = for {
+      payPrices0 <- bill2Util.getPayPrices(orderId, request.user.mBalancesFut)
+    } yield {
+      yakaUtil.assertPricesForPay(payPrices0)
+    }
 
     // Попытаться определить email клиента.
     val userEmailOptFut = for {
@@ -126,15 +110,17 @@ class PayYaka @Inject() (
       // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
       // Собрать аргументы для рендера, отрендерить страницу с формой.
       val formData = MYakaFormData(
-        shopId  = yakaUtil.SHOP_ID,
-        scId    = yakaUtil.SC_ID,
-        sumRub  = payPrice.amount,
+        isDemo          = yakaUtil.IS_DEMO,
+        shopId          = yakaUtil.SHOP_ID,
+        scId            = yakaUtil.SC_ID,
+        amount          = payPrice.amount,
+        onNodeId        = onNodeId,
         customerNumber  = request.user.personIdOpt.get,
         orderNumber     = Some(orderId),
         clientEmail     = userEmailOpt
       )
       // Отрендерить шаблон страницы.
-      val html = PayFormTpl(request.mnode) {
+      val html = PayFormTpl(orderId, request.mnode) {
         // Отрендерить саму форму в HTML. Форма может меняться от платежки к платёжке, поэтому вставляется в общую страницу в виде HTML.
         _YakaFormTpl(formData)(ctx)
       }(ctx)

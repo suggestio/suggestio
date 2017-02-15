@@ -1,6 +1,7 @@
 package models.mpay.yaka
 
-import io.suggest.bill.Amount_t
+import io.suggest.bill.{Amount_t, IPrice, MCurrencies, MCurrency}
+import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 
 /**
@@ -10,10 +11,18 @@ import io.suggest.mbill2.m.gid.Gid_t
   * Description: Модель данных формы яндекс-кассы.
   */
 case class MYakaFormData(
+                          isDemo          : Boolean,
                           shopId          : Long,
                           scId            : Long,
-                          sumRub          : Amount_t,
+                          amount          : Amount_t,
                           customerNumber  : String,
+                          onNodeId        : MEsUuId,
                           orderNumber     : Option[Gid_t],
                           clientEmail     : Option[String]
                         )
+  extends IPrice
+{
+
+  override def currency: MCurrency = MCurrencies.RUB
+
+}
