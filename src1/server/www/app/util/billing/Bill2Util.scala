@@ -18,7 +18,9 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.MNode
+import models.mcron.ICronTask
 import slick.sql.SqlAction
+import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -71,6 +73,14 @@ class Bill2Util @Inject() (
     // Вернуть id узла.
     res
   }
+
+  /** Через сколько времени считать ордер повисшим и разворачивать его назад в ордер-корзину? */
+  private val RELEASE_HOLD_ORDERS_AFTER_HOURS: Int = {
+    configuration.getInt("billing.orders.release.hold.after.hours")
+      .getOrElse(24)
+  }
+
+  private def MAX_STALLED_HOLDED_ORDERS_PER_ITERATION = 30
 
   private def _getDaysCountFix(days0: Int) = {
     Math.max(1, days0) + 1
@@ -1197,6 +1207,54 @@ class Bill2Util @Inject() (
       ordersDeleted
     }
     a.transactionally
+  }
+
+
+  /** Поиск и устранение повисших HOLD-ордеров в базе.
+    * Можно вызывать по cron'у.
+    *
+    * @return Фьючерс.
+    */
+  def findReleaseStalledHoldOrders(): Future[_] = {
+    val hours = RELEASE_HOLD_ORDERS_AFTER_HOURS
+    val oldNow = OffsetDateTime.now.minusHours( hours )
+    val stalledOrderIdsFut = slick.db.run {
+      mOrders.query
+        .filter { o =>
+          (o.statusStr === MOrderStatuses.Hold.strId) && (o.dateStatus < oldNow)
+        }
+        .map(_.id)
+        .take( MAX_STALLED_HOLDED_ORDERS_PER_ITERATION )
+        .result
+    }
+
+    lazy val logPrefix = s"findReleaseStalledHoldOrders()[$oldNow]:"
+    LOGGER.debug(s"$logPrefix Starting for ${hours}h...")
+
+    for {
+      orderIds <- stalledOrderIdsFut
+      orderIdsCount = orderIds.size
+      // Чтобы не нагружать сильно систему, обходим ордеры последовательно.
+      errorsCount <- {
+        LOGGER.trace(s"$logPrefix Found $orderIdsCount orders: ${orderIds.mkString(", ")}")
+        orderIds.foldLeft( Future.successful(0) ) { (accFut, orderId) =>
+          accFut
+            .flatMap { errCounter =>
+              slick.db
+                .run {
+                  unholdOrder(orderId)
+                }
+                .map { _ => errCounter }
+                .recover { case ex: Throwable =>
+                  LOGGER.error(s"$logPrefix failed to unhold order $orderId", ex)
+                  errCounter + 1
+                }
+            }
+        }
+      }
+    } yield {
+      LOGGER.info(s"$logPrefix Finished now with $orderIdsCount orders, $errorsCount failures.")
+    }
   }
 
 

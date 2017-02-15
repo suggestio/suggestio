@@ -5,6 +5,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
+import util.billing.Bill2Util
 import util.cron.ICronTasksProvider
 
 import scala.concurrent.duration._
@@ -20,6 +21,7 @@ class BillingCronTasks @Inject()(
   advDirectBilling        : AdvDirectBilling,
   aoaFac                  : ActivateOfflineAdvsFactory,
   deaFac                  : DisableExpiredAdvsFactory,
+  bill2Util               : Bill2Util,
   mCommonDi               : ICommonDi
 )
   extends ICronTasksProvider
@@ -75,7 +77,18 @@ class BillingCronTasks @Inject()(
       ) {
         aoaFac.create().run()
       }
-      List(depubExpired, advOfflineAdvs)
+
+      val unStallHoldedOrders = MCronTask(
+        startDelay = 30.seconds,
+        every = 10.minutes,
+        displayName = "unStallHoldedOrders()"
+      ) {
+        bill2Util.findReleaseStalledHoldOrders()
+          .onFailure { case ex: Throwable =>
+            LOGGER.error("Failed to findReleaseStalledHoldOrders()", ex)
+          }
+      }
+      List(depubExpired, advOfflineAdvs, unStallHoldedOrders)
 
     } else {
       Nil
