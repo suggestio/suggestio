@@ -1103,6 +1103,102 @@ class Bill2Util @Inject() (
     }
   }
 
+  /**
+    * Разхолдить ордер назад в корзину.
+    * @param orderId id ордера, подлежащего разморозке назад в корзину.
+    * @return DB-экшен, возвращающий инстанс размороженного ордера.
+    */
+  def unholdOrder(orderId: Gid_t): DBIOAction[MOrder, NoStream, RWT] = {
+    lazy val logPrefix = s"unHoldOrder($orderId)[${System.currentTimeMillis()}]:"
+
+    val a = for {
+      // Прочитать новый ордер в рамках транзакции.
+      morderOpt <- mOrders.getById(orderId).forUpdate
+      morder = morderOpt.get
+
+      // Выполнять какие-то действия, только если позволяет текущий статус ордера.
+      morder2 <- {
+        if (morder.status == MOrderStatuses.Hold) {
+          val morder22 = morder.withStatus( MOrderStatuses.Draft )
+          for {
+            // Поискать текущую корзину, вдруг юзер ещё что-то в корзину швырнул, пока текущий ордер был HOLD.
+            cartOrderOpt    <- getLastOrder(morder.contractId, MOrderStatuses.Draft)
+              .forUpdate
+
+            ordersUpdated <- mOrders.saveStatus( morder22 )
+            if ordersUpdated == 1
+
+            // Текущий ордер теперь снова стал корзиной.
+            // Но возможно, что уже существует ещё одна корзина? Их надо объеденить в пользу текущего ордера.
+            _ <- cartOrderOpt.fold [DBIOAction[Int, NoStream, WT]] {
+              // Нет внезапной корзины, всё ок.
+              LOGGER.trace(s"$logPrefix All ok, no duplicating cart-orders found.")
+              DBIO.successful(0)
+            } { suddenCartOrder =>
+              // Обнаружена внезапная корзина. Переместить все item'ы из неё в текущий ордер, и удалить внезапную корзину.
+              val suddenCartOrderId = suddenCartOrder.id.get
+              LOGGER.info(s"$logPrefix Will merge cart orders $suddenCartOrderId => ${morder.id.orNull}, because new cart already exists.")
+              mergeOrders(suddenCartOrderId, toOrderId = orderId)
+            }
+          } yield {
+            // Вернуть обновлённый инстанс.
+            morder22
+          }
+
+        } else if (morder.status == MOrderStatuses.Draft) {
+          LOGGER.debug(s"$logPrefix Already draft since ${morder.dateStatus}. Nothing to do, skipped.")
+          DBIO.successful( morder )
+        } else {
+          val msg = s"$logPrefix Order status is ${morder.status}, so cannot unhold. Only holded orders or drafts are allowed."
+          LOGGER.error(msg)
+          DBIO.failed( new IllegalArgumentException(msg) )
+        }
+      }
+
+    } yield {
+      LOGGER.debug(s"$logPrefix Order now draft. Was HOLD.")
+      morder2
+    }
+    // Только атомарно, иначе совем опасно.
+    a.transactionally
+  }
+
+
+  /** Объединение двух ордеров в пользу последнего из двух.
+    *
+    * @param orderIdForDelete id ордера, который подлежит уничтожению с переносом всех зависимых в новый ордер.
+    * @param toOrderId Целевой ордер, в который будет происходить перенос.
+    * @return DB-экшен, возвращающий кол-во удалённых ордеров. Т.е. или 1, или NSEE.
+    */
+  def mergeOrders(orderIdForDelete: Gid_t, toOrderId: Gid_t): DBIOAction[Int, NoStream, WT] = {
+    lazy val logPrefix = s"mergeOrders($orderIdForDelete => $toOrderId)[${System.currentTimeMillis()}]:"
+    val a = for {
+      // Обновить все item'ы.
+      itemsUpdated <- mItems.query
+        .filter( _.orderId === orderIdForDelete )
+        .map( _.orderId )
+        .update( toOrderId )
+
+      // Обновить все транзакции.
+      txnsUpdated <- mTxns.query
+        .filter(_.orderIdOpt === orderIdForDelete)
+        .map(_.orderIdOpt)
+        .update( Some(toOrderId) )
+
+      // Теперь удалить старую корзину. Список транзакций не проверяем, т.к. это же DRAFT-ордер, транзакций у таких не бывает.
+      ordersDeleted <- {
+        LOGGER.info(s"$logPrefix $itemsUpdated items and $txnsUpdated txns moved from oldOrder $orderIdForDelete to target order $toOrderId. Deleting old order.")
+        mOrders.deleteById( orderIdForDelete )
+      }
+      if ordersDeleted == 1
+
+    } yield {
+      LOGGER.info(s"$logPrefix Deleted $ordersDeleted cart-order.")
+      ordersDeleted
+    }
+    a.transactionally
+  }
+
 
   /** Штатное зачисление денег на баланс какого-то юзера через внешнюю платежную систему.
     *

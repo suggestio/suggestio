@@ -1,0 +1,22 @@
+@()(implicit ctx: Context)
+
+@* Минимальная страница с надписью "пожалуйста, подождите". *@
+
+@import ctx.messages
+@import ctx.api.cdn
+
+<html>
+@defining( messages("Please.wait") ) { pleaseWaitMsg =>
+  <head>
+    <title>@pleaseWaitMsg</title>
+  </head>
+
+  <body>
+    <h2>
+      @_preLoaderLkTpl()
+      @pleaseWaitMsg...
+    </h2>
+  </body>
+
+}
+</html>

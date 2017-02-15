@@ -10,6 +10,8 @@ import slick.dbio.Effect
   */
 package object effect {
 
+  type WT   = Effect.Write with Effect.Transactional
+
   type RW   = Effect.Read with Effect.Write
 
   type RWT  = RW with Effect.Transactional

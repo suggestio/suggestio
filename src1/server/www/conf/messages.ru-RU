@@ -797,6 +797,7 @@ Yandex.Kassa=Яндекс.Касса
 Order.N=Заказ №{0}
 Cost=Стоимость
 Order.already.paid=Заказ уже оплачен
+Pay.error=Ошибка при оплате
 
 Order.status.a=Черновик заказа
 Order.status.h=Ожидается подтверждение оплаты

@@ -23,7 +23,7 @@ import models.req.{INodeOrderReq, IReqHdr}
 import models.usr.MPersonIdents
 import play.api.mvc.{Call, Result}
 import play.twirl.api.Xml
-import util.acl.{CanPayOrder, MaybeAuth}
+import util.acl.{CanPayOrder, CanViewOrder, MaybeAuth}
 import util.billing.Bill2Util
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -32,6 +32,7 @@ import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
 import views.html.lk.billing.pay._
 import views.html.lk.billing.pay.yaka._
+import views.html.stuff.PleaseWaitTpl
 import views.xml.lk.billing.pay.yaka._yakaRespTpl
 
 import scala.concurrent.Future
@@ -48,6 +49,7 @@ import scala.concurrent.Future
 class PayYaka @Inject() (
                           maybeAuth                : MaybeAuth,
                           canPayOrder              : CanPayOrder,
+                          canViewOrder             : CanViewOrder,
                           statUtil                 : StatUtil,
                           mItems                   : MItems,
                           yakaUtil                 : YakaUtil,
@@ -570,7 +572,7 @@ class PayYaka @Inject() (
     * Судя по докам, возможен переход на этот экшен через POST из яндекс-кошелька.
     * @see [[https://tech.yandex.ru/money/doc/payment-solution/shop-config/parameters-docpage/]]
     */
-  def failPost(qsOpt: Option[MYakaReturnQs]) = fail(qsOpt)
+  def failPostQs(qs: MYakaReturnQs) = fail(qs)
 
 
   /** Какой-то непонятная ошибка без подробностей на стороне кассы. Полезных данных в qs нет.
@@ -591,17 +593,47 @@ class PayYaka @Inject() (
     }
   }
 
+
+  // TODO У обычного fail два редиректа, т.к. нужно попытаться принудительно залогинить юзера и проверить права доступа
+  // на ордер, чтобы его разморозить.
+
   /** Яндекс.касса вернула юзера сюда из-за ошибки оплаты.
     * Сессия юзера могла закончится, пока он платил, поэтому тут maybeAuth.
     *
-    * @param qsOpt QS-аргументы запроса, если есть.
-    *              None, если яндекс-касса не понимает, что за юзер и по какой причине к ней лезет с оплатой.
-    *              Такое возможно, если закрыть браузер с открытой вкладкой оплаты, потом снова запустить браузер
-    *              с сохраненной вкладкой.
+    * @param qs QS-аргументы запроса, если есть.
+    *           None, если яндекс-касса не понимает, что за юзер и по какой причине к ней лезет с оплатой.
+    *           Такое возможно, если закрыть браузер с открытой вкладкой оплаты, потом снова запустить браузер
+    *           с сохраненной вкладкой.
     */
-  def fail(qsOpt: Option[MYakaReturnQs]) = maybeAuth() { implicit request =>
-    LOGGER.trace(s"fail(): $qsOpt")
-    NotImplemented("fail: Not impl.")
+  def fail(qs: MYakaReturnQs) = maybeAuth() { implicit request =>
+    LOGGER.trace(s"fail(): $qs <=\n ${request.rawQueryString}")
+    // Т.к. будет небыстрый двойной редирект с ожиданием транзакции, используем 200 OK + Location: вместо обычного редиректа.
+    Ok( PleaseWaitTpl() )
+      .withHeaders(
+        LOCATION -> routes.PayYaka.failLoggedIn(qs.orderId, qs.onNodeId).url
+      )
+  }
+
+
+  /** Переброска сюда из fail() с отбросом ненужного мусора. */
+  def failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId) = canViewOrder(orderId, onNodeId).async { implicit request =>
+    // Есть права на просмотр ордера. Попытаться разморозить этот ордер.
+    val unholdFut = slick.db
+      .run {
+        bill2Util.unholdOrder(orderId)
+      }
+      .recover { case ex: Throwable =>
+        LOGGER.error(s"failLoggedIn($orderId, $onNodeId): Failed to unhold the order", ex)
+        null
+      }
+
+    // Когда обработка зафейленного ордера будет завершена, вернуть окончательный редирект.
+    for {
+      _ <- unholdFut
+    } yield {
+      Redirect(controllers.routes.LkBill2.showOrder(orderId, onNodeId))
+        .flashing(FLASH.ERROR -> implicitly[Context].messages("Pay.error"))
+    }
   }
 
 }

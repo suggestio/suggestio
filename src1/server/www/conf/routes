@@ -121,9 +121,11 @@ GET  /pay/yaka/order/:onNodeId/:orderId @controllers.pay.PayYaka.payForm(orderId
 POST /pay/yaka/check                    @controllers.pay.PayYaka.check
 POST /pay/yaka/payment                  @controllers.pay.PayYaka.payment
 GET  /pay/yaka/success                  @controllers.pay.PayYaka.success(qs: mpay.yaka.MYakaReturnQs)
-GET  /pay/yaka/fail                     @controllers.pay.PayYaka.fail(qs: Option[mpay.yaka.MYakaReturnQs])
+## Обработка ошибок нетривиальна: обычно GET + qs, но может быть и POST, может быть GET без нормальных параметров.
+GET  /pay/yaka/fail                     @controllers.pay.PayYaka.fail(qs: mpay.yaka.MYakaReturnQs)
 GET  /pay/yaka/fail                     @controllers.pay.PayYaka.failUnknown
-POST /pay/yaka/fail                     @controllers.pay.PayYaka.failPost(qs: Option[mpay.yaka.MYakaReturnQs])
+POST /pay/yaka/fail                     @controllers.pay.PayYaka.failPostQs(qs: mpay.yaka.MYakaReturnQs)
+GET  /pay/yaka/_fail                    @controllers.pay.PayYaka.failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId)
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/pay/order/:onNodeId/:orderId   @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
 
