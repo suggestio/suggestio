@@ -71,7 +71,6 @@ class CanViewOrder @Inject() (
 
         lazy val logPrefix = s"invokeBlock($orderId)[${request.remoteAddress}]:"
 
-
         // Узел скорее всего в кеше, поэтому проверяем по узлу в первую очередь.
         nodeAdmOptFut.flatMap {
 
@@ -86,7 +85,7 @@ class CanViewOrder @Inject() (
                   // Есть запрошенный ордер. Надо проверить права доступа на ордер.
                   case Some(morder) =>
                     // Сверить номера контрактов.
-                    if (morder.contractId == userContractId) {
+                    if (morder.contractId == userContractId || user.isSuper) {
                       val req1 = MNodeOrderReq(
                         morder  = morder,
                         mnode   = mnode,

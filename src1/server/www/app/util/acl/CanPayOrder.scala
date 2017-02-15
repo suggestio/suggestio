@@ -87,7 +87,7 @@ class CanPayOrder @Inject() (
                   // Есть запрошенный ордер. Надо проверить права доступа на ордер.
                   case Some(morder) =>
                     // Сверить номера контрактов.
-                    if (morder.contractId == userContractId) {
+                    if (morder.contractId == userContractId || user.isSuper) {
                       val req1 = MNodeOrderReq(
                         morder  = morder,
                         mnode   = mnode,

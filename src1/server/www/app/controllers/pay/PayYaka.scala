@@ -575,7 +575,7 @@ class PayYaka @Inject() (
   def failPostQs(qs: MYakaReturnQs) = fail(qs)
 
 
-  /** Какой-то непонятная ошибка без подробностей на стороне кассы. Полезных данных в qs нет.
+  /** Какая-то непонятная ошибка без подробностей на стороне кассы. И полезных данных в qs нет.
     * Такое бывает, когда у юзера слетела/истекла сессия в платежной системе.
     * @return Редирект куда-нибудь.
     */
@@ -584,6 +584,7 @@ class PayYaka @Inject() (
     val callFut = request.user.personIdOpt.fold [Future[Call]] {
       Future.successful( controllers.routes.Ident.emailPwLoginForm() )
     } { personId =>
+      // hold-ордер не ищем, т.к. повисший ордер крайне маловероятен в данной ситуации.
       identUtil.redirectCallUserSomewhere(personId)
     }
     val ctx = implicitly[Context]
@@ -593,9 +594,6 @@ class PayYaka @Inject() (
     }
   }
 
-
-  // TODO У обычного fail два редиректа, т.к. нужно попытаться принудительно залогинить юзера и проверить права доступа
-  // на ордер, чтобы его разморозить.
 
   /** Яндекс.касса вернула юзера сюда из-за ошибки оплаты.
     * Сессия юзера могла закончится, пока он платил, поэтому тут maybeAuth.
