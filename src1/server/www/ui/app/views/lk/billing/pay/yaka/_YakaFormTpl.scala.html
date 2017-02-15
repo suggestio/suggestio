@@ -5,15 +5,10 @@
 @import ctx.messages
 @import io.suggest.pay.yaka.YakaConst._
 @import util.TplDataFormatUtil.formatPrice
+@import lk.billing.pay._WhiteTd
 
 @__input(k: String, v: Any) = {
   <input type="hidden" name="@k" value="@v"/>
-}
-
-@__td(isKey: Boolean)(content: Html) = {
-  <td class="td __white __size-M @if(isKey) {ft-M dark-gray} else {ft-L}">
-    @content
-  </td>
 }
 
 <form method="POST" action="https://@if(args.isDemo){demo}money.yandex.ru/eshop.xml">
@@ -26,10 +21,11 @@
     <tbody>
       @for(orderId <- args.orderNumber) {
         <tr>
-          @__td(true) {
+          @_WhiteTd(true) {
             @messages("Order.number")
           }
-          @__td(false) {
+          @_WhiteTd(false) {
+            @messages("_N")
             @orderId
             @__input(ORDER_ID_FN,     orderId)
           }
@@ -37,19 +33,19 @@
       }
 
       <tr>
-        @__td(true) {
+        @_WhiteTd(true) {
           @messages("Payment.method")
         }
-        @__td(false) {
+        @_WhiteTd(false) {
           @messages("Yandex.Kassa")
         }
       </tr>
 
       <tr>
-        @__td(true) {
+        @_WhiteTd(true) {
           @messages("Total.to.pay")
         }
-        @__td(false) {
+        @_WhiteTd(false) {
           <strong>
             @formatPrice( args )
           </strong>

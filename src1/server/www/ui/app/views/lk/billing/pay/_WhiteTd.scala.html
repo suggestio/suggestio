@@ -1,0 +1,8 @@
+@(isKey: Boolean)(content: Html)
+
+@* Ячейка белая для kv-таблиц в pay.
+   У тега table должен быть class='table'. *@
+
+<td class="td __white __size-M @if(isKey) {ft-M dark-gray} else {ft-L}">
+  @content
+</td>

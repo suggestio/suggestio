@@ -1,5 +1,6 @@
 package models.mpay.yaka
 
+import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
@@ -37,7 +38,8 @@ object MYakaReturnQs {
 
   implicit def qsb(implicit
                    longB      : QueryStringBindable[Long],
-                   strB       : QueryStringBindable[String]
+                   strB       : QueryStringBindable[String],
+                   esUuIdB    : QueryStringBindable[MEsUuId]
                   ): QueryStringBindable[MYakaReturnQs] = {
 
     val retActionB = MYakaReturnActions.qsb
@@ -46,25 +48,28 @@ object MYakaReturnQs {
 
       override def bind(key: String, params: Map[String, Seq[String]]) = {
         for {
-          retActionEith <- retActionB.bind(ACTION_FN,         params)
-          orderIdEith   <- longB.bind     (ORDER_ID_FN,       params)
-          personIdEith  <- strB.bind      (PERSON_ID_FN,      params)
-          invoiceIdEith <- longB.bind     (INVOICE_ID_FN,     params)
-          shopIdEith    <- longB.bind     (SHOP_ID_FN,        params)
+          retActionEith <- retActionB.bind  (ACTION_FN,         params)
+          orderIdEith   <- longB.bind       (ORDER_ID_FN,       params)
+          personIdEith  <- strB.bind        (PERSON_ID_FN,      params)
+          invoiceIdEith <- longB.bind       (INVOICE_ID_FN,     params)
+          shopIdEith    <- longB.bind       (SHOP_ID_FN,        params)
+          onNodeIdEith  <- esUuIdB.bind     (SIO_NODE_ID_FN,    params)
         } yield {
           for {
-            retAction <- retActionEith.right
-            orderId   <- orderIdEith.right
-            personId  <- personIdEith.right
-            invoiceId <- invoiceIdEith.right
-            shopId    <- shopIdEith.right
+            retAction   <- retActionEith.right
+            orderId     <- orderIdEith.right
+            personId    <- personIdEith.right
+            invoiceId   <- invoiceIdEith.right
+            shopId      <- shopIdEith.right
+            onNodeId    <- onNodeIdEith.right
           } yield {
             MYakaReturnQs(
               action    = retAction,
               orderId   = orderId,
               personId  = personId,
               invoiceId = invoiceId,
-              shopId    = shopId
+              shopId    = shopId,
+              onNodeId  = onNodeId
             )
           }
         }
@@ -73,11 +78,12 @@ object MYakaReturnQs {
       // unbind() скорее всего не будет использоваться.
       override def unbind(key: String, value: MYakaReturnQs) = {
         _mergeUnbinded1(
-          retActionB.unbind (ACTION_FN,     value.action),
-          longB.unbind      (ORDER_ID_FN,   value.orderId),
-          strB.unbind       (PERSON_ID_FN,  value.personId),
-          longB.unbind      (INVOICE_ID_FN, value.invoiceId),
-          longB.unbind      (SHOP_ID_FN,    value.shopId)
+          retActionB.unbind (ACTION_FN,       value.action),
+          longB.unbind      (ORDER_ID_FN,     value.orderId),
+          strB.unbind       (PERSON_ID_FN,    value.personId),
+          longB.unbind      (INVOICE_ID_FN,   value.invoiceId),
+          longB.unbind      (SHOP_ID_FN,      value.shopId),
+          esUuIdB.unbind    (SIO_NODE_ID_FN,  value.onNodeId)
         )
       }
 
@@ -94,5 +100,6 @@ case class MYakaReturnQs(
                           orderId   : Gid_t,
                           personId  : String,
                           invoiceId : Long,
-                          shopId    : Long
+                          shopId    : Long,
+                          onNodeId  : MEsUuId
                         )

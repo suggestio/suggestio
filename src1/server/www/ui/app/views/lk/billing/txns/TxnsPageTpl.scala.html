@@ -16,25 +16,10 @@
 
   @defining( args.txns.size ) { txnsCount =>
     @if(txnsCount > 0) {
-      <table class="table __width-XL" id="@TXNS_CONTAINER_ID">
-        <tr>
-          @_Td(true, "_radial-first") {
-            @messages("Bill.id")
-          }
-          @_Td(true) {
-            @messages("Bill.details")
-          }
-          @_Td(true) {
-            @messages("Date")
-          }
-          @_Td(true, "_radial-last") {
-            @messages("Amount._money")
-          }
-        </tr>
 
+      @_TxnsTableTpl(id = Some(TXNS_CONTAINER_ID)) {
         @_TxnsListTpl(args)
-
-      </table>
+      }
 
       @if(txnsCount >= args.txnsPerPage) {
         <div class="btn-w __size-M">

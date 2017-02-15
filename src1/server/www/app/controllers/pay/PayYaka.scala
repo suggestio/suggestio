@@ -21,10 +21,11 @@ import models.mpay.yaka._
 import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReqHdr}
 import models.usr.MPersonIdents
-import play.api.mvc.Result
+import play.api.mvc.{Call, Result}
 import play.twirl.api.Xml
 import util.acl.{CanPayOrder, MaybeAuth}
 import util.billing.Bill2Util
+import util.ident.IdentUtil
 import util.mail.IMailerWrapper
 import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
@@ -56,6 +57,7 @@ class PayYaka @Inject() (
                           mailerWrapper            : IMailerWrapper,
                           mPersonIdents            : MPersonIdents,
                           mdrUtil                  : MdrUtil,
+                          identUtil                : IdentUtil,
                           override val mCommonDi   : ICommonDi
                         )
   extends SioControllerImpl
@@ -71,7 +73,9 @@ class PayYaka @Inject() (
     * @return Редирект.
     */
   private def _alreadyPaid(request: INodeOrderReq[_]): Future[Result] = {
-    NotImplemented("Order already paid. TODO")    // TODO Редиректить? На страницу подтверждения оплаты или куда?
+    implicit val req = request
+    Redirect( controllers.routes.LkBill2.showOrder(request.morder.id.get, request.mnode.id.get) )
+      .flashing(FLASH.ERROR -> implicitly[Context].messages("Order.already.paid"))
   }
 
 
@@ -84,17 +88,19 @@ class PayYaka @Inject() (
     * @return Страница с формой оплаты, отправляющей юзера в яндекс.кассу.
     */
   def payForm(orderId: Gid_t, onNodeId: MEsUuId) = canPayOrder.Get(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
-    val personId = request.user.personIdOpt.get
+    val orderPricesFut = bill2Util.getOrderPricesFut(orderId)
 
     val payPriceFut = for {
-      payPrices0 <- bill2Util.getPayPrices(orderId, request.user.mBalancesFut)
+      payPrices0 <- bill2Util.getPayPrices(orderPricesFut, request.user.mBalancesFut)
     } yield {
       yakaUtil.assertPricesForPay(payPrices0)
     }
 
+    val personId = request.user.personIdOpt.get
+
     // Попытаться определить email клиента.
     val userEmailOptFut = for {
-      // TODO Надо бы искать максимум 1 элемент.
+      // TODO Opt Надо бы искать максимум 1 элемент.
       epws <- mPersonIdents.findAllEmails(personId)
     } yield {
       epws.headOption
@@ -359,6 +365,7 @@ class PayYaka @Inject() (
                     bill2Util.incrUserBalanceFromPaySys(
                       contractId  = contractId,
                       mprice      = mprice,
+                      orderIdOpt  = Some(yReq.orderId),
                       psTxnUid    = yReq.invoiceId.toString,
                       comment     = Some( "Yandex.Kassa" )
                     )
@@ -552,7 +559,8 @@ class PayYaka @Inject() (
 
     } else {
       // Юзер либо аноним, либо правильный. Надо отредиректить юзера на его узел, где он может просмотреть итоги оплаты.
-      NotImplemented("success: Not implemented")
+      Redirect( controllers.routes.LkBill2.showOrder(qs.orderId, qs.onNodeId) )
+        .flashing(FLASH.SUCCESS -> implicitly[Context].messages("Thanks.for.buy"))
     }
   }
 
@@ -564,6 +572,24 @@ class PayYaka @Inject() (
     */
   def failPost(qsOpt: Option[MYakaReturnQs]) = fail(qsOpt)
 
+
+  /** Какой-то непонятная ошибка без подробностей на стороне кассы. Полезных данных в qs нет.
+    * Такое бывает, когда у юзера слетела/истекла сессия в платежной системе.
+    * @return Редирект куда-нибудь.
+    */
+  def failUnknown = maybeAuth().async { implicit request =>
+    LOGGER.warn(s"failUnknown(): Unknown error, user[${request.user.personIdOpt}] ip=${request.remoteAddress} qs: ${request.rawQueryString}")
+    val callFut = request.user.personIdOpt.fold [Future[Call]] {
+      Future.successful( controllers.routes.Ident.emailPwLoginForm() )
+    } { personId =>
+      identUtil.redirectCallUserSomewhere(personId)
+    }
+    val ctx = implicitly[Context]
+    for (call <- callFut) yield {
+      Redirect(call)
+        .flashing( FLASH.ERROR -> ctx.messages("Unknown.error") )
+    }
+  }
 
   /** Яндекс.касса вернула юзера сюда из-за ошибки оплаты.
     * Сессия юзера могла закончится, пока он платил, поэтому тут maybeAuth.

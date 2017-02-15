@@ -929,6 +929,11 @@ class Bill2Util @Inject() (
       pricesIter.toSeq
     }
   }
+  def getOrderPricesFut(orderId: Gid_t): Future[Seq[MPrice]] = {
+    slick.db.run {
+      getOrderPrices(orderId)
+    }
+  }
 
 
   /** Вычесть из цен остатки по балансам.
@@ -969,22 +974,17 @@ class Bill2Util @Inject() (
 
   /**
     * Вычислить стоимости оплаты заказа в валютах заказа.
+    * Тут скорее дедубликация рутинного кода, нежели какие реальные действия.
     *
-    * @param orderId id заказа.
-    * @param mBalancesFut Балансы из request.user.mBalancesFut
+    * @param orderPricesFut Фьючерс с выхлопом getOrderPricesFut() или похожей функции.
+    * @param mBalsFut Фьючерс с балансами из request.user.mBalancesFut
     * @return Фьючерс с ценниками по валютам на оплату.
     */
-  def getPayPrices(orderId: Gid_t, mBalancesFut: Future[Seq[MBalance]]): Future[Seq[MPrice]] = {
-     // Рассчитать стоимость текущих item'ов текущего заказа.
-    val orderPricesFut = slick.db.run {
-      getOrderPrices(orderId)
-    }
-
+  def getPayPrices(orderPricesFut: Future[Seq[MPrice]], mBalsFut: Future[Seq[MBalance]]): Future[Seq[MPrice]] = {
     // Узнать, сколько остатков денег у юзера на балансах. Сгруппировать по валютам.
-    val balsMapFut = for (ubs <- mBalancesFut) yield {
+    val balsMapFut = for (ubs <- mBalsFut) yield {
       MCurrencies.hardMapByCurrency(ubs)
     }
-
     // Посчитать, сколько юзеру надо доплатить за вычетом остатков по балансам.
     for {
       orderPrices   <- orderPricesFut
@@ -1060,8 +1060,8 @@ class Bill2Util @Inject() (
         payPrices.forall { payPrice =>
           val claimedPrice = claimedOrderPrices( payPrice.currency )
           // Double сравнивать -- дело неблагодатное. Поэтому сравниваем в рамках погрешности:
-          // 1 копейка или 0.01 рубля -- это предел, после которого цены не совпадают.
-          val maxDiff = Math.pow(10, -payPrice.currency.exponent)
+          // 0.01 рубля (т.е. одна копейка) -- это предел, после которого цены не совпадают.
+          val maxDiff = payPrice.currency.minAmount
           val matches = Math.abs(payPrice.amount - claimedPrice.amount) < maxDiff
           if (!matches)
             LOGGER.error(s"$logPrefix Claimed price = ${claimedPrice.amount} ${claimedPrice.currency}\n ReCalculated price = $payPrice\n They are NOT match.")
@@ -1156,6 +1156,24 @@ class Bill2Util @Inject() (
     }
     // Нужна транзакция, т.к. очень денежные тут дела.
     a.transactionally
+  }
+
+
+  /** Найти в базе платежную транзакцию, относящуюся к указанному заказу.
+    * Т.е. транзакцию зачисления денег из платежной системы в sio-биллинг.
+    *
+    * @param orderId Номер заказа.
+    * @return DB-экшен с опциональной транзакцией.
+    */
+  def getOrderTxns(orderId: Gid_t): DBIOAction[Seq[MTxn], Streaming[MTxn], Effect.Read] = {
+    mTxns.query
+      .filter { t =>
+        (t.orderIdOpt === orderId) &&
+          (t.txTypeStr === MTxnTypes.PaySysTxn.strId)
+      }
+      // Если вдруг больше одной транзакции, то интересует самая ранняя. Такое возможно из-за логических ошибок при аппруве item'ов.
+      .sortBy(_.id.asc)
+      .result
   }
 
 }

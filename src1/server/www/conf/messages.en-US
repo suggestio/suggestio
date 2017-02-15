@@ -42,6 +42,7 @@ Others=Others
 Privacy.policy=Privacy policy
 Status=Status
 Error=Error
+Unknown.error=Unknown error
 Page.link=Link to web-page
 Problem.occured=A problem occured
 without.confirmation=without confirmation
@@ -81,6 +82,7 @@ Center=Center
 Please.wait=Please wait...
 Today=Today
 Any=Any
+_N=#
 
 requisites=Payment details for withdrawal
 
@@ -500,6 +502,7 @@ Payment=Payment
 Payment.comment=Payment comment
 Bill.account.and.tariffs=Account and tariffs
 Transactions.history=Transactions history
+No.transactions.found=No transactions found
 Add.funds=Add funds
 Total.funds=Total funds
 Available.funds=Available funds
@@ -781,6 +784,15 @@ Payment.for.order.N=Payment for order #{0}
 Order.number=Order number
 Total.to.pay=Total to pay
 Payment.method=Payment method
+Order.N=Order #{0}
+Cost=Cost
+Order.already.paid=Order is already paid
+
+Order.status.a=Order draft
+Order.status.h=Awaiting payment confirmation
+Order.status.d=Paid
+Order.status.s=Superuser's order
+
 
 Item.type.a=Direct advertisement
 Item.type.t=Geo-tag advertisement

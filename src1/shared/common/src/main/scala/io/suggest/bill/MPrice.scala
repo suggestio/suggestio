@@ -118,7 +118,7 @@ case class MPrice(
     * Иными словами, отбросить доли копеек и прочего.
     */
   def normalizeAmountByExponent: MPrice = {
-    val expMult = Math.pow(10, currency.exponent).toLong
+    val expMult = currency.centsInUnit_d
     val amount2 = (amount * expMult).toLong.toDouble / expMult
     if (amount2 != amount) {
       withAmount(amount2)

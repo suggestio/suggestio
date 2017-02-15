@@ -1,0 +1,30 @@
+@(id: Option[String] = None)(tbody: Html)(implicit ctx: Context)
+
+@import ctx.messages
+
+@* Обёртка таблицы транзакций, чтобы можно было рендерить таблицу в нескольких шаблонах. *@
+
+<table class="table __width-XL" @if(id){id="@id"}>
+
+  <thead>
+    <tr>
+      @_Td(true, "_radial-first") {
+        @messages("Bill.id")
+      }
+      @_Td(true) {
+        @messages("Bill.details")
+      }
+      @_Td(true) {
+        @messages("Date")
+      }
+      @_Td(true, "_radial-last") {
+        @messages("Amount._money")
+      }
+    </tr>
+  </thead>
+
+  <tbody>
+    @tbody
+  </tbody>
+
+</table>

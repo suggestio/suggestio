@@ -9,6 +9,7 @@ import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, Find
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
+import io.suggest.model.common.OptId
 import slick.lifted._
 import slick.sql.SqlAction
 
@@ -178,11 +179,11 @@ class MBalances @Inject() (
 
 /** Экземпляр модели. */
 case class MBalance(
-  contractId  : Gid_t,
-  price       : MPrice,
-  blocked     : Amount_t          = 0.0,
-  lowOpt      : Option[Amount_t]  = None,
-  id          : Option[Gid_t]     = None
+  contractId        : Gid_t,
+  price             : MPrice,
+  blocked           : Amount_t          = 0.0,
+  lowOpt            : Option[Amount_t]  = None,
+  override val id   : Option[Gid_t]     = None
 )
   extends IGid
   with IMCurrency

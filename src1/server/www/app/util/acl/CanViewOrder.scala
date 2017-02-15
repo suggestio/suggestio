@@ -15,24 +15,24 @@ import scala.concurrent.Future
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 10.02.17 15:06
-  * Description: Проверка прав биллинга: может ли юзер оплачивать заказ?
-  * Да, если заказ в состоянии "корзины" и содержит item'ы.
+  * Created: 15.02.17 15:06
+  * Description: Можно ли посмотреть ордер на указанном узле?
+  * Да, если относится к текущему юзеру и есть права на узел.
   */
-class CanPayOrder @Inject() (
-                              mOrders         : MOrders,
-                              isAuth          : IsAuth,
-                              isAdnNodeAdmin  : IsAdnNodeAdmin,
-                              val csrf        : Csrf,
-                              mCommonDi       : ICommonDi
-                            )
+class CanViewOrder @Inject() (
+                               mOrders         : MOrders,
+                               isAuth          : IsAuth,
+                               isAdnNodeAdmin  : IsAdnNodeAdmin,
+                               val csrf        : Csrf,
+                               mCommonDi       : ICommonDi
+                             )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
 
 
-  /** Ядро логики текущего ACL-модуля в этом трейте. */
+  /** Базовая реализация проверки. */
   sealed trait Base
     extends ActionBuilder[MNodeOrderReq]
     with InitUserCmds
@@ -44,8 +44,6 @@ class CanPayOrder @Inject() (
     /** На каком узле сейчас находимся? */
     val onNodeId: MEsUuId
 
-    /** Действия при невозможности оплачивать указанный ордер (уже оплачен, например). */
-    def onAlreadyPaidF: MNodeOrderReq[_] => Future[Result]
 
     override def invokeBlock[A](request: Request[A], block: (MNodeOrderReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
@@ -73,6 +71,7 @@ class CanPayOrder @Inject() (
 
         lazy val logPrefix = s"invokeBlock($orderId)[${request.remoteAddress}]:"
 
+
         // Узел скорее всего в кеше, поэтому проверяем по узлу в первую очередь.
         nodeAdmOptFut.flatMap {
 
@@ -94,15 +93,8 @@ class CanPayOrder @Inject() (
                         user    = user,
                         request = request
                       )
-                      // Этот контракт принадлежит текущему юзеру. Но не факт, что ордер доступен для оплаты.
-                      if (morder.status.canGoToPaySys) {
-                        // Всё ок, передать управление экшену контроллера.
-                        block(req1)
-
-                      } else {
-                        LOGGER.warn(s"$logPrefix Order[$orderId] is not payable. Order status is '${morder.status}' since ${morder.dateStatus}, user[$personId]")
-                        onAlreadyPaidF(req1)
-                      }
+                      // Этот контракт принадлежит текущему юзеру.
+                      block(req1)
 
                     } else {
                       // Контракт существует, но принадлежит какому-то другому пользователю.
@@ -128,40 +120,41 @@ class CanPayOrder @Inject() (
             LOGGER.warn(s"$logPrefix User $personId has is NOT admin of node $onNodeId.")
             forbid
         }
-
       }
     }
 
   }
 
-  /** Абстрактная реализация логики ACL. */
+
   sealed abstract class Abstract
     extends Base
     with ExpireSession[MNodeOrderReq]
 
 
-  /** Стандартная проверка ACL без доп.проверок. */
-  case class Simple(override val orderId: Gid_t,
-                    override val onNodeId: MEsUuId,
-                    override val onAlreadyPaidF: MNodeOrderReq[_] => Future[Result],
-                    override val userInits: MUserInit*)
+  case class Simple(
+                    override val orderId    : Gid_t,
+                    override val onNodeId   : MEsUuId,
+                    override val userInits  : MUserInit*
+                   )
     extends Abstract
 
+  @inline
+  def apply(orderId: Gid_t,  onNodeId: MEsUuId,  userInits: MUserInit*) = Simple(orderId, onNodeId, userInits: _*)
 
-  /** Выставление CSRF-токена в реквест. */
-  case class Get(override val orderId: Gid_t,
-                 override val onNodeId: MEsUuId,
-                 override val onAlreadyPaidF: MNodeOrderReq[_] => Future[Result],
-                 override val userInits: MUserInit*)
+
+  case class Get(
+                  override val orderId      : Gid_t,
+                  override val onNodeId     : MEsUuId,
+                  override val userInits    : MUserInit*
+                )
     extends Abstract
     with csrf.Get[MNodeOrderReq]
 
-
-  /** Проверка CSRF-токена в реквесте. */
-  case class Post(override val orderId: Gid_t,
-                  override val onNodeId: MEsUuId,
-                  override val onAlreadyPaidF: MNodeOrderReq[_] => Future[Result],
-                  override val userInits: MUserInit*)
+  case class Post(
+                   override val orderId     : Gid_t,
+                   override val onNodeId    : MEsUuId,
+                   override val userInits   : MUserInit*
+                 )
     extends Abstract
     with csrf.Post[MNodeOrderReq]
 

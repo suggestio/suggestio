@@ -42,6 +42,7 @@ Others=Другие
 Privacy.policy=Политика приватности
 Status=Статус
 Error=Ошибка
+Unknown.error=Неизвестная ошибка
 Page.link=Ссылка на страницу
 Problem.occured=Возникла проблема
 without.confirmation=без подтверждения
@@ -81,7 +82,7 @@ Center=Центр
 Please.wait=Пожалуйста, подождите...
 Today=Сегодня
 Any=Любой
-
+_N=№
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -507,6 +508,7 @@ Payment=Платеж
 Payment.comment=Комментарий к платежу
 Bill.account.and.tariffs=Счет и тарифные планы
 Transactions.history=История операций
+No.transactions.found=Транзакций не найдено.
 Add.funds=Пополнить баланс
 Total.funds=Всего на счете
 Available.funds=Доступно для операций
@@ -792,6 +794,14 @@ Order.number=Номер заказа
 Total.to.pay=Итого к оплате
 Payment.method=Метод оплаты
 Yandex.Kassa=Яндекс.Касса
+Order.N=Заказ №{0}
+Cost=Стоимость
+Order.already.paid=Заказ уже оплачен
+
+Order.status.a=Черновик заказа
+Order.status.h=Ожидается подтверждение оплаты
+Order.status.d=Оплачен
+Order.status.s=Ордер суперпользователя
 
 
 Item.type.a=Прямое размещение

@@ -1,0 +1,76 @@
+@(args: mbill.MShowOrderTplArgs)(implicit ctx: Context)
+
+@* Страница, отображающая текущий статус ордера. *@
+
+@import ctx.messages
+@import args.morder.id.{get => orderId}
+@import lk.billing.txns._
+@import datetime._prettyDate
+@import util.TplDataFormatUtil.formatPrice
+
+@PayBase(
+  title = messages("Order.N", orderId),
+  mnode = args.mnode
+) {
+
+  @* Нарисовать табличку, описывающую текущий ордер. *@
+  <table class="table">
+    <tbody>
+
+      @* Строка с номером заказа. *@
+      <tr>
+        @_WhiteTd(true) {
+          @messages("Order.number")
+        }
+        @_WhiteTd(false) {
+          @messages("_N")
+          @orderId
+        }
+      </tr>
+
+      @* Строка статуса заказа. *@
+      <tr>
+        @_WhiteTd(true) {
+          @messages("Status")
+        }
+        @_WhiteTd(false) {
+          @messages( args.morder.status.singular )
+          <br/>
+          @_prettyDate( args.morder.dateStatus )
+        }
+      </tr>
+
+      @* Строка общей стоимости заказа, если хотя бы одна цена передана в args. *@
+      @for(headPrice <- args.orderPrices) {
+        <tr>
+          @_WhiteTd(true) {
+            @messages("Cost")
+          }
+          @_WhiteTd(false) {
+            @for(mprice <- args.orderPrices) {
+              @* Теоретически возможно, есть несколько цен в разных валютах. Рендерить их столбиком. *@
+              @if( !(mprice eq headPrice) ) {
+                <br/>
+              }
+              @formatPrice(mprice)
+            }
+          }
+        </tr>
+      }
+
+    </tbody>
+  </table>
+
+  <br/>
+  <br/>
+
+  @* Если есть транзакция, связанная с оплатой заказа, то отобразить её. *@
+  @if( args.txns.nonEmpty ) {
+    @_TxnsTableTpl() {
+      @_TxnsListTpl(args)
+    }
+  } else {
+    @messages("No.transactions.found").
+  }
+
+}

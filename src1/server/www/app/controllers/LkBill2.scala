@@ -3,18 +3,23 @@ package controllers
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.cbill.{LkBill2Cart, LkBillTxns}
+import io.suggest.es.model.MEsUuId
+import io.suggest.mbill2.m.balance.MBalance
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.txn.MTxns
+import io.suggest.model.common.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.im.make.IMaker
-import models.mbill.{MDailyTfTplArgs, MLkBillNodeTplArgs, MRcvrInfoTplArgs}
+import models.mbill.{MDailyTfTplArgs, MLkBillNodeTplArgs, MRcvrInfoTplArgs, MShowOrderTplArgs}
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.acl.{CanAccessItem, IsAuthNode, IsAdnNodeAdmin}
+import util.acl.{CanAccessItem, CanViewOrder, IsAdnNodeAdmin, IsAuthNode}
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.GalleryUtil
 import views.html.lk.billing._
+import views.html.lk.billing.pay._
 
 import scala.concurrent.Future
 
@@ -29,6 +34,7 @@ class LkBill2 @Inject() (
   tfDailyUtil                 : TfDailyUtil,
   mCalendars                  : MCalendars,
   galleryUtil                 : GalleryUtil,
+  canViewOrder                : CanViewOrder,
   override val canAccessItem  : CanAccessItem,
   @Named("blk") override val blkImgMaker  : IMaker,
   isAuthNode                  : IsAuthNode,
@@ -132,6 +138,48 @@ class LkBill2 @Inject() (
 
     okFut.recover { case _: NoSuchElementException =>
       NotFound("Not a receiver: " + nodeId)
+    }
+  }
+
+
+  /** Показать страничку с заказом.
+    *
+    * @param orderId id ордера.
+    * @param onNodeId id узла, на котором открыта морда ЛК.
+    */
+  def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = canViewOrder.Get(orderId, onNodeId, U.Lk).async { implicit request =>
+    // Поискать транзакцию по оплате ордера, если есть.
+    val txnsFut = slick.db.run {
+      bill2Util.getOrderTxns(orderId)
+    }
+
+    // Посчитать текущую стоимость заказа:
+    val orderPricesFut = slick.db.run {
+      bill2Util.getOrderPrices(orderId)
+    }
+
+    // Собрать карту балансов по id. Она нужна для рендера валюты транзакции. Возможно ещё для чего-либо пригодится.
+    // Нет смысла цеплять это об необязательно найденную транзакцию, т.к. U.Lk наверху гарантирует, что mBalancesFut уже запущен на исполнение.
+    val mBalsMapFut = for {
+      mBals <- request.user.mBalancesFut
+    } yield {
+      OptId.els2idMap[Gid_t, MBalance](mBals)
+    }
+
+    // Отрендерить ответ, когда всё будет готово.
+    for {
+      txns          <- txnsFut
+      orderPrices   <- orderPricesFut
+      mBalsMap      <- mBalsMapFut
+    } yield {
+      val tplArgs = MShowOrderTplArgs(
+        mnode         = request.mnode,
+        morder        = request.morder,
+        orderPrices   = orderPrices,
+        txns          = txns,
+        balances      = mBalsMap
+      )
+      Ok( ShowOrderTpl(tplArgs) )
     }
   }
 

@@ -29,6 +29,9 @@ object MOrderStatuses extends EnumMaybeWithName with EnumApply {
       */
     def canGoToPaySys: Boolean = false
 
+    /** Код i18n-сообщения о статусе в заказа в единственном числе. */
+    def singular: String = "Order.status." + strId
+
   }
 
   override type T = Val

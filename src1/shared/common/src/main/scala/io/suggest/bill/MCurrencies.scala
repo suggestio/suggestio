@@ -55,6 +55,18 @@ sealed abstract class MCurrency extends EnumEntry with IStrId {
   /** Копейки/центы после десятичной запятой. */
   def exponent: Int = 2
 
+  /** Минимальный значимый объем средств.
+    * Доли центов и копеек не имеют никакого смысла.
+    */
+  def minAmount: Amount_t = Math.pow(10, -exponent)
+
+  /** Количество центов в долларе, копеек в рубле. */
+  def centsInUnit: Int = centsInUnit_d.toInt
+
+  /** Количество центов в долларе, копеек в рубле в виде Double.
+    * Math.pow() возвращает Double, и иногда нет смысла конвертировать в Int, используется этот метод. */
+  def centsInUnit_d: Double = Math.pow(10, exponent)
+
 }
 
 
