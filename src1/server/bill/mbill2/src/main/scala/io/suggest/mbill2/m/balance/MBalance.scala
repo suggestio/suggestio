@@ -9,7 +9,6 @@ import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, Find
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.util.PgaNamesMaker
-import io.suggest.model.common.OptId
 import slick.lifted._
 import slick.sql.SqlAction
 
@@ -142,18 +141,37 @@ class MBalances @Inject() (
   }
 
 
+  /** Жестко перезаписать объемы средств на балансе.
+    *
+    * @param bal Обновлённый баланс.
+    * @return db-экшен, возвращающий кол-во обновлённых рядов.
+    */
+  def saveAmountAndBlocked(bal: MBalance): DBIOAction[Int, NoStream, Effect.Write] = {
+    query
+      .filter(_.id === bal.id.get)
+      .map { b =>
+        (b.amount, b.blocked)
+      }
+      .update((bal.price.amount, bal.blocked))
+  }
+
+
   /**
     * Поиск по id контракта и валюте.
     * Эта комбинация является уникальным ключом в рамках таблицы, поэтому максимум один результат.
     *
     * @param contractId id контракта.
-    * @param currency Валюта.
+    * @param currencies Искомые валюты.
     * @return Опциональных [[MBalance]].
     */
-  def getByContractCurrency(contractId: Gid_t, currency: MCurrency): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
+  def getByContractCurrency(contractId: Gid_t, currencies: MCurrency*): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
+    getByContractCurrency1(contractId, currencies)
+  }
+  def getByContractCurrency1(contractId: Gid_t, currencies: Traversable[MCurrency]): SqlAction[Option[MBalance], NoStream, Effect.Read] = {
+    assert(currencies.nonEmpty)
     query
       .filter { b =>
-        (b.contractId === contractId) && (b.currencyCode === currency.currencyCode)
+        (b.contractId === contractId) && (b.currencyCode inSet currencies.map(_.currencyCode))
       }
       .result
       .headOption
@@ -194,5 +212,17 @@ case class MBalance(
   def withPrice(price2: MPrice) = copy(price = price2)
 
   override def currency = price.currency
+
+  def withPriceBlocked(price2: MPrice, blocked2: Amount_t) = copy(
+    price   = price2,
+    blocked = blocked2
+  )
+
+  def unblockAmount(amount2: Amount_t) = withPriceBlocked(
+    price2   = price.plusAmount(amount2),
+    blocked2 = blocked - amount2
+  )
+
+  def blockAmount(amount2: Amount_t) = unblockAmount(-amount2)
 
 }

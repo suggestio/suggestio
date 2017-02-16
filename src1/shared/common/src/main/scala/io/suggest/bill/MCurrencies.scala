@@ -125,6 +125,11 @@ object MCurrencies extends Enum[MCurrency] {
       .toMap
   }
 
+  def toCurrenciesIter(items: TraversableOnce[IMCurrency]): Iterator[MCurrency] = {
+    items.toIterator
+      .map(_.currency)
+  }
+
 }
 
 

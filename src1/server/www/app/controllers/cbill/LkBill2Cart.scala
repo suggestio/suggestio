@@ -1,7 +1,7 @@
 package controllers.cbill
 
 import controllers.{SioController, routes}
-import io.suggest.bill.MGetPriceResp
+import io.suggest.bill.{MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
@@ -136,7 +136,7 @@ trait LkBill2Cart
       mitems <- mitemsFut
     } yield {
       MGetPriceResp(
-        prices = bill2Util.items2pricesIter(mitems).toSeq
+        prices = MPrice.toSumPricesByCurrency(mitems).values
       )
     }
 
@@ -174,12 +174,24 @@ trait LkBill2Cart
     for {
       personNode  <- request.user.personNodeFut
       enc         <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+      contractId  = enc.mc.id.get
 
       // Дальше надо бы делать транзакцию
       res <- {
         // Произвести чтение, анализ и обработку товарной корзины:
         slick.db.run {
-          bill2Util.processCart(enc.mc.id.get)
+          import slick.profile.api._
+          val dbAction = for {
+          // Прочитать текущую корзину
+            cart0   <- bill2Util.prepareCartTxn( contractId )
+            // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
+            txnRes  <- bill2Util.maybeExecuteOrder(cart0)
+          } yield {
+            // Сформировать результат работы экшена
+            txnRes
+          }
+          // Форсировать весь этот экшен в транзакции:
+          dbAction.transactionally
         }
       }
 

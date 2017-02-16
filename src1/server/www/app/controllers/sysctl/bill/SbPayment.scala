@@ -84,7 +84,7 @@ trait SbPayment
         val mcId = request.mcontract.id.get
         val price = res.price
         val txnFut = slick.db.run {
-          bill2Util.increaseBalanceSimple(mcId, price)
+          bill2Util.increaseBalanceAsIncome(mcId, price)
         }
         for (txn <- txnFut) yield {
           Redirect( routes.SysBilling.forNode(nodeId) )

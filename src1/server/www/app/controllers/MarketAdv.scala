@@ -274,12 +274,12 @@ class MarketAdv @Inject() (
           adves2  <- adves2Fut
           prices  <- {
             if (adves2.isEmpty || advFormUtil.maybeFreeAdv()) {
-              Future.successful(Nil: Seq[MPrice])
+              Future.successful(Nil: Iterable[MPrice])
             } else {
               for {
                 allPrices <- advDirectBilling.getAdvPrices(request.mad, adves2)
               } yield {
-                MPrice.sumPricesByCurrency(allPrices).toSeq
+                MPrice.sumPricesByCurrency(allPrices).values
               }
             }
           }

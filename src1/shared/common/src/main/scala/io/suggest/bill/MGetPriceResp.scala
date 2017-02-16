@@ -25,12 +25,14 @@ object MGetPriceResp {
 /**
   * Класс модели ответа на запрос рассчёта стоимости [размещения].
   * @param prices Данные по стоимостям.
+  *               Iterable для упрощения некоторого кода, было изначально Seq[].
+  *               Ситуация, когда несколько валют, довольно маловероятна.
   */
 case class MGetPriceResp(
-                          prices: Seq[MPrice]
+                          prices: Iterable[MPrice]
                         ) {
 
-  def withPrices(prices2: Seq[MPrice]) = copy(prices = prices2)
+  def withPrices(prices2: Iterable[MPrice]) = copy(prices = prices2)
 
   override def toString: String = {
     prices.mkString("$[", ",", "]")

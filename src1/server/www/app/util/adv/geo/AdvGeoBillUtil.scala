@@ -282,10 +282,10 @@ class AdvGeoBillUtil @Inject() (
 
     val pricesAcc = calc.execute()
 
-    // TODO Просуммировать/причесать, и удалить страшный код ниже:
-    val prices2 = MPrice.sumPricesByCurrency(pricesAcc).toSeq
+    // Просуммировать ценники
+    val prices2 = MPrice.sumPricesByCurrency(pricesAcc)
 
-    val result = bill2Util.getAdvPricing( prices2 )
+    val result = bill2Util.getAdvPricing( prices2.values )
     Future.successful(result)
   }
 

@@ -14,7 +14,6 @@ import io.suggest.model.n2.node.MNode
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.Lists
 import io.suggest.util.logs.MacroLogsImpl
-import models.mbill.MCartIdeas
 import models.mctx.Context
 import models.mdr.MSysMdrEmailTplArgs
 import models.mpay.yaka._
@@ -356,22 +355,20 @@ class PayYaka @Inject() (
               contractId = usrNode.billing.contractId.get
 
               // Выполнить действия в биллинге, связанные с проведением платежа.
-              (balTxn, isMdrNotifyNeeded, cartIdea) <- slick.db.run {
+              (balTxn, isMdrNotifyNeeded, ffor) <- slick.db.run {
                 import slick.profile.api._
                 val a = for {
                   // Проверить ордер, что он в статусе HOLD или DRAFT.
                   mOrder0  <- bill2Util.getOpenedOrderForUpdate(yReq.orderId, validContractId = contractId)
 
                   // Закинуть объем перечисленных денег на баланс указанного юзера.
-                  balTxn <- {
-                    bill2Util.incrUserBalanceFromPaySys(
-                      contractId  = contractId,
-                      mprice      = mprice,
-                      orderIdOpt  = Some(yReq.orderId),
-                      psTxnUid    = yReq.invoiceId.toString,
-                      comment     = Some( "Yandex.Kassa" )
-                    )
-                  }
+                  balTxn   <- bill2Util.incrUserBalanceFromPaySys(
+                    contractId  = contractId,
+                    mprice      = mprice,
+                    orderIdOpt  = Some(yReq.orderId),
+                    psTxnUid    = yReq.invoiceId.toString,
+                    comment     = Some( "Yandex.Kassa" )
+                  )
 
                   // Подготовить ордер корзины к исполнению.
                   owi <- bill2Util.prepareCartOrderItems(mOrder0)
@@ -380,10 +377,11 @@ class PayYaka @Inject() (
                   isMdrNotifyNeeded1 <- mdrUtil.isMdrNotifyNeeded
 
                   // Запустить действия, связанные с вычитанием бабла с баланса юзера и реализацией MItem'ов заказа.
-                  cartIdea <- bill2Util.maybeExecuteCart(owi)
+                  // Здесь используется более и сложный и более толерантный вариант экзекуции ордера. Fallback-вариант -- это bill2Util.maybeExecuteOrder(owi).
+                  ffor1 <- bill2Util.forceFinalizeOrder(owi)
 
                 } yield {
-                  (balTxn, isMdrNotifyNeeded1, cartIdea)
+                  (balTxn, isMdrNotifyNeeded1, ffor1)
                 }
 
                 a.transactionally
@@ -393,52 +391,56 @@ class PayYaka @Inject() (
               statMas0 <- statMas0Fut
 
             } yield {
-              val maPaym = cartIdea match {
-                case _: MCartIdeas.OrderClosed =>
-                  LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
-                  // Уведомить модераторов, если необходимо.
-                  if (isMdrNotifyNeeded) {
-                    val usrDisplayNameOptFut = FutureUtil.opt2futureOpt( usrNode.guessDisplayName ) {
-                      for (usrEmails <- mPersonIdents.findAllEmails( yReq.personId )) yield {
-                        usrEmails.headOption
-                      }
-                    }
-                    for (usrDisplayNameOpt <- usrDisplayNameOptFut) {
-                      mdrUtil.sendMdrNotify(MSysMdrEmailTplArgs(
-                        paid        = Some( mprice ),
-                        orderId     = Some( yReq.orderId ),
-                        txn         = Some( balTxn ),
-                        personId    = Some( yReq.personId ),
-                        personName  = usrDisplayNameOpt
-                      ))
-                    }
-                  }
-                  // Собрать stat-экшен.
-                  MAction(
-                    actions = MActionTypes.Success :: Nil
-                  )
+              var statMasAcc = statMas0
 
-                case _ =>
-                  val cartIdeaStr = cartIdea.toString
-                  LOGGER.error(s"$logPrefix Unable to close order ${yReq.orderId}. something gone wrong: $cartIdeaStr")
-                  Future {
-                    mailerWrapper.instance
-                      .setSubject(s"[YaKa] Проблемы с завершением платежа ${yReq.invoiceId}")
-                      .setText(s"order ${yReq.orderId}\n\ninvoice ${yReq.invoiceId}\n\n$cartIdeaStr\n\n\n $request\n\n$yReq")
-                      .setRecipients(mailerWrapper.EMAILS_PROGRAMMERS: _*)
-                      .send()
+              // Если есть успешно обработанные item'ы, то Success наверное.
+              if (ffor.okItemsCount > 0) {
+                LOGGER.info(s"$logPrefix Order ${yReq.orderId} closed successfully. Invoice ${yReq.invoiceId}")
+                // Уведомить модераторов, если необходимо.
+                if (isMdrNotifyNeeded) {
+                  val usrDisplayNameOptFut = FutureUtil.opt2futureOpt( usrNode.guessDisplayName ) {
+                    for (usrEmails <- mPersonIdents.findAllEmails( yReq.personId )) yield {
+                      usrEmails.headOption
+                    }
                   }
-                  MAction(
-                    actions = MActionTypes.PayBadIdea :: Nil,
-                    textNi  = cartIdea.toString :: Nil
-                  )
+                  for (usrDisplayNameOpt <- usrDisplayNameOptFut) {
+                    mdrUtil.sendMdrNotify(MSysMdrEmailTplArgs(
+                      paid        = Some( mprice ),
+                      orderId     = Some( yReq.orderId ),
+                      txn         = Some( balTxn ),
+                      personId    = Some( yReq.personId ),
+                      personName  = usrDisplayNameOpt
+                    ))
+                  }
+                }
+                // Собрать stat-экшен.
+                statMasAcc ::= MAction(
+                  actions = MActionTypes.Success :: Nil
+                )
+              }
+
+              // Если были проблемы при закрытии заказа, то надо уведомить программистов о наличии проблемы.
+              for (skippedCart <- ffor.skippedCartOpt) {
+                LOGGER.trace(s"$logPrefix Was not able to close order ${yReq.orderId} clearly. There are skipped cart-order#${skippedCart.id.orNull}")
+                val fforStr = ffor.toString
+                Future {
+                  mailerWrapper.instance
+                    .setSubject(s"[YaKa] Проблемы с завершением заказа ${yReq.invoiceId}")
+                    .setText(s"order ${yReq.orderId}\n\ninvoice ${yReq.invoiceId}\n\n\n${request.method} ${request.uri}\n\n$yReq\n\n$fforStr")
+                    .setRecipients(mailerWrapper.EMAILS_PROGRAMMERS: _*)
+                    .send()
+                }
+                statMasAcc ::= MAction(
+                  actions = MActionTypes.PayBadBalance :: Nil,
+                  textNi  = fforStr :: Nil
+                )
               }
 
               // Рендер XML-ответа яндекс-кассе.
               val xml = _successXml(yakaAction, yReq.invoiceId)
 
               // Собрать результат.
-              (maPaym :: statMas0, xml)
+              (statMasAcc, xml)
             }
 
             payFut.recoverWith { case ex: Throwable =>

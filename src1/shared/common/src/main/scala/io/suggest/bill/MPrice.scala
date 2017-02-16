@@ -28,19 +28,18 @@ object MPrice {
     * @param prices Входная пачка цен.
     * @return Итератор с результирующими ценами.
     */
-  def sumPricesByCurrency(prices: Seq[MPrice]): Iterator[MPrice] = {
+  def sumPricesByCurrency(prices: Seq[MPrice]): Map[MCurrency, MPrice] = {
     if (prices.isEmpty) {
-      Iterator.empty
+      Map.empty
     } else {
       prices
         .groupBy {
           _.currency
         }
-        .valuesIterator
-        .map { p =>
+        .mapValues { ps =>
           MPrice(
-            amount   = p.map(_.amount).sum,
-            currency = p.head.currency
+            amount   = ps.map(_.amount).sum,
+            currency = ps.head.currency
           )
         }
     }
@@ -50,6 +49,24 @@ object MPrice {
   def amountStr(m: MPrice): String = {
     m.amountStrOpt
       .getOrElse( "%1.2f".format(m.amount) )
+  }
+
+
+  /** Сконверить входной список элементов в список цен этих элементов без какой-либо доп.обработки. */
+  def toPricesIter(items: TraversableOnce[IMPrice]): Iterator[MPrice] = {
+    items
+      .toIterator
+      .map(_.price)
+  }
+
+  /** Объединение toPricesIter() и sumPricesByCurrency().
+    * Метод удобен для подсчёта общей стоимости списка каких-то элементов.
+    * @param items Исхондая коллекция элементов.
+    * @return Карта цен по валютам.
+    */
+  def toSumPricesByCurrency(items: TraversableOnce[IMPrice]): Map[MCurrency, MPrice] = {
+    val prices = toPricesIter(items).toSeq
+    sumPricesByCurrency(prices)
   }
 
 
@@ -126,5 +143,17 @@ case class MPrice(
       this
     }
   }
+
+}
+
+
+/**
+  * Интерфейс к экземплярам моделей к полю с ценой.
+  * Долго жил в mbill2.
+  */
+trait IMPrice {
+
+  /** Цена: значение + валюта. */
+  def price: MPrice
 
 }
