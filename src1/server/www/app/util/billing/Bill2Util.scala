@@ -1069,6 +1069,52 @@ class Bill2Util @Inject() (
   }
 
 
+  /**
+    * Сборка ценников для списка ордеров.
+    *
+    * @param orderIds Список ордеров, которые надо обсчитать.
+    * @return Карта ценников по ордерам.
+    */
+  def getOrdersPrices(orderIds: Traversable[Gid_t]): DBIOAction[Map[Gid_t, Seq[MPrice]], NoStream, Effect.Read] = {
+    for {
+      prices <- {
+        mItems.query
+          .filter { i =>
+            i.orderId inSet orderIds
+          }
+          .groupBy { i =>
+            (i.orderId, i.currencyCode)
+          }
+          .map { case ((orderId, currencyCode), grp) =>
+            (orderId, currencyCode, grp.map(_.amount).sum)
+          }
+          .result
+      }
+    } yield {
+      // Причесать полученные цены заказов в карту по orderId:
+      prices
+        .iterator
+        .flatMap { case (orderId, currencyCode, amountOpt) =>
+          for {
+            amount    <- amountOpt
+          } yield {
+            val price = MPrice(
+              amount    = amount,
+              currency  = MCurrencies.withName(currencyCode)
+            )
+            orderId -> price
+          }
+        }
+        .toSeq
+        .groupBy(_._1)
+        // Выкинуть orderId из полученных значений.
+        .mapValues { orderPrices =>
+          for ( (_, p) <- orderPrices ) yield p
+        }
+    }
+  }
+
+
   /** Вычесть из цен остатки по балансам.
     *
     * @param prices Цены БЕЗ повторяющихся валют, иначе будет AssertionError.
@@ -1479,6 +1525,25 @@ class Bill2Util @Inject() (
       }
       // Если вдруг больше одной транзакции, то интересует самая ранняя. Такое возможно из-за логических ошибок при аппруве item'ов.
       .sortBy(_.id.asc)
+      .result
+  }
+
+
+  /** Найти N последних заказов.
+    *
+    * @param contractId id контракта.
+    * @param limit Лимит.
+    * @param offset Оффсет.
+    * @return DB-экшен, возвращающий ордеры, новые сверху.
+    */
+  def findLastOrders(contractId: Gid_t, limit: Int, offset: Int = 0): DBIOAction[Seq[MOrder], Streaming[MOrder], Effect.Read] = {
+    mOrders.query
+      .filter { o =>
+        o.contractId === contractId
+      }
+      .sortBy(_.id.desc)
+      .drop( offset )
+      .take( limit )
       .result
   }
 

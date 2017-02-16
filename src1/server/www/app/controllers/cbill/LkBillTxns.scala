@@ -29,7 +29,11 @@ trait LkBillTxns
 
 
   /** Подгрузка страницы из списка транзакций. */
-  def txnsList(adnId: String, page: Int, inline: Boolean) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
+  def txnsList(nodeId: String, page: Int, inline: Boolean) = isAdnNodeAdmin.Get(nodeId, U.Lk).async { implicit request =>
+    // Наврядли стоит нагружать систему работой с какими-то далёкими страницами.
+    if (page > 100)
+      throw new IllegalArgumentException(s"txnsList($nodeId, $page, $inline): page number too big.")
+
     // Получить доступ к списку балансов юзера, который уже должен бы запрашиваться в фоне.
     val balancesFut = request.user.mBalancesFut
 

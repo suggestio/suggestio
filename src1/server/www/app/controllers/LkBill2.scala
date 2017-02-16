@@ -7,12 +7,13 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.order.{MOrder, MOrders}
 import io.suggest.mbill2.m.txn.MTxns
 import io.suggest.model.common.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.im.make.IMaker
-import models.mbill.{MDailyTfTplArgs, MLkBillNodeTplArgs, MRcvrInfoTplArgs, MShowOrderTplArgs}
+import models.mbill._
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import util.acl.{CanAccessItem, CanViewOrder, IsAdnNodeAdmin, IsAuthNode}
@@ -42,6 +43,7 @@ class LkBill2 @Inject() (
   override val mItems         : MItems,
   override val bill2Util      : Bill2Util,
   override val mTxns          : MTxns,
+  mOrders                     : MOrders,
   override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
@@ -180,6 +182,74 @@ class LkBill2 @Inject() (
         balances      = mBalsMap
       )
       Ok( ShowOrderTpl(tplArgs) )
+    }
+  }
+
+
+  private def ORDERS_PER_PAGE = 10
+
+  /** Показать ордеры, относящиеся к текущему юзеру.
+    * Была идея, чтобы показывать только ордеры, относящиеся к текущему узлу, но это наверное слишком сложно
+    * и неочевидно для юзеров.
+    *
+    * @param onNodeId id узла.
+    * @param page Номер страницы.
+    * @return Страница со таблицей-списком заказов. Свежие заказы сверху.
+    */
+  def orders(onNodeId: MEsUuId, page: Int) = isAdnNodeAdmin.Get(onNodeId, U.Lk).async { implicit request =>
+    lazy val logPrefix = s"nodeOrders($onNodeId, $page):"
+
+    // Слишком далёкую страницу - отсеивать.
+    if (page > 150)
+      throw new IllegalArgumentException(s"$logPrefix page number too high")
+
+    // Начинаем плясать от контракта...
+    val contractIdOptFut = request.user.contractIdOptFut
+
+    // Получить интересующие ордеры из базы.
+    val ordersFut = contractIdOptFut.flatMap { contractIdOpt =>
+      // Если нет контракта, то искать ничего не надо.
+      contractIdOpt.fold [Future[Seq[MOrder]]] {
+        LOGGER.trace(s"$logPrefix No contract - no orders for user ${request.user.personIdOpt.orNull}")
+        Future.successful( Nil )
+
+      } { contractId =>
+        val perPage = ORDERS_PER_PAGE
+        slick.db.run {
+          bill2Util.findLastOrders(
+            contractId  = contractId,
+            limit       = perPage,
+            offset      = page * perPage
+          )
+        }
+      }
+    }
+
+    // На след.шагах нужно множество id'шников ордеров...
+    val orderIdsFut = for (orders <- ordersFut) yield {
+      val r = OptId.els2idsSet(orders)
+      LOGGER.trace(s"$logPrefix Found ${orders.size} orders: ${r.mkString(", ")}")
+      r
+    }
+
+    // Надо рассчитать стоимости ордеров. Для ускорения, сделать это пакетно c GROUP BY.
+    val orderPricesFut = orderIdsFut.flatMap { orderIds =>
+      slick.db.run {
+        bill2Util.getOrdersPrices(orderIds)
+      }
+    }
+
+    // Отрендерить ответ, когда всё будет готово.
+    for {
+      orders    <- ordersFut
+      prices    <- orderPricesFut
+    } yield {
+      val tplArgs = MOrdersTplArgs(
+        mnode   = request.mnode,
+        orders  = orders,
+        prices  = prices
+      )
+      Ok( OrdersTpl(tplArgs) )
     }
   }
 

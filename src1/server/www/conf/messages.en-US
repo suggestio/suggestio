@@ -788,6 +788,7 @@ Order.N=Order #{0}
 Cost=Cost
 Order.already.paid=Order is already paid
 Pay.error=Pay error
+Orders=Orders
 
 Order.status.a=Order draft
 Order.status.h=Awaiting payment confirmation

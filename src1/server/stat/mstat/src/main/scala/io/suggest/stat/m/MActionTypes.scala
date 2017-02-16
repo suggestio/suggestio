@@ -63,6 +63,7 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
 
   val PayBadOrder         = Val("pay: bad order")
 
+  /** Почему-то объем оплаченных средств расходится с оплачиваемым заказом. */
   val PayBadBalance       = Val("pay: bad balance")
 
   val UnexpectedCookies   = Val("cookies: unexpected")

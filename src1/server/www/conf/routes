@@ -127,6 +127,7 @@ GET  /pay/yaka/fail                     @controllers.pay.PayYaka.failUnknown
 POST /pay/yaka/fail                     @controllers.pay.PayYaka.failPostQs(qs: mpay.yaka.MYakaReturnQs)
 GET  /pay/yaka/_fail                    @controllers.pay.PayYaka.failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId)
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
+GET  /lk/pay/orders/:onNodeId           @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/pay/order/:onNodeId/:orderId   @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
 
 ## Принятие приглашения на управления узлом.
