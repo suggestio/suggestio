@@ -15,5 +15,8 @@ case class MOrdersTplArgs(
                            mnode          : MNode,
                            orders         : Seq[MOrder],
                            prices         : Map[Gid_t, Iterable[MPrice]],
-                           cartOrderId    : Option[Gid_t]
+                           cartOrderId    : Option[Gid_t],
+                           ordersTotal    : Int,
+                           page           : Int,
+                           ordersPerPage  : Int
                          )

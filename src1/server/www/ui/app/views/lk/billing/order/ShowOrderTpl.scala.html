@@ -1,0 +1,77 @@
+@(args: mbill.MShowOrderTplArgs)(implicit ctx: Context)
+
+@* Страница, отображающая текущий статус ордера. *@
+
+@import ctx.messages
+@import args.morder.id.{get => orderId}
+@import datetime._prettyDate
+@import util.TplDataFormatUtil.formatPrice
+@import lk.billing.txns._
+@import lk.dsl.wkv._
+
+@OrdersBase(
+  title = messages("Order.N", orderId),
+  mnode = args.mnode
+) {
+
+  @* Нарисовать табличку, описывающую текущий ордер. *@
+  @_wkvTable() {
+
+      @* Строка с номером заказа. *@
+    @_wkvRow() {
+      @_wkvTd(true) {
+        @messages("Order.number")
+      }
+      @_wkvTd(false) {
+        @messages("_N")
+        @orderId
+      }
+    }
+
+      @* Строка статуса заказа. *@
+    @_wkvRow() {
+      @_wkvTd(true) {
+        @messages("Status")
+      }
+      @_wkvTd(false) {
+        @messages( args.morder.status.singular )
+        <br/>
+        <span class="ft-S">
+          @_prettyDate( args.morder.dateStatus )
+        </span>
+      }
+    }
+
+    @* Строка общей стоимости заказа, если хотя бы одна цена передана в args. *@
+    @for(headPrice <- args.orderPrices) {
+      @_wkvRow() {
+        @_wkvTd(true) {
+          @messages("Cost")
+        }
+        @_wkvTd(false) {
+          @for(mprice <- args.orderPrices) {
+            @* Теоретически возможно, есть несколько цен в разных валютах. Рендерить их столбиком. *@
+            @if( !(mprice eq headPrice) ) {
+              <br/>
+            }
+            @formatPrice(mprice)
+          }
+        }
+      }
+    }
+
+  }
+
+  <br/>
+  <br/>
+
+  @* Если есть транзакция, связанная с оплатой заказа, то отобразить её. *@
+  @if( args.txns.nonEmpty ) {
+    @_TxnsTableTpl() {
+      @_TxnsListTpl(args)
+    }
+  } else {
+    @messages("No.transactions.found").
+  }
+
+}

@@ -4,7 +4,7 @@ import java.io._
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}

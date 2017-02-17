@@ -5,7 +5,7 @@
 @import ctx.messages
 @import io.suggest.pay.yaka.YakaConst._
 @import util.TplDataFormatUtil.formatPrice
-@import lk.billing.pay._WhiteTd
+@import lk.dsl.wkv._
 
 @__input(k: String, v: Any) = {
   <input type="hidden" name="@k" value="@v"/>
@@ -17,44 +17,43 @@
   @__input(SC_ID_FN,          args.scId)
   @__input(PERSON_ID_FN,      args.customerNumber)
 
-  <table class="table">
-    <tbody>
-      @for(orderId <- args.orderNumber) {
-        <tr>
-          @_WhiteTd(true) {
-            @messages("Order.number")
-          }
-          @_WhiteTd(false) {
-            @messages("_N")
-            @orderId
-            @__input(ORDER_ID_FN,     orderId)
-          }
-        </tr>
+  @_wkvTable() {
+
+    @for(orderId <- args.orderNumber) {
+      @_wkvRow() {
+        @_wkvTd(true) {
+          @messages("Order.number")
+        }
+        @_wkvTd(false) {
+          @messages("_N")
+          @orderId
+          @__input(ORDER_ID_FN,     orderId)
+        }
       }
+    }
 
-      <tr>
-        @_WhiteTd(true) {
-          @messages("Payment.method")
-        }
-        @_WhiteTd(false) {
-          @messages("Yandex.Kassa")
-        }
-      </tr>
+    @_wkvRow() {
+      @_wkvTd(true) {
+        @messages("Payment.method")
+      }
+      @_wkvTd(false) {
+        @messages("Yandex.Kassa")
+      }
+    }
 
-      <tr>
-        @_WhiteTd(true) {
-          @messages("Total.to.pay")
-        }
-        @_WhiteTd(false) {
-          <strong>
-            @formatPrice( args )
-          </strong>
-          @__input(SUM_FN,      args.amount)
-        }
-      </tr>
+    @_wkvRow() {
+      @_wkvTd(true) {
+        @messages("Total.to.pay")
+      }
+      @_wkvTd(false) {
+        <strong>
+          @formatPrice( args )
+        </strong>
+        @__input(SUM_FN,      args.amount)
+      }
+    }
 
-    </tbody>
-  </table>
+  }
 
   @for(email <- args.clientEmail) {
     @__input(CLIENT_EMAIL_FN, email)

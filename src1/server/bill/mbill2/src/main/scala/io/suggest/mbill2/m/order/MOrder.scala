@@ -6,7 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
-import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, MContracts}
+import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, FindByContractId, MContracts}
 import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateStatusSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.util.PgaNamesMaker
@@ -33,6 +33,7 @@ class MOrders @Inject() (
   with InsertOneReturning
   with DeleteById
   with DateStatusSlick
+  with FindByContractId
 {
 
   import driver.api._

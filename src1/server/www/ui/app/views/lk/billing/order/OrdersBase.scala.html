@@ -1,0 +1,14 @@
+@(title: String, mnode: MNode)(content: Html)(implicit ctx: Context)
+
+@* Базовый шаблон для ордеров/заказов. *@
+
+@import ctx.messages
+@import lk.billing.billingBaseTpl
+
+@billingBaseTpl(
+  title       = title,
+  mnode       = mnode
+)(content)
+
+
+

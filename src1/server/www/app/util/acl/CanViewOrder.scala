@@ -158,3 +158,8 @@ class CanViewOrder @Inject() (
     with csrf.Post[MNodeOrderReq]
 
 }
+
+/** Интерфейс для DI-поля с инстансом [[CanViewOrder]]. */
+trait ICanViewOrder {
+  val canViewOrder: CanViewOrder
+}

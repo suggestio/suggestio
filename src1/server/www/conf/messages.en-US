@@ -789,6 +789,7 @@ Cost=Cost
 Order.already.paid=Order is already paid
 Pay.error=Pay error
 Orders=Orders
+No.orders.found=No orders found.
 
 Order.status.a=Order draft
 Order.status.h=Awaiting payment confirmation

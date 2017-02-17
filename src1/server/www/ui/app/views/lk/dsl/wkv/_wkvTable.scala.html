@@ -1,0 +1,17 @@
+@(thead: Html = null)(content: Html)
+
+@* outer-код таблицы white-KV. *@
+
+<table class="table">
+
+  @if(thead != null) {
+    <thead>
+      @thead
+    </thead>
+  }
+
+  <tbody>
+    @content
+  </tbody>
+
+</table>

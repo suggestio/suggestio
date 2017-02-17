@@ -799,6 +799,7 @@ Cost=Стоимость
 Order.already.paid=Заказ уже оплачен
 Pay.error=Ошибка при оплате
 Orders=Заказы
+No.orders.found=Заказов не найдено.
 
 Order.status.a=Черновик заказа
 Order.status.h=Ожидается подтверждение оплаты

@@ -14,7 +14,7 @@ import models.mlk.bill.{MCartItem, MCartTplArgs}
 import util.acl.{ICanAccessItemDi, IIsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
-import views.html.lk.billing.cart._
+import views.html.lk.billing.order._
 
 import scala.concurrent.Future
 
@@ -155,7 +155,7 @@ trait LkBill2Cart
       )
 
       // Рендер результата
-      val html = cartTpl(args)(ctx)
+      val html = CartTpl(args)(ctx)
       Ok(html)
     }
   }

@@ -20,6 +20,7 @@ import models.mpay.yaka._
 import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReqHdr}
 import models.usr.MPersonIdents
+import play.api.i18n.Messages
 import play.api.mvc.{Call, Result}
 import play.twirl.api.Xml
 import util.acl.{CanPayOrder, CanViewOrder, MaybeAuth}
@@ -32,7 +33,7 @@ import util.stat.StatUtil
 import views.html.lk.billing.pay._
 import views.html.lk.billing.pay.yaka._
 import views.html.stuff.PleaseWaitTpl
-import views.xml.lk.billing.pay.yaka._yakaRespTpl
+import views.xml.lk.billing.pay.yaka._YakaRespTpl
 
 import scala.concurrent.Future
 
@@ -75,8 +76,9 @@ class PayYaka @Inject() (
     */
   private def _alreadyPaid(request: INodeOrderReq[_]): Future[Result] = {
     implicit val req = request
+    val messages = implicitly[Messages]
     Redirect( controllers.routes.LkBill2.showOrder(request.morder.id.get, request.mnode.id.get) )
-      .flashing(FLASH.ERROR -> implicitly[Context].messages("Order.already.paid"))
+      .flashing(FLASH.ERROR -> messages("Order.already.paid"))
   }
 
 
@@ -107,13 +109,13 @@ class PayYaka @Inject() (
       epws.headOption
     }
 
+    implicit val ctx = implicitly[Context]
+
     // Собираем данные для рендера формы отправки в платёжку.
     for {
       payPrice      <- payPriceFut
       userEmailOpt  <- userEmailOptFut
     } yield {
-      implicit val ctx = implicitly[Context]
-
       // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
       // Собрать аргументы для рендера, отрендерить страницу с формой.
       val formData = MYakaFormData(
@@ -248,7 +250,7 @@ class PayYaka @Inject() (
               LOGGER.error(s"$logPrefix billing failed to check current order.", ex)
               // Вернуть ошибку 100, понятную для яндекс-кассы:
               for (statMas0 <- statMas0Fut) yield {
-                val xml = _yakaRespTpl(
+                val xml = _YakaRespTpl(
                   yakaAction  = yakaAction,
                   errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
                   invoiceId   = Some( yReq.invoiceId ),
@@ -291,7 +293,7 @@ class PayYaka @Inject() (
 
   /** Ответ платежке при невозможности понять запрос. */
   private def _badRequest(yakaAction: MYakaAction): Result = {
-    val xml = _yakaRespTpl(
+    val xml = _YakaRespTpl(
       yakaAction = yakaAction,
       errCode    = yakaUtil.ErrorCodes.BAD_REQUEST,
       shopId     = yakaUtil.SHOP_ID,
@@ -451,7 +453,7 @@ class PayYaka @Inject() (
                   actions = MActionTypes.PayBadOrder :: Nil,
                   textNi  = ex.toString :: yReqStr :: Nil
                 )
-                val xml = _yakaRespTpl(
+                val xml = _YakaRespTpl(
                   yakaAction  = yakaAction,
                   errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
                   shopId      = shopId,
@@ -492,7 +494,7 @@ class PayYaka @Inject() (
       actions = MActionTypes.PayBadReq :: Nil,
       textNi  = s"$expMd5\nMD5 != ${yReq.md5}" :: Nil
     )
-    val xml = _yakaRespTpl(
+    val xml = _YakaRespTpl(
       yakaAction  = yakaAction,
       errCode     = yakaUtil.ErrorCodes.MD5_ERROR,
       invoiceId   = Some( yReq.invoiceId ),
@@ -505,7 +507,7 @@ class PayYaka @Inject() (
 
   /** Рендер XML для положительного ответа для яндекс-кассы по экшену. */
   private def _successXml(yakaAction: MYakaAction, invoiceId: Long): Xml = {
-    _yakaRespTpl(
+    _YakaRespTpl(
       yakaAction  = yakaAction,
       errCode     = yakaUtil.ErrorCodes.NO_ERROR,
       shopId      = yakaUtil.SHOP_ID,

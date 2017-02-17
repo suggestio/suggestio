@@ -1,0 +1,95 @@
+@(args: mbill.MOrdersTplArgs)(implicit ctx: Context)
+
+@* Шаблон списка заказов. *@
+
+@import ctx.messages
+@import util.TplDataFormatUtil._
+@import datetime._prettyDate
+@import sys1.stuff.pager._
+
+
+@__td(isHeader: Boolean, clazz: String*)(content: Html) = {
+  <td class="td __@if(isHeader){gray}else{white} __size-M @clazz.mkString(" ")">
+    @content
+  </td>
+}
+
+@OrdersBase(
+  title = messages("Orders") + " (" + args.ordersTotal + ")",
+  mnode = args.mnode
+) {
+
+  @if(args.orders.isEmpty) {
+    @messages("No.orders.found")
+  }
+
+  <table class="table __width-XL">
+
+    <thead>
+      <tr>
+        @__td(true, "_radial-first") {
+          @messages("Order.number")
+        }
+        @__td(true) {
+          @messages("Status")
+        }
+        @__td(true) {
+          @messages("Date")
+        }
+        @__td(true, "_radial-last") {
+          @messages("Amount._money")
+        }
+      </tr>
+    </thead>
+
+    <tbody>
+      @for( ord <- args.orders ) {
+        <tr>
+          @__td(false, "__radial-first", "ft-M", "dark-gray") {
+            <a href="@if( ord.id.exists(args.cartOrderId.contains) ) {
+                @routes.LkBill2.cart(args.mnode.id.get, r = ctx.r)
+              } else {
+                @routes.LkBill2.showOrder(ord.id.get, args.mnode.id.get)
+              }">
+              @messages("_N") @ord.id
+            </a>
+          }
+          @__td(false) {
+            @messages( ord.status.singular )
+          }
+          @__td(false) {
+            <span title="@_prettyDate(ord.dateStatus).toString.trim">
+              <span class="ft-M dark-gray">@numericDate(ord.dateStatus)</span>
+              <br/>
+              @numericTime(ord.dateStatus)
+            </span>
+          }
+          @__td(false, "__radial-last") {
+            @for(orderId <- ord.id; prices <- args.prices.get(orderId)) {
+              @for(price <- prices) {
+                @formatPrice(price)
+              }
+            }
+          }
+        </tr>
+      }
+    </tbody>
+
+  </table>
+
+
+  @* Нарисовать черновой пейджер страниц. *@
+  @if( args.page > 1 || args.orders.size >= args.ordersPerPage ) {
+    <br/>
+    <br/>
+    @_simple3pTpl(
+      count  = args.ordersTotal,
+      limit  = args.ordersPerPage,
+      offset = args.ordersPerPage * args.page,
+      urlF   = { x =>
+        routes.LkBill2.orders(args.mnode.id.get, page = x / args.ordersPerPage)
+      }
+    )
+  }
+
+}

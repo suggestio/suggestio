@@ -14,9 +14,20 @@ trait FindByContractId extends ContractIdSlick with GidModelContainer {
 
   override type Table_t <: Table[El_t] with GidColumn with ContractIdColumn
 
-  def findByContractId(contractId: Gid_t) = {
+
+  def findByContractIdSql(contractId: Gid_t) = {
     query
       .filter(_.contractId === contractId)
+  }
+
+  def findByContractId(contractId: Gid_t) = {
+    findByContractIdSql(contractId)
+      .result
+  }
+
+  def countByContractId(contractId: Gid_t): DBIOAction[Int, NoStream, Effect.Read] = {
+    findByContractIdSql(contractId)
+      .size
       .result
   }
 

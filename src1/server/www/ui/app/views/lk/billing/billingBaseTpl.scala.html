@@ -18,15 +18,21 @@
       )
 
       @_navItemTpl(
-        title = messages("Transactions.history"),
-        href  = Some( routes.LkBill2.txnsList(nodeId, inline = false) ),
-        css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
-      )
-
-      @_navItemTpl(
         title = messages("Cart"),
         href  = Some( routes.LkBill2.cart(nodeId, r = ctx.r) ),
         css   = classesAct(rightCurrEl == RPL_CART)
+      )
+
+      @_navItemTpl(
+        title = messages("Orders"),
+        href  = Some( routes.LkBill2.orders(nodeId) ),
+        css   = classesAct(rightCurrEl == RPL_ORDERS)
+      )
+
+      @_navItemTpl(
+        title = messages("Transactions.history"),
+        href  = Some( routes.LkBill2.txnsList(nodeId, inline = false) ),
+        css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
       )
 
       @_navSysTpl(
