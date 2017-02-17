@@ -5,7 +5,7 @@ import io.suggest.bill.{MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
-import io.suggest.mbill2.m.order.{MOrderStatuses, OrderStatusChanged}
+import io.suggest.mbill2.m.order.OrderStatusChanged
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill.MCartIdeas
@@ -56,7 +56,7 @@ trait LkBill2Cart
     val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
       FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
         slick.db.run {
-          bill2Util.getLastOrder(mcId, MOrderStatuses.Draft)
+          bill2Util.getCartOrder(mcId)
         }
       }
     }

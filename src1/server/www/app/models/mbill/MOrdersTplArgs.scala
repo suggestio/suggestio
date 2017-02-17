@@ -12,7 +12,8 @@ import io.suggest.model.n2.node.MNode
   * Description: Модель аргументов для шаблона [[views.html.lk.billing.pay.OrdersTpl]].
   */
 case class MOrdersTplArgs(
-                           mnode    : MNode,
-                           orders   : Seq[MOrder],
-                           prices   : Map[Gid_t, Iterable[MPrice]]
+                           mnode          : MNode,
+                           orders         : Seq[MOrder],
+                           prices         : Map[Gid_t, Iterable[MPrice]],
+                           cartOrderId    : Option[Gid_t]
                          )

@@ -3,6 +3,7 @@ package controllers
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.cbill.{LkBill2Cart, LkBillTxns}
+import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.mbill2.m.gid.Gid_t
@@ -239,15 +240,26 @@ class LkBill2 @Inject() (
       }
     }
 
+    // Узнать id ордера-корзины.
+    val cartOrderIdOptFut = contractIdOptFut.flatMap { contractIdOpt =>
+      FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
+        slick.db.run {
+          bill2Util.getCartOrderId(contractId)
+        }
+      }
+    }
+
     // Отрендерить ответ, когда всё будет готово.
     for {
-      orders    <- ordersFut
-      prices    <- orderPricesFut
+      orders          <- ordersFut
+      prices          <- orderPricesFut
+      cartOrderIdOpt  <- cartOrderIdOptFut
     } yield {
       val tplArgs = MOrdersTplArgs(
-        mnode   = request.mnode,
-        orders  = orders,
-        prices  = prices
+        mnode         = request.mnode,
+        orders        = orders,
+        prices        = prices,
+        cartOrderId   = cartOrderIdOpt
       )
       Ok( OrdersTpl(tplArgs) )
     }

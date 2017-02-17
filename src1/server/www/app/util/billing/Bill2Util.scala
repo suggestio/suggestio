@@ -195,15 +195,29 @@ class Bill2Util @Inject() (
     }
   }
 
+  /** Поиск ордера-корзины. */
+  def getCartOrder(contractId: Gid_t) = getLastOrder(contractId, MOrderStatuses.Draft)
 
-  /** Поиск последнего ордера указанного контракта и с указанным статусом. */
-  def getLastOrder(contractId: Gid_t, status: MOrderStatus): SqlAction[Option[MOrder], NoStream, Effect.Read] = {
+  /** Поиск id ордера-корзины. */
+  def getCartOrderId(contractId: Gid_t): DBIOAction[Option[Gid_t], NoStream, Effect.Read] = {
+    _getLastOrderSql(contractId, MOrderStatuses.Draft)
+      .map(_.id)
+      .result
+      .headOption
+  }
+
+  private def _getLastOrderSql(contractId: Gid_t, status: MOrderStatus) = {
     mOrders.query
       .filter { q =>
         (q.contractId === contractId) && (q.statusStr === status.strId)
       }
       .sortBy(_.id.desc.nullsLast)
       .take(1)
+  }
+
+  /** Поиск последнего ордера указанного контракта и с указанным статусом. */
+  def getLastOrder(contractId: Gid_t, status: MOrderStatus): SqlAction[Option[MOrder], NoStream, Effect.Read] = {
+    _getLastOrderSql(contractId, status)
       .result
       .headOption
   }
@@ -232,8 +246,8 @@ class Bill2Util @Inject() (
   /** Найти корзину и очистить её. */
   def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RWT] = {
     val a = for {
-      cartOrderOpt    <- getLastOrder(contractId, MOrderStatuses.Draft)
-      cartOrderIdOpt  = cartOrderOpt.flatMap(_.id)
+      cartOrderOpt    <- getCartOrder(contractId)
+      cartOrderIdOpt   = cartOrderOpt.flatMap(_.id)
       itemsDeleted    <- maybeDeleteOrder( cartOrderIdOpt )
     } yield {
       itemsDeleted
@@ -315,7 +329,7 @@ class Bill2Util @Inject() (
   /** Подготовится к транзакции внутри корзины. */
   def prepareCartTxn(contractId: Gid_t): DBIOAction[MOrderWithItems, NoStream, Effect.Read] = {
     for {
-      cartOrderOpt  <- getLastOrder(contractId, MOrderStatuses.Draft).forUpdate
+      cartOrderOpt  <- getCartOrder(contractId).forUpdate
       order         = cartOrderOpt.get
       res           <- prepareCartOrderItems(order)
     } yield {
@@ -571,7 +585,7 @@ class Bill2Util @Inject() (
             val balOpt0 = acc0.balsMap.get( mitem.price.currency )
             val acc2Opt = for {
               bal0          <- balOpt0
-              itemAmount       = mitem.price.amount
+              itemAmount     = mitem.price.amount
               balAmount2     = bal0.price.amount - itemAmount
               if balAmount2 >= bal0.low
             } yield {
@@ -1304,7 +1318,7 @@ class Bill2Util @Inject() (
           val morder22 = morder.withStatus( MOrderStatuses.Draft )
           for {
             // Поискать текущую корзину, вдруг юзер ещё что-то в корзину швырнул, пока текущий ордер был HOLD.
-            cartOrderOpt    <- getLastOrder(morder.contractId, MOrderStatuses.Draft)
+            cartOrderOpt    <- getCartOrder(morder.contractId)
               .forUpdate
 
             ordersUpdated <- mOrders.saveStatus( morder22 )
