@@ -61,12 +61,17 @@ trait LkBillOrders
       OptId.els2idMap[Gid_t, MBalance](mBals)
     }
 
+    val lkCtxDataFut = request.user.lkCtxDataFut
+
     // Отрендерить ответ, когда всё будет готово.
     for {
       txns          <- txnsFut
       orderPrices   <- orderPricesFut
       mBalsMap      <- mBalsMapFut
+      lkCtxData     <- lkCtxDataFut
     } yield {
+      implicit val lkCtxData1 = lkCtxData
+
       val tplArgs = MShowOrderTplArgs(
         mnode         = request.mnode,
         morder        = request.morder,
@@ -148,13 +153,19 @@ trait LkBillOrders
       }
     }
 
+    // По идее, получение lkCtxData уже запущено, но лучше убедится в этом.
+    val lkCtxDataFut = request.user.lkCtxDataFut
+
     // Отрендерить ответ, когда всё будет готово.
     for {
       orders          <- ordersFut
       prices          <- orderPricesFut
       cartOrderIdOpt  <- cartOrderIdOptFut
       ordersTotal     <- ordersTotalFut
+      lkCtxData       <- lkCtxDataFut
     } yield {
+      implicit val lkCtxData1 = lkCtxData
+
       val tplArgs = MOrdersTplArgs(
         mnode         = request.mnode,
         orders        = orders,

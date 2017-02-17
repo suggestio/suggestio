@@ -8,6 +8,7 @@
 @import util.TplDataFormatUtil.formatPrice
 @import lk.billing.txns._
 @import lk.dsl.wkv._
+@import lk.dsl._minorTitleTpl
 
 @OrdersBase(
   title = messages("Order.N", orderId),
@@ -17,7 +18,7 @@
   @* Нарисовать табличку, описывающую текущий ордер. *@
   @_wkvTable() {
 
-      @* Строка с номером заказа. *@
+    @* Строка с номером заказа. *@
     @_wkvRow() {
       @_wkvTd(true) {
         @messages("Order.number")
@@ -65,13 +66,20 @@
   <br/>
   <br/>
 
-  @* Если есть транзакция, связанная с оплатой заказа, то отобразить её. *@
+
+  @* Если есть транзакции, связанные с текущим заказов, то отобразить её. *@
+  @_minorTitleTpl() {
+    @messages("Transactions")
+    @if( args.txns.nonEmpty ) {
+      (@args.txns.size)
+    }
+  }
   @if( args.txns.nonEmpty ) {
     @_TxnsTableTpl() {
       @_TxnsListTpl(args)
     }
   } else {
-    @messages("No.transactions.found").
+    @messages("No.transactions.found")
   }
 
 }

@@ -508,6 +508,7 @@ Payment=Платеж
 Payment.comment=Комментарий к платежу
 Bill.account.and.tariffs=Счет и тарифные планы
 Transactions.history=История операций
+Transactions=Транзакции
 No.transactions.found=Транзакций не найдено.
 Add.funds=Пополнить баланс
 Total.funds=Всего на счете

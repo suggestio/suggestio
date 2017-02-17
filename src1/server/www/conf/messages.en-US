@@ -503,6 +503,7 @@ Payment.comment=Payment comment
 Bill.account.and.tariffs=Account and tariffs
 Transactions.history=Transactions history
 No.transactions.found=No transactions found
+Transactions=Transactions
 Add.funds=Add funds
 Total.funds=Total funds
 Available.funds=Available funds

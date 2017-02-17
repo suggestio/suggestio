@@ -9,7 +9,7 @@ import io.suggest.model.n2.node.MNode
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 16.02.17 22:38
-  * Description: Модель аргументов для шаблона [[views.html.lk.billing.pay.OrdersTpl]].
+  * Description: Модель аргументов для шаблона [[views.html.lk.billing.order.OrdersTpl]].
   */
 case class MOrdersTplArgs(
                            mnode          : MNode,

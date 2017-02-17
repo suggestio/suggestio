@@ -109,12 +109,15 @@ class PayYaka @Inject() (
       epws.headOption
     }
 
-    implicit val ctx = implicitly[Context]
+    val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
+      implicitly[Context]
+    }
 
     // Собираем данные для рендера формы отправки в платёжку.
     for {
       payPrice      <- payPriceFut
       userEmailOpt  <- userEmailOptFut
+      ctx           <- ctxFut
     } yield {
       // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
       // Собрать аргументы для рендера, отрендерить страницу с формой.
