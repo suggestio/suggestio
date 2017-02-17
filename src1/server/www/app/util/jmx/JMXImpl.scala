@@ -10,7 +10,7 @@ import models.mcal.MCalendarJmx
 import models.usr.{EmailActivationsJmx, EmailPwIdentsJmx, MExtIdentJmx}
 import java.lang.management.ManagementFactory
 
-import io.suggest.loc.geo.ipgeobase.{MCitiesJmx, MIpRangesJmx}
+import io.suggest.loc.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
 import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JMXBase
@@ -46,6 +46,7 @@ class JMXImpl @Inject() (
                           mIpRangesJmx                  : MIpRangesJmx,
                           mCitiesJmx                    : MCitiesJmx,
                           mStatsJmx                     : MStatsJmx,
+                          ipgbImporterJmx               : IpgbImporterJmx,
                           sCryptUtilJmx                 : SCryptUtilJmx,
                           lifecycle                     : ApplicationLifecycle,
                           implicit private val ec       : ExecutionContext
@@ -73,6 +74,7 @@ class JMXImpl @Inject() (
       mCitiesJmx,
       mMediasJmx,
       mStatsJmx,
+      ipgbImporterJmx,
       sCryptUtilJmx
     )
   }

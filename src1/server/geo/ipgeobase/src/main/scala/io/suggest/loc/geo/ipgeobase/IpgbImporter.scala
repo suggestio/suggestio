@@ -4,16 +4,19 @@ import java.io._
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.google.inject.Inject
+import com.google.inject.{Inject, Singleton}
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.JMXBase
+import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
+import play.api.inject.Injector
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.io.Source
+import scala.util.{Failure, Success}
 
 /**
   * Suggest.io
@@ -335,6 +338,37 @@ class IpgbImporter @Inject() (
 
       info(s"$logPrefix $linesTotal lines converted total. Took ${System.currentTimeMillis - startedAtMs} ms.")
     }
+  }
+
+}
+
+
+trait IpgbImporterJmxMBean {
+  def updateIpBase(): String
+}
+
+final class IpgbImporterJmx @Inject()(
+                             injector                 : Injector,
+                             implicit private val ec  : ExecutionContext
+                           )
+  extends JMXBase
+  with IpgbImporterJmxMBean
+  with MacroLogsDyn
+{
+
+  override def jmxName = "io.suggest:type=ipgeobase,name=" + classOf[IpgbImporter].getSimpleName
+
+  private def ipgbInjector = injector.instanceOf[IpgbImporter]
+
+  override def updateIpBase(): String = {
+    ipgbInjector.updateIpBase()
+      .onComplete {
+        case Success(r) =>
+          LOGGER.debug("JMX: ipgeobase import done ok: " + r)
+        case Failure(ex) =>
+          LOGGER.error("JMX: ipgeobase import failed", ex)
+      }
+    "Started in background."
   }
 
 }
