@@ -17,9 +17,6 @@ import models.im.MImgT
 /** Модель аргументов рендера [[views.html.lk.billing.order.CartTpl]]. */
 trait ICartTplArgs extends IItemsTplArgs{
 
-  /** Личный кабинет какого узла у нас сейчас? */
-  def mnode: MNode
-
   /** return path для возврата из корзины. */
   def r: Option[String]
 

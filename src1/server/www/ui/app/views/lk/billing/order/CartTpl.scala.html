@@ -18,12 +18,8 @@
     .map { _ => _rightPriceTpl(args.totalPricing, formId = FORM_ID) }
 ) {
 
-  @for(r <- args.r) {
-    <a href="@r">@messages("Go.back")</a>
-  }
-
-
   @if( args.itemNodes.isEmpty ) {
+
     <h2>@messages("Your.cart.is.empty").</h2>
 
     @for( mnodeId <- args.mnode.id ) {
@@ -37,13 +33,14 @@
     @* Есть item'ы, рендерим таблицу item'ов. *@
     @_ItemsTpl(args, withDelete = true)
 
-    @for( mnodeId <- args.mnode.id ) {
-      @form( CSRF(routes.LkBill2.cartClear(mnodeId)) ) {
-        <input type="submit" value="@messages("Delete.all")"/>
-      }
-    }
   }
 
+  <br/>
+  <br/>
+
+  @for(r <- args.r) {
+    <a class="btn __size-M f-left __minor" href="@r">@messages("Go.back")</a>
+  }
 
   @* Форма для возможности сабмита. *@
   @form( CSRF(routes.LkBill2.cartSubmit(args.mnode.id.get)), 'id -> FORM_ID ) {

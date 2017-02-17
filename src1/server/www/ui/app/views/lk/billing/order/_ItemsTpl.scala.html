@@ -17,6 +17,17 @@
 }
 
 
+@__delBtn(call: Call, titleMsg: String) = {
+  @form( CSRF(call), 'class -> "f-right" ) {
+    <a class="btn __negative js-submit-btn"
+       title="@messages(titleMsg)"
+       href="#">
+      &cross;
+    </a>
+  }
+}
+
+
 @if( args.itemNodes.nonEmpty ) {
 
   <table class="table __width-XL">
@@ -26,31 +37,35 @@
         @__td("M", true, "__radial-first" :: "items-ad-column" :: Nil) {
           &nbsp;
         }
-        @__td("L", true) {
-          @messages("Item")
+        @__td("M", true) {
+          @messages("_cart.Items")
         }
-        @__td("M", true, "__radial-last" :: "items-price-column" :: Nil) {
+        @__td("M", true, "items-price-column" :: Nil) {
           @messages("Price")
+        }
+        @if(withDelete) {
+          @__td("M", true, "items-delete-column" :: "__radial-last" :: Nil) {
+            @__delBtn(routes.LkBill2.cartClear( args.mnode.id.get, r = ctx.r ), "Delete.all")
+          }
         }
       </tr>
     </thead>
 
     <tbody>
+      @defining( if(withDelete) 1 else 0 ) { colspanOffset =>
       @for( mnode <- args.itemNodes;  nodeId <- mnode.id;  nodeItems <- args.node2items.get(nodeId);  firstItem <- nodeItems.headOption;  lastItem <- nodeItems.lastOption ) {
         @for( mitem <- nodeItems;  startRow = mitem eq firstItem ) {
 
           <tr>
-            <td class="td __delimiter@if(!startRow){-thin}" colspan="@if(startRow) {3} else {2}"></td>
+            <td class="td __delimiter@if(!startRow){-thin}"
+                colspan="@(colspanOffset + (if(startRow) 3 else 2))"></td>
           </tr>
 
           <tr>
-
             @* Для первого элемента надо отрендерить вертикальную ячейку с rowspan, которая содержит иллюстрацию. *@
             @if(startRow) {
               @__td("M", false, "__radial-first" :: "items-ad-column" :: Nil, rowSpan = Some(nodeItems.size * 2 - 1)) {
                 <span class="">
-
-                </span>
                 @* При наличии brArgs отрендерить карточку. *@
                 @for( brArgs <- args.node2brArgs.get(nodeId) ) {
                   @_adNormalTpl( brArgs )
@@ -63,37 +78,42 @@
                        src="@dynImgUtil.imgCall(logoImg)"
                   />
                 }
-
+                </span>
               }
             }
 
             @* Рендерим текущий item: сначала суть item'а. *@
-            @__td("L", false) {
+            @__td("M", false) {
               @for( tagFace <- mitem.tagFaceOpt ) {
                 <span class="ft-S">#</span><span class="ft-M strong">@tagFace</span>
               }
               @mitem.id
+
+              @for( gs <- mitem.geoShape ) {
+                @gs
+              }
+
+              @for(rcvrId <- mitem.rcvrIdOpt) {
+                @rcvrId
+              }
             }
 
-            @* Стоимость item'а *@
+            @* Стоимость item'а. *@
             @__td("M", false, "items-price-column" :: Nil) {
               @formatPrice(mitem.price)
+            }
 
+            @__td("M", false, "items-delete-column" :: Nil) {
               @if(withDelete) {
                 @for( itemId <- mitem.id ) {
-                  @form( CSRF(routes.LkBill2.cartDeleteItem(itemId, r = ctx.request.path)), 'class -> "f-right" ) {
-                    <a class="btn __negative js-submit-btn"
-                       title="@messages("Delete")"
-                       href="#">
-                      &cross;
-                    </a>
-                  }
+                  @__delBtn( routes.LkBill2.cartDeleteItem(itemId, r = ctx.request.path), "Delete" )
                 }
               }
             }
 
           </tr>
         }
+      }
       }
     </tbody>
 
