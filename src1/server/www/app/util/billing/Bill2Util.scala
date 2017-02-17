@@ -1434,14 +1434,14 @@ class Bill2Util @Inject() (
     }
 
     lazy val logPrefix = s"findReleaseStalledHoldOrders[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix Starting for ${hours}h: treshold is $oldNow")
 
     for {
       orderIds <- stalledOrderIdsFut
       orderIdsCount = orderIds.size
       // Чтобы не нагружать сильно систему, обходим ордеры последовательно.
       errorsCount <- {
-        LOGGER.trace(s"$logPrefix Found $orderIdsCount orders: ${orderIds.mkString(", ")}")
+        if (orderIdsCount > 0)
+          LOGGER.trace(s"$logPrefix Found $orderIdsCount orders: ${orderIds.mkString(", ")}")
         orderIds.foldLeft( Future.successful(0) ) { (accFut, orderId) =>
           accFut
             .flatMap { errCounter =>
@@ -1459,15 +1459,13 @@ class Bill2Util @Inject() (
       }
     } yield {
       // Логгировать завершение, не сильно мусоря в логах.
-      def msg = s"$logPrefix Finished now with $orderIdsCount orders, $errorsCount failures."
       if (orderIdsCount > 0) {
+        val msg = s"$logPrefix ${hours}h($oldNow) Finished now with $orderIdsCount orders, $errorsCount failures."
         if (errorsCount > 0) {
           LOGGER.error(msg)
         } else {
           LOGGER.info(msg)
         }
-      } else {
-        LOGGER.trace(msg)
       }
     }
   }

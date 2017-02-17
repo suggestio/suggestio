@@ -1,12 +1,10 @@
-@(args: mlk.bill.ICartTplArgs)(implicit ctx: Context)
+@(args: mbill.ICartTplArgs)(implicit ctx: Context)
 
 @* Шаблон с корзиной. *@
 
 @import lk.billing.billingBaseTpl
 @import ctx.{request, messages}
-@import sys1.stuff.ntable._
 @import util.TplDataFormatUtil.formatPrice
-@import views.html.sc._adNormalTpl
 @import lk.lkwdgts.price._
 @import helper._
 @import io.suggest.common.cart.CartConstants._
@@ -15,7 +13,7 @@
   title       = messages("Cart"),
   mnode       = args.mnode,
   rightCurrEl = Some( BillingRightPanelLinks.RPL_CART ),
-  rightAfter  = args.items
+  rightAfter  = args.itemNodes
     .headOption
     .map { _ => _rightPriceTpl(args.totalPricing, formId = FORM_ID) }
 ) {
@@ -25,7 +23,7 @@
   }
 
 
-  @if( args.items.isEmpty ) {
+  @if( args.itemNodes.isEmpty ) {
     <h2>@messages("Your.cart.is.empty").</h2>
 
     @for( mnodeId <- args.mnode.id ) {
@@ -36,58 +34,8 @@
 
   } else {
 
-    @_ntable() {
-
-      @_th("S") {
-        &nbsp;
-      }
-      @_th("M") {
-        @messages("Item")
-      }
-      @_th("S") {
-        @messages("Price")
-      }
-
-    } {
-
-      @* TODO Дедублицировать рендер карточки *@
-      @for(itm <- args.items) {
-
-        @_tr() {
-          @* Нарисовать тут маленькую рекламную карточку *@
-          @_td("S") {
-            @_adNormalTpl(itm.brArgs)
-            @* TODO А если у нас оплата на ADN-узел (не карточку), то что рендерить? *@
-          }
-
-          @* Суть оффера. Инфа по заказанным тегам например. *@
-          @_td("M") {
-            @for(mitem <- itm.mitems; tag <- mitem.tagFaceOpt) {
-              <span>#@tag</span>
-              <br/>
-            }
-          }
-
-          @* Рендер стоимости item'а *@
-          @_td("S") {
-            @for(mitem <- itm.mitems) {
-              @formatPrice(mitem.price)
-              @* Кнопка-ссылка удаления этого элемента. *@
-              @for(itemId <- mitem.id) {
-                @form( CSRF(routes.LkBill2.cartDeleteItem(itemId, r = ctx.request.path)), 'class -> "f-right" ) {
-                  <a class="btn __negative js-submit-btn" title="@messages("Delete")" href="#">
-                    &cross;
-                  </a>
-                }
-              }
-              <br/>
-            }
-          }
-        }
-
-      } @* for itm *@
-
-    }
+    @* Есть item'ы, рендерим таблицу item'ов. *@
+    @_ItemsTpl(args, withDelete = true)
 
     @for( mnodeId <- args.mnode.id ) {
       @form( CSRF(routes.LkBill2.cartClear(mnodeId)) ) {

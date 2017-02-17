@@ -8,12 +8,12 @@ import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.OrderStatusChanged
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
-import models.mbill.MCartIdeas
+import models.mbill.{MCartIdeas, MCartTplArgs}
 import models.mctx.Context
-import models.mlk.bill.{MCartItem, MCartTplArgs}
 import util.acl.{ICanAccessItemDi, IIsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
+import util.di.ILogoUtilDi
 import views.html.lk.billing.order._
 
 import scala.concurrent.Future
@@ -32,6 +32,7 @@ trait LkBill2Cart
   with IMItems
   with ICanAccessItemDi
   with IBlkImgMakerDI
+  with ILogoUtilDi
 {
 
   import mCommonDi._
@@ -69,9 +70,9 @@ trait LkBill2Cart
     }
 
     // Собрать все карточки, относящиеся к mitem'ам:
-    val madsFut = mitemsFut.flatMap { mitems =>
-      val wantAdIds = mitems.iterator.map(_.nodeId).toSet
-      mNodesCache.multiGet(wantAdIds)
+    val nodesFut = mitemsFut.flatMap { mitems =>
+      val wantNodeIds = mitems.iterator.map(_.nodeId).toSet
+      mNodesCache.multiGet(wantNodeIds)
     }
 
     // Параллельно собираем контекст рендера
@@ -86,20 +87,22 @@ trait LkBill2Cart
     val szMult = ADS_SZ_MULT
 
     // Собрать карту аргументов для рендера карточек
-    val brArgsMapFut: Future[Map[String, IRenderArgs]] = for {
+    val node2brArgsMapFut: Future[Map[String, IRenderArgs]] = for {
       ctx     <- ctxFut
-      mads    <- madsFut
-      brArgss <- {
-        Future.traverse(mads) { mad =>
+      mads    <- nodesFut
+      brArgss <- Future.sequence {
+        // Интересуют только ноды, которые можно рендерить как рекламные карточки.
+        val devScrOpt = ctx.deviceScreenOpt
+        for (mad <- mads if mad.ad.nonEmpty) yield {
           for {
-            bgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, ctx.deviceScreenOpt)
+            bgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, devScrOpt)
           } yield {
             val ra = RenderArgs(
-              mad           = mad,
-              bc            = BlocksConf.applyOrDefault(mad),
-              withEdit      = false,
-              bgImg         = bgOpt,
-              szMult        = szMult,
+              mad       = mad,
+              bc        = BlocksConf.applyOrDefault(mad),
+              withEdit  = false,
+              bgImg     = bgOpt,
+              szMult    = szMult,
               inlineStyles  = true,
               isFocused     = false
             )
@@ -112,23 +115,30 @@ trait LkBill2Cart
     }
 
     // Сборка карты итемов ордера, сгруппированных по adId
-    val mItemsMapByAdFut = for {
+    val node2itemsMapFut = for {
       mitems <- mitemsFut
     } yield {
       mitems.groupBy(_.nodeId)
     }
 
-    // Сборка списка элементов корзины.
-    val cartItemsFut: Future[Seq[MCartItem]] = for {
-      mItemsMapByAd   <- mItemsMapByAdFut
-      brArgsMap       <- brArgsMapFut
-    } yield {
-      mItemsMapByAd
-        .iterator
-        .map { case (madId, mitemsAd) =>
-          MCartItem(mitemsAd, brArgsMap(madId))
+    // Собрать карту картинок-логотипов узлов. ADN-узлы нельзя ренедрить как карточки, но можно взять логотипы.
+    val node2logoMapFut = for {
+      nodes <- nodesFut
+      node2logos <- Future.sequence {
+        for (mnode <- nodes) yield {
+          // Готовим логотип данного узла... Если логотипа нет, то тут будет синхронное None.
+          for (logoOpt <- logoUtil.getLogoOfNode(mnode)) yield {
+            for (logo <- logoOpt; nodeId <- mnode.id) yield {
+              nodeId -> logo
+            }
+          }
         }
-        .toSeq
+      }
+    } yield {
+      node2logos
+        .iterator
+        .flatten
+        .toMap
     }
 
     // Рассчет общей стоимости корзины
@@ -142,14 +152,20 @@ trait LkBill2Cart
 
     // Рендер и возврат ответа
     for {
-      ctx           <- ctxFut
-      cartItems     <- cartItemsFut
-      totalPricing  <- totalPricingFut
+      ctx             <- ctxFut
+      nodes           <- nodesFut
+      node2logosMap   <- node2logoMapFut
+      node2brArgsMap  <- node2brArgsMapFut
+      node2itemsMap   <- node2itemsMapFut
+      totalPricing    <- totalPricingFut
     } yield {
       // Сборка аргументов для вызова шаблона
       val args = MCartTplArgs(
         mnode         = request.mnode,
-        items         = cartItems,
+        itemNodes     = nodes,
+        node2logo     = node2logosMap,
+        node2brArgs   = node2brArgsMap,
+        node2items    = node2itemsMap,
         r             = r,
         totalPricing  = totalPricing
       )

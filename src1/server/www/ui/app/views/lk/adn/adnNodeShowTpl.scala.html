@@ -25,8 +25,9 @@
 
   <div class="profile_logo-bar">
     @if(mnode.meta.colors.bg.isDefined) {
-      @args.logoImgOpt.map { img =>
-        <div class="image __size-L" style="background-color: #@mnode.meta.colors.bg.map(_.code);">
+      @for(img <- args.logoImgOpt) {
+        <div class="image __size-L"
+             @for(bgColor <- mnode.meta.colors.bg) {style="background-color: #@bgColor.code;"}>
           <img class="image_src" src="@dynImgUtil.imgCall(img)" alt="@mnode.meta.basic.name"/>
         </div>
       }

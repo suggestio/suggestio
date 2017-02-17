@@ -14,7 +14,7 @@ import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import util.acl.{CanAccessItem, CanViewOrder, IsAdnNodeAdmin, IsAuthNode}
 import util.billing.{Bill2Util, TfDailyUtil}
-import util.img.GalleryUtil
+import util.img.{GalleryUtil, LogoUtil}
 import views.html.lk.billing._
 
 import scala.concurrent.Future
@@ -30,6 +30,7 @@ class LkBill2 @Inject() (
   tfDailyUtil                 : TfDailyUtil,
   mCalendars                  : MCalendars,
   galleryUtil                 : GalleryUtil,
+  override val logoUtil       : LogoUtil,
   override val canViewOrder   : CanViewOrder,
   override val canAccessItem  : CanAccessItem,
   @Named("blk") override val blkImgMaker  : IMaker,
