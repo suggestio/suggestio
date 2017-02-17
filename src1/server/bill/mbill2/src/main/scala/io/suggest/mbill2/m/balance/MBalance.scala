@@ -225,4 +225,8 @@ case class MBalance(
 
   def blockAmount(amount2: Amount_t) = unblockAmount(-amount2)
 
+  override def toString: String = {
+    s"${getClass.getSimpleName}(#${id.orNull},c$contractId,$price+$blocked${lowOpt.fold("")(",low=" + _)})"
+  }
+
 }

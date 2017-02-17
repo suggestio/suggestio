@@ -127,4 +127,8 @@ case class MOrder(
     )
   }
 
+  override def toString: String = {
+    s"${getClass.getSimpleName}(#${id.orNull},c$contractId,$status)"
+  }
+
 }

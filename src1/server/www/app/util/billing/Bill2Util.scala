@@ -570,18 +570,21 @@ class Bill2Util @Inject() (
           .foldLeft( Acc() ) { (acc0, mitem) =>
             val balOpt0 = acc0.balsMap.get( mitem.price.currency )
             val acc2Opt = for {
-              bal0 <- balOpt0
-              balAmount2 = bal0.price.amount - mitem.price.amount
-              if balAmount2 < bal0.low
+              bal0          <- balOpt0
+              itemAmount       = mitem.price.amount
+              balAmount2     = bal0.price.amount - itemAmount
+              if balAmount2 >= bal0.low
             } yield {
-              val bal2 = bal0.blockAmount( mitem.price.amount )
+              val bal2 = bal0.blockAmount( itemAmount )
+              val mitem2 = mitem.withStatus( mitem.iType.orderClosedStatus )
+              LOGGER.trace(s"$logPrefix Enought money for item ${mitem2.id.orNull} on balance ${bal2.id.orNull}. Blocked $itemAmount, new balance: $bal2")
 
-              val itm2 = mitem.withStatus( mitem.iType.orderClosedStatus )
               val itmUpdDbAct = for {
-                itemsUpdated <- mItems.updateStatus(itm2)
+                itemsUpdated <- mItems.updateStatus(mitem2)
                 if itemsUpdated == 1
               } yield {
-                itm2
+                LOGGER.trace(s"$logPrefix Item ${mitem2.id.orNull} of type ${mitem2.iType} ($itemAmount) status updated to ${mitem2.status}")
+                mitem2
               }
 
               // Денег значит хватает. Заблокировать средства на текущем балансе и апдейтнуть текущий item.
