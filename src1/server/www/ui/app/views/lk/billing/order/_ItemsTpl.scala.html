@@ -66,7 +66,6 @@
             @* Для первого элемента надо отрендерить вертикальную ячейку с rowspan, которая содержит иллюстрацию. *@
             @if(startRow) {
               @__td("M", false, "__radial-first" :: "items-ad-column" :: Nil, rowSpan = Some(nodeItems.size * 2 - 1)) {
-                <span class="">
                 @* При наличии brArgs отрендерить карточку. *@
                 @for( brArgs <- args.node2brArgs.get(nodeId) ) {
                   @_adNormalTpl( brArgs )
@@ -79,7 +78,6 @@
                        src="@dynImgUtil.imgCall(logoImg)"
                   />
                 }
-                </span>
               }
             }
 

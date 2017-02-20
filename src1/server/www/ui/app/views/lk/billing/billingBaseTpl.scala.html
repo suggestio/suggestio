@@ -14,25 +14,25 @@
       @_navItemTpl(
         title = messages("Bill.account.and.tariffs"),
         href  = Some( routes.LkBill2.onNode(nodeId) ),
-        css   = classesAct(rightCurrEl == RPL_BILLING, "__node-billing")
+        css   = classesAct( rightCurrEl.contains(RPL_BILLING), "__node-billing")
       )
 
       @_navItemTpl(
         title = messages("Cart"),
         href  = Some( routes.LkBill2.cart(nodeId) ),
-        css   = classesAct(rightCurrEl == RPL_CART)
+        css   = classesAct( rightCurrEl.contains(RPL_CART) )
       )
 
       @_navItemTpl(
         title = messages("Orders"),
         href  = Some( routes.LkBill2.orders(nodeId) ),
-        css   = classesAct(rightCurrEl == RPL_ORDERS)
+        css   = classesAct( rightCurrEl.contains(RPL_ORDERS) )
       )
 
       @_navItemTpl(
         title = messages("Transactions.history"),
         href  = Some( routes.LkBill2.txnsList(nodeId, inline = false) ),
-        css   = classesAct(rightCurrEl == RPL_TRANSACTIONS, "__transactions-history")
+        css   = classesAct( rightCurrEl.contains(RPL_TRANSACTIONS), "__transactions-history")
       )
 
       @_navSysTpl(

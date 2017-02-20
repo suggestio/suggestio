@@ -44,6 +44,11 @@
 
     <tbody>
       @for( ord <- args.orders ) {
+
+        <tr>
+          <td class="td __delimiter" colspan="4"></td>
+        </tr>
+
         <tr>
           @__td(false, "__radial-first", "ft-M", "dark-gray") {
             <a href="@if( ord.id.exists(args.cartOrderId.contains) ) {
