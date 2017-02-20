@@ -1,0 +1,6 @@
+@(dateStart: java.time.LocalDate, dateEnd: java.time.LocalDate)(implicit ctx: Context)
+
+@* Рендер абстрактного диапазона дат. *@
+
+@_dateTpl("from", dateStart)
+@_dateTpl("till", dateEnd)

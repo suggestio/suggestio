@@ -6,10 +6,13 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.OrderStatusChanged
+import io.suggest.model.common.OptId
 import io.suggest.util.logs.IMacroLogs
+import models.MNode
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill.{MCartIdeas, MCartTplArgs}
 import models.mctx.Context
+import play.api.i18n.Messages
 import util.acl.{ICanAccessItemDi, IIsAdnNodeAdmin}
 import util.billing.IBill2UtilDi
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
@@ -41,6 +44,7 @@ trait LkBill2Cart
   /** Отображение карточек в таком вот размере. */
   private def ADS_SZ_MULT = 0.25F
 
+
   /**
     * Рендер страницы с корзиной покупок юзера в рамках личного кабинета узла.
     *
@@ -69,10 +73,45 @@ trait LkBill2Cart
         .fold [Future[Seq[MItem]]] (Future.successful(Nil)) { bill2Util.orderItems }
     }
 
-    // Собрать все карточки, относящиеся к mitem'ам:
-    val nodesFut = mitemsFut.flatMap { mitems =>
-      val wantNodeIds = mitems.iterator.map(_.nodeId).toSet
-      mNodesCache.multiGet(wantNodeIds)
+    // Собрать id узлов, на которые завязаны item'ы.
+    val itemNodeIdsFut = for (mitems <- mitemsFut) yield {
+      mitems.iterator
+        .map(_.nodeId)
+        .toSet
+    }
+    // Собрать id узлов-ресиверов.
+    val rcvrIdsFut = for (mitems <- mitemsFut) yield {
+      mitems.iterator
+        .flatMap(_.rcvrIdOpt)
+        .toSet
+    }
+
+    // Узнать все узлы, но в виде единой карты.
+    val allNodesMapFut = for {
+      itemNodeIds <- itemNodeIdsFut
+      rcvrIds     <- rcvrIdsFut
+      allNodeIds  = itemNodeIds ++ rcvrIds
+      allNodes    <- mNodesCache.multiGet(allNodeIds)
+    } yield {
+      OptId.els2idMap[String, MNode](allNodes)
+    }
+
+    lazy val logPrefix = s"cart($onNodeId):"
+
+    // Собрать последовательность карточек для рендера, которые относятся к найденным mitem'ам:
+    val itemNodesFut = for {
+      mitems      <- mitemsFut
+      allNodeMap  <- allNodesMapFut
+    } yield {
+      mitems
+        .map(_.nodeId)
+        .distinct
+        .flatMap { itemNodeId =>
+          val r = allNodeMap.get(itemNodeId)
+          if (r.isEmpty)
+            LOGGER.warn(s"$logPrefix Cannot find item node $itemNodeId")
+          r
+        }
     }
 
     // Параллельно собираем контекст рендера
@@ -88,12 +127,16 @@ trait LkBill2Cart
 
     // Собрать карту аргументов для рендера карточек
     val node2brArgsMapFut: Future[Map[String, IRenderArgs]] = for {
-      ctx     <- ctxFut
-      mads    <- nodesFut
-      brArgss <- Future.sequence {
+      ctx         <- ctxFut
+      itemNodeIds <- itemNodeIdsFut
+      allNodesMap <- allNodesMapFut
+      brArgss     <- Future.sequence {
         // Интересуют только ноды, которые можно рендерить как рекламные карточки.
         val devScrOpt = ctx.deviceScreenOpt
-        for (mad <- mads if mad.ad.nonEmpty) yield {
+        for {
+          (nodeId, mad) <- allNodesMap
+          if itemNodeIds.contains(nodeId) && mad.ad.nonEmpty
+        } yield {
           for {
             bgOpt <- BgImg.maybeMakeBgImgWith(mad, blkImgMaker, szMult, devScrOpt)
           } yield {
@@ -123,9 +166,14 @@ trait LkBill2Cart
 
     // Собрать карту картинок-логотипов узлов. ADN-узлы нельзя ренедрить как карточки, но можно взять логотипы.
     val node2logoMapFut = for {
-      nodes <- nodesFut
-      node2logos <- Future.sequence {
-        for (mnode <- nodes) yield {
+      itemNodeIds <- itemNodeIdsFut
+      allNodesMap <- allNodesMapFut
+      node2logos  <- Future.sequence {
+        for {
+          (nodeId, mnode) <- allNodesMap
+          // Пока интересуют только логотипы узлов, которые вместо рекламных карточек будут отображаться.
+          if itemNodeIds.contains(nodeId) && mnode.ad.isEmpty
+        } yield {
           // Готовим логотип данного узла... Если логотипа нет, то тут будет синхронное None.
           for (logoOpt <- logoUtil.getLogoOfNode(mnode)) yield {
             for (logo <- logoOpt; nodeId <- mnode.id) yield {
@@ -153,7 +201,8 @@ trait LkBill2Cart
     // Рендер и возврат ответа
     for {
       ctx             <- ctxFut
-      nodes           <- nodesFut
+      allNodesMap     <- allNodesMapFut
+      nodes           <- itemNodesFut
       node2logosMap   <- node2logoMapFut
       node2brArgsMap  <- node2brArgsMapFut
       node2itemsMap   <- node2itemsMapFut
@@ -162,6 +211,7 @@ trait LkBill2Cart
       // Сборка аргументов для вызова шаблона
       val args = MCartTplArgs(
         mnode         = request.mnode,
+        nodesMap      = allNodesMap,
         itemNodes     = nodes,
         node2logo     = node2logosMap,
         node2brArgs   = node2brArgsMap,
@@ -252,7 +302,7 @@ trait LkBill2Cart
     * @return Редирект.
     */
   def cartClear(onNodeId: String, r: Option[String]) = isAdnNodeAdmin.Post(onNodeId, U.ContractId).async { implicit request =>
-    lazy val logPrefix = s"cartClear($onNodeId):"
+    lazy val logPrefix = s"cartClear(u=${request.user.personIdOpt.orNull},on=$onNodeId):"
 
     request.user
       .contractIdOptFut
@@ -269,7 +319,7 @@ trait LkBill2Cart
       // Подавить и залоггировать возможные ошибки.
       .recover { case ex: Exception =>
         ex match {
-          case ex1: NoSuchElementException =>
+          case _: NoSuchElementException =>
             LOGGER.trace(s"$logPrefix Unable to clear cart, because contract or cart order does NOT exists")
           case _ =>
             LOGGER.warn(s"$logPrefix Cart clear failed", ex)
@@ -278,6 +328,7 @@ trait LkBill2Cart
       }
       // Независимо от исхода, вернуть редирект куда надо.
       .map { itemsDeleted =>
+        LOGGER.trace(s"$logPrefix $itemsDeleted items deleted.")
         RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
       }
   }
@@ -304,14 +355,13 @@ trait LkBill2Cart
       0
     }
 
-    implicit val ctx = implicitly[Context]
     for (rowsDeleted <- delFut) yield {
       val resp0 = Redirect(r)
       if (rowsDeleted == 1) {
         resp0
       } else {
         LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")
-        resp0.flashing(FLASH.ERROR -> ctx.messages("Something.gone.wrong"))
+        resp0.flashing(FLASH.ERROR -> implicitly[Messages].apply("Something.gone.wrong"))
       }
     }
   }

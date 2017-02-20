@@ -4,7 +4,8 @@
 
 @import ctx.{messages, request}
 @import ctx.api.dynImgUtil
-@import util.TplDataFormatUtil.formatPrice
+@import datetime._dateTpl
+@import util.TplDataFormatUtil.{formatPrice, formatGeoShape}
 @import helper._
 @import views.html.sc._adNormalTpl
 
@@ -37,7 +38,7 @@
         @__td("M", true, "__radial-first" :: "items-ad-column" :: Nil) {
           &nbsp;
         }
-        @__td("M", true) {
+        @__td("M", true, "items-descr-column" :: Nil) {
           @messages("_cart.Items")
         }
         @__td("M", true, "items-price-column" :: Nil) {
@@ -83,19 +84,35 @@
             }
 
             @* Рендерим текущий item: сначала суть item'а. *@
-            @__td("M", false) {
+            @__td("M", false, "items-descr-column" :: Nil) {
               @for( tagFace <- mitem.tagFaceOpt ) {
+                @messages("Tag")
                 <span class="ft-S">#</span><span class="ft-M strong">@tagFace</span>
               }
-              @mitem.id
 
               @for( gs <- mitem.geoShape ) {
-                @gs
+                @formatGeoShape(gs)
               }
 
               @for(rcvrId <- mitem.rcvrIdOpt) {
-                @rcvrId
+                @args.nodesMap.get(rcvrId).fold {
+                  <span class="red">
+                    @messages("in.unknown.node")
+                  </span>
+                } { rcvrNode =>
+                  @messages("in")
+                  @rcvrNode.guessDisplayNameOrId
+                }
               }
+
+              @* Рендерим диапазон дат размещения. *@
+              @for( dtStart <- mitem.dateStartOpt ) {
+                @_dateTpl("from", dtStart.toLocalDate)
+              }
+              @for( dtEnd <- mitem.dateEndOpt ) {
+                @_dateTpl("till", dtEnd.toLocalDate)
+              }
+
             }
 
             @* Стоимость item'а. *@

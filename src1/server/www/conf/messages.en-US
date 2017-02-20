@@ -83,6 +83,8 @@ Please.wait=Please wait...
 Today=Today
 Any=Any
 _N=#
+in=in
+near=near
 
 requisites=Payment details for withdrawal
 
@@ -774,6 +776,7 @@ Several.seconds.ago=Several seconds ago
 Less.than.minute.later=Less than a minute later
 Less.than.minute.ago=Less than a minute ago
 
+in.unknown.node=on unknown node
 _cart.Items=Items
 Cart=Cart
 Added.n.items.to.cart={0} items added into cart.
@@ -792,6 +795,10 @@ Order.already.paid=Order is already paid
 Pay.error=Pay error
 Orders=Orders
 No.orders.found=No orders found.
+
+in.radius.of.0.from.1=in radius of {0} from {2}
+n.km._kilometers={0} km
+n.m._meters={0} m
 
 Order.status.a=Order draft
 Order.status.h=Awaiting payment confirmation

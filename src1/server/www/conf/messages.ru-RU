@@ -83,6 +83,8 @@ Please.wait=Пожалуйста, подождите...
 Today=Сегодня
 Any=Любой
 _N=№
+in=в
+near=около
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -783,6 +785,7 @@ Several.seconds.ago=Несколько секунд назад
 Less.than.minute.later=Менее чем через минуту
 Less.than.minute.ago=Меньше минуты назад
 
+in.unknown.node=на неизвестном узле
 _cart.Items=Товары и услуги
 Cart=Корзина
 Added.n.items.to.cart=В корзину добавлено {0} товаров.
@@ -802,6 +805,10 @@ Order.already.paid=Заказ уже оплачен
 Pay.error=Ошибка при оплате
 Orders=Заказы
 No.orders.found=Заказов не найдено.
+
+in.radius.of.0.from.1=в радиусе {0} от {1}
+n.km._kilometers={0} км
+n.m._meters={0} м
 
 Order.status.a=Черновик заказа
 Order.status.h=Ожидается подтверждение оплаты

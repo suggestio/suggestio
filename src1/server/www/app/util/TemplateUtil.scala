@@ -9,6 +9,7 @@ import io.suggest.bill.{IMCurrency, IPrice, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.common.text.StringUtil
+import io.suggest.geo.{CircleGs, Distance, GeoShape, MGeoPoint}
 import models.mctx.Context
 import play.twirl.api.{Html, HtmlFormat}
 import views.html.fc._
@@ -319,6 +320,46 @@ object TplDataFormatUtil {
         str
     }
     Html(htmlStr)
+  }
+
+
+  def formatCoords(mgp: MGeoPoint)(implicit ctx: Context): String = {
+    // Рендерить координаты кратко.
+    val df = new DecimalFormat("###.####")
+    s"(${df.format(mgp.lat)} ${df.format(mgp.lon)})"
+  }
+
+  def formatDistance(d: Distance)(implicit ctx: Context): String = {
+    val km = d.kiloMeters
+    if (km > 3.0) {
+      val s = new DecimalFormat("###.#")
+        .format( km )
+      ctx.messages("n.km._kilometers", s)
+
+    } else {
+      val s = new DecimalFormat("####")
+        .format( d.meters )
+      ctx.messages("n.m._meters", s)
+    }
+  }
+
+  /** Отформатировать GeoShape в некоторую строку. */
+  def formatGeoShape(gs: GeoShape)(implicit ctx: Context): String = {
+    gs match {
+      // Круг описывается точкой и радиусом. Это и рендерим.
+      case circle: CircleGs =>
+        ctx.messages(
+          "in.radius.of.0.from.1",
+          formatDistance(circle.radius),
+          formatCoords(circle.center)
+        )
+
+      // Другие шейпы. Изначально их толком и не было, поэтому рендерим кое-как.
+      case _ =>
+        val nearStr = ctx.messages("near")
+        val coordStr = formatCoords(gs.firstPoint)
+        s"$nearStr $coordStr"
+    }
   }
 
 }

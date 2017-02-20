@@ -15,7 +15,7 @@ import models.im.MImgT
 
 
 /** Модель аргументов рендера [[views.html.lk.billing.order.CartTpl]]. */
-trait ICartTplArgs extends IItemsTplArgs{
+trait ICartTplArgs extends IItemsTplArgs {
 
   /** return path для возврата из корзины. */
   def r: Option[String]
@@ -28,6 +28,7 @@ trait ICartTplArgs extends IItemsTplArgs{
 /** Дефолтовая реализация модели [[ICartTplArgs]]. */
 case class MCartTplArgs(
                          override val mnode         : MNode,
+                         override val nodesMap      : Map[String, MNode],
                          override val itemNodes     : Seq[MNode],
                          override val node2logo     : Map[String, MImgT],
                          override val node2brArgs   : Map[String, IRenderArgs],

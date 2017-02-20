@@ -1,0 +1,9 @@
+@(i18nPrefix: String, date: java.time.LocalDate)(implicit ctx: Context)
+
+@* Шаблон для рендера одной из дат в отчете по датам. *@
+
+@import util.DateTimePrettyPrinter.{formatDateFull, dayOfWeek}
+@import ctx.messages
+
+@messages(i18nPrefix + "._date")
+<span title="@dayOfWeek(date)">@formatDateFull(date)</span>
