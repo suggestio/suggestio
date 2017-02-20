@@ -2,7 +2,7 @@ package controllers
 
 import com.google.inject.Inject
 import com.google.inject.name.Named
-import controllers.cbill.{LkBill2Cart, LkBillOrders, LkBillTxns}
+import controllers.cbill._
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.MTxns
@@ -44,7 +44,6 @@ class LkBill2 @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with LkBill2Cart
   with LkBillTxns
   with LkBillOrders
 {

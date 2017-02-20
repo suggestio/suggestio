@@ -9,7 +9,7 @@ import io.suggest.bill.{IMCurrency, IPrice, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
 import io.suggest.common.text.StringUtil
-import io.suggest.geo.{CircleGs, Distance, GeoShape, MGeoPoint}
+import io.suggest.geo._
 import models.mctx.Context
 import play.twirl.api.{Html, HtmlFormat}
 import views.html.fc._
@@ -346,7 +346,7 @@ object TplDataFormatUtil {
   /** Отформатировать GeoShape в некоторую строку. */
   def formatGeoShape(gs: GeoShape)(implicit ctx: Context): String = {
     gs match {
-      // Круг описывается точкой и радиусом. Это и рендерим.
+      // Круг описывается точкой и радиусом. Используется в георазмещении карточек.
       case circle: CircleGs =>
         ctx.messages(
           "in.radius.of.0.from.1",
@@ -354,10 +354,14 @@ object TplDataFormatUtil {
           formatCoords(circle.center)
         )
 
+      // Размещение в точке. Используется в lk-adn-map.
+      case point: PointGs =>
+        ctx.messages("in.geopoint.x", formatCoords(point.coord))
+
       // Другие шейпы. Изначально их толком и не было, поэтому рендерим кое-как.
       case _ =>
         val nearStr = ctx.messages("near")
-        val coordStr = formatCoords(gs.firstPoint)
+        val coordStr = formatCoords( gs.centerPoint.getOrElse(gs.firstPoint) )
         s"$nearStr $coordStr"
     }
   }

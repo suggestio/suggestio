@@ -39,3 +39,30 @@ trait IItemsTplArgs {
   def node2items  : Map[String, Seq[MItem]]
 
 }
+
+
+/** Дефолтовая реализация модели [[IItemsTplArgs]]. */
+case class MItemsTplArgs(
+                          override val mnode       : MNode,
+                          override val nodesMap    : Map[String, MNode],
+                          override val itemNodes   : Seq[MNode],
+                          override val node2logo   : Map[String, MImgT],
+                          override val node2brArgs : Map[String, IRenderArgs],
+                          override val node2items  : Map[String, Seq[MItem]]
+                        )
+  extends IItemsTplArgs
+
+
+/** wrap-реализация для модели [[IItemsTplArgs]]. */
+trait IItemsTplArgsWrap extends IItemsTplArgs {
+
+  def _underlying: IItemsTplArgs
+
+  override def mnode        = _underlying.mnode
+  override def nodesMap     = _underlying.nodesMap
+  override def itemNodes    = _underlying.itemNodes
+  override def node2logo    = _underlying.node2logo
+  override def node2brArgs  = _underlying.node2brArgs
+  override def node2items   = _underlying.node2items
+
+}

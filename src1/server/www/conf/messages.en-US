@@ -776,8 +776,7 @@ Several.seconds.ago=Several seconds ago
 Less.than.minute.later=Less than a minute later
 Less.than.minute.ago=Less than a minute ago
 
-in.unknown.node=on unknown node
-_cart.Items=Items
+_order.Items=Items
 Cart=Cart
 Added.n.items.to.cart={0} items added into cart.
 Item=Item
@@ -799,6 +798,7 @@ No.orders.found=No orders found.
 in.radius.of.0.from.1=in radius of {0} from {2}
 n.km._kilometers={0} km
 n.m._meters={0} m
+in.geopoint.x=in geo-point {0}
 
 Order.status.a=Order draft
 Order.status.h=Awaiting payment confirmation

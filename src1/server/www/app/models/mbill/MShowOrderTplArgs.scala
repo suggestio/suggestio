@@ -11,18 +11,18 @@ import io.suggest.model.n2.node.MNode
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 15.02.17 15:44
-  * Description: Модель аргументов для рендера шаблона [[views.html.lk.billing.pay.ShowOrderTpl]].
+  * Description: Модель аргументов для рендера шаблона [[views.html.lk.billing.order.ShowOrderTpl]].
   *
-  * @param mnode Текущий узел (ЛК).
   * @param morder Просматриваемый ордер.
   * @param txns Транзакции, связанные с этим ордером.
   */
 case class MShowOrderTplArgs(
-                              mnode                   : MNode,
-                              morder                  : MOrder,
-                              orderPrices             : Seq[MPrice],
-                              override val txns       : Seq[MTxn],
-                              override val balances   : Map[Gid_t, MBalance]
+                              override val _underlying    : IItemsTplArgs,
+                              morder                      : MOrder,
+                              orderPrices                 : Seq[MPrice],
+                              override val txns           : Seq[MTxn],
+                              override val balances       : Map[Gid_t, MBalance]
                             )
   extends ILkTxnsListTplArgs
+  with IItemsTplArgsWrap
 

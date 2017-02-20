@@ -1,10 +1,6 @@
 package models.mbill
 
 import io.suggest.bill.MGetPriceResp
-import io.suggest.mbill2.m.item.MItem
-import models.MNode
-import models.blk.IRenderArgs
-import models.im.MImgT
 
 /**
   * Suggest.io
@@ -15,7 +11,7 @@ import models.im.MImgT
 
 
 /** Модель аргументов рендера [[views.html.lk.billing.order.CartTpl]]. */
-trait ICartTplArgs extends IItemsTplArgs {
+trait ICartTplArgs extends IItemsTplArgsWrap {
 
   /** return path для возврата из корзины. */
   def r: Option[String]
@@ -27,12 +23,7 @@ trait ICartTplArgs extends IItemsTplArgs {
 
 /** Дефолтовая реализация модели [[ICartTplArgs]]. */
 case class MCartTplArgs(
-                         override val mnode         : MNode,
-                         override val nodesMap      : Map[String, MNode],
-                         override val itemNodes     : Seq[MNode],
-                         override val node2logo     : Map[String, MImgT],
-                         override val node2brArgs   : Map[String, IRenderArgs],
-                         override val node2items    : Map[String, Seq[MItem]],
+                         override val _underlying   : IItemsTplArgs,
                          override val r             : Option[String],
                          override val totalPricing  : MGetPriceResp
                        )

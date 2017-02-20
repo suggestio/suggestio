@@ -39,7 +39,7 @@
           &nbsp;
         }
         @__td("M", true, "items-descr-column" :: Nil) {
-          @messages("_cart.Items")
+          @messages("_order.Items")
         }
         @__td("M", true, "items-price-column" :: Nil) {
           @messages("Price")
@@ -95,11 +95,7 @@
               }
 
               @for(rcvrId <- mitem.rcvrIdOpt) {
-                @args.nodesMap.get(rcvrId).fold {
-                  <span class="red">
-                    @messages("in.unknown.node")
-                  </span>
-                } { rcvrNode =>
+                @for(rcvrNode <- args.nodesMap.get(rcvrId)) {
                   @messages("in")
                   @rcvrNode.guessDisplayNameOrId
                 }
@@ -120,8 +116,8 @@
               @formatPrice(mitem.price)
             }
 
-            @__td("M", false, "items-delete-column" :: Nil) {
-              @if(withDelete) {
+            @if(withDelete) {
+              @__td("M", false, "items-delete-column" :: Nil) {
                 @for( itemId <- mitem.id ) {
                   @__delBtn( routes.LkBill2.cartDeleteItem(itemId, r = ctx.request.path), "Delete" )
                 }
