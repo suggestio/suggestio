@@ -51,6 +51,9 @@ trait LkBillOrders
   /** Сколько ордеров рисовать на одной странице списка ордеров? */
   private def ORDERS_PER_PAGE = 10
 
+  /** Отображение карточек в таком вот размере. */
+  private def ADS_SZ_MULT = 0.33F
+
 
   /** Показать страничку с заказом.
     *
@@ -203,9 +206,6 @@ trait LkBillOrders
 
 
 
-  /** Отображение карточек в таком вот размере. */
-  private def ADS_SZ_MULT = 0.25F
-
 
   private def _mItemsTplArgs(mitemsFut: Future[Seq[MItem]], ctxFut: Future[Context])(implicit request: INodeReq[_]): Future[MItemsTplArgs] = {
     // Собрать id узлов, на которые завязаны item'ы.
@@ -294,8 +294,10 @@ trait LkBillOrders
 
     // Собрать карту картинок-логотипов узлов. ADN-узлы нельзя ренедрить как карточки, но можно взять логотипы.
     val node2logoMapFut = for {
+      ctx         <- ctxFut
       itemNodeIds <- itemNodeIdsFut
       allNodesMap <- allNodesMapFut
+      devScreenOpt = ctx.deviceScreenOpt
       node2logos  <- Future.sequence {
         for {
           (nodeId, mnode) <- allNodesMap
@@ -303,8 +305,11 @@ trait LkBillOrders
           if itemNodeIds.contains(nodeId) && mnode.ad.isEmpty
         } yield {
           // Готовим логотип данного узла... Если логотипа нет, то тут будет синхронное None.
-          for (logoOpt <- logoUtil.getLogoOfNode(mnode)) yield {
-            for (logo <- logoOpt; nodeId <- mnode.id) yield {
+          for {
+            logoOptRaw     <- logoUtil.getLogoOfNode(mnode)
+            logoOptScr     <- logoUtil.getLogoOpt4scr(logoOptRaw, devScreenOpt)
+          } yield {
+            for (logo <- logoOptScr; nodeId <- mnode.id) yield {
               nodeId -> logo
             }
           }
