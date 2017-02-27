@@ -8,7 +8,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.codec.binary.Hex
 import play.api.mvc.QueryStringBindable
 import play.core.parsers.FormUrlEncodedParser
-import play.api.Play.{configuration, current}
 
 /**
  * Suggest.io
@@ -18,9 +17,10 @@ import play.api.Play.{configuration, current}
  */
 object QsbSigner {
 
-  val ALGO_DFLT = configuration.getString("qsb.signer.mac.algo.dflt") getOrElse "HmacSHA1"
+  /** Алгоритм для подписывания. */
+  def ALGO_DFLT = "HmacSHA1"
 
-  val SIG_INVALID_MSG = configuration.getString("qsb.signer.signature.invalid.msg") getOrElse "Invalid signature."
+  def SIG_INVALID_MSG = "Invalid signature."
 
 }
 
@@ -33,12 +33,14 @@ import QsbSigner._
  * @param signKeyName Имя qs-ключа с подписью.
  * @param strB QSB-биндер для строк.
  */
-class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner.ALGO_DFLT)
+class QsbSigner(secretKey: String, signKeyName: String)
                (implicit strB: QueryStringBindable[String])
   extends QueryStringBindableImpl[Map[String, Seq[String]]]
   with MacroLogsImpl
 {
+
   import LOGGER._
+
 
   /** Итератор по карте параметров, который возвращает только подписанные параметры. */
   def onlyParamsForKey(key: String, params: Map[String, Seq[String]]): Iterator[(String, Seq[String])] = {
@@ -47,11 +49,15 @@ class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner
       .filter { case (k, _) => k.startsWith(key) && k != signKeyName }
   }
 
-  def mkMac = {
+
+  def mkMac: Mac = {
+    val algo = ALGO_DFLT
     val mac = Mac.getInstance(algo)
-    mac.init(new SecretKeySpec(secretKey.getBytes, algo))
+    val sks = new SecretKeySpec(secretKey.getBytes, algo)
+    mac.init(sks)
     mac
   }
+
 
   /** Посчитать подпись для указанной карты параметров. */
   def mkSignForMap(key: String, params: Map[String, Seq[String]]): String = {
@@ -82,6 +88,7 @@ class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner
     Hex.encodeHexString(mac.doFinal())
   }
 
+
   /**
    * Проверить подпись на параметрах, имена которых начинаются на key.
    * @param key Префикс ключей, по которым идёт проверка подписи.
@@ -107,13 +114,14 @@ class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner
     }
   }
 
+
   def signedOrNone(key: String, params: Map[String, Seq[String]]): Option[Map[String, Seq[String]]] = {
     bind(key, params)
       .flatMap {
-        case Right(result) => Some(result)
-        case left => None
+        _.right.toOption
       }
   }
+
 
   /**
    * Подписать qs-карту параметров, создав новую карту параметров.
@@ -125,6 +133,7 @@ class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner
     val s = mkSignForMap(key, value)
     value + (signKeyName -> Seq(s))
   }
+
 
   /**
    * Подпись для готовой qs-строки.
@@ -148,6 +157,7 @@ class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner
       .toString()
   }
 
+
   /**
    * Подписать и сериализовать в qs-строку значения, переданные в виде карты параметров.
    * @param key Префикс ключей подписываемых данных в карте.
@@ -160,6 +170,12 @@ class QsbSigner(secretKey: String, signKeyName: String, algo: String = QsbSigner
       .flatMap { case (k, vs) => vs.map(k -> _) }
       .map { case (k, v) => strB.unbind(k, v) }
       .mkString("&")
+  }
+
+
+  /** Имя класса рендерится в логах без secret key, даже если в будущем класс станет как case class. */
+  override def toString: String = {
+    s"${getClass.getSimpleName}($signKeyName)"
   }
 
 }

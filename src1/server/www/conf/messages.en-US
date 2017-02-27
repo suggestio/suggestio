@@ -660,6 +660,7 @@ e.sz.mult.too.high=Size multiplifier is too high.
 
 GeoTag=Geo-tag
 Tags=Tags
+Tag=Tag
 Tags.choosing=Tags choosing
 e.tag.len.min=Tag too short.
 e.tag.len.max=Tag too long.

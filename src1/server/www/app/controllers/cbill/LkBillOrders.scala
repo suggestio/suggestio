@@ -205,8 +205,13 @@ trait LkBillOrders
   }
 
 
-
-
+  /**
+    * Подготовка аргументов для рендера шаблона [[views.html.lk.billing.order._ItemsTpl]].
+    * @param mitemsFut Найденные в биллинге item'ы.
+    * @param ctxFut Контекст.
+    * @param request Текущий HTTP-реквест.
+    * @return Фьючерс с инстансом [[models.mbill.MRcvrInfoTplArgs]].
+    */
   private def _mItemsTplArgs(mitemsFut: Future[Seq[MItem]], ctxFut: Future[Context])(implicit request: INodeReq[_]): Future[MItemsTplArgs] = {
     // Собрать id узлов, на которые завязаны item'ы.
     val itemNodeIdsFut = for (mitems <- mitemsFut) yield {

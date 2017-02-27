@@ -108,6 +108,30 @@ class QsbSignerSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with Macro
         signKeyName = "siga"
       )
     }
+
+    // length-extension attack: подставляется параметр с дублирующимся id, но иным значением.
+    "die on lenght-extension attack" in {
+      val unSignedQsString = "i.id=SOME_VALID_ID"
+      val signKeyName = "sig"
+      val key = "i"
+
+      val signer = new QsbSigner("__THE_TOP_SECRET_PASSWORD_KEY__", signKeyName)
+      val signedQsString = signer.mkSigned(key, unSignedQsString)
+
+      val attackSignedQsString = signedQsString + "&i.id=ATTACKER_ID"
+
+      // Имитируем обращение к сгенеренной ссылке
+      val qsParams = FormUrlEncodedParser.parse(attackSignedQsString)
+      val signCheckResult = signer.bind(key, qsParams)
+      // Убедиться, что проверка зафейлилась.
+      trace(s"sigCheckResult: $signCheckResult")
+
+      assert(
+        signCheckResult.exists(_.isLeft),
+        signCheckResult
+      )
+    }
+
   }
 
 }

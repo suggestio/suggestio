@@ -670,6 +670,7 @@ Foreground=Передний план
 
 GeoTag=Гео-тег
 Tags=Теги
+Tag=Тег
 Tags.choosing=Выбор тегов
 e.tag.len.min=Слишком короткий тег.
 e.tag.len.max=Слишком длинный тег.
