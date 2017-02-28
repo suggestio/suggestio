@@ -2,7 +2,7 @@ package util.acl
 
 import com.google.inject.Inject
 import controllers.SioController
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
@@ -126,13 +126,11 @@ class CanRecoverPw @Inject() (
                 (override val keyNotFoundF: IReq[_] => Future[Result])
     extends CanRecoverPwBase
     with csrf.Get[MRecoverPwReq]
-    with ExpireSession[MRecoverPwReq]
 
   /** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
   case class Post(override val eActId: String, override val userInits: MUserInit*)
                  (override val keyNotFoundF: IReq[_] => Future[Result])
     extends CanRecoverPwBase
     with csrf.Post[MRecoverPwReq]
-    with ExpireSession[MRecoverPwReq]
 
 }

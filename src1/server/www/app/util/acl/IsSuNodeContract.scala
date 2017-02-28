@@ -3,7 +3,7 @@ package util.acl
 import com.google.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.contract.MContracts
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeContractReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
@@ -76,7 +76,6 @@ class IsSuNodeContract @Inject() (
 
   sealed abstract class IsSuNodeContractAbstract
     extends IsSuNodeContractBase
-    with ExpireSession[MNodeContractReq]
 
   /** Доступ к узлу с контрактом с выставлением CSRF-токена. */
   case class Get(override val nodeId: String)

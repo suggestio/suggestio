@@ -7,7 +7,7 @@ import models.req.{IReqHdr, MAdProdReq, MReq, MUserInit}
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -106,7 +106,6 @@ class CanEditAd @Inject() (
 
   sealed abstract class CanEditAdAbstract
     extends CanEditAdBase
-    with ExpireSession[MAdProdReq]
 
   /** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
   case class Get(override val adId: String,

@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.MNode
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeReq, MReq}
@@ -69,7 +69,6 @@ class IsSuNodeNoContract @Inject() (
 
   sealed abstract class IsSuNodeNoContractAbstract
     extends IsSuNodeNoContractBase
-    with ExpireSession[MNodeReq]
 
   /** Доступ суперюзера к узлу без контракта с выставлением CSRF-токена. */
   case class Get(override val nodeId: String)

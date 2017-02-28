@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn, MacroLogsImpl}
 import models._
 import models.mproj.ICommonDi
@@ -123,7 +123,6 @@ class CanAdvAd @Inject()(
 
   sealed abstract class CanAdvertiseAdAbstract
     extends CanAdvertiseAdBase
-    with ExpireSession[MAdProdReq]
     with MacroLogsDyn
 
   /** Запрос какой-то формы размещения рекламной карточки. */

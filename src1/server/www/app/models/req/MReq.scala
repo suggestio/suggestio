@@ -1,5 +1,6 @@
 package models.req
 
+import io.suggest.www.m.mreq.{IRequestHeaderWrap, IRequestWrap}
 import play.api.mvc.{AnyContent, Request, RequestHeader}
 
 /**
@@ -25,7 +26,7 @@ trait IReqHdr
 
 /** Завёрнутый заголовок реквест с дополнения от sio. */
 trait IReqHdrWrap
-  extends RequestHeaderWrap
+  extends IRequestHeaderWrap
   with IReqHdr
 
 abstract class MReqHdrWrap
@@ -40,7 +41,7 @@ trait IReq[A]
 
 /** Трейт завёрнутого реквеста. */
 trait IReqWrap[A]
-  extends RequestWrap[A]
+  extends IRequestWrap[A]
   with IReq[A]
 
 

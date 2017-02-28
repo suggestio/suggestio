@@ -45,7 +45,6 @@ trait LkBillOrders
 {
 
   import mCommonDi._
-  import canAccessItem.CanAccessItemPost
 
 
   /** Сколько ордеров рисовать на одной странице списка ордеров? */
@@ -529,7 +528,7 @@ trait LkBillOrders
     * @param r Обязательный адрес для возврата по итогам действа.
     * @return Редирект в r.
     */
-  def cartDeleteItem(itemId: Gid_t, r: String) = CanAccessItemPost(itemId, edit = true).async { implicit request =>
+  def cartDeleteItem(itemId: Gid_t, r: String) = canAccessItem.Post(itemId, edit = true).async { implicit request =>
     // Права уже проверены, item уже получен. Нужно просто удалить его.
     val delFut0 = slick.db.run {
       mItems.deleteById(itemId)

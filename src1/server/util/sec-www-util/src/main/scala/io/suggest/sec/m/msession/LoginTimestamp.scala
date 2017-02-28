@@ -16,7 +16,9 @@ object LoginTimestamp extends MacroLogsDyn {
   def TSAMP_SUBSTRACT = 1402927907242L
 
   /** Сгенерить текущий timestamp. */
-  def currentTstamp = (System.currentTimeMillis() - TSAMP_SUBSTRACT) / 1000L
+  def currentTstamp(): Long = {
+    (System.currentTimeMillis() - TSAMP_SUBSTRACT) / 1000L
+  }
 
 
   def parseTstamp(tstampStr: String): Option[Long] = {
@@ -51,7 +53,7 @@ import LoginTimestamp._
 
 case class LoginTimestamp(tstamp: Long, ttl: Ttl) {
 
-  def isTimestampValid(now: Long = currentTstamp): Boolean = {
+  def isTimestampValid(now: Long = currentTstamp()): Boolean = {
     ttl.isTimestmapValid(tstamp, now)
   }
 

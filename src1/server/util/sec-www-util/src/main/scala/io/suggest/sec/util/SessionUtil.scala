@@ -1,19 +1,21 @@
 package io.suggest.sec.util
 
 import com.google.inject.Singleton
-import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.sec.m.msession.Keys
 import play.api.mvc.{RequestHeader, Session}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 18.12.15 15:17
- * Description: Утиль для работы с сессией.
- * Появилась при упорядочивании разбросанных по всему проекту
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 18.12.15 15:17
+  * Description: Утиль для работы с данными сессии.
+  * Унифицирует самые типовые операции с данными сессии.
+  *
+  * 2017.feb.28: Логика проверки и поддержания TTL сессии уехала в фильтры.
+  * Поэтому данные сессии тут считаются актуальными на момент вызова (TTL не проверяются).
+  */
 @Singleton
-class SessionUtil extends MacroLogsImpl {
+class SessionUtil {
 
   /**
    * Очень часто сюда передаётся реквест, а не сессия. Это укорачивает код.
@@ -33,15 +35,6 @@ class SessionUtil extends MacroLogsImpl {
   def getPersonId(session: Session): Option[String] = {
     session
       .get(Keys.PersonId.name)
-      // Если выставлен timestamp, то проверить валидность защищенного session ttl.
-      .filter { personId =>
-        val tstampOpt = LoginTimestamp.fromSession(session)
-        val result = tstampOpt
-          .exists { _.isTimestampValid() }
-        if (!result)
-          LOGGER.trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampOpt")
-        result
-      }
   }
 
 }

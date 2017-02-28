@@ -5,7 +5,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{MItemReq, MUserInit}
@@ -165,16 +165,15 @@ class CanAccessItem @Inject() (
 
   abstract class CanAccessItemAbstract
     extends CanAccessItemBase
-    with ExpireSession[MItemReq]
 
   case class CanAccessItem(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
     extends CanAccessItemAbstract
 
-  case class CanAccessItemGet(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
+  case class Get(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
     extends CanAccessItemAbstract
     with csrf.Get[MItemReq]
 
-  case class CanAccessItemPost(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
+  case class Post(override val itemId: Gid_t, override val edit: Boolean, override val userInits: MUserInit*)
     extends CanAccessItemAbstract
     with csrf.Post[MItemReq]
 

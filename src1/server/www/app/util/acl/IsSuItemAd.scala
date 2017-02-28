@@ -3,7 +3,7 @@ package util.acl
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemAdReq, MReq}
@@ -83,7 +83,6 @@ class IsSuItemAd @Inject() (
 
   abstract class IsSuItemAdAbstract
     extends IsSuItemAdBase
-    with ExpireSession[MItemAdReq]
 
   //case class IsSuItemAd(override val itemId: Gid_t)
   //  extends IsSuItemAdAbstract

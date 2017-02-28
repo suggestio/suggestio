@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.MReq
 import play.api.mvc._
@@ -40,7 +40,6 @@ class IsAnon @Inject()(
 
   sealed abstract class Abstract
     extends Base
-    with ExpireSession[MReq]
 
   /** Без CSRF. */
   object NoCsrf extends Abstract

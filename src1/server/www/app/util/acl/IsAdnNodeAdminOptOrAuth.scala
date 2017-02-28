@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsDyn
 import models.mproj.ICommonDi
 import models.req.{MNodeOptReq, MUserInit}
@@ -61,7 +61,6 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
 
   sealed abstract class IsAdnNodeAdminOptOrAuthBase2
     extends IsAdnNodeAdminOptOrAuthBase
-    with ExpireSession[MNodeOptReq]
 
 
   case class Get(

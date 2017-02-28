@@ -4,7 +4,7 @@ import akka.stream.Materializer
 import com.google.inject.Inject
 import play.api.mvc.{Filter, RequestHeader, Result}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -41,15 +41,16 @@ import SecHeadersFilter._
 
 
 class SecHeadersFilter @Inject() (
-  override implicit val mat: Materializer
-) extends Filter {
+                                   implicit private val ec    : ExecutionContext,
+                                   override implicit val mat  : Materializer
+)
+  extends Filter
+{
 
   /** Навесить на результат недостающие security-заголовки. */
   override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
-    import play.api.libs.concurrent.Execution.Implicits.defaultContext
-
     val respFut = f(rh)
-    respFut map { resp =>
+    for (resp <- respFut) yield {
       // Добавить только заголовки, которые отсутсвуют в исходнике.
       val hs = resp.header.headers
       var acc: List[(String, String)] = Nil

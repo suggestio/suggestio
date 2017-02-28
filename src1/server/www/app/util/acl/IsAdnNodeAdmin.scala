@@ -6,7 +6,7 @@ import models._
 import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -128,7 +128,6 @@ class IsAdnNodeAdmin @Inject() (
   /** Трейт [[Base]], обвешанный всеми необходимыми для работы надстройками. */
   sealed abstract class BaseAbstract
     extends Base
-    with ExpireSession[MNodeReq]
 
 
   /** Просто проверка прав на узел перед запуском экшена. */

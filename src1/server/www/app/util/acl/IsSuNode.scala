@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeReq, MReq}
 
@@ -62,7 +62,6 @@ class IsSuNode @Inject() (
 
   sealed abstract class IsSuNodeBase2
     extends IsSuNodeBase
-    with ExpireSession[MNodeReq]
 
   /**
    * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.

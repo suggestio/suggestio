@@ -6,7 +6,7 @@ import models.mproj.ICommonDi
 import models.req.{MAdReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 
 import scala.concurrent.Future
 
@@ -62,7 +62,6 @@ class IsSuMad @Inject()(
 
   abstract class IsSuMadAbstract
     extends IsSuMadBase
-    with ExpireSession[MAdReq]
 
 
   /** ACL action builder на действия с указанной рекламной карточкой. */

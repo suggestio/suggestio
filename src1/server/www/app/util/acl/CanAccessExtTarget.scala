@@ -6,7 +6,6 @@ import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -75,7 +74,6 @@ class CanAccessExtTarget @Inject() (
   /** Дефолтовая реализация [[CanAccessExtTargetBase]] с поддержкой проления сессии. */
   case class CanAccessExtTarget(override val tgId: String)
     extends CanAccessExtTargetBase
-    with ExpireSession[MExtTargetNodeReq]
   @inline
   def apply(tgId: String) = CanAccessExtTarget(tgId)
 

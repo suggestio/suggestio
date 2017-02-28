@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.{MReq, MUserInit}
 import play.api.mvc._
@@ -52,7 +52,6 @@ class MaybeAuth @Inject() (
 
   sealed abstract class MaybeAuthAbstract
     extends MaybeAuthBase
-    with ExpireSession[MReq]
     with cookieCleanup.CookieCleanup[MReq]
 
   /** Сборка данных по текущей сессии юзера в реквест. */

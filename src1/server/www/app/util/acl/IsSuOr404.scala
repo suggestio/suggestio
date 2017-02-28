@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
 import play.api.mvc.Result
@@ -22,7 +22,8 @@ class IsSuOr404Ctl @Inject() (
 
   import mCommonDi._
 
-  sealed trait Base extends isSu.Base with ExpireSession[MReq] {
+  sealed trait Base
+    extends isSu.Base {
 
     override protected def _onUnauth(req: IReqHdr): Future[Result] = {
       isSu.logBlockedAccess(req)
@@ -42,7 +43,6 @@ class IsSuOr404 @Inject() (
 
   abstract class IsSuOr404Abstract
     extends isSuOr404Ctl.Base
-    with ExpireSession[MReq]
 
   object Get extends IsSuOr404Abstract with csrf.Get[MReq]
   object Post extends IsSuOr404Abstract with csrf.Post[MReq]

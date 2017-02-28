@@ -4,7 +4,7 @@ import com.google.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{MNodeOrderReq, MUserInit}
@@ -137,7 +137,6 @@ class CanPayOrder @Inject() (
   /** Абстрактная реализация логики ACL. */
   sealed abstract class Abstract
     extends Base
-    with ExpireSession[MNodeOrderReq]
 
 
   /** Стандартная проверка ACL без доп.проверок. */

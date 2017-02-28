@@ -10,6 +10,13 @@ import io.suggest.util.JMXBase
   * Created: 29.08.16 13:07
   * Description: Утиль для хэширования по scrypt.
   */
+
+// TODO Надо бы переехать на https://github.com/lhunath/scrypt
+// com.lambdaworks % scrypt % 1.4.0-lyndir
+//
+// Можно и bouncycastle, но у неё формат хэша другой, а хеши уже хранятся в БД идентов.
+// http://stackoverflow.com/a/41992593
+
 @Singleton
 class ScryptUtil {
 

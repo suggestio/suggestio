@@ -85,7 +85,7 @@ object Common {
 
 
   /** Версия bouncy castle. */
-  def bcVsn           = "1.54"
+  def bcVsn           = "1.56"
 
   /** Версия scalatest+play. */
   def scalaTestPlusPlayVsn = "2.0.0-M1"

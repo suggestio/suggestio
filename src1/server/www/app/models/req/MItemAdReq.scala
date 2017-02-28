@@ -22,5 +22,5 @@ case class MItemAdReq[A](
   override val user     : ISioUser,
   override val request  : Request[A]
 )
-  extends RequestWrap[A]
+  extends MReqWrap[A]
   with IItemAdReq[A]

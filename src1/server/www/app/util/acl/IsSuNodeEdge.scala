@@ -6,7 +6,7 @@ import models.msys.MNodeEdgeIdQs
 import models.req._
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 
 import scala.concurrent.Future
@@ -100,7 +100,6 @@ class IsSuNodeEdge @Inject() (
   /** Неполная реализация IsSuNodeBase для снижения объемов кодогенерации. */
   sealed abstract class IsSuNodeEdgeAbstract
     extends IsSuNodeEdgeBase
-    with ExpireSession[MNodeEdgeReq]
 
 
   /** Доступ к node edge для суперюзеров в рамках CSRF GET. */

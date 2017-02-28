@@ -82,7 +82,6 @@ class LkAdvGeo @Inject() (
   import mCommonDi._
   import streamsUtil.Implicits._
   import ymdHelpersJvm.Implicits._
-  import canAccessItem.CanAccessItemPost
 
   // Сериализация:
   import pickleSrvUtil.Base64ByteBufEncoder
@@ -475,7 +474,7 @@ class LkAdvGeo @Inject() (
     * @param itemId id по таблице mitem.
     * @return Бинарный выхлоп с данными для react-рендера попапа.
     */
-  def existGeoAdvsShapePopup(itemId: Gid_t) = CanAccessItemPost(itemId, edit = false).async { implicit request =>
+  def existGeoAdvsShapePopup(itemId: Gid_t) = canAccessItem.Post(itemId, edit = false).async { implicit request =>
     // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
     // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
     if ( !MItemTypes.advGeoTypes.contains( request.mitem.iType ) )

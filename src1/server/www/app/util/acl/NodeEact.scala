@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{MNodeEactReq, MReq}
@@ -100,7 +100,6 @@ class NodeEact @Inject() (
 
   sealed abstract class NodeEactAbstract
     extends NodeEactBase
-    with ExpireSession[MNodeEactReq]
 
   /** Реализация NodeEactBase для CSRF+GET-запросов. */
   case class Get(override val nodeId: String, override val eaId: String)

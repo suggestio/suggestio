@@ -1,7 +1,6 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
 import io.suggest.util.logs.MacroLogsDyn
 import models.MNodeType
 import models.mproj.ICommonDi
@@ -69,7 +68,6 @@ class IsAuthNode @Inject() (
   /** Абстрактный класс с недореализацией IsAuthNodeBase. */
   sealed abstract class IsAuthNodeAbstract
     extends IsAuthNodeBase
-    with ExpireSession[MNodeReq]
 
 
   case class IsAuthNode(override val nodeId: String,

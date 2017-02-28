@@ -6,7 +6,7 @@ import models.MNode
 import models.req.{MPersonReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -73,7 +73,6 @@ class IsSuPerson @Inject()(
 
   sealed abstract class IsSuPersonAbstract
     extends IsSuPersonBase
-    with ExpireSession[MPersonReq]
 
 
   case class Get(override val personId: String)

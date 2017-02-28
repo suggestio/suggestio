@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mproj.ICommonDi
@@ -93,7 +93,6 @@ class CanUpdateSls @Inject() (
 
   sealed abstract class CanUpdateSlsAbstract
     extends CanUpdateSlsBase
-    with ExpireSession[MAdProdReq]
 
   case class Post(adId: String)
     extends CanUpdateSlsAbstract

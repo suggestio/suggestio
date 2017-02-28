@@ -7,7 +7,7 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.MReq
 import models.usr.MExtIdents
@@ -100,7 +100,6 @@ class CanConfirmIdpReg @Inject() (
 
   sealed abstract class CanConfirmIdpRegBase2
     extends CanConfirmIdpRegBase
-    with ExpireSession[MReq]
     with MacroLogsDyn
 
   /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */

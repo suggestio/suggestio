@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.event.MEvents
 import models.mproj.ICommonDi
@@ -87,11 +87,12 @@ class CanAccessEvent @Inject() (
       val res = Results.NotFound("Event not found: " + eventId)
       Future successful res
     }
+
   }
+
 
   abstract class Abstract
     extends Base
-    with ExpireSession[MNodeEventReq]
 
 
   case class HasNodeEventAccess(

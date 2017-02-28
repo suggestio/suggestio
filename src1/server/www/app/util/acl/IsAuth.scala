@@ -8,7 +8,7 @@ import scala.concurrent.Future
 import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 
 // TODO Сделать всё это действо injectable. Возможно даже объеденить оба трейта в один класс.
@@ -69,7 +69,6 @@ class IsAuth @Inject() (
   /** Абстрактная реализация action-builder'а с поддержкой автоматического управления сессией. */
   sealed class Impl
     extends Base
-    with ExpireSession[MReq]
 
 
   /** Проверка на залогиненность юзера без CSRF-дейстий. */

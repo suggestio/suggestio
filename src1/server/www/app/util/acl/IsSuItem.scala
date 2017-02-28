@@ -3,7 +3,7 @@ package util.acl
 import com.google.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.sec.util.ExpireSession
+import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
@@ -65,7 +65,6 @@ class IsSuItem @Inject() (
 
   sealed abstract class IsSuItemAbstract
     extends IsSuItemBase
-    with ExpireSession[MItemReq]
 
   //case class IsSuItem(override val itemId: Gid_t)
   //  extends IsSuItemAbstract

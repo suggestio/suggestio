@@ -6,7 +6,6 @@ import models.mproj.ICommonDi
 import models.req.MCalendarReq
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.sec.util.ExpireSession
 
 import scala.concurrent.Future
 
@@ -51,6 +50,5 @@ class CalendarAccessAny @Inject() (
 
   case class CalendarAccessAny(override val calId: String)
     extends CalendarAccessAnyBase
-    with ExpireSession[MCalendarReq]
 
 }
