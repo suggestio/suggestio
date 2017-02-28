@@ -1,12 +1,12 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
 import models.event.MEvents
 import models.mproj.ICommonDi
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import io.suggest.common.fut.FutureUtil.HellImplicits._
 
 import scala.concurrent.Future
 
@@ -20,103 +20,82 @@ import scala.concurrent.Future
 class CanAccessEvent @Inject() (
                                  isAdnNodeAdmin         : IsAdnNodeAdmin,
                                  mEvents                : MEvents,
-                                 val csrf               : Csrf,
                                  mCommonDi              : ICommonDi
                                )
   extends MacroLogsImpl
-{
+{ outer =>
 
   import mCommonDi._
 
-  /** Проверка доступа к событию, которое относится к узлу. */
-  sealed trait Base
-    extends ActionBuilder[MNodeEventReq]
-    with InitUserCmds
-  {
 
-    /** id обрабатываемого события. */
-    def eventId: String
+  /** Собрать ActionBuilder.
+    *
+    * @param eventId id обрабатываемого события.
+    * @param onlyCloseable Разрешить это только для закрывабельных событий?
+    * @return
+    */
+  def apply(eventId          : String,
+            onlyCloseable    : Boolean,
+            userInits        : MUserInit*): ActionBuilder[MNodeEventReq] = {
 
-    /** Разрешить это только для закрывабельных событий? */
-    def onlyCloseable: Boolean
+    val userInits1 = userInits
+    new ActionBuilder[MNodeEventReq] with InitUserCmds {
 
-    override def invokeBlock[A](request: Request[A], block: (MNodeEventReq[A]) => Future[Result]): Future[Result] = {
-      val eventOptFut = mEvents.getById(eventId)
+      override def userInits = userInits1
 
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
+      override def invokeBlock[A](request: Request[A], block: (MNodeEventReq[A]) => Future[Result]): Future[Result] = {
+        val eventOptFut = mEvents.getById(eventId)
 
-      maybeInitUser(user)
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
 
-      val reqErr = MReq(request, user)
-      personIdOpt.fold ( forbidden(reqErr) ) { personId =>
-        eventOptFut.flatMap {
-          // Нет такого события в модели.
-          case None =>
-            eventNotFound(reqErr)
+        maybeInitUser(user)
 
-          // Есть событие и оно подходит под пожелания контроллера.
-          case Some(mevent) if !onlyCloseable || mevent.isCloseable =>
-            // Для наличия прав на событие нужны права на узел.
-            maybeInitUser(user)
+        val reqErr = MReq(request, user)
+        personIdOpt.fold ( forbidden(reqErr) ) { _ =>
+          eventOptFut.flatMap {
+            // Нет такого события в модели.
+            case None =>
+              eventNotFound(reqErr)
 
-            isAdnNodeAdmin.isAdnNodeAdmin(mevent.ownerId, user).flatMap {
-              case Some(mnode) =>
-                // Юзер имеет доступ к узлу. Значит, и к событию узла тоже.
-                val req1 = MNodeEventReq(mevent, mnode, request, user)
-                block(req1)
+            // Есть событие и оно подходит под пожелания контроллера.
+            case Some(mevent) if !onlyCloseable || mevent.isCloseable =>
+              // Для наличия прав на событие нужны права на узел.
+              maybeInitUser(user)
 
-              case None =>
-                LOGGER.warn("Not a event owner node admin: " + mevent.ownerId)
-                forbidden(reqErr)
-            }
+              isAdnNodeAdmin.isAdnNodeAdmin(mevent.ownerId, user).flatMap {
+                case Some(mnode) =>
+                  // Юзер имеет доступ к узлу. Значит, и к событию узла тоже.
+                  val req1 = MNodeEventReq(mevent, mnode, request, user)
+                  block(req1)
 
-          // Контроллер требует, чтобы флаг isCloseable был выставлен, а клиент хочет обойти это ограничение.
-          case Some(mevent) =>
-            LOGGER.warn("event isCloseable conflicted, 403")
-            forbidden(reqErr)
+                case None =>
+                  LOGGER.warn(s"$toString Not a event owner node admin: ${mevent.ownerId}")
+                  forbidden(reqErr)
+              }
+
+            // Контроллер требует, чтобы флаг isCloseable был выставлен, а клиент хочет обойти это ограничение.
+            case _: Some[_] =>
+              LOGGER.warn(s"$toString event isCloseable conflicted, 403")
+              forbidden(reqErr)
+          }
         }
       }
-    }
 
-    def forbidden(req: IReq[_]): Future[Result] = {
-      isAdnNodeAdmin.onUnauthNode(req)
-    }
+      def forbidden(req: IReq[_]): Future[Result] = {
+        isAdnNodeAdmin.onUnauthNode(req)
+      }
 
-    def eventNotFound(req: IReq[_]): Future[Result] = {
-      val res = Results.NotFound("Event not found: " + eventId)
-      Future successful res
+      def eventNotFound(req: IReq[_]): Future[Result] = {
+        val res = Results.NotFound("Event not found: " + eventId)
+        res
+      }
+
+      override def toString: String = outer.toString
+
     }
 
   }
-
-
-  abstract class Abstract
-    extends Base
-
-
-  case class HasNodeEventAccess(
-    override val eventId          : String,
-    override val onlyCloseable    : Boolean,
-    override val userInits        : MUserInit*
-  )
-    extends Abstract
-
-  case class Get(
-    override val eventId          : String,
-    override val onlyCloseable    : Boolean,
-    override val userInits        : MUserInit*
-  )
-    extends Abstract
-    with csrf.Get[MNodeEventReq]
-
-  case class Post(
-    override val eventId          : String,
-    override val onlyCloseable    : Boolean,
-    override val userInits        : MUserInit*
-  )
-    extends Abstract
-    with csrf.Post[MNodeEventReq]
 
 }
 

@@ -5,7 +5,6 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.sec.m.msession.Keys._
 import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.m.mreq.{IRequestHeaderWrap, IRequestWrap}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -63,34 +62,10 @@ class ExpireSessionUtil @Inject() (
       .exists { filteredKeySet.contains }
   }
 
+  // Тут был код, патчащий исходный реквест. Но как оказалось, нельзя пропатчить сессию в реквесте: там lazy val.
+  // Поэтому проверка TTL вернулась в SessionUtil.
 
-  /** Подготовить сессию в исходном реквесте, собрав обновлённый реквест.
-    *
-    * @param rh0 Заголовки исходного реквеста.
-    * @return Завёрнутый request header, O(1).
-    */
-  def prepareRequestHeader(rh0: RequestHeader): RequestHeader = {
-    // Подменяем исходный RequestHeader.session с помощью Request wrapper'а.
-    new IRequestHeaderWrap {
-      override def request = rh0
-      // Оверрайдим сессию, которая будет возвращать вычищенную сессию вместо обычной:
-      override lazy val session: Session = {
-        prepareRequestSession( rh0.session )
-      }
-    }
-  }
-
-  def prepareRequest[A](request0: Request[A]): Request[A] = {
-    new IRequestWrap[A] {
-      override def request = request0
-      override lazy val session: Session = {
-        prepareRequestSession( request0.session )
-      }
-    }
-  }
-
-
-  def prepareRequestSession(session0: Session): Session = {
+  private def prepareRequestSession(session0: Session): Session = {
     def logPrefix = s"prepareRequestSession(${session0.hashCode()})[${System.currentTimeMillis()}]:"
 
     val tstampOpt = LoginTimestamp.fromSession(session0)
@@ -112,9 +87,8 @@ class ExpireSessionUtil @Inject() (
       // Если в сессии есть истёкший TTL, то нужно вернуть почищенную сессию.
       // Есть timestamp сессии. Разобраться, что с ним надо делать...
       val hasValidTs = tstampOpt.exists { ts =>
-        val currTstamp = LoginTimestamp.currentTstamp()
         // Отфильтровать устаревшие timestamp'ы.
-        ts.isTimestampValid(currTstamp)
+        ts.isTimestampValid()
       }
 
       if (hasValidTs) {
@@ -122,7 +96,7 @@ class ExpireSessionUtil @Inject() (
         session0
       } else {
         // Таймштамп истёк -- стереть из сессии таймштамп и username, вернуть обновлённую сессию.
-        LOGGER.trace(s"$logPrefix Clearing expired session for person ${session0.get(PersonId.name)}")
+        LOGGER.trace(s"$logPrefix Hiding expired session for person ${session0.get(PersonId.name)}")
         clearSessionLoginData(session0)
       }
     }
@@ -182,6 +156,14 @@ class ExpireSessionUtil @Inject() (
     }
   }
 
+
+  /** Дедубликация кода запуска экшена на исполнение. */
+  private[sec] def _applyAction[R <: RequestHeader](request: R)(f: R => Future[Result]): Future[Result] = {
+    for (result <- f(request)) yield {
+      processResult(request, result)
+    }
+  }
+
 }
 
 
@@ -191,28 +173,14 @@ class ExpireSessionUtil @Inject() (
   */
 @Singleton
 class ExpireSessionAction @Inject() (
-                                      expireSessionUtil          : ExpireSessionUtil,
-                                      implicit private val ec    : ExecutionContext
+                                      expireSessionUtil          : ExpireSessionUtil
                                     ) {
-
-  /** Реализация экшена обработки данных сессии в состоянии. */
-  class ExpireSessionAction[A](action: Action[A]) extends Action[A] {
-
-    override def parser: BodyParser[A] = action.parser
-
-    override def apply(request0: Request[A]): Future[Result] = {
-      val request1 = expireSessionUtil.prepareRequest(request0)
-
-      for (result <- action(request1)) yield {
-        expireSessionUtil.processResult(request1, result)
-      }
-    }
-
-  }
 
   /** Завернуть экшен. */
   def apply[A](action: Action[A]): Action[A] = {
-    new ExpireSessionAction(action)
+    Action.async(action.parser) { request =>
+      expireSessionUtil._applyAction(request)(action.apply)
+    }
   }
 
 }
@@ -221,22 +189,13 @@ class ExpireSessionAction @Inject() (
 /** Глобальный фильтр для запросов и ответов на тему работы с TTL sio-сессияй. */
 class ExpireSessionFilter @Inject() (
                                       expireSessionUtil          : ExpireSessionUtil,
-                                      implicit private val ec    : ExecutionContext,
                                       override implicit val mat  : Materializer
                                     )
   extends Filter
 {
 
   override def apply(f: (RequestHeader) => Future[Result])(rh0: RequestHeader): Future[Result] = {
-    // Сначала обработать входящий реквест.
-    val rh2 = expireSessionUtil.prepareRequestHeader(rh0)
-    // Затем запустить исходный экшен на исполнение с почищенным реквестом.
-    for {
-      res0 <- f(rh2)
-    } yield {
-      // Отработать сессию в Result'е:
-      expireSessionUtil.processResult(rh2, res0)
-    }
+    expireSessionUtil._applyAction(rh0)(f)
   }
 
 }

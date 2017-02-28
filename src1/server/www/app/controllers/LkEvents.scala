@@ -191,14 +191,16 @@ class LkEvents @Inject() (
     * @param eventId id события.
     * @return 2хх если всё ок. Иначе 4xx.
     */
-  def nodeEventDelete(eventId: String) = canAccessEvent.Post(eventId, onlyCloseable = true).async { implicit request =>
-    for {
-      isDeleted <- mEvents.deleteById(eventId)
-    } yield {
-      if (isDeleted)
-        NoContent
-      else
-        NotFound(Messages("e.event.not.found"))
+  def nodeEventDelete(eventId: String) = csrf.Check {
+    canAccessEvent(eventId, onlyCloseable = true).async { implicit request =>
+      for {
+        isDeleted <- mEvents.deleteById(eventId)
+      } yield {
+        if (isDeleted)
+          NoContent
+        else
+          NotFound(Messages("e.event.not.found"))
+      }
     }
   }
 

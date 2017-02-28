@@ -1,7 +1,8 @@
 package io.suggest.sec.util
 
 import com.google.inject.Singleton
-import io.suggest.sec.m.msession.Keys
+import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
+import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc.{RequestHeader, Session}
 
 /**
@@ -9,13 +10,10 @@ import play.api.mvc.{RequestHeader, Session}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.12.15 15:17
   * Description: Утиль для работы с данными сессии.
-  * Унифицирует самые типовые операции с данными сессии.
-  *
-  * 2017.feb.28: Логика проверки и поддержания TTL сессии уехала в фильтры.
-  * Поэтому данные сессии тут считаются актуальными на момент вызова (TTL не проверяются).
+  * Унифицирует самые типовые операции с данными из сессии.
   */
 @Singleton
-class SessionUtil {
+class SessionUtil extends MacroLogsImpl {
 
   /**
    * Очень часто сюда передаётся реквест, а не сессия. Это укорачивает код.
@@ -29,12 +27,27 @@ class SessionUtil {
   /**
    * Прочитать значение personId из сессии play.
    * Учитывается значение timestamp'а сессиии.
+    *
    * @param session Сессия.
    * @return Some(personId) или None.
    */
   def getPersonId(session: Session): Option[String] = {
     session
       .get(Keys.PersonId.name)
+      // Если выставлен timestamp, то проверить валидность защищенного session ttl.
+      // НЕЛЬЗЯ удалять отсюда проверку, т.к. в фильтрах (play Filter) и при Action Composition нет возможности
+      // нормально перезаписывать сессию реквеста: там lazy val, который перевычисляется заново при каждом последующем Request wrap.
+      .filter { personId =>
+        val tstampOpt = LoginTimestamp.fromSession(session)
+        val result = tstampOpt
+          .exists {
+            _.isTimestampValid()
+          }
+        if (!result)
+          LOGGER.trace(s"getFromSession(): Session expired for user $personId. tstampRaw = $tstampOpt")
+        result
+      }
   }
+
 
 }

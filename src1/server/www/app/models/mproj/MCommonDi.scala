@@ -12,12 +12,11 @@ import play.api.Application
 import play.api.cache.CacheApi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
-import play.filters.csrf.{CSRFAddToken, CSRFCheck}
 import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di.ICacheApi
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.node.{INodeCache, MNodesCache}
-import io.suggest.sec.util.SessionUtil
+import io.suggest.sec.util.{Csrf, SessionUtil}
 import io.suggest.www.util.di.ISlickDbConfig
 import util.HtmlCompressUtil
 
@@ -47,6 +46,7 @@ trait ICommonDi
   val htmlCompressUtil                : HtmlCompressUtil
   // DI-модель языков Langs необходима внутри SioController (и следовательно почти везде):
   val langs                           : Langs
+  val csrf                            : Csrf
   // выставляем implicit, т.к. до-DI'шные websocket'ы требуют implicit application in scope.
   // TODO После перевода вёб-сокетов на akka streams, удалить implicit у current.
   override implicit val current       : Application
@@ -67,7 +67,7 @@ final class MCommonDi @Inject() (
                                   override val messagesApi        : MessagesApi,
                                   override val htmlCompressUtil   : HtmlCompressUtil,
                                   override val langs              : Langs,
-                                  //override val actorSystem        : ActorSystem,
+                                  override val csrf               : Csrf,
                                   override val cache              : CacheApi,
                                   override val cacheApiUtil       : CacheApiUtil,
                                   override val mNodesCache        : MNodesCache,

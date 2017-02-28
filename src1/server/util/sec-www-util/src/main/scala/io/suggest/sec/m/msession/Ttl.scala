@@ -1,7 +1,6 @@
 package io.suggest.sec.m.msession
 
 import io.suggest.util.logs.MacroLogsDyn
-import play.api.Play.{configuration, current}
 import play.api.mvc.Session
 
 import scala.concurrent.duration._
@@ -62,13 +61,11 @@ sealed trait Ttl {
 
 /** Стандартный длинный ttl. */
 object LongTtl extends Ttl {
+
   val SESSION_VALUE = "l"
 
   override val ttlSeconds: Long = {
-    configuration.getInt("login.ttl.long.days")
-      .getOrElse(7)   // первоначальный дефолт - неделя с продлением
-      .days
-      .toSeconds
+    7.days.toSeconds
   }
 
   override def sessionValue: Option[String] = Some(SESSION_VALUE)
@@ -77,11 +74,9 @@ object LongTtl extends Ttl {
 
 /** Стандартный короткий ttl. */
 object ShortTtl extends Ttl {
+
   override val ttlSeconds: Long = {
-    configuration.getInt("login.ttl.short.minutes")
-      .getOrElse(20)
-      .minutes
-      .toSeconds
+    20.minutes.toSeconds
   }
 
   override def sessionValue: Option[String] = None
@@ -91,7 +86,8 @@ object ShortTtl extends Ttl {
 object CustomTtl {
 
   /** Использовать жесткий ttl? Если да, то ttl логина будет привязан к исходному таймеру. */
-  val USE_HARD_TTL = configuration.getBoolean("login.ttl.custom.isHard") getOrElse false
+  def USE_HARD_TTL = false
+
 }
 
 
