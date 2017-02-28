@@ -45,8 +45,10 @@ class SysMdr @Inject() (
 
 
   /** Отобразить начальную страницу раздела модерации рекламных карточек. */
-  def index = isSu.Get { implicit request =>
-    Ok( mdrIndexTpl() )
+  def index = csrf.AddToken {
+    isSu() { implicit request =>
+      Ok( mdrIndexTpl() )
+    }
   }
 
   /**

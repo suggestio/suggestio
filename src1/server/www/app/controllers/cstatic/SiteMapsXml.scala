@@ -16,7 +16,6 @@ import views.html.static.sitemap._
 trait SiteMapsXml extends SioController with IIgnoreAuth {
 
   import mCommonDi._
-  import ignoreAuth.IgnoreAuth
 
 
   def siteMapUtil: SiteMapUtil
@@ -33,7 +32,7 @@ trait SiteMapsXml extends SioController with IIgnoreAuth {
    * Раздача сайт-мапы.
    * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
    */
-  def siteMapXml = IgnoreAuth { implicit request =>
+  def siteMapXml = ignoreAuth() { implicit request =>
     implicit val ctx = implicitly[Context]
     val enums = siteMapUtil.SITEMAP_SOURCES
       .map(_.siteMapXmlEnumerator(ctx))

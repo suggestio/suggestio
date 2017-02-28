@@ -41,7 +41,6 @@ class SysCalendar @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import calendarAccessAny.CalendarAccessAny
 
   /** Форма с селектом шаблона нового календаря. */
   private def newCalTplFormM = Form(
@@ -97,64 +96,70 @@ class SysCalendar @Inject() (
 
 
   /** Отобразить список всех сохранённых календарей. */
-  def showCalendars = isSu.Get.async { implicit request =>
-    val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
-    mCalendars.getAll(maxResults = 500).map { cals =>
-      Ok(listCalsTpl(cals, createFormM))
+  def showCalendars = csrf.AddToken {
+    isSu().async { implicit request =>
+      val createFormM = newCalTplFormM fill HolidayCalendar.RUSSIA
+      mCalendars.getAll(maxResults = 500).map { cals =>
+        Ok(listCalsTpl(cals, createFormM))
+      }
     }
   }
 
   /** Рендер страницы с заполненной формой нового календаря на основе шаблона. На странице можно выбрать шаблон.
     * Ничего никуда не сохраняется. */
-  def newCalendarFromTemplateSubmit = isSu.Get.async { implicit request =>
-    newCalTplFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        val calsFut = mCalendars.getAll(maxResults = 500)
-        debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
-        calsFut.map { cals =>
-          NotAcceptable(listCalsTpl(cals, formWithErrors))
+  def newCalendarFromTemplateSubmit = csrf.AddToken {
+    isSu().async { implicit request =>
+      newCalTplFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          val calsFut = mCalendars.getAll(maxResults = 500)
+          debug("newCalendarFormTpl(): Form bind failed:\n" + formatFormErrors(formWithErrors))
+          calsFut.map { cals =>
+            NotAcceptable(listCalsTpl(cals, formWithErrors))
+          }
+        },
+        {hc =>
+          val codeId = hc.getId.toLowerCase
+          getClass.getClassLoader.getResourceAsStream(s"holidays/Holidays_$codeId.xml") match {
+            case null =>
+              NotFound("Template calendar not found: " + codeId)
+            case stream =>
+              try {
+                val sw = new StringWriter()
+                IOUtils.copy(stream, sw)
+                val data = sw.toString
+                val stub = MCalendar(
+                  name      = "",
+                  data      = data,
+                  calType   = MCalTypes.default
+                )
+                val newFormBinded = calFormM.fill( stub )
+                Ok(createCalFormTpl(newFormBinded))
+              } finally {
+                stream.close()
+              }
+          }
         }
-      },
-      {hc =>
-        val codeId = hc.getId.toLowerCase
-        getClass.getClassLoader.getResourceAsStream(s"holidays/Holidays_$codeId.xml") match {
-          case null =>
-            NotFound("Template calendar not found: " + codeId)
-          case stream =>
-            try {
-              val sw = new StringWriter()
-              IOUtils.copy(stream, sw)
-              val data = sw.toString
-              val stub = MCalendar(
-                name      = "",
-                data      = data,
-                calType   = MCalTypes.default
-              )
-              val newFormBinded = calFormM.fill( stub )
-              Ok(createCalFormTpl(newFormBinded))
-            } finally {
-              stream.close()
-            }
-        }
-      }
-    )
+      )
+    }
   }
 
 
   /** Сохранять в базу новый календарь. */
-  def createCalendarSubmit = isSu.Post.async { implicit request =>
-    calFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("createCalendarSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
-        NotAcceptable(createCalFormTpl(formWithErrors))
-      },
-      {mcal =>
-        for (mcalId <- mCalendars.save(mcal)) yield {
-          Redirect(routes.SysCalendar.showCalendars())
-            .flashing(FLASH.SUCCESS -> "Создан новый календарь.")
+  def createCalendarSubmit = csrf.Check {
+    isSu().async { implicit request =>
+      calFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug("createCalendarSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
+          NotAcceptable(createCalFormTpl(formWithErrors))
+        },
+        {mcal =>
+          for (_ <- mCalendars.save(mcal)) yield {
+            Redirect(routes.SysCalendar.showCalendars())
+              .flashing(FLASH.SUCCESS -> "Создан новый календарь.")
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 
@@ -163,9 +168,11 @@ class SysCalendar @Inject() (
    *
    * @param calId id календаря.
    */
-  def editCalendar(calId: String) = isSuCalendar.Get(calId).async { implicit request =>
-    val cf = calFormM fill request.mcal
-    editCalendarRespBody(calId, cf, Ok)
+  def editCalendar(calId: String) = csrf.AddToken {
+    isSuCalendar(calId).async { implicit request =>
+      val cf = calFormM fill request.mcal
+      editCalendarRespBody(calId, cf, Ok)
+    }
   }
 
   /** Общий код экшенов, рендерящих страницу редактирования. */
@@ -179,25 +186,27 @@ class SysCalendar @Inject() (
     *
     * @param calId id календаря.
     */
-  def editCalendarSubmit(calId: String) = isSuCalendar.Post(calId).async { implicit request =>
-    calFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        editCalendarRespBody(calId, formWithErrors, NotAcceptable)
-      },
-      {mcal2 =>
-        val mcal3 = request.mcal.copy(
-          name    = mcal2.name,
-          data    = mcal2.data,
-          calType = mcal2.calType
-        )
-        for (_ <- mCalendars.save(mcal3)) yield {
-          HolidayManager.clearManagerCache()
-          Redirect(routes.SysCalendar.showCalendars())
-            .flashing(FLASH.SUCCESS -> "Изменения в календаре сохранены.")
+  def editCalendarSubmit(calId: String) = csrf.Check {
+    isSuCalendar(calId).async { implicit request =>
+      calFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(s"editCalendarSubmit($calId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+          editCalendarRespBody(calId, formWithErrors, NotAcceptable)
+        },
+        {mcal2 =>
+          val mcal3 = request.mcal.copy(
+            name    = mcal2.name,
+            data    = mcal2.data,
+            calType = mcal2.calType
+          )
+          for (_ <- mCalendars.save(mcal3)) yield {
+            HolidayManager.clearManagerCache()
+            Redirect(routes.SysCalendar.showCalendars())
+              .flashing(FLASH.SUCCESS -> "Изменения в календаре сохранены.")
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 
@@ -208,7 +217,7 @@ class SysCalendar @Inject() (
    * @param calId id календаря.
    * @return xml-содержимое календаря текстом.
    */
-  def getCalendarXml(calId: String) = CalendarAccessAny(calId) { implicit request =>
+  def getCalendarXml(calId: String) = calendarAccessAny(calId) { implicit request =>
     Ok(request.mcal.data)
       .as( MimeTypes.XML )
   }

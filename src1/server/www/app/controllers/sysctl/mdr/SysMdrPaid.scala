@@ -48,19 +48,21 @@ trait SysMdrPaid
     * @param args Аргументы поиска модерируемых карточек.
     * @return Страница с плиткой карточек, которые нужно модерировать по-платному направлению.
     */
-  def paidAdvs(args: MdrSearchArgs) = isSu.Get.async { implicit request =>
-    // Залезть в items, найти там размещения, ожидающие подтверждения.
-    val dbAction = sysMdrUtil.findPaidAdIds4MdrAction(args)
+  def paidAdvs(args: MdrSearchArgs) = csrf.AddToken {
+    isSu().async { implicit request =>
+      // Залезть в items, найти там размещения, ожидающие подтверждения.
+      val dbAction = sysMdrUtil.findPaidAdIds4MdrAction(args)
 
-    // Запустить поиск id карточек по биллингу, а затем и поиск самих карточек.
-    val madsFut = slick.db
-      .run( dbAction )
-      .flatMap { madIds =>
-        mNodesCache.multiGet( madIds )
-      }
+      // Запустить поиск id карточек по биллингу, а затем и поиск самих карточек.
+      val madsFut = slick.db
+        .run( dbAction )
+        .flatMap { madIds =>
+          mNodesCache.multiGet( madIds )
+        }
 
-    // Передать управление в _adsPage(), не дожидаясь ничего.
-    _adsPage(madsFut, args)
+      // Передать управление в _adsPage(), не дожидаясь ничего.
+      _adsPage(madsFut, args)
+    }
   }
 
 
@@ -71,122 +73,124 @@ trait SysMdrPaid
     * @param nodeId id карточки.
     * @return Страница
     */
-  def forAd(nodeId: String) = isSuMad.Get(nodeId).async { implicit request =>
-    // Константа лимита отображаемых модератору mitems
-    val ITEMS_LIMIT = 20
+  def forAd(nodeId: String) = csrf.AddToken {
+    isSuMad(nodeId).async { implicit request =>
+      // Константа лимита отображаемых модератору mitems
+      val ITEMS_LIMIT = 20
 
-    // Используем один и тот же query-билдер несколько раз.
-    val itemsQuery = sysMdrUtil.itemsQueryAwaiting(nodeId)
+      // Используем один и тот же query-билдер несколько раз.
+      val itemsQuery = sysMdrUtil.itemsQueryAwaiting(nodeId)
 
-    // Нужно запустить сборку списков item'ов на модерацию.
-    val mitemsFut = slick.db.run {
-      itemsQuery
-        // Ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
-        .take(ITEMS_LIMIT)
-        // Тяжелая сортировка тут скорее всего не важна, поэтому опускаем её.
-        .result
-    }
-
-    // Узнать общее кол-во item'ов для карточки, которые нужно отмодерировать.
-    val itemsCountFut = slick.db.run {
-      itemsQuery
-        .length
-        .result
-    }
-
-    implicit val ctx = implicitly[Context]
-
-    // Для рендера карточки необходим подготовить brArgs
-    val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
-
-    val edges = request.mad.edges
-
-    // Узнать, кто модерировал карточку ранее.
-    val freeMdrs = {
-       edges
-        .withPredicateIter(MPredicates.ModeratedBy)
-        .toSeq
-    }
-
-    // Найти бесплатные размещения карточки.
-    val rcvrsSelf = {
-      edges
-        .withPredicateIter( MPredicates.Receiver.Self )
-        .toSeq
-    }
-
-    // Узнать id продьюсера текущей, чтобы шаблон мог им воспользоваться.
-    val producerIdOpt = n2NodesUtil.madProducerId( request.mad )
-
-    for {
-      // Дождаться получения необходимых для модерации item'ов
-      mitems <- mitemsFut
-
-      // Для рендера инфы по узлам надо получить карту инстансов этих узлов.
-      mnodesMapFut = {
-        // Собрать карту узлов, чтобы их можно было рендерить
-        val nodeIdsSetB = Set.newBuilder[String]
-
-        // Закинуть в карту id продьюсера.
-        nodeIdsSetB ++= producerIdOpt
-
-        // Закинуть id модерарировших в общую кучу
-        nodeIdsSetB ++= freeMdrs.iterator
-          .flatMap(_.nodeIds)
-
-        // Закинуть в карту саморесивера. Он по идее совпадает с id продьюсера, но на всякий случай закидываем...
-        nodeIdsSetB ++= rcvrsSelf.iterator
-          .flatMap(_.nodeIds)
-
-        // Закинуть в список необходимых узлов те, что в mitems.
-        nodeIdsSetB ++= mitems.iterator
-          .filter(_.iType == MItemTypes.AdvDirect)
-          .flatMap(_.rcvrIdOpt)
-
-        val nodeIdsSet = nodeIdsSetB.result()
-
-        // Запустить запрос карты узлов
-        mNodesCache.multiGetMap( nodeIdsSet )
+      // Нужно запустить сборку списков item'ов на модерацию.
+      val mitemsFut = slick.db.run {
+        itemsQuery
+          // Ограничиваем кол-во запрашиваемых item'ов. Нет никакого смысла вываливать слишком много данных на экран.
+          .take(ITEMS_LIMIT)
+          // Тяжелая сортировка тут скорее всего не важна, поэтому опускаем её.
+          .result
       }
 
-      // Нужно выводить item'ы сгруппированными по смыслу.
-      mitemsGrouped = {
-        mitems
-          .groupBy(_.iType)
+      // Узнать общее кол-во item'ов для карточки, которые нужно отмодерировать.
+      val itemsCountFut = slick.db.run {
+        itemsQuery
+          .length
+          .result
+      }
+
+      implicit val ctx = implicitly[Context]
+
+      // Для рендера карточки необходим подготовить brArgs
+      val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
+
+      val edges = request.mad.edges
+
+      // Узнать, кто модерировал карточку ранее.
+      val freeMdrs = {
+        edges
+          .withPredicateIter(MPredicates.ModeratedBy)
           .toSeq
-          .sortBy(_._1.strId)
       }
 
-      // Посчитать, кол-во item'ов для рендера уже на пределе, или нет.
-      tooManyItems = mitems.size == ITEMS_LIMIT
+      // Найти бесплатные размещения карточки.
+      val rcvrsSelf = {
+        edges
+          .withPredicateIter( MPredicates.Receiver.Self )
+          .toSeq
+      }
 
-      // Дождаться оставльных асинхронных данных
-      mnodesMap   <- mnodesMapFut
-      brArgs      <- brArgsFut
-      itemsCount  <- itemsCountFut
+      // Узнать id продьюсера текущей, чтобы шаблон мог им воспользоваться.
+      val producerIdOpt = n2NodesUtil.madProducerId( request.mad )
 
-    } yield {
+      for {
+      // Дождаться получения необходимых для модерации item'ов
+        mitems <- mitemsFut
 
-      // Собрать аргументы рендера шаблона
-      val rargs = MSysMdrForAdTplArgs(
-        brArgs        = brArgs,
-        mnodesMap     = mnodesMap,
-        mitemsGrouped = mitemsGrouped,
-        freeAdvs      = rcvrsSelf,
-        producer      = producerIdOpt
-          .flatMap(mnodesMap.get)
-          .getOrElse {
-            LOGGER.warn(s"forAd($nodeId): Producer not found/not exists, using self as producer node.")
-            request.mad
-          },
-        tooManyItems  = tooManyItems,
-        itemsCount    = itemsCount,
-        freeMdrs      = freeMdrs
-      )
+        // Для рендера инфы по узлам надо получить карту инстансов этих узлов.
+        mnodesMapFut = {
+          // Собрать карту узлов, чтобы их можно было рендерить
+          val nodeIdsSetB = Set.newBuilder[String]
 
-      // Отрендерить и вернуть ответ клиенту
-      val html = forAdTpl(rargs)(ctx)
-      Ok(html)
+          // Закинуть в карту id продьюсера.
+          nodeIdsSetB ++= producerIdOpt
+
+          // Закинуть id модерарировших в общую кучу
+          nodeIdsSetB ++= freeMdrs.iterator
+            .flatMap(_.nodeIds)
+
+          // Закинуть в карту саморесивера. Он по идее совпадает с id продьюсера, но на всякий случай закидываем...
+          nodeIdsSetB ++= rcvrsSelf.iterator
+            .flatMap(_.nodeIds)
+
+          // Закинуть в список необходимых узлов те, что в mitems.
+          nodeIdsSetB ++= mitems.iterator
+            .filter(_.iType == MItemTypes.AdvDirect)
+            .flatMap(_.rcvrIdOpt)
+
+          val nodeIdsSet = nodeIdsSetB.result()
+
+          // Запустить запрос карты узлов
+          mNodesCache.multiGetMap( nodeIdsSet )
+        }
+
+        // Нужно выводить item'ы сгруппированными по смыслу.
+        mitemsGrouped = {
+          mitems
+            .groupBy(_.iType)
+            .toSeq
+            .sortBy(_._1.strId)
+        }
+
+        // Посчитать, кол-во item'ов для рендера уже на пределе, или нет.
+        tooManyItems = mitems.size == ITEMS_LIMIT
+
+        // Дождаться оставльных асинхронных данных
+        mnodesMap   <- mnodesMapFut
+        brArgs      <- brArgsFut
+        itemsCount  <- itemsCountFut
+
+      } yield {
+
+        // Собрать аргументы рендера шаблона
+        val rargs = MSysMdrForAdTplArgs(
+          brArgs        = brArgs,
+          mnodesMap     = mnodesMap,
+          mitemsGrouped = mitemsGrouped,
+          freeAdvs      = rcvrsSelf,
+          producer      = producerIdOpt
+            .flatMap(mnodesMap.get)
+            .getOrElse {
+              LOGGER.warn(s"forAd($nodeId): Producer not found/not exists, using self as producer node.")
+              request.mad
+            },
+          tooManyItems  = tooManyItems,
+          itemsCount    = itemsCount,
+          freeMdrs      = freeMdrs
+        )
+
+        // Отрендерить и вернуть ответ клиенту
+        val html = forAdTpl(rargs)(ctx)
+        Ok(html)
+      }
     }
   }
 
@@ -197,11 +201,13 @@ trait SysMdrPaid
     * @param nodeId id узла-карточки.
     * @return Редирект на модерацию следующей карточки.
     */
-  def approveAllItemsSubmit(nodeId: String) = isSuMad.Post(nodeId).async { implicit request =>
-    _processItemsForAd(
-      nodeId  = nodeId,
-      q       = sysMdrUtil.itemsQueryAwaiting(nodeId)
-    )(bill2Util.approveItemAction)
+  def approveAllItemsSubmit(nodeId: String) = csrf.Check {
+    isSuMad(nodeId).async { implicit request =>
+      _processItemsForAd(
+        nodeId  = nodeId,
+        q       = sysMdrUtil.itemsQueryAwaiting(nodeId)
+      )(bill2Util.approveItemAction)
+    }
   }
 
 
@@ -228,17 +234,21 @@ trait SysMdrPaid
     }
   }
 
+
   /** Модератор подтверждает оплаченный item. */
-  def approveItemSubmit(itemId: Gid_t) = isSu.Post.async { implicit request =>
-    val dbAction = bill2Util.approveItemAction(itemId)
-    for {
-      res <- sysMdrUtil._processOneItem(dbAction)
-    } yield {
-      // Отредиректить юзера для продолжения модерации
-      Redirect( routes.SysMdr.forAd(res.mitem.nodeId) )
-        .flashing(FLASH.SUCCESS -> s"Размещение #$itemId одобрено.")
+  def approveItemSubmit(itemId: Gid_t) = csrf.Check {
+    isSu().async { implicit request =>
+      val dbAction = bill2Util.approveItemAction(itemId)
+      for {
+        res <- sysMdrUtil._processOneItem(dbAction)
+      } yield {
+        // Отредиректить юзера для продолжения модерации
+        Redirect( routes.SysMdr.forAd(res.mitem.nodeId) )
+          .flashing(FLASH.SUCCESS -> s"Размещение #$itemId одобрено.")
+      }
     }
   }
+
 
   private def _refusePopup(call: Call, form: RefuseForm_t = sysMdrUtil.refuseFormM)
                           (implicit request: IReq[_]): Future[Result] = {
@@ -250,36 +260,41 @@ trait SysMdrPaid
     Ok(render)
   }
 
+
   /** Запрос попапам с формой отказа в размещение item'а. */
-  def refuseItemPopup(itemId: Gid_t) = isSuItemAd.Get(itemId).async { implicit request =>
-    _refusePopup(routes.SysMdr.refuseItemSubmit(itemId))
+  def refuseItemPopup(itemId: Gid_t) = csrf.AddToken {
+    isSuItemAd(itemId).async { implicit request =>
+      _refusePopup(routes.SysMdr.refuseItemSubmit(itemId))
+    }
   }
 
 
   /** Модератор отвергает оплаченный item с указанием причины отказа. */
-  def refuseItemSubmit(itemId: Gid_t) = isSuItem.Post(itemId).async { implicit request =>
-    lazy val logPrefix = s"refuseItem($itemId):"
-    sysMdrUtil.refuseFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        Redirect( routes.SysMdr.forAd(request.mitem.nodeId) )
-          .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
-      },
-
-      {res =>
-        // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
-        val dbAction  = bill2Util.refuseItemAction(itemId, Some(res.reason))
-
-        // Когда всё будет выполнено, надо отредиректить юзера на карточку.
-        for {
-          res <- sysMdrUtil._processOneItem(dbAction)
-        } yield {
-          // Отредиректить клиента на модерацию карточки.
+  def refuseItemSubmit(itemId: Gid_t) = csrf.Check {
+    isSuItem(itemId).async { implicit request =>
+      lazy val logPrefix = s"refuseItem($itemId):"
+      sysMdrUtil.refuseFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
           Redirect( routes.SysMdr.forAd(request.mitem.nodeId) )
-            .flashing(FLASH.SUCCESS -> s"Отказано в размещении #$itemId.")
+            .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
+        },
+
+        {res =>
+          // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
+          val dbAction  = bill2Util.refuseItemAction(itemId, Some(res.reason))
+
+          // Когда всё будет выполнено, надо отредиректить юзера на карточку.
+          for {
+            res <- sysMdrUtil._processOneItem(dbAction)
+          } yield {
+            // Отредиректить клиента на модерацию карточки.
+            Redirect( routes.SysMdr.forAd(request.mitem.nodeId) )
+              .flashing(FLASH.SUCCESS -> s"Отказано в размещении #$itemId.")
+          }
         }
-      }
-    )
+      )
+    }
   }
 
   /**
@@ -288,9 +303,12 @@ trait SysMdrPaid
     * @param nodeId id узла-карточки, которая модерируется в данный момент.
     * @return HTML попапа с формой отказа в размещении.
     */
-  def refuseAllItems(nodeId: String) = isSuMad.Get(nodeId).async { implicit request =>
-    _refusePopup( routes.SysMdr.refuseAllItemsSubmit(nodeId) )
+  def refuseAllItems(nodeId: String) = csrf.AddToken {
+    isSuMad(nodeId).async { implicit request =>
+      _refusePopup( routes.SysMdr.refuseAllItemsSubmit(nodeId) )
+    }
   }
+
 
   /**
     * Множенственный refuse всех модерируемых item'ов, относящихся к указанной карточке.
@@ -298,24 +316,26 @@ trait SysMdrPaid
     * @param nodeId id узла.
     * @return
     */
-  def refuseAllItemsSubmit(nodeId: String) = isSuMad.Post(nodeId).async { implicit request =>
-    lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
-    sysMdrUtil.refuseFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        Redirect( routes.SysMdr.forAd(nodeId) )
-          .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
-      },
+  def refuseAllItemsSubmit(nodeId: String) = csrf.Check {
+    isSuMad(nodeId).async { implicit request =>
+      lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
+      sysMdrUtil.refuseFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          Redirect( routes.SysMdr.forAd(nodeId) )
+            .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
+        },
 
-      {res =>
-        val someReason = Some(res.reason)
-        // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
-        _processItemsForAd(
-          nodeId = nodeId,
-          q      = sysMdrUtil.itemsQueryAwaiting(nodeId)
-        )(bill2Util.refuseItemAction(_, someReason))
-      }
-    )
+        {res =>
+          val someReason = Some(res.reason)
+          // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
+          _processItemsForAd(
+            nodeId = nodeId,
+            q      = sysMdrUtil.itemsQueryAwaiting(nodeId)
+          )(bill2Util.refuseItemAction(_, someReason))
+        }
+      )
+    }
   }
 
 
@@ -326,33 +346,41 @@ trait SysMdrPaid
     * @param itype id типа item'ов.
     * @return Редирект на текущую карточку.
     */
-  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = isSuMad.Post(nodeId).async { implicit request =>
-    _processItemsForAd(
-      nodeId = nodeId,
-      q = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype )
-    )(bill2Util.approveItemAction)
+  def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = csrf.Check {
+    isSuMad(nodeId).async { implicit request =>
+      _processItemsForAd(
+        nodeId = nodeId,
+        q = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype )
+      )(bill2Util.approveItemAction)
+    }
   }
 
-  def refuseAllItemsType(nodeId: String, itype: MItemType) = isSuMad.Get(nodeId).async { implicit request =>
-    _refusePopup( routes.SysMdr.refuseAllItemsTypeSubmit(nodeId, itype) )
+
+  def refuseAllItemsType(nodeId: String, itype: MItemType) = csrf.AddToken {
+    isSuMad(nodeId).async { implicit request =>
+      _refusePopup( routes.SysMdr.refuseAllItemsTypeSubmit(nodeId, itype) )
+    }
   }
 
-  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = isSuMad.Post(nodeId).async { implicit request =>
-    lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
-    sysMdrUtil.refuseFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        Redirect( routes.SysMdr.forAd(nodeId) )
-          .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
-      },
-      {res =>
-        val someReason = Some(res.reason)
-        _processItemsForAd(
-          nodeId  = nodeId,
-          q       = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype)
-        )(bill2Util.refuseItemAction(_, someReason))
-      }
-    )
+
+  def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = csrf.Check {
+    isSuMad(nodeId).async { implicit request =>
+      lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
+      sysMdrUtil.refuseFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          Redirect( routes.SysMdr.forAd(nodeId) )
+            .flashing(FLASH.ERROR -> "Ошибка в запросе отказа, проверьте причину.")
+        },
+        {res =>
+          val someReason = Some(res.reason)
+          _processItemsForAd(
+            nodeId  = nodeId,
+            q       = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype)
+          )(bill2Util.refuseItemAction(_, someReason))
+        }
+      )
+    }
   }
 
 }

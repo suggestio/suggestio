@@ -53,17 +53,19 @@ class Umap @Inject() (
 
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
-  def getAdnNodesMap = isSu.Get.apply { implicit request =>
-    // TODO Нужно задействовать reverse-роутер
-    val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
-    val args = UmapTplArgs(
-      dlUpdateUrl   = _csrfUrlPart(dlUrl),
-      dlGetUrl      = dlUrl,
-      editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
-      title         = "Сводная карта всех узлов",
-      ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
-    )
-    Ok( mapBaseTpl(args) )
+  def getAdnNodesMap = csrf.AddToken {
+    isSu().apply { implicit request =>
+      // TODO Нужно задействовать reverse-роутер
+      val dlUrl = "/sys/umap/nodes/datalayer?ngl={pk}"
+      val args = UmapTplArgs(
+        dlUpdateUrl   = _csrfUrlPart(dlUrl),
+        dlGetUrl      = dlUrl,
+        editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
+        title         = "Сводная карта всех узлов",
+        ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
+      )
+      Ok( mapBaseTpl(args) )
+    }
   }
 
   /** Кривая сборка шаблона ссылки сохранения с CSRF-токеном. */
@@ -80,24 +82,26 @@ class Umap @Inject() (
    * @param nodeId id узла.
    * @return 200 OK и страница с картой.
    */
-  def getAdnNodeMap(nodeId: String) = isSuNode.Get(nodeId) { implicit request =>
-    // TODO Нужно задействовать reverse-роутер.
-    val dlUrl = s"/sys/umap/node/$nodeId/datalayer?ngl={pk}"
-    val args = UmapTplArgs(
-      dlUpdateUrl   = _csrfUrlPart(dlUrl),
-      dlGetUrl      = dlUrl,
-      editAllowed   = true,
-      title         = "Карта: " +
-        request.mnode.meta.basic.name +
-        request.mnode.meta.address.town.fold("")(" / " + _),
-      ngls          = request.mnode
-        .extras
-        .adn
-        .fold (List.empty[NodeGeoLevel]) { adn =>
-          AdnShownTypes.adnInfo2val(adn).ngls
-        }
-    )
-    Ok( mapBaseTpl(args) )
+  def getAdnNodeMap(nodeId: String) = csrf.AddToken {
+    isSuNode(nodeId) { implicit request =>
+      // TODO Нужно задействовать reverse-роутер.
+      val dlUrl = s"/sys/umap/node/$nodeId/datalayer?ngl={pk}"
+      val args = UmapTplArgs(
+        dlUpdateUrl   = _csrfUrlPart(dlUrl),
+        dlGetUrl      = dlUrl,
+        editAllowed   = true,
+        title         = "Карта: " +
+          request.mnode.meta.basic.name +
+          request.mnode.meta.address.town.fold("")(" / " + _),
+        ngls          = request.mnode
+          .extras
+          .adn
+          .fold (List.empty[NodeGeoLevel]) { adn =>
+            AdnShownTypes.adnInfo2val(adn).ngls
+          }
+      )
+      Ok( mapBaseTpl(args) )
+    }
   }
 
 
@@ -188,34 +192,38 @@ class Umap @Inject() (
   /** Обработка запроса сохранения сеттингов карты.
     * Само сохранение не реализовано, поэтому тут просто ответ 200 OK.
     */
-  def saveMapSettingsSubmit = isSu.Post(parse.multipartFormData) { implicit request =>
-    val msgs = implicitly[Messages]
-    val resp = MapSettingsSaved(
-      url  = routes.Umap.getAdnNodesMap().url,
-      info = msgs("Map.settings.save.unsupported"),
-      id   = 16717    // цифра с потолка
-    )
-    Ok( Json.toJson(resp) )
+  def saveMapSettingsSubmit = csrf.Check {
+    isSu()(parse.multipartFormData) { implicit request =>
+      val msgs = implicitly[Messages]
+      val resp = MapSettingsSaved(
+        url  = routes.Umap.getAdnNodesMap().url,
+        info = msgs("Map.settings.save.unsupported"),
+        id   = 16717    // цифра с потолка
+      )
+      Ok( Json.toJson(resp) )
+    }
   }
 
 
   /** Сабмит одного слоя на глобальной карте. */
-  def saveMapDataLayer(ngl: NodeGeoLevel) = isSu.Post.async(parse.multipartFormData) { implicit request =>
-    // Банальная проверка на доступ к этому экшену.
-    if (!GLOBAL_MAP_EDIT_ALLOWED)
-      throw new IllegalAccessException("Global map editing is not allowed.")
-    // Продолжаем веселье.
-    _saveMapDataLayer(ngl, None) { feat =>
-      feat.properties
-        .flatMap(_.nodeId)
-        .getOrElse("???")
+  def saveMapDataLayer(ngl: NodeGeoLevel) = csrf.Check {
+    isSu().async(parse.multipartFormData) { implicit request =>
+      // Банальная проверка на доступ к этому экшену.
+      if (!GLOBAL_MAP_EDIT_ALLOWED)
+        throw new IllegalAccessException("Global map editing is not allowed.")
+      // Продолжаем веселье.
+      _saveMapDataLayer(ngl, None) { feat =>
+        feat.properties
+          .flatMap(_.nodeId)
+          .getOrElse("???")
+      }
     }
   }
 
 
   /** Сабмит одного слоя на карте узла. */
-  def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = {
-    isSuNode.Post(adnId).async(parse.multipartFormData) { implicit request =>
+  def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = csrf.Check {
+    isSuNode(adnId).async(parse.multipartFormData) { implicit request =>
       _saveMapDataLayer(ngl, request.mnode.id){ _ => adnId }
     }
   }
@@ -320,8 +328,10 @@ class Umap @Inject() (
   }
 
 
-  def createMapDataLayer = isSu.Post(parse.multipartFormData) { implicit request =>
-    Ok("asdasd")
+  def createMapDataLayer = csrf.Check {
+    isSu()(parse.multipartFormData) { implicit request =>
+      Ok("asdasd")
+    }
   }
 
 

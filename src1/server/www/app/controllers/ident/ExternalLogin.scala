@@ -270,9 +270,11 @@ trait ExternalLogin
    * Юзер, залогинившийся через провайдера, хочет создать ноду.
    * @return Страницу с колонкой подтверждения реги.
    */
-  def idpConfirm = canConfirmIdpReg.Get { implicit request =>
-    val form = externalLogin.extRegConfirmFormM
-    Ok( _idpConfirm(form) )
+  def idpConfirm = csrf.AddToken {
+    canConfirmIdpReg() { implicit request =>
+      val form = externalLogin.extRegConfirmFormM
+      Ok( _idpConfirm(form) )
+    }
   }
 
   /** Общий код рендера idpConfig вынесен сюда. */
@@ -281,22 +283,24 @@ trait ExternalLogin
   }
 
   /** Сабмит формы подтверждения регистрации через внешнего провайдера идентификации. */
-  def idpConfirmSubmit = canConfirmIdpReg.Post.async { implicit request =>
-    externalLogin.extRegConfirmFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        NotAcceptable( _idpConfirm(formWithErrors) )
-      },
-      {nodeName =>
-        // Развернуть узел для юзера, отобразить страницу успехоты.
-        for {
-          mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.user.personIdOpt.get)
-        } yield {
-          val args = nodesUtil.nodeRegSuccessArgs( mnode )
-          Ok( regSuccessTpl(args) )
+  def idpConfirmSubmit = csrf.Check {
+    canConfirmIdpReg().async { implicit request =>
+      externalLogin.extRegConfirmFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug("idpConfirmSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+          NotAcceptable( _idpConfirm(formWithErrors) )
+        },
+        {nodeName =>
+          // Развернуть узел для юзера, отобразить страницу успехоты.
+          for {
+            mnode <- nodesUtil.createUserNode(name = nodeName, personId = request.user.personIdOpt.get)
+          } yield {
+            val args = nodesUtil.nodeRegSuccessArgs( mnode )
+            Ok( regSuccessTpl(args) )
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 }

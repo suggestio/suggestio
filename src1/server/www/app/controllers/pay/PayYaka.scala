@@ -66,7 +66,7 @@ class PayYaka @Inject() (
   with MacroLogsImpl
 {
 
-  import mCommonDi.{ec, mNodesCache, slick}
+  import mCommonDi.{ec, mNodesCache, slick, csrf}
 
 
   /**
@@ -90,53 +90,55 @@ class PayYaka @Inject() (
     * @param onNodeId На каком узле сейчас находимся?
     * @return Страница с формой оплаты, отправляющей юзера в яндекс.кассу.
     */
-  def payForm(orderId: Gid_t, onNodeId: MEsUuId) = canPayOrder.Get(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
-    val orderPricesFut = bill2Util.getOrderPricesFut(orderId)
+  def payForm(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
+    canPayOrder(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
+      val orderPricesFut = bill2Util.getOrderPricesFut(orderId)
 
-    val payPriceFut = for {
-      payPrices0 <- bill2Util.getPayPrices(orderPricesFut, request.user.mBalancesFut)
-    } yield {
-      yakaUtil.assertPricesForPay(payPrices0)
-    }
+      val payPriceFut = for {
+        payPrices0 <- bill2Util.getPayPrices(orderPricesFut, request.user.mBalancesFut)
+      } yield {
+        yakaUtil.assertPricesForPay(payPrices0)
+      }
 
-    val personId = request.user.personIdOpt.get
+      val personId = request.user.personIdOpt.get
 
-    // Попытаться определить email клиента.
-    val userEmailOptFut = for {
+      // Попытаться определить email клиента.
+      val userEmailOptFut = for {
       // TODO Opt Надо бы искать максимум 1 элемент.
-      epws <- mPersonIdents.findAllEmails(personId)
-    } yield {
-      epws.headOption
-    }
+        epws <- mPersonIdents.findAllEmails(personId)
+      } yield {
+        epws.headOption
+      }
 
-    val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
-      implicitly[Context]
-    }
+      val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
+        implicitly[Context]
+      }
 
-    // Собираем данные для рендера формы отправки в платёжку.
-    for {
-      payPrice      <- payPriceFut
-      userEmailOpt  <- userEmailOptFut
-      ctx           <- ctxFut
-    } yield {
-      // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
-      // Собрать аргументы для рендера, отрендерить страницу с формой.
-      val formData = MYakaFormData(
-        isDemo          = yakaUtil.IS_DEMO,
-        shopId          = yakaUtil.SHOP_ID,
-        scId            = yakaUtil.SC_ID,
-        amount          = payPrice.amount,
-        onNodeId        = onNodeId,
-        customerNumber  = request.user.personIdOpt.get,
-        orderNumber     = Some(orderId),
-        clientEmail     = userEmailOpt
-      )
-      // Отрендерить шаблон страницы.
-      val html = PayFormTpl(orderId, request.mnode) {
-        // Отрендерить саму форму в HTML. Форма может меняться от платежки к платёжке, поэтому вставляется в общую страницу в виде HTML.
-        _YakaFormTpl(formData)(ctx)
-      }(ctx)
-      Ok(html)
+      // Собираем данные для рендера формы отправки в платёжку.
+      for {
+        payPrice      <- payPriceFut
+        userEmailOpt  <- userEmailOptFut
+        ctx           <- ctxFut
+      } yield {
+        // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
+        // Собрать аргументы для рендера, отрендерить страницу с формой.
+        val formData = MYakaFormData(
+          isDemo          = yakaUtil.IS_DEMO,
+          shopId          = yakaUtil.SHOP_ID,
+          scId            = yakaUtil.SC_ID,
+          amount          = payPrice.amount,
+          onNodeId        = onNodeId,
+          customerNumber  = request.user.personIdOpt.get,
+          orderNumber     = Some(orderId),
+          clientEmail     = userEmailOpt
+        )
+        // Отрендерить шаблон страницы.
+        val html = PayFormTpl(orderId, request.mnode) {
+          // Отрендерить саму форму в HTML. Форма может меняться от платежки к платёжке, поэтому вставляется в общую страницу в виде HTML.
+          _YakaFormTpl(formData)(ctx)
+        }(ctx)
+        Ok(html)
+      }
     }
   }
 

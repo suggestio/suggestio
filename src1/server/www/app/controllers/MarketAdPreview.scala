@@ -42,41 +42,43 @@ trait MarketAdPreview
    * @return 200 Ok с рендером.
    *         406 Not Acceptable при ошибочной форме.
    */
-  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
-    marketAdFormUtil.adFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
-        NotAcceptable("Preview form bind failed.")
-      },
-      {r =>
-        val bc = BlocksConf.DEFAULT
-        for {
-          imgs <- bc.asSavedImgs(r.bim)
-          html <- {
-            val mad = r.mad.copy(
-              edges = r.mad.edges.copy(
-                out = MNodeEdges.edgesToMap1 {
-                  val ownEdge = MEdge(
-                    predicate = MPredicates.OwnedBy,
-                    nodeIds   = request.mnode.id.toSet
-                  )
-                  r.mad.edges.iterator ++
-                    imgs ++
-                    Seq( ownEdge )
-                }
+  def adFormPreviewSubmit(adnId: String, isFull: Boolean) = csrf.Check {
+    isAdnNodeAdmin(adnId).async { implicit request =>
+      marketAdFormUtil.adFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
+          NotAcceptable("Preview form bind failed.")
+        },
+        {r =>
+          val bc = BlocksConf.DEFAULT
+          for {
+            imgs <- bc.asSavedImgs(r.bim)
+            html <- {
+              val mad = r.mad.copy(
+                edges = r.mad.edges.copy(
+                  out = MNodeEdges.edgesToMap1 {
+                    val ownEdge = MEdge(
+                      predicate = MPredicates.OwnedBy,
+                      nodeIds   = request.mnode.id.toSet
+                    )
+                    r.mad.edges.iterator ++
+                      imgs ++
+                      Seq( ownEdge )
+                  }
+                )
               )
-            )
-            if (isFull) {
-              renderFull(mad, bc)
-            } else {
-              renderSmall(mad, bc)
+              if (isFull) {
+                renderFull(mad, bc)
+              } else {
+                renderSmall(mad, bc)
+              }
             }
+          } yield {
+            Ok(html)
           }
-        } yield {
-          Ok(html)
         }
-      }
-    )
+      )
+    }
   }
 
   /** Рендер полноэкранного варианта отображения. */

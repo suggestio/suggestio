@@ -37,16 +37,20 @@ class SysAi @Inject() (
 
 
   /** Раздача страницы с оглавлением по ai-подсистемам. */
-  def index = isSu.Get { implicit request =>
-    Ok(indexTpl())
+  def index = csrf.AddToken {
+    isSu() { implicit request =>
+      Ok(indexTpl())
+    }
   }
 
 
   /** Заглавная страница генераторов рекламных карточек. */
-  def madIndex = isSu.Get.async { implicit request =>
-    val aisFut = mAiMads.getAll()
-    aisFut map { ais =>
-      Ok(madIndexTpl(ais))
+  def madIndex = csrf.AddToken {
+    isSu().async { implicit request =>
+      val aisFut = mAiMads.getAll()
+      aisFut map { ais =>
+        Ok(madIndexTpl(ais))
+      }
     }
   }
 
@@ -146,85 +150,93 @@ class SysAi @Inject() (
 
 
   /** Запрос страницы с формой создания генератора рекламных карточек. */
-  def createMadAi = isSu.Get { implicit request =>
-    Ok(createTpl(formM))
+  def createMadAi = csrf.AddToken {
+    isSu() { implicit request =>
+      Ok(createTpl(formM))
+    }
   }
 
   /** Сабмит формы создания генерата рекламнах карточек. */
-  def createMadAiSubmit = isSu.Post.async { implicit request =>
-    val formBinded = formM.bindFromRequest()
-    lazy val logPrefix = "createMadAiSubmit(): "
-    formBinded.fold(
-      {formWithErrors =>
-        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(createTpl(formWithErrors))
-      },
-      {maimad =>
-        // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
-        val fut = for {
-          _ <- madAiUtil.dryRun(maimad)
-          savedId <- mAiMads.save(maimad)
-        } yield {
-          Redirect( routes.SysAi.madIndex() )
-            .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")
-        }
+  def createMadAiSubmit = csrf.Check {
+    isSu().async { implicit request =>
+      val formBinded = formM.bindFromRequest()
+      lazy val logPrefix = "createMadAiSubmit(): "
+      formBinded.fold(
+        {formWithErrors =>
+          debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          NotAcceptable(createTpl(formWithErrors))
+        },
+        {maimad =>
+          // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
+          val fut = for {
+            _ <- madAiUtil.dryRun(maimad)
+            savedId <- mAiMads.save(maimad)
+          } yield {
+            Redirect( routes.SysAi.madIndex() )
+              .flashing(FLASH.SUCCESS -> "Создано. Обновите страницу.")
+          }
 
-        // Перехватить невалидный MAdAi
-        fut.recover {
-          case ex: Exception =>
-            debug(logPrefix + "dryRun() failed.", ex)
-            val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
-            NotAcceptable(createTpl(fwe))
+          // Перехватить невалидный MAdAi
+          fut.recover {
+            case ex: Exception =>
+              debug(logPrefix + "dryRun() failed.", ex)
+              val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+              NotAcceptable(createTpl(fwe))
+          }
         }
-      }
-    )
+      )
+    }
   }
 
   /** Запрос страницы редактирования ранее сохранённого [[models.ai.MAiMad]]. */
-  def editMadAi(aiMadId: String) = isSuAiMad.Get(aiMadId) { implicit request =>
-    import request.aiMad
-    val form = formM.fill(aiMad)
-    Ok(editTpl(aiMad, form))
+  def editMadAi(aiMadId: String) = csrf.AddToken {
+    isSuAiMad(aiMadId) { implicit request =>
+      import request.aiMad
+      val form = formM.fill(aiMad)
+      Ok(editTpl(aiMad, form))
+    }
   }
 
   /** Сабмит формы редактирования существующей [[models.ai.MAiMad]]. */
-  def editMadAiSubmit(aiMadId: String) = isSuAiMad.Post(aiMadId).async { implicit request =>
-    import request.aiMad
-    val formBinded = formM.bindFromRequest()
-    lazy val logPrefix = s"editMadAiSubmit($aiMadId): "
-    formBinded.fold(
-      {formWithErrors =>
-        debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable(editTpl(aiMad, formWithErrors))
-      },
-      {aim1 =>
-        // Обновляем исходный экземпляр MAiMad новыми данными
-        val aim2 = aiMad.copy(
-          name        = aim1.name,
-          sources     = aim1.sources,
-          tplAdId     = aim1.tplAdId,
-          renderers   = aim1.renderers,
-          targetAdIds = aim1.targetAdIds,
-          descr       = aim1.descr
-        )
+  def editMadAiSubmit(aiMadId: String) = csrf.Check {
+    isSuAiMad(aiMadId).async { implicit request =>
+      import request.aiMad
+      val formBinded = formM.bindFromRequest()
+      lazy val logPrefix = s"editMadAiSubmit($aiMadId): "
+      formBinded.fold(
+        {formWithErrors =>
+          debug(logPrefix + "Failed to bind form:\n" + formatFormErrors(formWithErrors))
+          NotAcceptable(editTpl(aiMad, formWithErrors))
+        },
+        {aim1 =>
+          // Обновляем исходный экземпляр MAiMad новыми данными
+          val aim2 = aiMad.copy(
+            name        = aim1.name,
+            sources     = aim1.sources,
+            tplAdId     = aim1.tplAdId,
+            renderers   = aim1.renderers,
+            targetAdIds = aim1.targetAdIds,
+            descr       = aim1.descr
+          )
 
-        // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
-        val resFut = for {
-          _         <- madAiUtil.dryRun(aim2)
-          _         <- mAiMads.save(aim2)
-        } yield {
-          Redirect( routes.SysAi.madIndex() )
-            .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
-        }
+          // Запускаем асинхронные проверки полученных данных: проверяем, что все указанные карточки существуют:
+          val resFut = for {
+            _         <- madAiUtil.dryRun(aim2)
+            _         <- mAiMads.save(aim2)
+          } yield {
+            Redirect( routes.SysAi.madIndex() )
+              .flashing(FLASH.SUCCESS -> "Сохранено. Обновите страницу.")
+          }
 
-        resFut.recover {
-          case ex: Exception =>
-            debug(logPrefix + "dryRun() failed.", ex)
-            val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
-            NotAcceptable(editTpl(aiMad, fwe))
+          resFut.recover {
+            case ex: Exception =>
+              debug(logPrefix + "dryRun() failed.", ex)
+              val fwe = formBinded.withGlobalError(s"${ex.getClass.getSimpleName}: ${ex.getMessage}")
+              NotAcceptable(editTpl(aiMad, fwe))
+          }
         }
-      }
-    )
+      )
+    }
   }
 
   /** Запуск одного [[models.ai.MAiMad]] на исполнение. Результат запроса содержит инфу о проблеме. */
@@ -248,17 +260,19 @@ class SysAi @Inject() (
 
 
   /** Сабмит удаления [[models.ai.MAiMad]]. */
-  def deleteMadAi(aiMadId: String) = isSuAiMad.Post(aiMadId).async { implicit request =>
-    val deleteFut = mAiMads.deleteById(aiMadId)
-    trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
-    for (isDeleted <- deleteFut) yield {
-      val flash = if (isDeleted) {
-        FLASH.SUCCESS -> "Удалено успешно. Обновите страницу."
-      } else {
-        FLASH.ERROR   -> "Не удалось удалить элемент."
+  def deleteMadAi(aiMadId: String) = csrf.Check {
+    isSuAiMad(aiMadId).async { implicit request =>
+      val deleteFut = mAiMads.deleteById(aiMadId)
+      trace(s"deleteMadAi($aiMadId): Called by superuser ${request.user.personIdOpt}")
+      for (isDeleted <- deleteFut) yield {
+        val flash = if (isDeleted) {
+          FLASH.SUCCESS -> "Удалено успешно. Обновите страницу."
+        } else {
+          FLASH.ERROR   -> "Не удалось удалить элемент."
+        }
+        Redirect(routes.SysAi.madIndex())
+          .flashing(flash)
       }
-      Redirect(routes.SysAi.madIndex())
-        .flashing(flash)
     }
   }
 

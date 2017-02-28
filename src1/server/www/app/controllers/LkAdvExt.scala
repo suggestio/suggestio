@@ -99,8 +99,10 @@ class LkAdvExt @Inject() (
    * @param adId id рекламной карточки.
    * @return 200 Ок + страница с данными по размещениям на внешних сервисах.
    */
-  def forAd(adId: String) = canAdvAd.Get(adId, U.Lk).async { implicit request =>
-    _forAdRender(adId, advsFormM, Ok)
+  def forAd(adId: String) = csrf.AddToken {
+    canAdvAd(adId, U.Lk).async { implicit request =>
+      _forAdRender(adId, advsFormM, Ok)
+    }
   }
 
   private def _forAdRender(adId: String, form: ExtAdvForm, rs: Status)
@@ -142,22 +144,24 @@ class LkAdvExt @Inject() (
    * @param adId id размещаемой рекламной карточки.
    * @return 200 Ok со страницей деятельности по размещению.
    */
-  def forAdSubmit(adId: String) = canAdvAd.Post(adId).async { implicit request =>
-    advsFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
-        _forAdRender(adId, formWithErrors, NotAcceptable)
-      },
-      {advs =>
-        val wsArgs = MExtAdvQs(
-          adId          = adId,
-          targets       = advs,
-          bestBeforeSec = _nowSec + WS_BEST_BEFORE_SECONDS,
-          wsId          = "" // TODO Это не нужно на данном этапе. runner() был вынесен в отдельнй экшен.
-        )
-        Redirect( CSRF(routes.LkAdvExt.runner(adId, Some(wsArgs))) )
-      }
-    )
+  def forAdSubmit(adId: String) = csrf.Check {
+    canAdvAd(adId).async { implicit request =>
+      advsFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(s"advFormSubmit($adId): failed to bind from request:\n ${formatFormErrors(formWithErrors)}")
+          _forAdRender(adId, formWithErrors, NotAcceptable)
+        },
+        {advs =>
+          val wsArgs = MExtAdvQs(
+            adId          = adId,
+            targets       = advs,
+            bestBeforeSec = _nowSec + WS_BEST_BEFORE_SECONDS,
+            wsId          = "" // TODO Это не нужно на данном этапе. runner() был вынесен в отдельнй экшен.
+          )
+          Redirect( CSRF(routes.LkAdvExt.runner(adId, Some(wsArgs))) )
+        }
+      )
+    }
   }
 
   /**
@@ -168,27 +172,29 @@ class LkAdvExt @Inject() (
    *                  Если не заданы, то будет редирект на форму размещения.
    * @return Страница с системой размещения.
    */
-  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = canAdvAd.Post(adId, U.Lk).async { implicit request =>
-    wsArgsOpt.fold [Future[Result]] {
-      // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
-      Redirect(routes.LkAdvExt.forAd(adId))
+  def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = csrf.Check {
+    canAdvAd(adId, U.Lk).async { implicit request =>
+      wsArgsOpt.fold [Future[Result]] {
+        // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
+        Redirect(routes.LkAdvExt.forAd(adId))
 
-    } { wsArgs =>
-      for (ctxData0 <- request.user.lkCtxDataFut) yield {
-        implicit val ctxData = ctxData0.withJsiTgs(
-          MJsiTgs.AdvExtRunner :: ctxData0.jsiTgs
-        )
-        implicit val ctx = implicitly[Context]
-        val wsArgs2 = wsArgs.copy(
-          wsId = ctx.ctxIdStr,
-          adId = adId
-        )
-        val rargs = MAdvRunnerTplArgs(
-          wsCallArgs  = wsArgs2,
-          mad         = request.mad,
-          mnode       = request.producer
-        )
-        Ok( advRunnerTpl(rargs)(ctx) )
+      } { wsArgs =>
+        for (ctxData0 <- request.user.lkCtxDataFut) yield {
+          implicit val ctxData = ctxData0.withJsiTgs(
+            MJsiTgs.AdvExtRunner :: ctxData0.jsiTgs
+          )
+          implicit val ctx = implicitly[Context]
+          val wsArgs2 = wsArgs.copy(
+            wsId = ctx.ctxIdStr,
+            adId = adId
+          )
+          val rargs = MAdvRunnerTplArgs(
+            wsCallArgs  = wsArgs2,
+            mad         = request.mad,
+            mnode       = request.producer
+          )
+          Ok( advRunnerTpl(rargs)(ctx) )
+        }
       }
     }
   }
@@ -282,11 +288,13 @@ class LkAdvExt @Inject() (
    * @param adnId id узла.
    * @return 200 Ok с отрендеренной формой.
    */
-  def writeTarget(adnId: String) = isAdnNodeAdmin.Get(adnId) { implicit request =>
-    val ctx = implicitly[Context]
-    val form0 = advExtFormUtil.oneRawTargetFullFormM(adnId)
-      .fill( ("", Some(ctx.messages("New.target")), None) )
-    Ok( _createTargetTpl(adnId, form0)(ctx) )
+  def writeTarget(adnId: String) = csrf.AddToken {
+    isAdnNodeAdmin(adnId) { implicit request =>
+      val ctx = implicitly[Context]
+      val form0 = advExtFormUtil.oneRawTargetFullFormM(adnId)
+        .fill( ("", Some(ctx.messages("New.target")), None) )
+      Ok( _createTargetTpl(adnId, form0)(ctx) )
+    }
   }
 
 
@@ -297,21 +305,23 @@ class LkAdvExt @Inject() (
    * @return 200 Ok если цель создана.
    *         406 NotAcceptable если форма заполнена с ошибками. body содержит рендер формы с ошибками.
    */
-  def writeTargetSubmit(adnId: String) = canSubmitExtTargetForNode.Post(adnId).async { implicit request =>
-    request.newTgForm.fold(
-      {formWithErrors =>
-        debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(_targetFormTpl(adnId, formWithErrors, request.tgExisting))
-      },
-      {case (tg, ret) =>
-        for (tgId <- mExtTargets.save(tg)) yield {
-          // Вернуть форму с выставленным id.
-          val tg2 = tg.copy(id = Some(tgId))
-          val form = request.newTgForm fill (tg2, ret)
-          Ok(_targetFormTpl(adnId, form, Some(tg2)))
+  def writeTargetSubmit(adnId: String) = csrf.Check {
+    canSubmitExtTargetForNode(adnId).async { implicit request =>
+      request.newTgForm.fold(
+        {formWithErrors =>
+          debug(s"createTargetSubmit($adnId): Unable to bind form:\n ${formatFormErrors(formWithErrors)}")
+          NotAcceptable(_targetFormTpl(adnId, formWithErrors, request.tgExisting))
+        },
+        {case (tg, ret) =>
+          for (tgId <- mExtTargets.save(tg)) yield {
+            // Вернуть форму с выставленным id.
+            val tg2 = tg.copy(id = Some(tgId))
+            val form = request.newTgForm fill (tg2, ret)
+            Ok(_targetFormTpl(adnId, form, Some(tg2)))
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 

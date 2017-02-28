@@ -1,9 +1,8 @@
 package util.acl
 
 import com.google.inject.Inject
-import controllers.SioController
-import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
 import models.usr._
@@ -27,110 +26,100 @@ class CanRecoverPw @Inject() (
                                identUtil              : IdentUtil,
                                emailPwIdents          : EmailPwIdents,
                                emailActivations       : EmailActivations,
-                               val csrf               : Csrf,
                                override val mCommonDi : ICommonDi
                              )
-  extends SioController
+  extends SioActionBuilderOuter
   with BruteForceProtect
   with MacroLogsImpl
 {
 
   import mCommonDi._
 
-  /** Трейт с базовой логикой action-builder'а CanRecoverPw. */
-  sealed abstract class CanRecoverPwBase
-    extends ActionBuilder[MRecoverPwReq]
-    with InitUserCmds
-  {
 
-    /** id активатора. */
-    def eActId: String
+  /** Собрать ACL ActionBuilder проверки доступа на восстановление пароля.
+    *
+    * @param eActId id активатора.
+    * @param keyNotFoundF Не найден ключ для восстановления.
+    */
+  def apply(eActId: String, userInits1: MUserInit*)
+           (keyNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MRecoverPwReq] = {
 
-    /** Не найден ключ для восстановления. */
-    def keyNotFoundF: IReq[_] => Future[Result]
+    new SioActionBuilderImpl[MRecoverPwReq] with InitUserCmds {
 
-    override def invokeBlock[A](request: Request[A], block: (MRecoverPwReq[A]) => Future[Result]): Future[Result] = {
-      lazy val logPrefix = s"CanRecoverPw($eActId): "
+      override def userInits = userInits1
 
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
+      override def invokeBlock[A](request: Request[A], block: (MRecoverPwReq[A]) => Future[Result]): Future[Result] = {
+        lazy val logPrefix = s"CanRecoverPw($eActId): "
 
-      val wrappedReq = MReq(request, user)
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
 
-      bruteForceProtectedNoimpl(wrappedReq) {
-        val eaOptFut = emailActivations.getById(eActId)
-        def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
-          val req1 = MRecoverPwReq(epw, eAct, request, user)
-          block(req1)
-        }
-        def _reqErr = MReq(request, user)
-        eaOptFut.flatMap {
-          // Юзер обращается по корректной активационной записи.
-          case Some(eAct) =>
-            val epwIdentFut = emailPwIdents.getById(eAct.email)
-            maybeInitUser(user)
-            epwIdentFut.flatMap {
-              case Some(epw) if epw.personId == eAct.key =>
-                // Можно отрендерить блок
-                LOGGER.debug(logPrefix + "ok: " + request.path)
-                runF(eAct, epw)
+        val wrappedReq = MReq(request, user)
 
-              // should never occur: Почему-то нет парольной записи для активатора.
-              // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
-              case None =>
-                LOGGER.error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $personIdOpt ;; eAct = $eAct")
-                keyNotFoundF( _reqErr )
-            }
+        bruteForceProtectedNoimpl(wrappedReq) {
+          val eaOptFut = emailActivations.getById(eActId)
+          def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
+            val req1 = MRecoverPwReq(epw, eAct, request, user)
+            block(req1)
+          }
+          def _reqErr = MReq(request, user)
+          eaOptFut.flatMap {
+            // Юзер обращается по корректной активационной записи.
+            case Some(eAct) =>
+              val epwIdentFut = emailPwIdents.getById(eAct.email)
+              maybeInitUser(user)
+              epwIdentFut.flatMap {
+                case Some(epw) if epw.personId == eAct.key =>
+                  // Можно отрендерить блок
+                  LOGGER.debug(logPrefix + "ok: " + request.path)
+                  runF(eAct, epw)
 
-          // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
-          case result if user.isSuper =>
-            val personId = personIdOpt.get
-            LOGGER.trace("Superuser mocking activation...")
-            val epwOptFut = emailPwIdents.findByPersonId(personId)
-            maybeInitUser(user)
-            val epwFut = epwOptFut
-              .map(_.head)
-              .recover {
-                // should never occur
-                case ex: NoSuchElementException =>
-                  LOGGER.warn("Oops, superuser access for unknown epw! " + personId + " Mocking...", ex)
-                  EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
+                // should never occur: Почему-то нет парольной записи для активатора.
+                // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
+                case None =>
+                  LOGGER.error(s"${logPrefix}eAct exists, but emailPw is NOT! Hacker? pwOpt = $personIdOpt ;; eAct = $eAct")
+                  keyNotFoundF( _reqErr )
               }
-            val ea = result getOrElse {
-              LOGGER.debug("Superuser requested form with invalid/inexisting activation: " + result)
-              EmailActivation("mocked@suggest.io", key = "keykeykeykeykey", id = Some("idididididididid"))
-            }
-            epwFut.flatMap { epw =>
-              runF(ea, epw)
-                .map { _.flashing("error" -> "Using mocked activation.") }
-            }
 
-          // Остальные случаи -- мимо кассы
-          case _ =>
-            personIdOpt match {
-              // Вероятно, юзер повторно перешел по ссылке из письма.
-              case Some(personId) =>
-                identUtil.redirectUserSomewhere(personId)
-              // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
-              case None =>
-                LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + personIdOpt)
-                keyNotFoundF( _reqErr )
-            }
+            // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
+            case result if user.isSuper =>
+              val personId = personIdOpt.get
+              LOGGER.trace("Superuser mocking activation...")
+              val epwOptFut = emailPwIdents.findByPersonId(personId)
+              maybeInitUser(user)
+              val epwFut = epwOptFut
+                .map(_.head)
+                .recover {
+                  // should never occur
+                  case ex: NoSuchElementException =>
+                    LOGGER.warn("Oops, superuser access for unknown epw! " + personId + " Mocking...", ex)
+                    EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
+                }
+              val ea = result getOrElse {
+                LOGGER.debug("Superuser requested form with invalid/inexisting activation: " + result)
+                EmailActivation("mocked@suggest.io", key = "keykeykeykeykey", id = Some("idididididididid"))
+              }
+              epwFut.flatMap { epw =>
+                runF(ea, epw)
+                  .map { _.flashing("error" -> "Using mocked activation.") }
+              }
+
+            // Остальные случаи -- мимо кассы
+            case _ =>
+              personIdOpt match {
+                // Вероятно, юзер повторно перешел по ссылке из письма.
+                case Some(personId) =>
+                  identUtil.redirectUserSomewhere(personId)
+                // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
+                case None =>
+                  LOGGER.warn(logPrefix + "Unknown eAct key. pwOpt = " + personIdOpt)
+                  keyNotFoundF( _reqErr )
+              }
+          }
         }
       }
+
     }
   }
-
-  /** Реализация [[CanRecoverPwBase]] с выставлением CSRF-токена. */
-  case class Get(override val eActId: String, override val userInits: MUserInit*)
-                (override val keyNotFoundF: IReq[_] => Future[Result])
-    extends CanRecoverPwBase
-    with csrf.Get[MRecoverPwReq]
-
-  /** Реализация [[CanRecoverPwBase]] с проверкой CSRF-токена. */
-  case class Post(override val eActId: String, override val userInits: MUserInit*)
-                 (override val keyNotFoundF: IReq[_] => Future[Result])
-    extends CanRecoverPwBase
-    with csrf.Post[MRecoverPwReq]
 
 }

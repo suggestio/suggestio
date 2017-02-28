@@ -59,13 +59,15 @@ class MarketAdv @Inject() (
 
 
   /** Страница управления размещением рекламной карточки. */
-  def advForAd(adId: String) = canAdvAd.Get(adId, U.Lk).async { implicit request =>
-    val form0 = advDirectFormUtil.advForm
-    // Залить в форму начальные данные.
-    val res = FormResult()
-    val formFilled = form0.fill(res)
-    // Запускаем остальной рендер
-    renderAdvForm(formFilled, Ok)
+  def advForAd(adId: String) = csrf.AddToken {
+    canAdvAd(adId, U.Lk).async { implicit request =>
+      val form0 = advDirectFormUtil.advForm
+      // Залить в форму начальные данные.
+      val res = FormResult()
+      val formFilled = form0.fill(res)
+      // Запускаем остальной рендер
+      renderAdvForm(formFilled, Ok)
+    }
   }
 
 
@@ -245,66 +247,68 @@ class MarketAdv @Inject() (
     * @param adId id размещаемой рекламной карточки.
     * @return Инлайновый рендер отображаемой цены.
     */
-  def getAdvPriceSubmit(adId: String) = canAdvAd.Post(adId).async { implicit request =>
-    lazy val logPrefix = s"getAdvPriceSubmit($adId)#${System.currentTimeMillis}:"
-    advDirectFormUtil.advForm.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        NotAcceptable("Cannot bind form.")
-      },
+  def getAdvPriceSubmit(adId: String) = csrf.Check {
+    canAdvAd(adId).async { implicit request =>
+      lazy val logPrefix = s"getAdvPriceSubmit($adId)#${System.currentTimeMillis}:"
+      advDirectFormUtil.advForm.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(s"$logPrefix Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+          NotAcceptable("Cannot bind form.")
+        },
 
-      // Всё ок. Надо рассчитать цену и вернуть результат.
-      {formRes =>
-        // Подготовить данные для рассчета стоимости размещения.
-        val allRcvrIdsFut = for (rcvrs <- collectAllReceivers(request.producer)) yield {
-          OptId.els2idsSet( rcvrs )
-        }
+        // Всё ок. Надо рассчитать цену и вернуть результат.
+        {formRes =>
+          // Подготовить данные для рассчета стоимости размещения.
+          val allRcvrIdsFut = for (rcvrs <- collectAllReceivers(request.producer)) yield {
+            OptId.els2idsSet( rcvrs )
+          }
 
-        val adves2Fut = for {
-          adves1      <- prepareFromEntries(adId, formRes)
-          allRcvrIds  <- allRcvrIdsFut
-        } yield {
-          filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
-        }
+          val adves2Fut = for {
+            adves1      <- prepareFromEntries(adId, formRes)
+            allRcvrIds  <- allRcvrIdsFut
+          } yield {
+            filterEntiesByPossibleRcvrs(adves1, allRcvrIds)
+          }
 
-        implicit val ctx = implicitly[Context]
+          implicit val ctx = implicitly[Context]
 
-        // Начинаем рассчитывать ценник.
-        val priceValHtmlFut = for {
-          adves2  <- adves2Fut
-          prices  <- {
-            if (adves2.isEmpty || advFormUtil.maybeFreeAdv()) {
-              Future.successful(Nil: Iterable[MPrice])
-            } else {
-              for {
-                allPrices <- advDirectBilling.getAdvPrices(request.mad, adves2)
-              } yield {
-                MPrice.sumPricesByCurrency(allPrices).values
+          // Начинаем рассчитывать ценник.
+          val priceValHtmlFut = for {
+            adves2  <- adves2Fut
+            prices  <- {
+              if (adves2.isEmpty || advFormUtil.maybeFreeAdv()) {
+                Future.successful(Nil: Iterable[MPrice])
+              } else {
+                for {
+                  allPrices <- advDirectBilling.getAdvPrices(request.mad, adves2)
+                } yield {
+                  MPrice.sumPricesByCurrency(allPrices).values
+                }
               }
             }
+          } yield {
+            val advPricing = bill2Util.getAdvPricing(prices)
+            htmlCompressUtil.html2str4json {
+              _priceValTpl(advPricing)(ctx)
+            }
           }
-        } yield {
-          val advPricing = bill2Util.getAdvPricing(prices)
-          htmlCompressUtil.html2str4json {
-            _priceValTpl(advPricing)(ctx)
+
+          // Параллельно отрендерить отчет по датам размещения.
+          val periodReportHtml = htmlCompressUtil.html2str4json {
+            _reportTpl(formRes.period)(ctx)
+          }
+
+          // Отрендерить JSON-ответ
+          for (priceValHtml <- priceValHtmlFut) yield {
+            val resp = GetPriceResp(
+              periodReportHtml  = periodReportHtml,
+              priceHtml         = priceValHtml
+            )
+            Ok( Json.toJson(resp) )
           }
         }
-
-        // Параллельно отрендерить отчет по датам размещения.
-        val periodReportHtml = htmlCompressUtil.html2str4json {
-          _reportTpl(formRes.period)(ctx)
-        }
-
-        // Отрендерить JSON-ответ
-        for (priceValHtml <- priceValHtmlFut) yield {
-          val resp = GetPriceResp(
-            periodReportHtml  = periodReportHtml,
-            priceHtml         = priceValHtml
-          )
-          Ok( Json.toJson(resp) )
-        }
-      }
-    )
+      )
+    }
   }
 
 
@@ -368,113 +372,115 @@ class MarketAdv @Inject() (
   }
 
   /** Сабмит формы размещения рекламной карточки. */
-  def advFormSubmit(adId: String) = canAdvAd.Post(adId, U.Contract, U.PersonNode).async { implicit request =>
-    lazy val logPrefix = s"advFormSubmit($adId): "
-    val formBinded = advDirectFormUtil.advForm.bindFromRequest()
-    formBinded.fold(
-      {formWithErrors =>
-        debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
-        renderAdvForm(formWithErrors, NotAcceptable)
-      },
-      {formRes =>
-        trace(logPrefix + "Starting with: " + formRes)
+  def advFormSubmit(adId: String) = csrf.Check {
+    canAdvAd(adId, U.Contract, U.PersonNode).async { implicit request =>
+      lazy val logPrefix = s"advFormSubmit($adId): "
+      val formBinded = advDirectFormUtil.advForm.bindFromRequest()
+      formBinded.fold(
+        {formWithErrors =>
+          debug(s"${logPrefix}form bind failed:\n${formatFormErrors(formWithErrors)}")
+          renderAdvForm(formWithErrors, NotAcceptable)
+        },
+        {formRes =>
+          trace(logPrefix + "Starting with: " + formRes)
 
-        val adves2Fut = prepareFromEntries(adId, formRes)
+          val adves2Fut = prepareFromEntries(adId, formRes)
 
-        // Перед сохранением надо проверить возможности публикации на каждый узел.
-        // Получаем в фоне все возможные узлы-ресиверы.
-        val rcvrsFut = {
-          val ids = formRes.nodeIdsIter
-            .filter { id => !request.producer.id.contains(id) }
-          collectRcvrsFromIds(ids)
-        }
-
-        val adves3Fut = for {
-          adves2    <- adves2Fut
-          rcvrs     <- rcvrsFut
-        } yield {
-          val allRcvrIds = OptId.els2idsSet(rcvrs)
-          filterEntiesByPossibleRcvrs(adves2, allRcvrIds)
-        }
-
-        // Начинаем двигаться в сторону сборки ответа...
-        val respFut = for {
-          adves3 <- adves3Fut
-          // С пустым списком размещения ковыряться смысла нет. Исключение будет перехвачено в recover:
-          if adves3.nonEmpty
-
-          // Запустить подготовку контракта текущего юзера.
-          personContractFut = {
-            request.user
-              .personNodeFut
-              .flatMap { personNode =>
-                bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
-              }
+          // Перед сохранением надо проверить возможности публикации на каждый узел.
+          // Получаем в фоне все возможные узлы-ресиверы.
+          val rcvrsFut = {
+            val ids = formRes.nodeIdsIter
+              .filter { id => !request.producer.id.contains(id) }
+            collectRcvrsFromIds(ids)
           }
 
-          // Синхронно проанализировать состояние галочки бесплатного размещения.
-          isSuFree = advFormUtil.maybeFreeAdv()
-          status   = advFormUtil.suFree2newItemStatus(isSuFree)
-
-          rcvrs     <- rcvrsFut
-
-          // Подготовить данные для рассчета стоимостей item'ов
-          tfsMap    <- tfDailyUtil.getNodesTfsMap(rcvrs)
-          mcalsCtx  <- {
-            val calIds = tfDailyUtil.tfsMap2calIds(tfsMap)
-            calendarUtil.getCalsCtx(calIds)
+          val adves3Fut = for {
+            adves2    <- adves2Fut
+            rcvrs     <- rcvrsFut
+          } yield {
+            val allRcvrIds = OptId.els2idsSet(rcvrs)
+            filterEntiesByPossibleRcvrs(adves2, allRcvrIds)
           }
 
-          // Собрать данные для биллинга, которые должны бы собраться уже
-          personContract    <- personContractFut
+          // Начинаем двигаться в сторону сборки ответа...
+          val respFut = for {
+            adves3 <- adves3Fut
+            // С пустым списком размещения ковыряться смысла нет. Исключение будет перехвачено в recover:
+            if adves3.nonEmpty
 
-          // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
-          billRes <- {
-            val dbAction = for {
-              cartOrder  <- bill2Util.ensureCart(
-                contractId  = personContract.mc.id.get,
-                status0     = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
-              )
-
-              //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
-
-              itemsSaved <- {
-                val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
-                mItems.insertMany(items0)
-              }
-
-            } yield {
-              MOrderWithItems(cartOrder, itemsSaved)
+            // Запустить подготовку контракта текущего юзера.
+            personContractFut = {
+              request.user
+                .personNodeFut
+                .flatMap { personNode =>
+                  bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+                }
             }
-            import slick.profile.api._
-            slick.db.run( dbAction.transactionally )
+
+            // Синхронно проанализировать состояние галочки бесплатного размещения.
+            isSuFree = advFormUtil.maybeFreeAdv()
+            status   = advFormUtil.suFree2newItemStatus(isSuFree)
+
+            rcvrs     <- rcvrsFut
+
+            // Подготовить данные для рассчета стоимостей item'ов
+            tfsMap    <- tfDailyUtil.getNodesTfsMap(rcvrs)
+            mcalsCtx  <- {
+              val calIds = tfDailyUtil.tfsMap2calIds(tfsMap)
+              calendarUtil.getCalsCtx(calIds)
+            }
+
+            // Собрать данные для биллинга, которые должны бы собраться уже
+            personContract    <- personContractFut
+
+            // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
+            billRes <- {
+              val dbAction = for {
+                cartOrder  <- bill2Util.ensureCart(
+                  contractId  = personContract.mc.id.get,
+                  status0     = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
+                )
+
+                //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
+
+                itemsSaved <- {
+                  val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
+                  mItems.insertMany(items0)
+                }
+
+              } yield {
+                MOrderWithItems(cartOrder, itemsSaved)
+              }
+              import slick.profile.api._
+              slick.db.run( dbAction.transactionally )
+            }
+
+          } yield {
+            LOGGER.debug(s"$logPrefix Successfully created items, res = $billRes")
+
+            // Всё сделано, отредиректить юзера
+            if (!isSuFree) {
+              // Обычные юзеры отправляются в корзину.
+              val call = routes.LkBill2.cart(
+                nodeId  = request.producer.id.get,
+                r       = Some(routes.MarketAdv.advForAd(adId).url)
+              )
+              Redirect(call)
+            } else {
+              // Суперюзеры sio отправляются на эту же страницу для дальнейшей возни
+              Redirect( routes.MarketAdv.advForAd(adId) )
+                .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+            }
           }
 
-        } yield {
-          LOGGER.debug(s"$logPrefix Successfully created items, res = $billRes")
-
-          // Всё сделано, отредиректить юзера
-          if (!isSuFree) {
-            // Обычные юзеры отправляются в корзину.
-            val call = routes.LkBill2.cart(
-              nodeId  = request.producer.id.get,
-              r       = Some(routes.MarketAdv.advForAd(adId).url)
-            )
-            Redirect(call)
-          } else {
-            // Суперюзеры sio отправляются на эту же страницу для дальнейшей возни
-            Redirect( routes.MarketAdv.advForAd(adId) )
-              .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+          // Если список размещения пуст, то надо вернуть форму.
+          respFut.recover { case _: NoSuchElementException =>
+            Redirect(routes.MarketAdv.advForAd(adId))
+              .flashing(FLASH.SUCCESS -> "No.changes")
           }
         }
-
-        // Если список размещения пуст, то надо вернуть форму.
-        respFut.recover { case ex: NoSuchElementException =>
-          Redirect(routes.MarketAdv.advForAd(adId))
-            .flashing(FLASH.SUCCESS -> "No.changes")
-        }
-      }
-    )
+      )
+    }
   }
 
 

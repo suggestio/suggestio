@@ -163,38 +163,44 @@ trait PwRecover
   }
 
   /** Запрос страницы с формой вспоминания пароля по email'у. */
-  def recoverPwForm = isAnon.Get { implicit request =>
-    Ok(_recoverPwStep1(recoverPwFormM))
+  def recoverPwForm = csrf.AddToken {
+    isAnon() { implicit request =>
+      Ok(_recoverPwStep1(recoverPwFormM))
+    }
   }
 
   /** Сабмит формы восстановления пароля. */
-  def recoverPwFormSubmit = isAnon.Post.async { implicit request =>
-    bruteForceProtected {
-      val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
-      formBinded.fold(
-        {formWithErrors =>
-          LOGGER.debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
-          NotAcceptable(_recoverPwStep1(formWithErrors))
-        },
-        {email1 =>
-          sendRecoverMail(email1) map { _ =>
-            // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
-            rmCaptcha(formBinded){
-              Redirect( CSRF(routes.Ident.recoverPwAccepted(email1)) )
+  def recoverPwFormSubmit = csrf.Check {
+    isAnon().async { implicit request =>
+      bruteForceProtected {
+        val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
+        formBinded.fold(
+          {formWithErrors =>
+            LOGGER.debug("recoverPwFormSubmit(): Failed to bind form:\n" + formatFormErrors(formWithErrors))
+            NotAcceptable(_recoverPwStep1(formWithErrors))
+          },
+          {email1 =>
+            sendRecoverMail(email1) map { _ =>
+              // отрендерить юзеру результат, что всё ок, независимо от успеха поиска.
+              rmCaptcha(formBinded){
+                Redirect( CSRF(routes.Ident.recoverPwAccepted(email1)) )
+              }
             }
           }
-        }
-      )
+        )
+      }
     }
   }
 
   /** Рендер страницы, отображаемой когда запрос восстановления пароля принят.
     * CSRF используется, чтобы никому нельзя было слать ссылку с сообщением "ваш пароль выслан вам на почту". */
-  def recoverPwAccepted(email1: String) = maybeAuth.Post() { implicit request =>
-    val ctx = implicitly[Context]
-    val colHtml = _acceptedColTpl(email1)(ctx)
-    val html = _outer(colHtml)(ctx)
-    Ok(html)
+  def recoverPwAccepted(email1: String) = csrf.Check {
+    maybeAuth() { implicit request =>
+      val ctx = implicitly[Context]
+      val colHtml = _acceptedColTpl(email1)(ctx)
+      val html = _outer(colHtml)(ctx)
+      Ok(html)
+    }
   }
 
   /** Форма сброса пароля. */
@@ -206,47 +212,53 @@ trait PwRecover
     _outer(colHtml)(ctx)
   }
 
+
   /** Юзер перешел по ссылке восстановления пароля из письма. Ему нужна форма ввода нового пароля. */
-  def recoverPwReturn(eActId: String) = canRecoverPw.Get(eActId)(_recoverKeyNotFound) { implicit request =>
-    Ok(_pwReset(pwResetFormM))
+  def recoverPwReturn(eActId: String) = csrf.AddToken {
+    canRecoverPw(eActId)(_recoverKeyNotFound) { implicit request =>
+      Ok(_pwReset(pwResetFormM))
+    }
   }
+
 
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
     * удалить запись из EmailActivation и отредиректить куда-нибудь. */
-  def pwResetSubmit(eActId: String) = canRecoverPw.Post(eActId, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
-    pwResetFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(_pwReset(formWithErrors))
-      },
-      {newPw =>
-        val pwHash2 = scryptUtil.mkHash(newPw)
-        val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
-        for {
+  def pwResetSubmit(eActId: String) = csrf.Check {
+    canRecoverPw(eActId, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
+      pwResetFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          NotAcceptable(_pwReset(formWithErrors))
+        },
+        {newPw =>
+          val pwHash2 = scryptUtil.mkHash(newPw)
+          val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
+          for {
           // Сохранение новых данных по паролю
-          _         <- emailPwIdents.save(epw2)
+            _         <- emailPwIdents.save(epw2)
 
-          // Запуск удаления eact
-          updateFut = emailActivations.deleteById(eActId)
+            // Запуск удаления eact
+            updateFut = emailActivations.deleteById(eActId)
 
-          // Подготовить редирект
-          rdr       <- identUtil.redirectUserSomewhere(epw2.personId)
+            // Подготовить редирект
+            rdr       <- identUtil.redirectUserSomewhere(epw2.personId)
 
-          // Генерить ответ как только появляется возможность.
-          res1      <- {
-            val res0 = rdr
-              .addingToSession(Keys.PersonId.name -> epw2.personId)
-              .flashing(FLASH.SUCCESS -> "New.password.saved")
-            setLangCookie2(res0, request.user.personNodeOptFut)
+            // Генерить ответ как только появляется возможность.
+            res1      <- {
+              val res0 = rdr
+                .addingToSession(Keys.PersonId.name -> epw2.personId)
+                .flashing(FLASH.SUCCESS -> "New.password.saved")
+              setLangCookie2(res0, request.user.personNodeOptFut)
+            }
+
+            // Дожидаться успешного завершения асинхронных операций
+            _         <- updateFut
+          } yield {
+            res1
           }
-
-          // Дожидаться успешного завершения асинхронных операций
-          _         <- updateFut
-        } yield {
-          res1
         }
-      }
-    )
+      )
+    }
   }
 
 }

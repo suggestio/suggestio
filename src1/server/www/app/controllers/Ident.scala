@@ -85,18 +85,20 @@ class Ident @Inject() (
    * @return 200 Ok для анонимуса.
    *         Иначе редирект в личный кабинет.
    */
-  def mySioStartPage(r: Option[String]) = isAnon.Get.async { implicit request =>
-    implicit val ctxData = CtxData(
-      jsiTgs = MJsiTgs.CaptchaForm :: MJsiTgs.HiddenCaptcha :: Nil
-    )
-    // TODO Затолкать это в отдельный шаблон!
-    val ctx = implicitly[Context]
-    val formFut = emailPwLoginFormStubM
-    val title = ctx.messages("Login.page.title")
-    val rc = _regColumnTpl(emailRegFormM, captchaShown = false)(ctx)
-    for (lf <- formFut) yield {
-      val lc = _loginColumnTpl(lf, r)(ctx)
-      Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )
+  def mySioStartPage(r: Option[String]) = csrf.AddToken {
+    isAnon().async { implicit request =>
+      implicit val ctxData = CtxData(
+        jsiTgs = MJsiTgs.CaptchaForm :: MJsiTgs.HiddenCaptcha :: Nil
+      )
+      // TODO Затолкать это в отдельный шаблон!
+      val ctx = implicitly[Context]
+      val formFut = emailPwLoginFormStubM
+      val title = ctx.messages("Login.page.title")
+      val rc = _regColumnTpl(emailRegFormM, captchaShown = false)(ctx)
+      for (lf <- formFut) yield {
+        val lc = _loginColumnTpl(lf, r)(ctx)
+        Ok( mySioStartTpl(title, Seq(lc, rc))(ctx) )
+      }
     }
   }
 

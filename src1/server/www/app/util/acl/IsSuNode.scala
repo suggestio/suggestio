@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeReq, MReq}
 
@@ -18,68 +18,49 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  */
 @Singleton
 class IsSuNode @Inject() (
-                           val csrf   : Csrf,
                            isSu       : IsSu,
                            mCommonDi  : ICommonDi
-                         ) {
+                         )
+  extends SioActionBuilderOuter
+{
 
   import mCommonDi._
 
-  /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin. */
-  sealed trait IsSuNodeBase
-    extends ActionBuilder[MNodeReq]
-  {
 
-    /** id запрашиваемого узла. */
-    def nodeId: String
+  /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
+    * @param nodeId id запрашиваемого узла.
+    */
+  def apply(nodeId: String): ActionBuilder[MNodeReq] = {
+    new SioActionBuilderImpl[MNodeReq] {
 
-    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
-      if (user.isSuper) {
-        val mnodeOptFut = mNodesCache.getById(nodeId)
-        mnodeOptFut.flatMap {
-          case Some(mnode) =>
-            val req1 = MNodeReq(mnode, request, user)
-            block(req1)
+      override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
+        if (user.isSuper) {
+          val mnodeOptFut = mNodesCache.getById(nodeId)
+          mnodeOptFut.flatMap {
+            case Some(mnode) =>
+              val req1 = MNodeReq(mnode, request, user)
+              block(req1)
 
-          case None =>
-            val req1 = MReq(request, user)
-            nodeNotFound(req1)
+            case None =>
+              val req1 = MReq(request, user)
+              nodeNotFound(req1)
+          }
+
+        } else {
+          val req1 = MReq(request, user)
+          isSu.supOnUnauthFut(req1)
         }
-
-      } else {
-        val req1 = MReq(request, user)
-        isSu.supOnUnauthFut(req1)
       }
-    }
 
-    def nodeNotFound(req: IReqHdr): Future[Result] = {
-      errorHandler.http404Fut(req)
     }
-
   }
 
-  sealed abstract class IsSuNodeBase2
-    extends IsSuNodeBase
 
-  /**
-   * Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
-   * @param nodeId id рекламного узла, которым интересуется суперпользователь.
-   */
-  case class IsSuNode(override val nodeId: String)
-    extends IsSuNodeBase2
-  def apply(nodeId: String) = IsSuNode(nodeId)
-
-  /** Аналог [[IsSuNode]] с выставлением CSRF-токена. */
-  case class Get(override val nodeId: String)
-    extends IsSuNodeBase2
-    with csrf.Get[MNodeReq]
-
-  /** Аналог [[IsSuNode]] с проверкой CSRF-токена при сабмитах. */
-  case class Post(override val nodeId: String)
-    extends IsSuNodeBase2
-    with csrf.Post[MNodeReq]
+  def nodeNotFound(req: IReqHdr): Future[Result] = {
+    errorHandler.http404Fut(req)
+  }
 
 }
 

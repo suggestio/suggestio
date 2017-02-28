@@ -110,45 +110,47 @@ class LkAdvGeo @Inject() (
     *
     * @param adId id отрабатываемой карточки.
     */
-  def forAd(adId: String) = canAdvAd.Get(adId, U.Lk, U.ContractId).async { implicit request =>
-    // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
-    //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
-    val resLogic = new ForAdLogic(
-      _isSuFree = request.user.isSuper
-    )
-
-    val formFut = for {
-      gp0         <- resLogic._geoPointFut
-      a4fPropsOpt <- resLogic._a4fPropsOptFut
-    } yield {
-
-      // TODO Распилить это на MMapProps и MGeoCircle.
-      val radMapVal = advFormUtil.radMapValue0(gp0)
-
-      // Залить начальные данные в маппинг формы.
-      MFormS(
-        mapProps = MMapProps(
-          center = radMapVal.state.center,
-          zoom   = radMapVal.state.zoom
-        ),
-        // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
-        onMainScreen = true,
-        adv4freeChecked = a4fPropsOpt.map(_ => true),
-        // TODO Найти текущие ресиверы в draft items (в корзине неоплаченных).
-        rcvrsMap = Map.empty,
-        // TODO Найти текущие теги в draft items (в корзине неоплаченных).
-        tagsEdit = MTagsEditProps(),
-        datePeriod = MAdvPeriod(),
-        // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
-        radCircle = Some(MGeoCircle(
-          center  = radMapVal.circle.center,
-          radiusM = radMapVal.circle.radius.meters
-        )),
-        tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE
+  def forAd(adId: String) = csrf.AddToken {
+    canAdvAd(adId, U.Lk, U.ContractId).async { implicit request =>
+      // TODO Попытаться заполнить форму с помощью данных из черновиков, если они есть.
+      //val draftItemsFut = advGeoBillUtil.findDraftsForAd(adId)
+      val resLogic = new ForAdLogic(
+        _isSuFree = request.user.isSuper
       )
-    }
 
-    resLogic.result(formFut, Ok)
+      val formFut = for {
+        gp0         <- resLogic._geoPointFut
+        a4fPropsOpt <- resLogic._a4fPropsOptFut
+      } yield {
+
+        // TODO Распилить это на MMapProps и MGeoCircle.
+        val radMapVal = advFormUtil.radMapValue0(gp0)
+
+        // Залить начальные данные в маппинг формы.
+        MFormS(
+          mapProps = MMapProps(
+            center = radMapVal.state.center,
+            zoom   = radMapVal.state.zoom
+          ),
+          // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
+          onMainScreen = true,
+          adv4freeChecked = a4fPropsOpt.map(_ => true),
+          // TODO Найти текущие ресиверы в draft items (в корзине неоплаченных).
+          rcvrsMap = Map.empty,
+          // TODO Найти текущие теги в draft items (в корзине неоплаченных).
+          tagsEdit = MTagsEditProps(),
+          datePeriod = MAdvPeriod(),
+          // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
+          radCircle = Some(MGeoCircle(
+            center  = radMapVal.circle.center,
+            radiusM = radMapVal.circle.radius.meters
+          )),
+          tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE
+        )
+      }
+
+      resLogic.result(formFut, Ok)
+    }
   }
 
 
@@ -268,87 +270,89 @@ class LkAdvGeo @Inject() (
    * @param adId id размещаемой карточки.
    * @return 302 see other, 416 not acceptable.
    */
-  def forAdSubmit(adId: String) = canAdvAd.Post(adId, U.PersonNode).async(formPostBP) { implicit request =>
-    lazy val logPrefix = s"forAdSubmit($adId):"
+  def forAdSubmit(adId: String) = csrf.Check {
+    canAdvAd(adId, U.PersonNode).async(formPostBP) { implicit request =>
+      lazy val logPrefix = s"forAdSubmit($adId):"
 
-    // Хватаем бинарные данные из тела запроса...
-    advGeoFormUtil.validateForm( request.body ).fold(
-      {violations =>
-        LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString("\n", "\n ", "")}")
-        NotAcceptable( violations.toString )
-      },
+      // Хватаем бинарные данные из тела запроса...
+      advGeoFormUtil.validateForm( request.body ).fold(
+        {violations =>
+          LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString("\n", "\n ", "")}")
+          NotAcceptable( violations.toString )
+        },
 
-      {mFormS =>
-        LOGGER.trace(s"$logPrefix Binded: $mFormS")
+        {mFormS =>
+          LOGGER.trace(s"$logPrefix Binded: $mFormS")
 
-        val mFormS2Fut = _checkFormRcvrs(mFormS)
-        val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
+          val mFormS2Fut = _checkFormRcvrs(mFormS)
+          val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
-        val abcFut = mFormS2Fut.flatMap { mFormS2 =>
-          advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2)
-        }
+          val abcFut = mFormS2Fut.flatMap { mFormS2 =>
+            advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2)
+          }
 
-        val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
+          val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
 
-        for {
+          for {
           // Прочитать узел юзера. Нужно для чтения/инциализации к контракта
-          personNode0 <- request.user.personNodeFut
+            personNode0 <- request.user.personNodeFut
 
-          // Узнать контракт юзера
-          e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
+            // Узнать контракт юзера
+            e           <- bill2Util.ensureNodeContract(personNode0, request.user.mContractOptFut)
 
-          // Дождаться готовности контекста биллинга:
-          abc         <- abcFut
+            // Дождаться готовности контекста биллинга:
+            abc         <- abcFut
 
-          // Произвести добавление товаров в корзину.
-          (itemsCart, itemsAdded) <- {
-            // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
-            val dbAction = for {
-              // Найти/создать корзину
-              cart    <- bill2Util.ensureCart(
-                contractId = e.mc.id.get,
-                status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
-              )
+            // Произвести добавление товаров в корзину.
+            (itemsCart, itemsAdded) <- {
+              // Надо определиться, правильно ли инициализацию корзины запихивать внутрь транзакции?
+              val dbAction = for {
+                // Найти/создать корзину
+                cart    <- bill2Util.ensureCart(
+                  contractId = e.mc.id.get,
+                  status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
+                )
 
-              // Узнать, потребуется ли послать письмецо модераторам после добавления item'ов.
-              //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
+                // Узнать, потребуется ли послать письмецо модераторам после добавления item'ов.
+                //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
-              // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
-              addRes  <- advGeoBillUtil.addToOrder(
-                orderId     = cart.id.get,
-                status      = status,
-                abc         = abc
-              )
-            } yield {
-              (cart, addRes)
+                // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
+                addRes  <- advGeoBillUtil.addToOrder(
+                  orderId     = cart.id.get,
+                  status      = status,
+                  abc         = abc
+                )
+              } yield {
+                (cart, addRes)
+              }
+              // Запустить экшен добавления в корзину на исполнение.
+              import slick.profile.api._
+              slick.db.run( dbAction.transactionally )
             }
-            // Запустить экшен добавления в корзину на исполнение.
-            import slick.profile.api._
-            slick.db.run( dbAction.transactionally )
+
+          } yield {
+            LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.mc.id.orNull} with item status '$status'.")
+
+            val rCall = routes.LkAdvGeo.forAd(adId)
+            val retCall = if (!isSuFree) {
+              val producerId  = request.producer.id.get
+              routes.LkBill2.cart(producerId, r = Some(rCall.url))
+              //implicit val messages = implicitly[Messages]
+              // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
+              //Redirect()
+              //  .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
+
+            } else {
+              // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
+              //Redirect( rCall )
+              //  .flashing(FLASH.SUCCESS -> "Ads.were.adv")
+              rCall
+            }
+            Ok(retCall.url)
           }
-
-        } yield {
-          LOGGER.debug(s"$logPrefix $itemsAdded items added into cart#${itemsCart.id.orNull} of contract#${e.mc.id.orNull} with item status '$status'.")
-
-          val rCall = routes.LkAdvGeo.forAd(adId)
-          val retCall = if (!isSuFree) {
-            val producerId  = request.producer.id.get
-            routes.LkBill2.cart(producerId, r = Some(rCall.url))
-            //implicit val messages = implicitly[Messages]
-            // Пора вернуть результат работы юзеру: отредиректить в корзину-заказ для оплаты.
-            //Redirect()
-            //  .flashing(FLASH.SUCCESS -> messages("Added.n.items.to.cart", itemsAdded.size))
-
-          } else {
-            // Суперюзеры отправляются назад в эту же форму для дальнейшего размещения.
-            //Redirect( rCall )
-            //  .flashing(FLASH.SUCCESS -> "Ads.were.adv")
-            rCall
-          }
-          Ok(retCall.url)
         }
-      }
-    )
+      )
+    }
   }
 
 
@@ -381,37 +385,39 @@ class LkAdvGeo @Inject() (
     * @param adId id рекламной карточки.
     * @return 200 / 416 + JSON
     */
-  def getPriceSubmit(adId: String) = canAdvAd.Post(adId).async(formPostBP) { implicit request =>
-    lazy val logPrefix = s"getPriceSubmit($adId):"
+  def getPriceSubmit(adId: String) = csrf.Check {
+    canAdvAd(adId).async(formPostBP) { implicit request =>
+      lazy val logPrefix = s"getPriceSubmit($adId):"
 
-    advGeoFormUtil.validateForm( request.body ).fold(
-      {violations =>
-        LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
-        NotAcceptable( violations.toString )
-      },
-      {mFormS =>
-        LOGGER.debug(s"$logPrefix request body =\n $mFormS")
-        val mFromS2Fut = _checkFormRcvrs(mFormS)
-        val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
+      advGeoFormUtil.validateForm( request.body ).fold(
+        {violations =>
+          LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
+          NotAcceptable( violations.toString )
+        },
+        {mFormS =>
+          LOGGER.debug(s"$logPrefix request body =\n $mFormS")
+          val mFromS2Fut = _checkFormRcvrs(mFormS)
+          val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
-        // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
-        val pricingFut = for {
-          mFormS2 <- mFromS2Fut
-          pricing <- _getPricing(isSuFree, mFormS2)
-        } yield {
-          advFormUtil.prepareAdvPricing(pricing)
+          // Запустить асинхронные операции: Надо обратиться к биллингу за рассчётом ценника:
+          val pricingFut = for {
+            mFormS2 <- mFromS2Fut
+            pricing <- _getPricing(isSuFree, mFormS2)
+          } yield {
+            advFormUtil.prepareAdvPricing(pricing)
+          }
+
+          for {
+            pricing <- pricingFut
+          } yield {
+            // Сериализация результата.
+            LOGGER.trace(s"$logPrefix => $pricing")
+            val bbuf = PickleUtil.pickle(pricing)
+            Ok( ByteString(bbuf) )
+          }
         }
-
-        for {
-          pricing <- pricingFut
-        } yield {
-          // Сериализация результата.
-          LOGGER.trace(s"$logPrefix => $pricing")
-          val bbuf = PickleUtil.pickle(pricing)
-          Ok( ByteString(bbuf) )
-        }
-      }
-    )
+      )
+    }
   }
 
 
@@ -420,21 +426,23 @@ class LkAdvGeo @Inject() (
     * @param adId id текущей размещаемой рекламной карточки.
     *             Пока используется как основание для проверки прав доступа.
     */
-  def advRcvrsMap(adId: MEsUuId) = canAdvAd.Post(adId).async { implicit request =>
-    val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
-      val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
-      advGeoMapUtil.rcvrNodesMap( msearch )
-    }
-    // Сериализовать поток данных в JSON:
-    val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(
-      nodesSrc.map { m =>
-        Json.toJson( m.toGeoJson )
+  def advRcvrsMap(adId: MEsUuId) = csrf.Check {
+    canAdvAd(adId).async { implicit request =>
+      val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
+        val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
+        advGeoMapUtil.rcvrNodesMap( msearch )
       }
-    )
-    // Вернуть chunked-ответ с потоком из JSON внутрях.
-    Ok.chunked(jsonStrSrc)
-      .as( withCharset(JSON) )
-      .withHeaders(CACHE_10)
+      // Сериализовать поток данных в JSON:
+      val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(
+        nodesSrc.map { m =>
+          Json.toJson( m.toGeoJson )
+        }
+      )
+      // Вернуть chunked-ответ с потоком из JSON внутрях.
+      Ok.chunked(jsonStrSrc)
+        .as( withCharset(JSON) )
+        .withHeaders(CACHE_10)
+    }
   }
 
 
@@ -443,29 +451,31 @@ class LkAdvGeo @Inject() (
     * @param adId id интересующей рекламной карточки.
     * @return js.Array[GjFeature].
     */
-  def existGeoAdvsMap(adId: String) = canAdvAd.Post(adId).async { implicit request =>
-    // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
-    val currAdvsSrc = slick.db
-      .stream {
-        val query = advGeoBillUtil.findCurrentForAdQ(request.mad.id.get)
-        advGeoBillUtil.onlyGeoShapesInfo(query)
-      }
-      .toSource
-      // Причесать сырой выхлоп базы, состоящий из пачки Option'ов.
-      .mapConcat( MAdvGeoShapeInfo.applyOpt(_).toList )
-      // Каждый элемент нужно скомпилить в пригодную для сериализации модель.
-      .map { si =>
+  def existGeoAdvsMap(adId: String) = csrf.Check {
+    canAdvAd(adId).async { implicit request =>
+      // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
+      val currAdvsSrc = slick.db
+        .stream {
+          val query = advGeoBillUtil.findCurrentForAdQ(request.mad.id.get)
+          advGeoBillUtil.onlyGeoShapesInfo(query)
+        }
+        .toSource
+        // Причесать сырой выхлоп базы, состоящий из пачки Option'ов.
+        .mapConcat( MAdvGeoShapeInfo.applyOpt(_).toList )
+        // Каждый элемент нужно скомпилить в пригодную для сериализации модель.
+        .map { si =>
         // Сконвертить в GeoJSON и сериализовать в промежуточное JSON-представление.
         val gj = advGeoFormUtil.shapeInfo2geoJson(si)
         Json.toJson(gj)
       }
 
-    // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
-    val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
+      // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
+      val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
 
-    Ok.chunked(jsonStrSrc)
-      .as( withCharset(JSON) )
-      .withHeaders(CACHE_10)
+      Ok.chunked(jsonStrSrc)
+        .as( withCharset(JSON) )
+        .withHeaders(CACHE_10)
+    }
   }
 
 
@@ -474,82 +484,84 @@ class LkAdvGeo @Inject() (
     * @param itemId id по таблице mitem.
     * @return Бинарный выхлоп с данными для react-рендера попапа.
     */
-  def existGeoAdvsShapePopup(itemId: Gid_t) = canAccessItem.Post(itemId, edit = false).async { implicit request =>
-    // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
-    // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
-    if ( !MItemTypes.advGeoTypes.contains( request.mitem.iType ) )
-      throw new IllegalArgumentException(s"MItem[itemId] type is ${request.mitem.iType}, but here we need GeoPlace ${MItemTypes.GeoPlace}")
+  def existGeoAdvsShapePopup(itemId: Gid_t) = csrf.Check {
+    canAccessItem(itemId, edit = false).async { implicit request =>
+      // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
+      // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
+      if ( !MItemTypes.advGeoTypes.contains( request.mitem.iType ) )
+        throw new IllegalArgumentException(s"MItem[itemId] type is ${request.mitem.iType}, but here we need GeoPlace ${MItemTypes.GeoPlace}")
 
-    // Наврядли можно отрендерить в попапе даже это количество...
-    val itemsMax = 50
+      // Наврядли можно отрендерить в попапе даже это количество...
+      val itemsMax = 50
 
-    // Запросить у базы инфы по размещениям в текущем месте...
-    val itemsSrc = slick.db
-      .stream {
-        advGeoBillUtil.withSameGeoShapeAs(
-          query   = advGeoBillUtil.findCurrentForAdQ( request.mitem.nodeId ),
-          itemId  = itemId,
-          limit   = itemsMax
+      // Запросить у базы инфы по размещениям в текущем месте...
+      val itemsSrc = slick.db
+        .stream {
+          advGeoBillUtil.withSameGeoShapeAs(
+            query   = advGeoBillUtil.findCurrentForAdQ( request.mitem.nodeId ),
+            itemId  = itemId,
+            limit   = itemsMax
+          )
+        }
+        .toSource
+
+      implicit val ctx = implicitly[Context]
+
+      val rowsMsFut = itemsSrc
+        // Причесать кортежи в нормальные инстансы
+        .map( MAdvGeoBasicInfo.apply )
+        // Сгруппировать и объеденить по периодам размещения.
+        .groupBy(itemsMax, { m => (m.dtStartOpt, m.dtEndOpt) })
+        .fold( List.empty[MAdvGeoBasicInfo] ) { (acc, e) => e :: acc }
+        .map { infos =>
+          // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
+          val info0 = infos.head
+          val row = MGeoAdvExistRow(
+            dateRange = MRangeYmdOpt.applyFrom(
+              dateStartOpt = _offDate2localDateOpt(info0.dtStartOpt)(ctx),
+              dateEndOpt   = _offDate2localDateOpt(info0.dtEndOpt)(ctx)
+            ),
+            items = infos
+              .sortBy(m => (m.tagFaceOpt, m.id) )
+              .map { m =>
+                MGeoItemInfo(
+                  itemId        = m.id,
+                  isOnlineNow   = m.status == MItemStatuses.Online,
+                  payload       = m.iType match {
+                    case MItemTypes.GeoTag    => InGeoTag( m.tagFaceOpt.get )
+                    case MItemTypes.GeoPlace  => OnMainScreen
+                  }
+                )
+              }
+          )
+          val startMs = info0.dtStartOpt.map(_.toInstant.toEpochMilli)
+          startMs -> row
+        }
+        // Вернуться на уровень основного потока...
+        .mergeSubstreams
+        // Собрать все имеющиеся результаты в единую коллекцию.
+        .runFold( List.empty[(Option[Long], MGeoAdvExistRow)] ) { (acc, row) => row :: acc }
+
+      // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
+      val itemsCountFut = itemsSrc.runFold(0) { (counter, e) => counter + 1 }
+
+      // Сборка непоточного бинарного ответа.
+      for {
+        rowsMs      <- rowsMsFut
+        itemsCount  <- itemsCountFut
+      } yield {
+        // Отсортировать ряды по датам, собрать итоговую модель ответа...
+        val mresp = MGeoAdvExistPopupResp(
+          rows = rowsMs
+            .sortBy(_._1)
+            .map(_._2),
+          haveMore = itemsCount >= itemsMax
         )
+        // Сериализовать и вернуть результат:
+        val pickled = PickleUtil.pickle(mresp)
+        Ok( ByteString(pickled) )
+          .withHeaders(CACHE_10)
       }
-      .toSource
-
-    implicit val ctx = implicitly[Context]
-
-    val rowsMsFut = itemsSrc
-      // Причесать кортежи в нормальные инстансы
-      .map( MAdvGeoBasicInfo.apply )
-      // Сгруппировать и объеденить по периодам размещения.
-      .groupBy(itemsMax, { m => (m.dtStartOpt, m.dtEndOpt) })
-      .fold( List.empty[MAdvGeoBasicInfo] ) { (acc, e) => e :: acc }
-      .map { infos =>
-        // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
-        val info0 = infos.head
-        val row = MGeoAdvExistRow(
-          dateRange = MRangeYmdOpt.applyFrom(
-            dateStartOpt = _offDate2localDateOpt(info0.dtStartOpt)(ctx),
-            dateEndOpt   = _offDate2localDateOpt(info0.dtEndOpt)(ctx)
-          ),
-          items = infos
-            .sortBy(m => (m.tagFaceOpt, m.id) )
-            .map { m =>
-              MGeoItemInfo(
-                itemId        = m.id,
-                isOnlineNow   = m.status == MItemStatuses.Online,
-                payload       = m.iType match {
-                  case MItemTypes.GeoTag    => InGeoTag( m.tagFaceOpt.get )
-                  case MItemTypes.GeoPlace  => OnMainScreen
-                }
-              )
-            }
-        )
-        val startMs = info0.dtStartOpt.map(_.toInstant.toEpochMilli)
-        startMs -> row
-      }
-      // Вернуться на уровень основного потока...
-      .mergeSubstreams
-      // Собрать все имеющиеся результаты в единую коллекцию.
-      .runFold( List.empty[(Option[Long], MGeoAdvExistRow)] ) { (acc, row) => row :: acc }
-
-    // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
-    val itemsCountFut = itemsSrc.runFold(0) { (counter, e) => counter + 1 }
-
-    // Сборка непоточного бинарного ответа.
-    for {
-      rowsMs      <- rowsMsFut
-      itemsCount  <- itemsCountFut
-    } yield {
-      // Отсортировать ряды по датам, собрать итоговую модель ответа...
-      val mresp = MGeoAdvExistPopupResp(
-        rows = rowsMs
-          .sortBy(_._1)
-          .map(_._2),
-        haveMore = itemsCount >= itemsMax
-      )
-      // Сериализовать и вернуть результат:
-      val pickled = PickleUtil.pickle(mresp)
-      Ok( ByteString(pickled) )
-        .withHeaders(CACHE_10)
     }
   }
 
@@ -566,153 +578,156 @@ class LkAdvGeo @Inject() (
     * @return Бинарь для boopickle на стороне JS.
     */
   def rcvrMapPopup(adIdU: MEsUuId, rcvrNodeIdU: MEsUuId) = _rcvrMapPopup(adId = adIdU, rcvrNodeId = rcvrNodeIdU)
-  private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = canThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
-    import request.{mnode => rcvrNode}
+  private def _rcvrMapPopup(adId: String, rcvrNodeId: String) = csrf.Check {
+    canThinkAboutAdvOnMapAdnNode(adId, nodeId = rcvrNodeId).async { implicit request =>
 
-    // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
-    val subNodesFut = advGeoMapUtil.findSubRcvrsOf(rcvrNodeId)
+      import request.{mnode => rcvrNode}
 
-    lazy val logPrefix = s"geoNodePopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
+      // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
+      val subNodesFut = advGeoMapUtil.findSubRcvrsOf(rcvrNodeId)
 
-    // Нужно получить все суб-узлы из кэша. Текущий узел традиционно уже есть в request'е.
-    val subNodesIdsFut = subNodesFut.map(OptId.els2idsSet)
+      lazy val logPrefix = s"geoNodePopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
 
-    // Закинуть во множество подузлов id текущего ресивера.
-    val allNodesIdsFut = for (subNodesIds <- subNodesIdsFut) yield {
-      LOGGER.trace(s"$logPrefix Found ${subNodesIds.size} sub-nodes: ${subNodesIds.mkString(", ")}")
-      subNodesIds + rcvrNodeId
-    }
+      // Нужно получить все суб-узлы из кэша. Текущий узел традиционно уже есть в request'е.
+      val subNodesIdsFut = subNodesFut.map(OptId.els2idsSet)
 
-    // Сгруппировать под-узлы по типам узлов, внеся туда ещё и текущий ресивер.
-    val subNodesGrpsFut = for {
-      subNodes <- subNodesFut
-    } yield {
-      subNodes
-        // Сгруппировать узлы по их типам. Для текущего узла тип будет None. Тогда он отрендерится без заголовка и в самом начале списка узлов.
-        .groupBy { mnode =>
+      // Закинуть во множество подузлов id текущего ресивера.
+      val allNodesIdsFut = for (subNodesIds <- subNodesIdsFut) yield {
+        LOGGER.trace(s"$logPrefix Found ${subNodesIds.size} sub-nodes: ${subNodesIds.mkString(", ")}")
+        subNodesIds + rcvrNodeId
+      }
+
+      // Сгруппировать под-узлы по типам узлов, внеся туда ещё и текущий ресивер.
+      val subNodesGrpsFut = for {
+        subNodes <- subNodesFut
+      } yield {
+        subNodes
+          // Сгруппировать узлы по их типам. Для текущего узла тип будет None. Тогда он отрендерится без заголовка и в самом начале списка узлов.
+          .groupBy { mnode =>
           mnode.common.ntype
         }
-        .toSeq
-        // Очень кривая сортировка, но для наших нужд и такой пока достаточно.
-        .sortBy( _._1.id )
-    }
-
-    // Запустить получение списка всех текущих (черновики + busy) размещений на узле и его маячках из биллинга.
-    val currAdvsSrc = {
-      val pubFut = for {
-        allNodeIds <- allNodesIdsFut
-      } yield {
-        slick.db.stream {
-          advGeoBillUtil.findCurrForAdToRcvrs(
-            adId      = adId,
-            // TODO Добавить поддержку групп маячков ресиверов.
-            rcvrIds   = allNodeIds,
-            // Интересуют и черновики, и текущие размещения
-            statuses  = MItemStatuses.advActual,
-            // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
-            limitOpt  = Some(300)
-          )
-        }
-      }
-      // Выпрямляем Future[Publisher] в просто нормальный Source.
-      pubFut.toSource
-    }
-
-    def __src2RcvrIdsSet(src: Source[MItem,_]): Future[Set[String]] = {
-      // В текущих размещениях интересуют значения в поле rcvrId...
-      src
-        .mapConcat( _.rcvrIdOpt.toList )
-        // Перегнать все id в Future[SetBuilder[String]]
-        .toSetFut
-    }
-
-    // Запустить сбор rcvr node id'шников в потоке для текущих размещений.
-    val advRcvrIdsActualFut = __src2RcvrIdsSet(currAdvsSrc)
-    val advRcvrIdsBusyFut   = __src2RcvrIdsSet {
-      currAdvsSrc.filter { i =>
-        i.status.isAdvBusy
-      }
-    }
-
-    // Собрать множество id узлов, у которых есть хотя бы одно online-размещение.
-    val nodesHasOnlineFut = __src2RcvrIdsSet {
-      currAdvsSrc
-        .filter { _.status == MItemStatuses.Online }
-    }
-
-    implicit val ctx = implicitly[Context]
-
-    // Карта интервалов размещения по id узлов.
-    val intervalsMapFut: Future[Map[String, MRangeYmdOpt]] = currAdvsSrc
-      .runFold( Map.newBuilder[String, MRangeYmdOpt]) { (acc, i) =>
-        for {
-          rcvrId     <- i.rcvrIdOpt
-        } {
-          val rymd = MRangeYmdOpt.applyFrom(
-            dateStartOpt  = _offDate2localDateOpt(i.dateStartOpt)(ctx),
-            dateEndOpt    = _offDate2localDateOpt(i.dateEndOpt)(ctx)
-          )
-          acc += rcvrId -> rymd
-        }
-        acc
-      }
-      .map( _.result() )
-
-    // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
-    for {
-      nodesHasOnline      <- nodesHasOnlineFut
-      intervalsMap        <- intervalsMapFut
-      advRcvrIdsActual    <- advRcvrIdsActualFut
-      advRcvrIdsBusy      <- advRcvrIdsBusyFut
-      subNodesGrps        <- subNodesGrpsFut
-    } yield {
-
-      def __mkCheckBoxMeta(mnode: MNode): MRcvrPopupMeta = {
-        val nodeId = mnode.id.get
-        MRcvrPopupMeta(
-          isCreate    = !advRcvrIdsBusy.contains( nodeId ),
-          checked     = advRcvrIdsActual.contains( nodeId ),
-          name        = mnode.guessDisplayNameOrId.getOrElse("???"),
-          isOnlineNow = nodesHasOnline.contains( nodeId ),
-          dateRange   = intervalsMap.getOrElse( nodeId , MRangeYmdOpt.empty )
-        )
+          .toSeq
+          // Очень кривая сортировка, но для наших нужд и такой пока достаточно.
+          .sortBy( _._1.id )
       }
 
-      val resp = MRcvrPopupResp(
-        node = Some(MRcvrPopupNode(
-          nodeId    = rcvrNodeId,
-
-          // Чекбокс у данного узла можно отображать, если он является узлом-ресивером.
-          // isReceiver здесь пока дублирует такую же проверку в ACL. Посмотрим, как дальше пойдёт...
-          checkbox  = for {
-            adn <- rcvrNode.extras.adn
-            if adn.isReceiver
-          } yield {
-            __mkCheckBoxMeta( rcvrNode )
-          },
-
-          // Под-группы просто строим из под-узлов.
-          subGroups = for {
-            (ntype, nodes) <- subNodesGrps
-          } yield {
-            MRcvrPopupGroup(
-              title = Some( ctx.messages( ntype.plural ) ),
-              nodes = for (n <- nodes) yield {
-                MRcvrPopupNode(
-                  nodeId    = n.id.get,
-                  checkbox  = Some( __mkCheckBoxMeta(n) ),
-                  subGroups = Nil
-                )
-              }
+      // Запустить получение списка всех текущих (черновики + busy) размещений на узле и его маячках из биллинга.
+      val currAdvsSrc = {
+        val pubFut = for {
+          allNodeIds <- allNodesIdsFut
+        } yield {
+          slick.db.stream {
+            advGeoBillUtil.findCurrForAdToRcvrs(
+              adId      = adId,
+              // TODO Добавить поддержку групп маячков ресиверов.
+              rcvrIds   = allNodeIds,
+              // Интересуют и черновики, и текущие размещения
+              statuses  = MItemStatuses.advActual,
+              // TODO Надо бы тут порешить, какой limit требуется на деле и требуется ли вообще. 20 взято с потолка.
+              limitOpt  = Some(300)
             )
           }
-        ))
-      )
+        }
+        // Выпрямляем Future[Publisher] в просто нормальный Source.
+        pubFut.toSource
+      }
 
-      Ok( ByteString( PickleUtil.pickle(resp) ) )
-        // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
-        .withHeaders(CACHE_10)
+      def __src2RcvrIdsSet(src: Source[MItem,_]): Future[Set[String]] = {
+        // В текущих размещениях интересуют значения в поле rcvrId...
+        src
+          .mapConcat( _.rcvrIdOpt.toList )
+          // Перегнать все id в Future[SetBuilder[String]]
+          .toSetFut
+      }
+
+      // Запустить сбор rcvr node id'шников в потоке для текущих размещений.
+      val advRcvrIdsActualFut = __src2RcvrIdsSet(currAdvsSrc)
+      val advRcvrIdsBusyFut   = __src2RcvrIdsSet {
+        currAdvsSrc.filter { i =>
+          i.status.isAdvBusy
+        }
+      }
+
+      // Собрать множество id узлов, у которых есть хотя бы одно online-размещение.
+      val nodesHasOnlineFut = __src2RcvrIdsSet {
+        currAdvsSrc
+          .filter { _.status == MItemStatuses.Online }
+      }
+
+      implicit val ctx = implicitly[Context]
+
+      // Карта интервалов размещения по id узлов.
+      val intervalsMapFut: Future[Map[String, MRangeYmdOpt]] = currAdvsSrc
+        .runFold( Map.newBuilder[String, MRangeYmdOpt]) { (acc, i) =>
+          for {
+            rcvrId     <- i.rcvrIdOpt
+          } {
+            val rymd = MRangeYmdOpt.applyFrom(
+              dateStartOpt  = _offDate2localDateOpt(i.dateStartOpt)(ctx),
+              dateEndOpt    = _offDate2localDateOpt(i.dateEndOpt)(ctx)
+            )
+            acc += rcvrId -> rymd
+          }
+          acc
+        }
+        .map( _.result() )
+
+      // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
+      for {
+        nodesHasOnline      <- nodesHasOnlineFut
+        intervalsMap        <- intervalsMapFut
+        advRcvrIdsActual    <- advRcvrIdsActualFut
+        advRcvrIdsBusy      <- advRcvrIdsBusyFut
+        subNodesGrps        <- subNodesGrpsFut
+      } yield {
+
+        def __mkCheckBoxMeta(mnode: MNode): MRcvrPopupMeta = {
+          val nodeId = mnode.id.get
+          MRcvrPopupMeta(
+            isCreate    = !advRcvrIdsBusy.contains( nodeId ),
+            checked     = advRcvrIdsActual.contains( nodeId ),
+            name        = mnode.guessDisplayNameOrId.getOrElse("???"),
+            isOnlineNow = nodesHasOnline.contains( nodeId ),
+            dateRange   = intervalsMap.getOrElse( nodeId , MRangeYmdOpt.empty )
+          )
+        }
+
+        val resp = MRcvrPopupResp(
+          node = Some(MRcvrPopupNode(
+            nodeId    = rcvrNodeId,
+
+            // Чекбокс у данного узла можно отображать, если он является узлом-ресивером.
+            // isReceiver здесь пока дублирует такую же проверку в ACL. Посмотрим, как дальше пойдёт...
+            checkbox  = for {
+              adn <- rcvrNode.extras.adn
+              if adn.isReceiver
+            } yield {
+              __mkCheckBoxMeta( rcvrNode )
+            },
+
+            // Под-группы просто строим из под-узлов.
+            subGroups = for {
+              (ntype, nodes) <- subNodesGrps
+            } yield {
+              MRcvrPopupGroup(
+                title = Some( ctx.messages( ntype.plural ) ),
+                nodes = for (n <- nodes) yield {
+                  MRcvrPopupNode(
+                    nodeId    = n.id.get,
+                    checkbox  = Some( __mkCheckBoxMeta(n) ),
+                    subGroups = Nil
+                  )
+                }
+              )
+            }
+          ))
+        )
+
+        Ok( ByteString( PickleUtil.pickle(resp) ) )
+          // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
+          .withHeaders(CACHE_10)
+      }
     }
   }
 

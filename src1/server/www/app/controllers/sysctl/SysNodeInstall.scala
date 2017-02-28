@@ -33,14 +33,16 @@ trait SysNodeInstall
 
 
   /** Вернуть страницу с формой установки дефолтовых карточек на узлы. */
-  def installDfltMads(adnId: String) = isSuNode.Get(adnId).async { implicit request =>
-    implicit val ctx = implicitly[Context]
-    val fd = MSysNodeInstallFormData(
-      count = nodesUtil.INIT_ADS_COUNT,
-      lang  = ctx.messages.lang
-    )
-    val form = sysMarketUtil.nodeInstallForm.fill(fd)
-    _installRender(form, Ok)(ctx, request)
+  def installDfltMads(adnId: String) = csrf.AddToken {
+    isSuNode(adnId).async { implicit request =>
+      implicit val ctx = implicitly[Context]
+      val fd = MSysNodeInstallFormData(
+        count = nodesUtil.INIT_ADS_COUNT,
+        lang  = ctx.messages.lang
+      )
+      val form = sysMarketUtil.nodeInstallForm.fill(fd)
+      _installRender(form, Ok)(ctx, request)
+    }
   }
 
 
@@ -58,25 +60,27 @@ trait SysNodeInstall
 
 
   /** Сабмит формы установки дефолтовых карточек. */
-  def installDfltMadsSubmit(adnId: String) = isSuNode.Post(adnId).async { implicit request =>
-    lazy val logPrefix = s"installDfltMadsSubmit($adnId):"
-    sysMarketUtil.nodeInstallForm.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(logPrefix + "Failed to bind form:\n " + formatFormErrors(formWithErrors) )
-        _installRender(formWithErrors, NotAcceptable)
-      },
-      {fd =>
-        // TODO Надо как-то сделать, чтобы это дело скастовалось автоматом.
-        val msgs = new Messages(fd.lang, messagesApi)
-        nodesUtil.installDfltMads(adnId, count = fd.count)(msgs)
-          .map { madIds =>
-            val count = madIds.size
-            LOGGER.trace(s"$logPrefix Cloned ok $count mads: [${madIds.mkString(", ")}]")
-            Redirect(routes.SysMarket.showAdnNode(adnId))
-              .flashing(FLASH.SUCCESS -> s"Клонировано $count дефолтовых карточек.")
-          }
-      }
-    )
+  def installDfltMadsSubmit(adnId: String) = csrf.Check {
+    isSuNode(adnId).async { implicit request =>
+      lazy val logPrefix = s"installDfltMadsSubmit($adnId):"
+      sysMarketUtil.nodeInstallForm.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(logPrefix + "Failed to bind form:\n " + formatFormErrors(formWithErrors) )
+          _installRender(formWithErrors, NotAcceptable)
+        },
+        {fd =>
+          // TODO Надо как-то сделать, чтобы это дело скастовалось автоматом.
+          val msgs = new Messages(fd.lang, messagesApi)
+          nodesUtil.installDfltMads(adnId, count = fd.count)(msgs)
+            .map { madIds =>
+              val count = madIds.size
+              LOGGER.trace(s"$logPrefix Cloned ok $count mads: [${madIds.mkString(", ")}]")
+              Redirect(routes.SysMarket.showAdnNode(adnId))
+                .flashing(FLASH.SUCCESS -> s"Клонировано $count дефолтовых карточек.")
+            }
+        }
+      )
+    }
   }
 
 }

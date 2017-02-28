@@ -7,6 +7,7 @@ import models.mproj.ICommonDi
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.www.util.acl.SioActionBuilderOuter
 
 import scala.concurrent.Future
 
@@ -22,7 +23,8 @@ class CanAccessEvent @Inject() (
                                  mEvents                : MEvents,
                                  mCommonDi              : ICommonDi
                                )
-  extends MacroLogsImpl
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 { outer =>
 
   import mCommonDi._
@@ -39,7 +41,7 @@ class CanAccessEvent @Inject() (
             userInits        : MUserInit*): ActionBuilder[MNodeEventReq] = {
 
     val userInits1 = userInits
-    new ActionBuilder[MNodeEventReq] with InitUserCmds {
+    new SioActionBuilderImpl[MNodeEventReq] with InitUserCmds {
 
       override def userInits = userInits1
 
@@ -52,6 +54,7 @@ class CanAccessEvent @Inject() (
         maybeInitUser(user)
 
         val reqErr = MReq(request, user)
+
         personIdOpt.fold ( forbidden(reqErr) ) { _ =>
           eventOptFut.flatMap {
             // Нет такого события в модели.
@@ -90,8 +93,6 @@ class CanAccessEvent @Inject() (
         val res = Results.NotFound("Event not found: " + eventId)
         res
       }
-
-      override def toString: String = outer.toString
 
     }
 

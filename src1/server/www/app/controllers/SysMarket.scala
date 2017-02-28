@@ -81,106 +81,115 @@ class SysMarket @Inject() (
   import mCommonDi._
   import sysMarketUtil._
 
+
   /**
    * Корень /sys/ indexTpl.scala.html для системной панели.
    *
    * Изначально оно жило в ctl.Sys, который был замёржен в ctl.Application,
    * который тоже был упразднён 2015.dec.17.
    */
-  def sysIndex = isSuOr404.Get { implicit request =>
-    Ok( views.html.sys1.indexTpl() )
+  def sysIndex = csrf.AddToken {
+    isSuOr404() { implicit request =>
+      Ok( views.html.sys1.indexTpl() )
+    }
   }
+
 
   /** Корень /sys/marker/. Тут ссылки на дальнейшие страницы в рамках market. */
-  def index = isSu.Get { implicit request =>
-    Ok(marketIndexTpl())
+  def index = csrf.AddToken {
+    isSu() { implicit request =>
+      Ok(marketIndexTpl())
+    }
   }
 
+
   /** Страница с унифицированным списком узлов рекламной сети в алфавитном порядке с делёжкой по memberType. */
-  def adnNodesList(args: MSysNodeListArgs) = isSu.Get.async { implicit request =>
-    // Запустить сбор статистики по типам N2-узлов:
-    val ntypeStatsFut = mNodes.ntypeStats()
+  def adnNodesList(args: MSysNodeListArgs) = csrf.AddToken {
+    isSu().async { implicit request =>
+      // Запустить сбор статистики по типам N2-узлов:
+      val ntypeStatsFut = mNodes.ntypeStats()
 
-    // Собрать es-запрос согласно запросу, описанному в URL.
-    val msearch = new MNodeSearchDfltImpl {
-      override def nodeTypes    = args.ntypeOpt.toSeq
-      override def shownTypeIds = args.stiOpt.toSeq.map(_.name)
-      override def limit        = args.limit
-      override def offset       = args.offset
-      override def withNameSort = Some( SortOrder.ASC )
-    }
-
-    // Запустить поиск узлов для рендера:
-    val mnodesFut = mNodes.dynSearch(msearch)
-
-    // Кол-во вообще всех узлов.
-    val allCountFut = for {
-      stats <- ntypeStatsFut
-    } yield {
-      stats.valuesIterator.sum
-    }
-
-    // Считаем общее кол-во элементов указанного типа.
-    val totalFut: Future[Long] = {
-      ntypeStatsFut flatMap { stats =>
-        args.ntypeOpt.fold[Future[Long]] {
-          allCountFut
-        } { ntype =>
-          val res = stats.getOrElse(ntype, 0L)
-          Future.successful(res)
-        }
+      // Собрать es-запрос согласно запросу, описанному в URL.
+      val msearch = new MNodeSearchDfltImpl {
+        override def nodeTypes    = args.ntypeOpt.toSeq
+        override def shownTypeIds = args.stiOpt.toSeq.map(_.name)
+        override def limit        = args.limit
+        override def offset       = args.offset
+        override def withNameSort = Some( SortOrder.ASC )
       }
-    }
 
-    implicit val ctx = implicitly[Context]
+      // Запустить поиск узлов для рендера:
+      val mnodesFut = mNodes.dynSearch(msearch)
 
-    // Нужно сгенерить список кнопок-типов на основе статистики типов
-    val ntypesFut = for {
-      stats <- ntypeStatsFut
-    } yield {
-      // Полоска управления наверху подготавливается здесь
-      MNodeTypes.values
-        .iterator
-        .flatMap { nt =>
-          val ntype: MNodeType = nt
-          for (count <- stats.get(ntype)) yield {
-            MNodeTypeInfo(
-              name      = ctx.messages( ntype.plural ),
-              ntypeOpt  = Some(ntype),
-              count     = count
-            )
+      // Кол-во вообще всех узлов.
+      val allCountFut = for {
+        stats <- ntypeStatsFut
+      } yield {
+        stats.valuesIterator.sum
+      }
+
+      // Считаем общее кол-во элементов указанного типа.
+      val totalFut: Future[Long] = {
+        ntypeStatsFut.flatMap { stats =>
+          args.ntypeOpt.fold[Future[Long]] {
+            allCountFut
+          } { ntype =>
+            val res = stats.getOrElse(ntype, 0L)
+            Future.successful(res)
           }
         }
-        .toStream
-        .sortBy(_.name)
-    }
+      }
 
-    // Добавить ссылку "Все" в начало списка поисковых ссылок.
-    val ntypes2Fut = for {
-      allCount <- allCountFut
-      ntypes0  <- ntypesFut
-    } yield {
-      val allNti = MNodeTypeInfo(
-        name      = ctx.messages("All"),
-        ntypeOpt  = None,
-        count     = allCount
-      )
-      allNti #:: ntypes0
-    }
+      implicit val ctx = implicitly[Context]
 
-    // Объединение асинхронных результатов:
-    for {
-      mnodes <- mnodesFut
-      ntypes <- ntypes2Fut
-      total  <- totalFut
-    } yield {
-      val rargs = MSysNodeListTplArgs(
-        mnodes = mnodes,
-        ntypes = ntypes,
-        args0  = args,
-        total  = total
-      )
-      Ok( adnNodesListTpl(rargs)(ctx) )
+      // Нужно сгенерить список кнопок-типов на основе статистики типов
+      val ntypesFut = for {
+        stats <- ntypeStatsFut
+      } yield {
+        // Полоска управления наверху подготавливается здесь
+        MNodeTypes.values
+          .iterator
+          .flatMap { nt =>
+            val ntype: MNodeType = nt
+            for (count <- stats.get(ntype)) yield {
+              MNodeTypeInfo(
+                name      = ctx.messages( ntype.plural ),
+                ntypeOpt  = Some(ntype),
+                count     = count
+              )
+            }
+          }
+          .toStream
+          .sortBy(_.name)
+      }
+
+      // Добавить ссылку "Все" в начало списка поисковых ссылок.
+      val ntypes2Fut = for {
+        allCount <- allCountFut
+        ntypes0  <- ntypesFut
+      } yield {
+        val allNti = MNodeTypeInfo(
+          name      = ctx.messages("All"),
+          ntypeOpt  = None,
+          count     = allCount
+        )
+        allNti #:: ntypes0
+      }
+
+      // Объединение асинхронных результатов:
+      for {
+        mnodes <- mnodesFut
+        ntypes <- ntypes2Fut
+        total  <- totalFut
+      } yield {
+        val rargs = MSysNodeListTplArgs(
+          mnodes = mnodes,
+          ntypes = ntypes,
+          args0  = args,
+          total  = total
+        )
+        Ok( adnNodesListTpl(rargs)(ctx) )
+      }
     }
   }
 
@@ -190,118 +199,120 @@ class SysMarket @Inject() (
    *
    * @param nodeId id узла
    */
-  def showAdnNode(nodeId: String) = isSuNode.Get(nodeId).async { implicit request =>
-    import request.mnode
+  def showAdnNode(nodeId: String) = csrf.AddToken {
+    isSuNode(nodeId).async { implicit request =>
+      import request.mnode
 
-    def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
-      eis.toSeq
-        .sortBy { ei =>
-          // Собрать ключ для сортировки
-          val nodeName = ei.mnodeEiths
-            .iterator
-            .map { _.fold [String] (identity, _.guessDisplayNameOrId.getOrElse("")) }
-            .toStream
-            .headOption
-            .getOrElse("???")
-          (ei.medge.predicate.strId,
-            ei.medge.order.getOrElse(Int.MaxValue),
-            nodeName)
-        }
-    }
-
-    // Узнаём исходящие ребра.
-    val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
-      val mnodesMapFut = mNodesCache.multiGetMap {
-        mnode.edges
-          .iterator
-          .flatMap(_.nodeIds)
-          .toSet
-      }
-      for (nmap <- mnodesMapFut) yield {
-        val iter = for {
-          (medge, index) <- mnode.edges.iterator.zipWithIndex
-        } yield {
-          val mnEiths = medge.nodeIds
-            .iterator
-            .map { nodeId =>
-              nmap.get(nodeId)
-                .toRight(nodeId)
-            }
-            .toSeq
-          MNodeEdgeInfo(
-            medge       = medge,
-            mnodeEiths  = mnEiths,
-            edgeId      = Some(index)
-          )
-        }
-        _prepareEdgeInfos(iter)
-      }
-    }
-
-    // Узнаём входящие ребра
-    val inEdgesFut = {
-      val msearch = new MNodeSearchDfltImpl {
-        override def outEdges: Seq[ICriteria] = {
-          val cr = Criteria(nodeIds = Seq(nodeId))
-          Seq(cr)
-        }
-        override def limit = 200
-      }
-      for {
-        mnodes <- mNodes.dynSearch( msearch )
-      } yield {
-        val iter = mnodes.iterator
-          .flatMap { mnode =>
-            mnode.edges
-              .withNodeId( nodeId )
-              .map { medge =>
-                MNodeEdgeInfo(
-                  medge       = medge,
-                  mnodeEiths  = Seq(Right(mnode)),
-                  edgeId      = None
-                )
-              }
+      def _prepareEdgeInfos(eis: TraversableOnce[MNodeEdgeInfo]): Seq[MNodeEdgeInfo] = {
+        eis.toSeq
+          .sortBy { ei =>
+            // Собрать ключ для сортировки
+            val nodeName = ei.mnodeEiths
+              .iterator
+              .map { _.fold [String] (identity, _.guessDisplayNameOrId.getOrElse("")) }
+              .toStream
+              .headOption
+              .getOrElse("???")
+            (ei.medge.predicate.strId,
+              ei.medge.order.getOrElse(Int.MaxValue),
+              nodeName)
           }
-        _prepareEdgeInfos(iter)
       }
-    }
 
-    // Определить имена юзеров-владельцев. TODO Удалить, ибо во многом дублирует логику outEdges.
-    val personNamesFut = {
-      val ownerIds = mnode.edges
-        .withPredicateIterIds( MPredicates.OwnedBy )
-      Future.traverse( ownerIds ) { personId =>
-        for {
-          nameOpt <- mPerson.findUsernameCached(personId)
-        } yield {
-          val name = nameOpt.getOrElse(personId)
-          personId -> name
+      // Узнаём исходящие ребра.
+      val outEdgesFut: Future[Seq[MNodeEdgeInfo]] = {
+        val mnodesMapFut = mNodesCache.multiGetMap {
+          mnode.edges
+            .iterator
+            .flatMap(_.nodeIds)
+            .toSet
         }
-      }.map {
-        _.toMap
+        for (nmap <- mnodesMapFut) yield {
+          val iter = for {
+            (medge, index) <- mnode.edges.iterator.zipWithIndex
+          } yield {
+            val mnEiths = medge.nodeIds
+              .iterator
+              .map { nodeId =>
+                nmap.get(nodeId)
+                  .toRight(nodeId)
+              }
+              .toSeq
+            MNodeEdgeInfo(
+              medge       = medge,
+              mnodeEiths  = mnEiths,
+              edgeId      = Some(index)
+            )
+          }
+          _prepareEdgeInfos(iter)
+        }
       }
-    }
 
-    // Сгенерить асинхронный результат.
-    for {
-      outEdges    <- outEdgesFut
-      inEdges     <- inEdgesFut
-      personNames <- personNamesFut
-    } yield {
-      val args = MSysNodeShowTplArgs(
-        mnode       = mnode,
-        inEdges     = inEdges,
-        outEdges    = outEdges,
-        personNames = personNames
-      )
-      Ok( adnNodeShowTpl(args) )
+      // Узнаём входящие ребра
+      val inEdgesFut = {
+        val msearch = new MNodeSearchDfltImpl {
+          override def outEdges: Seq[ICriteria] = {
+            val cr = Criteria(nodeIds = Seq(nodeId))
+            Seq(cr)
+          }
+          override def limit = 200
+        }
+        for {
+          mnodes <- mNodes.dynSearch( msearch )
+        } yield {
+          val iter = mnodes.iterator
+            .flatMap { mnode =>
+              mnode.edges
+                .withNodeId( nodeId )
+                .map { medge =>
+                  MNodeEdgeInfo(
+                    medge       = medge,
+                    mnodeEiths  = Seq(Right(mnode)),
+                    edgeId      = None
+                  )
+                }
+            }
+          _prepareEdgeInfos(iter)
+        }
+      }
+
+      // Определить имена юзеров-владельцев. TODO Удалить, ибо во многом дублирует логику outEdges.
+      val personNamesFut = {
+        val ownerIds = mnode.edges
+          .withPredicateIterIds( MPredicates.OwnedBy )
+        Future.traverse( ownerIds ) { personId =>
+          for {
+            nameOpt <- mPerson.findUsernameCached(personId)
+          } yield {
+            val name = nameOpt.getOrElse(personId)
+            personId -> name
+          }
+        }.map {
+          _.toMap
+        }
+      }
+
+      // Сгенерить асинхронный результат.
+      for {
+        outEdges    <- outEdgesFut
+        inEdges     <- inEdgesFut
+        personNames <- personNamesFut
+      } yield {
+        val args = MSysNodeShowTplArgs(
+          mnode       = mnode,
+          inEdges     = inEdges,
+          outEdges    = outEdges,
+          personNames = personNames
+        )
+        Ok( adnNodeShowTpl(args) )
+      }
     }
   }
 
 
   /** Безвозвратное удаление узла рекламной сети. */
-  def deleteAdnNodeSubmit(nodeId: String) = {
-    val ab = isSuNode.Post(nodeId)
+  def deleteAdnNodeSubmit(nodeId: String) = csrf.Check {
+    val ab = isSuNode(nodeId)
     ab.async { implicit request =>
       import request.mnode
       lazy val logPrefix = s"deleteAdnNodeSubmit($nodeId):"
@@ -319,26 +330,28 @@ class SysMarket @Inject() (
         .recoverWith {
           case _: NoSuchElementException =>
             warn(s"deleteAdnNodeSubmit($nodeId): Node not found. Anyway, resources re-erased.")
-            ab.nodeNotFound(request)
+            isSuNode.nodeNotFound(request)
         }
     }
   }
 
 
   /** Страница с формой создания нового узла. */
-  def createAdnNode() = isSu.Get.async { implicit request =>
-    // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
-    // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
-    val dfltFormM = adnNodeFormM.fill(
-      nodesUtil.userNodeInstance(
-        nameOpt     = None,
-        personIdOpt = request.user.personIdOpt
+  def createAdnNode() = csrf.AddToken {
+    isSu().async { implicit request =>
+      // Генерим stub и втыкаем его в форму, чтобы меньше галочек ставить.
+      // 2015.oct.21: Используем nodesUtil для сборки дефолтового инстанса.
+      val dfltFormM = adnNodeFormM.fill(
+        nodesUtil.userNodeInstance(
+          nameOpt     = None,
+          personIdOpt = request.user.personIdOpt
+        )
       )
-    )
 
-    val ncpForm = nodeCreateParamsFormM.fill( NodeCreateParams() )
+      val ncpForm = nodeCreateParamsFormM.fill( NodeCreateParams() )
 
-    createAdnNodeRender(dfltFormM, ncpForm, Ok)
+      createAdnNodeRender(dfltFormM, ncpForm, Ok)
+    }
   }
 
   /** Общий код create-node-экшенов с рендером страницы с формой создания узла. */
@@ -349,63 +362,65 @@ class SysMarket @Inject() (
   }
 
   /** Сабмит формы создания нового узла. */
-  def createAdnNodeSubmit() = isSu.Post.async { implicit request =>
-    def logPrefix = s"createAdnNodeSubmit():"
-    val ncpForm = nodeCreateParamsFormM.bindFromRequest()
-    val nodeForm = adnNodeFormM.bindFromRequest()
+  def createAdnNodeSubmit() = csrf.Check {
+    isSu().async { implicit request =>
+      def logPrefix = s"createAdnNodeSubmit():"
+      val ncpForm = nodeCreateParamsFormM.bindFromRequest()
+      val nodeForm = adnNodeFormM.bindFromRequest()
 
-    def __onError(formWithErrors: Form[_], formName: String): Future[Result] = {
-      val renderFut = createAdnNodeRender(nodeForm, ncpForm, NotAcceptable)
-      debug(s"$logPrefix Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
-      renderFut
-    }
-
-    nodeForm.fold(
-      __onError(_, "node"),
-      {mnode0 =>
-        ncpForm.fold(
-          __onError(_, "create"),
-          {ncp =>
-            // Собрать новый инстанс узла.
-            val resFut = for {
-              // Если задан id создаваемого узла, убедится что этот id свободен:
-              alreadyExistsOpt <- mNodes.maybeGetById( ncp.withId )
-              if alreadyExistsOpt.isEmpty
-
-              mnode1 = mnode0.copy(
-                edges = mnode0.edges.copy(
-                  out = {
-                    val ownEdge = MEdge(
-                      predicate = MPredicates.OwnedBy,
-                      nodeIds   = request.user.personIdOpt.toSet
-                    )
-                    MNodeEdges.edgesToMap(ownEdge)
-                  }
-                ),
-                // Возможно, id создаваемого документа уже задан.
-                id          = ncp.withId
-              )
-              nodeId <- mNodes.save(mnode1)
-
-            } yield {
-              // Инициализировать новосозданный узел согласно заданным параметрам.
-              maybeInitializeNode(ncp, nodeId)
-
-              val mnode2 = mnode1.withId( Some(nodeId) )
-              // Отредиректить админа в созданный узел.
-              Redirect(routes.SysMarket.showAdnNode(nodeId))
-                .flashing(FLASH.SUCCESS -> s"Создан узел сети: ${mnode2.guessDisplayNameOrIdOrEmpty}")
-            }
-
-            // Отрендерить ошибку совпадения id с существующим узлом...
-            resFut.recover { case ex: NoSuchElementException =>
-              LOGGER.error(s"$logPrefix Node already exists: ${ncp.withId}", ex)
-              Conflict(s"Node with ${ncp.withId.orNull} already exists.")
-            }
-          }
-        )
+      def __onError(formWithErrors: Form[_], formName: String): Future[Result] = {
+        val renderFut = createAdnNodeRender(nodeForm, ncpForm, NotAcceptable)
+        debug(s"$logPrefix Failed to bind $formName form: \n${formatFormErrors(formWithErrors)}")
+        renderFut
       }
-    )
+
+      nodeForm.fold(
+        __onError(_, "node"),
+        {mnode0 =>
+          ncpForm.fold(
+            __onError(_, "create"),
+            {ncp =>
+              // Собрать новый инстанс узла.
+              val resFut = for {
+              // Если задан id создаваемого узла, убедится что этот id свободен:
+                alreadyExistsOpt <- mNodes.maybeGetById( ncp.withId )
+                if alreadyExistsOpt.isEmpty
+
+                mnode1 = mnode0.copy(
+                  edges = mnode0.edges.copy(
+                    out = {
+                      val ownEdge = MEdge(
+                        predicate = MPredicates.OwnedBy,
+                        nodeIds   = request.user.personIdOpt.toSet
+                      )
+                      MNodeEdges.edgesToMap(ownEdge)
+                    }
+                  ),
+                  // Возможно, id создаваемого документа уже задан.
+                  id          = ncp.withId
+                )
+                nodeId <- mNodes.save(mnode1)
+
+              } yield {
+                // Инициализировать новосозданный узел согласно заданным параметрам.
+                maybeInitializeNode(ncp, nodeId)
+
+                val mnode2 = mnode1.withId( Some(nodeId) )
+                // Отредиректить админа в созданный узел.
+                Redirect(routes.SysMarket.showAdnNode(nodeId))
+                  .flashing(FLASH.SUCCESS -> s"Создан узел сети: ${mnode2.guessDisplayNameOrIdOrEmpty}")
+              }
+
+              // Отрендерить ошибку совпадения id с существующим узлом...
+              resFut.recover { case ex: NoSuchElementException =>
+                LOGGER.error(s"$logPrefix Node already exists: ${ncp.withId}", ex)
+                Conflict(s"Node with ${ncp.withId.orNull} already exists.")
+              }
+            }
+          )
+        }
+      )
+    }
   }
 
   /** При создании узла есть дополнительные отключаемые возможности по инициализации.
@@ -439,10 +454,12 @@ class SysMarket @Inject() (
 
 
   /** Страница с формой редактирования узла ADN. */
-  def editAdnNode(adnId: String) = isSuNode.Get(adnId).async { implicit request =>
-    import request.mnode
-    val formFilled = adnNodeFormM.fill(mnode)
-    editAdnNodeBody(adnId, formFilled, Ok)
+  def editAdnNode(adnId: String) = csrf.AddToken {
+    isSuNode(adnId).async { implicit request =>
+      import request.mnode
+      val formFilled = adnNodeFormM.fill(mnode)
+      editAdnNodeBody(adnId, formFilled, Ok)
+    }
   }
 
   private def editAdnNodeBody(adnId: String, form: Form[MNode], rs: Status)
@@ -452,31 +469,35 @@ class SysMarket @Inject() (
   }
 
   /** Самбит формы редактирования узла. */
-  def editAdnNodeSubmit(adnId: String) = isSuNode.Post(adnId).async { implicit request =>
-    import request.mnode
-    val formBinded = adnNodeFormM.bindFromRequest()
-    formBinded.fold(
-      {formWithErrors =>
-        debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        editAdnNodeBody(adnId, formWithErrors, NotAcceptable)
-      },
-      {adnNode2 =>
-        for {
-          _ <- mNodes.tryUpdate(mnode) { updateAdnNode(_, adnNode2) }
-        } yield {
-          Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing(FLASH.SUCCESS -> "Changes.saved")
+  def editAdnNodeSubmit(adnId: String) = csrf.Check {
+    isSuNode(adnId).async { implicit request =>
+      import request.mnode
+      val formBinded = adnNodeFormM.bindFromRequest()
+      formBinded.fold(
+        {formWithErrors =>
+          debug(s"editAdnNodeSubmit($adnId): Failed to bind form: ${formatFormErrors(formWithErrors)}")
+          editAdnNodeBody(adnId, formWithErrors, NotAcceptable)
+        },
+        {adnNode2 =>
+          for {
+            _ <- mNodes.tryUpdate(mnode) { updateAdnNode(_, adnNode2) }
+          } yield {
+            Redirect(routes.SysMarket.showAdnNode(adnId))
+              .flashing(FLASH.SUCCESS -> "Changes.saved")
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 
   // Инвайты на управление ТЦ
 
   /** Рендер страницы с формой инвайта (передачи прав на управление ТЦ). */
-  def nodeOwnerInviteForm(adnId: String) = isSuNode.Get(adnId).async { implicit request =>
-    _nodeOwnerInviteFormSubmit(nodeOwnerInviteFormM, Ok)
+  def nodeOwnerInviteForm(adnId: String) = csrf.AddToken {
+    isSuNode(adnId).async { implicit request =>
+      _nodeOwnerInviteFormSubmit(nodeOwnerInviteFormM, Ok)
+    }
   }
 
   private def _nodeOwnerInviteFormSubmit(form: Form[String], rs: Status)(implicit request: MNodeReq[_]): Future[Result] = {
@@ -488,26 +509,28 @@ class SysMarket @Inject() (
   }
 
   /** Сабмит формы создания инвайта на управление ТЦ. */
-  def nodeOwnerInviteFormSubmit(adnId: String) = isSuNode.Post(adnId).async { implicit request =>
-    import request.mnode
-    nodeOwnerInviteFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
-        _nodeOwnerInviteFormSubmit(formWithErrors, NotAcceptable)
-      },
-      {email1 =>
-        val eAct = EmailActivation(email=email1, key = adnId)
-        for (eActId <- emailActivations.save(eAct)) yield {
-          val eact2 = eAct.copy(
-            id = Some(eActId)
-          )
-          sendEmailInvite(eact2, mnode)
-          // Письмо отправлено, вернуть админа назад в магазин
-          Redirect(routes.SysMarket.showAdnNode(adnId))
-            .flashing(FLASH.SUCCESS -> ("Письмо с приглашением отправлено на " + email1))
+  def nodeOwnerInviteFormSubmit(adnId: String) = csrf.Check {
+    isSuNode(adnId).async { implicit request =>
+      import request.mnode
+      nodeOwnerInviteFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(s"martInviteFormSubmit($adnId): Failed to bind form: ${formWithErrors.errors}")
+          _nodeOwnerInviteFormSubmit(formWithErrors, NotAcceptable)
+        },
+        {email1 =>
+          val eAct = EmailActivation(email=email1, key = adnId)
+          for (eActId <- emailActivations.save(eAct)) yield {
+            val eact2 = eAct.copy(
+              id = Some(eActId)
+            )
+            sendEmailInvite(eact2, mnode)
+            // Письмо отправлено, вернуть админа назад в магазин
+            Redirect(routes.SysMarket.showAdnNode(adnId))
+              .flashing(FLASH.SUCCESS -> ("Письмо с приглашением отправлено на " + email1))
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 
@@ -523,138 +546,140 @@ class SysMarket @Inject() (
 
 
   /** Отобразить технический список рекламных карточек узла. */
-  def showAdnNodeAds(a: MScAdsSearchQs) = isSu.Get.async { implicit request =>
+  def showAdnNodeAds(a: MScAdsSearchQs) = csrf.AddToken {
+    isSu().async { implicit request =>
 
-    // Ищем все рекламные карточки, подходящие под запрос.
-    val msearchFut = scAdSearchUtil.qsArgs2nodeSearch(a)
-    // TODO Нужна устойчивая сортировка.
-    val madsFut = for {
-      msearch <- msearchFut
-      res     <- mNodes.dynSearch(msearch)
-    } yield {
-      res
-    }
-
-    val brArgssFut = madsFut.flatMap { mads =>
-      Future.traverse(mads) { mad =>
-        lkAdUtil.tiledAdBrArgs(mad)
+      // Ищем все рекламные карточки, подходящие под запрос.
+      val msearchFut = scAdSearchUtil.qsArgs2nodeSearch(a)
+      // TODO Нужна устойчивая сортировка.
+      val madsFut = for {
+        msearch <- msearchFut
+        res     <- mNodes.dynSearch(msearch)
+      } yield {
+        res
       }
-    }
 
-    def __nodeIdsF(x: Option[MEsUuId]): Seq[String] = {
-      x.iterator.map(_.id).toSeq
-    }
-    val producerIds = __nodeIdsF(a.prodIdOpt)
-    val rcvrIds     = __nodeIdsF(a.rcvrIdOpt)
-
-    // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
-    val adnNodeIdOpt = {
-      producerIds
-        .headOption
-        .orElse {
-          rcvrIds.headOption
+      val brArgssFut = madsFut.flatMap { mads =>
+        Future.traverse(mads) { mad =>
+          lkAdUtil.tiledAdBrArgs(mad)
         }
-    }
+      }
 
-    val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodesCache.getById )
+      def __nodeIdsF(x: Option[MEsUuId]): Seq[String] = {
+        x.iterator.map(_.id).toSeq
+      }
+      val producerIds = __nodeIdsF(a.prodIdOpt)
+      val rcvrIds     = __nodeIdsF(a.rcvrIdOpt)
 
-    // Собираем карту размещений рекламных карточек.
-    val ad2advMapFut: Future[Map[String, Seq[MItem]]] = {
-      for {
-        mads <- madsFut
-        advs <- {
-          import slick.profile.api._
-          lazy val adIds = mads.flatMap(_.id)
-          val q0 = {
-            val statuses = MItemStatuses.advBusyIds.toSeq
-            mItems.query
-              .filter { i =>
-                (i.nodeId inSet adIds) && (i.statusStr inSet statuses)
+      // Узнаём текущий узел на основе запроса. TODO Кривовато это как-то, может стоит через аргумент передавать?
+      val adnNodeIdOpt = {
+        producerIds
+          .headOption
+          .orElse {
+            rcvrIds.headOption
+          }
+      }
+
+      val adnNodeOptFut = FutureUtil.optFut2futOpt(adnNodeIdOpt)( mNodesCache.getById )
+
+      // Собираем карту размещений рекламных карточек.
+      val ad2advMapFut: Future[Map[String, Seq[MItem]]] = {
+        for {
+          mads <- madsFut
+          advs <- {
+            import slick.profile.api._
+            lazy val adIds = mads.flatMap(_.id)
+            val q0 = {
+              val statuses = MItemStatuses.advBusyIds.toSeq
+              mItems.query
+                .filter { i =>
+                  (i.nodeId inSet adIds) && (i.statusStr inSet statuses)
+                }
+            }
+            val items: Future[Seq[MItem]] = if (rcvrIds.nonEmpty) {
+              // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
+              slick.db.run {
+                q0.filter(_.rcvrIdOpt inSet rcvrIds).result
               }
-          }
-          val items: Future[Seq[MItem]] = if (rcvrIds.nonEmpty) {
-            // Ищем все размещения имеющихся карточек у запрошенных ресиверов.
-            slick.db.run {
-              q0.filter(_.rcvrIdOpt inSet rcvrIds).result
-            }
 
-          } else if (producerIds.nonEmpty) {
-            // Ищем размещения карточек для продьюсера.
-            slick.db.run {
-              q0.result
-            }
+            } else if (producerIds.nonEmpty) {
+              // Ищем размещения карточек для продьюсера.
+              slick.db.run {
+                q0.result
+              }
 
-          } else {
-            Future.successful(Nil)
+            } else {
+              Future.successful(Nil)
+            }
+            items
           }
-          items
+        } yield {
+          advs.groupBy(_.nodeId)
         }
-      } yield {
-        advs.groupBy(_.nodeId)
       }
-    }
 
-    // Собираем ресиверов рекламных карточек.
-    val rcvrsFut: Future[Map[String, Seq[MNode]]] = if (rcvrIds.nonEmpty) {
-      // Используем только переданные ресиверы.
-      Future
-        .traverse(rcvrIds) { mNodesCache.getById }
-        .flatMap { rcvrOpts =>
-          val rcvrs = rcvrOpts.flatten
-          madsFut map { mads =>
-            mads.flatMap(_.id)
-              .map { adId => adId -> rcvrs }
-              .toMap
+      // Собираем ресиверов рекламных карточек.
+      val rcvrsFut: Future[Map[String, Seq[MNode]]] = if (rcvrIds.nonEmpty) {
+        // Используем только переданные ресиверы.
+        Future
+          .traverse(rcvrIds) { mNodesCache.getById }
+          .flatMap { rcvrOpts =>
+            val rcvrs = rcvrOpts.flatten
+            madsFut map { mads =>
+              mads.flatMap(_.id)
+                .map { adId => adId -> rcvrs }
+                .toMap
+            }
+          }
+
+      } else {
+        // Собираем всех ресиверов со всех рекламных карточек. Делаем это через биллинг, т.к. в mad только текущие ресиверы.
+        for {
+          ad2advsMap  <- ad2advMapFut
+          allRcvrs    <- {
+            val allRcvrIdsSet = ad2advsMap.valuesIterator
+              .flatten
+              .flatMap(_.rcvrIdOpt)
+              .toSet
+            mNodesCache.multiGet(allRcvrIdsSet)
+          }
+
+        } yield {
+          // Список ресиверов конвертим в карту ресиверов.
+          val rcvrsMap = allRcvrs
+            .iterator
+            .map { rcvr =>
+              rcvr.id.get -> rcvr
+            }
+            .toMap
+          // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
+          ad2advsMap.mapValues { advs =>
+            advs.flatMap { adv =>
+              adv.rcvrIdOpt
+                .flatMap(rcvrsMap.get)
+            }
           }
         }
+      }
 
-    } else {
-      // Собираем всех ресиверов со всех рекламных карточек. Делаем это через биллинг, т.к. в mad только текущие ресиверы.
+      // Планируем рендер страницы-результата, когда все данные будут собраны.
       for {
-        ad2advsMap  <- ad2advMapFut
-        allRcvrs    <- {
-          val allRcvrIdsSet = ad2advsMap.valuesIterator
-            .flatten
-            .flatMap(_.rcvrIdOpt)
-            .toSet
-          mNodesCache.multiGet(allRcvrIdsSet)
-        }
-
+        brArgss       <- brArgssFut
+        adnNodeOpt    <- adnNodeOptFut
+        rcvrs         <- rcvrsFut
+        ad2advMap     <- ad2advMapFut
+        msearch       <- msearchFut
       } yield {
-        // Список ресиверов конвертим в карту ресиверов.
-        val rcvrsMap = allRcvrs
-          .iterator
-          .map { rcvr =>
-            rcvr.id.get -> rcvr
-          }
-          .toMap
-        // Заменяем в исходной карте ad2advs списки adv на списки ресиверов.
-        ad2advsMap.mapValues { advs =>
-          advs.flatMap { adv =>
-            adv.rcvrIdOpt
-              .flatMap(rcvrsMap.get)
-          }
-        }
+        val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap, msearch)
+        Ok( showAdnNodeAdsTpl(rargs) )
       }
-    }
-
-    // Планируем рендер страницы-результата, когда все данные будут собраны.
-    for {
-      brArgss       <- brArgssFut
-      adnNodeOpt    <- adnNodeOptFut
-      rcvrs         <- rcvrsFut
-      ad2advMap     <- ad2advMapFut
-      msearch       <- msearchFut
-    } yield {
-      val rargs = MShowNodeAdsTplArgs(brArgss, adnNodeOpt, rcvrs, a, ad2advMap, msearch)
-      Ok( showAdnNodeAdsTpl(rargs) )
     }
   }
 
 
   /** Убрать указанную рекламную карточку из выдачи указанного ресивера. */
-  def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = {
-    isSuMad.Post(adId).async { implicit request =>
+  def removeAdRcvr(adId: String, rcvrIdOpt: Option[String], r: Option[String]) = csrf.Check {
+    isSuMad(adId).async { implicit request =>
       // Запускаем спиливание ресивера для указанной рекламной карточки.
       val madSavedFut = advRcvrsUtil.depublishAdOn(request.mad, rcvrIdOpt.toSet)
 
@@ -736,116 +761,124 @@ class SysMarket @Inject() (
    *
    * @param adId id рекламной карточки.
    */
-  def showAd(adId: String) = isSuMad.Get(adId).async { implicit request =>
-    import request.mad
+  def showAd(adId: String) = csrf.AddToken {
+    isSuMad(adId).async { implicit request =>
+      import request.mad
 
-    // Определить узла-продьюсера
-    val producerIdOpt = n2NodesUtil.madProducerId( mad )
-    val producerOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
+      // Определить узла-продьюсера
+      val producerIdOpt = n2NodesUtil.madProducerId( mad )
+      val producerOptFut = mNodesCache.maybeGetByIdCached( producerIdOpt )
 
-    // Собрать инфу по картинкам.
-    val imgs = {
-      mad.edges
-        .withPredicateIter( MPredicates.Bg, MPredicates.WcLogo, MPredicates.GalleryItem )
-        .map { e =>
-          MImgEdge(e, MImg3(e))
-        }
-        .toSeq
-    }
+      // Собрать инфу по картинкам.
+      val imgs = {
+        mad.edges
+          .withPredicateIter( MPredicates.Bg, MPredicates.WcLogo, MPredicates.GalleryItem )
+          .map { e =>
+            MImgEdge(e, MImg3(e))
+          }
+          .toSeq
+      }
 
-    // Считаем кол-во ресиверов.
-    val rcvrsCount = n2NodesUtil.receiverIds(mad)
-      .toSet
-      .size
+      // Считаем кол-во ресиверов.
+      val rcvrsCount = n2NodesUtil.receiverIds(mad)
+        .toSet
+        .size
 
-    // Вернуть результат, когда всё будет готово.
-    for {
-      producerOpt <- producerOptFut
-    } yield {
-      val rargs = MShowAdTplArgs(mad, producerOpt, imgs, producerIdOpt, rcvrsCount)
-      Ok( showAdTpl(rargs) )
+      // Вернуть результат, когда всё будет готово.
+      for {
+        producerOpt <- producerOptFut
+      } yield {
+        val rargs = MShowAdTplArgs(mad, producerOpt, imgs, producerIdOpt, rcvrsCount)
+        Ok( showAdTpl(rargs) )
+      }
     }
   }
 
 
   /** Вывести результат анализа ресиверов рекламной карточки. */
-  def analyzeAdRcvrs(adId: String) = isSuMad.Get(adId).async { implicit request =>
-    import request.mad
-    val producerId = n2NodesUtil.madProducerId(mad).get
-    val producerOptFut = mNodesCache.getById(producerId)
+  def analyzeAdRcvrs(adId: String) = csrf.AddToken {
+    isSuMad(adId).async { implicit request =>
+      import request.mad
+      val producerId = n2NodesUtil.madProducerId(mad).get
+      val producerOptFut = mNodesCache.getById(producerId)
 
-    val newRcvrsMapFut = for {
-      producerOpt <- producerOptFut
-      acc2 <- advRcvrsUtil.calculateReceiversFor(mad, producerOpt)
-    } yield {
-      // Нужна только карта ресиверов. Дроп всей остальной инфы...
-      acc2.mad.edges.out
-    }
-
-    val rcvrsMap = n2NodesUtil.receiversMap(mad)
-
-    // Достаём из кэша узлы.
-    val nodesMapFut: Future[Map[String, MNode]] = {
-      def _nodeIds(rcvrs: Receivers_t): Set[String] = {
-        if (rcvrs.nonEmpty) {
-          rcvrs.iterator
-            .map(_.nodeIds)
-            .reduceLeft(_ ++ _)
-        } else {
-          Set.empty
-        }
-      }
-      val adnIds1 = _nodeIds(rcvrsMap)
-      for {
-        adns1       <- mNodesCache.multiGet(adnIds1)
-        newRcvrsMap <- newRcvrsMapFut
-        newAdns     <- {
-          val newRcvrIds = _nodeIds(newRcvrsMap)
-          mNodesCache.multiGet(newRcvrIds -- adnIds1)
-        }
+      val newRcvrsMapFut = for {
+        producerOpt <- producerOptFut
+        acc2 <- advRcvrsUtil.calculateReceiversFor(mad, producerOpt)
       } yield {
-        val iter = adns1.iterator ++ newAdns.iterator
-        OptId.els2idMap[String, MNode](iter)
+        // Нужна только карта ресиверов. Дроп всей остальной инфы...
+        acc2.mad.edges.out
       }
-    }
 
-    // Узнать, совпадает ли рассчетная карта ресиверов с текущей.
-    val rcvrsMapOkFut = for (newRcvrsMap <- newRcvrsMapFut) yield {
-      advRcvrsUtil.isRcvrsMapEquals(newRcvrsMap, rcvrsMap)
-    }
+      val rcvrsMap = n2NodesUtil.receiversMap(mad)
 
-    for {
-      newRcvrsMap <- newRcvrsMapFut
-      producerOpt <- producerOptFut
-      nodesMap    <- nodesMapFut
-      rcvrsMapOk  <- rcvrsMapOkFut
-    } yield {
-      val rargs = MShowAdRcvrsTplArgs( mad, newRcvrsMap, nodesMap, producerOpt, rcvrsMap, rcvrsMapOk )
-      Ok( showAdRcvrsTpl(rargs) )
+      // Достаём из кэша узлы.
+      val nodesMapFut: Future[Map[String, MNode]] = {
+        def _nodeIds(rcvrs: Receivers_t): Set[String] = {
+          if (rcvrs.nonEmpty) {
+            rcvrs.iterator
+              .map(_.nodeIds)
+              .reduceLeft(_ ++ _)
+          } else {
+            Set.empty
+          }
+        }
+        val adnIds1 = _nodeIds(rcvrsMap)
+        for {
+          adns1       <- mNodesCache.multiGet(adnIds1)
+          newRcvrsMap <- newRcvrsMapFut
+          newAdns     <- {
+            val newRcvrIds = _nodeIds(newRcvrsMap)
+            mNodesCache.multiGet(newRcvrIds -- adnIds1)
+          }
+        } yield {
+          val iter = adns1.iterator ++ newAdns.iterator
+          OptId.els2idMap[String, MNode](iter)
+        }
+      }
+
+      // Узнать, совпадает ли рассчетная карта ресиверов с текущей.
+      val rcvrsMapOkFut = for (newRcvrsMap <- newRcvrsMapFut) yield {
+        advRcvrsUtil.isRcvrsMapEquals(newRcvrsMap, rcvrsMap)
+      }
+
+      for {
+        newRcvrsMap <- newRcvrsMapFut
+        producerOpt <- producerOptFut
+        nodesMap    <- nodesMapFut
+        rcvrsMapOk  <- rcvrsMapOkFut
+      } yield {
+        val rargs = MShowAdRcvrsTplArgs( mad, newRcvrsMap, nodesMap, producerOpt, rcvrsMap, rcvrsMapOk )
+        Ok( showAdRcvrsTpl(rargs) )
+      }
     }
   }
 
 
   /** Пересчитать и сохранить ресиверы для указанной рекламной карточки. */
-  def resetReceivers(adId: String, r: Option[String]) = isSuMad.Post(adId).async { implicit request =>
-    for {
-      _ <- advRcvrsUtil.resetReceiversFor(request.mad)
-    } yield {
-      // Когда всё будет сделано, отредиректить юзера назад на страницу ресиверов.
-      RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
-        .flashing(FLASH.SUCCESS -> s"Произведён сброс ресиверов узла-карточки.")
+  def resetReceivers(adId: String, r: Option[String]) = csrf.Check {
+    isSuMad(adId).async { implicit request =>
+      for {
+        _ <- advRcvrsUtil.resetReceiversFor(request.mad)
+      } yield {
+        // Когда всё будет сделано, отредиректить юзера назад на страницу ресиверов.
+        RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
+          .flashing(FLASH.SUCCESS -> s"Произведён сброс ресиверов узла-карточки.")
+      }
     }
   }
 
 
   /** Очистить полностью таблицу ресиверов. Бывает нужно для временного сокрытия карточки везде.
     * Это действие можно откатить через resetReceivers. */
-  def cleanReceivers(adId: String, r: Option[String]) = isSuMad.Post(adId).async { implicit request =>
-    for {
-      _ <- advRcvrsUtil.cleanReceiverFor(request.mad)
-    } yield {
-      RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
-        .flashing(FLASH.SUCCESS -> "Из узла вычищены все ребра ресиверов. Биллинг не затрагивался.")
+  def cleanReceivers(adId: String, r: Option[String]) = csrf.Check {
+    isSuMad(adId).async { implicit request =>
+      for {
+        _ <- advRcvrsUtil.cleanReceiverFor(request.mad)
+      } yield {
+        RdrBackOr(r) { routes.SysMarket.analyzeAdRcvrs(adId) }
+          .flashing(FLASH.SUCCESS -> "Из узла вычищены все ребра ресиверов. Биллинг не затрагивался.")
+      }
     }
   }
 

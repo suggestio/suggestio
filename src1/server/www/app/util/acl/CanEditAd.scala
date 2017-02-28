@@ -7,7 +7,7 @@ import models.req.{IReqHdr, MAdProdReq, MReq, MUserInit}
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -25,10 +25,10 @@ class CanEditAd @Inject() (
                             isAdnNodeAdmin          : IsAdnNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
                             isAuth                  : IsAuth,
-                            val csrf                : Csrf,
                             mCommonDi               : ICommonDi
                           )
-  extends MacroLogsImpl
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -52,71 +52,59 @@ class CanEditAd @Inject() (
       LOGGER.trace(s"invokeBlock(): Ad not found: $adId")
       errorHandler.http404Fut(req)
     }
+
   }
 
 
-  /** Редактировать карточку может только владелец магазина. */
-  sealed trait CanEditAdBase
-    extends ActionBuilder[MAdProdReq]
-    with AdEditBase
-    with InitUserCmds
-  {
+  def apply(adId1: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq] = {
+    new SioActionBuilderImpl[MAdProdReq] with AdEditBase with InitUserCmds {
 
-    def prodNotFound(nodeIdOpt: Option[String]): Future[Result] = {
-      Results.NotFound("Ad producer not found: " + nodeIdOpt)
-    }
+      override def adId = adId1
 
-    override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
+      override def userInits = userInits1
 
-      personIdOpt.fold (isAuth.onUnauth(request)) { personId =>
-        val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
-        val user = mSioUsers(personIdOpt)
+      def prodNotFound(nodeIdOpt: Option[String]): Future[Result] = {
+        Results.NotFound("Ad producer not found: " + nodeIdOpt)
+      }
 
-        maybeInitUser(user)
+      override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
 
-        madOptFut.flatMap {
-          case Some(mad) =>
-            val prodIdOpt = n2NodesUtil.madProducerId(mad)
-            val prodNodeOptFut = mNodesCache.maybeGetByIdCached( prodIdOpt )
+        personIdOpt.fold (isAuth.onUnauth(request)) { personId =>
+          val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+          val user = mSioUsers(personIdOpt)
 
-            prodNodeOptFut.flatMap {
-              case Some(producer) =>
-                val allowed = user.isSuper || isAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+          maybeInitUser(user)
 
-                if (!allowed) {
-                  LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")
-                  forbiddenFut("No node admin rights", request)
-                } else {
-                  val req1 = MAdProdReq(mad = mad, producer = producer, request = request, user = user)
-                  block(req1)
-                }
+          madOptFut.flatMap {
+            case Some(mad) =>
+              val prodIdOpt = n2NodesUtil.madProducerId(mad)
+              val prodNodeOptFut = mNodesCache.maybeGetByIdCached( prodIdOpt )
 
-              case None =>
-                prodNotFound(personIdOpt)
-            }
+              prodNodeOptFut.flatMap {
+                case Some(producer) =>
+                  val allowed = user.isSuper || isAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
 
-          case None =>
-            val req1 = MReq(request, user)
-            adNotFound(req1)
+                  if (!allowed) {
+                    LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")
+                    forbiddenFut("No node admin rights", request)
+                  } else {
+                    val req1 = MAdProdReq(mad = mad, producer = producer, request = request, user = user)
+                    block(req1)
+                  }
+
+                case None =>
+                  prodNotFound(personIdOpt)
+              }
+
+            case None =>
+              val req1 = MReq(request, user)
+              adNotFound(req1)
+          }
         }
       }
+
     }
   }
-
-  sealed abstract class CanEditAdAbstract
-    extends CanEditAdBase
-
-  /** Запрос формы редактирования карточки должен сопровождаться выставлением CSRF-токена. */
-  case class Get(override val adId: String,
-                          override val userInits: MUserInit*)
-    extends CanEditAdAbstract
-    with csrf.Get[MAdProdReq]
-
-  /** Сабмит формы редактирования рекламной карточки должен начинаться с проверки CSRF-токена. */
-  case class Post(override val adId: String,
-                           override val userInits: MUserInit*)
-    extends CanEditAdAbstract
-    with csrf.Post[MAdProdReq]
 
 }

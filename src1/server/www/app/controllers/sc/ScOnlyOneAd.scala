@@ -25,7 +25,6 @@ trait ScOnlyOneAd
   protected val getAnyAd: GetAnyAd
 
   import mCommonDi._
-  import getAnyAd.GetAnyAd
 
   /**
    * Отрендерить одну указанную карточку как веб-страницу.
@@ -33,7 +32,7 @@ trait ScOnlyOneAd
    * @param args Настройки выборки и отображения результата.
    * @return 200 Ок с отрендеренной страницей-карточкой.
    */
-  def onlyOneAd(args: OneAdQsArgs) = GetAnyAd(args.adId).async { implicit request =>
+  def onlyOneAd(args: OneAdQsArgs) = getAnyAd(args.adId).async { implicit request =>
     import request.mad
     val bgImgOptFut = adRenderUtil.getBgImgOpt(mad, args)
     val bc = BlocksConf.applyOrDefault( request.mad )
@@ -75,7 +74,7 @@ trait ScOnlyOneAd
    * @param adArgs Настройки выборки и отображения результата.
    * @return 200 Ok с картинкой.
    */
-  def onlyOneAdAsImage(adArgs: OneAdQsArgs) = GetAnyAd(adArgs.adId).async { implicit request =>
+  def onlyOneAdAsImage(adArgs: OneAdQsArgs) = getAnyAd(adArgs.adId).async { implicit request =>
     for {
       imgFile <- adRenderUtil.renderAd2img(adArgs, request.mad)
     } yield {

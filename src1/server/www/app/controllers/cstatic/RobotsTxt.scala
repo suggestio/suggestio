@@ -13,7 +13,6 @@ import views.txt.static.robotsTxtTpl
 trait RobotsTxt extends SioController with IIgnoreAuth {
 
   import mCommonDi._
-  import ignoreAuth.IgnoreAuth
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS: Int = {
@@ -23,7 +22,7 @@ trait RobotsTxt extends SioController with IIgnoreAuth {
   }
 
   /** Раздача содержимого robots.txt. */
-  def robotsTxt = IgnoreAuth { implicit request =>
+  def robotsTxt = ignoreAuth() { implicit request =>
     Ok( robotsTxtTpl() )
       .withHeaders(
         //CONTENT_TYPE  -> "text/plain; charset=utf-8",

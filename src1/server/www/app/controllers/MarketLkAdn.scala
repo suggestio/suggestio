@@ -73,19 +73,21 @@ class MarketLkAdn @Inject() (
   import mCommonDi._
 
   /** Список личных кабинетов юзера. */
-  def lkList(fromAdnId: Option[String]) = isAdnNodeAdminOptOrAuth.Get(fromAdnId, U.Lk).async { implicit request =>
-    val personId = request.user.personIdOpt.get
+  def lkList(fromAdnId: Option[String]) = csrf.AddToken {
+    isAdnNodeAdminOptOrAuth(fromAdnId, U.Lk).async { implicit request =>
+      val personId = request.user.personIdOpt.get
 
-    val mnodesFut = mNodes.dynSearch(
-      nodesUtil.personNodesSearch(personId)
-    )
+      val mnodesFut = mNodes.dynSearch(
+        nodesUtil.personNodesSearch(personId)
+      )
 
-    for {
-      ctxData     <- request.user.lkCtxDataFut
-      mnodes      <- mnodesFut
-    } yield {
-      implicit val ctxData1 = ctxData
-      Ok( lkListTpl(mnodes, request.mnodeOpt) )
+      for {
+        ctxData     <- request.user.lkCtxDataFut
+        mnodes      <- mnodesFut
+      } yield {
+        implicit val ctxData1 = ctxData
+        Ok( lkListTpl(mnodes, request.mnodeOpt) )
+      }
     }
   }
 
@@ -95,26 +97,28 @@ class MarketLkAdn @Inject() (
    *
    * @param nodeId id узла.
    */
-  def showAdnNode(nodeId: String) = isAdnNodeAdmin.Get(nodeId, U.Lk).async { implicit request =>
-    val mnode = request.mnode
-    val logoOptFut = logoUtil.getLogoOfNode(mnode)
-    val galleryFut = galleryUtil.galleryImgs( mnode )
-    for {
-      ctxData   <- request.user.lkCtxDataFut
-      logoOpt   <- logoOptFut
-      gallery   <- galleryFut
-    } yield {
-      val rargs = MNodeShowArgs(
-        mnode         = mnode,
-        logoImgOpt    = logoOpt,
-        bgColor       = colorCodeOrDflt(mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
-        fgColor       = colorCodeOrDflt(mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
-        gallery       = gallery
-      )
+  def showAdnNode(nodeId: String) = csrf.AddToken {
+    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+      val mnode = request.mnode
+      val logoOptFut = logoUtil.getLogoOfNode(mnode)
+      val galleryFut = galleryUtil.galleryImgs( mnode )
+      for {
+        ctxData   <- request.user.lkCtxDataFut
+        logoOpt   <- logoOptFut
+        gallery   <- galleryFut
+      } yield {
+        val rargs = MNodeShowArgs(
+          mnode         = mnode,
+          logoImgOpt    = logoOpt,
+          bgColor       = colorCodeOrDflt(mnode.meta.colors.bg, scUtil.SITE_BGCOLOR_DFLT),
+          fgColor       = colorCodeOrDflt(mnode.meta.colors.fg, scUtil.SITE_FGCOLOR_DFLT),
+          gallery       = gallery
+        )
 
-      implicit val ctxData1 = ctxData
-      val html = adnNodeShowTpl( rargs )
-      Ok(html)
+        implicit val ctxData1 = ctxData
+        val html = adnNodeShowTpl( rargs )
+        Ok(html)
+      }
     }
   }
 
@@ -131,8 +135,8 @@ class MarketLkAdn @Inject() (
    *                   независимо от refresh в индексе. Тут её id.
    * @return 200 Ok + страница ЛК со списком карточек.
    */
-  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = {
-    isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
+  def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = csrf.AddToken {
+    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
       import request.mnode
 
       // Для узла нужно отобразить его рекламу.
@@ -270,112 +274,116 @@ class MarketLkAdn @Inject() (
   }
 
   /** Рендер страницы с формой подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = nodeEact.Get(adnId, eActId)(eactNotFound) { implicit request =>
-    Ok(invite.inviteAcceptFormTpl(request.mnode, request.eact, nodeOwnerInviteAcceptM, withOfferText = true))
+  def nodeOwnerInviteAcceptForm(adnId: String, eActId: String) = csrf.AddToken {
+    nodeEact(adnId, eActId)(eactNotFound) { implicit request =>
+      Ok(invite.inviteAcceptFormTpl(request.mnode, request.eact, nodeOwnerInviteAcceptM, withOfferText = true))
+    }
   }
 
   /** Сабмит формы подтверждения инвайта на управление ТЦ. */
-  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = nodeEact.Post(adnId, eActId)(eactNotFound).async { implicit request =>
-    import request.{eact, mnode}
-    // Если юзер залогинен, то форму биндить не надо
-    val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
-    lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($adnId, act=$eActId): "
-    formBinded.fold(
-      {formWithErrors =>
-        debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
+  def nodeOwnerInviteAcceptFormSubmit(adnId: String, eActId: String) = csrf.Check {
+    nodeEact(adnId, eActId)(eactNotFound).async { implicit request =>
+      import request.{eact, mnode}
+      // Если юзер залогинен, то форму биндить не надо
+      val formBinded = nodeOwnerInviteAcceptM.bindFromRequest()
+      lazy val logPrefix = s"nodeOwnerInviteAcceptFormSubmit($adnId, act=$eActId): "
+      formBinded.fold(
+        {formWithErrors =>
+          debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
+          NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
 
-      }, { case (contractAgreed, passwordOpt) =>
-        val isAuth = request.user.isAuth
-        if (passwordOpt.isEmpty && !isAuth) {
-          debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
-          val form1 = formBinded
-            .withError("password.pw1", "error.required")
-            .withError("password.pw2", "error.required")
-          NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, form1, withOfferText = false))
+        }, { case (contractAgreed, passwordOpt) =>
+          val isAuth = request.user.isAuth
+          if (passwordOpt.isEmpty && !isAuth) {
+            debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
+            val form1 = formBinded
+              .withError("password.pw1", "error.required")
+              .withError("password.pw2", "error.required")
+            NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, form1, withOfferText = false))
 
-        } else {
-          // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
-          for {
-            isDeleted <- emailActivations.deleteById(eActId)
+          } else {
+            // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
+            for {
+              isDeleted <- emailActivations.deleteById(eActId)
 
-            personIdOpt <- {
-              if (!isAuth) {
-                val mperson0 = MNode(
-                  common = MNodeCommon(
-                    ntype = MNodeTypes.Person,
-                    isDependent = false
-                  ),
-                  meta = MMeta(
-                    basic = MBasicMeta(
-                      nameOpt = Some(eact.email),
-                      langs = List( request2lang.code )
+              personIdOpt <- {
+                if (!isAuth) {
+                  val mperson0 = MNode(
+                    common = MNodeCommon(
+                      ntype = MNodeTypes.Person,
+                      isDependent = false
                     ),
-                    person = MPersonMeta(
-                      emails = List(eact.email)
+                    meta = MMeta(
+                      basic = MBasicMeta(
+                        nameOpt = Some(eact.email),
+                        langs = List( request2lang.code )
+                      ),
+                      person = MPersonMeta(
+                        emails = List(eact.email)
+                      )
                     )
                   )
-                )
 
-                // Сохранение данных.
-                for {
-                  personId        <- mNodes.save(mperson0)
-                  emailPwIdentId  <- {
-                    val epwIdent = EmailPwIdent(
+                  // Сохранение данных.
+                  for {
+                    personId <- mNodes.save(mperson0)
+                    epwIdent = EmailPwIdent(
                       email       = eact.email,
                       personId    = personId,
                       pwHash      = scryptUtil.mkHash(passwordOpt.get),
                       isVerified  = true
                     )
-                    emailPwIdents.save(epwIdent)
+                    _ <- emailPwIdents.save(epwIdent)
+                  } yield {
+                    Some(personId)
                   }
-                } yield {
-                  Some(personId)
+                } else {
+                  Future.successful( None )
                 }
-              } else {
-                Future.successful( None )
               }
-            }
 
-            personId = personIdOpt.orElse(request.user.personIdOpt).get
+              personId = personIdOpt.orElse(request.user.personIdOpt).get
 
-            _ <- {
-              val nodeOwnedByPersonId = {
-                mnode.edges
-                  .withPredicateIter( MPredicates.OwnedBy )
-                  .exists(_.nodeIds.contains(personId))
-              }
-              if (!nodeOwnedByPersonId) {
-                val ownEdge = MEdge(
-                  predicate = MPredicates.OwnedBy,
-                  nodeIds   = Set(personId)
-                )
-                mNodes.tryUpdate(mnode) { mnode0 =>
-                  mnode0.copy(
-                    edges = mnode0.edges.copy(
-                      out = mnode0.edges.out ++ Seq(ownEdge)
-                    )
+              _ <- {
+                val nodeOwnedByPersonId = {
+                  mnode.edges
+                    .withPredicateIter( MPredicates.OwnedBy )
+                    .exists(_.nodeIds.contains(personId))
+                }
+                if (!nodeOwnedByPersonId) {
+                  val ownEdge = MEdge(
+                    predicate = MPredicates.OwnedBy,
+                    nodeIds   = Set(personId)
                   )
+                  mNodes.tryUpdate(mnode) { mnode0 =>
+                    mnode0.copy(
+                      edges = mnode0.edges.copy(
+                        out = mnode0.edges.out ++ Seq(ownEdge)
+                      )
+                    )
+                  }
+                } else {
+                  Future.successful(Unit)
                 }
-              } else {
-                Future.successful(Unit)
               }
-            }
 
-          } yield {
-            Redirect(routes.MarketLkAdn.showNodeAds(adnId))
-              .flashing(FLASH.SUCCESS -> "Signup.finished")
-              .withSession(Keys.PersonId.name -> personId)
+            } yield {
+              Redirect(routes.MarketLkAdn.showNodeAds(adnId))
+                .flashing(FLASH.SUCCESS -> "Signup.finished")
+                .withSession(Keys.PersonId.name -> personId)
+            }
           }
         }
-      }
-    )
+      )
+    }
   }
 
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
-  def userProfileEdit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
-    _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
+  def userProfileEdit(adnId: String, r: Option[String]) = csrf.AddToken {
+    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+      _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
+    }
   }
 
   private def _userProfileEdit(form: Form[(String, String)], r: Option[String], rs: Status)
@@ -391,9 +399,11 @@ class MarketLkAdn @Inject() (
   }
 
   /** Сабмит формы смены пароля. */
-  def changePasswordSubmit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
-    _changePasswordSubmit(r) { formWithErrors =>
-      _userProfileEdit(formWithErrors, r, NotAcceptable)
+  def changePasswordSubmit(adnId: String, r: Option[String]) = csrf.Check {
+    isAdnNodeAdmin(adnId).async { implicit request =>
+      _changePasswordSubmit(r) { formWithErrors =>
+        _userProfileEdit(formWithErrors, r, NotAcceptable)
+      }
     }
   }
 
@@ -409,32 +419,37 @@ class MarketLkAdn @Inject() (
   }
 
   /** Рендер страницы с формой создания нового узла (магазина). */
-  def createNode = isAuth.Get { implicit request =>
-    val form = createNodeFormM
-    Ok(createTpl(form))
+  def createNode = csrf.AddToken {
+    isAuth() { implicit request =>
+      val form = createNodeFormM
+      Ok(createTpl(form))
+    }
   }
 
+
   /** Сабмит формы создания нового узла для юзера. */
-  def createNodeSubmit = isAuth.Post.async { implicit request =>
-    createNodeFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("createNodeSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        NotAcceptable(createTpl(formWithErrors))
-      },
-      {nodeName =>
-        val nodeFut = nodesUtil.createUserNode(
-          name      = nodeName,
-          personId  = request.user.personIdOpt.get
-        )
-        // Рендер HTTP-ответа.
-        val respFut = nodeFut map { adnNode =>
-          Redirect( nodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
-            .flashing(FLASH.SUCCESS -> "New.shop.created.fill.info")
+  def createNodeSubmit = csrf.Check {
+    isAuth().async { implicit request =>
+      createNodeFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug("createNodeSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+          NotAcceptable(createTpl(formWithErrors))
+        },
+        {nodeName =>
+          val nodeFut = nodesUtil.createUserNode(
+            name      = nodeName,
+            personId  = request.user.personIdOpt.get
+          )
+          // Рендер HTTP-ответа.
+          val respFut = nodeFut map { adnNode =>
+            Redirect( nodesUtil.userNodeCreatedRedirect(adnNode.id.get) )
+              .flashing(FLASH.SUCCESS -> "New.shop.created.fill.info")
+          }
+          // Вернуть HTTP-ответ.
+          respFut
         }
-        // Вернуть HTTP-ответ.
-        respFut
-      }
-    )
+      )
+    }
   }
 
 }

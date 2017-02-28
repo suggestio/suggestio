@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{MReq, MUserInit}
 import play.api.mvc._
@@ -16,57 +16,33 @@ import scala.concurrent.Future
  */
 @Singleton
 class MaybeAuth @Inject() (
-                            val cookieCleanup       : CookieCleanup,
-                            val csrf                : Csrf,
                             mCommonDi               : ICommonDi
-                          ) {
+                          )
+  extends SioActionBuilderOuter
+{
 
   import mCommonDi._
 
-  /** Здесь логика MaybeAuth action-builder'а. */
-  sealed trait MaybeAuthBase
-    extends ActionBuilder[MReq]
-    with InitUserCmds
-  {
+  /** Собрать MaybeAuth action-builder. */
+  def apply(userInits1: MUserInit*): ActionBuilder[MReq] = {
+    new SioActionBuilderImpl[MReq] with InitUserCmds {
 
-    /**
-     * Вызывается генератор экшена в билдере.
-     * @param request Реквест.
-     * @param block Суть действий в виде функции, возвращающей фьючерс.
-     * @tparam A Подтип реквеста.
-     * @return Фьючерс, описывающий результат.
-     */
-    override def invokeBlock[A](request: Request[A],
-                                block: (MReq[A]) => Future[Result]): Future[Result] = {
-      // Подготовить базовые данные реквеста.
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
-      maybeInitUser(user)
+      override def userInits = userInits1
 
-      // Сразу переходим к исполнению экшена, т.к. больше нечего делать.
-      val req1 = MReq(request, user)
-      block(req1)
+      override def invokeBlock[A](request: Request[A],
+                                  block: (MReq[A]) => Future[Result]): Future[Result] = {
+        // Подготовить базовые данные реквеста.
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
+        maybeInitUser(user)
+
+        // Сразу переходим к исполнению экшена, т.к. больше нечего делать.
+        val req1 = MReq(request, user)
+        block(req1)
+      }
+
     }
-
   }
-
-  sealed abstract class MaybeAuthAbstract
-    extends MaybeAuthBase
-    with cookieCleanup.CookieCleanup[MReq]
-
-  /** Сборка данных по текущей сессии юзера в реквест. */
-  case class MaybeAuth(override val userInits: MUserInit*)
-    extends MaybeAuthAbstract
-  @inline
-  def apply(userInits: MUserInit*) = MaybeAuth(userInits: _*)
-
-  case class Get(override val userInits: MUserInit*)
-    extends MaybeAuthAbstract
-    with csrf.Get[MReq]
-
-  case class Post(override val userInits: MUserInit*)
-    extends MaybeAuthAbstract
-    with csrf.Post[MReq]
 
 }
 

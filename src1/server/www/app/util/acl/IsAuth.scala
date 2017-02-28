@@ -8,10 +8,8 @@ import scala.concurrent.Future
 import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
-
-// TODO Сделать всё это действо injectable. Возможно даже объеденить оба трейта в один класс.
 
 /**
  * Suggest.io
@@ -23,10 +21,10 @@ import models.mproj.ICommonDi
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
 @Singleton
 class IsAuth @Inject() (
-                         val csrf               : Csrf,
                          mCommonDi              : ICommonDi
                        )
-  extends MacroLogsImpl
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -47,8 +45,8 @@ class IsAuth @Inject() (
     onUnauthBase(request)
   }
 
-
-  sealed trait Base extends ActionBuilder[MReq] {
+  /** реализация action-builder'а с поддержкой автоматического управления сессией. */
+  sealed class Impl extends SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
@@ -66,28 +64,16 @@ class IsAuth @Inject() (
 
   }
 
-  /** Абстрактная реализация action-builder'а с поддержкой автоматического управления сессией. */
-  sealed class Impl
-    extends Base
-
 
   /** Проверка на залогиненность юзера без CSRF-дейстий. */
   val IsAuth = new Impl
+
   @inline
   def apply() = IsAuth
 
-  /** Проверка на залогиненность юзера с выставлением CSRF-токена. */
-  object Get
-    extends Impl
-    with csrf.Get[MReq]
-
-  /** Проверка на залогиненность юзера с проверкой CSRF-токена, выставленного ранее. */
-  object Post
-    extends Impl
-    with csrf.Post[MReq]
-
 }
 
+/** Интерфейс для поля с DI-инстансом [[IsAuth]]. */
 trait IIsAuth {
   def isAuth: IsAuth
 }

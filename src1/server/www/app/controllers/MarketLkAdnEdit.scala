@@ -218,34 +218,36 @@ class MarketLkAdnEdit @Inject() (
 
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
-  def editAdnNode(adnId: String) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
-    import request.mnode
+  def editAdnNode(adnId: String) = csrf.AddToken {
+    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+      import request.mnode
 
-    // Запуск асинхронной сборки данных из моделей.
-    val nodeLogoOptFut = logoUtil.getLogoOfNode(mnode)
-    val gallerryIks = galleryUtil
-      .gallery2iiks {
-        mnode.edges
-          .withPredicateIter( MPredicates.GalleryItem )
+      // Запуск асинхронной сборки данных из моделей.
+      val nodeLogoOptFut = logoUtil.getLogoOfNode(mnode)
+      val gallerryIks = galleryUtil
+        .gallery2iiks {
+          mnode.edges
+            .withPredicateIter( MPredicates.GalleryItem )
+        }
+        .toList
+
+      // Сборка и наполнения маппинга формы.
+      val formM = nodeFormM(mnode.extras.adn.get)
+      val formFilledFut = for {
+        nodeLogoOpt  <- nodeLogoOptFut
+      } yield {
+        val wcLogoImg = welcomeUtil.wcLogoImg(mnode)
+        val fmr = FormMapResult(mnode.meta, nodeLogoOpt, wcLogoImg, gallerryIks)
+        formM fill fmr
       }
-      .toList
 
-    // Сборка и наполнения маппинга формы.
-    val formM = nodeFormM(mnode.extras.adn.get)
-    val formFilledFut = for {
-      nodeLogoOpt  <- nodeLogoOptFut
-    } yield {
-      val wcLogoImg = welcomeUtil.wcLogoImg(mnode)
-      val fmr = FormMapResult(mnode.meta, nodeLogoOpt, wcLogoImg, gallerryIks)
-      formM fill fmr
-    }
-
-    // Рендер и возврат http-ответа.
-    for {
-      formFilled  <- formFilledFut
-      resp        <- _editAdnNode(formFilled, Ok)
-    } yield {
-      resp
+      // Рендер и возврат http-ответа.
+      for {
+        formFilled  <- formFilledFut
+        resp        <- _editAdnNode(formFilled, Ok)
+      } yield {
+        resp
+      }
     }
   }
 
@@ -271,42 +273,44 @@ class MarketLkAdnEdit @Inject() (
 
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
-  def editAdnNodeSubmit(adnId: String) = isAdnNodeAdmin.Post(adnId, U.Lk).async { implicit request =>
-    import request.mnode
-    lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
-    nodeFormM(mnode.extras.adn.get).bindFromRequest().fold(
-      {formWithErrors =>
-        debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        _editAdnNode(formWithErrors, NotAcceptable)
-      },
-      {fmr =>
-        // В фоне обновляем картинку карточки-приветствия.
-        val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(mnode, fmr.waImgOpt)
-        trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
-        // В фоне обновляем логотип узла
-        val savedLogoFut = logoUtil.updateLogoFor(mnode, fmr.logoOpt)
-        // Запускаем апдейт галереи.
-        val galleryUpdFut = galleryUtil.updateGallery(
-          newGallery = fmr.gallery,
-          oldGallery = mnode.edges
-            .withPredicateIter( MPredicates.GalleryItem )
-            .flatMap { _.nodeIds}
-            .toSeq
-        )
-        for {
-          savedLogo   <- savedLogoFut
-          waFgEdgeOpt <- waFgEdgeOptFut
-          gallery     <- galleryUpdFut
-          _           <- mNodes.tryUpdate(mnode) {
-            applyNodeChanges(_, fmr.meta, savedLogo, waFgEdgeOpt, gallery)
+  def editAdnNodeSubmit(adnId: String) = csrf.Check {
+    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+      import request.mnode
+      lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
+      nodeFormM(mnode.extras.adn.get).bindFromRequest().fold(
+        {formWithErrors =>
+          debug(s"${logPrefix}Failed to bind form: ${formatFormErrors(formWithErrors)}")
+          _editAdnNode(formWithErrors, NotAcceptable)
+        },
+        {fmr =>
+          // В фоне обновляем картинку карточки-приветствия.
+          val waFgEdgeOptFut = welcomeUtil.updateWcFgImg(mnode, fmr.waImgOpt)
+          trace(s"${logPrefix}newGallery[${fmr.gallery.size}] ;; newLogo = ${fmr.logoOpt.map(_.fileName)}")
+          // В фоне обновляем логотип узла
+          val savedLogoFut = logoUtil.updateLogoFor(mnode, fmr.logoOpt)
+          // Запускаем апдейт галереи.
+          val galleryUpdFut = galleryUtil.updateGallery(
+            newGallery = fmr.gallery,
+            oldGallery = mnode.edges
+              .withPredicateIter( MPredicates.GalleryItem )
+              .flatMap { _.nodeIds}
+              .toSeq
+          )
+          for {
+            savedLogo   <- savedLogoFut
+            waFgEdgeOpt <- waFgEdgeOptFut
+            gallery     <- galleryUpdFut
+            _           <- mNodes.tryUpdate(mnode) {
+              applyNodeChanges(_, fmr.meta, savedLogo, waFgEdgeOpt, gallery)
+            }
+          } yield {
+            // Собираем новый экземпляр узла
+            Redirect(routes.MarketLkAdn.showAdnNode(adnId))
+              .flashing(FLASH.SUCCESS -> "Changes.saved")
           }
-        } yield {
-          // Собираем новый экземпляр узла
-          Redirect(routes.MarketLkAdn.showAdnNode(adnId))
-            .flashing(FLASH.SUCCESS -> "Changes.saved")
         }
-      }
-    )
+      )
+    }
   }
 
 

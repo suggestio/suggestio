@@ -5,9 +5,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn}
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.MReq
 import models.usr.MExtIdents
@@ -28,17 +28,18 @@ class CanConfirmIdpReg @Inject() (
                                    mNodes                   : MNodes,
                                    mExtIdents               : MExtIdents,
                                    isAuth                   : IsAuth,
-                                   val csrf                 : Csrf,
                                    mCommonDi                : ICommonDi
-                                 ) {
+                                 )
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
+{
 
   import mCommonDi._
 
+
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
-  sealed trait CanConfirmIdpRegBase
-    extends ActionBuilder[MReq]
-    with IMacroLogs
-  {
+  class ImplC extends SioActionBuilderImpl[MReq] {
+
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
 
@@ -80,6 +81,7 @@ class CanConfirmIdpReg @Inject() (
             }
           }
         }
+
         hasAccess.flatMap {
           case true =>
             val req1 = MReq(request, user)
@@ -96,20 +98,15 @@ class CanConfirmIdpReg @Inject() (
       // Вызвать редиректор, который найдёт для юзера пристанище.
       identUtil.redirectUserSomewhere(personId)
     }
+
   }
 
-  sealed abstract class CanConfirmIdpRegBase2
-    extends CanConfirmIdpRegBase
-    with MacroLogsDyn
 
-  /** Реализация [[CanConfirmIdpRegBase]] с выставлением CSRF-токена. */
-  object Get
-    extends CanConfirmIdpRegBase2
-    with csrf.Get[MReq]
+  val Impl = new ImplC
 
-  /** Реализация [[CanConfirmIdpRegBase]] с проверкой CSRF-токена. */
-  object Post
-    extends CanConfirmIdpRegBase2
-    with csrf.Post[MReq]
+  @inline
+  final def apply(): ActionBuilder[MReq] = {
+    Impl
+  }
 
 }

@@ -6,7 +6,7 @@ import models._
 import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -22,11 +22,11 @@ import play.api.mvc.Result
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 @Singleton
 class IsAdnNodeAdmin @Inject() (
-                                 val csrf         : Csrf,
                                  isAuth           : IsAuth,
                                  mCommonDi        : ICommonDi
                                )
-  extends MacroLogsImpl
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -41,9 +41,9 @@ class IsAdnNodeAdmin @Inject() (
     }
   }
 
-  def checkAdnNodeCredsFut(adnNodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
-    adnNodeOptFut.map {
-      checkAdnNodeCreds(_, adnId, user)
+  def checkAdnNodeCredsFut(nodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
+    for (nodeOpt <- nodeOptFut) yield {
+      checkAdnNodeCreds(nodeOpt, adnId, user)
     }
   }
 
@@ -95,65 +95,37 @@ class IsAdnNodeAdmin @Inject() (
     }
   }
 
-  /** В реквесте содержится администрируемый узел, если всё ок. */
-  sealed trait Base
-    extends ActionBuilder[MNodeReq]
-    with InitUserCmds
-  {
 
-    /** id запрашиваемого узла. */
-    def nodeId: String
+  /**
+    * Собрать ACL ActionBuilder, проверяющий права admin-доступа к узлу.
+    * @param nodeId id запрашиваемого узла.
+    */
+  def apply(nodeId: String, userInits1: MUserInit*): ActionBuilder[MNodeReq] = {
+    new SioActionBuilderImpl[MNodeReq] with InitUserCmds {
+      override def userInits = userInits1
 
-    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
-      val isAllowedFut = isAdnNodeAdmin(nodeId, user)
+      override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
+        val isAllowedFut = isAdnNodeAdmin(nodeId, user)
 
-      if (personIdOpt.nonEmpty)
-        maybeInitUser(user)
+        if (personIdOpt.nonEmpty)
+          maybeInitUser(user)
 
-      isAllowedFut.flatMap {
-        case Some(mnode) =>
-          val req1 = MNodeReq(mnode, request, user)
-          block(req1)
+        isAllowedFut.flatMap {
+          case Some(mnode) =>
+            val req1 = MNodeReq(mnode, request, user)
+            block(req1)
 
-        case _ =>
-          LOGGER.debug(s"User $personIdOpt has NO admin access to node $nodeId")
-          val req1 = MReq(request, user)
-          onUnauthNode(req1)
+          case None =>
+            LOGGER.debug(s"User $personIdOpt has NO admin access to node $nodeId")
+            val req1 = MReq(request, user)
+            onUnauthNode(req1)
+        }
       }
+
     }
   }
-
-  /** Трейт [[Base]], обвешанный всеми необходимыми для работы надстройками. */
-  sealed abstract class BaseAbstract
-    extends Base
-
-
-  /** Просто проверка прав на узел перед запуском экшена. */
-  case class IsAdnNodeAdmin(
-    override val nodeId     : String,
-    override val userInits  : MUserInit*
-  )
-    extends BaseAbstract
-  @inline
-  def apply(nodeId: String, userInits: MUserInit*) = IsAdnNodeAdmin(nodeId, userInits: _*)
-
-  /** Рендер формы редактирования требует защиты от CSRF. */
-  case class Get(
-    override val nodeId     : String,
-    override val userInits  : MUserInit*
-  )
-    extends BaseAbstract
-    with csrf.Get[MNodeReq]
-
-  /** Сабмит формы редактирования требует проверки CSRF-Token'а. */
-  case class Post(
-    override val nodeId     : String,
-    override val userInits  : MUserInit*
-  )
-    extends BaseAbstract
-    with csrf.Post[MNodeReq]
 
 }
 

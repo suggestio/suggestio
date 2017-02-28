@@ -30,34 +30,36 @@ trait SbOverview
     *
     * @return 200 Ok со страницей инфы по биллингу.
     */
-  def overview = isSu.Get.async { implicit request =>
-    // Поиск последних финансовых транзакций для отображения таблицы оных.
-    val txnsBalancesFut = slick.db.run {
-      for {
-        txns      <- mTxns.findLatestTxns(limit = 10)
-        if txns.nonEmpty
-        balances  <- mBalances.getByIds( txns.iterator.map(_.balanceId).toTraversable )
-      } yield {
-        (txns, balances)
+  def overview = csrf.AddToken {
+    isSu().async { implicit request =>
+      // Поиск последних финансовых транзакций для отображения таблицы оных.
+      val txnsBalancesFut = slick.db.run {
+        for {
+          txns      <- mTxns.findLatestTxns(limit = 10)
+          if txns.nonEmpty
+          balances  <- mBalances.getByIds( txns.iterator.map(_.balanceId).toTraversable )
+        } yield {
+          (txns, balances)
+        }
+      }.recover { case _: NoSuchElementException =>
+        (Nil, Nil)
       }
-    }.recover { case _: NoSuchElementException =>
-      (Nil, Nil)
-    }
 
-    val balancesMapFut = for ((_, balances) <- txnsBalancesFut) yield {
-      gidUtil.elements2map(balances)
-    }
+      val balancesMapFut = for ((_, balances) <- txnsBalancesFut) yield {
+        gidUtil.elements2map(balances)
+      }
 
-    // Запустить рендер результата
-    for {
-      (txns, _)   <- txnsBalancesFut
-      balancesMap <- balancesMapFut
-    } yield {
-      val args = MBillOverviewTplArgs(
-        txns          = txns,
-        balancesMap   = balancesMap
-      )
-      Ok(overviewTpl(args))
+      // Запустить рендер результата
+      for {
+        (txns, _)   <- txnsBalancesFut
+        balancesMap <- balancesMapFut
+      } yield {
+        val args = MBillOverviewTplArgs(
+          txns          = txns,
+          balancesMap   = balancesMap
+        )
+        Ok(overviewTpl(args))
+      }
     }
   }
 

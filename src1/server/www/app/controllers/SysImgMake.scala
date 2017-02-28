@@ -70,27 +70,29 @@ trait SysImgMake
    * @param bmDflt Необязательные дефолтовые данные полей block-meta. Заливаются в начальную форму.
    * @return 200 ok со страницей с формой описания img make-задачи.
    */
-  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = isSu.Get.async { implicit request =>
-    implicit val ctx = implicitly[Context]
-    // Забиндить дефолтовые данные в форму
-    val form = sysImgMakeUtil.makeFormM(img).fill((
-      Makers.StrictWide,
-      MakeArgs(
-        img = img,
-        blockMeta = bmDflt getOrElse {
-          BlockMeta(
-            blockId = BlocksConf.DEFAULT.id,
-            height  = BlockHeights.default.heightPx,
-            width   = BlockWidths.default.widthPx,
-            wide    = true
-          )
-        },
-        szMult = 1.0F,
-        devScreenOpt = ctx.deviceScreenOpt
-      )
-    ))
-    // Запустить рендер страницы с формой
-    _makeFormRender(img, form, Ok)(ctx)
+  def makeForm(img: MImgT, bmDflt: Option[BlockMeta]) = csrf.AddToken {
+    isSu().async { implicit request =>
+      implicit val ctx = implicitly[Context]
+      // Забиндить дефолтовые данные в форму
+      val form = sysImgMakeUtil.makeFormM(img).fill((
+        Makers.StrictWide,
+        MakeArgs(
+          img = img,
+          blockMeta = bmDflt getOrElse {
+            BlockMeta(
+              blockId = BlocksConf.DEFAULT.id,
+              height  = BlockHeights.default.heightPx,
+              width   = BlockWidths.default.widthPx,
+              wide    = true
+            )
+          },
+          szMult = 1.0F,
+          devScreenOpt = ctx.deviceScreenOpt
+        )
+      ))
+      // Запустить рендер страницы с формой
+      _makeFormRender(img, form, Ok)(ctx)
+    }
   }
 
   /** Рендер страницы с формой параметров make. */
@@ -106,19 +108,21 @@ trait SysImgMake
    * @param img Обрабатываемая картинка.
    * @return Получившаяся картинка.
    */
-  def makeFormSubmit(img: MImgT) = isSu.Post.async { implicit request =>
-    sysImgMakeUtil.makeFormM(img).bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        _makeFormRender(img, formWithErrors, NotAcceptable)
-      },
-      {case (maker, makeArgs) =>
-        val imaker = current.injector.instanceOf(maker.makerClass)
-        for (makeRes <- imaker.icompile(makeArgs)) yield {
-          Redirect(makeRes.dynImgCall)
+  def makeFormSubmit(img: MImgT) = csrf.Check {
+    isSu().async { implicit request =>
+      sysImgMakeUtil.makeFormM(img).bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"makeFormSubmit(${img.rowKeyStr}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          _makeFormRender(img, formWithErrors, NotAcceptable)
+        },
+        {case (maker, makeArgs) =>
+          val imaker = current.injector.instanceOf(maker.makerClass)
+          for (makeRes <- imaker.icompile(makeArgs)) yield {
+            Redirect(makeRes.dynImgCall)
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 }

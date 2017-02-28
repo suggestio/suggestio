@@ -108,12 +108,14 @@ class MarketAd @Inject() (
     *
     * @param adnId id узла рекламной сети.
     */
-  def createAd(adnId: String) = isAdnNodeAdmin.Get(adnId, U.Balance).async { implicit request =>
-    _renderCreateFormWith(
-      af      = adFormM,
-      adnNode = request.mnode,
-      rs      = Ok
-    )
+  def createAd(adnId: String) = csrf.AddToken {
+    isAdnNodeAdmin(adnId, U.Balance).async { implicit request =>
+      _renderCreateFormWith(
+        af      = adFormM,
+        adnNode = request.mnode,
+        rs      = Ok
+      )
+    }
   }
 
   /** Общий код рендера createShopAdTpl с запросом необходимых категорий. */
@@ -129,51 +131,53 @@ class MarketAd @Inject() (
     *
     * @param adnId id магазина.
     */
-  def createAdSubmit(adnId: String) = isAdnNodeAdmin.Post(adnId).async(parse.urlFormEncoded) { implicit request =>
-    import request.mnode
-    lazy val logPrefix = s"createAdSubmit($adnId): "
-    val bc = BlocksConf.DEFAULT
-    adFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
-        _renderCreateFormWith(formWithErrors, mnode, Some(bc), NotAcceptable)
-      },
-      {r =>
-        // Асинхронно обрабатываем сохранение картинок
-        val saveImgsFut = bc.saveImgs(r.bim)
+  def createAdSubmit(adnId: String) = csrf.Check {
+    isAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+      import request.mnode
+      lazy val logPrefix = s"createAdSubmit($adnId): "
+      val bc = BlocksConf.DEFAULT
+      adFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(logPrefix + "Bind failed: \n" + formatFormErrors(formWithErrors))
+          _renderCreateFormWith(formWithErrors, mnode, Some(bc), NotAcceptable)
+        },
+        {r =>
+          // Асинхронно обрабатываем сохранение картинок
+          val saveImgsFut = bc.saveImgs(r.bim)
 
-        // Сохраняем саму карточку, когда пришло подтверждение от картинок.
-        val adIdFut = for {
-          savedImgs <- saveImgsFut
-          adId      <- {
-            val mad2 = r.mad.copy(
-              edges = r.mad.edges.copy(
-                out = {
-                  val prodE = MEdge(
-                    predicate = MPredicates.OwnedBy,
-                    nodeIds   = mnode.id.toSet
-                  )
-                  var iter  = r.mad.edges.iterator ++ savedImgs ++ Seq(prodE)
-                  // Добавить эдж модератора, если карточка создаётся модератором.
-                  if (request.user.isSuper)
-                    iter ++= Seq( sysMdrUtil.mdrEdge() )
-                  // Сгенерить и вернуть итоговую карту эджей.
-                  MNodeEdges.edgesToMap1(iter)
-                }
+          // Сохраняем саму карточку, когда пришло подтверждение от картинок.
+          val adIdFut = for {
+            savedImgs <- saveImgsFut
+            adId      <- {
+              val mad2 = r.mad.copy(
+                edges = r.mad.edges.copy(
+                  out = {
+                    val prodE = MEdge(
+                      predicate = MPredicates.OwnedBy,
+                      nodeIds   = mnode.id.toSet
+                    )
+                    var iter  = r.mad.edges.iterator ++ savedImgs ++ Seq(prodE)
+                    // Добавить эдж модератора, если карточка создаётся модератором.
+                    if (request.user.isSuper)
+                      iter ++= Seq( sysMdrUtil.mdrEdge() )
+                    // Сгенерить и вернуть итоговую карту эджей.
+                    MNodeEdges.edgesToMap1(iter)
+                  }
+                )
               )
-            )
-            mNodes.save(mad2)
+              mNodes.save(mad2)
+            }
+          } yield {
+            adId
           }
-        } yield {
-          adId
+          // Сборка и возврат HTTP-ответа.
+          for (adId <- adIdFut) yield {
+            Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
+              .flashing(FLASH.SUCCESS -> "Ad.created")
+          }
         }
-        // Сборка и возврат HTTP-ответа.
-        for (adId <- adIdFut) yield {
-          Redirect(routes.MarketLkAdn.showNodeAds(adnId, newAdId = Some(adId)))
-            .flashing(FLASH.SUCCESS -> "Ad.created")
-        }
-      }
-    )
+      )
+    }
   }
 
 
@@ -199,26 +203,28 @@ class MarketAd @Inject() (
     *
     * @param adId id рекламной карточки.
     */
-  def editAd(adId: String) = canEditAd.Get(adId, U.Lk).async { implicit request =>
-    import request.mad
-    val bc = n2NodesUtil.bc(mad)
+  def editAd(adId: String) = csrf.AddToken {
+    canEditAd(adId, U.Lk).async { implicit request =>
+      import request.mad
+      val bc = n2NodesUtil.bc(mad)
 
-    // Собрать карту картинок для маппинга формы.
-    val bim: BlockImgMap = {
-      mad.edges
-        .withPredicateIter(bc.imgKeys : _*)
-        .map { e =>
-          e.predicate -> MImg3(e)
-        }
-        .toMap
+      // Собрать карту картинок для маппинга формы.
+      val bim: BlockImgMap = {
+        mad.edges
+          .withPredicateIter(bc.imgKeys : _*)
+          .map { e =>
+            e.predicate -> MImg3(e)
+          }
+          .toMap
+      }
+
+      // Собрать и заполнить маппинг формы.
+      val formVal = AdFormResult(mad, bim)
+      val formFilled = adFormM.fill( formVal )
+
+      // Вернуть страницу с рендером формы.
+      _renderEditFormWith(formFilled, Ok)
     }
-
-    // Собрать и заполнить маппинг формы.
-    val formVal = AdFormResult(mad, bim)
-    val formFilled = adFormM.fill( formVal )
-
-    // Вернуть страницу с рендером формы.
-    _renderEditFormWith(formFilled, Ok)
   }
 
 
@@ -236,70 +242,72 @@ class MarketAd @Inject() (
     *
     * @param adId id рекламной карточки.
     */
-  def editAdSubmit(adId: String) = canEditAd.Post(adId).async(parse.urlFormEncoded) { implicit request =>
-    lazy val logPrefix = s"editShopAdSubmit($adId): "
-    adFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
-        _renderEditFormWith(formWithErrors, NotAcceptable)
-      },
-      {r =>
-        val bc = n2NodesUtil.bc(request.mad)
+  def editAdSubmit(adId: String) = csrf.Check {
+    canEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
+      lazy val logPrefix = s"editShopAdSubmit($adId): "
+      adFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
+          _renderEditFormWith(formWithErrors, NotAcceptable)
+        },
+        {r =>
+          val bc = n2NodesUtil.bc(request.mad)
 
-        // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
-        // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
-        val _imgPreds = bc.imgKeys
-        val saveImgsFut = bc.saveImgs(
-          newImgs     = r.bim,
-          oldImgs     = request.mad.edges
-            .withPredicateIter(_imgPreds: _*)
-            .toList
-        )
+          // TODO Надо отделить удаление врЕменных и былых картинок от сохранения новых. И вызывать эти две фунции отдельно.
+          // Сейчас возможна ситуация, что при поздней ошибке сохранения теряется старая картинка, а новая сохраняется вникуда.
+          val _imgPreds = bc.imgKeys
+          val saveImgsFut = bc.saveImgs(
+            newImgs     = r.bim,
+            oldImgs     = request.mad.edges
+              .withPredicateIter(_imgPreds: _*)
+              .toList
+          )
 
-        // Какие предикаты нужно удалить перед заливкой обновлённых?
-        val predsFilteredOut: List[MPredicate] = {
-          MPredicates.ModeratedBy :: _imgPreds
-        }
-
-        // Произвести действия по сохранению карточки.
-        val saveFut = for {
-          imgsSaved <- saveImgsFut
-          mnode2    <- mNodes.tryUpdate(request.mad) { mad0 =>
-            mad0.copy(
-              meta = mad0.meta.copy(
-                colors = r.mad.meta.colors,
-                basic  = mad0.meta.basic.copy(
-                  dateEdited = Some( OffsetDateTime.now() )
-                ),
-                business = mad0.meta.business.copy(
-                  siteUrl = r.mad.meta.business.siteUrl
-                )
-              ),
-              ad = r.mad.ad,
-              edges = r.mad.edges.copy(
-                out = {
-                  // Нужно залить новые картинки, сбросить данные по модерации.
-                  var iter = mad0.edges
-                    .withoutPredicateIter(predsFilteredOut : _*)
-                    .++( imgsSaved )
-                  if (request.user.isSuper)
-                    iter ++= Seq( sysMdrUtil.mdrEdge() )
-                  MNodeEdges.edgesToMap1( iter )
-                }
-              )
-            )
+          // Какие предикаты нужно удалить перед заливкой обновлённых?
+          val predsFilteredOut: List[MPredicate] = {
+            MPredicates.ModeratedBy :: _imgPreds
           }
-        } yield {
-          // Просто надо что-нибудь вернуть...
-          mnode2
+
+          // Произвести действия по сохранению карточки.
+          val saveFut = for {
+            imgsSaved <- saveImgsFut
+            mnode2    <- mNodes.tryUpdate(request.mad) { mad0 =>
+              mad0.copy(
+                meta = mad0.meta.copy(
+                  colors = r.mad.meta.colors,
+                  basic  = mad0.meta.basic.copy(
+                    dateEdited = Some( OffsetDateTime.now() )
+                  ),
+                  business = mad0.meta.business.copy(
+                    siteUrl = r.mad.meta.business.siteUrl
+                  )
+                ),
+                ad = r.mad.ad,
+                edges = r.mad.edges.copy(
+                  out = {
+                    // Нужно залить новые картинки, сбросить данные по модерации.
+                    var iter = mad0.edges
+                      .withoutPredicateIter(predsFilteredOut : _*)
+                      .++( imgsSaved )
+                    if (request.user.isSuper)
+                      iter ++= Seq( sysMdrUtil.mdrEdge() )
+                    MNodeEdges.edgesToMap1( iter )
+                  }
+                )
+              )
+            }
+          } yield {
+            // Просто надо что-нибудь вернуть...
+            mnode2
+          }
+          // HTTP-ответ.
+          for (_ <- saveFut) yield {
+            Redirect( _routeToMadProducerOrLkList(request.mad) )
+              .flashing(FLASH.SUCCESS -> "Changes.saved")
+          }
         }
-        // HTTP-ответ.
-        for (_ <- saveFut) yield {
-          Redirect( _routeToMadProducerOrLkList(request.mad) )
-            .flashing(FLASH.SUCCESS -> "Changes.saved")
-        }
-      }
-    )
+      )
+    }
   }
 
 
@@ -316,8 +324,10 @@ class MarketAd @Inject() (
   }
 
   /** Рендер окошка с подтверждением удаления рекламной карточки. */
-  def deleteWnd(adId: String) = canEditAd.Get(adId).async { implicit request =>
-    Ok(_deleteWndTpl(request.mad))
+  def deleteWnd(adId: String) = csrf.AddToken {
+    canEditAd(adId).async { implicit request =>
+      Ok(_deleteWndTpl(request.mad))
+    }
   }
 
   /**
@@ -326,12 +336,14 @@ class MarketAd @Inject() (
     * @param adId id рекламы.
     * @return Редирект в магазин или ТЦ.
     */
-  def deleteSubmit(adId: String) = canEditAd.Post(adId).async { implicit request =>
-    for {
-      isDeleted <- mNodes.deleteById(adId)
-    } yield {
-      Redirect( _routeToMadProducerOrLkList(request.mad) )
-        .flashing(FLASH.SUCCESS -> "Ad.deleted")
+  def deleteSubmit(adId: String) = csrf.Check {
+    canEditAd(adId).async { implicit request =>
+      for {
+        isDeleted <- mNodes.deleteById(adId)
+      } yield {
+        Redirect( _routeToMadProducerOrLkList(request.mad) )
+          .flashing(FLASH.SUCCESS -> "Ad.deleted")
+      }
     }
   }
 
@@ -357,95 +369,96 @@ class MarketAd @Inject() (
    * Включение/выключение какого-то уровня отображения указанной рекламы.
    * Сабмит сюда должен отсылаться при нажатии на чекбоксы отображения на тех или иных экранах в _showAdsTpl.
    */
-  // TODO Sec Нужна поддержка CSRF тут. Её пока нет из-за работы через jsRouter.
-  def updateShowLevelSubmit(adId: String) = canUpdateSls.Post(adId).async { implicit request =>
-    lazy val logPrefix = s"updateShowLevelSubmit($adId): "
-    adShowLevelFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
-        NotAcceptable("Request body invalid.")
-      },
-      {case (sl, isLevelEnabled) =>
-        val producerId = request.producer.id.get
+  def updateShowLevelSubmit(adId: String) = csrf.Check {
+    canUpdateSls(adId).async { implicit request =>
+      lazy val logPrefix = s"updateShowLevelSubmit($adId): "
+      adShowLevelFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
+          NotAcceptable("Request body invalid.")
+        },
+        {case (sl, isLevelEnabled) =>
+          val producerId = request.producer.id.get
 
-        trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=$producerId")
+          trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=$producerId")
 
-        val saveFut = mNodes.tryUpdate(request.mad) { mad =>
-          // Извлекаем текущее ребро данного ресивера
-          val e0Opt = mad
-            .edges
-            .withNodePred(producerId, MPredicates.Receiver)
-            .toStream
-            .headOption
+          val saveFut = mNodes.tryUpdate(request.mad) { mad =>
+            // Извлекаем текущее ребро данного ресивера
+            val e0Opt = mad
+              .edges
+              .withNodePred(producerId, MPredicates.Receiver)
+              .toStream
+              .headOption
 
-          val e0 = e0Opt.getOrElse {
-            MEdge(
-              predicate = MPredicates.Receiver.Self,
-              nodeIds   = request.producer.id.toSet
-            )
-          }
-
-          val sls0 = e0.info.sls
-
-          // TODO Удалить поддержку sink'ов, когда будет выпилен старый биллинг.
-          def _mkSlss(src: TraversableOnce[AdnSink]) = {
-            for (sink <- src.toIterator) yield {
-              SinkShowLevels.withArgs(sink, sl)
-            }
-          }
-
-          val sls1 = if (isLevelEnabled) {
-            val prodSinks = Set(AdnSinks.SINK_GEO)
-            sls0 ++ _mkSlss(prodSinks)
-
-          } else {
-            sls0 -- _mkSlss(AdnSinks.valuesT)
-          }
-
-          val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
-            // Пустой список sls: значит нужно удалить ресивера.
-            for (_ <- e0Opt) yield {
-              // Исходный эдж существует. Удалить его из исходной карты эджей.
-              MNodeEdges.edgesToMap1(
-                mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
+            val e0 = e0Opt.getOrElse {
+              MEdge(
+                predicate = MPredicates.Receiver.Self,
+                nodeIds   = request.producer.id.toSet
               )
             }
-            // None будет означать, что ничего обновлять не надо, и нужно вернуть null из фунцкии.
 
-          } else if (sls0 == sls1) {
-            // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
-            LOGGER.trace(s"$logPrefix SLS not changed, nothing to update: $sls0")
-            None
+            val sls0 = e0.info.sls
 
-          } else {
-            // Есть новый и изменившийся список уровней. Выставить ресивера в карту эджей.
-            val e1 = e0.copy(
-              info = e0.info.copy(sls = sls1)
-            )
-            val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e1)
-            Some(map1)
-          }
+            // TODO Удалить поддержку sink'ов, когда будет выпилен старый биллинг.
+            def _mkSlss(src: TraversableOnce[AdnSink]) = {
+              for (sink <- src.toIterator) yield {
+                SinkShowLevels.withArgs(sink, sl)
+              }
+            }
 
-          mapOpt.fold [MNode] {
-            // Ничего менять не требуется -- вернуть null наверх
-            LOGGER.trace(logPrefix + "nothing for tryUpdate()")
-            null
-          } { eout2 =>
-            // Сохранить новую карту эджей в исходный инстанс
-            mad.copy(
-              edges = mad.edges.copy(
-                out = eout2
+            val sls1 = if (isLevelEnabled) {
+              val prodSinks = Set(AdnSinks.SINK_GEO)
+              sls0 ++ _mkSlss(prodSinks)
+
+            } else {
+              sls0 -- _mkSlss(AdnSinks.valuesT)
+            }
+
+            val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
+              // Пустой список sls: значит нужно удалить ресивера.
+              for (_ <- e0Opt) yield {
+                // Исходный эдж существует. Удалить его из исходной карты эджей.
+                MNodeEdges.edgesToMap1(
+                  mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
+                )
+              }
+              // None будет означать, что ничего обновлять не надо, и нужно вернуть null из фунцкии.
+
+            } else if (sls0 == sls1) {
+              // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
+              LOGGER.trace(s"$logPrefix SLS not changed, nothing to update: $sls0")
+              None
+
+            } else {
+              // Есть новый и изменившийся список уровней. Выставить ресивера в карту эджей.
+              val e1 = e0.copy(
+                info = e0.info.copy(sls = sls1)
               )
-            )
-          }
-        }
+              val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e1)
+              Some(map1)
+            }
 
-        // Отрендерить результат по завершению апдейта.
-        for (_ <- saveFut) yield {
-          Ok("Done")
-        }
-      }     // form.fold() right
-    )       // form.fold()
+            mapOpt.fold [MNode] {
+              // Ничего менять не требуется -- вернуть null наверх
+              LOGGER.trace(logPrefix + "nothing for tryUpdate()")
+              null
+            } { eout2 =>
+              // Сохранить новую карту эджей в исходный инстанс
+              mad.copy(
+                edges = mad.edges.copy(
+                  out = eout2
+                )
+              )
+            }
+          }
+
+          // Отрендерить результат по завершению апдейта.
+          for (_ <- saveFut) yield {
+            Ok("Done")
+          }
+        }     // form.fold() right
+      )       // form.fold()
+    }
   }
 
 

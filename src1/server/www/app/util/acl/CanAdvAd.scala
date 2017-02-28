@@ -1,8 +1,8 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.Csrf
-import io.suggest.util.logs.{IMacroLogs, MacroLogsDyn, MacroLogsImpl}
+import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models._
 import models.mproj.ICommonDi
 import models.req._
@@ -23,10 +23,10 @@ import scala.concurrent.Future
 class CanAdvAd @Inject()(
                           isAdnNodeAdmin          : IsAdnNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
-                          val csrf                : Csrf,
                           mCommonDi               : ICommonDi
                         )
-  extends MacroLogsImpl
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -82,72 +82,43 @@ class CanAdvAd @Inject()(
   }
 
 
-  /** Редактировать карточку может только владелец магазина. */
-  sealed trait CanAdvertiseAdBase
-    extends ActionBuilder[MAdProdReq]
-    with IMacroLogs
-    with InitUserCmds
-  {
+  /** Сборка ActionBuilder'а, проверяющего права на размещение карточки.
+    *
+    * @param adId id размещаемой рекламной карточки.
+    */
+  def apply(adId: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq] = {
+    new SioActionBuilderImpl[MAdProdReq] with InitUserCmds {
 
-    /** id запрошенной рекламной карточки. */
-    def adId: String
+      override def userInits = userInits1
 
-    def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val madFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
-      val user = mSioUsers(personIdOpt)
+      def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val madFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+        val user = mSioUsers(personIdOpt)
 
-      // Оптимистично запустить сбор запрошенных данных MSioUser.
-      maybeInitUser(user)
+        // Оптимистично запустить сбор запрошенных данных MSioUser.
+        maybeInitUser(user)
 
-      // Продолжить дальше работу асинхронно...
-      val reqBlank = MReq(request, user)
-      madFut.flatMap {
-        // Карточка найден, проверить доступ...
-        case Some(mad) =>
-          maybeAllowed(mad, reqBlank).flatMap {
-            case Some(req1) =>
-              block(req1)
-            case None =>
-              LOGGER.debug(s"invokeBlock(): maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
-              isAdnNodeAdmin.onUnauthNode(reqBlank)
-          }
+        // Продолжить дальше работу асинхронно...
+        val reqBlank = MReq(request, user)
+        madFut.flatMap {
+          // Карточка найден, проверить доступ...
+          case Some(mad) =>
+            maybeAllowed(mad, reqBlank).flatMap {
+              case Some(req1) =>
+                block(req1)
+              case None =>
+                LOGGER.debug(s"invokeBlock(): maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
+                isAdnNodeAdmin.onUnauthNode(reqBlank)
+            }
 
-        // Нет запрашиваем карточки, отработать и этот вариант.
-        case None =>
-          LOGGER.debug("invokeBlock(): MAd not found: " + adId)
-          isAdnNodeAdmin.onUnauthNode(reqBlank)
+          // Нет запрашиваем карточки, отработать и этот вариант.
+          case None =>
+            LOGGER.debug("invokeBlock(): MAd not found: " + adId)
+            isAdnNodeAdmin.onUnauthNode(reqBlank)
+        }
       }
     }
   }
-
-  sealed abstract class CanAdvertiseAdAbstract
-    extends CanAdvertiseAdBase
-    with MacroLogsDyn
-
-  /** Запрос какой-то формы размещения рекламной карточки. */
-  case class CanAdvertiseAd(
-    override val adId       : String,
-    override val userInits  : MUserInit*
-  )
-    extends CanAdvertiseAdAbstract
-  @inline
-  def apply(adId: String, userInits: MUserInit*) = CanAdvertiseAd(adId, userInits: _*)
-
-  /** Запрос какой-то формы размещения рекламной карточки с выставление CSRF в сессию. */
-  case class Get(
-    override val adId       : String,
-    override val userInits  : MUserInit*
-  )
-    extends CanAdvertiseAdAbstract
-    with csrf.Get[MAdProdReq]
-
-  /** Сабмит какой-то формы размещения рекламной карточки с проверкой CSRF в сессии. */
-  case class Post(
-    override val adId       : String,
-    override val userInits  : MUserInit*
-  )
-    extends CanAdvertiseAdAbstract
-    with csrf.Post[MAdProdReq]
 
 }

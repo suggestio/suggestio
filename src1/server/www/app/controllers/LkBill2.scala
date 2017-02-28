@@ -78,22 +78,24 @@ class LkBill2 @Inject() (
     * @param nodeId id узла.
     * @return 200 Ок со страницей биллинга узла.
     */
-  def onNode(nodeId: String) = isAdnNodeAdmin.Get(nodeId, U.Lk).async { implicit request =>
-    val dailyTfArgsFut = _dailyTfArgsFut(request.mnode)
+  def onNode(nodeId: String) = csrf.AddToken {
+    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+      val dailyTfArgsFut = _dailyTfArgsFut(request.mnode)
 
-    // Отрендерить результаты, когда всё получено:
-    for {
-      lkCtxData   <- request.user.lkCtxDataFut
-      dailyTfArgs <- dailyTfArgsFut
-    } yield {
+      // Отрендерить результаты, когда всё получено:
+      for {
+        lkCtxData   <- request.user.lkCtxDataFut
+        dailyTfArgs <- dailyTfArgsFut
+      } yield {
 
-      val args = MLkBillNodeTplArgs(
-        mnode       = request.mnode,
-        dailyTfArgs = dailyTfArgs
-      )
+        val args = MLkBillNodeTplArgs(
+          mnode       = request.mnode,
+          dailyTfArgs = dailyTfArgs
+        )
 
-      implicit val ctxData = lkCtxData
-      Ok( nodeBillingTpl(args) )
+        implicit val ctxData = lkCtxData
+        Ok( nodeBillingTpl(args) )
+      }
     }
   }
 
@@ -103,9 +105,11 @@ class LkBill2 @Inject() (
     * @param onNodeId В рамках ЛК какой ноды происходит движуха.
     * @return Страница "спасибо за покупку".
     */
-  def thanksForBuy(onNodeId: String) = isAdnNodeAdmin.Get(onNodeId, U.Lk).async { implicit request =>
-    request.user.lkCtxDataFut.flatMap { implicit ctxData =>
-      Ok(ThanksForBuyTpl(request.mnode))
+  def thanksForBuy(onNodeId: String) = csrf.AddToken {
+    isAdnNodeAdmin(onNodeId, U.Lk).async { implicit request =>
+      request.user.lkCtxDataFut.map { implicit ctxData =>
+        Ok(ThanksForBuyTpl(request.mnode))
+      }
     }
   }
 

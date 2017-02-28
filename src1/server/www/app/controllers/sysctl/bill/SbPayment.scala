@@ -54,8 +54,10 @@ trait SbPayment
     * @param nodeId id узла, чей баланс пополняется.
     * @return 200 Ок со страницей-результатом.
     */
-  def payment(nodeId: String) = isSuNodeContract.Get(nodeId).async { implicit request =>
-    _payment(_paymentFormM, Ok)
+  def payment(nodeId: String) = csrf.AddToken {
+    isSuNodeContract(nodeId).async { implicit request =>
+      _payment(_paymentFormM, Ok)
+    }
   }
 
   private def _payment(bf: Form[MPaymentFormResult], rs: Status)(implicit request: INodeContractReq[_]): Future[Result] = {
@@ -74,24 +76,28 @@ trait SbPayment
     * @param nodeId id узла, на кошельках которого барабаним.
     * @return Редирект в биллинг узла, если всё ок.
     */
-  def paymentSubmit(nodeId: String) = isSuNodeContract.Post(nodeId).async { implicit request =>
-    _paymentFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"paymentSubmit($nodeId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        _payment(formWithErrors, NotAcceptable)
-      },
-      {res =>
-        val mcId = request.mcontract.id.get
-        val price = res.price
-        val txnFut = slick.db.run {
-          bill2Util.increaseBalanceAsIncome(mcId, price)
+  def paymentSubmit(nodeId: String) = csrf.Check {
+    def logPrefix = s"paymentSubmit($nodeId):"
+    isSuNodeContract(nodeId).async { implicit request =>
+      _paymentFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          _payment(formWithErrors, NotAcceptable)
+        },
+        {res =>
+          val mcId = request.mcontract.id.get
+          val price = res.price
+          val txnFut = slick.db.run {
+            bill2Util.increaseBalanceAsIncome(mcId, price)
+          }
+          for (txn <- txnFut) yield {
+            LOGGER.trace(s"$logPrefix txn => $txn")
+            Redirect( routes.SysBilling.forNode(nodeId) )
+              .flashing(FLASH.SUCCESS -> s"Баланс узла изменён на $price")
+          }
         }
-        for (txn <- txnFut) yield {
-          Redirect( routes.SysBilling.forNode(nodeId) )
-            .flashing(FLASH.SUCCESS -> s"Баланс узла изменён на $price")
-        }
-      }
-    )
+      )
+    }
   }
 
 }

@@ -47,11 +47,13 @@ class LkLang @Inject() (
 
 
   /** Рендер страницы выбора языка. */
-  def showLangSwitcher(r: Option[String]) = maybeAuth.Get(U.Lk).async { implicit request =>
-    val ctx = implicitly[Context]
-    val l0 = ctx.messages.lang
-    val langForm = chooseLangFormM(l0).fill(l0)
-    _showLangSwitcher(langForm, r, Ok)(ctx)
+  def showLangSwitcher(r: Option[String]) = csrf.AddToken {
+    maybeAuth(U.Lk).async { implicit request =>
+      val ctx = implicitly[Context]
+      val l0 = ctx.messages.lang
+      val langForm = chooseLangFormM(l0).fill(l0)
+      _showLangSwitcher(langForm, r, Ok)(ctx)
+    }
   }
 
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String], rs: Status)(implicit ctx: Context): Future[Result] = {
@@ -81,55 +83,57 @@ class LkLang @Inject() (
 
 
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
-  def selectLangSubmit(r: Option[String]) = maybeAuth.Post().async { implicit request =>
-    chooseLangFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
-        _showLangSwitcher(formWithErrors, r, NotAcceptable)
-      },
-      {newLang =>
-        val saveUserLangFut: Future[_] = {
-          FutureUtil.optFut2futOpt( request.user.personIdOpt ) { personId =>
-            val newLangCode = newLang.code
-            for {
-              personNodeOpt <- request.user.personNodeOptFut
+  def selectLangSubmit(r: Option[String]) = csrf.Check {
+    maybeAuth().async { implicit request =>
+      chooseLangFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
+          _showLangSwitcher(formWithErrors, r, NotAcceptable)
+        },
+        {newLang =>
+          val saveUserLangFut: Future[_] = {
+            FutureUtil.optFut2futOpt( request.user.personIdOpt ) { personId =>
+              val newLangCode = newLang.code
+              for {
+                personNodeOpt <- request.user.personNodeOptFut
 
-              personNode = {
-                personNodeOpt.fold [MNode] {
-                  warn("User logged in, but not found in MPerson. Creating...")
-                  mNodes.applyPerson(
-                    lang = newLangCode,
-                    id = Some(personId)
-                  )
-                } { mperson0 =>
-                  mperson0.copy(
-                    meta = mperson0.meta.copy(
-                      basic = mperson0.meta.basic.copy(
-                        langs = List(newLangCode)
+                personNode = {
+                  personNodeOpt.fold [MNode] {
+                    warn("User logged in, but not found in MPerson. Creating...")
+                    mNodes.applyPerson(
+                      lang = newLangCode,
+                      id = Some(personId)
+                    )
+                  } { mperson0 =>
+                    mperson0.copy(
+                      meta = mperson0.meta.copy(
+                        basic = mperson0.meta.basic.copy(
+                          langs = List(newLangCode)
+                        )
                       )
                     )
-                  )
+                  }
                 }
+
+                id <- mNodes.save(personNode)
+
+              } yield {
+                Some(id)
               }
-
-              id <- mNodes.save(personNode)
-
-            } yield {
-              Some(id)
             }
           }
-        }
 
-        // Залоггировать ошибки.
-        saveUserLangFut.onFailure { case ex: Throwable =>
-          error("Failed to save lang for mperson", ex)
-        }
+          // Залоггировать ошибки.
+          saveUserLangFut.onFailure { case ex: Throwable =>
+            error("Failed to save lang for mperson", ex)
+          }
 
-        // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
-        RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
-          .withLang(newLang)
-      }
-    )
+          // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
+          RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
+            .withLang(newLang)
+        }
+      )
+    }
   }
 
 }

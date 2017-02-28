@@ -5,7 +5,7 @@ import models.mcal.MCalendars
 import models.req.{MCalendarReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -18,53 +18,41 @@ import scala.concurrent.Future
  * Долгое время это счастье жило прямо в контроллере.
  */
 class IsSuCalendar @Inject()(
-                              val csrf                : Csrf,
                               mCalendars              : MCalendars,
                               isSu                    : IsSu,
                               mCommonDi               : ICommonDi
                             )
+  extends SioActionBuilderOuter
 {
 
   import mCommonDi._
 
-  sealed trait IsSuCalendarBase
-    extends ActionBuilder[MCalendarReq]
-  {
+  /**
+    * @param calId id календаря, вокруг которого идёт работа.
+    */
+  def apply(calId: String): ActionBuilder[MCalendarReq] = {
+    new SioActionBuilderImpl[MCalendarReq] {
 
-    /** id календаря, вокруг которого идёт работа. */
-    def calId: String
+      override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
+        if (user.isSuper) {
+          mCalendars.getById(calId).flatMap {
+            case Some(mcal) =>
+              val req1 = MCalendarReq(mcal, request, user)
+              block(req1)
 
-    override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
-      if (user.isSuper) {
-        mCalendars.getById(calId).flatMap {
-          case Some(mcal) =>
-            val req1 = MCalendarReq(mcal, request, user)
-            block(req1)
+            case None =>
+              Results.NotFound("Calendar not found: " + calId)
+          }
 
-          case None =>
-            Results.NotFound("Calendar not found: " + calId)
+        } else {
+          val req1 = MReq(request, user)
+          isSu.supOnUnauthFut(req1)
         }
-
-      } else {
-        val req1 = MReq(request, user)
-        isSu.supOnUnauthFut(req1)
       }
+
     }
   }
-
-
-  /** Частичная реализация [[IsSuCalendarBase]]. */
-  sealed abstract class IsSuCalendarAbstract
-    extends IsSuCalendarBase
-
-  case class Get(override val calId: String)
-    extends IsSuCalendarAbstract
-    with csrf.Get[MCalendarReq]
-
-  case class Post(override val calId: String)
-    extends IsSuCalendarAbstract
-    with csrf.Post[MCalendarReq]
 
 }

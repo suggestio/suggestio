@@ -1,8 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.Csrf
-import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{MNodeOptReq, MUserInit}
 import play.api.mvc.{ActionBuilder, Request, Result}
@@ -20,54 +19,43 @@ import scala.concurrent.Future
 
 class IsAdnNodeAdminOptOrAuth @Inject() (
                                           isAdnNodeAdmin          : IsAdnNodeAdmin,
-                                          val csrf                : Csrf,
                                           isAuth                  : IsAuth,
                                           mCommonDi               : ICommonDi
-                                        ) {
+                                        )
+  extends SioActionBuilderOuter
+{
 
   import mCommonDi._
 
-  /** Абстрактная логика работы action-builder'ов, занимающихся вышеописанной проверкой. */
-  sealed trait IsAdnNodeAdminOptOrAuthBase
-    extends ActionBuilder[MNodeOptReq]
-    with MacroLogsDyn
-    with InitUserCmds
-  {
+  /** Сборка action-builder'ов, занимающихся вышеописанной проверкой.
+    * @param nodeIdOpt id узла, если есть.
+    */
+  def apply(nodeIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MNodeOptReq] = {
+    new SioActionBuilderImpl[MNodeOptReq] with InitUserCmds {
 
-    /** id узла, если есть. */
-    def adnIdOpt: Option[String]
+      override def userInits = userInits1
 
-    override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
+      override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
 
-      personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
-        val mnodeOptFut = mNodesCache.maybeGetByIdCached(adnIdOpt)
-        val user = mSioUsers(personIdOpt)
+        personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
+          val mnodeOptFut = mNodesCache.maybeGetByIdCached(nodeIdOpt)
+          val user = mSioUsers(personIdOpt)
 
-        // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
-        maybeInitUser(user)
+          // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
+          maybeInitUser(user)
 
-        mnodeOptFut.flatMap { mnodeOpt =>
-          val mnodeOpt1 = mnodeOpt.filter { mnode =>
-            isAdnNodeAdmin.isAdnNodeAdminCheck(mnode, user)
+          mnodeOptFut.flatMap { mnodeOpt =>
+            val mnodeOpt1 = mnodeOpt.filter { mnode =>
+              isAdnNodeAdmin.isAdnNodeAdminCheck(mnode, user)
+            }
+            val req1 = MNodeOptReq(mnodeOpt1, request, user)
+            block(req1)
           }
-          val req1 = MNodeOptReq(mnodeOpt1, request, user)
-          block(req1)
         }
       }
+
     }
-
   }
-
-  sealed abstract class IsAdnNodeAdminOptOrAuthBase2
-    extends IsAdnNodeAdminOptOrAuthBase
-
-
-  case class Get(
-    override val adnIdOpt   : Option[String],
-    override val userInits  : MUserInit*
-  )
-    extends IsAdnNodeAdminOptOrAuthBase2
-    with csrf.Get[MNodeOptReq]
 
 }

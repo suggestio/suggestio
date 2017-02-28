@@ -59,51 +59,53 @@ trait LkBillOrders
     * @param orderId id ордера.
     * @param onNodeId id узла, на котором открыта морда ЛК.
     */
-  def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = canViewOrder.Get(orderId, onNodeId, U.Lk).async { implicit request =>
-    // Поискать транзакцию по оплате ордера, если есть.
-    val txnsFut = slick.db.run {
-      bill2Util.getOrderTxns(orderId)
-    }
+  def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
+    canViewOrder(orderId, onNodeId, U.Lk).async { implicit request =>
+      // Поискать транзакцию по оплате ордера, если есть.
+      val txnsFut = slick.db.run {
+        bill2Util.getOrderTxns(orderId)
+      }
 
-    // Получить item'ы для рендера содержимого текущего заказа.
-    val mitemsFut = bill2Util.orderItems(orderId)
-    val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
-      implicitly[Context]
-    }
+      // Получить item'ы для рендера содержимого текущего заказа.
+      val mitemsFut = bill2Util.orderItems(orderId)
+      val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
+        implicitly[Context]
+      }
 
-    // Собрать данные для рендера списка узлов.
-    val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut)
+      // Собрать данные для рендера списка узлов.
+      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut)
 
-    // Собрать карту балансов по id. Она нужна для рендера валюты транзакции. Возможно ещё для чего-либо пригодится.
-    // Нет смысла цеплять это об необязательно найденную транзакцию, т.к. U.Lk наверху гарантирует, что mBalancesFut уже запущен на исполнение.
-    val mBalsMapFut = for {
-      mBals <- request.user.mBalancesFut
-    } yield {
-      OptId.els2idMap[Gid_t, MBalance](mBals)
-    }
+      // Собрать карту балансов по id. Она нужна для рендера валюты транзакции. Возможно ещё для чего-либо пригодится.
+      // Нет смысла цеплять это об необязательно найденную транзакцию, т.к. U.Lk наверху гарантирует, что mBalancesFut уже запущен на исполнение.
+      val mBalsMapFut = for {
+        mBals <- request.user.mBalancesFut
+      } yield {
+        OptId.els2idMap[Gid_t, MBalance](mBals)
+      }
 
-    // Посчитать текущую стоимость заказа:
-    val orderPricesFut = slick.db.run {
-      bill2Util.getOrderPrices(orderId)
-    }
+      // Посчитать текущую стоимость заказа:
+      val orderPricesFut = slick.db.run {
+        bill2Util.getOrderPrices(orderId)
+      }
 
-    // Отрендерить ответ, когда всё будет готово.
-    for {
-      txns          <- txnsFut
-      orderPrices   <- orderPricesFut
-      mBalsMap      <- mBalsMapFut
-      ctx           <- ctxFut
-      mItemsTplArgs <- mItemsTplArgsFut
-    } yield {
+      // Отрендерить ответ, когда всё будет готово.
+      for {
+        txns          <- txnsFut
+        orderPrices   <- orderPricesFut
+        mBalsMap      <- mBalsMapFut
+        ctx           <- ctxFut
+        mItemsTplArgs <- mItemsTplArgsFut
+      } yield {
 
-      val tplArgs = MShowOrderTplArgs(
-        _underlying   = mItemsTplArgs,
-        morder        = request.morder,
-        orderPrices   = orderPrices,
-        txns          = txns,
-        balances      = mBalsMap
-      )
-      Ok( ShowOrderTpl(tplArgs)(ctx) )
+        val tplArgs = MShowOrderTplArgs(
+          _underlying   = mItemsTplArgs,
+          morder        = request.morder,
+          orderPrices   = orderPrices,
+          txns          = txns,
+          balances      = mBalsMap
+        )
+        Ok( ShowOrderTpl(tplArgs)(ctx) )
+      }
     }
   }
 
@@ -116,90 +118,92 @@ trait LkBillOrders
     * @param page Номер страницы.
     * @return Страница со таблицей-списком заказов. Свежие заказы сверху.
     */
-  def orders(onNodeId: MEsUuId, page: Int) = isAdnNodeAdmin.Get(onNodeId, U.Lk).async { implicit request =>
-    lazy val logPrefix = s"nodeOrders($onNodeId, $page):"
+  def orders(onNodeId: MEsUuId, page: Int) = csrf.AddToken {
+    isAdnNodeAdmin(onNodeId, U.Lk).async { implicit request =>
+      lazy val logPrefix = s"nodeOrders($onNodeId, $page):"
 
-    // Слишком далёкую страницу - отсеивать.
-    if (page > 150)
-      throw new IllegalArgumentException(s"$logPrefix page number too high")
+      // Слишком далёкую страницу - отсеивать.
+      if (page > 150)
+        throw new IllegalArgumentException(s"$logPrefix page number too high")
 
-    // Начинаем плясать от контракта...
-    val contractIdOptFut = request.user.contractIdOptFut
+      // Начинаем плясать от контракта...
+      val contractIdOptFut = request.user.contractIdOptFut
 
-    // Получить интересующие ордеры из базы.
-    val ordersFut = contractIdOptFut.flatMap { contractIdOpt =>
-      // Если нет контракта, то искать ничего не надо.
-      contractIdOpt.fold [Future[Seq[MOrder]]] {
-        LOGGER.trace(s"$logPrefix No contract - no orders for user ${request.user.personIdOpt.orNull}")
-        Future.successful( Nil )
+      // Получить интересующие ордеры из базы.
+      val ordersFut = contractIdOptFut.flatMap { contractIdOpt =>
+        // Если нет контракта, то искать ничего не надо.
+        contractIdOpt.fold [Future[Seq[MOrder]]] {
+          LOGGER.trace(s"$logPrefix No contract - no orders for user ${request.user.personIdOpt.orNull}")
+          Future.successful( Nil )
 
-      } { contractId =>
-        val perPage = ORDERS_PER_PAGE
-        slick.db.run {
-          bill2Util.findLastOrders(
-            contractId  = contractId,
-            limit       = perPage,
-            offset      = page * perPage
-          )
+        } { contractId =>
+          val perPage = ORDERS_PER_PAGE
+          slick.db.run {
+            bill2Util.findLastOrders(
+              contractId  = contractId,
+              limit       = perPage,
+              offset      = page * perPage
+            )
+          }
         }
       }
-    }
 
-    // Посчитать общее кол-во заказов у юзера.
-    val ordersTotalFut = contractIdOptFut.flatMap { contractIdOpt =>
-      contractIdOpt.fold( Future.successful(0) ) { contractId =>
-        slick.db.run {
-          mOrders.countByContractId(contractId)
+      // Посчитать общее кол-во заказов у юзера.
+      val ordersTotalFut = contractIdOptFut.flatMap { contractIdOpt =>
+        contractIdOpt.fold( Future.successful(0) ) { contractId =>
+          slick.db.run {
+            mOrders.countByContractId(contractId)
+          }
         }
       }
-    }
 
-    // На след.шагах нужно множество id'шников ордеров...
-    val orderIdsFut = for (orders <- ordersFut) yield {
-      val r = OptId.els2idsSet(orders)
-      LOGGER.trace(s"$logPrefix Found ${orders.size} orders: ${r.mkString(", ")}")
-      r
-    }
-
-    // Надо рассчитать стоимости ордеров. Для ускорения, сделать это пакетно c GROUP BY.
-    val orderPricesFut = orderIdsFut.flatMap { orderIds =>
-      slick.db.run {
-        bill2Util.getOrdersPrices(orderIds)
+      // На след.шагах нужно множество id'шников ордеров...
+      val orderIdsFut = for (orders <- ordersFut) yield {
+        val r = OptId.els2idsSet(orders)
+        LOGGER.trace(s"$logPrefix Found ${orders.size} orders: ${r.mkString(", ")}")
+        r
       }
-    }
 
-    // Узнать id ордера-корзины.
-    val cartOrderIdOptFut = contractIdOptFut.flatMap { contractIdOpt =>
-      FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
+      // Надо рассчитать стоимости ордеров. Для ускорения, сделать это пакетно c GROUP BY.
+      val orderPricesFut = orderIdsFut.flatMap { orderIds =>
         slick.db.run {
-          bill2Util.getCartOrderId(contractId)
+          bill2Util.getOrdersPrices(orderIds)
         }
       }
-    }
 
-    // По идее, получение lkCtxData уже запущено, но лучше убедится в этом.
-    val lkCtxDataFut = request.user.lkCtxDataFut
+      // Узнать id ордера-корзины.
+      val cartOrderIdOptFut = contractIdOptFut.flatMap { contractIdOpt =>
+        FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
+          slick.db.run {
+            bill2Util.getCartOrderId(contractId)
+          }
+        }
+      }
 
-    // Отрендерить ответ, когда всё будет готово.
-    for {
-      orders          <- ordersFut
-      prices          <- orderPricesFut
-      cartOrderIdOpt  <- cartOrderIdOptFut
-      ordersTotal     <- ordersTotalFut
-      lkCtxData       <- lkCtxDataFut
-    } yield {
-      implicit val lkCtxData1 = lkCtxData
+      // По идее, получение lkCtxData уже запущено, но лучше убедится в этом.
+      val lkCtxDataFut = request.user.lkCtxDataFut
 
-      val tplArgs = MOrdersTplArgs(
-        mnode         = request.mnode,
-        orders        = orders,
-        prices        = prices,
-        cartOrderId   = cartOrderIdOpt,
-        ordersTotal   = ordersTotal,
-        page          = page,
-        ordersPerPage = ORDERS_PER_PAGE
-      )
-      Ok( OrdersTpl(tplArgs) )
+      // Отрендерить ответ, когда всё будет готово.
+      for {
+        orders          <- ordersFut
+        prices          <- orderPricesFut
+        cartOrderIdOpt  <- cartOrderIdOptFut
+        ordersTotal     <- ordersTotalFut
+        lkCtxData       <- lkCtxDataFut
+      } yield {
+        implicit val lkCtxData1 = lkCtxData
+
+        val tplArgs = MOrdersTplArgs(
+          mnode         = request.mnode,
+          orders        = orders,
+          prices        = prices,
+          cartOrderId   = cartOrderIdOpt,
+          ordersTotal   = ordersTotal,
+          page          = page,
+          ordersPerPage = ORDERS_PER_PAGE
+        )
+        Ok( OrdersTpl(tplArgs) )
+      }
     }
   }
 
@@ -353,63 +357,65 @@ trait LkBillOrders
     * @param r Куда производить возврат из корзины.
     * @return 200 ОК с html страницей корзины.
     */
-  def cart(onNodeId: String, r: Option[String]) = isAdnNodeAdmin.Get(onNodeId, U.Lk, U.ContractId).async { implicit request =>
+  def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
+    isAdnNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
-    // Узнать id контракта юзера. Сам контракт не важен.
-    val mcIdOptFut = request.user.contractIdOptFut
+      // Узнать id контракта юзера. Сам контракт не важен.
+      val mcIdOptFut = request.user.contractIdOptFut
 
-    // Найти ордер-корзину юзера в базе биллинга:
-    val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
-      FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
-        slick.db.run {
-          bill2Util.getCartOrder(mcId)
+      // Найти ордер-корзину юзера в базе биллинга:
+      val cartOptFut = mcIdOptFut.flatMap { mcIdOpt =>
+        FutureUtil.optFut2futOpt(mcIdOpt) { mcId =>
+          slick.db.run {
+            bill2Util.getCartOrder(mcId)
+          }
         }
       }
-    }
 
-    // Найти item'ы корзины:
-    val mitemsFut = cartOptFut.flatMap { cartOpt =>
-      cartOpt
-        .flatMap(_.id)
-        .fold [Future[Seq[MItem]]] (Future.successful(Nil)) { bill2Util.orderItems }
-    }
+      // Найти item'ы корзины:
+      val mitemsFut = cartOptFut.flatMap { cartOpt =>
+        cartOpt
+          .flatMap(_.id)
+          .fold [Future[Seq[MItem]]] (Future.successful(Nil)) { bill2Util.orderItems }
+      }
 
-    // Параллельно собираем контекст рендера
-    val ctxFut = for {
-      lkCtxData <- request.user.lkCtxDataFut
-    } yield {
-      implicit val ctxData = lkCtxData
-      implicitly[Context]
-    }
+      // Параллельно собираем контекст рендера
+      val ctxFut = for {
+        lkCtxData <- request.user.lkCtxDataFut
+      } yield {
+        implicit val ctxData = lkCtxData
+        implicitly[Context]
+      }
 
-    // Начать сборку аргументов для рендера списка item'ов.
-    val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut)
+      // Начать сборку аргументов для рендера списка item'ов.
+      val mItemsTplArgsFut = _mItemsTplArgs(mitemsFut, ctxFut)
 
-    // Рассчет общей стоимости корзины
-    val totalPricingFut = for {
-      mitems <- mitemsFut
-    } yield {
-      MGetPriceResp(
-        prices = MPrice.toSumPricesByCurrency(mitems).values
-      )
-    }
+      // Рассчет общей стоимости корзины
+      val totalPricingFut = for {
+        mitems <- mitemsFut
+      } yield {
+        MGetPriceResp(
+          prices = MPrice.toSumPricesByCurrency(mitems).values
+        )
+      }
 
-    // Рендер и возврат ответа
-    for {
-      ctx             <- ctxFut
-      mItemsTplArgs   <- mItemsTplArgsFut
-      totalPricing    <- totalPricingFut
-    } yield {
-      // Сборка аргументов для вызова шаблона
-      val args = MCartTplArgs(
-        _underlying   = mItemsTplArgs,
-        r             = r,
-        totalPricing  = totalPricing
-      )
+      // Рендер и возврат ответа
+      for {
+        ctx             <- ctxFut
+        mItemsTplArgs   <- mItemsTplArgsFut
+        totalPricing    <- totalPricingFut
+      } yield {
+        // Сборка аргументов для вызова шаблона
+        val args = MCartTplArgs(
+          _underlying   = mItemsTplArgs,
+          r             = r,
+          totalPricing  = totalPricing
+        )
 
-      // Рендер результата
-      val html = CartTpl(args)(ctx)
-      Ok(html)
+        // Рендер результата
+        val html = CartTpl(args)(ctx)
+        Ok(html)
+      }
     }
   }
 
@@ -421,60 +427,62 @@ trait LkBillOrders
     * @param onNodeId На каком узле сейчас находимся?
     * @return Редирект или страница оплаты.
     */
-  def cartSubmit(onNodeId: String) = isAdnNodeAdmin.Post(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
-    // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
-    // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
-    for {
-      personNode  <- request.user.personNodeFut
-      enc         <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
-      contractId  = enc.mc.id.get
+  def cartSubmit(onNodeId: String) = csrf.Check {
+    isAdnNodeAdmin(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
+      // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
+      // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
+      for {
+        personNode  <- request.user.personNodeFut
+        enc         <- bill2Util.ensureNodeContract(personNode, request.user.mContractOptFut)
+        contractId  = enc.mc.id.get
 
-      // Дальше надо бы делать транзакцию
-      res <- {
-        // Произвести чтение, анализ и обработку товарной корзины:
-        slick.db.run {
-          import slick.profile.api._
-          val dbAction = for {
-          // Прочитать текущую корзину
-            cart0   <- bill2Util.prepareCartTxn( contractId )
-            // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
-            txnRes  <- bill2Util.maybeExecuteOrder(cart0)
-          } yield {
-            // Сформировать результат работы экшена
-            txnRes
+        // Дальше надо бы делать транзакцию
+        res <- {
+          // Произвести чтение, анализ и обработку товарной корзины:
+          slick.db.run {
+            import slick.profile.api._
+            val dbAction = for {
+            // Прочитать текущую корзину
+              cart0   <- bill2Util.prepareCartTxn( contractId )
+              // На основе наполнения корзины нужно выбрать дальнейший путь развития событий:
+              txnRes  <- bill2Util.maybeExecuteOrder(cart0)
+            } yield {
+              // Сформировать результат работы экшена
+              txnRes
+            }
+            // Форсировать весь этот экшен в транзакции:
+            dbAction.transactionally
           }
-          // Форсировать весь этот экшен в транзакции:
-          dbAction.transactionally
         }
-      }
 
-    } yield {
+      } yield {
 
-      // Начать сборку http-ответа для юзера
-      implicit val ctx = implicitly[Context]
+        // Начать сборку http-ответа для юзера
+        implicit val ctx = implicitly[Context]
 
-      res match {
+        res match {
 
-        // Недостаточно бабла на балансах юзера в sio, это нормально. TODO Отправить в платежную систему...
-        case r: MCartIdeas.NeedMoney =>
-          Redirect( controllers.pay.routes.PayYaka.payForm(r.cart.morder.id.get, onNodeId) )
+          // Недостаточно бабла на балансах юзера в sio, это нормально. TODO Отправить в платежную систему...
+          case r: MCartIdeas.NeedMoney =>
+            Redirect( controllers.pay.routes.PayYaka.payForm(r.cart.morder.id.get, onNodeId) )
 
-        // Хватило денег на балансах или они не потребовались. Такое бывает в т.ч. после возврата юзера из платежной системы.
-        // Ордер был исполнен вместе с его наполнением.
-        case oc: MCartIdeas.OrderClosed =>
-          // Уведомить об ордере.
-          sn.publish( OrderStatusChanged(oc.cart.morder) )
-          // Уведомить об item'ах.
-          for (mitem <- oc.cart.mitems) {
-            sn.publish( ItemStatusChanged(mitem) )
-          }
-          // Отправить юзера на страницу "Спасибо за покупку"
-          Redirect( routes.LkBill2.thanksForBuy(onNodeId) )
+          // Хватило денег на балансах или они не потребовались. Такое бывает в т.ч. после возврата юзера из платежной системы.
+          // Ордер был исполнен вместе с его наполнением.
+          case oc: MCartIdeas.OrderClosed =>
+            // Уведомить об ордере.
+            sn.publish( OrderStatusChanged(oc.cart.morder) )
+            // Уведомить об item'ах.
+            for (mitem <- oc.cart.mitems) {
+              sn.publish( ItemStatusChanged(mitem) )
+            }
+            // Отправить юзера на страницу "Спасибо за покупку"
+            Redirect( routes.LkBill2.thanksForBuy(onNodeId) )
 
-        // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
-        case MCartIdeas.NothingToDo =>
-          Redirect( routes.LkBill2.cart(onNodeId) )
-            .flashing( FLASH.ERROR -> ctx.messages("Your.cart.is.empty") )
+          // У юзера оказалась пустая корзина. Отредиректить в корзину с ошибкой.
+          case MCartIdeas.NothingToDo =>
+            Redirect( routes.LkBill2.cart(onNodeId) )
+              .flashing( FLASH.ERROR -> ctx.messages("Your.cart.is.empty") )
+        }
       }
     }
   }
@@ -488,13 +496,14 @@ trait LkBillOrders
     *          Если пусто, то юзер будет отправлен на страницу своей пустой корзины.
     * @return Редирект.
     */
-  def cartClear(onNodeId: String, r: Option[String]) = isAdnNodeAdmin.Post(onNodeId, U.ContractId).async { implicit request =>
-    lazy val logPrefix = s"cartClear(u=${request.user.personIdOpt.orNull},on=$onNodeId):"
+  def cartClear(onNodeId: String, r: Option[String]) = csrf.Check {
+    isAdnNodeAdmin(onNodeId, U.ContractId).async { implicit request =>
+      lazy val logPrefix = s"cartClear(u=${request.user.personIdOpt.orNull},on=$onNodeId):"
 
-    request.user
-      .contractIdOptFut
-      // Выполнить необходимые операции в БД биллинга.
-      .flatMap { contractIdOpt =>
+      request.user
+        .contractIdOptFut
+        // Выполнить необходимые операции в БД биллинга.
+        .flatMap { contractIdOpt =>
         // Если корзина не существует, то делать ничего не надо.
         val contractId = contractIdOpt.get
 
@@ -503,8 +512,8 @@ trait LkBillOrders
           bill2Util.clearCart(contractId)
         }
       }
-      // Подавить и залоггировать возможные ошибки.
-      .recover { case ex: Exception =>
+        // Подавить и залоггировать возможные ошибки.
+        .recover { case ex: Exception =>
         ex match {
           case _: NoSuchElementException =>
             LOGGER.trace(s"$logPrefix Unable to clear cart, because contract or cart order does NOT exists")
@@ -513,11 +522,12 @@ trait LkBillOrders
         }
         0
       }
-      // Независимо от исхода, вернуть редирект куда надо.
-      .map { itemsDeleted =>
+        // Независимо от исхода, вернуть редирект куда надо.
+        .map { itemsDeleted =>
         LOGGER.trace(s"$logPrefix $itemsDeleted items deleted.")
         RdrBackOr(r)(routes.LkBill2.cart(onNodeId))
       }
+    }
   }
 
 
@@ -528,30 +538,31 @@ trait LkBillOrders
     * @param r Обязательный адрес для возврата по итогам действа.
     * @return Редирект в r.
     */
-  def cartDeleteItem(itemId: Gid_t, r: String) = canAccessItem.Post(itemId, edit = true).async { implicit request =>
-    // Права уже проверены, item уже получен. Нужно просто удалить его.
-    val delFut0 = slick.db.run {
-      mItems.deleteById(itemId)
-    }
+  def cartDeleteItem(itemId: Gid_t, r: String) = csrf.Check {
+    canAccessItem(itemId, edit = true).async { implicit request =>
+      // Права уже проверены, item уже получен. Нужно просто удалить его.
+      val delFut0 = slick.db.run {
+        mItems.deleteById(itemId)
+      }
 
-    lazy val logPrefix = s"cartDeleteItem($itemId):"
+      lazy val logPrefix = s"cartDeleteItem($itemId):"
 
-    // Подавить возможные ошибки удаления.
-    val delFut = delFut0.recover { case ex: Throwable =>
-      LOGGER.error(s"$logPrefix Item delete failed", ex)
-      0
-    }
+      // Подавить возможные ошибки удаления.
+      val delFut = delFut0.recover { case ex: Throwable =>
+        LOGGER.error(s"$logPrefix Item delete failed", ex)
+        0
+      }
 
-    for (rowsDeleted <- delFut) yield {
-      val resp0 = Redirect(r)
-      if (rowsDeleted == 1) {
-        resp0
-      } else {
-        LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")
-        resp0.flashing(FLASH.ERROR -> implicitly[Messages].apply("Something.gone.wrong"))
+      for (rowsDeleted <- delFut) yield {
+        val resp0 = Redirect(r)
+        if (rowsDeleted == 1) {
+          resp0
+        } else {
+          LOGGER.warn(s"$logPrefix MItems.deleteById() returned invalid deleted rows count: $rowsDeleted")
+          resp0.flashing(FLASH.ERROR -> implicitly[Messages].apply("Something.gone.wrong"))
+        }
       }
     }
   }
-
 
 }

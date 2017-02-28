@@ -1,10 +1,9 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.Csrf
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
-import play.api.mvc.Result
+import play.api.mvc.{ActionBuilder, Result}
 
 import scala.concurrent.Future
 
@@ -22,7 +21,7 @@ class IsSuOr404Ctl @Inject() (
 
   import mCommonDi._
 
-  sealed trait Base
+  sealed class Base
     extends isSu.Base {
 
     override protected def _onUnauth(req: IReqHdr): Future[Result] = {
@@ -37,15 +36,19 @@ class IsSuOr404Ctl @Inject() (
 
 class IsSuOr404 @Inject() (
                             val isSuOr404Ctl  : IsSuOr404Ctl,
-                            val csrf          : Csrf,
                             mCommonDi         : ICommonDi
                           ) {
 
-  abstract class IsSuOr404Abstract
+
+  class ImplC
     extends isSuOr404Ctl.Base
 
-  object Get extends IsSuOr404Abstract with csrf.Get[MReq]
-  object Post extends IsSuOr404Abstract with csrf.Post[MReq]
+  val Impl = new ImplC
+
+  @inline
+  def apply(): ActionBuilder[MReq] = {
+    Impl
+  }
 
 }
 
@@ -58,13 +61,15 @@ class IsSuOrDevelOr404 @Inject() (
   import mCommonDi._
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
-  object IsSuOrDevelOr404 extends isSuOr404Ctl.Base {
+  class ImplC extends isSuOr404Ctl.Base {
     override protected def isAllowed(user: ISioUser): Boolean = {
       super.isAllowed(user) || isDev
     }
   }
 
+  val Impl = new ImplC
+
   @inline
-  def apply() = IsSuOrDevelOr404
+  def apply() = Impl
 
 }

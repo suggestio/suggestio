@@ -48,60 +48,62 @@ class LkNodes @Inject() (
     * @param nodeId id текущей узла, т.е. узла с которым идёт взаимодействие.
     * @return 200 + HTML, если у юзера достаточно прав для управления узлом.
     */
-  def subNodesOf(nodeId: String) = isAdnNodeAdmin.Get(nodeId, U.Lk).async { implicit request =>
+  def subNodesOf(nodeId: String) = csrf.AddToken {
+    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
 
-    // Запустить поиск узлов.
-    val subNodesFut = mNodes.dynSearch {
-      lkNodesUtil.subNodesSearch(nodeId)
-    }
+      // Запустить поиск узлов.
+      val subNodesFut = mNodes.dynSearch {
+        lkNodesUtil.subNodesSearch(nodeId)
+      }
 
-    // Рендер найденных узлов в данные для модели формы.
-    val subNodesRespFut = for (subNodes <- subNodesFut) yield {
-      MLknSubNodesResp(
-        nodes = for (mnode <- subNodes) yield {
-          MLknTreeNode(
-            id                = mnode.id.get,
-            name              = mnode.guessDisplayNameOrId.getOrElse("???"),
-            ntypeId           = mnode.common.ntype.strId,
-            childrenLoaded    = false,
-            children          = Nil
-          )
-        }
-      )
-    }
+      // Рендер найденных узлов в данные для модели формы.
+      val subNodesRespFut = for (subNodes <- subNodesFut) yield {
+        MLknSubNodesResp(
+          nodes = for (mnode <- subNodes) yield {
+            MLknTreeNode(
+              id                = mnode.id.get,
+              name              = mnode.guessDisplayNameOrId.getOrElse("???"),
+              ntypeId           = mnode.common.ntype.strId,
+              childrenLoaded    = false,
+              children          = Nil
+            )
+          }
+        )
+      }
 
-    // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
-    val formStateB64Fut = for {
-      subNodesResp <- subNodesRespFut
-    } yield {
-      val minit = MLknFormInit(
-        nodes0 = subNodesResp,
-        // Собрать начальное состояние формы.
-        form   = MLknForm()
-      )
-      PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
-    }
+      // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
+      val formStateB64Fut = for {
+        subNodesResp <- subNodesRespFut
+      } yield {
+        val minit = MLknFormInit(
+          nodes0 = subNodesResp,
+          // Собрать начальное состояние формы.
+          form   = MLknForm()
+        )
+        PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
+      }
 
-    // Пока подготовить контекст рендера шаблона
-    val ctxFut = for {
-      lkCtxData <- request.user.lkCtxDataFut
-    } yield {
-      implicit val lkCtxData2 = lkCtxData.withJsiTgs(
-        MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
-      )
-      getContext2
-    }
+      // Пока подготовить контекст рендера шаблона
+      val ctxFut = for {
+        lkCtxData <- request.user.lkCtxDataFut
+      } yield {
+        implicit val lkCtxData2 = lkCtxData.withJsiTgs(
+          MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
+        )
+        getContext2
+      }
 
-    // Отрендерить и вернуть HTML-шаблон со страницей для формы.
-    for {
-      formStateB64    <- formStateB64Fut
-      ctx             <- ctxFut
-    } yield {
-      val args = MLkNodesTplArgs(
-        formState = formStateB64,
-        mnode     = request.mnode
-      )
-      Ok( nodesTpl(args)(ctx) )
+      // Отрендерить и вернуть HTML-шаблон со страницей для формы.
+      for {
+        formStateB64    <- formStateB64Fut
+        ctx             <- ctxFut
+      } yield {
+        val args = MLkNodesTplArgs(
+          formState = formStateB64,
+          mnode     = request.mnode
+        )
+        Ok( nodesTpl(args)(ctx) )
+      }
     }
   }
 

@@ -36,16 +36,18 @@ trait SbNodeTfDaily
    *
    * @param nodeId id узла, для которого редактируется тариф.
    */
-  def editNodeTfDaily(nodeId: String) = isSuNode.Get(nodeId).async { implicit request =>
-    // Вычисляем эффективный тариф узла.
-    val realTfFut = tfDailyUtil.forcedNodeTf(request.mnode)
+  def editNodeTfDaily(nodeId: String) = csrf.AddToken {
+    isSuNode(nodeId).async { implicit request =>
+      // Вычисляем эффективный тариф узла.
+      val realTfFut = tfDailyUtil.forcedNodeTf(request.mnode)
 
-    val formEmpty = tfDailyUtil.tfDailyForm
-    val formFut = for (realTf <- realTfFut) yield {
-      formEmpty.fill(realTf)
+      val formEmpty = tfDailyUtil.tfDailyForm
+      val formFut = for (realTf <- realTfFut) yield {
+        formEmpty.fill(realTf)
+      }
+
+      _editNodeTfDaily(formFut, Ok)
     }
-
-    _editNodeTfDaily(formFut, Ok)
   }
 
   private def _editNodeTfDaily(formFut: Future[Form[MDailyTf]], rs: Status)
@@ -74,22 +76,24 @@ trait SbNodeTfDaily
    * @param nodeId id редактируемого узла.
    * @return редирект на forNode().
    */
-  def editNodeTfDailySubmit(nodeId: String) = isSuNode.Post(nodeId).async { implicit request =>
-    tfDailyUtil.tfDailyForm.bindFromRequest().fold(
-      {formWithErrors =>
-        val respFut = _editNodeTfDaily(Future.successful(formWithErrors), NotAcceptable)
-        LOGGER.debug(s"editNodeTfDailySubmit($nodeId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
-        respFut
-      },
-      {tf2 =>
-        val saveFut = tfDailyUtil.updateNodeTf(request.mnode, Some(tf2))
+  def editNodeTfDailySubmit(nodeId: String) = csrf.Check {
+    isSuNode(nodeId).async { implicit request =>
+      tfDailyUtil.tfDailyForm.bindFromRequest().fold(
+        {formWithErrors =>
+          val respFut = _editNodeTfDaily(Future.successful(formWithErrors), NotAcceptable)
+          LOGGER.debug(s"editNodeTfDailySubmit($nodeId): Failed to bind form:\n${formatFormErrors(formWithErrors)}")
+          respFut
+        },
+        {tf2 =>
+          val saveFut = tfDailyUtil.updateNodeTf(request.mnode, Some(tf2))
 
-        for (_ <- saveFut) yield {
-          Redirect(routes.SysBilling.forNode(nodeId))
-            .flashing(FLASH.SUCCESS -> "Сохранен посуточный тариф для узла")
+          for (_ <- saveFut) yield {
+            Redirect(routes.SysBilling.forNode(nodeId))
+              .flashing(FLASH.SUCCESS -> "Сохранен посуточный тариф для узла")
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 
@@ -99,16 +103,18 @@ trait SbNodeTfDaily
    * @param nodeId id редактируемого узла.
    * @return Редирект на forNode().
    */
-  def deleteNodeTfDaily(nodeId: String) = isSuNode.Post(nodeId).async { implicit request =>
-    // Запустить стирание посуточного тарифа узла.
-    val saveFut = tfDailyUtil.updateNodeTf(request.mnode, newTf = None)
+  def deleteNodeTfDaily(nodeId: String) = csrf.Check {
+    isSuNode(nodeId).async { implicit request =>
+      // Запустить стирание посуточного тарифа узла.
+      val saveFut = tfDailyUtil.updateNodeTf(request.mnode, newTf = None)
 
-    LOGGER.trace(s"deleteNodeTfDaily($nodeId): erasing tf...")
+      LOGGER.trace(s"deleteNodeTfDaily($nodeId): erasing tf...")
 
-    // Отредиректить юзера на биллинг узла, когда всё будет готово.
-    for (_ <- saveFut) yield {
-      Redirect( routes.SysBilling.forNode(nodeId) )
-        .flashing(FLASH.SUCCESS -> s"Сброшен тариф узла: ${request.mnode.guessDisplayNameOrId.orNull}")
+      // Отредиректить юзера на биллинг узла, когда всё будет готово.
+      for (_ <- saveFut) yield {
+        Redirect( routes.SysBilling.forNode(nodeId) )
+          .flashing(FLASH.SUCCESS -> s"Сброшен тариф узла: ${request.mnode.guessDisplayNameOrId.orNull}")
+      }
     }
   }
 

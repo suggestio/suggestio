@@ -34,41 +34,43 @@ trait SbNode
    *
    * @param nodeId id просматриваемого узла.
    */
-  def forNode(nodeId: String) = isSuNode.Get(nodeId).async { implicit request =>
-    val contractIdOpt = request.mnode.billing.contractId
+  def forNode(nodeId: String) = csrf.AddToken {
+    isSuNode(nodeId).async { implicit request =>
+      val contractIdOpt = request.mnode.billing.contractId
 
-    val mContractOptFut = FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
-      val mContractOptAction = mContracts.getById(contractId)
-      slick.db.run(mContractOptAction)
-    }
+      val mContractOptFut = FutureUtil.optFut2futOpt(contractIdOpt) { contractId =>
+        val mContractOptAction = mContracts.getById(contractId)
+        slick.db.run(mContractOptAction)
+      }
 
-    val mBalancesFut = contractIdOpt.fold[Future[Seq[MBalance]]] {
-      Future.successful(Nil)
-    } { contractId =>
-      val mBalancesAction = mBalances.findByContractId(contractId)
-      slick.db.run(mBalancesAction)
-    }
+      val mBalancesFut = contractIdOpt.fold[Future[Seq[MBalance]]] {
+        Future.successful(Nil)
+      } { contractId =>
+        val mBalancesAction = mBalances.findByContractId(contractId)
+        slick.db.run(mBalancesAction)
+      }
 
-    // Получить узел CBCA для доступа к дефолтовому тарифу, если требуется.
-    val cbcaNodeOptFut = if (request.mnode.billing.tariffs.daily.isEmpty && bill2Util.CBCA_NODE_ID != nodeId) {
-      bill2Util.cbcaNodeOptFut
-    } else {
-      Future.successful(None)
-    }
+      // Получить узел CBCA для доступа к дефолтовому тарифу, если требуется.
+      val cbcaNodeOptFut = if (request.mnode.billing.tariffs.daily.isEmpty && bill2Util.CBCA_NODE_ID != nodeId) {
+        bill2Util.cbcaNodeOptFut
+      } else {
+        Future.successful(None)
+      }
 
-    for {
-      mContractOpt <- mContractOptFut
-      mBalances    <- mBalancesFut
-      cbcaNodeOpt  <- cbcaNodeOptFut
-    } yield {
-      // Поискать контракт, собрать аргументы для рендера, отрендерить forNodeTpl.
-      val args = MForNodeTplArgs(
-        mnode         = request.mnode,
-        mContractOpt  = mContractOpt,
-        mBalances     = mBalances,
-        cbcaNodeOpt   = cbcaNodeOpt
-      )
-      Ok( forNodeTpl(args) )
+      for {
+        mContractOpt <- mContractOptFut
+        mBalances    <- mBalancesFut
+        cbcaNodeOpt  <- cbcaNodeOptFut
+      } yield {
+        // Поискать контракт, собрать аргументы для рендера, отрендерить forNodeTpl.
+        val args = MForNodeTplArgs(
+          mnode         = request.mnode,
+          mContractOpt  = mContractOpt,
+          mBalances     = mBalances,
+          cbcaNodeOpt   = cbcaNodeOpt
+        )
+        Ok( forNodeTpl(args) )
+      }
     }
   }
 

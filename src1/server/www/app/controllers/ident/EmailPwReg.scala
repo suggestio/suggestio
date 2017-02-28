@@ -107,8 +107,10 @@ trait EmailPwReg
     *
     * @return 200 OK со страницей начала регистрации по email.
     */
-  def emailReg = isAnon.Get { implicit request =>
-    Ok(_epwRender(emailRegFormM))
+  def emailReg = csrf.AddToken {
+    isAnon() { implicit request =>
+      Ok(_epwRender(emailRegFormM))
+    }
   }
 
   /**
@@ -118,44 +120,46 @@ trait EmailPwReg
     * @return emailRegFormBindFailed() при проблеме с маппингом формы.
     *         emailRequestOk() когда сообщение отправлено почтой.
     */
-  def emailRegSubmit = isAnon.Post.async { implicit request =>
-    val form1 = checkCaptcha( emailRegFormM.bindFromRequest() )
-    form1.fold(
-      {formWithErrors =>
-        LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
-        NotAcceptable( _epwRender(formWithErrors) )
-      },
-      {email1 =>
-        // Почта уже зарегана может?
-        mPersonIdents.findIdentsByEmail(email1).flatMap {
-          // Нет такого email. Собираем активацию.
-          case nil if nil.isEmpty =>    // Используем isEmpty во избежания скрытых изменений в API в будущем
-            // Сохранить новый eact
-            val ea0 = EmailActivation(
-              email = email1,
-              key = CanConfirmEmailPwReg.EPW_ACT_KEY
-            )
-            for {
-              eaId <- emailActivations.save(ea0)
-              // отправить письмо на указанную почту
-              ea1 = ea0.copy(id = Some(eaId))
-              _ <- sendEmailAct(ea1)
-            } yield {
-              // Вернуть ответ юзеру
-              emailRequestOk(Some(ea1))
-            }
+  def emailRegSubmit = csrf.Check {
+    isAnon().async { implicit request =>
+      val form1 = checkCaptcha( emailRegFormM.bindFromRequest() )
+      form1.fold(
+        {formWithErrors =>
+          LOGGER.debug("emailRegSubmit(): Failed to bind form:\n " + formatFormErrors(formWithErrors))
+          NotAcceptable( _epwRender(formWithErrors) )
+        },
+        {email1 =>
+          // Почта уже зарегана может?
+          mPersonIdents.findIdentsByEmail(email1).flatMap {
+            // Нет такого email. Собираем активацию.
+            case nil if nil.isEmpty =>    // Используем isEmpty во избежания скрытых изменений в API в будущем
+              // Сохранить новый eact
+              val ea0 = EmailActivation(
+                email = email1,
+                key   = CanConfirmEmailPwReg.EPW_ACT_KEY
+              )
+              for {
+                eaId <- emailActivations.save(ea0)
+                // отправить письмо на указанную почту
+                ea1 = ea0.copy(id = Some(eaId))
+                _ <- sendEmailAct(ea1)
+              } yield {
+                // Вернуть ответ юзеру
+                emailRequestOk(Some(ea1))
+              }
 
-          // Уже есть такой email в базе. Выслать восстановление пароля.
-          case _ =>
-            LOGGER.error(s"emailRegSubmit($email1): Email already exists.")
-            for {
-              _ <- sendRecoverMail(email1)
-            } yield {
-              emailRequestOk(None)
-            }
+            // Уже есть такой email в базе. Выслать восстановление пароля.
+            case _ =>
+              LOGGER.error(s"emailRegSubmit($email1): Email already exists.")
+              for {
+                _ <- sendRecoverMail(email1)
+              } yield {
+                emailRequestOk(None)
+              }
+          }
         }
-      }
-    )
+      )
+    }
   }
 
   /** Что возвращать юзеру, когда сообщение отправлено на почту? */
@@ -175,71 +179,77 @@ trait EmailPwReg
     }
   }
 
+
   /** Юзер возвращается по ссылке из письма. Отрендерить страницу завершения регистрации. */
-  def emailReturn(eaInfo: IEaEmailId) = canConfirmEmailPwReg.Get(eaInfo)(_eaNotFound) { implicit request =>
-    // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
-    Ok(confirmTpl(request.eact, epwRegConfirmFormM))
+  def emailReturn(eaInfo: IEaEmailId) = csrf.AddToken {
+    canConfirmEmailPwReg(eaInfo)(_eaNotFound) { implicit request =>
+      // ActionBuilder уже выверил всё. Нужно показать юзеру страницу с формой ввода пароля, названия узла и т.д.
+      Ok(confirmTpl(request.eact, epwRegConfirmFormM))
+    }
   }
 
+
   /** Сабмит формы подтверждения регистрации по email. */
-  def emailConfirmSubmit(eaInfo: IEaEmailId) = canConfirmEmailPwReg.Post(eaInfo)(_eaNotFound).async { implicit request =>
-    // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
-    epwRegConfirmFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"emailConfirmSubmit($eaInfo): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable(confirmTpl(request.eact, formWithErrors))
-      },
-      {data =>
-        // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
-        val lang = request2lang
-        val mperson0 = MNode(
-          common = MNodeCommon(
-            ntype = MNodeTypes.Person,
-            isDependent = false
-          ),
-          meta = MMeta(
-            basic = MBasicMeta(
-              nameOpt = Some(eaInfo.email),
-              langs   = List( lang.code )
+  def emailConfirmSubmit(eaInfo: IEaEmailId) = csrf.Check {
+    canConfirmEmailPwReg(eaInfo)(_eaNotFound).async { implicit request =>
+      // ActionBuilder выверил данные из письма, надо забиндить данные регистрации, создать узел и т.д.
+      epwRegConfirmFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"emailConfirmSubmit($eaInfo): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          NotAcceptable(confirmTpl(request.eact, formWithErrors))
+        },
+        {data =>
+          // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
+          val lang = request2lang
+          val mperson0 = MNode(
+            common = MNodeCommon(
+              ntype = MNodeTypes.Person,
+              isDependent = false
             ),
-            person = MPersonMeta(
-              emails = List(eaInfo.email)
+            meta = MMeta(
+              basic = MBasicMeta(
+                nameOpt = Some(eaInfo.email),
+                langs   = List( lang.code )
+              ),
+              person = MPersonMeta(
+                emails = List(eaInfo.email)
+              )
             )
           )
-        )
 
-        for {
+          for {
           // Сохранить узел самого юзера.
-          personId <- mNodes.save(mperson0)
+            personId <- mNodes.save(mperson0)
 
-          // Развернуть узел-магазин для юзера
-          mnodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
+            // Развернуть узел-магазин для юзера
+            mnodeFut = nodesUtil.createUserNode(name = data.adnName, personId = personId)
 
-          // Запустить сохранение ident'а юзера, дождаться сохранения.
-          _ <- {
-            val epw0 = EmailPwIdent(
-              email       = eaInfo.email,
-              personId    = personId,
-              pwHash      = scryptUtil.mkHash(data.password),
-              isVerified  = true
-            )
-            emailPwIdents.save(epw0)
+            // Запустить сохранение ident'а юзера, дождаться сохранения.
+            _ <- {
+              val epw0 = EmailPwIdent(
+                email       = eaInfo.email,
+                personId    = personId,
+                pwHash      = scryptUtil.mkHash(data.password),
+                isVerified  = true
+              )
+              emailPwIdents.save(epw0)
+            }
+
+            // Удалить email activation
+            _ <- emailActivations.deleteById( request.eact.id.get )
+
+            // Дождаться готовности магазина юзера
+            mnode <- mnodeFut
+
+          } yield {
+            val args = nodesUtil.nodeRegSuccessArgs(mnode)
+            Ok( regSuccessTpl(args) )
+              .addingToSession(Keys.PersonId.name -> personId)
+              .withLang(lang)
           }
-
-          // Удалить email activation
-          _ <- emailActivations.deleteById( request.eact.id.get )
-
-          // Дождаться готовности магазина юзера
-          mnode <- mnodeFut
-
-        } yield {
-          val args = nodesUtil.nodeRegSuccessArgs(mnode)
-          Ok( regSuccessTpl(args) )
-            .addingToSession(Keys.PersonId.name -> personId)
-            .withLang(lang)
-        }
-      } // Form.fold right
-    )   // Form.fold
+        } // Form.fold right
+      )   // Form.fold
+    }
   }
 
 }

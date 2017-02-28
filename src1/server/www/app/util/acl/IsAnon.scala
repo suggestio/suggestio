@@ -1,7 +1,7 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.sec.util.Csrf
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.MReq
 import play.api.mvc._
@@ -15,15 +15,18 @@ import scala.concurrent.Future
  * Created: 19.06.14 17:42
  * Description: Является ли текущий юзер НЕзалогиненным (анонимусом)?
  */
-class IsAnon @Inject()(
-                        identUtil              : IdentUtil,
-                        val csrf               : Csrf,
-                        mCommonDi              : ICommonDi
-                      ) {
+final class IsAnon @Inject()(
+                              identUtil              : IdentUtil,
+                              mCommonDi              : ICommonDi
+                            )
+  extends SioActionBuilderOuter
+{
 
   import mCommonDi._
 
-  sealed trait Base extends ActionBuilder[MReq] {
+
+  class ImplC extends SioActionBuilderImpl[MReq] {
+
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val personIdOpt = sessionUtil.getPersonId(request)
       personIdOpt.fold {
@@ -36,26 +39,15 @@ class IsAnon @Inject()(
         identUtil.redirectUserSomewhere(personId)
       }
     }
+
   }
 
-  sealed abstract class Abstract
-    extends Base
+  val Impl = new ImplC
 
-  /** Без CSRF. */
-  object NoCsrf extends Abstract
   @inline
-  def apply() = NoCsrf
-
-  // CSRF:
-  /** GET-запросы с выставлением CSRF-токена. */
-  object Get
-    extends Abstract
-    with csrf.Get[MReq]
-
-  /** POST-запросы с проверкой CSRF-токена, выставленного ранее через csrf.Get. */
-  object Post
-    extends Abstract
-    with csrf.Post[MReq]
+  def apply(): ActionBuilder[MReq] = {
+    Impl
+  }
 
 }
 

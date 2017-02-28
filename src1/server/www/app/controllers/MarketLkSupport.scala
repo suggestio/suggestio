@@ -64,9 +64,11 @@ class MarketLkSupport @Inject() (
     *
     * @return 200 Ок и страница с формой.
    */
-  def supportFormNode(adnId: String, r: Option[String]) = isAdnNodeAdmin.Get(adnId, U.Lk).async { implicit request =>
-    val mnodeOpt = Some(request.mnode)
-    _supportForm(mnodeOpt, r)
+  def supportFormNode(adnId: String, r: Option[String]) = csrf.AddToken {
+    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+      val mnodeOpt = Some(request.mnode)
+      _supportForm(mnodeOpt, r)
+    }
   }
 
   /**
@@ -105,9 +107,11 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
-  def supportFormNodeSubmit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
-    val mnodeOpt = Some(request.mnode)
-    _supportFormSubmit(mnodeOpt, r)
+  def supportFormNodeSubmit(adnId: String, r: Option[String]) = csrf.Check {
+    isAdnNodeAdmin(adnId).async { implicit request =>
+      val mnodeOpt = Some(request.mnode)
+      _supportFormSubmit(mnodeOpt, r)
+    }
   }
 
   /** Сабмит формы обращения за помощью вне узла. */
@@ -123,28 +127,33 @@ class MarketLkSupport @Inject() (
         debug(logPrefix + "Failed to bind lk-feedback form:\n" + formatFormErrors(formWithErrors))
         _supportForm2(nodeOpt, formWithErrors, r, NotAcceptable)
       },
+
       {lsr =>
         val personId = request.user.personIdOpt.get
         val userEmailsFut = mPersonIdents.findAllEmails(personId)
         trace(logPrefix + "Processing from ip=" + request.remoteAddress)
+
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
         msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
-        userEmailsFut.map { ues =>
-          val username = ues.headOption getOrElse personId
-          msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
-          msg.setText {
-            htmlCompressUtil.txt2str {
-              views.txt.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
+
+        for {
+          ues <- userEmailsFut
+          rdrFut = RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
+          rdr <- {
+            val username = ues.headOption.getOrElse( personId )
+            msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
+            msg.setText {
+              htmlCompressUtil.txt2str {
+                views.txt.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
+              }
             }
+            msg.send()
+
+            rdrFut
           }
-          msg.send()
-        } flatMap { _ =>
-          // Письмо админам отправлено. Нужно куда-то перенаправить юзера.
-          RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
-            .map { rdr =>
-              rdr.flashing(FLASH.SUCCESS -> "Your.msg.sent")
-            }
+        } yield {
+          rdr.flashing(FLASH.SUCCESS -> "Your.msg.sent")
         }
       }
     )
@@ -163,45 +172,58 @@ class MarketLkSupport @Inject() (
   }
 
   /** Сабмит формы запроса выставления географии узла. */
-  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = isAdnNodeAdmin.Post(adnId).async { implicit request =>
-    lazy val logPrefix = s"addNodeGeoSubmit($adnId): "
-    geoNodeFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        debug("Failed to bind support form:\n" + formatFormErrors(formWithErrors))
-        NotAcceptable
-      },
-      {text =>
-        val personId = request.user.personIdOpt.get
-        val emailsFut = mPersonIdents.findAllEmails(personId)
-        trace(logPrefix + "Processing from ip=" + request.remoteAddress)
-        // собираем письмо админам s.io
-        val msg = mailer.instance
-        val mnode = request.mnode
-        msg.setSubject(
-          "sio-market: Запрос геолокации для узла " +
-            mnode.meta.basic.name +
-            mnode.meta.address.town.fold("")(" / " + _)
-        )
-        msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
-        emailsFut map { emails =>
-          val emailOpt = emails.headOption
-          if (emailOpt.isDefined)
-            msg.setReplyTo(emailOpt.get)
-          msg.setHtml {
-            htmlCompressUtil.html4email {
-              views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text)
+  def askGeo4NodeSubmit(adnId: String, r: Option[String]) = csrf.Check {
+    isAdnNodeAdmin(adnId).async { implicit request =>
+      lazy val logPrefix = s"addNodeGeoSubmit($adnId): "
+
+      geoNodeFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          debug("Failed to bind support form:\n" + formatFormErrors(formWithErrors))
+          NotAcceptable
+        },
+        {text =>
+          val personId = request.user.personIdOpt.get
+
+          val emailsFut = mPersonIdents.findAllEmails(personId)
+          trace(logPrefix + "Processing from ip=" + request.remoteAddress)
+          // собираем письмо админам s.io
+
+          val msg = mailer.instance
+          val mnode = request.mnode
+
+          msg.setSubject(
+            "sio-market: Запрос геолокации для узла " +
+              mnode.meta.basic.name +
+              mnode.meta.address.town.fold("")(" / " + _)
+          )
+
+          msg.setRecipients( supportUtil.FEEDBACK_RCVR_EMAILS : _* )
+
+          for {
+            emails <- emailsFut
+            // Организовать редирект.
+            rdrFut = RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
+            rdr    <- {
+              // Отправить сообщение.
+              val emailOpt = emails.headOption
+              if (emailOpt.isDefined)
+                msg.setReplyTo(emailOpt.get)
+              msg.setHtml {
+                htmlCompressUtil.html4email {
+                  views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text)
+                }
+              }
+              msg.send()
+
+              // Вернуть фьючерс редиректа.
+              rdrFut
             }
+          } yield {
+            rdr.flashing(FLASH.SUCCESS -> "Your.req.sent")
           }
-          msg.send()
-        } flatMap { _ =>
-          // Письмо отправлено админам. Нужно куда-то перенаправить юзера.
-          RdrBackOrFut(r) { identUtil.redirectCallUserSomewhere(personId) }
-            .map { rdr =>
-              rdr.flashing(FLASH.SUCCESS -> "Your.req.sent")
-            }
         }
-      }
-    )
+      )
+    }
   }
 
 }

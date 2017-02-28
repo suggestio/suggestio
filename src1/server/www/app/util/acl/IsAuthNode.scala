@@ -1,7 +1,8 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.MNodeType
 import models.mproj.ICommonDi
 import models.req.{MNodeReq, MReq}
@@ -18,63 +19,51 @@ import scala.concurrent.Future
 class IsAuthNode @Inject() (
                              isAuth                 : IsAuth,
                              mCommonDi              : ICommonDi
-                           ) {
+                           )
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
+{
 
   import mCommonDi._
 
-  /** Трейт с логикой проверки залогиненности вкупе с доступом к узлу. */
-  sealed trait IsAuthNodeBase
-    extends ActionBuilder[MNodeReq]
-    with MacroLogsDyn
-  {
 
-    /** id запрашиваемого узла. */
-    def nodeId: String
+  /** ActionBuilder с логикой проверки залогиненности вкупе с доступом к узлу.
+    *
+    * @param nodeId id запрашиваемого узла.
+    * @param ntypes Допустимые типы для запроса или empty, если не важно.
+    */
+  def apply(nodeId: String, ntypes: MNodeType*): ActionBuilder[MNodeReq] = {
+    new SioActionBuilderImpl[MNodeReq] {
 
-    /** Допустимые типы для запроса или empty, если не важно. */
-    // TODO Seq используется для доступа к contains(), который до конца не абстрагирован в разных scala.collections.
-    def ntypes: Seq[MNodeType]
+      override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
 
-    override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
+        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = mSioUsers(personIdOpt)
 
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
+        if (!user.isAuth) {
+          // Не залогинен.
+          isAuth.onUnauth(request)
 
-      if (!user.isAuth) {
-        // Не залогинен.
-        isAuth.onUnauth(request)
+        } else {
+          // Юзер залогинен, нужно продолжать запрос.
+          val nodeOptFut = mNodesCache.getById(nodeId)
+          val _ntypes = ntypes
+          nodeOptFut.flatMap {
+            case Some(mnode) if _ntypes.isEmpty || _ntypes.contains(mnode.common.ntype) =>
+              val req1 = MNodeReq(mnode, request, user)
+              block(req1)
 
-      } else {
-        // Юзер залогинен, нужно продолжать запрос.
-        val nodeOptFut = mNodesCache.getById( nodeId )
-        val _ntypes = ntypes
-        nodeOptFut flatMap {
-          case Some(mnode) if _ntypes.isEmpty || _ntypes.contains(mnode.common.ntype) =>
-            val req1 = MNodeReq(mnode, request, user)
-            block(req1)
-
-          case other =>
-            other.foreach { mnode =>
-              LOGGER.warn(s"404 for existing node[$nodeId] with unexpected ntype. Expected one of [${_ntypes.mkString(",")}], but node[$nodeId] has ntype ${mnode.common.ntype}.")
-            }
-            val req1 = MReq(request, user)
-            errorHandler.http404Fut(req1)
+            case other =>
+              for (mnode <- other) {
+                LOGGER.warn(s"404 for existing node[$nodeId] with unexpected ntype. Expected one of [${_ntypes.mkString(",")}], but node[$nodeId] has ntype ${mnode.common.ntype}.")
+              }
+              val req1 = MReq(request, user)
+              errorHandler.http404Fut(req1)
+          }
         }
       }
+
     }
   }
-
-
-  /** Абстрактный класс с недореализацией IsAuthNodeBase. */
-  sealed abstract class IsAuthNodeAbstract
-    extends IsAuthNodeBase
-
-
-  case class IsAuthNode(override val nodeId: String,
-                        override val ntypes: MNodeType*)
-    extends IsAuthNodeAbstract
-
-  @inline
-  def apply(nodeId: String, ntypes: MNodeType*) = IsAuthNode(nodeId, ntypes: _*)
 
 }

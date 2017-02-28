@@ -1,8 +1,8 @@
 package util.acl
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.util.Csrf
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
 
@@ -18,12 +18,11 @@ import play.api.mvc.{ActionBuilder, Request, Result}
 
 @Singleton
 final class IsSu @Inject() (
-                             val cookieCleanup  : CookieCleanup,
-                             val csrf           : Csrf,
                              isAuth             : IsAuth,
                              mCommonDi          : ICommonDi
                            )
-  extends MacroLogsImpl
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 {
 
   import mCommonDi._
@@ -38,10 +37,7 @@ final class IsSu @Inject() (
     isAuth.onUnauth(req)
   }
 
-
-  trait Base
-    extends ActionBuilder[MReq]
-  {
+  class Base extends SioActionBuilderImpl[MReq] {
 
     protected def isAllowed(user: ISioUser): Boolean = {
       user.isSuper
@@ -66,23 +62,10 @@ final class IsSu @Inject() (
 
   }
 
+  val Impl = new Base
 
-  sealed abstract class BaseAbstract
-    extends Base
-    with cookieCleanup.CookieCleanup[MReq]
-
-  object IsSu
-    extends BaseAbstract
   @inline
-  def apply() = IsSu
-
-  object Get
-    extends BaseAbstract
-    with csrf.Get[MReq]
-
-  object Post
-    extends BaseAbstract
-    with csrf.Post[MReq]
+  def apply(): ActionBuilder[MReq] = Impl
 
 }
 

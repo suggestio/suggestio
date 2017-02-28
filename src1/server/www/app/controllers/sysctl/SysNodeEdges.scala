@@ -41,33 +41,37 @@ trait SysNodeEdges
     * Сабмит формы-кнопки удаления эджа из узла.
     * @return Редирект, если всё ок.
     */
-  def deleteEdgePost(qs: MNodeEdgeIdQs) = isSuNodeEdge.Post(qs).async { implicit request =>
-    LOGGER.trace(s"deleteEdgePost($qs): Deleting edge ${request.medge} of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
+  def deleteEdgePost(qs: MNodeEdgeIdQs) = csrf.Check {
+    isSuNodeEdge(qs).async { implicit request =>
+      LOGGER.trace(s"deleteEdgePost($qs): Deleting edge ${request.medge} of node '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''")
 
-    val mnode2 = request.mnode.withEdges(
-      request.mnode.edges.copy(
-        out = MNodeEdges.edgesToMap1(
-          request.mnode.edges
-            .iterator
-            .filter { e => e ne request.medge }
+      val mnode2 = request.mnode.withEdges(
+        request.mnode.edges.copy(
+          out = MNodeEdges.edgesToMap1(
+            request.mnode.edges
+              .iterator
+              .filter { e => e ne request.medge }
+          )
         )
       )
-    )
 
-    // Сохранить собранный эдж.
-    for {
-      _ <- mNodes.save(mnode2)
-    } yield {
-      Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )
-        .flashing( FLASH.SUCCESS -> s"Удалён эдж #${qs.edgeId} из узла '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''." )
+      // Сохранить собранный эдж.
+      for {
+        _ <- mNodes.save(mnode2)
+      } yield {
+        Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )
+          .flashing( FLASH.SUCCESS -> s"Удалён эдж #${qs.edgeId} из узла '''${request.mnode.guessDisplayNameOrIdOrEmpty}'''." )
+      }
     }
   }
 
 
   /** Экшен запроса страницы с формой создания нового эджа на указанном узле. */
-  def createEdgeGet(nodeId: MEsUuId) = isSuNode.Get(nodeId).async { implicit request =>
-    val form = sysMarketUtil.edgeFormM
-    _createEdgeBody(Ok, form)
+  def createEdgeGet(nodeId: MEsUuId) = csrf.AddToken {
+    isSuNode(nodeId).async { implicit request =>
+      val form = sysMarketUtil.edgeFormM
+      _createEdgeBody(Ok, form)
+    }
   }
 
   /** Рендер страницы создания эджа на узле. */
@@ -76,37 +80,41 @@ trait SysNodeEdges
   }
 
   /** Сабмит формы создания нового эджа на узле. */
-  def createEdgePost(nodeId: MEsUuId) = isSuNode.Get(nodeId).async { implicit request =>
-    def logPrefix = s"createEdgePost(${nodeId.id}):"
+  def createEdgePost(nodeId: MEsUuId) = csrf.AddToken {
+    isSuNode(nodeId).async { implicit request =>
+      def logPrefix = s"createEdgePost(${nodeId.id}):"
 
-    sysMarketUtil.edgeFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind create form: ${formatFormErrors(formWithErrors)}")
-        _createEdgeBody(NotAcceptable, formWithErrors)
-      },
-      {medge =>
-        LOGGER.trace(s"$logPrefix Creating edge $medge on node ''${request.mnode.guessDisplayNameOrIdOrEmpty}''")
-        val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
-          mnode.withEdges(
-            mnode.edges.copy(
-              out = mnode.edges.out ++ Seq(medge)
+      sysMarketUtil.edgeFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind create form: ${formatFormErrors(formWithErrors)}")
+          _createEdgeBody(NotAcceptable, formWithErrors)
+        },
+        {medge =>
+          LOGGER.trace(s"$logPrefix Creating edge $medge on node ''${request.mnode.guessDisplayNameOrIdOrEmpty}''")
+          val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
+            mnode.withEdges(
+              mnode.edges.copy(
+                out = mnode.edges.out ++ Seq(medge)
+              )
             )
-          )
+          }
+          for (_ <- saveFut) yield {
+            Redirect( routes.SysMarket.showAdnNode(nodeId) )
+              .flashing( FLASH.SUCCESS -> s"Создан новый эдж на узле ''${request.mnode.guessDisplayNameOrIdOrEmpty}''." )
+          }
         }
-        for (_ <- saveFut) yield {
-          Redirect( routes.SysMarket.showAdnNode(nodeId) )
-            .flashing( FLASH.SUCCESS -> s"Создан новый эдж на узле ''${request.mnode.guessDisplayNameOrIdOrEmpty}''." )
-        }
-      }
-    )
+      )
+    }
   }
 
 
   /** Экшен запроса страницы с формой редактирования эджа на узле. */
-  def editEdgeGet(qs: MNodeEdgeIdQs) = isSuNodeEdge.Get(qs).async { implicit request =>
-    val eform = sysMarketUtil.edgeFormM
-      .fill( request.medge )
-    _editEdgeBody(qs, Ok, eform)
+  def editEdgeGet(qs: MNodeEdgeIdQs) = csrf.AddToken {
+    isSuNodeEdge(qs).async { implicit request =>
+      val eform = sysMarketUtil.edgeFormM
+        .fill( request.medge )
+      _editEdgeBody(qs, Ok, eform)
+    }
   }
 
   private def _editEdgeBody(qs: MNodeEdgeIdQs, rs: Status, ef: Form[MEdge])
@@ -115,40 +123,42 @@ trait SysNodeEdges
   }
 
   /** Экшен сабмита формы редактирования эджа. */
-  def editEdgePost(qs: MNodeEdgeIdQs) = isSuNodeEdge.Post(qs).async { implicit request =>
-    def logPrefix = s"editEdgePost($qs):"
-    sysMarketUtil.edgeFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        _editEdgeBody(qs, NotAcceptable, formWithErrors)
-      },
-      {medge2 =>
-        LOGGER.trace(s"$logPrefix Update of edge ${request.medge} using $medge2 on node ${request.mnode.guessDisplayNameOrIdOrEmpty}")
+  def editEdgePost(qs: MNodeEdgeIdQs) = csrf.Check {
+    isSuNodeEdge(qs).async { implicit request =>
+      def logPrefix = s"editEdgePost($qs):"
+      sysMarketUtil.edgeFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          _editEdgeBody(qs, NotAcceptable, formWithErrors)
+        },
+        {medge2 =>
+          LOGGER.trace(s"$logPrefix Update of edge ${request.medge} using $medge2 on node ${request.mnode.guessDisplayNameOrIdOrEmpty}")
 
-        // Заменить эдж в инстансе узла.
-        val mnode2 = request.mnode.withEdges(
-          request.mnode.edges.copy(
-            MNodeEdges.edgesToMap1(
-              request.mnode.edges
-                .withIndexUpdated( qs.edgeId ) { e0 =>
-                  Seq(
-                    sysMarketUtil.updateEdge(e0, medge2)
-                  )
-                }
+          // Заменить эдж в инстансе узла.
+          val mnode2 = request.mnode.withEdges(
+            request.mnode.edges.copy(
+              MNodeEdges.edgesToMap1(
+                request.mnode.edges
+                  .withIndexUpdated( qs.edgeId ) { e0 =>
+                    Seq(
+                      sysMarketUtil.updateEdge(e0, medge2)
+                    )
+                  }
+              )
             )
           )
-        )
 
-        // Запустить сохранение
-        for {
-          _ <- mNodes.save(mnode2)
-        } yield {
-          // Отредиректить на sys-страницу узла.
-          Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )
-            .flashing( FLASH.SUCCESS -> s"Обновлён эдж #${qs.edgeId} на узле ''${request.mnode.guessDisplayNameOrIdOrEmpty}''." )
+          // Запустить сохранение
+          for {
+            _ <- mNodes.save(mnode2)
+          } yield {
+            // Отредиректить на sys-страницу узла.
+            Redirect( routes.SysMarket.showAdnNode(qs.nodeId) )
+              .flashing( FLASH.SUCCESS -> s"Обновлён эдж #${qs.edgeId} на узле ''${request.mnode.guessDisplayNameOrIdOrEmpty}''." )
+          }
         }
-      }
-    )
+      )
+    }
   }
 
 }

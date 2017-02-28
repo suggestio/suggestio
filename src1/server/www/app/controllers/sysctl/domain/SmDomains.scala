@@ -32,9 +32,12 @@ trait SmDomains
 
 
   /** Запрос страницы добавления домена к узлу. */
-  def createNodeDomain(nodeId: String) = isSuNode.Get(nodeId) { implicit request =>
-    Ok( _createNodeDomainBody(sysMarketUtil.mDomainExtraFormM) )
+  def createNodeDomain(nodeId: String) = csrf.AddToken {
+    isSuNode(nodeId) { implicit request =>
+      Ok( _createNodeDomainBody(sysMarketUtil.mDomainExtraFormM) )
+    }
   }
+
 
   /** Рендер страницы с формой создания домена.
     * Это общий код GET и POST экшенов создания домена для узла. */
@@ -46,30 +49,33 @@ trait SmDomains
     createNodeDomainTpl(args)
   }
 
-  /** Сабмит формы добавления домена к узлу. */
-  def createNodeDomainFormSubmit(nodeId: String) = isSuNode.Post(nodeId).async { implicit request =>
-    lazy val logPrefix = s"createNodeDomainFormSubmit($nodeId):"
-    sysMarketUtil.mDomainExtraFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        NotAcceptable( _createNodeDomainBody(formWithErrors) )
-      },
-      {mdx =>
-        val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
-          _updateNodeDomains(mnode) {
-            mnode.extras.domains
-              .iterator
-              .filter { _.dkey != mdx.dkey }
-              .++( Iterator(mdx) )
-              .toSeq
-          }
-        }
 
-        // Отрендерить HTTP-ответ клиенту
-        for (_ <- saveFut) yield
-          _rdrSuccess(nodeId, s"Домен ${mdx.dkey} добавлен к узлу.")
-      }
-    )
+  /** Сабмит формы добавления домена к узлу. */
+  def createNodeDomainFormSubmit(nodeId: String) = csrf.Check {
+    isSuNode(nodeId).async { implicit request =>
+      lazy val logPrefix = s"createNodeDomainFormSubmit($nodeId):"
+      sysMarketUtil.mDomainExtraFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          NotAcceptable( _createNodeDomainBody(formWithErrors) )
+        },
+        {mdx =>
+          val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
+            _updateNodeDomains(mnode) {
+              mnode.extras.domains
+                .iterator
+                .filter { _.dkey != mdx.dkey }
+                .++( Iterator(mdx) )
+                .toSeq
+            }
+          }
+
+          // Отрендерить HTTP-ответ клиенту
+          for (_ <- saveFut) yield
+            _rdrSuccess(nodeId, s"Домен ${mdx.dkey} добавлен к узлу.")
+        }
+      )
+    }
   }
 
 
@@ -79,8 +85,10 @@ trait SmDomains
     * @param dkey ключ редактируемого узла.
     * @return 200, 403/302.
     */
-  def editNodeDomain(nodeId: String, dkey: String) = isSuNode.Get(nodeId) { implicit request =>
-    _editNodeDomainBody(dkey, Ok) { sysMarketUtil.mDomainExtraFormM.fill }
+  def editNodeDomain(nodeId: String, dkey: String) = csrf.AddToken {
+    isSuNode(nodeId) { implicit request =>
+      _editNodeDomainBody(dkey, Ok) { sysMarketUtil.mDomainExtraFormM.fill }
+    }
   }
 
   private def _editNodeDomainBody(dkey: String, rs: Status)(formF: MDomainExtra => Form[MDomainExtra])(implicit request: INodeReq[_]): Result = {
@@ -97,46 +105,50 @@ trait SmDomains
   }
 
   /** Реакция на сабмит формы редактирования одного домена, относящегося к узлу. */
-  def editNodeDomainFormSubmit(nodeId: String, dkey: String) = isSuNode.Post(nodeId).async { implicit request =>
-    lazy val logPrefix = s"editNodeDomainFormSubmit($nodeId, $dkey):"
-    sysMarketUtil.mDomainExtraFormM.bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"$logPrefix Failed to bind form: ${formatFormErrors(formWithErrors)}")
-        _editNodeDomainBody(dkey, NotAcceptable)(_ => formWithErrors)
-      },
-      {mdx2 =>
-        val dkeysFilteredOut = Set(dkey, mdx2.dkey)
-        val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
-          _updateNodeDomains(mnode) {
-            mnode.extras.domains
-              .iterator
-              .filter { mdx => !dkeysFilteredOut.contains(mdx.dkey) }
-              .++( Iterator(mdx2) )
-              .toSeq
+  def editNodeDomainFormSubmit(nodeId: String, dkey: String) = csrf.Check {
+    isSuNode(nodeId).async { implicit request =>
+      lazy val logPrefix = s"editNodeDomainFormSubmit($nodeId, $dkey):"
+      sysMarketUtil.mDomainExtraFormM.bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"$logPrefix Failed to bind form: ${formatFormErrors(formWithErrors)}")
+          _editNodeDomainBody(dkey, NotAcceptable)(_ => formWithErrors)
+        },
+        {mdx2 =>
+          val dkeysFilteredOut = Set(dkey, mdx2.dkey)
+          val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
+            _updateNodeDomains(mnode) {
+              mnode.extras.domains
+                .iterator
+                .filter { mdx => !dkeysFilteredOut.contains(mdx.dkey) }
+                .++( Iterator(mdx2) )
+                .toSeq
+            }
           }
-        }
 
-        for (_ <- mnode2Fut) yield
-          _rdrSuccess(nodeId, s"Обновлён домен $dkey.")
-      }
-    )
+          for (_ <- mnode2Fut) yield
+            _rdrSuccess(nodeId, s"Обновлён домен $dkey.")
+        }
+      )
+    }
   }
 
 
   /** Реакция на сабмит формы-кнопки удаления домена из узла. */
-  def deleteNodeDomainFormSubmit(nodeId: String, dkey: String) = isSuNode.Post(nodeId).async { implicit request =>
-    val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
-      _updateNodeDomains(mnode) {
-        mnode.extras.domains
-          .iterator
-          .filter { _.dkey != dkey }
-          .toSeq
+  def deleteNodeDomainFormSubmit(nodeId: String, dkey: String) = csrf.Check {
+    isSuNode(nodeId).async { implicit request =>
+      val mnode2Fut = mNodes.tryUpdate(request.mnode) { mnode =>
+        _updateNodeDomains(mnode) {
+          mnode.extras.domains
+            .iterator
+            .filter { _.dkey != dkey }
+            .toSeq
+        }
       }
-    }
 
-    // Когда всё будет выполнено, отправить юзера на страницу узла.
-    for (_ <- mnode2Fut) yield
-      _rdrSuccess(nodeId, s"Домен $dkey удалён из узла.")
+      // Когда всё будет выполнено, отправить юзера на страницу узла.
+      for (_ <- mnode2Fut) yield
+        _rdrSuccess(nodeId, s"Домен $dkey удалён из узла.")
+    }
   }
 
 

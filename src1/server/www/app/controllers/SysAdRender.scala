@@ -70,23 +70,25 @@ trait SysAdRender
    *         Редиректы в остальных случаях.
    *         404 если указанная карточка не найдена.
    */
-  def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = isSuMad.Get(madId).async { implicit request =>
-    // Забиндить форму дефолтовыми данными для отправки в шаблон.
-    val formArgs = OneAdQsArgs(
-      adId    = madId,
-      szMult  = 1.0F,
-      vsnOpt  = request.mad.versionOpt,
-      imgFmt  = OutImgFmts.JPEG,
-      wideOpt = request.mad.ad.blockMeta.map { bm =>
-        OneAdWideQsArgs(
-          width = bm.width * 2
-        )
-      }
-    )
-    val qf = oneAdQsArgsFormM(madId)
-      .fill( formArgs )
-    // Запустить рендер.
-    _showOneAdFormRender(qf, rvar, Ok)
+  def showOneAdForm(madId: String, rvar: OneAdRenderVariant) = csrf.AddToken {
+    isSuMad(madId).async { implicit request =>
+      // Забиндить форму дефолтовыми данными для отправки в шаблон.
+      val formArgs = OneAdQsArgs(
+        adId    = madId,
+        szMult  = 1.0F,
+        vsnOpt  = request.mad.versionOpt,
+        imgFmt  = OutImgFmts.JPEG,
+        wideOpt = request.mad.ad.blockMeta.map { bm =>
+          OneAdWideQsArgs(
+            width = bm.width * 2
+          )
+        }
+      )
+      val qf = oneAdQsArgsFormM(madId)
+        .fill( formArgs )
+      // Запустить рендер.
+      _showOneAdFormRender(qf, rvar, Ok)
+    }
   }
 
   private def _showOneAdFormRender(qf: Form[OneAdQsArgs], rvar: OneAdRenderVariant, rs: Status)
@@ -109,16 +111,18 @@ trait SysAdRender
    * @param rvar Интересующий render variant.
    * @return Редирект на результат рендера карточки согласно переданным параметрам.
    */
-  def oneAdFormSubmit(madId: String, rvar: OneAdRenderVariant) = isSuMad.Post(madId).async { implicit request =>
-    oneAdQsArgsFormM(madId).bindFromRequest().fold(
-      {formWithErrors =>
-        LOGGER.debug(s"oneAdFormSubmit($madId, ${rvar.nameI18n}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-        _showOneAdFormRender(formWithErrors, rvar, NotAcceptable)
-      },
-      {oneAdQsArgs =>
-        Redirect( rvar.routesCall(oneAdQsArgs) )
-      }
-    )
+  def oneAdFormSubmit(madId: String, rvar: OneAdRenderVariant) = csrf.Check {
+    isSuMad(madId).async { implicit request =>
+      oneAdQsArgsFormM(madId).bindFromRequest().fold(
+        {formWithErrors =>
+          LOGGER.debug(s"oneAdFormSubmit($madId, ${rvar.nameI18n}): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+          _showOneAdFormRender(formWithErrors, rvar, NotAcceptable)
+        },
+        {oneAdQsArgs =>
+          Redirect( rvar.routesCall(oneAdQsArgs) )
+        }
+      )
+    }
   }
 
 }

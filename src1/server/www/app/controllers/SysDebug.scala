@@ -25,8 +25,10 @@ class SysDebug @Inject() (
   import mCommonDi._
 
   /** Экшен для отображения индексной страницы. */
-  def index = isSu.Get { implicit request =>
-    Ok( indexTpl() )
+  def index = csrf.AddToken {
+    isSu() { implicit request =>
+      Ok( indexTpl() )
+    }
   }
 
   /**
@@ -34,21 +36,25 @@ class SysDebug @Inject() (
     *
     * @return 200 Ок со страницей-отчетом.
     */
-  def testNodesAllGeoParents = isSu.Post.async { implicit request =>
-    for {
+  def testNodesAllGeoParents = csrf.Check {
+    isSu().async { implicit request =>
+      for {
       // Организуем тестирование
-      testResults <- geoParentsHealth.testAll()
-    } yield {
-      val render = geo.parent.resultsTpl(testResults)
-      Ok(render)
+        testResults <- geoParentsHealth.testAll()
+      } yield {
+        val render = geo.parent.resultsTpl(testResults)
+        Ok(render)
+      }
     }
   }
 
 
   /** Запуск поиска и ремонта неправильных ресиверов в карточках. */
-  def resetAllRcvrs = isSu.Post.async { implicit request =>
-    for (count <- advRcvrsUtil.resetAllReceivers()) yield {
-      Ok(count + " ads updated.")
+  def resetAllRcvrs = csrf.Check {
+    isSu().async { implicit request =>
+      for (count <- advRcvrsUtil.resetAllReceivers()) yield {
+        Ok(count + " ads updated.")
+      }
     }
   }
 
