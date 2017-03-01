@@ -35,7 +35,7 @@ case class SiteMapUtil @Inject() (
 trait SiteMapXmlCtl {
 
   /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
-  def siteMapXmlEnumerator(implicit ctx: Context): Source[SiteMapUrlT, _]
+  def siteMapXmlSrc(implicit ctx: Context): Source[SiteMapUrlT, _]
 
 }
 

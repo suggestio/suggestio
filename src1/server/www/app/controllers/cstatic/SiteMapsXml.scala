@@ -2,8 +2,9 @@ package controllers.cstatic
 
 import akka.stream.scaladsl.Source
 import controllers.SioController
+import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import play.twirl.api.Xml
+import play.twirl.api.{Xml, XmlFormat}
 import util.acl.IIgnoreAuth
 import util.seo.SiteMapUtil
 import views.xml.static.sitemap._
@@ -14,7 +15,7 @@ import views.xml.static.sitemap._
  * Created: 17.12.15 11:45
  * Description: Трейт для контроллера для поддержки экшена с раздачей sitemap'ов.
  */
-trait SiteMapsXml extends SioController with IIgnoreAuth {
+trait SiteMapsXml extends SioController with IIgnoreAuth with MacroLogsImpl {
 
   import mCommonDi._
 
@@ -36,22 +37,24 @@ trait SiteMapsXml extends SioController with IIgnoreAuth {
 
     // Собираем асинхронный неупорядоченный источник sitemap-ссылок:
     val urls = Source( srcDescrs )
-      .flatMapMerge(srcDescrs.size, _.siteMapXmlEnumerator(ctx))
+      .flatMapMerge( Math.min(10, srcDescrs.size), _.siteMapXmlSrc(ctx) )
       // Рендерим каждую ссылку в текст
       .map { _urlTpl(_) }
+      .recover { case ex: Throwable =>
+        LOGGER.error("siteMapXml: Unable to render url", ex)
+        Xml(s"<!-- Stream error occured: ${ex.getClass.getName} -->")
+        XmlFormat.empty
+      }
 
     // Рендерим ответ: сначала заголовок sitemaps.xml:
     val respBody2: Source[Xml, _] = {
       Source
-        .single( beforeUrlsTpl()(ctx) )
+        .single( beforeUrlsTpl() )
         // Затем тело, содержащее ссылки...
         .concat( urls )
         // Футер sitemaps.xml:
         .concat {
-          // Форсируем отложенный рендер футера:
-          for (_ <- Source.single(1)) yield {
-            afterUrlsTpl()(ctx)
-          }
+          Source.single( afterUrlsTpl() )
         }
     }
 

@@ -9,6 +9,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.{Context, ContextUtil}
 import models.msc.ScJsState
@@ -35,6 +36,7 @@ class ScSitemapsXml @Inject() (
   ctxUtil                       : ContextUtil
 )
   extends SiteMapXmlCtl
+  with MacroLogsImpl
 {
 
   import mNodes.Implicits._
@@ -45,7 +47,7 @@ class ScSitemapsXml @Inject() (
    * Кравлер может ждать ответа долго, а xml может быть толстая, поэтому у нас упор на легковесность
    * и поточность, а не на скорость исполнения.
    */
-  override def siteMapXmlEnumerator(implicit ctx: Context): Source[SiteMapUrlT, _] = {
+  override def siteMapXmlSrc(implicit ctx: Context): Source[SiteMapUrlT, _] = {
     val adSearch = new MNodeSearchDfltImpl {
 
       override def isEnabled = Some(true)
@@ -80,10 +82,19 @@ class ScSitemapsXml @Inject() (
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
     val qsb = ScJsState.qsbStandalone
+    lazy val logPrefix = s"siteMapXmlSrc()[${System.currentTimeMillis()}]:"
 
-    src0.mapConcat { mad =>
-      mad2sxu(mad, today, qsb)
-    }
+    src0
+      .mapConcat { mad =>
+        try {
+          mad2sxu(mad, today, qsb)
+        } catch {
+          // Подавить возможные ошибки рендера ссылок для текущего узла:
+          case ex: Throwable =>
+            LOGGER.error(s"$logPrefix Failed to render sitemap URL from node#${mad.id.orNull}", ex)
+            Nil
+        }
+      }
   }
 
 

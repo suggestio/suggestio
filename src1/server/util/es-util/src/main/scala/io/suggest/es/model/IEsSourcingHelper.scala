@@ -38,6 +38,12 @@ trait IEsSourcingHelper[To] extends IEs4sHitMapper[To] {
     searchDef
   }
 
+  override def toString: String = try {
+    getClass.getSimpleName
+  } catch { case _: Throwable =>
+    super.toString
+  }
+
 }
 
 class IdsSourcingHelper extends IEsSourcingHelper[String] {

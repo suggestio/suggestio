@@ -764,28 +764,35 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     lazy val logPrefix = s"source()[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix Starting using $helper; searchDef = $searchDef")
 
-    for {
-      rHit <- Source.fromPublisher( pub )
-    } yield {
-      try {
-        helper.as(rHit)
-      } catch {
-        // Логгируем любые ошибки десериализации, т.к. есть основания подозревать akka-streams в молчаливости.
-        case ex: Throwable =>
-          LOGGER.error(s"$logPrefix Failed to helper.as() for hit = $rHit", ex)
-          throw ex
+    Source
+      .fromPublisher( pub )
+      .mapConcat { rHit =>
+        // Логгируем любые ошибки, т.к. есть основания подозревать akka-streams в молчаливости.
+        // https://github.com/akka/akka/issues/19950
+        try {
+          helper.as(rHit) :: Nil
+        } catch {
+          case ex: Throwable =>
+            LOGGER.error(s"$logPrefix Failed to helper.as() for hit#${rHit.getId} = $rHit", ex)
+            Nil
+        }
       }
-    }
   }
+
 
   /** typeclass для source() для простой десериализации ответов в обычные элементы модели. */
   class ElSourcingHelper extends IEsSourcingHelper[T] {
+
     override def prepareSearchDef(searchDef: SearchDefinition): SearchDefinition = {
       super.prepareSearchDef(searchDef)
         .fetchSource(true)
     }
     override def as(hit: RichSearchHit): T = {
       deserializeSearchHit( hit.java )
+    }
+
+    override def toString: String = {
+      s"${outer.getClass.getSimpleName}.${super.toString}"
     }
   }
 
