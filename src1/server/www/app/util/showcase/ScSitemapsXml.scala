@@ -7,7 +7,7 @@ import com.google.inject.Inject
 import controllers.routes
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.{Context, ContextUtil}
@@ -48,8 +48,14 @@ class ScSitemapsXml @Inject() (
   override def siteMapXmlEnumerator(implicit ctx: Context): Source[SiteMapUrlT, _] = {
     val adSearch = new MNodeSearchDfltImpl {
 
-      override def testNode = Some(false)
       override def isEnabled = Some(true)
+
+      override def nodeTypes: Seq[MNodeType] = {
+        MNodeTypes.AdnNode ::
+          MNodeTypes.Ad ::
+          // TODO Теги тоже надо индексировать, по идее. Но надо разобраться с выдачей по-лучше на предмет тегов, URL и их заголовков.
+          Nil
+      }
 
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(
@@ -62,9 +68,8 @@ class ScSitemapsXml @Inject() (
         )
         cr :: Nil
       }
+
     }
-    var reqb = mNodes.prepareSearch(adSearch)
-    reqb = mNodes.prepareScroll(srb = reqb)
 
     val src0 = mNodes.source(adSearch)
 
