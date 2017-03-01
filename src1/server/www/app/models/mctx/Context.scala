@@ -49,8 +49,14 @@ class ContextUtil @Inject() (
   val isIpadRe = "iPad".r.unanchored
   val isIphoneRe = "iPhone".r.unanchored
 
+  /** Самое дефолтовое имя главного домена. */
+  private def MAIN_DOMAIN_DFLT = "suggest.io"
+
+  /** Дефолтовый хост и порт. Используется, когда по стечению обстоятельств, нет подходящего значения для хоста. */
+  val DFLT_HOST_PORT = configuration.getString("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
+
   /** Основной хост и порт, на котором крутится выдача sio-market. */
-  val SC_HOST_PORT = configuration.getString("sio.sc.hostport").getOrElse("www.suggest.io")
+  val SC_HOST_PORT = configuration.getString("sio.sc.hostport").getOrElse(DFLT_HOST_PORT)
   val SC_PROTO = configuration.getString("sio.sc.proto").getOrElse("http")
   val SC_URL_PREFIX = SC_PROTO + "://" + SC_HOST_PORT
 
@@ -64,12 +70,10 @@ class ContextUtil @Inject() (
   }
 
   /** Хост и порт, на котором живёт часть сервиса с ограниченным доступом. */
-  val LK_HOST_PORT = configuration.getString("sio.lk.hostport").getOrElse("my.suggest.io")
+  val LK_HOST_PORT = configuration.getString("sio.lk.hostport").getOrElse(DFLT_HOST_PORT)
   val LK_PROTO = configuration.getString("sio.lk.proto").getOrElse("https")
   val LK_URL_PREFIX = LK_PROTO + "://" + LK_HOST_PORT
 
-  /** Дефолтовый хост и порт. Используется, когда по стечению обстоятельств, нет подходящего значения для хоста. */
-  val DFLT_HOST_PORT = configuration.getString("sio.hostport.dflt").getOrElse("suggest.io")
 
   /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
   val SCREEN_ARG_NAME_RE = "a\\.s(creen)?".r
@@ -92,19 +96,19 @@ class ContextUtil @Inject() (
 
   /** Список собственных хостов (доменов) системы suggest.io. */
   val SIO_HOSTS: Set[String] = {
-    val hosts = Seq(
+    val hosts = Set(
       SC_HOST_PORT,
+      MAIN_DOMAIN_DFLT,
       DFLT_HOST_PORT,
       LK_HOST_PORT,
       "япредлагаю.com",
       "isuggest.ru"
     )
-    val iter = for (h <- hosts.iterator) yield {
+    for (h <- hosts) yield {
       IDN.toASCII(
         removePortFromHostPort(h)
       )
     }
-    iter.toSet
   }
 
   /** Относится ли хост в запросе к собственным хостам suggest.io. */

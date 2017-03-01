@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.model.loc
 
 import io.suggest.geo.{IGeoPoint, Lat, Lon, MGeoPoint}
-import io.suggest.geo.GeoConstants.Qs
 import io.suggest.sjs.common.geo.json.{GjGeometry, GjTypes}
 import org.scalajs.dom.Coordinates
 

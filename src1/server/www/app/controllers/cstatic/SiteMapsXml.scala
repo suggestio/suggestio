@@ -3,7 +3,7 @@ package controllers.cstatic
 import akka.stream.scaladsl.Source
 import controllers.SioController
 import io.suggest.util.logs.MacroLogsImpl
-import play.twirl.api.{Xml, XmlFormat}
+import play.twirl.api.Xml
 import util.acl.IIgnoreAuth
 import util.seo.SiteMapUtil
 import views.xml.static.sitemap._
@@ -38,7 +38,6 @@ trait SiteMapsXml extends SioController with IIgnoreAuth with MacroLogsImpl {
       .recover { case ex: Throwable =>
         LOGGER.error("siteMapXml: Unable to render url", ex)
         Xml(s"<!-- Stream error occured: ${ex.getClass.getName} -->")
-        XmlFormat.empty
       }
 
     // Рендерим ответ: сначала заголовок sitemaps.xml:
