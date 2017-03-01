@@ -75,7 +75,7 @@ class ScSitemapsXml @Inject() (
       override def limit = 25
     }
 
-    val src0 = mNodes.source(adSearch)
+    val src0 = mNodes.source[MNode](adSearch)
 
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
@@ -96,7 +96,7 @@ class ScSitemapsXml @Inject() (
    *         Если карточка на годится для индексации, то пустой список.
    */
   protected def mad2sxu(mad: MNode, today: LocalDate, qsb: QueryStringBindable[ScJsState])
-                       (implicit ctx: Context): immutable.Seq[SiteMapUrl] = {
+                       (implicit ctx: Context): List[SiteMapUrl] = {
     val sxuOpt = for {
       // Нужны карточки только с продьюсером.
       producerId  <- n2NodesUtil.madProducerId(mad)
@@ -134,7 +134,7 @@ class ScSitemapsXml @Inject() (
       )
     }
 
-    sxuOpt.toStream
+    sxuOpt.toList
   }
 
 }

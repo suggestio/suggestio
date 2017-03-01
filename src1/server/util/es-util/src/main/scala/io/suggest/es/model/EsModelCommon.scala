@@ -757,12 +757,24 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     val searchDef2 = helper.prepareSearchDef(
       searchDef.scroll( SCROLL_KEEPALIVE_DFLT.toString )
     )
+
     // Собираем безлимитный publisher. Явно указываем maxElements для гарантированной защиты от ломания API es4s в будущем.
     val pub = es4sClient.publisher(searchDef2, elements = Long.MaxValue)
+
+    lazy val logPrefix = s"source()[${System.currentTimeMillis()}]:"
+    LOGGER.trace(s"$logPrefix Starting using $helper; searchDef = $searchDef")
+
     for {
       rHit <- Source.fromPublisher( pub )
     } yield {
-      helper.as(rHit)
+      try {
+        helper.as(rHit)
+      } catch {
+        // Логгируем любые ошибки десериализации, т.к. есть основания подозревать akka-streams в молчаливости.
+        case ex: Throwable =>
+          LOGGER.error(s"$logPrefix Failed to helper.as() for hit = $rHit", ex)
+          throw ex
+      }
     }
   }
 

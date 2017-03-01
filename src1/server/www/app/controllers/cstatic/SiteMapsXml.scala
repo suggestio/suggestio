@@ -3,7 +3,6 @@ package controllers.cstatic
 import akka.stream.scaladsl.Source
 import controllers.SioController
 import models.mctx.Context
-import play.api.http.{HttpEntity, Writeable}
 import play.twirl.api.Xml
 import util.acl.IIgnoreAuth
 import util.seo.SiteMapUtil
@@ -56,13 +55,19 @@ trait SiteMapsXml extends SioController with IIgnoreAuth {
         }
     }
 
-    // Возвращаем chunked-ответ с XML.
+    // Возвращаем streamed-ответ с XML.
+    /*
+    import play.api.http.{HttpEntity, Writeable}
     val w = implicitly[Writeable[Xml]]
     Ok.sendEntity( HttpEntity.Streamed(
       data          = respBody2.map( w.transform ),
       contentLength = None,
       contentType   = w.contentType
     ))
+    */
+
+    // Возвращаем chunked-ответ с XML.
+    Ok.chunked(respBody2)
       .withHeaders(
         CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
       )
