@@ -2,23 +2,21 @@ package util.showcase
 
 import java.time.LocalDate
 
+import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import controllers.routes
-import io.suggest.es.model.EsModelUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.{Context, ContextUtil}
-import models.mproj.ICommonDi
 import models.msc.ScJsState
-import org.elasticsearch.common.unit.TimeValue
-import play.api.libs.iteratee.Enumerator
 import play.api.mvc.QueryStringBindable
 import util.n2u.N2NodesUtil
 import util.seo.SiteMapXmlCtl
+
+import scala.collection.immutable
 
 
 /**
@@ -34,13 +32,12 @@ import util.seo.SiteMapXmlCtl
 class ScSitemapsXml @Inject() (
   n2NodesUtil                   : N2NodesUtil,
   mNodes                        : MNodes,
-  ctxUtil                       : ContextUtil,
-  mCommonDi                     : ICommonDi
+  ctxUtil                       : ContextUtil
 )
   extends SiteMapXmlCtl
 {
 
-  import mCommonDi._
+  import mNodes.Implicits._
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -48,52 +45,36 @@ class ScSitemapsXml @Inject() (
    * Кравлер может ждать ответа долго, а xml может быть толстая, поэтому у нас упор на легковесность
    * и поточность, а не на скорость исполнения.
    */
-  override def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT] = {
+  override def siteMapXmlEnumerator(implicit ctx: Context): Source[SiteMapUrlT, _] = {
     val adSearch = new MNodeSearchDfltImpl {
-      override def nodeTypes = Seq( MNodeTypes.Ad )
+
+      override def testNode = Some(false)
+      override def isEnabled = Some(true)
+
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(
-          predicates = Seq( MPredicates.OwnedBy ),
-          anySl = Some(true)
+          predicates = MPredicates.AdvGeoPlace ::
+            MPredicates.Receiver ::
+            MPredicates.TaggedBy.Agt ::
+            MPredicates.TaggedBy.DirectTag ::
+            MPredicates.AdnMap ::
+            Nil
         )
-        Seq(cr)
+        cr :: Nil
       }
     }
     var reqb = mNodes.prepareSearch(adSearch)
     reqb = mNodes.prepareScroll(srb = reqb)
 
+    val src0 = mNodes.source(adSearch)
+
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
     val qsb = ScJsState.qsbStandalone
 
-    // Запускаем поточный обход всех опубликованных MAd'ов и поточную генерацию sitemap'а.
-    val erFut = reqb.execute().map { searchResp0 =>
-      // TODO Запихать это всё в модели.
-      // Пришел ответ без результатов с начальным scrollId.
-      Enumerator.unfoldM(searchResp0.getScrollId) { scrollId0 =>
-        esClient.prepareSearchScroll(scrollId0)
-          .setScroll(new TimeValue(EsModelUtil.SCROLL_KEEPALIVE_MS_DFLT))
-          .execute()
-          .map { sr =>
-            val scrollId = sr.getScrollId
-            if (sr.getHits.getHits.isEmpty) {
-              esClient.prepareClearScroll()
-                .addScrollId(scrollId)
-                .execute()
-              None
-            } else {
-              Some(scrollId, mNodes.searchResp2list(sr))
-            }
-          }
-      }.flatMap { mads =>
-        // Из списка mads делаем Enumerator, который поочерёдно запиливает каждую карточку в элемент sitemap.xml.
-        Enumerator(mads : _*)
-          .flatMap[SiteMapUrlT] { mad =>
-            Enumerator(mad2sxu(mad, today, qsb) : _*)
-          }
-      }
+    src0.mapConcat { mad =>
+      mad2sxu(mad, today, qsb)
     }
-    Enumerator.flatten(erFut)
   }
 
 
@@ -106,7 +87,7 @@ class ScSitemapsXml @Inject() (
    *         Если карточка на годится для индексации, то пустой список.
    */
   protected def mad2sxu(mad: MNode, today: LocalDate, qsb: QueryStringBindable[ScJsState])
-                       (implicit ctx: Context): Seq[SiteMapUrl] = {
+                       (implicit ctx: Context): immutable.Seq[SiteMapUrl] = {
     val sxuOpt = for {
       // Нужны карточки только с продьюсером.
       producerId  <- n2NodesUtil.madProducerId(mad)
@@ -144,7 +125,7 @@ class ScSitemapsXml @Inject() (
       )
     }
 
-    sxuOpt.toSeq
+    sxuOpt.toStream
   }
 
 }

@@ -42,39 +42,6 @@ class Csrf @Inject() (
   }
 
 
-  // ----------------- v1 api ------------------
-  // Оно требует наследования action-builder'ов, что порождает огромную кучу лишних классов.
-
-  /** Аддон для action-builder'ов, добавляющий выставление CSRF-токена в сессию. */
-  trait Get[R[_]] extends ActionBuilder[R] {
-
-    abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-      withNoCacheFut {
-        super.invokeBlock(request, block)
-      }
-    }
-
-    override protected def composeAction[A](action: Action[A]): Action[A] = {
-      csrfAddToken(super.composeAction(action))
-    }
-  }
-
-
-  /** Аддон для action-builder'ов, добавляющий проверку CSRF-токена перед запуском экшена на исполнение. */
-  trait Post[R[_]] extends ActionBuilder[R] {
-
-    abstract override def invokeBlock[A](request: Request[A], block: (R[A]) => Future[Result]): Future[Result] = {
-      withNoCacheFut {
-        super.invokeBlock(request, block)
-      }
-    }
-
-    override protected def composeAction[A](action: Action[A]): Action[A] = {
-      csrfCheck(super.composeAction(action))
-    }
-  }
-
-
   // ---------- v2 api -----------
   // Без лишнего ООП и кривого наследования.
 

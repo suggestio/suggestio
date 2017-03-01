@@ -1,9 +1,9 @@
 package util.seo
 
+import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import models.crawl.SiteMapUrlT
 import models.mctx.Context
-import play.api.libs.iteratee.Enumerator
 import util.showcase.ScSitemapsXml
 
 /**
@@ -18,9 +18,9 @@ class SiteMapUtil @Inject() (
 ) {
 
   /** Источники для наполнения sitemap.xml */
-  def SITEMAP_SOURCES: Seq[SiteMapXmlCtl] = Seq(
-    scSitemapsXml
-  )
+  def SITEMAP_SOURCES: List[SiteMapXmlCtl] = {
+    scSitemapsXml :: Nil
+  }
 
 }
 
@@ -29,7 +29,7 @@ class SiteMapUtil @Inject() (
 trait SiteMapXmlCtl {
 
   /** Асинхронно поточно генерировать данные о страницах, подлежащих индексации. */
-  def siteMapXmlEnumerator(implicit ctx: Context): Enumerator[SiteMapUrlT]
+  def siteMapXmlEnumerator(implicit ctx: Context): Source[SiteMapUrlT, _]
 
 }
 
