@@ -757,8 +757,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     val searchDef2 = helper.prepareSearchDef(
       searchDef.scroll( SCROLL_KEEPALIVE_DFLT.toString )
     )
-
-    val pub = es4sClient.publisher(searchDef2)
+    // Собираем безлимитный publisher. Явно указываем maxElements для гарантированной защиты от ломания API es4s в будущем.
+    val pub = es4sClient.publisher(searchDef2, elements = Long.MaxValue)
     for {
       rHit <- Source.fromPublisher( pub )
     } yield {

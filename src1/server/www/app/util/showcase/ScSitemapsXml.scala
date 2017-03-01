@@ -58,17 +58,21 @@ class ScSitemapsXml @Inject() (
       }
 
       override def outEdges: Seq[ICriteria] = {
-        val cr = Criteria(
-          predicates = MPredicates.AdvGeoPlace ::
-            MPredicates.Receiver ::
-            MPredicates.TaggedBy.Agt ::
-            MPredicates.TaggedBy.DirectTag ::
-            MPredicates.AdnMap ::
-            Nil
-        )
-        cr :: Nil
+        val preds = MPredicates.AdvGeoPlace ::
+          MPredicates.Receiver ::
+          MPredicates.TaggedBy.Agt ::
+          MPredicates.TaggedBy.DirectTag ::
+          MPredicates.AdnMap ::
+          Nil
+        for (p <- preds) yield {
+          Criteria(
+            predicates = p :: Nil
+          )
+        }
       }
 
+      // Кол-во узлов за одну порцию.
+      override def limit = 25
     }
 
     val src0 = mNodes.source(adSearch)
