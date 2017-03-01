@@ -1,14 +1,12 @@
 package controllers.cstatic
 
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import controllers.SioController
 import models.mctx.Context
-import play.api.http.HttpEntity.Streamed
-import play.twirl.api.Html
+import play.twirl.api.Xml
 import util.acl.IIgnoreAuth
 import util.seo.SiteMapUtil
-import views.html.static.sitemap._
+import views.xml.static.sitemap._
 
 /**
  * Suggest.io
@@ -43,7 +41,7 @@ trait SiteMapsXml extends SioController with IIgnoreAuth {
       .map { _urlTpl(_) }
 
     // Рендерим ответ: сначала заголовок sitemaps.xml:
-    val respBody2: Source[Html, _] = {
+    val respBody2: Source[Xml, _] = {
       Source
         .single( beforeUrlsTpl()(ctx) )
         // Затем тело, содержащее ссылки...
@@ -55,13 +53,10 @@ trait SiteMapsXml extends SioController with IIgnoreAuth {
             afterUrlsTpl()(ctx)
           }
         }
-      // TODO Opt По факту, элементы приходят пачками с паузами. Возможно, их можно рендерить единым куском html => bytes, и это будет лучше?
     }
 
-    // Возвращаем chunked-ответ.
-    Ok
-      .chunked(respBody2)
-      .as( XML )
+    // Возвращаем chunked-ответ с XML.
+    Ok.chunked(respBody2)
       .withHeaders(
         CACHE_CONTROL -> s"public, max-age=$SITEMAP_XML_CACHE_TTL_SECONDS"
       )
