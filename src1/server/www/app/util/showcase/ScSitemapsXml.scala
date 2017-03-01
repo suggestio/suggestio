@@ -5,19 +5,20 @@ import java.time.LocalDate
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import controllers.routes
+import io.suggest.async.StreamsUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
-import models.mctx.{Context, ContextUtil}
+import models.mctx.ContextUtil
+import models.mgeo.{MGeoLoc, MLocEnv}
+import models.mproj.ICommonDi
 import models.msc.ScJsState
 import play.api.mvc.QueryStringBindable
 import util.n2u.N2NodesUtil
 import util.seo.SiteMapXmlCtl
-
-import scala.collection.immutable
 
 
 /**
@@ -31,15 +32,17 @@ import scala.collection.immutable
  * - Если изменилось вчера или ранее, то значение lastmod уведомит кравлер, что страница изменилась.
 */
 class ScSitemapsXml @Inject() (
-  n2NodesUtil                   : N2NodesUtil,
   mNodes                        : MNodes,
-  ctxUtil                       : ContextUtil
+  streamsUtil                   : StreamsUtil,
+  ctxUtil                       : ContextUtil,
+  mCommonDi                     : ICommonDi
 )
   extends SiteMapXmlCtl
   with MacroLogsImpl
 {
 
   import mNodes.Implicits._
+  import mCommonDi.ec
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -47,15 +50,15 @@ class ScSitemapsXml @Inject() (
    * Кравлер может ждать ответа долго, а xml может быть толстая, поэтому у нас упор на легковесность
    * и поточность, а не на скорость исполнения.
    */
-  override def siteMapXmlSrc(implicit ctx: Context): Source[SiteMapUrlT, _] = {
+  override def siteMapXmlSrc(): Source[SiteMapUrlT, _] = {
     val adSearch = new MNodeSearchDfltImpl {
 
       override def isEnabled = Some(true)
 
       override def nodeTypes: Seq[MNodeType] = {
-        MNodeTypes.AdnNode ::
-          MNodeTypes.Ad ::
+        MNodeTypes.Ad ::
           // TODO Теги тоже надо индексировать, по идее. Но надо разобраться с выдачей по-лучше на предмет тегов, URL и их заголовков.
+          // TODO А что с узлами-ресиверами, с плиткой которые?
           Nil
       }
 
@@ -64,7 +67,6 @@ class ScSitemapsXml @Inject() (
           MPredicates.Receiver ::
           MPredicates.TaggedBy.Agt ::
           MPredicates.TaggedBy.DirectTag ::
-          MPredicates.AdnMap ::
           Nil
         for (p <- preds) yield {
           Criteria(
@@ -79,12 +81,13 @@ class ScSitemapsXml @Inject() (
 
     val src0 = mNodes.source[MNode](adSearch)
 
+    lazy val logPrefix = s"siteMapXmlSrc()[${System.currentTimeMillis()}]:"
+
     // Готовим неизменяемые потоко-безопасные константы, которые будут использованы для ускорения последующих шагов.
     val today = LocalDate.now()
     val qsb = ScJsState.qsbStandalone
-    lazy val logPrefix = s"siteMapXmlSrc()[${System.currentTimeMillis()}]:"
 
-    src0
+    val urls = src0
       .mapConcat { mad =>
         try {
           mad2sxu(mad, today, qsb)
@@ -95,57 +98,73 @@ class ScSitemapsXml @Inject() (
             Nil
         }
       }
+
+    // Записать в логи кол-во пройденных узлов. Обычно оно эквивалентно кол-ву сгенеренных URL.
+    if ( LOGGER.underlying.isTraceEnabled() ) {
+      for (totalCount <- streamsUtil.count(src0)) yield {
+        LOGGER.trace(s"$logPrefix Total nodes found: $totalCount")
+      }
+    }
+
+    urls
   }
+
 
 
   /**
    * Приведение рекламной карточки к элементу sitemap.xml.
    * @param mad Экземпляр рекламной карточки.
    * @param today Дата сегодняшнего дня.
-   * @param ctx Контекст.
    * @return Экземпляры SiteMapUrl.
    *         Если карточка на годится для индексации, то пустой список.
    */
-  protected def mad2sxu(mad: MNode, today: LocalDate, qsb: QueryStringBindable[ScJsState])
-                       (implicit ctx: Context): List[SiteMapUrl] = {
-    val sxuOpt = for {
-      // Нужны карточки только с продьюсером.
-      producerId  <- n2NodesUtil.madProducerId(mad)
-      // Выбираем, на каком ресивере отображать карточку.
-      extRcvrEdge <- {
-        mad.edges
-          .withPredicateIter(MPredicates.Receiver)
-          .filter { e =>
-            e.nodeIds.nonEmpty && !e.nodeIds.contains(producerId) &&  e.info.sls.nonEmpty
-          }
-          .toStream
-          .headOption
+  protected def mad2sxu(mad: MNode, today: LocalDate, qsb: QueryStringBindable[ScJsState]): List[SiteMapUrl] = {
+
+    val rcvrIdOpt = mad.edges
+      .withPredicateIter(MPredicates.Receiver, MPredicates.OwnedBy)
+      .flatMap(_.nodeIds)
+      .toStream
+      .headOption
+
+    // Поиска текущую геоточку, если карточка там размещена.
+    val locEnv = mad.edges
+      .withPredicateIter( MPredicates.AdvGeoPlace )
+      .flatMap( _.info.geoPoints )
+      .toStream
+      .headOption
+      .fold(MLocEnv.empty) { gp =>
+        MLocEnv(
+          geoLocOpt = Some(MGeoLoc(
+            center = gp
+          ))
+        )
       }
+      // TODO Учитывать геотеги?
 
-    } yield {
-      // Собрать данные для sitemap-ссылки на карточку.
-      val jsState = ScJsState(
-        adnId           = extRcvrEdge.nodeIds.headOption,   // TODO headOption -- нужно понять, безопасно ли это тут. edge.nodeIds стало коллекцией внезапно.
-        fadOpenedIdOpt  = mad.id,
-        generationOpt   = None // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
-      )
-      val url = routes.Sc.geoSite().url + "#!?" + jsState.toQs(qsb)
-      val lastDt = mad.meta.basic.dateEditedOrCreated
-      val lastDate = lastDt.toLocalDate
-      SiteMapUrl(
-        // TODO Нужно здесь перейти на #!-адресацию, когда появится поддержка этого чуда в js выдаче.
-        loc         = ctxUtil.SC_URL_PREFIX + url,
-        lastMod     = Some(lastDate),
-        changeFreq  = Some {
-          if (lastDate isBefore today)
-            ChangeFreqs.daily
-          else
-            ChangeFreqs.hourly
-        }
-      )
-    }
+    // Собрать данные для sitemap-ссылки на карточку.
+    val jsState = ScJsState(
+      adnId           = rcvrIdOpt,
+      fadOpenedIdOpt  = mad.id,
+      generationOpt   = None, // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
+      locEnv          = locEnv
+    )
 
-    sxuOpt.toList
+    val url = routes.Sc.geoSite().url + "#!?" + jsState.toQs(qsb)
+    val lastDt = mad.meta.basic.dateEditedOrCreated
+    val lastDate = lastDt.toLocalDate
+
+    val smu = SiteMapUrl(
+      loc         = ctxUtil.SC_URL_PREFIX + url,
+      lastMod     = Some(lastDate),
+      changeFreq  = Some {
+        if (lastDate isBefore today)
+          ChangeFreqs.daily
+        else
+          ChangeFreqs.hourly
+      }
+    )
+
+    smu :: Nil
   }
 
 }

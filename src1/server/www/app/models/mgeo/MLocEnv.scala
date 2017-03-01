@@ -41,18 +41,16 @@ object MLocEnv {
       }
 
       override def unbind(key: String, value: MLocEnv): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            geoLocOptB.unbind (k(GEO_LOC_FN),     value.geoLocOpt),
-            beaconsB.unbind   (k(BLE_BEACONS_FN), value.bleBeacons)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          geoLocOptB.unbind (k(GEO_LOC_FN),     value.geoLocOpt),
+          beaconsB.unbind   (k(BLE_BEACONS_FN), value.bleBeacons)
+        )
       }
     }
   }
 
-  def empty = apply()
+  val empty = apply()
 
 }
 

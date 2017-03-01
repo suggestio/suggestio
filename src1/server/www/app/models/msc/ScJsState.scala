@@ -1,7 +1,9 @@
 package models.msc
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevel
+import models.mgeo.MLocEnv
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
@@ -16,7 +18,7 @@ import scala.util.Random
  * Description: Контейнер js-состояния выдачи (какой узел сейчас, какие панели открыты и т.д.).
  */
 
-object ScJsState {
+object ScJsState extends MacroLogsImpl {
 
   import io.suggest.sc.ScConstants.ScJsState._
 
@@ -28,6 +30,10 @@ object ScJsState {
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     import util.qsb.QSBs._
+    import io.suggest.geo.GeoPoint.Implicits.geoPointQsb
+    import models.mgeo.MGeoLoc.{qsb => mglQsb}
+    import models.mgeo.MBleBeaconInfo.{qsb => mbbiQsb}
+    import models.mgeo.MLocEnv.{qsb => mleQsb}
     qsb
   }
 
@@ -35,6 +41,7 @@ object ScJsState {
   private def strNonEmpty(strOpt: Option[String]) = strOpt.filter(!_.isEmpty)
 
   implicit def qsb(implicit
+                   locEnvB  : QueryStringBindable[MLocEnv],
                    strOptB  : QueryStringBindable[Option[String]],
                    boolOptB : QueryStringBindable[Option[Boolean]],
                    longOptB : QueryStringBindable[Option[Long]],
@@ -53,19 +60,25 @@ object ScJsState {
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
+          locEnvEith            <- locEnvB.bind (LOC_ENV_FN,            params)
+
         } yield {
-          val res = ScJsState(
-            adnId               = strNonEmpty( maybeAdnId ),
-            searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
-            navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
-            generationOpt       = maybeGeneration orElse generationDflt,
-            fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
-            fadsOffsetOpt       = maybeFadsOffset,
-            searchTabListOpt    = noFalse( maybeSearchTab ),
-            fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
-            navNglsMap          = maybeNglsMap getOrElse Map.empty
-          )
-          Right(res)
+          for {
+            locEnv <- locEnvEith.right
+          } yield {
+            ScJsState(
+              adnId               = strNonEmpty( maybeAdnId ),
+              searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
+              navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
+              generationOpt       = maybeGeneration orElse generationDflt,
+              fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
+              fadsOffsetOpt       = maybeFadsOffset,
+              searchTabListOpt    = noFalse( maybeSearchTab ),
+              fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
+              navNglsMap          = maybeNglsMap.getOrElse( Map.empty ),
+              locEnv              = locEnv
+            )
+          }
         }
       }
 
@@ -80,7 +93,8 @@ object ScJsState {
             intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
             boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
             strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
-            nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) )
+            nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
+            locEnvB.unbind  (LOC_ENV_FN,            value.locEnv)
           )
         }
       }
@@ -107,6 +121,7 @@ object ScJsState {
  * @param searchTabListOpt Выбранная вкладка на поисковой панели.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
  * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
+ * @param locEnv Данные по геолокации, неявно-пустая модель.
  */
 case class ScJsState(
   adnId               : Option[String]   = None,
@@ -117,7 +132,8 @@ case class ScJsState(
   fadsOffsetOpt       : Option[Int]      = None,
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
-  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty
+  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty,
+  locEnv              : MLocEnv          = MLocEnv.empty
 ) { that =>
 
   /** Содержаться ли тут какие-либо данные? */

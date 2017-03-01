@@ -20,6 +20,15 @@ class StreamsUtil @Inject() (
   implicit private val mat  : Materializer
 ) {
 
+  /** Подсчёт кол-ва элементов в Source.
+    *
+    * @param src Источник элементов.
+    * @return Фьючерс с кол-вом элементов.
+    */
+  def count(src: Source[_, _]): Future[Int] = {
+    src.runFold(0) { (counter, _) => counter + 1 }
+  }
+
 
   object Implicits {
 

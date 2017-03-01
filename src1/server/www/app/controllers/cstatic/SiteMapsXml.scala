@@ -3,7 +3,6 @@ package controllers.cstatic
 import akka.stream.scaladsl.Source
 import controllers.SioController
 import io.suggest.util.logs.MacroLogsImpl
-import models.mctx.Context
 import play.twirl.api.{Xml, XmlFormat}
 import util.acl.IIgnoreAuth
 import util.seo.SiteMapUtil
@@ -31,13 +30,9 @@ trait SiteMapsXml extends SioController with IIgnoreAuth with MacroLogsImpl {
    * @return sitemap, генерируемый поточно с очень минимальным потреблением RAM.
    */
   def siteMapXml = ignoreAuth() { implicit request =>
-    implicit val ctx = implicitly[Context]
-
-    val srcDescrs = siteMapUtil.SITEMAP_SOURCES
-
     // Собираем асинхронный неупорядоченный источник sitemap-ссылок:
-    val urls = Source( srcDescrs )
-      .flatMapMerge( Math.min(10, srcDescrs.size), _.siteMapXmlSrc(ctx) )
+    val urls = siteMapUtil
+      .sitemapUrlsSrc()
       // Рендерим каждую ссылку в текст
       .map { _urlTpl(_) }
       .recover { case ex: Throwable =>
@@ -57,17 +52,6 @@ trait SiteMapsXml extends SioController with IIgnoreAuth with MacroLogsImpl {
           Source.single( afterUrlsTpl() )
         }
     }
-
-    // Возвращаем streamed-ответ с XML.
-    /*
-    import play.api.http.{HttpEntity, Writeable}
-    val w = implicitly[Writeable[Xml]]
-    Ok.sendEntity( HttpEntity.Streamed(
-      data          = respBody2.map( w.transform ),
-      contentLength = None,
-      contentType   = w.contentType
-    ))
-    */
 
     // Возвращаем chunked-ответ с XML.
     Ok.chunked(respBody2)
