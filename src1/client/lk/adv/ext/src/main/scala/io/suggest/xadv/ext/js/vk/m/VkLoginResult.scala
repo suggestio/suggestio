@@ -29,6 +29,9 @@ import scala.scalajs.js.WrappedDictionary
  *    id: "345635645"
  *    last_name: "Pupkin"
  *    nickname: ""
+ *
+ * Или:
+ *  Map(session -> null, status -> unknown)
  */
 
 object VkLoginResult extends FromJsonT with Log {

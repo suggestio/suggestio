@@ -35,7 +35,7 @@ import scala.concurrent.{ExecutionContext, Future}
  *
  * При добавлении новых полей в модель, нужно добавлять их в [[ISioUser]] и в apply()-конструкторы ниже.
  */
-trait ISioUser {
+sealed trait ISioUser {
 
   /** id текущего юзера, если известен. */
   def personIdOpt: Option[String]
@@ -79,6 +79,8 @@ trait ISioUser {
   /** Частый экземпяр CtxData для нужд ЛК. */
   def lkCtxDataFut: Future[CtxData]
 
+  override def toString: String = s"U(${personIdOpt.getOrElse("")})"
+
 }
 
 
@@ -105,7 +107,7 @@ class MSioUserEmpty extends ISioUser {
 
 /** Частичная реализация [[ISioUser]] для дальнейших ижектируемых реализаций. */
 @ImplementedBy( classOf[MSioUserLazy] )
-trait ISioUserT extends ISioUser with MacroLogsDyn {
+sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
 
   // DI-инжектируемые контейнер со статическими моделями.
   protected val msuStatics: MsuStatic
@@ -249,6 +251,9 @@ case class MSioUserLazy @Inject() (
 
   override lazy val lkCtxDataFut      = super.lkCtxDataFut
 
+  override def toString: String = {
+    s"U(${personIdOpt.getOrElse("")}${jsiTgs.mkString(";[", ",", "]")})"
+  }
 }
 
 
@@ -269,7 +274,7 @@ class MSioUsers @Inject() (
   /**
     * factory-метод с дефолтовыми значениями некоторых аргументов.
     *
-    * @param personIdOpt Опционалньый id юзера. Экстрактиться из сессии с помощью SessionUtil.
+    * @param personIdOpt Опциональный id юзера. Экстрактиться из сессии с помощью SessionUtil.
     * @param jsiTgs Список целей js-инициализации [Nil].
     * @return Инстанс какой-то реализации [[ISioUser]].
     */

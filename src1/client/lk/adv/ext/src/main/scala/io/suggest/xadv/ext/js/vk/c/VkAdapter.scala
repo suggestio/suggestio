@@ -103,11 +103,11 @@ class VkAdapter extends AsyncInitAdp {
   protected def runLogin()(implicit actx: IActionContext): Future[VkLoginResult] = {
     actx.app.popupQueue.enqueue { () =>
       Vk.Auth.login(ACCESS_LEVEL)
-    } flatMap {
+    }.flatMap {
       case None =>
-        Future failed LoginCancelledException()
+        Future.failed( LoginCancelledException() )
       case Some(login) =>
-        Future successful login
+        Future.successful( login )
     }
   }
 

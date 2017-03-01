@@ -85,6 +85,7 @@ Any=Любой
 _N=№
 in=в
 near=около
+Please.try.again=Попробуйте ещё раз
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -404,7 +405,7 @@ adv.ext.ret.ad.hint=Ссылка на текущую карточку будет
 e.ext.adv.unathorized=Пользователь не авторизован.
 e.ext.adv.permissions=Недостаточно прав.
 e.ext.adv.permissions.group=Недостаточно прав для постинга на странице "{0}".
-e.ext.adv.target.url.invalid=Некорректный url цели.
+e.ext.adv.target.url.invalid=Некорректный URL цели.
 e.adv.ext.api.login=Возникла ошибка в процедуре логина.
 e.adv.ext.api.init=Не удалось инициализировать клиент.
 e.adv.ext.api=Ошибка взаимодействия с сервисом.

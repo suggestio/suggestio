@@ -145,7 +145,7 @@ object VkApiAuth {
       }
     } catch {
       case ex: Throwable =>
-        p failure LoginApiException(s"Cannot call VK.Auth.$name", ex)
+        p.failure( LoginApiException(s"Cannot call VK.Auth.$name", ex) )
     }
     p.future
   }

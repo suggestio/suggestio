@@ -16,7 +16,7 @@ import org.elasticsearch.search.sort.SortOrder
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.json.JsValue
-import play.api.mvc.WebSocket.HandlerProps
+import play.api.libs.streams.ActorFlow
 import play.api.mvc.{Result, WebSocket}
 import util.FormUtil._
 import util.acl._
@@ -57,7 +57,7 @@ class LkAdvExt @Inject() (
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
   private val WS_BEST_BEFORE_SECONDS = configuration
     .getInt("adv.ext.ws.api.best.before.seconds")
-    .getOrElse(200)
+    .getOrElse(600)
 
 
   private def _nowSec = System.currentTimeMillis() / 1000L
@@ -179,21 +179,30 @@ class LkAdvExt @Inject() (
         Redirect(routes.LkAdvExt.forAd(adId))
 
       } { wsArgs =>
-        for (ctxData0 <- request.user.lkCtxDataFut) yield {
-          implicit val ctxData = ctxData0.withJsiTgs(
-            MJsiTgs.AdvExtRunner :: ctxData0.jsiTgs
-          )
-          implicit val ctx = implicitly[Context]
-          val wsArgs2 = wsArgs.copy(
-            wsId = ctx.ctxIdStr,
-            adId = adId
-          )
-          val rargs = MAdvRunnerTplArgs(
-            wsCallArgs  = wsArgs2,
-            mad         = request.mad,
-            mnode       = request.producer
-          )
-          Ok( advRunnerTpl(rargs)(ctx) )
+        val now = _nowSec
+        if (wsArgs.bestBeforeSec < now) {
+          LOGGER.debug(s"runner($adId): Deprecated request TTL=${wsArgs.bestBeforeSec}, now = $now, wsArgs = $wsArgs")
+          Redirect( routes.LkAdvExt.forAd(adId) )
+            .flashing(FLASH.ERROR -> "Please.try.again")
+
+        } else {
+
+          for (ctxData0 <- request.user.lkCtxDataFut) yield {
+            implicit val ctxData = ctxData0.withJsiTgs(
+              MJsiTgs.AdvExtRunner :: ctxData0.jsiTgs
+            )
+            implicit val ctx = implicitly[Context]
+            val wsArgs2 = wsArgs.copy(
+              wsId = ctx.ctxIdStr,
+              adId = adId
+            )
+            val rargs = MAdvRunnerTplArgs(
+              wsCallArgs  = wsArgs2,
+              mad         = request.mad,
+              mnode       = request.producer
+            )
+            Ok( advRunnerTpl(rargs)(ctx) )
+          }
         }
       }
     }
@@ -207,42 +216,53 @@ class LkAdvExt @Inject() (
    * @param qsArgs Подписанные параметры размещения.
    * @return 101 Upgrade.
    */
-  def wsRun(qsArgs: MExtAdvQs) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit requestHeader =>
+  def wsRun(qsArgs: MExtAdvQs) = WebSocket.acceptOrResult[JsValue, JsValue] { implicit requestHeader =>
+    lazy val logPrefix = s"wsRun[${System.currentTimeMillis()}]:"
+    LOGGER.trace(s"$logPrefix $qsArgs")
+
     val resFut = for {
       // Сначала нужно синхронно проверить права доступа всякие.
       _ <- {
-        if (qsArgs.bestBeforeSec <= _nowSec) {
+        val now = _nowSec
+        if (qsArgs.bestBeforeSec >= now) {
           Future.successful(None)
         } else {
-          val res = RequestTimeout("Request expired. Return back, refresh page and try again.")
+          LOGGER.info(s"$logPrefix Expired ext adv ws TLL: ${qsArgs.bestBeforeSec} <= $now")
+          val res = NotAcceptable("Request expired. Return back, refresh page and try again.")
           Future.failed( ExceptionWithResult(res) )
         }
       }
 
       // Запустить поиск списка целей размещения
       targetsFut: Future[ActorTargets_t] = {
-        val ids = qsArgs.targets.iterator.map(_.targetId)
-        val _targetsFut = mExtTargets.multiGetRev(ids)
+        val _targetsFut = mExtTargets.multiGetRev {
+          for (t <- qsArgs.targets.iterator) yield t.targetId
+        }
+
         val targetsMap = qsArgs.targets
           .iterator
           .map { info => info.targetId -> info }
           .toMap
-        _targetsFut map { targets =>
-          targets.iterator
-            .flatMap { target =>
-              target.id
-                .flatMap(targetsMap.get)
-                .map { info => MExtTargetInfoFull(target, info.returnTo) }
-            }
-            .toList
+
+        for (targets <- _targetsFut) yield {
+          val iter = for {
+            target <- targets.iterator
+            tgId   <- target.id
+            info   <- targetsMap.get(tgId)
+          } yield {
+            MExtTargetInfoFull(target, info.returnTo)
+          }
+          iter.toList
         }
       }
 
       // Запустить получение текущей рекламной карточки
       madFut = mNodes.getById(qsArgs.adId)
         .map(_.get)
-        .recoverWith { case ex: NoSuchElementException =>
-          val ex2 = ExceptionWithResult(NotFound("Ad not found: " + qsArgs.adId))
+        .recoverWith { case _: NoSuchElementException =>
+          val msg = s"Node not found: ${qsArgs.adId}"
+          LOGGER.error(s"$logPrefix $msg")
+          val ex2 = ExceptionWithResult(NotFound(msg))
           Future.failed(ex2)
         }
 
@@ -252,14 +272,16 @@ class LkAdvExt @Inject() (
 
       // Дождаться получения рекламной картоки
       mad <- madFut
-      //
+
       adProdReq <- {
         val req1 = MReqNoBody(requestHeader, user) // RequestHeaderAsRequest(requestHeader)
         canAdvAd.maybeAllowed(mad, req1)
           .map(_.get)
           .recoverWith { case _: NoSuchElementException =>
-            val ex2 = ExceptionWithResult(Forbidden("Login session expired. Return back and press F5."))
-            Future.failed(ex2)
+            val msg = s"$logPrefix User[$user] not allowed to adv ad#${mad.idOrNull}"
+            LOGGER.warn(msg)
+            val resp = Forbidden(msg)
+            Future.failed( ExceptionWithResult(resp) )
           }
       }
 
@@ -269,14 +291,19 @@ class LkAdvExt @Inject() (
 
       // Всё ок, запускаем актора, который будет вести переговоры с этим websocket'ом.
       val eaArgs = MExtWsActorArgs(qsArgs, req1, targetsFut)
-      val hp: HandlerProps = advExtWsActors.props(_, eaArgs)
-      Right(hp)
+      val aFlow = ActorFlow.actorRef[JsValue, JsValue](
+        props = advExtWsActors.props(_, eaArgs)
+      )
+      LOGGER.trace(s"$logPrefix Ok, actor flow => $aFlow")
+      Right(aFlow)
     }
 
     resFut.recover {
       case ExceptionWithResult(res) =>
+        LOGGER.trace(s"$logPrefix Returning HTTP ${res.header.status} (failure), see logs upper.")
         Left(res)
-      case ex: Exception =>
+      case ex: Throwable =>
+        LOGGER.error(s"$logPrefix Failure, qs = $qsArgs", ex)
         Left(InternalServerError("500 Internal server error. Please try again later."))
     }
   }
