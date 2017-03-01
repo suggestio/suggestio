@@ -6,16 +6,13 @@ package io.suggest.common.empty
  * Created: 23.09.15 21:19
  * Description: Тестирование case class'а на наполненность параметров.
  */
+
 trait EmptyProduct extends IsEmpty { this: Product =>
 
   /** @return true, если класс содержит хотя бы одно значение. */
   override def nonEmpty: Boolean = {
-    productIterator.exists {
-      case opt: Option[_]           => opt.nonEmpty
-      case col: TraversableOnce[_]  => col.nonEmpty
-      case m: INonEmpty             => m.nonEmpty
-      case _                        => true
-    }
+    productIterator
+      .exists { EmptyProduct.nonEmpty }
   }
 
   /** @return true, если класс не содержит ни одного значения. */
@@ -30,4 +27,19 @@ trait EmptyProduct extends IsEmpty { this: Product =>
   }
 
 }
+
+object EmptyProduct {
+
+  def nonEmpty(v: Any): Boolean = {
+    v match {
+      case opt: Option[_]           => opt.nonEmpty
+      case col: TraversableOnce[_]  => col.nonEmpty
+      case m: INonEmpty             => m.nonEmpty
+      case m: IIsEmpty              => !m.isEmpty
+      case _                        => true
+    }
+  }
+
+}
+
 

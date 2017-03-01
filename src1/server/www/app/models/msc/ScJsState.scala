@@ -1,13 +1,15 @@
 package models.msc
 
+import io.suggest.common.empty.EmptyProduct
+import io.suggest.geo.MGeoPoint
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevel
-import models.mgeo.MLocEnv
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
 import util.qsb.QsbUtil._
+import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
 
 import scala.util.Random
 
@@ -30,10 +32,6 @@ object ScJsState extends MacroLogsImpl {
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     import util.qsb.QSBs._
-    import io.suggest.geo.GeoPoint.Implicits.geoPointQsb
-    import models.mgeo.MGeoLoc.{qsb => mglQsb}
-    import models.mgeo.MBleBeaconInfo.{qsb => mbbiQsb}
-    import models.mgeo.MLocEnv.{qsb => mleQsb}
     qsb
   }
 
@@ -41,13 +39,13 @@ object ScJsState extends MacroLogsImpl {
   private def strNonEmpty(strOpt: Option[String]) = strOpt.filter(!_.isEmpty)
 
   implicit def qsb(implicit
-                   locEnvB  : QueryStringBindable[MLocEnv],
-                   strOptB  : QueryStringBindable[Option[String]],
-                   boolOptB : QueryStringBindable[Option[Boolean]],
-                   longOptB : QueryStringBindable[Option[Long]],
-                   intOptB  : QueryStringBindable[Option[Int]],
-                   nglsMapB : QueryStringBindable[Option[NglsStateMap_t]]
+                   strOptB      : QueryStringBindable[Option[String]],
+                   boolOptB     : QueryStringBindable[Option[Boolean]],
+                   longOptB     : QueryStringBindable[Option[Long]],
+                   intOptB      : QueryStringBindable[Option[Int]],
+                   nglsMapB     : QueryStringBindable[Option[NglsStateMap_t]]
                   ): QueryStringBindable[ScJsState] = {
+    val geoPointOptB = pipeDelimitedQsbOpt
     new QueryStringBindableImpl[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {
         for {
@@ -60,25 +58,22 @@ object ScJsState extends MacroLogsImpl {
           maybeSearchTab        <- boolOptB.bind(SEARCH_TAB_FN,         params)
           maybeProducerAdnId    <- strOptB.bind (PRODUCER_ADN_ID_FN,    params)
           maybeNglsMap          <- nglsMapB.bind(NAV_NGLS_STATE_MAP_FN, params)
-          locEnvEith            <- locEnvB.bind (LOC_ENV_FN,            params)
+          geoPointOptEith       <- geoPointOptB.bind(LOC_ENV_FN,        params)
 
         } yield {
-          for {
-            locEnv <- locEnvEith.right
-          } yield {
-            ScJsState(
-              adnId               = strNonEmpty( maybeAdnId ),
-              searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
-              navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
-              generationOpt       = maybeGeneration orElse generationDflt,
-              fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
-              fadsOffsetOpt       = maybeFadsOffset,
-              searchTabListOpt    = noFalse( maybeSearchTab ),
-              fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
-              navNglsMap          = maybeNglsMap.getOrElse( Map.empty ),
-              locEnv              = locEnv
-            )
-          }
+          val r = ScJsState(
+            adnId               = strNonEmpty( maybeAdnId ),
+            searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
+            navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
+            generationOpt       = maybeGeneration orElse generationDflt,
+            fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
+            fadsOffsetOpt       = maybeFadsOffset,
+            searchTabListOpt    = noFalse( maybeSearchTab ),
+            fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
+            navNglsMap          = maybeNglsMap.getOrElse( Map.empty ),
+            geoPoint            = geoPointOptEith
+          )
+          Right(r)
         }
       }
 
@@ -94,7 +89,7 @@ object ScJsState extends MacroLogsImpl {
             boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
             strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
             nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
-            locEnvB.unbind  (LOC_ENV_FN,            value.locEnv)
+            geoPointOptB.unbind(LOC_ENV_FN,         value.geoPoint)
           )
         }
       }
@@ -121,7 +116,7 @@ object ScJsState extends MacroLogsImpl {
  * @param searchTabListOpt Выбранная вкладка на поисковой панели.
  * @param fadsProdIdOpt id продьюсера просматриваемой карточки.
  * @param navNglsMap Карта недефолтовых состояний отображаемых гео-уровней на карте навигации по узлам.
- * @param locEnv Данные по геолокации, неявно-пустая модель.
+ * @param geoPoint Данные по текущему месту юзера на карте, если есть.
  */
 case class ScJsState(
   adnId               : Option[String]   = None,
@@ -133,19 +128,23 @@ case class ScJsState(
   searchTabListOpt    : Option[Boolean]  = None,
   fadsProdIdOpt       : Option[String]   = None,
   navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty,
-  locEnv              : MLocEnv          = MLocEnv.empty
-) { that =>
+  geoPoint            : Option[MGeoPoint] = None
+)
+  extends EmptyProduct
+{ that =>
 
-  /** Содержаться ли тут какие-либо данные? */
-  def nonEmpty: Boolean = {
-    productIterator.exists {
-      case opt: Option[_]           => opt.nonEmpty && !(opt eq generationOpt)
-      case col: TraversableOnce[_]  => col.nonEmpty
-      case _ => true
-    }
+
+  /** @return true, если класс содержит хотя бы одно значение. */
+  override def nonEmpty: Boolean = {
+    productIterator
+      // Запрещаем проверять поле generationOpt.
+      .filter {
+        case vRef: AnyRef =>
+          !(vRef eq generationOpt)
+        case _ => true
+      }
+      .exists { EmptyProduct.nonEmpty }
   }
-  /** Инстанс содержит хоть какие-нибудь полезные данные? */
-  def isEmpty = !nonEmpty
 
   protected def orFalse(boolOpt: Option[Boolean]): Boolean = {
     boolOpt.isDefined && boolOpt.get

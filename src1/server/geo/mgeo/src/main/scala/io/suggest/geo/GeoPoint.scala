@@ -246,4 +246,59 @@ object GeoPoint extends MacroLogsImpl {
 
   }
 
+
+  /** Поддержка формата "e=51.9123|33.2424".
+    * Появилась для поддержки текущей точки в выдаче v2.
+    */
+  def pipeDelimitedQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MGeoPoint] = {
+    new QueryStringBindableImpl[MGeoPoint] {
+
+      override def unbind(key: String, value: MGeoPoint): String = {
+        strB.unbind(key, value.toString)
+      }
+
+      override def bind(key: String, params: Map[String, Seq[String]]) = {
+        for {
+          rawEith <- strB.bind(key, params)
+        } yield {
+          rawEith.right.flatMap { raw =>
+            MGeoPoint.fromString(raw)
+              .toRight("e.geo.point")
+          }
+        }
+      }
+
+    }
+  }
+
+  /** Опциональная поддержка формата "e=51.9123|33.2424"
+    * Появилась для поддержки текущей точки в выдаче v2.
+    */
+  def pipeDelimitedQsbOpt(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[Option[MGeoPoint]] = {
+    new QueryStringBindableImpl[Option[MGeoPoint]] {
+
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, Option[MGeoPoint]]] = {
+        for {
+          rawOptEith <- strOptB.bind(key, params)
+        } yield {
+          rawOptEith.right.flatMap { rawOpt =>
+            rawOpt.fold[Either[String, Option[MGeoPoint]]] {
+              Right(None)
+            } { raw =>
+              val gpOpt = MGeoPoint.fromString(raw)
+              if (gpOpt.isEmpty)
+                Left("e.geo.point")
+              else
+                Right(gpOpt)
+            }
+          }
+        }
+      }
+
+      override def unbind(key: String, value: Option[MGeoPoint]): String = {
+        strOptB.unbind(key, value.map(_.toString))
+      }
+    }
+  }
+
 }

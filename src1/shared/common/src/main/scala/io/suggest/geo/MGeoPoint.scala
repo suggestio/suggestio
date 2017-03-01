@@ -37,6 +37,26 @@ object MGeoPoint {
     Lat.isValid(gp.lat) && Lon.isValid(gp.lon)
   }
 
+
+  def fromString(str: String): Option[MGeoPoint] = {
+    str.split(Qs.LAT_LON_DELIM_FN) match {
+      case Array(latStr, lonStr) =>
+        try {
+          val gp = MGeoPoint(
+            lat = latStr.toDouble,
+            lon = lonStr.toDouble
+          )
+          Some(gp)
+        } catch { case ex: Throwable =>
+          None
+        }
+
+      case other =>
+        None
+    }
+  }
+
+
   /*
   import com.wix.accord.Validator
   import com.wix.accord.dsl._

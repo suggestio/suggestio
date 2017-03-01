@@ -28,24 +28,6 @@ object MGeoPointJs {
     )
   }
 
-  def fromString(str: String): Option[MGeoPoint] = {
-    str.split(Qs.LAT_LON_DELIM_FN) match {
-      case Array(latStr, lonStr) =>
-        try {
-          val gp = MGeoPoint(
-            lat = latStr.toDouble,
-            lon = lonStr.toDouble
-          )
-          Some(gp)
-        } catch { case ex: Throwable =>
-          None
-        }
-
-      case other =>
-        None
-    }
-  }
-
   /** Массив координат в стандартной нотации: [lon,lat] т.е. [x,y]. */
   def toArray(gp: IGeoPoint) = js.Array[Double](gp.lon, gp.lat)
 

@@ -13,11 +13,9 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import models.crawl.{ChangeFreqs, SiteMapUrl, SiteMapUrlT}
 import models.mctx.ContextUtil
-import models.mgeo.{MGeoLoc, MLocEnv}
 import models.mproj.ICommonDi
 import models.msc.ScJsState
 import play.api.mvc.QueryStringBindable
-import util.n2u.N2NodesUtil
 import util.seo.SiteMapXmlCtl
 
 
@@ -126,27 +124,26 @@ class ScSitemapsXml @Inject() (
       .toStream
       .headOption
 
-    // Поиска текущую геоточку, если карточка там размещена.
-    val locEnv = mad.edges
-      .withPredicateIter( MPredicates.AdvGeoPlace )
-      .flatMap( _.info.geoPoints )
-      .toStream
-      .headOption
-      .fold(MLocEnv.empty) { gp =>
-        MLocEnv(
-          geoLocOpt = Some(MGeoLoc(
-            center = gp
-          ))
-        )
-      }
-      // TODO Учитывать геотеги?
+    // Поиска текущую геоточку, если карточка там размещена, и на узле её не отобразить.
+    val gpOpt = if (rcvrIdOpt.isEmpty) {
+      mad.edges
+        .withPredicateIter( MPredicates.AdvGeoPlace )
+        .flatMap( _.info.geoPoints )
+        .toStream
+        .headOption
+    } else {
+      // Узел-ресивер уже есть. Точка рендерить не требуется.
+      None
+    }
+
+    // TODO Учитывать геотеги? direct-теги?
 
     // Собрать данные для sitemap-ссылки на карточку.
     val jsState = ScJsState(
       adnId           = rcvrIdOpt,
       fadOpenedIdOpt  = mad.id,
       generationOpt   = None, // Всем юзерам поисковиков будет выдаваться одна ссылка, но всегда на рандомную выдачу.
-      locEnv          = locEnv
+      geoPoint        = gpOpt
     )
 
     val url = routes.Sc.geoSite().url + "#!?" + jsState.toQs(qsb)
