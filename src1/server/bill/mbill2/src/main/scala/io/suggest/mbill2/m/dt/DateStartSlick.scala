@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.dt
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.slick.driver.IPgDriver
+import io.suggest.slick.profile.pg.IPgProfile
 
 /**
  * Suggest.io
@@ -10,9 +10,9 @@ import io.suggest.common.slick.driver.IPgDriver
  * Created: 02.12.15 15:00
  * Description: slick-поддержка для обязательного поля date_start.
  */
-trait DateStartSlick extends IPgDriver {
+trait DateStartSlick extends IPgProfile {
 
-  import driver.api._
+  import profile.api._
 
   def DATE_START_FN = "date_start"
 

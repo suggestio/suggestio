@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.common
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 04.12.15 22:19
  * Description: Типа-интерфейс для контейнеров slick-моделей.
  */
-trait ModelContainer extends IDriver {
+trait ModelContainer extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   type Id_t
 

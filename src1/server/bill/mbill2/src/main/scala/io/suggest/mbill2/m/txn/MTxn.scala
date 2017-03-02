@@ -4,7 +4,6 @@ import java.time.OffsetDateTime
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.Amount_t
-import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.balance.{BalanceIdFkSlick, BalanceIdInxSlick, FindByBalanceId, MBalances}
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.gid.{GetById, GidSlick, Gid_t, IGid}
@@ -12,6 +11,7 @@ import io.suggest.mbill2.m.item.{ItemIdOptFkSlick, ItemIdOptInxSlick, ItemIdOptS
 import io.suggest.mbill2.m.order.{MOrders, OrderIdOptFkSlick, OrderIdOptInxSlick, OrderIdOptSlick}
 import io.suggest.mbill2.m.price.AmountSlick
 import io.suggest.mbill2.util.PgaNamesMaker
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import slick.lifted.ProvenShape
 
 /**
@@ -23,10 +23,10 @@ import slick.lifted.ProvenShape
 
 @Singleton
 class MTxns @Inject() (
-  override protected val driver     : ExPgSlickDriverT,
-  override val mBalances            : MBalances,
-  override val mOrders              : MOrders,
-  override val mItems               : MItems
+                        override protected val profile    : SioPgSlickProfileT,
+                        override val mBalances            : MBalances,
+                        override val mOrders              : MOrders,
+                        override val mItems               : MItems
 )
   extends GidSlick
   with AmountSlick
@@ -38,7 +38,8 @@ class MTxns @Inject() (
   with ItemIdOptSlick with ItemIdOptFkSlick with ItemIdOptInxSlick
 {
 
-  import driver.api._
+  import profile.api._
+
 
   override type Table_t = MTxnsTable
   override type El_t    = MTxn

@@ -1,16 +1,16 @@
 package io.suggest.mbill2.m.item.cols
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 02.12.15 22:20
-  * Description:
+  * Description: Поддержка поля таблицы rcvrIdOpt: Option[rcvr_id].
   */
-trait RcvrIdOptSlick extends IDriver {
+trait RcvrIdOptSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def RCVR_ID_FN = "rcvr_id"
 

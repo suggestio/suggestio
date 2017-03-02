@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.dt
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.slick.driver.IPgDriver
+import io.suggest.slick.profile.pg.IPgProfile
 
 /**
  * Suggest.io
@@ -11,9 +11,9 @@ import io.suggest.common.slick.driver.IPgDriver
  * Description: Поле date_created присутствует в разных таблицах, тут трейты для упрощенной поддержка этого дела.
  */
 
-trait DateCreatedSlick extends IPgDriver {
+trait DateCreatedSlick extends IPgProfile {
 
-  import driver.api._
+  import profile.api._
 
   def DATE_CREATED_FN = "date_created"
 

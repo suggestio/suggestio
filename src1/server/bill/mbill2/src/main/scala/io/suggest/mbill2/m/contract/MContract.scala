@@ -4,10 +4,10 @@ import java.time.OffsetDateTime
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt.DateCreatedSlick
 import io.suggest.mbill2.m.gid.{DeleteById, GetById, GidSlick, Gid_t}
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import slick.lifted.ProvenShape
 import play.api.Configuration
 
@@ -43,8 +43,8 @@ object MContract extends ITableName {
 /** slick-модель таблицы контрактов. */
 @Singleton
 class MContracts @Inject()(
-  override protected val driver     : ExPgSlickDriverT,
-  configuration                     : Configuration
+                            override protected val profile    : SioPgSlickProfileT,
+                            configuration                     : Configuration
 )
   extends GidSlick
   with DateCreatedSlick
@@ -54,7 +54,7 @@ class MContracts @Inject()(
 {
 
   import MContract._
-  import driver.api._
+  import profile.api._
 
   override type Table_t = MContractsTable
   override type El_t = MContract

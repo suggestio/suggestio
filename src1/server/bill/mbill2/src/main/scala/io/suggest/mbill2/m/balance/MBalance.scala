@@ -3,7 +3,7 @@ package io.suggest.mbill2.m.balance
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{Amount_t, IMCurrency, MCurrency, MPrice}
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, FindByContractId, MContracts}
 import io.suggest.mbill2.m.gid._
@@ -23,7 +23,7 @@ import scala.concurrent.ExecutionContext
 
 @Singleton
 class MBalances @Inject() (
-  override protected val driver       : ExPgSlickDriverT,
+  override protected val profile      : SioPgSlickProfileT,
   override protected val mContracts   : MContracts,
   implicit private val ec             : ExecutionContext
 )
@@ -39,7 +39,7 @@ class MBalances @Inject() (
   with FindByContractId
 {
 
-  import driver.api._
+  import profile.api._
 
   override type Table_t = MBalancesTable
   override type El_t    = MBalance

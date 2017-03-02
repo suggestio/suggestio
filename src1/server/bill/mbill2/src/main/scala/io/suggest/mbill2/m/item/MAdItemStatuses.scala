@@ -1,8 +1,8 @@
 package io.suggest.mbill2.m.item
 
-import io.suggest.common.slick.driver.IPgDriver
 import io.suggest.mbill2.m.item.cols.INodeId
-import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.slick.profile.pg.IPgProfile
 import slick.jdbc.GetResult
 
 /**
@@ -11,9 +11,9 @@ import slick.jdbc.GetResult
   * Created: 18.02.16 17:14
   * Description: Поддержка модели списков item'ов, связанных с рекламной карточкой.
   */
-trait MAdItemStatusesSlick extends IPgDriver {
+trait MAdItemStatusesSlick extends IPgProfile {
 
-  import driver.api._
+  import profile.api._
 
   /** Десериализатор Pg RowSet'а c [[MAdItemIds]]. */
   implicit val adItemStatusesGr = GetResult { r =>

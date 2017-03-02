@@ -14,7 +14,7 @@ object OrderStatusChanged {
   private def headSne = Some( classOf[OrderStatusChanged].getSimpleName )
 
   def getClassifier(status: Option[MOrderStatus] = None): Classifier = {
-    List(headSne, status)
+    headSne :: status :: Nil
   }
 
 }

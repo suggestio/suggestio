@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.gid
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -10,9 +10,9 @@ import io.suggest.common.slick.driver.IDriver
  * Этот трейт подмешивается в DI-контейнер, затем GidColumn подмешивается к таблице,
  * и поле id добавляется в шейп.
  */
-trait GidSlick extends IDriver {
+trait GidSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def ID_FN = "id"
 

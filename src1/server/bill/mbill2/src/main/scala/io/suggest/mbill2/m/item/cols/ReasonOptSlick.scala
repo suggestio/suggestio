@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.item.cols
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 02.12.15 15:08
  * Description: slick-поддержка для поля reason, которое содержит причину отказа в размещении.
  */
-trait ReasonOptSlick extends IDriver {
+trait ReasonOptSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def REASON_FN = "reason"
 

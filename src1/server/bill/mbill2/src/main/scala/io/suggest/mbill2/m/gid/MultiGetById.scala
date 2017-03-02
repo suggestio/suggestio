@@ -8,7 +8,7 @@ package io.suggest.mbill2.m.gid
   */
 trait MultiGetById extends GidModelContainer {
 
-  import driver.api._
+  import profile.api._
 
   def getByIds(ids: Traversable[Gid_t]) = {
     query

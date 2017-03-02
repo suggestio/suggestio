@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.dt
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.slick.driver.IPgDriver
+import io.suggest.slick.profile.pg.IPgProfile
 
 /**
   * Suggest.io
@@ -10,9 +10,9 @@ import io.suggest.common.slick.driver.IPgDriver
   * Created: 05.02.16 14:58
   * Description: Поддержка обязательного поля date_status для slick-моделей.
   */
-trait DateStatusSlick extends IPgDriver {
+trait DateStatusSlick extends IPgProfile {
 
-  import driver.api._
+  import profile.api._
 
   def DATE_STATUS_FN = "date_status"
 

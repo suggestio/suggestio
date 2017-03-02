@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.order
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 import io.suggest.mbill2.m.gid.Gid_t
 
 /**
@@ -9,9 +9,9 @@ import io.suggest.mbill2.m.gid.Gid_t
  * Created: 02.12.15 12:20
  * Description: Slick-поддержка частоиспользуемого поля order_id и смежных сущностей.
  */
-trait OrderIdOptSlick extends IDriver with OrderIdFn {
+trait OrderIdOptSlick extends IProfile with OrderIdFn {
 
-  import driver.api._
+  import profile.api._
 
   /** Добавить колонку orderId. */
   trait OrderIdOpt { that: Table[_] =>
@@ -24,7 +24,7 @@ trait OrderIdOptSlick extends IDriver with OrderIdFn {
 /** Аддон для поддержки внешнего ключа order_id. */
 trait OrderIdOptFkSlick extends OrderIdOptSlick with OrderIdFkFn with IMOrders {
 
-  import driver.api._
+  import profile.api._
 
   /** Поддержка внешнего ключа таблицы по полю order_id. */
   trait OrderIdOptFk extends OrderIdOpt { that: Table[_] =>
@@ -37,7 +37,7 @@ trait OrderIdOptFkSlick extends OrderIdOptSlick with OrderIdFkFn with IMOrders {
 /** Аддон для slick-контейнера для поддержки индекса по order_id. */
 trait OrderIdOptInxSlick extends OrderIdOptSlick with OrderIdInxFn {
 
-  import driver.api._
+  import profile.api._
 
   /** Поддержка индекса по полю order_id. */
   trait OrderIdOptInx extends OrderIdOpt { that: Table[_] =>

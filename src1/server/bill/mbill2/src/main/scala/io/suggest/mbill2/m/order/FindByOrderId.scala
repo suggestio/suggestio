@@ -11,7 +11,7 @@ import io.suggest.mbill2.m.gid.Gid_t
   */
 trait FindByOrderId extends ModelContainer { that: OrderIdSlick =>
 
-  import driver.api._
+  import profile.api._
 
   override type Table_t <: Table[El_t] with OrderId
 

@@ -1,4 +1,4 @@
-package io.suggest.common.slick.driver
+package io.suggest.slick.profile.pg
 
 import com.github.tminglei.slickpg._
 import slick.sql.SqlAction
@@ -11,11 +11,10 @@ import slick.sql.SqlAction
  *
  * @see [[https://github.com/tminglei/slick-pg#usage]]
  */
-trait ExPgSlickDriverT
+trait SioPgSlickProfileT
   extends ExPostgresProfile
   with PgArraySupport
   with PgDate2Support
-  //with PgDateSupportJoda
 {
 
   /** Реализация API расширенного slick-pg-драйвера. */
@@ -24,7 +23,6 @@ trait ExPgSlickDriverT
     // slick-pg: Plain-импорты для sql-интерполятора, просто import'ы для lifted api.
     with ArrayImplicits with SimpleArrayPlainImplicits
     with DateTimeImplicits
-    //with JodaDateTimeImplicits with JodaDateTimePlainImplicits
   {
 
     protected val _strArrayTypeMapper = new SimpleArrayJdbcType[String]("text")
@@ -54,4 +52,4 @@ trait ExPgSlickDriverT
 
 
 /** Дефолтовая реализация slick-pg-драйвера. */
-object ExPgSlickDriver extends ExPgSlickDriverT
+object SioPgSlickProfile extends SioPgSlickProfileT

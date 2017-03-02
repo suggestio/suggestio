@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.gid.{GidModelContainer, Gid_t}
  */
 trait FindByBalanceId extends BalanceIdSlick with GidModelContainer {
 
-  import driver.api._
+  import profile.api._
 
   override type Table_t <: Table[El_t] with GidColumn with BalanceIdColumn
 

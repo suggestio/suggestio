@@ -8,7 +8,7 @@ package io.suggest.mbill2.m.gid
  */
 trait GetById extends GidModelContainer {
 
-  import driver.api._
+  import profile.api._
 
   /**
    * Чтение ряда по id.

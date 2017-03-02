@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.item
 
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.util.PgaNamesMaker
 
@@ -15,9 +15,9 @@ trait ItemIdFn {
   def ITEM_ID_FN = "item_id"
 }
 
-trait ItemIdSlick extends IDriver with ItemIdFn {
+trait ItemIdSlick extends IProfile with ItemIdFn {
 
-  import driver.api._
+  import profile.api._
 
   trait ItemIdColumn { that: Table[_] =>
     def itemId = column[Gid_t](ITEM_ID_FN)
@@ -32,7 +32,7 @@ trait ItemIdFkFn extends ItemIdFn with ITableName {
 }
 trait ItemIdFkSlick extends ItemIdSlick with ItemIdFkFn with IMItems {
 
-  import driver.api._
+  import profile.api._
 
   trait ItemIdFk extends ItemIdColumn { that: Table[_] =>
     def item = foreignKey(ITEM_ID_FK, itemId, mItems.query)(_.id)
@@ -46,7 +46,7 @@ trait ItemIdInxFn extends ItemIdFn with ITableName {
 }
 trait ItemIdInxSlick extends ItemIdSlick with ItemIdInxFn {
 
-  import driver.api._
+  import profile.api._
 
   trait ItemIdInx extends ItemIdColumn { that: Table[_] =>
     def itemInx = index(ITEM_ID_INX, itemId)

@@ -1,4 +1,4 @@
-package io.suggest.common.slick.driver
+package io.suggest.slick.profile
 
 import slick.jdbc.JdbcProfile
 
@@ -8,15 +8,8 @@ import slick.jdbc.JdbcProfile
  * Created: 02.12.15 10:30
  * Description: Интерфейс для DI-поля используемого slick-драйвера.
  */
-trait IDriver {
+trait IProfile {
 
-  protected val driver: JdbcProfile
-
-}
-
-
-trait IPgDriver extends IDriver {
-
-  override protected val driver: ExPgSlickDriverT
+  protected val profile: JdbcProfile
 
 }

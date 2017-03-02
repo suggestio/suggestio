@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.item.typ
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 02.12.15 14:08
  * Description: Поддержка поля item type в slick-моделях.
  */
-trait MItemTypeSlick extends IDriver {
+trait MItemTypeSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def ITYPE_FN = "type"
 

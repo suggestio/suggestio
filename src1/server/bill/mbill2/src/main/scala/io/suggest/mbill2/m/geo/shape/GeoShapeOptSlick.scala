@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.geo.shape
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 import io.suggest.geo.GeoShape
 import io.suggest.primo.IApplyOpt1
 import play.api.libs.json.Json
@@ -29,9 +29,9 @@ object GeoShapeOptSlick extends IApplyOpt1 {
 
 }
 
-trait GeoShapeOptSlick extends IDriver {
+trait GeoShapeOptSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def GEO_SHAPE_FN = "geo_shape"
 

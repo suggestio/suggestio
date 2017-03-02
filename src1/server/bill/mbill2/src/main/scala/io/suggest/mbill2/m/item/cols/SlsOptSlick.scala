@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.item.cols
 
-import io.suggest.common.slick.driver.IPgDriver
-import io.suggest.model.sc.common.{SinkShowLevels, SinkShowLevel}
+import io.suggest.model.sc.common.{SinkShowLevel, SinkShowLevels}
+import io.suggest.slick.profile.pg.IPgProfile
 
 /**
  * Suggest.io
@@ -9,9 +9,9 @@ import io.suggest.model.sc.common.{SinkShowLevels, SinkShowLevel}
  * Created: 02.12.15 22:24
  * Description: Поддержка опционального поля show levels (sls).
  */
-trait SlsOptSlick extends IPgDriver {
+trait SlsOptSlick extends IPgProfile {
 
-  import driver.api._
+  import profile.api._
 
   def SLS_FN = "sls"
 

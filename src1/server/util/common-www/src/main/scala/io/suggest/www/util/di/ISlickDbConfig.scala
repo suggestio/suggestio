@@ -1,6 +1,6 @@
 package io.suggest.www.util.di
 
-import io.suggest.common.slick.driver.ExPgSlickDriverT
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import play.api.db.slick.DatabaseConfigProvider
 
 /**
@@ -17,7 +17,7 @@ trait ISlickDbConfigProvider {
 
 trait ISlickDbConfig extends ISlickDbConfigProvider {
 
-  val slick = _slickConfigProvider.get[ExPgSlickDriverT]
+  val slick = _slickConfigProvider.get[SioPgSlickProfileT]
 
 }
 

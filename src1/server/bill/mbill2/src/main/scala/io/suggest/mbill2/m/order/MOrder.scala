@@ -4,12 +4,12 @@ import java.time.OffsetDateTime
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, FindByContractId, MContracts}
 import io.suggest.mbill2.m.dt.{DateCreatedSlick, DateStatusSlick}
 import io.suggest.mbill2.m.gid._
 import io.suggest.mbill2.util.PgaNamesMaker
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import slick.lifted.ProvenShape
 
 /**
@@ -21,8 +21,8 @@ import slick.lifted.ProvenShape
 
 @Singleton
 class MOrders @Inject() (
-  override protected val driver       : ExPgSlickDriverT,
-  override protected val mContracts   : MContracts
+                          override protected val profile      : SioPgSlickProfileT,
+                          override protected val mContracts   : MContracts
 )
   extends GidSlick
   with DateCreatedSlick
@@ -36,7 +36,8 @@ class MOrders @Inject() (
   with FindByContractId
 {
 
-  import driver.api._
+  import profile.api._
+
 
   override type Table_t = MOrdersTable
   override type El_t    = MOrder

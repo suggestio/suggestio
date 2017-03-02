@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.price
 
 import io.suggest.bill.Amount_t
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -9,9 +9,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 02.12.15 11:21
  * Description: Поддержа поля amount.
  */
-trait AmountSlick extends IDriver {
+trait AmountSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def AMOUNT_FN = "amount"
 

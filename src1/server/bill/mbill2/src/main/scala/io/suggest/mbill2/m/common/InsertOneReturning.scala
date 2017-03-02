@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.gid.GidModelContainer
  */
 trait InsertOneReturning extends GidModelContainer {
 
-  import driver.api._
+  import profile.api._
 
   /** Апдейт значения экземпляра модели новым id. */
   protected def _withId(el: Table_t#TableElementType, id: Id_t): El_t
@@ -31,7 +31,7 @@ trait InsertOneReturning extends GidModelContainer {
 /** Поддержка легкого инзерта нескольких элементов сразу. */
 trait InsertManyReturning extends InsertOneReturning {
 
-  import driver.api._
+  import profile.api._
 
   /**
     * Инзерт пачки элементов сразу.

@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.item.status
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 02.12.15 14:02
  * Description: Аддон для поддержки поля item status в slick-моделях.
  */
-trait ItemStatusSlick extends IDriver {
+trait ItemStatusSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def STATUS_FN = "status"
 

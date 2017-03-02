@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.tags
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
   * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
   * Created: 03.02.16 17:59
   * Description: Поддержка опциональной колонки tag_face с названием тега.
   */
-trait TagFaceOptSlick extends IDriver {
+trait TagFaceOptSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def TAG_FACE_FN = "tag_face"
 

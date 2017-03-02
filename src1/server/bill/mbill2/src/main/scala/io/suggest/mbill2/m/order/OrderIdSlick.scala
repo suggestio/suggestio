@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.order
 
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.util.PgaNamesMaker
 
@@ -18,9 +18,9 @@ trait OrderIdFn {
 
 }
 
-trait OrderIdSlick extends IDriver with OrderIdFn {
+trait OrderIdSlick extends IProfile with OrderIdFn {
 
-  import driver.api._
+  import profile.api._
 
   /** Добавить колонку orderId. */
   trait OrderId { that: Table[_] =>
@@ -39,7 +39,7 @@ trait OrderIdFkFn extends OrderIdFn with ITableName {
 /** Аддон для поддержки внешнего ключа order_id. */
 trait OrderIdFkSlick extends OrderIdSlick with OrderIdFkFn with IMOrders {
 
-  import driver.api._
+  import profile.api._
 
   /** Поддержка внешнего ключа таблицы по полю order_id. */
   trait OrderIdFk extends OrderId { that: Table[_] =>
@@ -59,7 +59,7 @@ trait OrderIdInxFn extends OrderIdFn with ITableName {
 /** Аддон для slick-контейнера для поддержки индекса по order_id. */
 trait OrderIdInxSlick extends OrderIdSlick with OrderIdInxFn {
 
-  import driver.api._
+  import profile.api._
 
   /** Поддержка индекса по полю order_id. */
   trait OrderIdInx extends OrderId { that: Table[_] =>

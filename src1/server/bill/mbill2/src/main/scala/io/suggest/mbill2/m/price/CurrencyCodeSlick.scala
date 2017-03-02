@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.price
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 02.12.15 11:24
  * Description: Поддержка частого поля currency_code в таблице.
  */
-trait CurrencyCodeSlick extends IDriver {
+trait CurrencyCodeSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def CURRENCY_CODE_FN = "currency_code"
 

@@ -8,7 +8,7 @@ package io.suggest.mbill2.m.gid
  */
 trait DeleteById extends GidModelContainer {
 
-  import driver.api._
+  import profile.api._
 
   /**
    * Удалить ряд по id.

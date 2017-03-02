@@ -19,7 +19,7 @@ object ItemStatusChanged {
   def classifier(status   : Option[MItemStatus] = None,
                  iType    : Option[MItemType]   = None,
                  orderId  : Option[Gid_t]       = None): Classifier = {
-    List( headSne, status, iType, orderId )
+    headSne :: status :: iType :: orderId :: Nil
   }
 
 }

@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.price
 
 import io.suggest.bill.{Amount_t, MCurrencies, MCurrency, MPrice}
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 import slick.lifted.MappedProjection
 
 /**
@@ -10,9 +10,9 @@ import slick.lifted.MappedProjection
  * Created: 01.12.15 22:29
  * Description: Аддоны для работы с ценой через slick.
  */
-trait PriceSlick extends IDriver {
+trait PriceSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   trait ICurrencyProjection {
     def currency: MappedProjection[MCurrency, _]

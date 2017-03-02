@@ -5,7 +5,6 @@ import java.time.OffsetDateTime
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{IMPrice, MPrice}
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.ExPgSlickDriverT
 import io.suggest.geo.GeoShape
 import io.suggest.mbill2.m.common.{InsertManyReturning, InsertOneReturning}
 import io.suggest.mbill2.m.dt._
@@ -18,6 +17,7 @@ import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
 import io.suggest.model.sc.common.SinkShowLevel
+import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
 import slick.sql.SqlAction
@@ -37,8 +37,8 @@ import slick.sql.SqlAction
 /** DI-контейнер для slick-модели абстрактных item'ов. */
 @Singleton
 class MItems @Inject() (
-  override protected val driver   : ExPgSlickDriverT,
-  override val mOrders            : MOrders
+                         override protected val profile  : SioPgSlickProfileT,
+                         override val mOrders            : MOrders
 )
   extends GidSlick
   with PriceSlick
@@ -66,9 +66,10 @@ class MItems @Inject() (
   with MAdItemStatusesSlick
 {
 
-  override val TABLE_NAME = "item"
+  import profile.api._
 
-  import driver.api._
+
+  override val TABLE_NAME = "item"
 
   override type Table_t = MItemsTable
   override type El_t    = MItem

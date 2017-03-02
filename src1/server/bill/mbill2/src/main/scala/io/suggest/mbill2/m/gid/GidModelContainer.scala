@@ -10,7 +10,7 @@ import io.suggest.mbill2.m.common.ModelContainer
  */
 trait GidModelContainer extends ModelContainer with GidSlick {
 
-  import driver.api._
+  import profile.api._
 
   override type Id_t = Gid_t
 

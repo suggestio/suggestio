@@ -1,7 +1,7 @@
 package io.suggest.mbill2.m.balance
 
 import io.suggest.common.m.sql.ITableName
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.util.PgaNamesMaker
 
@@ -11,9 +11,9 @@ import io.suggest.mbill2.util.PgaNamesMaker
  * Created: 02.12.15 17:13
  * Description: Поддержка поля balance_id для slick-моделей, ссылающихся на кошельки.
  */
-trait BalanceIdSlick extends IDriver {
+trait BalanceIdSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def BALANCE_ID_FN = "balance_id"
 
@@ -27,7 +27,7 @@ trait BalanceIdSlick extends IDriver {
 
 trait BalanceIdFkSlick extends BalanceIdSlick with ITableName {
 
-  import driver.api._
+  import profile.api._
 
   /** Название внешнего ключа для balance_id. */
   def BALANCE_ID_FK = PgaNamesMaker.fkey(TABLE_NAME, BALANCE_ID_FN)
@@ -44,7 +44,7 @@ trait BalanceIdFkSlick extends BalanceIdSlick with ITableName {
 
 trait BalanceIdInxSlick extends BalanceIdSlick {
 
-  import driver.api._
+  import profile.api._
 
   def BALANCE_ID_INX: String
 

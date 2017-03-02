@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.item.cols
 
-import io.suggest.common.slick.driver.IDriver
+import io.suggest.slick.profile.IProfile
 
 /**
  * Suggest.io
@@ -8,9 +8,9 @@ import io.suggest.common.slick.driver.IDriver
  * Created: 02.12.15 15:04
  * Description: Аддон для поддержки поля ad_id в slick-моделях.
  */
-trait NodeIdSlick extends IDriver {
+trait NodeIdSlick extends IProfile {
 
-  import driver.api._
+  import profile.api._
 
   def NODE_ID_FN = "ad_id"
 
