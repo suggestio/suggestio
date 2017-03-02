@@ -45,23 +45,23 @@ import scala.concurrent.Future
  * Description: Унифицированные части личного кабинета.
  */
 class MarketLkAdn @Inject() (
-  nodesUtil                           : NodesUtil,
-  lkAdUtil                            : LkAdUtil,
-  scUtil                              : ShowcaseUtil,
-  mItems                              : MItems,
-  mNodes                              : MNodes,
-  override val identUtil              : IdentUtil,
-  override val emailPwIdents          : EmailPwIdents,
-  override val mPersonIdents          : MPersonIdents,
-  emailActivations                    : EmailActivations,
-  logoUtil                            : LogoUtil,
-  galleryUtil                         : GalleryUtil,
-  isAuth                              : IsAuth,
-  isAdnNodeAdmin                      : IsAdnNodeAdmin,
-  isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
-  nodeEact                            : NodeEact,
-  override val scryptUtil             : ScryptUtil,
-  override val mCommonDi              : ICommonDi
+                              nodesUtil                           : NodesUtil,
+                              lkAdUtil                            : LkAdUtil,
+                              scUtil                              : ShowcaseUtil,
+                              mItems                              : MItems,
+                              mNodes                              : MNodes,
+                              override val identUtil              : IdentUtil,
+                              override val emailPwIdents          : EmailPwIdents,
+                              override val mPersonIdents          : MPersonIdents,
+                              emailActivations                    : EmailActivations,
+                              logoUtil                            : LogoUtil,
+                              galleryUtil                         : GalleryUtil,
+                              isAuth                              : IsAuth,
+                              isNodeAdmin                         : IsNodeAdmin,
+                              isAdnNodeAdminOptOrAuth             : IsAdnNodeAdminOptOrAuth,
+                              nodeEact                            : NodeEact,
+                              override val scryptUtil             : ScryptUtil,
+                              override val mCommonDi              : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
@@ -98,7 +98,7 @@ class MarketLkAdn @Inject() (
    * @param nodeId id узла.
    */
   def showAdnNode(nodeId: String) = csrf.AddToken {
-    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(nodeId, U.Lk).async { implicit request =>
       val mnode = request.mnode
       val logoOptFut = logoUtil.getLogoOfNode(mnode)
       val galleryFut = galleryUtil.galleryImgs( mnode )
@@ -136,7 +136,7 @@ class MarketLkAdn @Inject() (
    * @return 200 Ok + страница ЛК со списком карточек.
    */
   def showNodeAds(adnId: String, mode: MNodeAdsMode, newAdIdOpt: Option[String]) = csrf.AddToken {
-    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       import request.mnode
 
       // Для узла нужно отобразить его рекламу.
@@ -381,7 +381,7 @@ class MarketLkAdn @Inject() (
 
   /** Рендер страницы редактирования профиля пользователя в рамках ЛК узла. */
   def userProfileEdit(adnId: String, r: Option[String]) = csrf.AddToken {
-    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       _userProfileEdit(ChangePw.changePasswordFormM, r, Ok)
     }
   }
@@ -400,7 +400,7 @@ class MarketLkAdn @Inject() (
 
   /** Сабмит формы смены пароля. */
   def changePasswordSubmit(adnId: String, r: Option[String]) = csrf.Check {
-    isAdnNodeAdmin(adnId).async { implicit request =>
+    isNodeAdmin(adnId).async { implicit request =>
       _changePasswordSubmit(r) { formWithErrors =>
         _userProfileEdit(formWithErrors, r, NotAcceptable)
       }

@@ -12,7 +12,7 @@ import models.event.search.MEventsSearchArgs
 import models.mproj.ICommonDi
 import play.api.i18n.Messages
 import play.twirl.api.Html
-import util.acl.{CanAccessEvent, IsAdnNodeAdmin}
+import util.acl.{CanAccessEvent, IsNodeAdmin}
 import util.event.LkEventsUtil
 import util.lk.LkAdUtil
 import views.html.lk.event._
@@ -28,14 +28,14 @@ import scala.util.{Failure, Success}
  * Контроллер поддерживает отображение уведомлений, удаление оных и прочие действия.
  */
 class LkEvents @Inject() (
-  lkEventsUtil                    : LkEventsUtil,
-  lkAdUtil                        : LkAdUtil,
-  mNodes                          : MNodes,
-  mExtTargets                     : MExtTargets,
-  isAdnNodeAdmin                  : IsAdnNodeAdmin,
-  canAccessEvent                  : CanAccessEvent,
-  mEvents                         : MEvents,
-  override val mCommonDi          : ICommonDi
+                           lkEventsUtil                    : LkEventsUtil,
+                           lkAdUtil                        : LkAdUtil,
+                           mNodes                          : MNodes,
+                           mExtTargets                     : MExtTargets,
+                           isNodeAdmin                     : IsNodeAdmin,
+                           canAccessEvent                  : CanAccessEvent,
+                           mEvents                         : MEvents,
+                           override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
@@ -44,8 +44,10 @@ class LkEvents @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  private val LIMIT_MAX  = configuration.getInt("lk.events.nodeIndex.limit.max").getOrElse(10)
-  private val OFFSET_MAX = configuration.getInt("lk.events.nodeIndex.offset.max").getOrElse(300)
+
+  private def LIMIT_MAX  = 10  //configuration.getInt("lk.events.nodeIndex.limit.max").getOrElse(10)
+  private def OFFSET_MAX = 300 //configuration.getInt("lk.events.nodeIndex.offset.max").getOrElse(300)
+
 
   /**
    * Рендер страницы текущих нотификаций.
@@ -57,7 +59,7 @@ class LkEvents @Inject() (
    * @return 200 OK + страница со списком уведомлений.
    */
   def nodeIndex(adnId: String, limit0: Int, offset0: Int, inline: Boolean) = csrf.AddToken {
-    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       val limit = Math.min(LIMIT_MAX, limit0)
       val offset = Math.min(OFFSET_MAX, offset0)
       // Запустить фетчинг событий из хранилища.

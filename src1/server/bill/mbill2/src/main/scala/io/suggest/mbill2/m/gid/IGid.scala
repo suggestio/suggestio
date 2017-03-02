@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.gid
 
-import io.suggest.model.common.OptId
+import io.suggest.primo.id.OptId
 
 /**
  * Suggest.io

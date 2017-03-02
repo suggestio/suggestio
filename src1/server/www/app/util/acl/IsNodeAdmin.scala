@@ -21,10 +21,10 @@ import play.api.mvc.Result
 
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 @Singleton
-class IsAdnNodeAdmin @Inject() (
-                                 isAuth           : IsAuth,
-                                 mCommonDi        : ICommonDi
-                               )
+class IsNodeAdmin @Inject()(
+                             isAuth           : IsAuth,
+                             mCommonDi        : ICommonDi
+                           )
   extends SioActionBuilderOuter
   with MacroLogsImpl
 {
@@ -129,7 +129,7 @@ class IsAdnNodeAdmin @Inject() (
 
 }
 
-/** Интерфейс для поля c DI-инстансом [[IsAdnNodeAdmin]]. */
-trait IIsAdnNodeAdmin {
-  val isAdnNodeAdmin: IsAdnNodeAdmin
+/** Интерфейс для поля c DI-инстансом [[IsNodeAdmin]]. */
+trait IIsNodeAdmin {
+  val isNodeAdmin: IsNodeAdmin
 }

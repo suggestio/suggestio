@@ -6,7 +6,7 @@ import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.txn.{IMTxns, MTxn}
 import models.mbill.{MLkTxnsListTplArgs, MLkTxnsPageTplArgs}
 import play.twirl.api.Html
-import util.acl.IIsAdnNodeAdmin
+import util.acl.IIsNodeAdmin
 import views.html.lk.billing.txns._
 
 import scala.concurrent.Future
@@ -19,7 +19,7 @@ import scala.concurrent.Future
   */
 trait LkBillTxns
   extends SioController
-  with IIsAdnNodeAdmin
+  with IIsNodeAdmin
   with IMTxns
 {
 
@@ -30,7 +30,7 @@ trait LkBillTxns
 
   /** Подгрузка страницы из списка транзакций. */
   def txnsList(nodeId: String, page: Int, inline: Boolean) = csrf.AddToken {
-    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(nodeId, U.Lk).async { implicit request =>
       // Наврядли стоит нагружать систему работой с какими-то далёкими страницами.
       if (page > 100)
         throw new IllegalArgumentException(s"txnsList($nodeId, $page, $inline): page number too big.")

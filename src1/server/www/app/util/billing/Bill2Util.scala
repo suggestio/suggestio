@@ -13,8 +13,8 @@ import io.suggest.mbill2.m.item.{IItem, IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
-import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNodes
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi

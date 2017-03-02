@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes
 
 import boopickle.Default._
+import io.suggest.primo.id.IId
 
 /**
   * Suggest.io
@@ -22,9 +23,9 @@ object ILknTreeNode {
 
 /** Интерфейс элемента дерева узлов.
   * Интерфейс необходим из-за рекурсивности pickler'а. */
-sealed trait ILknTreeNode {
+sealed trait ILknTreeNode extends IId[String] {
 
-  val id              : String
+  override val id     : String
 
   /** Отображаемое название узла. */
   val name            : String

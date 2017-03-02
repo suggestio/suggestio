@@ -2,7 +2,6 @@ package models.event
 
 import java.time.OffsetDateTime
 
-import io.suggest.model.common.OptStrId
 import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
@@ -13,6 +12,7 @@ import play.api.libs.functional.syntax._
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
 

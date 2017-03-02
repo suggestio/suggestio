@@ -41,7 +41,7 @@ import views.html.lk.adv.geo._
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
-import io.suggest.model.common.OptId
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import util.mdr.MdrUtil

@@ -3,7 +3,6 @@ package controllers
 import java.time.OffsetDateTime
 
 import com.google.inject.Inject
-import io.suggest.model.common.OptId
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -16,6 +15,7 @@ import play.api.data._
 import Forms._
 import io.suggest.geo.{CircleGs, Distance, GeoShapeQuerable, MGeoPoint}
 import io.suggest.model.n2.node.MNodes
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.Result
 import util.FormUtil._

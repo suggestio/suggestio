@@ -21,7 +21,7 @@ import scala.concurrent.Future
 /** Аддон для контроллеров для проверки права размещать рекламную карточку. */
 @Singleton
 class CanAdvAd @Inject()(
-                          isAdnNodeAdmin          : IsAdnNodeAdmin,
+                          isNodeAdmin             : IsNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
                           mCommonDi               : ICommonDi
                         )
@@ -69,7 +69,7 @@ class CanAdvAd @Inject()(
         for (prodOpt <- prodOptFut) yield {
           val resOpt = prodOpt
             .filter { mnode =>
-              val isOwnedByMe = isAdnNodeAdmin.isAdnNodeAdminCheckStrict(mnode, req.user)
+              val isOwnedByMe = isNodeAdmin.isAdnNodeAdminCheckStrict(mnode, req.user)
               isOwnedByMe  &&  isAdvertiserNode(mnode)
             }
             .map { req2 }
@@ -109,13 +109,13 @@ class CanAdvAd @Inject()(
                 block(req1)
               case None =>
                 LOGGER.debug(s"invokeBlock(): maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
-                isAdnNodeAdmin.onUnauthNode(reqBlank)
+                isNodeAdmin.onUnauthNode(reqBlank)
             }
 
           // Нет запрашиваем карточки, отработать и этот вариант.
           case None =>
             LOGGER.debug("invokeBlock(): MAd not found: " + adId)
-            isAdnNodeAdmin.onUnauthNode(reqBlank)
+            isNodeAdmin.onUnauthNode(reqBlank)
         }
       }
     }

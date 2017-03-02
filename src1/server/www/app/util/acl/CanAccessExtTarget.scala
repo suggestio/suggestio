@@ -20,7 +20,7 @@ import scala.concurrent.Future
 
 class CanAccessExtTarget @Inject() (
                                      mExtTargets        : MExtTargets,
-                                     isAdnNodeAdmin     : IsAdnNodeAdmin,
+                                     isNodeAdmin        : IsNodeAdmin,
                                      mCommonDi          : ICommonDi
                                    )
   extends SioActionBuilderOuter
@@ -43,7 +43,7 @@ class CanAccessExtTarget @Inject() (
           // Запрошенная цель существует. Нужно проверить права на её узел.
           case Some(tg) =>
             val user = mSioUsers(personIdOpt)
-            val adnNodeOptFut = isAdnNodeAdmin.isAdnNodeAdmin(tg.adnId, user)
+            val adnNodeOptFut = isNodeAdmin.isAdnNodeAdmin(tg.adnId, user)
 
             adnNodeOptFut.flatMap {
               // У юзера есть права на узел. Запускаем экшен на исполнение.
@@ -54,7 +54,7 @@ class CanAccessExtTarget @Inject() (
               // Нет прав на узел.
               case None =>
                 val req1 = MReq(request, user)
-                isAdnNodeAdmin.onUnauthNode(req1)
+                isNodeAdmin.onUnauthNode(req1)
             }
 
           case None =>

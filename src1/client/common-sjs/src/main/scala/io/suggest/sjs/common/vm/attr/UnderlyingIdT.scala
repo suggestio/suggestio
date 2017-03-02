@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.vm.attr
 
-import io.suggest.primo.IId
+import io.suggest.primo.id.IId
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.Element
 

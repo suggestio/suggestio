@@ -2,8 +2,8 @@ package io.suggest.model.n2.node.event
 
 import io.suggest.event.SioEventT
 import io.suggest.event.SioNotifier.Classifier
-import io.suggest.model.common.OptStrId
-import io.suggest.model.n2.node.{MNodeType, INodeId, MNode}
+import io.suggest.model.n2.node.{INodeId, MNode, MNodeType}
+import io.suggest.primo.id.OptStrId
 
 /**
  * Suggest.io

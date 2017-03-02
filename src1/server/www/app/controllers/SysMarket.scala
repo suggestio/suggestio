@@ -8,11 +8,11 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.common.OptId
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mctx.Context

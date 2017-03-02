@@ -27,7 +27,7 @@ import scala.concurrent.Future
 class CanSubmitExtTargetForNode @Inject() (
                                             advExtFormUtil          : AdvExtFormUtil,
                                             mExtTargets             : MExtTargets,
-                                            isAdnNodeAdmin          : IsAdnNodeAdmin,
+                                            isNodeAdmin             : IsNodeAdmin,
                                             mCommonDi               : ICommonDi
                                           )
   extends SioActionBuilderOuter
@@ -49,7 +49,7 @@ class CanSubmitExtTargetForNode @Inject() (
         val personIdOpt = sessionUtil.getPersonId(request)
         val user = mSioUsers(personIdOpt)
 
-        val isAdnNodeAdmFut = isAdnNodeAdmin.isAdnNodeAdmin(nodeId, user)
+        val isAdnNodeAdmFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)
         val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
 
         // Запускаем сразу в фоне поиск уже сохранённой цели.
@@ -88,7 +88,7 @@ class CanSubmitExtTargetForNode @Inject() (
           // Нет прав на узел.
           case None =>
             val req1 = MReq(request, user)
-            isAdnNodeAdmin.onUnauthNode(req1)
+            isNodeAdmin.onUnauthNode(req1)
         }
       }
 

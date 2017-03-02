@@ -2,8 +2,8 @@ package io.suggest.es.search
 
 import com.sksamuel.elastic4s.{IndexesAndTypes, SearchDefinition}
 import io.suggest.es.model.{EsModelStaticT, ISearchResp}
-import io.suggest.model.common.OptId
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}

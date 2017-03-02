@@ -42,15 +42,15 @@ import scala.concurrent.Future
  * Супервайзер ресторанной сети и ТЦ имеют одну форму и здесь обозначаются как "узлы-лидеры".
  */
 class MarketLkAdnEdit @Inject() (
-  welcomeUtil                     : WelcomeUtil,
-  logoUtil                        : LogoUtil,
-  mNodes                          : MNodes,
-  tempImgSupport                  : TempImgSupport,
-  galleryUtil                     : GalleryUtil,
-  imgFormUtil                     : ImgFormUtil,
-  isAdnNodeAdmin                  : IsAdnNodeAdmin,
-  isAuth                          : IsAuth,
-  override val mCommonDi          : ICommonDi
+                                  welcomeUtil                     : WelcomeUtil,
+                                  logoUtil                        : LogoUtil,
+                                  mNodes                          : MNodes,
+                                  tempImgSupport                  : TempImgSupport,
+                                  galleryUtil                     : GalleryUtil,
+                                  imgFormUtil                     : ImgFormUtil,
+                                  isNodeAdmin                     : IsNodeAdmin,
+                                  isAuth                          : IsAuth,
+                                  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
@@ -219,7 +219,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Страница с формой редактирования узла рекламной сети. Функция смотрит тип узла и рендерит ту или иную страницу. */
   def editAdnNode(adnId: String) = csrf.AddToken {
-    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       import request.mnode
 
       // Запуск асинхронной сборки данных из моделей.
@@ -274,7 +274,7 @@ class MarketLkAdnEdit @Inject() (
   /** Сабмит формы редактирования узла рекламной сети. Функция смотрит тип узла рекламной сети и использует
     * тот или иной хелпер. */
   def editAdnNodeSubmit(adnId: String) = csrf.Check {
-    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       import request.mnode
       lazy val logPrefix = s"editAdnNodeSubmit($adnId): "
       nodeFormM(mnode.extras.adn.get).bindFromRequest().fold(

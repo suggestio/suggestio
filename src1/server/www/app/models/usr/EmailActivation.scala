@@ -1,6 +1,5 @@
 package models.usr
 
-import io.suggest.model.common.OptStrId
 import io.suggest.es.model.EsModelUtil._
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.JacksonParsing
@@ -11,6 +10,7 @@ import play.api.mvc.QueryStringBindable
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.primo.id.OptStrId
 import io.suggest.text.util.StringUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

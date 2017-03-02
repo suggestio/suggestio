@@ -28,7 +28,7 @@ import views.html.sc.foc._adFullTpl
 trait MarketAdPreview
   extends SioController
   with IMacroLogs
-  with IIsAdnNodeAdmin
+  with IIsNodeAdmin
   with IBlkImgMakerDI
   with ILkAdEdFormUtil
 {
@@ -43,7 +43,7 @@ trait MarketAdPreview
    *         406 Not Acceptable при ошибочной форме.
    */
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = csrf.Check {
-    isAdnNodeAdmin(adnId).async { implicit request =>
+    isNodeAdmin(adnId).async { implicit request =>
       marketAdFormUtil.adFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))

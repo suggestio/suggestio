@@ -19,7 +19,7 @@ import scala.concurrent.Future
  */
 
 class CanAccessEvent @Inject() (
-                                 isAdnNodeAdmin         : IsAdnNodeAdmin,
+                                 isNodeAdmin            : IsNodeAdmin,
                                  mEvents                : MEvents,
                                  mCommonDi              : ICommonDi
                                )
@@ -66,7 +66,7 @@ class CanAccessEvent @Inject() (
               // Для наличия прав на событие нужны права на узел.
               maybeInitUser(user)
 
-              isAdnNodeAdmin.isAdnNodeAdmin(mevent.ownerId, user).flatMap {
+              isNodeAdmin.isAdnNodeAdmin(mevent.ownerId, user).flatMap {
                 case Some(mnode) =>
                   // Юзер имеет доступ к узлу. Значит, и к событию узла тоже.
                   val req1 = MNodeEventReq(mevent, mnode, request, user)
@@ -86,7 +86,7 @@ class CanAccessEvent @Inject() (
       }
 
       def forbidden(req: IReq[_]): Future[Result] = {
-        isAdnNodeAdmin.onUnauthNode(req)
+        isNodeAdmin.onUnauthNode(req)
       }
 
       def eventNotFound(req: IReq[_]): Future[Result] = {

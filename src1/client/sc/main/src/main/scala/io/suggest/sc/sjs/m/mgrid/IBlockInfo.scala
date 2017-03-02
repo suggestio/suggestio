@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
-import io.suggest.primo.IId
+import io.suggest.primo.id.IId
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**

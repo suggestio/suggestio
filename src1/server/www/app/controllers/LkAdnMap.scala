@@ -18,7 +18,7 @@ import play.api.data.Form
 import play.api.i18n.Messages
 import play.api.libs.json.Json
 import play.api.mvc.Result
-import util.acl.IsAdnNodeAdmin
+import util.acl.IsNodeAdmin
 import util.adn.mapf.{LkAdnMapBillUtil, LkAdnMapFormUtil}
 import util.adv.AdvFormUtil
 import util.adv.geo.AdvGeoLocUtil
@@ -38,14 +38,14 @@ import scala.concurrent.Future
   * На карте в точках размещаются узлы ADN, и это делается за денежки.
   */
 class LkAdnMap @Inject() (
-  advFormUtil                   : AdvFormUtil,
-  lkAdnMapFormUtil              : LkAdnMapFormUtil,
-  lkAdnMapBillUtil              : LkAdnMapBillUtil,
-  bill2Util                     : Bill2Util,
-  advGeoLocUtil                 : AdvGeoLocUtil,
-  mdrUtil                       : MdrUtil,
-  isAdnNodeAdmin                : IsAdnNodeAdmin,
-  override val mCommonDi        : ICommonDi
+                           advFormUtil                   : AdvFormUtil,
+                           lkAdnMapFormUtil              : LkAdnMapFormUtil,
+                           lkAdnMapBillUtil              : LkAdnMapBillUtil,
+                           bill2Util                     : Bill2Util,
+                           advGeoLocUtil                 : AdvGeoLocUtil,
+                           mdrUtil                       : MdrUtil,
+                           isNodeAdmin                   : IsNodeAdmin,
+                           override val mCommonDi        : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
@@ -73,7 +73,7 @@ class LkAdnMap @Inject() (
     * @param esNodeId id текущего ADN-узла.
     */
   def forNode(esNodeId: MEsUuId) = csrf.AddToken {
-    isAdnNodeAdmin(esNodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(esNodeId, U.Lk).async { implicit request =>
       // TODO Заполнить форму начальными данными: положение карты, начальная точка, начальный период размещения
       val nodeId: String = esNodeId
       val geoPointFut = getGeoPoint0(nodeId)
@@ -131,7 +131,7 @@ class LkAdnMap @Inject() (
 
   /** Сабмит формы размещения узла. */
   def forNodeSubmit(esNodeId: MEsUuId) = csrf.Check {
-    isAdnNodeAdmin(esNodeId, U.PersonNode).async { implicit request =>
+    isNodeAdmin(esNodeId, U.PersonNode).async { implicit request =>
       val nodeId: String = request.mnode.id.getOrElse(esNodeId)
       lazy val logPrefix = s"formNodeSubmit($nodeId):"
 
@@ -211,7 +211,7 @@ class LkAdnMap @Inject() (
 
   /** Сабмит формы для рассчёт стоимости размещения. */
   def getPriceSubmit(esNodeId: MEsUuId) = csrf.Check {
-    isAdnNodeAdmin(esNodeId).async { implicit request =>
+    isNodeAdmin(esNodeId).async { implicit request =>
       val nodeId: String = esNodeId
       lazy val logPrefix = s"getPriceSubmit($nodeId):"
 

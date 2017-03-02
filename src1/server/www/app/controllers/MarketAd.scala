@@ -43,18 +43,18 @@ import scala.concurrent.Future
  * Description: Контроллер для работы с рекламным фунционалом.
  */
 class MarketAd @Inject() (
-  tempImgSupport                          : TempImgSupport,
-  mNodes                                  : MNodes,
-  sysMdrUtil                              : SysMdrUtil,
-  lkEditorWsActors                        : LkEditorWsActors,
-  isAuth                                  : IsAuth,
-  canEditAd                               : CanEditAd,
-  @Named("blk") override val blkImgMaker  : IMaker,
-  n2NodesUtil                             : N2NodesUtil,
-  canUpdateSls                            : CanUpdateSls,
-  override val isAdnNodeAdmin             : IsAdnNodeAdmin,
-  override val marketAdFormUtil           : LkAdEdFormUtil,
-  override val mCommonDi                  : ICommonDi
+                           tempImgSupport                          : TempImgSupport,
+                           mNodes                                  : MNodes,
+                           sysMdrUtil                              : SysMdrUtil,
+                           lkEditorWsActors                        : LkEditorWsActors,
+                           isAuth                                  : IsAuth,
+                           canEditAd                               : CanEditAd,
+                           @Named("blk") override val blkImgMaker  : IMaker,
+                           n2NodesUtil                             : N2NodesUtil,
+                           canUpdateSls                            : CanUpdateSls,
+                           override val isNodeAdmin             : IsNodeAdmin,
+                           override val marketAdFormUtil           : LkAdEdFormUtil,
+                           override val mCommonDi                  : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
@@ -110,7 +110,7 @@ class MarketAd @Inject() (
     * @param adnId id узла рекламной сети.
     */
   def createAd(adnId: String) = csrf.AddToken {
-    isAdnNodeAdmin(adnId, U.Balance).async { implicit request =>
+    isNodeAdmin(adnId, U.Balance).async { implicit request =>
       _renderCreateFormWith(
         af      = adFormM,
         adnNode = request.mnode,
@@ -133,7 +133,7 @@ class MarketAd @Inject() (
     * @param adnId id магазина.
     */
   def createAdSubmit(adnId: String) = csrf.Check {
-    isAdnNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+    isNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
       import request.mnode
       lazy val logPrefix = s"createAdSubmit($adnId): "
       val bc = BlocksConf.DEFAULT

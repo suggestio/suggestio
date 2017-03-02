@@ -8,9 +8,9 @@ import com.sksamuel.elastic4s.{RichSearchHit, SearchDefinition}
 import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.common.OptStrId
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonWrapper
 import org.elasticsearch.action.bulk.{BulkProcessor, BulkRequest, BulkResponse}
 import org.elasticsearch.action.get.{GetResponse, MultiGetResponse}

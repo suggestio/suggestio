@@ -22,7 +22,7 @@ import scala.concurrent.Future
 class CanViewOrder @Inject() (
                                mOrders         : MOrders,
                                isAuth          : IsAuth,
-                               isAdnNodeAdmin  : IsAdnNodeAdmin,
+                               isNodeAdmin     : IsNodeAdmin,
                                mCommonDi       : ICommonDi
                              )
   extends SioActionBuilderOuter
@@ -66,7 +66,7 @@ class CanViewOrder @Inject() (
           }
 
           // Прочитать узел, заявленный в URL, и проверить права юзера для доступа на него.
-          val nodeAdmOptFut = isAdnNodeAdmin.isAdnNodeAdmin(onNodeId, user)
+          val nodeAdmOptFut = isNodeAdmin.isAdnNodeAdmin(onNodeId, user)
 
           // Запускаем инициализацию полей модели user, т.к. маловероятно, что этот реквест пойдёт мимо кассы.
           maybeInitUser(user)

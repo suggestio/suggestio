@@ -39,7 +39,7 @@ class LkAdvExt @Inject() (
                            canAdvAd                        : CanAdvAd,
                            mNodes                          : MNodes,
                            advExtWsActors                  : AdvExtWsActors,
-                           isAdnNodeAdmin                  : IsAdnNodeAdmin,
+                           isNodeAdmin                     : IsNodeAdmin,
                            mExtTargets                     : MExtTargets,
                            canSubmitExtTargetForNode       : CanSubmitExtTargetForNode,
                            advExtFormUtil                  : AdvExtFormUtil,
@@ -316,7 +316,7 @@ class LkAdvExt @Inject() (
    * @return 200 Ok с отрендеренной формой.
    */
   def writeTarget(adnId: String) = csrf.AddToken {
-    isAdnNodeAdmin(adnId) { implicit request =>
+    isNodeAdmin(adnId) { implicit request =>
       val ctx = implicitly[Context]
       val form0 = advExtFormUtil.oneRawTargetFullFormM(adnId)
         .fill( ("", Some(ctx.messages("New.target")), None) )
@@ -384,7 +384,7 @@ class LkAdvExt @Inject() (
    * @return Что актор пожелает.
    *         В норме -- закрытие попапа с выставление шифрованного access-token'а в куку.
    */
-  private def oauth1PopupReturn(adnId: String, actorInfoQs: ActorPathQs) = isAdnNodeAdmin(adnId).async { implicit request =>
+  private def oauth1PopupReturn(adnId: String, actorInfoQs: ActorPathQs) = isNodeAdmin(adnId).async { implicit request =>
     trace(s"${request.method} oauth1return($adnId, $actorInfoQs): " + request.uri)
     val msg = OAuthVerifier(
       request.getQueryString("oauth_verifier")

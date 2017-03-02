@@ -2,11 +2,11 @@ package models.ai
 
 import java.time.ZoneId
 
-import io.suggest.model.common.OptStrId
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.primo.id.OptStrId
 import models.mproj.ICommonDi
 import play.api.libs.json.{JsArray, JsString}
 import io.suggest.util.JacksonParsing.{iteratorParser, strListParser, stringParser}

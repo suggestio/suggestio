@@ -1,17 +1,21 @@
 package controllers
 
+import akka.util.ByteString
 import com.google.inject.Inject
 import io.suggest.bin.ConvCodecs
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes.{MLknForm, MLknFormInit, MLknSubNodesResp, MLknTreeNode}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
+import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import models.mlk.nodes.MLkNodesTplArgs
 import models.mproj.ICommonDi
-import util.acl.IsAdnNodeAdmin
+import util.acl.IsNodeAdmin
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes.nodesTpl
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -28,7 +32,7 @@ import views.html.lk.nodes.nodesTpl
   * - массового создания маячков с целью занять чужие id'шники.
   */
 class LkNodes @Inject() (
-                          isAdnNodeAdmin            : IsAdnNodeAdmin,
+                          isNodeAdmin               : IsNodeAdmin,
                           lkNodesUtil               : LkNodesUtil,
                           pickleSrvUtil             : PickleSrvUtil,
                           mNodes                    : MNodes,
@@ -42,6 +46,27 @@ class LkNodes @Inject() (
   import pickleSrvUtil._
 
 
+  private def _subNodesRespFor(nodeId: String): Future[MLknSubNodesResp] = {
+    // Запустить поиск узлов.
+    val subNodesFut = mNodes.dynSearch {
+      lkNodesUtil.subNodesSearch(nodeId)
+    }
+
+    // Рендер найденных узлов в данные для модели формы.
+    for (subNodes <- subNodesFut) yield {
+      MLknSubNodesResp(
+        nodes = for (mnode <- subNodes) yield {
+          MLknTreeNode(
+            id                = mnode.id.get,
+            name              = mnode.guessDisplayNameOrId.getOrElse("???"),
+            ntypeId           = mnode.common.ntype.strId
+          )
+        }
+      )
+    }
+  }
+
+
   /**
     * Рендер страницы с формой управления подузлами текущего узла.
     * Сама форма реализована через react, тут у нас лишь страничка-обёртка.
@@ -49,26 +74,11 @@ class LkNodes @Inject() (
     * @param nodeId id текущей узла, т.е. узла с которым идёт взаимодействие.
     * @return 200 + HTML, если у юзера достаточно прав для управления узлом.
     */
-  def subNodesOf(nodeId: String) = csrf.AddToken {
-    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+  def nodesOf(nodeId: String) = csrf.AddToken {
+    isNodeAdmin(nodeId, U.Lk).async { implicit request =>
 
-      // Запустить поиск узлов.
-      val subNodesFut = mNodes.dynSearch {
-        lkNodesUtil.subNodesSearch(nodeId)
-      }
-
-      // Рендер найденных узлов в данные для модели формы.
-      val subNodesRespFut = for (subNodes <- subNodesFut) yield {
-        MLknSubNodesResp(
-          nodes = for (mnode <- subNodes) yield {
-            MLknTreeNode(
-              id                = mnode.id.get,
-              name              = mnode.guessDisplayNameOrId.getOrElse("???"),
-              ntypeId           = mnode.common.ntype.strId
-            )
-          }
-        )
-      }
+      // Запустить поиск под-узлов для текущего узла.
+      val subNodesRespFut = _subNodesRespFor(nodeId)
 
       // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
       val formStateB64Fut = for {
@@ -102,6 +112,24 @@ class LkNodes @Inject() (
           mnode     = request.mnode
         )
         Ok( nodesTpl(args)(ctx) )
+      }
+    }
+  }
+
+
+  /** Получение инфы по узлам, относящимся к указанному узлу.
+    *
+    * @param nodeId id узла.
+    * @return 200 OK с бинарем ответа.
+    */
+  def subNodesOf(nodeId: String) = csrf.Check {
+    isNodeAdmin(nodeId).async { implicit request =>
+      for {
+        resp <- _subNodesRespFor(nodeId)
+      } yield {
+        LOGGER.trace(s"subNodesOf($nodeId): Found ${resp.nodes.size} sub-nodes: ${IId.els2ids(resp.nodes).mkString(", ")}")
+        val bbuf = PickleUtil.pickle(resp)
+        Ok( ByteString(bbuf) )
       }
     }
   }

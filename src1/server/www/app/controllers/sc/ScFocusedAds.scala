@@ -4,9 +4,9 @@ import _root_.util.di.IScUtil
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.css.FocusedTopLeft
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearch
+import io.suggest.primo.id.OptId
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.Lists
 import io.suggest.util.logs.IMacroLogs

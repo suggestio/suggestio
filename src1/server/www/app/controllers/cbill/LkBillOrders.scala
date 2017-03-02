@@ -9,8 +9,8 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{IMOrders, MOrder, OrderStatusChanged}
-import io.suggest.model.common.OptId
 import io.suggest.model.n2.node.MNode
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
 import models.mbill._
@@ -35,7 +35,7 @@ trait LkBillOrders
   extends SioController
   with IBill2UtilDi
   with IMacroLogs
-  with IIsAdnNodeAdmin
+  with IIsNodeAdmin
   with IMOrders
   with IMItems
   with ICanViewOrder
@@ -119,7 +119,7 @@ trait LkBillOrders
     * @return Страница со таблицей-списком заказов. Свежие заказы сверху.
     */
   def orders(onNodeId: MEsUuId, page: Int) = csrf.AddToken {
-    isAdnNodeAdmin(onNodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(onNodeId, U.Lk).async { implicit request =>
       lazy val logPrefix = s"nodeOrders($onNodeId, $page):"
 
       // Слишком далёкую страницу - отсеивать.
@@ -358,7 +358,7 @@ trait LkBillOrders
     * @return 200 ОК с html страницей корзины.
     */
   def cart(onNodeId: String, r: Option[String]) = csrf.AddToken {
-    isAdnNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
+    isNodeAdmin(onNodeId, U.Lk, U.ContractId).async { implicit request =>
 
       // Узнать id контракта юзера. Сам контракт не важен.
       val mcIdOptFut = request.user.contractIdOptFut
@@ -428,7 +428,7 @@ trait LkBillOrders
     * @return Редирект или страница оплаты.
     */
   def cartSubmit(onNodeId: String) = csrf.Check {
-    isAdnNodeAdmin(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
+    isNodeAdmin(onNodeId, U.PersonNode, U.Contract).async { implicit request =>
       // Если цена нулевая, то контракт оформить как выполненный. Иначе -- заняться оплатой.
       // Чтение ордера, item'ов, кошелька, etc и их возможную модификацию надо проводить внутри одной транзакции.
       for {
@@ -497,7 +497,7 @@ trait LkBillOrders
     * @return Редирект.
     */
   def cartClear(onNodeId: String, r: Option[String]) = csrf.Check {
-    isAdnNodeAdmin(onNodeId, U.ContractId).async { implicit request =>
+    isNodeAdmin(onNodeId, U.ContractId).async { implicit request =>
       lazy val logPrefix = s"cartClear(u=${request.user.personIdOpt.orNull},on=$onNodeId):"
 
       request.user

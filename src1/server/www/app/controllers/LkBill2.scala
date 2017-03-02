@@ -12,7 +12,7 @@ import models.im.make.IMaker
 import models.mbill._
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
-import util.acl.{CanAccessItem, CanViewOrder, IsAdnNodeAdmin, IsAuthNode}
+import util.acl.{CanAccessItem, CanViewOrder, IsNodeAdmin, IsAuthNode}
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.{GalleryUtil, LogoUtil}
 import views.html.lk.billing._
@@ -27,20 +27,20 @@ import scala.concurrent.Future
   * Прошлый контроллер назывался MarketLkBilling.
   */
 class LkBill2 @Inject() (
-  tfDailyUtil                 : TfDailyUtil,
-  mCalendars                  : MCalendars,
-  galleryUtil                 : GalleryUtil,
-  override val logoUtil       : LogoUtil,
-  override val canViewOrder   : CanViewOrder,
-  override val canAccessItem  : CanAccessItem,
-  @Named("blk") override val blkImgMaker  : IMaker,
-  isAuthNode                  : IsAuthNode,
-  override val isAdnNodeAdmin : IsAdnNodeAdmin,
-  override val mItems         : MItems,
-  override val bill2Util      : Bill2Util,
-  override val mTxns          : MTxns,
-  override val mOrders        : MOrders,
-  override val mCommonDi      : ICommonDi
+                          tfDailyUtil                 : TfDailyUtil,
+                          mCalendars                  : MCalendars,
+                          galleryUtil                 : GalleryUtil,
+                          override val logoUtil       : LogoUtil,
+                          override val canViewOrder   : CanViewOrder,
+                          override val canAccessItem  : CanAccessItem,
+                          @Named("blk") override val blkImgMaker  : IMaker,
+                          isAuthNode                  : IsAuthNode,
+                          override val isNodeAdmin    : IsNodeAdmin,
+                          override val mItems         : MItems,
+                          override val bill2Util      : Bill2Util,
+                          override val mTxns          : MTxns,
+                          override val mOrders        : MOrders,
+                          override val mCommonDi      : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
@@ -79,7 +79,7 @@ class LkBill2 @Inject() (
     * @return 200 Ок со страницей биллинга узла.
     */
   def onNode(nodeId: String) = csrf.AddToken {
-    isAdnNodeAdmin(nodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(nodeId, U.Lk).async { implicit request =>
       val dailyTfArgsFut = _dailyTfArgsFut(request.mnode)
 
       // Отрендерить результаты, когда всё получено:
@@ -106,7 +106,7 @@ class LkBill2 @Inject() (
     * @return Страница "спасибо за покупку".
     */
   def thanksForBuy(onNodeId: String) = csrf.AddToken {
-    isAdnNodeAdmin(onNodeId, U.Lk).async { implicit request =>
+    isNodeAdmin(onNodeId, U.Lk).async { implicit request =>
       request.user.lkCtxDataFut.map { implicit ctxData =>
         Ok(ThanksForBuyTpl(request.mnode))
       }

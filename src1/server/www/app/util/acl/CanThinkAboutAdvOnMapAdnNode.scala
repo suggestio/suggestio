@@ -21,7 +21,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
                                                mNodes                 : MNodes,
                                                canAdvAd               : CanAdvAd,
                                                advGeoMapUtil          : AdvGeoMapUtil,
-                                               isAdnNodeAdmin         : IsAdnNodeAdmin,
+                                               isNodeAdmin            : IsNodeAdmin,
                                                isAuth                 : IsAuth,
                                                mCommonDi              : ICommonDi
                                              )
@@ -84,19 +84,19 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
                     // Нет узла или нельзя на него размещать. Логгирование уже выполнено внутри nodeCheckedOptFut.
                     case None =>
-                      isAdnNodeAdmin.onUnauthNode(reqBlank)
+                      isNodeAdmin.onUnauthNode(reqBlank)
                   }
 
                 // Нет доступа к карточке. Обычно, когда сессия истекла.
                 case None =>
                   LOGGER.debug(s"$logPrefix: maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
-                  isAdnNodeAdmin.onUnauthNode(reqBlank)
+                  isNodeAdmin.onUnauthNode(reqBlank)
               }
 
             // Нет карточки такой вообще.
             case None =>
               LOGGER.debug(s"$logPrefix: MAd not found: " + adId)
-              isAdnNodeAdmin.onUnauthNode(reqBlank)
+              isNodeAdmin.onUnauthNode(reqBlank)
           }
         }
       }

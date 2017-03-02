@@ -18,7 +18,7 @@ import scala.concurrent.Future
  */
 
 class IsAdnNodeAdminOptOrAuth @Inject() (
-                                          isAdnNodeAdmin          : IsAdnNodeAdmin,
+                                          isNodeAdmin             : IsNodeAdmin,
                                           isAuth                  : IsAuth,
                                           mCommonDi               : ICommonDi
                                         )
@@ -47,7 +47,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
 
           mnodeOptFut.flatMap { mnodeOpt =>
             val mnodeOpt1 = mnodeOpt.filter { mnode =>
-              isAdnNodeAdmin.isAdnNodeAdminCheck(mnode, user)
+              isNodeAdmin.isAdnNodeAdminCheck(mnode, user)
             }
             val req1 = MNodeOptReq(mnodeOpt1, request, user)
             block(req1)

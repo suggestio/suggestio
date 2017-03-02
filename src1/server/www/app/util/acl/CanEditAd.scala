@@ -22,7 +22,7 @@ import scala.concurrent.Future
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
 @Singleton
 class CanEditAd @Inject() (
-                            isAdnNodeAdmin          : IsAdnNodeAdmin,
+                            isNodeAdmin             : IsNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
                             isAuth                  : IsAuth,
                             mCommonDi               : ICommonDi
@@ -70,7 +70,7 @@ class CanEditAd @Inject() (
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
         val personIdOpt = sessionUtil.getPersonId(request)
 
-        personIdOpt.fold (isAuth.onUnauth(request)) { personId =>
+        personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
           val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
           val user = mSioUsers(personIdOpt)
 
@@ -83,7 +83,7 @@ class CanEditAd @Inject() (
 
               prodNodeOptFut.flatMap {
                 case Some(producer) =>
-                  val allowed = user.isSuper || isAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                  val allowed = user.isSuper || isNodeAdmin.isAdnNodeAdminCheck(producer, user)
 
                   if (!allowed) {
                     LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")

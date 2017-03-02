@@ -20,7 +20,7 @@ import scala.concurrent.Future
  */
 
 class CanUpdateSls @Inject() (
-                               isAdnNodeAdmin         : IsAdnNodeAdmin,
+                               isNodeAdmin            : IsNodeAdmin,
                                canEditAd              : CanEditAd,
                                n2NodesUtil            : N2NodesUtil,
                                mCommonDi              : ICommonDi
@@ -46,7 +46,7 @@ class CanUpdateSls @Inject() (
 
         if (user.isAnon) {
           LOGGER.trace("invokeBlock(): Anonymous access prohibited to " + adId)
-          isAdnNodeAdmin.onUnauthNode(reqErr)
+          isNodeAdmin.onUnauthNode(reqErr)
 
         } else {
           madOptFut.flatMap {
@@ -67,10 +67,10 @@ class CanUpdateSls @Inject() (
 
                 val producerIdOpt = n2NodesUtil.madProducerId(mad)
                 mNodesCache.maybeGetByIdCached(producerIdOpt).flatMap { producerOpt =>
-                  val isNodeAdmin = producerOpt.exists { producer =>
-                    isAdnNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                  val userIsNodeAdmin = producerOpt.exists { producer =>
+                    isNodeAdmin.isAdnNodeAdminCheck(producer, user)
                   }
-                  if (isNodeAdmin) {
+                  if (userIsNodeAdmin) {
                     // Юзер является админом. Всё ок.
                     val req1 = MAdProdReq(mad, producerOpt.get, request, user)
                     block(req1)

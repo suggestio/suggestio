@@ -1,8 +1,8 @@
 package io.suggest.es.model
 
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.common.OptId
 import io.suggest.es.util.SioEsUtil._
+import io.suggest.primo.id.OptId
 import org.elasticsearch.action.delete.DeleteRequestBuilder
 import org.elasticsearch.action.get.MultiGetRequest.Item
 import org.elasticsearch.action.index.IndexRequestBuilder

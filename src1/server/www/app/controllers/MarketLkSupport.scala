@@ -25,13 +25,13 @@ import scala.concurrent.Future
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
 class MarketLkSupport @Inject() (
-  mailer                          : IMailerWrapper,
-  identUtil                       : IdentUtil,
-  mPersonIdents                   : MPersonIdents,
-  supportUtil                     : SupportUtil,
-  isAuth                          : IsAuth,
-  isAdnNodeAdmin                  : IsAdnNodeAdmin,
-  override val mCommonDi          : ICommonDi
+                                  mailer                          : IMailerWrapper,
+                                  identUtil                       : IdentUtil,
+                                  mPersonIdents                   : MPersonIdents,
+                                  supportUtil                     : SupportUtil,
+                                  isAuth                          : IsAuth,
+                                  isNodeAdmin                     : IsNodeAdmin,
+                                  override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MacroLogsImplLazy
@@ -65,7 +65,7 @@ class MarketLkSupport @Inject() (
     * @return 200 Ок и страница с формой.
    */
   def supportFormNode(adnId: String, r: Option[String]) = csrf.AddToken {
-    isAdnNodeAdmin(adnId, U.Lk).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       val mnodeOpt = Some(request.mnode)
       _supportForm(mnodeOpt, r)
     }
@@ -108,7 +108,7 @@ class MarketLkSupport @Inject() (
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
   def supportFormNodeSubmit(adnId: String, r: Option[String]) = csrf.Check {
-    isAdnNodeAdmin(adnId).async { implicit request =>
+    isNodeAdmin(adnId).async { implicit request =>
       val mnodeOpt = Some(request.mnode)
       _supportFormSubmit(mnodeOpt, r)
     }
@@ -173,7 +173,7 @@ class MarketLkSupport @Inject() (
 
   /** Сабмит формы запроса выставления географии узла. */
   def askGeo4NodeSubmit(adnId: String, r: Option[String]) = csrf.Check {
-    isAdnNodeAdmin(adnId).async { implicit request =>
+    isNodeAdmin(adnId).async { implicit request =>
       lazy val logPrefix = s"addNodeGeoSubmit($adnId): "
 
       geoNodeFormM.bindFromRequest().fold(
