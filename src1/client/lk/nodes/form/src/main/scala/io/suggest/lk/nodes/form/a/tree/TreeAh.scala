@@ -1,7 +1,9 @@
 package io.suggest.lk.nodes.form.a.tree
 
-import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.lk.nodes.form.m.{MTree, NodeNameClick}
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import io.suggest.lk.nodes.form.a.ILkNodesApi
+import io.suggest.lk.nodes.form.m.{HandleSubNodesOf, MTree, NodeNameClick}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io
@@ -10,7 +12,8 @@ import io.suggest.lk.nodes.form.m.{MTree, NodeNameClick}
   * Description: Diode action-handler
   */
 class TreeAh[M](
-                 modelRW: ModelRW[M, MTree]
+                 api      : ILkNodesApi,
+                 modelRW  : ModelRW[M, MTree]
                )
   extends ActionHandler(modelRW) {
 
@@ -18,8 +21,22 @@ class TreeAh[M](
 
     // Сигнал о необходимости показать какой-то узел подробнее.
     case nnc: NodeNameClick =>
+
+      val rcvrKey = nnc.rcvrKey
+      val nodeId = nnc.rcvrKey.head
+
+      // Собрать эффект запроса к серверу за подробностями по узлу.
+      val fx = Effect {
+        // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
+        for {
+          resp <- api.subNodesOf(nodeId)
+        } yield {
+          HandleSubNodesOf(rcvrKey, resp)
+        }
+      }
+
+      val v0 = value
       println("clicked: " + nnc.rcvrKey)
-      // TODO Надо отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
       ???
 
   }

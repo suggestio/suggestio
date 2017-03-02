@@ -51,6 +51,7 @@ trait ILkAdvGeoApi extends ITagsApi {
 /** Реализация [[ILkAdvGeoApi]]. */
 class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
+  import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
   import MRcvrPopupResp.pickler
   import MGeoAdvExistPopupResp.pickler
 

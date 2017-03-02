@@ -2,6 +2,7 @@ package io.suggest.adv.rcvr
 
 import boopickle.Default._
 import io.suggest.dt.interval.MRangeYmdOpt
+import io.suggest.lk.nodes.NodesTreeWalker
 
 /**
   * Suggest.io
@@ -28,7 +29,17 @@ case class MRcvrPopupResp(
 
 
 /** Поддержка для модели узлов и подузлов ресиверов в попапе ресивера. */
-object IRcvrPopupNode {
+object IRcvrPopupNode extends NodesTreeWalker[IRcvrPopupNode] {
+
+  override protected def _subNodesOf(node: IRcvrPopupNode): Iterator[IRcvrPopupNode] = {
+    node.subGroups
+      .iterator
+      .flatMap(_.nodes)
+  }
+
+  override protected def _nodeIdOf(node: IRcvrPopupNode): String = {
+    node.nodeId
+  }
 
   /**
     * Рекурсивный pickler весь живёт здесь.
@@ -40,44 +51,6 @@ object IRcvrPopupNode {
     implicit val metaP = MRcvrPopupMeta.rcvrPopupMetaPickler
     implicit val selfP = compositePickler[IRcvrPopupNode]
     selfP.addConcreteType[MRcvrPopupNode]
-  }
-
-  /** Рекурсивный поиск под-узла по указанному пути id.
-    * @param rcvrKey Путь id'шников узла.
-    * @param parent Начальный узел.
-    * @return Опционально: найденный под-узел.
-    *         Если путь пустой, то будет возвращён текущий узел.
-    */
-  def findSubNode(rcvrKey: RcvrKey, parent: IRcvrPopupNode): Option[IRcvrPopupNode] = {
-    if (rcvrKey.isEmpty) {
-      Some(parent)
-    } else {
-      val childRcvrKey = rcvrKey.tail
-      parent.subGroups
-        .iterator
-        .flatMap(_.nodes)
-        .filter { _.nodeId == rcvrKey.head }
-        .flatMap { subNode =>
-          findSubNode(childRcvrKey, subNode)
-        }
-        .toStream
-        .headOption
-    }
-  }
-
-  /**
-    * Строгий поиск узла по указанному node-id пути.
-    * В поиске участвует текущий узел и его под-узлы.
-    * @param rcvrKey Ключ узла.
-    * @param node Начальный узел.
-    * @return Опционально: найденный узел.
-    */
-  def findNode(rcvrKey: RcvrKey, node: IRcvrPopupNode): Option[IRcvrPopupNode] = {
-    // Случай пустого rcvrKey НЕ игнорируем, т.к. это скорее защита от самого себя.
-    if ( rcvrKey.headOption.contains(node.nodeId) )
-      findSubNode(rcvrKey.tail, node)
-    else
-      None
   }
 
 }

@@ -5,7 +5,8 @@
 @import ctx.messages
 @import io.suggest.lk.nodes.LkNodesConst.FORM_CONT_ID
 @import io.suggest.common.spa.SpaConst.STATE_CONT_ID
-@import views.html.stuff._preLoaderLkTpl
+@import views.html.stuff.{_preLoaderLkTpl, jsTpl2HtmlTpl}
+@import views.js.stuff.jsRevRouterTpl
 
 @nodesBaseTpl(
   title     = messages("Nodes.management"),
@@ -21,10 +22,11 @@
   </div>
 
 
-  @* JS-роутер. *@
-  @*jsTpl2HtmlTpl( withScriptTag = true )(
+  @* JS-роутер для команд из формы... *@
+  @jsTpl2HtmlTpl( withScriptTag = true )(
     jsRevRouterTpl("jsRoutes", csrfAll = true)(
+      routes.javascript.LkNodes.subNodesOf
     )
-  )*@
+  )
 
 }

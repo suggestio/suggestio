@@ -47,18 +47,20 @@ object JsMessagesSingleLangNative extends IJsMessagesSingleLang
   */
 object Messages {
 
+  /** Локализовать инстанс IMessage. */
+  def apply(fe: IMessage): String = {
+    apply1(fe.message, fe.args)
+  }
+
   /** Локализовать сообщение по коду и опциональным аргументам. */
   def apply(message: String, args: Any*): String = {
-    apply1(message, args)
+    apply1(message, args.asInstanceOf[Seq[js.Any]])
   }
 
   def apply1(message: String, args: Seq[Any]): String = {
-    JsMessagesSingleLangNative(message, args)
-  }
-
-  /** Локализовать инстанс IMessage. */
-  def apply(fe: IMessage): String = {
-    apply(fe.message, fe.args)
+    // Шаманство с аргументами из-за конфликта между Any, AnyRef и js.Any.
+    val argsJs = args.asInstanceOf[Seq[js.Any]]
+    JsMessagesSingleLangNative(message, argsJs: _*)
   }
 
 }

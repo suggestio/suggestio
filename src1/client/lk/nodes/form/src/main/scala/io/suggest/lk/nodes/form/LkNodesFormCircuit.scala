@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form
 import diode.react.ReactConnector
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
+import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.lk.nodes.form.a.tree.TreeAh
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
 import io.suggest.pick.PickleUtil
@@ -21,6 +22,8 @@ import scala.concurrent.Future
   * Description: Diode circuit для формы управления узлами в личном кабинете.
   */
 object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[MLkNodesRoot] {
+
+  val API = new LkNodesApiHttpImpl
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.LK_NODES_FORM_ERROR
 
@@ -48,6 +51,7 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
   override protected def actionHandler: HandlerFunction = {
     // Реагировать на события древа узлов.
     val treeAh = new TreeAh(
+      api     = API,
       modelRW = zoomRW(_.tree) { _.withTree(_) }
     )
 

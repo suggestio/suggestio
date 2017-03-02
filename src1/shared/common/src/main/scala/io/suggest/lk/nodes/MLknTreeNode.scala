@@ -10,7 +10,15 @@ import io.suggest.primo.id.IId
   * Description: Кросс-платформенная модель данных по одному узлу в дереве узлов форме узлов.
   */
 
-object ILknTreeNode {
+object ILknTreeNode extends NodesTreeWalker[ILknTreeNode] {
+
+  override protected def _subNodesOf(node: ILknTreeNode): TraversableOnce[ILknTreeNode] = {
+    node.children
+  }
+
+  override protected def _nodeIdOf(node: ILknTreeNode): String = {
+    node.id
+  }
 
   /** Поддержка сериализации/десериализации. */
   implicit val lknTreeNodePickler: Pickler[ILknTreeNode] = {

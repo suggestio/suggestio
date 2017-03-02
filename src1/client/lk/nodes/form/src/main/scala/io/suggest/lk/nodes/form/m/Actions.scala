@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.lk.nodes.MLknSubNodesResp
 import io.suggest.sjs.common.spa.DAction
 
 /**
@@ -14,3 +15,7 @@ sealed trait LkNodesAction extends DAction
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
 case class NodeNameClick(rcvrKey: RcvrKey) extends LkNodesAction
+
+/** Ответ сервера по поводу под-узлов. */
+case class HandleSubNodesOf(rcvrKey: RcvrKey, subNodesResp: MLknSubNodesResp) extends LkNodesAction
+
