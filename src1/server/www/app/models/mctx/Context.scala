@@ -38,7 +38,7 @@ import scala.util.matching.Regex
 
 /** Статическая поддержка для экземпляров [[Context]] и прочих вещей. В основном, тут всякие константы. */
 @Singleton
-class ContextUtil @Inject() (
+final class ContextUtil @Inject() (
   override val current: Application
 )
   extends ICurrentConf
@@ -49,16 +49,34 @@ class ContextUtil @Inject() (
   val isIpadRe = "iPad".r.unanchored
   val isIphoneRe = "iPhone".r.unanchored
 
+  /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
+  val SCREEN_ARG_NAME_RE = "a\\.s(creen)?".r
+
+
   /** Самое дефолтовое имя главного домена. */
   private def MAIN_DOMAIN_DFLT = "suggest.io"
 
-  /** Дефолтовый хост и порт. Используется, когда по стечению обстоятельств, нет подходящего значения для хоста. */
-  val DFLT_HOST_PORT = configuration.getString("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
+  /** На dev-системах удобно глобально выключить https в конфиге. */
+  val HTTPS_DISABLED = configuration.getBoolean("sio.https.disabled").contains(true)
+
+  def HTTPS_ENABLED = !HTTPS_DISABLED
+
+  /** Дефолтовый протокол работы suggest.io. */
+  def PROTO: String = {
+    if (HTTPS_DISABLED) "http" else "https"
+  }
+
+  /** Хост:порт сайта suggest.io. */
+  val HOST_PORT = configuration.getString("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
+
+  /** Префикс абсолютных ссылок на сайт. */
+  val URL_PREFIX = PROTO + "://" + HOST_PORT
+
 
   /** Основной хост и порт, на котором крутится выдача sio-market. */
-  val SC_HOST_PORT = configuration.getString("sio.sc.hostport").getOrElse(DFLT_HOST_PORT)
-  val SC_PROTO = configuration.getString("sio.sc.proto").getOrElse("http")
-  val SC_URL_PREFIX = SC_PROTO + "://" + SC_HOST_PORT
+  def SC_HOST_PORT = HOST_PORT // configuration.getString("sio.sc.hostport").getOrElse(HOST_PORT)
+  def SC_PROTO = PROTO //configuration.getString("sio.sc.proto").getOrElse(PROTO)
+  def SC_URL_PREFIX = URL_PREFIX //SC_PROTO + "://" + SC_HOST_PORT
 
   /** Генерация абсолютной ссылки через выдачу на основе строке относительной ссылки. */
   def toScAbsUrl(relUrl: String): String = {
@@ -70,13 +88,10 @@ class ContextUtil @Inject() (
   }
 
   /** Хост и порт, на котором живёт часть сервиса с ограниченным доступом. */
-  val LK_HOST_PORT = configuration.getString("sio.lk.hostport").getOrElse(DFLT_HOST_PORT)
-  val LK_PROTO = configuration.getString("sio.lk.proto").getOrElse("https")
-  val LK_URL_PREFIX = LK_PROTO + "://" + LK_HOST_PORT
+  def LK_HOST_PORT = HOST_PORT //configuration.getString("sio.lk.hostport").getOrElse(HOST_PORT)
+  def LK_PROTO = PROTO //configuration.getString("sio.lk.proto").getOrElse(PROTO)
+  def LK_URL_PREFIX = URL_PREFIX //LK_PROTO + "://" + LK_HOST_PORT
 
-
-  /** Регэксп для поиска в query string параметра, который хранит параметры клиентского экрана. */
-  val SCREEN_ARG_NAME_RE = "a\\.s(creen)?".r
 
   /** Бывает, что необходимо заменить локалхост на 127.0.0.1. Например, при разработке под твиттер.
     * @param source Исходная строка, т.е. ссылка, или её префикс или хостнейм.
@@ -99,7 +114,7 @@ class ContextUtil @Inject() (
     val hosts = Set(
       SC_HOST_PORT,
       MAIN_DOMAIN_DFLT,
-      DFLT_HOST_PORT,
+      HOST_PORT,
       LK_HOST_PORT,
       "япредлагаю.com",
       "isuggest.ru"

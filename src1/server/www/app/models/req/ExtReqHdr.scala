@@ -147,7 +147,7 @@ trait ExtReqHdr extends RequestHeader {
       val h = lastForwarded(xfhHdr)
       // Если входящий запрос на backend, то нужно отобразить его на www.
       BACKEND_HOST_RE
-        .replaceFirstIn(h, "www.")
+        .replaceFirstIn(h, "")
         .toLowerCase
     }
 

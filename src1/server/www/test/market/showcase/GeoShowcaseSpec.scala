@@ -24,11 +24,8 @@ trait GeoShowcaseSpecT extends PlaySpec with OneServerPerSuite with OneBrowserPe
     GuiceApplicationBuilder()
       .in( Mode.Test )
       .configure(
-        "persona.audience.url"        -> s"http://localhost:$port",
-        "sio.proto.dflt"              -> "http",
-        "sio.hostport.dflt"           -> s"localhost:$port",
-        "radius.server.tiny.enabled"  -> false,
-        "cats.install.mart.allowed"   -> false
+        "sio.https.disabled"          -> true,
+        "sio.hostport.dflt"           -> s"localhost:$port"
       )
       .build()
   }

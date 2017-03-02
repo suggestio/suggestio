@@ -8,6 +8,7 @@
 @import io.suggest.common.qs.QsConstants._
 @import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
 @import ctx.request
+@import ctx.api.ctxUtil.HTTPS_ENABLED
 
 "use strict";
 
@@ -17,8 +18,8 @@ var @(name) = {};
   @* Этот код примерно как-то скопипасчен из play JSRR. Хз, как именно работает, т.к. местами минифицирован до непонятности. *@
   var _nS = function(c,f,b){var e=c.split(f||"."),g=b||_root,d,a;for(d=0,a=e.length;d<a;d++){g=g[e[d]]=g[e[d]]||{}}return g}
   var _qS = function(items){var qs = ''; for(var i=0;i<items.length;i++) {if(items[i]) qs += (qs ? '&' : '') + items[i]}; return qs ? ('?' + qs) : ''}
-  var _s = function(p,s){return p+((s===true||(s&&s.secure))?'s':'')+'://'}
-  var hostEsc = '@esc( ctx.request.host )';
+  var _s = function(p,s){return p + @if(HTTPS_ENABLED){ ((s===true||(s&&s.secure))?'s':'') + }'://'}
+  var hostEsc = '@esc( request.host )';
 
   @* 2016.dec.14: Запилена поддержка CSRF в JsRoutes для POST-запросов. *@
   var csrfQs = @JavaScript( play.filters.csrf.CSRF.getToken.fold("undefined")(t => s"'${t.name}=${t.value}'") );
