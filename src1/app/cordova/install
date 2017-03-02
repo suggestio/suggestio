@@ -1,0 +1,6 @@
+#!/bin/sh
+
+## Собрать и установить на android-мобильник.
+
+cordova build android && \
+    adb install -r platforms/android/build/outputs/apk/android-debug.apk

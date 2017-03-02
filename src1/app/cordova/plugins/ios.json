@@ -1,0 +1,25 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {}
+    },
+    "installed_plugins": {
+        "cordova-plugin-ble": {
+            "PACKAGE_NAME": "io.suggest.Sio2m"
+        },
+        "cordova-plugin-geolocation": {
+            "PACKAGE_NAME": "io.suggest.Sio2m"
+        },
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "io.suggest.Sio2m"
+        }
+    },
+    "dependent_plugins": {
+        "cordova-plugin-compat": {
+            "PACKAGE_NAME": "io.suggest.Sio2m"
+        }
+    }
+}

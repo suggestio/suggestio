@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+    <head>
+	<title>Suggest.io</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+	<!-- https://github.com/apache/cordova-plugin-whitelist/blob/master/README.md#content-security-policy -->
+        <!--meta http-equiv="Content-Security-Policy" content="default-src 'self' data: 'https://www.suggest.io' gap: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *"-->
+
+	<meta name="apple-mobile-web-app-capable" content="yes"/>
+	<meta name="apple-mobile-web-app-status-bar-style" content="black"/>
+	<meta name="viewport" content="width=320,initial-scale=1,user-scalable=no,minimal-ui"/>
+	<link type="text/css" rel="stylesheet" media="screen" href="css/showcase.css"/>
+	<link href='css/mapbox-gl.css' rel='stylesheet'/>
+    </head>
+    <body class="sm-body __ru ">
+	<script id="scJsRouterCont" type="text/javascript" async src="js/router.js"></script>
+        <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="cordova_plugins.js"></script>
+	<input type="hidden" id="actomab" value="pk.eyJ1Ijoia29uc3RhbnRpbjIiLCJhIjoiY2ltb2xlYWcyMDAxN3ZjbTRwYjg3Z3NqbiJ9.7ls6nsfHopoz8pxt34yjbg"/>
+	<input type="hidden" id="allscnm" value="https://suggest.io/sc/map/nodes/all"/>
+	<!--script type="text/javascript" src="js/sc-sjs-jsdeps.min.js"></script-->
+	<script type="text/javascript" async src='js/mapbox-gl.js'></script>
+	<script type="text/javascript" src="js/sc-sjs-opt-bundle.js"></script>
+    </body>
+</html>

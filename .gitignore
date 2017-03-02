@@ -43,3 +43,4 @@ src1/server/www/conf/application.conf.dev
 src1/server/www/conf/elasticsearch.yml
 src1/server/www/conf/logback.xml
 
+src1/app/
