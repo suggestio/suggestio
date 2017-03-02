@@ -17,7 +17,7 @@ libraryDependencies ++= Seq(
   // Здесь common-утиль для diode.
   // В выдаче оно пока не задействовано, но это и не важно: будет пострипано.
   // Потом сюда же надо и diode-react запихать.
-  "me.chrons"           %%% "diode"               % Common.diodeVsn,
+  "io.suzaku"           %%% "diode"               % Common.diodeVsn,
 
   // Тестирование...
   "io.monix"            %%% "minitest"            % Common.minitestVsn  % "test"

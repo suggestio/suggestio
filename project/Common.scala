@@ -140,12 +140,12 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.0"
+  val diodeVsn = "1.1.1"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]
     */
-  val boopickleVsn = "1.2.5"
+  val boopickleVsn = "1.2.6"
 
   /** Версия autowire для клиента и сервера.
     *  @see [[https://github.com/lihaoyi/autowire]]

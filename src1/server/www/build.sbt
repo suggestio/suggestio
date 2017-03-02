@@ -99,10 +99,6 @@ libraryDependencies ++= {
   "org.webjars.bower" % "leaflet.markercluster" % Common.leafletMarkerClusterJsVsn,
   "org.webjars"       % "leaflet-locatecontrol" % Common.leafletControlLocateWjVsn,
 
-  // Прогрессивная интеграция с js client-side:
-  //"me.chrons"         %% "boopickle"            % Common.boopickleVsn, // вынесенов в [common]
-  //"com.lihaoyi" %% "autowire" % "0.2.6",
-
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
   // test
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % Test

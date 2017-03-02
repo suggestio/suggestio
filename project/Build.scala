@@ -23,7 +23,7 @@ object Sio2Build extends Build {
       version := "0.0.0-SNAPSHOT",
       testFrameworks += new TestFramework("minitest.runner.Framework"),
       libraryDependencies ++= Seq(
-        "me.chrons"    %%% "boopickle"   % Common.boopickleVsn,
+        "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
         "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
         "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
         //"com.wix"      %%% "accord-core" % Common.wixAccordVsn
