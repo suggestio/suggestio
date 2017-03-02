@@ -34,6 +34,7 @@ object TreeR {
       // Контейнер узла узла + дочерних узлов.
       <.div(
         ^.key := node.id,
+
         (level > 0) ?= {
           ^.marginLeft := (level * 10).px
         },

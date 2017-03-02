@@ -43,6 +43,7 @@ sealed trait ILknTreeNode {
 
 }
 
+
 /**
   * Класс модели данных по узлу.
   * По идее, это единственая реализация [[ILknTreeNode]].
@@ -57,7 +58,7 @@ case class MLknTreeNode(
   extends ILknTreeNode
 {
 
-  override def withChildren(children2: Seq[ILknTreeNode], loaded2: Boolean): ILknTreeNode = {
+  override def withChildren(children2: Seq[ILknTreeNode], loaded2: Boolean): MLknTreeNode = {
     copy(
       children = children2,
       childrenLoaded = loaded2
