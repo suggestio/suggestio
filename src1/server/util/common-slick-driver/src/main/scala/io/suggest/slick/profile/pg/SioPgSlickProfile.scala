@@ -44,9 +44,9 @@ trait SioPgSlickProfileT
 
   }
 
-  object ExPgApi extends ExPgApiT
+  protected class ExPgApi extends ExPgApiT
 
-  override val api = ExPgApi
+  override val api: ExPgApiT = new ExPgApi
 
 }
 
