@@ -4,9 +4,9 @@ import diode.react.ModelProxy
 import io.suggest.css.Css
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
-import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.lk.tags.edit.m.RmTag
+import io.suggest.sjs.common.i18n.Messages
 
 /**
   * Suggest.io
@@ -32,7 +32,7 @@ object TagsExistsR {
       // tagExistsCont: Уже добавленные к заказу гео-теги.
       <.div(
         for {
-          (tagName, i) <- tagsExists().toSeq.sorted.iterator.zipWithIndex
+          tagName <- tagsExists().toSeq.sorted.iterator
         } yield {
           <.div(
             ^.`class` := (Css.TagsEdit.JS_TAG_EDITABLE + SPACE + Css.TagsEdit.CONTAINER),

@@ -1,8 +1,8 @@
 package io.suggest.sjs.dt.period.r
 
 import japgolly.scalajs.react.vdom.prefix_<^._
-import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.css.Css
+import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.{ReactComponentB, ReactNode}
 
 /** Компонент внешнего контейнера виджета. */

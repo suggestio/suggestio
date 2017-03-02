@@ -13,4 +13,4 @@ sealed trait LkNodesAction extends DAction
 
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
-case class NodeShow(rcvrKey: RcvrKey) extends LkNodesAction
+case class NodeNameClick(rcvrKey: RcvrKey) extends LkNodesAction

@@ -32,9 +32,6 @@ sealed trait ILknTreeNode {
   /** Код типа узла по модели MNodeTypes. */
   val ntypeId         : String
 
-  /** Загружена ли инфа по дочерним узлам? */
-  val childrenLoaded  : Boolean
-
   /** Список дочерних узлов. */
   val children        : Seq[ILknTreeNode]
 
@@ -52,16 +49,14 @@ case class MLknTreeNode(
                          override val id              : String,
                          override val name            : String,
                          override val ntypeId         : String,
-                         override val childrenLoaded  : Boolean,
-                         override val children        : Seq[ILknTreeNode]
+                         override val children        : Seq[ILknTreeNode] = Nil
                        )
   extends ILknTreeNode
 {
 
   override def withChildren(children2: Seq[ILknTreeNode], loaded2: Boolean): MLknTreeNode = {
     copy(
-      children = children2,
-      childrenLoaded = loaded2
+      children = children2
     )
   }
 

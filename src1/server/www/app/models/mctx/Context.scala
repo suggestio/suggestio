@@ -298,7 +298,7 @@ trait Context {
 
   /** Генератор ссылки на ассет lk-messages.js, который содержит локализованные сообщения для client-side i18n
     * и кэшируется на клиенте. */
-  def lkLangJs: Call = {
+  def lkMessagesJs: Call = {
     routes.LkLang.lkMessagesJs(
       lang = messages.lang.code.toLowerCase,
       hash = api.jsMessagesUtil.hash

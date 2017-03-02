@@ -13,10 +13,11 @@ import org.scalajs.dom.raw.HTMLImageElement
   * Created: 27.12.16 18:24
   * Description: VM'ка для работы с прелодером.
   */
-object PreLoaderLk extends FindElT {
+object LkPreLoader extends FindElT {
+
   override type Dom_t = HTMLImageElement
   override def DOM_ID = SpaConst.LkPreLoader.DOM_ID
-  override type T     = PreLoaderLk
+  override type T     = LkPreLoader
 
 
   /** Вернуть ссылку на картинку-прелоадер, если таковая имеется.
@@ -27,10 +28,10 @@ object PreLoaderLk extends FindElT {
 }
 
 
-import PreLoaderLk.Dom_t
+import LkPreLoader.Dom_t
 
 
-case class PreLoaderLk(override val _underlying: Dom_t) extends VmT with ShowHideDisplayT with SelfRemoveT {
+case class LkPreLoader(override val _underlying: Dom_t) extends VmT with ShowHideDisplayT with SelfRemoveT {
 
   override type T = Dom_t
 

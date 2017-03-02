@@ -1,8 +1,9 @@
 package io.suggest.sjs.common.i18n
 
-import io.suggest.i18n.IMessage
+import io.suggest.i18n.{I18nConstants, IMessage}
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -13,7 +14,7 @@ import scala.scalajs.js
 
 /** интерфейс для messages-объекта в рамках одного языка. */
 @js.native
-sealed trait JsMessagesSingleLang extends js.Object {
+sealed trait IJsMessagesSingleLang extends js.Object {
 
   /**
     * Рендер одного сообщения.
@@ -33,13 +34,31 @@ sealed trait JsMessagesSingleLang extends js.Object {
 }
 
 
-/** Поддержка apply() метода, поглащающего инстансы [[io.suggest.i18n.IMessage]]. */
-trait JsMessager {
+/**
+  * Фасад к нативному глобальному инстансу window._SioMessages.
+  */
+@js.native
+@JSName( I18nConstants.MESSAGES_JSNAME )
+object JsMessagesSingleLangNative extends IJsMessagesSingleLang
 
-  def Messages: JsMessagesSingleLang
 
+/** Основной доступ к локализациям в рамках одного языка.
+  * Легко импортировать, легко заюзать.
+  */
+object Messages {
+
+  /** Локализовать сообщение по коду и опциональным аргументам. */
+  def apply(message: String, args: Any*): String = {
+    apply1(message, args)
+  }
+
+  def apply1(message: String, args: Seq[Any]): String = {
+    JsMessagesSingleLangNative(message, args)
+  }
+
+  /** Локализовать инстанс IMessage. */
   def apply(fe: IMessage): String = {
-    Messages(fe.message, fe.args)
+    apply(fe.message, fe.args)
   }
 
 }

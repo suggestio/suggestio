@@ -4,7 +4,7 @@ import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.dt.MYmd
 import io.suggest.sjs.common.dt.MYmdJs
-import io.suggest.sjs.common.i18n.JsMessagesSingleLang
+import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -16,13 +16,12 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object RangeYmdR {
 
-  final case class Props(capFirst: Boolean, rangeYmdOpt: MRangeYmdOpt, Messages: JsMessagesSingleLang)
+  final case class Props(capFirst: Boolean, rangeYmdOpt: MRangeYmdOpt)
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(p: Props): ReactElement = {
-      import p.Messages
 
       /** Рендер title-аттрибута для даты. */
       def _dateTitle(ymd: MYmd) = {

@@ -1,10 +1,12 @@
 package io.suggest.lk.nodes.form.r.tree
 
 import diode.react.ModelProxy
+import diode.react.ReactPot._
 import io.suggest.adv.rcvr.RcvrKey
-import io.suggest.lk.nodes.ILknTreeNode
-import io.suggest.lk.nodes.form.m.MTree
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import io.suggest.lk.nodes.form.m.{MNodeState, MTree, NodeNameClick}
+import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.vm.spa.LkPreLoader
+import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
 /**
@@ -21,6 +23,14 @@ object TreeR {
   /** Ядро react-компонента дерева узлов. */
   class Backend($: BackendScope[Props,_]) {
 
+    /** Callback реакции на клик по заголовку узла. */
+    def onNodeClick(rcvrKey: RcvrKey): Callback = {
+      $.props >>= { p =>
+        p.dispatchCB( NodeNameClick(rcvrKey) )
+      }
+    }
+
+
     /**
       * Рекурсивный рендер под-дерева узлов.
       *
@@ -29,37 +39,61 @@ object TreeR {
       * @param level Уровень [0].
       * @return React-элемент.
       */
-    def _renderNode(node: ILknTreeNode, parentRcvrKey: RcvrKey = Nil, level: Int = 0): ReactElement = {
-      val rcvrKey = node.id :: parentRcvrKey
+    def _renderNode(node: MNodeState, parentRcvrKey: RcvrKey, level: Int): ReactElement = {
+      val rcvrKey = node.info.id :: parentRcvrKey
       // Контейнер узла узла + дочерних узлов.
       <.div(
-        ^.key := node.id,
+        ^.key := node.info.id,
 
         (level > 0) ?= {
           ^.marginLeft := (level * 10).px
         },
 
-        // контейнер текущего узла
+        // контейнер названия текущего узла
         <.div(
-          node.name
+          ^.onClick --> onNodeClick(rcvrKey),
+          node.info.name
         ),
 
-        node.children.nonEmpty ?= {
-          val childLevel = level + 1
-          for (subNode <- node.children) yield {
-            _renderNode(subNode, rcvrKey, childLevel)
+        // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
+        node.children.renderPending { _ =>
+          val pleaseWait = Messages("Please.wait")
+          LkPreLoader.PRELOADER_IMG_URL.fold [ReactElement] {
+            <.span( pleaseWait )
+          } { url =>
+            <.img(
+              ^.src := url,
+              ^.alt := pleaseWait
+            )
           }
+        },
+
+        // Рекурсивно отрендерить дочерние элементы:
+        node.children.render { children =>
+          <.div(
+            children.nonEmpty ?= {
+              val childLevel = level + 1
+              for (subNode <- children) yield {
+                _renderNode(subNode, rcvrKey, childLevel)
+              }
+            }
+          )
         }
+
       )
     }
+
 
     /** Рендер текущего компонента. */
     def render(p: Props): ReactElement = {
       val v = p()
+      val parentLevel = 0
+      val parentRcvrKey = Nil
+
       <.div(
         // Рендерить узлы.
         for (node <- v.nodes) yield {
-          _renderNode(node)
+          _renderNode(node, parentRcvrKey, parentLevel)
         }
       )
     }

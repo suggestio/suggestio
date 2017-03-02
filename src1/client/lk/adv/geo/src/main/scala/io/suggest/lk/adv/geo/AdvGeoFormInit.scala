@@ -7,7 +7,7 @@ import io.suggest.lk.adv.r.PriceR
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.view.VUtil
-import io.suggest.sjs.common.vm.spa.PreLoaderLk
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -42,7 +42,7 @@ class AdvGeoFormInit extends IInit {
   override def init(): Unit = {
 
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
-    PreLoaderLk.PRELOADER_IMG_URL
+    LkPreLoader.PRELOADER_IMG_URL
 
     val circuit = LkAdvGeoFormCircuit
 

@@ -5,8 +5,7 @@ import io.suggest.css.Css
 import io.suggest.lk.tags.edit.m.AddCurrentTag
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import japgolly.scalajs.react.vdom.prefix_<^._
-import io.suggest.lk.vm.LkMessagesWindow.Messages
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.sjs.common.i18n.Messages
 
 /**
   * Suggest.io

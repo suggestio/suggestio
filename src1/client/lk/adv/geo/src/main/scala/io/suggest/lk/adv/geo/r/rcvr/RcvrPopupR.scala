@@ -8,10 +8,10 @@ import io.suggest.css.Css
 import io.suggest.lk.adv.geo.a.SetRcvrStatus
 import io.suggest.lk.adv.geo.m.MRcvr
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.r.RangeYmdR
-import io.suggest.sjs.common.vm.spa.PreLoaderLk
+import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import react.leaflet.layer.LayerGroupR
@@ -87,8 +87,7 @@ object RcvrPopupR {
                     RangeYmdR(
                       RangeYmdR.Props(
                         capFirst    = true,
-                        rangeYmdOpt = n.dateRange,
-                        Messages    = Messages
+                        rangeYmdOpt = n.dateRange
                       )
                     )
                   )
@@ -144,7 +143,7 @@ object RcvrPopupR {
 
           // Рендер маркера-крутилки на карте в ожидании рендера.
           v.popupResp.renderPending { _: Int =>
-            for (iconUrl <- PreLoaderLk.PRELOADER_IMG_URL) yield {
+            for (iconUrl <- LkPreLoader.PRELOADER_IMG_URL) yield {
               val icon1 = LkAdvGeoFormUtil.pendingIcon(iconUrl, 16)
               MarkerR(
                 new MarkerPropsR {

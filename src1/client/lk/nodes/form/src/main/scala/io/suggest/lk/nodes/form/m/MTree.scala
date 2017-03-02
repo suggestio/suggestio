@@ -21,5 +21,5 @@ object MTree {
 
 
 case class MTree(
-                  nodes: Seq[ILknTreeNode]
+                  nodes: Seq[MNodeState]
                 )

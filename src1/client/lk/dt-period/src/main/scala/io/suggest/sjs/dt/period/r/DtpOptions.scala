@@ -10,7 +10,6 @@ import io.suggest.dt.{MAdvPeriod, MYmd}
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriod, QuickAdvPeriods}
 import io.suggest.lk.r.PropTable
 import io.suggest.lk.r.Forms.InputCont
-import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.sjs.common.spa.OptFastEq
 import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
@@ -19,6 +18,7 @@ import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
+import io.suggest.sjs.common.i18n.Messages
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr

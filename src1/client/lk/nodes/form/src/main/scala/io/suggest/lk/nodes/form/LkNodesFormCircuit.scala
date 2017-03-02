@@ -4,7 +4,7 @@ import diode.react.ReactConnector
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.tree.TreeAh
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MTree}
+import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
@@ -31,7 +31,9 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLknFormInit](base64)
     val mroot = MLkNodesRoot(
       tree = MTree(
-        nodes = mFormInit.nodes0.nodes
+        nodes = for (nInfo <- mFormInit.nodes0.nodes) yield {
+          MNodeState(nInfo)
+        }
       )
     )
     // Потом удалить input, который больше не нужен.

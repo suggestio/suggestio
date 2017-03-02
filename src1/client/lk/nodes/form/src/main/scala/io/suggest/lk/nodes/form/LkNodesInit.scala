@@ -5,7 +5,7 @@ import io.suggest.lk.nodes.form.r.LkNodesFormR
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil
-import io.suggest.sjs.common.vm.spa.PreLoaderLk
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -36,7 +36,7 @@ trait LkNodesInitRouter extends InitRouter {
     */
   private def initLkNodesForm(): Unit = {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
-    PreLoaderLk.PRELOADER_IMG_URL
+    LkPreLoader.PRELOADER_IMG_URL
 
     // Инициализировать circuit
     val circuit = LkNodesFormCircuit

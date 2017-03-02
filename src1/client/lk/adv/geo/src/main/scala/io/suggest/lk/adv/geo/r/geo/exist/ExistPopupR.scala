@@ -6,9 +6,9 @@ import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.MGeoAdvs
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
-import io.suggest.lk.vm.LkMessagesWindow.Messages
 import io.suggest.react.r.RangeYmdR
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.popup.PopupR
@@ -64,8 +64,7 @@ object ExistPopupR {
                 row.dateRange.nonEmpty ?= RangeYmdR(
                   RangeYmdR.Props(
                     capFirst = true,
-                    rangeYmdOpt = row.dateRange,
-                    Messages = Messages
+                    rangeYmdOpt = row.dateRange
                   )
                 ),
 

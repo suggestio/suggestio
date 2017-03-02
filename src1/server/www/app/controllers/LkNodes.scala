@@ -41,6 +41,7 @@ class LkNodes @Inject() (
   import mCommonDi._
   import pickleSrvUtil._
 
+
   /**
     * Рендер страницы с формой управления подузлами текущего узла.
     * Сама форма реализована через react, тут у нас лишь страничка-обёртка.
@@ -63,9 +64,7 @@ class LkNodes @Inject() (
             MLknTreeNode(
               id                = mnode.id.get,
               name              = mnode.guessDisplayNameOrId.getOrElse("???"),
-              ntypeId           = mnode.common.ntype.strId,
-              childrenLoaded    = false,
-              children          = Nil
+              ntypeId           = mnode.common.ntype.strId
             )
           }
         )

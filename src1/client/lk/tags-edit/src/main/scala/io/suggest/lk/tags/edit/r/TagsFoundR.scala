@@ -8,8 +8,8 @@ import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
 import io.suggest.lk.tags.edit.m.AddTagFound
 import io.suggest.lk.tags.edit.vm.search.hints.SRow
-import io.suggest.lk.vm.LkMessagesWindow.Messages
-import io.suggest.sjs.common.vm.spa.PreLoaderLk
+import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventH}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -57,7 +57,7 @@ object TagsFoundR {
             // Если снова идёт поиск, то пусть будет спиннер прямо в текущем отображаемом контейнере.
             v.isPending ?= {
               val pleaseWait = Messages("Please.wait")
-              PreLoaderLk.PRELOADER_IMG_URL.fold[TagMod](pleaseWait) { preloaderUrl =>
+              LkPreLoader.PRELOADER_IMG_URL.fold[TagMod](pleaseWait) { preloaderUrl =>
                 <.img(
                   ^.src := preloaderUrl,
                   ^.alt := pleaseWait,

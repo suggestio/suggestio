@@ -9,6 +9,6 @@ package io.suggest.i18n
 object I18nConstants {
 
   /** Имя объекта lk-messages на стороне js. */
-  final val LK_MESSAGES_JSNAME = "_SioLkMessages"
+  final val MESSAGES_JSNAME = "_SioMessages"
 
 }

@@ -20,10 +20,10 @@ trait LkJsMessages
 {
 
   /** Глобальное имя на клиенте, в которое будет залита функция локализации. */
-  private def JS_NAME = "window." + I18nConstants.LK_MESSAGES_JSNAME
+  private def JS_NAME = "window." + I18nConstants.MESSAGES_JSNAME
 
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
-  private val CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 10
+  private val CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5
 
 
 
@@ -38,11 +38,11 @@ trait LkJsMessages
 
     // Проверить хеш
     if (hash == jsMessagesUtil.hash) {
-      val sessionMessages = implicitly[Messages]
+      val messages = implicitly[Messages]
 
       // Проверить langCode
-      if (sessionMessages.lang.code equalsIgnoreCase langCode) {
-        val js = jsMessagesUtil.lkJsMsgsFactory.apply(Some(JS_NAME))(sessionMessages)
+      if (messages.lang.code equalsIgnoreCase langCode) {
+        val js = jsMessagesUtil.lkJsMsgsFactory(Some(JS_NAME))(messages)
         Ok(js)
           .withHeaders(CACHE_CONTROL -> ("public, max-age=" + CACHE_MAX_AGE_SECONDS))
 
