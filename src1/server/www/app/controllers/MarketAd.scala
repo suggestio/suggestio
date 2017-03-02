@@ -23,6 +23,7 @@ import models.req.{IAdProdReq, INodeReq, IReq}
 import play.api.data.Forms._
 import play.api.data._
 import play.api.libs.json.JsValue
+import play.api.libs.streams.ActorFlow
 import play.api.mvc.{Call, Request, Result, WebSocket}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
@@ -463,18 +464,24 @@ class MarketAd @Inject() (
 
 
   /** Открытие websocket'а для обратной асинхронной связи с браузером клиента. */
-  def ws(wsId: String) = WebSocket.tryAcceptWithActor[JsValue, JsValue] { implicit request =>
+  def ws(wsId: String) = WebSocket.acceptOrResult[JsValue, JsValue] { implicit request =>
     // Прямо тут проверяем права доступа. Пока просто проверяем залогиненность вопрошающего.
     val personIdOpt = sessionUtil.getPersonId(request)
     val auth = personIdOpt.isDefined
-    Future.successful(
-      if (auth) {
-        Right(lkEditorWsActors.props(_, wsId))
-      } else {
-        val result = Forbidden("Unathorized")
-        Left(result)
-      }
-    )
+    def logPrefix = s"ws($wsId):"
+    val res = if (auth) {
+      LOGGER.trace(s"$logPrefix Starting websocket...")
+      val aFlow = ActorFlow.actorRef(
+        props = lkEditorWsActors.props(_, wsId)
+      )
+      Right(aFlow)
+
+    } else {
+      LOGGER.warn(s"$logPrefix User $personIdOpt is not allowed.")
+      val result = Forbidden("Unathorized")
+      Left(result)
+    }
+    Future.successful( res )
   }
 
 
