@@ -4,6 +4,7 @@ import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import com.google.inject.Inject
+import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
 import play.api.libs.json.{JsNull, JsValue, Json}
 
@@ -18,7 +19,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class StreamsUtil @Inject() (
   implicit private val ec   : ExecutionContext,
   implicit private val mat  : Materializer
-) {
+) { outer =>
 
   /** Подсчёт кол-ва элементов в Source.
     *
@@ -27,6 +28,20 @@ class StreamsUtil @Inject() (
     */
   def count(src: Source[_, _]): Future[Int] = {
     src.runFold(0) { (counter, _) => counter + 1 }
+  }
+
+  /** Бывает, что необходимо просто залоггировать длину сорса, когда включена трассировка в логгере.
+    * По факту, это и есть основное предназначение count.
+    *
+    * @param src Источник.
+    * @param clazz Класса, снабжённый логгером.
+    * @param logMessageF Сборка сообщения логгера.
+    */
+  def maybeTraceCount(src: Source[_, _], clazz: IMacroLogs)(logMessageF: Int => String): Unit = {
+    val logger = clazz.LOGGER
+    if (logger.underlying.isTraceEnabled)
+      for (totalCount <- count(src))
+        logger.trace( logMessageF(totalCount) )
   }
 
 

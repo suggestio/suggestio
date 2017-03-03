@@ -1,8 +1,8 @@
 package io.suggest.adv.rcvr
 
+import io.suggest.common.tree.NodesTreeWalkerSpecT
 import io.suggest.dt.MYmd
 import io.suggest.dt.interval.MRangeYmdOpt
-import minitest._
 
 /**
   * Suggest.io
@@ -10,10 +10,14 @@ import minitest._
   * Created: 02.02.17 14:30
   * Description: Тесты для рекурсивной модели [[MRcvrPopupNode]]
   */
-object MRcvrPopupNodeSpec extends SimpleTestSuite {
+object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
 
-  val m1 = MRcvrPopupNode(
-    nodeId = "asdadasdsa",
+  override type Node_t = IRcvrPopupNode
+
+  override protected def Nodes_t = IRcvrPopupNode
+
+  override val m1 = MRcvrPopupNode(
+    id = "asdadasdsa",
 
     checkbox      = Some(MRcvrPopupMeta(
       isCreate    = true,
@@ -28,7 +32,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
         title = Some("abserare aedfad"),
         nodes = Seq(
           MRcvrPopupNode(
-            nodeId = "sub1-asdadasdsa",
+            id = "sub1-asdadasdsa",
 
             checkbox      = Some(MRcvrPopupMeta(
               isCreate    = false,
@@ -46,7 +50,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
                 title = Some("sub-sub-group"),
                 nodes = Seq(
                   MRcvrPopupNode(
-                    nodeId = "sub1-asdadasdsa",
+                    id = "sub1-asdadasdsa",
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = false,
@@ -67,7 +71,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
           ),
 
           MRcvrPopupNode(
-            nodeId = "sub2-asdadasdsa",
+            id = "sub2-asdadasdsa",
 
             checkbox      = Some(MRcvrPopupMeta(
               isCreate    = true,
@@ -82,7 +86,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
                 title = Some("sub-su22b-group"),
                 nodes = Seq(
                   MRcvrPopupNode(
-                    nodeId = "sub22-asdadasdsa",
+                    id = "sub22-asdadasdsa",
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = false,
@@ -99,7 +103,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
                   ),
 
                   MRcvrPopupNode(
-                    nodeId = "sub2233-asdadasdsa",
+                    id = "sub2233-asdadasdsa",
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = true,
@@ -120,7 +124,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
           ),
 
           MRcvrPopupNode(
-            nodeId = "sub3-asdadasdsa",
+            id = "sub3-asdadasdsa",
 
             checkbox      = Some(MRcvrPopupMeta(
               isCreate    = true,
@@ -135,7 +139,7 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
                 title = Some("sub-sub-group33"),
                 nodes = Seq(
                   MRcvrPopupNode(
-                    nodeId = "sub33-asdadasdsa",
+                    id = "sub33-asdadasdsa",
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = false,
@@ -159,74 +163,5 @@ object MRcvrPopupNodeSpec extends SimpleTestSuite {
 
     )
   )
-
-
-  test("findNode() for missing top-level node") {
-    val r = IRcvrPopupNode.findNode(
-      rcvrKey = "WHOOOAAA_SOMETHING_INVALID_ID" :: Nil,
-      node    = m1
-    )
-    assertEquals(r, None)
-  }
-
-  test("findNode() for missing sub-node") {
-    val r = IRcvrPopupNode.findNode(
-      rcvrKey = "asdadasdsa" :: "WHOOOAAA_SOMETHING_INVALID_ID" :: Nil,
-      node    = m1
-    )
-    assertEquals(r, None)
-  }
-
-  test("findNode() for completely missing sub-sub-sub-node") {
-    val r = IRcvrPopupNode.findNode(
-      rcvrKey = "asdadasdsa" :: "WHOOOAAA_SOMETHING_INVALID_ID" :: "ZZZZZZZZZZZZzz" :: "" :: Nil,
-      node    = m1
-    )
-    assertEquals(r, None)
-  }
-
-  test("findNode() for completely missing inner-level node") {
-    val r = IRcvrPopupNode.findNode(
-      rcvrKey = "ZZZZZZZZZ_INVALID_ID" :: "WHOOOAAA_SOMETHING_INVALID_ID" :: "" :: Nil,
-      node    = m1
-    )
-    assertEquals(r, None)
-  }
-
-  test("findNode() for top-level node") {
-    val nodeId = "asdadasdsa"
-    val rOpt = IRcvrPopupNode.findNode(
-      rcvrKey = nodeId :: Nil,
-      node    = m1
-    )
-    assert(rOpt.nonEmpty, rOpt.toString)
-    val r = rOpt.get
-
-    assertEquals(r.nodeId, nodeId)
-  }
-
-  test("findNode() for first existing sub-node") {
-    val rcvrKey = "asdadasdsa" :: "sub1-asdadasdsa" :: Nil
-    val rOpt = IRcvrPopupNode.findNode(
-      rcvrKey = rcvrKey,
-      node = m1
-    )
-    assert(rOpt.nonEmpty, rOpt.toString)
-    val r = rOpt.get
-
-    assertEquals(r.nodeId, rcvrKey.last)
-  }
-
-  test("findNode() for some deep non-first node") {
-    val rcvrKey = "asdadasdsa" :: "sub2-asdadasdsa" :: "sub2233-asdadasdsa" :: Nil
-    val rOpt = IRcvrPopupNode.findNode(
-      rcvrKey = rcvrKey,
-      node = m1
-    )
-    assert(rOpt.nonEmpty, rOpt.toString)
-    val r = rOpt.get
-
-    assertEquals(r.nodeId, rcvrKey.last)
-  }
 
 }

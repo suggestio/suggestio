@@ -40,7 +40,6 @@ class ScSitemapsXml @Inject() (
 {
 
   import mNodes.Implicits._
-  import mCommonDi.ec
 
   /**
    * Асинхронно поточно генерировать данные о страницах выдачи, которые подлежат индексации.
@@ -98,10 +97,8 @@ class ScSitemapsXml @Inject() (
       }
 
     // Записать в логи кол-во пройденных узлов. Обычно оно эквивалентно кол-ву сгенеренных URL.
-    if ( LOGGER.underlying.isTraceEnabled() ) {
-      for (totalCount <- streamsUtil.count(src0)) yield {
-        LOGGER.trace(s"$logPrefix Total nodes found: $totalCount")
-      }
+    streamsUtil.maybeTraceCount(src0, this) { totalCount =>
+      s"$logPrefix Total nodes found: $totalCount"
     }
 
     urls

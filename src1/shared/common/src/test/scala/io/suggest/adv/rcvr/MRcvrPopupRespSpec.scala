@@ -31,7 +31,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
   test("boopickle against lightly-filled model") {
     val m1 = MRcvrPopupResp(
       node = Some(MRcvrPopupNode(
-        nodeId = "asdadasdsa",
+        id = "asdadasdsa",
         checkbox      = Some(MRcvrPopupMeta(
           isCreate    = true,
           checked     = false,
@@ -48,7 +48,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
   test("boopickle against complexly-filled model") {
     val m2 = MRcvrPopupResp(
       node = Some(MRcvrPopupNode(
-        nodeId = "asdadasdsa",
+        id = "asdadasdsa",
 
         checkbox      = Some(MRcvrPopupMeta(
           isCreate    = true,
@@ -63,7 +63,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
             title = Some("abserare aedfad"),
             nodes = Seq(
               MRcvrPopupNode(
-                nodeId = "sub1-asdadasdsa",
+                id = "sub1-asdadasdsa",
 
                 checkbox      = Some(MRcvrPopupMeta(
                   isCreate    = false,
@@ -81,7 +81,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
                     title = Some("sub-sub-group"),
                     nodes = Seq(
                       MRcvrPopupNode(
-                        nodeId = "sub1-asdadasdsa",
+                        id = "sub1-asdadasdsa",
 
                         checkbox      = Some(MRcvrPopupMeta(
                           isCreate    = false,
@@ -102,7 +102,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
               ),
 
               MRcvrPopupNode(
-                nodeId = "sub2-asdadasdsa",
+                id = "sub2-asdadasdsa",
 
                 checkbox      = Some(MRcvrPopupMeta(
                   isCreate    = true,
@@ -117,7 +117,7 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
                     title = Some("sub-su22b-group"),
                     nodes = Seq(
                       MRcvrPopupNode(
-                        nodeId = "sub22-asdadasdsa",
+                        id = "sub22-asdadasdsa",
 
                         checkbox      = Some(MRcvrPopupMeta(
                           isCreate    = false,

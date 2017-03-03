@@ -1,7 +1,6 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
-import io.suggest.lk.nodes.ILknTreeNode
 
 /**
   * Suggest.io

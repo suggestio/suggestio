@@ -84,6 +84,9 @@ trait ScAdsTileBase
 
     lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch(_qs.search)
 
+    LOGGER.trace(s"$logPrefix ${_request.uri}")
+
+
     /** Найти все итоговые карточки. */
     lazy val madsFut: Future[Seq[MNode]] = {
       if (_qs.search.hasAnySearchCriterias) {

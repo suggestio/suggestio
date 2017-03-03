@@ -1,19 +1,23 @@
-package io.suggest.lk.nodes
+package io.suggest.common.tree
 
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.primo.id.IId
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 02.03.17 22:38
-  * Description: Код гуляния по дереву моделей.
+  * Description: Код гуляния по дереву моделей без каких-либо ограничений на тип модели.
   * Изначально рос внутри IRcvrPopupNode.
   */
 trait NodesTreeWalker[T] {
 
+  /** Вернуть все подузлы для указанного инстанса узла. */
   protected def _subNodesOf(node: T): TraversableOnce[T]
 
+  /** Извлечь id узла. */
   protected def _nodeIdOf(node: T): String
+
 
   /** Рекурсивный поиск под-узла по указанному пути id.
     * @param rcvrKey Путь id'шников узла.
@@ -25,20 +29,28 @@ trait NodesTreeWalker[T] {
     if (rcvrKey.isEmpty) {
       Some(parent)
     } else {
-      val childRcvrKey = rcvrKey.tail
-      _subNodesOf(parent)
-      //parent.subGroups
-      //  .iterator
-      //  .flatMap(_.nodes)
-        .toIterator
-        .filter { node => _nodeIdOf(node) == rcvrKey.head }
-        .flatMap { subNode =>
-          findSubNode(childRcvrKey, subNode)
-        }
-        .toStream
-        .headOption
+      findSubNode(rcvrKey, _subNodesOf(parent))
     }
   }
+
+
+  /** Найти узел в списке узлов текущего уровня.
+    *
+    * @param rcvrKey Ключ узла.
+    * @param nodes Список узлов верхнего уровня.
+    * @return Опционально найденный узел.
+    */
+  def findSubNode(rcvrKey: RcvrKey, nodes: TraversableOnce[T]): Option[T] = {
+    nodes
+      .toIterator
+      .filter { node => _nodeIdOf(node) == rcvrKey.head }
+      .flatMap { subNode =>
+        findSubNode(rcvrKey.tail, subNode)
+      }
+      .toStream
+      .headOption
+  }
+
 
   /**
     * Строгий поиск узла по указанному node-id пути.
@@ -56,4 +68,15 @@ trait NodesTreeWalker[T] {
       None
   }
 
+}
+
+
+/**
+  * Частичная реализация [[NodesTreeWalker]] для случаев, когда узел является
+  * реализацией [[io.suggest.primo.id.IId]][String].
+  */
+trait NodesTreeWalkerIId[T <: IId[String]] extends NodesTreeWalker[T] {
+  override protected def _nodeIdOf(node: T): String = {
+    node.id
+  }
 }

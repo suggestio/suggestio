@@ -54,11 +54,11 @@ object RcvrPopupR {
         // node -- узел для рендера
         // parentRcvrKeyRev обратный rcvrKey родительского узла или Nil для рендера top-level узла.
         def __renderNode(node: IRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): ReactElement = {
-          val rcvrKeyRev = node.nodeId :: parentRcvrKeyRev
+          val rcvrKeyRev = node.id :: parentRcvrKeyRev
           val rcvrKey = rcvrKeyRev.reverse
 
           <.div(
-            ^.key := node.nodeId,
+            ^.key := node.id,
 
             // Рендер галочки текущего узла, если она задана.
             for (n <- node.checkbox) yield {

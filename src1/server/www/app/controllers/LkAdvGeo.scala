@@ -200,12 +200,16 @@ class LkAdvGeo @Inject() (
       * @param rs Статус ответа HTTP.
       */
     def result(formFut: Future[MFormS], rs: Status): Future[Result] = {
-      //lazy val logPrefix = s"_forAd(${request.mad.idOrNull} ${System.currentTimeMillis}):"
+      def logPrefix = s"result(${request.mad.idOrNull} $rs):"
 
       // Считаем в фоне начальный ценник для размещения...
-      val advPricingFut = formFut
-        .flatMap { _getPricing(_isSuFree, _) }
-        .map { advFormUtil.prepareAdvPricing }
+      val advPricingFut = for {
+        form <- formFut
+        pricing <- _getPricing(_isSuFree, form)
+      } yield {
+        LOGGER.trace(s"$logPrefix su=${_isSuFree}  prod=${request.producer.idOrNull}  pricing => $pricing")
+        advFormUtil.prepareAdvPricing(pricing)
+      }
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
       val formStateSerFut: Future[String] = for {
@@ -230,7 +234,6 @@ class LkAdvGeo @Inject() (
         ctx           <- _ctxFut
         formStateSer  <- formStateSerFut
       } yield {
-
         val rargs = MForAdTplArgs(
           mad           = request.mad,
           producer      = request.producer,
@@ -395,7 +398,6 @@ class LkAdvGeo @Inject() (
           NotAcceptable( violations.toString )
         },
         {mFormS =>
-          LOGGER.debug(s"$logPrefix request body =\n $mFormS")
           val mFromS2Fut = _checkFormRcvrs(mFormS)
           val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
@@ -404,6 +406,7 @@ class LkAdvGeo @Inject() (
             mFormS2 <- mFromS2Fut
             pricing <- _getPricing(isSuFree, mFormS2)
           } yield {
+            LOGGER.trace(s"$logPrefix request body =\n $mFormS=>$mFormS2 su=$isSuFree pricing => $pricing")
             advFormUtil.prepareAdvPricing(pricing)
           }
 
@@ -411,7 +414,6 @@ class LkAdvGeo @Inject() (
             pricing <- pricingFut
           } yield {
             // Сериализация результата.
-            LOGGER.trace(s"$logPrefix => $pricing")
             val bbuf = PickleUtil.pickle(pricing)
             Ok( ByteString(bbuf) )
           }
@@ -472,6 +474,10 @@ class LkAdvGeo @Inject() (
       // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
       val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
 
+      streamsUtil.maybeTraceCount(currAdvsSrc, this) { totalCount =>
+        s"existGeoAdvsMap($adId): streamed $totalCount GeoJSON features"
+      }
+
       Ok.chunked(jsonStrSrc)
         .as( withCharset(JSON) )
         .withHeaders(CACHE_10)
@@ -486,10 +492,12 @@ class LkAdvGeo @Inject() (
     */
   def existGeoAdvsShapePopup(itemId: Gid_t) = csrf.Check {
     canAccessItem(itemId, edit = false).async { implicit request =>
+      def logPrefix = s"existGeoAdvsShapePopup($itemId):"
+
       // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
       // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
       if ( !MItemTypes.advGeoTypes.contains( request.mitem.iType ) )
-        throw new IllegalArgumentException(s"MItem[itemId] type is ${request.mitem.iType}, but here we need GeoPlace ${MItemTypes.GeoPlace}")
+        throw new IllegalArgumentException(s"$logPrefix Item itype==${request.mitem.iType}, but here we need GeoPlace: ${MItemTypes.GeoPlace}")
 
       // Наврядли можно отрендерить в попапе даже это количество...
       val itemsMax = 50
@@ -543,7 +551,7 @@ class LkAdvGeo @Inject() (
         .runFold( List.empty[(Option[Long], MGeoAdvExistRow)] ) { (acc, row) => row :: acc }
 
       // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
-      val itemsCountFut = itemsSrc.runFold(0) { (counter, e) => counter + 1 }
+      val itemsCountFut = streamsUtil.count(itemsSrc)
 
       // Сборка непоточного бинарного ответа.
       for {
@@ -557,6 +565,8 @@ class LkAdvGeo @Inject() (
             .map(_._2),
           haveMore = itemsCount >= itemsMax
         )
+        LOGGER.trace(s"$logPrefix count=$itemsCount/$itemsMax haveMore=${mresp.haveMore} rows=${mresp.rows}")
+
         // Сериализовать и вернуть результат:
         val pickled = PickleUtil.pickle(mresp)
         Ok( ByteString(pickled) )
@@ -605,8 +615,8 @@ class LkAdvGeo @Inject() (
         subNodes
           // Сгруппировать узлы по их типам. Для текущего узла тип будет None. Тогда он отрендерится без заголовка и в самом начале списка узлов.
           .groupBy { mnode =>
-          mnode.common.ntype
-        }
+            mnode.common.ntype
+          }
           .toSeq
           // Очень кривая сортировка, но для наших нужд и такой пока достаточно.
           .sortBy( _._1.id )
@@ -630,7 +640,11 @@ class LkAdvGeo @Inject() (
           }
         }
         // Выпрямляем Future[Publisher] в просто нормальный Source.
-        pubFut.toSource
+        val src = pubFut.toSource
+        streamsUtil.maybeTraceCount(src, this) { totalCount =>
+          s"$logPrefix Found $totalCount curr advs to rcvrs"
+        }
+        src
       }
 
       def __src2RcvrIdsSet(src: Source[MItem,_]): Future[Set[String]] = {
@@ -658,20 +672,26 @@ class LkAdvGeo @Inject() (
       implicit val ctx = implicitly[Context]
 
       // Карта интервалов размещения по id узлов.
-      val intervalsMapFut: Future[Map[String, MRangeYmdOpt]] = currAdvsSrc
-        .runFold( Map.newBuilder[String, MRangeYmdOpt]) { (acc, i) =>
+      val intervalsMapFut: Future[Map[String, MRangeYmdOpt]] = for {
+        // Сбилдить карту на основе источника текущих размещений
+        currAdvs <- currAdvsSrc.runFold(Map.newBuilder[String, MRangeYmdOpt]) { (acc, i) =>
           for {
-            rcvrId     <- i.rcvrIdOpt
+            rcvrId <- i.rcvrIdOpt
           } {
             val rymd = MRangeYmdOpt.applyFrom(
-              dateStartOpt  = _offDate2localDateOpt(i.dateStartOpt)(ctx),
-              dateEndOpt    = _offDate2localDateOpt(i.dateEndOpt)(ctx)
+              dateStartOpt = _offDate2localDateOpt(i.dateStartOpt)(ctx),
+              dateEndOpt = _offDate2localDateOpt(i.dateEndOpt)(ctx)
             )
             acc += rcvrId -> rymd
           }
           acc
         }
-        .map( _.result() )
+
+      } yield {
+        val r = currAdvs.result()
+        LOGGER.trace(s"$logPrefix Found ${r.size} adv date ranges for nodes: ${r.keysIterator.mkString(", ")}")
+        r
+      }
 
       // Сборка JSON-модели для рендера JSON-ответа, пригодного для рендера с помощью react.js.
       for {
@@ -695,7 +715,7 @@ class LkAdvGeo @Inject() (
 
         val resp = MRcvrPopupResp(
           node = Some(MRcvrPopupNode(
-            nodeId    = rcvrNodeId,
+            id    = rcvrNodeId,
 
             // Чекбокс у данного узла можно отображать, если он является узлом-ресивером.
             // isReceiver здесь пока дублирует такую же проверку в ACL. Посмотрим, как дальше пойдёт...
@@ -714,7 +734,7 @@ class LkAdvGeo @Inject() (
                 title = Some( ctx.messages( ntype.plural ) ),
                 nodes = for (n <- nodes) yield {
                   MRcvrPopupNode(
-                    nodeId    = n.id.get,
+                    id    = n.id.get,
                     checkbox  = Some( __mkCheckBoxMeta(n) ),
                     subGroups = Nil
                   )

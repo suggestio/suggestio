@@ -5,6 +5,7 @@ import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -29,12 +30,13 @@ import scala.concurrent.Future
   * Description:
   */
 class AdvGeoMapUtil @Inject() (
-  mNodes      : MNodes,
-  logoUtil    : LogoUtil,
-  cdnUtil     : CdnUtil,
-  mAnyImgs    : MAnyImgs,
-  dynImgUtil  : DynImgUtil,
-  mCommonDi   : ICommonDi
+                                mNodes      : MNodes,
+                                logoUtil    : LogoUtil,
+                                cdnUtil     : CdnUtil,
+                                mAnyImgs    : MAnyImgs,
+                                dynImgUtil  : DynImgUtil,
+                                streamsUtil : StreamsUtil,
+                                mCommonDi   : ICommonDi
 )
   extends MacroLogsImpl
 {
@@ -133,7 +135,7 @@ class AdvGeoMapUtil @Inject() (
     }
 
     // Отмаппить узлы в представление, годное для GeoJSON-сериализации. Финальную сериализацию организует контроллер.
-    logosAndNodeSrc.mapConcat { nodeInfo =>
+    val resultsSrc = logosAndNodeSrc.mapConcat { nodeInfo =>
       // Собираем url отдельно и ровно один раз, чтобы сэкономить ресурсы.
       val iconInfoOpt = for {
         logoInfo <- nodeInfo.logoInfoOpt
@@ -165,6 +167,13 @@ class AdvGeoMapUtil @Inject() (
         }
         .toStream // Это типа toImmutableIterable
     }
+
+    // Залоггировать общее кол-во отправленных наверх нод, если включена трассировка.
+    streamsUtil.maybeTraceCount(resultsSrc, this) { total =>
+      s"$logPrefix Returned $total map-nodes."
+    }
+
+    resultsSrc
   }
 
 

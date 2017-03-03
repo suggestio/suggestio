@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes
 
 import boopickle.Default._
+import io.suggest.common.tree.NodesTreeWalkerIId
 import io.suggest.primo.id.IId
 
 /**
@@ -10,15 +11,9 @@ import io.suggest.primo.id.IId
   * Description: Кросс-платформенная модель данных по одному узлу в дереве узлов форме узлов.
   */
 
-object ILknTreeNode extends NodesTreeWalker[ILknTreeNode] {
+object ILknTreeNode extends NodesTreeWalkerIId[ILknTreeNode] {
 
-  override protected def _subNodesOf(node: ILknTreeNode): TraversableOnce[ILknTreeNode] = {
-    node.children
-  }
-
-  override protected def _nodeIdOf(node: ILknTreeNode): String = {
-    node.id
-  }
+  override protected def _subNodesOf(node: ILknTreeNode) = node.children
 
   /** Поддержка сериализации/десериализации. */
   implicit val lknTreeNodePickler: Pickler[ILknTreeNode] = {
@@ -29,8 +24,10 @@ object ILknTreeNode extends NodesTreeWalker[ILknTreeNode] {
 }
 
 
-/** Интерфейс элемента дерева узлов.
-  * Интерфейс необходим из-за рекурсивности pickler'а. */
+/**
+  * Интерфейс элемента дерева узлов.
+  * Интерфейс необходим из-за рекурсивности pickler'а.
+  */
 sealed trait ILknTreeNode extends IId[String] {
 
   override val id     : String

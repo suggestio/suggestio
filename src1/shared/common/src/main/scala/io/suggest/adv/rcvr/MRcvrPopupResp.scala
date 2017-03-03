@@ -1,8 +1,9 @@
 package io.suggest.adv.rcvr
 
 import boopickle.Default._
+import io.suggest.common.tree.NodesTreeWalkerIId
 import io.suggest.dt.interval.MRangeYmdOpt
-import io.suggest.lk.nodes.NodesTreeWalker
+import io.suggest.primo.id.IId
 
 /**
   * Suggest.io
@@ -29,16 +30,12 @@ case class MRcvrPopupResp(
 
 
 /** Поддержка для модели узлов и подузлов ресиверов в попапе ресивера. */
-object IRcvrPopupNode extends NodesTreeWalker[IRcvrPopupNode] {
+object IRcvrPopupNode extends NodesTreeWalkerIId[IRcvrPopupNode] {
 
   override protected def _subNodesOf(node: IRcvrPopupNode): Iterator[IRcvrPopupNode] = {
     node.subGroups
       .iterator
       .flatMap(_.nodes)
-  }
-
-  override protected def _nodeIdOf(node: IRcvrPopupNode): String = {
-    node.nodeId
   }
 
   /**
@@ -60,9 +57,9 @@ object IRcvrPopupNode extends NodesTreeWalker[IRcvrPopupNode] {
   * Рекурсивные типы в boopickle неявно требуют интерфейса, который они будут реализовавывать.
   * Без интерфейса всё молча компилится в пустой pickler, бесконечно вызывающий сам себя.
   */
-sealed trait IRcvrPopupNode {
+sealed trait IRcvrPopupNode extends IId[String] {
 
-  val nodeId          : String
+  override val id     : String
 
   val checkbox        : Option[MRcvrPopupMeta]
 
@@ -73,10 +70,10 @@ sealed trait IRcvrPopupNode {
 
 /** Описание узла с данными одного узла в ответе [[MRcvrPopupResp]].
   *
-  * @param nodeId id узла.
+  * @param id id узла.
   */
 case class MRcvrPopupNode(
-                           override val nodeId          : String,
+                           override val id              : String,
                            override val checkbox        : Option[MRcvrPopupMeta],
                            override val subGroups       : Seq[MRcvrPopupGroup]
                          )
