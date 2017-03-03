@@ -24,7 +24,7 @@ object MTree {
 case class MTree(
                   /** Дерево узлов, скомпиленное на основе данных сервера. */
                   nodes       : Seq[MNodeState],
-                  /** id родительского узла (вкл.Nil) -> состояние формы добавления. */
+                  /** id родительского узла (вкл.Nil) -> текущее состояние формы добавления. */
                   addStates   : Map[RcvrKey, MAddSubNodeState] = Map.empty
                 )
 {

@@ -843,3 +843,8 @@ price.USD=${0}
 price.EUR=€{0}
 
 Nodes.management=Nodes management
+
+Beacon.name.example=My beacon
+Beacon.id=Beacon ID
+Example.id.0=Example identifier: {0}
+

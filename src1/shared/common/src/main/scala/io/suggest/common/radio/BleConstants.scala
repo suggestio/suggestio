@@ -16,9 +16,6 @@ object BleConstants {
     */
   def SERVICES_BASE_UUID_LC = "-0000-1000-8000-00805f9b34fb"
 
-  /** Гугломаячки исповедуют этот id сервиса или что-то в этом роде. */
-  def EDDY_STONE_SERVICE_UUID_PREFIX_LC = "0000feaa"
-
 
   /** Константы ble-маячков. */
   object Beacon {
@@ -52,6 +49,16 @@ object BleConstants {
 
       /** Имя поля с оценочным расстоянием до маячка. */
       def DISTANCE_CM_FN     = "g"
+
+    }
+
+    object EddyStone {
+
+      /** Гугломаячки исповедуют этот id сервиса или что-то в этом роде. */
+      def SERVICE_UUID_PREFIX_LC = "0000feaa"
+
+      /** id маячка eddystone-uid. Совпадает с техническим id существующего маячка. */
+      def EXAMPLE_UID = "aa112233445566778899-000000000456"
 
     }
 

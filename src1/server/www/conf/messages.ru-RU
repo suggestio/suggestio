@@ -852,3 +852,8 @@ price.USD=${0}
 price.EUR=€{0}
 
 Nodes.management=Управление узлами
+
+Beacon.name.example=Мой маячок
+Beacon.id=ID маячка
+Example.id.0=Пример идентификатора: {0}
+

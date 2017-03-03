@@ -9,6 +9,11 @@ package io.suggest.lk.nodes.form.m
   * @param id Заданный id-узла. Для маячков, в первую очередь.
   */
 case class MAddSubNodeState(
-                            name  : String,
-                            id    : Option[String]
-                           )
+                            name    : String          = "",
+                            id      : Option[String]  = None
+                           ) {
+
+  def withName(name2: String) = copy(name = name2)
+  def withId(id2: Option[String]) = copy(id = id2)
+
+}

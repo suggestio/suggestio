@@ -18,18 +18,17 @@ class JsMessagesUtil @Inject() (
 
   /** Локализация для периодов рекламного размещения. */
   private def ADV_DATES_PERIOD_MSGS: TraversableOnce[String] = {
-    val static = Iterator(
-      "Today",
-      "Date.choosing",
-      "Advertising.period",
-      "Your.ad.will.adv",
-      "From._date",
-      "from._date",
-      "till._date",
-      "Date.start",
-      "Date.end",
-      "locale.momentjs"
-    )
+    val static = "Today" ::
+      "Date.choosing" ::
+      "Advertising.period" ::
+      "Your.ad.will.adv" ::
+      "From._date" ::
+      "from._date" ::
+      "till._date" ::
+      "Date.start" ::
+      "Date.end" ::
+      "locale.momentjs" ::
+      Nil
 
     val advPeriodsIter: Iterator[String] = {
       Seq(
@@ -49,12 +48,11 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения редактора тегов. */
   private def TAGS_EDITOR_MSGS: TraversableOnce[String] = {
-    Iterator(
-      "Add",
-      "Tags.choosing",
-      "Add.tags",
-      "Delete"
-    )
+    "Add" ::
+      "Tags.choosing" ::
+      "Add.tags" ::
+      "Delete" ::
+      Nil
   }
 
   private def DAYS_OF_WEEK_MSGS: Traversable[String] = {
@@ -70,32 +68,41 @@ class JsMessagesUtil @Inject() (
   }
 
   private def DATE_TIME_ABBREVATIONS: TraversableOnce[String] = {
-    Iterator(
-      "year_abbrevated"
-    )
+    "year_abbrevated" ::
+      Nil
   }
 
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
-    Iterator(
-      "Adv.on.map", "Adv.on.map.hint",
-      "Main.screen",
-      "GeoTag",
-      "_adv.Online.now",
-      "Adv.on.main.screen",
-      "Please.wait"
-    )
+    "Adv.on.map" :: "Adv.on.map.hint" ::
+      "Main.screen" ::
+      "GeoTag" ::
+      "_adv.Online.now" ::
+      "Adv.on.main.screen" ::
+      "Please.wait" ::
+      Nil
   }
 
   /** Коды ошибок форм. */
   private def FORM_ERRORS: TraversableOnce[String] = {
-    Iterator(
-      "Error",
-      "Something.gone.wrong",
-      "error.maxLength",
-      "error.minLength",
-      "error.required"
-    )
+    "Error" ::
+      "Something.gone.wrong" ::
+      "error.maxLength" ::
+      "error.minLength" ::
+      "error.required" ::
+      Nil
+  }
+
+  /** Сообщения для формы управления узлами/подузлами. */
+  private def LK_NODES_MSGS: List[String] = {
+    "Add" ::
+      "Name" ::
+      "Beacon.id" ::
+      "Beacon.name.example" ::
+      "Example.id.0" ::
+      "Save" ::
+      "Cancel" ::
+      Nil
   }
 
 
@@ -104,10 +111,11 @@ class JsMessagesUtil @Inject() (
     val prices = MCurrencies.values
       .iterator
       .map(_.i18nPriceCode)
-    val msgs = Iterator(
-      "Total.amount._money",
-      "Send.request"
-    )
+    val msgs = {
+      "Total.amount._money" ::
+        "Send.request" ::
+        Nil
+    }
     prices ++ msgs
   }
 
@@ -122,7 +130,8 @@ class JsMessagesUtil @Inject() (
       OF_MONTHS_OF_YEAR,
       DAYS_OF_WEEK_MSGS,
       DATE_TIME_ABBREVATIONS,
-      ADV_PRICING
+      ADV_PRICING,
+      LK_NODES_MSGS
     )
       .flatten
       .toSet

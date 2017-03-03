@@ -77,7 +77,7 @@ case class EddyStoneParser(override val dev: DeviceInfo)
 
       // And the 0xFEAA service.
       b64data       <- {
-        val srvDataKey = BleConstants.EDDY_STONE_SERVICE_UUID_PREFIX_LC + BleConstants.SERVICES_BASE_UUID_LC
+        val srvDataKey = BleConstants.Beacon.EddyStone.SERVICE_UUID_PREFIX_LC + BleConstants.SERVICES_BASE_UUID_LC
         serviceData.get( srvDataKey )
       }
 
