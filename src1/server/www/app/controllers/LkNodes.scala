@@ -134,4 +134,17 @@ class LkNodes @Inject() (
     }
   }
 
+
+  /**
+    * Юзер нажал кнопку добавления нового узла.
+    * Форма запрашивает права и данные для добавления узла к указанному узлу.
+    *
+    * param nodeId id родительского узла.
+    * return Бинарь c ответом.
+    */
+  //def wantCreateSubNodeTo(nodeId: String) = csrf.Check {
+  //  isNodeAdmin(nodeId) { implicit request =>
+  //  }
+  //}
+
 }

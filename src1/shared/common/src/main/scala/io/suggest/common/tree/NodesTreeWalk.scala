@@ -1,6 +1,7 @@
 package io.suggest.common.tree
 
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.primo.TypeT
 import io.suggest.primo.id.IId
 
 /**
@@ -10,13 +11,34 @@ import io.suggest.primo.id.IId
   * Description: Код гуляния по дереву моделей без каких-либо ограничений на тип модели.
   * Изначально рос внутри IRcvrPopupNode.
   */
-trait NodesTreeWalker[T] {
+trait NodesTreeApi extends TypeT {
 
   /** Вернуть все подузлы для указанного инстанса узла. */
   protected def _subNodesOf(node: T): TraversableOnce[T]
 
   /** Извлечь id узла. */
   protected def _nodeIdOf(node: T): String
+
+}
+
+
+trait NodesTreeWalk extends NodesTreeApi {
+
+  /**
+    * Строгий поиск узла по указанному node-id пути.
+    * В поиске участвует текущий узел и его под-узлы.
+    * @param rcvrKey Ключ узла.
+    * @param node Начальный узел.
+    * @return Опционально: найденный узел.
+    */
+  def findNode(rcvrKey: RcvrKey, node: T): Option[T] = {
+    // Случай пустого rcvrKey НЕ игнорируем, т.к. это скорее защита от самого себя.
+    val nodeId = _nodeIdOf(node)
+    if ( rcvrKey.headOption.contains(nodeId) )
+      findSubNode(rcvrKey.tail, node)
+    else
+      None
+  }
 
 
   /** Рекурсивный поиск под-узла по указанному пути id.
@@ -51,32 +73,19 @@ trait NodesTreeWalker[T] {
       .headOption
   }
 
-
-  /**
-    * Строгий поиск узла по указанному node-id пути.
-    * В поиске участвует текущий узел и его под-узлы.
-    * @param rcvrKey Ключ узла.
-    * @param node Начальный узел.
-    * @return Опционально: найденный узел.
-    */
-  def findNode(rcvrKey: RcvrKey, node: T): Option[T] = {
-    // Случай пустого rcvrKey НЕ игнорируем, т.к. это скорее защита от самого себя.
-    val nodeId = _nodeIdOf(node)
-    if ( rcvrKey.headOption.contains(nodeId) )
-      findSubNode(rcvrKey.tail, node)
-    else
-      None
-  }
-
 }
 
 
 /**
-  * Частичная реализация [[NodesTreeWalker]] для случаев, когда узел является
+  * Частичная реализация [[NodesTreeWalk]] для случаев, когда узел является
   * реализацией [[io.suggest.primo.id.IId]][String].
   */
-trait NodesTreeWalkerIId[T <: IId[String]] extends NodesTreeWalker[T] {
+trait NodesTreeApiIId extends NodesTreeApi {
+
+  override type T <: IId[String]
+
   override protected def _nodeIdOf(node: T): String = {
     node.id
   }
+
 }

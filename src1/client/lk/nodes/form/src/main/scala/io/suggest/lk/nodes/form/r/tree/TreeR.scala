@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.r.tree
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m.{MNodeState, MTree, NodeNameClick}
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
@@ -77,6 +78,15 @@ object TreeR {
                 _renderNode(subNode, rcvrKey, childLevel)
               }
             }
+          )
+        },
+
+        // При ошибке запроса отрендерить тут что-то про ошибку.
+        node.children.renderFailed { ex =>
+          <.span(
+            ^.title   := ex.toString,
+            ^.`class` := Css.Colors.RED,
+            Messages("Error")
           )
         }
 

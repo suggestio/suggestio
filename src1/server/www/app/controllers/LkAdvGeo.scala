@@ -86,6 +86,10 @@ class LkAdvGeo @Inject() (
   // Сериализация:
   import pickleSrvUtil.Base64ByteBufEncoder
 
+  /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */
+  private def RCVR_ITEMS_PER_POPUP_LIMIT = 50
+
+
   /** Асинхронный детектор начальной точки для карты георазмещения. */
   private def getGeoPoint0(adId: String)(implicit request: IAdProdReq[_]): Future[MGeoPoint] = {
     import advGeoLocUtil.Detectors._
@@ -500,7 +504,7 @@ class LkAdvGeo @Inject() (
         throw new IllegalArgumentException(s"$logPrefix Item itype==${request.mitem.iType}, but here we need GeoPlace: ${MItemTypes.GeoPlace}")
 
       // Наврядли можно отрендерить в попапе даже это количество...
-      val itemsMax = 50
+      val itemsMax = RCVR_ITEMS_PER_POPUP_LIMIT
 
       // Запросить у базы инфы по размещениям в текущем месте...
       val itemsSrc = slick.db

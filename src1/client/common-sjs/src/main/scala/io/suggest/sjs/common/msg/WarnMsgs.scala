@@ -104,4 +104,7 @@ object WarnMsgs extends MsgsStaticT {
   /** Получен ответ сервера на уже неактуальный запрос. Чисто информационная мессага. */
   def SRV_RESP_INACTUAL_ANYMORE              = E(45)
 
+  /** Отвергнута попытка обновить данные внутри Pot, который вообще пустой и не ожидает данных. */
+  def REFUSED_TO_UPDATE_EMPTY_POT_VALUE      = E(46)
+
 }

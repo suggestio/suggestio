@@ -10,9 +10,8 @@ import minitest._
   * Description: Тесты для модельной утили, работающей с деревьями узлов/графов.
   * Начальные тесты были сформированы ранее в [[io.suggest.adv.rcvr.MRcvrPopupNodeSpec]].
   */
-object NodesTreeWalkerSpec extends NodesTreeWalkerSpecT {
+object NodesTreeWalkSpec extends NodesTreeWalkerSpecT with NodesTreeUpdateSpecT {
 
-  // Имитируем какую-то абстрактную модель узлов:
 
   protected case class Node(
                              id       : String,
@@ -22,9 +21,16 @@ object NodesTreeWalkerSpec extends NodesTreeWalkerSpecT {
 
   override type Node_t = Node
 
-  override val Nodes_t = new NodesTreeWalkerIId[Node] {
-    override protected def _subNodesOf(node: Node) = node.children
+  protected object Nodes extends NodesTreeApiIId with NodesTreeWalk with NodeTreeUpdate {
+    override type T = Node
+    override def _subNodesOf(node: Node) = node.children
+    override def withNodeChildren(node: Node, children2: TraversableOnce[Node]): Node = {
+      node.copy(children = children2.toSeq)
+    }
   }
+
+  override type Nodes_t = Nodes.type
+  override val Nodes_t = Nodes
 
   /** Пример верхнего узла дерева узлов. */
   override val m1 = Node(
@@ -70,16 +76,25 @@ object NodesTreeWalkerSpec extends NodesTreeWalkerSpecT {
 }
 
 
-/** Тесты для дерева, которые можно пошарить между спеками. */
-trait NodesTreeWalkerSpecT extends SimpleTestSuite {
+/** Базовый трейт для сборки разных тестов разных трейтов TreeNodes*. */
+trait NodesTreeSpecBase extends SimpleTestSuite {
 
   /** Класс модели. */
   type Node_t <: IId[String]
 
-  protected def Nodes_t: NodesTreeWalkerIId[Node_t]
+  type Nodes_t <: NodesTreeApiIId { type T = Node_t }
+
+  protected def Nodes_t: Nodes_t
 
   protected def m1: Node_t
 
+}
+
+
+/** Тесты для дерева, которые можно пошарить между спеками. */
+trait NodesTreeWalkerSpecT extends NodesTreeSpecBase {
+
+  override type Nodes_t <: NodesTreeApiIId with NodesTreeWalk { type T = Node_t }
 
   test("findNode() for missing top-level node") {
     val r = Nodes_t.findNode(
@@ -147,6 +162,71 @@ trait NodesTreeWalkerSpecT extends SimpleTestSuite {
     val r = rOpt.get
 
     assertEquals(r.id, rcvrKey.last)
+  }
+
+}
+
+
+/** Тесты для update-функций. */
+trait NodesTreeUpdateSpecT extends NodesTreeSpecBase {
+
+  override type Nodes_t <: NodesTreeApiIId with NodeTreeUpdate { type T = Node_t }
+
+
+  // Тесты вокруг узла вернего уровня.
+
+  test("flatMapNode() can delete top node / will produce empty tree") {
+    val nodeId = "asdadasdsa"
+    val r = Nodes_t
+      .flatMapNode(nodeId :: Nil, m1)( Nodes_t.deleteF )
+      .toSeq
+    assert( r.isEmpty, r.toString )
+  }
+
+  test("flatMapNode() deletion for missing node will produce unmodified tree") {
+    val nodeId = "WHOAAA_INEXISTING_ID"
+    val r = Nodes_t
+      .flatMapNode(nodeId :: Nil, m1)( Nodes_t.deleteF )
+      .toSeq
+    assertEquals( r, Seq(m1) )
+  }
+
+  test("flatMapNode() update for top-node will return new tree") {
+    val nodeId = "asdadasdsa"
+    val r = Nodes_t
+      .flatMapNode(nodeId :: Nil, m1) { node0 =>
+        val node2 = Nodes_t.withNodeChildren(node0, Nil)
+        node2 :: Nil
+      }
+      .toSeq
+    val m1_2 = Nodes_t.withNodeChildren(m1, Nil)
+    assertEquals( r, Seq(m1_2) )
+  }
+
+
+  // Убогонькие минимальные тесты на втором уровне:
+  test("flatMapNode() update one node on non-1-st level") {
+    val rcvrKey = "asdadasdsa" :: "sub2-asdadasdsa" :: "sub2233-asdadasdsa" :: Nil
+    val updatedNode = Nodes_t.withNodeChildren(m1, Nil)
+    val r = Nodes_t
+      .flatMapNode(rcvrKey, m1) { _ =>
+        updatedNode :: Nil
+      }
+      .toSeq
+    assert( r != Seq(m1), r.toString )
+
+    val m1_2 = r.head
+    // Проверить, что первый узел остался тот же
+    val topNodeNoChildren = Nodes_t.withNodeChildren( m1_2, Nil )
+    assertEquals( updatedNode, topNodeNoChildren )
+
+    // Проверить, что узел rcvrKey больше не существует (т.к. он был замененён другим узлом с другим id).
+    val r1 = Nodes_t
+      .flatMapNode(rcvrKey, m1_2) { _ =>
+        throw new IllegalArgumentException("Should be never called here")
+      }
+      .toSeq
+    assertEquals(r, r1)
   }
 
 }

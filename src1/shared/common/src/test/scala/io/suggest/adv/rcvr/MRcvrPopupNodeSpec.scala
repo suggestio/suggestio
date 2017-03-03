@@ -14,7 +14,8 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
 
   override type Node_t = IRcvrPopupNode
 
-  override protected def Nodes_t = IRcvrPopupNode
+  override type Nodes_t = IRcvrPopupNode.type
+  override val Nodes_t = IRcvrPopupNode
 
   override val m1 = MRcvrPopupNode(
     id = "asdadasdsa",

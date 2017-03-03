@@ -1,7 +1,7 @@
 package io.suggest.adv.rcvr
 
 import boopickle.Default._
-import io.suggest.common.tree.NodesTreeWalkerIId
+import io.suggest.common.tree.{NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.primo.id.IId
 
@@ -30,7 +30,9 @@ case class MRcvrPopupResp(
 
 
 /** Поддержка для модели узлов и подузлов ресиверов в попапе ресивера. */
-object IRcvrPopupNode extends NodesTreeWalkerIId[IRcvrPopupNode] {
+object IRcvrPopupNode extends NodesTreeApiIId with NodesTreeWalk {
+
+  override type T = IRcvrPopupNode
 
   override protected def _subNodesOf(node: IRcvrPopupNode): Iterator[IRcvrPopupNode] = {
     node.subGroups

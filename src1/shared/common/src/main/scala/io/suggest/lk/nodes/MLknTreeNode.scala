@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes
 
 import boopickle.Default._
-import io.suggest.common.tree.NodesTreeWalkerIId
+import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.primo.id.IId
 
 /**
@@ -11,9 +11,21 @@ import io.suggest.primo.id.IId
   * Description: Кросс-платформенная модель данных по одному узлу в дереве узлов форме узлов.
   */
 
-object ILknTreeNode extends NodesTreeWalkerIId[ILknTreeNode] {
+object ILknTreeNode
+  extends NodesTreeApiIId
+  with NodesTreeWalk
+  with NodeTreeUpdate
+{
+
+  override type T = ILknTreeNode
 
   override protected def _subNodesOf(node: ILknTreeNode) = node.children
+
+  override def withNodeChildren(node: ILknTreeNode, children2: TraversableOnce[ILknTreeNode]): ILknTreeNode = {
+    node.withChildren(
+      children2.toSeq
+    )
+  }
 
   /** Поддержка сериализации/десериализации. */
   implicit val lknTreeNodePickler: Pickler[ILknTreeNode] = {

@@ -1,7 +1,12 @@
 package io.suggest.lk.nodes.form.m
 
-import diode.data.Pot
+import diode.data.{Pot, Ready}
+import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
 import io.suggest.lk.nodes.ILknTreeNode
+import io.suggest.primo.id.IId
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.common.html.HtmlConstants.SPACE
 
 /**
   * Suggest.io
@@ -20,8 +25,40 @@ import io.suggest.lk.nodes.ILknTreeNode
 case class MNodeState(
                        info     : ILknTreeNode,
                        children : Pot[Seq[MNodeState]] = Pot.empty
-                     ) {
+                     )
+  extends IId[String]
+{
+
+  override def id = info.id
 
   def withChildren(children2: Pot[Seq[MNodeState]]) = copy(children = children2)
+
+}
+
+
+object MNodeState
+  extends NodesTreeApiIId
+  with NodesTreeWalk
+  with NodeTreeUpdate
+  with Log
+{
+
+  override type T = MNodeState
+
+  override protected def _subNodesOf(node: MNodeState): TraversableOnce[MNodeState] = {
+    node.children.getOrElse(Nil)
+  }
+
+  override def withNodeChildren(node: MNodeState, children2: TraversableOnce[MNodeState]): MNodeState = {
+    // Хз, надо ли проверять Pot.empty. Скорее всего, этот метод никогда не вызывается для Empty Pot.
+    if (node.children.isEmpty) {
+      LOG.warn( WarnMsgs.REFUSED_TO_UPDATE_EMPTY_POT_VALUE, msg = node + SPACE + children2 )
+      node
+    } else {
+      node.withChildren(
+        Ready( children2.toSeq )
+      )
+    }
+  }
 
 }
