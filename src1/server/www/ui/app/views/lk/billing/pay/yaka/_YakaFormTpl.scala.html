@@ -37,6 +37,11 @@
         @messages("Payment.method")
       }
       @_wkvTd(false) {
+        @if(args.isDemo) {
+          <strong>
+            (@messages("Demo"))
+          </strong>
+        }
         @messages("Yandex.Kassa")
       }
     }

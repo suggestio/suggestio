@@ -49,5 +49,4 @@ class SessionUtil extends MacroLogsImpl {
       }
   }
 
-
 }

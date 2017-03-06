@@ -1,6 +1,6 @@
 package util.pay.yaka
 
-import models.mpay.yaka.{IYakaReqSigned, MYakaAction, MYakaActions, MYakaReq}
+import models.mpay.yaka._
 import play.api.data._
 import Forms._
 import com.google.inject.Inject
@@ -9,6 +9,7 @@ import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.text.util.TextHashUtil
 import io.suggest.util.logs.MacroLogsImpl
+import models.mpay.{MPayMode, MPayModes}
 import org.apache.commons.codec.digest.DigestUtils
 import util.{FormUtil, TplDataFormatUtil}
 
@@ -25,24 +26,49 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
   /** id магазина в системе яндекс-кассы.
     * По идее, всегда одинков, т.к. это номер единственного аккаунта по БД яндекса.
     */
-  def SHOP_ID = 84780L
-
-  /** 548806 -- демо-витрина, выданная при первом подключении. */
-  private def DEMO_SC_ID = 548806L
+  private def SHOP_ID = 84780L
 
   private def CONF_PREFIX = "sio.pay.yaka."
 
-  /** id витрины. На продакшене задаётся в конфиге. */
-  val SC_ID: Long = {
-    configuration.getLong( CONF_PREFIX + "scid").getOrElse {
-      val demoScId = DEMO_SC_ID
-      LOGGER.info("DEMO pay mode, scid = " + demoScId)
-      demoScId
-    }
+
+  /** Реализация IYakaConf. */
+  private case class YakaProfile(
+                                  override val scId         : Long,
+                                  override val mode         : MPayMode,
+                                  override val md5Password  : Option[String]
+                                )
+    extends IYakaProfile
+  {
+    override final def shopId = SHOP_ID
   }
 
-  /** Флаг демо-режима, по умолчанию = true. */
-  val IS_DEMO: Boolean = configuration.getBoolean(CONF_PREFIX + "demo").getOrElse(true)
+
+  /** Доступные для работы конфигурации яндекс-кассы. */
+  val PROFILES: Map[MPayMode, IYakaProfile] = {
+    val iter = for {
+      confSeq <- configuration.getConfigSeq(CONF_PREFIX + "profiles").iterator
+      conf    <- confSeq
+      scId    <- conf.getLong("scid")
+      modeId  <- conf.getString("mode")
+    } yield {
+      val mode = MPayModes.withName(modeId)
+      val yProf = YakaProfile(
+        scId = scId,
+        mode = mode,
+        md5Password = conf.getString("password")
+      )
+      LOGGER.debug(s"PROFILES: Found profile $yProf")
+      mode -> yProf
+    }
+    iter.toMap
+  }
+
+  LOGGER.info(s"${PROFILES.size} profiles total.")
+
+
+  def PRODUCTION_OPT  = PROFILES.get( MPayModes.Production )
+  def PRODUCTION      = PROFILES( MPayModes.Production )
+  def DEMO            = PROFILES( MPayModes.Testing )
 
 
   object ErrorCodes {
@@ -53,23 +79,8 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
   }
 
 
-  /** Пароль для подписывания данных при MD5-режиме. Задаётся только в конфиге. */
-  private val YAKA_MD5_PASSWORD: Option[String] = {
-    val ck = CONF_PREFIX + "password"
-    val resOpt = configuration.getString(ck)
-    if (resOpt.isEmpty)
-      LOGGER.error("Yandex.Kassa password is not defined in application.conf: " + ck)
-    resOpt
-  }
-
-
-  def isEnabled: Boolean = YAKA_MD5_PASSWORD.nonEmpty
-  def assertEnabled(): Unit = {
-    if (!isEnabled)
-      throw new IllegalStateException("Yandex.kassa is NOT configured/enabled.")
-  }
-
-
+  // ------------- Утиль для сборка маппингов форм. --------------
+  /** Поле экшена яндекс-кассы. */
   def yakaActionOptM: Mapping[Option[MYakaAction]] = {
     nonEmptyText(minLength = 5, maxLength = 16)
       .transform [Option[MYakaAction]] (
@@ -111,9 +122,11 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
   }
 
 
-  def currencyM: Mapping[MCurrency] = {
-    FormUtil.currency_iso4217(currencyIdOffset)
+  def currencyM(profile: IYakaProfile): Mapping[MCurrency] = {
+    val off = currencyIdOffset(profile)
+    FormUtil.currency_iso4217(off)
   }
+
 
   /**
     * В демо-режиме только демо-рубли. И их код 10643.
@@ -121,7 +134,9 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     * https://tech.yandex.ru/money/doc/payment-solution/deposition/test-data-docpage/
     * В обычном режиме -- используется стандартный код валюты.
     */
-  def currencyIdOffset = if (IS_DEMO) 10000 else 0
+  def currencyIdOffset(profile: IYakaProfile): Int = {
+    if (profile.isDemo) 10000 else 0
+  }
 
   /** Маппинг для данных запроса check и aviso.
     *
@@ -161,12 +176,12 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     *   md5 -> AD3E905D6F489F1AD7F2F302D2982B1B
     * }}}
     */
-  def md5Form: Form[MYakaReq] = {
+  def md5Form(profile: IYakaProfile): Form[MYakaReq] = {
     import io.suggest.pay.yaka.YakaConst._
     val m = mapping(
       ACTION_FN                   -> yakaActionM,
       AMOUNT_FN                   -> amountM,
-      CURRENCY_FN                 -> currencyM,
+      CURRENCY_FN                 -> currencyM(profile),
       BANK_ID_FN                  -> number,
       SHOP_ID_FN                  -> shopIdM,
       INVOICE_ID_FN               -> invoiceIdM,
@@ -187,29 +202,33 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     * @param price Рассчётная стоимость заказа.
     * @return Рассчётная строка.
     */
-  def getMd5(yReq: IYakaReqSigned, price: IPrice): String = {
-    assertEnabled()
-    // MD5(action;суммазаказа;orderSumCurrencyPaycash;orderSumBankPaycash;shopId;invoiceId;customerNumber;shopPassword)
-    val amount = TplDataFormatUtil.formatPriceAmountPlain(price)
+  def getMd5(profile: IYakaProfile, yReq: IYakaReqSigned, price: IPrice): String = {
+    profile.md5Password.fold[String] {
+      throw new IllegalStateException(s"Yandex.kassa has no md5-password configured/enabled. mode=${profile.mode} scid=${profile.scId}")
+    } { md5Password =>
+      // MD5(action;суммазаказа;orderSumCurrencyPaycash;orderSumBankPaycash;shopId;invoiceId;customerNumber;shopPassword)
+      val amount = TplDataFormatUtil.formatPriceAmountPlain(price)
 
-    val d = ';'
-    val str = new StringBuilder(128)    // ~106-112 примерная макс.длина этой строки в нашем случае.
-      .append( yReq.action.strId ).append(d)
-      .append( amount ).append(d)
-      .append( price.currency.iso4217 + currencyIdOffset ).append(d)
-      .append( yReq.bankId ).append(d)
-      .append( SHOP_ID ).append(d)
-      .append( yReq.invoiceId ).append(d)
-      .append( yReq.personId ).append(d)
-      .append( YAKA_MD5_PASSWORD.get )
-      .toString()
+      val d = ';'
+      val str = new StringBuilder(128)    // ~106-112 примерная макс.длина этой строки в нашем случае.
+        .append( yReq.action.strId ).append(d)
+        .append( amount ).append(d)
+        .append( price.currency.iso4217 + currencyIdOffset(profile) ).append(d)
+        .append( yReq.bankId ).append(d)
+        .append( SHOP_ID ).append(d)
+        .append( yReq.invoiceId ).append(d)
+        .append( yReq.personId ).append(d)
+        .append( md5Password )
+        .toString()
 
-    val md5Str = DigestUtils.md5Hex(str).toUpperCase()
-    LOGGER.trace(s"getMd5($yReq, $price): done:\n text for md5 = $str\n md5 = $md5Str")
-    md5Str
+      val md5Str = DigestUtils.md5Hex(str).toUpperCase()
+      LOGGER.trace(s"getMd5($yReq, $price): done:\n text for md5 = $str\n md5 = $md5Str")
+      md5Str
+    }
   }
-  def getMd5(yReq: IYakaReqSigned): String = {
-    getMd5(yReq, yReq)
+
+  def getMd5(profile: IYakaProfile, yReq: IYakaReqSigned): String = {
+    getMd5(profile, yReq, yReq)
   }
 
 

@@ -20,6 +20,7 @@ import scala.concurrent.Future
   * Да, если заказ в состоянии "корзины" и содержит item'ы.
   */
 class CanPayOrder @Inject() (
+                              aclUtil         : AclUtil,
                               mOrders         : MOrders,
                               isAuth          : IsAuth,
                               isNodeAdmin     : IsNodeAdmin,
@@ -43,14 +44,13 @@ class CanPayOrder @Inject() (
       override def userInits = userInits1
 
       override def invokeBlock[A](request: Request[A], block: (MNodeOrderReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-
         // Отказ юзеру в обслуживании: для защиты от сканирования id и прочего, ответ непонятным юзерам всегда один.
         def forbid = isAuth.onUnauth(request)
 
+        val user = aclUtil.userFromRequest(request)
+
         // Незалогиненных юзеров можно сразу посылать.
-        personIdOpt.fold( forbid ) { personId =>
-          val user = mSioUsers(personIdOpt)
+        user.personIdOpt.fold( forbid ) { personId =>
 
           // Получить id контракта юзера.
           val usrContractIdOptFut = user.contractIdOptFut

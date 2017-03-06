@@ -18,12 +18,12 @@ import models.mctx.Context
 import models.mdr.MSysMdrEmailTplArgs
 import models.mpay.yaka._
 import models.mproj.ICommonDi
-import models.req.{INodeOrderReq, IReqHdr}
-import models.usr.MPersonIdents
+import models.req.{INodeOrderReq, IReq, IReqHdr}
+import models.usr.{MPersonIdents, MSuperUsers}
 import play.api.i18n.Messages
-import play.api.mvc.{Call, Result}
+import play.api.mvc.{Action, AnyContent, Call, Result}
 import play.twirl.api.Xml
-import util.acl.{CanPayOrder, CanViewOrder, MaybeAuth}
+import util.acl.{CanPayOrder, CanViewOrder, IsSuOrNotProduction, MaybeAuth}
 import util.billing.Bill2Util
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -43,6 +43,11 @@ import scala.concurrent.Future
   * Created: 09.02.17 15:02
   * Description: Контроллер для ПС Яндекс.Касса, которая к сбербанку ближе.
   *
+  * 2016.mar.6: Для эксперимента реализована возможность одновременного использования демо и продакшен кассы
+  * через разные экшены с похожими названиями.
+  * Какой-то быдлокод получился (Может лучше бы по scId разделять, и карту профилей по scId?),
+  * но анкета с новыми ссылками уже отправлена, пока будет терпеть и наблюдать.
+  *
   * @see Прямая ссылка: [[https://github.com/yandex-money/yandex-money-joinup/blob/master/demo/010%20%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%B8%D1%81%D0%BD%D1%8B%D1%85%20%D1%81%D0%B0%D0%B9%D1%82%D0%BE%D0%B2.md#%D0%9D%D0%B0%D1%87%D0%B0%D0%BB%D0%BE-%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D0%B8]]
   *      Короткая ссылка: [[https://goo.gl/Zfwt15]]
   */
@@ -54,10 +59,12 @@ class PayYaka @Inject() (
                           mItems                   : MItems,
                           yakaUtil                 : YakaUtil,
                           mBalances                : MBalances,
+                          isSuOrNotProduction      : IsSuOrNotProduction,
                           mOrders                  : MOrders,
                           bill2Util                : Bill2Util,
                           mailerWrapper            : IMailerWrapper,
                           mPersonIdents            : MPersonIdents,
+                          mSuperUsers              : MSuperUsers,
                           mdrUtil                  : MdrUtil,
                           identUtil                : IdentUtil,
                           override val mCommonDi   : ICommonDi
@@ -82,6 +89,11 @@ class PayYaka @Inject() (
   }
 
 
+  /** Платеж через демо-кассу. */
+  def demoPayForm(orderId: Gid_t, onNodeId: MEsUuId) = isSuOrNotProduction {
+    _payForm(yakaUtil.DEMO, orderId, onNodeId)
+  }
+
   /** Подготовиться к оплате через яндекс-кассу.
     * Юзеру рендерится неизменяемая форма с данными для оплаты.
     * Экшен можно вызывать несколько раз, он не влияет на БД.
@@ -90,7 +102,18 @@ class PayYaka @Inject() (
     * @param onNodeId На каком узле сейчас находимся?
     * @return Страница с формой оплаты, отправляющей юзера в яндекс.кассу.
     */
-  def payForm(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
+  def payForm(orderId: Gid_t, onNodeId: MEsUuId): Action[AnyContent] = {
+    yakaUtil.PRODUCTION_OPT.fold {
+      isSuOrNotProduction() { implicit request =>
+        LOGGER.debug(s"payForm($orderId, $onNodeId): PRODUCTION mode unawailable, will try demo-mode...")
+        Redirect( routes.PayYaka.demoPayForm(orderId, onNodeId) )
+      }
+    } { prod =>
+      _payForm(prod, orderId, onNodeId)
+    }
+  }
+
+  private def _payForm(profile: IYakaProfile, orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
     canPayOrder(orderId, onNodeId, _alreadyPaid, U.Balance).async { implicit request =>
       val orderPricesFut = bill2Util.getOrderPricesFut(orderId)
 
@@ -123,9 +146,9 @@ class PayYaka @Inject() (
         // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
         // Собрать аргументы для рендера, отрендерить страницу с формой.
         val formData = MYakaFormData(
-          isDemo          = yakaUtil.IS_DEMO,
-          shopId          = yakaUtil.SHOP_ID,
-          scId            = yakaUtil.SC_ID,
+          isDemo          = profile.isDemo,
+          shopId          = profile.shopId,
+          scId            = profile.scId,
           amount          = payPrice.amount,
           onNodeId        = onNodeId,
           customerNumber  = request.user.personIdOpt.get,
@@ -178,6 +201,17 @@ class PayYaka @Inject() (
 
   def YREQ_BP = parse.urlFormEncoded(60000)
 
+
+  /** Сделать исключение, если не-суперюзер пытается платить через демокассу. */
+  private def _assertDemoSu(profile: IYakaProfile, yReq: IYakaReq): Unit = {
+    if ( profile.isDemo && !mSuperUsers.isSuperuserId(yReq.personId) )
+      throw new SecurityException(s"_assertDemoSu($profile): Non-SU user tried to pay via DEMOkassa.")
+  }
+
+
+  def check     = _check( yakaUtil.PRODUCTION )
+  def demoCheck = _check( yakaUtil.DEMO )
+
   /**
     * Экшен проверки платежа яндекс-кассой.
     *
@@ -186,31 +220,32 @@ class PayYaka @Inject() (
     * @see Пример с CURL: [[https://github.com/yandex-money/yandex-money-joinup/blob/master/demo/010%20%D0%B8%D0%BD%D1%82%D0%B5%D0%B3%D1%80%D0%B0%D1%86%D0%B8%D1%8F%20%D0%B4%D0%BB%D1%8F%20%D1%81%D0%B0%D0%BC%D0%BE%D0%BF%D0%B8%D1%81%D0%BD%D1%8B%D1%85%20%D1%81%D0%B0%D0%B9%D1%82%D0%BE%D0%B2.md#%D0%9F%D1%80%D0%B8%D0%BC%D0%B5%D1%80-curl]]
     * @return 200 OK + XML, когда всё нормально.
     */
-  def check = maybeAuth().async(YREQ_BP) { implicit request =>
+  private def _check(profile: IYakaProfile) = maybeAuth().async(YREQ_BP) { implicit request =>
     lazy val logPrefix = s"check[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix ${request.remoteAddress} body: ${formatReqBody(request.body)}")
 
     val yakaAction = MYakaActions.Check
-    val shopId = yakaUtil.SHOP_ID
 
     // Надо забиндить тело запроса в форму.
-    yakaUtil.md5Form.bindFromRequest().fold(
+    yakaUtil.md5Form(profile).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix Failed to bind yaka request: ${formatFormErrors(formWithErrors)}")
-        _badRequest(yakaAction)
+        _badRequest(profile, yakaAction)
       },
 
       // Всё ок забиндилось. Выверяем все данные.
       {yReq =>
         // Реквест похож на денежный. Сначала можно просто пересчитать md5:
         val resDataFut: Future[(List[MAction], Xml)] = {
-          val expMd5 = yakaUtil.getMd5(yReq)
+          val expMd5 = yakaUtil.getMd5(profile, yReq)
           // Проверяем shopId и md5 одновременно, чтобы по-лучше идентифицировать реквест.
           if (
-            yReq.shopId == shopId &&
+            yReq.shopId == profile.shopId &&
             yReq.action == yakaAction &&
             expMd5.equalsIgnoreCase( yReq.md5 )
           ) {
+            // Если демо-режим, то разрешить только для суперюзеров:
+            _assertDemoSu(profile, yReq)
 
             // Проверяем связь юзера и ордера: Узнать id контракта юзера.
             val usrNodeOptFut = mNodesCache.getById(yReq.personId)
@@ -244,7 +279,7 @@ class PayYaka @Inject() (
 
             } yield {
               // Всё ок. Вернуть 200 + XML без ошибок.
-              val xml = _successXml(yakaAction, yReq.invoiceId)
+              val xml = _successXml(profile, yakaAction, yReq.invoiceId)
               val checkMa = MAction(
                 actions = MActionTypes.Success :: Nil
               )
@@ -259,7 +294,7 @@ class PayYaka @Inject() (
                   yakaAction  = yakaAction,
                   errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
                   invoiceId   = Some( yReq.invoiceId ),
-                  shopId      = shopId,
+                  shopId      = profile.shopId,
                   errMsg      = Some( ex.getMessage )
                 )
                 val statMas2 = MAction(
@@ -271,7 +306,7 @@ class PayYaka @Inject() (
             }
 
           } else {
-            _badMd5(yakaAction, yReq, expMd5)
+            _badMd5(profile, yakaAction, yReq, expMd5)
           }
         }
 
@@ -297,11 +332,11 @@ class PayYaka @Inject() (
 
 
   /** Ответ платежке при невозможности понять запрос. */
-  private def _badRequest(yakaAction: MYakaAction): Result = {
+  private def _badRequest(profile: IYakaProfile, yakaAction: MYakaAction): Result = {
     val xml = _YakaRespTpl(
       yakaAction = yakaAction,
       errCode    = yakaUtil.ErrorCodes.BAD_REQUEST,
-      shopId     = yakaUtil.SHOP_ID,
+      shopId     = profile.shopId,
       invoiceId  = None
     )
     Ok(xml)
@@ -319,34 +354,39 @@ class PayYaka @Inject() (
   }
 
 
+  def payment = _payment( yakaUtil.PRODUCTION )
+  def demoPayment = _payment( yakaUtil.DEMO )
+
   /** Уведомление о прошедшем платеже.
     *
     * @return 200 + XML.
     */
-  def payment = maybeAuth().async(YREQ_BP) { implicit request =>
+  private def _payment(profile: IYakaProfile) = maybeAuth().async(YREQ_BP) { implicit request =>
     lazy val logPrefix = s"payment[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix ${request.remoteAddress} body:\n ${formatReqBody(request.body)}")
 
     val yakaAction = MYakaActions.Payment
-    val shopId = yakaUtil.SHOP_ID
 
     // Надо забиндить тело запроса в форму.
-    yakaUtil.md5Form.bindFromRequest().fold(
+    yakaUtil.md5Form(profile).bindFromRequest().fold(
       {formWithErrors =>
         LOGGER.debug(s"$logPrefix unable to bind form: ${formatFormErrors(formWithErrors)}")
-        _badRequest(yakaAction)
+        _badRequest(profile, yakaAction)
       },
 
       // Удалось забиндить данные оплаты в форму. Надо проверить данные реквеста, в т.ч. md5.
       {yReq =>
         // Реквест похож на денежный. Сначала можно просто пересчитать md5:
-        val expMd5 = yakaUtil.getMd5(yReq)
+        val expMd5 = yakaUtil.getMd5(profile, yReq)
         val resDataFut: Future[(List[MAction], Xml)] = {
           // Проверяем shopId и md5 одновременно, чтобы по-лучше идентифицировать реквест.
           if ( expMd5.equalsIgnoreCase(yReq.md5) &&
-            yReq.shopId == shopId &&
+            yReq.shopId == profile.shopId &&
             yReq.action == yakaAction
           ) {
+            // Если демо-режим, то разрешить только для суперюзеров:
+            _assertDemoSu(profile, yReq)
+
             // Базовые поля реквеста и md5 совпадают с ожидаемыми. Зачислить на баланс юзера оплаченные бабки, попытаться исполнить ордер.
             // Узнать узел юзера, для его contract_id и человеческого названия.
             val usrNodeOptFut = mNodesCache.getById( yReq.personId )
@@ -444,7 +484,7 @@ class PayYaka @Inject() (
               }
 
               // Рендер XML-ответа яндекс-кассе.
-              val xml = _successXml(yakaAction, yReq.invoiceId)
+              val xml = _successXml(profile, yakaAction, yReq.invoiceId)
 
               // Собрать результат.
               (statMasAcc, xml)
@@ -461,7 +501,7 @@ class PayYaka @Inject() (
                 val xml = _YakaRespTpl(
                   yakaAction  = yakaAction,
                   errCode     = yakaUtil.ErrorCodes.ORDER_ERROR,
-                  shopId      = shopId,
+                  shopId      = profile.shopId,
                   invoiceId   = Some( yReq.invoiceId ),
                   errMsg      = Some( ex.getMessage )
                 )
@@ -470,7 +510,7 @@ class PayYaka @Inject() (
             }
 
           } else {
-            _badMd5(yakaAction, yReq, expMd5)
+            _badMd5(profile, yakaAction, yReq, expMd5)
           }
         }
 
@@ -491,9 +531,8 @@ class PayYaka @Inject() (
   }
 
 
-  private def _badMd5(yakaAction: MYakaAction, yReq: MYakaReq, expMd5: String): Future[(List[MAction], Xml)] = {
-    val shopId = yakaUtil.SHOP_ID
-    LOGGER.error(s"_badMd5Xml($yakaAction): yaka req binded, but action/shop/md5 invalid:\n $yReq\n calculated = $expMd5 , but provided = ${yReq.md5} shopId=$shopId")
+  private def _badMd5(profile: IYakaProfile, yakaAction: MYakaAction, yReq: MYakaReq, expMd5: String): Future[(List[MAction], Xml)] = {
+    LOGGER.error(s"_badMd5Xml($yakaAction): yaka req binded, but action/shop/md5 invalid:\n $yReq\n calculated = $expMd5 , but provided = ${yReq.md5} shopId=${profile.shopId}")
     // Записывать в статистику.
     val maErr = MAction(
       actions = MActionTypes.PayBadReq :: Nil,
@@ -503,7 +542,7 @@ class PayYaka @Inject() (
       yakaAction  = yakaAction,
       errCode     = yakaUtil.ErrorCodes.MD5_ERROR,
       invoiceId   = Some( yReq.invoiceId ),
-      shopId      = shopId
+      shopId      = profile.shopId
     )
     val statMas2 = maErr :: Nil
     Future.successful((statMas2, xml))
@@ -511,11 +550,11 @@ class PayYaka @Inject() (
 
 
   /** Рендер XML для положительного ответа для яндекс-кассы по экшену. */
-  private def _successXml(yakaAction: MYakaAction, invoiceId: Long): Xml = {
+  private def _successXml(profile: IYakaProfile, yakaAction: MYakaAction, invoiceId: Long): Xml = {
     _YakaRespTpl(
       yakaAction  = yakaAction,
       errCode     = yakaUtil.ErrorCodes.NO_ERROR,
-      shopId      = yakaUtil.SHOP_ID,
+      shopId      = profile.shopId,
       invoiceId   = Some(invoiceId)
     )
   }
@@ -549,20 +588,28 @@ class PayYaka @Inject() (
   }
 
 
+  def success(qs: MYakaReturnQs)      = maybeAuth() { implicit request =>
+    _success(yakaUtil.PRODUCTION, qs)
+  }
+  def demoSuccess(qs: MYakaReturnQs)  = isSuOrNotProduction() { implicit request =>
+    _success(yakaUtil.DEMO, qs)
+  }
+
   /** Яндекс.касса вернула сюда юзера после удачной оплаты.
     * Сессия юзера могла истечь, пока он платил, поэтому тут maybeAuth.
     * @param qs QS-аргументы запроса.
     */
-  def success(qs: MYakaReturnQs) = maybeAuth() { implicit request =>
+  private def _success(profile: IYakaProfile, qs: MYakaReturnQs)(implicit request: IReq[_]): Result = {
     lazy val logPrefix = s"success[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix User returned with $qs")
+
     if (qs.action != MYakaReturnActions.Success) {
       LOGGER.warn(s"$logPrefix unexpected qs action: ${qs.action}")
-      BadRequest(s"No success: ${qs.action}")
+      ExpectationFailed(s"No success: ${qs.action}")
 
-    } else if (qs.shopId != yakaUtil.SHOP_ID) {
+    } else if (qs.shopId != profile.shopId) {
       LOGGER.warn(s"$logPrefix Unexpected shopId for returned user: ${qs.shopId}")
-      BadRequest("Invalid shop.")
+      NotAcceptable("Invalid shop.")
 
     } else if (request.user.personIdOpt.nonEmpty && !request.user.personIdOpt.contains(qs.personId)) {
       LOGGER.warn(s"$logPrefix Unexpected personId for returned user: ${qs.personId}, but expected ${request.user.personIdOpt}")
@@ -576,12 +623,14 @@ class PayYaka @Inject() (
   }
 
 
+
   /** Аналог success() для POST-запросов.
     *
     * Судя по докам, возможен переход на этот экшен через POST из яндекс-кошелька.
     * @see [[https://tech.yandex.ru/money/doc/payment-solution/shop-config/parameters-docpage/]]
     */
   def failPostQs(qs: MYakaReturnQs) = fail(qs)
+  def demoFailPostQs(qs: MYakaReturnQs) = fail(qs)
 
 
   /** Какая-то непонятная ошибка без подробностей на стороне кассы. И полезных данных в qs нет.
@@ -603,6 +652,8 @@ class PayYaka @Inject() (
     }
   }
 
+  def demoFailUnknown = failUnknown
+
 
   /** Яндекс.касса вернула юзера сюда из-за ошибки оплаты.
     * Сессия юзера могла закончится, пока он платил, поэтому тут maybeAuth.
@@ -620,6 +671,7 @@ class PayYaka @Inject() (
         LOCATION -> routes.PayYaka.failLoggedIn(qs.orderId, qs.onNodeId).url
       )
   }
+  def demoFail(qs: MYakaReturnQs) = fail(qs)
 
 
   /** Переброска сюда из fail() с отбросом ненужного мусора. */

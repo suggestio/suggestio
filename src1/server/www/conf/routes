@@ -128,6 +128,16 @@ GET  /pay/yaka/fail                     @controllers.pay.PayYaka.fail(qs: mpay.y
 GET  /pay/yaka/fail                     @controllers.pay.PayYaka.failUnknown
 POST /pay/yaka/fail                     @controllers.pay.PayYaka.failPostQs(qs: mpay.yaka.MYakaReturnQs)
 GET  /pay/yaka/_fail                    @controllers.pay.PayYaka.failLoggedIn(orderId: Gid_t, onNodeId: MEsUuId)
+## lk pay demos
+GET  /demopay/yaka/order/:onNodeId/:orderId   @controllers.pay.PayYaka.demoPayForm(orderId: Gid_t, onNodeId: MEsUuId)
+POST /demopay/yaka/check                @controllers.pay.PayYaka.demoCheck
+POST /demopay/yaka/payment              @controllers.pay.PayYaka.demoPayment
+GET  /demopay/yaka/success              @controllers.pay.PayYaka.demoSuccess(qs: mpay.yaka.MYakaReturnQs)
+## Обработка ошибок нетривиальна: обычно GET + qs, но может быть и POST, может быть GET без нормальных параметров.
+GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFail(qs: mpay.yaka.MYakaReturnQs)
+GET  /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailUnknown
+POST /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailPostQs(qs: mpay.yaka.MYakaReturnQs)
+
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/order/:onNodeId/:orderId       @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId)
