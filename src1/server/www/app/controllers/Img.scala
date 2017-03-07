@@ -245,7 +245,6 @@ trait TempImgSupport
   extends SioController
   with IMacroLogs
   with NotifyWs
-  with MyConfName
   with IDynImgUtil
   with IMImg3Di
   with IOrigImageUtilDi
@@ -263,11 +262,12 @@ trait TempImgSupport
   import imgCtlUtil._
 
   /** Размер генерируемой палитры. */
-  val MAIN_COLORS_PALETTE_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8
-  /** Размер возвращаемой по WebSocket палитры. */
-  val MAIN_COLORS_PALETTE_SHRINK_SIZE: Int = configuration.getInt(s"img.$MY_CONF_NAME.palette.shrink.size") getOrElse 4
+  private def MAIN_COLORS_PALETTE_SIZE = 8 //configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8
 
-  val TEMP_IMG_PREVIEW_SIDE_SIZE_PX = configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
+  /** Размер возвращаемой по WebSocket палитры. */
+  private def MAIN_COLORS_PALETTE_SHRINK_SIZE = 4 //configuration.getInt(s"img.$MY_CONF_NAME.palette.shrink.size") getOrElse 4
+
+  private def TEMP_IMG_PREVIEW_SIDE_SIZE_PX = 620 //configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
 
   /** Настройка кеширования для  */
   protected def CACHE_COLOR_HISTOGRAM_SEC = 10

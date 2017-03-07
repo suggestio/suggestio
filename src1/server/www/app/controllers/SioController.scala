@@ -121,17 +121,15 @@ trait MyConfName {
 
 
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
-trait NotifyWs extends SioController with IMacroLogs with MyConfName with IWsDispatcherActorsDi {
+trait NotifyWs extends SioController with IMacroLogs with IWsDispatcherActorsDi {
 
   import mCommonDi._
 
   /** Сколько асинхронных попыток предпринимать. */
-  val NOTIFY_WS_WAIT_RETRIES_MAX = configuration.getInt(s"ctl.ws.notify.$MY_CONF_NAME.retires.max") getOrElse NOTIFY_WS_WAIT_RETRIES_MAX_DFLT
-  def NOTIFY_WS_WAIT_RETRIES_MAX_DFLT = 15
+  private def NOTIFY_WS_WAIT_RETRIES_MAX = 15
 
   /** Пауза между повторными попытками отправить уведомление. */
-  val NOTIFY_WS_RETRY_PAUSE_MS = configuration.getLong(s"ctl.ws.notify.$MY_CONF_NAME.retry.pause.ms") getOrElse NOTIFY_WS_RETRY_PAUSE_MS_DFLT
-  def NOTIFY_WS_RETRY_PAUSE_MS_DFLT = 1000L
+  private def NOTIFY_WS_RETRY_PAUSE_MS = 1000L
 
   /** Послать сообщение ws-актору с указанным wsId. Если WS-актор ещё не появился, то нужно подождать его
     * некоторое время. Если WS-актор так и не появился, то выразить соболезнования в логи. */
