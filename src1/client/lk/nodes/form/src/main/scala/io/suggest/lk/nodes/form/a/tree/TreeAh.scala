@@ -1,7 +1,11 @@
 package io.suggest.lk.nodes.form.a.tree
 
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode._
+import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adv.rcvr.IRcvrKey
+import io.suggest.common.radio.BeaconUtil
+import io.suggest.common.text.StringUtil
+import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -15,8 +19,9 @@ import scala.util.Success
   * Description: Diode action-handler
   */
 class TreeAh[M](
-                 api      : ILkNodesApi,
-                 modelRW  : ModelRW[M, MTree]
+                 api          : ILkNodesApi,
+                 modelRW      : ModelRW[M, MTree],
+                 rootNodeIdM  : ModelRO[String]
                )
   extends ActionHandler(modelRW)
 {
@@ -31,23 +36,50 @@ class TreeAh[M](
     updated(v2)
   }
 
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case m: AddSubNodeClick =>
       val v0 = value
+      val addState0 = MAddSubNodeState()
       val v2 = v0.withAddStates(
-        v0.addStates + (m.rcvrKey -> MAddSubNodeState())
+        v0.addStates + (m.rcvrKey -> addState0)
       )
       updated(v2)
 
+
     // Сигнал о вводе имени узла в форме добавления узла.
     case m: AddSubNodeNameChange =>
-      _updateAddState(m) { _.withName( m.name ) }
+      _updateAddState(m) { addState0 =>
+        val name2 = StringUtil.strLimitLen(
+          str     = m.name.trim,
+          maxLen  = NodeEditConstants.Name.LEN_MAX,
+          ellipsis = ""
+        )
+        addState0.copy(
+          name      = name2,
+          nameValid = name2.length >= NodeEditConstants.Name.LEN_MIN
+        )
+      }
+
 
     // Сигнал о вводе id узла в форме добавления узла.
     case m: AddSubNodeIdChange =>
-      _updateAddState(m) { _.withId( Some(m.id) ) }
+      _updateAddState(m) { addState0 =>
+        val ed = BeaconUtil.EddyStone
+        // Сопоставить с паттерном маячка.
+        val id2 = StringUtil.strLimitLen(
+          str       = m.id.toLowerCase,
+          maxLen    = ed.NODE_ID_LEN,
+          ellipsis  = ""
+        )
+        addState0.copy(
+          idValid   = id2.matches( ed.EDDY_STONE_NODE_ID_RE_LC ),
+          id        = Some(id2)
+        )
+      }
+
 
     // Сигнал о нажатии на кнопку "отмена" в форме добавления узла.
     case m: AddSubNodeCancelClick =>
@@ -56,6 +88,81 @@ class TreeAh[M](
         v0.addStates - m.rcvrKey
       )
       updated(v2)
+
+
+    // Сигнал создания нового узла на сервере.
+    case m: AddSubNodeSaveClick =>
+      val v0 = value
+      val rcvrKey = m.rcvrKey
+      val addState0 = v0.addStates( rcvrKey )
+
+      if (addState0.isValid) {
+
+        // Огранизовать запрос на сервер.
+        val fx = Effect {
+          val parentNodeId = rcvrKey.lastOption.getOrElse {
+            // Если rcvrKey пустой, значит добавление под-узла верхнего уровня. Узел надо взять из состояния.
+            rootNodeIdM()
+          }
+          val req = MLknNodeReq(
+            name = addState0.name,
+            id   = addState0.id
+          )
+          api
+            .createSubNodeSubmit(parentNodeId, req)
+            .transform { tryResp =>
+              val action = AddSubNodeResp(
+                tryResp = tryResp,
+                rcvrKey = rcvrKey
+              )
+              Success(action)
+            }
+        }
+
+        // Выставить в addState флаг текущего запроса.
+        val addState2 = addState0.withSaving(
+          addState0.saving.pending()
+        )
+        val v2 = v0.withAddStates(
+          addStates2 = v0.addStates + (rcvrKey -> addState2)
+        )
+        updated(v2, fx)
+
+      } else {
+        // Игнорить нажатие, пусть юзер введёт все данные.
+        noChange
+      }
+
+
+    // Положительный ответ сервера по поводу добавления нового узла.
+    case m: AddSubNodeResp =>
+      m.tryResp.fold(
+        {ex =>
+          // Вернуть addState назад.
+          _updateAddState(m) { addState0 =>
+            addState0.withSaving(
+              addState0.saving.fail(ex)
+            )
+          }
+        },
+        {resp =>
+          // Залить обновления в дерево, удалить addState для текущего rcvrKey
+          val v0 = value
+          val v2 = v0.copy(
+            addStates = v0.addStates - m.rcvrKey,
+            nodes = MNodeState
+              .updateChildren(m.rcvrKey, v0.nodes) { children0 =>
+                val mns0 = MNodeState(
+                  info = resp
+                )
+                children0.toIterator ++ (mns0 :: Nil)
+              }
+              .toSeq
+          )
+          updated(v2)
+        }
+      )
+
 
     // Сигнал о необходимости показать какой-то узел подробнее.
     case nnc: NodeNameClick =>

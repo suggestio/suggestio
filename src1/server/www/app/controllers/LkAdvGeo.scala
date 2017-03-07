@@ -43,6 +43,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.req.ReqUtil
 import models.MNode
 import util.mdr.MdrUtil
 
@@ -65,6 +66,7 @@ class LkAdvGeo @Inject() (
                            streamsUtil                     : StreamsUtil,
                            pickleSrvUtil                   : PickleSrvUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
+                           reqUtil                         : ReqUtil,
                            mdrUtil                         : MdrUtil,
                            canAccessItem                   : CanAccessItem,
                            canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
@@ -364,24 +366,7 @@ class LkAdvGeo @Inject() (
 
 
   /** Body parser для реквестов, содержащих внутри себя сериализованный инстанс MFormS. */
-  private def formPostBP: BodyParser[MFormS] = {
-    parse.raw(maxLength = 1024 * 10)
-      // Десериализовать тело реквеста...
-      .validate { rawBuf =>
-        rawBuf.asBytes()
-          .toRight[Result]( EntityTooLarge("missing body") )
-          .right.flatMap { bStr =>
-            try {
-              val bbuf = bStr.asByteBuffer
-              val mfs = PickleUtil.unpickle[MFormS](bbuf)
-              Right( mfs )
-            } catch { case ex: Throwable =>
-              LOGGER.error(s"$formPostBP: unable to deserialize req.body", ex)
-              Left( BadRequest("invalid body") )
-            }
-          }
-      }
-  }
+  private def formPostBP = reqUtil.picklingBodyParser[MFormS]
 
 
   /**

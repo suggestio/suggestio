@@ -12,7 +12,7 @@ import io.suggest.common.radio.BeaconSignal
  *
   * @param uid id маячка, если есть.
   *            Т.к. на неужное разделение 16 байт id на Namespace ID и Beacon ID нам вообще параллельно,
-  *            то тут base64-строка с 16 байтами полного id.
+  *            то тут hex-строка с 16 байтами полного id.
   */
 case class EddyStone(
   override val rssi     : Int,

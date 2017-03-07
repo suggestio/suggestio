@@ -17,4 +17,10 @@ object NodeEditConstants {
   /** id контейнера для управления логотипом узла. */
   def NODE_LOGO_DIV_ID = "logo"
 
+
+  object Name {
+    def LEN_MAX = 64
+    def LEN_MIN = 1
+  }
+
 }

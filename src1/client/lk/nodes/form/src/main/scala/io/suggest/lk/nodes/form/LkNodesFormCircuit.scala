@@ -5,7 +5,7 @@ import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
 import io.suggest.lk.nodes.form.a.tree.TreeAh
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
+import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MLknOther, MNodeState, MTree}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
@@ -33,6 +33,9 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     val base64   = stateInp.value.get
     val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLknFormInit](base64)
     val mroot = MLkNodesRoot(
+      other = MLknOther(
+        onNodeId = mFormInit.onNodeId
+      ),
       tree = MTree(
         nodes = for (nInfo <- mFormInit.nodes0.children) yield {
           MNodeState(nInfo)
@@ -52,7 +55,8 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     // Реагировать на события древа узлов.
     val treeAh = new TreeAh(
       api     = API,
-      modelRW = zoomRW(_.tree) { _.withTree(_) }
+      modelRW = zoomRW(_.tree) { _.withTree(_) },
+      rootNodeIdM = zoom(_.other.onNodeId)
     )
 
     treeAh

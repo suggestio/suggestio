@@ -31,4 +31,23 @@ object BeaconUtil {
       .toInt
   }
 
+
+  object EddyStone {
+
+    def ID_DELIM        = "-"
+
+    def NS_ID_HEX_LEN   = 20
+    def INST_ID_HEX_LEN = 12
+    def NODE_ID_LEN     = NS_ID_HEX_LEN + ID_DELIM.length + INST_ID_HEX_LEN
+
+    /** Regexp для проверки на EddyStone в нижнем регистре. */
+    def EDDY_STONE_NODE_ID_RE_LC: String = {
+      val hexCharRe = "[a-f0-9]"
+      val pre = "{"
+      val post = "}"
+      hexCharRe + pre + NS_ID_HEX_LEN + post + ID_DELIM + hexCharRe + pre +INST_ID_HEX_LEN + post
+    }
+
+  }
+
 }

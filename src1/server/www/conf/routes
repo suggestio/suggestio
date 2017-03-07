@@ -102,6 +102,7 @@ GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offer
 ## ЛК: Управление под-узлами.
 GET  /lk/subnodes/of/:nodeId            @controllers.LkNodes.nodesOf(nodeId)
 GET  /lk/subnodes/subof/:nodeId         @controllers.LkNodes.subNodesOf(nodeId)
+POST /lk/subnodes/sub/create/:parentId  @controllers.LkNodes.createSubNodeSubmit(parentId)
 
 
 ## ЛК: Размещение ADN-узла на карте

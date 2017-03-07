@@ -3,6 +3,7 @@ package util
 import java.net.{MalformedURLException, URL}
 import java.time.{LocalDate, ZoneId}
 
+import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.bill.{MCurrencies, MCurrency}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
@@ -249,13 +250,20 @@ object FormUtil {
   }
 
 
-  val nameM = nonEmptyText(maxLength = 64)
-    .transform(strTrimSanitizeUnescapeF, strIdentityF)
+  val nameM: Mapping[String] = {
+    val n = NodeEditConstants.Name
+    val minLen = n.LEN_MIN
+    val maxLen = n.LEN_MAX
+    nonEmptyText(minLength = minLen, maxLength = maxLen)
+      .transform(strTrimSanitizeUnescapeF, strIdentityF)
+      .verifying("error.too.short", _.length >= maxLen)
+  }
+
   def nameOptM = optional(nameM)
 
 
   /** Маппер для поля, содержащего код цвета. */
-  private val colorCheckRE = "(?i)[a-f0-9]{6}".r
+  private def colorCheckRE = "(?i)[a-f0-9]{6}".r
   def colorM = nonEmptyText(minLength = 6, maxLength = 6)
     .verifying("error.color.invalid", colorCheckRE.pattern.matcher(_).matches)
   def colorOptM = optional(colorM)

@@ -27,10 +27,14 @@ object LkNodesRoutes {
 }
 
 
+/** Доступные экшены контроллера LkNodes. */
 @js.native
 sealed trait LkNodesCtl extends js.Object {
 
-  /** Запрос списка под-узлов для указанного узла. */
+  /** Роута списка под-узлов для указанного узла. */
   def subNodesOf(nodeId: String): Route = js.native
+
+  /** Роута сабмита формы добавления нового узла. */
+  def createSubNodeSubmit(parentId: String): Route = js.native
 
 }

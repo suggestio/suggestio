@@ -25,6 +25,7 @@ object MLkNodesRoot {
   * @param tree Модель-контейнер для отображаемых поддеревьев узлов.
   */
 case class MLkNodesRoot(
+                         other      : MLknOther,
                          tree       : MTree
                        )
 {

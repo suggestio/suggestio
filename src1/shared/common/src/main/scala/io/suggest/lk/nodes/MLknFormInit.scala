@@ -24,6 +24,7 @@ object MLknFormInit {
   * @param form Начальное состояние формы.
   */
 case class MLknFormInit(
-                         nodes0 : MLknNodeResp,
-                         form   : MLknForm
+                         onNodeId   : String,
+                         nodes0     : MLknNodeResp,
+                         form       : MLknForm
                        )

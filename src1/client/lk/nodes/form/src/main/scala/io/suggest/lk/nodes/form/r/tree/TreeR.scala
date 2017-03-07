@@ -85,6 +85,11 @@ object TreeR {
         )
 
       } { addState =>
+        val isSaving = addState.saving.isPending
+        val disabledAttr = isSaving ?= {
+          ^.disabled := true
+        }
+
         // Сейчас открыта форма добавление под-узла для текущего узла.
         <.div(
 
@@ -95,7 +100,8 @@ object TreeR {
               ^.`type`      := "text",
               ^.value       := addState.name,
               ^.onChange   ==> onAddSubNodeNameChange(parentRcvrKey),
-              ^.placeholder := Messages("Beacon.name.example")
+              ^.placeholder := Messages("Beacon.name.example"),
+              disabledAttr
             )
           ),
 
@@ -108,25 +114,63 @@ object TreeR {
               ^.value       := addState.id.getOrElse(""),
               ^.onChange   ==> onAddSubNodeIdChange(parentRcvrKey),
               ^.placeholder := EXAMPLE_UID,
-              ^.title       := Messages("Example.id.0", EXAMPLE_UID)
+              ^.title       := Messages("Example.id.0", EXAMPLE_UID),
+              disabledAttr
             )
           ),
 
-          // Кнопка сохранения.
+          // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
           <.a(
-            ^.`class` := (Css.Buttons.BTN :: Css.Size.M :: Css.Buttons.MAJOR :: Nil).mkString(SPACE),
+            {
+              val isEnabled = addState.isValid && !isSaving
+              ^.classSet1(
+                (Css.Buttons.BTN :: Css.Size.M :: Nil).mkString(SPACE),
+                Css.Buttons.MAJOR     -> isEnabled,
+                Css.Buttons.DISABLED  -> !isEnabled
+              )
+            },
             ^.onClick --> onAddSubNodeSaveClick(parentRcvrKey),
             Messages("Save")
           ),
 
           // Кнопка отмены.
           <.a(
-            ^.`class` := (Css.Buttons.BTN :: Css.Size.M :: Css.Buttons.NEGATIVE :: Nil).mkString(SPACE),
+            ^.classSet1(
+              (Css.Buttons.BTN :: Css.Size.M :: Nil).mkString(SPACE),
+              Css.Buttons.NEGATIVE  -> !isSaving,
+              Css.Buttons.DISABLED  -> isSaving
+            ),
             ^.onClick --> onAddSubNodeCancelClick(parentRcvrKey),
             Messages("Cancel")
-          )
-        )
-      }
+          ),
+
+          // Крутилка ожидания сохранения.
+          isSaving ?= {
+            val pleaseWait = Messages("Please.wait")
+            LkPreLoader.PRELOADER_IMG_URL.fold [ReactElement] {
+              <.span(
+                pleaseWait,
+                HtmlConstants.ELLIPSIS
+              )
+            } { loaderUrl =>
+              <.img(
+                ^.src   := loaderUrl,
+                ^.title := pleaseWait,
+                ^.width := 22
+              )
+            }
+          },
+
+          // Вывести инфу, что что-то пошло не так при ошибке сохранения.
+          addState.saving.renderFailed { ex =>
+            <.span(
+              ^.title := ex.toString,
+              Messages("Something.gone.wrong")
+            )
+          }
+
+        ) // div()
+      } // addState =>
     }
 
 

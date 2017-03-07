@@ -3,7 +3,6 @@ package util.blocks
 import io.suggest.model.n2.ad.ent.text.ValueEnt
 import models.blk.ed.{AdFormM, BindAcc, BindResult}
 import models.{MEntity, TextEnt}
-import play.api.Play.{configuration, current}
 import play.api.data.Forms._
 import play.api.data._
 
@@ -23,10 +22,10 @@ object ListBlock {
   }
 
   /** Минимальное кол-во полей, отрендеренных сразу. */
-  val OFFERS_COUNT_MIN = configuration.getInt("block.offers.count.min") getOrElse 2
+  def OFFERS_COUNT_MIN = 2 //configuration.getInt("block.offers.count.min") getOrElse 2
 
   /** Макс. кол-во полей вообще. */
-  val OFFERS_COUNT_MAX = configuration.getInt("block.offers.count.max") getOrElse 10
+  def OFFERS_COUNT_MAX = 10 //configuration.getInt("block.offers.count.max") getOrElse 10
 
 }
 

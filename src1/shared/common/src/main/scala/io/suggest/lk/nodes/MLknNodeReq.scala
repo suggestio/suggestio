@@ -23,10 +23,8 @@ object MLknNodeReq {
   *
   * @param name Имя узла.
   * @param id Идентификатор узла, если задан.
-  * @param parentId Новый id родительского узла, если необходимо.
   */
 case class MLknNodeReq(
                         name     : String,
-                        id       : Option[String],
-                        parentId : Option[String] = None
+                        id       : Option[String]
                       )

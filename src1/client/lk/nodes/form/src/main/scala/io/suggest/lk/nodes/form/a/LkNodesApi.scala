@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.a
 
-import io.suggest.lk.nodes.MLknNodeResp
+import io.suggest.lk.nodes.{ILknTreeNode, MLknNodeReq, MLknNodeResp}
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.xhr.Xhr
@@ -23,6 +23,14 @@ trait ILkNodesApi {
     */
   def subNodesOf(nodeId: String): Future[MLknNodeResp]
 
+  /** Создать новый узел на стороне сервера.
+    *
+    * @param parentId id родительского узла.
+    * @param data Данные по создаваемому узлу.
+    * @return Фьючерс с ответом по созданному узлу.
+    */
+  def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[ILknTreeNode]
+
 }
 
 
@@ -31,6 +39,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
   import io.suggest.lk.nodes.form.u.LkNodesRoutes._
 
+
   override def subNodesOf(nodeId: String): Future[MLknNodeResp] = {
     for {
       resp <- Xhr.requestBinary(
@@ -38,6 +47,18 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       )
     } yield {
       PickleUtil.unpickle[MLknNodeResp](resp)
+    }
+  }
+
+
+  override def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[ILknTreeNode] = {
+    for {
+      resp <- Xhr.requestBinary(
+        route = jsRoutes.controllers.LkNodes.createSubNodeSubmit(parentId),
+        body  = PickleUtil.pickle(data)
+      )
+    } yield {
+      PickleUtil.unpickle[ILknTreeNode](resp)
     }
   }
 

@@ -62,9 +62,11 @@ trait BruteForceProtect
     .getOrElse(BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT)
   def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 40
 
-  def bruteForceLogPrefix(implicit request: RequestHeader): String = {
+
+  private def bruteForceLogPrefix(implicit request: RequestHeader): String = {
     s"bruteForceProtect($MY_CONF_NAME/${request.remoteAddress}): ${request.method} ${request.path}?${request.rawQueryString} : "
   }
+
 
   /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
   def bruteForceProtected(f: => Future[Result])(implicit request: ExtReqHdr): Future[Result] = {
@@ -95,12 +97,12 @@ trait BruteForceProtect
   }
 
   /** Формула рассчёта лага брутфорса. */
-  def getLagMs(prevTryCount: Int): Int = {
+  private def getLagMs(prevTryCount: Int): Int = {
     val lagLevel = prevTryCount / BRUTEFORCE_TRY_COUNT_DIVISOR
     lagLevel * lagLevel * BRUTEFORCE_LAG_MS
   }
 
-  def onBruteForceReplyLagged(f: => Future[Result], lagMs: Int): Future[Result] = {
+  private def onBruteForceReplyLagged(f: => Future[Result], lagMs: Int): Future[Result] = {
     val lagPromise = Promise[Result]()
     current.actorSystem
       .scheduler
@@ -111,19 +113,19 @@ trait BruteForceProtect
   }
 
   /** Подозрение на брутфорс. В нормале - увеличивается лаг. */
-  def onBruteForceAttackSuspicion(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
+  private def onBruteForceAttackSuspicion(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
     LOGGER.debug(s"${bruteForceLogPrefix}Inserting lag $lagMs ms, try = $prevTryCount")
     onBruteForceReplyLagged(f, lagMs)
   }
 
   /** Замечен брутфорс. */
-  def onBruteForceAttackDetected(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
+  private def onBruteForceAttackDetected(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
     LOGGER.warn(s"${bruteForceLogPrefix}Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
     onBruteForceReplyLagged(f, lagMs)
   }
 
   /** Наступил дедлайн, т.е. атака точно подтверждена, и пора дропать запросы. */
-  def onBruteForceDeadline(f: => Future[Result], prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
+  private def onBruteForceDeadline(f: => Future[Result], prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
     LOGGER.warn(bruteForceLogPrefix + "Too many bruteforce retries. Dropping request...")
     bruteForceRequestDrop
   }
@@ -133,7 +135,7 @@ trait BruteForceProtect
     bruteForceProtected(f)(request)
   }
 
-  def bruteForceRequestDrop: Future[Result] = {
+  private def bruteForceRequestDrop: Future[Result] = {
     Results.TooManyRequests("Too many requests. Do not want.")
   }
 

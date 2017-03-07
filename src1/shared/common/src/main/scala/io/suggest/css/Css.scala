@@ -164,6 +164,7 @@ object Css {
     def MINOR     = PREFIX + "minor"
     def NEGATIVE  = PREFIX + "negative"
     def HELPER    = PREFIX + "helper"
+    def DISABLED  = PREFIX + "disabled"
 
   }
 

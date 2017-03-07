@@ -62,6 +62,19 @@ trait NodeTreeUpdate extends NodesTreeApi {
   }
 
 
+  def updateChildren(rcvrKey: RcvrKey, nodes: TraversableOnce[T])(updateF: TraversableOnce[T] => TraversableOnce[T]): TraversableOnce[T] = {
+    if (rcvrKey.isEmpty) {
+      updateF(nodes)
+    } else {
+      flatMapSubNode(rcvrKey, nodes) { node0 =>
+        withNodeChildren(
+          node0,
+          updateF(_subNodesOf(node0))
+        ) :: Nil
+      }
+    }
+  }
+
   /** Функция удаления элемента.
     * Её можно передавать в качестве значения updateF для удаления элемента по указанному пути.
     */
