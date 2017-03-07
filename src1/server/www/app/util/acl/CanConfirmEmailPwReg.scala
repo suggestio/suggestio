@@ -29,6 +29,7 @@ import util.acl.CanConfirmEmailPwReg._
 
 
 class CanConfirmEmailPwReg @Inject()(
+                                      aclUtil                 : AclUtil,
                                       identUtil               : IdentUtil,
                                       emailActivations        : EmailActivations,
                                       isAuth                  : IsAuth,
@@ -52,8 +53,7 @@ class CanConfirmEmailPwReg @Inject()(
       override def invokeBlock[A](request: Request[A], block: (MEmailActivationReq[A]) => Future[Result]): Future[Result] = {
         val eaFut = emailActivations.maybeGetById(eaInfo.id)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         eaFut.flatMap {
           // Всё срослось.
@@ -68,7 +68,7 @@ class CanConfirmEmailPwReg @Inject()(
 
           // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
           case Some(ea) =>
-            LOGGER.warn(s"Client ip[${request.remoteAddress}] User[$personIdOpt] tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
+            LOGGER.warn(s"Client ip[${request.remoteAddress}] User#${user.personIdOpt.orNull} tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
             isAuth.onUnauth(request)
         }
       }

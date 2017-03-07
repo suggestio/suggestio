@@ -43,6 +43,7 @@ class LkAdvExt @Inject() (
                            mExtTargets                     : MExtTargets,
                            canSubmitExtTargetForNode       : CanSubmitExtTargetForNode,
                            advExtFormUtil                  : AdvExtFormUtil,
+                           aclUtil                         : AclUtil,
                            canAccessExtTarget              : CanAccessExtTarget,
                            override val mCommonDi          : ICommonDi
 )
@@ -267,8 +268,7 @@ class LkAdvExt @Inject() (
         }
 
       // Собрать кое-какие синхронные данные.
-      personIdOpt = sessionUtil.getPersonId(requestHeader)
-      user = mSioUsers(personIdOpt)
+      user = aclUtil.userFromRequest(requestHeader)
 
       // Дождаться получения рекламной картоки
       mad <- madFut

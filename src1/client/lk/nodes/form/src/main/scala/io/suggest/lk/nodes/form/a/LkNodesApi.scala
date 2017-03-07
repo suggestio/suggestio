@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.a
 
-import io.suggest.lk.nodes.MLknSubNodesResp
+import io.suggest.lk.nodes.MLknNodeResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.xhr.Xhr
@@ -21,7 +21,7 @@ trait ILkNodesApi {
     * @param nodeId id узла.
     * @return Фьючерс с десериализованным ответом сервера.
     */
-  def subNodesOf(nodeId: String): Future[MLknSubNodesResp]
+  def subNodesOf(nodeId: String): Future[MLknNodeResp]
 
 }
 
@@ -31,13 +31,13 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
   import io.suggest.lk.nodes.form.u.LkNodesRoutes._
 
-  override def subNodesOf(nodeId: String): Future[MLknSubNodesResp] = {
+  override def subNodesOf(nodeId: String): Future[MLknNodeResp] = {
     for {
       resp <- Xhr.requestBinary(
         route = jsRoutes.controllers.LkNodes.subNodesOf(nodeId)
       )
     } yield {
-      PickleUtil.unpickle[MLknSubNodesResp](resp)
+      PickleUtil.unpickle[MLknNodeResp](resp)
     }
   }
 

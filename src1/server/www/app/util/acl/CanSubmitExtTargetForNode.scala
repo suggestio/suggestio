@@ -25,6 +25,7 @@ import scala.concurrent.Future
 
 /** Аддон для контроллера для добавления поддержки */
 class CanSubmitExtTargetForNode @Inject() (
+                                            aclUtil                 : AclUtil,
                                             advExtFormUtil          : AdvExtFormUtil,
                                             mExtTargets             : MExtTargets,
                                             isNodeAdmin             : IsNodeAdmin,
@@ -46,8 +47,7 @@ class CanSubmitExtTargetForNode @Inject() (
     new SioActionBuilderImpl[MNodeExtTgSubmitReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeExtTgSubmitReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         val isAdnNodeAdmFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)
         val formBinded = advExtFormUtil.oneTargetFullFormM(nodeId).bindFromRequest()(request)
@@ -66,12 +66,13 @@ class CanSubmitExtTargetForNode @Inject() (
               val req1 = MNodeExtTgSubmitReq(mnode, formBinded, tgOpt, request, user)
               block(req1)
             }
+
             tgOptFut.flatMap {
               // Цель не существует...
               case None =>
                 if (tgIdOpt.isDefined)
                   // но если id цели передан, то это ненормально
-                  LOGGER.debug(s"User[$personIdOpt] submitted tg_id[${tgIdOpt.get}] for inexisting ext target. Tolerating...")
+                  LOGGER.debug(s"User#${user.personIdOpt.orNull} submitted tg_id[${tgIdOpt.get}] for inexisting ext target. Tolerating...")
                 allOk()
 
               // Есть такая цель в хранилищах.

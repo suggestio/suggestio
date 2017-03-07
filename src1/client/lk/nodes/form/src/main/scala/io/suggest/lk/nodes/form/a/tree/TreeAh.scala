@@ -104,7 +104,7 @@ class TreeAh[M](
             val children2 = snr.subNodesRespTry.fold(
               mns0.children.fail,
               {resp =>
-                val mnsChildren = for (node <- resp.nodes) yield {
+                val mnsChildren = for (node <- resp.children) yield {
                   MNodeState(node)
                 }
                 mns0.children.ready( mnsChildren )

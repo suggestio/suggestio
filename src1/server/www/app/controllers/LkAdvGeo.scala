@@ -368,21 +368,19 @@ class LkAdvGeo @Inject() (
     parse.raw(maxLength = 1024 * 10)
       // Десериализовать тело реквеста...
       .validate { rawBuf =>
-      lazy val logPrefix = "formPostBP:"
-
-      rawBuf.asBytes()
-        .toRight[Result]( EntityTooLarge("missing body") )
-        .right.flatMap { bStr =>
-        try {
-          val bbuf = bStr.asByteBuffer
-          val mfs = PickleUtil.unpickle[MFormS](bbuf)
-          Right( mfs )
-        } catch { case ex: Throwable =>
-          LOGGER.error(s"$logPrefix unable to deserialize req.body", ex)
-          Left( BadRequest("invalid body") )
-        }
+        rawBuf.asBytes()
+          .toRight[Result]( EntityTooLarge("missing body") )
+          .right.flatMap { bStr =>
+            try {
+              val bbuf = bStr.asByteBuffer
+              val mfs = PickleUtil.unpickle[MFormS](bbuf)
+              Right( mfs )
+            } catch { case ex: Throwable =>
+              LOGGER.error(s"$formPostBP: unable to deserialize req.body", ex)
+              Left( BadRequest("invalid body") )
+            }
+          }
       }
-    }
   }
 
 

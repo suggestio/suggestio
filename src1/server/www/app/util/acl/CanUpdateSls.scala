@@ -20,6 +20,7 @@ import scala.concurrent.Future
  */
 
 class CanUpdateSls @Inject() (
+                               aclUtil                : AclUtil,
                                isNodeAdmin            : IsNodeAdmin,
                                canEditAd              : CanEditAd,
                                n2NodesUtil            : N2NodesUtil,
@@ -39,8 +40,7 @@ class CanUpdateSls @Inject() (
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
         val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         def reqErr = MReq(request, user)
 

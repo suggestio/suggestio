@@ -17,6 +17,7 @@ import scala.concurrent.Future
  * Description: Доступ к узлу и его контракту для суперюзера.
  */
 class IsSuNodeContract @Inject() (
+                                   aclUtil      : AclUtil,
                                    mContracts   : MContracts,
                                    isSu         : IsSu,
                                    mCommonDi    : ICommonDi
@@ -34,8 +35,7 @@ class IsSuNodeContract @Inject() (
     new SioActionBuilderImpl[MNodeContractReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeContractReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         def reqErr = MReq(request, user)
 
@@ -47,6 +47,7 @@ class IsSuNodeContract @Inject() (
                 val act = mContracts.getById(contractId)
                 slick.db.run(act)
               }
+
               mcOptFut.flatMap {
                 case Some(mc) =>
                   val req1 = MNodeContractReq(mnode, mc, request, user)

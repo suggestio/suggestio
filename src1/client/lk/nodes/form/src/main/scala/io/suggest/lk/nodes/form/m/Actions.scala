@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import io.suggest.adv.rcvr.{IRcvrKey, RcvrKey}
-import io.suggest.lk.nodes.MLknSubNodesResp
+import io.suggest.lk.nodes.MLknNodeResp
 import io.suggest.sjs.common.spa.DAction
 
 import scala.util.Try
@@ -21,7 +21,7 @@ case class NodeNameClick(override val rcvrKey: RcvrKey) extends LkNodesAction wi
 /** Модель результата запроса к серверу по поводу под-узлов для указанного узла. */
 case class HandleSubNodesOf(
                              override val rcvrKey   : RcvrKey,
-                             subNodesRespTry        : Try[MLknSubNodesResp]
+                             subNodesRespTry        : Try[MLknNodeResp]
                            )
   extends LkNodesAction
   with IRcvrKey

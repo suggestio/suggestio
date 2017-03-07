@@ -52,7 +52,8 @@ class MarketAd @Inject() (
                            @Named("blk") override val blkImgMaker  : IMaker,
                            n2NodesUtil                             : N2NodesUtil,
                            canUpdateSls                            : CanUpdateSls,
-                           override val isNodeAdmin             : IsNodeAdmin,
+                           aclUtil                                 : AclUtil,
+                           override val isNodeAdmin                : IsNodeAdmin,
                            override val marketAdFormUtil           : LkAdEdFormUtil,
                            override val mCommonDi                  : ICommonDi
 )
@@ -466,10 +467,10 @@ class MarketAd @Inject() (
   /** Открытие websocket'а для обратной асинхронной связи с браузером клиента. */
   def ws(wsId: String) = WebSocket.acceptOrResult[JsValue, JsValue] { implicit request =>
     // Прямо тут проверяем права доступа. Пока просто проверяем залогиненность вопрошающего.
-    val personIdOpt = sessionUtil.getPersonId(request)
-    val auth = personIdOpt.isDefined
+    val user = aclUtil.userFromRequest(request)
+
     def logPrefix = s"ws($wsId):"
-    val res = if (auth) {
+    val res = if (user.isAuth) {
       LOGGER.trace(s"$logPrefix Starting websocket...")
       val aFlow = ActorFlow.actorRef(
         props = lkEditorWsActors.props(_, wsId)
@@ -477,7 +478,7 @@ class MarketAd @Inject() (
       Right(aFlow)
 
     } else {
-      LOGGER.warn(s"$logPrefix User $personIdOpt is not allowed.")
+      LOGGER.warn(s"$logPrefix User#${user.personIdOpt.orNull} is not allowed.")
       val result = Forbidden("Unathorized")
       Left(result)
     }

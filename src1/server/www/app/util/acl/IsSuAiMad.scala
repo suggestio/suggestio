@@ -17,6 +17,7 @@ import play.api.mvc.{ActionBuilder, Request, Result, Results}
  * Description: Аддон для контроллеров для IsSuperuser + доступ к AiMad по id.
  */
 class IsSuAiMad @Inject() (
+                            aclUtil                 : AclUtil,
                             mAiMads                 : MAiMads,
                             isSu                    : IsSu,
                             mCommonDi               : ICommonDi
@@ -35,8 +36,8 @@ class IsSuAiMad @Inject() (
 
       override def invokeBlock[A](request: Request[A], block: (MAiMadReq[A]) => Future[Result]): Future[Result] = {
         val madAiFut = mAiMads.getById(aiMadId)
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+
+        val user = aclUtil.userFromRequest(request)
         if (user.isSuper) {
           madAiFut.flatMap {
             case Some(madAi) =>

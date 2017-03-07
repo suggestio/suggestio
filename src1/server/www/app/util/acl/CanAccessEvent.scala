@@ -19,6 +19,7 @@ import scala.concurrent.Future
  */
 
 class CanAccessEvent @Inject() (
+                                 aclUtil                : AclUtil,
                                  isNodeAdmin            : IsNodeAdmin,
                                  mEvents                : MEvents,
                                  mCommonDi              : ICommonDi
@@ -48,14 +49,13 @@ class CanAccessEvent @Inject() (
       override def invokeBlock[A](request: Request[A], block: (MNodeEventReq[A]) => Future[Result]): Future[Result] = {
         val eventOptFut = mEvents.getById(eventId)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         maybeInitUser(user)
 
         val reqErr = MReq(request, user)
 
-        personIdOpt.fold ( forbidden(reqErr) ) { _ =>
+        user.personIdOpt.fold ( forbidden(reqErr) ) { _ =>
           eventOptFut.flatMap {
             // Нет такого события в модели.
             case None =>

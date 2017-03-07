@@ -20,6 +20,7 @@ import scala.concurrent.Future
   * Да, если относится к текущему юзеру и есть права на узел.
   */
 class CanViewOrder @Inject() (
+                               aclUtil         : AclUtil,
                                mOrders         : MOrders,
                                isAuth          : IsAuth,
                                isNodeAdmin     : IsNodeAdmin,
@@ -48,14 +49,13 @@ class CanViewOrder @Inject() (
       override def userInits = userInits1
 
       override def invokeBlock[A](request: Request[A], block: (MNodeOrderReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = aclUtil.userFromRequest(request)
 
         // Отказ юзеру в обслуживании: для защиты от сканирования id и прочего, ответ непонятным юзерам всегда один.
         def forbid = isAuth.onUnauth(request)
 
         // Незалогиненных юзеров можно сразу посылать.
-        personIdOpt.fold( forbid ) { personId =>
-          val user = mSioUsers(personIdOpt)
+        user.personIdOpt.fold( forbid ) { personId =>
 
           // Получить id контракта юзера.
           val usrContractIdOptFut = user.contractIdOptFut

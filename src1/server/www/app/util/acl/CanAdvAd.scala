@@ -21,6 +21,7 @@ import scala.concurrent.Future
 /** Аддон для контроллеров для проверки права размещать рекламную карточку. */
 @Singleton
 class CanAdvAd @Inject()(
+                          aclUtil                 : AclUtil,
                           isNodeAdmin             : IsNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
                           mCommonDi               : ICommonDi
@@ -92,9 +93,8 @@ class CanAdvAd @Inject()(
       override def userInits = userInits1
 
       def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
         val madFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         // Оптимистично запустить сбор запрошенных данных MSioUser.
         maybeInitUser(user)
@@ -108,7 +108,7 @@ class CanAdvAd @Inject()(
               case Some(req1) =>
                 block(req1)
               case None =>
-                LOGGER.debug(s"invokeBlock(): maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
+                LOGGER.debug(s"invokeBlock(): maybeAllowed(${user.personIdOpt.orNull}, mad=${mad.id.get}) -> false.")
                 isNodeAdmin.onUnauthNode(reqBlank)
             }
 

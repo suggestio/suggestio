@@ -18,6 +18,7 @@ import play.api.mvc.{ActionBuilder, Request, Result}
  */
 @Singleton
 class IsSuNode @Inject() (
+                           aclUtil    : AclUtil,
                            isSu       : IsSu,
                            mCommonDi  : ICommonDi
                          )
@@ -34,8 +35,8 @@ class IsSuNode @Inject() (
     new SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
+
         if (user.isSuper) {
           val mnodeOptFut = mNodesCache.getById(nodeId)
           mnodeOptFut.flatMap {

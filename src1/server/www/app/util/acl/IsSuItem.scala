@@ -17,6 +17,7 @@ import scala.concurrent.Future
   * Description: ACL-аддон для isSuperuser + mItems.getById()
   */
 class IsSuItem @Inject() (
+                           aclUtil     : AclUtil,
                            mItems      : MItems,
                            isSu        : IsSu,
                            mCommonDi   : ICommonDi
@@ -33,8 +34,8 @@ class IsSuItem @Inject() (
     new SioActionBuilderImpl[MItemReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MItemReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
+
         if (user.isSuper) {
           val mitemOptFut = slick.db.run {
             mItems.getById(itemId)

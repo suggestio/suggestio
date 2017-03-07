@@ -34,7 +34,7 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLknFormInit](base64)
     val mroot = MLkNodesRoot(
       tree = MTree(
-        nodes = for (nInfo <- mFormInit.nodes0.nodes) yield {
+        nodes = for (nInfo <- mFormInit.nodes0.children) yield {
           MNodeState(nInfo)
         }
       )

@@ -2,7 +2,6 @@ package util.acl
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.www.util.acl.SioActionBuilderOuter
-import models.mproj.ICommonDi
 import models.req.{MReq, MUserInit}
 import play.api.mvc._
 
@@ -16,12 +15,10 @@ import scala.concurrent.Future
  */
 @Singleton
 class MaybeAuth @Inject() (
-                            mCommonDi               : ICommonDi
+                            aclUtil: AclUtil
                           )
   extends SioActionBuilderOuter
 {
-
-  import mCommonDi._
 
   /** Собрать MaybeAuth action-builder. */
   def apply(userInits1: MUserInit*): ActionBuilder[MReq] = {
@@ -32,8 +29,8 @@ class MaybeAuth @Inject() (
       override def invokeBlock[A](request: Request[A],
                                   block: (MReq[A]) => Future[Result]): Future[Result] = {
         // Подготовить базовые данные реквеста.
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
+
         maybeInitUser(user)
 
         // Сразу переходим к исполнению экшена, т.к. больше нечего делать.

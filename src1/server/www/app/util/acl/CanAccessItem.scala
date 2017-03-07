@@ -21,6 +21,7 @@ import scala.concurrent.Future
   */
 @Singleton
 class CanAccessItem @Inject() (
+                                aclUtil                 : AclUtil,
                                 mItems                  : MItems,
                                 mOrders                 : MOrders,
                                 isAuth                  : IsAuth,
@@ -58,8 +59,7 @@ class CanAccessItem @Inject() (
         val _itemId = itemId
         lazy val logPrefix = s"${getClass.getSimpleName}(${_itemId}):"
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         if (user.isAnon) {
           // Анонимус по определению не может иметь доступа к биллингу.
@@ -116,14 +116,14 @@ class CanAccessItem @Inject() (
                       if ( itemContractIdOpt.contains(userContractId) ) {
                         okF()
                       } else {
-                        LOGGER.warn(s"$logPrefix User $personIdOpt contract[$userContractId] tried to access to item of contract[$itemContractIdOpt]")
+                        LOGGER.warn(s"$logPrefix User#${user.personIdOpt.orNull} contract[$userContractId] tried to access to item of contract[$itemContractIdOpt]")
                         itemForbidden(request)
                       }
                     }
 
                   // У юзера нет контракта, item'ов у него тоже быть не может.
                   case None =>
-                    LOGGER.warn(s"User $personIdOpt with NO contract refused to edit item")
+                    LOGGER.warn(s"User#${user.personIdOpt.orNull} with NO contract refused to edit item")
                     itemForbidden(request)
                 }
               }

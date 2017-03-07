@@ -18,6 +18,7 @@ import scala.concurrent.Future
   * Description: ACL-аддон для sys-контроллеров для экшенов управления эджами.
   */
 class IsSuNodeEdge @Inject() (
+                               aclUtil    : AclUtil,
                                isSu       : IsSu,
                                mCommonDi  : ICommonDi
                              )
@@ -38,21 +39,19 @@ class IsSuNodeEdge @Inject() (
       protected[this] def logPrefix = s"${getClass.getSimpleName}(${qs.nodeId}/v=${qs.nodeVsn}/e=${qs.edgeId}):"
 
       override def invokeBlock[A](request: Request[A], block: (MNodeEdgeReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
-        val _qs = qs
+        val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
-          val mnodeOptFut = mNodesCache.getById(_qs.nodeId)
+          val mnodeOptFut = mNodesCache.getById(qs.nodeId)
           mnodeOptFut.flatMap {
 
             // Запрошенный узел найден.
             case Some(mnode) =>
               def nodeReq = MNodeReq(mnode, request, user)
 
-              if (mnode.versionOpt.contains(_qs.nodeVsn)) {
+              if (mnode.versionOpt.contains(qs.nodeVsn)) {
                 mnode.edges
-                  .withIndex(_qs.edgeId)
+                  .withIndex(qs.edgeId)
                   .fold[Future[Result]] {
                     // Нет запрошенного эджа
                     edgeNotFound(nodeReq)
@@ -63,7 +62,7 @@ class IsSuNodeEdge @Inject() (
 
               } else {
                 // Узел был изменён до начала этого запроса. Порядок эджей может быть нарушен.
-                LOGGER.debug(s"$logPrefix node version invalid. Expected=${_qs.nodeVsn}, real=${mnode.versionOpt}")
+                LOGGER.debug(s"$logPrefix node version invalid. Expected=${qs.nodeVsn}, real=${mnode.versionOpt}")
                 nodeVsnInvalid(nodeReq)
               }
 

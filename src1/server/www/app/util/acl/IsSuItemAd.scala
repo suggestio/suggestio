@@ -18,6 +18,7 @@ import scala.concurrent.Future
   * Description: Аддон для контроллеров для поддержки получения MItem вместе со связанной mad.
   */
 class IsSuItemAd @Inject() (
+                             aclUtil                : AclUtil,
                              isSu                   : IsSu,
                              mItems                 : MItems,
                              mCommonDi              : ICommonDi
@@ -36,8 +37,7 @@ class IsSuItemAd @Inject() (
     new SioActionBuilderImpl[MItemAdReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MItemAdReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         def req1 = MReq(request, user)
 

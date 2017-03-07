@@ -17,6 +17,7 @@ import scala.concurrent.Future
  * Description: Аддон для контроллеров c гибридом IsAuth и тривиального чтения узла MNode.
  */
 class IsAuthNode @Inject() (
+                             aclUtil                : AclUtil,
                              isAuth                 : IsAuth,
                              mCommonDi              : ICommonDi
                            )
@@ -36,9 +37,7 @@ class IsAuthNode @Inject() (
     new SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         if (!user.isAuth) {
           // Не залогинен.

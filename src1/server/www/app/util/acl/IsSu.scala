@@ -3,7 +3,6 @@ package util.acl
 import com.google.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.acl.SioActionBuilderOuter
-import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
 
 import scala.concurrent.Future
@@ -18,14 +17,12 @@ import play.api.mvc.{ActionBuilder, Request, Result}
 
 @Singleton
 final class IsSu @Inject() (
-                             isAuth             : IsAuth,
-                             mCommonDi          : ICommonDi
+                             aclUtil            : AclUtil,
+                             isAuth             : IsAuth
                            )
   extends SioActionBuilderOuter
   with MacroLogsImpl
 {
-
-  import mCommonDi._
 
   def logBlockedAccess(req: IReqHdr): Unit = {
     import req._
@@ -37,6 +34,7 @@ final class IsSu @Inject() (
     isAuth.onUnauth(req)
   }
 
+
   class Base extends SioActionBuilderImpl[MReq] {
 
     protected def isAllowed(user: ISioUser): Boolean = {
@@ -44,11 +42,11 @@ final class IsSu @Inject() (
     }
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
-      val user = mSioUsers(personIdOpt)
+      val user = aclUtil.userFromRequest(request)
+
       val req1 = MReq(request, user)
       if ( isAllowed(user) ) {
-        LOGGER.trace(s"for user $personIdOpt :: ${request.method} ${request.path}")
+        LOGGER.trace(s"for user#${user.personIdOpt.orNull} :: ${request.method} ${request.path}")
         block(req1)
 
       } else {

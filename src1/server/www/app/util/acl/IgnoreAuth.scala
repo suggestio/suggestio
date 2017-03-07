@@ -20,7 +20,7 @@ final class IgnoreAuth @Inject() (mSioUsers: MSioUsers) extends SioActionBuilder
   class ImplC extends SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
-      val user = mSioUsers(None)
+      val user = mSioUsers.empty
       val req1 = MReq(request, user)
       block(req1)
     }

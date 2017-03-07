@@ -24,6 +24,7 @@ import scala.concurrent.Future
  * подтверждения регистрации (создания первой ноды).
  */
 class CanConfirmIdpReg @Inject() (
+                                   aclUtil                  : AclUtil,
                                    identUtil                : IdentUtil,
                                    mNodes                   : MNodes,
                                    mExtIdents               : MExtIdents,
@@ -41,14 +42,13 @@ class CanConfirmIdpReg @Inject() (
   class ImplC extends SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
+      val user = aclUtil.userFromRequest(request)
 
-      personIdOpt.fold {
+      user.personIdOpt.fold {
         LOGGER.trace("User not logged in.")
         isAuth.onUnauth(request)
 
       } { personId =>
-        val user = mSioUsers(personIdOpt)
         // Разрешить суперюзеру доступ, чтобы можно было верстать и проверять форму без шаманств.
         val hasAccess: Future[Boolean] = if (user.isSuper) {
           true

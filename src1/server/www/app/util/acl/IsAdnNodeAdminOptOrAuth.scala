@@ -18,6 +18,7 @@ import scala.concurrent.Future
  */
 
 class IsAdnNodeAdminOptOrAuth @Inject() (
+                                          aclUtil                 : AclUtil,
                                           isNodeAdmin             : IsNodeAdmin,
                                           isAuth                  : IsAuth,
                                           mCommonDi               : ICommonDi
@@ -36,11 +37,10 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
       override def userInits = userInits1
 
       override def invokeBlock[A](request: Request[A], block: (MNodeOptReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = aclUtil.userFromRequest(request)
 
-        personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
+        user.personIdOpt.fold( isAuth.onUnauth(request) ) { _ =>
           val mnodeOptFut = mNodesCache.maybeGetByIdCached(nodeIdOpt)
-          val user = mSioUsers(personIdOpt)
 
           // Запустить в фоне получение кошелька юзера, т.к. экшены все относятся к этому кошельку
           maybeInitUser(user)

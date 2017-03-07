@@ -22,6 +22,7 @@ import scala.concurrent.Future
 /** Аддон для контроллеров, занимающихся редактированием рекламных карточек. */
 @Singleton
 class CanEditAd @Inject() (
+                            aclUtil                 : AclUtil,
                             isNodeAdmin             : IsNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
                             isAuth                  : IsAuth,
@@ -63,18 +64,18 @@ class CanEditAd @Inject() (
 
       override def userInits = userInits1
 
-      def prodNotFound(nodeIdOpt: Option[String]): Future[Result] = {
+      def prodNotFound( mreq: IReqHdr, nodeIdOpt: Option[String]): Future[Result] = {
         Results.NotFound("Ad producer not found: " + nodeIdOpt)
       }
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = aclUtil.userFromRequest(request)
 
-        personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
+        user.personIdOpt.fold (isAuth.onUnauth(request)) { _ =>
           val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
-          val user = mSioUsers(personIdOpt)
 
           maybeInitUser(user)
+          def mreq = MReq(request, user)
 
           madOptFut.flatMap {
             case Some(mad) =>
@@ -94,12 +95,11 @@ class CanEditAd @Inject() (
                   }
 
                 case None =>
-                  prodNotFound(personIdOpt)
+                  prodNotFound( mreq, prodIdOpt )
               }
 
             case None =>
-              val req1 = MReq(request, user)
-              adNotFound(req1)
+              adNotFound(mreq)
           }
         }
       }

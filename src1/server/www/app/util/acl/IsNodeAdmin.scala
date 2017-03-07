@@ -22,6 +22,7 @@ import play.api.mvc.Result
 /** Аддон для контроллеров для проверки admin-прав доступа к узлу. */
 @Singleton
 class IsNodeAdmin @Inject()(
+                             aclUtil          : AclUtil,
                              isAuth           : IsAuth,
                              mCommonDi        : ICommonDi
                            )
@@ -105,11 +106,11 @@ class IsNodeAdmin @Inject()(
       override def userInits = userInits1
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
+
         val isAllowedFut = isAdnNodeAdmin(nodeId, user)
 
-        if (personIdOpt.nonEmpty)
+        if (user.personIdOpt.nonEmpty)
           maybeInitUser(user)
 
         isAllowedFut.flatMap {
@@ -118,7 +119,7 @@ class IsNodeAdmin @Inject()(
             block(req1)
 
           case None =>
-            LOGGER.debug(s"User $personIdOpt has NO admin access to node $nodeId")
+            LOGGER.debug(s"User#${user.personIdOpt.orNull} has NO admin access to node $nodeId")
             val req1 = MReq(request, user)
             onUnauthNode(req1)
         }

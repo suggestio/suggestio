@@ -19,6 +19,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class IsSuMad @Inject()(
+                         aclUtil    : AclUtil,
                          isSu       : IsSu,
                          mCommonDi  : ICommonDi
                        )
@@ -37,8 +38,7 @@ class IsSuMad @Inject()(
       override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
         val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
           madOptFut.flatMap {

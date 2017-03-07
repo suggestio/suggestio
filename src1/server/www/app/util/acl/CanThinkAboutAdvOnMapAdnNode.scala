@@ -18,6 +18,7 @@ import scala.concurrent.Future
   * Description: ACL для проверок возможности размещения
   */
 class CanThinkAboutAdvOnMapAdnNode @Inject() (
+                                               aclUtil                : AclUtil,
                                                mNodes                 : MNodes,
                                                canAdvAd               : CanAdvAd,
                                                advGeoMapUtil          : AdvGeoMapUtil,
@@ -43,11 +44,9 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
     new SioActionBuilderImpl[MAdProdRcvrReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdRcvrReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        personIdOpt.fold {
-          isAuth.onUnauth(request)
+        val user = aclUtil.userFromRequest(request)
 
-        } { _ =>
+        user.personIdOpt.fold( isAuth.onUnauth(request) ) { _ =>
           // Юзер залогинен. Сразу же собираем все параллельные задачи...
           val madOptFut   = mNodesCache.getByIdType(adId,   MNodeTypes.Ad)
 
@@ -60,9 +59,8 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
           )
 
           // Подготовить синхронные данные:
-          val user = mSioUsers(personIdOpt)
           val reqBlank = MReq(request, user)
-          lazy val logPrefix = s"${getClass.getSimpleName}[${reqBlank.remoteAddress}]:"
+          lazy val logPrefix = s"${getClass.getSimpleName}[${reqBlank.remoteAddress}]#${user.personIdOpt.orNull}:"
 
           // Когда придёт ответ от БД по запрошенной карточке...
           madOptFut.flatMap {
@@ -89,13 +87,13 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
                 // Нет доступа к карточке. Обычно, когда сессия истекла.
                 case None =>
-                  LOGGER.debug(s"$logPrefix: maybeAllowed($personIdOpt, mad=${mad.id.get}) -> false.")
+                  LOGGER.debug(s"$logPrefix: maybeAllowed(mad#$adId) -> false.")
                   isNodeAdmin.onUnauthNode(reqBlank)
               }
 
             // Нет карточки такой вообще.
             case None =>
-              LOGGER.debug(s"$logPrefix: MAd not found: " + adId)
+              LOGGER.debug(s"$logPrefix: MAd not found: $adId")
               isNodeAdmin.onUnauthNode(reqBlank)
           }
         }

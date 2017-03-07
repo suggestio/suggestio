@@ -1,8 +1,8 @@
 package util.acl
 
 import com.google.inject.Inject
-import models.mproj.ICommonDi
-import models.req.{IReq, ISioUser}
+import io.suggest.sec.util.SessionUtil
+import models.req.{IReqHdr, ISioUser, MSioUsers}
 import play.api.mvc.RequestHeader
 
 /**
@@ -11,18 +11,20 @@ import play.api.mvc.RequestHeader
   * Created: 06.03.17 12:51
   * Description: Утиль для ACL.
   */
-class AclUtil @Inject() (mCommonDi: ICommonDi) {
-
-  import mCommonDi._
+class AclUtil @Inject() (
+                          mSioUsers   : MSioUsers,
+                          sessionUtil : SessionUtil
+                        ) {
 
   /**
-    * Извлечь инстанс user из абстрактного реквеста, если возможно.
+    * Извлечь уже готовый инстанс user из абстрактного реквеста, если возможно.
     * Если невозможно, то собрать новый инстанс.
+    * Это позволяет избегать пересборки MSioUser, состоящего внутри из кучи lazy val.
     */
   def userFromRequest(request: RequestHeader): ISioUser = {
     request match {
       // Это sio-реквест. Значит инстанс user уже существует.
-      case req: IReq[_] =>
+      case req: IReqHdr =>
         req.user
 
       // Это не sio-реквест, а play-реквест или какой-то другой инстанс. Поэтому user внутри нема.

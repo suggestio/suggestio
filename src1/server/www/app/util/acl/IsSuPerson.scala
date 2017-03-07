@@ -19,6 +19,7 @@ import scala.concurrent.Future
  */
 
 class IsSuPerson @Inject()(
+                            aclUtil   : AclUtil,
                             isSu      : IsSu,
                             mCommonDi : ICommonDi
                           )
@@ -32,15 +33,14 @@ class IsSuPerson @Inject()(
     new SioActionBuilderImpl[MPersonReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MPersonReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         if (user.isSuper) {
 
           // Если юзер запрашивает сам себя, то заполняем user.personNodeOptFut. Иначе запрашиваем узел целевого юзера напрямую.
           val mpersonOptFut: Future[Option[MNode]] = {
             val _personId = personId
-            if (personIdOpt.contains(_personId)) {
+            if (user.personIdOpt.contains(_personId)) {
               user.personNodeOptFut
             } else {
               mNodesCache.getByIdType(_personId, MNodeTypes.Person)

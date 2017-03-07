@@ -19,6 +19,7 @@ import scala.concurrent.Future
  */
 
 class CanAccessExtTarget @Inject() (
+                                     aclUtil            : AclUtil,
                                      mExtTargets        : MExtTargets,
                                      isNodeAdmin        : IsNodeAdmin,
                                      mCommonDi          : ICommonDi
@@ -37,12 +38,11 @@ class CanAccessExtTarget @Inject() (
       override def invokeBlock[A](request: Request[A], block: (MExtTargetNodeReq[A]) => Future[Result]): Future[Result] = {
         val tgOptFut = mExtTargets.getById(tgId)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
+        val user = aclUtil.userFromRequest(request)
 
         tgOptFut.flatMap {
           // Запрошенная цель существует. Нужно проверить права на её узел.
           case Some(tg) =>
-            val user = mSioUsers(personIdOpt)
             val adnNodeOptFut = isNodeAdmin.isAdnNodeAdmin(tg.adnId, user)
 
             adnNodeOptFut.flatMap {
@@ -58,7 +58,7 @@ class CanAccessExtTarget @Inject() (
             }
 
           case None =>
-            LOGGER.info(s"User $personIdOpt tried to access to ExtTarget[$tgId], but id does not exist.")
+            LOGGER.info(s"User#${user.personIdOpt.orNull} tried to access to ExtTarget[$tgId], but id does not exist.")
             tgNotFound(request)
         }
       }

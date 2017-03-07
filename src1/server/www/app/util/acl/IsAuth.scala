@@ -9,7 +9,6 @@ import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.www.util.acl.SioActionBuilderOuter
-import models.mproj.ICommonDi
 
 /**
  * Suggest.io
@@ -21,14 +20,11 @@ import models.mproj.ICommonDi
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
 @Singleton
 class IsAuth @Inject() (
-                         mCommonDi              : ICommonDi
+                         aclUtil                : AclUtil
                        )
   extends SioActionBuilderOuter
   with MacroLogsImpl
 {
-
-  import mCommonDi._
-
 
   /** Основная синхронная реакция на выявленную необходимость залогинится.
     *
@@ -49,16 +45,15 @@ class IsAuth @Inject() (
   sealed class Impl extends SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
-      val personIdOpt = sessionUtil.getPersonId(request)
-      if (personIdOpt.isDefined) {
-        // Юзер залогинен. Продолжить выполнения экшена.
-        val user = mSioUsers(personIdOpt)
-        val req1 = MReq(request, user)
-        block(req1)
+      val user = aclUtil.userFromRequest(request)
 
-      } else {
+      user.personIdOpt.fold {
         LOGGER.debug("invokeBlock(): anonymous access prohibited. path = " + request.path)
         onUnauth(request)
+      } { _ =>
+        // Юзер залогинен. Продолжить выполнения экшена.
+        val req1 = MReq(request, user)
+        block(req1)
       }
     }
 

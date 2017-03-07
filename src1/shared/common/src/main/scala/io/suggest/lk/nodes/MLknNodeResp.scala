@@ -12,20 +12,20 @@ import boopickle.Default._
   * На последующих этапах: подгружать под-узлы с сервера по мере погружения юзера в глубины иерархии.
   */
 
-object MLknSubNodesResp {
+object MLknNodeResp {
 
   /** Поддержка сериализации/десериализации. */
-  implicit val mLknSubNodesRespPickler: Pickler[MLknSubNodesResp] = {
+  implicit val mLknSubNodesRespPickler: Pickler[MLknNodeResp] = {
     implicit val nodeP = ILknTreeNode.lknTreeNodePickler
-    generatePickler[MLknSubNodesResp]
+    generatePickler[MLknNodeResp]
   }
 
 }
 
 /**
   * Класс модели ответа на запрос под-списка узлов.
-  * @param nodes Узлы.
+  * @param children Дочерние узлы.
   */
-case class MLknSubNodesResp(
-                             nodes: Seq[ILknTreeNode]
-                           )
+case class MLknNodeResp(
+                         children: Seq[ILknTreeNode]
+                       )

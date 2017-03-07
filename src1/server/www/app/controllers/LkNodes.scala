@@ -3,14 +3,17 @@ package controllers
 import akka.util.ByteString
 import com.google.inject.Inject
 import io.suggest.bin.ConvCodecs
+import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
-import io.suggest.lk.nodes.{MLknForm, MLknFormInit, MLknSubNodesResp, MLknTreeNode}
+import io.suggest.lk.nodes._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.req.ReqUtil
 import models.mlk.nodes.MLkNodesTplArgs
 import models.mproj.ICommonDi
+import play.api.mvc.BodyParser
 import util.acl.IsNodeAdmin
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes.nodesTpl
@@ -36,6 +39,7 @@ class LkNodes @Inject() (
                           lkNodesUtil               : LkNodesUtil,
                           pickleSrvUtil             : PickleSrvUtil,
                           mNodes                    : MNodes,
+                          reqUtil                   : ReqUtil,
                           override val mCommonDi    : ICommonDi
                         )
   extends SioControllerImpl
@@ -46,7 +50,7 @@ class LkNodes @Inject() (
   import pickleSrvUtil._
 
 
-  private def _subNodesRespFor(nodeId: String): Future[MLknSubNodesResp] = {
+  private def _subNodesRespFor(nodeId: String): Future[MLknNodeResp] = {
     // Запустить поиск узлов.
     val subNodesFut = mNodes.dynSearch {
       lkNodesUtil.subNodesSearch(nodeId)
@@ -54,8 +58,8 @@ class LkNodes @Inject() (
 
     // Рендер найденных узлов в данные для модели формы.
     for (subNodes <- subNodesFut) yield {
-      MLknSubNodesResp(
-        nodes = for (mnode <- subNodes) yield {
+      MLknNodeResp(
+        children = for (mnode <- subNodes) yield {
           MLknTreeNode(
             id                = mnode.id.get,
             name              = mnode.guessDisplayNameOrId.getOrElse("???"),
@@ -77,12 +81,10 @@ class LkNodes @Inject() (
   def nodesOf(nodeId: String) = csrf.AddToken {
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
 
-      // Запустить поиск под-узлов для текущего узла.
-      val subNodesRespFut = _subNodesRespFor(nodeId)
-
       // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
       val formStateB64Fut = for {
-        subNodesResp <- subNodesRespFut
+        // Запустить поиск под-узлов для текущего узла.
+        subNodesResp  <- _subNodesRespFor(nodeId)
       } yield {
         val minit = MLknFormInit(
           nodes0 = subNodesResp,
@@ -127,10 +129,30 @@ class LkNodes @Inject() (
       for {
         resp <- _subNodesRespFor(nodeId)
       } yield {
-        LOGGER.trace(s"subNodesOf($nodeId): Found ${resp.nodes.size} sub-nodes: ${IId.els2ids(resp.nodes).mkString(", ")}")
+        LOGGER.trace(s"subNodesOf($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
         val bbuf = PickleUtil.pickle(resp)
         Ok( ByteString(bbuf) )
       }
+    }
+  }
+
+
+  /** BodyParser для тела запроса по созданию/редактированию узла. */
+  private def mLknNodeReqBP: BodyParser[MLknNodeReq] = {
+    reqUtil.picklingBodyParser[MLknNodeReq]
+    // TODO Нужна валидация полученных полей. По длине, формату и т.д.
+  }
+
+
+  /** Создать новый узел (маячок) с указанными параметрами.
+    * POST-запрос с данными добавля
+    *
+    * @param parentNodeId id родительского узла.
+    * @return 200 OK + данные созданного узла.
+    */
+  def addSubNodeSubmit(parentNodeId: MEsUuId) = csrf.Check {
+    isNodeAdmin(parentNodeId).async(mLknNodeReqBP) { implicit request =>
+      ???
     }
   }
 

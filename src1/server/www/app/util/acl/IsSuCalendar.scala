@@ -6,9 +6,8 @@ import models.req.{MCalendarReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result, Results}
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.www.util.acl.SioActionBuilderOuter
-import models.mproj.ICommonDi
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -18,14 +17,13 @@ import scala.concurrent.Future
  * Долгое время это счастье жило прямо в контроллере.
  */
 class IsSuCalendar @Inject()(
+                              aclUtil                 : AclUtil,
                               mCalendars              : MCalendars,
                               isSu                    : IsSu,
-                              mCommonDi               : ICommonDi
+                              implicit private val ec : ExecutionContext
                             )
   extends SioActionBuilderOuter
 {
-
-  import mCommonDi._
 
   /**
     * @param calId id календаря, вокруг которого идёт работа.
@@ -34,8 +32,8 @@ class IsSuCalendar @Inject()(
     new SioActionBuilderImpl[MCalendarReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
+
         if (user.isSuper) {
           mCalendars.getById(calId).flatMap {
             case Some(mcal) =>

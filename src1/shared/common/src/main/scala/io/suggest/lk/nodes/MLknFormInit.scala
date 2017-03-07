@@ -11,7 +11,7 @@ import boopickle.Default._
 object MLknFormInit {
 
   implicit val mLknFormInit: Pickler[MLknFormInit] = {
-    implicit val mRespP = MLknSubNodesResp.mLknSubNodesRespPickler
+    implicit val mRespP = MLknNodeResp.mLknSubNodesRespPickler
     generatePickler[MLknFormInit]
   }
 
@@ -24,6 +24,6 @@ object MLknFormInit {
   * @param form Начальное состояние формы.
   */
 case class MLknFormInit(
-                         nodes0 : MLknSubNodesResp,
+                         nodes0 : MLknNodeResp,
                          form   : MLknForm
                        )

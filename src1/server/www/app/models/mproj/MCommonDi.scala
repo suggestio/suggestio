@@ -6,7 +6,6 @@ import controllers.{ErrorHandler, IErrorHandler}
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.playx.CacheApiUtil
 import models.mctx.Context2Factory
-import models.req.MSioUsers
 import org.elasticsearch.client.Client
 import play.api.Application
 import play.api.cache.CacheApi
@@ -16,7 +15,7 @@ import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di.ICacheApi
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.node.{INodeCache, MNodesCache}
-import io.suggest.sec.util.{Csrf, SessionUtil}
+import io.suggest.sec.util.Csrf
 import io.suggest.www.util.di.ISlickDbConfig
 import util.HtmlCompressUtil
 
@@ -39,8 +38,6 @@ trait ICommonDi
   with INodeCache
 {
   // Для возможно оптимизации, всё объявляем как val, т.к. по сути так оно и есть.
-  val mSioUsers                       : MSioUsers
-  val sessionUtil                     : SessionUtil
   val contextFactory                  : Context2Factory
   val messagesApi                     : MessagesApi
   val htmlCompressUtil                : HtmlCompressUtil
@@ -71,8 +68,6 @@ final class MCommonDi @Inject() (
                                   override val cache              : CacheApi,
                                   override val cacheApiUtil       : CacheApiUtil,
                                   override val mNodesCache        : MNodesCache,
-                                  override val sessionUtil        : SessionUtil,
-                                  override val mSioUsers          : MSioUsers,
                                   override val es4sClient         : ElasticClient,
                                   override val _slickConfigProvider   : DatabaseConfigProvider,
                                   override implicit val current   : Application,

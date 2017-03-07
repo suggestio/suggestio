@@ -16,6 +16,7 @@ import scala.concurrent.Future
  * Description: Доступ суперюзера к узлу, обязательно БЕЗ контракта.
  */
 class IsSuNodeNoContract @Inject() (
+                                     aclUtil    : AclUtil,
                                      isSu       : IsSu,
                                      mCommonDi  : ICommonDi
                                    )
@@ -31,8 +32,7 @@ class IsSuNodeNoContract @Inject() (
     new SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         def reqErr = MReq(request, user)
 

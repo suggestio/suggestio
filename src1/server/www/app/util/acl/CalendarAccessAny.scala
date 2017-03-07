@@ -17,6 +17,7 @@ import scala.concurrent.Future
  * Description: Доступ к календарю вообще без проверки ACL.
  */
 class CalendarAccessAny @Inject() (
+                                    aclUtil     : AclUtil,
                                     mCalendars  : MCalendars,
                                     mCommonDi   : ICommonDi
                                   )
@@ -36,8 +37,7 @@ class CalendarAccessAny @Inject() (
 
       override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
         val mcalOptFut = mCalendars.getById(calId)
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         mcalOptFut.flatMap {
           case Some(mcal) =>

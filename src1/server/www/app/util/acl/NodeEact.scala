@@ -18,6 +18,7 @@ import scala.concurrent.Future
  * Аддон подмешивается к контроллерам, где необходима поддержка NodeEact.
  */
 class NodeEact @Inject() (
+                           aclUtil                : AclUtil,
                            emailPwIdents          : EmailPwIdents,
                            emailActivations       : EmailActivations,
                            isAuth                 : IsAuth,
@@ -45,8 +46,7 @@ class NodeEact @Inject() (
         val eaOptFut = emailActivations.getById(eaId)
         val nodeOptFut = mNodesCache.getById(nodeId)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         /** Общий код рендера отрицательного ответа на запрос вынесен сюда. */
         def _renderInvalidTpl(reason: String): Future[Result] = {
@@ -62,8 +62,8 @@ class NodeEact @Inject() (
               case Some(mnode) =>
                 epwIdOptFut.flatMap {
                   // email, на который выслан запрос, уже зареган в системе, но текущий юзер не подходит: тут у нас анонимус или левый юзер.
-                  case Some(epwIdent) if epwIdent.isVerified && !personIdOpt.contains(epwIdent.personId) =>
-                    LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = $personIdOpt :: Rdr user to login...")
+                  case Some(epwIdent) if epwIdent.isVerified && !user.personIdOpt.contains(epwIdent.personId) =>
+                    LOGGER.debug(s"eAct has email = ${epwIdent.email}. This is personId[${epwIdent.personId}], but current pwOpt = ${user.personIdOpt.orNull} :: Rdr user to login...")
                     val result = isAuth.onUnauthBase(request)
                     val res2 = if (user.isAuth) result.withNewSession else result
                     Future successful res2

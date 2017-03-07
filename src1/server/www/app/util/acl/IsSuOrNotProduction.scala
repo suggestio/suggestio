@@ -6,7 +6,6 @@ import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.MReq
 import play.api.mvc._
-import io.suggest.common.fut.FutureUtil.HellImplicits._
 
 import scala.concurrent.Future
 import scala.language.higherKinds

@@ -16,7 +16,12 @@ import scala.concurrent.Future
  * Created: 14.10.15 17:32
  * Description: ActionBuild для запроса действия над любой карточкой без проверки прав.
  */
-class GetAnyAd @Inject() (mCommonDi: ICommonDi) extends SioActionBuilderOuter {
+class GetAnyAd @Inject() (
+                           aclUtil    : AclUtil,
+                           mCommonDi  : ICommonDi
+                         )
+  extends SioActionBuilderOuter
+{
 
   import mCommonDi._
 
@@ -31,8 +36,7 @@ class GetAnyAd @Inject() (mCommonDi: ICommonDi) extends SioActionBuilderOuter {
       override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
         val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
 
-        val personIdOpt = sessionUtil.getPersonId(request)
-        val user = mSioUsers(personIdOpt)
+        val user = aclUtil.userFromRequest(request)
 
         madOptFut.flatMap {
           case Some(mad) =>
