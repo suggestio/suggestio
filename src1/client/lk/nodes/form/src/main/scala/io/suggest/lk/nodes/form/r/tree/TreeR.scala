@@ -92,6 +92,9 @@ object TreeR {
 
         // Сейчас открыта форма добавление под-узла для текущего узла.
         <.div(
+          isSaving ?= {
+            ^.title := Messages("Server.request.in.progress.wait")
+          },
 
           // Поле ввода названия маячка.
           <.label(
@@ -114,7 +117,9 @@ object TreeR {
               ^.value       := addState.id.getOrElse(""),
               ^.onChange   ==> onAddSubNodeIdChange(parentRcvrKey),
               ^.placeholder := EXAMPLE_UID,
-              ^.title       := Messages("Example.id.0", EXAMPLE_UID),
+              !isSaving ?= {
+                ^.title := Messages("Example.id.0", EXAMPLE_UID)
+              },
               disabledAttr
             )
           ),
@@ -147,15 +152,16 @@ object TreeR {
           // Крутилка ожидания сохранения.
           isSaving ?= {
             val pleaseWait = Messages("Please.wait")
-            LkPreLoader.PRELOADER_IMG_URL.fold [ReactElement] {
+            // Нарисовать картинку-крутилку, если возможно.
+            LkPreLoader.PRELOADER_IMG_URL.fold[ReactElement] {
               <.span(
                 pleaseWait,
                 HtmlConstants.ELLIPSIS
               )
             } { loaderUrl =>
               <.img(
-                ^.src   := loaderUrl,
-                ^.title := pleaseWait,
+                ^.src := loaderUrl,
+                ^.alt := pleaseWait,
                 ^.width := 22
               )
             }
@@ -188,9 +194,8 @@ object TreeR {
       <.div(
         ^.key := node.info.id,
 
-        (level > 0) ?= {
-          ^.marginLeft := (level * 10).px
-        },
+        // Сдвиг слева согласно уровню, чтобы выглядело как дерево.
+        ^.marginLeft := (level * 10).px,
 
         // контейнер названия текущего узла
         <.div(

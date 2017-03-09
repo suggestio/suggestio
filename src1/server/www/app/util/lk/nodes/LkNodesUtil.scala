@@ -1,6 +1,6 @@
 package util.lk.nodes
 
-import com.google.inject.{Inject, Singleton}
+import com.google.inject.Singleton
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.common.radio.BeaconUtil
 import io.suggest.lk.nodes.MLknNodeReq
@@ -9,7 +9,6 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.MNodeTypes
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
-import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
 import util.FormUtil
 
@@ -20,11 +19,10 @@ import util.FormUtil
   * Description: Утиль для LkNodes -- системы управления узлами в личном кабинете.
   */
 @Singleton
-class LkNodesUtil @Inject() (
-                             mCommonDi : ICommonDi
-                            )
+class LkNodesUtil
   extends MacroLogsImpl
 {
+
 
   def SUB_NODES_LIMIT = 40
 
@@ -45,7 +43,6 @@ class LkNodesUtil @Inject() (
       override def nodeTypes = MNodeTypes.BleBeacon :: Nil
     }
   }
-
 
 
   import com.wix.accord.dsl._

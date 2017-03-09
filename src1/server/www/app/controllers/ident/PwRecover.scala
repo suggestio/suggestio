@@ -236,7 +236,7 @@ trait PwRecover
             val pwHash2 = scryptUtil.mkHash(newPw)
             val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
             for {
-            // Сохранение новых данных по паролю
+              // Сохранение новых данных по паролю
               _         <- emailPwIdents.save(epw2)
 
               // Запуск удаления eact

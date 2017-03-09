@@ -44,8 +44,12 @@ object ReactCommonUtil {
 
     /** Приведение Option[ReactElement] к ReactElement. Чтобы не писать везде .orNull */
     implicit def reactElOpt2reactEl[T <: ReactElement](rElOpt: Option[T]): T = {
-      // TODO Option.orNull тут не компилится почему-то.
-      if (rElOpt.isEmpty) null.asInstanceOf[T] else rElOpt.get
+      if (rElOpt.isEmpty) {
+        // TODO Option.orNull тут не компилится почему-то.
+        null.asInstanceOf[T]
+      } else {
+        rElOpt.get
+      }
     }
 
   }

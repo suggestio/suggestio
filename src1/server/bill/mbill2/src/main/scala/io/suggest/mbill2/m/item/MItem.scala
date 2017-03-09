@@ -107,6 +107,9 @@ class MItems @Inject() (
     def withNodeId(nodeIds: String*): Rep[Boolean] = {
       nodeId.inSet( nodeIds )
     }
+    def withTypes1(types: MItemType*): Rep[Boolean] = {
+      withTypes(types)
+    }
     def withTypes(types: TraversableOnce[MItemType]): Rep[Boolean] = {
       iTypeStr.inSet( MItemTypes.onlyIds(types).toTraversable )
     }

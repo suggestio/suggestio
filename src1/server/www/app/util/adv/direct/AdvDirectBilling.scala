@@ -177,4 +177,21 @@ class AdvDirectBilling @Inject() (
     }
   }
 
+
+  /** Есть ли прямые размещения на указанном узле?
+    *
+    * @param nodeId id целевого узла.
+    * @return true, если есть хотя бы один busy adv item прямого размещения на указанном узле.
+    */
+  def hasAnyBusyToNode(nodeId: String): DBIOAction[Boolean, NoStream, Effect.Read] = {
+    mItems.query
+      .filter { i =>
+        i.withNodeId( nodeId ) &&
+          i.withStatuses( MItemStatuses.advBusy ) &&
+          i.withTypes1( MItemTypes.AdvDirect, MItemTypes.TagDirect )
+      }
+      .exists
+      .result
+  }
+
 }

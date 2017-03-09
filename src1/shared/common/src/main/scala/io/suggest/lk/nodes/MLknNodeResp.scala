@@ -16,8 +16,7 @@ object MLknNodeResp {
 
   /** Поддержка сериализации/десериализации. */
   implicit val mLknSubNodesRespPickler: Pickler[MLknNodeResp] = {
-    implicit val nodeReqP = MLknNodeReq.mLknNodeReqPickler
-    implicit val treeNodeP = ILknTreeNode.lknTreeNodePickler
+    implicit val treeNodeP = MLknNode.lknNodePickler
     generatePickler[MLknNodeResp]
   }
 
@@ -29,6 +28,6 @@ object MLknNodeResp {
   * @param children Дочерние узлы.
   */
 case class MLknNodeResp(
-                         info       : Option[MLknNodeReq],
-                         children   : Seq[ILknTreeNode]
+                         info       : Option[MLknNode],
+                         children   : Seq[MLknNode]
                        )

@@ -270,8 +270,15 @@ case class MNode(
       .orElse { id }
   }
 
+  def guessDisplayNameOrIdOrQuestions: String = {
+    guessDisplayNameOrIdOr("???")
+  }
   def guessDisplayNameOrIdOrEmpty: String = {
-    guessDisplayNameOrId.getOrElse("")
+    guessDisplayNameOrIdOr("")
+  }
+
+  def guessDisplayNameOrIdOr(or: => String): String = {
+    guessDisplayNameOrId.getOrElse(or)
   }
 
   def withEdges(edges2: MNodeEdges) = copy(edges = edges2)

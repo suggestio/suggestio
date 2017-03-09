@@ -51,14 +51,10 @@ class Csrf @Inject() (
     * Явное запрещение кэша решило проблему.
     * Но это было давно, может быть уже неактуально?
     */
-  private case class ForceNoClientCache[A](action: Action[A]) extends Action[A] {
-
-    override def parser: BodyParser[A] = action.parser
-
-    override def apply(request: Request[A]): Future[Result] = {
+  private def ForceNoClientCache[A](action: Action[A]): Action[A] = {
+    Action.async(action.parser) { request =>
       withNoCacheFut( action(request) )
     }
-
   }
 
 

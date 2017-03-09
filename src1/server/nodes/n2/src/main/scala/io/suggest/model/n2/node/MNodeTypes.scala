@@ -33,7 +33,14 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
     /** Разрешается ли использовать рандомные id'шники? [true] */
     def randomIdAllowed: Boolean = true
 
+    /**
+      * Есть ли у юзера расширенный доступ к управлению узлом?
+      * Это подразумевает возможность удалять узел и управлять значением isEnabled.
+      */
+    def userHasExtendedAcccess: Boolean = false
+
   }
+
 
   /** Абстрактная класс одного элемента модели. */
   protected[this] abstract class Val(override val strId: String)
@@ -115,6 +122,9 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
       * но всё-таки нет необходимости в ведении ещё одного индекса.
       */
     override def randomIdAllowed = false
+
+    /** Юзер управляет маячками самостоятельно. */
+    override def userHasExtendedAcccess: Boolean = true
 
   }
 

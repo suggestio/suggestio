@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import io.suggest.adv.rcvr.{IRcvrKey, RcvrKey}
-import io.suggest.lk.nodes.{ILknTreeNode, MLknNodeResp}
+import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.sjs.common.spa.DAction
 
 import scala.util.Try
@@ -70,7 +70,7 @@ case class AddSubNodeSaveClick(
 
 
 /** Среагировать на ответ сервера по поводу успешного добавления нового узла. */
-case class AddSubNodeResp( rcvrKey: RcvrKey, tryResp: Try[ILknTreeNode] )
+case class AddSubNodeResp( rcvrKey: RcvrKey, tryResp: Try[MLknNode] )
   extends LkNodesAction
   with IRcvrKey
 

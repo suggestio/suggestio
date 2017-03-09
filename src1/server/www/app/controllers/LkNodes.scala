@@ -4,6 +4,7 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.fut.FutureUtil
+import FutureUtil.HellImplicits._
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
@@ -17,7 +18,8 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
 import models.mlk.nodes.MLkNodesTplArgs
 import models.mproj.ICommonDi
-import util.acl.{BruteForceProtect, IsNodeAdmin}
+import models.req.IReqHdr
+import util.acl.{BruteForceProtect, CanChangeNodeAvailability, IsNodeAdmin}
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes.nodesTpl
 
@@ -42,6 +44,7 @@ class LkNodes @Inject() (
                           lkNodesUtil               : LkNodesUtil,
                           pickleSrvUtil             : PickleSrvUtil,
                           mNodes                    : MNodes,
+                          canChangeNodeAvailability : CanChangeNodeAvailability,
                           bruteForceProtect         : BruteForceProtect,
                           reqUtil                   : ReqUtil,
                           override val mCommonDi    : ICommonDi
@@ -54,21 +57,44 @@ class LkNodes @Inject() (
   import pickleSrvUtil._
 
 
-  private def _subNodesRespFor(nodeId: String): Future[MLknNodeResp] = {
+  private def _subNodesRespFor(nodeId: String, withCurrNode: Option[MNode] = None)(implicit req: IReqHdr): Future[MLknNodeResp] = {
     // Запустить поиск узлов.
     val subNodesFut = mNodes.dynSearch {
       lkNodesUtil.subNodesSearch(nodeId)
     }
 
+    // Можно ли менять доступность узла?
+    val canChangeAvailabilityFut = withCurrNode.fold [Future[Boolean]] (false) { mnode =>
+      canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
+    }
+
     // Рендер найденных узлов в данные для модели формы.
-    for (subNodes <- subNodesFut) yield {
+    for {
+      subNodes                <- subNodesFut
+      canChangeAvailability   <- canChangeAvailabilityFut
+    } yield {
       MLknNodeResp(
-        info     = None,    // TODO Надо ли какую-то инфу по узлу возвращать?
+        // Надо ли какую-то инфу по текущему узлу возвращать?
+        info = for {
+          mnode <- withCurrNode
+        } yield {
+          MLknNode(
+            id                    = nodeId,
+            name                  = mnode.guessDisplayNameOrIdOrQuestions,
+            ntypeId               = mnode.common.ntype.strId,
+            isEnabled             = mnode.common.isEnabled,
+            canChangeAvailability = Some( canChangeAvailability )
+          )
+        },
+
         children = for (mnode <- subNodes) yield {
-          MLknTreeNode(
+          MLknNode(
             id                = mnode.id.get,
-            name              = mnode.guessDisplayNameOrId.getOrElse("???"),
-            ntypeId           = mnode.common.ntype.strId
+            name              = mnode.guessDisplayNameOrIdOrQuestions,
+            ntypeId           = mnode.common.ntype.strId,
+            isEnabled         = mnode.common.isEnabled,
+            // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
+            canChangeAvailability = None
           )
         }
       )
@@ -133,7 +159,7 @@ class LkNodes @Inject() (
   def subNodesOf(nodeId: String) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
       for {
-        resp <- _subNodesRespFor(nodeId)
+        resp <- _subNodesRespFor(nodeId, Some(request.mnode))
       } yield {
         LOGGER.trace(s"subNodesOf($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
         val bbuf = PickleUtil.pickle(resp)
@@ -144,7 +170,7 @@ class LkNodes @Inject() (
 
 
   /** BodyParser для тела запроса по созданию/редактированию узла. */
-  private def mLknNodeReqBP = reqUtil.picklingBodyParser[MLknNodeReq]
+  private def _mLknNodeReqBP = reqUtil.picklingBodyParser[MLknNodeReq]
 
 
   /** Создать новый узел (маячок) с указанными параметрами.
@@ -156,7 +182,7 @@ class LkNodes @Inject() (
     */
   def createSubNodeSubmit(parentNodeId: MEsUuId) = csrf.Check {
     bruteForceProtect {
-      isNodeAdmin(parentNodeId).async(mLknNodeReqBP) { implicit request =>
+      isNodeAdmin(parentNodeId).async(_mLknNodeReqBP) { implicit request =>
 
         lazy val logPrefix = s"addSubNodeSubmit($parentNodeId)[${System.currentTimeMillis()}]:"
 
@@ -177,12 +203,14 @@ class LkNodes @Inject() (
             val nodeWithIdNotExistsFut = currIdNodeOptFut.filter(_.isEmpty)
 
             val ntype = MNodeTypes.BleBeacon
+            val isEnabled = true
 
             // Параллельно собираем инстанс нового узла. Крайне маловерятно, что это будет пустой работой.
             val newNode = MNode(
               common = MNodeCommon(
-                ntype = ntype,
-                isDependent = false
+                ntype       = ntype,
+                isDependent = false,
+                isEnabled   = isEnabled
               ),
               meta = MMeta(
                 basic = MBasicMeta(
@@ -226,12 +254,15 @@ class LkNodes @Inject() (
               newNodeId <- newNodeIdFut
             } yield {
               // Собираем ответ, сериализуем, возвращаем...
-              val mResp = MLknTreeNode(
-                id      = newNodeId,
-                name    = addNodeInfo.name,
-                ntypeId = ntype.strId
+              val mResp = MLknNode(
+                id        = newNodeId,
+                name      = addNodeInfo.name,
+                ntypeId   = ntype.strId,
+                isEnabled = isEnabled,
+                // Текущий юзер создал юзер, значит он может его и удалить.
+                canChangeAvailability = Some(true)
               )
-              val bbuf = PickleUtil.pickle[ILknTreeNode](mResp)
+              val bbuf = PickleUtil.pickle[MLknNode](mResp)
               Ok( ByteString(bbuf) )
             }
 

@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.{Pot, Ready}
 import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
-import io.suggest.lk.nodes.ILknTreeNode
+import io.suggest.lk.nodes.MLknNode
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -23,7 +23,7 @@ import io.suggest.common.html.HtmlConstants.SPACE
   *                 Элементы запрашиваются с сервера по мере необходимости.
   */
 case class MNodeState(
-                       info     : ILknTreeNode,
+                       info     : MLknNode,
                        children : Pot[Seq[MNodeState]] = Pot.empty
                      )
   extends IId[String]
