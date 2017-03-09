@@ -110,15 +110,6 @@ trait SioController
 abstract class SioControllerImpl extends SioController
 
 
-/** Трейт, добавляющий константу, хранящую имя текущего модуля, пригодного для использования в конфиге в качестве ключа. */
-trait MyConfName {
-
-  /** Имя модуля в ключах конфига. Нельзя, чтобы ключ конфига содержал знак $, который скала добавляет
-    * ко всем объектам. Используется только при инициализации. */
-  val MY_CONF_NAME = getClass.getSimpleName.replace("$", "")
-
-}
-
 
 /** Утиль для связи с акторами, обрабатывающими ws-соединения. */
 trait NotifyWs extends SioController with IMacroLogs with IWsDispatcherActorsDi {

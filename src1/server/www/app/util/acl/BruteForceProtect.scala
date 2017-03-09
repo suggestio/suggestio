@@ -1,13 +1,15 @@
 package util.acl
 
-import controllers.MyConfName
-import io.suggest.util.logs.IMacroLogs
-import models.mproj.IMCommonDi
-import models.req.ExtReqHdr
+import akka.actor.ActorSystem
+import com.google.inject.{Inject, Singleton}
+import io.suggest.util.logs.MacroLogsImpl
+import models.req.{BfpArgs, IReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.www.util.acl.SioActionBuilderOuter
+import play.api.cache.CacheApi
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 import scala.concurrent.duration._
 import play.api.mvc.Result
 
@@ -22,121 +24,102 @@ import play.api.mvc.Result
  *  Настраивается путём перезаписи констант. Если LAG = 333 ms, и DIVISOR = 3, то скорость ответов будет такова:
  *  0*333 = 0 ms (3 раза), затем 1*333 = 333 ms (3 раза), затем 2*333 = 666 ms (3 раза), и т.д.
  */
-
-trait BruteForceProtect
-  extends IMacroLogs
-  with MyConfName
-  with IMCommonDi
+@Singleton
+final class BruteForceProtect @Inject() (
+                                          aclUtil                 : AclUtil,
+                                          cache                   : CacheApi,
+                                          actorSystem             : ActorSystem,
+                                          implicit private val ec : ExecutionContext
+                                        )
+  extends SioActionBuilderOuter
+  with MacroLogsImpl
 {
 
-  import mCommonDi._
+  //import mCommonDi._
 
-  /** Шаг задержки. Добавляемая задержка ответа будет кратна этому лагу. */
-  val BRUTEFORCE_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.lag_ms")
-    .getOrElse(BRUTEFORCE_ATTACK_LAG_MS_DFLT)
-  def BRUTEFORCE_LAG_MS_DFLT = 222
-
-  /** Префикс в кеше для ip-адреса. */
-  val BRUTEFORCE_CACHE_PREFIX = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.prefix")
-    .getOrElse(BRUTEFORCE_CACHE_PREFIX_DFLT)
-  def BRUTEFORCE_CACHE_PREFIX_DFLT = "bfp:"
-
-  /** Какой лаг уже считается лагом текущей атаки? (в миллисекундах) */
-  val BRUTEFORCE_ATTACK_LAG_MS = configuration.getInt(s"bfp.$MY_CONF_NAME.attack.lag.ms")
-    .getOrElse(BRUTEFORCE_ATTACK_LAG_MS_DFLT)
-  def BRUTEFORCE_ATTACK_LAG_MS_DFLT = 2000
-
-  /** Нормализация кол-ва попыток происходит по этому целому числу. */
-  val BRUTEFORCE_TRY_COUNT_DIVISOR = configuration.getInt(s"bfp.$MY_CONF_NAME.try.count.divisor")
-    .getOrElse(BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT)
-  def BRUTEFORCE_TRY_COUNT_DIVISOR_DFLT = 2
-
-  /** Время хранения в кеше инфы о попытках для ip-адреса. */
-  val BRUTEFORCE_CACHE_TTL = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl")
-    .getOrElse(BRUTEFORCE_CACHE_TTL_SECONDS_DFLT)
-    .seconds
-  def BRUTEFORCE_CACHE_TTL_SECONDS_DFLT = 30
-
-  /** Макс кол-во попыток, после которого запросы будут отправляться в помойку. */
-  val BRUTEFORCE_TRY_COUNT_DEADLINE = configuration.getInt(s"bfp.$MY_CONF_NAME.cache.ttl")
-    .getOrElse(BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT)
-  def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 40
+  /** Дефолтовые настройки противодействия брут-форсам. */
+  val ARGS_DFLT = BfpArgs()
 
 
-  private def bruteForceLogPrefix(implicit request: RequestHeader): String = {
-    s"bruteForceProtect($MY_CONF_NAME/${request.remoteAddress}): ${request.method} ${request.path}?${request.rawQueryString} : "
-  }
+  private def _apply[A](args: BfpArgs, request0: Request[A])(f: IReq[A] => Future[Result]): Future[Result] = {
+    val mreq = aclUtil.reqFromRequest(request0)
+    def logPrefix = s"bruteForceProtect(${mreq.remoteAddress}): ${mreq.method} ${mreq.uri} ::"
 
-
-  /** Система асинхронного платформонезависимого противодействия брутфорс-атакам. */
-  def bruteForceProtected(f: => Future[Result])(implicit request: ExtReqHdr): Future[Result] = {
     // Для противодействию брутфорсу добавляем асинхронную задержку выполнения проверки по методике https://stackoverflow.com/a/17284760
-    val ck = BRUTEFORCE_CACHE_PREFIX + request.remoteAddress
-    val prevTryCount: Int = cache.get[Int](ck) getOrElse 0
-    if (prevTryCount > BRUTEFORCE_TRY_COUNT_DEADLINE) {
+    val ck = args.cachePrefix + mreq.remoteAddress
+    val prevTryCount = cache.get[Int](ck) getOrElse 0
+
+    if (prevTryCount > args.tryCountDeadline) {
       // Наступил предел толерантности к атаке.
-      onBruteForceDeadline(f, prevTryCount)
+      LOGGER.warn(s"$logPrefix Too many bruteforce retries. Dropping request...")
+      Results.TooManyRequests("Too many requests. Do not want.")
+
     } else {
-      val lagMs = getLagMs(prevTryCount)
+      val lagMs = {
+        val lagLevel = prevTryCount / args.tryCountDivisor
+        lagLevel * lagLevel * args.lagMs
+      }
+
       val resultFut: Future[Result] = if (lagMs <= 0) {
-        f
+        f(mreq)
+
       } else {
         // Нужно решить, что делать с запросом.
-        if (lagMs > BRUTEFORCE_ATTACK_LAG_MS) {
+        if (lagMs > args.attackLagMs) {
           // Кажется, идёт брутфорс-атака.
-          onBruteForceAttackDetected(f, lagMs, prevTryCount = prevTryCount)
+          LOGGER.warn(s"$logPrefix Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
         } else {
           // Есть подозрение на брутфорс.
-          onBruteForceAttackSuspicion(f, lagMs, prevTryCount = prevTryCount)
+          LOGGER.debug(s"$logPrefix Inserting lag $lagMs ms, try = $prevTryCount")
         }
+
+        val lagPromise = Promise[Result]()
+        actorSystem
+          .scheduler
+          .scheduleOnce(lagMs.milliseconds) {
+            lagPromise.completeWith( f(mreq) )
+          }
+        lagPromise.future
       }
+
       // Закинуть в кеш инфу о попытке
-      cache.set(ck, prevTryCount + 1, BRUTEFORCE_CACHE_TTL)
+      cache.set(ck, prevTryCount + 1, args.cacheTtl)
       resultFut
     }
   }
 
-  /** Формула рассчёта лага брутфорса. */
-  private def getLagMs(prevTryCount: Int): Int = {
-    val lagLevel = prevTryCount / BRUTEFORCE_TRY_COUNT_DIVISOR
-    lagLevel * lagLevel * BRUTEFORCE_LAG_MS
+
+  /** Собрать экшен под указанные параметры. */
+  def apply[A](args: BfpArgs = ARGS_DFLT)(action: Action[A]): Action[A] = {
+    Action.async(action.parser) { request0 =>
+      _apply(args, request0)( action.apply )
+    }
   }
 
-  private def onBruteForceReplyLagged(f: => Future[Result], lagMs: Int): Future[Result] = {
-    val lagPromise = Promise[Result]()
-    current.actorSystem
-      .scheduler
-      .scheduleOnce(lagMs.milliseconds) {
-        lagPromise completeWith f
+  /** Завернуть в экшен с дефолтовыми параметрами. */
+  def apply[A](action: Action[A]): Action[A] = {
+    apply()(action)
+  }
+
+
+  /** Собрать action builder под указанные параметры. */
+  def b(args: BfpArgs = ARGS_DFLT): ActionBuilder[IReq] = {
+    new SioActionBuilderImpl[IReq] {
+      override def invokeBlock[A](request: Request[A], block: (IReq[A]) => Future[Result]): Future[Result] = {
+        _apply(args, request)(block)
       }
-    lagPromise.future
+    }
   }
 
-  /** Подозрение на брутфорс. В нормале - увеличивается лаг. */
-  private def onBruteForceAttackSuspicion(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
-    LOGGER.debug(s"${bruteForceLogPrefix}Inserting lag $lagMs ms, try = $prevTryCount")
-    onBruteForceReplyLagged(f, lagMs)
+  /** Собрать action builder с дефолтовыми параметрами. */
+  def b: ActionBuilder[IReq] = {
+    b()
   }
 
-  /** Замечен брутфорс. */
-  private def onBruteForceAttackDetected(f: => Future[Result], lagMs: Int, prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
-    LOGGER.warn(s"${bruteForceLogPrefix}Attack is going on! Inserting fat lag $lagMs ms, prev.try count = $prevTryCount.")
-    onBruteForceReplyLagged(f, lagMs)
-  }
+}
 
-  /** Наступил дедлайн, т.е. атака точно подтверждена, и пора дропать запросы. */
-  private def onBruteForceDeadline(f: => Future[Result], prevTryCount: Int)(implicit request: ExtReqHdr): Future[Result] = {
-    LOGGER.warn(bruteForceLogPrefix + "Too many bruteforce retries. Dropping request...")
-    bruteForceRequestDrop
-  }
 
-  /** Если нет возможности использовать implicit request, тут явная версия: */
-  def bruteForceProtectedNoimpl(request: ExtReqHdr)(f: => Future[Result]): Future[Result] = {
-    bruteForceProtected(f)(request)
-  }
-
-  private def bruteForceRequestDrop: Future[Result] = {
-    Results.TooManyRequests("Too many requests. Do not want.")
-  }
-
+/** Интерфейс к полю с DI-инстансом защиты от брут-форса. */
+trait IBruteForceProtect {
+  val bruteForceProtect: BruteForceProtect
 }

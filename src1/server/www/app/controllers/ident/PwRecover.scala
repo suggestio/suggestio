@@ -41,6 +41,7 @@ trait SendPwRecoverEmail
   with IMPersonIdents
   with IEmailPwIdentsDi
   with IEmailActivationsDi
+  with IBruteForceProtect
 {
 
   import mCommonDi._
@@ -120,7 +121,7 @@ trait PwRecover
   extends SendPwRecoverEmail
   with IMacroLogs
   with CaptchaValidator
-  with BruteForceProtect
+  with IBruteForceProtect
   with SetLangCookieUtil
   with IIsAnonAcl
   with IIdentUtil
@@ -171,8 +172,8 @@ trait PwRecover
 
   /** Сабмит формы восстановления пароля. */
   def recoverPwFormSubmit = csrf.Check {
-    isAnon().async { implicit request =>
-      bruteForceProtected {
+    bruteForceProtect {
+      isAnon().async { implicit request =>
         val formBinded = checkCaptcha(recoverPwFormM.bindFromRequest())
         formBinded.fold(
           {formWithErrors =>
@@ -224,40 +225,42 @@ trait PwRecover
   /** Юзер сабмиттит форму с новым паролем. Нужно его залогинить, сохранить новый пароль в базу,
     * удалить запись из EmailActivation и отредиректить куда-нибудь. */
   def pwResetSubmit(eActId: String) = csrf.Check {
-    canRecoverPw(eActId, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
-      pwResetFormM.bindFromRequest().fold(
-        {formWithErrors =>
-          LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
-          NotAcceptable(_pwReset(formWithErrors))
-        },
-        {newPw =>
-          val pwHash2 = scryptUtil.mkHash(newPw)
-          val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
-          for {
-          // Сохранение новых данных по паролю
-            _         <- emailPwIdents.save(epw2)
+    bruteForceProtect {
+      canRecoverPw(eActId, U.PersonNode)(_recoverKeyNotFound).async { implicit request =>
+        pwResetFormM.bindFromRequest().fold(
+          {formWithErrors =>
+            LOGGER.debug(s"pwResetSubmit($eActId): Failed to bind form:\n ${formatFormErrors(formWithErrors)}")
+            NotAcceptable(_pwReset(formWithErrors))
+          },
+          {newPw =>
+            val pwHash2 = scryptUtil.mkHash(newPw)
+            val epw2 = request.epw.copy(pwHash = pwHash2, isVerified = true)
+            for {
+            // Сохранение новых данных по паролю
+              _         <- emailPwIdents.save(epw2)
 
-            // Запуск удаления eact
-            updateFut = emailActivations.deleteById(eActId)
+              // Запуск удаления eact
+              updateFut = emailActivations.deleteById(eActId)
 
-            // Подготовить редирект
-            rdr       <- identUtil.redirectUserSomewhere(epw2.personId)
+              // Подготовить редирект
+              rdr       <- identUtil.redirectUserSomewhere(epw2.personId)
 
-            // Генерить ответ как только появляется возможность.
-            res1      <- {
-              val res0 = rdr
-                .addingToSession(Keys.PersonId.name -> epw2.personId)
-                .flashing(FLASH.SUCCESS -> "New.password.saved")
-              setLangCookie2(res0, request.user.personNodeOptFut)
+              // Генерить ответ как только появляется возможность.
+              res1      <- {
+                val res0 = rdr
+                  .addingToSession(Keys.PersonId.name -> epw2.personId)
+                  .flashing(FLASH.SUCCESS -> "New.password.saved")
+                setLangCookie2(res0, request.user.personNodeOptFut)
+              }
+
+              // Дожидаться успешного завершения асинхронных операций
+              _         <- updateFut
+            } yield {
+              res1
             }
-
-            // Дожидаться успешного завершения асинхронных операций
-            _         <- updateFut
-          } yield {
-            res1
           }
-        }
-      )
+        )
+      }
     }
   }
 

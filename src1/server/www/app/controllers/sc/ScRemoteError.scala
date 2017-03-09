@@ -9,7 +9,7 @@ import play.api.data.Forms._
 import play.api.data._
 import play.api.http.MimeTypes
 import util.FormUtil._
-import util.acl.{BruteForceProtect, IMaybeAuth}
+import util.acl.{IBruteForceProtect, IMaybeAuth}
 import util.geo.IGeoIpUtilDi
 import util.stat.IStatUtil
 
@@ -23,7 +23,7 @@ import util.stat.IStatUtil
 trait ScRemoteError
   extends SioController
   with MacroLogsImpl
-  with BruteForceProtect
+  with IBruteForceProtect
   with IMaybeAuth
   with IGeoIpUtilDi
   with IStatUtil
@@ -32,7 +32,7 @@ trait ScRemoteError
   import mCommonDi._
 
   /** Малый дедлайн, т.к. новая выдача бывает любит пофлудить ошибками. */
-  override def BRUTEFORCE_TRY_COUNT_DEADLINE_DFLT = 3
+  private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(3)
 
   /** Маппинг для вычитывания результата из тела POST. */
   private def errorFormM: Form[MScRemoteDiag] = {
@@ -69,8 +69,8 @@ trait ScRemoteError
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleScError = maybeAuth(U.PersonNode).async { implicit request =>
-    bruteForceProtected {
+  def handleScError = bruteForceProtect(_BFP_ARGS) {
+    maybeAuth(U.PersonNode).async { implicit request =>
       lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
       errorFormM.bindFromRequest().fold(
         {formWithErrors =>

@@ -29,7 +29,7 @@ import util.FormUtil.passwordM
 trait EmailPwSubmit
   extends SioController
   with IMacroLogs
-  with BruteForceProtect
+  with IBruteForceProtect
   with SetLangCookieUtil
   with IIsAnonAcl
   with IIdentUtil
@@ -82,8 +82,8 @@ trait EmailPwSubmit
 
   /** Самбит формы логина по email и паролю. */
   def emailPwLoginFormSubmit(r: Option[String]) = csrf.Check {
-    isAnon().async { implicit request =>
-      bruteForceProtected {
+    bruteForceProtect {
+      isAnon().async { implicit request =>
         val formBinded = emailPwLoginFormM.bindFromRequest()
         formBinded.fold(
           {formWithErrors =>

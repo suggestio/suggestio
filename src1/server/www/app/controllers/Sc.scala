@@ -8,7 +8,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.IMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import util.acl.{GetAnyAd, MaybeAuth}
+import util.acl.{BruteForceProtect, GetAnyAd, MaybeAuth}
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
 import util.ble.BleUtil
@@ -18,7 +18,7 @@ import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.showcase.{ScMapUtil, _}
-import util.stat.{StatUtil, StatCookiesUtil}
+import util.stat.{StatCookiesUtil, StatUtil}
 
 
 /**
@@ -45,6 +45,7 @@ class Sc @Inject() (
                      @Named("blk") override val blkImgMaker  : IMaker,
                      override val scMapUtil          : ScMapUtil,
                      override val ctxUtil            : ContextUtil,
+                     override val bruteForceProtect  : BruteForceProtect,
                      override val scAdSearchUtil     : ScAdSearchUtil,
                      override val nodesUtil          : NodesUtil,
                      override val scTagsUtil         : ScTagsUtil,

@@ -65,7 +65,6 @@ class MarketLkAdn @Inject() (
 )
   extends SioController
   with MacroLogsImpl
-  with BruteForceProtect
   with ChangePwAction
 {
 

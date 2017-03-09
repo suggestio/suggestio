@@ -2,8 +2,8 @@ package util.acl
 
 import com.google.inject.Inject
 import io.suggest.sec.util.SessionUtil
-import models.req.{IReqHdr, ISioUser, MSioUsers}
-import play.api.mvc.RequestHeader
+import models.req._
+import play.api.mvc.{Request, RequestHeader}
 
 /**
   * Suggest.io
@@ -31,6 +31,29 @@ class AclUtil @Inject() (
       case _ =>
         val personIdOpt = sessionUtil.getPersonId(request)
         mSioUsers(personIdOpt)
+    }
+  }
+
+
+  /** Получить инстанс IReq из абстрактного реквеста.
+    *
+    * @param request Абстрактный play-реквест.
+    * @tparam A Тип body.
+    * @return Какой-то инстанс IReq[A].
+    */
+  def reqFromRequest[A](request: Request[A]): IReq[A] = {
+    request match {
+      // Обнаружен какой-то sio-реквест. Его и возвращаем.
+      case req: IReq[A] =>
+        req
+
+      // Какой-то простой реквест. Создать инстанс IReq с ленивым инстансом user.
+      case _ =>
+        val request1 = request
+        new MReqWrap[A] {
+          override def request = request1
+          override lazy val user = userFromRequest(request1)
+        }
     }
   }
 

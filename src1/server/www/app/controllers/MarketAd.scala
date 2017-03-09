@@ -53,13 +53,13 @@ class MarketAd @Inject() (
                            n2NodesUtil                             : N2NodesUtil,
                            canUpdateSls                            : CanUpdateSls,
                            aclUtil                                 : AclUtil,
+                           bruteForceProtect                       : BruteForceProtect,
                            override val isNodeAdmin                : IsNodeAdmin,
                            override val marketAdFormUtil           : LkAdEdFormUtil,
                            override val mCommonDi                  : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
-  with BruteForceProtect
   with MarketAdPreview
 {
 
@@ -70,8 +70,7 @@ class MarketAd @Inject() (
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
 
-  override val BRUTEFORCE_TRY_COUNT_DIVISOR = 3
-  override val BRUTEFORCE_CACHE_PREFIX = "aip:"
+  private def _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(3)
 
 
   /** Макс.длина загружаемой картинки в байтах. */
@@ -540,8 +539,8 @@ class MarketAd @Inject() (
   )
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */
-  def prepareBlockImg(args: PrepareBlkImgArgs) = isAuth().async(blockImgBp) { implicit request =>
-    bruteForceProtected {
+  def prepareBlockImg(args: PrepareBlkImgArgs) = bruteForceProtect(_BFP_ARGS) {
+    isAuth().async(blockImgBp) { implicit request =>
       args.bc.getImgFieldForName(args.bimKey) match {
         case Some(bfi) =>
           val resultFut = tempImgSupport._handleTempImg(

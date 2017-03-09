@@ -27,10 +27,9 @@ class CanRecoverPw @Inject() (
                                identUtil              : IdentUtil,
                                emailPwIdents          : EmailPwIdents,
                                emailActivations       : EmailActivations,
-                               override val mCommonDi : ICommonDi
+                               mCommonDi              : ICommonDi
                              )
   extends SioActionBuilderOuter
-  with BruteForceProtect
   with MacroLogsImpl
 {
 
@@ -53,80 +52,76 @@ class CanRecoverPw @Inject() (
         val user = aclUtil.userFromRequest(request)
         lazy val logPrefix = s"CanRecoverPw($eActId)#${user.personIdOpt.orNull}:"
 
-        val wrappedReq = MReq(request, user)
+        val eaOptFut = emailActivations.getById(eActId)
 
-        bruteForceProtectedNoimpl(wrappedReq) {
-          val eaOptFut = emailActivations.getById(eActId)
+        def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
+          val req1 = MRecoverPwReq(epw, eAct, request, user)
+          block(req1)
+        }
 
-          def runF(eAct: EmailActivation, epw: EmailPwIdent): Future[Result] = {
-            val req1 = MRecoverPwReq(epw, eAct, request, user)
-            block(req1)
-          }
+        def _reqErr = MReq(request, user)
 
-          def _reqErr = MReq(request, user)
+        eaOptFut.flatMap {
 
-          eaOptFut.flatMap {
+          // Юзер обращается по корректной активационной записи.
+          case Some(eAct) =>
+            val epwIdentFut = emailPwIdents.getById(eAct.email)
+            maybeInitUser(user)
 
-            // Юзер обращается по корректной активационной записи.
-            case Some(eAct) =>
-              val epwIdentFut = emailPwIdents.getById(eAct.email)
-              maybeInitUser(user)
+            epwIdentFut.flatMap {
+              case Some(epw) if epw.personId == eAct.key =>
+                // Можно отрендерить блок
+                LOGGER.debug(s"$logPrefix ok, epw id = ${epw.idOrNull}")
+                runF(eAct, epw)
 
-              epwIdentFut.flatMap {
-                case Some(epw) if epw.personId == eAct.key =>
-                  // Можно отрендерить блок
-                  LOGGER.debug(s"$logPrefix ok, epw id = ${epw.idOrNull}")
-                  runF(eAct, epw)
-
-                // should never occur: Почему-то нет парольной записи для активатора.
-                // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
-                case None =>
-                  LOGGER.error(s"$logPrefix eAct exists, but emailPw is NOT! Hacker? eAct = $eAct")
-                  keyNotFoundF( _reqErr )
-              }
-
-
-            // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
-            case result if user.isSuper =>
-              val personId = user.personIdOpt.get
-              LOGGER.trace(s"$logPrefix Superuser mocking activation...")
-              val epwOptFut = emailPwIdents.findByPersonId(personId)
-
-              maybeInitUser(user)
-
-              val epwFut = epwOptFut
-                .map(_.head)
-                .recover {
-                  // should never occur
-                  case ex: NoSuchElementException =>
-                    LOGGER.warn(s"$logPrefix Oops, superuser access for unknown epw! $personId Mocking...", ex)
-                    EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
-                }
-              val ea = result.getOrElse {
-                LOGGER.debug(s"$logPrefix Superuser requested form with invalid/inexisting activation: $result")
-                EmailActivation("mocked@suggest.io", key = "keykeykeykeykey", id = Some("idididididididid"))
-              }
-
-              for {
-                epw  <- epwFut
-                resp <- runF(ea, epw)
-              } yield {
-                resp.flashing("error" -> "Using mocked activation.")
-              }
-
-
-            // Остальные случаи -- мимо кассы
-            case other =>
-              user.personIdOpt.fold {
-                // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
-                LOGGER.warn(s"$logPrefix Unknown eAct key: $other")
+              // should never occur: Почему-то нет парольной записи для активатора.
+              // Такое возможно, если юзер взял ключ инвайта в маркет и вставил его в качестве ключа восстановления пароля.
+              case None =>
+                LOGGER.error(s"$logPrefix eAct exists, but emailPw is NOT! Hacker? eAct = $eAct")
                 keyNotFoundF( _reqErr )
-              } { personId =>
-                // Вероятно, юзер повторно перешел по ссылке из письма.
-                identUtil.redirectUserSomewhere(personId)
-              }
+            }
 
-          }
+
+          // Суперюзер (верстальщик например) должен иметь доступ без шаманства.
+          case result if user.isSuper =>
+            val personId = user.personIdOpt.get
+            LOGGER.trace(s"$logPrefix Superuser mocking activation...")
+            val epwOptFut = emailPwIdents.findByPersonId(personId)
+
+            maybeInitUser(user)
+
+            val epwFut = epwOptFut
+              .map(_.head)
+              .recover {
+                // should never occur
+                case ex: NoSuchElementException =>
+                  LOGGER.warn(s"$logPrefix Oops, superuser access for unknown epw! $personId Mocking...", ex)
+                  EmailPwIdent("mock@suggest.io", personId = personId, pwHash = "", isVerified = true)
+              }
+            val ea = result.getOrElse {
+              LOGGER.debug(s"$logPrefix Superuser requested form with invalid/inexisting activation: $result")
+              EmailActivation("mocked@suggest.io", key = "keykeykeykeykey", id = Some("idididididididid"))
+            }
+
+            for {
+              epw  <- epwFut
+              resp <- runF(ea, epw)
+            } yield {
+              resp.flashing("error" -> "Using mocked activation.")
+            }
+
+
+          // Остальные случаи -- мимо кассы
+          case other =>
+            user.personIdOpt.fold {
+              // Юзер неизвестен и ключ неизвестен. Возможно, перебор ключей какой-то?
+              LOGGER.warn(s"$logPrefix Unknown eAct key: $other")
+              keyNotFoundF( _reqErr )
+            } { personId =>
+              // Вероятно, юзер повторно перешел по ссылке из письма.
+              identUtil.redirectUserSomewhere(personId)
+            }
+
         }
       }
 

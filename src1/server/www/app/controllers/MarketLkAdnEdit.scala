@@ -48,13 +48,13 @@ class MarketLkAdnEdit @Inject() (
                                   tempImgSupport                  : TempImgSupport,
                                   galleryUtil                     : GalleryUtil,
                                   imgFormUtil                     : ImgFormUtil,
+                                  bruteForceProtect               : BruteForceProtect,
                                   isNodeAdmin                     : IsNodeAdmin,
                                   isAuth                          : IsAuth,
                                   override val mCommonDi          : ICommonDi
 )
   extends SioController
   with MacroLogsImpl
-  with BruteForceProtect
 {
 
   import LOGGER._
@@ -425,8 +425,8 @@ class MarketLkAdnEdit @Inject() (
   )
   /** Обертка экшена для всех экшенов загрузки картинков. */
   private def _imgUploadBase(f: IReq[MultipartFormData[TemporaryFile]] => Future[Result]) = {
-    isAuth().async(imgUploadBp) { implicit request =>
-      bruteForceProtected {
+    bruteForceProtect {
+      isAuth().async(imgUploadBp) { implicit request =>
         f(request)
       }
     }
