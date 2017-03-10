@@ -1,11 +1,13 @@
 package util.acl
 
 import com.google.inject.Inject
-import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.req.{IReqHdr, ISioUser, MNodeReq}
@@ -24,6 +26,7 @@ import scala.concurrent.Future
   */
 
 class CanChangeNodeAvailability @Inject() (
+                                            mNodes            : MNodes,
                                             aclUtil           : AclUtil,
                                             isNodeAdmin       : IsNodeAdmin,
                                             advDirectBilling  : AdvDirectBilling,
@@ -59,9 +62,32 @@ class CanChangeNodeAvailability @Inject() (
         !mnode.edges.withPredicateIter( MPredicates.ModeratedBy ).exists( _.info.flag.contains(false) )
     ) {
       val nodeId = mnode.id.get
-      slick.db.run {
+
+      // Поискать размещений на узел в биллинге...
+      val hasAnyBusyToNodeFut = slick.db.run {
         advDirectBilling.hasAnyBusyToNode(nodeId)
       }
+
+      // Поискать какие-либо подчиненные узлы, указывающие на этот узел.
+      val hasRefNodesFut = mNodes.dynCount {
+        new MNodeSearchDfltImpl {
+          override def outEdges: Seq[ICriteria] = {
+            val cr = Criteria(
+              nodeIds    = nodeId :: Nil
+            )
+            cr :: Nil
+          }
+        }
+      }
+
+      // Сделать вывод по итогам анализа баз:
+      for {
+        hasAnyBusy  <- hasAnyBusyToNodeFut
+        hasRefNodes <- hasRefNodesFut
+      } yield {
+        !(hasAnyBusy && hasRefNodes > 0L)
+      }
+
     } else {
       LOGGER.trace(s"nodeCanChangeAvailability(${mnode.idOrNull}): Node has type ${mnode.common.ntype} or false-moderated, so availability changing is prohibited.")
       false
