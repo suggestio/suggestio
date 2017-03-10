@@ -40,4 +40,7 @@ sealed trait LkNodesCtl extends js.Object {
   /** Роута сабмита нового значения флага isEnabled. */
   def setNodeEnabled(nodeId: String, isEnabled: Boolean): Route = js.native
 
+  /** Роута для удаления узла. */
+  def deleteNode(nodeId: String): Route = js.native
+
 }

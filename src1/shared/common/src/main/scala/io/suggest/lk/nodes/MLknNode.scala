@@ -37,7 +37,9 @@ case class MLknNode(
                        * None значит, что сервер не определял это значение.
                        */
                      //isPublic             : Boolean,
-                     /** Может ли юзер управлять значением флага isEnabled или удалять узел? */
+                     /** Может ли юзер управлять значением флага isEnabled или удалять узел?
+                       * None значит, что сервер не интересовался этим вопросом.
+                       */
                      canChangeAvailability  : Option[Boolean]
                    )
   extends IId[String]

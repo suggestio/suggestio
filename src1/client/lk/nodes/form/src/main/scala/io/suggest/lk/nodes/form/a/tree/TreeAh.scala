@@ -244,16 +244,25 @@ class TreeAh[M](
       val v2 = value.withNodes(
         MNodeState
           .flatMapSubNode(snr.rcvrKey, v0.nodes) { mns0 =>
-            val children2 = snr.subNodesRespTry.fold(
-              mns0.children.fail,
+            val mns2 = snr.subNodesRespTry.fold(
+              // Ошибка запроса. Сохранить её в состояние.
+              {ex =>
+                mns0.withChildren(
+                  mns0.children.fail(ex)
+                )
+              },
+              // Положительный ответ сервера, обновить данные по текущему узлу.
               {resp =>
-                val mnsChildren = for (node <- resp.children) yield {
-                  MNodeState(node)
-                }
-                mns0.children.ready( mnsChildren )
+                mns0.copy(
+                  info      = resp.info.getOrElse( mns0.info ),
+                  children  = mns0.children.ready {
+                    for (node <- resp.children) yield {
+                      MNodeState(node)
+                    }
+                  }
+                )
               }
             )
-            val mns2 = mns0.withChildren( children2 )
             mns2 :: Nil
           }
           .toList
@@ -358,6 +367,57 @@ class TreeAh[M](
               mns0.withDeleting( Some(Pot.empty) )
             }
             mns2 :: Nil
+          }
+          .toList
+      )
+      updated(v2)
+
+
+    // Сигнал подтверждения удаления узла.
+    case m: NodeDeleteOkClick =>
+      val v0 = value
+
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+            val mns2 = mns0.withDeleting(
+              mns0.deleting.map { _.pending() }
+            )
+            mns2 :: Nil
+          }
+          .toList
+      )
+
+      // Запустить удаление узла на сервере.
+      val fx = Effect {
+        val nodeId = m.rcvrKey.last
+        api.deleteNode( nodeId ).transform { tryRes =>
+          val r = NodeDeleteResp(m.rcvrKey, tryRes)
+          Success(r)
+        }
+      }
+
+      updated(v2, fx)
+
+
+    // Сигнал о завершении запроса к серверу по поводу удаления узла.
+    case m: NodeDeleteResp =>
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes)( MNodeState.deleteF )
+          .toList
+      )
+      updated(v2)
+
+
+    // Сигнал отмены удаления узла. Скрыть диалог удаления.
+    case m: NodeDeleteCancelClick =>
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+            mns0.withDeleting(None) :: Nil
           }
           .toList
       )

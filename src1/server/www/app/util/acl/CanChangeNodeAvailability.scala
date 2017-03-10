@@ -53,6 +53,7 @@ class CanChangeNodeAvailability @Inject() (
   /** Можно ли нормальным юзерам влиять на availability данного узла? */
   def nodeCanChangeAvailability(mnode: MNode): Future[Boolean] = {
     if (
+      // Тип узла должен подразумевать возможность расширенного управления со стороны юзера.
       mnode.common.ntype.userHasExtendedAcccess &&
         // Не должно быть banned-эджей на узле.
         !mnode.edges.withPredicateIter( MPredicates.ModeratedBy ).exists( _.info.flag.contains(false) )

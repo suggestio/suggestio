@@ -42,6 +42,12 @@ object Xhr {
   def HDR_CONTENT_LENGHT  = "Content-Lenght"
   def HDR_CONNECTION      = "Connection"
 
+  object Status {
+    def OK         = 200
+    def NO_CONTENT = 204
+    def NOT_FOUND  = 404
+  }
+
 
   /** Флаг предпочтения генерации абсолютных ссылок из Route вместо привычных относительных.
     * Для браузера хватает относительных ссылок, а вот cordova держит webview в локальном контексте. */

@@ -292,13 +292,15 @@ object TreeR {
             ),
 
             // Кнопка удаления узла.
-            <.a(
-              ^.href      := HtmlConstants.DIEZ,
-              ^.`class`   := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
-                .mkString( HtmlConstants.SPACE ),
-              ^.onClick  --> onNodeDeleteClick(rcvrKey),
-              Messages("Delete")
-            ),
+            node.info.canChangeAvailability.contains(true) ?= {
+              <.a(
+                ^.href     := HtmlConstants.DIEZ,
+                ^.`class`  := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
+                  .mkString(HtmlConstants.SPACE),
+                ^.onClick --> onNodeDeleteClick(rcvrKey),
+                Messages("Delete")
+              )
+            },
 
             // Форма подтверждения удаления узла.
             for (delPot <- node.deleting) yield {

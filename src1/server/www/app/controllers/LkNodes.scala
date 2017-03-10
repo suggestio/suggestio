@@ -289,35 +289,63 @@ class LkNodes @Inject() (
     * @return 200 OK + обновлённый узел.
     */
   def setNodeEnabled(nodeId: String, isEnabled: Boolean) = csrf.Check {
-    canChangeNodeAvailability(nodeId).async { implicit request =>
+    bruteForceProtect {
+      canChangeNodeAvailability(nodeId).async { implicit request =>
 
-      // Запустить обновление узла.
-      val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
-        mnode.copy(
-          common = mnode.common.copy(
-            isEnabled = isEnabled
-          ),
-          meta = mnode.meta.copy(
-            basic = mnode.meta.basic.copy(
-              dateEdited = Some( OffsetDateTime.now() )
+        // Запустить обновление узла.
+        val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
+          mnode.copy(
+            common = mnode.common.copy(
+              isEnabled = isEnabled
+            ),
+            meta = mnode.meta.copy(
+              basic = mnode.meta.basic.copy(
+                dateEdited = Some(OffsetDateTime.now())
+              )
             )
           )
-        )
-      }
+        }
 
-      // Когда сохранение будет выполнено, то вернуть данные по обновлённому узлу.
-      for {
-        _ <- saveFut
-      } yield {
-        val mLknNode = MLknNode(
-          id        = nodeId,
-          name      = request.mnode.guessDisplayNameOrIdOrQuestions,
-          ntypeId   = request.mnode.common.ntype.strId,
-          isEnabled = isEnabled,
-          canChangeAvailability = Some(true)
-        )
-        val bbuf = PickleUtil.pickle( mLknNode )
-        Ok( ByteString(bbuf) )
+        // Когда сохранение будет выполнено, то вернуть данные по обновлённому узлу.
+        for {
+          _ <- saveFut
+        } yield {
+          LOGGER.debug(s"setNodeEnabled($nodeId): enabled => $isEnabled")
+          val mLknNode = MLknNode(
+            id = nodeId,
+            name = request.mnode.guessDisplayNameOrIdOrQuestions,
+            ntypeId = request.mnode.common.ntype.strId,
+            isEnabled = isEnabled,
+            canChangeAvailability = Some(true)
+          )
+          val bbuf = PickleUtil.pickle(mLknNode)
+          Ok(ByteString(bbuf))
+        }
+      }
+    }
+  }
+
+
+  /** Команда к удалению какого-то узла.
+    *
+    * @param nodeId id узла.
+    * @return 204 No content | 404 Not found
+    */
+  def deleteNode(nodeId: String) = csrf.Check {
+    // Защита от брутфорса, хз зачем. Может пригодиться...
+    bruteForceProtect {
+      canChangeNodeAvailability(nodeId).async { implicit request =>
+        val isDeletedFut = mNodes.deleteById(nodeId)
+        for {
+          isDeleted <- isDeletedFut
+        } yield {
+          LOGGER.info(s"deleteNode($nodeId): Delete node by user#${request.user.personIdOpt.orNull} request: isDeleted?$isDeleted")
+          if (isDeleted) {
+            NoContent
+          } else {
+            NotFound
+          }
+        }
       }
     }
   }

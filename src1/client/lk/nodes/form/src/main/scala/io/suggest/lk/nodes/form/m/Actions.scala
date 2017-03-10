@@ -116,6 +116,13 @@ case class NodeDeleteOkClick( override val rcvrKey: RcvrKey )
   extends LkNodesAction
   with IRcvrKey
 
+/** Результат запроса к серверу по поводу удаления узла. */
+case class NodeDeleteResp( override val rcvrKey: RcvrKey,
+                           resp: Try[Boolean]
+                         )
+  extends LkNodesAction
+  with IRcvrKey
+
 /** Клик по кнопке отмены удаления узла. */
 case class NodeDeleteCancelClick( override val rcvrKey: RcvrKey )
   extends LkNodesAction

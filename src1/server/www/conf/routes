@@ -104,6 +104,7 @@ GET  /lk/subnodes/of/:nodeId           @controllers.LkNodes.nodesOf(nodeId: MEsU
 GET  /lk/subnodes/info/:nodeId         @controllers.LkNodes.nodeInfo(nodeId: String)
 POST /lk/subnodes/create/:parentId     @controllers.LkNodes.createSubNodeSubmit(parentId: String)
 POST /lk/subnodes/enable/:nodeId/:enabled  @controllers.LkNodes.setNodeEnabled(nodeId: String, enabled: Boolean)
+POST /lk/subnodes/delete/:nodeId       @controllers.LkNodes.deleteNode(nodeId: String)
 
 
 ## ЛК: Размещение ADN-узла на карте

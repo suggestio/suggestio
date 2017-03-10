@@ -40,6 +40,15 @@ trait ILkNodesApi {
     */
   def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode]
 
+  /** Запуск удаления какого-то узла на сервере.
+    *
+    * @param nodeId id узла.
+    * @return true, если узел был удалён.
+    *         false, если узел не был найден.
+    *         exception, если всё ещё хуже.
+    */
+  def deleteNode(nodeId: String): Future[Boolean]
+
 }
 
 
@@ -78,6 +87,19 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       )
     } yield {
       PickleUtil.unpickle[MLknNode](resp)
+    }
+  }
+
+
+  override def deleteNode(nodeId: String): Future[Boolean] = {
+    import Xhr.Status._
+    for {
+      resp <- Xhr.successIfStatus( NO_CONTENT, NOT_FOUND ) {
+        Xhr.send( jsRoutes.controllers.LkNodes.deleteNode(nodeId) )
+      }
+    } yield {
+      // В логах нередко встречаются null вместо инстансов XHR. Поэтому залезаем в реквест аккуратно.
+      resp == null || resp.status == NO_CONTENT
     }
   }
 
