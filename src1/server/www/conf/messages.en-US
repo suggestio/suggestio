@@ -89,6 +89,9 @@ Please.try.again=Please try again
 Demo=Demo
 Server.request.in.progress.wait=Request to server in progress, please wait...
 Is.enabled=Is enabled?
+Are.you.sure=Are you sure?
+This.action.cannot.be.undone=This action cannot be undone.
+Yes.delete.it=Yes, delete it
 
 requisites=Payment details for withdrawal
 

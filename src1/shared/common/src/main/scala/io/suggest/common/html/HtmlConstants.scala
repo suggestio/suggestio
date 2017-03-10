@@ -22,7 +22,10 @@ object HtmlConstants {
 
   val CHECKMARK               = "✓"
 
-  val TAG_PREFIX              = "#"
+  val DIEZ                    = "#"
+
+  @inline
+  def TAG_PREFIX              = DIEZ
 
   val NBSP                    = '\u00A0'
 

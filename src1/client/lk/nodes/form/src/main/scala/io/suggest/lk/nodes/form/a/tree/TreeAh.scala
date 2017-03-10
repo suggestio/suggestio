@@ -29,13 +29,23 @@ class TreeAh[M](
   with Log
 {
 
-  private def _updateAddState(m: LkNodesAction with IRcvrKey)(f: MAddSubNodeState => MAddSubNodeState) = {
+  private def _updateAddState(m: LkNodesAction with IRcvrKey)(f: Option[MAddSubNodeState] => Option[MAddSubNodeState]) = {
     val v0 = value
-    val s0 = v0.addStates( m.rcvrKey )
-    val s2 = f(s0)
-    val v2 = v0.withAddStates(
-      v0.addStates + (m.rcvrKey -> s2)
-    )
+    val nodes2 = MNodeState
+      .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+        val s0 = mns0.addSubNodeState
+        val s2 = f(s0)
+        val mns2 = if (s0 eq s2) {
+          // Ничего не изменилось. Просто вернуть исходный элемент.
+          mns0
+        } else {
+          mns0.withAddSubNodeState( s2 )
+        }
+        mns2 :: Nil
+      }
+      .toList
+
+    val v2 = v0.withNodes( nodes2 )
     updated(v2)
   }
 
@@ -44,28 +54,23 @@ class TreeAh[M](
 
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case m: AddSubNodeClick =>
-      val v0 = value
-      val addState0 = MAddSubNodeState()
-      val v2 = v0.withAddStates(
-        v0.addStates + (m.rcvrKey -> addState0)
-      )
-      updated(v2)
-
+      _updateAddState(m) { _ =>
+        Some( MAddSubNodeState() )
+      }
 
     // Сигнал о вводе имени узла в форме добавления узла.
     case m: AddSubNodeNameChange =>
-      _updateAddState(m) { addState0 =>
+      _updateAddState(m) { addStateOpt0 =>
         val name2 = StringUtil.strLimitLen(
           str     = m.name.trim,
           maxLen  = NodeEditConstants.Name.LEN_MAX,
           ellipsis = ""
         )
-        addState0.copy(
+        addStateOpt0.map( _.copy(
           name      = name2,
           nameValid = name2.length >= NodeEditConstants.Name.LEN_MIN
-        )
+        ))
       }
-
 
     // Сигнал о вводе id узла в форме добавления узла.
     case m: AddSubNodeIdChange =>
@@ -77,27 +82,26 @@ class TreeAh[M](
           maxLen    = ed.NODE_ID_LEN,
           ellipsis  = ""
         )
-        addState0.copy(
+        addState0.map(_.copy(
           idValid   = id2.matches( ed.EDDY_STONE_NODE_ID_RE_LC ),
           id        = Some(id2)
-        )
+        ))
       }
 
 
     // Сигнал о нажатии на кнопку "отмена" в форме добавления узла.
     case m: AddSubNodeCancelClick =>
-      val v0 = value
-      val v2 = v0.withAddStates(
-        v0.addStates - m.rcvrKey
-      )
-      updated(v2)
+      _updateAddState(m) { _ =>
+        None
+      }
 
 
     // Сигнал создания нового узла на сервере.
     case m: AddSubNodeSaveClick =>
       val v0 = value
       val rcvrKey = m.rcvrKey
-      val addState0 = v0.addStates( rcvrKey )
+      val s0 = MNodeState.findSubNode(rcvrKey, v0.nodes).get
+      val addState0 = s0.addSubNodeState.get
 
       if (addState0.isValid) {
 
@@ -123,8 +127,13 @@ class TreeAh[M](
         val addState2 = addState0.withSaving(
           addState0.saving.pending()
         )
-        val v2 = v0.withAddStates(
-          addStates2 = v0.addStates + (rcvrKey -> addState2)
+        val v2 = v0.withNodes(
+          MNodeState
+            .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+              val mns2 = mns0.withAddSubNodeState( Some(addState2) )
+              mns2 :: Nil
+            }
+            .toList
         )
         updated(v2, fx)
 
@@ -139,25 +148,32 @@ class TreeAh[M](
       m.tryResp.fold(
         {ex =>
           // Вернуть addState назад.
-          _updateAddState(m) { addState0 =>
-            addState0.withSaving(
-              addState0.saving.fail(ex)
-            )
+          _updateAddState(m) { addStateOpt0 =>
+            for (as0 <- addStateOpt0) yield {
+              as0.withSaving( as0.saving.fail(ex) )
+            }
           }
         },
         {resp =>
           // Залить обновления в дерево, удалить addState для текущего rcvrKey
           val v0 = value
-          val v2 = v0.copy(
-            addStates = v0.addStates - m.rcvrKey,
-            nodes = MNodeState
-              .updateChildren(m.rcvrKey, v0.nodes) { children0 =>
-                val mns0 = MNodeState(
-                  info = resp
+          val v2 = v0.withNodes(
+            MNodeState
+              .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+                val mns2 = mns0.copy(
+                  addSubNodeState = None,
+                  children = for {
+                    children0 <- mns0.children
+                  } yield {
+                    val ch0 = MNodeState(
+                      info = resp
+                    )
+                    children0 ++ (ch0 :: Nil)
+                  }
                 )
-                children0.toIterator ++ (mns0 :: Nil)
+                mns2 :: Nil
               }
-              .toSeq
+              .toList
           )
           updated(v2)
         }
@@ -323,6 +339,28 @@ class TreeAh[M](
         .toList
 
       val v2 = v0.withNodes(nodes2)
+      updated(v2)
+
+
+    // Сигнал нажатия на кнопку "удалить" возле какого-то узла.
+    case m: NodeDeleteClick =>
+      // Выставить флаг отображения формы удаления узла.
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+            val mns2 = if ( !mns0.info.canChangeAvailability.contains(true) ) {
+              // Почему-то у узла стоит флаг, намекающий о невозможности нормально влиять на узел. Should never happen.
+              LOG.warn( ErrorMsgs.ACTION_WILL_BE_FORBIDDEN_BY_SERVER, msg = m )
+              mns0
+            } else {
+              // Выставить в состояние узла флаг показа формы удаления узла.
+              mns0.withDeleting( Some(Pot.empty) )
+            }
+            mns2 :: Nil
+          }
+          .toList
+      )
       updated(v2)
 
   }

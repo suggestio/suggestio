@@ -102,6 +102,12 @@ class JsMessagesUtil @Inject() (
       "Server.request.in.progress.wait" ::
       "Example.id.0" ::
       "Is.enabled" ::
+      "Edit" ::
+      "Delete" ::
+      "This.action.cannot.be.undone" ::
+      "Are.you.sure" ::
+      "Yes.delete.it" ::
+      "Close" ::
       "Save" ::
       "Cancel" ::
       Nil

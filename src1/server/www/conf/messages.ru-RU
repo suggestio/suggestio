@@ -89,6 +89,9 @@ Please.try.again=Попробуйте ещё раз
 Demo=Демо
 Server.request.in.progress.wait=Происходит запрос к серверу, подождите...
 Is.enabled=Включён?
+Are.you.sure=Вы уверены?
+This.action.cannot.be.undone=Это действие нельзя будет отменить.
+Yes.delete.it=Да, удаляйте
 
 requisites=Платёжные реквизиты для вывода средств
 

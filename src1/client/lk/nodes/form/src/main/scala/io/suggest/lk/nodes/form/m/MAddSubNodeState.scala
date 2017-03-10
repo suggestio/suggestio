@@ -7,10 +7,20 @@ import diode.data.Pot
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 03.03.17 18:05
   * Description: Модель состояния данных добавляемого узла.
- *
+  *
+  */
+object MAddSubNodeState {
+
+  def empty = MAddSubNodeState()
+
+}
+
+/** Состояние формочки создания нового узла.
+  *
   * @param name Название узла, задаётся юзером.
   * @param id Заданный id-узла. Для маячков, в первую очередь.
   * @param saving Сейчас происходит сохранение узла?
+  * @param nameValid флаг текущей валидности названия.
   */
 case class MAddSubNodeState(
                             name      : String          = "",

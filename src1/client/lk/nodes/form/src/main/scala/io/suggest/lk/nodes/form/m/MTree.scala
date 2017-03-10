@@ -13,8 +13,8 @@ object MTree {
 
   object MTreeFastEq extends FastEq[MTree] {
     override def eqv(a: MTree, b: MTree): Boolean = {
-      (a.nodes eq b.nodes) &&
-        (a.addStates eq b.addStates)
+      (a.nodes eq b.nodes) //&&
+        //(a.addStates eq b.addStates)
     }
   }
 
@@ -23,14 +23,14 @@ object MTree {
 
 case class MTree(
                   /** Дерево узлов, скомпиленное на основе данных сервера. */
-                  nodes       : Seq[MNodeState],
+                  nodes       : Seq[MNodeState]
                   /** id родительского узла (вкл.Nil) -> текущее состояние формы добавления. */
-                  addStates   : Map[RcvrKey, MAddSubNodeState] = Map.empty
+                  //addStates   : Map[RcvrKey, MAddSubNodeState] = Map.empty
                 )
 {
 
   def withNodes(nodes2: Seq[MNodeState]) = copy(nodes = nodes2)
 
-  def withAddStates(addStates2: Map[RcvrKey, MAddSubNodeState]) = copy(addStates = addStates2)
+  //def withAddStates(addStates2: Map[RcvrKey, MAddSubNodeState]) = copy(addStates = addStates2)
 
 }
