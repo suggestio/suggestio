@@ -32,9 +32,12 @@ object LkNodesRoutes {
 sealed trait LkNodesCtl extends js.Object {
 
   /** Роута списка под-узлов для указанного узла. */
-  def subNodesOf(nodeId: String): Route = js.native
+  def nodeInfo(nodeId: String): Route = js.native
 
   /** Роута сабмита формы добавления нового узла. */
   def createSubNodeSubmit(parentId: String): Route = js.native
+
+  /** Роута сабмита нового значения флага isEnabled. */
+  def setNodeEnabled(nodeId: String, isEnabled: Boolean): Route = js.native
 
 }

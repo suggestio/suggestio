@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.a.tree
 
 import diode._
+import diode.data.{Pending, Pot}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.adv.rcvr.IRcvrKey
 import io.suggest.common.radio.BeaconUtil
@@ -9,6 +10,8 @@ import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 import scala.util.Success
 
@@ -20,10 +23,10 @@ import scala.util.Success
   */
 class TreeAh[M](
                  api          : ILkNodesApi,
-                 modelRW      : ModelRW[M, MTree],
-                 rootNodeIdM  : ModelRO[String]
+                 modelRW      : ModelRW[M, MTree]
                )
   extends ActionHandler(modelRW)
+  with Log
 {
 
   private def _updateAddState(m: LkNodesAction with IRcvrKey)(f: MAddSubNodeState => MAddSubNodeState) = {
@@ -100,10 +103,7 @@ class TreeAh[M](
 
         // Огранизовать запрос на сервер.
         val fx = Effect {
-          val parentNodeId = rcvrKey.lastOption.getOrElse {
-            // Если rcvrKey пустой, значит добавление под-узла верхнего уровня. Узел надо взять из состояния.
-            rootNodeIdM()
-          }
+          val parentNodeId = rcvrKey.last
           val req = MLknNodeReq(
             name = addState0.name,
             id   = addState0.id
@@ -171,34 +171,54 @@ class TreeAh[M](
       val v0 = value
       MNodeState
         .findSubNode(rcvrKey, v0.nodes)
-        .filter { n =>
-          val c = n.children
-          c.isEmpty && !c.isPending
-        }
-        .fold(noChange) { _ =>
-          val nodeId = nnc.rcvrKey.head
+        .fold {
+          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
+          noChange
 
-          // Собрать эффект запроса к серверу за подробностями по узлу.
-          val fx = Effect {
-            // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
-            api.subNodesOf(nodeId).transform { tryRes =>
-              Success( HandleSubNodesOf(rcvrKey, tryRes) )
-            }
-          }
+        } { n =>
+          if (n.children.isPending) {
+            // Происходит запрос к серверу за данными.
+            LOG.log( WarnMsgs.REQUEST_IN_PROGRESS, msg = nnc )
+            noChange
 
-          // Произвести обновление модели.
-          val v2 = v0.withNodes(
-            MNodeState
-              .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                val mns1 = mns0.withChildren(
-                  mns0.children.pending()
-                )
-                mns1 :: Nil
+          } else if (n.children.exists(_.nonEmpty)) {
+            // Есть под-элементы. Свернуть подсписок, забыв их всех.
+            val v2 = v0.withNodes(
+              MNodeState
+                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+                  val mns1 = mns0.withChildren( Pot.empty )
+                  mns1 :: Nil
+                }
+                .toList
+            )
+            updated(v2)
+
+          } else {
+            // children.isEmpty, значит нужно запросить их с сервера
+            val nodeId = nnc.rcvrKey.last
+
+            // Собрать эффект запроса к серверу за подробностями по узлу.
+            val fx = Effect {
+              // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
+              api.nodeInfo(nodeId).transform { tryRes =>
+                Success( HandleSubNodesOf(rcvrKey, tryRes) )
               }
-              .toList
-          )
+            }
 
-          updated(v2, fx)
+            // Произвести обновление модели.
+            val v2 = v0.withNodes(
+              MNodeState
+                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+                  val mns1 = mns0.withChildren(
+                    mns0.children.pending()
+                  )
+                  mns1 :: Nil
+                }
+                .toList
+            )
+
+            updated(v2, fx)
+          }
         }
 
 
@@ -222,6 +242,87 @@ class TreeAh[M](
           }
           .toList
       )
+      updated(v2)
+
+
+    // Сигнал о клике юзером по галочке управления флагом isEnabled у какого-то узла.
+    case m: NodeIsEnabledChanged =>
+      val v0 = value
+      val nodeOpt = MNodeState.findSubNode(m.rcvrKey, v0.nodes)
+      nodeOpt
+        .filter( _.info.canChangeAvailability.contains(true) )
+        .fold {
+          // Пришёл сигнал управления галочкой, но у юзера нет прав влиять на эту галочку.
+          val errCode = if (nodeOpt.isDefined)
+            ErrorMsgs.ACTION_WILL_BE_FORBIDDEN_BY_SERVER
+          else
+            ErrorMsgs.NODE_NOT_FOUND
+          LOG.warn( errCode, msg = m )
+
+          // Без изменений, т.к. любые действия в данной ситуации бессмыслены.
+          noChange
+
+        } { _ =>
+          // Выставить новое значение галочки в состояние узла, организовать реквест на сервер с апдейтом.
+          val v2 = v0.withNodes(
+            MNodeState
+              .flatMapSubNode( m.rcvrKey, v0.nodes ) { n0 =>
+                val n2 = n0.withNodeEnabledUpd(
+                  Some( MNodeEnabledUpdateState(
+                    newIsEnabled  = m.isEnabled,
+                    request       = Pending()
+                  ) )
+                )
+                n2 :: Nil
+              }
+              .toList
+          )
+
+          // Эффект апдейта на сервере:
+          val fx = Effect {
+            val rcvrKey = m.rcvrKey
+            api.setNodeEnabled(rcvrKey.last, m.isEnabled).transform { tryRes =>
+              val r = NodeIsEnabledUpdateResp(rcvrKey, tryRes)
+              Success(r)
+            }
+          }
+
+          // Вернуть итог наверх...
+          updated(v2, fx)
+        }
+
+
+    // Ответ сервер по поводу флага isEnabled для какого-то узла.
+    case m: NodeIsEnabledUpdateResp =>
+      val v0 = value
+      val nodes2 = MNodeState
+        .flatMapSubNode(m.rcvrKey, v0.nodes) { nodeState =>
+          val nodeState2 = m.resp.fold [MNodeState] (
+            // При ошибке запроса: сохранить ошибку в состояние
+            {ex =>
+              nodeState.withNodeEnabledUpd(
+                nodeState.isEnabledUpd.map { nodeEnabledState =>
+                  nodeEnabledState.copy(
+                    newIsEnabled  = nodeState.info.isEnabled,
+                    request       = nodeEnabledState.request.fail(ex)
+                  )
+                }
+              )
+            },
+
+            // Если всё ок, то обновить состояние текущего узла.
+            {newNodeInfo =>
+              nodeState.copy(
+                info            = newNodeInfo,
+                isEnabledUpd  = None
+              )
+            }
+          )
+          nodeState2 :: Nil
+        }
+        .toList
+
+      val v2 = v0.withNodes(nodes2)
       updated(v2)
 
   }

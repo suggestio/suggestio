@@ -5,7 +5,7 @@ import io.suggest.model.n2.node.MNode
 import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.es.model.MEsUuId
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.req.{IReqHdr, ISioUser, MNodeReq}
@@ -52,19 +52,23 @@ class CanChangeNodeAvailability @Inject() (
 
   /** Можно ли нормальным юзерам влиять на availability данного узла? */
   def nodeCanChangeAvailability(mnode: MNode): Future[Boolean] = {
-    if (mnode.common.ntype.userHasExtendedAcccess) {
+    if (
+      mnode.common.ntype.userHasExtendedAcccess &&
+        // Не должно быть banned-эджей на узле.
+        !mnode.edges.withPredicateIter( MPredicates.ModeratedBy ).exists( _.info.flag.contains(false) )
+    ) {
       val nodeId = mnode.id.get
       slick.db.run {
         advDirectBilling.hasAnyBusyToNode(nodeId)
       }
     } else {
-      LOGGER.trace(s"nodeCanChangeAvailability(${mnode.idOrNull}): Node has type ${mnode.common.ntype}, so availability changing is totally prohibited for all normal users.")
+      LOGGER.trace(s"nodeCanChangeAvailability(${mnode.idOrNull}): Node has type ${mnode.common.ntype} or false-moderated, so availability changing is prohibited.")
       false
     }
   }
 
 
-  def apply(nodeId: MEsUuId): ActionBuilder[MNodeReq] = {
+  def apply(nodeId: String): ActionBuilder[MNodeReq] = {
     new SioActionBuilderImpl[MNodeReq] {
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]) = {
         val user = aclUtil.userFromRequest(request)

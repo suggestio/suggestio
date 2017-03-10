@@ -23,15 +23,18 @@ import io.suggest.common.html.HtmlConstants.SPACE
   *                 Элементы запрашиваются с сервера по мере необходимости.
   */
 case class MNodeState(
-                       info     : MLknNode,
-                       children : Pot[Seq[MNodeState]] = Pot.empty
+                       info               : MLknNode,
+                       children           : Pot[Seq[MNodeState]]              = Pot.empty,
+                       isEnabledUpd     : Option[MNodeEnabledUpdateState]   = None
                      )
   extends IId[String]
 {
 
   override def id = info.id
 
+  def withInfo(info2: MLknNode) = copy(info = info2)
   def withChildren(children2: Pot[Seq[MNodeState]]) = copy(children = children2)
+  def withNodeEnabledUpd(neu: Option[MNodeEnabledUpdateState]) = copy(isEnabledUpd = neu)
 
 }
 

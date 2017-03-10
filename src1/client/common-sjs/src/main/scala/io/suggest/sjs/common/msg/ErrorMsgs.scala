@@ -98,4 +98,9 @@ object ErrorMsgs extends MsgsStaticT {
 
   def LK_NODES_FORM_ERROR              = E(45)
 
+  /** Экшен отсеян, т.к. не имеет смысла: клиенту известны права доступа на исполнение данного экшена. */
+  def ACTION_WILL_BE_FORBIDDEN_BY_SERVER = E(46)
+
+  def NODE_NOT_FOUND                   = E(47)
+
 }

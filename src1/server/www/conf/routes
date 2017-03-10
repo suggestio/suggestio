@@ -100,9 +100,10 @@ GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 
 ## ЛК: Управление под-узлами.
-GET  /lk/subnodes/of/:nodeId            @controllers.LkNodes.nodesOf(nodeId)
-GET  /lk/subnodes/subof/:nodeId         @controllers.LkNodes.subNodesOf(nodeId)
-POST /lk/subnodes/sub/create/:parentId  @controllers.LkNodes.createSubNodeSubmit(parentId)
+GET  /lk/subnodes/of/:nodeId           @controllers.LkNodes.nodesOf(nodeId: MEsUuId)
+GET  /lk/subnodes/info/:nodeId         @controllers.LkNodes.nodeInfo(nodeId: String)
+POST /lk/subnodes/create/:parentId     @controllers.LkNodes.createSubNodeSubmit(parentId: String)
+POST /lk/subnodes/enable/:nodeId/:enabled  @controllers.LkNodes.setNodeEnabled(nodeId: String, enabled: Boolean)
 
 
 ## ЛК: Размещение ADN-узла на карте

@@ -16,12 +16,12 @@ import scala.concurrent.Future
   */
 trait ILkNodesApi {
 
-  /** Узнать под-узлы для указанного узла.
+  /** Узнать у сервера подробности по указанному узлу (метаданные, под-узлы).
     *
     * @param nodeId id узла.
     * @return Фьючерс с десериализованным ответом сервера.
     */
-  def subNodesOf(nodeId: String): Future[MLknNodeResp]
+  def nodeInfo(nodeId: String): Future[MLknNodeResp]
 
   /** Создать новый узел на стороне сервера.
     *
@@ -31,6 +31,15 @@ trait ILkNodesApi {
     */
   def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode]
 
+
+  /** Вызов обновления флага isEnabled для указанного узла.
+    *
+    * @param nodeId id обновляемого узла.
+    * @param isEnabled Новое значение флага isEnabled.
+    * @return Фьючерс с обновлёнными данными по обновлённому узлу.
+    */
+  def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode]
+
 }
 
 
@@ -39,11 +48,10 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
   import io.suggest.lk.nodes.form.u.LkNodesRoutes._
 
-
-  override def subNodesOf(nodeId: String): Future[MLknNodeResp] = {
+  override def nodeInfo(nodeId: String): Future[MLknNodeResp] = {
     for {
       resp <- Xhr.requestBinary(
-        route = jsRoutes.controllers.LkNodes.subNodesOf(nodeId)
+        route = jsRoutes.controllers.LkNodes.nodeInfo(nodeId)
       )
     } yield {
       PickleUtil.unpickle[MLknNodeResp](resp)
@@ -56,6 +64,17 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       resp <- Xhr.requestBinary(
         route = jsRoutes.controllers.LkNodes.createSubNodeSubmit(parentId),
         body  = PickleUtil.pickle(data)
+      )
+    } yield {
+      PickleUtil.unpickle[MLknNode](resp)
+    }
+  }
+
+
+  override def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode] = {
+    for {
+      resp <- Xhr.requestBinary(
+        route = jsRoutes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled)
       )
     } yield {
       PickleUtil.unpickle[MLknNode](resp)

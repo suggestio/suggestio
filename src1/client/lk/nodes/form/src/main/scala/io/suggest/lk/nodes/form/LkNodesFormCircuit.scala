@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form
 
+import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
@@ -36,11 +37,20 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
       other = MLknOther(
         onNodeId = mFormInit.onNodeId
       ),
-      tree = MTree(
-        nodes = for (nInfo <- mFormInit.nodes0.children) yield {
+      tree = {
+        val chStates = for (nInfo <- mFormInit.nodes0.children) yield {
           MNodeState(nInfo)
         }
-      )
+        MTree(
+          nodes = mFormInit.nodes0.info.fold(chStates) { parentInfo =>
+            val parent = MNodeState(
+              info      = parentInfo,
+              children  = Ready(chStates)
+            )
+            parent :: Nil
+          }
+        )
+      }
     )
     // Потом удалить input, который больше не нужен.
     Future {
@@ -55,8 +65,7 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     // Реагировать на события древа узлов.
     val treeAh = new TreeAh(
       api     = API,
-      modelRW = zoomRW(_.tree) { _.withTree(_) },
-      rootNodeIdM = zoom(_.other.onNodeId)
+      modelRW = zoomRW(_.tree) { _.withTree(_) }
     )
 
     treeAh

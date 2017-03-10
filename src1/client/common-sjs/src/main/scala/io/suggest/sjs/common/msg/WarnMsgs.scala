@@ -107,4 +107,7 @@ object WarnMsgs extends MsgsStaticT {
   /** Отвергнута попытка обновить данные внутри Pot, который вообще пустой и не ожидает данных. */
   def REFUSED_TO_UPDATE_EMPTY_POT_VALUE      = E(46)
 
+  /** Какое-то действие отфильтровано, т.к. система ожидает исполнения реквеста. */
+  def REQUEST_IN_PROGRESS                    = E(47)
+
 }

@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form.r.tree
 
+import diode.ActionType
 import diode.react.ModelProxy
 import diode.react.ReactPot._
 import io.suggest.adv.rcvr.RcvrKey
@@ -29,48 +30,71 @@ object TreeR {
 
     /** Callback клика по заголовку узла. */
     def onNodeClick(rcvrKey: RcvrKey): Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( NodeNameClick(rcvrKey) )
-      }
+      _dispatchCB( NodeNameClick(rcvrKey) )
     }
 
 
     /** Callback клика по кнопке добавления под-узла. */
     def onAddSubNodeClick(parentKey: RcvrKey): Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( AddSubNodeClick(parentKey) )
-      }
+      _dispatchCB( AddSubNodeClick(parentKey) )
     }
 
 
     /** Callback для ввода названия добавляемого под-узла. */
     def onAddSubNodeNameChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
       val name2 = e.target.value
-      $.props >>= { p =>
-        p.dispatchCB( AddSubNodeNameChange(parentKey, name2) )
-      }
+      _dispatchCB( AddSubNodeNameChange(parentKey, name2) )
     }
 
     /** Callback редактирования id создаваемого узла. */
     def onAddSubNodeIdChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
       val name2 = e.target.value
-      $.props >>= { p =>
-        p.dispatchCB( AddSubNodeIdChange(parentKey, name2) )
-      }
+      _dispatchCB( AddSubNodeIdChange(parentKey, name2) )
     }
 
     /** Callback нажатия на кнопку "сохранить" при добавлении нового узла. */
     def onAddSubNodeSaveClick(parentKey: RcvrKey): Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( AddSubNodeSaveClick(parentKey) )
-      }
+      _dispatchCB( AddSubNodeSaveClick(parentKey) )
     }
 
     def onAddSubNodeCancelClick(parentKey: RcvrKey): Callback = {
+      _dispatchCB( AddSubNodeCancelClick(parentKey) )
+    }
+
+    /** Реакция на изменение значения флага активности узла. */
+    def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+      val isEnabled2 = e.target.checked
+      _dispatchCB( NodeIsEnabledChanged(rcvrKey, isEnabled2) )
+    }
+
+    private def _dispatchCB[A](action: A)(implicit evidence: ActionType[A]): Callback = {
       $.props >>= { p =>
-        p.dispatchCB( AddSubNodeCancelClick(parentKey) )
+        p.dispatchCB( action )
       }
     }
+
+
+    private val pleaseWait = Messages("Please.wait")
+    private lazy val _textPreLoader: ReactElement = {
+      <.span(
+        pleaseWait,
+        HtmlConstants.ELLIPSIS
+      )
+    }
+
+    private def _waitLoader(widthPx: Int): ReactElement = {
+      LkPreLoader.PRELOADER_IMG_URL
+        .fold(_textPreLoader) { url =>
+          <.img(
+            ^.src   := url,
+            ^.alt   := pleaseWait,
+            ^.width := widthPx.px
+          )
+        }
+    }
+
+    private lazy val _smallWaitLoader = _waitLoader(16)
+    private lazy val _mediumLoader = _waitLoader(22)
 
 
     /** Рендер кнопки, либо формы добавления нового узла (маячка). */
@@ -150,22 +174,7 @@ object TreeR {
           ),
 
           // Крутилка ожидания сохранения.
-          isSaving ?= {
-            val pleaseWait = Messages("Please.wait")
-            // Нарисовать картинку-крутилку, если возможно.
-            LkPreLoader.PRELOADER_IMG_URL.fold[ReactElement] {
-              <.span(
-                pleaseWait,
-                HtmlConstants.ELLIPSIS
-              )
-            } { loaderUrl =>
-              <.img(
-                ^.src := loaderUrl,
-                ^.alt := pleaseWait,
-                ^.width := 22
-              )
-            }
-          },
+          isSaving ?= _mediumLoader,
 
           // Вывести инфу, что что-то пошло не так при ошибке сохранения.
           addState.saving.renderFailed { ex =>
@@ -189,7 +198,9 @@ object TreeR {
       * @return React-элемент.
       */
     def _renderNode(node: MNodeState, parentRcvrKey: RcvrKey, level: Int): ReactElement = {
-      val rcvrKey = node.info.id :: parentRcvrKey
+      val rcvrKeyRev = node.info.id :: parentRcvrKey
+      val rcvrKey = rcvrKeyRev.reverse
+
       // Контейнер узла узла + дочерних узлов.
       <.div(
         ^.key := node.info.id,
@@ -200,20 +211,49 @@ object TreeR {
         // контейнер названия текущего узла
         <.div(
           ^.onClick --> onNodeClick(rcvrKey),
-          node.info.name
+          node.info.name,
+
+          // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
+          node.children.renderPending { _ =>
+            _smallWaitLoader
+          }
         ),
 
-        // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
-        node.children.renderPending { _ =>
-          val pleaseWait = Messages("Please.wait")
-          LkPreLoader.PRELOADER_IMG_URL.fold [ReactElement] {
-            <.span( pleaseWait )
-          } { url =>
-            <.img(
-              ^.src := url,
-              ^.alt := pleaseWait
-            )
-          }
+        // Галочка управления активностью узла, если определено.
+        for (cca <- node.info.canChangeAvailability) yield {
+          <.label(
+
+            <.input(
+              ^.`type`      := "checkbox",
+              // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
+              ^.value       := node.isEnabledUpd.fold(node.info.isEnabled)(_.newIsEnabled),
+              // Можно управлять галочкой, если разрешено и если не происходит какого-то запроса с обновлением сейчас.
+              if (cca && node.isEnabledUpd.isEmpty) {
+                ^.onChange ==> onNodeEnabledChange(rcvrKey)
+              } else {
+                ^.disabled  := true
+              }
+            ),
+            Messages("Is.enabled"),
+
+            for (upd <- node.isEnabledUpd) yield {
+              <.span(
+                // Крутилка ожидания, если происходит запрос к серверу за обновлением.
+                upd.request.renderPending { _ =>
+                  _smallWaitLoader
+                },
+                // Рендер данных по ошибке запроса, если она имеет место.
+                upd.request.renderFailed { ex =>
+                  <.span(
+                    ^.`class` := Css.Colors.RED,
+                    ^.title   := ex.toString,
+                    Messages("Error")
+                  )
+                }
+              )
+            }
+
+          )
         },
 
         // Рекурсивно отрендерить дочерние элементы:
@@ -222,7 +262,7 @@ object TreeR {
             children.nonEmpty ?= {
               val childLevel = level + 1
               for (subNode <- children) yield {
-                _renderNode(subNode, rcvrKey, childLevel)
+                _renderNode(subNode, rcvrKeyRev, childLevel)
               }
             }
           )

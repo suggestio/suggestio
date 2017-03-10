@@ -101,6 +101,7 @@ class JsMessagesUtil @Inject() (
       "Beacon.name.example" ::
       "Server.request.in.progress.wait" ::
       "Example.id.0" ::
+      "Is.enabled" ::
       "Save" ::
       "Cancel" ::
       Nil

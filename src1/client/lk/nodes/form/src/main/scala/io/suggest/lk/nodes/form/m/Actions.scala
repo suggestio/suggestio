@@ -81,3 +81,21 @@ case class AddSubNodeCancelClick(
                                 )
   extends LkNodesAction
   with IRcvrKey
+
+
+/** Сигнал о клике по галочке узла. */
+case class NodeIsEnabledChanged(
+                                 override val rcvrKey : RcvrKey,
+                                 isEnabled            : Boolean
+                               )
+  extends LkNodesAction
+  with IRcvrKey
+
+
+/** Сигнал ответа сервера на апдейт флага isEnabled. */
+case class NodeIsEnabledUpdateResp(
+                                    override val rcvrKey : RcvrKey,
+                                    resp                 : Try[MLknNode]
+                                  )
+  extends LkNodesAction
+  with IRcvrKey

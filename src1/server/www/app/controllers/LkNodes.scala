@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.OffsetDateTime
+
 import akka.util.ByteString
 import com.google.inject.Inject
 import io.suggest.bin.ConvCodecs
@@ -109,19 +111,19 @@ class LkNodes @Inject() (
     * @param nodeId id текущей узла, т.е. узла с которым идёт взаимодействие.
     * @return 200 + HTML, если у юзера достаточно прав для управления узлом.
     */
-  def nodesOf(nodeId: String) = csrf.AddToken {
+  def nodesOf(nodeId: MEsUuId) = csrf.AddToken {
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
 
       // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
       val formStateB64Fut = for {
         // Запустить поиск под-узлов для текущего узла.
-        subNodesResp  <- _subNodesRespFor(nodeId)
+        subNodesResp  <- _subNodesRespFor(nodeId, Some(request.mnode))
       } yield {
         val minit = MLknFormInit(
           onNodeId = nodeId,
-          nodes0 = subNodesResp,
+          nodes0   = subNodesResp,
           // Собрать начальное состояние формы.
-          form   = MLknForm()
+          form     = MLknForm()
         )
         PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
       }
@@ -156,12 +158,12 @@ class LkNodes @Inject() (
     * @param nodeId id узла.
     * @return 200 OK с бинарем ответа.
     */
-  def subNodesOf(nodeId: String) = csrf.Check {
+  def nodeInfo(nodeId: String) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
       for {
         resp <- _subNodesRespFor(nodeId, Some(request.mnode))
       } yield {
-        LOGGER.trace(s"subNodesOf($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
+        LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
         val bbuf = PickleUtil.pickle(resp)
         Ok( ByteString(bbuf) )
       }
@@ -180,7 +182,7 @@ class LkNodes @Inject() (
     * @return 200 OK + данные созданного узла.
     *         409 Conflict - id узла уже занят кем-то.
     */
-  def createSubNodeSubmit(parentNodeId: MEsUuId) = csrf.Check {
+  def createSubNodeSubmit(parentNodeId: String) = csrf.Check {
     bruteForceProtect {
       isNodeAdmin(parentNodeId).async(_mLknNodeReqBP) { implicit request =>
 
@@ -275,6 +277,47 @@ class LkNodes @Inject() (
             }
           }
         )
+      }
+    }
+  }
+
+
+  /** Обновление флага isEnabled у какого-то узла.
+    *
+    * @param nodeId id узла.
+    * @param isEnabled Новое значение флага.
+    * @return 200 OK + обновлённый узел.
+    */
+  def setNodeEnabled(nodeId: String, isEnabled: Boolean) = csrf.Check {
+    canChangeNodeAvailability(nodeId).async { implicit request =>
+
+      // Запустить обновление узла.
+      val saveFut = mNodes.tryUpdate(request.mnode) { mnode =>
+        mnode.copy(
+          common = mnode.common.copy(
+            isEnabled = isEnabled
+          ),
+          meta = mnode.meta.copy(
+            basic = mnode.meta.basic.copy(
+              dateEdited = Some( OffsetDateTime.now() )
+            )
+          )
+        )
+      }
+
+      // Когда сохранение будет выполнено, то вернуть данные по обновлённому узлу.
+      for {
+        _ <- saveFut
+      } yield {
+        val mLknNode = MLknNode(
+          id        = nodeId,
+          name      = request.mnode.guessDisplayNameOrIdOrQuestions,
+          ntypeId   = request.mnode.common.ntype.strId,
+          isEnabled = isEnabled,
+          canChangeAvailability = Some(true)
+        )
+        val bbuf = PickleUtil.pickle( mLknNode )
+        Ok( ByteString(bbuf) )
       }
     }
   }
