@@ -107,6 +107,8 @@ class JsMessagesUtil @Inject() (
       "This.action.cannot.be.undone" ::
       "Are.you.sure" ::
       "Yes.delete.it" ::
+      "Type.new.name.for.beacon.0" ::
+      "For.example.0" ::
       "Close" ::
       "Save" ::
       "Cancel" ::

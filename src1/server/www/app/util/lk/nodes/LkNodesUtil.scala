@@ -66,7 +66,12 @@ class LkNodesUtil
     }
   }
 
-  implicit private val mLknNodeReqV = validator[MLknNodeReq] { req =>
+  private val mLknNodeReqEditV = validator[MLknNodeReq] { req =>
+    req.name.should(nodeNameV)
+    req.id should empty   // Нельзя редактировать id, хотя в модели запроса это поле присутствует.
+  }
+
+  private val mLknNodeReqCreateV = validator[MLknNodeReq] { req =>
     req.name.should(nodeNameV)
     req.id should notEmpty  // На первом этапе можно добавлять только маячки, а они только с id.
     req.id.each.should(eddyStoneIdV)
@@ -76,12 +81,13 @@ class LkNodesUtil
 
   import com.wix.accord._
 
-  def validateNodeReq(nodeInfo: MLknNodeReq): Either[Set[Violation], MLknNodeReq] = {
+  def validateNodeReq(nodeInfo: MLknNodeReq, isEdit: Boolean): Either[Set[Violation], MLknNodeReq] = {
     val nodeInfo1 = nodeInfo.copy(
       name  = FormUtil.strTrimSanitizeF(nodeInfo.name),
       id    = nodeInfo.id.map( FormUtil.strTrimSanitizeLowerF )
     )
-    validate(nodeInfo1) match {
+    val v = if (isEdit) mLknNodeReqEditV else mLknNodeReqCreateV
+    validate(nodeInfo1)(v) match {
       case Success =>
         Right(nodeInfo1)
       case Failure(res) =>

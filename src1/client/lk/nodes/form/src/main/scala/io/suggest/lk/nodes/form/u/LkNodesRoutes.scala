@@ -43,4 +43,7 @@ sealed trait LkNodesCtl extends js.Object {
   /** Роута для удаления узла. */
   def deleteNode(nodeId: String): Route = js.native
 
+  /** Сабмит редактирования узла. */
+  def editNode(nodeId: String): Route = js.native
+
 }

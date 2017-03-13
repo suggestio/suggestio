@@ -49,6 +49,14 @@ trait ILkNodesApi {
     */
   def deleteNode(nodeId: String): Future[Boolean]
 
+  /** Запуск экшена редактирования узла.
+    *
+    * @param nodeId id узла.
+    * @param data Обновлённые данные по узлу. id игнорируется или должен быть None.
+    * @return Фьючерс с инфой по обновлённому узлу.
+    */
+  def editNode(nodeId: String, data: MLknNodeReq): Future[MLknNode]
+
 }
 
 
@@ -57,36 +65,31 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
   import io.suggest.lk.nodes.form.u.LkNodesRoutes._
 
+
   override def nodeInfo(nodeId: String): Future[MLknNodeResp] = {
-    for {
-      resp <- Xhr.requestBinary(
+    Xhr.unBooPickleResp[MLknNodeResp] {
+      Xhr.requestBinary(
         route = jsRoutes.controllers.LkNodes.nodeInfo(nodeId)
       )
-    } yield {
-      PickleUtil.unpickle[MLknNodeResp](resp)
     }
   }
 
 
   override def createSubNodeSubmit(parentId: String, data: MLknNodeReq): Future[MLknNode] = {
-    for {
-      resp <- Xhr.requestBinary(
+    Xhr.unBooPickleResp[MLknNode] {
+      Xhr.requestBinary(
         route = jsRoutes.controllers.LkNodes.createSubNodeSubmit(parentId),
         body  = PickleUtil.pickle(data)
       )
-    } yield {
-      PickleUtil.unpickle[MLknNode](resp)
     }
   }
 
 
   override def setNodeEnabled(nodeId: String, isEnabled: Boolean): Future[MLknNode] = {
-    for {
-      resp <- Xhr.requestBinary(
+    Xhr.unBooPickleResp[MLknNode] {
+      Xhr.requestBinary(
         route = jsRoutes.controllers.LkNodes.setNodeEnabled(nodeId, isEnabled)
       )
-    } yield {
-      PickleUtil.unpickle[MLknNode](resp)
     }
   }
 
@@ -95,11 +98,23 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
     import Xhr.Status._
     for {
       resp <- Xhr.successIfStatus( NO_CONTENT, NOT_FOUND ) {
-        Xhr.send( jsRoutes.controllers.LkNodes.deleteNode(nodeId) )
+        Xhr.send(
+          route = jsRoutes.controllers.LkNodes.deleteNode(nodeId)
+        )
       }
     } yield {
       // В логах нередко встречаются null вместо инстансов XHR. Поэтому залезаем в реквест аккуратно.
       resp == null || resp.status == NO_CONTENT
+    }
+  }
+
+
+  override def editNode(nodeId: String, data: MLknNodeReq): Future[MLknNode] = {
+    Xhr.unBooPickleResp[MLknNode] {
+      Xhr.requestBinary(
+        route = jsRoutes.controllers.LkNodes.editNode(nodeId),
+        body  = PickleUtil.pickle(data)
+      )
     }
   }
 

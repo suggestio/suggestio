@@ -188,7 +188,7 @@ class LkNodes @Inject() (
 
         lazy val logPrefix = s"addSubNodeSubmit($parentNodeId)[${System.currentTimeMillis()}]:"
 
-        lkNodesUtil.validateNodeReq( request.body ).fold(
+        lkNodesUtil.validateNodeReq( request.body, isEdit = false ).fold(
           {violations =>
             LOGGER.debug(s"$logPrefix Failed to validate data:\n ${request.body}\n Violations: ${violations.mkString(", ")}")
             NotAcceptable(s"Invalidated: ${violations.mkString("\n", ",\n", "")}")
@@ -312,11 +312,11 @@ class LkNodes @Inject() (
         } yield {
           LOGGER.debug(s"setNodeEnabled($nodeId): enabled => $isEnabled")
           val mLknNode = MLknNode(
-            id = nodeId,
-            name = request.mnode.guessDisplayNameOrIdOrQuestions,
-            ntypeId = request.mnode.common.ntype.strId,
-            isEnabled = isEnabled,
-            canChangeAvailability = Some(true)
+            id                      = nodeId,
+            name                    = request.mnode.guessDisplayNameOrIdOrQuestions,
+            ntypeId                 = request.mnode.common.ntype.strId,
+            isEnabled               = isEnabled,
+            canChangeAvailability   = Some(true)
           )
           val bbuf = PickleUtil.pickle(mLknNode)
           Ok(ByteString(bbuf))
@@ -346,6 +346,61 @@ class LkNodes @Inject() (
             NotFound
           }
         }
+      }
+    }
+  }
+
+
+  /** Самбит данных редактирования узла.
+    * На вход подаётся данные по узлу (без id, т.к. он неизменяем).
+    *
+    * @param nodeId id узла.
+    * @return 200 с обновлёнными данными по узлу | 404 | 406 | BFP.
+    */
+  def editNode(nodeId: String) = csrf.Check {
+    bruteForceProtect {
+      canChangeNodeAvailability(nodeId).async(_mLknNodeReqBP) { implicit request =>
+
+        lazy val logPrefix = s"editNode($nodeId):"
+
+        lkNodesUtil.validateNodeReq( request.body, isEdit = true ).fold(
+          {violations =>
+            LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString(", ")}")
+            NotAcceptable("Invalid name.")
+          },
+
+          {binded =>
+            LOGGER.trace(s"$logPrefix Binded: $binded")
+
+            // Запустить апдейт узла.
+            val updateFut = mNodes.tryUpdate( request.mnode ) { mnode =>
+              mnode.copy(
+                meta = mnode.meta.copy(
+                  basic = mnode.meta.basic.copy(
+                    nameOpt = Some( binded.name )
+                  )
+                )
+              )
+            }
+
+            // Когда будет сохранено, отрендерить свежую инфу по узлу.
+            for {
+              mnode <- updateFut
+            } yield {
+              LOGGER.debug(s"$logPrefix Ok, nodeVsn => ${mnode.versionOpt.orNull}")
+              val m = MLknNode(
+                id                      = nodeId,
+                name                    = mnode.guessDisplayNameOrIdOrQuestions,
+                ntypeId                 = mnode.common.ntype.strId,
+                isEnabled               = mnode.common.isEnabled,
+                canChangeAvailability   = Some(true)
+              )
+              val bbuf = PickleUtil.pickle( m )
+              Ok( ByteString(bbuf) )
+            }
+          }
+        )
+
       }
     }
   }

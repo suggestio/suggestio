@@ -28,7 +28,8 @@ case class MNodeState(
                        children           : Pot[Seq[MNodeState]]              = Pot.empty,
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        addSubNodeState    : Option[MAddSubNodeState]          = None,
-                       deleting           : Option[Pot[_]]                    = None
+                       deleting           : Option[Pot[_]]                    = None,
+                       editing            : Option[MEditNodeState]            = None
                      )
   extends IId[String]
 {
@@ -40,6 +41,7 @@ case class MNodeState(
   def withNodeEnabledUpd(neu: Option[MNodeEnabledUpdateState]) = copy(isEnabledUpd = neu)
   def withAddSubNodeState(asns: Option[MAddSubNodeState]) = copy(addSubNodeState = asns)
   def withDeleting(deleting2: Option[Pot[_]]) = copy(deleting = deleting2)
+  def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
 
   /** Раскрыт ли сейчас данный узел? */
   def isNodeOpened = children.nonEmpty

@@ -15,6 +15,7 @@ object MAddSubNodeState {
 
 }
 
+
 /** Состояние формочки создания нового узла.
   *
   * @param name Название узла, задаётся юзером.
@@ -23,20 +24,24 @@ object MAddSubNodeState {
   * @param nameValid флаг текущей валидности названия.
   */
 case class MAddSubNodeState(
-                            name      : String          = "",
-                            nameValid : Boolean         = false,
-                            id        : Option[String]  = None,
-                            idValid   : Boolean         = false,
-                            saving    : Pot[_]          = Pot.empty
-                           ) {
+                             override val name       : String          = "",
+                             override val nameValid  : Boolean         = false,
+                             id                      : Option[String]  = None,
+                             idValid                 : Boolean         = false,
+                             override val saving     : Pot[_]          = Pot.empty
+                           )
+  extends IEditNodeState[MAddSubNodeState]
+{
 
-  def withName(name2: String) = copy(name = name2)
-  def withNameValid(nameValid2: Boolean) = copy(nameValid = nameValid2)
+  override def withName(name2: String) = copy(name = name2)
+  override def withName(name2: String, nameValid2: Boolean) = copy(name = name2, nameValid = nameValid2)
+  override def withNameValid(nameValid2: Boolean) = copy(nameValid = nameValid2)
   def withId(id2: Option[String]) = copy(id = id2)
+  def withId(id2: Option[String], idValid2: Boolean) = copy(id = id2, idValid = idValid2)
   def withIdValid(idValid2: Boolean) = copy(idValid = idValid2)
-  def withSaving(saving2: Pot[_]) = copy(saving = saving2)
+  override def withSaving(saving2: Pot[_]) = copy(saving = saving2)
 
 
-  def isValid = nameValid && idValid
+  override def isValid = super.isValid && idValid
 
 }

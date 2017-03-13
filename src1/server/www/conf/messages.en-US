@@ -853,4 +853,6 @@ Nodes.management=Nodes management
 Beacon.name.example=My beacon
 Beacon.id=Beacon ID
 Example.id.0=Example identifier: {0}
+Type.new.name.for.beacon.0=Type new name for beacon "{0}".
+For.example.0=For example: {0}
 

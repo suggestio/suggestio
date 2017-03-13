@@ -862,4 +862,6 @@ Nodes.management=Управление узлами
 Beacon.name.example=Мой маячок
 Beacon.id=ID маячка
 Example.id.0=Пример идентификатора: {0}
+Type.new.name.for.beacon.0=Введите новое имя для маячка "{0}".
+For.example.0=Например: {0}
 

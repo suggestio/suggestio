@@ -3,7 +3,6 @@ package io.suggest.lk.nodes.form.a.tree
 import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.adv.rcvr.IRcvrKey
 import io.suggest.common.radio.BeaconUtil
 import io.suggest.common.text.StringUtil
 import io.suggest.lk.nodes.MLknNodeReq
@@ -29,17 +28,34 @@ class TreeAh[M](
   with Log
 {
 
-  private def _updateAddState(m: LkNodesAction with IRcvrKey)(f: Option[MAddSubNodeState] => Option[MAddSubNodeState]) = {
+  /** Интерфейс typeclass'ов точечного обновления состояния. */
+  private sealed trait OptStateUpdater[T] {
+    def getStateOpt(mns0: MNodeState): Option[T]
+    def updateState(mns0: MNodeState, data: Option[T]): MNodeState
+  }
+
+  implicit private object AddStateUpdater extends OptStateUpdater[MAddSubNodeState] {
+    override def getStateOpt(mns0: MNodeState) = mns0.addSubNodeState
+    override def updateState(mns0: MNodeState, data: Option[MAddSubNodeState]) = mns0.withAddSubNodeState( data )
+  }
+
+  implicit private object EditStateUpdater extends OptStateUpdater[MEditNodeState] {
+    override def getStateOpt(mns0: MNodeState) = mns0.editing
+    override def updateState(mns0: MNodeState, data: Option[MEditNodeState]) = mns0.withEditing( data )
+  }
+
+
+  private def _updateOptState[T](m: LkNodesTreeAction)(f: Option[T] => Option[T])(implicit osu: OptStateUpdater[T]) = {
     val v0 = value
     val nodes2 = MNodeState
       .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-        val s0 = mns0.addSubNodeState
+        val s0 = osu.getStateOpt(mns0)
         val s2 = f(s0)
         val mns2 = if (s0 eq s2) {
           // Ничего не изменилось. Просто вернуть исходный элемент.
           mns0
         } else {
-          mns0.withAddSubNodeState( s2 )
+          osu.updateState( mns0, s2 )
         }
         mns2 :: Nil
       }
@@ -49,32 +65,37 @@ class TreeAh[M](
     updated(v2)
   }
 
+  private def _updateNameIn[T <: IEditNodeState[T]](m: LkNodesTreeNameAction)(implicit osu: OptStateUpdater[T]) = {
+    _updateOptState[T](m) { addStateOpt0 =>
+      val name2 = StringUtil.strLimitLen(
+        str     = m.name.trim,
+        maxLen  = NodeEditConstants.Name.LEN_MAX,
+        ellipsis = ""
+      )
+      val nameValid2 = name2.length >= NodeEditConstants.Name.LEN_MIN
+
+      addStateOpt0.map(
+        _.withName(name2, nameValid2)
+      )
+    }
+  }
+
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case m: AddSubNodeClick =>
-      _updateAddState(m) { _ =>
+      _updateOptState[MAddSubNodeState](m) { _ =>
         Some( MAddSubNodeState() )
       }
 
     // Сигнал о вводе имени узла в форме добавления узла.
     case m: AddSubNodeNameChange =>
-      _updateAddState(m) { addStateOpt0 =>
-        val name2 = StringUtil.strLimitLen(
-          str     = m.name.trim,
-          maxLen  = NodeEditConstants.Name.LEN_MAX,
-          ellipsis = ""
-        )
-        addStateOpt0.map( _.copy(
-          name      = name2,
-          nameValid = name2.length >= NodeEditConstants.Name.LEN_MIN
-        ))
-      }
+      _updateNameIn[MAddSubNodeState](m)
 
     // Сигнал о вводе id узла в форме добавления узла.
     case m: AddSubNodeIdChange =>
-      _updateAddState(m) { addState0 =>
+      _updateOptState[MAddSubNodeState](m) { addState0 =>
         val ed = BeaconUtil.EddyStone
         // Сопоставить с паттерном маячка.
         val id2 = StringUtil.strLimitLen(
@@ -82,18 +103,16 @@ class TreeAh[M](
           maxLen    = ed.NODE_ID_LEN,
           ellipsis  = ""
         )
-        addState0.map(_.copy(
-          idValid   = id2.matches( ed.EDDY_STONE_NODE_ID_RE_LC ),
-          id        = Some(id2)
+        addState0.map(_.withId(
+          id2       = Some(id2),
+          idValid2  = id2.matches( ed.EDDY_STONE_NODE_ID_RE_LC )
         ))
       }
 
 
     // Сигнал о нажатии на кнопку "отмена" в форме добавления узла.
     case m: AddSubNodeCancelClick =>
-      _updateAddState(m) { _ =>
-        None
-      }
+      _updateOptState[MAddSubNodeState](m) { _ => None }
 
 
     // Сигнал создания нового узла на сервере.
@@ -124,9 +143,7 @@ class TreeAh[M](
         }
 
         // Выставить в addState флаг текущего запроса.
-        val addState2 = addState0.withSaving(
-          addState0.saving.pending()
-        )
+        val addState2 = addState0.withSavingPending()
         val v2 = v0.withNodes(
           MNodeState
             .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
@@ -148,7 +165,7 @@ class TreeAh[M](
       m.tryResp.fold(
         {ex =>
           // Вернуть addState назад.
-          _updateAddState(m) { addStateOpt0 =>
+          _updateOptState[MAddSubNodeState](m) { addStateOpt0 =>
             for (as0 <- addStateOpt0) yield {
               as0.withSaving( as0.saving.fail(ex) )
             }
@@ -418,6 +435,103 @@ class TreeAh[M](
         MNodeState
           .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
             mns0.withDeleting(None) :: Nil
+          }
+          .toList
+      )
+      updated(v2)
+
+
+    // Сигнал клика по кнопке редактирования узла.
+    case m: NodeEditClick =>
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode( m.rcvrKey, v0.nodes ) { mns0 =>
+            val mns2 = mns0.withEditing( Some(
+              MEditNodeState(
+                name = mns0.info.name,
+                nameValid = true
+              )
+            ))
+            mns2 :: Nil
+          }
+          .toList
+      )
+      updated(v2)
+
+
+    // Сигнал ввода нового имени узла.
+    case m: NodeEditNameChange =>
+      _updateNameIn[MEditNodeState](m)
+
+    // Сигнал отмены редактирования узла.
+    case m: NodeEditCancelClick =>
+      _updateOptState[MEditNodeState](m) { _ => None }
+
+    // Сигнал подтверждения редактирования узла.
+    case m: NodeEditOkClick =>
+      val v0 = value
+      val rcvrKey = m.rcvrKey
+      val n0 = MNodeState.findSubNode(rcvrKey, v0.nodes).get
+      val editState0 = n0.editing.get
+
+      if (editState0.isValid) {
+        // Эффект обновления данных узла на сервере.
+        val fx = Effect {
+          val nodeId = rcvrKey.last
+          val req = MLknNodeReq(
+            name  = editState0.name,
+            id    = None
+          )
+          api
+            .editNode(nodeId, req)
+            .transform { tryResp =>
+              val r = NodeEditSaveResp(rcvrKey, tryResp)
+              Success(r)
+            }
+        }
+
+        // Обновление состояния формы.
+        val editState2 = editState0.withSavingPending()
+
+        val v2 = v0.withNodes(
+          MNodeState
+            .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+              val mns2 = mns0.withEditing( Some(editState2) )
+              mns2 :: Nil
+            }
+            .toList
+        )
+        updated(v2, fx)
+
+      } else {
+        noChange
+      }
+
+
+    // Сигнал завершения запроса сохранения с сервера.
+    case m: NodeEditSaveResp =>
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+            val mns2 = m.tryResp.fold[MNodeState](
+              {ex =>
+                mns0.withEditing(
+                  mns0.editing.map { editState0 =>
+                    editState0.withSaving(
+                      editState0.saving.fail( ex )
+                    )
+                  }
+                )
+              },
+              {info2 =>
+                mns0
+                  .withEditing(None)
+                  .withInfo(info2)
+              }
+            )
+            mns2 :: Nil
           }
           .toList
       )

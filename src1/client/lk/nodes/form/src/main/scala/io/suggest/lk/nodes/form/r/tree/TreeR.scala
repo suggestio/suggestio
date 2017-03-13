@@ -67,10 +67,26 @@ object TreeR {
       _dispatchCB( NodeIsEnabledChanged(rcvrKey, isEnabled2) )
     }
 
+
     /** Callback для кнопки редактирования узла. */
     def onNodeEditClick(rcvrKey: RcvrKey): Callback = {
       _dispatchCB( NodeEditClick(rcvrKey) )
     }
+
+    def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+      _dispatchCB( NodeEditNameChange(rcvrKey, e.target.value) )
+    }
+
+    /** Callback нажатия по кнопке сохранения отредактированного узла. */
+    def onNodeEditOkClick(rcvrKey: RcvrKey): Callback = {
+      _dispatchCB( NodeEditOkClick(rcvrKey) )
+    }
+
+    /** Callback нажатия по кнопке отмены редактирования узла. */
+    def onNodeEditCancelClick(rcvrKey: RcvrKey): Callback = {
+      _dispatchCB( NodeEditCancelClick(rcvrKey) )
+    }
+
 
     /** Callback клика по кнопке удаления узла. */
     def onNodeDeleteClick(rcvrKey: RcvrKey): Callback = {
@@ -94,6 +110,12 @@ object TreeR {
       }
     }
 
+
+    private lazy val _msg_BeaconId = Messages("Beacon.id")
+    private lazy val _msg_BeaconNameExample = Messages("Beacon.name.example")
+    private lazy val _msg_ServerReqInProgressWait = Messages("Server.request.in.progress.wait")
+    private lazy val _msg_Save = Messages("Save")
+    private lazy val _msg_Cancel = Messages("Cancel")
 
     private val pleaseWait = Messages("Please.wait")
     private lazy val _textPreLoader: ReactElement = {
@@ -124,7 +146,8 @@ object TreeR {
       node.addSubNodeState.fold[TagMod] {
         // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
         <.a(
-          ^.`class` := (Css.Buttons.BTN :: Css.Size.M :: Css.Buttons.MINOR :: Nil).mkString( SPACE ),
+          ^.`class` := (Css.Buttons.BTN :: Css.Size.M :: Css.Buttons.MINOR :: Nil)
+            .mkString( SPACE ),
           ^.onClick --> onAddSubNodeClick(rcvrKey),
           Messages("Add"), HtmlConstants.ELLIPSIS
         )
@@ -138,7 +161,7 @@ object TreeR {
         // Сейчас открыта форма добавление под-узла для текущего узла.
         <.div(
           isSaving ?= {
-            ^.title := Messages("Server.request.in.progress.wait")
+            ^.title := _msg_ServerReqInProgressWait
           },
 
           // Поле ввода названия маячка.
@@ -148,14 +171,14 @@ object TreeR {
               ^.`type`      := "text",
               ^.value       := addState.name,
               ^.onChange   ==> onAddSubNodeNameChange(rcvrKey),
-              ^.placeholder := Messages("Beacon.name.example"),
+              ^.placeholder := _msg_BeaconNameExample,
               disabledAttr
             )
           ),
 
           // Поля для ввода id маячка.
           <.label(
-            Messages("Beacon.id"),
+            _msg_BeaconId,
             " (EddyStone-UID)",
             <.input(
               ^.`type`      := "text",
@@ -180,7 +203,7 @@ object TreeR {
               )
             },
             ^.onClick --> onAddSubNodeSaveClick(rcvrKey),
-            Messages("Save")
+            _msg_Save
           ),
 
           // Кнопка отмены.
@@ -191,7 +214,7 @@ object TreeR {
               Css.Buttons.DISABLED  -> isSaving
             ),
             ^.onClick --> onAddSubNodeCancelClick(rcvrKey),
-            Messages("Cancel")
+            _msg_Cancel
           ),
 
           // Крутилка ожидания сохранения.
@@ -229,134 +252,188 @@ object TreeR {
         // Сдвиг слева согласно уровню, чтобы выглядело как дерево.
         ^.marginLeft := (level * 10).px,
 
-        // контейнер названия текущего узла
-        <.div(
-          ^.onClick --> onNodeClick(rcvrKey),
-          node.info.name,
+        node.editing.fold[ReactElement] {
+          // контейнер названия текущего узла
+          <.div(
+            ^.onClick --> onNodeClick(rcvrKey),
+            node.info.name,
+            // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
+            node.children.renderPending { _ =>
+              _smallWaitLoader
+            }
+          )
 
-          // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
-          node.children.renderPending { _ =>
-            _smallWaitLoader
-          }
-        ),
+        } { ed =>
+          <.input(
+            ^.placeholder := node.info.name,
+            ^.title := Messages("Type.new.name.for.beacon.0", node.info.name) + HtmlConstants.SPACE + Messages("For.example.0", _msg_BeaconNameExample),
+            ^.value := ed.name,
+            if (ed.saving.isPending) {
+              ^.disabled := true
+            } else {
+              ^.onChange ==> onNodeEditNameChange(rcvrKey)
+            }
+          )
+        },
 
         // Рендер подробной информации по узлу
         node.isNodeOpened ?= {
           <.div(
 
-            // Галочка управления активностью узла, если определено.
-            for (cca <- node.info.canChangeAvailability) yield {
-              // Чек-бокс для управления isEnabled-флагом узла.
-              <.label(
-                <.input(
-                  ^.`type`      := "checkbox",
-                  // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
-                  ^.value       := node.isEnabledUpd.fold(node.info.isEnabled)(_.newIsEnabled),
-                  // Можно управлять галочкой, если разрешено и если не происходит какого-то запроса с обновлением сейчас.
-                  if (cca && node.isEnabledUpd.isEmpty) {
-                    ^.onChange ==> onNodeEnabledChange(rcvrKey)
-                  } else {
-                    ^.disabled  := true
-                  }
-                ),
-                Messages("Is.enabled")
-              )
-            },
-
-
-            // Рендер данные по реквестов обновления флага isEnabled.
-            for (upd <- node.isEnabledUpd) yield {
-              <.span(
-                // Крутилка ожидания, если происходит запрос к серверу за обновлением.
-                upd.request.renderPending { _ =>
-                  _smallWaitLoader
-                },
-                // Рендер данных по ошибке запроса, если она имеет место.
-                upd.request.renderFailed { ex =>
-                  <.span(
-                    ^.`class` := Css.Colors.RED,
-                    ^.title   := ex.toString,
-                    Messages("Error")
-                  )
-                }
-              )
-            },
-
-            // Кнопка редактирования узла.
-            <.a(
-              ^.href      := HtmlConstants.DIEZ,
-              ^.`class`   := (Css.Buttons.BTN :: Css.Buttons.MINOR :: Css.Size.M :: Nil)
-                .mkString( HtmlConstants.SPACE ),
-              ^.onClick  --> onNodeEditClick(rcvrKey),
-              Messages("Edit")
+            // Отрендерить неизменяемый id узла (маячка).
+            <.div(
+              _msg_BeaconId, ":",
+              node.info.id
             ),
 
-            // Кнопка удаления узла.
-            node.info.canChangeAvailability.contains(true) ?= {
-              <.a(
-                ^.href     := HtmlConstants.DIEZ,
-                ^.`class`  := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
-                  .mkString(HtmlConstants.SPACE),
-                ^.onClick --> onNodeDeleteClick(rcvrKey),
-                Messages("Delete")
-              )
-            },
+            node.editing.fold[ReactElement] {
 
-            // Форма подтверждения удаления узла.
-            for (delPot <- node.deleting) yield {
+              // Узел НЕ редактируется, а просто показывается. Рендерить основные элементы управления.
               <.div(
-                // Рендерить форму, когда Pot пуст.
-                delPot.renderEmpty {
-                  <.div(
-                    Messages("Are.you.sure"),
-                    " (", Messages("This.action.cannot.be.undone"), ")",
-
-                    // Кнопка подтверждения удаления, красная.
-                    <.a(
-                      ^.`class` := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
-                        .mkString( HtmlConstants.SPACE ),
-                      ^.onClick --> onNodeDeleteOkClick(rcvrKey),
-                      Messages("Yes.delete.it")
+                // Галочка управления активностью узла, если определено.
+                for (cca <- node.info.canChangeAvailability) yield {
+                  // Чек-бокс для управления isEnabled-флагом узла.
+                  <.label(
+                    <.input(
+                      ^.`type`      := "checkbox",
+                      // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
+                      ^.value       := node.isEnabledUpd.fold(node.info.isEnabled)(_.newIsEnabled),
+                      // Можно управлять галочкой, если разрешено и если не происходит какого-то запроса с обновлением сейчас.
+                      if (cca && node.isEnabledUpd.isEmpty) {
+                        ^.onChange ==> onNodeEnabledChange(rcvrKey)
+                      } else {
+                        ^.disabled  := true
+                      }
                     ),
-
-                    // Кнопка отмены удаления.
-                    <.a(
-                      ^.`class` := (Css.Buttons.BTN :: Css.Buttons.MINOR :: Css.Size.M :: Nil)
-                        .mkString( HtmlConstants.SPACE ),
-                      ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
-                      Messages("Cancel")
-                    )
+                    Messages("Is.enabled")
                   )
                 },
 
-                // Когда идёт запрос к серверу, рендерить ожидание
-                delPot.renderPending { _ =>
-                  <.div(
-                    _mediumLoader,
-                    pleaseWait
+
+                // Рендер данные по реквестов обновления флага isEnabled.
+                for (upd <- node.isEnabledUpd) yield {
+                  <.span(
+                    // Крутилка ожидания, если происходит запрос к серверу за обновлением.
+                    upd.request.renderPending { _ =>
+                      _smallWaitLoader
+                    },
+                    // Рендер данных по ошибке запроса, если она имеет место.
+                    upd.request.renderFailed { ex =>
+                      <.span(
+                        ^.`class` := Css.Colors.RED,
+                        ^.title   := ex.toString,
+                        Messages("Error")
+                      )
+                    }
                   )
                 },
 
-                // Ошибку удаления можно выводить на экран.
-                delPot.renderFailed { ex =>
-                  <.div(
-                    <.span(
-                      ^.`class` := Css.Colors.RED,
-                      ^.title := ex.toString,
-                      Messages("Error")
-                    ),
+                // Кнопка редактирования узла.
+                <.a(
+                  ^.href      := HtmlConstants.DIEZ,
+                  ^.`class`   := (Css.Buttons.BTN :: Css.Buttons.MINOR :: Css.Size.M :: Nil)
+                    .mkString( HtmlConstants.SPACE ),
+                  ^.onClick  --> onNodeEditClick(rcvrKey),
+                  Messages("Edit")
+                ),
 
-                    // Кнопка закрытия ошибочной формы.
-                    <.a(
-                      ^.`class` := (Css.Buttons.BTN :: Css.Buttons.MINOR :: Css.Size.M :: Nil)
-                        .mkString( HtmlConstants.SPACE ),
-                      ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
-                      Messages("Close")
-                    )
+                // Кнопка удаления узла.
+                node.info.canChangeAvailability.contains(true) ?= {
+                  <.a(
+                    ^.href     := HtmlConstants.DIEZ,
+                    ^.`class`  := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
+                      .mkString(HtmlConstants.SPACE),
+                    ^.onClick --> onNodeDeleteClick(rcvrKey),
+                    Messages("Delete")
+                  )
+                },
+
+                // Форма подтверждения удаления узла.
+                for (delPot <- node.deleting) yield {
+                  <.div(
+                    // Рендерить форму, когда Pot пуст.
+                    delPot.renderEmpty {
+                      <.div(
+                        Messages("Are.you.sure"),
+                        " (", Messages("This.action.cannot.be.undone"), ")",
+
+                        // Кнопка подтверждения удаления, красная.
+                        <.a(
+                          ^.`class` := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
+                            .mkString( HtmlConstants.SPACE ),
+                          ^.onClick --> onNodeDeleteOkClick(rcvrKey),
+                          Messages("Yes.delete.it")
+                        ),
+
+                        // Кнопка отмены удаления.
+                        <.a(
+                          ^.`class` := (Css.Buttons.BTN :: Css.Buttons.MINOR :: Css.Size.M :: Nil)
+                            .mkString( HtmlConstants.SPACE ),
+                          ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
+                          Messages("Cancel")
+                        )
+                      )
+                    },
+
+                    // Когда идёт запрос к серверу, рендерить ожидание
+                    delPot.renderPending { _ =>
+                      <.div(
+                        _mediumLoader,
+                        pleaseWait
+                      )
+                    },
+
+                    // Ошибку удаления можно выводить на экран.
+                    delPot.renderFailed { ex =>
+                      <.div(
+                        <.span(
+                          ^.`class` := Css.Colors.RED,
+                          ^.title := ex.toString,
+                          Messages("Error")
+                        ),
+
+                        // Кнопка закрытия ошибочной формы.
+                        <.a(
+                          ^.`class` := (Css.Buttons.BTN :: Css.Buttons.MINOR :: Css.Size.M :: Nil)
+                            .mkString( HtmlConstants.SPACE ),
+                          ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
+                          Messages("Close")
+                        )
+                      )
+                    }
+
                   )
                 }
 
               )
+            } { ed =>
+              // Происходит редактирование узла. Отобразить кнопки сохранения.
+              if (ed.saving.isPending) {
+                // Идёт сохранение на сервер прямо сейчас. Отрендерить сообщение о необходимости подождать.
+                <.div(
+                  ^.title := _msg_ServerReqInProgressWait,
+                  pleaseWait,
+                  _smallWaitLoader
+                )
+
+              } else {
+                <.div(
+                  // Кнопка сохранения изменений.
+                  <.a(
+                    ^.`class` := (Css.Buttons.BTN :: Css.Buttons.MAJOR :: Css.Size.M :: Nil)
+                      .mkString(HtmlConstants.SPACE),
+                    ^.onClick --> onNodeEditOkClick(rcvrKey),
+                    _msg_Save
+                  ),
+                  // Кнопка отмены редактирования.
+                  <.a(
+                    ^.`class` := (Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Css.Size.M :: Nil)
+                      .mkString(HtmlConstants.SPACE),
+                    ^.onClick --> onNodeEditCancelClick(rcvrKey),
+                    _msg_Cancel
+                  )
+                )
+              }
             }
 
           )
