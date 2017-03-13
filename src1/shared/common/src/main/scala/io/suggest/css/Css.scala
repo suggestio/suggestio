@@ -78,7 +78,8 @@ object Css {
 
 
   object Colors {
-    def RED = "red"
+    def WHITE = "white"
+    def RED   = "red"
     def GREEN = "green"
     def LIGHT_GRAY = "light-gray"
   }
@@ -165,6 +166,42 @@ object Css {
     def NEGATIVE  = PREFIX + "negative"
     def HELPER    = PREFIX + "helper"
     def DISABLED  = PREFIX + "disabled"
+
+  }
+
+
+  /** CSS-классы для сборки таблицы, используемой в списке транзакций, в корзине, в других шаблонах. */
+  object Table {
+
+    def TABLE = "table"
+
+    object Width {
+      private def _PREFIX_ = "__width-"
+      def XL = _PREFIX_ + "XL"
+    }
+
+    object Td {
+      def TD = "td"
+      def WHITE = "__" + Colors.WHITE
+
+      object Radial {
+        private def _PREFIX_ = "__radial-"
+        def FIRST = _PREFIX_ + "first"
+        def LAST  = _PREFIX_ + "last"
+      }
+    }
+
+  }
+
+
+  /** Шрифты. */
+  object Font {
+
+    /** Размеры шрифтов.*/
+    object Sz extends _EuSizes {
+      override def PREFIX_ROOT = "ft"
+      override def PREFIX = PREFIX_ROOT + "-"
+    }
 
   }
 

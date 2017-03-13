@@ -248,6 +248,8 @@ object TreeR {
       // Контейнер узла узла + дочерних узлов.
       <.div(
         ^.key := node.info.id,
+        ^.`class` := (Css.Table.Td.TD :: Css.Table.Td.WHITE :: Css.Size.M :: Nil)
+          .mkString( HtmlConstants.SPACE ),
 
         // Сдвиг слева согласно уровню, чтобы выглядело как дерево.
         ^.marginLeft := (level * 10).px,
@@ -255,8 +257,13 @@ object TreeR {
         node.editing.fold[ReactElement] {
           // контейнер названия текущего узла
           <.div(
+            ^.`class` := Css.Font.Sz.L,
+
             ^.onClick --> onNodeClick(rcvrKey),
-            node.info.name,
+            // Рендер названия узла.
+            <.strong(
+              node.info.name
+            ),
             // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
             node.children.renderPending { _ =>
               _smallWaitLoader
@@ -268,6 +275,7 @@ object TreeR {
             ^.placeholder := node.info.name,
             ^.title := Messages("Type.new.name.for.beacon.0", node.info.name) + HtmlConstants.SPACE + Messages("For.example.0", _msg_BeaconNameExample),
             ^.value := ed.name,
+            // Блокировать поле, пока происходит сохранение на сервер.
             if (ed.saving.isPending) {
               ^.disabled := true
             } else {
@@ -476,6 +484,9 @@ object TreeR {
       val parentRcvrKey = Nil
 
       <.div(
+        ^.`class` := (Css.Table.TABLE :: Css.Table.Width.XL :: Nil)
+          .mkString( HtmlConstants.SPACE ),
+
         // Рендерить узлы.
         for (node <- v.nodes) yield {
           _renderNode(node, parentRcvrKey, parentLevel)
