@@ -10,7 +10,7 @@ import io.suggest.dt.{MAdvPeriod, MYmd}
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvPeriod, QuickAdvPeriods}
 import io.suggest.lk.r.PropTable
 import io.suggest.lk.r.Forms.InputCont
-import io.suggest.sjs.common.spa.OptFastEq
+import io.suggest.sjs.common.spa.OptFastEq.Plain
 import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -169,7 +169,6 @@ object DtpOptions {
 
   val component = ReactComponentB[Props]("DtpOptions")
     .initialState_P { props =>
-      import OptFastEq.optFastEqImpl
       State(
         qapConn             = props.connect(_.info.quickAdvPeriod),
         customRangeConn     = props.connect(_.info.customRangeOpt),

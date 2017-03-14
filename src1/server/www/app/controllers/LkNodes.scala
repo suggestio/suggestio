@@ -121,6 +121,7 @@ class LkNodes @Inject() (
       } yield {
         val minit = MLknFormInit(
           onNodeId = nodeId,
+          adIdOpt  = None,      // Сейчас находимся явно вне карточки, поэтому просто управление узлами.
           nodes0   = subNodesResp,
           // Собрать начальное состояние формы.
           form     = MLknForm()

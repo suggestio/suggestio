@@ -13,12 +13,14 @@ object MLknOther {
   /** Поддержка быстрого сравнивания. */
   implicit object MLknOtherFastEq extends FastEq[MLknOther] {
     override def eqv(a: MLknOther, b: MLknOther): Boolean = {
-      a.onNodeId eq b.onNodeId
+      (a.onNodeId eq b.onNodeId) &&
+        (a.adIdOpt eq b.adIdOpt)
     }
   }
 
 }
 
 case class MLknOther(
-                     onNodeId: String
+                      onNodeId : String,
+                      adIdOpt  : Option[String]
                     )

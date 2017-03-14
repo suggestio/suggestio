@@ -1,5 +1,7 @@
 package io.suggest.css
 
+import io.suggest.common.html.HtmlConstants
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,6 +9,14 @@ package io.suggest.css
   * Description:
   */
 object Css {
+
+  /** Для рендера перечисления css-классов можно юзать этот метод. */
+  def flat(cssClasses: String*): String = {
+    flat1(cssClasses)
+  }
+  def flat1(cssClasses: Seq[String]): String = {
+    cssClasses.mkString( HtmlConstants.SPACE )
+  }
 
   def JS_PREFIX = "js-"
 
@@ -21,6 +31,8 @@ object Css {
   def VALUE     = "value"
   def HIDDEN    = "hidden"
 
+  def __ = "__"
+
   object Text {
     def CENTERED = "centered"
   }
@@ -30,7 +42,7 @@ object Css {
     def PREFIX = "lk-"
     def MINOR_TITLE = "minor-" + _TITLE
     def LK_FIELD = PREFIX + "field"
-    def LK_FIELD_NAME = LK_FIELD + "__" + NAME
+    def LK_FIELD_NAME = LK_FIELD + __ + NAME
 
     object Adv {
       def FORM_PREFIX = "adv-management"
@@ -74,6 +86,22 @@ object Css {
 
     }
 
+
+    /** Css-стили для формы LkNodes. */
+    object Nodes {
+      def LKN_PREFIX = "lkn-"
+
+      object Name {
+        def NAME   = LKN_PREFIX + "nodename"
+        def NORMAL = __ + "normal"
+        def EDIT   = __ + "edit"
+        def EDIT_BTNS = EDIT + "-btns"
+      }
+
+      def DELIM = LKN_PREFIX + "delim"
+
+    }
+
   }
 
 
@@ -81,7 +109,9 @@ object Css {
     def WHITE = "white"
     def RED   = "red"
     def GREEN = "green"
-    def LIGHT_GRAY = "light-gray"
+    private[css] def GRAY  = "gray"
+    def LIGHT_GRAY  = "light-" + GRAY
+    def DARK_GRAY   = "dark-" + GRAY
   }
 
 
@@ -100,7 +130,7 @@ object Css {
 
   trait _EuSizes {
     def PREFIX_ROOT: String
-    def PREFIX = "__" + PREFIX_ROOT + "-"
+    def PREFIX = __ + PREFIX_ROOT + "-"
     def S = PREFIX + "S"
     def M = PREFIX + "M"
     def L = PREFIX + "L"
@@ -124,7 +154,7 @@ object Css {
     def INPUT_SHADOW  = INPUT + "_shadow"
     def INPUT_W       = INPUT + "-w"
     def JS_INPUT_W    = JS_PREFIX + INPUT_W
-    def ERROR         = "__error"
+    def ERROR         = __ + "error"
 
     def CHECKBOX          = "checkbox"
     def STYLED_CHECKBOX   = "styled-" + CHECKBOX
@@ -159,7 +189,7 @@ object Css {
 
     def BTN = "btn"
 
-    def PREFIX = "__"
+    def PREFIX = __
 
     def MAJOR     = PREFIX + "major"
     def MINOR     = PREFIX + "minor"
@@ -176,16 +206,17 @@ object Css {
     def TABLE = "table"
 
     object Width {
-      private def _PREFIX_ = "__width-"
+      private def _PREFIX_ = __ + "width-"
       def XL = _PREFIX_ + "XL"
     }
 
     object Td {
       def TD = "td"
-      def WHITE = "__" + Colors.WHITE
+      def WHITE = __ + Colors.WHITE
+      def GRAY  = __ + Colors.GRAY
 
       object Radial {
-        private def _PREFIX_ = "__radial-"
+        private def _PREFIX_ = __ + "radial-"
         def FIRST = _PREFIX_ + "first"
         def LAST  = _PREFIX_ + "last"
       }

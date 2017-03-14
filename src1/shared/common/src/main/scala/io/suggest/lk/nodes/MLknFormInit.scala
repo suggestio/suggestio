@@ -25,6 +25,7 @@ object MLknFormInit {
   */
 case class MLknFormInit(
                          onNodeId   : String,
+                         adIdOpt    : Option[String],
                          nodes0     : MLknNodeResp,
                          form       : MLknForm
                        )

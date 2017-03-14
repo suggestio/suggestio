@@ -10,6 +10,7 @@ Company=Компания
 Name=Название
 Address=Адрес
 Delete=Удалить
+Deletion=Удаление
 Owner=Владелец
 Mart=Торговый центр
 Marts=Торговые центы
@@ -92,6 +93,7 @@ Is.enabled=Включён?
 Are.you.sure=Вы уверены?
 This.action.cannot.be.undone=Это действие нельзя будет отменить.
 Yes.delete.it=Да, удаляйте
+Change=Изменить
 
 requisites=Платёжные реквизиты для вывода средств
 
@@ -860,8 +862,10 @@ price.EUR=€{0}
 Nodes.management=Управление узлами
 
 Beacon.name.example=Мой маячок
-Beacon.id=ID маячка
+Identifier=Идентификатор
 Example.id.0=Пример идентификатора: {0}
 Type.new.name.for.beacon.0=Введите новое имя для маячка "{0}".
 For.example.0=Например: {0}
-
+Subnodes=Подчинённые узлы
+N.nodes={0} узлов
+N.disabled={0} выключенных

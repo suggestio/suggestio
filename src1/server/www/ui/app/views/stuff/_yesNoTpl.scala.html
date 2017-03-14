@@ -1,2 +1,5 @@
 @(b: Boolean)(implicit ctx: Context)
-@ctx.messages(if(b) "Yes" else "No")
+
+@import io.suggest.i18n.I18nConstants
+
+@ctx.messages( I18nConstants.yesNo(b) )

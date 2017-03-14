@@ -28,5 +28,6 @@ object HtmlConstants {
   def TAG_PREFIX              = DIEZ
 
   val NBSP                    = '\u00A0'
+  val NBSP_STR                = NBSP.toString
 
 }

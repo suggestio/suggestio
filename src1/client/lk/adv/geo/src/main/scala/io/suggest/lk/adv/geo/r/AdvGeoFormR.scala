@@ -23,6 +23,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR
 import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
+import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -40,6 +41,14 @@ import scala.scalajs.js.UndefOr
   * Этот react-компонент формы должен подключаться в diode circuit через wrap().
   */
 object AdvGeoFormR extends Log {
+
+  // Без пинка, FastEq не подцеплялись к работе и вызывали лишней re-render внутри коннекшенов.
+  import MRcvr.MRcvrFastEq
+  import MMap.MMapFastEq
+  import MGeoAdvs.MGeoAdvsFastEq
+  import MRad.MRadFastEq
+  import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
+
 
   type Props = ModelProxy[MRoot]
 

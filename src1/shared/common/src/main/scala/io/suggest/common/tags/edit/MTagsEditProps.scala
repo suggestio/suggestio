@@ -10,10 +10,12 @@ import io.suggest.i18n.MMessage
   * Props -- потому что это состояние, которое ближе по смыслу и использованию к react props,
   * а так же сериализуются на сервер.
   */
+
+// TODO Надо бы реализовать diode FastEq.
 case class MTagsEditProps(
                            query       : MTagsEditQueryProps    = MTagsEditQueryProps(),
                            tagsExists  : Set[String]            = Set.empty
-) {
+                         ) {
 
   def withQuery(q: MTagsEditQueryProps) = copy( query = q )
   def withTagsExists(te: Set[String]) = copy( tagsExists = te )

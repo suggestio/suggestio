@@ -3,7 +3,6 @@ package io.suggest.lk.adv.r
 import diode._
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.free.MAdv4Free
-import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.m.SetAdv4Free
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
@@ -56,8 +55,7 @@ object Adv4FreeR {
               ^.`class` := Css.Input.STYLED_CHECKBOX
             ),
             <.span(
-              ^.`class` := (Css.Input.CHECKBOX_TITLE :: Css.Buttons.MAJOR :: Nil)
-                .mkString( HtmlConstants.SPACE ),
+              ^.`class` := Css.flat(Css.Input.CHECKBOX_TITLE, Css.Buttons.MAJOR),
               v.static.title
             )
           )

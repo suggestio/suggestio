@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MTree}
+import io.suggest.lk.nodes.form.m.MLkNodesRoot
 import io.suggest.lk.nodes.form.r.tree.TreeR
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -14,18 +14,21 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object LkNodesFormR {
 
+  import TreeR.TreeRPropsValFastEq
+
+
   type Props = ModelProxy[MLkNodesRoot]
 
   /** Состояние содержит коннекшены до под-моделей. */
   case class State(
-                    treeC: ReactConnectProxy[MTree]
+                    treeC: ReactConnectProxy[TreeR.PropsVal]
                   )
 
 
   /** Вся суть react-компонента формы обитает здесь. */
   class Backend($: BackendScope[Props, State]) {
 
-    def render(p: Props, s: State): ReactElement = {
+    def render(s: State): ReactElement = {
       <.div(
         // Рендер текущего дерева узлов
         s.treeC { TreeR.apply }
@@ -38,7 +41,12 @@ object LkNodesFormR {
   val component = ReactComponentB[Props]("LkNodesForm")
     .initialState_P { p =>
       State(
-        treeC = p.connect(_.tree)
+        treeC = p.connect { v =>
+          TreeR.PropsVal(
+            adIdOpt = v.other.adIdOpt,
+            mtree   = v.tree
+          )
+        }
       )
     }
     .renderBackend[Backend]

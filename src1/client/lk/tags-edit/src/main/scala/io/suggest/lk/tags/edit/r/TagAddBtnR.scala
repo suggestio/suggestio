@@ -27,7 +27,7 @@ object TagAddBtnR {
 
     def render(p: Props) = {
       <.input(
-        ^.`class`  := (Css.Buttons.BTN :: Css.Size.M :: Css.Buttons.MAJOR :: Nil).mkString(" "),
+        ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MAJOR),
         ^.value    := Messages("Add"),
         ^.`type`   := "submit",
         ^.onClick --> onAddBtnClick

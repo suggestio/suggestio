@@ -83,8 +83,7 @@ object PriceR {
         },
 
         <.button(
-          ^.`class` := (Price.WIDGET_REQ_BTN :: Css.Buttons.BTN :: Css.Buttons.MAJOR :: Css.Size.L :: Nil)
-            .mkString(HtmlConstants.SPACE),
+          ^.`class` := Css.flat(Price.WIDGET_REQ_BTN, Css.Buttons.BTN, Css.Buttons.MAJOR, Css.Size.L),
           ^.onClick --> onSubmitBtnClick,
 
           Messages("Send.request")

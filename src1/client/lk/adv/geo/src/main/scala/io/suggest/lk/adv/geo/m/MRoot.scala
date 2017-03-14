@@ -7,8 +7,6 @@ import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.sjs.common.controller.DomQuick
 
-import scala.scalajs.js.Date
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

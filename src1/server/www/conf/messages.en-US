@@ -10,6 +10,7 @@ Company=Company
 Name=Name
 Address=Address
 Delete=Delete
+Deletion=Deletion
 Owner=Owner
 Mart=Shopping center
 Marts=Shopping centers
@@ -92,6 +93,7 @@ Is.enabled=Is enabled?
 Are.you.sure=Are you sure?
 This.action.cannot.be.undone=This action cannot be undone.
 Yes.delete.it=Yes, delete it
+Change=Change
 
 requisites=Payment details for withdrawal
 
@@ -851,8 +853,10 @@ price.EUR=€{0}
 Nodes.management=Nodes management
 
 Beacon.name.example=My beacon
-Beacon.id=Beacon ID
+Identifier=Identifier
 Example.id.0=Example identifier: {0}
 Type.new.name.for.beacon.0=Type new name for beacon "{0}".
 For.example.0=For example: {0}
-
+Subnodes=Sub-nodes
+N.nodes={0} nodes
+N.disabled={0} disabled

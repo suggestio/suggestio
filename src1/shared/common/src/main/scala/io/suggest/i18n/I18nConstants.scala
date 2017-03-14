@@ -11,4 +11,13 @@ object I18nConstants {
   /** Имя объекта lk-messages на стороне js. */
   final val MESSAGES_JSNAME = "_SioMessages"
 
+  /** Привести булёво значение к Yes или No.
+    * И это потом можно в messages() передавать, для локализации ответа. */
+  def yesNo(isYes: Boolean): String = {
+    if (isYes)
+      "Yes"
+    else
+      "No"
+  }
+
 }

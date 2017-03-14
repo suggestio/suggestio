@@ -43,7 +43,7 @@ object TagsExistsR {
 
             // Кнопка удаления тега из списка.
             <.span(
-              ^.`class`  := (Css.TagsEdit.JS_TAG_DELETE :: Css.Buttons.BTN :: Css.Buttons.NEGATIVE :: Nil).mkString(SPACE),
+              ^.`class`  := Css.flat(Css.TagsEdit.JS_TAG_DELETE, Css.Buttons.BTN, Css.Buttons.NEGATIVE),
               ^.title    := Messages( "Delete" ),
               // TODO Брать tagName из key или содержимого div'а выше на уровне Callback'а, а не здесь.
               ^.onClick --> onTagDeleteClick(tagName),

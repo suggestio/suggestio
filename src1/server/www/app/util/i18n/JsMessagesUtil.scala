@@ -97,15 +97,19 @@ class JsMessagesUtil @Inject() (
   private def LK_NODES_MSGS: List[String] = {
     "Add" ::
       "Name" ::
-      "Beacon.id" ::
+      "Identifier" ::
       "Beacon.name.example" ::
       "Server.request.in.progress.wait" ::
       "Example.id.0" ::
       "Is.enabled" ::
       "Edit" ::
-      "Delete" ::
+      "Change" ::
+      "Yes" :: "No" ::
       "This.action.cannot.be.undone" ::
       "Are.you.sure" ::
+      "Delete" ::
+      "Deletion" ::
+      "Subnodes" :: "N.nodes" :: "N.disabled" ::
       "Yes.delete.it" ::
       "Type.new.name.for.beacon.0" ::
       "For.example.0" ::

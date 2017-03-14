@@ -28,6 +28,7 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.LK_NODES_FORM_ERROR
 
+
   /** Сборка начального инстанса корневой модели. */
   override protected def initialModel: MLkNodesRoot = {
     val stateInp = StateInp.find().get
@@ -35,7 +36,8 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLknFormInit](base64)
     val mroot = MLkNodesRoot(
       other = MLknOther(
-        onNodeId = mFormInit.onNodeId
+        onNodeId = mFormInit.onNodeId,
+        adIdOpt  = mFormInit.adIdOpt
       ),
       tree = {
         val chStates = for (nInfo <- mFormInit.nodes0.children) yield {

@@ -16,7 +16,7 @@ object MTagsEditState {
 
   def empty = MTagsEditState()
 
-  implicit object MTagsEditFastEq extends FastEq[MTagsEditState] {
+  implicit object MTagsEditStateFastEq extends FastEq[MTagsEditState] {
     override def eqv(a: MTagsEditState, b: MTagsEditState): Boolean = {
       (a.props eq b.props) &&
         (a.found eq b.found) &&
