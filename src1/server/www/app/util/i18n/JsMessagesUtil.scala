@@ -95,7 +95,7 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для формы управления узлами/подузлами. */
   private def LK_NODES_MSGS: List[String] = {
-    "Add" ::
+    "Create" ::
       "Name" ::
       "Identifier" ::
       "Beacon.name.example" ::

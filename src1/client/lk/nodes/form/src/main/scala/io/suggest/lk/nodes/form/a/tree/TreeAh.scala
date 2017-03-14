@@ -68,7 +68,7 @@ class TreeAh[M](
   private def _updateNameIn[T <: IEditNodeState[T]](m: LkNodesTreeNameAction)(implicit osu: OptStateUpdater[T]) = {
     _updateOptState[T](m) { addStateOpt0 =>
       val name2 = StringUtil.strLimitLen(
-        str     = m.name.trim,
+        str     = m.name,
         maxLen  = NodeEditConstants.Name.LEN_MAX,
         ellipsis = ""
       )
@@ -128,7 +128,7 @@ class TreeAh[M](
         val fx = Effect {
           val parentNodeId = rcvrKey.last
           val req = MLknNodeReq(
-            name = addState0.name,
+            name = addState0.name.trim,
             id   = addState0.id
           )
           api
@@ -480,7 +480,7 @@ class TreeAh[M](
         val fx = Effect {
           val nodeId = rcvrKey.last
           val req = MLknNodeReq(
-            name  = editState0.name,
+            name  = editState0.name.trim,
             id    = None
           )
           api

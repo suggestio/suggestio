@@ -188,7 +188,7 @@ object TreeR {
         <.a(
           ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
           ^.onClick --> onAddSubNodeClick(rcvrKey),
-          Messages("Add"), HtmlConstants.ELLIPSIS
+          Messages("Create"), HtmlConstants.ELLIPSIS
         )
 
       } { addState =>
@@ -204,68 +204,80 @@ object TreeR {
           },
 
           // Поле ввода названия маячка.
-          <.label(
-            Messages("Name"), ":",
-            <.input(
-              ^.`type`      := "text",
-              ^.value       := addState.name,
-              ^.onChange   ==> onAddSubNodeNameChange(rcvrKey),
-              ^.placeholder := _msg_BeaconNameExample,
-              disabledAttr
+          <.div(
+            ^.`class` := Css.Input.INPUT,
+
+            <.label(
+              Messages("Name"), ":",
+              <.input(
+                ^.`type`      := "text",
+                ^.value       := addState.name,
+                ^.onChange   ==> onAddSubNodeNameChange(rcvrKey),
+                ^.placeholder := _msg_BeaconNameExample,
+                disabledAttr
+              )
             )
           ),
 
           // Поля для ввода id маячка.
-          <.label(
-            _msg_NodeId,
-            " (EddyStone-UID)",
-            <.input(
-              ^.`type`      := "text",
-              ^.value       := addState.id.getOrElse(""),
-              ^.onChange   ==> onAddSubNodeIdChange(rcvrKey),
-              ^.placeholder := EXAMPLE_UID,
-              !isSaving ?= {
-                ^.title := Messages("Example.id.0", EXAMPLE_UID)
-              },
-              disabledAttr
+          <.div(
+            ^.`class` := Css.Input.INPUT,
+            <.label(
+              _msg_NodeId,
+              " (EddyStone-UID)",
+              <.input(
+                ^.`type`      := "text",
+                ^.value       := addState.id.getOrElse(""),
+                ^.onChange   ==> onAddSubNodeIdChange(rcvrKey),
+                ^.placeholder := EXAMPLE_UID,
+                !isSaving ?= {
+                  ^.title := Messages("Example.id.0", EXAMPLE_UID)
+                },
+                disabledAttr
+              )
             )
           ),
 
-          // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
-          <.a(
-            {
-              val isEnabled = addState.isValid && !isSaving
-              ^.classSet1(
-                Css.flat(Css.Buttons.BTN, Css.Size.M),
-                Css.Buttons.MAJOR     -> isEnabled,
-                Css.Buttons.DISABLED  -> !isEnabled
+          // Кнопки сохранения/отмены.
+          <.div(
+            // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
+            addState.saving.renderEmpty {
+              val isSaveBtnEnabled = addState.isValid
+              <.span(
+                <.a(
+                  ^.classSet1(
+                    Css.flat(Css.Buttons.BTN, Css.Size.M),
+                    Css.Buttons.MAJOR     -> isSaveBtnEnabled,
+                    Css.Buttons.DISABLED  -> !isSaveBtnEnabled
+                  ),
+                  isSaveBtnEnabled ?= {
+                    ^.onClick --> onAddSubNodeSaveClick(rcvrKey)
+                  },
+                  _msg_Save
+                ),
+                HtmlConstants.SPACE,
+
+                // Кнопка отмены.
+                <.a(
+                  ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.NEGATIVE),
+                  ^.onClick --> onAddSubNodeCancelClick(rcvrKey),
+                  _msg_Cancel
+                )
               )
             },
-            ^.onClick --> onAddSubNodeSaveClick(rcvrKey),
-            _msg_Save
-          ),
 
-          // Кнопка отмены.
-          <.a(
-            ^.classSet1(
-              Css.flat(Css.Buttons.BTN, Css.Size.M),
-              Css.Buttons.NEGATIVE  -> !isSaving,
-              Css.Buttons.DISABLED  -> isSaving
-            ),
-            ^.onClick --> onAddSubNodeCancelClick(rcvrKey),
-            _msg_Cancel
-          ),
+            // Крутилка ожидания сохранения.
+            isSaving ?= _mediumLoader,
 
-          // Крутилка ожидания сохранения.
-          isSaving ?= _mediumLoader,
+            // Вывести инфу, что что-то пошло не так при ошибке сохранения.
+            addState.saving.renderFailed { ex =>
+              <.span(
+                ^.title := ex.toString,
+                Messages("Something.gone.wrong")
+              )
+            }
 
-          // Вывести инфу, что что-то пошло не так при ошибке сохранения.
-          addState.saving.renderFailed { ex =>
-            <.span(
-              ^.title := ex.toString,
-              Messages("Something.gone.wrong")
-            )
-          }
+          )
 
         ) // div()
       } // addState =>
@@ -295,10 +307,15 @@ object TreeR {
         _delim,
 
         <.div(
-          ^.`class` := Css.flat(
-            Css.Table.Td.TD,
-            if (node.info.isEnabled)  Css.Table.Td.WHITE  else  Css.Table.Td.GRAY,
-            Css.Size.M, Css.Table.Td.Radial.FIRST, Css.Lk.Nodes.Name.NAME
+          ^.classSet1(
+            Css.flat(
+              Css.Table.Td.TD,
+              if (node.info.isEnabled)  Css.Table.Td.WHITE  else  Css.Table.Td.GRAY,
+              Css.Size.M,
+              Css.Lk.Nodes.Name.NAME
+            ),
+            // Закруглять углы только когда узел не раскрыт.
+            Css.Table.Td.Radial.FIRST -> !node.isNodeOpened
           ),
 
           node.editing.fold[ReactElement] {
@@ -334,7 +351,10 @@ object TreeR {
 
               // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
               node.children.renderPending { _ =>
-                _smallWaitLoader
+                <.span(
+                  HtmlConstants.NBSP_STR,
+                  _smallWaitLoader
+                )
               }
             )
 
@@ -599,11 +619,6 @@ object TreeR {
             ^.`class` := Css.Colors.RED,
             Messages("Error")
           )
-        },
-
-        // Рендерить кнопку/форму добавления узла.
-        node.isNodeOpened ?= {
-          _renderAddUtil(rcvrKey, node)
         }
 
       )
