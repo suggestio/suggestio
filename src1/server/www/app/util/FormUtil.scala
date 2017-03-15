@@ -256,7 +256,7 @@ object FormUtil {
     val maxLen = n.LEN_MAX
     nonEmptyText(minLength = minLen, maxLength = maxLen)
       .transform(strTrimSanitizeUnescapeF, strIdentityF)
-      .verifying("error.too.short", _.length >= maxLen)
+      .verifying("error.too.short", _.length >= minLen)
   }
 
   def nameOptM = optional(nameM)

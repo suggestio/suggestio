@@ -584,7 +584,7 @@ class LkAdvGeo @Inject() (
       // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
       val subNodesFut = advGeoMapUtil.findSubRcvrsOf(rcvrNodeId)
 
-      lazy val logPrefix = s"geoNodePopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
+      lazy val logPrefix = s"rcvrMapPopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
 
       // Нужно получить все суб-узлы из кэша. Текущий узел традиционно уже есть в request'е.
       val subNodesIdsFut = subNodesFut.map(OptId.els2idsSet)

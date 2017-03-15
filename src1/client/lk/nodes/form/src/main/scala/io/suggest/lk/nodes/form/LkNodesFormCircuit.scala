@@ -34,6 +34,7 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
     val stateInp = StateInp.find().get
     val base64   = stateInp.value.get
     val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLknFormInit](base64)
+
     val mroot = MLkNodesRoot(
       other = MLknOther(
         onNodeId = mFormInit.onNodeId,
@@ -54,10 +55,12 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
         )
       }
     )
+
     // Потом удалить input, который больше не нужен.
     Future {
       stateInp.remove()
     }
+
     // Наконец вернуть собранную root-модель.
     mroot
   }

@@ -217,6 +217,7 @@ class LkNodes @Inject() (
                 isDependent = false,
                 isEnabled   = isEnabled
               ),
+
               meta = MMeta(
                 basic = {
                   val nameOpt = Some( addNodeInfo.name )
@@ -226,6 +227,7 @@ class LkNodes @Inject() (
                   )
                 }
               ),
+
               edges = MNodeEdges(
                 out = {
                   // Эдж до юзера-создателя узла.
@@ -249,16 +251,19 @@ class LkNodes @Inject() (
                   eCreator :: eParent :: ePlacedIn :: Nil
                 }
               ),
+
               // Это узел-ресивер, поэтому заполняем профиль ADN-узла:
               extras = MNodeExtras(
                 adn = Some(MAdnExtra(
                   rights      = Set( AdnRights.RECEIVER ),
-                  isUser      = true,
+                  isUser      = !request.user.isSuper,
                   showInScNl  = false
                 ))
               ),
+
               id = addNodeInfo.id
             )
+
 
             // Запустить сохранение нового узла, если id позволяет:
             val newNodeIdFut = nodeWithIdNotExistsFut.flatMap { _ =>
