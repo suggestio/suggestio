@@ -11,6 +11,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -18,6 +19,7 @@ import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
+import io.suggest.ym.model.common.AdnRights
 import models.mlk.nodes.MLkNodesTplArgs
 import models.mproj.ICommonDi
 import models.req.IReqHdr
@@ -242,6 +244,14 @@ class LkNodes @Inject() (
                   // Вернуть все эджи:
                   eCreator :: eParent :: ePlacedIn :: Nil
                 }
+              ),
+              // Это узел-ресивер, поэтому заполняем профиль ADN-узла:
+              extras = MNodeExtras(
+                adn = Some(MAdnExtra(
+                  rights      = Set( AdnRights.RECEIVER ),
+                  isUser      = true,
+                  showInScNl  = false
+                ))
               ),
               id = addNodeInfo.id
             )
