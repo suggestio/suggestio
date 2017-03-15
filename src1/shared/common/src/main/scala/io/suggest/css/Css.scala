@@ -31,13 +31,17 @@ object Css {
   def VALUE     = "value"
   def HIDDEN    = "hidden"
 
-  def __ = "__"
+  private def __ = "__"
+
+  def CLICKABLE = "clickable"
 
   object Text {
     def CENTERED = "centered"
   }
 
   object Lk {
+
+    def LINK = "link"
 
     def PREFIX = "lk-"
     def MINOR_TITLE = "minor-" + _TITLE
@@ -89,16 +93,35 @@ object Css {
 
     /** Css-стили для формы LkNodes. */
     object Nodes {
-      def LKN_PREFIX = "lkn-"
+      def LKN = "lkn"
 
       object Name {
-        def NAME   = LKN_PREFIX + "nodename"
-        def NORMAL = __ + "normal"
-        def EDIT   = __ + "edit"
-        def EDIT_BTNS = EDIT + "-btns"
+        def NAME   = "nodename"
+
+        def NORMAL    = __ + "normal"
+        def DISABLED  = __ + "disabled"
+
+        def EDITING   = __ + "editing"
+        def SHOWING   = __ + "showing"
+
+        def EDIT_BTN     = "edit-btn"
+        def TITLE        = "title"
+        def CONTENT      = "content"
+
+        def EDITING_BTNS = "editing-btns"
       }
 
-      def DELIM = LKN_PREFIX + "delim"
+      object KvTable {
+        def LKN_TABLE  = "table"
+        object Td {
+          /** Класс ячейки с ключом. */
+          def KEY = "key"
+          /** Класс ячейки со значением. */
+          def VALUE = "value"
+        }
+      }
+
+      def DELIM = "delim"
 
     }
 

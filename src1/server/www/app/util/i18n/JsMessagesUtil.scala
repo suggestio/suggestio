@@ -105,7 +105,6 @@ class JsMessagesUtil @Inject() (
       "Edit" ::
       "Change" ::
       "Yes" :: "No" ::
-      "This.action.cannot.be.undone" ::
       "Are.you.sure" ::
       "Delete" ::
       "Deletion" ::

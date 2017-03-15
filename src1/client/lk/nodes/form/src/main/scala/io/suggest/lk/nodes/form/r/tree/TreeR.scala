@@ -173,10 +173,10 @@ object TreeR {
       Css.flat1( Css.Table.Td.TD :: Css.Table.Td.WHITE :: Css.Size.M :: tail )
     }
     private val _kvTdKey = <.td(
-      ^.`class` := _kvTdClasses( Css.Font.Sz.M :: Css.Colors.LIGHT_GRAY :: Nil )
+      ^.`class` := _kvTdClasses( Css.Font.Sz.M :: Css.Colors.LIGHT_GRAY :: Css.Lk.Nodes.KvTable.Td.KEY :: Nil )
     )
     private val _kvTdValue = <.td(
-      ^.`class` := _kvTdClasses( Css.Font.Sz.L :: Nil )
+      ^.`class` := _kvTdClasses( Css.Font.Sz.L :: Css.Lk.Nodes.KvTable.Td.VALUE :: Nil )
     )
 
 
@@ -186,7 +186,8 @@ object TreeR {
       node.addSubNodeState.fold[TagMod] {
         // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
         <.a(
-          ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
+          ^.href    := HtmlConstants.DIEZ,
+          ^.`class` := Css.Lk.LINK, // flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
           ^.onClick --> onAddSubNodeClick(rcvrKey),
           Messages("Create"), HtmlConstants.ELLIPSIS
         )
@@ -310,19 +311,27 @@ object TreeR {
           ^.classSet1(
             Css.flat(
               Css.Table.Td.TD,
-              if (node.info.isEnabled)  Css.Table.Td.WHITE  else  Css.Table.Td.GRAY,
               Css.Size.M,
               Css.Lk.Nodes.Name.NAME
             ),
+            // CSS-классы режима узла: normal | disabled | editing
+            Css.Lk.Nodes.Name.NORMAL   -> node.info.isEnabled,
+            Css.Lk.Nodes.Name.DISABLED -> !node.info.isEnabled,
+            Css.Lk.Nodes.Name.SHOWING  -> node.editing.isEmpty,
+            Css.Lk.Nodes.Name.EDITING  -> node.editing.nonEmpty,
+
             // Закруглять углы только когда узел не раскрыт.
             Css.Table.Td.Radial.FIRST -> !node.isNodeOpened
           ),
+          // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
+          node.editing.isEmpty ?= {
+            ^.onClick --> onNodeClick(rcvrKey)
+          },
 
           node.editing.fold[ReactElement] {
             // контейнер названия текущего узла
             <.div(
-              ^.`class` := Css.flat(Css.Font.Sz.L, Css.Lk.Nodes.Name.NORMAL),
-              ^.onClick --> onNodeClick(rcvrKey),
+              ^.`class` := Css.flat(Css.Font.Sz.L, Css.Lk.Nodes.Name.CONTENT),
 
               // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
               for (_ <- adIdOpt) yield {
@@ -334,20 +343,22 @@ object TreeR {
 
               // Рендер названия узла.
               <.span(
-                node.info.isEnabled ?= {
-                  ^.`class` := Css.Colors.LIGHT_GRAY
-                },
+                ^.`class` := Css.Lk.Nodes.Name.TITLE,
                 node.info.name
               ),
 
               // Рендерить кнопку редактирования имени.
-              node.isNodeOpened ?= <.span(
-                ^.`class` := Css.flat( Css.Colors.LIGHT_GRAY, Css.Font.Sz.S ),
-                ^.onClick ==> onNodeEditClick(rcvrKey),
-                HtmlConstants.NBSP_STR, HtmlConstants.NBSP_STR,
-                Messages("Change"),
-                HtmlConstants.ELLIPSIS
-              ),
+              node.isNodeOpened ?= {
+                <.span(
+                  HtmlConstants.NBSP_STR,
+                  HtmlConstants.NBSP_STR,
+                  <.span(
+                    ^.`class` := Css.Lk.Nodes.Name.EDIT_BTN,
+                    ^.onClick ==> onNodeEditClick(rcvrKey),
+                    ^.title   := Messages("Change")
+                  )
+                )
+              },
 
               // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
               node.children.renderPending { _ =>
@@ -362,7 +373,7 @@ object TreeR {
             <.div(
 
               <.div(
-                ^.`class` := Css.flat(Css.Input.INPUT, Css.Lk.Nodes.Name.EDIT),
+                ^.`class` := Css.flat(Css.Input.INPUT),
 
                 <.input(
                   ^.placeholder := node.info.name,
@@ -379,7 +390,7 @@ object TreeR {
 
               // Происходит редактирование узла. Отобразить кнопки сохранения.
               <.div(
-                ^.`class` := Css.Lk.Nodes.Name.EDIT_BTNS,
+                ^.`class` := Css.Lk.Nodes.Name.EDITING_BTNS,
 
                 if (ed.saving.isPending) {
                   // Идёт сохранение на сервер прямо сейчас. Отрендерить сообщение о необходимости подождать.
@@ -418,7 +429,7 @@ object TreeR {
 
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
             <.table(
-              ^.`class` := Css.Table.TABLE,
+              ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL, Css.Lk.Nodes.KvTable.LKN_TABLE ),
 
               <.tbody(
 
@@ -443,7 +454,7 @@ object TreeR {
                     _kvTdValue(
                       // Чек-бокс для управления isEnabled-флагом узла.
                       <.label(
-                        ^.`class` := Css.Input.INPUT,
+                        ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
                         <.input(
                           ^.`type` := "checkbox",
                           // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
@@ -496,9 +507,10 @@ object TreeR {
                         node.info.canChangeAvailability.contains(true) ?= {
                           <.a(
                             ^.href     := HtmlConstants.DIEZ,
-                            ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
+                            ^.`class`  := Css.Lk.LINK,  //Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
                             ^.onClick --> onNodeDeleteClick(rcvrKey),
-                            Messages("Delete")
+                            Messages("Delete"),
+                            HtmlConstants.ELLIPSIS
                           )
                         }
                       )
@@ -512,22 +524,22 @@ object TreeR {
                             Messages("Are.you.sure"),
                             HtmlConstants.SPACE,
 
-                            // Кнопка подтверждения удаления, красная.
-                            <.a(
-                              ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
-                              ^.onClick --> onNodeDeleteOkClick(rcvrKey),
-                              Messages("Yes.delete.it")
-                            ),
-                            HtmlConstants.SPACE,
-
-                            // Кнопка отмены удаления.
+                            // Кнопки поменяны местами для защиты от двойных нажатий.
+                            // Кнопка отмены удаления:
                             <.a(
                               ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M),
                               ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
                               _msg_Cancel
                             ),
-                            <.br,
-                            Messages("This.action.cannot.be.undone")
+
+                            HtmlConstants.SPACE,
+
+                            // Кнопка подтверждения удаления, красная.
+                            <.a(
+                              ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
+                              ^.onClick --> onNodeDeleteOkClick(rcvrKey),
+                              Messages("Yes.delete.it")
+                            )
                           )
                         },
 
@@ -575,20 +587,23 @@ object TreeR {
                     ),
 
                     _kvTdValue(
-                      // Вывести общее кол-во под-узлов.
-                      Messages("N.nodes", children.size),
+                      node.addSubNodeState.isEmpty ?= <.span(
+                        // Вывести общее кол-во под-узлов.
+                        Messages("N.nodes", children.size),
 
-                      // Вывести кол-во выключенных под-узлов, если такие есть.
-                      (countDisabled > 0) ?= {
-                        <.span(
-                          HtmlConstants.COMMA,
-                          HtmlConstants.NBSP_STR,
-                          Messages("N.disabled", countDisabled)
-                        )
-                      },
+                        // Вывести кол-во выключенных под-узлов, если такие есть.
+                        (countDisabled > 0) ?= {
+                          <.span(
+                            HtmlConstants.COMMA,
+                            HtmlConstants.NBSP_STR,
+                            Messages("N.disabled", countDisabled)
+                          )
+                        },
 
-                      // Рендерим поддержку добавления нового под-узла:
-                      HtmlConstants.SPACE,
+                        // Рендерим поддержку добавления нового под-узла:
+                        HtmlConstants.COMMA,
+                        HtmlConstants.SPACE
+                      ),
                       _renderAddUtil(rcvrKey, node)
                     )
                   )

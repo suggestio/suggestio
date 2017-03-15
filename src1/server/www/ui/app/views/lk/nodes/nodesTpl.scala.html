@@ -7,6 +7,7 @@
 @import io.suggest.common.spa.SpaConst.STATE_CONT_ID
 @import views.html.stuff.{_preLoaderLkTpl, jsTpl2HtmlTpl}
 @import views.js.stuff.jsRevRouterTpl
+@import io.suggest.css.Css
 
 @nodesBaseTpl(
   title     = messages("Nodes.management"),
@@ -17,7 +18,7 @@
   <input type="hidden" id="@STATE_CONT_ID" value="@args.formState"/>
 
   @* Верстка контейнера формы. *@
-  <div id="@FORM_CONT_ID">
+  <div class="@Css.Lk.Nodes.LKN" id="@FORM_CONT_ID">
     @_preLoaderLkTpl()
   </div>
 

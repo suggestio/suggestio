@@ -3,6 +3,9 @@
 .sm-block
   position  relative
 
+.clickable
+  cursor    pointer
+
 /********************************************************************************************************************/
 /* Fonts */
 /********************************************************************************************************************/
@@ -11,7 +14,7 @@
   font-size 11px
 
 .ft-S
-	font-size 13px
+  font-size 13px
 
 .ft-M
   font-size 16px
@@ -1000,23 +1003,58 @@ label
 /********************************************************************************************************************/
 /* LkNodes */
 /********************************************************************************************************************/
-.lkn-nodename
-  .__edit
-    padding-top   5px
+.lkn
 
-  .__normal
-    padding-top   10px
+  .nodename
+    .edit-btn
+      padding-top         0px
 
-  .input
-    min-width     40%
-    width         70%
-    float         left
+    .content
+      padding-top         10px
 
-  .__edit-btns
-    float         left
-    padding-top   4px
-    margin-left   10px
 
-.lkn-delim
-  height          3px
+    &.__disabled
+      background-color    lightGray
+      color               darkGray
+      .title
+        color             white
+
+    &.__normal
+      background-color    white
+      color               lightGray
+      .title
+        color             lightGray
+
+
+    &.__showing
+      cursor              pointer
+      &:hover
+        background-color  darkGray
+        .title
+          color           white
+
+    &.__editing
+      background-color    white
+      color               lightGray
+      .content
+        padding-top       5px
+
+
+    .input
+      padding-top   5px
+      min-width     40%
+      width         73%
+      float         left
+
+    .editing-btns
+      float         left
+      padding-top   4px
+      margin-left   10px
+
+  .delim
+    height          3px
+
+  .table
+    .key
+      width         170px
 

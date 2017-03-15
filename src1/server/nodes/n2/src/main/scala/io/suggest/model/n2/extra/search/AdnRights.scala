@@ -1,5 +1,6 @@
 package io.suggest.model.n2.extra.search
 
+import io.suggest.es.model.{IMust, MWrapClause, QueryUtil}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.ym.model.common.AdnRight
@@ -22,22 +23,27 @@ trait AdnRights extends DynSearchArgs {
     val _war = withAdnRights
     if (_war.isEmpty) {
       qbOpt0
+
     } else {
       val fn = MNodeFields.Extras.ADN_RIGHTS_FN
-      // Собираем termsQuery()
-      val allTermsQ = QueryBuilders.boolQuery()
-      for (name <- withAdnRights.map(_.name)) {
-        val tq = QueryBuilders.termQuery(fn, name)
-        allTermsQ.must(tq)
+
+      // Собираем terms query, объединяя через AND (must).
+      val allTermsQ = QueryUtil.maybeWrapToBool {
+        for (r <- _war) yield {
+          MWrapClause(IMust.MUST, QueryBuilders.termQuery(fn, r.name))
+        }
       }
+
       // Накатить собранную termsQuery на исходную query.
-      qbOpt0.map { qb =>
-        QueryBuilders.boolQuery()
-          .must(qb)
-          .filter(allTermsQ)
-      }.orElse {
-        Some(allTermsQ)
-      }
+      qbOpt0
+        .map { qb =>
+          QueryBuilders.boolQuery()
+            .must(qb)
+            .filter(allTermsQ)
+        }
+        .orElse {
+          Some(allTermsQ)
+        }
     }
   }
 

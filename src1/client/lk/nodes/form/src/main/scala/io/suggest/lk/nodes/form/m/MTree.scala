@@ -13,24 +13,31 @@ object MTree {
 
   object MTreeFastEq extends FastEq[MTree] {
     override def eqv(a: MTree, b: MTree): Boolean = {
-      (a.nodes eq b.nodes) //&&
-        //(a.addStates eq b.addStates)
+      (a.nodes eq b.nodes) &&
+        (a.focused eq b.focused) &&
+        (a.currHdr eq b.currHdr)
     }
   }
 
 }
 
 
+/** Класс модели состояния дерева узлов.
+  *
+  * @param nodes Дерево узлов, скомпиленное на основе данных сервера.
+  * @param focused Фокусированный элемент дерева. Он только один. Для него отображаются элементы управления.
+  * @param currHdr Заголовок вот этого узла помечен как текущий.
+  *                Т.е. мышька сейчас наведена на заголовок указанного узла.
+  */
 case class MTree(
-                  /** Дерево узлов, скомпиленное на основе данных сервера. */
-                  nodes       : Seq[MNodeState]
-                  /** id родительского узла (вкл.Nil) -> текущее состояние формы добавления. */
-                  //addStates   : Map[RcvrKey, MAddSubNodeState] = Map.empty
+                  nodes       : Seq[MNodeState],
+                  focused     : Option[RcvrKey] = None,
+                  currHdr     : Option[RcvrKey] = None
                 )
 {
 
   def withNodes(nodes2: Seq[MNodeState]) = copy(nodes = nodes2)
-
-  //def withAddStates(addStates2: Map[RcvrKey, MAddSubNodeState]) = copy(addStates = addStates2)
+  def withFocused(focused2: Option[RcvrKey]) = copy(focused = focused2)
+  def withCurrHdr(currHdr2: Option[RcvrKey]) = copy(currHdr = currHdr2)
 
 }
