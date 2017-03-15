@@ -150,14 +150,17 @@ object TreeR {
     }
 
     private def _waitLoader(widthPx: Int): ReactElement = {
-      LkPreLoader.PRELOADER_IMG_URL
-        .fold(_textPreLoader) { url =>
+      <.span(
+        // Чтобы alt был маленькими буквами, если картинка не подгрузилась
+        ^.`class` := Css.Font.Sz.S,
+        LkPreLoader.PRELOADER_IMG_URL.fold(_textPreLoader) { url =>
           <.img(
             ^.src   := url,
             ^.alt   := pleaseWait,
             ^.width := widthPx.px
           )
         }
+      )
     }
 
     private lazy val _smallWaitLoader = _waitLoader(16)
@@ -507,7 +510,7 @@ object TreeR {
                         node.info.canChangeAvailability.contains(true) ?= {
                           <.a(
                             ^.href     := HtmlConstants.DIEZ,
-                            ^.`class`  := Css.Lk.LINK,  //Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
+                            ^.`class`  := Css.flat(Css.Colors.RED, Css.Lk.LINK),
                             ^.onClick --> onNodeDeleteClick(rcvrKey),
                             Messages("Delete"),
                             HtmlConstants.ELLIPSIS
@@ -577,9 +580,6 @@ object TreeR {
 
                 // Отрендерить обобщённую информацию по под-узлам и поддержку добавления узла.
                 node.children.render { children =>
-                  val countDisabled = children.count { n =>
-                    !n.info.isEnabled
-                  }
 
                   <.tr(
                     _kvTdKey(
@@ -587,17 +587,22 @@ object TreeR {
                     ),
 
                     _kvTdValue(
-                      node.addSubNodeState.isEmpty ?= <.span(
+                      (node.addSubNodeState.isEmpty && children.nonEmpty) ?= <.span(
                         // Вывести общее кол-во под-узлов.
                         Messages("N.nodes", children.size),
 
                         // Вывести кол-во выключенных под-узлов, если такие есть.
-                        (countDisabled > 0) ?= {
-                          <.span(
-                            HtmlConstants.COMMA,
-                            HtmlConstants.NBSP_STR,
-                            Messages("N.disabled", countDisabled)
-                          )
+                        {
+                          val countDisabled = children.count { n =>
+                            !n.info.isEnabled
+                          }
+                          (countDisabled > 0) ?= {
+                            <.span(
+                              HtmlConstants.COMMA,
+                              HtmlConstants.NBSP_STR,
+                              Messages("N.disabled", countDisabled)
+                            )
+                          }
                         },
 
                         // Рендерим поддержку добавления нового под-узла:

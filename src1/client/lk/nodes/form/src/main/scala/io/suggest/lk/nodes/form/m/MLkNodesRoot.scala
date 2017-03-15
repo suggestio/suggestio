@@ -32,8 +32,4 @@ case class MLkNodesRoot(
 
   def withTree(tree2: MTree) = copy(tree = tree2)
 
-
-  /** Извлечь данные из разных моделей в инстанс, пригодный для сабмита. */
-  def toForm: MLknForm = ???
-
 }
