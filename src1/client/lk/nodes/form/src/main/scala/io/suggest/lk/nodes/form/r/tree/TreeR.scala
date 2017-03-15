@@ -48,6 +48,7 @@ object TreeR {
         for (node <- v.mtree.nodes) yield {
           val tnp = NodeR.PropsVal(
             conf          = v.conf,
+            mtree         = v.mtree,
             node          = node,
             parentRcvrKey = parentRcvrKey,
             level         = parentLevel,

@@ -10,7 +10,7 @@ import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.util.Success
 
@@ -82,6 +82,103 @@ class TreeAh[M](
 
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Сигнал о необходимости показать какой-то узел подробнее.
+    case nnc: NodeNameClick =>
+      val rcvrKey = nnc.rcvrKey
+
+      val v0 = value
+      MNodeState
+        .findSubNode(rcvrKey, v0.nodes)
+        .fold {
+          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
+          noChange
+
+        } { n =>
+          if (n.children.nonEmpty) {
+            // Дочерние элементы уже получены с сервера. Даже если их нет. Сфокусироваться на текущий узел либо свернуть его.
+            // Узнать, является ли текущий элемент сфокусированным?
+            if (v0.showProps.contains(rcvrKey)) {
+              // Это был клик по заголовку текущего узла. Свернуть текущий узел.
+              // Есть под-элементы. Свернуть подсписок, забыв их всех.
+              val v2 = v0.copy(
+                nodes = MNodeState
+                  .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+                    val mns1 = mns0.withChildren( Pot.empty )
+                    mns1 :: Nil
+                  }
+                  .toList,
+                showProps = None
+              )
+              updated(v2)
+
+            } else {
+              // Окликнутый узел не является сфокусированным, но для него уже загружены children. Выставить текущий узел как сфокусированный.
+              val v2 = v0.withShowProps( Some(rcvrKey) )
+              updated(v2)
+            }
+
+          } else {
+            // children.isEmpty: Для текущего узла не загружено children. Запустить в фоне загрузку, выставить её в состояние.
+            val nodeId = nnc.rcvrKey.last
+
+            // Собрать эффект запроса к серверу за подробностями по узлу.
+            val fx = Effect {
+              // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
+              api.nodeInfo(nodeId).transform { tryRes =>
+                Success( HandleSubNodesOf(rcvrKey, tryRes) )
+              }
+            }
+
+            // Произвести обновление модели.
+            val v2 = v0.withNodes(
+              MNodeState
+                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+                  val mns1 = mns0.withChildren(
+                    mns0.children.pending()
+                  )
+                  mns1 :: Nil
+                }
+                .toList
+            )
+
+            updated(v2, fx)
+          }
+        }
+
+
+    // Ответ сервера на тему под-узлов.
+    case snr: HandleSubNodesOf =>
+      val v0 = value
+      val v2 = value.copy(
+        nodes = MNodeState
+          .flatMapSubNode(snr.rcvrKey, v0.nodes) { mns0 =>
+            val mns2 = snr.subNodesRespTry.fold(
+              // Ошибка запроса. Сохранить её в состояние.
+              {ex =>
+                mns0.withChildren(
+                  mns0.children.fail(ex)
+                )
+              },
+              // Положительный ответ сервера, обновить данные по текущему узлу.
+              {resp =>
+                mns0.copy(
+                  info      = resp.info.getOrElse( mns0.info ),
+                  children  = mns0.children.ready {
+                    for (node <- resp.children) yield {
+                      MNodeState(node)
+                    }
+                  }
+                )
+              }
+            )
+            mns2 :: Nil
+          }
+          .toList,
+        showProps = Some(snr.rcvrKey)
+      )
+      updated(v2)
+
 
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case m: AddSubNodeClick =>
@@ -195,96 +292,6 @@ class TreeAh[M](
           updated(v2)
         }
       )
-
-
-    // Сигнал о необходимости показать какой-то узел подробнее.
-    case nnc: NodeNameClick =>
-      val rcvrKey = nnc.rcvrKey
-
-      val v0 = value
-      MNodeState
-        .findSubNode(rcvrKey, v0.nodes)
-        .fold {
-          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = nnc )
-          noChange
-
-        } { n =>
-          if (n.children.isPending) {
-            // Происходит запрос к серверу за данными.
-            LOG.log( WarnMsgs.REQUEST_IN_PROGRESS, msg = nnc )
-            noChange
-
-          } else if (n.children.exists(_.nonEmpty)) {
-            // Есть под-элементы. Свернуть подсписок, забыв их всех.
-            val v2 = v0.withNodes(
-              MNodeState
-                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                  val mns1 = mns0.withChildren( Pot.empty )
-                  mns1 :: Nil
-                }
-                .toList
-            )
-            updated(v2)
-
-          } else {
-            // children.isEmpty, значит нужно запросить их с сервера
-            val nodeId = nnc.rcvrKey.last
-
-            // Собрать эффект запроса к серверу за подробностями по узлу.
-            val fx = Effect {
-              // Отправить запрос к серверу за данными по выбранному узлу, выставить ожидание ответа в состояние.
-              api.nodeInfo(nodeId).transform { tryRes =>
-                Success( HandleSubNodesOf(rcvrKey, tryRes) )
-              }
-            }
-
-            // Произвести обновление модели.
-            val v2 = v0.withNodes(
-              MNodeState
-                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-                  val mns1 = mns0.withChildren(
-                    mns0.children.pending()
-                  )
-                  mns1 :: Nil
-                }
-                .toList
-            )
-
-            updated(v2, fx)
-          }
-        }
-
-
-    // Ответ сервера на тему под-узлов.
-    case snr: HandleSubNodesOf =>
-      val v0 = value
-      val v2 = value.withNodes(
-        MNodeState
-          .flatMapSubNode(snr.rcvrKey, v0.nodes) { mns0 =>
-            val mns2 = snr.subNodesRespTry.fold(
-              // Ошибка запроса. Сохранить её в состояние.
-              {ex =>
-                mns0.withChildren(
-                  mns0.children.fail(ex)
-                )
-              },
-              // Положительный ответ сервера, обновить данные по текущему узлу.
-              {resp =>
-                mns0.copy(
-                  info      = resp.info.getOrElse( mns0.info ),
-                  children  = mns0.children.ready {
-                    for (node <- resp.children) yield {
-                      MNodeState(node)
-                    }
-                  }
-                )
-              }
-            )
-            mns2 :: Nil
-          }
-          .toList
-      )
-      updated(v2)
 
 
     // Сигнал о клике юзером по галочке управления флагом isEnabled у какого-то узла.

@@ -21,7 +21,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   * Description: Рекурсивный react-компонент одной ноды дерева [[TreeR]].
   * Изначально разрастался прямо внутри [[TreeR]].
   */
-object NodeR {
+object NodeR { self =>
 
   type Props = PropsVal
 
@@ -34,6 +34,7 @@ object NodeR {
     */
   case class PropsVal(
                        conf          : MLknOther,
+                       mtree         : MTree,
                        node          : MNodeState,
                        parentRcvrKey : RcvrKey,
                        level         : Int,
@@ -302,6 +303,8 @@ object NodeR {
       val rcvrKeyRev = node.info.id :: parentRcvrKey
       val rcvrKey = rcvrKeyRev.reverse
 
+      val isShowProps = p.mtree.showProps.contains(rcvrKey)
+
       // Контейнер узла узла + дочерних узлов.
       <.div(
         ^.key := node.info.id,
@@ -326,7 +329,7 @@ object NodeR {
             Css.Lk.Nodes.Name.EDITING  -> node.editing.nonEmpty,
 
             // Закруглять углы только когда узел не раскрыт.
-            Css.Table.Td.Radial.FIRST -> !node.isNodeOpened
+            Css.Table.Td.Radial.FIRST -> !isShowProps
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
           node.editing.isEmpty ?= {
@@ -353,7 +356,7 @@ object NodeR {
               ),
 
               // Рендерить кнопку редактирования имени.
-              node.isNodeOpened ?= {
+              isShowProps ?= {
                 <.span(
                   HtmlConstants.NBSP_STR,
                   HtmlConstants.NBSP_STR,
@@ -429,9 +432,8 @@ object NodeR {
         ),
 
         // Рендер подробной информации по узлу
-        node.isNodeOpened ?= {
+        p.mtree.showProps.contains(rcvrKey) ?= {
           <.div(
-
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
             <.table(
               ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL, Css.Lk.Nodes.KvTable.LKN_TABLE ),
@@ -617,7 +619,6 @@ object NodeR {
 
               )   // TBODY
             )     // TABLE
-
           )
         },
 
@@ -632,7 +633,7 @@ object NodeR {
                   parentRcvrKey = rcvrKeyRev,
                   level         = childLevel
                 )
-                NodeR( p1 )
+                self( p1 )
               }
             }
           )

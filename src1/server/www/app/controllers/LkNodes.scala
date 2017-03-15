@@ -124,9 +124,7 @@ class LkNodes @Inject() (
         val minit = MLknFormInit(
           onNodeId = nodeId,
           adIdOpt  = None,      // Сейчас находимся явно вне карточки, поэтому просто управление узлами.
-          nodes0   = subNodesResp,
-          // Собрать начальное состояние формы.
-          form     = MLknForm()
+          nodes0   = subNodesResp
         )
         PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
       }

@@ -21,11 +21,9 @@ object MLknFormInit {
 /** Класс модели с данными для начальной конфигурацией формы.
   *
   * @param nodes0 Начальный список под-узлов, чтобы его не дёргать с сервера.
-  * @param form Начальное состояние формы.
   */
 case class MLknFormInit(
                          onNodeId   : String,
                          adIdOpt    : Option[String],
-                         nodes0     : MLknNodeResp,
-                         form       : MLknForm
+                         nodes0     : MLknNodeResp
                        )

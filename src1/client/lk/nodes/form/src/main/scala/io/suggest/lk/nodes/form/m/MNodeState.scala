@@ -43,9 +43,6 @@ case class MNodeState(
   def withDeleting(deleting2: Option[Pot[_]]) = copy(deleting = deleting2)
   def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
 
-  /** Раскрыт ли сейчас данный узел? */
-  def isNodeOpened = children.nonEmpty
-
 }
 
 
