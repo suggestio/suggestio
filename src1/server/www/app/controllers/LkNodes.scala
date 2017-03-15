@@ -218,9 +218,13 @@ class LkNodes @Inject() (
                 isEnabled   = isEnabled
               ),
               meta = MMeta(
-                basic = MBasicMeta(
-                  nameOpt = Some(addNodeInfo.name)
-                )
+                basic = {
+                  val nameOpt = Some( addNodeInfo.name )
+                  MBasicMeta(
+                    nameOpt       = nameOpt,
+                    nameShortOpt  = nameOpt
+                  )
+                }
               ),
               edges = MNodeEdges(
                 out = {
@@ -387,9 +391,14 @@ class LkNodes @Inject() (
             val updateFut = mNodes.tryUpdate( request.mnode ) { mnode =>
               mnode.copy(
                 meta = mnode.meta.copy(
-                  basic = mnode.meta.basic.copy(
-                    nameOpt = Some( binded.name )
-                  )
+                  basic = {
+                    val nameOpt = Some( binded.name )
+                    mnode.meta.basic.copy(
+                      nameOpt       = nameOpt,
+                      nameShortOpt  = nameOpt,
+                      dateEdited    = Some( OffsetDateTime.now() )
+                    )
+                  }
                 )
               )
             }

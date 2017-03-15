@@ -18,17 +18,21 @@ trait NameSortBase extends DynSearchArgs {
   /** Сортировать по названиям? */
   def withNameSort: Option[SortOrder]
 
+
   override def prepareSearchRequest(srb: SearchRequestBuilder): SearchRequestBuilder = {
     val srb1 = super.prepareSearchRequest(srb)
-    val _wns = withNameSort
-    if (_wns.isDefined) {
-      val sob = SortBuilders.fieldSort(_NAME_FN)
-        .order( _wns.get )
-        .unmappedType("string")
-      srb1 addSort sob
+
+    for (wns <- withNameSort) {
+      srb1.addSort {
+        SortBuilders.fieldSort(_NAME_FN)
+          .order( wns )
+          .unmappedType("string")
+      }
     }
+
     srb1
   }
+
 
   /** Базовый размер StringBuilder'а. */
   override def sbInitSize: Int = {

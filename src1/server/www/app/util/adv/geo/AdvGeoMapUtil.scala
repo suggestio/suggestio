@@ -18,6 +18,7 @@ import models.adv.geo.mapf.{MAdvGeoMapNode, MAdvGeoMapNodeProps, MIconInfo}
 import models.im.{MAnyImgs, MImgT}
 import models.mctx.Context
 import models.mproj.ICommonDi
+import org.elasticsearch.search.sort.SortOrder
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, LogoUtil}
 
@@ -338,6 +339,7 @@ class AdvGeoMapUtil @Inject() (
         cr :: Nil
       }
       override def withAdnRights  = AdnRights.RECEIVER :: Nil
+      override def withNameSort   = Some( SortOrder.ASC )
       override def limit          = limit1
       override def withIds        = onlyWithIds
     }
