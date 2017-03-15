@@ -43,7 +43,7 @@ object LkNodesFormR {
       State(
         treeC = p.connect { v =>
           TreeR.PropsVal(
-            adIdOpt = v.other.adIdOpt,
+            conf    = v.other,
             mtree   = v.tree
           )
         }
