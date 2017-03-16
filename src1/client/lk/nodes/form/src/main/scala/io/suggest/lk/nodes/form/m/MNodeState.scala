@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.data.{Pot, Ready}
 import io.suggest.common.tree.{NodeTreeUpdate, NodesTreeApiIId, NodesTreeWalk}
-import io.suggest.lk.nodes.MLknNode
+import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -59,6 +59,21 @@ object MNodeState
 
   override protected def _subNodesOf(node: MNodeState): TraversableOnce[MNodeState] = {
     node.children.getOrElse(Nil)
+  }
+
+  def apply(resp: MLknNodeResp): MNodeState = {
+    MNodeState(
+      info = resp.info,
+      children = if (resp.children.isEmpty) {
+        // TODO А если дочерних элементов просто нет?
+        Pot.empty
+      } else {
+        val childrenStates = for (ch <- resp.children) yield {
+          MNodeState(ch)
+        }
+        Ready(childrenStates)
+      }
+    )
   }
 
   override def withNodeChildren(node: MNodeState, children2: TraversableOnce[MNodeState]): MNodeState = {

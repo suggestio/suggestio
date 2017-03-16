@@ -28,6 +28,6 @@ object MLknNodeResp {
   * @param children Дочерние узлы.
   */
 case class MLknNodeResp(
-                         info       : Option[MLknNode],
+                         info       : MLknNode,
                          children   : Seq[MLknNode]
                        )

@@ -27,6 +27,7 @@ import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
 import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}
 import util.acl._
+import util.adn.NodesUtil
 import util.billing.Bill2Util
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
@@ -54,6 +55,7 @@ class LkNodes @Inject() (
                           canFreelyAdvAdOnNode      : CanFreelyAdvAdOnNode,
                           canAdvAd                  : CanAdvAd,
                           pickleSrvUtil             : PickleSrvUtil,
+                          nodesUtil                 : NodesUtil,
                           mNodes                    : MNodes,
                           canChangeNodeAvailability : CanChangeNodeAvailability,
                           bruteForceProtect         : BruteForceProtect,
@@ -68,25 +70,25 @@ class LkNodes @Inject() (
   import pickleSrvUtil._
 
 
-  private def _subNodesRespFor(nodeId: String, withCurrNode: Option[MNode] = None, madOpt: Option[MNode])
+  private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[Boolean] = {
+    for (mad <- madOpt) yield {
+      mad.edges
+        .withNodePred(nodeId, MPredicates.Receiver)
+        .nonEmpty
+    }
+  }
+
+  private def _subNodesRespFor(mnode: MNode, madOpt: Option[MNode])
                               (implicit req: IReqHdr): Future[MLknNodeResp] = {
+    val nodeId = mnode.id.get
+
     // Запустить поиск узлов.
     val subNodesFut = mNodes.dynSearch {
       lkNodesUtil.subNodesSearch(nodeId)
     }
 
     // Можно ли менять доступность узла?
-    val canChangeAvailabilityFut = withCurrNode.fold [Future[Boolean]] (false) { mnode =>
-      canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
-    }
-
-    def __hasAdv(xNodeId: String): Option[Boolean] = {
-      for (mad <- madOpt) yield {
-        mad.edges
-          .withNodePred(xNodeId, MPredicates.Receiver)
-          .nonEmpty
-      }
-    }
+    val canChangeAvailabilityFut = canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
 
     // Рендер найденных узлов в данные для модели формы.
     for {
@@ -95,18 +97,14 @@ class LkNodes @Inject() (
     } yield {
       MLknNodeResp(
         // Надо ли какую-то инфу по текущему узлу возвращать?
-        info = for {
-          mnode <- withCurrNode
-        } yield {
-          MLknNode(
-            id                    = nodeId,
-            name                  = mnode.guessDisplayNameOrIdOrQuestions,
-            ntypeId               = mnode.common.ntype.strId,
-            isEnabled             = mnode.common.isEnabled,
-            canChangeAvailability = Some( canChangeAvailability ),
-            hasAdv                = __hasAdv(nodeId)
-          )
-        },
+        info = MLknNode(
+          id                    = nodeId,
+          name                  = mnode.guessDisplayNameOrIdOrQuestions,
+          ntypeId               = mnode.common.ntype.strId,
+          isEnabled             = mnode.common.isEnabled,
+          canChangeAvailability = Some( canChangeAvailability ),
+          hasAdv                = _hasAdv(nodeId, madOpt)
+        ),
 
         children = for (mnode <- subNodes) yield {
           val chNodeId = mnode.id.get
@@ -117,7 +115,7 @@ class LkNodes @Inject() (
             isEnabled         = mnode.common.isEnabled,
             // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
             canChangeAvailability = None,
-            hasAdv            = __hasAdv(chNodeId)
+            hasAdv            = _hasAdv(chNodeId, madOpt)
           )
         }
       )
@@ -131,8 +129,8 @@ class LkNodes @Inject() (
     * @param ctx Обычный контекст.
     */
   private case class _MLknFormPrep(
-                                    formStateB64: String,
-                                    implicit val ctx: Context
+                                    formStateB64      : String,
+                                    implicit val ctx  : Context
                                   )
 
   /** Дедубликация кода экшена HTML-рендера формы на узле и для карточки.
@@ -145,16 +143,47 @@ class LkNodes @Inject() (
   private def _lknFormPrep(onNode: MNode, madOpt: Option[MNode] = None)(implicit request: IReq[_]): Future[_MLknFormPrep] = {
     // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
     val nodeId = onNode.id.get
+
+    // Поискать другие пользовательские узлы верхнего уровня. TODO А что будет, если текущий узел не является прямо-подчинённым текущему юзеру? Каша из узлов?
+    val otherPersonNodesFut = request.user.personIdOpt
+      .fold[Future[List[MLknNodeResp]]] (Nil) { personId =>
+        for {
+          mnodes <- mNodes.dynSearch {
+            nodesUtil.personNodesSearch(personId, withoutIds1 = onNode.id.toList)
+          }
+        } yield {
+          val someTrue = Some(true)
+
+          val iter = for {
+            mnode <- mnodes.iterator
+            mnodeId <- mnode.id
+          } yield {
+            val mLknNode = MLknNode(
+              id                        = mnodeId,
+              name                      = mnode.guessDisplayNameOrIdOrQuestions,
+              ntypeId                   = mnode.common.ntype.strId,
+              isEnabled                 = mnode.common.isEnabled,
+              canChangeAvailability     = someTrue,
+              hasAdv                    = _hasAdv(mnodeId, madOpt)
+            )
+            MLknNodeResp(mLknNode, Nil)
+          }
+
+          iter.toList
+        }
+      }
+
     val formStateB64Fut = for {
-    // Запустить поиск под-узлов для текущего узла.
-      subNodesResp  <- _subNodesRespFor(nodeId, Some(onNode), madOpt = madOpt)
+      // Запустить поиск под-узлов для текущего узла.
+      subNodesResp      <- _subNodesRespFor(onNode, madOpt = madOpt)
+      otherPersonNodes  <- otherPersonNodesFut
     } yield {
       val minit = MLknFormInit(
         conf = MLknConf(
           onNodeId = nodeId,
           adIdOpt  = madOpt.flatMap(_.id)
         ),
-        nodes0   = subNodesResp
+        nodes0   = subNodesResp :: otherPersonNodes
       )
       PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
     }
@@ -190,7 +219,7 @@ class LkNodes @Inject() (
     val nodeId = nodeIdU: String
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
       for {
-        res <- _lknFormPrep(request.mnode)
+        res               <- _lknFormPrep(request.mnode)
       } yield {
         val args = MLkNodesTplArgs(
           formState = res.formStateB64,
@@ -210,7 +239,7 @@ class LkNodes @Inject() (
   def nodeInfo(nodeId: String) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
       for {
-        resp <- _subNodesRespFor(nodeId, Some(request.mnode), madOpt = None)    // TODO Сделать madOpt универсальным
+        resp <- _subNodesRespFor(request.mnode, madOpt = None)    // TODO Сделать madOpt универсальным
       } yield {
         LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
         val bbuf = PickleUtil.pickle(resp)

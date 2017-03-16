@@ -165,7 +165,7 @@ class TreeAh[M](
               // Положительный ответ сервера, обновить данные по текущему узлу.
               {resp =>
                 mns0.copy(
-                  info      = resp.info.getOrElse( mns0.info ),
+                  info      = resp.info,
                   children  = mns0.children.ready {
                     for (node <- resp.children) yield {
                       MNodeState(node)

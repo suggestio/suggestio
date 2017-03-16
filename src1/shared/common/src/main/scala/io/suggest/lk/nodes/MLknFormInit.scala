@@ -25,5 +25,5 @@ object MLknFormInit {
   */
 case class MLknFormInit(
                          conf       : MLknConf,
-                         nodes0     : MLknNodeResp
+                         nodes0     : Seq[MLknNodeResp]
                        )
