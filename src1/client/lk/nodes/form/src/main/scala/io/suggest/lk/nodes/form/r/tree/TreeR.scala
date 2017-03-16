@@ -34,7 +34,6 @@ object TreeR {
   /** Ядро react-компонента дерева узлов. */
   class Backend($: BackendScope[Props, _]) {
 
-
     /** Рендер текущего компонента. */
     def render(p: Props): ReactElement = {
       val v = p()

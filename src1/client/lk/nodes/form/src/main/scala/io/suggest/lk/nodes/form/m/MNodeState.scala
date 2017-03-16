@@ -29,7 +29,8 @@ case class MNodeState(
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        addSubNodeState    : Option[MAddSubNodeState]          = None,
                        deleting           : Option[Pot[_]]                    = None,
-                       editing            : Option[MEditNodeState]            = None
+                       editing            : Option[MEditNodeState]            = None,
+                       adv                : Option[MNodeAdvState]             = None
                      )
   extends IId[String]
 {
@@ -42,6 +43,7 @@ case class MNodeState(
   def withAddSubNodeState(asns: Option[MAddSubNodeState]) = copy(addSubNodeState = asns)
   def withDeleting(deleting2: Option[Pot[_]]) = copy(deleting = deleting2)
   def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
+  def withAdv(adv2: Option[MNodeAdvState] = None) = copy(adv = adv2)
 
 }
 

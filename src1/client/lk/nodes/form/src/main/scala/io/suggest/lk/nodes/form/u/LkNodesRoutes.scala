@@ -46,4 +46,7 @@ sealed trait LkNodesCtl extends js.Object {
   /** Сабмит редактирования узла. */
   def editNode(nodeId: String): Route = js.native
 
+  /** Сабмит обновления данных размещения какой-то карточки на каком-то узле по rcvrKey. */
+  def setAdv(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
+
 }

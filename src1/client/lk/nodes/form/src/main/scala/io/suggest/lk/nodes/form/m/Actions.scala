@@ -149,3 +149,6 @@ case class NodeEditSaveResp(override val rcvrKey: RcvrKey, tryResp: Try[MLknNode
 /** Изменилось состояние галочки, управляющей размещением текущей карточки на узле. */
 case class AdvOnNodeChanged(override val rcvrKey: RcvrKey, isEnabled: Boolean)
   extends LkNodesTreeAction
+/** Ответ сервера на тему управления размещением карточки на узле. */
+case class AdvOnNodeResp(override val rcvrKey: RcvrKey, tryResp: Try[MLknNode])
+  extends LkNodesTreeAction

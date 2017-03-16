@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form.a
 
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.lk.nodes.{MLknNode, MLknNodeReq, MLknNodeResp}
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
@@ -56,6 +57,15 @@ trait ILkNodesApi {
     * @return Фьючерс с инфой по обновлённому узлу.
     */
   def editNode(nodeId: String, data: MLknNodeReq): Future[MLknNode]
+
+  /** Запустить экшен обновления прямого размещения на узле.
+    *
+    * @param adId id текущей карточки (берётся из конфига).
+    * @param isEnabled Разместить или снять с размещения?
+    * @param onNode RcvrKey узла, на котором происходит размещение.
+    * @return Фьючерс с обновлённой инфой по узлу.
+    */
+  def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode]
 
 }
 
@@ -114,6 +124,19 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
       Xhr.requestBinary(
         route = jsRoutes.controllers.LkNodes.editNode(nodeId),
         body  = PickleUtil.pickle(data)
+      )
+    }
+  }
+
+
+  override def setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey): Future[MLknNode] = {
+    Xhr.unBooPickleResp[MLknNode] {
+      Xhr.requestBinary(
+        route = jsRoutes.controllers.LkNodes.setAdv(
+          adId          = adId,
+          isEnabled     = isEnabled,
+          onNodeRcvrKey = onNode.mkString("/")
+        )
       )
     }
   }

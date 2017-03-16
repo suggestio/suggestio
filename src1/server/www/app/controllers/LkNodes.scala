@@ -7,6 +7,7 @@ import com.google.inject.Inject
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
@@ -87,7 +88,8 @@ class LkNodes @Inject() (
             name                  = mnode.guessDisplayNameOrIdOrQuestions,
             ntypeId               = mnode.common.ntype.strId,
             isEnabled             = mnode.common.isEnabled,
-            canChangeAvailability = Some( canChangeAvailability )
+            canChangeAvailability = Some( canChangeAvailability ),
+            hasAdv                = None
           )
         },
 
@@ -98,7 +100,8 @@ class LkNodes @Inject() (
             ntypeId           = mnode.common.ntype.strId,
             isEnabled         = mnode.common.isEnabled,
             // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
-            canChangeAvailability = None
+            canChangeAvailability = None,
+            hasAdv            = None
           )
         }
       )
@@ -280,7 +283,8 @@ class LkNodes @Inject() (
                 ntypeId   = ntype.strId,
                 isEnabled = isEnabled,
                 // Текущий юзер создал юзер, значит он может его и удалить.
-                canChangeAvailability = Some(true)
+                canChangeAvailability = Some(true),
+                hasAdv    = None
               )
               val bbuf = PickleUtil.pickle[MLknNode](mResp)
               Ok( ByteString(bbuf) )
@@ -334,7 +338,8 @@ class LkNodes @Inject() (
             name                    = request.mnode.guessDisplayNameOrIdOrQuestions,
             ntypeId                 = request.mnode.common.ntype.strId,
             isEnabled               = isEnabled,
-            canChangeAvailability   = Some(true)
+            canChangeAvailability   = Some(true),
+            hasAdv                  = None
           )
           val bbuf = PickleUtil.pickle(mLknNode)
           Ok(ByteString(bbuf))
@@ -416,7 +421,8 @@ class LkNodes @Inject() (
                 name                    = mnode.guessDisplayNameOrIdOrQuestions,
                 ntypeId                 = mnode.common.ntype.strId,
                 isEnabled               = mnode.common.isEnabled,
-                canChangeAvailability   = Some(true)
+                canChangeAvailability   = Some(true),
+                hasAdv                  = None
               )
               val bbuf = PickleUtil.pickle( m )
               Ok( ByteString(bbuf) )
@@ -426,6 +432,18 @@ class LkNodes @Inject() (
 
       }
     }
+  }
+
+
+  /** Обновить статус карточки на узле.
+    *
+    * @param adId id рекламной карточки.
+    * @param isEnabled Размещена или нет?
+    * @param rcvrKey Ключ узла.
+    * @return 200 OK + MLknNode.
+    */
+  def setAdv(adId: String, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
+    ???
   }
 
 }

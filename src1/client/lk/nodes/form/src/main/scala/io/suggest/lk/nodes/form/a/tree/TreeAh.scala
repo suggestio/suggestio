@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.a.tree
 import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.adn.edit.NodeEditConstants
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.radio.BeaconUtil
 import io.suggest.common.text.StringUtil
 import io.suggest.lk.nodes.MLknNodeReq
@@ -10,7 +11,7 @@ import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 
 import scala.util.Success
 
@@ -22,7 +23,8 @@ import scala.util.Success
   */
 class TreeAh[M](
                  api          : ILkNodesApi,
-                 modelRW      : ModelRW[M, MTree]
+                 modelRW      : ModelRW[M, MTree],
+                 confRO       : ModelRO[MLknOther]
                )
   extends ActionHandler(modelRW)
   with Log
@@ -176,6 +178,88 @@ class TreeAh[M](
           }
           .toList,
         showProps = Some(snr.rcvrKey)
+      )
+      updated(v2)
+
+
+    // Юзер ткнул галочку размещения карточки на узле. Отправить запрос апдейта на сервер, обновив состояние узла.
+    case m: AdvOnNodeChanged =>
+      val conf = confRO()
+      conf.adIdOpt.fold {
+        // adId не задан в конфиге формы. Should never happen.
+        LOG.warn( ErrorMsgs.AD_ID_IS_EMPTY, msg = m + HtmlConstants.SPACE + conf )
+        noChange
+
+      } { adId =>
+        val v0 = value
+        MNodeState.findSubNode(m.rcvrKey, v0.nodes).fold {
+          LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          noChange
+        } { mns0 =>
+          if (mns0.adv.nonEmpty) {
+            // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
+            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m + HtmlConstants.SPACE + mns0 )
+            noChange
+
+          } else {
+            // Всё ок, можно обновлять текущий узел и запускать реквест на сервер.
+            val rcvrKey = m.rcvrKey
+
+            // Организовать реквест на сервер.
+            val fx = Effect {
+              api.setAdv(
+                adId      = adId,
+                isEnabled = m.isEnabled,
+                onNode    = rcvrKey
+              ).transform { tryResp =>
+                Success( AdvOnNodeResp(rcvrKey, tryResp) )
+              }
+            }
+
+            // Обновить состояние формы.
+            val v2 = value.withNodes(
+              MNodeState
+                .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
+                  val mns2 = mns0.withAdv(
+                    Some( MNodeAdvState(
+                      newIsEnabled  = m.isEnabled,
+                      req           = Pending()
+                    ))
+                  )
+                  mns2 :: Nil
+                }
+                .toList
+            )
+
+            updated(v2, fx)
+          }
+        }
+      }
+
+    // Сигнал завершения реквеста изменения состояния размещения карточки на узле.
+    case m: AdvOnNodeResp =>
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+            val mns2 = m.tryResp.fold(
+              {ex =>
+                LOG.error(ErrorMsgs.SRV_REQUEST_FAILED, ex, msg = m)
+                mns0.withAdv(
+                  mns0.adv.map { s =>
+                    s.withReq( s.req.fail(ex) )
+                  }
+                )
+              },
+              {info2 =>
+                mns0
+                  .withInfo(info2)
+                  .withAdv(None)
+              }
+            )
+            mns2 :: Nil
+          }
+          .toList
       )
       updated(v2)
 

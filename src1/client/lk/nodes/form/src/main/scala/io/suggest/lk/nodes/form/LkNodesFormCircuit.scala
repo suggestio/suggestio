@@ -68,12 +68,13 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
 
 
   override protected def actionHandler: HandlerFunction = {
-    //val confR = zoom(_.other)
+    val confR = zoom(_.other)
 
     // Реагировать на события древа узлов.
     val treeAh = new TreeAh(
       api     = API,
-      modelRW = zoomRW(_.tree) { _.withTree(_) }
+      modelRW = zoomRW(_.tree) { _.withTree(_) },
+      confRO  = confR
     )
 
     treeAh

@@ -130,7 +130,7 @@ resolvers ++= {
 }
 
 
-
+// Импорты для play-роутера.
 routesImport ++= Seq(
   "models._",
   "util.qsb._",
@@ -140,6 +140,11 @@ routesImport ++= Seq(
   "io.suggest.es.model.MEsUuId",
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
+
+  // 2017.mar.16: Поддержка RcvrKey в роутере.
+  "io.suggest.adv.rcvr.RcvrKey",
+  "io.suggest.www.util.nodes.RcvrKeyUtil.Implicits._",
+
   // 2016.dec.15: GeoPoint class унифицирован на уровне [common], поэтому для его QSB теперь требуется особое приглашение:
   "io.suggest.geo.GeoPoint.Implicits._"
 )

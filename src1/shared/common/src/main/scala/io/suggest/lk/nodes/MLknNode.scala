@@ -40,6 +40,9 @@ case class MLknNode(
                      /** Может ли юзер управлять значением флага isEnabled или удалять узел?
                        * None значит, что сервер не интересовался этим вопросом.
                        */
-                     canChangeAvailability  : Option[Boolean]
+                     canChangeAvailability  : Option[Boolean],
+
+                     /** Имеется ли размещение текущей рекламной карточки на указанном узле? */
+                     hasAdv                 : Option[Boolean]
                    )
   extends IId[String]

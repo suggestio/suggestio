@@ -103,4 +103,10 @@ object ErrorMsgs extends MsgsStaticT {
 
   def NODE_NOT_FOUND                   = E(47)
 
+  /** Неожиданно оказалось, что id рекламной карточки не задан, что недопустимо для текущего действия. */
+  def AD_ID_IS_EMPTY                   = E(48)
+
+  /** Какой-то реквест к серверу не удался. */
+  def SRV_REQUEST_FAILED               = E(49)
+
 }
