@@ -3,6 +3,7 @@ package io.suggest.lk.nodes.form.r.tree
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
+import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
@@ -26,7 +27,7 @@ object TreeR {
     }
   }
   case class PropsVal(
-                       conf       : MLknOther,
+                       conf       : MLknConf,
                        mtree      : MTree
                      )
 

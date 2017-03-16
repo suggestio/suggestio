@@ -1,0 +1,15 @@
+@(args: mlk.nodes.MLkNodesTplArgs)(implicit ctx: Context)
+
+@* Страница-заготовка для формы управления узлами. *@
+
+@import ctx.messages
+
+@lk.adn.nodeBaseTpl(
+  title         = messages("Nodes.management"),
+  mnode         = args.mnode,
+  rightCurrEl   = NodeRightPanelLinks.RPL_NODES
+) {
+
+  @_nodesFormTpl( args.formState )
+
+}

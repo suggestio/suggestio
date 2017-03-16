@@ -12,6 +12,8 @@ import play.api.mvc.PathBindable
   */
 object RcvrKeyUtil {
 
+  def RCVR_KEY_MAXLEN = 7
+
   /** Неявности всякие живут в отдельном контейнере: */
   object Implicits {
 
@@ -23,12 +25,14 @@ object RcvrKeyUtil {
           if (value.isEmpty) {
             Left("error.required")
           } else {
-            val rcvrKey: RcvrKey = {
-              value
-                .split('/')
-                .toList
+            val nodeIdsArr = value.split('/')
+            if (nodeIdsArr.length < 1) {
+              Left( "error.empty" )
+            } else if (nodeIdsArr.length <= RCVR_KEY_MAXLEN) {
+              Right( nodeIdsArr.toList )
+            } else {
+              Left( "e.rcvrKey.tooLong" )
             }
-            Right(rcvrKey)
           }
         }
 

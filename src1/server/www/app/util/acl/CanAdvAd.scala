@@ -38,6 +38,17 @@ class CanAdvAd @Inject()(
     mnode.common.isEnabled  &&  mnode.extras.adn.exists(_.isProducer)
   }
 
+  def maybeAllowed[A](adId: String, req: IReq[A]): Future[Option[MAdProdReq[A]]] = {
+    val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)
+    madOptFut.flatMap {
+      case Some(mad) =>
+        maybeAllowed(mad, req)
+      case None =>
+        LOGGER.warn(s"maybeAllowed($adId): Ad not found, requested by u#${req.user}: $req")
+        Future.successful(None)
+    }
+  }
+
   /**
    * Определить, можно ли пропускать реквест на исполнение экшена.
    * @param mad Рекламная карточка.

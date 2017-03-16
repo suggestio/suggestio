@@ -15,6 +15,7 @@ import util.adn.mapf.AdnMapBuilder
 import util.adv.direct.AdvDirectBuilder
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
+import util.billing.Bill2Util
 import util.n2u.{IN2NodesUtilDi, N2NodesUtil}
 
 import scala.concurrent.Future
@@ -85,25 +86,12 @@ trait IAdvBuilder
   /** Финализировать все размещения карточки по базе биллинга. */
   def finalizeBilling(statuses: MItemStatus*): IAdvBuilder = {
     withAccUpdated { acc0 =>
-      val _now = now
-      val supItmTypesStr = supportedItemTypes
-        .iterator
-        .map(_.strId)
-        .toSet
-      val statusesStr = statuses
-        .iterator
-        .map(_.strId)
-        .toSet
-      val dbAction = mItems.query
-        .filter { i =>
-          (i.nodeId === acc0.mad.id.get) &&
-            (i.statusStr inSet statusesStr) &&
-            (i.iTypeStr inSet supItmTypesStr)
-        }
-        .map { i =>
-          (i.status, i.dateEndOpt, i.dateStatus)
-        }
-        .update( (MItemStatuses.Finished, Some(_now), _now) )
+      val dbAction = di.bill2Util.justFinalizeItemsLike(
+        nodeId    = acc0.mad.id.get,
+        iTypes    = supportedItemTypes,
+        statuses  = statuses,
+        now       = now
+      )
       acc0.copy(
         dbActions = dbAction :: acc0.dbActions
       )
@@ -209,12 +197,8 @@ trait IAdvBuilder
       val _now = now
       val itemIds = tagItems.iterator.flatMap(_.id).toSet
       LOGGER.trace(s"$logPrefix Generating unInstall SQL for ${itemIds.size} items: ${itemIds.mkString(",")}, now = ${_now}")
-      val dbAction = mItems.query
-        .filter(_.id inSet itemIds)
-        .map { i =>
-          (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt)
-        }
-        .update((MItemStatuses.Finished, Some(_now), _now, reasonOpt))
+      val dbAction = di.bill2Util
+        .justFinalizeItems(itemIds, reasonOpt, _now)
         .filter { rowsUpdated =>
           val itemIdsLen = itemIds.size
           val r = rowsUpdated == itemIdsLen
@@ -241,6 +225,7 @@ trait IAdvBuilder
 /** Контейнер для DI-аргументов вынесен за пределы билдера для ускорения и упрощения ряда вещей. */
 @Singleton
 class AdvBuilderDi @Inject() (
+  val bill2Util                   : Bill2Util,
   override val n2NodesUtil        : N2NodesUtil,
   override val mItems             : MItems,
   override val advBuilderUtil     : AdvBuilderUtil,

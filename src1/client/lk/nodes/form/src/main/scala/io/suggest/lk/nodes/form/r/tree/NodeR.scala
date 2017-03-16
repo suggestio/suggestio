@@ -8,8 +8,11 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.common.radio.BleConstants.Beacon.EddyStone
 import io.suggest.css.Css
 import io.suggest.i18n.I18nConstants
+import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -21,7 +24,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   * Description: Рекурсивный react-компонент одной ноды дерева [[TreeR]].
   * Изначально разрастался прямо внутри [[TreeR]].
   */
-object NodeR { self =>
+object NodeR extends Log { self =>
 
   type Props = PropsVal
 
@@ -33,7 +36,7 @@ object NodeR { self =>
     * @param conf конфигурация.
     */
   case class PropsVal(
-                       conf          : MLknOther,
+                       conf          : MLknConf,
                        mtree         : MTree,
                        node          : MNodeState,
                        parentRcvrKey : RcvrKey,
@@ -127,6 +130,7 @@ object NodeR { self =>
 
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
     def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+      e.stopPropagation()
       _dispatchCB(
         AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked)
       )
@@ -345,9 +349,23 @@ object NodeR { self =>
 
               // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
               for (_ <- p.conf.adIdOpt) yield {
-                <.input(
-                  ^.`type`    := "checkbox",
-                  ^.onChange ==> onAdvOnNodeChanged(rcvrKey)
+                <.span(
+                  //^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
+                  <.input(
+                    ^.`type`    := "checkbox",
+                    ^.onChange ==> onAdvOnNodeChanged(rcvrKey),
+                    ^.onClick  ==> { e: ReactEventI => e.stopPropagationCB },
+                    ^.checked   := node.adv
+                      .map(_.newIsEnabled)
+                      .orElse(node.info.hasAdv)
+                      .getOrElse {
+                        LOG.log( ErrorMsgs.AD_ID_IS_EMPTY, msg = rcvrKey )
+                        false
+                      }
+                  ),
+                  <.span(),
+
+                  HtmlConstants.NBSP_STR
                 )
               },
 

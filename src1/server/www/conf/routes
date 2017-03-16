@@ -106,7 +106,8 @@ POST /lk/subnodes/create/:parentId                  @controllers.LkNodes.createS
 POST /lk/subnodes/enable/:nodeId/:enabled           @controllers.LkNodes.setNodeEnabled(nodeId: String, enabled: Boolean)
 POST /lk/subnodes/delete/:nodeId                    @controllers.LkNodes.deleteNode(nodeId: String)
 POST /lk/subnodes/edit/:nodeId                      @controllers.LkNodes.editNode(nodeId: String)
-POST /lk/subnodes/adv/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdv(adId: String, isEnabled: Boolean, onNode: RcvrKey)
+POST /lk/subnodes/adv/:adId/:isEnabled/*onNode      @controllers.LkNodes.setAdv(adId: MEsUuId, isEnabled: Boolean, onNode: RcvrKey)
+GET  /lk/subnodes/ad/:adId                          @controllers.LkNodes.nodesForAd(adId: MEsUuId)
 
 
 ## ЛК: Размещение ADN-узла на карте

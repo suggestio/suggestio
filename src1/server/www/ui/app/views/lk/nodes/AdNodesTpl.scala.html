@@ -1,0 +1,16 @@
+@(args: mlk.nodes.MLkAdNodesTplArgs)(implicit ctx: Context)
+
+@* Шаблон для формы размещения на узлах в контексте рекламной карточки. *@
+
+@import ctx.messages
+
+@lk.adv.advBase(
+  title       = messages("Adv.in.nodes"),
+  mad         = args.mad,
+  producer    = args.producer,
+  rightLink   = adv.tpl.LkAdvRightLinks.AD_NODES
+) {
+
+  @_nodesFormTpl( args.formState )
+
+}

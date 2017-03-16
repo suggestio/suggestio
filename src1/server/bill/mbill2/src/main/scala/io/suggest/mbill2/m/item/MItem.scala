@@ -104,6 +104,12 @@ class MItems @Inject() (
     }
 
     // DSL для быстрой сборки query.filter(...)
+    def withIds(ids: Gid_t*): Rep[Boolean] = {
+      withIds1( ids )
+    }
+    def withIds1(ids: Traversable[Gid_t]): Rep[Boolean] = {
+      id inSet ids
+    }
     def withNodeId(nodeIds: String*): Rep[Boolean] = {
       nodeId.inSet( nodeIds )
     }

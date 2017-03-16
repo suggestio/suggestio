@@ -11,6 +11,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -21,12 +22,14 @@ import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
 import io.suggest.ym.model.common.AdnRights
-import models.mlk.nodes.MLkNodesTplArgs
+import models.mctx.Context
+import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
 import models.mproj.ICommonDi
-import models.req.IReqHdr
-import util.acl.{BruteForceProtect, CanChangeNodeAvailability, IsNodeAdmin}
+import models.req.{IReq, IReqHdr}
+import util.acl._
+import util.billing.Bill2Util
 import util.lk.nodes.LkNodesUtil
-import views.html.lk.nodes.nodesTpl
+import views.html.lk.nodes._
 
 import scala.concurrent.Future
 
@@ -45,8 +48,11 @@ import scala.concurrent.Future
   * - массового создания маячков с целью занять чужие id'шники.
   */
 class LkNodes @Inject() (
+                          bill2Util                 : Bill2Util,
                           isNodeAdmin               : IsNodeAdmin,
                           lkNodesUtil               : LkNodesUtil,
+                          canFreelyAdvAdOnNode      : CanFreelyAdvAdOnNode,
+                          canAdvAd                  : CanAdvAd,
                           pickleSrvUtil             : PickleSrvUtil,
                           mNodes                    : MNodes,
                           canChangeNodeAvailability : CanChangeNodeAvailability,
@@ -62,7 +68,8 @@ class LkNodes @Inject() (
   import pickleSrvUtil._
 
 
-  private def _subNodesRespFor(nodeId: String, withCurrNode: Option[MNode] = None)(implicit req: IReqHdr): Future[MLknNodeResp] = {
+  private def _subNodesRespFor(nodeId: String, withCurrNode: Option[MNode] = None, madOpt: Option[MNode])
+                              (implicit req: IReqHdr): Future[MLknNodeResp] = {
     // Запустить поиск узлов.
     val subNodesFut = mNodes.dynSearch {
       lkNodesUtil.subNodesSearch(nodeId)
@@ -71,6 +78,14 @@ class LkNodes @Inject() (
     // Можно ли менять доступность узла?
     val canChangeAvailabilityFut = withCurrNode.fold [Future[Boolean]] (false) { mnode =>
       canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
+    }
+
+    def __hasAdv(xNodeId: String): Option[Boolean] = {
+      for (mad <- madOpt) yield {
+        mad.edges
+          .withNodePred(xNodeId, MPredicates.Receiver)
+          .nonEmpty
+      }
     }
 
     // Рендер найденных узлов в данные для модели формы.
@@ -89,22 +104,77 @@ class LkNodes @Inject() (
             ntypeId               = mnode.common.ntype.strId,
             isEnabled             = mnode.common.isEnabled,
             canChangeAvailability = Some( canChangeAvailability ),
-            hasAdv                = None
+            hasAdv                = __hasAdv(nodeId)
           )
         },
 
         children = for (mnode <- subNodes) yield {
+          val chNodeId = mnode.id.get
           MLknNode(
-            id                = mnode.id.get,
+            id                = chNodeId,
             name              = mnode.guessDisplayNameOrIdOrQuestions,
             ntypeId           = mnode.common.ntype.strId,
             isEnabled         = mnode.common.isEnabled,
             // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
             canChangeAvailability = None,
-            hasAdv            = None
+            hasAdv            = __hasAdv(chNodeId)
           )
         }
       )
+    }
+  }
+
+
+  /** Внутренняя модель данных по форме и контексту.
+    *
+    * @param formStateB64 base64-строка с данными формы для инициализации на клиенте.
+    * @param ctx Обычный контекст.
+    */
+  private case class _MLknFormPrep(
+                                    formStateB64: String,
+                                    implicit val ctx: Context
+                                  )
+
+  /** Дедубликация кода экшена HTML-рендера формы на узле и для карточки.
+    *
+    * @param onNode Текущий узел ADN или продьюсер карточки.
+    * @param madOpt Рекламная карточки, если известна.
+    * @param request Исходный HTTP-реквест.
+    * @return Подготовленные данные по форме и контексту.
+    */
+  private def _lknFormPrep(onNode: MNode, madOpt: Option[MNode] = None)(implicit request: IReq[_]): Future[_MLknFormPrep] = {
+    // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
+    val nodeId = onNode.id.get
+    val formStateB64Fut = for {
+    // Запустить поиск под-узлов для текущего узла.
+      subNodesResp  <- _subNodesRespFor(nodeId, Some(onNode), madOpt = madOpt)
+    } yield {
+      val minit = MLknFormInit(
+        conf = MLknConf(
+          onNodeId = nodeId,
+          adIdOpt  = madOpt.flatMap(_.id)
+        ),
+        nodes0   = subNodesResp
+      )
+      PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
+    }
+
+    // Пока подготовить контекст рендера шаблона
+    val ctxFut = for {
+      lkCtxData <- request.user.lkCtxDataFut
+    } yield {
+      implicit val lkCtxData2 = lkCtxData.withJsiTgs(
+        MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
+      )
+      getContext2
+    }
+
+    // Отрендерить и вернуть HTML-шаблон со страницей для формы.
+    for {
+      formStateB64    <- formStateB64Fut
+      ctx             <- ctxFut
+    } yield {
+      _MLknFormPrep(formStateB64, ctx)
     }
   }
 
@@ -113,45 +183,20 @@ class LkNodes @Inject() (
     * Рендер страницы с формой управления подузлами текущего узла.
     * Сама форма реализована через react, тут у нас лишь страничка-обёртка.
     *
-    * @param nodeId id текущей узла, т.е. узла с которым идёт взаимодействие.
+    * @param nodeIdU id текущей узла, т.е. узла с которым идёт взаимодействие.
     * @return 200 + HTML, если у юзера достаточно прав для управления узлом.
     */
-  def nodesOf(nodeId: MEsUuId) = csrf.AddToken {
+  def nodesOf(nodeIdU: MEsUuId) = csrf.AddToken {
+    val nodeId = nodeIdU: String
     isNodeAdmin(nodeId, U.Lk).async { implicit request =>
-
-      // Собрать модель данных инициализации формы с начальным состоянием формы. Сериализовать в base64.
-      val formStateB64Fut = for {
-        // Запустить поиск под-узлов для текущего узла.
-        subNodesResp  <- _subNodesRespFor(nodeId, Some(request.mnode))
-      } yield {
-        val minit = MLknFormInit(
-          onNodeId = nodeId,
-          adIdOpt  = None,      // Сейчас находимся явно вне карточки, поэтому просто управление узлами.
-          nodes0   = subNodesResp
-        )
-        PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
-      }
-
-      // Пока подготовить контекст рендера шаблона
-      val ctxFut = for {
-        lkCtxData <- request.user.lkCtxDataFut
-      } yield {
-        implicit val lkCtxData2 = lkCtxData.withJsiTgs(
-          MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
-        )
-        getContext2
-      }
-
-      // Отрендерить и вернуть HTML-шаблон со страницей для формы.
       for {
-        formStateB64    <- formStateB64Fut
-        ctx             <- ctxFut
+        res <- _lknFormPrep(request.mnode)
       } yield {
         val args = MLkNodesTplArgs(
-          formState = formStateB64,
+          formState = res.formStateB64,
           mnode     = request.mnode
         )
-        Ok( nodesTpl(args)(ctx) )
+        Ok( NodesTpl(args)(res.ctx) )
       }
     }
   }
@@ -165,7 +210,7 @@ class LkNodes @Inject() (
   def nodeInfo(nodeId: String) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
       for {
-        resp <- _subNodesRespFor(nodeId, Some(request.mnode))
+        resp <- _subNodesRespFor(nodeId, Some(request.mnode), madOpt = None)    // TODO Сделать madOpt универсальным
       } yield {
         LOGGER.trace(s"nodeInfo($nodeId): Found ${resp.children.size} sub-nodes: ${IId.els2ids(resp.children).mkString(", ")}")
         val bbuf = PickleUtil.pickle(resp)
@@ -435,15 +480,98 @@ class LkNodes @Inject() (
   }
 
 
+  /** Открыть форму узлов для рекламной карточки.
+    *
+    * @param adIdU id рекламной карточки.
+    * @return 200 + HTML с данными формы узлов в контексте карточки.
+    */
+  def nodesForAd(adIdU: MEsUuId) = csrf.AddToken {
+    val adId = adIdU: String
+    canAdvAd(adId).async { implicit request =>
+      // Сборка дерева узлов. Интересует узел-продьюсер.
+      for {
+        res <- _lknFormPrep(request.producer, madOpt = Some(request.mad))
+      } yield {
+        val rArgs = MLkAdNodesTplArgs(
+          formState = res.formStateB64,
+          mad = request.mad,
+          producer = request.producer
+        )
+        val html = AdNodesTpl(rArgs)(res.ctx)
+        Ok(html)
+      }
+    }
+  }
+
+
   /** Обновить статус карточки на узле.
     *
-    * @param adId id рекламной карточки.
+    * @param adIdU id рекламной карточки.
     * @param isEnabled Размещена или нет?
     * @param rcvrKey Ключ узла.
     * @return 200 OK + MLknNode.
     */
-  def setAdv(adId: String, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
-    ???
+  def setAdv(adIdU: MEsUuId, isEnabled: Boolean, rcvrKey: RcvrKey) = csrf.Check {
+    canFreelyAdvAdOnNode(adIdU, rcvrKey).async { implicit request =>
+      // Выполнить обновление текущей карточки согласно значению флага isEnabled.
+      val adId = request.mad.id.get
+      val nodeId = request.mnode.id.get
+      val nodeIds = Set(nodeId)
+
+      // Поискать аналогичные бесплатные размещения в биллинге, заглушив их.
+      val suppressRelatedItemsFut = slick.db.run {
+        bill2Util.justFinalizeItemsLike(
+          nodeId  = adId,
+          iTypes  = MItemTypes.AdvDirect :: Nil,
+          rcvrIds = nodeIds
+        )
+      }
+
+      // Запустить обновление узла на стороне ES.
+      val updateNodeFut = mNodes.tryUpdate( request.mad ) { mad =>
+        mad.copy(
+          edges = mad.edges.copy(
+            out = {
+              // Удалить эдж текущего размещения. Даже если isEnabled=true, всё равно надо отфильтровать старый эдж, чтобы перезаписать его.
+              val edgesIter1 = mad.edges.withoutNodePred( nodeId, MPredicates.Receiver )
+              val edgesIter2 = if (isEnabled) {
+                // Найти/добавить эдж до указанного узла.
+                val medge = MEdge(
+                  predicate = MPredicates.Receiver.Self,
+                  nodeIds = nodeIds
+                )
+                edgesIter1 ++ (medge :: Nil)
+              } else {
+                // isEnabled=false, удаление эджа размещения уже было выше.
+                edgesIter1
+              }
+              MNodeEdges.edgesToMap1( edgesIter2 )
+            }
+          )
+        )
+      }
+
+      for {
+        itemsSuppressed   <- suppressRelatedItemsFut
+        _                 <- updateNodeFut
+      } yield {
+        LOGGER.trace(s"setAdv(ad#$adId, node#$nodeId): adv => $isEnabled, suppressed $itemsSuppressed in billing")
+
+        // Собрать ответ.
+        val mLknNode = MLknNode(
+          id        = nodeId,
+          name      = request.mnode.guessDisplayNameOrIdOrQuestions,
+          ntypeId   = request.mnode.common.ntype.strId,
+          isEnabled = request.mnode.common.isEnabled,
+          canChangeAvailability = Some(true),
+          hasAdv    = Some(isEnabled)
+        )
+
+        // Отправить сериализованные данные по узлу.
+        val bbuf = PickleUtil.pickle(mLknNode)
+        Ok( ByteString(bbuf) )
+      }
+    }
   }
 
 }

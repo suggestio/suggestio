@@ -6,7 +6,7 @@ import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.radio.BeaconUtil
 import io.suggest.common.text.StringUtil
-import io.suggest.lk.nodes.MLknNodeReq
+import io.suggest.lk.nodes.{MLknNodeReq, MLknConf}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -24,7 +24,7 @@ import scala.util.Success
 class TreeAh[M](
                  api          : ILkNodesApi,
                  modelRW      : ModelRW[M, MTree],
-                 confRO       : ModelRO[MLknOther]
+                 confRO       : ModelRO[MLknConf]
                )
   extends ActionHandler(modelRW)
   with Log

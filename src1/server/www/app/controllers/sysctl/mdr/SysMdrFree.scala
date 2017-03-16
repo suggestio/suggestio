@@ -139,7 +139,7 @@ trait SysMdrFree
                 sysMdrUtil._processItemsForAd(
                   nodeId  = adId,
                   q       = q1
-                )(bill2Util.refuseItemAction(_, someReason))
+                )(bill2Util.refuseItem(_, someReason))
               }
               // Дождаться итогов, вернуть модератору результат.
               for (res <- saveFut) yield {

@@ -8,7 +8,8 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.status.MItemStatuses
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IItem, IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
@@ -826,7 +827,7 @@ class Bill2Util @Inject() (
     * @param itemId id обрабатываемого item'а.
     * @return Экшен с результатом работы.
     */
-  def approveItemAction(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RWT] = {
+  def approveItem(itemId: Gid_t): DBIOAction[ApproveItemResult, NoStream, RWT] = {
     lazy val logPrefix = s"approveItemAction($itemId):"
 
     val a = for {
@@ -878,7 +879,7 @@ class Bill2Util @Inject() (
 
       // Залить деньги получателю денег, если возможно.
       mrInfoOpt <- DBIO.from( mrInfoOptFut )
-      mrBalances2Opt <- {
+      _ <- {
         LOGGER.trace(s"$logPrefix item[${mitem2.id.orNull}] status: ${mitem0.status} => ${mitem2.status}")
 
         mrInfoOpt.fold [DBIOAction[Option[MBalance], NoStream, RW]] {
@@ -911,6 +912,7 @@ class Bill2Util @Inject() (
       }
 
     } yield {
+      LOGGER.trace(s"$logPrefix Done ok.")
       ApproveItemResult( mitem2 )
     }
     a.transactionally
@@ -959,7 +961,7 @@ class Bill2Util @Inject() (
     * @param reasonOpt причина отказа, если есть.
     * @return
     */
-  def refuseItemAction(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RW] = {
+  def refuseItem(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RW] = {
     lazy val logPrefix = s"refuseItemAction($itemId):"
     for {
       // Получить и заблокировать текущий item.
@@ -1008,6 +1010,73 @@ class Bill2Util @Inject() (
       // Собрать итог работы экшена...
       RefuseItemResult(mitem2, mtxn2)
     }
+  }
+
+
+  /**
+    * Простая и банальная финализация item'ов по id без какой-либо дополнительной логики.
+    * Используется, когда нужно тупо завершить какой-то item в нормальном режиме.
+    *
+    * @param itemIds id завершаемых item'ов.
+    * @param reasonOpt Причина завершения [None].
+    * @param now Дата закрытия [now()].
+    * @return Экшен, возвращающий кол-во обновлённых рядов.
+    */
+  def justFinalizeItems(itemIds   : Traversable[Gid_t],
+                        reasonOpt : Option[String] = None,
+                        now       : OffsetDateTime = OffsetDateTime.now
+                       ): DBIOAction[Int, NoStream, Effect.Write] = {
+    if (itemIds.isEmpty)
+      LOGGER.error(s"justFinalizeItems($itemIds, $reasonOpt, $now): itemIds arg. must be non-empty, or this action makes no sence.")
+
+    mItems.query
+      .filter { i =>
+        i.withIds1(itemIds) &&
+          // Не надо повторно закрывать уже закрытые item'ы, это только даты сбивает.
+          (!i.withStatuses( MItemStatuses.advDone ))
+      }
+      .map { i =>
+        (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt)
+      }
+      .update((MItemStatuses.Finished, Some(now), now, reasonOpt))
+  }
+
+  /** Аналог justFinalizeItems(), но выборка item'ов не по id.
+    *
+    * @param nodeId id целевого узла/карточки.
+    * @param iTypes Типы затрагиваемых item'ов (размещений).
+    * @param statuses Затрагиваемые Item-статусы. Если не задано, то все незавершённые.
+    * @param reasonOpt Опциональная причина завершения.
+    * @param now Текущее время.
+    * @return write-db-экшен, возвращающий кол-во затронутых рядов.
+    */
+  def justFinalizeItemsLike(nodeId    : String,
+                            iTypes    : TraversableOnce[MItemType],
+                            statuses  : TraversableOnce[MItemStatus]  = Nil,
+                            rcvrIds   : Traversable[String]           = Nil,
+                            reasonOpt : Option[String]                = None,
+                            now       : OffsetDateTime                = OffsetDateTime.now
+                           ): DBIOAction[Int, NoStream, Effect.Write] = {
+    mItems.query
+      .filter { i =>
+        val i0 = {
+          i.withNodeId(nodeId) && i.withTypes(iTypes) && {
+            if (statuses.isEmpty)
+              !i.withStatuses( MItemStatuses.advDone )
+            else
+              i.withStatuses( statuses )
+          }
+        }
+        if (rcvrIds.isEmpty) {
+          i0.?
+        } else {
+          i0 && i.withRcvrs(rcvrIds)
+        }
+      }
+      .map { i =>
+        (i.status, i.dateEndOpt, i.dateStatus, i.reasonOpt)
+      }
+      .update( (MItemStatuses.Finished, Some(now), now, reasonOpt) )
   }
 
 

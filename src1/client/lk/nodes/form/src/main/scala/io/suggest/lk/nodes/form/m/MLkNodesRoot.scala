@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
+import io.suggest.lk.nodes.MLknConf
 
 /**
   * Suggest.io
@@ -24,7 +25,7 @@ object MLkNodesRoot {
   * @param tree Модель-контейнер для отображаемых поддеревьев узлов.
   */
 case class MLkNodesRoot(
-                         other      : MLknOther,
+                         conf      : MLknConf,
                          tree       : MTree
                        )
 {

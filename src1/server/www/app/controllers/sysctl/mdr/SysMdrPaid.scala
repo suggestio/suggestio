@@ -206,7 +206,7 @@ trait SysMdrPaid
       _processItemsForAd(
         nodeId  = nodeId,
         q       = sysMdrUtil.itemsQueryAwaiting(nodeId)
-      )(bill2Util.approveItemAction)
+      )(bill2Util.approveItem)
     }
   }
 
@@ -238,7 +238,7 @@ trait SysMdrPaid
   /** Модератор подтверждает оплаченный item. */
   def approveItemSubmit(itemId: Gid_t) = csrf.Check {
     isSu().async { implicit request =>
-      val dbAction = bill2Util.approveItemAction(itemId)
+      val dbAction = bill2Util.approveItem(itemId)
       for {
         res <- sysMdrUtil._processOneItem(dbAction)
       } yield {
@@ -282,7 +282,7 @@ trait SysMdrPaid
 
         {res =>
           // Запустить транзакцию отката оплаченного размещения в кошелек юзера.
-          val dbAction  = bill2Util.refuseItemAction(itemId, Some(res.reason))
+          val dbAction  = bill2Util.refuseItem(itemId, Some(res.reason))
 
           // Когда всё будет выполнено, надо отредиректить юзера на карточку.
           for {
@@ -332,7 +332,7 @@ trait SysMdrPaid
           _processItemsForAd(
             nodeId = nodeId,
             q      = sysMdrUtil.itemsQueryAwaiting(nodeId)
-          )(bill2Util.refuseItemAction(_, someReason))
+          )(bill2Util.refuseItem(_, someReason))
         }
       )
     }
@@ -351,7 +351,7 @@ trait SysMdrPaid
       _processItemsForAd(
         nodeId = nodeId,
         q = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype )
-      )(bill2Util.approveItemAction)
+      )(bill2Util.approveItem)
     }
   }
 
@@ -377,7 +377,7 @@ trait SysMdrPaid
           _processItemsForAd(
             nodeId  = nodeId,
             q       = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype)
-          )(bill2Util.refuseItemAction(_, someReason))
+          )(bill2Util.refuseItem(_, someReason))
         }
       )
     }

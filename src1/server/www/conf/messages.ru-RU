@@ -869,3 +869,5 @@ For.example.0=Например: {0}
 Subnodes=Подчинённые узлы
 N.nodes={0} узлов
 N.disabled={0} выключенных
+Adv.in.nodes=Размещение в узлах
+

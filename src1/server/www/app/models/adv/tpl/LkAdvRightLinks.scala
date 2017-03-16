@@ -10,6 +10,6 @@ object LkAdvRightLinks extends Enumeration {
 
   type T = Value
 
-  val GEO, EXT, DIRECT = Value : T
+  val GEO, EXT, DIRECT, AD_NODES = Value : T
 
 }

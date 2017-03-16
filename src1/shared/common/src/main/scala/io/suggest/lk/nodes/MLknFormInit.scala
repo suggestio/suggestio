@@ -12,6 +12,7 @@ object MLknFormInit {
 
   implicit val mLknFormInit: Pickler[MLknFormInit] = {
     implicit val mRespP = MLknNodeResp.mLknSubNodesRespPickler
+    implicit val mLknConfP = MLknConf.mLknConfPickler
     generatePickler[MLknFormInit]
   }
 
@@ -23,7 +24,6 @@ object MLknFormInit {
   * @param nodes0 Начальный список под-узлов, чтобы его не дёргать с сервера.
   */
 case class MLknFormInit(
-                         onNodeId   : String,
-                         adIdOpt    : Option[String],
+                         conf       : MLknConf,
                          nodes0     : MLknNodeResp
                        )

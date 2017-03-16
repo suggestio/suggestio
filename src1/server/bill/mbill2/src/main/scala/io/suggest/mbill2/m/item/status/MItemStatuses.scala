@@ -105,4 +105,8 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   /** id статусов, обозначающих текущую актуальность adv-item'а. */
   def advActualIds = onlyIds(advBusy)
 
+
+  def advDone = valuesT.iterator.filter { it => !it.isAdvActual }
+  def advDoneIds = onlyIds( advDone )
+
 }
