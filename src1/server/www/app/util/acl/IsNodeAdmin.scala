@@ -108,7 +108,7 @@ class IsNodeAdmin @Inject()(
       } { nodeOptFut =>
         nodeOptFut.flatMap {
           case Some(mnode) =>
-            if ( isAdnNodeAdminCheckStrict(mnode, ownersAcc) ) {
+            if ( user.isSuper || isAdnNodeAdminCheckStrict(mnode, ownersAcc) ) {
               LOGGER.trace(s"$logPrefix Ok for node#${mnode.idOrNull}, owners = ${ownersAcc.mkString(", ")}.")
               // Есть доступ на админство. Продолжаем обход.
               __fold(

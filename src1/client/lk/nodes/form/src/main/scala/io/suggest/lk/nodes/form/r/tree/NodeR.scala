@@ -349,10 +349,15 @@ object NodeR extends Log { self =>
 
               // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
               for (_ <- p.conf.adIdOpt) yield {
+                val isPending = node.adv.exists(_.req.isPending)
+
                 <.span(
                   //^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
                   <.input(
                     ^.`type`    := "checkbox",
+                    isPending ?= {
+                      ^.disabled := true
+                    },
                     ^.onChange ==> onAdvOnNodeChanged(rcvrKey),
                     ^.onClick  ==> { e: ReactEventI => e.stopPropagationCB },
                     ^.checked   := node.adv
@@ -364,6 +369,26 @@ object NodeR extends Log { self =>
                       }
                   ),
                   <.span(),
+
+
+                  for (advState <- node.adv) yield {
+                    <.span(
+                      HtmlConstants.NBSP_STR,
+
+                      // Если Pending, крутилку отобразить.
+                      advState.req.renderPending { _ =>
+                        _smallWaitLoader
+                      },
+
+                      // Если ошибка, то отобразить сообщение о проблеме.
+                      advState.req.renderFailed { ex =>
+                        <.span(
+                          ^.title := ex.toString,
+                          Messages("Error")
+                        )
+                      }
+                    )
+                  },
 
                   HtmlConstants.NBSP_STR
                 )
