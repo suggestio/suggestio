@@ -3,6 +3,7 @@
 @* Шаблон для формы размещения на узлах в контексте рекламной карточки. *@
 
 @import ctx.messages
+@import io.suggest.css.Css
 
 @lk.adv.advBase(
   title       = messages("Adv.in.nodes"),
@@ -12,5 +13,13 @@
 ) {
 
   @_nodesFormTpl( args.formState )
+
+
+  <br/>
+  <div class="@Css.Lk.SM_NOTE">
+    @Html(messages("You.can.tweak.nodes.link.in.0.page",
+      s"""<a class="${Css.Lk.BLUE_LINK}" href="${routes.LkNodes.nodesOf( args.producer.id.get )}">${messages("_in.nodes.management")}</a>"""
+    ))
+  </div>
 
 }

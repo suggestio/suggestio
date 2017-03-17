@@ -27,3 +27,8 @@ skip in packageJSDependencies := true
 
 // TODO Надо бы выставлять это на ci, но НЕ выставлять на продакшенах.
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
+
+enableReloadWorkflow := true
+
+emitSourceMaps := false
+

@@ -42,6 +42,10 @@ object Css {
   object Lk {
 
     def LINK = "link"
+    def BLUE_LINK = "blue-" + LINK
+
+    private def _SM_PREFIX_ = "sm-"
+    def SM_NOTE = _SM_PREFIX_ + "note"
 
     def PREFIX = "lk-"
     def MINOR_TITLE = "minor-" + _TITLE
@@ -93,7 +97,12 @@ object Css {
 
     /** Css-стили для формы LkNodes. */
     object Nodes {
+
       def LKN = "lkn"
+
+      object Inputs {
+        def INPUT70 = Input.INPUT + "70"
+      }
 
       object Name {
         def NAME   = "nodename"

@@ -852,6 +852,9 @@ price.EUR=€{0}
 
 Nodes.management=Nodes management
 
+_in.nodes.management=nodes management
+You.can.tweak.nodes.link.in.0.page=You can tweak the nodes list in {0} page.
+
 Beacon.name.example=My beacon
 Identifier=Identifier
 Example.id.0=Example identifier: {0}

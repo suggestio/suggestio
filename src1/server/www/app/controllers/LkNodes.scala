@@ -12,11 +12,12 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.sc.common.SinkShowLevels
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
@@ -567,7 +568,13 @@ class LkNodes @Inject() (
                 // Найти/добавить эдж до указанного узла.
                 val medge = MEdge(
                   predicate = MPredicates.Receiver.Self,
-                  nodeIds = nodeIds
+                  nodeIds = nodeIds,
+                  // TODO Удалить выставление info.sls (и info= соответственно) вместе с уровнями отображения.
+                  // Строчка добавлена для совместной работы с текущими галочками "[x] Выводить" у карточек,
+                  // которые пока работают с учётом этих галочек.
+                  info = MEdgeInfo(
+                    sls = Set( SinkShowLevels.GEO_START_PAGE_SL )
+                  )
                 )
                 edgesIter1 ++ (medge :: Nil)
               } else {

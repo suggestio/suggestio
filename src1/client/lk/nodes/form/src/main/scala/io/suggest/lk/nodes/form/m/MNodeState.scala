@@ -45,6 +45,15 @@ case class MNodeState(
   def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
   def withAdv(adv2: Option[MNodeAdvState] = None) = copy(adv = adv2)
 
+  /** Является ли текущее состояние узла нормальным и обычным?
+    *
+    * @return true, значит можно отрабатывать клики по заголовку в нормальном режиме.
+    *         false -- происходит какое-то действо, например переименование узла.
+    */
+  def isNormal = editing.isEmpty && !advIsPending
+
+  def advIsPending = adv.exists(_.req.isPending)
+
 }
 
 

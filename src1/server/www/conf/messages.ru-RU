@@ -859,7 +859,11 @@ price.RUB={0} ₽
 price.USD=${0}
 price.EUR=€{0}
 
+
 Nodes.management=Управление узлами
+
+_in.nodes.management=управления узлами
+You.can.tweak.nodes.link.in.0.page=Вы можете настроить список узлов на странице {0}.
 
 Beacon.name.example=Мой маячок
 Identifier=Идентификатор

@@ -34,3 +34,7 @@ requiresDOM in Test := true
 // Пока не нужно, ибо не минифицировано и не версия jquery у нас более старая. Но потом надо будет это заюзать.
 // skip in packageJSDependencies := true
 
+enableReloadWorkflow := true
+
+emitSourceMaps := false
+

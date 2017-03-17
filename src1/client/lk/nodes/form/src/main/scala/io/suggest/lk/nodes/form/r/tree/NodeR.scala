@@ -12,7 +12,7 @@ import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -171,7 +171,7 @@ object NodeR extends Log { self =>
       )
     }
 
-    private lazy val _smallWaitLoader = _waitLoader(16)
+    private lazy val _smallWaitLoader = _waitLoader(15)
     private lazy val _mediumLoader = _waitLoader(22)
 
     private val _delim = <.div(
@@ -216,7 +216,7 @@ object NodeR extends Log { self =>
 
           // Поле ввода названия маячка.
           <.div(
-            ^.`class` := Css.Input.INPUT,
+            ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT70 ),
 
             <.label(
               Messages("Name"), ":",
@@ -232,7 +232,7 @@ object NodeR extends Log { self =>
 
           // Поля для ввода id маячка.
           <.div(
-            ^.`class` := Css.Input.INPUT,
+            ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT70 ),
             <.label(
               _msg_NodeId,
               " (EddyStone-UID)",
@@ -307,7 +307,7 @@ object NodeR extends Log { self =>
       val rcvrKeyRev = node.info.id :: parentRcvrKey
       val rcvrKey = rcvrKeyRev.reverse
 
-      val isShowProps = p.mtree.showProps.contains(rcvrKey)
+      val isShowProps = p.conf.adIdOpt.isEmpty && p.mtree.showProps.contains(rcvrKey)
 
       // Контейнер узла узла + дочерних узлов.
       <.div(
@@ -338,28 +338,33 @@ object NodeR extends Log { self =>
             Css.Table.Td.Radial.FIRST -> !isShowProps
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
-          node.editing.isEmpty ?= {
+          node.isNormal ?= {
             ^.onClick --> onNodeClick(rcvrKey)
           },
 
           node.editing.fold[ReactElement] {
+            // Рендер названия узла. В зависимости от режима формы, могут быть варианты того, где он будет находиться.
+            val nameSpan = <.span(
+              ^.`class` := Css.Lk.Nodes.Name.TITLE,
+              node.info.name
+            )
+
             // контейнер названия текущего узла
             <.div(
               ^.`class` := Css.flat(Css.Font.Sz.L, Css.Lk.Nodes.Name.CONTENT),
 
-              // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
-              for (_ <- p.conf.adIdOpt) yield {
-                val isPending = node.adv.exists(_.req.isPending)
-
-                <.span(
-                  //^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
+              p.conf.adIdOpt.fold [ReactElement] (nameSpan) { _ =>
+                // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
+                <.label(
+                  ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
+                  ^.onClick  ==> { e: ReactEventI => e.stopPropagationCB },
                   <.input(
                     ^.`type`    := "checkbox",
-                    isPending ?= {
+                    if (node.advIsPending) {
                       ^.disabled := true
+                    } else {
+                      ^.onChange ==> onAdvOnNodeChanged(rcvrKey)
                     },
-                    ^.onChange ==> onAdvOnNodeChanged(rcvrKey),
-                    ^.onClick  ==> { e: ReactEventI => e.stopPropagationCB },
                     ^.checked   := node.adv
                       .map(_.newIsEnabled)
                       .orElse(node.info.hasAdv)
@@ -368,40 +373,14 @@ object NodeR extends Log { self =>
                         false
                       }
                   ),
-                  <.span(),
-
-
-                  for (advState <- node.adv) yield {
-                    <.span(
-                      HtmlConstants.NBSP_STR,
-
-                      // Если Pending, крутилку отобразить.
-                      advState.req.renderPending { _ =>
-                        _smallWaitLoader
-                      },
-
-                      // Если ошибка, то отобразить сообщение о проблеме.
-                      advState.req.renderFailed { ex =>
-                        <.span(
-                          ^.title := ex.toString,
-                          Messages("Error")
-                        )
-                      }
-                    )
-                  },
-
-                  HtmlConstants.NBSP_STR
+                  <.span,
+                  HtmlConstants.NBSP_STR,
+                  nameSpan
                 )
               },
 
-              // Рендер названия узла.
-              <.span(
-                ^.`class` := Css.Lk.Nodes.Name.TITLE,
-                node.info.name
-              ),
-
-              // Рендерить кнопку редактирования имени.
-              isShowProps ?= {
+              // Рендерить кнопку редактирования имени, если ситуация позволяет.
+              (isShowProps && node.isNormal) ?= {
                 <.span(
                   HtmlConstants.NBSP_STR,
                   HtmlConstants.NBSP_STR,
@@ -411,6 +390,29 @@ object NodeR extends Log { self =>
                     ^.title   := Messages("Change")
                   )
                 )
+              },
+
+              for (advState <- node.adv) yield {
+                <.span(
+                  HtmlConstants.NBSP_STR,
+
+                  // Если Pending, крутилку отобразить.
+                  advState.req.renderPending { _ =>
+                    _smallWaitLoader
+                  },
+
+                  // Если ошибка, то отобразить сообщение о проблеме.
+                  advState.req.renderFailed { ex =>
+                    <.span(
+                      ^.title := ex.toString,
+                      Messages("Error")
+                    )
+                  }
+                )
+              },
+
+              !node.advIsPending ?= {
+                HtmlConstants.NBSP_STR
               },
 
               // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
@@ -426,7 +428,7 @@ object NodeR extends Log { self =>
             <.div(
 
               <.div(
-                ^.`class` := Css.flat(Css.Input.INPUT),
+                ^.`class` := Css.flat( Css.Lk.Nodes.Inputs.INPUT70, Css.Input.INPUT ),
 
                 <.input(
                   ^.placeholder := node.info.name,
@@ -477,7 +479,7 @@ object NodeR extends Log { self =>
         ),
 
         // Рендер подробной информации по узлу
-        p.mtree.showProps.contains(rcvrKey) ?= {
+        isShowProps ?= {
           <.div(
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
             <.table(
@@ -506,7 +508,7 @@ object NodeR extends Log { self =>
                     _kvTdValue(
                       // Чек-бокс для управления isEnabled-флагом узла.
                       <.label(
-                        ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
+                        ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE, Css.Lk.Nodes.Inputs.INPUT70 ),
                         <.input(
                           ^.`type` := "checkbox",
                           // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
@@ -525,6 +527,9 @@ object NodeR extends Log { self =>
                       // Рендер данные по реквестов обновления флага isEnabled.
                       for (upd <- node.isEnabledUpd) yield {
                         <.span(
+                          (upd.request.isPending || upd.request.isFailed) ?= {
+                            HtmlConstants.NBSP_STR
+                          },
                           // Крутилка ожидания, если происходит запрос к серверу за обновлением.
                           upd.request.renderPending { _ =>
                             _smallWaitLoader
