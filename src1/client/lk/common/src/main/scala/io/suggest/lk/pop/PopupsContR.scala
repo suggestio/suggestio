@@ -7,7 +7,6 @@ import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
@@ -16,7 +15,7 @@ import org.scalajs.dom.raw.HTMLDivElement
   * Created: 17.03.17 18:15
   * Description: React-компонент контейнера react-попапов.
   */
-object PopContR {
+object PopupsContR {
 
   type Props = ModelProxy[PropsVal]
 

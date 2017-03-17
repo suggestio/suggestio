@@ -36,9 +36,9 @@ class TreeAh[M](
     def updateState(mns0: MNodeState, data: Option[T]): MNodeState
   }
 
-  implicit private object AddStateUpdater extends OptStateUpdater[MAddSubNodeState] {
+  implicit private object AddStateUpdater extends OptStateUpdater[MCreateNodeS] {
     override def getStateOpt(mns0: MNodeState) = mns0.addSubNodeState
-    override def updateState(mns0: MNodeState, data: Option[MAddSubNodeState]) = mns0.withAddSubNodeState( data )
+    override def updateState(mns0: MNodeState, data: Option[MCreateNodeS]) = mns0.withAddSubNodeState( data )
   }
 
   implicit private object EditStateUpdater extends OptStateUpdater[MEditNodeState] {
@@ -266,17 +266,17 @@ class TreeAh[M](
 
     // Сигнал о клике юзера по кнопке добавления под-узла.
     case m: AddSubNodeClick =>
-      _updateOptState[MAddSubNodeState](m) { _ =>
-        Some( MAddSubNodeState() )
+      _updateOptState[MCreateNodeS](m) { _ =>
+        Some( MCreateNodeS() )
       }
 
     // Сигнал о вводе имени узла в форме добавления узла.
     case m: AddSubNodeNameChange =>
-      _updateNameIn[MAddSubNodeState](m)
+      _updateNameIn[MCreateNodeS](m)
 
     // Сигнал о вводе id узла в форме добавления узла.
     case m: AddSubNodeIdChange =>
-      _updateOptState[MAddSubNodeState](m) { addState0 =>
+      _updateOptState[MCreateNodeS](m) { addState0 =>
         val ed = BeaconUtil.EddyStone
         // Сопоставить с паттерном маячка.
         val id2 = StringUtil.strLimitLen(
@@ -293,7 +293,7 @@ class TreeAh[M](
 
     // Сигнал о нажатии на кнопку "отмена" в форме добавления узла.
     case m: AddSubNodeCancelClick =>
-      _updateOptState[MAddSubNodeState](m) { _ => None }
+      _updateOptState[MCreateNodeS](m) { _ => None }
 
 
     // Сигнал создания нового узла на сервере.
@@ -346,7 +346,7 @@ class TreeAh[M](
       m.tryResp.fold(
         {ex =>
           // Вернуть addState назад.
-          _updateOptState[MAddSubNodeState](m) { addStateOpt0 =>
+          _updateOptState[MCreateNodeS](m) { addStateOpt0 =>
             for (as0 <- addStateOpt0) yield {
               as0.withSaving( as0.saving.fail( LknException(ex) ) )
             }

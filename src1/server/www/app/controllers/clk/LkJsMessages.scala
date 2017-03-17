@@ -1,7 +1,7 @@
 package controllers.clk
 
 import controllers.SioController
-import io.suggest.i18n.I18nConstants
+import io.suggest.i18n.I18nConst
 import play.api.i18n.Messages
 import util.acl.IMaybeAuth
 import util.i18n.IJsMessagesUtilDi
@@ -20,7 +20,7 @@ trait LkJsMessages
 {
 
   /** Глобальное имя на клиенте, в которое будет залита функция локализации. */
-  private def JS_NAME = "window." + I18nConstants.MESSAGES_JSNAME
+  private def JS_NAME = "window." + I18nConst.MESSAGES_JSNAME
 
   /** Сколько секунд кэшировать на клиенте js'ник с локализацией. */
   private val CACHE_MAX_AGE_SECONDS = if (mCommonDi.isProd) 864000 else 5

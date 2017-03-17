@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form.m
 
+import diode.FastEq
 import diode.data.Pot
 
 /**
@@ -9,9 +10,19 @@ import diode.data.Pot
   * Description: Модель состояния данных добавляемого узла.
   *
   */
-object MAddSubNodeState {
+object MCreateNodeS {
 
-  def empty = MAddSubNodeState()
+  def empty = MCreateNodeS()
+
+  implicit object MCreateNodeSFastEq extends FastEq[MCreateNodeS] {
+    override def eqv(a: MCreateNodeS, b: MCreateNodeS): Boolean = {
+      (a.name eq b.name) &&
+        (a.nameValid == b.nameValid) &&
+        (a.id eq b.id) &&
+        (a.idValid == b.idValid) &&
+        (a.saving eq b.saving)
+    }
+  }
 
 }
 
@@ -23,14 +34,14 @@ object MAddSubNodeState {
   * @param saving Сейчас происходит сохранение узла?
   * @param nameValid флаг текущей валидности названия.
   */
-case class MAddSubNodeState(
+case class MCreateNodeS(
                              override val name       : String          = "",
                              override val nameValid  : Boolean         = false,
                              id                      : Option[String]  = None,
                              idValid                 : Boolean         = false,
                              override val saving     : Pot[_]          = Pot.empty
                            )
-  extends IEditNodeState[MAddSubNodeState]
+  extends IEditNodeState[MCreateNodeS]
 {
 
   override def withName(name2: String) = copy(name = name2)

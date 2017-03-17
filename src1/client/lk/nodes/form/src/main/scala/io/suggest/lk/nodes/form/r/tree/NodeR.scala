@@ -7,13 +7,15 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.radio.BleConstants.Beacon.EddyStone
 import io.suggest.css.Css
-import io.suggest.i18n.I18nConstants
+import io.suggest.i18n.{I18nConst, MsgCodes}
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
+import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.vm.spa.LkPreLoader
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -48,36 +50,36 @@ object NodeR extends Log { self =>
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback клика по заголовку узла. */
-    def onNodeClick(rcvrKey: RcvrKey): Callback = {
+    private def onNodeClick(rcvrKey: RcvrKey): Callback = {
       _dispatchCB( NodeNameClick(rcvrKey) )
     }
 
     /** Callback клика по кнопке добавления под-узла. */
-    def onAddSubNodeClick(parentKey: RcvrKey): Callback = {
+    private def onAddSubNodeClick(parentKey: RcvrKey): Callback = {
       _dispatchCB( AddSubNodeClick(parentKey) )
     }
 
 
     /** Callback для ввода названия добавляемого под-узла. */
-    def onAddSubNodeNameChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onAddSubNodeNameChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
       _dispatchCB(
         AddSubNodeNameChange(parentKey, name = e.target.value)
       )
     }
 
     /** Callback редактирования id создаваемого узла. */
-    def onAddSubNodeIdChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onAddSubNodeIdChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
       _dispatchCB(
         AddSubNodeIdChange(parentKey, id = e.target.value)
       )
     }
 
     /** Callback нажатия на кнопку "сохранить" при добавлении нового узла. */
-    def onAddSubNodeSaveClick(parentKey: RcvrKey): Callback = {
+    private def onAddSubNodeSaveClick(parentKey: RcvrKey): Callback = {
       _dispatchCB( AddSubNodeSaveClick(parentKey) )
     }
 
-    def onAddSubNodeCancelClick(parentKey: RcvrKey): Callback = {
+    private def onAddSubNodeCancelClick(parentKey: RcvrKey): Callback = {
       _dispatchCB( AddSubNodeCancelClick(parentKey) )
     }
 
@@ -143,36 +145,17 @@ object NodeR extends Log { self =>
     }
 
 
-    private lazy val _msg_NodeId = Messages("Identifier")
-    private lazy val _msg_BeaconNameExample = Messages("Beacon.name.example")
-    private lazy val _msg_ServerReqInProgressWait = Messages("Server.request.in.progress.wait")
-    private lazy val _msg_Save = Messages("Save")
-    private lazy val _msg_Cancel = Messages("Cancel")
+    private lazy val _msg_NodeId = Messages( MsgCodes.`Identifier` )
+    private lazy val _msg_BeaconNameExample = Messages( MsgCodes.`Beacon.name.example` )
+    private lazy val _msg_ServerReqInProgressWait = Messages( MsgCodes.`Server.request.in.progress.wait` )
+    private lazy val _msg_Save = Messages( MsgCodes.`Save` )
+    private lazy val _msg_Cancel = Messages( MsgCodes.`Cancel` )
 
-    private val pleaseWait = Messages("Please.wait")
-    private lazy val _textPreLoader: ReactElement = {
-      <.span(
-        pleaseWait,
-        HtmlConstants.ELLIPSIS
-      )
-    }
+    private val pleaseWait = Messages( MsgCodes.`Please.wait` )
 
-    private def _waitLoader(widthPx: Int): ReactElement = {
-      <.span(
-        // Чтобы alt был маленькими буквами, если картинка не подгрузилась
-        ^.`class` := Css.Font.Sz.S,
-        LkPreLoader.PRELOADER_IMG_URL.fold(_textPreLoader) { url =>
-          <.img(
-            ^.src   := url,
-            ^.alt   := pleaseWait,
-            ^.width := widthPx.px
-          )
-        }
-      )
-    }
 
-    private lazy val _smallWaitLoader = _waitLoader(15)
-    private lazy val _mediumLoader = _waitLoader(22)
+    private def _smallWaitLoader  = LkPreLoaderR.AnimSmall
+    private def _mediumLoader     = LkPreLoaderR.AnimMedium
 
     private val _delim = <.div(
       ^.`class` := Css.Lk.Nodes.DELIM
@@ -532,7 +515,7 @@ object NodeR extends Log { self =>
                           }
                         ),
                         <.span(),
-                        Messages( I18nConstants.yesNo(isEnabledValue) )
+                        Messages( I18nConst.yesNo(isEnabledValue) )
                       ),
 
                       // Рендер данные по реквестов обновления флага isEnabled.
@@ -705,7 +688,7 @@ object NodeR extends Log { self =>
           <.span(
             ^.title   := ex.toString,
             ^.`class` := Css.Colors.RED,
-            Messages("Error")
+            Messages( MsgCodes.`Error` )
           )
         },
 

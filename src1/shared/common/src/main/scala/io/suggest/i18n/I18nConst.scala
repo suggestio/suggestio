@@ -6,7 +6,7 @@ package io.suggest.i18n
   * Created: 06.12.16 17:15
   * Description: Пошаренные константы локализации.
   */
-object I18nConstants {
+object I18nConst {
 
   /** Имя объекта lk-messages на стороне js. */
   final val MESSAGES_JSNAME = "_SioMessages"

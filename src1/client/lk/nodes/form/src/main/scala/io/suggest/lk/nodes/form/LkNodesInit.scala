@@ -2,6 +2,8 @@ package io.suggest.lk.nodes.form
 
 import io.suggest.lk.nodes.LkNodesConst
 import io.suggest.lk.nodes.form.r.LkNodesFormR
+import io.suggest.lk.nodes.form.r.pop.LknPopupsR
+import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil
@@ -45,6 +47,11 @@ trait LkNodesInitRouter extends InitRouter {
     val formR = circuit.wrap(m => m)(LkNodesFormR.apply)
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( LkNodesConst.FORM_CONT_ID )
     ReactDOM.render( formR, formTarget )
+
+    // Рендер компонента попапов.
+    val popsContR = circuit.wrap(_.popups)( LknPopupsR.apply )
+    val popsContTarget = PopupsContR.initDocBody()
+    ReactDOM.render(popsContR, popsContTarget)
   }
 
 }

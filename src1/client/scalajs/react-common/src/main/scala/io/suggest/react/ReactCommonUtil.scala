@@ -3,7 +3,6 @@ package io.suggest.react
 import japgolly.scalajs.react.{CallbackTo, ReactElement}
 
 import scala.scalajs.js
-
 import scala.language.implicitConversions
 
 /**

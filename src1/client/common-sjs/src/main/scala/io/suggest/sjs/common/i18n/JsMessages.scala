@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.i18n
 
-import io.suggest.i18n.{I18nConstants, IMessage}
+import io.suggest.i18n.{I18nConst, IMessage}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -38,7 +38,7 @@ sealed trait IJsMessagesSingleLang extends js.Object {
   * Фасад к нативному глобальному инстансу window._SioMessages.
   */
 @js.native
-@JSName( I18nConstants.MESSAGES_JSNAME )
+@JSName( I18nConst.MESSAGES_JSNAME )
 object JsMessagesSingleLangNative extends IJsMessagesSingleLang
 
 

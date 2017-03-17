@@ -27,7 +27,7 @@ case class MNodeState(
                        info               : MLknNode,
                        children           : Pot[Seq[MNodeState]]              = Pot.empty,
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
-                       addSubNodeState    : Option[MAddSubNodeState]          = None,
+                       addSubNodeState    : Option[MCreateNodeS]          = None,
                        deleting           : Option[Pot[_]]                    = None,
                        editing            : Option[MEditNodeState]            = None,
                        adv                : Option[MNodeAdvState]             = None
@@ -40,7 +40,7 @@ case class MNodeState(
   def withInfo(info2: MLknNode) = copy(info = info2)
   def withChildren(children2: Pot[Seq[MNodeState]]) = copy(children = children2)
   def withNodeEnabledUpd(neu: Option[MNodeEnabledUpdateState]) = copy(isEnabledUpd = neu)
-  def withAddSubNodeState(asns: Option[MAddSubNodeState]) = copy(addSubNodeState = asns)
+  def withAddSubNodeState(asns: Option[MCreateNodeS]) = copy(addSubNodeState = asns)
   def withDeleting(deleting2: Option[Pot[_]]) = copy(deleting = deleting2)
   def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
   def withAdv(adv2: Option[MNodeAdvState] = None) = copy(adv = adv2)
