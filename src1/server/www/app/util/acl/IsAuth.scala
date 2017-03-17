@@ -8,7 +8,9 @@ import scala.concurrent.Future
 import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.id.IdentConst
 import io.suggest.www.util.acl.SioActionBuilderOuter
+import play.api.http.{HeaderNames, MimeTypes}
 
 /**
  * Suggest.io
@@ -33,13 +35,28 @@ class IsAuth @Inject() (
     */
   def onUnauthBase(request: RequestHeader): Result = {
     val rOpt = Some(request.path)
-    Results.Redirect( routes.Ident.emailPwLoginForm(r = rOpt) )
+
+    // Ожидает ли клиент в ответе увидеть HTML-форму? Нужно для защиты от совсем бессмыленного отвечания на запрос.
+    val acceptOpt = request.headers.get( HeaderNames.ACCEPT )
+    val clientAcceptsHtmlForm = acceptOpt.isEmpty || acceptOpt.exists { v =>
+      v.contains("*/*") || v.contains( MimeTypes.HTML )
+    }
+
+    val url = routes.Ident.emailPwLoginForm(r = rOpt)
+    if (clientAcceptsHtmlForm) {
+      Results.Redirect( url )
+    } else {
+      LOGGER.trace(s"onUnauthBase($request): 401, because Accept: $acceptOpt")
+      Results.Unauthorized
+        .withHeaders( IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP -> url.url )
+    }
   }
 
   /** Что делать, когда юзер не авторизован? Асинхронная реакция. */
   def onUnauth(request: RequestHeader): Future[Result] = {
     onUnauthBase(request)
   }
+
 
   /** реализация action-builder'а с поддержкой автоматического управления сессией. */
   sealed class Impl extends SioActionBuilderImpl[MReq] {

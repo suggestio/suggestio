@@ -11,31 +11,8 @@ import scala.scalajs.js
  * Description: Исключения при исполнении XHR-запроса (без jquery или иных помошников).
  */
 
-trait XhrException extends RuntimeException {
+sealed trait XhrException extends RuntimeException {
   def xhr: XMLHttpRequest
-}
-
-/** Ошибка связи при выполнении ajax-запроса. */
-case class XhrNetworkException(evt: ErrorEvent, xhr: XMLHttpRequest) extends XhrException {
-
-  override def getMessage: String = {
-    val msg = if (evt != null && !js.isUndefined(evt))
-      evt.message
-    else
-      ""
-    "XHR failed: " + msg
-  }
-
-}
-
-
-/** Наступил таймаут при исполнении XHR-запроса. */
-case class XhrTimeoutException(evt: Event, xhr: XMLHttpRequest, timeoutMs: Long) extends XhrException {
-
-  override def getMessage: String = {
-    "XHR timeout: " + timeoutMs + " ms"
-  }
-
 }
 
 

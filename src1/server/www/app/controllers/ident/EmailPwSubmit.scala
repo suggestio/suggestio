@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.SioController
+import io.suggest.id.IdentConst
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.sec.m.msession.{Keys, LongTtl, ShortTtl, Ttl}
 import io.suggest.sec.util.IScryptUtilDi
@@ -134,7 +135,15 @@ trait EmailPwLogin extends EmailPwSubmit {
   def emailPwLoginForm(r: Option[String]) = csrf.AddToken {
     isAnon().async { implicit request =>
       for (lf <- emailPwLoginFormStubM) yield {
-        epwLoginPage(lf, r)
+        val resp0 = epwLoginPage(lf, r)
+        // Если r не пуст, то добавить в ответ хидер, чтобы js-клиент мог распознать redirected 200 OK
+        if (r.isEmpty) {
+          resp0
+        } else {
+          resp0.withHeaders(
+            IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP -> ""
+          )
+        }
       }
     }
   }

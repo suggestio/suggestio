@@ -109,4 +109,7 @@ object ErrorMsgs extends MsgsStaticT {
   /** Какой-то реквест к серверу не удался. */
   def SRV_REQUEST_FAILED               = E(49)
 
+  /** Истекла сессия юзера. */
+  def NO_AUTH_HTTP_SESSION             = E(50)
+
 }

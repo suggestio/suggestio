@@ -281,11 +281,22 @@ object NodeR extends Log { self =>
             isSaving ?= _mediumLoader,
 
             // Вывести инфу, что что-то пошло не так при ошибке сохранения.
-            addState.saving.renderFailed { ex =>
-              <.span(
-                ^.title := ex.toString,
-                Messages("Something.gone.wrong")
-              )
+            addState.saving.renderFailed {
+              // Исключение в норме заворачивается в ILknException на уровне TreeAh.
+              case ex: ILknException =>
+                <.span(
+                  ^.`class` := Css.Colors.RED,
+                  for (title <- ex.titleOpt) yield {
+                    ^.title := title
+                  },
+                  Messages( ex.msgCode )
+                )
+              // should never happen
+              case ex =>
+                <.span(
+                  Messages("Error"), ": ",
+                  ex.toString
+                )
             }
 
           )

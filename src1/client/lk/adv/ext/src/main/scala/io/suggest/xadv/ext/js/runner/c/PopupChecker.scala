@@ -1,6 +1,6 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.sjs.common.controller.routes
+import io.suggest.sjs.common.controller.{DomQuick, routes}
 import org.scalajs.dom
 import org.scalajs.dom.raw.Window
 
@@ -45,7 +45,7 @@ object PopupChecker {
     dom.console.log("DOM msg received: [", evt.data.toString, "] from", evt.source.toString)
     if (evt.data == ("reloaded" : js.Any)) {
       // TODO Нужно реагировать на разблокировку попапов: рестартовать текущий процесс БЕЗ перезагрузки страницы.
-      dom.document.location.reload()
+      DomQuick.reloadPage()
     }
   }
 

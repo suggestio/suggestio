@@ -33,6 +33,15 @@ object DomQuick {
     dom.window.requestAnimationFrame(f)
   }
 
+  /** Принудительная перезагрузка страницы. */
+  def reloadPage(): Unit = {
+    dom.document.location.reload(true)
+  }
+
+  /** Перейти по указанной ссылке. */
+  def goToLocation(url: String): Unit = {
+    dom.document.location.assign(url)
+  }
 
   /** Вернуть scala Promise, который исполняется по указанному таймауту.
     *

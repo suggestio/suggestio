@@ -874,4 +874,5 @@ Subnodes=Подчинённые узлы
 N.nodes={0} узлов
 N.disabled={0} выключенных
 Adv.in.nodes=Размещение в узлах
+Node.with.such.id.already.exists=Узел с таким id уже существует.
 

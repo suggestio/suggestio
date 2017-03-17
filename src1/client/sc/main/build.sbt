@@ -28,6 +28,7 @@ skip in packageJSDependencies := true
 // TODO Надо бы выставлять это на ci, но НЕ выставлять на продакшенах.
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 
+// https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
 enableReloadWorkflow := true
 
 emitSourceMaps := false
