@@ -45,7 +45,7 @@ object TagsFoundR {
       <.div(
         ^.classSet1(
           Css.HintList.CONTAINER,
-          Css.HIDDEN -> !isShown
+          Css.Display.HIDDEN -> !isShown
         ),
         isShown ?= <.div(
           ^.`class`     := Css.HintList.OUTER,

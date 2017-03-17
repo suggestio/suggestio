@@ -18,6 +18,14 @@ object Css {
     cssClasses.mkString( HtmlConstants.SPACE )
   }
 
+  object Display {
+    def HIDDEN        = "hidden"
+    def BLOCK         = "block"
+    def VISIBLE       = "visible"
+    def INLINE_BLOCK  = "inline-block"
+  }
+
+
   def JS_PREFIX = "js-"
 
   def CLEAR     = "clear"
@@ -29,7 +37,6 @@ object Css {
   def _CONTAINER  = "container"
   def NAME      = "name"
   def VALUE     = "value"
-  def HIDDEN    = "hidden"
 
   private def __ = "__"
 
@@ -132,6 +139,15 @@ object Css {
 
       def DELIM = "delim"
 
+    }
+
+    /** Стили для попапов. */
+    object Popup {
+      def CLOSE = "close"
+      def POPUP = "popup"
+      def POPUPS = POPUP + "s"
+      def POPUPS_CONTAINER = POPUPS + "-" + _CONTAINER
+      def POPUP_HEADER = POPUP + "-header"
     }
 
   }
@@ -266,6 +282,14 @@ object Css {
       override def PREFIX = PREFIX_ROOT + "-"
     }
 
+  }
+
+
+  /** Позиционирование "плавающих" элементов. */
+  object Floatt {
+    private def _PREFIX_ = "f-"
+    def LEFT  = _PREFIX_ + "left"
+    def RIGHT = _PREFIX_ + "right"
   }
 
 }

@@ -348,7 +348,7 @@ class TreeAh[M](
           // Вернуть addState назад.
           _updateOptState[MAddSubNodeState](m) { addStateOpt0 =>
             for (as0 <- addStateOpt0) yield {
-              as0.withSaving( as0.saving.fail( ILknException(ex) ) )
+              as0.withSaving( as0.saving.fail( LknException(ex) ) )
             }
           }
         },

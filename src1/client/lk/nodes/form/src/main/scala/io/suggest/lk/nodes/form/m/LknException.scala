@@ -11,32 +11,39 @@ import org.scalajs.dom.ext.AjaxException
   */
 sealed trait ILknException extends RuntimeException {
   def msgCode: String
-  def titleOpt: Option[String] = None
+  def titleOpt: Option[String]
 }
 
-object ILknException {
+object LknException {
 
   def apply(ex: Throwable): ILknException = {
     ex match {
-      case ae: AjaxException if ae.xhr.status == Xhr.Status.CONFLICT =>
-        NodeAlreadyExistException(ae)
+      case ae: AjaxException =>
+        if (ae.xhr.status == Xhr.Status.CONFLICT) {
+          LknException( "Node.with.such.id.already.exists", ex )
+        } else {
+          unknown(ex)
+        }
 
       case _ =>
-        LknException(ex)
+        unknown(ex)
     }
   }
 
+  def unknown(ex: Throwable) = LknException(
+    msgCode  = "Error",
+    getCause = ex,
+    titleOpt = Option(ex).map(_.toString)
+  )
+
 }
 
 
-/** Какая-то произвольная ошибка. */
-case class LknException(override val getCause: Throwable) extends ILknException {
-  override def msgCode = "Error"
-  override def titleOpt = Option( getCause ).map(_.toString)
-}
-
-/** Ошибка, связанная с конфликтом id узла. */
-case class NodeAlreadyExistException(override val getCause: Throwable) extends ILknException {
-  override def msgCode = "Node.with.such.id.already.exists"
-}
+/** Ошибка, причина которой определена и выставлена в msgCode. */
+case class LknException(
+                         override val msgCode: String,
+                         override val getCause: Throwable,
+                         override val titleOpt: Option[String] = None
+                       )
+  extends ILknException
 
