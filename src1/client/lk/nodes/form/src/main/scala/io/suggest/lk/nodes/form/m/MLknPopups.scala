@@ -16,7 +16,8 @@ object MLknPopups {
 
   implicit object MLknPopupsFastEq extends FastEq[MLknPopups] {
     override def eqv(a: MLknPopups, b: MLknPopups): Boolean = {
-      a.createNodeS eq b.createNodeS
+      (a.createNodeS eq b.createNodeS) &&
+        (a.deleteNodeS eq b.deleteNodeS)
     }
   }
 
@@ -27,13 +28,16 @@ object MLknPopups {
   * Неявно-пустая модель.
   *
   * @param createNodeS Состояние попапа добавления узла, если есть.
+  * @param deleteNodeS Состояние попапа удаления узла, если есть.
   */
 case class MLknPopups(
-                       createNodeS   : Option[MCreateNodeS]    = None
+                       createNodeS   : Option[MCreateNodeS]    = None,
+                       deleteNodeS   : Option[MDeleteNodeS]    = None
                      )
   extends EmptyProduct
 {
 
   def withCreateNodeState(cns2: Option[MCreateNodeS]) = copy(createNodeS = cns2)
+  def withDeleteNodeState(dns2: Option[MDeleteNodeS]) = copy(deleteNodeS = dns2)
 
 }

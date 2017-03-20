@@ -5,7 +5,6 @@ import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.html.HtmlConstants
-import io.suggest.common.radio.BleConstants.Beacon.EddyStone
 import io.suggest.css.Css
 import io.suggest.i18n.{I18nConst, MsgCodes}
 import io.suggest.lk.nodes.MLknConf
@@ -14,8 +13,6 @@ import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.vm.spa.LkPreLoader
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -36,6 +33,8 @@ object NodeR extends Log { self =>
     * @param parentRcvrKey Ключ родительского узла [Nil].
     * @param level Уровень [0].
     * @param conf конфигурация.
+    * @param proxy Proxy любой модели, нужен для диспатчинга в коллбэках.
+    *              Живёт отдельно от данных из-за рекурсивной природы этого компонента.
     */
   case class PropsVal(
                        conf          : MLknConf,
@@ -60,54 +59,42 @@ object NodeR extends Log { self =>
     }
 
     /** Реакция на изменение значения флага активности узла. */
-    def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
       _dispatchCB(
         NodeIsEnabledChanged(rcvrKey, isEnabled = e.target.checked)
       )
     }
 
+    /** Callback клика по кнопке удаления узла. */
+    private def onNodeDeleteClick: Callback = {
+      _dispatchCB( NodeDeleteClick )
+    }
 
     /** Callback для кнопки редактирования узла. */
-    def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
       e.stopPropagationCB >>= { _ =>
         _dispatchCB( NodeEditClick(rcvrKey) )
       }
     }
 
-    def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
       _dispatchCB(
         NodeEditNameChange(rcvrKey, name = e.target.value)
       )
     }
 
     /** Callback нажатия по кнопке сохранения отредактированного узла. */
-    def onNodeEditOkClick(rcvrKey: RcvrKey): Callback = {
+    private def onNodeEditOkClick(rcvrKey: RcvrKey): Callback = {
       _dispatchCB( NodeEditOkClick(rcvrKey) )
     }
 
     /** Callback нажатия по кнопке отмены редактирования узла. */
-    def onNodeEditCancelClick(rcvrKey: RcvrKey): Callback = {
+    private def onNodeEditCancelClick(rcvrKey: RcvrKey): Callback = {
       _dispatchCB( NodeEditCancelClick(rcvrKey) )
     }
 
-
-    /** Callback клика по кнопке удаления узла. */
-    def onNodeDeleteClick(rcvrKey: RcvrKey): Callback = {
-      _dispatchCB( NodeDeleteClick(rcvrKey) )
-    }
-
-    /** Callback клика по кнопке ПОДТВЕРЖДЕНИЯ удаления узла. */
-    def onNodeDeleteOkClick(rcvrKey: RcvrKey): Callback = {
-      _dispatchCB( NodeDeleteOkClick(rcvrKey) )
-    }
-
-    /** Callback нажатия кнопки ОТМЕНЫ удаления узла. */
-    def onNodeDeleteCancelClick(rcvrKey: RcvrKey): Callback = {
-      _dispatchCB( NodeDeleteCancelClick(rcvrKey) )
-    }
-
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
-    def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
       e.stopPropagation()
       _dispatchCB(
         AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked)
@@ -121,13 +108,8 @@ object NodeR extends Log { self =>
     }
 
 
-    private lazy val _msg_NodeId = Messages( MsgCodes.`Identifier` )
-    private lazy val _msg_BeaconNameExample = Messages( MsgCodes.`Beacon.name.example` )
-    private lazy val _msg_ServerReqInProgressWait = Messages( MsgCodes.`Server.request.in.progress.wait` )
-    private lazy val _msg_Save = Messages( MsgCodes.`Save` )
-    private lazy val _msg_Cancel = Messages( MsgCodes.`Cancel` )
-
-    private val pleaseWait = Messages( MsgCodes.`Please.wait` )
+    private def _msg_Cancel     = Messages( MsgCodes.`Cancel` )
+    private def _msg_PleaseWait = Messages( MsgCodes.`Please.wait` )
 
 
     private def _smallWaitLoader  = LkPreLoaderR.AnimSmall
@@ -156,7 +138,7 @@ object NodeR extends Log { self =>
       * @param p Пропертисы.
       * @return React-элемент.
       */
-    def render(p: Props) /*  node: MNodeState, adIdOpt: Option[String], parentRcvrKey: RcvrKey, level: Int)*/: ReactElement = {
+    def render(p: Props): ReactElement = {
       import p._
 
       val rcvrKeyRev = node.info.id :: parentRcvrKey
@@ -242,7 +224,7 @@ object NodeR extends Log { self =>
                   <.span(
                     ^.`class` := Css.Lk.Nodes.Name.EDIT_BTN,
                     ^.onClick ==> onNodeEditClick(rcvrKey),
-                    ^.title   := Messages("Change")
+                    ^.title   := Messages( MsgCodes.`Change` )
                   )
                 )
               },
@@ -260,7 +242,7 @@ object NodeR extends Log { self =>
                   advState.req.renderFailed { ex =>
                     <.span(
                       ^.title := ex.toString,
-                      Messages("Error")
+                      Messages( MsgCodes.`Error` )
                     )
                   }
                 )
@@ -287,7 +269,7 @@ object NodeR extends Log { self =>
 
                 <.input(
                   ^.placeholder := node.info.name,
-                  ^.title := Messages("Type.new.name.for.beacon.0", node.info.name) + HtmlConstants.SPACE + Messages("For.example.0", _msg_BeaconNameExample),
+                  ^.title := Messages("Type.new.name.for.beacon.0", node.info.name) + HtmlConstants.SPACE + Messages( MsgCodes.`For.example.0`, Messages( MsgCodes.`Beacon.name.example` )),
                   ^.value := ed.name,
                   // Блокировать поле, пока происходит сохранение на сервер.
                   if (ed.saving.isPending) {
@@ -305,8 +287,8 @@ object NodeR extends Log { self =>
                 if (ed.saving.isPending) {
                   // Идёт сохранение на сервер прямо сейчас. Отрендерить сообщение о необходимости подождать.
                   <.div(
-                    ^.title := _msg_ServerReqInProgressWait,
-                    pleaseWait,
+                    ^.title := Messages( MsgCodes.`Server.request.in.progress.wait` ),
+                    _msg_PleaseWait,
                     _smallWaitLoader
                   )
 
@@ -316,7 +298,7 @@ object NodeR extends Log { self =>
                     <.a(
                       ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MAJOR, Css.Size.M),
                       ^.onClick --> onNodeEditOkClick(rcvrKey),
-                      _msg_Save
+                      Messages( MsgCodes.`Save` )
                     ),
                     HtmlConstants.SPACE,
                     // Кнопка отмены редактирования.
@@ -345,7 +327,7 @@ object NodeR extends Log { self =>
                 // id узла.
                 <.tr(
                   _kvTdKey(
-                    _msg_NodeId
+                    Messages( MsgCodes.`Identifier` )
                   ),
                   _kvTdValue(
                     node.info.id
@@ -408,80 +390,22 @@ object NodeR extends Log { self =>
                 // Рендерить поддержку удаления узла.
                 <.tr(
                   _kvTdKey(
-                    Messages("Deletion")
+                    Messages( MsgCodes.`Deletion` )
                   ),
 
                   _kvTdValue(
-                    node.deleting.fold {
-                      // Нормальный режим, удаления узла не происходит. Рендерить обычные кнопки управления.
-                      <.div(
-                        // Кнопка удаления узла.
-                        node.info.canChangeAvailability.contains(true) ?= {
-                          <.a(
-                            ^.`class`  := Css.flat(Css.Colors.RED, Css.Lk.LINK),
-                            ^.onClick --> onNodeDeleteClick(rcvrKey),
-                            Messages("Delete"),
-                            HtmlConstants.ELLIPSIS
-                          )
-                        }
-                      )
-
-                    } { delPot =>
-                      // Происходит удаление узла или подготовка к этому.
-                      <.div(
-                        // Рендерить форму, когда Pot пуст.
-                        delPot.renderEmpty {
-                          <.div(
-                            Messages("Are.you.sure"),
-                            HtmlConstants.SPACE,
-
-                            // Кнопки поменяны местами для защиты от двойных нажатий.
-                            // Кнопка отмены удаления:
-                            <.a(
-                              ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M),
-                              ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
-                              _msg_Cancel
-                            ),
-
-                            HtmlConstants.SPACE,
-
-                            // Кнопка подтверждения удаления, красная.
-                            <.a(
-                              ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
-                              ^.onClick --> onNodeDeleteOkClick(rcvrKey),
-                              Messages("Yes.delete.it")
-                            )
-                          )
-                        },
-
-                        // Когда идёт запрос к серверу, рендерить ожидание
-                        delPot.renderPending { _ =>
-                          <.div(
-                            _mediumLoader,
-                            pleaseWait
-                          )
-                        },
-
-                        // Ошибку удаления можно выводить на экран.
-                        delPot.renderFailed { ex =>
-                          <.div(
-                            <.span(
-                              ^.`class` := Css.Colors.RED,
-                              ^.title   := ex.toString,
-                              Messages("Error")
-                            ),
-
-                            // Кнопка закрытия ошибочной формы.
-                            <.a(
-                              ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M),
-                              ^.onClick --> onNodeDeleteCancelClick(rcvrKey),
-                              Messages("Close")
-                            )
-                          )
-                        }
-
-                      )
-                    }
+                    // Нормальный режим, удаления узла не происходит. Рендерить обычные кнопки управления.
+                    <.div(
+                      // Кнопка удаления узла.
+                      node.info.canChangeAvailability.contains(true) ?= {
+                        <.a(
+                          ^.`class`  := Css.flat(Css.Colors.RED, Css.Lk.LINK),
+                          ^.onClick --> onNodeDeleteClick,
+                          Messages( MsgCodes.`Delete` ),
+                          HtmlConstants.ELLIPSIS
+                        )
+                      }
+                    )
                   )
                 ),
 
@@ -522,7 +446,7 @@ object NodeR extends Log { self =>
                       <.a(
                         ^.`class` := Css.Lk.LINK, // flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
                         ^.onClick --> onCreateNodeClick,
-                        Messages("Create"), HtmlConstants.ELLIPSIS
+                        Messages( MsgCodes.`Create` ), HtmlConstants.ELLIPSIS
                       )
                     )
                   )

@@ -372,74 +372,12 @@ class TreeAh[M](
       updated(v2)
 
 
-    // Сигнал нажатия на кнопку "удалить" возле какого-то узла.
-    case m: NodeDeleteClick =>
-      // Выставить флаг отображения формы удаления узла.
-      val v0 = value
-      val v2 = v0.withNodes(
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-            val mns2 = if ( !mns0.info.canChangeAvailability.contains(true) ) {
-              // Почему-то у узла стоит флаг, намекающий о невозможности нормально влиять на узел. Should never happen.
-              LOG.warn( ErrorMsgs.ACTION_WILL_BE_FORBIDDEN_BY_SERVER, msg = m )
-              mns0
-            } else {
-              // Выставить в состояние узла флаг показа формы удаления узла.
-              mns0.withDeleting( Some(Pot.empty) )
-            }
-            mns2 :: Nil
-          }
-          .toList
-      )
-      updated(v2)
-
-
-    // Сигнал подтверждения удаления узла.
-    case m: NodeDeleteOkClick =>
-      val v0 = value
-
-      val v2 = v0.withNodes(
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-            val mns2 = mns0.withDeleting(
-              mns0.deleting.map { _.pending() }
-            )
-            mns2 :: Nil
-          }
-          .toList
-      )
-
-      // Запустить удаление узла на сервере.
-      val fx = Effect {
-        val nodeId = m.rcvrKey.last
-        api.deleteNode( nodeId ).transform { tryRes =>
-          val r = NodeDeleteResp(m.rcvrKey, tryRes)
-          Success(r)
-        }
-      }
-
-      updated(v2, fx)
-
-
     // Сигнал о завершении запроса к серверу по поводу удаления узла.
     case m: NodeDeleteResp =>
       val v0 = value
       val v2 = v0.withNodes(
         MNodeState
           .flatMapSubNode(m.rcvrKey, v0.nodes)( MNodeState.deleteF )
-          .toList
-      )
-      updated(v2)
-
-
-    // Сигнал отмены удаления узла. Скрыть диалог удаления.
-    case m: NodeDeleteCancelClick =>
-      val v0 = value
-      val v2 = v0.withNodes(
-        MNodeState
-          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-            mns0.withDeleting(None) :: Nil
-          }
           .toList
       )
       updated(v2)

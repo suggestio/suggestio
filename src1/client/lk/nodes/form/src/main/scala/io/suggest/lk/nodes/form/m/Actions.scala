@@ -88,13 +88,15 @@ case class NodeIsEnabledUpdateResp(
   extends LkNodesTreeAction
 
 
+// Удалятельство узлов.
+
 /** Клик по кнопке удаления узла. */
-case class NodeDeleteClick( override val rcvrKey: RcvrKey )
-  extends LkNodesTreeAction
+case object NodeDeleteClick
+  extends LkNodesAction
 
 /** Клик по кнопке подтверждения удаления узла. */
-case class NodeDeleteOkClick( override val rcvrKey: RcvrKey )
-  extends LkNodesTreeAction
+case object NodeDeleteOkClick
+  extends LkNodesAction
 
 /** Результат запроса к серверу по поводу удаления узла. */
 case class NodeDeleteResp(
@@ -104,12 +106,14 @@ case class NodeDeleteResp(
   extends LkNodesTreeAction
 
 /** Клик по кнопке отмены удаления узла. */
-case class NodeDeleteCancelClick( override val rcvrKey: RcvrKey )
-  extends LkNodesTreeAction
+case object NodeDeleteCancelClick
+  extends LkNodesAction
 
+
+// Редактирование узла (переименование).
 
 /** Клик по кнопке редактирования узла в дереве узлов. */
-case class NodeEditClick( override val rcvrKey: RcvrKey)
+case class NodeEditClick( override val rcvrKey: RcvrKey )
   extends LkNodesTreeAction
 
 /** Редактирование названия узла: Юзер вводит название узла (маячка). */

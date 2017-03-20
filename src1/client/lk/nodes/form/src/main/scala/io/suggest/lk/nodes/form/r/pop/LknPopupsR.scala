@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
-import io.suggest.lk.nodes.form.m.{MCreateNodeS, MLknPopups}
+import io.suggest.lk.nodes.form.m.{MCreateNodeS, MDeleteNodeS, MLknPopups}
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
@@ -23,7 +23,8 @@ object LknPopupsR {
 
   case class State(
                     popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
-                    createNodeOptConn   : ReactConnectProxy[Option[MCreateNodeS]]
+                    createNodeOptConn   : ReactConnectProxy[Option[MCreateNodeS]],
+                    deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteNodeS]]
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -35,7 +36,10 @@ object LknPopupsR {
         PopupsContR( popContPropsProxy )(
 
           // Рендер попапа создания нового узла:
-          state.createNodeOptConn { CreateNodeR.apply }
+          state.createNodeOptConn { CreateNodeR.apply },
+
+          // Рендер попапа удаления существующего узла:
+          state.deleteNodeOptConn { DeleteNodeR.apply }
 
         )
 
@@ -54,7 +58,8 @@ object LknPopupsR {
             css       = Css.Lk.Nodes.LKN
           )
         },
-        createNodeOptConn = p.connect(_.createNodeS)
+        createNodeOptConn = p.connect(_.createNodeS),
+        deleteNodeOptConn = p.connect(_.deleteNodeS)
       )
     }
     .renderBackend[Backend]

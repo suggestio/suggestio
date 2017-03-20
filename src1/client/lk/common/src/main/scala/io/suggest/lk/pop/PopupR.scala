@@ -30,7 +30,8 @@ object PopupR {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.closeable eq b.closeable) &&
         (a.hSize eq b.hSize) &&
-        (a.css eq b.css)
+        (a.css eq b.css) &&
+        (a.topPc == b.topPc)
     }
   }
 

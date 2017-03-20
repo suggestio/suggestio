@@ -21,13 +21,11 @@ import io.suggest.common.html.HtmlConstants.SPACE
   * @param info Данные по узлу, присланные сервером.
   * @param children Состояния дочерних элементов в натуральном порядке.
   *                 Элементы запрашиваются с сервера по мере необходимости.
-  * @param deleting Происходит процедура удаления: диалоговое окно с подтверждением или даже запрос удаления.
   */
 case class MNodeState(
                        info               : MLknNode,
                        children           : Pot[Seq[MNodeState]]              = Pot.empty,
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
-                       deleting           : Option[Pot[_]]                    = None,
                        editing            : Option[MEditNodeState]            = None,
                        adv                : Option[MNodeAdvState]             = None
                      )
@@ -39,7 +37,6 @@ case class MNodeState(
   def withInfo(info2: MLknNode) = copy(info = info2)
   def withChildren(children2: Pot[Seq[MNodeState]]) = copy(children = children2)
   def withNodeEnabledUpd(neu: Option[MNodeEnabledUpdateState]) = copy(isEnabledUpd = neu)
-  def withDeleting(deleting2: Option[Pot[_]]) = copy(deleting = deleting2)
   def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
   def withAdv(adv2: Option[MNodeAdvState] = None) = copy(adv = adv2)
 
