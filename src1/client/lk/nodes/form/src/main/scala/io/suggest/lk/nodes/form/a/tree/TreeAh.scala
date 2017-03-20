@@ -4,7 +4,6 @@ import diode._
 import diode.data.{Pending, Pot}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.common.html.HtmlConstants
-import io.suggest.common.radio.BeaconUtil
 import io.suggest.common.text.StringUtil
 import io.suggest.lk.nodes.{MLknNodeReq, MLknConf}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
@@ -34,11 +33,6 @@ class TreeAh[M](
   private sealed trait OptStateUpdater[T] {
     def getStateOpt(mns0: MNodeState): Option[T]
     def updateState(mns0: MNodeState, data: Option[T]): MNodeState
-  }
-
-  implicit private object AddStateUpdater extends OptStateUpdater[MCreateNodeS] {
-    override def getStateOpt(mns0: MNodeState) = mns0.addSubNodeState
-    override def updateState(mns0: MNodeState, data: Option[MCreateNodeS]) = mns0.withAddSubNodeState( data )
   }
 
   implicit private object EditStateUpdater extends OptStateUpdater[MEditNodeState] {
@@ -264,103 +258,22 @@ class TreeAh[M](
       updated(v2)
 
 
-    // Сигнал о клике юзера по кнопке добавления под-узла.
-    case m: AddSubNodeClick =>
-      _updateOptState[MCreateNodeS](m) { _ =>
-        Some( MCreateNodeS() )
-      }
-
-    // Сигнал о вводе имени узла в форме добавления узла.
-    case m: AddSubNodeNameChange =>
-      _updateNameIn[MCreateNodeS](m)
-
-    // Сигнал о вводе id узла в форме добавления узла.
-    case m: AddSubNodeIdChange =>
-      _updateOptState[MCreateNodeS](m) { addState0 =>
-        val ed = BeaconUtil.EddyStone
-        // Сопоставить с паттерном маячка.
-        val id2 = StringUtil.strLimitLen(
-          str       = m.id.toLowerCase,
-          maxLen    = ed.NODE_ID_LEN,
-          ellipsis  = ""
-        )
-        addState0.map(_.withId(
-          id2       = Some(id2),
-          idValid2  = id2.matches( ed.EDDY_STONE_NODE_ID_RE_LC )
-        ))
-      }
-
-
-    // Сигнал о нажатии на кнопку "отмена" в форме добавления узла.
-    case m: AddSubNodeCancelClick =>
-      _updateOptState[MCreateNodeS](m) { _ => None }
-
-
-    // Сигнал создания нового узла на сервере.
-    case m: AddSubNodeSaveClick =>
-      val v0 = value
-      val rcvrKey = m.rcvrKey
-      val s0 = MNodeState.findSubNode(rcvrKey, v0.nodes).get
-      val addState0 = s0.addSubNodeState.get
-
-      if (addState0.isValid) {
-
-        // Огранизовать запрос на сервер.
-        val fx = Effect {
-          val parentNodeId = rcvrKey.last
-          val req = MLknNodeReq(
-            name = addState0.name.trim,
-            id   = addState0.id
-          )
-          api
-            .createSubNodeSubmit(parentNodeId, req)
-            .transform { tryResp =>
-              val action = AddSubNodeResp(
-                tryResp = tryResp,
-                rcvrKey = rcvrKey
-              )
-              Success(action)
-            }
-        }
-
-        // Выставить в addState флаг текущего запроса.
-        val addState2 = addState0.withSavingPending()
-        val v2 = v0.withNodes(
-          MNodeState
-            .flatMapSubNode(rcvrKey, v0.nodes) { mns0 =>
-              val mns2 = mns0.withAddSubNodeState( Some(addState2) )
-              mns2 :: Nil
-            }
-            .toList
-        )
-        updated(v2, fx)
-
-      } else {
-        // Игнорить нажатие, пусть юзер введёт все данные.
-        noChange
-      }
-
-
     // Положительный ответ сервера по поводу добавления нового узла.
-    case m: AddSubNodeResp =>
+    case m: CreateNodeResp =>
       m.tryResp.fold(
-        {ex =>
-          // Вернуть addState назад.
-          _updateOptState[MCreateNodeS](m) { addStateOpt0 =>
-            for (as0 <- addStateOpt0) yield {
-              as0.withSaving( as0.saving.fail( LknException(ex) ) )
-            }
-          }
+        // Ошибки с сервера отрабатываются в CreateNodeAh.
+        {_ =>
+          noChange
         },
+        // Положительный ответ сервера: обновить дерево узлов.
         {resp =>
           // Залить обновления в дерево, удалить addState для текущего rcvrKey
           val v0 = value
           val v2 = v0.withNodes(
             MNodeState
-              .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
-                val mns2 = mns0.copy(
-                  addSubNodeState = None,
-                  children = for {
+              .flatMapSubNode(v0.showProps.get, v0.nodes) { mns0 =>
+                val mns2 = mns0.withChildren(
+                  for {
                     children0 <- mns0.children
                   } yield {
                     val ch0 = MNodeState(

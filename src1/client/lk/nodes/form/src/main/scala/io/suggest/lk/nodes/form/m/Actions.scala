@@ -19,6 +19,10 @@ sealed trait LkNodesTreeAction
   extends LkNodesAction
   with IRcvrKey
 
+sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
+  val name: String
+}
+
 
 /** Юзер кликнул по узлу, необходимо развернуть узел. */
 case class NodeNameClick(
@@ -36,52 +40,36 @@ case class HandleSubNodesOf(
 
 
 /** Юзер кликнул по кнопке добавления подузла.
-  *
-  * @param rcvrKey Ключ родительского узла.
   */
-case class AddSubNodeClick(
-                            override val rcvrKey: RcvrKey
-                          )
-  extends LkNodesTreeAction
+case object CreateNodeClick
+  extends LkNodesAction
 
 
-sealed trait LkNodesTreeNameAction extends LkNodesTreeAction {
-  val name: String
-}
 
 /** Добавление под-узла: Юзер вводит название узла (маячка). */
-case class AddSubNodeNameChange(
-                                 override val rcvrKey: RcvrKey,
-                                 name: String
-                               )
-  extends LkNodesTreeNameAction
+case class CreateNodeNameChange( name: String )
+  extends LkNodesAction
 
 
 /** Добавление под-узла: Юзер вводит id узла (маячка). */
-case class AddSubNodeIdChange(
-                               override val rcvrKey : RcvrKey,
-                               id                   : String
-                             )
-  extends LkNodesTreeAction
+case class CreateNodeIdChange( id: String )
+  extends LkNodesAction
 
 
 /** Добавление под-узла: Юзер нажимает "сохранить". */
-case class AddSubNodeSaveClick(
-                                override val rcvrKey: RcvrKey
-                              )
-  extends LkNodesTreeAction
+case object CreateNodeSaveClick
+  extends LkNodesAction
 
 
 /** Среагировать на ответ сервера по поводу успешного добавления нового узла. */
-case class AddSubNodeResp( rcvrKey: RcvrKey, tryResp: Try[MLknNode] )
-  extends LkNodesTreeAction
+case class CreateNodeResp(tryResp: Try[MLknNode] )
+  extends LkNodesAction
 
 
 /** Добавление под-узла: юзер нажал "отмена". */
-case class AddSubNodeCancelClick(
-                                  override val rcvrKey: RcvrKey
-                                )
-  extends LkNodesTreeAction
+case object CreateNodeCancelClick
+  extends LkNodesAction
+
 
 
 /** Сигнал о клике по галочке узла. */

@@ -109,6 +109,7 @@ object Css {
 
       object Inputs {
         def INPUT70 = Input.INPUT + "70"
+        def INPUT90 = Input.INPUT + "90"
       }
 
       object Name {
@@ -236,6 +237,7 @@ object Css {
   object Buttons {
 
     def BTN = "btn"
+    def BTN_W = BTN + "-w"
 
     def PREFIX = __
 
@@ -244,6 +246,8 @@ object Css {
     def NEGATIVE  = PREFIX + "negative"
     def HELPER    = PREFIX + "helper"
     def DISABLED  = PREFIX + "disabled"
+
+    def LIST      = PREFIX + "list"
 
   }
 

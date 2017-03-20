@@ -110,6 +110,7 @@ class JsMessagesUtil @Inject() (
       "Deletion" ::
       "Subnodes" :: "N.nodes" :: "N.disabled" ::
       "Yes.delete.it" ::
+      "New.node" ::
       "Node.with.such.id.already.exists" ::
       "Type.new.name.for.beacon.0" ::
       "For.example.0" ::

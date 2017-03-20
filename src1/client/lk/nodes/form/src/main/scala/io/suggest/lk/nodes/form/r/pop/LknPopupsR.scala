@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m.{MCreateNodeS, MLknPopups}
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
@@ -21,17 +22,23 @@ object LknPopupsR {
 
 
   case class State(
-                    popContPropsConn: ReactConnectProxy[PopupsContR.PropsVal],
-                    createNodeOptConn: ReactConnectProxy[Option[MCreateNodeS]]
+                    popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
+                    createNodeOptConn   : ReactConnectProxy[Option[MCreateNodeS]]
                   )
 
   class Backend($: BackendScope[Props, State]) {
 
     def render(propsProxy: Props, state: State): ReactElement = {
       state.popContPropsConn { popContPropsProxy =>
+
+        // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
+
+          // Рендер попапа создания нового узла:
           state.createNodeOptConn { CreateNodeR.apply }
+
         )
+
       }
     }
 
@@ -43,7 +50,8 @@ object LknPopupsR {
       State(
         popContPropsConn = p.connect { v =>
           PopupsContR.PropsVal(
-            visible = v.hasOpenedPopups
+            visible   = v.nonEmpty,
+            css       = Css.Lk.Nodes.LKN
           )
         },
         createNodeOptConn = p.connect(_.createNodeS)

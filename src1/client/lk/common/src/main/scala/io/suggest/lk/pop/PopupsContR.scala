@@ -20,7 +20,8 @@ object PopupsContR {
   type Props = ModelProxy[PropsVal]
 
   case class PropsVal(
-                       visible: Boolean
+                       visible  : Boolean,
+                       css      : String  = ""
                      )
     extends UseValueEq
 
@@ -37,7 +38,7 @@ object PopupsContR {
       val p = propsProxy()
       <.aside(
         ^.classSet1(
-          Css.flat( Css.Lk.Popup.POPUPS, Css.Lk.Popup.POPUPS_CONTAINER ),
+          Css.flat( Css.Lk.Popup.POPUPS, Css.Lk.Popup.POPUPS_CONTAINER, p.css ),
           Css.Display.VISIBLE -> p.visible
         ),
 

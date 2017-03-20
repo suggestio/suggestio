@@ -3,8 +3,8 @@ package io.suggest.lk.pop
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.sjs.common.spa.DAction
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom
@@ -20,9 +20,10 @@ object PopupR {
   type Props = ModelProxy[PropsVal]
 
   case class PropsVal(
-                       closeable  : Option[DAction] = None,
-                       hSize      : String          = Css.Size.M,
-                       css        : List[String]    = Nil
+                       closeable  : Option[Callback]  = None,
+                       hSize      : String            = Css.Size.M,
+                       css        : List[String]      = Nil,
+                       topPc      : Int               = 32
                      )
 
   implicit object PopupPropsValFastEq extends FastEq[PropsVal] {
@@ -36,32 +37,27 @@ object PopupR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def onClose: Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( p().closeable.get )
-      }
-    }
-
     def render(propsProxy: Props, pc: PropsChildren): ReactElement = {
       val p = propsProxy()
       <.div(
         ^.`class` := Css.flat1( Css.Lk.Popup.POPUP :: p.hSize :: p.css ),
+        ^.top := p.topPc.pct,
 
-        <.div(
-          ^.`class` := Css.Lk.Popup.POPUP_HEADER,
+        for (closeCB <- p.closeable) yield {
+          <.div(
+            ^.`class` := Css.Lk.Popup.POPUP_HEADER,
 
-          for (closeMsg <- p.closeable) yield {
             <.a(
               ^.`class`  := Css.flat(Css.Lk.Popup.CLOSE, Css.Floatt.RIGHT),
               ^.href     := dom.window.location.href,
-              ^.title    := Messages("Close"),
-              ^.onClick --> onClose
+              ^.title    := Messages( MsgCodes.`Close` ),
+              ^.onClick --> closeCB
             )
-          },
+          )
+        },
 
-          // Наконец, рендер содержимого попапа:
-          pc
-        )
+        // Наконец, рендер содержимого попапа:
+        pc
       )
     }
 

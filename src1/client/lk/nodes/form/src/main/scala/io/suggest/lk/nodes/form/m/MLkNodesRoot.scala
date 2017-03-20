@@ -36,5 +36,6 @@ case class MLkNodesRoot(
 {
 
   def withTree(tree2: MTree) = copy(tree = tree2)
+  def withPopups(popups2: MLknPopups) = copy(popups = popups2)
 
 }

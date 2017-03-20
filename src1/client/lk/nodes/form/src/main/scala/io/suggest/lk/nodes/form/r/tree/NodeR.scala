@@ -54,33 +54,9 @@ object NodeR extends Log { self =>
       _dispatchCB( NodeNameClick(rcvrKey) )
     }
 
-    /** Callback клика по кнопке добавления под-узла. */
-    private def onAddSubNodeClick(parentKey: RcvrKey): Callback = {
-      _dispatchCB( AddSubNodeClick(parentKey) )
-    }
-
-
-    /** Callback для ввода названия добавляемого под-узла. */
-    private def onAddSubNodeNameChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
-      _dispatchCB(
-        AddSubNodeNameChange(parentKey, name = e.target.value)
-      )
-    }
-
-    /** Callback редактирования id создаваемого узла. */
-    private def onAddSubNodeIdChange(parentKey: RcvrKey)(e: ReactEventI): Callback = {
-      _dispatchCB(
-        AddSubNodeIdChange(parentKey, id = e.target.value)
-      )
-    }
-
-    /** Callback нажатия на кнопку "сохранить" при добавлении нового узла. */
-    private def onAddSubNodeSaveClick(parentKey: RcvrKey): Callback = {
-      _dispatchCB( AddSubNodeSaveClick(parentKey) )
-    }
-
-    private def onAddSubNodeCancelClick(parentKey: RcvrKey): Callback = {
-      _dispatchCB( AddSubNodeCancelClick(parentKey) )
+    /** Callback клика по кнопке добавления под-узла для текущего узла. */
+    private def onCreateNodeClick: Callback = {
+      _dispatchCB( CreateNodeClick )
     }
 
     /** Реакция на изменение значения флага активности узла. */
@@ -172,121 +148,6 @@ object NodeR extends Log { self =>
     private val _kvTdValue = <.td(
       ^.`class` := _kvTdClasses( Css.Font.Sz.L :: Css.Lk.Nodes.KvTable.Td.VALUE :: Nil )
     )
-
-
-    /** Рендер кнопки, либо формы добавления нового узла (маячка). */
-    def _renderAddUtil(rcvrKey: RcvrKey, node: MNodeState): TagMod = {
-      // Рендерить кнопку добавления нового узла.
-      node.addSubNodeState.fold[TagMod] {
-        // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
-        <.a(
-          ^.`class` := Css.Lk.LINK, // flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
-          ^.onClick --> onAddSubNodeClick(rcvrKey),
-          Messages("Create"), HtmlConstants.ELLIPSIS
-        )
-
-      } { addState =>
-        val isSaving = addState.saving.isPending
-        val disabledAttr = isSaving ?= {
-          ^.disabled := true
-        }
-
-        // Сейчас открыта форма добавление под-узла для текущего узла.
-        <.div(
-          isSaving ?= {
-            ^.title := _msg_ServerReqInProgressWait
-          },
-
-          // Поле ввода названия маячка.
-          <.div(
-            ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT70 ),
-
-            <.label(
-              Messages("Name"), ":",
-              <.input(
-                ^.`type`      := "text",
-                ^.value       := addState.name,
-                ^.onChange   ==> onAddSubNodeNameChange(rcvrKey),
-                ^.placeholder := _msg_BeaconNameExample,
-                disabledAttr
-              )
-            )
-          ),
-
-          // Поля для ввода id маячка.
-          <.div(
-            ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT70 ),
-            <.label(
-              _msg_NodeId,
-              " (EddyStone-UID)",
-              <.input(
-                ^.`type`      := "text",
-                ^.value       := addState.id.getOrElse(""),
-                ^.onChange   ==> onAddSubNodeIdChange(rcvrKey),
-                ^.placeholder := EddyStone.EXAMPLE_UID,
-                !isSaving ?= {
-                  ^.title := Messages("Example.id.0", EddyStone.EXAMPLE_UID)
-                },
-                disabledAttr
-              )
-            )
-          ),
-
-          // Кнопки сохранения/отмены.
-          <.div(
-            // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
-            addState.saving.renderEmpty {
-              val isSaveBtnEnabled = addState.isValid
-              <.span(
-                <.a(
-                  ^.classSet1(
-                    Css.flat(Css.Buttons.BTN, Css.Size.M),
-                    Css.Buttons.MAJOR     -> isSaveBtnEnabled,
-                    Css.Buttons.DISABLED  -> !isSaveBtnEnabled
-                  ),
-                  isSaveBtnEnabled ?= {
-                    ^.onClick --> onAddSubNodeSaveClick(rcvrKey)
-                  },
-                  _msg_Save
-                ),
-                HtmlConstants.SPACE,
-
-                // Кнопка отмены.
-                <.a(
-                  ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.NEGATIVE),
-                  ^.onClick --> onAddSubNodeCancelClick(rcvrKey),
-                  _msg_Cancel
-                )
-              )
-            },
-
-            // Крутилка ожидания сохранения.
-            isSaving ?= _mediumLoader,
-
-            // Вывести инфу, что что-то пошло не так при ошибке сохранения.
-            addState.saving.renderFailed {
-              // Исключение в норме заворачивается в ILknException на уровне TreeAh.
-              case ex: ILknException =>
-                <.span(
-                  ^.`class` := Css.Colors.RED,
-                  for (title <- ex.titleOpt) yield {
-                    ^.title := title
-                  },
-                  Messages( ex.msgCode )
-                )
-              // should never happen
-              case ex =>
-                <.span(
-                  Messages("Error"), ": ",
-                  ex.toString
-                )
-            }
-
-          )
-
-        ) // div()
-      } // addState =>
-    }
 
 
     /**
@@ -634,7 +495,7 @@ object NodeR extends Log { self =>
                     ),
 
                     _kvTdValue(
-                      (node.addSubNodeState.isEmpty && children.nonEmpty) ?= <.span(
+                      children.nonEmpty ?= <.span(
                         // Вывести общее кол-во под-узлов.
                         Messages("N.nodes", children.size),
 
@@ -656,7 +517,13 @@ object NodeR extends Log { self =>
                         HtmlConstants.COMMA,
                         HtmlConstants.SPACE
                       ),
-                      _renderAddUtil(rcvrKey, node)
+
+                      // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
+                      <.a(
+                        ^.`class` := Css.Lk.LINK, // flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
+                        ^.onClick --> onCreateNodeClick,
+                        Messages("Create"), HtmlConstants.ELLIPSIS
+                      )
                     )
                   )
                 }

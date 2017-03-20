@@ -28,26 +28,26 @@ object CreateNodeR {
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback для ввода названия добавляемого под-узла. */
-    def onAddSubNodeNameChange(e: ReactEventI): Callback = {
+    private def onNameChange(e: ReactEventI): Callback = {
       dispatchOnProxyScopeCB(
-        $, AddSubNodeNameChange(Nil, name = e.target.value)
+        $, CreateNodeNameChange(name = e.target.value)
       )
     }
 
     /** Callback редактирования id создаваемого узла. */
-    def onAddSubNodeIdChange(e: ReactEventI): Callback = {
+    private def onIdChange(e: ReactEventI): Callback = {
       dispatchOnProxyScopeCB(
-        $, AddSubNodeIdChange(Nil, id = e.target.value)
+        $, CreateNodeIdChange(id = e.target.value)
       )
     }
 
     /** Callback нажатия на кнопку "сохранить" при добавлении нового узла. */
-    def onAddSubNodeSaveClick: Callback = {
-      dispatchOnProxyScopeCB( $, AddSubNodeSaveClick(Nil) )
+    private def onSaveClick: Callback = {
+      dispatchOnProxyScopeCB( $, CreateNodeSaveClick )
     }
 
-    def onAddSubNodeCancelClick: Callback = {
-      dispatchOnProxyScopeCB( $, AddSubNodeCancelClick(Nil) )
+    private def onCancelClick: Callback = {
+      dispatchOnProxyScopeCB( $, CreateNodeCancelClick )
     }
 
 
@@ -59,54 +59,74 @@ object CreateNodeR {
           ^.disabled := true
         }
 
-        propsProxy.wrap { _ => PopupR.PropsVal() } { popPropsProxy =>
+        propsProxy.wrap { _ =>
+          PopupR.PropsVal(
+            closeable = Some(onCancelClick)
+          )
+        } { popPropsProxy =>
           PopupR( popPropsProxy ) {
 
             // Сейчас открыта форма добавление под-узла для текущего узла.
             <.div(
+
               isSaving ?= {
                 ^.title := Messages( MsgCodes.`Server.request.in.progress.wait` )
               },
 
-              // Поле ввода названия маячка.
-              <.div(
-                ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT70 ),
+              <.h2(
+                ^.`class` := Css.Lk.MINOR_TITLE,
+                Messages( MsgCodes.`New.node` )
+              ),
 
-                <.label(
-                  Messages("Name"), ":",
-                  <.input(
-                    ^.`type`      := "text",
-                    ^.value       := addState.name,
-                    ^.onChange   ==> onAddSubNodeNameChange,
-                    ^.placeholder := Messages( MsgCodes.`Beacon.name.example` ),
-                    disabledAttr
+
+              <.div(
+                ^.`class` := Css.Text.CENTERED,
+
+                // Поле ввода названия маячка.
+                <.div(
+                  ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT90 ),
+
+                  <.label(
+                    Messages( MsgCodes.`Name` ), ":",
+                    <.input(
+                      ^.`type`      := "text",
+                      ^.value       := addState.name,
+                      ^.onChange   ==> onNameChange,
+                      ^.placeholder := Messages( MsgCodes.`Beacon.name.example` ),
+                      disabledAttr
+                    )
+                  )
+                ),
+
+                <.br,
+
+                // Поля для ввода id маячка.
+                <.div(
+                  ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT90 ),
+                  <.label(
+                    Messages( MsgCodes.`Identifier` ),
+                    " (EddyStone-UID)",
+                    <.input(
+                      ^.`type`      := "text",
+                      ^.value       := addState.id.getOrElse(""),
+                      ^.onChange   ==> onIdChange,
+                      ^.placeholder := EddyStone.EXAMPLE_UID,
+                      !isSaving ?= {
+                        ^.title := Messages( MsgCodes.`Example.id.0`, EddyStone.EXAMPLE_UID )
+                      },
+                      disabledAttr
+                    )
                   )
                 )
               ),
 
-              // Поля для ввода id маячка.
-              <.div(
-                ^.`class` := Css.flat( Css.Input.INPUT, Css.Lk.Nodes.Inputs.INPUT70 ),
-                <.label(
-                  Messages( MsgCodes.`Identifier` ),
-                  " (EddyStone-UID)",
-                  <.input(
-                    ^.`type`      := "text",
-                    ^.value       := addState.id.getOrElse(""),
-                    ^.onChange   ==> onAddSubNodeIdChange,
-                    ^.placeholder := EddyStone.EXAMPLE_UID,
-                    !isSaving ?= {
-                      ^.title := Messages( MsgCodes.`Example.id.0`, EddyStone.EXAMPLE_UID )
-                    },
-                    disabledAttr
-                  )
-                )
-              ),
 
               // Кнопки сохранения/отмены.
               <.div(
+                ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
+
                 // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
-                addState.saving.renderEmpty {
+                (addState.saving.isEmpty && !isSaving) ?= {
                   val isSaveBtnEnabled = addState.isValid
                   <.span(
                     <.a(
@@ -116,7 +136,7 @@ object CreateNodeR {
                         Css.Buttons.DISABLED  -> !isSaveBtnEnabled
                       ),
                       isSaveBtnEnabled ?= {
-                        ^.onClick --> onAddSubNodeSaveClick
+                        ^.onClick --> onSaveClick
                       },
                       Messages( MsgCodes.`Save` )
                     ),
@@ -124,8 +144,8 @@ object CreateNodeR {
 
                     // Кнопка отмены.
                     <.a(
-                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.NEGATIVE),
-                      ^.onClick --> onAddSubNodeCancelClick,
+                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.NEGATIVE, Css.Buttons.LIST),
+                      ^.onClick --> onCancelClick,
                       Messages( MsgCodes.`Cancel` )
                     )
                   )

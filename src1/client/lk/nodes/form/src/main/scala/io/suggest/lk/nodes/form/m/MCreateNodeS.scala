@@ -35,12 +35,12 @@ object MCreateNodeS {
   * @param nameValid флаг текущей валидности названия.
   */
 case class MCreateNodeS(
-                             override val name       : String          = "",
-                             override val nameValid  : Boolean         = false,
-                             id                      : Option[String]  = None,
-                             idValid                 : Boolean         = false,
-                             override val saving     : Pot[_]          = Pot.empty
-                           )
+                         override val name       : String          = "",
+                         override val nameValid  : Boolean         = false,
+                         id                      : Option[String]  = None,
+                         idValid                 : Boolean         = false,
+                         override val saving     : Pot[_]          = Pot.empty
+                       )
   extends IEditNodeState[MCreateNodeS]
 {
 

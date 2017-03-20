@@ -865,4 +865,5 @@ N.nodes={0} nodes
 N.disabled={0} disabled
 Adv.in.nodes=Advertising in nodes
 Node.with.such.id.already.exists=Node with such id already exist.
+New.node=New node
 

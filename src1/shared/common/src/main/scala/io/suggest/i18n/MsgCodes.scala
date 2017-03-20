@@ -8,10 +8,14 @@ package io.suggest.i18n
   */
 object MsgCodes {
 
+  val `Name` = "Name"
+  val `New.node` = "New.node"
+
   val `Error` = "Error"
   val `Identifier` = "Identifier"
   val `Cancel` = "Cancel"
   val `Save` = "Save"
+  val `Close` = "Close"
   val `Node.id` = "Node.id"
   val `Please.wait` = "Please.wait"
   val `Example.id.0` = "Example.id.0"

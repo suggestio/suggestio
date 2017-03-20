@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
+import io.suggest.common.empty.EmptyProduct
 
 /**
   * Suggest.io
@@ -29,8 +30,10 @@ object MLknPopups {
   */
 case class MLknPopups(
                        createNodeS   : Option[MCreateNodeS]    = None
-                     ) {
+                     )
+  extends EmptyProduct
+{
 
-  def hasOpenedPopups = createNodeS.nonEmpty
+  def withCreateNodeState(cns2: Option[MCreateNodeS]) = copy(createNodeS = cns2)
 
 }
