@@ -102,6 +102,11 @@ object NodeR extends Log { self =>
       )
     }
 
+    /** Callback запуска редактирования тарифа текущего узла. */
+    private def onTfChangeClick: Callback = {
+      _dispatchCB( TfDailyEditClick )
+    }
+
     private def _dispatchCB[A](action: A)(implicit evidence: ActionType[A]): Callback = {
       $.props >>= { p =>
         p.proxy.dispatchCB( action )
@@ -425,6 +430,7 @@ object NodeR extends Log { self =>
 
                       <.a(
                         ^.`class` := Css.Lk.LINK,
+                        ^.onClick --> onTfChangeClick,
                         Messages( MsgCodes.`Change` ),
                         HtmlConstants.ELLIPSIS
                       ),
@@ -484,7 +490,7 @@ object NodeR extends Log { self =>
 
                       // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
                       <.a(
-                        ^.`class` := Css.Lk.LINK,
+                        ^.`class`  := Css.Lk.LINK,
                         ^.onClick --> onCreateNodeClick,
                         Messages( MsgCodes.`Create` ), HtmlConstants.ELLIPSIS
                       )

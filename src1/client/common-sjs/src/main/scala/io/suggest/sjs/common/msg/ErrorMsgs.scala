@@ -112,4 +112,6 @@ object ErrorMsgs extends MsgsStaticT {
   /** Истекла сессия юзера. */
   def NO_AUTH_HTTP_SESSION             = E(50)
 
+  def TF_UNDEFINED                     = E(51)
+
 }

@@ -4,7 +4,7 @@ import diode.react.ReactConnector
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
-import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh}
+import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh}
 import io.suggest.lk.nodes.form.a.tree.TreeAh
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
 import io.suggest.pick.PickleUtil
@@ -13,6 +13,14 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
+import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.lk.nodes.form.m.MCreateNodeS.MCreateNodeSFastEq
+import io.suggest.lk.nodes.form.m.MDeleteNodeS.MDeleteNodeSFastEq
+import io.suggest.lk.nodes.form.m.MEditTfDailyS.MTfDailyEditSFastEq
+import io.suggest.lk.nodes.form.m.MTree.MTreeFastEq
+import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
+
 
 import scala.concurrent.Future
 
@@ -23,6 +31,7 @@ import scala.concurrent.Future
   * Description: Diode circuit для формы управления узлами в личном кабинете.
   */
 object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[MLkNodesRoot] {
+
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LK_NODES_FORM_ERROR
 
@@ -81,8 +90,15 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
       currNodeRO  = currNodeR
     )
 
+    // Реактор на события редактирования тарифа узла.
+    val editTfDailyAh = new EditTfDailyAh(
+      api     = API,
+      modelRW = popupsRW.zoomRW(_.editTfDailyS) { _.withEditTfDailyState(_) },
+      treeRO  = treeRW
+    )
+
     // Разные Ah шарят между собой некоторые события, поэтому они все соединены параллельно.
-    foldHandlers(treeAh, createNodeAh, deleteNodeAh)
+    foldHandlers(treeAh, createNodeAh, deleteNodeAh, editTfDailyAh)
   }
 
 }

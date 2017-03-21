@@ -11,7 +11,7 @@ import io.suggest.lk.nodes.MLknConf
   */
 object MLkNodesRoot {
 
-  object MLknRootFastEq extends FastEq[MLkNodesRoot] {
+  implicit object MLknRootFastEq extends FastEq[MLkNodesRoot] {
     override def eqv(a: MLkNodesRoot, b: MLkNodesRoot): Boolean = {
       (a.tree eq b.tree) &&
         (a.popups eq b.popups)

@@ -144,3 +144,17 @@ case class AdvOnNodeChanged(override val rcvrKey: RcvrKey, isEnabled: Boolean)
 /** Ответ сервера на тему управления размещением карточки на узле. */
 case class AdvOnNodeResp(override val rcvrKey: RcvrKey, tryResp: Try[MLknNode])
   extends LkNodesTreeAction
+
+
+// Управление тарифом узла.
+/** Клик по ссылке редактирования тарифа текущего узла. */
+case object TfDailyEditClick
+  extends LkNodesAction
+
+/** Команда сохранения возможно обновлённого тарифа. */
+case object TfDailySaveClick
+  extends LkNodesAction
+
+/** Отмена редактирования тарифа текущего узла. */
+case object TfDailyCancelClick
+  extends LkNodesAction

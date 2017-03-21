@@ -889,6 +889,7 @@ class Bill2Util @Inject() (
         } { mrInfo =>
           // Есть получатель финансов, зачислить ему на необходимый баланс.
           val price = mitem2.price
+          // TODO Отработать комиссию с item'а здесь? Если да, то откуда её брать? С тарифа узла и типа item'а?
           for {
             // Найти/создать кошелек получателя денег
             mrBalance0    <- ensureBalanceFor(mrInfo.mc.id.get, price.currency)

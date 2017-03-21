@@ -55,10 +55,6 @@ object MItemTypes extends EnumMaybeWithName with EnumApply {
   /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
   val AdnNodeMap        : T = new Val("m")
 
-  /** Плата за активность маячка в системе s.io.
-    * Неоплаченный маячок "не работает", хотя и засоряет эфир своими сигналами. */
-  val BleBeaconActive   : T = new Val("b")
-
   /** Прямое размещение тега на узле. */
   val TagDirect         : T = new Val("d")
 

@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
-import io.suggest.lk.nodes.form.m.{MCreateNodeS, MDeleteNodeS, MLknPopups}
+import io.suggest.lk.nodes.form.m.{MCreateNodeS, MDeleteNodeS, MEditTfDailyS, MLknPopups}
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
@@ -16,6 +16,8 @@ import japgolly.scalajs.react._
 object LknPopupsR {
 
   import MCreateNodeS.MCreateNodeSFastEq
+  import MDeleteNodeS.MDeleteNodeSFastEq
+  import MEditTfDailyS.MTfDailyEditSFastEq
 
 
   type Props = ModelProxy[MLknPopups]
@@ -24,7 +26,8 @@ object LknPopupsR {
   case class State(
                     popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
                     createNodeOptConn   : ReactConnectProxy[Option[MCreateNodeS]],
-                    deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteNodeS]]
+                    deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteNodeS]],
+                    editTfDailyOptConn  : ReactConnectProxy[Option[MEditTfDailyS]]
                   )
 
   class Backend($: BackendScope[Props, State]) {
@@ -39,7 +42,10 @@ object LknPopupsR {
           state.createNodeOptConn { CreateNodeR.apply },
 
           // Рендер попапа удаления существующего узла:
-          state.deleteNodeOptConn { DeleteNodeR.apply }
+          state.deleteNodeOptConn { DeleteNodeR.apply },
+
+          // Рендер попапа редактирования тарифа текущего узла.
+          state.editTfDailyOptConn { EditTfDailyR.apply }
 
         )
 
@@ -58,8 +64,9 @@ object LknPopupsR {
             css       = Css.Lk.Nodes.LKN
           )
         },
-        createNodeOptConn = p.connect(_.createNodeS),
-        deleteNodeOptConn = p.connect(_.deleteNodeS)
+        createNodeOptConn  = p.connect(_.createNodeS),
+        deleteNodeOptConn  = p.connect(_.deleteNodeS),
+        editTfDailyOptConn = p.connect(_.editTfDailyS)
       )
     }
     .renderBackend[Backend]

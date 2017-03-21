@@ -8,6 +8,8 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
+import io.suggest.lk.nodes.form.m.MLkNodesRoot.MLknRootFastEq
+import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -37,6 +39,7 @@ trait LkNodesInitRouter extends InitRouter {
     * Логика инициализации проживает здесь.
     */
   private def initLkNodesForm(): Unit = {
+
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 

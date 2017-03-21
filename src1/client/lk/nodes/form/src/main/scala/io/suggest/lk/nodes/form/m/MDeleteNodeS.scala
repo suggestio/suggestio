@@ -1,5 +1,6 @@
 package io.suggest.lk.nodes.form.m
 
+import diode.FastEq
 import diode.data.Pot
 
 /**
@@ -8,6 +9,15 @@ import diode.data.Pot
   * Created: 20.03.17 18:03
   * Description: Модель состояния компонента удаления узла.
   */
+object MDeleteNodeS {
+  implicit object MDeleteNodeSFastEq extends FastEq[MDeleteNodeS] {
+    override def eqv(a: MDeleteNodeS, b: MDeleteNodeS): Boolean = {
+      a.request eq b.request
+    }
+  }
+}
+
+
 case class MDeleteNodeS(
                          request: Pot[_] = Pot.empty
                        ) {
