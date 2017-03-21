@@ -54,7 +54,7 @@ class LkBill2 @Inject() (
     if (mnode.extras.adn.exists(_.isReceiver)) {
       for {
         // Получить данные по тарифу.
-        dailyTf   <- tfDailyUtil.forcedNodeTf( mnode )
+        dailyTf   <- tfDailyUtil.nodeTf( mnode )
         // Прочитать календари, относящиеся к тарифу.
         calsMap   <- mCalendars.multiGetMap( dailyTf.calIds )
       } yield {

@@ -5,6 +5,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.bill.MCurrenciesJvm.CURRENCY_FORMAT
 import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.model.PrefixedFn
 
 /**
  * Suggest.io
@@ -12,15 +13,27 @@ import io.suggest.es.model.IGenEsMappingProps
  * Created: 23.12.15 21:14
  * Description: Модель тарифа посуточного размещения на узле.
  */
-object MDailyTf extends IGenEsMappingProps {
+object MTfDaily extends IGenEsMappingProps {
 
-  val CURRENCY_CODE_FN  = "cc"
-  val CLAUSES_FN        = "cl"
-  val COMISSION_PC_FN   = "com"
+  /** Названия полей. */
+  object Fields {
+
+    val CURRENCY_FN     = "cc"
+    val CLAUSES_FN      = "cl"
+    val COMISSION_PC_FN = "com"
+
+    object Clauses extends PrefixedFn {
+      override protected def _PARENT_FN = CLAUSES_FN
+      def CAL_ID_FN = _fullFn( MDayClause.Fields.CAL_ID_FN )
+    }
+
+  }
 
 
-  implicit val FORMAT: OFormat[MDailyTf] = (
-    (__ \ CURRENCY_CODE_FN).format[MCurrency] and
+  import Fields._
+
+  implicit val FORMAT: OFormat[MTfDaily] = (
+    (__ \ CURRENCY_FN).format[MCurrency] and
     (__ \ CLAUSES_FN).format[Seq[MDayClause]]
       .inmap [Map[String, MDayClause]] (
         _.iterator.map { v => v.name -> v }.toMap,
@@ -35,7 +48,7 @@ object MDailyTf extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(CURRENCY_CODE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldString(CURRENCY_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
       FieldObject(CLAUSES_FN, enabled = true, properties = MDayClause.generateMappingProps),
       FieldNumber(COMISSION_PC_FN, fieldType = DocFieldTypes.double, index = FieldIndexingVariants.no, include_in_all = false)
     )
@@ -65,7 +78,7 @@ trait ITfComissionPc extends IMCurrency {
  *                    Например: 1.0 означает 100% уходит в CBCA.
  *                    None означает значение по умолчанию. Изначально = 1.0, но не обязательно.
  */
-case class MDailyTf(
+case class MTfDaily(
   override val currency      : MCurrency,
   override val clauses       : ClausesMap_t,
   override val comissionPc   : Option[Double] = None
@@ -99,6 +112,7 @@ case class MDailyTf(
   }
 
 
+  def withClauses(clauses2: ClausesMap_t) = copy(clauses = clauses2)
   def withComission(c: Option[Double]) = copy(comissionPc = c)
 
 }

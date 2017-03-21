@@ -2,6 +2,7 @@ package models.mcal
 
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.common.empty.EmptyUtil
+import play.api.data.Forms._
 import play.api.data.Mapping
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
@@ -16,9 +17,7 @@ import play.api.libs.functional.syntax._
   */
 class MCalTypesJvm {
 
-  import play.api.data.Forms._
-
-
+  /** Поддержка опционального маппинга из/в JSON. */
   implicit val mCalTypeOptFormat: Format[Option[MCalType]] = {
     __.format[String]
       // Чтобы не было экзепшенов, надо дергать maybeWithName() и смотреть значение Option.
@@ -28,6 +27,7 @@ class MCalTypesJvm {
       )
   }
 
+  /** Поддержка обязательного маппинга из/в JSON. */
   implicit val mCalTypeFormat: Format[MCalType] = {
     val reads = mCalTypeOptFormat
       // TODO Хз как передать некорректное значение внутрь ValidationError... А надо бы, очень надо.

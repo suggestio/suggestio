@@ -2,6 +2,7 @@ package util.i18n
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
+import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
 import jsmessages.{JsMessages, JsMessagesFactory}
 
@@ -94,8 +95,8 @@ class JsMessagesUtil @Inject() (
   }
 
   /** Сообщения для формы управления узлами/подузлами. */
-  private def LK_NODES_MSGS: List[String] = {
-    "Create" ::
+  private def LK_NODES_MSGS: TraversableOnce[String] = {
+    val l1 = "Create" ::
       "Name" ::
       "Identifier" ::
       "Beacon.name.example" ::
@@ -117,7 +118,15 @@ class JsMessagesUtil @Inject() (
       "Close" ::
       "Save" ::
       "Cancel" ::
+      // Тарифы узлов
+      "Adv.tariff" ::
+      "Inherited" :: "Set.manually" ::
+      "_per_.day" ::
       Nil
+
+    val l2 = MCalTypes.values.map(_.name)
+
+    Iterator(l1, l2).flatten
   }
 
 

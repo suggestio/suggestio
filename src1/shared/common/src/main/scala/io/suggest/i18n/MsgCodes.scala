@@ -27,6 +27,11 @@ object MsgCodes {
   val `Please.wait` = "Please.wait"
   val `Example.id.0` = "Example.id.0"
 
+  val `Adv.tariff` = "Adv.tariff"
+  val `Inherited` = "Inherited"
+  val `Set.manually` = "Set.manually"
+  val `_per_.day` = "_per_.day"
+
   val `Server.request.in.progress.wait` = "Server.request.in.progress.wait"
 
   val `Beacon.name.example` = "Beacon.name.example"

@@ -8,14 +8,14 @@ import org.scalatest.FlatSpec
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.01.17 12:02
-  * Description: Тесты для модели [[MDailyTf]].
+  * Description: Тесты для модели [[MTfDaily]].
   */
 class MDailyTfSpec extends FlatSpec with PlayJsonTestUtil {
 
-  override type T = MDailyTf
+  override type T = MTfDaily
 
   "JSON" should "handle minimal model" in {
-    val m = MDailyTf(
+    val m = MTfDaily(
       currency = MCurrencies.RUB,
       clauses = MDayClause.clauses2map(
         MDayClause(
@@ -28,7 +28,7 @@ class MDailyTfSpec extends FlatSpec with PlayJsonTestUtil {
   }
 
   it should "handle full-filled model" in {
-    val m = MDailyTf(
+    val m = MTfDaily(
       currency = MCurrencies.EUR,
       clauses = MDayClause.clauses2map(
         MDayClause(

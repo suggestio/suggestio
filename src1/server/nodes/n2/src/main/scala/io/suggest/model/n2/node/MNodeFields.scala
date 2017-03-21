@@ -2,6 +2,7 @@ package io.suggest.model.n2.node
 
 import io.suggest.model._
 import io.suggest.model.n2.FieldNamesL1
+import io.suggest.model.n2.bill.tariff.MNodeTariffs
 import io.suggest.model.n2.edge.MNodeEdges
 import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -119,10 +120,14 @@ object MNodeFields {
 
 
   /** Поля, относящиеся к биллингу. */
-  object Billing {
+  object Billing extends PrefixedFn {
 
     /** Название корневого поля биллинга. */
     def BILLING_FN = FieldNamesL1.Billing.name
+    override protected def _PARENT_FN = BILLING_FN
+
+    def TARIFFS_DAILY_CURRENCY_FN       = _fullFn( MNodeTariffs.Fields.Daily.CURRENCY_FN )
+    def TARIFFS_DAILY_CLAUSES_CAL_ID_FN = _fullFn( MNodeTariffs.Fields.Daily.CLAUSES_CAL_ID_FN )
 
   }
 

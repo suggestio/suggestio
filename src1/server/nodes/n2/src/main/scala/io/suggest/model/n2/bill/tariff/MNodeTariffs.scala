@@ -2,7 +2,8 @@ package io.suggest.model.n2.bill.tariff
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.n2.bill.tariff.daily.MDailyTf
+import io.suggest.model.PrefixedFn
+import io.suggest.model.n2.bill.tariff.daily.MTfDaily
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -16,14 +17,27 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
 
   override type T = MNodeTariffs
 
-  val DAILY_FN  = "day"
+  object Fields {
+
+    val DAILY_FN = "day"
+
+    object Daily extends PrefixedFn {
+      override protected def _PARENT_FN = DAILY_FN
+      def CLAUSES_CAL_ID_FN = _fullFn( MTfDaily.Fields.Clauses.CAL_ID_FN )
+      def CURRENCY_FN       = _fullFn( MTfDaily.Fields.CLAUSES_FN )
+    }
+
+  }
+
+
+  import Fields._
 
   override val empty: MNodeTariffs = {
     apply()
   }
 
   implicit val FORMAT: Format[MNodeTariffs] = {
-    (__ \ DAILY_FN).formatNullable[MDailyTf]
+    (__ \ DAILY_FN).formatNullable[MTfDaily]
       .inmap[MNodeTariffs](apply, _.daily)
   }
 
@@ -32,7 +46,7 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldObject(DAILY_FN, enabled = true, properties = MDailyTf.generateMappingProps)
+      FieldObject(DAILY_FN, enabled = true, properties = MTfDaily.generateMappingProps)
     )
   }
 
@@ -40,6 +54,6 @@ object MNodeTariffs extends IGenEsMappingProps with IEmpty {
 
 
 case class MNodeTariffs(
-  daily         : Option[MDailyTf]      = None
+  daily         : Option[MTfDaily]      = None
 )
   extends EmptyProduct

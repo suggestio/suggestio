@@ -8,6 +8,8 @@ import io.suggest.bin.ConvCodecs
 import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.bill.tf.daily.ITfDailyMode
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
@@ -29,7 +31,7 @@ import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}
 import util.acl._
 import util.adn.NodesUtil
-import util.billing.Bill2Util
+import util.billing.{Bill2Util, TfDailyUtil}
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
 
@@ -56,6 +58,7 @@ class LkNodes @Inject() (
                           canFreelyAdvAdOnNode      : CanFreelyAdvAdOnNode,
                           canAdvAd                  : CanAdvAd,
                           pickleSrvUtil             : PickleSrvUtil,
+                          tfDailyUtil               : TfDailyUtil,
                           nodesUtil                 : NodesUtil,
                           mNodes                    : MNodes,
                           canChangeNodeAvailability : CanChangeNodeAvailability,
@@ -91,10 +94,18 @@ class LkNodes @Inject() (
     // Можно ли менять доступность узла?
     val canChangeAvailabilityFut = canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
 
+    val tfDailyInfoOptFut = madOpt.fold {
+      tfDailyUtil.getTfInfo(mnode)
+        .map( EmptyUtil.someF )
+    } { _ =>
+      Future.successful(None)
+    }
+
     // Рендер найденных узлов в данные для модели формы.
     for {
       subNodes                <- subNodesFut
       canChangeAvailability   <- canChangeAvailabilityFut
+      tfDailyInfoOpt          <- tfDailyInfoOptFut
     } yield {
       MLknNodeResp(
         // Надо ли какую-то инфу по текущему узлу возвращать?
@@ -104,7 +115,8 @@ class LkNodes @Inject() (
           ntypeId               = mnode.common.ntype.strId,
           isEnabled             = mnode.common.isEnabled,
           canChangeAvailability = Some( canChangeAvailability ),
-          hasAdv                = _hasAdv(nodeId, madOpt)
+          hasAdv                = _hasAdv(nodeId, madOpt),
+          tf                    = tfDailyInfoOpt
         ),
 
         children = for (mnode <- subNodes) yield {
@@ -116,7 +128,8 @@ class LkNodes @Inject() (
             isEnabled         = mnode.common.isEnabled,
             // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
             canChangeAvailability = None,
-            hasAdv            = _hasAdv(chNodeId, madOpt)
+            hasAdv            = _hasAdv(chNodeId, madOpt),
+            tf                = None
           )
         }
       )
@@ -165,7 +178,8 @@ class LkNodes @Inject() (
               ntypeId                   = mnode.common.ntype.strId,
               isEnabled                 = mnode.common.isEnabled,
               canChangeAvailability     = someTrue,
-              hasAdv                    = _hasAdv(mnodeId, madOpt)
+              hasAdv                    = _hasAdv(mnodeId, madOpt),
+              tf                        = None // Не факт, что это важно.
             )
             MLknNodeResp(mLknNode, Nil)
           }
@@ -347,9 +361,13 @@ class LkNodes @Inject() (
               mNodes.save( newNode )
             }
 
+            // В фоне собрать инфу по тарифу текущему.
+            val tfDailyInfoFut = tfDailyUtil.getTfInfo( request.mnode )
+
             // Дождаться окончания сохранения нового узла.
             val respFut = for {
-              newNodeId <- newNodeIdFut
+              newNodeId     <- newNodeIdFut
+              tfDailyInfo   <- tfDailyInfoFut
             } yield {
               // Собираем ответ, сериализуем, возвращаем...
               val mResp = MLknNode(
@@ -359,7 +377,8 @@ class LkNodes @Inject() (
                 isEnabled = isEnabled,
                 // Текущий юзер создал юзер, значит он может его и удалить.
                 canChangeAvailability = Some(true),
-                hasAdv    = None
+                hasAdv    = None,
+                tf        = Some(tfDailyInfo)
               )
               val bbuf = PickleUtil.pickle[MLknNode](mResp)
               Ok( ByteString(bbuf) )
@@ -403,9 +422,13 @@ class LkNodes @Inject() (
           )
         }
 
+        // В фоне собрать инфу по тарифу текущему.
+        val tfDailyInfoFut = tfDailyUtil.getTfInfo( request.mnode )
+
         // Когда сохранение будет выполнено, то вернуть данные по обновлённому узлу.
         for {
-          _ <- saveFut
+          _             <- saveFut
+          tfDailyInfo   <- tfDailyInfoFut
         } yield {
           LOGGER.debug(s"setNodeEnabled($nodeId): enabled => $isEnabled")
           val mLknNode = MLknNode(
@@ -414,7 +437,8 @@ class LkNodes @Inject() (
             ntypeId                 = request.mnode.common.ntype.strId,
             isEnabled               = isEnabled,
             canChangeAvailability   = Some(true),
-            hasAdv                  = None
+            hasAdv                  = None,
+            tf                      = Some(tfDailyInfo)
           )
           val bbuf = PickleUtil.pickle(mLknNode)
           Ok(ByteString(bbuf))
@@ -486,9 +510,13 @@ class LkNodes @Inject() (
               )
             }
 
+            // В фоне собрать инфу по тарифу текущему.
+            val tfDailyInfoFut = tfDailyUtil.getTfInfo( request.mnode )
+
             // Когда будет сохранено, отрендерить свежую инфу по узлу.
             for {
-              mnode <- updateFut
+              mnode         <- updateFut
+              tfDailyInfo   <- tfDailyInfoFut
             } yield {
               LOGGER.debug(s"$logPrefix Ok, nodeVsn => ${mnode.versionOpt.orNull}")
               val m = MLknNode(
@@ -497,7 +525,8 @@ class LkNodes @Inject() (
                 ntypeId                 = mnode.common.ntype.strId,
                 isEnabled               = mnode.common.isEnabled,
                 canChangeAvailability   = Some(true),
-                hasAdv                  = None
+                hasAdv                  = None,
+                tf                      = Some(tfDailyInfo)
               )
               val bbuf = PickleUtil.pickle( m )
               Ok( ByteString(bbuf) )
@@ -600,7 +629,8 @@ class LkNodes @Inject() (
           ntypeId   = request.mnode.common.ntype.strId,
           isEnabled = request.mnode.common.isEnabled,
           canChangeAvailability = Some(true),
-          hasAdv    = Some(isEnabled)
+          hasAdv    = Some(isEnabled),
+          tf        = None // На странице размещения это не важно
         )
 
         // Отправить сериализованные данные по узлу.
@@ -609,5 +639,60 @@ class LkNodes @Inject() (
       }
     }
   }
+
+  /** BodyParser для выставления тарифа. */
+  private def _tfDailyBp = reqUtil.picklingBodyParser[ITfDailyMode]
+
+
+  /** Юзер выставляет тариф для узла.
+    *
+    * @param rcvrKey Ключ узла.
+    * @return 200 + бинарь с обновлёнными данными по тарифу.
+    */
+  def setTfDaily(rcvrKey: RcvrKey) = csrf.Check {
+    isNodeAdmin(rcvrKey).async(_tfDailyBp) { implicit request =>
+
+      lazy val logPrefix = s"setTfDaily(${rcvrKey.mkString("/")}):"
+
+      tfDailyUtil.validateTfDailyMode( request.body ).fold(
+        // Ошибка проверки данных реквеста.
+        {violations =>
+          val violsStr = violations.mkString("\n ")
+          LOGGER.debug(s"$logPrefix Failed to validate tf-mode:\n $violsStr")
+          NotAcceptable( violsStr )
+        },
+
+        // Всё ок, обновить текущий узел.
+        {tfdm =>
+          for {
+            // Вычислить тариф для узла на основе заданного режима.
+            tfDailyOpt <- tfDailyUtil.tfMode2tfDaily( tfdm )
+
+            // Обновить узел новым тарифом.
+            _ <- {
+              LOGGER.trace(s"$logPrefix mode=$tfdm ==>> tf = $tfDailyOpt")
+              mNodes.tryUpdate( request.mnode ) { mnode =>
+                mnode.copy(
+                  billing = mnode.billing.copy(
+                    tariffs = mnode.billing.tariffs.copy(
+                      daily = tfDailyOpt
+                    )
+                  )
+                )
+              }
+            }
+
+          } yield {
+            LOGGER.debug(s"$logPrefix Node#${rcvrKey.last} tfDaily set to $tfDailyOpt")
+
+            // Собрать HTTP-ответ клиенту
+            val bbuf = PickleUtil.pickle( tfdm )
+            Ok( ByteString(bbuf) )
+          }
+        }
+      )
+    }
+  }
+
 
 }

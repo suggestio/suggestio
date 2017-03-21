@@ -4,6 +4,7 @@ import diode.ActionType
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.bill.MPrice
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.{I18nConst, MsgCodes}
@@ -409,6 +410,43 @@ object NodeR extends Log { self =>
                   )
                 ),
 
+                // Рендер строки данных по тарифу размещения.
+                for (tfInfo <- node.info.tf) yield {
+                  val perDay = Messages( MsgCodes.`_per_.day` )
+                  <.tr(
+                    _kvTdKey(
+                      Messages( MsgCodes.`Adv.tariff` )
+                    ),
+
+                    _kvTdValue(
+                      Messages( tfInfo.mode.msgCode ),
+                      HtmlConstants.COMMA,
+                      HtmlConstants.SPACE,
+
+                      <.a(
+                        ^.`class` := Css.Lk.LINK,
+                        Messages( MsgCodes.`Change` ),
+                        HtmlConstants.ELLIPSIS
+                      ),
+
+                      // Описать текущий тариф:
+                      for {
+                        (mCalType, mPrice) <- tfInfo.clauses
+                      } yield {
+                        <.span(
+                          ^.key := mCalType.strId,
+                          <.br,
+                          Messages( mCalType.name ),
+                          "=",
+                          Messages(mPrice.currency.i18nPriceCode, MPrice.amountStr(mPrice)),
+                          perDay,
+                          HtmlConstants.COMMA
+                        )
+                      }
+
+                    )
+                  )
+                },
 
                 // Отрендерить обобщённую информацию по под-узлам и поддержку добавления узла.
                 node.children.render { children =>
@@ -444,7 +482,7 @@ object NodeR extends Log { self =>
 
                       // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
                       <.a(
-                        ^.`class` := Css.Lk.LINK, // flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MINOR),
+                        ^.`class` := Css.Lk.LINK,
                         ^.onClick --> onCreateNodeClick,
                         Messages( MsgCodes.`Create` ), HtmlConstants.ELLIPSIS
                       )

@@ -6,6 +6,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.model.PrefixedFn
 
 /**
  * Suggest.io
@@ -17,8 +18,21 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
 
   override type T = MNodeBilling
 
-  val CONTRACT_ID_FN = "ct"
-  val TARIFFS_FN     = "tfs"
+  object Fields {
+
+    val CONTRACT_ID_FN = "ct"
+    val TARIFFS_FN     = "tfs"
+
+    object Tariffs extends PrefixedFn {
+      override protected def _PARENT_FN = TARIFFS_FN
+      def DAILY_CLAUSES_CAL_ID_FN = _fullFn( MNodeTariffs.Fields.Daily.CLAUSES_CAL_ID_FN )
+      def DAILY_CURRENCY_FN       = _fullFn( MNodeTariffs.Fields.Daily.CURRENCY_FN )
+    }
+
+  }
+
+
+  import Fields._
 
   /** Поддержка двустороннего json-маппинга. */
   implicit val FORMAT: Format[MNodeBilling] = (

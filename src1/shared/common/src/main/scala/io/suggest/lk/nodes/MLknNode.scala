@@ -1,6 +1,7 @@
 package io.suggest.lk.nodes
 
 import boopickle.Default._
+import io.suggest.bill.tf.daily.MTfDailyInfo
 import io.suggest.primo.id.IId
 
 /**
@@ -14,6 +15,7 @@ object MLknNode {
 
   /** Поддержка сериализации/десериализации. */
   implicit val lknNodePickler: Pickler[MLknNode] = {
+    implicit val tfP = MTfDailyInfo.mTfDailyInfoPickler
     generatePickler[MLknNode]
   }
 
@@ -43,6 +45,9 @@ case class MLknNode(
                      canChangeAvailability  : Option[Boolean],
 
                      /** Имеется ли размещение текущей рекламной карточки на указанном узле? */
-                     hasAdv                 : Option[Boolean]
+                     hasAdv                 : Option[Boolean],
+
+                     /** Данные по тарифу размещения. None значит, что сервер не уточнял этот вопрос. */
+                     tf                     : Option[MTfDailyInfo]
                    )
   extends IId[String]

@@ -139,7 +139,7 @@ package object models {
   val  MEntity              = n2.ad.ent.MEntity
   type MEntity              = n2.ad.ent.MEntity
 
-  type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MDailyTf
+  type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MTfDaily
   type MContract            = io.suggest.mbill2.m.contract.MContract
 
 }

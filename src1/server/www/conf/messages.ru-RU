@@ -536,6 +536,11 @@ Minimal.module=Минимальный{0}модуль
 scheme.left=на{0}схеме{0}слева
 Agreement.btw.CBCA.and.node.tariffs.for.year=Cоглашением между компанией CBCA и {0} "{1}" определены тарифные планы на {2} год.
 
+Adv.tariff=Тариф размещения
+Inherited=Унаследован
+Set.manually=Выставлен вручную
+_per_.day=/день
+
 day24h=сутки
 
 dow.mo=пн

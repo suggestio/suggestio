@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.search
 
 import io.suggest.es.search._
+import io.suggest.model.n2.bill.tariff.daily.{TfDailyCurrencySearch, TfDailyCurrencySearchDflt, TfDailyCurrencySearchWrap}
 import io.suggest.model.n2.edge.search._
 import io.suggest.model.n2.extra.domain.{DomainsSearch, DomainsSearchDflt, DomainsSearchWrap}
 import io.suggest.model.n2.extra.search._
@@ -22,6 +23,7 @@ trait MNodeSearch
   with WithIds
   with DomainsSearch
   with OutEdges
+  with TfDailyCurrencySearch
   with ShownTypeId
   with AdnRights
   with AdnIsTest
@@ -59,6 +61,7 @@ trait MNodeSearchDflt
   with WithIdsDflt
   with DomainsSearchDflt
   with OutEdgesDflt
+  with TfDailyCurrencySearchDflt
   with ShownTypeIdDflt
   with AdnRightsDflt
   with AdnIsTestDflt
@@ -95,6 +98,7 @@ trait MNodeSearchWrap
   with WithIdsWrap
   with DomainsSearchWrap
   with OutEdgesWrap
+  with TfDailyCurrencySearchWrap
   with ShownTypeIdWrap
   with AdnRightsWrap
   with AdnIsTestWrap

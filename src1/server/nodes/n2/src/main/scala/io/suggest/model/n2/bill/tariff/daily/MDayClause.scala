@@ -16,9 +16,14 @@ import play.api.libs.functional.syntax._
  */
 object MDayClause extends IGenEsMappingProps {
 
-  val NAME_FN     = "n"
-  val AMOUNT_FN   = "am"
-  val CAL_ID_FN   = "cal"
+  object Fields {
+    val NAME_FN   = "n"
+    val AMOUNT_FN = "am"
+    val CAL_ID_FN = "cal"
+  }
+
+
+  import Fields._
 
   implicit val FORMAT: Format[MDayClause] = (
     (__ \ NAME_FN).format[String] and
@@ -64,4 +69,8 @@ case class MDayClause(
   name    : String,
   amount  : Double,
   calId   : Option[String] = None
-)
+) {
+
+  def withAmount(amount2: Double) = copy(amount = amount2)
+
+}

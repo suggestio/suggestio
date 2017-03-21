@@ -39,7 +39,7 @@ trait SbNodeTfDaily
   def editNodeTfDaily(nodeId: String) = csrf.AddToken {
     isSuNode(nodeId).async { implicit request =>
       // Вычисляем эффективный тариф узла.
-      val realTfFut = tfDailyUtil.forcedNodeTf(request.mnode)
+      val realTfFut = tfDailyUtil.nodeTf(request.mnode)
 
       val formEmpty = tfDailyUtil.tfDailyForm
       val formFut = for (realTf <- realTfFut) yield {
