@@ -1,6 +1,7 @@
 package models.mcal
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.JacksonParsing
@@ -21,13 +22,16 @@ import scala.concurrent.ExecutionContext
  */
 @Singleton
 class MCalendars @Inject() (
-  override val mCommonDi: ICommonDi
+  mCalTypesJvm            : MCalTypesJvm,
+  override val mCommonDi  : ICommonDi
 )
   extends EsModelStatic
   with MacroLogsImpl
   with EsmV2Deserializer
   with EsModelPlayJsonStaticT
 {
+
+  import mCalTypesJvm.mCalTypeFormat
 
   override type T = MCalendar
 
@@ -41,10 +45,12 @@ class MCalendars @Inject() (
     val CAL_TYPE_FN   = "ctype"
   }
 
-  override def generateMappingStaticFields: List[Field] = List(
-    FieldSource(enabled = true),
-    FieldAll(enabled = true)
-  )
+  override def generateMappingStaticFields: List[Field] = {
+    List(
+      FieldSource(),
+      FieldAll()
+    )
+  }
 
 
   import Fields._
@@ -62,7 +68,7 @@ class MCalendars @Inject() (
       name        = m.get(NAME_FN).fold("WTF?")(JacksonParsing.stringParser),
       calType     = m.get(CAL_TYPE_FN)
         .map(JacksonParsing.stringParser)
-        .flatMap(MCalTypes.maybeWithName)
+        .flatMap(MCalTypes.withNameOption)
         .getOrElse( _dfltCalType(id) ),
       data        = JacksonParsing.stringParser( m(DATA_FN) ),
       versionOpt  = version

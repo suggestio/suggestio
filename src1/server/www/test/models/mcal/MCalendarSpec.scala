@@ -1,6 +1,7 @@
 package models.mcal
 
 import functional.OneAppPerSuiteNoGlobalStart
+import io.suggest.cal.m.MCalTypes
 import org.scalatestplus.play.PlaySpec
 
 /**

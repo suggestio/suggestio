@@ -5,8 +5,9 @@ import java.io.{ByteArrayInputStream, StringWriter}
 import com.google.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
+import io.suggest.cal.m.MCalTypes
 import io.suggest.util.logs.MacroLogsImpl
-import models.mcal.{MCalTypes, MCalendar, MCalendars}
+import models.mcal.{MCalTypesJvm, MCalendar, MCalendars}
 import models.mproj.ICommonDi
 import models.req.ICalendarReq
 import org.apache.commons.io.IOUtils
@@ -32,6 +33,7 @@ class SysCalendar @Inject() (
                               mCalendars                  : MCalendars,
                               isSuCalendar                : IsSuCalendar,
                               isSu                        : IsSu,
+                              mCalTypesJvm                : MCalTypesJvm,
                               calendarAccessAny           : CalendarAccessAny,
                               override val mCommonDi      : ICommonDi
 )
@@ -65,7 +67,7 @@ class SysCalendar @Inject() (
   private def calFormM = Form(mapping(
     "name" -> nonEmptyText(minLength = 5, maxLength = 256)
       .transform(strTrimSanitizeF, strIdentityF),
-    "type" -> MCalTypes.calTypeM,
+    "type" -> mCalTypesJvm.calTypeM,
     "data" -> nonEmptyText(maxLength = 20000)
       .verifying { data =>
         try {

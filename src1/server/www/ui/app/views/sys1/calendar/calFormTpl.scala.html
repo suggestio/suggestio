@@ -3,7 +3,7 @@
 @* Форма создания/редактирования календаря. *@
 @import helper._
 @import ctx.{request, messages}
-@import mcal.MCalTypes
+@import io.suggest.cal.m.MCalTypes
 
 @form( CSRF(submitCall) ) {
 
@@ -15,7 +15,9 @@
 
   @select(
     cf("type"),
-    options = MCalTypes.valuesT.iterator.map(mct => mct.strId -> messages(mct.name)).toSeq,
+    options = for (mct <- MCalTypes.values) yield {
+      mct.strId -> messages(mct.name)
+    },
     '_label -> "Отображаемый тип"
   )
 

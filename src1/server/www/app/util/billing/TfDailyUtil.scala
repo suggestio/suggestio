@@ -34,7 +34,7 @@ class TfDailyUtil @Inject()(
 
   def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", 1.0)
 
-  def VERY_DEFAULT_FT = {
+  private def VERY_DEFAULT_FT = {
     val clause = VERY_DEFAULT_WEEKDAY_CLAUSE
     MDailyTf(
       currency      = MCurrencies.default,
@@ -108,35 +108,26 @@ class TfDailyUtil @Inject()(
       .toSet
   }
 
-  /** Вернуть тариф узла, если таковой имеется. */
-  def nodeTfOpt(mnode: MNode): Option[MDailyTf] = {
-    mnode.billing.tariffs.daily
-  }
-
   /**
     * Вернуть тариф узла для размещения на узле.
-    * Если тариф на узле отсутствует, то будет использован дефолтовый тариф.
+    * Если тариф на узле отсутствует, то будет использован унаследованный сверху или дефолтовый тариф.
     */
   def forcedNodeTf(mnode: MNode): Future[MDailyTf] = {
-    forcedNodeTf( nodeTfOpt(mnode) )
-  }
-
-  /**
-   * Узнать тариф для узла. Если у узла нет тарифа, то будет взят тариф cbca.
-   *
-   * @param nodeTfOpt Тариф узла, если есть.
-   * @return Фьючерс с тарифом.
-   */
-  def forcedNodeTf(nodeTfOpt: Option[MDailyTf]): Future[MDailyTf] = {
-    // Вычисляем текущий реальный тариф узла.
-    FutureUtil.opt2future(nodeTfOpt) {
-      for (cbcaNodeOpt <- mNodesCache.getById( bill2Util.CBCA_NODE_ID )) yield {
+    // TODO Подниматься по цепочке узлов, чтобы узнать унаследованный тариф.
+    FutureUtil.opt2future( mnode.billing.tariffs.daily ) {
+      for {
+        cbcaNodeOpt <- mNodesCache.getById( bill2Util.CBCA_NODE_ID )
+      } yield {
         cbcaNodeOpt
           .flatMap(_.billing.tariffs.daily)
-          .getOrElse( VERY_DEFAULT_FT )
+          .getOrElse {
+            LOGGER.debug(s"forceNodeTf(): CBCA ${bill2Util.CBCA_NODE_ID} dailyTF is not defined!")
+            VERY_DEFAULT_FT
+          }
       }
     }
   }
+
 
   /**
    * Апдейт тарифа в узле.

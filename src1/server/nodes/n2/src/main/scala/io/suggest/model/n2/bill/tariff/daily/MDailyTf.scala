@@ -62,8 +62,8 @@ trait ITfComissionPc extends IMCurrency {
  * @param clauses Описание дней и их тарификации.
  *                Должна быть хотя бы одна кляуза без календаря, т.е. дефолтовая.
  * @param comissionPc Комиссия suggest.io за размещение.
- *                    1.0 означает 100% уходит в CBCA.
- *                    None означает 1.0
+ *                    Например: 1.0 означает 100% уходит в CBCA.
+ *                    None означает значение по умолчанию. Изначально = 1.0, но не обязательно.
  */
 case class MDailyTf(
   override val currency      : MCurrency,
@@ -97,5 +97,8 @@ case class MDailyTf(
   def calIds: Set[String] = {
     calIdsIter.toSet
   }
+
+
+  def withComission(c: Option[Double]) = copy(comissionPc = c)
 
 }

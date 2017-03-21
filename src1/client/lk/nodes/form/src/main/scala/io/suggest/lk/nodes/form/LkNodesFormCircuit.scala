@@ -9,7 +9,7 @@ import io.suggest.lk.nodes.form.a.tree.TreeAh
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
-import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -24,9 +24,7 @@ import scala.concurrent.Future
   */
 object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[MLkNodesRoot] {
 
-  val API = new LkNodesApiHttpImpl
-
-  override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.LK_NODES_FORM_ERROR
+  override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.LK_NODES_FORM_ERROR
 
   /** Сборка начального инстанса корневой модели. */
   override protected def initialModel: MLkNodesRoot = {
@@ -54,13 +52,15 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
   }
 
 
-  override protected def actionHandler: HandlerFunction = {
+  override protected val actionHandler: HandlerFunction = {
+    val API = new LkNodesApiHttpImpl
+
     val confR = zoom(_.conf)
     val treeRW = zoomRW(_.tree) { _.withTree(_) }
     val popupsRW = zoomRW(_.popups) { _.withPopups(_) }
     val currNodeR = treeRW.zoom(_.showProps)
 
-    // Реагировать на события древа узлов.
+    // Реагировать на события из дерева узлов.
     val treeAh = new TreeAh(
       api     = API,
       modelRW = treeRW,
@@ -74,13 +74,14 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
       currNodeRO  = currNodeR
     )
 
-    // Реактор на события, связанные с оконшком удаления узла.
+    // Реактор на события, связанные с окошком удаления узла.
     val deleteNodeAh = new DeleteNodeAh(
       api         = API,
       modelRW     = popupsRW.zoomRW(_.deleteNodeS) { _.withDeleteNodeState(_) },
       currNodeRO  = currNodeR
     )
 
+    // Разные Ah шарят между собой некоторые события, поэтому они все соединены параллельно.
     foldHandlers(treeAh, createNodeAh, deleteNodeAh)
   }
 
