@@ -122,6 +122,7 @@ class JsMessagesUtil @Inject() (
       "Adv.tariff" ::
       "Inherited" :: "Set.manually" ::
       "_per_.day" ::
+      "Comission.0.pct.for.sio" ::
       Nil
 
     val l2 = MCalTypes.values.map(_.name)

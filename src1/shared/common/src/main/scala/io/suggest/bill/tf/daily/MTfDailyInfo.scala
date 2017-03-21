@@ -21,7 +21,16 @@ object MTfDailyInfo {
 
 }
 
+
+/** Класс модель инфы по тарифам узла.
+  * В отличии от основной модели MTfDaily, тут скомпанованы разные данные воедино.
+  *
+  * @param mode Режим тарифа
+  * @param clauses Упрощённые условия посуточного тарифа.
+  * @param comissionPct Комиссия s.io в %%. Например, 100%.
+  */
 case class MTfDailyInfo(
-                         mode     : ITfDailyMode,
-                         clauses  : Map[MCalType, MPrice]
+                         mode         : ITfDailyMode,
+                         clauses      : Map[MCalType, MPrice],
+                         comissionPct : Int
                        )

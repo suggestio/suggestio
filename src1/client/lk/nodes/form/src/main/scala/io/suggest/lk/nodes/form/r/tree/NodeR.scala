@@ -437,13 +437,15 @@ object NodeR extends Log { self =>
                           ^.key := mCalType.strId,
                           <.br,
                           Messages( mCalType.name ),
-                          "=",
+                          " = ",
                           Messages(mPrice.currency.i18nPriceCode, MPrice.amountStr(mPrice)),
                           perDay,
                           HtmlConstants.COMMA
                         )
-                      }
+                      },
 
+                      <.br,
+                      Messages( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct )
                     )
                   )
                 },
@@ -453,7 +455,7 @@ object NodeR extends Log { self =>
 
                   <.tr(
                     _kvTdKey(
-                      Messages("Subnodes")
+                      Messages( MsgCodes.`Subnodes` )
                     ),
 
                     _kvTdValue(

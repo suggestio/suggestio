@@ -8,12 +8,14 @@ package io.suggest.i18n
   */
 object MsgCodes {
 
+  val `Subnodes` = "Subnodes"
   val `Name` = "Name"
   val `New.node` = "New.node"
   val `Delete` = "Delete"
   val `Deletion` = "Deletion"
   val `Yes.delete.it` = "Yes.delete.it"
   val `Are.you.sure` = "Are.you.sure"
+  val `Comission.0.pct.for.sio` = "Comission.0.pct.for.sio"
 
   val `Error` = "Error"
   val `Identifier` = "Identifier"

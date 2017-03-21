@@ -38,6 +38,10 @@ class TfDailyUtil @Inject()(
 
   def VERY_DEFAULT_WEEKDAY_CLAUSE = MDayClause("Будни", 1.0)
 
+  /** Комиссия тарифа. 1.0 означает, что 100% улетает в suggest.io. */
+  def COMISSION_DFLT = 1.0
+
+
   private def VERY_DEFAULT_FT = {
     val clause = VERY_DEFAULT_WEEKDAY_CLAUSE
     MTfDaily(
@@ -303,11 +307,13 @@ class TfDailyUtil @Inject()(
       }
 
     for {
+      tf            <- tfFut
       clausesInfo   <- clausesInfoFut
     } yield {
       MTfDailyInfo(
-        mode    = tfMode,
-        clauses = clausesInfo
+        mode          = tfMode,
+        clauses       = clausesInfo,
+        comissionPct  = (tf.comissionPc.getOrElse(COMISSION_DFLT) * 100).toInt
       )
     }
   }
