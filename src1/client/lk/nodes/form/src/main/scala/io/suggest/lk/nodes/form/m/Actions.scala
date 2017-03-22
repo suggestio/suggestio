@@ -147,6 +147,9 @@ case class AdvOnNodeResp(override val rcvrKey: RcvrKey, tryResp: Try[MLknNode])
 
 
 // Управление тарифом узла.
+case class TfDailyShowDetails(override val rcvrKey: RcvrKey)
+  extends LkNodesTreeAction
+
 /** Клик по ссылке редактирования тарифа текущего узла. */
 case object TfDailyEditClick
   extends LkNodesAction

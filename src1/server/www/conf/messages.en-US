@@ -65,6 +65,7 @@ Bill.id=ID
 Bill.details=Details
 Show.more=Show more
 Show.all=Show all
+Show.details=Show details
 No.records=No records
 Nothing.found=Nothing found
 Quick.search.for.offers=Quick search for offers
@@ -855,6 +856,11 @@ Adv.for.free.without.moderation=Advertise for free, without moderation?
 price.RUB={0} ₽
 price.USD=${0}
 price.EUR=€{0}
+
+currency.RUB=Russian ruble
+currency.USD=US Dollar
+currency.EUR=Euro
+
 
 Nodes.management=Nodes management
 

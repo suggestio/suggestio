@@ -480,6 +480,20 @@ class TreeAh[M](
       updated(v2)
 
 
+    // Юзер почитать развернуть подробности по тарифу.
+    case m: TfDailyShowDetails =>
+      val v0 = value
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode(m.rcvrKey, v0.nodes) { mns0 =>
+            val mns2 = mns0.withTfInfoWide( true )
+            mns2 :: Nil
+          }
+          .toList
+      )
+      updated( v2 )
+
+
     // Сигнал о завершении запроса к серверу на тему редактирования тарифа размещения.
     case m: TfDailySavedResp =>
       val v0 = value

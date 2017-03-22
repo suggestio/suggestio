@@ -27,6 +27,7 @@ case class MNodeState(
                        children           : Pot[Seq[MNodeState]]              = Pot.empty,
                        isEnabledUpd       : Option[MNodeEnabledUpdateState]   = None,
                        editing            : Option[MEditNodeState]            = None,
+                       tfInfoWide         : Boolean                           = false,
                        adv                : Option[MNodeAdvState]             = None
                      )
   extends IId[String]
@@ -39,6 +40,7 @@ case class MNodeState(
   def withNodeEnabledUpd(neu: Option[MNodeEnabledUpdateState]) = copy(isEnabledUpd = neu)
   def withEditing(editing2: Option[MEditNodeState]) = copy(editing = editing2)
   def withAdv(adv2: Option[MNodeAdvState] = None) = copy(adv = adv2)
+  def withTfInfoWide(tiw: Boolean) = copy(tfInfoWide = tiw)
 
   /** Является ли текущее состояние узла нормальным и обычным?
     *

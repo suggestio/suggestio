@@ -1,11 +1,14 @@
 package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.ModelProxy
+import diode.react.ReactPot.potWithReact
 import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.pop.PopupR
+import io.suggest.lk.r.LkPreLoaderR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -62,6 +65,8 @@ object EditTfDailyR {
           val modeInputName = "mode"
           val radio = "radio"
           val editSValid = editS.isValid
+          val isPending = editS.request.isPending
+          val saveBtnActive = editSValid && !isPending
 
           PopupR( popupPropsProxy )(
             <.h2(
@@ -102,19 +107,24 @@ object EditTfDailyR {
                   Messages( MsgCodes.`Set.manually` )
                 ),
 
-                for (manMode <- editS.mode.manualOpt) yield {
+                for (_ <- editS.mode.manualOpt) yield {
                   val mcurrency = editS.nodeTfOpt
                     .fold(MCurrencies.default)( _.currency )
-                  val mprice = MPrice( manMode.amount, mcurrency )
                   <.div(
                     <.label(
-                      ^.`class` := Css.flat( Css.Lk.Nodes.Inputs.INPUT70, Css.Input.INPUT ),
+                      ^.`class` := Css.Input.INPUT,
                       Messages( MsgCodes.`Cost` ),
-                      <.input(
-                        ^.`type` := "text",
-                        ^.value  := MPrice.amountStr( mprice ),
-                        ^.onChange ==> onManualAmountChange
-                      ),
+                      HtmlConstants.SPACE,
+
+                      for (mia <- editS.inputAmount) yield {
+                        <.input(
+                          ^.`type`   := "text",
+                          ^.`class`  := Css.Lk.Nodes.Inputs.INPUT70,
+                          ^.value    := mia.value,
+                          ^.onChange ==> onManualAmountChange
+                        )
+                      },
+                      
                       mcurrency.symbol,
                       Messages( MsgCodes.`_per_.day` )
                     )
@@ -131,10 +141,10 @@ object EditTfDailyR {
               <.a(
                 ^.classSet1(
                   Css.flat( Css.Buttons.BTN, Css.Size.M ),
-                  Css.Buttons.MAJOR -> editSValid,
-                  Css.Buttons.MINOR -> !editSValid
+                  Css.Buttons.MAJOR -> saveBtnActive,
+                  Css.Buttons.MINOR -> !saveBtnActive
                 ),
-                editSValid ?= {
+                saveBtnActive ?= {
                   ^.onClick --> onSaveClick
                 },
                 Messages( MsgCodes.`Save` )
@@ -144,8 +154,24 @@ object EditTfDailyR {
                 ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M, Css.Buttons.LIST ),
                 ^.onClick --> onCancelClick,
                 Messages( MsgCodes.`Cancel` )
+              ),
+
+              editS.request.renderPending { _ =>
+                LkPreLoaderR.AnimMedium
+              }
+            ),
+
+            editS.request.renderFailed { ex =>
+              <.div(
+                <.span(
+                  ^.`class` := Css.Colors.RED,
+                  Messages( MsgCodes.`Error` ),
+                  HtmlConstants.SPACE,
+                  ex.toString
+                ),
+                <.br
               )
-            )
+            }
           )
         }
 

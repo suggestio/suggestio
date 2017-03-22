@@ -137,7 +137,9 @@ class JsMessagesUtil @Inject() (
   private def ADV_PRICING: TraversableOnce[String] = {
     val prices = MCurrencies.values
       .iterator
-      .map(_.i18nPriceCode)
+      .flatMap { c =>
+        c.i18nPriceCode :: c.currencyNameI18n :: Nil
+      }
     val msgs = {
       "Total.amount._money" ::
         "Send.request" ::

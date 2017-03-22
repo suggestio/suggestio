@@ -104,6 +104,11 @@ object NodeR extends Log { self =>
       _dispatchCB( TfDailyEditClick )
     }
 
+    private def onTfShowDetailsClick(rcvrKey: RcvrKey): Callback = {
+      _dispatchCB( TfDailyShowDetails(rcvrKey) )
+    }
+
+
     private def _dispatchCB[A](action: A)(implicit evidence: ActionType[A]): Callback = {
       $.props >>= { p =>
         p.proxy.dispatchCB( action )
@@ -389,7 +394,7 @@ object NodeR extends Log { self =>
                             <.span(
                               ^.`class` := Css.Colors.RED,
                               ^.title := ex.toString,
-                              Messages("Error")
+                              Messages( MsgCodes.`Error` )
                             )
                           }
                         )
@@ -402,6 +407,14 @@ object NodeR extends Log { self =>
                 // Рендер строки данных по тарифу размещения.
                 for (tfInfo <- node.info.tf) yield {
                   val perDay = Messages( MsgCodes.`_per_.day` )
+
+                  val changeBtn = <.a(
+                    ^.`class`  := Css.Lk.LINK,
+                    ^.onClick --> onTfChangeClick,
+                    Messages( MsgCodes.`Change` ),
+                    HtmlConstants.ELLIPSIS
+                  )
+
                   <.tr(
                     _kvTdKey(
                       Messages( MsgCodes.`Adv.tariff` )
@@ -409,33 +422,73 @@ object NodeR extends Log { self =>
 
                     _kvTdValue(
                       Messages( tfInfo.mode.msgCode ),
-                      HtmlConstants.COMMA,
-                      HtmlConstants.SPACE,
 
-                      <.a(
-                        ^.`class` := Css.Lk.LINK,
-                        ^.onClick --> onTfChangeClick,
-                        Messages( MsgCodes.`Change` ),
-                        HtmlConstants.ELLIPSIS
-                      ),
-
-                      // Описать текущий тариф:
-                      for {
-                        (mCalType, mPrice) <- tfInfo.clauses
-                      } yield {
+                      // Есть два отображения для тарифа: компактное одной строчкой и развёрнутое
+                      if (node.tfInfoWide) {
+                        // Рендер развёрнутого отображения.
                         <.span(
-                          ^.key := mCalType.strId,
-                          <.br,
-                          Messages( mCalType.name ),
-                          " = ",
-                          Messages(mPrice.currency.i18nPriceCode, MPrice.amountStr(mPrice)),
-                          perDay,
-                          HtmlConstants.COMMA
-                        )
-                      },
+                          HtmlConstants.COMMA,
+                          HtmlConstants.SPACE,
+                          changeBtn,
 
-                      <.br,
-                      Messages( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct )
+                          // Описать текущий тариф:
+                          <.table(
+                            ^.`class` := Css.Table.TABLE,
+                            <.tbody(
+                              for {
+                                (mCalType, mPrice) <- tfInfo.clauses
+                              } yield {
+                                <.tr(
+                                  ^.key := mCalType.strId,
+                                  _kvTdKey(
+                                    Messages( mCalType.name )
+                                  ),
+                                  _kvTdValue(
+                                    Messages(mPrice.currency.i18nPriceCode, MPrice.amountStr(mPrice)),
+                                    perDay
+                                  )
+                                )
+                              }
+                            )
+                          ),
+
+                          <.br,
+                          Messages( MsgCodes.`Comission.0.pct.for.sio`, tfInfo.comissionPct )
+                        )
+                      } else {
+                        // Рендер компактной инфы по тарифу.
+                        <.span(
+                          ": ",
+                          for {
+                            (mCalType, mPrice) <- tfInfo.clauses
+                          } yield {
+                            <.span(
+                              ^.key := mCalType.strId,
+                              (!(mCalType == tfInfo.clauses.head._1)) ?= {
+                                " / "
+                              },
+                              ^.title := Messages( mCalType.name ),
+                              MPrice.amountStr(mPrice)
+                            )
+                          },
+                          <.span(
+                            ^.title := Messages( tfInfo.currency.currencyNameI18n ),
+                            Messages(tfInfo.currency.i18nPriceCode, "")
+                          ),
+                          perDay,
+                          // Кнопка показа подробностей по тарифу.
+                          <.a(
+                            ^.`class`  := Css.Lk.LINK,
+                            ^.title    := Messages("Show.details"),
+                            ^.onClick --> onTfShowDetailsClick(rcvrKey),
+                            HtmlConstants.ELLIPSIS
+                          ),
+                          HtmlConstants.COMMA,
+                          HtmlConstants.SPACE,
+
+                          changeBtn
+                        )
+                      }
                     )
                   )
                 },

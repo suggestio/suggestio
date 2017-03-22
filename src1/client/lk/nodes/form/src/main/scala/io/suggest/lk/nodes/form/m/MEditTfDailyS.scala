@@ -29,16 +29,31 @@ object MEditTfDailyS {
   * @param mode Новый режим тарифа (пока не сохранён).
   * @param nodeTfOpt Данные по текущему тарифу узла.
   * @param request Реквест к серверу с обновлением тарифа.
+  * @param inputAmount Текущее значение input'а, куда юзер вводит новый ценник.
   */
 case class MEditTfDailyS(
-                          mode        : ITfDailyMode,
-                          nodeTfOpt   : Option[MTfDailyInfo],
-                          request     : Pot[_] = Pot.empty
+                          mode              : ITfDailyMode,
+                          nodeTfOpt         : Option[MTfDailyInfo],
+                          inputAmount       : Option[MInputAmount]  = None,
+                          request           : Pot[_]                = Pot.empty
                         ) {
 
   def withMode(mode2: ITfDailyMode) = copy(mode = mode2)
   def withRequest(req2: Pot[_]) = copy(request = req2)
 
-  def isValid = mode.isValid
+  def withModeInputAmount(mode2: ITfDailyMode, inpAmount: Option[MInputAmount]) = {
+    copy(
+      mode          = mode2,
+      inputAmount   = inpAmount
+    )
+  }
+
+  def isValid = mode.isValid && (inputAmount.isEmpty || inputAmount.exists(_.isValid))
 
 }
+
+
+case class MInputAmount(
+                         value    : String,
+                         isValid  : Boolean
+                       )

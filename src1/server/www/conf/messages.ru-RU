@@ -65,6 +65,7 @@ Bill.id=Номер
 Bill.details=Основание
 Show.more=Показать ещё
 Show.all=Показать всё
+Show.details=Показать подробности
 No.records=Нет записей
 Nothing.found=Ничего не найдено
 Quick.search.for.offers=Быстрый поиск по предложениям
@@ -864,6 +865,10 @@ Adv.for.free.without.moderation=Размещать бесплатно, без п
 price.RUB={0} ₽
 price.USD=${0}
 price.EUR=€{0}
+
+currency.RUB=Рубль России
+currency.USD=Доллар США
+currency.EUR=Евро
 
 
 Nodes.management=Управление узлами

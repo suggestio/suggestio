@@ -1,8 +1,8 @@
 package io.suggest.lk.nodes.form.a.pop
 
 import diode._
-import io.suggest.bill.Amount_t
-import io.suggest.bill.tf.daily.{ITfDailyMode, InheritTf, ManualTf}
+import io.suggest.bill.{Amount_t, MPrice}
+import io.suggest.bill.tf.daily.{ITfDailyMode, InheritTf, MTfDailyInfo, ManualTf}
 import io.suggest.cal.m.MCalTypes
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
@@ -27,17 +27,53 @@ class EditTfDailyAh[M](
   with Log
 {
 
+  /** Подготовить данные для рендера на основе тарифа. */
+  private def _nodeTfOpt2mia(nodeTfOpt: Option[MTfDailyInfo]): (MInputAmount, MPrice) = {
+    val priceOpt = nodeTfOpt
+      .flatMap { tf =>
+        tf.clauses
+          .get( MCalTypes.All )
+          .orElse( tf.clauses.values.headOption )
+      }
+    val priceAmount = priceOpt
+      .fold[Amount_t](1.0) { _.amount }
+    val mprice = priceOpt.getOrElse {
+      MPrice(priceAmount, nodeTfOpt.get.currency )
+    }
+    val amountStr = MPrice.amountStr( mprice )
+    val mia = MInputAmount(
+      value   = amountStr,
+      isValid = true
+    )
+    (mia, mprice)
+  }
+
+
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал редактирования amount.
     case m: TfDailyManualAmountChanged =>
       val v0 = value
-      val v2 = v0.map { v =>
-        v.withMode(
-          ManualTf(
-            amount = m.amount.trim.toDouble
+      val v2 = for (v <- v0) yield {
+        val (mode2, isValid) = try {
+          val amount2 = m.amount.trim.replace(',' , '.').toDouble
+          val mode22 = v.mode.manualOpt.fold( ManualTf(amount2) )( _.withAmount(amount2) )
+          mode22 -> true
+        } catch {
+          case _: Throwable =>
+            v.mode -> false
+        }
+        val v22 = v.withModeInputAmount(
+          mode2,
+          Some(
+            MInputAmount(
+              value   = m.amount,
+              isValid = isValid
+            )
           )
         )
+        println( m + " " + v22 )
+        v22
       }
       updated( v2 )
 
@@ -55,10 +91,12 @@ class EditTfDailyAh[M](
       } { tf0 =>
         tf0.mode
       }
+      val (mia, _) = _nodeTfOpt2mia(currNodeTfOpt)
 
       val v2 = MEditTfDailyS(
-        mode    = mode0,
-        nodeTfOpt  = currNodeTfOpt
+        mode       = mode0,
+        nodeTfOpt  = currNodeTfOpt,
+        inputAmount = Some( mia )
       )
       updated( Some(v2) )
 
@@ -66,21 +104,15 @@ class EditTfDailyAh[M](
     // Сигнал о том, что юзер выбрал режим наследования тарифа.
     case TfDailyInheritedMode =>
       val v2 = for (s <- value) yield {
-        s.withMode( InheritTf )
+        s.withModeInputAmount( InheritTf, None )
       }
       updated( v2 )
 
     // Сигнал, что юзер выбрал ручной режим управления тарифом.
     case TfDailyManualMode =>
       val v2 = for (s <- value) yield {
-        val priceAmount = s.nodeTfOpt
-          .flatMap { tf =>
-            tf.clauses
-              .get( MCalTypes.All )
-              .orElse( tf.clauses.values.headOption )
-          }
-          .fold[Amount_t](1.0) { _.amount }
-        s.withMode( ManualTf(priceAmount) )
+        val (mia, mprice) = _nodeTfOpt2mia( s.nodeTfOpt )
+        s.withModeInputAmount( ManualTf(mprice.amount), Some(mia) )
       }
       updated( v2 )
 

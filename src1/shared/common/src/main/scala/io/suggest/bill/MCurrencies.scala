@@ -38,6 +38,9 @@ sealed abstract class MCurrency extends EnumEntry with IStrId {
   /** Код по messages для форматирования цены с указанием данной валюты. */
   def i18nPriceCode = "price." + currencyCode
 
+  /** Код по messages с полным локализвоанным названием валюты. */
+  def currencyNameI18n = "currency." + currencyCode
+
   /** Вернуть инстанс java currency. */
   def toJavaCurrency = java.util.Currency.getInstance(currencyCode)
 
