@@ -18,6 +18,7 @@ object LknPopupsR {
   import MCreateNodeS.MCreateNodeSFastEq
   import MDeleteNodeS.MDeleteNodeSFastEq
   import MEditTfDailyS.MTfDailyEditSFastEq
+  import PopupsContR.PopContPropsValFastEq
 
 
   type Props = ModelProxy[MLknPopups]
@@ -58,11 +59,15 @@ object LknPopupsR {
   val component = ReactComponentB[Props]("Pops")
     .initialState_P { p =>
       State(
-        popContPropsConn = p.connect { v =>
-          PopupsContR.PropsVal(
-            visible   = v.nonEmpty,
-            css       = Css.Lk.Nodes.LKN
-          )
+        popContPropsConn = {
+          // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.
+          val contCss = Css.Lk.Nodes.LKN
+          p.connect { v =>
+            PopupsContR.PropsVal(
+              visible   = v.nonEmpty,
+              css       = contCss
+            )
+          }
         },
         createNodeOptConn  = p.connect(_.createNodeS),
         deleteNodeOptConn  = p.connect(_.deleteNodeS),

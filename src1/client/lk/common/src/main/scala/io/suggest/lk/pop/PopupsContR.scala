@@ -1,6 +1,6 @@
 package io.suggest.lk.pop
 
-import diode.UseValueEq
+import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.sjs.common.view.VUtil
@@ -25,11 +25,12 @@ object PopupsContR {
                      )
     extends UseValueEq
 
-  /*implicit object PopContPropsValFastEq extends FastEq[PropsVal] {
+  implicit object PopContPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a == b
+      (a.visible == b.visible) &&
+        (a.css eq b.css)
     }
-  }*/
+  }
 
 
   class Backend($: BackendScope[Props, Unit]) {

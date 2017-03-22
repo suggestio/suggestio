@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.a.pop
 
 import diode.{ActionHandler, ActionResult, ModelRO, ModelRW}
-import io.suggest.bill.tf.daily.{ITfDailyMode, InheritTf}
+import io.suggest.bill.tf.daily.{ITfDailyMode, InheritTf, ManualTf}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.log.Log
@@ -24,11 +24,26 @@ class EditTfDailyAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    // Сигнал редактирования amount.
+    case m: TfDailyManualAmountChanged =>
+      val v0 = value
+      val v2 = v0.map { v =>
+        v.withMode(
+          ManualTf(
+            amount = m.amount.trim.toDouble
+          )
+        )
+      }
+      updated( v2 )
+
+
     // Сигнал запуска редактирования посуточного тарифа. Инициализировать состояние редактора тарифа.
     case TfDailyEditClick =>
       val tree = treeRO()
       val currNode = MNodeState.findSubNode(tree.showProps.get, tree.nodes).get
-      val mode0 = currNode.info.tf.fold [ITfDailyMode] {
+      val currNodeTfOpt = currNode.info.tf
+
+      val mode0 = currNodeTfOpt.fold [ITfDailyMode] {
         // Should never happen: сервер забыл передать данные по тарифу.
         LOG.warn( ErrorMsgs.TF_UNDEFINED, msg = currNode.info )
         InheritTf
@@ -37,11 +52,12 @@ class EditTfDailyAh[M](
       }
 
       val v2 = MEditTfDailyS(
-        mode = mode0
+        mode    = mode0,
+        nodeTfOpt  = currNodeTfOpt
       )
       updated( Some(v2) )
 
-      
+
     // Сигнал отмены редактирования тарифа.
     case TfDailyCancelClick =>
       updated( None )

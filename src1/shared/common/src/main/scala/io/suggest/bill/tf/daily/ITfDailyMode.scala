@@ -30,6 +30,9 @@ sealed trait ITfDailyMode {
   /** Amount, если задан. Появился из-за особенностей валидации через accord. */
   def amountOpt: Option[Amount_t] = None
 
+  def isManual: Boolean
+  def isInherited: Boolean
+
   /** Инстанс ManualTf, если актуально. */
   def manualOpt: Option[ManualTf]
 
@@ -41,7 +44,8 @@ sealed trait ITfDailyMode {
 /** Режим: наследовать тариф. */
 case object InheritTf extends ITfDailyMode {
   override def manualOpt = None
-
+  override def isManual = false
+  override def isInherited = true
   override def msgCode = MsgCodes.`Inherited`
 }
 
@@ -57,6 +61,8 @@ final case class ManualTf( amount: Amount_t )
   override def msgCode = MsgCodes.`Set.manually`
   override def amountOpt = Some(amount)
   override def manualOpt = Some(this)
+  override def isManual = true
+  override def isInherited = false
 
   override def withAmount(amount2: Amount_t): ManualTf = {
     copy(amount = amount2)

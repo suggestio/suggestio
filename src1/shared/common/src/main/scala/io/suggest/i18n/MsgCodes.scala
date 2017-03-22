@@ -16,6 +16,7 @@ object MsgCodes {
   val `Yes.delete.it` = "Yes.delete.it"
   val `Are.you.sure` = "Are.you.sure"
   val `Comission.0.pct.for.sio` = "Comission.0.pct.for.sio"
+  val `Cost` = "Cost"
 
   val `Error` = "Error"
   val `Identifier` = "Identifier"

@@ -28,7 +28,7 @@ import io.suggest.ym.model.common.AdnRights
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
 import models.mproj.ICommonDi
-import models.req.{IReq, IReqHdr}
+import models.req.IReq
 import util.acl._
 import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
@@ -83,7 +83,9 @@ class LkNodes @Inject() (
   }
 
   private def _subNodesRespFor(mnode: MNode, madOpt: Option[MNode])
-                              (implicit req: IReqHdr): Future[MLknNodeResp] = {
+                              (implicit ctx: Context): Future[MLknNodeResp] = {
+    import ctx.request
+
     val nodeId = mnode.id.get
 
     // Запустить поиск узлов.
@@ -95,7 +97,7 @@ class LkNodes @Inject() (
     val canChangeAvailabilityFut = canChangeNodeAvailability.adminCanChangeAvailabilityOf(mnode)
 
     val tfDailyInfoOptFut = madOpt.fold {
-      tfDailyUtil.getTfInfo(mnode)
+      tfDailyUtil.getTfInfo(mnode)(ctx)
         .map( EmptyUtil.someF )
     } { _ =>
       Future.successful(None)
@@ -188,9 +190,20 @@ class LkNodes @Inject() (
         }
       }
 
+    // Пока подготовить контекст рендера шаблона
+    val ctxFut = for {
+      lkCtxData <- request.user.lkCtxDataFut
+    } yield {
+      implicit val lkCtxData2 = lkCtxData.withJsiTgs(
+        MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
+      )
+      getContext2
+    }
+
     val formStateB64Fut = for {
       // Запустить поиск под-узлов для текущего узла.
-      subNodesResp      <- _subNodesRespFor(onNode, madOpt = madOpt)
+      ctx               <- ctxFut
+      subNodesResp      <- _subNodesRespFor(onNode, madOpt = madOpt)(ctx)
       otherPersonNodes  <- otherPersonNodesFut
     } yield {
       val minit = MLknFormInit(
@@ -201,16 +214,6 @@ class LkNodes @Inject() (
         nodes0   = subNodesResp :: otherPersonNodes
       )
       PickleUtil.pickleConv[MLknFormInit, ConvCodecs.Base64, String](minit)
-    }
-
-    // Пока подготовить контекст рендера шаблона
-    val ctxFut = for {
-      lkCtxData <- request.user.lkCtxDataFut
-    } yield {
-      implicit val lkCtxData2 = lkCtxData.withJsiTgs(
-        MJsiTgs.LkNodesForm :: lkCtxData.jsiTgs
-      )
-      getContext2
     }
 
     // Отрендерить и вернуть HTML-шаблон со страницей для формы.

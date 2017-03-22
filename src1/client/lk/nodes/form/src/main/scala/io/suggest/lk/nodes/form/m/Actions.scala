@@ -158,3 +158,7 @@ case object TfDailySaveClick
 /** Отмена редактирования тарифа текущего узла. */
 case object TfDailyCancelClick
   extends LkNodesAction
+
+/** Юзер редактирует значением amount для ручного тарифа. */
+case class TfDailyManualAmountChanged(amount: String)
+  extends LkNodesAction

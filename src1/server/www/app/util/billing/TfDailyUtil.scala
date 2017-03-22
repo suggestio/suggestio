@@ -11,10 +11,12 @@ import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.mcal.MCalendars
+import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil.{currencyM, doubleM, esIdM}
+import util.TplDataFormatUtil
 
 import scala.concurrent.Future
 
@@ -257,7 +259,7 @@ class TfDailyUtil @Inject()(
     }
   }
 
-  def getTfInfo(mnode: MNode): Future[MTfDailyInfo] = {
+  def getTfInfo(mnode: MNode)(implicit ctx: Context): Future[MTfDailyInfo] = {
     // Узнать фактический тариф на узле
     val tfFut = nodeTf(mnode)
 
@@ -284,7 +286,11 @@ class TfDailyUtil @Inject()(
             else
               MCalTypes.WeekDay
           } { _.calType }
-          calType -> MPrice( mClause.amount, tf.currency )
+          val mprice0 = MPrice( mClause.amount, tf.currency )
+          val mprice1 = mprice0.withValueStrOpt {
+            Some( TplDataFormatUtil.formatPriceAmount(mprice0) )
+          }
+          calType -> mprice1
         }
         .toMap
     }
@@ -313,7 +319,8 @@ class TfDailyUtil @Inject()(
       MTfDailyInfo(
         mode          = tfMode,
         clauses       = clausesInfo,
-        comissionPct  = (tf.comissionPc.getOrElse(COMISSION_DFLT) * 100).toInt
+        comissionPct  = (tf.comissionPc.getOrElse(COMISSION_DFLT) * 100).toInt,
+        currency      = tf.currency
       )
     }
   }

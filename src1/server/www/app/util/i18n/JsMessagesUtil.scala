@@ -4,6 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
+import io.suggest.i18n.MsgCodes
 import jsmessages.{JsMessages, JsMessagesFactory}
 
 /**
@@ -115,14 +116,15 @@ class JsMessagesUtil @Inject() (
       "Node.with.such.id.already.exists" ::
       "Type.new.name.for.beacon.0" ::
       "For.example.0" ::
-      "Close" ::
-      "Save" ::
-      "Cancel" ::
+      MsgCodes.`Close` ::
+      MsgCodes.`Save` ::
+      MsgCodes.`Cancel` ::
       // Тарифы узлов
-      "Adv.tariff" ::
-      "Inherited" :: "Set.manually" ::
-      "_per_.day" ::
-      "Comission.0.pct.for.sio" ::
+      MsgCodes.`Adv.tariff` ::
+      MsgCodes.`Inherited` :: MsgCodes.`Set.manually` ::
+      MsgCodes.`_per_.day` ::
+      MsgCodes.`Comission.0.pct.for.sio` ::
+      MsgCodes.`Cost` ::
       Nil
 
     val l2 = MCalTypes.values.map(_.name)
