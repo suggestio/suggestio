@@ -110,4 +110,7 @@ object WarnMsgs extends MsgsStaticT {
   /** Какое-то действие отфильтровано, т.к. система ожидает исполнения реквеста по смежному или этому же действию. */
   def REQUEST_STILL_IN_PROGRESS              = E(47)
 
+  /** Что-то не удалось провалидировать. */
+  def VALIDATION_FAILED                      = E(48)
+
 }

@@ -672,7 +672,7 @@ class LkNodes @Inject() (
             tfDailyOpt <- tfDailyUtil.tfMode2tfDaily( tfdm )
 
             // Обновить узел новым тарифом.
-            _ <- {
+            mnode2 <- {
               LOGGER.trace(s"$logPrefix mode=$tfdm ==>> tf = $tfDailyOpt")
               mNodes.tryUpdate( request.mnode ) { mnode =>
                 mnode.copy(
@@ -685,11 +685,25 @@ class LkNodes @Inject() (
               }
             }
 
+            // Собрать инфу по обновлённому тарифу для http-ответа.
+            tfInfo <- tfDailyUtil.getTfInfo(mnode2)
+
           } yield {
             LOGGER.debug(s"$logPrefix Node#${rcvrKey.last} tfDaily set to $tfDailyOpt")
 
+            // Собрать ответ.
+            val mLknNode = MLknNode(
+              id        = mnode2.id.get,
+              name      = mnode2.guessDisplayNameOrIdOrQuestions,
+              ntypeId   = mnode2.common.ntype.strId,
+              isEnabled = mnode2.common.isEnabled,
+              canChangeAvailability = Some(true),
+              hasAdv    = None,
+              tf        = Some(tfInfo)
+            )
+
             // Собрать HTTP-ответ клиенту
-            val bbuf = PickleUtil.pickle( tfdm )
+            val bbuf = PickleUtil.pickle( mLknNode )
             Ok( ByteString(bbuf) )
           }
         }

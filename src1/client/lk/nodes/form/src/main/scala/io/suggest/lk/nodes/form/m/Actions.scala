@@ -154,6 +154,9 @@ case object TfDailyEditClick
 /** Команда сохранения возможно обновлённого тарифа. */
 case object TfDailySaveClick
   extends LkNodesAction
+/** Сигнал ответа сервера по поводу обновления тарифа. */
+case class TfDailySavedResp(tryResp: Try[MLknNode])
+  extends LkNodesAction
 
 /** Отмена редактирования тарифа текущего узла. */
 case object TfDailyCancelClick
@@ -162,3 +165,12 @@ case object TfDailyCancelClick
 /** Юзер редактирует значением amount для ручного тарифа. */
 case class TfDailyManualAmountChanged(amount: String)
   extends LkNodesAction
+
+/** Выбран режим унаследованного тарифа. */
+case object TfDailyInheritedMode
+  extends LkNodesAction
+
+/** Выбран режим ручной тарификации. */
+case object TfDailyManualMode
+  extends LkNodesAction
+

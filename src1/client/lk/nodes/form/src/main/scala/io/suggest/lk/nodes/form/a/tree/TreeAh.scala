@@ -479,6 +479,29 @@ class TreeAh[M](
       )
       updated(v2)
 
+
+    // Сигнал о завершении запроса к серверу на тему редактирования тарифа размещения.
+    case m: TfDailySavedResp =>
+      val v0 = value
+      val rcvrKey = v0.showProps.get
+      val v2 = v0.withNodes(
+        MNodeState
+          .flatMapSubNode( rcvrKey, v0.nodes ) { mns0 =>
+            val mns2 = m.tryResp.fold(
+              {_ =>
+                // Ошибка должна быть отработана EditTfDailyAh.
+                mns0
+              },
+              {node2 =>
+                mns0.withInfo(node2)
+              }
+            )
+            mns2 :: Nil
+          }
+          .toList
+      )
+      updated(v2)
+
   }
 
 }

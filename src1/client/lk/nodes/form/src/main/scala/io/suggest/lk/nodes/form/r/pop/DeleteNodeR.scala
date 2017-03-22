@@ -65,21 +65,20 @@ object DeleteNodeR {
                   <.div(
                     ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
 
-                    // Кнопки поменяны местами для защиты от двойных нажатий.
-                    // Кнопка отмены удаления:
+                    // Кнопка подтверждения удаления, красная.
                     <.a(
-                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M),
-                      ^.onClick --> onCancelClick,
-                      Messages(MsgCodes.`Cancel`)
+                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M),
+                      ^.onClick --> onOkClick,
+                      Messages(MsgCodes.`Yes.delete.it`)
                     ),
 
                     HtmlConstants.NBSP_STR,
 
-                    // Кнопка подтверждения удаления, красная.
+                    // Кнопка отмены удаления:
                     <.a(
-                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.NEGATIVE, Css.Size.M, Css.Buttons.LIST),
-                      ^.onClick --> onOkClick,
-                      Messages(MsgCodes.`Yes.delete.it`)
+                      ^.`class` := Css.flat(Css.Buttons.BTN, Css.Buttons.MINOR, Css.Size.M, Css.Buttons.LIST),
+                      ^.onClick --> onCancelClick,
+                      Messages(MsgCodes.`Cancel`)
                     )
                   )
 

@@ -27,6 +27,8 @@ sealed trait ITfDailyMode {
 
   def msgCode: String
 
+  def isValid: Boolean
+
   /** Amount, если задан. Появился из-за особенностей валидации через accord. */
   def amountOpt: Option[Amount_t] = None
 
@@ -44,6 +46,7 @@ sealed trait ITfDailyMode {
 /** Режим: наследовать тариф. */
 case object InheritTf extends ITfDailyMode {
   override def manualOpt = None
+  override def isValid = true
   override def isManual = false
   override def isInherited = true
   override def msgCode = MsgCodes.`Inherited`
@@ -66,6 +69,11 @@ final case class ManualTf( amount: Amount_t )
 
   override def withAmount(amount2: Amount_t): ManualTf = {
     copy(amount = amount2)
+  }
+
+  override def isValid: Boolean = {
+    amount >= TfDailyConst.Amount.MIN &&
+    amount <= TfDailyConst.Amount.MAX
   }
 
 }

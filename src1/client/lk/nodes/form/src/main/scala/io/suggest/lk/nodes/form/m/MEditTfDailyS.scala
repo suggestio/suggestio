@@ -31,11 +31,14 @@ object MEditTfDailyS {
   * @param request Реквест к серверу с обновлением тарифа.
   */
 case class MEditTfDailyS(
-                          mode    : ITfDailyMode,
-                          nodeTfOpt  : Option[MTfDailyInfo],
-                          request : Pot[_] = Pot.empty
+                          mode        : ITfDailyMode,
+                          nodeTfOpt   : Option[MTfDailyInfo],
+                          request     : Pot[_] = Pot.empty
                         ) {
 
   def withMode(mode2: ITfDailyMode) = copy(mode = mode2)
+  def withRequest(req2: Pot[_]) = copy(request = req2)
+
+  def isValid = mode.isValid
 
 }

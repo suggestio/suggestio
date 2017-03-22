@@ -49,4 +49,7 @@ sealed trait LkNodesCtl extends js.Object {
   /** Сабмит обновления данных размещения какой-то карточки на каком-то узле по rcvrKey. */
   def setAdv(adId: String, isEnabled: Boolean, onNodeRcvrKey: String): Route = js.native
 
+  /** Сабмит обновлённых данных по тарификацию размещений на узле. */
+  def setTfDaily(onNodeRcvrKey: String): Route = js.native
+
 }

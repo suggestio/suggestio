@@ -144,7 +144,7 @@ object Css {
 
     /** Стили для попапов. */
     object Popup {
-      def CLOSE = "close"
+      def CLOSE = Buttons.CLOSE
       def POPUP = "popup"
       def POPUPS = POPUP + "s"
       def POPUPS_CONTAINER = POPUPS + "-" + _CONTAINER
@@ -237,6 +237,7 @@ object Css {
   object Buttons {
 
     def BTN = "btn"
+    def CLOSE = "close"
     def BTN_W = BTN + "-w"
 
     def PREFIX = __

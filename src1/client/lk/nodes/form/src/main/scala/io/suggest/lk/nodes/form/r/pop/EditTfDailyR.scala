@@ -4,7 +4,7 @@ import diode.react.ModelProxy
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.nodes.form.m.{MEditTfDailyS, TfDailyCancelClick, TfDailyManualAmountChanged, TfDailySaveClick}
+import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.pop.PopupR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -26,11 +26,18 @@ object EditTfDailyR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    private val modeInputName = "mode"
-    private val modeInheritedValue = "inh"
-    private val modeManualValue = "man"
-    private val radio = "radio"
+    private def onInheritedModeClick: Callback = {
+      dispatchOnProxyScopeCB( $, TfDailyInheritedMode )
+    }
 
+    private def onManualModeClick: Callback = {
+      dispatchOnProxyScopeCB( $, TfDailyManualMode )
+    }
+
+    private def onManualAmountChange(e: ReactEventI): Callback = {
+      val v = e.target.value
+      dispatchOnProxyScopeCB( $, TfDailyManualAmountChanged(v) )
+    }
 
     private def onSaveClick: Callback = {
       dispatchOnProxyScopeCB( $, TfDailySaveClick )
@@ -38,21 +45,6 @@ object EditTfDailyR {
 
     private def onCancelClick: Callback = {
       dispatchOnProxyScopeCB( $, TfDailyCancelClick )
-    }
-
-    private def onModeChanged(e: ReactEventI): Callback = {
-      e.target.value match {
-        case modeInheritedValue =>
-        case modeManualValue =>
-      }
-      ???
-    }
-
-    private def onManualAmountChange(e: ReactEventI): Callback = {
-      val v = e.target.value
-      e.stopPropagationCB >> {
-        dispatchOnProxyScopeCB( $, TfDailyManualAmountChanged(v) )
-      }
     }
 
 
@@ -67,24 +59,28 @@ object EditTfDailyR {
           )
         } { popupPropsProxy =>
 
+          val modeInputName = "mode"
+          val radio = "radio"
+          val editSValid = editS.isValid
+
           PopupR( popupPropsProxy )(
             <.h2(
               ^.`class` := Css.Lk.MINOR_TITLE,
               Messages( MsgCodes.`Adv.tariff` )
             ),
 
-            // TODO Форма с radio-кнопками и полем ввода ручного ценника.
+            // Форма с radio-кнопками и полем ввода ручного ценника.
             <.div(
-              ^.onChange ==> onModeChanged,
 
               <.div(
                 <.label(
                   ^.`class` := Css.Input.INPUT,
                   <.input(
-                    ^.`type`  := radio,
-                    ^.name    := modeInputName,
-                    ^.value   := modeInheritedValue,
-                    ^.checked := editS.mode.isInherited
+                    ^.`type`    := radio,
+                    ^.name      := modeInputName,
+                    ^.value     := "inh",
+                    ^.checked   := editS.mode.isInherited,
+                    ^.onChange --> onInheritedModeClick
                   ),
                   <.span,
                   Messages( MsgCodes.`Inherited` )
@@ -96,10 +92,11 @@ object EditTfDailyR {
                 <.label(
                   ^.`class` := Css.Input.INPUT,
                   <.input(
-                    ^.`type`  := radio,
-                    ^.name    := modeInputName,
-                    ^.value   := modeManualValue,
-                    ^.checked := editS.mode.isManual
+                    ^.`type`    := radio,
+                    ^.name      := modeInputName,
+                    ^.value     := "man",
+                    ^.checked   := editS.mode.isManual,
+                    ^.onChange --> onManualModeClick
                   ),
                   <.span,
                   Messages( MsgCodes.`Set.manually` )
@@ -118,7 +115,8 @@ object EditTfDailyR {
                         ^.value  := MPrice.amountStr( mprice ),
                         ^.onChange ==> onManualAmountChange
                       ),
-                      mcurrency.symbol
+                      mcurrency.symbol,
+                      Messages( MsgCodes.`_per_.day` )
                     )
                   )
                 }
@@ -131,8 +129,14 @@ object EditTfDailyR {
               ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
 
               <.a(
-                ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.MAJOR, Css.Size.M ),
-                ^.onClick --> onSaveClick,
+                ^.classSet1(
+                  Css.flat( Css.Buttons.BTN, Css.Size.M ),
+                  Css.Buttons.MAJOR -> editSValid,
+                  Css.Buttons.MINOR -> !editSValid
+                ),
+                editSValid ?= {
+                  ^.onClick --> onSaveClick
+                },
                 Messages( MsgCodes.`Save` )
               ),
 

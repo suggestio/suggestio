@@ -67,15 +67,13 @@ object NodeR extends Log { self =>
     }
 
     /** Callback клика по кнопке удаления узла. */
-    private def onNodeDeleteClick: Callback = {
-      _dispatchCB( NodeDeleteClick )
+    private def onNodeDeleteClick(e: ReactEvent): Callback = {
+      e.stopPropagationCB >> _dispatchCB( NodeDeleteClick )
     }
 
     /** Callback для кнопки редактирования узла. */
     private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
-      e.stopPropagationCB >>= { _ =>
-        _dispatchCB( NodeEditClick(rcvrKey) )
-      }
+      e.stopPropagationCB >> _dispatchCB( NodeEditClick(rcvrKey) )
     }
 
     private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
@@ -96,8 +94,7 @@ object NodeR extends Log { self =>
 
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
     private def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
-      e.stopPropagation()
-      _dispatchCB(
+      e.stopPropagationCB >> _dispatchCB(
         AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked)
       )
     }
@@ -264,7 +261,17 @@ object NodeR extends Log { self =>
                   HtmlConstants.NBSP_STR,
                   _smallWaitLoader
                 )
+              },
+
+              // Кнопка удаления узла.
+              (isShowProps && node.info.canChangeAvailability.contains(true)) ?= {
+                <.span(
+                  ^.`class`  := Css.Buttons.CLOSE,
+                  ^.onClick ==> onNodeDeleteClick,
+                  ^.title    := (Messages( MsgCodes.`Delete` ) + HtmlConstants.ELLIPSIS)
+                )
               }
+
             )
 
           } { ed =>
@@ -391,29 +398,6 @@ object NodeR extends Log { self =>
 
                   )
                 }, // for
-
-
-                // Рендерить поддержку удаления узла.
-                <.tr(
-                  _kvTdKey(
-                    Messages( MsgCodes.`Deletion` )
-                  ),
-
-                  _kvTdValue(
-                    // Нормальный режим, удаления узла не происходит. Рендерить обычные кнопки управления.
-                    <.div(
-                      // Кнопка удаления узла.
-                      node.info.canChangeAvailability.contains(true) ?= {
-                        <.a(
-                          ^.`class`  := Css.flat(Css.Colors.RED, Css.Lk.LINK),
-                          ^.onClick --> onNodeDeleteClick,
-                          Messages( MsgCodes.`Delete` ),
-                          HtmlConstants.ELLIPSIS
-                        )
-                      }
-                    )
-                  )
-                ),
 
                 // Рендер строки данных по тарифу размещения.
                 for (tfInfo <- node.info.tf) yield {
