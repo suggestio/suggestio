@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
-import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.bill.MCurrencies
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -76,6 +76,7 @@ object EditTfDailyR {
 
             // Форма с radio-кнопками и полем ввода ручного ценника.
             <.div(
+              ^.`class` := Css.Lk.Popup.ALEFT,
 
               <.div(
                 <.label(
@@ -118,13 +119,13 @@ object EditTfDailyR {
 
                       for (mia <- editS.inputAmount) yield {
                         <.input(
-                          ^.`type`   := "text",
-                          ^.`class`  := Css.Lk.Nodes.Inputs.INPUT70,
-                          ^.value    := mia.value,
+                          ^.`type`    := "text",
+                          ^.`class`   := Css.Lk.Nodes.Inputs.INPUT70,
+                          ^.value     := mia.value,
                           ^.onChange ==> onManualAmountChange
                         )
                       },
-                      
+
                       mcurrency.symbol,
                       Messages( MsgCodes.`_per_.day` )
                     )

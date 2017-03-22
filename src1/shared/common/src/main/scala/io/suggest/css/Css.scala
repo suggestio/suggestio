@@ -145,6 +145,7 @@ object Css {
     /** Стили для попапов. */
     object Popup {
       def CLOSE = Buttons.CLOSE
+      def ALEFT = "aleft"   // align=left с поправкой на попап. Изначально было реализовано только для .lkn.popup.aleft
       def POPUP = "popup"
       def POPUPS = POPUP + "s"
       def POPUPS_CONTAINER = POPUPS + "-" + _CONTAINER
