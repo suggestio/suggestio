@@ -204,7 +204,7 @@ class ScAdSearchUtil @Inject() (
         LOGGER.trace(s"$logPrefix Cleared beacons set: ${uids.mkString(", ")}")
 
         // Учитывать только маячки до этого расстояния. Остальные не учитывать
-        val maxDistance = BeaconUtil.DIST_CM_10M
+        val maxDistance = BeaconUtil.DIST_CM_FAR
 
         val bcns2Iter = bcns
           .iterator

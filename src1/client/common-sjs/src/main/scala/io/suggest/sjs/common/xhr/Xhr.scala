@@ -122,9 +122,9 @@ object Xhr extends Log {
       .filter { p =>
         !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"
       }
-      .fold(true) {
-        case "http:"  => false
-        case _        => true
+      .fold(true) { proto =>
+        // Обычно протокол описан как "http:" или "https:". Поэтому просто проверяем наличие буквы s в строке.
+        proto.contains("s")
       }
   }
 
