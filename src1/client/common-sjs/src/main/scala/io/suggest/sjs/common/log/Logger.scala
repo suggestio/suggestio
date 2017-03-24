@@ -78,7 +78,7 @@ trait Log extends ILog {
   override def LOG: Logger = {
     val csn = try {
       getClass.getSimpleName
-    } catch { case ex: Throwable =>
+    } catch { case _: Throwable =>
       getClass.getName
     }
     new Logger( csn )

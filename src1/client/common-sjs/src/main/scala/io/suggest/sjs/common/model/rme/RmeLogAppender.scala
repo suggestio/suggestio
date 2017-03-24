@@ -26,7 +26,7 @@ abstract class RmeLogAppender extends ILogAppender {
     // Организовать запрос на сервер по указанной ссылке.
     val fut = Xhr.successIfStatus( HttpStatuses.NO_CONTENT ) {
       Xhr.send(
-        route   = route,
+        route   = route,      // TODO Отработать отсутствие роуты через /sc/error
         headers = Seq(
           Xhr.HDR_CONTENT_TYPE -> Xhr.MIME_JSON
         ),
@@ -45,7 +45,7 @@ abstract class RmeLogAppender extends ILogAppender {
     }
 
     // Залоггировать проблемы реквеста в консоль.
-    fut.onFailure { case ex: Throwable =>
+    for (ex <- fut.failed) {
       val n = "\n"
       println( ErrorMsgs.RME_LOGGER_REQ_FAIL + " " + logMsg + " " + ex + " " + ex.getStackTrace.mkString(n,n,n))
     }

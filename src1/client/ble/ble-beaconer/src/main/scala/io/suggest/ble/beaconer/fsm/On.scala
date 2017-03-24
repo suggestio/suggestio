@@ -82,44 +82,41 @@ trait On extends BeaconerFsmStub { thisFsm =>
 
     /** Реакция на сигнал обнаружения маячка. */
     def _handleBeaconSeen(bs: BeaconDetected): Unit = {
+      LOG.warn( "DBG", msg = bs )
+
       bs.beacon.uid
         .filter(_.nonEmpty)
         // Интересуют только маячки с идентификаторами.
         .fold[Unit] {
-          LOG.log(WarnMsgs.BLE_BEACON_EMPTY_UID, msg = bs)
+          LOG.warn(WarnMsgs.BLE_BEACON_EMPTY_UID, msg = bs)
         } { bUid =>
-          for {
-            // для которых можно оценить мгновенное расстояние...
-            distanceM <- {
-              val dOpt = RadioUtil.calculateAccuracy(bs.beacon)
-              if (dOpt.isEmpty)
-                LOG.warn(WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = bs.beacon)
-              dOpt
+          val distanceOptM = RadioUtil.calculateAccuracy(bs.beacon)
+
+          val sd0 = _stateData
+          val beaconSd1 = sd0.beacons
+            .get(bUid)
+            .fold[BeaconSd] {
+              BeaconSd(
+                beacon     = bs.beacon,
+                lastSeenMs = bs.seen
+              )
+            } { currBeaconSd =>
+              currBeaconSd.copy(
+                beacon     = bs.beacon,
+                lastSeenMs = bs.seen
+              )
             }
-
-          } {
-            val sd0 = _stateData
-            val beaconSd1 = sd0.beacons
-              .get(bUid)
-              .fold[BeaconSd] {
-                BeaconSd(
-                  beacon     = bs.beacon,
-                  lastSeenMs = bs.seen
-                )
-              } { currBeaconSd =>
-                currBeaconSd.copy(
-                  beacon     = bs.beacon,
-                  lastSeenMs = bs.seen
-                )
-              }
-            // Нам проще работать с целочисленной дистанцией в сантиметрах
-            val distanceCm = (distanceM * 100).toInt
-
-            beaconSd1.accuracies.pushValue(distanceCm)
-            _stateData = sd0.withBeacons(
-              sd0.beacons + ((bUid, beaconSd1))
-            )
+          val distanceM = distanceOptM.getOrElse {
+            LOG.warn(WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = bs.beacon)
+            99
           }
+          // Нам проще работать с целочисленной дистанцией в сантиметрах
+          val distanceCm = (distanceM * 100).toInt
+
+          beaconSd1.accuracies.pushValue(distanceCm)
+          _stateData = sd0.withBeacons(
+            sd0.beacons + ((bUid, beaconSd1))
+          )
         }
     }
 
@@ -306,18 +303,21 @@ trait On extends BeaconerFsmStub { thisFsm =>
         sd0.beacons
           .iterator
           .flatMap { case (k, v) =>
-            for {
+            val res = for {
               accuracyCm    <- v.accuracies.average
               uid           <- v.beacon.uid
             } yield {
               (k, MBleBeaconInfo(uid, accuracyCm))
             }
+            if (res.isEmpty)
+              LOG.warn( WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )
+            res
           }
           //.filter { tuple =>
             // Маячки на значительном расстоянии уже неинтересны.
-            // 2017.mar.24: Отключено. Тут стояло 20 почему-то, но в первом реальным магазине (ТК Гулливер) выяснилось
+            // 2017.mar.24: Отключено. Тут стояло 20м, но в первом же реальном магазине (ТК Гулливер) выяснилось
             // что из-за всяких разных факторов ощущаемые расстояния колеблятся ОТ 20 метров до 85 метров. А это значит,
-            // что фильтровать по дальности вообще смысла нет, т.к. кроме проблем это ничего не сулит в реальной обстановке.
+            // что фильтровать по дальности вообще смысла мало, т.к. кроме проблем это ничего не сулит в реальной обстановке.
             //tuple._2.distanceCm < 10000
           //}
           .toSeq
