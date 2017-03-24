@@ -116,6 +116,7 @@ class JsMessagesUtil @Inject() (
       "Node.with.such.id.already.exists" ::
       "Type.new.name.for.beacon.0" ::
       "For.example.0" ::
+      MsgCodes.`Show.details` ::
       MsgCodes.`Close` ::
       MsgCodes.`Save` ::
       MsgCodes.`Cancel` ::

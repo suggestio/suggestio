@@ -48,7 +48,11 @@ case class MEditTfDailyS(
     )
   }
 
-  def isValid = mode.isValid && (inputAmount.isEmpty || inputAmount.exists(_.isValid))
+  /** Является ли текущее состояние тарифа пригодным для сохранения на сервере? */
+  def isValid: Boolean = {
+    mode.isValid &&
+      inputAmount.fold(true)(_.isValid)
+  }
 
 }
 

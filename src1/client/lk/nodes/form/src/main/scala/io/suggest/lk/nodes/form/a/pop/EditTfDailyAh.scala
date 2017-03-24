@@ -63,7 +63,7 @@ class EditTfDailyAh[M](
           case _: Throwable =>
             v.mode -> false
         }
-        val v22 = v.withModeInputAmount(
+        v.withModeInputAmount(
           mode2,
           Some(
             MInputAmount(
@@ -72,8 +72,6 @@ class EditTfDailyAh[M](
             )
           )
         )
-        println( m + " " + v22 )
-        v22
       }
       updated( v2 )
 

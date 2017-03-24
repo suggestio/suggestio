@@ -121,7 +121,6 @@ object NodeR extends Log { self =>
 
 
     private def _smallWaitLoader  = LkPreLoaderR.AnimSmall
-    private def _mediumLoader     = LkPreLoaderR.AnimMedium
 
     private val _delim = <.div(
       ^.`class` := Css.Lk.Nodes.DELIM
