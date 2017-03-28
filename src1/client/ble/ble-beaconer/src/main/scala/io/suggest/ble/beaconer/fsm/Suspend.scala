@@ -28,6 +28,7 @@ trait Suspend extends BeaconerFsmStub {
     /** Действия, которые вызываются, когда это состояние выставлено в актор. */
     override def afterBecome(): Unit = {
       super.afterBecome()
+      LOG.log("SUSPENDED")
 
       // Запустить таймер сброса данных по маячкам, если есть какие-то данные
       val sd0 = _stateData

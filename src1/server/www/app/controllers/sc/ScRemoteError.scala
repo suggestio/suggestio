@@ -31,11 +31,10 @@ trait ScRemoteError
 
   import mCommonDi._
 
-  /** Малый дедлайн, т.к. новая выдача бывает любит пофлудить ошибками. */
-  private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(3)
+  private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(1)
 
   /** Маппинг для вычитывания результата из тела POST. */
-  private def errorFormM: Form[MScRemoteDiag] = {
+  private val errorFormM: Form[MScRemoteDiag] = {
     import io.suggest.err.ErrorConstants.Remote._
     Form(
       mapping(
@@ -64,6 +63,7 @@ trait ScRemoteError
       }
     )
   }
+
 
   /**
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.

@@ -82,7 +82,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
 
     /** Реакция на сигнал обнаружения маячка. */
     def _handleBeaconSeen(bs: BeaconDetected): Unit = {
-      LOG.warn( "DBG", msg = bs )
+      LOG.log( "hBS", msg = bs )
 
       bs.beacon.uid
         .filter(_.nonEmpty)
@@ -106,12 +106,14 @@ trait On extends BeaconerFsmStub { thisFsm =>
                 lastSeenMs = bs.seen
               )
             }
-          val distanceM = distanceOptM.getOrElse {
+          val distanceM: Double = distanceOptM.getOrElse {
             LOG.warn(WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = bs.beacon)
             99
           }
           // Нам проще работать с целочисленной дистанцией в сантиметрах
           val distanceCm = (distanceM * 100).toInt
+
+          LOG.log( msg = (bUid :: distanceCm :: Nil).mkString(" ") )
 
           beaconSd1.accuracies.pushValue(distanceCm)
           _stateData = sd0.withBeacons(
@@ -124,6 +126,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
     /** Просто уйти в отключку немедленно. */
     def _goOffline(): Unit = {
       val sd0 = _stateData
+      LOG.log( "OFF" )
 
       // Остановить мониторинг
       for (api <- sd0.listeningOn) {
@@ -263,7 +266,10 @@ trait On extends BeaconerFsmStub { thisFsm =>
       val ttl = FORGET_UNSEEN_AFTER
       val now = System.currentTimeMillis()
       val beacons2 = sd0.beacons.filter { case (_, v) =>
-        now - v.lastSeenMs < ttl
+        val r = now - v.lastSeenMs < ttl
+        if (!r)
+          LOG.log( "gc", msg = v )
+        r
       }
       // Если были какие-то изменения в карте маячков, то запланировать возможные уведомления для подписчиков.
       if (sd0.beacons.size != beacons2.size) {
@@ -339,6 +345,8 @@ trait On extends BeaconerFsmStub { thisFsm =>
           .hashCode()
         Some(hash)
       }
+
+      LOG.log( "ACC", msg = fingerPrintNowOpt + "|" + sd0.envFingerPrint + " || " + beaconsNearby.iterator.map(_._2).mkString(" , ") )
 
       if (sd0.envFingerPrint != fingerPrintNowOpt) {
         // Изменилось состояние маячкового окружения. Требуется сформировать отчёт по маячкам и уведомить watcher'ов.

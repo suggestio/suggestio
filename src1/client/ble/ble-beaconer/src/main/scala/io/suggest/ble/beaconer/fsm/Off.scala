@@ -20,6 +20,7 @@ trait Off extends BeaconerFsmStub {
     override def _handleSubscribe(s: Subscribe): Unit = {
       if (IBleBeaconsApi.detectApi.nonEmpty) {
         super._handleSubscribe(s)
+        LOG.log("ON")
         become(_onlineState)
       } else {
         LOG.error( ErrorMsgs.BLE_BEACONS_API_UNAVAILABLE )
