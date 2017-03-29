@@ -117,15 +117,17 @@ object Xhr extends Log {
 
   /** Флаг предпочтения https над http при сборки абсолютных ссылок. */
   lazy val PREFER_SECURE_URLS: Boolean = {
-    Option( dom.window.location )
+    val r = Option( dom.window.location )
       .flatMap( l => Option(l.protocol) )
       .filter { p =>
-        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"
+        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"  &&  p.startsWith("http")
       }
       .fold(true) { proto =>
         // Обычно протокол описан как "http:" или "https:". Поэтому просто проверяем наличие буквы s в строке.
         proto.contains("s")
       }
+    LOG.log(msg = "Xhr.secure = " + r)
+    r
   }
 
   def send(route: Route, timeoutMsOpt: Option[Int] = None,

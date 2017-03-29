@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.model.rme
 
-import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severities, Severity}
+import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.xhr.{HttpStatuses, Xhr}
