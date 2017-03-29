@@ -30,9 +30,10 @@ abstract class RmeLogAppender extends ILogAppender {
     val fut = Xhr.successIfStatus( HttpStatuses.NO_CONTENT ) {
       Xhr.send(
         route   = route,      // TODO Отработать отсутствие роуты через /sc/error
-        headers = Seq(
-          Xhr.HDR_CONTENT_TYPE -> Xhr.MIME_JSON
-        ),
+        headers = {
+          val hdrCt = Xhr.HDR_CONTENT_TYPE -> Xhr.MIME_JSON
+          hdrCt :: Nil
+        },
         body    = {
           val report = MRmeReport(
             severity = logMsg.severity,

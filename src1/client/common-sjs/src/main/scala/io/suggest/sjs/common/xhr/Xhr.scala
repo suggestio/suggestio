@@ -101,6 +101,7 @@ object Xhr extends Log {
       .filter { p =>
         !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"
       }
+      .map(_.toLowerCase())
   }
 
   private def myHttpProto: Option[String] = {
@@ -125,7 +126,6 @@ object Xhr extends Log {
     !relUrlsOk
   }
 
-
   /** Флаг предпочтения https над http при сборки абсолютных ссылок. */
   lazy val PREFER_SECURE_URLS: Boolean = {
     val r = myHttpProto.fold(true) { proto =>
@@ -135,6 +135,7 @@ object Xhr extends Log {
     println("Xhr.secure = " + r)    // Нельзя тут LOG, иначе будет StackOverflowError во время инициализации RME-логгера.
     r
   }
+
 
   def send(route: Route, timeoutMsOpt: Option[Int] = None,
            headers: TraversableOnce[(String, String)] = Nil, body: Ajax.InputData = null): Future[XMLHttpRequest] = {
