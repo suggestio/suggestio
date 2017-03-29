@@ -31,11 +31,10 @@ class DeleteNodeAh[M](
 
     // Сигнал подтверждения удаления узла.
     case NodeDeleteOkClick =>
-      val v2 = for (v <- value) yield {
-        v.withRequest(
-          v.request.pending()
-        )
-      }
+      val v0 = value.get
+      val v2 = v0.withRequest(
+        v0.request.pending()
+      )
 
       // Запустить удаление узла на сервере.
       val fx = Effect {
@@ -47,7 +46,7 @@ class DeleteNodeAh[M](
         }
       }
 
-      updated(v2, fx)
+      updated(Some(v2), fx)
 
 
     // Сигнал о завершении запроса к серверу по поводу удаления узла.

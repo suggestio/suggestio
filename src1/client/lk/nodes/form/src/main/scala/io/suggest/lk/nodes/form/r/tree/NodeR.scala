@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.r.tree
 
 import diode.ActionType
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import diode.react.ReactPot.potWithReact
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MPrice
@@ -10,6 +10,7 @@ import io.suggest.css.Css
 import io.suggest.i18n.{I18nConst, MsgCodes}
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
+import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
@@ -43,6 +44,7 @@ object NodeR extends Log { self =>
                        node          : MNodeState,
                        parentRcvrKey : RcvrKey,
                        level         : Int,
+                       menuOptC      : ReactConnectProxy[Option[MNodeMenuS]],
                        proxy         : ModelProxy[_]
                      )
 
@@ -64,11 +66,6 @@ object NodeR extends Log { self =>
       _dispatchCB(
         NodeIsEnabledChanged(rcvrKey, isEnabled = e.target.checked)
       )
-    }
-
-    /** Callback клика по кнопке удаления узла. */
-    private def onNodeDeleteClick(e: ReactEvent): Callback = {
-      e.stopPropagationCB >> _dispatchCB( NodeDeleteClick )
     }
 
     /** Callback для кнопки редактирования узла. */
@@ -269,11 +266,7 @@ object NodeR extends Log { self =>
 
               // Кнопка удаления узла.
               (isShowProps && node.info.canChangeAvailability.contains(true)) ?= {
-                <.span(
-                  ^.`class`  := Css.Buttons.CLOSE,
-                  ^.onClick ==> onNodeDeleteClick,
-                  ^.title    := (Messages( MsgCodes.`Delete` ) + HtmlConstants.ELLIPSIS)
-                )
+                NodeMenuBtnR( p.proxy )
               }
 
             )
@@ -335,6 +328,8 @@ object NodeR extends Log { self =>
         // Рендер подробной информации по узлу
         isShowProps ?= {
           <.div(
+            p.menuOptC { NodeMenuR.apply },
+
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
             <.table(
               ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL, Css.Lk.Nodes.KvTable.LKN_TABLE ),

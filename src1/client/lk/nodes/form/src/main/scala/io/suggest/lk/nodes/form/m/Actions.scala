@@ -94,6 +94,13 @@ case class NodeIsEnabledUpdateResp(
 case object NodeDeleteClick
   extends LkNodesAction
 
+
+// Выпадающая менюшка узла с доп.функциями.
+/** Клик по кнопке меню узла. */
+case object NodeMenuBtnClick
+  extends LkNodesAction
+
+
 /** Клик по кнопке подтверждения удаления узла. */
 case object NodeDeleteOkClick
   extends LkNodesAction
@@ -177,3 +184,7 @@ case object TfDailyInheritedMode
 case object TfDailyManualMode
   extends LkNodesAction
 
+
+/** Клик где-то в документе. Нужно скрывания выпадающей менюшки, если она отображается. */
+case object DocumentClick
+  extends LkNodesAction

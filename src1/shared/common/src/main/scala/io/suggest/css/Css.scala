@@ -113,7 +113,7 @@ object Css {
       }
 
       object Name {
-        def NAME   = "nodename"
+        def NAME      = "nodename"
 
         def NORMAL    = __ + "normal"
         def DISABLED  = __ + "disabled"
@@ -121,11 +121,19 @@ object Css {
         def EDITING   = __ + "editing"
         def SHOWING   = __ + "showing"
 
-        def EDIT_BTN     = "edit-btn"
-        def TITLE        = "title"
-        def CONTENT      = "content"
+        def EDIT_BTN  = "edit-btn"
+        def TITLE     = "title"
+        def CONTENT   = "content"
 
         def EDITING_BTNS = "editing-btns"
+      }
+
+      /** Менюшка узла. */
+      object Menu {
+        def BTN  = "menu-btn"
+
+        def CONT = "menu"
+        def ITEM = "item"
       }
 
       object KvTable {

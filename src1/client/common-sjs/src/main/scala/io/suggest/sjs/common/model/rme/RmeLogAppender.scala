@@ -20,7 +20,7 @@ abstract class RmeLogAppender extends ILogAppender {
   /** Куда делать реквест. Функция, возвращающая route. */
   def route: Route
 
-  def minSeverity: Severity = Severities.ALL
+  def minSeverity: Severity //= Severities.Warn
 
   private def _logAppendInto(logMsg: LogMsg, route: Route): Future[_] = {
     // Организовать запрос на сервер по указанной ссылке.

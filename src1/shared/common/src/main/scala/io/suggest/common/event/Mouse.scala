@@ -13,3 +13,4 @@ trait Mouse {
   def MOUSE_UP        = "mouseup"
 
 }
+object MouseEvents extends Mouse with Click
