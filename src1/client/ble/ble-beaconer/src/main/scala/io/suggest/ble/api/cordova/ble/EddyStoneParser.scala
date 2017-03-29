@@ -38,7 +38,7 @@ object EddyStoneParser extends BeaconParserFactory {
   *   }
   * }}}
   *
-  * А это сигнал EddyStone-URL маячка, который нам неинтересен:
+  * А это сигнал EddyStone-URL маячка:
   * {{{
   *   {
   *     "address": "EF:3B:62:6A:2E:9B",
@@ -88,7 +88,7 @@ case class EddyStoneParser(override val dev: DeviceInfo)
       val bytes = JsBinaryUtil.base64DecToArr(b64data)
       val frameCode = bytes(0)
 
-      if (frameCode == 0x00 && bytes.byteLength <= 18) {
+      if (frameCode == 0x00 && bytes.byteLength >= 18) {
         // Раз уж есть данные, то заодно уточнить значение RSSI.
         val rssi = dev.rssi.get
 

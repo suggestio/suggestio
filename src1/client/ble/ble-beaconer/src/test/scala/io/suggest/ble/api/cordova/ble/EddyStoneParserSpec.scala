@@ -24,7 +24,7 @@ object EddyStoneParserSpec extends SimpleTestSuite {
       val svcUuid = "0000feaa-0000-1000-8000-00805f9b34fb"
       ad.kCBAdvDataServiceUUIDs = js.Array( svcUuid )
       ad.kCBAdvDataServiceData  = js.Dictionary[String](
-        "0000feaa-0000-1000-8000-00805f9b34fb" -> "AMOqESIzRFVmd4iZAAAAAARW"
+        svcUuid -> "AMOqESIzRFVmd4iZAAAAAARW"
       )
       ad
     }
@@ -41,6 +41,34 @@ object EddyStoneParserSpec extends SimpleTestSuite {
     //assertEquals(r.rssi0, -61)
 
     assertEquals( r.uid, Some("aa112233445566778899-000000000456") )
+  }
+
+
+  test("Parse some strange eddystone-UID beacon from TK Gulliver (scan via iPhone)") {
+
+    val dev = js.Object().asInstanceOf[DeviceInfo]
+    dev.address = "35E90358-121B-4BE9-811A-0AE262D2FED5"
+    dev.rssi = -95
+    dev.advertisementData = {
+      val ad = js.Object().asInstanceOf[AdvertisementData]
+      val svcUuid = "0000feaa-0000-1000-8000-00805f9b34fb"
+      ad.kCBAdvDataServiceUUIDs = js.Array(svcUuid)
+      ad.kCBAdvDataServiceData = js.Dictionary[String](
+        svcUuid -> "AOO6HFG6sxR+/ujlJSQjIiEgAAA="
+      )
+      ad
+    }
+
+    val rEithOpt = EddyStoneParser(dev).parse()
+    assert( rEithOpt.isDefined, rEithOpt.toString )
+
+    val rEith = rEithOpt.get
+    assert( rEith.isRight, rEith.toString )
+
+    val r = rEith.right.get
+
+    assertEquals( r.txPower, -29 )
+    assertEquals( r.uid, Some("ba1c51bab3147efee8e5-252423222120") )
   }
 
 }
