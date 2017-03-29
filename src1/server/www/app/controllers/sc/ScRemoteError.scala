@@ -31,7 +31,7 @@ trait ScRemoteError
 
   import mCommonDi._
 
-  private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(1)
+  //private val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDeadline(1)
 
   /** Маппинг для вычитывания результата из тела POST. */
   private val errorFormM: Form[MScRemoteDiag] = {
@@ -69,7 +69,7 @@ trait ScRemoteError
    * Реакция на ошибку в showcase (в выдаче). Если слишком много запросов с одного ip, то экшен начнёт тупить.
    * @return NoContent или NotAcceptable.
    */
-  def handleScError = bruteForceProtect(_BFP_ARGS) {
+  def handleScError = /*bruteForceProtect(_BFP_ARGS)*/ {
     maybeAuth(U.PersonNode).async { implicit request =>
       lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
       errorFormM.bindFromRequest().fold(
