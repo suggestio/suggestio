@@ -94,19 +94,30 @@ object Xhr extends Log {
   }
 
 
+  private def myProto: Option[String] = {
+    Option( dom.window.location )
+      .filterNot(js.isUndefined)
+      .flatMap( l => Option(l.protocol) )
+      .filter { p =>
+        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"
+      }
+  }
+
+  private def myHttpProto: Option[String] = {
+    myProto.filter { p =>
+      p.startsWith("http")
+    }
+  }
+
   /** Флаг предпочтения генерации абсолютных ссылок из Route вместо привычных относительных.
     * Для браузера хватает относительных ссылок, а вот cordova держит webview в локальном контексте. */
   val PREFER_ABS_URLS: Boolean = {
     // Подготовить Xhr к работе. Если cordova-приложение или какой-то локальный запуск, то нужно использовать absoluter urls для реквестов.
     val lOpt = Option( dom.window.location )
       .filterNot(js.isUndefined)
-    val protoOpt = lOpt
-      .flatMap { l =>
-        Option(l.protocol)
-      }
-    val isHttp = protoOpt.exists { proto =>
-      proto.toLowerCase.trim.startsWith("http")
-    }
+
+    val isHttp = myHttpProto.nonEmpty
+
     // Если это не http/https или hostname пустоват, то активировать предпочтетение абсолютных URL.
     val relUrlsOk = isHttp && lOpt
       .flatMap(l => Option(l.hostname))
@@ -117,16 +128,11 @@ object Xhr extends Log {
 
   /** Флаг предпочтения https над http при сборки абсолютных ссылок. */
   lazy val PREFER_SECURE_URLS: Boolean = {
-    val r = Option( dom.window.location )
-      .flatMap( l => Option(l.protocol) )
-      .filter { p =>
-        !js.isUndefined(p)  &&  p.nonEmpty  &&  p != "null"  &&  p.startsWith("http")
-      }
-      .fold(true) { proto =>
-        // Обычно протокол описан как "http:" или "https:". Поэтому просто проверяем наличие буквы s в строке.
-        proto.contains("s")
-      }
-    LOG.log(msg = "Xhr.secure = " + r)
+    val r = myHttpProto.fold(true) { proto =>
+      // Обычно протокол описан как "http:" или "https:". Поэтому просто проверяем наличие буквы s в строке.
+      proto.contains("s")
+    }
+    println("Xhr.secure = " + r)    // Нельзя тут LOG, иначе будет StackOverflowError во время инициализации RME-логгера.
     r
   }
 

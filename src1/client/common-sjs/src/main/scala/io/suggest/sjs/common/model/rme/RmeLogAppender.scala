@@ -17,6 +17,9 @@ import scala.scalajs.js.JSON
   */
 abstract class RmeLogAppender extends ILogAppender {
 
+  // TODO Нужна защита от StackOverflow, чтобы избежать вызова логгера во время инициализации object'ов.
+  //private var _isReady: Boolean = false
+
   /** Куда делать реквест. Функция, возвращающая route. */
   def route: Route
 
