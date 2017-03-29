@@ -16,6 +16,8 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   */
 object EddyStoneParser extends BeaconParserFactory {
   override type T = EddyStoneParser
+
+  private val UID_PAYLOAD_BYTELEN = 18
 }
 
 
@@ -83,12 +85,14 @@ case class EddyStoneParser(override val dev: DeviceInfo)
 
     } yield {
 
-      // Это EddyStone 100%. Но нас интересует только EddyStone-UID. Для остальных возвращать Left().
-      // Загнать данные eddystone-сервиса в байтовый массив...
+      // Это EddyStone 100%. Загнать данные eddystone-сервиса в байтовый массив...
       val bytes = JsBinaryUtil.base64DecToArr(b64data)
       val frameCode = bytes(0)
 
-      if (frameCode == 0x00 && bytes.byteLength >= 18) {
+      // 2017.mar.29: Бывают кривые маячки, которые шлют ошибочно длинные фреймы.
+      // Могут и 20 байт обозначить, и 19. Первый такой маячок был обнаружен в ТК Гулливер.
+      // Парсим первые N байт в UID-фреймах:
+      if (frameCode == 0x00 && bytes.byteLength >= EddyStoneParser.UID_PAYLOAD_BYTELEN) {
         // Раз уж есть данные, то заодно уточнить значение RSSI.
         val rssi = dev.rssi.get
 
@@ -97,7 +101,9 @@ case class EddyStoneParser(override val dev: DeviceInfo)
           txPower = JsBinaryUtil.littleEndianToInt8(bytes, 1),
           uid     = Some(
             LowUuidUtil.hexStringToEddyUid(
-              JsBinaryUtil.typedArrayToHexString( bytes.subarray(2, 18) )
+              JsBinaryUtil.typedArrayToHexString(
+                bytes.subarray(2, EddyStoneParser.UID_PAYLOAD_BYTELEN)
+              )
             )
           )
         )
