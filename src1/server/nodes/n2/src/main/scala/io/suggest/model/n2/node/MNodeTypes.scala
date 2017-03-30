@@ -39,6 +39,9 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
       */
     def userHasExtendedAcccess: Boolean = false
 
+    /** Разрешено ли неограниченному кругу лиц узнавать данные по узлу на тему размещения на нём? */
+    def publicCanReadInfoAboutAdvOn: Boolean = false
+
   }
 
 
@@ -82,7 +85,9 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
   }
 
   /** Узел ADN. */
-  val AdnNode: T  = new ValNoSub("n")
+  val AdnNode: T  = new ValNoSub("n") {
+    override def publicCanReadInfoAboutAdvOn = true
+  }
 
   /** Рекламная карточка. */
   val Ad: T       = new ValNoSub("a")
@@ -116,6 +121,9 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
   /** Маячок BLE. iBeacon или EddyStone -- системе это не важно. */
   val BleBeacon = new ValNoSub("b") {
+
+    /** Маячок -- тоже узел для направленного размещения, с какими-то своими правилами. */
+    override def publicCanReadInfoAboutAdvOn = true
 
     /**
       * Узлам-маячкам надо хранить свои uid'ы в _id. Так хоть и длинее,

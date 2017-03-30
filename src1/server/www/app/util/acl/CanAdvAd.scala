@@ -81,7 +81,7 @@ class CanAdvAd @Inject()(
         for (prodOpt <- prodOptFut) yield {
           val resOpt = prodOpt
             .filter { mnode =>
-              val isOwnedByMe = isNodeAdmin.isAdnNodeAdminCheckStrict(mnode, req.user)
+              val isOwnedByMe = isNodeAdmin.isNodeAdminCheckStrict(mnode, req.user)
               isOwnedByMe  &&  isAdvertiserNode(mnode)
             }
             .map { req2 }

@@ -1,18 +1,22 @@
 package controllers
 
+import akka.util.ByteString
 import com.google.inject.Inject
 import com.google.inject.name.Named
 import controllers.cbill._
+import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.MTxns
+import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.im.make.IMaker
 import models.mbill._
 import models.mcal.MCalendars
+import models.mctx.Context
 import models.mproj.ICommonDi
-import util.acl.{CanAccessItem, CanViewOrder, IsNodeAdmin, IsAuthNode}
+import util.acl._
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.{GalleryUtil, LogoUtil}
 import views.html.lk.billing._
@@ -34,7 +38,7 @@ class LkBill2 @Inject() (
                           override val canViewOrder   : CanViewOrder,
                           override val canAccessItem  : CanAccessItem,
                           @Named("blk") override val blkImgMaker  : IMaker,
-                          isAuthNode                  : IsAuthNode,
+                          canViewNodeAdvInfo          : CanViewNodeAdvInfo,
                           override val isNodeAdmin    : IsNodeAdmin,
                           override val mItems         : MItems,
                           override val bill2Util      : Bill2Util,
@@ -120,7 +124,7 @@ class LkBill2 @Inject() (
     * @return 200 Ок с версткой окошка.
     *         404 если узел не найден или не является ресивером.
     */
-  def _rcvrInfoWnd(nodeId: String) = isAuthNode(nodeId).async { implicit request =>
+  def _rcvrInfoWnd(nodeId: String) = canViewNodeAdvInfo(nodeId).async { implicit request =>
     val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode)
     val galleryFut = galleryUtil.galleryImgs(request.mnode)
 
@@ -140,6 +144,46 @@ class LkBill2 @Inject() (
 
     okFut.recover { case _: NoSuchElementException =>
       NotFound("Not a receiver: " + nodeId)
+    }
+  }
+
+
+  /** Возврат данных для рендера данных по размещению на узле..
+    *
+    * @param nodeId id узла.
+    * @return Бинарь с публичной инфой по узлу, на котором планируется размещение.
+    */
+  def nodeAdvInfoWndData(nodeId: String) = canViewNodeAdvInfo(nodeId).async { implicit request =>
+    implicit val ctx = implicitly[Context]
+
+    // Собрать картинки
+    val imgUrlsFut = for {
+      gal <- galleryUtil.galleryImgs(request.mnode)
+    } yield {
+      for (mimg <- gal) yield {
+        galleryUtil.dynLkBigCall(mimg)(ctx)
+          .url
+      }
+    }
+
+    // Собрать данные по тарифу.
+    val tfInfoFut = tfDailyUtil.getTfInfo( request.mnode )(ctx)
+
+    for {
+      tfInfo      <- tfInfoFut
+      imgUrlsFut  <- imgUrlsFut
+    } yield {
+      // Собрать финальный инстанс модели аргументов для рендера:
+      val m = MNodeAdvInfo(
+        nodeName = request.mnode.guessDisplayNameOrIdOrQuestions,
+        tfDaily  = Some(tfInfo),
+        meta     = request.mnode.meta.public,
+        imgUrls  = imgUrlsFut
+      )
+
+      // Сериализовать и отправить ответ.
+      val bbuf = PickleUtil.pickle(m)
+      Ok( ByteString(bbuf) )
     }
   }
 

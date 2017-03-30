@@ -47,7 +47,7 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
 
           mnodeOptFut.flatMap { mnodeOpt =>
             val mnodeOpt1 = mnodeOpt.filter { mnode =>
-              isNodeAdmin.isAdnNodeAdminCheck(mnode, user)
+              isNodeAdmin.isNodeAdminCheck(mnode, user)
             }
             val req1 = MNodeOptReq(mnodeOpt1, request, user)
             block(req1)

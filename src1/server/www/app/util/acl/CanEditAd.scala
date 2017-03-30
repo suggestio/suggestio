@@ -84,7 +84,7 @@ class CanEditAd @Inject() (
 
               prodNodeOptFut.flatMap {
                 case Some(producer) =>
-                  val allowed = user.isSuper || isNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                  val allowed = user.isSuper || isNodeAdmin.isNodeAdminCheck(producer, user)
 
                   if (!allowed) {
                     LOGGER.debug(s"isEditAllowed(${mad.id.get}, $user): Not a producer[$prodIdOpt] admin.")

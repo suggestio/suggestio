@@ -105,9 +105,7 @@ case class MBasicMeta(
   dateCreated   : OffsetDateTime          = OffsetDateTime.now(),
   dateEdited    : Option[OffsetDateTime]  = None,
   langs         : List[String]            = Nil
-)
-  extends MBasicMetaUtil
-{
+) {
 
   def guessDisplayName: Option[String] = {
     nameOpt
@@ -118,16 +116,6 @@ case class MBasicMeta(
   def dateEditedOrCreated: OffsetDateTime = {
     dateEdited getOrElse dateCreated
   }
-
-}
-
-
-/** Утиль для basic-meta моделей: текущей и legacy MNodeMeta. */
-trait MBasicMetaUtil {
-
-  def nameOpt: Option[String]
-  def langs: Seq[String]
-  def nameShortOpt: Option[String]
 
   /** Изначально поле name было обязательным. */
   def name: String = {

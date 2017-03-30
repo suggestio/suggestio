@@ -68,7 +68,7 @@ class CanUpdateSls @Inject() (
                 val producerIdOpt = n2NodesUtil.madProducerId(mad)
                 mNodesCache.maybeGetByIdCached(producerIdOpt).flatMap { producerOpt =>
                   val userIsNodeAdmin = producerOpt.exists { producer =>
-                    isNodeAdmin.isAdnNodeAdminCheck(producer, user)
+                    isNodeAdmin.isNodeAdminCheck(producer, user)
                   }
                   if (userIsNodeAdmin) {
                     // Юзер является админом. Всё ок.

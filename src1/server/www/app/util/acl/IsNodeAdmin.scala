@@ -43,18 +43,18 @@ class IsNodeAdmin @Inject()(
     }
   }
 
-  def checkAdnNodeCredsFut(nodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
+  def checkNodeCredsFut(nodeOptFut: Future[Option[MNode]], adnId: String, user: ISioUser): Future[Either[Option[MNode], MNode]] = {
     for (nodeOpt <- nodeOptFut) yield {
-      checkAdnNodeCreds(nodeOpt, adnId, user)
+      isUserAdminOfNode(nodeOpt, adnId, user)
     }
   }
 
-  def checkAdnNodeCreds(adnNodeOpt: Option[MNode], adnId: String, user: ISioUser): Either[Option[MNode], MNode] = {
+  def isUserAdminOfNode(adnNodeOpt: Option[MNode], adnId: String, user: ISioUser): Either[Option[MNode], MNode] = {
     adnNodeOpt.fold [Either[Option[MNode], MNode]] {
       LOGGER.warn(s"checkAdnNodeCreds(): Node[$adnId] does not exist!")
       Left(None)
     } { adnNode =>
-      val isAllowed = isAdnNodeAdminCheck(adnNode, user)
+      val isAllowed = isNodeAdminCheck(adnNode, user)
       if (isAllowed) {
         Right(adnNode)
       } else {
@@ -66,8 +66,8 @@ class IsNodeAdmin @Inject()(
     }
   }
 
-  def checkAdnNodeCredsOpt(nodeOptFut: Future[Option[MNode]], nodeId: String, user: ISioUser): Future[Option[MNode]] = {
-    checkAdnNodeCredsFut(nodeOptFut, nodeId, user).map {
+  def checkNodeCredsOpt(nodeOptFut: Future[Option[MNode]], nodeId: String, user: ISioUser): Future[Option[MNode]] = {
+    checkNodeCredsFut(nodeOptFut, nodeId, user).map {
       case Right(mnode) =>
         Some(mnode)
       case other =>
@@ -78,7 +78,7 @@ class IsNodeAdmin @Inject()(
 
   def isAdnNodeAdmin(adnId: String, user: ISioUser): Future[Option[MNode]] = {
     val fut = mNodesCache.getById(adnId)
-    checkAdnNodeCredsOpt(fut, adnId, user)
+    checkNodeCredsOpt(fut, adnId, user)
   }
 
 
@@ -108,7 +108,7 @@ class IsNodeAdmin @Inject()(
       } { nodeOptFut =>
         nodeOptFut.flatMap {
           case Some(mnode) =>
-            if ( user.isSuper || isAdnNodeAdminCheckStrict(mnode, ownersAcc) ) {
+            if ( user.isSuper || isNodeAdminCheckStrict(mnode, ownersAcc) ) {
               LOGGER.trace(s"$logPrefix Ok for node#${mnode.idOrNull}, owners = ${ownersAcc.mkString(", ")}.")
               // Есть доступ на админство. Продолжаем обход.
               __fold(
@@ -135,16 +135,16 @@ class IsNodeAdmin @Inject()(
 
 
   /** Проверка прав на управления узлом с учётом того, что юзер может быть суперюзером s.io. */
-  def isAdnNodeAdminCheck(mnode: MNode, user: ISioUser): Boolean = {
+  def isNodeAdminCheck(mnode: MNode, user: ISioUser): Boolean = {
     user.isSuper ||
-      isAdnNodeAdminCheckStrict(mnode, user)
+      isNodeAdminCheckStrict(mnode, user)
   }
 
   /** Проверка прав на домен без учёта суперюзеров. */
-  def isAdnNodeAdminCheckStrict(mnode: MNode, user: ISioUser): Boolean = {
-    isAdnNodeAdminCheckStrict(mnode, user.personIdOpt.toSet)
+  def isNodeAdminCheckStrict(mnode: MNode, user: ISioUser): Boolean = {
+    isNodeAdminCheckStrict(mnode, user.personIdOpt.toSet)
   }
-  def isAdnNodeAdminCheckStrict(mnode: MNode, personIds: Set[String]): Boolean = {
+  def isNodeAdminCheckStrict(mnode: MNode, personIds: Set[String]): Boolean = {
     personIds.nonEmpty && {
       // Проверка admin-доступа к v2: проверять OwnedBy
       val allowedOwn = mnode.edges

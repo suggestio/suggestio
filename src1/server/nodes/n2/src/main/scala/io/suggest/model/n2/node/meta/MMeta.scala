@@ -54,6 +54,8 @@ object MMeta extends IGenEsMappingProps {
   import Fields.Address.ADDRESS_FN
   import Fields.Business.BUSINESS_FN
   import Fields.Colors.COLORS_FN
+  import MAddressEs.{FORMAT => MADDRESS_FORMAT}
+  import MBusinessInfoEs.{FORMAT => MBUSINESS_INFO_FORMAT}
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MMeta] = (
@@ -91,11 +93,11 @@ object MMeta extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     // Сформировать анализируемые поля-объекты.
-    val info = List(
+    val info = List[(String, IGenEsMappingProps)](
       (BASIC_FN,        MBasicMeta),
       (PERSON_FN,       MPersonMeta),
-      (ADDRESS_FN,      MAddress),
-      (BUSINESS_FN,     MBusinessInfo)
+      (ADDRESS_FN,      MAddressEs),
+      (BUSINESS_FN,     MBusinessInfoEs)
     )
     val acc0 = for ((fn, model) <- info) yield {
       FieldObject(fn, enabled = true, properties = model.generateMappingProps)
@@ -115,4 +117,9 @@ case class MMeta(
   address       : MAddress        = MAddress.empty,
   business      : MBusinessInfo   = MBusinessInfo.empty,
   colors        : MColors         = MColors.empty
-)
+) {
+
+  /** Вернуть инстанс модели [[MMetaPub]] на основе данной модели. */
+  def public = MMetaPub(address, business)
+
+}

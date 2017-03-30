@@ -1,6 +1,5 @@
 package io.suggest.model.n2.node.meta
 
-import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -11,9 +10,7 @@ import play.api.libs.functional.syntax._
  * Created: 25.09.15 15:04
  * Description: Модель метаданных по описанию делишек узла: инфа о товарах, посетителях, сайте и т.д.
  */
-object MBusinessInfo extends IGenEsMappingProps with IEmpty {
-
-  override type T = MBusinessInfo
+object MBusinessInfoEs extends IGenEsMappingProps {
 
   object Fields {
     val SITE_URL_FN             = "su"
@@ -22,13 +19,6 @@ object MBusinessInfo extends IGenEsMappingProps with IEmpty {
 
     /** Имя поля для описания серьезного бизнеса: Business DESCRiption. */
     val BDESCR_FN               = "bd"
-  }
-
-  /** Частоиспользуемый пустой экземпляр модели [[MBusinessInfo]]. */
-  override val empty: MBusinessInfo = {
-    new MBusinessInfo() {
-      override def nonEmpty = false
-    }
   }
 
 
@@ -40,7 +30,7 @@ object MBusinessInfo extends IGenEsMappingProps with IEmpty {
     (__ \ AUDIENCE_DESCR_FN).formatNullable[String] and
     (__ \ HUMAN_TRAFFIC_AVG_FN).formatNullable[Int] and
     (__ \ BDESCR_FN).formatNullable[String]
-  )(apply, unlift(unapply))
+  )(MBusinessInfo.apply, unlift(MBusinessInfo.unapply))
 
 
   import io.suggest.es.util.SioEsUtil._
@@ -54,12 +44,3 @@ object MBusinessInfo extends IGenEsMappingProps with IEmpty {
   }
 
 }
-
-
-case class MBusinessInfo(
-  siteUrl             : Option[String]  = None,
-  audienceDescr       : Option[String]  = None,
-  humanTrafficAvg     : Option[Int]     = None,
-  info                : Option[String]  = None
-)
-  extends EmptyProduct
