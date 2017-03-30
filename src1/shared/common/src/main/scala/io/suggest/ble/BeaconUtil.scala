@@ -1,4 +1,4 @@
-package io.suggest.common.radio
+package io.suggest.ble
 
 /**
   * Suggest.io

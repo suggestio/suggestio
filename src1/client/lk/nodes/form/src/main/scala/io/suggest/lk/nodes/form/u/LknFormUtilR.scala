@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.u
 
 import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.common.radio.BeaconUtil
+import io.suggest.ble.BeaconUtil
 import io.suggest.common.text.StringUtil
 
 /**

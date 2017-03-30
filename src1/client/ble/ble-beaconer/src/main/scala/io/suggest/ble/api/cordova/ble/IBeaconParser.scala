@@ -1,7 +1,7 @@
 package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.DeviceInfo
-import io.suggest.ble.beaconer.m.beacon.apple.IBeacon
+import io.suggest.ble.ibeacon.MiBeacon
 import io.suggest.common.uuid.LowUuidUtil
 import io.suggest.sjs.common.bin.JsBinaryUtil
 import io.suggest.sjs.common.log.Log
@@ -65,7 +65,7 @@ case class IBeaconParser(override val dev: DeviceInfo)
   with Log
 {
 
-  override type T = IBeacon
+  override type T = MiBeacon
 
   override def parserFailMsg = ErrorMsgs.CANT_PARSE_IBEACON
 
@@ -88,7 +88,7 @@ case class IBeaconParser(override val dev: DeviceInfo)
       rssi <- dev.rssi
 
     } yield {
-      val ib = IBeacon(
+      val ib = MiBeacon(
         rssi          = rssi,
         // TODO отформатировать в UUID с помощью дефисов.
         proximityUuid = LowUuidUtil.hexStringToUuid(

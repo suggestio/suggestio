@@ -1,7 +1,7 @@
 package util.showcase
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.common.radio.BeaconUtil
+import io.suggest.ble.BeaconUtil
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.PointGs

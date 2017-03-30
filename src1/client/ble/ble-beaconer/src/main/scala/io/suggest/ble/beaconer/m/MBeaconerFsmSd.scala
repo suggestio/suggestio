@@ -1,8 +1,8 @@
 package io.suggest.ble.beaconer.m
 
+import io.suggest.ble.BeaconSignal
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.beacon.BeaconAccuracyMeasurer
-import io.suggest.common.radio.BeaconSignal
 import io.suggest.sjs.common.fsm.SjsFsm
 
 /**

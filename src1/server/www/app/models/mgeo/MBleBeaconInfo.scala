@@ -1,9 +1,9 @@
 package models.mgeo
 
-import io.suggest.common.radio.BeaconData
+import io.suggest.ble.BeaconData
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import io.suggest.common.radio.BleConstants.Beacon.Qs._
+import io.suggest.ble.BleConstants.Beacon.Qs._
 
 /**
   * Suggest.io

@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.m.signals
 
-import io.suggest.common.radio.BeaconSignal
+import io.suggest.ble.BeaconSignal
 import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
 

@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.ble
 
-import io.suggest.common.radio.BeaconData
-import io.suggest.common.radio.BleConstants.Beacon.Qs._
+import io.suggest.ble.BeaconData
+import io.suggest.ble.BleConstants.Beacon.Qs._
 
 import scala.scalajs.js
 

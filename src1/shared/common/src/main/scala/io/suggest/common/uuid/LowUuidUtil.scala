@@ -1,6 +1,6 @@
 package io.suggest.common.uuid
 
-import io.suggest.common.radio.BleConstants.Beacon.UID_PARTS_DELIM
+import io.suggest.ble.BleConstants.Beacon.UID_PARTS_DELIM
 
 /**
   * Suggest.io

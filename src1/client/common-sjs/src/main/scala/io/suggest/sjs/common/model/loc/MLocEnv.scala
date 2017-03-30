@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.model.loc
 
+import io.suggest.ble.BeaconData
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.common.radio.BeaconData
 import io.suggest.loc.LocationConstants._
 import io.suggest.sjs.common.ble.MBleBeaconInfo
 

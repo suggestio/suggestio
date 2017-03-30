@@ -2,7 +2,7 @@ package util.lk.nodes
 
 import com.google.inject.Singleton
 import io.suggest.adn.edit.NodeEditConstants
-import io.suggest.common.radio.BeaconUtil
+import io.suggest.ble.BeaconUtil
 import io.suggest.lk.nodes.MLknNodeReq
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}

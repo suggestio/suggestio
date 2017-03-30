@@ -1,4 +1,6 @@
-package io.suggest.common.radio
+package io.suggest.ble
+
+import io.suggest.common.radio.IDistantRadioSignal
 
 /**
   * Suggest.io
@@ -7,7 +9,7 @@ package io.suggest.common.radio
   * Description: Трейт наблюдаемых данных по ровно одному маячку.
   * Изначально назывался IBeacon, но это слегка конфликтовало с ябло-брендом.
   */
-trait BeaconSignal extends IRadioSignalInfo {
+trait BeaconSignal extends IDistantRadioSignal {
 
   /** Некий внутренний уникальный id/ключ маячка, если он вообще есть.
     *

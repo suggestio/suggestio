@@ -1,7 +1,7 @@
 package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.DeviceInfo
-import io.suggest.common.radio.BeaconSignal
+import io.suggest.ble.BeaconSignal
 import io.suggest.primo.{IApply1, TypeT}
 import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsg_t

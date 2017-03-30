@@ -1,9 +1,10 @@
 package io.suggest.ble.beaconer.fsm
 
+import io.suggest.ble.BeaconUtil
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconSd
 import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconsNearby}
-import io.suggest.common.radio.{BeaconUtil, RadioUtil}
+import io.suggest.common.radio.RadioUtil
 import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal

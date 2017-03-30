@@ -1,8 +1,8 @@
 package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.DeviceInfo
-import io.suggest.ble.beaconer.m.beacon.google.EddyStone
-import io.suggest.common.radio.BleConstants
+import io.suggest.ble.BleConstants
+import io.suggest.ble.eddystone.{MEddyStoneUid, MFrameTypes}
 import io.suggest.common.uuid.LowUuidUtil
 import io.suggest.sjs.common.bin.JsBinaryUtil
 import io.suggest.sjs.common.log.Log
@@ -16,8 +16,6 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   */
 object EddyStoneParser extends BeaconParserFactory {
   override type T = EddyStoneParser
-
-  private val UID_PAYLOAD_BYTELEN = 18
 }
 
 
@@ -62,7 +60,7 @@ case class EddyStoneParser(override val dev: DeviceInfo)
   with Log
 {
 
-  override type T = EddyStone
+  override type T = MEddyStoneUid
 
   /**
     * Парсинг eddystone-маячков.
@@ -89,20 +87,21 @@ case class EddyStoneParser(override val dev: DeviceInfo)
       val bytes = JsBinaryUtil.base64DecToArr(b64data)
       val frameCode = bytes(0)
 
-      // 2017.mar.29: Бывают кривые маячки, которые шлют ошибочно длинные фреймы.
-      // Могут и 20 байт обозначить, и 19. Первый такой маячок был обнаружен в ТК Гулливер.
-      // Парсим первые N байт в UID-фреймах:
-      if (frameCode == 0x00 && bytes.byteLength >= EddyStoneParser.UID_PAYLOAD_BYTELEN) {
-        val eddyStone = EddyStone(
+      // 2017.mar.29: Бывают инновационные маячки, которые излишне длинные фреймы, что не противоречит стандарту.
+      // Могут и 20 байт прислать, где в хвосте 0x0000. Первый такой маячок был обнаружен в ТК Гулливер.
+      // Парсим только первые N байт в UID-фреймах:
+      val uidType = MFrameTypes.Uid
+      if (frameCode == uidType.frameCode  &&  bytes.byteLength >= uidType.frameMinByteLen) {
+        val eddyStone = MEddyStoneUid(
           rssi    = dev.rssi.get,
           txPower = JsBinaryUtil.littleEndianToInt8(bytes, 1),
-          uid     = Some(
+          id      = {
             LowUuidUtil.hexStringToEddyUid(
               JsBinaryUtil.typedArrayToHexString(
-                bytes.subarray(2, EddyStoneParser.UID_PAYLOAD_BYTELEN)
+                bytes.subarray(2, uidType.frameMinByteLen)
               )
             )
-          )
+          }
         )
 
         Right(eddyStone)

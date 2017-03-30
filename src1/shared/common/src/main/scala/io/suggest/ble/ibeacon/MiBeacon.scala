@@ -1,6 +1,6 @@
-package io.suggest.ble.beaconer.m.beacon.apple
+package io.suggest.ble.ibeacon
 
-import io.suggest.common.radio.{BeaconSignal, BleConstants}
+import io.suggest.ble.{BeaconSignal, BleConstants}
 
 /**
   * Suggest.io
@@ -9,7 +9,7 @@ import io.suggest.common.radio.{BeaconSignal, BleConstants}
   * Description: Модель описания Apple iBeacon.
   */
 
-case class IBeacon(
+case class MiBeacon(
   override val rssi   : Int,
   override val rssi0  : Int,
   proximityUuid       : String,

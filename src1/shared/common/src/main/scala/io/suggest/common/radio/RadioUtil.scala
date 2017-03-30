@@ -54,7 +54,7 @@ object RadioUtil {
     }
   }
 
-  def calculateAccuracy(signal: IRadioSignalInfo): Option[Double] = {
+  def calculateAccuracy(signal: IDistantRadioSignal): Option[Double] = {
     calculateAccuracy(
       distance0m  = signal.distance0m,
       rssi0       = signal.rssi0,
@@ -65,11 +65,17 @@ object RadioUtil {
 }
 
 
-/** Интерфейс какой-то инфы по какому-то радио-сигналу. */
-trait IRadioSignalInfo {
+/** Интерфейс для моделей данных абстрактных радиосигналов. */
+trait IRadioSignal {
 
   /** Текущая мощность сигнала в децибелах. */
   def rssi: Int
+
+}
+
+
+/** Интерфейс моделей инфы по какому-то радио-сигналу, для которого можно посчитать расстояние до источника. */
+trait IDistantRadioSignal extends IRadioSignal {
 
   /** Нормальная мощность сигнала в децибелах на некоем известном расстоянии. */
   def rssi0: Int
