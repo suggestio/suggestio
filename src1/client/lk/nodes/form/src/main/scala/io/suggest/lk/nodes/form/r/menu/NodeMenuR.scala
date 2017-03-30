@@ -3,9 +3,8 @@ package io.suggest.lk.nodes.form.r.menu
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.lk.nodes.form.m.{MNodeMenuS, NodeDeleteClick}
+import io.suggest.lk.nodes.form.m.NodeDeleteClick
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -18,28 +17,27 @@ import japgolly.scalajs.react.vdom.prefix_<^._
   */
 object NodeMenuR {
 
-  type Props = ModelProxy[Option[MNodeMenuS]]
+  type Props = ModelProxy[_]
 
-  class Backend($: BackendScope[Props, _]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     def deleteClick: Callback = {
-      dispatchOnProxyScopeCB( $, NodeDeleteClick )
+      dispatchOnProxyScopeCB(
+        $.asInstanceOf[ BackendScope[ModelProxy[AnyRef], Unit] ],
+        NodeDeleteClick
+      )
     }
 
     def render(p: Props): ReactElement = {
-      val v = p()
-      for (_ <- v) yield {
+      <.div(
+        ^.`class` := Css.Lk.Nodes.Menu.CONT,
+
         <.div(
-          ^.`class` := Css.Lk.Nodes.Menu.CONT,
-
-          <.div(
-            ^.`class` := Css.Lk.Nodes.Menu.ITEM,
-            ^.onClick --> deleteClick,
-            Messages("Delete") + HtmlConstants.ELLIPSIS
-          )
-
-        ): ReactElement
-      }
+          ^.`class` := Css.Lk.Nodes.Menu.ITEM,
+          ^.onClick --> deleteClick,
+          Messages("Delete") + HtmlConstants.ELLIPSIS
+        )
+      )
     }
 
   }

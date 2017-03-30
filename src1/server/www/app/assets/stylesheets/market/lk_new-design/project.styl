@@ -1053,10 +1053,6 @@ label
       width         73%
       float         left
 
-    .menu-btn
-      float         right
-      padding-right 7px
-
   .popup
 
     .input90
@@ -1072,11 +1068,33 @@ label
       margin-top    30px
 
   .menu
-    float           right
-    display         inline-block
+    float            right
+    position         relative
+    display          inline-block
 
-    .item
-      height        20px
+    .menu-btn
+      padding-right 7px
+
+    .cont
+      position        absolute
+      left            -130px
+      overflow        auto
+      display         none
+      min-width       160px
+      /* почему-то не работает в FF:  box-shadow      1px 5px 15px -5px rgba(0, 0, 0, 0.206) */
+      z-index         99
+      background-color #f9f9f9
+      border          solid 1px
+
+      .item
+        padding       12px 16px
+        height        20px
+
+        &:hover
+          background-color #eeeeee
+
+    &:hover .cont
+      display   block
 
   .delim
     height          3px

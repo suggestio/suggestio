@@ -1,13 +1,12 @@
 package io.suggest.lk.nodes.form.r.tree
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io
@@ -18,15 +17,7 @@ import io.suggest.sjs.common.spa.OptFastEq.Wrapped
   */
 object TreeR {
 
-  import MNodeMenuS.MNodeMenuSFastEq
-
-
   type Props = ModelProxy[PropsVal]
-
-  /** Внутреннее состояние компонента дерева содержит коннекшены для внутренних компонентов. */
-  protected case class State(
-                              nodeMenuOptProxy    : ReactConnectProxy[Option[MNodeMenuS]]
-                            )
 
 
   implicit object TreeRPropsValFastEq extends FastEq[PropsVal] {
@@ -37,16 +28,15 @@ object TreeR {
   }
   case class PropsVal(
                        conf         : MLknConf,
-                       mtree        : MTree,
-                       nodeMenuOpt  : Option[MNodeMenuS]
+                       mtree        : MTree
                      )
 
 
   /** Ядро react-компонента дерева узлов. */
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     /** Рендер текущего компонента. */
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props): ReactElement = {
       val v = p()
       val parentLevel = 0
       val parentRcvrKey = Nil
@@ -62,8 +52,7 @@ object TreeR {
             node          = node,
             parentRcvrKey = parentRcvrKey,
             level         = parentLevel,
-            proxy         = p,
-            menuOptC      = s.nodeMenuOptProxy
+            proxy         = p
           )
           NodeR( tnp )
         }
@@ -74,11 +63,7 @@ object TreeR {
 
 
   val component = ReactComponentB[Props]("Tree")
-    .initialState_P { p =>
-      State(
-        nodeMenuOptProxy = p.connect(_.nodeMenuOpt)
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

@@ -40,7 +40,7 @@ object EddyStoneParserSpec extends SimpleTestSuite {
     assertEquals(r.rssi, -60)
     //assertEquals(r.rssi0, -61)
 
-    assertEquals( r.uid, Some("aa112233445566778899-000000000456") )
+    assertEquals( r.beaconUid, Some("aa112233445566778899-000000000456") )
   }
 
 
@@ -68,7 +68,7 @@ object EddyStoneParserSpec extends SimpleTestSuite {
     val r = rEith.right.get
 
     assertEquals( r.txPower, -29 )
-    assertEquals( r.uid, Some("ba1c51bab3147efee8e5-252423222120") )
+    assertEquals( r.beaconUid, Some("ba1c51bab3147efee8e5-252423222120") )
   }
 
 }

@@ -22,12 +22,12 @@ sealed abstract class MFrameType extends EnumEntry {
 
 
 /** Модель типов фреймов EddyStone. */
-object MFrameTypes {
+object MFrameTypes extends Enum[MFrameType] {
 
   /** UID-фрейм.
     * @see [[https://github.com/google/eddystone/tree/master/eddystone-uid]]
     */
-  case object Uid extends MFrameType {
+  case object UID extends MFrameType {
 
     override def frameCode: Short = 0x00
 
@@ -36,5 +36,8 @@ object MFrameTypes {
     override def frameMinByteLen = 18
 
   }
+
+
+  override def values = findValues
 
 }

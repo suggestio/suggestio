@@ -11,14 +11,14 @@ package io.suggest.ble.eddystone
 case class MEddyStoneUid(
   override val rssi     : Int,
   override val txPower  : Int,
-  id                    : String
+  uid                   : String
   //url                   : Option[String] = None
 )
   extends IEddyStoneTxSignal
 {
 
-  override def uid = Some(id)
+  override def beaconUid = Some(uid)
 
-  override def frameType = MFrameTypes.Uid
+  override def frameType = MFrameTypes.UID
 
 }

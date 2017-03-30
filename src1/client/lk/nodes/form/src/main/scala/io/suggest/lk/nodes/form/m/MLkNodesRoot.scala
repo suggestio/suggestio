@@ -14,8 +14,7 @@ object MLkNodesRoot {
   implicit object MLknRootFastEq extends FastEq[MLkNodesRoot] {
     override def eqv(a: MLkNodesRoot, b: MLkNodesRoot): Boolean = {
       (a.tree eq b.tree) &&
-        (a.popups eq b.popups) &&
-        (a.nodeMenu eq b.nodeMenu)
+        (a.popups eq b.popups)
         //&& (a.conf eq b.conf)  // Закомменчено, ибо конфиг не изменяется во время работы.
     }
   }
@@ -28,18 +27,15 @@ object MLkNodesRoot {
   * @param tree Модель-контейнер для отображаемых поддеревьев узлов.
   * @param conf Конфиг формы с сервера. Не должен изменяться самой формой.
   * @param popups Состояния попапов формы.
-  * @param nodeMenu Отображать ли меню узла с доп.пунктами?
   */
 case class MLkNodesRoot(
                          conf       : MLknConf,
                          tree       : MTree,
-                         popups     : MLknPopups            = MLknPopups.empty,
-                         nodeMenu   : Option[MNodeMenuS]    = None
+                         popups     : MLknPopups            = MLknPopups.empty
                        )
 {
 
   def withTree(tree2: MTree) = copy(tree = tree2)
   def withPopups(popups2: MLknPopups) = copy(popups = popups2)
-  def withMenu(menuOpt2: Option[MNodeMenuS]) = copy(nodeMenu = menuOpt2)
 
 }

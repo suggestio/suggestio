@@ -21,7 +21,7 @@ case class MiBeacon(
 
   override def distance0m: Int = 1
 
-  override def uid: Option[String] = {
+  override def beaconUid: Option[String] = {
     val delim = BleConstants.Beacon.UID_DELIM
     val uidStr = proximityUuid + delim + major + delim + minor
     Some(uidStr)

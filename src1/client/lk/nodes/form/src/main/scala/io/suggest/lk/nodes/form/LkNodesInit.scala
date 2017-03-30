@@ -1,8 +1,6 @@
 package io.suggest.lk.nodes.form
 
-import io.suggest.common.event.MouseEvents
 import io.suggest.lk.nodes.LkNodesConst
-import io.suggest.lk.nodes.form.m.DocumentClick
 import io.suggest.lk.nodes.form.r.LkNodesFormR
 import io.suggest.lk.nodes.form.r.pop.LknPopupsR
 import io.suggest.lk.pop.PopupsContR
@@ -12,9 +10,7 @@ import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.lk.nodes.form.m.MLkNodesRoot.MLknRootFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
-import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react.ReactDOM
-import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLDivElement
 
 import scala.concurrent.Future
@@ -59,11 +55,6 @@ trait LkNodesInitRouter extends InitRouter {
     val popsContR = circuit.wrap(_.popups)( LknPopupsR.apply )
     val popsContTarget = PopupsContR.initDocBody()
     ReactDOM.render(popsContR, popsContTarget)
-
-    // Связать глобальные события с circuit:
-    DocumentVm().addEventListener( MouseEvents.CLICK ) { _: Event =>
-      circuit.dispatch( DocumentClick )
-    }
   }
 
 }

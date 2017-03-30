@@ -4,7 +4,6 @@ import diode.react.ReactConnector
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.nodes.MLknFormInit
 import io.suggest.lk.nodes.form.a.LkNodesApiHttpImpl
-import io.suggest.lk.nodes.form.a.menu.NodeMenuAh
 import io.suggest.lk.nodes.form.a.pop.{CreateNodeAh, DeleteNodeAh, EditTfDailyAh}
 import io.suggest.lk.nodes.form.a.tree.TreeAh
 import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
@@ -96,13 +95,8 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
       treeRO  = treeRW
     )
 
-    // Контроллер событий, связанных с менюшкой узла.
-    val nodeMenuAh = new NodeMenuAh(
-      modelRW = zoomRW(_.nodeMenu) { _.withMenu(_) }
-    )
-
     // Разные Ah шарят между собой некоторые события, поэтому они все соединены параллельно.
-    foldHandlers(treeAh, createNodeAh, deleteNodeAh, editTfDailyAh, nodeMenuAh)
+    foldHandlers(treeAh, createNodeAh, deleteNodeAh, editTfDailyAh)
   }
 
 }

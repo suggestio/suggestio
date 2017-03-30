@@ -85,7 +85,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
     def _handleBeaconSeen(bs: BeaconDetected): Unit = {
       LOG.log( "hBS", msg = bs )
 
-      bs.beacon.uid
+      bs.beacon.beaconUid
         .filter(_.nonEmpty)
         // Интересуют только маячки с идентификаторами.
         .fold[Unit] {
@@ -312,7 +312,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
           .flatMap { case (k, v) =>
             val res = for {
               accuracyCm    <- v.accuracies.average
-              uid           <- v.beacon.uid
+              uid           <- v.beacon.beaconUid
             } yield {
               (k, MBleBeaconInfo(uid, accuracyCm))
             }

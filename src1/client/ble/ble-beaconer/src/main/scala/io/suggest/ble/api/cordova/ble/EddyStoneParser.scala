@@ -90,12 +90,12 @@ case class EddyStoneParser(override val dev: DeviceInfo)
       // 2017.mar.29: Бывают инновационные маячки, которые излишне длинные фреймы, что не противоречит стандарту.
       // Могут и 20 байт прислать, где в хвосте 0x0000. Первый такой маячок был обнаружен в ТК Гулливер.
       // Парсим только первые N байт в UID-фреймах:
-      val uidType = MFrameTypes.Uid
+      val uidType = MFrameTypes.UID
       if (frameCode == uidType.frameCode  &&  bytes.byteLength >= uidType.frameMinByteLen) {
         val eddyStone = MEddyStoneUid(
           rssi    = dev.rssi.get,
           txPower = JsBinaryUtil.littleEndianToInt8(bytes, 1),
-          id      = {
+          uid     = {
             LowUuidUtil.hexStringToEddyUid(
               JsBinaryUtil.typedArrayToHexString(
                 bytes.subarray(2, uidType.frameMinByteLen)

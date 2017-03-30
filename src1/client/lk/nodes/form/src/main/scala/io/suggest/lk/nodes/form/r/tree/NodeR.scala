@@ -17,6 +17,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.r.ReactDiodeUtil
 
 /**
   * Suggest.io
@@ -44,7 +45,6 @@ object NodeR extends Log { self =>
                        node          : MNodeState,
                        parentRcvrKey : RcvrKey,
                        level         : Int,
-                       menuOptC      : ReactConnectProxy[Option[MNodeMenuS]],
                        proxy         : ModelProxy[_]
                      )
 
@@ -266,7 +266,12 @@ object NodeR extends Log { self =>
 
               // Кнопка удаления узла.
               (isShowProps && node.info.canChangeAvailability.contains(true)) ?= {
-                NodeMenuBtnR( p.proxy )
+                <.div(
+                  ^.`class` := Css.Lk.Nodes.Menu.MENU,
+                  ^.onClick ==> ReactDiodeUtil.eStopPropagationCB,
+                  NodeMenuBtnR( p.proxy ),
+                  NodeMenuR( p.proxy )
+                )
               }
 
             )
@@ -328,7 +333,6 @@ object NodeR extends Log { self =>
         // Рендер подробной информации по узлу
         isShowProps ?= {
           <.div(
-            p.menuOptC { NodeMenuR.apply },
 
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
             <.table(

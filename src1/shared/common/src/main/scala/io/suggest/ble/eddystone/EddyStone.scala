@@ -13,7 +13,10 @@ import io.suggest.common.radio.IRadioSignal
   *
   */
 trait IEddyStoneSignal extends IRadioSignal {
+
+  /** Тип фрейма EddyStone. В первом байте каждого eddystone-фрейма. */
   def frameType: MFrameType
+
 }
 
 

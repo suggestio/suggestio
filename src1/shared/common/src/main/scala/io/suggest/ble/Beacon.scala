@@ -16,7 +16,7 @@ trait BeaconSignal extends IDistantRadioSignal {
     * Option[], потому что в гугле смогли уродить маячки с каким-то кастрированными URL внутри фрейма.
     * Скорее всего, маячки без uid останутся бесполезны для s.io и в будущем.
     */
-  def uid: Option[String]
+  def beaconUid: Option[String]
 
 }
 

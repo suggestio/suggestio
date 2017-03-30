@@ -25,6 +25,11 @@ object Css {
     def INLINE_BLOCK  = "inline-block"
   }
 
+  object Position {
+    def RELATIVE      = "relative"
+    def ABSOLUTE      = "abs"
+  }
+
 
   def JS_PREFIX = "js-"
 
@@ -130,12 +135,13 @@ object Css {
 
       /** Менюшка узла. */
       object Menu {
+        def MENU = "menu"
         def BTN  = "menu-btn"
-
-        def CONT = "menu"
+        def CONT = "cont"
         def ITEM = "item"
       }
 
+      /** Табличка key-value. */
       object KvTable {
         def LKN_TABLE  = "table"
         object Td {

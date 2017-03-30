@@ -2,7 +2,7 @@ package io.suggest.lk.r
 
 import diode.ActionType
 import diode.react.ModelProxy
-import japgolly.scalajs.react.{BackendScope, Callback}
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
 
 /**
   * Suggest.io
@@ -27,6 +27,11 @@ object ReactDiodeUtil {
     $.props >>= { p =>
       p.dispatchCB( msg )
     }
+  }
+
+
+  def eStopPropagationCB(e: ReactEvent): Callback = {
+    e.stopPropagationCB
   }
 
 }
