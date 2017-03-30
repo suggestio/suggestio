@@ -93,11 +93,8 @@ case class EddyStoneParser(override val dev: DeviceInfo)
       // Могут и 20 байт обозначить, и 19. Первый такой маячок был обнаружен в ТК Гулливер.
       // Парсим первые N байт в UID-фреймах:
       if (frameCode == 0x00 && bytes.byteLength >= EddyStoneParser.UID_PAYLOAD_BYTELEN) {
-        // Раз уж есть данные, то заодно уточнить значение RSSI.
-        val rssi = dev.rssi.get
-
         val eddyStone = EddyStone(
-          rssi    = rssi,
+          rssi    = dev.rssi.get,
           txPower = JsBinaryUtil.littleEndianToInt8(bytes, 1),
           uid     = Some(
             LowUuidUtil.hexStringToEddyUid(
