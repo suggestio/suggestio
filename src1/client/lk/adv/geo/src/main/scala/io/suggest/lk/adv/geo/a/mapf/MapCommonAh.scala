@@ -2,8 +2,7 @@ package io.suggest.lk.adv.geo.a.mapf
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.geo.IGeoPointField
-import io.suggest.lk.adv.geo.a.{HandleLocationFound, ISetMapCenter, ISetMapCenterForPopup}
-import io.suggest.lk.adv.geo.m.MMap
+import io.suggest.lk.adv.geo.m.{HandleLocationFound, ISetMapCenter, ISetMapCenterForPopup, MMap}
 
 /**
   * Suggest.io

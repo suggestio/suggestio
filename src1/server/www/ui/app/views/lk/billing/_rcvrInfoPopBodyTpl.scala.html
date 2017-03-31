@@ -1,0 +1,15 @@
+@(args: mbill.IRcvrInfoTplArgs)(implicit ctx: Context)
+
+@* Вынос кода из _rcvrInfoWndTpl, чтобы можно внутри react отрендерить только статическую часть. *@
+
+@import ctx.messages
+@import io.suggest.i18n.MsgCodes
+
+<h2 class="minor-title">
+  @messages( MsgCodes.`Tariff.rate.of.0`, args.mnode.guessDisplayNameOrIdOrQuestions )
+</h2>
+
+@* Этот класс используется, чтобы нормально рендерилась информация о тарифе. *@
+<div class="tariff __in-popup">
+  @_rcvrInfoTpl(args)
+</div>

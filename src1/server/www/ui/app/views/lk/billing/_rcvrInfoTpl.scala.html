@@ -19,7 +19,7 @@
 
 <div class="ovh">
 
-  @args.mnode.meta.address.address.map { address =>
+  @for( address <- args.mnode.meta.address.address ) {
     @lkProp( messages("Address")) {
       @Html(replaceEOLwithBR(address))
       @args.mnode.meta.address.phone.map { phone =>
@@ -29,14 +29,14 @@
     @_delimTpl()
   }
 
-  @args.mnode.meta.business.humanTrafficAvg.map { htAvg =>
+  @for( htAvg <- args.mnode.meta.business.humanTrafficAvg ) {
     @lkProp( messages("Daily.people.traffic")) {
       @messages("N.humans.per.day", formatIntHtml(htAvg))
     }
     @_delimTpl()
   }
 
-  @args.mnode.meta.business.audienceDescr.map { audDescr =>
+  @for( audDescr <- args.mnode.meta.business.audienceDescr ) {
     @lkProp( messages("Audience.descr")) {
       @Html(audDescr)
     }

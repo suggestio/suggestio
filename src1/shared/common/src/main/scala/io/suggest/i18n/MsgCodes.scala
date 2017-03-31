@@ -20,6 +20,7 @@ object MsgCodes {
   val `Show.details` = "Show.details"
 
   val `Error` = "Error"
+  val `Something.gone.wrong` = "Something.gone.wrong"
   val `Identifier` = "Identifier"
   val `Cancel` = "Cancel"
   val `Save` = "Save"
@@ -35,6 +36,8 @@ object MsgCodes {
   val `Inherited` = "Inherited"
   val `Set.manually` = "Set.manually"
   val `_per_.day` = "_per_.day"
+
+  val `Tariff.rate.of.0` = "Tariff.rate.of.0"
 
   val `Server.request.in.progress.wait` = "Server.request.in.progress.wait"
 

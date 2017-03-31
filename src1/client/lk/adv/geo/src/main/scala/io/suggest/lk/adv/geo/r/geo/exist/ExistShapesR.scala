@@ -4,8 +4,8 @@ import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.adv.geo.AdvGeoConstants.CurrShapes.{OK_COLOR, OPACITY, REQ_COLOR}
 import io.suggest.geo.MGeoPoint
-import io.suggest.lk.adv.geo.a.OpenAdvGeoExistPopup
 import io.suggest.lk.adv.geo.m.MGeoAdvExistGjFtProps.fromAny
+import io.suggest.lk.adv.geo.m.OpenAdvGeoExistPopup
 import io.suggest.sjs.common.geo.json.{GjFeature, GjFeatureCollection, GjGeometry}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -74,7 +74,7 @@ object ExistShapesR extends Log {
               val itemId = props.itemId
               val gp = GjGeometry.firstPoint(gjFeature.geometry)
 
-              layer.on3( Events.CLICK, { e: LayerEvent =>
+              layer.on3( Events.CLICK, { _: LayerEvent =>
                 existShapeClick(itemId, gp).runNow()
               })
             }

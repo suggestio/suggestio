@@ -45,6 +45,9 @@ trait ILkAdvGeoApi extends ITagsApi {
   /** Окончательный сабмит формы георазмещения. */
   def formSubmit(adId: String, mFormS: MFormS): Future[String]
 
+  /** Получение инфы по узлу. */
+  def rcvrInfoWndBody(nodeId: String): Future[String]
+
 }
 
 
@@ -111,6 +114,11 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     for (xhr <- fut) yield {
       xhr.responseText
     }
+  }
+
+  override def rcvrInfoWndBody(nodeId: String): Future[String] = {
+    val route = jsRoutes.controllers.LkBill2._rcvrInfoWndBody( nodeId )
+    Xhr.requestHtml( route )
   }
 
 }

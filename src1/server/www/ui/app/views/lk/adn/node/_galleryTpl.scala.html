@@ -3,7 +3,7 @@
 @import ctx.api.galleryUtil
 
 <div class="js-photo-slider">
-  @gallery.map { mimg =>
+  @for(mimg <- gallery) {
     <img class="@imgClass" src="@galleryUtil.dynLkBigCall(mimg)" />
   }
 </div>

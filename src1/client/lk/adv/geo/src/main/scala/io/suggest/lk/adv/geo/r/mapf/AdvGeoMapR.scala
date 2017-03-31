@@ -2,8 +2,7 @@ package io.suggest.lk.adv.geo.r.mapf
 
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.a.{HandlePopupClose, HandleLocationFound}
-import io.suggest.lk.adv.geo.m.MMap
+import io.suggest.lk.adv.geo.m.{HandleLocationFound, HandlePopupClose, MMap}
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactComponentB, ReactElement}

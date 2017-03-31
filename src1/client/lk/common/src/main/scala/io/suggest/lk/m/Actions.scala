@@ -10,6 +10,15 @@ import io.suggest.sjs.common.spa.DAction
   */
 
 sealed trait ILkCommonAction extends DAction
+sealed trait ILkCommonPopupCloseAction extends ILkCommonAction
+/** Трейт-маркер закрытия "бесполезного" попапа, т.к. не содержащего ожидаемый контект, а какую-то малополезную инфу. */
+sealed trait ILkCommonUselessPopupCloseAction extends ILkCommonAction
 
 /** Экшен закрытия попапа с инфой по узлу. */
-case object NodeInfoPopupClose extends ILkCommonAction
+case object NodeInfoPopupClose extends ILkCommonPopupCloseAction
+
+/** Клик по кнопке закрытия окна-попапа ожидания. */
+case object PleaseWaitPopupCloseClick extends ILkCommonUselessPopupCloseAction
+
+/** Экшен закрытия попапа с ошибкой. */
+case object ErrorPopupCloseClick extends ILkCommonUselessPopupCloseAction

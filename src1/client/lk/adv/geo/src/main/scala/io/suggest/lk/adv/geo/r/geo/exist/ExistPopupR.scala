@@ -75,7 +75,7 @@ object ExistPopupR {
                   <.span(
                     ^.key := itm.itemId,
                     itm.payload match {
-                      case OnMainScreen   =>
+                      case OnMainScreen =>
                         Messages("Main.screen")
                       case InGeoTag(face) =>
                         <.span(

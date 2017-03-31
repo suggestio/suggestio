@@ -25,7 +25,8 @@ case class MRoot(
                   rcvr          : MRcvr,
                   rad           : Option[MRad],
                   geoAdv        : MGeoAdvs                = MGeoAdvs(),
-                  datePeriod    : MAdvPeriod
+                  datePeriod    : MAdvPeriod,
+                  popups        : MPopupsS                = MPopupsS()
                 ) {
 
   def withMapState(ms2: MMap) = copy(mmap = ms2)
@@ -36,6 +37,7 @@ case class MRoot(
   def withRcvr(rcvr2: MRcvr) = copy(rcvr = rcvr2)
   def withCurrGeoAdvs(cga2: MGeoAdvs) = copy(geoAdv = cga2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
+  def withPopups(popups2: MPopupsS) = copy(popups = popups2)
 
   def radEnabled = rad.filter(_.enabled)
 

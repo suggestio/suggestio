@@ -95,7 +95,7 @@ object AdvGeoFormR extends Log {
   protected class Backend($: BackendScope[Props, _]) {
 
     /** Рендер всея формы. */
-    def render(p: Props, s: State) = {
+    def render(p: Props, s: State): ReactElement = {
       // без <form>, т.к. форма теперь сущетсвует на уровне JS в состоянии diode.
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,

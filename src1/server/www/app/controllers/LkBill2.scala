@@ -16,6 +16,7 @@ import models.mbill._
 import models.mcal.MCalendars
 import models.mctx.Context
 import models.mproj.ICommonDi
+import play.twirl.api.{Html, Template2}
 import util.acl._
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.{GalleryUtil, LogoUtil}
@@ -124,26 +125,33 @@ class LkBill2 @Inject() (
     * @return 200 Ок с версткой окошка.
     *         404 если узел не найден или не является ресивером.
     */
-  def _rcvrInfoWnd(nodeId: String) = canViewNodeAdvInfo(nodeId).async { implicit request =>
-    val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode)
-    val galleryFut = galleryUtil.galleryImgs(request.mnode)
+  def _rcvrInfoWnd(nodeId: String) = _rcvrInfoResp(nodeId, _rcvrInfoWndTpl)
 
-    val okFut = for {
-      dailyTfArgsOpt  <- dailyTfArgsOptFut
-      dailyTfArgs     =  dailyTfArgsOpt.get
-      gallery         <- galleryFut
-    } yield {
-      val args = MRcvrInfoTplArgs(
-        mnode   = request.mnode,
-        dailyTf = dailyTfArgs.dailyTf,
-        calsMap = dailyTfArgs.calsMap,
-        gallery = gallery
-      )
-      Ok( _rcvrInfoWndTpl(args) )
-    }
+  /** Рендер только наполнения окошка по целевому узлу-ресиверу. */
+  def _rcvrInfoWndBody(nodeId: String) = _rcvrInfoResp(nodeId, _rcvrInfoPopBodyTpl)
 
-    okFut.recover { case _: NoSuchElementException =>
-      NotFound("Not a receiver: " + nodeId)
+  private def _rcvrInfoResp(nodeId: String, tpl: Template2[IRcvrInfoTplArgs, Context, Html]) = {
+    canViewNodeAdvInfo(nodeId).async { implicit request =>
+      val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode)
+      val galleryFut = galleryUtil.galleryImgs(request.mnode)
+
+      val okFut = for {
+        dailyTfArgsOpt  <- dailyTfArgsOptFut
+        dailyTfArgs     =  dailyTfArgsOpt.get
+        gallery         <- galleryFut
+      } yield {
+        val args = MRcvrInfoTplArgs(
+          mnode   = request.mnode,
+          dailyTf = dailyTfArgs.dailyTf,
+          calsMap = dailyTfArgs.calsMap,
+          gallery = gallery
+        )
+        Ok( tpl.render(args, implicitly[Context]) )
+      }
+
+      okFut.recover { case _: NoSuchElementException =>
+        NotFound("Not a receiver: " + nodeId)
+      }
     }
   }
 
@@ -153,7 +161,8 @@ class LkBill2 @Inject() (
     * @param nodeId id узла.
     * @return Бинарь с публичной инфой по узлу, на котором планируется размещение.
     */
-  def nodeAdvInfoWndData(nodeId: String) = canViewNodeAdvInfo(nodeId).async { implicit request =>
+  // TODO Не используется, т.к. потом было решено ускорить вёрстку: вместо чистовой react-вёрстки использовать существующую html string + innerHtml.
+  private def nodeAdvInfo(nodeId: String) = canViewNodeAdvInfo(nodeId).async { implicit request =>
     implicit val ctx = implicitly[Context]
 
     // Собрать картинки

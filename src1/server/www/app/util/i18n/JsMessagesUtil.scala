@@ -150,6 +150,17 @@ class JsMessagesUtil @Inject() (
   }
 
 
+  /** Коды сообщений инфы по размещению. */
+  private def ADV_INFO: TraversableOnce[String] = {
+    //MsgCodes.`Tariff.rate.of.0` ::
+      Nil
+  }
+
+  private def LK_COMMON: TraversableOnce[String] = {
+    MsgCodes.`Something.gone.wrong` ::
+      Nil
+  }
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -161,6 +172,8 @@ class JsMessagesUtil @Inject() (
       DAYS_OF_WEEK_MSGS,
       DATE_TIME_ABBREVATIONS,
       ADV_PRICING,
+      ADV_INFO,
+      LK_COMMON,
       LK_NODES_MSGS
     )
       .flatten

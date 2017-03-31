@@ -5,8 +5,7 @@ import diode.react.ReactPot._
 import io.suggest.adv.rcvr.{IRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.a.SetRcvrStatus
-import io.suggest.lk.adv.geo.m.MRcvr
+import io.suggest.lk.adv.geo.m.{MRcvr, OpenNodeInfoClick, SetRcvrStatus}
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.r.RangeYmdR
@@ -17,6 +16,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEle
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 import react.leaflet.popup.PopupR
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -35,11 +35,13 @@ object RcvrPopupR {
   protected[this] class Backend($: BackendScope[Props, _]) {
 
     /** Реакция на изменение флага узла-ресивера в попапе узла. */
-    def rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
+    private def rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
       val checked = e.target.checked
-      $.props >>= { props =>
-        props.dispatchCB( SetRcvrStatus(rk, checked) )
-      }
+      dispatchOnProxyScopeCB( $, SetRcvrStatus(rk, checked) )
+    }
+
+    private def rcvrInfoClick(rk: RcvrKey): Callback = {
+      dispatchOnProxyScopeCB($, OpenNodeInfoClick(rk))
     }
 
 
@@ -63,7 +65,6 @@ object RcvrPopupR {
             // Рендер галочки текущего узла, если она задана.
             for (n <- node.checkbox) yield {
               <.div(
-                //^.key     := rcvrKey.mkString("."),
                 ^.`class` := Css.Lk.LK_FIELD,
 
                 if (n.dateRange.nonEmpty) {
@@ -109,7 +110,16 @@ object RcvrPopupR {
                     <.span,
                     n.name
                   )
-                }
+                },
+
+                HtmlConstants.SPACE,
+
+                <.a(
+                  ^.onClick --> rcvrInfoClick(rcvrKey),
+                  <.i(
+                    "i"
+                  )
+                )
 
               )
             },

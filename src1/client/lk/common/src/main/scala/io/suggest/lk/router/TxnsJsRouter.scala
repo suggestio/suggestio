@@ -15,4 +15,7 @@ sealed trait TxnLkBillingCtl extends js.Object {
 
   def txnsList(adnId: String, page: Int, inline: Boolean): Route = js.native
 
+  /** Получить HTML-содержимое окошка информации. */
+  def _rcvrInfoWndBody(nodeId: String): Route = js.native
+
 }

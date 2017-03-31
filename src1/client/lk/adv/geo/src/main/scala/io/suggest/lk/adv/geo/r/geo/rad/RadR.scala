@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.r.geo.rad
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
 import io.suggest.lk.adv.geo.a._
-import io.suggest.lk.adv.geo.m.MRad
+import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl

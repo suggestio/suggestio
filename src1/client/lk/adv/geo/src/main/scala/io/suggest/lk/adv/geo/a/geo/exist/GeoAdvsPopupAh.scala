@@ -2,8 +2,7 @@ package io.suggest.lk.adv.geo.a.geo.exist
 
 import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.lk.adv.geo.a.{HandleAdvGeoExistPopupResp, HandlePopupClose, OpenAdvGeoExistPopup}
-import io.suggest.lk.adv.geo.m.{MGeoAdvPopupState, MGeoAdvs}
+import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log

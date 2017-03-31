@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.adv.geo.AdvGeoConstants.Rad
 import io.suggest.geo.IGeoPointField
 import io.suggest.lk.adv.geo.a._
-import io.suggest.lk.adv.geo.m.MRad
+import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 
 /**

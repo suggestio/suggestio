@@ -8,10 +8,10 @@ import io.suggest.adv.geo.{MFormInit, MFormS}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
-import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.geo.rad.RadAh
 import io.suggest.lk.adv.geo.a.mapf.MapCommonAh
+import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
 import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
@@ -27,6 +27,17 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
+import MMap.MMapFastEq
+import MOther.MOtherFastEq
+// TODO import MAdv4Free....FastEq
+import MTagsEditState.MTagsEditStateFastEq
+import MRcvr.MRcvrFastEq
+import MRad.MRadFastEq
+import MGeoAdvs.MGeoAdvsFastEq
+// TODO import MAdvPeriod...FastEq
+import MPopupsS.MPopupsFastEq
+import MNodeInfoPopupS.MNodeInfoPopupFastEq
+import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 
 import scala.concurrent.Future
 
@@ -194,8 +205,16 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       doSubmitF     = submitFormFut
     )
 
+    val mPopupsRW = zoomRW(_.popups) { _.withPopups(_) }
+
+    val nodeInfoPopupAh = new NodeInfoPopupAh(
+      api     = API,
+      modelRW = mPopupsRW.zoomRW(_.nodeInfo) { _.withNodeInfo(_) }
+    )
+
     // Склеить все handler'ы.
     val h1 = composeHandlers(
+      // Основные элементы формы:
       radAh,
       priceAh,
       rcvrsMarkerPopupAh, rcvrInputsAh,
@@ -204,6 +223,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       onMainScreenAh,
       datePeriodAh,
       adv4freeAh,
+      // попапы:
+      nodeInfoPopupAh,
       // init-вызовы в конце, т.к. они довольно редкие.
       geoAdvsInitAh,
       rcvrsMapInitAh

@@ -2,8 +2,7 @@ package io.suggest.lk.adv.geo.r.rcvr
 
 import diode.data.Pot
 import diode.react.ModelProxy
-import io.suggest.lk.adv.geo.a.ReqRcvrPopup
-import io.suggest.lk.adv.geo.m.MarkerNodeId
+import io.suggest.lk.adv.geo.m.{MarkerNodeId, ReqRcvrPopup}
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}

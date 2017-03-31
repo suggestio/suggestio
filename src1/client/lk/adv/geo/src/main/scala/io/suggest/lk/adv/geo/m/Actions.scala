@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.a
+package io.suggest.lk.adv.geo.m
 
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
@@ -8,6 +8,7 @@ import io.suggest.sjs.common.spa.DAction
 import io.suggest.sjs.leaflet.marker.Marker
 
 import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -86,3 +87,10 @@ case class RadOnOff(enabled: Boolean) extends IAdvGeoFormAction
 case object RadiusDragStart extends IAdvGeoFormAction
 case class RadiusDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
 case class RadiusDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
+
+
+/** Сигнал открытия инфы по узлу. */
+case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends IAdvGeoFormAction
+/** Сигнал ответа сервера на запрос информации по узлу. */
+case class OpenNodeInfoResp(rcvrKey: RcvrKey, tryRes: Try[String]) extends IAdvGeoFormAction
+

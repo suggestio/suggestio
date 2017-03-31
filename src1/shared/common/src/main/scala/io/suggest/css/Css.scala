@@ -78,6 +78,21 @@ object Css {
         def CONTAINER = "adv-su-inputs-wrap"
       }
 
+      /** Инфа по рекламному размещению. */
+      object NodeInfo {
+
+        def TARIFF   = "tariff"
+        def IN_POPUP = __ + "in-" + Popup.POPUP
+
+        private def TARIFF_PHOTO = TARIFF + "_photo"
+        def TARIFF_PHOTO_LIST = TARIFF_PHOTO + "-lst"
+        def TARIFF_PHOTO_IMG = TARIFF_PHOTO + "-i"
+
+        def TARIFF_ILLUSTRATION = TARIFF + "_illustration"
+        def TARIFF_ILLUSTRATION_W = TARIFF_ILLUSTRATION + "-w"
+
+      }
+
     }
 
     object Bars {
@@ -164,6 +179,10 @@ object Css {
       def POPUPS = POPUP + "s"
       def POPUPS_CONTAINER = POPUPS + "-" + _CONTAINER
       def POPUP_HEADER = POPUP + "-header"
+    }
+
+    object BsSlider {
+      def JS_PHOTO_SLIDER = "js-photo-slider"
     }
 
   }

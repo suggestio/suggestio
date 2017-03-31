@@ -3,7 +3,6 @@
 @* Рендер окошка, которое должно бы отображаться при щелчке на имени узла в форме размещения рекламной карточки. *@
 @import ctx._
 @import util.TplDataFormatUtil._
-@import util.FormUtil.replaceEOLwithBR
 @import io.suggest.popup.PopupConstants
 
 <div class="@PopupConstants.POPUP_CLASS @PopupConstants.JS_POPUP_CLASS" id="dailyMmpsWindow" >
@@ -12,18 +11,7 @@
     <a class="close f-right @PopupConstants.CLOSE_CSS_CLASS" href="@ctx.request.path"></a>
   </div>
 
-  <h2 class="minor-title">
-    @messages("Tariff.rate")
-    @args.mnode.meta.basic.name
-    @for( town <- args.mnode.meta.address.town ) {
-      / @town
-    }
-  </h2>
-
-  @* [Макс] Этот класс используется, чтобы нормально рендерилась информация о тарифе. *@
-  <div class="tariff __in-popup">
-    @_rcvrInfoTpl(args)
-  </div>
+  @_rcvrInfoPopBodyTpl(args)
 
 </div>
 

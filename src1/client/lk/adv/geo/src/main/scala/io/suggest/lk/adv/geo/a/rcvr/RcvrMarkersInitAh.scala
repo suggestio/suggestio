@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.a.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.lk.adv.geo.a.{InstallRcvrMarkers, RcvrMarkersInit}
+import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

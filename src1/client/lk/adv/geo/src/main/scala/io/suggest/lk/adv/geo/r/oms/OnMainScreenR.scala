@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.r.oms
 import diode.{ActionHandler, ActionResult, ModelRW}
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.a.SetOnMainScreen
+import io.suggest.lk.adv.geo.m.SetOnMainScreen
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
