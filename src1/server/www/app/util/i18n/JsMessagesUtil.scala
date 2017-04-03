@@ -152,7 +152,7 @@ class JsMessagesUtil @Inject() (
 
   /** Коды сообщений инфы по размещению. */
   private def ADV_INFO: TraversableOnce[String] = {
-    //MsgCodes.`Tariff.rate.of.0` ::
+    MsgCodes.`Information` ::
       Nil
   }
 

@@ -7,6 +7,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEle
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import PopupR.PopupPropsValFastEq
 
 /**
   * Suggest.io

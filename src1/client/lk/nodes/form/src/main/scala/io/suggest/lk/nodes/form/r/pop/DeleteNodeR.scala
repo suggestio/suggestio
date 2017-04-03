@@ -13,6 +13,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import PopupR.PopupPropsValFastEq
 
 /**
   * Suggest.io

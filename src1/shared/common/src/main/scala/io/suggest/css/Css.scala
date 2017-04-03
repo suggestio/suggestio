@@ -30,6 +30,7 @@ object Css {
     def ABSOLUTE      = "abs"
   }
 
+  def INFO_BLACK = "info-black"
 
   def JS_PREFIX = "js-"
 
@@ -42,6 +43,7 @@ object Css {
   def _CONTAINER  = "container"
   def NAME      = "name"
   def VALUE     = "value"
+  private def _NODENAME_ = "nodename"
 
   private def __ = "__"
 
@@ -72,6 +74,8 @@ object Css {
 
       object Geo {
         def MAP_CONTAINER = "radmap-" + _CONTAINER
+        def RCVR_POPUP = "rcvr-pop"
+        def NODE_NAME_CONT = _NODENAME_
       }
 
       object Su {
@@ -133,7 +137,7 @@ object Css {
       }
 
       object Name {
-        def NAME      = "nodename"
+        def NAME      = _NODENAME_
 
         def NORMAL    = __ + "normal"
         def DISABLED  = __ + "disabled"

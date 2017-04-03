@@ -145,7 +145,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     )
 
     val tagsAh = new TagsEditAh(
-      modelRW         = zoomRW { _.tags } { _.withTagsEditState(_) },
+      modelRW         = zoomRW(_.tags) { _.withTagsEditState(_) },
       api             = API,
       priceUpdateFx   = priceUpdateEffect
     )
@@ -214,7 +214,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     // Склеить все handler'ы.
     val h1 = composeHandlers(
-      // Основные элементы формы:
+      // Основные элементы формы, в т.ч. leaflet-попапы:
       radAh,
       priceAh,
       rcvrsMarkerPopupAh, rcvrInputsAh,
@@ -223,7 +223,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       onMainScreenAh,
       datePeriodAh,
       adv4freeAh,
-      // попапы:
+      // lk-попапы (вне leaflet):
       nodeInfoPopupAh,
       // init-вызовы в конце, т.к. они довольно редкие.
       geoAdvsInitAh,

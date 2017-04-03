@@ -5,6 +5,7 @@ import diode.react.ReactPot._
 import io.suggest.adv.rcvr.{IRcvrPopupNode, RcvrKey}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m.{MRcvr, OpenNodeInfoClick, SetRcvrStatus}
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
@@ -65,7 +66,7 @@ object RcvrPopupR {
             // Рендер галочки текущего узла, если она задана.
             for (n <- node.checkbox) yield {
               <.div(
-                ^.`class` := Css.Lk.LK_FIELD,
+                ^.`class` := Css.flat( Css.Lk.LK_FIELD, Css.Lk.Adv.Geo.NODE_NAME_CONT ),
 
                 if (n.dateRange.nonEmpty) {
                   // Есть какая-то инфа по текущему размещению на данном узле.
@@ -112,13 +113,13 @@ object RcvrPopupR {
                   )
                 },
 
-                HtmlConstants.SPACE,
+                HtmlConstants.NBSP_STR,
 
-                <.a(
+                <.div(
+                  ^.`class` := Css.flat( Css.INFO_BLACK ),
+                  ^.title   := Messages( MsgCodes.`Information` ),
                   ^.onClick --> rcvrInfoClick(rcvrKey),
-                  <.i(
-                    "i"
-                  )
+                  HtmlConstants.NBSP_STR
                 )
 
               )
@@ -173,6 +174,8 @@ object RcvrPopupR {
               position = latLng
             )(
               <.div(
+                ^.`class` := Css.Lk.Adv.Geo.RCVR_POPUP,
+
                 for (topNode <- resp.node) yield {
                   __renderNode(topNode)
                 }

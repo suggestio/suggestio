@@ -7,6 +7,7 @@ import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import PopupsContR.PopContPropsValFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
+import io.suggest.lk.r.{ErrorPopupR, PleaseWaitPopupR}
 
 /**
   * Suggest.io
@@ -20,19 +21,28 @@ object AdvGeoPopupsR {
 
   protected case class State(
                               popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
-                              nodeInfoConn        : ReactConnectProxy[Option[MNodeInfoPopupS]]
+                              nodeInfoConn        : ReactConnectProxy[Option[MNodeInfoPopupS]],
+                              pendingOptConn      : ReactConnectProxy[Option[Long]],
+                              errorOptConn        : ReactConnectProxy[Option[Throwable]]
                             )
 
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(state: State): ReactElement = {
+    def render(props: Props, state: State): ReactElement = {
       state.popContPropsConn { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
 
           // Попап инфы по размещению на узле.
-          state.nodeInfoConn { AdvGeoNodeInfoPopR.apply }
+          state.nodeInfoConn { AdvGeoNodeInfoPopR.apply },
+
+          // -- Служебные попапы --
+          // Попап "Пожалуйста, подождите...":
+          state.pendingOptConn { PleaseWaitPopupR.apply },
+
+          // Попап с какой-либо ошибкой среди попапов.
+          state.errorOptConn { ErrorPopupR.apply }
 
         )
       }
@@ -47,10 +57,12 @@ object AdvGeoPopupsR {
         popContPropsConn = propsProxy.connect { props =>
           // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.
           PopupsContR.PropsVal(
-            visible   = props.nonEmpty
+            visible = props.nonEmpty
           )
         },
-        nodeInfoConn = propsProxy.connect( _.nodeInfo )
+        nodeInfoConn    = propsProxy.connect( _.nodeInfo ),
+        pendingOptConn  = propsProxy.connect( _.firstPotPending ),
+        errorOptConn    = propsProxy.connect( _.firstPotFailed )
       )
     }
     .renderBackend[Backend]

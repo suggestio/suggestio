@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.lk.r.ReactDiodeUtil
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -41,8 +42,9 @@ object PopupR {
     def render(propsProxy: Props, pc: PropsChildren): ReactElement = {
       val p = propsProxy()
       <.div(
-        ^.`class` := Css.flat1( Css.Lk.Popup.POPUP :: p.hSize :: p.css ),
-        ^.top := p.topPc.pct,
+        ^.`class`  := Css.flat1( Css.Lk.Popup.POPUP :: p.hSize :: p.css ),
+        ^.top      := p.topPc.pct,
+        ^.onClick ==> ReactDiodeUtil.eStopPropagationCB,
 
         for (closeCB <- p.closeable) yield {
           <.div(
@@ -50,7 +52,7 @@ object PopupR {
 
             <.a(
               ^.`class`  := Css.flat(Css.Lk.Popup.CLOSE, Css.Floatt.RIGHT),
-              ^.href     := dom.window.location.href,
+              //^.href     := dom.window.location.href,
               ^.title    := Messages( MsgCodes.`Close` ),
               ^.onClick --> closeCB
             )

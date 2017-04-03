@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.a.mapf
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.geo.IGeoPointField
-import io.suggest.lk.adv.geo.m.{HandleLocationFound, ISetMapCenter, ISetMapCenterForPopup, MMap}
+import io.suggest.lk.adv.geo.m._
 
 /**
   * Suggest.io
@@ -39,6 +39,10 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMap]) extends ActionHandler(mmapRW) {
       // TODO Нужно, отценровать карту как-то по-особому, чтобы центр был ниже реального центра.
       _setMapCenter(ismc)
 
+    // Сигнал сокрытия попапа на карте Leaflet.
+    case _: IHandlePopupClose =>
+      // Почему-то бывает, что сообщение о закрытие попапа приходят дважды.
+      noChange
   }
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.react
 
-import japgolly.scalajs.react.{CallbackTo, ReactElement}
+import japgolly.scalajs.react.{CallbackTo, ReactNode}
 
 import scala.scalajs.js
 import scala.language.implicitConversions
@@ -42,7 +42,7 @@ object ReactCommonUtil {
   object Implicits {
 
     /** Приведение Option[ReactElement] к ReactElement. Чтобы не писать везде .orNull */
-    implicit def reactElOpt2reactEl[T <: ReactElement](rElOpt: Option[T]): T = {
+    implicit def reactElOpt2reactEl[T <: ReactNode](rElOpt: Option[T]): T = {
       if (rElOpt.isEmpty) {
         // TODO Option.orNull тут не компилится почему-то.
         null.asInstanceOf[T]

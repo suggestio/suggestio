@@ -3,11 +3,14 @@ package io.suggest.lk.r
 import diode.react.ModelProxy
 import io.suggest.lk.pop.PopupR
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.prefix_<^._
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.PleaseWaitPopupCloseClick
 import io.suggest.sjs.common.i18n.Messages
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import PopupR.PopupPropsValFastEq
 
 /**
   * Suggest.io
@@ -17,30 +20,32 @@ import io.suggest.sjs.common.i18n.Messages
   */
 object PleaseWaitPopupR {
 
-  type Props = ModelProxy[_]
+  type Props = ModelProxy[Option[Long]]
 
   class Backend($: BackendScope[Props, Unit]) {
 
     private def closeBtnClick: Callback = {
-      dispatchOnProxyScopeCB(
-        $.asInstanceOf[BackendScope[ModelProxy[AnyRef], Unit]],
-        PleaseWaitPopupCloseClick
-      )
+      dispatchOnProxyScopeCB( $, PleaseWaitPopupCloseClick )
     }
 
     def render(proxy: Props): ReactElement = {
-      proxy.wrap { _ =>
-        PopupR.PropsVal(
-          closeable = Some(closeBtnClick)
-        )
-      } { popupPropsProxy =>
-        PopupR(popupPropsProxy)(
-          LkPreLoaderR.AnimMedium,
-          HtmlConstants.SPACE,
+      for (_ <- proxy()) yield {
+        proxy.wrap { _ =>
+          PopupR.PropsVal(
+            closeable = Some(closeBtnClick)
+          )
+        } { popupPropsProxy =>
+          PopupR(popupPropsProxy)(
+            <.br,
+            <.div(
+              LkPreLoaderR.AnimSmall,
+              HtmlConstants.SPACE,
 
-          Messages( MsgCodes.`Please.wait` ),
-          HtmlConstants.ELLIPSIS
-        )
+              Messages(MsgCodes.`Please.wait`),
+              HtmlConstants.ELLIPSIS
+            )
+          )
+        }
       }
     }
   }

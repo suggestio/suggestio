@@ -18,6 +18,7 @@ object MsgCodes {
   val `Comission.0.pct.for.sio` = "Comission.0.pct.for.sio"
   val `Cost` = "Cost"
   val `Show.details` = "Show.details"
+  val `Information` = "Information"
 
   val `Error` = "Error"
   val `Something.gone.wrong` = "Something.gone.wrong"

@@ -3,7 +3,6 @@ package io.suggest.lk.adv.geo.a.rcvr
 import diode._
 import diode.data.Pot
 import io.suggest.adv.rcvr.MRcvrPopupS
-import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -17,9 +16,11 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   * Description: Action handler для карты ресиверов.
   */
 
-class RcvrsMarkerPopupAh[M](api: ILkAdvGeoApi,
-                            adIdProxy: ModelRO[String],
-                            rcvrsRW: ModelRW[M, MRcvr])
+class RcvrsMarkerPopupAh[M](
+                             api        : ILkAdvGeoApi,
+                             adIdProxy  : ModelRO[String],
+                             rcvrsRW    : ModelRW[M, MRcvr]
+                           )
   extends ActionHandler(rcvrsRW)
   with Log
 {
@@ -65,7 +66,7 @@ class RcvrsMarkerPopupAh[M](api: ILkAdvGeoApi,
       updated(v2)
 
     // Среагировать на закрытие попапа, если он открыт сейчас.
-    case HandlePopupClose if value.popupState.nonEmpty =>
+    case HandlePopupClose if value.popupState.nonEmpty || value.popupResp.nonEmpty =>
       val v2 = value.withPopup(
         resp  = Pot.empty,
         state = None

@@ -3,11 +3,13 @@ package io.suggest.lk.pop
 import diode.{FastEq, UseValueEq}
 import diode.react.ModelProxy
 import io.suggest.css.Css
+import io.suggest.lk.m.CloseAllPopups
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import org.scalajs.dom.raw.HTMLDivElement
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -35,6 +37,11 @@ object PopupsContR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
+    /** Callback клика по подложке попапов. */
+    private def onBgClick: Callback = {
+      dispatchOnProxyScopeCB( $, CloseAllPopups )
+    }
+
     def render(propsProxy: Props, pc: PropsChildren): ReactElement = {
       val p = propsProxy()
       <.aside(
@@ -42,6 +49,8 @@ object PopupsContR {
           Css.flat( Css.Lk.Popup.POPUPS, Css.Lk.Popup.POPUPS_CONTAINER, p.css ),
           Css.Display.VISIBLE -> p.visible
         ),
+
+        ^.onClick --> onBgClick,
 
         // Отрендерить все попапы:
         pc

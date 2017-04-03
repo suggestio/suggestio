@@ -2,6 +2,7 @@ package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.sjs.common.vm.spa.IOverMPots
 
 /**
   * Suggest.io
@@ -28,6 +29,7 @@ case class MPopupsS(
                      nodeInfo   : Option[MNodeInfoPopupS]   = None
                    )
   extends EmptyProduct
+  with IOverMPots
 {
 
   def withNodeInfo(nodeInfo2: Option[MNodeInfoPopupS]) = copy(nodeInfo = nodeInfo2)

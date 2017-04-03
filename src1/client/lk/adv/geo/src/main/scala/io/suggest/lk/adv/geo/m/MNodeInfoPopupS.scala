@@ -3,6 +3,7 @@ package io.suggest.lk.adv.geo.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.sjs.common.vm.spa.IMPot
 
 /**
   * Suggest.io
@@ -29,8 +30,12 @@ object MNodeInfoPopupS {
 case class MNodeInfoPopupS(
                             rcvrKey : RcvrKey,
                             req     : Pot[String]
-                          ) {
+                          )
+  extends IMPot[String]
+{
 
   def withReq(req2: Pot[String]) = copy(req = req2)
+
+  override final def _pot = req
 
 }

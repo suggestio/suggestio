@@ -4,7 +4,7 @@ import diode.data.Pending
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, OpenNodeInfoClick, OpenNodeInfoResp}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
-import io.suggest.lk.m.{ILkCommonUselessPopupCloseAction, NodeInfoPopupClose}
+import io.suggest.lk.m.ILkCommonPopupCloseAction
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -70,12 +70,8 @@ class NodeInfoPopupAh[M](
       }
 
 
-    // Сигнал закрытия текущего попапа.
-    case NodeInfoPopupClose =>
-      updated( None )
-
-    // Сигнал сокрытия попапа с ошибкой или please-wait попапа, связанного с текущим действом.
-    case _: ILkCommonUselessPopupCloseAction if value.nonEmpty =>
+    // Сигнал сокрытия попапа с ошибкой или please-wait попапа, связанного с текущим действом, закрытия всех попапов.
+    case _: ILkCommonPopupCloseAction if value.nonEmpty =>
       updated( None )
 
   }
