@@ -127,7 +127,7 @@ class AdvUtil @Inject() (
 
         // Пройтись по праздничным календарям, попытаться найти подходящий
         val clause4day = clausesWithCals
-          .find { case (clause, calCtx) =>
+          .find { case (_, calCtx) =>
             calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
           }
           .map(_._1)

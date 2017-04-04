@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import java.time.LocalDate
+import java.time.{LocalDate, OffsetDateTime}
 
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
@@ -139,96 +139,9 @@ class AdvGeoBillUtil @Inject() (
     * @return Фьючерс c результатом.
     */
   def addToOrder(orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
-    // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
-    val ymdPeriod = abc.res.datePeriod.info
-    val dateStart = ymdPeriod.dateStart[LocalDate]
-    val dateEnd   = ymdPeriod.dateEnd[LocalDate]
-
-    // Инновация: берём временную зону прямо из браузера!
-    val tzOffset = DateTimeUtil.minutesOffset2TzOff( abc.res.tzOffsetMinutes )
-
-    val dtStartOpt = Some( dateStart.atStartOfDay().atOffset(tzOffset) )
-    val dtEndOpt   = Some( dateEnd.atStartOfDay().atOffset(tzOffset) )
-
-    val adId = abc.adId
-
-    val calc = new Calc[MItem](abc) {
-
-      override def logPrefixPrefix: String = s"addToOrder(ord=$orderId,ad=$adId,st=$status)"
-
-      override type CircleGs_t = Option[CircleGs]
-      override def mkCircleGs(circle: MGeoCircle): CircleGs_t = {
-        Some( CircleGs( circle ) )
-      }
-
-      /** Сборка item'а для geo + onMainScreen. */
-      override def geoOms(circleGs: CircleGs_t, price: MPrice): MItem = {
-        MItem(
-          orderId       = orderId,
-          iType         = MItemTypes.GeoPlace,
-          status        = status,
-          price         = price,
-          nodeId        = adId,
-          dateStartOpt  = dtStartOpt,
-          dateEndOpt    = dtEndOpt,
-          rcvrIdOpt     = None,
-          geoShape      = circleGs
-        )
-      }
-
-      /** Добавить в _acc информацию по геотегам. */
-      override def addGeoTags(circleGs: CircleGs_t, oneTagPrice: MPrice): Unit = {
-        for (tagFace <- abc.res.tagsEdit.tagsExists) {
-          _acc ::= MItem(
-            orderId       = orderId,
-            iType         = MItemTypes.GeoTag,
-            status        = status,
-            price         = oneTagPrice,
-            nodeId        = adId,
-            dateStartOpt  = dtStartOpt,
-            dateEndOpt    = dtEndOpt,
-            // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
-            rcvrIdOpt     = None,
-            tagFaceOpt    = Some(tagFace),
-            geoShape      = circleGs
-          )
-        }
-      }
-
-      /** Собрать item'а для размещения на одном ресивере на его главном экране. */
-      override def rcvrOms(rcvrId: String, price: MPrice): MItem = {
-        MItem(
-          orderId       = orderId,
-          iType         = MItemTypes.AdvDirect,
-          status        = status,
-          price         = price,
-          nodeId        = adId,
-          dateStartOpt  = dtStartOpt,
-          dateEndOpt    = dtEndOpt,
-          rcvrIdOpt     = Some(rcvrId),
-          geoShape      = None
-        )
-      }
-
-      /** Добавить в _acc данные по размещениям всех тегов на ресивере. */
-      override def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit = {
-        for (tagFace <- abc.res.tagsEdit.tagsExists) {
-          _acc ::= MItem(
-            orderId       = orderId,
-            iType         = MItemTypes.TagDirect,
-            status        = status,
-            price         = oneTagPrice,
-            nodeId        = adId,
-            dateStartOpt  = dtStartOpt,
-            dateEndOpt    = dtEndOpt,
-            // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
-            rcvrIdOpt     = None,
-            tagFaceOpt    = Some(tagFace),
-            geoShape      = None
-          )
-        }
-      }
-
+    val calc = new ItemsCalc(abc) {
+      override val _orderId     = orderId
+      override val _itemStatus  = status
     }
 
     val itemsAcc = calc.execute()
@@ -247,43 +160,22 @@ class AdvGeoBillUtil @Inject() (
     * @return Фьючерс с данными прайсинга, пригодными для сериализации и отправки на клиент.
     */
   def getPricing(abc: MGeoAdvBillCtx): Future[MGetPriceResp] = {
-
-    val calc = new Calc[MPrice](abc) {
-
-      override def logPrefixPrefix = "getPricing"
-
-      override type CircleGs_t = MGeoCircle
-      override def mkCircleGs(circle: CircleGs_t): CircleGs_t = circle
-
-      /** Сборка item'а для geo + onMainScreen. */
-      override def geoOms(circleGs: CircleGs_t, price: MPrice): MPrice = {
-        price
-      }
-
-      /** Добавить в _acc информацию по геотегам. */
-      override def addGeoTags(circleGs: CircleGs_t, oneTagPrice: MPrice): Unit = {
-        _handleTags(oneTagPrice)
-      }
-
-      /** Собрать item'а для размещения на одном ресивере на его главном экране. */
-      override def rcvrOms(rcvrId: String, price: MPrice): MPrice = {
-        price
-      }
-
-      /** Добавить в _acc данные по размещениям всех тегов на ресивере. */
-      override def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit = {
-        _handleTags(oneTagPrice)
-      }
-
-      private def _handleTags(oneTagPrice: MPrice): Unit = {
-        _acc ::= oneTagPrice.multiplifiedBy(tagsCount)
-      }
+    // 2017.04.04: Надо бы выводить в форму более подробную инфу по рассчёту стоимости.
+    // Поэтому, рассчёт на основе тех же item'ов, что и при добавлении в корзину:
+    // item'ы генерятся, их цена суммируется, некоторые данные item'ов сериализуются прямо в ответ.
+    val itemsCalc = new ItemsCalc(abc) {
+      // Все эти обязательные значения не важны для результата:
+      override val _orderId = -1L
+      override val _itemStatus = MItemStatuses.Draft
     }
 
-    val pricesAcc = calc.execute()
+    val items = itemsCalc.execute()
+    val pricesAcc = items.map(_.price)
 
     // Просуммировать ценники
-    val prices2 = MPrice.sumPricesByCurrency(pricesAcc)
+    val prices2 = MPrice.sumPricesByCurrency( pricesAcc )
+
+    // TODO Извлечь полезную инфу из items, и сериализовать её в модель ответа по цене в отдельное поле.
 
     val result = bill2Util.getAdvPricing( prices2.values )
     Future.successful(result)
@@ -397,6 +289,108 @@ class AdvGeoBillUtil @Inject() (
     }
 
   }
+
+
+  /** Items-генератор на основе калькулятора. */
+  private abstract class ItemsCalc(abc: MGeoAdvBillCtx) extends Calc[MItem](abc) {
+
+    val _orderId: Gid_t
+
+    // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
+    val _ymdPeriod = abc.res.datePeriod.info
+    val _dateStart = _ymdPeriod.dateStart[LocalDate]
+    val _dateEnd   = _ymdPeriod.dateEnd[LocalDate]
+
+    // Инновация: берём временную зону прямо из браузера!
+    val _tzOffset = DateTimeUtil.minutesOffset2TzOff( abc.res.tzOffsetMinutes )
+
+    private def __dt(localDate: LocalDate): Option[OffsetDateTime] = {
+      Some( localDate.atStartOfDay().atOffset(_tzOffset) )
+    }
+
+    val _dtStartOpt  = __dt( _dateStart )
+    val _dtEndOpt    = __dt( _dateEnd )
+
+    val _itemStatus: MItemStatus
+    val _adId = abc.adId
+
+    override def logPrefixPrefix: String = s"addToOrder(ord=${_orderId},ad=${_adId},st=${_itemStatus})"
+
+    override type CircleGs_t = Option[CircleGs]
+    override def mkCircleGs(circle: MGeoCircle): CircleGs_t = {
+      Some( CircleGs( circle ) )
+    }
+
+    /** Сборка item'а для geo + onMainScreen. */
+    override def geoOms(circleGs: CircleGs_t, price: MPrice): MItem = {
+      MItem(
+        orderId       = _orderId,
+        iType         = MItemTypes.GeoPlace,
+        status        = _itemStatus,
+        price         = price,
+        nodeId        = _adId,
+        dateStartOpt  = _dtStartOpt,
+        dateEndOpt    = _dtEndOpt,
+        rcvrIdOpt     = None,
+        geoShape      = circleGs
+      )
+    }
+
+    /** Добавить в _acc информацию по геотегам. */
+    override def addGeoTags(circleGs: CircleGs_t, oneTagPrice: MPrice): Unit = {
+      for (tagFace <- abc.res.tagsEdit.tagsExists) {
+        _acc ::= MItem(
+          orderId       = _orderId,
+          iType         = MItemTypes.GeoTag,
+          status        = _itemStatus,
+          price         = oneTagPrice,
+          nodeId        = _adId,
+          dateStartOpt  = _dtStartOpt,
+          dateEndOpt    = _dtEndOpt,
+          // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
+          rcvrIdOpt     = None,
+          tagFaceOpt    = Some(tagFace),
+          geoShape      = circleGs
+        )
+      }
+    }
+
+    /** Собрать item'а для размещения на одном ресивере на его главном экране. */
+    override def rcvrOms(rcvrId: String, price: MPrice): MItem = {
+      MItem(
+        orderId       = _orderId,
+        iType         = MItemTypes.AdvDirect,
+        status        = _itemStatus,
+        price         = price,
+        nodeId        = _adId,
+        dateStartOpt  = _dtStartOpt,
+        dateEndOpt    = _dtEndOpt,
+        rcvrIdOpt     = Some(rcvrId),
+        geoShape      = None
+      )
+    }
+
+    /** Добавить в _acc данные по размещениям всех тегов на ресивере. */
+    override def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit = {
+      for (tagFace <- abc.res.tagsEdit.tagsExists) {
+        _acc ::= MItem(
+          orderId       = _orderId,
+          iType         = MItemTypes.TagDirect,
+          status        = _itemStatus,
+          price         = oneTagPrice,
+          nodeId        = _adId,
+          dateStartOpt  = _dtStartOpt,
+          dateEndOpt    = _dtEndOpt,
+          // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
+          rcvrIdOpt     = None,
+          tagFaceOpt    = Some(tagFace),
+          geoShape      = None
+        )
+      }
+    }
+
+  }
+
 
   /** Базовый множитель цены для размещения на главном экране (ресивера, карты). */
   private def ON_MAIN_SCREEN_MULT = 3.0
