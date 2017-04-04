@@ -213,7 +213,7 @@ trait LkBillOrders
     * @param mitemsFut Найденные в биллинге item'ы.
     * @param ctxFut Контекст.
     * @param request Текущий HTTP-реквест.
-    * @return Фьючерс с инстансом [[models.mbill.MRcvrInfoTplArgs]].
+    * @return Фьючерс.
     */
   private def _mItemsTplArgs(mitemsFut: Future[Seq[MItem]], ctxFut: Future[Context])(implicit request: INodeReq[_]): Future[MItemsTplArgs] = {
     // Собрать id узлов, на которые завязаны item'ы.

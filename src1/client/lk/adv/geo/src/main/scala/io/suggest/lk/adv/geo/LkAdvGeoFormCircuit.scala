@@ -209,6 +209,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val nodeInfoPopupAh = new NodeInfoPopupAh(
       api     = API,
+      confRO  = otherRW,
       modelRW = mPopupsRW.zoomRW(_.nodeInfo) { _.withNodeInfo(_) }
     )
 

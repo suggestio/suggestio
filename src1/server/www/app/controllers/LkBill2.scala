@@ -18,6 +18,7 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import play.twirl.api.{Html, Template2}
 import util.acl._
+import util.adv.AdvUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.img.{GalleryUtil, LogoUtil}
 import views.html.lk.billing._
@@ -35,6 +36,7 @@ class LkBill2 @Inject() (
                           tfDailyUtil                 : TfDailyUtil,
                           mCalendars                  : MCalendars,
                           galleryUtil                 : GalleryUtil,
+                          advUtil                     : AdvUtil,
                           override val logoUtil       : LogoUtil,
                           override val canViewOrder   : CanViewOrder,
                           override val canAccessItem  : CanAccessItem,
@@ -55,18 +57,33 @@ class LkBill2 @Inject() (
 
   import mCommonDi._
 
-  private def _dailyTfArgsFut(mnode: MNode): Future[Option[MDailyTfTplArgs]] = {
+  private def _dailyTfArgsFut(mnode: MNode, madOpt: Option[MNode] = None): Future[Option[MTfDailyTplArgs]] = {
     if (mnode.extras.adn.exists(_.isReceiver)) {
       for {
         // Получить данные по тарифу.
-        dailyTf   <- tfDailyUtil.nodeTf( mnode )
+        tfDaily   <- tfDailyUtil.nodeTf( mnode )
         // Прочитать календари, относящиеся к тарифу.
-        calsMap   <- mCalendars.multiGetMap( dailyTf.calIds )
+        calsMap   <- mCalendars.multiGetMap( tfDaily.calIds )
       } yield {
-        val args1 = MDailyTfTplArgs(
-          mnode   = mnode,
-          dailyTf = dailyTf,
-          calsMap = calsMap
+
+        // Подготовить инфу по ценам на карточку, если она задана.
+        val madTfOpt = for (mad <- madOpt) yield {
+          val bmc = advUtil.getAdModulesCount( mad )
+          val madTf = tfDaily.withClauses(
+            tfDaily.clauses.mapValues { mdc =>
+              mdc.withAmount(
+                mdc.amount * bmc
+              )
+            }
+          )
+          MAdTfInfo(bmc, madTf)
+        }
+
+        val args1 = MTfDailyTplArgs(
+          mnode     = mnode,
+          tfDaily   = tfDaily,
+          madTfOpt  = madTfOpt,
+          calsMap   = calsMap
         )
         Some(args1)
       }
@@ -125,14 +142,20 @@ class LkBill2 @Inject() (
     * @return 200 Ок с версткой окошка.
     *         404 если узел не найден или не является ресивером.
     */
-  def _rcvrInfoWnd(nodeId: String) = _rcvrInfoResp(nodeId, _rcvrInfoWndTpl)
+  def _rcvrInfoWnd(nodeId: String) = _rcvrInfoResp(_rcvrInfoWndTpl, nodeId)
 
   /** Рендер только наполнения окошка по целевому узлу-ресиверу. */
-  def _rcvrInfoWndBody(nodeId: String) = _rcvrInfoResp(nodeId, _rcvrInfoPopBodyTpl)
+  def _rcvrInfoWndBody(nodeId: String, forAdId: Option[String]) = _rcvrInfoResp(_rcvrInfoPopBodyTpl, nodeId, forAdId)
 
-  private def _rcvrInfoResp(nodeId: String, tpl: Template2[IRcvrInfoTplArgs, Context, Html]) = {
-    canViewNodeAdvInfo(nodeId).async { implicit request =>
-      val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode)
+  private def _rcvrInfoResp(
+                             tpl      : Template2[IRcvrInfoTplArgs, Context, Html],
+                             nodeId   : String,
+                             forAdId  : Option[String] = None
+                           ) = {
+    canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
+      val madOpt = request.adProdReqOpt
+        .map(_.mad)
+      val dailyTfArgsOptFut = _dailyTfArgsFut(request.mnode, madOpt)
       val galleryFut = galleryUtil.galleryImgs(request.mnode)
 
       val okFut = for {
@@ -141,9 +164,7 @@ class LkBill2 @Inject() (
         gallery         <- galleryFut
       } yield {
         val args = MRcvrInfoTplArgs(
-          mnode   = request.mnode,
-          dailyTf = dailyTfArgs.dailyTf,
-          calsMap = dailyTfArgs.calsMap,
+          tfArgs  = dailyTfArgs,
           gallery = gallery
         )
         Ok( tpl.render(args, implicitly[Context]) )

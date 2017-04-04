@@ -195,6 +195,7 @@ blocks.field.title=Заголовок
 blocks.field.bgColor=Цвет фона
 blocks.field.href=Ссылка на внешний ресурс
 Add.text.block=Добавить текстовый блок
+N.modules={0} модулей
 
 ad.stat.action.v=Просмотр
 ad.stat.action.c=Клик
@@ -854,6 +855,7 @@ Domain.mode.sc=Отображение выдачи в домене
 conf.sc.node.ephemeral.id=AU1MCCmy2A6B8K1LbX6u
 e.required.tags.or.main.screen=Требуется активировать размещение на главном экране или указать хотя бы один геотег.
 
+Current.ad=Текущая карточка
 Current.node=Текущий узел
 x.on.advertisers.map={0} на карте рекламодателей
 On.the.map=На карте

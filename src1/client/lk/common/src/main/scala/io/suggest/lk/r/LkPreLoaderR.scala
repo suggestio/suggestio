@@ -41,7 +41,7 @@ object LkPreLoaderR {
           .fold[ReactElement]( Text() ) { url =>
             <.img(
               ^.src   := url,
-              ^.alt   := pleaseWait,
+              ^.title := pleaseWait,
               ^.width := widthPx.px
             )
           }

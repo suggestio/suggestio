@@ -41,8 +41,7 @@ object PleaseWaitPopupR {
               LkPreLoaderR.AnimSmall,
               HtmlConstants.SPACE,
 
-              Messages(MsgCodes.`Please.wait`),
-              HtmlConstants.ELLIPSIS
+              Messages(MsgCodes.`Please.wait`)
             )
           )
         }

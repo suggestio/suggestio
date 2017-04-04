@@ -4,8 +4,8 @@ import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
-import models.req.MNodeMaybeAdminReq
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import models.req.{IAdProdReq, MNodeMaybeAdminReq}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 
 import scala.concurrent.Future
@@ -19,6 +19,7 @@ import scala.concurrent.Future
   */
 class CanViewNodeAdvInfo @Inject() (
                                      aclUtil                : AclUtil,
+                                     canAdvAd               : CanAdvAd,
                                      isAuth                 : IsAuth,
                                      isNodeAdmin            : IsNodeAdmin,
                                      mCommonDi              : ICommonDi
@@ -33,15 +34,17 @@ class CanViewNodeAdvInfo @Inject() (
   /** Вся ACL-логика живёт здесь.
     *
     * @param nodeId id узла.
+    * @param forAdIdOpt Опциональный id рекламной карточки, если экшен в контексте какой-то карточки.
     * @param request реквест.
     * @param f Тело экшена.
     * @return Фьючерс с HTTP-ответом.
     */
-  private def _apply[A](nodeId: String, request: Request[A])
+  private def _apply[A](nodeId: String, forAdIdOpt: Option[String], request: Request[A])
                        (f: MNodeMaybeAdminReq[A] => Future[Result]): Future[Result] = {
 
-    val user = aclUtil.userFromRequest( request )
-    lazy val logPrefix = s"${outer.getClass.getSimpleName}($nodeId):"
+    val mreq0 = aclUtil.reqFromRequest( request )
+    val user = aclUtil.userFromRequest( mreq0 )
+    lazy val logPrefix = s"${outer.getClass.getSimpleName}($nodeId${forAdIdOpt.fold("")("," + _)}):"
 
     user.personIdOpt.fold {
       LOGGER.debug(s"$logPrefix Refused anonymous user from ${request.remoteAddress}")
@@ -52,8 +55,26 @@ class CanViewNodeAdvInfo @Inject() (
       val mnodeOptFut = mNodesCache.getById(nodeId)
 
       // Ответ при проблемах с доступом для залогиненного юзера всегда один:
-      def forbidden: Future[Result] = {
+      def forbidden: Result = {
         Results.Forbidden( s"No access to node $nodeId." )
+      }
+
+      // Запустить в фоне проверку доступа к опциональной карточке.
+      val madProdReqOptFut = forAdIdOpt.fold [Future[Either[Result, Option[IAdProdReq[A]]]]] {
+        LOGGER.trace(s"$logPrefix adId undefined, skipped.")
+        Right(None)
+      } { forAdId =>
+        for {
+          madReqOpt <- canAdvAd.maybeAllowed( forAdId, mreq0 )
+        } yield {
+          madReqOpt.fold [Either[Result, Option[IAdProdReq[A]]]] {
+            LOGGER.warn(s"$logPrefix User#$personId has NO access to ad#$forAdId")
+            Left( forbidden )
+          } { adProdReq =>
+            LOGGER.trace(s"$logPrefix User#$personId allowed to adv $forAdId")
+            Right( Some(adProdReq) )
+          }
+        }
       }
 
       mnodeOptFut.flatMap {
@@ -70,8 +91,18 @@ class CanViewNodeAdvInfo @Inject() (
             (userIsAdmin || mnode.common.isEnabled)
 
           if (isAllowed) {
-            val req1 = MNodeMaybeAdminReq(mnode, userIsAdmin, request, user)
-            f(req1)
+
+            // Переходим к проверке опциональной карточки.
+            madProdReqOptFut.flatMap {
+              // Разрешено всё. Пропускаем реквест вперёд.
+              case Right( adProdReqOpt ) =>
+                val req1 = MNodeMaybeAdminReq(mnode, userIsAdmin, adProdReqOpt, request, user)
+                f(req1)
+
+              case Left( result ) =>
+                result
+            }
+
           } else {
             LOGGER.warn(s"$logPrefix User#$personId cannot access to existing node $nodeId. nodePublic?$isNodePublic nodeEnabled?${mnode.common.isEnabled}")
             forbidden
@@ -92,11 +123,24 @@ class CanViewNodeAdvInfo @Inject() (
     * @param nodeId id интересующего узла.
     * @return ActionBuilder.
     */
-  def apply(nodeId: String): ActionBuilder[MNodeMaybeAdminReq] = {
+  def apply(nodeId: String, forAdIdOpt: Option[String] = None): ActionBuilder[MNodeMaybeAdminReq] = {
     new SioActionBuilderImpl[MNodeMaybeAdminReq] {
       override def invokeBlock[A](request: Request[A], block: (MNodeMaybeAdminReq[A]) => Future[Result]): Future[Result] = {
-        _apply(nodeId, request)(block)
+        _apply(nodeId, forAdIdOpt, request)(block)
       }
+    }
+  }
+
+  /** Завернуть произвольный экшен в текущую проверку.
+    *
+    * @param nodeId id узла.
+    * @param action экшен.
+    * @tparam A тип request body.
+    * @return Обновлённый экшен.
+    */
+  def A[A](nodeId: String, forAdIdOpt: Option[String] = None)(action: Action[A]): Action[A] = {
+    Action.async(action.parser) { request =>
+      _apply(nodeId, forAdIdOpt, request)(action.apply)
     }
   }
 

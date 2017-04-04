@@ -1,8 +1,6 @@
 package models.mbill
 
 import models.im.MImgT
-import models.{MDailyTf, MNode}
-import models.mcal.MCalendar
 
 /**
  * Suggest.io
@@ -13,18 +11,20 @@ import models.mcal.MCalendar
  * @see [[views.html.lk.billing._rcvrInfoTpl]]
  */
 
-trait IRcvrInfoTplArgs extends IDailyTfTplArgs {
+trait IRcvrInfoTplArgs extends ITfDailyTplArgsWrap {
 
   /** Галлерея узла. */
   def gallery   : Seq[MImgT]
+
+  def tfArgs: ITfDailyTplArgs
+
+  override protected final def underlying = tfArgs
 
 }
 
 
 case class MRcvrInfoTplArgs(
-  override val mnode      : MNode,
-  override val dailyTf    : MDailyTf,
-  override val calsMap    : Map[String, MCalendar],
-  override val gallery    : Seq[MImgT]
+                             override val tfArgs     : ITfDailyTplArgs,
+                             override val gallery    : Seq[MImgT]
 )
   extends IRcvrInfoTplArgs

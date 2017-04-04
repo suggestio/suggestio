@@ -15,7 +15,7 @@ trait ILkBillNodeTplArgs {
   def mnode: MNode
 
   /** Аргументы для рендера посуточного тарифа текущего узла-ресивера. */
-  def dailyTfArgs: Option[IDailyTfTplArgs]
+  def dailyTfArgs: Option[ITfDailyTplArgs]
 
 }
 
@@ -23,6 +23,6 @@ trait ILkBillNodeTplArgs {
 /** Дефолтовая реализация модели [[ILkBillNodeTplArgs]]. */
 case class MLkBillNodeTplArgs(
   override val mnode        : MNode,
-  override val dailyTfArgs  : Option[IDailyTfTplArgs]
+  override val dailyTfArgs  : Option[ITfDailyTplArgs]
 )
   extends ILkBillNodeTplArgs

@@ -1,9 +1,28 @@
-@(args: mbill.IDailyTfTplArgs)(implicit ctx: Context)
+@(args: mbill.ITfDailyTplArgs)(implicit ctx: Context)
 
 @import ctx._
 @import util.TplDataFormatUtil._
-@import io.suggest.cal.m.MCalTypes
+@import io.suggest.cal.m.{MCalTypes, MCalType}
+@import io.suggest.model.n2.bill.tariff.daily.MTfDaily
 
+@* Общий код рендера строки с ценниками. *@
+@__renderTfDaily(tf: MTfDaily) = {
+  @*<td class="td"></td>*@
+  @defining( messages("day24h") ) { sutkiI18n =>
+
+    @for( clause <- tf.clauses.valuesIterator) {
+      @*if( !clause.eq( tf.clauses.head._2 ) ) {*@
+        <td class="td"></td>
+      @*}*@
+      <td class="td tariff_info-value">
+        @formatPrice(clause.amount, tf.currency)/@sutkiI18n
+      </td>
+    }
+  } @* Частое слово "сутки" на текущем языке. *@
+}
+
+
+@* Далее -- основная вёрстка шаблона. *@
 <div class="tariff_illustration-w">
   <div class="tariff_illustration"></div>
 </div>
@@ -15,14 +34,14 @@
     @* Строка-заголовок. *@
     <tr>
       <td colspan="2">&nbsp;</td>
-      @for( clause <- args.dailyTf.clauses.valuesIterator) {
+      @for( clause <- args.tfDaily.clauses.valuesIterator) {
         @* Из-за "особенностей" верстки макса требуется добавлять пустые ячейки между столбцами. *@
-        @if( !clause.eq( args.dailyTf.clauses.head._2 ) ) {
+        @if( !clause.eq( args.tfDaily.clauses.head._2 ) ) {
           <td></td>
         }
         <td class="td tariff_info-title">
           @* По календарю определить тип и слова для рендера. *@
-          @defining( clause.calId.flatMap(args.calsMap.get).map(_.calType).getOrElse(MCalTypes.default) ) { mct =>
+          @defining( clause.calId.flatMap(args.calsMap.get).fold[MCalType](MCalTypes.default)(_.calType) ) { mct =>
             @messages(mct.name):
             @for(dayStart <- mct.dayStart; dayEnd <- mct.dayEnd) {
               @messages("dow." + dayStart)-@messages("dow." + dayEnd)
@@ -39,22 +58,20 @@
         <br/>
         (@Html( messages("scheme.left", "&nbsp") ))
       </td>
-      <td class="td"></td>
-      @defining( args.dailyTf.currency ) { currency =>
-      @defining( messages("day24h") ) { sutkiI18n =>
-
-        @for( clause <- args.dailyTf.clauses.valuesIterator) {
-          @if( !clause.eq( args.dailyTf.clauses.head._2 ) ) {
-            <td class="td"></td>
-          }
-          <td class="td tariff_info-value">
-            @formatPrice(clause.amount, currency)/@sutkiI18n
-          </td>
-        }
-
-      } @* Слово "сутки" на текущем языке. *@
-      } @* закешированный инстанс currency *@
+      @__renderTfDaily(args.tfDaily)
     </tr>
+
+    @* Если указана карточка, для которой нужно вывести тарифы, то отрендерить ещё одну строку. *@
+    @for(madTf <- args.madTfOpt ) {
+      <tr>
+        <td class="td tariff_green ft-XS white">
+          @messages("Current.ad")
+          <br/>
+          (@messages("N.modules", madTf.modulesCount))
+        </td>
+        @__renderTfDaily(madTf.tfDaily)
+      </tr>
+    }
 
     @* Строка-футер с малополезным пояснением. *@
     <tr>

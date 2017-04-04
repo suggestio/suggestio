@@ -14,15 +14,19 @@ trait INodeMaybeAdminReq[A] extends INodeReq[A] {
   /** Является ли юзер админом текущего узла? */
   def isAdmin: Boolean
 
+  /** Рекламная карточка, если есть. */
+  def adProdReqOpt: Option[IAdProdReq[A]]
+
 }
 
 
 /** Дефолтовая реализация модели реквеста [[INodeMaybeAdminReq]]. */
 case class MNodeMaybeAdminReq[A](
-                                  override val mnode    : MNode,
-                                  override val isAdmin  : Boolean,
-                                  override val request  : Request[A],
-                                  override val user     : ISioUser
+                                  override val mnode        : MNode,
+                                  override val isAdmin      : Boolean,
+                                  override val adProdReqOpt : Option[IAdProdReq[A]],
+                                  override val request      : Request[A],
+                                  override val user         : ISioUser
                                 )
   extends MReqWrap[A]
   with INodeMaybeAdminReq[A]
