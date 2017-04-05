@@ -5,6 +5,7 @@ import io.suggest.bill.MCurrencies
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
 import io.suggest.i18n.MsgCodes
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
 
 /**
@@ -161,6 +162,12 @@ class JsMessagesUtil @Inject() (
       Nil
   }
 
+  private def ITEM_TYPES: TraversableOnce[String] = {
+    for (i <- MItemTypes.values.iterator) yield {
+      i.nameI18n
+    }
+  }
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -173,6 +180,7 @@ class JsMessagesUtil @Inject() (
       DATE_TIME_ABBREVATIONS,
       ADV_PRICING,
       ADV_INFO,
+      ITEM_TYPES,
       LK_COMMON,
       LK_NODES_MSGS
     )

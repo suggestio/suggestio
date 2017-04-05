@@ -16,6 +16,7 @@ object MGetPriceResp {
 
   implicit val pickler: Pickler[MGetPriceResp] = {
     implicit val priceP = MPrice.mPricePickler
+    implicit val mItemInfoP = MItemInfo.mItemInfoPickler
     generatePickler[MGetPriceResp]
   }
 
@@ -29,7 +30,8 @@ object MGetPriceResp {
   *               Ситуация, когда несколько валют, довольно маловероятна.
   */
 case class MGetPriceResp(
-                          prices: Iterable[MPrice]
+                          prices  : Iterable[MPrice],
+                          items   : Seq[MItemInfo] = Nil
                         ) {
 
   def withPrices(prices2: Iterable[MPrice]) = copy(prices = prices2)

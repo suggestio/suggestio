@@ -147,6 +147,20 @@ object TplDataFormatUtil {
   }
 
   /**
+    * Выставить в mprice отформатированное значение amount'а.
+    * @param mprice Цена.
+    * @param ctx Контекст рендера.
+    * @return Обновлённый инстанс MPrice.
+    */
+  def setPriceAmountStr(mprice: MPrice)(implicit ctx: Context): MPrice = {
+    mprice.withAmountStrOpt(
+      Some(
+        formatPriceAmount(mprice)
+      )
+    )
+  }
+
+  /**
     * Форматирование amount стоимости в строку БЕЗ символа валюты.
     * @param mprice Сумма.
     * @param ctx Контекст рендера.

@@ -159,8 +159,7 @@ class AdvFormUtil {
   def prepareAdvPricing(pricing: MGetPriceResp)(implicit ctx: Context): MGetPriceResp = {
     pricing.withPrices(
       for (mprice <- pricing.prices) yield {
-        val amountStr = TplDataFormatUtil.formatPriceAmount(mprice)
-        mprice.withValueStrOpt( Some(amountStr) )
+        TplDataFormatUtil.setPriceAmountStr( mprice )
       }
     )
   }

@@ -4,7 +4,7 @@ import java.time.{LocalDate, OffsetDateTime}
 
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
-import io.suggest.bill.{MGetPriceResp, MPrice}
+import io.suggest.bill.{MGetPriceResp, MItemInfo, MNameId, MPrice}
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.geo.{CircleGs, MGeoCircle}
 import io.suggest.mbill2.m.gid.Gid_t
@@ -16,9 +16,11 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
 import models.adv.geo.MGeoAdvBillCtx
 import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
+import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
+import util.TplDataFormatUtil
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.Bill2Util
@@ -159,7 +161,7 @@ class AdvGeoBillUtil @Inject() (
     * @param abc Контекст гео-биллинга для рассчёта ценника. См. [[advBillCtx()]].
     * @return Фьючерс с данными прайсинга, пригодными для сериализации и отправки на клиент.
     */
-  def getPricing(abc: MGeoAdvBillCtx): Future[MGetPriceResp] = {
+  def getPricing(abc: MGeoAdvBillCtx)(implicit ctx: Context): Future[MGetPriceResp] = {
     // 2017.04.04: Надо бы выводить в форму более подробную инфу по рассчёту стоимости.
     // Поэтому, рассчёт на основе тех же item'ов, что и при добавлении в корзину:
     // item'ы генерятся, их цена суммируется, некоторые данные item'ов сериализуются прямо в ответ.
@@ -170,15 +172,49 @@ class AdvGeoBillUtil @Inject() (
     }
 
     val items = itemsCalc.execute()
-    val pricesAcc = items.map(_.price)
 
-    // Просуммировать ценники
-    val prices2 = MPrice.sumPricesByCurrency( pricesAcc )
+    if (items.isEmpty) {
+      // Можно не продолжать, всё и так понятно.
+      bill2Util.zeroPricingFut
 
-    // TODO Извлечь полезную инфу из items, и сериализовать её в модель ответа по цене в отдельное поле.
+    } else {
+      // Просуммировать ценники в один итоговый ценник:
+      val prices2 = {
+        val pricesAcc = items.map(_.price)
+        MPrice.sumPricesByCurrency(pricesAcc)
+      }
 
-    val result = bill2Util.getAdvPricing( prices2.values )
-    Future.successful(result)
+      // Извлечь полезную инфу из items списком
+      val infos = items
+        .map { i =>
+          MItemInfo(
+            iType = i.iType,
+            price = TplDataFormatUtil.setPriceAmountStr( i.price ),
+            rcvr = for (rcvrId <- i.rcvrIdOpt) yield {
+              MNameId(
+                id = i.rcvrIdOpt,
+                name = abc.rcvrsMap
+                  .get(rcvrId)
+                  .flatMap(_.guessDisplayNameOrId)
+                  .getOrElse(rcvrId)
+              )
+            },
+            gsInfo = i.geoShape
+              .map(TplDataFormatUtil.formatGeoShape)
+          )
+        }
+        // Отсортировать, чтобы одни и теже элементы не плясали.
+        .sortBy { ii =>
+          ii.iType.strId + " " + ii.rcvr.map(_.name).getOrElse("")
+        }
+
+      // Собрать итоговый ответ с подробными ценами для формы.
+      val resp = MGetPriceResp(
+        prices = prices2.values,
+        items  = infos
+      )
+      Future.successful(resp)
+    }
   }
 
 

@@ -119,7 +119,7 @@ case class MPrice(
 {
 
   def withAmount(value2: Amount_t) = copy(amount = value2, amountStrOpt = None)
-  def withValueStrOpt(valueStrOpt2: Option[String]) = copy(amountStrOpt = valueStrOpt2)
+  def withAmountStrOpt(amountStrOpt2: Option[String]) = copy(amountStrOpt = amountStrOpt2)
 
   override def toString: String = {
     MPrice.amountStr(this) + currency.currencyCode

@@ -160,12 +160,13 @@ class LkAdvGeo @Inject() (
   }
 
 
-  private def _getPricing(isSuFree: Boolean, mFormS: MFormS)(implicit request: IAdProdReq[_]): Future[MGetPriceResp] = {
+  private def _getPricing(isSuFree: Boolean, mFormS: MFormS)
+                         (implicit request: IAdProdReq[_], ctx: Context): Future[MGetPriceResp] = {
     bill2Util.maybeFreePricing(isSuFree) {
       // Найти все узлы, принадлежащие текущему юзеру:
       for {
         billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS)
-        pricing     <- advGeoBillUtil.getPricing(billCtx)
+        pricing     <- advGeoBillUtil.getPricing( billCtx )(ctx)
       } yield {
         pricing
       }
@@ -210,8 +211,9 @@ class LkAdvGeo @Inject() (
 
       // Считаем в фоне начальный ценник для размещения...
       val advPricingFut = for {
-        form <- formFut
-        pricing <- _getPricing(_isSuFree, form)
+        form    <- formFut
+        ctx     <- _ctxFut
+        pricing <- _getPricing(_isSuFree, form)(request, ctx)
       } yield {
         LOGGER.trace(s"$logPrefix su=${_isSuFree}  prod=${request.producer.idOrNull}  pricing => $pricing")
         advFormUtil.prepareAdvPricing(pricing)
@@ -512,22 +514,37 @@ class LkAdvGeo @Inject() (
           // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
           val info0 = infos.head
           val row = MGeoAdvExistRow(
+            // Диапазон дат, если есть.
             dateRange = MRangeYmdOpt.applyFrom(
               dateStartOpt = _offDate2localDateOpt(info0.dtStartOpt)(ctx),
               dateEndOpt   = _offDate2localDateOpt(info0.dtEndOpt)(ctx)
             ),
+            // Инфа по item'ам.
             items = infos
               .sortBy(m => (m.tagFaceOpt, m.id) )
-              .map { m =>
-                MGeoItemInfo(
-                  itemId        = m.id,
-                  isOnlineNow   = m.status == MItemStatuses.Online,
-                  payload       = m.iType match {
-                    case MItemTypes.GeoTag    => InGeoTag( m.tagFaceOpt.get )
-                    case MItemTypes.GeoPlace  => OnMainScreen
-                    case otherType            => throw new IllegalArgumentException("Unexpected iType = " + otherType)
-                  }
-                )
+              .flatMap { m =>
+                val mgiPlOpt: Option[MGeoItemInfoPayload] = m.iType match {
+                  case MItemTypes.GeoTag =>
+                    m.tagFaceOpt
+                      .map { InGeoTag.apply }
+                  case MItemTypes.GeoPlace  =>
+                    Some( OnMainScreen )
+                  case otherType =>
+                    LOGGER.error(s"$logPrefix Unexpected iType=$otherType for #${m.id}, Dropping adv data.")
+                    None
+                    //throw new IllegalArgumentException("Unexpected iType = " + otherType)
+                }
+
+                if (mgiPlOpt.isEmpty)
+                  LOGGER.warn(s"$logPrefix Dropped adv data: $m")
+
+                for (mgiPl <- mgiPlOpt) yield {
+                  MGeoItemInfo(
+                    itemId        = m.id,
+                    isOnlineNow   = m.status == MItemStatuses.Online,
+                    payload       = mgiPl
+                  )
+                }
               }
           )
           val startMs = info0.dtStartOpt.map(_.toInstant.toEpochMilli)

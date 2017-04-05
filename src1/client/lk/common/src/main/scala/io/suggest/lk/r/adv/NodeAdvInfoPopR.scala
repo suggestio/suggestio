@@ -31,7 +31,8 @@ object NodeAdvInfoPopR {
       for (innerHtml <- ihOpt) yield {
         proxy.wrap { _ =>
           PopupR.PropsVal(
-            closeable = Some( closeClick )
+            closeable = Some( closeClick ),
+            topPc     = 10
           )
         } { popPropsProxy =>
           PopupR(popPropsProxy)(
