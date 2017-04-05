@@ -11,7 +11,7 @@ import models.adv.{IAdvBillCtx, IAdvBillCtxWrap}
   */
 case class MGeoAdvBillCtx(
                            override val wrapped: IAdvBillCtx,
-                           res: MFormS
+                           res    : MFormS
                          )
   extends IAdvBillCtxWrap
 

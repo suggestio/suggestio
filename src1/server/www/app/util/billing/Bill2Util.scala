@@ -54,6 +54,7 @@ class Bill2Util @Inject() (
   import mCommonDi._
   import slick.profile.api._
 
+
   /** id узла, на который должна сыпаться комиссия с этого биллинга. */
   val CBCA_NODE_ID: String = {
     val ck = "bill.cbca.node.id"
@@ -85,6 +86,24 @@ class Bill2Util @Inject() (
   private def _getDaysCountFix(days0: Int) = {
     Math.max(1, days0) + 1
   }
+
+
+  /** Когда ордер нормально закрыт, какой статус выставлять item'у указанного типа?. */
+  private def orderClosedItemStatus( iType: MItemType ): MItemStatus = {
+    // Пока все item'ы -- это adv-itemы. Поэтому они отправляются на модерацию.
+    MItemStatuses.AwaitingMdr
+  }
+
+  /** Статус item'а при его подтверждении.
+    * Подтверждение наступает, когда, например, модератор подтвердил размещение.
+    *
+    * @param iType Тип item'а.
+    * @return Статус item'а.
+    */
+  private def approvedItemStatus( iType: MItemType ): MItemStatus = {
+    MItemStatuses.Offline
+  }
+
 
   /** Посчитать кол-во дней размещения для указанного Duration. */
   def getDaysCount(dur: Duration): Int = {
@@ -386,7 +405,7 @@ class Bill2Util @Inject() (
       // Обновляем item'ы ордера, возвращаем обновлённые инстансы.
       mitems3 <- {
         val actions = for (itm <- order.mitems) yield {
-          val itm2 = itm.withStatus( itm.iType.orderClosedStatus )
+          val itm2 = itm.withStatus( orderClosedItemStatus(itm.iType) )
           for {
             itemsUpdated <- mItems.updateStatus(itm2)
             if itemsUpdated == 1
@@ -591,7 +610,7 @@ class Bill2Util @Inject() (
               if balAmount2 >= bal0.low
             } yield {
               val bal2 = bal0.blockAmount( itemAmount )
-              val mitem2 = mitem.withStatus( mitem.iType.orderClosedStatus )
+              val mitem2 = mitem.withStatus( orderClosedItemStatus(mitem.iType) )
               LOGGER.trace(s"$logPrefix Enought money for item ${mitem2.id.orNull} on balance ${bal2.id.orNull}. Blocked $itemAmount, new balance: $bal2")
 
               val itmUpdDbAct = for {
@@ -864,7 +883,7 @@ class Bill2Util @Inject() (
       mitem2 <- {
         LOGGER.debug(s"$logPrefix Buyer blocked balance[${balance0.id.orNull}] freed ${mitem0.price.amount}: ${balance0.blocked} => ${usrAmtBlocked2.orNull} ${balance0.price.currency}")
         val mitem1 = mitem0.copy(
-          status      = MItemStatuses.Offline,
+          status      = approvedItemStatus( mitem0.iType ),
           dateStatus  = OffsetDateTime.now()
         )
         mItems.query

@@ -525,6 +525,7 @@ class LkAdvGeo @Inject() (
                   payload       = m.iType match {
                     case MItemTypes.GeoTag    => InGeoTag( m.tagFaceOpt.get )
                     case MItemTypes.GeoPlace  => OnMainScreen
+                    case otherType            => throw new IllegalArgumentException("Unexpected iType = " + otherType)
                   }
                 )
               }

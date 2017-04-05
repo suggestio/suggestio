@@ -1,5 +1,6 @@
 package io.suggest.primo.id
 
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.higherKinds
 
 /**
@@ -49,6 +50,14 @@ trait IdUtil[IId_t[_]] {
       Map.empty
     else
       els2idMapIter[Id_t, T](els).toMap
+  }
+
+  /** Аналог els2idMap, но вокруг фьючерса. Появился просто из-за частой необходимости. */
+  def elsFut2idMapFut[Id_t, T <: IId_t[Id_t]](elsFut: Future[TraversableOnce[T]])
+                                             (implicit ec: ExecutionContext): Future[Map[Id_t, T]] = {
+    for (els <- elsFut) yield {
+      els2idMap(els)
+    }
   }
 
 }

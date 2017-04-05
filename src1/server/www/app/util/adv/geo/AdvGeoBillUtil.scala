@@ -164,9 +164,9 @@ class AdvGeoBillUtil @Inject() (
     // Поэтому, рассчёт на основе тех же item'ов, что и при добавлении в корзину:
     // item'ы генерятся, их цена суммируется, некоторые данные item'ов сериализуются прямо в ответ.
     val itemsCalc = new ItemsCalc(abc) {
-      // Все эти обязательные значения не важны для результата:
-      override val _orderId = -1L
-      override val _itemStatus = MItemStatuses.Draft
+      // Все эти обязательные значения не важны и будут проигнорены:
+      override val _orderId     = -1L
+      override val _itemStatus  = MItemStatuses.Draft
     }
 
     val items = itemsCalc.execute()

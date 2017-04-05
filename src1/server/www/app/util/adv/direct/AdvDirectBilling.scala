@@ -8,6 +8,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.adv.MAdvBillCtx
@@ -114,6 +115,8 @@ class AdvDirectBilling @Inject() (
     // Карта тарифов по id узлов.
     val tfsMapFut = rcvrsFut.flatMap( tfDailyUtil.getNodesTfsMap )
 
+    val rcvrsMapFut = OptId.elsFut2idMapFut[String, MNode](rcvrsFut)
+
     // Получить необходимые календари, также составив карту по id
     val calsCtxFut = tfsMapFut.flatMap { tfsMap =>
       val calIds = tfDailyUtil.tfsMap2calIds( tfsMap )
@@ -125,14 +128,15 @@ class AdvDirectBilling @Inject() (
 
     // Когда всё будет готово, нужно нагенерить результатов.
     for {
-      tfsMap  <- tfsMapFut
-      calsCtx <- calsCtxFut
+      tfsMap    <- tfsMapFut
+      calsCtx   <- calsCtxFut
+      rcvrsMap  <- rcvrsMapFut
     } yield {
       // Выдать список цен из списка запрашиваемых размещений.
       adves2
         .iterator
         .map { adve =>
-          val abc = MAdvBillCtx(bmc, calsCtx, tfsMap, adve, mad)
+          val abc = MAdvBillCtx(bmc, calsCtx, tfsMap, adve, mad, rcvrsMap)
           advUtil.calculateAdvPriceOnRcvr(adve.adnId, abc)
             .normalizeAmountByExponent
         }
@@ -153,14 +157,14 @@ class AdvDirectBilling @Inject() (
     * @return db-экшен, добавляющий запросы размещения в корзину.
     */
   def mkAdvReqItems(orderId: Gid_t, mad: MNode, advs: TraversableOnce[AdvFormEntry], status: MItemStatus,
-                    rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx): Iterator[MItem] = {
+                    rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx, rcvrsMap: Map[String, MNode]): Iterator[MItem] = {
     val bmc = advUtil.getAdModulesCount(mad)
 
     for {
       adv <- advs.toIterator
       if adv.advertise
     } yield {
-      val abc = MAdvBillCtx(bmc, mcalsCtx, rcvrTfs, adv, mad)
+      val abc = MAdvBillCtx(bmc, mcalsCtx, rcvrTfs, adv, mad, rcvrsMap)
       MItem(
         orderId       = orderId,
         iType         = MItemTypes.AdvDirect,

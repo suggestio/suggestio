@@ -402,6 +402,8 @@ class MarketAdv @Inject() (
             filterEntiesByPossibleRcvrs(adves2, allRcvrIds)
           }
 
+          val rcvrsMapFut = OptId.elsFut2idMapFut[String, MNode]( rcvrsFut )
+
           // Начинаем двигаться в сторону сборки ответа...
           val respFut = for {
             adves3 <- adves3Fut
@@ -433,6 +435,9 @@ class MarketAdv @Inject() (
             // Собрать данные для биллинга, которые должны бы собраться уже
             personContract    <- personContractFut
 
+            // Дождаться карты ресиверов по id. TODO По факту оно не нужно. Как и весь этот модуль в будущем.
+            rcvrsMap          <- rcvrsMapFut
+
             // Залезть наконец в базу биллинга, сохранив в корзину добавленные размещения...
             billRes <- {
               val dbAction = for {
@@ -444,7 +449,7 @@ class MarketAdv @Inject() (
                 //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
                 itemsSaved <- {
-                  val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx)
+                  val items0 = advDirectBilling.mkAdvReqItems(cartOrder.id.get, request.mad, adves3, status, tfsMap, mcalsCtx, rcvrsMap)
                   mItems.insertMany(items0)
                 }
 

@@ -28,6 +28,8 @@ trait IAdvBillCtx {
   /** Рекламная карточка. */
   def mad                 : MNode
 
+  /** Карта ресиверов. */
+  def rcvrsMap            : Map[String, MNode]
 
   /** Упрощённый доступ к id рекламной карточки. */
   def adId = mad.id.get
@@ -50,6 +52,7 @@ trait IAdvBillCtxWrap extends IAdvBillCtx {
   override def mcalsCtx           = wrapped.mcalsCtx
   override def ivl                = wrapped.ivl
   override def mad                = wrapped.mad
+  override def rcvrsMap           = wrapped.rcvrsMap
 }
 
 
@@ -59,6 +62,7 @@ case class MAdvBillCtx(
                         override val mcalsCtx            : ICalsCtx,
                         override val tfsMap              : Map[String, MDailyTf],
                         override val ivl                 : IDateStartEnd,
-                        override val mad                 : MNode
+                        override val mad                 : MNode,
+                        override val rcvrsMap            : Map[String, MNode]
                       )
   extends IAdvBillCtx

@@ -264,7 +264,7 @@ case class MItem(
   /** @return Инстанс [[MItem]] с новым статусом и датой обновления оного. */
   def withStatus(status1: MItemStatus): MItem = {
     copy(
-      status      = iType.orderClosedStatus,
+      status      = status1,
       dateStatus  = OffsetDateTime.now()
     )
   }

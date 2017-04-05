@@ -4,6 +4,7 @@ import java.time.{DayOfWeek, LocalDate}
 
 import com.google.inject.Inject
 import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
@@ -46,7 +47,6 @@ class AdvUtil @Inject() (
       }
       .toSet
   }
-
 
   /**
     * Высокоуровневый рассчет цены размещения рекламной карточки. Вычисляет кол-во рекламных модулей и дергает
@@ -175,6 +175,9 @@ class AdvUtil @Inject() (
     // Собираем карту тарифов размещения на узлах.
     val tfsMapFut = rcvrsFut.flatMap( tfDailyUtil.getNodesTfsMap )
 
+    // Оформить собранные ресиверы в карту по id.
+    val rcvrsMapFut = OptId.elsFut2idMapFut[String, MNode](rcvrsFut)
+
     // Получить необходимые календари, также составив карту по id
     val calsCtxFut = tfsMapFut.flatMap { tfsMap =>
       val calIds = tfDailyUtil.tfsMap2calIds( tfsMap )
@@ -185,15 +188,17 @@ class AdvUtil @Inject() (
     val bmc = getAdModulesCount(mad)
 
     for {
-      tfsMap  <- tfsMapFut
-      calsCtx <- calsCtxFut
+      tfsMap    <- tfsMapFut
+      calsCtx   <- calsCtxFut
+      rcvrsMap  <- rcvrsMapFut
     } yield {
       MAdvBillCtx(
         blockModulesCount = bmc,
         mcalsCtx  = calsCtx,
         tfsMap    = tfsMap,
         ivl       = ivl,
-        mad       = mad
+        mad       = mad,
+        rcvrsMap  = rcvrsMap
       )
     }
   }
@@ -207,7 +212,8 @@ class AdvUtil @Inject() (
       mcalsCtx          = MCalsCtx.empty,
       tfsMap            = Map.empty,
       ivl               = ivl,
-      mad               = mad
+      mad               = mad,
+      rcvrsMap          = Map.empty
     )
   }
 
