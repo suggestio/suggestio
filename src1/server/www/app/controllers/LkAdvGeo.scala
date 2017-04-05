@@ -165,7 +165,7 @@ class LkAdvGeo @Inject() (
     bill2Util.maybeFreePricing(isSuFree) {
       // Найти все узлы, принадлежащие текущему юзеру:
       for {
-        billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS)
+        billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS, extendedPricing = true)
         pricing     <- advGeoBillUtil.getPricing( billCtx )(ctx)
       } yield {
         pricing
@@ -299,7 +299,7 @@ class LkAdvGeo @Inject() (
           val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
           val abcFut = mFormS2Fut.flatMap { mFormS2 =>
-            advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2)
+            advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2, extendedPricing = false)
           }
 
           val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.

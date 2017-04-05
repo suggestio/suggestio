@@ -79,7 +79,7 @@ class AdvGeoBillUtil @Inject() (
     * @param request реквест. Биллинг зависит от юзера и продьсера, которые лежат в реквесте.
     * @return Фьючерс с контекстом биллинга.
     */
-  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS)(implicit request: IAdProdReq[_]): Future[MGeoAdvBillCtx] = {
+  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS, extendedPricing: Boolean)(implicit request: IAdProdReq[_]): Future[MGeoAdvBillCtx] = {
     // Подготовить интервал размещения...
     val ivl = MDateStartEnd(res.datePeriod.info)
 
@@ -120,9 +120,30 @@ class AdvGeoBillUtil @Inject() (
           b.result()
         }
 
-        abc <- advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
+        abcFut = advUtil.rcvrBillCtx(mad, rcvrIdsSet, ivl)
+
+        // Часть узлов вылетает из карты узлов-ресиверов. Поэтому надо недостающие элементы вычислить и дописать:
+        missNodesMapFut = {
+          if (extendedPricing) {
+            val missNodeIds = res.rcvrsMap
+              .keysIterator
+              .flatMap(_.lastOption)
+              .toSet
+              .--(rcvrIdsSet)
+            mNodesCache.multiGetMap(missNodeIds)
+          } else {
+            Future.successful( Map.empty )
+          }
+        }
+
+        abc <- abcFut
+        missNodesMap <- missNodesMapFut
+
       } yield {
-        abc
+        // Залить недостающих ресиверов в списочек ресиверов bill-контекста.
+        abc.withRcvrsMap(
+          abc.rcvrsMap ++ missNodesMap
+        )
       }
     }
 

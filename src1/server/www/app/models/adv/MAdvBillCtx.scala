@@ -66,3 +66,8 @@ case class MAdvBillCtx(
                         override val rcvrsMap            : Map[String, MNode]
                       )
   extends IAdvBillCtx
+{
+
+  def withRcvrsMap(rcvrsMap2: Map[String, MNode]) = copy(rcvrsMap = rcvrsMap2)
+
+}
