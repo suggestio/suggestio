@@ -29,8 +29,8 @@ class GalleryUtil @Inject() (
 ) {
 
   // Ширина/высота картинки галереи, отображаемой в ЛК на странице узла.
-  val LK_NODE_GALLERY_SHOW_WIDTH_PX: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
-  val LK_NODE_GALLERY_SHOW_HEIGHT_PX: Int = configuration.getInt("lk.node.gallery.show.height.px") getOrElse 200
+  def LK_NODE_GALLERY_SHOW_WIDTH_PX = 625   //: Int  = configuration.getInt("lk.node.gallery.show.width.px") getOrElse 625
+  def LK_NODE_GALLERY_SHOW_HEIGHT_PX = 200  //: Int = configuration.getInt("lk.node.gallery.show.height.px") getOrElse 200
 
   /** Максимально кол-во картинок в галереи. */
   val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
@@ -89,7 +89,9 @@ class GalleryUtil @Inject() (
       height = szMulted(LK_NODE_GALLERY_SHOW_HEIGHT_PX, devPixelRatio.pixelRatio)
     )
     var imOps: List[ImOp] = List(
-      AbsResizeOp(newSz, ImResizeFlags.IgnoreAspectRatio),
+      ImGravities.Center,
+      AbsResizeOp( newSz, ImResizeFlags.FillArea ),
+      ExtentOp( newSz ),
       devPixelRatio.fgCompression.imQualityOp,
       ImInterlace.Plane
     )
