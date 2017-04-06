@@ -4,13 +4,16 @@ import java.time.{LocalDate, OffsetDateTime}
 
 import com.google.inject.Inject
 import io.suggest.adv.geo.MFormS
-import io.suggest.bill.{MGetPriceResp, MItemInfo, MNameId, MPrice}
-import io.suggest.dt.YmdHelpersJvm
+import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.bill._
+import io.suggest.cal.m.{MCalType, MCalTypes}
+import io.suggest.dt.{MYmd, YmdHelpersJvm}
 import io.suggest.geo.{CircleGs, MGeoCircle}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
@@ -22,7 +25,7 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import util.TplDataFormatUtil
 import util.adn.NodesUtil
-import util.adv.AdvUtil
+import util.adv.{AdvUtil, IAdvPriceDaysCalcListener}
 import util.billing.Bill2Util
 
 import scala.concurrent.Future
@@ -58,17 +61,15 @@ class AdvGeoBillUtil @Inject() (
     */
   private def GEO_TF_SRC_NODE_ID = bill2Util.CBCA_NODE_ID
 
-
   /**
     * Посчитать мультипликатор стоимости на основе даты и радиуса размещения.
     *
-    * @param circle Гео-круг, заданный юзером в форме георазмещения.
+    * @param radiusKm Радиус гео-круга.
     * @return Double-мультипликатор цены.
     */
-  def getPriceMult(circle: MGeoCircle): Double = {
+  private def getPriceMult(radiusKm: Double): Double = {
     // Привести радиус на карте к множителю цены
-    val radKm = circle.radiusM / 1000d   // метры -> км
-    radKm * radKm / 1.5
+    radiusKm * radiusKm / 1.5
   }
 
 
@@ -77,9 +78,11 @@ class AdvGeoBillUtil @Inject() (
     * @param mad рекламная карточка.
     * @param res Содержимое формы.
     * @param request реквест. Биллинг зависит от юзера и продьсера, которые лежат в реквесте.
+    * @param addFreeRcvrs Если требуется безопасно дописать в контекст бесплатных ресиверов (без тарифов), то true.
+    *                        В норме - false.
     * @return Фьючерс с контекстом биллинга.
     */
-  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS, extendedPricing: Boolean)(implicit request: IAdProdReq[_]): Future[MGeoAdvBillCtx] = {
+  def advBillCtx(isSuFree: Boolean, mad: MNode, res: MFormS, addFreeRcvrs: Boolean = false)(implicit request: IAdProdReq[_]): Future[MGeoAdvBillCtx] = {
     // Подготовить интервал размещения...
     val ivl = MDateStartEnd(res.datePeriod.info)
 
@@ -124,7 +127,7 @@ class AdvGeoBillUtil @Inject() (
 
         // Часть узлов вылетает из карты узлов-ресиверов. Поэтому надо недостающие элементы вычислить и дописать:
         missNodesMapFut = {
-          if (extendedPricing) {
+          if (addFreeRcvrs) {
             val missNodeIds = res.rcvrsMap
               .keysIterator
               .flatMap(_.lastOption)
@@ -207,26 +210,30 @@ class AdvGeoBillUtil @Inject() (
 
       // Извлечь полезную инфу из items списком
       val infos = items
-        .map { i =>
+        .iterator
+        .zipWithIndex
+        .map { case (mitem, index) =>
           MItemInfo(
-            iType = i.iType,
-            price = TplDataFormatUtil.setPriceAmountStr( i.price ),
-            rcvr = for (rcvrId <- i.rcvrIdOpt) yield {
+            index = index,
+            iType = mitem.iType,
+            price = TplDataFormatUtil.setPriceAmountStr( mitem.price ),
+            rcvr = for (rcvrId <- mitem.rcvrIdOpt) yield {
               MNameId(
-                id = i.rcvrIdOpt,
+                id = mitem.rcvrIdOpt,
                 name = abc.rcvrsMap
                   .get(rcvrId)
                   .flatMap(_.guessDisplayNameOrId)
                   .getOrElse(rcvrId)
               )
             },
-            gsInfo = i.geoShape
-              .map(TplDataFormatUtil.formatGeoShape)
+            gsInfo = mitem.geoShape
+              .map( TplDataFormatUtil.formatGeoShape )
           )
         }
+        .toSeq
         // Отсортировать, чтобы одни и теже элементы не плясали.
         .sortBy { ii =>
-          ii.iType.strId + " " + ii.rcvr.map(_.name).getOrElse("")
+          ii.iType.strId + ii.rcvr.fold("")(rcvr => " " + rcvr.name)
         }
 
       // Собрать итоговый ответ с подробными ценами для формы.
@@ -236,6 +243,156 @@ class AdvGeoBillUtil @Inject() (
       )
       Future.successful(resp)
     }
+  }
+
+
+  /**
+    * Получение детализованных данных по рассчёту стоимости.
+    * Здесь есть доля ненужных действий, но это нормально.
+    *
+    * @param itemIndex порядковый номер item'а, для которого надо детализацию получить.
+    * @param abc Контекст гео-биллинга.
+    * @param ctx Контекст рендера
+    * @return Фьючерс с детальными данными по рассчёту стоимости указанного item'а.
+    */
+  def getDetalizedPricing(itemIndex: Int, abc: MGeoAdvBillCtx)(implicit ctx: Context): Future[MDetailedPriceResp] = {
+    val itemsCalc = new ItemsCalc(abc) {
+      // Все эти обязательные значения не важны и будут проигнорены:
+      override val _orderId     = -1L
+      override val _itemStatus  = MItemStatuses.Draft
+
+
+      // Listener для сбора промежуточных данных-рассчётов.
+      // Используя промежуточные данные, он так же считает итоговые цены за каждый день.
+      // Спроектирован исходя из того, что юзера будет интересовать только один конкретный item.
+      class Listener extends IAdvPriceDaysCalcListener with ICalcExecListener {
+
+        /** Счётчик пройденных item'ов. Используется для определения item'а, который интересует юзера. */
+        var _currItemIndex = 0
+
+        /** Кол-во item'ов на текущем шаге.
+          * Инициализируется через willCalcDaysAdvPriceForNItems() перед каждым вызовом. */
+        var _itemsIndexNextStep = 0
+
+        /** Является ли обрабатываемый item релевантным запросу юзера? */
+        def _isCollectingData: Boolean = {
+          itemIndex == _currItemIndex || {
+            // При пачке тегов возможна ситуация, когда "текущий" item будет перепрыгнут. Решаем проблему диапазоном текущих индексов:
+            (_currItemIndex < itemIndex) && (itemIndex + _itemsIndexNextStep) > itemIndex
+          }
+        }
+
+        /** Инициализировать items step. */
+        override def willCalcDaysAdvPriceForNItems(itemsCount: Int): Unit = {
+          _itemsIndexNextStep = itemsCount
+        }
+
+        var _tfCurrency: Option[MCurrency] = None
+        // Поля MDetailedPriceResp
+        var _daysAccRev         : List[MDayPriceInfo] = Nil
+        var _onMainScreenMult   : Option[Double] = None
+        var _geoInfo            : Option[MGeoInfo] = None
+
+        def _setDaysAccRevMult(mult: Double): Unit = {
+          for (d <- _daysAccRev) yield {
+            d.withPrice(
+              TplDataFormatUtil.setPriceAmountStr(
+                d.baseDayPrice.multiplifiedBy(mult)
+                  .normalizeAmountByExponent
+              )
+            )
+          }
+        }
+
+        /** Сдвинуть счётчик текущего item'а на новое положение. Обнулить step. */
+        def _itemsProcessed(): Unit = {
+          if (_itemsIndexNextStep < 1)
+            throw new IllegalStateException("willCalcDaysAdvPriceForNItems() must be called before _itemsProcessed()")
+          _currItemIndex += _itemsIndexNextStep
+          _itemsIndexNextStep = 0
+        }
+
+        override def handleTfDaily(tf: MTfDaily): Unit = {
+          if (_isCollectingData)
+            _tfCurrency = Some( tf.currency )
+        }
+
+        override def handleOneDayData(day: LocalDate, dow17: Int, mcalTypeOpt: Option[MCalType], mdc: MDayClause, dayAmount: Amount_t): Unit = {
+          if (_isCollectingData) {
+            val basePrice = TplDataFormatUtil.setPriceAmountStr(
+              MPrice(dayAmount, _tfCurrency.get)
+            )
+            _daysAccRev ::= MDayPriceInfo(
+              ymd           = MYmd.from(day),
+              calType       = mcalTypeOpt.getOrElse(MCalTypes.WeekDay),
+              baseDayPrice  = basePrice,
+              price         = null // Нельзя определить финальную цену за день без инфы по мультипликатору.
+            )
+          }
+        }
+
+
+        override def handleGeoOms(radiusKmOpt: Option[Amount_t], allDaysPriceBase: MPrice, omsMult: Amount_t, geoMult: Amount_t, geoPrice: MPrice): Unit = {
+          if (_isCollectingData) {
+            _geoInfo = Some(MGeoInfo(
+              radiusKm  = radiusKmOpt,
+              priceMult = geoMult
+            ))
+            _onMainScreenMult = Some(omsMult)
+            _setDaysAccRevMult( omsMult * geoMult )
+          }
+          _itemsProcessed()
+        }
+
+        override def handleGeoTags(radiusKmOpt: Option[Amount_t], allDaysPriceBase: MPrice, geoMult: Amount_t, oneTagPrice: MPrice, tagsCount: Int): Unit = {
+          if (_isCollectingData) {
+            _geoInfo = Some(MGeoInfo(
+              radiusKm  = radiusKmOpt,
+              priceMult = geoMult
+            ))
+            _setDaysAccRevMult( geoMult )
+          }
+          _itemsProcessed()
+        }
+
+        override def handleRcvrOms(rcvrKey: RcvrKey, rcvrId: String, allDaysPriceBase: MPrice, omsMult: Amount_t, totalPrice: MPrice): Unit = {
+          if (_isCollectingData) {
+            _onMainScreenMult = Some( omsMult )
+            _setDaysAccRevMult( omsMult )
+          }
+          _itemsProcessed()
+        }
+
+        override def handleRcvrTags(rcvrId: String, priceMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {
+          if (_isCollectingData) {
+            _setDaysAccRevMult( priceMult )
+          }
+          _itemsProcessed()
+        }
+
+        def getDetailedResult: MDetailedPriceResp = {
+          MDetailedPriceResp(
+            blockModulesCount   = abc.blockModulesCount,
+            onMainScreenMult    = _onMainScreenMult,
+            geoInfo             = _geoInfo,
+            days                = _daysAccRev.reverse
+          )
+        }
+
+      }
+
+      val LISTENER = new Listener
+      val someListener = Some( LISTENER )
+
+      override def _advPriceListener = someListener
+      override def _executionListener = someListener
+
+    }
+
+    itemsCalc.execute()
+
+    val resp = itemsCalc.LISTENER.getDetailedResult
+    Future.successful(resp)
   }
 
 
@@ -277,7 +434,19 @@ class AdvGeoBillUtil @Inject() (
     def addRcvrTags(rcvrId: String, oneTagPrice: MPrice): Unit
 
 
-    /** Запуск этого калькулятора результата. */
+    /** listener для вызова advUtil.calculateAdvPriceOnRcvr(). */
+    def _advPriceListener: Option[IAdvPriceDaysCalcListener] = None
+
+    /** listener вызова execute. */
+    def _executionListener: Option[ICalcExecListener] = None
+
+    /** Укороченно дёргаем exec-listener. */
+    @inline
+    private def __listen[U](f: ICalcExecListener => U): Unit = {
+      _executionListener.foreach(f)
+    }
+
+    /** Запуск высчитывания результата. */
     def execute(): List[T] = {
       LOGGER.trace(s"$logPrefix $res")
 
@@ -287,17 +456,28 @@ class AdvGeoBillUtil @Inject() (
         if res.onMainScreen || res.tagsEdit.tagsExists.nonEmpty
       } {
         // Посчитать стоимость данного гео-круга:
-        val circleGeoMult = getPriceMult(radCircle)
+        val radiusKm = radCircle.radiusKm
+        val someRadiusKm = Some(radiusKm)
+
+        val circleGeoMult = getPriceMult( radiusKm )
+
         val gs = mkCircleGs(radCircle)
-        val geoAllDaysPrice = advUtil.calculateAdvPriceOnRcvr(GEO_TF_SRC_NODE_ID, abc)
+        __listen { l =>
+          l.willCalcDaysAdvPriceForNItems(
+            tagsCount + (if (res.onMainScreen) 1 else 0)
+          )
+        }
+        val geoAllDaysPrice = advUtil.calculateAdvPriceOnRcvr(GEO_TF_SRC_NODE_ID, abc, _advPriceListener)
 
         // Накинуть за гео-круг + главный экран:
         if (res.onMainScreen) {
-          val omsMult = circleGeoMult * ON_MAIN_SCREEN_MULT
-          val priceOms = geoAllDaysPrice.multiplifiedBy(omsMult)
+          val omsMult = ON_MAIN_SCREEN_MULT
+          val geoOmsMult = circleGeoMult * omsMult
+          val geoOmsPrice = geoAllDaysPrice.multiplifiedBy(geoOmsMult)
             .normalizeAmountByExponent
-          val geoOmsRes = geoOms(gs, priceOms)
-          LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $omsMult => $geoAllDaysPrice * $priceOms => $geoOmsRes")
+          __listen( _.handleGeoOms(someRadiusKm, geoAllDaysPrice, geoOmsMult, circleGeoMult, geoOmsPrice) )
+          val geoOmsRes = geoOms(gs, geoOmsPrice)
+          LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $geoOmsMult => $geoAllDaysPrice * $geoOmsPrice => $geoOmsRes")
           _acc ::= geoOmsRes
         }
 
@@ -305,9 +485,11 @@ class AdvGeoBillUtil @Inject() (
         if (tagsCount > 0) {
           val oneTagPrice = geoAllDaysPrice.multiplifiedBy( circleGeoMult )
             .normalizeAmountByExponent
+          __listen( _.handleGeoTags(someRadiusKm, geoAllDaysPrice, circleGeoMult, oneTagPrice, tagsCount) )
           LOGGER.trace(s"$logPrefix geo + $tagsCount tags, geo=$circleGeoMult * $geoAllDaysPrice = $oneTagPrice per each tag" )
           addGeoTags(gs, oneTagPrice)
         }
+
       }
 
       // Отработать ресиверы, если заданы.
@@ -317,34 +499,59 @@ class AdvGeoBillUtil @Inject() (
           (rcvrKey, rcvrProps) <- res.rcvrsMap
           // TODO Отработать rcvrProps. Возможно, отмена размещения вместо создания.
         } {
+          __listen( _.willCalcDaysAdvPriceForNItems(1) )
           // Накинуть за ресивер (главный экран ресивера)
           val rcvrId = rcvrKey.last
-          val rcvrPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc)
-          val rcvrPriceOms = rcvrPrice.multiplifiedBy( ON_MAIN_SCREEN_MULT )
+          val rcvrPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc, _advPriceListener)
+
+          val omsMult = ON_MAIN_SCREEN_MULT
+          val rcvrPriceOms = rcvrPrice.multiplifiedBy( omsMult )
             .normalizeAmountByExponent
+          __listen( _.handleRcvrOms(rcvrKey, rcvrId, rcvrPrice, omsMult, rcvrPriceOms) )
           val rcvrOmsRes = rcvrOms(rcvrId, rcvrPriceOms)
           LOGGER.trace(s"$logPrefix Rcvr ${rcvrKey.mkString(".")}: price $rcvrPrice, oms => $rcvrPriceOms,\n $rcvrOmsRes")
           _acc ::= rcvrOmsRes
         }
 
         // Отработать теги на ресиверах: теги размещаются только на верхних узлах.
-        val topRcvrIds = res.rcvrsMap
-          // TODO Отработать rcvrProps. Возможна отмена размещения вместо создания.
-          .keysIterator
-          .flatMap(_.headOption)
-          .toSet
-        for (rcvrId <- topRcvrIds) {
-          val rcvrTagPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc)
-            .normalizeAmountByExponent
-          LOGGER.trace(s"$logPrefix Top-rcvr $rcvrId + $tagsCount tags, $rcvrTagPrice per tag")
-          addRcvrTags(rcvrId, rcvrTagPrice)
+        if (tagsCount > 0) {
+          val topRcvrIds = res.rcvrsMap
+            // TODO Отработать rcvrProps. Возможна отмена размещения вместо создания.
+            .keysIterator
+            .flatMap(_.headOption)
+            .toSet
+          for (rcvrId <- topRcvrIds) {
+            __listen( _.willCalcDaysAdvPriceForNItems(tagsCount) )
+            val rcvrTagPrice = advUtil.calculateAdvPriceOnRcvr(rcvrId, abc, _advPriceListener)
+              .normalizeAmountByExponent
+            val priceMult = 1.0
+            __listen( _.handleRcvrTags(rcvrId, priceMult, rcvrTagPrice, tagsCount) )
+            LOGGER.trace(s"$logPrefix Top-rcvr $rcvrId + $tagsCount tags, $rcvrTagPrice per tag")
+            addRcvrTags(rcvrId, rcvrTagPrice)
+          }
         }
       }
+
+      __listen( _.handleAllDone() )
 
       // И вернуть наверх финальный аккамулятор.
       _acc
     }
 
+  }
+
+
+  /** Листенер промежуточных шагов и данных в Calc. */
+  private trait ICalcExecListener {
+    /** Listener предупреждается, что сейчас будет n item'ов с одинаковой базовой стоимостью. */
+    def willCalcDaysAdvPriceForNItems(itemsCount: Int): Unit = {}
+    def handleGeoOms(radiusKmOpt: Option[Double], allDaysPriceBase: MPrice, omsMult: Double, geoMult: Double, geoPrice: MPrice): Unit = {}
+    def handleGeoTags(radiusKmOpt: Option[Double], allDaysPriceBase: MPrice, geoMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}
+
+    def handleRcvrOms(rcvrKey: RcvrKey, rcvrId: String, allDaysPriceBase: MPrice, omsMult: Double, totalPrice: MPrice): Unit = {}
+    def handleRcvrTags(rcvrId: String, priceMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}
+
+    def handleAllDone(): Unit = {}
   }
 
 

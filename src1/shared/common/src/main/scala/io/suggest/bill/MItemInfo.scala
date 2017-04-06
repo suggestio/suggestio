@@ -24,12 +24,14 @@ object MItemInfo {
 
 /** Класс инфы по item'у.
   *
+  * @param index Какой-то целочисленный идентификатор.
   * @param iType Тип item'а.
   * @param price Ценник.
   * @param rcvr Данные по узлу-ресиверу, если есть.
   * @param gsInfo Данные по гео-шейпу, если есть.
   */
 case class MItemInfo(
+                      index   : Int,
                       iType   : MItemType,
                       price   : MPrice,
                       rcvr    : Option[MNameId],

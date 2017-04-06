@@ -37,6 +37,8 @@ case class MGeoCircle(
                        radiusM  : Double    = 5000
                      ) {
 
+  def radiusKm = radiusM / 1000d
+
   def withCenter(center2: MGeoPoint) = copy(center = center2)
 
   def withRadiusM(radius2: Double) = copy(radiusM = radius2)

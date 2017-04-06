@@ -165,7 +165,7 @@ class LkAdvGeo @Inject() (
     bill2Util.maybeFreePricing(isSuFree) {
       // Найти все узлы, принадлежащие текущему юзеру:
       for {
-        billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS, extendedPricing = true)
+        billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS, addFreeRcvrs = true)
         pricing     <- advGeoBillUtil.getPricing( billCtx )(ctx)
       } yield {
         pricing
@@ -299,7 +299,7 @@ class LkAdvGeo @Inject() (
           val isSuFree = advFormUtil.isFreeAdv( mFormS.adv4freeChecked )
 
           val abcFut = mFormS2Fut.flatMap { mFormS2 =>
-            advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2, extendedPricing = false)
+            advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS2)
           }
 
           val status   = advFormUtil.suFree2newItemStatus(isSuFree) // TODO Не пашет пока что. Нужно другой вызов тут.
@@ -758,5 +758,52 @@ class LkAdvGeo @Inject() (
 
   /** Хидер короткого кеша, в основном для защиты от повторяющихся запросов. */
   private def CACHE_10 = CACHE_CONTROL -> "private, max-age=10"
+
+
+  /** Юзер запрашивает детализованный прайсинг.
+    * В теле запроса приходит бинарь MFormS.
+    *
+    * @param adId id рекламной карточки.
+    * @param itemIndex index item'а из таблицы под формой.
+    *
+    * @return 200 OK + Бинарь MDetailedPriceResp.
+    */
+  def detailedPricing(adId: String, itemIndex: Int) = csrf.Check {
+    canAdvAd(adId).async(formPostBP) { implicit request =>
+      lazy val logPrefix = s"detailedPricing($adId,$itemIndex):"
+
+      if (itemIndex < 0) {
+        LOGGER.debug(s"$logPrefix itemIndex invalid. Not acceptable.")
+        NotAcceptable("itemIndex must be >= 0")
+
+      } else {
+        advGeoFormUtil.validateForm( request.body ).fold(
+          {violations =>
+            LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
+            NotAcceptable( violations.toString )
+          },
+          {mFormS =>
+            val mFromS2Fut = _checkFormRcvrs(mFormS)
+
+            // Тут игнорим SU-free-флаг, т.к. у суперюзеров всё даром и они не дёргают экшен.
+            for {
+              mFormS2 <- mFromS2Fut
+              abc     <- advGeoBillUtil.advBillCtx(
+                isSuFree  = false,
+                mad       = request.mad,
+                res       = mFormS2
+              )
+              detResp <- advGeoBillUtil.getDetalizedPricing( itemIndex, abc )
+            } yield {
+              LOGGER.trace(s"$logPrefix Detailed resp => $detResp")
+              val bbuf = PickleUtil.pickle( detResp )
+              Ok( ByteString(bbuf) )
+                .withHeaders(CACHE_CONTROL -> "no-cache, must-revalidate")
+            }
+          }
+        )
+      }
+    }
+  }
 
 }

@@ -3,7 +3,9 @@ package util.adv
 import java.time.{DayOfWeek, LocalDate}
 
 import com.google.inject.Inject
-import io.suggest.bill.{MCurrencies, MPrice}
+import io.suggest.bill._
+import io.suggest.cal.m.MCalType
+import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
@@ -70,16 +72,23 @@ class AdvUtil @Inject() (
 
 
   /**
-   * Рассчитать ценник размещения рекламной карточки.
-   * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
-   *
-   * @return Стоимость размещения.
-   */
-  def calculateAdvPriceOnRcvr(rcvrId: String, abc: IAdvBillCtx): MPrice = {
+    * Рассчитать ценник размещения рекламной карточки.
+    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
+    *
+    * @param rcvrId id ресивера, тариф которого надо использовать.
+    * @param abc Контекст данных биллинга.
+    * @param listenerOpt Опциональный листенер промежуточных данных модуля.
+    * @return Стоимость размещения.
+    */
+  def calculateAdvPriceOnRcvr(rcvrId: String, abc: IAdvBillCtx, listenerOpt: Option[IAdvPriceDaysCalcListener] = None): MPrice = {
     lazy val logPrefix = s"calculateAdvPrice($rcvrId)[${System.currentTimeMillis}]:"
 
+    def __listen[U](f: IAdvPriceDaysCalcListener => U): Unit = {
+      listenerOpt.foreach(f)
+    }
+
     // Извлечь подходящий тариф из карты тарифов узлов.
-    abc.tfsMap.get(rcvrId).fold[MPrice] {
+    val mpriceRes = abc.tfsMap.get(rcvrId).fold[MPrice] {
       // TODO Валюта нулевого ценника берётся с потолка. Нужен более адекватный источник валюты.
       val res = MPrice(0d, MCurrencies.default)
       LOGGER.debug(s"$logPrefix Missing TF for $rcvrId. Guessing adv as free: $res")
@@ -88,6 +97,7 @@ class AdvUtil @Inject() (
     } { tf =>
 
       LOGGER.trace(s"$logPrefix tf = $tf")
+      __listen( _.handleTfDaily(tf) )
 
       val dateStart = abc.ivl.dateStart
       val dateEnd = abc.ivl.dateEnd
@@ -125,21 +135,35 @@ class AdvUtil @Inject() (
       def calculateDateAdvPrice(day: LocalDate): Double = {
         val dayOfWeek = day.getDayOfWeek.getValue
 
+        val clause4dayOpt = clausesWithCals
+          .find { case (_, calCtx) =>
+            calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
+          }
+
         // Пройтись по праздничным календарям, попытаться найти подходящий
         val clause4day = clausesWithCals
           .find { case (_, calCtx) =>
             calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
           }
-          .map(_._1)
-          .getOrElse(clauseDflt)
+          .fold(clauseDflt)(_._1)
 
         LOGGER.trace(s"$logPrefix $day -> ${clause4day.name} +${clause4day.amount} ${tf.currency}")
-        clause4day.amount
+
+        val dayAmount = clause4day.amount
+
+        __listen { l =>
+          val calTypeOpt = for ((_, calCtx) <- clause4dayOpt) yield {
+            calCtx.mcal.calType
+          }
+          l.handleOneDayData(day, dayOfWeek, calTypeOpt, clause4day, dayAmount )
+        }
+
+        dayAmount
       }
 
       // Цикл суммирования стоимости дат, начиная с $1 и заканчивая dateEnd.
-      @tailrec def walkDaysAndPrice(day: LocalDate, acc: Double): Double = {
-        val acc1 = calculateDateAdvPrice(day) + acc
+      @tailrec def walkDaysAndPrice(day: LocalDate, acc0: Double): Double = {
+        val acc1 = calculateDateAdvPrice(day) + acc0
         val day1 = day.plusDays(1)
         if (day1.isAfter(dateEnd)) {
           acc1
@@ -156,6 +180,9 @@ class AdvUtil @Inject() (
       LOGGER.trace(s"$logPrefix amount (min/full) = $amount1 / $amountN")
       MPrice(amountN, tf.currency)
     }
+
+    __listen( _.handleAdvDaysPriceDone(mpriceRes) )
+    mpriceRes
   }
 
 
@@ -217,4 +244,12 @@ class AdvUtil @Inject() (
     )
   }
 
+}
+
+
+/** Интерфейс Listener'а промежуточных данных суммирования. */
+trait IAdvPriceDaysCalcListener {
+  def handleTfDaily(tf: MTfDaily): Unit = {}
+  def handleOneDayData(day: LocalDate, dow17: Int, mcalTypeOpt: Option[MCalType], mdc: MDayClause, dayAmount: Amount_t ): Unit = {}
+  def handleAdvDaysPriceDone(mprice: MPrice): Unit = {}
 }
