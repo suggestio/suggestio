@@ -26,7 +26,8 @@ case class MRoot(
                   rad           : Option[MRad],
                   geoAdv        : MGeoAdvs                = MGeoAdvs(),
                   datePeriod    : MAdvPeriod,
-                  popups        : MPopupsS                = MPopupsS()
+                  popups        : MPopupsS                = MPopupsS(),
+                  bill          : MBillS
                 ) {
 
   def withMapState(ms2: MMap) = copy(mmap = ms2)
@@ -38,6 +39,7 @@ case class MRoot(
   def withCurrGeoAdvs(cga2: MGeoAdvs) = copy(geoAdv = cga2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
   def withPopups(popups2: MPopupsS) = copy(popups = popups2)
+  def withBill(bill2: MBillS) = copy(bill = bill2)
 
   def radEnabled = rad.filter(_.enabled)
 
@@ -73,7 +75,8 @@ object MRoot {
         (a.rcvr eq b.rcvr) &&
         (a.rad eq b.rad) &&
         (a.geoAdv eq b.geoAdv) &&
-        (a.datePeriod eq b.datePeriod)
+        (a.datePeriod eq b.datePeriod) &&
+        (a.bill eq b.bill)
     }
   }
 

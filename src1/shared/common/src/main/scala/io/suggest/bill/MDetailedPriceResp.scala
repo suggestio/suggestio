@@ -49,11 +49,11 @@ object MDayPriceInfo {
 
 /** Инфа по географии, влияющая на цену.
   *
-  * @param radiusKm Радиус в км, если круг.
+  * @param radiusM Значение радиуса в метрах, если это круг.
   * @param priceMult Множитель цены за географию.
   */
 case class MGeoInfo(
-                     radiusKm   : Option[Double],
+                     radiusM    : Option[Int],
                      priceMult  : Double
                    )
 object MGeoInfo {

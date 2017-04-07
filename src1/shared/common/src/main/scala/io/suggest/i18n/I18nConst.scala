@@ -15,9 +15,9 @@ object I18nConst {
     * И это потом можно в messages() передавать, для локализации ответа. */
   def yesNo(isYes: Boolean): String = {
     if (isYes)
-      "Yes"
+      MsgCodes.`Yes`
     else
-      "No"
+      MsgCodes.`No`
   }
 
 }

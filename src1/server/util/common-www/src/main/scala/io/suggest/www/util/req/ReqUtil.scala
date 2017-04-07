@@ -27,16 +27,22 @@ class ReqUtil @Inject() (
     parse.raw(maxLength = 2048)
       // Десериализовать тело реквеста...
       .validate { rawBuf =>
+        def logPrefix = s"picklingBodyParser($pickler):"
         rawBuf.asBytes()
-          .toRight[Result]( Results.EntityTooLarge("missing body") )
-          .right.flatMap { bStr =>
+          .filter( _.nonEmpty )
+          .toRight[Result] {
+            LOGGER.error(s"$logPrefix Request body is null or empty.")
+            Results.UnprocessableEntity("Request body expected.")
+          }
+          .right.flatMap { byteStr =>
             try {
-              val bbuf = bStr.asByteBuffer
+              val bbuf = byteStr.asByteBuffer
               val mfs = PickleUtil.unpickle[T](bbuf)
-              Right( mfs )
-            } catch { case ex: Throwable =>
-              LOGGER.error(s"picklingBodyParser($pickler): unable to deserialize req.body", ex)
-              Left( Results.BadRequest("invalid body") )
+              Right(mfs)
+            } catch {
+              case ex: Throwable =>
+                LOGGER.error(s"$logPrefix Unable to deserialize req.body", ex)
+                Left(Results.BadRequest("invalid body"))
             }
           }
       }

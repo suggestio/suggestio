@@ -765,18 +765,18 @@ Month.N.10=Октябрь
 Month.N.11=Ноябрь
 Month.N.12=Декабрь
 
-ofMonth.N.1=Января
-ofMonth.N.2=Февраля
-ofMonth.N.3=Марта
-ofMonth.N.4=Апреля
-ofMonth.N.5=Мая
-ofMonth.N.6=Июня
-ofMonth.N.7=Июля
-ofMonth.N.8=Августа
-ofMonth.N.9=Сентября
-ofMonth.N.10=Октября
-ofMonth.N.11=Ноября
-ofMonth.N.12=Декабря
+ofMonth.N.1=января
+ofMonth.N.2=февраля
+ofMonth.N.3=марта
+ofMonth.N.4=апреля
+ofMonth.N.5=мая
+ofMonth.N.6=июня
+ofMonth.N.7=июля
+ofMonth.N.8=августа
+ofMonth.N.9=сентября
+ofMonth.N.10=октября
+ofMonth.N.11=ноября
+ofMonth.N.12=декабря
 
 
 DayOfW.N.1=Пн
@@ -823,6 +823,7 @@ Pay.error=Ошибка при оплате
 Orders=Заказы
 No.orders.found=Заказов не найдено.
 
+Radius=Радиус
 in.radius.of.0.from.1=в радиусе {0} от {1}
 n.km._kilometers={0} км
 n.m._meters={0} м

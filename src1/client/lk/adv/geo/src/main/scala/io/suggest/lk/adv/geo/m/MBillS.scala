@@ -22,7 +22,7 @@ object MBillS {
 /**
   * Состояние данных по биллингу.
   *
-  * @param price Прайс.
+  * @param price Состояние ценника.
   * @param detailed Детали какого-то элемента.
   */
 case class MBillS(

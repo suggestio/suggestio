@@ -43,6 +43,9 @@ sealed trait LkAdvGeoCtl extends js.Object {
   /** Роута для запроса ценника текущего размещения. */
   def getPriceSubmit(adId: String): Route = js.native
 
+  /** Роута для получения детализированной информации по стоимости размещения какого-то элемента. */
+  def detailedPricing(adId: String, itemIndex: Int): Route = js.native
+
   /** Роута для итогового сабмита формы. */
   def forAdSubmit(adId: String): Route = js.native
 
@@ -59,8 +62,5 @@ sealed trait LkAdvGeoCtl extends js.Object {
 
   /** Роута для получения содержимого попапа над указанной областью георазмещения. */
   def existGeoAdvsShapePopup(itemId: Double): Route = js.native
-
-  /** Роута для получения детализированной информации по стоимости размещения какого-то элемента. */
-  def detailedPricing(adId: String, itemIndex: Int): Route = js.native
 
 }

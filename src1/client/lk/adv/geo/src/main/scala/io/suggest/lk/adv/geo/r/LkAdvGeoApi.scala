@@ -42,14 +42,14 @@ trait ILkAdvGeoApi extends ITagsApi {
   /** Запросить у сервера рассчёт цены. */
   def getPrice(adId: String, mFormS: MFormS): Future[MGetPriceResp]
 
+  /** Получение детальной инфы по какому-то элементу ценообразования. */
+  def detailedPricing(adId: String, mFormS: MFormS, itemIndex: Int): Future[MDetailedPriceResp]
+
   /** Окончательный сабмит формы георазмещения. */
   def formSubmit(adId: String, mFormS: MFormS): Future[String]
 
   /** Получение инфы по узлу. */
   def rcvrInfoWndBody(nodeId: String, adId: String): Future[String]
-
-  /** Получение детальной инфы по какому-то элементу ценообразования. */
-  def detailedPricing(adId: String, mFormS: MFormS, itemIndex: Int): Future[MDetailedPriceResp]
 
 }
 
@@ -108,6 +108,14 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     }
   }
 
+  override def detailedPricing(adId: String, mFormS: MFormS, itemIndex: Int): Future[MDetailedPriceResp] = {
+    val route = jsRoutes.controllers.LkAdvGeo.detailedPricing(adId, itemIndex)
+    val bbuf = PickleUtil.pickle( mFormS )
+    Xhr.unBooPickleResp[MDetailedPriceResp] {
+      Xhr.requestBinary(route, bbuf)
+    }
+  }
+
   override def formSubmit(adId: String, mFormS: MFormS): Future[String] = {
     val route = jsRoutes.controllers.LkAdvGeo.forAdSubmit(adId)
     val bbuf = PickleUtil.pickle(mFormS)
@@ -122,14 +130,6 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
   override def rcvrInfoWndBody(nodeId: String, adId: String): Future[String] = {
     val route = jsRoutes.controllers.LkBill2._rcvrInfoWndBody( nodeId, adId )
     Xhr.requestHtml( route )
-  }
-
-  override def detailedPricing(adId: String, mFormS: MFormS, itemIndex: Int): Future[MDetailedPriceResp] = {
-    val route = jsRoutes.controllers.LkAdvGeo.detailedPricing(adId, itemIndex)
-    val bbuf = PickleUtil.pickle( mFormS )
-    Xhr.unBooPickleResp[MDetailedPriceResp] {
-      Xhr.requestBinary(route, bbuf)
-    }
   }
 
 }

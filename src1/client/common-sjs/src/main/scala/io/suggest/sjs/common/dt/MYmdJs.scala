@@ -18,7 +18,7 @@ object MYmdJs extends Log {
   def parse(raw: String): Option[MYmd] = {
     val res = try {
       js.Date.parse(raw)
-    } catch { case ex: Throwable =>
+    } catch { case _: Throwable =>
       Double.NaN
     }
 

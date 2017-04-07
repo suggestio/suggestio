@@ -2,13 +2,12 @@ package io.suggest.lk.adv.geo.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.bill.MGetPriceResp
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
+import io.suggest.lk.adv.geo.r.bill.ItemsPricesR
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
 import io.suggest.lk.adv.geo.r.geo.rad.{RadEnabledR, RadR}
-import io.suggest.lk.adv.geo.r.info.ItemsPricesR
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
@@ -61,17 +60,17 @@ object AdvGeoFormR extends Log {
     * [[http://scala-language.1934581.n4.nabble.com/Option-What-Option-td4647470.html]]
     * [[https://github.com/scala/scala/pull/4017]]
     */
-  case class State(
-                    onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
-                    rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
-                    rcvrPopupConn       : ReactConnectProxy[MRcvr],
-                    mmapConn            : ReactConnectProxy[MMap],
-                    geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
-                    geoAdvConn          : ReactConnectProxy[MGeoAdvs],
-                    mRadOptConn         : ReactConnectProxy[Option[MRad]],
-                    radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal],
-                    priceRespPotConn    : ReactConnectProxy[Pot[MGetPriceResp]]
-                  )
+  protected case class State(
+                              onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
+                              rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
+                              rcvrPopupConn       : ReactConnectProxy[MRcvr],
+                              mmapConn            : ReactConnectProxy[MMap],
+                              geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
+                              geoAdvConn          : ReactConnectProxy[MGeoAdvs],
+                              mRadOptConn         : ReactConnectProxy[Option[MRad]],
+                              radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal],
+                              billConn            : ReactConnectProxy[MBillS]
+                            )
 
 
   /** Константный инстанс TileLayer компонента лежит в памяти отдельно, т.к. никаких изменений в нём не требуется. */
@@ -168,7 +167,7 @@ object AdvGeoFormR extends Log {
         <.br,
 
         // Рендерить табличку с данными по рассчёту текущей цены:
-        s.priceRespPotConn { ItemsPricesR.apply }
+        s.billConn { ItemsPricesR.apply }
 
       )   // top div
     }     // render()
@@ -196,7 +195,7 @@ object AdvGeoFormR extends Log {
           p.zoom(mradOptZoomF),
           renderHintAsText = false
         ),
-        priceRespPotConn    = p.connect(_.other.price.resp)
+        billConn            = p.connect(_.bill)
       )
     }
     .renderBackend[Backend]

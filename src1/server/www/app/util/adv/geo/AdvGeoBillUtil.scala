@@ -294,10 +294,11 @@ class AdvGeoBillUtil @Inject() (
         var _geoInfo            : Option[MGeoInfo] = None
 
         def _setDaysAccRevMult(mult: Double): Unit = {
-          for (d <- _daysAccRev) yield {
+          _daysAccRev = for (d <- _daysAccRev) yield {
             d.withPrice(
               TplDataFormatUtil.setPriceAmountStr(
-                d.baseDayPrice.multiplifiedBy(mult)
+                d.baseDayPrice
+                  .multiplifiedBy(mult * abc.blockModulesCount)
                   .normalizeAmountByExponent
               )
             )
@@ -332,10 +333,10 @@ class AdvGeoBillUtil @Inject() (
         }
 
 
-        override def handleGeoOms(radiusKmOpt: Option[Amount_t], allDaysPriceBase: MPrice, omsMult: Amount_t, geoMult: Amount_t, geoPrice: MPrice): Unit = {
+        override def handleGeoOms(radiusMOpt: Option[Int], allDaysPriceBase: MPrice, omsMult: Amount_t, geoMult: Amount_t, geoPrice: MPrice): Unit = {
           if (_isCollectingData) {
             _geoInfo = Some(MGeoInfo(
-              radiusKm  = radiusKmOpt,
+              radiusM   = radiusMOpt,
               priceMult = geoMult
             ))
             _onMainScreenMult = Some(omsMult)
@@ -344,10 +345,10 @@ class AdvGeoBillUtil @Inject() (
           _itemsProcessed()
         }
 
-        override def handleGeoTags(radiusKmOpt: Option[Amount_t], allDaysPriceBase: MPrice, geoMult: Amount_t, oneTagPrice: MPrice, tagsCount: Int): Unit = {
+        override def handleGeoTags(radiusMOpt: Option[Int], allDaysPriceBase: MPrice, geoMult: Amount_t, oneTagPrice: MPrice, tagsCount: Int): Unit = {
           if (_isCollectingData) {
             _geoInfo = Some(MGeoInfo(
-              radiusKm  = radiusKmOpt,
+              radiusM   = radiusMOpt,
               priceMult = geoMult
             ))
             _setDaysAccRevMult( geoMult )
@@ -457,7 +458,7 @@ class AdvGeoBillUtil @Inject() (
       } {
         // Посчитать стоимость данного гео-круга:
         val radiusKm = radCircle.radiusKm
-        val someRadiusKm = Some(radiusKm)
+        val someRadiusM = Some( radCircle.radiusM.toInt )
 
         val circleGeoMult = getPriceMult( radiusKm )
 
@@ -475,7 +476,7 @@ class AdvGeoBillUtil @Inject() (
           val geoOmsMult = circleGeoMult * omsMult
           val geoOmsPrice = geoAllDaysPrice.multiplifiedBy(geoOmsMult)
             .normalizeAmountByExponent
-          __listen( _.handleGeoOms(someRadiusKm, geoAllDaysPrice, geoOmsMult, circleGeoMult, geoOmsPrice) )
+          __listen( _.handleGeoOms(someRadiusM, geoAllDaysPrice, geoOmsMult, circleGeoMult, geoOmsPrice) )
           val geoOmsRes = geoOms(gs, geoOmsPrice)
           LOGGER.trace(s"$logPrefix geo + onMainScreen => multAcc ::= $circleGeoMult * $ON_MAIN_SCREEN_MULT = $geoOmsMult => $geoAllDaysPrice * $geoOmsPrice => $geoOmsRes")
           _acc ::= geoOmsRes
@@ -485,7 +486,7 @@ class AdvGeoBillUtil @Inject() (
         if (tagsCount > 0) {
           val oneTagPrice = geoAllDaysPrice.multiplifiedBy( circleGeoMult )
             .normalizeAmountByExponent
-          __listen( _.handleGeoTags(someRadiusKm, geoAllDaysPrice, circleGeoMult, oneTagPrice, tagsCount) )
+          __listen( _.handleGeoTags(someRadiusM, geoAllDaysPrice, circleGeoMult, oneTagPrice, tagsCount) )
           LOGGER.trace(s"$logPrefix geo + $tagsCount tags, geo=$circleGeoMult * $geoAllDaysPrice = $oneTagPrice per each tag" )
           addGeoTags(gs, oneTagPrice)
         }
@@ -545,8 +546,8 @@ class AdvGeoBillUtil @Inject() (
   private trait ICalcExecListener {
     /** Listener предупреждается, что сейчас будет n item'ов с одинаковой базовой стоимостью. */
     def willCalcDaysAdvPriceForNItems(itemsCount: Int): Unit = {}
-    def handleGeoOms(radiusKmOpt: Option[Double], allDaysPriceBase: MPrice, omsMult: Double, geoMult: Double, geoPrice: MPrice): Unit = {}
-    def handleGeoTags(radiusKmOpt: Option[Double], allDaysPriceBase: MPrice, geoMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}
+    def handleGeoOms(radiusMOpt: Option[Int], allDaysPriceBase: MPrice, omsMult: Double, geoMult: Double, geoPrice: MPrice): Unit = {}
+    def handleGeoTags(radiusMOpt: Option[Int], allDaysPriceBase: MPrice, geoMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}
 
     def handleRcvrOms(rcvrKey: RcvrKey, rcvrId: String, allDaysPriceBase: MPrice, omsMult: Double, totalPrice: MPrice): Unit = {}
     def handleRcvrTags(rcvrId: String, priceMult: Double, oneTagPrice: MPrice, tagsCount: Int): Unit = {}

@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css.Lk.Bars.RightBar.Price
 import io.suggest.css.Css
 import io.suggest.lk.adv.m.{DoFormSubmit, MPriceS}
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 
@@ -57,7 +57,7 @@ object PriceR {
 
               pricePot.render { resp =>
                 for (p <- resp.prices) yield {
-                  Messages(p.currency.i18nPriceCode, MPrice.amountStr(p))
+                  JsFormatUtil.formatPrice(p)
                 }
               }
             ),

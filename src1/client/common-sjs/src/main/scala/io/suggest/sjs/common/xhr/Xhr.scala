@@ -267,7 +267,7 @@ object Xhr extends Log {
       successIf200 {
         sendBinary(
           route     = route,
-          body      = body ,
+          body      = body,
           respType  = RESP_ARRAY_BUFFER,
           headers   = (HDR_ACCEPT -> MIME_OCTET_STREAM) :: Nil
         )

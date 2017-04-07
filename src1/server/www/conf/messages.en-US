@@ -756,18 +756,18 @@ Month.N.10=October
 Month.N.11=November
 Month.N.12=December
 
-ofMonth.N.1=January
-ofMonth.N.2=Febrary
-ofMonth.N.3=March
-ofMonth.N.4=April
-ofMonth.N.5=May
-ofMonth.N.6=June
-ofMonth.N.7=July
-ofMonth.N.8=August
-ofMonth.N.9=September
-ofMonth.N.10=October
-ofMonth.N.11=November
-ofMonth.N.12=December
+ofMonth.N.1=january
+ofMonth.N.2=febrary
+ofMonth.N.3=march
+ofMonth.N.4=april
+ofMonth.N.5=may
+ofMonth.N.6=june
+ofMonth.N.7=july
+ofMonth.N.8=august
+ofMonth.N.9=september
+ofMonth.N.10=october
+ofMonth.N.11=november
+ofMonth.N.12=december
 
 
 DayOfW.N.1=Mo
@@ -813,6 +813,7 @@ Pay.error=Pay error
 Orders=Orders
 No.orders.found=No orders found.
 
+Radius=Radius
 in.radius.of.0.from.1=in radius of {0} from {2}
 n.km._kilometers={0} km
 n.m._meters={0} m

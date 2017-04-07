@@ -1,7 +1,6 @@
 package io.suggest.lk.adv.geo.m
 
 import diode.FastEq
-import io.suggest.lk.adv.m.MPriceS
 
 /**
   * Suggest.io
@@ -17,8 +16,7 @@ object MOther {
   implicit object MOtherFastEq extends FastEq[MOther] {
     override def eqv(a: MOther, b: MOther): Boolean = {
       (a.adId eq b.adId) &&
-        (a.onMainScreen == b.onMainScreen) &&
-        (a.price eq b.price)
+        (a.onMainScreen == b.onMainScreen)
     }
   }
 
@@ -33,15 +31,12 @@ object MOther {
   *                     Передаётся на сервер внутри URL.
   *
   * @param onMainScreen Текущее Состояние галочки размещения на главном экране.
-  * @param price Состояние ценника.
   */
 case class MOther(
   adId          : String,
-  onMainScreen  : Boolean             = true,
-  price         : MPriceS             = MPriceS()
+  onMainScreen  : Boolean             = true
 ) {
 
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
-  def withPriceS(price2: MPriceS) = copy(price = price2)
 
 }

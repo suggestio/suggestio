@@ -13,18 +13,25 @@ import io.suggest.bill.MDetailedPriceResp
 object MBillDetailedS {
   implicit object MBillDatailedSFastEq extends FastEq[MBillDetailedS] {
     override def eqv(a: MBillDetailedS, b: MBillDetailedS): Boolean = {
-      (a.detailed eq b.detailed) &&
-        (a.index == b.index)
+      (a.req eq b.req) &&
+        (a.itemIndex == b.itemIndex)
     }
   }
 }
 
 
+/** Класс состояния детализованных данных биллинга по какому-то элементу.
+  *
+  * @param itemIndex индекс детализуемого элемента.
+  * @param ts timestamp запроса.
+  * @param req Потенциальное состояние ответа сервера по вопросу детализации.
+  */
 case class MBillDetailedS(
-                           index       : Int,
-                           detailed    : Pot[MDetailedPriceResp]
+                           itemIndex   : Int,
+                           ts          : Long,
+                           req    : Pot[MDetailedPriceResp]
                          ) {
 
-  def withDetailed(detailed2: Pot[MDetailedPriceResp]) = copy( detailed = detailed2 )
+  def withReq(req2: Pot[MDetailedPriceResp]) = copy( req = req2 )
 
 }

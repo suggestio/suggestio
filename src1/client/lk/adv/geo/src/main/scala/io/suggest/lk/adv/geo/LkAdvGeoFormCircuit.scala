@@ -29,6 +29,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
 import MMap.MMapFastEq
 import MOther.MOtherFastEq
+import io.suggest.lk.adv.geo.a.bill.ItemDetailsAh
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -38,6 +39,7 @@ import MGeoAdvs.MGeoAdvsFastEq
 import MPopupsS.MPopupsFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import MBillDetailedS.MBillDatailedSFastEq
 
 import scala.concurrent.Future
 
@@ -66,10 +68,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
           props = mFormInit.form.mapProps
         ),
         other = MOther(
-          adId = mFormInit.adId,
-          price = MPriceS(
-            resp = Ready( mFormInit.advPricing )
-          )
+          adId = mFormInit.adId
         ),
         adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
           MAdv4Free(
@@ -91,7 +90,12 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
             )
           )
         },
-        datePeriod = mFormInit.form.datePeriod
+        datePeriod = mFormInit.form.datePeriod,
+        bill = MBillS(
+          price = MPriceS(
+            resp = Ready( mFormInit.advPricing )
+          )
+        )
       )
     }
 
@@ -199,8 +203,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       priceUpdateFx = priceUpdateEffect
     )
 
+    val billRW = zoomRW(_.bill) { _.withBill(_) }
+
     val priceAh = new PriceAh(
-      modelRW       = otherRW.zoomRW(_.price) { _.withPriceS(_) },
+      modelRW       = billRW.zoomRW(_.price) { _.withPrice(_) },
       priceAskFutF  = priceAskFut,
       doSubmitF     = submitFormFut
     )
@@ -213,12 +219,20 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = mPopupsRW.zoomRW(_.nodeInfo) { _.withNodeInfo(_) }
     )
 
+    val itemDetailsAh = new ItemDetailsAh(
+      api = API,
+      modelRW = billRW.zoomRW(_.detailed) { _.withDetailed(_) },
+      confRO  = otherRW,
+      mFormRO = mFormDataRO
+    )
+
     // Склеить все handler'ы.
     val h1 = composeHandlers(
       // Основные элементы формы, в т.ч. leaflet-попапы:
       radAh,
       priceAh,
       rcvrsMarkerPopupAh, rcvrInputsAh,
+      itemDetailsAh,
       geoAdvsPopupAh,
       tagsAh,
       onMainScreenAh,

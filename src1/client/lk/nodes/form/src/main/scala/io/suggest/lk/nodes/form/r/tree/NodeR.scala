@@ -12,7 +12,7 @@ import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.nodes.form.r.menu.{NodeMenuBtnR, NodeMenuR}
 import io.suggest.lk.r.LkPreLoaderR
-import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react._
@@ -284,7 +284,7 @@ object NodeR extends Log { self =>
 
                 <.input(
                   ^.placeholder := node.info.name,
-                  ^.title := Messages("Type.new.name.for.beacon.0", node.info.name) + HtmlConstants.SPACE + Messages( MsgCodes.`For.example.0`, Messages( MsgCodes.`Beacon.name.example` )),
+                  ^.title := Messages( MsgCodes.`Type.new.name.for.beacon.0`, node.info.name) + HtmlConstants.SPACE + Messages( MsgCodes.`For.example.0`, Messages( MsgCodes.`Beacon.name.example` )),
                   ^.value := ed.name,
                   // Блокировать поле, пока происходит сохранение на сервер.
                   if (ed.saving.isPending) {
@@ -355,7 +355,7 @@ object NodeR extends Log { self =>
                   val isEnabledValue = node.isEnabledUpd.fold(node.info.isEnabled)(_.newIsEnabled)
                   <.tr(
                     _kvTdKey(
-                      Messages("Is.enabled")
+                      Messages( MsgCodes.`Is.enabled` )
                     ),
 
                     _kvTdValue(
@@ -442,7 +442,7 @@ object NodeR extends Log { self =>
                                     Messages( mCalType.name )
                                   ),
                                   _kvTdValue(
-                                    Messages(mPrice.currency.i18nPriceCode, MPrice.amountStr(mPrice)),
+                                    JsFormatUtil.formatPrice(mPrice),
                                     perDay
                                   )
                                 )
@@ -477,7 +477,7 @@ object NodeR extends Log { self =>
                           // Кнопка показа подробностей по тарифу.
                           <.a(
                             ^.`class`  := Css.Lk.LINK,
-                            ^.title    := Messages("Show.details"),
+                            ^.title    := Messages( MsgCodes.`Show.details` ),
                             ^.onClick --> onTfShowDetailsClick(rcvrKey),
                             HtmlConstants.ELLIPSIS
                           ),
@@ -502,7 +502,7 @@ object NodeR extends Log { self =>
                     _kvTdValue(
                       children.nonEmpty ?= <.span(
                         // Вывести общее кол-во под-узлов.
-                        Messages("N.nodes", children.size),
+                        Messages( MsgCodes.`N.nodes`, children.size),
 
                         // Вывести кол-во выключенных под-узлов, если такие есть.
                         {
@@ -513,7 +513,7 @@ object NodeR extends Log { self =>
                             <.span(
                               HtmlConstants.COMMA,
                               HtmlConstants.NBSP_STR,
-                              Messages("N.disabled", countDisabled)
+                              Messages( MsgCodes.`N.disabled`, countDisabled )
                             )
                           }
                         },

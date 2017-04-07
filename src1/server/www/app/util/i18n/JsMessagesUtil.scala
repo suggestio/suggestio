@@ -54,19 +54,21 @@ class JsMessagesUtil @Inject() (
     "Add" ::
       "Tags.choosing" ::
       "Add.tags" ::
-      "Delete" ::
+      MsgCodes.`Delete` ::
       Nil
   }
 
-  private def DAYS_OF_WEEK_MSGS: Traversable[String] = {
-    for (i <- 1 to 7) yield {
-      "DayOfWeek.N." + i
+  private def DAYS_OF_WEEK_MSGS: TraversableOnce[String] = {
+    (1 to 7).iterator.flatMap { dow =>
+      MsgCodes.`DayOfWeek.N.`(dow) ::
+        MsgCodes.`DayOfW.N.`(dow) ::
+        Nil
     }
   }
 
   private def OF_MONTHS_OF_YEAR: Traversable[String] = {
     for (m <- 1 to 12) yield {
-      "ofMonth.N." + m
+      MsgCodes.`ofMonth.N.`( m )
     }
   }
 
@@ -81,14 +83,16 @@ class JsMessagesUtil @Inject() (
       "Main.screen" ::
       "GeoTag" ::
       "_adv.Online.now" ::
+      MsgCodes.`Radius` ::
+      MsgCodes.`N.modules` ::
       "Adv.on.main.screen" ::
-      "Please.wait" ::
+      MsgCodes.`Please.wait` ::
       Nil
   }
 
   /** Коды ошибок форм. */
   private def FORM_ERRORS: TraversableOnce[String] = {
-    "Error" ::
+    MsgCodes.`Error` ::
       "Something.gone.wrong" ::
       "error.maxLength" ::
       "error.minLength" ::
@@ -98,24 +102,24 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для формы управления узлами/подузлами. */
   private def LK_NODES_MSGS: TraversableOnce[String] = {
-    val l1 = "Create" ::
-      "Name" ::
+    val l1 = MsgCodes.`Create` ::
+      MsgCodes.`Name` ::
       "Identifier" ::
       "Beacon.name.example" ::
       "Server.request.in.progress.wait" ::
       "Example.id.0" ::
-      "Is.enabled" ::
-      "Edit" ::
-      "Change" ::
-      "Yes" :: "No" ::
+      MsgCodes.`Is.enabled` ::
+      MsgCodes.`Edit` ::
+      MsgCodes.`Change` ::
+      MsgCodes.`Yes` :: MsgCodes.`No` ::
       "Are.you.sure" ::
-      "Delete" ::
-      "Deletion" ::
-      "Subnodes" :: "N.nodes" :: "N.disabled" ::
-      "Yes.delete.it" ::
+      MsgCodes.`Delete` ::
+      MsgCodes.`Deletion` ::
+      MsgCodes.`Subnodes` :: MsgCodes.`N.nodes` :: MsgCodes.`N.disabled` ::
+      MsgCodes.`Yes.delete.it` ::
       "New.node" ::
       "Node.with.such.id.already.exists" ::
-      "Type.new.name.for.beacon.0" ::
+      MsgCodes.`Type.new.name.for.beacon.0` ::
       "For.example.0" ::
       MsgCodes.`Show.details` ::
       MsgCodes.`Close` ::
@@ -134,6 +138,11 @@ class JsMessagesUtil @Inject() (
     Iterator(l1, l2).flatten
   }
 
+  private def DIST_UNITS: TraversableOnce[String] = {
+    MsgCodes.`n.km._kilometers` ::
+      MsgCodes.`n.m._meters` ::
+      Nil
+  }
 
   /** Коды платежных вещей в формах размещения. */
   private def ADV_PRICING: TraversableOnce[String] = {
@@ -180,6 +189,7 @@ class JsMessagesUtil @Inject() (
       DATE_TIME_ABBREVATIONS,
       ADV_PRICING,
       ADV_INFO,
+      DIST_UNITS,
       ITEM_TYPES,
       LK_COMMON,
       LK_NODES_MSGS

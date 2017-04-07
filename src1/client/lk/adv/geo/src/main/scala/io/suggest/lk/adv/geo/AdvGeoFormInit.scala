@@ -54,7 +54,7 @@ class AdvGeoFormInit extends IInit {
     ReactDOM.render( formR, formTarget )
 
     // Отдельно идёт рендер виджета цены PriceR:
-    val priceR = circuit.wrap(_.other.price)(PriceR.apply)
+    val priceR = circuit.wrap(_.bill.price)(PriceR.apply)
     val priceTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
     ReactDOM.render(priceR, priceTarget)
 
