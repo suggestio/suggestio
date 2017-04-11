@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.r
 
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.adv.rcvr.MRcvrPopupResp
-import io.suggest.bill.{MDetailedPriceResp, MGetPriceResp}
+import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
@@ -41,9 +41,6 @@ trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запросить у сервера рассчёт цены. */
   def getPrice(adId: String, mFormS: MFormS): Future[MGetPriceResp]
-
-  /** Получение детальной инфы по какому-то элементу ценообразования. */
-  def detailedPricing(adId: String, mFormS: MFormS, itemIndex: Int): Future[MDetailedPriceResp]
 
   /** Окончательный сабмит формы георазмещения. */
   def formSubmit(adId: String, mFormS: MFormS): Future[String]
@@ -104,14 +101,6 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     val route = jsRoutes.controllers.LkAdvGeo.getPriceSubmit(adId)
     val bbuf = PickleUtil.pickle(mFormS)
     Xhr.unBooPickleResp[MGetPriceResp] {
-      Xhr.requestBinary(route, bbuf)
-    }
-  }
-
-  override def detailedPricing(adId: String, mFormS: MFormS, itemIndex: Int): Future[MDetailedPriceResp] = {
-    val route = jsRoutes.controllers.LkAdvGeo.detailedPricing(adId, itemIndex)
-    val bbuf = PickleUtil.pickle( mFormS )
-    Xhr.unBooPickleResp[MDetailedPriceResp] {
       Xhr.requestBinary(route, bbuf)
     }
   }

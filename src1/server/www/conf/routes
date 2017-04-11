@@ -86,7 +86,6 @@ GET  /lk/xadv/geo/map/rcvr/pop/:adId/:nodeId     @controllers.LkAdvGeo.rcvrMapPo
 GET  /lk/xadv/geo/map/shapes/:adId      @controllers.LkAdvGeo.existGeoAdvsMap(adId)
 GET  /lk/xadv/geo/map/shape/pop/:itemId @controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId: Gid_t)
 ## Тут должен быть GET, но почему-то GET с бинарным телом не выходит из Ajax/XHR.
-POST /lk/xadv/geo/depr/:adId/:index     @controllers.LkAdvGeo.detailedPricing(adId, index: Int)
 
 ## ЛК: Рекламные карточки
 GET  /lk/mad/new/:adnId                 @controllers.MarketAd.createAd(adnId)

@@ -127,6 +127,7 @@ case class MPrice(
 
   /** Домножить amount на какой-то коэффициент. */
   def multiplifiedBy(mult: Double) = withAmount(amount * mult)
+  def *(mult: Double) = multiplifiedBy(mult)
 
   /** Увеличить (уменьшить) объем средств на указанное число. */
   def plusAmount(plusAmount: Amount_t) = withAmount(amount + plusAmount)

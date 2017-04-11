@@ -4,8 +4,8 @@ import java.time.{DayOfWeek, LocalDate}
 
 import com.google.inject.Inject
 import io.suggest.bill._
-import io.suggest.cal.m.MCalType
-import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
+import io.suggest.bill.price.dsl._
+import io.suggest.dt.{MYmd, YmdHelpersJvm}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
@@ -29,12 +29,14 @@ import scala.concurrent.Future
 class AdvUtil @Inject() (
                           tfDailyUtil             : TfDailyUtil,
                           calendarUtil            : CalendarUtil,
+                          ymdHelpersJvm           : YmdHelpersJvm,
                           mCommonDi               : ICommonDi
                         )
   extends MacroLogsImpl
 {
 
   import mCommonDi._
+  import ymdHelpersJvm.Implicits.LocalDateYmdHelper
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
@@ -71,33 +73,28 @@ class AdvUtil @Inject() (
   }
 
 
-  /**
-    * Рассчитать ценник размещения рекламной карточки.
-    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
+  /** Сборка считалки стоимости размещения на указанном ресивере.
+    * Это реинкарнация метода calculateAdvPriceOnRcvr(), без кривых листенеров и соответствующего кода.
     *
-    * @param rcvrId id ресивера, тариф которого надо использовать.
-    * @param abc Контекст данных биллинга.
-    * @param listenerOpt Опциональный листенер промежуточных данных модуля.
-    * @return Стоимость размещения.
+    * @param tfRcvrId id ресивера.
+    * @param abc Контекст рассчётов.
+    * @return Для получения цены можно вызвать .price.
     */
-  def calculateAdvPriceOnRcvr(rcvrId: String, abc: IAdvBillCtx, listenerOpt: Option[IAdvPriceDaysCalcListener] = None): MPrice = {
-    lazy val logPrefix = s"calculateAdvPrice($rcvrId)[${System.currentTimeMillis}]:"
-
-    def __listen[U](f: IAdvPriceDaysCalcListener => U): Unit = {
-      listenerOpt.foreach(f)
-    }
+  def calcDateAdvPriceOnTf(tfRcvrId: String, abc: IAdvBillCtx): IPriceDslTerm = {
+    lazy val logPrefix = s"calcDateAdvPriceOnTf($tfRcvrId)[${System.currentTimeMillis}]:"
 
     // Извлечь подходящий тариф из карты тарифов узлов.
-    val mpriceRes = abc.tfsMap.get(rcvrId).fold[MPrice] {
+    abc.tfsMap.get(tfRcvrId).fold[IPriceDslTerm] {
       // TODO Валюта нулевого ценника берётся с потолка. Нужен более адекватный источник валюты.
       val res = MPrice(0d, MCurrencies.default)
-      LOGGER.debug(s"$logPrefix Missing TF for $rcvrId. Guessing adv as free: $res")
-      res
+      LOGGER.debug(s"$logPrefix Missing TF for $tfRcvrId. Guessing adv as free: $res")
+      BaseTfPrice(
+        price = res
+      )
 
     } { tf =>
 
-      LOGGER.trace(s"$logPrefix tf = $tf")
-      __listen( _.handleTfDaily(tf) )
+      LOGGER.trace(s"$logPrefix Starting with tf = $tf")
 
       val dateStart = abc.ivl.dateStart
       val dateEnd = abc.ivl.dateEnd
@@ -132,7 +129,7 @@ class AdvUtil @Inject() (
       val weekendDays = WEEKEND_DAYS
 
       // Рассчет стоимости для одной даты (дня) размещения.
-      def calculateDateAdvPrice(day: LocalDate): Double = {
+      def calculateDateAdvPrice(day: LocalDate): IPriceDslTerm = {
         val dayOfWeek = day.getDayOfWeek.getValue
 
         val clause4dayOpt = clausesWithCals
@@ -141,48 +138,66 @@ class AdvUtil @Inject() (
           }
 
         // Пройтись по праздничным календарям, попытаться найти подходящий
-        val clause4day = clausesWithCals
-          .find { case (_, calCtx) =>
-            calCtx.mcal.calType.maybeWeekend(dayOfWeek, weekendDays) || calCtx.mgr.isHoliday(day)
-          }
+        val clause4day = clause4dayOpt
           .fold(clauseDflt)(_._1)
 
         LOGGER.trace(s"$logPrefix $day -> ${clause4day.name} +${clause4day.amount} ${tf.currency}")
 
         val dayAmount = clause4day.amount
 
-        __listen { l =>
-          val calTypeOpt = for ((_, calCtx) <- clause4dayOpt) yield {
-            calCtx.mcal.calType
-          }
-          l.handleOneDayData(day, dayOfWeek, calTypeOpt, clause4day, dayAmount )
-        }
-
-        dayAmount
+        BaseTfPrice(
+          price     = MPrice(dayAmount, tf.currency),
+          mCalType  = clause4dayOpt.map(_._2.mcal.calType),
+          date      = Some( MYmd.from(day) )
+        )
       }
 
       // Цикл суммирования стоимости дат, начиная с $1 и заканчивая dateEnd.
-      @tailrec def walkDaysAndPrice(day: LocalDate, acc0: Double): Double = {
-        val acc1 = calculateDateAdvPrice(day) + acc0
+      @tailrec def walkDaysAndPrice(day: LocalDate, accRev0: List[IPriceDslTerm] = Nil): List[IPriceDslTerm] = {
+        val accRev1 = calculateDateAdvPrice(day) :: accRev0
         val day1 = day.plusDays(1)
-        if (day1.isAfter(dateEnd)) {
-          acc1
+        if (!day1.isBefore(dateEnd)) {
+          accRev1.reverse
         } else {
-          walkDaysAndPrice(day1, acc1)
+          walkDaysAndPrice(day1, accRev1)
         }
       }
 
       // amount1 - минимальная оплата одного минимального блока по времени
-      val amount1 = walkDaysAndPrice(dateStart, 0.0)
-      // amountN -- amount1 домноженная на кол-во блоков.
-      val amountN = abc.blockModulesCount * amount1
+      val amount1 = Sum(
+        walkDaysAndPrice(dateStart)
+      )
 
-      LOGGER.trace(s"$logPrefix amount (min/full) = $amount1 / $amountN")
-      MPrice(amountN, tf.currency)
+      // amountN -- amount1 домноженная на кол-во блоков карточки.
+      val bmc = abc.blockModulesCount
+      val amountN = Mapper(
+        multiplifier = Some(bmc),
+        reason       = Some(
+          MPriceReason(
+            reasonType  = MReasonTypes.BlockModulesCount,
+            ints        = bmc :: Nil
+          )
+        ),
+        underlying = amount1
+      )
+
+      LOGGER.trace(s"$logPrefix amount (min/full) = ${amount1.price} / ${amountN.price}")
+      amountN
     }
+  }
 
-    __listen( _.handleAdvDaysPriceDone(mpriceRes) )
-    mpriceRes
+
+  /**
+    * Рассчитать ценник размещения рекламной карточки.
+    * Цена блока рассчитывается по площади, тарифам размещения узла-получателя и исходя из будней-праздников.
+    *
+    * @param rcvrId id ресивера, тариф которого надо использовать.
+    * @param abc Контекст данных биллинга.
+    * @return Стоимость размещения.
+    */
+  @deprecated("Use calcDateAdvPriceOnTf().price instead.", "2017.apr.10")
+  def calculateAdvPriceOnRcvr(rcvrId: String, abc: IAdvBillCtx): MPrice = {
+    calcDateAdvPriceOnTf(rcvrId, abc).price
   }
 
 
@@ -244,12 +259,4 @@ class AdvUtil @Inject() (
     )
   }
 
-}
-
-
-/** Интерфейс Listener'а промежуточных данных суммирования. */
-trait IAdvPriceDaysCalcListener {
-  def handleTfDaily(tf: MTfDaily): Unit = {}
-  def handleOneDayData(day: LocalDate, dow17: Int, mcalTypeOpt: Option[MCalType], mdc: MDayClause, dayAmount: Amount_t ): Unit = {}
-  def handleAdvDaysPriceDone(mprice: MPrice): Unit = {}
 }
