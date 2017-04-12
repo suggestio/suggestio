@@ -2,7 +2,6 @@ package io.suggest.lk.adv.geo.m
 
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
-import io.suggest.bill.MDetailedPriceResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.spa.DAction
@@ -94,10 +93,3 @@ case class RadiusDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGe
 case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends IAdvGeoFormAction
 /** Сигнал ответа сервера на запрос информации по узлу. */
 case class OpenNodeInfoResp(rcvrKey: RcvrKey, tryRes: Try[String]) extends IAdvGeoFormAction
-
-
-// bill-события
-/** Скрыть/показать детали по цене какого-то item'а в списке bill item'ов. */
-case class ShowHideItemPriceDetails(itemIndex: Int) extends IAdvGeoFormAction
-/** Результат запроса к серверу за подробностями стоимости размещения. */
-case class ItemDetailsResult(ts: Long, itemIndex: Int, tryRes: Try[MDetailedPriceResp]) extends IAdvGeoFormAction

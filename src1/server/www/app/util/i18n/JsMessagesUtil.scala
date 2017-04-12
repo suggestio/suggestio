@@ -83,10 +83,13 @@ class JsMessagesUtil @Inject() (
       "Main.screen" ::
       "GeoTag" ::
       "_adv.Online.now" ::
-      MsgCodes.`Radius` ::
+      MsgCodes.`Radius` :: MsgCodes.`in.radius.of.0.from.1` ::
       MsgCodes.`N.modules` ::
       "Adv.on.main.screen" ::
       MsgCodes.`Please.wait` ::
+      MsgCodes.`Adv.on.main.screen` :: MsgCodes.`Coverage.area` ::
+      MsgCodes.`Ad.area.modules.count` :: MsgCodes.`Tag` ::
+      MsgCodes.`Date` :: MsgCodes.`Price` ::
       Nil
   }
 

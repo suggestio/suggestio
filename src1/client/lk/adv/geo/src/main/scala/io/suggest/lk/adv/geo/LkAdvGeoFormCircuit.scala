@@ -29,7 +29,6 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
 import MMap.MMapFastEq
 import MOther.MOtherFastEq
-import io.suggest.lk.adv.geo.a.bill.ItemDetailsAh
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -39,7 +38,6 @@ import MGeoAdvs.MGeoAdvsFastEq
 import MPopupsS.MPopupsFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
-import MBillDetailedS.MBillDatailedSFastEq
 
 import scala.concurrent.Future
 
@@ -219,20 +217,12 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = mPopupsRW.zoomRW(_.nodeInfo) { _.withNodeInfo(_) }
     )
 
-    val itemDetailsAh = new ItemDetailsAh(
-      api = API,
-      modelRW = billRW.zoomRW(_.detailed) { _.withDetailed(_) },
-      confRO  = otherRW,
-      mFormRO = mFormDataRO
-    )
-
     // Склеить все handler'ы.
     val h1 = composeHandlers(
       // Основные элементы формы, в т.ч. leaflet-попапы:
       radAh,
       priceAh,
       rcvrsMarkerPopupAh, rcvrInputsAh,
-      itemDetailsAh,
       geoAdvsPopupAh,
       tagsAh,
       onMainScreenAh,

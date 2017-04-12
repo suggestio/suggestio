@@ -1,19 +1,13 @@
 package io.suggest.lk.adv.geo.r.bill
 
-import diode.data.Pot
-import diode.react.{ModelProxy, ReactConnectProxy}
-import diode.react.ReactPot.potWithReact
-import io.suggest.bill.MGetPriceResp
+import diode.react.ModelProxy
+import io.suggest.bill.price.dsl.{BaseTfPrice, IPriceDslTerm, Mapper, Sum}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.{MBillDetailedS, MBillS, ShowHideItemPriceDetails}
 import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import MBillDetailedS.MBillDatailedSFastEq
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement, ReactNode}
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.r.LkPreLoaderR
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.r.YmdR
@@ -26,187 +20,262 @@ import io.suggest.react.r.YmdR
   */
 object ItemsPricesR {
 
-  type Props = ModelProxy[MBillS] //Pot[MGetPriceResp]]
+  type Props = ModelProxy[Option[IPriceDslTerm]]
 
-  protected case class State(
-                              priceRespPotConn : ReactConnectProxy[Pot[MGetPriceResp]],
-                              detailedOptConn  : ReactConnectProxy[Option[MBillDetailedS]]
-                            )
 
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
-    private def onItemPriceClick(itemIndex: Int): Callback = {
-      dispatchOnProxyScopeCB( $, ShowHideItemPriceDetails(itemIndex) )
+    private val tdCssBase = Css.Table.Td.TD :: Css.Table.Td.WHITE :: Css.Size.M :: Nil
+    private val tdCssHead = Css.Table.Td.GRAY :: tdCssBase
+    private val tdCssBody = Css.Table.Td.WHITE :: tdCssBase
+
+    /** Рендер строки маппера с данными его полей (кроме underlying). */
+    def _renderMapperReason(mapper: Mapper) = {
+      <.tr(
+        for (priceReason <- mapper.reason) yield {
+          // Рендерить название причины начисления
+          val leftTd = <.td(
+            ^.`class` := Css.flat1( Css.Table.Td.Radial.FIRST :: tdCssBody ),
+
+            Messages( priceReason.reasonType.msgCodeI18n )
+          )
+
+          // Рендерить переменные, присланные вместе с причиной.
+          val secondTd = <.td(
+            ^.`class` := Css.flat1( tdCssBody ),
+
+            priceReason.reasonType
+              .i18nPayload(priceReason)( Messages.f )
+              .getOrElse[String]( HtmlConstants.NBSP_STR )
+          )
+
+          // Рендерить множитель причины.
+          val thirdTd = <.td(
+            ^.`class` := Css.flat1( tdCssBody ),
+            ^.width := 40.px,
+
+            mapper
+              .multiplifier
+              .fold[ReactNode]( HtmlConstants.NBSP_STR ) { mult =>
+              <.span(
+                "x", "%1.2f".format(mult)
+              )
+            }
+
+          )
+
+          leftTd ::
+            secondTd ::
+            thirdTd ::
+            Nil
+        },
+
+        // Рендерить цену после домножения на множитель
+        <.td(
+          ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssBody ),
+          ^.width   := 100.px,
+          JsFormatUtil.formatPrice( mapper.price )
+        )
+
+      )
     }
 
-    def render(proxy: Props, s: State): ReactElement = {
-      <.div(
-        s.priceRespPotConn { mrespPotProxy =>
-          mrespPotProxy().render { mresp =>
-            val tdCss = Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE )
 
-            <.table(
-              ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL ),
+    /** Рендер одного ряда с под-элементами. */
+    private def _renderUnderlyingRow(und: IPriceDslTerm, undLevel: Int, withTableOuter: Boolean = true) = {
+      <.tr(
+        <.td(
+          ^.`class` := Css.flat1( tdCssBody ),
+          ^.colSpan := 4,
+          _renderPriceTerm(und, level = undLevel, withTableOuter = withTableOuter)
+        )
+      )
+    }
 
-              <.tbody(
-                for (i <- mresp.items) yield {
-                  Seq[ReactElement](
-                    <.tr(
-                      ^.key := i.index + "a",
-                      // Общая инфа по размещению
-                      <.td(
-                        ^.`class` := tdCss, // Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE ),
-                        Messages( i.iType.nameI18n ),
-                        // Инфа по узлу
-                        for (rcvr <- i.rcvr) yield {
-                          <.span(
-                            HtmlConstants.SPACE,
-                            rcvr.name
-                          )
-                        },
-                        // Инфа по географии размещения:
-                        for (gsInfo <- i.gsInfo) yield {
-                          <.span(
-                            HtmlConstants.SPACE,
-                            gsInfo
-                          )
-                        }
-                      ),
 
-                      // Цена
-                      <.td(
-                        ^.`class` := tdCss,
-                        ^.onClick --> onItemPriceClick( i.index ),
-                        JsFormatUtil.formatPrice( i.price )
-                      )
-                    ),
+    /** Рендер данных по тарифу. */
+    private def _renderBaseTfPriceData(tfPrice: BaseTfPrice) = {
+      // Желательно не более трёх полей, т.к. это дело на самом нижнем уровне рендерится с ощутимым сдвигом слева.
+      <.tr(
+        // Дата
+        <.td(
+          ^.`class` := Css.flat1( Css.Table.Td.Radial.FIRST :: tdCssBody ),
 
-                    s.detailedOptConn { detailedOpt =>
-                      for {
-                        detailed <- detailedOpt()
-                        if detailed.itemIndex == i.index
-                      } yield {
-                        <.tr(
-                          ^.key := detailed.itemIndex.toString + "d",
+          tfPrice.date
+            .fold[ReactNode]( HtmlConstants.NBSP_STR ) { ymd =>
+              YmdR( ymd )(
+                HtmlConstants.COMMA,
+                HtmlConstants.SPACE,
+                JsFormatUtil.formatDow( ymd )
+              )
+            }
+        ),
 
-                          <.td(
-                            ^.colSpan := 2,
+        // Рендерить название типа использованного календаря.
+        <.td(
+          ^.`class` := Css.flat1( tdCssBody ),
+          tfPrice.mCalType
+            .fold[ReactNode]( HtmlConstants.NBSP_STR ) { calType =>
+              Messages( calType.name )
+            }
+        ),
 
-                            // Ждём сервер...
-                            detailed.req.renderPending { _ =>
-                              <.span(
-                                LkPreLoaderR.AnimMedium,
-                                HtmlConstants.SPACE,
-                                Messages( MsgCodes.`Please.wait` )
-                              )
-                            },
+        // Рендерить цены по тарифу для календаря.
+        <.td(
+          ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssBody ),
+          ^.width   := 100.px,
+          JsFormatUtil.formatPrice( tfPrice.price ),
+          Messages( MsgCodes.`_per_.day` )
+        )
+      )
+    }
 
-                            // Есть детали, рендерим ответ:
-                            detailed.req.render { det =>
-                              <.table(
-                                ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL ),
 
-                                <.tbody(
-                                  for (d <- det.days) yield {
-                                    <.tr(
-                                      ^.key := d.ymd.toString,
-                                      // День
-                                      <.td(
-                                        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.GRAY, Css.Table.Td.Radial.FIRST ),
-                                        YmdR(d.ymd)(
-                                          HtmlConstants.COMMA,
-                                          HtmlConstants.SPACE,
-                                          JsFormatUtil.formatDow( d.ymd )
-                                        )
-                                      ),
+    private def _renderChildren(term: IPriceDslTerm, sumLevel: Int) = {
+      val undLevel = sumLevel + 1
+      for {
+        (c, i) <- term.children.iterator.zipWithIndex
+      } yield {
+        _renderUnderlyingRow(c, undLevel = undLevel)(
+          ^.key := i.toString
+        )
+      }
+    }
 
-                                      <.td(
-                                        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE ),
-                                        Messages( d.calType.name )
-                                      ),
-                                      <.td(
-                                        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE ),
-                                        JsFormatUtil.formatPrice( d.baseDayPrice ),
-                                        Messages( MsgCodes.`_per_.day` )
-                                      ),
 
-                                      <.td(
-                                        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE ),
-                                        "x", Messages( MsgCodes.`N.modules`, det.blockModulesCount )
-                                      ),
+    private def _renderOuterTableForRow(term: IPriceDslTerm, level: Int) = {
+      val thead: TagMod = term match {
+        // На основе маппера нужно собрать заголовок на 4 колонки.
+        case _: Mapper =>
+          EmptyTag
+          /*
+          mapper.reason.fold[TagMod](EmptyTag) { _ =>
+            <.thead(
+              <.tr(
+                <.td(
+                  ^.`class` := Css.flat1( Css.Table.Td.Radial.FIRST :: tdCssHead ),
+                  "#1"
+                ),
 
-                                      // Колонка информации по географии
-                                      for (geoInfo <- det.geoInfo) yield {
-                                        <.td(
-                                          ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE ),
-                                          "x",
-                                          <.span(
-                                            ^.title := geoInfo.priceMult.toString,
-                                            "%1.2f".format( geoInfo.priceMult )
-                                          ),
-                                          for (radiusMeters <- geoInfo.radiusM) yield {
-                                            <.span(
-                                              <.br,
-                                              Messages( MsgCodes.`Radius` ),
-                                              " = ",
-                                              Messages(
-                                                MsgCodes.`n.m._meters`,
-                                                radiusMeters
-                                              )
-                                            )
-                                          }
-                                        )
-                                      },
+                <.td(
+                  ^.`class` := Css.flat1( tdCssHead ),
+                  "#2"
+                ),
 
-                                      for (omsMult <- det.onMainScreenMult) yield {
-                                        <.td(
-                                          ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE ),
-                                          <.span(
-                                            ^.title := omsMult.toString,
-                                            "x",
-                                            "%1.2f".format(omsMult)
-                                          )
-                                        )
-                                      },
-                                      // TODO Остальные колонки...
+                <.td(
+                  ^.`class` := Css.flat1( tdCssHead ),
+                  "#3"
+                ),
 
-                                      <.td(
-                                        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Table.Td.WHITE, Css.Table.Td.Radial.LAST ),
-                                        JsFormatUtil.formatPrice( d.price )
-                                      )
-                                    )
-                                  }
-                                )
-                              )
-                            }
-
-                          )
-                        ): ReactElement
-                      }
-                    }
-                  )
-                }
+                <.td(
+                  ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssHead ),
+                  Messages( MsgCodes.`Price` )
+                )
               )
             )
+          }
+          */
 
-          }.asInstanceOf[ReactElement]
-        }
+        case tfPrice: BaseTfPrice =>
+          <.thead(
+            <.tr(
+              // Колонка даты, если есть.
+              for (_ <- tfPrice.date) yield {
+                <.td(
+                  ^.`class` := Css.flat1(Css.Table.Td.Radial.FIRST :: tdCssHead),
+                  Messages( MsgCodes.`Date` )
+                ): ReactElement
+              },
+
+              // Колонка календаря
+              for (_ <- tfPrice.mCalType) yield {
+                <.td(
+                  ^.`class` := Css.flat1( tdCssHead ),
+                  HtmlConstants.NBSP_STR
+                ): ReactElement
+              },
+
+              // Колонка цены.
+              <.td(
+                ^.`class` := Css.flat1(Css.Table.Td.Radial.LAST :: tdCssHead),
+                ^.width := 40.px,
+                Messages( MsgCodes.`Price` )
+              )
+            )
+          )
+
+        case _: Sum =>
+          // Заголовок не нужен.
+          EmptyTag
+
+      }
+
+      <.table(
+        ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL ),
+        ^.marginLeft := (level * 2).px,
+        thead
       )
+    }
+
+
+    private def _renderPriceTerm(term: IPriceDslTerm, level: Int = 0, withTableOuter: Boolean = true): ReactNode = {
+      val contentRows: Seq[ReactElement] = term match {
+        // У нас тут маппер. Рендерить его и его содержимое.
+        case mapper: Mapper =>
+          Seq(
+            _renderMapperReason(mapper)(
+              ^.key := "r"
+            ),
+            _renderUnderlyingRow( mapper.underlying, undLevel = level + 1, withTableOuter = true )(
+              ^.key := "u"
+            )
+          )
+
+        case tfPrice: BaseTfPrice =>
+          Seq(
+            _renderBaseTfPriceData( tfPrice )(
+              ^.key := "a"
+            )
+          )
+
+        case sum: Sum =>
+          _renderChildren(sum, level)
+            .toSeq
+      }
+
+      if (withTableOuter) {
+        term.children
+          .headOption
+          .fold[ReactNode](contentRows) { firstChild =>
+            _renderOuterTableForRow(firstChild, level)(
+              <.tbody(
+                contentRows
+              )
+            )
+          }
+      } else {
+        contentRows
+      }
+    }
+
+
+    def render(proxy: Props): ReactElement = {
+      println(proxy())
+      for (term <- proxy()) yield {
+        <.div(
+          _renderPriceTerm(term)
+        ): ReactElement
+      }
     }
 
   }
 
 
   val component = ReactComponentB[Props]("ItemsPrices")
-    .initialState_P { p =>
-      State(
-        priceRespPotConn  = p.connect(_.price.resp),
-        detailedOptConn   = p.connect(_.detailed)
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 
-  def apply(respPotProxy: Props) = component( respPotProxy )
+  def apply(priceDslOptProxy: Props) = component( priceDslOptProxy )
 
 }

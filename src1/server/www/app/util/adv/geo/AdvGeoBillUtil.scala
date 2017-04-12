@@ -185,7 +185,7 @@ class AdvGeoBillUtil @Inject() (
         case m: Mapper =>
           m.reason.exists { r =>
             // Если достигаем itemType, то дальше дробить уже нельзя.
-            !r.reasonType.isItemType
+            !r.reasonType.isItemLevel
           }
         // Остальные элементы -- просто дробить по сумматорам.
         case _ => true
@@ -198,7 +198,7 @@ class AdvGeoBillUtil @Inject() (
           .map { CircleGs.apply }
 
         term2
-          .findWithReasonType( MReasonTypes.GeoSq )
+          .findWithReasonType( MReasonTypes.GeoArea )
           .flatMap { geoSubTerm =>
             geoSubTerm
               // Проверить на geo + тег:
@@ -312,8 +312,8 @@ class AdvGeoBillUtil @Inject() (
     // Сборка считалки цены:
     val priceDsl0 = calcAdvGeoPrice(abc)
 
-    if (priceDsl0.isEmpty) {
-      bill2Util.zeroPricingFut
+    val gpResp = if (priceDsl0.isEmpty) {
+      bill2Util.zeroPricing
 
     } else {
       val priceDsl2 = priceDsl0.mapAllPrices { p0 =>
@@ -328,8 +328,10 @@ class AdvGeoBillUtil @Inject() (
         priceDsl = Some(priceDsl2)
       )
 
-      Future.successful( resp )
+      resp
     }
+
+    Future.successful( gpResp )
   }
 
 
@@ -382,7 +384,10 @@ class AdvGeoBillUtil @Inject() (
       val geoAllDaysPrice = Mapper(
         underlying    = Sum( accGeoRev.reverse ),
         multiplifier  = Some( getPriceMult(radiusKm) ),
-        reason        = Some( MPriceReason( MReasonTypes.GeoSq, doubles = radiusKm :: Nil ) )
+        reason        = Some( MPriceReason(
+          MReasonTypes.GeoArea,
+          geoCircles  = radCircle :: Nil
+        ) )
       )
 
       // Закинуть гео-итог в общий акк.
@@ -405,7 +410,7 @@ class AdvGeoBillUtil @Inject() (
           MPriceReason(
             MReasonTypes.Rcvr,
             nameIds = MNameId(
-              id = Some(rcvrId),
+              id   = Some(rcvrId),
               name = __rcvrNameOf(rcvrId)
             ) :: Nil
           )

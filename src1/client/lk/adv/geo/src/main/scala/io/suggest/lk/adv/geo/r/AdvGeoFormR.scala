@@ -2,6 +2,7 @@ package io.suggest.lk.adv.geo.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
@@ -69,7 +70,7 @@ object AdvGeoFormR extends Log {
                               geoAdvConn          : ReactConnectProxy[MGeoAdvs],
                               mRadOptConn         : ReactConnectProxy[Option[MRad]],
                               radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal],
-                              billConn            : ReactConnectProxy[MBillS]
+                              priceDslOptConn     : ReactConnectProxy[Option[IPriceDslTerm]]
                             )
 
 
@@ -167,7 +168,7 @@ object AdvGeoFormR extends Log {
         <.br,
 
         // Рендерить табличку с данными по рассчёту текущей цены:
-        s.billConn { ItemsPricesR.apply }
+        s.priceDslOptConn { ItemsPricesR.apply }
 
       )   // top div
     }     // render()
@@ -195,7 +196,7 @@ object AdvGeoFormR extends Log {
           p.zoom(mradOptZoomF),
           renderHintAsText = false
         ),
-        billConn            = p.connect(_.bill)
+        priceDslOptConn            = p.connect( _.bill.price.resp.toOption.flatMap(_.priceDsl) )
       )
     }
     .renderBackend[Backend]

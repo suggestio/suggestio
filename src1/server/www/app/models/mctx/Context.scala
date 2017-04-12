@@ -8,6 +8,7 @@ import _root_.models.im.DevScreen
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
+import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
 import io.suggest.util.UuidUtil
 import io.suggest.www.m.mctx.CtxData
@@ -190,6 +191,8 @@ trait Context {
 
   /** Текущий язык запроса. Определеляется в контроллерах на основе запроса. */
   implicit val messages: Messages
+  /** Функция типа MessagesF_t, которую можно использовать в кросс-платформенном коде. */
+  def messagesF: MessagesF_t = messages( _, _: _* )
 
   /** Для быстрого задания значений r-параметров (path для возврата, см. routes) можно использовать этот метод. */
   def r = Some(request.uri)

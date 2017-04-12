@@ -1,7 +1,10 @@
 package io.suggest.bill.price.dsl
 
-import boopickle.Default._
 import enumeratum._
+import io.suggest.common.html.HtmlConstants
+import io.suggest.geo.DistanceUtil
+import io.suggest.i18n.{MessagesF_t, MsgCodes}
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.primo.IStrId
 
 /**
@@ -12,18 +15,19 @@ import io.suggest.primo.IStrId
   * Причина начисления заворачивается в доп.класс, чтобы можно передавать какие-то пояснения или аргументы.
   */
 
-
 object MReasonType {
 
+  import boopickle.Default._
   /** Поддержка бинарной сериализации. */
   implicit val mReasonTypePickler: Pickler[MReasonType] = {
     import MReasonTypes._
     // TODO 2.12 Организовать с помощью sealed. В scala-2.12 должны были уже починить.
     compositePickler[MReasonType]
       .addConcreteType[OnMainScreen.type]
-      .addConcreteType[GeoSq.type]
+      .addConcreteType[GeoArea.type]
       .addConcreteType[BlockModulesCount.type]
       .addConcreteType[Tag.type]
+      .addConcreteType[Rcvr.type]
   }
 
 }
@@ -35,7 +39,15 @@ sealed abstract class MReasonType extends EnumEntry with IStrId {
   override final def strId = toString
 
   /** Граничная причина, после которой идёт погружение на уровень item'а и его дней. */
-  def isItemType: Boolean = false
+  def isItemLevel: Boolean = false
+
+  /** Код наименования по messages. */
+  def msgCodeI18n: String
+
+  /** Локализованный payload, если есть. */
+  def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
+    None
+  }
 
 }
 
@@ -43,32 +55,87 @@ sealed abstract class MReasonType extends EnumEntry with IStrId {
 /** Модель типов причин тарификации. */
 object MReasonTypes extends Enum[MReasonType] {
 
+
   /** Тарифное начисление за размещение на главном экране. */
   case object OnMainScreen extends MReasonType {
-    override def toString = "oms"
-    override def isItemType = true
+    override def toString     = "oms"
+    override def isItemLevel  = true
+    override def msgCodeI18n  = MsgCodes.`Adv.on.main.screen`
   }
 
+
   /** Причина начисления - географическая площадь. */
-  case object GeoSq extends MReasonType {
-    override def toString = "geo"
+  case object GeoArea extends MReasonType {
+
+    override def toString     = "geo"
+    override def msgCodeI18n  = MsgCodes.`Coverage.area`
+
+    override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
+      // Пытаемся отрендерить инфу по гео-кругу.
+      for {
+        mgc       <- payload.geoCircles.headOption
+      } yield {
+        val distanceStr = DistanceUtil.formatDistanceM( mgc.radiusM )(messagesF)
+        val coordsStr = mgc.center.toHumanFriendlyString
+        messagesF(
+          MsgCodes.`in.radius.of.0.from.1`,
+          distanceStr :: coordsStr :: Nil
+        )
+      }
+    }
+
   }
+
 
   /** Накидывание цены за фактическую площадь карточки в плитке. */
   case object BlockModulesCount extends MReasonType {
-    override def toString = "bmc"
+    override def toString     = "bmc"
+    override def msgCodeI18n  = MsgCodes.`Ad.area.modules.count`
+
+    override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
+      for {
+        bmc <- payload.ints.headOption
+      } yield {
+        messagesF( MsgCodes.`N.modules`, bmc :: Nil )
+      }
+    }
+
   }
+
 
   /** Накидывают за тег. */
   case object Tag extends MReasonType {
-    override def toString = "tag"
-    override def isItemType = true
+    override def toString     = "tag"
+    override def isItemLevel  = true
+    override def msgCodeI18n  = MsgCodes.`Tag`
+
+    override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
+      for {
+        tagFace <- payload.strings.headOption
+      } yield {
+        HtmlConstants.TAG_PREFIX + tagFace
+      }
+    }
+
   }
 
   /** Накидывают за прямое размещение на каком-то узле-ресивере. */
   case object Rcvr extends MReasonType {
-    override def toString = "rcvr"
+    override def toString     = "rcvr"
+    override def msgCodeI18n  = MItemTypes.AdvDirect.nameI18n
+
+    override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
+      for {
+        nameId <- payload.nameIds.headOption
+      } yield {
+        nameId.name
+      }
+    }
+
   }
+
+
+  // -------------------------------------------------------
 
   /** Перепись всех допустимых инстансов. */
   override val values = findValues

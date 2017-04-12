@@ -168,7 +168,7 @@ class LkAdvGeo @Inject() (
         billCtx     <- advGeoBillUtil.advBillCtx(isSuFree, request.mad, mFormS, addFreeRcvrs = true)
         pricing     <- advGeoBillUtil.getPricing( billCtx )(ctx)
       } yield {
-        pricing
+        advFormUtil.prepareAdvPricing( pricing )(ctx)
       }
     }
   }
@@ -216,7 +216,7 @@ class LkAdvGeo @Inject() (
         pricing <- _getPricing(_isSuFree, form)(request, ctx)
       } yield {
         LOGGER.trace(s"$logPrefix su=${_isSuFree}  prod=${request.producer.idOrNull}  pricing => $pricing")
-        advFormUtil.prepareAdvPricing(pricing)
+        pricing
       }
 
       // Отрендерить текущие радиусные размещения в форму MRoot.
@@ -396,7 +396,7 @@ class LkAdvGeo @Inject() (
             pricing <- _getPricing(isSuFree, mFormS2)
           } yield {
             LOGGER.trace(s"$logPrefix request body =\n $mFormS=>$mFormS2 su=$isSuFree pricing => $pricing")
-            advFormUtil.prepareAdvPricing(pricing)
+            pricing
           }
 
           for {

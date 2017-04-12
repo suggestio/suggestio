@@ -10,12 +10,14 @@ import io.suggest.lk.adv.m.MPriceS
   * Description: Состояния данных, связанных с биллингом.
   */
 object MBillS {
+
+  /** Быстрый компаратор FastEq. */
   implicit object MBillSFastEq extends FastEq[MBillS] {
     override def eqv(a: MBillS, b: MBillS): Boolean = {
-      (a.price eq b.price) &&
-        (a.detailed eq b.detailed)
+      a.price eq b.price
     }
   }
+
 }
 
 
@@ -23,14 +25,11 @@ object MBillS {
   * Состояние данных по биллингу.
   *
   * @param price Состояние ценника.
-  * @param detailed Детали какого-то элемента.
   */
 case class MBillS(
-                   price         : MPriceS                  = MPriceS(),
-                   detailed      : Option[MBillDetailedS]   = None
+                   price         : MPriceS                  = MPriceS()
                  ) {
 
   def withPrice(price2: MPriceS) = copy(price = price2)
-  def withDetailed(detailed2: Option[MBillDetailedS]) = copy(detailed = detailed2)
 
 }

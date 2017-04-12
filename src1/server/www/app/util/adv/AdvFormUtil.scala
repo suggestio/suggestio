@@ -157,11 +157,15 @@ class AdvFormUtil {
 
   /** Нужно здесь отрендерить amount для каждой суммы, т.к. на стороне scala.js это геморно. */
   def prepareAdvPricing(pricing: MGetPriceResp)(implicit ctx: Context): MGetPriceResp = {
-    pricing.withPrices(
-      for (mprice <- pricing.prices) yield {
-        TplDataFormatUtil.setPriceAmountStr( mprice )
-      }
-    )
+    if ( pricing.prices.exists(_.amountStrOpt.isEmpty) ) {
+      pricing.withPrices(
+        for (mprice <- pricing.prices) yield {
+          TplDataFormatUtil.setPriceAmountStr(mprice)
+        }
+      )
+    } else {
+      pricing
+    }
   }
 
 }

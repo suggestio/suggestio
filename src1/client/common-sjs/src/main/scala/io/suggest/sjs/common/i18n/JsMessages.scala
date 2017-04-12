@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.i18n
 
-import io.suggest.i18n.{I18nConst, IMessage}
+import io.suggest.i18n.{I18nConst, IMessage, MessagesF_t}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSName
@@ -62,5 +62,8 @@ object Messages {
     val argsJs = args.asInstanceOf[Seq[js.Any]]
     JsMessagesSingleLangNative(message, argsJs: _*)
   }
+
+  /** Вернуть инстанс MessagesF_t, который можно передавать в т.ч. кросс-платформенный код. */
+  def f: MessagesF_t = apply1
 
 }

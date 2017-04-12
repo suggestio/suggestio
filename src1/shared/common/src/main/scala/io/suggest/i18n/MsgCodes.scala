@@ -60,5 +60,13 @@ object MsgCodes {
   val `n.km._kilometers` = "n.km._kilometers"
   val `n.m._meters` = "n.m._meters"
   val `Radius` = "Radius"
+  val `in.radius.of.0.from.1` = "in.radius.of.0.from.1"
+
+  val `Adv.on.main.screen` = "Adv.on.main.screen"
+  val `Coverage.area` = "Coverage.area"
+  val `Ad.area.modules.count` = "Ad.area.modules.count"
+  val `Tag` = "Tag"
+  val `Date` = "Date"
+  val `Price` = "Price"
 
 }

@@ -5,6 +5,7 @@ import java.time.{DayOfWeek, LocalDate}
 import com.google.inject.Inject
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
+import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.{MYmd, YmdHelpersJvm}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
@@ -147,7 +148,9 @@ class AdvUtil @Inject() (
 
         BaseTfPrice(
           price     = MPrice(dayAmount, tf.currency),
-          mCalType  = clause4dayOpt.map(_._2.mcal.calType),
+          mCalType  = clause4dayOpt
+            .map(_._2.mcal.calType)
+            .orElse( Some(MCalTypes.WeekDay) ),
           date      = Some( MYmd.from(day) )
         )
       }

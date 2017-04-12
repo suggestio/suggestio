@@ -112,6 +112,8 @@ sealed trait IPriceDslTerm extends NonEmpty {
 
   override def isEmpty = false
 
+  def maybeMapper: Option[Mapper] = None
+
 }
 
 
@@ -197,6 +199,8 @@ final case class Mapper(
       Some( f(this2.price) )
     )
   }
+
+  override def maybeMapper = Some(this)
 
 }
 

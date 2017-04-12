@@ -891,3 +891,6 @@ Adv.in.nodes=Размещение в узлах
 Node.with.such.id.already.exists=Узел с таким id уже существует.
 New.node=Новый узел
 
+Coverage.area=Площадь покрытия
+Ad.area.modules.count=Площадь карточки (кол-во модулей)
+

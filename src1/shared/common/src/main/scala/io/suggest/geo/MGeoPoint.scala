@@ -1,6 +1,7 @@
 package io.suggest.geo
 
 import boopickle.Default._
+import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.GeoConstants.Qs
 
 /**
@@ -25,6 +26,13 @@ trait IGeoPoint {
   // TODO Оно используется только в устаревшем GeoMode.
   def toQsStr = lat.toString + "," + lon.toString
 
+
+  /** (12.1234 65.5633) */
+  def toHumanFriendlyString: String = {
+    def _fmt(coord: Double) = "%1.4f".format(coord)
+    "(" + _fmt(lat) + HtmlConstants.SPACE + _fmt(lon) + ")"
+  }
+
 }
 
 
@@ -47,11 +55,11 @@ object MGeoPoint {
             lon = lonStr.toDouble
           )
           Some(gp)
-        } catch { case ex: Throwable =>
+        } catch { case _: Throwable =>
           None
         }
 
-      case other =>
+      case _ =>
         None
     }
   }

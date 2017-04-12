@@ -882,3 +882,6 @@ Adv.in.nodes=Advertising in nodes
 Node.with.such.id.already.exists=Node with such id already exist.
 New.node=New node
 
+Coverage.area=Coverage area
+Ad.area.modules.count=Promo-card area (modules count)
+
