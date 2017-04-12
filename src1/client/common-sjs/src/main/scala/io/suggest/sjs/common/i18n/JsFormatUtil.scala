@@ -57,7 +57,8 @@ object JsFormatUtil {
   }
   implicit object JsDateDayOfWeekHelper extends IDayOfWeekHelper[js.Date] {
     override def apply(d: js.Date): Int = {
-      d.getDay() + 1
+      val d0 = d.getDay()
+      if (d0 <= 0) 7 else d0
     }
   }
   implicit object YmdDayOfWeekHelper extends IDayOfWeekHelper[MYmd] {

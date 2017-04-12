@@ -72,7 +72,8 @@ object JsDateUtil {
   /** Реализация FastEq для модели MRangeYmd. */
   implicit object MRangeYmdFastEq extends FastEq[MRangeYmd] {
     override def eqv(a: MRangeYmd, b: MRangeYmd): Boolean = {
-      (a.dateStart eq b.dateStart) && (a.dateEnd eq b.dateEnd)
+      (a.dateStart eq b.dateStart) &&
+        (a.dateEnd eq b.dateEnd)
     }
   }
 

@@ -134,92 +134,23 @@ object ItemsPricesR {
     private def _renderChildren(term: IPriceDslTerm, sumLevel: Int) = {
       val undLevel = sumLevel + 1
       for {
-        (c, i) <- term.children.iterator.zipWithIndex
+        c <- term.children.iterator
       } yield {
-        _renderUnderlyingRow(c, undLevel = undLevel)(
-          ^.key := i.toString
-        )
+        _renderPriceTerm(c, level = undLevel, withTableOuter = false)
       }
     }
 
 
     private def _renderOuterTableForRow(term: IPriceDslTerm, level: Int) = {
-      val thead: TagMod = term match {
-        // На основе маппера нужно собрать заголовок на 4 колонки.
-        case _: Mapper =>
-          EmptyTag
-          /*
-          mapper.reason.fold[TagMod](EmptyTag) { _ =>
-            <.thead(
-              <.tr(
-                <.td(
-                  ^.`class` := Css.flat1( Css.Table.Td.Radial.FIRST :: tdCssHead ),
-                  "#1"
-                ),
-
-                <.td(
-                  ^.`class` := Css.flat1( tdCssHead ),
-                  "#2"
-                ),
-
-                <.td(
-                  ^.`class` := Css.flat1( tdCssHead ),
-                  "#3"
-                ),
-
-                <.td(
-                  ^.`class` := Css.flat1( Css.Table.Td.Radial.LAST :: tdCssHead ),
-                  Messages( MsgCodes.`Price` )
-                )
-              )
-            )
-          }
-          */
-
-        case tfPrice: BaseTfPrice =>
-          <.thead(
-            <.tr(
-              // Колонка даты, если есть.
-              for (_ <- tfPrice.date) yield {
-                <.td(
-                  ^.`class` := Css.flat1(Css.Table.Td.Radial.FIRST :: tdCssHead),
-                  Messages( MsgCodes.`Date` )
-                ): ReactElement
-              },
-
-              // Колонка календаря
-              for (_ <- tfPrice.mCalType) yield {
-                <.td(
-                  ^.`class` := Css.flat1( tdCssHead ),
-                  HtmlConstants.NBSP_STR
-                ): ReactElement
-              },
-
-              // Колонка цены.
-              <.td(
-                ^.`class` := Css.flat1(Css.Table.Td.Radial.LAST :: tdCssHead),
-                ^.width := 40.px,
-                Messages( MsgCodes.`Price` )
-              )
-            )
-          )
-
-        case _: Sum =>
-          // Заголовок не нужен.
-          EmptyTag
-
-      }
-
       <.table(
         ^.`class` := Css.flat( Css.Table.TABLE, Css.Table.Width.XL ),
-        ^.marginLeft := (level * 2).px,
-        thead
+        ^.marginLeft := (level * 2).px
       )
     }
 
 
     private def _renderPriceTerm(term: IPriceDslTerm, level: Int = 0, withTableOuter: Boolean = true): ReactNode = {
-      val contentRows: Seq[ReactElement] = term match {
+      val contentRows: Seq[ReactNode] = term match {
         // У нас тут маппер. Рендерить его и его содержимое.
         case mapper: Mapper =>
           Seq(
@@ -260,7 +191,6 @@ object ItemsPricesR {
 
 
     def render(proxy: Props): ReactElement = {
-      println(proxy())
       for (term <- proxy()) yield {
         <.div(
           _renderPriceTerm(term)
