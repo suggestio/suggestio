@@ -185,7 +185,7 @@ object Css {
       def POPUP_HEADER = POPUP + "-header"
     }
 
-    object BsSlider {
+    object BxSlider {
       def JS_PHOTO_SLIDER = "js-photo-slider"
     }
 

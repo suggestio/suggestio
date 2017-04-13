@@ -8,6 +8,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import PopupR.PopupPropsValFastEq
+import io.suggest.sjs.common.controller.bxslider.BxSliderCtl
 
 /**
   * Suggest.io
@@ -46,12 +47,21 @@ object NodeAdvInfoPopR {
       }
     }
 
+    def componentDidMount(): Callback = {
+      Callback {
+        BxSliderCtl.initAll()
+      }
+    }
+
   }
 
 
   val component = ReactComponentB[Props]("NodeAdvInfoPop")
     .stateless
     .renderBackend[Backend]
+    .componentDidMount { dc =>
+      dc.backend.componentDidMount()
+    }
     .build
 
   def apply(innerHtmlOptProxy: Props) = component( innerHtmlOptProxy )

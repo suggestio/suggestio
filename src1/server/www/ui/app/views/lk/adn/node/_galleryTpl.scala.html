@@ -1,8 +1,9 @@
 @(gallery: Seq[im.MImgT], imgClass: String)(implicit ctx: Context)
 
 @import ctx.api.galleryUtil
+@import io.suggest.css.Css.Lk.BxSlider.JS_PHOTO_SLIDER
 
-<div class="js-photo-slider">
+<div class="@JS_PHOTO_SLIDER">
   @for(mimg <- gallery) {
     <img class="@imgClass" src="@galleryUtil.dynLkBigCall(mimg)" />
   }

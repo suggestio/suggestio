@@ -11,9 +11,10 @@
 @import args._
 @import lk.lkProp
 @import lk.dsl._
+@import views.html.stuff.bxslider._
 
 @headAfter1 = {
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.css")'/>
+  @_bxSliderCssTpl()
 }
 
 @nodeBaseTpl(
@@ -112,7 +113,7 @@
   </div>
 
   @* Какая-то примитивная ротация галереи была реализована максом через левый костыль. *@
-  <script src="@routes.Assets.versioned("javascripts/lib/bxslider/jquery.bxslider.min.js")"></script>
+  @_bxSliderJsTpl()
 
 }
 

@@ -38,7 +38,7 @@ object ImgGalR {
         .filter(_.imgUrls.nonEmpty)
         .fold[ReactElement](null) { v =>
           val inner = <.div(
-            ^.`class` := Css.Lk.BsSlider.JS_PHOTO_SLIDER,
+            ^.`class` := Css.Lk.BxSlider.JS_PHOTO_SLIDER,
 
             for {
               (imgUrl, i) <- v.imgUrls.zipWithIndex

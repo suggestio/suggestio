@@ -7,9 +7,11 @@
 @import static.date.picker._
 @import ctx.api.cdn.asset
 @import adv.tpl._
+@import views.html.stuff.bxslider._
 
 
 @headAfter1 = {
+  @_bxSliderCssTpl()
   @_leafletCssTpl()
   @_locateControlCssTpl()
   @_lMarkerClusterCssTpl()
@@ -28,5 +30,7 @@
 ) {
 
   @content
+
+  @_bxSliderJsTpl()
 
 }

@@ -60,8 +60,8 @@ object ItemsPricesR {
                 var fracDigits = 2
                 if (absMult < 0.02)
                   fracDigits += 1
-                if (absMult < 0.002)
-                  fracDigits += 1
+                //if (absMult < 0.002)
+                //  fracDigits += 1
                 val fmt = "%1." + fracDigits + "f"
 
                 <.span(

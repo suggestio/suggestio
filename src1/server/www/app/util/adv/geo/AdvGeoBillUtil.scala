@@ -68,7 +68,7 @@ class AdvGeoBillUtil @Inject() (
     */
   private def getPriceMult(radiusKm: Double): Double = {
     // Привести радиус на карте к множителю цены
-    Math.max(0.0005, radiusKm * radiusKm / 1.5)
+    Math.max(0.001, radiusKm * radiusKm / 1.5)
   }
 
 
