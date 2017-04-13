@@ -9,7 +9,6 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement, ReactNode}
 import io.suggest.i18n.MsgCodes
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.r.YmdR
 
 /**
@@ -26,7 +25,6 @@ object ItemsPricesR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private val tdCssBase = Css.Table.Td.TD :: Css.Table.Td.WHITE :: Css.Size.M :: Nil
-    private val tdCssHead = Css.Table.Td.GRAY :: tdCssBase
     private val tdCssBody = Css.Table.Td.WHITE :: tdCssBase
 
     /** Рендер строки маппера с данными его полей (кроме underlying). */
