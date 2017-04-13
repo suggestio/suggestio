@@ -9,6 +9,7 @@ import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import PopupR.PopupPropsValFastEq
 import io.suggest.sjs.common.controller.bxslider.BxSliderCtl
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
   * Suggest.io
@@ -36,6 +37,10 @@ object NodeAdvInfoPopR {
             topPc     = 10
           )
         } { popPropsProxy =>
+          // Костыль: didMount до фактического рендера. Поэтому тут отложенный запуск bxSlider
+          // TODO Надо попап переверстать на react.js и использовать react-image-gallery.
+          _componentDidMount()
+
           PopupR(popPropsProxy)(
 
             <.div(
@@ -47,9 +52,10 @@ object NodeAdvInfoPopR {
       }
     }
 
-    def componentDidMount(): Callback = {
-      Callback {
-        BxSliderCtl.initAll()
+    private def _componentDidMount(): Unit = {
+      // Исполняем в фоне с задержкой, т.к. иногда оно почему-то не срабатывает.
+      DomQuick.setTimeout(50) {
+        BxSliderCtl.initAll
       }
     }
 
@@ -59,9 +65,6 @@ object NodeAdvInfoPopR {
   val component = ReactComponentB[Props]("NodeAdvInfoPop")
     .stateless
     .renderBackend[Backend]
-    .componentDidMount { dc =>
-      dc.backend.componentDidMount()
-    }
     .build
 
   def apply(innerHtmlOptProxy: Props) = component( innerHtmlOptProxy )

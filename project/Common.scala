@@ -48,7 +48,6 @@ object Common {
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.0"
 
-
     object Sio {
 
       /** Версия драйвера common-slick-driver.
