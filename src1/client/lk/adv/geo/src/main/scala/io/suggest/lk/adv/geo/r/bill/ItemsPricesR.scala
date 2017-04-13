@@ -55,10 +55,19 @@ object ItemsPricesR {
             mapper
               .multiplifier
               .fold[ReactNode]( HtmlConstants.NBSP_STR ) { mult =>
-              <.span(
-                "x", "%1.2f".format(mult)
-              )
-            }
+                val absMult = Math.abs(mult)
+
+                var fracDigits = 2
+                if (absMult < 0.02)
+                  fracDigits += 1
+                if (absMult < 0.002)
+                  fracDigits += 1
+                val fmt = "%1." + fracDigits + "f"
+
+                <.span(
+                  "x", fmt.format(mult)
+                )
+              }
 
           )
 

@@ -15,7 +15,6 @@ import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
 import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
-import io.suggest.lk.adv.geo.r.oms.OnMainScreenAH
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
@@ -29,6 +28,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
 import MMap.MMapFastEq
 import MOther.MOtherFastEq
+import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -152,7 +152,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       priceUpdateFx   = priceUpdateEffect
     )
 
-    val onMainScreenAh = new OnMainScreenAH(
+    val onMainScreenAh = new OnMainScreenAh(
+      priceUpdateFx   = priceUpdateEffect,
       modelRW = otherRW.zoomRW(_.onMainScreen) { _.withOnMainScreen(_) }
     )
 

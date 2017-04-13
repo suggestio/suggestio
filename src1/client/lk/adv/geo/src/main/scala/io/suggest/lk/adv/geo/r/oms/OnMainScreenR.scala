@@ -1,6 +1,5 @@
 package io.suggest.lk.adv.geo.r.oms
 
-import diode.{ActionHandler, ActionResult, ModelRW}
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.SetOnMainScreen
@@ -56,16 +55,4 @@ object OnMainScreenR {
 }
 
 
-/** Action handler для галочки размещения на главном экране. */
-class OnMainScreenAH[M](modelRW: ModelRW[M, Boolean]) extends ActionHandler(modelRW) {
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
-    case SetOnMainScreen(checked2) =>
-      val checked0 = value
-      if (checked0 != checked2) {
-        // TODO Нужен опциональный эффект пересчёта стоимости.
-        updated(checked2)
-      } else {
-        noChange
-      }
-  }
-}
+
