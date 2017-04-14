@@ -109,7 +109,7 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
    * @return 1.0, т.к. если клиентский браузер не сообщает плотность пикселей, то значит там античный мусор
    *         с плотностью 1.0
    */
-  def default = MDPI
+  def default = XHDPI
 
   /**
    * Подобрать экземпляр этого перечисления под указанный

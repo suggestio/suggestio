@@ -2,6 +2,7 @@ package io.suggest.adv.info
 
 import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
+import io.suggest.media.MMediaInfo
 import io.suggest.model.n2.node.meta.MMetaPub
 
 /**
@@ -16,15 +17,28 @@ object MNodeAdvInfo {
   implicit val mNodeAdvInfoPickler: Pickler[MNodeAdvInfo] = {
     implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
     implicit val mMetaPubP = MMetaPub.mNodeadvMetaPickler
+    implicit val mAdvInfo4AdP = MNodeAdvInfo4Ad.mAdvInfo4AdPickler
+    implicit val mMediaInfoP = MMediaInfo.mGalItemPickler
     generatePickler[MNodeAdvInfo]
   }
 
 }
 
 
+/** Класс-контейнер кросс-платформенной инфы по узлу.
+  *
+  * @param nodeName Название узла.
+  * @param tfDaily Текущий тариф узла (для 1 модуля), если есть.
+  * @param tfDaily4Ad Данные тарификации к контексте текущей карточки.
+  * @param meta Публичные мета-данные узла.
+  * @param gallery Галерея узла. Или Nil, если её нет.
+  */
 case class MNodeAdvInfo(
                          nodeName   : String,
                          tfDaily    : Option[MTfDailyInfo],
+                         tfDaily4Ad : Option[MNodeAdvInfo4Ad],
                          meta       : MMetaPub,
-                         imgUrls    : Seq[String]
+                         gallery    : Seq[MMediaInfo]
                        )
+
+
