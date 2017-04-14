@@ -1,6 +1,7 @@
 package util.img
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta
 import models._
@@ -91,7 +92,7 @@ class LogoUtil @Inject() (
   }
   def getLogoOpt4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[LogoOpt_t] = {
     getLogo4scr(logoImg, screenOpt)
-      .map { Some.apply }
+      .map { EmptyUtil.someF }
   }
 
   def getLogo4scr(logoImg: MImgT, screenOpt: Option[DevScreen]): Future[MImgT] = {
@@ -99,11 +100,14 @@ class LogoUtil @Inject() (
     getLogo4scr(logoImg, heightCssPx, screenOpt)
   }
   def getLogo4scr(logoImg: MImgT, heightCssPx: Int, screenOpt: Option[DevScreen]): Future[MImgT] = {
-    // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
     // Узнаём pixelRatio для дальнейших рассчетов.
-    val pxRatio = screenOpt.flatMap(_.pixelRatioOpt)
+    val pxRatio = screenOpt
+      .flatMap(_.pixelRatioOpt)
       .getOrElse(DevPixelRatios.default)
-
+    getLogo4scr(logoImg, heightCssPx, pxRatio)
+  }
+  def getLogo4scr(logoImg: MImgT, heightCssPx: Int, pxRatio: DevPixelRatio): Future[MImgT] = {
+    // Код метода синхронный, но, как показывает практика, лучше сразу сделать асинхрон, чтобы потом всё не перепиливать.
     // Исходя из pxRatio нужно посчитать высоту логотипа
     val heightPx = szMulted(heightCssPx, pxRatio.pixelRatio)
 
@@ -115,7 +119,7 @@ class LogoUtil @Inject() (
         pxRatio.fgCompression.imQualityOp
       )
     )
-    Future successful logoImg2
+    Future.successful( logoImg2 )
   }
 
 }

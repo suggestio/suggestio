@@ -208,7 +208,7 @@ class DynImgUtil @Inject() (
       if (LOGGER.underlying.isTraceEnabled()) {
         val tstamp = System.currentTimeMillis() * imOps.hashCode() * in.hashCode()
         trace(s"convert(): [$tstamp] ${cmd.getCommand.mkString(" ")} $opStr")
-        resFut onSuccess { case res =>
+        for (res <- resFut) {
           trace(s"convert(): [$tstamp] returned $res, result ${out.length} bytes")
         }
       }

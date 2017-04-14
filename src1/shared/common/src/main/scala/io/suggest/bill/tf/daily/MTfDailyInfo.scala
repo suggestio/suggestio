@@ -35,4 +35,8 @@ case class MTfDailyInfo(
                          clauses      : Map[MCalType, MPrice],
                          comissionPct : Int,
                          currency     : MCurrency
-                       )
+                       ) {
+
+  def withClauses(clauses2: Map[MCalType, MPrice]) = copy(clauses = clauses2)
+
+}

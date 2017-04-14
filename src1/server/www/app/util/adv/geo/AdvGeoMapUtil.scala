@@ -7,6 +7,7 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.common.geom.d2.Size2di
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
@@ -15,7 +16,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.common.AdnRights
 import models.ISize2di
 import models.adv.geo.mapf.{MAdvGeoMapNode, MAdvGeoMapNodeProps, MIconInfo}
-import models.im.{MAnyImgs, MImgT}
+import models.im.{DevPixelRatios, MAnyImgs, MImgT}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
@@ -109,16 +110,26 @@ class AdvGeoMapUtil @Inject() (
     val logosAndNodeSrc = nodesSource.mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
       val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
         FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
+          val dpr = DevPixelRatios.XHDPI
           val fut = for {
-            logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, None)
+            logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, dpr)
             localImg  <- dynImgUtil.ensureImgReady(logo, cacheResult = true)
             whOpt     <- mAnyImgs.getImageWH(localImg)
           } yield {
             whOpt.fold[Option[LogoInfo]] {
-              LOGGER.warn(s"Unable to fetch WH of logo $logo for node ${mnode.idOrNull}")
+              LOGGER.warn(s"$logPrefix Unable to fetch WH of logo $logo for node ${mnode.idOrNull}")
               None
             } { wh =>
-              Some(LogoInfo(logo, wh))
+              LOGGER.trace(s"$logPrefix wh = $wh for img $logo")
+              val wh2 = if (dpr.pixelRatio != 1.0F) {
+                Size2di(
+                  width  = (wh.width  / dpr.pixelRatio).toInt,
+                  height = (wh.height / dpr.pixelRatio).toInt
+                )
+              } else {
+                wh
+              }
+              Some(LogoInfo(logo, wh2))
             }
           }
 

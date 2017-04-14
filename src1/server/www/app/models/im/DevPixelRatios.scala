@@ -106,8 +106,7 @@ object DevPixelRatios extends Enumeration with EnumValue2Val with StrEnumFormMap
 
   /** 
    * Дефолтовое значение DPR, когда нет другого.
-   * @return 1.0, т.к. если клиентский браузер не сообщает плотность пикселей, то значит там античный мусор
-   *         с плотностью 1.0
+   * @return 2.0, т.к. клиентский браузер браузер может не сообщать свои пиксели в ЛК.
    */
   def default = XHDPI
 

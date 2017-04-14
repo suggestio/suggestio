@@ -216,8 +216,8 @@ class LkBill2 @Inject() (
       for {
         tfInfo <- tfInfoFut
       } yield {
-        val tdDaily4ad = tfInfo.copy(
-          clauses = tfInfo.clauses.mapValues(_ * bmc)
+        val tdDaily4ad = tfInfo.withClauses(
+          tfInfo.clauses.mapValues(_ * bmc)
         )
         val r = MNodeAdvInfo4Ad(
           blockModulesCount = bmc,
