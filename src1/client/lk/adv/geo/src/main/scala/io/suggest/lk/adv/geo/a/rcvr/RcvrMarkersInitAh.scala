@@ -43,7 +43,7 @@ class RcvrMarkersInitAh[M](
 
 
     // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
-    case m: InstallRcvrMarkers => //(markersArr) =>
+    case m: InstallRcvrMarkers =>
       val v2 = m.tryResp.fold(
         {ex =>
           LOG.error( ErrorMsgs.INIT_RCVRS_MAP_GJ_REQ_FAIL, ex)

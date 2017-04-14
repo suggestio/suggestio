@@ -16,7 +16,8 @@ object MOther {
   implicit object MOtherFastEq extends FastEq[MOther] {
     override def eqv(a: MOther, b: MOther): Boolean = {
       (a.adId eq b.adId) &&
-        (a.onMainScreen == b.onMainScreen)
+        (a.onMainScreen == b.onMainScreen) &&
+        (a.doc eq b.doc)
     }
   }
 
@@ -34,9 +35,11 @@ object MOther {
   */
 case class MOther(
   adId          : String,
-  onMainScreen  : Boolean             = true
+  onMainScreen  : Boolean             = true,
+  doc           : MDocS               = MDocS()
 ) {
 
   def withOnMainScreen(oms2: Boolean) = copy(onMainScreen = oms2)
+  def withDoc(doc2: MDocS) = copy(doc = doc2)
 
 }

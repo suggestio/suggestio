@@ -31,6 +31,8 @@ object OnMainScreenR {
 
     def render(p: Props) = {
       <.label(
+        ^.`class` := Css.CLICKABLE,
+
         <.input(
           ^.`type`    := "checkbox",
           ^.checked   := p().value,

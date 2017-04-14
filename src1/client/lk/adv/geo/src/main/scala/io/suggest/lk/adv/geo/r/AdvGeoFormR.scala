@@ -5,9 +5,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
-import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.bill.ItemsPricesR
+import io.suggest.lk.adv.geo.r.geo.MapInitFailR
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
 import io.suggest.lk.adv.geo.r.geo.rad.{RadEnabledR, RadR}
 import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
@@ -17,7 +17,6 @@ import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.tags.edit.r.TagsEditR
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -72,7 +71,8 @@ object AdvGeoFormR extends Log {
                               geoAdvConn          : ReactConnectProxy[MGeoAdvs],
                               mRadOptConn         : ReactConnectProxy[Option[MRad]],
                               radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal],
-                              priceDslOptConn     : ReactConnectProxy[Option[IPriceDslTerm]]
+                              priceDslOptConn     : ReactConnectProxy[Option[IPriceDslTerm]],
+                              mDocConn            : ReactConnectProxy[MDocS]
                             )
 
 
@@ -104,6 +104,9 @@ object AdvGeoFormR extends Log {
       // без <form>, т.к. форма теперь сущетсвует на уровне JS в состоянии diode.
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
+
+        // Рендер компонента документации.
+        s.mDocConn { DocR.apply },
 
         // Галочка бесплатного размещения для суперюзеров.
         p.wrap(_.adv4free) { a4fOptProx =>
@@ -137,17 +140,8 @@ object AdvGeoFormR extends Log {
         <.br,
 
         // Если не удалось прочитать маркеры ресиверов с сервера, то отрендерить заметное сообщение об ошибке.
-        s.rcvrMarkersConn { rcvrsMarkersPotProxy =>
-          for (ex <- rcvrsMarkersPotProxy().exceptionOption) yield {
-            <.div(
-              ^.`class` := Css.flat( Css.Lk.Adv.Su.CONTAINER, Css.Colors.RED ),
-              Messages( MsgCodes.`Error` ),
-              ": ",
-              Messages( MsgCodes.`Unable.to.initialize.map` ),
-              <.br,
-              ex.toString
-            ): ReactElement
-          }
+        s.rcvrMarkersConn { x =>
+          MapInitFailR( x.asInstanceOf[ModelProxy[Pot[_]]] )
         },
 
         // Рендер географической карты:
@@ -212,7 +206,8 @@ object AdvGeoFormR extends Log {
           p.zoom(mradOptZoomF),
           renderHintAsText = false
         ),
-        priceDslOptConn            = p.connect( _.bill.price.resp.toOption.flatMap(_.priceDsl) )
+        priceDslOptConn            = p.connect( _.bill.price.resp.toOption.flatMap(_.priceDsl) ),
+        mDocConn            = p.connect(_.other.doc)
       )
     }
     .renderBackend[Backend]

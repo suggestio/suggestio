@@ -79,6 +79,7 @@ object DtpOptions {
               state.qapConn { qapProxy =>
                 <.select(
                   ^.name := ( AdvConstants.PERIOD_FN + QsConstants.KEY_PARTS_DELIM_STR + AdvConstants.DtPeriod.QUICK_PERIOD_FN ),
+                  ^.`class` := Css.CLICKABLE,
                   ^.value := qapProxy().strId,
                   ^.onChange ==> onQapChange,
 

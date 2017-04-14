@@ -40,6 +40,8 @@ object Adv4FreeR {
           ^.`class` := Css.Lk.Adv.Su.CONTAINER,
 
           <.label(
+            ^.`class` := Css.CLICKABLE,
+
             // Единственная динамическая часть компонента: input-галочка
             checkedOptConn { checkedOptProx =>
               for (checked <- checkedOptProx()) yield {

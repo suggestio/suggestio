@@ -70,4 +70,12 @@ object MsgCodes {
   val `Price` = "Price"
   val `Unable.to.initialize.map` = "Unable.to.initialize.map"
 
+  val `Read.more` = "Read.more"
+  val `Adv.geo.form.descr1` = "Adv.geo.form.descr1"
+  val `User.located.inside.are.or.location.will.see.your.offer` = "User.located.inside.are.or.location.will.see.your.offer"
+  val `Good.to.know.that` = "Good.to.know.that"
+  val `Geo.circle.does.not.touch.any.nodes` = "Geo.circle.does.not.touch.any.nodes"
+  val `Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons` = "Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons"
+  val `Adv.geo.form.descr.price` = "Adv.geo.form.descr.price"
+
 }

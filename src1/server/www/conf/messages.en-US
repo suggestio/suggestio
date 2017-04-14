@@ -95,6 +95,7 @@ Are.you.sure=Are you sure?
 This.action.cannot.be.undone=This action cannot be undone.
 Yes.delete.it=Yes, delete it
 Change=Change
+Read.more=Read more...
 
 requisites=Payment details for withdrawal
 
@@ -886,3 +887,9 @@ Coverage.area=Coverage area
 Ad.area.modules.count=Promo-card area (modules count)
 Unable.to.initialize.map=Unable to initialize the map
 
+Adv.geo.form.descr1=This page helps you to publish your promo-card in any geographical area on the map, in choosen "nodes" (see logo-markers on the map).
+User.located.inside.are.or.location.will.see.your.offer=Users inside this location or inside choosen nodes, will see your offer on the device screen.
+Good.to.know.that=It is good to remember, that:
+Geo.circle.does.not.touch.any.nodes=Geographical area circle does NOT touch any of nodes. Advertising inside any node you should choose manually.
+Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons=Any node may contain sub-node, for example: Bluetooth-beacons or groups of them, internal spaces and objects; internet sites, linked to Suggest.io; WiFi-routers, TV screens or video-projectors with Suggest.io support; or other advertising media. Advertising cost depends on node's tariff, defined by node owner.
+Adv.geo.form.descr.price=Advertising cost in circle on the map mathematically depends on circle area. Every node tariff is defined by node owner. Below the map, you can see a table with detailed pricing information about services you choose.

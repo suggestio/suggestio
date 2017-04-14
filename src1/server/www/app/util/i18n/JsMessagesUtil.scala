@@ -91,6 +91,14 @@ class JsMessagesUtil @Inject() (
       MsgCodes.`Adv.on.main.screen` :: MsgCodes.`Coverage.area` ::
       MsgCodes.`Ad.area.modules.count` :: MsgCodes.`Tag` ::
       MsgCodes.`Date` :: MsgCodes.`Price` ::
+      // Как бы документация.
+      MsgCodes.`Read.more` ::
+      MsgCodes.`Adv.geo.form.descr1` ::
+      MsgCodes.`User.located.inside.are.or.location.will.see.your.offer` ::
+      MsgCodes.`Good.to.know.that` ::
+      MsgCodes.`Geo.circle.does.not.touch.any.nodes` ::
+      MsgCodes.`Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons` ::
+      MsgCodes.`Adv.geo.form.descr.price` ::
       Nil
   }
 

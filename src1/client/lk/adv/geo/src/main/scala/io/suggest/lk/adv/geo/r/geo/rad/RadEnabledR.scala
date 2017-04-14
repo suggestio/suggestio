@@ -44,6 +44,8 @@ object RadEnabledR {
       val hint = Messages("Adv.on.map.hint")
 
       <.label(
+        ^.`class` := Css.CLICKABLE,
+
         !p.renderHintAsText ?= {
           ^.title := hint
         },

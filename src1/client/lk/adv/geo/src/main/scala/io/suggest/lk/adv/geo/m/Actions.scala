@@ -93,3 +93,7 @@ case class RadiusDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGe
 case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends IAdvGeoFormAction
 /** Сигнал ответа сервера на запрос информации по узлу. */
 case class OpenNodeInfoResp(rcvrKey: RcvrKey, tryRes: Try[String]) extends IAdvGeoFormAction
+
+
+/** Юзер хочет узнать по-больше о форме гео-размещения. */
+case object DocReadMoreClick extends IAdvGeoFormAction

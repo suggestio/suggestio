@@ -28,6 +28,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
 import MMap.MMapFastEq
 import MOther.MOtherFastEq
+import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
@@ -218,6 +219,10 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = mPopupsRW.zoomRW(_.nodeInfo) { _.withNodeInfo(_) }
     )
 
+    val docAh = new DocAh(
+      modelRW = otherRW.zoomRW(_.doc) { _.withDoc(_) }
+    )
+
     // Склеить все handler'ы.
     val h1 = composeHandlers(
       // Основные элементы формы, в т.ч. leaflet-попапы:
@@ -233,7 +238,9 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       nodeInfoPopupAh,
       // init-вызовы в конце, т.к. они довольно редкие.
       geoAdvsInitAh,
-      rcvrsMapInitAh
+      rcvrsMapInitAh,
+      // Просто очень редкие вызовы:
+      docAh
     )
 
     // Приклеить common-обработчики, которые вызываются параллельно со всеми остальными

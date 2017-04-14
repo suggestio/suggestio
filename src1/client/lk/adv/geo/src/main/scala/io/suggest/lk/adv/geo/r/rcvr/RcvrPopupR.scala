@@ -99,7 +99,7 @@ object RcvrPopupR {
 
                   <.label(
                     ^.classSet1(
-                      Css.Lk.LK_FIELD_NAME,
+                      Css.flat( Css.Lk.LK_FIELD_NAME, Css.CLICKABLE ),
                       Css.Colors.RED   -> (!checked && !n.isCreate),
                       Css.Colors.GREEN -> (checked && n.isCreate)
                     ),
@@ -116,7 +116,7 @@ object RcvrPopupR {
                 HtmlConstants.NBSP_STR,
 
                 <.div(
-                  ^.`class` := Css.flat( Css.INFO_BLACK ),
+                  ^.`class` := Css.flat( Css.INFO_BLACK, Css.CLICKABLE ),
                   ^.title   := Messages( MsgCodes.`Information` ),
                   ^.onClick --> rcvrInfoClick(rcvrKey),
                   HtmlConstants.NBSP_STR
