@@ -5,6 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.bill.ItemsPricesR
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
@@ -14,8 +15,9 @@ import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
 import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.geo.json.GjFeature
+import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.wnd.WindowVm
@@ -133,6 +135,20 @@ object AdvGeoFormR extends Log {
         // Тут немного пустоты нужно...
         <.br,
         <.br,
+
+        // Если не удалось прочитать маркеры ресиверов с сервера, то отрендерить заметное сообщение об ошибке.
+        s.rcvrMarkersConn { rcvrsMarkersPotProxy =>
+          for (ex <- rcvrsMarkersPotProxy().exceptionOption) yield {
+            <.div(
+              ^.`class` := Css.flat( Css.Lk.Adv.Su.CONTAINER, Css.Colors.RED ),
+              Messages( MsgCodes.`Error` ),
+              ": ",
+              Messages( MsgCodes.`Unable.to.initialize.map` ),
+              <.br,
+              ex.toString
+            ): ReactElement
+          }
+        },
 
         // Рендер географической карты:
         s.mmapConn { mapProps =>

@@ -114,4 +114,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def TF_UNDEFINED                     = E(51)
 
+  /** Не удалось инициализировать карту. */
+  def INIT_RCVRS_MAP_GJ_REQ_FAIL          = E(52)
+
 }

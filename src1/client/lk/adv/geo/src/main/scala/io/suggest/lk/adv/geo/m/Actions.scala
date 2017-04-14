@@ -43,7 +43,7 @@ case class SetRcvrStatus(rcvrKey: RcvrKey, checked: Boolean) extends IAdvGeoForm
 case object RcvrMarkersInit extends IAdvGeoFormAction
 
 /** Экшен выставления указанных recevier-маркеров в состояние. */
-case class InstallRcvrMarkers(rcvrMarkers: js.Array[Marker]) extends IAdvGeoFormAction
+case class InstallRcvrMarkers(tryResp: Try[MMapGjResp]) extends IAdvGeoFormAction
 
 
 /** Экшен выставления центра карты на указанную гео-точку. */

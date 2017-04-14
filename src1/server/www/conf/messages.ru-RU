@@ -893,4 +893,5 @@ New.node=Новый узел
 
 Coverage.area=Площадь покрытия
 Ad.area.modules.count=Площадь карточки (кол-во модулей)
+Unable.to.initialize.map=Невозможно инициализировать карту
 

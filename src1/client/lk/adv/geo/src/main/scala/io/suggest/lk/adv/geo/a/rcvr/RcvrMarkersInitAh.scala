@@ -6,9 +6,12 @@ import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.leaflet.marker.Marker
 
 import scala.scalajs.js
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -17,30 +20,42 @@ import scala.scalajs.js
   * Description: Diode action handler для инициализации карты ресиверов.
   */
 class RcvrMarkersInitAh[M](
-                            api: ILkAdvGeoApi,
-                            adIdProxy: ModelRO[String],
-                            modelRW: ModelRW[M, Pot[js.Array[Marker]]]
+                            api       : ILkAdvGeoApi,
+                            adIdProxy : ModelRO[String],
+                            modelRW   : ModelRW[M, Pot[js.Array[Marker]]]
                           )
-  extends ActionHandler(modelRW) {
+  extends ActionHandler(modelRW)
+  with Log
+{
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сигнал запуска инициализации маркеров с сервера.
     case RcvrMarkersInit =>
       val fx = Effect {
-        for {
-          resp <- api.rcvrsMap(adIdProxy())
-        } yield {
-          // Привести результат к js.Array[Markers].
-          val markersArr = LkAdvGeoFormUtil.geoJsonToClusterMarkers(resp.featuresIter)
-          InstallRcvrMarkers( markersArr )
-        }
+        api.rcvrsMap( adIdProxy() )
+          .transform { tryResp =>
+            val r = InstallRcvrMarkers( tryResp )
+            Success( r )
+          }
       }
       updated( value.pending(), fx )
 
+
     // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
-    case InstallRcvrMarkers(markersArr) =>
-      updated( value.ready(markersArr) )
+    case m: InstallRcvrMarkers => //(markersArr) =>
+      val v2 = m.tryResp.fold(
+        {ex =>
+          LOG.error( ErrorMsgs.INIT_RCVRS_MAP_GJ_REQ_FAIL, ex)
+          value.fail( ex )
+        },
+        {resp =>
+          // Привести результат к js.Array[Markers].
+          val markersArr = LkAdvGeoFormUtil.geoJsonToClusterMarkers( resp.featuresIter )
+          value.ready(markersArr)
+        }
+      )
+      updated( v2 )
 
   }
 }

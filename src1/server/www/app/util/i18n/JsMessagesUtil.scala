@@ -86,6 +86,7 @@ class JsMessagesUtil @Inject() (
       MsgCodes.`Radius` :: MsgCodes.`in.radius.of.0.from.1` ::
       MsgCodes.`N.modules` ::
       "Adv.on.main.screen" ::
+      MsgCodes.`Unable.to.initialize.map` ::
       MsgCodes.`Please.wait` ::
       MsgCodes.`Adv.on.main.screen` :: MsgCodes.`Coverage.area` ::
       MsgCodes.`Ad.area.modules.count` :: MsgCodes.`Tag` ::

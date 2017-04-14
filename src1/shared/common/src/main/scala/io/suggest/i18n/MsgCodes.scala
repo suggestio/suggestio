@@ -68,5 +68,6 @@ object MsgCodes {
   val `Tag` = "Tag"
   val `Date` = "Date"
   val `Price` = "Price"
+  val `Unable.to.initialize.map` = "Unable.to.initialize.map"
 
 }
