@@ -16,7 +16,6 @@ import io.suggest.mbill2.m.item.typ.{IMItemType, MItemType, MItemTypeSlick, MIte
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.price._
 import io.suggest.mbill2.m.tags.{ITagFaceOpt, TagFaceOptSlick}
-import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import org.threeten.extra.Interval
 import slick.lifted.ProvenShape
@@ -32,7 +31,6 @@ import slick.sql.SqlAction
 // TODO По таблице items:
 // - Переименовать столбец ad_id в node_id
 // - Обновить коммент к столбцу node_id.
-// - Удалить столбец sls.
 
 /** DI-контейнер для slick-модели абстрактных item'ов. */
 @Singleton
@@ -54,7 +52,6 @@ class MItems @Inject() (
   with NodeIdSlick
   with ReasonOptSlick
   with RcvrIdOptSlick
-  with SlsOptSlick
   with GetById
   with MultiGetById
   with InsertOneReturning with InsertManyReturning
@@ -90,14 +87,13 @@ class MItems @Inject() (
     with NodeIdColumn
     with ReasonOptColumn
     with RcvrIdOptColumn
-    with SlsColumn
     with GeoShapeOptColumn
     with TagFaceOptColumn
     with DateStatusColumn
   {
 
     override def * : ProvenShape[MItem] = {
-      (orderId, iType, status, price, nodeId, dateStartOpt, dateEndOpt, rcvrIdOpt, sls, reasonOpt, geoShapeOpt, tagFaceOpt,
+      (orderId, iType, status, price, nodeId, dateStartOpt, dateEndOpt, rcvrIdOpt, reasonOpt, geoShapeOpt, tagFaceOpt,
         dateStatus, id.?) <> (
         MItem.tupled, MItem.unapply
       )
@@ -235,7 +231,6 @@ trait IItem
   with INodeId
   with IReasonOpt
   with IRcvrIdOpt
-  with ISls
   with IGeoShapeOpt
   with ITagFaceOpt
   with IDateStatus
@@ -251,7 +246,6 @@ case class MItem(
   override val dateStartOpt   : Option[OffsetDateTime],
   override val dateEndOpt     : Option[OffsetDateTime],
   override val rcvrIdOpt      : Option[String],
-  override val sls            : Set[SinkShowLevel]  = Set.empty,
   override val reasonOpt      : Option[String]      = None,
   override val geoShape       : Option[GeoShape]    = None,
   override val tagFaceOpt     : Option[String]      = None,

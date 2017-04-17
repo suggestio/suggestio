@@ -10,7 +10,6 @@ import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Va
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
 import io.suggest.model.n2.node.meta.colors.MColorData
-import io.suggest.model.sc.common.LvlMap_t
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.UuidUtil
@@ -487,29 +486,6 @@ object FormUtil {
     optional(geoPointM)
   }
 
-
-  def slsStrM: Mapping[LvlMap_t] = {
-    text(maxLength = 256)
-      .transform[LvlMap_t](
-        {raw =>
-          raw.split("\\s*,\\s*")
-            .toSeq
-            .map { one =>
-              val Array(slRaw, slMaxRaw) = one.split("\\s*=\\s*")
-              val sl: AdShowLevel = AdShowLevels.withName(slRaw)
-              sl -> slMaxRaw.toInt
-            }
-            .filter(_._2 > 0)
-            .toMap
-        },
-        {sls =>
-          val raws = sls.map {
-            case (sl, slMax)  =>  s"${sl.name} = $slMax"
-          }
-          raws.mkString(", ")
-        }
-      )
-  }
 
   /** Маппер размеров, заданные через width и height. Например, размеры картинки. */
   def whSizeM: Mapping[MImgSizeT] = {

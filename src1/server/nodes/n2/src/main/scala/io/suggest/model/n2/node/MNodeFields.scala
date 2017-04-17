@@ -81,7 +81,6 @@ object MNodeFields {
     def EDGE_OUT_PREDICATE_FULL_FN = _fullFn( Out.OUT_PREDICATE_FN )
     def EDGE_OUT_NODE_ID_FULL_FN   = _fullFn( Out.OUT_NODE_ID_FN )
     def EDGE_OUT_ORDER_FULL_FN     = _fullFn( Out.OUT_ORDER_FN )
-    def EDGE_OUT_INFO_SLS_FN       = _fullFn( Out.OUT_INFO_SLS_FN )
     def EDGE_OUT_INFO_FLAG_FN      = _fullFn( Out.OUT_INFO_FLAG_FN )
 
     // Теги

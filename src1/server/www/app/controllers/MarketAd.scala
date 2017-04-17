@@ -339,9 +339,13 @@ class MarketAd @Inject() (
     */
   def deleteSubmit(adId: String) = csrf.Check {
     canEditAd(adId).async { implicit request =>
+      lazy val logPrefix = s"deleteSubmit($adId):"
+      LOGGER.trace(s"$logPrefix Starting by user#${request.user.personIdOpt.orNull}...")
       for {
         isDeleted <- mNodes.deleteById(adId)
       } yield {
+        LOGGER.info(s"$logPrefix Done, isDeleted = $isDeleted")
+
         Redirect( _routeToMadProducerOrLkList(request.mad) )
           .flashing(FLASH.SUCCESS -> "Ad.deleted")
       }
@@ -349,22 +353,12 @@ class MarketAd @Inject() (
   }
 
 
-  // ===================================== ad show levels =============================================
+  // ===================================== Галочки размещения у самого себя ============================================
 
   /** Форма для маппинга результатов  */
-  private def adShowLevelFormM: Form[(AdShowLevel, Boolean)] = Form(tuple(
-    // id уровня, прописано в чекбоксе
-    "levelId" -> nonEmptyText(maxLength = 1)
-      .transform [Option[AdShowLevel]] (
-        { AdShowLevels.maybeWithName },
-        { case Some(sl) => sl.toString()
-          case None => "" }
-      )
-      .verifying("ad.show.level.undefined", _.isDefined)
-      .transform[AdShowLevel](_.get, Some.apply)
-    ,
+  private def adShowLevelFormM: Form[Boolean] = Form(
     "levelEnabled" -> boolean   // Новое состояние чекбокса.
-  ))
+  )
 
   /**
    * Включение/выключение какого-то уровня отображения указанной рекламы.
@@ -378,65 +372,44 @@ class MarketAd @Inject() (
           debug(logPrefix + "Failed to bind form: " + formWithErrors.errors)
           NotAcceptable("Request body invalid.")
         },
-        {case (sl, isLevelEnabled) =>
+        {isEnabled =>
           val producerId = request.producer.id.get
 
-          trace(s"${logPrefix}Updating ad[$adId] with sl=$sl/$isLevelEnabled prodId=$producerId")
+          trace(s"${logPrefix}Updating ad[$adId] with isEnabled=$isEnabled prodId=$producerId")
 
+          val pred = MPredicates.Receiver.Self
           val saveFut = mNodes.tryUpdate(request.mad) { mad =>
             // Извлекаем текущее ребро данного ресивера
             val e0Opt = mad
               .edges
-              .withNodePred(producerId, MPredicates.Receiver)
+              .withNodePred(producerId, pred)
               .toStream
               .headOption
 
-            val e0 = e0Opt.getOrElse {
-              MEdge(
-                predicate = MPredicates.Receiver.Self,
-                nodeIds   = request.producer.id.toSet
-              )
-            }
+            val mapOpt: Option[NodeEdgesMap_t] = if (isEnabled) {
+              e0Opt.fold [Option[Seq[MEdge]]] {
+                // Эджа саморазмещения не существует. Это нормально, создать его на узле:
+                val e2 = MEdge(
+                  predicate = pred,
+                  nodeIds   = request.producer.id.toSet
+                )
+                val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e2)
+                Some(map1)
 
-            val sls0 = e0.info.sls
-
-            // TODO Удалить поддержку sink'ов, когда будет выпилен старый биллинг.
-            def _mkSlss(src: TraversableOnce[AdnSink]) = {
-              for (sink <- src.toIterator) yield {
-                SinkShowLevels.withArgs(sink, sl)
+              } { e0 =>
+                LOGGER.trace(s"$logPrefix Nothing to update(). isEnabled=$isEnabled, but self-rcvr edge already exists: $e0")
+                None
               }
-            }
-
-            val sls1 = if (isLevelEnabled) {
-              val prodSinks = Set(AdnSinks.SINK_GEO)
-              sls0 ++ _mkSlss(prodSinks)
 
             } else {
-              sls0 -- _mkSlss(AdnSinks.valuesT)
-            }
 
-            val mapOpt: Option[NodeEdgesMap_t] = if (sls1.isEmpty) {
-              // Пустой список sls: значит нужно удалить ресивера.
-              for (_ <- e0Opt) yield {
+              for (e0 <- e0Opt) yield {
+                LOGGER.trace(s"$logPrefix Deleting edge $e0, because isEnabled=$isEnabled")
                 // Исходный эдж существует. Удалить его из исходной карты эджей.
                 MNodeEdges.edgesToMap1(
-                  mad.edges.withoutNodePred(producerId, MPredicates.Receiver)
+                  mad.edges.withoutNodePred(producerId, pred)
                 )
               }
-              // None будет означать, что ничего обновлять не надо, и нужно вернуть null из фунцкии.
-
-            } else if (sls0 == sls1) {
-              // Есть новые список уровней есть, но он не изменился относительно текущего. Не обновлять ничего.
-              LOGGER.trace(s"$logPrefix SLS not changed, nothing to update: $sls0")
-              None
-
-            } else {
-              // Есть новый и изменившийся список уровней. Выставить ресивера в карту эджей.
-              val e1 = e0.copy(
-                info = e0.info.copy(sls = sls1)
-              )
-              val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e1)
-              Some(map1)
             }
 
             mapOpt.fold [MNode] {
@@ -445,8 +418,8 @@ class MarketAd @Inject() (
               null
             } { eout2 =>
               // Сохранить новую карту эджей в исходный инстанс
-              mad.copy(
-                edges = mad.edges.copy(
+              mad.withEdges(
+                mad.edges.copy(
                   out = eout2
                 )
               )

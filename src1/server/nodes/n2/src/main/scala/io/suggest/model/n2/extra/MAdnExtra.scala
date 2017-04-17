@@ -1,7 +1,6 @@
 package io.suggest.model.n2.extra
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.sc.common.AdShowLevel
 import io.suggest.ym.model.common.{AdnRight, AdnRights}
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
@@ -29,8 +28,6 @@ object MAdnExtra extends IGenEsMappingProps {
     val IS_BY_USER          = new Val("u")
     val SHOWN_TYPE          = new Val("s")
     val IS_TEST             = new Val("t")
-    /** Outgoing show levels. */
-    val OUT_SLS             = new Val("l")
     val SHOW_IN_SC_NL       = new Val("n")
 
   }
@@ -55,11 +52,6 @@ object MAdnExtra extends IGenEsMappingProps {
         _.contains(true), // getOrElse false,
         someF
       ) and
-    (__ \ OUT_SLS.fn).formatNullable[Iterable[MSlInfo]]
-      .inmap [Map[AdShowLevel, MSlInfo]] (
-        _.iterator.flatten.map(sli => sli.sl -> sli).toMap,
-        { slmap => if (slmap.isEmpty) None else Some(slmap.values) }
-      ) and
     (__ \ SHOW_IN_SC_NL.fn).formatNullable[Boolean]
       .inmap [Boolean] (
         _.getOrElse(true),
@@ -77,8 +69,6 @@ object MAdnExtra extends IGenEsMappingProps {
       FieldBoolean(IS_BY_USER.fn, index = not_analyzed, include_in_all = false),
       FieldString(SHOWN_TYPE.fn, index = not_analyzed, include_in_all = false),
       FieldBoolean(IS_TEST.fn, index = not_analyzed, include_in_all = false),
-      // раньше это лежало в EMAdnMPubSettings, но потом было перемещено сюда, т.к. по сути это разделение было некорректно.
-      FieldNestedObject(OUT_SLS.fn, enabled = true, properties = MSlInfo.generateMappingProps),
       FieldBoolean(SHOW_IN_SC_NL.fn, index = not_analyzed, include_in_all = false)
     )
   }
@@ -93,7 +83,6 @@ object MAdnExtra extends IGenEsMappingProps {
   *                       Появилось, когда понадобилось обозначить торговый центр вокзалом/портом, не меняя его свойств.
   * @param testNode Отметка о тестовом характере существования этого узла.
   *                 Он не должен отображаться для обычных участников сети, а только для других тестовых узлов.
-  * @param outSls Контейнер с инфой об уровнях отображения.
   * @param showInScNl Можно ли узел отображать в списке узлов выдачи?
   */
 case class MAdnExtra(
@@ -101,19 +90,11 @@ case class MAdnExtra(
   isUser                : Boolean                   = false,
   shownTypeIdOpt        : Option[String]            = None,
   testNode              : Boolean                   = false,
-  outSls                : Map[AdShowLevel, MSlInfo] = Map.empty,
   showInScNl            : Boolean                   = true
 ) {
 
 
   def isProducer: Boolean = rights.contains( AdnRights.PRODUCER )
   def isReceiver: Boolean = rights.contains( AdnRights.RECEIVER )
-
-  def out4render: Seq[MSlInfo] = {
-    outSls
-      .valuesIterator
-      .toSeq
-      .sortBy(_.sl.visualPrio)
-  }
 
 }

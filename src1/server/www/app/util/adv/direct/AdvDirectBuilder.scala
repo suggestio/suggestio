@@ -109,19 +109,18 @@ trait AdvDirectBuilder extends IAdvBuilder {
     if (ditems.isEmpty) {
       this2
     } else {
-      // Группировать тут по устаревшему show-levels, потом каждую группу перегонять в единственный эдж. Это снизит кол-во эджей.
+      // Группировать по параметрам эджа, потом каждую группу перегонять в единственный эдж. Это снизит кол-во эджей.
       val edgesIter = ditems
         .toSeq
         .groupBy { i =>
-          (i.iType, i.sls, i.tagFaceOpt)
+          (i.iType, i.tagFaceOpt)
         }
         .iterator
-        .map { case ((iType, sls, tagFaceOpt), slsItems) =>
+        .map { case ((iType, tagFaceOpt), slsItems) =>
           MEdge(
             predicate = itypeToPredicate(iType),
             nodeIds   = slsItems.iterator.flatMap(_.rcvrIdOpt).toSet,
             info = MEdgeInfo(
-              sls  = sls,
               tags = tagFaceOpt.toSet
             )
           )

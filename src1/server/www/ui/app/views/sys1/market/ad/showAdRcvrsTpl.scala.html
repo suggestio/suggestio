@@ -13,8 +13,9 @@
     <table>
       <thead>
         <tr>
-          <td title="Узел, на котором размещается эта карточка">Узел-получатель</td>
-          <td title="Первая буква - sink, вторая - show level.">Уровни размещения</td>
+          <td>Ресивер</td>
+          <td>Эдж</td>
+          <td>Edge info</td>
         </tr>
       </thead>
       <tbody>
@@ -35,10 +36,12 @@
               }
             </td>
             <td>
-              @ri.info.sls.iterator.map { ssl =>
-                @messages("adn.sink." + ssl.adnSink.longName): @messages("lk.sl." + ssl.sl)
-                <br/>
-              }
+              <span title="@ri.predicate">
+                @messages( ri.predicate.singular )
+              </span>
+            </td>
+            <td>
+              @ri.info
             </td>
           </tr>
         }

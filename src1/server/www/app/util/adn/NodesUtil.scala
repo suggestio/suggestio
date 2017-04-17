@@ -5,8 +5,8 @@ import java.time.OffsetDateTime
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges, NodeEdgesMap_t}
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
+import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
@@ -123,11 +123,7 @@ class NodesUtil @Inject() (
           isUser          = true,
           shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),
           testNode        = false,
-          showInScNl      = false,
-          outSls          = {
-            val sli = MSlInfo(AdShowLevels.LVL_START_PAGE, SL_START_PAGE_LIMIT_DFLT)
-            Map(sli.sl -> sli)
-          }
+          showInScNl      = false
         ))
       ),
       edges = MNodeEdges(
@@ -235,7 +231,7 @@ class NodesUtil @Inject() (
             edges = MNodeEdges(
               out = {
                 val pp = MPredicates.OwnedBy
-                val rp = MPredicates.Receiver
+                val rp = MPredicates.Receiver.Self
                 val nodeIdSet = Set(adnId)
                 val prodE = MEdge(
                   predicate = pp,
@@ -243,8 +239,7 @@ class NodesUtil @Inject() (
                 )
                 val selfRcvrE = MEdge(
                   predicate = rp,
-                  nodeIds   = nodeIdSet,
-                  info = MEdgeInfo(sls = Set(SinkShowLevels.GEO_START_PAGE_SL))
+                  nodeIds   = nodeIdSet
                 )
                 MNodeEdges.edgesToMap1 {
                   mad0.edges

@@ -2,10 +2,9 @@ package util.sys
 
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.extra.domain.MDomainExtra
-import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras, MSlInfo}
+import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
-import io.suggest.model.sc.common.LvlMap_t
 import io.suggest.util.logs.MacroLogsDyn
 import models._
 import models.msys.{MSysNodeInstallFormData, NodeCreateParams}
@@ -87,33 +86,6 @@ class SysMarketUtil extends MacroLogsDyn {
     }
   }
 
-  private def lvlMapOrEmpty: Mapping[LvlMap_t] = {
-    default(slsStrM, Map.empty)
-  }
-
-  /** Маппинг карты доступных ShowLevels для узлов N2. */
-  private def mSlInfoMapM: Mapping[Map[AdShowLevel, MSlInfo]] = {
-    // TODO Тут из одной карты делается другая. Может стоит реализовать напрямую?
-    lvlMapOrEmpty
-      .transform[Map[AdShowLevel,MSlInfo]](
-        {lvlMap =>
-          lvlMap.iterator
-            .map { case (sl, limit) =>
-              val msli = MSlInfo(sl, limit)
-              sl -> msli
-            }
-            .toMap
-        },
-        {mslMap =>
-          mslMap.iterator
-            .map { case (sl, msli) =>
-              sl -> msli.limit
-            }
-            .toMap
-        }
-      )
-  }
-
   private def nodeCommonM: Mapping[MNodeCommon] = {
     mapping(
       "ntype"         -> MNodeTypes.mappingM,
@@ -137,16 +109,14 @@ class SysMarketUtil extends MacroLogsDyn {
   private def adnExtraM: Mapping[MAdnExtra] = mapping(
     "shownTypeIdOpt" -> adnShownTypeIdOptM,
     "rights"        -> adnRightsM,
-    "sls"           -> mSlInfoMapM,
     "testNode"      -> boolean,
     "isUser"        -> boolean,
     "showInScNl"    -> boolean
   )
-  {(shownTypeIdOpt, rights, sls, isTestNode, isUser, showInScNl) =>
+  {(shownTypeIdOpt, rights, isTestNode, isUser, showInScNl) =>
     MAdnExtra(
       rights          = rights,
       shownTypeIdOpt  = shownTypeIdOpt,
-      outSls          = sls,
       testNode        = isTestNode,
       isUser          = isUser,
       showInScNl      = showInScNl
@@ -154,7 +124,7 @@ class SysMarketUtil extends MacroLogsDyn {
   }
   {mae =>
     import mae._
-    Some((shownTypeIdOpt, rights, outSls, testNode, isUser, showInScNl))
+    Some((shownTypeIdOpt, rights, testNode, isUser, showInScNl))
   }
 
 

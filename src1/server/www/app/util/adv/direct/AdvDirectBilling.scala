@@ -173,7 +173,6 @@ class AdvDirectBilling @Inject() (
         price         = advUtil.calcDateAdvPriceOnTf(adv.adnId, abc).price
           .normalizeAmountByExponent,
         nodeId        = mad.id.get,
-        sls           = adv.showLevels,
         // TODO Тут java.time-словоблудие. Всё равно весь класс будет удалён вместе с формой, поэтому точность и дубликация кода тут не важна, лишь бы по-быстрее двигаться:
         dateStartOpt  = Some( adv.dateStart.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime ),
         dateEndOpt    = Some( adv.dateEnd.atStartOfDay().atZone(ZoneId.systemDefault()).toOffsetDateTime ),

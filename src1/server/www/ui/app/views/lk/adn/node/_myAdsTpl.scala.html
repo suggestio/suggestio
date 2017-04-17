@@ -16,72 +16,60 @@
   )
 )
 
-@* Флаг single переименовывает единственную галочку "Выводить". *@
-@defining( mnode.extras.adn.map(_.out4render).getOrElse(Nil) ) { outLvlMap =>
+@_adsListOuterTpl {
 
-  @* Раскрыть для скриптов текущую информацию о лимитах по кол-ву объяв на доступных уровнях отображения. *@
-  @outLvlMap.map { msl =>
-    <input id="maxShownAds_@msl.sl" type="hidden" value="@msl.limit"/>
-  }
+  <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(mnode.id.get)">
+    <span>@Html( messages("Create.ad", "<br/>") )</span>
+  </a>
 
-  @_adsListOuterTpl {
+  @for( (mnai, i) <- args.mads.iterator.zipWithIndex ) {
+    @_adInListTpl(mnai.brArgs, i + 1) {
+      <div class="js-equal-height">
 
-    <a class="add-adv-btn f-left" href="@routes.MarketAd.createAd(mnode.id.get)">
-      <span>@Html( messages("Create.ad", "<br/>") )</span>
-    </a>
-
-    @defining(outLvlMap.size == 1) { isSingleOutLvl =>
-      @for( (mnai, i) <- args.mads.iterator.zipWithIndex ) {
-        @_adInListTpl(mnai.brArgs, i + 1) {
-          <div class="js-equal-height">
-
-            @* Отображать индикацию размещенности карточки. *@
-            @if( mnai.isBusy ) {
-              <span class="adv-item_status @if(mnai.isReq){__request} @if(mnai.isApproved){__ok}"></span>
-            }
-
-	          @* Карточку можно редактировать всегда. Раньше нельзя было редактировать размещенную. *@
-            <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mnai.mad.id.get)">
-              <span></span>
-            </a>
-
-            @* Галочки для управления отображением рекламной карточки магазина.
-               Отображаются, если модератор не запретил бесплатное размещение этой карточки. *@
-            @n2n.mdrs(mnai.mad).toStream.headOption.fold {
-
-              @* Бесплатное размещение не запрещено. *@
-              <div class="ads-list-block__controls">
-                @defining( mnode.id.flatMap(n2n.findReceiver(mnai.mad, _)).map(_.info.sls).getOrElse(Set.empty).map(_.sl) ) { adSls =>
-                  @* Обходим данные по out-уровня, превращая её в список галочек. *@
-                  @outLvlMap.map { msl =>
-                    @defining(mnode.common.isEnabled && msl.allowed) { hl =>
-                      <label class="@msl.sl.checkboxCssClass@if(!msl.allowed){ inactive}">
-                        <input class="@if(msl.limit == 1){js-one-}checkbox" type="checkbox"
-                               data-level="@msl.sl" data-adid="@mnai.mad.id" data-name="@msl.sl.checkboxCssClass"
-                               @if(!msl.allowed) {disabled="disabled"}
-                               @if(adSls.contains(msl.sl)) {checked="checked"} />
-                        <span class="styled-checkbox"></span>&nbsp;@messages(if(isSingleOutLvl) "lk.sl.enable_ad" else ("lk.sl." + msl.sl.name))
-                      </label>
-                    }
-                  }
-                }
-              </div>
-            } { faMdr =>
-              @* Модератор запретил бесплатное размещение указанное карточки. *@
-              @faMdr.info.commentNi
-            }
-          </div> @* js-equal-height *@
-
-          @if(canAdv) {
-            <a class="btn __size-XM __radial-major" href="@routes.LkAdvGeo.forAd(mnai.mad.id.get)">
-              @messages("ad.Manage")
-            </a>
-          }
-
+        @* Отображать индикацию размещенности карточки. *@
+        @if( mnai.isBusy ) {
+          <span class="adv-item_status @if(mnai.isReq){__request} @if(mnai.isApproved){__ok}"></span>
         }
-      }
-    }
 
-    <div class="clear"></div>
+        @* Карточку можно редактировать всегда. Раньше нельзя было редактировать размещенную. *@
+        <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mnai.mad.id.get)">
+          <span></span>
+        </a>
+
+        @* Галочка для управления отображением рекламной карточки магазина.
+           Отображается, если текущий узел допускает размещение своих карточек... *@
+        @if(canAdv) {
+          @* и если модератор не препятствует бесплатному размещению этой карточки. *@
+          @n2n.mdrs(mnai.mad).toStream.headOption.fold {
+
+            @* Бесплатное размещение не запрещено. *@
+            <div class="ads-list-block__controls">
+              @* Обходим данные по out-уровня, превращая её в список галочек. *@
+              <label>
+                <input class="checkbox" type="checkbox"
+                       data-level="a" data-adid="@mnai.mad.id"
+                       @if(!args.canAdv) {disabled="disabled"}
+                       @if( mnode.id.flatMap(n2n.findReceiver(mnai.mad, _)).nonEmpty ) {checked="checked"} />
+                <span class="styled-checkbox"></span>&nbsp;@messages("Show._ad")
+              </label>
+            </div>
+          } { faMdr =>
+            @* Модератор запретил бесплатное размещение указанное карточки. *@
+            @faMdr.info.commentNi
+          }
+        }
+
+      </div> @* js-equal-height *@
+
+      @if(canAdv) {
+        <a class="btn __size-XM __radial-major" href="@routes.LkAdvGeo.forAd(mnai.mad.id.get)">
+          @messages("ad.Manage")
+        </a>
+      }
+
+    }
   }
+
+  <div class="clear"></div>
+
 }

@@ -7,7 +7,6 @@ import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{GeoPoint, MGeoPoint}
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
-import io.suggest.model.sc.common.SinkShowLevel
 import io.suggest.util.SioConstants
 import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.functional.syntax._
@@ -38,7 +37,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   object Fields {
 
     val DYN_IMG_ARGS_FN   = "di"
-    val SLS_FN            = "sls"
     val DATE_NI_FN        = "dtni"
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
@@ -80,11 +78,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   /** Поддержка JSON. */
   implicit val FORMAT: Format[MEdgeInfo] = (
     (__ \ DYN_IMG_ARGS_FN).formatNullable[String] and
-    (__ \ SLS_FN).formatNullable[Set[SinkShowLevel]]
-      .inmap [Set[SinkShowLevel]] (
-        _.getOrElse(Set.empty),
-        { ssls => if (ssls.nonEmpty) Some(ssls) else None }
-      ) and
     (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
@@ -122,13 +115,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         id              = DYN_IMG_ARGS_FN,
         index           = FieldIndexingVariants.no,
         include_in_all  = false
-      ),
-      FieldString(
-        id              = SLS_FN,
-        index           = FieldIndexingVariants.analyzed,
-        include_in_all  = false,
-        analyzer        = SioConstants.DEEP_NGRAM_AN,
-        search_analyzer = SioConstants.MINIMAL_AN
       ),
       FieldDate(
         id              = DATE_NI_FN,
@@ -196,9 +182,6 @@ trait IEdgeInfo extends IIsNonEmpty {
   /** При указании на картинку бывает нужно указать исходный кроп или что-то ещё. */
   def dynImgArgs   : Option[String]
 
-  /** При публикации карточке где-то нужно указывать show levels, т.е. где именно карточка отображается. */
-  def sls          : Set[SinkShowLevel]
-
   /** Неиднексируемая дата. */
   def dateNi       : Option[OffsetDateTime]
 
@@ -238,16 +221,6 @@ trait IEdgeInfo extends IIsNonEmpty {
       sb.append("dynImg{")
         .append(dia)
         .append("} ")
-    }
-
-    val _sls = sls
-    if (_sls.nonEmpty) {
-      sb.append("sls=")
-      for (sl <- _sls) {
-        sb.append(sl)
-          .append(',')
-      }
-      sb.append(' ')
     }
 
     for (dt <- dateNi) {
@@ -304,7 +277,6 @@ trait IEdgeInfo extends IIsNonEmpty {
 /** Класс экземпляров модели [[IEdgeInfo]]. */
 case class MEdgeInfo(
   override val dynImgArgs   : Option[String]          = None,
-  override val sls          : Set[SinkShowLevel]      = Set.empty,
   override val dateNi       : Option[OffsetDateTime]  = None,
   override val commentNi    : Option[String]          = None,
   override val flag         : Option[Boolean]         = None,

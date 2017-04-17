@@ -10,7 +10,7 @@ $ git clone ... sio2
 $ cd sio2
 $ npm install jsdom
 $ sbt
-> project web21
+> project www
 > npm install
 > bower install
 

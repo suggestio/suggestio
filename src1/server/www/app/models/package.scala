@@ -13,9 +13,6 @@ import play.api.data.Form
 
 package object models {
 
-  type AdShowLevel          = io.suggest.model.sc.common.AdShowLevel
-  val  AdShowLevels         = io.suggest.model.sc.common.AdShowLevels
-
   val  AdnRights            = ym.model.common.AdnRights
   type AdnRight             = ym.model.common.AdnRight
 
@@ -68,12 +65,6 @@ package object models {
   type TextAlign            = io.suggest.model.n2.ad.ent.text.TextAlign
 
   type AdnShownType         = AdnShownTypes.T
-
-  type SinkShowLevel        = io.suggest.model.sc.common.SinkShowLevel
-  val  SinkShowLevels       = io.suggest.model.sc.common.SinkShowLevels
-
-  val  AdnSinks             = ym.model.common.AdnSinks
-  type AdnSink              = ym.model.common.AdnSink
 
   type NodeRightPanelLink   = NodeRightPanelLinks.T
   type BillingRightPanelLink= BillingRightPanelLinks.T

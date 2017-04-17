@@ -3,7 +3,6 @@ package io.suggest.model.n2.edge.search
 import io.suggest.common.empty.{EmptyProduct, IIsNonEmpty}
 import io.suggest.es.model.{IMust, Must_t}
 import io.suggest.model.n2.edge.MPredicate
-import io.suggest.model.sc.common.SlNameTokenStr
 
 /**
  * Suggest.io
@@ -21,12 +20,6 @@ trait ICriteria extends IIsNonEmpty with IMust {
 
   /** id предикатов. */
   def predicates  : Seq[MPredicate]
-
-  /** Искомые уровни отображения. */
-  def sls         : Seq[SlNameTokenStr]
-
-  /** Флаг наличия любого уровня или отсутствия всех уровней отображения. */
-  def anySl       : Option[Boolean]
 
   /** Критерий для поиска по тегу. */
   def tags        : Seq[ITagCriteria]
@@ -70,18 +63,6 @@ trait ICriteria extends IIsNonEmpty with IMust {
       sb.append(']')
     }
 
-    val _sls = sls
-    if (_sls.nonEmpty) {
-      sb.append( ",sls=[" )
-        .append( _sls.mkString(",") )
-        .append( ']' )
-    }
-
-    for (_anySl <- anySl) {
-      sb.append(",anySl=")
-        .append(_anySl)
-    }
-
     for (_flag <- flag) {
       sb.append(",flag=")
         .append( _flag )
@@ -108,8 +89,6 @@ trait ICriteria extends IIsNonEmpty with IMust {
 case class Criteria(
   override val nodeIds     : Seq[String]          = Nil,
   override val predicates  : Seq[MPredicate]      = Nil,
-  override val sls         : Seq[SlNameTokenStr]  = Nil,
-  override val anySl       : Option[Boolean]      = None,
   override val must        : Must_t               = IMust.SHOULD,
   override val flag        : Option[Boolean]      = None,
   override val tags        : Seq[ITagCriteria]    = Nil,

@@ -357,13 +357,9 @@ class MarketAdv @Inject() (
   private def _formRes2adves(formRes: FormResult): List[AdvFormEntry] = {
     formRes.nodes.foldLeft(List.empty[AdvFormEntry]) {
       case (acc, oni) =>
-        val ssls = for (sl <- oni.sls) yield {
-          SinkShowLevels.withArgs(AdnSinks.SINK_GEO, sl)
-        }
         val result = AdvFormEntry(
           adnId       = oni.adnId,
           advertise   = oni.isAdv,
-          showLevels  = ssls,
           dateStart   = formRes.period.dateStart,
           dateEnd     = formRes.period.dateEnd
         )

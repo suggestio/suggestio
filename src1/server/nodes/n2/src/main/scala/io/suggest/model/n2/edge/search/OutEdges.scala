@@ -151,50 +151,6 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
         }
       }
 
-      // ad search receivers: добавить show levels
-      if (oe.anySl.nonEmpty) {
-        // Требуется, чтобы был хотя бы один show level. Любой какой-нибудь, но обязательно был.
-        if (_qOpt.nonEmpty && oe.sls.isEmpty) {
-          // missing/existing filter можно навешивать только если уже есть тело nested query
-          val fn = EDGE_OUT_INFO_SLS_FN
-          val eq = QueryBuilders.existsQuery(fn)
-          val _nq2 = {
-            val qq = QueryBuilders.boolQuery()
-              .must(_qOpt.get)
-            if (oe.anySl.get) {
-              qq.filter(eq)
-            } else {
-              qq.mustNot(eq)
-            }
-          }
-
-          _qOpt = Some(_nq2)
-
-        } else {
-          val msg = if (_qOpt.isEmpty ) {
-            // Нельзя навешивать any sl-фильтры без заданного предиката или id узла.
-            "so at least one of [.predicates, .nodeIds] must be non-empty"
-          } else {
-            // Нельзя одновременно задавать sls и anySl критерии.
-            "but .sls is non empty too. Define at once only one of, not both"
-          }
-          throw new IllegalArgumentException("outEdges Criteria: .anySl is defined, " + msg + ": " + oe)
-        }
-
-      } else if (oe.sls.nonEmpty) {
-        val slsStr = oe.sls.map(_.name)
-        val slFn = EDGE_OUT_INFO_SLS_FN
-        _qOpt = _qOpt.map { _q =>
-          val slsf = QueryBuilders.termsQuery(slFn, slsStr : _*)
-          QueryBuilders.boolQuery()
-            .must(_q)
-            .filter(slsf)
-        }.orElse {
-          val _q = QueryBuilders.termsQuery(slFn, slsStr: _*)
-          Some( _q )
-        }
-      }
-
       // Ищем/фильтруем по info.flag
       if (oe.flag.nonEmpty) {
         val flag = oe.flag.get

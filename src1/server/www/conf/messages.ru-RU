@@ -174,10 +174,6 @@ adv.period.P1M=Месяц
 
 _x.asking.for.adv=запрашивает размещение.
 
-adn.sink.wifi=Wi-Fi
-adn.sink.geo=Геолокация
-
-
 ngl.bu=Здание
 ngl.td=Район города
 ngl.to=Город
@@ -226,10 +222,7 @@ N.humans.per.day={0} человек в сутки.
 Office.phone.number=Офисный телефон
 Your.IR.accepted=Ваш запрос на подключение к системе принят.
 
-lk.sl.enable_ad=Выводить
-lk.sl.d=Первый экран
-lk.sl.h=Рубрикатор
-lk.sl.m=Мой каталог
+Show._ad=Выводить
 
 nth.floor={0}-й этаж
 
@@ -577,12 +570,8 @@ Send.rejection=Отправить отказ
 Cancel.adv=Отменить размещение
 Select.town=Выберите город
 All.places=Все места
-Adv.levels=Уровни размещения
 Main.screen=Главный экран
-Product.categories=Категории товаров
-Categories=Категории
 _adv.Online.now=Отображается сейчас
-Catalog=Каталог
 List=Список
 advertised=размещено
 Date.choosing=Выбор даты
@@ -593,9 +582,6 @@ Your.ad.will.adv=Ваша карточка будет размещена
 from._date=с
 From._date=С
 till._date=по
-Your.ad.will.see.all.sio.users.in.geolocs=Вашу рекламу на главном экране увидят все пользователи Sugest.io, которые находятся в заданных локациях.
-Ad.will.seen.by.interested.in.cats.users=Рекламу в категориях увидят наиболее заинтересованные пользователи, которые ищут конкретные товары и услуги.
-Catalog.ads.will.be.seen.by.walkers=Реклама из персональных каталогов рекламодателей отображатется пользователям при горизонтальном пролистывании открытых карточек и при поиске через поисковую строку.
 refused.adv=отказал в размещении
 approved.adv=одобрил размещение
 

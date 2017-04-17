@@ -2,8 +2,6 @@ package models.adv.direct
 
 import java.time.LocalDate
 
-import models.SinkShowLevel
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -14,7 +12,6 @@ import models.SinkShowLevel
 case class AdvFormEntry(
   adnId     : String,
   advertise : Boolean,
-  showLevels: Set[SinkShowLevel],
   dateStart : LocalDate,
   dateEnd   : LocalDate
 )

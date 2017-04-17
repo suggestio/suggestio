@@ -1,6 +1,5 @@
 package io.suggest.model.n2.extra
 
-import io.suggest.model.sc.common.AdShowLevels
 import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.ym.model.common.AdnRights
 import org.scalatest.FlatSpec
@@ -27,10 +26,6 @@ class MAdnExtraSpec extends FlatSpec with PlayJsonTestUtil {
         isUser = true,
         shownTypeIdOpt = Some("a"),
         testNode = true,
-        outSls = {
-          val sli = MSlInfo(AdShowLevels.LVL_START_PAGE, 10)
-          Map(sli.sl -> sli)
-        },
         showInScNl = true
       )
     }

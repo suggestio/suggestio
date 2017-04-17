@@ -171,10 +171,6 @@ adv.period.P1M=Month
 
 _x.asking.for.adv=запрашивает размещение.
 
-adn.sink.wifi=Wi-Fi
-adn.sink.geo=Geolocation
-
-
 ngl.bu=Building
 ngl.td=Town district
 ngl.to=Town
@@ -201,10 +197,7 @@ ad.stat.action.c=Click
 mir.type.a=Advertiser
 mir.type.w=Wi-Fi AP owner
 
-lk.sl.enable_ad=Display ad
-lk.sl.d=First page
-lk.sl.h=Categorizator
-lk.sl.m=My catalog
+Show._ad=Show
 
 nth.floor={0}th floor
 
@@ -571,12 +564,8 @@ Send.rejection=Send rejection
 Cancel.adv=Refuse advertising
 Select.town=Select town
 All.places=All places
-Adv.levels=Advertising levels
 Main.screen=Main screen
-Product.categories=Product categories
-Categories=Categories
 _adv.Online.now=Visible now
-Catalog=Catalog
 List=List
 advertised=advertised
 Date.choosing=Date choosing
@@ -587,9 +576,6 @@ Your.ad.will.adv=Your promo-card will be advertised
 from._date=from
 From._date=From
 till._date=till
-Your.ad.will.see.all.sio.users.in.geolocs=Your ad will be seen by all Suggest.io users in requested locations.
-Ad.will.seen.by.interested.in.cats.users=Ad in categories will be seen by interested Suggest.io users, whom looking for specific products and services.
-Catalog.ads.will.be.seen.by.walkers=Ads from your personal catalog is displayed to users during horizontal listing of opened promo-cards and during full-text searching.
 refused.adv=refused advertising
 approved.adv=accepted advertising
 

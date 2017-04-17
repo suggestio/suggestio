@@ -3,7 +3,6 @@ package io.suggest.model.n2.edge
 import java.time.OffsetDateTime
 
 import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
-import io.suggest.model.sc.common.SinkShowLevels
 import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.ym.model.NodeGeoLevels
 import org.scalatest.FlatSpec
@@ -39,7 +38,6 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
         predicate = MPredicates.AdnMap,
         info = MEdgeInfo(
           dynImgArgs = Some("easdasd"),
-          sls = Set( SinkShowLevels.GEO_START_PAGE_SL ),
           dateNi = Some( OffsetDateTime.now().minusDays(1) ),
           commentNi = Some("asdas asd as a#$!#@$ds'ad''''!"),
           flag = Some(true),

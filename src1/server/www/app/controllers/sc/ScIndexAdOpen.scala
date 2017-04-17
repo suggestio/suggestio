@@ -2,10 +2,9 @@ package controllers.sc
 
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
+import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.req.IReq
-import models.{AdShowLevels, MNode}
 import models.im.DevScreen
 import models.msc._
 import play.api.mvc.Result

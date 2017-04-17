@@ -3,7 +3,6 @@ package util.adv.direct
 import java.time.OffsetDateTime
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -68,23 +67,11 @@ class AdvRcvrsUtil @Inject()(
 
     val rcvrEdgeOpt = prodIdOpt.flatMap { prodId =>
       mad.edges
-        .withPredicateIter(MPredicates.Receiver)
-        .find( _.nodeIds.contains(prodId) )
+        .withNodePred(prodId, MPredicates.Receiver)
+        .toStream
+        .headOption
     }
     val needProducer = rcvrEdgeOpt.isDefined
-
-    // Нам нужен продьюсер для фильтрации копируемых sls продьюсера. Ищем его в фоне.
-    val producerFut: Future[MNode] = if (needProducer) {
-      val _prodOpt = producerOpt
-        // самоконтроль: резать переданного продьюсера, если он не является продьюсером данной карточки.
-        .filter { _.id == prodIdOpt }
-      FutureUtil.opt2future(_prodOpt) {
-        mNodesCache.maybeGetByIdCached(prodIdOpt)
-          .map(_.get)
-      }
-    } else {
-      Future successful producerOpt.orNull
-    }
 
     // Заготавливаем билдер, нужно это заранее сделать для выборки item'ов только поддерживаемых типов.
     val acc0 = Acc(mad)
@@ -116,7 +103,7 @@ class AdvRcvrsUtil @Inject()(
       acc2
     }
 
-    val bAcc3Fut = bAcc2Fut.recover { case ex: NoSuchElementException =>
+    val bAcc3Fut = bAcc2Fut.recover { case _: NoSuchElementException =>
       LOGGER.trace(s"$logPrefix No adv items found for $madId")
       acc0
     }
@@ -124,42 +111,20 @@ class AdvRcvrsUtil @Inject()(
     // Чистим саморазмещение и добавляем в карту прямых ресиверов.
     rcvrEdgeOpt.fold(bAcc3Fut) { rcvrEdge =>
       for {
-        producer <- producerFut
-
-        // Оставляем только уровни отображения, которые доступны ресиверу.
-        psls2 = rcvrEdge.info
-          .sls
-          // Выкинуть sink-уровни продьюсера, которые не соответствуют доступным синкам и
-          // уровням отображения, которые записаны в политике исходящих размещений
-          .filter { ssl =>
-            val res = producer.extras.adn.exists { adn =>
-              adn.isReceiver &&
-                adn.outSls.get( ssl.sl ).exists(_.limit > 0)
-            }
-            if (!res)
-              debug(s"$logPrefix Dropping sink show level[$ssl] because producer[${prodIdOpt.orNull}] has only levels=[${producer.extras.adn.iterator.flatMap(_.out4render).map(_.sl).mkString(",")}]")
-            res
-          }
-
-        acc3 <- bAcc3Fut
-
+        acc3     <- bAcc3Fut
       } yield {
-        if (psls2.isEmpty) {
+
+        if (!needProducer) {
           // Уровни пусты, саморесивер не нужен.
           acc3
 
         } else {
           // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
-          val edge2 = rcvrEdge.copy(
-            info = rcvrEdge.info.copy(
-              sls = psls2
-            )
-          )
           acc3.copy(
             mad = acc3.mad.copy(
               edges = acc3.mad.edges.copy(
                 out = {
-                  acc3.mad.edges.out ++ Seq(edge2)
+                  acc3.mad.edges.out ++ Seq(rcvrEdge)
                 }
               )
             )

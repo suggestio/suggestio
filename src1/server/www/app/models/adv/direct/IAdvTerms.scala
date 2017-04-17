@@ -2,7 +2,6 @@ package models.adv.direct
 
 import java.time.LocalDate
 
-import models.SinkShowLevel
 import models.mdt.IDateStartEnd
 
 /**
@@ -13,7 +12,6 @@ import models.mdt.IDateStartEnd
  */
 trait IAdvTerms extends IDateStartEnd {
 
-  def showLevels: Set[SinkShowLevel]
   def dateStart: LocalDate
   def dateEnd: LocalDate
 
