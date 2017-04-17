@@ -288,9 +288,9 @@ class AdvGeoBillUtil @Inject() (
           }
           .orElse {
             // Какая-то логическая ошибка в коде: этот метод не понимает выхлоп из calcAdvGeoPrice().
-            LOGGER.error( s"Not supported price term: $term2 Please check current billing class code." )
+            throw new UnsupportedOperationException(s"Not supported price term: $term2 Please check current billing class code.")
             // Давим ошибку. Лишнего с юзера не спишется, а оплата в целом пройдёт.
-            None
+            //None
           }
       }
       .map { mItems.insertOne }
@@ -394,28 +394,22 @@ class AdvGeoBillUtil @Inject() (
       accRev ::= geoAllDaysPrice
     }   // END geo
 
-    // Определить название ресивера.
-    def __rcvrNameOf(rcvrId: String): String = {
-      abc.rcvrsMap
-        .get(rcvrId)
-        .fold("")(_.guessDisplayNameOrIdOrQuestions)
-    }
-
-    // Сборка карты причин. Они могут повторятся на разных этапах, быстрая дедубликация Some-инстансов
-    // позволит снизить сериализованный объём, уменьшить риск ошибки в коде.
-    val rcvrsReasonsMap = abc.rcvrsMap
-      .mapValues { mnode =>
-        val rcvrId = mnode.id.get
-        Some(
-          MPriceReason(
-            MReasonTypes.Rcvr,
-            nameIds = MNameId(
-              id   = Some(rcvrId),
-              name = __rcvrNameOf(rcvrId)
-            ) :: Nil
-          )
+    // Сборка причины наценки за ресивер.
+    def __rcvrPriceReason(rcvrId: String): Option[MPriceReason] = {
+      // TODO Opt Инстансы причин наценки на ресивер могут повторяться на последующих шагах, желательно возвращать одни и те же инстансы.
+      Some(
+        MPriceReason(
+          MReasonTypes.Rcvr,
+          nameIds = MNameId(
+            id   = Some(rcvrId),
+            // Определить какое-нибудь название ресивера. Ресивера может не быть в abc.rcvrsMap при isSu==true или какой-то проблеме.
+            name = abc.rcvrsMap
+              .get(rcvrId)
+              .fold("")(_.guessDisplayNameOrIdOrQuestions)
+          ) :: Nil
         )
-      }
+      )
+    }
 
     // Отработать ресиверы, если заданы.
     if (res.rcvrsMap.nonEmpty) {
@@ -443,7 +437,7 @@ class AdvGeoBillUtil @Inject() (
         // Закинуть в аккамулятор результатов.
         accRev ::= Mapper(
           underlying = rcvrOmsPrice,
-          reason     = rcvrsReasonsMap.get(rcvrId).flatten
+          reason     = __rcvrPriceReason(rcvrId)
         )
       }
 
@@ -470,7 +464,7 @@ class AdvGeoBillUtil @Inject() (
 
           accRev ::= Mapper(
             underlying  = Sum(tagsOnRcvrPrices),
-            reason      = rcvrsReasonsMap.get(rcvrId).flatten
+            reason      = __rcvrPriceReason(rcvrId)
           )
         }
       }
