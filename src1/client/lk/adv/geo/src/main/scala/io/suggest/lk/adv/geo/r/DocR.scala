@@ -37,12 +37,15 @@ object DocR {
 
         Messages( MsgCodes.`Adv.geo.form.descr1` ),
         HtmlConstants.SPACE,
+
         if ( expanded ) {
           // Рендер более подробной информации.
           <.div(
+
             <.p(
               Messages( MsgCodes.`User.located.inside.are.or.location.will.see.your.offer` )
             ),
+
             <.p(
               Messages( MsgCodes.`Good.to.know.that` )
             ),
@@ -57,6 +60,7 @@ object DocR {
                 Messages( MsgCodes.`Adv.geo.form.descr.price` )
               )
             )
+
           )
 
         } else {

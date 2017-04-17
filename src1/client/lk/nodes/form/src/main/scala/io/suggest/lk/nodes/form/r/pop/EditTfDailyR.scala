@@ -64,7 +64,7 @@ object EditTfDailyR {
         } { popupPropsProxy =>
 
           val modeInputName = "mode"
-          val radio = "radio"
+          val radio = HtmlConstants.Input.radio
           val editSValid = editS.isValid
           val isPending = editS.request.isPending
           val saveBtnActive = editSValid && !isPending
@@ -120,7 +120,7 @@ object EditTfDailyR {
 
                       for (mia <- editS.inputAmount) yield {
                         <.input(
-                          ^.`type`    := "text",
+                          ^.`type`    := HtmlConstants.Input.text,
                           ^.`class`   := Css.Lk.Nodes.Inputs.INPUT70,
                           ^.value     := mia.value,
                           ^.onChange ==> onManualAmountChange

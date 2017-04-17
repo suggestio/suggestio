@@ -200,7 +200,7 @@ object NodeR extends Log { self =>
                   ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
                   ^.onClick  ==> { e: ReactEventI => e.stopPropagationCB },
                   <.input(
-                    ^.`type`    := "checkbox",
+                    ^.`type` := HtmlConstants.Input.checkbox,
                     if (node.advIsPending) {
                       ^.disabled := true
                     } else {
@@ -363,7 +363,7 @@ object NodeR extends Log { self =>
                       <.label(
                         ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE, Css.Lk.Nodes.Inputs.INPUT70 ),
                         <.input(
-                          ^.`type` := "checkbox",
+                          ^.`type` := HtmlConstants.Input.checkbox,
                           // Текущее значение галочки происходит из нового значения и текущего значения, полученного на сервере.
                           ^.checked := isEnabledValue,
                           // Можно управлять галочкой, если разрешено и если не происходит какого-то запроса с обновлением сейчас.

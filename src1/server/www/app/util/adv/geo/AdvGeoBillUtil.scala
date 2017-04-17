@@ -260,7 +260,7 @@ class AdvGeoBillUtil @Inject() (
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
                       // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
-                      rcvrIdOpt     = None,
+                      rcvrIdOpt     = Some(rcvrId),
                       tagFaceOpt    = Some( tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head ),
                       geoShape      = None
                     )
@@ -280,6 +280,8 @@ class AdvGeoBillUtil @Inject() (
                           dateStartOpt  = dtStartOpt,
                           dateEndOpt    = dtEndOpt,
                           rcvrIdOpt     = Some(rcvrId),
+                          // Надо? указывать showLevel, т.к. ScAdSearchUtil.qsArgs2nodeSearch() фильтрует
+                          //sls           = Set( SinkShowLevels.GEO_START_PAGE_SL ),
                           geoShape      = None
                         )
                       }

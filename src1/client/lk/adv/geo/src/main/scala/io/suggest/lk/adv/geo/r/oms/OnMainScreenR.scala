@@ -1,7 +1,9 @@
 package io.suggest.lk.adv.geo.r.oms
 
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m.SetOnMainScreen
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -34,14 +36,14 @@ object OnMainScreenR {
         ^.`class` := Css.CLICKABLE,
 
         <.input(
-          ^.`type`    := "checkbox",
+          ^.`type`    := HtmlConstants.Input.checkbox,
           ^.checked   := p().value,
           ^.onChange ==> onMainScreenChanged
         ),
         <.span(
           ^.`class` := Css.Input.STYLED_CHECKBOX
         ),
-        Messages( "Adv.on.main.screen" )
+        Messages( MsgCodes.`Adv.on.main.screen` )
       )
     }
 

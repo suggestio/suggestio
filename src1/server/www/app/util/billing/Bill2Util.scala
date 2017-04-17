@@ -9,7 +9,7 @@ import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
-import io.suggest.mbill2.m.item.typ.MItemType
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{IItem, IMItem, MItem, MItems}
 import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
@@ -90,9 +90,21 @@ class Bill2Util @Inject() (
 
   /** Когда ордер нормально закрыт, какой статус выставлять item'у указанного типа?. */
   private def orderClosedItemStatus( iType: MItemType ): MItemStatus = {
-    // Пока все item'ы -- это adv-itemы. Поэтому они отправляются на модерацию.
-    MItemStatuses.AwaitingMdr
+    if (iType == MItemTypes.BalanceCredit) {
+      // Это пополнение собственного баланса. Проходит без промежуточных шагов и сразу же закрывается.
+      MItemStatuses.Finished
+
+    } else if (iType.isAdv) {
+      // Пока все item'ы -- это adv-itemы. Поэтому они отправляются на модерацию.
+      MItemStatuses.AwaitingMdr
+
+    } else {
+      // Should never happen. Возможно, появился какой-то новый тип item'а, для которого забыли
+      // заимплементить логику в этом модуле биллинга.
+      throw new UnsupportedOperationException(s"Item type '$iType' not supported for orderClosing.")
+    }
   }
+
 
   /** Статус item'а при его подтверждении.
     * Подтверждение наступает, когда, например, модератор подтвердил размещение.
@@ -101,7 +113,32 @@ class Bill2Util @Inject() (
     * @return Статус item'а.
     */
   private def approvedItemStatus( iType: MItemType ): MItemStatus = {
-    MItemStatuses.Offline
+    if (iType.isApprovable) {
+      // После аппрува, item рекламных размещений можно переводить в оффлайн.
+      MItemStatuses.Offline
+    } else {
+      // Should never happen.
+      // item'ы, запрещающие стадию аппрува для себя, не должны сюда попадать.
+      throw new UnsupportedOperationException(s"Item type '$iType' not supported for itemApprove.")
+    }
+  }
+
+
+  /** Сколько бабла списывать с баланса юзера по указанному item'у?
+    *
+    * @param iType Обрабатываемый тип item'а.
+    * @param amount0 Исходное значение price amount данного item'а.
+    * @return mitem.amount обычно.
+    *         Но бывает и -mitem.amount, если
+    */
+  private def userBalanceWithdrawAmount( iType: MItemType, amount0: Amount_t ): Amount_t = {
+    if (iType.isDebt) {
+      // Юзер что-то оплачивает. Это нормально.
+      amount0
+    } else {
+      // Юзер заливает деньги себе на счёт.
+      -amount0
+    }
   }
 
 

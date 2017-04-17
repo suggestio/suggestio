@@ -3,7 +3,6 @@ package io.suggest.model.sc.common
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.model.menum.EnumJsonReadsValT
 import AdShowLevels._
-import io.suggest.util.logs.MacroLogsImplLazy
 import io.suggest.ym.model.common.AdnSinks._
 import io.suggest.ym.model.common._
 
@@ -16,9 +15,7 @@ import io.suggest.ym.model.common._
  * поэтому можно искать как по обоим флагам, так и по любому из них.
  */
 
-object SinkShowLevels extends EnumMaybeWithName with MacroLogsImplLazy with EnumJsonReadsValT {
-
-  import LOGGER._
+object SinkShowLevels extends EnumMaybeWithName with EnumJsonReadsValT {
 
   protected def args2name(adnSink: AdnSink, sl: AdShowLevel): String = {
     adnSink.name + sl.name

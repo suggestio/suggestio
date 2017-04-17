@@ -137,7 +137,8 @@ class AdvDirectBilling @Inject() (
         .iterator
         .map { adve =>
           val abc = MAdvBillCtx(bmc, calsCtx, tfsMap, adve, mad, rcvrsMap)
-          advUtil.calculateAdvPriceOnRcvr(adve.adnId, abc)
+          advUtil.calcDateAdvPriceOnTf(adve.adnId, abc)
+            .price
             .normalizeAmountByExponent
         }
         .toSeq
@@ -169,7 +170,7 @@ class AdvDirectBilling @Inject() (
         orderId       = orderId,
         iType         = MItemTypes.AdvDirect,
         status        = status,
-        price         = advUtil.calculateAdvPriceOnRcvr(adv.adnId, abc)
+        price         = advUtil.calcDateAdvPriceOnTf(adv.adnId, abc).price
           .normalizeAmountByExponent,
         nodeId        = mad.id.get,
         sls           = adv.showLevels,

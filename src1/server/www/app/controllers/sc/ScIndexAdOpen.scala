@@ -1,5 +1,6 @@
 package controllers.sc
 
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -61,8 +62,8 @@ trait ScIndexAdOpen
           val args = new MNodeSearchDfltImpl {
             override def outEdges: Seq[ICriteria] = {
               val cr = Criteria(
-                nodeIds = Seq(producerId),
-                sls     = Seq(AdShowLevels.LVL_START_PAGE)
+                predicates  = MPredicates.Receiver :: Nil,
+                nodeIds     = producerId :: Nil
               )
               Seq(cr)
             }

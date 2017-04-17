@@ -90,7 +90,7 @@ object CreateNodeR {
                   <.label(
                     Messages( MsgCodes.`Name` ), ":",
                     <.input(
-                      ^.`type`      := "text",
+                      ^.`type`      := HtmlConstants.Input.text,
                       ^.value       := addState.name,
                       ^.onChange   ==> onNameChange,
                       ^.placeholder := Messages( MsgCodes.`Beacon.name.example` ),
@@ -108,7 +108,7 @@ object CreateNodeR {
                     Messages( MsgCodes.`Identifier` ),
                     " (EddyStone-UID)",
                     <.input(
-                      ^.`type`      := "text",
+                      ^.`type`      := HtmlConstants.Input.text,
                       ^.value       := addState.id.getOrElse(""),
                       ^.onChange   ==> onIdChange,
                       ^.placeholder := EddyStone.EXAMPLE_UID,
@@ -169,7 +169,7 @@ object CreateNodeR {
                   // should never happen
                   case ex =>
                     <.span(
-                      Messages("Error"), ": ",
+                      Messages( MsgCodes.`Error` ), ": ",
                       ex.toString()
                     )
                 }

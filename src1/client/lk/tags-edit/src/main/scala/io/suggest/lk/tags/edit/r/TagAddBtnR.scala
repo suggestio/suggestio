@@ -1,7 +1,9 @@
 package io.suggest.lk.tags.edit.r
 
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.AddCurrentTag
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -28,8 +30,8 @@ object TagAddBtnR {
     def render(p: Props) = {
       <.input(
         ^.`class`  := Css.flat(Css.Buttons.BTN, Css.Size.M, Css.Buttons.MAJOR),
-        ^.value    := Messages("Add"),
-        ^.`type`   := "submit",
+        ^.value    := Messages( MsgCodes.`Add` ),
+        ^.`type`   := HtmlConstants.Input.submit,
         ^.onClick --> onAddBtnClick
       )
     }

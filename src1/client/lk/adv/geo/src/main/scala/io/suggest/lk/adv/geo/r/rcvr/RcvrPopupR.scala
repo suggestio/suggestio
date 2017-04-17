@@ -77,7 +77,7 @@ object RcvrPopupR {
                       Css.Colors.GREEN -> true
                     ),
                     <.input(
-                      ^.`type`   := "checkbox",
+                      ^.`type`   := HtmlConstants.Input.checkbox,
                       ^.checked  := true,
                       ^.disabled := true
                     ),
@@ -104,7 +104,7 @@ object RcvrPopupR {
                       Css.Colors.GREEN -> (checked && n.isCreate)
                     ),
                     <.input(
-                      ^.`type`    := "checkbox",
+                      ^.`type`    := HtmlConstants.Input.checkbox,
                       ^.checked   := checked,
                       ^.onChange ==> rcvrCheckboxChanged(rcvrKey)
                     ),
@@ -162,7 +162,7 @@ object RcvrPopupR {
                   override val draggable = false
                   override val clickable = false
                   override val icon      = icon1
-                  override val title     = Messages("Please.wait")
+                  override val title     = Messages( MsgCodes.`Please.wait` )
                 }
               )()
             }

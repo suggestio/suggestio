@@ -24,6 +24,7 @@ object MsgCodes {
   val `Information` = "Information"
   val `N.modules` = "N.modules"
 
+  val `Add` = "Add"
   val `Error` = "Error"
   val `Something.gone.wrong` = "Something.gone.wrong"
   val `Identifier` = "Identifier"
@@ -69,6 +70,11 @@ object MsgCodes {
   val `Date` = "Date"
   val `Price` = "Price"
   val `Unable.to.initialize.map` = "Unable.to.initialize.map"
+
+  val `Add.tags` = "Add.tags"
+
+  val `Adv.on.map` = "Adv.on.map"
+  val `Adv.on.map.hint` = "Adv.on.map.hint"
 
   val `Read.more` = "Read.more"
   val `Adv.geo.form.descr1` = "Adv.geo.form.descr1"

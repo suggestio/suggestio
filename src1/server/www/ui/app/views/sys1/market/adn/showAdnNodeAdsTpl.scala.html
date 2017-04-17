@@ -60,8 +60,7 @@
       }
 
       @if( args.nodeOpt.flatMap(_.id).exists { adnId =>
-        ctx.api.n2NodesUtil.findReceiver(mad, adnId)
-          .exists(_.info.sls.nonEmpty)
+        ctx.api.n2NodesUtil.findReceiver(mad, adnId).nonEmpty
       } ) {
         <p>Саморазмещение</p>
       }

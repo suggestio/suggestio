@@ -67,7 +67,8 @@ class ScAdSearchUtil @Inject() (
         eacc ::= Criteria(
           nodeIds     = rcvrId.id :: Nil,
           predicates  = MPredicates.Receiver :: Nil,
-          anySl       = must,   // = Some(true)
+          // Фильтрация по sls не нужна, они плавно уходят в прошлое.
+          //anySl       = must,   // = Some(true)
           must        = must
         )
       }

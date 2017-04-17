@@ -51,9 +51,9 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения редактора тегов. */
   private def TAGS_EDITOR_MSGS: TraversableOnce[String] = {
-    "Add" ::
+    MsgCodes.`Add` ::
       "Tags.choosing" ::
-      "Add.tags" ::
+      MsgCodes.`Add.tags` ::
       MsgCodes.`Delete` ::
       Nil
   }
@@ -79,7 +79,7 @@ class JsMessagesUtil @Inject() (
 
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
-    "Adv.on.map" :: "Adv.on.map.hint" ::
+    MsgCodes.`Adv.on.map` :: MsgCodes.`Adv.on.map.hint` ::
       "Main.screen" ::
       "GeoTag" ::
       "_adv.Online.now" ::

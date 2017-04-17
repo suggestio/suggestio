@@ -42,8 +42,21 @@ sealed abstract class MItemType extends EnumEntry with IStrId {
     */
   def moneyRcvrIsCbca: Boolean = true
 
+  /** Тип item'а относится к рекламным размещениям карточек и тегам к ним? */
+  def isAdv: Boolean = true
+
+  /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
+  def isApprovable: Boolean = true
+
   /** final, чтобы в case object'ах не было перезаписи. */
   override final def toString = super.toString
+
+  /** Цена item'а является долгом/обязательством клиентам перед сервисом?
+    * @return true - дебет, т.е. для всяких оплат товаров и услуг.
+    *         false - это крЕдит, т.е. источник средств.
+    *         Оплаченный item обогащает sio-баланс клиента своей стоимостью.
+    */
+  def isDebt: Boolean = true
 
 }
 
@@ -73,6 +86,8 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
   case object AdnNodeMap extends MItemType {
     override def strId = "m"
+    /** Это размещение узлов ЛК на карте. К карточкам это не относится никак. */
+    override def isAdv = false
   }
 
   /** Прямое размещение тега на узле. */
@@ -80,14 +95,17 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     override def strId = "d"
   }
 
-  /** Покупка срочного доступа к внешнему размещению (разовая абонплата). */
-  //val AdvExtFee         : T = new Val("e")
+  /** Юзер просто пополняет sio-баланс, перекачивая на него деньги из внешнего источника денег. */
+  case object BalanceCredit extends MItemType {
+    override def strId = "e"
+    /** Это кредитование баланса. Поэтому false. */
+    override def isDebt = false
+    /** Никакой рекламной составляющей это действо не несёт. */
+    override def isAdv = false
+    /** Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется. */
+    override def isApprovable = false
+  }
 
-
-  /** Типы, относящиеся к рекламным размещениям. */
-  // TODO Перенести TagDirect в advDirectTypes, если это безопасно.
-  def advTypes                = advGeoTypes reverse_::: advDirectTypes
-  def advTypesIds             = onlyIds( advTypes )
 
   /** Только типы item'ов, относящиеся к гео-размещениям. */
   def advGeoTypes             = GeoTag :: GeoPlace :: Nil

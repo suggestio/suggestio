@@ -30,4 +30,14 @@ object HtmlConstants {
   val NBSP                    = '\u00A0'
   val NBSP_STR                = NBSP.toString
 
+
+  object Input {
+
+    val checkbox = "checkbox"
+    val text = "text"
+    val radio = "radio"
+    val submit = "submit"
+
+  }
+
 }

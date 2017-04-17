@@ -104,7 +104,7 @@ trait ScSiteBase
         .filter { mad =>
           mad.edges
             .withPredicateIter(MPredicates.Receiver)
-            .exists(_.info.sls.nonEmpty)
+            .nonEmpty  //.exists(_.info.sls.nonEmpty)
         }
         // Зарендерить всё параллельно.
         .flatMap { mad =>

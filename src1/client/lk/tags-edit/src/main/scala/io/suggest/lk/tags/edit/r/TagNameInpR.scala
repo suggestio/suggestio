@@ -1,11 +1,13 @@
 package io.suggest.lk.tags.edit.r
 
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.tags.edit.{MTagsEditQueryProps, TagsEditConstants}
 import io.suggest.css.Css
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI, ReactKeyboardEventI}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.{AddCurrentTag, SetTagSearchQuery}
 import io.suggest.sjs.common.i18n.Messages
 import org.scalajs.dom.ext.KeyCode
@@ -52,7 +54,7 @@ object TagNameInpR {
         // Лэйбл для ввода названия тега
         <.label(
           ^.`class` := Css.Lk.LK_FIELD_NAME,
-          Messages( "Add.tags" ),
+          Messages( MsgCodes.`Add.tags` ),
 
           // Рендер инпута, содержащего искомое имя тега
           <.div(
@@ -63,7 +65,7 @@ object TagNameInpR {
             <.div(
               ^.`class` := (Css.Input.INPUT_SHADOW + SPACE + Css.Input.JS_INPUT_W),
               <.input(
-                ^.`type`   := "text",
+                ^.`type`   := HtmlConstants.Input.text,
                 ^.name     := TagsEditConstants.ADD_TAGS_FN,
                 ^.value    := p().text,
                 ^.onChange ==> onQueryChange,

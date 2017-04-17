@@ -1,7 +1,9 @@
 package io.suggest.lk.adv.geo.r.geo.rad
 
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m.{MRad, RadOnOff}
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
@@ -41,7 +43,7 @@ object RadEnabledR {
 
     def render(propsProxy: Props): ReactElement = {
       val p = propsProxy()
-      val hint = Messages("Adv.on.map.hint")
+      val hint = Messages( MsgCodes.`Adv.on.map.hint` )
 
       <.label(
         ^.`class` := Css.CLICKABLE,
@@ -51,7 +53,7 @@ object RadEnabledR {
         },
 
         <.input(
-          ^.`type`    := "checkbox",
+          ^.`type`    := HtmlConstants.Input.checkbox,
           ^.checked   := p.enabled,
           ^.onChange ==> onRadEnabledChanged
         ),
@@ -60,7 +62,7 @@ object RadEnabledR {
           ^.`class` := Css.Input.STYLED_CHECKBOX
         ),
 
-        Messages( "Adv.on.map" ),
+        Messages( MsgCodes.`Adv.on.map` ),
         p.renderHintAsText ?= {
           <.span(
             <.br,
