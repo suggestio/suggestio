@@ -5,7 +5,7 @@ import io.suggest.adv.geo.{InGeoTag, OnMainScreen}
 import io.suggest.common.html.HtmlConstants._
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.MGeoAdvs
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
+import io.suggest.maps.u.MapsUtil
 import io.suggest.react.r.RangeYmdR
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.i18n.Messages
@@ -53,7 +53,7 @@ object ExistPopupR {
         popState  <- p0.popupState
       } yield {
         PopupR(
-          position = LkAdvGeoFormUtil.geoPoint2LatLng( popState.open.geoPoint )
+          position = MapsUtil.geoPoint2LatLng( popState.open.geoPoint )
         )(
           <.ul(
             for (row <- popResp.rows) yield {

@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.m
+package io.suggest.maps.m
 
 import diode.FastEq
 import io.suggest.adv.geo.MMapProps
@@ -7,12 +7,14 @@ import io.suggest.adv.geo.MMapProps
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.01.17 18:55
-  * Description: Клиентская модель данных состояния карты.
+  * Description: Клиентская модель данных состояния простейшей карты.
+  * Изначально под такой картой подразумевалась leaflet-карта с кнопкой "где я?",
+  * возможностью перемещения и масштабирования этой карты.
   */
-object MMap {
+object MMapS {
 
-  implicit object MMapFastEq extends FastEq[MMap] {
-    override def eqv(a: MMap, b: MMap): Boolean = {
+  implicit object MMapSFastEq extends FastEq[MMapS] {
+    override def eqv(a: MMapS, b: MMapS): Boolean = {
       (a.props eq b.props) &&
         (a.locationFound eq b.locationFound)
     }
@@ -29,13 +31,12 @@ object MMap {
   *                      false началась геолокация, нужно отцентровать карту по опредённым координатам.
   *                      None Нет ни геолокации, ничего.
   */
-case class MMap(
+case class MMapS(
   props         : MMapProps,
   locationFound : Option[Boolean] = None
 ) {
 
   def withProps(mmp: MMapProps) = copy(props = mmp)
-
   def withLocationFound(lf: Option[Boolean]) = copy(locationFound = lf)
 
 }

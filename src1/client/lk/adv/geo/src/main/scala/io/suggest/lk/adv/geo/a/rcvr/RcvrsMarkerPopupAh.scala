@@ -5,6 +5,7 @@ import diode.data.Pot
 import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
+import io.suggest.maps.m.HandleMapPopupClose
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -66,7 +67,7 @@ class RcvrsMarkerPopupAh[M](
       updated(v2)
 
     // Среагировать на закрытие попапа, если он открыт сейчас.
-    case HandlePopupClose if value.popupState.nonEmpty || value.popupResp.nonEmpty =>
+    case HandleMapPopupClose if value.popupState.nonEmpty || value.popupResp.nonEmpty =>
       val v2 = value.withPopup(
         resp  = Pot.empty,
         state = None

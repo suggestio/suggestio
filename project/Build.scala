@@ -270,7 +270,8 @@ object Sio2Build extends Build {
     val name = "maps-sjs"
     Project(id = name, base = file(DIR0 + "client/geo/common-maps"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, leafletSjs)
+      // TODO lkCommonSjs просто из-за зависимости от diode-react, по факту достаточно commonSjs. Перещёлкнуть, когда и sc-sjs будет реагировать.
+      .dependsOn(lkCommonSjs, leafletSjs, commonReactSjs, leafletReactSjs)
   }
 
   /** Sjs-модуль редактора тегов. */

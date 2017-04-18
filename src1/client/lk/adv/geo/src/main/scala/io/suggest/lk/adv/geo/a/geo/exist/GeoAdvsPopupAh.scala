@@ -4,6 +4,7 @@ import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
+import io.suggest.maps.m.HandleMapPopupClose
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -54,7 +55,7 @@ class GeoAdvsPopupAh[M](
       }
 
     // Реакция на сигнал закрытия попапа, когда он открыт.
-    case HandlePopupClose if value.popupState.nonEmpty =>
+    case HandleMapPopupClose if value.popupState.nonEmpty =>
       val v2 = value.copy(
         popupResp  = Pot.empty,
         popupState = None

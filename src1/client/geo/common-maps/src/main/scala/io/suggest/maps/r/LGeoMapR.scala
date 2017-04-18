@@ -1,13 +1,13 @@
-package io.suggest.lk.adv.geo.r.mapf
+package io.suggest.maps.r
 
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import io.suggest.lk.adv.geo.m.{HandleLocationFound, HandlePopupClose, MMap}
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
+import io.suggest.maps.m.{HandleLocationFound, HandleMapPopupClose, MMapS}
+import io.suggest.maps.u.MapsUtil
+import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactComponentB, ReactElement}
 import react.leaflet.lmap.{LMapPropsR, LMapR}
-import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 
 import scala.scalajs.js
 
@@ -18,15 +18,15 @@ import scala.scalajs.js
   * Description: React-компонент карты георазмещения.
   * По сути -- обёртка вокруг react-leaflet и diode.
   */
-object AdvGeoMapR {
+object LGeoMapR {
 
-  type Props = ModelProxy[MMap]
+  type Props = ModelProxy[MMapS]
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
     def onLocationFound(locEvent: LocationEvent): Callback = {
-      val gp = LkAdvGeoFormUtil.latLng2geoPoint( locEvent.latLng )
+      val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
       $.props >>= { props =>
         props.dispatchCB( HandleLocationFound(gp) )
       }
@@ -34,7 +34,7 @@ object AdvGeoMapR {
 
     def onPopupClose(popEvent: PopupEvent): Callback = {
       $.props >>= { props =>
-        props.dispatchCB( HandlePopupClose )
+        props.dispatchCB( HandleMapPopupClose )
       }
     }
 
@@ -46,9 +46,9 @@ object AdvGeoMapR {
       // Карта должна рендерится сюда:
       LMapR(
         new LMapPropsR {
-          override val center    = LkAdvGeoFormUtil.geoPoint2LatLng( v.props.center )
+          override val center    = MapsUtil.geoPoint2LatLng( v.props.center )
           override val zoom      = v.props.zoom
-          override val className = Css.Lk.Adv.Geo.MAP_CONTAINER
+          override val className = Css.Lk.Maps.MAP_CONTAINER
           override val useFlyTo  = true
           override val onLocationFound = {
             if ( v.locationFound.contains(true) ) {
@@ -65,7 +65,7 @@ object AdvGeoMapR {
   }
 
 
-  val component = ReactComponentB[Props]("AdvGeoMap")
+  val component = ReactComponentB[Props]("LGeoMap")
     .stateless
     .renderBackend[Backend]
     .build

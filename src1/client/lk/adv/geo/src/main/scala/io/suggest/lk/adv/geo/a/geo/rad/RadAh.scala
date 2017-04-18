@@ -3,9 +3,10 @@ package io.suggest.lk.adv.geo.a.geo.rad
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.adv.geo.AdvGeoConstants.Rad
 import io.suggest.geo.IGeoPointField
-import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
+import io.suggest.maps.m.{HandleLocationFound, HandleMapPopupClose}
+import io.suggest.maps.u.MapsUtil
 
 /**
   * Suggest.io
@@ -28,7 +29,7 @@ class RadAh[M](
 
     // Считаем расстояние между новым радиусом и исходным центром.
     val distanceM = Math.abs(
-      LkAdvGeoFormUtil.distanceBetween(v0.circle.center, rmGp1)
+      MapsUtil.distanceBetween(v0.circle.center, rmGp1)
     )
 
     // Принудительно запихиваем в границы.
@@ -158,7 +159,7 @@ class RadAh[M](
       }
 
     // Сигнал закрытия попапа.
-    case HandlePopupClose if value.exists(_.centerPopup) =>
+    case HandleMapPopupClose if value.exists(_.centerPopup) =>
       val mrad0 = value.get
       val mrad1 = mrad0.withCenterPopup(false)
       updated( Some(mrad1) )

@@ -5,6 +5,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormS
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
+import io.suggest.maps.m.MMapS
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -18,7 +19,7 @@ import io.suggest.sjs.common.controller.DomQuick
   * @param tags Контейнер данных по тегам.
   */
 case class MRoot(
-                  mmap          : MMap,
+                  mmap          : MMapS,
                   other         : MOther,
                   adv4free      : Option[MAdv4Free],
                   tags          : MTagsEditState,
@@ -30,7 +31,7 @@ case class MRoot(
                   bill          : MBillS
                 ) {
 
-  def withMapState(ms2: MMap) = copy(mmap = ms2)
+  def withMapState(ms2: MMapS) = copy(mmap = ms2)
   def withOther(other2: MOther) = copy(other = other2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withTagsEditState(tes: MTagsEditState) = copy(tags = tes)

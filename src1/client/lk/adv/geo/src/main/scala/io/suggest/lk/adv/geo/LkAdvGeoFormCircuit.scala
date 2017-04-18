@@ -10,7 +10,6 @@ import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.geo.rad.RadAh
-import io.suggest.lk.adv.geo.a.mapf.MapCommonAh
 import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
 import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.m._
@@ -26,10 +25,11 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
-import MMap.MMapFastEq
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
+import io.suggest.maps.c.MapCommonAh
+import io.suggest.maps.m.MMapS
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -63,7 +63,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MFormInit](base64)
       // Собираем начальный инстанс MRoot на основе данных, переданных с сервера...
       MRoot(
-        mmap = MMap(
+        mmap = MMapS(
           props = mFormInit.form.mapProps
         ),
         other = MOther(

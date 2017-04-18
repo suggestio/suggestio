@@ -3,9 +3,8 @@ package io.suggest.lk.adv.geo.m
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
+import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup}
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.spa.DAction
-import io.suggest.sjs.leaflet.marker.Marker
 
 import scala.scalajs.js
 import scala.util.Try
@@ -17,11 +16,7 @@ import scala.util.Try
   * Description: Diode-экшены формы lk adv geo.
   */
 
-sealed trait IAdvGeoFormAction extends DAction
-
-/** Интерфейс для сообщений выставления центра. */
-sealed trait ISetMapCenter extends IAdvGeoFormAction with IGeoPointField
-sealed trait ISetMapCenterForPopup extends IAdvGeoFormAction with IGeoPointField
+sealed trait IAdvGeoFormAction extends IMapsAction
 
 
 /** Экшен успешно декодированного ответа на запрос попапа. */
@@ -46,10 +41,6 @@ case object RcvrMarkersInit extends IAdvGeoFormAction
 case class InstallRcvrMarkers(tryResp: Try[MMapGjResp]) extends IAdvGeoFormAction
 
 
-/** Экшен выставления центра карты на указанную гео-точку. */
-case class HandleLocationFound(override val geoPoint: MGeoPoint) extends ISetMapCenter
-
-
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */
 case object CurrGeoAdvsInit extends IAdvGeoFormAction
 /** Выставить указанные данные размещения в состояние. */
@@ -63,10 +54,6 @@ case class OpenAdvGeoExistPopup(itemId: Double, geoPoint: MGeoPoint) extends ISe
 case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvExistPopupResp)
   extends IAdvGeoFormAction
 
-
-sealed trait IHandlePopupClose extends IAdvGeoFormAction
-/** Команда среагировать на сокрытие произвольного попапа карты на стороне leaflet. */
-case object HandlePopupClose extends IHandlePopupClose
 
 
 // Rad-события для маркера центра круга

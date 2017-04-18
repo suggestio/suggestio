@@ -2,9 +2,9 @@ package io.suggest.lk.adv.geo.r.geo.rad
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
-import io.suggest.lk.adv.geo.a._
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
+import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
@@ -69,7 +69,7 @@ object RadR {
       val latLng = e.target
         .asInstanceOf[Marker]
         .getLatLng()
-      val mgp = LkAdvGeoFormUtil.latLng2geoPoint( latLng )
+      val mgp = MapsUtil.latLng2geoPoint( latLng )
       $.props >>= { p =>
         p.dispatchCB( msg(mgp) )
       }
@@ -96,7 +96,7 @@ object RadR {
     def render(p: Props, s: State): ReactElement = {
       for ( v <- p() ) yield {
 
-        val centerLatLng = LkAdvGeoFormUtil.geoPoint2LatLng {
+        val centerLatLng = MapsUtil.geoPoint2LatLng {
           v.state.centerDragging
             .getOrElse( v.circle.center )
         }
@@ -159,7 +159,7 @@ object RadR {
               if (v.state.centerDragging.isEmpty) {
                 MarkerR(
                   new MarkerPropsR {
-                    override val position    = LkAdvGeoFormUtil.geoPoint2LatLng {
+                    override val position    = MapsUtil.geoPoint2LatLng {
                       v.state.radiusMarkerCoords
                     }
                     override val draggable   = true

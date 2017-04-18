@@ -1,6 +1,5 @@
 package io.suggest.lk.adv.geo.u
 
-import io.suggest.common.spa.SpaConst.LkPreLoader
 import io.suggest.geo.{GeoConstants, MGeoCircle, MGeoPoint}
 import io.suggest.lk.adv.geo.m.MMapGjFeature
 import io.suggest.maps.c.LeafletPinMarker
@@ -11,8 +10,6 @@ import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.lk.adv.geo.m.MarkerNodeId._
 import io.suggest.lk.adv.geo.vm.rad.RadiusMarkerIcon
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.model.loc.MGeoPointJs
-import io.suggest.sjs.leaflet.map.LatLng
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -25,38 +22,10 @@ import scala.scalajs.js.JSConverters._
   */
 object LkAdvGeoFormUtil extends LeafletPinMarker {
 
-  /** Конверсия L.LatLng в MGeoPoint. */
-  def latLng2geoPoint(ll: LatLng): MGeoPoint = {
-    MGeoPoint(
-      lat = ll.lat,
-      lon = ll.lng
-    )
-  }
-
-  /** Конверсия MGeoPoint в L.LatLng. */
-  def geoPoint2LatLng(gp: MGeoPoint): LatLng = {
-    Leaflet.latLng( MGeoPointJs.toLatLngArray(gp) )
-  }
-
   /** Сборка данных для иконки маркера радиуса круга. */
   def radiusMarkerIcon(): Icon = {
     val o = _markerIconBase(RadiusMarkerIcon)
     Leaflet.icon(o)
-  }
-
-  def pendingIcon(url: String, sidePx: Int = LkPreLoader.WIDTH_PX): Icon = {
-    val io = IconOptions.empty
-    io.iconUrl = url
-    io.iconSize = Leaflet.point(x = sidePx, y = sidePx)
-    val center = sidePx/2
-    io.iconAnchor = Leaflet.point(x = center, y = center)
-    Leaflet.icon(io)
-  }
-
-  /** Посчитать расстояние между двумя точками. */
-  def distanceBetween(gp0: MGeoPoint, gp1: MGeoPoint): Double = {
-    geoPoint2LatLng(gp0)
-      .distanceTo( geoPoint2LatLng(gp1) )
   }
 
 

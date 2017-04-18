@@ -66,6 +66,12 @@ object Css {
     def LK_FIELD = PREFIX + "field"
     def LK_FIELD_NAME = LK_FIELD + __ + NAME
 
+
+    object Maps {
+      def MAP_CONTAINER = "radmap-" + _CONTAINER
+    }
+
+
     object Adv {
       def FORM_PREFIX = "adv-management"
       def FORM_OUTER_DIV = FORM_PREFIX
@@ -73,7 +79,6 @@ object Css {
       def LEFT_BAR  = FORM_PREFIX + "_left-bar"
 
       object Geo {
-        def MAP_CONTAINER = "radmap-" + _CONTAINER
         def RCVR_POPUP = "rcvr-pop"
         def NODE_NAME_CONT = _NODENAME_
       }

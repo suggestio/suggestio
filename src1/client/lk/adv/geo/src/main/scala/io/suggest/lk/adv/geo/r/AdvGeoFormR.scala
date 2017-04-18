@@ -3,33 +3,28 @@ package io.suggest.lk.adv.geo.r
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.IPriceDslTerm
-import io.suggest.common.maps.leaflet.LeafletConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.bill.ItemsPricesR
 import io.suggest.lk.adv.geo.r.geo.MapInitFailR
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
 import io.suggest.lk.adv.geo.r.geo.rad.{RadEnabledR, RadR}
-import io.suggest.lk.adv.geo.r.mapf.AdvGeoMapR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
 import io.suggest.lk.adv.r.Adv4FreeR
 import io.suggest.lk.tags.edit.r.TagsEditR
+import io.suggest.maps.m.MMapS
+import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.dt.period.r._
 import io.suggest.sjs.leaflet.marker.Marker
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR
-import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -43,11 +38,11 @@ import scala.scalajs.js.UndefOr
   *
   * Этот react-компонент формы должен подключаться в diode circuit через wrap().
   */
-object AdvGeoFormR extends Log {
+object AdvGeoFormR {
 
   // Без пинка, FastEq не подцеплялись к работе и вызывали лишней re-render внутри коннекшенов.
   import MRcvr.MRcvrFastEq
-  import MMap.MMapFastEq
+  import MMapS.MMapSFastEq
   import MGeoAdvs.MGeoAdvsFastEq
   import MRad.MRadFastEq
   import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
@@ -66,7 +61,7 @@ object AdvGeoFormR extends Log {
                               onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
                               rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
                               rcvrPopupConn       : ReactConnectProxy[MRcvr],
-                              mmapConn            : ReactConnectProxy[MMap],
+                              mmapConn            : ReactConnectProxy[MMapS],
                               geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
                               geoAdvConn          : ReactConnectProxy[MGeoAdvs],
                               mRadOptConn         : ReactConnectProxy[Option[MRad]],
@@ -75,26 +70,6 @@ object AdvGeoFormR extends Log {
                               mDocConn            : ReactConnectProxy[MDocS]
                             )
 
-
-  /** Константный инстанс TileLayer компонента лежит в памяти отдельно, т.к. никаких изменений в нём не требуется. */
-  private val _tileLayerU = {
-    TileLayerR(
-      new TileLayerPropsR {
-        override val url           = LeafletConstants.Tiles.URL_OSM_DFLT
-
-        override val detectRetina: UndefOr[Boolean] = {
-          WindowVm().devicePixelRatio.fold {
-            LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
-            false
-          } { pxRatio =>
-            pxRatio >= 1.4
-          }
-        }
-
-        override val attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
-      }
-    )()
-  }
 
   /** Класс для компонента формы. */
   protected class Backend($: BackendScope[Props, _]) {
@@ -146,10 +121,10 @@ object AdvGeoFormR extends Log {
 
         // Рендер географической карты:
         s.mmapConn { mapProps =>
-          AdvGeoMapR(mapProps)(
+          LGeoMapR(mapProps)(
 
             // Рендерим основную плитку карты.
-            _tileLayerU,
+            ReactLeafletUtil.Tiles.OsmDefault,
 
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),

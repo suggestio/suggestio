@@ -1,8 +1,8 @@
-package io.suggest.lk.adv.geo.a.mapf
+package io.suggest.maps.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.geo.IGeoPointField
-import io.suggest.lk.adv.geo.m._
+import io.suggest.maps.m._
 
 /**
   * Suggest.io
@@ -11,9 +11,9 @@ import io.suggest.lk.adv.geo.m._
   * Description: Diode action handler для экшенов очень общих воздействий на геокарту формы.
   * Экшены вызываются параллельно с остальными экшенами, т.к. эти common-экшены носят интерфейсный характер.
   */
-class MapCommonAh[M](mmapRW: ModelRW[M, MMap]) extends ActionHandler(mmapRW) {
+class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
 
-  private def _setMapCenter(ismc: IGeoPointField, v0: MMap = value) = {
+  private def _setMapCenter(ismc: IGeoPointField, v0: MMapS = value) = {
     val v2 = v0.withProps(
       v0.props.withCenter(
         ismc.geoPoint
@@ -40,7 +40,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMap]) extends ActionHandler(mmapRW) {
       _setMapCenter(ismc)
 
     // Сигнал сокрытия попапа на карте Leaflet.
-    case _: IHandlePopupClose =>
+    case _: IHandleMapPopupClose =>
       // Почему-то бывает, что сообщение о закрытие попапа приходят дважды.
       noChange
   }
