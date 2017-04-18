@@ -25,6 +25,7 @@ import util.i18n.JsMessagesUtil
 import util.img.{DynImgUtil, GalleryUtil}
 import util.jsa.init.ITargets
 import util.n2u.N2NodesUtil
+import util.support.SupportUtil
 
 import scala.util.matching.Regex
 
@@ -321,6 +322,7 @@ class ContextApi @Inject() (
   val n2NodesUtil         : N2NodesUtil,
   val mSuperUsers         : MSuperUsers,
   val jsMessagesUtil      : JsMessagesUtil,
+  val supportUtil         : SupportUtil,
   override implicit val current: Application
 )
   extends ICurrentAppHelpers

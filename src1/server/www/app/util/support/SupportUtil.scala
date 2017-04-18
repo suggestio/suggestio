@@ -11,7 +11,14 @@ import play.api.Configuration
  */
 class SupportUtil @Inject() (configuration: Configuration) {
 
-  val FEEDBACK_RCVR_EMAILS = configuration.getStringSeq("feedback.send.to.emails")
-    .getOrElse(Seq("support@suggest.io"))
+  /** Адреса email, на которые будет отправлено сообщение от юзера.
+    *
+    * 2017.apr.18: Первый в списке мыльник будет отображаться на странице /lk/support,
+    * поэтому на продакшене первый мыльник должен быть 100% публичным. См. [[views.html.lk.support.supportFormTpl]].
+    */
+  val FEEDBACK_RCVR_EMAILS: Seq[String] = {
+    configuration.getStringSeq("feedback.send.to.emails")
+      .getOrElse( "support@suggest.io" :: Nil )
+  }
 
 }

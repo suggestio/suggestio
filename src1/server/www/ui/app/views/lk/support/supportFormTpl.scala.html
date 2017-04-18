@@ -6,6 +6,7 @@
 @import io.suggest.vlines.VLines._
 @import io.suggest.i18n.MsgCodes
 @import mhelp.MRightLinks
+@import io.suggest.css.Css
 
 
 @supportBase(
@@ -47,11 +48,18 @@
     <div class="btn-w __size-M __align-by-inputs">
       <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">@messages( MsgCodes.`Send` )</a>
 
-      <div class="border-line __vertical-light __separator f-left @JSVL_CLASS" @INHERNIT_HEIGHT_ATTR="@INHERNIT_HEIGHT_ENABLED"></div>
-      <div class="color-strong f-left feedback_phone-text">
-        @messages( MsgCodes.`Or.contact.us.via.phone` ):<br/>
-        <strong class="ft-M">8 (812) 640-76-46</strong>
-      </div>
+      @for( email <- ctx.api.supportUtil.FEEDBACK_RCVR_EMAILS.headOption ) {
+        <div class="border-line __vertical-light __separator f-left @JSVL_CLASS" @INHERNIT_HEIGHT_ATTR="@INHERNIT_HEIGHT_ENABLED"></div>
+        <div class="color-strong f-left feedback_phone-text">
+        @messages( MsgCodes.`Or.contact.us.via.email` ):
+          <br/>
+          <strong class="ft-M">
+            <a class="@Css.Lk.BLUE_LINK" href="mailto:@email">
+              @email
+            </a>
+          </strong>
+        </div>
+      }
 
     </div>
   }

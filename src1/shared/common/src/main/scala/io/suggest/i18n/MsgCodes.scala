@@ -89,7 +89,7 @@ object MsgCodes {
   val `Company.about` = "Company.about"
   val `Support.service` = "Support.service"
   val `Describe.problem` = "Describe.problem"
-  val `Or.contact.us.via.phone` = "Or.contact.us.via.phone"
+  val `Or.contact.us.via.email` = "Or.contact.us.via.email"
 
   val `OGRN` = "OGRN"
   val `Organization.name` = "Organization.name"
