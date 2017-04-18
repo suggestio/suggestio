@@ -390,7 +390,9 @@ class SysMarket @Inject() (
                   edges = mnode0.edges.copy(
                     out = {
                       val ownEdge = MEdge(
-                        predicate = MPredicates.OwnedBy,
+                        // OwnedBy вешать НЕЛЬЗЯ, т.к. это вызывает недопонимание у суперюзеров (человеческий фактор).
+                        // Например, цена начинает считаться по нулям у суперюзера даже при отключении соотв. галочки su free.
+                        predicate = MPredicates.CreatedBy,
                         nodeIds   = request.user.personIdOpt.toSet
                       )
                       MNodeEdges.edgesToMap(ownEdge)

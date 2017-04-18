@@ -124,24 +124,6 @@ class Bill2Util @Inject() (
   }
 
 
-  /** Сколько бабла списывать с баланса юзера по указанному item'у?
-    *
-    * @param iType Обрабатываемый тип item'а.
-    * @param amount0 Исходное значение price amount данного item'а.
-    * @return mitem.amount обычно.
-    *         Но бывает и -mitem.amount, если
-    */
-  private def userBalanceWithdrawAmount( iType: MItemType, amount0: Amount_t ): Amount_t = {
-    if (iType.isDebt) {
-      // Юзер что-то оплачивает. Это нормально.
-      amount0
-    } else {
-      // Юзер заливает деньги себе на счёт.
-      -amount0
-    }
-  }
-
-
   /** Посчитать кол-во дней размещения для указанного Duration. */
   def getDaysCount(dur: Duration): Int = {
     _getDaysCountFix( dur.toDays.toInt )
@@ -640,16 +622,41 @@ class Bill2Util @Inject() (
         val acc9 = owi.mitems
           .foldLeft( Acc() ) { (acc0, mitem) =>
             val balOpt0 = acc0.balsMap.get( mitem.price.currency )
+
+            // Some(acc2) || None, если недостаточно средств на балансе.
             val acc2Opt = for {
               bal0          <- balOpt0
+              isDebt         = mitem.iType.isDebt
+              // itemAmount может быть отрицательный, если просто пополнение счёта.
               itemAmount     = mitem.price.amount
-              balAmount2     = bal0.price.amount - itemAmount
-              if balAmount2 >= bal0.low
-            } yield {
-              val bal2 = bal0.blockAmount( itemAmount )
-              val mitem2 = mitem.withStatus( orderClosedItemStatus(mitem.iType) )
-              LOGGER.trace(s"$logPrefix Enought money for item ${mitem2.id.orNull} on balance ${bal2.id.orNull}. Blocked $itemAmount, new balance: $bal2")
+              if {
+                // Кредитование (отрицательное списание) баланса всегда возможно.
+                !isDebt || {
+                  // Положительное списание с баланса -- только если денег на балансе достаточно.
+                  val balAmount2 = bal0.price.amount - itemAmount
+                  balAmount2 >= bal0.low
+                }
+              }
 
+            } yield {
+
+              // Обновить баланс юзера в текущей валюте.
+              val bal2 = if (isDebt) {
+                // Это обычное списание с баланса (дебет).
+                val b2 = bal0.blockAmount( itemAmount )
+                LOGGER.trace(s"$logPrefix Enought money for item ${mitem.id.orNull} on balance ${b2.id.orNull}. Blocked $itemAmount, new balance: $b2")
+                b2
+              } else {
+                // Это пополнение баланса юзером (крЕдит) вместо покупки чего-либо.
+                val b2 = bal0.plusAmount( itemAmount )
+                LOGGER.trace(s"$logPrefix Crediting balance for item${mitem.id.orNull} by $itemAmount. New balance#${b2.id.orNull} = ${b2.price}")
+                b2
+              }
+
+              // Обновить статус item'а.
+              val mitem2 = mitem.withStatus( orderClosedItemStatus(mitem.iType) )
+
+              // Сохранить обновлённый статус item'а, убедившись, что item действительно сейчас есть в таблице.
               val itmUpdDbAct = for {
                 itemsUpdated <- mItems.updateStatus(mitem2)
                 if itemsUpdated == 1

@@ -80,8 +80,8 @@ class SysMarketUtil extends MacroLogsDyn {
       acc.toSet
     }
     {rights =>
-      val isProd = rights contains PRODUCER
-      val isRcvr = rights contains RECEIVER
+      val isProd = rights.contains( PRODUCER )
+      val isRcvr = rights.contains( RECEIVER )
       Some((isProd, isRcvr))
     }
   }

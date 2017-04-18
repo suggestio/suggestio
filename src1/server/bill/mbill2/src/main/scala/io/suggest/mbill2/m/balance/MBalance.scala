@@ -213,9 +213,13 @@ case class MBalance(
 
   override def currency = price.currency
 
-  def withPriceBlocked(price2: MPrice, blocked2: Amount_t) = copy(
+  def withPriceBlocked(price2: MPrice, blocked2: Amount_t = blocked) = copy(
     price   = price2,
     blocked = blocked2
+  )
+
+  def plusAmount(amount: Amount_t) = withPriceBlocked(
+    price2 = price.plusAmount(amount)
   )
 
   def unblockAmount(amount2: Amount_t) = withPriceBlocked(
