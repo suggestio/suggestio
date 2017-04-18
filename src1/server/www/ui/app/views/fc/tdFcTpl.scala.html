@@ -28,9 +28,10 @@
 
       <td class="input-w_left">
         <label class="input-w_prop-name" for="@elements.id">@elements.label
-          @if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
-          <span class="required-icon">*</span>
-          }
+          @* Почему-то оно очень рандомное, местами вообще наоборот работает. *@
+          @*if(elements.field.constraints.exists { _._1 == "constraint.required" }) {
+            <span class="required-icon">*</span>
+          }*@
         </label>
       </td>
 

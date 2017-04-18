@@ -16,6 +16,7 @@ import util.mail.IMailerWrapper
 import util.support.SupportUtil
 import util.FormUtil
 import views.html.lk.support._
+import views.txt.lk.support.emailSupportRequestedTpl
 
 import scala.concurrent.Future
 
@@ -30,6 +31,7 @@ class LkHelp @Inject()(
                                   identUtil                       : IdentUtil,
                                   mPersonIdents                   : MPersonIdents,
                                   supportUtil                     : SupportUtil,
+                                  bruteForceProtect               : BruteForceProtect,
                                   isAuth                          : IsAuth,
                                   isNodeAdmin                     : IsNodeAdmin,
                                   override val mCommonDi          : ICommonDi
@@ -78,8 +80,10 @@ class LkHelp @Inject()(
     * @param r Адрес для возврата.
    * @return 200 Ok и страница с формой.
    */
-  def supportForm(r: Option[String]) = isAuth().async { implicit request =>
-    _supportForm(None, r)
+  def supportForm(r: Option[String]) = csrf.AddToken {
+    isAuth().async { implicit request =>
+      _supportForm(None, r)
+    }
   }
 
   private def _supportForm(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
@@ -87,12 +91,12 @@ class LkHelp @Inject()(
     val emailsDfltFut = request.user
       .personIdOpt
       .fold [Future[Seq[String]]] {
-        Future successful Nil
+        Future.successful( Nil )
       } { personId =>
         mPersonIdents.findAllEmails(personId)
       }
     emailsDfltFut.flatMap { emailsDflt =>
-      val emailDflt = emailsDflt.headOption getOrElse ""
+      val emailDflt = emailsDflt.headOption.getOrElse("")
       val lsr = MLkSupportRequest(name = None, replyEmail = emailDflt, msg = "")
       val form = supportFormM.fill(lsr)
 
@@ -109,15 +113,21 @@ class LkHelp @Inject()(
 
   /** Сабмит формы обращения за помощью по узлу, которым управляем. */
   def supportFormNodeSubmit(adnId: String, r: Option[String]) = csrf.Check {
-    isNodeAdmin(adnId).async { implicit request =>
-      val mnodeOpt = Some(request.mnode)
-      _supportFormSubmit(mnodeOpt, r)
+    bruteForceProtect {
+      isNodeAdmin(adnId).async { implicit request =>
+        val mnodeOpt = Some(request.mnode)
+        _supportFormSubmit(mnodeOpt, r)
+      }
     }
   }
 
   /** Сабмит формы обращения за помощью вне узла. */
-  def supportFormSubmit(r: Option[String]) = isAuth().async { implicit request =>
-    _supportFormSubmit(None, r)
+  def supportFormSubmit(r: Option[String]) = csrf.Check {
+    bruteForceProtect {
+      isAuth().async { implicit request =>
+        _supportFormSubmit(None, r)
+      }
+    }
   }
 
   private def _supportFormSubmit(nodeOpt: Option[MNode], r: Option[String])(implicit request: IReq[_]): Future[Result] = {
@@ -146,7 +156,7 @@ class LkHelp @Inject()(
             msg.setSubject("S.io Market: Вопрос от пользователя " + lsr.name.orElse(ues.headOption).getOrElse(""))
             msg.setText {
               htmlCompressUtil.txt2str {
-                views.txt.lk.support.emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
+                emailSupportRequestedTpl(username, lsr, adnIdOpt, r = r)
               }
             }
             msg.send()
@@ -232,24 +242,21 @@ class LkHelp @Inject()(
     *
     * @return Страница с инфой о компании.
     */
-  def companyAbout(onNodeId: Option[String]) = {
-    val ab = onNodeId.fold[ActionBuilder[IReq]]( isAuth() )( isNodeAdmin(_) )
-
-    csrf.AddToken {
-      ab { implicit request =>
-        val mnodeOpt = request match {
-          case nreq: INodeReq[_] =>
-            Some(nreq.mnode)
-          case _ =>
-            None
-        }
-
-        val html = companyAboutTpl(
-          nodeOpt = mnodeOpt
-        )
-        Ok(html)
-          .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+  def companyAbout(onNodeId: Option[String]) = csrf.AddToken {
+    val actionBuilder = onNodeId.fold[ActionBuilder[IReq]]( isAuth() )( isNodeAdmin(_) )
+    actionBuilder { implicit request =>
+      val mnodeOpt = request match {
+        case nreq: INodeReq[_] =>
+          Some(nreq.mnode)
+        case _ =>
+          None
       }
+
+      val html = companyAboutTpl(
+        nodeOpt = mnodeOpt
+      )
+      Ok(html)
+        .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
     }
   }
 
