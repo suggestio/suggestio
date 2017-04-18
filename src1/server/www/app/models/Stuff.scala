@@ -10,15 +10,6 @@ import play.twirl.api.Html
  * Description: Моделе-подобное барахло, которые в основном нужно для шаблонов.
  */
 
-/** Экземпляр запроса помощи через обратную связь в ЛК. */
-case class MLkSupportRequest(
-  name        : Option[String],
-  replyEmail  : String,
-  msg         : String,
-  phoneOpt    : Option[String] = None
-)
-
-
 
 /** Enum для задания параметра подсветки текущей ссылки на правой панели личного кабинета узла. */
 object NodeRightPanelLinks extends Enumeration {

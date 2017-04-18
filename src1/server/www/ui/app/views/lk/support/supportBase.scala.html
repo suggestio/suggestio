@@ -1,10 +1,41 @@
-@(title: String, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None, r: Option[String] = None)(content: Html)(implicit ctx: Context)
+@(title: String, rightLink: mhelp.MRightLink, nodeOpt: Option[MNode] = None, headAfter: Option[Html] = None)(content: Html)(implicit ctx: Context)
 
 @* Шаблон-подложка для шаблонов саппорта в ЛК. *@
+
+@import lk.right._
+@import ctx.messages
+@import util.tpl.CssFormat._
+@import io.suggest.i18n.MsgCodes
+@import mhelp.MRightLinks
+
+@* Правая панель живёт прямо здесь. *@
+@rightBar = {
+  @defining( nodeOpt.flatMap(_.id) ) { nodeIdOpt =>
+    @_navTpl() {
+
+      @* Ссылка на страницу с криком о помощи. *@
+      @_navItemTpl(
+        title = messages( MsgCodes.`Support.request` ),
+        href  = Some( ctx.supportFormCall( nodeIdOpt ) ),
+        css   = classesAct( rightLink == MRightLinks.Support )
+      )
+
+      @* Ссылка на страницу "О компании" *@
+      @_navItemTpl(
+        title = messages( MsgCodes.`Company.about` ),
+        href  = Some( routes.LkHelp.companyAbout(nodeIdOpt) ),
+        css   = classesAct( rightLink == MRightLinks.CompanyAbout )
+      )
+
+    }
+  }
+}
+
 
 @lk.lkBaseLayout(
   title         = title,
   headAfter     = headAfter,
   nodeOpt       = nodeOpt,
-  leftCurrEl    = Some(LkLeftPanelLinks.LPL_SUPPORT)
+  leftCurrEl    = Some( LkLeftPanelLinks.LPL_SUPPORT ),
+  rightBar      = Some( rightBar )
 )(content)

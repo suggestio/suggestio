@@ -1,4 +1,4 @@
-@(userName: String, lsr: MLkSupportRequest, adnIdOpt: Option[String], r: Option[String])(implicit ctx: Context)
+@(userName: String, lsr: mhelp.MLkSupportRequest, adnIdOpt: Option[String], r: Option[String])(implicit ctx: Context)
 
 @import ctx.api.ctxUtil
 

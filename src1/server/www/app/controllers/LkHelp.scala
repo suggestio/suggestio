@@ -3,12 +3,13 @@ package controllers
 import com.google.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
 import models._
+import models.mhelp.MLkSupportRequest
 import models.mproj.ICommonDi
-import models.req.{IReq, IReqHdr}
+import models.req.{INodeReq, IReq, IReqHdr}
 import models.usr.MPersonIdents
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.Result
+import play.api.mvc.{ActionBuilder, Result}
 import util.acl._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -24,7 +25,7 @@ import scala.concurrent.Future
  * Created: 04.08.14 14:39
  * Description: Контроллер для обратной связи с техподдержкой s.io в личном кабинете узла.
  */
-class MarketLkSupport @Inject() (
+class LkHelp @Inject()(
                                   mailer                          : IMailerWrapper,
                                   identUtil                       : IdentUtil,
                                   mPersonIdents                   : MPersonIdents,
@@ -210,7 +211,7 @@ class MarketLkSupport @Inject() (
                 msg.setReplyTo(emailOpt.get)
               msg.setHtml {
                 htmlCompressUtil.html4email {
-                  views.html.lk.support.emailGeoNodeRequestTpl(emails, mnode, text)
+                  emailGeoNodeRequestTpl(emails, mnode, text)
                 }
               }
               msg.send()
@@ -223,6 +224,32 @@ class MarketLkSupport @Inject() (
           }
         }
       )
+    }
+  }
+
+
+  /** Страница "О компании" с какими-то данными юр.лица.
+    *
+    * @return Страница с инфой о компании.
+    */
+  def companyAbout(onNodeId: Option[String]) = {
+    val ab = onNodeId.fold[ActionBuilder[IReq]]( isAuth() )( isNodeAdmin(_) )
+
+    csrf.AddToken {
+      ab { implicit request =>
+        val mnodeOpt = request match {
+          case nreq: INodeReq[_] =>
+            Some(nreq.mnode)
+          case _ =>
+            None
+        }
+
+        val html = companyAboutTpl(
+          nodeOpt = mnodeOpt
+        )
+        Ok(html)
+          .withHeaders(CACHE_CONTROL -> "public, max-age=3600")
+      }
     }
   }
 

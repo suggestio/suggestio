@@ -1,0 +1,127 @@
+@(nodeOpt: Option[MNode])(implicit ctx: Context)
+
+@* Шаблон страницы "О компании". *@
+
+@import ctx.messages
+@import io.suggest.css.Css
+@import io.suggest.i18n.MsgCodes
+@import mhelp.MRightLinks
+
+@__cell(css: String = "")(content: Html) = {
+  <td class="@Css.Table.Td.TD @Css.Size.M @css">
+    @content
+  </td>
+}
+
+@__key()(content: Html) = {
+  @__cell( Css.Table.Td.GRAY )(content)
+}
+
+@__value()(content: Html) = {
+  @__cell( Css.Table.Td.WHITE )(content)
+}
+
+
+@supportBase(
+  title     = messages( MsgCodes.`Company.about` ),
+  rightLink = MRightLinks.CompanyAbout,
+  nodeOpt   = nodeOpt
+) {
+
+  <table class="@Css.Table.TABLE @Css.Table.Width.XL">
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Organization.name` )
+      }
+      @__value() {
+        <strong>
+          @messages( MsgCodes.`_Cbca.name.full_` )
+        </strong>
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Legal.address` )
+      }
+      @__value() {
+        @messages( MsgCodes.`_Cbca.address.legal_` )
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Mail.address` )
+      }
+      @__value() {
+        @messages( MsgCodes.`_Cbca.address.mail_` )
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`INN` )
+      }
+      @__value() {
+        7801307156
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`KPP` )
+      }
+      @__value() {
+        780101001
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`OGRN` )
+      }
+      @__value() {
+        1167847188794
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Checking.account` )
+      }
+      @__value() {
+        40702810032230001633
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Correspondent.account` )
+      }
+      @__value() {
+        30101810600000000786
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Bank` )
+      }
+      @__value() {
+        @messages( MsgCodes.`_Cbca.bank.name_` )
+      }
+    </tr>
+
+    <tr>
+      @__key() {
+        @messages( MsgCodes.`Bank.BIK` )
+      }
+      @__value() {
+        044030786
+      }
+    </tr>
+
+  </table>
+
+}

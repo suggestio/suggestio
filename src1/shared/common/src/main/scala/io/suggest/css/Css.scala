@@ -123,6 +123,8 @@ object Css {
         def LEFT_BAR = PREFIX + BAR_SUFFIX
       }
 
+      def ACT = __ + "act"
+
     }
 
 
@@ -188,6 +190,8 @@ object Css {
     object BxSlider {
       def JS_PHOTO_SLIDER = "js-photo-slider"
     }
+
+
 
   }
 

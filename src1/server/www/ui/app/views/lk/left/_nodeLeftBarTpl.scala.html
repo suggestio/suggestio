@@ -6,31 +6,32 @@
 @import LkLeftPanelLinks._
 @import util.tpl.CssFormat._
 
-@_leftBarTpl() {
+@__topItems = {
+
   @for(nodeId <- nodeIdOpt) {
 
     @_leftBarItemTpl(
       title = messages("Ad.cards"),
       href  = routes.MarketLkAdn.showNodeAds(nodeId),
-      css   = classesAct(leftCurrEl contains LPL_ADS, "__cards")
+      css   = classesAct(leftCurrEl.contains(LPL_ADS), "__cards")
     )()
 
     @_leftBarItemTpl(
       title = messages("Profile"),
       href  = routes.MarketLkAdn.showAdnNode(nodeId),
-      css   = classesAct(leftCurrEl contains LPL_NODE, "__profile")
+      css   = classesAct(leftCurrEl.contains(LPL_NODE), "__profile")
     )()
 
     @_leftBarItemTpl(
       title = messages("Billing"),
       href  = routes.LkBill2.onNode(nodeId),
-      css   = classesAct(leftCurrEl contains LPL_BILLING, "__billing")
+      css   = classesAct(leftCurrEl.contains(LPL_BILLING), "__billing")
     )()
 
     @_leftBarItemTpl(
       title = messages("Events"),
       href  = routes.LkEvents.nodeIndex(nodeId),
-      css   = classesAct(leftCurrEl contains LPL_EVENTS, "__events")
+      css   = classesAct(leftCurrEl.contains(LPL_EVENTS), "__events")
     ) {
       @* Заметный кружок с кол-вом непрочитанных сообщений. *@
       @for( cnt <- ctx.data.evtsCount) {
@@ -41,4 +42,30 @@
     }
 
   } @* nodeId *@
-} @* leftBar *@
+
+}
+
+
+<aside class="left-bar">
+
+  @* Верняя часть bar'а. *@
+  <nav class="left-bar_menu">
+    @__topItems
+  </nav>
+
+  @* Кнопки внизу bar'а. *@
+  <div class="left-bar_bottom">
+
+    @if(ctx.user.isAuth) {
+      <a class="left-bar_exit js-btn" href="#logoutPopup">@messages("Logout")</a>
+      <hr class="delimiter"/>
+    }
+
+    <a href="@ctx.supportFormCall(nodeIdOpt)"
+       class="@classesPreSpaced( classesAct(leftCurrEl.contains(LPL_SUPPORT), "left-bar_help") )">
+      @messages("Help")
+    </a>
+
+  </div>
+
+</aside>

@@ -1,27 +1,32 @@
 @(nodeOpt: Option[MNode], sf: Form[_], r: Option[String])(implicit ctx: Context)
 
 @import helper._
-@import ctx._
+@import ctx.{messages, request}
 @import util.FC.tdFc
 @import io.suggest.vlines.VLines._
+@import io.suggest.i18n.MsgCodes
+@import mhelp.MRightLinks
 
 
-@supportBase("СЛУЖБА ПОДДЕРЖКИ", nodeOpt = nodeOpt, r = ctx.r) {
+@supportBase(
+  title     = messages( MsgCodes.`Support.service` ),
+  rightLink = MRightLinks.Support,
+  nodeOpt   = nodeOpt
+) {
 
-
-  @form(CSRF( ctx.supportFormCall(nodeOpt.flatMap(_.id)) )) {
+  @form(CSRF( nodeOpt.flatMap(_.id).fold( routes.LkHelp.supportFormSubmit(r) )(routes.LkHelp.supportFormNodeSubmit(_, r)) )) {
 
     <table class="input-w __size-L">
       @inputText(
-      sf("name"),
-      '_label -> (messages("your_name") + ":")
+        sf("name"),
+        '_label -> (messages( MsgCodes.`Your.name` ) + ":")
       )
     </table>
 
     <table class="input-w __size-L">
       @inputText(
         sf("phone"),
-        '_label -> (messages("Phone") + ":")
+        '_label -> (messages( MsgCodes.`Phone` ) + ":")
       )
     </table>
 
@@ -35,16 +40,16 @@
     <table class="input-w __size-L">
       @textarea(
         sf("msg"),
-         '_label -> "Опишите проблему:"
+         '_label -> (messages( MsgCodes.`Describe.problem` ) + ":")
       )
     </table>
 
     <div class="btn-w __size-M __align-by-inputs">
-      <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">Отправить</a>
+      <a class="siom-ac-btn __color-2 __size-M __ft-XM f-left js-submit-btn">@messages( MsgCodes.`Send` )</a>
 
       <div class="border-line __vertical-light __separator f-left @JSVL_CLASS" @INHERNIT_HEIGHT_ATTR="@INHERNIT_HEIGHT_ENABLED"></div>
       <div class="color-strong f-left feedback_phone-text">
-        Или свяжитесь с нами по телефону:<br/>
+        @messages( MsgCodes.`Or.contact.us.via.phone` ):<br/>
         <strong class="ft-M">8 (812) 640-76-46</strong>
       </div>
 

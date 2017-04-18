@@ -23,6 +23,7 @@ object MsgCodes {
   val `Show.details` = "Show.details"
   val `Information` = "Information"
   val `N.modules` = "N.modules"
+  val `Send` = "Send"
 
   val `Add` = "Add"
   val `Error` = "Error"
@@ -83,5 +84,29 @@ object MsgCodes {
   val `Geo.circle.does.not.touch.any.nodes` = "Geo.circle.does.not.touch.any.nodes"
   val `Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons` = "Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons"
   val `Adv.geo.form.descr.price` = "Adv.geo.form.descr.price"
+
+  val `Support.request` = "Support.request"
+  val `Company.about` = "Company.about"
+  val `Support.service` = "Support.service"
+  val `Describe.problem` = "Describe.problem"
+  val `Or.contact.us.via.phone` = "Or.contact.us.via.phone"
+
+  val `OGRN` = "OGRN"
+  val `Organization.name` = "Organization.name"
+  val `_Cbca.name.full_` = "_Cbca.name.full_"
+  val `INN` = "INN"
+  val `KPP` = "KPP"
+  val `Bank` = "Bank"
+  val `_Cbca.bank.name_` = "_Cbca.bank.name_"
+  val `Bank.BIK` = "Bank.BIK"
+  val `Checking.account` = "Checking.account"
+  val `Correspondent.account` = "Correspondent.account"
+  val `Legal.address` = "Legal.address"
+  val `_Cbca.address.legal_` = "_Cbca.address.legal_"
+  val `Mail.address` = "Mail.address"
+  val `_Cbca.address.mail_` = "_Cbca.address.mail_"
+
+  val `Your.name` = "Your.name"
+  val `Phone` = "Phone"
 
 }

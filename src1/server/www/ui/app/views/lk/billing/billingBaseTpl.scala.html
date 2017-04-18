@@ -12,6 +12,7 @@
 @rightBar = {
   @for(nodeId <- mnode.id) {
     @_navTpl() {
+
       @_navItemTpl(
         title = messages("Bill.account.and.tariffs"),
         href  = Some( routes.LkBill2.onNode(nodeId) ),
@@ -39,6 +40,7 @@
       @_navSysTpl(
         call  = routes.SysBilling.forNode(nodeId)
       )
+
     }
   }
 

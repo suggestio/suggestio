@@ -157,11 +157,12 @@ GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInvite
 POST /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptFormSubmit(adnId, eaId)
 
 ## Обращение в тех.поддерку зареганного клиента sio-market.
-GET  /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNode(adnId, r: Option[String] ?= None)
-POST /lk/support/:adnId                 @controllers.MarketLkSupport.supportFormNodeSubmit(adnId, r: Option[String] ?= None)
-GET  /support                           @controllers.MarketLkSupport.supportForm(r: Option[String] ?= None)
-POST /support                           @controllers.MarketLkSupport.supportFormSubmit(r: Option[String] ?= None)
-POST /support/geo/node/:adnId           @controllers.MarketLkSupport.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
+GET  /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNode(nodeId, r: Option[String] ?= None)
+POST /lk/h/support/at/:nodeId           @controllers.LkHelp.supportFormNodeSubmit(nodeId, r: Option[String] ?= None)
+GET  /lk/h/support                      @controllers.LkHelp.supportForm(r: Option[String] ?= None)
+POST /lk/h/support                      @controllers.LkHelp.supportFormSubmit(r: Option[String] ?= None)
+POST /lk/h/geo/node/:adnId              @controllers.LkHelp.askGeo4NodeSubmit(adnId, r: Option[String] ?= None)
+GET  /lk/h/about                        @controllers.LkHelp.companyAbout(nodeId: Option[String] ?= None)
 
 ## ЛК: нотификации (события)
 GET  /lk/events/node/:adnId             @controllers.LkEvents.nodeIndex(adnId, limit: Int ?= 7, offset: Int ?= 0, inline: Boolean ?= false)

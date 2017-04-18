@@ -1,5 +1,7 @@
 package util.tpl
 
+import io.suggest.css.Css
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -22,8 +24,10 @@ object CssFormat {
     * Используется при рендере панелей с текущим выбранным элементом панели. */
   def classesAct(isAct: Boolean, other: String*): Iterator[String] = {
     var i0 = other.iterator
+
     if (isAct)
-      i0 ++= Iterator("__act")
+      i0 ++= (Css.Lk.Bars.ACT :: Nil)
+
     i0
   }
 

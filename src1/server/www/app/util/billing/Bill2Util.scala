@@ -672,6 +672,7 @@ class Bill2Util @Inject() (
                 okItemsCount  = acc0.okItemsCount + 1
               )
             }
+
             // Отработать случай, когда недостаточно денег или когда баланса с деньгами вообще не существует.
             acc2Opt.getOrElse {
               LOGGER.warn(s"$logPrefix Not enought money for item ${mitem.id.orNull}, need ${mitem.price}, but only have ${balOpt0.orNull}")
