@@ -5,16 +5,14 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
-import io.suggest.lk.adv.geo.r.bill.ItemsPricesR
-import io.suggest.lk.adv.geo.r.geo.MapInitFailR
 import io.suggest.lk.adv.geo.r.geo.exist.{ExistPopupR, ExistShapesR}
 import io.suggest.lk.adv.geo.r.geo.rad.{RadEnabledR, RadR}
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
-import io.suggest.lk.adv.r.Adv4FreeR
+import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
 import io.suggest.maps.m.MMapS
-import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
+import io.suggest.maps.r.{LGeoMapR, MapInitFailR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.dt.period.r._
@@ -181,7 +179,7 @@ object AdvGeoFormR {
           p.zoom(mradOptZoomF),
           renderHintAsText = false
         ),
-        priceDslOptConn            = p.connect( _.bill.price.resp.toOption.flatMap(_.priceDsl) ),
+        priceDslOptConn     = p.connect( _.bill.price.respDslOpt ),
         mDocConn            = p.connect(_.other.doc)
       )
     }

@@ -10,11 +10,11 @@ import io.suggest.geo.MGeoPoint
   * Description: Модель состояния размещения узла на карте.
   */
 
-object MLamS {
+object MNodeMarkerS {
 
-  /** Поддержка FastEq для [[MLamS]]. */
-  implicit object MLamSFastEq extends FastEq[MLamS] {
-    override def eqv(a: MLamS, b: MLamS): Boolean = {
+  /** Поддержка FastEq для [[MNodeMarkerS]]. */
+  implicit object MNodeMarkerFastEq extends FastEq[MNodeMarkerS] {
+    override def eqv(a: MNodeMarkerS, b: MNodeMarkerS): Boolean = {
       a.center eq b.center
     }
   }
@@ -26,10 +26,10 @@ object MLamS {
   *
   * @param center Координаты маркера размещения узла.
   */
-case class MLamS(
-                  center: MGeoPoint
-                ) {
+case class MNodeMarkerS(
+                         center: MGeoPoint
+                       ) {
 
-  def withGeoPoint(center2: MGeoPoint) = copy(center = center2)
+  def withCenter(center2: MGeoPoint) = copy(center = center2)
 
 }

@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.r.geo
+package io.suggest.maps.r
 
 import diode.data.Pot
 import diode.react.ModelProxy

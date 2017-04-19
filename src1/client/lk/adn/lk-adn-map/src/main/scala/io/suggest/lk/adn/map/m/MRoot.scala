@@ -2,6 +2,8 @@ package io.suggest.lk.adn.map.m
 
 import diode.FastEq
 import io.suggest.adv.free.MAdv4Free
+import io.suggest.dt.MAdvPeriod
+import io.suggest.lk.adv.m.MPriceS
 import io.suggest.maps.m.MMapS
 
 /**
@@ -17,7 +19,8 @@ object MRoot {
     override def eqv(a: MRoot, b: MRoot): Boolean = {
       (a.map eq b.map) &&
         (a.lam eq b.lam) &&
-        (a.adv4free eq b.adv4free)
+        (a.adv4free eq b.adv4free) &&
+        (a.price eq b.price)
     }
   }
 
@@ -31,12 +34,16 @@ object MRoot {
   */
 case class MRoot(
                   map           : MMapS,
-                  lam           : MLamS,
-                  adv4free      : Option[MAdv4Free]
+                  lam           : MNodeMarkerS,
+                  adv4free      : Option[MAdv4Free],
+                  price         : MPriceS,
+                  datePeriod    : MAdvPeriod
                 ) {
 
   def withMap(map2: MMapS) = copy(map = map2)
-  def withLam(lam2: MLamS) = copy(lam = lam2)
+  def withLam(lam2: MNodeMarkerS) = copy(lam = lam2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
+  def withPrice(price2: MPriceS) = copy(price = price2)
+  def withDatePeriod(dp2: MAdvPeriod) = copy(datePeriod = dp2)
 
 }

@@ -1,15 +1,15 @@
-package io.suggest.lk.adv.geo.r.bill
+package io.suggest.lk.adv.r
 
 import diode.react.ModelProxy
 import io.suggest.bill.price.dsl.{BaseTfPrice, IPriceDslTerm, Mapper, Sum}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement, ReactNode}
 import io.suggest.i18n.MsgCodes
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.r.YmdR
+import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
+import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement, ReactNode}
 
 /**
   * Suggest.io

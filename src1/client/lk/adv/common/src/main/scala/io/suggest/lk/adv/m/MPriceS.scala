@@ -35,4 +35,6 @@ case class MPriceS(
 
   def withPriceResp(pr2: Pot[MGetPriceResp]) = copy(resp = pr2)
 
+  def respDslOpt = resp.toOption.flatMap(_.priceDsl)
+
 }
