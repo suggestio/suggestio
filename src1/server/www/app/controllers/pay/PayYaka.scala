@@ -93,7 +93,7 @@ class PayYaka @Inject() (
   /** Платеж через демо-кассу. */
   def demoPayForm(orderId: Gid_t, onNodeId: MEsUuId) = {
     val action = _payForm(yakaUtil.DEMO, orderId, onNodeId)
-    if (yakaUtil.TEST_PROFILE_ALLOWED_FOR_USERS) {
+    if (yakaUtil.DEMO_ALLOWED_FOR_ALL) {
       isNodeAdmin.A(onNodeId)(action)
     } else {
       isSuOrNotProduction(action)
@@ -101,7 +101,7 @@ class PayYaka @Inject() (
   }
 
   private def _demoActionBuilder(onNodeId: Option[String] = None): ActionBuilder[IReq] = {
-    if (yakaUtil.TEST_PROFILE_ALLOWED_FOR_USERS) {
+    if (yakaUtil.DEMO_ALLOWED_FOR_ALL) {
       onNodeId.fold[ActionBuilder[IReq]] {
         isAuth()
       } { nodeId =>
@@ -222,7 +222,11 @@ class PayYaka @Inject() (
 
   /** Сделать исключение, если не-суперюзер пытается платить через демокассу. */
   private def _assertDemoSu(profile: IYakaProfile, yReq: IYakaReq): Unit = {
-    if ( profile.isDemo && !mSuperUsers.isSuperuserId(yReq.personId) )
+    if (
+      !yakaUtil.DEMO_ALLOWED_FOR_ALL &&
+        profile.isDemo &&
+        !mSuperUsers.isSuperuserId(yReq.personId)
+    )
       throw new SecurityException(s"_assertDemoSu($profile): Non-SU user tried to pay via DEMOkassa.")
   }
 
