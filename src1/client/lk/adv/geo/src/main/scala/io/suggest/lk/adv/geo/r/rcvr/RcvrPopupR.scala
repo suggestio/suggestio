@@ -17,7 +17,7 @@ import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 import react.leaflet.popup.PopupR
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.maps.u.MapsUtil
+import io.suggest.maps.u.{MapIcons, MapsUtil}
 
 /**
   * Suggest.io
@@ -155,7 +155,7 @@ object RcvrPopupR {
           // Рендер маркера-крутилки на карте в ожидании рендера.
           v.popupResp.renderPending { _: Int =>
             for (iconUrl <- LkPreLoader.PRELOADER_IMG_URL) yield {
-              val icon1 = MapsUtil.pendingIcon(iconUrl, 16)
+              val icon1 = MapIcons.pendingIcon(iconUrl, 16)
               MarkerR(
                 new MarkerPropsR {
                   override val position  = latLng

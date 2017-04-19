@@ -2,13 +2,13 @@ package io.suggest.lk.adv.geo.u
 
 import io.suggest.geo.{GeoConstants, MGeoCircle, MGeoPoint}
 import io.suggest.lk.adv.geo.m.MMapGjFeature
-import io.suggest.maps.c.LeafletPinMarker
 import io.suggest.sjs.common.geo.json.GjTypes
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.lk.adv.geo.m.MarkerNodeId._
 import io.suggest.lk.adv.geo.vm.rad.RadiusMarkerIcon
+import io.suggest.maps.u.MapIcons
 import io.suggest.sjs.common.empty.JsOptionUtil
 
 import scala.scalajs.js
@@ -20,11 +20,11 @@ import scala.scalajs.js.JSConverters._
   * Created: 12.12.16 14:57
   * Description: Статическая утиль для рендера формы георазмещения.
   */
-object LkAdvGeoFormUtil extends LeafletPinMarker {
+object LkAdvGeoFormUtil {
 
   /** Сборка данных для иконки маркера радиуса круга. */
   def radiusMarkerIcon(): Icon = {
-    val o = _markerIconBase(RadiusMarkerIcon)
+    val o = MapIcons.markerIconBase(RadiusMarkerIcon)
     Leaflet.icon(o)
   }
 
@@ -76,7 +76,7 @@ object LkAdvGeoFormUtil extends LeafletPinMarker {
         override val draggable = false
         override val clickable = nodeIdOpt.isDefined
         // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
-        override val icon = gjFeature.icon.fold(_pinMarkerIcon()) { iconInfo =>
+        override val icon = gjFeature.icon.fold( MapIcons.pinMarkerIcon() ) { iconInfo =>
           val o = IconOptions.empty
           o.iconUrl = iconInfo.url
           // Описываем размеры иконки по данным сервера.

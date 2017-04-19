@@ -1,7 +1,8 @@
 package io.suggest.lk.adn.map.init
 
 import io.suggest.lk.adn.map.vm.FormInputs
-import io.suggest.maps.c.{LeafletLocateControlUtil, LeafletMapInit, LeafletPinMarker}
+import io.suggest.maps.c.{LeafletLocateControlUtil, LeafletMapInit}
+import io.suggest.maps.u.MapIcons
 import io.suggest.maps.vm.MapContainer
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -14,7 +15,6 @@ import io.suggest.sjs.leaflet.marker.Marker
 class LkAdnMapInit
   extends Log
   with LeafletMapInit
-  with LeafletPinMarker
   with LeafletLocateControlUtil
 {
 
@@ -36,7 +36,7 @@ class LkAdnMapInit
       }
 
     // Собираем и устанавливаем маркер центра круга:
-    val cm = _mkDraggableMarker( latLng, _pinMarkerIcon() )
+    val cm = MapIcons.mkDraggableMarker( latLng, MapIcons.pinMarkerIcon() )
       .addTo(lmap)
 
     // При определении текущего местоположения следует перемещать маркер в текущее местоположение юзера.
