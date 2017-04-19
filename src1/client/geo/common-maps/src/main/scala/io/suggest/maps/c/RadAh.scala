@@ -1,10 +1,9 @@
-package io.suggest.lk.adv.geo.a.geo.rad
+package io.suggest.maps.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.adv.geo.AdvGeoConstants.Rad
 import io.suggest.geo.IGeoPointField
-import io.suggest.lk.adv.geo.m._
-import io.suggest.maps.m.{HandleLocationFound, HandleMapPopupClose}
+import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 
 /**
@@ -147,7 +146,7 @@ class RadAh[M](
       }
 
     // Сигнал клика по некоторым rad-элементам.
-    case RadClick =>
+    case _: IRadClick =>
       _valueFold { mrad0 =>
         if (mrad0.centerPopup) {
           noChange

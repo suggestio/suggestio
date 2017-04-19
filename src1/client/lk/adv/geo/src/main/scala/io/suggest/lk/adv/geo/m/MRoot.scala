@@ -5,7 +5,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormS
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.m.{MMapS, MRad}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**

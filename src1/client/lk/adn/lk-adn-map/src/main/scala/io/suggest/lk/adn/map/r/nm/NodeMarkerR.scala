@@ -2,6 +2,7 @@ package io.suggest.lk.adn.map.r.nm
 
 import diode.react.ModelProxy
 import io.suggest.lk.adn.map.m.MNodeMarkerS
+import io.suggest.maps.u.MapIcons
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 
 /**
@@ -19,7 +20,14 @@ object NodeMarkerR {
 
   class Backend($: BackendScope[Props, State]) {
 
+    private val _pinIcon = MapIcons.pinMarkerIcon()
+
+
+
     def render(p: Props, s: State): ReactElement = {
+      val props = p()
+
+      // Маркер центра круга.
       ???
     }
 

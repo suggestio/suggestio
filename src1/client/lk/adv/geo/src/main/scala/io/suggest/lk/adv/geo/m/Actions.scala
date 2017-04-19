@@ -56,25 +56,6 @@ case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvE
 
 
 
-// Rad-события для маркера центра круга
-/** Экшен начала таскания центра круга. */
-case object RadCenterDragStart extends IAdvGeoFormAction
-/** Экшен модификации центра rad-круга в ходе продолжающегося драггинга. */
-case class RadCenterDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
-/** Экшен завершения перетаскивания rad-круга за его центр. */
-case class RadCenterDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
-/** Экшен клика по центру круга. */
-case object RadClick extends IAdvGeoFormAction
-
-
-/** Экшен включения/выключени режима размещения прямо на карте. */
-case class RadOnOff(enabled: Boolean) extends IAdvGeoFormAction
-
-// Rad-события для маркера радиуса круга.
-case object RadiusDragStart extends IAdvGeoFormAction
-case class RadiusDragging(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
-case class RadiusDragEnd(geoPoint: MGeoPoint) extends IAdvGeoFormAction with IGeoPointField
-
 
 /** Сигнал открытия инфы по узлу. */
 case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends IAdvGeoFormAction
