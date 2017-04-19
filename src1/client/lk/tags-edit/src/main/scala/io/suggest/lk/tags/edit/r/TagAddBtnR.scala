@@ -8,6 +8,7 @@ import io.suggest.lk.tags.edit.m.AddCurrentTag
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.sjs.common.i18n.Messages
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -19,12 +20,13 @@ object TagAddBtnR {
 
   type Props = ModelProxy[_]
 
-  protected class Backend($: BackendScope[Props, _]) {
+  protected class Backend($: BackendScope[Props, Unit]) {
 
     def onAddBtnClick: Callback = {
-      $.props >>= { p =>
-        p.dispatchCB(AddCurrentTag)
-      }
+      dispatchOnProxyScopeCB(
+        $.asInstanceOf[BackendScope[ModelProxy[AnyRef], Unit]],
+        AddCurrentTag
+      )
     }
 
     def render(p: Props) = {

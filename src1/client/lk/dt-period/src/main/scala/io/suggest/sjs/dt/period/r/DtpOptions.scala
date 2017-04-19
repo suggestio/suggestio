@@ -19,6 +19,7 @@ import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
 import io.suggest.sjs.common.i18n.Messages
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 // TODO import io.suggest.sjs.common.dt.JsDateUtil.MRangeYmdFastEq + OptFastEq.Wrapped
 
 import scala.scalajs.js
@@ -43,20 +44,15 @@ object DtpOptions {
     def onQapChange(e: ReactEventI): Callback = {
       val v = e.target.value
       val qap = QuickAdvPeriods.withName(v)
-      $.props >>= { props =>
-        props.dispatchCB( SetQap(qap) )
-      }
+      dispatchOnProxyScopeCB($, SetQap(qap))
     }
 
     def onCustomDateChange(fn: DtpInputFn, newDate: Moment): Callback = {
-      $.props >>= { props =>
-        props.dispatchCB(
-          SetDateStartEnd(
-            fn      = fn,
-            moment  = newDate
-          )
-        )
-      }
+      val msg = SetDateStartEnd(
+        fn      = fn,
+        moment  = newDate
+      )
+      dispatchOnProxyScopeCB($, msg)
     }
 
 

@@ -15,6 +15,7 @@ import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 import react.leaflet.popup.PopupR
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -52,16 +53,12 @@ object RadR {
   protected class Backend($: BackendScope[Props, State]) {
 
     private def radClick: Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( RadClick )
-      }
+      dispatchOnProxyScopeCB($, RadClick)
     }
 
     /** Событие начала перетаскивания маркера. */
     private def _dragStart(msg: IAdvGeoFormAction): Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( msg )
-      }
+      dispatchOnProxyScopeCB($, msg)
     }
 
     /** События таскания какого-то маркера. */
@@ -70,9 +67,7 @@ object RadR {
         .asInstanceOf[Marker]
         .getLatLng()
       val mgp = MapsUtil.latLng2geoPoint( latLng )
-      $.props >>= { p =>
-        p.dispatchCB( msg(mgp) )
-      }
+      dispatchOnProxyScopeCB($, msg(mgp))
     }
 
     /** Событие завершения перетаскивания маркера. */

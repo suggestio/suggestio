@@ -3,7 +3,7 @@ package io.suggest.lk.adv.r
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
 import diode.react.ReactPot._
-import io.suggest.bill.{MGetPriceResp, MPrice}
+import io.suggest.bill.MGetPriceResp
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css.Lk.Bars.RightBar.Price
 import io.suggest.css.Css
@@ -11,6 +11,7 @@ import io.suggest.lk.adv.m.{DoFormSubmit, MPriceS}
 import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -30,9 +31,7 @@ object PriceR {
 
     /** Нажатие кнопки сабмита всея формы. */
     def onSubmitBtnClick: Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( DoFormSubmit )
-      }
+      dispatchOnProxyScopeCB($, DoFormSubmit)
     }
 
     def render(s: State): ReactElement = {

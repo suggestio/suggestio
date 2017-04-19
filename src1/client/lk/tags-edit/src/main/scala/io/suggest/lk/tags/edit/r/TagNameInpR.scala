@@ -11,6 +11,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.{AddCurrentTag, SetTagSearchQuery}
 import io.suggest.sjs.common.i18n.Messages
 import org.scalajs.dom.ext.KeyCode
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -30,21 +31,18 @@ object TagNameInpR {
       */
     def onQueryChange(e: ReactEventI): Callback = {
       val queryStr2 = e.target.value
-      $.props >>= { p =>
-        p.dispatchCB( SetTagSearchQuery(queryStr2) )
-      }
+      dispatchOnProxyScopeCB( $, SetTagSearchQuery(queryStr2) )
     }
 
     /** Коллбек для реакции на нажатие некоторых особых клавиш на клавиатуре во время ввода. */
     def onKeyUp(e: ReactKeyboardEventI): Callback = {
       if (e.keyCode == KeyCode.Enter) {
-        $.props >>= { p =>
-          p.dispatchCB( AddCurrentTag )
-        }
+        dispatchOnProxyScopeCB($, AddCurrentTag)
       } else {
         Callback.empty
       }
     }
+
 
     def render(p: Props) = {
       // tagsAddForm: поле ввода имени тега.

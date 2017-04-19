@@ -15,6 +15,7 @@ import io.suggest.sjs.leaflet.map.{LatLng, Layer}
 import io.suggest.sjs.leaflet.path.PathOptions
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import react.leaflet.gj.{GeoJsonPropsR, GeoJsonR}
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scala.scalajs.js
 import scala.scalajs.js.{Function1, Function2, JSON, UndefOr}
@@ -32,9 +33,7 @@ object ExistShapesR extends Log {
   protected class Backend($: BackendScope[Props, _]) {
 
     def existShapeClick(itemId: Double, at: MGeoPoint): Callback = {
-      $.props >>= { props =>
-        props.dispatchCB( OpenAdvGeoExistPopup(itemId, at) )
-      }
+      dispatchOnProxyScopeCB( $, OpenAdvGeoExistPopup(itemId, at) )
     }
 
     def render(p: Props): ReactElement = {

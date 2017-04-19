@@ -12,6 +12,7 @@ import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventH}
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -33,9 +34,7 @@ object TagsFoundR {
       } yield {
         // Тримминг здесь -- это обычно бесполезная операция. Но делается чисто на всякий случай, для самоуспокоения.
         val tagFace2 = tagFace.trim
-        $.props >>= { p =>
-          p.dispatchCB( AddTagFound(tagFace2) )
-        }
+        dispatchOnProxyScopeCB($, AddTagFound(tagFace2))
       }
     }
 

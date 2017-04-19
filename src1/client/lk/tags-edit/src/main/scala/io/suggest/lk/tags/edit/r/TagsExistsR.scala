@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.lk.tags.edit.m.RmTag
 import io.suggest.sjs.common.i18n.Messages
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -22,9 +23,7 @@ object TagsExistsR {
 
     /** Клик по кнопке удаления exists-тега. */
     def onTagDeleteClick(tagName: String): Callback = {
-      $.props >>= { p =>
-        p.dispatchCB( RmTag(tagName) )
-      }
+      dispatchOnProxyScopeCB($, RmTag(tagName))
     }
 
 

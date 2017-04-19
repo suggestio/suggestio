@@ -8,6 +8,7 @@ import io.suggest.lk.adv.geo.m.{MRad, RadOnOff}
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -36,9 +37,7 @@ object RadEnabledR {
 
     def onRadEnabledChanged(e: ReactEventI): Callback = {
       val isEnabled = e.target.checked
-      $.props >>= { p =>
-        p.dispatchCB( RadOnOff(isEnabled) )
-      }
+      dispatchOnProxyScopeCB( $, RadOnOff(isEnabled) )
     }
 
     def render(propsProxy: Props): ReactElement = {

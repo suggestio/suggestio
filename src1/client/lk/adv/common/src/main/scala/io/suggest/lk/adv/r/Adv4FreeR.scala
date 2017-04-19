@@ -9,6 +9,7 @@ import io.suggest.lk.adv.m.SetAdv4Free
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
 import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -30,9 +31,7 @@ object Adv4FreeR {
     /** Реакция на изменение состояния галочки. */
     def onChange(e: ReactEventI): Callback = {
       val v2 = e.target.checked
-      $.props >>= { props =>
-        props.dispatchCB(SetAdv4Free(v2))
-      }
+      dispatchOnProxyScopeCB($, SetAdv4Free(v2))
     }
 
     def render(props: Props, checkedOptConn: State): ReactElement = {

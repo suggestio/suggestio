@@ -8,6 +8,7 @@ import io.suggest.lk.adv.geo.m.SetOnMainScreen
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.prefix_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
@@ -26,9 +27,7 @@ object OnMainScreenR {
     /** Реакция на изменение галочки onMainScreen. */
     def onMainScreenChanged(e: ReactEventI): Callback = {
       val oms2 = e.target.checked
-      $.props >>= { p =>
-        p.dispatchCB( SetOnMainScreen(oms2) )
-      }
+      dispatchOnProxyScopeCB( $, SetOnMainScreen(oms2) )
     }
 
     def render(p: Props) = {

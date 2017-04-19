@@ -9,6 +9,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEle
 import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.react.ReactCommonUtil.Implicits._
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scala.scalajs.js
 
@@ -30,10 +31,9 @@ object RcvrMarkersR {
       val nodeId = MarkerNodeId(marker).nodeId.get
       val latLng = marker.getLatLng()
 
-      $.props >>= { p =>
-        val gp = MapsUtil.latLng2geoPoint(latLng)
-        p.dispatchCB( ReqRcvrPopup(nodeId, gp) )
-      }
+      val gp = MapsUtil.latLng2geoPoint(latLng)
+      val msg = ReqRcvrPopup(nodeId, gp)
+      dispatchOnProxyScopeCB($, msg)
     }
 
     private val _onMarkerClickedF = cbFun1TojsCallback( onMarkerClicked )

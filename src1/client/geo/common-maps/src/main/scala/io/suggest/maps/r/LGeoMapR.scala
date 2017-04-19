@@ -8,6 +8,7 @@ import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactComponentB, ReactElement}
 import react.leaflet.lmap.{LMapPropsR, LMapR}
+import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scala.scalajs.js
 
@@ -27,15 +28,11 @@ object LGeoMapR {
 
     def onLocationFound(locEvent: LocationEvent): Callback = {
       val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
-      $.props >>= { props =>
-        props.dispatchCB( HandleLocationFound(gp) )
-      }
+      dispatchOnProxyScopeCB( $, HandleLocationFound(gp) )
     }
 
     def onPopupClose(popEvent: PopupEvent): Callback = {
-      $.props >>= { props =>
-        props.dispatchCB( HandleMapPopupClose )
-      }
+      dispatchOnProxyScopeCB( $, HandleMapPopupClose )
     }
 
     private val onLocationFoundF = cbFun1TojsCallback( onLocationFound )
