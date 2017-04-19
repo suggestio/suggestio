@@ -21,9 +21,9 @@ import models.mproj.ICommonDi
 import models.req.{INodeOrderReq, IReq, IReqHdr}
 import models.usr.{MPersonIdents, MSuperUsers}
 import play.api.i18n.Messages
-import play.api.mvc.{Action, AnyContent, Call, Result}
+import play.api.mvc._
 import play.twirl.api.Xml
-import util.acl.{CanPayOrder, CanViewOrder, IsSuOrNotProduction, MaybeAuth}
+import util.acl._
 import util.billing.Bill2Util
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -62,7 +62,9 @@ class PayYaka @Inject() (
                           isSuOrNotProduction      : IsSuOrNotProduction,
                           mOrders                  : MOrders,
                           bill2Util                : Bill2Util,
+                          isNodeAdmin              : IsNodeAdmin,
                           mailerWrapper            : IMailerWrapper,
+                          isAuth                   : IsAuth,
                           mPersonIdents            : MPersonIdents,
                           mSuperUsers              : MSuperUsers,
                           mdrUtil                  : MdrUtil,
@@ -88,10 +90,26 @@ class PayYaka @Inject() (
       .flashing(FLASH.ERROR -> messages("Order.already.paid"))
   }
 
-
   /** Платеж через демо-кассу. */
-  def demoPayForm(orderId: Gid_t, onNodeId: MEsUuId) = isSuOrNotProduction {
-    _payForm(yakaUtil.DEMO, orderId, onNodeId)
+  def demoPayForm(orderId: Gid_t, onNodeId: MEsUuId) = {
+    val action = _payForm(yakaUtil.DEMO, orderId, onNodeId)
+    if (yakaUtil.TEST_PROFILE_ALLOWED_FOR_USERS) {
+      isNodeAdmin.A(onNodeId)(action)
+    } else {
+      isSuOrNotProduction(action)
+    }
+  }
+
+  private def _demoActionBuilder(onNodeId: Option[String] = None): ActionBuilder[IReq] = {
+    if (yakaUtil.TEST_PROFILE_ALLOWED_FOR_USERS) {
+      onNodeId.fold[ActionBuilder[IReq]] {
+        isAuth()
+      } { nodeId =>
+        isNodeAdmin(nodeId)
+      }
+    } else {
+      isSuOrNotProduction()
+    }
   }
 
   /** Подготовиться к оплате через яндекс-кассу.
@@ -104,7 +122,7 @@ class PayYaka @Inject() (
     */
   def payForm(orderId: Gid_t, onNodeId: MEsUuId): Action[AnyContent] = {
     yakaUtil.PRODUCTION_OPT.fold {
-      isSuOrNotProduction() { implicit request =>
+      _demoActionBuilder( Some(onNodeId) ) { implicit request =>
         LOGGER.debug(s"payForm($orderId, $onNodeId): PRODUCTION mode unawailable, will try demo-mode...")
         Redirect( routes.PayYaka.demoPayForm(orderId, onNodeId) )
       }
@@ -591,7 +609,7 @@ class PayYaka @Inject() (
   def success(qs: MYakaReturnQs)      = maybeAuth() { implicit request =>
     _success(yakaUtil.PRODUCTION, qs)
   }
-  def demoSuccess(qs: MYakaReturnQs)  = isSuOrNotProduction() { implicit request =>
+  def demoSuccess(qs: MYakaReturnQs)  = _demoActionBuilder() { implicit request =>
     _success(yakaUtil.DEMO, qs)
   }
 

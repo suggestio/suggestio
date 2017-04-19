@@ -30,6 +30,15 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
 
   private def CONF_PREFIX = "sio.pay.yaka."
 
+  /** Разрешён ли тестовый профиль для не-суперюзеров?
+    * @return false почти всегда.
+    *         true, если доступа к продакшену ещё пока не выдано яндекс-кассой.
+    */
+  lazy val TEST_PROFILE_ALLOWED_FOR_USERS: Boolean = {
+    configuration
+      .getBoolean( CONF_PREFIX + "test4all" )
+      .contains(true)
+  }
 
   /** Реализация IYakaConf. */
   private case class YakaProfile(

@@ -156,38 +156,46 @@ class IsNodeAdmin @Inject()(
   }
 
 
+  private def _applyId[A](nodeId: String, userInits: Seq[MUserInit], request: Request[A])(f: MNodeReq[A] => Future[Result]): Future[Result] = {
+    val user = aclUtil.userFromRequest(request)
+
+    val isAllowedFut = isAdnNodeAdmin(nodeId, user)
+
+    if (user.personIdOpt.nonEmpty)
+      InitUserCmds.maybeInitUser(user, userInits)
+
+    isAllowedFut.flatMap {
+      case Some(mnode) =>
+        val req1 = MNodeReq(mnode, request, user)
+        f(req1)
+
+      case None =>
+        LOGGER.debug(s"User#${user.personIdOpt.orNull} has NO admin access to node $nodeId")
+        val req1 = MReq(request, user)
+        onUnauthNode(req1)
+    }
+  }
+
+
   /**
     * Собрать ACL ActionBuilder, проверяющий права admin-доступа к узлу.
     * @param nodeId id запрашиваемого узла.
     */
-  def apply(nodeId: String, userInits1: MUserInit*): ActionBuilder[MNodeReq] = {
-    new SioActionBuilderImpl[MNodeReq] with InitUserCmds {
-
-      override def userInits = userInits1
+  def apply(nodeId: String, userInits: MUserInit*): ActionBuilder[MNodeReq] = {
+    new SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
-        val user = aclUtil.userFromRequest(request)
-
-        val isAllowedFut = isAdnNodeAdmin(nodeId, user)
-
-        if (user.personIdOpt.nonEmpty)
-          maybeInitUser(user)
-
-        isAllowedFut.flatMap {
-          case Some(mnode) =>
-            val req1 = MNodeReq(mnode, request, user)
-            block(req1)
-
-          case None =>
-            LOGGER.debug(s"User#${user.personIdOpt.orNull} has NO admin access to node $nodeId")
-            val req1 = MReq(request, user)
-            onUnauthNode(req1)
-        }
+        _applyId(nodeId, userInits, request)(block)
       }
 
     }
   }
 
+  def A[A](nodeId: String, userInits: MUserInit*)(action: Action[A]): Action[A] = {
+    Action.async(action.parser) { request =>
+      _applyId(nodeId, userInits, request)(action.apply)
+    }
+  }
 
 
   /**

@@ -9,16 +9,24 @@ import models.req.{MUserInits, MUserInit, ISioUser}
  * Description: Некоторые ACL'ки должны запускать в фоне чтение баланса текущего юзера или что-то ещё.
  * Это описывается списком команд инициализации при сборке action builder'а.
  */
+object InitUserCmds {
+
+  def maybeInitUser(user: ISioUser, userInits: Seq[MUserInit]): Unit = {
+    if (userInits.nonEmpty) {
+      MUserInits.initUser(user, userInits)
+    }
+  }
+
+}
+
+
 trait InitUserCmds {
 
   /** Список команд ранней инициализации. */
   def userInits: Seq[MUserInit]
 
   protected def maybeInitUser(user: ISioUser): Unit = {
-    val _userInits = userInits
-    if (_userInits.nonEmpty) {
-      MUserInits.initUser(user, _userInits)
-    }
+    InitUserCmds.maybeInitUser(user, userInits)
   }
 
 }
