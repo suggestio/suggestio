@@ -22,11 +22,11 @@
 
     <h2>@messages("Your.cart.is.empty").</h2>
 
-    @for( mnodeId <- args.mnode.id ) {
+    @*for( mnodeId <- args.mnode.id ) {
       <a href="@routes.MarketLkAdn.showNodeAds(mnodeId)">
         @messages("Return.to.my.ads")
       </a>
-    }
+    }*@
 
   } else {
 
