@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.m
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
-import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup}
+import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup, MMapGjResp}
 import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js

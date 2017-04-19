@@ -3,8 +3,8 @@ package io.suggest.lk.adv.geo.r
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
-import io.suggest.lk.adv.geo.m.MMapGjResp
 import io.suggest.lk.router.jsRoutes
+import io.suggest.maps.m.MMapGjResp
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

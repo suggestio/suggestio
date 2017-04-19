@@ -1,4 +1,4 @@
-package io.suggest.lk.adv.geo.vm.rad
+package io.suggest.maps.vm
 
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.maps.vm.img.{IconVmStaticT, IconVmT}
@@ -16,7 +16,7 @@ object RadiusMarkerIcon extends IconVmStaticT {
 }
 
 
-import RadiusMarkerIcon.Dom_t
+import io.suggest.maps.vm.RadiusMarkerIcon.Dom_t
 
 
 case class RadiusMarkerIcon(

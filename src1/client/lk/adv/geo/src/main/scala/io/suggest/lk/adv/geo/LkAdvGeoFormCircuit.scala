@@ -14,7 +14,6 @@ import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
 import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
@@ -30,6 +29,7 @@ import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
+import io.suggest.maps.u.MapsUtil
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -85,7 +85,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
           MRad(
             circle = radCircle,
             state  = MRadS(
-              radiusMarkerCoords = LkAdvGeoFormUtil.radiusMarkerLatLng(radCircle)
+              radiusMarkerCoords = MapsUtil.radiusMarkerLatLng(radCircle)
             )
           )
         },

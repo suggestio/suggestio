@@ -4,7 +4,6 @@ import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.adv.geo.AdvGeoConstants.Rad
 import io.suggest.geo.IGeoPointField
 import io.suggest.lk.adv.geo.m._
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.maps.m.{HandleLocationFound, HandleMapPopupClose}
 import io.suggest.maps.u.MapsUtil
 
@@ -44,7 +43,7 @@ class RadAh[M](
       // TODO нужно подправлять координаты радиуса, чтобы учитывать угол на окружности.
       // Сейчас выехавший за пределы радиус оказывается на западе от центра независимо от угла.
       //v0.state.radiusMarkerCoords
-      LkAdvGeoFormUtil.radiusMarkerLatLng(circle2)
+      MapsUtil.radiusMarkerLatLng(circle2)
     } else {
       rmGp1
     }
@@ -132,7 +131,7 @@ class RadAh[M](
       _valueFold { mrad =>
         val center2 = hlf.geoPoint
         val mgc2 = mrad.circle.withCenter(center2)
-        val radiusXy = LkAdvGeoFormUtil.radiusMarkerLatLng(mgc2)
+        val radiusXy = MapsUtil.radiusMarkerLatLng(mgc2)
         val mrad2 = mrad.copy(
           circle = mgc2,
           state  = mrad.state.withRadiusMarkerCoords(radiusXy)

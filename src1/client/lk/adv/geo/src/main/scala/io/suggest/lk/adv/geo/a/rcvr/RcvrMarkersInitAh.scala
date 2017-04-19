@@ -4,7 +4,7 @@ import diode._
 import diode.data.Pot
 import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
+import io.suggest.maps.u.MapIcons
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -51,7 +51,7 @@ class RcvrMarkersInitAh[M](
         },
         {resp =>
           // Привести результат к js.Array[Markers].
-          val markersArr = LkAdvGeoFormUtil.geoJsonToClusterMarkers( resp.featuresIter )
+          val markersArr = MapIcons.geoJsonToClusterMarkers( resp.featuresIter )
           value.ready(markersArr)
         }
       )

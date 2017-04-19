@@ -3,7 +3,6 @@ package io.suggest.lk.adv.geo.r.geo.rad
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
 import io.suggest.lk.adv.geo.m._
-import io.suggest.lk.adv.geo.u.LkAdvGeoFormUtil
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
@@ -41,7 +40,7 @@ object RadR {
   type Props = ModelProxy[Option[MRad]]
 
   private val _pinIcon = MapIcons.pinMarkerIcon()
-  private val _radiusIcon = LkAdvGeoFormUtil.radiusMarkerIcon()
+  private val _radiusIcon = MapIcons.radiusMarkerIcon()
 
   case class State(
                     centerPopupConn     : ReactConnectProxy[Option[Boolean]],
