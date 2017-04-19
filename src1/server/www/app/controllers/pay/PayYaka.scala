@@ -62,9 +62,7 @@ class PayYaka @Inject() (
                           isSuOrNotProduction      : IsSuOrNotProduction,
                           mOrders                  : MOrders,
                           bill2Util                : Bill2Util,
-                          isNodeAdmin              : IsNodeAdmin,
                           mailerWrapper            : IMailerWrapper,
-                          isAuth                   : IsAuth,
                           mPersonIdents            : MPersonIdents,
                           mSuperUsers              : MSuperUsers,
                           mdrUtil                  : MdrUtil,
@@ -86,7 +84,11 @@ class PayYaka @Inject() (
   private def _alreadyPaid(request: INodeOrderReq[_]): Future[Result] = {
     implicit val req = request
     val messages = implicitly[Messages]
-    Redirect( controllers.routes.LkBill2.showOrder(request.morder.id.get, request.mnode.id.get) )
+    val call = controllers.routes.LkBill2.showOrder(
+      orderId  = request.morder.id.get,
+      onNodeId = request.mnode.id.get
+    )
+    Redirect(call)
       .flashing(FLASH.ERROR -> messages("Order.already.paid"))
   }
 
@@ -94,23 +96,12 @@ class PayYaka @Inject() (
   def demoPayForm(orderId: Gid_t, onNodeId: MEsUuId) = {
     val action = _payForm(yakaUtil.DEMO, orderId, onNodeId)
     if (yakaUtil.DEMO_ALLOWED_FOR_ALL) {
-      isNodeAdmin.A(onNodeId)(action)
+      action
     } else {
       isSuOrNotProduction(action)
     }
   }
 
-  private def _demoActionBuilder(onNodeId: Option[String] = None): ActionBuilder[IReq] = {
-    if (yakaUtil.DEMO_ALLOWED_FOR_ALL) {
-      onNodeId.fold[ActionBuilder[IReq]] {
-        isAuth()
-      } { nodeId =>
-        isNodeAdmin(nodeId)
-      }
-    } else {
-      isSuOrNotProduction()
-    }
-  }
 
   /** Подготовиться к оплате через яндекс-кассу.
     * Юзеру рендерится неизменяемая форма с данными для оплаты.
@@ -122,8 +113,8 @@ class PayYaka @Inject() (
     */
   def payForm(orderId: Gid_t, onNodeId: MEsUuId): Action[AnyContent] = {
     yakaUtil.PRODUCTION_OPT.fold {
-      _demoActionBuilder( Some(onNodeId) ) { implicit request =>
-        LOGGER.debug(s"payForm($orderId, $onNodeId): PRODUCTION mode unawailable, will try demo-mode...")
+      canPayOrder(orderId, onNodeId, _alreadyPaid) { implicit request =>
+        LOGGER.debug(s"payForm($orderId, $onNodeId): PRODUCTION mode unavailable, will try demo-mode...")
         Redirect( routes.PayYaka.demoPayForm(orderId, onNodeId) )
       }
     } { prod =>
@@ -223,11 +214,16 @@ class PayYaka @Inject() (
   /** Сделать исключение, если не-суперюзер пытается платить через демокассу. */
   private def _assertDemoSu(profile: IYakaProfile, yReq: IYakaReq): Unit = {
     if (
-      !yakaUtil.DEMO_ALLOWED_FOR_ALL &&
-        profile.isDemo &&
+      // Если сейчас используется демо-профиль...
+      profile.isDemo &&
+        // И если demo-режим разрешён не для всех
+        !yakaUtil.DEMO_ALLOWED_FOR_ALL &&
+        // то нужно убедится, что текущий юзер -- это суперпользователь
         !mSuperUsers.isSuperuserId(yReq.personId)
-    )
+    ) {
+      // Текущему юзеру нельзя юзать demo-режим, т.к. он не является суперюзером.
       throw new SecurityException(s"_assertDemoSu($profile): Non-SU user tried to pay via DEMOkassa.")
+    }
   }
 
 
@@ -613,8 +609,14 @@ class PayYaka @Inject() (
   def success(qs: MYakaReturnQs)      = maybeAuth() { implicit request =>
     _success(yakaUtil.PRODUCTION, qs)
   }
-  def demoSuccess(qs: MYakaReturnQs)  = _demoActionBuilder() { implicit request =>
-    _success(yakaUtil.DEMO, qs)
+  def demoSuccess(qs: MYakaReturnQs)  = {
+    val actionBuilder = if (yakaUtil.DEMO_ALLOWED_FOR_ALL)
+      maybeAuth()
+    else
+      isSuOrNotProduction()
+    actionBuilder { implicit request =>
+      _success(yakaUtil.DEMO, qs)
+    }
   }
 
   /** Яндекс.касса вернула сюда юзера после удачной оплаты.
