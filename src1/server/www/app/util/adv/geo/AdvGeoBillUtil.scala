@@ -164,6 +164,9 @@ class AdvGeoBillUtil @Inject() (
     * @return Фьючерс c результатом.
     */
   def addToOrder(orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+    lazy val logPrefix = s"addToOrder($orderId)[${System.currentTimeMillis()}]:"
+    LOGGER.trace(s"$logPrefix status=$status, ${abc.rcvrsMap.size} rcvrs, ${abc.mcalsCtx.calsMap.size} calendars")
+
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
     val ymdPeriod = abc.res.datePeriod.info
     val dateStart = ymdPeriod.dateStart[LocalDate]
@@ -179,6 +182,8 @@ class AdvGeoBillUtil @Inject() (
     val dtStartOpt  = __dt( dateStart )
     val dtEndOpt    = __dt( dateEnd )
 
+    LOGGER.trace(s"$logPrefix period=$ymdPeriod tzOff=$tzOffset => ${dtStartOpt.orNull}..${dtEndOpt.orNull}")
+
     val itemActsIter = calcAdvGeoPrice(abc)
       .splitOnSumUntil {
         // Маппер содержит причину трансформации. Резать можно только до уровня item'а.
@@ -193,17 +198,22 @@ class AdvGeoBillUtil @Inject() (
       .toIterator
       .flatMap { term =>
         val term2 = term.mapAllPrices(_.normalizeAmountByExponent)
-        val gsOpt = abc.res
-          .radCircle
-          .map { CircleGs.apply }
-
+        lazy val logPrefix2 = s"$logPrefix (${term2.getClass.getSimpleName}#${term2.hashCode()}) "
+        LOGGER.trace(s"$logPrefix2 term = $term2")
         term2
           .findWithReasonType( MReasonTypes.GeoArea )
           .flatMap { geoSubTerm =>
+            val gsOpt = abc.res
+              .radCircle
+              .map { CircleGs.apply }
+
+            LOGGER.trace(s"$logPrefix2 It is Geo term, circle = ${abc.res.radCircle.orNull}, gs => ${gsOpt.orNull}")
             geoSubTerm
               // Проверить на geo + тег:
               .findWithReasonType( MReasonTypes.Tag )
               .map { tagSubTerm =>
+                val tagFace = tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head
+                LOGGER.trace(s"$logPrefix2 It is a GeoTag: #$tagFace")
                 // Это размещение в гео-теге.
                 MItem(
                   orderId       = orderId,
@@ -215,7 +225,7 @@ class AdvGeoBillUtil @Inject() (
                   dateEndOpt    = dtEndOpt,
                   // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
                   rcvrIdOpt     = None,
-                  tagFaceOpt    = Some( tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head ),
+                  tagFaceOpt    = Some( tagFace ),
                   geoShape      = gsOpt
                 )
               }
@@ -224,6 +234,7 @@ class AdvGeoBillUtil @Inject() (
                 geoSubTerm
                   .findWithReasonType(MReasonTypes.OnMainScreen)
                   .map { _ =>
+                    LOGGER.trace(s"$logPrefix2 It is Geo+OnMainScreen")
                     // Это onMainScreen-гео-размещение.
                     MItem(
                       orderId       = orderId,
@@ -246,10 +257,14 @@ class AdvGeoBillUtil @Inject() (
               .flatMap { rcvrSubTerm =>
                 // Это прямое размещение на каком-то ресивере. У него обязан быть выставленный id.
                 val rcvrId = rcvrSubTerm.asInstanceOf[Mapper].reason.get.nameIds.head.id.get
+                LOGGER.trace(s"$logPrefix2 It is Rcvr term on rcvrId=$rcvrId")
+
                 // Это может быть главный экран или тег.
                 rcvrSubTerm
                   .findWithReasonType( MReasonTypes.Tag )
                   .map { tagSubTerm =>
+                    val tagFace = tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head
+                    LOGGER.trace(s"$logPrefix2 It is direct tag #$tagFace on Rcvr#$rcvrId")
                     // Это размещение в теге на ресивере.
                     MItem(
                       orderId       = orderId,
@@ -261,15 +276,16 @@ class AdvGeoBillUtil @Inject() (
                       dateEndOpt    = dtEndOpt,
                       // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
                       rcvrIdOpt     = Some(rcvrId),
-                      tagFaceOpt    = Some( tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head ),
+                      tagFaceOpt    = Some( tagFace ),
                       geoShape      = None
                     )
                   }
                   // Проверить на rcvr + OMS
                   .orElse {
                     rcvrSubTerm
-                      .findWithReasonType(MReasonTypes.OnMainScreen)
+                      .findWithReasonType( MReasonTypes.OnMainScreen )
                       .map { _ =>
+                        LOGGER.trace(s"$logPrefix2 It is OnMainScreen on rcvr#$rcvrId")
                         // Это размещение на главном экране ресивера.
                         MItem(
                           orderId       = orderId,
@@ -280,8 +296,6 @@ class AdvGeoBillUtil @Inject() (
                           dateStartOpt  = dtStartOpt,
                           dateEndOpt    = dtEndOpt,
                           rcvrIdOpt     = Some(rcvrId),
-                          // Надо? указывать showLevel, т.к. ScAdSearchUtil.qsArgs2nodeSearch() фильтрует
-                          //sls           = Set( SinkShowLevels.GEO_START_PAGE_SL ),
                           geoShape      = None
                         )
                       }
@@ -424,17 +438,19 @@ class AdvGeoBillUtil @Inject() (
         val rcvrId = rcvrKey.last
         val rcvrPrice = advUtil.calcDateAdvPriceOnTf(rcvrId, abc)
 
-        val rcvrOmsPrice = if (rcvrKey.tail.nonEmpty) {
+        val omsMultOpt: Option[Double] = if (rcvrKey.tail.nonEmpty) {
           // Для суб-ресиверов: без доп.наценок за главный экран.
-          rcvrPrice
+          None
         } else {
           // Домножаем за главный экран только для top-ресиверов.
-          Mapper(
-            underlying    = rcvrPrice,
-            multiplifier  = Some( ON_MAIN_SCREEN_MULT ),
-            reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) )
-          )
+          Some(ON_MAIN_SCREEN_MULT)
         }
+        // Маппер OMS нужен ВСЕГДА, иначе addToOrder() не поймёт, что от него хотят.
+        val rcvrOmsPrice = Mapper(
+          underlying    = rcvrPrice,
+          multiplifier  = omsMultOpt,
+          reason        = Some( MPriceReason( MReasonTypes.OnMainScreen ) )
+        )
 
         // Закинуть в аккамулятор результатов.
         accRev ::= Mapper(
