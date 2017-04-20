@@ -16,8 +16,8 @@ import io.suggest.bill.MGetPriceResp
 object MFormInit {
 
   implicit val pickler: Pickler[MFormInit] = {
-    implicit val a4fP   = MAdv4FreeProps.pickler
-    implicit val advPricingP = MGetPriceResp.pickler
+    implicit val a4fP   = MAdv4FreeProps.a4fPropsPickler
+    implicit val advPricingP = MGetPriceResp.getPriceRespPickler
     implicit val formP  = MFormS.pickler
     generatePickler[MFormInit]
   }

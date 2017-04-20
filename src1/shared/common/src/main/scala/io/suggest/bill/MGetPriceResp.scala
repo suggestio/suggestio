@@ -15,7 +15,7 @@ import io.suggest.bill.price.dsl.IPriceDslTerm
 
 object MGetPriceResp {
 
-  implicit val pickler: Pickler[MGetPriceResp] = {
+  implicit val getPriceRespPickler: Pickler[MGetPriceResp] = {
     implicit val priceP = MPrice.mPricePickler
     implicit val iPriceDslTermP = IPriceDslTerm.iPriceDslTermPickler
     generatePickler[MGetPriceResp]

@@ -1,4 +1,4 @@
-package io.suggest.adn
+package io.suggest.adn.mapf
 
 import io.suggest.adv.AdvConstants
 import io.suggest.common.maps.MapFormConstants

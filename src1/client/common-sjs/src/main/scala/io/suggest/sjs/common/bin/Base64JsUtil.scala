@@ -12,10 +12,10 @@ import scala.scalajs.js.typedarray.TypedArrayBuffer
   * Created: 27.12.16 10:32
   * Description: Утиль для поддержки base64.
   */
-object EvoBase64JsUtil {
+object Base64JsUtil {
 
-  /** js-only base64-декодер в рамках интерфейса конвертеров данных. */
-  implicit case object EvoBase64JsDecoder extends IDataConv[String, ConvCodecs.Base64, ByteBuffer] {
+  /** scala.js-only base64-декодер в рамках интерфейса конвертеров данных. */
+  implicit case object SjsBase64JsDecoder extends IDataConv[String, ConvCodecs.Base64, ByteBuffer] {
     override def convert(base64: String): ByteBuffer = {
       val arr = JsBinaryUtil.base64DecToArr(base64)
       TypedArrayBuffer.wrap(arr.buffer)

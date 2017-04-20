@@ -1,7 +1,7 @@
 package util.adn.mapf
 
 import com.google.inject.Inject
-import io.suggest.adn.AdnMapFormConstants.Fields._
+import io.suggest.adn.mapf.AdnMapFormConstants.Fields._
 import models.madn.mapf.MAdnMapFormRes
 import play.api.data.Forms._
 import play.api.data._

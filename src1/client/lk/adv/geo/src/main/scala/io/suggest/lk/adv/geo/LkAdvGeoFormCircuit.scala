@@ -1,6 +1,5 @@
 package io.suggest.lk.adv.geo
 
-import diode.Effect
 import diode.data.Ready
 import diode.react.ReactConnector
 import io.suggest.adv.free.MAdv4Free
@@ -19,10 +18,9 @@ import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.bin.EvoBase64JsUtil.EvoBase64JsDecoder
+import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
@@ -124,7 +122,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   override protected val actionHandler: HandlerFunction = {
 
     // Эффект пересчёта стоимости размещения с помощью сервера.
-    val priceUpdateEffect = Effect.action( ResetPrice )
+    val priceUpdateEffect = ResetPrice.effect
 
     val rcvrRW  = zoomRW(_.rcvr) { _.withRcvr(_) }
     val rcvrPopupRW = rcvrRW.zoomRW(_.popupResp) { _.withPopupResp(_) }

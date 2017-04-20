@@ -17,7 +17,7 @@ object MRoot {
   /** Поддержка FastEq. */
   implicit object MRootFastEq extends FastEq[MRoot] {
     override def eqv(a: MRoot, b: MRoot): Boolean = {
-      (a.map eq b.map) &&
+      (a.mmap eq b.mmap) &&
         (a.nodeMarker eq b.nodeMarker) &&
         (a.adv4free eq b.adv4free) &&
         (a.price eq b.price)
@@ -33,14 +33,14 @@ object MRoot {
   * @param nodeMarker Состояния размещения.
   */
 case class MRoot(
-                  map           : MMapS,
+                  mmap          : MMapS,
                   nodeMarker    : MNodeMarkerS,
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
                   datePeriod    : MAdvPeriod
                 ) {
 
-  def withMap(map2: MMapS) = copy(map = map2)
+  def withMap(map2: MMapS) = copy(mmap = map2)
   def withNodeMarker(nm2: MNodeMarkerS) = copy(nodeMarker = nm2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)

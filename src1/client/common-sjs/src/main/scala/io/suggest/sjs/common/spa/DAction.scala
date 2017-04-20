@@ -1,6 +1,7 @@
 package io.suggest.sjs.common.spa
 
-import diode.ActionType
+import diode.{ActionType, Effect}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io
@@ -12,7 +13,13 @@ import diode.ActionType
   *
   * @see [[http://ochrons.github.io/diode/usage/Actions.html]]
   */
-trait DAction
+trait DAction {
+
+  import DAction.DActionType
+
+  final def effect = Effect.action( this )( DActionType, defaultExecCtx )
+
+}
 
 
 trait DActionType extends ActionType[DAction]

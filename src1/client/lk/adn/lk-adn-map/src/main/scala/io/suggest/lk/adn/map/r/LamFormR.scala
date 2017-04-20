@@ -13,9 +13,7 @@ import MMapS.MMapSFastEq
 import MNodeMarkerS.MNodeMarkerFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
-import io.suggest.maps.u.MapsUtil
 import io.suggest.sjs.dt.period.r.DatePeriodR
-import io.suggest.sjs.leaflet.map.LatLng
 
 /**
   * Suggest.io
@@ -93,7 +91,7 @@ object LamFormR {
   val component = ReactComponentB[Props]("LamForm")
     .initialState_P { p =>
       State(
-        mmapC         = p.connect(_.map),
+        mmapC         = p.connect(_.mmap),
         nodeMarkerC   = p.connect(_.nodeMarker),
         priceDslOptC  = p.connect(_.price.respDslOpt)
       )

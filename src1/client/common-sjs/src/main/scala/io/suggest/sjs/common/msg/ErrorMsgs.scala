@@ -117,4 +117,6 @@ object ErrorMsgs extends MsgsStaticT {
   /** Не удалось инициализировать карту. */
   def INIT_RCVRS_MAP_GJ_REQ_FAIL          = E(52)
 
+  def ADN_MAP_CIRCUIT_ERROR            = E(53)
+
 }

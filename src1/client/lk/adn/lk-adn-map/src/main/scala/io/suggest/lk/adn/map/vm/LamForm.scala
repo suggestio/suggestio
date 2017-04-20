@@ -1,6 +1,6 @@
 package io.suggest.lk.adn.map.vm
 
-import io.suggest.adn.AdnMapFormConstants
+import io.suggest.adn.mapf.AdnMapFormConstants
 import io.suggest.lk.adv.vm.Adv4FreeInside
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
 import io.suggest.sjs.common.vm.find.FindElT

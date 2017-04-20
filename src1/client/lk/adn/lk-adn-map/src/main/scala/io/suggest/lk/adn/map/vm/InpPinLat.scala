@@ -1,6 +1,6 @@
 package io.suggest.lk.adn.map.vm
 
-import io.suggest.adn.AdnMapFormConstants
+import io.suggest.adn.mapf.AdnMapFormConstants
 import io.suggest.sjs.common.vm.attr.DoubleInputValueT
 import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom.raw.HTMLInputElement

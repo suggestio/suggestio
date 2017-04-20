@@ -1,6 +1,6 @@
 package io.suggest.lk.adn.map.vm
 
-import io.suggest.adn.AdnMapFormConstants
+import io.suggest.adn.mapf.AdnMapFormConstants
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.{IInitLayoutFsm, SjsFsm}
 import io.suggest.sjs.common.vm.attr.IntInputValueT
