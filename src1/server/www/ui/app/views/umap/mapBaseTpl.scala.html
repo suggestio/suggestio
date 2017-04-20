@@ -3,6 +3,7 @@
 @import ctx.{request, messages}
 @import ctx.api.ctxUtil
 @import helper._
+@import io.suggest.js.JsRoutesConst
 
 <!DOCTYPE html>
 <html>
@@ -32,7 +33,7 @@
   <div id="storage-tooltip-container"></div>
   <div id="map"></div>
 
-  @helper.javascriptRouter("jsRoutes")(
+  @helper.javascriptRouter( JsRoutesConst.GLOBAL_NAME )(
     routes.javascript.Static.keepAliveSession
   )
 

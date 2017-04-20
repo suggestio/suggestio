@@ -20,7 +20,7 @@
 
 @* JS-роутер для команд из формы... *@
 @jsTpl2HtmlTpl( withScriptTag = true )(
-  jsRevRouterTpl("jsRoutes", csrfAll = true)(
+  jsRevRouterTpl( csrfAll = true )(
     routes.javascript.LkNodes.nodeInfo,
     routes.javascript.LkNodes.createSubNodeSubmit,
     routes.javascript.LkNodes.setNodeEnabled,

@@ -1,4 +1,5 @@
-@(name: String, csrfAll: Boolean = false)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
+@(name: String = io.suggest.js.JsRoutesConst.GLOBAL_NAME,
+  csrfAll: Boolean = false)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
 
 @* JS-шаблон генерации play js reverse router.
    Синтаксис вызова шаблона аналогичен вызову helper.javascriptRoutes().

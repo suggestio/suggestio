@@ -5,6 +5,7 @@
 @import io.suggest.adv.ext.view.RunnerPage._
 @import ctx._
 @import helper._
+@import io.suggest.js.JsRoutesConst
 
 @base(
   title = messages("Adv.on.ext.services.running"),
@@ -20,7 +21,7 @@
   <div id="@ID_EVTS_CONTAINER"></div>
 
   @* Скрипты, необходимые для работы системы. *@
-  @javascriptRouter("jsRoutes")(
+  @javascriptRouter( JsRoutesConst.GLOBAL_NAME )(
     routes.javascript.Static.popupCheckContent
   )
 

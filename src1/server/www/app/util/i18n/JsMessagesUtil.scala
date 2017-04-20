@@ -189,6 +189,11 @@ class JsMessagesUtil @Inject() (
     }
   }
 
+  private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
+    MsgCodes.`You.can.place.adn.node.on.map.below` ::
+      Nil
+  }
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -203,6 +208,7 @@ class JsMessagesUtil @Inject() (
       ADV_INFO,
       DIST_UNITS,
       ITEM_TYPES,
+      LK_ADN_MAP_MSGS,
       LK_COMMON,
       LK_NODES_MSGS
     )

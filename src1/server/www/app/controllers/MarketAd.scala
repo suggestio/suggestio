@@ -377,12 +377,12 @@ class MarketAd @Inject() (
 
           trace(s"${logPrefix}Updating ad[$adId] with isEnabled=$isEnabled prodId=$producerId")
 
-          val pred = MPredicates.Receiver.Self
+          val parentPred = MPredicates.Receiver
           val saveFut = mNodes.tryUpdate(request.mad) { mad =>
             // Извлекаем текущее ребро данного ресивера
             val e0Opt = mad
               .edges
-              .withNodePred(producerId, pred)
+              .withNodePred(producerId, parentPred)
               .toStream
               .headOption
 
@@ -390,7 +390,7 @@ class MarketAd @Inject() (
               e0Opt.fold [Option[Seq[MEdge]]] {
                 // Эджа саморазмещения не существует. Это нормально, создать его на узле:
                 val e2 = MEdge(
-                  predicate = pred,
+                  predicate = parentPred.Self,
                   nodeIds   = request.producer.id.toSet
                 )
                 val map1 = mad.edges.out ++ MNodeEdges.edgesToMap(e2)
@@ -407,7 +407,7 @@ class MarketAd @Inject() (
                 LOGGER.trace(s"$logPrefix Deleting edge $e0, because isEnabled=$isEnabled")
                 // Исходный эдж существует. Удалить его из исходной карты эджей.
                 MNodeEdges.edgesToMap1(
-                  mad.edges.withoutNodePred(producerId, pred)
+                  mad.edges.withoutNodePred(producerId, parentPred)
                 )
               }
             }

@@ -12,7 +12,9 @@ import react.leaflet.control.LocateControlR
 import MMapS.MMapSFastEq
 import MNodeMarkerS.MNodeMarkerFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
+import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.dt.period.r.DatePeriodR
 
 /**
@@ -52,8 +54,7 @@ object LamFormR {
         // Верхняя половина, левая колонка:
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
-
-          "TODO"
+          Messages( MsgCodes.`You.can.place.adn.node.on.map.below` )
         ),
 
         // Верхняя половина, правая колонка:

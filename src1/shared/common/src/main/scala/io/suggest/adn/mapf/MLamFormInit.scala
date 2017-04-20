@@ -29,6 +29,7 @@ object MLamFormInit {
   * @param priceResp Начальное состояние ценника.
   */
 case class MLamFormInit(
+                         nodeId           : String,
                          priceResp        : MGetPriceResp,
                          form             : MLamForm,
                          adv4FreeProps    : Option[MAdv4FreeProps]

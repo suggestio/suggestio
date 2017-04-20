@@ -7,6 +7,7 @@
 @import datetime._
 @import io.suggest.bill.TxnsListConstants._
 @import lk.billing.billingBaseTpl
+@import io.suggest.js.JsRoutesConst
 
 @billingBaseTpl(
   title         = messages("Transactions.history"),
@@ -36,7 +37,7 @@
   <input type="hidden" id="@ADN_ID_INPUT_ID" value="@args.mnode.id"/>
   <input type="hidden" id="@CURR_PAGE_NUM_INPUT_ID" value="@args.currPage"/>
 
-  @helper.javascriptRouter("jsRoutes")(
+  @helper.javascriptRouter( JsRoutesConst.GLOBAL_NAME )(
     routes.javascript.LkBill2.txnsList
   )
 

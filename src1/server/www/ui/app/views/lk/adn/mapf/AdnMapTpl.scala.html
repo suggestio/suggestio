@@ -44,4 +44,15 @@
 
   }
 
+
+
+  @* JS-роутер. *@
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true )(
+      routes.javascript.LkAdnMap.getPriceSubmit,
+      routes.javascript.LkAdnMap.forNodeSubmit
+    )
+  )
+
+
 }

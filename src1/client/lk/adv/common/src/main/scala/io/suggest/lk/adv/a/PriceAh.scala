@@ -6,7 +6,7 @@ import io.suggest.lk.adv.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import org.scalajs.dom
+import io.suggest.sjs.common.controller.DomQuick
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -91,7 +91,7 @@ class PriceAh[M](
       hfsr.tryResp match {
         case Success(url) =>
           // Имитируем редирект на указанный сервером адресок. На этом заканчивается жизненный цикл текущей формы.
-          dom.window.location.assign(url)
+          DomQuick.goToLocation( url )
           noChange
 
         case Failure(ex) =>

@@ -6,8 +6,9 @@ import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adn.map.a.NodeMarkerAh
-import io.suggest.lk.adn.map.m.{MNodeMarkerS, MRoot}
-import io.suggest.lk.adv.a.Adv4FreeAh
+import io.suggest.lk.adn.map.m.{MLamConf, MNodeMarkerS, MRoot}
+import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
+import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.maps.c.MapCommonAh
 import io.suggest.maps.m.MMapS
@@ -39,6 +40,9 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       mmap = MMapS(
         props = mFormInit.form.mapProps
       ),
+      conf = MLamConf(
+        nodeId = mFormInit.nodeId
+      ),
       nodeMarker = MNodeMarkerS(
         center = mFormInit.form.coord
       ),
@@ -59,11 +63,27 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
   /** Собрать статический actionHandler. */
   override protected val actionHandler: HandlerFunction = {
 
+    val httpApi = new LkAdnMapApiHttpImpl
+
+    val confRO = zoom(_.conf)
+    val formRO = zoom(_.toForm)
+
+    // Поддержка экшенов виджета цены с кнопкой сабмита.
+    val priceAh = new PriceAh(
+      modelRW = zoomRW(_.price) { _.withPrice(_) },
+      priceAskFutF = { () =>
+        httpApi.getPriceSubmit( confRO().nodeId, formRO() )
+      },
+      doSubmitF = { () =>
+        httpApi.forNodeSubmit( confRO().nodeId, formRO() )
+      }
+    )
+
     // Эффект пересчёта стоимости размещения с помощью сервера.
     val priceUpdateEffect = ResetPrice.effect
 
     // Обновлять состояние при изменении конфигурации карты.
-    val mapAh = new MapCommonAh(
+    val mapCommonAh = new MapCommonAh(
       mmapRW = zoomRW(_.mmap) { _.withMap(_) }
     )
 
@@ -91,13 +111,16 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       priceUpdateFx = priceUpdateEffect
     )
 
-    // Склеить все handler'ы.
-    composeHandlers(
+    // Склеить все handler'ы последовательно.
+    val conseqAh = composeHandlers(
       nodeMarkerAh,
-      mapAh,
+      priceAh,
       datePeriodAh,
       adv4freeAh
     )
+
+    // Параллельно приделать mapCommonAh, который работает с абстрактными сигналами:
+    foldHandlers( conseqAh, mapCommonAh )
   }
 
 }

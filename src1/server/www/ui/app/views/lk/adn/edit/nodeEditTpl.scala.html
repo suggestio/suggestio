@@ -4,6 +4,7 @@
 @import ctx._
 @import lk.popup._
 @import lk.adn._
+@import io.suggest.js.JsRoutesConst
 
 @popupContent = {
 
@@ -57,7 +58,7 @@
     submitCall    = routes.MarketLkAdnEdit.editAdnNodeSubmit(args.mnode.id.get)
   )
 
-  @helper.javascriptRouter("jsRoutes")(
+  @helper.javascriptRouter( JsRoutesConst.GLOBAL_NAME )(
     routes.javascript.Img.imgCropForm
   )
 

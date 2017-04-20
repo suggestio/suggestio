@@ -1,6 +1,7 @@
 package io.suggest.lk.adn.map.m
 
 import diode.FastEq
+import io.suggest.adn.mapf.MLamForm
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS
@@ -18,9 +19,11 @@ object MRoot {
   implicit object MRootFastEq extends FastEq[MRoot] {
     override def eqv(a: MRoot, b: MRoot): Boolean = {
       (a.mmap eq b.mmap) &&
+        (a.conf eq b.conf) &&
         (a.nodeMarker eq b.nodeMarker) &&
         (a.adv4free eq b.adv4free) &&
-        (a.price eq b.price)
+        (a.price eq b.price) &&
+        (a.datePeriod eq b.datePeriod)
     }
   }
 
@@ -29,11 +32,12 @@ object MRoot {
 
 /** Класс корневой модели состояния формы.
   *
-  * @param map Состояние географической карты.
+  * @param mmap Состояние географической карты.
   * @param nodeMarker Состояния размещения.
   */
 case class MRoot(
                   mmap          : MMapS,
+                  conf          : MLamConf,
                   nodeMarker    : MNodeMarkerS,
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
@@ -45,5 +49,15 @@ case class MRoot(
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)
   def withDatePeriod(dp2: MAdvPeriod) = copy(datePeriod = dp2)
+
+  /** Создать снимок основных данных, пригодный для отправки на сервер. */
+  def toForm: MLamForm = {
+    MLamForm(
+      mapProps          = mmap.props,
+      coord             = nodeMarker.center,
+      datePeriod        = datePeriod,
+      adv4freeChecked   = adv4free.map(_.checked)
+    )
+  }
 
 }

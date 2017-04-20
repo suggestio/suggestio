@@ -5,6 +5,7 @@
 @import ctx.{messages, request}
 @import helper._
 @import io.suggest.ad.form.AdFormConstants._
+@import io.suggest.js.JsRoutesConst
 
 @headAfter = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -37,7 +38,7 @@
   </div>
 
   @* jsRoutes для всей формы здесь. *@
-  @helper.javascriptRouter("jsRoutes")(
+  @helper.javascriptRouter( JsRoutesConst.GLOBAL_NAME )(
     routes.javascript.Img.imgCropForm,
     routes.javascript.MarketAd.newTextField,
     routes.javascript.MarketAd.ws

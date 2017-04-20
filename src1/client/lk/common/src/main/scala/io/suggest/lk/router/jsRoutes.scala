@@ -1,16 +1,17 @@
 package io.suggest.lk.router
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
+import io.suggest.js.JsRoutesConst.GLOBAL_NAME
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 10.08.15 17:43
- * Description: Глобальный интерфейс для js-роутеров, зарегистрированных под именем "jsRoutes".
+ * Description: Global-scope интерфейс для js-роутеров.
  */
 @js.native
-@JSName("jsRoutes")
+@JSGlobal(GLOBAL_NAME)
 object jsRoutes extends js.Object {
 
   def controllers: Controllers = js.native

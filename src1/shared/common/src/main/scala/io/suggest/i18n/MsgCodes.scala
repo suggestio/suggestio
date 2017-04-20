@@ -109,4 +109,6 @@ object MsgCodes {
   val `Your.name` = "Your.name"
   val `Phone` = "Phone"
 
+  val `You.can.place.adn.node.on.map.below` = "You.can.place.adn.node.on.map.below"
+
 }
