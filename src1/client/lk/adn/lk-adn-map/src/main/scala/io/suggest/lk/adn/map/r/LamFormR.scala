@@ -13,7 +13,9 @@ import MMapS.MMapSFastEq
 import MNodeMarkerS.MNodeMarkerFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
+import io.suggest.maps.u.MapsUtil
 import io.suggest.sjs.dt.period.r.DatePeriodR
+import io.suggest.sjs.leaflet.map.LatLng
 
 /**
   * Suggest.io
@@ -31,9 +33,9 @@ object LamFormR {
 
   /** Модель состояния компонента. */
   protected[this] case class State(
-                                    mmapC            : ReactConnectProxy[MMapS],
-                                    nodeMarkerC      : ReactConnectProxy[MNodeMarkerS],
-                                    priceDslOptC     : ReactConnectProxy[Option[IPriceDslTerm]]
+                                    mmapC                 : ReactConnectProxy[MMapS],
+                                    nodeMarkerC           : ReactConnectProxy[MNodeMarkerS],
+                                    priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]]
                                   )
 
 
@@ -92,7 +94,7 @@ object LamFormR {
     .initialState_P { p =>
       State(
         mmapC         = p.connect(_.map),
-        nodeMarkerC   = p.connect(_.lam),
+        nodeMarkerC   = p.connect(_.nodeMarker),
         priceDslOptC  = p.connect(_.price.respDslOpt)
       )
     }

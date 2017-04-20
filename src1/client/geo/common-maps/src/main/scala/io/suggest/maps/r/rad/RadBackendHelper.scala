@@ -14,16 +14,17 @@ import japgolly.scalajs.react.{BackendScope, Callback}
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.04.17 17:16
   * Description: Внутренняя утиль для react-компонентов Rad.
+  * Можно экстендить, можно как поле класса использовать.
   */
 class RadBackendHelper[Props, State]($: BackendScope[ModelProxy[Props], State]) {
 
   /** Событие начала перетаскивания маркера. */
-  protected def _dispatch(msg: IMapsAction): Callback = {
+  def _dispatch(msg: IMapsAction): Callback = {
     dispatchOnProxyScopeCB($, msg)
   }
 
   /** События таскания какого-то маркера. */
-  protected def _markerDragging(e: Event, msg: MGeoPoint => IMapsAction): Callback = {
+  def _markerDragging(e: Event, msg: MGeoPoint => IMapsAction): Callback = {
     val latLng = e.target
       .asInstanceOf[Marker]
       .getLatLng()
@@ -32,7 +33,7 @@ class RadBackendHelper[Props, State]($: BackendScope[ModelProxy[Props], State]) 
   }
 
   /** Событие завершения перетаскивания маркера. */
-  protected def _markerDragEnd(e: DragEndEvent, msg: MGeoPoint => IMapsAction): Callback = {
+  def _markerDragEnd(e: DragEndEvent, msg: MGeoPoint => IMapsAction): Callback = {
     _markerDragging(e, msg)
   }
 

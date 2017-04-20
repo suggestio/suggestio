@@ -1,12 +1,12 @@
 package io.suggest.maps.r.rad
 
 import diode.react.ModelProxy
+import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m._
-import io.suggest.maps.u.MapIcons
+import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
+import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
-import io.suggest.sjs.leaflet.map.LatLng
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 
@@ -18,7 +18,7 @@ import react.leaflet.marker.{MarkerPropsR, MarkerR}
   */
 object DraggablePinMarkerR {
 
-  type Props = ModelProxy[Option[LatLng]]
+  type Props = ModelProxy[Option[MGeoPoint]]
 
 
   class Backend($: BackendScope[Props, Unit]) extends RadBackendHelper($) {
@@ -26,19 +26,19 @@ object DraggablePinMarkerR {
     private val _pinIcon = MapIcons.pinMarkerIcon()
 
     // Функции-коллбеки для маркера центра круга.
-    private val _centerClickF     = cbFun1TojsCallback { _: Event => _dispatch( RadCenterClick ) }
-    private val _centerDragStartF = cbFun1TojsCallback { _: Event => _dispatch(RadCenterDragStart) }
-    private val _centerDraggingF  = cbFun1TojsCallback( _markerDragging(_: Event, RadCenterDragging) )
-    private val _centerDragEndF   = cbFun1TojsCallback( _markerDragEnd(_: DragEndEvent, RadCenterDragEnd) )
+    private val _centerClickF     = cbFun1ToJsCb { _: Event => _dispatch( RadCenterClick ) }
+    private val _centerDragStartF = cbFun1ToJsCb { _: Event => _dispatch(RadCenterDragStart) }
+    private val _centerDraggingF  = cbFun1ToJsCb( _markerDragging(_: Event, RadCenterDragging) )
+    private val _centerDragEndF   = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadCenterDragEnd) )
 
     def render(latLngProxy: Props): ReactElement = {
       for {
-        latLng <- latLngProxy()
+        geoPoint <- latLngProxy()
       } yield {
         MarkerR(
           new MarkerPropsR {
             // Параметры рендера:
-            override val position    = latLng
+            override val position    = MapsUtil.geoPoint2LatLng( geoPoint )
             override val draggable   = true
             override val clickable   = true
             override val icon        = _pinIcon

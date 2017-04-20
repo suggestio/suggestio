@@ -1,7 +1,7 @@
 package io.suggest.maps.m
 
 import diode.FastEq
-import io.suggest.geo.MGeoCircle
+import io.suggest.geo.{MGeoCircle, MGeoPoint}
 
 /**
   * Suggest.io
@@ -40,5 +40,10 @@ case class MRad(
   def withState(state2: MRadS) = copy(state = state2)
   def withEnabled(enabled2: Boolean) = copy(enabled = enabled2)
   def withCenterPopup(enabled2: Boolean) = copy(centerPopup = enabled2)
+
+  def currentCenter: MGeoPoint = {
+    state.centerDragging
+      .getOrElse( circle.center )
+  }
 
 }

@@ -4,7 +4,7 @@ import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.maps.m.{HandleLocationFound, HandleMapPopupClose, MMapS}
 import io.suggest.maps.u.MapsUtil
-import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
+import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ReactComponentB, ReactElement}
 import react.leaflet.lmap.{LMapPropsR, LMapR}
@@ -35,8 +35,8 @@ object LGeoMapR {
       dispatchOnProxyScopeCB( $, HandleMapPopupClose )
     }
 
-    private val onLocationFoundF = cbFun1TojsCallback( onLocationFound )
-    private val onPopupCloseF = cbFun1TojsCallback( onPopupClose )
+    private val onLocationFoundF = cbFun1ToJsCb( onLocationFound )
+    private val onPopupCloseF = cbFun1ToJsCb( onPopupClose )
 
     def render(props: Props, children: PropsChildren) = {
       val v = props()

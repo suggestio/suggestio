@@ -15,7 +15,8 @@ object MNodeMarkerS {
   /** Поддержка FastEq для [[MNodeMarkerS]]. */
   implicit object MNodeMarkerFastEq extends FastEq[MNodeMarkerS] {
     override def eqv(a: MNodeMarkerS, b: MNodeMarkerS): Boolean = {
-      a.center eq b.center
+      (a.center eq b.center) &&
+        (a.dragging eq b.dragging)
     }
   }
 
@@ -27,9 +28,14 @@ object MNodeMarkerS {
   * @param center Координаты маркера размещения узла.
   */
 case class MNodeMarkerS(
-                         center: MGeoPoint
+                         center   : MGeoPoint,
+                         dragging : Option[MGeoPoint] = None
                        ) {
 
   def withCenter(center2: MGeoPoint) = copy(center = center2)
+  def withDragging(dragging2: Option[MGeoPoint]) = copy(dragging = dragging2)
+
+  /** Текущий видимый для юзера центр. */
+  def currentCenter = dragging.getOrElse(center)
 
 }

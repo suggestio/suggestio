@@ -6,7 +6,7 @@ import io.suggest.lk.adv.geo.m.ReqRcvrPopup
 import io.suggest.maps.u.MapsUtil
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import io.suggest.react.ReactCommonUtil.cbFun1TojsCallback
+import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.react.ReactCommonUtil.Implicits._
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -37,7 +37,7 @@ object RcvrMarkersR {
       dispatchOnProxyScopeCB($, msg)
     }
 
-    private val _onMarkerClickedF = cbFun1TojsCallback( onMarkerClicked )
+    private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
 
     def render(p: Props): ReactElement = {
       for (markers1 <- p().toOption) yield {
