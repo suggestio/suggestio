@@ -10,8 +10,8 @@ import models.adv.{IAdvBillCtx, IAdvBillCtxWrap}
   * Description: Модель контекста биллинга в рамках geo-биллинга.
   */
 case class MGeoAdvBillCtx(
-                           override val wrapped: IAdvBillCtx,
-                           res    : MFormS
+                           override val wrapped   : IAdvBillCtx,
+                           res                    : MFormS
                          )
   extends IAdvBillCtxWrap
 

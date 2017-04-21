@@ -124,7 +124,7 @@ class AdvDirectBilling @Inject() (
     }
 
     // Пока посчитать размеры карточки
-    val bmc = advUtil.getAdModulesCount(mad)
+    val bmc = advUtil.maybeAdModulesCount(mad)
 
     // Когда всё будет готово, нужно нагенерить результатов.
     for {
@@ -159,7 +159,7 @@ class AdvDirectBilling @Inject() (
     */
   def mkAdvReqItems(orderId: Gid_t, mad: MNode, advs: TraversableOnce[AdvFormEntry], status: MItemStatus,
                     rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx, rcvrsMap: Map[String, MNode]): Iterator[MItem] = {
-    val bmc = advUtil.getAdModulesCount(mad)
+    val bmc = advUtil.maybeAdModulesCount(mad)
 
     for {
       adv <- advs.toIterator

@@ -17,7 +17,7 @@ trait IAdvBillCtx {
   def tfsMap              : Map[String, MDailyTf]
 
   /** Кол-во блоков карточки (площадь карточки). */
-  def blockModulesCount   : Int
+  def blockModulesCount   : Option[Int]
 
   /** Контекст календарей, необходимых для рассчёта выходных/рабочих дней. */
   def mcalsCtx            : ICalsCtx
@@ -35,7 +35,7 @@ trait IAdvBillCtx {
   def adId = mad.id.get
 
   override def toString: String = {
-    s"${getClass.getSimpleName}(${tfsMap.size}tfs,bmc=$blockModulesCount,$mcalsCtx,mad#${mad.id.orNull})"
+    s"${getClass.getSimpleName}(${tfsMap.size}tfs${blockModulesCount.fold("")(",bmc=" + _)},$mcalsCtx,mad#${mad.id.orNull})"
   }
 
 }
@@ -58,7 +58,7 @@ trait IAdvBillCtxWrap extends IAdvBillCtx {
 
 /** Дефолтовая реализация контейнера [[IAdvBillCtx]]. */
 case class MAdvBillCtx(
-                        override val blockModulesCount   : Int,
+                        override val blockModulesCount   : Option[Int],
                         override val mcalsCtx            : ICalsCtx,
                         override val tfsMap              : Map[String, MDailyTf],
                         override val ivl                 : IDateStartEnd,

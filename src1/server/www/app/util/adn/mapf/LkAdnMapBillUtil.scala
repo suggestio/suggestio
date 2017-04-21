@@ -53,7 +53,7 @@ class LkAdnMapBillUtil @Inject() (
       mad     = mnode,
       rcvrIds = TF_NODE_ID :: Nil,
       ivl     = MDateStartEnd(res.datePeriod.info),
-      bmc     = 1
+      bmc     = None
     )
   }
 

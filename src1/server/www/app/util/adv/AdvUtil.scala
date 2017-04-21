@@ -74,6 +74,10 @@ class AdvUtil @Inject() (
     val hmul = BlockHeights(bm.height).relSz
     wmul * hmul
   }
+  def maybeAdModulesCount(mad: MNode): Option[Int] = {
+    mad.ad.blockMeta
+      .map( getAdModulesCount )
+  }
 
 
   /** Сборка считалки стоимости размещения на указанном ресивере.
@@ -174,17 +178,18 @@ class AdvUtil @Inject() (
       )
 
       // amountN -- amount1 домноженная на кол-во блоков карточки.
-      val bmc = abc.blockModulesCount
-      val amountN = Mapper(
-        multiplifier = Some(bmc),
-        reason       = Some(
-          MPriceReason(
-            reasonType  = MReasonTypes.BlockModulesCount,
-            ints        = bmc :: Nil
-          )
-        ),
-        underlying = amount1
-      )
+      val amountN = abc.blockModulesCount.fold [IPriceDslTerm] (amount1) { bmc =>
+        Mapper(
+          multiplifier = Some(bmc),
+          reason       = Some(
+            MPriceReason(
+              reasonType  = MReasonTypes.BlockModulesCount,
+              ints        = bmc :: Nil
+            )
+          ),
+          underlying = amount1
+        )
+      }
 
       LOGGER.trace(s"$logPrefix amount (min/full) = ${amount1.price} / ${amountN.price}")
       amountN
@@ -216,9 +221,9 @@ class AdvUtil @Inject() (
     */
   def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
     // Посчитать размеры карточки
-    rcvrBillCtx(mad, rcvrIds, ivl, bmc = getAdModulesCount(mad))
+    rcvrBillCtx(mad, rcvrIds, ivl, bmc = maybeAdModulesCount(mad))
   }
-  def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd, bmc: Int): Future[MAdvBillCtx] = {
+  def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
 
     // Собираем все упомянутые узлы.
     val rcvrsFut = mNodesCache.multiGet(rcvrIds)
@@ -254,9 +259,8 @@ class AdvUtil @Inject() (
 
   /** Контекст для бесплатного размещения. */
   def freeRcvrBillCtx(mad: MNode, ivl: IDateStartEnd): MAdvBillCtx = {
-    val bmc = getAdModulesCount(mad)
     MAdvBillCtx(
-      blockModulesCount = bmc,
+      blockModulesCount = maybeAdModulesCount(mad),
       mcalsCtx          = MCalsCtx.empty,
       tfsMap            = Map.empty,
       ivl               = ivl,
