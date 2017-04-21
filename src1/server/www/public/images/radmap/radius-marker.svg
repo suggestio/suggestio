@@ -1,66 +1,32 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
-<svg
-   xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://creativecommons.org/ns#"
-   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:svg="http://www.w3.org/2000/svg"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="5mm"
-   height="5mm"
-   viewBox="0 0 17.716535 17.716535"
-   id="svg2"
-   version="1.1"
-   inkscape:version="0.91 r13725"
-   sodipodi:docname="radius-marker.svg">
-  <defs
-     id="defs4" />
-  <sodipodi:namedview
-     id="base"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:pageopacity="0.0"
-     inkscape:pageshadow="2"
-     inkscape:zoom="11.2"
-     inkscape:cx="31.7893"
-     inkscape:cy="12.997195"
-     inkscape:document-units="px"
-     inkscape:current-layer="layer1"
-     showgrid="false"
-     inkscape:window-width="1920"
-     inkscape:window-height="1136"
-     inkscape:window-x="0"
-     inkscape:window-y="27"
-     inkscape:window-maximized="1"
-     units="mm"
-     width="10mm" />
-  <metadata
-     id="metadata7">
-    <rdf:RDF>
-      <cc:Work
-         rdf:about="">
-        <dc:format>image/svg+xml</dc:format>
-        <dc:type
-           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
-      </cc:Work>
-    </rdf:RDF>
-  </metadata>
-  <g
-     inkscape:label="Layer 1"
-     inkscape:groupmode="layer"
-     id="layer1"
-     transform="translate(0,-1034.6456)">
-    <rect
-       style="fill:#ffffea;fill-rule:evenodd;stroke:#000000;stroke-width:1.658;stroke-linecap:butt;stroke-linejoin:bevel;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none;opacity:1;fill-opacity:1"
-       id="rect3336"
-       width="15.299875"
-       height="15.121304"
-       x="1.2008168"
-       y="1036.0742" />
-  </g>
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="50px" height="50px" viewBox="0 0 50 50" style="enable-background:new 0 0 50 50;" xml:space="preserve">
+<circle style="fill:#EC2227;" cx="25.097" cy="24.448" r="23.415"/>
+<g style="opacity:0.2;">
+	<defs>
+		<circle id="SVGID_1_" style="opacity:0.2;" cx="25.097" cy="24.448" r="23.415"/>
+	</defs>
+	<clipPath id="SVGID_2_">
+		<use xlink:href="#SVGID_1_"  style="overflow:visible;"/>
+	</clipPath>
+	<polygon style="clip-path:url(#SVGID_2_);fill:#010101;" points="21.139,32.875 23.529,35.983 27.102,34.571 29.27,31.199 
+		24.648,23.068 21.139,19.004 22.611,13.767 26.877,13.767 29.917,14.583 70.582,55.066 53.26,68.949 19.793,36.087 	"/>
+</g>
+<path style="fill:#FFFFFF;" d="M25.672,13.084c1.641,0,2.996,0.412,4.055,1.232c1.062,0.818,1.596,1.855,1.596,3.113
+	c0,0.719-0.246,1.34-0.744,1.858c-0.492,0.519-1.131,0.782-1.918,0.782c-0.639,0-1.2-0.189-1.693-0.568
+	c-0.494-0.378-0.744-0.916-0.744-1.621c0-0.283,0.076-0.602,0.23-0.953c0.104-0.236,0.154-0.412,0.154-0.527
+	c0-0.586-0.445-0.877-1.334-0.877c-0.637,0-1.205,0.231-1.697,0.689c-0.496,0.459-0.742,1.101-0.742,1.92
+	c0,0.703,0.229,1.369,0.678,1.997c0.451,0.628,1.643,1.639,3.564,3.026c1.859,1.339,3.158,2.575,3.895,3.704
+	c0.736,1.132,1.104,2.407,1.104,3.831c0,2.258-0.725,4.016-2.186,5.26c-1.451,1.246-3.188,1.871-5.199,1.871
+	c-1.906,0-3.451-0.455-4.635-1.367c-1.178-0.914-1.766-2.076-1.766-3.479c0-0.771,0.234-1.436,0.699-1.996
+	c0.471-0.56,1.148-0.842,2.035-0.842c1.611,0,2.414,0.762,2.414,2.285c0,0.252-0.053,0.575-0.152,0.979
+	c-0.107,0.366-0.158,0.63-0.158,0.778c0,0.82,0.588,1.23,1.762,1.23c0.889,0,1.625-0.28,2.213-0.84s0.881-1.199,0.881-1.92
+	c0-0.791-0.258-1.513-0.766-2.175c-0.512-0.663-1.514-1.562-3.004-2.698c-2.008-1.542-3.424-2.869-4.242-3.983
+	c-0.824-1.111-1.232-2.448-1.232-4.004c0-1.993,0.707-3.61,2.111-4.85C22.258,13.703,23.861,13.084,25.672,13.084"/>
+<polyline style="fill:#EC2227;" points="2.334,9.701 2.334,2.334 9.7,2.334 "/>
+<polyline style="fill:#EC2227;" points="40.3,2.334 47.666,2.334 47.666,9.701 "/>
+<polyline style="fill:#EC2227;" points="47.665,40.301 47.665,47.667 40.299,47.667 "/>
+<polyline style="fill:#EC2227;" points="9.7,47.666 2.333,47.666 2.333,40.3 "/>
 </svg>
