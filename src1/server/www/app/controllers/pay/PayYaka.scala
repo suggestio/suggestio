@@ -155,9 +155,7 @@ class PayYaka @Inject() (
         // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
         // Собрать аргументы для рендера, отрендерить страницу с формой.
         val formData = MYakaFormData(
-          isDemo          = profile.isDemo,
-          shopId          = profile.shopId,
-          scId            = profile.scId,
+          profile         = profile,
           amount          = payPrice.amount,
           onNodeId        = onNodeId,
           customerNumber  = request.user.personIdOpt.get,

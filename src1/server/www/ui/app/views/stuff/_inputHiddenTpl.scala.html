@@ -1,9 +1,0 @@
-@(f: Field, id: Option[String] = None)
-
-@* Тривиальный рендер hidden-поля на основе field-маппинга. *@
-
-<input type="hidden"
-       @if(id) { id="@id" }
-       name="@f.name"
-       value="@f.value"
-/>

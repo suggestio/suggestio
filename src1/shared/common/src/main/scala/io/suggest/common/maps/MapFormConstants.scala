@@ -10,27 +10,8 @@ import io.suggest.common.html.HtmlConstants.ATTR_PREFIX
   */
 object MapFormConstants {
 
-  /** Имя поля точки-центра карты. */
-  def CENTER_FN = "center"
-
-  /** Имя поля с текущим зумом карты. */
-  def ZOOM_FN   = "zoom"
-
-  /** Имя поля верхнего уровня с данными карты. */
-  def MAP_FN = "map"
-
-  def STATE_FN  = "state"
-
-  def INPUT_ID_LAT  = ID_PREFIX + "ma"
-  def INPUT_ID_LON  = ID_PREFIX + "mo"
-  def INPUT_ID_ZOOM = ID_PREFIX + "mz"
-
-
   /** Префикс разных id'шников, объявленных здесь. */
   def ID_PREFIX = "mf_"
-
-  /** id элемента-контейнера карты. */
-  def CONTAINER_ID  = ID_PREFIX + "cont"
 
 
   def ATTR_IMG_WIDTH        = ATTR_PREFIX + "w"

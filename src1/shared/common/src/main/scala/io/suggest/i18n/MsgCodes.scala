@@ -71,6 +71,7 @@ object MsgCodes {
   val `Date` = "Date"
   val `Price` = "Price"
   val `Unable.to.initialize.map` = "Unable.to.initialize.map"
+  val `Publish.node.on.adv.map` = "Publish.node.on.adv.map"
 
   val `Add.tags` = "Add.tags"
 
@@ -110,5 +111,7 @@ object MsgCodes {
   val `Phone` = "Phone"
 
   val `You.can.place.adn.node.on.map.below` = "You.can.place.adn.node.on.map.below"
+
+  val `Adv.for.free.without.moderation` = "Adv.for.free.without.moderation"
 
 }

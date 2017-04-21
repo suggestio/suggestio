@@ -13,8 +13,10 @@ import models.MNode
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.blk.{BlockHeights, BlockMeta, BlockWidths}
 import models.mcal.MCalsCtx
+import models.mctx.Context
 import models.mdt.IDateStartEnd
 import models.mproj.ICommonDi
+import util.TplDataFormatUtil
 import util.billing.TfDailyUtil
 import util.cal.CalendarUtil
 
@@ -213,6 +215,10 @@ class AdvUtil @Inject() (
     * @return Фьючерс с готовым к использованию контекстом rcvr-биллинга.
     */
   def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
+    // Посчитать размеры карточки
+    rcvrBillCtx(mad, rcvrIds, ivl, bmc = getAdModulesCount(mad))
+  }
+  def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd, bmc: Int): Future[MAdvBillCtx] = {
 
     // Собираем все упомянутые узлы.
     val rcvrsFut = mNodesCache.multiGet(rcvrIds)
@@ -228,9 +234,6 @@ class AdvUtil @Inject() (
       val calIds = tfDailyUtil.tfsMap2calIds( tfsMap )
       calendarUtil.getCalsCtx(calIds)
     }
-
-    // Пока посчитать размеры карточки
-    val bmc = getAdModulesCount(mad)
 
     for {
       tfsMap    <- tfsMapFut
@@ -260,6 +263,21 @@ class AdvUtil @Inject() (
       mad               = mad,
       rcvrsMap          = Map.empty
     )
+  }
+
+
+  def prepareForRender(priceDsl: IPriceDslTerm)(implicit ctx: Context): IPriceDslTerm = {
+    priceDsl.mapAllPrices { p0 =>
+      TplDataFormatUtil.setPriceAmountStr(
+        p0.normalizeAmountByExponent
+      )
+    }
+  }
+
+
+  def prepareForSave(priceDsl: IPriceDslTerm): IPriceDslTerm = {
+    priceDsl
+      .mapAllPrices(_.normalizeAmountByExponent)
   }
 
 }

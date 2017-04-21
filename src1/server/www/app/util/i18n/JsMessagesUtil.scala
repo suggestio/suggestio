@@ -2,6 +2,7 @@ package util.i18n
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
+import io.suggest.bill.price.dsl.MReasonTypes
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
 import io.suggest.i18n.MsgCodes
@@ -191,6 +192,7 @@ class JsMessagesUtil @Inject() (
 
   private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
     MsgCodes.`You.can.place.adn.node.on.map.below` ::
+      MReasonTypes.AdnMapAdv.msgCodeI18n ::
       Nil
   }
 

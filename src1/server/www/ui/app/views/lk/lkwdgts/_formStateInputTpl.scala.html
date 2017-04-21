@@ -1,0 +1,7 @@
+@(stateStr: String)
+
+@* Скрытый рендер как-то сериализованного состояния формы внутри HTML-страницы. *@
+
+@import io.suggest.common.spa.SpaConst.STATE_CONT_ID
+
+<input type="hidden" id="@STATE_CONT_ID" value="@stateStr"/>

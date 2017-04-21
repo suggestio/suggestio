@@ -11,9 +11,7 @@ import io.suggest.mbill2.m.gid.Gid_t
   * Description: Модель данных формы яндекс-кассы.
   */
 case class MYakaFormData(
-                          isDemo          : Boolean,
-                          shopId          : Long,
-                          scId            : Long,
+                          profile         : IYakaProfile,
                           amount          : Amount_t,
                           customerNumber  : String,
                           onNodeId        : MEsUuId,

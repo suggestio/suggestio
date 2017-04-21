@@ -6,11 +6,12 @@
 @import io.suggest.common.spa.SpaConst.STATE_CONT_ID
 @import views.html.stuff.{_preLoaderLkTpl, jsTpl2HtmlTpl}
 @import views.js.stuff.jsRevRouterTpl
+@import lk.lkwdgts._formStateInputTpl
 @import io.suggest.css.Css
 
 
 @* Рендер сериализованных данных для начального состояния. *@
-<input type="hidden" id="@STATE_CONT_ID" value="@formState"/>
+@_formStateInputTpl( formState )
 
 @* Верстка контейнера формы. *@
 <div class="@Css.Lk.Nodes.LKN" id="@FORM_CONT_ID">

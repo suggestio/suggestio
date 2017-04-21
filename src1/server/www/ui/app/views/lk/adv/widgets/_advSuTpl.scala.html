@@ -3,6 +3,7 @@
 @* Инпуты для суперюзера при размещении. *@
 
 @import io.suggest.adv.AdvConstants.Su._
+@import io.suggest.i18n.MsgCodes
 
 @if(ctx.user.isSuper) {
   <div class="adv-su-inputs-wrap">
@@ -14,7 +15,7 @@
         "checked" -> "checked"
       )
       @_checkBoxTitleTpl() {
-        @ctx.messages("Adv.for.free.without.moderation")
+        @ctx.messages( MsgCodes.`Adv.for.free.without.moderation` )
       }
     </label>
   </div>

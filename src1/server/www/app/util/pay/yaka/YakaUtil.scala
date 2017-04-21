@@ -12,6 +12,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mpay.{MPayMode, MPayModes}
 import org.apache.commons.codec.digest.DigestUtils
 import util.{FormUtil, TplDataFormatUtil}
+import play.api.http.HttpVerbs
 
 /**
   * Suggest.io
@@ -30,6 +31,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
 
   private def CONF_PREFIX = "sio.pay.yaka."
 
+
   /** Реализация IYakaConf. */
   private case class YakaProfile(
                                   override val scId         : Long,
@@ -38,7 +40,23 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
                                 )
     extends IYakaProfile
   {
+
+    /** ID магазина всегда стабилен и не зависит от режима работы. */
     override final def shopId = SHOP_ID
+
+    override def eshopActionMethod = HttpVerbs.POST
+
+    /** URL экшена оплаты. */
+    override def eshopActionUrl: String = {
+      val sb = new StringBuilder(40)
+        .append( "https://" )
+      // Для демо-кассы надо demo-домен юзать.
+      if (isDemo)
+        sb.append( "demo" )
+      sb.append( "money.yandex.ru/eshop.xml" )
+        .toString()
+    }
+
   }
 
 

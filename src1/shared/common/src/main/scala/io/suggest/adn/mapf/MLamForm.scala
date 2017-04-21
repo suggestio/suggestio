@@ -34,5 +34,6 @@ case class MLamForm(
                      mapProps         : MMapProps,
                      coord            : MGeoPoint,
                      datePeriod       : MAdvPeriod,
-                     adv4freeChecked  : Option[Boolean]
+                     adv4freeChecked  : Option[Boolean],
+                     tzOffsetMinutes  : Int = 0
                    )

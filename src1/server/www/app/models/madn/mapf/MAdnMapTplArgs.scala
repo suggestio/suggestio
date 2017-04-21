@@ -1,9 +1,7 @@
 package models.madn.mapf
 
-import io.suggest.bill.MGetPriceResp
 import io.suggest.model.n2.node.MNode
 import models.adv.form.IAdvForAdFormCommonTplArgs
-import play.api.data.Form
 
 /**
   * Suggest.io
@@ -17,11 +15,8 @@ trait IAdnMapTplArgs extends IAdvForAdFormCommonTplArgs {
   /** Текущий ADN-узел. */
   def mnode   : MNode
 
-  /** Маппинг формы размещения узла. */
-  def form    : Form[MAdnMapFormRes]
-
-  /** Текущая стоимость размещения. */
-  def price   : MGetPriceResp
+  /** Сериализованные данные состояния react-формы размещения узла. */
+  def formB64 : String
 
 }
 
@@ -29,7 +24,6 @@ trait IAdnMapTplArgs extends IAdvForAdFormCommonTplArgs {
 /** Дефолтовая реализация модели [[IAdnMapTplArgs]]. */
 case class MAdnMapTplArgs(
   override val mnode      : MNode,
-  override val form       : Form[MAdnMapFormRes],
-  override val price      : MGetPriceResp
+  override val formB64    : String
 )
   extends IAdnMapTplArgs

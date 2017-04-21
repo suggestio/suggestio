@@ -8,8 +8,12 @@
 @import views.html.stuff.geo.maps._
 @import lk.adv.widgets._
 @import lk.lkwdgts.price._
+@import lk.lkwdgts._formStateInputTpl
 @import adv.tpl._
-@import io.suggest.adn.mapf.AdnMapFormConstants.FORM_ID
+@import io.suggest.common.spa.SpaConst.STATE_CONT_ID
+@import io.suggest.adn.mapf.AdnMapFormConstants.FORM_CONT_ID
+@import io.suggest.adv.AdvConstants.Price
+@import views.html.stuff._preLoaderLkTpl
 
 @mapfBase(
   title         = messages(
@@ -17,23 +21,15 @@
     args.mnode.guessDisplayNameOrId.getOrElse( messages("Current.node") )
   ),
   mnode         = args.mnode,
-  rightBarAfter = Some( _rightPriceTpl(args.price, formId = FORM_ID) )
+  rightBarAfter = Some( _rightPriceContTpl(id = Some(Price.OUTER_CONT_ID))() )
 ) {
 
-  @* URL для рассчета стоимости размещения. *@
-  @_getPriceUrlTpl( routes.LkAdnMap.getPriceSubmit(args.mnode.id.get) )
+  @* Скрытый рендер как-то сериализованного состояния формы. *@
+  @_formStateInputTpl( args.formB64 )
 
-
-  @_advFormBlockTpl() {
-
-    @* Рендер самой формы здесь. *@
-    @_AdnMapFormTpl(args)
-
-    @* Контейнер карты. *@
-    <br/>
-    @_mapContTpl()
-
-  }
+  <div id="@FORM_CONT_ID">
+    @_preLoaderLkTpl()
+  </div>
 
 
   @* Рендерим маркеры, необходимые для размещения ADN-узла на карте. *@

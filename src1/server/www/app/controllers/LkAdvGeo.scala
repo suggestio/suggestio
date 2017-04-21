@@ -140,7 +140,7 @@ class LkAdvGeo @Inject() (
           ),
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
           onMainScreen = true,
-          adv4freeChecked = a4fPropsOpt.map(_ => true),
+          adv4freeChecked = advFormUtil.a4fCheckedOpt( a4fPropsOpt ),
           // TODO Найти текущие ресиверы в draft items (в корзине неоплаченных).
           rcvrsMap = Map.empty,
           // TODO Найти текущие теги в draft items (в корзине неоплаченных).
@@ -192,14 +192,7 @@ class LkAdvGeo @Inject() (
       getContext2
     }
 
-    val _a4fPropsOptFut = for (ctx <- _ctxFut) yield {
-      OptionUtil.maybe( request.user.isSuper ) {
-        MAdv4FreeProps(
-          fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
-          title = ctx.messages( "Adv.for.free.without.moderation" )
-        )
-      }
-    }
+    val _a4fPropsOptFut = advFormUtil.a4fPropsOpt0CtxFut( _ctxFut )
 
     /** Рендер ответа.
       *
@@ -286,7 +279,7 @@ class LkAdvGeo @Inject() (
       lazy val logPrefix = s"forAdSubmit($adId):"
 
       // Хватаем бинарные данные из тела запроса...
-      advGeoFormUtil.validateForm( request.body ).fold(
+      advGeoFormUtil.validateFromRequest().fold(
         {violations =>
           LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString("\n", "\n ", "")}")
           NotAcceptable( violations.toString )
@@ -346,6 +339,7 @@ class LkAdvGeo @Inject() (
 
             val rCall = routes.LkAdvGeo.forAd(adId)
             val retCall = if (!isSuFree) {
+              // Обычный юзер отправляется читать свою корзину заказов.
               val producerId  = request.producer.id.get
               routes.LkBill2.cart(producerId, r = Some(rCall.url))
               //implicit val messages = implicitly[Messages]
@@ -381,7 +375,7 @@ class LkAdvGeo @Inject() (
     canAdvAd(adId).async(formPostBP) { implicit request =>
       lazy val logPrefix = s"getPriceSubmit($adId):"
 
-      advGeoFormUtil.validateForm( request.body ).fold(
+      advGeoFormUtil.validateFromRequest().fold(
         {violations =>
           LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
           NotAcceptable( violations.toString )

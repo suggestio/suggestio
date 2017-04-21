@@ -849,6 +849,7 @@ Current.node=Текущий узел
 x.on.advertisers.map={0} на карте рекламодателей
 On.the.map=На карте
 You.can.place.adn.node.on.map.below=Вы можете разместиться на карте рекламодателей с помощью карты ниже.
+Publish.node.on.adv.map=Размещение узла на карте
 
 
 Adv.for.free.without.moderation=Размещать бесплатно, без подтверждения?

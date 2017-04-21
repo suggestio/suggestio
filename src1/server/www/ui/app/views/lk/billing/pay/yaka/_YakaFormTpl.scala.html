@@ -11,10 +11,10 @@
   <input type="hidden" name="@k" value="@v"/>
 }
 
-<form method="POST" action="https://@if(args.isDemo){demo}money.yandex.ru/eshop.xml">
+<form method="@args.profile.eshopActionMethod" action="@args.profile.eshopActionUrl">
 
-  @__input(SHOP_ID_FN,        args.shopId)
-  @__input(SC_ID_FN,          args.scId)
+  @__input(SHOP_ID_FN,        args.profile.shopId)
+  @__input(SC_ID_FN,          args.profile.scId)
   @__input(PERSON_ID_FN,      args.customerNumber)
 
   @_wkvTable() {
@@ -37,7 +37,7 @@
         @messages("Payment.method")
       }
       @_wkvTd(false) {
-        @if(args.isDemo) {
+        @if(args.profile.isDemo) {
           <strong>
             (@messages("Demo"))
           </strong>

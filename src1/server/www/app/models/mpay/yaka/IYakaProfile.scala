@@ -10,6 +10,13 @@ import models.mpay.MPayMode
   */
 trait IYakaProfile {
 
+  /** URL экшена оплаты. */
+  def eshopActionUrl: String
+
+  /** HTTP-метод для экшена оплаты. Наверное всегда POST. */
+  def eshopActionMethod: String
+
+
   /** id магазина. */
   def shopId: Long
 

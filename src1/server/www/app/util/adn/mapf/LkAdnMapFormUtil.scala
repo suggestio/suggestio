@@ -1,13 +1,8 @@
 package util.adn.mapf
 
 import com.google.inject.Inject
-import io.suggest.adn.mapf.AdnMapFormConstants.Fields._
-import models.madn.mapf.MAdnMapFormRes
-import play.api.data.Forms._
-import play.api.data._
-import util.FormUtil
-import util.adv.AdvFormUtil
-import util.maps.MapFormUtil
+import io.suggest.adn.mapf.MLamForm
+import util.data.{AccordUtil, AccordValidateFormUtilT}
 
 /**
   * Suggest.io
@@ -19,25 +14,21 @@ import util.maps.MapFormUtil
   * Будем всячески избегать ситуации в проекте, когда точек узла может быть больше одной.
   */
 class LkAdnMapFormUtil @Inject() (
-  mapFormUtil       : MapFormUtil,
-  advFormUtil       : AdvFormUtil
-) {
+                                   accordUtil        : AccordUtil
+                                 )
+  extends AccordValidateFormUtilT[MLamForm]
+{
 
-  /** Form-маппинг для [[MAdnMapFormRes]]. */
-  def adnMapFormResM: Mapping[MAdnMapFormRes] = {
-    mapping(
-      POINT_FN      -> FormUtil.geoPointM,
-      STATE_FN      -> mapFormUtil.mapStateM,
-      PERIOD_FN     -> advFormUtil.advPeriodM,
-      TZ_OFFSET_FN  -> number
-    )
-    { MAdnMapFormRes.apply }
-    { MAdnMapFormRes.unapply }
-  }
+  import com.wix.accord.dsl._
+  import accordUtil._
 
-  /** Маппинг для формы размещения ADN-узла на карте. */
-  def adnMapFormM: Form[MAdnMapFormRes] = {
-    Form(adnMapFormResM)
+  /** Основной валидатор для MLamForm. */
+  // TODO Кривой wix.accord глючит, если написать implicit val тут. Но оно implicit в трейте, поэтому пока терпим.
+  override val mainValidator = validator[MLamForm] { mf =>
+    mf.datePeriod is valid
+    mf.coord is valid
+    mf.mapProps is valid
+    mf.tzOffsetMinutes is valid( jsDateTzOffsetMinutesV )
   }
 
 }

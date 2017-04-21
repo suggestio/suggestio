@@ -8,6 +8,7 @@
 @import stuff.geo.maps._
 @import lk.adv.geo.agBase
 @import lk.lkwdgts.price._
+@import lk.lkwdgts._formStateInputTpl
 @import io.suggest.adv.geo.AdvGeoConstants._
 @import io.suggest.adv.AdvConstants.Price
 @import io.suggest.common.spa.SpaConst.STATE_CONT_ID
@@ -23,7 +24,7 @@
 ) {
 
   @* Скрытый рендер как-то сериализованного состояния формы. *@
-  <input type="hidden" id="@STATE_CONT_ID" value="@args.formState"/>
+  @_formStateInputTpl( args.formState )
 
   <div id="@REACT_FORM_TARGET_ID">
     @_preLoaderLkTpl()

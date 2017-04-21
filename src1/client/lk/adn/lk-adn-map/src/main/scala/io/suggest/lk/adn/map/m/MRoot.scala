@@ -6,6 +6,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS
 import io.suggest.maps.m.MMapS
+import io.suggest.sjs.common.controller.DomQuick
 
 /**
   * Suggest.io
@@ -56,7 +57,8 @@ case class MRoot(
       mapProps          = mmap.props,
       coord             = nodeMarker.center,
       datePeriod        = datePeriod,
-      adv4freeChecked   = adv4free.map(_.checked)
+      adv4freeChecked   = adv4free.map(_.checked),
+      tzOffsetMinutes   = DomQuick.tzOffsetMinutes
     )
   }
 

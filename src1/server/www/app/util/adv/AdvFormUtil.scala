@@ -2,12 +2,15 @@ package util.adv
 
 import java.time.LocalDate
 
-import com.google.inject.Singleton
+import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
+import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
+import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import models.adv.form._
 import models.maps.{MapViewState, RadMapValue}
@@ -18,6 +21,8 @@ import play.api.data.Forms._
 import play.api.data.{Form, _}
 import util.TplDataFormatUtil
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -25,7 +30,9 @@ import util.TplDataFormatUtil
  * Description: Общая утиль для маппингов разных форм размещения рекламной карточки.
  */
 @Singleton
-class AdvFormUtil {
+class AdvFormUtil @Inject() (
+                             implicit private val ec: ExecutionContext
+                            ) {
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
@@ -166,6 +173,31 @@ class AdvFormUtil {
     } else {
       pricing
     }
+  }
+
+
+  /** Дефолтовое состояние Adv4Free, пробрасываемое в react+boopickle-формы,
+    * поддерживающие галочку бесплатного размещения.
+    *
+    * @param ctx Контекст рендера.
+    * @return
+    */
+  def a4fPropsOpt0(implicit ctx: Context): Option[MAdv4FreeProps] = {
+    OptionUtil.maybe( ctx.request.user.isSuper ) {
+      MAdv4FreeProps(
+        fn    = AdvConstants.Su.ADV_FOR_FREE_FN,
+        title = ctx.messages( MsgCodes.`Adv.for.free.without.moderation` )
+      )
+    }
+  }
+  def a4fPropsOpt0CtxFut(ctxFut: Future[Context]): Future[Option[MAdv4FreeProps]] = {
+    for (ctx <- ctxFut) yield {
+      a4fPropsOpt0(ctx)
+    }
+  }
+
+  def a4fCheckedOpt(a4fPropsOpt: Option[MAdv4FreeProps]): Option[Boolean] = {
+    a4fPropsOpt.map(_ => true)
   }
 
 }

@@ -197,7 +197,7 @@ class AdvGeoBillUtil @Inject() (
       }
       .toIterator
       .flatMap { term =>
-        val term2 = term.mapAllPrices(_.normalizeAmountByExponent)
+        val term2 = advUtil.prepareForSave(term)
         lazy val logPrefix2 = s"$logPrefix (${term2.getClass.getSimpleName}#${term2.hashCode()}) "
         LOGGER.trace(s"$logPrefix2 term = $term2")
         term2
@@ -332,11 +332,7 @@ class AdvGeoBillUtil @Inject() (
       bill2Util.zeroPricing
 
     } else {
-      val priceDsl2 = priceDsl0.mapAllPrices { p0 =>
-        TplDataFormatUtil.setPriceAmountStr(
-          p0.normalizeAmountByExponent
-        )
-      }
+      val priceDsl2 = advUtil.prepareForRender(priceDsl0)
 
       // Собрать итоговый ответ с подробными ценами для формы.
       val resp = MGetPriceResp(
