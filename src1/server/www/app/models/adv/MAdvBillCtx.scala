@@ -25,17 +25,12 @@ trait IAdvBillCtx {
   /** Период размещения. */
   def ivl                 : IDateStartEnd
 
-  /** Рекламная карточка. */
-  def mad                 : MNode
-
   /** Карта ресиверов. */
   def rcvrsMap            : Map[String, MNode]
 
-  /** Упрощённый доступ к id рекламной карточки. */
-  def adId = mad.id.get
 
   override def toString: String = {
-    s"${getClass.getSimpleName}(${tfsMap.size}tfs${blockModulesCount.fold("")(",bmc=" + _)},$mcalsCtx,mad#${mad.id.orNull})"
+    s"${getClass.getSimpleName}(${tfsMap.size}tfs${blockModulesCount.fold("")(",bmc=" + _)},$mcalsCtx)"
   }
 
 }
@@ -51,7 +46,6 @@ trait IAdvBillCtxWrap extends IAdvBillCtx {
   override def blockModulesCount  = wrapped.blockModulesCount
   override def mcalsCtx           = wrapped.mcalsCtx
   override def ivl                = wrapped.ivl
-  override def mad                = wrapped.mad
   override def rcvrsMap           = wrapped.rcvrsMap
 }
 
@@ -62,7 +56,6 @@ case class MAdvBillCtx(
                         override val mcalsCtx            : ICalsCtx,
                         override val tfsMap              : Map[String, MDailyTf],
                         override val ivl                 : IDateStartEnd,
-                        override val mad                 : MNode,
                         override val rcvrsMap            : Map[String, MNode]
                       )
   extends IAdvBillCtx

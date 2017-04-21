@@ -22,7 +22,6 @@ import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
-import util.TplDataFormatUtil
 import util.adn.NodesUtil
 import util.adv.AdvUtil
 import util.billing.Bill2Util
@@ -163,7 +162,7 @@ class AdvGeoBillUtil @Inject() (
     *                Например, выхлоп [[util.billing.Bill2Util.ensureCartOrder()]].
     * @return Фьючерс c результатом.
     */
-  def addToOrder(orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(adId: String, orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     lazy val logPrefix = s"addToOrder($orderId)[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix status=$status, ${abc.rcvrsMap.size} rcvrs, ${abc.mcalsCtx.calsMap.size} calendars")
 
@@ -220,7 +219,7 @@ class AdvGeoBillUtil @Inject() (
                   iType         = MItemTypes.GeoTag,
                   status        = status,
                   price         = term2.price,
-                  nodeId        = abc.adId,
+                  nodeId        = adId,
                   dateStartOpt  = dtStartOpt,
                   dateEndOpt    = dtEndOpt,
                   // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
@@ -241,7 +240,7 @@ class AdvGeoBillUtil @Inject() (
                       iType         = MItemTypes.GeoPlace,
                       status        = status,
                       price         = term2.price,
-                      nodeId        = abc.adId,
+                      nodeId        = adId,
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
                       rcvrIdOpt     = None,
@@ -271,7 +270,7 @@ class AdvGeoBillUtil @Inject() (
                       iType         = MItemTypes.TagDirect,
                       status        = status,
                       price         = term2.price,
-                      nodeId        = abc.adId,
+                      nodeId        = adId,
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
                       // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
@@ -292,7 +291,7 @@ class AdvGeoBillUtil @Inject() (
                           iType         = MItemTypes.AdvDirect,
                           status        = status,
                           price         = term2.price,
-                          nodeId        = abc.adId,
+                          nodeId        = adId,
                           dateStartOpt  = dtStartOpt,
                           dateEndOpt    = dtEndOpt,
                           rcvrIdOpt     = Some(rcvrId),

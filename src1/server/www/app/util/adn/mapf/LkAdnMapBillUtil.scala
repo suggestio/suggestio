@@ -50,7 +50,6 @@ class LkAdnMapBillUtil @Inject() (
   def advBillCtx(isSuFree: Boolean, mnode: MNode, res: MLamForm): Future[MAdvBillCtx] = {
     // Подготовить интервал размещения...
     advUtil.rcvrBillCtx(
-      mad     = mnode,
       rcvrIds = TF_NODE_ID :: Nil,
       ivl     = MDateStartEnd(res.datePeriod.info),
       bmc     = None

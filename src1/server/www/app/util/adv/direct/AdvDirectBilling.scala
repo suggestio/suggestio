@@ -136,7 +136,7 @@ class AdvDirectBilling @Inject() (
       adves2
         .iterator
         .map { adve =>
-          val abc = MAdvBillCtx(bmc, calsCtx, tfsMap, adve, mad, rcvrsMap)
+          val abc = MAdvBillCtx(bmc, calsCtx, tfsMap, adve, rcvrsMap)
           advUtil.calcDateAdvPriceOnTf(adve.adnId, abc)
             .price
             .normalizeAmountByExponent
@@ -165,7 +165,7 @@ class AdvDirectBilling @Inject() (
       adv <- advs.toIterator
       if adv.advertise
     } yield {
-      val abc = MAdvBillCtx(bmc, mcalsCtx, rcvrTfs, adv, mad, rcvrsMap)
+      val abc = MAdvBillCtx(bmc, mcalsCtx, rcvrTfs, adv, rcvrsMap)
       MItem(
         orderId       = orderId,
         iType         = MItemTypes.AdvDirect,

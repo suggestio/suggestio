@@ -221,9 +221,9 @@ class AdvUtil @Inject() (
     */
   def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd): Future[MAdvBillCtx] = {
     // Посчитать размеры карточки
-    rcvrBillCtx(mad, rcvrIds, ivl, bmc = maybeAdModulesCount(mad))
+    rcvrBillCtx(rcvrIds, ivl, bmc = maybeAdModulesCount(mad))
   }
-  def rcvrBillCtx(mad: MNode, rcvrIds: TraversableOnce[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
+  def rcvrBillCtx(rcvrIds: TraversableOnce[String], ivl: IDateStartEnd, bmc: Option[Int]): Future[MAdvBillCtx] = {
 
     // Собираем все упомянутые узлы.
     val rcvrsFut = mNodesCache.multiGet(rcvrIds)
@@ -250,7 +250,6 @@ class AdvUtil @Inject() (
         mcalsCtx  = calsCtx,
         tfsMap    = tfsMap,
         ivl       = ivl,
-        mad       = mad,
         rcvrsMap  = rcvrsMap
       )
     }
@@ -264,7 +263,6 @@ class AdvUtil @Inject() (
       mcalsCtx          = MCalsCtx.empty,
       tfsMap            = Map.empty,
       ivl               = ivl,
-      mad               = mad,
       rcvrsMap          = Map.empty
     )
   }

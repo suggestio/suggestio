@@ -322,6 +322,7 @@ class LkAdvGeo @Inject() (
 
                 // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
                 addRes  <- advGeoBillUtil.addToOrder(
+                  adId        = adId,
                   orderId     = cart.id.get,
                   status      = status,
                   abc         = abc
