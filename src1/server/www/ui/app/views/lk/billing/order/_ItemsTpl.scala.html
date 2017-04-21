@@ -8,6 +8,8 @@
 @import util.TplDataFormatUtil.{formatPrice, formatGeoShape}
 @import helper._
 @import views.html.sc._adNormalTpl
+@import ctx.api.cdn.asset
+@import io.suggest.css.Css
 
 
 @__td(size: String, isHeader: Boolean, classes: Seq[String] = Nil, rowSpan: Option[Int] = None)(content: Html) = {
@@ -20,10 +22,8 @@
 
 @__delBtn(call: Call, titleMsg: String) = {
   @form( CSRF(call), 'class -> "f-right" ) {
-    <a class="btn __negative js-submit-btn"
-       title="@messages(titleMsg)"
-       href="#">
-      &cross;
+    <a class="@Css.Buttons.BTN js-submit-btn delete-cross"
+       title="@messages(titleMsg)">
     </a>
   }
 }
