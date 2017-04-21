@@ -33,7 +33,7 @@ object ItemsPricesR {
         for (priceReason <- mapper.reason) yield {
           // Рендерить название причины начисления
           val leftTd = <.td(
-            ^.`class` := Css.flat1( Css.Table.Td.Radial.FIRST :: tdCssBody ),
+            ^.`class` := Css.flat1( tdCssBody ),
 
             Messages( priceReason.reasonType.msgCodeI18n )
           )
@@ -106,7 +106,7 @@ object ItemsPricesR {
       <.tr(
         // Дата
         <.td(
-          ^.`class` := Css.flat1( Css.Table.Td.Radial.FIRST :: tdCssBody ),
+          ^.`class` := Css.flat1( tdCssBody ),
 
           tfPrice.date
             .fold[ReactNode]( HtmlConstants.NBSP_STR ) { ymd =>
