@@ -5,13 +5,14 @@
 
 @import views.html.stuff.leaflet._
 @import static.date.picker._
+@import stuff.react.datepicker._reactDatePickerCssTpl
 
 
 @headAfter1 = {
   @_leafletCssTpl()
   @_locateControlCssTpl()
-  @_jqDatePickCssTpl()
   @headAfter
+  @_reactDatePickerCssTpl()
 }
 
 
@@ -24,8 +25,5 @@
 ) {
 
   @content
-
-  @* leaflet.js и остальные живут в jsdeps.js на уровне lkBase.html . *@
-  @_jqDatePickJsTpl()
 
 }

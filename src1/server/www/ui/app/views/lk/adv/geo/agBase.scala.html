@@ -5,9 +5,9 @@
 
 @import views.html.stuff.leaflet._
 @import static.date.picker._
-@import ctx.api.cdn.asset
 @import adv.tpl._
 @import views.html.stuff.bxslider._
+@import stuff.react.datepicker._reactDatePickerCssTpl
 
 
 @headAfter1 = {
@@ -16,7 +16,7 @@
   @_locateControlCssTpl()
   @_lMarkerClusterCssTpl()
   @headAfter
-  <link rel="stylesheet" type="text/css" href="@asset("react-datepicker/dist/react-datepicker.min.css")"/>
+  @_reactDatePickerCssTpl()
 }
 
 
