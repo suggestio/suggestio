@@ -6,6 +6,7 @@ import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
+import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.balance.MBalances
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
@@ -101,11 +102,11 @@ class PayYaka @Inject() (
   private def _alreadyPaid(request: INodeOrderReq[_]): Future[Result] = {
     implicit val req = request
     val messages = implicitly[Messages]
-    val call = controllers.routes.LkBill2.showOrder(
+    val call = _callToOrder(
       orderId  = request.morder.id.get,
       onNodeId = request.mnode.id.get
     )
-    Redirect(call)
+    Redirect( call )
       .flashing(FLASH.ERROR -> messages("Order.already.paid"))
   }
 
@@ -459,7 +460,7 @@ class PayYaka @Inject() (
                     mprice      = mprice,
                     orderIdOpt  = Some(yReq.orderId),
                     psTxnUid    = yReq.invoiceId.toString,
-                    comment     = Some( "Yandex.Kassa" )
+                    comment     = Some( MsgCodes.`Yandex.Kassa` )
                   )
 
                   // Подготовить ордер корзины к исполнению.
@@ -628,7 +629,7 @@ class PayYaka @Inject() (
       override def ctx = ctx1
     }
     val fut = statUtil.saveStat(s2)
-    fut.onFailure { case ex: Throwable =>
+    for (ex <- fut.failed) {
       LOGGER.error(s"_saveStats(): Unable to save stat $s2\n yReq = $yReq\n statsMas = $statsMas\n userSaOpt1 = $userSaOpt1", ex)
     }
     fut
@@ -670,12 +671,7 @@ class PayYaka @Inject() (
 
     } else {
       // Юзер либо аноним, либо правильный. Надо отредиректить юзера на его узел, где он может просмотреть итоги оплаты.
-      val call = controllers.routes.LkBill2.showOrder(
-        orderId     = qs.orderId,
-        onNodeId    = qs.onNodeId,
-        fromPaySys  = Some(yakaUtil.paySystem)
-      )
-      Redirect( call )
+      Redirect( _callToOrder(qs.orderId, qs.onNodeId) )
         .flashing(FLASH.SUCCESS -> implicitly[Context].messages("Thanks.for.buy"))
     }
 
@@ -752,10 +748,25 @@ class PayYaka @Inject() (
     for {
       _ <- unholdFut
     } yield {
-      Redirect( controllers.routes.LkBill2.showOrder(orderId, onNodeId) )
+      Redirect( _callToOrder(orderId, onNodeId) )
         .flashing(FLASH.ERROR -> implicitly[Context].messages("Pay.error"))
         .withHeaders( FRAMES_ALLOWED: _* )
     }
+  }
+
+
+  /** Общий код сборки ссылки на возврат юзера в личный кабинет вынесен сюда.
+    *
+    * @param orderId id ордера.
+    * @param onNodeId На каком узле идёт просмотр ордера.
+    * @return Call до страницы, показывающей ордер.
+    */
+  private def _callToOrder(orderId: Gid_t, onNodeId: MEsUuId): Call = {
+    controllers.routes.LkBill2.showOrder(
+      orderId     = orderId,
+      onNodeId    = onNodeId,
+      fromPaySys  = Some(yakaUtil.paySystem)
+    )
   }
 
 }

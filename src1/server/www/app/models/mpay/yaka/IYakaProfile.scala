@@ -36,7 +36,7 @@ trait IYakaProfile {
 
 
   override def toString: String = {
-    s"${getClass.getSimpleName}($mode,shop#$shopId,sc#$scId${md5Password.fold("")(_ => Some("*").toString)})"
+    s"${getClass.getSimpleName}($mode,shop#$shopId,sc#$scId${md5Password.fold("")(_ => "," + Some("*").toString)})"
   }
 
 }

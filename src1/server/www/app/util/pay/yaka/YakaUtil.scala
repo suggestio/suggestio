@@ -261,7 +261,8 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
         .toString()
 
       val md5Str = DigestUtils.md5Hex(str).toUpperCase()
-      LOGGER.trace(s"getMd5($yReq, $price): done:\n text for md5 = $str\n md5 = $md5Str")
+      // Закоменчено, чтобы не сорить паролями в логах.
+      //LOGGER.trace(s"getMd5($yReq, $price): done:\n text for md5 = $str\n md5 = $md5Str")
       md5Str
     }
   }
