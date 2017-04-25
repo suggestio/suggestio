@@ -30,6 +30,7 @@ import util.mail.IMailerWrapper
 import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
+import util.xplay.SecHeadersFilter
 import views.html.lk.billing.pay._
 import views.html.lk.billing.pay.yaka._
 import views.html.stuff.PleaseWaitTpl
@@ -74,6 +75,22 @@ class PayYaka @Inject() (
 {
 
   import mCommonDi.{ec, mNodesCache, slick, csrf}
+
+
+  /** Заголовок ответа, разрешающий открытие ресурсов sio из фреймов.
+    * Яндекс-касса использует фреймы в продакшен режиме.
+    * Если этот заголовок больше не будет нужен, то нужно вычистить метод и весь сопутствующий код.
+    */
+  // TODO Нужна поддержка CSP, т.к. хром не умеет в ALLOW-FROM
+  private def FRAMES_ALLOWED: List[(String, String)] = {
+    yakaUtil.paySystem
+      .returnRespHdr_XFrameOptions_AllowFrom
+      .iterator
+      .flatMap { url =>
+        SecHeadersFilter.FRAMES_ALLOWED_FROM( url )
+      }
+      .toList
+  }
 
 
   /**
@@ -618,10 +635,10 @@ class PayYaka @Inject() (
   }
 
 
-  def success(qs: MYakaReturnQs)      = maybeAuth() { implicit request =>
+  def success(qs: MYakaReturnQs) = maybeAuth() { implicit request =>
     _success(yakaUtil.PRODUCTION, qs)
   }
-  def demoSuccess(qs: MYakaReturnQs)  = {
+  def demoSuccess(qs: MYakaReturnQs) = {
     val actionBuilder = if (yakaUtil.DEMO_ALLOWED_FOR_ALL)
       maybeAuth()
     else
@@ -639,7 +656,7 @@ class PayYaka @Inject() (
     lazy val logPrefix = s"success[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix User returned with $qs")
 
-    if (qs.action != MYakaReturnActions.Success) {
+    val resp = if (qs.action != MYakaReturnActions.Success) {
       LOGGER.warn(s"$logPrefix unexpected qs action: ${qs.action}")
       ExpectationFailed(s"No success: ${qs.action}")
 
@@ -653,9 +670,16 @@ class PayYaka @Inject() (
 
     } else {
       // Юзер либо аноним, либо правильный. Надо отредиректить юзера на его узел, где он может просмотреть итоги оплаты.
-      Redirect( controllers.routes.LkBill2.showOrder(qs.orderId, qs.onNodeId) )
+      val call = controllers.routes.LkBill2.showOrder(
+        orderId     = qs.orderId,
+        onNodeId    = qs.onNodeId,
+        fromPaySys  = Some(yakaUtil.paySystem)
+      )
+      Redirect( call )
         .flashing(FLASH.SUCCESS -> implicitly[Context].messages("Thanks.for.buy"))
     }
+
+    resp.withHeaders( FRAMES_ALLOWED: _* )
   }
 
 
@@ -685,6 +709,7 @@ class PayYaka @Inject() (
     for (call <- callFut) yield {
       Redirect(call)
         .flashing( FLASH.ERROR -> ctx.messages("Unknown.error") )
+        .withHeaders( FRAMES_ALLOWED: _* )
     }
   }
 
@@ -704,7 +729,8 @@ class PayYaka @Inject() (
     // Т.к. будет небыстрый двойной редирект с ожиданием транзакции, используем 200 OK + Location: вместо обычного редиректа.
     Ok( PleaseWaitTpl() )
       .withHeaders(
-        LOCATION -> routes.PayYaka.failLoggedIn(qs.orderId, qs.onNodeId).url
+        (LOCATION -> routes.PayYaka.failLoggedIn(qs.orderId, qs.onNodeId).url) ::
+          FRAMES_ALLOWED: _*
       )
   }
   def demoFail(qs: MYakaReturnQs) = fail(qs)
@@ -726,8 +752,9 @@ class PayYaka @Inject() (
     for {
       _ <- unholdFut
     } yield {
-      Redirect(controllers.routes.LkBill2.showOrder(orderId, onNodeId))
+      Redirect( controllers.routes.LkBill2.showOrder(orderId, onNodeId) )
         .flashing(FLASH.ERROR -> implicitly[Context].messages("Pay.error"))
+        .withHeaders( FRAMES_ALLOWED: _* )
     }
   }
 

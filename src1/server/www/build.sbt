@@ -148,6 +148,9 @@ routesImport ++= Seq(
   // 2016.dec.15: GeoPoint class унифицирован на уровне [common], поэтому для его QSB теперь требуется особое приглашение:
   "io.suggest.geo.GeoPoint.Implicits._",
 
+  // 2017.apr.26: Поддержка биндинга для MPaySystem.
+  "io.suggest.pay.MPaySystemsJvm._",
+
   // 2017.apr.5: Вынос кое-каких моделей биллинга в [common]:
   "io.suggest.mbill2.m.item.typ.MItemTypesJvm._"
 )

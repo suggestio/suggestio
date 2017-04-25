@@ -34,6 +34,12 @@ object SecHeadersFilter {
   val DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES   = "master-only"
   //val DEFAULT_CONTENT_SECURITY_POLICY = "default-src 'self'"
 
+  def FRAMES_ALLOWED_FROM(url: String): Seq[(String, String)] = {
+    val xfoHdr = X_FRAME_OPTIONS_HEADER -> ("ALLOW-FROM " + url)
+    // TODO Нужна поддержка CSP. Хром не умеет в ALLOW-FROM. Надо CSP frame-ancestors.
+    xfoHdr :: Nil
+  }
+
 }
 
 

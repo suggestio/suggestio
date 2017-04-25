@@ -10,6 +10,7 @@ import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{IMOrders, MOrder, OrderStatusChanged}
 import io.suggest.model.n2.node.MNode
+import io.suggest.pay.MPaySystem
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
@@ -21,6 +22,7 @@ import util.acl._
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
 import util.billing.IBill2UtilDi
 import util.di.ILogoUtilDi
+import util.xplay.SecHeadersFilter
 import views.html.lk.billing.order._
 
 import scala.concurrent.Future
@@ -58,8 +60,10 @@ trait LkBillOrders
     *
     * @param orderId id ордера.
     * @param onNodeId id узла, на котором открыта морда ЛК.
+    * @param fromPaySys Отметка о возврате из какой-то платежной системы.
+    *                   Изначально использовалась для модификации заголовков ответа.
     */
-  def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
+  def showOrder(orderId: Gid_t, onNodeId: MEsUuId, fromPaySys: Option[MPaySystem]) = csrf.AddToken {
     canViewOrder(orderId, onNodeId, U.Lk).async { implicit request =>
       // Поискать транзакцию по оплате ордера, если есть.
       val txnsFut = slick.db.run {
@@ -104,7 +108,15 @@ trait LkBillOrders
           txns          = txns,
           balances      = mBalsMap
         )
-        Ok( ShowOrderTpl(tplArgs)(ctx) )
+        val resp = Ok( ShowOrderTpl(tplArgs)(ctx) )
+
+        // Модифицировать X-Frame-Options ответа, если происходит возврат из фреймовой платежной системы.
+        // TODO Нужна поддержка CSP, т.к. хром не умеет в ALLOW-FROM
+        fromPaySys
+          .flatMap( _.returnRespHdr_XFrameOptions_AllowFrom )
+          .fold(resp) { frameAllowFromUrl =>
+            resp.withHeaders( SecHeadersFilter.FRAMES_ALLOWED_FROM( frameAllowFromUrl ): _* )
+          }
       }
     }
   }

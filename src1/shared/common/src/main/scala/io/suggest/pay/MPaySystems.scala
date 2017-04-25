@@ -34,6 +34,11 @@ sealed abstract class MPaySystem extends EnumEntry with IStrId {
   /** @return Код локализованного названия ПС по messages. */
   def nameI18n: String
 
+  /** Бывает нужно переопределить хидер X-Frame-Options для HTTP-ответов юзерам, возвращающимся из ПС после оплаты.
+    * Тут значение ссылки для случая ALLOW-FROM.
+    */
+  def returnRespHdr_XFrameOptions_AllowFrom: Option[String] = None
+
 }
 
 
@@ -66,6 +71,12 @@ object MPaySystems extends Enum[MPaySystem] {
     override def nodeIdOpt = Some( MsgCodes.`Yandex.Kassa` )
 
     override def nameI18n = MsgCodes.`Yandex.Kassa`
+
+    /** У яндекс.кассы в продакшен режиме есть фреймы, которые не работают в связке с дефолтовым X-Frame-Options: DENY.
+      * Поэтому, надо при возврате из этой ПС надо выставлять особое разрешение для хидера.
+      * @return ВСЕГДА Some("...") с типом Some[String].
+      */
+    override def returnRespHdr_XFrameOptions_AllowFrom = Some( "https://money.yandex.ru/cashdesk/" )
 
   }
 
