@@ -34,4 +34,9 @@ trait IYakaProfile {
     */
   def md5Password: Option[String]
 
+
+  override def toString: String = {
+    s"${getClass.getSimpleName}($mode,shop#$shopId,sc#$scId${md5Password.fold("")(_ => Some("*").toString)})"
+  }
+
 }

@@ -810,6 +810,8 @@ Order.already.paid=Заказ уже оплачен
 Pay.error=Ошибка при оплате
 Orders=Заказы
 No.orders.found=Заказов не найдено.
+Order.price=Стоимость заказа
+Minimal.payment=Минимальный платёж
 
 Radius=Радиус
 in.radius.of.0.from.1=в радиусе {0} от {1}

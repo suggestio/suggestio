@@ -15,6 +15,7 @@ import io.suggest.mbill2.m.order._
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
 import io.suggest.mbill2.util.effect._
 import io.suggest.model.n2.node.MNodes
+import io.suggest.pay.MPaySystem
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MCartIdeas
@@ -85,6 +86,34 @@ class Bill2Util @Inject() (
 
   private def _getDaysCountFix(days0: Int) = {
     Math.max(1, days0) + 1
+  }
+
+
+  /** Минимальный разрешённый платёж для платежной системы.
+    *
+    * @param paySys Платежная система.
+    * @param orderPrice Стоимость заказа.
+    * @return None, если минимальная цена не важна.
+    *         Some(price), когда минимальная цена должна определять размер платежа.
+    */
+  def minPayPrice(paySys: MPaySystem, orderPrice: MPrice): Option[MPrice] = {
+    def logPrefix = s"minPayPrice($paySys, $orderPrice):"
+    val pp = paySys.supportedCurrency( orderPrice.currency )
+      // Если валюта не поддерживается в ПС, то значит уже что-то не так, и продолжать смысла нет.
+      .get
+
+    val sioCurrencyMinAmount = orderPrice.currency.sioPaymentAmountMin
+    val finalMinAmount = pp.lowerDebtLimitOpt
+      .fold(sioCurrencyMinAmount) { Math.max(_, sioCurrencyMinAmount) }
+
+    if (orderPrice.amount < finalMinAmount) {
+      val minPrice = orderPrice.withAmount( finalMinAmount )
+      LOGGER.debug(s"$logPrefix Current price too low, returning minPrice = $minPrice")
+      Some( minPrice )
+    } else {
+      LOGGER.trace(s"$logPrefix Current price is enought.")
+      None
+    }
   }
 
 
@@ -1287,17 +1316,16 @@ class Bill2Util @Inject() (
           .get(op.currency)
           .filter(_.price.amount > 0)
           .fold[Option[MPrice]] (Some(op)) { curBal =>
-          // Есть какие-то деньги на валютном балансе юзера. Посчитать остаток.
-          val needAmount = op.amount - curBal.price.amount
-          if (needAmount > 0) {
-            val op2 = op.withAmount(
-              op.amount - curBal.price.amount
-            )
-            Some(op2)
-          } else {
-            None
+            val balAmountAvail = curBal.price.amount
+            // Есть какие-то деньги на валютном балансе юзера. Посчитать остаток.
+            val needAmount = op.amount - balAmountAvail
+            if (needAmount > 0) {
+              val op2 = op.plusAmount( -balAmountAvail )
+              Some(op2)
+            } else {
+              None
+            }
           }
-        }
       }
   }
 
@@ -1353,11 +1381,11 @@ class Bill2Util @Inject() (
     }
   }
 
-  /** Проверить и заморозить ордер для платежной системы.
+  /** Проверить ордер для платежной системы.
     * Работы идут в виде транзакции, которая завершается исключением при любой проблеме.
     *
     * Метод дёргается на check-стадии оплаты: платежная система ещё не списала деньги,
-    * но хочет проверить присланные юзером данные по оплачиваемому заказу.
+    * но хочет проверить достоверность присланных юзером данных по оплачиваемому заказу.
     * S.io проверяет ордер и "холдит" его, чтобы защититься от изменений до окончания оплаты.
     *
     * @param orderId Заявленный платежной системой order_id. Ордер будет проверен на связь с контрактом.
@@ -1366,8 +1394,8 @@ class Bill2Util @Inject() (
     *                           Map: валюта -> цена.
     * @return DB-экшен.
     */
-  def checkOrder(orderId: Gid_t, validContractId: Gid_t,
-                 claimedOrderPrices: Map[MCurrency, IPrice]): DBIOAction[MOrder, NoStream, RWT] = {
+  def checkPayableOrder(orderId: Gid_t, validContractId: Gid_t, paySys: MPaySystem,
+                        claimedOrderPrices: Map[MCurrency, IPrice]): DBIOAction[MOrder, NoStream, RWT] = {
     lazy val logPrefix = s"checkHoldOrder(o=$orderId,c=$validContractId):"
 
     val a = for {
@@ -1387,8 +1415,15 @@ class Bill2Util @Inject() (
 
       // Убедится, что всё ок с ценами, что они совпадают с заявленными платежной системой.
       if {
-        payPrices.forall { payPrice =>
+        LOGGER.trace(s"$logPrefix order=$mOrder\n uBalsMap=$uBalsMap\n orderPrices=$orderPrices\n payPrices=$payPrices")
+        payPrices.forall { payPrice0 =>
+          // Опционально поправить стоимость по минимальной стоимости.
+          val payPrice = minPayPrice(paySys, payPrice0)
+            .getOrElse(payPrice0)
+
           val claimedPrice = claimedOrderPrices( payPrice.currency )
+          LOGGER.trace(s"$logPrefix payPrice=[$payPrice0 => $payPrice], claimedPrice = $claimedPrice")
+
           // Double сравнивать -- дело неблагодатное. Поэтому сравниваем в рамках погрешности:
           // 0.01 рубля (т.е. одна копейка) -- это предел, после которого цены не совпадают.
           val maxDiff = payPrice.currency.minAmount

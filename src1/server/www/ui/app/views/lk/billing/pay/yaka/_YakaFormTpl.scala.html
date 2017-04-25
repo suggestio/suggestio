@@ -6,6 +6,8 @@
 @import io.suggest.pay.yaka.YakaConst._
 @import util.TplDataFormatUtil.formatPrice
 @import lk.dsl.wkv._
+@import io.suggest.pay.MPaySystems
+@import io.suggest.i18n.MsgCodes
 
 @__input(k: String, v: Any) = {
   <input type="hidden" name="@k" value="@v"/>
@@ -22,10 +24,10 @@
     @for(orderId <- args.orderNumber) {
       @_wkvRow() {
         @_wkvTd(true) {
-          @messages("Order.number")
+          @messages( MsgCodes.`Order.number` )
         }
         @_wkvTd(false) {
-          @messages("_N")
+          @messages( MsgCodes.`_N` )
           @orderId
           @__input(ORDER_ID_FN,     orderId)
         }
@@ -34,7 +36,7 @@
 
     @_wkvRow() {
       @_wkvTd(true) {
-        @messages("Payment.method")
+        @messages( MsgCodes.`Payment.method` )
       }
       @_wkvTd(false) {
         @if(args.profile.isDemo) {
@@ -42,19 +44,46 @@
             (@messages("Demo"))
           </strong>
         }
-        @messages("Yandex.Kassa")
+        @messages( MPaySystems.YaKa.nameI18n )
+      }
+    }
+
+    @* Если сработало ограничение на минимальный размер платежа, то отрендерить инфу об этом. *@
+    @for(minPrice <- args.minPayPrice) {
+      @* Фактическая стоимость заказа. *@
+      @_wkvRow() {
+        @_wkvTd(true) {
+          @messages( MsgCodes.`Order.price` )
+        }
+        @_wkvTd(false) {
+          @formatPrice( args.orderPrice )
+        }
+      }
+
+      @* Минимально-допустимый размер оплаты. *@
+      @_wkvRow() {
+        @_wkvTd(true) {
+          @messages( MsgCodes.`Minimal.payment` )
+        }
+        @_wkvTd(false) {
+          @formatPrice( minPrice )
+        }
       }
     }
 
     @_wkvRow() {
       @_wkvTd(true) {
-        @messages("Total.to.pay")
+        <strong>
+          @messages( MsgCodes.`Total.to.pay` )
+        </strong>
       }
       @_wkvTd(false) {
-        <strong>
-          @formatPrice( args )
-        </strong>
-        @__input(SUM_FN,      args.amount)
+        @defining( args.payPrice ) { pp =>
+          <strong>
+            @formatPrice( pp )
+          </strong>
+          @__input(SUM_FN, pp.amount)
+        }
       }
     }
 

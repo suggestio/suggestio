@@ -794,12 +794,15 @@ Payment.for.order.N=Payment for order #{0}
 Order.number=Order number
 Total.to.pay=Total to pay
 Payment.method=Payment method
+Yandex.Kassa=Yandex.Kassa
 Order.N=Order #{0}
 Cost=Cost
 Order.already.paid=Order is already paid
 Pay.error=Pay error
 Orders=Orders
 No.orders.found=No orders found.
+Order.price=Order price
+Minimal.payment=Minimal payment
 
 Radius=Radius
 in.radius.of.0.from.1=in radius of {0} from {2}

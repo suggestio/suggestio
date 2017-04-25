@@ -114,4 +114,12 @@ object MsgCodes {
 
   val `Adv.for.free.without.moderation` = "Adv.for.free.without.moderation"
 
+  val `Yandex.Kassa` = "Yandex.Kassa"
+  val `Order.price` = "Order.price"
+  val `Minimal.payment` = "Minimal.payment"
+  val `Order.number` = "Order.number"
+  val `Payment.method` = "Payment.method"
+  val `Total.to.pay` = "Total.to.pay"
+  val `_N` = "_N"
+
 }

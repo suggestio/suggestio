@@ -3,10 +3,11 @@ package util.pay.yaka
 import models.mpay.yaka._
 import play.api.data._
 import Forms._
-import com.google.inject.Inject
-import io.suggest.bill.{IPrice, MCurrencies, MCurrency, MPrice}
+import com.google.inject.{Inject, Singleton}
+import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
+import io.suggest.pay.{IMPaySystem, MPaySystems}
 import io.suggest.text.util.TextHashUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mpay.{MPayMode, MPayModes}
@@ -20,7 +21,11 @@ import play.api.http.HttpVerbs
   * Created: 09.02.17 16:26
   * Description: Разная утиль для взаимодействия с яндекс-кассой, чтобы не перегружать контроллер лишним кодом.
   */
-class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
+@Singleton
+class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
+  extends MacroLogsImpl
+  with IMPaySystem
+{
 
   import mCommonDi.configuration
 
@@ -30,6 +35,8 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
   private def SHOP_ID = 84780L
 
   private def CONF_PREFIX = "sio.pay.yaka."
+
+  override def paySystem = MPaySystems.YaKa
 
 
   /** Реализация IYakaConf. */
@@ -57,6 +64,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
         .toString()
     }
 
+    override final def toString = super.toString
   }
 
 
@@ -80,7 +88,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
     iter.toMap
   }
 
-  LOGGER.info(s"${PROFILES.size} profiles total: ${PROFILES.mkString("\n ", " \n", "")}")
+  LOGGER.info(s"${PROFILES.size} profiles total: ${PROFILES.mkString("\n ", " \n ", "")}")
 
 
   /** Разрешён ли тестовый профиль для не-суперюзеров?
@@ -273,25 +281,25 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal) extends MacroLogsImpl {
   def assertPricesForPay(payPrices: Seq[MPrice]): MPrice = {
     lazy val logPrefix = s"_getPayPrice():"
     val ppsSize = payPrices.length
-      if (ppsSize == 0) {
-        // Нечего платить. По идее, деньги должны были списаться на предыдущем шаге биллинга.
-        throw new IllegalStateException(s"$logPrefix Nothing to pay remotely via yaka. User reserve are enought?")
+    if (ppsSize == 0) {
+      // Нечего платить. По идее, деньги должны были списаться на предыдущем шаге биллинга.
+      throw new IllegalStateException(s"$logPrefix Nothing to pay remotely via yaka. User reserve are enought?")
 
-      } else if (ppsSize == 1) {
-        val pp = payPrices.head
-        if (pp.currency == MCurrencies.RUB) {
-          // Цена в одной единственной валюте, которая поддерживается яндекс-кассой. Вернуть её наверх.
-          pp
-
-        } else {
-          // Какая-то валюта, которая не поддерживается яндекс-кассой.
-          throw new IllegalArgumentException(s"$logPrefix Yaka unsupported currency: ${pp.currency}. Price = $pp")
-        }
+    } else if (ppsSize == 1) {
+      val pp = payPrices.head
+      if (pp.currency == MCurrencies.RUB) {
+        // Цена в одной единственной валюте, которая поддерживается яндекс-кассой. Вернуть её наверх.
+        pp
 
       } else {
-        // Сразу несколько валют. Не поддерживается яндекс.кассой.
-        throw new UnsupportedOperationException(s"$logPrefix too many currencies need to pay, but yaka supports only RUB:\n$payPrices")
+        // Какая-то валюта, которая не поддерживается яндекс-кассой.
+        throw new IllegalArgumentException(s"$logPrefix Yaka unsupported currency: ${pp.currency}. Price = $pp")
       }
+
+    } else {
+      // Сразу несколько валют. Не поддерживается яндекс.кассой.
+      throw new UnsupportedOperationException(s"$logPrefix too many currencies need to pay, but yaka supports only RUB:\n$payPrices")
+    }
   }
 
 }

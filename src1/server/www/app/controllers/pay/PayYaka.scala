@@ -136,32 +136,45 @@ class PayYaka @Inject() (
 
       // Попытаться определить email клиента.
       val userEmailOptFut = for {
-      // TODO Opt Надо бы искать максимум 1 элемент.
+        // TODO Opt Надо бы искать максимум 1 элемент.
         epws <- mPersonIdents.findAllEmails(personId)
       } yield {
         epws.headOption
       }
 
+      // Подготовить контекст рендера страницы личного кабинета.
       val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
         implicitly[Context]
       }
 
+      // Проверить итоговую стоимость по minPrice
+      val minPayPriceOptFut = for {
+        payPrice <- payPriceFut
+      } yield {
+        // Сравнить с минимальной разрешенной стоимостью платежа в данном направлении.
+        // Вернуть минималку, если текущий платёж ниже необходимой планки.
+        bill2Util.minPayPrice( yakaUtil.paySystem, payPrice )
+      }
+
       // Собираем данные для рендера формы отправки в платёжку.
       for {
-        payPrice      <- payPriceFut
-        userEmailOpt  <- userEmailOptFut
-        ctx           <- ctxFut
+        payPrice        <- payPriceFut
+        userEmailOpt    <- userEmailOptFut
+        minPayPriceOpt  <- minPayPriceOptFut
+        ctx             <- ctxFut
       } yield {
         // Цена в одной единственной валюте, которая поддерживается яндекс-кассой.
         // Собрать аргументы для рендера, отрендерить страницу с формой.
         val formData = MYakaFormData(
           profile         = profile,
-          amount          = payPrice.amount,
+          orderPrice      = payPrice,
+          minPayPrice     = minPayPriceOpt,
           onNodeId        = onNodeId,
           customerNumber  = request.user.personIdOpt.get,
           orderNumber     = Some(orderId),
           clientEmail     = userEmailOpt
         )
+
         // Отрендерить шаблон страницы.
         val html = PayFormTpl(orderId, request.mnode) {
           // Отрендерить саму форму в HTML. Форма может меняться от платежки к платёжке, поэтому вставляется в общую страницу в виде HTML.
@@ -202,9 +215,6 @@ class PayYaka @Inject() (
       .mapValues(_.mkString(", "))
       .mkString(d, d, "")
   }
-
-  /** id узла платежной системы. Узел не существует, просто нужен был идентифицируемый id для статистики. */
-  private def PAY_SYS_NODE_ID = "Yandex.Kassa"
 
   def YREQ_BP = parse.urlFormEncoded(60000)
 
@@ -277,9 +287,11 @@ class PayYaka @Inject() (
               _ <- slick.db.run {
                 import slick.profile.api._
                 val a = for {
-                  mOrder0 <- bill2Util.checkOrder(
+                  // Обсчитать ордер
+                  mOrder0 <- bill2Util.checkPayableOrder(
                     orderId             = yReq.orderId,
                     validContractId     = usrNodeOpt.get.billing.contractId.get,
+                    paySys              = yakaUtil.paySystem,
                     claimedOrderPrices  = MCurrencies.hardMapByCurrency( yReq :: Nil )
                   )
 
@@ -467,13 +479,15 @@ class PayYaka @Inject() (
                     }
                   }
                   for (usrDisplayNameOpt <- usrDisplayNameOptFut) {
-                    mdrUtil.sendMdrNotify(MSysMdrEmailTplArgs(
-                      paid        = Some( mprice ),
-                      orderId     = Some( yReq.orderId ),
-                      txn         = Some( balTxn ),
-                      personId    = Some( yReq.personId ),
-                      personName  = usrDisplayNameOpt
-                    ))
+                    mdrUtil.sendMdrNotify(
+                      MSysMdrEmailTplArgs(
+                        paid        = Some( mprice ),
+                        orderId     = Some( yReq.orderId ),
+                        txn         = Some( balTxn ),
+                        personId    = Some( yReq.personId ),
+                        personName  = usrDisplayNameOpt
+                      )
+                    )
                   }
                 }
                 // Собрать stat-экшен.
@@ -584,8 +598,8 @@ class PayYaka @Inject() (
     // Используем mstat для логгирования, чтобы всё стало видно в kibana.
     val maPc = MAction(
       actions = MActionTypes.PayCheck :: Nil,
-      nodeId = PAY_SYS_NODE_ID :: Nil,
-      textNi = yReq.toString :: Nil
+      nodeId  = yakaUtil.paySystem.nodeIdOpt.toList,
+      textNi  = yReq.toString :: Nil
     )
     val s2 = new statUtil.Stat2 {
       override def statActions = {

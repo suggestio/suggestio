@@ -16,6 +16,7 @@ object OptionUtil {
     *               true  => Some(f())
     * @return Опциональный результат выполнения функции f в зависимости от значения isSome.
     */
+  @inline
   def maybe[T](isSome: Boolean)(someF: => T): Option[T] = {
     if (isSome)
       Some(someF)

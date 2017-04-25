@@ -195,7 +195,15 @@ class MBalances @Inject() (
 }
 
 
-/** Экземпляр модели. */
+/** Экземпляр модели одного баланса-кошелька.
+  * blocked-средства живут ВНЕ price. Т.е. при блокировке денег, средства списываются с price.amount
+  * и добавляются в blocked.
+  * Т.е. средства НЕ живут одновременно в двух полях.
+  *
+  * @param price Все ДОСТУПНЫЕ к расходованию средства.
+  * @param blocked Заблокированный объем средств (средства вне price).
+  * @param lowOpt Допустимый овердрафт по доступным средствам. None значит 0.
+  */
 case class MBalance(
   contractId        : Gid_t,
   price             : MPrice,
@@ -212,6 +220,14 @@ case class MBalance(
   def withPrice(price2: MPrice) = copy(price = price2)
 
   override def currency = price.currency
+
+  def blockedPrice: MPrice = {
+    price.withAmount( blocked )
+  }
+
+  def allPrice: MPrice = {
+    price.plusAmount( blocked )
+  }
 
   def withPriceBlocked(price2: MPrice, blocked2: Amount_t = blocked) = copy(
     price   = price2,

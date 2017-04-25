@@ -70,6 +70,9 @@ sealed abstract class MCurrency extends EnumEntry with IStrId {
     * Math.pow() возвращает Double, и иногда нет смысла конвертировать в Int, используется этот метод. */
   def centsInUnit_d: Double = Math.pow(10, exponent)
 
+  /** Минимальный размер платежа в данной валюте на suggest.io. */
+  def sioPaymentAmountMin: Amount_t
+
 }
 
 
@@ -89,6 +92,7 @@ object MCurrencies extends Enum[MCurrency] {
     override def htmlSymbol = "&#8381;"
     override def symbol     = "₽"
     override def iso4217    = 643
+    override def sioPaymentAmountMin: Amount_t = 1d
   }
 
   /** Евро.
@@ -100,6 +104,7 @@ object MCurrencies extends Enum[MCurrency] {
     override def htmlSymbol = "&#8364;"
     override def symbol     = "€"
     override def iso4217    = 978
+    override def sioPaymentAmountMin: Amount_t = 10d
   }
 
   /** Доллары США.
@@ -111,6 +116,7 @@ object MCurrencies extends Enum[MCurrency] {
     override def htmlSymbol = symbol
     override def symbol     = "$"
     override def iso4217    = 840
+    override def sioPaymentAmountMin: Amount_t = 10d
   }
 
   def withIso4217Option(code: Int) = values.find(_.iso4217 == code)
