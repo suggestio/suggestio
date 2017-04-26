@@ -808,6 +808,7 @@ Minimal.payment=Minimal payment
 Order.0.is.paid=Order №{0} is paid
 We.received.payment.for.order.0=We received payment for order #{0}.
 Order.details=Order details
+Paid=Paid
 
 Radius=Radius
 in.radius.of.0.from.1=in radius of {0} from {2}
@@ -815,10 +816,17 @@ n.km._kilometers={0} km
 n.m._meters={0} m
 in.geopoint.x=in geo-point {0}
 
-Order.status.a=Order draft
+Order.status.a=Cart
 Order.status.h=Awaiting payment confirmation
 Order.status.d=Paid
-Order.status.s=Superuser's order
+Order.status.s=Superuser's cart
+
+Item.status.a=Draft
+Item.status.b=Sent to moderation
+Item.status.c=Refused
+Item.status.f=Approved, planned for publication
+Item.status.o=Displaying now
+Item.status.z=Finished
 
 
 Item.type.a=Direct advertisement

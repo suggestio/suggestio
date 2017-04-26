@@ -817,6 +817,7 @@ Minimal.payment=Минимальный платёж
 Order.0.is.paid=Заказ №{0} оплачен
 We.received.payment.for.order.0=Поступила оплата по заказу №{0}.
 Order.details=Подробности заказа
+Paid=Оплачено
 
 Radius=Радиус
 in.radius.of.0.from.1=в радиусе {0} от {1}
@@ -824,10 +825,17 @@ n.km._kilometers={0} км
 n.m._meters={0} м
 in.geopoint.x=в точке {0}
 
-Order.status.a=Черновик заказа
+Order.status.a=Корзина
 Order.status.h=Ожидается подтверждение оплаты
 Order.status.d=Оплачен
-Order.status.s=Ордер суперпользователя
+Order.status.s=Корзина суперпользователя
+
+Item.status.a=Черновик
+Item.status.b=Отправлено на модерацию
+Item.status.c=Отклонёно
+Item.status.f=Допущено к публикации
+Item.status.o=Отображается сейчас
+Item.status.z=Завершено
 
 
 Item.type.a=Прямое размещение

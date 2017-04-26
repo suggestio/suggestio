@@ -1,7 +1,7 @@
 package controllers.cbill
 
 import controllers.{SioController, routes}
-import io.suggest.bill.{MGetPriceResp, MPrice}
+import io.suggest.bill.{MCurrencies, MGetPriceResp, MPrice}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.balance.MBalance
@@ -9,8 +9,8 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{IMItems, ItemStatusChanged, MItem}
 import io.suggest.mbill2.m.order.{IMOrders, MOrder, OrderStatusChanged}
+import io.suggest.mbill2.m.txn.MTxnTypes
 import io.suggest.model.n2.node.MNode
-import io.suggest.pay.MPaySystem
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.IMacroLogs
 import models.blk.{IRenderArgs, RenderArgs}
@@ -89,6 +89,43 @@ trait LkBillOrders
         bill2Util.getOrderPrices(orderId)
       }
 
+      // Карта стоимостей заказа по валютам нужна для определения некоторых особенностей рендера.
+      val orderPricesByCurFut = orderPricesFut
+        .map( MCurrencies.hardMapByCurrency )
+
+      // Бывают случаи, когда размер платежа превышает стоимость заказа: сработал минимальный платёж.
+      // Если сразу не вывести оплаченную сумму, то юзер может испугаться, не промотав до списка транзакций.
+      // Поэтому, считаем общую стоимость платежных транзакций, сравниваем с orderPrices.
+      val payPricesByCurFut = for {
+        txns          <- txnsFut
+        mBalsMap      <- mBalsMapFut
+      } yield {
+        val payTxnsIter = for {
+          mtxn <- txns.iterator
+          if mtxn.txType == MTxnTypes.PaySysTxn
+          mbal <- mBalsMap.get( mtxn.balanceId )
+        } yield {
+          MPrice( mtxn.amount, mbal.price.currency )
+        }
+        val payTxns = payTxnsIter.toSeq
+        MPrice.sumPricesByCurrency( payTxns )
+      }
+
+      // Вычисляем платежи, где транзакция ПС превышает стоимость заказа.
+      val payOverPricesFut = for {
+        payPricesByCur  <- payPricesByCurFut
+        orderPriceByCur <- orderPricesByCurFut
+      } yield {
+        val iter = for {
+          kv @ (cur, payPrice)  <- payPricesByCur.iterator
+          curOrderPrice         <- orderPriceByCur.get( cur )
+          if payPrice.amount > curOrderPrice.amount
+        } yield {
+          kv
+        }
+        iter.toMap
+      }
+
       // Отрендерить ответ, когда всё будет готово.
       for {
         txns          <- txnsFut
@@ -96,6 +133,7 @@ trait LkBillOrders
         mBalsMap      <- mBalsMapFut
         ctx           <- ctxFut
         mItemsTplArgs <- mItemsTplArgsFut
+        payOverPrices <- payOverPricesFut
       } yield {
 
         val tplArgs = MShowOrderTplArgs(
@@ -103,7 +141,8 @@ trait LkBillOrders
           morder        = request.morder,
           orderPrices   = orderPrices,
           txns          = txns,
-          balances      = mBalsMap
+          balances      = mBalsMap,
+          payOverPrices = payOverPrices
         )
         Ok( ShowOrderTpl(tplArgs)(ctx) )
       }

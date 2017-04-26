@@ -9,6 +9,29 @@
 @import lk.billing.txns._
 @import lk.dsl.wkv._
 @import lk.dsl._minorTitleTpl
+@import io.suggest.bill.MPrice
+
+@* Рендер строки с ценами заказа.  *@
+@__pricesRow(title: String, prices: Traversable[MPrice]) = {
+  @* Строка общей стоимости заказа, если хотя бы одна цена передана в args. *@
+  @for(headPrice <- prices.headOption) {
+    @_wkvRow() {
+      @_wkvTd(true) {
+        @title
+      }
+      @_wkvTd(false) {
+        @for(mprice <- prices) {
+        @* Теоретически возможно, есть несколько цен в разных валютах. Рендерить их столбиком. *@
+          @if( !(mprice eq headPrice) ) {
+            <br/>
+          }
+          @formatPrice(mprice)
+        }
+      }
+    }
+  }
+}
+
 
 @OrdersBase(
   title = messages("Order.N", orderId.toString),
@@ -44,22 +67,10 @@
     }
 
     @* Строка общей стоимости заказа, если хотя бы одна цена передана в args. *@
-    @for(headPrice <- args.orderPrices) {
-      @_wkvRow() {
-        @_wkvTd(true) {
-          @messages("Cost")
-        }
-        @_wkvTd(false) {
-          @for(mprice <- args.orderPrices) {
-            @* Теоретически возможно, есть несколько цен в разных валютах. Рендерить их столбиком. *@
-            @if( !(mprice eq headPrice) ) {
-              <br/>
-            }
-            @formatPrice(mprice)
-          }
-        }
-      }
-    }
+    @__pricesRow( messages("Cost"), args.orderPrices )
+
+    @* Строка переплаты за заказ, если она имела место быть (т.е. когда заказ дешевле минимального платежа). *@
+    @__pricesRow( messages("Paid"), args.payOverPrices.values )
 
   }
 
@@ -67,7 +78,7 @@
   <br/>
 
   @* Рендерим содержимое заказа. *@
-  @_ItemsTpl(args, withDelete = false)
+  @_ItemsTpl(args, withDelete = false, withStatus = true)
 
 
   <br/>

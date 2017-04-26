@@ -36,6 +36,9 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
       */
     def isAdvBusyApproved       : Boolean = false
 
+    /** Код локализованного названия по messages. */
+    def nameI18n = "Item.status." + strId
+
   }
 
   /** Укороченное выставление флага isBusy = false. */

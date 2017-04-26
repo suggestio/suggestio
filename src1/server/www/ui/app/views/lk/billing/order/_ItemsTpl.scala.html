@@ -1,4 +1,4 @@
-@(args: mbill.IItemsTplArgs, withDelete: Boolean)(implicit ctx: Context)
+@(args: mbill.IItemsTplArgs, withDelete: Boolean, withStatus: Boolean)(implicit ctx: Context)
 
 @* Рендер таблицы item'ов в рамках одного ордера. *@
 
@@ -35,7 +35,7 @@
 
     <thead>
       <tr>
-        @__td("M", true, "__radial-first" :: "items-ad-column" :: Nil) {
+        @__td("M", true, "items-ad-column" :: Nil) {
           &nbsp;
         }
         @__td("M", true, "items-descr-column" :: Nil) {
@@ -43,6 +43,11 @@
         }
         @__td("M", true, "items-price-column" :: Nil) {
           @messages("Price")
+        }
+        @if(withStatus) {
+          @__td("M", true, "items-price-column" :: Nil) {
+            &nbsp;
+          }
         }
         @if(withDelete) {
           @__td("M", true, "items-delete-column" :: "__radial-last" :: Nil) {
@@ -53,7 +58,7 @@
     </thead>
 
     <tbody>
-      @defining( if(withDelete) 1 else 0 ) { colspanOffset =>
+      @defining( (if(withDelete) 1 else 0) + (if(withStatus) 1 else 0) ) { colspanOffset =>
       @for( mnode <- args.itemNodes;  nodeId <- mnode.id;  nodeItems <- args.node2items.get(nodeId);  firstItem <- nodeItems.headOption;  lastItem <- nodeItems.lastOption ) {
         @for( mitem <- nodeItems;  startRow = mitem eq firstItem ) {
 
@@ -112,6 +117,15 @@
             @* Стоимость item'а. *@
             @__td("M", false, "items-price-column" :: Nil) {
               @formatPrice(mitem.price)
+            }
+
+            @* Текущий статус item'а. *@
+            @if(withStatus) {
+              @__td("M", false, "items-price-column" :: Nil) {
+                <span title="@messages( mitem.status.nameI18n )">
+                  @mitem.status
+                </span>
+              }
             }
 
             @if(withDelete) {
