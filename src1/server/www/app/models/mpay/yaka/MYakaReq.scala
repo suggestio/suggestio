@@ -54,6 +54,7 @@ case class MYakaReq(
                      override val invoiceId       : Long,
                      override val personId        : String,
                      override val md5             : String,
-                     orderId                      : Gid_t
+                     orderId                      : Gid_t,
+                     onNodeId                     : String
                    )
   extends IYakaReq

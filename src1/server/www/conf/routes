@@ -151,7 +151,6 @@ POST /demopay/yaka/fail                 @controllers.pay.PayYaka.demoFailPostQs(
 GET  /lk/pay/thanks                     @controllers.LkBill2.thanksForBuy(onNodeId: String)
 GET  /lk/orders/:onNodeId               @controllers.LkBill2.orders(onNodeId: MEsUuId, page: Int ?= 0)
 GET  /lk/order/:onNodeId/:orderId       @controllers.LkBill2.showOrder(orderId: Gid_t, onNodeId: MEsUuId, fromPaySys: Option[io.suggest.pay.MPaySystem] ?= None)
-GET  /lk/ordtick/:onNodeId/:orderId     @controllers.LkBill2.showOrderTicket(orderId: Gid_t, onNodeId: MEsUuId, fromPaySys: Option[io.suggest.pay.MPaySystem] ?= None)
 
 ## Принятие приглашения на управления узлом.
 GET  /lk/node/eact/:adnId/:eaId         @controllers.MarketLkAdn.nodeOwnerInviteAcceptForm(adnId, eaId)

@@ -15,6 +15,7 @@ import io.suggest.model.n2.node.MNode
 import io.suggest.stat.m.{MAction, MActionTypes}
 import io.suggest.util.Lists
 import io.suggest.util.logs.MacroLogsImpl
+import models.mbill.MEmailOrderPaidTplArgs
 import models.mctx.Context
 import models.mdr.MSysMdrEmailTplArgs
 import models.mpay.yaka._
@@ -32,6 +33,7 @@ import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
 import util.xplay.SecHeadersFilter
+import views.html.lk.billing.order.OrderPaidEmailTpl
 import views.html.lk.billing.pay._
 import views.html.lk.billing.pay.yaka._
 import views.html.stuff.PleaseWaitTpl
@@ -441,6 +443,9 @@ class PayYaka @Inject() (
             // Собрать начальные stat-экшены.
             val statMas0Fut = _statActions0(yReq, usrNodeOptFut)
 
+            // В фоне узнать все email'ы юзера-плательщика.
+            val userEmailsFut = mPersonIdents.findAllEmails( yReq.personId )
+
             val payFut: Future[(List[MAction], Xml)] = for {
               // Дождаться данных по узлу юзера.
               usrNodeOpt <- usrNodeOptFut
@@ -492,7 +497,7 @@ class PayYaka @Inject() (
                 // Уведомить модераторов, если необходимо.
                 if (isMdrNotifyNeeded) {
                   val usrDisplayNameOptFut = FutureUtil.opt2futureOpt( usrNode.guessDisplayName ) {
-                    for (usrEmails <- mPersonIdents.findAllEmails( yReq.personId )) yield {
+                    for (usrEmails <- userEmailsFut) yield {
                       usrEmails.headOption
                     }
                   }
@@ -529,6 +534,27 @@ class PayYaka @Inject() (
                   actions = MActionTypes.PayBadBalance :: Nil,
                   textNi  = fforStr :: Nil
                 )
+              }
+
+              // Надо уведомить юзера о поступившем платеже.
+              for {
+                userEmails <- userEmailsFut
+                if userEmails.nonEmpty
+              } {
+                // TODO Нужно определять messages в контексте текущего юзера по yReq.*, а не из автоматического HTTP-реквеста яндекс-кассы.
+                implicit val uCtx = implicitly[Context]
+                val tplArgs = MEmailOrderPaidTplArgs(
+                  asEmail     = true,
+                  orderId     = yReq.orderId,
+                  onNodeId    = yReq.onNodeId,
+                  withHello   = Some( None ),    // TODO Поискать имя юзера надо как-то?,
+                  fromPaySys  = Some( yakaUtil.paySystem )
+                )
+                mailerWrapper.instance
+                  .setSubject( uCtx.messages( MsgCodes.`Order.0.is.paid`, yReq.orderId ) )
+                  .setHtml( OrderPaidEmailTpl(tplArgs)(uCtx).body )
+                  .setRecipients( userEmails: _* )
+                  .send()
               }
 
               // Рендер XML-ответа яндекс-кассе.

@@ -22,7 +22,6 @@ import util.acl._
 import util.blocks.{BgImg, BlocksConf, IBlkImgMakerDI}
 import util.billing.IBill2UtilDi
 import util.di.ILogoUtilDi
-import util.xplay.SecHeadersFilter
 import views.html.lk.billing.order._
 
 import scala.concurrent.Future
@@ -110,40 +109,6 @@ trait LkBillOrders
         )
         Ok( ShowOrderTpl(tplArgs)(ctx) )
       }
-    }
-  }
-
-
-  /** Отрендерить инфу по ордеру в виде письма-талончика.
-    * Появилось для iframe/embedded-рендеринга внутри фрейма яндекс-кассы.
-    *
-    * @param orderId id ордера.
-    * @param onNodeId id узла, на котором открыта морда ЛК.
-    * @param fromPaySys Отметка о возврате из какой-то платежной системы.
-    *                   Изначально использовалась для модификации заголовков ответа.
-    * @return Минимальная HTML-страничка с инфой по заказу и ссылкой возврата на соотв.страницу ЛК.
-    */
-  def showOrderTicket(orderId: Gid_t, onNodeId: MEsUuId, fromPaySys: Option[MPaySystem]) = {
-    canViewOrder(orderId, onNodeId, U.Lk) { implicit request =>
-      val args = MEmailOrderPaidTplArgs(
-        asEmail     = false,
-        orderId     = orderId,
-        onNodeId    = onNodeId,
-        withHello   = None,
-        fromPaySys  = fromPaySys
-      )
-
-      val resp0 = Ok( OrderPaidEmailTpl(args) )
-
-      // Модифицировать X-Frame-Options ответа, если происходит возврат из фреймовой платежной системы.
-      // TODO Нужна поддержка CSP, т.к. хром не умеет в ALLOW-FROM
-      fromPaySys
-        .flatMap( _.returnRespHdr_XFrameOptions_AllowFrom )
-        .fold(resp0) { frameAllowFromUrl =>
-          resp0.withHeaders(
-            SecHeadersFilter.FRAMES_ALLOWED_FROM( frameAllowFromUrl ): _*
-          )
-        }
     }
   }
 

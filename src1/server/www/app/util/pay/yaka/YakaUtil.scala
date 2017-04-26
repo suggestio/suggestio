@@ -226,7 +226,8 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
       INVOICE_ID_FN               -> invoiceIdM,
       PERSON_ID_FN                -> personIdM,
       MD5_FN                      -> md5M,
-      ORDER_ID_FN                 -> longNumber
+      ORDER_ID_FN                 -> longNumber,
+      SIO_NODE_ID_FN              -> FormUtil.esIdM
     )
     { MYakaReq.apply }
     { MYakaReq.unapply }
