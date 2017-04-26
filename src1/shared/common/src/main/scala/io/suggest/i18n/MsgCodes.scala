@@ -121,5 +121,14 @@ object MsgCodes {
   val `Payment.method` = "Payment.method"
   val `Total.to.pay` = "Total.to.pay"
   val `_N` = "_N"
+  val `Order.0.is.paid` = "Order.0.is.paid"
+  val `We.received.payment.for.order.0` = "We.received.payment.for.order.0"
+  val `Thank.you.for.using.our.service` = "Thank.you.for.using.our.service"
+  val `Order.details` = "Order.details"
+
+  val `Hello` = "Hello"
+  val `Hello.0` = "Hello.0"
+  val `Suggest.io` = "Suggest.io"
+  val `All.rights.reserved` = "All.rights.reserved"
 
 }

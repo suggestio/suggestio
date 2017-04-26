@@ -791,12 +791,14 @@ Several.seconds.ago=Несколько секунд назад
 Less.than.minute.later=Менее чем через минуту
 Less.than.minute.ago=Меньше минуты назад
 
+Hello.0=Здравствуйте, {0}!
 _order.Items=Товары и услуги
 Cart=Корзина
 Added.n.items.to.cart=В корзину добавлено {0} товаров.
 Item=Товар
 Your.cart.is.empty=Ваша корзина пуста
 Thanks.for.buy=Спасибо за покупку!
+Thank.you.for.using.our.service=Благодарим вас за использование нашего сервиса.
 Your.order.is.being.processed=Ваш заказ обрабатывается системой Suggest.io.
 Return.to.my.ads=Назад к рекламным карточкам
 Payment.for.order.N=Оплата заказа №{0}
@@ -812,6 +814,9 @@ Orders=Заказы
 No.orders.found=Заказов не найдено.
 Order.price=Стоимость заказа
 Minimal.payment=Минимальный платёж
+Order.0.is.paid=Заказ №{0} оплачен
+We.received.payment.for.order.0=Поступила оплата по заказу №{0}.
+Order.details=Подробности заказа
 
 Radius=Радиус
 in.radius.of.0.from.1=в радиусе {0} от {1}

@@ -4,11 +4,14 @@
 @import ctx.messages
 @import ctx.api.ctxUtil
 @import views.html.email._
+@import io.suggest.i18n.MsgCodes
 
-@emailBaseTpl( messages("Password.recovery.in", "Suggest.io") ) {
+@emailBaseTpl(
+  title = messages("Password.recovery.in", messages(MsgCodes.`Suggest.io`))
+) {
 
   @_rowTpl("padding: 20px 0; border-bottom: 1px dashed #878787;") {
-    @messages("Sys.rcvd.pw.recover.request", "Suggest.io")
+    @messages("Sys.rcvd.pw.recover.request", messages(MsgCodes.`Suggest.io`) )
     <br/>
     <strong>@eAct.email</strong>
   }

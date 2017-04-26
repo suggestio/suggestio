@@ -782,12 +782,14 @@ Several.seconds.ago=Several seconds ago
 Less.than.minute.later=Less than a minute later
 Less.than.minute.ago=Less than a minute ago
 
+Hello.0=Hello, {0}!
 _order.Items=Items
 Cart=Cart
 Added.n.items.to.cart={0} items added into cart.
 Item=Item
 Your.cart.is.empty=Your cart is empty
 Thanks.for.buy=Thank you for your purchase!
+Thank.you.for.using.our.service=Thank you for using our service.
 Your.order.is.being.processed=Your order is being processed by Suggest.io. Please be patient.
 Return.to.my.ads=Return to my ads
 Payment.for.order.N=Payment for order #{0}
@@ -803,6 +805,9 @@ Orders=Orders
 No.orders.found=No orders found.
 Order.price=Order price
 Minimal.payment=Minimal payment
+Order.0.is.paid=Order №{0} is paid
+We.received.payment.for.order.0=We received payment for order #{0}.
+Order.details=Order details
 
 Radius=Radius
 in.radius.of.0.from.1=in radius of {0} from {2}
