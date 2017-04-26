@@ -543,15 +543,16 @@ class PayYaka @Inject() (
               } {
                 // TODO Нужно определять messages в контексте текущего юзера по yReq.*, а не из автоматического HTTP-реквеста яндекс-кассы.
                 implicit val uCtx = implicitly[Context]
+                val orderIdStr = yReq.orderId.toString
                 val tplArgs = MEmailOrderPaidTplArgs(
                   asEmail     = true,
                   orderId     = yReq.orderId,
+                  orderIdStr  = orderIdStr,
                   onNodeId    = yReq.onNodeId,
-                  withHello   = Some( None ),    // TODO Поискать имя юзера надо как-то?,
-                  fromPaySys  = Some( yakaUtil.paySystem )
+                  withHello   = Some( None )    // TODO Поискать имя юзера надо как-то?,
                 )
                 mailerWrapper.instance
-                  .setSubject( uCtx.messages( MsgCodes.`Order.0.is.paid`, yReq.orderId ) )
+                  .setSubject( uCtx.messages( MsgCodes.`Order.0.is.paid`, orderIdStr ) )
                   .setHtml( OrderPaidEmailTpl(tplArgs)(uCtx).body )
                   .setRecipients( userEmails: _* )
                   .send()
@@ -790,8 +791,7 @@ class PayYaka @Inject() (
   private def _callToOrder(orderId: Gid_t, onNodeId: MEsUuId): Call = {
     controllers.routes.LkBill2.showOrder(
       orderId     = orderId,
-      onNodeId    = onNodeId,
-      fromPaySys  = Some(yakaUtil.paySystem)
+      onNodeId    = onNodeId
     )
   }
 

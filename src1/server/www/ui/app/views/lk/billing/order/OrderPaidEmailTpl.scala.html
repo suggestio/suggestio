@@ -11,9 +11,9 @@
 @* Отрендерить тот или иной родительский шаблон исходя из args. *@
 @__outerF(title: String)(content: Html) = @{ if (args.asEmail) emailBaseTpl(title)(content)  else  TicketBaseTpl(title)(content) }
 
-@* Отрендерить всё. *@
+
 @__outerF(
-  title = messages( MsgCodes.`Order.0.is.paid`, args.orderId )
+  title = messages( MsgCodes.`Order.0.is.paid`, args.orderIdStr )
 ) {
 
   @for( userNameOpt <- args.withHello ) {
@@ -25,12 +25,12 @@
   }
 
   @_rowTpl("padding: 20px 0; border-bottom: 1px dashed #878787;") {
-    @messages( MsgCodes.`We.received.payment.for.order.0`, args.orderId )
+    @messages( MsgCodes.`We.received.payment.for.order.0`, args.orderIdStr )
   }
 
   @_rowTpl("padding: 10px 0 20px; border-bottom: 1px dashed #878787;") {
     <a style="color: #7b89a4;"
-       href="@ctxUtil.LK_URL_PREFIX@routes.LkBill2.showOrder(args.orderId, args.onNodeId, args.fromPaySys)"
+       href="@ctxUtil.LK_URL_PREFIX@routes.LkBill2.showOrder(args.orderId, args.onNodeId)"
        target="_blank">
       @messages( MsgCodes.`Order.details` )
     </a>

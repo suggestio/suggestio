@@ -59,10 +59,8 @@ trait LkBillOrders
     *
     * @param orderId id ордера.
     * @param onNodeId id узла, на котором открыта морда ЛК.
-    * @param fromPaySys Отметка о возврате из какой-то платежной системы.
-    *                   Изначально использовалась для модификации заголовков ответа.
     */
-  def showOrder(orderId: Gid_t, onNodeId: MEsUuId, fromPaySys: Option[MPaySystem]) = csrf.AddToken {
+  def showOrder(orderId: Gid_t, onNodeId: MEsUuId) = csrf.AddToken {
     canViewOrder(orderId, onNodeId, U.Lk).async { implicit request =>
       // Поискать транзакцию по оплате ордера, если есть.
       val txnsFut = slick.db.run {
