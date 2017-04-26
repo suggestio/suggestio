@@ -71,7 +71,7 @@
       @_td() {
         @_cellCnt("L") {
           @for(orderId <- txn.orderIdOpt) {
-            @messages("Payment.for.order.N", orderId)
+            @messages("Payment.for.order.N", orderId.toString)
           }
           @for(c <- txn.paymentComment) {
             <p>@c</p>

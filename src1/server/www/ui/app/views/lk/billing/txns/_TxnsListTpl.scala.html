@@ -20,7 +20,7 @@
     @_Td(false, "transactions-history_descr") {
       @for(orderId <- txn.orderIdOpt) {
         @* TODO Нужна ссылка для просмотра заказа. *@
-        @messages("Payment.for.order.N", orderId)
+        @messages("Payment.for.order.N", orderId.toString)
       }
       @for(c <- txn.paymentComment) {
         @highlightFirstWordEsc(c, start = """<span class="ft-M dark-gray">""", end = "</span>")
