@@ -762,7 +762,7 @@ class PayYaka @Inject() (
     * @return Call до страницы, показывающей ордер.
     */
   private def _callToOrder(orderId: Gid_t, onNodeId: MEsUuId): Call = {
-    controllers.routes.LkBill2.showOrderTicket(
+    controllers.routes.LkBill2.showOrder(
       orderId     = orderId,
       onNodeId    = onNodeId,
       fromPaySys  = Some(yakaUtil.paySystem)
