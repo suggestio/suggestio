@@ -1,7 +1,5 @@
 package controllers
 
-import java.time.OffsetDateTime
-
 import com.google.inject.Inject
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
@@ -76,16 +74,6 @@ class LkEvents @Inject() (
         getContext2
       }
 
-      // Если начало списка, и узел -- ресивер, то нужно проверить, есть ли у него геошейпы. Если нет, то собрать ещё одно событие...
-      val geoWelcomeFut: Future[Option[(Html, OffsetDateTime)]] = ctxFut.flatMap { implicit ctx =>
-        val mnode = request.mnode
-        if (offset == 0  &&  mnode.extras.adn.exists(_.isReceiver)) {
-          lkEventsUtil.getGeoWelcome(mnode)(ctx)
-        } else {
-          Future.successful( None )
-        }
-      }
-
       // Нужно отрендерить каждое хранимое событие с помощью соотв.шаблона. Для этого нужно собрать аргументы для каждого события.
       val evtsRndrFut = for {
         mevents   <- eventsFut
@@ -147,11 +135,10 @@ class LkEvents @Inject() (
               }
             }
             // Нужно закинуть в кучу ещё уведомление об отсутствующей геолокации
-            geoWelcomeOpt <- geoWelcomeFut
           } yield {
             // Восстанавливаем порядок по дате после параллельного рендера.
             // TODO Opt тут можно оптимизировать объединение и сортировку коллекций.
-            (geoWelcomeOpt.toSeq ++ events)
+            events
               .sortBy(_._2)
               .map(_._1)
           }

@@ -47,11 +47,6 @@ object MEventTypes extends Enumeration with EnumMaybeWithName with EnumJsonReads
     override def template = targetErrorTpl
   }
 
-  /** Когда узел [[models.MNode]] создан, нужно выводить приглашение для включения в геосеть s.io. */
-  val NodeGeoWelcome: MEventType = new Val("d") {
-    override def template = _nodeGeoWelcomeEvtTpl
-  }
-
   /** Когда узел создан, нужно добавить владельцу указание на возможность создать ещё один узел. */
   val YouCanCreateNewShop: MEventType = new Val("e") {
     override def template = _youCanUseAddShopBtnEvtTpl
