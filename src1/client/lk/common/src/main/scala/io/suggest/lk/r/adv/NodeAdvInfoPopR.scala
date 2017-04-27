@@ -196,6 +196,8 @@ object NodeAdvInfoPopR {
 
                 // Галерея фоток, если есть.
                 advInfo.gallery.nonEmpty ?= {
+                  val hasManyImgs = advInfo.gallery.size >= 2
+
                   <.div(
                     ^.`class` := Css.Lk.Adv.NodeInfo.TARIFF_PHOTO_LIST,
                     // Юзаем тут react-галеру вместо всяких кривых bxSlider:
@@ -220,7 +222,7 @@ object NodeAdvInfoPopR {
                         }
                         override val showThumbnails = false
                         override val showNav = false
-                        override val showBullets = true
+                        override val showBullets = hasManyImgs
                         override val slideInterval = 3000
                         override val slideDuration = 450
                         override val showFullscreenButton = true
