@@ -38,6 +38,7 @@ object MsgCodes {
   val `Edit` = "Edit"
   val `Node.id` = "Node.id"
   val `Please.wait` = "Please.wait"
+  val `Please.try.again.later` = "Please.try.again.later"
   val `Example.id.0` = "Example.id.0"
 
   val `Adv.tariff` = "Adv.tariff"
@@ -55,6 +56,7 @@ object MsgCodes {
   def `ofMonth.N.`(month_1_12: Int) = "ofMonth.N." + month_1_12
   def `DayOfWeek.N.`(dow_1_7: Int) = "DayOfWeek.N." + dow_1_7
   def `DayOfW.N.`(dow_1_7: Int) = "DayOfW.N." + dow_1_7
+  def `dayOfW.N.`(dow_1_7: Int) = "dayOfW.N." + dow_1_7
 
   val `Yes` = "Yes"
   val `No` = "No"
@@ -126,9 +128,22 @@ object MsgCodes {
   val `Thank.you.for.using.our.service` = "Thank.you.for.using.our.service"
   val `Order.details` = "Order.details"
 
+  val `Minimal.module` = "Minimal.module"
+  val `scheme.left` = "scheme.left"
+  val `Current.ad` = "Current.ad"
+  val `Agreement.btw.CBCA.and.node.tariffs.for.year` = "Agreement.btw.CBCA.and.node.tariffs.for.year"
+
+  val `Town` = "Town"
+  val `Address` = "Address"
+  val `Site` = "Site"
+  val `Info.about.prods.and.svcs` = "Info.about.prods.and.svcs"
+  val `Daily.people.traffic` = "Daily.people.traffic"
+  val `Audience.descr` = "Audience.descr"
+
   val `Hello` = "Hello"
   val `Hello.0` = "Hello.0"
   val `Suggest.io` = "Suggest.io"
   val `All.rights.reserved` = "All.rights.reserved"
+  val `day24h` = "day24h"
 
 }

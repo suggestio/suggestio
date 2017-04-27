@@ -30,10 +30,10 @@ sealed abstract class MCalType extends EnumEntry with IStrId {
   def name: String
 
   /** Опциональное код дня начала периода. */
-  def dayStart: Option[String]
+  def dayStart: Option[Int]
 
   /** Опциональное код дня окончания периода. */
-  def dayEnd: Option[String]
+  def dayEnd: Option[Int]
 
   /** Костыль к jollyday для weekend-календарей, которые не могут описывать все выходные в году как праздники. */
   def maybeWeekend(dow: Int, weekEndDays: Set[Int]): Boolean = false
@@ -49,8 +49,8 @@ object MCalTypes extends Enum[MCalType] {
   /** Будни. */
   case object WeekDay extends MCalType {
     override def name     = "Week.days"
-    override def dayStart = Some("mo")
-    override def dayEnd   = Some("th")
+    override def dayStart = Some(1)
+    override def dayEnd   = Some(5)
     override def strId    = "d"
     override def toString = super.toString
   }
@@ -59,8 +59,8 @@ object MCalTypes extends Enum[MCalType] {
   case object WeekEnd extends MCalType {
     override def strId    = "e"
     override def name     = "Weekend"
-    override def dayStart = Some("fr")
-    override def dayEnd   = Some("su")
+    override def dayStart = Some(6)
+    override def dayEnd   = Some(7)
 
     override def maybeWeekend(dow: Int, weekEndDays: Set[Int]): Boolean = {
       weekEndDays.contains(dow)
@@ -81,8 +81,8 @@ object MCalTypes extends Enum[MCalType] {
   case object All extends MCalType {
     override def strId    = "a"
     override def name     = "All.week"
-    override def dayStart = Some("mo")
-    override def dayEnd   = Some("su")
+    override def dayStart = Some(1)
+    override def dayEnd   = Some(7)
     override def toString = super.toString
   }
 

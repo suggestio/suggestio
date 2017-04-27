@@ -124,7 +124,7 @@ GET  /lk/bill/txns/:nodeId              @controllers.LkBill2.txnsList(nodeId, pa
 GET  /lk/bill/:nodeId                   @controllers.LkBill2.onNode(nodeId)
 GET  /lk/bill/pricing/wnd/:nodeId       @controllers.LkBill2._rcvrInfoWnd(nodeId)
 GET  /lk/bill/pricing/wndbody/:nodeId   @controllers.LkBill2._rcvrInfoWndBody(nodeId, adId: Option[String] ?= None)
-#GET  /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId)
+GET  /lk/nai/:nodeId                    @controllers.LkBill2.nodeAdvInfo(nodeId, adId: Option[String] ?= None)
 POST /lk/cart/clear/:nodeId             @controllers.LkBill2.cartClear(nodeId, r: Option[String] ?= None)
 POST /lk/cart/item/del/:itemId          @controllers.LkBill2.cartDeleteItem(itemId: Gid_t, r: String)
 

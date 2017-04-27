@@ -11,11 +11,11 @@ import scala.scalajs.js
  * Description: js-router для обращения к серверу за новыми данными транзакций.
  */
 @js.native
-sealed trait TxnLkBillingCtl extends js.Object {
+sealed trait LkBill2Routes extends js.Object {
 
   def txnsList(adnId: String, page: Int, inline: Boolean): Route = js.native
 
-  /** Получить HTML-содержимое окошка информации. */
-  def _rcvrInfoWndBody(nodeId: String, forAdId: String = null): Route = js.native
+  /** Получить бинарь с данными размещения по узлу. */
+  def nodeAdvInfo(nodeId: String, forAdId: String = null): Route = js.native
 
 }

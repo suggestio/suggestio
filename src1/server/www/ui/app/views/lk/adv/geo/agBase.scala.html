@@ -8,15 +8,15 @@
 @import adv.tpl._
 @import views.html.stuff.bxslider._
 @import stuff.react.datepicker._reactDatePickerCssTpl
-
+@import stuff.react.image.gallery._reactImageGalleryCssTpl
 
 @headAfter1 = {
-  @_bxSliderCssTpl()
   @_leafletCssTpl()
   @_locateControlCssTpl()
   @_lMarkerClusterCssTpl()
   @headAfter
   @_reactDatePickerCssTpl()
+  @_reactImageGalleryCssTpl()
 }
 
 
@@ -30,7 +30,5 @@
 ) {
 
   @content
-
-  @_bxSliderJsTpl()
 
 }

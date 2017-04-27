@@ -1,35 +1,32 @@
 // https://www.npmjs.com/package/react-image-gallery
-// TODO Не пилился этот проект. Т.к. innerHtml() победил в попапе adv-info.
+
+import Common.Vsn.{REACT_IMAGE_GALLERY => VSN}
+
 
 Common.settingsOrgJS
 
 // Turn this project into a Scala.js project by importing these settings
-enablePlugins(ScalaJSPlugin)
+//enablePlugins(ScalaJSPlugin)
 
 enablePlugins(ScalaJSBundlerPlugin)
 
 name := "scalajs-react-image-gallery"
 
-version := "0.7.15-SNAPSHOT"
+version := s"${VSN}-SNAPSHOT"
 
-persistLauncher in Compile := false
-
-persistLauncher in Test := false
-
-testFrameworks += new TestFramework("minitest.runner.Framework")
+//testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "scalajs-react-common"  % "0.0.0-SNAPSHOT",
-  "io.monix"      %%% "minitest" % Common.minitestVsn % "test"
-  // moment
+  Common.ORG        %%% "scalajs-react-common"  % "0.0.0-SNAPSHOT"
+  //"io.monix"      %%% "minitest" % Common.minitestVsn % "test"
 )
 
 npmDependencies in Compile ++= Seq(
   "react"                  -> Common.reactJsVsn,
-  "react-image-gallery"    -> "0.7.15"
+  "react-image-gallery"    -> VSN
 )
 
 //requiresDOM in Test := true

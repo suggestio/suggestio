@@ -30,6 +30,10 @@ object Css {
     def ABSOLUTE      = "abs"
   }
 
+  object Overflow {
+    def HIDDEN = "ovh"
+  }
+
   def INFO_BLACK = "info-black"
 
   def JS_PREFIX = "js-"
@@ -99,6 +103,12 @@ object Css {
 
         def TARIFF_ILLUSTRATION = TARIFF + "_illustration"
         def TARIFF_ILLUSTRATION_W = TARIFF_ILLUSTRATION + "-w"
+
+        def TARIFF_INFO = TARIFF + "_info"
+        def TARIFF_INFO_TITLE = TARIFF_INFO + "-title"
+        def TARIFF_INFO_VALUE = TARIFF_INFO + "-value"
+
+        def TARIFF_GREEN = TARIFF + "_green"
 
       }
 
@@ -197,6 +207,10 @@ object Css {
     }
 
 
+    object HrDelim {
+      def DELIMITER = "delimiter"
+      def LIGHT = __ + "light"
+    }
 
   }
 
@@ -230,6 +244,7 @@ object Css {
     def S = PREFIX + "S"
     def M = PREFIX + "M"
     def L = PREFIX + "L"
+    def XS = PREFIX + "XS"
   }
 
 

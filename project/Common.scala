@@ -56,6 +56,8 @@ object Common {
 
     }
 
+    val REACT_IMAGE_GALLERY = "0.7.15"
+
   }
 
 

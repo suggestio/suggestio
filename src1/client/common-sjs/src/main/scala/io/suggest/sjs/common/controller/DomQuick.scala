@@ -68,4 +68,7 @@ object DomQuick {
   /** Описать текущий сдвиг времени в минутах. */
   def tzOffsetMinutes: Int = new Date().getTimezoneOffset()
 
+  /** Текущий год. */
+  def currentYear = new Date().getFullYear()
+
 }

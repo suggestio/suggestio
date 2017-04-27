@@ -8,6 +8,13 @@ package io.suggest.dt.interval
  */
 object DatesIntervalConstants {
 
+  /** Принятые в рамках sio номера дней недели. */
+  def DAYS_OF_WEEK = 1 to 7
+
+  /** Принятые в рамках sio номера месяцев года. */
+  def MONTHS_OF_YEAR = 1 to 12
+
+
   /** Префикс id'шников элементов виджета выбора периода дат. */
   def ID_PREFIX           = "dsivl"
 

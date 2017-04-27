@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.m
 
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
+import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup, MMapGjResp}
@@ -60,7 +61,7 @@ case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvE
 /** Сигнал открытия инфы по узлу. */
 case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends IAdvGeoFormAction
 /** Сигнал ответа сервера на запрос информации по узлу. */
-case class OpenNodeInfoResp(rcvrKey: RcvrKey, tryRes: Try[String]) extends IAdvGeoFormAction
+case class OpenNodeInfoResp(rcvrKey: RcvrKey, tryRes: Try[MNodeAdvInfo]) extends IAdvGeoFormAction
 
 
 /** Юзер хочет узнать по-больше о форме гео-размещения. */

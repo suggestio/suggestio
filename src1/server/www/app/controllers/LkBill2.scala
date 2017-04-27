@@ -19,6 +19,7 @@ import models.mcal.MCalendars
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.twirl.api.{Html, Template2}
+import util.TplDataFormatUtil
 import util.acl._
 import util.adv.AdvUtil
 import util.billing.{Bill2Util, TfDailyUtil}
@@ -185,8 +186,7 @@ class LkBill2 @Inject() (
     * @param nodeId id узла.
     * @return Бинарь с публичной инфой по узлу, на котором планируется размещение.
     */
-  // TODO Не используется, т.к. потом было решено ускорить вёрстку: вместо чистовой react-вёрстки использовать существующую html string + innerHtml.
-  private def nodeAdvInfo(nodeId: String, forAdId: Option[String]) = canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
+  def nodeAdvInfo(nodeId: String, forAdId: Option[String]) = canViewNodeAdvInfo(nodeId, forAdId).async { implicit request =>
     implicit val ctx = implicitly[Context]
 
     // Собрать картинки
@@ -217,7 +217,10 @@ class LkBill2 @Inject() (
         tfInfo <- tfInfoFut
       } yield {
         val tdDaily4ad = tfInfo.withClauses(
-          tfInfo.clauses.mapValues(_ * bmc)
+          tfInfo.clauses.mapValues { p0 =>
+            val p2 = p0 * bmc
+            TplDataFormatUtil.setPriceAmountStr( p2 )(ctx)
+          }
         )
         val r = MNodeAdvInfo4Ad(
           blockModulesCount = bmc,
@@ -235,11 +238,12 @@ class LkBill2 @Inject() (
     } yield {
       // Собрать финальный инстанс модели аргументов для рендера:
       val m = MNodeAdvInfo(
-        nodeName    = request.mnode.guessDisplayNameOrIdOrQuestions,
-        tfDaily     = Some(tfInfo),
-        tfDaily4Ad  = tfDaily4Ad,
-        meta        = request.mnode.meta.public,
-        gallery     = gallery
+        nodeNameBasic   = request.mnode.meta.basic.name,
+        nodeName        = request.mnode.guessDisplayNameOrIdOrQuestions,
+        tfDaily         = Some(tfInfo),
+        tfDaily4Ad      = tfDaily4Ad,
+        meta            = request.mnode.meta.public,
+        gallery         = gallery
       )
 
       // Сериализовать и отправить ответ.

@@ -14,6 +14,8 @@
 @import madn.EditConstants._
 @import args.mf
 @import lk.dsl._
+@import io.suggest.i18n.MsgCodes
+
 
 @form(CSRF(submitCall), 'id -> "profileEdit") {
 
@@ -50,28 +52,28 @@
 
     @inputText(
       mf("meta.name"),
-      '_label -> messages("Name")
+      '_label -> messages( MsgCodes.`Name` )
     )
 
     @inputText(
       mf("meta.town"),
-      '_label -> messages("Town")
+      '_label -> messages( MsgCodes`Town` )
     )
 
     @textarea(
       mf("meta.address"),
-      '_label -> messages("Address")
+      '_label -> messages( MsgCodes.`Address` )
     )
 
     @inputText(
       mf("meta.siteUrl"),
-      '_label -> messages("Site")
+      '_label -> messages( MsgCodes.`Site` )
     )
 
     @if( args.mnode.extras.adn.exists(a => a.isProducer || a.isReceiver) ) {
       @textarea(
         mf("meta.info"),
-        '_label -> messages("Info.about.prods.and.svcs")
+        '_label -> messages( MsgCodes.`Info.about.prods.and.svcs` )
       )
     }
 
@@ -80,12 +82,12 @@
     @if( args.mnode.extras.adn.exists(_.isReceiver) ) {
       @inputText(
         mf("meta.humanTrafficAvg"),
-        '_label -> messages("Daily.people.traffic")
+        '_label -> messages( MsgCodes.`Daily.people.traffic` )
       )
 
       @textarea(
         mf("meta.audienceDescr"),
-        '_label -> messages("Audience.descr")
+        '_label -> messages( MsgCodes.`Audience.descr` )
       )
       @_delimTpl()
 

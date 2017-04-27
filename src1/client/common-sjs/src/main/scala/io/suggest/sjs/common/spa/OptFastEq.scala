@@ -15,11 +15,11 @@ object OptFastEq {
     def _eqv(a: T, b: T): Boolean
 
     override def eqv(a: Option[T], b: Option[T]): Boolean = {
-      (a eq b) || ((a,b) match {
-        case (Some(x), Some(y))   => _eqv(x, y)
-        case (None, None)         => true
-        case _                    => false
-      })
+      val aEmpty = a.isEmpty
+      val bEmpty = b.isEmpty
+      (aEmpty && bEmpty) || {
+        !aEmpty && !bEmpty && _eqv(a.get, b.get)
+      }
     }
 
   }
@@ -29,6 +29,13 @@ object OptFastEq {
   implicit object Plain extends OptFastEqHelper[AnyRef] {
     override def _eqv(a: AnyRef, b: AnyRef): Boolean = {
       a eq b
+    }
+  }
+
+  /** Сравнивание нереференсных типов внутри Option по значениям. */
+  object PlainVal extends OptFastEqHelper[AnyVal] {
+    override def _eqv(a: AnyVal, b: AnyVal): Boolean = {
+      a == b
     }
   }
 

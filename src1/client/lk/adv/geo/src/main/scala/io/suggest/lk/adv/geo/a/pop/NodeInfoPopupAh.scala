@@ -36,7 +36,7 @@ class NodeInfoPopupAh[M](
       // Организовать запрос к серверу.
       val fx = Effect {
         api
-          .rcvrInfoWndBody(nodeId, adId = confRO().adId)
+          .nodeAdvInfo(nodeId, adId = confRO().adId)
           .transform { tryRes =>
             val r = OpenNodeInfoResp(rcvrKey, tryRes)
             Success(r)

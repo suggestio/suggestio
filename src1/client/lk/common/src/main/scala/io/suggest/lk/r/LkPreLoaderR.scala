@@ -19,7 +19,7 @@ object LkPreLoaderR {
   private def pleaseWait = Messages( MsgCodes.`Please.wait` )
 
 
-  val Text = ReactComponentB[Unit]("TextPreLoader")
+  val TextC = ReactComponentB[Unit]("TextPreLoader")
     .stateless
     .render { _ =>
       <.span(
@@ -28,6 +28,7 @@ object LkPreLoaderR {
       )
     }
     .build
+  def Text = TextC()
 
 
   val Anim = ReactComponentB[Int]("PreLoader")
@@ -38,7 +39,7 @@ object LkPreLoaderR {
         ^.`class` := Css.Font.Sz.S,
 
         LkPreLoader.PRELOADER_IMG_URL
-          .fold[ReactElement]( Text() ) { url =>
+          .fold[ReactElement]( Text ) { url =>
             <.img(
               ^.src   := url,
               ^.title := pleaseWait,

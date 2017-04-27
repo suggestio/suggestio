@@ -88,6 +88,7 @@ _N=#
 in=in
 near=near
 Please.try.again=Please try again
+Please.try.again.later=Please try again later.
 Demo=Demo
 Server.request.in.progress.wait=Request to server in progress, please wait...
 Is.enabled=Is enabled?
@@ -535,11 +536,6 @@ Comission.0.pct.for.sio={0}% comission in favor of Suggest.io.
 
 day24h=day
 
-dow.mo=mo
-dow.th=th
-dow.fr=fr
-dow.su=su
-
 New.events.cnt={0} new events
 User.profile.edit=Edit user profile
 
@@ -765,6 +761,15 @@ DayOfW.N.4=Th
 DayOfW.N.5=Fr
 DayOfW.N.6=Sa
 DayOfW.N.7=Su
+
+dayOfW.N.1=mo
+dayOfW.N.2=tu
+dayOfW.N.3=we
+dayOfW.N.4=th
+dayOfW.N.5=fr
+dayOfW.N.6=sa
+dayOfW.N.7=su
+
 
 DayOfWeek.N.1=Monday
 DayOfWeek.N.2=Tuesday

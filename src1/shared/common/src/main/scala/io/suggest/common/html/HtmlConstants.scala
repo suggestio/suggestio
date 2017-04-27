@@ -40,4 +40,8 @@ object HtmlConstants {
 
   }
 
+  object Target {
+    val blank = "_blank"
+  }
+
 }

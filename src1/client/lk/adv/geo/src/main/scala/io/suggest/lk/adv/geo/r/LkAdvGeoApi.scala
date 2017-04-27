@@ -1,6 +1,7 @@
 package io.suggest.lk.adv.geo.r
 
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
+import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.router.jsRoutes
@@ -46,7 +47,7 @@ trait ILkAdvGeoApi extends ITagsApi {
   def formSubmit(adId: String, mFormS: MFormS): Future[String]
 
   /** Получение инфы по узлу. */
-  def rcvrInfoWndBody(nodeId: String, adId: String): Future[String]
+  def nodeAdvInfo(nodeId: String, adId: String): Future[MNodeAdvInfo]
 
 }
 
@@ -116,9 +117,11 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     }
   }
 
-  override def rcvrInfoWndBody(nodeId: String, adId: String): Future[String] = {
-    val route = jsRoutes.controllers.LkBill2._rcvrInfoWndBody( nodeId, adId )
-    Xhr.requestHtml( route )
+  override def nodeAdvInfo(nodeId: String, adId: String): Future[MNodeAdvInfo] = {
+    val route = jsRoutes.controllers.LkBill2.nodeAdvInfo( nodeId, adId )
+    Xhr.unBooPickleResp[MNodeAdvInfo](
+      Xhr.requestBinary( route )
+    )
   }
 
 }

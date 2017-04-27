@@ -1,7 +1,6 @@
 package io.suggest.lk.adv.geo.r.pop
 
 import diode.react.ModelProxy
-import diode.react.ReactPot.potWithReact
 import io.suggest.lk.adv.geo.m.MNodeInfoPopupS
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
@@ -22,11 +21,7 @@ object AdvGeoNodeInfoPopR {
 
     def render(props: Props): ReactElement = {
       for (ps <- props()) yield {
-        ps.req.renderReady { iHtml =>
-          props.wrap(_ => Option(iHtml)) { iHtmlOptProxy =>
-            NodeAdvInfoPopR(iHtmlOptProxy)
-          }
-        }.asInstanceOf[ReactElement]
+        props.wrap(_ => ps.req.toOption)( NodeAdvInfoPopR.apply )
       }
     }
 

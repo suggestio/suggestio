@@ -88,6 +88,7 @@ _N=№
 in=в
 near=около
 Please.try.again=Попробуйте ещё раз
+Please.try.again.later=Пожалуйста, повторите попытку позже.
 Demo=Демо
 Server.request.in.progress.wait=Происходит запрос к серверу, подождите...
 Is.enabled=Включён?
@@ -529,8 +530,8 @@ Holidays.primetime=Праздники/праймтайм
 Week.days=Будние дни
 Weekend=Выходные дни
 All.week=Вся неделя
-Minimal.module=Минимальный{0}модуль
-scheme.left=на{0}схеме{0}слева
+Minimal.module=Минимальный модуль
+scheme.left=на схеме слева
 Agreement.btw.CBCA.and.node.tariffs.for.year=Cоглашением между компанией CBCA и {0} "{1}" определены тарифные планы на {2} год.
 
 Adv.tariff=Тариф размещения
@@ -540,11 +541,6 @@ _per_.day=/день
 Comission.0.pct.for.sio=Комиссия {0}% в пользу Suggest.io.
 
 day24h=сутки
-
-dow.mo=пн
-dow.th=чт
-dow.fr=пт
-dow.su=вс
 
 New.events.cnt={0} новых событий
 User.profile.edit=Редактирование профиля пользователя
@@ -774,6 +770,15 @@ DayOfW.N.4=Чт
 DayOfW.N.5=Пт
 DayOfW.N.6=Сб
 DayOfW.N.7=Вс
+
+dayOfW.N.1=пн
+dayOfW.N.2=вт
+dayOfW.N.3=ср
+dayOfW.N.4=чт
+dayOfW.N.5=пт
+dayOfW.N.6=сб
+dayOfW.N.7=вс
+
 
 DayOfWeek.N.1=Понедельник
 DayOfWeek.N.2=Вторник

@@ -6,16 +6,34 @@ package io.suggest.media
   * Created: 14.04.17 9:42
   * Description: Кросс-модель описания одного элемента галереи.
   */
-object MMediaInfo {
+object IMediaInfo {
 
   import boopickle.Default._
 
   /** Поддержка бинарной сериализации между клиентом и сервером. */
-  implicit val mGalItemPickler: Pickler[MMediaInfo] = {
-    implicit val giTypeP = MMediaType.mGalItemTypePickler
-    implicit val p = compositePickler[MMediaInfo]
+  implicit val iMediaItemPickler: Pickler[IMediaInfo] = {
+    implicit val giTypeP = MMediaType.mMediaTypePickler
+    implicit val p = compositePickler[IMediaInfo]
     p.addConcreteType[MMediaInfo]
   }
+
+}
+
+
+/** Трейт, т.к. у нас тут рекурсивная модель, без трейта нельзя. */
+trait IMediaInfo {
+
+  /** Тип элемента галлереи. Изначально только Image. */
+  def giType   : MMediaType
+
+  /** Ссылка на картинку. */
+  def url      : String
+
+  /**
+    * Элемент thumb-галлереи, если есть.
+    * По идее всегда картинка или None. В теории же -- необязательно.
+    */
+  def thumb    : Option[MMediaInfo]
 
 }
 
@@ -29,9 +47,10 @@ object MMediaInfo {
   *              В теории же -- необязательно.
   */
 case class MMediaInfo(
-                       giType   : MMediaType,
-                       url      : String,
-                       thumb    : Option[MMediaInfo] = None
+                       override val giType   : MMediaType,
+                       override val url      : String,
+                       override val thumb    : Option[MMediaInfo] = None
                      )
+  extends IMediaInfo
 
 

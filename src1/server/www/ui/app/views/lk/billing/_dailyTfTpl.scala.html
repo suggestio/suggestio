@@ -4,16 +4,14 @@
 @import util.TplDataFormatUtil._
 @import io.suggest.cal.m.{MCalTypes, MCalType}
 @import io.suggest.model.n2.bill.tariff.daily.MTfDaily
+@import io.suggest.i18n.MsgCodes
 
 @* Общий код рендера строки с ценниками. *@
 @__renderTfDaily(tf: MTfDaily) = {
-  @*<td class="td"></td>*@
-  @defining( messages("day24h") ) { sutkiI18n =>
+  @defining( messages( MsgCodes.`day24h` ) ) { sutkiI18n =>
 
     @for( clause <- tf.clauses.valuesIterator) {
-      @*if( !clause.eq( tf.clauses.head._2 ) ) {*@
-        <td class="td"></td>
-      @*}*@
+      <td class="td"></td>
       <td class="td tariff_info-value">
         @formatPrice(clause.amount, tf.currency)/@sutkiI18n
       </td>
@@ -41,10 +39,10 @@
         }
         <td class="td tariff_info-title">
           @* По календарю определить тип и слова для рендера. *@
-          @defining( clause.calId.flatMap(args.calsMap.get).fold[MCalType](MCalTypes.default)(_.calType) ) { mct =>
+          @defining( clause.calId.flatMap(args.calsMap.get).fold[MCalType](MCalTypes.WeekDay)(_.calType) ) { mct =>
             @messages(mct.name):
             @for(dayStart <- mct.dayStart; dayEnd <- mct.dayEnd) {
-              @messages("dow." + dayStart)-@messages("dow." + dayEnd)
+              @messages( MsgCodes.`dayOfW.N.`(dayStart) )-@messages( MsgCodes.`dayOfW.N.`(dayEnd) )
             }
           }
         </td>
@@ -56,7 +54,7 @@
       <td class="td tariff_green ft-XS white">
         @Html( messages("Minimal.module", "&nbsp;") )
         <br/>
-        (@Html( messages("scheme.left", "&nbsp") ))
+        (@Html( messages("scheme.left", "&nbsp;") ))
       </td>
       @__renderTfDaily(args.tfDaily)
     </tr>

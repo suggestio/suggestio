@@ -8,6 +8,7 @@ import io.suggest.dt.interval.{PeriodsConstants, QuickAdvPeriods}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import jsmessages.{JsMessages, JsMessagesFactory}
+import io.suggest.dt.interval.DatesIntervalConstants.{MONTHS_OF_YEAR, DAYS_OF_WEEK}
 
 /**
   * Suggest.io
@@ -60,7 +61,7 @@ class JsMessagesUtil @Inject() (
   }
 
   private def DAYS_OF_WEEK_MSGS: TraversableOnce[String] = {
-    (1 to 7).iterator.flatMap { dow =>
+    DAYS_OF_WEEK.iterator.flatMap { dow =>
       MsgCodes.`DayOfWeek.N.`(dow) ::
         MsgCodes.`DayOfW.N.`(dow) ::
         Nil
@@ -68,7 +69,7 @@ class JsMessagesUtil @Inject() (
   }
 
   private def OF_MONTHS_OF_YEAR: Traversable[String] = {
-    for (m <- 1 to 12) yield {
+    for (m <- MONTHS_OF_YEAR) yield {
       MsgCodes.`ofMonth.N.`( m )
     }
   }
@@ -146,9 +147,8 @@ class JsMessagesUtil @Inject() (
       MsgCodes.`Cost` ::
       Nil
 
-    val l2 = MCalTypes.values.map(_.name)
-
-    Iterator(l1, l2).flatten
+    Iterator(l1, CAL_TYPES)
+      .flatten
   }
 
   private def DIST_UNITS: TraversableOnce[String] = {
@@ -173,10 +173,39 @@ class JsMessagesUtil @Inject() (
   }
 
 
+  /** пн, вт, ср, ... */
+  private def DOWS_LC: TraversableOnce[String] = {
+    DAYS_OF_WEEK.map { MsgCodes.`dayOfW.N.` }
+  }
+
+  /** Названия календарей. */
+  private def CAL_TYPES: TraversableOnce[String] = {
+    MCalTypes.values
+      .iterator
+      .map(_.name)
+  }
+
   /** Коды сообщений инфы по размещению. */
   private def ADV_INFO: TraversableOnce[String] = {
-    MsgCodes.`Information` ::
+    val msgs = MsgCodes.`Please.try.again.later` ::
+      MsgCodes.`Tariff.rate.of.0` ::
+      MsgCodes.`Information` ::
+      MsgCodes.`day24h` ::
+      MsgCodes.`Minimal.module` ::
+      MsgCodes.`scheme.left` ::
+      MsgCodes.`Current.ad` ::
+      MsgCodes.`N.modules` ::
+      MsgCodes.`Agreement.btw.CBCA.and.node.tariffs.for.year` ::
+      MsgCodes.`Town` ::
+      MsgCodes.`Address` ::
+      MsgCodes.`Site` ::
+      MsgCodes.`Info.about.prods.and.svcs` ::
+      MsgCodes.`Daily.people.traffic` ::
+      MsgCodes.`Audience.descr` ::
       Nil
+
+    Iterator( msgs, DOWS_LC, CAL_TYPES )
+      .flatten
   }
 
   private def LK_COMMON: TraversableOnce[String] = {

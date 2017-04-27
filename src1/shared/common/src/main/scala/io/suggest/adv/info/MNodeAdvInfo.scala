@@ -2,7 +2,7 @@ package io.suggest.adv.info
 
 import boopickle.Default._
 import io.suggest.bill.tf.daily.MTfDailyInfo
-import io.suggest.media.MMediaInfo
+import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.MMetaPub
 
 /**
@@ -18,7 +18,7 @@ object MNodeAdvInfo {
     implicit val mTfDailyInfoP = MTfDailyInfo.mTfDailyInfoPickler
     implicit val mMetaPubP = MMetaPub.mNodeadvMetaPickler
     implicit val mAdvInfo4AdP = MNodeAdvInfo4Ad.mAdvInfo4AdPickler
-    implicit val mMediaInfoP = MMediaInfo.mGalItemPickler
+    implicit val mMediaInfoP = IMediaInfo.iMediaItemPickler
     generatePickler[MNodeAdvInfo]
   }
 
@@ -34,11 +34,11 @@ object MNodeAdvInfo {
   * @param gallery Галерея узла. Или Nil, если её нет.
   */
 case class MNodeAdvInfo(
-                         nodeName   : String,
-                         tfDaily    : Option[MTfDailyInfo],
-                         tfDaily4Ad : Option[MNodeAdvInfo4Ad],
-                         meta       : MMetaPub,
-                         gallery    : Seq[MMediaInfo]
+                         nodeNameBasic  : String,
+                         nodeName       : String,
+                         tfDaily        : Option[MTfDailyInfo],
+                         tfDaily4Ad     : Option[MNodeAdvInfo4Ad],
+                         meta           : MMetaPub,
+                         gallery        : Seq[IMediaInfo]
                        )
-
 

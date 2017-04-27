@@ -11,10 +11,10 @@ libraryDependencies ++= Seq(
   "io.monix"      %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
-persistLauncher in Compile := true
+//persistLauncher in Compile := true
 
 // Tесты: только node.js. Нельзя через rhino. С 0.6.13 node.js используется по дефолту
-persistLauncher in Test := false
+//persistLauncher in Test := false
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 

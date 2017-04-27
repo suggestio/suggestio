@@ -54,6 +54,9 @@ object ErrorPopupR {
             ),
             <.br,
 
+            Messages( MsgCodes.`Please.try.again.later` ),
+            <.br,
+
             <.a(
               ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.BTN_W, Css.Buttons.NEGATIVE, Css.Size.M ),
               ^.onClick --> closeBtnClick,

@@ -123,7 +123,7 @@ object Sio2Build extends Build {
     val name = "lk-common-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/common"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, commonReactSjs)
+      .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs)
   }
 
   /** Самопальные биндинги для moment.js. */
@@ -139,11 +139,18 @@ object Sio2Build extends Build {
       .dependsOn(momentSjs, commonSjs)
   }
 
-  /** Фасады и врапперы scala.js для react date-picker'а. */
+  /** Фасады scala.js для react-date-picker. */
   lazy val reactDatePickerSjs = {
     Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
       .enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonReactSjs, momentSioSjs)
+  }
+
+  /** Фасады scala.js для react-image-gallery. */
+  lazy val reactImageGallerySjs = {
+    Project(id = "scalajs-react-image-gallery", base = file(DIR0 + "client/scalajs/react-image-gallery"))
+      .enablePlugins(ScalaJSBundlerPlugin)
+      .dependsOn(commonReactSjs)
   }
 
   /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
@@ -382,6 +389,9 @@ object Sio2Build extends Build {
       pipelineStages in Assets += scalaJSPipeline,
       npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
         (nodeModules / "react-datepicker" / "dist") * "*.css"
+      }.value,
+      npmAssets ++= NpmAssets.ofProject(reactImageGallerySjs) { nodeModules =>
+        (nodeModules / "react-image-gallery" / "build") * "*.css"
       }.value
     )
 
