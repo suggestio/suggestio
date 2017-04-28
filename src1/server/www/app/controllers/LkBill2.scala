@@ -197,12 +197,13 @@ class LkBill2 @Inject() (
         MMediaInfo(
           giType  = MMediaTypes.Image,
           url     = galleryUtil.dynLkBigCall(mimg)(ctx).url,
-          thumb   = Some(
+          // thumb'ы: Не отображаются на экране из-за особенностей вёрстки; в дизайне не предусмотрены.
+          thumb   = None /*Some(
             MMediaInfo(
               giType = MMediaTypes.Image,
               url    = dynImgUtil.thumb256Call(mimg, fillArea = true).url
             )
-          )
+          )*/
         )
       }
     }

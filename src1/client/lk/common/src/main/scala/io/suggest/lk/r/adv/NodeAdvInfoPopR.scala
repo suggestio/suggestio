@@ -205,22 +205,25 @@ object NodeAdvInfoPopR {
                       new ImageGalleryPropsR {
                         override val autoPlay = true
                         override val items: js.Array[IgItem] = {
+                          val _imgOriginalClass = Css.Lk.Adv.NodeInfo.TARIFF_PHOTO_IMG
                           val igItems = for {
                             mediaInfo <- advInfo.gallery.iterator
                           } yield {
                             new IgItem {
                               override val original = mediaInfo.url
-                              override val thumbnail: UndefOr[String] = {
+                              /*override val thumbnail: UndefOr[String] = {
                                 mediaInfo.thumb.map(_.url)
-                              }
+                              }*/
                               override val originalClass: UndefOr[String] = {
-                                Css.Lk.Adv.NodeInfo.TARIFF_PHOTO_IMG
+                                _imgOriginalClass
                               }
                             }
                           }
                           igItems.toJSArray
                         }
+                        // thumb'ы в дизайне и вёрстке не предусмотрены, с сервера не отсылаются (см. код LkBill2)
                         override val showThumbnails = false
+                        // TODO showNav: Надо бы true, но есть какая-то проблема с z-index: кнопки навигации не реагируют на курсор мыши
                         override val showNav = false
                         override val showBullets = hasManyImgs
                         override val slideInterval = 3000
@@ -238,10 +241,6 @@ object NodeAdvInfoPopR {
                     ^.`class` := Css.Lk.Adv.NodeInfo.TARIFF_ILLUSTRATION
                   )
                 ),
-
-                /*
-                 <div class="ovh"><table class="tariff_info"><tbody><tr><td colspan="2">&nbsp;</td><td class="td tariff_info-title"> Вся неделя: пн-вс </td><td></td><td class="td tariff_info-title"> Выходные дни: пт-вс </td><td></td><td class="td tariff_info-title"> Праздники/праймтайм: </td></tr><tr><td class="td tariff_green ft-XS white">Минимальный&nbsp;модуль <br>(на&nbsp;схеме&nbsp;слева) </td><td class="td"></td><td class="td tariff_info-value">2&nbsp;р./сутки </td><td class="td"></td><td class="td tariff_info-value">4&nbsp;р./сутки </td><td class="td"></td><td class="td tariff_info-value">6&nbsp;р./сутки </td></tr><tr><td class="td tariff_green ft-XS white">Текущая карточка <br>(6 модулей) </td><td class="td"></td><td class="td tariff_info-value">12&nbsp;р./сутки </td><td class="td"></td><td class="td tariff_info-value">24&nbsp;р./сутки </td><td class="td"></td><td class="td tariff_info-value">36&nbsp;р./сутки </td></tr><tr><td colspan="2"></td><td class="td light-gray ft-XS" colspan="5"> Cоглашением между компанией CBCA и Магазин "cbca" определены тарифные планы на 2017 год. </td></tr></tbody></table></div><div class="ovh"><table class="prop "><tbody><tr><td class="prop_name">Адрес </td><td class="prop_value"> В.О. , Пл. Морской славы д.1 </td></tr></tbody></table><hr class="delimiter __light"></div></div>
-                 */
 
                 // Конейнер таблицы тарифов.
                 <.div(
