@@ -22,13 +22,13 @@
       @_navItemTpl(
         title = messages("Cart"),
         href  = Some( routes.LkBill2.cart(nodeId) ),
-        css   = classesAct( rightCurrEl.contains(RPL_CART) )
+        css   = classesAct( rightCurrEl.contains(RPL_CART), "__bill-cart" )
       )
 
       @_navItemTpl(
         title = messages("Orders"),
         href  = Some( routes.LkBill2.orders(nodeId) ),
-        css   = classesAct( rightCurrEl.contains(RPL_ORDERS) )
+        css   = classesAct( rightCurrEl.contains(RPL_ORDERS), "__bill-orders" )
       )
 
       @_navItemTpl(
