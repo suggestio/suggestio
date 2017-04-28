@@ -10,7 +10,7 @@ import io.suggest.common.menum.{EnumApply, EnumMaybeWithName}
  */
 object MItemStatuses extends EnumMaybeWithName with EnumApply {
 
-  protected[this] class Val(override val strId: String)
+  protected[this] abstract class Val(override val strId: String)
     extends super.Val(strId)
     with ValT
   {
@@ -39,6 +39,9 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
     /** Код локализованного названия по messages. */
     def nameI18n = "Item.status." + strId
 
+    /** Класс css-иконки. */
+    def iconCssClass: Option[String]
+
   }
 
   /** Укороченное выставление флага isBusy = false. */
@@ -66,12 +69,19 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
 
   /** Item лежит в корзине, т.е. в черновике заказа. */
   val Draft               : T = new Val("a") with NotBusy {
+
+    /** Черновики обитают только в "корзине" (за искл. hold-ордера), CSS-иконки там не отображаются. */
+    override def iconCssClass = None
+
     /** Пока товар в корзине, ничего никуда не списано. */
     override def isMoneyWithdrawed      = false
   }
 
   /** Item оплачен. Ожидается подтверждение со стороны suggest.io: модерация. */
   val AwaitingMdr     : T = new Val("b") {
+
+    override def iconCssClass = Some( "mdr" )
+
     /** Деньги списаны с доступного баланса на заблокированный. */
     override def isMoneyBlockedOnBuyer  = true
   }
@@ -80,21 +90,28 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
   val Refused   : T = new Val("c") with NotBusy with AdvInactual {
     /** Деньги уже возвращены на счет счет покупателя. */
     override def isMoneyWithdrawed      = false
+    override def iconCssClass = Some("refused")
   }
 
-  private class _ValBusyApproved(name: String)
+  private abstract class _ValBusyApproved(name: String)
     extends Val(name)
     with AdvBusyApproved
 
 
   /** Купленная услуга пока в оффлайне. */
-  val Offline             : T = new _ValBusyApproved("f")
+  val Offline             : T = new _ValBusyApproved("f") {
+    override def iconCssClass = Some("offline")
+  }
 
   /** Оплаченная услуга сейчас в онлайне. */
-  val Online              : T = new _ValBusyApproved("o")
+  val Online              : T = new _ValBusyApproved("o") {
+    override def iconCssClass = Some("online")
+  }
 
   /** Завершена обработка item'а. Например, оплаченная услуга истекла. */
-  val Finished            : T = new Val("z") with NotBusy with AdvInactual
+  val Finished            : T = new Val("z") with NotBusy with AdvInactual {
+    override def iconCssClass = Some("finished")
+  }
 
 
   /** Статусы, обозначающие занятость карточки для прямого размещения. */

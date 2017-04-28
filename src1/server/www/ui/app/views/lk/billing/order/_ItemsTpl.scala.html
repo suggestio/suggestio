@@ -12,8 +12,9 @@
 @import io.suggest.css.Css
 
 
-@__td(size: String, isHeader: Boolean, classes: Seq[String] = Nil, rowSpan: Option[Int] = None)(content: Html) = {
+@__td(size: String, isHeader: Boolean, classes: Seq[String] = Nil, rowSpan: Option[Int] = None, title: Option[String] = None)(content: Html) = {
   <td @if(rowSpan){rowspan="@rowSpan"}
+      @if(title) {title="@title"}
       class="td __@if(isHeader){gray}else{white} __size-@size @classes.mkString(" ")">
     @content
   </td>
@@ -121,10 +122,15 @@
 
             @* Текущий статус item'а. *@
             @if(withStatus) {
-              @__td("M", false, "items-price-column" :: Nil) {
-                <span title="@messages( mitem.status.nameI18n )">
-                  @mitem.status
-                </span>
+              @defining( mitem.status.iconCssClass ) { icc =>
+              @defining( "items-price-column" :: Nil ) { css0 =>
+                @__td("M", false, icc.fold(css0)(css2 => "item-status-icon" :: ("__" + css2) :: css0), title = Some(messages( mitem.status.nameI18n )) ) {
+                  &nbsp;
+                  @*<span title="@messages( mitem.status.nameI18n )">
+                    @mitem.status
+                  </span>*@
+                }
+              }
               }
             }
 
