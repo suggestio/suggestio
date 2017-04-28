@@ -10,6 +10,7 @@
 @import views.html.sc._adNormalTpl
 @import ctx.api.cdn.asset
 @import io.suggest.css.Css
+@import util.DateTimePrettyPrinter.humanizeDt
 
 
 @__td(size: String, isHeader: Boolean, classes: Seq[String] = Nil, rowSpan: Option[Int] = None, title: Option[String] = None)(content: Html) = {
@@ -31,7 +32,7 @@
 
 
 @if( args.itemNodes.nonEmpty ) {
-
+  @defining( asset("images/market/lk/bill/item-statuses.svg") ) { statusSpriteUrl =>
   <table class="table __width-XL">
 
     <thead>
@@ -113,6 +114,11 @@
                 @_dateTpl("till", dtEnd.toLocalDate)
               }
 
+              @* Рендер причины бана в следующей строке красно-жирным текстом: *@
+              @for( reason <- mitem.reasonOpt ) {
+                <br/>
+                <strong class="@Css.Colors.RED">@reason</strong>
+              }
             }
 
             @* Стоимость item'а. *@
@@ -120,17 +126,15 @@
               @formatPrice(mitem.price)
             }
 
-            @* Текущий статус item'а. *@
+            @* Текущий статус item'а. Используем img-спрайт. *@
             @if(withStatus) {
-              @defining( mitem.status.iconCssClass ) { icc =>
-              @defining( "items-price-column" :: Nil ) { css0 =>
-                @__td("M", false, icc.fold(css0)(css2 => "item-status-icon" :: ("__" + css2) :: css0), title = Some(messages( mitem.status.nameI18n )) ) {
-                  &nbsp;
-                  @*<span title="@messages( mitem.status.nameI18n )">
-                    @mitem.status
-                  </span>*@
+              @defining( messages( mitem.status.nameI18n ) ) { statusMsg =>
+                @__td("M", false, "items-status-column" :: Nil, title = Some(s"$statusMsg (${humanizeDt( mitem.dateStatus )})" ) ) {
+                  <img @for(icc <- mitem.status.iconCssClass) {class="__@icc"}
+                       src="@statusSpriteUrl"
+                       alt="@statusMsg"
+                  />
                 }
-              }
               }
             }
 
@@ -149,5 +153,5 @@
     </tbody>
 
   </table>
-
+  }
 }

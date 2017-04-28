@@ -517,25 +517,3 @@
 .right-bar_menu-i.__bill-orders:hover, .right-bar_menu-i.__bill-orders.__act {
   background-position: 20px 11px;
 }
-
-
-.item-status-icon {
-  background-image: url('/vassets/images/market/lk/bill/item-statuses.svg');
-  background-repeat: no-repeat;
-}
-
-.item-status-icon.__mdr {
-  background-position: 0px 5px;
-}
-.item-status-icon.__offline {
-  background-position: 0px -35px;
-}
-.item-status-icon.__refused {
-  background-position: 0px -75px;
-}
-.item-status-icon.__online {
-  background-position: 0px -115px;
-}
-.item-status-icon.__finished {
-  background-position: 0px -155px;
-}

@@ -161,7 +161,7 @@ object DateTimePrettyPrinter {
    * @param dt Указанное время
    * @return Человеческое время.
    */
-  def humanizeDt(dt: java.time.OffsetDateTime, isCapitalized: Boolean)(implicit ctx: Context) : String = {
+  def humanizeDt(dt: java.time.OffsetDateTime, isCapitalized: Boolean = true)(implicit ctx: Context) : String = {
     humanizeDt(toJodaTime(dt), isCapitalized)
   }
   def humanizeDt(dt: DateTime, isCapitalized: Boolean)(implicit ctx: Context) : String = {
