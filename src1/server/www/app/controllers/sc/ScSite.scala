@@ -191,7 +191,7 @@ trait ScSiteBase
         _domainNodeOpt    <- _domainNodeOptFut
       } yield {
         new Stat2 {
-          override def scComponents = MComponents.Site :: super.scComponents
+          override def components = MComponents.Site :: super.components
           override def userSaOpt = _userSaOpt
           override def statActions: List[MAction] = {
             // Возможный stat-экшен POV-просмотра сайта с т.з. карточки.

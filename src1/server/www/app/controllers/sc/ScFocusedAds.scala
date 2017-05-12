@@ -474,7 +474,7 @@ trait ScFocusedAdsBase
         }
 
         new Stat2 {
-          override def scComponents = MComponents.Open :: super.scComponents
+          override def components = MComponents.Open :: super.components
           override def statActions  = saAcc
           override def userSaOpt    = _userSaOpt
           override def locEnvOpt    = _qs.search.locEnv.optional

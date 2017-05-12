@@ -2,10 +2,15 @@ package controllers
 
 import com.google.inject.Inject
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
+import io.suggest.sec.csp.CspViolationReport
+import io.suggest.stat.m.{MComponents, MDiag}
+import models.mctx.Context
 import models.mproj.ICommonDi
-import util.acl.{IgnoreAuth, IsAuth, IsSuOrDevelOr404, MaybeAuth}
+import util.acl._
 import util.cdn.CorsUtil
+import util.sec.CspUtil
 import util.seo.SiteMapUtil
+import util.stat.StatUtil
 import util.xplay.SecHeadersFilterUtil
 import views.html.static._
 
@@ -22,7 +27,10 @@ class Static @Inject() (
   override val corsUtil           : CorsUtil,
   override val siteMapUtil        : SiteMapUtil,
   isAuth                          : IsAuth,
+  bruteForceProtect               : BruteForceProtect,
+  statUtil                        : StatUtil,
   secHeadersFilterUtil            : SecHeadersFilterUtil,
+  cspUtil                         : CspUtil,
   isSuOrDevelOr404                : IsSuOrDevelOr404,
   maybeAuth                       : MaybeAuth,
   override val mCommonDi          : ICommonDi
@@ -34,6 +42,7 @@ class Static @Inject() (
 {
 
   import mCommonDi._
+  import cspUtil.Implicits._
 
 
   /**
@@ -90,6 +99,73 @@ class Static @Inject() (
    */
   def keepAliveSession = isAuth() { implicit request =>
     NoContent
+  }
+
+
+  /** Экшен принятия отчёта об ошибке CSP от браузера.
+    * Какой-то браузер жалуется на нарушение политики безопасности контента (CSP) на сайте.
+    * Экшен не очень уместен для этого контроллера (Static), но в целом ок.
+    *
+    * Этот запрос имеет вид JSON-документа:
+    * {{{
+    *   {
+    *     "csp-report": {
+    *       "document-uri": "http://example.com/signup.html",
+    *       "referrer": "",
+    *       "blocked-uri": "http://example.com/css/style.css",
+    *       "violated-directive": "style-src cdn.example.com",
+    *       "original-policy": "default-src 'none'; style-src cdn.example.com; report-uri /_/csp-reports"
+    *     }
+    *   }
+    * }}}
+    */
+  def handleCspReport = bruteForceProtect {
+    maybeAuth().async( parse.json(1024) ) { implicit request =>
+      // Залить ошибку в MStat.
+      lazy val logPrefix = s"cspReportHandler[${System.currentTimeMillis()}]:"
+      val requestBodyStr = request.body.toString()
+      LOGGER.info(s"$logPrefix From ip#${request.remoteAddress} Body:\n $requestBodyStr")
+
+      request.body.validate[CspViolationReport].fold(
+        // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
+        {violations =>
+          LOGGER.warn(s"$logPrefix Invalid JSON: ${violations.mkString(", ")}")
+          BadRequest("WOW!")
+        },
+
+        // Всё ок распарсилось.
+        {cspViol =>
+          // Сам результат парсинга не особо важен, это скорее контроль контента.
+          val userSaOptFut = statUtil.userSaOptFutFromRequest()
+          val _ctx = implicitly[Context]
+
+          for {
+            _userSaOpt <- userSaOptFut
+
+            stat2 = new statUtil.Stat2 {
+              override def ctx = _ctx
+              override def uri = Some( cspViol.documentUri )
+
+              override def components = {
+                MComponents.CSP :: MComponents.Error :: super.components
+              }
+              override def statActions = Nil
+              override def userSaOpt = _userSaOpt
+
+              override def diag = MDiag(
+                message = Some( requestBodyStr )
+              )
+            }
+
+            r <- statUtil.saveStat(stat2)
+
+          } yield {
+            LOGGER.trace(s"$logPrefix Saved csp-report -> $r")
+            NoContent
+          }
+        }
+      )
+    }
   }
 
 }

@@ -202,13 +202,13 @@ class StatUtil @Inject()(
     /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
     def domain3p: Option[String] = None
 
-    def scComponents: List[MComponent] = Nil
+    def components: List[MComponent] = Nil
 
     def uri = Option( ctx.request.uri )
 
     def mcommon: MCommon = {
       MCommon(
-        components      = MComponents.Sc :: scComponents,
+        components      = MComponents.Sc :: components,
         ip              = Some( remoteAddr.remoteAddr ),
         clientUid       = clUidOpt,
         uri             = uri,

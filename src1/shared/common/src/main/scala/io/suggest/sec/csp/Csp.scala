@@ -285,3 +285,20 @@ case class CspPolicy(
   override def toString = CspPolicy.format(this)
 
 }
+
+
+/** Модель отчёта о нарушении безопасности.
+  *
+  * @param documentUri URL страницы.
+  * @param referrer Реферер, если есть.
+  * @param blockedUri Заблокированный запрос.
+  * @param violatedDirective Нарушенная директива.
+  * @param originalPolicy Политика безопасности.
+  */
+case class CspViolationReport(
+                               documentUri        : String,
+                               referrer           : Option[String],
+                               blockedUri         : Option[String],
+                               violatedDirective  : String,
+                               originalPolicy     : String
+                             )

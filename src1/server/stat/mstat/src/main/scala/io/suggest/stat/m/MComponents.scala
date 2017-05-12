@@ -50,6 +50,8 @@ object MComponents extends EnumMaybeWithName with EnumJsonReadsValT with StrIdVa
     * Обычно применяется в связке с другими компонентами, чтобы уточнить суть. */
   val Error     : T = new Val("ошибка")
 
+  /** Content-Security-Policy. */
+  val CSP       : T = new Val("CSP")
 
   //val Lk: T       = new Val("ЛК")
   //val Sys: T      = new Val("SYS")

@@ -591,7 +591,7 @@ trait ScIndex
             )
             List(inxSa)
           }
-          override def scComponents = MComponents.Index :: super.scComponents
+          override def components = MComponents.Index :: super.components
           override def remoteAddr   = _remoteIp
           override def devScreenOpt = _reqArgs.screen
           override def locEnvOpt    = Some(_reqArgs.locEnv)

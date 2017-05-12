@@ -367,8 +367,9 @@ POST /id/reg/ext/confirm                @controllers.Ident.idpConfirmSubmit
 ## compat
 GET  /app/session/keepalive             @controllers.Static.keepAliveSession
 ## Раньше был пункт меню "О проекте". Теперь редирект на буклет маркета.
-GET     /privacy                        @controllers.Static.privacyPolicy
-GET     /st/popup/check                 @controllers.Static.popupCheckContent
+GET  /privacy                           @controllers.Static.privacyPolicy
+GET  /st/popup/check                    @controllers.Static.popupCheckContent
+POST /_/csp/report                      @controllers.Static.handleCspReport
 
 ## yeoman-play
 #GET     /ui         com.tuplejump.playYeoman.Yeoman.index

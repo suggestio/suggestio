@@ -70,4 +70,5 @@ object MActionTypes extends EnumMaybeWithName with EnumJsonReadsValT with StrIdV
 
   val Success             = Val("успех")
 
+  val Violation           = Val("нарушение")
 }

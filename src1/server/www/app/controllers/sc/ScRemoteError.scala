@@ -108,7 +108,7 @@ trait ScRemoteError
                 )
                 maction :: Nil
               }
-              override def scComponents = MComponents.Error :: super.scComponents
+              override def components = MComponents.Error :: super.components
               override def userSaOpt = _userSaOpt
               override def ctx = _ctx
               override def geoIpLoc = _geoLocOpt

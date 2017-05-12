@@ -1,7 +1,8 @@
 package util.sec
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy}
+import controllers.routes
+import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
 import play.api.Configuration
 import play.api.mvc.Result
@@ -48,7 +49,8 @@ class CspUtil @Inject() (
           connectSrc  = commonSources ++ Seq(
             // Разрешить веб-сокеты в same-origin.
             s"ws${if (contextUtil.HTTPS_ENABLED) "s" else ""}://${contextUtil.HOST_PORT}"
-          )
+          ),
+          reportUri = Some( routes.Static.handleCspReport().url )
         ),
         reportOnly = CSP_REPORT_ONLY
       )
@@ -89,6 +91,31 @@ class CspUtil @Inject() (
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
     val PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )
+
+  }
+
+
+  import play.api.libs.json._
+  import play.api.libs.functional.syntax._
+
+
+  /** Поддержка JSON-парсинга для тела отчёта о нарушении CSP. */
+  val REPORT_BODY_READS: Reads[CspViolationReport] = (
+    (__ \ "document-uri").read[String] and
+    (__ \ "referrer").readNullable[String] and
+    (__ \ "blocked-uri").readNullable[String] and
+    (__ \ "violated-directive").read[String] and
+    (__ \ "original-policy").read[String]
+  )( CspViolationReport.apply _ )
+
+
+  /** Контейнер неявных вещей и относящихся к ним. */
+  object Implicits {
+
+    /** Поддержка JSON-парсинга полного JSON-отчёта CSP. */
+    implicit val WRAP_REPORT_READS: Reads[CspViolationReport] = {
+      (__ \ "csp-report").read( REPORT_BODY_READS )
+    }
 
   }
 

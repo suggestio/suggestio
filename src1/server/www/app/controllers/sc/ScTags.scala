@@ -122,7 +122,7 @@ trait ScTags
         override def ctx          = _ctx
         override def locEnvOpt    = Some(qs.locEnv)
         override def geoIpLoc     = geoIpResOpt
-        override def scComponents = MComponents.Tags :: super.scComponents
+        override def components = MComponents.Tags :: super.components
       }
       statUtil.saveStat(sstat)
         .onFailure { case ex: Throwable =>

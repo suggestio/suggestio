@@ -231,7 +231,7 @@ trait ScAdsTileBase
         }
 
         new Stat2 {
-          override def scComponents = MComponents.Tile :: super.scComponents
+          override def components = MComponents.Tile :: super.components
           override def statActions  = saAcc
           override def userSaOpt    = _userSaOpt
           override def locEnvOpt    = _qs.search.locEnv.optional
