@@ -16,6 +16,7 @@ import play.twirl.api.Html
 import util.acl._
 import util.di.IScUtil
 import util.ext.IExtServicesUtilDi
+import util.sec.ICspUtilDi
 import util.stat.IStatUtil
 import views.html.sc._
 
@@ -39,9 +40,11 @@ trait ScSiteBase
   with IExtServicesUtilDi
   with IMNodes
   with IContextUtilDi
+  with ICspUtilDi
 {
 
   import mCommonDi._
+
 
   /** Настраиваемая логика сборки результата запроса сайта выдачи. */
   protected abstract class SiteLogic extends LogicCommonT {
@@ -170,8 +173,10 @@ trait ScSiteBase
     def resultFut: Future[Result] = {
       for (rargs <- renderArgsFut) yield {
         val render = siteTpl(rargs)(ctx)
-        cacheControlShort {
-          Ok( render )
+        cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.ScSiteHdrOpt ) {
+          cacheControlShort {
+            Ok(render)
+          }
         }
       }
     }

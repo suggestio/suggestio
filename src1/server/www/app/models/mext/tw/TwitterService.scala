@@ -28,4 +28,9 @@ trait TwitterService extends IExtService {
   /** Человекочитабельный юзернейм (id страницы) suggest.io на стороне сервиса. */
   override def myUserName = Some("@suggest_io")
 
+  override def cspSrcDomains: Iterable[String] = {
+    "*.twitter.com" ::
+      Nil
+  }
+
 }

@@ -17,6 +17,7 @@ import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
 import util.img.{LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
+import util.sec.CspUtil
 import util.showcase.{ScMapUtil, _}
 import util.stat.{StatCookiesUtil, StatUtil}
 
@@ -32,7 +33,7 @@ class Sc @Inject() (
                      override val logoUtil           : LogoUtil,
                      override val welcomeUtil        : WelcomeUtil,
                      override val bleUtil            : BleUtil,
-                     override val statUtil         : StatUtil,
+                     override val statUtil           : StatUtil,
                      override val statCookiesUtil    : StatCookiesUtil,
                      override val mNodes             : MNodes,
                      override val scNlUtil           : ShowcaseNodeListUtil,
@@ -40,6 +41,7 @@ class Sc @Inject() (
                      override val adRenderUtil       : AdRenderUtil,
                      override val cdnUtil            : CdnUtil,
                      override val n2NodesUtil        : N2NodesUtil,
+                     override val cspUtil            : CspUtil,
                      override val getAnyAd           : GetAnyAd,
                      override val maybeAuth          : MaybeAuth,
                      @Named("blk") override val blkImgMaker  : IMaker,

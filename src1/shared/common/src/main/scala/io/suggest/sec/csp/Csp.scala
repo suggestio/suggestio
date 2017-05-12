@@ -1,6 +1,6 @@
 package io.suggest.sec.csp
 
-import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.empty.{EmptyProduct, OptionUtil}
 
 /**
   * Suggest.io
@@ -39,6 +39,8 @@ object Csp {
 
     /** Allows loading resources via the data scheme (eg Base64 encoded images). */
     def DATA = "data:"
+
+    def BLOB = "blob:"
 
     /** Allows loading resources only over HTTPS on any domain. */
     def HTTPS = "https:"
@@ -104,11 +106,12 @@ case class CspHeader(
   def headerValue = policy.toString
 
   def headerOpt: Option[(String, String)] = {
-    if (policy.isEmpty)
-      None
-    else
-      Some(headerName -> headerValue)
+    OptionUtil.maybe( policy.nonEmpty )(header)
   }
+
+  def header = headerName -> headerValue
+
+  def withPolicy(policy2: CspPolicy) = copy(policy = policy2)
 
 }
 
@@ -211,43 +214,73 @@ object CspPolicy {
 case class CspPolicy(
                       // TODO Заменить Seq на Set? Это будет удобно для сложных случаев, но нарушает порядок.
                       // CSP Level 1
-                      defaultSrc        : Seq[String]     = Nil,
-                      scriptSrc         : Seq[String]     = Nil,
-                      styleSrc          : Seq[String]     = Nil,
-                      imgSrc            : Seq[String]     = Nil,
-                      connectSrc        : Seq[String]     = Nil,
-                      fontSrc           : Seq[String]     = Nil,
-                      objectSrc         : Seq[String]     = Nil,
-                      mediaSrc          : Seq[String]     = Nil,
-                      frameSrc          : Seq[String]     = Nil,
+                      defaultSrc        : Set[String]     = Set.empty,
+                      scriptSrc         : Set[String]     = Set.empty,
+                      styleSrc          : Set[String]     = Set.empty,
+                      imgSrc            : Set[String]     = Set.empty,
+                      connectSrc        : Set[String]     = Set.empty,
+                      fontSrc           : Set[String]     = Set.empty,
+                      objectSrc         : Set[String]     = Set.empty,
+                      mediaSrc          : Set[String]     = Set.empty,
+                      frameSrc          : Set[String]     = Set.empty,
                       reportUri         : Option[String]  = None,
                       // CSP Level 2
-                      childSrc          : Seq[String]     = Nil,
-                      formAction        : Seq[String]     = Nil,
-                      frameAncestors    : Seq[String]     = Nil,
-                      pluginTypes       : Seq[String]     = Nil
+                      childSrc          : Set[String]     = Set.empty,
+                      formAction        : Set[String]     = Set.empty,
+                      frameAncestors    : Set[String]     = Set.empty,
+                      pluginTypes       : Set[String]     = Set.empty
                     )
   extends EmptyProduct
 {
 
   // CSP L1
-  def withDefaultSrc(defaultSrc1: String*) = copy(defaultSrc = defaultSrc1)
-  def withScriptSrc(scriptSrc1: String*) = copy(scriptSrc = scriptSrc1)
-  def withStyleSrc(styleSrc1: String*) = copy(styleSrc = styleSrc1)
-  def withImgSrc(imgSrc1: String*) = copy(imgSrc = imgSrc1)
-  def withConnectSrc(connectSrc1: String*) = copy(connectSrc = connectSrc1)
-  def withFontSrc(fontSrc1: String*) = copy(fontSrc = fontSrc1)
-  def withObjectSrc(objectSrc1: String*) = copy(objectSrc = objectSrc1)
-  def withMediaSrc(mediaSrc1: String*) = copy(mediaSrc = mediaSrc1)
-  def withFrameSrc(frameSrc1: String*) = copy(frameSrc = frameSrc1)
+  def withDefaultSrc(defaultSrcs: Set[String]) = copy(defaultSrc = defaultSrcs)
+  def addDefaultSrc(defaultSrcs: String*) = withDefaultSrc( defaultSrc ++ defaultSrcs )
+
+  def withScriptSrc(scriptSrcs: Set[String]) = copy(scriptSrc = scriptSrcs)
+  def addScriptSrc(scriptSrcs: String*) = withScriptSrc( scriptSrc ++ scriptSrcs )
+
+  def withStyleSrc(styleSrcs: Set[String]) = copy(styleSrc = styleSrcs)
+  def addStyleSrc(styleSrcs: String*) = withStyleSrc( styleSrc ++ styleSrcs )
+
+  def withImgSrc(imgSrcs: Set[String]) = copy(imgSrc = imgSrcs)
+  def addImgSrc(imgSrcs: String*) = withImgSrc( imgSrc ++ imgSrcs )
+
+  def withConnectSrc(connectSrcs: Set[String]) = copy(connectSrc = connectSrcs)
+  def addConnectSrc(connectSrcs: String*) = withConnectSrc( connectSrc ++ connectSrcs )
+
+  def withFontSrc(fontSrcs: Set[String]) = copy(fontSrc = fontSrcs)
+  def withObjectSrc(objectSrcs: Set[String]) = copy(objectSrc = objectSrcs)
+  def withMediaSrc(mediaSrcs: Set[String]) = copy(mediaSrc = mediaSrcs)
+  def withFrameSrc(frameSrcs: Set[String]) = copy(frameSrc = frameSrcs)
   def withReportUri(reportUri1: String = null) = copy(reportUri = Option(reportUri1))
 
   // CSP L2
-  def withChildSrc(childSrcs: String*) = copy(childSrc = childSrcs)
-  def withFormAction(formActions: String*) = copy(formAction = formActions)
-  def withFrameAncestors(frameAncestors1: String*) = copy(frameAncestors = frameAncestors1)
-  def withPluginTypes(pluginTypes1: String*) = copy(pluginTypes = pluginTypes1)
+  def withChildSrc(childSrcs: Set[String]) = copy(childSrc = childSrcs)
+  def withFormAction(formActions: Set[String]) = copy(formAction = formActions)
+  def withFrameAncestors(frameAncestors1: Set[String]) = copy(frameAncestors = frameAncestors1)
+  def withPluginTypes(pluginTypes1: Set[String]) = copy(pluginTypes = pluginTypes1)
 
+
+  /** Использование векторных карт MapBox (mapbox-gl.js) требует кое-каких дополнительных разрешений CSP.
+    * @return Обновлённая CSP policy.
+    */
+  def allowMapBoxGl: CspPolicy = {
+    val mbHost = "https://*.mapbox.com"
+    val blob = Csp.Sources.BLOB
+
+    addDefaultSrc( blob )
+      .addConnectSrc( mbHost )
+      .addScriptSrc( blob, Csp.Sources.UNSAFE_EVAL )
+      // Хз, надо ли imgSrc, т.к. она векторная и через XHR свои тайлы получает.
+      .addImgSrc( mbHost, blob )
+  }
+
+
+  /** Разрешить доступ для OSM-карт для leaflet.js. */
+  def allowOsmLeaflet: CspPolicy = {
+    addImgSrc( "*.tile.openstreetmap.org" )
+  }
 
   override def toString = CspPolicy.format(this)
 

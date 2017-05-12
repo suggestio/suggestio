@@ -4,12 +4,14 @@ import com.google.inject.Inject
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.MNodes
+import io.suggest.sec.csp.Csp
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv._
 import models.adv.ext.act.{ActorPathQs, OAuthVerifier}
 import models.adv.ext.{MAdvRunnerTplArgs, MForAdTplArgs}
 import models.adv.search.etg.ExtTargetSearchArgs
 import models.mctx.Context
+import models.mext.MExtServices
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, MReqNoBody}
 import org.elasticsearch.search.sort.SortOrder
@@ -21,6 +23,7 @@ import play.api.mvc.{Result, WebSocket}
 import util.FormUtil._
 import util.acl._
 import util.adv.ext.{AdvExtFormUtil, AdvExtWsActors}
+import util.sec.CspUtil
 import views.html.helper.CSRF
 import views.html.lk.adv.ext._
 import views.html.static.popups.closingPopupTpl
@@ -43,6 +46,7 @@ class LkAdvExt @Inject() (
                            mExtTargets                     : MExtTargets,
                            canSubmitExtTargetForNode       : CanSubmitExtTargetForNode,
                            advExtFormUtil                  : AdvExtFormUtil,
+                           cspUtil                         : CspUtil,
                            aclUtil                         : AclUtil,
                            canAccessExtTarget              : CanAccessExtTarget,
                            override val mCommonDi          : ICommonDi
@@ -59,6 +63,29 @@ class LkAdvExt @Inject() (
   private val WS_BEST_BEFORE_SECONDS = configuration
     .getInt("adv.ext.ws.api.best.before.seconds")
     .getOrElse(600)
+
+
+  /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */
+  private val _CSP_HDR_OPT: Option[(String, String)] = {
+    cspUtil.mkCustomPolicyHdr { csp0 =>
+      val allSrcsIter = for {
+        mExtService <- MExtServices.valuesT.iterator
+        domain      <- mExtService.cspSrcDomains
+        proto       <- mExtService.cspSrcProtos
+      } yield {
+        proto + "://" + domain
+      }
+
+      val allSrcs = allSrcsIter.toList
+
+      csp0
+        .addDefaultSrc( allSrcs: _* )
+        .addScriptSrc( Csp.Sources.UNSAFE_EVAL :: Csp.Sources.UNSAFE_INLINE :: allSrcs: _* )
+        .addImgSrc( allSrcs: _* )
+        .addConnectSrc( allSrcs: _* )
+        .addStyleSrc( allSrcs: _* )
+    }
+  }
 
 
   private def _nowSec = System.currentTimeMillis() / 1000L
@@ -175,14 +202,17 @@ class LkAdvExt @Inject() (
    */
   def runner(adId: String, wsArgsOpt: Option[MExtAdvQs]) = csrf.Check {
     canAdvAd(adId, U.Lk).async { implicit request =>
+      def logPrefix = s"runner($adId):"
+
       wsArgsOpt.fold [Future[Result]] {
         // Аргументы не заданы. Такое бывает, когда юзер обратился к runner'у, но изменился ключ сервера или истекла сессия.
+        LOGGER.debug(s"$logPrefix wsArgs are empty, rdr user#${request.user.personIdOpt.orNull} back to form.")
         Redirect(routes.LkAdvExt.forAd(adId))
 
       } { wsArgs =>
         val now = _nowSec
         if (wsArgs.bestBeforeSec < now) {
-          LOGGER.debug(s"runner($adId): Deprecated request TTL=${wsArgs.bestBeforeSec}, now = $now, wsArgs = $wsArgs")
+          LOGGER.debug(s"$logPrefix Deprecated request TTL=${wsArgs.bestBeforeSec}, now = $now, wsArgs = $wsArgs")
           Redirect( routes.LkAdvExt.forAd(adId) )
             .flashing(FLASH.ERROR -> "Please.try.again")
 
@@ -202,7 +232,11 @@ class LkAdvExt @Inject() (
               mad         = request.mad,
               mnode       = request.producer
             )
-            Ok( advRunnerTpl(rargs)(ctx) )
+
+            // Запилить CSP-заголовок с сильно-расширенной политикой безопасности.
+            cspUtil.applyCspHdrOpt( _CSP_HDR_OPT ) {
+              Ok( advRunnerTpl(rargs)(ctx) )
+            }
           }
         }
       }

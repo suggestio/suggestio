@@ -14,13 +14,17 @@ import scala.scalajs.js.WrappedDictionary
  * Description: Модель поддерживаемых сервисов.
  */
 object MServices extends MServicesLightT {
-  sealed protected class Val(val strId: String) extends ValT
+
+  sealed protected[this] class Val(val strId: String) extends ValT
 
   override type T = Val
 
   override val FACEBOOK: T = new Val(FACEBOOK_ID)
+
   override val VKONTAKTE: T = new Val(VKONTAKTE_ID)
+
   override val TWITTER: T = new Val(TWITTER_ID)
+
 }
 
 

@@ -85,7 +85,8 @@ class PayYaka @Inject() (
     * Яндекс-касса использует фреймы в продакшен режиме.
     * Если этот заголовок больше не будет нужен, то нужно вычистить метод и весь сопутствующий код.
     */
-  // TODO Нужна поддержка CSP, т.к. хром не умеет в ALLOW-FROM
+  // TODO Удалить. Уже должно всё работать ок без этих костылей.
+  //@deprecated("YaKa resovled back-to-site frames problem. Delete it.", "2017.05.12")
   private def FRAMES_ALLOWED: List[(String, String)] = {
     yakaUtil.paySystem
       .returnRespHdr_XFrameOptions_AllowFrom

@@ -76,7 +76,8 @@ object MPaySystems extends Enum[MPaySystem] {
       * Поэтому, надо при возврате из этой ПС надо выставлять особое разрешение для хидера.
       * @return ВСЕГДА Some("...") с типом Some[String].
       */
-    override def returnRespHdr_XFrameOptions_AllowFrom = Some( "https://money.yandex.ru/cashdesk/" )
+    // 2016.may.12: Яндекс-касса уже починила фреймы 2 недели назад. Пока просто отключаем отработку фреймов тут:
+    override def returnRespHdr_XFrameOptions_AllowFrom = None // Some( "https://money.yandex.ru/cashdesk/" )
 
   }
 

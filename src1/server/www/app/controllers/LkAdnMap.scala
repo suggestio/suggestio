@@ -23,6 +23,7 @@ import util.adv.AdvFormUtil
 import util.adv.geo.AdvGeoLocUtil
 import util.billing.Bill2Util
 import util.mdr.MdrUtil
+import util.sec.CspUtil
 import views.html.lk.adn.mapf._
 
 import scala.concurrent.Future
@@ -43,6 +44,7 @@ class LkAdnMap @Inject() (
                            pickleSrvUtil                 : PickleSrvUtil,
                            mdrUtil                       : MdrUtil,
                            reqUtil                       : ReqUtil,
+                           cspUtil                       : CspUtil,
                            isNodeAdmin                   : IsNodeAdmin,
                            override val mCommonDi        : ICommonDi
 )
@@ -145,7 +147,12 @@ class LkAdnMap @Inject() (
         )
 
         val html = AdnMapTpl(rargs)(ctx)
-        Ok(html)
+
+        // Навесить скорректированный CSP-заголовок на HTTP-ответ.
+        cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.PageWithOsmLeaflet ) {
+          Ok(html)
+        }
+
       }
     }
   }

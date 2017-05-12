@@ -26,6 +26,14 @@ trait VkService extends IJsActorExtService with VkLoginProvider {
 
   override def dfltTargetUrl = Some(mainPageUrl)
 
+  override def cspSrcDomains: Iterable[String] = {
+    "vk.com" ::
+    "*.vk.com" ::             // login.vk.com, api.vk.com, возможно ещё какие-то.
+      "*.vkontakte.ru" ::     // Не нужно, но на всякий случай.
+      "*.vk.me" ::            // Не нужно, но на всякий случай.
+      Nil
+  }
+
 }
 
 

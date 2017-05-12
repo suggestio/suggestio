@@ -29,6 +29,21 @@ trait FacebookService
 
   override def dfltTargetUrl = Some(mainPageUrl + "me")
 
+  override def cspSrcDomains: Iterable[String] = {
+    "facebook.com"   ::     // Не используется, но на всякий случай.
+    "*.facebook.com" ::     // Почти все запросы к мордокниге улетают в эти домены.
+      "*.fbcdn.net"  ::      // Не нужно, но на всякий случай.
+      "*.facebook.net" ::   // .net нужен на самом шаге инициализации fb.js API в adv-ext.
+      Nil
+  }
+
+  /** CSP: Список поддерживаемых протоколов для обычных запросов. */
+  override def cspSrcProtos: List[String] = {
+    // В dev-режиме:
+    // The page’s settings observed the loading of a resource at
+    // http://staticxx.facebook.com/connect/xd_arbiter/r/JtmcTFxyLye.js?version=42
+    "http" :: super.cspSrcProtos
+  }
 }
 
 /** Реализация модели размеров картинок фейсбука. */

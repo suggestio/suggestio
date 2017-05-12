@@ -46,6 +46,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
 import models.MNode
 import util.mdr.MdrUtil
+import util.sec.CspUtil
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -67,6 +68,7 @@ class LkAdvGeo @Inject() (
                            pickleSrvUtil                   : PickleSrvUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
                            reqUtil                         : ReqUtil,
+                           cspUtil                         : CspUtil,
                            mdrUtil                         : MdrUtil,
                            canAccessItem                   : CanAccessItem,
                            canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
@@ -242,7 +244,11 @@ class LkAdvGeo @Inject() (
         )
 
         val html = AdvGeoForAdTpl(rargs)(ctx)
-        rs(html)
+
+        // Навесить скорректированный CSP-заголовок на HTTP-ответ, т.к. форма нуждается в доступе к картам OSM.
+        cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.PageWithOsmLeaflet ) {
+          rs(html)
+        }
       }
     }
 
