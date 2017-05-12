@@ -6,6 +6,7 @@ import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy}
 import models.mctx.ContextUtil
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
+import util.acl.AclUtil
 import util.cdn.CdnUtil
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,14 +34,19 @@ class SecHeadersFilterUtil @Inject() (
   val X_XSS_PROTECTION_HEADER                   = "X-XSS-Protection"
   val X_CONTENT_TYPE_OPTIONS_HEADER             = "X-Content-Type-Options"
   val X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER  = "X-Permitted-Cross-Domain-Policies"
-  //val CONTENT_SECURITY_POLICY_HEADER = "Content-Security-Policy"
+  /** @see [[https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security]] */
+  val STRICT_TRANSPORT_SECURITY                 = "Strict-Transport-Security"
 
   // Дефолтовые значения заголовков.
   val DEFAULT_FRAME_OPTIONS                     = "DENY"
   val DEFAULT_XSS_PROTECTION                    = "1; mode=block"
   val DEFAULT_CONTENT_TYPE_OPTIONS              = "nosniff"
   val DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES   = "master-only"
-  //val DEFAULT_CONTENT_SECURITY_POLICY = "default-src 'self'"
+
+  // TODO Надо выставить хотя бы 12 недель, а лучше год, и флаг preload для доступа в hardcoded-списки браузеров.
+  // Сейчас это пока не сделано, т.к. есть проблемы с letsEncrypt, nginx reload, других возможных проблем.
+  val DEFAULT_STRICT_TRANSPORT_SECURITY         = "max-age=10000, includeSubDomains"
+
 
   def FRAMES_ALLOWED_FROM(url: String): Seq[(String, String)] = {
     val xfoHdr = X_FRAME_OPTIONS_HEADER -> ("ALLOW-FROM " + url)
@@ -100,6 +106,7 @@ class SecHeadersFilterUtil @Inject() (
 /** play-фильтр для запросов и ответов, добавляющий http-заголовки политики безопасности. */
 class SecHeadersFilter @Inject() (
                                    secHeadersFilterUtil       : SecHeadersFilterUtil,
+                                   aclUtil                    : AclUtil,
                                    implicit private val ec    : ExecutionContext,
                                    override implicit val mat  : Materializer
                                  )
@@ -110,8 +117,11 @@ class SecHeadersFilter @Inject() (
 
 
   /** Навесить на результат недостающие security-заголовки. */
-  override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
+  override def apply(f: (RequestHeader) => Future[Result])(rh0: RequestHeader): Future[Result] = {
+    val rh = aclUtil.reqHdrFromRequestHdr( rh0 )
     val respFut = f(rh)
+
+    val isSecure = rh.secure
 
     for (resp <- respFut) yield {
       // Добавить только заголовки, которые отсутсвуют в исходнике.
@@ -129,6 +139,10 @@ class SecHeadersFilter @Inject() (
 
       if ( !hs.contains(X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER) )
         acc ::= X_PERMITTED_CROSS_DOMAIN_POLICIES_HEADER -> DEFAULT_PERMITTED_CROSS_DOMAIN_POLICIES
+
+      // Добавить HSTS-хидер, если https. Для голого HTTP в этом нет смысла и необходимости.
+      if (isSecure && !hs.contains(STRICT_TRANSPORT_SECURITY))
+        acc ::= STRICT_TRANSPORT_SECURITY -> DEFAULT_STRICT_TRANSPORT_SECURITY
 
       // CSP: если включено, то Some.
       for {

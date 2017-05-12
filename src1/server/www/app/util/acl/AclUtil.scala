@@ -35,7 +35,7 @@ class AclUtil @Inject() (
   }
 
 
-  /** Получить инстанс IReq из абстрактного реквеста.
+  /** Получить инстанс [[models.req.IReq]] из абстрактного реквеста.
     *
     * @param request Абстрактный play-реквест.
     * @tparam A Тип body.
@@ -53,6 +53,25 @@ class AclUtil @Inject() (
         new MReqWrap[A] {
           override def request = request1
           override lazy val user = userFromRequest(request1)
+        }
+    }
+  }
+
+
+  /** Получить инстанс [[models.req.IReqHdr]] из абстрактного RequestHeader'а.
+    *
+    * @param requestHeader Инстанс play RequestHeader.
+    * @return Текущий или новый инстанс [[models.req.IReqHdr]].
+    */
+  def reqHdrFromRequestHdr(requestHeader: RequestHeader): IReqHdr = {
+    requestHeader match {
+      case rh: IReqHdr =>
+        rh
+
+      case _ =>
+        new MReqHdrWrap {
+          override def request    = requestHeader
+          override lazy val user  = userFromRequest(requestHeader)
         }
     }
   }
