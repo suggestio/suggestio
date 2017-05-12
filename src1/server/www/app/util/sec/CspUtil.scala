@@ -43,9 +43,9 @@ class CspUtil @Inject() (
           imgSrc      = commonSources + Csp.Sources.DATA,
           styleSrc    = commonSourcesWithInline,
           scriptSrc   = commonSourcesWithInline,
-          connectSrc  = Set(
-            // Разрешить XHR same-origin.
-            contextUtil.HOST_PORT,
+          // Коннекты: обычно, коннекты идут прямо на suggest.io. Для WebSocket надо явно прописать адреса из-за протокола.
+          // Бывают XHR-коннекты через CDN, например GeoJSON для точек на карте выдачи.
+          connectSrc  = commonSources ++ Seq(
             // Разрешить веб-сокеты в same-origin.
             s"ws${if (contextUtil.HTTPS_ENABLED) "s" else ""}://${contextUtil.HOST_PORT}"
           )

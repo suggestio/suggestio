@@ -39,7 +39,7 @@ class SecHeadersFilterUtil {
 
   // TODO Надо выставить хотя бы 12 недель, а лучше год, и флаг preload для доступа в hardcoded-списки браузеров.
   // Сейчас это пока не сделано, т.к. есть проблемы с letsEncrypt, nginx reload, других возможных проблем.
-  val DEFAULT_STRICT_TRANSPORT_SECURITY         = "max-age=10000, includeSubDomains"
+  val DEFAULT_STRICT_TRANSPORT_SECURITY         = "max-age=10000; includeSubDomains"
 
 
   // Хром не умеет в ALLOW-FROM. Надо разруливать через CSP frame-ancestors.
