@@ -14,6 +14,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
     extends super.Val(strId)
     with ValT
   {
+
     /** Деньги заблокированы на счете покупателя? */
     def isMoneyBlockedOnBuyer   : Boolean = false
 
@@ -43,6 +44,7 @@ object MItemStatuses extends EnumMaybeWithName with EnumApply {
     def iconCssClass: Option[String]
 
   }
+
 
   /** Укороченное выставление флага isBusy = false. */
   sealed protected[this] trait NotBusy extends Val {

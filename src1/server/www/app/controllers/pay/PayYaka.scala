@@ -32,7 +32,7 @@ import util.mail.IMailerWrapper
 import util.mdr.MdrUtil
 import util.pay.yaka.YakaUtil
 import util.stat.StatUtil
-import util.xplay.SecHeadersFilter
+import util.xplay.SecHeadersFilterUtil
 import views.html.lk.billing.order.OrderPaidEmailTpl
 import views.html.lk.billing.pay._
 import views.html.lk.billing.pay.yaka._
@@ -66,6 +66,7 @@ class PayYaka @Inject() (
                           isSuOrNotProduction      : IsSuOrNotProduction,
                           mOrders                  : MOrders,
                           bill2Util                : Bill2Util,
+                          secHeadersFilterUtil     : SecHeadersFilterUtil,
                           mailerWrapper            : IMailerWrapper,
                           mPersonIdents            : MPersonIdents,
                           mSuperUsers              : MSuperUsers,
@@ -90,7 +91,7 @@ class PayYaka @Inject() (
       .returnRespHdr_XFrameOptions_AllowFrom
       .iterator
       .flatMap { url =>
-        SecHeadersFilter.FRAMES_ALLOWED_FROM( url )
+        secHeadersFilterUtil.FRAMES_ALLOWED_FROM( url )
       }
       .toList
   }

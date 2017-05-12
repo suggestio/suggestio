@@ -20,7 +20,7 @@
     <img title="@args.title"
          class="sm-producer-header_logo"
          height="@HEIGHT_CSSPX"
-         src="@cdn.maybeAbsUrl( args.apiVsn.forceAbsUrls )( cdn.dynImg(logoImg) )"
+         src="@cdn.maybeAbsUrl( args.apiVsn.forceAbsUrls )( ctx.dynImgCall(logoImg) )"
     />
   }
 

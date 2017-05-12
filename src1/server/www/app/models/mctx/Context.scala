@@ -4,18 +4,18 @@ import java.net.IDN
 import java.time.{Instant, OffsetDateTime, ZoneId}
 import java.util.UUID
 
-import _root_.models.im.DevScreen
+import _root_.models.im.{DevScreen, MImgT}
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.i18n.MessagesF_t
-import io.suggest.playx.{ICurrentAppHelpers, ICurrentConf}
+import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.util.UuidUtil
 import io.suggest.www.m.mctx.CtxData
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
-import play.api.Application
+import play.api.{Application, Configuration, Environment}
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
 import play.api.mvc.Call
@@ -41,11 +41,13 @@ import scala.util.matching.Regex
 /** Статическая поддержка для экземпляров [[Context]] и прочих вещей. В основном, тут всякие константы. */
 @Singleton
 final class ContextUtil @Inject() (
-  override val current: Application
+                                    env           : Environment,
+                                    configuration : Configuration
 )
-  extends ICurrentConf
-  with ICurrentAppHelpers
+  extends IsAppModes
 {
+
+  override protected def appMode = env.mode
 
   val mobileUaPattern = "(iPhone|webOS|iPod|Android|BlackBerry|mobile|SAMSUNG|IEMobile|OperaMobi)".r.unanchored
   val isIpadRe = "iPad".r.unanchored
@@ -306,6 +308,11 @@ trait Context {
       lang = messages.lang.code.toLowerCase,
       hash = api.jsMessagesUtil.hash
     )
+  }
+
+  def dynImgCall(img: MImgT): Call = {
+    val imgCall = api.dynImgUtil.imgCall(img)
+    api.cdn.forCall(imgCall)(this)
   }
 
 }

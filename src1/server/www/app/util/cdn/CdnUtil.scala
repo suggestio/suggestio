@@ -5,12 +5,11 @@ import controllers.routes
 import io.suggest.playx.ExternalCall
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
-import models.im.{MImg3, MImgT}
 import play.api.Configuration
 import play.api.mvc.Call
-import util.img.DynImgUtil
 
 import scala.collection.JavaConversions._
+
 
 /**
  * Suggest.io
@@ -20,14 +19,11 @@ import scala.collection.JavaConversions._
  */
 @Singleton
 class CdnUtil @Inject() (
-  dynImgUtil      : DynImgUtil,
-  configuration   : Configuration,
-  corsUtil        : CorsUtil
-)
+                          corsUtil        : CorsUtil,
+                          configuration   : Configuration
+                        )
   extends MacroLogsImpl
 {
-
-  import LOGGER._
 
   /** Прочитать из конфига список CDN-хостов для указанного протокола. */
   private def _getCdnHostsForProto(proto: String): List[String] = {
@@ -62,8 +58,11 @@ class CdnUtil @Inject() (
       .fold (Set.empty[String]) (_.toSet)
   }
 
+  val HAS_ANY_CDN = CDN_PROTO_HOSTS.nonEmpty
+
+
   // Печатаем карту в консоль при запуске.
-  info {
+  LOGGER.info {
     val sb = new StringBuilder("CDNs map (proto -> hosts...) is:")
     CDN_PROTO_HOSTS
       .foreach { case (proto, hosts) =>
@@ -79,10 +78,8 @@ class CdnUtil @Inject() (
   }
 
   if (DISABLED_ON_HOSTS.nonEmpty) {
-    info(s"CDNs disabled on hosts: " + DISABLED_ON_HOSTS.mkString(", "))
+    LOGGER.info(s"CDNs disabled on hosts: " + DISABLED_ON_HOSTS.mkString(", "))
   }
-
-  val HAS_ANY_CDN: Boolean = CDN_PROTO_HOSTS.nonEmpty
 
 
   /** Выбрать подходящий CDN-хост для указанного протокола. */
@@ -103,8 +100,10 @@ class CdnUtil @Inject() (
         val protoLc = ctx.request.myProto
         for {
           cdnHost <- chooseHostForProto(protoLc)
-          if !DISABLED_ON_HOSTS.contains(reqHost) &&
-            !(cdnHost equalsIgnoreCase reqHost)
+          if {
+            !DISABLED_ON_HOSTS.contains(reqHost) &&
+              !(cdnHost equalsIgnoreCase reqHost)
+          }
         } yield {
           protoLc + "://" + cdnHost
         }
@@ -120,14 +119,6 @@ class CdnUtil @Inject() (
     forCall( routes.Assets.versioned(file) )
   }
 
-  /** Вызов к dynImg через CDN. */
-  def dynImg(dargs: MImgT)(implicit ctx: Context): Call = {
-    forCall( dynImgUtil.imgCall(dargs) )
-  }
-  def dynImg(filename: String)(implicit ctx: Context): Call = {
-    val img = MImg3(filename)
-    dynImg(img)
-  }
 
   /** Бывает, что нужно в зависимости от значения флага генерить полные и относительные ссылки.
     * Не очень уместный здесь код (к CDN напрямую не относится).

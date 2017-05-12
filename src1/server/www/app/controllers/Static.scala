@@ -6,7 +6,7 @@ import models.mproj.ICommonDi
 import util.acl.{IgnoreAuth, IsAuth, IsSuOrDevelOr404, MaybeAuth}
 import util.cdn.CorsUtil
 import util.seo.SiteMapUtil
-import util.xplay.SecHeadersFilter
+import util.xplay.SecHeadersFilterUtil
 import views.html.static._
 
 /**
@@ -22,6 +22,7 @@ class Static @Inject() (
   override val corsUtil           : CorsUtil,
   override val siteMapUtil        : SiteMapUtil,
   isAuth                          : IsAuth,
+  secHeadersFilterUtil            : SecHeadersFilterUtil,
   isSuOrDevelOr404                : IsSuOrDevelOr404,
   maybeAuth                       : MaybeAuth,
   override val mCommonDi          : ICommonDi
@@ -58,8 +59,8 @@ class Static @Inject() (
   def tinymceColorpicker(filename: String) = maybeAuth() { implicit request =>
     Ok(tinymce.colorpicker.indexTpl())
       .withHeaders(
-        CACHE_CONTROL -> "public, max-age=3600",
-        SecHeadersFilter.X_FRAME_OPTIONS_HEADER -> "SAMEORIGIN"
+        CACHE_CONTROL                                 -> "public, max-age=3600",
+        secHeadersFilterUtil.X_FRAME_OPTIONS_HEADER   -> "SAMEORIGIN"
       )
   }
 

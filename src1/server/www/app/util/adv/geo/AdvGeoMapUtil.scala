@@ -154,7 +154,7 @@ class AdvGeoMapUtil @Inject() (
         logoInfo <- nodeInfo.logoInfoOpt
       } yield {
         MIconInfo(
-          url    = cdnUtil.dynImg(logoInfo.logo).url,
+          url    = ctx.dynImgCall( logoInfo.logo ).url,
           width  = logoInfo.wh.width,
           height = logoInfo.wh.height
         )
