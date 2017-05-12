@@ -171,7 +171,7 @@ POST /lk/events/delete/:evtId           @controllers.LkEvents.nodeEventDelete(ev
 ## Языки и локализация
 GET  /lang                              @controllers.LkLang.showLangSwitcher(r: Option[String] ?= None)
 POST /lang                              @controllers.LkLang.selectLangSubmit(r: Option[String])
-GET  /lk/:lang/:hash/messages.js        @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
+GET  /lang/:lang/:hash/messages.js      @controllers.LkLang.lkMessagesJs(lang: String, hash: Int)
 
 GET  /img/crop/:imgId                   @controllers.Img.imgCropForm(imgId, width:Int, height: Int)
 POST /img/crop                          @controllers.Img.imgCropSubmit
