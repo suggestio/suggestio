@@ -268,6 +268,12 @@ class AdvUtil @Inject() (
   }
 
 
+  /** Подготовить price-терм к показу юзеру на экране.
+    *
+    * @param priceDsl Исходный терм.
+    * @param ctx Контекст рендера.
+    * @return Price-терм, готовый к отправке клиенту.
+    */
   def prepareForRender(priceDsl: IPriceDslTerm)(implicit ctx: Context): IPriceDslTerm = {
     priceDsl.mapAllPrices { p0 =>
       TplDataFormatUtil.setPriceAmountStr(
@@ -277,6 +283,12 @@ class AdvUtil @Inject() (
   }
 
 
+  /** Подготовить цены к сохранению в mitem или куда-либо ещё.
+    * Цены нужно нормализовать.
+    *
+    * @param priceDsl Нормализуемый price-терм.
+    * @return Нормализованный price-терм.
+    */
   def prepareForSave(priceDsl: IPriceDslTerm): IPriceDslTerm = {
     priceDsl
       .mapAllPrices(_.normalizeAmountByExponent)

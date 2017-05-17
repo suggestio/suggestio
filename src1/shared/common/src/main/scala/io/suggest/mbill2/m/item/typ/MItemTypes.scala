@@ -106,6 +106,11 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     override def isApprovable = false
   }
 
+  case object GeoLocCaptureArea extends MItemType {
+    override def strId = "l"
+    override def isAdv = false
+  }
+
 
   /** Только типы item'ов, относящиеся к гео-размещениям. */
   def advGeoTypes             = GeoTag :: GeoPlace :: Nil

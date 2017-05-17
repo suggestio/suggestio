@@ -1,21 +1,20 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.{MNodeMarkerS, MRoot}
+import io.suggest.lk.adn.map.m.{IRadOpts, MRoot}
 import io.suggest.maps.m.MMapS
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.css.Css
-import io.suggest.lk.adn.map.r.nm.NodeMarkerR
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
 import MMapS.MMapSFastEq
-import MNodeMarkerS.MNodeMarkerFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.dt.period.r.DatePeriodR
+import IRadOpts.IRadOptsFastEq
 
 /**
   * Suggest.io
@@ -34,7 +33,7 @@ object LamFormR {
   /** Модель состояния компонента. */
   protected[this] case class State(
                                     mmapC                 : ReactConnectProxy[MMapS],
-                                    nodeMarkerC           : ReactConnectProxy[MNodeMarkerS],
+                                    radOptsC              : ReactConnectProxy[IRadOpts[_]],
                                     priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]]
                                   )
 
@@ -54,7 +53,12 @@ object LamFormR {
         // Верхняя половина, левая колонка:
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
-          Messages( MsgCodes.`You.can.place.adn.node.on.map.below` )
+
+          Messages( MsgCodes.`You.can.place.adn.node.on.map.below` ),
+          <.br,
+
+          // Галочки полей mroot.opts.
+          p.wrap(_.opts) { OptsR.apply }
         ),
 
         // Верхняя половина, правая колонка:
@@ -72,7 +76,7 @@ object LamFormR {
             LocateControlR()(),
 
             // Маркер местоположения узла.
-            s.nodeMarkerC { NodeMarkerR.apply }
+            s.radOptsC { MapCursorR.apply }
 
           )
         },
@@ -93,7 +97,7 @@ object LamFormR {
     .initialState_P { p =>
       State(
         mmapC         = p.connect(_.mmap),
-        nodeMarkerC   = p.connect(_.nodeMarker),
+        radOptsC      = p.connect(identity),
         priceDslOptC  = p.connect(_.price.respDslOpt)
       )
     }

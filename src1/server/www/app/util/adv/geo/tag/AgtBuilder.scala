@@ -100,8 +100,8 @@ trait AgtBuilder extends IAdvBuilder {
             }
 
           acc0.copy(
-            mad = acc0.mad.copy(
-              edges = acc0.mad.edges.copy(
+            mad = acc0.mad.withEdges(
+              acc0.mad.edges.copy(
                 out = MNodeEdges.edgesToMap1(acc0.mad.edges.iterator ++ agtEdgesIter)
               )
             )

@@ -29,6 +29,7 @@ object MReasonType {
       .addConcreteType[Tag.type]
       .addConcreteType[Rcvr.type]
       .addConcreteType[AdnMapAdv.type]
+      .addConcreteType[GeoLocCapture.type]
   }
 
 }
@@ -40,7 +41,7 @@ sealed abstract class MReasonType extends EnumEntry with IStrId {
   override final def strId = toString
 
   /** Граничная причина, после которой идёт погружение на уровень item'а и его дней. */
-  def isItemLevel: Boolean = false
+  def isItemLevel: Boolean
 
   /** Код наименования по messages. */
   def msgCodeI18n: String
@@ -71,6 +72,9 @@ object MReasonTypes extends Enum[MReasonType] {
     override def toString     = "geo"
     override def msgCodeI18n  = MsgCodes.`Coverage.area`
 
+    /** Накидывание за гео-покрытие идёт поверх каких-то item'ов. */
+    override def isItemLevel = false
+
     override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
       // Пытаемся отрендерить инфу по гео-кругу.
       for {
@@ -92,6 +96,8 @@ object MReasonTypes extends Enum[MReasonType] {
   case object BlockModulesCount extends MReasonType {
     override def toString     = "bmc"
     override def msgCodeI18n  = MsgCodes.`Ad.area.modules.count`
+    /** Кол-во блоков не является оплачиваемым, а является просто множителем для других item-причин. */
+    override def isItemLevel = false
 
     override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
       for {
@@ -123,6 +129,8 @@ object MReasonTypes extends Enum[MReasonType] {
   /** Накидывают за прямое размещение на каком-то узле-ресивере. */
   case object Rcvr extends MReasonType {
     override def toString     = "rcvr"
+    /** Это не является item-уровнем. item'ами являются теги и OnMainScreen в underlying-термах. */
+    override def isItemLevel = false
     override def msgCodeI18n  = MItemTypes.AdvDirect.nameI18n
 
     override def i18nPayload(payload: MPriceReason)(messagesF: MessagesF_t): Option[String] = {
@@ -136,10 +144,18 @@ object MReasonTypes extends Enum[MReasonType] {
   }
 
 
-  /** Накидка за размещение ADN-узла на карте рекламодателей. */
+  /** Накидка за размещение ADN-узла на карте рекламодателей в ЛК. */
   case object AdnMapAdv extends MReasonType {
     override def toString     = "AMV"
     override def msgCodeI18n  = MsgCodes.`Publish.node.on.adv.map`
+    override def isItemLevel  = true
+  }
+
+
+  /** Начисление за размещение ADN-узла на карте геолокации пользователей. */
+  case object GeoLocCapture extends MReasonType {
+    override def toString     = "GLC"
+    override def msgCodeI18n  = MsgCodes.`Users.geo.location.capturing`
     override def isItemLevel  = true
   }
 

@@ -1,10 +1,100 @@
 package io.suggest.maps.c
 
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
-import io.suggest.adv.geo.AdvGeoConstants.Rad
-import io.suggest.geo.IGeoPointField
+import io.suggest.adv.geo.AdvGeoConstants
+import io.suggest.common.maps.rad.IMinMaxM
+import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
+
+
+object RadAhUtil {
+
+  def radCenterDragging[V <: MRadT[V]](v0: V, rcd: RadCenterDragging): V = {
+    v0.withState(
+      v0.state.withCenterDragging( Some(rcd.geoPoint) )
+    )
+  }
+
+  def radCenterDragStart[V <: MRadT[V]](v0: V): V = {
+    v0.withState(
+      v0.state.withCenterDragging( Some(v0.circle.center) )
+    )
+  }
+
+  def radCenterDragEnd[V <: MRadT[V]](v0: V, rcde: RadCenterDragEnd): V = {
+    val rmc0 = v0.state.radiusMarkerCoords
+    val c0 = v0.circle.center
+    val c2 = rcde.geoPoint
+
+    v0.withCircleState(
+      // Выставить новый центр круга в состояние.
+      circle = v0.circle.withCenter( c2 ),
+      state  = v0.state.copy(
+        centerDragging = None,
+        // Пересчитать координаты маркера радиуса.
+        radiusMarkerCoords = rmc0.copy(
+          // В прошлой версии были проблемы с дедубликацией этого кода: ошибочно прибавлялось +1.
+          lat = rmc0.lat + c2.lat - c0.lat,
+          lon = rmc0.lon + c2.lon - c0.lon
+        )
+      )
+    )
+  }
+
+  def radiusDragStart[V <: MRadT[V]](v0: V): V = {
+    v0.withState(
+      v0.state.withRadiusDragging( true )
+    )
+  }
+
+
+  /** Статический метод для пересчёта абстрактного состояния rad.
+    *
+    * @param v0 Начальное состояние.
+    * @param rmGp1 Новая координата маркера радиуса.
+    * @param contraints Ограничения радиуса.
+    * @param stillDragging Новое значение флага radiusDragging.
+    * @tparam V Тип модели-реализации [[io.suggest.maps.m.MRadT]]
+    * @return Новый инстанс модели-реализации [[io.suggest.maps.m.MRadT]].
+    */
+  def onRadiusDrag[V <: MRadT[V]](v0: V, contraints: IMinMaxM, rmGp1: MGeoPoint, stillDragging: Boolean): V = {
+
+    // Считаем расстояние между новым радиусом и исходным центром.
+    val distanceM = Math.abs(
+      MapsUtil.distanceBetween(v0.circle.center, rmGp1)
+    )
+
+    // Принудительно запихиваем в границы.
+    val radius2m = Math.max( contraints.MIN_M,
+      Math.min( contraints.MAX_M, distanceM )
+    )
+
+    val circle2 = v0.circle.withRadiusM( radius2m )
+
+    // Не двигать радиус, вылезающий за пределы допустимых значений:
+    val rmGp2 = if (radius2m != distanceM) {
+      // TODO нужно подправлять координаты радиуса, чтобы учитывать угол на окружности.
+      // Сейчас выехавший за пределы радиус оказывается на западе от центра независимо от угла.
+      //v0.state.radiusMarkerCoords
+      MapsUtil.radiusMarkerLatLng(circle2)
+    } else {
+      rmGp1
+    }
+
+    v0.withCircleState(
+      circle  = circle2,
+      state   = v0.state.copy(
+        radiusDragging      = stillDragging,
+        radiusMarkerCoords  = rmGp2
+      )
+    )
+
+  }
+
+
+}
+
 
 /**
   * Suggest.io
@@ -21,40 +111,9 @@ class RadAh[M](
   /** Действия работы с радиусом очень одинаковы как при drag, так и при drag end. */
   private def _handleNewRadiusXY(rd: IGeoPointField, stillDragging: Boolean): Option[MRad] = {
     val v0 = value.get
-
     // Посчитать радиус:
     val rmGp1 = rd.geoPoint
-
-    // Считаем расстояние между новым радиусом и исходным центром.
-    val distanceM = Math.abs(
-      MapsUtil.distanceBetween(v0.circle.center, rmGp1)
-    )
-
-    // Принудительно запихиваем в границы.
-    val radius2m = Math.max( Rad.RADIUS_MIN_M,
-      Math.min( Rad.RADIUS_MAX_M, distanceM )
-    )
-
-    val circle2 = v0.circle.withRadiusM( radius2m )
-
-    // Не двигать радиус, вылезающий за пределы допустимых значений:
-    val rmGp2 = if (radius2m != distanceM) {
-      // TODO нужно подправлять координаты радиуса, чтобы учитывать угол на окружности.
-      // Сейчас выехавший за пределы радиус оказывается на западе от центра независимо от угла.
-      //v0.state.radiusMarkerCoords
-      MapsUtil.radiusMarkerLatLng(circle2)
-    } else {
-      rmGp1
-    }
-
-    val v2 = v0.copy(
-      circle  = circle2,
-      state   = v0.state.copy(
-        radiusDragging      = stillDragging,
-        radiusMarkerCoords  = rmGp2
-      )
-    )
-
+    val v2 = RadAhUtil.onRadiusDrag(v0, AdvGeoConstants.Radius, rmGp1, stillDragging)
     Some(v2)
   }
 
@@ -65,9 +124,7 @@ class RadAh[M](
     // Пришла команда изменения центра круга в ходе таскания.
     case rcd: RadCenterDragging =>
       val v0 = value.get
-      val v2 = v0.withState(
-        v0.state.withCenterDragging( Some(rcd.geoPoint) )
-      )
+      val v2 = RadAhUtil.radCenterDragging(v0, rcd)
       updated( Some(v2) )
 
     // Происходит таскание маркера радиуса.
@@ -80,42 +137,20 @@ class RadAh[M](
     // Реакция на начало таскания центра круга.
     case RadCenterDragStart =>
       val v0 = value.get
-      val v2 = v0.withState(
-        v0.state.withCenterDragging( Some(v0.circle.center) )
-      )
+      val v2 = RadAhUtil.radCenterDragStart(v0)
       updated( Some(v2) )
 
     // Реакция на окончание таскания центра круга.
     case rcde: RadCenterDragEnd =>
       val v0 = value.get
-
-      val rmc0 = v0.state.radiusMarkerCoords
-      val c0 = v0.circle.center
-      val c2 = rcde.geoPoint
-
-      val v2 = v0.copy(
-        // Выставить новый центр круга в состояние.
-        circle = v0.circle.withCenter( c2 ),
-        state  = v0.state.copy(
-          centerDragging = None,
-          // Пересчитать координаты маркера радиуса.
-          radiusMarkerCoords = rmc0.copy(
-            // В прошлой версии были проблемы с дедубликацией этого кода: ошибочно прибавлялось +1.
-            lat = rmc0.lat + c2.lat - c0.lat,
-            lon = rmc0.lon + c2.lon - c0.lon
-          )
-        )
-      )
-
+      val v2 = RadAhUtil.radCenterDragEnd(v0, rcde)
       updated( Some(v2) )
 
 
     // Реакция на начало таскания маркера радиуса.
     case RadiusDragStart =>
       val v0 = value.get
-      val v2 = v0.withState(
-        v0.state.withRadiusDragging( true )
-      )
+      val v2 = RadAhUtil.radiusDragStart(v0)
       updated( Some(v2) )
 
     // Окончание таскания радиуса.

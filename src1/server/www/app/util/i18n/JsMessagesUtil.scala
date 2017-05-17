@@ -222,6 +222,7 @@ class JsMessagesUtil @Inject() (
   private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
     MsgCodes.`You.can.place.adn.node.on.map.below` ::
       MReasonTypes.AdnMapAdv.msgCodeI18n ::
+      MReasonTypes.GeoLocCapture.msgCodeI18n ::
       Nil
   }
 

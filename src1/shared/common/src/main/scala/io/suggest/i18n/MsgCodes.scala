@@ -74,6 +74,7 @@ object MsgCodes {
   val `Price` = "Price"
   val `Unable.to.initialize.map` = "Unable.to.initialize.map"
   val `Publish.node.on.adv.map` = "Publish.node.on.adv.map"
+  val `Users.geo.location.capturing` = "Users.geo.location.capturing"
 
   val `Add.tags` = "Add.tags"
 

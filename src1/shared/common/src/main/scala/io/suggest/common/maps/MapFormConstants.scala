@@ -13,7 +13,6 @@ object MapFormConstants {
   /** Префикс разных id'шников, объявленных здесь. */
   def ID_PREFIX = "mf_"
 
-
   def ATTR_IMG_WIDTH        = ATTR_PREFIX + "w"
   def ATTR_IMG_HEIGHT       = ATTR_PREFIX + "h"
   def ATTR_IMG_ANCHOR_X     = ATTR_PREFIX + "x"
@@ -28,3 +27,4 @@ object MapFormConstants {
   def IMG_ID_MARKER_SHADOW = ID_PREFIX + "ics"
 
 }
+

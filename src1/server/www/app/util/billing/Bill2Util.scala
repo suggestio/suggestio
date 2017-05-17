@@ -184,7 +184,7 @@ class Bill2Util @Inject() (
       .map { mc =>
         EnsuredNodeContract(mc, mnode)
       }
-      .recoverWith { case ex: NoSuchElementException =>
+      .recoverWith { case _: NoSuchElementException =>
         ensureNodeContract(mnode)
       }
   }
@@ -292,15 +292,15 @@ class Bill2Util @Inject() (
 
 
   /** Попытаться удалить ордер, если есть id. */
-  def maybeDeleteOrder(orderIdOpt: Option[Gid_t]): DBIOAction[Int, NoStream, Effect.Write] = {
-    orderIdOpt.fold [DBIOAction[Int, NoStream, Effect.Write]] {
+  def maybeDeleteOrder(orderIdOpt: Option[Gid_t]): DBIOAction[Int, NoStream, WT] = {
+    orderIdOpt.fold [DBIOAction[Int, NoStream, WT]] {
       LOGGER.trace("maybeClearCart(): orderId is empty, skipping")
       DBIO.successful(0)
     } { deleteOrder }
   }
   /** Удалить ордер вместе с item'ами. Такое можно сделать только если не было транзакций по ордеру/item'ам. */
-  def deleteOrder(orderId: Gid_t): DBIOAction[Int, NoStream, Effect.Write] = {
-    for {
+  def deleteOrder(orderId: Gid_t): DBIOAction[Int, NoStream, WT] = {
+    val dbAction = for {
       // Удаляем все item'ы в корзине разом.
       itemsDeleted  <- mItems.deleteByOrderId(orderId)
       // Удаляем ордер корзины, транзакций по ней быть не должно, а больше зависимостей и нет.
@@ -309,7 +309,9 @@ class Bill2Util @Inject() (
       LOGGER.debug(s"clearCart($orderId) cartOrderId[$orderId] cleared $itemsDeleted items with $ordersDeleted order.")
       itemsDeleted
     }
+    dbAction.transactionally
   }
+
 
   /** Найти корзину и очистить её. */
   def clearCart(contractId: Gid_t): DBIOAction[Int, NoStream, RWT] = {
@@ -324,11 +326,13 @@ class Bill2Util @Inject() (
     a.transactionally
   }
 
+
   def ensureCart(contractId: Gid_t, status0: MOrderStatus = MOrderStatuses.Draft): DBIOAction[MOrder, NoStream, RW] = {
     getLastOrder(contractId, status0).flatMap { orderOpt =>
       ensureCartOrder(orderOpt, contractId, status0)
     }
   }
+
 
   /**
     * Убедиться, что для контракта существует ордер-корзина для покупок.
@@ -1049,15 +1053,14 @@ class Bill2Util @Inject() (
 
   /**
     * Item не прошел модерацию или продавец/поставщик отказал по какой-то [уважительной] причине.
-    * Необходимо не забывать заворачивать в транзакцию весь этот код.
     *
     * @param itemId id итема, от которого отказывается продавец.
     * @param reasonOpt причина отказа, если есть.
     * @return
     */
-  def refuseItem(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RW] = {
+  def refuseItem(itemId: Gid_t, reasonOpt: Option[String]): DBIOAction[RefuseItemResult, NoStream, RWT] = {
     lazy val logPrefix = s"refuseItemAction($itemId):"
-    for {
+    val dbAction = for {
       // Получить и заблокировать текущий item.
       mitem0 <- _prepareAwaitingItem(itemId)
 
@@ -1104,6 +1107,9 @@ class Bill2Util @Inject() (
       // Собрать итог работы экшена...
       RefuseItemResult(mitem2, mtxn2)
     }
+
+    // Важно исполнять это транзакцией.
+    dbAction.transactionally
   }
 
 

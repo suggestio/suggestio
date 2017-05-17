@@ -2,9 +2,11 @@ package util.adv.build
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.geo.MGeoPoint
+import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.edge.{MEdge, MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.ym.model.NodeGeoLevels
 import models.MPredicate
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
@@ -106,6 +108,82 @@ class AdvBuilderUtil @Inject() (
           // Плевать, если не центральная точка: в работе самой геолокации это не используется, только для всякой статистики.
           .getOrElse( gs.firstPoint )
       }
+  }
+
+
+  /** Дробление списка item'ов на два списка по совпадению с запрашиваемым itype.
+    *
+    * @param items item'ы.
+    * @param itype Интересующий тип item'ов.
+    * @return Подходящие и неподходящие item'ы.
+    */
+  def partitionItemsByType(items: Iterable[MItem], itype: MItemType): (Iterable[MItem], Iterable[MItem]) = {
+    items.partition { i =>
+      // Интересуют только item'ы с искомым значением в поле itype.
+      i.iType == itype
+      // Тут была проверка на mitem.gsOpt, но это защита от самого себя и она была выпилена.
+    }
+  }
+
+
+
+  /** Код накладывания географических item'ов обычно одинаковый: взяли item'ы, извлекли geo-шейпы,
+    * собрали эдж, затолкали эдж в ноду.
+    *
+    * @param b0 Билдер.
+    * @param items Список item'ов.
+    * @param predicate Предикат для создаваемых эджей.
+    * @return Обновлённый инстанс AdvBuilder в связке с оставшимися необработанными item'ами.
+    */
+  def geoInstallNode(b0: IAdvBuilder, items: Iterable[MItem], predicate: MPredicate): IAdvBuilder = {
+    // При сборке эджей считаем, что происходит пересборка эджей с нуля.
+    if (items.nonEmpty) {
+
+      // Аккамулируем все item'ы для единого эджа.
+      val (geoShapes, _) = items
+        .foldLeft( List.empty[MEdgeGeoShape] -> MEdgeGeoShape.SHAPE_ID_START ) {
+          case ((acc, counter), mitem) =>
+            val meGs = MEdgeGeoShape(
+              id      = counter,
+              glevel  = NodeGeoLevels.geoPlace,
+              shape   = mitem.geoShape.get
+            )
+            (meGs :: acc) -> (counter + 1)
+        }
+
+      // Надо собрать опорные точки для общей статистики, записав их рядышком.
+      // По идее, все шейпы - это PointGs.
+      val geoPoints = grabGeoPoints4Stats( items )
+        .toSeq
+
+      // Собираем единый эдж для геолокации карточки в месте на гео.карте.
+      val e = MEdge(
+        predicate = predicate,
+        info = MEdgeInfo(
+          geoShapes = geoShapes,
+          geoPoints = geoPoints
+        )
+      )
+
+      LOGGER.trace(s"geoInstallNode($predicate): Found ${items.size} items for geo edge-building: ${geoShapes.size} geoshapes, ${geoPoints.size} geo points.")
+
+      // Собрать новую карточку, аккамулятор, билдер...
+      b0.withAccUpdated { acc0 =>
+        acc0.copy(
+          mad = acc0.mad.withEdges(
+            acc0.mad.edges.copy(
+              out = {
+                val iter = acc0.mad.edges.iterator ++ Seq(e)
+                MNodeEdges.edgesToMap1(iter)
+              }
+            )
+          )
+        )
+      }
+
+    } else {
+      b0
+    }
   }
 
 }

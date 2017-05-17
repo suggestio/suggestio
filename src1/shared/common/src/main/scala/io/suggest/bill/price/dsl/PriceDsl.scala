@@ -3,7 +3,7 @@ package io.suggest.bill.price.dsl
 import boopickle.Default._
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.cal.m.MCalType
-import io.suggest.common.empty.NonEmpty
+import io.suggest.common.empty.{NonEmpty, OptionUtil}
 import io.suggest.dt.MYmd
 
 /**
@@ -66,6 +66,22 @@ sealed trait IPriceDslTerm extends NonEmpty {
   protected def _doSplitUntil(f: IPriceDslTerm => Boolean): TraversableOnce[IPriceDslTerm]
   protected def _doNotSplitThis = this :: Nil
 
+
+  /** Сплиттинг по сумматорам в глубину, но только до уровня item'ов. */
+  def splitOnSumTillItemLevel: TraversableOnce[IPriceDslTerm] = {
+    splitOnSumUntil {
+      // Маппер содержит причину трансформации. Резать можно только до уровня item'а.
+      case m: Mapper =>
+        m.reason.exists { r =>
+          // Если достигаем itemType, то дальше дробить уже нельзя.
+          !r.reasonType.isItemLevel
+        }
+      // Остальные элементы -- просто дробить по сумматорам.
+      case _ => true
+    }
+  }
+
+
   def children: Seq[IPriceDslTerm]
 
   def *(multBy: Double) = Mapper(this, Some(multBy))
@@ -78,28 +94,35 @@ sealed trait IPriceDslTerm extends NonEmpty {
   def mapAllPrices(f: MPrice => MPrice): IPriceDslTerm
 
   def find(f: IPriceDslTerm => Boolean): Option[IPriceDslTerm] = {
-    if (f(this)) {
-      Some(this)
-    } else {
-      children
-        .iterator
-        .flatMap(_.find(f))
-        .toStream
-        .headOption
+    findOpt { that =>
+      OptionUtil.maybe( f(that) )( that )
     }
+  }
+
+  def findOpt[T](f: IPriceDslTerm => Option[T]): Option[T] = {
+    f(this)
+      .orElse {
+        children
+          .iterator
+          .flatMap(_.findOpt(f))
+          .toStream
+          .headOption
+      }
   }
 
   def exists(f: IPriceDslTerm => Boolean): Boolean = {
     find(f).isDefined
   }
 
-  def findWithReasonType(rtypes: MReasonType*): Option[IPriceDslTerm] = {
-    find {
+  def findWithReasonType(rtypes: MReasonType*): Option[Mapper] = {
+    findOpt {
       case m: Mapper =>
-        m.reason.exists { reason =>
-          rtypes.contains( reason.reasonType )
-        }
-      case _ => false
+        m.reason
+          .find { reason =>
+            rtypes.contains( reason.reasonType )
+          }
+          .map(_ => m)
+      case _ => None
     }
   }
 

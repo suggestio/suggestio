@@ -862,6 +862,7 @@ x.on.advertisers.map={0} on adverisers map
 On.the.map=On the map
 You.can.place.adn.node.on.map.below=You can place your current node on the advertisers map below.
 Publish.node.on.adv.map=Publishing node on the advertisers map
+Users.geo.location.capturing=Capture of user geolocation
 
 
 Adv.for.free.without.moderation=Advertise for free, without moderation?

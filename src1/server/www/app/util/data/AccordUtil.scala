@@ -3,14 +3,14 @@ package util.data
 import java.time.LocalDate
 
 import com.google.inject.{Inject, Singleton}
-import com.wix.accord.{Failure, Success, Validator, Violation, validate}
 import com.wix.accord.dsl._
-import io.suggest.adv.geo.{AdvGeoConstants, MMapProps, RcvrsMap_t}
+import com.wix.accord._
+import io.suggest.adv.geo.MMapProps
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.common.tags.edit.{MTagsEditProps, TagsEditConstants}
-import io.suggest.dt.interval.MRangeYmd
 import io.suggest.dt._
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
+import io.suggest.dt.interval.MRangeYmd
+import io.suggest.geo.MGeoPoint
 import play.api.mvc.Request
 import util.FormUtil
 
@@ -68,11 +68,6 @@ class AccordUtil @Inject() (
     rk.each.is( valid(rcvrIdV) )
   }
 
-  implicit val rcvrsMapV = validator[RcvrsMap_t] { rm =>
-    rm.size should be <= AdvGeoConstants.AdnNodes.MAX_RCVRS_PER_TIME
-    rm.keys.each is valid
-  }
-
   val tagExistV = validator[String] { tagFace =>
     tagFace.length should be <= TagsEditConstants.Constraints.TAG_LEN_MAX
     tagFace.length should be >= TagsEditConstants.Constraints.TAG_LEN_MIN
@@ -82,12 +77,6 @@ class AccordUtil @Inject() (
   implicit val tagEditPropsV = validator[MTagsEditProps] { tep =>
     tep.tagsExists.each is valid(tagExistV)
     tep.tagsExists have size <= TagsEditConstants.Constraints.TAGS_PER_ADD_MAX
-  }
-
-  implicit val geoCircleV = validator[MGeoCircle] { gc =>
-    gc.center is valid
-    gc.radiusM should be >= AdvGeoConstants.Rad.RADIUS_MIN_M.toDouble
-    gc.radiusM should be <= AdvGeoConstants.Rad.RADIUS_MAX_M.toDouble
   }
 
   /** Валидатор для данных по временной зоне, которую сообщает браузер из js.Date */

@@ -11,7 +11,7 @@ import io.suggest.model.n2.edge.MPredicate
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import models.adv.build.Acc
 import models.mproj.{ICommonDi, IMCommonDi}
-import util.adn.mapf.AdnMapBuilder
+import util.adn.mapf.{AdnMapBuilder, GeoLocBuilder}
 import util.adv.direct.AdvDirectBuilder
 import util.adv.geo.place.AgpBuilder
 import util.adv.geo.tag.AgtBuilder
@@ -254,10 +254,11 @@ case class AdvBuilder @Inject() (
   override val di                 : AdvBuilderDi
 )
   extends AdvDirectBuilder
+  with MacroLogsImpl
   with AgtBuilder
   with AgpBuilder
   with AdnMapBuilder
-  with MacroLogsImpl
+  with GeoLocBuilder
 {
 
   override def withAcc(accFut2: Future[Acc]): IAdvBuilder = {

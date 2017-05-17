@@ -16,10 +16,10 @@ import util.adv.build.IAdvBuilder
   *
   * Изначальная реализация: один узел может иметь много точек. Пока без отката предыдущих точек-размещений.
   */
-trait AdnMapBuilder extends IAdvBuilder {
+trait GeoLocBuilder extends IAdvBuilder {
 
-  private def _ITYPE = MItemTypes.AdnNodeMap
-  private def _PRED  = MPredicates.AdnMap
+  private def _ITYPE = MItemTypes.GeoLocCaptureArea
+  private def _PRED  = MPredicates.NodeLocation.Paid
 
 
   override def supportedItemTypes: List[MItemType] = {

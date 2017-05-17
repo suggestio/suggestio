@@ -1,7 +1,9 @@
 package util.adn.mapf
 
 import com.google.inject.Inject
-import io.suggest.adn.mapf.MLamForm
+import io.suggest.adn.mapf.{AdnMapFormConstants, MLamForm}
+import io.suggest.adv.geo.MMapProps
+import io.suggest.geo.{MGeoCircle, MGeoPoint}
 import util.data.{AccordUtil, AccordValidateFormUtilT}
 
 /**
@@ -19,14 +21,35 @@ class LkAdnMapFormUtil @Inject() (
   extends AccordValidateFormUtilT[MLamForm]
 {
 
+  def mapProps0(gp0: MGeoPoint): MMapProps = {
+    MMapProps(
+      center  = gp0,
+      zoom    = AdnMapFormConstants.MAP_ZOOM_DFLT
+    )
+  }
+
+  def radCircle0(gp0: MGeoPoint): MGeoCircle = {
+    MGeoCircle(
+      center  = gp0,
+      radiusM = AdnMapFormConstants.Rad.RadiusM.DEFAULT
+    )
+  }
+
+
   import com.wix.accord.dsl._
   import accordUtil._
+
+  implicit val geoCircleV = validator[MGeoCircle] { gc =>
+    gc.center is valid
+    gc.radiusM should be >= AdnMapFormConstants.Rad.RadiusM.MIN_M.toDouble
+    gc.radiusM should be <= AdnMapFormConstants.Rad.RadiusM.MAX_M.toDouble
+  }
 
   /** Основной валидатор для MLamForm. */
   // TODO Кривой wix.accord глючит, если написать implicit val тут. Но оно implicit в трейте, поэтому пока терпим.
   override val mainValidator = validator[MLamForm] { mf =>
     mf.datePeriod is valid
-    mf.coord is valid
+    mf.mapCursor is valid
     mf.mapProps is valid
     mf.tzOffsetMinutes is valid( jsDateTzOffsetMinutesV )
   }

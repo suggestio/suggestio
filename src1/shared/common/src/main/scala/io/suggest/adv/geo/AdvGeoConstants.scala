@@ -1,5 +1,6 @@
 package io.suggest.adv.geo
 
+import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.common.qs.QsConstants
 
 /**
@@ -18,15 +19,14 @@ object AdvGeoConstants {
   /** id элемента, в который будет отрендерена react-форма. */
   def REACT_FORM_TARGET_ID = PREFIX + "rft"
 
-  object Rad {
+  object Radius extends IMinMaxM {
 
-    def IMG_ID_RADIUS_MARKER = PREFIX + "irm"
+    override def MIN_M = 5
 
-    def RADIUS_MIN_M = 5
-
-    def RADIUS_MAX_M = 1000000
+    override def MAX_M = 1000000
 
   }
+
 
   /** Константы инфы о текущих гео-размещениях.
     * Для передачи данных в Leaflet используется GeoJSON FeatureCollection.

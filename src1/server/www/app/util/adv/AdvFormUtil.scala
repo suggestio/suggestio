@@ -9,14 +9,11 @@ import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.interval.{PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
-import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import models.adv.form._
-import models.maps.{MapViewState, RadMapValue}
 import models.mctx.Context
 import models.req.{IReq, IReqHdr}
-import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data.Forms._
 import play.api.data.{Form, _}
 import util.TplDataFormatUtil
@@ -144,21 +141,6 @@ class AdvFormUtil @Inject() (
       // Остальные размещения улетают в корзину.
       MItemStatuses.Draft
     }
-  }
-
-
-  /**
-    * Для adv-форм с radmap-картой требуется начальное состояние карты.
-    * Тут -- сборка состояния на основе начальной точки.
-    *
-    * @param gp Начальная точка карты. Будет в центре выделенного круга.
-    * @return Экземпляр значения rad-map.
-    */
-  def radMapValue0(gp: MGeoPoint): RadMapValue = {
-    RadMapValue(
-      state = MapViewState(gp, zoom = 13),
-      circle = CircleGs(gp, radius = Distance(500, DistanceUnit.METERS))
-    )
   }
 
 

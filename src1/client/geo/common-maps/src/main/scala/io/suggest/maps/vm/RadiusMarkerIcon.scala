@@ -1,6 +1,6 @@
 package io.suggest.maps.vm
 
-import io.suggest.adv.geo.AdvGeoConstants
+import io.suggest.common.maps.rad.RadConst
 import io.suggest.maps.vm.img.{IconVmStaticT, IconVmT}
 
 /**
@@ -12,7 +12,7 @@ import io.suggest.maps.vm.img.{IconVmStaticT, IconVmT}
 
 object RadiusMarkerIcon extends IconVmStaticT {
   override type T     = RadiusMarkerIcon
-  override def DOM_ID = AdvGeoConstants.Rad.IMG_ID_RADIUS_MARKER
+  override def DOM_ID = RadConst.IMG_ID_RADIUS_MARKER
 }
 
 

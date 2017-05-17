@@ -65,7 +65,7 @@ class AdvGeoBillUtil @Inject() (
     * @param radiusKm Радиус гео-круга.
     * @return Double-мультипликатор цены.
     */
-  private def getPriceMult(radiusKm: Double): Double = {
+  private def getGeoPriceMult(radiusKm: Double): Double = {
     // Привести радиус на карте к множителю цены
     Math.max(0.001, radiusKm * radiusKm / 1.5)
   }
@@ -183,17 +183,8 @@ class AdvGeoBillUtil @Inject() (
 
     LOGGER.trace(s"$logPrefix period=$ymdPeriod tzOff=$tzOffset => ${dtStartOpt.orNull}..${dtEndOpt.orNull}")
 
-    val itemActsIter = calcAdvGeoPrice(abc)
-      .splitOnSumUntil {
-        // Маппер содержит причину трансформации. Резать можно только до уровня item'а.
-        case m: Mapper =>
-          m.reason.exists { r =>
-            // Если достигаем itemType, то дальше дробить уже нельзя.
-            !r.reasonType.isItemLevel
-          }
-        // Остальные элементы -- просто дробить по сумматорам.
-        case _ => true
-      }
+    val itemActions = calcAdvGeoPrice(abc)
+      .splitOnSumTillItemLevel
       .toIterator
       .flatMap { term =>
         val term2 = advUtil.prepareForSave(term)
@@ -311,7 +302,7 @@ class AdvGeoBillUtil @Inject() (
       .map { mItems.insertOne }
       .toSeq
 
-    DBIO.sequence(itemActsIter)
+    DBIO.sequence(itemActions)
   }
 
 
@@ -394,7 +385,7 @@ class AdvGeoBillUtil @Inject() (
 
       val geoAllDaysPrice = Mapper(
         underlying    = Sum( accGeoRev.reverse ),
-        multiplifier  = Some( getPriceMult(radiusKm) ),
+        multiplifier  = Some( getGeoPriceMult(radiusKm) ),
         reason        = Some( MPriceReason(
           MReasonTypes.GeoArea,
           geoCircles  = radCircle :: Nil

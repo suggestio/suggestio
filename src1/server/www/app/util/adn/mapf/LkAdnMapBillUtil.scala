@@ -4,15 +4,16 @@ import java.time.{LocalDate, OffsetDateTime}
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.MLamForm
-import io.suggest.bill.price.dsl.{IPriceDslTerm, MPriceReason, MReasonTypes, Mapper}
+import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.dt.YmdHelpersJvm
-import io.suggest.geo.PointGs
+import io.suggest.geo.{CircleGs, MGeoCircle, PointGs}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.model.n2.node.MNode
+import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mctx.Context
@@ -37,7 +38,9 @@ class LkAdnMapBillUtil @Inject() (
                                    tfDailyUtil                : TfDailyUtil,
                                    ymdHelpersJvm              : YmdHelpersJvm,
                                    protected val mCommonDi    : ICommonDi
-                                 ) {
+                                 )
+  extends MacroLogsImpl
+{
 
   import mCommonDi._
   import slick.profile.api._
@@ -58,7 +61,20 @@ class LkAdnMapBillUtil @Inject() (
 
 
   /** Множитель стоимости размещения узла на карте. */
-  def PRICE_MULT = 5.0
+  private def PRICE_MULT = 5.0
+
+
+  /**
+    * Посчитать мультипликатор стоимости на основе даты и радиуса размещения.
+    *
+    * @param circle Гео-круг.
+    * @return Double-мультипликатор цены.
+    */
+  private def getGeoPriceMult(circle: MGeoCircle): Double = {
+    val radius = circle.radiusM / 50
+    // Привести радиус на карте к множителю цены
+    Math.max(0.1, radius * radius )
+  }
 
 
   /**
@@ -72,7 +88,14 @@ class LkAdnMapBillUtil @Inject() (
     */
   def addToOrder(orderId: Gid_t, nodeId: String, formRes: MLamForm, status: MItemStatus, abc: IAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
-    val priceDsl = advUtil.prepareForSave( getPriceDsl(abc) )
+    val priceDsl = getPriceDsl(formRes, abc)
+
+    lazy val logPrefix = s"addToOrder($orderId)[${System.currentTimeMillis()}]:"
+
+    if (priceDsl.isEmpty)
+      throw new IllegalArgumentException(s"$logPrefix Cannot add to order empty form: $formRes")
+
+    LOGGER.trace(s"$logPrefix ADN-node#$nodeId status=$status form=$formRes")
 
     val ymdPeriod = formRes.datePeriod.info
     val dateStart = ymdPeriod.dateStart[LocalDate]
@@ -88,23 +111,61 @@ class LkAdnMapBillUtil @Inject() (
     val dtStartOpt  = __dt( dateStart )
     val dtEndOpt    = __dt( dateEnd )
 
-    val mitem = MItem(
-      orderId       = orderId,
-      iType         = MItemTypes.AdnNodeMap,
-      status        = status,
-      price         = priceDsl.price,
-      nodeId        = nodeId,
-      dateStartOpt  = dtStartOpt,
-      dateEndOpt    = dtEndOpt,
-      rcvrIdOpt     = None,
-      geoShape      = Some( PointGs(formRes.coord) )
-    )
-    for {
-      mitem2 <- mItems.insertOne(mitem)
-    } yield {
-      mitem2 :: Nil
-    }
+    val itemActions = priceDsl
+      .splitOnSumTillItemLevel
+      .toIterator
+      .flatMap { priceTerm0 =>
+        val priceTerm = advUtil.prepareForSave( priceTerm0 )
+        lazy val logPrefix2 = s"$logPrefix (${priceTerm.getClass.getSimpleName}#${priceTerm.hashCode()}) "
+        LOGGER.trace(s"$logPrefix2 term = $priceTerm")
+
+        priceTerm
+          .findWithReasonType( MReasonTypes.AdnMapAdv )
+          .map { _ =>
+            LOGGER.trace(s"$logPrefix2 on Advs map")
+            MItem(
+              orderId       = orderId,
+              iType         = MItemTypes.AdnNodeMap,
+              status        = status,
+              price         = priceTerm.price,
+              nodeId        = nodeId,
+              dateStartOpt  = dtStartOpt,
+              dateEndOpt    = dtEndOpt,
+              // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
+              rcvrIdOpt     = None,
+              geoShape      = Some(
+                PointGs( formRes.mapCursor.center )
+              )
+            )
+          }
+          .orElse {
+            priceTerm
+              .findWithReasonType( MReasonTypes.GeoLocCapture )
+              .map { _ =>
+                LOGGER.trace(s"$logPrefix2 Geo loc capture")
+                MItem(
+                  orderId       = orderId,
+                  iType         = MItemTypes.GeoLocCaptureArea,
+                  status        = status,
+                  price         = priceTerm.price,
+                  nodeId        = nodeId,
+                  dateStartOpt  = dtStartOpt,
+                  dateEndOpt    = dtEndOpt,
+                  // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
+                  rcvrIdOpt     = None,
+                  geoShape      = Some(
+                    CircleGs( formRes.mapCursor )
+                  )
+                )
+              }
+          }
+      }
+      .map { mItems.insertOne }
+      .toSeq
+
+    DBIO.sequence( itemActions )
   }
+
 
   // TODO Подумать на тему максимум одной покупки и отката других adn-map размещений ПОСЛЕ оплаты.
 
@@ -117,7 +178,7 @@ class LkAdnMapBillUtil @Inject() (
     }
   }
   def getPricing(formRes: MLamForm, abc: IAdvBillCtx)(implicit ctx: Context): Future[MGetPriceResp] = {
-    val priceDsl = advUtil.prepareForRender( getPriceDsl(abc) )
+    val priceDsl = advUtil.prepareForRender( getPriceDsl(formRes, abc) )
     // Собрать итоговый ответ с подробными ценами для формы.
     val resp = MGetPriceResp(
       prices   = priceDsl.price :: Nil,
@@ -132,17 +193,56 @@ class LkAdnMapBillUtil @Inject() (
     * @param abc Контекст подсчёта.
     * @return Терм PriceDSL, готовый к рассчётам цены.
     */
-  def getPriceDsl(abc: IAdvBillCtx): IPriceDslTerm = {
+  def getPriceDsl(formRes: MLamForm, abc: IAdvBillCtx): IPriceDslTerm = {
     val p0 = advUtil.calcDateAdvPriceOnTf(TF_NODE_ID, abc)
-    Mapper(
-      underlying    = p0,
-      multiplifier  = Some( PRICE_MULT ),
-      reason        = Some(
-        MPriceReason(
-          reasonType = MReasonTypes.AdnMapAdv
+
+    var acc = List.empty[IPriceDslTerm]
+    val priceMult = PRICE_MULT
+
+    // Размещение на карте рекламодателей в ЛК
+    if (formRes.opts.onAdvMap) {
+      acc ::= Mapper(
+        underlying    = p0,
+        multiplifier  = Some( priceMult ),
+        reason        = Some(
+          MPriceReason(
+            reasonType = MReasonTypes.AdnMapAdv
+          )
         )
       )
-    )
+    }
+
+    // Размещение в геолокации выдачи.
+    if (formRes.opts.onGeoLoc) {
+      // Для "упрощения" цифр и просто по техническим причинам используется два вложенных маппера: один по площади, второй -- константа.
+      val innerMapper = Mapper(
+        underlying   = p0,
+        // Маппер-константа.
+        multiplifier = Some( priceMult ),
+        reason       = Some( MPriceReason(
+          reasonType = MReasonTypes.GeoLocCapture
+        ))
+      )
+
+      // Маппер по площади на карте - снаружи, чтобы можно было внутрь него пихать иные мапперы.
+      val geoMapper = Mapper(
+        underlying    = innerMapper,
+        multiplifier  = Some(
+          getGeoPriceMult( formRes.mapCursor )
+        ),
+        reason        = Some(
+          MPriceReason(
+            reasonType = MReasonTypes.GeoArea,
+            geoCircles = Seq( formRes.mapCursor )
+          )
+        )
+      )
+
+      acc ::= geoMapper
+    }
+
+    // Вернуть итоговую сумму.
+    Sum( acc )
   }
 
 }

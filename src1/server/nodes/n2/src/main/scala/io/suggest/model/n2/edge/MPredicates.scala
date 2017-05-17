@@ -165,7 +165,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     val DirectTag: T = new Val("ld") with _Child
 
     override def children: List[T] = {
-      Agt :: Self :: super.children
+      Agt :: Self :: DirectTag :: super.children
     }
 
   }
@@ -176,11 +176,24 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
 
   /**
-    * Недо-эдж, обозначающий некое указание на связь узла с областью какой-то на карте.
-    * Раньше было mnode.geo.shapes, но они были перенесены внутрь эджей.
-    * Узла, на который указывает эдж, обычно нет и не существует (edge.nodeId = None).
+    * Эдж для задания гео-шейпов геолокации узла в выдаче.
+    *
+    * SysAdnGeo, упавляющий геоформами вручную, исторически пишет в корневой предикат.
+    * Поиск геолокации идёт всегда по корневому предикату.
     */
-  val NodeLocation: T = new Val("n")
+  val NodeLocation = new Val("n") {
+
+    // TODO Сделать manual-эдж отдельными, а не корневым. Для этого надо обновление узлов произвести.
+    // Можно "n"-эдж сделать дочерним для нового корневого, и запустить пересохранение всех узлов.
+
+    /** 2017.may.17: Платные размещения на карте геолокации, подчиняются биллингу.
+      * Выставляются и вычищаются биллингом в соотв. adv-билдере.
+      */
+    val Paid: T = new Val("np") with _Child
+
+    override def children = Paid :: super.children
+
+  }
 
 
   /** Предикат для эджей, описывающих размещение карточек просто в шейпе на карте. */

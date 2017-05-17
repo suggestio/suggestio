@@ -1,7 +1,6 @@
 package io.suggest.maps.r.rad
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
@@ -10,7 +9,7 @@ import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.popup.PopupR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
-import RadCircleR.RadCirclePropsValFastEq
+import MRadT.MRadTFastEq
 
 /**
   * Suggest.io
@@ -23,15 +22,13 @@ object RadR {
   type Props = ModelProxy[Option[MRad]]
 
   protected case class State(
-                              centerGeoPointOptC      : ReactConnectProxy[Option[MGeoPoint]],
+                              mRadTC                  : ReactConnectProxy[Option[MRadT[_]]],
                               centerPopupC            : ReactConnectProxy[Option[Boolean]],
-                              radEnabledPropsC        : ReactConnectProxy[RadEnabledR.PropsVal],
-                              radCirclePropsOptC      : ReactConnectProxy[Option[RadCircleR.PropsVal]],
-                              radiusGeoPointOptC      : ReactConnectProxy[Option[MGeoPoint]]
+                              radEnabledPropsC        : ReactConnectProxy[RadEnabledR.PropsVal]
                             )
 
 
-  protected class Backend($: BackendScope[Props, State]) extends RadBackendHelper($) {
+  protected class Backend($: BackendScope[Props, State]) {
 
     def render(p: Props, s: State): ReactElement = {
       for {
@@ -43,18 +40,8 @@ object RadR {
 
           // Слой с кругом и маркерами управления оными.
           if (mrad.enabled) {
-            LayerGroupR()(
-              // Основной круг для описания слоя:
-              s.radCirclePropsOptC { RadCircleR.apply },
+            s.mRadTC { RadMapControlsR.apply }
 
-              // Маркер центра круга.
-              // TODO Скрывать маркер центра, если расстояние в пикселях до радиуса < 5
-              s.centerGeoPointOptC { DraggablePinMarkerR.apply },
-
-              // Маркер радиуса круга. Сделан в виде circle-marker'а.
-              s.radiusGeoPointOptC { RadiusMarkerR.apply }
-
-            )
           } else {
             // !v.enabled -- галочка размещения на карте выключена.
             null
@@ -62,7 +49,10 @@ object RadR {
 
           // Попап управления центром.
           s.centerPopupC { popupEnabledOpt =>
-            for (isEnabled <- popupEnabledOpt() if isEnabled) yield {
+            for {
+              isEnabled <- popupEnabledOpt()
+              if isEnabled
+            } yield {
               PopupR(
                 position = MapsUtil.geoPoint2LatLng( mrad.currentCenter )
               )(
@@ -84,31 +74,14 @@ object RadR {
   val component = ReactComponentB[Props]("Rad")
     .initialState_P { mradOptProxy =>
       State(
+        mRadTC = mradOptProxy.connect(identity),
         centerPopupC = mradOptProxy.connect { mradOpt =>
           mradOpt.map(_.centerPopup)
         },
-        radEnabledPropsC = RadEnabledR.radEnabledPropsConn(mradOptProxy, renderHintAsText = true),
-        centerGeoPointOptC = mradOptProxy.connect { mradOpt =>
-          mradOpt.map(_.currentCenter)
-        },
-        radCirclePropsOptC = mradOptProxy.connect { mradOpt =>
-          for (mrad <- mradOpt) yield {
-            RadCircleR.PropsVal(
-              centerGeoPoint = mrad.currentCenter,
-              radiusM        = mrad.circle.radiusM,
-              centerDragging = mrad.state.centerDragging.nonEmpty,
-              radiusDragging = mrad.state.radiusDragging
-            )
-          }
-        },
-        radiusGeoPointOptC = mradOptProxy.connect { mradOpt =>
-          for {
-            mrad <- mradOpt
-            if mrad.state.centerDragging.isEmpty
-          } yield {
-            mrad.state.radiusMarkerCoords
-          }
-        }
+        radEnabledPropsC = RadEnabledR.radEnabledPropsConn(
+          mradOptProxy,
+          renderHintAsText = true
+        )
       )
     }
     .renderBackend[Backend]

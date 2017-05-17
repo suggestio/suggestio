@@ -2,8 +2,8 @@ package controllers
 
 import akka.util.ByteString
 import com.google.inject.Inject
+import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.adn.mapf.{MLamForm, MLamFormInit}
-import io.suggest.adv.geo.MMapProps
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsiTgs
@@ -97,11 +97,12 @@ class LkAdnMap @Inject() (
         a4fPropsOpt   <- a4fPropsOptFut
       } yield {
         MLamForm(
-          mapProps = MMapProps(
-            center = geoPoint0,
-            zoom = 10
+          mapProps = lkAdnMapFormUtil.mapProps0( geoPoint0 ),
+          mapCursor = lkAdnMapFormUtil.radCircle0( geoPoint0 ),
+          opts = MLamOpts(
+            onAdvMap = true,
+            onGeoLoc = true
           ),
-          coord           = geoPoint0,
           datePeriod      = MAdvPeriod(),
           adv4freeChecked = advFormUtil.a4fCheckedOpt( a4fPropsOpt )
         )

@@ -2,6 +2,7 @@ package io.suggest.lk.adn.map.m
 
 import diode.FastEq
 import io.suggest.adn.mapf.MLamForm
+import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS
@@ -14,6 +15,7 @@ import io.suggest.sjs.common.controller.DomQuick
   * Created: 18.04.17 21:32
   * Description: Корневая модель состояния компонента fsm-mvm.
   */
+
 object MRoot {
 
   /** Поддержка FastEq. */
@@ -21,7 +23,7 @@ object MRoot {
     override def eqv(a: MRoot, b: MRoot): Boolean = {
       (a.mmap eq b.mmap) &&
         (a.conf eq b.conf) &&
-        (a.nodeMarker eq b.nodeMarker) &&
+        IRadOpts.IRadOptsFastEq.eqv(a, b) &&
         (a.adv4free eq b.adv4free) &&
         (a.price eq b.price) &&
         (a.datePeriod eq b.datePeriod)
@@ -34,19 +36,25 @@ object MRoot {
 /** Класс корневой модели состояния формы.
   *
   * @param mmap Состояние географической карты.
-  * @param nodeMarker Состояния размещения.
+  * @param rad Состояние rad-компонента на карте.
+  *            Не-опционально, т.к. используется для всех возможных режимов сразу.
+  * @param opts Состояние галочек управления формой.
   */
 case class MRoot(
                   mmap          : MMapS,
                   conf          : MLamConf,
-                  nodeMarker    : MNodeMarkerS,
+                  rad           : MLamRad,
+                  opts          : MLamOpts,
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
                   datePeriod    : MAdvPeriod
-                ) {
+                )
+  extends IRadOpts[MRoot]
+{
 
   def withMap(map2: MMapS) = copy(mmap = map2)
-  def withNodeMarker(nm2: MNodeMarkerS) = copy(nodeMarker = nm2)
+  override def withRad(rad2: MLamRad) = copy(rad = rad2)
+  override def withOpts(opts2: MLamOpts) = copy(opts = opts2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)
   def withDatePeriod(dp2: MAdvPeriod) = copy(datePeriod = dp2)
@@ -55,9 +63,10 @@ case class MRoot(
   def toForm: MLamForm = {
     MLamForm(
       mapProps          = mmap.props,
-      coord             = nodeMarker.center,
+      mapCursor         = rad.circle,
       datePeriod        = datePeriod,
       adv4freeChecked   = adv4free.map(_.checked),
+      opts              = opts,
       tzOffsetMinutes   = DomQuick.tzOffsetMinutes
     )
   }

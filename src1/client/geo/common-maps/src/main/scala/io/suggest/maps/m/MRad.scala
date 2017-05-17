@@ -1,21 +1,20 @@
 package io.suggest.maps.m
 
-import diode.FastEq
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
+import io.suggest.geo.MGeoCircle
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 10.01.17 13:25
   * Description: Модель-контейнер данных по компоненту настройки нового георазмещения.
+  * Используется для окончательного компонента [[io.suggest.maps.r.rad.RadR]].
   */
 object MRad {
 
   /** Поддержка FastEq для инстансов [[MRad]]. */
-  implicit object MRadFastEq extends FastEq[MRad] {
+  implicit object MRadFastEq extends IMRadTFastEq[MRad] {
     override def eqv(a: MRad, b: MRad) = {
-      (a.circle eq b.circle) &&
-        (a.state eq b.state) &&
+      super.eqv(a, b) &&
         (a.enabled == b.enabled) &&
         (a.centerPopup == b.centerPopup)
     }
@@ -30,20 +29,17 @@ object MRad {
   * @param state Состояние rad-компонентов.
   */
 case class MRad(
-                 circle      : MGeoCircle,
-                 state       : MRadS,
-                 enabled     : Boolean    = true,
-                 centerPopup : Boolean    = false
-               ) {
+                 override val circle      : MGeoCircle,
+                 override val state       : MRadS,
+                 enabled                  : Boolean    = true,
+                 centerPopup              : Boolean    = false
+               )
+  extends MRadT[MRad]
+{
 
-  def withCircle(circle2: MGeoCircle) = copy(circle = circle2)
-  def withState(state2: MRadS) = copy(state = state2)
+  override def withCircle(circle2: MGeoCircle) = copy(circle = circle2)
+  override def withState(state2: MRadS) = copy(state = state2)
   def withEnabled(enabled2: Boolean) = copy(enabled = enabled2)
   def withCenterPopup(enabled2: Boolean) = copy(centerPopup = enabled2)
-
-  def currentCenter: MGeoPoint = {
-    state.centerDragging
-      .getOrElse( circle.center )
-  }
 
 }

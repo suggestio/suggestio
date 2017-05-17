@@ -5,13 +5,14 @@ import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.bin.ConvCodecs
-import io.suggest.lk.adn.map.a.NodeMarkerAh
-import io.suggest.lk.adn.map.m.{MLamConf, MNodeMarkerS, MRoot}
+import io.suggest.lk.adn.map.a.{LamOptsAh, LamRadAh}
+import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.maps.c.MapCommonAh
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.m.{MMapS, MRadS}
+import io.suggest.maps.u.MapsUtil
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -43,13 +44,19 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       conf = MLamConf(
         nodeId = mFormInit.nodeId
       ),
-      nodeMarker = MNodeMarkerS(
-        center = mFormInit.form.coord
+      rad = MLamRad(
+        circle = mFormInit.form.mapCursor,
+        state = MRadS(
+          radiusMarkerCoords = MapsUtil.radiusMarkerLatLng( mFormInit.form.mapCursor )
+        )
       ),
-      adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
+      opts = mFormInit.form.opts,
+      adv4free = for {
+        a4fProps <- mFormInit.adv4FreeProps
+      } yield {
         MAdv4Free(
           static  = a4fProps,
-          checked = mFormInit.form.adv4freeChecked.contains(true)   // getOrElse(false)
+          checked = mFormInit.form.adv4freeChecked.contains(true)
         )
       },
       price = MPriceS(
@@ -88,8 +95,15 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     )
 
     // Реакция на двиганье маркера на карте:
-    val nodeMarkerAh = new NodeMarkerAh(
-      modelRW = zoomRW(_.nodeMarker) { _.withNodeMarker(_) }
+    val radAh = new LamRadAh(
+      modelRW       = zoomRW [IRadOpts[MRoot]] (identity) { _.withRadOpts(_) },
+      priceUpdateFx = priceUpdateEffect
+    )
+
+    // Контроллер галочек опций.
+    val optsAh = new LamOptsAh(
+      modelRW       = zoomRW(_.opts) { _.withOpts(_) },
+      priceUpdateFx = priceUpdateEffect
     )
 
     // Поддержка реакции на adv4free:
@@ -113,9 +127,10 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
     // Склеить все handler'ы последовательно.
     val conseqAh = composeHandlers(
-      nodeMarkerAh,
+      radAh,
       priceAh,
       datePeriodAh,
+      optsAh,
       adv4freeAh
     )
 

@@ -6,24 +6,27 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
 import controllers.ctag.NodeTagsEdit
-import io.suggest.adv.AdvConstants
-import io.suggest.adv.free.MAdv4FreeProps
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._
-import io.suggest.mbill2.m.item.MItem
-import io.suggest.mbill2.m.item.status.MItemStatuses
-import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.async.StreamsUtil
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
-import io.suggest.common.empty.OptionUtil
 import io.suggest.common.tags.edit.MTagsEditProps
+import io.suggest.dt.{MAdvPeriod, YmdHelpersJvm}
 import io.suggest.dt.interval.MRangeYmdOpt
-import io.suggest.dt.MAdvPeriod
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
+import io.suggest.es.model.MEsUuId
+import io.suggest.geo.MGeoPoint
+import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.gid.Gid_t
+import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.m.order.MOrderStatuses
 import io.suggest.pick.{PickleSrvUtil, PickleUtil}
+import io.suggest.primo.id.OptId
+import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.www.util.req.ReqUtil
+import models.MNode
 import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
 import models.adv.geo.tag.MForAdTplArgs
 import models.mctx.Context
@@ -36,17 +39,10 @@ import util.adv.AdvFormUtil
 import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
 import util.billing.Bill2Util
 import util.lk.LkTagsSearchUtil
-import util.tags.TagsEditFormUtil
-import views.html.lk.adv.geo._
-import io.suggest.dt.YmdHelpersJvm
-import io.suggest.es.model.MEsUuId
-import io.suggest.init.routed.MJsiTgs
-import io.suggest.primo.id.OptId
-import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
-import models.MNode
 import util.mdr.MdrUtil
 import util.sec.CspUtil
+import util.tags.TagsEditFormUtil
+import views.html.lk.adv.geo._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -132,14 +128,9 @@ class LkAdvGeo @Inject() (
       } yield {
 
         // TODO Распилить это на MMapProps и MGeoCircle.
-        val radMapVal = advFormUtil.radMapValue0(gp0)
-
         // Залить начальные данные в маппинг формы.
         MFormS(
-          mapProps = MMapProps(
-            center = radMapVal.state.center,
-            zoom   = radMapVal.state.zoom
-          ),
+          mapProps = advGeoFormUtil.mapProps0(gp0),
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
           onMainScreen = true,
           adv4freeChecked = advFormUtil.a4fCheckedOpt( a4fPropsOpt ),
@@ -149,10 +140,7 @@ class LkAdvGeo @Inject() (
           tagsEdit = MTagsEditProps(),
           datePeriod = MAdvPeriod(),
           // TODO Найти текущее размещение в draft items (в корзине неоплаченных).
-          radCircle = Some(MGeoCircle(
-            center  = radMapVal.circle.center,
-            radiusM = radMapVal.circle.radius.meters
-          )),
+          radCircle = Some( advGeoFormUtil.radCircle0(gp0) ),
           tzOffsetMinutes = MFormS.TZ_OFFSET_IGNORE
         )
       }
