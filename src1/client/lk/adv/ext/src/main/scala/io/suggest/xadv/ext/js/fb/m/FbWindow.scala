@@ -3,6 +3,8 @@ package io.suggest.xadv.ext.js.fb.m
 import org.scalajs.dom.raw.Window
 
 import scala.scalajs.js
+import scala.language.implicitConversions
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -12,6 +14,7 @@ import scala.scalajs.js
  */
 
 @js.native
+@JSGlobal
 class FbWindow extends Window {
   var fbAsyncInit: js.Function0[_] = js.native
 }

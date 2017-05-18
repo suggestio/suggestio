@@ -15,6 +15,7 @@ import models.madn.mapf.MAdnMapTplArgs
 import io.suggest.bill.MGetPriceResp.getPriceRespPickler
 import io.suggest.bin.ConvCodecs
 import io.suggest.dt.MAdvPeriod
+import io.suggest.mbill2.m.item.typ.MItemTypes
 import models.mproj.ICommonDi
 import models.req.INodeReq
 import util.acl.IsNodeAdmin
@@ -44,6 +45,7 @@ class LkAdnMap @Inject() (
                            pickleSrvUtil                 : PickleSrvUtil,
                            mdrUtil                       : MdrUtil,
                            reqUtil                       : ReqUtil,
+                           lkGeoCtlUtil                  : LkGeoCtlUtil,
                            cspUtil                       : CspUtil,
                            isNodeAdmin                   : IsNodeAdmin,
                            override val mCommonDi        : ICommonDi
@@ -246,7 +248,7 @@ class LkAdnMap @Inject() (
 
   /** Сабмит формы для рассчёт стоимости размещения. */
   def getPriceSubmit(esNodeId: MEsUuId) = csrf.Check {
-    val nodeId: String = esNodeId
+    val nodeId = esNodeId.id
     isNodeAdmin(nodeId).async(formPostBP) { implicit request =>
       lazy val logPrefix = s"getPriceSubmit($nodeId):"
 
@@ -278,6 +280,18 @@ class LkAdnMap @Inject() (
           }
         }
       )
+    }
+  }
+
+
+  /** Текущие георазмещения карточки, т.е. размещения на карте в кружках.
+    *
+    * @param nodeId id текущего узла.
+    * @return js.Array[GjFeature].
+    */
+  def currentNodeGeoGj(nodeId: MEsUuId) = csrf.Check {
+    isNodeAdmin(nodeId).async { implicit request =>
+      lkGeoCtlUtil.currentNodeItemsGsToGeoJson( nodeId, MItemTypes.adnMapTypes )
     }
   }
 

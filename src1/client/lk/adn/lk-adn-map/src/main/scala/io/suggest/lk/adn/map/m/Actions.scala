@@ -1,7 +1,11 @@
 package io.suggest.lk.adn.map.m
 
 import io.suggest.primo.IApply1
+import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.spa.DAction
+
+import scala.scalajs.js
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -23,7 +27,13 @@ sealed trait IApply1BoolTo[Res] extends IApply1 {
 case class OnAdvsMapChanged(checked: Boolean) extends ILamAction
 object OnAdvsMapChanged extends IApply1BoolTo[OnAdvsMapChanged]
 
-
 /** Изменилось состояние опции размещения на карте геолокации. */
 case class OnGeoLocChanged(checked: Boolean) extends ILamAction
 object OnGeoLocChanged extends IApply1BoolTo[OnGeoLocChanged]
+
+
+/** Проинициализировать карту текущих размещений узла. */
+case object CurrGeoAdvsInit extends ILamAction
+/** Результат запроса по поводу гео-данных текущих размещений узла. */
+case class SetCurrGeoAdvs( tryResp: Try[js.Array[GjFeature]] ) extends ILamAction
+

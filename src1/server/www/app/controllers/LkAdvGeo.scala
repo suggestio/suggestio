@@ -27,7 +27,7 @@ import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
 import models.MNode
-import models.adv.geo.cur.{MAdvGeoBasicInfo, MAdvGeoShapeInfo}
+import models.adv.geo.cur.MAdvGeoBasicInfo
 import models.adv.geo.tag.MForAdTplArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -66,6 +66,7 @@ class LkAdvGeo @Inject() (
                            reqUtil                         : ReqUtil,
                            cspUtil                         : CspUtil,
                            mdrUtil                         : MdrUtil,
+                           lkGeoCtlUtil                    : LkGeoCtlUtil,
                            canAccessItem                   : CanAccessItem,
                            canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
                            canAdvAd                        : CanAdvAd,
@@ -433,32 +434,7 @@ class LkAdvGeo @Inject() (
     */
   def existGeoAdvsMap(adId: String) = csrf.Check {
     canAdvAd(adId).async { implicit request =>
-      // Собрать данные о текущих гео-размещениях карточки, чтобы их отобразить юзеру на карте.
-      val currAdvsSrc = slick.db
-        .stream {
-          val query = advGeoBillUtil.findCurrentForAdQ(request.mad.id.get)
-          advGeoBillUtil.onlyGeoShapesInfo(query)
-        }
-        .toSource
-        // Причесать сырой выхлоп базы, состоящий из пачки Option'ов.
-        .mapConcat( MAdvGeoShapeInfo.applyOpt(_).toList )
-        // Каждый элемент нужно скомпилить в пригодную для сериализации модель.
-        .map { si =>
-        // Сконвертить в GeoJSON и сериализовать в промежуточное JSON-представление.
-        val gj = advGeoFormUtil.shapeInfo2geoJson(si)
-        Json.toJson(gj)
-      }
-
-      // Превратить поток JSON-значений в "поточную строку", направленную в сторону юзера.
-      val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(currAdvsSrc)
-
-      streamsUtil.maybeTraceCount(currAdvsSrc, this) { totalCount =>
-        s"existGeoAdvsMap($adId): streamed $totalCount GeoJSON features"
-      }
-
-      Ok.chunked(jsonStrSrc)
-        .as( withCharset(JSON) )
-        .withHeaders(CACHE_10)
+      lkGeoCtlUtil.currentNodeItemsGsToGeoJson( adId, MItemTypes.advGeoTypes )
     }
   }
 
@@ -484,7 +460,7 @@ class LkAdvGeo @Inject() (
       val itemsSrc = slick.db
         .stream {
           advGeoBillUtil.withSameGeoShapeAs(
-            query   = advGeoBillUtil.findCurrentForAdQ( request.mitem.nodeId ),
+            query   = bill2Util.findCurrentForNodeQuery( request.mitem.nodeId, MItemTypes.advGeoTypes ),
             itemId  = itemId,
             limit   = itemsMax
           )

@@ -16,7 +16,7 @@ import scala.scalajs.js.annotation.ScalaJSDefined
 @ScalaJSDefined
 trait CircleMarkerOptions extends PathOptions {
 
-  /** Radius in css-pixels. */
+  /** Radius in css-pixels. [10 px] */
   val radius    : UndefOr[Double]   = js.undefined
 
 }

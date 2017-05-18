@@ -53,3 +53,9 @@ case class RadOnOff(enabled: Boolean) extends IMapsAction
 case object RadiusDragStart extends IMapsAction
 case class RadiusDragging(geoPoint: MGeoPoint) extends IMapsAction with IGeoPointField
 case class RadiusDragEnd(geoPoint: MGeoPoint) extends IMapsAction with IGeoPointField
+
+
+
+/** Команда к открытию попапа над гео-шейпом (кружком) по уже существующими размещениям. */
+case class OpenAdvGeoExistPopup(itemId: Double, geoPoint: MGeoPoint) extends ISetMapCenterForPopup
+

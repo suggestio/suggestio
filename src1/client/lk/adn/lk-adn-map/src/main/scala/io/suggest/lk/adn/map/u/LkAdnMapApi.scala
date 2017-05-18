@@ -5,9 +5,11 @@ import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -22,6 +24,9 @@ trait ILkAdnMapApi {
 
   /** Сабмит формы на сервер. */
   def forNodeSubmit(nodeId: String, mForm: MLamForm): Future[String]
+
+  /** Получение GeoJSON'а текущих размещений узла. */
+  def currentNodeGeoGj(nodeId: String): Future[js.Array[GjFeature]]
 
 }
 
@@ -54,6 +59,13 @@ class LkAdnMapApiHttpImpl extends ILkAdnMapApi {
     } yield {
       xhr.responseText
     }
+  }
+
+
+  override def currentNodeGeoGj(nodeId: String): Future[js.Array[GjFeature]] = {
+    val route = jsRoutes.controllers.LkAdnMap.currentNodeGeoGj( nodeId )
+    Xhr.requestJson(route)
+      .asInstanceOf[Future[js.Array[GjFeature]]]
   }
 
 }

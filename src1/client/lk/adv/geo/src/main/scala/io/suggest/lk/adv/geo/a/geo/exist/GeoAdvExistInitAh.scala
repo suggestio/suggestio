@@ -28,7 +28,9 @@ class GeoAdvExistInitAh[M](
     // Сигнал к инициализации карты кружочков текущий размещений.
     case CurrGeoAdvsInit =>
       val fx = Effect {
-        for (resp <- api.existGeoAdvsMap(adId = adIdProxy())) yield {
+        for {
+          resp <- api.existGeoAdvsMap(adId = adIdProxy())
+        } yield {
           SetCurrGeoAdvs(resp)
         }
       }

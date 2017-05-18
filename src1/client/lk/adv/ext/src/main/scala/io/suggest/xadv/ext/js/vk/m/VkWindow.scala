@@ -4,6 +4,7 @@ import org.scalajs.dom.Window
 
 import scala.language.implicitConversions
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -13,6 +14,7 @@ import scala.scalajs.js
  * @see [[https://vk.com/pages?oid=-17680044&p=Open_API]] см.Asynchronized Initialization
  */
 @js.native
+@JSGlobal
 class VkWindow extends Window {
 
   var vkAsyncInit: js.Function0[_] = js.native

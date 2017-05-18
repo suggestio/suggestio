@@ -17,7 +17,7 @@ import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
 import models.adv.geo.MGeoAdvBillCtx
-import models.adv.geo.cur.{AdvGeoBasicInfo_t, AdvGeoShapeInfo_t}
+import models.adv.geo.cur.AdvGeoBasicInfo_t
 import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
@@ -202,7 +202,7 @@ class AdvGeoBillUtil @Inject() (
               // Проверить на geo + тег:
               .findWithReasonType( MReasonTypes.Tag )
               .map { tagSubTerm =>
-                val tagFace = tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head
+                val tagFace = tagSubTerm.reason.get.strings.head
                 LOGGER.trace(s"$logPrefix2 It is a GeoTag: #$tagFace")
                 // Это размещение в гео-теге.
                 MItem(
@@ -246,14 +246,14 @@ class AdvGeoBillUtil @Inject() (
               .findWithReasonType( MReasonTypes.Rcvr )
               .flatMap { rcvrSubTerm =>
                 // Это прямое размещение на каком-то ресивере. У него обязан быть выставленный id.
-                val rcvrId = rcvrSubTerm.asInstanceOf[Mapper].reason.get.nameIds.head.id.get
+                val rcvrId = rcvrSubTerm.reason.get.nameIds.head.id.get
                 LOGGER.trace(s"$logPrefix2 It is Rcvr term on rcvrId=$rcvrId")
 
                 // Это может быть главный экран или тег.
                 rcvrSubTerm
                   .findWithReasonType( MReasonTypes.Tag )
                   .map { tagSubTerm =>
-                    val tagFace = tagSubTerm.asInstanceOf[Mapper].reason.get.strings.head
+                    val tagFace = tagSubTerm.reason.get.strings.head
                     LOGGER.trace(s"$logPrefix2 It is direct tag #$tagFace on Rcvr#$rcvrId")
                     // Это размещение в теге на ресивере.
                     MItem(
@@ -524,58 +524,6 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
-  /** Сборка query для поиска текущих item'ов карточки. */
-  def findCurrentForAdQ(adId: String): Query[mItems.MItemsTable, MItem, Seq] = {
-    mItems.query
-      .filter { i =>
-        i.withNodeId(adId) &&
-          i.withTypes( MItemTypes.advGeoTypes ) &&
-          i.withStatuses( MItemStatuses.advBusy )
-      }
-  }
-
-  /**
-    * Поиск уже текущих размещений для указанной карточки.
-    *
-    * @param adId id рекламной карточки.
-    * @return DBIO-экшен, возвращающий MItem'ы.
-    */
-  def findCurrentForAd(adId: String, limit: Int = 200): DBIOAction[Seq[MItem], Streaming[MItem], Effect.Read] = {
-    findCurrentForAdQ(adId)
-      .take(limit)
-      // Сортировка пока не требуется, но возможно потребуется.
-      .result
-  }
-
-
-  /** Собрать минимальную и достаточную геоинфу для рендера разноцветных кружочков на карте размещений.
-    *
-    * @param query Исходный запрос item'ов. Например, выхлоп от findCurrentForAdQ().
-    *
-    * @return Пачка из Option'ов, т.к. все затрагиваемые столбцы базы заявлены как NULLable,
-    *         и slick не может это проигнорить:
-    *         (geo_shape, id, isAwaitingMdr).
-    */
-  def onlyGeoShapesInfo(query: Query[mItems.MItemsTable, MItem, Seq], limit: Int = 500): DBIOAction[Seq[AdvGeoShapeInfo_t], Streaming[AdvGeoShapeInfo_t], Effect.Read] = {
-    query
-      // WHERE не пустой geo_shape
-      .filter(_.geoShapeStrOpt.isDefined)
-      // GROUP BY geo_shape
-      .groupBy(_.geoShapeStrOpt)
-      .map { case (geoShapeStrOpt, group) =>
-        // Делаем правильный кортеж: ключ -- строка шейпа, id - любой, status -- только максимальный
-        (geoShapeStrOpt,
-          group.map(_.id).max,
-          group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.strId
-          )
-      }
-      // LIMIT 200
-      .take(limit)
-      .result
-    // TODO Нужно завернуть кортежи в MAdvGeoShapeInfo. .map() не котируем, т.к. ломает streaming.
-  }
-
-
   /**
     * Найти item'ы с таким же гео-шейпом, как у указанного item'а.
     * @param query Исходный запрос item'ов. Например, выхлоп от findCurrentForAdQ().
@@ -583,7 +531,7 @@ class AdvGeoBillUtil @Inject() (
     * @param limit Макс.кол-во результатов.
     * @return Streamable-результаты.
     */
-  def withSameGeoShapeAs(query: Query[mItems.MItemsTable, MItem, Seq], itemId: Gid_t, limit: Int = 500)
+  def withSameGeoShapeAs(query: Query[MItems#MItemsTable, MItem, Seq], itemId: Gid_t, limit: Int = 500)
   : DBIOAction[Seq[AdvGeoBasicInfo_t], Streaming[AdvGeoBasicInfo_t], Effect.Read] = {
     query
       .filter { i =>

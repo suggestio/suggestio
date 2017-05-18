@@ -13,13 +13,13 @@ object MAdvGeoShapeInfo {
   /** Собрать инстанс из аналогичного корежа.
     * Такие кортежи генерит slick на сервере. */
   def applyOpt(tuple: AdvGeoShapeInfo_t): Option[MAdvGeoShapeInfo] = {
-    val (gsStrOpt, idOpt, statusStrOpt) = tuple
+    val (gsStrOpt, idOpt, hasApprovedOpt) = tuple
     for {
-      gsStr <- gsStrOpt
-      id    <- idOpt
-      statusStr <- statusStrOpt
+      gsStr       <- gsStrOpt
+      id          <- idOpt
+      hasApproved <- hasApprovedOpt
     } yield {
-      apply(gsStr, id, statusStr)
+      apply(gsStr, id, hasApproved)
     }
   }
 
@@ -29,9 +29,8 @@ object MAdvGeoShapeInfo {
 /**
   * Класс модели представления данных по одному шейпу размещений.
   *
-
   * @param geoShapeStr Геометрия передаётся толстоватой GeoJSON-строкой.
-  *                 т.к. GeoShape-модели пока не являются кроссплатформенными, а завязаны на сервер.
+  *                    т.к. GeoShape-модели пока не являются кроссплатформенными, а завязаны на сервер.
   */
 case class MAdvGeoShapeInfo(
                              geoShapeStr : String,

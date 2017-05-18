@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.vk.c.low
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -12,7 +12,7 @@ import scala.scalajs.js.annotation.JSName
 
 /** Описываем глобально-доступный объект VK и его API. */
 @js.native
-@JSName("VK")
+@JSGlobal("VK")
 object VkLow extends js.Object {
   def init(options: js.Dictionary[js.Any]): Unit = js.native
   def Api: VkApi = js.native

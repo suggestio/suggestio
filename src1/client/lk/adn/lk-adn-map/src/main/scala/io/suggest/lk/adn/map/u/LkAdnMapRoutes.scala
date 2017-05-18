@@ -31,6 +31,7 @@ trait LkAdnMapControllers extends js.Object {
 
 }
 
+
 /** Интерфейс роут LkAdnMap. */
 @js.native
 trait LkAdnMapRoutes extends js.Object {
@@ -40,5 +41,8 @@ trait LkAdnMapRoutes extends js.Object {
 
   /** Сабмит формы. */
   def forNodeSubmit(nodeId: String): Route = js.native
+
+  /** Получение списка текущих размещений указанного узла. */
+  def currentNodeGeoGj(nodeId: String): Route = js.native
 
 }

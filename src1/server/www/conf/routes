@@ -116,6 +116,7 @@ POST /lk/subnodes/tfd/*onNode                       @controllers.LkNodes.setTfDa
 POST /lk/adn/map/price/:nodeId          @controllers.LkAdnMap.getPriceSubmit(nodeId: MEsUuId)
 GET  /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNode(nodeId: MEsUuId)
 POST /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNodeSubmit(nodeId: MEsUuId)
+GET  /lk/adn/current/:nodeId            @controllers.LkAdnMap.currentNodeGeoGj(nodeId: MEsUuId)
 
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)

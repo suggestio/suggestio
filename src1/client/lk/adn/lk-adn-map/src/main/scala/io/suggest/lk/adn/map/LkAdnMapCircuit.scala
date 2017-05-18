@@ -5,7 +5,7 @@ import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.bin.ConvCodecs
-import io.suggest.lk.adn.map.a.{LamOptsAh, LamRadAh}
+import io.suggest.lk.adn.map.a.{CurrentGeoAh, LamOptsAh, LamRadAh}
 import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
@@ -75,14 +75,16 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     val confRO = zoom(_.conf)
     val formRO = zoom(_.toForm)
 
+    val nodeIdProxy = confRO.zoom(_.nodeId)
+
     // Поддержка экшенов виджета цены с кнопкой сабмита.
     val priceAh = new PriceAh(
       modelRW = zoomRW(_.price) { _.withPrice(_) },
       priceAskFutF = { () =>
-        httpApi.getPriceSubmit( confRO().nodeId, formRO() )
+        httpApi.getPriceSubmit( nodeIdProxy(), formRO() )
       },
       doSubmitF = { () =>
-        httpApi.forNodeSubmit( confRO().nodeId, formRO() )
+        httpApi.forNodeSubmit( nodeIdProxy(), formRO() )
       }
     )
 
@@ -119,6 +121,14 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       priceUpdateFx = priceUpdateEffect
     )
 
+    val currentRW = zoomRW(_.current) { _.withCurrent(_) }
+
+    val currentGeoAh = new CurrentGeoAh(
+      api         = httpApi,
+      modelRW     = currentRW.zoomRW(_.existingGj) { _.withExistingGj(_) },
+      nodeIdProxy = nodeIdProxy
+    )
+
     // Реакция на события виджета с датой:
     val datePeriodAh = new DtpAh(
       modelRW       = zoomRW(_.datePeriod) { _.withDatePeriod(_) },
@@ -131,11 +141,16 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       priceAh,
       datePeriodAh,
       optsAh,
-      adv4freeAh
+      adv4freeAh,
+      currentGeoAh
     )
 
     // Параллельно приделать mapCommonAh, который работает с абстрактными сигналами:
     foldHandlers( conseqAh, mapCommonAh )
   }
+
+
+  // Запустить в фоне инициализацию текущих размещений.
+  dispatch( CurrGeoAdvsInit )
 
 }

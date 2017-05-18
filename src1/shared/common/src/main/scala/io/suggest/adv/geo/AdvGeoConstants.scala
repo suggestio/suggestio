@@ -36,27 +36,13 @@ object AdvGeoConstants {
   object GjFtPropsC {
 
     /** Имя поля радиуса круга. */
-    final val CIRCLE_RADIUS_M_FN   = "r"
+    final val CIRCLE_RADIUS_M_FN    = "r"
 
     /** id item'а шейпа. Это id, по которому можно получить доступ ко всем остальным id. */
-    final val ITEM_ID_FN        = "i"
+    final val ITEM_ID_FN            = "i"
 
     /** Есть ли хоть одно подтвержденное размещение? */
-    final val HAS_APPROVED_FN   = "a"
-
-  }
-
-  /** Константы заливки шейпов на карте гео-размещений. */
-  object CurrShapes {
-
-    /** Цвет заливки запрошенных размещений. */
-    def REQ_COLOR = "#4C88A9"
-
-    /** Цвет заливки принятых размещений. */
-    def OK_COLOR  = "#1ABC8A"
-
-    /** Прозрачность заливки info-шейпов. */
-    def OPACITY   = 0.5
+    final val HAS_APPROVED_FN       = "a"
 
   }
 

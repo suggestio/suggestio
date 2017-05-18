@@ -29,7 +29,7 @@ import scala.concurrent.Future
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 22.11.16 15:01
-  * Description:
+  * Description: Утиль для форм размещения с гео-картам.
   */
 class AdvGeoMapUtil @Inject() (
                                 mNodes      : MNodes,
@@ -39,7 +39,7 @@ class AdvGeoMapUtil @Inject() (
                                 dynImgUtil  : DynImgUtil,
                                 streamsUtil : StreamsUtil,
                                 mCommonDi   : ICommonDi
-)
+                              )
   extends MacroLogsImpl
 {
 

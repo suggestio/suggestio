@@ -36,8 +36,8 @@ class LkAdnMapFormUtil @Inject() (
   }
 
 
-  import com.wix.accord.dsl._
   import accordUtil._
+  import com.wix.accord.dsl._
 
   implicit val geoCircleV = validator[MGeoCircle] { gc =>
     gc.center is valid

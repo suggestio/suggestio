@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.{IRadOpts, MRoot}
+import io.suggest.lk.adn.map.m.{IRadOpts, MCurrentGeoS, MRoot}
 import io.suggest.maps.m.MMapS
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -15,6 +15,11 @@ import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.dt.period.r.DatePeriodR
 import IRadOpts.IRadOptsFastEq
+import diode.data.Pot
+import io.suggest.lk.adn.map.r.cur.CurrentR
+import io.suggest.sjs.common.geo.json.GjFeature
+
+import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -34,7 +39,8 @@ object LamFormR {
   protected[this] case class State(
                                     mmapC                 : ReactConnectProxy[MMapS],
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
-                                    priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]]
+                                    priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
+                                    currentPotC           : ReactConnectProxy[MCurrentGeoS]
                                   )
 
 
@@ -66,14 +72,16 @@ object LamFormR {
 
 
         // Рендер географической карты:
-        s.mmapC { mapProps =>
-          LGeoMapR(mapProps)(
+        s.mmapC { mapPropsProxy =>
+          LGeoMapR(mapPropsProxy)(
 
             // Рендерим основную плитку карты.
             ReactLeafletUtil.Tiles.OsmDefault,
 
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
+
+            s.currentPotC { CurrentR.apply },
 
             // Маркер местоположения узла.
             s.radOptsC { MapCursorR.apply }
@@ -98,7 +106,8 @@ object LamFormR {
       State(
         mmapC         = p.connect(_.mmap),
         radOptsC      = p.connect(identity),
-        priceDslOptC  = p.connect(_.price.respDslOpt)
+        priceDslOptC  = p.connect(_.price.respDslOpt),
+        currentPotC   = p.connect(_.current)
       )
     }
     .renderBackend[Backend]

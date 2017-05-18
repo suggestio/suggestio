@@ -24,6 +24,7 @@ object MRoot {
       (a.mmap eq b.mmap) &&
         (a.conf eq b.conf) &&
         IRadOpts.IRadOptsFastEq.eqv(a, b) &&
+        (a.current eq b.current) &&
         (a.adv4free eq b.adv4free) &&
         (a.price eq b.price) &&
         (a.datePeriod eq b.datePeriod)
@@ -45,6 +46,7 @@ case class MRoot(
                   conf          : MLamConf,
                   rad           : MLamRad,
                   opts          : MLamOpts,
+                  current       : MCurrentGeoS      = MCurrentGeoS(),
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
                   datePeriod    : MAdvPeriod
@@ -55,6 +57,7 @@ case class MRoot(
   def withMap(map2: MMapS) = copy(mmap = map2)
   override def withRad(rad2: MLamRad) = copy(rad = rad2)
   override def withOpts(opts2: MLamOpts) = copy(opts = opts2)
+  def withCurrent(current2: MCurrentGeoS) = copy(current = current2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)
   def withDatePeriod(dp2: MAdvPeriod) = copy(datePeriod = dp2)

@@ -21,6 +21,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mbill.MCartIdeas
 import models.mproj.ICommonDi
 import models.MNode
+import models.adv.geo.cur.AdvGeoShapeInfo_t
 import slick.sql.SqlAction
 
 import scala.concurrent.Future
@@ -1735,6 +1736,45 @@ class Bill2Util @Inject() (
       .drop( offset )
       .take( limit )
       .result
+  }
+
+
+  /** Сборка query для поиска текущих item'ов карточки. */
+  def findCurrentForNodeQuery(nodeId: String, itypes: TraversableOnce[MItemType]): Query[MItems#MItemsTable, MItem, Seq] = {
+    mItems.query
+      .filter { i =>
+        i.withNodeId( nodeId ) &&
+          i.withTypes( itypes ) &&
+          i.withStatuses( MItemStatuses.advBusy )
+      }
+  }
+
+
+  /** Собрать минимальную и достаточную геоинфу для рендера разноцветных кружочков на карте размещений.
+    *
+    * @param query Исходный запрос item'ов. Например, выхлоп от AdvGeoBillUtil.findCurrentForAdQ().
+    *
+    * @return Пачка из Option'ов, т.к. все затрагиваемые столбцы базы заявлены как NULLable,
+    *         и slick не может это проигнорить:
+    *         (geo_shape, id, isAwaitingMdr).
+    */
+  def onlyGeoShapesInfo(query: Query[MItems#MItemsTable, MItem, Seq], limit: Int = 500): DBIOAction[Seq[AdvGeoShapeInfo_t], Streaming[AdvGeoShapeInfo_t], Effect.Read] = {
+    query
+      // WHERE не пустой geo_shape
+      .filter(_.geoShapeStrOpt.isDefined)
+      // GROUP BY geo_shape
+      .groupBy(_.geoShapeStrOpt)
+      .map { case (geoShapeStrOpt, group) =>
+        // Делаем правильный кортеж: ключ -- строка шейпа, id - любой, status -- только максимальный
+        (geoShapeStrOpt,
+          group.map(_.id).max,
+          group.map(_.statusStr).max =!= MItemStatuses.AwaitingMdr.strId
+        )
+      }
+      // LIMIT 200
+      .take(limit)
+      .result
+    // TODO Нужно завернуть кортежи в MAdvGeoShapeInfo. .map() не котируем, т.к. ломает streaming.
   }
 
 }

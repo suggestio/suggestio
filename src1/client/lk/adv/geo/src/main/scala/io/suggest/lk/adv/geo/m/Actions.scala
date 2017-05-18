@@ -3,8 +3,8 @@ package io.suggest.lk.adv.geo.m
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
-import io.suggest.geo.{IGeoPointField, MGeoPoint}
-import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup, MMapGjResp}
+import io.suggest.geo.MGeoPoint
+import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup, MMapGjResp, OpenAdvGeoExistPopup}
 import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
@@ -47,9 +47,6 @@ case object CurrGeoAdvsInit extends IAdvGeoFormAction
 /** Выставить указанные данные размещения в состояние. */
 case class SetCurrGeoAdvs(resp: js.Array[GjFeature]) extends IAdvGeoFormAction
 
-
-/** Команда к открытию попапа над гео-шейпом (кружком) по уже существующими размещениям. */
-case class OpenAdvGeoExistPopup(itemId: Double, geoPoint: MGeoPoint) extends ISetMapCenterForPopup
 
 /** Команда к реакции на полученние попапа над гео-областью. */
 case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvExistPopupResp)

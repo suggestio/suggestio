@@ -1,7 +1,7 @@
 package io.suggest.xadv.ext.js.fb.c.low
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -11,7 +11,7 @@ import scala.scalajs.js.annotation.JSName
  */
 
 @js.native
-@JSName("FB")
+@JSGlobal("FB")
 object FbLow extends js.Object {
 
   /**

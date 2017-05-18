@@ -118,6 +118,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
 
   def advDirectTypes          = AdvDirect :: TagDirect :: Nil
 
+  def adnMapTypes             = AdnNodeMap :: GeoLocCaptureArea :: Nil
 
   override val values = findValues
 

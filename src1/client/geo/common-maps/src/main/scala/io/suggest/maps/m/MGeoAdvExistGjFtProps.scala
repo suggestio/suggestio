@@ -1,10 +1,11 @@
-package io.suggest.lk.adv.geo.m
+package io.suggest.maps.m
 
-import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
-import io.suggest.adv.geo.AdvGeoConstants.GjFtPropsC.{HAS_APPROVED_FN, ITEM_ID_FN, CIRCLE_RADIUS_M_FN}
+import io.suggest.adv.geo.AdvGeoConstants.GjFtPropsC.{CIRCLE_RADIUS_M_FN, HAS_APPROVED_FN, ITEM_ID_FN}
 
 import scala.language.implicitConversions
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.JSName
 
 
 /**
@@ -26,7 +27,7 @@ trait MGeoAdvExistGjFtProps extends js.Object {
   val hasApproved: Boolean = js.native
 
   @JSName( CIRCLE_RADIUS_M_FN )
-  var radiusM: Double = js.native
+  var radiusM: UndefOr[Double] = js.native
 
 }
 
