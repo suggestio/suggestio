@@ -4,7 +4,7 @@ import diode.data.Pot
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
-import io.suggest.maps.m.{HandleMapPopupClose, OpenAdvGeoExistPopup}
+import io.suggest.maps.m.{HandleMapPopupClose, MExistGeoPopupS, OpenAdvGeoExistPopup}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
@@ -16,8 +16,8 @@ import io.suggest.sjs.common.msg.WarnMsgs
   * Description: Action handler для работы с попапами над текущими размещениями.
   */
 class GeoAdvsPopupAh[M](
-                         api: ILkAdvGeoApi,
-                         modelRW: ModelRW[M, MGeoAdvs]
+                         api      : ILkAdvGeoApi,
+                         modelRW  : ModelRW[M, MExistGeoPopupS]
                        )
   extends ActionHandler(modelRW)
   with Log
@@ -34,8 +34,8 @@ class GeoAdvsPopupAh[M](
         }
       }
       // Обновлить текущее состояние данными по открываемому попапу:
-      val v1 = value.withPopupState {
-        Some(MGeoAdvPopupState(op))
+      val v1 = value.withState {
+        Some(op)
       }
       updated(v1, fx)
 
@@ -43,9 +43,9 @@ class GeoAdvsPopupAh[M](
     case h: HandleAdvGeoExistPopupResp =>
       val v0 = value
       // Почему-то сравнение через open eq open здесь не сработало, поэтому сравниваем по itemId.
-      if ( v0.popupState.exists(_.open.itemId == h.open.itemId) ) {
+      if ( v0.state.exists(_.itemId == h.open.itemId) ) {
         // Поступил ожидаемый ответ сервера. Залить его в состояние.
-        val v1 = value.withPopupResp( v0.popupResp.ready(h.resp) )
+        val v1 = value.withContent( v0.content.ready(h.resp) )
         updated(v1)
 
       } else {
@@ -55,10 +55,10 @@ class GeoAdvsPopupAh[M](
       }
 
     // Реакция на сигнал закрытия попапа, когда он открыт.
-    case HandleMapPopupClose if value.popupState.nonEmpty =>
+    case HandleMapPopupClose if value.state.nonEmpty =>
       val v2 = value.copy(
-        popupResp  = Pot.empty,
-        popupState = None
+        content  = Pot.empty,
+        state    = None
       )
       updated(v2)
 

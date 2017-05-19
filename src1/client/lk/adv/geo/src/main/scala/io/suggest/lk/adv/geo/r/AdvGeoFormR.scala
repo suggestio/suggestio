@@ -5,14 +5,13 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
-import io.suggest.lk.adv.geo.r.geo.exist.ExistPopupR
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.maps.m.{MMapS, MRad}
+import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS, MMapS, MRad}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
-import io.suggest.maps.r.{ExistAdvGeoShapesR, LGeoMapR, MapInitFailR, ReactLeafletUtil}
+import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.dt.period.r._
@@ -21,6 +20,7 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import MExistGeoPopupS.MGeoCurPopupSFastEq
 
 import scala.scalajs.js
 
@@ -41,7 +41,7 @@ object AdvGeoFormR {
   // Без пинка, FastEq не подцеплялись к работе и вызывали лишней re-render внутри коннекшенов.
   import MRcvr.MRcvrFastEq
   import MMapS.MMapSFastEq
-  import MGeoAdvs.MGeoAdvsFastEq
+  import MExistGeoS.MExistGeoSFastEq
   import MRad.MRadFastEq
   import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
 
@@ -60,8 +60,8 @@ object AdvGeoFormR {
                               rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
                               rcvrPopupConn       : ReactConnectProxy[MRcvr],
                               mmapConn            : ReactConnectProxy[MMapS],
-                              geoAdvExistRespConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
-                              geoAdvConn          : ReactConnectProxy[MGeoAdvs],
+                              geoAdvExistGjConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
+                              geoAdvPopupConn     : ReactConnectProxy[MExistGeoPopupS],
                               mRadOptConn         : ReactConnectProxy[Option[MRad]],
                               radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal],
                               priceDslOptConn     : ReactConnectProxy[Option[IPriceDslTerm]],
@@ -128,12 +128,12 @@ object AdvGeoFormR {
             LocateControlR()(),
 
             // Рендер кружочков текущих размещений.
-            s.geoAdvExistRespConn( ExistAdvGeoShapesR.apply ),
+            s.geoAdvExistGjConn( ExistAdvGeoShapesR.apply ),
             // Рендер попапа над кружочком георазмещения:
-            s.geoAdvConn( ExistPopupR.apply ),
+            s.geoAdvPopupConn( ExistPopupR.apply ),
 
             // Запрешаем рендер красного круга пока не нарисованы все остальные. Так надо, чтобы он был поверх их всех.
-            s.geoAdvExistRespConn { potProx =>
+            s.geoAdvExistGjConn { potProx =>
               // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
               for (_ <- potProx().toOption) yield {
                 s.mRadOptConn( RadR.apply )
@@ -171,8 +171,8 @@ object AdvGeoFormR {
         rcvrMarkersConn     = p.connect(_.rcvr.markers),
         rcvrPopupConn       = p.connect(_.rcvr),
         mmapConn            = p.connect(_.mmap),
-        geoAdvExistRespConn = p.connect(_.geoAdv.existResp),
-        geoAdvConn          = p.connect(_.geoAdv),
+        geoAdvExistGjConn   = p.connect(_.geoAdv.geoJson),
+        geoAdvPopupConn     = p.connect(_.geoAdv.popup),
         // Для рендера подходит только radEnabled, а он у нас генерится заново каждый раз.
         mRadOptConn         = p.connect(mradOptZoomF),
         radEnabledPropsConn = RadEnabledR.radEnabledPropsConn(

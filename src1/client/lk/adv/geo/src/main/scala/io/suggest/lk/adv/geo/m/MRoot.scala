@@ -5,7 +5,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.MFormS
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.tags.edit.m.MTagsEditState
-import io.suggest.maps.m.{MMapS, MRad}
+import io.suggest.maps.m.{MExistGeoS, MMapS, MRad}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -25,7 +25,7 @@ case class MRoot(
                   tags          : MTagsEditState,
                   rcvr          : MRcvr,
                   rad           : Option[MRad],
-                  geoAdv        : MGeoAdvs                = MGeoAdvs(),
+                  geoAdv        : MExistGeoS              = MExistGeoS(),
                   datePeriod    : MAdvPeriod,
                   popups        : MPopupsS                = MPopupsS(),
                   bill          : MBillS
@@ -37,7 +37,7 @@ case class MRoot(
   def withTagsEditState(tes: MTagsEditState) = copy(tags = tes)
   def withRad(radOpt: Option[MRad]) = copy(rad = radOpt)
   def withRcvr(rcvr2: MRcvr) = copy(rcvr = rcvr2)
-  def withCurrGeoAdvs(cga2: MGeoAdvs) = copy(geoAdv = cga2)
+  def withCurrGeoAdvs(cga2: MExistGeoS) = copy(geoAdv = cga2)
   def withDatePeriod(ivl: MAdvPeriod) = copy(datePeriod = ivl)
   def withPopups(popups2: MPopupsS) = copy(popups = popups2)
   def withBill(bill2: MBillS) = copy(bill = bill2)

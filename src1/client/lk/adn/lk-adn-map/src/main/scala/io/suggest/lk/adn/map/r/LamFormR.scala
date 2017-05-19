@@ -1,8 +1,8 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.{IRadOpts, MCurrentGeoS, MRoot}
-import io.suggest.maps.m.MMapS
+import io.suggest.lk.adn.map.m.{IRadOpts, MRoot}
+import io.suggest.maps.m.{MExistGeoS, MMapS}
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.css.Css
@@ -15,11 +15,8 @@ import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.dt.period.r.DatePeriodR
 import IRadOpts.IRadOptsFastEq
-import diode.data.Pot
-import io.suggest.lk.adn.map.r.cur.CurrentR
-import io.suggest.sjs.common.geo.json.GjFeature
-
-import scala.scalajs.js
+import io.suggest.lk.adn.map.m.MLamRad.MLamRadFastEq
+import MExistGeoS.MExistGeoSFastEq
 
 /**
   * Suggest.io
@@ -40,7 +37,7 @@ object LamFormR {
                                     mmapC                 : ReactConnectProxy[MMapS],
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
                                     priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
-                                    currentPotC           : ReactConnectProxy[MCurrentGeoS]
+                                    currentPotC           : ReactConnectProxy[MExistGeoS]
                                   )
 
 
@@ -81,7 +78,8 @@ object LamFormR {
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
 
-            s.currentPotC { CurrentR.apply },
+            // Рендер текущих размещений.
+            s.currentPotC { CurrentGeoR.apply },
 
             // Маркер местоположения узла.
             s.radOptsC { MapCursorR.apply }

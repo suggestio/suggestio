@@ -1,5 +1,7 @@
 package io.suggest.lk.adn.map.m
 
+import io.suggest.adv.geo.MGeoAdvExistPopupResp
+import io.suggest.maps.m.OpenAdvGeoExistPopup
 import io.suggest.primo.IApply1
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.spa.DAction
@@ -37,3 +39,10 @@ case object CurrGeoAdvsInit extends ILamAction
 /** Результат запроса по поводу гео-данных текущих размещений узла. */
 case class SetCurrGeoAdvs( tryResp: Try[js.Array[GjFeature]] ) extends ILamAction
 
+
+/** Команда к реакции на полученние попапа над гео-областью. */
+case class HandleAdvGeoExistPopupResp(
+                                       open     : OpenAdvGeoExistPopup,
+                                       tryResp  : Try[MGeoAdvExistPopupResp]
+                                     )
+  extends ILamAction

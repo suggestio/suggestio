@@ -147,4 +147,8 @@ object MsgCodes {
   val `All.rights.reserved` = "All.rights.reserved"
   val `day24h` = "day24h"
 
+  val `Main.screen` = "Main.screen"
+  val `GeoTag` = "GeoTag"
+  val `_adv.Online.now` = "_adv.Online.now"
+
 }

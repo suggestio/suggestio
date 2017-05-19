@@ -838,6 +838,10 @@ Item.type.a=Direct advertisement
 Item.type.t=Geo-tag advertisement
 Item.type.e=External deployment
 Item.type.g=In-the-place advertising
+Item.type.m=Publish in advertisning nodes map
+Item.type.d=Publish inside node tag
+Item.type.e=Add money to user balance
+Item.type.l=Users' geolocation capturing
 
 Moderation=Moderation
 Picture.editing=Picture editing

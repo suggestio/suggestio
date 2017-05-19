@@ -17,7 +17,10 @@ import io.suggest.model.menum.EnumJsonReadsValT
   */
 object MComponents extends EnumMaybeWithName with EnumJsonReadsValT with StrIdValT {
 
-  /** Класс для всех экземпляров модели. */
+  /** Класс для всех экземпляров модели.
+    *
+    * @param strId LOWER CASE ONLY!
+    */
   protected class Val(override val strId: String)
     extends super.Val
     with ValT
@@ -51,7 +54,7 @@ object MComponents extends EnumMaybeWithName with EnumJsonReadsValT with StrIdVa
   val Error     : T = new Val("ошибка")
 
   /** Content-Security-Policy. */
-  val CSP       : T = new Val("CSP")
+  val CSP       : T = new Val("csp")
 
   //val Lk: T       = new Val("ЛК")
   //val Sys: T      = new Val("SYS")

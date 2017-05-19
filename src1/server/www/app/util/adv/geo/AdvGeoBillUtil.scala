@@ -524,23 +524,23 @@ class AdvGeoBillUtil @Inject() (
   }
 
 
+  def offDate2localDateOpt(offDateOpt: Option[OffsetDateTime])(implicit ctx: Context): Option[LocalDate] = {
+    // TODO Выставлять local-date на основе текущего offset'а юзера через ctx.
+    offDateOpt.map(_.toLocalDate)
+  }
+
+
+
   /**
     * Найти item'ы с таким же гео-шейпом, как у указанного item'а.
-    * @param query Исходный запрос item'ов. Например, выхлоп от findCurrentForAdQ().
+    * @param query0 Исходный запрос item'ов. Например, выхлоп от findCurrentForAdQ().
     * @param itemId id item'а, содержащего необходимый шейп.
     * @param limit Макс.кол-во результатов.
     * @return Streamable-результаты.
     */
-  def withSameGeoShapeAs(query: Query[MItems#MItemsTable, MItem, Seq], itemId: Gid_t, limit: Int = 500)
+  def itemsWithSameGeoShapeAs(query0: Query[MItems#MItemsTable, MItem, Seq], itemId: Gid_t, limit: Int = 500)
   : DBIOAction[Seq[AdvGeoBasicInfo_t], Streaming[AdvGeoBasicInfo_t], Effect.Read] = {
-    query
-      .filter { i =>
-        val itemShapeQ = mItems.query
-          .filter(_.id === itemId)
-          .map(_.geoShapeStrOpt)
-          .filter(_.isDefined)
-        i.geoShapeStrOpt in itemShapeQ
-      }
+    mItems.withSameGeoShapeAs(itemId, query0)
       .map { i =>
         (i.id, i.iType, i.status, i.dateStartOpt, i.dateEndOpt, i.tagFaceOpt)
       }

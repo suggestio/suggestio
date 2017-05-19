@@ -6,7 +6,7 @@ import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.m.{MExistGeoS, MMapS}
 import io.suggest.sjs.common.controller.DomQuick
 
 /**
@@ -46,7 +46,7 @@ case class MRoot(
                   conf          : MLamConf,
                   rad           : MLamRad,
                   opts          : MLamOpts,
-                  current       : MCurrentGeoS      = MCurrentGeoS(),
+                  current       : MExistGeoS        = MExistGeoS(),
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
                   datePeriod    : MAdvPeriod
@@ -57,7 +57,7 @@ case class MRoot(
   def withMap(map2: MMapS) = copy(mmap = map2)
   override def withRad(rad2: MLamRad) = copy(rad = rad2)
   override def withOpts(opts2: MLamOpts) = copy(opts = opts2)
-  def withCurrent(current2: MCurrentGeoS) = copy(current = current2)
+  def withCurrent(current2: MExistGeoS) = copy(current = current2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)
   def withDatePeriod(dp2: MAdvPeriod) = copy(datePeriod = dp2)

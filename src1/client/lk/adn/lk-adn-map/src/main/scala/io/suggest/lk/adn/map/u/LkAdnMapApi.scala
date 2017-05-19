@@ -1,6 +1,7 @@
 package io.suggest.lk.adn.map.u
 
 import io.suggest.adn.mapf.MLamForm
+import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
@@ -27,6 +28,8 @@ trait ILkAdnMapApi {
 
   /** Получение GeoJSON'а текущих размещений узла. */
   def currentNodeGeoGj(nodeId: String): Future[js.Array[GjFeature]]
+
+  def currentGeoItemPopup(itemId: Double): Future[MGeoAdvExistPopupResp]
 
 }
 
@@ -66,6 +69,14 @@ class LkAdnMapApiHttpImpl extends ILkAdnMapApi {
     val route = jsRoutes.controllers.LkAdnMap.currentNodeGeoGj( nodeId )
     Xhr.requestJson(route)
       .asInstanceOf[Future[js.Array[GjFeature]]]
+  }
+
+
+  override def currentGeoItemPopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
+    val route = jsRoutes.controllers.LkAdnMap.currentGeoItemPopup(itemId)
+    Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
+      Xhr.requestBinary(route)
+    }
   }
 
 }

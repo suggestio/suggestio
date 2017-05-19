@@ -1,12 +1,13 @@
-package io.suggest.lk.adn.map.r.cur
+package io.suggest.lk.adn.map.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.MCurrentGeoS
-import io.suggest.maps.r.ExistAdvGeoShapesR
+import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS}
+import io.suggest.maps.r.{ExistAdvGeoShapesR, ExistPopupR}
 import io.suggest.sjs.common.geo.json.GjFeature
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.layer.LayerGroupR
+import MExistGeoPopupS.MGeoCurPopupSFastEq
 
 import scala.scalajs.js
 
@@ -16,12 +17,13 @@ import scala.scalajs.js
   * Created: 18.05.17 17:32
   * Description: React-компонент leaflet-элементов, отображающих текущее состояние размещения узла на карте.
   */
-object CurrentR {
+object CurrentGeoR {
 
-  type Props = ModelProxy[MCurrentGeoS]
+  type Props = ModelProxy[MExistGeoS]
 
   protected case class State(
-                              existingGjC   : ReactConnectProxy[Pot[js.Array[GjFeature]]]
+                              geoJsonC   : ReactConnectProxy[Pot[js.Array[GjFeature]]],
+                              popupC     : ReactConnectProxy[MExistGeoPopupS]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -29,7 +31,10 @@ object CurrentR {
     def render(s: State): ReactElement = {
       LayerGroupR()(
 
-        s.existingGjC { ExistAdvGeoShapesR.apply }
+        s.geoJsonC { ExistAdvGeoShapesR.apply },
+
+        // Рендер попапа при клике по шейпу.
+        s.popupC { ExistPopupR.apply }
 
       )
     }
@@ -40,7 +45,8 @@ object CurrentR {
   val component = ReactComponentB[Props]("CurrentGeo")
     .initialState_P { mcgProxy =>
       State(
-        existingGjC = mcgProxy.connect(_.existingGj)
+        geoJsonC = mcgProxy.connect(_.geoJson),
+        popupC   = mcgProxy.connect(_.popup)
       )
     }
     .renderBackend[Backend]

@@ -5,7 +5,7 @@ import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.bin.ConvCodecs
-import io.suggest.lk.adn.map.a.{CurrentGeoAh, LamOptsAh, LamRadAh}
+import io.suggest.lk.adn.map.a.{CurrentGeoAh, CurrentGeoPopupAh, LamOptsAh, LamRadAh}
 import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
@@ -19,6 +19,10 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
+import MRoot.MRootFastEq
+import MLamRad.MLamRadFastEq
+import MMapS.MMapSFastEq
+import IRadOpts.IRadOptsFastEq
 
 /**
   * Suggest.io
@@ -125,8 +129,13 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
     val currentGeoAh = new CurrentGeoAh(
       api         = httpApi,
-      modelRW     = currentRW.zoomRW(_.existingGj) { _.withExistingGj(_) },
+      modelRW     = currentRW.zoomRW(_.geoJson) { _.withGeoJson(_) },
       nodeIdProxy = nodeIdProxy
+    )
+
+    val curGeoPopupAh = new CurrentGeoPopupAh(
+      api         = httpApi,
+      modelRW     = currentRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
     // Реакция на события виджета с датой:
@@ -138,11 +147,12 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     // Склеить все handler'ы последовательно.
     val conseqAh = composeHandlers(
       radAh,
+      currentGeoAh,
+      curGeoPopupAh,
       priceAh,
       datePeriodAh,
       optsAh,
-      adv4freeAh,
-      currentGeoAh
+      adv4freeAh
     )
 
     // Параллельно приделать mapCommonAh, который работает с абстрактными сигналами:

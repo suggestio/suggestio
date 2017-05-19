@@ -45,4 +45,7 @@ trait LkAdnMapRoutes extends js.Object {
   /** Получение списка текущих размещений указанного узла. */
   def currentNodeGeoGj(nodeId: String): Route = js.native
 
+  /** Получение инфы по item'у размещения. */
+  def currentGeoItemPopup(itemId: Double): Route = js.native
+
 }

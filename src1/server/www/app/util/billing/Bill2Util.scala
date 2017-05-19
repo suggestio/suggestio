@@ -1739,17 +1739,6 @@ class Bill2Util @Inject() (
   }
 
 
-  /** Сборка query для поиска текущих item'ов карточки. */
-  def findCurrentForNodeQuery(nodeId: String, itypes: TraversableOnce[MItemType]): Query[MItems#MItemsTable, MItem, Seq] = {
-    mItems.query
-      .filter { i =>
-        i.withNodeId( nodeId ) &&
-          i.withTypes( itypes ) &&
-          i.withStatuses( MItemStatuses.advBusy )
-      }
-  }
-
-
   /** Собрать минимальную и достаточную геоинфу для рендера разноцветных кружочков на карте размещений.
     *
     * @param query Исходный запрос item'ов. Например, выхлоп от AdvGeoBillUtil.findCurrentForAdQ().

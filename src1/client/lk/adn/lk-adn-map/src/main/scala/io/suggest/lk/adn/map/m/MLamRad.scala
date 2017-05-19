@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.m
 
 import io.suggest.geo.MGeoCircle
-import io.suggest.maps.m.{MRadS, MRadT}
+import io.suggest.maps.m.{IMRadTFastEq, MRadS, MRadT}
 
 /**
   * Suggest.io
@@ -11,7 +11,7 @@ import io.suggest.maps.m.{MRadS, MRadT}
   */
 object MLamRad {
 
-  implicit def MLamRadFastEq = MRadT.MRadTFastEq
+  implicit object MLamRadFastEq extends IMRadTFastEq[MLamRad]
 
 }
 

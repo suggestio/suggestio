@@ -113,12 +113,12 @@ object MItemTypes extends EnumeratumApply[MItemType] {
 
 
   /** Только типы item'ов, относящиеся к гео-размещениям. */
-  def advGeoTypes             = GeoTag :: GeoPlace :: Nil
-  def advGeoTypeIds           = onlyIds( advGeoTypes )
+  def advGeoTypes     : List[MItemType]     = GeoTag :: GeoPlace :: Nil
+  def advGeoTypeIds                         = onlyIds( advGeoTypes )
 
-  def advDirectTypes          = AdvDirect :: TagDirect :: Nil
+  def advDirectTypes  : List[MItemType]     = AdvDirect :: TagDirect :: Nil
 
-  def adnMapTypes             = AdnNodeMap :: GeoLocCaptureArea :: Nil
+  def adnMapTypes     : List[MItemType]     = AdnNodeMap :: GeoLocCaptureArea :: Nil
 
   override val values = findValues
 

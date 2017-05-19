@@ -82,12 +82,12 @@ class JsMessagesUtil @Inject() (
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
     MsgCodes.`Adv.on.map` :: MsgCodes.`Adv.on.map.hint` ::
-      "Main.screen" ::
-      "GeoTag" ::
-      "_adv.Online.now" ::
+      MsgCodes.`Main.screen` ::
+      MsgCodes.`GeoTag` ::
+      MsgCodes.`_adv.Online.now` ::
       MsgCodes.`Radius` :: MsgCodes.`in.radius.of.0.from.1` ::
       MsgCodes.`N.modules` ::
-      "Adv.on.main.screen" ::
+      MsgCodes.`Adv.on.main.screen` ::
       MsgCodes.`Unable.to.initialize.map` ::
       MsgCodes.`Please.wait` ::
       MsgCodes.`Adv.on.main.screen` :: MsgCodes.`Coverage.area` ::

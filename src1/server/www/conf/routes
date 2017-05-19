@@ -117,6 +117,7 @@ POST /lk/adn/map/price/:nodeId          @controllers.LkAdnMap.getPriceSubmit(nod
 GET  /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNode(nodeId: MEsUuId)
 POST /lk/adn/map/:nodeId                @controllers.LkAdnMap.forNodeSubmit(nodeId: MEsUuId)
 GET  /lk/adn/current/:nodeId            @controllers.LkAdnMap.currentNodeGeoGj(nodeId: MEsUuId)
+GET  /lk/adn/pop/item/:itemId           @controllers.LkAdnMap.currentGeoItemPopup( itemId: Gid_t )
 
 ## lk.bill2
 GET  /lk/cart/:nodeId                   @controllers.LkBill2.cart(nodeId, r: Option[String] ?= None)

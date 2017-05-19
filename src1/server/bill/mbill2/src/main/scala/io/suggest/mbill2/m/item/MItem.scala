@@ -216,6 +216,44 @@ class MItems @Inject() (
       .delete
   }
 
+
+  /** Алиас типа для абстрактной query. */
+  type Query0 = Query[MItems#MItemsTable, MItem, Seq]
+
+  /** Найти item'ы с таким же гео-шейпом, как у указанного item'а.
+    *
+    * @param query0 Какой-то исходный запрос item'ов.
+    * @param itemId id item'а, содержащего необходимый шейп.
+    *
+    * @return Query.
+    */
+  def withSameGeoShapeAs(itemId: Gid_t, query0: Query0 = query): Query0 = {
+    query0
+      .filter { i =>
+        val itemShapeQ = query
+          .filter(_.id === itemId)
+          .map(_.geoShapeStrOpt)
+          .filter(_.isDefined)
+        i.geoShapeStrOpt in itemShapeQ
+      }
+  }
+
+
+  /** Сборка query для поиска текущих item'ов карточки. */
+  def findCurrentForNode(nodeId: String, itypes: TraversableOnce[MItemType], query0: Query0 = query): Query0 = {
+    query0
+      .filter { i =>
+        val x0 = i.withNodeId( nodeId ) &&
+          i.withStatuses( MItemStatuses.advBusy )
+        // Если допустимые типы item'ов перечислены, то добавить соотв.SQL:
+        if (itypes.isEmpty) {
+          x0
+        } else {
+          x0 && i.withTypes( itypes )
+        }
+      }
+  }
+
 }
 
 

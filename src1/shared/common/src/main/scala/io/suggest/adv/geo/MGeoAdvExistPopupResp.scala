@@ -63,8 +63,16 @@ object MGeoItemInfoPayload {
     compositePickler[MGeoItemInfoPayload]
       .addConcreteType[OnMainScreen.type]
       .addConcreteType[InGeoTag]
+      .addConcreteType[OnAdvsMap.type]
+      .addConcreteType[OnGeoCapturing.type]
   }
 }
 sealed trait MGeoItemInfoPayload
+
+// lk-adv-geo
 case object OnMainScreen extends MGeoItemInfoPayload
 case class InGeoTag(tagFace: String) extends MGeoItemInfoPayload
+
+// lk-adn-map
+case object OnAdvsMap extends MGeoItemInfoPayload
+case object OnGeoCapturing extends MGeoItemInfoPayload

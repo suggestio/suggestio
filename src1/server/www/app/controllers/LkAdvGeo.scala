@@ -1,7 +1,5 @@
 package controllers
 
-import java.time.{LocalDate, OffsetDateTime}
-
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import com.google.inject.Inject
@@ -18,7 +16,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.gid.Gid_t
-import io.suggest.mbill2.m.item.MItem
+import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrderStatuses
@@ -27,7 +25,6 @@ import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
 import models.MNode
-import models.adv.geo.cur.MAdvGeoBasicInfo
 import models.adv.geo.tag.MForAdTplArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -67,6 +64,7 @@ class LkAdvGeo @Inject() (
                            cspUtil                         : CspUtil,
                            mdrUtil                         : MdrUtil,
                            lkGeoCtlUtil                    : LkGeoCtlUtil,
+                           mItems                          : MItems,
                            canAccessItem                   : CanAccessItem,
                            canThinkAboutAdvOnMapAdnNode    : CanThinkAboutAdvOnMapAdnNode,
                            canAdvAd                        : CanAdvAd,
@@ -86,9 +84,6 @@ class LkAdvGeo @Inject() (
 
   // Сериализация:
   import pickleSrvUtil.Base64ByteBufEncoder
-
-  /** Макс.кол-во item'ов ресиверов, возвращаемых в одном rcvr-попапе. */
-  private def RCVR_ITEMS_PER_POPUP_LIMIT = 50
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */
@@ -445,109 +440,19 @@ class LkAdvGeo @Inject() (
     * @return Бинарный выхлоп с данными для react-рендера попапа.
     */
   def existGeoAdvsShapePopup(itemId: Gid_t) = csrf.Check {
-    canAccessItem(itemId, edit = false).async { implicit request =>
-      def logPrefix = s"existGeoAdvsShapePopup($itemId):"
-
-      // Доп. проверка прав доступа: вдруг юзер захочет пропихнуть тут какой-то левый (но свой) item.
-      // TODO Вынести суть ассерта на уровень отдельного ActionBuilder'а, проверяющего права доступа по аналогии с CanAccessItemPost.
-      if ( !MItemTypes.advGeoTypes.contains( request.mitem.iType ) )
-        throw new IllegalArgumentException(s"$logPrefix Item itype==${request.mitem.iType}, but here we need GeoPlace: ${MItemTypes.GeoPlace}")
-
-      // Наврядли можно отрендерить в попапе даже это количество...
-      val itemsMax = RCVR_ITEMS_PER_POPUP_LIMIT
-
-      // Запросить у базы инфы по размещениям в текущем месте...
-      val itemsSrc = slick.db
-        .stream {
-          advGeoBillUtil.withSameGeoShapeAs(
-            query   = bill2Util.findCurrentForNodeQuery( request.mitem.nodeId, MItemTypes.advGeoTypes ),
-            itemId  = itemId,
-            limit   = itemsMax
-          )
-        }
-        .toSource
-
-      implicit val ctx = implicitly[Context]
-
-      val rowsMsFut = itemsSrc
-        // Причесать кортежи в нормальные инстансы
-        .map( MAdvGeoBasicInfo.apply )
-        // Сгруппировать и объеденить по периодам размещения.
-        .groupBy(itemsMax, { m => (m.dtStartOpt, m.dtEndOpt) })
-        .fold( List.empty[MAdvGeoBasicInfo] ) { (acc, e) => e :: acc }
-        .map { infos =>
-          // Нужно отсортировать item'ы по алфавиту или id, завернув их в итоге в Row
-          val info0 = infos.head
-          val row = MGeoAdvExistRow(
-            // Диапазон дат, если есть.
-            dateRange = MRangeYmdOpt.applyFrom(
-              dateStartOpt = _offDate2localDateOpt(info0.dtStartOpt)(ctx),
-              dateEndOpt   = _offDate2localDateOpt(info0.dtEndOpt)(ctx)
-            ),
-            // Инфа по item'ам.
-            items = infos
-              .sortBy(m => (m.tagFaceOpt, m.id) )
-              .flatMap { m =>
-                val mgiPlOpt: Option[MGeoItemInfoPayload] = m.iType match {
-                  case MItemTypes.GeoTag =>
-                    m.tagFaceOpt
-                      .map { InGeoTag.apply }
-                  case MItemTypes.GeoPlace  =>
-                    Some( OnMainScreen )
-                  case otherType =>
-                    LOGGER.error(s"$logPrefix Unexpected iType=$otherType for #${m.id}, Dropping adv data.")
-                    None
-                    //throw new IllegalArgumentException("Unexpected iType = " + otherType)
-                }
-
-                if (mgiPlOpt.isEmpty)
-                  LOGGER.warn(s"$logPrefix Dropped adv data: $m")
-
-                for (mgiPl <- mgiPlOpt) yield {
-                  MGeoItemInfo(
-                    itemId        = m.id,
-                    isOnlineNow   = m.status == MItemStatuses.Online,
-                    payload       = mgiPl
-                  )
-                }
-              }
-          )
-          val startMs = info0.dtStartOpt.map(_.toInstant.toEpochMilli)
-          startMs -> row
-        }
-        // Вернуться на уровень основного потока...
-        .mergeSubstreams
-        // Собрать все имеющиеся результаты в единую коллекцию.
-        .runFold( List.empty[(Option[Long], MGeoAdvExistRow)] ) { (acc, row) => row :: acc }
-
-      // Параллельно считаем общее кол-во найденных item'ов, чтобы сравнить их с лимитом.
-      val itemsCountFut = streamsUtil.count(itemsSrc)
-
-      // Сборка непоточного бинарного ответа.
-      for {
-        rowsMs      <- rowsMsFut
-        itemsCount  <- itemsCountFut
-      } yield {
-        // Отсортировать ряды по датам, собрать итоговую модель ответа...
-        val mresp = MGeoAdvExistPopupResp(
-          rows = rowsMs
-            .sortBy(_._1)
-            .map(_._2),
-          haveMore = itemsCount >= itemsMax
-        )
-        LOGGER.trace(s"$logPrefix count=$itemsCount/$itemsMax haveMore=${mresp.haveMore} rows=${mresp.rows}")
-
-        // Сериализовать и вернуть результат:
-        val pickled = PickleUtil.pickle(mresp)
-        Ok( ByteString(pickled) )
-          .withHeaders(CACHE_10)
+    lazy val logPrefix = s"existGeoAdvsShapePopup($itemId):"
+    lkGeoCtlUtil.currentItemPopup(itemId, MItemTypes.advGeoTypes) { m =>
+      m.iType match {
+        case MItemTypes.GeoTag =>
+          m.tagFaceOpt
+            .map { InGeoTag.apply }
+        case MItemTypes.GeoPlace =>
+          Some( OnMainScreen )
+        case otherType =>
+          LOGGER.error(s"$logPrefix Unexpected iType=$otherType for #${m.id}, Dropping adv data.")
+          None
       }
     }
-  }
-
-  private def _offDate2localDateOpt(offDateOpt: Option[OffsetDateTime])(implicit ctx: Context): Option[LocalDate] = {
-    // TODO Выставлять local-date на основе текущего offset'а юзера через ctx.
-    offDateOpt.map(_.toLocalDate)
   }
 
 
@@ -649,8 +554,8 @@ class LkAdvGeo @Inject() (
             rcvrId <- i.rcvrIdOpt
           } {
             val rymd = MRangeYmdOpt.applyFrom(
-              dateStartOpt = _offDate2localDateOpt(i.dateStartOpt)(ctx),
-              dateEndOpt = _offDate2localDateOpt(i.dateEndOpt)(ctx)
+              dateStartOpt = advGeoBillUtil.offDate2localDateOpt(i.dateStartOpt)(ctx),
+              dateEndOpt   = advGeoBillUtil.offDate2localDateOpt(i.dateEndOpt)(ctx)
             )
             acc += rcvrId -> rymd
           }

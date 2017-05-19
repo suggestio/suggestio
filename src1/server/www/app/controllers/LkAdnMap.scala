@@ -4,6 +4,7 @@ import akka.util.ByteString
 import com.google.inject.Inject
 import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.adn.mapf.{MLamForm, MLamFormInit}
+import io.suggest.adv.geo.{OnAdvsMap, OnGeoCapturing}
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsiTgs
@@ -15,6 +16,7 @@ import models.madn.mapf.MAdnMapTplArgs
 import io.suggest.bill.MGetPriceResp.getPriceRespPickler
 import io.suggest.bin.ConvCodecs
 import io.suggest.dt.MAdvPeriod
+import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import models.mproj.ICommonDi
 import models.req.INodeReq
@@ -292,6 +294,22 @@ class LkAdnMap @Inject() (
   def currentNodeGeoGj(nodeId: MEsUuId) = csrf.Check {
     isNodeAdmin(nodeId).async { implicit request =>
       lkGeoCtlUtil.currentNodeItemsGsToGeoJson( nodeId, MItemTypes.adnMapTypes )
+    }
+  }
+
+
+  def currentGeoItemPopup(itemId: Gid_t) = csrf.Check {
+    lazy val logPrefix = s"existGeoAdvsShapePopup($itemId):"
+    lkGeoCtlUtil.currentItemPopup(itemId, MItemTypes.adnMapTypes) { m =>
+      m.iType match {
+        case MItemTypes.AdnNodeMap =>
+          Some( OnAdvsMap )
+        case MItemTypes.GeoLocCaptureArea =>
+          Some( OnGeoCapturing )
+        case otherType =>
+          LOGGER.error(s"$logPrefix Unexpected iType=$otherType for #${m.id}, Ignored item.")
+          None
+      }
     }
   }
 

@@ -31,7 +31,7 @@ import io.suggest.maps.u.MapsUtil
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
 import MRad.MRadFastEq
-import MGeoAdvs.MGeoAdvsFastEq
+import io.suggest.maps.m.MExistGeoS.MExistGeoSFastEq
 // TODO import MAdvPeriod...FastEq
 import MPopupsS.MPopupsFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
@@ -181,12 +181,12 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     val geoAdvsInitAh = new GeoAdvExistInitAh(
       api           = API,
       adIdProxy     = adIdRW,
-      existAdvsRW   = geoAdvRW.zoomRW(_.existResp) { _.withExistResp(_) }
+      existAdvsRW   = geoAdvRW.zoomRW(_.geoJson) { _.withGeoJson(_) }
     )
 
     val geoAdvsPopupAh = new GeoAdvsPopupAh(
       api     = API,
-      modelRW = geoAdvRW
+      modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
