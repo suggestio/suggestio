@@ -221,6 +221,7 @@ class JsMessagesUtil @Inject() (
 
   private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
     MsgCodes.`You.can.place.adn.node.on.map.below` ::
+      MsgCodes.`Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle` ::
       MReasonTypes.AdnMapAdv.msgCodeI18n ::
       MReasonTypes.GeoLocCapture.msgCodeI18n ::
       Nil

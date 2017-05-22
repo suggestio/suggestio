@@ -5,7 +5,7 @@ import diode.react.ReactConnector
 import io.suggest.adn.mapf.MLamFormInit
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.bin.ConvCodecs
-import io.suggest.lk.adn.map.a.{CurrentGeoAh, CurrentGeoPopupAh, LamOptsAh, LamRadAh}
+import io.suggest.lk.adn.map.a._
 import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
@@ -100,10 +100,17 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       mmapRW = zoomRW(_.mmap) { _.withMap(_) }
     )
 
+    val radOptsRW = zoomRW [IRadOpts[MRoot]] (identity) { _.withRadOpts(_) }
     // Реакция на двиганье маркера на карте:
     val radAh = new LamRadAh(
-      modelRW       = zoomRW [IRadOpts[MRoot]] (identity) { _.withRadOpts(_) },
+      modelRW       = radOptsRW,
       priceUpdateFx = priceUpdateEffect
+    )
+
+    val radRw = radOptsRW.zoomRW(_.rad) { _.withRad(_) }
+
+    val radPopupAh = new LamRadPopupAh(
+      modelRW = radRw.zoomRW(_.popup) { _.withPopup(_) }
     )
 
     // Контроллер галочек опций.
@@ -152,6 +159,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       priceAh,
       datePeriodAh,
       optsAh,
+      radPopupAh,
       adv4freeAh
     )
 

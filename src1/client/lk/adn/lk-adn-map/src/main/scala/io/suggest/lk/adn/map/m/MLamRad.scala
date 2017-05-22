@@ -1,7 +1,9 @@
 package io.suggest.lk.adn.map.m
 
+import diode.FastEq
 import io.suggest.geo.MGeoCircle
-import io.suggest.maps.m.{IMRadTFastEq, MRadS, MRadT}
+import io.suggest.maps.m.MRadT.MRadTFastEq
+import io.suggest.maps.m.{MRadS, MRadT}
 
 /**
   * Suggest.io
@@ -11,14 +13,20 @@ import io.suggest.maps.m.{IMRadTFastEq, MRadS, MRadT}
   */
 object MLamRad {
 
-  implicit object MLamRadFastEq extends IMRadTFastEq[MLamRad]
+  implicit object MLamRadFastEq extends FastEq[MLamRad] {
+    override def eqv(a: MLamRad, b: MLamRad): Boolean = {
+      MRadTFastEq.eqv(a, b) &&
+        (a.popup == b.popup)
+    }
+  }
 
 }
 
 
 case class MLamRad(
                     override val circle      : MGeoCircle,
-                    override val state       : MRadS
+                    override val state       : MRadS,
+                    popup                    : Boolean      = false
                   )
   extends MRadT[MLamRad]
 {
@@ -32,5 +40,7 @@ case class MLamRad(
       state  = state2
     )
   }
+
+  def withPopup(shown: Boolean) = copy(popup = shown)
 
 }

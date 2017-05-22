@@ -864,7 +864,8 @@ Current.ad=Current ad
 Current.node=Current node
 x.on.advertisers.map={0} on adverisers map
 On.the.map=On the map
-You.can.place.adn.node.on.map.below=You can place your current node on the advertisers map below.
+You.can.place.adn.node.on.map.below=You can place your current node on the adverting nodes using the map below. Users will be able to advertise inside your node.
+Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle=Your showcase will opened automatically for any user, geolocated inside the circle on the map below.
 Publish.node.on.adv.map=Publishing node on the advertisers map
 Users.geo.location.capturing=Capture of user geolocation
 

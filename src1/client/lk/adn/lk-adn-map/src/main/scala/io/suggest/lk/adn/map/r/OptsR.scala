@@ -39,10 +39,10 @@ object OptsR {
         ^.`class` := Css.Input.STYLED_CHECKBOX
       )
       val inputTypeCheckbox =
-        ^.`type`     := HtmlConstants.Input.checkbox
+        ^.`type`  := HtmlConstants.Input.checkbox
 
       <.div(
-
+        Messages( MsgCodes.`You.can.place.adn.node.on.map.below` ),
         <.br,
 
         // Галочка размещения на карте рекламодателей
@@ -62,6 +62,10 @@ object OptsR {
         ),
 
         <.br,
+        <.br,
+
+
+        Messages( MsgCodes.`Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle` ),
         <.br,
 
         // Галочка размещения на карте геолокации.

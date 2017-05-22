@@ -75,6 +75,8 @@ object MsgCodes {
   val `Unable.to.initialize.map` = "Unable.to.initialize.map"
   val `Publish.node.on.adv.map` = "Publish.node.on.adv.map"
   val `Users.geo.location.capturing` = "Users.geo.location.capturing"
+  val `You.can.place.adn.node.on.map.below` = "You.can.place.adn.node.on.map.below"
+  val `Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle` = "Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle"
 
   val `Add.tags` = "Add.tags"
 
@@ -112,8 +114,6 @@ object MsgCodes {
 
   val `Your.name` = "Your.name"
   val `Phone` = "Phone"
-
-  val `You.can.place.adn.node.on.map.below` = "You.can.place.adn.node.on.map.below"
 
   val `Adv.for.free.without.moderation` = "Adv.for.free.without.moderation"
 

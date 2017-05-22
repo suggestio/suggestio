@@ -10,13 +10,14 @@ import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
 import MMapS.MMapSFastEq
 import io.suggest.bill.price.dsl.IPriceDslTerm
-import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
-import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.dt.period.r.DatePeriodR
 import IRadOpts.IRadOptsFastEq
-import io.suggest.lk.adn.map.m.MLamRad.MLamRadFastEq
 import MExistGeoS.MExistGeoSFastEq
+import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import RadPopupR.PropsValFastEq
+import io.suggest.adn.mapf.opts.MLamOpts
+import io.suggest.common.empty.OptionUtil
 
 /**
   * Suggest.io
@@ -37,7 +38,9 @@ object LamFormR {
                                     mmapC                 : ReactConnectProxy[MMapS],
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
                                     priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
-                                    currentPotC           : ReactConnectProxy[MExistGeoS]
+                                    currentPotC           : ReactConnectProxy[MExistGeoS],
+                                    optsC                 : ReactConnectProxy[MLamOpts],
+                                    radPopupPropsC        : ReactConnectProxy[Option[RadPopupR.PropsVal]]
                                   )
 
 
@@ -53,20 +56,15 @@ object LamFormR {
           Adv4FreeR(a4fOptProx)
         },
 
-        // Верхняя половина, левая колонка:
+        // Верхняя половина, левая колонка
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
-
-          Messages( MsgCodes.`You.can.place.adn.node.on.map.below` ),
-          <.br,
-
-          // Галочки полей mroot.opts.
-          p.wrap(_.opts) { OptsR.apply }
+          // Для OptsR можно использовать wrap, но этот же коннекшен пробрасывается в rad popup, поэтому везде connect.
+          s.optsC { OptsR.apply }
         ),
 
         // Верхняя половина, правая колонка:
         p.wrap(_.datePeriod)( DatePeriodR.apply ),
-
 
         // Рендер географической карты:
         s.mmapC { mapPropsProxy =>
@@ -82,7 +80,11 @@ object LamFormR {
             s.currentPotC { CurrentGeoR.apply },
 
             // Маркер местоположения узла.
-            s.radOptsC { MapCursorR.apply }
+            s.radOptsC { MapCursorR.apply },
+
+            // L-попап при клике по rad cursor.
+
+            s.radPopupPropsC { RadPopupR.apply }
 
           )
         },
@@ -101,11 +103,21 @@ object LamFormR {
 
   val component = ReactComponentB[Props]("LamForm")
     .initialState_P { p =>
+      val optsC = p.connect(_.opts)
       State(
         mmapC         = p.connect(_.mmap),
         radOptsC      = p.connect(identity),
         priceDslOptC  = p.connect(_.price.respDslOpt),
-        currentPotC   = p.connect(_.current)
+        currentPotC   = p.connect(_.current),
+        optsC         = optsC,
+        radPopupPropsC = p.connect { p =>
+          OptionUtil.maybe( p.rad.popup ) {
+            RadPopupR.PropsVal(
+              point = p.rad.circle.center,
+              optsC = optsC
+            )
+          }
+        }
       )
     }
     .renderBackend[Backend]
