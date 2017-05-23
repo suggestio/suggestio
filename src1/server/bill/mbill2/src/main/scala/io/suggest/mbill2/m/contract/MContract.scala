@@ -60,7 +60,7 @@ class MContracts @Inject()(
   override type El_t = MContract
 
   /** Дефолтовый суффикс контракта, может быть использован при создании инстанса MContract. */
-  lazy val SUFFIX_DFLT = configuration.getString("bill.contract.suffix.dflt") getOrElse "CEO"
+  lazy val SUFFIX_DFLT = configuration.getString("bill.contract.suffix.dflt").getOrElse("CEO")
 
   /** slick-описание таблицы контрактов. */
   class MContractsTable(tag: Tag)

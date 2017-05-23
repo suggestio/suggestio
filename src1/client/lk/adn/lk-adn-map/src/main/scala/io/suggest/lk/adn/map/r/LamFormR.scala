@@ -83,7 +83,6 @@ object LamFormR {
             s.radOptsC { MapCursorR.apply },
 
             // L-попап при клике по rad cursor.
-
             s.radPopupPropsC { RadPopupR.apply }
 
           )

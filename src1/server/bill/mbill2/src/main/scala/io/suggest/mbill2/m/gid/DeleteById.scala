@@ -12,12 +12,12 @@ trait DeleteById extends GidModelContainer {
 
   /**
    * Удалить ряд по id.
-   * @param id Ключ ряда.
-   * @return
+   * @param ids Ключ ряда.
+   * @return Кол-во выпиленных рядов.
    */
-  def deleteById(id: Id_t) = {
+  def deleteById(ids: Id_t*): DBIOAction[Int, NoStream, Effect.Write] = {
     query
-      .filter(_.id === id)
+      .filter(_.id inSet ids)
       .delete
   }
 

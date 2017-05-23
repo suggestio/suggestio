@@ -68,7 +68,7 @@ trait LkBillOrders
       }
 
       // Получить item'ы для рендера содержимого текущего заказа.
-      val mitemsFut = bill2Util.orderItems(orderId)
+      val mitemsFut = bill2Util.orderItemsFut(orderId)
       val ctxFut = request.user.lkCtxDataFut.map { implicit lkCtxData =>
         implicitly[Context]
       }
@@ -416,7 +416,7 @@ trait LkBillOrders
       val mitemsFut = cartOptFut.flatMap { cartOpt =>
         cartOpt
           .flatMap(_.id)
-          .fold [Future[Seq[MItem]]] (Future.successful(Nil)) { bill2Util.orderItems }
+          .fold [Future[Seq[MItem]]] (Future.successful(Nil)) { bill2Util.orderItemsFut }
       }
 
       // Параллельно собираем контекст рендера
@@ -580,12 +580,12 @@ trait LkBillOrders
     */
   def cartDeleteItem(itemId: Gid_t, r: String) = csrf.Check {
     canAccessItem(itemId, edit = true).async { implicit request =>
+      lazy val logPrefix = s"cartDeleteItem($itemId):"
+
       // Права уже проверены, item уже получен. Нужно просто удалить его.
       val delFut0 = slick.db.run {
-        mItems.deleteById(itemId)
+        bill2Util.deleteItem( itemId )
       }
-
-      lazy val logPrefix = s"cartDeleteItem($itemId):"
 
       // Подавить возможные ошибки удаления.
       val delFut = delFut0.recover { case ex: Throwable =>

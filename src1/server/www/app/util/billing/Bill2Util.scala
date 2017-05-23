@@ -7,6 +7,7 @@ import io.suggest.bill._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
+import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
@@ -48,6 +49,7 @@ class Bill2Util @Inject() (
   mBalances                       : MBalances,
   mTxns                           : MTxns,
   mNodes                          : MNodes,
+  mDebugs                         : MDebugs,
   val mCommonDi                   : ICommonDi
 )
   extends MacroLogsImpl
@@ -293,22 +295,50 @@ class Bill2Util @Inject() (
 
 
   /** Попытаться удалить ордер, если есть id. */
-  def maybeDeleteOrder(orderIdOpt: Option[Gid_t]): DBIOAction[Int, NoStream, WT] = {
-    orderIdOpt.fold [DBIOAction[Int, NoStream, WT]] {
+  def maybeDeleteOrder(orderIdOpt: Option[Gid_t]): DBIOAction[Int, NoStream, RWT] = {
+    orderIdOpt.fold [DBIOAction[Int, NoStream, RWT]] {
       LOGGER.trace("maybeClearCart(): orderId is empty, skipping")
       DBIO.successful(0)
     } { deleteOrder }
   }
   /** Удалить ордер вместе с item'ами. Такое можно сделать только если не было транзакций по ордеру/item'ам. */
-  def deleteOrder(orderId: Gid_t): DBIOAction[Int, NoStream, WT] = {
+  def deleteOrder(orderId: Gid_t): DBIOAction[Int, NoStream, RWT] = {
     val dbAction = for {
+      orderItemIds  <- mItems.findIdsByOrderId( orderId )
       // Удаляем все item'ы в корзине разом.
-      itemsDeleted  <- mItems.deleteByOrderId(orderId)
+      itemsDeleted  <- mItems.deleteById(orderItemIds: _*)
       // Удаляем ордер корзины, транзакций по ней быть не должно, а больше зависимостей и нет.
       ordersDeleted <- mOrders.deleteById(orderId)
+      // Удалить все дебажные данные для всех удаляемых элементов.
+      debugsDeleted <- mDebugs.deleteByObjectIds( orderId +: orderItemIds )
+
     } yield {
-      LOGGER.debug(s"clearCart($orderId) cartOrderId[$orderId] cleared $itemsDeleted items with $ordersDeleted order.")
+      LOGGER.info(s"clearCart($orderId) cartOrderId[$orderId] cleared. Total deleted:\n $itemsDeleted items\n $ordersDeleted orders\n $debugsDeleted debugs")
       itemsDeleted
+    }
+    dbAction.transactionally
+  }
+
+
+  def deleteItem(itemId: Gid_t): DBIOAction[Int, NoStream, WT] = {
+    val dbAction = for {
+      itemsDeleted  <- mItems.deleteById(itemId)
+      debugsDeleted <- mDebugs.deleteByObjectId( itemId )
+    } yield {
+      LOGGER.debug(s"deleteItem($itemId): Deleted $itemsDeleted items with $debugsDeleted debugs.")
+      itemsDeleted
+    }
+    dbAction.transactionally
+  }
+
+
+  def deleteContract(contractId: Gid_t): DBIOAction[Int, NoStream, WT] = {
+    val dbAction = for {
+      contractsDeleted <- mContracts.deleteById( contractId )
+      debugsDeleted    <- mDebugs.deleteByObjectId( contractId )
+    } yield {
+      LOGGER.info(s"deleteContract($contractId): Deleted $contractsDeleted contracts, $debugsDeleted debugs")
+      contractsDeleted
     }
     dbAction.transactionally
   }
@@ -376,7 +406,7 @@ class Bill2Util @Inject() (
 
 
   /** Найти все item'ы указанного ордера. */
-  def orderItems(orderId: Gid_t): Future[Seq[MItem]] = {
+  def orderItemsFut(orderId: Gid_t): Future[Seq[MItem]] = {
     slick.db.run {
       mItems.findByOrderId(orderId)
     }
@@ -1556,8 +1586,11 @@ class Bill2Util @Inject() (
       }
       if ordersDeleted == 1
 
+      // Удалить любые дебажные вещи, касающиеся удаляемого ордера
+      orderDebugsDeleted <- mDebugs.deleteByObjectId( orderIdForDelete )
+
     } yield {
-      LOGGER.info(s"$logPrefix Deleted $ordersDeleted cart-order.")
+      LOGGER.info(s"$logPrefix Deleted $ordersDeleted cart-order with $orderDebugsDeleted order's debugs.")
       ordersDeleted
     }
     a.transactionally

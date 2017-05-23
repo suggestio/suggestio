@@ -8,7 +8,7 @@ import models.req.{INodeContractReq, INodeReq}
 import play.api.data.Form
 import play.api.mvc.Result
 import util.acl.{IIsSuNodeContract, IsSuNodeNoContract}
-import util.billing.IContractUtilDi
+import util.billing.{IBill2UtilDi, IContractUtilDi}
 import views.html.sys1.bill.contract._
 
 import scala.concurrent.Future
@@ -26,6 +26,7 @@ trait SbNodeContract
   with IContractUtilDi
   with IMContracts
   with IMNodes
+  with IBill2UtilDi
 {
 
   import mCommonDi._
@@ -97,8 +98,9 @@ trait SbNodeContract
             ex  <- nodeSaveFut.failed
           } {
             val contractId = mc2.id.get
-            val deleteAct = mContracts.deleteById(contractId)
-            val deleteFut = slick.db.run(deleteAct)
+            val deleteFut = slick.db.run {
+              bill2Util.deleteContract( contractId )
+            }
             LOGGER.warn("Rollbacking contract save because of node save error", ex)
             if (LOGGER.underlying.isTraceEnabled) {
               deleteFut.onComplete { result =>
@@ -188,8 +190,9 @@ trait SbNodeContract
   def deleteContractSubmit(nodeId: String) = csrf.Check {
     isSuNodeContract(nodeId).async { implicit request =>
       val contractId = request.mcontract.id.get
-      val act = mContracts.deleteById(contractId)
-      val deleteFut = slick.db.run(act)
+      val deleteFut = slick.db.run {
+        bill2Util.deleteContract( contractId )
+      }
 
       lazy val logPrefix = s"deleteContractSubmit($nodeId):"
 

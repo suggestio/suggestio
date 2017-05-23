@@ -19,7 +19,6 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
-import MRoot.MRootFastEq
 import MLamRad.MLamRadFastEq
 import MMapS.MMapSFastEq
 import IRadOpts.IRadOptsFastEq

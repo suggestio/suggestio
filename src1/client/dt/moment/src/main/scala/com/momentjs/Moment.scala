@@ -1,7 +1,7 @@
 package com.momentjs
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSImport
+import scala.scalajs.js.annotation.{JSGlobal, JSImport}
 import scala.scalajs.js.{Date, |}
 
 /**
@@ -68,6 +68,7 @@ object Moment extends js.Object {
 }
 
 
+@JSGlobal
 @js.native
 class Moment extends js.Object {
 

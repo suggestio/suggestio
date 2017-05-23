@@ -40,7 +40,8 @@ object ConvCodecs {
 object IDataConv {
 
   /** Dummy-конвертер как тривиальный пример реализации конвертера. */
-  implicit def DummyDataConv[T]: IDataConv[T,ConvCodecs.Dummy,T] = {
+  implicit def DummyDataConv[T]: IDataConv[T, ConvCodecs.Dummy, T] = {
+    // Нельзя приводить к SAM, scalac не понимает.
     new IDataConv[T, ConvCodecs.Dummy, T] {
       override def convert(from: T): T = from
     }
@@ -53,9 +54,7 @@ object IDataConv {
     */
   implicit object ByteBuf2ByteArrConv extends IDataConv[ByteBuffer, ConvCodecs.Dummy, Array[Byte]] {
     override def convert(bytes: ByteBuffer): Array[Byte] = {
-      val data = Array.ofDim[Byte](bytes.remaining())
-      bytes.get(data)
-      data
+      BinaryUtil.byteBufToByteArray( bytes )
     }
   }
 

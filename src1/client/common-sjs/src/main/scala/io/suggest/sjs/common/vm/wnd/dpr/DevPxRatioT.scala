@@ -1,10 +1,11 @@
-package io.suggest.sjs.common.view.safe.wnd.dpr
+package io.suggest.sjs.common.vm.wnd.dpr
 
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.Window
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -30,6 +31,7 @@ trait DevPxRatioT extends IVm {
 
 
 /** Интерфейс для аккуратного доступа к возможному значению window.devicePixelRatio. */
+@JSGlobal
 @js.native
 sealed class WindowDrpStub extends js.Object {
 

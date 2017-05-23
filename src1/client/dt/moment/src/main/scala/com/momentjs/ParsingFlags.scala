@@ -1,13 +1,15 @@
 package com.momentjs
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.01.17 10:35
-  * Description:
+  * Description: Parsing flags model facade.
   */
+@JSGlobal
 @js.native
 class ParsingFlags extends js.Object {
 

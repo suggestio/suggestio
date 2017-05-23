@@ -6,13 +6,17 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
+import io.suggest.bin.BinaryUtil
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.geo.{CircleGs, MGeoCircle, PointGs}
+import io.suggest.mbill2.m.dbg.{MDbgKeys, MDebug, MDebugs}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
+import io.suggest.mbill2.util.effect.WT
 import io.suggest.model.n2.node.MNode
+import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
@@ -34,6 +38,7 @@ import scala.concurrent.Future
 class LkAdnMapBillUtil @Inject() (
                                    bill2Util                  : Bill2Util,
                                    mItems                     : MItems,
+                                   mDebugs                    : MDebugs,
                                    advUtil                    : AdvUtil,
                                    tfDailyUtil                : TfDailyUtil,
                                    ymdHelpersJvm              : YmdHelpersJvm,
@@ -86,7 +91,7 @@ class LkAdnMapBillUtil @Inject() (
     * @param status Статус новых item'ов.
     * @return DB-экшен добавления заказа в ордер.
     */
-  def addToOrder(orderId: Gid_t, nodeId: String, formRes: MLamForm, status: MItemStatus, abc: IAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(orderId: Gid_t, nodeId: String, formRes: MLamForm, status: MItemStatus, abc: IAdvBillCtx): DBIOAction[Seq[MItem], NoStream, WT] = {
     // Собираем экшен заливки item'ов. Один тег -- один item. А цена у всех одна.
     val priceDsl = getPriceDsl(formRes, abc)
 
@@ -159,11 +164,32 @@ class LkAdnMapBillUtil @Inject() (
                 )
               }
           }
+          .map { _ -> priceTerm }
       }
-      .map { mItems.insertOne }
+      .map { case (itm0, priceTerm) =>
+        for {
+          mItem <- mItems.insertOne(itm0)
+          mDbg  <- {
+            val key = MDbgKeys.PriceDsl
+            val mdbg0 = MDebug(
+              objectId = mItem.id.get,
+              key      = key,
+              vsn      = key.V_CURRENT,
+              data     = BinaryUtil.byteBufToByteArray(
+                PickleUtil.pickle(priceTerm)
+              )
+            )
+            mDebugs.insertOne( mdbg0 )
+          }
+        } yield {
+          LOGGER.trace(s"Saved item $mItem and debug $mDbg")
+          mItem
+        }
+      }
       .toSeq
 
     DBIO.sequence( itemActions )
+      .transactionally
   }
 
 

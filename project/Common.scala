@@ -18,15 +18,15 @@ object Common {
     val GUICE = "4.0"
 
     /** Версия typesafe slick. */
-    val SLICK        = "3.2.0-M2"
+    val SLICK        = "3.2.0"
 
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
       */
-    val SLICK_PG     = "0.15.0-M3"
+    val SLICK_PG     = "0.15.0-RC"
 
     /** Версия play-slick прослойки. */
-    val PLAY_SLICK   = "2.1.0-SNAPSHOT"
+    val PLAY_SLICK   = "2.1.0"
 
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
@@ -82,7 +82,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.5.13"
+  val playVsn         = "2.5.15"
 
 
   /** Версия bouncy castle. */

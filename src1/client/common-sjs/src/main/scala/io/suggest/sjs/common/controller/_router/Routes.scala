@@ -3,6 +3,7 @@ package io.suggest.sjs.common.controller._router
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -16,6 +17,7 @@ import scala.scalajs.js
  */
 
 /** Интерфейс routes.controllers с доступом к static-контроллеру. */
+@JSGlobal
 @js.native
 class Controllers extends js.Object {
 
@@ -38,7 +40,7 @@ sealed trait StaticController extends js.Object {
 }
 
 
-/** Интерфйес роутера ImgController'а. */
+/** Интерфейс роутера ImgController'а. */
 @js.native
 sealed trait ImgController extends js.Object {
 

@@ -1,6 +1,7 @@
 package com.momentjs
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -8,6 +9,7 @@ import scala.scalajs.js
   * Created: 19.01.17 10:31
   * Description: API for momentjs Duration.
   */
+@JSGlobal
 @js.native
 class Duration extends js.Object {
 
