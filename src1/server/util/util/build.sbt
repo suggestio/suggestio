@@ -33,6 +33,9 @@ libraryDependencies ++= {
     PlayImport.ws,
     PlayImport.cache,
 
+    // CompressUtil использует это. И [www] тоже.
+    "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
+
     // akka
     "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     //"com.typesafe.akka" %% "akka-remote" % akkaVsn,

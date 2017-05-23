@@ -65,8 +65,25 @@ class MDebugs @Inject() (
   }
   def deleteByObjectIds(objectId: Traversable[Gid_t]): DBIOAction[Int, NoStream, Effect.Write] = {
     query
-      .filter( _.objectId.inSet( objectId ) )
+      .filter(_.objectId inSet objectId)
       .delete
+  }
+
+
+  /** Поиск по primary key.
+    *
+    * @param objectId id объекта биллинга.
+    * @param key ключ.
+    * @return DB-экшен, опционально возращающий найденный [[MDebug]].
+    */
+  def getByIdKey(objectId: Gid_t, key: MDbgKey): DBIOAction[Option[MDebug], NoStream, Effect.Read] = {
+    query
+      .filter { d =>
+        (d.objectId === objectId) &&
+          (d.keyStr === key.strId)
+      }
+      .result
+      .headOption
   }
 
 }
@@ -89,8 +106,7 @@ case class MDebug(
                   key       : MDbgKey,
                   vsn       : Short,
                   data      : Array[Byte]
-                 )
-{
+                 ) {
 
   override def toString: String = {
     s"${getClass.getSimpleName}($objectId#$key,v$vsn,${data.length}b)"

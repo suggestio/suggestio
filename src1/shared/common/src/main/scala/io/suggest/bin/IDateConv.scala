@@ -33,6 +33,9 @@ object ConvCodecs {
   /** Тип-маркер для base64-кодирования. */
   sealed trait Base64 extends IConvCodec
 
+  /** Gzip сжатие или разжатие. Направление определяется опять же расположением типа ByteBuffer. */
+  sealed trait Gzip extends IConvCodec
+
 }
 
 
