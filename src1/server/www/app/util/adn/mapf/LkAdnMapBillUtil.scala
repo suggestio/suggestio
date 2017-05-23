@@ -6,17 +6,15 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
-import io.suggest.bin.BinaryUtil
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.geo.{CircleGs, MGeoCircle, PointGs}
-import io.suggest.mbill2.m.dbg.{MDbgKeys, MDebug, MDebugs}
+import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.util.effect.WT
 import io.suggest.model.n2.node.MNode
-import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
@@ -24,7 +22,7 @@ import models.mctx.Context
 import models.mdt.MDateStartEnd
 import models.mproj.ICommonDi
 import util.adv.AdvUtil
-import util.billing.{Bill2Util, TfDailyUtil}
+import util.billing.{Bill2Util, BillDebugUtil, TfDailyUtil}
 
 import scala.concurrent.Future
 
@@ -37,6 +35,7 @@ import scala.concurrent.Future
 @Singleton
 class LkAdnMapBillUtil @Inject() (
                                    bill2Util                  : Bill2Util,
+                                   billDebugUtil              : BillDebugUtil,
                                    mItems                     : MItems,
                                    mDebugs                    : MDebugs,
                                    advUtil                    : AdvUtil,
@@ -169,20 +168,9 @@ class LkAdnMapBillUtil @Inject() (
       .map { case (itm0, priceTerm) =>
         for {
           mItem <- mItems.insertOne(itm0)
-          mDbg  <- {
-            val key = MDbgKeys.PriceDsl
-            val mdbg0 = MDebug(
-              objectId = mItem.id.get,
-              key      = key,
-              vsn      = key.V_CURRENT,
-              data     = BinaryUtil.byteBufToByteArray(
-                PickleUtil.pickle(priceTerm)
-              )
-            )
-            mDebugs.insertOne( mdbg0 )
-          }
+          mDbg  <- billDebugUtil.savePriceDslDebug( mItem.id.get, priceTerm )
         } yield {
-          LOGGER.trace(s"Saved item $mItem and debug $mDbg")
+          LOGGER.trace(s"Saved item $mItem and $mDbg debugs.")
           mItem
         }
       }

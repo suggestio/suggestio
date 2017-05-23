@@ -13,6 +13,7 @@ import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.mbill2.util.effect.WT
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.dt.DateTimeUtil
@@ -24,7 +25,7 @@ import models.mproj.ICommonDi
 import models.req.IAdProdReq
 import util.adn.NodesUtil
 import util.adv.AdvUtil
-import util.billing.Bill2Util
+import util.billing.{Bill2Util, BillDebugUtil}
 
 import scala.concurrent.Future
 
@@ -37,14 +38,15 @@ import scala.concurrent.Future
   * Через год сюда приехал биллинг ресиверов в попапах.
   */
 class AdvGeoBillUtil @Inject() (
-  bill2Util                           : Bill2Util,
-  ymdHelpersJvm                       : YmdHelpersJvm,
-  advUtil                             : AdvUtil,
-  nodesUtil                           : NodesUtil,
-  mNodes                              : MNodes,
-  protected val mItems                : MItems,
-  protected val mCommonDi             : ICommonDi
-)
+                                 bill2Util                           : Bill2Util,
+                                 billDebugUtil                       : BillDebugUtil,
+                                 ymdHelpersJvm                       : YmdHelpersJvm,
+                                 advUtil                             : AdvUtil,
+                                 nodesUtil                           : NodesUtil,
+                                 mNodes                              : MNodes,
+                                 protected val mItems                : MItems,
+                                 protected val mCommonDi             : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 
@@ -162,7 +164,7 @@ class AdvGeoBillUtil @Inject() (
     *                Например, выхлоп [[util.billing.Bill2Util.ensureCartOrder()]].
     * @return Фьючерс c результатом.
     */
-  def addToOrder(adId: String, orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, Effect.Write] = {
+  def addToOrder(adId: String, orderId: Gid_t, status: MItemStatus, abc: MGeoAdvBillCtx): DBIOAction[Seq[MItem], NoStream, WT] = {
     lazy val logPrefix = s"addToOrder($orderId)[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix status=$status, ${abc.rcvrsMap.size} rcvrs, ${abc.mcalsCtx.calsMap.size} calendars")
 
@@ -292,6 +294,7 @@ class AdvGeoBillUtil @Inject() (
                   }
               }
           }
+          .map { _ -> term2 }
           .orElse {
             // Какая-то логическая ошибка в коде: этот метод не понимает выхлоп из calcAdvGeoPrice().
             throw new UnsupportedOperationException(s"Not supported price term: $term2 Please check current billing class code.")
@@ -299,10 +302,19 @@ class AdvGeoBillUtil @Inject() (
             //None
           }
       }
-      .map { mItems.insertOne }
+      .map { case (itm, priceTerm) =>
+        for {
+          mItem2      <- mItems.insertOne(itm)
+          dbgCount    <- billDebugUtil.savePriceDslDebug( mItem2.id.get, priceTerm )
+        } yield {
+          LOGGER.trace(s"$logPrefix Item $mItem2 inserted with $dbgCount debugs")
+          mItem2
+        }
+      }
       .toSeq
 
     DBIO.sequence(itemActions)
+      .transactionally
   }
 
 
