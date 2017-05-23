@@ -1,8 +1,9 @@
 package models.adv.build
 
+import io.suggest.mbill2.util.effect.RWT
 import io.suggest.model.n2.node.IMNodes
 import models._
-import slick.dbio.{DBIOAction, Effect, NoStream}
+import slick.dbio.{DBIOAction, NoStream}
 
 import scala.concurrent.Future
 
@@ -12,11 +13,10 @@ import scala.concurrent.Future
   * @param dbActions Аккамулятор DBIO Actions, которые необходимо будет в ходе транзакции накатить.
   */
 case class Acc(
-  mad         : MNode,
-  dbActions   : List[DBIOAction[_, NoStream, Effect.Write]] = Nil,
-  ctxOuterFut : Future[MCtxOuter] = MCtxOuter.emptyFut
+                mad         : MNode,
+                dbActions   : List[DBIOAction[_, NoStream, RWT]] = Nil,
+                ctxOuterFut : Future[MCtxOuter] = MCtxOuter.emptyFut
 )
-
 
 
 /** Трейт для поддержки TryUpdateBuilder'а под нужды Adv-подсистемы.

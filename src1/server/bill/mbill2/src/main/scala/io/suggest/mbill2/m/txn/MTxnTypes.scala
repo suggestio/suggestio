@@ -31,6 +31,9 @@ object MTxnTypes extends EnumMaybeWithName with EnumApply {
     * Юзер оплатил на счёт CBCA в ПС, и ему закидываются деньги на баланс в S.io. */
   val PaySysTxn = new Val("s")
 
+  /** Частичный возврат средств за прерванный, отчасти уже потраченный, item. */
+  val InterruptPartialRefund = new Val("a")
+
   /** Возмещение денег за некачественно-оказанные услуги. */
   //val Refund   = new Val("e")
 

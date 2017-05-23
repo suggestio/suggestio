@@ -1,5 +1,7 @@
 package io.suggest.mbill2.m.gid
 
+import slick.sql.SqlAction
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -15,7 +17,7 @@ trait GetById extends GidModelContainer {
    * @param id id ряда.
    * @return Slick-экшен получения ряда.
    */
-  def getById(id: Id_t) = {
+  def getById(id: Id_t): SqlAction[Option[El_t], NoStream, Effect.Read] = {
     query
       .filter(_.id === id)
       .result

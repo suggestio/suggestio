@@ -28,8 +28,12 @@ object MDbgKeys extends Enum[MDbgKey] {
     override def strId = "p"
 
     // Версии API
+    /** Начальное API: просто выхлоп из pickle(). */
     def V_1         : DbgVsn_t  = 1.toShort
-    def V_CURRENT   : DbgVsn_t  = V_1
+    /** Теперь выхлоп из pickle(), пожатый gzip'ом. */
+    def V_2         : DbgVsn_t  = (V_1 + 1).toShort
+    /** Текущая (последняя) версия API. */
+    def V_CURRENT   : DbgVsn_t  = V_2
 
   }
 

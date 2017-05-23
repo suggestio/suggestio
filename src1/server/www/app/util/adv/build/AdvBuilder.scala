@@ -132,9 +132,7 @@ trait IAdvBuilder
   def installSql(items: Iterable[MItem]): IAdvBuilder = {
 
     val itypes = supportedItemTypes
-    val (ditems, others) = items.partition { i =>
-      itypes.contains(i.iType)
-    }
+    val (ditems, others) = advBuilderUtil.partitionItemsByType(items, itypes: _*)
 
     lazy val logPrefix = s"installSql(${items.size}):"
 

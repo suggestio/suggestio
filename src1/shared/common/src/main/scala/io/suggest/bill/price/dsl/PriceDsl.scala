@@ -133,6 +133,15 @@ sealed trait IPriceDslTerm extends NonEmpty {
       .flatMap(_.dates)
   }
 
+  /** Рекурсивная фильтрация содержимого терма по датам.
+    *
+    * @param f Функция-предикат.
+    * @return Опциональный результат с новым термом.
+    *         Возможна ситуация, что None, если все даты будут отфильтрованы,
+    *         и это будет обнаружено на верхнем уровне рекурсии.
+    */
+  def filterDates(f: Option[MYmd] => Boolean): Option[IPriceDslTerm]
+
   override def isEmpty = false
 
   def maybeMapper: Option[Mapper] = None
@@ -166,6 +175,10 @@ case class BaseTfPrice(
 
   override def dates: Iterator[MYmd] = {
     date.iterator
+  }
+
+  override def filterDates(f: (Option[MYmd]) => Boolean): Option[BaseTfPrice] = {
+    OptionUtil.maybe( f(date) )(this)
   }
 
 }
@@ -224,6 +237,13 @@ final case class Mapper(
   }
 
   override def maybeMapper = Some(this)
+
+  override def filterDates(f: (Option[MYmd]) => Boolean): Option[Mapper] = {
+    // Дат на этом уровне нет, пробрасываем фильтрацию на нижний уровень.
+    for (und2 <- underlying.filterDates(f)) yield {
+      withUnderlying(und2)
+    }
+  }
 
 }
 
@@ -290,6 +310,16 @@ case class Sum(
     this2.withFinalPrice(
       Some( f( this2.price ) )
     )
+  }
+
+  override def filterDates(f: (Option[MYmd]) => Boolean): Option[Sum] = {
+    // Фильтрануть дочерние элементы.
+    val chs2 = children
+      .flatMap( _.filterDates(f) )
+    // Если дочерних элементов не осталось после фильтрации, то вернуть None.
+    OptionUtil.maybe( chs2.nonEmpty ) {
+      withChildren(chs2)
+    }
   }
 
 }

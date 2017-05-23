@@ -1,6 +1,7 @@
 package util.adv.build
 
 import com.google.inject.{Inject, Singleton}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -11,6 +12,7 @@ import models.MPredicate
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 import util.adv.geo.tag.GeoTagsUtil
+import util.billing.BillDebugUtil
 
 import scala.concurrent.Future
 
@@ -22,9 +24,10 @@ import scala.concurrent.Future
   */
 @Singleton
 class AdvBuilderUtil @Inject() (
-  geoTagsUtil : GeoTagsUtil,
-  mCommonDi   : ICommonDi
-)
+                                 geoTagsUtil      : GeoTagsUtil,
+                                 billDebugUtil    : BillDebugUtil,
+                                 mCommonDi        : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 
@@ -114,13 +117,13 @@ class AdvBuilderUtil @Inject() (
   /** Дробление списка item'ов на два списка по совпадению с запрашиваемым itype.
     *
     * @param items item'ы.
-    * @param itype Интересующий тип item'ов.
+    * @param itypes Интересующий тип или типы item'ов.
     * @return Подходящие и неподходящие item'ы.
     */
-  def partitionItemsByType(items: Iterable[MItem], itype: MItemType): (Iterable[MItem], Iterable[MItem]) = {
+  def partitionItemsByType(items: Iterable[MItem], itypes: MItemType*): (Iterable[MItem], Iterable[MItem]) = {
     items.partition { i =>
       // Интересуют только item'ы с искомым значением в поле itype.
-      i.iType == itype
+      itypes.contains( i.iType )
       // Тут была проверка на mitem.gsOpt, но это защита от самого себя и она была выпилена.
     }
   }
@@ -183,6 +186,50 @@ class AdvBuilderUtil @Inject() (
 
     } else {
       b0
+    }
+  }
+
+
+  /** Логика для installSql() для поиска и прерывания всех item'ов, аналогичных текущим по типам и nodeIds.
+    *
+    * @param b0 Текущий инстанс [[IAdvBuilder]].
+    * @param items Все item'ы, переданные в installSql().
+    * @param itypes Только типы item'ов, котроые нуждаются в проработке.
+    * @return Обновлённый инстанс [[IAdvBuilder]].
+    */
+  def interruptItemsFor(b0: IAdvBuilder, items: Iterable[MItem], itypes: MItemType*): IAdvBuilder = {
+    // Ищем id узлов, которые надо будет обработать.
+    val myNodeIds = items.iterator
+      .filter { i =>
+        itypes.contains(i.iType)
+      }
+      .map(_.nodeId)
+      .toSet
+
+    if (myNodeIds.nonEmpty) {
+      LOGGER.trace(s"installSql(): Will search for online items for nodes#[${myNodeIds.mkString(", ")}] to interruption...")
+      b0.withAccUpdated { acc0 =>
+        val dbAction = billDebugUtil.findAndInterruptItemsLike(myNodeIds, itypes: _*)
+        acc0.copy(
+          // ПЕРЕД выполнением остальных экшенов надо выполнить данную зачистку.
+          dbActions = dbAction :: acc0.dbActions
+        )
+      }
+    } else {
+      b0
+    }
+  }
+
+
+  /** Выбрать наиболее стартующий сейчас item, проигнорив все остальные. */
+  def lastStartedItem(items: Iterable[MItem]): Option[MItem] = {
+    // Отсеять item'ы без dateStart.
+    val itemsIter = items
+      .iterator
+      .filter(_.dateStartOpt.nonEmpty)
+    OptionUtil.maybe( itemsIter.nonEmpty ) {
+      // Ищем по dateStart. Фильтрация по наличию dateStart уже сделана выше, поэтому .get безопасен тут.
+      itemsIter.maxBy( _.dateStartOpt.get.toInstant.toEpochMilli )
     }
   }
 

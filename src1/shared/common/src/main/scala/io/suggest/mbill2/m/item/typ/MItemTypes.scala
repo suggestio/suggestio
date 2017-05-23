@@ -58,6 +58,15 @@ sealed abstract class MItemType extends EnumEntry with IStrId {
     */
   def isDebt: Boolean = true
 
+  /** Можно ли "прерывать" item данного типа?
+    * Прерывание item'а: это когда в online-режиме происходит коррекция dateEnd с частичным возвратом средств.
+    *
+    * По идее, изначально допускается прерывание любых adv и adn-item'ов.
+    * Но реализовано на том этапе только прерывание adn-item'ов в lk-adn-map-форме при перезаписи размещения.
+    * Нельзя прерывать всякие не-sio товары и услуги.
+    */
+  def isInterruptable: Boolean
+
 }
 
 
@@ -71,16 +80,19 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     */
   case object AdvDirect extends MItemType {
     override def strId = "a"
+    override def isInterruptable = true
   }
 
   /** Заказ геотеггинга для карточки. Размещение по шейпу и id узла-тега-ресивера. */
   case object GeoTag extends MItemType {
     override def strId = "t"
+    override def isInterruptable = true
   }
 
   /** Покупка размещения в каком-то месте на карте: по геошейпу без ресиверов. */
   case object GeoPlace extends MItemType {
     override def strId = "g"
+    override def isInterruptable = true
   }
 
   /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
@@ -88,11 +100,13 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     override def strId = "m"
     /** Это размещение узлов ЛК на карте. К карточкам это не относится никак. */
     override def isAdv = false
+    override def isInterruptable = true
   }
 
   /** Прямое размещение тега на узле. */
   case object TagDirect extends MItemType {
     override def strId = "d"
+    override def isInterruptable = true
   }
 
   /** Юзер просто пополняет sio-баланс, перекачивая на него деньги из внешнего источника денег. */
@@ -104,11 +118,13 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     override def isAdv = false
     /** Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется. */
     override def isApprovable = false
+    override def isInterruptable = false
   }
 
   case object GeoLocCaptureArea extends MItemType {
     override def strId = "l"
     override def isAdv = false
+    override def isInterruptable = true
   }
 
 
@@ -119,6 +135,8 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   def advDirectTypes  : List[MItemType]     = AdvDirect :: TagDirect :: Nil
 
   def adnMapTypes     : List[MItemType]     = AdnNodeMap :: GeoLocCaptureArea :: Nil
+
+  def interruptable = values.filter(_.isInterruptable)
 
   override val values = findValues
 
