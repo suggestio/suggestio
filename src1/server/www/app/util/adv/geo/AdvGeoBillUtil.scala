@@ -302,15 +302,7 @@ class AdvGeoBillUtil @Inject() (
             //None
           }
       }
-      .map { case (itm, priceTerm) =>
-        for {
-          mItem2      <- mItems.insertOne(itm)
-          dbgCount    <- billDebugUtil.savePriceDslDebug( mItem2.id.get, priceTerm )
-        } yield {
-          LOGGER.trace(s"$logPrefix Item $mItem2 inserted with $dbgCount debugs")
-          mItem2
-        }
-      }
+      .map { billDebugUtil.insertItemWithPriceDebug }
       .toSeq
 
     DBIO.sequence(itemActions)

@@ -165,15 +165,7 @@ class LkAdnMapBillUtil @Inject() (
           }
           .map { _ -> priceTerm }
       }
-      .map { case (itm0, priceTerm) =>
-        for {
-          mItem <- mItems.insertOne(itm0)
-          mDbg  <- billDebugUtil.savePriceDslDebug( mItem.id.get, priceTerm )
-        } yield {
-          LOGGER.trace(s"Saved item $mItem and $mDbg debugs.")
-          mItem
-        }
-      }
+      .map { billDebugUtil.insertItemWithPriceDebug }
       .toSeq
 
     DBIO.sequence( itemActions )
