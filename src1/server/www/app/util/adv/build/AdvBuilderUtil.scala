@@ -3,7 +3,7 @@ package util.adv.build
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
-import io.suggest.mbill2.m.item.typ.MItemType
+import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.util.logs.MacroLogsImpl
@@ -77,10 +77,10 @@ class AdvBuilderUtil @Inject() (
     val acc2Fut = for {
       acc0 <- b0.accFut
     } yield {
-      val mad2 = acc0.mad.copy(
-        edges = acc0.mad.edges.copy(
+      val mad2 = acc0.mnode.withEdges(
+        acc0.mnode.edges.copy(
           out = {
-            val iter = acc0.mad
+            val iter = acc0.mnode
               .edges
               // Все теги и геотеги идут через биллинг. Чистка равносильна стиранию всех эджей TaggedBy.
               .withoutPredicateIter( preds: _* )
@@ -89,9 +89,7 @@ class AdvBuilderUtil @Inject() (
         )
       )
       // Сохранить почищенную карточку в возвращаемый акк.
-      acc0.copy(
-        mad = mad2
-      )
+      acc0.withMnode( mad2 )
     }
     b0.withAcc( acc2Fut )
   }
@@ -172,11 +170,11 @@ class AdvBuilderUtil @Inject() (
 
       // Собрать новую карточку, аккамулятор, билдер...
       b0.withAccUpdated { acc0 =>
-        acc0.copy(
-          mad = acc0.mad.withEdges(
-            acc0.mad.edges.copy(
+        acc0.withMnode(
+          mnode = acc0.mnode.withEdges(
+            acc0.mnode.edges.copy(
               out = {
-                val iter = acc0.mad.edges.iterator ++ Seq(e)
+                val iter = acc0.mnode.edges.iterator ++ Seq(e)
                 MNodeEdges.edgesToMap1(iter)
               }
             )
@@ -198,26 +196,49 @@ class AdvBuilderUtil @Inject() (
     * @return Обновлённый инстанс [[IAdvBuilder]].
     */
   def interruptItemsFor(b0: IAdvBuilder, items: Iterable[MItem], itypes: MItemType*): IAdvBuilder = {
-    // Ищем id узлов, которые надо будет обработать.
-    val myNodeIds = items.iterator
-      .filter { i =>
-        itypes.contains(i.iType)
-      }
-      .map(_.nodeId)
-      .toSet
+    b0.withAccUpdated { acc0 =>
+      lazy val logPrefix = s"interruptItemsFor(i##[${items.iterator.flatMap(_.id).mkString(",")}], t=[${itypes.mkString(",")}])[${System.currentTimeMillis()}]:"
+      val needInterruptItypes = itypes.toSet -- acc0.interruptedTypes
 
-    if (myNodeIds.nonEmpty) {
-      LOGGER.trace(s"installSql(): Will search for online items for nodes#[${myNodeIds.mkString(", ")}] to interruption...")
-      b0.withAccUpdated { acc0 =>
-        val dbAction = billDebugUtil.findAndInterruptItemsLike(myNodeIds, itypes: _*)
-        acc0.copy(
-          // ПЕРЕД выполнением остальных экшенов надо выполнить данную зачистку.
-          dbActions = dbAction :: acc0.dbActions
-        )
+      if (needInterruptItypes.isEmpty) {
+        LOGGER.trace(s"$logPrefix Nothing to do: no more itypes.")
+        acc0
+
+      } else {
+        LOGGER.trace(s"$logPrefix Only need to interrupt ${needInterruptItypes.size} types: ${needInterruptItypes.mkString(", ")}")
+        // Ищем id узлов, которые надо будет обработать.
+        val myNodeIds = items
+          .iterator
+          .filter { i =>
+            needInterruptItypes.contains( i.iType )
+          }
+          .map(_.nodeId)
+          .toSet
+
+        if (myNodeIds.nonEmpty) {
+          LOGGER.debug(s"$logPrefix Will search for online items for nodes#[${myNodeIds.mkString(", ")}] to interruption...")
+          val dbAction = billDebugUtil.findAndInterruptItemsLike(myNodeIds, itypes: _*)
+          acc0
+            .withDbActions(
+              // ПЕРЕД выполнением остальных экшенов надо выполнить данную зачистку.
+              dbActions = dbAction :: acc0.dbActions
+            )
+            .withInterruptedTypes(
+              acc0.interruptedTypes ++ needInterruptItypes
+            )
+        } else {
+          LOGGER.trace(s"$logPrefix No related nodes found for itypes [${needInterruptItypes.mkString(", ")}]")
+          acc0
+        }
       }
-    } else {
-      b0
     }
+  }
+
+  /** Враппер над interruptItemsFor() для adn-items.
+    * Обычно надо отменять сразу все adn-размещения пачкой.
+    */
+  def interruptAdnMapItemsFor(b0: IAdvBuilder, items: Iterable[MItem]): IAdvBuilder = {
+    interruptItemsFor(b0, items, MItemTypes.adnMapTypes: _*)
   }
 
 

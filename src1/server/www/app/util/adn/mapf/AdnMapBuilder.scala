@@ -50,8 +50,8 @@ trait AdnMapBuilder extends IAdvBuilder {
 
   override def installSql(items: Iterable[MItem]): IAdvBuilder = {
     val b0 = super.installSql(items)
-    // Предварительно завершить все остальные текущие item'ы текущего типа с частичным возвратом средств или без оного.
-    di.advBuilderUtil.interruptItemsFor(b0, items, _ITYPE)
+    // Предварительно завершить все остальные adn-item'ы с частичным возвратом средств или без оного.
+    di.advBuilderUtil.interruptAdnMapItemsFor(b0, items)
   }
 
 }

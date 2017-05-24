@@ -87,13 +87,13 @@ trait IAdvBuilder
   def finalizeBilling(statuses: MItemStatus*): IAdvBuilder = {
     withAccUpdated { acc0 =>
       val dbAction = di.bill2Util.justFinalizeItemsLike(
-        nodeId    = acc0.mad.id.get,
+        nodeId    = acc0.mnode.id.get,
         iTypes    = supportedItemTypes,
         statuses  = statuses,
         now       = now
       )
-      acc0.copy(
-        dbActions = dbAction :: acc0.dbActions
+      acc0.withDbActions(
+        dbAction :: acc0.dbActions
       )
     }
   }
@@ -160,7 +160,7 @@ trait IAdvBuilder
           }
           dbAction :: dbas0
         }
-        acc0.copy(
+        acc0.withDbActions(
           dbActions = dbas1
         )
       }
@@ -207,7 +207,7 @@ trait IAdvBuilder
 
       // Собрать новый акк.
       withAccUpdated { acc0 =>
-        acc0.copy(
+        acc0.withDbActions(
           dbActions = dbAction :: acc0.dbActions
         )
       }

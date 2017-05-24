@@ -36,17 +36,24 @@ trait GeoLocBuilder extends IAdvBuilder {
 
     val this2 = super.installNode(other)
 
-    di.advBuilderUtil.geoInstallNode(
-      b0        = this2,
-      items     = gItems,
-      predicate = _PRED
-    )
+    if (gItems.isEmpty) {
+      this2
+    } else {
+      di.advBuilderUtil.geoInstallNode(
+        b0        = this2,
+        // Интересует только самый последний item
+        items     = di.advBuilderUtil.lastStartedItem(gItems).toList,
+        predicate = _PRED
+      )
+    }
   }
 
 
-  // TODO Надо брать только самую последнюю точку размещения и с ней плясать в installNode().
-  // Предыдущие размещения закрывать с частичным возвратом средств.
-  // А не накатывать всем покупками такого типа. См.TODO по installSql() ниже.
-  // TODO Запилить installSql() или что-то такое, который откатывает все прошлые размещения, возвращает с них неизрасходованное бабло назад.
+  /** Аналогично [[AdnMapBuilder]], надо дропать предыдущие размещения. */
+  override def installSql(items: Iterable[MItem]): IAdvBuilder = {
+    val b0 = super.installSql(items)
+    // Предварительно завершить все остальные adn-item'ы с частичным возвратом средств или без оного.
+    di.advBuilderUtil.interruptAdnMapItemsFor(b0, items)
+  }
 
 }

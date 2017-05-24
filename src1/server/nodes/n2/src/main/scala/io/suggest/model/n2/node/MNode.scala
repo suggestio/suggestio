@@ -281,7 +281,7 @@ case class MNode(
     guessDisplayNameOrId.getOrElse(or)
   }
 
-  def withEdges(edges2: MNodeEdges) = copy(edges = edges2)
+  def withEdges(edges: MNodeEdges) = copy(edges = edges)
 
   def withId(idOpt: Option[String]) = copy(id = idOpt)
 

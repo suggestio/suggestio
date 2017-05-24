@@ -51,7 +51,8 @@ object MapCursorR {
       State(
         pointOptC  = p.connect { radOpts =>
           OptionUtil.maybe( radOpts.opts.onAdvMap && !radOpts.opts.onGeoLoc ) {
-            radOpts.rad.circle.center
+            radOpts.rad.state.centerDragging
+              .getOrElse( radOpts.rad.circle.center )
           }
         },
         mRadTOptC = p.connect { radOpts =>

@@ -205,7 +205,7 @@ abstract class AdvsUpdate
     // Нужны только item'ы, которые поддерживаются adv-билдерами
     val acc0Fut = for (madOpt <- madOptFut) yield {
       Acc(
-        mad         = madOpt.get,
+        mnode       = madOpt.get,
         ctxOuterFut = _builderCtxOuterFut
       )
     }
@@ -237,7 +237,7 @@ abstract class AdvsUpdate
 
     } yield {
       trace(s"$logPrefix Done")
-      acc2.mad
+      acc2.mnode
     }
 
     // Сохранить изменения во всех моделях, вернув итоговый фьючерс.

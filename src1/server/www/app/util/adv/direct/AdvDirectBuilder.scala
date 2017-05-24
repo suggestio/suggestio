@@ -74,9 +74,9 @@ trait AdvDirectBuilder extends IAdvBuilder {
     val accFut2 = for {
       acc0 <- super.clearNode(full).accFut
     } yield {
-      acc0.copy(
-        mad = acc0.mad.copy(
-          edges = acc0.mad.edges.copy(
+      acc0.withMnode(
+        mnode = acc0.mnode.withEdges(
+          acc0.mnode.edges.copy(
             out = {
               // Полная чистка удаляет всех ресиверов. Обычная -- касается только AdvDirect.
               val preds = if (full) {
@@ -86,7 +86,7 @@ trait AdvDirectBuilder extends IAdvBuilder {
               }
               // Собрать новую карту эджей.
               MNodeEdges.edgesToMap1(
-                acc0.mad.edges
+                acc0.mnode.edges
                   .withoutPredicateIter( preds : _* )
               )
             }
@@ -127,10 +127,12 @@ trait AdvDirectBuilder extends IAdvBuilder {
         }
 
       this2.withAccUpdated { acc0 =>
-        acc0.copy(
-          mad = acc0.mad.copy(
-            edges = acc0.mad.edges.copy(
-              out = MNodeEdges.edgesToMap1( acc0.mad.edges.iterator ++ edgesIter )
+        acc0.withMnode(
+          acc0.mnode.withEdges(
+            acc0.mnode.edges.copy(
+              out = MNodeEdges.edgesToMap1(
+                acc0.mnode.edges.iterator ++ edgesIter
+              )
             )
           )
         )

@@ -99,10 +99,12 @@ trait AgtBuilder extends IAdvBuilder {
               )
             }
 
-          acc0.copy(
-            mad = acc0.mad.withEdges(
-              acc0.mad.edges.copy(
-                out = MNodeEdges.edgesToMap1(acc0.mad.edges.iterator ++ agtEdgesIter)
+          acc0.withMnode(
+            mnode = acc0.mnode.withEdges(
+              acc0.mnode.edges.copy(
+                out = MNodeEdges.edgesToMap1(
+                  acc0.mnode.edges.iterator ++ agtEdgesIter
+                )
               )
             )
           )
@@ -157,7 +159,7 @@ trait AgtBuilder extends IAdvBuilder {
             }
             dbAction :: dbas0
           }
-          acc0.copy(
+          acc0.withDbActions(
             dbActions = dbas1
           )
         }

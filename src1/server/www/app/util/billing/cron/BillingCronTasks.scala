@@ -40,7 +40,7 @@ class BillingCronTasks @Inject()(
   /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
   private def CHECK_ADVS_OK_DURATION: FiniteDuration = {
     configuration.getInt("bill.cron.check.every.seconds")
-      .getOrElse(60)
+      .getOrElse(20)
       .seconds
   }
 
@@ -53,14 +53,6 @@ class BillingCronTasks @Inject()(
     info("enabled = " + enabled)
     if (enabled) {
       val every = CHECK_ADVS_OK_DURATION
-
-      /*val applyOldReqs = MCronTask(
-        startDelay = 3.seconds,
-        every = every,
-        displayName = "enableOfflineAdvs()"
-      ) {
-        enableOfflineAdvs()
-      }*/
 
       val depubExpired = MCronTask(
         startDelay = 5.seconds,

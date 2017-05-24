@@ -155,7 +155,7 @@ class BillDebugUtil @Inject() (
         mitem.iType.isInterruptable &&
           (mitem.status == MItemStatuses.Online) &&
           // НЕ допускаем без даты окончания, т.к. это может быть нечто ошибочное.
-          mitem.dateEndOpt.exists { _.isBefore(dateEnd) }
+          mitem.dateEndOpt.exists { de => !de.isBefore(dateEnd) }
       }
 
       // Надо фильтрануть priceDsl по датам, не трогая остальных частей.
@@ -201,7 +201,7 @@ class BillDebugUtil @Inject() (
         val currItemSql = mItems.query
           .filter( _.withIds(itemId))
 
-        priceDslOpt2.fold [DBIOAction[_, NoStream, RW]] {
+        priceDslOpt2.fold [DBIOAction[_, NoStream, RWT]] {
           LOGGER.debug(s"$logPrefix PriceDSL filtered into None. No money need to be returned to user. Keeping item price as-is.")
           // Обновить некоторые поля у item'а
           for {
@@ -212,14 +212,15 @@ class BillDebugUtil @Inject() (
             }
             if itemsUpdated == 1
           } yield {
-            LOGGER.trace(s"$logPrefix Just finished item ")
+            LOGGER.trace(s"$logPrefix Just moved item#$itemId dateEnd => $dateEnd")
             itemsUpdated
           }
-          DBIO.successful( None )
 
         } { priceDsl2 =>
-          val price2 = priceDsl2.price
-          LOGGER.debug(s"$logPrefix PriceDSL mutated from ${mitem.price} into $price2 . Will return money diff to user balance and update item price.")
+          // Вычислить новую цену и разницу в цене
+          val price2     = priceDsl2.price
+          val diffAmount = mitem.price.amount - price2.amount
+          LOGGER.debug(s"$logPrefix PriceDSL mutated from ${mitem.price} into $price2 . Will return money diff=$diffAmount to user balance and update item price.")
 
           // Получить текущий баланс юзера по номеру контракта и валюте
           for {
@@ -227,8 +228,6 @@ class BillDebugUtil @Inject() (
             contractId    = contractIdOpt.get
             bal0          <- bill2Util.ensureBalanceFor( contractId, mitem.price.currency )  // forUpdate уже внутри там
 
-            // Вычислить разницу в цене
-            diffAmount    = mitem.price.amount - price2.amount
             // Убедится, что новая цена не больше старой.
             if {
               val r = diffAmount >= 0   // Надо >, т.к. = отрабатывается в None-ветке, но чисто на всякий случай тут >=

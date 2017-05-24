@@ -12,7 +12,7 @@ import scala.concurrent.Future
   */
 trait ICtxOuter {
 
-  /** Карта узловв-тегов: (tagFace|id) -> MNode.
+  /** Карта узлов-тегов: (tagFace|id) -> MNode.
     * Смысл ключа зависит от контекста исполнения
     */
   def tagNodesMap: Map[String, MNode]

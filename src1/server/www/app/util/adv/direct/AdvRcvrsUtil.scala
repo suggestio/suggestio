@@ -120,12 +120,10 @@ class AdvRcvrsUtil @Inject()(
 
         } else {
           // Добавляем собственный ресивер с обновлёнными уровнями отображениям.
-          acc3.copy(
-            mad = acc3.mad.copy(
-              edges = acc3.mad.edges.copy(
-                out = {
-                  acc3.mad.edges.out ++ Seq(rcvrEdge)
-                }
+          acc3.withMnode(
+            acc3.mnode.withEdges(
+              acc3.mnode.edges.copy(
+                out = acc3.mnode.edges.out ++ Seq(rcvrEdge)
               )
             )
           )
@@ -229,7 +227,7 @@ class AdvRcvrsUtil @Inject()(
       }
 
     } yield {
-      tuData2.acc.mad
+      tuData2.acc.mnode
     }
 
     // Запуск транзакции на исполнение
@@ -251,13 +249,13 @@ class AdvRcvrsUtil @Inject()(
       // Запустить пересчет ресиверов с сохранением.
       val tub2Fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mnode0)) ) { tub0 =>
         for {
-          acc1 <- calculateReceiversFor(tub0.acc.mad)
+          acc1 <- calculateReceiversFor(tub0.acc.mnode)
         } yield {
           tub0.copy(acc1)
         }
       }
       for {
-        tub2    <- tub2Fut
+        _       <- tub2Fut
         counter <- counterFut
       } yield {
         val counter2 = counter + 1
@@ -302,19 +300,19 @@ class AdvRcvrsUtil @Inject()(
   def resetReceiversFor(mad0: MNode): Future[MNode] = {
     val fut = EsModelUtil.tryUpdate[MNode, TryUpdateBuilder](mNodes, TryUpdateBuilder(Acc(mad0)) ) { tub0 =>
       for {
-        acc2 <- calculateReceiversFor(tub0.acc.mad)
+        acc2 <- calculateReceiversFor(tub0.acc.mnode)
       } yield {
         tub0.copy(acc2)
       }
     }
     for (tub2 <- fut) yield {
-      tub2.acc.mad
+      tub2.acc.mnode
     }
   }
 
   /** Заменить ресиверов в узле без сохранения. */
   def updateReceivers(mad: MNode, rcvrs1: Receivers_t): MNode = {
-    mad.copy(
+    mad.withEdges(
       edges = mad.edges.copy(
         out = {
           val oldEdgesIter = mad.edges

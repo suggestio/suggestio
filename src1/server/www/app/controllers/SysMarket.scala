@@ -809,7 +809,7 @@ class SysMarket @Inject() (
         acc2 <- advRcvrsUtil.calculateReceiversFor(mad, producerOpt)
       } yield {
         // Нужна только карта ресиверов. Дроп всей остальной инфы...
-        acc2.mad.edges.out
+        acc2.mnode.edges.out
       }
 
       val rcvrsMap = n2NodesUtil.receiversMap(mad)

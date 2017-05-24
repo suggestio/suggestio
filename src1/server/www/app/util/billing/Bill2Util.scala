@@ -1010,7 +1010,7 @@ class Bill2Util @Inject() (
       _ <- {
         LOGGER.trace(s"$logPrefix item[${mitem2.id.orNull}] status: ${mitem0.status} => ${mitem2.status}")
 
-        mrInfoOpt.fold [DBIOAction[Option[MBalance], NoStream, RW]] {
+        mrInfoOpt.fold [DBIOAction[Option[MBalance], NoStream, RWT]] {
           LOGGER.warn(s"$logPrefix Money income skipped, so they are lost.")
           DBIO.successful(None)
 
@@ -1055,9 +1055,9 @@ class Bill2Util @Inject() (
     * @param currency Валюта баланса.
     * @return Экшен, возвращающий баланс, готовый к обновлению.
     */
-  def ensureBalanceFor(contractId: Gid_t, currency: MCurrency): DBIOAction[MBalance, NoStream, RW] = {
+  def ensureBalanceFor(contractId: Gid_t, currency: MCurrency): DBIOAction[MBalance, NoStream, RWT] = {
     lazy val logPrefix = s"ensureBalanceFor($contractId,$currency):"
-    for {
+    val dbAction = for {
       // Считать баланс получателя...
       balanceOpt <- {
         mBalances.getByContractCurrency(contractId, currency)
@@ -1067,14 +1067,20 @@ class Bill2Util @Inject() (
       // Если баланс отсутствует, то инициализировать
       balance0 <- {
         balanceOpt.fold [DBIOAction[MBalance, NoStream, RW]] {
-          LOGGER.trace(s"$logPrefix Initializing new money receiver's balance...")
-          mBalances.initByContractCurrency(contractId, currency)
+          for {
+            bal2 <- mBalances.initByContractCurrency(contractId, currency)
+          } yield {
+            LOGGER.debug(s"$logPrefix Initialized new balance#${bal2.id.orNull}: $bal2")
+            bal2
+          }
         } { DBIO.successful }
       }
 
     } yield {
       balance0
     }
+    // Несколько действий, которые очень желательно выполнять в непрерывной связке:
+    dbAction.transactionally
   }
 
 
