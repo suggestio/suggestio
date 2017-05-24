@@ -6,6 +6,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.geo.{CircleGs, MGeoCircle, PointGs}
 import io.suggest.mbill2.m.dbg.MDebugs
@@ -115,6 +116,8 @@ class LkAdnMapBillUtil @Inject() (
     val dtStartOpt  = __dt( dateStart )
     val dtEndOpt    = __dt( dateEnd )
 
+    val isFreeAdv   = status.isAdvBusyApproved
+
     val itemActions = priceDsl
       .splitOnSumTillItemLevel
       .toIterator
@@ -122,6 +125,12 @@ class LkAdnMapBillUtil @Inject() (
         val priceTerm = advUtil.prepareForSave( priceTerm0 )
         lazy val logPrefix2 = s"$logPrefix (${priceTerm.getClass.getSimpleName}#${priceTerm.hashCode()}) "
         LOGGER.trace(s"$logPrefix2 term = $priceTerm")
+
+        // Если status соответствует уже одобренному размещению, то значит цену записывать не требуется.
+        val itemPrice = if (isFreeAdv)
+          bill2Util.zeroPrice
+        else
+          priceTerm.price
 
         priceTerm
           .findWithReasonType( MReasonTypes.AdnMapAdv )
@@ -131,7 +140,7 @@ class LkAdnMapBillUtil @Inject() (
               orderId       = orderId,
               iType         = MItemTypes.AdnNodeMap,
               status        = status,
-              price         = priceTerm.price,
+              price         = itemPrice,
               nodeId        = nodeId,
               dateStartOpt  = dtStartOpt,
               dateEndOpt    = dtEndOpt,
@@ -151,7 +160,7 @@ class LkAdnMapBillUtil @Inject() (
                   orderId       = orderId,
                   iType         = MItemTypes.GeoLocCaptureArea,
                   status        = status,
-                  price         = priceTerm.price,
+                  price         = itemPrice,
                   nodeId        = nodeId,
                   dateStartOpt  = dtStartOpt,
                   dateEndOpt    = dtEndOpt,
@@ -163,7 +172,9 @@ class LkAdnMapBillUtil @Inject() (
                 )
               }
           }
-          .map { _ -> priceTerm }
+          .map { itm =>
+            itm -> OptionUtil.maybe(!isFreeAdv)(priceTerm)
+          }
       }
       .map { billDebugUtil.insertItemWithPriceDebug }
       .toSeq

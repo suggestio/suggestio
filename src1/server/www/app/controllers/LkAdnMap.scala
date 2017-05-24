@@ -199,14 +199,11 @@ class LkAdnMap @Inject() (
             // Добавить в корзину размещение узла на карте
             itemsAdded  <- {
               val dbAction = for {
-              // Инициализировать корзину, если требуется...
+                // Инициализировать корзину, если требуется...
                 cart    <- bill2Util.ensureCart(
                   contractId = e.mc.id.get,
                   status0    = MOrderStatuses.cartStatusForAdvSuperUser(isSuFree)
                 )
-
-                // Узнать, потребуется ли отправлять письмо модераторам по итогам работы...
-                //mdrNotifyNeeded <- mdrUtil.isMdrNotifyNeeded
 
                 // Закинуть заказ в корзину юзера. Там же и рассчет цены будет.
                 addRes <- lkAdnMapBillUtil.addToOrder(

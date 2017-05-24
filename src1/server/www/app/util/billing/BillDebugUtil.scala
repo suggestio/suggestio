@@ -14,7 +14,7 @@ import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.mbill2.m.txn.{MTxn, MTxnTypes, MTxns}
-import io.suggest.mbill2.util.effect.{RW, RWT, WT}
+import io.suggest.mbill2.util.effect.{RWT, WT}
 import io.suggest.pick.PickleUtil
 import io.suggest.util.CompressUtilJvm
 import io.suggest.util.logs.MacroLogsImpl
@@ -83,22 +83,27 @@ class BillDebugUtil @Inject() (
     * Тут метод, реализующий эти два дела.
     *
     * @param mitem Item для insert'а, без id обычно.
-    * @param priceTerm Терм рассчёта цены.
+    * @param priceTermOpt Терм рассчёта цены, если есть.
     * @return DB-экшен, возвращающий сохранённый инстанс MItem.
     */
-  def insertItemWithPriceDebug(mitem: MItem, priceTerm: IPriceDslTerm): DBIOAction[MItem, NoStream, WT] = {
-    for {
+  def insertItemWithPriceDebug(mitem: MItem, priceTermOpt: Option[IPriceDslTerm]): DBIOAction[MItem, NoStream, WT] = {
+    val dbAction = for {
       mItem2      <- mItems.insertOne(mitem)
-      dbgCount    <- savePriceDslDebug( mItem2.id.get, priceTerm )
+      dbgCount    <- priceTermOpt.fold [DBIOAction[Int, NoStream, Effect.Write]] {
+        DBIO.successful(0)
+      } { priceTerm =>
+        savePriceDslDebug( mItem2.id.get, priceTerm )
+      }
     } yield {
       LOGGER.trace(s"insertItemWithPriceDebug(): Item $mItem2 inserted with $dbgCount debugs")
       mItem2
     }
+    dbAction.transactionally
   }
   /** Кортежная реализация insertItemWithPriceDebug/2, которая обычно и нужна. */
-  def insertItemWithPriceDebug(mitemTerm: (MItem, IPriceDslTerm)): DBIOAction[MItem, NoStream, WT] = {
-    val (mitem, priceTerm) = mitemTerm
-    insertItemWithPriceDebug(mitem, priceTerm)
+  def insertItemWithPriceDebug(mitemTerm: (MItem, Option[IPriceDslTerm])): DBIOAction[MItem, NoStream, WT] = {
+    val (mitem, priceTermOpt) = mitemTerm
+    insertItemWithPriceDebug(mitem, priceTermOpt)
   }
 
 

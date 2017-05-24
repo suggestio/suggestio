@@ -7,6 +7,7 @@ import io.suggest.adv.geo.MFormS
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
+import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.YmdHelpersJvm
 import io.suggest.geo.CircleGs
 import io.suggest.mbill2.m.gid.Gid_t
@@ -183,6 +184,8 @@ class AdvGeoBillUtil @Inject() (
     val dtStartOpt  = __dt( dateStart )
     val dtEndOpt    = __dt( dateEnd )
 
+    val isFreeAdv   = status.isAdvBusyApproved
+
     LOGGER.trace(s"$logPrefix period=$ymdPeriod tzOff=$tzOffset => ${dtStartOpt.orNull}..${dtEndOpt.orNull}")
 
     val itemActions = calcAdvGeoPrice(abc)
@@ -191,7 +194,15 @@ class AdvGeoBillUtil @Inject() (
       .flatMap { term =>
         val term2 = advUtil.prepareForSave(term)
         lazy val logPrefix2 = s"$logPrefix (${term2.getClass.getSimpleName}#${term2.hashCode()}) "
-        LOGGER.trace(s"$logPrefix2 term = $term2")
+
+        // Для бесплатных размещений надо выставлять нулевую цену.
+        val price = if (isFreeAdv)
+          bill2Util.zeroPrice
+        else
+          term2.price
+
+        LOGGER.trace(s"$logPrefix2 term = $term2, price => $price")
+
         term2
           .findWithReasonType( MReasonTypes.GeoArea )
           .flatMap { geoSubTerm =>
@@ -211,7 +222,7 @@ class AdvGeoBillUtil @Inject() (
                   orderId       = orderId,
                   iType         = MItemTypes.GeoTag,
                   status        = status,
-                  price         = term2.price,
+                  price         = price,
                   nodeId        = adId,
                   dateStartOpt  = dtStartOpt,
                   dateEndOpt    = dtEndOpt,
@@ -232,7 +243,7 @@ class AdvGeoBillUtil @Inject() (
                       orderId       = orderId,
                       iType         = MItemTypes.GeoPlace,
                       status        = status,
-                      price         = term2.price,
+                      price         = price,
                       nodeId        = adId,
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
@@ -262,7 +273,7 @@ class AdvGeoBillUtil @Inject() (
                       orderId       = orderId,
                       iType         = MItemTypes.TagDirect,
                       status        = status,
-                      price         = term2.price,
+                      price         = price,
                       nodeId        = adId,
                       dateStartOpt  = dtStartOpt,
                       dateEndOpt    = dtEndOpt,
@@ -283,7 +294,7 @@ class AdvGeoBillUtil @Inject() (
                           orderId       = orderId,
                           iType         = MItemTypes.AdvDirect,
                           status        = status,
-                          price         = term2.price,
+                          price         = price,
                           nodeId        = adId,
                           dateStartOpt  = dtStartOpt,
                           dateEndOpt    = dtEndOpt,
@@ -294,7 +305,7 @@ class AdvGeoBillUtil @Inject() (
                   }
               }
           }
-          .map { _ -> term2 }
+          .map { itm => itm -> OptionUtil.maybe(!isFreeAdv)(term2) }
           .orElse {
             // Какая-то логическая ошибка в коде: этот метод не понимает выхлоп из calcAdvGeoPrice().
             throw new UnsupportedOperationException(s"Not supported price term: $term2 Please check current billing class code.")
