@@ -10,7 +10,7 @@ import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im.DevScreen
-import models.mctx.Context
+import models.mctx.{Context, ContextUtil}
 import models.mgeo.MLocEnv
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser}
@@ -33,6 +33,7 @@ import scala.concurrent.Future
 class StatUtil @Inject()(
   statCookiesUtil         : StatCookiesUtil,
   playStatSaver           : PlayStatSaver,
+  contextUtil             : ContextUtil,
   geoIpUtil               : GeoIpUtil,
   mCommonDi               : ICommonDi
 )
@@ -200,7 +201,7 @@ class StatUtil @Inject()(
     }
 
     /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
-    def domain3p: Option[String] = None
+    def domain3p: Option[String] = _Domain.ifNotSio
 
     def components: List[MComponent] = Nil
 
@@ -312,6 +313,23 @@ class StatUtil @Inject()(
     // Если же будет часто вызываться, то лучше mstat сделать как lazy val вместо def.
     override def toString: String = {
       s"${classOf[Stat2].getSimpleName}(${mstat.toString})"
+    }
+
+    /** Утиль для быстрого задания значения domain3p. */
+    object _Domain {
+      def currentHost: Option[String] = {
+        Option(ctx.request.host)
+      }
+      def ifNotSio: Option[String] = {
+        currentHost
+          .filterNot { contextUtil.SIO_HOSTS.contains }
+      }
+      def maybeCurrent(useCurrentHost: Boolean): Option[String] = {
+        if (useCurrentHost)
+          currentHost
+        else
+          None
+      }
     }
 
   }

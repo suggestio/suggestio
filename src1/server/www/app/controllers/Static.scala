@@ -183,7 +183,6 @@ class Static @Inject() (
             stat2 = new statUtil.Stat2 {
               override def ctx = _ctx
               override def uri = Some( cspViol.documentUri )
-
               override def components = {
                 MComponents.CSP :: MComponents.Error :: super.components
               }

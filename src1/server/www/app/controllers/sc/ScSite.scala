@@ -213,14 +213,7 @@ trait ScSiteBase
             mSiteAction :: mPovActions
           }
 
-          /** Перезаписать, если сейчас орудуем в каком-то другом домене, вне s.io. */
-          override def domain3p: Option[String] = {
-            if (_domainNodeOpt.nonEmpty) {
-              Some( ctx.request.host )
-            } else {
-              None
-            }
-          }
+          override def domain3p = _Domain.maybeCurrent( _domainNodeOpt.nonEmpty )
         }
       }
     }
