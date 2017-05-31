@@ -6,6 +6,8 @@ import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
 import models.mctx.Context
 import models.mproj.ICommonDi
+import play.api.libs.json.JsValue
+import play.api.mvc.BodyParser
 import util.acl._
 import util.cdn.CorsUtil
 import util.sec.CspUtil
@@ -102,6 +104,26 @@ class Static @Inject() (
   }
 
 
+  /** Body-parser для CSP-репортов.
+    * CSP-report -- это JSON в особом формате. Проверить Content-Type, затем распарсить просто как JSON.
+    * Валидировать JSON будет уже экшен.
+    */
+  def _cspJsonBp: BodyParser[JsValue] = parse.when(
+    predicate = _.contentType.exists { m =>
+      m.equalsIgnoreCase( "application/csp-report" ) ||
+        m.equalsIgnoreCase( JSON )
+    },
+    // тестовый реальный отчёт из firefox весил 631 байт.
+    parser = parse.tolerantJson( 2048 ),
+    badResult = { req =>
+      LOGGER.debug(s"_cspBp: Dropped request from ${req.remoteAddress} with unknown content type ${req.contentType}")
+      // Нет никакой надобности отвечать html-страницами, т.к. на CSP-экшены никто кроме браузеров не обращается.
+      UnsupportedMediaType( "CSP-report expected" )
+    }
+  )
+
+
+
   /** Экшен принятия отчёта об ошибке CSP от браузера.
     * Какой-то браузер жалуется на нарушение политики безопасности контента (CSP) на сайте.
     * Экшен не очень уместен для этого контроллера (Static), но в целом ок.
@@ -118,9 +140,25 @@ class Static @Inject() (
     *     }
     *   }
     * }}}
+    *
+    *
+    * Реальный отчёт от firefox'а (звёздочки обособлены пробелами, что не ломать коммент в коде):
+    * {{{
+    *   {
+    *     "csp-report": {
+    *       "blocked-uri": "data",
+    *       "document-uri": "http://cbda.ru/",
+    *       "original-policy": "default-src http://suggest.cdnvideo.ru http://cbda.ru blob:; script-src http://suggest.cdnvideo.ru 'unsafe-eval' 'unsafe-inline' blob: http://cbda.ru; style-src http://suggest.cdnvideo.ru http://cbda.ru 'unsafe-inline'; img-src https:// * .mapbox.com http://suggest.cdnvideo.ru data: blob: http://cbda.ru; connect-src http://suggest.cdnvideo.ru http://cbda.ru wss://suggest.io https:// * .mapbox.com; report-uri http://cbda.ru/_/csp/report",
+    *       "referrer": "",
+    *       "violated-directive": "style-src http://suggest.cdnvideo.ru http://cbda.ru 'unsafe-inline'"
+    *     }
+    *   }
+    * }}}
+    * Данная ошибка возникла из-за stylish, который подмешивает стили через data:
+    *
     */
   def handleCspReport = bruteForceProtect {
-    maybeAuth().async( parse.json(1024) ) { implicit request =>
+    maybeAuth().async( _cspJsonBp ) { implicit request =>
       // Залить ошибку в MStat.
       lazy val logPrefix = s"cspReportHandler[${System.currentTimeMillis()}]:"
       val requestBodyStr = request.body.toString()
