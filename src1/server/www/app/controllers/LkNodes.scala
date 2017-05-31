@@ -14,12 +14,13 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.lk.nodes._
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
-import io.suggest.pick.{PickleSrvUtil, PickleUtil}
+import io.suggest.pick.PickleUtil
+import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
@@ -56,7 +57,6 @@ class LkNodes @Inject() (
                           lkNodesUtil               : LkNodesUtil,
                           canFreelyAdvAdOnNode      : CanFreelyAdvAdOnNode,
                           canAdvAd                  : CanAdvAd,
-                          pickleSrvUtil             : PickleSrvUtil,
                           tfDailyUtil               : TfDailyUtil,
                           nodesUtil                 : NodesUtil,
                           mNodes                    : MNodes,
@@ -70,7 +70,6 @@ class LkNodes @Inject() (
 {
 
   import mCommonDi._
-  import pickleSrvUtil._
 
 
   private def _hasAdv(nodeId: String, madOpt: Option[MNode]): Option[Boolean] = {

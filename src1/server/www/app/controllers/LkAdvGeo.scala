@@ -20,7 +20,8 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.pick.{PickleSrvUtil, PickleUtil}
+import io.suggest.pick.PickleUtil
+import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
@@ -58,7 +59,6 @@ class LkAdvGeo @Inject() (
                            advGeoLocUtil                   : AdvGeoLocUtil,
                            advGeoMapUtil                   : AdvGeoMapUtil,
                            streamsUtil                     : StreamsUtil,
-                           pickleSrvUtil                   : PickleSrvUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
                            reqUtil                         : ReqUtil,
                            cspUtil                         : CspUtil,
@@ -81,9 +81,6 @@ class LkAdvGeo @Inject() (
   import mCommonDi._
   import streamsUtil.Implicits._
   import ymdHelpersJvm.Implicits._
-
-  // Сериализация:
-  import pickleSrvUtil.Base64ByteBufEncoder
 
 
   /** Асинхронный детектор начальной точки для карты георазмещения. */

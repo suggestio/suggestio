@@ -16,7 +16,7 @@ import scala.scalajs.js.annotation.JSName
   * Description: JSON-фасад модели как-то сериализованных JSON-пропертисов в виде JSON object.
   * Такие пропертисы содержат лишь одно поле, поле с сериализованных данных.
   */
-object MPickledProps {
+object MPickledPropsJs {
 
   /** Акт опциональной десериализации опциональных пропертисов.
     *
@@ -28,7 +28,7 @@ object MPickledProps {
   def applyOpt[P](raw: js.UndefOr[js.Any])(implicit pickler: Pickler[P]): Option[P] = {
     for {
       props0 <- raw.toOption
-      propsPick = props0.asInstanceOf[MPickledProps]
+      propsPick = props0.asInstanceOf[MPickledPropsJs]
       base64 <- propsPick.pickled.toOption
       if base64.nonEmpty
     } yield {
@@ -40,7 +40,7 @@ object MPickledProps {
 
 
 @js.native
-trait MPickledProps extends js.Object {
+trait MPickledPropsJs extends js.Object {
 
   /** Сериализованные данные. */
   @JSName( PickleUtil.PICKED_FN )

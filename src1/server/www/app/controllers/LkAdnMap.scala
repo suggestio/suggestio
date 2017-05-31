@@ -9,7 +9,8 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.geo.MGeoPoint
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.order.MOrderStatuses
-import io.suggest.pick.{PickleSrvUtil, PickleUtil}
+import io.suggest.pick.PickleUtil
+import io.suggest.pick.PickleSrvUtil._
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
 import models.madn.mapf.MAdnMapTplArgs
@@ -44,7 +45,6 @@ class LkAdnMap @Inject() (
                            lkAdnMapBillUtil              : LkAdnMapBillUtil,
                            bill2Util                     : Bill2Util,
                            advGeoLocUtil                 : AdvGeoLocUtil,
-                           pickleSrvUtil                 : PickleSrvUtil,
                            mdrUtil                       : MdrUtil,
                            reqUtil                       : ReqUtil,
                            lkGeoCtlUtil                  : LkGeoCtlUtil,
@@ -58,7 +58,6 @@ class LkAdnMap @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import pickleSrvUtil._
 
   /** Body-parser, декодирующий бинарь из запроса в инстанс MLamForm. */
   private def formPostBP = reqUtil.picklingBodyParser[MLamForm]

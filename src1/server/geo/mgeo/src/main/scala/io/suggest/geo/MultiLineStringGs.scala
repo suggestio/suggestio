@@ -60,7 +60,9 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
 
   override def toPlayGeoJsonGeom: MultiLineString[LatLng] = {
     MultiLineString(
-      coordinates = lines.iterator.map(_.toPlayGeoJsonGeom.coordinates).toStream
+      coordinates = lines.iterator
+        .map(_.toPlayGeoJsonGeom.coordinates)
+        .toStream
     )
   }
 
