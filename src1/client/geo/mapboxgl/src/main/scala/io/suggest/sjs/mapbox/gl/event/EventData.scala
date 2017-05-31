@@ -6,6 +6,7 @@ import io.suggest.sjs.mapbox.gl.map.Point
 import org.scalajs.dom.Event
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -18,6 +19,7 @@ object EventData extends FromDict {
 }
 
 @js.native
+@JSGlobal
 class EventData extends js.Object {
 
   var originalEvent: Event = js.native

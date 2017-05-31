@@ -51,7 +51,8 @@ object MAdvGeoMapNodeProps {
     (__ \ NODE_ID_FN).write[String] and
     (__ \ HINT_FN).writeNullable[String] and
     (__ \ ICON_FN).writeNullable[MIconInfo] and
-    (__ \ BG_COLOR_FN).writeNullable[String]
+    (__ \ BG_COLOR_FN).writeNullable[String] and
+    (__ \ CIRCLE_RADIUS_M_FN).writeNullable[Double]
   )(unlift(unapply))
 
 }
@@ -63,10 +64,11 @@ object MAdvGeoMapNodeProps {
   * @param icon Логотип узла, отображаемый на карте.
   */
 case class MAdvGeoMapNodeProps(
-  nodeId  : String,
-  hint    : Option[String],
-  icon    : Option[MIconInfo] = None,
-  bgColor : Option[String]    = None
+  nodeId          : String,
+  hint            : Option[String],
+  icon            : Option[MIconInfo] = None,
+  bgColor         : Option[String]    = None,
+  circleRadiusM   : Option[Double]    = None
 )
 
 

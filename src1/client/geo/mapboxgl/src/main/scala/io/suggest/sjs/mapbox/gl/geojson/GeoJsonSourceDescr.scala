@@ -6,6 +6,7 @@ import io.suggest.sjs.mapbox.gl.Zoom_t
 import io.suggest.sjs.mapbox.gl.source.{SourceDescr, SourceTypes}
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.|
 
 /**
@@ -34,6 +35,7 @@ object GeoJsonSourceDescr extends FromDict {
 
 
 @js.native
+@JSGlobal
 class GeoJsonSourceDescr extends SourceDescr {
 
   var data: GjType | String = js.native

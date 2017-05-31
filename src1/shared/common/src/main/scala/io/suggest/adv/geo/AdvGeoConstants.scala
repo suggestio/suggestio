@@ -64,6 +64,12 @@ object AdvGeoConstants {
 
     def ICON_FN       = "i"
 
+    /** Имя поля с радиусом круга. GeoJSON не поддерживает круги,
+      * поэтому он описывается точкой и радусом в props.
+      */
+    def CIRCLE_RADIUS_M_FN = GjFtPropsC.CIRCLE_RADIUS_M_FN
+
+
     object Icon {
 
       /** Имя поля с адресом иконки узла. */

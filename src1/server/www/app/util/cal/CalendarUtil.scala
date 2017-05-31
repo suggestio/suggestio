@@ -33,7 +33,7 @@ class CalendarUtil @Inject() (
     * Передать в менеджер календарей календарь пока получилось только через абсолютный URL
     * к SysCalendar-контроллеру.
     */
-  private val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix") getOrElse {
+  private val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix").getOrElse {
     val myPort = Option(System.getProperty("http.port")).fold(9000)(_.toInt)
     s"http://localhost:$myPort"
   }

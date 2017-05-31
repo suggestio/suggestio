@@ -410,7 +410,7 @@ class LkAdvGeo @Inject() (
       }
       // Сериализовать поток данных в JSON:
       val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(
-        nodesSrc.map { m =>
+        for (m <- nodesSrc) yield {
           Json.toJson( m.toGeoJson )
         }
       )

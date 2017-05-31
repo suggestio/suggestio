@@ -1,7 +1,7 @@
 package io.suggest.sjs.mapbox.gl.ll
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.|
 
 /**
@@ -12,7 +12,7 @@ import scala.scalajs.js.|
   */
 
 @js.native
-@JSName("mapboxgl.LngLatBounds")
+@JSGlobal("mapboxgl.LngLatBounds")
 object LngLatBounds extends js.Object {
 
   def convert(input: LngLatBounds | js.Array[Double] | js.Array[js.Array[Double]]): LngLatBounds = js.native
@@ -21,7 +21,7 @@ object LngLatBounds extends js.Object {
 
 
 @js.native
-@JSName("mapboxgl.LngLatBounds")
+@JSGlobal("mapboxgl.LngLatBounds")
 class LngLatBounds(sw: LngLat, nw: LngLat) extends js.Object {
 
   def extend(obj: LngLat | LngLatBounds): this.type = js.native

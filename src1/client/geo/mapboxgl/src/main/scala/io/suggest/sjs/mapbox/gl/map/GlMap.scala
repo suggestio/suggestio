@@ -12,7 +12,7 @@ import io.suggest.sjs.mapbox.gl.style.{Style, StyleBatch, StyleOptions}
 import org.scalajs.dom.raw.{HTMLCanvasElement, HTMLElement}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.{UndefOr, |}
 
 /**
@@ -23,7 +23,7 @@ import scala.scalajs.js.{UndefOr, |}
   */
 
 @js.native
-@JSName("mapboxgl.Map")
+@JSGlobal("mapboxgl.Map")
 class GlMap(options: GlMapOptions) extends StyleBatch with Evented {
 
   def addClass(klass: String, options: StyleOptions = js.native): this.type = js.native

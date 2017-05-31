@@ -1,7 +1,6 @@
 package io.suggest.sjs.mapbox.gl.event
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -10,7 +9,7 @@ import scala.scalajs.js.annotation.JSName
   * Description: API for evented mix-in.
   */
 @js.native
-@JSName("mapboxgl.Evented")
+//@JSGlobal("mapboxgl.Evented")
 trait Evented extends js.Object {
 
   def fire(etype: String, eventData: EventData = js.native): this.type = js.native

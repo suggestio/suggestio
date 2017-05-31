@@ -23,7 +23,7 @@ object MAddressEs extends IGenEsMappingProps {
 
   import Fields._
 
-  implicit val FORMAT: OFormat[MAddress] = (
+  implicit val MADDRESS_FORMAT: OFormat[MAddress] = (
     (__ \ TOWN_FN).formatNullable[String] and
     (__ \ ADDRESS_FN).formatNullable[String] and
     (__ \ PHONE_FN).formatNullable[String] and
@@ -33,6 +33,7 @@ object MAddressEs extends IGenEsMappingProps {
 
 
   import io.suggest.es.util.SioEsUtil._
+
   override def generateMappingProps: List[DocField] = {
     List(
       FieldString(TOWN_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),

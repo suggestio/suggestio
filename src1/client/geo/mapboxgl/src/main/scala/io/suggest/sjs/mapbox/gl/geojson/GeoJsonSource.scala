@@ -3,6 +3,7 @@ package io.suggest.sjs.mapbox.gl.geojson
 import io.suggest.sjs.common.geo.json.GjType
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -12,6 +13,7 @@ import scala.scalajs.js
   */
 
 @js.native
+@JSGlobal
 class GeoJsonSource extends js.Object {
 
   def setData(data: GjType): this.type = js.native

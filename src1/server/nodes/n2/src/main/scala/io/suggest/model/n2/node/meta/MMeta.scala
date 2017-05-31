@@ -54,8 +54,9 @@ object MMeta extends IGenEsMappingProps {
   import Fields.Address.ADDRESS_FN
   import Fields.Business.BUSINESS_FN
   import Fields.Colors.COLORS_FN
-  import MAddressEs.{FORMAT => MADDRESS_FORMAT}
-  import MBusinessInfoEs.{FORMAT => MBUSINESS_INFO_FORMAT}
+  import MAddressEs.MADDRESS_FORMAT
+  import MBusinessInfoEs.MBUSINESS_INFO_FORMAT
+  import colors.MColorsJvm.MCOLORS_FORMAT
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MMeta] = (

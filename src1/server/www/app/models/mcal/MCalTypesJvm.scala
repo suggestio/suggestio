@@ -30,7 +30,6 @@ class MCalTypesJvm {
   /** Поддержка обязательного маппинга из/в JSON. */
   implicit val mCalTypeFormat: Format[MCalType] = {
     val reads = mCalTypeOptFormat
-      // TODO Хз как передать некорректное значение внутрь ValidationError... А надо бы, очень надо.
       .filter( ValidationError("error.unknown.name") )(_.nonEmpty)
       .map(_.get)
     val writes = (mCalTypeOptFormat: Writes[Option[MCalType]])
@@ -42,7 +41,10 @@ class MCalTypesJvm {
   /** Опциональный маппинг для формы. */
   def calTypeOptM: Mapping[Option[MCalType]] = {
     nonEmptyText(minLength = 1, maxLength = 10)
-      .transform [Option[MCalType]] (MCalTypes.withNameOption, _.fold("")(_.strId))
+      .transform [Option[MCalType]] (
+        MCalTypes.withNameOption,
+        _.fold("")(_.strId)
+      )
   }
 
   /** Обязательный маппинг для формы. */

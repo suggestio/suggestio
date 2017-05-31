@@ -11,18 +11,12 @@ import play.api.libs.functional.syntax._
  * В прошлой архитектуре, сохранялся только цвет кода, например "FFFFFF" и больше ничего.
  * Модель не анализируется со стороны ES вообще.
  */
-object MColorData {
-
-  val CODE_FN = "c"
+object MColorDataJvm {
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MColorData] = {
-    (__ \ CODE_FN).format[String]
-      .inmap(apply, _.code)
+  implicit val MCOLOR_DATA_FORMAT: OFormat[MColorData] = {
+    (__ \ MColorData.CODE_FN).format[String]
+      .inmap(MColorData.apply, _.code)
   }
 
 }
-
-case class MColorData(
-  code: String
-)

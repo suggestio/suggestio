@@ -3,7 +3,6 @@ package io.suggest.sjs.mapbox.gl.control
 import io.suggest.sjs.mapbox.gl.map.GlMap
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
 
 /**
   * Suggest.io
@@ -12,7 +11,7 @@ import scala.scalajs.js.annotation.JSName
   * Description: API for abstract GL Map control.
   */
 @js.native
-@JSName("mapboxgl.Control")
+//@JSGlobal("mapboxgl.Control")
 trait Control extends js.Object {
 
   def addTo(map: GlMap): this.type = js.native

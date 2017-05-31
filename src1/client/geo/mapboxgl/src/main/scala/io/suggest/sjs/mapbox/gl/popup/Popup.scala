@@ -5,7 +5,7 @@ import io.suggest.sjs.mapbox.gl.event.Evented
 import io.suggest.sjs.mapbox.gl.ll.LngLat
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -14,7 +14,7 @@ import scala.scalajs.js.annotation.JSName
   * Description: API for popup control.
   */
 @js.native
-@JSName("mapboxgl.Popup")
+@JSGlobal("mapboxgl.Popup")
 class Popup extends Control with Evented {
 
   def getLngLat(): LngLat = js.native

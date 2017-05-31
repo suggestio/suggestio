@@ -213,23 +213,23 @@ trait ScIndex
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
               val gsCr = GsCriteria(
-                levels = Seq(ngl),
+                levels = ngl :: Nil,
                 shapes = Seq(
                   CircleGs(geoLoc.center, Distance(10, DistanceUnit.METERS))
                 )
               )
               val cr = Criteria(
-                predicates  = Seq(MPredicates.NodeLocation),
+                predicates  = MPredicates.NodeLocation :: Nil,
                 gsIntersect = Some(gsCr)
               )
-              Seq(cr)
+              cr :: Nil
             }
           }
 
           for (mnodeOpt <- mNodes.dynSearchOne(msearch)) yield {
             for (mnode <- mnodeOpt) yield {
               MIndexNodeInfo(
-                mnodeOpt.get,
+                mnode  = mnode,
                 isRcvr = ngl.isLowest     // Только здания могут выступать ресиверами.
               )
             }

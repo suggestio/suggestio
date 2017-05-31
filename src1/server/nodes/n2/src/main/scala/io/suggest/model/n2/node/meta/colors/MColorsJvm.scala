@@ -1,6 +1,5 @@
 package io.suggest.model.n2.node.meta.colors
 
-import io.suggest.common.empty.{IEmpty, EmptyProduct}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -13,29 +12,15 @@ import play.api.libs.functional.syntax._
  * Модель не анализируется со стороны ES вообще.
  */
 
-object MColors extends IEmpty {
+object MColorsJvm {
 
-  override type T = MColors
-
-  override val empty: MColors = {
-    new MColors() {
-      override def nonEmpty = false
-    }
-  }
+  import MColorDataJvm.MCOLOR_DATA_FORMAT
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MColors] = (
+  implicit val MCOLORS_FORMAT: OFormat[MColors] = (
     (__ \ MColorKeys.Bg.strId).formatNullable[MColorData] and
     (__ \ MColorKeys.Fg.strId).formatNullable[MColorData] and
     (__ \ MColorKeys.Pattern.strId).formatNullable[MColorData]
-  )(apply, unlift(unapply))
+  )(MColors.apply, unlift(MColors.unapply))
 
 }
-
-
-case class MColors(
-  bg        : Option[MColorData]    = None,
-  fg        : Option[MColorData]    = None,
-  pattern   : Option[MColorData]    = None
-)
-  extends EmptyProduct

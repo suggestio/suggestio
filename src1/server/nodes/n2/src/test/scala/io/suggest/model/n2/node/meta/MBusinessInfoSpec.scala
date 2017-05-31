@@ -2,7 +2,7 @@ package io.suggest.model.n2.node.meta
 
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
-import MBusinessInfoEs.FORMAT
+import MBusinessInfoEs.MBUSINESS_INFO_FORMAT
 
 /**
  * Suggest.io

@@ -25,7 +25,7 @@ object MBusinessInfoEs extends IGenEsMappingProps {
   import Fields._
 
   /** Поддержка JSON. */
-  implicit val FORMAT: OFormat[MBusinessInfo] = (
+  implicit val MBUSINESS_INFO_FORMAT: OFormat[MBusinessInfo] = (
     (__ \ SITE_URL_FN).formatNullable[String] and
     (__ \ AUDIENCE_DESCR_FN).formatNullable[String] and
     (__ \ HUMAN_TRAFFIC_AVG_FN).formatNullable[Int] and

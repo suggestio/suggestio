@@ -103,7 +103,6 @@ class AdvGeoMapUtil @Inject() (
   def rcvrNodesMap(msearch: MNodeSearch)(implicit ctx: Context): Source[MAdvGeoMapNode, NotUsed] = {
     // Начать выкачивать все подходящие узлы из модели:
     val nodesSource = mNodes.source[MNode](msearch)
-    // TODO Opt направить этот поток в кэш узлов MNodeCache?
 
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
@@ -161,23 +160,41 @@ class AdvGeoMapUtil @Inject() (
       }
       val mnode = nodeInfo.mnode
 
+      // Собираем props-константы за скобками.
+      val nodeId = mnode.id.get
+      val hint   = mnode.guessDisplayName
+      val bgColor = mnode.meta.colors.bg
+          .map(_.code)
+
+      // props'ы для одной точки.
       val props = MAdvGeoMapNodeProps(
-        nodeId  = mnode.id.get,
-        hint    = mnode.guessDisplayName,
-        bgColor = mnode.meta.colors.bg
-          .map(_.code),
+        nodeId  = nodeId,
+        hint    = hint,
+        bgColor = bgColor,
         icon    = iconInfoOpt
       )
 
-      mnode.edges
+      // Собрать точки узла.
+      val pointsIter = mnode.edges
         .withPredicateIter( MPredicates.AdnMap )
-        .flatMap( _.info.geoPoints )
+        .flatMap { _.info.geoPoints }
         .map { geoPoint =>
           MAdvGeoMapNode(
             point = geoPoint,
             props = props
           )
         }
+
+      // Собрать шейпы узла.
+      val shapesIter = mnode.edges
+        .withoutPredicateIter( MPredicates.NodeLocation )
+        .flatMap( _.info.geoShapes )
+        .map { gs =>
+          gs.shape.toPlayGeoJsonGeom
+        }
+
+
+      pointsIter
         .toStream // Это типа toImmutableIterable
     }
 
