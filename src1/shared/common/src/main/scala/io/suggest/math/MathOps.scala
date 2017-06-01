@@ -32,18 +32,35 @@ object MathOps {
 }
 
 
-/** Подмешиваемый трейт для операций простой математической модификации какого-то инстанса модели.
+/** Интерфейс для подмешиваемых трейтов, реализующих простые математические операции
+  * на произвольных классах-моделях.
+  *
+  * @tparam A Тип значения объекта математических операций. Например Int.
+  * @tparam T Тип класса модели.
+  */
+trait IMathModifiers[A, T] {
+
+  protected[this] def applyMathOp(op: IBinaryMathOp[A], arg2: A): T
+
+  /** Разделить текущий инстанс на целое число. */
+  def /(by: A): T
+
+  /** Умножить текущий инстанс на целое число. */
+  def *(by: A): T
+
+}
+
+/** Готовый к использованию подмешиваемый трейт для операций простой математической модификации
+  * какого-то инстанса модели с использованием целых чисел.
   *
   * @tparam T Класс текущей модели. Что-то типа this.type.
   */
-trait IntMathModifiers[T] {
-
-  protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): T
+trait IntMathModifiers[T] extends IMathModifiers[Int, T] {
 
   /** Разделить текущий инстанс на целое число. */
-  def /(by: Int): T = applyMathOp(MathOps.IntDiv, by)
+  override def /(by: Int): T = applyMathOp(MathOps.IntDiv, by)
 
   /** Умножить текущий инстанс на целое число. */
-  def *(by: Int): T = applyMathOp(MathOps.IntMult, by)
+  override def *(by: Int): T = applyMathOp(MathOps.IntMult, by)
 
 }

@@ -32,6 +32,19 @@ object CircleGs extends GsStatic {
     )
   }
 
+  /** Вернуть инстанс круга из инстанса гео-шейпа.
+    *
+    * @param gs Какой-то [[GeoShape]].
+    * @return Опциональный [[CircleGs]].
+    *         None, если gs -- это НЕ круг, а что-либо другое.
+    */
+  def maybeFromGs(gs: GeoShape): Option[CircleGs] = {
+    gs match {
+      case circle: CircleGs   => Some(circle)
+      case _                  => None
+    }
+  }
+
 }
 
 

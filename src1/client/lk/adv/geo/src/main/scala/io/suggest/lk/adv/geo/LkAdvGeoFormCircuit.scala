@@ -192,7 +192,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = API,
       adIdProxy = adIdRW,
-      modelRW   = rcvrRW.zoomRW(_.markers) { _.withMarkers(_) }
+      modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
     )
 
     val radAh = new RadAh(

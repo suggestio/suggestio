@@ -2,6 +2,7 @@ package io.suggest.maps.nodes
 
 import boopickle.Default._
 import io.suggest.common.geom.d2.Size2di
+import io.suggest.model.n2.node.meta.colors.MColors
 
 /**
   * Suggest.io
@@ -14,7 +15,8 @@ object MAdvGeoMapNodeProps {
 
   /** Поддержка boopickle. */
   implicit val mAdvGeoMapNodePropsPickler: Pickler[MAdvGeoMapNodeProps] = {
-    implicit val mMapNodeIconInfo = MMapNodeIconInfo.mMapNodeIconInfoPickler
+    implicit val mMapNodeIconInfoP = MMapNodeIconInfo.mMapNodeIconInfoPickler
+    implicit val mColorsP = MColors.mColorsPickler
     generatePickler[MAdvGeoMapNodeProps]
   }
 
@@ -28,9 +30,9 @@ object MAdvGeoMapNodeProps {
   */
 case class MAdvGeoMapNodeProps(
                                 nodeId          : String,
-                                hint            : Option[String],
+                                colors          : MColors,
+                                hint            : Option[String]            = None,
                                 icon            : Option[MMapNodeIconInfo]  = None,
-                                bgColor         : Option[String]            = None,
                                 circleRadiusM   : Option[Double]            = None
                               )
 

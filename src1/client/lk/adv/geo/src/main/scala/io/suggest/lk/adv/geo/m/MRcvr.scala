@@ -4,9 +4,6 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
-import io.suggest.sjs.leaflet.marker.Marker
-
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -21,7 +18,7 @@ object MRcvr {
   implicit object MRcvrFastEq extends FastEq[MRcvr] {
     override def eqv(a: MRcvr, b: MRcvr): Boolean = {
       (a.popupResp eq b.popupResp) &&
-        (a.markers eq b.markers) &&
+        (a.rcvrsGeo eq b.rcvrsGeo) &&
         (a.popupState eq b.popupState) &&
         (a.rcvrsMap eq b.rcvrsMap)
     }
@@ -34,20 +31,20 @@ object MRcvr {
   * @param popupResp Потенциальные данные попапа над маркером (точкой) ресивера.
   *                  Приходят с сервера по запросу, однако сам факт наличия/необходимости
   *                  такого запроса отражается в form.rcvrPopup.
-  * @param markers Маркеры карты ресиверов.
+  * @param rcvrsGeo Маркеры и шейпы карты ресиверов.
   * @param popupState Состояние попапа на ресивере.
   */
 case class MRcvr(
                   popupResp   : Pot[MRcvrPopupResp]     = Pot.empty,
-                  markers     : Pot[js.Array[Marker]]   = Pot.empty,
+                  rcvrsGeo    : Pot[MRcvrsGeo]          = Pot.empty,
                   popupState  : Option[MRcvrPopupS]     = None,
                   rcvrsMap    : RcvrsMap_t              = Map.empty
 ) {
 
-  def withPopupResp(rcvrPopupResp: Pot[MRcvrPopupResp]) = copy(popupResp = rcvrPopupResp)
-  def withMarkers(rcvrMarkers2: Pot[js.Array[Marker]]) = copy(markers = rcvrMarkers2)
-  def withPopupState(rcvrPopup2: Option[MRcvrPopupS]) = copy(popupState = rcvrPopup2)
-  def withRcvrMap(rcvrsMap2: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap2)
+  def withPopupResp(popupResp: Pot[MRcvrPopupResp]) = copy(popupResp = popupResp)
+  def withRcvrsGeo(rcvrsGeo: Pot[MRcvrsGeo]) = copy(rcvrsGeo = rcvrsGeo)
+  def withPopupState(popupState: Option[MRcvrPopupS]) = copy(popupState = popupState)
+  def withRcvrMap(rcvrsMap: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap)
 
   def withPopup(resp: Pot[MRcvrPopupResp], state: Option[MRcvrPopupS]) = copy(
     popupResp  = resp,

@@ -8,7 +8,7 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.Size2di
-import io.suggest.geo.PointGs
+import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -170,9 +170,9 @@ class AdvGeoMapUtil @Inject() (
 
       // Собираем props-константы за скобками.
       val nodeId = mnode.id.get
-      val hint   = mnode.guessDisplayName
-      val bgColor = mnode.meta.colors.bg
-          .map(_.code)
+
+      // Цвета узла, без цвета паттерна, т.к. он не нужен.
+      val nodeColors = mnode.meta.colors
 
       var featsAcc = List.empty[TraversableOnce[Feature[LngLat]]]
 
@@ -181,13 +181,13 @@ class AdvGeoMapUtil @Inject() (
         .withPredicateIter( MPredicates.AdnMap )
         .flatMap { _.info.geoPoints }
       val hasPoints = pointsIter.nonEmpty
-
       if (hasPoints) {
+        val nodeName = mnode.guessDisplayName
         // props'ы для одной точки.
         val props = MAdvGeoMapNodeProps(
           nodeId  = nodeId,
-          hint    = hint,
-          bgColor = bgColor,
+          hint    = nodeName,
+          colors  = nodeColors,
           icon    = iconInfoOpt
         )
         val mpp = MPickledPropsJvm(props)
@@ -203,14 +203,33 @@ class AdvGeoMapUtil @Inject() (
         featsAcc ::= iter
       }
 
-      // Собрать шейпы узла.
-      //val shapesIter = mnode.edges
-      //  .withoutPredicateIter( MPredicates.NodeLocation )
-      //  .flatMap( _.info.geoShapes )
-      //  .map { gs =>
-      //    gs.shape.toPlayGeoJsonGeom
-      //  }
+      // Теперь собрать шейпы геолокации узла.
+      val shapesIter = mnode.edges
+        .withPredicateIter( MPredicates.NodeLocation )
+        .flatMap( _.info.geoShapes )
+      if (shapesIter.nonEmpty) {
+        val nodeName = mnode.guessDisplayNameOrIdOrQuestions
+        // TODO Нет смысла передавать подсказку на клиент, т.к. L не умеет title внутри svg. Но может быть, с этим что-то можно сделать?
+        val iter = shapesIter
+          .map { gs =>
+            val props = MAdvGeoMapNodeProps(
+              nodeId  = nodeId,
+              colors  = nodeColors,
+              circleRadiusM = CircleGs.maybeFromGs( gs.shape )
+                .map(_.radius.meters)
+            )
+            val mpp = MPickledPropsJvm( props )
+            val propsBin = implicitly[OWrites[mpp.type]].writes(mpp)
+            Feature(
+              geometry    = gs.shape.toPlayGeoJsonGeom,
+              properties  = Some( propsBin )
+            )
+          }
 
+        featsAcc ::= iter
+      }
+
+      // Нормализовать итоговый аккамулятор.
       featsAcc
         .iterator
         .flatten

@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node.meta.colors
 
+import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 
 /**
@@ -21,7 +22,14 @@ object MColors extends IEmpty {
     }
   }
 
+  /** Поддержка boopickle. */
+  implicit val mColorsPickler: Pickler[MColors] = {
+    implicit val mColorsDataP = MColorData.mColorDataPickler
+    generatePickler[MColors]
+  }
+
 }
+
 
 case class MColors(
   bg        : Option[MColorData]    = None,

@@ -1,5 +1,7 @@
 package io.suggest.model.n2.node.meta.colors
 
+import boopickle.Default._
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,6 +13,11 @@ object MColorData {
 
   /** Название поля с кодом цвета. Обычно цвет задан как RGB. */
   val CODE_FN = "c"
+
+  /** Поддержка boopickle. */
+  implicit val mColorDataPickler: Pickler[MColorData] = {
+    generatePickler[MColorData]
+  }
 
 }
 

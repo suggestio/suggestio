@@ -1,7 +1,7 @@
 package react.leaflet.circle
 
 import io.suggest.react.JsWrapperR
-import io.suggest.sjs.leaflet.event.Event
+import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.PathOptions
 import japgolly.scalajs.react.{JsComponentType, TopNode}
@@ -42,6 +42,7 @@ trait CirclePropsR extends PathOptions {
   /** Circle radius. */
   val radius  : Double
 
-  val onClick       : UndefOr[js.Function1[Event, Unit]]         = js.undefined
+  /** Реакция на клики по кружочку. */
+  val onClick       : UndefOr[js.Function1[MouseEvent, Unit]]         = js.undefined
 
 }

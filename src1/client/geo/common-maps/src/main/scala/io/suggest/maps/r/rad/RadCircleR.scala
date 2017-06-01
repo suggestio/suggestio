@@ -10,7 +10,7 @@ import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.RadAreaClick
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.sjs.leaflet.event.Event
+import io.suggest.sjs.leaflet.event.MouseEvent
 
 /**
   * Suggest.io
@@ -60,7 +60,7 @@ object RadCircleR {
       dispatchOnProxyScopeCB($, RadAreaClick)
     }
 
-    private val _onClickCB = cbFun1ToJsCb { _: Event => _onClick }
+    private val _onClickCB = cbFun1ToJsCb { _: MouseEvent => _onClick }
 
     def render(propsProxy: Props): ReactElement = {
       for (p <- propsProxy()) yield {

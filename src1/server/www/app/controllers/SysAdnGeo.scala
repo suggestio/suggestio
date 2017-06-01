@@ -423,12 +423,11 @@ class SysAdnGeo @Inject() (
       )
     }
     {geo =>
-      geo.shape match {
-        case circle: CircleGs =>
-          Some((geo.glevel, circle))
-        case other =>
-          warn(s"circleFormM(): Unable to unbind geo shape of class ${other.getClass.getSimpleName} into circle.")
-          None
+      val circleOpt = CircleGs.maybeFromGs(geo.shape)
+      if (circleOpt.isEmpty)
+        warn(s"circleFormM(): Unable to unbind geo shape of class ${geo.shape.getClass.getSimpleName} into circle.")
+      for (circle <- circleOpt) yield {
+        (geo.glevel, circle)
       }
     })
   }

@@ -2,15 +2,12 @@ package io.suggest.lk.adv.geo.a.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, RcvrMarkersInit}
+import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, MRcvrsGeo, RcvrMarkersInit}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
-import io.suggest.maps.u.MapIcons
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.leaflet.marker.Marker
 
-import scala.scalajs.js
 import scala.util.Success
 
 /**
@@ -22,7 +19,7 @@ import scala.util.Success
 class RcvrMarkersInitAh[M](
                             api       : ILkAdvGeoApi,
                             adIdProxy : ModelRO[String],
-                            modelRW   : ModelRW[M, Pot[js.Array[Marker]]]
+                            modelRW   : ModelRW[M, Pot[MRcvrsGeo]]
                           )
   extends ActionHandler(modelRW)
   with Log
@@ -51,8 +48,10 @@ class RcvrMarkersInitAh[M](
         },
         {resp =>
           // Привести результат к js.Array[Markers].
-          val markersArr = MapIcons.geoJsonToClusterMarkers( resp )
-          value.ready(markersArr)
+          val mrg = MRcvrsGeo(
+            features = resp
+          )
+          value.ready( mrg )
         }
       )
       updated( v2 )

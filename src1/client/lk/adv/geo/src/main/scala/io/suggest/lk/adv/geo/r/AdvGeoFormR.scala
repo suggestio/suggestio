@@ -42,6 +42,7 @@ object AdvGeoFormR {
   import MRcvr.MRcvrFastEq
   import MMapS.MMapSFastEq
   import MExistGeoS.MExistGeoSFastEq
+  import MRcvrsGeo.MRcvrsGeoFastEq
   import MRad.MRadFastEq
   import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
 
@@ -56,16 +57,16 @@ object AdvGeoFormR {
     * [[https://github.com/scala/scala/pull/4017]]
     */
   protected case class State(
-                              onMainScrConn       : ReactConnectProxy[OnMainScreenR.PropsVal],
-                              rcvrMarkersConn     : ReactConnectProxy[Pot[js.Array[Marker]]],
-                              rcvrPopupConn       : ReactConnectProxy[MRcvr],
-                              mmapConn            : ReactConnectProxy[MMapS],
-                              geoAdvExistGjConn : ReactConnectProxy[Pot[js.Array[GjFeature]]],
-                              geoAdvPopupConn     : ReactConnectProxy[MExistGeoPopupS],
-                              mRadOptConn         : ReactConnectProxy[Option[MRad]],
-                              radEnabledPropsConn : ReactConnectProxy[RadEnabledR.PropsVal],
-                              priceDslOptConn     : ReactConnectProxy[Option[IPriceDslTerm]],
-                              mDocConn            : ReactConnectProxy[MDocS]
+                              onMainScrC          : ReactConnectProxy[OnMainScreenR.PropsVal],
+                              rcvrsGeoC           : ReactConnectProxy[Pot[MRcvrsGeo]],
+                              rcvrPopupC          : ReactConnectProxy[MRcvr],
+                              mmapC               : ReactConnectProxy[MMapS],
+                              geoAdvExistGjC      : ReactConnectProxy[Pot[js.Array[GjFeature]]],
+                              geoAdvPopupC        : ReactConnectProxy[MExistGeoPopupS],
+                              mRadOptC            : ReactConnectProxy[Option[MRad]],
+                              radEnabledPropsC    : ReactConnectProxy[RadEnabledR.PropsVal],
+                              priceDslOptC        : ReactConnectProxy[Option[IPriceDslTerm]],
+                              mDocC               : ReactConnectProxy[MDocS]
                             )
 
 
@@ -79,7 +80,7 @@ object AdvGeoFormR {
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
         // Рендер компонента документации.
-        s.mDocConn { DocR.apply },
+        s.mDocC { DocR.apply },
 
         // Галочка бесплатного размещения для суперюзеров.
         p.wrap(_.adv4free) { a4fOptProx =>
@@ -91,12 +92,12 @@ object AdvGeoFormR {
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
 
           // Галочка активности георазмещения на карте.
-          s.radEnabledPropsConn( RadEnabledR.apply ),
+          s.radEnabledPropsC( RadEnabledR.apply ),
           <.br,
           <.br,
 
           // Галочка размещения на главном экране
-          s.onMainScrConn( OnMainScreenR.apply ),
+          s.onMainScrC( OnMainScreenR.apply ),
 
           <.br,
           <.br,
@@ -113,12 +114,12 @@ object AdvGeoFormR {
         <.br,
 
         // Если не удалось прочитать маркеры ресиверов с сервера, то отрендерить заметное сообщение об ошибке.
-        s.rcvrMarkersConn { x =>
+        s.rcvrsGeoC { x =>
           MapInitFailR( x.asInstanceOf[ModelProxy[Pot[_]]] )
         },
 
         // Рендер географической карты:
-        s.mmapConn { mapProps =>
+        s.mmapC { mapProps =>
           LGeoMapR(mapProps)(
 
             // Рендерим основную плитку карты.
@@ -128,22 +129,22 @@ object AdvGeoFormR {
             LocateControlR()(),
 
             // Рендер кружочков текущих размещений.
-            s.geoAdvExistGjConn( ExistAdvGeoShapesR.apply ),
+            s.geoAdvExistGjC( ExistAdvGeoShapesR.apply ),
             // Рендер попапа над кружочком георазмещения:
-            s.geoAdvPopupConn( ExistPopupR.apply ),
+            s.geoAdvPopupC( ExistPopupR.apply ),
 
             // Запрешаем рендер красного круга пока не нарисованы все остальные. Так надо, чтобы он был поверх их всех.
-            s.geoAdvExistGjConn { potProx =>
+            s.geoAdvExistGjC { potProx =>
               // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
               for (_ <- potProx().toOption) yield {
-                s.mRadOptConn( RadR.apply )
+                s.mRadOptC( RadR.apply )
               }
             },
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
-            s.rcvrMarkersConn( RcvrMarkersR.apply ),
+            s.rcvrsGeoC( RcvrMarkersR.apply ),
             // Рендер опционального попапа над ресивером.
-            s.rcvrPopupConn( RcvrPopupR.apply )
+            s.rcvrPopupC( RcvrPopupR.apply )
 
           )
         },
@@ -151,7 +152,7 @@ object AdvGeoFormR {
         <.br,
 
         // Рендерить табличку с данными по рассчёту текущей цены:
-        s.priceDslOptConn { ItemsPricesR.apply }
+        s.priceDslOptC { ItemsPricesR.apply }
 
       )   // top div
     }     // render()
@@ -163,24 +164,24 @@ object AdvGeoFormR {
     .initialState_P { p =>
       val mradOptZoomF = { r: MRoot => r.rad }
       State(
-        onMainScrConn   = p.connect { mroot =>
+        onMainScrC   = p.connect { mroot =>
           OnMainScreenR.PropsVal(
             mroot.other.onMainScreen
           )
         },
-        rcvrMarkersConn     = p.connect(_.rcvr.markers),
-        rcvrPopupConn       = p.connect(_.rcvr),
-        mmapConn            = p.connect(_.mmap),
-        geoAdvExistGjConn   = p.connect(_.geoAdv.geoJson),
-        geoAdvPopupConn     = p.connect(_.geoAdv.popup),
+        rcvrsGeoC        = p.connect(_.rcvr.rcvrsGeo),
+        rcvrPopupC       = p.connect(_.rcvr),
+        mmapC            = p.connect(_.mmap),
+        geoAdvExistGjC   = p.connect(_.geoAdv.geoJson),
+        geoAdvPopupC     = p.connect(_.geoAdv.popup),
         // Для рендера подходит только radEnabled, а он у нас генерится заново каждый раз.
-        mRadOptConn         = p.connect(mradOptZoomF),
-        radEnabledPropsConn = RadEnabledR.radEnabledPropsConn(
+        mRadOptC         = p.connect(mradOptZoomF),
+        radEnabledPropsC = RadEnabledR.radEnabledPropsConn(
           p.zoom(mradOptZoomF),
           renderHintAsText = false
         ),
-        priceDslOptConn     = p.connect( _.bill.price.respDslOpt ),
-        mDocConn            = p.connect(_.other.doc)
+        priceDslOptC     = p.connect( _.bill.price.respDslOpt ),
+        mDocC            = p.connect(_.other.doc)
       )
     }
     .renderBackend[Backend]

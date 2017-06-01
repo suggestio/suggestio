@@ -1,7 +1,5 @@
 package io.suggest.maps.m
 
-import io.suggest.sjs.leaflet.marker.Marker
-
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
@@ -13,19 +11,19 @@ import scala.scalajs.js.UndefOr
   */
 
 @js.native
-sealed trait MarkerNodeId extends js.Object {
+sealed trait MonkeyNodeId extends js.Object {
 
   var nodeId: UndefOr[String] = js.native
 
 }
 
 
-object MarkerNodeId {
+object MonkeyNodeId {
 
   import scala.language.implicitConversions
 
-  implicit def apply(marker: Marker): MarkerNodeId = {
-    marker.asInstanceOf[MarkerNodeId]
+  implicit def apply(marker: js.Object): MonkeyNodeId = {
+    marker.asInstanceOf[MonkeyNodeId]
   }
 
 }

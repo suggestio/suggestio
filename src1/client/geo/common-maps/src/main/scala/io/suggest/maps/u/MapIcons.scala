@@ -9,7 +9,7 @@ import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
-import io.suggest.maps.m.MarkerNodeId._
+import io.suggest.maps.m.MonkeyNodeId._
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.sjs.leaflet.geojson.GeoJson
 
@@ -104,7 +104,7 @@ object MapIcons {
   def geoJsonToClusterMarkers(features: TraversableOnce[BooGjFeature[MAdvGeoMapNodeProps]]): js.Array[Marker] = {
     val iter2 = for {
       // Перебираем все переданные фичи GeoJSON.
-      feature <- features
+      feature <- features.toIterator
 
       // Тут интересуют только точки.
       if (feature.geometry.`type` == GjTypes.Geom.POINT) && feature.props.circleRadiusM.isEmpty
