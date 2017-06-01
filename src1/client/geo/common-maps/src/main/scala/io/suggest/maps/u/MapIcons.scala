@@ -1,18 +1,19 @@
 package io.suggest.maps.u
 
 import io.suggest.common.spa.SpaConst.LkPreLoader
-import io.suggest.maps.m.MMapGjFeature
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.geo.json.GjTypes
+import io.suggest.sjs.common.geo.json.{BooGjFeature, GjGeometry, GjTypes}
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.maps.m.MarkerNodeId._
-import scala.scalajs.js.JSConverters._
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.sjs.leaflet.geojson.GeoJson
 
+import scala.scalajs.js.JSConverters._
 import scala.scalajs.js
 
 /**
@@ -98,51 +99,47 @@ object MapIcons {
 
 
   /** Скомпилировать GeoJSON-маркеров в маркеры для кластеризации.
-    * @param gjFeatures Исходный набор точек с сервера.
+    * @param features Исходный набор точек с сервера.
     */
-  def geoJsonToClusterMarkers(gjFeatures: TraversableOnce[MMapGjFeature]): js.Array[Marker] = {
+  def geoJsonToClusterMarkers(features: TraversableOnce[BooGjFeature[MAdvGeoMapNodeProps]]): js.Array[Marker] = {
     val iter2 = for {
       // Перебираем все переданные фичи GeoJSON.
-      gjFeature <- gjFeatures
+      feature <- features
 
       // Тут интересуют только точки.
-      if gjFeature.underlying.geometry.`type` == GjTypes.Geom.POINT
+      if (feature.geometry.`type` == GjTypes.Geom.POINT) && feature.props.circleRadiusM.isEmpty
 
     } yield {
 
       // Собираем параметры отображения маркера.
-      val nodeIdOpt = gjFeature.nodeId
+      val nodeId = feature.props.nodeId
       val options = new MarkerOptions {
         override val draggable = false
-        override val clickable = nodeIdOpt.isDefined
+        override val clickable = true //nodeIdOpt.isDefined
         // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
-        override val icon = gjFeature.icon.fold( MapIcons.pinMarkerIcon() ) { iconInfo =>
-          val o = IconOptions.empty
-          o.iconUrl = iconInfo.url
-          // Описываем размеры иконки по данным сервера.
-          o.iconSize = Leaflet.point(
-            y = iconInfo.height,
-            x = iconInfo.width
-          )
-          // Для иконки -- якорь прямо в середине.
-          o.iconAnchor = Leaflet.point(
-            y = iconInfo.height / 2,
-            x = iconInfo.width / 2
-          )
-          Leaflet.icon(o)
+        override val icon = js.defined {
+          feature.props.icon.fold( MapIcons.pinMarkerIcon() ) { iconInfo =>
+            val o = IconOptions.empty
+            o.iconUrl = iconInfo.url
+            // Описываем размеры иконки по данным сервера.
+            o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
+            // Для иконки -- якорь прямо в середине.
+            o.iconAnchor = MapsUtil.size2d2LPoint( iconInfo.wh / 2 )
+            Leaflet.icon(o)
+          }
         }
-        override val title = JsOptionUtil.opt2undef( gjFeature.title )
+        override val title = JsOptionUtil.opt2undef( feature.props.hint )
       }
 
       val m = Leaflet.marker(
-        latLng  = gjFeature.pointLatLng,
+        latLng  = GeoJson.coordsToLatLng(
+          GjGeometry.firstPoint( feature.geometry )
+        ),
         options = options
       )
 
       // monkey-patching id узла внутрь маркера.
-      for (nodeId <- nodeIdOpt) {
-        m.nodeId = nodeId
-      }
+      m.nodeId = nodeId
 
       m
     }

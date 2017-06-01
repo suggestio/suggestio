@@ -9,7 +9,7 @@ import scala.scalajs.js
   * Description: API for abstract Leaflet Event.
   */
 @js.native
-class Event extends js.Object {
+trait Event extends js.Object {
 
   var `type`: String = js.native
 

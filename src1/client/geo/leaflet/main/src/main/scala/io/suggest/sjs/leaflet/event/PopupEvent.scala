@@ -12,7 +12,7 @@ import scala.scalajs.js
  */
 
 @js.native
-class PopupEvent extends Event {
+trait PopupEvent extends Event {
 
   var popup: Popup = js.native
 

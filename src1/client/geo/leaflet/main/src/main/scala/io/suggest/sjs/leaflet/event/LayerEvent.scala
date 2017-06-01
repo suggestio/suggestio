@@ -12,7 +12,7 @@ import scala.scalajs.js
   * @see [[http://leafletjs.com/reference-1.0.2.html#layer]]
   */
 @js.native
-class LayerEvent extends Event {
+trait LayerEvent extends Event {
 
   val layer: Layer = js.native
 

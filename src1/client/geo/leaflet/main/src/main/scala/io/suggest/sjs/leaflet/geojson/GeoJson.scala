@@ -16,20 +16,31 @@ import scala.scalajs.js.annotation.JSImport
 @js.native
 object GeoJson extends js.Object {
 
-  def geometryToLayer(feature: GjFeature,
-                      pointToLayer: js.Function2[GjFeature, LatLng, js.Object] = js.native): Layer = js.native
+  def geometryToLayer(feature       : GjFeature,
+                      pointToLayer  : js.Function2[GjFeature, LatLng, js.Object] = js.native
+                     ): Layer = js.native
 
-  def coordsToLatLng(coords: js.Array[Double], reverse: Boolean = js.native): LatLng = js.native
+  def coordsToLatLng(coords: js.Array[Double]): LatLng = js.native
 
-  def coordsToLatLngs(coords: GjCoordsDeepArray,
-                      levelsDeep: Int = js.native,
-                      reverse: Boolean = js.native): GjLatLngDeepArray = js.native
+  def coordsToLatLng(coords         : js.Object,
+                     levelsDeep     : Int = js.native,
+                     coordsToLatLng : js.Function1[js.Array[Double], LatLng] = js.native
+                    ): LatLng = js.native
+
+  def latLngToCoords(latLng: LatLng): js.Array[Double] = js.native
+
+  def latLngsToCoords(latLngs     : js.Array[js.Any],
+                      levelsDeep  : Int     = js.native,
+                      closed      : Boolean = js.native
+                     ): js.Array[js.Any] = js.native
+
+  def asFeature(geojson: js.Object): js.Object = js.native
 
 }
 
 
 @js.native
-sealed class GeoJson extends Layer {
+sealed trait GeoJson extends Layer {
 
   def addTo(lmap: LMap): this.type = js.native
 

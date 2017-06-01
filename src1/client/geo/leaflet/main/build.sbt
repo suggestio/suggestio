@@ -9,9 +9,9 @@ name := "scalajs-leaflet"
 
 version := "0.1s-SNAPSHOT"
 
-persistLauncher in Compile := false
+//persistLauncher in Compile := false
 
-persistLauncher in Test := false
+//persistLauncher in Test := false
 
 // Show more comments when using dubious features
 scalacOptions += "-feature"

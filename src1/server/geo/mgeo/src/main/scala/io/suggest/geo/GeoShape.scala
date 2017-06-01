@@ -8,7 +8,7 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
-import play.extras.geojson.{Geometry, LatLng}
+import play.extras.geojson.{Geometry, LngLat}
 
 /**
   * Suggest.io
@@ -105,7 +105,7 @@ trait GeoShape {
     * Circle конвертится в точку!
     * ES envelope -- пока не поддерживается, но можно представить прямоугольным полигоном.
     */
-  def toPlayGeoJsonGeom: Geometry[LatLng]
+  def toPlayGeoJsonGeom: Geometry[LngLat]
 
 }
 

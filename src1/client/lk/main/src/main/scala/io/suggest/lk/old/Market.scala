@@ -1,7 +1,7 @@
 package io.suggest.lk.old
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import scala.scalajs.js.annotation.JSName
  * Description: Доступ к старому API, реализованном в mx_cof.js максом.
  */
 @js.native
-@JSName("market")
+@JSGlobal("market")
 object Market extends js.Object {
 
   /** Доступ к API картинок. */

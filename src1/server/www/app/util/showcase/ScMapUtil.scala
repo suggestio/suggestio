@@ -15,7 +15,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import play.api.libs.json.JsObject
-import play.extras.geojson.{Feature, FeatureCollection, LatLng}
+import play.extras.geojson.{Feature, FeatureCollection, LngLat}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future
@@ -70,7 +70,7 @@ class ScMapUtil @Inject() (
   }
 
   /** Кешируем результат поиска точек. */
-  def getAllPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[FeatureCollection[LatLng]] = {
+  def getAllPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[FeatureCollection[LngLat]] = {
     cacheApiUtil.getOrElseFut("sc.map.points", expiration = 10.seconds) {
       val startedAtMs = System.currentTimeMillis()
       val adnPointsFut = findAdnPoints(areaOpt)

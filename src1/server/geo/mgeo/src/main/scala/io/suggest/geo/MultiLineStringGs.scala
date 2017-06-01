@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilder}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LatLng, MultiLineString}
+import play.extras.geojson.{LngLat, MultiLineString}
 
 
 /**
@@ -58,7 +58,7 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
 
   override def firstPoint = lines.head.firstPoint
 
-  override def toPlayGeoJsonGeom: MultiLineString[LatLng] = {
+  override def toPlayGeoJsonGeom: MultiLineString[LngLat] = {
     MultiLineString(
       coordinates = lines.iterator
         .map(_.toPlayGeoJsonGeom.coordinates)

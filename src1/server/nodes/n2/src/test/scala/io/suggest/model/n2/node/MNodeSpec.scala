@@ -74,7 +74,7 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
                         id = 1,
                         glevel = NodeGeoLevels.NGL_BUILDING,
                         shape  = CircleGs(
-                          center = MGeoPoint(10, 15),
+                          center = MGeoPoint(lat = 10, lon = 15),
                           radius = Distance.meters(2000)
                         )
                       )
@@ -85,7 +85,7 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
             }
           ),
           geo = MNodeGeo(
-            point = Some(MGeoPoint(10.0, 33.2))
+            point = Some(MGeoPoint(lat = 10.0, lon = 33.2))
           ),
           ad = MNodeAd(
             blockMeta = Some(BlockMeta.DEFAULT)

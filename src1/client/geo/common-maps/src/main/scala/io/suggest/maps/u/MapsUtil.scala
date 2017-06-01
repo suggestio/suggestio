@@ -1,9 +1,10 @@
 package io.suggest.maps.u
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.geo.{GeoConstants, MGeoCircle, MGeoPoint}
 import io.suggest.sjs.common.model.loc.MGeoPointJs
 import io.suggest.sjs.leaflet.Leaflet
-import io.suggest.sjs.leaflet.map.LatLng
+import io.suggest.sjs.leaflet.map.{LatLng, Point}
 
 /**
   * Suggest.io
@@ -12,6 +13,14 @@ import io.suggest.sjs.leaflet.map.LatLng
   * Description: JS-утиль для работы с географическими картами и геоданными.
   */
 object MapsUtil {
+
+  /** Конвертация size2di в leaflet-точку. */
+  def size2d2LPoint(size2d: ISize2di): Point = {
+    Leaflet.point(
+      x = size2d.width,
+      y = size2d.height
+    )
+  }
 
 
   /** Конверсия L.LatLng в MGeoPoint. */

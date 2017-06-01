@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LatLng, Polygon}
+import play.extras.geojson.{LngLat, Polygon}
 
 /**
  * Suggest.io
@@ -74,7 +74,7 @@ case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) exten
 
   def toMpGss = (outer :: holes).map(_.coords)
 
-  override def toPlayGeoJsonGeom: Polygon[LatLng] = {
+  override def toPlayGeoJsonGeom: Polygon[LngLat] = {
     Polygon(
       coordinates = outer.toPlayGeoJsonGeom.coordinates :: holes.map(_.toPlayGeoJsonGeom.coordinates)
     )

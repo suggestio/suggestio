@@ -5,11 +5,11 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.router.jsRoutes
-import io.suggest.maps.m.MMapGjResp
+import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.geo.json.GjFeature
+import io.suggest.sjs.common.geo.json.{BooGjFeature, GjFeature}
 import io.suggest.sjs.common.tags.search.{ITagsApi, TagsApiImplXhr}
 
 import scala.concurrent.Future
@@ -29,7 +29,7 @@ import scala.scalajs.js
 trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  def rcvrsMap(adId: String): Future[MMapGjResp]
+  def rcvrsMap(adId: String): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]]
 
   /** Запрос с сервера попапа над ресивером. */
   def rcvrPopup(adId: String, nodeId: String): Future[MRcvrPopupResp]
@@ -64,11 +64,14 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def rcvrsMap(adId: String): Future[MMapGjResp] = {
+  override def rcvrsMap(adId: String): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]] = {
     // Надо запустить запрос на сервер для получения списка узлов.
     val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap(adId)
-    Xhr.requestJson( route )
-      .map(MMapGjResp.apply)
+    for (json <- Xhr.requestJson( route )) yield {
+      val gjFeatures = json.asInstanceOf[js.Array[GjFeature]]
+      BooGjFeature.fromFeaturesIter[MAdvGeoMapNodeProps]( gjFeatures )
+        .toSeq
+    }
   }
 
 

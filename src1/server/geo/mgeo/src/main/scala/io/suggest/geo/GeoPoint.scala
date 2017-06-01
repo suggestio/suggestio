@@ -14,7 +14,7 @@ import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
-import play.extras.geojson.{LatLng, LngLat}
+import play.extras.geojson.LngLat
 
 /**
   * Suggest.io
@@ -169,13 +169,15 @@ object GeoPoint extends MacroLogsImpl {
   /** Пространственная координата в терминах JTS. */
   def toJstCoordinate(gp: IGeoPoint) = new Coordinate(gp.lon, gp.lat)
 
+  /** (Lon,lat,alt) является основным порядком гео.координат в sio2. */
   def toLngLat(gp: IGeoPoint): LngLat = {
     LngLat(lng = gp.lon, lat = gp.lat)
   }
 
-  def toLatLng(gp: IGeoPoint): LatLng = {
-    LatLng(lat = gp.lat, lng = gp.lon)
-  }
+  // Предвартильно выпилено на корню в целях борьбы с зоопарком форматов координат.
+  //def toLatLng(gp: IGeoPoint): LatLng = {
+  //  LatLng(lat = gp.lat, lng = gp.lon)
+  //}
 
   /** Всякие неявности изолированы в отдельном namespace. */
   object Implicits {

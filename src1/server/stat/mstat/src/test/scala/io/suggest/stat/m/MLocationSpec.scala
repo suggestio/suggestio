@@ -21,10 +21,10 @@ class MLocationSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MLocation(
         geo = MGeoLocData(
-          coords = Some(MGeoPoint(11, 22))
+          coords = Some(MGeoPoint(lat = 11, lon = 22))
         ),
         geoIp = MGeoLocData(
-          coords  = Some(MGeoPoint(44, 55)),
+          coords  = Some(MGeoPoint(lat = 44, lon = 55)),
           town    = Some("Xata")
         )
       )

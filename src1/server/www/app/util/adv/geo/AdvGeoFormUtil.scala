@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
 import io.suggest.geo.{CircleGs, GeoShape, MGeoCircle, MGeoPoint}
 import models.adv.geo.cur._
-import play.extras.geojson.{Feature, LatLng}
+import play.extras.geojson.{Feature, LngLat}
 import util.data.{AccordUtil, AccordValidateFormUtilT}
 
 /**
@@ -51,7 +51,7 @@ class AdvGeoFormUtil @Inject() (
     * Это во многом аналогично обычному shapeItems2geoJson, но более лениво в плане рендера попапа:
     * js должен обращаться к серверу за попапом. Поэтому, это легковеснее, быстрее, и Context здесь не нужен.
     */
-  def shapeInfo2geoJson(si: MAdvGeoShapeInfo): Feature[LatLng] = {
+  def shapeInfo2geoJson(si: MAdvGeoShapeInfo): Feature[LngLat] = {
     val gs = GeoShape.parse(si.geoShapeStr)
     val props = GjFtProps(
       itemId      = si.itemId,

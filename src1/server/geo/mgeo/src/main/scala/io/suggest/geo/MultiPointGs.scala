@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LatLng, MultiPoint}
+import play.extras.geojson.{LngLat, MultiPoint}
 
 /**
  * Suggest.io
@@ -30,7 +30,7 @@ case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
     ShapeBuilder.newMultiPoint()
   }
 
-  override def toPlayGeoJsonGeom: MultiPoint[LatLng] = {
+  override def toPlayGeoJsonGeom: MultiPoint[LngLat] = {
     MultiPoint(
       coordinates = MultiPointGs.coords2latLngs(coords)
     )
@@ -53,10 +53,10 @@ trait MultiPointShapeStatic extends GsStatic {
   }
 
   /** Сборка immutable-коллекции из инстансов LatLng. */
-  def coords2latLngs(coords: TraversableOnce[MGeoPoint]): Stream[LatLng] = {
+  def coords2latLngs(coords: TraversableOnce[MGeoPoint]): Stream[LngLat] = {
     coords
       .toIterator
-      .map( GeoPoint.toLatLng )
+      .map( GeoPoint.toLngLat )
       .toStream
   }
 

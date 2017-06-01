@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LatLng, Point}
+import play.extras.geojson.{LngLat, Point}
 
 /**
  * Suggest.io
@@ -60,7 +60,7 @@ case class CircleGs(center: MGeoPoint, radius: Distance) extends GeoShapeQuerabl
   override def centerPoint = Some(center)
 
   /** Circle представляется точкой, т.к. GeoJSON не поддерживает Circle. */
-  override def toPlayGeoJsonGeom: Point[LatLng] = {
+  override def toPlayGeoJsonGeom: Point[LngLat] = {
     PointGs(center).toPlayGeoJsonGeom
   }
 

@@ -1,5 +1,8 @@
 package io.suggest.common.geom.d2
 
+import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
+
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,6 +15,11 @@ trait ISize2di extends IWidth with IHeight {
   /** Сравнение c другим размером. */
   def sizeWhEquals(sz1: ISize2di): Boolean = {
     sz1.width == width  &&  sz1.height == height
+  }
+
+  /** Вернуть инстанс [[Size2di]]. */
+  def toSize2di: Size2di = {
+    Size2di(width = width, height = height)
   }
 
   override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
@@ -32,8 +40,37 @@ trait IHeight {
 }
 
 
+object Size2di {
+
+  import boopickle.Default._
+
+  /** Поддержка boopickle для инстансов [[Size2di]]. */
+  implicit val size2diPickler: Pickler[Size2di] = {
+    generatePickler[Size2di]
+  }
+
+}
+
 /** Дефолтовая реализация [[ISize2di]]. */
-case class Size2di(width: Int, height: Int) extends ISize2di
+final case class Size2di(
+                          override val width  : Int,
+                          override val height : Int
+                        )
+  extends ISize2di
+  with IntMathModifiers[Size2di]
+{
+
+  override def toSize2di = this
+
+  /** Модифицировать ширину и длину одной математической операцией. */
+  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): Size2di = {
+    copy(
+      width   = op(width, arg2),
+      height  = op(height, arg2)
+    )
+  }
+
+}
 
 
 /** Именованая версия [[ISize2di]]. Полезно для enum'ов.

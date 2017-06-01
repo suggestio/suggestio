@@ -34,7 +34,7 @@ trait ILatLng extends js.Object {
 
 
 @js.native
-class LatLng extends ILatLng {
+trait LatLng extends ILatLng {
 
   def distanceTo(other: LatLng): Double = js.native
 

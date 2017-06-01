@@ -61,7 +61,7 @@ class AdvGeoLocUtil @Inject() (
   /** Когда нет точки для отображения, взять её с потолка. */
   def getGeoPointLastResort: MGeoPoint = {
     // Штаб ВМФ СПб, который в центре СПб
-    MGeoPoint(59.93769, 30.30887)
+    MGeoPoint(lat = 59.93769, lon = 30.30887)
   }
 
   private def _geoAdvsItemTypes = Seq(

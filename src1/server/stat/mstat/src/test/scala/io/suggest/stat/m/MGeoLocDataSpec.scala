@@ -20,7 +20,7 @@ class MGeoLocDataSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support full-filled model" in {
     jsonTest {
       MGeoLocData(
-        coords    = Some( MGeoPoint(33, 55) ),
+        coords    = Some( MGeoPoint(lat = 33, lon = 55) ),
         accuracy  = Some( 155 ),
         town      = Some( "Engozero" ),
         country   = Some( "RU" )

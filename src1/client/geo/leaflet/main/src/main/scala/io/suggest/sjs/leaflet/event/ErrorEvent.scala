@@ -9,7 +9,7 @@ import scala.scalajs.js
  * Description: API for Leaflet ErrorEvent.
  */
 @js.native
-class ErrorEvent extends Event {
+trait ErrorEvent extends Event {
 
   var message: String = js.native
 

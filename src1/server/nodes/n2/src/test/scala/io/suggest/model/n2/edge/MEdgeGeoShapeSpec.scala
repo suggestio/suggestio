@@ -23,7 +23,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
       id     = 1,
       glevel = NodeGeoLevels.NGL_BUILDING,
       shape  = CircleGs(
-        center = MGeoPoint(10.1, 11.2),
+        center = MGeoPoint(lat = 10.1, lon = 11.2),
         radius = Distance(10.55, DistanceUnit.KILOMETERS)
       )
     )
@@ -50,7 +50,11 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
         glevel = NodeGeoLevels.NGL_TOWN,
         shape  = PolygonGs(
           outer = LineStringGs(Seq(
-            MGeoPoint(10, 10), MGeoPoint(20, 20), MGeoPoint(30, 30), MGeoPoint(0, 30), MGeoPoint(10, 10)
+            MGeoPoint(lat = 10, lon = 10),
+            MGeoPoint(lat = 20, lon = 20),
+            MGeoPoint(lat = 30, lon = 30),
+            MGeoPoint(lat = 0,  lon = 30),
+            MGeoPoint(lat = 10, lon = 10)
           ))
         ),
         fromUrl = Some("https://x.com/asd.jpg"),

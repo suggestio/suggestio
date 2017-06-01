@@ -12,7 +12,7 @@ import org.scalajs.dom.{raw => sjs}
   * Description:
   */
 @js.native
-class MouseEvent extends Event {
+trait MouseEvent extends Event {
 
   var latlng: LatLng = js.native
 

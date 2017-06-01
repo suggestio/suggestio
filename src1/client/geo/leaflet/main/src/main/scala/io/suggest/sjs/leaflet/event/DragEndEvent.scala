@@ -9,7 +9,7 @@ import scala.scalajs.js
  * Description: API for `dragent` event.
  */
 @js.native
-class DragEndEvent extends Event {
+trait DragEndEvent extends Event {
 
   var distance: Double = js.native
 

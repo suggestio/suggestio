@@ -8,18 +8,22 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.Size2di
+import io.suggest.geo.PointGs
+import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
+import io.suggest.pick.MPickledPropsJvm
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.common.AdnRights
 import models.ISize2di
-import models.adv.geo.mapf.{MAdvGeoMapNode, MAdvGeoMapNodeProps, MIconInfo}
 import models.im.{DevPixelRatios, MAnyImgs, MImgT}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
+import play.api.libs.json.OWrites
+import play.extras.geojson.{Feature, LngLat}
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, LogoUtil}
 
@@ -81,7 +85,7 @@ class AdvGeoMapUtil @Inject() (
         val cr = Criteria(
           predicates = MPredicates.AdnMap :: Nil
         )
-        Seq(cr)
+        cr :: Nil
       }
       override def isEnabled  = Some(true)
       override def testNode   = Some(false)
@@ -100,13 +104,15 @@ class AdvGeoMapUtil @Inject() (
     * @param msearch Инстас поисковых аргументов, собранный через rcvrsSearch().
     * @return Фьючерс с GeoJSON.
     */
-  def rcvrNodesMap(msearch: MNodeSearch)(implicit ctx: Context): Source[MAdvGeoMapNode, NotUsed] = {
+  def rcvrNodesMap(msearch: MNodeSearch)(implicit ctx: Context): Source[Feature[LngLat], NotUsed] = {
     // Начать выкачивать все подходящие узлы из модели:
     val nodesSource = mNodes.source[MNode](msearch)
 
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
     val logosAndNodeSrc = nodesSource.mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
+      // Подготовить инфу по логотипу узла.
+      // TODO А нужно ли готовить логотип, если нет AdnMap-предиката?
       val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
         FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
           val dpr = DevPixelRatios.XHDPI
@@ -128,7 +134,7 @@ class AdvGeoMapUtil @Inject() (
               } else {
                 wh
               }
-              Some(LogoInfo(logo, wh2))
+              Some( LogoInfo(logo, wh2) )
             }
           }
 
@@ -152,10 +158,12 @@ class AdvGeoMapUtil @Inject() (
       val iconInfoOpt = for {
         logoInfo <- nodeInfo.logoInfoOpt
       } yield {
-        MIconInfo(
+        MMapNodeIconInfo(
           url    = ctx.dynImgCall( logoInfo.logo ).url,
-          width  = logoInfo.wh.width,
-          height = logoInfo.wh.height
+          wh = Size2di(
+            width  = logoInfo.wh.width,
+            height = logoInfo.wh.height
+          )
         )
       }
       val mnode = nodeInfo.mnode
@@ -166,35 +174,46 @@ class AdvGeoMapUtil @Inject() (
       val bgColor = mnode.meta.colors.bg
           .map(_.code)
 
-      // props'ы для одной точки.
-      val props = MAdvGeoMapNodeProps(
-        nodeId  = nodeId,
-        hint    = hint,
-        bgColor = bgColor,
-        icon    = iconInfoOpt
-      )
+      var featsAcc = List.empty[TraversableOnce[Feature[LngLat]]]
 
-      // Собрать точки узла.
+      // Собрать точки узла, если они есть.
       val pointsIter = mnode.edges
         .withPredicateIter( MPredicates.AdnMap )
         .flatMap { _.info.geoPoints }
-        .map { geoPoint =>
-          MAdvGeoMapNode(
-            point = geoPoint,
-            props = props
+      val hasPoints = pointsIter.nonEmpty
+
+      if (hasPoints) {
+        // props'ы для одной точки.
+        val props = MAdvGeoMapNodeProps(
+          nodeId  = nodeId,
+          hint    = hint,
+          bgColor = bgColor,
+          icon    = iconInfoOpt
+        )
+        val mpp = MPickledPropsJvm(props)
+        val propsBin = implicitly[OWrites[mpp.type]].writes(mpp)
+
+        val iter = for (geoPoint <- pointsIter) yield {
+          Feature(
+            geometry   = PointGs(geoPoint).toPlayGeoJsonGeom,
+            properties = Some( propsBin )
           )
         }
 
+        featsAcc ::= iter
+      }
+
       // Собрать шейпы узла.
-      val shapesIter = mnode.edges
-        .withoutPredicateIter( MPredicates.NodeLocation )
-        .flatMap( _.info.geoShapes )
-        .map { gs =>
-          gs.shape.toPlayGeoJsonGeom
-        }
+      //val shapesIter = mnode.edges
+      //  .withoutPredicateIter( MPredicates.NodeLocation )
+      //  .flatMap( _.info.geoShapes )
+      //  .map { gs =>
+      //    gs.shape.toPlayGeoJsonGeom
+      //  }
 
-
-      pointsIter
+      featsAcc
+        .iterator
+        .flatten
         .toStream // Это типа toImmutableIterable
     }
 

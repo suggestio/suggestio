@@ -4,9 +4,8 @@ import io.suggest.sc.ScConstants.JsRouter.NAME
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
-import scala.scalajs.js.{Dictionary, Any}
-
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.{Any, Dictionary}
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
  * Suggest.io
@@ -16,7 +15,7 @@ import scala.scalajs.js.annotation.JSName
  */
 
 @js.native
-@JSName(NAME)
+@JSGlobal(NAME)
 object routes extends js.Object {
   def controllers: Ctls = js.native
 }

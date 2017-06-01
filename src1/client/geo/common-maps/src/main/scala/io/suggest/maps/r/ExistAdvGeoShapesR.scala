@@ -18,6 +18,7 @@ import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.leaflet.path.circle.CircleMarkerOptions
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.OpenAdvGeoExistPopup
+import io.suggest.sjs.common.model.loc.MGeoPointJs
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr}
@@ -93,7 +94,9 @@ object ExistAdvGeoShapesR extends Log {
             } {
 
               val itemId = props.itemId
-              val gp = GjGeometry.firstPoint(gjFeature.geometry)
+              val gp = MGeoPointJs.fromGjArray(
+                GjGeometry.firstPoint(gjFeature.geometry)
+              )
 
               layer.on3( Events.CLICK, { _: LayerEvent =>
                 onShapeClick(itemId, gp).runNow()

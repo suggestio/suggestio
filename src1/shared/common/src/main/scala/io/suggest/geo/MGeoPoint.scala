@@ -12,12 +12,13 @@ import io.suggest.geo.GeoConstants.Qs
  */
 trait IGeoPoint {
 
-  /** Широта. */
-  def lat: Double
-
-  /** Долгота. */
+  /** Долгота (X). */
   def lon: Double
 
+  /** Широта (Y). */
+  def lat: Double
+
+  // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.
   override def toString: String = {
     lat.toString + Qs.LAT_LON_DELIM_FN + lon.toString
   }
@@ -64,27 +65,16 @@ object MGeoPoint {
     }
   }
 
-
-  /*
-  import com.wix.accord.Validator
-  import com.wix.accord.dsl._
-
-  implicit val VALIDATOR: Validator[MGeoPoint] = {
-    validator[MGeoPoint] { mgp =>
-      mgp.lat is between(-LAT_BOUND, LAT_BOUND)
-      mgp.lon is between(-LON_BOUND, LON_BOUND)
-    }
-  }
-  */
-
 }
 
 
 /** Дефолтовая, пошаренная между клиентом и сервером, реализация [[IGeoPoint]]. */
 case class MGeoPoint(
-  override val lat: Double,
-  override val lon: Double
-)
+                      // TODO Надо обменять порядок аргументов на (lon,lat).
+                      // TODO Надо это учесть в FormUtil.geoPointM и в GeoPoint.FORMAT_OBJECT
+                      override val lat: Double,
+                      override val lon: Double
+                    )
   extends IGeoPoint
 {
 

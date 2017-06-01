@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LatLng, MultiPolygon}
+import play.extras.geojson.{LngLat, MultiPolygon}
 
 /**
  * Suggest.io
@@ -62,7 +62,7 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
 
   override def firstPoint = polygons.head.firstPoint
 
-  override def toPlayGeoJsonGeom: MultiPolygon[LatLng] = {
+  override def toPlayGeoJsonGeom: MultiPolygon[LngLat] = {
     MultiPolygon(
       coordinates = polygons
         .iterator

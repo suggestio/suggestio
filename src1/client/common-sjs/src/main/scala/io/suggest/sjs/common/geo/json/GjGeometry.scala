@@ -1,8 +1,6 @@
 package io.suggest.sjs.common.geo.json
 
-import io.suggest.geo.MGeoPoint
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.model.loc.MGeoPointJs
 import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.scalajs.js
@@ -24,14 +22,14 @@ object GjGeometry extends Log {
     }
   }
 
-  def firstPoint(geom: GjGeometry): MGeoPoint = {
+  def firstPoint(geom: GjGeometry): js.Array[Double] = {
     firstPoint(geom.coordinates)
   }
-  def firstPoint(coords: js.Array[_], index: Int = 0): MGeoPoint = {
+  def firstPoint(coords: js.Array[_], index: Int = 0): js.Array[Double] = {
     coords(index) match {
-      // Число. Значит текущий массив -- это координата [x,y].
-      case lon: Double =>
-        MGeoPointJs.fromGjArray(coords.asInstanceOf[js.Array[Double]])
+      // Число (lon). Значит текущий массив -- это координата [x,y].
+      case _: Double =>
+        coords.asInstanceOf[js.Array[Double]]
 
       // Подмассив с координатами или другими подмассивами. Это нормально.
       case arr: js.Array[_] if arr.nonEmpty =>

@@ -48,7 +48,7 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
               id = 1,
               glevel = NodeGeoLevels.NGL_BUILDING,
               shape  = CircleGs(
-                center = MGeoPoint(10, 15),
+                center = MGeoPoint(lat = 10, lon = 15),
                 radius = Distance.meters(2000)
               ),
               fromUrl = Some("http://asdasdasd/.df"),

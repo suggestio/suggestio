@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import org.elasticsearch.common.geo.builders.{LineStringBuilder, ShapeBuilder}
 import play.api.libs.json.JsArray
-import play.extras.geojson.{LatLng, LineString}
+import play.extras.geojson.{LineString, LngLat}
 
 /**
  * Suggest.io
@@ -35,7 +35,7 @@ case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
   override def firstPoint = coords.head
 
-  override def toPlayGeoJsonGeom: LineString[LatLng] = {
+  override def toPlayGeoJsonGeom: LineString[LngLat] = {
     LineString(
       coordinates = LineStringGs.coords2latLngs(coords)
     )

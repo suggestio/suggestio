@@ -9,4 +9,4 @@ import scala.scalajs.js
   * Description: API for icons.
   */
 @js.native
-class Icon extends js.Object
+trait Icon extends js.Object

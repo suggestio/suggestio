@@ -8,7 +8,7 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
-import play.extras.geojson.{Geometry, LatLng, Polygon}
+import play.extras.geojson.{Geometry, LngLat, Polygon}
 
 /**
   * Suggest.io
@@ -103,15 +103,15 @@ case class EnvelopeGs(
 
   /** Экспорт в GeoJSON Polygon.
     * Не тестировано, но по идее должно работать. */
-  override def toPlayGeoJsonGeom: Geometry[LatLng] = {
-    import GeoPoint.toLatLng
+  override def toPlayGeoJsonGeom: Geometry[LngLat] = {
+    import GeoPoint.toLngLat
     val outer = List(
-      toLatLng( topLeft ),
-      toLatLng( topLeft.copy(lon = bottomRight.lon) ),
-      toLatLng( bottomRight ),
-      toLatLng( bottomRight.copy(lat = topLeft.lat) )
+      toLngLat( topLeft ),
+      toLngLat( topLeft.copy(lon = bottomRight.lon) ),
+      toLngLat( bottomRight ),
+      toLngLat( bottomRight.copy(lat = topLeft.lat) )
     )
-    Polygon [LatLng] (
+    Polygon [LngLat] (
       outer :: Nil
     )
   }

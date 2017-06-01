@@ -1,14 +1,14 @@
 package io.suggest.sjs.leaflet.map
 
 import io.suggest.sjs.leaflet.control.IControl
-import io.suggest.sjs.leaflet.event.{MouseEvent, LEventTarget}
+import io.suggest.sjs.leaflet.event.{LEventTarget, MouseEvent}
 import io.suggest.sjs.leaflet.handler.IHandler
-import io.suggest.sjs.leaflet.popup.{PopupOptions, Popup}
+import io.suggest.sjs.leaflet.popup.{Popup, PopupOptions}
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.`|`
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -18,7 +18,7 @@ import scala.scalajs.js.annotation.JSName
   * @see [[http://leafletjs.com/reference.html#map-set-methods]]
   */
 @js.native
-@JSName("L.Map")
+@JSGlobal("L.Map")
 class LMap extends LEventTarget {
 
   def setView(center: LatLng, zoom: Zoom_t = js.native, zoomOpts: ZoomOptions = js.native): LMap = js.native

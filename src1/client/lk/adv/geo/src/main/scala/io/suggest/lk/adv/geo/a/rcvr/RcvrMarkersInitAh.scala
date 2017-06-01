@@ -51,7 +51,7 @@ class RcvrMarkersInitAh[M](
         },
         {resp =>
           // Привести результат к js.Array[Markers].
-          val markersArr = MapIcons.geoJsonToClusterMarkers( resp.featuresIter )
+          val markersArr = MapIcons.geoJsonToClusterMarkers( resp )
           value.ready(markersArr)
         }
       )

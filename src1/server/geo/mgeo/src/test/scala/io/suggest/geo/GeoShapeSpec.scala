@@ -14,13 +14,20 @@ class GeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
   override type T = GeoShape
 
   "play-json" should "handle point shape" in {
-    jsonTest( PointGs(MGeoPoint(10, 20)) )
+    jsonTest( PointGs(
+      MGeoPoint(lat = 10, lon = 20)
+    ) )
   }
 
   it should "handle polygon shape" in {
     jsonTest {
       PolygonGs(
-        outer = LineStringGs(Seq(MGeoPoint(10, 20), MGeoPoint(30, 30), MGeoPoint(40, 40), MGeoPoint(10, 20)))
+        outer = LineStringGs(Seq(
+          MGeoPoint(lat = 10, lon = 20),
+          MGeoPoint(lat = 30, lon = 30),
+          MGeoPoint(lat = 40, lon = 40),
+          MGeoPoint(lat = 10, lon = 20)
+        ))
       )
     }
   }

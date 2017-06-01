@@ -11,7 +11,7 @@ import org.scalatest.FlatSpec
  */
 class MColorsSpec extends FlatSpec with PlayJsonTestUtil {
 
-  import MColorsJvm.FORMAT
+  import MColorsJvm.MCOLORS_FORMAT
 
   override type T = MColors
 

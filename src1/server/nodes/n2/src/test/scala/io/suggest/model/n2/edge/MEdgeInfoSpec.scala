@@ -37,7 +37,7 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
             id     = 5,
             glevel = NodeGeoLevels.NGL_BUILDING,
             shape  = CircleGs(
-              center = MGeoPoint(10.1, 11.2),
+              center = MGeoPoint(lat = 10.1, lon = 11.2),
               radius = Distance(10.55, DistanceUnit.KILOMETERS)
             )
           )

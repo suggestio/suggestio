@@ -12,7 +12,7 @@ import scala.scalajs.js
  */
 
 @js.native
-class ResizeEvent extends Event {
+trait ResizeEvent extends Event {
 
   var oldSize: Point = js.native
 

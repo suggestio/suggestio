@@ -1,7 +1,6 @@
 package io.suggest.adv.geo
 
 import io.suggest.common.maps.rad.IMinMaxM
-import io.suggest.common.qs.QsConstants
 
 /**
   * Suggest.io
@@ -52,65 +51,6 @@ object AdvGeoConstants {
 
     /** Максимальное кол-во изменений галочек за один раз. */
     def MAX_RCVRS_PER_TIME = 100
-
-    /** Имя поля с подсказкой узла. */
-    def HINT_FN       = "h"
-
-    /** Имя поля с именем узла. */
-    def NODE_ID_FN    = "n"
-
-    /** Имя поля с цветом фона (полезно для рендера логотипа с прозрачностью, например). */
-    def BG_COLOR_FN   = "b"
-
-    def ICON_FN       = "i"
-
-    /** Имя поля с радиусом круга. GeoJSON не поддерживает круги,
-      * поэтому он описывается точкой и радусом в props.
-      */
-    def CIRCLE_RADIUS_M_FN = GjFtPropsC.CIRCLE_RADIUS_M_FN
-
-
-    object Icon {
-
-      /** Имя поля с адресом иконки узла. */
-      def URL_FN    = "u"
-
-      def WIDTH_FN  = "w"
-      def HEIGHT_FN = "h"
-
-    }
-
-    /** Константы для попапа, выпрыгивающего при клике по узлу. */
-    object Popup {
-
-      /** id группы узлов, алиас некой общей сути у узлов.
-        * Например и изначально -- это тип узлов (ntype), но совсем не обязательно. */
-      final val GROUP_ID_FN       = "b"
-
-      /** Поставлена ли галочка? */
-      final val CHECKED_FN        = "f"
-
-
-      private def ID_DELIM        = QsConstants.KEY_PARTS_DELIM_STR
-
-      /** префикс DOM-id контейнера данных для попапа ресивера. */
-      def CONT_ID_PREFIX           = "prc" + ID_DELIM
-
-    }
-
-
-    /** Константы полей формы для размещения на узлах-ресиверах. */
-    object Req {
-
-      def RCVR_FN     = "rcvr"
-
-      def FROM_FN     = NODE_ID_FN
-      def TO_FN       = "t"
-
-      def GROUP_ID_FN = Popup.GROUP_ID_FN
-      def VALUE_FN    = Popup.CHECKED_FN
-
-    }
 
   }
 

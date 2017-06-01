@@ -14,7 +14,7 @@ import scala.scalajs.js.annotation.JSName
  */
 
 @js.native
-class LocationEvent extends Event {
+trait LocationEvent extends Event {
 
   @JSName("latlng")
   var latLng: LatLng = js.native

@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{GeometryCollection, LatLng}
+import play.extras.geojson.{GeometryCollection, LngLat}
 
 /**
  * Suggest.io
@@ -42,7 +42,7 @@ case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
 
   override def firstPoint = geoms.head.firstPoint
 
-  override def toPlayGeoJsonGeom: GeometryCollection[LatLng] = {
+  override def toPlayGeoJsonGeom: GeometryCollection[LngLat] = {
     GeometryCollection(
       geoms.iterator.map(_.toPlayGeoJsonGeom).toStream
     )

@@ -30,11 +30,11 @@ class PolygonGsTest extends FlatSpec with CoordLineRnd {
     assert(jsr.isSuccess, jsr)
     jsr.get shouldBe PolygonGs(
       LineStringGs(Seq(
-        MGeoPoint(0.0, lon = 100.0),
-        MGeoPoint(0.0, lon = 101.0),
-        MGeoPoint(1.0, lon = 101.0),
-        MGeoPoint(1.0, lon = 100.0),
-        MGeoPoint(0.0, lon = 100.0)
+        MGeoPoint(lat = 0.0, lon = 100.0),
+        MGeoPoint(lat = 0.0, lon = 101.0),
+        MGeoPoint(lat = 1.0, lon = 101.0),
+        MGeoPoint(lat = 1.0, lon = 100.0),
+        MGeoPoint(lat = 0.0, lon = 100.0)
       ))
     )
   }
@@ -55,19 +55,19 @@ class PolygonGsTest extends FlatSpec with CoordLineRnd {
     assert( jsr.isSuccess, jsr )
     jsr.get shouldBe PolygonGs(
       outer = LineStringGs(Seq(
-        MGeoPoint(0.0, lon = 100.0),
-        MGeoPoint(0.0, lon = 101.0),
-        MGeoPoint(1.0, lon = 101.0),
-        MGeoPoint(1.0, lon = 100.0),
-        MGeoPoint(0.0, lon = 100.0)
+        MGeoPoint(lat = 0.0, lon = 100.0),
+        MGeoPoint(lat = 0.0, lon = 101.0),
+        MGeoPoint(lat = 1.0, lon = 101.0),
+        MGeoPoint(lat = 1.0, lon = 100.0),
+        MGeoPoint(lat = 0.0, lon = 100.0)
       )),
       holes = List(
         LineStringGs(Seq(
-          MGeoPoint(0.2, lon = 100.2),
-          MGeoPoint(0.2, lon = 100.8),
-          MGeoPoint(0.8, lon = 100.8),
-          MGeoPoint(0.8, lon = 100.2),
-          MGeoPoint(0.2, lon = 100.2)
+          MGeoPoint(lat = 0.2, lon = 100.2),
+          MGeoPoint(lat = 0.2, lon = 100.8),
+          MGeoPoint(lat = 0.8, lon = 100.8),
+          MGeoPoint(lat = 0.8, lon = 100.2),
+          MGeoPoint(lat = 0.2, lon = 100.2)
         ))
       )
     )

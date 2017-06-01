@@ -11,7 +11,7 @@ import scala.scalajs.js
   * Description: Marker event API facade.
   */
 @js.native
-class MarkerEvent extends LayerEvent {
+trait MarkerEvent extends LayerEvent {
 
   override val layer: Marker = js.native
 

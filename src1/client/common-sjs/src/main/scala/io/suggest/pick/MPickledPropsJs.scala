@@ -1,8 +1,7 @@
-package io.suggest.sjs.common.pick
+package io.suggest.pick
 
 import boopickle.Pickler
 import io.suggest.bin.ConvCodecs
-import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
 
 import scala.scalajs.js
@@ -20,16 +19,20 @@ object MPickledPropsJs {
 
   /** Акт опциональной десериализации опциональных пропертисов.
     *
-    * @param raw Сырые пропертисы.
+    * @param rawNullUndef Сырые пропертисы, или null, или undefined.
     * @param pickler Поддержка boopickle для класса-результата.
     * @tparam P Тип результата.
     * @return Опциональный результат.
     */
-  def applyOpt[P](raw: js.UndefOr[js.Any])(implicit pickler: Pickler[P]): Option[P] = {
+  def applyOpt[P](rawNullUndef: js.UndefOr[js.Any])(implicit pickler: Pickler[P]): Option[P] = {
     for {
-      props0 <- raw.toOption
-      propsPick = props0.asInstanceOf[MPickledPropsJs]
-      base64 <- propsPick.pickled.toOption
+      propsOrNull <- rawNullUndef.toOption
+      props0      <- Option( propsOrNull )
+
+      base64      <- props0.asInstanceOf[MPickledPropsJs]
+        .pickled
+        .toOption
+
       if base64.nonEmpty
     } yield {
       PickleUtil.unpickleConv[String, ConvCodecs.Base64, P](base64)

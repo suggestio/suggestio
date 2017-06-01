@@ -440,7 +440,7 @@ class SysAdnGeo @Inject() (
       val ngl = guessGeoLevel getOrElse NodeGeoLevels.default
       // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
       val gpStub = request.mnode.geo.point
-        .getOrElse( MGeoPoint(0, 0) )
+        .getOrElse( MGeoPoint(lat = 0, lon = 0) )
       val stub = MEdgeGeoShape(
         id      = -1,
         glevel  = ngl,
