@@ -87,7 +87,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
       testRel("rel.vaska.osm.xml", RelResultInfo(1114252L, membersCount = 24,
         firstBorderMemberId = 71338507L,
         lastBorderMemberId = 71346364L,
-        gsType = GsTypes.polygon
+        gsType = GsTypes.Polygon
       ))
     }
 
@@ -95,7 +95,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
       testRel("rel.vyborgsky.spb.osm.xml", RelResultInfo(1114354, 107,
         firstBorderMemberId = 178770468,
         lastBorderMemberId = 100599524L,
-        gsType = GsTypes.polygon
+        gsType = GsTypes.Polygon
       ))
     }
 
@@ -103,7 +103,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
       testRel("rel.spb.osm.xml", RelResultInfo(337422L, 183,
         firstBorderMemberId = 197668703L,
         lastBorderMemberId = 175195149L,
-        gsType = GsTypes.polygon
+        gsType = GsTypes.Polygon
       ))
     }
 
@@ -112,7 +112,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
         "rel.spb.kirovsky-rajon.osm.xml", RelResultInfo(369514L, 23,
           firstBorderMemberId = 31396996L,
           lastBorderMemberId = 159348605L,
-          gsType = GsTypes.polygon,
+          gsType = GsTypes.Polygon,
           allMemberIds = Seq(31396996L, 182611220L, 37669206L, 71338511L, 79570062L, 46835382L, 46835375L,
             79522204L, 79522201L, 46896188L, 46896180L, 46835385L, 45205337L, 79522192L, 79522199L, 45205338L,
             79522198L, 79522202L, 79522193L, 45273634L, 264454722L, 264454721L, 159348605L

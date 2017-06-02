@@ -22,7 +22,7 @@ object MultiPointGs extends MultiPointShapeStatic {
 
 case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
-  override def shapeType = GsTypes.multipoint
+  override def shapeType = GsTypes.MultiPoint
 
   override type Shape_t = MultiPointBuilder
 
@@ -41,7 +41,7 @@ case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
 
 /** Общий static-код моделей, которые описываются массивом точек. */
-trait MultiPointShapeStatic extends GsStatic {
+trait MultiPointShapeStatic extends GsStaticJvm {
 
   override type Shape_t <: MultiPointShape
 
@@ -91,7 +91,7 @@ trait MultiPointShape extends GeoShapeQuerable {
 
   protected def shapeBuilder: Shape_t
 
-  override def shapeType: GsType = GsTypes.multipoint
+  override def shapeType: GsType = GsTypes.MultiPoint
 
   override def firstPoint = coords.head
 

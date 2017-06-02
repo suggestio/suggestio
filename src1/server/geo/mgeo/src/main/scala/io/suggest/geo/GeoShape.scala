@@ -1,7 +1,5 @@
 package io.suggest.geo
 
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.menum.EnumJsonReadsValT
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
@@ -9,6 +7,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.extras.geojson.{Geometry, LngLat}
+import GsTypesJvm.GS_TYPE_FORMAT
 
 /**
   * Suggest.io
@@ -32,11 +31,12 @@ object GeoShape extends MacroLogsDyn {
 
   val TYPE_FORMAT = (__ \ TYPE_ESFN).format[GsType]
 
+
   val READS = Reads[GeoShape] {
     case o: JsObject =>
       o.validate(TYPE_FORMAT)
         .flatMap { gsType =>
-          o.validate( gsType.companion.DATA_FORMAT )
+          o.validate( GsTypesJvm.companionFor(gsType).DATA_FORMAT )
         }
 
     case other =>
@@ -127,82 +127,9 @@ trait GeoShapeQuerable extends GeoShape with IToEsQueryFn {
 }
 
 
-/** Типы плоских фигур, допустимых для отправки в ES для geo-поиска/geo-фильтрации. */
-object GsTypes extends Enumeration with EnumMaybeWithName with EnumJsonReadsValT {
 
-  protected[this] abstract sealed class Val(val esName: String)
-    extends super.Val(esName)
-  {
-    /** Имя в рамках спецификации GeoJSON. */
-    def geoJsonName: Option[String] = None
-
-    def isGeoJsonCompatible: Boolean = geoJsonName.isDefined
-
-    def companion: GsStatic
-
-    /** Является ли фигура кругом? У нас редактор кругов отдельно, поэтому и проверка совместимости тут, отдельно. */
-    def isCircle: Boolean = false
-  }
-
-  override type T = Val
-
-  val point               : T = new Val("point") {
-    override def geoJsonName  = Some("Point")
-    override def companion    = PointGs
-  }
-
-  val polygon             : T = new Val("polygon") {
-    override def geoJsonName  = Some("Polygon")
-    override def companion    = PolygonGs
-  }
-
-  val circle              : T = new Val("circle") {
-    override def companion    = CircleGs
-    override def isCircle     = true
-  }
-
-  val linestring          : T = new Val("linestring") {
-    override def geoJsonName  = Some("LineString")
-    override def companion    = LineStringGs
-  }
-
-  val multipoint          : T = new Val("multipoint") {
-    override def geoJsonName  = Some("MultiPoint")
-    override def companion    = MultiPointGs
-  }
-
-  val multilinestring     : T = new Val("multilinestring") {
-    override def geoJsonName  = Some("MultiLineString")
-    override def companion    = MultiLineStringGs
-  }
-
-  val multipolygon        : T = new Val("multipolygon") {
-    override def geoJsonName  = Some("MultiPolygon")
-    override def companion    = MultiPolygonGs
-  }
-
-  val geometrycollection  : T = new Val("geometrycollection") {
-    override def geoJsonName  = Some("GeometryCollection")
-    override def companion    = GeometryCollectionGs
-  }
-
-  val envelope            : T = new Val("envelope") {
-    override def companion    = EnvelopeGs
-  }
-
-  override def maybeWithName(n: String): Option[T] = {
-    values
-      .find { v =>
-        val _v = value2val(v)
-        _v.esName == n || _v.geoJsonName.contains(n)
-      }
-      .asInstanceOf[Option[T]]
-  }
-
-}
-
-
-trait GsStatic {
+/** Интерфейс для объекта-компаньона на стороне JVM. */
+trait GsStaticJvm {
 
   type Shape_t <: GeoShape
 

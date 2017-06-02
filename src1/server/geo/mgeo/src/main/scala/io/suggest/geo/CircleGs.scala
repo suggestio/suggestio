@@ -14,7 +14,7 @@ import play.extras.geojson.{LngLat, Point}
  * Created: 22.08.14 12:29
  * Description: Круг в двумерном пространстве.
  */
-object CircleGs extends GsStatic {
+object CircleGs extends GsStaticJvm {
 
   override type Shape_t = CircleGs
 
@@ -53,7 +53,7 @@ import io.suggest.geo.CircleGs._
 
 case class CircleGs(center: MGeoPoint, radius: Distance) extends GeoShapeQuerable {
 
-  override def shapeType = GsTypes.circle
+  override def shapeType = GsTypes.Circle
 
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(

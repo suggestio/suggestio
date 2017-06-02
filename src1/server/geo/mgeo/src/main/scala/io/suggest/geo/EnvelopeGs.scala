@@ -19,7 +19,7 @@ import play.extras.geojson.{Geometry, LngLat, Polygon}
   *
   * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-shape.html#_envelope]]
   */
-object EnvelopeGs extends GsStatic {
+object EnvelopeGs extends GsStaticJvm {
 
   override type Shape_t = EnvelopeGs
 
@@ -83,7 +83,7 @@ case class EnvelopeGs(
 )
   extends GeoShapeQuerable {
 
-  override def shapeType = GsTypes.envelope
+  override def shapeType = GsTypes.Envelope
 
   override def toEsShapeBuilder: ShapeBuilder = {
     ShapeBuilder.newEnvelope()

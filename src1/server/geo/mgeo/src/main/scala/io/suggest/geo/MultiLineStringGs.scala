@@ -16,7 +16,7 @@ import play.extras.geojson.{LngLat, MultiLineString}
  * Description: Представление multiline-объектов в рамках s.io.
  */
 
-object MultiLineStringGs extends GsStatic {
+object MultiLineStringGs extends GsStaticJvm {
 
   override type Shape_t = MultiLineStringGs
 
@@ -34,7 +34,7 @@ object MultiLineStringGs extends GsStatic {
 case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable {
 
   /** Используемый тип фигуры. */
-  override def shapeType = GsTypes.multilinestring
+  override def shapeType = GsTypes.MultiLineString
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {

@@ -14,7 +14,7 @@ import play.extras.geojson.{LngLat, Point}
  * Description: Sio-представление точки в двумерном пространстве WGS84.
  */
 
-object PointGs extends GsStatic {
+object PointGs extends GsStaticJvm {
 
   override type Shape_t = PointGs
 
@@ -30,7 +30,7 @@ object PointGs extends GsStatic {
 
 case class PointGs(coord: MGeoPoint) extends GeoShapeQuerable {
 
-  override def shapeType = GsTypes.point
+  override def shapeType = GsTypes.Point
 
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     (COORDS_ESFN -> GeoPoint.toPlayGeoJson(coord)) :: Nil

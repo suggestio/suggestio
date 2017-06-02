@@ -14,7 +14,7 @@ import play.extras.geojson.{LngLat, MultiPolygon}
  * Created: 29.08.14 18:58
  * Description: Мультиполигон - это список полигонов.
  */
-object MultiPolygonGs extends GsStatic {
+object MultiPolygonGs extends GsStaticJvm {
 
   override type Shape_t = MultiPolygonGs
 
@@ -40,7 +40,7 @@ object MultiPolygonGs extends GsStatic {
 
 case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
 
-  override def shapeType = GsTypes.multipolygon
+  override def shapeType = GsTypes.MultiPolygon
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {

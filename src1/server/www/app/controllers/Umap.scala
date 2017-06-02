@@ -268,7 +268,7 @@ class Umap @Inject() (
           // Собираем шейпы для узла
           val shapes = features
             .iterator
-            .filter { _.geometry.shapeType == GsTypes.polygon }
+            .filter { _.geometry.shapeType == GsTypes.Polygon }
             .zipWithIndex
             .map { case (poly, i) =>
               MEdgeGeoShape(

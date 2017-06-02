@@ -25,7 +25,7 @@ object LineStringGs extends MultiPointShapeStatic {
 
 case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
-  override def shapeType = GsTypes.linestring
+  override def shapeType = GsTypes.LineString
 
   override type Shape_t = LineStringBuilder
 

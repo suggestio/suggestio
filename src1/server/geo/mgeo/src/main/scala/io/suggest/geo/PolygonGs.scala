@@ -15,7 +15,7 @@ import play.extras.geojson.{LngLat, Polygon}
  * Description: Sio-класс для полигона.
  */
 
-object PolygonGs extends GsStatic {
+object PolygonGs extends GsStaticJvm {
 
   override type Shape_t = PolygonGs
 
@@ -39,7 +39,7 @@ object PolygonGs extends GsStatic {
 
 /** Полигон с необязательными дырками в двумерном пространстве. */
 case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShapeQuerable {
-  override def shapeType = GsTypes.polygon
+  override def shapeType = GsTypes.Polygon
 
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(COORDS_ESFN -> _toPlayJsonCoords)

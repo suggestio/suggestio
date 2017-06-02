@@ -40,7 +40,7 @@ class UmapUtil @Inject() (
               e.copy(
                 info = e.info.copy(
                   geoShapes = e.info.geoShapes.flatMap {
-                    case s if s.shape.shapeType == GsTypes.multipolygon =>
+                    case s if s.shape.shapeType == GsTypes.MultiPolygon =>
                       val mpoly = s.shape.asInstanceOf[MultiPolygonGs]
                       for (poly <- mpoly.polygons.iterator) yield {
                         s.copy(

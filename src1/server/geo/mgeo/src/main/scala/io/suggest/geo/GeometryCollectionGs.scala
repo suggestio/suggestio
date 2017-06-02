@@ -11,7 +11,7 @@ import play.extras.geojson.{GeometryCollection, LngLat}
  * Created: 01.09.14 18:17
  * Description: Набор геометрических фигур.
  */
-object GeometryCollectionGs extends GsStatic {
+object GeometryCollectionGs extends GsStaticJvm {
 
   val GEOMETRIES_ESFN = "geometries"
 
@@ -30,7 +30,7 @@ import io.suggest.geo.GeometryCollectionGs._
 
 case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
 
-  override def shapeType = GsTypes.geometrycollection
+  override def shapeType = GsTypes.GeometryCollection
 
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
