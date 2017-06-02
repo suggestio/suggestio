@@ -62,7 +62,7 @@ class AdvGeoFormUtil @Inject() (
     )
     Feature(
       // Если circle, то будет отрендерена точка. Поэтому радиус задан в props.
-      geometry    = gs.toPlayGeoJsonGeom,
+      geometry    = GeoShape.toPlayGeoJsonGeom(gs),
       // Собрать пропертисы для этой feature:
       properties  = Some( GjFtProps.FORMAT.writes(props) )
     )

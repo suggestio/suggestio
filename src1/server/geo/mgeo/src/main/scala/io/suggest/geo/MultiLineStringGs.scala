@@ -28,6 +28,17 @@ object MultiLineStringGs extends GsStaticJvm {
       )
   }
 
+  override def toPlayGeoJsonGeom(mlsGs: Shape_t): MultiLineString[LngLat] = {
+    MultiLineString(
+      coordinates = mlsGs.lines
+        .iterator
+        .map { lsGs =>
+          LineStringGs.toPlayGeoJsonGeom( lsGs ).coordinates
+        }
+        .toStream
+    )
+  }
+
 }
 
 
@@ -57,13 +68,5 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
   }
 
   override def firstPoint = lines.head.firstPoint
-
-  override def toPlayGeoJsonGeom: MultiLineString[LngLat] = {
-    MultiLineString(
-      coordinates = lines.iterator
-        .map(_.toPlayGeoJsonGeom.coordinates)
-        .toStream
-    )
-  }
 
 }

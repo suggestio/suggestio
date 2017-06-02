@@ -64,7 +64,7 @@ class ScMapUtil @Inject() (
   /** Приведение одной точки к GeoJSON-представлению. */
   private def _formatPoint(gp: MGeoPoint, props: Option[JsObject]) = {
     Feature(
-      geometry    = PointGs(gp).toPlayGeoJsonGeom,
+      geometry    = PointGs.toPlayGeoJsonGeom(gp),
       properties  = props
     )
   }

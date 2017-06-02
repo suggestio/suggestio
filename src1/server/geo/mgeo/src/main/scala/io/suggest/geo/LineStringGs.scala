@@ -20,6 +20,12 @@ object LineStringGs extends MultiPointShapeStatic {
     JsArray(coordsJson)
   }
 
+  override def toPlayGeoJsonGeom(gs: Shape_t): LineString[LngLat] = {
+    LineString(
+      coordinates = LineStringGs.coords2latLngs( gs.coords )
+    )
+  }
+
 }
 
 
@@ -34,11 +40,5 @@ case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
   }
 
   override def firstPoint = coords.head
-
-  override def toPlayGeoJsonGeom: LineString[LngLat] = {
-    LineString(
-      coordinates = LineStringGs.coords2latLngs(coords)
-    )
-  }
 
 }

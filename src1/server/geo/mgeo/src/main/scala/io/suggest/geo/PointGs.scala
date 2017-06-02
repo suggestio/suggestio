@@ -25,6 +25,13 @@ object PointGs extends GsStaticJvm {
       .inmap(apply, unlift(unapply))
   }
 
+  def toPlayGeoJsonGeom(mgp: MGeoPoint): Point[LngLat] = {
+    Point( GeoPoint.toLngLat( mgp ) )
+  }
+  override def toPlayGeoJsonGeom(gs: Shape_t): Point[LngLat] = {
+    toPlayGeoJsonGeom( gs.coord )
+  }
+
 }
 
 
@@ -41,10 +48,6 @@ case class PointGs(coord: MGeoPoint) extends GeoShapeQuerable {
   }
 
   override def firstPoint = coord
-
-  override def toPlayGeoJsonGeom: Point[LngLat] = {
-    Point( GeoPoint.toLngLat(coord) )
-  }
 
   override def centerPoint = Some(coord)
 

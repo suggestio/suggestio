@@ -18,6 +18,12 @@ object MultiPointGs extends MultiPointShapeStatic {
 
   override type Shape_t = MultiPointGs
 
+  def toPlayGeoJsonGeom(gs: Shape_t): MultiPoint[LngLat] = {
+    MultiPoint(
+      coordinates = MultiPointGs.coords2latLngs( gs.coords )
+    )
+  }
+
 }
 
 case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
@@ -28,12 +34,6 @@ case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
   override protected def shapeBuilder: Shape_t = {
     ShapeBuilder.newMultiPoint()
-  }
-
-  override def toPlayGeoJsonGeom: MultiPoint[LngLat] = {
-    MultiPoint(
-      coordinates = MultiPointGs.coords2latLngs(coords)
-    )
   }
 
 }

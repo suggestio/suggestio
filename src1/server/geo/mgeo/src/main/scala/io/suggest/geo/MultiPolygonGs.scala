@@ -35,6 +35,17 @@ object MultiPolygonGs extends GsStaticJvm {
       )
   }
 
+  override def toPlayGeoJsonGeom(mpGs: Shape_t): MultiPolygon[LngLat] = {
+    MultiPolygon(
+      coordinates = mpGs.polygons
+        .iterator
+        .map { pgs =>
+          PolygonGs.toPlayGeoJsonGeom( pgs ).coordinates
+        }
+        .toStream
+    )
+  }
+
 }
 
 
@@ -61,15 +72,6 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
   }
 
   override def firstPoint = polygons.head.firstPoint
-
-  override def toPlayGeoJsonGeom: MultiPolygon[LngLat] = {
-    MultiPolygon(
-      coordinates = polygons
-        .iterator
-        .map { _.toPlayGeoJsonGeom.coordinates }
-        .toStream
-    )
-  }
 
 }
 

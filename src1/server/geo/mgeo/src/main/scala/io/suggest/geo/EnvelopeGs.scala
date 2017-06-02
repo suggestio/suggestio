@@ -8,7 +8,7 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
-import play.extras.geojson.{Geometry, LngLat, Polygon}
+import play.extras.geojson.{LngLat, Polygon}
 
 /**
   * Suggest.io
@@ -75,6 +75,21 @@ object EnvelopeGs extends GsStaticJvm {
     }
   }
 
+  /** Экспорт в GeoJSON Polygon.
+    * Не тестировано, но по идее должно работать. */
+  override def toPlayGeoJsonGeom(gs: Shape_t): Polygon[LngLat] = {
+    import GeoPoint.toLngLat
+    val outer = List(
+      toLngLat( gs.topLeft ),
+      toLngLat( gs.topLeft.copy(lon = gs.bottomRight.lon) ),
+      toLngLat( gs.bottomRight ),
+      toLngLat( gs.bottomRight.copy(lat = gs.topLeft.lat) )
+    )
+    Polygon [LngLat] (
+      outer :: Nil
+    )
+  }
+
 }
 
 case class EnvelopeGs(
@@ -100,21 +115,6 @@ case class EnvelopeGs(
   }
 
   override def firstPoint: MGeoPoint = topLeft
-
-  /** Экспорт в GeoJSON Polygon.
-    * Не тестировано, но по идее должно работать. */
-  override def toPlayGeoJsonGeom: Geometry[LngLat] = {
-    import GeoPoint.toLngLat
-    val outer = List(
-      toLngLat( topLeft ),
-      toLngLat( topLeft.copy(lon = bottomRight.lon) ),
-      toLngLat( bottomRight ),
-      toLngLat( bottomRight.copy(lat = topLeft.lat) )
-    )
-    Polygon [LngLat] (
-      outer :: Nil
-    )
-  }
 
   override def centerPoint: Some[MGeoPoint] = {
     // TODO Код не тестирован и не использовался с момента запиливания

@@ -34,6 +34,19 @@ object PolygonGs extends GsStaticJvm {
     )
   }
 
+  override def toPlayGeoJsonGeom(pgs: Shape_t): Polygon[LngLat] = {
+    Polygon(
+      coordinates = {
+        pgs.outerWithHoles
+          .iterator
+          .map { lsgs =>
+            LineStringGs.toPlayGeoJsonGeom(lsgs).coordinates
+          }
+          .toStream
+      }
+    )
+  }
+
 }
 
 
@@ -72,12 +85,8 @@ case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) exten
 
   override def firstPoint = outer.firstPoint
 
-  def toMpGss = (outer :: holes).map(_.coords)
+  def toMpGss = outerWithHoles.map(_.coords)
 
-  override def toPlayGeoJsonGeom: Polygon[LngLat] = {
-    Polygon(
-      coordinates = outer.toPlayGeoJsonGeom.coordinates :: holes.map(_.toPlayGeoJsonGeom.coordinates)
-    )
-  }
+  def outerWithHoles = outer :: holes
 
 }

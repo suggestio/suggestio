@@ -59,6 +59,12 @@ object GeoShape extends MacroLogsDyn {
     OFormat(READS, WRITES_GJSON_COMPAT)
   }
 
+  def toPlayGeoJsonGeom(gs: GeoShape): Geometry[LngLat] = {
+    val c = GsTypesJvm.companionFor(gs.shapeType)
+    // TODO Нужна higher-kinds метод, занимающийся этим без asInstanceOf.
+    c.toPlayGeoJsonGeom( gs.asInstanceOf[c.Shape_t] )
+  }
+
 }
 
 
@@ -101,12 +107,6 @@ trait GeoShape {
       .getOrElse( getClass.getSimpleName )
   }
 
-  /** Конвертация в play.extras.geojson.Geomenty.
-    * Circle конвертится в точку!
-    * ES envelope -- пока не поддерживается, но можно представить прямоугольным полигоном.
-    */
-  def toPlayGeoJsonGeom: Geometry[LngLat]
-
 }
 
 
@@ -134,5 +134,13 @@ trait GsStaticJvm {
   type Shape_t <: GeoShape
 
   def DATA_FORMAT: Reads[Shape_t]
+
+  /** Конвертация в play.extras.geojson.Geomenty.
+    * Circle конвертится в точку!
+    * ES envelope -- пока не поддерживается, но можно представить прямоугольным полигоном.
+    * @param gs Шейп.
+    * @return Геометрия play-geojson.
+    */
+  def toPlayGeoJsonGeom(gs: Shape_t): Geometry[LngLat]
 
 }

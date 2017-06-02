@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{GeometryCollection, LngLat}
+import play.extras.geojson.{Geometry, GeometryCollection, LngLat}
 
 /**
  * Suggest.io
@@ -20,6 +20,22 @@ object GeometryCollectionGs extends GsStaticJvm {
   override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ GEOMETRIES_ESFN).format[Seq[GeoShape]]
       .inmap[Shape_t](apply, _.geoms)
+  }
+
+  /** Конвертация в play.extras.geojson.Geomenty.
+    * Circle конвертится в точку!
+    * ES envelope -- пока не поддерживается, но можно представить прямоугольным полигоном.
+    *
+    * @param gs Шейп.
+    * @return Геометрия play-geojson.
+    */
+  override def toPlayGeoJsonGeom(gs: GeometryCollectionGs): Geometry[LngLat] = {
+    GeometryCollection(
+      gs.geoms
+        .iterator
+        .map( GeoShape.toPlayGeoJsonGeom )
+        .toStream
+    )
   }
 
 }
@@ -41,11 +57,5 @@ case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
   }
 
   override def firstPoint = geoms.head.firstPoint
-
-  override def toPlayGeoJsonGeom: GeometryCollection[LngLat] = {
-    GeometryCollection(
-      geoms.iterator.map(_.toPlayGeoJsonGeom).toStream
-    )
-  }
 
 }
