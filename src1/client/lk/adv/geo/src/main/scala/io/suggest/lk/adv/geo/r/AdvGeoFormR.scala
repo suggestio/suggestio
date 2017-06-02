@@ -15,7 +15,6 @@ import io.suggest.maps.r._
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.dt.period.r._
-import io.suggest.sjs.leaflet.marker.Marker
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR

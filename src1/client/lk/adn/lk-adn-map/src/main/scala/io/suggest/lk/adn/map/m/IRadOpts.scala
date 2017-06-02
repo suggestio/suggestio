@@ -1,7 +1,6 @@
 package io.suggest.lk.adn.map.m
 
 import diode.FastEq
-import io.suggest.adn.mapf.opts.MLamOpts
 
 /**
   * Suggest.io
@@ -13,8 +12,7 @@ object IRadOpts {
 
   implicit object IRadOptsFastEq extends FastEq[IRadOpts[_]] {
     override def eqv(a: IRadOpts[_], b: IRadOpts[_]): Boolean = {
-      (a.rad eq b.rad) &&
-        (a.opts eq b.opts)
+      a.rad eq b.rad
     }
   }
 
@@ -25,16 +23,11 @@ trait IRadOpts[T <: IRadOpts[T]] { this: T =>
 
   val rad     : MLamRad
 
-  val opts    : MLamOpts
-
 
   def withRad(rad2: MLamRad): T
 
-  def withOpts(opts2: MLamOpts): T
-
   def withRadOpts(radOpts: IRadOpts[_]): T = {
     withRad( radOpts.rad )
-      .withOpts( radOpts.opts )
   }
 
 }

@@ -1,15 +1,12 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MGeoPoint
 import io.suggest.lk.adn.map.m.IRadOpts
 import io.suggest.maps.m.MRadT
-import MRadT.MRadTFastEq
-import io.suggest.maps.r.rad.{DraggablePinMarkerR, RadMapControlsR}
+import io.suggest.maps.m.MRadT.MRadTFastEq
+import io.suggest.maps.r.rad.RadMapControlsR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import react.leaflet.layer.LayerGroupR
 
 /**
   * Suggest.io
@@ -23,7 +20,6 @@ object MapCursorR {
 
 
   protected[this] case class State(
-                                    pointOptC      : ReactConnectProxy[Option[MGeoPoint]],
                                     mRadTOptC      : ReactConnectProxy[Option[MRadT[_]]]
                                   )
 
@@ -31,16 +27,8 @@ object MapCursorR {
   class Backend($: BackendScope[Props, State]) {
 
     def render(p: Props, s: State): ReactElement = {
-      // Маркер центра круга.
-      LayerGroupR()(
-
-        // Опциональное размещение в точке.
-        s.pointOptC { DraggablePinMarkerR.apply },
-
-        // Опциональное размещение в круге и в точке.
-        s.mRadTOptC { RadMapControlsR.apply }
-
-      )
+      // Опциональное размещение в круге и в точке.
+      s.mRadTOptC { RadMapControlsR.apply }
     }
 
   }
@@ -49,16 +37,8 @@ object MapCursorR {
   val component = ReactComponentB[Props]("NodeMarker")
     .initialState_P { p =>
       State(
-        pointOptC  = p.connect { radOpts =>
-          OptionUtil.maybe( radOpts.opts.onAdvMap && !radOpts.opts.onGeoLoc ) {
-            radOpts.rad.state.centerDragging
-              .getOrElse( radOpts.rad.circle.center )
-          }
-        },
         mRadTOptC = p.connect { radOpts =>
-          OptionUtil.maybe( radOpts.opts.onGeoLoc ) {
-            radOpts.rad
-          }
+          Some( radOpts.rad )
         }
       )
     }

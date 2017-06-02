@@ -53,7 +53,6 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
           radiusMarkerCoords = MapsUtil.radiusMarkerLatLng( mFormInit.form.mapCursor )
         )
       ),
-      opts = mFormInit.form.opts,
       adv4free = for {
         a4fProps <- mFormInit.adv4FreeProps
       } yield {
@@ -112,12 +111,6 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       modelRW = radRw.zoomRW(_.popup) { _.withPopup(_) }
     )
 
-    // Контроллер галочек опций.
-    val optsAh = new LamOptsAh(
-      modelRW       = zoomRW(_.opts) { _.withOpts(_) },
-      priceUpdateFx = priceUpdateEffect
-    )
-
     // Поддержка реакции на adv4free:
     val adv4freeAh = new Adv4FreeAh(
       // Для оптимального подхвата Option[] используем zoomMap:
@@ -157,7 +150,6 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       curGeoPopupAh,
       priceAh,
       datePeriodAh,
-      optsAh,
       radPopupAh,
       adv4freeAh
     )

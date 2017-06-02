@@ -1,6 +1,5 @@
 package io.suggest.adn.mapf
 
-import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.adv.geo.MMapProps
 import io.suggest.dt.MAdvPeriod
 import io.suggest.geo.{MGeoCircle, MGeoPoint}
@@ -21,7 +20,6 @@ object MLamForm {
     implicit val mGeoPointP = MGeoPoint.pickler
     implicit val mGeoCircle = MGeoCircle.mGeoCirlePickler
     implicit val mAdvPeriodP = MAdvPeriod.mAdvPeriodPickler
-    implicit val mLamOptsP = MLamOpts.mLamOptsP
     generatePickler[MLamForm]
   }
 
@@ -39,7 +37,6 @@ case class MLamForm(
                      mapCursor        : MGeoCircle,
                      datePeriod       : MAdvPeriod,
                      adv4freeChecked  : Option[Boolean],
-                     opts             : MLamOpts,
                      tzOffsetMinutes  : Int = 0
                    )
 

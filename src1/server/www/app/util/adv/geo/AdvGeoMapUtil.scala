@@ -221,8 +221,7 @@ class AdvGeoMapUtil @Inject() (
         .withPredicateIter( MPredicates.NodeLocation )
         .flatMap( _.info.geoShapes )
       if (shapesIter.nonEmpty) {
-        val nodeName = mnode.guessDisplayNameOrIdOrQuestions
-        // TODO Нет смысла передавать подсказку на клиент, т.к. L не умеет title внутри svg. Но может быть, с этим что-то можно сделать?
+        // Нет смысла передавать подсказку на клиент, т.к. L не умеет title внутри svg.
         val iter = shapesIter
           .map { gs =>
             val props = MAdvGeoMapNodeProps(

@@ -8,7 +8,7 @@ import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.YmdHelpersJvm
-import io.suggest.geo.{CircleGs, MGeoCircle, PointGs}
+import io.suggest.geo.{CircleGs, MGeoCircle}
 import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -133,12 +133,12 @@ class LkAdnMapBillUtil @Inject() (
           priceTerm.price
 
         priceTerm
-          .findWithReasonType( MReasonTypes.AdnMapAdv )
+          .findWithReasonType( MReasonTypes.GeoLocCapture )
           .map { _ =>
-            LOGGER.trace(s"$logPrefix2 on Advs map")
+            LOGGER.trace(s"$logPrefix2 Geo loc capture")
             MItem(
               orderId       = orderId,
-              iType         = MItemTypes.AdnNodeMap,
+              iType         = MItemTypes.GeoLocCaptureArea,
               status        = status,
               price         = itemPrice,
               nodeId        = nodeId,
@@ -147,30 +147,9 @@ class LkAdnMapBillUtil @Inject() (
               // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
               rcvrIdOpt     = None,
               geoShape      = Some(
-                PointGs( formRes.mapCursor.center )
+                CircleGs( formRes.mapCursor )
               )
             )
-          }
-          .orElse {
-            priceTerm
-              .findWithReasonType( MReasonTypes.GeoLocCapture )
-              .map { _ =>
-                LOGGER.trace(s"$logPrefix2 Geo loc capture")
-                MItem(
-                  orderId       = orderId,
-                  iType         = MItemTypes.GeoLocCaptureArea,
-                  status        = status,
-                  price         = itemPrice,
-                  nodeId        = nodeId,
-                  dateStartOpt  = dtStartOpt,
-                  dateEndOpt    = dtEndOpt,
-                  // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
-                  rcvrIdOpt     = None,
-                  geoShape      = Some(
-                    CircleGs( formRes.mapCursor )
-                  )
-                )
-              }
           }
           .map { itm =>
             itm -> OptionUtil.maybe(!isFreeAdv)(priceTerm)
@@ -211,55 +190,35 @@ class LkAdnMapBillUtil @Inject() (
     * @return Терм PriceDSL, готовый к рассчётам цены.
     */
   def getPriceDsl(formRes: MLamForm, abc: IAdvBillCtx): IPriceDslTerm = {
+    // Рассчитать исходную финансовую нагрузку на основе посуточного тарифа.
     val p0 = advUtil.calcDateAdvPriceOnTf(TF_NODE_ID, abc)
 
-    var acc = List.empty[IPriceDslTerm]
-    val priceMult = PRICE_MULT
-
-    // Размещение на карте рекламодателей в ЛК
-    if (formRes.opts.onAdvMap) {
-      acc ::= Mapper(
-        underlying    = p0,
-        multiplifier  = Some( priceMult ),
-        reason        = Some(
-          MPriceReason(
-            reasonType = MReasonTypes.AdnMapAdv
-          )
-        )
-      )
-    }
-
     // Размещение в геолокации выдачи.
-    if (formRes.opts.onGeoLoc) {
-      // Для "упрощения" цифр и просто по техническим причинам используется два вложенных маппера: один по площади, второй -- константа.
-      val innerMapper = Mapper(
-        underlying   = p0,
-        // Маппер-константа.
-        multiplifier = Some( priceMult ),
-        reason       = Some( MPriceReason(
-          reasonType = MReasonTypes.GeoLocCapture
-        ))
-      )
+    // Для "упрощения" цифр и просто по техническим причинам используется два вложенных маппера: один по площади, второй -- константа.
+    val innerMapper = Mapper(
+      underlying   = p0,
+      // Маппер-константа.
+      multiplifier = Some( PRICE_MULT ),
+      reason       = Some( MPriceReason(
+        reasonType = MReasonTypes.GeoLocCapture
+      ))
+    )
 
-      // Маппер по площади на карте - снаружи, чтобы можно было внутрь него пихать иные мапперы.
-      val geoMapper = Mapper(
-        underlying    = innerMapper,
-        multiplifier  = Some(
-          getGeoPriceMult( formRes.mapCursor )
-        ),
-        reason        = Some(
-          MPriceReason(
-            reasonType = MReasonTypes.GeoArea,
-            geoCircles = Seq( formRes.mapCursor )
-          )
+    // Маппер по площади на карте - снаружи, чтобы можно было внутрь него пихать иные мапперы.
+    val geoMapper = Mapper(
+      underlying    = innerMapper,
+      multiplifier  = Some(
+        getGeoPriceMult( formRes.mapCursor )
+      ),
+      reason        = Some(
+        MPriceReason(
+          reasonType = MReasonTypes.GeoArea,
+          geoCircles = Seq( formRes.mapCursor )
         )
       )
+    )
 
-      acc ::= geoMapper
-    }
-
-    // Вернуть итоговую сумму.
-    Sum( acc )
+    geoMapper
   }
 
 }

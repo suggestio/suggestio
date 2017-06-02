@@ -35,7 +35,7 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
       )
 
       val edge3 = MEdge(
-        predicate = MPredicates.AdnMap,
+        predicate = MPredicates.NodeLocation,
         info = MEdgeInfo(
           dynImgArgs = Some("easdasd"),
           dateNi = Some( OffsetDateTime.now().minusDays(1) ),

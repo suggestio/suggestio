@@ -16,7 +16,6 @@ import IRadOpts.IRadOptsFastEq
 import MExistGeoS.MExistGeoSFastEq
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import RadPopupR.PropsValFastEq
-import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.common.empty.OptionUtil
 
 /**
@@ -39,7 +38,6 @@ object LamFormR {
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
                                     priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
                                     currentPotC           : ReactConnectProxy[MExistGeoS],
-                                    optsC                 : ReactConnectProxy[MLamOpts],
                                     radPopupPropsC        : ReactConnectProxy[Option[RadPopupR.PropsVal]]
                                   )
 
@@ -60,7 +58,7 @@ object LamFormR {
         <.div(
           ^.`class` := Css.Lk.Adv.LEFT_BAR,
           // Для OptsR можно использовать wrap, но этот же коннекшен пробрасывается в rad popup, поэтому везде connect.
-          s.optsC { OptsR.apply }
+          OptsR(p)
         ),
 
         // Верхняя половина, правая колонка:
@@ -102,18 +100,15 @@ object LamFormR {
 
   val component = ReactComponentB[Props]("LamForm")
     .initialState_P { p =>
-      val optsC = p.connect(_.opts)
       State(
         mmapC         = p.connect(_.mmap),
         radOptsC      = p.connect(identity),
         priceDslOptC  = p.connect(_.price.respDslOpt),
         currentPotC   = p.connect(_.current),
-        optsC         = optsC,
         radPopupPropsC = p.connect { p =>
           OptionUtil.maybe( p.rad.popup ) {
             RadPopupR.PropsVal(
-              point = p.rad.circle.center,
-              optsC = optsC
+              point = p.rad.circle.center
             )
           }
         }

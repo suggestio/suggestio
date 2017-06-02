@@ -28,7 +28,6 @@ object MReasonType {
       .addConcreteType[BlockModulesCount.type]
       .addConcreteType[Tag.type]
       .addConcreteType[Rcvr.type]
-      .addConcreteType[AdnMapAdv.type]
       .addConcreteType[GeoLocCapture.type]
   }
 
@@ -141,14 +140,6 @@ object MReasonTypes extends Enum[MReasonType] {
       }
     }
 
-  }
-
-
-  /** Накидка за размещение ADN-узла на карте рекламодателей в ЛК. */
-  case object AdnMapAdv extends MReasonType {
-    override def toString     = "AMV"
-    override def msgCodeI18n  = MsgCodes.`Publish.node.on.adv.map`
-    override def isItemLevel  = true
   }
 
 

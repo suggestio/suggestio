@@ -2,7 +2,6 @@ package io.suggest.lk.adn.map.m
 
 import diode.FastEq
 import io.suggest.adn.mapf.MLamForm
-import io.suggest.adn.mapf.opts.MLamOpts
 import io.suggest.adv.free.MAdv4Free
 import io.suggest.dt.MAdvPeriod
 import io.suggest.lk.adv.m.MPriceS
@@ -39,13 +38,11 @@ object MRoot {
   * @param mmap Состояние географической карты.
   * @param rad Состояние rad-компонента на карте.
   *            Не-опционально, т.к. используется для всех возможных режимов сразу.
-  * @param opts Состояние галочек управления формой.
   */
 case class MRoot(
                   mmap          : MMapS,
                   conf          : MLamConf,
                   rad           : MLamRad,
-                  opts          : MLamOpts,
                   current       : MExistGeoS        = MExistGeoS(),
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
@@ -56,7 +53,6 @@ case class MRoot(
 
   def withMap(map2: MMapS) = copy(mmap = map2)
   override def withRad(rad2: MLamRad) = copy(rad = rad2)
-  override def withOpts(opts2: MLamOpts) = copy(opts = opts2)
   def withCurrent(current2: MExistGeoS) = copy(current = current2)
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)
@@ -69,7 +65,6 @@ case class MRoot(
       mapCursor         = rad.circle,
       datePeriod        = datePeriod,
       adv4freeChecked   = adv4free.map(_.checked),
-      opts              = opts,
       tzOffsetMinutes   = DomQuick.tzOffsetMinutes
     )
   }

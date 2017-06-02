@@ -1,14 +1,12 @@
 package io.suggest.lk.adn.map.r
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.adn.mapf.opts.MLamOpts
+import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.MapsUtil
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import react.leaflet.popup.PopupR
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import react.leaflet.popup.PopupR
 
 /**
   * Suggest.io
@@ -21,14 +19,12 @@ object RadPopupR {
   type Props = ModelProxy[Option[PropsVal]]
 
   case class PropsVal(
-                       point  : MGeoPoint,
-                       optsC  : ReactConnectProxy[MLamOpts]
+                       point  : MGeoPoint
                      )
 
   implicit object PropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.point eq b.point) &&
-        (a.optsC eq b.optsC)
+      a.point eq b.point
     }
   }
 
@@ -42,7 +38,7 @@ object RadPopupR {
         PopupR(
           position = MapsUtil.geoPoint2LatLng(p.point)
         )(
-          p.optsC { OptsR.apply }
+          OptsR( propsProxy )
         )
       }
     }

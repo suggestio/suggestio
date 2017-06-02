@@ -206,6 +206,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   val PlacedIn: T = new Val("p")
 
   /** Размещение ADN-узла на географической карте рекламополучателей. */
+  @deprecated("Толком никакой смысловой нагрузки не было, и оно замёржено в NodeLocation", "2017-06-02")
   val AdnMap: T = new Val("r")
 
 

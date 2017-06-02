@@ -96,6 +96,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   }
 
   /** Размещение ADN-узла (магазина/ТЦ/etc) на карте. */
+  @deprecated("Смысл замёржился в GeoLocCaptureArea", "2017-06-02")
   case object AdnNodeMap extends MItemType {
     override def strId = "m"
     /** Это размещение узлов ЛК на карте. К карточкам это не относится никак. */
