@@ -2,7 +2,30 @@ package io.suggest.geo
 
 import enumeratum._
 
+object GsType {
 
+  import boopickle.Default._
+
+  /** Поддержка boopickle. */
+  implicit val gsTypePickler: Pickler[GsType] = {
+    import GsTypes._
+    // TODO scala-2.12 Доверить поиск sealed-реализаций автоматике, когда scala-2.11 уйдёт в историю.
+    compositePickler[GsType]
+      .addConcreteType[Point.type]
+      .addConcreteType[Polygon.type]
+      .addConcreteType[Circle.type]
+      .addConcreteType[LineString.type]
+      .addConcreteType[MultiPoint.type]
+      .addConcreteType[MultiLineString.type]
+      .addConcreteType[MultiPolygon.type]
+      .addConcreteType[GeometryCollection.type]
+      .addConcreteType[Envelope.type]
+  }
+
+}
+
+
+/** Класс элемента модели [[GsTypes]]. */
 sealed abstract class GsType extends EnumEntry {
 
   /** Название типа на стороне elasticsearch. */
@@ -71,12 +94,25 @@ object GsTypes extends Enum[GsType] {
   }
 
 
-  override def withNameOption(name: String): Option[GsType] = {
-    super.withNameOption(name).orElse {
-      values.find(_.geoJsonName.contains(name))
+  override val values = findValues
+
+  /** Карта названий GeoJSON.
+    * Её длина всегда меньше values, т.к. Circle и Envelope не поддерживаются в GeoJSON. */
+  lazy val geoJsonNamesToValuesMap: Map[String, GsType] = {
+    val iter = for {
+      v       <- values.iterator
+      gjName  <- v.geoJsonName
+    } yield {
+      gjName -> v
     }
+    iter.toMap
   }
 
-  override val values = findValues
+  // Была поддержка поиска по GeoJSON-имени. TODO Не ясно, нужна ли она сейчас?
+  override def withNameOption(name: String): Option[GsType] = {
+    super.withNameOption(name).orElse {
+      geoJsonNamesToValuesMap.get( name )
+    }
+  }
 
 }
