@@ -16,7 +16,7 @@ import scala.scalajs.js.|
 @JSGlobal("mapboxgl.LngLat")
 object LngLat extends js.Object {
 
-  def convert(input: js.Array[js.Any] | LngLat): LngLat = js.native
+  def convert(input: js.Array[Double] | LngLat): LngLat = js.native
 
 }
 

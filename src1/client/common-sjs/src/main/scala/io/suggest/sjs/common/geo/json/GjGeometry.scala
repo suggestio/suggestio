@@ -15,7 +15,7 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   */
 object GjGeometry extends Log {
 
-  def apply(gtype: String, gcoordinates: js.Array[js.Any]): GjGeometry = {
+  def apply(gtype: String, gcoordinates: GjGeometryCoords_t): GjGeometry = {
     new GjGeometry {
       override val `type` = gtype
       override val coordinates = gcoordinates
@@ -25,15 +25,15 @@ object GjGeometry extends Log {
   def firstPoint(geom: GjGeometry): js.Array[Double] = {
     firstPoint(geom.coordinates)
   }
-  def firstPoint(coords: js.Array[_], index: Int = 0): js.Array[Double] = {
-    coords(index) match {
+  def firstPoint(coords: GjGeometryCoords_t, index: Int = 0): js.Array[Double] = {
+    coords(index).asInstanceOf[Any] match {
       // Число (lon). Значит текущий массив -- это координата [x,y].
       case _: Double =>
         coords.asInstanceOf[js.Array[Double]]
 
       // Подмассив с координатами или другими подмассивами. Это нормально.
       case arr: js.Array[_] if arr.nonEmpty =>
-        firstPoint(arr)
+        firstPoint( arr.asInstanceOf[GjGeometryCoords_t] )
 
       // Should never happen:
       case other =>
@@ -51,6 +51,6 @@ object GjGeometry extends Log {
 @ScalaJSDefined
 trait GjGeometry extends GjType {
 
-  val coordinates: js.Array[js.Any]
+  val coordinates: GjGeometryCoords_t
 
 }

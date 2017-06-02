@@ -151,4 +151,6 @@ object MsgCodes {
   val `GeoTag` = "GeoTag"
   val `_adv.Online.now` = "_adv.Online.now"
 
+  val `Multi` = "Multi"
+
 }

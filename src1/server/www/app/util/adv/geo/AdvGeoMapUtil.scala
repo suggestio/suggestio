@@ -83,7 +83,7 @@ class AdvGeoMapUtil @Inject() (
     new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(
-          predicates = MPredicates.AdnMap :: Nil
+          predicates = MPredicates.AdnMap :: MPredicates.NodeLocation :: Nil
         )
         cr :: Nil
       }

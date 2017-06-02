@@ -1,6 +1,10 @@
 package io.suggest.sjs.leaflet.path.poly
 
+import io.suggest.sjs.leaflet.path.PathOptions
+
 import scala.scalajs.js
+import scala.scalajs.js.UndefOr
+import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -8,11 +12,11 @@ import scala.scalajs.js
  * Created: 20.11.15 23:11
  * Description: Polyline constructor options.
  */
-@js.native
-trait PolylineOptions extends js.Object {
+@ScalaJSDefined
+trait PolylineOptions extends PathOptions {
 
-  var smoothFactor: Double = js.native
+  val smoothFactor  : UndefOr[Double]   = js.undefined
 
-  var noClip: Boolean = js.native
+  val noClip        : UndefOr[Boolean]  = js.undefined
 
 }

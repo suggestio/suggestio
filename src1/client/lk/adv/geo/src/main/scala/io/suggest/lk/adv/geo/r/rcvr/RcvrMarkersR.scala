@@ -17,11 +17,13 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.empty.JsOptionUtil
 import io.suggest.sjs.common.geo.json.GjTypes
 import io.suggest.sjs.common.model.loc.MGeoPointJs
+import io.suggest.sjs.leaflet.PolygonLatLngs_t
 import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.geojson.GeoJson
 import io.suggest.sjs.leaflet.map.LatLng
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
+import react.leaflet.poly.{PolygonPropsR, PolygonR}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -35,6 +37,10 @@ import scala.scalajs.js.UndefOr
 object RcvrMarkersR {
 
   type Props = ModelProxy[Pot[MRcvrsGeo]]
+
+  val FILL_OPACITY    = 0.15
+  val STROKE_OPACITY  = 0.7
+  val STROKE_WEIGHT   = 1
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
@@ -59,6 +65,12 @@ object RcvrMarkersR {
       JsOptionUtil.opt2undef( colorOpt )
     }
 
+    private def _clickSomewhereEvent(nodeId: String)(e: MouseEvent): Callback = {
+      val gp = MapsUtil.latLng2geoPoint( e.latlng )
+      val msg = ReqRcvrPopup(nodeId, gp)
+      dispatchOnProxyScopeCB($, msg)
+    }
+
     private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
 
     def render(rcvrsGeoPotProxy: Props): ReactElement = {
@@ -72,8 +84,6 @@ object RcvrMarkersR {
 
         // Собрать круги.
         val _circles = {
-          val _fillOpacity = 0.15
-          val _strokeOpacity = 0.7
 
           val iter2 = for {
             feature <- features.toIterator
@@ -88,7 +98,6 @@ object RcvrMarkersR {
             val gjCoordArr = feature.geometry
               .coordinates
               .asInstanceOf[js.Array[Double]]
-            val strokeWeight = 1
             val gp = MGeoPointJs.fromGjArray( gjCoordArr )
             val opts = new CirclePropsR {
               override val radius: Double = radiusM
@@ -99,19 +108,19 @@ object RcvrMarkersR {
                 _toColorOpt( c.bg )
               }
               override val fillOpacity: UndefOr[Double] = {
-                _fillOpacity
+                FILL_OPACITY
               }
               override val stroke: UndefOr[Boolean] = {
                 c.fg.nonEmpty
               }
               override val weight: UndefOr[Int] = {
-                strokeWeight
+                STROKE_WEIGHT
               }
               override val color: UndefOr[String] = {
                 _toColorOpt( c.fg )
               }
               override val opacity: UndefOr[Double] = {
-                _strokeOpacity
+                STROKE_OPACITY
               }
               override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
                 cbFun1ToJsCb { _: MouseEvent =>
@@ -119,8 +128,55 @@ object RcvrMarkersR {
                 }
               }
             }
-
             CircleR( opts )()
+          }
+
+          iter2.toSeq
+        }
+
+        // Собираем полигоны.
+        val _polygons = {
+          // Типы геометрий, пригодный для рендера через PolygonR.
+          val types = GjTypes.Geom.POLYGON ::
+            GjTypes.Geom.MULTI_POLYGON ::
+            Nil
+          val iter2 = for {
+            feature <- features.iterator
+            if types.contains( feature.geometry.`type` )
+          } yield {
+            val c = feature.props.colors
+            val nodeId = feature.props.nodeId
+
+            val opts = new PolygonPropsR {
+              override val positions: PolygonLatLngs_t = {
+                GeoJson.coordsToLatLngs(
+                  coords     = feature.geometry.coordinates,
+                  levelsDeep = if (feature.geometry.`type`.contains( GjTypes.Geom._MULTI )) 2 else 1
+                )
+              }
+              override val fillColor: UndefOr[String] = {
+                _toColorOpt( c.bg )
+              }
+              override val fillOpacity: UndefOr[Double] = {
+                FILL_OPACITY
+              }
+              override val stroke: UndefOr[Boolean] = {
+                c.fg.nonEmpty
+              }
+              override val weight: UndefOr[Int] = {
+                STROKE_WEIGHT
+              }
+              override val color: UndefOr[String] = {
+                _toColorOpt( c.fg )
+              }
+              override val opacity: UndefOr[Double] = {
+                STROKE_OPACITY
+              }
+              override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
+                cbFun1ToJsCb { _clickSomewhereEvent(nodeId) }
+              }
+            }
+            PolygonR(opts)()
           }
 
           iter2.toSeq
@@ -128,18 +184,30 @@ object RcvrMarkersR {
 
         LayerGroupR()(
 
-          // Гео-шейпы узлов
-          LayerGroupR()(
-            _circles: _*
-          ),
+          // Полигоны, мультиполигоны.
+          for (_ <- _polygons.headOption) yield {
+            LayerGroupR()(
+              _polygons: _*
+            )
+          },
+
+          // Гео-шейпы узлов.
+          // Круги -- выше всех остальных шейпов, но ниже маркеров.
+          for (_ <- _circles.headOption) yield {
+            LayerGroupR()(
+              _circles: _*
+            )
+          },
 
           // Точки-маркеры поверх вообще всех кружочков
-          MarkerClusterGroupR(
-            new MarkerClusterGroupPropsR {
-              override val markers      = _markers
-              override val markerClick  = _onMarkerClickedF
-            }
-          )()
+          for (_ <- _markers.headOption) yield {
+            MarkerClusterGroupR(
+              new MarkerClusterGroupPropsR {
+                override val markers      = _markers
+                override val markerClick  = _onMarkerClickedF
+              }
+            )()
+          }
 
         )
 

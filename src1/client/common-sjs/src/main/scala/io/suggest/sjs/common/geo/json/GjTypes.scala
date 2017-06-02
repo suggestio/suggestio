@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.geo.json
 
+import io.suggest.i18n.MsgCodes
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -17,6 +19,10 @@ object GjTypes {
     def POINT = "Point"
 
     def POLYGON = "Polygon"
+
+    def _MULTI = MsgCodes.`Multi`
+
+    def MULTI_POLYGON = _MULTI + POLYGON
 
   }
 

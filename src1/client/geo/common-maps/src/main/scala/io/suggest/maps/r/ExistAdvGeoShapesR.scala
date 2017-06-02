@@ -15,7 +15,7 @@ import io.suggest.sjs.leaflet.path.PathOptions
 import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
 import react.leaflet.gj.{GeoJsonPropsR, GeoJsonR}
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import io.suggest.sjs.leaflet.path.circle.CircleMarkerOptions
+import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.OpenAdvGeoExistPopup
 import io.suggest.sjs.common.model.loc.MGeoPointJs
@@ -62,7 +62,10 @@ object ExistAdvGeoShapesR extends Log {
               .fold[Layer] {
                 Leaflet.circleMarker(latLng, _circleMarkerOptions)
               } { radiusM =>
-                Leaflet.circle(latLng, radiusM)
+                val circleOpts = new CircleOptions {
+                  override val radius = radiusM
+                }
+                Leaflet.circle(latLng, circleOpts)
               }
           }
 

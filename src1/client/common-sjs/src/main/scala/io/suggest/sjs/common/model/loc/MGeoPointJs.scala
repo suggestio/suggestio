@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.model.loc
 
 import io.suggest.geo.{IGeoPoint, Lat, Lon, MGeoPoint}
-import io.suggest.sjs.common.geo.json.{GjGeometry, GjTypes}
+import io.suggest.sjs.common.geo.json.{GjCoord_t, GjGeometry, GjTypes}
 import org.scalajs.dom.Coordinates
 
 import scala.scalajs.js
@@ -28,9 +28,9 @@ object MGeoPointJs {
   }
 
   /** Массив координат в стандартной нотации: [lon,lat] т.е. [x,y]. */
-  def toArray(gp: IGeoPoint) = js.Array[Double](gp.lon, gp.lat)
+  def toArray(gp: IGeoPoint): GjCoord_t = js.Array[Double](gp.lon, gp.lat)
 
-  def toJsArray(gp: IGeoPoint) = toArray(gp).asInstanceOf[ js.Array[js.Any] ]
+  def toJsArray(gp: IGeoPoint) = toArray(gp)//.asInstanceOf[ js.Array[js.Any] ]
 
   def fromGjArray(arr: js.Array[Double]): MGeoPoint = {
     MGeoPoint(
