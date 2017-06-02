@@ -8,14 +8,16 @@ import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.Size2di
+import io.suggest.es.model.IMust
 import io.suggest.geo.{CircleGs, PointGs}
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
+import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.pick.MPickledPropsJvm
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnRights
 import models.ISize2di
 import models.im.{DevPixelRatios, MAnyImgs, MImgT}
@@ -82,10 +84,21 @@ class AdvGeoMapUtil @Inject() (
   def onMapRcvrsSearch(limit1: Int, onlyWithIds: Seq[String] = Nil): MNodeSearch = {
     new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
-        val cr = Criteria(
-          predicates = MPredicates.AdnMap :: MPredicates.NodeLocation :: Nil
+        val should = IMust.SHOULD
+        val crAdnMap = Criteria(
+          predicates = MPredicates.AdnMap :: Nil,
+          must = should
         )
-        cr :: Nil
+        val crNodeLoc = Criteria(
+          predicates = MPredicates.NodeLocation :: Nil,
+          must = should,
+          gsIntersect = Some(
+            GsCriteria(
+              levels = NodeGeoLevels.NGL_BUILDING :: Nil
+            )
+          )
+        )
+        crAdnMap :: crNodeLoc :: Nil
       }
       override def isEnabled  = Some(true)
       override def testNode   = Some(false)
