@@ -44,14 +44,16 @@ object GeoShape extends MacroLogsDyn {
   }
 
   val WRITES = Writes[GeoShape] { gs =>
-    gs.toPlayJson(false)
+    // TODO Надо задействовать companion.DATA_FORMAT, как это в READS сделано, связав его с TYPE_FORMAT тут.
+    // И тогда метод toPlayJson() можно будет выкинуть окончательно.
+    toPlayJson( gs, geoJsonCompatible = false )
   }
 
   implicit val FORMAT = Format(READS, WRITES)
 
   def WRITES_GJSON_COMPAT: OWrites[GeoShape] = {
     OWrites { v =>
-      v.toPlayJson(true)
+      toPlayJson( v, geoJsonCompatible = true )
     }
   }
 
@@ -65,6 +67,13 @@ object GeoShape extends MacroLogsDyn {
     c.toPlayGeoJsonGeom( gs.asInstanceOf[c.Shape_t] )
   }
 
+  /** Отрендерить json для сохранения внутри _source. */
+  // TODO От этого кривого метода зависит только этот WRITES. Надо бы его спилить, и сделать нормальный WRITES.
+  def toPlayJson(gs: GeoShape, geoJsonCompatible: Boolean = false): JsObject = {
+    val c = GsTypesJvm.companionFor( gs.shapeType )
+    c.toPlayJson(gs.asInstanceOf[c.Shape_t], geoJsonCompatible)
+  }
+
 }
 
 
@@ -76,21 +85,6 @@ trait GeoShape {
 
   /** Используемый тип фигуры. */
   def shapeType: GsType
-
-  /** Отрендерить json для сохранения внутри _source. */
-  def toPlayJson(geoJsonCompatible: Boolean = false): JsObject = {
-    val typeName: String = if (geoJsonCompatible) {
-      shapeType.geoJsonName.get
-    } else {
-      shapeType.esName
-    }
-    val acc = TYPE_ESFN -> JsString(typeName) ::
-      _toPlayJsonInternal(geoJsonCompatible)
-    JsObject(acc)
-  }
-
-  /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc
 
   def firstPoint: MGeoPoint
 
@@ -142,5 +136,21 @@ trait GsStaticJvm {
     * @return Геометрия play-geojson.
     */
   def toPlayGeoJsonGeom(gs: Shape_t): Geometry[LngLat]
+
+
+  /** Отрендерить json для сохранения внутри _source. */
+  def toPlayJson(gs: Shape_t, geoJsonCompatible: Boolean = false): JsObject = {
+    val typeName: String = if (geoJsonCompatible) {
+      gs.shapeType.geoJsonName.get
+    } else {
+      gs.shapeType.esName
+    }
+    val acc = TYPE_ESFN -> JsString(typeName) ::
+      _toPlayJsonInternal(gs, geoJsonCompatible)
+    JsObject(acc)
+  }
+
+  /** Фигуро-специфический рендер JSON для значения внутри _source. */
+  protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc
 
 }

@@ -32,16 +32,17 @@ object PointGs extends GsStaticJvm {
     toPlayGeoJsonGeom( gs.coord )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val mgpJson = GeoPoint.toPlayGeoJson(gs.coord)
+    (COORDS_ESFN -> mgpJson) :: Nil
+  }
+
 }
 
 
 case class PointGs(coord: MGeoPoint) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.Point
-
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    (COORDS_ESFN -> GeoPoint.toPlayGeoJson(coord)) :: Nil
-  }
 
   override def toEsShapeBuilder = {
     ShapeBuilder.newPoint(coord.lon, coord.lat)

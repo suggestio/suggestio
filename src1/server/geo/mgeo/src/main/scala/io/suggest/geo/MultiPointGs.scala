@@ -60,6 +60,11 @@ trait MultiPointShapeStatic extends GsStaticJvm {
       .toStream
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val coordsJson = LineStringGs.coords2playJson( gs.coords )
+    List(COORDS_ESFN -> coordsJson)
+  }
+
 }
 
 
@@ -67,12 +72,6 @@ trait MultiPointShapeStatic extends GsStaticJvm {
 trait MultiPointShape extends GeoShapeQuerable {
 
   def coords: Seq[MGeoPoint]
-
-  /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val coordsJson = LineStringGs.coords2playJson(coords)
-    List(COORDS_ESFN -> coordsJson)
-  }
 
   type Shape_t <: PointCollection[Shape_t]
 

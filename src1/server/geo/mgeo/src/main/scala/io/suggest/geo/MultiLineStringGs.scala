@@ -39,6 +39,13 @@ object MultiLineStringGs extends GsStaticJvm {
     )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val playJson = for (line <- gs.lines) yield {
+      LineStringGs.coords2playJson( line.coords )
+    }
+    List(COORDS_ESFN -> JsArray(playJson))
+  }
+
 }
 
 
@@ -46,12 +53,6 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
 
   /** Используемый тип фигуры. */
   override def shapeType = GsTypes.MultiLineString
-
-  /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val playJson = lines.map { line => LineStringGs.coords2playJson(line.coords) }
-    List(COORDS_ESFN -> JsArray(playJson))
-  }
 
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
     *

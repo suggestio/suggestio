@@ -38,23 +38,21 @@ object GeometryCollectionGs extends GsStaticJvm {
     )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val geomsJson = gs.geoms.map { subGs =>
+      GeoShape.toPlayJson( subGs, geoJsonCompatible )
+    }
+    List(
+      GEOMETRIES_ESFN -> JsArray(geomsJson)
+    )
+  }
+
 }
-
-
-import io.suggest.geo.GeometryCollectionGs._
 
 
 case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
 
   override def shapeType = GsTypes.GeometryCollection
-
-  /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val geomsJson = geoms.map { _.toPlayJson(geoJsonCompatible) }
-    List(
-      GEOMETRIES_ESFN -> JsArray(geomsJson)
-    )
-  }
 
   override def firstPoint = geoms.head.firstPoint
 

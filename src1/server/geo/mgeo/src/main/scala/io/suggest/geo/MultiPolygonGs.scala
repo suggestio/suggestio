@@ -46,18 +46,21 @@ object MultiPolygonGs extends GsStaticJvm {
     )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val coords = for (pgs <- gs.polygons) yield {
+      PolygonGs._toPlayJsonCoords( pgs )
+    }
+    val coordsArr = JsArray( coords )
+    val row = COORDS_ESFN -> coordsArr
+    row :: Nil
+  }
+
 }
 
 
 case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.MultiPolygon
-
-  /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val coords = JsArray(polygons.map { _._toPlayJsonCoords })
-    List(COORDS_ESFN -> coords)
-  }
 
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
     *
@@ -66,7 +69,7 @@ case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
     polygons.foldLeft(ShapeBuilder.newMultiPolygon) {
       (mpb, poly) =>
         val polyBuilder = mpb.polygon()
-        poly.renderToEsPolyBuilder(polyBuilder)
+        PolygonGs._renderToEsPolyBuilder(poly, polyBuilder)
         polyBuilder.close()
     }
   }

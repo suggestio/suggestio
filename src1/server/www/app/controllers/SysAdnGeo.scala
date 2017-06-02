@@ -13,7 +13,7 @@ import models.req.INodeReq
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._
 import Forms._
-import io.suggest.geo.{CircleGs, Distance, GeoShapeQuerable, MGeoPoint}
+import io.suggest.geo._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImplLazy
@@ -561,7 +561,9 @@ class SysAdnGeo @Inject() (
   /** Отрендерить geojson для валидации через geojsonlint. */
   def showGeoJson(g: MGsPtr) = isSuNode(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
-      Ok( mgs.shape.toPlayJson() )
+      // Сейчас тут рендер GeoJSON-compatible. Раньше был просто рендер, почему-то.
+      val json = GeoShape.WRITES_GJSON_COMPAT.writes( mgs.shape )
+      Ok( json )
     }
   }
 

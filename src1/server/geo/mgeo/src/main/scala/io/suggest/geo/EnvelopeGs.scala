@@ -90,6 +90,13 @@ object EnvelopeGs extends GsStaticJvm {
     )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    DATA_FORMAT
+      .writes(gs)
+      .fields
+      .toList
+  }
+
 }
 
 case class EnvelopeGs(
@@ -104,14 +111,6 @@ case class EnvelopeGs(
     ShapeBuilder.newEnvelope()
       .topLeft( GeoPoint.toJstCoordinate(topLeft) )
       .bottomRight( GeoPoint.toJstCoordinate(bottomRight) )
-  }
-
-  /** Фигуро-специфический рендер JSON для значения внутри _source. */
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    EnvelopeGs.DATA_FORMAT
-      .writes(this)
-      .fields
-      .toList
   }
 
   override def firstPoint: MGeoPoint = topLeft

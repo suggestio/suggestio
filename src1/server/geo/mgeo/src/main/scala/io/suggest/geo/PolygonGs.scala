@@ -47,6 +47,31 @@ object PolygonGs extends GsStaticJvm {
     )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    val json = PolygonGs._toPlayJsonCoords( gs )
+    val row = COORDS_ESFN -> json
+    row :: Nil
+  }
+
+  protected[geo] def _toPlayJsonCoords(gs: Shape_t): JsArray = {
+    val coords = gs.outerWithHoles
+    val playJson = coords.map { line => LineStringGs.coords2playJson(line.coords) }
+    JsArray(playJson)
+  }
+
+  protected[geo] def _renderToEsPolyBuilder[T <: BasePolygonBuilder[T]](gs: Shape_t, poly: BasePolygonBuilder[T]): BasePolygonBuilder[T] = {
+    for (outerGp <- gs.outer.coords) {
+      poly.point(outerGp.lon, outerGp.lat)
+    }
+    poly.close()
+    // Рисуем дырки
+    for (hole <- gs.holes) {
+      val holeRing = poly.hole()
+      hole.renderToShape(holeRing)
+    }
+    poly
+  }
+
 }
 
 
@@ -54,33 +79,10 @@ object PolygonGs extends GsStaticJvm {
 case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShapeQuerable {
   override def shapeType = GsTypes.Polygon
 
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    List(COORDS_ESFN -> _toPlayJsonCoords)
-  }
-
-  def _toPlayJsonCoords: JsArray = {
-    val coords = outer :: holes
-    val playJson = coords.map { line => LineStringGs.coords2playJson(line.coords) }
-    JsArray(playJson)
-  }
-
   override def toEsShapeBuilder = {
     val poly = ShapeBuilder.newPolygon()
     // Рисуем оболочку
-    renderToEsPolyBuilder(poly)
-  }
-
-  def renderToEsPolyBuilder[T <: BasePolygonBuilder[T]](poly: BasePolygonBuilder[T]): BasePolygonBuilder[T] = {
-    outer.coords foreach { outerGp =>
-      poly.point(outerGp.lon, outerGp.lat)
-    }
-    poly.close()
-    // Рисуем дырки
-    holes.foreach { hole =>
-      val holeRing = poly.hole()
-      hole.renderToShape(holeRing)
-    }
-    poly
+    PolygonGs._renderToEsPolyBuilder(this, poly)
   }
 
   override def firstPoint = outer.firstPoint

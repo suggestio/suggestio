@@ -50,22 +50,19 @@ object CircleGs extends GsStaticJvm {
     PointGs.toPlayGeoJsonGeom( circle.center )
   }
 
+  override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
+    List(
+      COORDS_ESFN  -> GeoPoint.toPlayGeoJson( gs.center ),
+      RADIUS_ESFN  -> JsString( gs.radius.toString )
+    )
+  }
+
 }
-
-
-import io.suggest.geo.CircleGs._
 
 
 case class CircleGs(center: MGeoPoint, radius: Distance) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.Circle
-
-  override def _toPlayJsonInternal(geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    List(
-      COORDS_ESFN  -> GeoPoint.toPlayGeoJson(center),
-      RADIUS_ESFN  -> JsString(radius.toString)
-    )
-  }
 
   override def toEsShapeBuilder = {
     ShapeBuilder.newCircleBuilder()
