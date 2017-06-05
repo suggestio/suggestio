@@ -1,7 +1,7 @@
 package io.suggest.maps.m
 
 import diode.FastEq
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
+import io.suggest.geo.{CircleGs, MGeoPoint}
 
 /**
   * Suggest.io
@@ -33,19 +33,19 @@ object MRadT {
 trait MRadT[T <: MRadT[T]] { this: T =>
 
   /** Состояние гео-круга в целом, пригодное для сериализации на сервер. */
-  val circle      : MGeoCircle
+  val circle      : CircleGs
 
   /** Состояние Rad-компонентов.  */
   val state       : MRadS
 
 
   /** Обновление сериализуемого состояния круга. */
-  def withCircle(circle2: MGeoCircle): T
+  def withCircle(circle2: CircleGs): T
 
   /** Обновление состояния Rad. */
   def withState(state2: MRadS): T
 
-  def withCircleState(circle: MGeoCircle, state: MRadS): T = {
+  def withCircleState(circle: CircleGs, state: MRadS): T = {
     withCircle(circle)
       .withState(state)
   }

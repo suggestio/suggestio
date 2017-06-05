@@ -1,7 +1,7 @@
 package io.suggest.maps.u
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.geo.{GeoConstants, MGeoCircle, MGeoPoint}
+import io.suggest.geo.{GeoConstants, CircleGs, MGeoPoint}
 import io.suggest.sjs.common.model.loc.MGeoPointJs
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.{LatLng, Point}
@@ -51,7 +51,7 @@ object MapsUtil {
     * @return Гео-точка.
     * @see [[http://gis.stackexchange.com/a/2980]]
     */
-  def radiusMarkerLatLng(geoCircle: MGeoCircle): MGeoPoint = {
+  def radiusMarkerLatLng(geoCircle: CircleGs): MGeoPoint = {
     // Считаем чисто математичеки координаты маркера радиуса. По дефолту, просто восточнее от центра на расстоянии радиуса.
     val earthRadiusM = GeoConstants.Earth.RADIUS_M
 

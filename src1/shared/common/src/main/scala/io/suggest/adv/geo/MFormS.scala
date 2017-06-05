@@ -3,7 +3,7 @@ package io.suggest.adv.geo
 import boopickle.Default._
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.dt.MAdvPeriod
-import io.suggest.geo.MGeoCircle
+import io.suggest.geo.CircleGs
 
 /**
   * Suggest.io
@@ -28,7 +28,7 @@ object MFormS {
   implicit val pickler: Pickler[MFormS] = {
     implicit val mmapsP = MMapProps.mmapsPickler
     implicit val datePeriodP = MAdvPeriod.mAdvPeriodPickler
-    implicit val circleP = MGeoCircle.mGeoCirlePickler
+    implicit val circleP = CircleGs.CIRCLE_GS_PICKLER
     generatePickler[MFormS]
   }
 
@@ -54,7 +54,7 @@ case class MFormS(
                    rcvrsMap         : RcvrsMap_t,
                    tagsEdit         : MTagsEditProps,
                    datePeriod       : MAdvPeriod,
-                   radCircle        : Option[MGeoCircle],
+                   radCircle        : Option[CircleGs],
                    tzOffsetMinutes  : Int
                  ) {
 

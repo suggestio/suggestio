@@ -2,7 +2,7 @@ package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
-import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, MGeoCircle, MGeoPoint}
+import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, CircleGs, MGeoPoint}
 import models.adv.geo.cur._
 import play.extras.geojson.{Feature, LngLat}
 import util.data.{AccordUtil, AccordValidateFormUtilT}
@@ -38,8 +38,8 @@ class AdvGeoFormUtil @Inject() (
     * @param gp Начальная точка карты. Будет в центре выделенного круга.
     * @return MGeoCircle.
     */
-  def radCircle0(gp: MGeoPoint): MGeoCircle = {
-    MGeoCircle(
+  def radCircle0(gp: MGeoPoint): CircleGs = {
+    CircleGs(
       center  = gp,
       radiusM = 500
     )
@@ -78,7 +78,7 @@ class AdvGeoFormUtil @Inject() (
     rm.keys.each is valid
   }
 
-  implicit val geoCircleV = validator[MGeoCircle] { gc =>
+  implicit val geoCircleV = validator[CircleGs] { gc =>
     gc.center is valid
     gc.radiusM should be >= AdvGeoConstants.Radius.MIN_M.toDouble
     gc.radiusM should be <= AdvGeoConstants.Radius.MAX_M.toDouble

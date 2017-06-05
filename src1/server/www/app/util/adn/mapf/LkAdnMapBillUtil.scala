@@ -8,7 +8,7 @@ import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.YmdHelpersJvm
-import io.suggest.geo.{CircleGsJvm, MGeoCircle}
+import io.suggest.geo.{CircleGsJvm, CircleGs}
 import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -75,7 +75,7 @@ class LkAdnMapBillUtil @Inject() (
     * @param circle Гео-круг.
     * @return Double-мультипликатор цены.
     */
-  private def getGeoPriceMult(circle: MGeoCircle): Double = {
+  private def getGeoPriceMult(circle: CircleGs): Double = {
     val radius = circle.radiusM / 50
     // Привести радиус на карте к множителю цены
     Math.max(0.1, radius * radius )

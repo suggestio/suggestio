@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.m
 
 import diode.FastEq
-import io.suggest.geo.MGeoCircle
+import io.suggest.geo.CircleGs
 import io.suggest.maps.m.MRadT.MRadTFastEq
 import io.suggest.maps.m.{MRadS, MRadT}
 
@@ -24,17 +24,17 @@ object MLamRad {
 
 
 case class MLamRad(
-                    override val circle      : MGeoCircle,
+                    override val circle      : CircleGs,
                     override val state       : MRadS,
                     popup                    : Boolean      = false
                   )
   extends MRadT[MLamRad]
 {
 
-  override def withCircle(circle2: MGeoCircle) = copy(circle = circle2)
+  override def withCircle(circle2: CircleGs) = copy(circle = circle2)
   override def withState(state2: MRadS) = copy(state = state2)
 
-  override def withCircleState(circle2: MGeoCircle, state2: MRadS) = {
+  override def withCircleState(circle2: CircleGs, state2: MRadS) = {
     copy(
       circle = circle2,
       state  = state2

@@ -27,7 +27,7 @@ object CircleGsJvm extends GsStaticJvmQuerable {
       .inmap[Double]( _.meters, Distance.meters)
   )(CircleGs.apply, unlift(CircleGs.unapply))
 
-  def apply(geoCircle: MGeoCircle): CircleGs = {
+  def apply(geoCircle: CircleGs): CircleGs = {
     CircleGs(
       center  = geoCircle.center,
       radiusM = geoCircle.radiusM

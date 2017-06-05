@@ -2,7 +2,7 @@ package io.suggest.bill.price.dsl
 
 import boopickle.Default._
 import io.suggest.bill.MNameId
-import io.suggest.geo.MGeoCircle
+import io.suggest.geo.CircleGs
 
 /**
   * Suggest.io
@@ -15,7 +15,7 @@ object MPriceReason {
   /** Поддержка бинарной сериализации между клиентом и сервером. */
   implicit val iPriceReasonPickler: Pickler[MPriceReason] = {
     implicit val mReasonTypeP = MReasonType.mReasonTypePickler
-    implicit val mGeoCircleP = MGeoCircle.mGeoCirlePickler
+    implicit val mGeoCircleP = CircleGs.CIRCLE_GS_PICKLER
     implicit val mNameIdP = MNameId.mNameIdPickler
 
     generatePickler[MPriceReason]
@@ -37,6 +37,6 @@ final case class MPriceReason(
                                ints         : Seq[Int]            = Nil,
                                strings      : Seq[String]         = Nil,
                                doubles      : Seq[Double]         = Nil,
-                               geoCircles   : Seq[MGeoCircle]     = Nil,
+                               geoCircles   : Seq[CircleGs]     = Nil,
                                nameIds      : Seq[MNameId]        = Nil
                              )

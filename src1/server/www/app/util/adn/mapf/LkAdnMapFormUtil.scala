@@ -3,7 +3,7 @@ package util.adn.mapf
 import com.google.inject.Inject
 import io.suggest.adn.mapf.{AdnMapFormConstants, MLamForm}
 import io.suggest.adv.geo.MMapProps
-import io.suggest.geo.{MGeoCircle, MGeoPoint}
+import io.suggest.geo.{CircleGs, MGeoPoint}
 import util.data.{AccordUtil, AccordValidateFormUtilT}
 
 /**
@@ -28,8 +28,8 @@ class LkAdnMapFormUtil @Inject() (
     )
   }
 
-  def radCircle0(gp0: MGeoPoint): MGeoCircle = {
-    MGeoCircle(
+  def radCircle0(gp0: MGeoPoint): CircleGs = {
+    CircleGs(
       center  = gp0,
       radiusM = AdnMapFormConstants.Rad.RadiusM.DEFAULT
     )
@@ -39,7 +39,7 @@ class LkAdnMapFormUtil @Inject() (
   import accordUtil._
   import com.wix.accord.dsl._
 
-  implicit val geoCircleV = validator[MGeoCircle] { gc =>
+  implicit val geoCircleV = validator[CircleGs] { gc =>
     gc.center is valid
     gc.radiusM should be >= AdnMapFormConstants.Rad.RadiusM.MIN_M.toDouble
     gc.radiusM should be <= AdnMapFormConstants.Rad.RadiusM.MAX_M.toDouble

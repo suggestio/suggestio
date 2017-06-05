@@ -1,6 +1,6 @@
 package io.suggest.maps.m
 
-import io.suggest.geo.MGeoCircle
+import io.suggest.geo.CircleGs
 
 /**
   * Suggest.io
@@ -29,7 +29,7 @@ object MRad {
   * @param state Состояние rad-компонентов.
   */
 case class MRad(
-                 override val circle      : MGeoCircle,
+                 override val circle      : CircleGs,
                  override val state       : MRadS,
                  enabled                  : Boolean    = true,
                  centerPopup              : Boolean    = false
@@ -37,7 +37,7 @@ case class MRad(
   extends MRadT[MRad]
 {
 
-  override def withCircle(circle2: MGeoCircle) = copy(circle = circle2)
+  override def withCircle(circle2: CircleGs) = copy(circle = circle2)
   override def withState(state2: MRadS) = copy(state = state2)
   def withEnabled(enabled2: Boolean) = copy(enabled = enabled2)
   def withCenterPopup(enabled2: Boolean) = copy(centerPopup = enabled2)
