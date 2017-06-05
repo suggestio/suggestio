@@ -8,7 +8,7 @@ import play.api.libs.json.Json
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.04.16 15:18
-  * Description: Тесты для модели гео-шейпов [[EnvelopeGs]].
+  * Description: Тесты для модели гео-шейпов [[EnvelopeGsJvm]].
   */
 class EnvelopeGsSpec extends FlatSpec {
 
@@ -21,7 +21,7 @@ class EnvelopeGsSpec extends FlatSpec {
         |}
       """.stripMargin
     val jsr = Json.parse(jsonStr)
-      .validate(EnvelopeGs.DATA_FORMAT)
+      .validate(EnvelopeGsJvm.DATA_FORMAT)
     assert(jsr.isSuccess, jsr)
     val pgs = jsr.get
     pgs shouldBe EnvelopeGs(
@@ -35,7 +35,7 @@ class EnvelopeGsSpec extends FlatSpec {
       topLeft     = MGeoPoint(lon = -77.03653, lat = 38.897676),
       bottomRight = MGeoPoint(lon = -67.03653, lat = 48.897676)
     )
-    val fmt = EnvelopeGs.DATA_FORMAT
+    val fmt = EnvelopeGsJvm.DATA_FORMAT
     val jsr = Json.toJson(gs)(fmt)
       .validate(fmt)
     jsr.isSuccess shouldBe true

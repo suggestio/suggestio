@@ -19,7 +19,7 @@ import play.extras.geojson.{LngLat, Polygon}
   *
   * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-shape.html#_envelope]]
   */
-object EnvelopeGs extends GsStaticJvmQuerable {
+object EnvelopeGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = EnvelopeGs
 
@@ -101,28 +101,6 @@ object EnvelopeGs extends GsStaticJvmQuerable {
     ShapeBuilder.newEnvelope()
       .topLeft( GeoPoint.toJstCoordinate(gs.topLeft) )
       .bottomRight( GeoPoint.toJstCoordinate(gs.bottomRight) )
-  }
-
-}
-
-case class EnvelopeGs(
-  topLeft: MGeoPoint,
-  bottomRight: MGeoPoint
-)
-  extends IGeoShapeQuerable {
-
-  override def shapeType = GsTypes.Envelope
-
-  override def firstPoint: MGeoPoint = topLeft
-
-  override def centerPoint: Some[MGeoPoint] = {
-    // TODO Код не тестирован и не использовался с момента запиливания
-    // Тут чисто-арифметическое определение центра, без [возможных] поправок на форму геойда и прочее.
-    val c = MGeoPoint(
-      lat = (bottomRight.lat + topLeft.lat) / 2,
-      lon = (bottomRight.lon + topLeft.lon) / 2
-    )
-    Some(c)
   }
 
 }

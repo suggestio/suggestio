@@ -44,7 +44,7 @@ object GsTypesJvm {
       case GsTypes.Polygon            => PolygonGs
       case GsTypes.Circle             => CircleGsJvm
       case GsTypes.Point              => PointGsJvm
-      case GsTypes.Envelope           => EnvelopeGs
+      case GsTypes.Envelope           => EnvelopeGsJvm
       case GsTypes.LineString         => LineStringGs
       case GsTypes.MultiLineString    => MultiLineStringGs
       case GsTypes.MultiPoint         => MultiPointGs
