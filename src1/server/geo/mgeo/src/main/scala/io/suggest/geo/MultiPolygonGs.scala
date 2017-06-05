@@ -24,7 +24,7 @@ object MultiPolygonGs extends GsStaticJvmQuerable {
         {polyGss =>
           MultiPolygonGs(
             polyGss.map { polyCoords =>
-              PolygonGs(polyCoords)
+              PolygonGsJvm(polyCoords)
             }
           )
         },
@@ -40,7 +40,7 @@ object MultiPolygonGs extends GsStaticJvmQuerable {
       coordinates = mpGs.polygons
         .iterator
         .map { pgs =>
-          PolygonGs.toPlayGeoJsonGeom( pgs ).coordinates
+          PolygonGsJvm.toPlayGeoJsonGeom( pgs ).coordinates
         }
         .toStream
     )
@@ -48,7 +48,7 @@ object MultiPolygonGs extends GsStaticJvmQuerable {
 
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
     val coords = for (pgs <- gs.polygons) yield {
-      PolygonGs._toPlayJsonCoords( pgs )
+      PolygonGsJvm._toPlayJsonCoords( pgs )
     }
     val coordsArr = JsArray( coords )
     val row = COORDS_ESFN -> coordsArr
@@ -62,7 +62,7 @@ object MultiPolygonGs extends GsStaticJvmQuerable {
     gs.polygons.foldLeft(ShapeBuilder.newMultiPolygon) {
       (mpb, poly) =>
         val polyBuilder = mpb.polygon()
-        PolygonGs._renderToEsPolyBuilder(poly, polyBuilder)
+        PolygonGsJvm._renderToEsPolyBuilder(poly, polyBuilder)
         polyBuilder.close()
     }
   }

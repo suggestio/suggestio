@@ -26,7 +26,7 @@ class PolygonGsSpec extends FlatSpec with CoordLineRnd {
         |}
       """.stripMargin
     val jsr = Json.parse(jsStr)
-      .validate( PolygonGs.DATA_FORMAT )
+      .validate( PolygonGsJvm.DATA_FORMAT )
     assert(jsr.isSuccess, jsr)
     jsr.get shouldBe PolygonGs(
       LineStringGs(Seq(
@@ -51,7 +51,7 @@ class PolygonGsSpec extends FlatSpec with CoordLineRnd {
         |}
       """.stripMargin
     val jsr = Json.parse(jsStr)
-      .validate( PolygonGs.DATA_FORMAT )
+      .validate( PolygonGsJvm.DATA_FORMAT )
     assert( jsr.isSuccess, jsr )
     jsr.get shouldBe PolygonGs(
       outer = LineStringGs(Seq(

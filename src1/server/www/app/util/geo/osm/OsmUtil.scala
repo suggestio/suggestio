@@ -264,7 +264,7 @@ object RelMemberRoles extends Enumeration {
       }
       Some(r)
     } catch {
-      case ex: NoSuchElementException => None
+      case _: NoSuchElementException => None
     }
   }
 

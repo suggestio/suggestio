@@ -15,11 +15,11 @@ import play.extras.geojson.{LngLat, Polygon}
  * Description: Sio-класс для полигона.
  */
 
-object PolygonGs extends GsStaticJvmQuerable {
+object PolygonGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = PolygonGs
 
-  override def DATA_FORMAT: Format[PolygonGs] = {
+  override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ COORDS_ESFN).format[List[Seq[MGeoPoint]]]
       .inmap [PolygonGs] (
         apply,
@@ -48,7 +48,7 @@ object PolygonGs extends GsStaticJvmQuerable {
   }
 
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val json = PolygonGs._toPlayJsonCoords( gs )
+    val json = PolygonGsJvm._toPlayJsonCoords( gs )
     val row = COORDS_ESFN -> json
     row :: Nil
   }
@@ -75,26 +75,7 @@ object PolygonGs extends GsStaticJvmQuerable {
   override def toEsShapeBuilder(gs: Shape_t) = {
     val poly = ShapeBuilder.newPolygon()
     // Рисуем оболочку
-    PolygonGs._renderToEsPolyBuilder(gs, poly)
+    PolygonGsJvm._renderToEsPolyBuilder(gs, poly)
   }
-
-}
-
-
-/** Полигон с необязательными дырками в двумерном пространстве. */
-case class PolygonGs(
-                      outer : LineStringGs,
-                      holes : List[LineStringGs] = Nil
-                    )
-  extends IGeoShapeQuerable
-{
-
-  override def shapeType = GsTypes.Polygon
-
-  override def firstPoint = outer.firstPoint
-
-  def toMpGss = outerWithHoles.map(_.coords)
-
-  def outerWithHoles = outer :: holes
 
 }

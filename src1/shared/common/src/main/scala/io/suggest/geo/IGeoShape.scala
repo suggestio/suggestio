@@ -125,3 +125,17 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends IGeoShapeQuerable
   override def shapeType = GsTypes.MultiLineString
   override def firstPoint = lines.head.firstPoint
 }
+
+
+/** Гео-шейп полигона с необязательными дырками в двумерном пространстве. */
+case class PolygonGs(
+                      outer : LineStringGs,
+                      holes : List[LineStringGs] = Nil
+                    )
+  extends IGeoShapeQuerable
+{
+  override def shapeType = GsTypes.Polygon
+  override def firstPoint = outer.firstPoint
+  def toMpGss = outerWithHoles.map(_.coords)
+  def outerWithHoles = outer :: holes
+}
