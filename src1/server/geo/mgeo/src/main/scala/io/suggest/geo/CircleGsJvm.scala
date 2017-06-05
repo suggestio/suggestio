@@ -15,7 +15,7 @@ import play.extras.geojson.{Geometry, LngLat}
  * Created: 22.08.14 12:29
  * Description: Круг в двумерном пространстве.
  */
-object CircleGs extends GsStaticJvmQuerable {
+object CircleGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = CircleGs
 
@@ -25,7 +25,7 @@ object CircleGs extends GsStaticJvmQuerable {
     (__ \ COORDS_ESFN).format[MGeoPoint] and
     (__ \ RADIUS_ESFN).format[Distance]
       .inmap[Double]( _.meters, Distance.meters)
-  )(apply, unlift(unapply))
+  )(CircleGs.apply, unlift(CircleGs.unapply))
 
   def apply(geoCircle: MGeoCircle): CircleGs = {
     CircleGs(
@@ -37,7 +37,7 @@ object CircleGs extends GsStaticJvmQuerable {
   /** Вернуть инстанс круга из инстанса гео-шейпа.
     *
     * @param gs Какой-то [[GeoShapeJvm]].
-    * @return Опциональный [[CircleGs]].
+    * @return Опциональный [[CircleGsJvm]].
     *         None, если gs -- это НЕ круг, а что-либо другое.
     */
   def maybeFromGs(gs: IGeoShape): Option[CircleGs] = {
@@ -69,20 +69,4 @@ object CircleGs extends GsStaticJvmQuerable {
 
 }
 
-
-// TODO Замёржить common-модель MGeoCircle в этот шейп.
-case class CircleGs(
-                     center   : MGeoPoint,
-                     radiusM  : Double
-                   )
-  extends IGeoShapeQuerable
-{
-
-  override def shapeType = GsTypes.Circle
-
-  override def firstPoint = center
-
-  override def centerPoint = Some(center)
-
-}
 

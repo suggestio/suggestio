@@ -213,7 +213,7 @@ trait ScIndex
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
               val circle = CircleGs(geoLoc.center, radiusM = 10)
-              val qShape = CircleGs.toEsQueryMaker( circle )
+              val qShape = CircleGsJvm.toEsQueryMaker( circle )
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
                 shapes = qShape :: Nil

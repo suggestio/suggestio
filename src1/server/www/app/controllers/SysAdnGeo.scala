@@ -422,7 +422,7 @@ class SysAdnGeo @Inject() (
       )
     }
     {geo =>
-      val circleOpt = CircleGs.maybeFromGs(geo.shape)
+      val circleOpt = CircleGsJvm.maybeFromGs(geo.shape)
       if (circleOpt.isEmpty)
         warn(s"circleFormM(): Unable to unbind geo shape of class ${geo.shape.getClass.getSimpleName} into circle.")
       for (circle <- circleOpt) yield {

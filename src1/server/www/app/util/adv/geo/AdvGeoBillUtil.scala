@@ -9,7 +9,7 @@ import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.YmdHelpersJvm
-import io.suggest.geo.CircleGs
+import io.suggest.geo.CircleGsJvm
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -208,7 +208,7 @@ class AdvGeoBillUtil @Inject() (
           .flatMap { geoSubTerm =>
             val gsOpt = abc.res
               .radCircle
-              .map { CircleGs.apply }
+              .map { CircleGsJvm.apply }
 
             LOGGER.trace(s"$logPrefix2 It is Geo term, circle = ${abc.res.radCircle.orNull}, gs => ${gsOpt.orNull}")
             geoSubTerm

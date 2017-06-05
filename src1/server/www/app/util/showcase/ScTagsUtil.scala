@@ -2,7 +2,7 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.geo.CircleGs
+import io.suggest.geo.{CircleGs, CircleGsJvm}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
@@ -61,7 +61,7 @@ class ScTagsUtil @Inject()(
         )
         GsCriteria(
           levels = NodeGeoLevels.geoTag :: Nil,
-          shapes = CircleGs.toEsQueryMaker(circle) :: Nil
+          shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
         )
       }
     )

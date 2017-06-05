@@ -8,7 +8,7 @@ import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
 import io.suggest.dt.YmdHelpersJvm
-import io.suggest.geo.{CircleGs, MGeoCircle}
+import io.suggest.geo.{CircleGsJvm, MGeoCircle}
 import io.suggest.mbill2.m.dbg.MDebugs
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -147,7 +147,7 @@ class LkAdnMapBillUtil @Inject() (
               // Было раньше tag.nodeId, но вроде от этого отказались: rcvrId вроде выставляется на этапе install().
               rcvrIdOpt     = None,
               geoShape      = Some(
-                CircleGs( formRes.mapCursor )
+                CircleGsJvm( formRes.mapCursor )
               )
             )
           }

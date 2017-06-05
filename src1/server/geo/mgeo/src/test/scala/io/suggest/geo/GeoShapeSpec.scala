@@ -2,6 +2,7 @@ package io.suggest.geo
 
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
+import GeoShapeJvm.GEO_SHAPE_FORMAT
 
 /**
  * Suggest.io

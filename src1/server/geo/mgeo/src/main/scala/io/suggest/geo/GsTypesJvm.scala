@@ -42,7 +42,7 @@ object GsTypesJvm {
   def esQuerableCompanionFor(gsType: GsType): Option[GsStaticJvmQuerable] = {
     val cOrNull: GsStaticJvmQuerable = gsType match {
       case GsTypes.Polygon            => PolygonGs
-      case GsTypes.Circle             => CircleGs
+      case GsTypes.Circle             => CircleGsJvm
       case GsTypes.Point              => PointGs
       case GsTypes.Envelope           => EnvelopeGs
       case GsTypes.LineString         => LineStringGs

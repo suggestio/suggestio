@@ -34,3 +34,17 @@ trait IGeoShape {
 /** Если элемент можно запрашивать в geo-shape search/filter, то об этом можно уведомить компилятор. */
 trait IGeoShapeQuerable extends IGeoShape
 
+
+
+// TODO Замёржить common-модель MGeoCircle в этот шейп.
+case class CircleGs(
+                     center   : MGeoPoint,
+                     radiusM  : Double
+                   )
+  extends IGeoShapeQuerable
+{
+  override def shapeType = GsTypes.Circle
+  override def firstPoint = center
+  override def centerPoint = Some(center)
+}
+

@@ -2,7 +2,7 @@ package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
-import io.suggest.geo.{CircleGs, GeoShapeJvm, MGeoCircle, MGeoPoint}
+import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, MGeoCircle, MGeoPoint}
 import models.adv.geo.cur._
 import play.extras.geojson.{Feature, LngLat}
 import util.data.{AccordUtil, AccordValidateFormUtilT}
@@ -57,7 +57,7 @@ class AdvGeoFormUtil @Inject() (
       itemId      = si.itemId,
       // hasApproved влияет на цвет заливки.
       hasApproved = si.hasApproved,
-      crclRadiusM = CircleGs.maybeFromGs(gs)
+      crclRadiusM = CircleGsJvm.maybeFromGs(gs)
         .map(_.radiusM)
     )
     Feature(
