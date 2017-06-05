@@ -46,7 +46,7 @@ object GsTypesJvm {
       case GsTypes.Point              => PointGsJvm
       case GsTypes.Envelope           => EnvelopeGsJvm
       case GsTypes.LineString         => LineStringGsJvm
-      case GsTypes.MultiLineString    => MultiLineStringGs
+      case GsTypes.MultiLineString    => MultiLineStringGsJvm
       case GsTypes.MultiPoint         => MultiPointGsJvm
       case GsTypes.MultiPolygon       => MultiPolygonGs
       case _                          => null

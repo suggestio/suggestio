@@ -16,14 +16,14 @@ import play.extras.geojson.{LngLat, MultiLineString}
  * Description: Представление multiline-объектов в рамках s.io.
  */
 
-object MultiLineStringGs extends GsStaticJvmQuerable {
+object MultiLineStringGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = MultiLineStringGs
 
   override def DATA_FORMAT: Format[MultiLineStringGs] = {
     (__ \ COORDS_ESFN).format[Seq[Seq[MGeoPoint]]]
       .inmap [MultiLineStringGs] (
-        { ss => apply( ss.map(LineStringGs.apply)) },
+        { ss => MultiLineStringGs( ss.map(LineStringGs.apply)) },
         { _.lines.map(_.coords) }
       )
   }
@@ -62,15 +62,5 @@ object MultiLineStringGs extends GsStaticJvmQuerable {
           .end()
     }
   }
-
-}
-
-
-case class MultiLineStringGs(lines: Seq[LineStringGs]) extends IGeoShapeQuerable {
-
-  /** Используемый тип фигуры. */
-  override def shapeType = GsTypes.MultiLineString
-
-  override def firstPoint = lines.head.firstPoint
 
 }

@@ -27,7 +27,7 @@ class MultiLineStringGsSpec extends FlatSpec with CoordLineRnd {
         |}
       """.stripMargin
     val jsr = Json.parse(jsstr)
-      .validate( MultiLineStringGs.DATA_FORMAT )
+      .validate( MultiLineStringGsJvm.DATA_FORMAT )
     assert( jsr.isSuccess, jsr )
     val mlsGs = jsr.get
     mlsGs.lines.size  shouldBe  3

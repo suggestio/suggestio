@@ -1,7 +1,5 @@
 package io.suggest.geo
 
-import io.suggest
-import io.suggest.geo
 import io.suggest.primo.IApply1
 
 /**
@@ -122,3 +120,8 @@ object LineStringGs extends IApply1 {
 }
 
 
+/** Гео-шейп мульти-линии. */
+case class MultiLineStringGs(lines: Seq[LineStringGs]) extends IGeoShapeQuerable {
+  override def shapeType = GsTypes.MultiLineString
+  override def firstPoint = lines.head.firstPoint
+}
