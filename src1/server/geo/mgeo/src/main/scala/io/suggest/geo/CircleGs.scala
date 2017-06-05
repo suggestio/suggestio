@@ -14,7 +14,7 @@ import play.extras.geojson.{Geometry, LngLat}
  * Created: 22.08.14 12:29
  * Description: Круг в двумерном пространстве.
  */
-object CircleGs extends GsStaticJvm {
+object CircleGs extends GsStaticJvmQuerable {
 
   override type Shape_t = CircleGs
 
@@ -57,18 +57,18 @@ object CircleGs extends GsStaticJvm {
     )
   }
 
+  override def toEsShapeBuilder(gs: Shape_t) = {
+    ShapeBuilder.newCircleBuilder()
+      .center(gs.center.lon, gs.center.lat)
+      .radius(gs.radius.distance, gs.radius.units)
+  }
+
 }
 
 
 case class CircleGs(center: MGeoPoint, radius: Distance) extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.Circle
-
-  override def toEsShapeBuilder = {
-    ShapeBuilder.newCircleBuilder()
-      .center(center.lon, center.lat)
-      .radius(radius.distance, radius.units)
-  }
 
   override def firstPoint = center
 

@@ -52,27 +52,26 @@ class ScTagsUtil @Inject()(
     }
 
     val _edgeSearchCr = Criteria(
-      predicates  = Seq( MPredicates.TaggedBy.Self ),
+      predicates  = MPredicates.TaggedBy.Self :: Nil,
       tags        = tcrOpt.toSeq,
       // Отработать геолокацию: искать только теги, размещенные в текущей области.
       gsIntersect = for (geoLoc <- geoLocOpt2) yield {
+        val circle = CircleGs(
+          center = geoLoc.center,
+          radius = Distance(1, DistanceUnit.METERS)
+        )
         GsCriteria(
-          levels = Seq( NodeGeoLevels.geoTag ),
-          shapes = Seq(
-            CircleGs(
-              center = geoLoc.center,
-              radius = Distance(1, DistanceUnit.METERS)
-            )
-          )
+          levels = NodeGeoLevels.geoTag :: Nil,
+          shapes = CircleGs.toEsQueryMaker(circle) :: Nil
         )
       }
     )
 
     val r = new MNodeSearchDfltImpl {
-      override def outEdges  = Seq(_edgeSearchCr)
+      override def outEdges  = _edgeSearchCr :: Nil
       override def limit     = _limit
       override def offset    = _offset
-      override def nodeTypes = Seq( MNodeTypes.Tag )
+      override def nodeTypes = MNodeTypes.Tag :: Nil
     }
 
     Future.successful(r)

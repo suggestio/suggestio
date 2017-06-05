@@ -15,7 +15,7 @@ import play.extras.geojson.{LngLat, Polygon}
  * Description: Sio-класс для полигона.
  */
 
-object PolygonGs extends GsStaticJvm {
+object PolygonGs extends GsStaticJvmQuerable {
 
   override type Shape_t = PolygonGs
 
@@ -67,23 +67,29 @@ object PolygonGs extends GsStaticJvm {
     // Рисуем дырки
     for (hole <- gs.holes) {
       val holeRing = poly.hole()
-      hole.renderToShape(holeRing)
+      LineStringGs.renderToShape(hole, holeRing)
     }
     poly
+  }
+
+  override def toEsShapeBuilder(gs: Shape_t) = {
+    val poly = ShapeBuilder.newPolygon()
+    // Рисуем оболочку
+    PolygonGs._renderToEsPolyBuilder(gs, poly)
   }
 
 }
 
 
 /** Полигон с необязательными дырками в двумерном пространстве. */
-case class PolygonGs(outer: LineStringGs, holes: List[LineStringGs] = Nil) extends GeoShapeQuerable {
-  override def shapeType = GsTypes.Polygon
+case class PolygonGs(
+                      outer : LineStringGs,
+                      holes : List[LineStringGs] = Nil
+                    )
+  extends GeoShapeQuerable
+{
 
-  override def toEsShapeBuilder = {
-    val poly = ShapeBuilder.newPolygon()
-    // Рисуем оболочку
-    PolygonGs._renderToEsPolyBuilder(this, poly)
-  }
+  override def shapeType = GsTypes.Polygon
 
   override def firstPoint = outer.firstPoint
 

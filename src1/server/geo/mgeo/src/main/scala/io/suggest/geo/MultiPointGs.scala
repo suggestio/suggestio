@@ -24,24 +24,24 @@ object MultiPointGs extends MultiPointShapeStatic {
     )
   }
 
+  override type ShapeBuilder_t = MultiPointBuilder
+
+  override protected def shapeBuilder: ShapeBuilder_t = {
+    ShapeBuilder.newMultiPoint()
+  }
+
 }
 
 case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
 
   override def shapeType = GsTypes.MultiPoint
 
-  override type Shape_t = MultiPointBuilder
-
-  override protected def shapeBuilder: Shape_t = {
-    ShapeBuilder.newMultiPoint()
-  }
-
 }
 
 
 
 /** Общий static-код моделей, которые описываются массивом точек. */
-trait MultiPointShapeStatic extends GsStaticJvm {
+trait MultiPointShapeStatic extends GsStaticJvmQuerable {
 
   override type Shape_t <: MultiPointShape
 
@@ -65,6 +65,23 @@ trait MultiPointShapeStatic extends GsStaticJvm {
     List(COORDS_ESFN -> coordsJson)
   }
 
+  def renderToShape[R <: PointCollection[R]](gs: Shape_t, shape: R) = {
+    gs.coords.foldLeft(shape) {
+      (acc, gp)  =>  acc.point(gp.lon, gp.lat)
+    }
+  }
+
+  type ShapeBuilder_t <: PointCollection[ShapeBuilder_t]
+
+  protected def shapeBuilder: ShapeBuilder_t
+
+  /** Отрендерить в изменяемый LineString ShapeBuilder для построения ES-запросов.
+    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
+    */
+  override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder_t = {
+    renderToShape(gs, shapeBuilder)
+  }
+
 }
 
 
@@ -72,25 +89,6 @@ trait MultiPointShapeStatic extends GsStaticJvm {
 trait MultiPointShape extends GeoShapeQuerable {
 
   def coords: Seq[MGeoPoint]
-
-  type Shape_t <: PointCollection[Shape_t]
-
-  /** Отрендерить в изменяемый LineString ShapeBuilder для построения ES-запросов.
-    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
-    */
-  override def toEsShapeBuilder: Shape_t = {
-    renderToShape(shapeBuilder)
-  }
-  
-  def renderToShape[R <: PointCollection[R]](shape: R) = {
-    coords.foldLeft(shape) {
-      (acc, gp)  =>  acc.point(gp.lon, gp.lat)
-    }
-  }
-
-  protected def shapeBuilder: Shape_t
-
-  override def shapeType: GsType = GsTypes.MultiPoint
 
   override def firstPoint = coords.head
 

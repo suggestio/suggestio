@@ -74,6 +74,26 @@ object GeoShape extends MacroLogsDyn {
     c.toPlayJson(gs.asInstanceOf[c.Shape_t], geoJsonCompatible)
   }
 
+  /**
+    * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
+    *
+    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
+    */
+  def toEsShapeBuilder(gs: GeoShapeQuerable): ShapeBuilder = {
+    val c = GsTypesJvm.companionFor( gs.shapeType )
+      .asInstanceOf[GsStaticJvmQuerable]
+    c.toEsShapeBuilder( gs.asInstanceOf[c.Shape_t] )
+  }
+
+  def toEsQueryMaker(gs: GeoShapeQuerable): IToEsQueryFn = {
+    val gsb = toEsShapeBuilder(gs)
+    new IToEsQueryFn {
+      override def toEsQuery(fn: String): QueryBuilder = {
+        QueryBuilders.geoShapeQuery(fn, gsb)
+      }
+    }
+  }
+
 }
 
 
@@ -104,22 +124,8 @@ trait GeoShape {
 }
 
 
-/** Если элемент можно запрашивать в geo-shape search/filter, то нужен билдер для Shape'а. */
-trait GeoShapeQuerable extends GeoShape with IToEsQueryFn {
-
-  /**
-    * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
-    *
-    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
-    */
-  def toEsShapeBuilder: ShapeBuilder
-
-  override def toEsQuery(fn: String): QueryBuilder = {
-    QueryBuilders.geoShapeQuery(fn, toEsShapeBuilder)
-  }
-
-}
-
+/** Если элемент можно запрашивать в geo-shape search/filter, то об этом можно уведомить компилятор. */
+trait GeoShapeQuerable extends GeoShape
 
 
 /** Интерфейс для объекта-компаньона на стороне JVM. */
@@ -153,4 +159,28 @@ trait GsStaticJvm {
   /** Фигуро-специфический рендер JSON для значения внутри _source. */
   protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc
 
+}
+
+
+/** Статическая поддержка querable-шейпов, пригодных для сборки search query запроса в ES.
+  * Примитивные гео-шейпы являются пригодными для es query, но вот [[GeometryCollectionGs]] -- нет.  */
+trait GsStaticJvmQuerable extends GsStaticJvm {
+
+  override type Shape_t <: GeoShapeQuerable
+
+  /**
+    * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
+    *
+    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
+    */
+  def toEsShapeBuilder(gs: Shape_t): ShapeBuilder
+
+  def toEsQueryMaker(gs: Shape_t): IToEsQueryFn = {
+    val gsb = toEsShapeBuilder(gs)
+    new IToEsQueryFn {
+      override def toEsQuery(fn: String): QueryBuilder = {
+        QueryBuilders.geoShapeQuery(fn, gsb)
+      }
+    }
+  }
 }

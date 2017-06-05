@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.ble.BeaconUtil
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
-import io.suggest.geo.PointGs
+import io.suggest.geo.{GeoShape, PointGs}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
@@ -91,7 +91,7 @@ class ScAdSearchUtil @Inject() (
             must        = must,
             gsIntersect = Some(GsCriteria(
               levels = NodeGeoLevels.geoPlace :: Nil,
-              shapes = PointGs(geoLoc.center) :: Nil
+              shapes = PointGs.toEsQueryMaker( PointGs(geoLoc.center) ) :: Nil
             ))
           )
         }
@@ -105,7 +105,7 @@ class ScAdSearchUtil @Inject() (
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
             GsCriteria(
               levels = NodeGeoLevels.geoTag :: Nil,
-              shapes = PointGs(geoLoc.center) :: Nil
+              shapes = PointGs.toEsQueryMaker(PointGs(geoLoc.center)) :: Nil
             )
           }
         )

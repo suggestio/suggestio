@@ -2,7 +2,7 @@ package util.showcase
 
 import com.google.inject.Inject
 import io.suggest.es.model.IMust
-import io.suggest.geo.{GeoPoint, GeoShapeQuerable, MGeoPoint, PointGs}
+import io.suggest.geo._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
@@ -111,12 +111,12 @@ class ScMapUtil @Inject() (
       override def outEdges: Seq[ICriteria] = {
         // Сборка edge-критерия для выборки торговых центров и прочих объектов.
         val crBuildings = Criteria(
-          predicates  = Seq( MPredicates.NodeLocation ),
+          predicates  = MPredicates.NodeLocation :: Nil,
           gsIntersect = Some(
             // Сборка геопоискового критерия с area или без.
             GsCriteria(
-              levels = Seq( NodeGeoLevels.NGL_BUILDING ),
-              shapes = areaOpt.toSeq
+              levels = NodeGeoLevels.NGL_BUILDING :: Nil,
+              shapes = areaOpt.map(GeoShape.toEsQueryMaker).toList
             )
           ),
           // Выставляем явно should, т.к. будут ещё критерии.
@@ -173,7 +173,7 @@ class ScMapUtil @Inject() (
           // Это поле не использовалось изначально, т.к. реализация areaOpt отодвинуто на будущее.
           gsIntersect = for (area <- areaOpt) yield {
             GsCriteria(
-              shapes = Seq(area)
+              shapes = GeoShape.toEsQueryMaker(area) :: Nil
             )
           }
         )

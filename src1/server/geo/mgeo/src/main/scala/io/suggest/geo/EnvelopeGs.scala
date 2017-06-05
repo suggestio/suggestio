@@ -19,7 +19,7 @@ import play.extras.geojson.{LngLat, Polygon}
   *
   * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/geo-shape.html#_envelope]]
   */
-object EnvelopeGs extends GsStaticJvm {
+object EnvelopeGs extends GsStaticJvmQuerable {
 
   override type Shape_t = EnvelopeGs
 
@@ -97,6 +97,12 @@ object EnvelopeGs extends GsStaticJvm {
       .toList
   }
 
+  override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder = {
+    ShapeBuilder.newEnvelope()
+      .topLeft( GeoPoint.toJstCoordinate(gs.topLeft) )
+      .bottomRight( GeoPoint.toJstCoordinate(gs.bottomRight) )
+  }
+
 }
 
 case class EnvelopeGs(
@@ -106,12 +112,6 @@ case class EnvelopeGs(
   extends GeoShapeQuerable {
 
   override def shapeType = GsTypes.Envelope
-
-  override def toEsShapeBuilder: ShapeBuilder = {
-    ShapeBuilder.newEnvelope()
-      .topLeft( GeoPoint.toJstCoordinate(topLeft) )
-      .bottomRight( GeoPoint.toJstCoordinate(bottomRight) )
-  }
 
   override def firstPoint: MGeoPoint = topLeft
 

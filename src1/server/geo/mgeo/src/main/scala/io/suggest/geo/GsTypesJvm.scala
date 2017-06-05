@@ -26,17 +26,32 @@ object GsTypesJvm {
     * @return Инстанс объекта-компаньона для абстрактного гео-шейпа.
     */
   def companionFor(gsType: GsType): GsStaticJvm = {
-    gsType match {
+    val cqOpt: Option[GsStaticJvm] = esQuerableCompanionFor(gsType)
+    cqOpt.getOrElse {
+      gsType match {
+        case GsTypes.GeometryCollection =>
+          GeometryCollectionGs
+        // should never happen:
+        case other =>
+          throw new NotImplementedError(s"Looks like, new gsType=$other exist in code, but not implemented in ${getClass.getName}")
+      }
+    }
+  }
+
+
+  def esQuerableCompanionFor(gsType: GsType): Option[GsStaticJvmQuerable] = {
+    val cOrNull: GsStaticJvmQuerable = gsType match {
       case GsTypes.Polygon            => PolygonGs
       case GsTypes.Circle             => CircleGs
       case GsTypes.Point              => PointGs
-      case GsTypes.GeometryCollection => GeometryCollectionGs
       case GsTypes.Envelope           => EnvelopeGs
       case GsTypes.LineString         => LineStringGs
       case GsTypes.MultiLineString    => MultiLineStringGs
       case GsTypes.MultiPoint         => MultiPointGs
       case GsTypes.MultiPolygon       => MultiPolygonGs
+      case _                          => null
     }
+    Option( cOrNull )
   }
 
 }

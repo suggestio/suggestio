@@ -3,7 +3,7 @@ package controllers.sc
 import _root_.util.di._
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
-import io.suggest.geo.{CircleGs, Distance, IGeoFindIpResult, MGeoPoint}
+import io.suggest.geo._
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
@@ -212,11 +212,11 @@ trait ScIndex
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
+              val circle = CircleGs(geoLoc.center, Distance(10, DistanceUnit.METERS))
+              val qShape = CircleGs.toEsQueryMaker( circle )
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
-                shapes = Seq(
-                  CircleGs(geoLoc.center, Distance(10, DistanceUnit.METERS))
-                )
+                shapes = qShape :: Nil
               )
               val cr = Criteria(
                 predicates  = MPredicates.NodeLocation :: Nil,

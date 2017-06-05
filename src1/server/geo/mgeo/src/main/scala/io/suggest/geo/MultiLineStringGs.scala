@@ -16,7 +16,7 @@ import play.extras.geojson.{LngLat, MultiLineString}
  * Description: Представление multiline-объектов в рамках s.io.
  */
 
-object MultiLineStringGs extends GsStaticJvm {
+object MultiLineStringGs extends GsStaticJvmQuerable {
 
   override type Shape_t = MultiLineStringGs
 
@@ -46,20 +46,12 @@ object MultiLineStringGs extends GsStaticJvm {
     List(COORDS_ESFN -> JsArray(playJson))
   }
 
-}
-
-
-case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable {
-
-  /** Используемый тип фигуры. */
-  override def shapeType = GsTypes.MultiLineString
-
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
-  override def toEsShapeBuilder: MultiLineStringBuilder = {
+  override def toEsShapeBuilder(gs: Shape_t): MultiLineStringBuilder = {
     // Заливаем линии
-    lines.foldLeft(ShapeBuilder.newMultiLinestring) {
+    gs.lines.foldLeft(ShapeBuilder.newMultiLinestring) {
       (acc0, coordLine) =>
         // Заливаем все точки в линию
         coordLine.coords.foldLeft(acc0.linestring) {
@@ -67,6 +59,14 @@ case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable 
         }.end()
     }
   }
+
+}
+
+
+case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable {
+
+  /** Используемый тип фигуры. */
+  override def shapeType = GsTypes.MultiLineString
 
   override def firstPoint = lines.head.firstPoint
 

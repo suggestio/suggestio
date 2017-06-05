@@ -630,26 +630,26 @@ class SysAdnGeo @Inject() (
           .filter(_.glevel.upper.isDefined)
           .find(_.shape.isInstanceOf[GeoShapeQuerable])
           .fold [Future[Seq[String]]] (Future.successful(Nil)) { geo =>
-          val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
-          val msearch = new MNodeSearchDfltImpl {
-            override def limit = 1
+            val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
+            val msearch = new MNodeSearchDfltImpl {
+              override def limit = 1
 
-            override def outEdges: Seq[ICriteria] = {
-              val gsCr = GsCriteria(
-                levels = geo.glevel.upper.toSeq,
-                shapes = Seq(shapeq)
-              )
-              val cr = Criteria(
-                predicates  = Seq( MPredicates.NodeLocation ),
-                gsIntersect = Some(gsCr)
-              )
-              Seq(cr)
+              override def outEdges: Seq[ICriteria] = {
+                val gsCr = GsCriteria(
+                  levels = geo.glevel.upper.toSeq,
+                  shapes = GeoShape.toEsQueryMaker(shapeq) :: Nil
+                )
+                val cr = Criteria(
+                  predicates  = MPredicates.NodeLocation :: Nil,
+                  gsIntersect = Some(gsCr)
+                )
+                Seq(cr)
+              }
+            }
+            for (res <- mNodes.dynSearchIds(msearch)) yield {
+              res.iterator.toSeq
             }
           }
-          for (res <- mNodes.dynSearchIds(msearch)) yield {
-            res.iterator.toSeq
-          }
-        }
       }
 
       val nodesMapFut = {
@@ -694,7 +694,7 @@ class SysAdnGeo @Inject() (
     val glevels = if (glevels0.nonEmpty) {
       glevels0
     } else {
-      List(NodeGeoLevels.NGL_TOWN, NodeGeoLevels.NGL_TOWN_DISTRICT)
+      NodeGeoLevels.NGL_TOWN :: NodeGeoLevels.NGL_TOWN_DISTRICT :: Nil
     }
     collectNodesOnLevels(glevels) map nodes2nodesMap
   }
@@ -715,7 +715,7 @@ class SysAdnGeo @Inject() (
           .toStream
           .headOption
       }
-      val formBinded = nodeGeoFormM fill (request.mnode.geo.point, directParentId)
+      val formBinded = nodeGeoFormM.fill((request.mnode.geo.point, directParentId))
       _editAdnNodeGeodata(formBinded, Ok)
     }
   }
@@ -787,7 +787,7 @@ class SysAdnGeo @Inject() (
                         .map { parentNodeId =>
                           MEdge(
                             predicate = MPredicates.GeoParent.Direct,
-                            nodeIds   = parentNodeIdOpt.toSet
+                            nodeIds   = Set(parentNodeId)
                           )
                         }
                       val iter = mnode.edges.withoutPredicateIter( MPredicates.GeoParent ) ++

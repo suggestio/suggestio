@@ -14,7 +14,7 @@ import play.extras.geojson.{LngLat, MultiPolygon}
  * Created: 29.08.14 18:58
  * Description: Мультиполигон - это список полигонов.
  */
-object MultiPolygonGs extends GsStaticJvm {
+object MultiPolygonGs extends GsStaticJvmQuerable {
 
   override type Shape_t = MultiPolygonGs
 
@@ -55,24 +55,24 @@ object MultiPolygonGs extends GsStaticJvm {
     row :: Nil
   }
 
-}
-
-
-case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
-
-  override def shapeType = GsTypes.MultiPolygon
-
   /** Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
-  override def toEsShapeBuilder: MultiPolygonBuilder = {
-    polygons.foldLeft(ShapeBuilder.newMultiPolygon) {
+  override def toEsShapeBuilder(gs: Shape_t): MultiPolygonBuilder = {
+    gs.polygons.foldLeft(ShapeBuilder.newMultiPolygon) {
       (mpb, poly) =>
         val polyBuilder = mpb.polygon()
         PolygonGs._renderToEsPolyBuilder(poly, polyBuilder)
         polyBuilder.close()
     }
   }
+
+}
+
+
+case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
+
+  override def shapeType = GsTypes.MultiPolygon
 
   override def firstPoint = polygons.head.firstPoint
 
