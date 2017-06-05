@@ -430,6 +430,7 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
       acc2.head
     } else {
       GeometryCollectionGs(acc2)
+
     }
   }
 
