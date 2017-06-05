@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.geo.shape
 
-import io.suggest.geo.GeoShape
+import io.suggest.geo.IGeoShape
 
 /**
   * Suggest.io
@@ -10,6 +10,6 @@ import io.suggest.geo.GeoShape
   */
 trait IGeoShapeOpt {
 
-  def geoShape        : Option[GeoShape]
+  def geoShape        : Option[IGeoShape]
 
 }

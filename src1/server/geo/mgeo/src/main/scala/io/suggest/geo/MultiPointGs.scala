@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoPoint.Implicits._
-import io.suggest.geo.GeoShape.COORDS_ESFN
+import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
 import play.api.libs.functional.syntax._
@@ -86,7 +86,7 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
 
 
 /** Общий код linestring и multipoint здеся. */
-trait MultiPointShape extends GeoShapeQuerable {
+trait MultiPointShape extends IGeoShapeQuerable {
 
   def coords: Seq[MGeoPoint]
 

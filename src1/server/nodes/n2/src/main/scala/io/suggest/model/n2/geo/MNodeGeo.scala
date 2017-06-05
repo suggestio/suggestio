@@ -13,6 +13,9 @@ import play.api.libs.functional.syntax._
  * Created: 06.10.15 17:28
  * Description: JSON-модель для представления геоданных узлов [[io.suggest.model.n2.node.MNode]].
  */
+
+// TODO Эта модель неактуальна. Так или иначе, её суть переехал в MEdge.info.shape и point.
+// Надо портировать зависимый код и удалить её вообще.
 object MNodeGeo extends IGenEsMappingProps with IEmpty {
 
   override type T = MNodeGeo

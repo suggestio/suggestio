@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import com.google.inject.{Inject, Singleton}
 import io.suggest.bill.{IMPrice, MPrice}
 import io.suggest.common.m.sql.ITableName
-import io.suggest.geo.GeoShape
+import io.suggest.geo.IGeoShape
 import io.suggest.mbill2.m.common.{InsertManyReturning, InsertOneReturning}
 import io.suggest.mbill2.m.dt._
 import io.suggest.mbill2.m.geo.shape.{GeoShapeOptSlick, IGeoShapeOpt}
@@ -279,19 +279,19 @@ trait IItem
 
 /** Экземпляр модели (ряда абстрактной таблицы item'ов). */
 case class MItem(
-  override val orderId        : Gid_t,
-  override val iType          : MItemType,
-  override val status         : MItemStatus,
-  override val price          : MPrice,
-  override val nodeId         : String,
-  override val dateStartOpt   : Option[OffsetDateTime],
-  override val dateEndOpt     : Option[OffsetDateTime],
-  override val rcvrIdOpt      : Option[String],
-  override val reasonOpt      : Option[String]      = None,
-  override val geoShape       : Option[GeoShape]    = None,
-  override val tagFaceOpt     : Option[String]      = None,
-  override val dateStatus     : OffsetDateTime      = OffsetDateTime.now(),
-  override val id             : Option[Gid_t]       = None
+                  override val orderId        : Gid_t,
+                  override val iType          : MItemType,
+                  override val status         : MItemStatus,
+                  override val price          : MPrice,
+                  override val nodeId         : String,
+                  override val dateStartOpt   : Option[OffsetDateTime],
+                  override val dateEndOpt     : Option[OffsetDateTime],
+                  override val rcvrIdOpt      : Option[String],
+                  override val reasonOpt      : Option[String]      = None,
+                  override val geoShape       : Option[IGeoShape]    = None,
+                  override val tagFaceOpt     : Option[String]      = None,
+                  override val dateStatus     : OffsetDateTime      = OffsetDateTime.now(),
+                  override val id             : Option[Gid_t]       = None
 )
   extends IItem
 {

@@ -7,11 +7,11 @@ import org.scalatest.FlatSpec
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.10.15 12:35
- * Description: Тесты для надмодели [[GeoShape]].
+ * Description: Тесты для надмодели [[GeoShapeJvm]].
  */
 class GeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
 
-  override type T = GeoShape
+  override type T = IGeoShape
 
   "play-json" should "handle point shape" in {
     jsonTest( PointGs(

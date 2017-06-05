@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoPoint.Implicits._
-import io.suggest.geo.GeoShape.COORDS_ESFN
+import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
 import play.api.libs.functional.syntax._
@@ -86,7 +86,7 @@ case class PolygonGs(
                       outer : LineStringGs,
                       holes : List[LineStringGs] = Nil
                     )
-  extends GeoShapeQuerable
+  extends IGeoShapeQuerable
 {
 
   override def shapeType = GsTypes.Polygon

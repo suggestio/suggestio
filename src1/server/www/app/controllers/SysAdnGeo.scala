@@ -562,7 +562,7 @@ class SysAdnGeo @Inject() (
   def showGeoJson(g: MGsPtr) = isSuNode(g.nodeId).async { implicit request =>
     _withNodeShape(g.gsId)() { mgs =>
       // Сейчас тут рендер GeoJSON-compatible. Раньше был просто рендер, почему-то.
-      val json = GeoShape.WRITES_GJSON_COMPAT.writes( mgs.shape )
+      val json = GeoShapeJvm.WRITES_GJSON_COMPAT.writes( mgs.shape )
       Ok( json )
     }
   }
@@ -628,16 +628,16 @@ class SysAdnGeo @Inject() (
         shapes
           .iterator
           .filter(_.glevel.upper.isDefined)
-          .find(_.shape.isInstanceOf[GeoShapeQuerable])
+          .find(_.shape.isInstanceOf[IGeoShapeQuerable])
           .fold [Future[Seq[String]]] (Future.successful(Nil)) { geo =>
-            val shapeq = geo.shape.asInstanceOf[GeoShapeQuerable]
+            val shapeq = geo.shape.asInstanceOf[IGeoShapeQuerable]
             val msearch = new MNodeSearchDfltImpl {
               override def limit = 1
 
               override def outEdges: Seq[ICriteria] = {
                 val gsCr = GsCriteria(
                   levels = geo.glevel.upper.toSeq,
-                  shapes = GeoShape.toEsQueryMaker(shapeq) :: Nil
+                  shapes = GeoShapeJvm.toEsQueryMaker(shapeq) :: Nil
                 )
                 val cr = Criteria(
                   predicates  = MPredicates.NodeLocation :: Nil,

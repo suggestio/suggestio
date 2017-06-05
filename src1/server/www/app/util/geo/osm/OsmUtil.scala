@@ -194,7 +194,7 @@ trait OsmObject {
 
   def xmlUrl = osmElemType.xmlUrl(id)
 
-  def toGeoShape: GeoShape
+  def toGeoShape: IGeoShape
 
   def firstNode: OsmNode
   def lastNode: OsmNode
@@ -225,7 +225,7 @@ case class OsmWay(id: Long, nodesOrdered: List[OsmNode]) extends OsmObject {
   override def firstNode = nodesOrdered.head
   override def lastNode = nodesOrdered.last
 
-  override def toGeoShape: GeoShape = {
+  override def toGeoShape: IGeoShape = {
     // для замкнутых путей используем полигон, для разомкнутых - просто линию.
     val line = LineStringGs(nodesOrdered.map(_.gp))
     if (nodesOrdered.head == nodesOrdered.last && nodesOrdered.tail.nonEmpty) {
@@ -382,9 +382,9 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
   def hasInners = inners.hasNext
   def hasSubareas = subareas.hasNext
 
-  override def toGeoShape: GeoShape = {
+  override def toGeoShape: IGeoShape = {
     // Тут рендерятся линии, мультиполигоны и полигоны. Сначала рендерим полигон, описанный в inners/outers
-    val acc0: List[GeoShape] = if (hasOuters) {
+    val acc0: List[IGeoShape] = if (hasOuters) {
       val outerLineWays = OsmUtil.connectWays(outerWays)
       if (outerLineWays.tail.isEmpty) {
         // Одна линия. Если это полигон, то можно вырезанть в нём дырки.

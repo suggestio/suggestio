@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.geo.GeoShape.COORDS_ESFN
+import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
@@ -34,11 +34,11 @@ object CircleGs extends GsStaticJvmQuerable {
 
   /** Вернуть инстанс круга из инстанса гео-шейпа.
     *
-    * @param gs Какой-то [[GeoShape]].
+    * @param gs Какой-то [[GeoShapeJvm]].
     * @return Опциональный [[CircleGs]].
     *         None, если gs -- это НЕ круг, а что-либо другое.
     */
-  def maybeFromGs(gs: GeoShape): Option[CircleGs] = {
+  def maybeFromGs(gs: IGeoShape): Option[CircleGs] = {
     gs match {
       case circle: CircleGs   => Some(circle)
       case _                  => None
@@ -66,7 +66,7 @@ object CircleGs extends GsStaticJvmQuerable {
 }
 
 
-case class CircleGs(center: MGeoPoint, radius: Distance) extends GeoShapeQuerable {
+case class CircleGs(center: MGeoPoint, radius: Distance) extends IGeoShapeQuerable {
 
   override def shapeType = GsTypes.Circle
 

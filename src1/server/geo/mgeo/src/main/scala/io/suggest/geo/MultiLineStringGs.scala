@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.geo.GeoShape.COORDS_ESFN
+import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilder}
@@ -63,7 +63,7 @@ object MultiLineStringGs extends GsStaticJvmQuerable {
 }
 
 
-case class MultiLineStringGs(lines: Seq[LineStringGs]) extends GeoShapeQuerable {
+case class MultiLineStringGs(lines: Seq[LineStringGs]) extends IGeoShapeQuerable {
 
   /** Используемый тип фигуры. */
   override def shapeType = GsTypes.MultiLineString

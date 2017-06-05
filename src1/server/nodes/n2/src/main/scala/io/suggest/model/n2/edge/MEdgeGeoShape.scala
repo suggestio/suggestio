@@ -4,7 +4,8 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.geo.GeoShape
+import io.suggest.geo.IGeoShape
+import io.suggest.geo.GeoShapeJvm.GEO_SHAPE_FORMAT
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.data.validation.ValidationError
 import play.api.libs.json._
@@ -41,7 +42,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
 
   /** Нетривиальная поддержка JSON.
     * Т.к. шейп может быть сохранен в разных масштабах, то требуется соотв.поддержка в маппере. */
-  implicit val FORMAT: Format[MEdgeGeoShape] = {
+  implicit val MEDGE_GEO_SHAPE_FORMAT: Format[MEdgeGeoShape] = {
     // Всё разом закинуто внутрь метода, чтобы GC мог вычистить ненужное из кучи Format'ов.
 
     import Fields._
@@ -58,8 +59,8 @@ object MEdgeGeoShape extends IGenEsMappingProps {
         EmptyUtil.someF
       )
 
-    def _shapeFormat(ngl: NodeGeoLevel): OFormat[GeoShape] = {
-      (__ \ SHAPE_FN(ngl)).format[GeoShape]
+    def _shapeFormat(ngl: NodeGeoLevel): OFormat[IGeoShape] = {
+      (__ \ SHAPE_FN(ngl)).format[IGeoShape]
     }
 
     // Десериализация.
@@ -89,7 +90,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     val WRITES = Writes[MEdgeGeoShape] { mgs =>
       // Собираем промежуточный JSON-врайтер.
       val write1: Writes[MEdgeGeoShape] = (
-        (__ \ SHAPE_FN(mgs.glevel)).write[GeoShape] and
+        (__ \ SHAPE_FN(mgs.glevel)).write[IGeoShape] and
           GLEVEL_FORMAT and
           GJC_FORMAT and
           FROM_URL_FORMAT and
@@ -122,7 +123,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
           FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
       }
     FieldString(Fields.GLEVEL_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = true) ::
-      FieldBoolean(Fields.GJSON_COMPAT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = false) ::
+      FieldBoolean(Fields.GJSON_COMPAT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false) ::
       FieldString(Fields.FROM_URL_FN, index = FieldIndexingVariants.no, include_in_all = false) ::
       FieldDate(Fields.DATE_EDITED_FN, index = FieldIndexingVariants.no, include_in_all = false) ::
       FieldNumber(Fields.ID_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.no, include_in_all = false) ::
@@ -158,9 +159,9 @@ object MEdgeGeoShape extends IGenEsMappingProps {
   * @param dateEdited Дата редактирования, если требуется.
   */
 case class MEdgeGeoShape(
-  id            : Int,
-  glevel        : NodeGeoLevel,
-  shape         : GeoShape,
-  fromUrl       : Option[String]          = None,
-  dateEdited    : Option[OffsetDateTime]  = None
+                          id            : Int,
+                          glevel        : NodeGeoLevel,
+                          shape         : IGeoShape,
+                          fromUrl       : Option[String]          = None,
+                          dateEdited    : Option[OffsetDateTime]  = None
 )

@@ -80,7 +80,7 @@ case class GeoDistanceQuery(
   def outerCircle = CircleGs(center, distanceMax)
 
   override def toEsQuery(fn: String): QueryBuilder = {
-    QueryBuilders.geoShapeQuery(fn, GeoShape.toEsShapeBuilder( outerCircle ))
+    QueryBuilders.geoShapeQuery(fn, GeoShapeJvm.toEsShapeBuilder( outerCircle ))
     // util:2a9e4a872bff До 2016.jan.14 здесь жил ни разу не тестированный код вырезания inner-круга, т.е. distanceMin.
     // Он был удалён, т.к. был завязан на N2-утиль, которая должна жить в отдельном проекте. Да и он просто мертвый был.
   }

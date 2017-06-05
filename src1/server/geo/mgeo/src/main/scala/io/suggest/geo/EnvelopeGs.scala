@@ -24,7 +24,7 @@ object EnvelopeGs extends GsStaticJvmQuerable {
   override type Shape_t = EnvelopeGs
 
   override val DATA_FORMAT: OFormat[EnvelopeGs] = {
-    (__ \ GeoShape.COORDS_ESFN)
+    (__ \ GeoShapeJvm.COORDS_ESFN)
       .format[Seq[MGeoPoint]]
       .inmap[EnvelopeGs] (
         { case Seq(c1, c3) =>
@@ -109,7 +109,7 @@ case class EnvelopeGs(
   topLeft: MGeoPoint,
   bottomRight: MGeoPoint
 )
-  extends GeoShapeQuerable {
+  extends IGeoShapeQuerable {
 
   override def shapeType = GsTypes.Envelope
 

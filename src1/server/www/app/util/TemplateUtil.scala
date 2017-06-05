@@ -347,7 +347,7 @@ object TplDataFormatUtil {
   }
 
   /** Отформатировать GeoShape в некоторую строку. */
-  def formatGeoShape(gs: GeoShape)(implicit ctx: Context): String = {
+  def formatGeoShape(gs: IGeoShape)(implicit ctx: Context): String = {
     gs match {
       // Круг описывается точкой и радиусом. Используется в георазмещении карточек.
       case circle: CircleGs =>

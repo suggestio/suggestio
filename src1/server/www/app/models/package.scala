@@ -124,9 +124,6 @@ package object models {
   val  MMedia               = n2.media.MMedia
   type MMedia               = n2.media.MMedia
 
-  type MGeoShape            = n2.geo.MGeoShape
-  val  MGeoShape            = n2.geo.MGeoShape
-
   val  MEntity              = n2.ad.ent.MEntity
   type MEntity              = n2.ad.ent.MEntity
 

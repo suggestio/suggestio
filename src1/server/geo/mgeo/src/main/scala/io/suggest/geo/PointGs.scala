@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.geo.GeoShape._
+import io.suggest.geo.GeoShapeJvm._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import play.api.libs.functional.syntax._
@@ -44,7 +44,7 @@ object PointGs extends GsStaticJvmQuerable {
 }
 
 
-case class PointGs(coord: MGeoPoint) extends GeoShapeQuerable {
+case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
 
   override def shapeType = GsTypes.Point
 

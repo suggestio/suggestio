@@ -4,7 +4,7 @@ import com.google.inject.{Inject, Singleton}
 import io.suggest.ble.BeaconUtil
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
-import io.suggest.geo.{GeoShape, PointGs}
+import io.suggest.geo.PointGs
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}

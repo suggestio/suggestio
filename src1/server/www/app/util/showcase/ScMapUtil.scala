@@ -70,7 +70,7 @@ class ScMapUtil @Inject() (
   }
 
   /** Кешируем результат поиска точек. */
-  def getAllPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[FeatureCollection[LngLat]] = {
+  def getAllPoints(areaOpt: Option[IGeoShapeQuerable] = None): Future[FeatureCollection[LngLat]] = {
     cacheApiUtil.getOrElseFut("sc.map.points", expiration = 10.seconds) {
       val startedAtMs = System.currentTimeMillis()
       val adnPointsFut = findAdnPoints(areaOpt)
@@ -101,7 +101,7 @@ class ScMapUtil @Inject() (
     * @param areaOpt Область, в которой ищем точки.
     * @return Фьючерс с FeatureCollection внутри.
     */
-  def findAdnPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[Iterator[MGeoPoint]] = {
+  def findAdnPoints(areaOpt: Option[IGeoShapeQuerable] = None): Future[Iterator[MGeoPoint]] = {
     // Сборка критериев поискового запроса узлов (торг.центров, магазинов и прочих), отображаемых на карте.
     val msearch = new _MNodeSearch4Points {
       override def nodeTypes    = Seq( MNodeTypes.AdnNode )
@@ -116,7 +116,7 @@ class ScMapUtil @Inject() (
             // Сборка геопоискового критерия с area или без.
             GsCriteria(
               levels = NodeGeoLevels.NGL_BUILDING :: Nil,
-              shapes = areaOpt.map(GeoShape.toEsQueryMaker).toList
+              shapes = areaOpt.map(GeoShapeJvm.toEsQueryMaker).toList
             )
           ),
           // Выставляем явно should, т.к. будут ещё критерии.
@@ -157,7 +157,7 @@ class ScMapUtil @Inject() (
 
 
   /** Сборка запроса для сбора узлов, имеющих какие-то точки в adv. */
-  def findAdvPoints(areaOpt: Option[GeoShapeQuerable] = None): Future[Iterator[MGeoPoint]] = {
+  def findAdvPoints(areaOpt: Option[IGeoShapeQuerable] = None): Future[Iterator[MGeoPoint]] = {
 
     // Сборка начального поиского запроса.
     val msearch = new _MNodeSearch4Points {
@@ -173,7 +173,7 @@ class ScMapUtil @Inject() (
           // Это поле не использовалось изначально, т.к. реализация areaOpt отодвинуто на будущее.
           gsIntersect = for (area <- areaOpt) yield {
             GsCriteria(
-              shapes = GeoShape.toEsQueryMaker(area) :: Nil
+              shapes = GeoShapeJvm.toEsQueryMaker(area) :: Nil
             )
           }
         )

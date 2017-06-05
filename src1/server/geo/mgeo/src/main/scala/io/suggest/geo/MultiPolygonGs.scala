@@ -1,7 +1,7 @@
 package io.suggest.geo
 
 import io.suggest.geo.GeoPoint.Implicits._
-import io.suggest.geo.GeoShape.COORDS_ESFN
+import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
 import play.api.libs.functional.syntax._
@@ -70,7 +70,7 @@ object MultiPolygonGs extends GsStaticJvmQuerable {
 }
 
 
-case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends GeoShapeQuerable {
+case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends IGeoShapeQuerable {
 
   override def shapeType = GsTypes.MultiPolygon
 

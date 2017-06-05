@@ -19,11 +19,11 @@ import GsTypesJvm.GS_TYPE_FORMAT
   * Эта модель служит цели
   */
 
-object GeoShape extends MacroLogsDyn {
+object GeoShapeJvm extends MacroLogsDyn {
 
   /** Распарсить шейп из json-выхлопа. */
-  def parse(raw: String): GeoShape = {
-    Json.parse(raw).as[GeoShape]
+  def parse(raw: String): IGeoShape = {
+    Json.parse(raw).as[IGeoShape]
   }
 
   val COORDS_ESFN = "coordinates"
@@ -32,7 +32,7 @@ object GeoShape extends MacroLogsDyn {
   val TYPE_FORMAT = (__ \ TYPE_ESFN).format[GsType]
 
 
-  val READS = Reads[GeoShape] {
+  val READS = Reads[IGeoShape] {
     case o: JsObject =>
       o.validate(TYPE_FORMAT)
         .flatMap { gsType =>
@@ -43,25 +43,25 @@ object GeoShape extends MacroLogsDyn {
       JsError( ValidationError("expected.jsobject", other) )
   }
 
-  val WRITES = Writes[GeoShape] { gs =>
+  val WRITES = Writes[IGeoShape] { gs =>
     // TODO Надо задействовать companion.DATA_FORMAT, как это в READS сделано, связав его с TYPE_FORMAT тут.
     // И тогда метод toPlayJson() можно будет выкинуть окончательно.
     toPlayJson( gs, geoJsonCompatible = false )
   }
 
-  implicit val FORMAT = Format(READS, WRITES)
+  implicit val GEO_SHAPE_FORMAT = Format(READS, WRITES)
 
-  def WRITES_GJSON_COMPAT: OWrites[GeoShape] = {
+  def WRITES_GJSON_COMPAT: OWrites[IGeoShape] = {
     OWrites { v =>
       toPlayJson( v, geoJsonCompatible = true )
     }
   }
 
-  def FORMAT_GJSON_COMPAT: OFormat[GeoShape] = {
+  def FORMAT_GJSON_COMPAT: OFormat[IGeoShape] = {
     OFormat(READS, WRITES_GJSON_COMPAT)
   }
 
-  def toPlayGeoJsonGeom(gs: GeoShape): Geometry[LngLat] = {
+  def toPlayGeoJsonGeom(gs: IGeoShape): Geometry[LngLat] = {
     val c = GsTypesJvm.companionFor(gs.shapeType)
     // TODO Нужна higher-kinds метод, занимающийся этим без asInstanceOf.
     c.toPlayGeoJsonGeom( gs.asInstanceOf[c.Shape_t] )
@@ -69,7 +69,7 @@ object GeoShape extends MacroLogsDyn {
 
   /** Отрендерить json для сохранения внутри _source. */
   // TODO От этого кривого метода зависит только этот WRITES. Надо бы его спилить, и сделать нормальный WRITES.
-  def toPlayJson(gs: GeoShape, geoJsonCompatible: Boolean = false): JsObject = {
+  def toPlayJson(gs: IGeoShape, geoJsonCompatible: Boolean = false): JsObject = {
     val c = GsTypesJvm.companionFor( gs.shapeType )
     c.toPlayJson(gs.asInstanceOf[c.Shape_t], geoJsonCompatible)
   }
@@ -79,13 +79,13 @@ object GeoShape extends MacroLogsDyn {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
     */
-  def toEsShapeBuilder(gs: GeoShapeQuerable): ShapeBuilder = {
+  def toEsShapeBuilder(gs: IGeoShapeQuerable): ShapeBuilder = {
     val c = GsTypesJvm.companionFor( gs.shapeType )
       .asInstanceOf[GsStaticJvmQuerable]
     c.toEsShapeBuilder( gs.asInstanceOf[c.Shape_t] )
   }
 
-  def toEsQueryMaker(gs: GeoShapeQuerable): IToEsQueryFn = {
+  def toEsQueryMaker(gs: IGeoShapeQuerable): IToEsQueryFn = {
     val gsb = toEsShapeBuilder(gs)
     new IToEsQueryFn {
       override def toEsQuery(fn: String): QueryBuilder = {
@@ -97,41 +97,11 @@ object GeoShape extends MacroLogsDyn {
 }
 
 
-import io.suggest.geo.GeoShape._
-
-
-/** Базовый трейт для реализаций geoshape. */
-trait GeoShape {
-
-  /** Используемый тип фигуры. */
-  def shapeType: GsType
-
-  def firstPoint: MGeoPoint
-
-  /**
-    * Центральная точка фигуры.
-    * По идее, эта точка всегда существует, но тут Option.
-    * None означает, что код поддержки вычисления центральной точки не заимплеменчен.
-    */
-  def centerPoint: Option[MGeoPoint] = None
-
-  /** Отображаемое для пользователя имя шейпа. */
-  def displayTypeName: String = {
-    shapeType.geoJsonName
-      .getOrElse( getClass.getSimpleName )
-  }
-
-}
-
-
-/** Если элемент можно запрашивать в geo-shape search/filter, то об этом можно уведомить компилятор. */
-trait GeoShapeQuerable extends GeoShape
-
 
 /** Интерфейс для объекта-компаньона на стороне JVM. */
 trait GsStaticJvm {
 
-  type Shape_t <: GeoShape
+  type Shape_t <: IGeoShape
 
   def DATA_FORMAT: Reads[Shape_t]
 
@@ -151,8 +121,8 @@ trait GsStaticJvm {
     } else {
       gs.shapeType.esName
     }
-    val acc = TYPE_ESFN -> JsString(typeName) ::
-      _toPlayJsonInternal(gs, geoJsonCompatible)
+    val kv = GeoShapeJvm.TYPE_ESFN -> JsString(typeName)
+    val acc = kv :: _toPlayJsonInternal(gs, geoJsonCompatible)
     JsObject(acc)
   }
 
@@ -166,7 +136,7 @@ trait GsStaticJvm {
   * Примитивные гео-шейпы являются пригодными для es query, но вот [[GeometryCollectionGs]] -- нет.  */
 trait GsStaticJvmQuerable extends GsStaticJvm {
 
-  override type Shape_t <: GeoShapeQuerable
+  override type Shape_t <: IGeoShapeQuerable
 
   /**
     * Отрендерить в изменяемый ShapeBuilder для построения ES-запросов.

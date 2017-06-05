@@ -2,7 +2,7 @@ package util.adv.geo
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
-import io.suggest.geo.{CircleGs, GeoShape, MGeoCircle, MGeoPoint}
+import io.suggest.geo.{CircleGs, GeoShapeJvm, MGeoCircle, MGeoPoint}
 import models.adv.geo.cur._
 import play.extras.geojson.{Feature, LngLat}
 import util.data.{AccordUtil, AccordValidateFormUtilT}
@@ -52,7 +52,7 @@ class AdvGeoFormUtil @Inject() (
     * js должен обращаться к серверу за попапом. Поэтому, это легковеснее, быстрее, и Context здесь не нужен.
     */
   def shapeInfo2geoJson(si: MAdvGeoShapeInfo): Feature[LngLat] = {
-    val gs = GeoShape.parse(si.geoShapeStr)
+    val gs = GeoShapeJvm.parse(si.geoShapeStr)
     val props = GjFtProps(
       itemId      = si.itemId,
       // hasApproved влияет на цвет заливки.
@@ -62,7 +62,7 @@ class AdvGeoFormUtil @Inject() (
     )
     Feature(
       // Если circle, то будет отрендерена точка. Поэтому радиус задан в props.
-      geometry    = GeoShape.toPlayGeoJsonGeom(gs),
+      geometry    = GeoShapeJvm.toPlayGeoJsonGeom(gs),
       // Собрать пропертисы для этой feature:
       properties  = Some( GjFtProps.FORMAT.writes(props) )
     )

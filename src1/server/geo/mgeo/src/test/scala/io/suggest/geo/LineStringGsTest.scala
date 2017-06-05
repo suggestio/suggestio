@@ -40,7 +40,7 @@ trait MultiPoingGeoShapeTest extends FlatSpec with CoordLineRnd {
   override val minCoordLineLen = 2
   override val coordLineLenRnd = 40
   
-  type T <: GeoShapeQuerable
+  type T <: IGeoShapeQuerable
 
   def companion: MultiPointShapeStatic { type Shape_t = T }
 

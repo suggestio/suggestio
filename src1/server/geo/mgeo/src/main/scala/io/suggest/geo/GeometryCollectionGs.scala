@@ -4,6 +4,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{Geometry, GeometryCollection, LngLat}
+import GeoShapeJvm.GEO_SHAPE_FORMAT
 
 /**
  * Suggest.io
@@ -18,7 +19,7 @@ object GeometryCollectionGs extends GsStaticJvm {
   override type Shape_t = GeometryCollectionGs
 
   override def DATA_FORMAT: Format[Shape_t] = {
-    (__ \ GEOMETRIES_ESFN).format[Seq[GeoShape]]
+    (__ \ GEOMETRIES_ESFN).format[Seq[IGeoShape]]
       .inmap[Shape_t](apply, _.geoms)
   }
 
@@ -33,14 +34,14 @@ object GeometryCollectionGs extends GsStaticJvm {
     GeometryCollection(
       gs.geoms
         .iterator
-        .map( GeoShape.toPlayGeoJsonGeom )
+        .map( GeoShapeJvm.toPlayGeoJsonGeom )
         .toStream
     )
   }
 
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
     val geomsJson = gs.geoms.map { subGs =>
-      GeoShape.toPlayJson( subGs, geoJsonCompatible )
+      GeoShapeJvm.toPlayJson( subGs, geoJsonCompatible )
     }
     List(
       GEOMETRIES_ESFN -> JsArray(geomsJson)
@@ -50,7 +51,7 @@ object GeometryCollectionGs extends GsStaticJvm {
 }
 
 
-case class GeometryCollectionGs(geoms: Seq[GeoShape]) extends GeoShape {
+case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
 
   override def shapeType = GsTypes.GeometryCollection
 
