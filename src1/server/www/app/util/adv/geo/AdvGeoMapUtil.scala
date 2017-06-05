@@ -9,7 +9,7 @@ import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.Size2di
 import io.suggest.es.model.IMust
-import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, PointGs}
+import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, PointGsJvm}
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
@@ -208,7 +208,7 @@ class AdvGeoMapUtil @Inject() (
 
         val iter = for (geoPoint <- pointsIter) yield {
           Feature(
-            geometry   = PointGs.toPlayGeoJsonGeom( geoPoint ),
+            geometry   = PointGsJvm.toPlayGeoJsonGeom( geoPoint ),
             properties = Some( propsBin )
           )
         }

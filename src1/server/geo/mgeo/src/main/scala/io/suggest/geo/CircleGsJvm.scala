@@ -49,7 +49,7 @@ object CircleGsJvm extends GsStaticJvmQuerable {
 
   /** Circle представляется точкой, т.к. GeoJSON не поддерживает Circle. */
   override def toPlayGeoJsonGeom(circle: CircleGs): Geometry[LngLat] = {
-    PointGs.toPlayGeoJsonGeom( circle.center )
+    PointGsJvm.toPlayGeoJsonGeom( circle.center )
   }
 
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {

@@ -14,7 +14,7 @@ import play.extras.geojson.{LngLat, Point}
  * Description: Sio-представление точки в двумерном пространстве WGS84.
  */
 
-object PointGs extends GsStaticJvmQuerable {
+object PointGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = PointGs
 
@@ -22,7 +22,7 @@ object PointGs extends GsStaticJvmQuerable {
   override def DATA_FORMAT: Format[PointGs] = {
     (__ \ COORDS_ESFN)
       .format( GeoPoint.FORMAT_GEO_ARRAY )
-      .inmap(apply, unlift(unapply))
+      .inmap(PointGs.apply, unlift(PointGs.unapply))
   }
 
   def toPlayGeoJsonGeom(mgp: MGeoPoint): Point[LngLat] = {
@@ -43,15 +43,5 @@ object PointGs extends GsStaticJvmQuerable {
 
 }
 
-
-case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
-
-  override def shapeType = GsTypes.Point
-
-  override def firstPoint = coord
-
-  override def centerPoint = Some(coord)
-
-}
 
 

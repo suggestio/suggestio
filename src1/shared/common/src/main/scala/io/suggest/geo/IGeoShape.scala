@@ -35,7 +35,17 @@ trait IGeoShape {
 trait IGeoShapeQuerable extends IGeoShape
 
 
+// Реализация GeoShape'ов:
 
+/** Гео-шейп точки. */
+case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
+  override def shapeType = GsTypes.Point
+  override def firstPoint = coord
+  override def centerPoint = Some(coord)
+}
+
+
+/** Гео-шейп круга. */
 // TODO Замёржить common-модель MGeoCircle в этот шейп.
 case class CircleGs(
                      center   : MGeoPoint,

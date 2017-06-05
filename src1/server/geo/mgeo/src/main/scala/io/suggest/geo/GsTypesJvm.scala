@@ -43,7 +43,7 @@ object GsTypesJvm {
     val cOrNull: GsStaticJvmQuerable = gsType match {
       case GsTypes.Polygon            => PolygonGs
       case GsTypes.Circle             => CircleGsJvm
-      case GsTypes.Point              => PointGs
+      case GsTypes.Point              => PointGsJvm
       case GsTypes.Envelope           => EnvelopeGs
       case GsTypes.LineString         => LineStringGs
       case GsTypes.MultiLineString    => MultiLineStringGs
