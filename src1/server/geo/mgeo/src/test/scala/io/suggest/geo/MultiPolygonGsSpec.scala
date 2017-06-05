@@ -28,7 +28,7 @@ class MultiPolygonGsSpec extends FlatSpec {
         |}
       """.stripMargin
     val jsr = Json.parse(jsStr)
-      .validate( MultiPolygonGs.DATA_FORMAT )
+      .validate( MultiPolygonGsJvm.DATA_FORMAT )
     assert( jsr.isSuccess,  jsr )
     val gs = jsr.get
     gs.polygons.size shouldBe 2

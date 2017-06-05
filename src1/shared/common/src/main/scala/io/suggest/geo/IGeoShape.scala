@@ -12,7 +12,7 @@ import io.suggest.primo.IApply1
   */
 
 /** Базовый трейт для реализаций geoshape. */
-trait IGeoShape {
+sealed trait IGeoShape {
 
   /** Используемый тип фигуры. */
   def shapeType: GsType
@@ -36,7 +36,7 @@ trait IGeoShape {
 
 
 /** Если элемент можно запрашивать в geo-shape search/filter, то об этом можно уведомить компилятор. */
-trait IGeoShapeQuerable extends IGeoShape
+sealed trait IGeoShapeQuerable extends IGeoShape
 
 
 // Реализация GeoShape'ов:
@@ -138,4 +138,11 @@ case class PolygonGs(
   override def firstPoint = outer.firstPoint
   def toMpGss = outerWithHoles.map(_.coords)
   def outerWithHoles = outer :: holes
+}
+
+
+/** Гео-шейп мульти-полигона. */
+case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends IGeoShapeQuerable {
+  override def shapeType = GsTypes.MultiPolygon
+  override def firstPoint = polygons.head.firstPoint
 }

@@ -412,7 +412,7 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
             // TODO Нужно определять, какие дырки относятся к текущему полигону.
             PolygonGs(ls)
           }
-        List( MultiPolygonGs(polys) )
+        MultiPolygonGs(polys) :: Nil
       }
     } else {
       Nil

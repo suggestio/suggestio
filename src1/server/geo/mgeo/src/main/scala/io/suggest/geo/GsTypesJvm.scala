@@ -48,7 +48,7 @@ object GsTypesJvm {
       case GsTypes.LineString         => LineStringGsJvm
       case GsTypes.MultiLineString    => MultiLineStringGsJvm
       case GsTypes.MultiPoint         => MultiPointGsJvm
-      case GsTypes.MultiPolygon       => MultiPolygonGs
+      case GsTypes.MultiPolygon       => MultiPolygonGsJvm
       case _                          => null
     }
     Option( cOrNull )

@@ -14,16 +14,16 @@ import play.extras.geojson.{LngLat, MultiPolygon}
  * Created: 29.08.14 18:58
  * Description: Мультиполигон - это список полигонов.
  */
-object MultiPolygonGs extends GsStaticJvmQuerable {
+object MultiPolygonGsJvm extends GsStaticJvmQuerable {
 
   override type Shape_t = MultiPolygonGs
 
-  override def DATA_FORMAT: Format[MultiPolygonGs] = {
+  override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ COORDS_ESFN).format[Seq[List[Seq[MGeoPoint]]]]
-      .inmap [MultiPolygonGs] (
+      .inmap [Shape_t] (
         {polyGss =>
           MultiPolygonGs(
-            polyGss.map { polyCoords =>
+            for (polyCoords <- polyGss) yield {
               PolygonGsJvm(polyCoords)
             }
           )
@@ -68,13 +68,3 @@ object MultiPolygonGs extends GsStaticJvmQuerable {
   }
 
 }
-
-
-case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends IGeoShapeQuerable {
-
-  override def shapeType = GsTypes.MultiPolygon
-
-  override def firstPoint = polygons.head.firstPoint
-
-}
-
