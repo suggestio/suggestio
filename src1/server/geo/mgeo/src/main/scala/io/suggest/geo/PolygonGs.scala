@@ -40,7 +40,7 @@ object PolygonGs extends GsStaticJvmQuerable {
         pgs.outerWithHoles
           .iterator
           .map { lsgs =>
-            LineStringGs.toPlayGeoJsonGeom(lsgs).coordinates
+            LineStringGsJvm.toPlayGeoJsonGeom(lsgs).coordinates
           }
           .toStream
       }
@@ -55,7 +55,7 @@ object PolygonGs extends GsStaticJvmQuerable {
 
   protected[geo] def _toPlayJsonCoords(gs: Shape_t): JsArray = {
     val coords = gs.outerWithHoles
-    val playJson = coords.map { line => LineStringGs.coords2playJson(line.coords) }
+    val playJson = coords.map { line => LineStringGsJvm.coords2playJson(line.coords) }
     JsArray(playJson)
   }
 
@@ -67,7 +67,7 @@ object PolygonGs extends GsStaticJvmQuerable {
     // Рисуем дырки
     for (hole <- gs.holes) {
       val holeRing = poly.hole()
-      LineStringGs.renderToShape(hole, holeRing)
+      LineStringGsJvm.renderToShape(hole, holeRing)
     }
     poly
   }

@@ -54,7 +54,7 @@ class OsmUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart with WithInp
       val gs = resWay.toGeoShape
       assert( gs.isInstanceOf[LineStringGs] )
       val lsgs = gs.asInstanceOf[LineStringGs]
-      lsgs.coords  mustBe  resWay.nodesOrdered.map(_.gp).toSeq
+      lsgs.coords  mustBe  resWay.nodesOrdered.map(_.gp)
     }
   }
 

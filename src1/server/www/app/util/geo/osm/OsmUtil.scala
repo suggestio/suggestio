@@ -227,7 +227,7 @@ case class OsmWay(id: Long, nodesOrdered: List[OsmNode]) extends OsmObject {
 
   override def toGeoShape: IGeoShape = {
     // для замкнутых путей используем полигон, для разомкнутых - просто линию.
-    val line = LineStringGs(nodesOrdered.map(_.gp))
+    val line = LineStringGs( nodesOrdered.map(_.gp) )
     if (nodesOrdered.head == nodesOrdered.last && nodesOrdered.tail.nonEmpty) {
       // Путь замкнут -- заворачиваем в полигон.
       PolygonGs(line)
@@ -389,13 +389,13 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
       if (outerLineWays.tail.isEmpty) {
         // Одна линия. Если это полигон, то можно вырезанть в нём дырки.
         val hd = outerLineWays.head
-        val line = LineStringGs(hd.map(_.gp))
+        val line = LineStringGs( hd.map(_.gp) )
         val isOuterClosed = hd.head == hd.last && hd.tail.nonEmpty
         val e = if (isOuterClosed) {
           val holes = innerHoles
             .flatMap { wayGroup =>
             OsmUtil.connectWays(wayGroup.iterator)
-              .map { w => LineStringGs(w.map(_.gp))}
+              .map { w => LineStringGs( w.map(_.gp) )}
           }
             .toList
           PolygonGs(line, holes)
@@ -408,7 +408,7 @@ case class OsmRelation(id: Long, members: List[OsmRelMember]) extends OsmObject 
         // Мультиполигон.
         val polys = outerLineWays
           .map { olw =>
-            val ls = LineStringGs(olw.map(_.gp))
+            val ls = LineStringGs( olw.map(_.gp) )
             // TODO Нужно определять, какие дырки относятся к текущему полигону.
             PolygonGs(ls)
           }

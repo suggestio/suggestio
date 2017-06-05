@@ -33,7 +33,7 @@ object MultiLineStringGs extends GsStaticJvmQuerable {
       coordinates = mlsGs.lines
         .iterator
         .map { lsGs =>
-          LineStringGs.toPlayGeoJsonGeom( lsGs ).coordinates
+          LineStringGsJvm.toPlayGeoJsonGeom( lsGs ).coordinates
         }
         .toStream
     )
@@ -41,7 +41,7 @@ object MultiLineStringGs extends GsStaticJvmQuerable {
 
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
     val playJson = for (line <- gs.lines) yield {
-      LineStringGs.coords2playJson( line.coords )
+      LineStringGsJvm.coords2playJson( line.coords )
     }
     List(COORDS_ESFN -> JsArray(playJson))
   }
@@ -54,9 +54,12 @@ object MultiLineStringGs extends GsStaticJvmQuerable {
     gs.lines.foldLeft(ShapeBuilder.newMultiLinestring) {
       (acc0, coordLine) =>
         // Заливаем все точки в линию
-        coordLine.coords.foldLeft(acc0.linestring) {
-          (acc1, e)  =>  acc1.point(e.lon, e.lat)
-        }.end()
+        coordLine
+          .coords
+          .foldLeft(acc0.linestring) {
+            (acc1, e)  =>  acc1.point(e.lon, e.lat)
+          }
+          .end()
     }
   }
 

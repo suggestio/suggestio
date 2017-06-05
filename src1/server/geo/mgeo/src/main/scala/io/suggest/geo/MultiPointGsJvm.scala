@@ -2,6 +2,7 @@ package io.suggest.geo
 
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
+import io.suggest.primo.IApply1
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
 import play.api.libs.functional.syntax._
@@ -14,13 +15,13 @@ import play.extras.geojson.{LngLat, MultiPoint}
  * Created: 29.08.14 17:50
  * Description: Аналог линии, но не линия, а просто множество точек.
  */
-object MultiPointGs extends MultiPointShapeStatic {
+object MultiPointGsJvm extends MultiPointShapeStatic {
 
   override type Shape_t = MultiPointGs
 
   def toPlayGeoJsonGeom(gs: Shape_t): MultiPoint[LngLat] = {
     MultiPoint(
-      coordinates = MultiPointGs.coords2latLngs( gs.coords )
+      coordinates = MultiPointGsJvm.coords2latLngs( gs.coords )
     )
   }
 
@@ -30,12 +31,7 @@ object MultiPointGs extends MultiPointShapeStatic {
     ShapeBuilder.newMultiPoint()
   }
 
-}
-
-case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
-
-  override def shapeType = GsTypes.MultiPoint
-
+  override protected[this] def applier = MultiPointGs
 }
 
 
@@ -45,11 +41,11 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
 
   override type Shape_t <: MultiPointShape
 
-  def apply(coords: Seq[MGeoPoint]): Shape_t
+  protected[this] def applier: IApply1 { type ApplyArg_t = Seq[MGeoPoint]; type T = Shape_t }
 
   override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ COORDS_ESFN).format[Seq[MGeoPoint]]
-      .inmap[Shape_t](apply, _.coords)
+      .inmap[Shape_t](applier.apply, _.coords)
   }
 
   /** Сборка immutable-коллекции из инстансов LatLng. */
@@ -61,7 +57,7 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
   }
 
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
-    val coordsJson = LineStringGs.coords2playJson( gs.coords )
+    val coordsJson = LineStringGsJvm.coords2playJson( gs.coords )
     List(COORDS_ESFN -> coordsJson)
   }
 
@@ -81,15 +77,5 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
   override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder_t = {
     renderToShape(gs, shapeBuilder)
   }
-
-}
-
-
-/** Общий код linestring и multipoint здеся. */
-trait MultiPointShape extends IGeoShapeQuerable {
-
-  def coords: Seq[MGeoPoint]
-
-  override def firstPoint = coords.head
 
 }

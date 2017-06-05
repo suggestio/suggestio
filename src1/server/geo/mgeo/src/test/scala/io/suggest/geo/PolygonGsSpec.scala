@@ -10,7 +10,7 @@ import play.api.libs.json.Json
  * Created: 22.08.14 15:37
  * Description: Тест для полигонов, которые используются для описания площадей узлов.
  */
-class PolygonGsTest extends FlatSpec with CoordLineRnd {
+class PolygonGsSpec extends FlatSpec with CoordLineRnd {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_www_geojson_org_geojson_spec_html_id4_polygon_ulink]]

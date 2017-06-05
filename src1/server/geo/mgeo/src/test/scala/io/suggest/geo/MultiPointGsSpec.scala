@@ -6,10 +6,10 @@ package io.suggest.geo
  * Created: 29.08.14 18:18
  * Description: Тесты для multipoint geo shape. Они совпадают с LineString-тестами.
  */
-class MultiPointGsTest extends MultiPoingGeoShapeTest {
+class MultiPointGsSpec extends MultiPoingGeoShapeTest {
 
   override type T = MultiPointGs
-  override def companion = MultiPointGs
+  override def companion = MultiPointGsJvm
 
   override protected def JSON_EXAMPLE: String = {
     """

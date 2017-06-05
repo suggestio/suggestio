@@ -11,7 +11,7 @@ import play.extras.geojson.{LineString, LngLat}
  * Description: Линия на карте, которая состоит из двух и более точек.
  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_geojson_org_geojson_spec_html_id3_linestring_ulink]]
  */
-object LineStringGs extends MultiPointShapeStatic {
+object LineStringGsJvm extends MultiPointShapeStatic {
 
   override type Shape_t = LineStringGs
 
@@ -22,7 +22,7 @@ object LineStringGs extends MultiPointShapeStatic {
 
   override def toPlayGeoJsonGeom(gs: Shape_t): LineString[LngLat] = {
     LineString(
-      coordinates = LineStringGs.coords2latLngs( gs.coords )
+      coordinates = LineStringGsJvm.coords2latLngs( gs.coords )
     )
   }
 
@@ -32,13 +32,7 @@ object LineStringGs extends MultiPointShapeStatic {
     ShapeBuilder.newLineString()
   }
 
-}
-
-
-case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
-
-  override def shapeType = GsTypes.LineString
-
-  override def firstPoint = coords.head
+  override protected[this] def applier = LineStringGs
 
 }
+

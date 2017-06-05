@@ -10,10 +10,10 @@ import play.api.libs.json.Json
  * Created: 29.08.14 17:23
  * Description: Тесты для Linestring GeoShape'ов.
  */
-class LineStringGsTest extends MultiPoingGeoShapeTest {
+class LineStringGsSpec extends MultiPoingGeoShapeTest {
 
   override type T = LineStringGs
-  override def companion = LineStringGs
+  override def companion = LineStringGsJvm
 
   override protected def JSON_EXAMPLE: String = {
     """

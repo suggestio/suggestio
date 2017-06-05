@@ -1,5 +1,9 @@
 package io.suggest.geo
 
+import io.suggest
+import io.suggest.geo
+import io.suggest.primo.IApply1
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -90,3 +94,31 @@ case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
   override def shapeType = GsTypes.GeometryCollection
   override def firstPoint = geoms.head.firstPoint
 }
+
+
+/** Общий интерфейс для [[LineStringGs]] и [[MultiPointGs]] обитает здесь. */
+sealed trait MultiPointShape extends IGeoShapeQuerable {
+  def coords: Seq[MGeoPoint]
+  override def firstPoint = coords.head
+}
+
+/** Гео-шейп для MultiPoint geometry. */
+case class MultiPointGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
+  override def shapeType = GsTypes.MultiPoint
+}
+object MultiPointGs extends IApply1 {
+  override type ApplyArg_t = Seq[MGeoPoint]
+  override type T = MultiPointGs
+}
+
+/** Гео-шейп для ListString geometry. */
+case class LineStringGs(coords: Seq[MGeoPoint]) extends MultiPointShape {
+  override def shapeType = GsTypes.LineString
+  override def firstPoint = coords.head
+}
+object LineStringGs extends IApply1 {
+  override type ApplyArg_t = Seq[MGeoPoint]
+  override type T = LineStringGs
+}
+
+

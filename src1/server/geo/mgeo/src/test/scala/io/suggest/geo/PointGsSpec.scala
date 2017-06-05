@@ -10,7 +10,7 @@ import play.api.libs.json.Json
  * Created: 22.08.14 15:10
  * Description: Тесты для модели точки, заданной через индексируемые spatial4j-поля.
  */
-class PointGsTest extends FlatSpec {
+class PointGsSpec extends FlatSpec {
 
   /**
    * @see [[https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html#_ulink_url_http_geojson_org_geojson_spec_html_id2_point_ulink]]
