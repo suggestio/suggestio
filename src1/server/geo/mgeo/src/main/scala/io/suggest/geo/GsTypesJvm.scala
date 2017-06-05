@@ -30,7 +30,7 @@ object GsTypesJvm {
     cqOpt.getOrElse {
       gsType match {
         case GsTypes.GeometryCollection =>
-          GeometryCollectionGs
+          GeometryCollectionGsJvm
         // should never happen:
         case other =>
           throw new NotImplementedError(s"Looks like, new gsType=$other exist in code, but not implemented in ${getClass.getName}")

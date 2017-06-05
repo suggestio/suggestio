@@ -83,3 +83,10 @@ case class EnvelopeGs(
   }
 
 }
+
+
+/** Гео-шейп коллекций любых других геометрий. Не является Querable. */
+case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
+  override def shapeType = GsTypes.GeometryCollection
+  override def firstPoint = geoms.head.firstPoint
+}

@@ -12,7 +12,7 @@ import GeoShapeJvm.GEO_SHAPE_FORMAT
  * Created: 01.09.14 18:17
  * Description: Набор геометрических фигур.
  */
-object GeometryCollectionGs extends GsStaticJvm {
+object GeometryCollectionGsJvm extends GsStaticJvm {
 
   val GEOMETRIES_ESFN = "geometries"
 
@@ -20,7 +20,7 @@ object GeometryCollectionGs extends GsStaticJvm {
 
   override def DATA_FORMAT: Format[Shape_t] = {
     (__ \ GEOMETRIES_ESFN).format[Seq[IGeoShape]]
-      .inmap[Shape_t](apply, _.geoms)
+      .inmap[Shape_t](GeometryCollectionGs.apply, _.geoms)
   }
 
   /** Конвертация в play.extras.geojson.Geomenty.
@@ -30,7 +30,7 @@ object GeometryCollectionGs extends GsStaticJvm {
     * @param gs Шейп.
     * @return Геометрия play-geojson.
     */
-  override def toPlayGeoJsonGeom(gs: GeometryCollectionGs): Geometry[LngLat] = {
+  override def toPlayGeoJsonGeom(gs: Shape_t): Geometry[LngLat] = {
     GeometryCollection(
       gs.geoms
         .iterator
@@ -47,14 +47,5 @@ object GeometryCollectionGs extends GsStaticJvm {
       GEOMETRIES_ESFN -> JsArray(geomsJson)
     )
   }
-
-}
-
-
-case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
-
-  override def shapeType = GsTypes.GeometryCollection
-
-  override def firstPoint = geoms.head.firstPoint
 
 }
