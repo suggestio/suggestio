@@ -228,7 +228,7 @@ class AdvGeoMapUtil @Inject() (
               nodeId  = nodeId,
               colors  = nodeColors,
               circleRadiusM = CircleGs.maybeFromGs( gs.shape )
-                .map(_.radius.meters)
+                .map(_.radiusM)
             )
             val mpp = MPickledPropsJvm( props )
             val propsBin = implicitly[OWrites[mpp.type]].writes(mpp)

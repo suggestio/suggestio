@@ -10,7 +10,6 @@ import models.mgeo.MGsPtr
 import models.mproj.ICommonDi
 import models.msys._
 import models.req.INodeReq
-import org.elasticsearch.common.unit.DistanceUnit
 import play.api.data._
 import Forms._
 import io.suggest.geo._
@@ -443,7 +442,7 @@ class SysAdnGeo @Inject() (
       val stub = MEdgeGeoShape(
         id      = -1,
         glevel  = ngl,
-        shape   = CircleGs(gpStub, Distance(0.0, DistanceUnit.METERS))
+        shape   = CircleGs(gpStub, radiusM = 0d)
       )
       val form1 = circleFormM.fill( stub )
       Ok( createCircleTpl(form1, request.mnode) )

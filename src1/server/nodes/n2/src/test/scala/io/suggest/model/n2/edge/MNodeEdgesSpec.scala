@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge
 
 import java.time.OffsetDateTime
 
-import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
+import io.suggest.geo.{CircleGs, MGeoPoint}
 import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.ym.model.NodeGeoLevels
 import org.scalatest.FlatSpec
@@ -48,8 +48,8 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
               id = 1,
               glevel = NodeGeoLevels.NGL_BUILDING,
               shape  = CircleGs(
-                center = MGeoPoint(lat = 10, lon = 15),
-                radius = Distance.meters(2000)
+                center  = MGeoPoint(lat = 10, lon = 15),
+                radiusM = 2000
               ),
               fromUrl = Some("http://asdasdasd/.df"),
               dateEdited = Some( OffsetDateTime.now() )

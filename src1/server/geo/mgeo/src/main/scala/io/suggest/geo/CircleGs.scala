@@ -4,6 +4,7 @@ import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.common.unit.DistanceUnit
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{Geometry, LngLat}
@@ -23,12 +24,13 @@ object CircleGs extends GsStaticJvmQuerable {
   override def DATA_FORMAT: OFormat[CircleGs] = (
     (__ \ COORDS_ESFN).format[MGeoPoint] and
     (__ \ RADIUS_ESFN).format[Distance]
+      .inmap[Double]( _.meters, Distance.meters)
   )(apply, unlift(unapply))
 
   def apply(geoCircle: MGeoCircle): CircleGs = {
     CircleGs(
-      center = geoCircle.center,
-      radius = Distance.meters( geoCircle.radiusM )
+      center  = geoCircle.center,
+      radiusM = geoCircle.radiusM
     )
   }
 
@@ -53,20 +55,28 @@ object CircleGs extends GsStaticJvmQuerable {
   override protected[this] def _toPlayJsonInternal(gs: Shape_t, geoJsonCompatible: Boolean): FieldsJsonAcc = {
     List(
       COORDS_ESFN  -> GeoPoint.toPlayGeoJson( gs.center ),
-      RADIUS_ESFN  -> JsString( gs.radius.toString )
+      RADIUS_ESFN  -> JsString( distance(gs).toString )
     )
   }
+
+  def distance(circle: CircleGs) = Distance.meters( circle.radiusM )
 
   override def toEsShapeBuilder(gs: Shape_t) = {
     ShapeBuilder.newCircleBuilder()
       .center(gs.center.lon, gs.center.lat)
-      .radius(gs.radius.distance, gs.radius.units)
+      .radius(gs.radiusM, DistanceUnit.METERS)
   }
 
 }
 
 
-case class CircleGs(center: MGeoPoint, radius: Distance) extends IGeoShapeQuerable {
+// TODO Замёржить common-модель MGeoCircle в этот шейп.
+case class CircleGs(
+                     center   : MGeoPoint,
+                     radiusM  : Double
+                   )
+  extends IGeoShapeQuerable
+{
 
   override def shapeType = GsTypes.Circle
 

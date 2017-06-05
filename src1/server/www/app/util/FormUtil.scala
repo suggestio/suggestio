@@ -230,6 +230,7 @@ object FormUtil {
     mapping(
       "center"  -> geoPointM,
       "radius"  -> distanceM
+        .transform[Double](_.meters, Distance.meters)
     )
     { CircleGs.apply }
     { CircleGs.unapply }

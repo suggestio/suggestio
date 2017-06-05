@@ -353,7 +353,7 @@ object TplDataFormatUtil {
       case circle: CircleGs =>
         ctx.messages(
           MsgCodes.`in.radius.of.0.from.1`,
-          formatDistance(circle.radius),
+          formatDistance( CircleGs.distance(circle) ),
           formatCoords(circle.center)
         )
 

@@ -58,7 +58,7 @@ class AdvGeoFormUtil @Inject() (
       // hasApproved влияет на цвет заливки.
       hasApproved = si.hasApproved,
       crclRadiusM = CircleGs.maybeFromGs(gs)
-        .map(_.radius.meters)
+        .map(_.radiusM)
     )
     Feature(
       // Если circle, то будет отрендерена точка. Поэтому радиус задан в props.

@@ -77,7 +77,7 @@ case class GeoDistanceQuery(
   extends IToEsQueryFn
 {
 
-  def outerCircle = CircleGs(center, distanceMax)
+  def outerCircle = CircleGs(center, radiusM = distanceMax.meters)
 
   override def toEsQuery(fn: String): QueryBuilder = {
     QueryBuilders.geoShapeQuery(fn, GeoShapeJvm.toEsShapeBuilder( outerCircle ))

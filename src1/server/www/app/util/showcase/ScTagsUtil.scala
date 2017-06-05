@@ -2,7 +2,7 @@ package util.showcase
 
 import com.google.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.geo.{CircleGs, Distance}
+import io.suggest.geo.CircleGs
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
@@ -10,7 +10,6 @@ import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.ym.model.NodeGeoLevels
 import models.mgeo.MGeoLoc
 import models.msc.tag.MScTagsSearchQs
-import org.elasticsearch.common.unit.DistanceUnit
 
 import scala.concurrent.Future
 
@@ -57,8 +56,8 @@ class ScTagsUtil @Inject()(
       // Отработать геолокацию: искать только теги, размещенные в текущей области.
       gsIntersect = for (geoLoc <- geoLocOpt2) yield {
         val circle = CircleGs(
-          center = geoLoc.center,
-          radius = Distance(1, DistanceUnit.METERS)
+          center  = geoLoc.center,
+          radiusM = 1
         )
         GsCriteria(
           levels = NodeGeoLevels.geoTag :: Nil,

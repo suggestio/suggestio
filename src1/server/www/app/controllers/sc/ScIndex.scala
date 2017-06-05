@@ -212,7 +212,7 @@ trait ScIndex
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
-              val circle = CircleGs(geoLoc.center, Distance(10, DistanceUnit.METERS))
+              val circle = CircleGs(geoLoc.center, radiusM = 10)
               val qShape = CircleGs.toEsQueryMaker( circle )
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
