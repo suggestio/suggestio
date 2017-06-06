@@ -2,11 +2,11 @@ package io.suggest.lk.adv.geo.a.rcvr
 
 import diode._
 import diode.data.Pot
-import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, MRcvrsGeo, RcvrMarkersInit}
+import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
 
 import scala.util.Success
 
@@ -18,7 +18,7 @@ import scala.util.Success
   */
 class RcvrMarkersInitAh[M](
                             api       : ILkAdvGeoApi,
-                            modelRW   : ModelRW[M, Pot[MRcvrsGeo]]
+                            modelRW   : ModelRW[M, Pot[MGeoNodesResp]]
                           )
   extends ActionHandler(modelRW)
   with Log
@@ -41,17 +41,8 @@ class RcvrMarkersInitAh[M](
     // Результат реквеста карты маркеров пришёл и готов к заливке в карту.
     case m: InstallRcvrMarkers =>
       val v2 = m.tryResp.fold(
-        {ex =>
-          LOG.error( ErrorMsgs.INIT_RCVRS_MAP_GJ_REQ_FAIL, ex)
-          value.fail( ex )
-        },
-        {resp =>
-          // Привести результат к js.Array[Markers].
-          val mrg = MRcvrsGeo(
-            features = resp
-          )
-          value.ready( mrg )
-        }
+        value.fail,
+        value.ready
       )
       updated( v2 )
 

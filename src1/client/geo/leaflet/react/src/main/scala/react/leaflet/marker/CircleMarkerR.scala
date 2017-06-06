@@ -4,7 +4,7 @@ import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.circle.CircleMarkerOptions
 import japgolly.scalajs.react.{JsComponentType, TopNode}
-import org.scalajs.dom.raw.HTMLElement
+import react.leaflet.event.MapComponentEventsProps
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
@@ -16,7 +16,7 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Description: sjs-react wrapper for react-leaflet's CircleMarker.
   */
 case class CircleMarkerR( props: CircleMarkerPropsR )
-  extends JsWrapperR[CircleMarkerPropsR, HTMLElement]
+  extends JsWrapperR[CircleMarkerPropsR, TopNode]
 {
   override protected def _rawComponent = js.constructorOf[CircleMarker]
 }
@@ -28,7 +28,7 @@ sealed class CircleMarker extends JsComponentType[CircleMarkerPropsR, js.Object,
 
 /** Circle-marker rendering args. */
 @ScalaJSDefined
-trait CircleMarkerPropsR extends CircleMarkerOptions {
+trait CircleMarkerPropsR extends CircleMarkerOptions with MapComponentEventsProps {
 
   /** Circle marker center coords. */
   val center: LatLng

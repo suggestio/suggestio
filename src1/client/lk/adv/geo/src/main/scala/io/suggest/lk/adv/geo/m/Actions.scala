@@ -5,8 +5,8 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup, OpenAdvGeoExistPopup}
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
-import io.suggest.sjs.common.geo.json.{BooGjFeature, GjFeature}
+import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
 import scala.util.Try
@@ -40,7 +40,7 @@ case class SetRcvrStatus(rcvrKey: RcvrKey, checked: Boolean) extends IAdvGeoForm
 case object RcvrMarkersInit extends IAdvGeoFormAction
 
 /** Экшен выставления указанных recevier-маркеров в состояние. */
-case class InstallRcvrMarkers(tryResp: Try[ Seq[BooGjFeature[MAdvGeoMapNodeProps]] ]) extends IAdvGeoFormAction
+case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IAdvGeoFormAction
 
 
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */

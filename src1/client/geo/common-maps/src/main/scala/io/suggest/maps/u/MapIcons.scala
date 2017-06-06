@@ -3,18 +3,10 @@ package io.suggest.maps.u
 import io.suggest.common.spa.SpaConst.LkPreLoader
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
-import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.geo.json.{BooGjFeature, GjGeometry, GjTypes}
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.LatLng
-import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
-import io.suggest.maps.m.MonkeyNodeId._
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
-import io.suggest.sjs.leaflet.geojson.GeoJson
-
-import scala.scalajs.js.JSConverters._
-import scala.scalajs.js
+import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
 
 /**
   * Suggest.io
@@ -95,56 +87,6 @@ object MapIcons {
   def radiusMarkerIcon(): Icon = {
     val o = MapIcons.markerIconBase(RadiusMarkerIcon)
     Leaflet.icon(o)
-  }
-
-
-  /** Скомпилировать GeoJSON-маркеров в маркеры для кластеризации.
-    * @param features Исходный набор точек с сервера.
-    */
-  def geoJsonToClusterMarkers(features: TraversableOnce[BooGjFeature[MAdvGeoMapNodeProps]]): js.Array[Marker] = {
-    val iter2 = for {
-      // Перебираем все переданные фичи GeoJSON.
-      feature <- features.toIterator
-
-      // Тут интересуют только точки.
-      if (feature.geometry.`type` == GjTypes.Geom.POINT) && feature.props.circleRadiusM.isEmpty
-
-    } yield {
-
-      // Собираем параметры отображения маркера.
-      val nodeId = feature.props.nodeId
-      val options = new MarkerOptions {
-        override val draggable = false
-        override val clickable = true //nodeIdOpt.isDefined
-        // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
-        override val icon = js.defined {
-          feature.props.icon.fold( MapIcons.pinMarkerIcon() ) { iconInfo =>
-            val o = IconOptions.empty
-            o.iconUrl = iconInfo.url
-            // Описываем размеры иконки по данным сервера.
-            o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
-            // Для иконки -- якорь прямо в середине.
-            o.iconAnchor = MapsUtil.size2d2LPoint( iconInfo.wh / 2 )
-            Leaflet.icon(o)
-          }
-        }
-        override val title = JsOptionUtil.opt2undef( feature.props.hint )
-      }
-
-      val m = Leaflet.marker(
-        latLng  = GeoJson.coordsToLatLng(
-          GjGeometry.firstPoint( feature.geometry )
-        ),
-        options = options
-      )
-
-      // monkey-patching id узла внутрь маркера.
-      m.nodeId = nodeId
-
-      m
-    }
-
-    iter2.toJSArray
   }
 
 }

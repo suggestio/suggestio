@@ -7,12 +7,12 @@ import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.lk.router.jsRoutes
-import io.suggest.maps.nodes.MAdvGeoMapNodeProps
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.pick.PickleUtil
-import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.geo.json.{BooGjFeature, GjFeature}
+import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.tags.search.{ITagsApi, TagsApiImplXhr}
+import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -31,7 +31,7 @@ import scala.scalajs.js
 trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  def rcvrsMap(): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]]
+  def rcvrsMap(): Future[MGeoNodesResp]
 
   /** Запрос с сервера попапа над ресивером. */
   def rcvrPopup(nodeId: String): Future[MRcvrPopupResp]
@@ -60,22 +60,20 @@ class LkAdvGeoApiImpl( confRO: ModelRO[MOther] )
   with TagsApiImplXhr
 {
 
-  import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
-  import MRcvrPopupResp.pickler
   import MGeoAdvExistPopupResp.pickler
+  import MRcvrPopupResp.pickler
+  import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
 
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = jsRoutes.controllers.LkAdvGeo.tagsSearch2
 
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def rcvrsMap(): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]] = {
+  override def rcvrsMap(): Future[MGeoNodesResp] = {
     // Надо запустить запрос на сервер для получения списка узлов.
     val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap()
-    for (json <- Xhr.requestJson( route )) yield {
-      val gjFeatures = json.asInstanceOf[js.Array[GjFeature]]
-      BooGjFeature.fromFeaturesIter[MAdvGeoMapNodeProps]( gjFeatures )
-        .toSeq
+    Xhr.unBooPickleResp[MGeoNodesResp] {
+      Xhr.requestBinary(route)
     }
   }
 

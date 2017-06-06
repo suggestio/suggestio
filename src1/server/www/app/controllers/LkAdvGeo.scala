@@ -405,22 +405,20 @@ class LkAdvGeo @Inject() (
     */
   def advRcvrsMap = {
     ignoreAuth().async { implicit request =>
-      val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
+      // Собрать данные по узлам.
+      val nodesRespFut = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
         val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
         advGeoMapUtil.rcvrNodesMap( msearch )
       }
-      // Сериализовать поток данных в JSON:
-      val jsonStrSrc = streamsUtil.jsonSrcToJsonArrayNullEnded(
-        for (m <- nodesSrc) yield {
-          Json.toJson( m )
-        }
-      )
-      // Вернуть chunked-ответ с потоком из JSON внутрях.
-      Ok.chunked(jsonStrSrc)
-        .as( withCharset(JSON) )
-        .withHeaders(
-          CACHE_CONTROL -> "public, max-age=20"
-        )
+      // Завернуть данные в единый блоб и отправить клиенту.
+      for (nodesResp <- nodesRespFut) yield {
+        val bbuf = PickleUtil.pickle( nodesResp )
+        Ok( ByteString(bbuf) )
+          .as( withCharset(JSON) )
+          .withHeaders(
+            CACHE_CONTROL -> "public, max-age=20"
+          )
+      }
     }
   }
 

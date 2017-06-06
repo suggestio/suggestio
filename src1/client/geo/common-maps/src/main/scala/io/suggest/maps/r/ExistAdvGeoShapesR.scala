@@ -3,7 +3,7 @@ package io.suggest.maps.r
 import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.adv.AdvConstants.CurrShapes
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{GeoConstants, MGeoPoint}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
 import io.suggest.sjs.common.geo.json.{GjFeature, GjFeatureCollection, GjGeometry}
 import io.suggest.sjs.common.log.Log
@@ -46,7 +46,7 @@ object ExistAdvGeoShapesR extends Log {
         gjFeatures <- p().toOption
       } yield {
         lazy val _circleMarkerOptions = new CircleMarkerOptions {
-          override val radius: UndefOr[Double] = 3d
+          override val radius = GeoConstants.CircleMarkers.RADIUS_PX
         }
 
         // Собрать GeoJSON-слой для кружочков, но рендером управлять через callback'и.

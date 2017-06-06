@@ -20,6 +20,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import MExistGeoPopupS.MGeoCurPopupSFastEq
+import io.suggest.maps.nodes.MGeoNodesResp
 
 import scala.scalajs.js
 
@@ -41,7 +42,6 @@ object AdvGeoFormR {
   import MRcvr.MRcvrFastEq
   import MMapS.MMapSFastEq
   import MExistGeoS.MExistGeoSFastEq
-  import MRcvrsGeo.MRcvrsGeoFastEq
   import MRad.MRadFastEq
   import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
 
@@ -57,7 +57,7 @@ object AdvGeoFormR {
     */
   protected case class State(
                               onMainScrC          : ReactConnectProxy[OnMainScreenR.PropsVal],
-                              rcvrsGeoC           : ReactConnectProxy[Pot[MRcvrsGeo]],
+                              rcvrsGeoC           : ReactConnectProxy[Pot[MGeoNodesResp]],
                               rcvrPopupC          : ReactConnectProxy[MRcvr],
                               mmapC               : ReactConnectProxy[MMapS],
                               geoAdvExistGjC      : ReactConnectProxy[Pot[js.Array[GjFeature]]],

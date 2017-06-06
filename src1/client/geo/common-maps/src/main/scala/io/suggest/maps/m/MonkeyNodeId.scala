@@ -22,7 +22,7 @@ object MonkeyNodeId {
 
   import scala.language.implicitConversions
 
-  implicit def apply(marker: js.Object): MonkeyNodeId = {
+  implicit def forJsObject(marker: js.Object): MonkeyNodeId = {
     marker.asInstanceOf[MonkeyNodeId]
   }
 

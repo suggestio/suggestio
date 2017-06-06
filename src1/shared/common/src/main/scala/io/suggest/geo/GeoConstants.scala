@@ -52,4 +52,11 @@ object GeoConstants {
 
   }
 
+
+  object CircleMarkers {
+
+    def RADIUS_PX = 3d
+
+  }
+
 }

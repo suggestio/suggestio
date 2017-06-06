@@ -1,7 +1,5 @@
 package util.adv.geo
 
-import akka.NotUsed
-import akka.stream.scaladsl.Source
 import com.google.inject.Inject
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
@@ -9,13 +7,11 @@ import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.Size2di
 import io.suggest.es.model.IMust
-import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, PointGsJvm}
-import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MMapNodeIconInfo}
+import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MGeoNodesResp, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.pick.MPickledPropsJvm
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevels
 import io.suggest.ym.model.common.AdnRights
@@ -24,8 +20,6 @@ import models.im.{DevPixelRatios, MAnyImgs, MImgT}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import org.elasticsearch.search.sort.SortOrder
-import play.api.libs.json.OWrites
-import play.extras.geojson.{Feature, LngLat}
 import util.cdn.CdnUtil
 import util.img.{DynImgUtil, LogoUtil}
 
@@ -117,143 +111,100 @@ class AdvGeoMapUtil @Inject() (
     * @param msearch Инстас поисковых аргументов, собранный через rcvrsSearch().
     * @return Фьючерс с GeoJSON.
     */
-  def rcvrNodesMap(msearch: MNodeSearch)(implicit ctx: Context): Source[Feature[LngLat], NotUsed] = {
+  def rcvrNodesMap(msearch: MNodeSearch)(implicit ctx: Context): Future[MGeoNodesResp] = {
     // Начать выкачивать все подходящие узлы из модели:
     val nodesSource = mNodes.source[MNode](msearch)
 
     lazy val logPrefix = s"rcvrNodesMap(${System.currentTimeMillis}):"
 
-    val logosAndNodeSrc = nodesSource.mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
-      // Подготовить инфу по логотипу узла.
-      // TODO А нужно ли готовить логотип, если нет AdnMap-предиката?
-      val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
-        FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
-          val dpr = DevPixelRatios.XHDPI
-          val fut = for {
-            logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, dpr)
-            localImg  <- dynImgUtil.ensureImgReady(logo, cacheResult = true)
-            whOpt     <- mAnyImgs.getImageWH(localImg)
-          } yield {
-            whOpt.fold[Option[LogoInfo]] {
-              LOGGER.warn(s"$logPrefix Unable to fetch WH of logo $logo for node ${mnode.idOrNull}")
-              None
-            } { wh =>
-              LOGGER.trace(s"$logPrefix wh = $wh for img $logo")
-              val wh2 = if (dpr.pixelRatio != 1.0F) {
-                Size2di(
-                  width  = (wh.width  / dpr.pixelRatio).toInt,
-                  height = (wh.height / dpr.pixelRatio).toInt
-                )
-              } else {
-                wh
+    // Пережевать все найденные узлы, собрать нужные данные в единый список.
+    nodesSource
+      // Собрать логотипы узлов.
+      .mapAsyncUnordered(NODE_LOGOS_PREPARING_PARALLELISM) { mnode =>
+        // Подготовить инфу по логотипу узла.
+        val logoInfoOptFut = logoUtil.getLogoOfNode(mnode).flatMap { logoOptRaw =>
+          FutureUtil.optFut2futOpt(logoOptRaw) { logoRaw =>
+            val dpr = DevPixelRatios.XHDPI
+            val fut = for {
+              logo      <- logoUtil.getLogo4scr(logoRaw, LOGO_HEIGHT_CSSPX, dpr)
+              localImg  <- dynImgUtil.ensureImgReady(logo, cacheResult = true)
+              whOpt     <- mAnyImgs.getImageWH(localImg)
+            } yield {
+              whOpt.fold[Option[LogoInfo]] {
+                LOGGER.warn(s"$logPrefix Unable to fetch WH of logo $logo for node ${mnode.idOrNull}")
+                None
+              } { wh =>
+                LOGGER.trace(s"$logPrefix wh = $wh for img $logo")
+                val wh2 = if (dpr.pixelRatio != 1.0F) {
+                  Size2di(
+                    width  = (wh.width  / dpr.pixelRatio).toInt,
+                    height = (wh.height / dpr.pixelRatio).toInt
+                  )
+                } else {
+                  wh
+                }
+                Some( LogoInfo(logo, wh2) )
               }
-              Some( LogoInfo(logo, wh2) )
+            }
+
+            // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
+            fut.recover { case ex: Throwable =>
+              LOGGER.error(s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map", ex)
+              None
             }
           }
-
-          // Подавлять ошибки рендера логотипа. Дефолтовщины хватит, главное чтобы всё было ок.
-          fut.recover { case ex: Throwable =>
-            LOGGER.error(s"$logPrefix Node[${mnode.idOrNull}] with possible logo[$logoRaw] failed to prepare the logo for map", ex)
-            None
-          }
-        }
-      }
-
-      // Завернуть результат работы в итоговый контейнер, используемый вместо трейта.
-      for (logoInfoOpt <- logoInfoOptFut) yield {
-        NodeInfo(mnode, logoInfoOpt)
-      }
-    }
-
-    // Отмаппить узлы в представление, годное для GeoJSON-сериализации. Финальную сериализацию организует контроллер.
-    val resultsSrc = logosAndNodeSrc.mapConcat { nodeInfo =>
-      // Собираем url отдельно и ровно один раз, чтобы сэкономить ресурсы.
-      val iconInfoOpt = for {
-        logoInfo <- nodeInfo.logoInfoOpt
-      } yield {
-        MMapNodeIconInfo(
-          url    = ctx.dynImgCall( logoInfo.logo ).url,
-          wh = Size2di(
-            width  = logoInfo.wh.width,
-            height = logoInfo.wh.height
-          )
-        )
-      }
-      val mnode = nodeInfo.mnode
-
-      // Собираем props-константы за скобками.
-      val nodeId = mnode.id.get
-
-      // Цвета узла, без цвета паттерна, т.к. он не нужен.
-      val nodeColors = mnode.meta.colors
-
-      var featsAcc = List.empty[TraversableOnce[Feature[LngLat]]]
-
-      // Собрать точки узла, если они есть.
-      val pointsIter = mnode.edges
-        .withPredicateIter( MPredicates.AdnMap )
-        .flatMap { _.info.geoPoints }
-      val hasPoints = pointsIter.nonEmpty
-      if (hasPoints) {
-        val nodeName = mnode.guessDisplayName
-        // props'ы для одной точки.
-        val props = MAdvGeoMapNodeProps(
-          nodeId  = nodeId,
-          hint    = nodeName,
-          colors  = nodeColors,
-          icon    = iconInfoOpt
-        )
-        val mpp = MPickledPropsJvm(props)
-        val propsBin = implicitly[OWrites[mpp.type]].writes(mpp)
-
-        val iter = for (geoPoint <- pointsIter) yield {
-          Feature(
-            geometry   = PointGsJvm.toPlayGeoJsonGeom( geoPoint ),
-            properties = Some( propsBin )
-          )
         }
 
-        featsAcc ::= iter
-      }
+        // Собрать шейпы геолокации узла:
+        val geoShapes = mnode.edges
+          .withPredicateIter( MPredicates.NodeLocation )
+          .flatMap( _.info.geoShapes )
+          .map(_.shape)
+          .toSeq
 
-      // Теперь собрать шейпы геолокации узла.
-      val shapesIter = mnode.edges
-        .withPredicateIter( MPredicates.NodeLocation )
-        .flatMap( _.info.geoShapes )
-      if (shapesIter.nonEmpty) {
-        // Нет смысла передавать подсказку на клиент, т.к. L не умеет title внутри svg.
-        val iter = shapesIter
-          .map { gs =>
-            val props = MAdvGeoMapNodeProps(
-              nodeId  = nodeId,
-              colors  = nodeColors,
-              circleRadiusM = CircleGsJvm.maybeFromGs( gs.shape )
-                .map(_.radiusM)
-            )
-            val mpp = MPickledPropsJvm( props )
-            val propsBin = implicitly[OWrites[mpp.type]].writes(mpp)
-            Feature(
-              geometry    = GeoShapeJvm.toPlayGeoJsonGeom(gs.shape),
-              properties  = Some( propsBin )
+        // Собираем props-константы за скобками, чтобы mnode-инстанс можно было "отпустить".
+        val nodeId     = mnode.id.get
+        val hintOpt    = mnode.guessDisplayName
+        val nodeColors = mnode.meta.colors.withPattern()
+
+        // Завернуть результат работы в итоговый контейнер, используемый вместо трейта.
+        for (logoInfoOpt <- logoInfoOptFut) yield {
+          // Заверуть найденную иконку в пригодный для сериализации на клиент результат:
+          val iconInfoOpt = for {
+            logoInfo <- logoInfoOpt
+          } yield {
+            MMapNodeIconInfo(
+              url = ctx.dynImgCall( logoInfo.logo ).url,
+              wh  = Size2di(
+                width  = logoInfo.wh.width,
+                height = logoInfo.wh.height
+              )
             )
           }
 
-        featsAcc ::= iter
+          // props'ы для одной точки.
+          val props = MAdvGeoMapNodeProps(
+            nodeId  = nodeId,
+            hint    = hintOpt,
+            // Цвета узла. Можно без цвета паттерна, т.к. он не нужен.
+            colors  = nodeColors,
+            icon    = iconInfoOpt
+          )
+
+          // Собрать и вернуть контейнер с данными мапы узлов:
+          MGeoNodePropsShapes(
+            props  = props,
+            shapes = geoShapes
+          )
+        }
       }
-
-      // Нормализовать итоговый аккамулятор.
-      featsAcc
-        .iterator
-        .flatten
-        .toStream // Это типа toImmutableIterable
-    }
-
-    // Залоггировать общее кол-во отправленных наверх нод, если включена трассировка.
-    streamsUtil.maybeTraceCount(resultsSrc, this) { total =>
-      s"$logPrefix Returned $total map-nodes."
-    }
-
-    resultsSrc
+      // Собрать в единый список всё это дело:
+      .runFold( List.empty[MGeoNodePropsShapes] ) { (acc, e) => e :: acc }
+      .map { mgnps =>
+        MGeoNodesResp(
+          nodes = mgnps
+        )
+      }
   }
 
 

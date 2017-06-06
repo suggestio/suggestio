@@ -32,8 +32,7 @@ case class MAdvGeoMapNodeProps(
                                 nodeId          : String,
                                 colors          : MColors,
                                 hint            : Option[String]            = None,
-                                icon            : Option[MMapNodeIconInfo]  = None,
-                                circleRadiusM   : Option[Double]            = None
+                                icon            : Option[MMapNodeIconInfo]  = None
                               )
 
 

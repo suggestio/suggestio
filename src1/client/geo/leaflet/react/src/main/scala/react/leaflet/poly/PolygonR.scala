@@ -4,7 +4,6 @@ import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.PolygonLatLngs_t
 import io.suggest.sjs.leaflet.path.poly.PolylineOptions
 import japgolly.scalajs.react.{JsComponentType, TopNode}
-import org.scalajs.dom.Element
 import react.leaflet.event.MapComponentEventsProps
 
 import scala.scalajs.js
@@ -17,7 +16,7 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Description: React-component for L.Polygon rendering.
   */
 case class PolygonR( override val props: PolygonPropsR )
-  extends JsWrapperR[PolygonPropsR, Element]
+  extends JsWrapperR[PolygonPropsR, TopNode]
 {
   override protected def _rawComponent: js.Dynamic = js.constructorOf[Polygon]
 }

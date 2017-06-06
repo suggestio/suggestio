@@ -3,29 +3,29 @@ package io.suggest.lk.adv.geo.r.rcvr
 import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
-import io.suggest.geo.MGeoPoint
-import io.suggest.lk.adv.geo.m.{MRcvrsGeo, ReqRcvrPopup}
-import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.sjs.leaflet.marker.MarkerEvent
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
-import io.suggest.react.ReactCommonUtil.Implicits._
-import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
+import io.suggest.geo._
+import io.suggest.lk.adv.geo.m.ReqRcvrPopup
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.maps.m.MonkeyNodeId
+import io.suggest.maps.m.MonkeyNodeId.forJsObject
+import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.geo.json.GjTypes
-import io.suggest.sjs.common.model.loc.MGeoPointJs
-import io.suggest.sjs.leaflet.PolygonLatLngs_t
+import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.MouseEvent
-import io.suggest.sjs.leaflet.geojson.GeoJson
 import io.suggest.sjs.leaflet.map.LatLng
+import io.suggest.sjs.leaflet.marker.icon.IconOptions
+import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
+import japgolly.scalajs.react.{BackendScope, Callback, JsComponentU, ReactComponentB, ReactElement, TopNode}
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
+import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
 import react.leaflet.poly.{PolygonPropsR, PolygonR}
 
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 import scala.scalajs.js.UndefOr
 
 /**
@@ -36,7 +36,7 @@ import scala.scalajs.js.UndefOr
   */
 object RcvrMarkersR {
 
-  type Props = ModelProxy[Pot[MRcvrsGeo]]
+  type Props = ModelProxy[Pot[MGeoNodesResp]]
 
   val FILL_OPACITY    = 0.15
   val STROKE_OPACITY  = 0.7
@@ -46,8 +46,7 @@ object RcvrMarkersR {
 
     private def onMarkerClicked(e: MarkerEvent): Callback = {
       val marker = e.layer
-      // TODO Почему-то тут не срабатывает implicit convertion... Приходится явно заворачивать
-      val nodeId = MonkeyNodeId(marker).nodeId.get
+      val nodeId = marker.nodeId.get
       val latLng = marker.getLatLng()
       val gp = MapsUtil.latLng2geoPoint(latLng)
       _clickEvent(nodeId, gp)
@@ -65,145 +64,170 @@ object RcvrMarkersR {
       JsOptionUtil.opt2undef( colorOpt )
     }
 
-    private def _clickSomewhereEvent(nodeId: String)(e: MouseEvent): Callback = {
-      val gp = MapsUtil.latLng2geoPoint( e.latlng )
-      val msg = ReqRcvrPopup(nodeId, gp)
-      dispatchOnProxyScopeCB($, msg)
-    }
 
     private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
 
+    // Алиас типа, чтобы короче писать. Тип везде скастован принудительно, т.к. у scalac крышу рвёт ниже по коду.
+    private type RComp_t = JsComponentU[js.Object, js.Any, TopNode]
+    // Внутренний класс вместо кортежа, т.к. у scalac крышу срывает от кортежей с RComp_t внутри.
+    private case class ResTuple( latLng: LatLng, jsComp: RComp_t )
+
+
+    /** Рендер всей гео.карты. */
     def render(rcvrsGeoPotProxy: Props): ReactElement = {
       for {
         mRcvrsGeo <- rcvrsGeoPotProxy().toOption
       } yield {
-        val features = mRcvrsGeo.features
 
-        // Собрать маркеры.
-        val _markers = MapIcons.geoJsonToClusterMarkers( features )
+        // Собираем сложный итератор, который на выходе в элементах выдаёт два аккамулятора: маркеры и шейпы.
+        val iter = for {
+          mnode <- mRcvrsGeo.nodes.iterator
 
-        // Собрать круги.
-        val _circles = {
+          // Собираем параметры отображения маркеров текущего узла над его шейпами.
+          nodeId = mnode.props.nodeId
 
-          val iter2 = for {
-            feature <- features.toIterator
+          _onClickCbF = { _mgp: MGeoPoint =>
+            cbFun1ToJsCb { _: MouseEvent =>
+              _clickEvent(nodeId, _mgp)
+            }
+          }
 
-            // Интересуют только круги. В GeoJSON они задаются точкой-центром + props.radiusM.
-            if feature.geometry.`type` == GjTypes.Geom.POINT
-            radiusM <- feature.props.circleRadiusM
+          // Маркер можно рендерить, когда есть иконка узла. Иначе нужен CircleMarker вместо маркера.
+          markerOptions = new MarkerOptions {
+            override val draggable = false
+            override val clickable = true //nodeIdOpt.isDefined
+            // Иконка обязательна, иначе отображать будет нечего. Собрать иконку из присланных сервером данных.
+            override val icon = js.defined {
+              mnode.props.icon.fold ( MapIcons.pinMarkerIcon() ) { iconInfo =>
+                val o = IconOptions.empty
+                o.iconUrl = iconInfo.url
+                // Описываем размеры иконки по данным сервера.
+                o.iconSize = MapsUtil.size2d2LPoint( iconInfo.wh )
+                // Для иконки -- якорь прямо в середине.
+                o.iconAnchor = MapsUtil.size2d2LPoint( iconInfo.wh / 2 )
+                Leaflet.icon(o)
+              }
+            }
+            override val title = JsOptionUtil.opt2undef( mnode.props.hint )
+          }
 
-          } yield {
-            val c = feature.props.colors
-            val nodeId = feature.props.nodeId
-            val gjCoordArr = feature.geometry
-              .coordinates
-              .asInstanceOf[js.Array[Double]]
-            val gp = MGeoPointJs.fromGjArray( gjCoordArr )
-            val opts = new CirclePropsR {
-              override val radius: Double = radiusM
-              override val center: LatLng = {
-                GeoJson.coordsToLatLng( gjCoordArr )
-              }
-              override val fillColor: UndefOr[String] = {
-                _toColorOpt( c.bg )
-              }
-              override val fillOpacity: UndefOr[Double] = {
-                FILL_OPACITY
-              }
-              override val stroke: UndefOr[Boolean] = {
-                c.fg.nonEmpty
-              }
-              override val weight: UndefOr[Int] = {
-                STROKE_WEIGHT
-              }
-              override val color: UndefOr[String] = {
-                _toColorOpt( c.fg )
-              }
-              override val opacity: UndefOr[Double] = {
-                STROKE_OPACITY
-              }
-              override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
-                cbFun1ToJsCb { _: MouseEvent =>
-                  _clickEvent(nodeId, gp)
+
+          // Подготовить цвета для гео-шейпов текущего узла.
+          c = mnode.props.colors
+          _fillColor = _toColorOpt( c.bg )
+          _strokeColor = _toColorOpt( c.fg )
+
+          // Пройтись по шейпам узла
+          gs <- mnode.shapes
+
+          // Если возможно, отрендерить шейп узла в react-компонент, вычислить центр шейпа, и туда маркер засандалить.
+          resTuple: ResTuple = {
+            gs match {
+              // Рендерим react-круг.
+              case circleGs: CircleGs =>
+                val _center = circleGs.center
+                val _centerLatLng = MapsUtil.geoPoint2LatLng( _center )
+                val opts = new CirclePropsR {
+                  override val radius       = circleGs.radiusM
+                  override val center       = _centerLatLng
+                  override val fillColor    = _fillColor
+                  override val fillOpacity  = FILL_OPACITY
+                  override val stroke       = _strokeColor.nonEmpty
+                  override val weight       = STROKE_WEIGHT
+                  override val color        = _strokeColor
+                  override val opacity      = STROKE_OPACITY
+                  override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
+                    _onClickCbF( _center )
+                  }
                 }
-              }
+                val rc = CircleR( opts )()
+                  .asInstanceOf[RComp_t]
+                ResTuple(_centerLatLng, rc)
+
+              // Рендерить полигон или мультиполигон.
+              case lPolygon: ILPolygonGs =>
+                val _positions = MapsUtil.lPolygon2leafletCoords( lPolygon )
+                // Вычислить гео-центр этого полигона
+                val _centerLL = Leaflet.polygon( _positions )
+                  .getBounds()
+                  .getCenter()
+                val _center = MapsUtil.latLng2geoPoint( _centerLL )
+                val opts = new PolygonPropsR {
+                  override val positions    = _positions
+                  override val fillColor    = _fillColor
+                  override val fillOpacity  = FILL_OPACITY
+                  override val stroke       = _strokeColor.nonEmpty
+                  override val weight       = STROKE_WEIGHT
+                  override val color        = _strokeColor
+                  override val opacity      = STROKE_OPACITY
+                  override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
+                    _onClickCbF( _center )
+                  }
+                }
+                val rc = PolygonR(opts)()
+                  .asInstanceOf[RComp_t]
+                ResTuple(_centerLL, rc)
+
+              // TODO Реализовать рендер остальных шейпов. Сейчас они пока не нужны.
+              case other =>
+                println("Unsupported geo-shape: " + other)
+                ???
             }
-            CircleR( opts )()
           }
 
-          iter2.toSeq
-        }
-
-        // Собираем полигоны.
-        val _polygons = {
-          // Типы геометрий, пригодный для рендера через PolygonR.
-          val types = GjTypes.Geom.POLYGON ::
-            GjTypes.Geom.MULTI_POLYGON ::
-            Nil
-          val iter2 = for {
-            feature <- features.iterator
-            if types.contains( feature.geometry.`type` )
-          } yield {
-            val c = feature.props.colors
-            val nodeId = feature.props.nodeId
-
-            val opts = new PolygonPropsR {
-              override val positions: PolygonLatLngs_t = {
-                GeoJson.coordsToLatLngs(
-                  coords     = feature.geometry.coordinates,
-                  levelsDeep = if (feature.geometry.`type`.contains( GjTypes.Geom._MULTI )) 2 else 1
-                )
-              }
-              override val fillColor: UndefOr[String] = {
-                _toColorOpt( c.bg )
-              }
-              override val fillOpacity: UndefOr[Double] = {
-                FILL_OPACITY
-              }
-              override val stroke: UndefOr[Boolean] = {
-                c.fg.nonEmpty
-              }
-              override val weight: UndefOr[Int] = {
-                STROKE_WEIGHT
-              }
-              override val color: UndefOr[String] = {
-                _toColorOpt( c.fg )
-              }
-              override val opacity: UndefOr[Double] = {
-                STROKE_OPACITY
-              }
+        } yield {
+          val shapeComponents0 = resTuple.jsComp :: Nil
+          // Собрать маркер узла над шейпом:
+          /*markerOptionsOpt.fold [(List[Marker], List[RComp_t])] {
+            // Маркер выставить нет возможности. Поэтому нужно собрать CircleMarkerR вместо него.
+            val cmProps = new CircleMarkerPropsR {
+              override val center       = centerLatLng
+              override val radius       = GeoConstants.CircleMarkers.RADIUS_PX
+              override val fillColor    = _fillColor.orElse(_strokeColor)
+              override val fillOpacity  = 1.0
+              override val stroke       = false
               override val onClick: UndefOr[js.Function1[MouseEvent, Unit]] = {
-                cbFun1ToJsCb { _clickSomewhereEvent(nodeId) }
+                _onClickCbF( centerMgp )
               }
             }
-            PolygonR(opts)()
-          }
+            val cm = CircleMarkerR(cmProps)()
+              .asInstanceOf[RComp_t]
+            val shapeComponents2 = cm :: shapeComponents0
+            (Nil, shapeComponents2)
 
-          iter2.toSeq
+          } { markerOptions =>*/
+            // Есть данные для рендера маркера. Собираем маркер:
+            val marker = Leaflet.marker( resTuple.latLng, markerOptions )
+            marker.nodeId = nodeId
+            val markers = marker :: Nil
+            (markers, shapeComponents0)
+          //}
         }
 
+        // Превратить итератор аккамуляторов в два стабильных аккамулятора.
+        val (markers9, shapeComponents9) = iter
+          .foldLeft( (List.empty[List[Marker]], List.empty[List[JsComponentU[_,_,_]]]) ) {
+            case ((markersAcc, shapeComponentsAcc), (markers, shapeComponents)) =>
+              (markers :: markersAcc,
+                shapeComponents :: shapeComponentsAcc)
+          }
+
+
+        // Вернуть итоговый react-компонент:
         LayerGroupR()(
 
-          // Полигоны, мультиполигоны.
-          for (_ <- _polygons.headOption) yield {
+          // Полигоны, мультиполигоны, круги.
+          for (_ <- shapeComponents9.headOption) yield {
             LayerGroupR()(
-              _polygons: _*
+              shapeComponents9.flatten: _*
             )
           },
 
-          // Гео-шейпы узлов.
-          // Круги -- выше всех остальных шейпов, но ниже маркеров.
-          for (_ <- _circles.headOption) yield {
-            LayerGroupR()(
-              _circles: _*
-            )
-          },
-
-          // Точки-маркеры поверх вообще всех кружочков
-          for (_ <- _markers.headOption) yield {
+          // Точки-маркеры поверх вообще всех svg-шейпов
+          for (_ <- markers9.headOption) yield {
             MarkerClusterGroupR(
               new MarkerClusterGroupPropsR {
-                override val markers      = _markers
+                override val markers      = markers9.iterator.flatten.toJSArray
                 override val markerClick  = _onMarkerClickedF
               }
             )()

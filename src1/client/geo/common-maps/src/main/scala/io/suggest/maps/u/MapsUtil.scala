@@ -1,10 +1,12 @@
 package io.suggest.maps.u
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.geo.{GeoConstants, CircleGs, MGeoPoint}
+import io.suggest.geo._
 import io.suggest.sjs.common.model.loc.MGeoPointJs
-import io.suggest.sjs.leaflet.Leaflet
+import io.suggest.sjs.leaflet.{Leaflet, PolygonCoords_t, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LatLng, Point}
+
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -70,6 +72,40 @@ object MapsUtil {
       // OffsetPosition, decimal degrees
       geoCircle.center.lon + dLon * D180 / Math.PI
     )
+  }
+
+
+  private def _polygon2leafletCoordsArr(polygonGs: PolygonGs) = {
+    polygonGs
+      .outerWithHoles
+      .iterator
+      .map { lsgs =>
+        lsgs
+          .coords
+          .map( MapsUtil.geoPoint2LatLng )
+          .toJSArray
+      }
+      .toJSArray
+  }
+  def polygon2leafletCoords(polygonGs: PolygonGs): PolygonLatLngs_t = {
+    _polygon2leafletCoordsArr( polygonGs )
+  }
+
+  def multiPolygon2leafletCoords(multiPolygonGs: MultiPolygonGs): PolygonLatLngs_t = {
+    multiPolygonGs
+      .polygons
+      .iterator
+      .map( _polygon2leafletCoordsArr )
+      .toJSArray
+  }
+
+  def lPolygon2leafletCoords(lPolygon: ILPolygonGs): PolygonLatLngs_t = {
+    lPolygon match {
+      case polygonGs: PolygonGs =>
+        polygon2leafletCoords( polygonGs )
+      case multiPolygonGs: MultiPolygonGs =>
+        multiPolygon2leafletCoords( multiPolygonGs )
+    }
   }
 
 }

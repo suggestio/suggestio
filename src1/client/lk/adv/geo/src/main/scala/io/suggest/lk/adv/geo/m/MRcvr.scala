@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
+import io.suggest.maps.nodes.MGeoNodesResp
 
 /**
   * Suggest.io
@@ -31,18 +32,18 @@ object MRcvr {
   * @param popupResp Потенциальные данные попапа над маркером (точкой) ресивера.
   *                  Приходят с сервера по запросу, однако сам факт наличия/необходимости
   *                  такого запроса отражается в form.rcvrPopup.
-  * @param rcvrsGeo Маркеры и шейпы карты ресиверов.
+  * @param rcvrsGeo Данные по маркерам и шейпам карты ресиверов.
   * @param popupState Состояние попапа на ресивере.
   */
 case class MRcvr(
                   popupResp   : Pot[MRcvrPopupResp]     = Pot.empty,
-                  rcvrsGeo    : Pot[MRcvrsGeo]          = Pot.empty,
+                  rcvrsGeo    : Pot[MGeoNodesResp]      = Pot.empty,
                   popupState  : Option[MRcvrPopupS]     = None,
                   rcvrsMap    : RcvrsMap_t              = Map.empty
 ) {
 
   def withPopupResp(popupResp: Pot[MRcvrPopupResp]) = copy(popupResp = popupResp)
-  def withRcvrsGeo(rcvrsGeo: Pot[MRcvrsGeo]) = copy(rcvrsGeo = rcvrsGeo)
+  def withRcvrsGeo(rcvrsGeo: Pot[MGeoNodesResp]) = copy(rcvrsGeo = rcvrsGeo)
   def withPopupState(popupState: Option[MRcvrPopupS]) = copy(popupState = popupState)
   def withRcvrMap(rcvrsMap: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap)
 

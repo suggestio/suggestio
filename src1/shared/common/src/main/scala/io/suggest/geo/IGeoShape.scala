@@ -66,6 +66,15 @@ sealed trait IGeoShape {
     shapeType.isArea.contains(true)
   }
 
+  /** Является ли шейп leaflet-полигоном? Несколько фигур подходит под это описание. */
+  def isLPolygon = false
+
+}
+
+
+/** Маркер-трейт leaflet-полигона. */
+sealed trait ILPolygonGs extends IGeoShape {
+  override def isLPolygon = true
 }
 
 
@@ -209,6 +218,7 @@ case class PolygonGs(
                       holes : List[LineStringGs] = Nil
                     )
   extends IGeoShapeQuerable
+  with ILPolygonGs
 {
   override def shapeType = GsTypes.Polygon
   override def firstPoint = outer.firstPoint
@@ -224,7 +234,10 @@ object PolygonGs {
 
 
 /** Гео-шейп мульти-полигона. */
-case class MultiPolygonGs(polygons: Seq[PolygonGs]) extends IGeoShapeQuerable {
+case class MultiPolygonGs(polygons: Seq[PolygonGs])
+  extends IGeoShapeQuerable
+  with ILPolygonGs
+{
   override def shapeType = GsTypes.MultiPolygon
   override def firstPoint = polygons.head.firstPoint
 }

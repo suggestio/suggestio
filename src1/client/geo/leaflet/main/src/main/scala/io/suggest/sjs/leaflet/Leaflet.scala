@@ -49,7 +49,7 @@ object Leaflet extends js.Object {
 
   def polyline(latLng: LatLng, options: PolylineOptions = js.native): Polyline = js.native
 
-  def polygon(latLngs: PolygonLatLngs_t, options: PolylineOptions): Polygon = js.native
+  def polygon(latLngs: PolygonLatLngs_t, options: PolylineOptions = js.native): Polygon = js.native
 
   def multiPolyline(latLngs: js.Array[js.Array[LatLng]], options: PolylineOptions): MultiPolyline = js.native
 
