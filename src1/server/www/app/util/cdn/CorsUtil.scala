@@ -43,8 +43,12 @@ class CorsUtil @Inject() (
   }
 
   def allowHeaders = {
-    configuration.getStringList("cors.allow.headers")
-      .fold(Option.empty[String]) { hs => Some( hs.mkString(", ") ) }
+    // Эти хидеры нужны для boopickle-общения через CDN. Т.е. бинарь подразумевает эти необычные хидеры:
+    val hdrs0 = Set( CONTENT_TYPE, ACCEPT )
+    val v = configuration.getStringList("cors.allow.headers")
+      .fold( hdrs0 ) { hdrs0 ++ _ }
+      .mkString(", ")
+    Some(v)
   }
 
   def allowCreds = configuration.getBoolean("cors.allow.credentials")
@@ -54,15 +58,16 @@ class CorsUtil @Inject() (
     val ao = allowOrigins
     if (!ao.isEmpty) {
       acc ::= ACCESS_CONTROL_ALLOW_ORIGIN -> ao
+
       val am = allowMethods
-      if (!am.isEmpty)
+      if (am.nonEmpty)
         acc ::= ACCESS_CONTROL_ALLOW_METHODS -> am
-      val ah = allowHeaders
-      if (ah.isDefined)
-        acc ::= ACCESS_CONTROL_ALLOW_HEADERS -> ah.get
-      val ac = allowCreds
-      if (ac.nonEmpty)
-        acc ::= ACCESS_CONTROL_ALLOW_CREDENTIALS -> ac.get.toString
+
+      for (ah <- allowHeaders )
+        acc ::= ACCESS_CONTROL_ALLOW_HEADERS -> ah
+
+      for (ac <- allowCreds)
+        acc ::= ACCESS_CONTROL_ALLOW_CREDENTIALS -> ac.toString
     }
     acc
   }
