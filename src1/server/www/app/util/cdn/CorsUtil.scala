@@ -84,7 +84,7 @@ class CorsUtil @Inject() (
   /** На какие запросы навешивать CORS-allow хидеры? */
   val ADD_HEADERS_URL_RE: Regex = {
     configuration.getString("cors.allow.headers.for.url.regex")
-      .getOrElse { "^/v?assets/" }
+      .getOrElse { "^/(v?assets/|~)" }
       .r
   }
 
