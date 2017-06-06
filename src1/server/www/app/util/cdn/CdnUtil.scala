@@ -110,7 +110,8 @@ class CdnUtil @Inject() (
               !(cdnHost equalsIgnoreCase reqHost)
           }
         } yield {
-          protoLc + "://" + cdnHost
+          // Не указываем протокол. Это хорошо, когда CDN работает по HTTP, а раздаёт по HTTPS.
+          "//" + cdnHost
         }
       }
       urlPrefixOpt.fold(c) { urlPrefix =>
