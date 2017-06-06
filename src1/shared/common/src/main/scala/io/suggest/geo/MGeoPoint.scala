@@ -39,7 +39,7 @@ trait IGeoPoint {
 
 object MGeoPoint {
 
-  implicit val pickler: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
+  implicit val MGEO_POINT_PICKLER: Pickler[MGeoPoint] = generatePickler[MGeoPoint]
 
   /** Проверить точку на валидность координат. */
   def isValid(gp: MGeoPoint): Boolean = {

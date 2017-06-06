@@ -17,8 +17,8 @@ object MLamForm {
   /** Поддержка бинарной сериализации модели между клиентом и сервером. */
   implicit val mLamFormPickler: Pickler[MLamForm] = {
     implicit val mMapProps = MMapProps.mmapsPickler
-    implicit val mGeoPointP = MGeoPoint.pickler
-    implicit val mGeoCircle = CircleGs.CIRCLE_GS_PICKLER
+    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
+    implicit val mCircleGsP = CircleGs.CIRCLE_GS_PICKLER
     implicit val mAdvPeriodP = MAdvPeriod.mAdvPeriodPickler
     generatePickler[MLamForm]
   }
@@ -30,7 +30,6 @@ object MLamForm {
   *
   * @param datePeriod Начальные данные периода размещения. Для них же и вычислена начальное цена.
   * @param mapCursor Состояние "курсора" на гео-карте.
-  * @param opts Активные опции формы.
   */
 case class MLamForm(
                      mapProps         : MMapProps,

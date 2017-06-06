@@ -1,9 +1,11 @@
 package io.suggest.lk.adv.geo.r
 
+import diode.ModelRO
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
+import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.lk.router.jsRoutes
 import io.suggest.maps.nodes.MAdvGeoMapNodeProps
 import io.suggest.pick.PickleUtil
@@ -29,31 +31,34 @@ import scala.scalajs.js
 trait ILkAdvGeoApi extends ITagsApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  def rcvrsMap(adId: String): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]]
+  def rcvrsMap(): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]]
 
   /** Запрос с сервера попапа над ресивером. */
-  def rcvrPopup(adId: String, nodeId: String): Future[MRcvrPopupResp]
+  def rcvrPopup(nodeId: String): Future[MRcvrPopupResp]
 
   /** Запрос карты текущий георазмещений с сервера. */
-  def existGeoAdvsMap(adId: String): Future[js.Array[GjFeature]]
+  def existGeoAdvsMap(): Future[js.Array[GjFeature]]
 
   /** Запрос содержимого попапа над указанной гео-областью. */
   def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp]
 
   /** Запросить у сервера рассчёт цены. */
-  def getPrice(adId: String, mFormS: MFormS): Future[MGetPriceResp]
+  def getPrice(mFormS: MFormS): Future[MGetPriceResp]
 
   /** Окончательный сабмит формы георазмещения. */
-  def formSubmit(adId: String, mFormS: MFormS): Future[String]
+  def formSubmit(mFormS: MFormS): Future[String]
 
   /** Получение инфы по узлу. */
-  def nodeAdvInfo(nodeId: String, adId: String): Future[MNodeAdvInfo]
+  def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo]
 
 }
 
 
 /** Реализация [[ILkAdvGeoApi]]. */
-class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
+class LkAdvGeoApiImpl( confRO: ModelRO[MOther] )
+  extends ILkAdvGeoApi
+  with TagsApiImplXhr
+{
 
   import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
   import MRcvrPopupResp.pickler
@@ -64,9 +69,9 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def rcvrsMap(adId: String): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]] = {
+  override def rcvrsMap(): Future[Seq[BooGjFeature[MAdvGeoMapNodeProps]]] = {
     // Надо запустить запрос на сервер для получения списка узлов.
-    val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap(adId)
+    val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap()
     for (json <- Xhr.requestJson( route )) yield {
       val gjFeatures = json.asInstanceOf[js.Array[GjFeature]]
       BooGjFeature.fromFeaturesIter[MAdvGeoMapNodeProps]( gjFeatures )
@@ -76,9 +81,9 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
 
 
   /** Запрос с сервера попапа над ресивером. */
-  override def rcvrPopup(adId: String, nodeId: String): Future[MRcvrPopupResp] = {
+  override def rcvrPopup(nodeId: String): Future[MRcvrPopupResp] = {
     val route = jsRoutes.controllers.LkAdvGeo.rcvrMapPopup(
-      adId    = adId,
+      adId    = confRO().adId,
       nodeId  = nodeId
     )
     Xhr.unBooPickleResp[MRcvrPopupResp] {
@@ -87,8 +92,10 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
   }
 
 
-  override def existGeoAdvsMap(adId: String): Future[js.Array[GjFeature]] = {
-    val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsMap(adId)
+  override def existGeoAdvsMap(): Future[js.Array[GjFeature]] = {
+    val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsMap(
+      adId = confRO().adId
+    )
     Xhr.requestJson(route)
       .asInstanceOf[Future[js.Array[GjFeature]]]
   }
@@ -101,16 +108,20 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
   }
 
   /** Запросить у сервера рассчёт цены. */
-  override def getPrice(adId: String, mFormS: MFormS): Future[MGetPriceResp] = {
-    val route = jsRoutes.controllers.LkAdvGeo.getPriceSubmit(adId)
+  override def getPrice(mFormS: MFormS): Future[MGetPriceResp] = {
+    val route = jsRoutes.controllers.LkAdvGeo.getPriceSubmit(
+      adId = confRO().adId
+    )
     val bbuf = PickleUtil.pickle(mFormS)
     Xhr.unBooPickleResp[MGetPriceResp] {
       Xhr.requestBinary(route, bbuf)
     }
   }
 
-  override def formSubmit(adId: String, mFormS: MFormS): Future[String] = {
-    val route = jsRoutes.controllers.LkAdvGeo.forAdSubmit(adId)
+  override def formSubmit(mFormS: MFormS): Future[String] = {
+    val route = jsRoutes.controllers.LkAdvGeo.forAdSubmit(
+      adId = confRO().adId
+    )
     val bbuf = PickleUtil.pickle(mFormS)
     val fut = Xhr.successIf200 {
       Xhr.sendBinary(route, bbuf, Xhr.RespTypes.ANY)
@@ -120,8 +131,11 @@ class LkAdvGeoApiImpl extends ILkAdvGeoApi with TagsApiImplXhr {
     }
   }
 
-  override def nodeAdvInfo(nodeId: String, adId: String): Future[MNodeAdvInfo] = {
-    val route = jsRoutes.controllers.LkBill2.nodeAdvInfo( nodeId, adId )
+  override def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo] = {
+    val route = jsRoutes.controllers.LkBill2.nodeAdvInfo(
+      nodeId  = nodeId,
+      forAdId = confRO().adId
+    )
     Xhr.unBooPickleResp[MNodeAdvInfo](
       Xhr.requestBinary( route )
     )

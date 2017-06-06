@@ -17,7 +17,6 @@ import scala.scalajs.js
   */
 class GeoAdvExistInitAh[M](
                           api         : ILkAdvGeoApi,
-                          adIdProxy   : ModelRO[String],
                           existAdvsRW : ModelRW[M, Pot[js.Array[GjFeature]]]
                         )
   extends ActionHandler(existAdvsRW)
@@ -29,7 +28,7 @@ class GeoAdvExistInitAh[M](
     case CurrGeoAdvsInit =>
       val fx = Effect {
         for {
-          resp <- api.existGeoAdvsMap(adId = adIdProxy())
+          resp <- api.existGeoAdvsMap()
         } yield {
           SetCurrGeoAdvs(resp)
         }

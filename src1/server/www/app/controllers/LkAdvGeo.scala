@@ -61,6 +61,7 @@ class LkAdvGeo @Inject() (
                            streamsUtil                     : StreamsUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
                            reqUtil                         : ReqUtil,
+                           ignoreAuth                      : IgnoreAuth,
                            cspUtil                         : CspUtil,
                            mdrUtil                         : MdrUtil,
                            lkGeoCtlUtil                    : LkGeoCtlUtil,
@@ -395,12 +396,15 @@ class LkAdvGeo @Inject() (
 
 
   /**
-    * Получение списка маркеров-точек узлов-ресиверов для карты.
-    * @param adId id текущей размещаемой рекламной карточки.
-    *             Пока используется как основание для проверки прав доступа.
+    * Получение списка шейпов и маркеров узлов-ресиверов на карте.
+    *
+    * 2017-06-06: Экшен теперь НЕ проверяет CSRF для возможности кеширования в CDN.
+    * В routes вставлена соотв. волшебная комбинация "/~" для защиты от CSRF-настойчивого js-роутера.
+    *
+    * @return Бинарь с маркерами всех упомянутых узлов + список шейпов.
     */
-  def advRcvrsMap(adId: MEsUuId) = csrf.Check {
-    canAdvAd(adId).async { implicit request =>
+  def advRcvrsMap = {
+    ignoreAuth().async { implicit request =>
       val nodesSrc = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
         val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
         advGeoMapUtil.rcvrNodesMap( msearch )
@@ -414,7 +418,9 @@ class LkAdvGeo @Inject() (
       // Вернуть chunked-ответ с потоком из JSON внутрях.
       Ok.chunked(jsonStrSrc)
         .as( withCharset(JSON) )
-        .withHeaders(CACHE_10)
+        .withHeaders(
+          CACHE_CONTROL -> "public, max-age=20"
+        )
     }
   }
 
@@ -618,12 +624,11 @@ class LkAdvGeo @Inject() (
 
         Ok( ByteString( PickleUtil.pickle(resp) ) )
           // Чисто для подавления двойных запросов. Ведь в теле запроса могут быть данные формы, которые варьируются.
-          .withHeaders(CACHE_10)
+          .withHeaders(
+            CACHE_CONTROL -> "private, max-age=10"
+          )
       }
     }
   }
-
-  /** Хидер короткого кеша, в основном для защиты от повторяющихся запросов. */
-  private def CACHE_10 = CACHE_CONTROL -> "private, max-age=10"
 
 }

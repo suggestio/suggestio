@@ -65,43 +65,6 @@ class ExpireSessionUtil @Inject() (
   // Тут был код, патчащий исходный реквест. Но как оказалось, нельзя пропатчить сессию в реквесте: там lazy val.
   // Поэтому проверка TTL вернулась в SessionUtil.
 
-  private def prepareRequestSession(session0: Session): Session = {
-    def logPrefix = s"prepareRequestSession(${session0.hashCode()})[${System.currentTimeMillis()}]:"
-
-    val tstampOpt = LoginTimestamp.fromSession(session0)
-
-    if (tstampOpt.isEmpty) {
-      // Нет никакого timestamp'а в сессии. Убедиться, что в передаваемой в экшен сессии нет login-данных.
-      // С учётом малых объемов данных, это быстрая read-only проверка:
-      if ( session0.data.keysIterator.exists( filteredKeySet.contains ) ) {
-        // Внезапно, в сессии без TTL обнаружились какие-то важные данные. Пока просто ругаться в логи.
-        val session2 = clearSessionLoginData(session0)
-        LOGGER.error(s"$logPrefix Session without TTL contains login data! Re-cleared session data:\n old session = ${session0.data}\n new session = $session2")
-        session2
-      } else {
-        // Ничего страшного внутри сессии не обнаружено. Просто возвращаем исходную сессию:
-        session0
-      }
-
-    } else {
-      // Если в сессии есть истёкший TTL, то нужно вернуть почищенную сессию.
-      // Есть timestamp сессии. Разобраться, что с ним надо делать...
-      val hasValidTs = tstampOpt.exists { ts =>
-        // Отфильтровать устаревшие timestamp'ы.
-        ts.isTimestampValid()
-      }
-
-      if (hasValidTs) {
-        // Таймштамп актуален и сейчас. Просто вернуть исходную сессию:
-        session0
-      } else {
-        // Таймштамп истёк -- стереть из сессии таймштамп и username, вернуть обновлённую сессию.
-        LOGGER.trace(s"$logPrefix Hiding expired session for person ${session0.get(PersonId.name)}")
-        clearSessionLoginData(session0)
-      }
-    }
-  }
-
 
   /** Статическая обработка результата работы экшенов на предмет сессии.
     *

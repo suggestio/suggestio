@@ -13,30 +13,31 @@ import io.suggest.primo.IApply1
   */
 object IGeoShape {
 
-  /** Общий boo-pickler для разных реализаций [[IGeoShape]]. */
+  /** Общий boopickler для ИСПОЛЬЗУЕМЫХ реализаций [[IGeoShape]]. */
   implicit val GEO_SHAPE_PICKLER: Pickler[IGeoShape] = {
     // Добавлены только необходимые элементы.
-    // TODO Добавить поддержку остального кода, при необходимости. Но надо быть по-острожнее с GeometryCollectionGs.
     implicit val circleGsP = CircleGs.CIRCLE_GS_PICKLER
     implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
     implicit val pointGsP = PointGs.POINT_GS_PICKLER
-    // ListString: Не особо оно нужно, но polygon тянет её за собой всё равно.
     implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
-    // Возможно, это нужно для рендер полигонов, импортированных из OSM. Фигурирует в OsmUtil.
     implicit val multiPolygonGsP = MultiPolygonGs.MULTI_POLYGON_GS_PICKLER
-    // TODO Добавить как-то GeometryCollectionGs, который фигурирует в OsmUtil. Её pickler взрывоопасен, т.к. дёргает this.
 
-    compositePickler[IGeoShape]
-      .addConcreteType[CircleGs]
-      .addConcreteType[PolygonGs]
+    // Сразу же защищаемся от рекурсивных пиклеров. Это особенно нужно для GeometryCollectionGs:
+    implicit val geoShapeP = compositePickler[IGeoShape]
+
+    geoShapeP
+      .addConcreteType[CircleGs]              // ГеоКруг -- основная гео-фигура в личном кабинете.
+      .addConcreteType[PolygonGs]             // OsmUtil. Карты в ЛК уже вовсю рендерят полигоны.
       .addConcreteType[PointGs]
-      .addConcreteType[LineStringGs]
-      .addConcreteType[MultiPolygonGs]
+      .addConcreteType[LineStringGs]          // OsmUtil. PolygonGs тянет её за собой всё равно.
+      .addConcreteType[MultiPolygonGs]        // OsmUtil
+      .addConcreteType[GeometryCollectionGs]  // OsmUtil, но в реале оно наверное не нужно.
+      // TODO Добавить поддержку остальных моделей при необходимости.
   }
 
 }
 
-/** Базовый трейт для реализаций geoshape. */
+/** Базовый трейт для всех моделей гео-шейпов. */
 sealed trait IGeoShape {
 
   /** Используемый тип фигуры. */
@@ -57,6 +58,14 @@ sealed trait IGeoShape {
       .getOrElse( getClass.getSimpleName )
   }
 
+  /** Занимает ли данная фигура область на карте?
+    * @return true Фигура занимает какую-то область на карте.
+    *         false Фигура является точкой или линией, она не занимает никаких областей на карте.
+    */
+  def isArea: Boolean = {
+    shapeType.isArea.contains(true)
+  }
+
 }
 
 
@@ -68,7 +77,7 @@ sealed trait IGeoShapeQuerable extends IGeoShape
 
 object PointGs {
   implicit val POINT_GS_PICKLER: Pickler[PointGs] = {
-    implicit val mGeoPointP = MGeoPoint.pickler
+    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[PointGs]
   }
 }
@@ -84,7 +93,7 @@ case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
 // TODO Замёржить common-модель MGeoCircle в этот шейп.
 object CircleGs {
   implicit val CIRCLE_GS_PICKLER: Pickler[CircleGs] = {
-    implicit val mGeoPointP = MGeoPoint.pickler
+    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[CircleGs]
   }
 }
@@ -102,13 +111,12 @@ case class CircleGs(
   def radiusKm = radiusM / 1000d
   def withCenter(center: MGeoPoint) = copy(center = center)
   def withRadiusM(radiusM: Double) = copy(radiusM = radiusM)
-
 }
 
 
 object EnvelopeGs {
   implicit def ENVELOPE_GS_PICKLER: Pickler[EnvelopeGs] = {
-    implicit val mGeoPointP = MGeoPoint.pickler
+    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[EnvelopeGs]
   }
 }
@@ -136,18 +144,16 @@ case class EnvelopeGs(
 }
 
 
-// TODO Поддержку boopickle надо бы сюда.
 /** Гео-шейп коллекций любых других геометрий. Не является Querable. */
 case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
   override def shapeType = GsTypes.GeometryCollection
   override def firstPoint = geoms.head.firstPoint
-}
-object GeometryCollectionGs {
-  implicit def GEOMETRY_COLLECTION_PICKLER: Pickler[GeometryCollectionGs] = {
-    implicit val iGeoShapeP = IGeoShape.GEO_SHAPE_PICKLER
-    generatePickler[GeometryCollectionGs]
+  // Занимается или нет область на карте -- это зависит только от шейпов внутри коллекции.
+  override def isArea: Boolean = {
+    geoms.exists(_.isArea)
   }
 }
+// TODO В целях безопасности, boopickle для GeometryCollectionGs генерится внутри IGeoShape с учётом рекурсии.
 
 
 /** Общий интерфейс для [[LineStringGs]] и [[MultiPointGs]] обитает здесь. */
@@ -164,7 +170,7 @@ object MultiPointGs extends IApply1 {
   override type ApplyArg_t = Seq[MGeoPoint]
   override type T = MultiPointGs
   implicit def MULTI_POINT_PICKLER: Pickler[MultiPointGs] = {
-    implicit val mGeoPointP = MGeoPoint.pickler
+    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[MultiPointGs]
   }
 }
@@ -178,7 +184,7 @@ object LineStringGs extends IApply1 {
   override type ApplyArg_t = Seq[MGeoPoint]
   override type T = LineStringGs
   implicit val LINE_STRING_PICKLER: Pickler[LineStringGs] = {
-    implicit val mGeoPointP = MGeoPoint.pickler
+    implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[LineStringGs]
   }
 }

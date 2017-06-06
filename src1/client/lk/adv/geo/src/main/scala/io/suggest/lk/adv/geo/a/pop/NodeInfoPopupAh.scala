@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.a.pop
 
 import diode.data.Pending
 import diode._
-import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, MOther, OpenNodeInfoClick, OpenNodeInfoResp}
+import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, OpenNodeInfoClick, OpenNodeInfoResp}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
 import io.suggest.lk.m.ILkCommonPopupCloseAction
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -19,7 +19,6 @@ import scala.util.Success
   */
 class NodeInfoPopupAh[M](
                           api      : ILkAdvGeoApi,
-                          confRO   : ModelRO[MOther],
                           modelRW  : ModelRW[M, Option[MNodeInfoPopupS]]
                         )
   extends ActionHandler(modelRW)
@@ -36,7 +35,7 @@ class NodeInfoPopupAh[M](
       // Организовать запрос к серверу.
       val fx = Effect {
         api
-          .nodeAdvInfo(nodeId, adId = confRO().adId)
+          .nodeAdvInfo(nodeId)
           .transform { tryRes =>
             val r = OpenNodeInfoResp(rcvrKey, tryRes)
             Success(r)

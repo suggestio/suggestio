@@ -18,7 +18,6 @@ import scala.util.Success
   */
 class RcvrMarkersInitAh[M](
                             api       : ILkAdvGeoApi,
-                            adIdProxy : ModelRO[String],
                             modelRW   : ModelRW[M, Pot[MRcvrsGeo]]
                           )
   extends ActionHandler(modelRW)
@@ -30,7 +29,7 @@ class RcvrMarkersInitAh[M](
     // Сигнал запуска инициализации маркеров с сервера.
     case RcvrMarkersInit =>
       val fx = Effect {
-        api.rcvrsMap( adIdProxy() )
+        api.rcvrsMap()
           .transform { tryResp =>
             val r = InstallRcvrMarkers( tryResp )
             Success( r )

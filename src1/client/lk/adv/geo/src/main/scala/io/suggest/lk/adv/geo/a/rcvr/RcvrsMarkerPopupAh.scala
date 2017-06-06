@@ -19,7 +19,6 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 
 class RcvrsMarkerPopupAh[M](
                              api        : ILkAdvGeoApi,
-                             adIdProxy  : ModelRO[String],
                              rcvrsRW    : ModelRW[M, MRcvr]
                            )
   extends ActionHandler(rcvrsRW)
@@ -32,7 +31,8 @@ class RcvrsMarkerPopupAh[M](
     case rrp: ReqRcvrPopup =>
       // TODO Проверить содержимое rcvrsRW, может там уже есть правильный ответ, и запрос делать не надо.
       val fx = Effect[IAdvGeoFormAction] {
-        api.rcvrPopup(adIdProxy(), nodeId = rrp.nodeId)
+        api
+          .rcvrPopup( nodeId = rrp.nodeId )
           .map { HandleRcvrPopup.apply }
           .recover { case ex: Throwable =>
             HandleRcvrPopupError(ex)

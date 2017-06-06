@@ -24,21 +24,26 @@ var @(name) = {};
 
   @* 2016.dec.14: Запилена поддержка CSRF в JsRoutes для POST-запросов. *@
   var csrfQs = @JavaScript( play.filters.csrf.CSRF.getToken.fold("undefined")(t => s"'${t.name}=${t.value}'") );
+  var csrfQsExist = typeof csrfQs == "string";
 
+  @*
+   * Функция _wA() вызывается напрямую из генерируемых роут (захардкожена в route.f):
+   * _wA({method:"GET", url:"/" + "sc/fads" + _qS([(_o2qs)("a", a0)])})
+   *@
   var _wA = function(r) {
     var method = r.method;
-    var url;
-    if (typeof csrfQs == "string"@if(!csrfAll){ && method == "POST"}) {
+    var url = r.url;
+    @* Выставление CSRF-токена: влияет наличие CSRF в реквесте, method или значение csrfAll,
+     * или наличие '/~' в начале URL в качестве принудительного глобального запрета CSRF для роуты. *@
+    if (csrfQsExist && !url.startsWith("/~")@if(!csrfAll){ && method == "POST"}) {
       var delim;
       var qmark = '?'
-      if (r.url.indexOf(qmark) >= 0) {
+      if (url.indexOf(qmark) >= 0) {
         delim = '&';
       } else {
         delim = qmark;
       }
-      url = r.url + delim + csrfQs;
-    } else {
-      url = r.url;
+      url = url + delim + csrfQs;
     }
     return {
       method: method,

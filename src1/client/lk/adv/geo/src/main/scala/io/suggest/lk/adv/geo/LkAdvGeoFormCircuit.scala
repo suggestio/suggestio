@@ -48,8 +48,6 @@ import scala.concurrent.Future
   */
 object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
 
-  val API = new LkAdvGeoApiImpl
-
   /** Сборка начальной корневой модели. */
   override protected def initialModel: MRoot = {
     // Десериализовывать из base64 из скрытого поля через boopickle + base64.
@@ -100,13 +98,14 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
 
   private val otherRW  = zoomRW(_.other) { _.withOther(_) }
-  private val adIdRW = otherRW.zoom(_.adId)
-  val mFormDataRO = zoom(_.toFormData)
 
-  private def _apiF2fut[T]( apiF: (String, MFormS) => Future[T] ): Future[T] = {
-    val adId = adIdRW.value
+  private val API = new LkAdvGeoApiImpl(otherRW)
+
+  private val mFormDataRO = zoom(_.toFormData)
+
+  private def _apiF2fut[T]( apiF: MFormS => Future[T] ): Future[T] = {
     val mFormS = mFormDataRO.value
-    apiF(adId, mFormS)
+    apiF( mFormS )
   }
 
   /** Функция запуска запроса на сервер для перерасчёта ценника. */
@@ -117,6 +116,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
   private def submitFormFut(): Future[String] = {
     _apiF2fut( API.formSubmit )
   }
+
 
   /** Обработчики экшенов объединяются прямо здесь: */
   override protected val actionHandler: HandlerFunction = {
@@ -133,7 +133,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val rcvrsMarkerPopupAh = new RcvrsMarkerPopupAh(
       api       = API,
-      adIdProxy = adIdRW,
       rcvrsRW   = rcvrRW
     )
 
@@ -180,7 +179,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val geoAdvsInitAh = new GeoAdvExistInitAh(
       api           = API,
-      adIdProxy     = adIdRW,
       existAdvsRW   = geoAdvRW.zoomRW(_.geoJson) { _.withGeoJson(_) }
     )
 
@@ -191,7 +189,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = API,
-      adIdProxy = adIdRW,
       modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
     )
 
@@ -212,7 +209,6 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val nodeInfoPopupAh = new NodeInfoPopupAh(
       api     = API,
-      confRO  = otherRW,
       modelRW = mPopupsRW.zoomRW(_.nodeInfo) { _.withNodeInfo(_) }
     )
 

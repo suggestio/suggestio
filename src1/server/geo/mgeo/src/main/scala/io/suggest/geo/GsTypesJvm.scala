@@ -39,6 +39,12 @@ object GsTypesJvm {
   }
 
 
+  /** Вернуть опциональный объект-компаньон для указанного querable-типа шейпов.
+    *
+    * @param gsType Querable-тип шейпа.
+    * @return Опциональный объект-компаньон.
+    *         None, если тип шейпа не относится к querable-шейпам.
+    */
   def esQuerableCompanionFor(gsType: GsType): Option[GsStaticJvmQuerable] = {
     val cOrNull: GsStaticJvmQuerable = gsType match {
       case GsTypes.Polygon            => PolygonGsJvm

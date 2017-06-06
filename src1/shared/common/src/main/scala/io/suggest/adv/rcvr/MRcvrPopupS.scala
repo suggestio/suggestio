@@ -14,7 +14,7 @@ case class MRcvrPopupS(
 object MRcvrPopupS {
 
   implicit val pickler: Pickler[MRcvrPopupS] = {
-    implicit val mgpPickler = MGeoPoint.pickler
+    implicit val mgpPickler = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[MRcvrPopupS]
   }
 
