@@ -1,15 +1,18 @@
-@(name: String = io.suggest.js.JsRoutesConst.GLOBAL_NAME,
-  csrfAll: Boolean = false)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
+@(name: String = io.suggest.js.JsRoutesConst.GLOBAL_NAME, csrfAll: Boolean = false,
+  cdn: Boolean = false)(routes: play.api.routing.JavaScriptReverseRoute*)(implicit ctx: Context)
 
 @* JS-шаблон генерации play js reverse router.
    Синтаксис вызова шаблона аналогичен вызову helper.javascriptRoutes().
    csrfAll: true заставляет все запросы подписывать по CSRF, а не только POST`ы [false].
+   cdn: Если true, то роутер будет пытаться проводить через CDN все URL, начинающиеся с ~. [false]
  *@
 
 @import io.suggest.common.qs.QsConstants._
 @import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
 @import ctx.request
 @import ctx.api.ctxUtil.HTTPS_ENABLED
+@import ctx.api.cdn.ctx2CdnHost
+@import io.suggest.common.empty.OptionUtil
 
 "use strict";
 
@@ -33,11 +36,12 @@ var @(name) = {};
   var _wA = function(r) {
     var method = r.method;
     var url = r.url;
+    var viaCdn = url.startsWith("/~");
     @* Выставление CSRF-токена: влияет наличие CSRF в реквесте, method или значение csrfAll,
-     * или наличие '/~' в начале URL в качестве принудительного глобального запрета CSRF для роуты. *@
-    if (csrfQsExist && !url.startsWith("/~")@if(!csrfAll){ && method == "POST"}) {
+     * или наличие '/~' в начале URL (viaCdn) в качестве принудительного глобального запрета CSRF для роуты. *@
+    if (csrfQsExist && !viaCdn@if(!csrfAll){ && method == "POST"}) {
       var delim;
-      var qmark = '?'
+      var qmark = '?';
       if (url.indexOf(qmark) >= 0) {
         delim = '&';
       } else {
@@ -45,11 +49,31 @@ var @(name) = {};
       }
       url = url + delim + csrfQs;
     }
+    @* Роутинг GET-запросов, начинающихся с /~, должен идти через CDN. *@
+    var absUrlHost;
+    @OptionUtil.maybeOpt(cdn)(ctx2CdnHost).fold {
+      absUrlHost = hostEsc;
+    } { cdnHost =>
+      if (viaCdn && method == "GET") {
+        absUrlHost = '@cdnHost';
+      } else {
+        absUrlHost = hostEsc;
+      }
+    }
+
+    @* Если запрос через CDN, то надо и относительный url подменять на CDN URL. *@
+    var relUrl;
+    if (absUrlHost != hostEsc) {
+      relUrl = '//'+absUrlHost+url;
+    } else {
+      relUrl = url;
+    }
+
     return {
       method: method,
-      url: url,
-      absoluteURL: function(s){return _s('http',s)+hostEsc+url},
-      webSocketURL: function(s){return _s('ws',s)+hostEsc+url}
+      url: relUrl,
+      absoluteURL: function(s){return _s('http',s)+absUrlHost+url},
+      webSocketURL: function(s){return _s('ws',s)+absUrlHost+url}
     }
   }
 

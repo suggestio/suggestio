@@ -62,7 +62,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
           props = mFormInit.form.mapProps
         ),
         other = MOther(
-          adId = mFormInit.adId
+          adId     = mFormInit.adId
         ),
         adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
           MAdv4Free(

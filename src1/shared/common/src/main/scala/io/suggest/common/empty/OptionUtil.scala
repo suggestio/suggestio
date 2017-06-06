@@ -24,6 +24,14 @@ object OptionUtil {
       None
   }
 
+  @inline
+  def maybeOpt[T](isSome: Boolean)(optF: => Option[T]): Option[T] = {
+    if (isSome)
+      optF
+    else
+      None
+  }
+
   def maybeFut[T](isSome: Boolean)(someF: => Future[Option[T]]): Future[Option[T]] = {
     if (isSome)
       someF

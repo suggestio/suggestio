@@ -26,7 +26,7 @@ class CdnUtil @Inject() (
 {
 
   /** Прочитать из конфига список CDN-хостов для указанного протокола. */
-  private def _getCdnHostsForProto(proto: String): List[String] = {
+  def getCdnHostsForProto(proto: String): List[String] = {
     configuration.getStringList("cdn.hosts." + proto)
       .fold (List.empty[String]) (_.toList)
   }
@@ -40,7 +40,7 @@ class CdnUtil @Inject() (
           .map(_.trim.toLowerCase)
       }
       .map { proto =>
-        proto -> _getCdnHostsForProto(proto)
+        proto -> getCdnHostsForProto(proto)
       }
       .filter { _._2.nonEmpty }
       .toMap
@@ -84,8 +84,13 @@ class CdnUtil @Inject() (
 
   /** Выбрать подходящий CDN-хост для указанного протокола. */
   def chooseHostForProto(protoLc: String): Option[String] = {
-    CDN_PROTO_HOSTS.get(protoLc)
+    CDN_PROTO_HOSTS
+      .get(protoLc)
       .flatMap(_.headOption)    // TODO Выбирать рандомный хост из списка хостов.
+  }
+
+  def ctx2CdnHost(implicit ctx: Context): Option[String] = {
+    chooseHostForProto( ctx.request.myProto )
   }
 
   /** Генератор вызовов к CDN или внутренних. */

@@ -30,7 +30,6 @@ import models.adv.geo.tag.MForAdTplArgs
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IAdProdReq
-import play.api.libs.json.Json
 import play.api.mvc.Result
 import util.acl._
 import util.adv.AdvFormUtil
@@ -414,7 +413,6 @@ class LkAdvGeo @Inject() (
       for (nodesResp <- nodesRespFut) yield {
         val bbuf = PickleUtil.pickle( nodesResp )
         Ok( ByteString(bbuf) )
-          .as( withCharset(JSON) )
           .withHeaders(
             CACHE_CONTROL -> "public, max-age=20"
           )
