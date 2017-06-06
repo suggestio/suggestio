@@ -53,7 +53,7 @@ class CorsUtil @Inject() (
 
   def allowCreds = configuration.getBoolean("cors.allow.credentials")
 
-  lazy val PREFLIGHT_CORS_HEADERS: Seq[(String, String)] = {
+  lazy val PREFLIGHT_CORS_HEADERS: List[(String, String)] = {
     var acc: List[(String, String)] = Nil
     val ao = allowOrigins
     if (!ao.isEmpty) {
