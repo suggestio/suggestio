@@ -153,4 +153,6 @@ object MsgCodes {
 
   val `Multi` = "Multi"
 
+  val `Switch.node` = "Switch.node"
+
 }

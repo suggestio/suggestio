@@ -12,6 +12,7 @@
 @import lk.dsl._
 @import helper._
 @import io.suggest.popup.PopupConstants
+@import io.suggest.i18n.MsgCodes
 
 <!DOCTYPE html>
 <html>
@@ -64,7 +65,7 @@
     @if(showSwitchNodeBtn && ctx.user.isAuth) {
       <a class="btn __size-M __major header_change-node"
          href="@routes.MarketLkAdn.lkList(fromNode = nodeOpt.flatMap(_.id))">
-        @messages("Switch.shop")
+        @messages( MsgCodes.`Switch.node` )
       </a>
     }
 
