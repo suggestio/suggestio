@@ -1,7 +1,7 @@
 package controllers
 
 import _root_.util.jsa.init.ITargetsEmpty
-import com.google.inject.{Inject, Provider, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.sec.util.SessionUtil
 import io.suggest.www.m.mctx.CtxData
 import models.mctx.{Context, Context2Factory}

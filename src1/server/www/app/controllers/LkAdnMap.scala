@@ -1,7 +1,7 @@
 package controllers
 
 import akka.util.ByteString
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.{MLamForm, MLamFormInit}
 import io.suggest.adv.geo.{OnAdvsMap, OnGeoCapturing}
 import io.suggest.es.model.MEsUuId
@@ -38,6 +38,7 @@ import scala.concurrent.Future
   * Description: Контроллер личного кабинета для связывания узла с точкой/местом на карте.
   * На карте в точках размещаются узлы ADN, и это делается за денежки.
   */
+@Singleton
 class LkAdnMap @Inject() (
                            advFormUtil                   : AdvFormUtil,
                            lkAdnMapFormUtil              : LkAdnMapFormUtil,

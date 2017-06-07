@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import com.google.inject.name.Named
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
@@ -29,6 +29,7 @@ import util.stat.{StatCookiesUtil, StatUtil}
  * Description: Контроллер выдачи sio-market.
  * 2014.nov.10: Из-за активного наращивания функционала был разрезан на части, расположенные в controllers.sc.*.
  */
+@Singleton
 class Sc @Inject() (
                      override val logoUtil           : LogoUtil,
                      override val welcomeUtil        : WelcomeUtil,

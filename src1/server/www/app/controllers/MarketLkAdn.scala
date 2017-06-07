@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import controllers.ident._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.MItems
@@ -44,6 +44,7 @@ import scala.concurrent.Future
  * Created: 23.04.14 11:18
  * Description: Унифицированные части личного кабинета.
  */
+@Singleton
 class MarketLkAdn @Inject() (
                               nodesUtil                           : NodesUtil,
                               lkAdUtil                            : LkAdUtil,

@@ -4,7 +4,8 @@ import java.io.File
 import java.time.{Instant, ZoneOffset}
 
 import _root_.util._
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.google.inject.ImplementedBy
+import javax.inject.{Inject, Singleton}
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.ConvertModes

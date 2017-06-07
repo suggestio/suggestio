@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import controllers.sysctl._
 import controllers.sysctl.domain.SmDomains
 import controllers.sysctl.invite.SmSendEmailInvite
@@ -48,6 +48,7 @@ import scala.concurrent.Future
  * Created: 07.02.14 17:21
  * Description: Тут управление компаниями, торговыми центрами и магазинами.
  */
+@Singleton
 class SysMarket @Inject() (
                             override val nodesUtil          : NodesUtil,
                             lkAdUtil                        : LkAdUtil,

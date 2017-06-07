@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
@@ -21,7 +21,7 @@ import views.html.sys1.mdr._
  * Description: Sys Moderation - контроллер, заправляющий s.io-модерацией рекламных карточек.
  * 2016.mar.1: Контроллер разбит на трейты, живущие в [[controllers.sysctl.mdr]].
  */
-
+@Singleton
 class SysMdr @Inject() (
   override val lkAdUtil             : LkAdUtil,
   override val mNodes               : MNodes,

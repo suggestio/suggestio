@@ -411,8 +411,10 @@ class LkAdvGeo @Inject() (
       }
       // Завернуть данные в единый блоб и отправить клиенту.
       for (nodesResp <- nodesRespFut) yield {
-        val bbuf = PickleUtil.pickle( nodesResp )
-        Ok( ByteString(bbuf) )
+        val bytes = ByteString(
+          PickleUtil.pickle( nodesResp )
+        )
+        Ok( bytes )
           .withHeaders(
             CACHE_CONTROL -> "public, max-age=20"
           )

@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
 import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
@@ -17,13 +17,14 @@ import util.xplay.SecHeadersFilterUtil
 import views.html.static._
 
 /**
- * Authors: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- *          Alexander Pestrikov <alexander.pestrikov@cbca.ru>
- * Date: 16.05.13 13:34
- * Статика всякая.
- * 2014.oct.24: Вычищение старой верстки. Ссылки на неё всплывают в поисковиках.
- */
-
+  * Authors: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  *          Alexander Pestrikov <alexander.pestrikov@cbca.ru>
+  * Date: 16.05.13 13:34
+  *
+  * Description: Изначально это был контроллер для всякой статики.
+  * Но постепенно стал контроллером для разных очень общих вещей.
+  */
+@Singleton
 class Static @Inject() (
   override val ignoreAuth         : IgnoreAuth,
   override val corsUtil           : CorsUtil,

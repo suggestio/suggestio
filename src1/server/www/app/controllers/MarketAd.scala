@@ -2,7 +2,7 @@ package controllers
 
 import java.time.OffsetDateTime
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import com.google.inject.name.Named
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.init.routed.MJsiTgs
@@ -42,6 +42,7 @@ import scala.concurrent.Future
  * Created: 06.03.14 11:26
  * Description: Контроллер для работы с рекламным фунционалом.
  */
+@Singleton
 class MarketAd @Inject() (
                            tempImgSupport                          : TempImgSupport,
                            mNodes                                  : MNodes,

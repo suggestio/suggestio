@@ -3,6 +3,7 @@ package controllers
 import java.io.ByteArrayOutputStream
 import java.util.Properties
 import javax.imageio.ImageIO
+import javax.inject.Singleton
 
 import com.google.code.kaptcha.util.Config
 import com.google.inject.Inject
@@ -23,6 +24,7 @@ import scala.util.Random
  * Created: 18.06.14 9:57
  * Description: Контроллер и сопутствующая утиль для капчеванию пользователей.
  */
+@Singleton
 class Captcha @Inject() (
   override val captchaUtil: CaptchaUtil
 )

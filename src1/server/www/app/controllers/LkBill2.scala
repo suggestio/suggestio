@@ -1,7 +1,7 @@
 package controllers
 
 import akka.util.ByteString
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import com.google.inject.name.Named
 import controllers.cbill._
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
@@ -35,6 +35,7 @@ import scala.concurrent.Future
   * Description: Контроллер биллинга второго поколения в личном кабинете.
   * Прошлый контроллер назывался MarketLkBilling.
   */
+@Singleton
 class LkBill2 @Inject() (
                           tfDailyUtil                 : TfDailyUtil,
                           mCalendars                  : MCalendars,

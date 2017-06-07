@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.MNodes
@@ -38,6 +38,7 @@ import scala.concurrent.Future
  * иных сервисах, занимающихся PR-деятельстью.
  * Логический родственник [[MarketAdv]], который занимается размещениями карточек на узлах.
  */
+@Singleton
 class LkAdvExt @Inject() (
                            canAdvAd                        : CanAdvAd,
                            mNodes                          : MNodes,

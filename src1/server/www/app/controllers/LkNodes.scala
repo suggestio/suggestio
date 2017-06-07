@@ -3,7 +3,7 @@ package controllers
 import java.time.OffsetDateTime
 
 import akka.util.ByteString
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
@@ -51,6 +51,7 @@ import scala.concurrent.Future
   * Контроллер также должен препятствовать нежелательной деятельности пользователя:
   * - массового создания маячков с целью занять чужие id'шники.
   */
+@Singleton
 class LkNodes @Inject() (
                           bill2Util                 : Bill2Util,
                           isNodeAdmin               : IsNodeAdmin,

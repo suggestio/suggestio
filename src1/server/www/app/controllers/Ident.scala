@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.{Inject, Singleton}
 import controllers.ident._
 import io.suggest.init.routed.{MJsiTg, MJsiTgs}
 import io.suggest.model.n2.node.MNodes
@@ -32,6 +32,7 @@ import views.html.ident.reg.email._regColumnTpl
  * 2015.jan.27: вынос разжиревших кусков контроллера в util.acl.*, controllers.ident.* и рефакторинг.
  */
 
+@Singleton
 class Ident @Inject() (
                         override val mNodes               : MNodes,
                         override val mailer               : IMailerWrapper,
