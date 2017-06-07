@@ -6,7 +6,7 @@ import io.suggest.sjs.leaflet.layer.group.FeatureGroup
 import io.suggest.sjs.leaflet.map.Layer
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, JSName}
+import scala.scalajs.js.annotation.{JSGlobal, JSImport}
 
 /**
   * Suggest.io
@@ -29,7 +29,7 @@ object MarkerClusterGroup {
     try {
       // Должна быть ошибка, т.к. мы импортируем тут не-commonJS-модуль:
       new McgRequireWrap
-    } catch { case ex: Throwable =>
+    } catch { case _: Throwable =>
       // do nothing - подавить ошибку, т.к. она вполне ожидаема
     }
   }
@@ -42,7 +42,7 @@ object MarkerClusterGroup {
 
 
 //@JSImport("leaflet.markercluster", ???)
-@JSName("L.MarkerClusterGroup")
+@JSGlobal("L.MarkerClusterGroup")
 @js.native
 sealed class MarkerClusterGroup(options: MarkerClusterGroupOptions) extends FeatureGroup with LEventTarget {
 

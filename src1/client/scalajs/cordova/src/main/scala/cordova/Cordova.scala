@@ -1,7 +1,7 @@
 package cordova
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.JSName
+import scala.scalajs.js.annotation.JSGlobal
 
 /**
   * Suggest.io
@@ -9,7 +9,7 @@ import scala.scalajs.js.annotation.JSName
   * Created: 14.10.16 11:35
   * Description: API for cordova.js.
   */
-@JSName("cordova")
+@JSGlobal("cordova")
 @js.native
 object Cordova extends js.Object {
 

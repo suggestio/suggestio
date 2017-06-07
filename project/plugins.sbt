@@ -44,16 +44,16 @@ addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.9-SNAPSHOT")
 // ProGuard занимается обфускацией скомпиленных данных.
 //addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3-SNAPSHOT")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.16")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.17")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
 // Этот плагин зависит от sbt-web, от play он независим, несмотря на название.
 // https://github.com/vmunier/sbt-play-scalajs/pull/12
-addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.3")
+addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.5")
 
 // Плагины для интеграции scalajs + npm + webpack.
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.5.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.6.0")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.5.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.6.0")
 
