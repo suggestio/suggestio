@@ -1,7 +1,10 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+
+import akka.util.ByteString
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
+import io.suggest.pick.PickleUtil
 import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
 import models.mctx.Context
@@ -9,12 +12,14 @@ import models.mproj.ICommonDi
 import play.api.libs.json.JsValue
 import play.api.mvc.BodyParser
 import util.acl._
+import util.adv.geo.AdvGeoMapUtil
 import util.cdn.CorsUtil
 import util.sec.CspUtil
 import util.seo.SiteMapUtil
 import util.stat.StatUtil
 import util.xplay.SecHeadersFilterUtil
 import views.html.static._
+import scala.concurrent.duration._
 
 /**
   * Authors: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -26,18 +31,19 @@ import views.html.static._
   */
 @Singleton
 class Static @Inject() (
-  override val ignoreAuth         : IgnoreAuth,
-  override val corsUtil           : CorsUtil,
-  override val siteMapUtil        : SiteMapUtil,
-  isAuth                          : IsAuth,
-  bruteForceProtect               : BruteForceProtect,
-  statUtil                        : StatUtil,
-  secHeadersFilterUtil            : SecHeadersFilterUtil,
-  cspUtil                         : CspUtil,
-  isSuOrDevelOr404                : IsSuOrDevelOr404,
-  maybeAuth                       : MaybeAuth,
-  override val mCommonDi          : ICommonDi
-)
+                         override val ignoreAuth         : IgnoreAuth,
+                         override val corsUtil           : CorsUtil,
+                         override val siteMapUtil        : SiteMapUtil,
+                         isAuth                          : IsAuth,
+                         bruteForceProtect               : BruteForceProtect,
+                         advGeoMapUtil                   : AdvGeoMapUtil,
+                         statUtil                        : StatUtil,
+                         secHeadersFilterUtil            : SecHeadersFilterUtil,
+                         cspUtil                         : CspUtil,
+                         isSuOrDevelOr404                : IsSuOrDevelOr404,
+                         maybeAuth                       : MaybeAuth,
+                         override val mCommonDi          : ICommonDi
+                       )
   extends SioControllerImpl
   with RobotsTxt
   with SiteMapsXml
@@ -109,7 +115,7 @@ class Static @Inject() (
     * CSP-report -- это JSON в особом формате. Проверить Content-Type, затем распарсить просто как JSON.
     * Валидировать JSON будет уже экшен.
     */
-  def _cspJsonBp: BodyParser[JsValue] = parse.when(
+  private def _cspJsonBp: BodyParser[JsValue] = parse.when(
     predicate = _.contentType.exists { m =>
       m.equalsIgnoreCase( "application/csp-report" ) ||
         m.equalsIgnoreCase( JSON )
@@ -203,6 +209,38 @@ class Static @Inject() (
           }
         }
       )
+    }
+  }
+
+
+  /**
+    * Получение списка шейпов и маркеров узлов-ресиверов на карте.
+    *
+    * Это ресурсоёмкая операция, использует реактивный доступ к множеству узлов,
+    * но при этом возвращает НЕпоточную структуру данных.
+    *
+    * 2017-06-06: Экшен теперь НЕ проверяет CSRF для возможности кеширования в CDN.
+    * В routes вставлена соотв. волшебная комбинация "/~" для защиты от CSRF-настойчивого js-роутера.
+    *
+    * @return Бинарь с маркерами всех упомянутых узлов + список шейпов.
+    */
+  def advRcvrsMap = {
+    ignoreAuth().async { implicit request =>
+      // Собрать данные по узлам.
+      val nodesRespFut = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
+        val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
+        advGeoMapUtil.rcvrNodesMap( msearch )
+      }
+      // Завернуть данные в единый блоб и отправить клиенту.
+      for (nodesResp <- nodesRespFut) yield {
+        val bytes = ByteString(
+          PickleUtil.pickle( nodesResp )
+        )
+        Ok( bytes )
+          .withHeaders(
+            CACHE_CONTROL -> "public, max-age=20"
+          )
+      }
     }
   }
 

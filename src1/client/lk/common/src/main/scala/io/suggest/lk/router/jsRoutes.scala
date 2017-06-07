@@ -26,4 +26,6 @@ sealed trait Controllers extends js.Object {
 
   def MarketAd: MarketAdFormCtl = js.native
 
+  def Static: StaticRoutes = js.native
+
 }

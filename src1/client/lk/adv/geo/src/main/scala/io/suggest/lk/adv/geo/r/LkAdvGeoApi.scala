@@ -7,7 +7,6 @@ import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.lk.router.jsRoutes
-import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
@@ -29,9 +28,6 @@ import scala.scalajs.js
   * @see [[https://geirsson.com/post/2015/10/autowire-acl/]] - почему не autowire.
   */
 trait ILkAdvGeoApi extends ITagsApi {
-
-  /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  def rcvrsMap(): Future[MGeoNodesResp]
 
   /** Запрос с сервера попапа над ресивером. */
   def rcvrPopup(nodeId: String): Future[MRcvrPopupResp]
@@ -55,7 +51,7 @@ trait ILkAdvGeoApi extends ITagsApi {
 
 
 /** Реализация [[ILkAdvGeoApi]]. */
-class LkAdvGeoApiImpl( confRO: ModelRO[MOther] )
+class LkAdvGeoHttpApiImpl(confRO: ModelRO[MOther] )
   extends ILkAdvGeoApi
   with TagsApiImplXhr
 {
@@ -66,16 +62,6 @@ class LkAdvGeoApiImpl( confRO: ModelRO[MOther] )
 
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = jsRoutes.controllers.LkAdvGeo.tagsSearch2
-
-
-  /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
-  override def rcvrsMap(): Future[MGeoNodesResp] = {
-    // Надо запустить запрос на сервер для получения списка узлов.
-    val route = jsRoutes.controllers.LkAdvGeo.advRcvrsMap()
-    Xhr.unBooPickleResp[MGeoNodesResp] {
-      Xhr.requestBinary(route)
-    }
-  }
 
 
   /** Запрос с сервера попапа над ресивером. */

@@ -9,9 +9,9 @@ import io.suggest.bin.ConvCodecs
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
-import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrMarkersInitAh, RcvrsMarkerPopupAh}
+import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.m._
-import io.suggest.lk.adv.geo.r.LkAdvGeoApiImpl
+import io.suggest.lk.adv.geo.r.LkAdvGeoHttpApiImpl
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
@@ -24,8 +24,9 @@ import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
-import io.suggest.maps.c.{MapCommonAh, RadAh}
-import io.suggest.maps.m.{MMapS, MRad, MRadS}
+import io.suggest.lk.router.StaticHttpApi
+import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
+import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
@@ -99,7 +100,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
   private val otherRW  = zoomRW(_.other) { _.withOther(_) }
 
-  private val API = new LkAdvGeoApiImpl(otherRW)
+  private val API = new LkAdvGeoHttpApiImpl(otherRW)
 
   private val mFormDataRO = zoom(_.toFormData)
 
@@ -187,8 +188,9 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
+    val STATIC_API = new StaticHttpApi
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
-      api       = API,
+      api       = STATIC_API,
       modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
     )
 

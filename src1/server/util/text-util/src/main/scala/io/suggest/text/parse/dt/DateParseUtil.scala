@@ -4,8 +4,8 @@ import java.time._
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+import io.suggest.common.coll.Lists
 import io.suggest.text.util.TextUtil
-import io.suggest.util.Lists
 import io.suggest.util.logs.MacroLogsImpl
 
 import scala.collection.mutable

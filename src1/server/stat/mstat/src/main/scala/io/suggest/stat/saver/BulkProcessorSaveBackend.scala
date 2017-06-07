@@ -62,6 +62,7 @@ class BulkProcessorSaveBackend @Inject() (
     _asyncSafe {
       val irb = mStats.prepareIndex(stat).request()
       bp.add(irb)
+      None    // Не возвращать инстанс BP наружу, пусть лучше будет какой-нибудь мусор.
     }
   }
 

@@ -6,7 +6,7 @@ import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
-import io.suggest.lk.adv.geo.r.rcvr.{RcvrMarkersR, RcvrPopupR}
+import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
 import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS, MMapS, MRad}

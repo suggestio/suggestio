@@ -42,7 +42,6 @@ import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 /**
   * Suggest.io
@@ -72,7 +71,7 @@ class LkAdvGeo @Inject() (
                            override val tagSearchUtil      : LkTagsSearchUtil,
                            override val tagsEditFormUtil   : TagsEditFormUtil,
                            override val mCommonDi          : ICommonDi
-)
+                         )
   extends SioControllerImpl
   with MacroLogsImpl
   with NodeTagsEdit
@@ -393,34 +392,6 @@ class LkAdvGeo @Inject() (
     }
   }
 
-
-  /**
-    * Получение списка шейпов и маркеров узлов-ресиверов на карте.
-    *
-    * 2017-06-06: Экшен теперь НЕ проверяет CSRF для возможности кеширования в CDN.
-    * В routes вставлена соотв. волшебная комбинация "/~" для защиты от CSRF-настойчивого js-роутера.
-    *
-    * @return Бинарь с маркерами всех упомянутых узлов + список шейпов.
-    */
-  def advRcvrsMap = {
-    ignoreAuth().async { implicit request =>
-      // Собрать данные по узлам.
-      val nodesRespFut = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
-        val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
-        advGeoMapUtil.rcvrNodesMap( msearch )
-      }
-      // Завернуть данные в единый блоб и отправить клиенту.
-      for (nodesResp <- nodesRespFut) yield {
-        val bytes = ByteString(
-          PickleUtil.pickle( nodesResp )
-        )
-        Ok( bytes )
-          .withHeaders(
-            CACHE_CONTROL -> "public, max-age=20"
-          )
-      }
-    }
-  }
 
 
   /** Текущие георазмещения карточки, т.е. размещения на карте в кружках.

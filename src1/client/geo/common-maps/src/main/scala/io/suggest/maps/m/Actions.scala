@@ -1,7 +1,10 @@
 package io.suggest.maps.m
 
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
+import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.common.spa.DAction
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -59,3 +62,12 @@ case class RadiusDragEnd(geoPoint: MGeoPoint) extends IMapsAction with IGeoPoint
 /** Команда к открытию попапа над гео-шейпом (кружком) по уже существующими размещениям. */
 case class OpenAdvGeoExistPopup(itemId: Double, geoPoint: MGeoPoint) extends ISetMapCenterForPopup
 
+
+
+
+/** Экшен запуска инициализации карты маркеров ресиверов. */
+case object RcvrMarkersInit extends IMapsAction
+/** Экшен выставления указанных recevier-маркеров в состояние. */
+case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IMapsAction
+
+case class ReqRcvrPopup(nodeId: String, geoPoint: MGeoPoint) extends ISetMapCenterForPopup

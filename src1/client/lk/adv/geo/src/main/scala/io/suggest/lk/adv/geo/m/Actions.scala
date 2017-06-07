@@ -3,9 +3,7 @@ package io.suggest.lk.adv.geo.m
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
-import io.suggest.geo.MGeoPoint
-import io.suggest.maps.m.{IMapsAction, ISetMapCenterForPopup, OpenAdvGeoExistPopup}
-import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.maps.m.{IMapsAction, OpenAdvGeoExistPopup}
 import io.suggest.sjs.common.geo.json.GjFeature
 
 import scala.scalajs.js
@@ -26,21 +24,12 @@ case class HandleRcvrPopup(resp: MRcvrPopupResp) extends IAdvGeoFormAction
 /** Ошибка запроса по теме попапа. */
 case class HandleRcvrPopupError(ex: Throwable) extends IAdvGeoFormAction
 
-case class ReqRcvrPopup(nodeId: String, geoPoint: MGeoPoint) extends ISetMapCenterForPopup
-
 /** Экшен замены значения галочки размещения на главном экране. */
 case class SetOnMainScreen(checked: Boolean) extends IAdvGeoFormAction
 
 
 /** Экшен на тему изменения статуса ресивера. */
 case class SetRcvrStatus(rcvrKey: RcvrKey, checked: Boolean) extends IAdvGeoFormAction
-
-
-/** Экшен запуска инициализации карты маркеров ресиверов. */
-case object RcvrMarkersInit extends IAdvGeoFormAction
-
-/** Экшен выставления указанных recevier-маркеров в состояние. */
-case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IAdvGeoFormAction
 
 
 /** Команда инициализации кружчков и др.фигурок текущего размещния. */

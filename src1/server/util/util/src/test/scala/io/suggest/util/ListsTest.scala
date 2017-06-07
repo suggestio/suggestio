@@ -1,7 +1,7 @@
 package io.suggest.util
 
 import org.scalatest._
-import Lists._
+import io.suggest.common.coll.Lists._
 
 /**
  * Suggest.io

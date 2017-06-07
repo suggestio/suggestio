@@ -1,8 +1,8 @@
-package io.suggest.util
+package io.suggest.common.coll
 
-import collection.mutable
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
+import scala.collection.mutable
 import scala.language.higherKinds
 
 /**
@@ -18,7 +18,7 @@ object Lists {
    * [{a,[1,2,3]}, {b,[1,5,7]}, ...]  =>  [{1,[a,b]}, {2,[b]}, ...]
    * @param source исходная мапа, подлежащая выворачиванию.
    */
-  def insideOut[K,V](source:Map[K, Traversable[V]]) : Map[V, Set[K]] = {
+  def insideOut[K,V](source: Map[K, Traversable[V]]): Map[V, Set[K]] = {
     // разворачиваем исходный список в [{1,a}, {2,a}, .., {1,b}, ...]
     val flatVKList = source.foldLeft(List[(V,K)]()) { case (_acc, (_k, _vl)) =>
       _vl.foldLeft(_acc) { case (__acc, __v) =>  (__v, _k) :: __acc }
@@ -36,7 +36,7 @@ object Lists {
    * @param ms Мапа для мержа.
    * @param f Функция обработки коллизий ключей, совпадает MergeF в dict:merge/3: (K,V1,V2) => V
    */
-  def mergeMaps[K,V](ms: Map[K, V] *)(f: (K,V,V) => V) : Map[K, V] = {
+  def mergeMaps[K,V](ms: Map[K, V]*)(f: (K,V,V) => V): Map[K, V] = {
     (Map[K, V]() /: (for (m <- ms; kv <- m) yield kv)) { (a, kv) =>
       a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
     }
@@ -47,7 +47,7 @@ object Lists {
    * Тоже самое для mutable-словаря. Стоит заменить это добро на нормальный вызов с collections.MapLike и манифестами.
    * @return
    */
-  def mergeMutableMaps[K,V](ms:mutable.Map[K,V] *)(f: (K,V,V) => V) : mutable.Map[K,V] = {
+  def mergeMutableMaps[K,V](ms: mutable.Map[K,V] *)(f: (K,V,V) => V): mutable.Map[K,V] = {
     (mutable.Map[K, V]() /: (for (m <- ms; kv <- m) yield kv)) { (a, kv) =>
       a + (if (a.contains(kv._1)) kv._1 -> f(kv._1, a(kv._1), kv._2) else kv)
     }
@@ -61,7 +61,7 @@ object Lists {
     * @tparam T Тип элемента, для самой функции значения никакого не имеет.
     * @return Один из хвостов списка.
     */
-  @tailrec def nthTail[T](l: List[T], nth:Int): List[T] = {
+  @tailrec def nthTail[T](l: List[T], nth: Int): List[T] = {
     if (nth > 0) {
       nthTail(l.tail, nth - 1)
     } else {
@@ -78,7 +78,7 @@ object Lists {
    * @tparam T Тип элементов в списках.
    * @return Общий хвост. Если такого нет, то будет Nil. Если длины списков разные, то IllegialArgumentException.
    */
-  def getCommonTail[T](l1:List[T], l2:List[T]): List[T] = {
+  def getCommonTail[T](l1: List[T], l2: List[T]): List[T] = {
     if (l1 == l2) {
       l1
     } else if (l1.isEmpty || l2.isEmpty) {
@@ -118,7 +118,7 @@ object Lists {
    * @return Наибольшая общая подпоследовательность в исходном порядке.
    *         Если найденная подпоследовательность состоит из одного элемента, то тоже будет Nil.
    */
-  def findLCS1[T](longer:List[T], shorter:List[T], shorterSize:Int): List[T] = {
+  def findLCS1[T](longer: List[T], shorter: List[T], shorterSize: Int): List[T] = {
     val minSliceLen = 2
     // Отбрасываем головы от shorter-списка (без мусора) и дергаем containsSlice().
     @tailrec def shortenHeads(slice:List[T], sliceLen:Int): List[T] = {
@@ -133,7 +133,7 @@ object Lists {
       }
     }
     // Отбрасываем элементы из хвоста shorten-списка. Отбрасывание из хвоста порождает много мусора, поэтому эта функция вызывается реже.
-    @tailrec def shortenTails(slice0: List[T], slice0sz:Int, acc0:List[T] = Nil, acc0len:Int = 0): List[T] = {
+    @tailrec def shortenTails(slice0: List[T], slice0sz: Int, acc0: List[T] = Nil, acc0len: Int = 0): List[T] = {
       if (slice0sz >= acc0len && slice0sz >= minSliceLen) {
         val lcs = shortenHeads(slice0, slice0sz)
         val maybeLcs: List[T] = if (lcs.isEmpty) {
@@ -178,7 +178,7 @@ object Lists {
    * @tparam T Тип элементов массивов.
    * @return Непрерывная общая под-последовательность элементов или Nil, если ничего общего не найдено.
    */
-  def findRaggedLCS[T](x: Array[T], y:Array[T]): List[T] = {
+  def findRaggedLCS[T](x: Array[T], y: Array[T]): List[T] = {
     var i = 0
     var j = 0
     /* initialize the n x m matrix B and C for dynamic programming
@@ -306,6 +306,29 @@ object Lists {
     */
   def prependOpt[T](xOpt: Option[T])(tail: List[T]): List[T] = {
     xOpt.fold(tail)(_ :: tail)
+  }
+
+
+  /** Аналог flatten для списка/коллекции, но в обратном порядке и без билдеров.
+    * Это бывает эффективно на больших коллекциях, когда не важен порядок.
+    */
+  def flattenRev[T](elems: TraversableOnce[TraversableOnce[T]]): List[T] = {
+    toListRev {
+      elems.toIterator
+        .flatten
+    }
+  }
+
+
+  /** Это как toList, но с выхлопом в обратном порядке.
+    * Это позволяет обойтись без всяких CBF, с минимальным расходом памяти и
+    * минимальной сложностью, т.е. O(N).
+    * @param elems Исходная коллекция или итератор.
+    * @return Список исходных элементов в обратном порядке.
+    */
+  def toListRev[T](elems: TraversableOnce[T]): List[T] = {
+    elems
+      .foldLeft( List.empty[T] ) { (acc, e) => e :: acc }
   }
 
 }

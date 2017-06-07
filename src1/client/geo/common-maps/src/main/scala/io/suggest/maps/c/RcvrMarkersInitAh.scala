@@ -1,9 +1,9 @@
-package io.suggest.lk.adv.geo.a.rcvr
+package io.suggest.maps.c
 
 import diode._
 import diode.data.Pot
-import io.suggest.lk.adv.geo.m.{InstallRcvrMarkers, RcvrMarkersInit}
-import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
+import io.suggest.lk.router.IStaticApi
+import io.suggest.maps.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -17,7 +17,7 @@ import scala.util.Success
   * Description: Diode action handler для инициализации карты ресиверов.
   */
 class RcvrMarkersInitAh[M](
-                            api       : ILkAdvGeoApi,
+                            api       : IStaticApi,
                             modelRW   : ModelRW[M, Pot[MGeoNodesResp]]
                           )
   extends ActionHandler(modelRW)
@@ -29,7 +29,7 @@ class RcvrMarkersInitAh[M](
     // Сигнал запуска инициализации маркеров с сервера.
     case RcvrMarkersInit =>
       val fx = Effect {
-        api.rcvrsMap()
+        api.advRcvrsMap()
           .transform { tryResp =>
             val r = InstallRcvrMarkers( tryResp )
             Success( r )

@@ -1,12 +1,13 @@
-package io.suggest.lk.adv.geo.r.rcvr
+package io.suggest.maps.r
 
 import diode.data.Pot
 import diode.react.ModelProxy
+import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
-import io.suggest.lk.adv.geo.m.ReqRcvrPopup
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
+import io.suggest.maps.m.ReqRcvrPopup
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.model.n2.node.meta.colors.MColorData
@@ -219,7 +220,8 @@ object RcvrMarkersR {
           // Полигоны, мультиполигоны, круги.
           for (_ <- shapeComponents9.headOption) yield {
             LayerGroupR()(
-              shapeComponents9.flatten: _*
+              // Используем ускоренный flattenRev вместо штатного flatten, т.к. порядок нам не важен.
+              Lists.flattenRev( shapeComponents9 ): _*
             )
           },
 
