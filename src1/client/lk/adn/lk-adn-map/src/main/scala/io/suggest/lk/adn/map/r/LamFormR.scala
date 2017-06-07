@@ -1,7 +1,7 @@
 package io.suggest.lk.adn.map.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.adn.map.m.{IRadOpts, MRoot}
+import io.suggest.lk.adn.map.m.{IRadOpts, MLamRcvrs, MRoot}
 import io.suggest.maps.m.{MExistGeoS, MMapS}
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import japgolly.scalajs.react.vdom.prefix_<^._
@@ -36,6 +36,7 @@ object LamFormR {
   protected[this] case class State(
                                     mmapC                 : ReactConnectProxy[MMapS],
                                     radOptsC              : ReactConnectProxy[IRadOpts[_]],
+                                    rcvrsC                : ReactConnectProxy[MLamRcvrs],
                                     priceDslOptC          : ReactConnectProxy[Option[IPriceDslTerm]],
                                     currentPotC           : ReactConnectProxy[MExistGeoS],
                                     radPopupPropsC        : ReactConnectProxy[Option[RadPopupR.PropsVal]]
@@ -74,6 +75,9 @@ object LamFormR {
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
 
+            // Карта покрытия ресиверов.
+            s.rcvrsC { LamRcvrsR.apply },
+
             // Рендер текущих размещений.
             s.currentPotC { CurrentGeoR.apply },
 
@@ -103,6 +107,7 @@ object LamFormR {
       State(
         mmapC         = p.connect(_.mmap),
         radOptsC      = p.connect(identity),
+        rcvrsC        = p.connect(_.rcvrs),
         priceDslOptC  = p.connect(_.price.respDslOpt),
         currentPotC   = p.connect(_.current),
         radPopupPropsC = p.connect { p =>

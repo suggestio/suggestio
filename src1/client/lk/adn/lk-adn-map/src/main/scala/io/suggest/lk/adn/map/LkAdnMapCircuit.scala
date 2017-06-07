@@ -10,8 +10,8 @@ import io.suggest.lk.adn.map.m._
 import io.suggest.lk.adn.map.u.LkAdnMapApiHttpImpl
 import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
 import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
-import io.suggest.maps.c.MapCommonAh
-import io.suggest.maps.m.{MMapS, MRadS}
+import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
+import io.suggest.maps.m.{MMapS, MRadS, RcvrMarkersInit}
 import io.suggest.maps.u.MapsUtil
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
@@ -22,6 +22,10 @@ import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
 import MLamRad.MLamRadFastEq
 import MMapS.MMapSFastEq
 import IRadOpts.IRadOptsFastEq
+import io.suggest.lk.router.StaticHttpApi
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+
+import scala.concurrent.Future
 
 /**
   * Suggest.io
@@ -143,6 +147,15 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       priceUpdateFx = priceUpdateEffect
     )
 
+    val rcvrsRw = zoomRW(_.rcvrs) { _.withRcvrs(_) }
+
+    // Карта покрытия с данными ресиверов:
+    val staticApi = new StaticHttpApi
+    val rcvrsInitAh = new RcvrMarkersInitAh(
+      api     = staticApi,
+      modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) }
+    )
+
     // Склеить все handler'ы последовательно.
     val conseqAh = composeHandlers(
       radAh,
@@ -151,7 +164,8 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       priceAh,
       datePeriodAh,
       radPopupAh,
-      adv4freeAh
+      adv4freeAh,
+      rcvrsInitAh
     )
 
     // Параллельно приделать mapCommonAh, который работает с абстрактными сигналами:
@@ -159,7 +173,13 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
   }
 
 
-  // Запустить в фоне инициализацию текущих размещений.
-  dispatch( CurrGeoAdvsInit )
+  // Конструктор: действия, выполняемые в фоне.
+  Future {
+    // Запустить в фоне инициализацию текущих размещений.
+    dispatch(CurrGeoAdvsInit)
+
+    // Запустить инициализацию географической карты ресиверов.
+    dispatch(RcvrMarkersInit)
+  }
 
 }

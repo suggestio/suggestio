@@ -51,7 +51,7 @@ trait ILkAdvGeoApi extends ITagsApi {
 
 
 /** Реализация [[ILkAdvGeoApi]]. */
-class LkAdvGeoHttpApiImpl(confRO: ModelRO[MOther] )
+class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   extends ILkAdvGeoApi
   with TagsApiImplXhr
 {

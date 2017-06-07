@@ -24,6 +24,7 @@ object MRoot {
         (a.conf eq b.conf) &&
         IRadOpts.IRadOptsFastEq.eqv(a, b) &&
         (a.current eq b.current) &&
+        (a.rcvrs eq b.rcvrs) &&
         (a.adv4free eq b.adv4free) &&
         (a.price eq b.price) &&
         (a.datePeriod eq b.datePeriod)
@@ -44,6 +45,7 @@ case class MRoot(
                   conf          : MLamConf,
                   rad           : MLamRad,
                   current       : MExistGeoS        = MExistGeoS(),
+                  rcvrs         : MLamRcvrs         = MLamRcvrs(),
                   adv4free      : Option[MAdv4Free],
                   price         : MPriceS,
                   datePeriod    : MAdvPeriod
@@ -57,6 +59,7 @@ case class MRoot(
   def withAdv4Free(a4fOpt: Option[MAdv4Free]) = copy(adv4free = a4fOpt)
   def withPrice(price2: MPriceS) = copy(price = price2)
   def withDatePeriod(dp2: MAdvPeriod) = copy(datePeriod = dp2)
+  def withRcvrs(rcvrs: MLamRcvrs) = copy(rcvrs = rcvrs)
 
   /** Создать снимок основных данных, пригодный для отправки на сервер. */
   def toForm: MLamForm = {

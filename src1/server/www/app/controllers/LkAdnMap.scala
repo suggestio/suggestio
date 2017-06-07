@@ -51,7 +51,7 @@ class LkAdnMap @Inject() (
                            cspUtil                       : CspUtil,
                            isNodeAdmin                   : IsNodeAdmin,
                            override val mCommonDi        : ICommonDi
-)
+                         )
   extends SioControllerImpl
   with MacroLogsImpl
 {

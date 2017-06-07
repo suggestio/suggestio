@@ -16,11 +16,11 @@
 @import views.html.stuff._preLoaderLkTpl
 
 @mapfBase(
-  title         = messages(
+  title = messages(
     "x.on.advertisers.map",
     args.mnode.guessDisplayNameOrId.getOrElse( messages("Current.node") )
   ),
-  mnode         = args.mnode,
+  mnode = args.mnode,
   rightBarAfter = Some( _rightPriceContTpl(id = Some(Price.OUTER_CONT_ID))() )
 ) {
 
@@ -42,13 +42,14 @@
 
   @* JS-роутер. *@
   @jsTpl2HtmlTpl( withScriptTag = true )(
-    jsRevRouterTpl( csrfAll = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = true )(
       routes.javascript.LkAdnMap.getPriceSubmit,
       routes.javascript.LkAdnMap.forNodeSubmit,
       routes.javascript.LkAdnMap.currentNodeGeoGj,
-      routes.javascript.LkAdnMap.currentGeoItemPopup
+      routes.javascript.LkAdnMap.currentGeoItemPopup,
+
+      routes.javascript.Static.advRcvrsMap
     )
   )
-
 
 }
