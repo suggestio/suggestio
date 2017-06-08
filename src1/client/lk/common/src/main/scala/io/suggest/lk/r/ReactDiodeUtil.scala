@@ -17,13 +17,13 @@ object ReactDiodeUtil {
     *
     * @param $ Backend scope as-is.
     * @param msg Сообщение для диспатчинга.
-    * @tparam A Тип сообщения.
-    * @tparam P Тип Backend Props, просто компилятор требует, для метода не важен.
+    * @tparam P Тип Backend Props, просто компилятор требует, для метода главное чтобы ModelProxy.
     * @tparam S Тип Backend State, просто компилятор требует, для метода не важен.
+    * @tparam A Тип сообщения msg.
     * @return Callback.
     */
-
-  def dispatchOnProxyScopeCB[A, P, S]($: BackendScope[ModelProxy[P], S], msg: A)(implicit ev: ActionType[A]): Callback = {
+  def dispatchOnProxyScopeCB[P <: ModelProxy[_], S, A]($: BackendScope[P, S], msg: A)
+                                                      (implicit ev: ActionType[A]): Callback = {
     $.props >>= { p =>
       p.dispatchCB( msg )
     }

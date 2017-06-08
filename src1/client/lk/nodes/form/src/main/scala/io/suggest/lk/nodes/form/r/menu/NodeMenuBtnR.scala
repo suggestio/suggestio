@@ -15,10 +15,7 @@ object NodeMenuBtnR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private def onNodeMenuBtnClick(e: ReactEvent): Callback = {
-      e.stopPropagationCB >> dispatchOnProxyScopeCB(
-        $.asInstanceOf[BackendScope[ModelProxy[Any], Unit]],   // TODO Какая-то шляпа тут с типами. _ не подходит почему-то.
-        NodeMenuBtnClick
-      )
+      e.stopPropagationCB >> dispatchOnProxyScopeCB( $, NodeMenuBtnClick )
     }
 
     def render: ReactElement = {

@@ -23,10 +23,7 @@ object TagAddBtnR {
   protected class Backend($: BackendScope[Props, Unit]) {
 
     def onAddBtnClick: Callback = {
-      dispatchOnProxyScopeCB(
-        $.asInstanceOf[BackendScope[ModelProxy[AnyRef], Unit]],
-        AddCurrentTag
-      )
+      dispatchOnProxyScopeCB( $, AddCurrentTag )
     }
 
     def render(p: Props) = {

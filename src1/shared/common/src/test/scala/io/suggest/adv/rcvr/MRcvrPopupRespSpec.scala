@@ -31,11 +31,11 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
   test("boopickle against lightly-filled model") {
     val m1 = MRcvrPopupResp(
       node = Some(MRcvrPopupNode(
-        id = "asdadasdsa",
+        id   = "asdadasdsa",
+        name = Some("test node"),
         checkbox      = Some(MRcvrPopupMeta(
           isCreate    = true,
           checked     = false,
-          name        = "test node",
           isOnlineNow = false,
           dateRange   = MRangeYmdOpt.empty
         )),
@@ -48,12 +48,12 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
   test("boopickle against complexly-filled model") {
     val m2 = MRcvrPopupResp(
       node = Some(MRcvrPopupNode(
-        id = "asdadasdsa",
+        id   = "asdadasdsa",
+        name = Some("test node"),
 
         checkbox      = Some(MRcvrPopupMeta(
           isCreate    = true,
           checked     = false,
-          name        = "test node",
           isOnlineNow = false,
           dateRange   = MRangeYmdOpt.empty
         )),
@@ -64,11 +64,11 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
             nodes = Seq(
               MRcvrPopupNode(
                 id = "sub1-asdadasdsa",
+                name = Some("test subnode"),
 
                 checkbox      = Some(MRcvrPopupMeta(
                   isCreate    = false,
                   checked     = true,
-                  name        = "test subnode",
                   isOnlineNow = true,
                   dateRange   = MRangeYmdOpt(
                     Some(MYmd(2016,1,1)),
@@ -81,12 +81,12 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
                     title = Some("sub-sub-group"),
                     nodes = Seq(
                       MRcvrPopupNode(
-                        id = "sub1-asdadasdsa",
+                        id   = "sub1-asdadasdsa",
+                        name = Some("test subnode"),
 
                         checkbox      = Some(MRcvrPopupMeta(
                           isCreate    = false,
                           checked     = true,
-                          name        = "test subnode",
                           isOnlineNow = true,
                           dateRange   = MRangeYmdOpt(
                             Some(MYmd(2016,1,1)),
@@ -102,12 +102,12 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
               ),
 
               MRcvrPopupNode(
-                id = "sub2-asdadasdsa",
+                id    = "sub2-asdadasdsa",
+                name  = Some("test subnode2"),
 
                 checkbox      = Some(MRcvrPopupMeta(
                   isCreate    = true,
                   checked     = true,
-                  name        = "test subnode2",
                   isOnlineNow = true,
                   dateRange   = MRangeYmdOpt.empty
                 )),
@@ -117,12 +117,12 @@ object MRcvrPopupRespSpec extends SimpleTestSuite {
                     title = Some("sub-su22b-group"),
                     nodes = Seq(
                       MRcvrPopupNode(
-                        id = "sub22-asdadasdsa",
+                        id   = "sub22-asdadasdsa",
+                        name = Some("test subnode"),
 
                         checkbox      = Some(MRcvrPopupMeta(
                           isCreate    = false,
                           checked     = true,
-                          name        = "test subnode",
                           isOnlineNow = false,
                           dateRange   = MRangeYmdOpt(
                             Some(MYmd(2016,1,4)),

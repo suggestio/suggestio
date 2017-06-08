@@ -1,11 +1,10 @@
-package io.suggest.lk.adv.geo.a.rcvr
+package io.suggest.lk.adv.a
 
 import diode._
 import diode.data.Pot
 import io.suggest.adv.rcvr.MRcvrPopupS
-import io.suggest.lk.adv.geo.m._
-import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
-import io.suggest.maps.m.{HandleMapPopupClose, ReqRcvrPopup}
+import io.suggest.lk.adv.m.IRcvrPopupProps
+import io.suggest.maps.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -18,8 +17,8 @@ import io.suggest.sjs.common.msg.ErrorMsgs
   */
 
 class RcvrsMarkerPopupAh[M](
-                             api        : ILkAdvGeoApi,
-                             rcvrsRW    : ModelRW[M, MRcvr]
+                             api        : IRcvrPopupApi,
+                             rcvrsRW    : ModelRW[M, IRcvrPopupProps]
                            )
   extends ActionHandler(rcvrsRW)
   with Log
@@ -30,10 +29,10 @@ class RcvrsMarkerPopupAh[M](
     // Сигнал запуска запроса с сервера содержимого попапа для ресивера.
     case rrp: ReqRcvrPopup =>
       // TODO Проверить содержимое rcvrsRW, может там уже есть правильный ответ, и запрос делать не надо.
-      val fx = Effect[IAdvGeoFormAction] {
+      val fx = Effect[IMapsAction] {
         api
           .rcvrPopup( nodeId = rrp.nodeId )
-          .map { HandleRcvrPopup.apply }
+          .map { HandleRcvrPopupResp.apply }
           .recover { case ex: Throwable =>
             HandleRcvrPopupError(ex)
           }
@@ -48,7 +47,7 @@ class RcvrsMarkerPopupAh[M](
       updated(v2, fx)
 
     // Есть ответ от сервера на запрос попапа, надо закинуть ответ в состояние.
-    case hrp: HandleRcvrPopup =>
+    case hrp: HandleRcvrPopupResp =>
       // Нужно залить в состояние ответ сервера
       val v0 = value
       val v2 = v0.withPopupResp(

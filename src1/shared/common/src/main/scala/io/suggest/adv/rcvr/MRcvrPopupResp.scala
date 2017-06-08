@@ -61,21 +61,25 @@ object IRcvrPopupNode extends NodesTreeApiIId with NodesTreeWalk {
   */
 sealed trait IRcvrPopupNode extends IId[String] {
 
+  /** id узла. */
   override val id     : String
 
+  /** Отображаемое название узла. */
+  val name            : Option[String]
+
+  /** Данные по чек-боксу, если надо отображать. */
   val checkbox        : Option[MRcvrPopupMeta]
 
+  /** Подгруппы узлов текущего узла. */
   val subGroups       : Seq[MRcvrPopupGroup]
 
 }
 
 
-/** Описание узла с данными одного узла в ответе [[MRcvrPopupResp]].
-  *
-  * @param id id узла.
-  */
+/** Описание узла с данными одного узла в ответе [[MRcvrPopupResp]]. */
 case class MRcvrPopupNode(
                            override val id              : String,
+                           override val name            : Option[String],
                            override val checkbox        : Option[MRcvrPopupMeta],
                            override val subGroups       : Seq[MRcvrPopupGroup]
                          )
@@ -92,7 +96,6 @@ object MRcvrPopupMeta {
   * @param isCreate true -- ожидается создание размещения.
   *                 false -- возможно удаление текущего размещения.
   * @param checked Исходное состояние галочки.
-  * @param name Отображаемое название узла.
   * @param isOnlineNow Сейчас активен?
   * @param dateRange Диапазон дат размещения, если есть.
   *                  Если содержит хоть какое-то значение внутри, значит уже есть проплаченное срочное размещение.
@@ -100,7 +103,6 @@ object MRcvrPopupMeta {
 case class MRcvrPopupMeta(
                            isCreate        : Boolean,
                            checked         : Boolean,
-                           name            : String,
                            isOnlineNow     : Boolean,
                            dateRange       : MRangeYmdOpt
                          )

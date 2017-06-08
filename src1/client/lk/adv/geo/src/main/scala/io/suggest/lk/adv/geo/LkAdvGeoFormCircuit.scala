@@ -6,13 +6,13 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.adv.geo.{MFormInit, MFormS}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.bin.ConvCodecs
-import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh}
+import io.suggest.lk.adv.a.{Adv4FreeAh, PriceAh, RcvrsMarkerPopupAh}
 import io.suggest.lk.adv.geo.a.geo.exist.{GeoAdvExistInitAh, GeoAdvsPopupAh}
 import io.suggest.lk.adv.geo.a.pop.NodeInfoPopupAh
-import io.suggest.lk.adv.geo.a.rcvr.{RcvrInputsAh, RcvrsMarkerPopupAh}
+import io.suggest.lk.adv.geo.a.rcvr.RcvrInputsAh
 import io.suggest.lk.adv.geo.m._
 import io.suggest.lk.adv.geo.r.LkAdvGeoHttpApiImpl
-import io.suggest.lk.adv.m.{MPriceS, ResetPrice}
+import io.suggest.lk.adv.m.{IRcvrPopupProps, MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
@@ -132,9 +132,8 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
 
     val rcvrsMarkerPopupAh = new RcvrsMarkerPopupAh(
       api       = API,
-      rcvrsRW   = rcvrRW
+      rcvrsRW   = rcvrRW.zoomRW[IRcvrPopupProps](identity) { _.withIrpp(_) }
     )
-
 
     val rcvrInputsAh = new RcvrInputsAh(
       respPot       = rcvrPopupRW,

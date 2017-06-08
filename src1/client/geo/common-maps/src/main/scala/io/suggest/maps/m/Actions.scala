@@ -1,9 +1,10 @@
 package io.suggest.maps.m
 
+import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.common.spa.DAction
-import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
+import io.suggest.sjs.leaflet.map.Zoom_t
 
 import scala.util.Try
 
@@ -72,6 +73,11 @@ case object RcvrMarkersInit extends IMapsAction
 case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IMapsAction
 
 case class ReqRcvrPopup(nodeId: String, override val geoPoint: MGeoPoint) extends ISetMapCenterForPopup
+
+/** Экшен успешно декодированного ответа на запрос попапа. */
+case class HandleRcvrPopupResp(resp: MRcvrPopupResp) extends IMapsAction
+/** Ошибка запроса по теме попапа. */
+case class HandleRcvrPopupError(ex: Throwable) extends IMapsAction
 
 
 

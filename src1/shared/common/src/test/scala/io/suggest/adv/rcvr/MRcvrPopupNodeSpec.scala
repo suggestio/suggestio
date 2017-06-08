@@ -19,11 +19,11 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
 
   override val m1 = MRcvrPopupNode(
     id = "asdadasdsa",
+    name          = Some("test node"),
 
     checkbox      = Some(MRcvrPopupMeta(
       isCreate    = true,
       checked     = false,
-      name        = "test node",
       isOnlineNow = false,
       dateRange   = MRangeYmdOpt.empty
     )),
@@ -33,12 +33,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
         title = Some("abserare aedfad"),
         nodes = Seq(
           MRcvrPopupNode(
-            id = "sub1-asdadasdsa",
+            id   = "sub1-asdadasdsa",
+            name = Some("test subnode"),
 
             checkbox      = Some(MRcvrPopupMeta(
               isCreate    = false,
               checked     = true,
-              name        = "test subnode",
               isOnlineNow = true,
               dateRange   = MRangeYmdOpt(
                 Some(MYmd(2016,1,1)),
@@ -51,12 +51,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
                 title = Some("sub-sub-group"),
                 nodes = Seq(
                   MRcvrPopupNode(
-                    id = "sub1-asdadasdsa",
+                    id   = "sub1-asdadasdsa",
+                    name = Some("test subnode"),
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = false,
                       checked     = true,
-                      name        = "test subnode",
                       isOnlineNow = true,
                       dateRange   = MRangeYmdOpt(
                         Some(MYmd(2016,1,1)),
@@ -72,12 +72,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
           ),
 
           MRcvrPopupNode(
-            id = "sub2-asdadasdsa",
+            id   = "sub2-asdadasdsa",
+            name = Some("test subnode2"),
 
             checkbox      = Some(MRcvrPopupMeta(
               isCreate    = true,
               checked     = true,
-              name        = "test subnode2",
               isOnlineNow = true,
               dateRange   = MRangeYmdOpt.empty
             )),
@@ -87,12 +87,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
                 title = Some("sub-su22b-group"),
                 nodes = Seq(
                   MRcvrPopupNode(
-                    id = "sub22-asdadasdsa",
+                    id   = "sub22-asdadasdsa",
+                    name = Some("test subnode"),
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = false,
                       checked     = true,
-                      name        = "test subnode",
                       isOnlineNow = false,
                       dateRange   = MRangeYmdOpt(
                         Some(MYmd(2016,1,4)),
@@ -104,12 +104,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
                   ),
 
                   MRcvrPopupNode(
-                    id = "sub2233-asdadasdsa",
+                    id    = "sub2233-asdadasdsa",
+                    name  = Some("test subnode 22 33"),
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = true,
                       checked     = true,
-                      name        = "test subnode 22 33",
                       isOnlineNow = false,
                       dateRange   = MRangeYmdOpt(
                         Some(MYmd(2015,4,4)),
@@ -125,12 +125,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
           ),
 
           MRcvrPopupNode(
-            id = "sub3-asdadasdsa",
+            id   = "sub3-asdadasdsa",
+            name = Some("test subnode3"),
 
             checkbox      = Some(MRcvrPopupMeta(
               isCreate    = true,
               checked     = true,
-              name        = "test subnode3",
               isOnlineNow = true,
               dateRange   = MRangeYmdOpt.empty
             )),
@@ -140,12 +140,12 @@ object MRcvrPopupNodeSpec extends NodesTreeWalkerSpecT {
                 title = Some("sub-sub-group33"),
                 nodes = Seq(
                   MRcvrPopupNode(
-                    id = "sub33-asdadasdsa",
+                    id   = "sub33-asdadasdsa",
+                    name = Some("test subnode3333"),
 
                     checkbox      = Some(MRcvrPopupMeta(
                       isCreate    = false,
                       checked     = true,
-                      name        = "test subnode3333",
                       isOnlineNow = false,
                       dateRange   = MRangeYmdOpt(
                         Some(MYmd(2016,1,4)),

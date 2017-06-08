@@ -3,8 +3,6 @@ package io.suggest.maps.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.m._
-import io.suggest.maps.u.MapsUtil
-import io.suggest.sjs.leaflet.map.LatLng
 
 /**
   * Suggest.io

@@ -5,7 +5,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.geo._
 import io.suggest.maps.m.MMapS
 import io.suggest.sjs.common.model.loc.MGeoPointJs
-import io.suggest.sjs.leaflet.{Leaflet, PolygonCoords_t, PolygonLatLngs_t}
+import io.suggest.sjs.leaflet.{Leaflet, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LatLng, Point}
 
 import scala.scalajs.js.JSConverters._
@@ -111,10 +111,14 @@ object MapsUtil {
   }
 
 
+  /** Сборка начального состояния MMapS.
+    *
+    * @param mapProps Присланный с сервера MMapProps.
+    * @return Инстанс MMapS, готовый к сохранению в состояние.
+    */
   def initialMapStateFrom( mapProps: MMapProps ): MMapS = {
     MMapS(
       props    = mapProps
-      //centerLL = geoPoint2LatLng( mapProps.center )
     )
   }
 

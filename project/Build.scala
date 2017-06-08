@@ -166,7 +166,7 @@ object Sio2Build extends Build {
     val name = "lk-adv-common-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs)
+      .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs, mapsSjs)
   }
 
   /** Поддержка формы прямого размещения на узлах. */

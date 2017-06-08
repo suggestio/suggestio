@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.adv.geo.RcvrsMap_t
 import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
+import io.suggest.lk.adv.m.IRcvrPopupProps
 import io.suggest.maps.nodes.MGeoNodesResp
 
 /**
@@ -18,9 +19,8 @@ object MRcvr {
   /** Поддержка быстрого сравнения содержимого сложного контейнера для diode circuit. */
   implicit object MRcvrFastEq extends FastEq[MRcvr] {
     override def eqv(a: MRcvr, b: MRcvr): Boolean = {
-      (a.popupResp eq b.popupResp) &&
+      IRcvrPopupProps.IRcvrPopupPropsFastEq.eqv(a, b) &&
         (a.rcvrsGeo eq b.rcvrsGeo) &&
-        (a.popupState eq b.popupState) &&
         (a.rcvrsMap eq b.rcvrsMap)
     }
   }
@@ -36,20 +36,24 @@ object MRcvr {
   * @param popupState Состояние попапа на ресивере.
   */
 case class MRcvr(
-                  popupResp   : Pot[MRcvrPopupResp]     = Pot.empty,
-                  rcvrsGeo    : Pot[MGeoNodesResp]      = Pot.empty,
-                  popupState  : Option[MRcvrPopupS]     = None,
-                  rcvrsMap    : RcvrsMap_t              = Map.empty
-) {
+                  override val popupResp    : Pot[MRcvrPopupResp]     = Pot.empty,
+                  rcvrsGeo                  : Pot[MGeoNodesResp]      = Pot.empty,
+                  override val popupState   : Option[MRcvrPopupS]     = None,
+                  rcvrsMap                  : RcvrsMap_t              = Map.empty
+)
+  extends IRcvrPopupProps
+{
 
-  def withPopupResp(popupResp: Pot[MRcvrPopupResp]) = copy(popupResp = popupResp)
   def withRcvrsGeo(rcvrsGeo: Pot[MGeoNodesResp]) = copy(rcvrsGeo = rcvrsGeo)
-  def withPopupState(popupState: Option[MRcvrPopupS]) = copy(popupState = popupState)
   def withRcvrMap(rcvrsMap: RcvrsMap_t) = copy(rcvrsMap = rcvrsMap)
+  def withPopupResp(popupResp: Pot[MRcvrPopupResp]) = copy(popupResp = popupResp)
+  def withPopupState(popupState: Option[MRcvrPopupS]) = copy(popupState = popupState)
 
   def withPopup(resp: Pot[MRcvrPopupResp], state: Option[MRcvrPopupS]) = copy(
     popupResp  = resp,
     popupState = state
   )
+
+  def withIrpp(irpp2: IRcvrPopupProps) = withPopup(irpp2.popupResp, irpp2.popupState)
 
 }

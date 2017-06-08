@@ -554,7 +554,6 @@ class LkAdvGeo @Inject() (
           MRcvrPopupMeta(
             isCreate    = !advRcvrIdsBusy.contains( nodeId ),
             checked     = advRcvrIdsActual.contains( nodeId ),
-            name        = mnode.guessDisplayNameOrId.getOrElse("???"),
             isOnlineNow = nodesHasOnline.contains( nodeId ),
             dateRange   = intervalsMap.getOrElse( nodeId , MRangeYmdOpt.empty )
           )
@@ -563,6 +562,7 @@ class LkAdvGeo @Inject() (
         val resp = MRcvrPopupResp(
           node = Some(MRcvrPopupNode(
             id    = rcvrNodeId,
+            name  = rcvrNode.guessDisplayName,
 
             // Чекбокс у данного узла можно отображать, если он является узлом-ресивером.
             // isReceiver здесь пока дублирует такую же проверку в ACL. Посмотрим, как дальше пойдёт...
@@ -581,7 +581,8 @@ class LkAdvGeo @Inject() (
                 title = Some( ctx.messages( ntype.plural ) ),
                 nodes = for (n <- nodes) yield {
                   MRcvrPopupNode(
-                    id    = n.id.get,
+                    id        = n.id.get,
+                    name      = n.guessDisplayName,
                     checkbox  = Some( __mkCheckBoxMeta(n) ),
                     subGroups = Nil
                   )

@@ -2,8 +2,9 @@ package io.suggest.lk.adv.geo.a.pop
 
 import diode.data.Pending
 import diode._
-import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, OpenNodeInfoClick, OpenNodeInfoResp}
+import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, OpenNodeInfoResp}
 import io.suggest.lk.adv.geo.r.ILkAdvGeoApi
+import io.suggest.lk.adv.m.OpenNodeInfoClick
 import io.suggest.lk.m.ILkCommonPopupCloseAction
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log

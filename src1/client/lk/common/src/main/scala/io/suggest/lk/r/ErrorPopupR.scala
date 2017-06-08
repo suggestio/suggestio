@@ -25,10 +25,7 @@ object ErrorPopupR {
   protected class Backend($: BackendScope[Props, Unit]) {
 
     private val closeBtnClick: Callback = {
-      dispatchOnProxyScopeCB(
-        $.asInstanceOf[BackendScope[ModelProxy[AnyRef], Unit]],
-        ErrorPopupCloseClick
-      )
+      dispatchOnProxyScopeCB( $, ErrorPopupCloseClick )
     }
 
     def render(proxy: Props): ReactElement = {

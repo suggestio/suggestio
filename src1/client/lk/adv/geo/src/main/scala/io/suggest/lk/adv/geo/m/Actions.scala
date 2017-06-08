@@ -2,7 +2,7 @@ package io.suggest.lk.adv.geo.m
 
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.adv.info.MNodeAdvInfo
-import io.suggest.adv.rcvr.{MRcvrPopupResp, RcvrKey}
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.maps.m.{IMapsAction, OpenAdvGeoExistPopup}
 import io.suggest.sjs.common.geo.json.GjFeature
 
@@ -18,11 +18,6 @@ import scala.util.Try
 
 sealed trait IAdvGeoFormAction extends IMapsAction
 
-
-/** Экшен успешно декодированного ответа на запрос попапа. */
-case class HandleRcvrPopup(resp: MRcvrPopupResp) extends IAdvGeoFormAction
-/** Ошибка запроса по теме попапа. */
-case class HandleRcvrPopupError(ex: Throwable) extends IAdvGeoFormAction
 
 /** Экшен замены значения галочки размещения на главном экране. */
 case class SetOnMainScreen(checked: Boolean) extends IAdvGeoFormAction
@@ -44,9 +39,6 @@ case class HandleAdvGeoExistPopupResp(open: OpenAdvGeoExistPopup, resp: MGeoAdvE
 
 
 
-
-/** Сигнал открытия инфы по узлу. */
-case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends IAdvGeoFormAction
 /** Сигнал ответа сервера на запрос информации по узлу. */
 case class OpenNodeInfoResp(rcvrKey: RcvrKey, tryRes: Try[MNodeAdvInfo]) extends IAdvGeoFormAction
 

@@ -1,5 +1,6 @@
 package io.suggest.lk.adv.m
 
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MGetPriceResp
 import io.suggest.sjs.common.spa.DAction
 
@@ -24,3 +25,7 @@ case class HandleGetPriceResp(tryResp: Try[MGetPriceResp], ts: Long) extends DAc
 case object DoFormSubmit extends DAction
 /** Сигнал результата "сабмита" формы. */
 case class HandleFormSubmitResp(tryResp: Try[String]) extends DAction
+
+
+/** Сигнал открытия инфы по узлу. */
+case class OpenNodeInfoClick(rcvrKey: RcvrKey) extends DAction

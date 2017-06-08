@@ -5,12 +5,14 @@ import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
+import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
 import io.suggest.lk.router.jsRoutes
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.tags.search.{ITagsApi, TagsApiImplXhr}
+import io.suggest.sjs.common.model.Route
+import io.suggest.sjs.common.tags.search.{ITagsApi, TagsHttpApiImpl}
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
@@ -27,10 +29,10 @@ import scala.scalajs.js
   *
   * @see [[https://geirsson.com/post/2015/10/autowire-acl/]] - почему не autowire.
   */
-trait ILkAdvGeoApi extends ITagsApi {
-
-  /** Запрос с сервера попапа над ресивером. */
-  def rcvrPopup(nodeId: String): Future[MRcvrPopupResp]
+trait ILkAdvGeoApi
+  extends ITagsApi
+  with IRcvrPopupApi
+{
 
   /** Запрос карты текущий георазмещений с сервера. */
   def existGeoAdvsMap(): Future[js.Array[GjFeature]]
@@ -53,7 +55,8 @@ trait ILkAdvGeoApi extends ITagsApi {
 /** Реализация [[ILkAdvGeoApi]]. */
 class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   extends ILkAdvGeoApi
-  with TagsApiImplXhr
+  with TagsHttpApiImpl
+  with RcvrPopupHttpApiImpl
 {
 
   import MGeoAdvExistPopupResp.pickler
@@ -63,18 +66,12 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   /** Функция-генератор роуты поиска тегов на сервере. */
   override protected def _tagsSearchRoute = jsRoutes.controllers.LkAdvGeo.tagsSearch2
 
-
-  /** Запрос с сервера попапа над ресивером. */
-  override def rcvrPopup(nodeId: String): Future[MRcvrPopupResp] = {
-    val route = jsRoutes.controllers.LkAdvGeo.rcvrMapPopup(
+  override protected def _rcvrPopupRoute(nodeId: String): Route = {
+    jsRoutes.controllers.LkAdvGeo.rcvrMapPopup(
       adId    = confRO().adId,
       nodeId  = nodeId
     )
-    Xhr.unBooPickleResp[MRcvrPopupResp] {
-      Xhr.requestBinary(route)
-    }
   }
-
 
   override def existGeoAdvsMap(): Future[js.Array[GjFeature]] = {
     val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsMap(

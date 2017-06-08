@@ -23,7 +23,7 @@ trait ITagsApi {
 
 
 /** Реализация [[ITagsApi]] через XHR с бинарщиной в ответе. */
-trait TagsApiImplXhr extends ITagsApi {
+trait TagsHttpApiImpl extends ITagsApi {
 
   /** Функция-генератор роуты для поиска тегов на сервере. */
   protected def _tagsSearchRoute: js.Dictionary[js.Any] => Route
