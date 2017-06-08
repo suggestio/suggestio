@@ -59,9 +59,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MFormInit](base64)
       // Собираем начальный инстанс MRoot на основе данных, переданных с сервера...
       MRoot(
-        mmap = MMapS(
-          props = mFormInit.form.mapProps
-        ),
+        mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
         other = MOther(
           adId     = mFormInit.adId
         ),

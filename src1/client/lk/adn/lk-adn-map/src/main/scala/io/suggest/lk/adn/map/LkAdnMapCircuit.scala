@@ -45,9 +45,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     val mFormInit = PickleUtil.unpickleConv[String, ConvCodecs.Base64, MLamFormInit](base64)
 
     MRoot(
-      mmap = MMapS(
-        props = mFormInit.form.mapProps
-      ),
+      mmap = MapsUtil.initialMapStateFrom( mFormInit.form.mapProps ),
       conf = MLamConf(
         nodeId = mFormInit.nodeId
       ),

@@ -3,6 +3,7 @@ package io.suggest.maps.m
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.sjs.common.spa.DAction
+import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
 
 import scala.util.Try
 
@@ -70,4 +71,19 @@ case object RcvrMarkersInit extends IMapsAction
 /** Экшен выставления указанных recevier-маркеров в состояние. */
 case class InstallRcvrMarkers(tryResp: Try[MGeoNodesResp]) extends IMapsAction
 
-case class ReqRcvrPopup(nodeId: String, geoPoint: MGeoPoint) extends ISetMapCenterForPopup
+case class ReqRcvrPopup(nodeId: String, override val geoPoint: MGeoPoint) extends ISetMapCenterForPopup
+
+
+
+/** Интерфейс для событий изменения zoom'а на карте leaflet. */
+trait IMapZoomEnd extends IMapsAction {
+  /** Новый уровень zoom'а. */
+  def newZoom: Zoom_t
+}
+/** Дефолтовое событие изменения zoom'а на карте.
+  * Это дефолтовая реализация [[IMapZoomEnd]]. */
+case class MapZoomEnd( override val newZoom: Zoom_t ) extends IMapZoomEnd
+
+
+
+//case class MapMoveEnd( newCenterLL: LatLng ) extends IMapsAction

@@ -14,6 +14,7 @@ case class MMapProps(
 ) {
 
   def withCenter(center2: MGeoPoint) = copy(center = center2)
+  def withZoom(zoom: Int) = copy(zoom = zoom)
 
 }
 

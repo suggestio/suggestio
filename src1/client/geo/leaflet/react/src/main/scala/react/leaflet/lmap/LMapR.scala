@@ -1,7 +1,7 @@
 package react.leaflet.lmap
 
 import io.suggest.react.JsWrapperR
-import io.suggest.sjs.leaflet.event.{LocationEvent, PopupEvent}
+import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.{LatLngBounds, MapOptions}
 import japgolly.scalajs.react.{JsComponentType, TopNode}
 import org.scalajs.dom.raw.HTMLDivElement
@@ -48,5 +48,11 @@ trait LMapPropsR extends MapOptions {
   val onLocationFound: UndefOr[js.Function1[LocationEvent, Unit]] = js.undefined
 
   val onPopupClose: UndefOr[js.Function1[PopupEvent, Unit]] = js.undefined
+
+  val onZoomStart: UndefOr[js.Function1[Event, Unit]] = js.undefined
+  val onZoomEnd: UndefOr[js.Function1[Event, Unit]] = js.undefined
+
+  val onMoveStart: UndefOr[js.Function1[Event, Unit]] = js.undefined
+  val onMoveEnd: UndefOr[js.Function1[Event, Unit]] = js.undefined
 
 }

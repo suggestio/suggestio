@@ -8,10 +8,6 @@ name := "scalajs-leaflet-react"
 
 version := "0.0.0-SNAPSHOT"
 
-persistLauncher in Compile := false
-
-persistLauncher in Test := false
-
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 
@@ -24,6 +20,6 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile ++= Seq(
-  "react-leaflet" -> "1.0.3"
+  "react-leaflet" -> "1.2.2"
 )
 
