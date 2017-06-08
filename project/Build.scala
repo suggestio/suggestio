@@ -182,7 +182,7 @@ object Sio2Build extends Build {
     val name = "lk-adv-geo-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/geo"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarketClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
+      .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarkerClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
   }
 
   /** Sjs поддержки формы управления узлами/под-узлами в ЛК узла. */
@@ -239,11 +239,11 @@ object Sio2Build extends Build {
   lazy val leafletReactSjs = {
     Project(id = "scalajs-leaflet-react", base = file(DIR0 + "client/geo/leaflet/react"))
       .enablePlugins(ScalaJSPlugin)
-      .dependsOn(commonSjs, leafletSjs, leafletMarketClusterSjs, commonReactSjs)
+      .dependsOn(commonSjs, leafletSjs, leafletMarkerClusterSjs, commonReactSjs)
   }
 
   /** leaflet.markercluster.js scalajs API. */
-  lazy val leafletMarketClusterSjs = {
+  lazy val leafletMarkerClusterSjs = {
     Project(id = "scalajs-leaflet-markercluster", base = file(DIR0 + "client/geo/leaflet/markercluster"))
       .enablePlugins(ScalaJSPlugin)
       .dependsOn(leafletSjs, commonReactSjs)
@@ -388,10 +388,20 @@ object Sio2Build extends Build {
       scalaJSProjects := Seq(lkSjs, scSjs),
       pipelineStages in Assets += scalaJSPipeline,
       npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
-        (nodeModules / "react-datepicker" / "dist") * "*.css"
+        (nodeModules / "react-datepicker" / "dist") * "*.min.css"
       }.value,
       npmAssets ++= NpmAssets.ofProject(reactImageGallerySjs) { nodeModules =>
         (nodeModules / "react-image-gallery" / "build") * "*.css"
+      }.value,
+      npmAssets ++= NpmAssets.ofProject(leafletSjs) { nodeModules =>
+        val llcCss = (nodeModules / "leaflet.locatecontrol" / "dist") * "*.min.css"
+        val lDist = nodeModules / "leaflet" / "dist"
+        val lCss = lDist * "*.css"
+        val lImages = (lDist / "images").***
+        llcCss +++ lCss +++ lImages
+      }.value,
+      npmAssets ++= NpmAssets.ofProject(leafletMarkerClusterSjs) { nodeModules =>
+        (nodeModules / "leaflet.markercluster" / "dist") * "*.css"
       }.value
     )
 

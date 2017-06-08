@@ -23,10 +23,6 @@ libraryDependencies ++= Seq(
   "io.monix"            %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
-//persistLauncher in Compile := false
-
-//persistLauncher in Test := false
-
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 jsDependencies += RuntimeDOM % "test"

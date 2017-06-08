@@ -7,10 +7,6 @@ name := "scalajs-mapboxgl"
 
 version := "0.0.0-SNAPSHOT"
 
-persistLauncher in Compile := false
-
-persistLauncher in Test := false
-
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 

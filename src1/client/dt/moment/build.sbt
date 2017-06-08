@@ -9,10 +9,6 @@ name := "scalajs-moment"
 
 version := Common.Vsn.momentJs
 
-persistLauncher in Compile := false
-
-persistLauncher in Test := false
-
 // Show more comments when using dubious features
 scalacOptions += "-feature"
 

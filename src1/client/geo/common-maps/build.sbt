@@ -13,11 +13,6 @@ libraryDependencies ++= Seq(
   Common.ORG          %%% "scalajs-leaflet"     % "0.1s-SNAPSHOT"
 )
 
-
-persistLauncher in Compile := false
-
-persistLauncher in Test := false
-
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
 jsDependencies += RuntimeDOM % "test"

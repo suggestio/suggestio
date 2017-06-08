@@ -90,14 +90,6 @@ libraryDependencies ++= {
     exclude("de.l3s.boilerpipe", "boilerpipe")
   ,
 
-  //"com.yandex.money.api" % "yandex-money-sdk-java" % Common.Vsn.YA_MONEY_SDK,
-
-  // webjars
-  // карты leaflet.(js подхватывается в scala.js через jsDeps)
-  "org.webjars.bower" % "leaflet"               % Common.leafletJsVsn,
-  "org.webjars.bower" % "leaflet.markercluster" % Common.leafletMarkerClusterJsVsn,
-  "org.webjars"       % "leaflet-locatecontrol" % Common.leafletControlLocateWjVsn,
-
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
   // test
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % Test

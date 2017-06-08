@@ -131,7 +131,7 @@ object Common {
   val leafletJsVsn              = "1.0.3"
 
   /** Версия L.control.locate.js. */
-  val leafletControlLocateJsVsn = "0.56.0"
+  val leafletControlLocateJsVsn = "0.61.0"
   val leafletControlLocateWjVsn = leafletControlLocateJsVsn + "-1"
 
   /** Версия Leaflet.markercluster.js. */

@@ -9,10 +9,6 @@ name := "moment-sio-sjs"
 
 version := "0.0.0-SNAPSHOT"
 
-persistLauncher in Compile := false
-
-persistLauncher in Test := false
-
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // Show more comments when using dubious features

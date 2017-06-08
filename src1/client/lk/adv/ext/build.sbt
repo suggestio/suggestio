@@ -11,10 +11,6 @@ libraryDependencies ++= Seq(
   "io.monix"      %%% "minitest"            % Common.minitestVsn  % "test"
 )
 
-//persistLauncher in Compile := true
-
-persistLauncher in Test := false
-
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // требуется DOM в тестах. http://www.scala-js.org/doc/tutorial.html
