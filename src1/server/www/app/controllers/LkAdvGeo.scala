@@ -33,7 +33,7 @@ import models.req.IAdProdReq
 import play.api.mvc.Result
 import util.acl._
 import util.adv.AdvFormUtil
-import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoMapUtil}
+import util.adv.geo.{AdvGeoBillUtil, AdvGeoFormUtil, AdvGeoLocUtil, AdvGeoRcvrsUtil}
 import util.billing.Bill2Util
 import util.lk.LkTagsSearchUtil
 import util.mdr.MdrUtil
@@ -55,7 +55,7 @@ class LkAdvGeo @Inject() (
                            advFormUtil                     : AdvFormUtil,
                            bill2Util                       : Bill2Util,
                            advGeoLocUtil                   : AdvGeoLocUtil,
-                           advGeoMapUtil                   : AdvGeoMapUtil,
+                           advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                            streamsUtil                     : StreamsUtil,
                            ymdHelpersJvm                   : YmdHelpersJvm,
                            reqUtil                         : ReqUtil,
@@ -236,7 +236,7 @@ class LkAdvGeo @Inject() (
 
   private def _checkFormRcvrs(mFormS0: MFormS): Future[MFormS] = {
     if (mFormS0.rcvrsMap.nonEmpty) {
-      val rcvrKeys2Fut = advGeoMapUtil.checkRcvrs(mFormS0.rcvrsMap.keys)
+      val rcvrKeys2Fut = advGeoRcvrsUtil.checkRcvrs(mFormS0.rcvrsMap.keys)
       lazy val logPrefix = s"_checkFormRcvrs(${mFormS0.hashCode()})[${System.currentTimeMillis()}]:"
       for (keys2 <- rcvrKeys2Fut) yield {
         val rcvrsMap2: RcvrsMap_t = keys2
@@ -442,7 +442,7 @@ class LkAdvGeo @Inject() (
       import request.{mnode => rcvrNode}
 
       // Запросить по биллингу карту подузлов для запрашиваемого ресивера.
-      val subNodesFut = advGeoMapUtil.findSubRcvrsOf(rcvrNodeId)
+      val subNodesFut = advGeoRcvrsUtil.findSubRcvrsOf(rcvrNodeId)
 
       lazy val logPrefix = s"rcvrMapPopup($adId,$rcvrNodeId)[${System.currentTimeMillis}]:"
 

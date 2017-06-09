@@ -16,7 +16,7 @@ import org.scalajs.dom.raw.HTMLImageElement
 object LkPreLoader extends FindElT {
 
   override type Dom_t = HTMLImageElement
-  override def DOM_ID = SpaConst.LkPreLoader.DOM_ID
+  override def DOM_ID = SpaConst.LkPreLoaderConst.DOM_ID
   override type T     = LkPreLoader
 
 

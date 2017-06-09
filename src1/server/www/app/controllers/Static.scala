@@ -12,7 +12,7 @@ import models.mproj.ICommonDi
 import play.api.libs.json.JsValue
 import play.api.mvc.BodyParser
 import util.acl._
-import util.adv.geo.AdvGeoMapUtil
+import util.adv.geo.AdvGeoRcvrsUtil
 import util.cdn.CorsUtil
 import util.sec.CspUtil
 import util.seo.SiteMapUtil
@@ -36,7 +36,7 @@ class Static @Inject() (
                          override val siteMapUtil        : SiteMapUtil,
                          isAuth                          : IsAuth,
                          bruteForceProtect               : BruteForceProtect,
-                         advGeoMapUtil                   : AdvGeoMapUtil,
+                         advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                          statUtil                        : StatUtil,
                          secHeadersFilterUtil            : SecHeadersFilterUtil,
                          cspUtil                         : CspUtil,
@@ -228,8 +228,8 @@ class Static @Inject() (
     ignoreAuth().async { implicit request =>
       // Собрать данные по узлам.
       val nodesRespFut = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
-        val msearch = advGeoMapUtil.onMapRcvrsSearch(30)
-        advGeoMapUtil.rcvrNodesMap( msearch )
+        val msearch = advGeoRcvrsUtil.onMapRcvrsSearch(30)
+        advGeoRcvrsUtil.rcvrNodesMap( msearch )
       }
       // Завернуть данные в единый блоб и отправить клиенту.
       for (nodesResp <- nodesRespFut) yield {

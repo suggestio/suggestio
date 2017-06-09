@@ -7,7 +7,7 @@ import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{MAdProdRcvrReq, MReq}
 import play.api.mvc.{ActionBuilder, Request, Result}
-import util.adv.geo.AdvGeoMapUtil
+import util.adv.geo.AdvGeoRcvrsUtil
 
 import scala.concurrent.Future
 
@@ -21,7 +21,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
                                                aclUtil                : AclUtil,
                                                mNodes                 : MNodes,
                                                canAdvAd               : CanAdvAd,
-                                               advGeoMapUtil          : AdvGeoMapUtil,
+                                               advGeoRcvrsUtil        : AdvGeoRcvrsUtil,
                                                isNodeAdmin            : IsNodeAdmin,
                                                isAuth                 : IsAuth,
                                                mCommonDi              : ICommonDi
@@ -52,7 +52,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
           // Ищем целевой узел, проверяя права размещения на узле прямо в рамках ES-запроса:
           val nodeOptFut = mNodes.dynSearchOne(
-            advGeoMapUtil.onMapRcvrsSearch(
+            advGeoRcvrsUtil.onMapRcvrsSearch(
               limit1      = 1,
               onlyWithIds = nodeId :: Nil
             )

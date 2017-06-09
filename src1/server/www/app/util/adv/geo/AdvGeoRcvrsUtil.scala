@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
@@ -29,15 +29,15 @@ import scala.concurrent.Future
   * Created: 22.11.16 15:01
   * Description: Утиль для форм размещения с гео-картам.
   */
-class AdvGeoMapUtil @Inject() (
-                                mNodes      : MNodes,
-                                logoUtil    : LogoUtil,
-                                cdnUtil     : CdnUtil,
-                                mAnyImgs    : MAnyImgs,
-                                dynImgUtil  : DynImgUtil,
-                                streamsUtil : StreamsUtil,
-                                mCommonDi   : ICommonDi
-                              )
+class AdvGeoRcvrsUtil @Inject()(
+                                 mNodes      : MNodes,
+                                 logoUtil    : LogoUtil,
+                                 cdnUtil     : CdnUtil,
+                                 mAnyImgs    : MAnyImgs,
+                                 dynImgUtil  : DynImgUtil,
+                                 streamsUtil : StreamsUtil,
+                                 mCommonDi   : ICommonDi
+                               )
   extends MacroLogsImpl
 {
 
@@ -405,7 +405,7 @@ class AdvGeoMapUtil @Inject() (
 }
 
 
-/** Интерфейс для DI-поля с инстансом [[AdvGeoMapUtil]]. */
+/** Интерфейс для DI-поля с инстансом [[AdvGeoRcvrsUtil]]. */
 trait IAdvGeoMapUtilDi {
-  def advGeoMapUtil: AdvGeoMapUtil
+  def advGeoMapUtil: AdvGeoRcvrsUtil
 }

@@ -2,12 +2,10 @@ package io.suggest.lk.adv.geo.r
 
 import diode.ModelRO
 import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
-import io.suggest.adv.info.MNodeAdvInfo
-import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
-import io.suggest.lk.router.jsRoutes
+import io.suggest.lk.router.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, jsRoutes}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
@@ -32,6 +30,7 @@ import scala.scalajs.js
 trait ILkAdvGeoApi
   extends ITagsApi
   with IRcvrPopupApi
+  with ILkBill2NodeAdvInfoApi
 {
 
   /** Запрос карты текущий георазмещений с сервера. */
@@ -46,9 +45,6 @@ trait ILkAdvGeoApi
   /** Окончательный сабмит формы георазмещения. */
   def formSubmit(mFormS: MFormS): Future[String]
 
-  /** Получение инфы по узлу. */
-  def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo]
-
 }
 
 
@@ -57,10 +53,10 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   extends ILkAdvGeoApi
   with TagsHttpApiImpl
   with RcvrPopupHttpApiImpl
+  with LkBill2NodeAdvInfoHttpApiImpl
 {
 
   import MGeoAdvExistPopupResp.pickler
-  import MRcvrPopupResp.pickler
   import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
 
   /** Функция-генератор роуты поиска тегов на сервере. */
@@ -112,13 +108,11 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
     }
   }
 
-  override def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo] = {
-    val route = jsRoutes.controllers.LkBill2.nodeAdvInfo(
+
+  override protected[this] def _nodeAdvInfoRoute(nodeId: String): Route = {
+    jsRoutes.controllers.LkBill2.nodeAdvInfo(
       nodeId  = nodeId,
       forAdId = confRO().adId
-    )
-    Xhr.unBooPickleResp[MNodeAdvInfo](
-      Xhr.requestBinary( route )
     )
   }
 

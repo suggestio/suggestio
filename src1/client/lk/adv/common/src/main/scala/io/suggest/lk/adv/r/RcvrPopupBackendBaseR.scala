@@ -22,22 +22,21 @@ import react.leaflet.popup.PopupR
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 08.06.17 16:58
-  * Description: Трейт для сборки backend'а для компонента L-попапа над каким-либо ресивером.
+  * Description: React-утиль для сборки rcvr-попапа
+  *
+  */
+
+/** Трейт для сборки backend'а для компонента L-попапа над каким-либо ресивером.
   * В разных формах есть карты с ресиверами, но содержимое попапов в них отличается от формы к форме.
   *
   * @tparam PropsVal Тип внутри props ModelProxy.
   * @tparam State Внутреннее состояние компонента.
   */
-
 trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
 
   /** Инстанс BackendScope. */
   val $: BackendScope[ModelProxy[PropsVal], State]
 
-
-  protected[this] def _rcvrInfoClick(rk: RcvrKey): Callback = {
-    dispatchOnProxyScopeCB($, OpenNodeInfoClick(rk))
-  }
 
   /** Рендер маленькой кнопки-ссылки info для узла. */
   protected[this] def _infoBtn(rcvrKey: RcvrKey): ReactElement = {
@@ -47,6 +46,10 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
       ^.onClick --> _rcvrInfoClick(rcvrKey),
       HtmlConstants.NBSP_STR
     )
+  }
+
+  protected[this] def _rcvrInfoClick(rk: RcvrKey): Callback = {
+    dispatchOnProxyScopeCB($, OpenNodeInfoClick(rk))
   }
 
   /** Рендер тела одного узла. */
@@ -100,20 +103,7 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
       LayerGroupR()(
 
         // Рендер маркера-крутилки на карте в ожидании рендера.
-        v.popupResp.renderPending { _: Int =>
-          for (iconUrl <- LkPreLoader.PRELOADER_IMG_URL) yield {
-            val icon1 = MapIcons.pendingIcon(iconUrl, 16)
-            MarkerR(
-              new MarkerPropsR {
-                override val position  = latLng
-                override val draggable = false
-                override val clickable = false
-                override val icon      = icon1
-                override val title     = Messages( MsgCodes.`Please.wait` )
-              }
-            )()
-          }
-        },
+        MapIcons.preloaderLMarkerPot( v.popupResp, latLng ),
 
         // Рендер попапа. когда всё готово.
         v.popupResp.renderReady { resp =>

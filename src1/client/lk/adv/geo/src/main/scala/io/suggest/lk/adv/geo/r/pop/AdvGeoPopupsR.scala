@@ -29,7 +29,7 @@ object AdvGeoPopupsR {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(props: Props, state: State): ReactElement = {
+    def render(state: State): ReactElement = {
       state.popContPropsConn { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(

@@ -154,10 +154,16 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
       modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) }
     )
 
+    val rcvrMarkerPopupAh = new LamRcvrMarkerPopupAh(
+      api     = httpApi,
+      rcvrsRW = rcvrsRw
+    )
+
     // Склеить все handler'ы последовательно.
     val conseqAh = composeHandlers(
       radAh,
       currentGeoAh,
+      rcvrMarkerPopupAh,
       curGeoPopupAh,
       priceAh,
       datePeriodAh,

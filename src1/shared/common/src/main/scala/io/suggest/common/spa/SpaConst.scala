@@ -13,7 +13,7 @@ object SpaConst {
   /** id тега на странице, value которого содержит сериализованное состояние формы. */
   def STATE_CONT_ID = PREFIX + "s"
 
-  object LkPreLoader {
+  object LkPreLoaderConst {
 
     /** id элемента-картинки, которая содержит красный анимированный прелоадер. */
     def DOM_ID = "pl_ri"

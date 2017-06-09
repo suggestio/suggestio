@@ -1,5 +1,6 @@
 package io.suggest.maps.m
 
+import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
@@ -76,6 +77,7 @@ case class ReqRcvrPopup(nodeId: String, override val geoPoint: MGeoPoint) extend
 
 /** Экшен успешно декодированного ответа на запрос попапа. */
 case class HandleRcvrPopupResp(resp: MRcvrPopupResp) extends IMapsAction
+case class HandleRcvrPopupTryResp(resp: Try[MNodeAdvInfo], rrp: ReqRcvrPopup) extends IMapsAction
 /** Ошибка запроса по теме попапа. */
 case class HandleRcvrPopupError(ex: Throwable) extends IMapsAction
 

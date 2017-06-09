@@ -3,8 +3,9 @@ package io.suggest.lk.adn.map.init
 import io.suggest.adn.mapf.AdnMapFormConstants
 import io.suggest.adv.AdvConstants
 import io.suggest.lk.adn.map.LkAdnMapCircuit
-import io.suggest.lk.adn.map.r.LamFormR
+import io.suggest.lk.adn.map.r.{LamFormR, LamPopupsR}
 import io.suggest.lk.adv.r.PriceR
+import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
@@ -29,9 +30,11 @@ class LkAdnMapFormInit extends IInit {
     val circuit = new LkAdnMapCircuit
 
     // Припаять схему к html-вёрстке от сервера.
+    val mrootRO = circuit.zoom(m => m)
+
     // Основное тело формы:
     ReactDOM.render(
-      element   = circuit.wrap(m => m)( LamFormR.apply ),
+      element   = circuit.wrap(mrootRO)( LamFormR.apply ),
       container = VUtil.getElementByIdOrNull[HTMLDivElement]( AdnMapFormConstants.FORM_CONT_ID )
     )
 
@@ -41,17 +44,12 @@ class LkAdnMapFormInit extends IInit {
       container = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
     )
 
-    // Запуск основного FSM формы.
-    //val formFsm = new LamFormFsm
-    //formFsm.start()
+    // Рендер контейнера обычных попапов.
+    ReactDOM.render(
+      circuit.wrap(mrootRO)( LamPopupsR.apply ),
+      container = PopupsContR.initDocBody()
+    )
 
-    // Инициализатор карты размещения.
-    //val mapInitializer = new LkAdnMapInit
-    //mapInitializer.init()
-
-    // Инициализация остальной формы.
-    //val initFsmF = IInitLayoutFsm.f(formFsm)
-    //LamForm.find().foreach(initFsmF)
   }
 
 }

@@ -1,12 +1,20 @@
 package io.suggest.maps.u
 
-import io.suggest.common.spa.SpaConst.LkPreLoader
+import diode.data.Pot
+import diode.react.ReactPot._
+import io.suggest.common.spa.SpaConst.LkPreLoaderConst
+import io.suggest.i18n.MsgCodes
 import io.suggest.maps.vm.RadiusMarkerIcon
 import io.suggest.maps.vm.img.{IconVmStaticT, MarkerIcon, MarkerIconRetina, MarkerIconShadow}
+import io.suggest.sjs.common.i18n.Messages
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import japgolly.scalajs.react.{ReactElement, ReactNode}
+import react.leaflet.marker.{MarkerPropsR, MarkerR}
 
 /**
   * Suggest.io
@@ -73,7 +81,7 @@ object MapIcons {
   }
 
 
-  def pendingIcon(url: String, sidePx: Int = LkPreLoader.WIDTH_PX): Icon = {
+  def pendingIcon(url: String, sidePx: Int = LkPreLoaderConst.WIDTH_PX): Icon = {
     val io = IconOptions.empty
     io.iconUrl = url
     io.iconSize = Leaflet.point(x = sidePx, y = sidePx)
@@ -87,6 +95,32 @@ object MapIcons {
   def radiusMarkerIcon(): Icon = {
     val o = MapIcons.markerIconBase(RadiusMarkerIcon)
     Leaflet.icon(o)
+  }
+
+
+  def preloaderLMarkerPot(pot: Pot[_], latLng: LatLng): ReactNode = {
+    pot.renderPending { _: Int =>
+      preloaderLMarker( latLng )
+    }
+  }
+  /** Рендер крутилки прямо на карте.
+    * @param latLng L-координата маркера-крутилки.
+    * @return ReactElement.
+    *         Если LkPreLoader.PRELOADER_IMG_URL не инициализирован, то будет null.
+    */
+  def preloaderLMarker( latLng: LatLng ): ReactElement = {
+    for (iconUrl <- LkPreLoader.PRELOADER_IMG_URL) yield {
+      val icon1 = MapIcons.pendingIcon(iconUrl, 16)
+      MarkerR(
+        new MarkerPropsR {
+          override val position  = latLng
+          override val draggable = false
+          override val clickable = false
+          override val icon      = icon1
+          override val title     = Messages( MsgCodes.`Please.wait` )
+        }
+      )()
+    }
   }
 
 }

@@ -2,13 +2,15 @@ package io.suggest.lk.adn.map.r
 
 import diode.data.Pot
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.geo.MGeoPoint
 import io.suggest.lk.adn.map.m.MLamRcvrs
-import io.suggest.lk.adv.m.IRcvrPopupProps
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.RcvrMarkersR
+import io.suggest.maps.u.{MapIcons, MapsUtil}
+import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.sjs.common.spa.OptFastEq.Plain
 import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
 import react.leaflet.layer.LayerGroupR
-import IRcvrPopupProps.IRcvrPopupPropsFastEq
 
 /**
   * Suggest.io
@@ -23,7 +25,7 @@ object LamRcvrsR {
 
   protected case class State(
                               nodesRespPotC     : ReactConnectProxy[Pot[MGeoNodesResp]],
-                              irppC             : ReactConnectProxy[IRcvrPopupProps]
+                              popupRespPotC     : ReactConnectProxy[Option[MGeoPoint]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -34,8 +36,13 @@ object LamRcvrsR {
         // Рендер гео.карты узлов-ресиверов. Сейчас она такая же, как и карта в lk-adv-geo:
         s.nodesRespPotC { RcvrMarkersR.apply },
 
-        // Рендер попапа над ресивером.
-        s.irppC { LamRcvrPopupR.apply }
+        // Рендерить крутилку на карте, пока с сервера происходит подгрузка данных для попапа:
+        s.popupRespPotC { mgpOpt =>
+          for (mgp <- mgpOpt()) yield {
+            val latLng = MapsUtil.geoPoint2LatLng(mgp)
+            MapIcons.preloaderLMarker(latLng)
+          }
+        }
 
       )
     }
@@ -47,7 +54,14 @@ object LamRcvrsR {
     .initialState_P { p =>
       State(
         nodesRespPotC = p.connect(_.nodesResp),
-        irppC         = p.connect(identity)
+        popupRespPotC = p.connect { m =>
+          for {
+            popupState <- m.popupState
+            if m.popupResp.isPending
+          } yield {
+            popupState.latLng
+          }
+        }
       )
     }
     .renderBackend[Backend]

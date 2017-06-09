@@ -2,8 +2,8 @@ package io.suggest.lk.adn.map.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.adv.rcvr.{MRcvrPopupResp, MRcvrPopupS}
-import io.suggest.lk.adv.m.IRcvrPopupProps
+import io.suggest.adv.info.MNodeAdvInfo
+import io.suggest.adv.rcvr.MRcvrPopupS
 import io.suggest.maps.nodes.MGeoNodesResp
 
 /**
@@ -17,7 +17,8 @@ object MLamRcvrs {
   implicit object MLamRcvrsFastEq extends FastEq[MLamRcvrs] {
     override def eqv(a: MLamRcvrs, b: MLamRcvrs): Boolean = {
       (a.nodesResp eq b.nodesResp) &&
-        IRcvrPopupProps.IRcvrPopupPropsFastEq.eqv(a, b)
+        (a.popupResp eq b.popupResp) &&
+        (a.popupState eq b.popupState)
     }
   }
 
@@ -25,19 +26,18 @@ object MLamRcvrs {
 
 
 case class MLamRcvrs(
-                      nodesResp                 : Pot[MGeoNodesResp]    = Pot.empty,
-                      override val popupResp    : Pot[MRcvrPopupResp]   = Pot.empty,
-                      override val popupState   : Option[MRcvrPopupS]   = None
+                      nodesResp    : Pot[MGeoNodesResp]    = Pot.empty,
+                      popupResp    : Pot[MNodeAdvInfo]     = Pot.empty,
+                      popupState   : Option[MRcvrPopupS]   = None
                     )
-  extends IRcvrPopupProps
 {
 
   def withNodesResp( nodesResp: Pot[MGeoNodesResp] ) = copy( nodesResp = nodesResp )
 
-  def withPopupResp(popupResp: Pot[MRcvrPopupResp]) = copy(popupResp = popupResp)
+  def withPopupResp(popupResp: Pot[MNodeAdvInfo]) = copy(popupResp = popupResp)
   def withPopupState(popupState: Option[MRcvrPopupS]) = copy(popupState = popupState)
 
-  def withPopup(resp: Pot[MRcvrPopupResp], state: Option[MRcvrPopupS]) = copy(
+  def withPopup(resp: Pot[MNodeAdvInfo], state: Option[MRcvrPopupS]) = copy(
     popupResp  = resp,
     popupState = state
   )
