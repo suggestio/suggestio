@@ -19,7 +19,7 @@ import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
-import japgolly.scalajs.react.{BackendScope, Callback, JsComponentU, ReactComponentB, ReactElement, TopNode}
+import japgolly.scalajs.react.{BackendScope, Callback, JsComponentU, PropsChildren, ReactComponentB, ReactElement, ReactNode, TopNode}
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
@@ -75,7 +75,7 @@ object RcvrMarkersR {
 
 
     /** Рендер всей гео.карты. */
-    def render(rcvrsGeoPotProxy: Props): ReactElement = {
+    def render(rcvrsGeoPotProxy: Props, children: PropsChildren): ReactElement = {
       for {
         mRcvrsGeo <- rcvrsGeoPotProxy().toOption
       } yield {
@@ -233,8 +233,9 @@ object RcvrMarkersR {
                 override val markerClick  = _onMarkerClickedF
               }
             )()
-          }
+          },
 
+          children
         )
 
       }
@@ -249,6 +250,6 @@ object RcvrMarkersR {
     .build
 
 
-  def apply(rcvrsGeoPotProxy: Props) = component(rcvrsGeoPotProxy)
+  def apply(rcvrsGeoPotProxy: Props)(children: ReactNode*) = component(rcvrsGeoPotProxy, children: _*)
 
 }

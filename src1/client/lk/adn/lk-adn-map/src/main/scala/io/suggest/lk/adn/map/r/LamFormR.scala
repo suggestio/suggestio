@@ -17,6 +17,7 @@ import MExistGeoS.MExistGeoSFastEq
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import RadPopupR.PropsValFastEq
 import io.suggest.common.empty.OptionUtil
+import react.leaflet.layer.LayerGroupR
 
 /**
   * Suggest.io
@@ -75,14 +76,25 @@ object LamFormR {
             // Плагин для геолокации текущего юзера.
             LocateControlR()(),
 
-            // Карта покрытия ресиверов.
-            s.rcvrsC { LamRcvrsR.apply },
 
-            // Рендер текущих размещений.
-            s.currentPotC { CurrentGeoR.apply },
+            // Карта покрытия ресиверов (подгружается асихронно).
+            s.rcvrsC { rcvrsProxy =>
 
-            // Маркер местоположения узла.
-            s.radOptsC { MapCursorR.apply },
+              // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
+              val lg = {
+                // Рендер текущих размещений.
+                s.currentPotC { CurrentGeoR.apply } ::
+                  // Маркер местоположения узла.
+                  s.radOptsC { MapCursorR.apply } ::
+                  Nil
+              }
+
+              rcvrsProxy().nodesResp.toOption.fold[ReactElement] {
+                LayerGroupR()( lg: _* )
+              } { _ =>
+                LamRcvrsR(rcvrsProxy)( lg: _* )
+              }
+            },
 
             // L-попап при клике по rad cursor.
             s.radPopupPropsC { RadPopupR.apply }

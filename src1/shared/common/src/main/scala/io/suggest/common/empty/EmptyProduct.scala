@@ -12,8 +12,15 @@ trait EmptyProduct extends IsEmpty { this: Product =>
   /** @return true, если класс содержит хотя бы одно значение. */
   override def nonEmpty: Boolean = {
     productIterator
-      .exists { EmptyProduct.nonEmpty }
+      .exists { _nonEmptyValue }
   }
+
+
+  /** Внутренний тест одного значения на nonEmpty. */
+  protected[this] def _nonEmptyValue(v: Any): Boolean = {
+    EmptyProduct.nonEmpty(v)
+  }
+
 
   /** @return true, если класс не содержит ни одного значения. */
   override final def isEmpty = super.isEmpty
@@ -27,6 +34,7 @@ trait EmptyProduct extends IsEmpty { this: Product =>
   }
 
 }
+
 
 object EmptyProduct {
 

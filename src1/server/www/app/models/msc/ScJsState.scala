@@ -133,17 +133,15 @@ case class ScJsState(
   extends EmptyProduct
 { that =>
 
-
-  /** @return true, если класс содержит хотя бы одно значение. */
-  override def nonEmpty: Boolean = {
-    productIterator
-      // Запрещаем проверять поле generationOpt.
-      .filter {
-        case vRef: AnyRef =>
-          !(vRef eq generationOpt)
-        case _ => true
-      }
-      .exists { EmptyProduct.nonEmpty }
+  /** Внутренний тест одного значения на nonEmpty. */
+  override protected[this] def _nonEmptyValue(v: Any): Boolean = {
+    v match {
+      // Запрещаем проверять значение поля generationOpt: возвращать false даже для Some().
+      case genOpt: Some[_] if genOpt eq generationOpt =>
+        false
+      case other =>
+        super._nonEmptyValue(other)
+    }
   }
 
   protected def orFalse(boolOpt: Option[Boolean]): Boolean = {

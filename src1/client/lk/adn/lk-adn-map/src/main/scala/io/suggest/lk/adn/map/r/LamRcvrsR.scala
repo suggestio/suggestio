@@ -9,7 +9,7 @@ import io.suggest.maps.r.RcvrMarkersR
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.common.spa.OptFastEq.Plain
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, ReactComponentB, ReactElement, ReactNode}
 import react.leaflet.layer.LayerGroupR
 
 /**
@@ -30,11 +30,13 @@ object LamRcvrsR {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(s: State): ReactElement = {
+    def render(s: State, children: PropsChildren): ReactElement = {
       LayerGroupR()(
 
         // Рендер гео.карты узлов-ресиверов. Сейчас она такая же, как и карта в lk-adv-geo:
-        s.nodesRespPotC { RcvrMarkersR.apply },
+        s.nodesRespPotC { nodesRespPot =>
+          RcvrMarkersR(nodesRespPot)(children: _*)
+        },
 
         // Рендерить крутилку на карте, пока с сервера происходит подгрузка данных для попапа:
         s.popupRespPotC { mgpOpt =>
@@ -68,6 +70,6 @@ object LamRcvrsR {
     .build
 
 
-  def apply(lamRcvrsProxy: Props) = component( lamRcvrsProxy )
+  def apply(lamRcvrsProxy: Props)(children: ReactNode*) = component( lamRcvrsProxy, children: _* )
 
 }

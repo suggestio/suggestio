@@ -41,7 +41,6 @@ object AdvGeoFormR {
   // Без пинка, FastEq не подцеплялись к работе и вызывали лишней re-render внутри коннекшенов.
   import MRcvr.MRcvrFastEq
   import MMapS.MMapSFastEq
-  import MExistGeoS.MExistGeoSFastEq
   import MRad.MRadFastEq
   import io.suggest.lk.tags.edit.m.MTagsEditState.MTagsEditStateFastEq
 
@@ -141,7 +140,7 @@ object AdvGeoFormR {
             },
 
             // MarkerCluster для списка ресиверов, если таковой имеется...
-            s.rcvrsGeoC( RcvrMarkersR.apply ),
+            s.rcvrsGeoC( RcvrMarkersR(_)() ),
             // Рендер опционального попапа над ресивером.
             s.rcvrPopupC( RcvrPopupR.apply )
 
