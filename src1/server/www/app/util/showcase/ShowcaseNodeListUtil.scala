@@ -213,8 +213,8 @@ class ShowcaseNodeListUtil @Inject() (
       mNodes.dynSearch( sargs1 )
         .map(_.head)
         // 2015.jun.18 Была выявлена проблема в head, когда город отсутствует. Пытаемся найти район, а из него город уже.
-        .recoverWith { case ex: NoSuchElementException if ast.isBuilding =>
-          error("getTownOfNode() geo-inconsistent linked node: id=" + mnode.id, ex)
+        .recoverWith { case _: NoSuchElementException if ast.isBuilding =>
+          warn("getTownOfNode() geo-inconsistent linked node: id=" + mnode.id)
           val districtTypeNames = AdnShownTypes.districtNames
           val sargs2 = NodeSearchByIdShownType(allParentIds, shownTypeIds = districtTypeNames)
           mNodes.dynSearch(sargs2)
@@ -517,7 +517,8 @@ sealed class SmNodesSearchArgsT extends SmNodesSearchArgsCommonT {
 /** При детектирования текущего узла происходит поиск единственного продакшен-ресивера.
   * Тут -- common-аргументы, задающие это поведение при поиске узлов. */
 sealed class NodeDetectArgsT extends SmNodesSearchArgsCommonT {
-  override def withAdnRights = Seq(AdnRights.RECEIVER)
+  // 2017.06.13: Закомменчено, т.к. отказ от ресиверов районов-округов-городов.
+  //override def withAdnRights = Seq(AdnRights.RECEIVER)
   override def limit = 1
   override def offset = 0
 }
