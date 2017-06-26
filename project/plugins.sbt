@@ -1,3 +1,5 @@
+//dependencyOverrides += "jline" % "jline" % "2.14.4"
+
 // Comment to get more information during initialization
 //logLevel := Level.Warn
 

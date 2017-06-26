@@ -153,21 +153,24 @@ trait ExternalLogin
   // которые по сути являются переусложнёнными stateful(!)-сессиями, которые придумал какой-то нехороший человек.
   protected def handleAuth1(provider: ILoginProvider, redirectTo: Option[String]) = maybeAuth().async { implicit request =>
     lazy val logPrefix = s"handleAuth1($provider):"
-    env.providers.get(provider.ssProvName).map {
-      _.authenticate().flatMap {
-        case denied: AuthenticationResult.AccessDenied =>
+    env.providers.get(provider.ssProvName).fold[Future[Result]]( NotFound ) { idProv =>
+      idProv.authenticate().flatMap {
+        case _: AuthenticationResult.AccessDenied =>
           val res = Redirect( routes.Ident.mySioStartPage() )
             .flashing(FLASH.ERROR -> "securesocial.login.accessDenied")
           res
+
         case failed: AuthenticationResult.Failed =>
           LOGGER.error(s"$logPrefix authentication failed, reason: ${failed.error}")
           throw AuthenticationException()
+
         case flow: AuthenticationResult.NavigationFlow => Future.successful {
-          redirectTo.map { url =>
-            flow.result
-              .addingToSession(Keys.OrigUrl.name -> url)
-          } getOrElse flow.result
+          val r0 = flow.result
+          redirectTo.fold( r0 ) { url =>
+            r0.addingToSession(Keys.OrigUrl.name -> url)
+          }
         }
+
         case authenticated: AuthenticationResult.Authenticated =>
           // TODO Отрабатывать случаи, когда юзер уже залогинен под другим person_id.
           val profile = authenticated.profile
@@ -221,8 +224,9 @@ trait ExternalLogin
               // Регистрация юзера не требуется. Возвращаем то, что есть в наличии.
               case Some(ident) =>
                 LOGGER.trace(s"$logPrefix Existing user[${ident.personId}] logged-in from ${profile.userId}")
-                Future successful (ident -> None)
+                Future.successful( ident -> None )
             }
+
             saveFut.flatMap { case (ident, newMpersonOpt) =>
               // Можно перенести внутрь match всю эту логику. Т.к. она очень предсказуема. Но это наверное ещё добавит сложности кода.
               val mpersonOptFut = newMpersonOpt match {
@@ -254,14 +258,12 @@ trait ExternalLogin
             }
           }
 
-      } recover {
+      }.recover {
         case e =>
           LOGGER.error("Unable to log user in. An exception was thrown", e)
           Redirect(routes.Ident.mySioStartPage())
             .flashing(FLASH.ERROR -> "securesocial.login.errorLoggingIn")
       }
-    } getOrElse {
-      Future.successful(NotFound)
     }
   }
 

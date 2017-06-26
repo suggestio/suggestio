@@ -115,12 +115,14 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
+  //val reactJsVsn         = "15.5.4" // "15.3.4"
   val reactJsVsn         = "15.3.2"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
+  //val reactSjsVsn        = "1.0.1" //"0.11.4-bundler-SNAPSHOT"
   val reactSjsVsn        = "0.11.4-bundler-SNAPSHOT"
 
   /** 

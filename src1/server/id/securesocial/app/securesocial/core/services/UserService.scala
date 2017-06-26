@@ -18,7 +18,6 @@ package securesocial.core.services
 
 import scala.concurrent.Future
 import securesocial.core.{IProfile, PasswordInfo}
-import securesocial.core.providers.MailToken
 
 trait UserService[U] {
 
@@ -32,15 +31,6 @@ trait UserService[U] {
   def find(providerId: String, userId: String): Future[Option[IProfile]]
 
   /**
-   * Finds a profile by email and provider
-   *
-   * @param email - the user email
-   * @param providerId - the provider id
-   * @return an optional profile
-   */
-  def findByEmailAndProvider(email: String, providerId: String): Future[Option[IProfile]]
-
-  /**
    * Saves a profile.  This method gets called when a user logs in, registers or changes his password.
    * This is your chance to save the user information in your backing store.
    *
@@ -50,14 +40,6 @@ trait UserService[U] {
   def save(profile: IProfile, mode: SaveMode): Future[U]
 
   /**
-   * Links the current user to another profile
-   *
-   * @param current The current user instance
-   * @param to the profile that needs to be linked to
-   */
-  def link(current: U, to: IProfile): Future[U]
-
-  /**
    * Returns an optional PasswordInfo instance for a given user
    *
    * @param user a user instance
@@ -65,55 +47,6 @@ trait UserService[U] {
    */
   def passwordInfoFor(user: U): Future[Option[PasswordInfo]]
 
-  /**
-   * Updates the PasswordInfo for a given user
-   *
-   * @param user a user instance
-   * @param info the password info
-   * @return
-   */
-  def updatePasswordInfo(user: U, info: PasswordInfo): Future[Option[IProfile]]
-
-  /**
-   * Saves a mail token.  This is needed for users that
-   * are creating an account in the system or trying to reset a password
-   *
-   * Note: If you do not plan to use the UsernamePassword provider just provide en empty
-   * implementation
-   *
-   * @param token The token to save
-   */
-  def saveToken(token: MailToken): Future[MailToken]
-
-  /**
-   * Finds a token
-   *
-   * Note: If you do not plan to use the UsernamePassword provider just provide en empty
-   * implementation
-   *
-   * @param token the token id
-   * @return
-   */
-  def findToken(token: String): Future[Option[MailToken]]
-
-  /**
-   * Deletes a token
-   *
-   * Note: If you do not plan to use the UsernamePassword provider just provide en empty
-   * implementation
-   *
-   * @param uuid the token id
-   */
-  def deleteToken(uuid: String): Future[Option[MailToken]]
-
-  /**
-   * Deletes all expired tokens
-   *
-   * Note: If you do not plan to use the UsernamePassword provider just provide en empty
-   * implementation
-   *
-   */
-  def deleteExpiredTokens()
 }
 
 /**

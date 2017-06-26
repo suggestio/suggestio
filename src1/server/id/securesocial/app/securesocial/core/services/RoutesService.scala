@@ -18,19 +18,17 @@ package securesocial.core.services
 
 import play.api.mvc.{ Call, RequestHeader }
 import securesocial.core.IdentityProvider
-import securesocial.util.{LoggerImpl, LazyLoggerImpl}
+import securesocial.util.LoggerImpl
 
 /**
  * A RoutesService that resolves the routes for some of the pages
  */
 trait RoutesService {
-  def loginPageUrl(implicit req: RequestHeader): String
-  def signUpUrl(implicit req: RequestHeader): String
-  def resetPasswordUrl(implicit req: RequestHeader): String
+
   def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String
-  def faviconPath: Call
-  def jqueryPath: Call
-  def customCssPath: Option[Call]
+
+  def loginPageUrl(implicit req: RequestHeader): String
+
 }
 
 object RoutesService {
@@ -38,8 +36,7 @@ object RoutesService {
    * The default RoutesService implementation.  It points to the routes
    * defined by the built in controllers.
    */
-  class Default extends RoutesService with LoggerImpl {
-    def conf = play.api.Play.current.configuration
+  abstract class Default extends RoutesService with LoggerImpl {
 
     def FaviconKey = "securesocial.faviconPath"
     def JQueryKey = "securesocial.jqueryPath"
@@ -51,48 +48,7 @@ object RoutesService {
       call.absoluteURL(IdentityProvider.sslEnabled)
     }
 
-    override def loginPageUrl(implicit req: RequestHeader): String = {
-      absoluteUrl(securesocial.controllers.routes.LoginPage.login())
-    }
+    def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String
 
-    def signUpUrl(implicit req: RequestHeader): String = {
-      absoluteUrl(securesocial.controllers.routes.Registration.startSignUp())
-    }
-
-    override def resetPasswordUrl(implicit request: RequestHeader): String = {
-      absoluteUrl(securesocial.controllers.routes.PasswordReset.startResetPassword())
-    }
-
-    override def authenticationUrl(provider: String, redirectTo: Option[String] = None)(implicit req: RequestHeader): String = {
-      absoluteUrl(securesocial.controllers.routes.ProviderController.authenticate(provider, redirectTo))
-    }
-
-    protected def valueFor(key: String, default: String) = {
-      val value = conf.getString(key).getOrElse(default)
-      logger.debug(s"[securesocial] $key = $value")
-      securesocial.controllers.routes.Assets.at(value)
-    }
-
-    /**
-     * Loads the Favicon to use from configuration, using a default one if not provided
-     * @return the path to Favicon file to use
-     */
-    override val faviconPath = valueFor(FaviconKey, DefaultFaviconPath)
-
-    /**
-     * Loads the Jquery file to use from configuration, using a default one if not provided
-     * @return the path to Jquery file to use
-     */
-    override val jqueryPath = valueFor(JQueryKey, DefaultJqueryPath)
-
-    /**
-     * Loads the Custom Css file to use from configuration. If there is none define, none will be used
-     * @return Option containing a custom css file or None
-     */
-    override val customCssPath: Option[Call] = {
-      val path = conf.getString(CustomCssKey).map(securesocial.controllers.routes.Assets.at)
-      logger.debug("[securesocial] custom css path = %s".format(path))
-      path
-    }
   }
 }
