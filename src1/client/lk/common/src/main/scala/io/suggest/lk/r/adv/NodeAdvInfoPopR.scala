@@ -3,9 +3,9 @@ package io.suggest.lk.r.adv
 import diode.react.ModelProxy
 import io.suggest.lk.m.NodeInfoPopupClose
 import io.suggest.lk.pop.PopupR
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactNode}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.bill.MPrice
@@ -44,27 +44,28 @@ object NodeAdvInfoPopR {
 
 
     /** Ряд заголовка. */
-    private def _tableHeaderRow(clauses: Iterable[(MCalType, MPrice)]): ReactElement = {
+    private def _tableHeaderRow(clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
       val firstCalTypeOpt = clauses.headOption.map(_._1)
 
-      <.tr(
-        <.td(
-          ^.colSpan := 2,
-          HtmlConstants.NBSP_STR
-        ),
+      val head = <.td(
+        ^.colSpan := 2,
+        HtmlConstants.NBSP_STR
+      )
 
-        clauses.flatMap { case (mCalType, _) =>
+      val tail = clauses
+        .iterator
+        .flatMap { case (mCalType, _) =>
           // Ячейка заголовка с описанием названия (типа) календаря и затрагиваемых дней недели.
           val payloadCell = <.td(
             ^.key := mCalType.strId,
             ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_INFO_TITLE ),
             Messages( mCalType.name ),
             ": ",
-            for (dayStart <- mCalType.dayStart) yield {
+            mCalType.dayStart.whenDefined { dayStart =>
               Messages( MsgCodes.`dayOfW.N.`( dayStart ) )
             },
-            (mCalType.dayStart.nonEmpty && mCalType.dayEnd.nonEmpty) ?= "-",
-            for (dayEnd <- mCalType.dayEnd) yield {
+            "-".when( mCalType.dayStart.nonEmpty && mCalType.dayEnd.nonEmpty ),
+            mCalType.dayEnd.whenDefined { dayEnd =>
               Messages( MsgCodes.`dayOfW.N.`( dayEnd ) )
             }
           )
@@ -80,25 +81,32 @@ object NodeAdvInfoPopR {
             acc0
           }
         }
+        .toStream
 
+      val children = head #:: tail
+
+      <.tr(
+        children: _*
       )
     }
 
 
     /** Ячейки ряда с ценами. */
-    private def _pricesRow(rowTitle1: String, rowTitle2: String, clauses: Iterable[(MCalType, MPrice)]): ReactElement = {
+    private def _pricesRow(rowTitle1: String, rowTitle2: String, clauses: Iterable[(MCalType, MPrice)]): VdomElement = {
       val sutki = Messages( MsgCodes.`day24h` )
       val td = Css.Table.Td.TD
-      <.tr(
-        // Левая колонка: описание принадлежности перечисленных цен.
-        <.td(
-          ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_GREEN, Css.Font.Sz.XS, Css.Colors.WHITE ),
-          rowTitle1,
-          <.br,
-          rowTitle2
-        ),
 
-        clauses.flatMap { case (mCalType, mPrice) =>
+      // Левая колонка: описание принадлежности перечисленных цен.
+      val head = <.td(
+        ^.`class` := Css.flat( Css.Table.Td.TD, Css.Lk.Adv.NodeInfo.TARIFF_GREEN, Css.Font.Sz.XS, Css.Colors.WHITE ),
+        rowTitle1,
+        <.br,
+        rowTitle2
+      )
+
+      val tail = clauses
+        .iterator
+        .flatMap { case (mCalType, mPrice) =>
           // td-разделитель, из-за особенностей вёрстки.
           val td1 = <.td(
             ^.key := mCalType.strId + "_",
@@ -114,13 +122,19 @@ object NodeAdvInfoPopR {
           )
           td1 :: td2 :: Nil
         }
+        .toStream
+
+      val children = head #:: tail
+
+      <.tr(
+        children: _*
       )
     }
 
 
     /** Рендер одного ряда в метаданных. */
-    private def _renderMetaRow(msgCode: String, vOpt: Option[String], isUrl: Boolean = false): ReactElement = {
-      for (v <- vOpt) yield {
+    private def _renderMetaRow(msgCode: String, vOpt: Option[String], isUrl: Boolean = false): VdomElement = {
+      vOpt.whenDefinedEl { v =>
         <.div(
           <.table(
             ^.`class` := Css.PropTable.TABLE,
@@ -148,7 +162,7 @@ object NodeAdvInfoPopR {
           <.hr(
             ^.`class` := Css.flat( Css.Lk.HrDelim.DELIMITER, Css.Lk.HrDelim.LIGHT )
           )
-        ): ReactElement
+        ): VdomElement
       }
     }
 
@@ -171,8 +185,8 @@ object NodeAdvInfoPopR {
       * @param advInfoOptProxy Прокся props.
       * @return React element.
       */
-    def render( advInfoOptProxy: Props ): ReactElement = {
-      for (advInfo <- advInfoOptProxy()) yield {
+    def render( advInfoOptProxy: Props ): VdomElement = {
+      advInfoOptProxy().whenDefinedEl { advInfo =>
         advInfoOptProxy.wrap { _ =>
           PopupR.PropsVal(
             closeable = Some( popupCloseClick ),
@@ -195,7 +209,9 @@ object NodeAdvInfoPopR {
                 ^.`class` := Css.flat( Css.Lk.Adv.NodeInfo.TARIFF, Css.Lk.Adv.NodeInfo.IN_POPUP ),
 
                 // Галерея фоток, если есть.
-                advInfo.gallery.nonEmpty ?= {
+                if ( advInfo.gallery.isEmpty ) {
+                  EmptyVdom
+                } else {
                   val hasManyImgs = advInfo.gallery.size >= 2
 
                   <.div(
@@ -217,7 +233,7 @@ object NodeAdvInfoPopR {
                               override val originalClass: UndefOr[String] = {
                                 _imgOriginalClass
                               }
-                            }
+                            }: IgItem
                           }
                           igItems.toJSArray
                         }
@@ -230,7 +246,7 @@ object NodeAdvInfoPopR {
                         override val slideDuration = 450
                         override val showFullscreenButton = true
                       }
-                    )()
+                    )
                   )
                 },
 
@@ -250,29 +266,28 @@ object NodeAdvInfoPopR {
                     <.tbody(
 
                       // Ряд-заголовок тарифной таблицы.
-                      for {
-                        tfDailyInfo <- advInfo.tfDaily
-                          .orElse { advInfo.tfDaily4Ad.map(_.tfDaily) }
-                      } yield {
-                        _tableHeaderRow( tfDailyInfo.clauses ): ReactElement
-                      },
+                      advInfo.tfDaily
+                        .orElse { advInfo.tfDaily4Ad.map(_.tfDaily) }
+                        .whenDefined { tfDailyInfo =>
+                          _tableHeaderRow( tfDailyInfo.clauses ): VdomElement
+                        },
 
                       // Ряд с тарифами минимального модуля.
-                      for ( tfDailyInfo <- advInfo.tfDaily ) yield {
+                      advInfo.tfDaily.whenDefined { tfDailyInfo =>
                         _pricesRow(
                           Messages( MsgCodes.`Minimal.module` ),
                           "(" + Messages( MsgCodes.`scheme.left` ) + ")",
                           tfDailyInfo.clauses
-                        ): ReactNode
+                        )
                       },
 
                       // Ряд с тарифами в рамках текущей карточки, если есть.
-                      for ( adTdDailyInfo <- advInfo.tfDaily4Ad ) yield {
+                      advInfo.tfDaily4Ad.whenDefined { adTdDailyInfo =>
                         _pricesRow(
                           Messages( MsgCodes.`Current.ad` ),
                           Messages( MsgCodes.`N.modules`, adTdDailyInfo.blockModulesCount ),
                           adTdDailyInfo.tfDaily.clauses
-                        ): ReactNode
+                        )
                       },
 
                       // Строка с малополезным пояснением на тему соглашения между CBCA и теущим узлом:
@@ -305,7 +320,7 @@ object NodeAdvInfoPopR {
 
           )
 
-        }: ReactElement
+        }
       }
     }
 
@@ -313,7 +328,7 @@ object NodeAdvInfoPopR {
   }
 
 
-  val component = ReactComponentB[Props]("NodeAdvInfoPop")
+  val component = ScalaComponent.builder[Props]("NodeAdvInfoPop")
     .stateless
     .renderBackend[Backend]
     .build

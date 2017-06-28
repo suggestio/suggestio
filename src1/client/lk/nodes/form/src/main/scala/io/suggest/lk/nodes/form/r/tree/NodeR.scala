@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.r.tree
 
 import diode.ActionType
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MPrice
@@ -16,7 +16,7 @@ import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil
 
 /**
@@ -62,18 +62,18 @@ object NodeR extends Log { self =>
     }
 
     /** Реакция на изменение значения флага активности узла. */
-    private def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onNodeEnabledChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
       _dispatchCB(
         NodeIsEnabledChanged(rcvrKey, isEnabled = e.target.checked)
       )
     }
 
     /** Callback для кнопки редактирования узла. */
-    private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onNodeEditClick(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
       e.stopPropagationCB >> _dispatchCB( NodeEditClick(rcvrKey) )
     }
 
-    private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onNodeEditNameChange(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
       _dispatchCB(
         NodeEditNameChange(rcvrKey, name = e.target.value)
       )
@@ -90,7 +90,7 @@ object NodeR extends Log { self =>
     }
 
     /** Callback изменения галочки управления размещением текущей карточки на указанном узле. */
-    private def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventI): Callback = {
+    private def onAdvOnNodeChanged(rcvrKey: RcvrKey)(e: ReactEventFromInput): Callback = {
       e.stopPropagationCB >> _dispatchCB(
         AdvOnNodeChanged(rcvrKey, isEnabled = e.target.checked)
       )
@@ -142,7 +142,7 @@ object NodeR extends Log { self =>
       * @param p Пропертисы.
       * @return React-элемент.
       */
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       import p._
 
       val rcvrKeyRev = node.info.id :: parentRcvrKey
@@ -160,7 +160,7 @@ object NodeR extends Log { self =>
         // Разделитель-промежуток от предыдущего элемента сверху.
         _delim,
         // Если на текущем узле отображаются пропертисы, то нужен толстый delimiter
-        isShowProps ?= _delim,
+        _delim.when( isShowProps ),
 
         <.div(
           ^.classSet1(
@@ -179,11 +179,13 @@ object NodeR extends Log { self =>
             Css.Table.Td.Radial.FIRST -> !isShowProps
           ),
           // Во время неРедактирования можно сворачивать-разворачивать блок, кликая по нему.
-          node.isNormal ?= {
+          if (node.isNormal) {
             ^.onClick --> onNodeClick(rcvrKey)
+          } else {
+            EmptyVdom
           },
 
-          node.editing.fold[ReactElement] {
+          node.editing.fold[VdomElement] {
             // Рендер названия узла. В зависимости от режима формы, могут быть варианты того, где он будет находиться.
             val nameSpan = <.span(
               ^.`class` := Css.Lk.Nodes.Name.TITLE,
@@ -194,11 +196,11 @@ object NodeR extends Log { self =>
             <.div(
               ^.`class` := Css.flat(Css.Font.Sz.L, Css.Lk.Nodes.Name.CONTENT),
 
-              p.conf.adIdOpt.fold [ReactElement] (nameSpan) { _ =>
+              p.conf.adIdOpt.fold [VdomElement] (nameSpan) { _ =>
                 // Рендерить галочку размещения текущей карточки на данном узле, если режим размещения активен сейчас.
                 <.label(
                   ^.`class` := Css.flat( Css.Input.INPUT, Css.CLICKABLE ),
-                  ^.onClick  ==> { e: ReactEventI => e.stopPropagationCB },
+                  ^.onClick  ==> { e: ReactEventFromInput => e.stopPropagationCB },
                   <.input(
                     ^.`type` := HtmlConstants.Input.checkbox,
                     if (node.advIsPending) {
@@ -221,7 +223,7 @@ object NodeR extends Log { self =>
               },
 
               // Рендерить кнопку редактирования имени, если ситуация позволяет.
-              (isShowProps && node.isNormal) ?= {
+              if (isShowProps && node.isNormal) {
                 <.span(
                   HtmlConstants.NBSP_STR,
                   HtmlConstants.NBSP_STR,
@@ -231,9 +233,9 @@ object NodeR extends Log { self =>
                     ^.title   := Messages( MsgCodes.`Change` )
                   )
                 )
-              },
+              } else EmptyVdom,
 
-              for (advState <- node.adv) yield {
+              node.adv.whenDefined { advState =>
                 <.span(
                   HtmlConstants.NBSP_STR,
 
@@ -252,9 +254,8 @@ object NodeR extends Log { self =>
                 )
               },
 
-              !node.advIsPending ?= {
-                HtmlConstants.NBSP_STR
-              },
+              HtmlConstants.NBSP_STR
+                .unless( node.advIsPending ),
 
               // Если инфа по узлу запрашивается с сервера, от отрендерить прелоадер
               node.children.renderPending { _ =>
@@ -265,14 +266,14 @@ object NodeR extends Log { self =>
               },
 
               // Кнопка удаления узла.
-              (isShowProps && node.info.canChangeAvailability.contains(true)) ?= {
+              if (isShowProps && node.info.canChangeAvailability.contains(true)) {
                 <.div(
                   ^.`class` := Css.Lk.Nodes.Menu.MENU,
                   ^.onClick ==> ReactDiodeUtil.eStopPropagationCB,
                   NodeMenuBtnR( p.proxy ),
                   NodeMenuR( p.proxy )
                 )
-              }
+              } else EmptyVdom
 
             )
 
@@ -331,7 +332,7 @@ object NodeR extends Log { self =>
         ),
 
         // Рендер подробной информации по узлу
-        isShowProps ?= {
+        if (isShowProps) {
           <.div(
 
             // Данные по узлу рендерим таблицей вида ключ-значение. Однако, возможна третья колонка с крутилкой.
@@ -351,7 +352,7 @@ object NodeR extends Log { self =>
                 ),
 
                 // Галочка управления активностью узла, если определено.
-                for (cca <- node.info.canChangeAvailability) yield {
+                node.info.canChangeAvailability.whenDefined { cca =>
                   val isEnabledValue = node.isEnabledUpd.fold(node.info.isEnabled)(_.newIsEnabled)
                   <.tr(
                     _kvTdKey(
@@ -378,11 +379,10 @@ object NodeR extends Log { self =>
                       ),
 
                       // Рендер данные по реквестов обновления флага isEnabled.
-                      for (upd <- node.isEnabledUpd) yield {
+                      node.isEnabledUpd.whenDefined { upd =>
                         <.span(
-                          (upd.request.isPending || upd.request.isFailed) ?= {
-                            HtmlConstants.NBSP_STR
-                          },
+                          HtmlConstants.NBSP_STR
+                            .when( upd.request.isPending || upd.request.isFailed ),
                           // Крутилка ожидания, если происходит запрос к серверу за обновлением.
                           upd.request.renderPending { _ =>
                             _smallWaitLoader
@@ -403,7 +403,7 @@ object NodeR extends Log { self =>
                 }, // for
 
                 // Рендер строки данных по тарифу размещения.
-                for (tfInfo <- node.info.tf) yield {
+                node.info.tf.whenDefined { tfInfo =>
                   val perDay = Messages( MsgCodes.`_per_.day` )
 
                   val changeBtn = <.a(
@@ -433,9 +433,7 @@ object NodeR extends Log { self =>
                           <.table(
                             ^.`class` := Css.Table.TABLE,
                             <.tbody(
-                              for {
-                                (mCalType, mPrice) <- tfInfo.clauses
-                              } yield {
+                              tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
                                 <.tr(
                                   ^.key := mCalType.strId,
                                   _kvTdKey(
@@ -457,14 +455,11 @@ object NodeR extends Log { self =>
                         // Рендер компактной инфы по тарифу.
                         <.span(
                           ": ",
-                          for {
-                            (mCalType, mPrice) <- tfInfo.clauses
-                          } yield {
+                          tfInfo.clauses.toVdomArray { case (mCalType, mPrice) =>
                             <.span(
                               ^.key := mCalType.strId,
-                              (!(mCalType == tfInfo.clauses.head._1)) ?= {
-                                " / "
-                              },
+                              " / "
+                                .unless( mCalType == tfInfo.clauses.head._1 ),
                               ^.title := Messages( mCalType.name ),
                               MPrice.amountStr(mPrice)
                             )
@@ -500,7 +495,7 @@ object NodeR extends Log { self =>
                     ),
 
                     _kvTdValue(
-                      children.nonEmpty ?= <.span(
+                      if (children.nonEmpty) <.span(
                         // Вывести общее кол-во под-узлов.
                         Messages( MsgCodes.`N.nodes`, children.size),
 
@@ -509,19 +504,19 @@ object NodeR extends Log { self =>
                           val countDisabled = children.count { n =>
                             !n.info.isEnabled
                           }
-                          (countDisabled > 0) ?= {
+                          if (countDisabled > 0) {
                             <.span(
                               HtmlConstants.COMMA,
                               HtmlConstants.NBSP_STR,
                               Messages( MsgCodes.`N.disabled`, countDisabled )
                             )
-                          }
+                          } else EmptyVdom
                         },
 
                         // Рендерим поддержку добавления нового под-узла:
                         HtmlConstants.COMMA,
                         HtmlConstants.SPACE
-                      ),
+                      ) else EmptyVdom,
 
                       // Форма добавления для текущего узла не существует. Рендерить кнопку добавления.
                       <.a(
@@ -536,14 +531,14 @@ object NodeR extends Log { self =>
               )   // TBODY
             )     // TABLE
           )
-        },
+        } else EmptyVdom,
 
         // Рекурсивно отрендерить дочерние элементы:
         node.children.render { children =>
           <.div(
-            children.nonEmpty ?= {
+            if (children.nonEmpty) {
               val childLevel = level + 1
-              for (subNode <- children) yield {
+              children.toVdomArray { subNode =>
                 val p1 = p.copy(
                   node          = subNode,
                   parentRcvrKey = rcvrKeyRev,
@@ -551,7 +546,7 @@ object NodeR extends Log { self =>
                 )
                 self( p1 )
               }
-            }
+            } else EmptyVdom
           )
         },
 
@@ -565,7 +560,7 @@ object NodeR extends Log { self =>
         },
 
         // Если текущий узел раскрыт полностью, то нужен ещё один разделитель снизу, чтобы явно отделить контент текущего узла.
-        isShowProps ?= _delim
+        _delim.when( isShowProps )
 
       )
     }
@@ -573,7 +568,7 @@ object NodeR extends Log { self =>
   }
 
 
-  val component = ReactComponentB[Props]("Node")
+  val component = ScalaComponent.builder[Props]("Node")
     .stateless
     .renderBackend[Backend]
     .build

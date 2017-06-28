@@ -4,9 +4,11 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.MapsUtil
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import react.leaflet.popup.PopupR
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import react.leaflet.popup.{LPopupPropsR, LPopupR}
 
 /**
   * Suggest.io
@@ -31,22 +33,22 @@ object RadPopupR {
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
-    def render(propsProxy: Props): ReactElement = {
-      for {
-        p <- propsProxy()
-      } yield {
-        PopupR(
-          position = MapsUtil.geoPoint2LatLng(p.point)
+    def render(propsProxy: Props): VdomElement = {
+      propsProxy().whenDefinedEl { p =>
+        LPopupR(
+          new LPopupPropsR {
+            override val position = MapsUtil.geoPoint2LatLng(p.point)
+          }
         )(
           OptsR( propsProxy )
-        )
+        ): VdomElement
       }
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("RadPopup")
+  val component = ScalaComponent.builder[Props]("RadPopup")
     .stateless
     .renderBackend[Backend]
     .build

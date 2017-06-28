@@ -1,9 +1,7 @@
 package react.leaflet.gj
 
-import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.geojson.GjOptions
-import japgolly.scalajs.react.JsComponentType
-import org.scalajs.dom.raw.HTMLElement
+import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
@@ -15,13 +13,18 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Description: React API for GeoJSON leaflet layer component.
   */
 
-case class GeoJsonR(override val props: GeoJsonPropsR) extends JsWrapperR[GeoJsonPropsR, HTMLElement] {
-  override protected def _rawComponent = js.constructorOf[GeoJSON]
+object GeoJsonR {
+
+  val component = JsComponent[GeoJsonPropsR, Children.None, Null]( LGeoJsonJs )
+
+  def apply(props: GeoJsonPropsR) = component( props )
+
 }
+
 
 @JSImport("react-leaflet", "GeoJSON")
 @js.native
-sealed class GeoJSON extends JsComponentType[GeoJsonPropsR, js.Object, HTMLElement]
+object LGeoJsonJs extends js.Object
 
 
 @ScalaJSDefined

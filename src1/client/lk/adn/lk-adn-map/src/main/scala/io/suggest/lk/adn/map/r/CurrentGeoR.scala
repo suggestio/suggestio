@@ -5,9 +5,11 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS}
 import io.suggest.maps.r.{ExistAdvGeoShapesR, ExistPopupR}
 import io.suggest.sjs.common.geo.json.GjFeature
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
 import MExistGeoPopupS.MGeoCurPopupSFastEq
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 import scala.scalajs.js
 
@@ -28,7 +30,7 @@ object CurrentGeoR {
 
   protected class Backend($: BackendScope[Props, State]) {
 
-    def render(s: State): ReactElement = {
+    def render(s: State): VdomElement = {
       LayerGroupR()(
 
         s.geoJsonC { ExistAdvGeoShapesR.apply },
@@ -42,8 +44,8 @@ object CurrentGeoR {
   }
 
 
-  val component = ReactComponentB[Props]("CurrentGeo")
-    .initialState_P { mcgProxy =>
+  val component = ScalaComponent.builder[Props]("CurrentGeo")
+    .initialStateFromProps { mcgProxy =>
       State(
         geoJsonC = mcgProxy.connect(_.geoJson),
         popupC   = mcgProxy.connect(_.popup)

@@ -10,10 +10,10 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.pop.PopupR
 import io.suggest.lk.r.LkPreLoaderR
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import PopupR.PopupPropsValFastEq
 
 /**
@@ -38,7 +38,7 @@ object EditTfDailyR {
       dispatchOnProxyScopeCB( $, TfDailyManualMode )
     }
 
-    private def onManualAmountChange(e: ReactEventI): Callback = {
+    private def onManualAmountChange(e: ReactEventFromInput): Callback = {
       val v = e.target.value
       dispatchOnProxyScopeCB( $, TfDailyManualAmountChanged(v) )
     }
@@ -52,10 +52,8 @@ object EditTfDailyR {
     }
 
 
-    def render(propsProxy: Props): ReactElement = {
-      for {
-        editS  <- propsProxy()
-      } yield {
+    def render(propsProxy: Props): VdomElement = {
+      propsProxy().whenDefinedEl { editS =>
 
         propsProxy.wrap { _ =>
           PopupR.PropsVal(
@@ -109,7 +107,7 @@ object EditTfDailyR {
                   Messages( MsgCodes.`Set.manually` )
                 ),
 
-                for (_ <- editS.mode.manualOpt) yield {
+                editS.mode.manualOpt.whenDefinedEl { _ =>
                   val mcurrency = editS.nodeTfOpt
                     .fold(MCurrencies.default)( _.currency )
                   <.div(
@@ -118,7 +116,7 @@ object EditTfDailyR {
                       Messages( MsgCodes.`Cost` ),
                       HtmlConstants.SPACE,
 
-                      for (mia <- editS.inputAmount) yield {
+                      editS.inputAmount.whenDefinedEl { mia =>
                         <.input(
                           ^.`type`    := HtmlConstants.Input.text,
                           ^.`class`   := Css.Lk.Nodes.Inputs.INPUT70,
@@ -146,8 +144,10 @@ object EditTfDailyR {
                   Css.Buttons.MAJOR -> saveBtnActive,
                   Css.Buttons.MINOR -> !saveBtnActive
                 ),
-                saveBtnActive ?= {
+                if (saveBtnActive) {
                   ^.onClick --> onSaveClick
+                } else {
+                  EmptyVdom
                 },
                 Messages( MsgCodes.`Save` )
               ),
@@ -183,7 +183,7 @@ object EditTfDailyR {
   }
 
 
-  val component = ReactComponentB[Props]("EditTfDaily")
+  val component = ScalaComponent.builder[Props]("EditTfDaily")
     .stateless
     .renderBackend[Backend]
     .build

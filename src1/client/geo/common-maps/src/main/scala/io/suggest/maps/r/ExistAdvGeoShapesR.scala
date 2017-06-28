@@ -12,13 +12,15 @@ import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.event.{Events, LayerEvent}
 import io.suggest.sjs.leaflet.map.{LatLng, Layer}
 import io.suggest.sjs.leaflet.path.PathOptions
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.gj.{GeoJsonPropsR, GeoJsonR}
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
 import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.maps.m.OpenAdvGeoExistPopup
 import io.suggest.sjs.common.model.loc.MGeoPointJs
+import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr}
@@ -41,10 +43,8 @@ object ExistAdvGeoShapesR extends Log {
       dispatchOnProxyScopeCB( $, OpenAdvGeoExistPopup(itemId, at) )
     }
 
-    def render(p: Props): ReactElement = {
-      for {
-        gjFeatures <- p().toOption
-      } yield {
+    def render(p: Props): VdomElement = {
+      p().toOption.whenDefinedEl { gjFeatures =>
         lazy val _circleMarkerOptions = new CircleMarkerOptions {
           override val radius = GeoConstants.CircleMarkers.RADIUS_PX
         }
@@ -107,13 +107,13 @@ object ExistAdvGeoShapesR extends Log {
             }
           }
 
-        })()
+        })
       }
     }
 
   }
 
-  val component = ReactComponentB[Props]("ExistAdvGeoShapes")
+  val component = ScalaComponent.builder[Props]("ExistAdvGeoShapes")
     .stateless
     .renderBackend[Backend]
     .build

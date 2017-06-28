@@ -1,10 +1,8 @@
 package react.leaflet.marker.cluster
 
-import io.suggest.react.JsWrapper0R
-import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.marker.cluster._
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
-import japgolly.scalajs.react.TopNode
+import japgolly.scalajs.react.{JsComponent, Children}
 import react.leaflet.Context
 import react.leaflet.layer.MapLayerR
 
@@ -25,20 +23,16 @@ object MarkerClusterGroupR {
   def jsConstructor = js.constructorOf[MarkerClusterGroupC]
   jsConstructor.contextTypes = MapLayerR.contextTypes
 
-}
+  val component = JsComponent[MarkerClusterGroupPropsR, Children.None, Null]( jsConstructor )
 
-/**
-  * Реализация sjs-react-враппера для react-js-компонента [[MarkerClusterGroupC]].
-  * sealed, чтобы можно было делать инстанс только через companion object, у которого есть очень нужный конструктор.
-  */
-sealed case class MarkerClusterGroupR(props: MarkerClusterGroupPropsR) extends JsWrapper0R[MarkerClusterGroupPropsR, TopNode] {
-  override protected def _rawComponent = MarkerClusterGroupR.jsConstructor
+  def apply(props: MarkerClusterGroupPropsR) = component( props )
+
 }
 
 
 /** Реализация компонента, овладевающего кластерами из маркеров. */
 @ScalaJSDefined
-class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
+sealed class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
   extends MapLayerR[MarkerClusterGroupPropsR](_props, _ctx)
 {
 

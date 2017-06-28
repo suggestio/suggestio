@@ -1,9 +1,8 @@
 package react.leaflet.control
 
-import io.suggest.react.JsWrapper0R
 import io.suggest.sjs.leaflet.control.locate.{LocateControl, LocateOptions}
-import org.scalajs.dom.raw.HTMLElement
 import react.leaflet.Context
+import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined
@@ -22,16 +21,10 @@ object LocateControlR {
   def jsConstructor = js.constructorOf[LocateControlC]
   jsConstructor.contextTypes = MapControlR.contextTypes
 
-}
+  val component = JsComponent[LocateControlPropsR, Children.None, Null]( jsConstructor )
 
+  def apply(props: LocateControlPropsR = new LocateControlPropsR{} ) = component( props )
 
-/** Scala.js-враппер для js-класса [[LocateControlC]]. */
-case class LocateControlR(
-  override val props: LocateControlPropsR = new LocateControlPropsR {}
-)
-  extends JsWrapper0R[LocateOptions, HTMLElement]
-{
-  override protected def _rawComponent = LocateControlR.jsConstructor
 }
 
 

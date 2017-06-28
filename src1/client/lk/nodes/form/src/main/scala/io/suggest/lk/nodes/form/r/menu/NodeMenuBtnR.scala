@@ -5,7 +5,7 @@ import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m.NodeMenuBtnClick
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /** Компонентик кнопки меню узла. */
 object NodeMenuBtnR {
@@ -18,7 +18,7 @@ object NodeMenuBtnR {
       e.stopPropagationCB >> dispatchOnProxyScopeCB( $, NodeMenuBtnClick )
     }
 
-    def render: ReactElement = {
+    def render: VdomElement = {
       <.span(
         ^.`class`  := Css.Lk.Nodes.Menu.BTN,
         ^.onClick ==> onNodeMenuBtnClick,
@@ -31,7 +31,7 @@ object NodeMenuBtnR {
 
   }
 
-  val component = ReactComponentB[Props]("MenuBtn")
+  val component = ScalaComponent.builder[Props]("MenuBtn")
     .stateless
     .renderBackend[Backend]
     .build

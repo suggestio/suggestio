@@ -4,10 +4,10 @@ import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalaComponent
 
 /**
   * Suggest.io
@@ -19,10 +19,10 @@ object MapInitFailR {
 
   type Props = ModelProxy[Pot[_]]
 
-  val component = ReactComponentB[Props]("RcvrMarkersFail")
+  val component = ScalaComponent.builder[Props]("RcvrMarkersFail")
     .stateless
     .render_P { props =>
-      for (ex <- props().exceptionOption) yield {
+      props().exceptionOption.whenDefinedEl { ex =>
         <.div(
           ^.`class` := Css.flat( Css.Lk.Adv.Su.CONTAINER, Css.Colors.RED ),
           Messages( MsgCodes.`Error` ),
@@ -30,7 +30,7 @@ object MapInitFailR {
           Messages( MsgCodes.`Unable.to.initialize.map` ),
           <.br,
           ex.toString
-        ): ReactElement
+        ): VdomElement
       }
     }
     .build

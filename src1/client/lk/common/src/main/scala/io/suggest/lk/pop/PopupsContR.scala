@@ -7,7 +7,7 @@ import io.suggest.lk.m.CloseAllPopups
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.raw.HTMLDivElement
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
@@ -42,7 +42,7 @@ object PopupsContR {
       dispatchOnProxyScopeCB( $, CloseAllPopups )
     }
 
-    def render(propsProxy: Props, pc: PropsChildren): ReactElement = {
+    def render(propsProxy: Props, pc: PropsChildren): VdomElement = {
       val p = propsProxy()
       <.aside(
         ^.classSet1(
@@ -60,12 +60,12 @@ object PopupsContR {
   }
 
 
-  val component = ReactComponentB[Props]("PopCont")
+  val component = ScalaComponent.builder[Props]("PopCont")
     .stateless
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
-  def apply(props: Props)(children: ReactNode*) = component(props, children: _*)
+  def apply(props: Props)(children: VdomNode*) = component(props)(children: _*)
 
   /**
     * Надо куда-то рендерить контейнер попапов, прежде чем пользоваться им.

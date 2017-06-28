@@ -10,8 +10,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
-import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom.raw.HTMLDivElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 import scala.concurrent.Future
 
@@ -51,17 +51,17 @@ class AdvGeoFormInit extends IInit {
     // Рендер всей формы:
     val formR = circuit.wrap(m => m)(AdvGeoFormR.apply)
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvGeoConstants.REACT_FORM_TARGET_ID )
-    ReactDOM.render( formR, formTarget )
+    formR.renderIntoDOM( formTarget )
 
     // Отдельно идёт рендер виджета цены PriceR:
     val priceR = circuit.wrap(_.bill.price)(PriceR.apply)
     val priceTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdvConstants.Price.OUTER_CONT_ID )
-    ReactDOM.render(priceR, priceTarget)
+    priceR.renderIntoDOM( priceTarget )
 
     // Рендер контейнера попапов.
     val popsContR = circuit.wrap(_.popups)( AdvGeoPopupsR.apply )
     val popsContTarget = PopupsContR.initDocBody()
-    ReactDOM.render(popsContR, popsContTarget)
+    popsContR.renderIntoDOM( popsContTarget )
 
   }
 

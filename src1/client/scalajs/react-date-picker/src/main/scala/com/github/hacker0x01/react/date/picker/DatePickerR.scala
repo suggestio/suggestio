@@ -1,12 +1,10 @@
 package com.github.hacker0x01.react.date.picker
 
-import io.suggest.react.JsWrapperR
 import org.scalajs.dom.Element
-import org.scalajs.dom.raw.HTMLDivElement
-import japgolly.scalajs.react.{JsComponentType, ReactEvent, TopNode}
+import japgolly.scalajs.react.{JsComponent, ReactEvent, Children}
 
 import scala.scalajs.js
-import scala.scalajs.js.{Dynamic, UndefOr, |}
+import scala.scalajs.js.{UndefOr, |}
 import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 
 /**
@@ -15,15 +13,19 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Created: 17.01.17 11:19
   * Description: react DatePicker component support for scala.js.
   */
-case class DatePickerR(props: DatePickerPropsR) extends JsWrapperR[DatePickerPropsR, HTMLDivElement] {
-  override protected def _rawComponent: Dynamic = js.constructorOf[DatePicker]
+object DatePickerR {
+
+  val component = JsComponent[DatePickerPropsR, Children.None, Null]( DatePickerJs )
+
+  def apply(props: DatePickerPropsR) = component( props )
+
 }
 
 
 /** Native component facade. */
 @JSImport("react-datepicker", JSImport.Namespace)
 @js.native
-class DatePicker extends JsComponentType[DatePickerPropsR, js.Object, TopNode]
+object DatePickerJs extends js.Object // JsComponentType[DatePickerPropsR, js.Object, TopNode]
 
 
 /** Component properties. */

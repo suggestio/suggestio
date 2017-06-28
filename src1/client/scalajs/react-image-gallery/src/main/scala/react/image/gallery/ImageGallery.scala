@@ -1,7 +1,6 @@
 package react.image.gallery
 
-import io.suggest.react.JsWrapper0R
-import japgolly.scalajs.react.JsComponentType
+import japgolly.scalajs.react.{JsComponent, Children}
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLElement
 
@@ -18,19 +17,18 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * @see [[https://www.npmjs.com/package/react-image-gallery]]
   */
 
-/** Scala.js-враппер для js-класса [[ImageGalleryC]]. */
-case class ImageGalleryR(
-  override val props: ImageGalleryPropsR
-)
-  extends JsWrapper0R[ImageGalleryPropsR, HTMLElement]
-{
-  override protected def _rawComponent = js.constructorOf[ImageGalleryC]
+object ImageGalleryR {
+
+  val component = JsComponent[ImageGalleryPropsR, Children.None, Null]( ImageGalleryC )
+
+  def apply( props: ImageGalleryPropsR ) = component( props )
+
 }
 
 
 @JSImport("react-image-gallery", JSImport.Default)
 @js.native
-sealed class ImageGalleryC extends JsComponentType[ImageGalleryPropsR, js.Object, HTMLElement] {
+object ImageGalleryC extends js.Object {
 
   def play(): Unit = js.native
 

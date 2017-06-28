@@ -1,8 +1,8 @@
 package react.leaflet.layer
 
-import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.event.MouseEvent
-import japgolly.scalajs.react.{JsComponentType, TopNode}
+import japgolly.scalajs.react.vdom.VdomNode
+import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -14,20 +14,20 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Created: 10.01.17 12:03
   * Description: Layer group for react-leaflet wrappers and APIs.
   */
-case class LayerGroupR(
-                        override val props  : LayerGroupPropsR = new LayerGroupPropsR {}
-                      )
-  extends JsWrapperR[LayerGroupPropsR, TopNode]
-{
+object LayerGroupR {
 
-  override protected def _rawComponent = js.constructorOf[LayerGroup]
+  val component = JsComponent[LayerGroupPropsR, Children.Varargs, Null]( LLayerGroupJsR )
+
+  def apply(props  : LayerGroupPropsR = new LayerGroupPropsR {})(children: VdomNode*) = {
+    component(props)(children: _*)
+  }
 
 }
 
 
 @JSImport("react-leaflet", "LayerGroup")
 @js.native
-sealed class LayerGroup extends JsComponentType[LayerGroupPropsR, js.Object, TopNode]
+object LLayerGroupJsR extends js.Object
 
 
 @ScalaJSDefined

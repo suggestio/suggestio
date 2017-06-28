@@ -9,18 +9,19 @@ import io.suggest.lk.adv.geo.r.oms.OnMainScreenR
 import io.suggest.lk.adv.geo.r.rcvr.RcvrPopupR
 import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.lk.tags.edit.r.TagsEditR
-import io.suggest.maps.m.{MExistGeoPopupS, MExistGeoS, MMapS, MRad}
+import io.suggest.maps.m.{MExistGeoPopupS, MMapS, MRad}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import MExistGeoPopupS.MGeoCurPopupSFastEq
 import io.suggest.maps.nodes.MGeoNodesResp
+import react.leaflet.lmap.LMapR
 
 import scala.scalajs.js
 
@@ -72,7 +73,7 @@ object AdvGeoFormR {
   protected class Backend($: BackendScope[Props, _]) {
 
     /** Рендер всея формы. */
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props, s: State): VdomElement = {
       // без <form>, т.к. форма теперь сущетсвует на уровне JS в состоянии diode.
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
@@ -118,13 +119,14 @@ object AdvGeoFormR {
 
         // Рендер географической карты:
         s.mmapC { mapProps =>
-          LGeoMapR(mapProps)(
+          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapProps )
+          LMapR(lMapProps)(
 
             // Рендерим основную плитку карты.
             ReactLeafletUtil.Tiles.OsmDefault,
 
             // Плагин для геолокации текущего юзера.
-            LocateControlR()(),
+            LocateControlR(),
 
             // Рендер кружочков текущих размещений.
             s.geoAdvExistGjC( ExistAdvGeoShapesR.apply ),
@@ -134,7 +136,7 @@ object AdvGeoFormR {
             // Запрешаем рендер красного круга пока не нарисованы все остальные. Так надо, чтобы он был поверх их всех.
             s.geoAdvExistGjC { potProx =>
               // Георазмещение: рисуем настраиваемый круг для размещения в радиусе:
-              for (_ <- potProx().toOption) yield {
+              potProx().toOption.whenDefinedEl { _ =>
                 s.mRadOptC( RadR.apply )
               }
             },
@@ -158,8 +160,8 @@ object AdvGeoFormR {
   }
 
 
-  protected val component = ReactComponentB[Props]("AdvGeoForm")
-    .initialState_P { p =>
+  protected val component = ScalaComponent.builder[Props]("AdvGeoForm")
+    .initialStateFromProps { p =>
       val mradOptZoomF = { r: MRoot => r.rad }
       State(
         onMainScrC   = p.connect { mroot =>

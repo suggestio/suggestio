@@ -3,8 +3,10 @@ package io.suggest.lk.adv.geo.r.pop
 import diode.react.ModelProxy
 import io.suggest.lk.adv.geo.m.MNodeInfoPopupS
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 /**
   * Suggest.io
@@ -19,8 +21,8 @@ object AdvGeoNodeInfoPopR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def render(props: Props): ReactElement = {
-      for (ps <- props()) yield {
+    def render(props: Props): VdomElement = {
+      props().whenDefinedEl { ps =>
         props.wrap(_ => ps.req.toOption)( NodeAdvInfoPopR.apply )
       }
     }
@@ -28,7 +30,7 @@ object AdvGeoNodeInfoPopR {
   }
 
 
-  val component = ReactComponentB[Props]("AdvGeoNodeInfoPop")
+  val component = ScalaComponent.builder[Props]("AdvGeoNodeInfoPop")
     .stateless
     .renderBackend[Backend]
     .build

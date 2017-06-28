@@ -1,7 +1,7 @@
 package react.leaflet.control
 
 import io.suggest.sjs.leaflet.control.ControlOptions
-import japgolly.scalajs.react.ReactElement
+import japgolly.scalajs.react.raw.ReactElement
 import react.leaflet.Context
 import react.leaflet.lmap.MapComponentR
 

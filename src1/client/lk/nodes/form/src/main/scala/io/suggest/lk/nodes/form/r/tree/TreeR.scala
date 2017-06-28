@@ -5,8 +5,8 @@ import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.lk.nodes.MLknConf
 import io.suggest.lk.nodes.form.m._
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 /**
   * Suggest.io
@@ -36,7 +36,7 @@ object TreeR {
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Рендер текущего компонента. */
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       val v = p()
       val parentLevel = 0
       val parentRcvrKey = Nil
@@ -45,7 +45,7 @@ object TreeR {
         ^.`class` := Css.flat(Css.Table.TABLE, Css.Table.Width.XL),
 
         // Рендерить узлы.
-        for (node <- v.mtree.nodes) yield {
+        v.mtree.nodes.toVdomArray { node =>
           val tnp = NodeR.PropsVal(
             conf          = v.conf,
             mtree         = v.mtree,
@@ -56,13 +56,14 @@ object TreeR {
           )
           NodeR( tnp )
         }
+
       )
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("Tree")
+  val component = ScalaComponent.builder[Props]("Tree")
     .stateless
     .renderBackend[Backend]
     .build

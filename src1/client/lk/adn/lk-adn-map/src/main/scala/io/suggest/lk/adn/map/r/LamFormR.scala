@@ -3,8 +3,7 @@ package io.suggest.lk.adn.map.r
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adn.map.m.{IRadOpts, MLamRcvrs, MRoot}
 import io.suggest.maps.m.{MExistGeoS, MMapS}
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.css.Css
 import io.suggest.maps.r.{LGeoMapR, ReactLeafletUtil}
 import react.leaflet.control.LocateControlR
@@ -18,6 +17,8 @@ import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import RadPopupR.PropsValFastEq
 import io.suggest.common.empty.OptionUtil
 import react.leaflet.layer.LayerGroupR
+import react.leaflet.lmap.LMapR
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -47,7 +48,7 @@ object LamFormR {
   /** Логика рендера компонента всея формы. */
   class Backend($: BackendScope[Props, State]) {
 
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props, s: State): VdomElement = {
       <.div(
         ^.`class` := Css.Lk.Adv.FORM_OUTER_DIV,
 
@@ -68,28 +69,28 @@ object LamFormR {
 
         // Рендер географической карты:
         s.mmapC { mapPropsProxy =>
-          LGeoMapR(mapPropsProxy)(
+          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy )
+          LMapR(lMapProps)(
 
             // Рендерим основную плитку карты.
             ReactLeafletUtil.Tiles.OsmDefault,
 
             // Плагин для геолокации текущего юзера.
-            LocateControlR()(),
+            LocateControlR(),
 
 
             // Карта покрытия ресиверов (подгружается асихронно).
             s.rcvrsC { rcvrsProxy =>
 
               // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
-              val lg = {
+              val lg = List[VdomNode](
                 // Рендер текущих размещений.
-                s.currentPotC { CurrentGeoR.apply } ::
-                  // Маркер местоположения узла.
-                  s.radOptsC { MapCursorR.apply } ::
-                  Nil
-              }
+                s.currentPotC { CurrentGeoR.apply },
+                // Маркер местоположения узла.
+                s.radOptsC { MapCursorR.apply }
+              )
 
-              rcvrsProxy().nodesResp.toOption.fold[ReactElement] {
+              rcvrsProxy().nodesResp.toOption.fold[VdomElement] {
                 LayerGroupR()( lg: _* )
               } { _ =>
                 LamRcvrsR(rcvrsProxy)( lg: _* )
@@ -114,8 +115,8 @@ object LamFormR {
   }
 
 
-  val component = ReactComponentB[Props]("LamForm")
-    .initialState_P { p =>
+  val component = ScalaComponent.builder[Props]("LamForm")
+    .initialStateFromProps { p =>
       State(
         mmapC         = p.connect(_.mmap),
         radOptsC      = p.connect(identity),

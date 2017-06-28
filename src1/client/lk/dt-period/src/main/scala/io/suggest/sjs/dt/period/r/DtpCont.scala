@@ -1,14 +1,15 @@
 package io.suggest.sjs.dt.period.r
 
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.{ReactComponentB, ReactNode}
+import japgolly.scalajs.react.ScalaComponent
 
 /** Компонент внешнего контейнера виджета. */
 object DtpCont {
 
-  val component = ReactComponentB[Unit]("DtpCont")
+  val component = ScalaComponent.builder[Unit]("DtpCont")
     .stateless
     .render_C { children =>
       // Контейнер виджета
@@ -18,7 +19,7 @@ object DtpCont {
         // Заголовок виджета
         <.h2(
           ^.`class` := Css.Lk.MINOR_TITLE,
-          Messages( "Date.choosing" )
+          Messages( MsgCodes.`Date.choosing` )
         ),
 
         // Контейнер кусков виджета.
@@ -30,6 +31,6 @@ object DtpCont {
     }
     .build
 
-  def apply(children: ReactNode*) = component(children: _*)
+  def apply(children: VdomNode*) = component(children: _*)
 
 }

@@ -3,7 +3,8 @@ package io.suggest.sjs.dt.period.r
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.dt.MAdvPeriod
 import io.suggest.dt.interval.MRangeYmd
-import japgolly.scalajs.react.ReactComponentB
+import japgolly.scalajs.react.ScalaComponent
+import japgolly.scalajs.react.vdom.Implicits._
 import io.suggest.sjs.common.dt.JsDateUtil._
 
 /**
@@ -21,8 +22,8 @@ object DatePeriodR {
                     dateRangeConn     : ReactConnectProxy[MRangeYmd]
                   )
 
-  val component = ReactComponentB[Props]("DatePeriod")
-    .initialState_P { props =>
+  val component = ScalaComponent.builder[Props]("DatePeriod")
+    .initialStateFromProps { props =>
       State(
         dateRangeConn = props.connect { r =>
           r.info.rangeYmd(JsDateHelper)

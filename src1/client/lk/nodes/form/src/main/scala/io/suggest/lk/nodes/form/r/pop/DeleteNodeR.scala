@@ -10,9 +10,9 @@ import io.suggest.lk.pop.PopupR
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import PopupR.PopupPropsValFastEq
 
 /**
@@ -39,8 +39,8 @@ object DeleteNodeR {
     }
 
 
-    def render(propsProxy: Props): ReactElement = {
-      for (props <- propsProxy()) yield {
+    def render(propsProxy: Props): VdomElement = {
+      propsProxy().whenDefinedEl { props =>
 
         propsProxy.wrap { _ =>
           PopupR.PropsVal(
@@ -113,7 +113,7 @@ object DeleteNodeR {
               }
 
             )
-          }: ReactElement
+          }
         }
       }
     }
@@ -121,7 +121,7 @@ object DeleteNodeR {
   }
 
 
-  val component = ReactComponentB[Props]("DeleteNode")
+  val component = ScalaComponent.builder[Props]("DeleteNode")
     .stateless
     .renderBackend[Backend]
     .build

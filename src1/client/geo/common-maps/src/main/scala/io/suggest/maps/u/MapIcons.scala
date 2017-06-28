@@ -12,8 +12,9 @@ import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.{Icon, IconOptions}
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerOptions}
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import japgolly.scalajs.react.{ReactElement, ReactNode}
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 
 /**
@@ -98,18 +99,18 @@ object MapIcons {
   }
 
 
-  def preloaderLMarkerPot(pot: Pot[_], latLng: LatLng): ReactNode = {
+  def preloaderLMarkerPot(pot: Pot[_], latLng: LatLng): VdomNode = {
     pot.renderPending { _: Int =>
       preloaderLMarker( latLng )
     }
   }
   /** Рендер крутилки прямо на карте.
     * @param latLng L-координата маркера-крутилки.
-    * @return ReactElement.
+    * @return VdomElement.
     *         Если LkPreLoader.PRELOADER_IMG_URL не инициализирован, то будет null.
     */
-  def preloaderLMarker( latLng: LatLng ): ReactElement = {
-    for (iconUrl <- LkPreLoader.PRELOADER_IMG_URL) yield {
+  def preloaderLMarker( latLng: LatLng ): VdomElement = {
+    LkPreLoader.PRELOADER_IMG_URL.whenDefinedEl { iconUrl =>
       val icon1 = MapIcons.pendingIcon(iconUrl, 16)
       MarkerR(
         new MarkerPropsR {
@@ -119,7 +120,7 @@ object MapIcons {
           override val icon      = icon1
           override val title     = Messages( MsgCodes.`Please.wait` )
         }
-      )()
+      ): VdomElement
     }
   }
 

@@ -2,9 +2,10 @@ package io.suggest.lk.tags.edit.r
 
 import diode.react.ModelProxy
 import io.suggest.css.Css
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.RmTag
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -27,12 +28,10 @@ object TagsExistsR {
     }
 
 
-    def render(tagsExists: Props): ReactElement = {
+    def render(tagsExists: Props): VdomElement = {
       // tagExistsCont: Уже добавленные к заказу гео-теги.
       <.div(
-        for {
-          tagName <- tagsExists().toSeq.sorted.iterator
-        } yield {
+        tagsExists().toSeq.sorted.toVdomArray { tagName =>
           <.div(
             ^.`class` := (Css.TagsEdit.JS_TAG_EDITABLE + SPACE + Css.TagsEdit.CONTAINER),
             ^.key     := tagName,
@@ -43,7 +42,7 @@ object TagsExistsR {
             // Кнопка удаления тега из списка.
             <.span(
               ^.`class`  := Css.flat(Css.TagsEdit.JS_TAG_DELETE, Css.Buttons.BTN, Css.Buttons.NEGATIVE),
-              ^.title    := Messages( "Delete" ),
+              ^.title    := Messages( MsgCodes.`Delete` ),
               // TODO Брать tagName из key или содержимого div'а выше на уровне Callback'а, а не здесь.
               ^.onClick --> onTagDeleteClick(tagName),
               "[x]"
@@ -55,7 +54,7 @@ object TagsExistsR {
 
   }
 
-  val component = ReactComponentB[Props]("TagsExist")
+  val component = ScalaComponent.builder[Props]("TagsExist")
     .stateless
     .renderBackend[Backend]
     .build

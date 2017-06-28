@@ -4,13 +4,15 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.MapsUtil
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.RadAreaClick
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.leaflet.event.MouseEvent
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 /**
   * Suggest.io
@@ -62,8 +64,8 @@ object RadCircleR {
 
     private val _onClickCB = cbFun1ToJsCb { _: MouseEvent => _onClick }
 
-    def render(propsProxy: Props): ReactElement = {
-      for (p <- propsProxy()) yield {
+    def render(propsProxy: Props): VdomElement = {
+      propsProxy().whenDefinedEl { p =>
         CircleR(
           new CirclePropsR {
             override val center = MapsUtil.geoPoint2LatLng( p.centerGeoPoint )
@@ -92,14 +94,14 @@ object RadCircleR {
             override val onClick   = _onClickCB
             override val clickable = true
           }
-        )()
+        )
       }
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("RadCircle")
+  val component = ScalaComponent.builder[Props]("RadCircle")
     .stateless
     .renderBackend[Backend]
     .build

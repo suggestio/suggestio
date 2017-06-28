@@ -7,8 +7,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.ReactDiodeUtil
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-import org.scalajs.dom
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -39,14 +38,14 @@ object PopupR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def render(propsProxy: Props, pc: PropsChildren): ReactElement = {
+    def render(propsProxy: Props, pc: PropsChildren): VdomElement = {
       val p = propsProxy()
       <.div(
         ^.`class`  := Css.flat1( Css.Lk.Popup.POPUP :: p.hSize :: p.css ),
         ^.top      := p.topPc.pct,
         ^.onClick ==> ReactDiodeUtil.eStopPropagationCB,
 
-        for (closeCB <- p.closeable) yield {
+        p.closeable.whenDefined { closeCB =>
           <.div(
             ^.`class` := Css.Lk.Popup.POPUP_HEADER,
 
@@ -67,11 +66,11 @@ object PopupR {
   }
 
 
-  val component = ReactComponentB[Props]("Popup")
+  val component = ScalaComponent.builder[Props]("Popup")
     .stateless
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
-  def apply(props: Props)(children: ReactNode*) = component(props, children: _*)
+  def apply(props: Props)(children: VdomNode*) = component(props)(children: _*)
 
 }

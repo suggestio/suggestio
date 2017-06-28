@@ -10,8 +10,8 @@ import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.lk.nodes.form.m.MLkNodesRoot.MLknRootFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
-import japgolly.scalajs.react.ReactDOM
 import org.scalajs.dom.raw.HTMLDivElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 import scala.concurrent.Future
 
@@ -49,12 +49,12 @@ trait LkNodesInitRouter extends InitRouter {
     // Рендер формы.
     val formR = circuit.wrap(m => m)(LkNodesFormR.apply)
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( LkNodesConst.FORM_CONT_ID )
-    ReactDOM.render( formR, formTarget )
+    formR.renderIntoDOM(formTarget )
 
     // Рендер компонента попапов.
     val popsContR = circuit.wrap(_.popups)( LknPopupsR.apply )
     val popsContTarget = PopupsContR.initDocBody()
-    ReactDOM.render(popsContR, popsContTarget)
+    popsContR.renderIntoDOM(popsContTarget)
   }
 
 }

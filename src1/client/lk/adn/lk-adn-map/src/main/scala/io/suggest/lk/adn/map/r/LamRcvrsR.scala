@@ -7,9 +7,11 @@ import io.suggest.lk.adn.map.m.MLamRcvrs
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.RcvrMarkersR
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.sjs.common.spa.OptFastEq.Plain
-import japgolly.scalajs.react.{BackendScope, PropsChildren, ReactComponentB, ReactElement, ReactNode}
+import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
 
 /**
@@ -30,17 +32,17 @@ object LamRcvrsR {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(s: State, children: PropsChildren): ReactElement = {
+    def render(s: State, children: PropsChildren): VdomElement = {
       LayerGroupR()(
 
         // Рендер гео.карты узлов-ресиверов. Сейчас она такая же, как и карта в lk-adv-geo:
         s.nodesRespPotC { nodesRespPot =>
-          RcvrMarkersR(nodesRespPot)(children: _*)
+          RcvrMarkersR(nodesRespPot)(children)
         },
 
         // Рендерить крутилку на карте, пока с сервера происходит подгрузка данных для попапа:
-        s.popupRespPotC { mgpOpt =>
-          for (mgp <- mgpOpt()) yield {
+        s.popupRespPotC { mgpOptProxy =>
+          mgpOptProxy().whenDefinedEl { mgp =>
             val latLng = MapsUtil.geoPoint2LatLng(mgp)
             MapIcons.preloaderLMarker(latLng)
           }
@@ -52,8 +54,8 @@ object LamRcvrsR {
   }
 
 
-  val component = ReactComponentB[Props]("LamRcvrs")
-    .initialState_P { p =>
+  val component = ScalaComponent.builder[Props]("LamRcvrs")
+    .initialStateFromProps { p =>
       State(
         nodesRespPotC = p.connect(_.nodesResp),
         popupRespPotC = p.connect { m =>
@@ -66,10 +68,10 @@ object LamRcvrsR {
         }
       )
     }
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
 
-  def apply(lamRcvrsProxy: Props)(children: ReactNode*) = component( lamRcvrsProxy, children: _* )
+  def apply(lamRcvrsProxy: Props)(children: VdomNode*) = component( lamRcvrsProxy )(children: _*)
 
 }

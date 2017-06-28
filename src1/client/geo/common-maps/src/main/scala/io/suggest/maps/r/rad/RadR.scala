@@ -3,11 +3,11 @@ package io.suggest.maps.r.rad
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
-import react.leaflet.popup.PopupR
+import react.leaflet.popup.{LPopupPropsR, LPopupR}
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import MRadT.MRadTFastEq
 
@@ -30,10 +30,8 @@ object RadR {
 
   protected class Backend($: BackendScope[Props, State]) {
 
-    def render(p: Props, s: State): ReactElement = {
-      for {
-        mrad <- p()
-      } yield {
+    def render(p: Props, s: State): VdomElement = {
+      p().whenDefinedEl { mrad =>
 
         // Рендер группы слоёв одной пачкой, чтобы можно было всё скопом вернуть наверх.
         LayerGroupR()(
@@ -49,12 +47,12 @@ object RadR {
 
           // Попап управления центром.
           s.centerPopupC { popupEnabledOpt =>
-            for {
-              isEnabled <- popupEnabledOpt()
-              if isEnabled
-            } yield {
-              PopupR(
-                position = MapsUtil.geoPoint2LatLng( mrad.currentCenter )
+            val opt = popupEnabledOpt().filter(identity)
+            opt.whenDefinedEl { _ =>
+              LPopupR(
+                new LPopupPropsR {
+                  override val position = MapsUtil.geoPoint2LatLng( mrad.currentCenter )
+                }
               )(
                 <.div(
                   s.radEnabledPropsC( RadEnabledR.apply )
@@ -71,8 +69,8 @@ object RadR {
   }
 
 
-  val component = ReactComponentB[Props]("Rad")
-    .initialState_P { mradOptProxy =>
+  val component = ScalaComponent.builder[Props]("Rad")
+    .initialStateFromProps { mradOptProxy =>
       State(
         mRadTC = mradOptProxy.connect(identity),
         centerPopupC = mradOptProxy.connect { mradOpt =>

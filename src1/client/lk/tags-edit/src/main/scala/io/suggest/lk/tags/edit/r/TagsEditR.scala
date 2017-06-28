@@ -7,8 +7,8 @@ import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
 import io.suggest.lk.tags.edit.m.MTagsEditState
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 /**
   * Suggest.io
@@ -36,7 +36,7 @@ object TagsEditR {
   protected class Backend($: BackendScope[Props, State]) {
 
     /** Выполнить рендер редактора тегов. */
-    def render(p: Props, s: State): ReactElement = {
+    def render(p: Props, s: State): VdomElement = {
       <.div(
         // Локализованный заголовок виджета
         <.h2(
@@ -62,8 +62,8 @@ object TagsEditR {
   } // class Backend
 
 
-  protected val component = ReactComponentB[Props]("TagsEdit")
-    .initialState_P { p =>
+  protected val component = ScalaComponent.builder[Props]("TagsEdit")
+    .initialStateFromProps { p =>
       // Инициализировать связи до модели для нужд суб-компонентов:
       State(
         tagQueryConn  = p.connect(_.props.query),

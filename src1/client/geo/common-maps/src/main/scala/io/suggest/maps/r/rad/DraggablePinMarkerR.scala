@@ -4,10 +4,12 @@ import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m._
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
 
 /**
@@ -31,10 +33,8 @@ object DraggablePinMarkerR {
     private val _centerDraggingF  = cbFun1ToJsCb( _markerDragging(_: Event, RadCenterDragging) )
     private val _centerDragEndF   = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadCenterDragEnd) )
 
-    def render(latLngProxy: Props): ReactElement = {
-      for {
-        geoPoint <- latLngProxy()
-      } yield {
+    def render(latLngProxy: Props): VdomElement = {
+      latLngProxy().whenDefinedEl { geoPoint =>
         MarkerR(
           new MarkerPropsR {
             // Параметры рендера:
@@ -49,14 +49,14 @@ object DraggablePinMarkerR {
             override val onDrag      = _centerDraggingF
             override val onDragEnd   = _centerDragEndF
           }
-        )()
+        )
       }
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("DragPinMark")
+  val component = ScalaComponent.builder[Props]("DragPinMark")
     .stateless
     .renderBackend[Backend]
     .build

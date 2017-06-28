@@ -7,16 +7,14 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.m.{IRcvrPopupProps, OpenNodeInfoClick}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.sjs.common.vm.spa.LkPreLoader
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback}
 import react.leaflet.layer.LayerGroupR
-import react.leaflet.marker.{MarkerPropsR, MarkerR}
-import react.leaflet.popup.PopupR
+import react.leaflet.popup.{LPopupPropsR, LPopupR}
 
 /**
   * Suggest.io
@@ -39,7 +37,7 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
 
 
   /** Рендер маленькой кнопки-ссылки info для узла. */
-  protected[this] def _infoBtn(rcvrKey: RcvrKey): ReactElement = {
+  protected[this] def _infoBtn(rcvrKey: RcvrKey): VdomElement = {
     <.div(
       ^.`class` := Css.flat( Css.INFO_BLACK, Css.CLICKABLE ),
       ^.title   := Messages( MsgCodes.`Information` ),
@@ -53,20 +51,20 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
   }
 
   /** Рендер тела одного узла. */
-  protected[this] def _renderNodeRow(node: IRcvrPopupNode, rcvrKey: RcvrKey, v: PropsVal): ReactElement
+  protected[this] def _renderNodeRow(node: IRcvrPopupNode, rcvrKey: RcvrKey, v: PropsVal): VdomElement
 
 
   /** react render. */
-  def render(props: ModelProxy[PropsVal]): ReactElement = {
+  def render(props: ModelProxy[PropsVal]): VdomElement = {
     val v = props()
 
     // Погружаемся в состояние попапа ресивера, если оно задано...
-    for (state <- v.popupState) yield {
+    v.popupState.whenDefinedEl { state =>
 
       // Функция для рендера узла и его под-групп. Рекурсивна, т.к. в группах тоже могут быть узлы.
       // node -- узел для рендера
       // parentRcvrKeyRev обратный rcvrKey родительского узла или Nil для рендера top-level узла.
-      def __renderNode(node: IRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): ReactElement = {
+      def __renderNode(node: IRcvrPopupNode, parentRcvrKeyRev: List[String] = Nil): VdomElement = {
         val rcvrKeyRev = node.id :: parentRcvrKeyRev
         val rcvrKey = rcvrKeyRev.reverse
 
@@ -77,24 +75,24 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
           _renderNodeRow(node, rcvrKey, v),
 
           // Рендер подгрупп узла
-          for {
-            (subGrp, i) <- node.subGroups.iterator.zipWithIndex
-          } yield {
-            <.div(
-              ^.key := subGrp.title.getOrElse(i.toString),
+          node.subGroups
+            .iterator
+            .zipWithIndex
+            .toVdomArray { case (subGrp, i) =>
+              <.div(
+                ^.key := subGrp.title.getOrElse(i.toString),
 
-              // Заголовок текущей группы, если требуется...
-              for (grpTitle <- subGrp.title) yield {
-                <.h3( grpTitle )
-              },
+                // Заголовок текущей группы, если требуется...
+                subGrp.title.whenDefined { grpTitle =>
+                  <.h3( grpTitle )
+                },
 
-              // Рендер под-узлов данной группы узлов.
-              for (subNode <- subGrp.nodes) yield {
-                __renderNode(subNode, rcvrKeyRev)
-              }
-            )
-          }
-
+                // Рендер под-узлов данной группы узлов.
+                subGrp.nodes.toVdomArray { subNode =>
+                  __renderNode(subNode, rcvrKeyRev)
+                }
+              ): VdomElement
+            }
         )
       }
 
@@ -107,13 +105,15 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
 
         // Рендер попапа. когда всё готово.
         v.popupResp.renderReady { resp =>
-          PopupR(
-            position = latLng
+          LPopupR(
+            new LPopupPropsR {
+              override val position = latLng
+            }
           )(
             <.div(
               ^.`class` := Css.Lk.Adv.Geo.RCVR_POPUP,
 
-              for (topNode <- resp.node) yield {
+              resp.node.whenDefined { topNode =>
                 __renderNode(topNode)
               }
             )
@@ -122,7 +122,7 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
 
       )
 
-    }               // popupState
+    }               // popupState Option
 
   } // render()
 

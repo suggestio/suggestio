@@ -6,9 +6,9 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.m.SetAdv4Free
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
@@ -29,13 +29,13 @@ object Adv4FreeR {
   protected class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на изменение состояния галочки. */
-    def onChange(e: ReactEventI): Callback = {
+    def onChange(e: ReactEventFromInput): Callback = {
       val v2 = e.target.checked
       dispatchOnProxyScopeCB($, SetAdv4Free(v2))
     }
 
-    def render(props: Props, checkedOptConn: State): ReactElement = {
-      for (v <- props()) yield {
+    def render(props: Props, checkedOptConn: State): VdomElement = {
+      props().whenDefinedEl { v =>
         <.div(
           ^.`class` := Css.Lk.Adv.Su.CONTAINER,
 
@@ -44,13 +44,13 @@ object Adv4FreeR {
 
             // Единственная динамическая часть компонента: input-галочка
             checkedOptConn { checkedOptProx =>
-              for (checked <- checkedOptProx()) yield {
+              checkedOptProx().whenDefinedEl { checked =>
                 <.input(
                   ^.`type`    := HtmlConstants.Input.checkbox,
                   ^.name      := v.static.fn,
                   ^.checked   := checked,
                   ^.onChange ==> onChange
-                ): ReactElement
+                )
               }
             },
             <.span(
@@ -61,14 +61,14 @@ object Adv4FreeR {
               v.static.title
             )
           )
-        ): ReactElement
+        )
       }
     }
 
   }
 
-  val component = ReactComponentB[Props]("Adv4Free")
-    .initialState_P { p =>
+  val component = ScalaComponent.builder[Props]("Adv4Free")
+    .initialStateFromProps { p =>
       // Коннекшен каждый раз генерит новый инстанс Option[Boolean], но это оптимизируется с помощью ValueEq O(1):
       // теперь паразитный рендер подавляется, несмотря на постоянную пересборку результата zoom-функции.
       p.connect( _.map(_.checked) )( FastEq.ValueEq )

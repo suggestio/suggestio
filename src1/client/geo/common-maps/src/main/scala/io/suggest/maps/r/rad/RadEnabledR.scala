@@ -7,8 +7,8 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.{MRad, RadOnOff}
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
 
 /**
   * Suggest.io
@@ -35,21 +35,20 @@ object RadEnabledR {
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
-    def onRadEnabledChanged(e: ReactEventI): Callback = {
+    def onRadEnabledChanged(e: ReactEventFromInput): Callback = {
       val isEnabled = e.target.checked
       dispatchOnProxyScopeCB( $, RadOnOff(isEnabled) )
     }
 
-    def render(propsProxy: Props): ReactElement = {
+    def render(propsProxy: Props): VdomElement = {
       val p = propsProxy()
       val hint = Messages( MsgCodes.`Adv.on.map.hint` )
 
       <.label(
         ^.`class` := Css.CLICKABLE,
 
-        !p.renderHintAsText ?= {
-          ^.title := hint
-        },
+        (^.title := hint)
+          .unless( p.renderHintAsText ),
 
         <.input(
           ^.`type`    := HtmlConstants.Input.checkbox,
@@ -62,18 +61,17 @@ object RadEnabledR {
         ),
 
         Messages( MsgCodes.`Adv.on.map` ),
-        p.renderHintAsText ?= {
-          <.span(
-            <.br,
-            hint
-          )
-        }
+        <.span(
+          <.br,
+          hint
+        )
+          .when( p.renderHintAsText )
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("RadEnabled")
+  val component = ScalaComponent.builder[Props]("RadEnabled")
     .stateless
     .renderBackend[Backend]
     .build

@@ -3,15 +3,17 @@ package io.suggest.lk.tags.edit.r
 import diode.data.Pot
 import io.suggest.common.tags.edit.TagsEditConstants.Search.Hints.ATTR_TAG_FACE
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.tags.edit.TagsEditConstants
 import io.suggest.common.tags.search.MTagsFound
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.AddTagFound
 import io.suggest.lk.tags.edit.vm.search.hints.SRow
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventH}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
@@ -27,7 +29,7 @@ object TagsFoundR {
   protected class Backend($: BackendScope[Props, Unit]) {
 
     /** Коллбэк выбора найденного тега с помощью клика по нему в списке тегов. */
-    def onTagFoundClick(e: ReactEventH): Option[Callback] = {
+    def onTagFoundClick(e: ReactEventFromHtml): Option[Callback] = {
       for {
         srow    <- SRow.ofHtmlElUp(e.target)
         tagFace <- srow.tagFace
@@ -38,7 +40,7 @@ object TagsFoundR {
       }
     }
 
-    def render(props: Props): ReactElement = {
+    def render(props: Props): VdomElement = {
       val v = props()
       val isShown = v.exists(_.tags.nonEmpty) || v.isFailed
       <.div(
@@ -46,55 +48,70 @@ object TagsFoundR {
           Css.HintList.CONTAINER,
           Css.Display.HIDDEN -> !isShown
         ),
-        isShown ?= <.div(
+        if (!isShown) EmptyVdom else <.div(
           ^.`class`     := Css.HintList.OUTER,
           <.div(
             ^.`class`   := Css.HintList.CONTENT,
+
             // Клик активен только когда есть по чему кликать.
-            v.exists(_.tags.nonEmpty) ?= ^.onClick ==>? onTagFoundClick,
+            if ( v.exists(_.tags.nonEmpty) ) {
+              ^.onClick ==>? onTagFoundClick
+            } else {
+              EmptyVdom
+            },
 
             // Если снова идёт поиск, то пусть будет спиннер прямо в текущем отображаемом контейнере.
-            v.isPending ?= {
-              val pleaseWait = Messages("Please.wait")
+            if (v.isPending) {
+              val pleaseWait = Messages( MsgCodes.`Please.wait` )
               LkPreLoader.PRELOADER_IMG_URL.fold[TagMod](pleaseWait) { preloaderUrl =>
                 <.img(
                   ^.src := preloaderUrl,
                   ^.alt := pleaseWait,
-                  ^.width := 16
+                  ^.width := 16.px
                 )
               }
+            } else {
+              EmptyVdom
             },
 
             // Отрендерить список найденных тегов
-            for {
-              state     <- v.iterator
-              tagFound  <- state.tags.iterator
-            } yield {
-              <.div(
-                ^.key := tagFound.face,
-                ^.`class` := (Css.HintList.ROW + " " + TagsEditConstants.Search.Hints.HINT_ROW_CLASS),
-                ATTR_TAG_FACE.reactAttr := tagFound.face,
+            {
+              val attrTagFace = VdomAttr(ATTR_TAG_FACE)
+              val iter = for {
+                state     <- v.iterator
+                tagFound  <- state.tags.iterator
+              } yield {
+                <.div(
+                  ^.key := tagFound.face,
+                  ^.`class` := (Css.HintList.ROW + " " + TagsEditConstants.Search.Hints.HINT_ROW_CLASS),
+                  attrTagFace := tagFound.face,
 
-                <.div(
-                  ^.`class` := Css.NAME,
-                  <.span(
-                    ^.`class` := Css._PREFIX,
-                    "#"
+                  <.div(
+                    ^.`class` := Css.NAME,
+                    <.span(
+                      ^.`class` := Css._PREFIX,
+                      HtmlConstants.DIEZ
+                    ),
+                    tagFound.face
                   ),
-                  tagFound.face
-                ),
-                <.div(
-                  ^.`class` := Css.VALUE,
-                  tagFound.count
+                  <.div(
+                    ^.`class` := Css.VALUE,
+                    tagFound.count
+                  )
                 )
-              )
+              }
+              iter.toVdomArray
             },
 
             // При ошибке надо тоже надо не молчать, чтобы эту ошибку быстрее обнаружили и устранили.
-            v.isFailed ?= <.div(
-              ^.`class` := Css.Colors.RED,
-              Messages("Something.gone.wrong")
-            )
+            if (v.isFailed) {
+              <.div(
+                ^.`class` := Css.Colors.RED,
+                Messages( MsgCodes.`Something.gone.wrong` )
+              )
+            } else {
+              EmptyVdom
+            }
 
           )
         )
@@ -104,7 +121,7 @@ object TagsFoundR {
   }
 
 
-  val component = ReactComponentB[Props]("TagsFound")
+  val component = ScalaComponent.builder[Props]("TagsFound")
     .stateless
     .renderBackend[Backend]
     .build

@@ -3,12 +3,14 @@ package io.suggest.maps.r.rad
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.maps.m.{RadiusDragEnd, RadiusDragStart, RadiusDragging}
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 /**
   * Suggest.io
@@ -31,10 +33,8 @@ object RadiusMarkerR {
     private val _radiusDragEndF   = cbFun1ToJsCb( _markerDragEnd(_: DragEndEvent, RadiusDragEnd) )
 
 
-    def render(geoPointOptProxy: Props): ReactElement = {
-      for {
-        geoPoint <- geoPointOptProxy()
-      } yield {
+    def render(geoPointOptProxy: Props): VdomElement = {
+      geoPointOptProxy().whenDefinedEl { geoPoint =>
         MarkerR(
           new MarkerPropsR {
             override val position    = MapsUtil.geoPoint2LatLng(geoPoint)
@@ -46,14 +46,14 @@ object RadiusMarkerR {
             override val onDrag      = _radiusDraggingF
             override val onDragEnd   = _radiusDragEndF
           }
-        )()
+        )
       }
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("RadiusMarker")
+  val component = ScalaComponent.builder[Props]("RadiusMarker")
     .stateless
     .renderBackend[Backend]
     .build

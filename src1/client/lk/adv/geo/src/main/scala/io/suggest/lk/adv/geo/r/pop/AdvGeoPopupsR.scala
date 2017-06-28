@@ -3,11 +3,13 @@ package io.suggest.lk.adv.geo.r.pop
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, MPopupsS}
 import io.suggest.lk.pop.PopupsContR
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import PopupsContR.PopContPropsValFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.lk.r.{ErrorPopupR, PleaseWaitPopupR}
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 /**
   * Suggest.io
@@ -29,7 +31,7 @@ object AdvGeoPopupsR {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(state: State): ReactElement = {
+    def render(state: State): VdomElement = {
       state.popContPropsConn { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
@@ -51,8 +53,8 @@ object AdvGeoPopupsR {
   }
 
 
-  val component = ReactComponentB[Props]("AdvGeoPopups")
-    .initialState_P { propsProxy =>
+  val component = ScalaComponent.builder[Props]("AdvGeoPopups")
+    .initialStateFromProps { propsProxy =>
       State(
         popContPropsConn = propsProxy.connect { props =>
           // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.

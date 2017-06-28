@@ -8,7 +8,7 @@ import io.suggest.lk.nodes.form.m.NodeDeleteClick
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -26,7 +26,7 @@ object NodeMenuR {
       dispatchOnProxyScopeCB( $, NodeDeleteClick )
     }
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       <.div(
         ^.`class` := Css.Lk.Nodes.Menu.CONT,
 
@@ -41,7 +41,7 @@ object NodeMenuR {
   }
 
 
-  val component = ReactComponentB[Props]("NodeMenu")
+  val component = ScalaComponent.builder[Props]("NodeMenu")
     .stateless
     .renderBackend[Backend]
     .build

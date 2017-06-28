@@ -6,8 +6,10 @@ import io.suggest.lk.adn.map.m.MRoot
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.sjs.common.spa.OptFastEq.Plain
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 /**
   * Suggest.io
@@ -27,7 +29,7 @@ object LamPopupsR {
 
   protected class Backend($: BackendScope[Props, State]) {
 
-    def render(state: State): ReactElement = {
+    def render(state: State): VdomElement = {
       state.popContPropsC { popContPropsProxy =>
         // Рендер контейнера попапов:
         PopupsContR( popContPropsProxy )(
@@ -45,8 +47,8 @@ object LamPopupsR {
   }
 
 
-  val component = ReactComponentB[Props]("LamPops")
-    .initialState_P { mrootProxy =>
+  val component = ScalaComponent.builder[Props]("LamPops")
+    .initialStateFromProps { mrootProxy =>
       State(
         popContPropsC = mrootProxy.connect { mroot =>
           // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.

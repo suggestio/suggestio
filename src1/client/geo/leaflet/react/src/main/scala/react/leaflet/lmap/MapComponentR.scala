@@ -1,7 +1,5 @@
 package react.leaflet.lmap
 
-import japgolly.scalajs.react.JsComponentType
-import org.scalajs.dom.raw.HTMLElement
 import react.leaflet.Context
 
 import scala.scalajs.js
@@ -19,7 +17,7 @@ class MapComponentR[Props <: js.Any](
   val props: Props,
   val context: Context
 )
-  extends JsComponentType[Props, js.Object, HTMLElement]
+  extends js.Object
 {
 
   type El_t <: js.Object

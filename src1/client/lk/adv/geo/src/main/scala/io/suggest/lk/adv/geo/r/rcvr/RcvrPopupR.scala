@@ -7,10 +7,10 @@ import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.{MRcvr, SetRcvrStatus}
 import io.suggest.lk.adv.r.RcvrPopupBackendBaseR
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.r.RangeYmdR
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement, ReactEventI}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
 
 /**
   * Suggest.io
@@ -30,16 +30,16 @@ object RcvrPopupR {
     extends RcvrPopupBackendBaseR[MRcvr, Unit] {
 
     /** Реакция на изменение флага узла-ресивера в попапе узла. */
-    private def _rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventI): Callback = {
+    private def _rcvrCheckboxChanged(rk: RcvrKey)(e: ReactEventFromInput): Callback = {
       val checked = e.target.checked
       dispatchOnProxyScopeCB( $, SetRcvrStatus(rk, checked) )
     }
 
 
     /** Рендер тела одного узла. */
-    override protected[this] def _renderNodeRow(node: IRcvrPopupNode, rcvrKey: RcvrKey, v: MRcvr): ReactElement = {
+    override protected[this] def _renderNodeRow(node: IRcvrPopupNode, rcvrKey: RcvrKey, v: MRcvr): VdomElement = {
       // Рендер галочки текущего узла, если она задана.
-      for (n <- node.checkbox) yield {
+      node.checkbox.whenDefinedEl { n =>
         val nodeName = node.name.getOrElse( node.id )
 
         <.div(
@@ -94,14 +94,14 @@ object RcvrPopupR {
 
           _infoBtn(rcvrKey)
 
-        ): ReactElement
+        ): VdomElement
       }
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("RcvrPop")
+  val component = ScalaComponent.builder[Props]("RcvrPop")
     .stateless
     .renderBackend[Backend]
     .build

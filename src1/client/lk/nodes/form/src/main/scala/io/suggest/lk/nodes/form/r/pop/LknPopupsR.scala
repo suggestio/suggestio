@@ -6,6 +6,8 @@ import io.suggest.lk.nodes.form.m.{MCreateNodeS, MDeleteNodeS, MEditTfDailyS, ML
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.Implicits._
 
 /**
   * Suggest.io
@@ -33,7 +35,7 @@ object LknPopupsR {
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(propsProxy: Props, state: State): ReactElement = {
+    def render(propsProxy: Props, state: State): VdomElement = {
       state.popContPropsConn { popContPropsProxy =>
 
         // Рендер контейнера попапов:
@@ -56,8 +58,8 @@ object LknPopupsR {
   }
 
 
-  val component = ReactComponentB[Props]("Pops")
-    .initialState_P { p =>
+  val component = ScalaComponent.builder[Props]("Pops")
+    .initialStateFromProps { p =>
       State(
         popContPropsConn = {
           // Храним строку css-классов снаружи функции, чтобы избежать ложных отрицательных результатов a.css eq b.css.

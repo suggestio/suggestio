@@ -4,8 +4,8 @@ import io.suggest.dt.interval.MRangeYmdOpt
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.dt.MYmd
 import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -19,7 +19,7 @@ object RangeYmdR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
 
       val v = p.rangeYmdOpt
 
@@ -35,7 +35,7 @@ object RangeYmdR {
         Messages( (if (p.capFirst) "F" else "f") + "rom._date" ),
         SPACE,
 
-        for (dateStart <- v.dateStartOpt) yield {
+        v.dateStartOpt.whenDefined { dateStart =>
           <.span(
             // В подсказке содержится день недели.
             YmdR.dowTitle(dateStart),
@@ -43,22 +43,24 @@ object RangeYmdR {
             dateStart.day,
 
             // Дата начала может быть отрендерена неполностью. Если год/месяц совпадают с датой окончания:
-            (!isSameYear || v.dateEndOpt.isEmpty || !v.dateEndOpt.map(_.month).contains( dateStart.month ) ) ?= <.span(
+            <.span(
               SPACE,
               JsFormatUtil.formatMonth( dateStart ),
-              !isSameYear ?= <.span(SPACE, dateStart.year)
-            ),
+              <.span(SPACE, dateStart.year)
+                .unless( isSameYear )
+            )
+              .when( !isSameYear || v.dateEndOpt.isEmpty || !v.dateEndOpt.map(_.month).contains( dateStart.month ) ),
             SPACE
-          ): ReactElement
+          )
         },
 
-        for (dateEnd <- v.dateEndOpt) yield {
+        v.dateEndOpt.whenDefined { dateEnd =>
           <.span(
             // до [дата окончания]
             Messages("till._date"),
             SPACE,
             YmdR( dateEnd )()
-          ): ReactElement
+          )
         },
 
         // г.
@@ -69,7 +71,7 @@ object RangeYmdR {
 
   }
 
-  val component = ReactComponentB[Props]("RangeYmd")
+  val component = ScalaComponent.builder[Props]("RangeYmd")
     .stateless
     .renderBackend[Backend]
     .build

@@ -51,7 +51,7 @@ object Sio2Build extends Build {
   lazy val commonSjs = {
     val name = "common-sjs"
     Project(id = name, base = file(DIR0 + "client/" ++ name))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonJS)
       // Хз нужен ли этот инклюд сорцов прямо здесь.
       /*.settings(
@@ -64,7 +64,7 @@ object Sio2Build extends Build {
   /** Расшаренная утиль для интеграции с react.js через scalajs-react. */
   lazy val commonReactSjs = {
     Project(id = "scalajs-react-common", base = file(DIR0 + "client/scalajs/react-common"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -82,7 +82,7 @@ object Sio2Build extends Build {
   lazy val lkAdvExtSjs = {
     val name = "lk-adv-ext-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/ext"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -115,41 +115,41 @@ object Sio2Build extends Build {
   lazy val jqDateTimePickerSjs = {
     val name = "jquery-datetimepicker"
     Project(id = name, base = file(DIR0 + "client/scalajs/jquery/jquery-datetimepicker"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
   }
 
   /** всякая мелочь, специфчная только для личного кабинета, но используется в нескольких модулях. */
   lazy val lkCommonSjs = {
     val name = "lk-common-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/common"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonSjs, commonReactSjs, reactImageGallerySjs)
   }
 
   /** Самопальные биндинги для moment.js. */
   lazy val momentSjs = {
     Project(id = "moment-sjs", base = file(DIR0 + "client/dt/moment"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSPlugin)
   }
 
   /** sio-утиль для moment.js. */
   lazy val momentSioSjs = {
     Project(id = "moment-sio-sjs", base = file(DIR0 + "client/dt/moment-sio"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(momentSjs, commonSjs)
   }
 
   /** Фасады scala.js для react-date-picker. */
   lazy val reactDatePickerSjs = {
     Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
-      .enablePlugins(ScalaJSBundlerPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonReactSjs, momentSioSjs)
   }
 
   /** Фасады scala.js для react-image-gallery. */
   lazy val reactImageGallerySjs = {
     Project(id = "scalajs-react-image-gallery", base = file(DIR0 + "client/scalajs/react-image-gallery"))
-      .enablePlugins(ScalaJSBundlerPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonReactSjs)
   }
 
@@ -157,7 +157,7 @@ object Sio2Build extends Build {
   lazy val lkDtPeriodSjs = {
     val name = "lk-dt-period-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/dt-period"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkCommonSjs, jqDateTimePickerSjs, commonReactSjs, reactDatePickerSjs)
   }
 
@@ -165,7 +165,7 @@ object Sio2Build extends Build {
   lazy val lkAdvCommonSjs = {
     val name = "lk-adv-common-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/common"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkCommonSjs, lkDtPeriodSjs, commonReactSjs, mapsSjs)
   }
 
@@ -173,7 +173,7 @@ object Sio2Build extends Build {
   lazy val lkAdvDirectSjs = {
     val name = "lk-adv-direct-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/direct"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkAdvCommonSjs)
   }
 
@@ -181,7 +181,7 @@ object Sio2Build extends Build {
   lazy val lkAdvGeoSjs = {
     val name = "lk-adv-geo-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/adv/geo"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkAdvCommonSjs, lkTagsEditSjs, leafletMarkerClusterSjs, leafletReactSjs, commonReactSjs, mapsSjs)
   }
 
@@ -189,7 +189,7 @@ object Sio2Build extends Build {
   lazy val lkNodesFormSjs = {
     val name = "lk-nodes-form-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/nodes/form"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkAdvCommonSjs, commonReactSjs)
   }
 
@@ -219,33 +219,33 @@ object Sio2Build extends Build {
   /** Scala.js API для самой cordova. */
   lazy val cordovaSjs = {
     Project(id = "scalajs-cordova", base = file(DIR0 + "client/scalajs/cordova"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
   }
 
   /** scala.js API для evothings/cordova-ble. */
   lazy val cordovaBleSjs = {
     Project(id = "scalajs-cordova-ble", base = file(DIR0 + "client/ble/cordova-ble"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
   }
 
   /** Самописное leaflet API. */
   lazy val leafletSjs = {
     Project(id = "scalajs-leaflet", base = file(DIR0 + "client/geo/leaflet/main"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
   /** Самописное leaflet-react API. */
   lazy val leafletReactSjs = {
     Project(id = "scalajs-leaflet-react", base = file(DIR0 + "client/geo/leaflet/react"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonSjs, leafletSjs, leafletMarkerClusterSjs, commonReactSjs)
   }
 
   /** leaflet.markercluster.js scalajs API. */
   lazy val leafletMarkerClusterSjs = {
     Project(id = "scalajs-leaflet-markercluster", base = file(DIR0 + "client/geo/leaflet/markercluster"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(leafletSjs, commonReactSjs)
   }
 
@@ -261,14 +261,14 @@ object Sio2Build extends Build {
   //lazy val mapBoxSjs = {
   //  val name = "scalajs-mapbox"
   //  Project(id = name, base = file("scalajs/" + name))
-  //    .enablePlugins(ScalaJSPlugin)
+  //    .enablePlugins(ScalaJSBundlerPlugin)
   //    .dependsOn(leafletSjs)
   //}
 
   /** mapbox-gl API. */
   lazy val mapBoxGlSjs = {
     Project(id = "scalajs-mapboxgl", base = file(DIR0 + "client/geo/mapboxgl"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSPlugin)
       .dependsOn(commonSjs)
   }
 
@@ -276,7 +276,7 @@ object Sio2Build extends Build {
   lazy val mapsSjs = {
     val name = "maps-sjs"
     Project(id = name, base = file(DIR0 + "client/geo/common-maps"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       // TODO lkCommonSjs просто из-за зависимости от diode-react, по факту достаточно commonSjs. Перещёлкнуть, когда и sc-sjs будет реагировать.
       .dependsOn(lkCommonSjs, leafletSjs, commonReactSjs, leafletReactSjs)
   }
@@ -285,21 +285,22 @@ object Sio2Build extends Build {
   lazy val lkTagsEditSjs = {
     val name = "lk-tags-edit-sjs"
     Project(id = name, base = file(DIR0 + "client/lk/tags-edit"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkCommonSjs)
   }
 
   /** Sjs-поддержка размещения ADN-узла на карте. */
   lazy val lkAdnMapSjs = {
     Project(id = "lk-adn-map-sjs", base = file(DIR0 + "client/lk/adn/lk-adn-map"))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(lkCommonSjs, lkAdvCommonSjs, lkDtPeriodSjs, mapsSjs)
   }
 
   /** Всякие мелкие скрипты ЛК объеденены в этом scala-js. */
   lazy val lkSjs = {
     Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
-      .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
+      //.enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+      .enablePlugins(ScalaJSWeb)
       .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs)
       // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
       .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs, lkNodesFormSjs)
@@ -309,14 +310,15 @@ object Sio2Build extends Build {
   lazy val bleBeaconerSjs = {
     val name = "ble-beaconer"
     Project(id = name, base = file(DIR0 + "client/ble/" + name))
-      .enablePlugins(ScalaJSPlugin)
+      //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs)
   }
 
   /** Выдача suggest.io, написанная с помощью scala.js. */
   lazy val scSjs = {
     Project(id = "sc-sjs", base = file(DIR0 + "client/sc/main"))
-      .enablePlugins(ScalaJSPlugin, ScalaJSWeb)
+      //.enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
+      .enablePlugins(ScalaJSWeb)
       .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
   }
 

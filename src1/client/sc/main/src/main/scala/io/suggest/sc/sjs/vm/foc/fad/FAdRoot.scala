@@ -3,7 +3,6 @@ package io.suggest.sc.sjs.vm.foc.fad
 import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.ScConstants.Focused.FAd.MAD_ID_ATTR
 import io.suggest.sc.sjs.m.msc.IScCommon
-import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.content.{ApplyFromOuterHtml, GetInnerHtml, OuterHtml}
 import io.suggest.sjs.common.vm.height3.SetHeight3Raw

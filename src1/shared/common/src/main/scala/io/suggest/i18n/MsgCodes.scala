@@ -24,6 +24,7 @@ object MsgCodes {
   val `Information` = "Information"
   val `N.modules` = "N.modules"
   val `Send` = "Send"
+  val `Send.request` = "Send.request"
 
   val `Add` = "Add"
   val `Error` = "Error"
@@ -71,6 +72,8 @@ object MsgCodes {
   val `Ad.area.modules.count` = "Ad.area.modules.count"
   val `Tag` = "Tag"
   val `Date` = "Date"
+  def `Date.suffixed`(suffix: String) = `Date` + "." + suffix
+  val `Date.choosing` = "Date.choosing"
   val `Price` = "Price"
   val `Unable.to.initialize.map` = "Unable.to.initialize.map"
   val `Publish.node.on.adv.map` = "Publish.node.on.adv.map"
@@ -123,6 +126,7 @@ object MsgCodes {
   val `Order.number` = "Order.number"
   val `Payment.method` = "Payment.method"
   val `Total.to.pay` = "Total.to.pay"
+  val `Total.amount._money` = "Total.amount._money"
   val `_N` = "_N"
   val `Order.0.is.paid` = "Order.0.is.paid"
   val `We.received.payment.for.order.0` = "We.received.payment.for.order.0"
@@ -154,5 +158,10 @@ object MsgCodes {
   val `Multi` = "Multi"
 
   val `Switch.node` = "Switch.node"
+
+  val `Today` = "Today"
+
+  val `locale.momentjs` = "locale.momentjs"
+  val `Advertising.period` = "Advertising.period"
 
 }

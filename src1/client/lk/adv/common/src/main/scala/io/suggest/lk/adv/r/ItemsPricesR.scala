@@ -5,11 +5,11 @@ import io.suggest.bill.price.dsl.{BaseTfPrice, IPriceDslTerm, Mapper, Sum}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.r.YmdR
 import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement, ReactNode}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 /**
   * Suggest.io
@@ -30,7 +30,7 @@ object ItemsPricesR {
     /** Рендер строки маппера с данными его полей (кроме underlying). */
     def _renderMapperReason(mapper: Mapper) = {
       <.tr(
-        for (priceReason <- mapper.reason) yield {
+        mapper.reason.whenDefined { priceReason =>
           // Рендерить название причины начисления
           val leftTd = <.td(
             ^.`class` := Css.flat1( tdCssBody ),
@@ -54,7 +54,7 @@ object ItemsPricesR {
 
             mapper
               .multiplifier
-              .fold[ReactNode]( HtmlConstants.NBSP_STR ) { mult =>
+              .fold[VdomNode]( HtmlConstants.NBSP_STR ) { mult =>
                 val absMult = Math.abs(mult)
 
                 var fracDigits = 2
@@ -71,10 +71,11 @@ object ItemsPricesR {
 
           )
 
-          leftTd ::
-            secondTd ::
-            thirdTd ::
-            Nil
+          VdomArray(
+            leftTd,
+            secondTd,
+            thirdTd
+          )
         },
 
         // Рендерить цену после домножения на множитель
@@ -109,7 +110,7 @@ object ItemsPricesR {
           ^.`class` := Css.flat1( tdCssBody ),
 
           tfPrice.date
-            .fold[ReactNode]( HtmlConstants.NBSP_STR ) { ymd =>
+            .fold[VdomNode]( HtmlConstants.NBSP_STR ) { ymd =>
               YmdR( ymd )(
                 HtmlConstants.COMMA,
                 HtmlConstants.SPACE,
@@ -122,7 +123,7 @@ object ItemsPricesR {
         <.td(
           ^.`class` := Css.flat1( tdCssBody ),
           tfPrice.mCalType
-            .fold[ReactNode]( HtmlConstants.NBSP_STR ) { calType =>
+            .fold[VdomNode]( HtmlConstants.NBSP_STR ) { calType =>
               Messages( calType.name )
             }
         ),
@@ -140,9 +141,7 @@ object ItemsPricesR {
 
     private def _renderChildren(term: IPriceDslTerm, sumLevel: Int) = {
       val undLevel = sumLevel + 1
-      for {
-        c <- term.children.iterator
-      } yield {
+      term.children.toVdomArray { c =>
         _renderPriceTerm(c, level = undLevel, withTableOuter = false)
       }
     }
@@ -156,11 +155,11 @@ object ItemsPricesR {
     }
 
 
-    private def _renderPriceTerm(term: IPriceDslTerm, level: Int = 0, withTableOuter: Boolean = true): ReactNode = {
-      val contentRows: Seq[ReactNode] = term match {
+    private def _renderPriceTerm(term: IPriceDslTerm, level: Int = 0, withTableOuter: Boolean = true): VdomNode = {
+      val contentRows: VdomNode = term match {
         // У нас тут маппер. Рендерить его и его содержимое.
         case mapper: Mapper =>
-          Seq(
+          VdomArray(
             _renderMapperReason(mapper)(
               ^.key := "r"
             ),
@@ -170,7 +169,7 @@ object ItemsPricesR {
           )
 
         case tfPrice: BaseTfPrice =>
-          Seq(
+          VdomArray(
             _renderBaseTfPriceData( tfPrice )(
               ^.key := "a"
             )
@@ -178,13 +177,12 @@ object ItemsPricesR {
 
         case sum: Sum =>
           _renderChildren(sum, level)
-            .toSeq
       }
 
       if (withTableOuter) {
         term.children
           .headOption
-          .fold[ReactNode](contentRows) { firstChild =>
+          .fold[VdomNode](contentRows) { firstChild =>
             _renderOuterTableForRow(firstChild, level)(
               <.tbody(
                 contentRows
@@ -197,18 +195,18 @@ object ItemsPricesR {
     }
 
 
-    def render(proxy: Props): ReactElement = {
-      for (term <- proxy()) yield {
+    def render(proxy: Props): VdomElement = {
+      proxy().whenDefinedEl { term =>
         <.div(
           _renderPriceTerm(term)
-        ): ReactElement
+        )
       }
     }
 
   }
 
 
-  val component = ReactComponentB[Props]("ItemsPrices")
+  val component = ScalaComponent.builder[Props]("ItemsPrices")
     .stateless
     .renderBackend[Backend]
     .build

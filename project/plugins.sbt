@@ -57,5 +57,5 @@ addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.5")
 // Плагины для интеграции scalajs + npm + webpack.
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.6.0")
 
-addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.6.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.7.0-SNAPSHOT")
 

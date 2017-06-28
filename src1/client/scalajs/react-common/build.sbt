@@ -1,6 +1,6 @@
 Common.settingsOrgJS
 
-enablePlugins(ScalaJSPlugin)
+//enablePlugins(ScalaJSPlugin)
 
 enablePlugins(ScalaJSBundlerPlugin)
 

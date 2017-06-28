@@ -4,7 +4,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.dt.MYmd
 import io.suggest.sjs.common.i18n.JsFormatUtil
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -20,7 +20,7 @@ object YmdR {
   }
 
 
-  val component = ReactComponentB[MYmd]("Ymd")
+  val component = ScalaComponent.builder[MYmd]("Ymd")
     .stateless
     .renderPC { (_, mYmd, pc) =>
       <.span(
@@ -39,6 +39,6 @@ object YmdR {
     }
     .build
 
-  def apply(mYmd: MYmd)(children: ReactNode*) = component(mYmd, children: _*)
+  def apply(mYmd: MYmd)(children: VdomNode*) = component(mYmd)(children: _*)
 
 }

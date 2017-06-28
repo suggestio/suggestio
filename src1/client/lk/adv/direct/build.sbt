@@ -1,6 +1,7 @@
 Common.settingsOrgJS
 
-enablePlugins(ScalaJSPlugin)
+//enablePlugins(ScalaJSPlugin)
+enablePlugins(ScalaJSBundlerPlugin)
 
 name := "lk-adv-direct-sjs"
 

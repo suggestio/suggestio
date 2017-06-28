@@ -1,7 +1,7 @@
 Common.settingsOrgJS
 
 // Turn this project into a Scala.js project by importing these settings
-enablePlugins(ScalaJSPlugin)
+//enablePlugins(ScalaJSPlugin)
 
 enablePlugins(ScalaJSBundlerPlugin)
 
@@ -22,7 +22,7 @@ libraryDependencies ++= Seq(
 
 npmDependencies in Compile ++= Seq(
   //"react-onclickoutside" -> "5.7.1",
-  "react" -> Common.reactJsVsn,
+  //"react" -> Common.reactJsVsn,
   //"moment" -> Common.Vsn.momentJs,
   "react-datepicker" -> "0.39.0"
 )

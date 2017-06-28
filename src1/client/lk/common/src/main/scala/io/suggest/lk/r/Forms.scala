@@ -1,9 +1,8 @@
 package io.suggest.lk.r
 
 import io.suggest.css.Css
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.ReactComponentB
-import org.scalajs.dom.raw.HTMLDivElement
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.ScalaComponent
 
 /**
   * Suggest.io
@@ -16,16 +15,15 @@ import org.scalajs.dom.raw.HTMLDivElement
 /** Контейнер для рендера видимых инпутов в ЛК. */
 object Forms {
 
-  val InputCont = ReactComponentB[String]("InputCont")
+  val InputCont = ScalaComponent.builder[String]("InputCont")
     .stateless
     .renderPC { (_, props, children) =>
       <.div(
-        ^.`class` := (Css.Input.INPUT :: props :: Nil).mkString(" "),
+        ^.`class` := Css.flat(Css.Input.INPUT, props),
         children
       )
     }
-    .domType[HTMLDivElement]
-    .propsDefault( Css.Size.S )
+    //.propsDefault( Css.Size.S ) // TODO Чо делать-то?
     .build
 
 }

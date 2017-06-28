@@ -1,11 +1,9 @@
 package react.leaflet.marker
 
-import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.MarkerOptions
-import japgolly.scalajs.react.{JsComponentType, TopNode}
-import org.scalajs.dom.raw.HTMLElement
+import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -18,17 +16,19 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Description: React wrapper for react-leaflet Marker component.
   */
 
-case class MarkerR(
-  override val props: MarkerPropsR
-)
-  extends JsWrapperR[MarkerPropsR, HTMLElement] {
+object MarkerR {
 
-  override protected def _rawComponent = js.constructorOf[Marker]
+  val component = JsComponent[MarkerPropsR, Children.None, Null]( LMarkerJs )
+
+  def apply(props: MarkerPropsR) = component(props)
+
 }
+
 
 @JSImport("react-leaflet", "Marker")
 @js.native
-sealed class Marker extends JsComponentType[MarkerPropsR, js.Object, TopNode]
+object LMarkerJs extends js.Object // JsComponentType[MarkerPropsR, js.Object, TopNode]
+
 
 @ScalaJSDefined
 trait MarkerPropsR extends MarkerOptions {

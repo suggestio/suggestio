@@ -7,10 +7,11 @@ import io.suggest.bill.MGetPriceResp
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css.Lk.Bars.RightBar.Price
 import io.suggest.css.Css
+import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.m.{DoFormSubmit, MPriceS}
 import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
@@ -34,13 +35,13 @@ object PriceR {
       dispatchOnProxyScopeCB($, DoFormSubmit)
     }
 
-    def render(s: State): ReactElement = {
+    def render(s: State): VdomElement = {
       <.div(
         ^.`class` := Price.WIDGET_CNT,
 
         <.h2(
           ^.`class` := Price.WIDGET_TITLE,
-          Messages("Total.amount._money")
+          Messages( MsgCodes.`Total.amount._money` )
         ),
 
         s.pricePotConn { pricePotProx =>
@@ -55,7 +56,7 @@ object PriceR {
               },
 
               pricePot.render { resp =>
-                for (p <- resp.prices) yield {
+                resp.prices.toVdomArray { p =>
                   JsFormatUtil.formatPrice(p)
                 }
               }
@@ -65,7 +66,7 @@ object PriceR {
             pricePot.renderPending { _ =>
               <.div(
                 ^.`class` := Price.WIDGET_LOADER,
-                ^.title   := Messages("Please.wait")
+                ^.title   := Messages( MsgCodes.`Please.wait` )
               )
             },
 
@@ -75,7 +76,7 @@ object PriceR {
                 ^.`class` := Css.Colors.RED + HtmlConstants.SPACE + Css.Text.CENTERED,
                 ^.title := ex.getClass.getSimpleName + HtmlConstants.SPACE + ex.getMessage,
 
-                Messages("Error"), HtmlConstants.ELLIPSIS
+                Messages(  MsgCodes.`Error` ), HtmlConstants.ELLIPSIS
               )
             }
           )
@@ -85,15 +86,15 @@ object PriceR {
           ^.`class` := Css.flat(Price.WIDGET_REQ_BTN, Css.Buttons.BTN, Css.Buttons.MAJOR, Css.Size.L),
           ^.onClick --> onSubmitBtnClick,
 
-          Messages("Send.request")
+          Messages( MsgCodes.`Send.request` )
         )
 
       )
     }
   }
 
-  val component = ReactComponentB[Props]("PriceWdgt")
-    .initialState_P { p =>
+  val component = ScalaComponent.builder[Props]("PriceWdgt")
+    .initialStateFromProps { p =>
       State(
         pricePotConn = p.connect(_.resp)
       )

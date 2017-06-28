@@ -1,8 +1,7 @@
 package react.leaflet.layer
 
-import io.suggest.react.JsWrapper0R
 import io.suggest.sjs.leaflet.tilelayer.TlOptions
-import japgolly.scalajs.react.{JsComponentType, TopNode}
+import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
@@ -14,17 +13,18 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * Description: React-leaflet wrapper API for TileLayer component.
   */
 
-case class TileLayerR(
-  override val props: TileLayerPropsR
-)
-  extends JsWrapper0R[TileLayerPropsR, TopNode]
-{
-  override protected def _rawComponent = js.constructorOf[TileLayer]
+object TileLayerR {
+
+  val component = JsComponent[TileLayerPropsR, Children.None, Null]( TileLayerJsR )
+
+  def apply(props: TileLayerPropsR) = component(props)
+
 }
+
 
 @JSImport("react-leaflet", "TileLayer")
 @js.native
-sealed class TileLayer extends JsComponentType[TileLayerPropsR, js.Object, TopNode]
+object TileLayerJsR extends js.Object // JsComponentType[TileLayerPropsR, js.Object, TopNode]
 
 
 @ScalaJSDefined

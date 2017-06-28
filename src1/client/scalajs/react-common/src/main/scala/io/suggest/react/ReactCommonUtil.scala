@@ -1,9 +1,11 @@
 package io.suggest.react
 
-import japgolly.scalajs.react.{CallbackTo, ReactNode}
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.CallbackTo
+import japgolly.scalajs.react.internal.OptionLike
 
 import scala.scalajs.js
-import scala.language.implicitConversions
+import scala.language.{implicitConversions, higherKinds}
 
 /**
   * Suggest.io
@@ -39,16 +41,23 @@ object ReactCommonUtil {
   }
 
 
+  val VdomNullElement: VdomElement = {
+    VdomElement(null)
+  }
+
+  final class VdomElOptionExt[O[_], A](o: O[A])(implicit O: OptionLike[O]) {
+    def whenDefinedEl(f: A => VdomElement): VdomElement =
+      O.fold(o, VdomNullElement)(f)
+  }
+
+
   object Implicits {
 
-    /** Приведение Option[ReactElement] к ReactElement. Чтобы не писать везде .orNull */
-    implicit def reactElOpt2reactEl[T <: ReactNode](rElOpt: Option[T]): T = {
-      if (rElOpt.isEmpty) {
-        // TODO Option.orNull тут не компилится почему-то.
-        null.asInstanceOf[T]
-      } else {
-        rElOpt.get
-      }
+    /** Приведение Option[VdomElement] к VdomElement.
+      * Это чтобы не мудрить везде с .orNull и прочими EmptyVdom, и заодно решить проблему с diode connect/wrap.
+      */
+    implicit def vdomElOptionExt[O[_], A](o: O[A])(implicit O: OptionLike[O]): VdomElOptionExt[O, A] = {
+      new VdomElOptionExt(o)
     }
 
   }

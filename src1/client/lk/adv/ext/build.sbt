@@ -1,5 +1,7 @@
 Common.settingsOrgJS
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 name := "lk-adv-ext-sjs"
 
 version := "0.0.0-SNAPSHOT"

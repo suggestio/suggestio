@@ -2,14 +2,14 @@ package io.suggest.lk.r
 
 import diode.react.ModelProxy
 import io.suggest.lk.pop.PopupR
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.PleaseWaitPopupCloseClick
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import PopupR.PopupPropsValFastEq
 
 /**
@@ -28,8 +28,8 @@ object PleaseWaitPopupR {
       dispatchOnProxyScopeCB( $, PleaseWaitPopupCloseClick )
     }
 
-    def render(proxy: Props): ReactElement = {
-      for (_ <- proxy()) yield {
+    def render(proxy: Props): VdomElement = {
+      proxy().whenDefinedEl { _ =>
         proxy.wrap { _ =>
           PopupR.PropsVal(
             closeable = Some(closeBtnClick)
@@ -49,7 +49,7 @@ object PleaseWaitPopupR {
     }
   }
 
-  val component = ReactComponentB[Props]("PleaseWaitPopup")
+  val component = ScalaComponent.builder[Props]("PleaseWaitPopup")
     .stateless
     .renderBackend[Backend]
     .build

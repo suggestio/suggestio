@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -33,16 +33,14 @@ object ImgGalR {
 
   class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       p()
         .filter(_.imgUrls.nonEmpty)
-        .fold[ReactElement](null) { v =>
+        .fold[VdomElement](null) { v =>
           val inner = <.div(
             ^.`class` := Css.Lk.BxSlider.JS_PHOTO_SLIDER,
 
-            for {
-              (imgUrl, i) <- v.imgUrls.zipWithIndex
-            } yield {
+            v.imgUrls.iterator.zipWithIndex.toVdomArray { case (imgUrl, i) =>
               <.img(
                 ^.key     := i.toString,
                 ^.`class` := v.imgClass,
@@ -62,7 +60,7 @@ object ImgGalR {
 
   }
 
-  val component = ReactComponentB[Props]("ImgGal")
+  val component = ScalaComponent.builder[Props]("ImgGal")
     .stateless
     .renderBackend[Backend]
     .build

@@ -1,8 +1,8 @@
 package io.suggest.lk.r
 
 import diode.react.ModelProxy
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 import ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
@@ -10,7 +10,7 @@ import io.suggest.lk.m.ErrorPopupCloseClick
 import io.suggest.lk.pop.PopupR
 import io.suggest.sjs.common.i18n.Messages
 import PopupR.PopupPropsValFastEq
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 
 /**
   * Suggest.io
@@ -24,12 +24,12 @@ object ErrorPopupR {
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
-    private val closeBtnClick: Callback = {
+    private def closeBtnClick: Callback = {
       dispatchOnProxyScopeCB( $, ErrorPopupCloseClick )
     }
 
-    def render(proxy: Props): ReactElement = {
-      for (ex <- proxy()) yield {
+    def render(proxy: Props): VdomElement = {
+      proxy().whenDefinedEl { ex =>
         proxy.wrap { _ =>
           PopupR.PropsVal(
             closeable = Some(closeBtnClick)
@@ -68,7 +68,7 @@ object ErrorPopupR {
   }
 
 
-  val component = ReactComponentB[Props]("ErrorPopup")
+  val component = ScalaComponent.builder[Props]("ErrorPopup")
     .stateless
     .renderBackend[Backend]
     .build

@@ -10,9 +10,9 @@ import io.suggest.lk.nodes.form.m._
 import io.suggest.lk.pop.PopupR
 import io.suggest.lk.r.LkPreLoaderR
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 import PopupR.PopupPropsValFastEq
 
@@ -29,14 +29,14 @@ object CreateNodeR {
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback для ввода названия добавляемого под-узла. */
-    private def onNameChange(e: ReactEventI): Callback = {
+    private def onNameChange(e: ReactEventFromInput): Callback = {
       dispatchOnProxyScopeCB(
         $, CreateNodeNameChange(name = e.target.value)
       )
     }
 
     /** Callback редактирования id создаваемого узла. */
-    private def onIdChange(e: ReactEventI): Callback = {
+    private def onIdChange(e: ReactEventFromInput): Callback = {
       dispatchOnProxyScopeCB(
         $, CreateNodeIdChange(id = e.target.value)
       )
@@ -52,13 +52,14 @@ object CreateNodeR {
     }
 
 
-    def render(propsProxy: Props): ReactElement = {
-      for (addState <- propsProxy()) yield {
+    def render(propsProxy: Props): VdomElement = {
+      propsProxy().whenDefinedEl { addState =>
 
         val isSaving = addState.saving.isPending
-        val disabledAttr = isSaving ?= {
+
+        val disabledAttr = {
           ^.disabled := true
-        }
+        }.when( isSaving )
 
         propsProxy.wrap { _ =>
           PopupR.PropsVal(
@@ -70,8 +71,10 @@ object CreateNodeR {
             // Сейчас открыта форма добавление под-узла для текущего узла.
             <.div(
 
-              isSaving ?= {
+              if (isSaving) {
                 ^.title := Messages( MsgCodes.`Server.request.in.progress.wait` )
+              } else {
+                EmptyVdom
               },
 
               <.h2(
@@ -112,9 +115,13 @@ object CreateNodeR {
                       ^.value       := addState.id.getOrElse(""),
                       ^.onChange   ==> onIdChange,
                       ^.placeholder := EddyStone.EXAMPLE_UID,
-                      !isSaving ?= {
+
+                      if (!isSaving) {
                         ^.title := Messages( MsgCodes.`Example.id.0`, EddyStone.EXAMPLE_UID )
+                      } else {
+                        EmptyVdom
                       },
+
                       disabledAttr
                     )
                   )
@@ -127,7 +134,7 @@ object CreateNodeR {
                 ^.`class` := Css.flat( Css.Buttons.BTN_W, Css.Size.M ),
 
                 // Кнопка сохранения. Активна только когда юзером введено достаточно данных.
-                (addState.saving.isEmpty && !isSaving) ?= {
+                if (addState.saving.isEmpty && !isSaving) {
                   val isSaveBtnEnabled = addState.isValid
                   <.span(
                     <.a(
@@ -136,9 +143,13 @@ object CreateNodeR {
                         Css.Buttons.MAJOR     -> isSaveBtnEnabled,
                         Css.Buttons.DISABLED  -> !isSaveBtnEnabled
                       ),
-                      isSaveBtnEnabled ?= {
+
+                      if (isSaveBtnEnabled) {
                         ^.onClick --> onSaveClick
+                      } else {
+                        EmptyVdom
                       },
+
                       Messages( MsgCodes.`Save` )
                     ),
                     HtmlConstants.SPACE,
@@ -150,10 +161,15 @@ object CreateNodeR {
                       Messages( MsgCodes.`Cancel` )
                     )
                   )
+                } else {
+                  EmptyVdom
                 },
 
                 // Крутилка ожидания сохранения.
-                isSaving ?= LkPreLoaderR.AnimMedium,
+                if (isSaving)
+                  LkPreLoaderR.AnimMedium
+                else
+                  EmptyVdom,
 
                 // Вывести инфу, что что-то пошло не так при ошибке сохранения.
                 addState.saving.renderFailed {
@@ -161,7 +177,7 @@ object CreateNodeR {
                   case ex: ILknException =>
                     <.span(
                       ^.`class` := Css.Colors.RED,
-                      for (title <- ex.titleOpt) yield {
+                      ex.titleOpt.whenDefined { title =>
                         ^.title := title
                       },
                       Messages( ex.msgCode )
@@ -184,7 +200,7 @@ object CreateNodeR {
 
   }
 
-  val component = ReactComponentB[Props]("CreateNodePop")
+  val component = ScalaComponent.builder[Props]("CreateNodePop")
     .stateless
     .renderBackend[Backend]
     .build

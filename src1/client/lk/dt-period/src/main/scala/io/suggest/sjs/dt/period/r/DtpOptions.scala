@@ -13,10 +13,12 @@ import io.suggest.lk.r.Forms.InputCont
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, SetQap}
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+//import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
+import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -41,7 +43,7 @@ object DtpOptions {
   class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на смену значения в селекте периода размещения. */
-    def onQapChange(e: ReactEventI): Callback = {
+    def onQapChange(e: ReactEventFromInput): Callback = {
       val v = e.target.value
       val qap = QuickAdvPeriods.withName(v)
       dispatchOnProxyScopeCB($, SetQap(qap))
@@ -56,7 +58,7 @@ object DtpOptions {
     }
 
 
-    def render(state: State): ReactElement = {
+    def render(state: State): VdomElement = {
       <.div(
         ^.`class` := Css.Dt.OPTIONS,
 
@@ -64,23 +66,19 @@ object DtpOptions {
         PropTable.Outer(
           PropTable.Row(
             // Пояснение по сути
-            Messages( "Advertising.period" ),
-
+            Messages( MsgCodes.`Advertising.period` )
+          )(
             // Селект
-            InputCont(
-              // Props
-              Some( Css.Size.S ),
-
-              // Children
+            InputCont( Css.Size.S )(
               state.qapConn { qapProxy =>
                 <.select(
-                  ^.name := ( AdvConstants.PERIOD_FN + QsConstants.KEY_PARTS_DELIM_STR + AdvConstants.DtPeriod.QUICK_PERIOD_FN ),
-                  ^.`class` := Css.CLICKABLE,
-                  ^.value := qapProxy().strId,
+                  ^.name      := ( AdvConstants.PERIOD_FN + QsConstants.KEY_PARTS_DELIM_STR + AdvConstants.DtPeriod.QUICK_PERIOD_FN ),
+                  ^.`class`   := Css.CLICKABLE,
+                  ^.value     := qapProxy().strId,
                   ^.onChange ==> onQapChange,
 
                   // Отрендерить опшены: сначала quick-периоды, затем кастомные режимы дат.
-                  for (qap <- QuickAdvPeriods.values) yield {
+                  QuickAdvPeriods.values.toVdomArray { qap =>
                     <.option(
                       ^.key   := qap.strId,
                       ^.value := qap.strId,
@@ -96,22 +94,27 @@ object DtpOptions {
         // Выбор диапазона дат размещения в случае кастомности исходного периода:
         state.customRangeConn { customRangeOptProxy =>
           val customRangeOpt = customRangeOptProxy()
-          val momentLocale = Messages("locale.momentjs")
+          val momentLocale = Messages( MsgCodes.`locale.momentjs` )
           <.div(
-            customRangeOpt.nonEmpty ?= <.div(
-              for {
-                (fn, dateOptConn) <- Seq [(DtpInputFn, ReactConnectProxy[Option[MYmd]])] (
+            if (customRangeOpt.isEmpty) {
+              EmptyVdom
+
+            } else {
+              val children: Seq[TagMod] = for {
+                (fn, dateOptConn) <- Seq[(DtpInputFn, ReactConnectProxy[Option[MYmd]])](
                   DtpInputFns.start -> state.dateStartConn,
                   DtpInputFns.end   -> state.dateEndConn
                 )
               } yield {
                 dateOptConn { dateOptProx =>
-                  for (ymd <- dateOptProx()) yield {
+                  dateOptProx().whenDefinedEl { ymd =>
                     PropTable.Outer.withKey(fn.strId)(
                       PropTable.Row(
-                        Messages( "Date." + fn.strId ),
-
-                        InputCont(
+                        Messages(
+                          MsgCodes.`Date.suffixed`(fn.strId)
+                        )
+                      )(
+                        InputCont(Css.Size.S)(
                           DatePickerR(
                             new DatePickerPropsR {
                               override val locale: UndefOr[String] = momentLocale
@@ -139,23 +142,24 @@ object DtpOptions {
                               override val monthsShown: UndefOr[Int] = fn.monthsShown
                               override val todayButton: UndefOr[String] = {
                                 if (fn.withTodayBtn)
-                                  Messages("Today")
+                                  Messages(MsgCodes.`Today`)
                                 else
                                   js.undefined
                               }
                               override val maxDate: UndefOr[Date_t] = fn.maxDate
                             }
-                          )()
+                          )
                         )
 
                       )
                     )
-                  }  // for ymd
-
-                }
-              }   // for (fn, dateOptConn)
-
-            )
+                  } // for ymd
+                }: TagMod
+              }  // for (fn, dateOptConn)
+              <.div(
+                children: _*
+              )
+            }
           )
         } // customRangeProxy
 
@@ -165,8 +169,8 @@ object DtpOptions {
   }
 
 
-  val component = ReactComponentB[Props]("DtpOptions")
-    .initialState_P { props =>
+  val component = ScalaComponent.builder[Props]("DtpOptions")
+    .initialStateFromProps { props =>
       State(
         qapConn             = props.connect(_.info.quickAdvPeriod),
         customRangeConn     = props.connect(_.info.customRangeOpt),

@@ -1,10 +1,9 @@
 package react.leaflet.lmap
 
-import io.suggest.react.JsWrapperR
 import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
 import io.suggest.sjs.leaflet.map.{LatLngBounds, MapOptions}
-import japgolly.scalajs.react.{JsComponentType, TopNode}
-import org.scalajs.dom.raw.HTMLDivElement
+import japgolly.scalajs.react.vdom.VdomNode
+import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -18,17 +17,18 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   * @see [[https://github.com/chandu0101/scalajs-react-components/blob/master/doc/InteropWithThirdParty.md]]
   */
 
-case class LMapR(
-  override val props: LMapPropsR
-)
-  extends JsWrapperR[LMapPropsR, HTMLDivElement]
-{
-  override protected def _rawComponent = js.constructorOf[Map]
+object LMapR {
+
+  val component = JsComponent[LMapPropsR, Children.Varargs, Null]( LMapJsR )
+
+  def apply(props: LMapPropsR)(children: VdomNode*) = component(props)(children: _*)
+
 }
+
 
 @JSImport("react-leaflet", "Map")
 @js.native
-sealed class Map extends JsComponentType[LMapPropsR, js.Object, TopNode]
+object LMapJsR extends js.Object
 
 @ScalaJSDefined
 trait LMapPropsR extends MapOptions {

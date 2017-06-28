@@ -1,7 +1,8 @@
 Common.settingsOrgJS
 
 // Turn this project into a Scala.js project by importing these settings
-enablePlugins(ScalaJSPlugin)
+//enablePlugins(ScalaJSPlugin)
+enablePlugins(ScalaJSBundlerPlugin)
 
 name := "lk-adn-map-sjs"
 

@@ -6,8 +6,8 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m.SetOnMainScreen
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
@@ -25,12 +25,12 @@ object OnMainScreenR {
   protected class Backend($: BackendScope[Props, Unit]) {
 
     /** Реакция на изменение галочки onMainScreen. */
-    def onMainScreenChanged(e: ReactEventI): Callback = {
+    def onMainScreenChanged(e: ReactEventFromInput): Callback = {
       val oms2 = e.target.checked
       dispatchOnProxyScopeCB( $, SetOnMainScreen(oms2) )
     }
 
-    def render(p: Props) = {
+    def render(p: Props): VdomElement = {
       <.label(
         ^.`class` := Css.CLICKABLE,
 
@@ -39,16 +39,18 @@ object OnMainScreenR {
           ^.checked   := p().value,
           ^.onChange ==> onMainScreenChanged
         ),
+
         <.span(
           ^.`class` := Css.Input.STYLED_CHECKBOX
         ),
+
         Messages( MsgCodes.`Adv.on.main.screen` )
       )
     }
 
   }
 
-  val component = ReactComponentB[Props]("OnMainScreen")
+  val component = ScalaComponent.builder[Props]("OnMainScreen")
     .stateless
     .renderBackend[Backend]
     .build

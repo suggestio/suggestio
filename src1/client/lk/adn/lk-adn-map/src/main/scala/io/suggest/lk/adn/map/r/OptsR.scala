@@ -3,8 +3,8 @@ package io.suggest.lk.adn.map.r
 import diode.react.ModelProxy
 import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 
 /**
   * Suggest.io
@@ -20,7 +20,7 @@ object OptsR {
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
-    def render(): ReactElement = {
+    def render(): VdomElement = {
       <.div(
         <.br,
 
@@ -35,7 +35,7 @@ object OptsR {
   }
 
 
-  val component = ReactComponentB[Props]("Opts")
+  val component = ScalaComponent.builder[Props]("Opts")
     .stateless
     .renderBackend[Backend]
     .build

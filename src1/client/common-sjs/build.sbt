@@ -2,6 +2,8 @@ Common.settingsOrgJS
 
 name := "common-sjs"
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= Seq(

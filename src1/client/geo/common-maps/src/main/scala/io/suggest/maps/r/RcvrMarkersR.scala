@@ -19,7 +19,9 @@ import io.suggest.sjs.leaflet.event.MouseEvent
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.icon.IconOptions
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent, MarkerOptions}
-import japgolly.scalajs.react.{BackendScope, Callback, JsComponentU, PropsChildren, ReactComponentB, ReactElement, ReactNode, TopNode}
+import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.Implicits._
+import japgolly.scalajs.react.{BackendScope, Callback, PropsChildren, ScalaComponent}
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.marker.cluster.{MarkerClusterGroupPropsR, MarkerClusterGroupR}
@@ -68,17 +70,13 @@ object RcvrMarkersR {
 
     private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
 
-    // Алиас типа, чтобы короче писать. Тип везде скастован принудительно, т.к. у scalac крышу рвёт ниже по коду.
-    private type RComp_t = JsComponentU[js.Object, js.Any, TopNode]
     // Внутренний класс вместо кортежа, т.к. у scalac крышу срывает от кортежей с RComp_t внутри.
-    private case class ResTuple( latLng: LatLng, jsComp: RComp_t )
+    private case class ResTuple( latLng: LatLng, jsComp: VdomNode )
 
 
     /** Рендер всей гео.карты. */
-    def render(rcvrsGeoPotProxy: Props, children: PropsChildren): ReactElement = {
-      for {
-        mRcvrsGeo <- rcvrsGeoPotProxy().toOption
-      } yield {
+    def render(rcvrsGeoPotProxy: Props, children: PropsChildren): VdomElement = {
+      rcvrsGeoPotProxy().toOption.whenDefinedEl { mRcvrsGeo =>
 
         // Собираем сложный итератор, который на выходе в элементах выдаёт два аккамулятора: маркеры и шейпы.
         val iter = for {
@@ -141,8 +139,7 @@ object RcvrMarkersR {
                     _onClickCbF( _center )
                   }
                 }
-                val rc = CircleR( opts )()
-                  .asInstanceOf[RComp_t]
+                val rc = CircleR( opts ): VdomNode
                 ResTuple(_centerLatLng, rc)
 
               // Рендерить полигон или мультиполигон.
@@ -165,8 +162,7 @@ object RcvrMarkersR {
                     _onClickCbF( _center )
                   }
                 }
-                val rc = PolygonR(opts)()
-                  .asInstanceOf[RComp_t]
+                val rc = PolygonR(opts)
                 ResTuple(_centerLL, rc)
 
               // TODO Реализовать рендер остальных шейпов. Сейчас они пока не нужны.
@@ -207,7 +203,7 @@ object RcvrMarkersR {
 
         // Превратить итератор аккамуляторов в два стабильных аккамулятора.
         val (markers9, shapeComponents9) = iter
-          .foldLeft( (List.empty[List[Marker]], List.empty[List[JsComponentU[_,_,_]]]) ) {
+          .foldLeft( (List.empty[List[Marker]], List.empty[List[VdomNode]]) ) {
             case ((markersAcc, shapeComponentsAcc), (markers, shapeComponents)) =>
               (markers :: markersAcc,
                 shapeComponents :: shapeComponentsAcc)
@@ -218,7 +214,7 @@ object RcvrMarkersR {
         LayerGroupR()(
 
           // Полигоны, мультиполигоны, круги.
-          for (_ <- shapeComponents9.headOption) yield {
+          shapeComponents9.headOption.whenDefinedEl { _ =>
             LayerGroupR()(
               // Используем ускоренный flattenRev вместо штатного flatten, т.к. порядок нам не важен.
               Lists.flattenRev( shapeComponents9 ): _*
@@ -226,13 +222,13 @@ object RcvrMarkersR {
           },
 
           // Точки-маркеры поверх вообще всех svg-шейпов
-          for (_ <- markers9.headOption) yield {
+          markers9.headOption.whenDefinedEl { _ =>
             MarkerClusterGroupR(
               new MarkerClusterGroupPropsR {
                 override val markers      = markers9.iterator.flatten.toJSArray
                 override val markerClick  = _onMarkerClickedF
               }
-            )()
+            )
           },
 
           children
@@ -244,12 +240,12 @@ object RcvrMarkersR {
   }
 
 
-  val component = ReactComponentB[Props]("RcvrMarkers")
+  val component = ScalaComponent.builder[Props]("RcvrMarkers")
     .stateless
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
 
-  def apply(rcvrsGeoPotProxy: Props)(children: ReactNode*) = component(rcvrsGeoPotProxy, children: _*)
+  def apply(rcvrsGeoPotProxy: Props)(children: VdomNode*) = component(rcvrsGeoPotProxy)(children: _*)
 
 }

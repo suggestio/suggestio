@@ -1,6 +1,7 @@
 Common.settingsOrgJS
 
-enablePlugins(ScalaJSPlugin)
+//enablePlugins(ScalaJSPlugin)
+enablePlugins(ScalaJSBundlerPlugin)
 
 name := "lk-dt-period-sjs"
 

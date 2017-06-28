@@ -1,5 +1,7 @@
 Common.settingsOrgJS
 
+enablePlugins(ScalaJSBundlerPlugin)
+
 name := "ble-beaconer-sjs"
 
 version := "0.0.0-SNAPSHOT"

@@ -36,7 +36,7 @@ object ReactLeafletUtil extends Log {
 
           override val attribution   = LeafletConstants.Tiles.ATTRIBUTION_OSM
         }
-      )()
+      )
     }
 
   }

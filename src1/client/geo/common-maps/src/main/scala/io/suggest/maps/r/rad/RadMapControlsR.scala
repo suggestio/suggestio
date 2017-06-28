@@ -3,7 +3,8 @@ package io.suggest.maps.r.rad
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.geo.MGeoPoint
 import io.suggest.maps.m.MRadT
-import japgolly.scalajs.react.ReactComponentB
+import japgolly.scalajs.react.ScalaComponent
+import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.layer.LayerGroupR
 import io.suggest.sjs.common.spa.OptFastEq
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
@@ -27,9 +28,9 @@ object RadMapControlsR {
                             )
 
 
-  val component = ReactComponentB[Props]("Rad")
+  val component = ScalaComponent.builder[Props]("Rad")
     // Собрать начальное состояние.
-    .initialState_P { mradOptProxy =>
+    .initialStateFromProps { mradOptProxy =>
       State(
         centerGeoPointOptC = mradOptProxy.connect { mradOpt =>
           mradOpt.map(_.currentCenter)

@@ -4,8 +4,8 @@ import diode.react.ModelProxy
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.tags.edit.{MTagsEditQueryProps, TagsEditConstants}
 import io.suggest.css.Css
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactEventI, ReactKeyboardEventI}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput, ReactKeyboardEventFromInput}
+import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.{AddCurrentTag, SetTagSearchQuery}
@@ -29,13 +29,13 @@ object TagNameInpR {
       * Коллбэк ввода текста в поле имени нового тега.
       * Надо обновить состояние и запустить поисковый запрос, если требуется.
       */
-    def onQueryChange(e: ReactEventI): Callback = {
+    def onQueryChange(e: ReactEventFromInput): Callback = {
       val queryStr2 = e.target.value
       dispatchOnProxyScopeCB( $, SetTagSearchQuery(queryStr2) )
     }
 
     /** Коллбек для реакции на нажатие некоторых особых клавиш на клавиатуре во время ввода. */
-    def onKeyUp(e: ReactKeyboardEventI): Callback = {
+    def onKeyUp(e: ReactKeyboardEventFromInput): Callback = {
       if (e.keyCode == KeyCode.Enter) {
         dispatchOnProxyScopeCB($, AddCurrentTag)
       } else {
@@ -78,7 +78,7 @@ object TagNameInpR {
   }
 
 
-  val component = ReactComponentB[Props]("TagNameInp")
+  val component = ScalaComponent.builder[Props]("TagNameInp")
     .stateless
     .renderBackend[Backend]
     .build

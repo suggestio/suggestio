@@ -7,8 +7,8 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.geo.m.{DocReadMoreClick, MDocS}
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
-import japgolly.scalajs.react.{BackendScope, Callback, ReactComponentB, ReactElement}
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -26,13 +26,15 @@ object DocR {
       dispatchOnProxyScopeCB( $, DocReadMoreClick )
     }
 
-    def render(mDocProxy: Props): ReactElement = {
+    def render(mDocProxy: Props): VdomElement = {
       val expanded = mDocProxy().expanded
 
       <.div(
 
-        expanded ?= {
+        if (expanded) {
           ^.`class` := Css.PropTable.TD_VALUE
+        } else {
+          EmptyVdom
         },
 
         Messages( MsgCodes.`Adv.geo.form.descr1` ),
@@ -81,7 +83,7 @@ object DocR {
   }
 
 
-  val component = ReactComponentB[Props]("Doc")
+  val component = ScalaComponent.builder[Props]("Doc")
     .stateless
     .renderBackend[Backend]
     .build

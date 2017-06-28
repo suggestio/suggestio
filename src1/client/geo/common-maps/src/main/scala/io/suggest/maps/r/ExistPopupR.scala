@@ -8,12 +8,12 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.maps.m.MExistGeoPopupS
 import io.suggest.maps.u.MapsUtil
 import io.suggest.mbill2.m.item.typ.MItemTypes
-import io.suggest.react.ReactCommonUtil.Implicits.reactElOpt2reactEl
+import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.r.RangeYmdR
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.vdom.prefix_<^._
-import japgolly.scalajs.react.{BackendScope, ReactComponentB, ReactElement}
-import react.leaflet.popup.PopupR
+import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import react.leaflet.popup.{LPopupPropsR, LPopupR}
 
 /**
   * Suggest.io
@@ -47,59 +47,68 @@ object ExistPopupR {
   /** Рендерер содержимого попапа. */
   class Backend($: BackendScope[Props, Unit]) {
 
-    def render(p: Props): ReactElement = {
+    def render(p: Props): VdomElement = {
       val p0 = p()
 
-      for {
+      // Костыль для whenDefinedEl()
+      val popDataOpt = for {
         popResp   <- p0.content.toOption
         popState  <- p0.state
       } yield {
-        PopupR(
-          position = MapsUtil.geoPoint2LatLng( popState.geoPoint )
-        )(
-          <.ul(
-            for (row <- popResp.rows) yield {
-              <.li(
-                ^.key := row.dateRange.toString,
+        (popResp, popState)
+      }
 
-                // Рендер диапазона дат, если указан...
-                row.dateRange.nonEmpty ?= RangeYmdR(
-                  RangeYmdR.Props(
-                    capFirst = true,
-                    rangeYmdOpt = row.dateRange
-                  )
-                ),
+      popDataOpt.whenDefinedEl { case (popResp, popState) =>
+        LPopupR(
+          new LPopupPropsR {
+            override val position = MapsUtil.geoPoint2LatLng( popState.geoPoint )
+          }
+        ) {
+          val elements = for (row <- popResp.rows) yield {
+            <.li(
+              ^.key := row.dateRange.toString,
 
-                SPACE,
-
-                // Рендер строкой всех item'ов в текущем диапазоне.
-                for (itm <- row.items) yield {
-                  <.span(
-                    ^.key := itm.itemId,
-                    itm.payload match {
-                      // lk-adv-geo
-                      case OnMainScreen =>
-                        Messages( MsgCodes.`Main.screen` )
-                      case InGeoTag(face) =>
-                        <.span(
-                          _tagPrefix,
-                          face
-                        )
-                      // lk-adn-map
-                      case OnAdvsMap =>
-                        Messages( MItemTypes.AdnNodeMap.nameI18n )
-                      case OnGeoCapturing =>
-                        Messages( MItemTypes.GeoLocCaptureArea.nameI18n )
-                    },
-                    itm.isOnlineNow ?= _onlineNow,
-                    COMMA, SPACE
-                  )
-                }
-
+              // Рендер диапазона дат, если указан...
+              RangeYmdR(
+                RangeYmdR.Props(
+                  capFirst = true,
+                  rangeYmdOpt = row.dateRange
+                )
               )
-            }
+                .when(row.dateRange.nonEmpty),
+
+              SPACE,
+
+              // Рендер строкой всех item'ов в текущем диапазоне.
+              row.items.toVdomArray { itm =>
+                <.span(
+                  ^.key := itm.itemId,
+                  itm.payload match {
+                    // lk-adv-geo
+                    case OnMainScreen =>
+                      Messages(MsgCodes.`Main.screen`)
+                    case InGeoTag(face) =>
+                      <.span(
+                        _tagPrefix,
+                        face
+                      )
+                    // lk-adn-map
+                    case OnAdvsMap =>
+                      Messages(MItemTypes.AdnNodeMap.nameI18n)
+                    case OnGeoCapturing =>
+                      Messages(MItemTypes.GeoLocCaptureArea.nameI18n)
+                  },
+                  _onlineNow.when(itm.isOnlineNow),
+                  COMMA, SPACE
+                )
+              }
+
+            )
+          }
+          <.ul(
+            elements: _*
           )
-        )
+        }: VdomElement
       }
 
     }
@@ -107,7 +116,7 @@ object ExistPopupR {
   }
 
 
-  val component = ReactComponentB[Props]("GeoAdvExistPop")
+  val component = ScalaComponent.builder[Props]("GeoAdvExistPop")
     .stateless
     .renderBackend[Backend]
     .build

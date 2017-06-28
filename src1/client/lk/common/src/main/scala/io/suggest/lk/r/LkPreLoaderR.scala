@@ -6,7 +6,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -19,7 +19,7 @@ object LkPreLoaderR {
   private def pleaseWait = Messages( MsgCodes.`Please.wait` )
 
 
-  val TextC = ReactComponentB[Unit]("TextPreLoader")
+  val TextC = ScalaComponent.builder[Unit]("TextPreLoader")
     .stateless
     .render { _ =>
       <.span(
@@ -31,7 +31,7 @@ object LkPreLoaderR {
   def Text = TextC()
 
 
-  val Anim = ReactComponentB[Int]("PreLoader")
+  val Anim = ScalaComponent.builder[Int]("PreLoader")
     .stateless
     .render_P { widthPx =>
       <.span(
@@ -39,7 +39,7 @@ object LkPreLoaderR {
         ^.`class` := Css.Font.Sz.S,
 
         LkPreLoader.PRELOADER_IMG_URL
-          .fold[ReactElement]( Text ) { url =>
+          .fold[VdomElement]( Text ) { url =>
             <.img(
               ^.src   := url,
               ^.title := pleaseWait,

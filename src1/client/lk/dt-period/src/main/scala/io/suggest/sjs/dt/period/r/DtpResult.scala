@@ -6,8 +6,8 @@ import io.suggest.dt.interval.MRangeYmd
 import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.react.r.RangeYmdR
 import io.suggest.sjs.common.i18n.Messages
-import japgolly.scalajs.react.ReactComponentB
-import japgolly.scalajs.react.vdom.prefix_<^._
+import japgolly.scalajs.react.ScalaComponent
+import japgolly.scalajs.react.vdom.html_<^._
 
 /**
   * Suggest.io
@@ -24,7 +24,7 @@ import japgolly.scalajs.react.vdom.prefix_<^._
 object DtpResult {
 
   /** Статическая визуальная обёртка для [[DtpResult]].component. */
-  val Outer = ReactComponentB[Unit]("DtpResOut")
+  val Outer = ScalaComponent.builder[Unit]("DtpResOut")
     .stateless
     .render_C { propsChildren =>
       <.div(
@@ -44,7 +44,7 @@ object DtpResult {
   type Props = ModelProxy[MRangeYmd]
 
   // Этот компонент надо использовать через proxy.connect().
-  val component = ReactComponentB[Props]("DtpRes")
+  val component = ScalaComponent.builder[Props]("DtpRes")
     .stateless
     .render_P { p =>
       val v = p()
