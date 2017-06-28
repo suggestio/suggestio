@@ -1,8 +1,11 @@
 package io.suggest.async
 
+import java.io.{File, FileOutputStream}
+
 import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import com.google.inject.Inject
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
@@ -17,9 +20,9 @@ import scala.concurrent.{ExecutionContext, Future}
   * Description: Утиль для akka streams.
   */
 class StreamsUtil @Inject() (
-  implicit private val ec   : ExecutionContext,
-  implicit private val mat  : Materializer
-) { outer =>
+                              implicit private val ec   : ExecutionContext,
+                              implicit private val mat  : Materializer
+                            ) { outer =>
 
   /** Подсчёт кол-ва элементов в Source.
     *
@@ -109,6 +112,35 @@ class StreamsUtil @Inject() (
           Json.stringify(JsNull) :: "]" :: Nil
         )
       }
+  }
+
+  /**
+   * Асинхронно записать все данные из Enumerator'а в указанный файл.
+   * Файл будет перезаписан, либо создан, если не существует.
+   * @param data Енумератор сырых данных.
+   * @param f java.io.File
+   * @param deleteOnError Удалять пустой/неполный файл при ошибке? [true]
+   * @return Фьючерс, обозначающий завершение записи.
+   */
+  def sourceIntoFile(data: Source[ByteString, _], f: File, deleteOnError: Boolean = true): Future[_] = {
+    val os = new FileOutputStream(f)
+
+    val doneFut = data
+      .runForeach { byteStr =>
+        os.write( byteStr.toArray )
+      }
+      .andThen { case _ =>
+        os.close()
+      }
+
+    if (deleteOnError) {
+      // При ошибке нужно удалить файл, т.к. он всё равно уже теперь пустой.
+      for (_ <- doneFut.failed) {
+        f.delete()
+      }
+    }
+
+    doneFut
   }
 
 }

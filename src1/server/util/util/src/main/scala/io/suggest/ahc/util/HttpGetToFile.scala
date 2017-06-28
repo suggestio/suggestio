@@ -3,7 +3,7 @@ package io.suggest.ahc.util
 import java.io.File
 
 import com.google.inject.{Inject, Singleton}
-import io.suggest.itee.IteeUtil
+import io.suggest.async.StreamsUtil
 import play.api.http.HttpVerbs
 import play.api.libs.ws.{WSClient, WSResponseHeaders}
 
@@ -17,9 +17,10 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class HttpGetToFile @Inject() (
-  ws                      : WSClient,
-  implicit private val ec : ExecutionContext
-) {
+                                ws                      : WSClient,
+                                streamsUtil             : StreamsUtil,
+                                implicit private val ec : ExecutionContext
+                              ) {
 
   /** Класс для качания из интернетов. */
   abstract class AbstractDownloader {
@@ -61,19 +62,19 @@ class HttpGetToFile @Inject() (
       val respFut = ws.url(urlStr)
         .withFollowRedirects(followRedirects)
         .withMethod(HttpVerbs.GET)
-        .streamWithEnumerator() // TODO stream()
+        .stream()
 
-      respFut.flatMap { case (headers, body) =>
-        if (!isStatusValid(headers.status)) {
-          val ex = statusCodeInvalidException(headers)
+      respFut.flatMap { sr =>
+        if (!isStatusValid(sr.headers.status)) {
+          val ex = statusCodeInvalidException(sr.headers)
           Future.failed(ex)
         } else {
           val f = File.createTempFile(tempFilePrefix, tempFileSuffix)
           for {
-            _ <- IteeUtil.writeIntoFile(body, f)
+            _ <- streamsUtil.sourceIntoFile(sr.body, f)
           } yield {
             // Вернуть готовый файл, когда всё закончится.
-            DlResp(headers, f)
+            DlResp(sr.headers, f)
           }
         }
       }
