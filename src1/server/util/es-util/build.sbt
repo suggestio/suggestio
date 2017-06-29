@@ -10,11 +10,10 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 libraryDependencies ++= {
   Seq(
-    "org.elasticsearch"       % "elasticsearch"     % Common.Vsn.ELASTIC_SEARCH,
-    "com.sksamuel.elastic4s" %% "elastic4s-core"    % Common.Vsn.ELASTIC4S,
-    "com.sksamuel.elastic4s" %% "elastic4s-streams" % Common.Vsn.ELASTIC4S,
+    "org.elasticsearch"         % "elasticsearch"       % Common.Vsn.ELASTIC_SEARCH,
+    "org.elasticsearch.client"  % "transport"           % Common.Vsn.ELASTIC_SEARCH,
 
-    "org.scalatest"          %% "scalatest"         % Common.scalaTestVsn % "test"
+    "org.scalatest"             %% "scalatest"          % Common.scalaTestVsn % "test"
   )
 }
 

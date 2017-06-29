@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import com.sksamuel.elastic4s.{HitAs, RichSearchHit, SearchDefinition}
+import org.elasticsearch.action.search.SearchRequestBuilder
 import org.elasticsearch.search.SearchHit
 
 /**
@@ -19,24 +19,22 @@ object IEsSourcingHelper {
 
 /** Интерфейс typeclass'а для десериализатора SearchHit ответов elasticsearch. */
 trait IEsHitMapper[To] {
-  def as(from: SearchHit): To
+  def mapSearchHit(from: SearchHit): To
 }
 
-/** Интерфейс typeclass'а для десериализатора RichSearchHit ответов elastic4s. */
-trait IEs4sHitMapper[To] extends HitAs[To]
-
-trait IEs4sJavaHitMapper[To] extends IEsHitMapper[To] with IEs4sHitMapper[To] {
-  override def as(from: RichSearchHit): To = {
-    as( from.java )
-  }
-}
-
-trait IEsSourcingHelper[To] extends IEs4sHitMapper[To] {
+trait IEsSrbMutator {
 
   /** Подготовка search definition'а к будущему запросу. */
-  def prepareSearchDef(searchDef: SearchDefinition): SearchDefinition = {
-    searchDef
+  def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    srb
   }
+
+}
+
+
+/** Интерфейс SourcingHelper'а.
+  * Такие typeclass'ы модифицируют поисковые запросы и их результаты. */
+trait IEsSourcingHelper[To] extends IEsHitMapper[To] with IEsSrbMutator {
 
   override def toString: String = try {
     getClass.getSimpleName
@@ -46,16 +44,17 @@ trait IEsSourcingHelper[To] extends IEs4sHitMapper[To] {
 
 }
 
+
+/** Сборка сорсера только id'шников. */
 class IdsSourcingHelper extends IEsSourcingHelper[String] {
 
-  /** Подготовка search definition'а к будущему запросу. */
-  override def prepareSearchDef(searchDef: SearchDefinition): SearchDefinition = {
-    super.prepareSearchDef(searchDef)
-      .fetchSource(false)
+  override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+    super.prepareSrb(srb)
+      .setFetchSource(false)
   }
 
-  override def as(from: RichSearchHit): String = {
-    from.id
+  override def mapSearchHit(from: SearchHit): String = {
+    from.getId
   }
 
 }

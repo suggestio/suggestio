@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import org.elasticsearch.common.geo.builders.{LineStringBuilder, ShapeBuilder}
+import org.elasticsearch.common.geo.builders.ShapeBuilders
 import play.api.libs.json.JsArray
 import play.extras.geojson.{LineString, LngLat}
 
@@ -26,11 +26,7 @@ object LineStringGsJvm extends MultiPointShapeStatic {
     )
   }
 
-  override type ShapeBuilder_t = LineStringBuilder
-
-  override protected def shapeBuilder: ShapeBuilder_t = {
-    ShapeBuilder.newLineString()
-  }
+  override def toEsShapeBuilder(gs: LineStringGs) = ShapeBuilders.newLineString( gsCoords2esCoords(gs) )
 
   override protected[this] def applier = LineStringGs
 

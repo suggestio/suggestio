@@ -14,7 +14,7 @@ import scala.collection.JavaConversions._
 object IEsDoc {
 
   /** Эксрактор для посковых результатов (/_search). */
-  implicit val esHitEv = new IEsDoc[SearchHit] {
+  implicit val esSearchHitEv = new IEsDoc[SearchHit] {
 
     override def rawVersion(v: SearchHit): Long = {
       v.getVersion

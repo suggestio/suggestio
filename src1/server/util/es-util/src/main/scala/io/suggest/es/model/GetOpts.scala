@@ -1,6 +1,6 @@
 package io.suggest.es.model
 
-import org.elasticsearch.search.fetch.source.FetchSourceContext
+import org.elasticsearch.search.fetch.subphase.FetchSourceContext
 
 /**
  * Suggest.io
@@ -14,7 +14,9 @@ trait ISourceFiltering {
 
   def excludes: TraversableOnce[String]
 
-  def toFetchSourceCtx = new FetchSourceContext(includes.toArray, excludes.toArray)
+  def toFetchSourceCtx: FetchSourceContext = {
+    new FetchSourceContext(true, includes.toArray, excludes.toArray)
+  }
 
 }
 

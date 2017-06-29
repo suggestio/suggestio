@@ -28,12 +28,12 @@ trait AdnIsTest extends DynSearchArgs {
         _testNode.fold(qb) { tnFlag =>
           var tnf: QueryBuilder = QueryBuilders.termQuery(fn, tnFlag)
           if (!tnFlag) {
-            val tmf = QueryBuilders.missingQuery(fn)
+            val tmf = QueryBuilders.existsQuery(fn)
             tnf = QueryBuilders.boolQuery()
               // Имитация orQuery, которая стала deprecated во время переезда на es-2.0.
               .should(tnf)
-              .should(tmf)
-              .minimumNumberShouldMatch(1)
+              .mustNot(tmf)
+              .minimumShouldMatch(1)
           }
           QueryBuilders.boolQuery()
             .must(qb)

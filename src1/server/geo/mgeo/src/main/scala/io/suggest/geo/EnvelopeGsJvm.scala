@@ -4,7 +4,7 @@ import io.suggest.geo.GeoConstants.Qs
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.common.geo.builders.{ShapeBuilder, ShapeBuilders}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
@@ -98,9 +98,10 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
   }
 
   override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder = {
-    ShapeBuilder.newEnvelope()
-      .topLeft( GeoPoint.toJstCoordinate(gs.topLeft) )
-      .bottomRight( GeoPoint.toJstCoordinate(gs.bottomRight) )
+    ShapeBuilders.newEnvelope(
+      GeoPoint.toJtsCoordinate(gs.topLeft),
+      GeoPoint.toJtsCoordinate(gs.bottomRight)
+    )
   }
 
 }

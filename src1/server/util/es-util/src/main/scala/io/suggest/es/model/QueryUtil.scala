@@ -37,7 +37,7 @@ object QueryUtil {
         }
       }
       // Если should-clause'ы отсутствуют, то minimum should match 0. Иначе 1.
-      nq.minimumNumberShouldMatch(
+      nq.minimumShouldMatch(
         Math.min(1, shouldClauses)
       )
 

@@ -3,7 +3,8 @@ package io.suggest.es.model
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptId
-import org.elasticsearch.action.delete.DeleteRequestBuilder
+import org.elasticsearch.action.DocWriteResponse.Result
+import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
 import org.elasticsearch.action.get.MultiGetRequest.Item
 import org.elasticsearch.action.index.IndexRequestBuilder
 
@@ -16,9 +17,16 @@ import scala.concurrent.Future
  * Description: Файл содержит трейты для базовой сборки типичных ES-моделей, без parent-child и прочего.
  */
 
+object EsModelStaticT {
+
+  def delResp2isDeleted(dr: DeleteResponse): Boolean = {
+    dr.getResult == Result.DELETED
+  }
+
+}
+
 /** Базовый шаблон для статических частей ES-моделей, НЕ имеющих _parent'ов. Применяется в связке с [[EsModelT]].
   * Здесь десериализация полностью выделена в отдельную функцию. */
-
 trait EsModelStaticT extends EsModelCommonStaticT {
 
   override type T <: EsModelT
@@ -33,14 +41,14 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   def prepareDelete(id: String) = prepareDeleteBase(id)
 
   /**
-   * Существует ли указанный документ в хранилище?
+   * Существует ли указанный документ в текущем типе?
    *
-   * @param id id магазина.
+   * @param id id документа.
    * @return true/false
    */
   def isExist(id: String): Future[Boolean] = {
     prepareGet(id)
-      .setFields()
+      .setFetchSource(false)
       .execute()
       .map { _.isExists }
   }
@@ -110,9 +118,8 @@ trait EsModelStaticT extends EsModelCommonStaticT {
         .setRealtime(true)
       for (id <- ids) {
         val item = new Item(ES_INDEX_NAME, ES_TYPE_NAME, id)
-        for (sf <- options.sourceFiltering) {
+        for (sf <- options.sourceFiltering)
           item.fetchSourceContext( sf.toFetchSourceCtx )
-        }
         req.add(item)
       }
       req.execute()
@@ -172,7 +179,7 @@ trait EsModelStaticT extends EsModelCommonStaticT {
   def deleteById(id: String): Future[Boolean] = {
     deleteRequestBuilder(id)
       .execute()
-      .map { _.isFound }
+      .map { EsModelStaticT.delResp2isDeleted }
   }
 
 

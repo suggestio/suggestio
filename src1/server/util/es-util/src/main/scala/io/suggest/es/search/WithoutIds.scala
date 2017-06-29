@@ -23,7 +23,7 @@ trait WithoutIds extends DynSearchArgs with IEsTypes {
         .must(query3)
         .mustNot {
           QueryBuilders.idsQuery(esTypes: _*)
-            .ids(withoutIds: _*)
+            .addIds(withoutIds: _*)
         }
     } else {
       query3

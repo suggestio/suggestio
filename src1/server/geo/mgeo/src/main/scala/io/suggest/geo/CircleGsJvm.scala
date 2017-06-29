@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.common.geo.builders.ShapeBuilders
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -62,7 +62,7 @@ object CircleGsJvm extends GsStaticJvmQuerable {
   def distance(circle: CircleGs) = Distance.meters( circle.radiusM )
 
   override def toEsShapeBuilder(gs: Shape_t) = {
-    ShapeBuilder.newCircleBuilder()
+    ShapeBuilders.newCircleBuilder()
       .center(gs.center.lon, gs.center.lat)
       .radius(gs.radiusM, DistanceUnit.METERS)
   }

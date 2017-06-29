@@ -5,6 +5,8 @@ import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import models.mgeo.MBleBeaconInfo
+import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -61,17 +63,9 @@ class BleUtil {
         override def toEsQuery: QueryBuilder = {
           val qb0 = super.toEsQuery
 
-          // Начинаем собирать function-score без function'ов внутри, только с весами и фильтрами внутрях.
-          val qb1 = QueryBuilders.functionScoreQuery(qb0)
-            // При объединении скоров интересует только самый ближайший скор.
-            .scoreMode( "max" )
-            // При накладывании function-скора на найденную ноду, забывать об исходном скоринге, заменяя его кастомом.
-            .boostMode( "replace" )
-            .boost(maxBoost)
-
           // Собирать критерии скоринга: собрать фильтр по каждому маячку, выставив weight при срабатывании фильтра.
-          val qb2 = bcnsMap
-            .foldLeft(qb1) { case (qbAcc, (uid, weight)) =>
+          val ffbs = bcnsMap.iterator
+            .map { case (uid, weight) =>
               val bcnEdgeCr = Criteria(
                 predicates = predicates,
                 nodeIds    = Seq(uid)
@@ -81,10 +75,17 @@ class BleUtil {
               }
               val filter = bcnFilterDynSearch.toEsQuery
               val scorer = ScoreFunctionBuilders.weightFactorFunction(weight)
-              qbAcc.add(filter, scorer)
+              new FilterFunctionBuilder(filter, scorer)
             }
+            .toArray
 
-          qb2
+          // Собирать итоговую function-score без function'ов внутри, только с весами и фильтрами внутрях.
+          QueryBuilders.functionScoreQuery(qb0, ffbs)
+            // При объединении скоров интересует только самый ближайший скор.
+            .scoreMode( FiltersFunctionScoreQuery.ScoreMode.MAX )
+            // При накладывании function-скора на найденную ноду, забывать об исходном скоринге, заменяя его кастомом.
+            .boostMode( CombineFunction.REPLACE )
+            .boost(maxBoost)
         }
       }
 

@@ -2,9 +2,9 @@ package io.suggest.geo
 
 import java.{lang => jl}
 
-import com.spatial4j.core.context.SpatialContext
-import com.spatial4j.core.io.GeohashUtils
-import com.spatial4j.core.shape.Point
+import org.locationtech.spatial4j.context.SpatialContext
+import org.locationtech.spatial4j.io.GeohashUtils
+import org.locationtech.spatial4j.shape.Point
 import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -167,7 +167,7 @@ object GeoPoint extends MacroLogsImpl {
   def toEsStr(gp: IGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 
   /** Пространственная координата в терминах JTS. */
-  def toJstCoordinate(gp: IGeoPoint) = new Coordinate(gp.lon, gp.lat)
+  def toJtsCoordinate(gp: IGeoPoint) = new Coordinate(gp.lon, gp.lat)
 
   /** (Lon,lat,alt) является основным порядком гео.координат в sio2. */
   def toLngLat(gp: IGeoPoint): LngLat = {

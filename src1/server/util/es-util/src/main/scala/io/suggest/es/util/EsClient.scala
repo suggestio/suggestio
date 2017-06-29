@@ -6,7 +6,6 @@ import com.google.inject.{Inject, Provider, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient
-import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.InetSocketTransportAddress
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
@@ -36,6 +35,7 @@ object EsClientUtil {
 }
 
 trait EsClientT
+
   extends IEsClient
   with Provider[Client]
 {
@@ -45,7 +45,10 @@ trait EsClientT
 
 /**
   * Реализация инжектируемого ES-клиента на базе транспортного клиента.
-  * Начиная с elasticsearch 2.x рекомендуется использовать транспортный клиент на стороне приложения + локальную ноду.
+  *
+  * Начиная с elasticsearch 2.x и вышие рекомендуется использовать транспортный клиент
+  * на стороне приложения + локальную ноду, к которой он присоединён.
+  * Это снизит объёмы паразитной болтовни в кластере.
   */
 @Singleton
 class TransportEsClient @Inject() (
@@ -64,24 +67,10 @@ class TransportEsClient @Inject() (
   def _installClient(): TransportClient = {
     lazy val logPrefix = s"_installClient(${System.currentTimeMillis}):"
 
-    val settingsBuilder = Settings.builder()
-
     // Закинуть имя кластера из оригинального конфига.
     // TODO Переименовать параметры sio-конфига во что-то, начинающееся с es.client.
     val clusterNameOpt = configuration.getString("cluster.name")
-    clusterNameOpt.fold [Unit] {
-      settingsBuilder.put("client.transport.ignore_cluster_name", true)
-    } { clusterName =>
-      settingsBuilder.put("cluster.name", clusterName)
-    }
-    val settings = settingsBuilder.build()
-
-    debug(s"$logPrefix Cluster name: $clusterNameOpt")
-
-    // Собираем клиентуру
-    _trClient = TransportClient.builder()
-      .settings(settings)
-      .build()
+    debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
 
     // Законнектить свеженький клиент согласно адресам из конфига, если они там указаны.
     val addrs = configuration
@@ -103,8 +92,9 @@ class TransportEsClient @Inject() (
       .toSeq
 
     debug(s"$logPrefix Transport addrs: ${addrs.mkString(", ")}")
+
+    _trClient = SioEsUtil.newTransportClient(addrs, clusterNameOpt)
     _trClient
-      .addTransportAddresses(addrs : _*)
   }
 
   override implicit def esClient: Client = _trClient
@@ -118,9 +108,11 @@ class TransportEsClient @Inject() (
   lifecycle.addStopHook { () =>
     Future {
       try {
-        _trClient.close()
-        trace(s"Successfully closed ES client ${_trClient}")
-        _trClient = null
+        for ( c <- Option(_trClient) ) {
+          c.close()
+          trace(s"Successfully closed ES client $c")
+          _trClient = null
+        }
       } catch {
         case ex: Throwable =>
           error(s"Cannot close es client ${_trClient}", ex)

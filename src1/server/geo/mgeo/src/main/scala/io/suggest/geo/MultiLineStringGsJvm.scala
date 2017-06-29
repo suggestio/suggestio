@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilder}
+import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilders}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{LngLat, MultiLineString}
@@ -51,15 +51,11 @@ object MultiLineStringGsJvm extends GsStaticJvmQuerable {
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder(gs: Shape_t): MultiLineStringBuilder = {
     // Заливаем линии
-    gs.lines.foldLeft(ShapeBuilder.newMultiLinestring) {
+    gs.lines.foldLeft(ShapeBuilders.newMultiLinestring()) {
       (acc0, coordLine) =>
         // Заливаем все точки в линию
-        coordLine
-          .coords
-          .foldLeft(acc0.linestring) {
-            (acc1, e)  =>  acc1.point(e.lon, e.lat)
-          }
-          .end()
+        val lsb = LineStringGsJvm.toEsShapeBuilder(coordLine)
+        acc0.linestring(lsb)
     }
   }
 

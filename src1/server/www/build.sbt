@@ -65,8 +65,8 @@ libraryDependencies ++= {
   // Нужно выпилить joda-time из проекта, перейти на java 8 datetime api, дождаться когда починят драйвер jdbc и можно будет обновляться.
   "org.postgresql" % "postgresql" % "9.4.1212",
   // geo
-  "com.spatial4j" % "spatial4j" % "0.4.+",
-  "com.vividsolutions" % "jts" % "1.13",
+  //"org.locationtech.spatial4j" % "spatial4j" % Common.Vsn.SPATIAL4J,
+  //"com.vividsolutions" % "jts-core" % Common.Vsn.JTS,
   //"com.sanoma.cda" %% "maxmind-geoip2-scala" % "1.3.5",
   // statistics
   "net.sf.uadetector" % "uadetector-resources" % "2014.+",

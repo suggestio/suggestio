@@ -2,7 +2,7 @@ package io.suggest.geo
 
 import io.suggest.geo.GeoShapeJvm._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.ShapeBuilder
+import org.elasticsearch.common.geo.builders.ShapeBuilders
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{LngLat, Point}
@@ -38,7 +38,8 @@ object PointGsJvm extends GsStaticJvmQuerable {
   }
 
   override def toEsShapeBuilder(gs: Shape_t) = {
-    ShapeBuilder.newPoint(gs.coord.lon, gs.coord.lat)
+    val jCoord = GeoPoint.toJtsCoordinate( gs.coord )
+    ShapeBuilders.newPoint( jCoord )
   }
 
 }

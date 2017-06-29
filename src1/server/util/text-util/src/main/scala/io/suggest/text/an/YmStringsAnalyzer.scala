@@ -4,14 +4,12 @@ import java.io.Reader
 import java.util
 
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents
-import org.apache.lucene.analysis.core._
 import org.apache.lucene.analysis.en.EnglishAnalyzer
 import org.apache.lucene.analysis.ru.RussianAnalyzer
 import org.apache.lucene.analysis.snowball.SnowballFilter
 import org.apache.lucene.analysis.standard._
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
-import org.apache.lucene.analysis.util.CharArraySet
-import org.apache.lucene.analysis.{Analyzer, TokenStream, Tokenizer}
+import org.apache.lucene.analysis._
 import org.tartarus.snowball.ext.{EnglishStemmer, RussianStemmer}
 
 import scala.collection.JavaConversions._

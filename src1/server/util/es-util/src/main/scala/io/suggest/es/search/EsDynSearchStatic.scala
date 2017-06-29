@@ -1,6 +1,5 @@
 package io.suggest.es.search
 
-import com.sksamuel.elastic4s.{IndexesAndTypes, SearchDefinition}
 import io.suggest.es.model.{EsModelStaticT, ISearchResp}
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.primo.id.OptId
@@ -95,7 +94,7 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
     override def prepareSearchRequest(args: A): SearchRequestBuilder = {
       super.prepareSearchRequest(args)
         .setFetchSource(false)
-        .setNoFields()
+        //.setNoFields()
     }
   }
 
@@ -200,22 +199,8 @@ trait EsDynSearchStatic[A <: DynSearchArgs] extends EsModelStaticT with IMacroLo
       * @param args Аргументы поиска dyn-search для текущей модели.
       * @return Инстанс SearchDefinition, пригодный для огуливания в elastic4s.
       */
-    implicit def dynSearchArgs2es4sDefinition(args: A): SearchDefinition = {
-      // TODO Говнокод из-за особенностей внутреннего устройства системы es4s, API-методы которого потребляют case class'ы на вход.
-      //      По-хорошему, надо pull-request организовать, который заменяет в elastic4s API всякие классы на их интерфейсы.
-      val iAndT = IndexesAndTypes(
-        indexes = Seq(ES_INDEX_NAME),
-        types   = Seq(ES_TYPE_NAME)
-      )
-
-      // Пред-инстанс для доступа к инстансу билдера, т.к. super._builder() недоступен из-за val.
-      val sd0 = SearchDefinition(iAndT)
-
-      // Компилим и собираем итоговое добро. Выносим компиляцию за пределы инстанса для улучшения сборки мусора.
-      val srb = prepareSearch(args, sd0._builder)
-      new SearchDefinition(iAndT) {
-        override val _builder = srb
-      }
+    implicit def dynSearchArgs2es4sDefinition(args: A): QueryBuilder = {
+      args.toEsQuery
     }
 
   }

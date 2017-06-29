@@ -1,13 +1,15 @@
 package io.suggest.geo
 
+import com.vividsolutions.jts.geom.Coordinate
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.primo.IApply1
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.{MultiPointBuilder, PointCollection, ShapeBuilder}
+import org.elasticsearch.common.geo.builders.ShapeBuilders
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{LngLat, MultiPoint}
+import java.{util => ju}
 
 /**
  * Suggest.io
@@ -25,13 +27,16 @@ object MultiPointGsJvm extends MultiPointShapeStatic {
     )
   }
 
-  override type ShapeBuilder_t = MultiPointBuilder
-
-  override protected def shapeBuilder: ShapeBuilder_t = {
-    ShapeBuilder.newMultiPoint()
-  }
+  override def toEsShapeBuilder(gs: MultiPointGs) = ShapeBuilders.newMultiPoint( gsCoords2esCoords(gs) )
 
   override protected[this] def applier = MultiPointGs
+
+  def geoPoints2esCoords(points: Seq[MGeoPoint]): ju.List[Coordinate] = {
+    import scala.collection.JavaConversions._
+    points
+      .map { GeoPoint.toJtsCoordinate }
+  }
+
 }
 
 
@@ -61,21 +66,8 @@ trait MultiPointShapeStatic extends GsStaticJvmQuerable {
     List(COORDS_ESFN -> coordsJson)
   }
 
-  def renderToShape[R <: PointCollection[R]](gs: Shape_t, shape: R) = {
-    gs.coords.foldLeft(shape) {
-      (acc, gp)  =>  acc.point(gp.lon, gp.lat)
-    }
-  }
-
-  type ShapeBuilder_t <: PointCollection[ShapeBuilder_t]
-
-  protected def shapeBuilder: ShapeBuilder_t
-
-  /** Отрендерить в изменяемый LineString ShapeBuilder для построения ES-запросов.
-    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]
-    */
-  override def toEsShapeBuilder(gs: Shape_t): ShapeBuilder_t = {
-    renderToShape(gs, shapeBuilder)
+  def gsCoords2esCoords(gs: Shape_t): ju.List[Coordinate] = {
+    MultiPointGsJvm.geoPoints2esCoords( gs.coords )
   }
 
 }

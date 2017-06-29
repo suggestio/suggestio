@@ -2,9 +2,7 @@ package io.suggest.es.model
 
 import akka.stream.Materializer
 import com.google.inject.{ImplementedBy, Inject, Singleton}
-import com.sksamuel.elastic4s.ElasticClient
-import io.suggest.di._
-import io.suggest.es.util.{IEs4sClient, IEsClient}
+import io.suggest.es.util.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.{ICommonDiValBase, IMCommonDiBase}
 import io.suggest.playx.CacheApiUtil
@@ -23,7 +21,9 @@ import scala.concurrent.ExecutionContext
 trait IEsModelDiVal
   extends ICommonDiValBase
   with IEsClient
-  with IEs4sClient
+{
+  def esScrollPublisherFactory: EsScrollPublisherFactory
+}
 
 
 /** Интерфейс для поля с DI-инстансом контейнера общего хлама в DI-моделях. */
@@ -37,7 +37,7 @@ trait IEsModelDi extends IMCommonDiBase {
 class MEsModelDiVal @Inject() (
   override val cacheApiUtil       : CacheApiUtil,
   override val current            : Application,
-  override val es4sClient         : ElasticClient,
+  override val esScrollPublisherFactory: EsScrollPublisherFactory,
   override implicit val ec        : ExecutionContext,
   override implicit val esClient  : Client,
   override implicit val sn        : SioNotifierStaticClientI,

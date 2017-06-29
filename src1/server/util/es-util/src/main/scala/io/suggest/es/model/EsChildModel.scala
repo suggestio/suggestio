@@ -1,6 +1,7 @@
 package io.suggest.es.model
 
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
+import org.elasticsearch.action.DocWriteResponse.Result
 import org.elasticsearch.action.index.IndexRequestBuilder
 
 import scala.concurrent.Future
@@ -30,7 +31,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
    */
   def isExist(id: String, parentId: String): Future[Boolean] = {
     prepareGet(id, parentId)
-      .setFields()
+      //.setFields()
       .setFetchSource(false)
       .execute()
       .map { _.isExists }
@@ -77,7 +78,7 @@ trait EsChildModelStaticT extends EsModelCommonStaticT {
   def delete(id: String, parentId: String): Future[Boolean] = {
     prepareDelete(id, parentId)
       .execute()
-      .map { _.isFound }
+      .map { EsModelStaticT.delResp2isDeleted }
   }
 
   def resave(id: String, parentId: String): Future[Option[String]] = {

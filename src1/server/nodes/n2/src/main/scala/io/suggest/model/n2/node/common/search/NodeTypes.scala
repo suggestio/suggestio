@@ -28,10 +28,9 @@ trait NodeTypes extends DynSearchArgs {
         val qb0 = qbOpt0 getOrElse {
           QueryBuilders.matchAllQuery()
         }
-        val mf = QueryBuilders.missingQuery( fn )
         val qb1 = QueryBuilders.boolQuery()
           .must(qb0)
-          .filter(mf)
+          .mustNot( QueryBuilders.existsQuery( fn ) )
         Some(qb1)
 
       } else {

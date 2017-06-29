@@ -4,8 +4,6 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import com.sksamuel.elastic4s.{RichSearchHit, SearchDefinition}
-import com.sksamuel.elastic4s.streams.ReactiveElastic._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.primo.TypeT
@@ -18,6 +16,7 @@ import org.elasticsearch.action.index.IndexRequestBuilder
 import org.elasticsearch.action.search.{SearchRequestBuilder, SearchResponse}
 import org.elasticsearch.client.Client
 import org.elasticsearch.common.unit.TimeValue
+import org.elasticsearch.common.xcontent.XContentType
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.sort.SortBuilders
@@ -223,7 +222,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
               .iterator()
               .map { deserializeSearchHit }
               .foldLeft(acc01)(f)
-            Future successful acc02
+            Future.successful( acc02 )
         }
       }
   }
@@ -360,7 +359,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       .setQuery( QueryBuilders.matchAllQuery() )
       .setSize(maxPerStep)
       .setFetchSource(false)
-      .setNoFields()
+      //.setNoFields()
       .execute()
       .flatMap { searchResp =>
         EsModelUtil.searchScrollResp2ids(
@@ -460,7 +459,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   def searchResp2fnList[T](searchResp: SearchResponse, fn: String): Seq[T] = {
     searchRespMap(searchResp) { hit =>
-      hit.field(fn).getValue[T]
+      hit.getField(fn).getValue[T]
     }
       .toSeq
   }
@@ -687,7 +686,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     //LOGGER.trace(s"prepareIndexNoVsn($indexName/$typeName/$idOrNull): $json")
     client
       .prepareIndex(indexName, typeName, idOrNull)
-      .setSource(json)
+      .setSource(json, XContentType.JSON)
   }
 
 
@@ -746,34 +745,37 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
   /** Поточно читаем выхлоп elasticsearch.
     *
-    * @param searchDef Одноразовый инстанс elastic4s.SearchDefinition.
-    *                  Метод будет модифицировать этот инстанс изнутри, поэтому не надо использовать его повторно.
-    *                  Можно передавать DynSearchArgs при наличии import Implicits.* в scope.
+    * @param searchQuery Поисковый запрос.
     * @tparam To тип одного элемента.
     * @return Source[T, NotUsed].
     */
-  def source[To](searchDef: SearchDefinition)(implicit helper: IEsSourcingHelper[To]): Source[To, NotUsed] = {
+  def source[To](searchQuery: QueryBuilder)(implicit helper: IEsSourcingHelper[To]): Source[To, NotUsed] = {
     // Нужно помнить, что SearchDefinition -- это mutable-инстанс и всегда возвращает this.
-    val searchDef2 = helper.prepareSearchDef(
-      searchDef.scroll( SCROLL_KEEPALIVE_DFLT.toString )
+    val scrollArgs = MScrollArgs(
+      query           = searchQuery,
+      model           = this,
+      sourcingHelper  = helper,
+      keepAlive       = SCROLL_KEEPALIVE_DFLT,
+      maxResults      = None,
+      resultsPerScroll = MAX_RESULTS_DFLT
     )
 
     // Собираем безлимитный publisher. Явно указываем maxElements для гарантированной защиты от ломания API es4s в будущем.
-    val pub = es4sClient.publisher(searchDef2, elements = Long.MaxValue)
+    val pub = esScrollPublisherFactory.publisher(scrollArgs)
 
     lazy val logPrefix = s"source()[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix Starting using $helper; searchDef = $searchDef")
+    LOGGER.trace(s"$logPrefix Starting using $helper; searchDef = $searchQuery")
 
     Source
       .fromPublisher( pub )
-      .mapConcat { rHit =>
+      .mapConcat { searchHit =>
         // Логгируем любые ошибки, т.к. есть основания подозревать akka-streams в молчаливости.
         // https://github.com/akka/akka/issues/19950
         try {
-          helper.as(rHit) :: Nil
+          helper.mapSearchHit(searchHit) :: Nil
         } catch {
           case ex: Throwable =>
-            LOGGER.error(s"$logPrefix Failed to helper.as() for hit#${rHit.getId} = $rHit", ex)
+            LOGGER.error(s"$logPrefix Failed to helper.as() for hit#${searchHit.getId} = $searchHit", ex)
             Nil
         }
       }
@@ -783,12 +785,14 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   /** typeclass для source() для простой десериализации ответов в обычные элементы модели. */
   class ElSourcingHelper extends IEsSourcingHelper[T] {
 
-    override def prepareSearchDef(searchDef: SearchDefinition): SearchDefinition = {
-      super.prepareSearchDef(searchDef)
-        .fetchSource(true)
+    override def mapSearchHit(from: SearchHit): T = {
+      deserializeSearchHit( from )
     }
-    override def as(hit: RichSearchHit): T = {
-      deserializeSearchHit( hit.java )
+
+    /** Подготовка search definition'а к будущему запросу. */
+    override def prepareSrb(srb: SearchRequestBuilder): SearchRequestBuilder = {
+      super.prepareSrb(srb)
+        .setFetchSource(true)
     }
 
     override def toString: String = {

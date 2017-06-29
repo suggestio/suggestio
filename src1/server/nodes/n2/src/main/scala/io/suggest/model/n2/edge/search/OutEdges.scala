@@ -6,7 +6,8 @@ import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.util.logs.IMacroLogs
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
-import org.elasticsearch.index.query.{MatchQueryBuilder, QueryBuilder, QueryBuilders}
+import org.apache.lucene.search.join.ScoreMode
+import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
  * Suggest.io
@@ -38,14 +39,11 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
           else
             E_OUT_INFO_TAGS_FN
           // Узнать желаемый тип запроса
-          val qmType = if (tcr.isPrefix)
-            MatchQueryBuilder.Type.PHRASE_PREFIX
+          val tq = if (tcr.isPrefix)
+            QueryBuilders.matchPhrasePrefixQuery(fn, tcr.face)
           else
-            MatchQueryBuilder.Type.PHRASE
+            QueryBuilders.matchPhraseQuery(fn, tcr.face)
           // Собрать match query
-          val tq = QueryBuilders.matchQuery(fn, tcr.face)
-            .`type`(qmType)
-            .zeroTermsQuery( MatchQueryBuilder.ZeroTermsQuery.ALL )
           MWrapClause(tcr.must, tq)
         }
 
@@ -93,7 +91,7 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
             for (q <- queries) {
               bq.should(q)
             }
-            bq.minimumNumberShouldMatch(1)
+            bq.minimumShouldMatch( 1 )
             bq
           }
 
@@ -111,7 +109,7 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
 
         // Завернуть собранную инфу в nested-запрос и накатить на исходную query.
         val fn = MNodeFields.Edges.E_OUT_INFO_GS_FN
-        val gqNf = QueryBuilders.nestedQuery(fn, nq)
+        val gqNf = QueryBuilders.nestedQuery(fn, nq, ScoreMode.Max)
         _qOpt = _qOpt.map { qb0 =>
           QueryBuilders.boolQuery()
             .must(qb0)
@@ -170,7 +168,8 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
         LOGGER.warn("edge.NestedSearch: suppressed empty bool query for " + oe)
 
       for (_q <- _qOpt) yield {
-        val _qn = QueryBuilders.nestedQuery(nestPath, _q)
+        // TODO ScoreMode.Avg -- с потолка взято, надо разобраться на тему оптимального варианта.
+        val _qn = QueryBuilders.nestedQuery(nestPath, _q, ScoreMode.Avg)
         MWrapClause(oe.must, _qn)
       }
     }

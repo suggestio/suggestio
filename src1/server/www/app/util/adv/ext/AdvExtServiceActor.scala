@@ -93,7 +93,7 @@ class AdvExtServiceActor @Inject()(
                                     aeTgJsAdpActorFactory       : AdvExtTargetActorFactory,
                                     override val ctxUtil        : ContextUtil,
                                     override val extServicesUtil: ExtServicesUtil,
-                                    override val advExtFormUtil     : AdvExtFormUtil
+                                    override val advExtFormUtil : AdvExtFormUtil
 )
   extends AdvExtServiceActorLogic
   with ExtServiceActorEnv

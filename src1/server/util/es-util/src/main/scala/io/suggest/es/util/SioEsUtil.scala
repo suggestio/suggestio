@@ -10,8 +10,10 @@ import org.elasticsearch.client.transport.TransportClient
 import org.elasticsearch.common.bytes.BytesArray
 import org.elasticsearch.common.settings.Settings
 import org.elasticsearch.common.transport.TransportAddress
-import org.elasticsearch.common.xcontent.XContentBuilder
+import org.elasticsearch.common.xcontent.{XContentBuilder, XContentType}
 import org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder
+import org.elasticsearch.index.mapper._
+import org.elasticsearch.transport.client.PreBuiltTransportClient
 
 import scala.concurrent.{ExecutionContext, Future, Promise}
 
@@ -53,7 +55,6 @@ object SioEsUtil extends MacroLogsImpl {
 
   /** Стандартные имена полей ES. */
   object StdFns {
-    import org.elasticsearch.index.mapper.internal._
     def FIELD_ALL           = AllFieldMapper.NAME
     def FIELD_SOURCE        = SourceFieldMapper.NAME
     def FIELD_ROUTING       = RoutingFieldMapper.NAME
@@ -201,16 +202,13 @@ object SioEsUtil extends MacroLogsImpl {
   def newTransportClient(addrs: Seq[TransportAddress], clusterName: Option[String]): TransportClient = {
     val settingsBuilder = Settings.builder()
       //.classLoader(classOf[Settings].getClassLoader)
-    clusterName match {
-      case Some(_clusterName) =>
-        settingsBuilder.put("cluster.name", _clusterName)
-      case None =>
-        settingsBuilder.put("client.transport.ignore_cluster_name", true)
+    clusterName.fold {
+      settingsBuilder.put("client.transport.ignore_cluster_name", true)
+    } { _clusterName =>
+      settingsBuilder.put("cluster.name", _clusterName)
     }
     val settings = settingsBuilder.build()
-    TransportClient.builder()
-      .settings(settings)
-      .build()
+    new PreBuiltTransportClient(settings)
       .addTransportAddresses(addrs : _*)
   }
 
@@ -449,7 +447,7 @@ object SioEsUtil extends MacroLogsImpl {
       client.admin()
         .indices()
         .prepareUpdateSettings(indexName)
-        .setSettings( settings )
+        .setSettings( settings, XContentType.JSON )
         .execute()
     }
     // Переоткрыть индекс, когда всё будет сделано.
@@ -1269,7 +1267,7 @@ extends JsonObject {
     super.fieldsBuilder
     b.field("match", nameMatch)
      .field("match_mapping_type", matchMappingType)
-     .rawField("mapping", new BytesArray(mapping1.getBytes))
+     .rawField("mapping", new BytesArray(mapping1.getBytes), XContentType.JSON)
   }
 }
 
@@ -1508,8 +1506,9 @@ class EsAction2Promise[T](promise: Promise[T]) extends ActionListener[T] {
     promise.success(response)
   }
 
-  override def onFailure(ex: Throwable) {
+  override def onFailure(ex: Exception): Unit = {
     promise.failure(ex)
   }
+
 }
 

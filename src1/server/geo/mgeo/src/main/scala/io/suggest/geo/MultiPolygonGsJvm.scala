@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilder}
+import org.elasticsearch.common.geo.builders.{MultiPolygonBuilder, ShapeBuilders}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{LngLat, MultiPolygon}
@@ -59,11 +59,10 @@ object MultiPolygonGsJvm extends GsStaticJvmQuerable {
     *
     * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/query-dsl-geo-shape-query.html]]*/
   override def toEsShapeBuilder(gs: Shape_t): MultiPolygonBuilder = {
-    gs.polygons.foldLeft(ShapeBuilder.newMultiPolygon) {
+    gs.polygons.foldLeft(ShapeBuilders.newMultiPolygon()) {
       (mpb, poly) =>
-        val polyBuilder = mpb.polygon()
-        PolygonGsJvm._renderToEsPolyBuilder(poly, polyBuilder)
-        polyBuilder.close()
+        val polyBuilder = PolygonGsJvm.toEsShapeBuilder( poly )
+        mpb.polygon( polyBuilder )
     }
   }
 

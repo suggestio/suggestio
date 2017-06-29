@@ -25,7 +25,7 @@ trait GeoDstSort extends DynSearchArgs {
       val fn = MNodeFields.Geo.POINT_FN
       val func = ScoreFunctionBuilders
         .gaussDecayFunction(fn, GeoPoint.toEsStr(geoPoint), "1km")
-        .setOffset("0km")
+        //.setOffset("0km") // TODO es-5.x А что надо тут выставить?
       QueryBuilders.functionScoreQuery(qb0, func)
         .boostMode(CombineFunction.REPLACE)
     }

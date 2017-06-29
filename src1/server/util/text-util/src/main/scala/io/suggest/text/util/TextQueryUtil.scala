@@ -31,7 +31,7 @@ object TextQueryUtil {
         }
         Some(result)
 
-      case Array(fts, ngram:String) =>
+      case Array(fts, ngram: String) =>
         // Бывает, что fts-часть состоит из одного предлога или слова, которое кажется сейчас предлогом.
         // Если отправить в ES в качестве запроса предлог, то, очевидно, будет ноль результатов на выходе.
         val fts1 = if (StopWords.ALL_STOPS contains fts) {
@@ -80,11 +80,12 @@ object TextQueryV2Util {
           queries1 = ftsQuery :: queries1
         }
         // Если получилось несколько запросов, то обернуть их в bool-query
-        val finalEngramQuery = if (queries1.tail == Nil) {
+        val finalEngramQuery: QueryBuilder = if (queries1.tail == Nil) {
           queries1.head
         } else {
           val minShouldMatch = 1
-          val boolQB = QueryBuilders.boolQuery().minimumNumberShouldMatch(minShouldMatch)
+          val boolQB = QueryBuilders.boolQuery()
+            .minimumShouldMatch(minShouldMatch)
           queries1.foreach { boolQB.should }
           boolQB
         }

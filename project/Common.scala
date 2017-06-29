@@ -34,10 +34,7 @@ object Common {
     //val YA_MONEY_SDK = "6.1.+"
 
     /** Версия elasticsearch. */
-    val ELASTIC_SEARCH = "2.4.1"
-
-    /** Версия elastic4s. */
-    val ELASTIC4S = "2.4.0"
+    val ELASTIC_SEARCH = "5.4.2"
 
     /** Бывает, что используется slf4j. Тут его версия.
       * По-хорошему, у нас на сервере logback, на клиенте -- самописный логгинг.
@@ -47,6 +44,9 @@ object Common {
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.0"
+
+    val JTS = "1.14.0"
+    val SPATIAL4J = "0.6"
 
     object Sio {
 

@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import org.elasticsearch.common.geo.builders.{BasePolygonBuilder, ShapeBuilder}
+import org.elasticsearch.common.geo.builders._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.extras.geojson.{LngLat, Polygon}
@@ -59,23 +59,16 @@ object PolygonGsJvm extends GsStaticJvmQuerable {
     JsArray(playJson)
   }
 
-  protected[geo] def _renderToEsPolyBuilder[T <: BasePolygonBuilder[T]](gs: Shape_t, poly: BasePolygonBuilder[T]): BasePolygonBuilder[T] = {
-    for (outerGp <- gs.outer.coords) {
-      poly.point(outerGp.lon, outerGp.lat)
-    }
-    poly.close()
-    // Рисуем дырки
-    for (hole <- gs.holes) {
-      val holeRing = poly.hole()
-      LineStringGsJvm.renderToShape(hole, holeRing)
-    }
-    poly
-  }
 
-  override def toEsShapeBuilder(gs: Shape_t) = {
-    val poly = ShapeBuilder.newPolygon()
-    // Рисуем оболочку
-    PolygonGsJvm._renderToEsPolyBuilder(gs, poly)
+  override def toEsShapeBuilder(gs: Shape_t): PolygonBuilder = {
+    val inner = new CoordinatesBuilder()
+      .coordinates( MultiPointGsJvm.geoPoints2esCoords(gs.outer.coords) )
+      .close()
+
+    gs.holes.foldLeft( ShapeBuilders.newPolygon( inner ) ) { (pb, lsGs) =>
+      val lsb = LineStringGsJvm.toEsShapeBuilder( lsGs )
+      pb.hole( lsb, true )
+    }
   }
 
 }

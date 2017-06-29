@@ -11,9 +11,8 @@ import play.api.Application
 import play.api.cache.CacheApi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
-import com.sksamuel.elastic4s.ElasticClient
 import io.suggest.di.ICacheApi
-import io.suggest.es.model.IEsModelDiVal
+import io.suggest.es.model.{EsScrollPublisherFactory, IEsModelDiVal}
 import io.suggest.model.n2.node.{INodeCache, MNodesCache}
 import io.suggest.sec.util.Csrf
 import io.suggest.www.util.di.ISlickDbConfig
@@ -68,7 +67,7 @@ final class MCommonDi @Inject() (
                                   override val cache              : CacheApi,
                                   override val cacheApiUtil       : CacheApiUtil,
                                   override val mNodesCache        : MNodesCache,
-                                  override val es4sClient         : ElasticClient,
+                                  override val esScrollPublisherFactory: EsScrollPublisherFactory,
                                   override val _slickConfigProvider   : DatabaseConfigProvider,
                                   override implicit val current   : Application,
                                   override implicit val mat       : Materializer,

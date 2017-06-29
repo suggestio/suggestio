@@ -3,6 +3,7 @@ package io.suggest.model.n2.extra.domain
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
+import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
@@ -28,7 +29,7 @@ trait DomainsSearch extends DynSearchArgs {
     } else {
       // Собрать nested query, которая найдёт узлы, подходящие под указанные домены.
       val inNestedQ = QueryBuilders.boolQuery()
-        .minimumNumberShouldMatch(1)
+        .minimumShouldMatch(1)
 
       // Пробежаться по заданным критериям...
       for (cr <- _domainsIter) {
@@ -50,7 +51,7 @@ trait DomainsSearch extends DynSearchArgs {
       }
 
       // У нас ведь nested object. Поэтому, надо аккамулятор завернуть в nested query перед объединением с qOpt0.
-      val nestedQ = QueryBuilders.nestedQuery( MNodeFields.Extras.DOMAIN_FN, inNestedQ )
+      val nestedQ = QueryBuilders.nestedQuery( MNodeFields.Extras.DOMAIN_FN, inNestedQ, ScoreMode.Max )
 
       qOpt0.map { q0 =>
         QueryBuilders.boolQuery()

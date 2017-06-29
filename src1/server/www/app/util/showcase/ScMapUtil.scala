@@ -132,7 +132,7 @@ class ScMapUtil @Inject() (
     val fn = MNodeFields.Geo.POINT_FN
     val nodesPointsFut = mNodes.prepareSearch(msearch)
       .setFetchSource(false)
-      .addFields(fn)
+      .addDocValueField(fn) // TODO Правильно ли оно тут выставлено?
       .execute()
 
     for (resp <- nodesPointsFut) yield {
@@ -146,7 +146,7 @@ class ScMapUtil @Inject() (
         .flatMap { hit =>
           lazy val hitInfo = s"${hit.getIndex}/${hit.getType}/${hit.getId}"
           // формат данных здесь примерно такой: { "g.p": [30.23424234, -5.56756756] }
-          val fieldValue = hit.field(fn)
+          val fieldValue = hit.getField(fn)
           val rOpt = GeoPoint.fromArraySeq( fieldValue.getValues.iterator() )
           if (rOpt.isEmpty)
             LOGGER.error(s"$logPrefix Agg.values parsing failed for hit $hitInfo")
@@ -186,11 +186,11 @@ class ScMapUtil @Inject() (
     // Запустить аггрегацию точек через GeoHashGrid.
     val aggEdgesName = "edges"
     val subAggGeo = "geo"
+
     val aggFut = mNodes.prepareSearch(msearch)
       .setSize(0)
       .addAggregation {
-        AggregationBuilders.nested( aggEdgesName )
-          .path( MNodeFields.Edges.E_OUT_FN )
+        AggregationBuilders.nested( aggEdgesName, MNodeFields.Edges.E_OUT_FN )
           .subAggregation {
             AggregationBuilders.geohashGrid( subAggGeo )
               .field( MNodeFields.Edges.E_OUT_INFO_GEO_POINTS_FN )

@@ -22,7 +22,7 @@ trait WithIds extends DynSearchArgs with IEsTypes {
 
     } else {
       val idf = QueryBuilders.idsQuery(esTypes: _*)
-        .ids( _withIds: _* )
+        .addIds( _withIds: _* )
       qbOpt0.map { qb =>
         QueryBuilders.boolQuery()
           .must( qb )
