@@ -2,7 +2,7 @@ package util.adn
 
 import java.time.OffsetDateTime
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
@@ -45,20 +45,20 @@ class NodesUtil @Inject() (
   import mCommonDi._
 
   /** Дефолтовый лимит на размещение у самого себя на главной. */
-  private val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getInt("user.node.adn.sl.out.statpage.limit.dflt")
+  private val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getOptional[Int]("user.node.adn.sl.out.statpage.limit.dflt")
     .getOrElse(50)
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
-  private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getInt("user.node.created.success.redirect.after.sec")
+  private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getOptional[Int]("user.node.created.success.redirect.after.sec")
     .getOrElse(5)
 
   // Для новосозданного узла надо создавать новые карточки, испортируя их из указанного узла в указанном кол-ве.
   /** id узла, который содержит дефолтовые карточки. Задается явно в конфиге. */
-  val ADN_IDS_INIT_ADS_SOURCE = configuration.getStringSeq("user.node.created.mads.import.from.adn_ids")
+  val ADN_IDS_INIT_ADS_SOURCE = configuration.getOptional[Seq[String]]("user.node.created.mads.import.from.adn_ids")
     .getOrElse(Nil)
 
   /** Кол-во карточек для импорта из дефолтового узла. */
-  val INIT_ADS_COUNT = configuration.getInt("user.node.created.mads.import.count")
+  val INIT_ADS_COUNT = configuration.getOptional[Int]("user.node.created.mads.import.count")
     .getOrElse(1)
 
 
@@ -269,7 +269,7 @@ class NodesUtil @Inject() (
       }
 
       // Если не было adnId узлов-источников, то
-      .recover { case ex: NoSuchElementException =>
+      .recover { case _: NoSuchElementException =>
         LOGGER.warn(logPrefix + " Node default ads installer is disabled!")
         Nil
       }

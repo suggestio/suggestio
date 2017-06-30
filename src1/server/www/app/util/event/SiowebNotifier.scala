@@ -4,7 +4,7 @@ import io.suggest.event._
 import util._
 import akka.actor.{ActorRef, ActorRefFactory, ActorSystem, Props}
 import akka.util.Timeout
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.node.MNodesCache
 
 import scala.concurrent.duration._
@@ -32,7 +32,7 @@ class SiowebNotifier @Inject() (
 {
 
   implicit val SN_ASK_TIMEOUT: Timeout = {
-    val ms = configuration.getInt("sn.ask.timeout_ms").getOrElse(5000)
+    val ms = configuration.getOptional[Int]("sn.ask.timeout_ms").getOrElse(5000)
     Timeout( ms.milliseconds )
   }
 

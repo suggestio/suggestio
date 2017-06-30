@@ -1,6 +1,6 @@
 package models.usr
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
@@ -41,16 +41,15 @@ class MPerson @Inject() (
   private def personCacheKey(personId: String) = personId + ".pu"
 
   /** Сколько секунд кешировать найденный юзернейм в кеше play? */
-  val USERNAME_CACHE_EXPIRATION_SEC: Int = configuration.getInt("mperson.username.cache.seconds").getOrElse(100)
+  val USERNAME_CACHE_EXPIRATION_SEC: Int = configuration.getOptional[Int]("mperson.username.cache.seconds").getOrElse(100)
 
   /** Асинхронно найти подходящее имя для юзера используя кеш. */
   def findUsernameCached(personId: String): Future[Option[String]] = {
     val cacheKey = personCacheKey(personId)
-    cache.get[String](cacheKey) match {
-      case res @ Some(result) =>
+    cache.get[String](cacheKey).flatMap { res =>
+      if (res.nonEmpty) {
         Future.successful(res)
-
-      case None =>
+      } else {
         val resultFut = findUsername(personId)
         resultFut onSuccess {
           case Some(result) =>
@@ -59,6 +58,7 @@ class MPerson @Inject() (
             LOGGER.warn(s"findUsernameCached($personId): Username not found for user. Invalid session?")
         }
         resultFut
+      }
     }
   }
 

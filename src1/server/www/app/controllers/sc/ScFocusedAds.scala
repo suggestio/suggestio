@@ -562,7 +562,7 @@ trait ScFocusedAds
 
   /** Перезаписываемый сборкщик логик для версий. */
   def getLogicFor(qs: MScAdsFocQs)(implicit request: IReq[_]): FocusedAdsLogicHttp = {
-    throw new IllegalArgumentException(s"Unsupported API version: ${qs.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteAddress}")
+    throw new IllegalArgumentException(s"Unsupported API version: ${qs.apiVsn} :: ${request.method} ${request.uri} FROM ${request.remoteClientAddress}")
   }
 
 

@@ -2,7 +2,7 @@ package util.data
 
 import java.time.LocalDate
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import com.wix.accord.dsl._
 import com.wix.accord._
 import io.suggest.adv.geo.MMapProps

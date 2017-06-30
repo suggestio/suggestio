@@ -7,7 +7,7 @@ import org.elasticsearch.index.query.QueryBuilders
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.id.OptStrId

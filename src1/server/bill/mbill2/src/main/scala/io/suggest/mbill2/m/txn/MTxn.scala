@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.txn
 
 import java.time.OffsetDateTime
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.Amount_t
 import io.suggest.mbill2.m.balance.{BalanceIdFkSlick, BalanceIdInxSlick, FindByBalanceId, MBalances}
 import io.suggest.mbill2.m.common.InsertOneReturning
@@ -27,7 +27,7 @@ class MTxns @Inject() (
                         override val mBalances            : MBalances,
                         override val mOrders              : MOrders,
                         override val mItems               : MItems
-)
+                      )
   extends GidSlick
   with AmountSlick
   with BalanceIdFkSlick with BalanceIdInxSlick

@@ -1,13 +1,13 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 import play.api.mvc._
@@ -25,10 +25,10 @@ import play.api.mvc.Result
 class IsNodeAdmin @Inject()(
                              aclUtil          : AclUtil,
                              isAuth           : IsAuth,
+                             reqUtil          : ReqUtil,
                              mCommonDi        : ICommonDi
                            )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -181,8 +181,8 @@ class IsNodeAdmin @Inject()(
     * Собрать ACL ActionBuilder, проверяющий права admin-доступа к узлу.
     * @param nodeId id запрашиваемого узла.
     */
-  def apply(nodeId: String, userInits: MUserInit*): ActionBuilder[MNodeReq] = {
-    new SioActionBuilderImpl[MNodeReq] {
+  def apply(nodeId: String, userInits: MUserInit*): ActionBuilder[MNodeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
         _applyId(nodeId, userInits, request)(block)
@@ -202,8 +202,8 @@ class IsNodeAdmin @Inject()(
     * Собрать ACL ActionBuilder, проверяющий права admin-доступа к узлу.
     * @param nodeKey Цепочка id'шников запрашиваемого узла.
     */
-  def apply(nodeKey: RcvrKey, userInits1: MUserInit*): ActionBuilder[MNodesChainReq] = {
-    new SioActionBuilderImpl[MNodesChainReq] with InitUserCmds {
+  def apply(nodeKey: RcvrKey, userInits1: MUserInit*): ActionBuilder[MNodesChainReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodesChainReq] with InitUserCmds {
 
       override def userInits = userInits1
 

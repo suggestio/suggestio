@@ -4,7 +4,7 @@ import java.io.FileInputStream
 
 import _root_.util.acl._
 import _root_.util.geo.umap._
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.geo.{GsTypes, PointGs}
 import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
@@ -47,8 +47,8 @@ class Umap @Inject() (
   /** Разрешено ли редактирование глобальной карты всех узлов? */
   val GLOBAL_MAP_EDIT_ALLOWED: Boolean = {
     configuration
-      .getBoolean("umap.global.map.edit.allowed")
-      .getOrElse(false)
+      .getOptional[Boolean]("umap.global.map.edit.allowed")
+      .contains(true)
   }
 
 
@@ -240,7 +240,7 @@ class Umap @Inject() (
 
     } { tempFile =>
       // Парсим json в потоке с помощью play.json:
-      val is = new FileInputStream( tempFile.ref.file )
+      val is = new FileInputStream( tempFile.ref.path.toFile )
       val playJson = try {
         Json.parse(is)
       } finally {

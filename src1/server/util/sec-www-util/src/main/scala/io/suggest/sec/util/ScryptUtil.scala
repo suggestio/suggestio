@@ -1,6 +1,6 @@
 package io.suggest.sec.util
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.util.JMXBase
 

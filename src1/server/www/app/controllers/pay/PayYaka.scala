@@ -2,7 +2,7 @@ package controllers.pay
 
 import javax.inject.Singleton
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import controllers.SioControllerImpl
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.coll.Lists
@@ -219,7 +219,7 @@ class PayYaka @Inject() (
     */
   private def _logIfHasCookies(implicit request: IReqHdr): Option[MAction] = {
     OptionUtil.maybe( mCommonDi.isProd && request.cookies.nonEmpty ) {
-      LOGGER.error(s"_logIfHasCookies[${System.currentTimeMillis()}]: Unexpected cookies ${request.cookies} from client ${request.remoteAddress}, personId = ${request.user.personIdOpt}")
+      LOGGER.error(s"_logIfHasCookies[${System.currentTimeMillis()}]: Unexpected cookies ${request.cookies} from client ${request.remoteClientAddress}, personId = ${request.user.personIdOpt}")
       MAction(
         actions = MActionTypes.UnexpectedCookies :: Nil,
         textNi  = {
@@ -273,7 +273,7 @@ class PayYaka @Inject() (
     */
   private def _check(profile: IYakaProfile) = maybeAuth().async(YREQ_BP) { implicit request =>
     lazy val logPrefix = s"check[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix ${request.remoteAddress} body: ${formatReqBody(request.body)}")
+    LOGGER.trace(s"$logPrefix ${request.remoteClientAddress} body: ${formatReqBody(request.body)}")
 
     val yakaAction = MYakaActions.Check
 
@@ -416,7 +416,7 @@ class PayYaka @Inject() (
     */
   private def _payment(profile: IYakaProfile) = maybeAuth().async(YREQ_BP) { implicit request =>
     lazy val logPrefix = s"payment[${System.currentTimeMillis()}]:"
-    LOGGER.trace(s"$logPrefix ${request.remoteAddress} body:\n ${formatReqBody(request.body)}")
+    LOGGER.trace(s"$logPrefix ${request.remoteClientAddress} body:\n ${formatReqBody(request.body)}")
 
     val yakaAction = MYakaActions.Payment
 
@@ -726,7 +726,7 @@ class PayYaka @Inject() (
     * @return Редирект куда-нибудь.
     */
   def failUnknown = maybeAuth().async { implicit request =>
-    LOGGER.warn(s"failUnknown(): Unknown error, user[${request.user.personIdOpt}] ip=${request.remoteAddress} qs: ${request.rawQueryString}")
+    LOGGER.warn(s"failUnknown(): Unknown error, user[${request.user.personIdOpt}] ip=${request.remoteClientAddress} qs: ${request.rawQueryString}")
     val callFut = request.user.personIdOpt.fold [Future[Call]] {
       Future.successful( controllers.routes.Ident.emailPwLoginForm() )
     } { personId =>

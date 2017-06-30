@@ -1,6 +1,6 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
@@ -9,9 +9,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.req.{IReqHdr, ISioUser, MNodeReq}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 
 import scala.concurrent.Future
 
@@ -30,10 +30,10 @@ class CanChangeNodeAvailability @Inject() (
                                             aclUtil           : AclUtil,
                                             isNodeAdmin       : IsNodeAdmin,
                                             advDirectBilling  : AdvDirectBilling,
+                                            reqUtil           : ReqUtil,
                                             mCommonDi         : ICommonDi
                                           )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -95,8 +95,8 @@ class CanChangeNodeAvailability @Inject() (
   }
 
 
-  def apply(nodeId: String): ActionBuilder[MNodeReq] = {
-    new SioActionBuilderImpl[MNodeReq] {
+  def apply(nodeId: String): ActionBuilder[MNodeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeReq] {
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]) = {
         val user = aclUtil.userFromRequest(request)
         val mnodeOptFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)

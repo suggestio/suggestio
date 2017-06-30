@@ -2,7 +2,7 @@ package util.ext.vk
 
 import java.net.URL
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.{OutImgFmt, OutImgFmts}
@@ -36,7 +36,7 @@ class VkontakteHelper @Inject() (
         .getHost
         .contains(".vk")
     } catch {
-      case ex: Throwable =>
+      case _: Throwable =>
         LOGGER.debug("checkImgUploadUrl(): Invalid URL: " + url)
         false
     }

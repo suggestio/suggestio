@@ -1,8 +1,8 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models._
 import models.mproj.ICommonDi
 import models.req._
@@ -24,10 +24,10 @@ class CanAdvAd @Inject()(
                           aclUtil                 : AclUtil,
                           isNodeAdmin             : IsNodeAdmin,
                           n2NodeUtil              : N2NodesUtil,
+                          reqUtil                 : ReqUtil,
                           mCommonDi               : ICommonDi
                         )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -98,8 +98,8 @@ class CanAdvAd @Inject()(
     *
     * @param adId id размещаемой рекламной карточки.
     */
-  def apply(adId: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq] = {
-    new SioActionBuilderImpl[MAdProdReq] with InitUserCmds {
+  def apply(adId: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAdProdReq] with InitUserCmds {
 
       override def userInits = userInits1
 

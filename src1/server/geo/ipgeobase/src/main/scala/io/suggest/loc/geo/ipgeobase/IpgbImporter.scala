@@ -4,7 +4,7 @@ import java.io._
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
@@ -39,33 +39,33 @@ class IpgbImporter @Inject() (
   import LOGGER._
 
   /** Ссылка для скачивания текущей базы. */
-  def ARCHIVE_DOWNLOAD_URL = configuration.getString("ipgeobase.archive.url")
+  def ARCHIVE_DOWNLOAD_URL = configuration.getOptional[String]("ipgeobase.archive.url")
     .getOrElse("http://ipgeobase.ru/files/db/Main/geo_files.zip")
 
   /** Поверхностная проверка скачанного архива на профпригодность. */
-  def ARCHIVE_MAGIC_NUMBER = configuration.getInt("ipgeobase.archive.magic")
+  def ARCHIVE_MAGIC_NUMBER = configuration.getOptional[Int]("ipgeobase.archive.magic")
     .getOrElse(0x504b0304)
 
   /** Минимально допустимая длина архива с данными. */
-  def ARCHIVE_MIN_LENGTH = configuration.getInt("ipgeobase.archive.size.min")
+  def ARCHIVE_MIN_LENGTH = configuration.getOptional[Int]("ipgeobase.archive.size.min")
     .getOrElse(1900000)
 
   /** Имя файл, содержащего диапазоны.*/
-  def IP_RANGES_FILENAME = configuration.getString("ipgeobase.cidr_optim.filename")
+  def IP_RANGES_FILENAME = configuration.getOptional[String]("ipgeobase.cidr_optim.filename")
     .getOrElse("cidr_optim.txt")
 
   /** Кодировка файла с дампами диапазонов. Исторически там win-1251.
     * Корректное значение названия кодировки надо брать из колонки java.nio нижеуказанной ссылки.
     * @see [[http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html]]. */
-  def IP_RANGES_FILE_ENCODING = configuration.getString("ipgeobase.cidr_optim.encoding")
+  def IP_RANGES_FILE_ENCODING = configuration.getOptional[String]("ipgeobase.cidr_optim.encoding")
     .getOrElse("windows-1251")
 
   /** Название файла, в котором лежит карта городов. */
-  def CITIES_FILENAME = configuration.getString("ipgeobase.cities.filename")
+  def CITIES_FILENAME = configuration.getOptional[String]("ipgeobase.cities.filename")
     .getOrElse("cities.txt")
 
   /** Кодировка содержимого файла городов. */
-  def CITIES_FILE_ENCODING = configuration.getString("ipgeobase.cities.encoding")
+  def CITIES_FILE_ENCODING = configuration.getOptional[String]("ipgeobase.cities.encoding")
     .getOrElse(IP_RANGES_FILE_ENCODING)
 
   /** Кол-во item'ов в очереди на удаление. */

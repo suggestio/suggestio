@@ -1,6 +1,6 @@
 package util.mdr
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.item.MItems
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.util.logs.MacroLogsImpl

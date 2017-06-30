@@ -1,7 +1,7 @@
 package util.event
 
 import akka.actor.ActorContext
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.{Classifier, Event, Subscriber}
 import io.suggest.event.subscriber.SnClassSubscriber
@@ -33,11 +33,11 @@ class AdnNodeEvents @Inject() (
   import mCommonDi._
 
   /** Автодобавление уведомления о создании нового магазина можно отключить через конфиг. */
-  private val EVT_YOU_CAN_ADD_NEW_SHOPS = configuration.getBoolean("node.evn.created.youCanAddNewShopsEvent")
+  private val EVT_YOU_CAN_ADD_NEW_SHOPS = configuration.getOptional[Boolean]("node.evn.created.youCanAddNewShopsEvent")
     .getOrElse(true)
 
   /** Автодобавление уведомления о возможности использования менеджера рекламных карточек. */
-  private val EVT_START_YOUR_WORK_USING_CARD_MGR = configuration.getBoolean("node.evt.created.startYourWorkUsingCardMgr")
+  private val EVT_START_YOUR_WORK_USING_CARD_MGR = configuration.getOptional[Boolean]("node.evt.created.startYourWorkUsingCardMgr")
     .getOrElse(true)
 
 

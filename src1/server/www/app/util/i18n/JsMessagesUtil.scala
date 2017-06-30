@@ -1,6 +1,6 @@
 package util.i18n
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.MCurrencies
 import io.suggest.bill.price.dsl.MReasonTypes
 import io.suggest.cal.m.MCalTypes

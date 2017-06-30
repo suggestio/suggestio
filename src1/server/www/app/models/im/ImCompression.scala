@@ -1,6 +1,6 @@
 package models.im
 
-import play.api.Play.{current, configuration}
+import play.api.Play.current
 
 /**
  * Suggest.io
@@ -24,12 +24,13 @@ object ImCompression {
   def apply(name: String, mode: String, qDflt: Int, chromaSsDflt: ImSamplingFactor = ImSamplingFactors.SF_2x2,
             imBlurDflt: Option[Float] = None): ImCompression = {
     // Пытаемся получить параметры сжатия из конфига
+    val configuration = current.configuration
     ImCompression(
-      imQualityInt = configuration.getInt(s"dpr.$name.$mode.quality")
+      imQualityInt = configuration.getOptional[Int](s"dpr.$name.$mode.quality")
         .getOrElse(qDflt),
-      chromaSubSampling = configuration.getString(s"dpr.$name.$mode.chroma.ss")
+      chromaSubSampling = configuration.getOptional[String](s"dpr.$name.$mode.chroma.ss")
         .fold(chromaSsDflt)(ImSamplingFactors.withName),
-      imBlur = configuration.getDouble(s"dpr.$name.$mode.blur.gauss")
+      imBlur = configuration.getOptional[Double](s"dpr.$name.$mode.blur.gauss")
         .map(_.toFloat)
         .orElse(imBlurDflt)
     )

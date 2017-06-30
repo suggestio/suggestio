@@ -1,9 +1,9 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser, MReq}
-import play.api.mvc.{ActionBuilder, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Result}
 
 import scala.concurrent.Future
 
@@ -21,7 +21,7 @@ class IsSuOr404Ctl @Inject() (
 
   import mCommonDi._
 
-  sealed class Base
+  sealed protected[acl] class Base
     extends isSu.Base {
 
     override protected def _onUnauth(req: IReqHdr): Future[Result] = {
@@ -40,13 +40,15 @@ class IsSuOr404 @Inject() (
                           ) {
 
 
-  class ImplC
+  private class ImplC
     extends isSuOr404Ctl.Base
 
-  val Impl = new ImplC
+  private val Impl: ActionBuilder[MReq, AnyContent] = {
+    new ImplC
+  }
 
   @inline
-  def apply(): ActionBuilder[MReq] = {
+  def apply(): ActionBuilder[MReq, AnyContent] = {
     Impl
   }
 
@@ -61,13 +63,13 @@ class IsSuOrDevelOr404 @Inject() (
   import mCommonDi._
 
   /** Разрешить не-админам и анонимам доступ в devel-режиме. */
-  class ImplC extends isSuOr404Ctl.Base {
+  private class ImplC extends isSuOr404Ctl.Base {
     override protected def isAllowed(user: ISioUser): Boolean = {
       super.isAllowed(user) || isDev
     }
   }
 
-  val Impl = new ImplC
+  private val Impl: ActionBuilder[MReq, AnyContent] = new ImplC
 
   @inline
   def apply() = Impl

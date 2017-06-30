@@ -1,7 +1,6 @@
 package io.suggest.enum
 
 import enumeratum._
-import play.api.data.validation.ValidationError
 import play.api.libs.json.Writes
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -26,7 +25,7 @@ object EnumeratumJvmUtil {
   def enumEntryReads[T <: EnumEntry](model: Enum[T]): Reads[T] = {
     __.read[String]
       .map( model.withNameOption )
-      .filter( ValidationError("error.unknown.name") )(_.nonEmpty)
+      .filter( JsonValidationError("error.unknown.name") )(_.nonEmpty)
       .map(_.get)
   }
 

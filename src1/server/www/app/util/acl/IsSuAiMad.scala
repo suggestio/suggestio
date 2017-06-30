@@ -1,14 +1,14 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import models.ai.MAiMads
 import models.mproj.ICommonDi
 import models.req.{MAiMadReq, MReq}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 
 /**
  * Suggest.io
@@ -20,10 +20,9 @@ class IsSuAiMad @Inject() (
                             aclUtil                 : AclUtil,
                             mAiMads                 : MAiMads,
                             isSu                    : IsSu,
+                            reqUtil                 : ReqUtil,
                             mCommonDi               : ICommonDi
-                          )
-  extends SioActionBuilderOuter
-{
+                          ) {
 
   import mCommonDi._
 
@@ -31,8 +30,8 @@ class IsSuAiMad @Inject() (
     *
     * @param aiMadId id описания карточки.
     */
-  def apply(aiMadId: String): ActionBuilder[MAiMadReq] = {
-    new SioActionBuilderImpl[MAiMadReq] {
+  def apply(aiMadId: String): ActionBuilder[MAiMadReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAiMadReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAiMadReq[A]) => Future[Result]): Future[Result] = {
         val madAiFut = mAiMads.getById(aiMadId)

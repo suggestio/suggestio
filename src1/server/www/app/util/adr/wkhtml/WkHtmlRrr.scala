@@ -3,7 +3,7 @@ package util.adr.wkhtml
 import java.io.File
 
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs.MacroLogsDyn
 import models.MImgSizeT
@@ -28,11 +28,11 @@ class WkHtmlRrrUtil @Inject() (
 {
 
   /** Название/путь к утили, вызываемой из командной строки. */
-  val WKHTML2IMG = configuration.getString("wkhtml.toimg.prog.name").getOrElse("wkhtmltoimage")
+  val WKHTML2IMG = configuration.getOptional[String]("wkhtml.toimg.prog.name").getOrElse("wkhtmltoimage")
 
   /** path для директории кеширования. */
   val CACHE_DIR: Option[String] = {
-    val dirPath = configuration.getString("wkhtml.cache.dir")
+    val dirPath = configuration.getOptional[String]("wkhtml.cache.dir")
       .getOrElse("/tmp/sio2/wkhtml/cache")
     val dirFile = new File(dirPath)
     val logger = LOGGER

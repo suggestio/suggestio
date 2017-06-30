@@ -1,15 +1,16 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
+
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.adv._
 import models.mproj.ICommonDi
-import models.req.{ISioUser, MNodeExtTgSubmitReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import models.req.{IReq, ISioUser, MNodeExtTgSubmitReq, MReq}
+import play.api.mvc._
 import util.adv.ext.AdvExtFormUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 
@@ -29,10 +30,10 @@ class CanSubmitExtTargetForNode @Inject() (
                                             advExtFormUtil          : AdvExtFormUtil,
                                             mExtTargets             : MExtTargets,
                                             isNodeAdmin             : IsNodeAdmin,
+                                            reqUtil                 : ReqUtil,
                                             mCommonDi               : ICommonDi
                                           )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -43,10 +44,11 @@ class CanSubmitExtTargetForNode @Inject() (
     *
     * @param nodeId id узла, заявленного клиентом.
     */
-  def apply(nodeId: String): ActionBuilder[MNodeExtTgSubmitReq] = {
-    new SioActionBuilderImpl[MNodeExtTgSubmitReq] {
+  def apply(nodeId: String): ActionBuilder[MNodeExtTgSubmitReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeExtTgSubmitReq] {
 
-      override def invokeBlock[A](request: Request[A], block: (MNodeExtTgSubmitReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request0: Request[A], block: (MNodeExtTgSubmitReq[A]) => Future[Result]): Future[Result] = {
+        val request = aclUtil.reqFromRequest( request0 )
         val user = aclUtil.userFromRequest(request)
 
         val isAdnNodeAdmFut = isNodeAdmin.isAdnNodeAdmin(nodeId, user)
@@ -93,8 +95,8 @@ class CanSubmitExtTargetForNode @Inject() (
         }
       }
 
-      def breakInAttempted(user: ISioUser, request: Request[_], tg: MExtTarget): Future[Result] = {
-        LOGGER.warn(s"FORBIDDEN: User[${user.personIdOpt}] @${request.remoteAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
+      def breakInAttempted(user: ISioUser, request: IReq[_], tg: MExtTarget): Future[Result] = {
+        LOGGER.warn(s"FORBIDDEN: User[${user.personIdOpt}] @${request.remoteClientAddress} tried to rewrite foreign target[${tg.id.get}] via node[$nodeId]. AdnNode expected = ${tg.adnId}.")
         Results.Forbidden(s"Target ${tg.id.get} doesn't belongs to node[$nodeId].")
       }
 

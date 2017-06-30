@@ -6,7 +6,7 @@ import java.util.UUID
 
 import _root_.models.im.{DevScreen, MImgT}
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
@@ -43,7 +43,7 @@ import scala.util.matching.Regex
 final class ContextUtil @Inject() (
                                     env           : Environment,
                                     configuration : Configuration
-)
+                                  )
   extends IsAppModes
 {
 
@@ -61,7 +61,7 @@ final class ContextUtil @Inject() (
   private def MAIN_DOMAIN_DFLT = "suggest.io"
 
   /** На dev-системах удобно глобально выключить https в конфиге. */
-  val HTTPS_DISABLED = configuration.getBoolean("sio.https.disabled").contains(true)
+  val HTTPS_DISABLED = configuration.getOptional[Boolean]("sio.https.disabled").contains(true)
 
   def HTTPS_ENABLED = !HTTPS_DISABLED
 
@@ -71,7 +71,7 @@ final class ContextUtil @Inject() (
   }
 
   /** Хост:порт сайта suggest.io. */
-  val HOST_PORT = configuration.getString("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
+  val HOST_PORT = configuration.getOptional[String]("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
 
   /** Префикс абсолютных ссылок на сайт. */
   val URL_PREFIX = PROTO + "://" + HOST_PORT
@@ -244,7 +244,7 @@ trait Context {
   /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
   lazy val wsUrlPrefix: String = {
     val sb = new StringBuilder(32, "ws")
-    if (request.secure)
+    if (request.isTransferSecure)
       sb.append('s')
     sb.append("://")
       .append( request.host )

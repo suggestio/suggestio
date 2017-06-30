@@ -1,6 +1,6 @@
 package util.blocks
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import models.blk.{SzMult_t, szMulted}
 import models.im._
 

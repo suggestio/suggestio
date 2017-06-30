@@ -19,15 +19,16 @@ package securesocial.core
 import _root_.java.net.URLEncoder
 import _root_.java.util.UUID
 
+import com.typesafe.config.ConfigObject
 import play.api.Play
-import play.api.libs.json.{ JsError, JsSuccess, JsValue, Json }
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.libs.ws.WSResponse
 import play.api.mvc._
-import securesocial.core.services.{ CacheService, HttpService, RoutesService }
+import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import securesocial.util.LoggerImpl
 
 import scala.collection.JavaConversions._
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 trait OAuth2Client {
   val settings: OAuth2Settings
@@ -189,8 +190,7 @@ trait OAuth2Provider extends IdentityProvider with ApiSupport with LoggerImpl {
         case ok: JsSuccess[LoginJson] =>
           Some(ok.get)
         case error: JsError =>
-          val e = JsError.toFlatJson(error).toString()
-          logger.error(s"[securesocial] error parsing json: $e")
+          logger.error(s"[securesocial] error parsing json: $error\n ${request.body}")
           None
       }
     }
@@ -248,16 +248,16 @@ object OAuth2Settings {
       val config = Play.current.configuration
       val scope = loadProperty(id, OAuth2Settings.Scope, optional = true)
       val authorizationUrlParams: Map[String, String] =
-        config.getObject(propertyKey + OAuth2Settings.AuthorizationUrlParams).map { o =>
+        config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AuthorizationUrlParams).map { o =>
           o.unwrapped.toMap.mapValues(_.toString)
         }.getOrElse(Map())
 
-      val accessTokenUrlParams: Map[String, String] = config.getObject(propertyKey + OAuth2Settings.AccessTokenUrlParams).map { o =>
+      val accessTokenUrlParams: Map[String, String] = config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AccessTokenUrlParams).map { o =>
         o.unwrapped.toMap.mapValues(_.toString)
       }.getOrElse(Map())
       OAuth2Settings(authorizationUrl, accessToken, clientId, clientSecret, scope, authorizationUrlParams, accessTokenUrlParams)
     }
-    if (!result.isDefined) {
+    if (result.isEmpty) {
       IdentityProvider.throwMissingPropertiesException(id)
     }
     result.get

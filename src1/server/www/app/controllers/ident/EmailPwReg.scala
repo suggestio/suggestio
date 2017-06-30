@@ -245,7 +245,7 @@ trait EmailPwReg
             val args = nodesUtil.nodeRegSuccessArgs(mnode)
             Ok( regSuccessTpl(args) )
               .addingToSession(Keys.PersonId.name -> personId)
-              .withLang(lang)
+              .withLang(lang)( mCommonDi.messagesApi )
           }
         } // Form.fold right
       )   // Form.fold

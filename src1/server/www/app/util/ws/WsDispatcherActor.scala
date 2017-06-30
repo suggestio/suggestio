@@ -3,7 +3,7 @@ package util.ws
 import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import util.SiowebSup

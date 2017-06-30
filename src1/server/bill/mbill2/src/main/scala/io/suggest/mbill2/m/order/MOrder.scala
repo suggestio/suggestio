@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.order
 
 import java.time.OffsetDateTime
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.contract.{ContractIdSlickFk, ContractIdSlickIdx, FindByContractId, MContracts}
@@ -23,7 +23,7 @@ import slick.lifted.ProvenShape
 class MOrders @Inject() (
                           override protected val profile      : SioPgSlickProfileT,
                           override protected val mContracts   : MContracts
-)
+                        )
   extends GidSlick
   with DateCreatedSlick
   with ContractIdSlickFk with ContractIdSlickIdx

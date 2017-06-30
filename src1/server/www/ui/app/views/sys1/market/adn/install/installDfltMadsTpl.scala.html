@@ -1,4 +1,5 @@
-@(langs: Seq[Lang], mnode: MNode, ff: Form[_], srcNodes: Seq[MNode])(implicit ctx: Context)
+@(langs: Seq[Lang], langCode2msgs: Map[String, Messages], mnode: MNode, ff: Form[_],
+  srcNodes: Seq[MNode])(implicit ctx: Context)
 
 @* Страница с формой установки дефолтовых карточек на текущий узел. *@
 
@@ -14,6 +15,6 @@
     </a>,
   }
 
-  @_instDfltMadsFormTpl(mnode.id.get, langs, ff)
+  @_instDfltMadsFormTpl(mnode.id.get, langs, langCode2msgs, ff)
 
 }

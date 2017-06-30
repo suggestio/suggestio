@@ -1,6 +1,6 @@
 package io.suggest.model.n2.media.storage.swfs
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.fio.IWriteRequest
 import io.suggest.model.n2.media.storage.MStorages.STYPE_FN_FORMAT
 import io.suggest.model.n2.media.storage._
@@ -41,13 +41,13 @@ class SwfsStorages @Inject() (
 
   /** Инстанс с дефолтовыми настройками репликации. */
   val REPLICATION_DFLT: Option[Replication] = {
-    configuration.getString("swfs.assign.replication")
+    configuration.getOptional[String]("swfs.assign.replication")
       .map { Replication.apply }
   }
 
   /** Дефолтовые настройки дата-центра в assign-request. */
   val DATA_CENTER_DFLT: Option[String] = {
-    configuration.getString("swfs.assign.dc")
+    configuration.getOptional[String]("swfs.assign.dc")
   }
 
   LOGGER.info(s"Assign settings: dc = $DATA_CENTER_DFLT, replication = $REPLICATION_DFLT")

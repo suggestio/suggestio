@@ -1,7 +1,7 @@
 package models.usr
 
 import io.suggest.es.model.EsModelUtil._
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl

@@ -1,6 +1,6 @@
 package util.img
 
-import com.google.inject.{Singleton, Inject}
+import javax.inject.{Singleton, Inject}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
@@ -33,7 +33,7 @@ class GalleryUtil @Inject() (
   def LK_NODE_GALLERY_SHOW_HEIGHT_PX = 200  //: Int = configuration.getInt("lk.node.gallery.show.height.px") getOrElse 200
 
   /** Максимально кол-во картинок в галереи. */
-  val GALLERY_LEN_MAX = configuration.getInt("adn.gallery.len.max") getOrElse 7
+  val GALLERY_LEN_MAX = configuration.getOptional[Int]("adn.gallery.len.max") getOrElse 7
 
   def galleryM: Mapping[List[MImgT]] = {
     list(imgFormUtil.img3IdM)

@@ -1,13 +1,13 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import models.mproj.ICommonDi
 import models.msys.MNodeEdgeIdQs
 import models.req._
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 
@@ -20,10 +20,10 @@ import scala.concurrent.Future
 class IsSuNodeEdge @Inject() (
                                aclUtil    : AclUtil,
                                isSu       : IsSu,
+                               reqUtil    : ReqUtil,
                                mCommonDi  : ICommonDi
                              )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -33,8 +33,8 @@ class IsSuNodeEdge @Inject() (
     *
     * @param qs query string.
     */
-  def apply(qs: MNodeEdgeIdQs): ActionBuilder[MNodeEdgeReq] = {
-    new SioActionBuilderImpl[MNodeEdgeReq] {
+  def apply(qs: MNodeEdgeIdQs): ActionBuilder[MNodeEdgeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeEdgeReq] {
 
       protected[this] def logPrefix = s"${getClass.getSimpleName}(${qs.nodeId}/v=${qs.nodeVsn}/e=${qs.edgeId}):"
 

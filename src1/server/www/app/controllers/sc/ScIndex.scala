@@ -14,7 +14,6 @@ import models.im.MImgT
 import models.mgeo.MGeoLoc
 import models.msc._
 import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespIndex}
-import org.elasticsearch.common.unit.DistanceUnit
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html

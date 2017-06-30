@@ -38,6 +38,7 @@ class Static @Inject() (
                          bruteForceProtect               : BruteForceProtect,
                          advGeoRcvrsUtil                 : AdvGeoRcvrsUtil,
                          statUtil                        : StatUtil,
+                         aclUtil                         : AclUtil,
                          secHeadersFilterUtil            : SecHeadersFilterUtil,
                          cspUtil                         : CspUtil,
                          isSuOrDevelOr404                : IsSuOrDevelOr404,
@@ -122,8 +123,9 @@ class Static @Inject() (
     },
     // тестовый реальный отчёт из firefox весил 631 байт.
     parser = parse.tolerantJson( 2048 ),
-    badResult = { req =>
-      LOGGER.debug(s"_cspBp: Dropped request from ${req.remoteAddress} with unknown content type ${req.contentType}")
+    badResult = { req0 =>
+      val req = aclUtil.reqHdrFromRequestHdr(req0)
+      LOGGER.debug(s"_cspBp: Dropped request from ${req.remoteClientAddress} with unknown content type ${req.contentType}")
       // Нет никакой надобности отвечать html-страницами, т.к. на CSP-экшены никто кроме браузеров не обращается.
       UnsupportedMediaType( "CSP-report expected" )
     }
@@ -169,7 +171,7 @@ class Static @Inject() (
       // Залить ошибку в MStat.
       lazy val logPrefix = s"cspReportHandler[${System.currentTimeMillis()}]:"
       val requestBodyStr = request.body.toString()
-      LOGGER.info(s"$logPrefix From ip#${request.remoteAddress} Body:\n $requestBodyStr")
+      LOGGER.info(s"$logPrefix From ip#${request.remoteClientAddress} Body:\n $requestBodyStr")
 
       request.body.validate[CspViolationReport].fold(
         // Ошибка парсинга JSON-тела. Вообще, это обычно неправильно.
@@ -227,7 +229,7 @@ class Static @Inject() (
   def advRcvrsMap = {
     ignoreAuth().async { implicit request =>
       // Собрать данные по узлам.
-      val nodesRespFut = cache.getOrElse("advGeoNodesSrc", expiration = 10.seconds) {
+      val nodesRespFut = cache.getOrElseUpdate("advGeoNodesSrc", expiration = 10.seconds) {
         val msearch = advGeoRcvrsUtil.onMapRcvrsSearch(30)
         advGeoRcvrsUtil.rcvrNodesMap( msearch )
       }

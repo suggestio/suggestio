@@ -1,6 +1,6 @@
 package util
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import akka.actor._
 import play.api.Application
 import util.ws.WsDispatcherActors

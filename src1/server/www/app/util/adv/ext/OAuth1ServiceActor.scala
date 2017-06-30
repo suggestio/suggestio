@@ -6,7 +6,8 @@ import java.util.concurrent.TimeoutException
 
 import akka.actor.Props
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
+
 import controllers.routes
 import io.suggest.async.AsyncUtil
 import io.suggest.fsm.FsmActor
@@ -23,11 +24,11 @@ import models.jsm.DomWindowSpecs
 import models.ls.LsOAuth1Info
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import oauth.signpost.exception.OAuthException
 import org.apache.commons.io.IOUtils
 import play.api.libs.json.Json
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSClient
+import play.shaded.oauth.oauth.signpost.exception.OAuthException
 import util.adv.ext.ut._
 import util.ext.ExtServicesUtil
 import util.jsa.JsWindowOpen
@@ -67,9 +68,9 @@ class OAuth1ServiceActor @Inject() (
                                      asyncUtil                   : AsyncUtil,
                                      override val extServicesUtil: ExtServicesUtil,
                                      override val ctxUtil        : ContextUtil,
-                                     override val advExtFormUtil     : AdvExtFormUtil,
+                                     override val advExtFormUtil : AdvExtFormUtil,
                                      implicit val wsClient       : WSClient
-)
+                                   )
   extends FsmActor
   with ReplyTo
   with ExtServiceActorEnv
@@ -125,8 +126,8 @@ class OAuth1ServiceActor @Inject() (
     Future(f)(asyncUtil.singleThreadIoContext)
       // Завернуть результат в правильный Future.
       .flatMap {
-        case Right(reqTok)  => Future successful reqTok
-        case Left(ex)       => Future failed ex
+        case Right(reqTok)  => Future.successful( reqTok )
+        case Left(ex)       => Future.failed( ex )
       }
       // Сообщить текущему актору о результатах.
       .onComplete {

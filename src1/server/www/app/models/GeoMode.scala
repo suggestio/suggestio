@@ -9,7 +9,7 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.http.HeaderNames
 import play.api.mvc.QueryStringBindable
-import play.api.Play.{configuration, current}
+import play.api.Play.current
 import util.geo.GeoIpUtil
 
 import scala.concurrent.Future
@@ -166,9 +166,9 @@ case object GeoIp extends GeoMode with MacroLogsImpl {
 
   import LOGGER._
 
-  val CACHE_TTL_SECONDS = configuration.getInt("geo.ip.cache.ttl.seconds").getOrElse( 240 )
+  val CACHE_TTL_SECONDS = current.configuration.getInt("geo.ip.cache.ttl.seconds").getOrElse( 240 )
 
-  val DISTANCE_KM_DFLT: Double = configuration.getDouble("geo.ip.distance.km.dflt").getOrElse( 50.0 )
+  val DISTANCE_KM_DFLT: Double = current.configuration.getDouble("geo.ip.distance.km.dflt").getOrElse( 50.0 )
 
   def DISTANCE_DFLT = Distance(DISTANCE_KM_DFLT, DistanceUnit.KILOMETERS)
 
@@ -210,7 +210,7 @@ case object GeoIp extends GeoMode with MacroLogsImpl {
   override def isExact: Boolean = false
 
   def getRemoteAddr(implicit request: ExtReqHdr): String = {
-    geoIpUtil.fixRemoteAddr(request.remoteAddress).remoteAddr
+    geoIpUtil.fixRemoteAddr(request.remoteClientAddress).remoteAddr
   }
 
   /** Асинхронный поиск какого-то ip в базе ip-адресов.
@@ -230,7 +230,7 @@ object GeoLocation {
 
   /** Дефолтовый радиус обнаружения пользователя, для которого известны координаты. */
   val ES_DISTANCE_DFLT = {
-    val raw = configuration.getString("geo.location.distance.dflt") getOrElse "15m"
+    val raw = current.configuration.getString("geo.location.distance.dflt").getOrElse( "15m" )
     DistanceUnit.Distance.parseDistance(raw)
   }
 

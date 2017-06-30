@@ -1,9 +1,9 @@
 package util.acl
 
-import com.google.inject.Inject
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import javax.inject.Inject
+import io.suggest.www.util.req.ReqUtil
 import models.req.{MReq, MSioUsers}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -15,9 +15,12 @@ import scala.concurrent.Future
  * Полезно, когда нужен нормальный реквест, но абсолютно не важно, какой именно.
  */
 
-final class IgnoreAuth @Inject() (mSioUsers: MSioUsers) extends SioActionBuilderOuter {
+final class IgnoreAuth @Inject() (
+                                   reqUtil    : ReqUtil,
+                                   mSioUsers  : MSioUsers
+                                 ) {
 
-  class ImplC extends SioActionBuilderImpl[MReq] {
+  private class ImplC extends reqUtil.SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val user = mSioUsers.empty
@@ -27,12 +30,10 @@ final class IgnoreAuth @Inject() (mSioUsers: MSioUsers) extends SioActionBuilder
 
   }
 
-  val Impl = new ImplC
+  private val Impl: ActionBuilder[MReq, AnyContent] = new ImplC
 
   @inline
-  def apply(): ActionBuilder[MReq] = {
-    Impl
-  }
+  def apply() = Impl
 
 }
 

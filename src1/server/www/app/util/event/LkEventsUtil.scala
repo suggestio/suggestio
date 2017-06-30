@@ -1,6 +1,6 @@
 package util.event
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.es.model.{EsModelStaticT, EsModelT}
 import models.event._
 import models.event.search.MEventsSearchArgs

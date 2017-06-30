@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.mproj.ICommonDi
 import models.req.{IAdProdReq, MNodeMaybeAdminReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 
@@ -22,10 +22,11 @@ class CanViewNodeAdvInfo @Inject() (
                                      canAdvAd               : CanAdvAd,
                                      isAuth                 : IsAuth,
                                      isNodeAdmin            : IsNodeAdmin,
+                                     dab                    : DefaultActionBuilder,
+                                     reqUtil                : ReqUtil,
                                      mCommonDi              : ICommonDi
                                    )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 { outer =>
 
   import mCommonDi.{ec, mNodesCache}
@@ -35,19 +36,19 @@ class CanViewNodeAdvInfo @Inject() (
     *
     * @param nodeId id узла.
     * @param forAdIdOpt Опциональный id рекламной карточки, если экшен в контексте какой-то карточки.
-    * @param request реквест.
+    * @param request0 Исходный реквест.
     * @param f Тело экшена.
     * @return Фьючерс с HTTP-ответом.
     */
-  private def _apply[A](nodeId: String, forAdIdOpt: Option[String], request: Request[A])
+  private def _apply[A](nodeId: String, forAdIdOpt: Option[String], request0: Request[A])
                        (f: MNodeMaybeAdminReq[A] => Future[Result]): Future[Result] = {
 
-    val mreq0 = aclUtil.reqFromRequest( request )
-    val user = aclUtil.userFromRequest( mreq0 )
+    val request = aclUtil.reqFromRequest( request0 )
+    val user = aclUtil.userFromRequest( request )
     lazy val logPrefix = s"${outer.getClass.getSimpleName}($nodeId${forAdIdOpt.fold("")("," + _)}):"
 
     user.personIdOpt.fold {
-      LOGGER.debug(s"$logPrefix Refused anonymous user from ${request.remoteAddress}")
+      LOGGER.debug(s"$logPrefix Refused anonymous user from ${request.remoteClientAddress}")
       isAuth.onUnauth(request)
 
     } { personId =>
@@ -65,7 +66,7 @@ class CanViewNodeAdvInfo @Inject() (
         Right(None)
       } { forAdId =>
         for {
-          madReqOpt <- canAdvAd.maybeAllowed( forAdId, mreq0 )
+          madReqOpt <- canAdvAd.maybeAllowed( forAdId, request )
         } yield {
           madReqOpt.fold [Either[Result, Option[IAdProdReq[A]]]] {
             LOGGER.warn(s"$logPrefix User#$personId has NO access to ad#$forAdId")
@@ -123,8 +124,8 @@ class CanViewNodeAdvInfo @Inject() (
     * @param nodeId id интересующего узла.
     * @return ActionBuilder.
     */
-  def apply(nodeId: String, forAdIdOpt: Option[String] = None): ActionBuilder[MNodeMaybeAdminReq] = {
-    new SioActionBuilderImpl[MNodeMaybeAdminReq] {
+  def apply(nodeId: String, forAdIdOpt: Option[String] = None): ActionBuilder[MNodeMaybeAdminReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeMaybeAdminReq] {
       override def invokeBlock[A](request: Request[A], block: (MNodeMaybeAdminReq[A]) => Future[Result]): Future[Result] = {
         _apply(nodeId, forAdIdOpt, request)(block)
       }
@@ -139,7 +140,7 @@ class CanViewNodeAdvInfo @Inject() (
     * @return Обновлённый экшен.
     */
   def A[A](nodeId: String, forAdIdOpt: Option[String] = None)(action: Action[A]): Action[A] = {
-    Action.async(action.parser) { request =>
+    dab.async(action.parser) { request =>
       _apply(nodeId, forAdIdOpt, request)(action.apply)
     }
   }

@@ -29,10 +29,10 @@ libraryDependencies ++= {
 
     // JSON
     "com.fasterxml.jackson.module" %% "jackson-module-scala" % "2.8.+",
-    PlayImport.json,
+    "com.typesafe.play"            %% "play-json"            % Common.Vsn.PLAY_JSON_VSN,
     PlayImport.ws,
-    PlayImport.cache,
-
+    PlayImport.cacheApi,
+   
     // CompressUtil использует это. И [www] тоже.
     "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
 

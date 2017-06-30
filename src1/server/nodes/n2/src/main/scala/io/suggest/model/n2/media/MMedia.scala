@@ -1,6 +1,6 @@
 package io.suggest.model.n2.media
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.model.n2.media.storage.{IMediaStorage, IMediaStorages}
 import io.suggest.util.logs.MacroLogsImpl

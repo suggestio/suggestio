@@ -1,6 +1,6 @@
 package util.img
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta

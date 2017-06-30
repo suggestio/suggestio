@@ -1,7 +1,7 @@
 package util.cron
 
 import akka.actor.{Cancellable, Scheduler}
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mcron.ICronTask
 import models.mproj.ICommonDi

@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.Files
 import java.text.ParseException
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
@@ -32,7 +32,7 @@ class MainColorDetector @Inject() (
   import mCommonDi.{configuration, ec}
 
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
-  val PALETTE_MAX_COLORS_DFLT = configuration.getInt("mcd.palette.colors.max.dflt").getOrElse(8)
+  val PALETTE_MAX_COLORS_DFLT = configuration.getOptional[Int]("mcd.palette.colors.max.dflt").getOrElse(8)
 
 
   /**

@@ -17,18 +17,20 @@
 package securesocial.core
 
 import _root_.java.util.UUID
+
 import play.api.libs.oauth._
-import play.api.mvc.{ AnyContent, Request }
+import play.api.mvc.{AnyContent, Request}
 import play.api.mvc.Results.Redirect
-import oauth.signpost.exception.OAuthException
 import securesocial.util.LoggerImpl
-import scala.concurrent.{ ExecutionContext, Future }
-import securesocial.core.services.{ HttpService, RoutesService, CacheService }
+
+import scala.concurrent.{ExecutionContext, Future}
+import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import play.api.libs.oauth.OAuth
 import play.api.libs.oauth.ServiceInfo
 import play.api.libs.oauth.RequestToken
 import play.api.libs.oauth.ConsumerKey
 import play.api.libs.json.JsValue
+import play.shaded.oauth.oauth.signpost.exception.OAuthException
 
 /**
  * A trait that allows mocking the OAuth 1 client

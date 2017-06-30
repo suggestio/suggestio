@@ -388,7 +388,8 @@ object Sio2Build extends Build {
     )
     .settings(
       scalaJSProjects := Seq(lkSjs, scSjs),
-      pipelineStages in Assets += scalaJSPipeline,
+      // TODO sbt-0.13.14 и выше сбоит тут капительно: found: sbt.Task[]   required: sbt.TaskKey[]
+      //pipelineStages in Assets += scalaJSPipeline,
       npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
         (nodeModules / "react-datepicker" / "dist") * "*.min.css"
       }.value,

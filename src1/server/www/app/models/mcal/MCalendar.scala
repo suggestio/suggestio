@@ -1,6 +1,6 @@
 package models.mcal
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.es.model._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc

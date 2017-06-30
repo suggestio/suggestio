@@ -28,9 +28,7 @@ object AdCssArgs {
   /** Ключ для подписи ссылок. */
   private val SIGN_SECRET: String = {
     val sg = new SecretGetter with MacroLogsDyn {
-      import play.api.Play.{current, isProd}
       override val confKey = "ads.css.url.sign.key"
-      override def useRandomIfMissing = isProd
     }
     sg()
   }

@@ -7,7 +7,6 @@ import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.IGeoShape
 import io.suggest.geo.GeoShapeJvm.GEO_SHAPE_FORMAT
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
-import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -83,7 +82,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
         }
 
       case other =>
-        JsError( ValidationError("expected.jsobject", other) )
+        JsError( JsonValidationError("expected.jsobject", other) )
     }
 
     // Сериализация

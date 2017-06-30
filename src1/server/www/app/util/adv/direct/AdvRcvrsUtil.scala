@@ -2,7 +2,7 @@ package util.adv.direct
 
 import java.time.OffsetDateTime
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -47,7 +47,8 @@ class AdvRcvrsUtil @Inject()(
 
   /** Причина hard-отказа в размещении со стороны suggest.io, а не узла.
     * Потом надо это заменить на нечто иное: чтобы суперюзер s.io вводил причину. */
-  private def SIOM_REFUSE_REASON = configuration.getString("sys.m.ad.hard.refuse.reason") getOrElse "Refused by suggest.io."
+  private def SIOM_REFUSE_REASON = configuration.getOptional[String]("sys.m.ad.hard.refuse.reason")
+    .getOrElse("Refused by Suggest.io.")
 
   /**
     * Пересчет текущих размещений рекламной карточки на основе данных других моделей.

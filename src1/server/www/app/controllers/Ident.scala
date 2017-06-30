@@ -52,7 +52,7 @@ class Ident @Inject() (
                         override val isAnon               : IsAnon,
                         override val isAuth               : IsAuth,
                         override val mCommonDi            : ICommonDi
-)
+                      )
   extends SioController
   with MacroLogsImpl
   with EmailPwLogin

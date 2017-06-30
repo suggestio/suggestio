@@ -3,7 +3,7 @@ package util.adv.ext
 import _root_.util.jsa.JsAppendById
 import _root_.util.ws.{SubscribeToWsDispatcher, WsDispatcherActors}
 import akka.actor.{Actor, ActorRef, Props, SupervisorStrategy}
-import com.google.inject.Inject
+import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.fsm.FsmActor
 import io.suggest.util.logs.MacroLogsImpl
@@ -200,7 +200,7 @@ case class AdvExtWsActor @Inject()(
     override def afterBecome(): Unit = {
       super.afterBecome()
       // Повесить callback'и на фьючерс с таргетами.
-      eactx.targetsFut onComplete {
+      eactx.targetsFut.onComplete {
         case Success(targets) => self ! TargetsReady(targets)
         case Failure(ex)      => self ! TargetsFailed(ex)
       }

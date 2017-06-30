@@ -2,7 +2,7 @@ package controllers
 
 import java.time.OffsetDateTime
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl

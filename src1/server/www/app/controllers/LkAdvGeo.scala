@@ -2,7 +2,7 @@ package controllers
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import com.google.inject.Inject
+import javax.inject.Inject
 import controllers.ctag.NodeTagsEdit
 import io.suggest.adv.geo._
 import io.suggest.adv.rcvr._

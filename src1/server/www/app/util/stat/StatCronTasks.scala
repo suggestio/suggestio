@@ -1,6 +1,6 @@
 package util.stat
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.stat.inx.StatIndexUtil
 import io.suggest.util.logs.MacroLogsDyn
 import models.mcron.{ICronTask, MCronTask}
@@ -16,8 +16,8 @@ import scala.concurrent.duration._
   * Description: Поддержка cron-задач для нужд статистики.
   */
 class StatCronTasks @Inject()(
-  mCommonDi : ICommonDi
-)
+                               mCommonDi : ICommonDi
+                             )
   extends ICronTasksProvider
   with MacroLogsDyn
 {
@@ -32,7 +32,7 @@ class StatCronTasks @Inject()(
     * Флаг активности этих cron-задач.
     * По умолчанию - выключено, т.е. надо вручную активировать в конфиге.
     */
-  def IS_ENABLED = configuration.getBoolean(_CONF_KEY).contains(true)
+  def IS_ENABLED = configuration.getOptional[Boolean](_CONF_KEY).contains(true)
 
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(): TraversableOnce[ICronTask] = {

@@ -15,22 +15,12 @@
  *
  */
 package securesocial.core.services
-import play.api.Play.current
-import play.api.libs.ws.{WSRequest, WS}
+
+import play.api.libs.ws.WSRequest
 
 /**
  * A mockable interface for the http client
  */
 trait HttpService {
   def url(url: String): WSRequest
-}
-
-object HttpService {
-
-  /**
-   * A default implementation for HttpService based on the Play WS client.
-   */
-  class Default extends HttpService {
-    def url(url: String): WSRequest = WS.url(url)
-  }
 }

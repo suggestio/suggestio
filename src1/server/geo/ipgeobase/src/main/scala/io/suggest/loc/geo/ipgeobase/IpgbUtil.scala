@@ -1,6 +1,6 @@
 package io.suggest.loc.geo.ipgeobase
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoPoint}
 import io.suggest.util.logs.MacroLogsImpl

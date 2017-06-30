@@ -6,7 +6,7 @@ import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.IMacroLogs
 import org.reactivestreams.Publisher
 import play.api.libs.json.{JsNull, JsValue, Json}
@@ -142,5 +142,12 @@ class StreamsUtil @Inject() (
 
     doneFut
   }
+
+
+
+  def mergeByteStrings(src: Source[ByteString, _]): Future[ByteString] = {
+    src.runReduce { (a,b) => a ++ b }
+  }
+
 
 }

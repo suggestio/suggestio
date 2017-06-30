@@ -2,7 +2,7 @@ package util.adv
 
 import java.time.{DayOfWeek, LocalDate}
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
@@ -45,7 +45,7 @@ class AdvUtil @Inject() (
   private val WEEKEND_DAYS: Set[Int] = {
     import scala.collection.JavaConversions._
 
-    configuration.getIntList("weekend.days")
+    configuration.getOptional[Seq[Int]]("weekend.days")
       .fold[TraversableOnce[Int]] {
         Iterator(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
           .map(_.getValue)

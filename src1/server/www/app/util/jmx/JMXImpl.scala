@@ -1,6 +1,6 @@
 package util.jmx
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.media.MMediasJmx
 import io.suggest.model.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx

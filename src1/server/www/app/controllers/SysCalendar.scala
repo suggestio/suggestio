@@ -2,7 +2,7 @@ package controllers
 
 import java.io.{ByteArrayInputStream, StringWriter}
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import de.jollyday.util.XMLUtil
 import de.jollyday.{HolidayCalendar, HolidayManager}
 import io.suggest.cal.m.MCalTypes
@@ -36,7 +36,7 @@ class SysCalendar @Inject() (
                               mCalTypesJvm                : MCalTypesJvm,
                               calendarAccessAny           : CalendarAccessAny,
                               override val mCommonDi      : ICommonDi
-)
+                            )
   extends SioControllerImpl
   with MacroLogsImpl
 {

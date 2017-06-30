@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.req.{IReqHdr, ISioUser, MReq}
 
 import scala.concurrent.Future
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 /**
  * Suggest.io
@@ -17,16 +17,16 @@ import play.api.mvc.{ActionBuilder, Request, Result}
 
 @Singleton
 final class IsSu @Inject() (
-                             aclUtil            : AclUtil,
-                             isAuth             : IsAuth
+                             aclUtil                : AclUtil,
+                             protected val reqUtil  : ReqUtil,
+                             isAuth                 : IsAuth
                            )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   def logBlockedAccess(req: IReqHdr): Unit = {
     import req._
-    LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteAddress user=${req.user.personIdOpt}")
+    LOGGER.warn(s"$method $path <- BLOCKED access to hidden/priveleged place from $remoteClientAddress user=${req.user.personIdOpt}")
   }
 
   def supOnUnauthFut(req: IReqHdr): Future[Result] = {
@@ -35,7 +35,7 @@ final class IsSu @Inject() (
   }
 
 
-  class Base extends SioActionBuilderImpl[MReq] {
+  protected[acl] class Base extends reqUtil.SioActionBuilderImpl[MReq] {
 
     protected def isAllowed(user: ISioUser): Boolean = {
       user.isSuper
@@ -60,10 +60,10 @@ final class IsSu @Inject() (
 
   }
 
-  val Impl = new Base
+  private val Impl: ActionBuilder[MReq, AnyContent] = new Base
 
   @inline
-  def apply(): ActionBuilder[MReq] = Impl
+  def apply() = Impl
 
 }
 

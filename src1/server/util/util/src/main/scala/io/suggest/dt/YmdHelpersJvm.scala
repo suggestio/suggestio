@@ -2,7 +2,7 @@ package io.suggest.dt
 
 import java.time.LocalDate
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 
 /**
   * Suggest.io

@@ -3,8 +3,10 @@ package models.im
 import java.io.File
 import java.time.{Instant, ZoneOffset}
 import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
-import com.google.inject.{Inject, Singleton}
+import akka.stream.scaladsl.{FileIO, Source}
+import akka.util.ByteString
 import io.suggest.async.AsyncUtil
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
@@ -14,8 +16,6 @@ import models.IImgMeta
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
-import play.api.libs.iteratee.Enumerator
-import util._
 import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
 
 import scala.concurrent.duration._
@@ -50,15 +50,15 @@ class MLocalImgs @Inject() (
 
 
   /** Сколько модель должна кешировать в голове результат вызова identify? */
-  val IDENTIFY_CACHE_TTL_SECONDS = configuration.getInt("m.local.img.identify.cache.ttl.seconds")
+  val IDENTIFY_CACHE_TTL_SECONDS = configuration.getOptional[Int]("m.local.img.identify.cache.ttl.seconds")
     .getOrElse(120)
 
   /** Адрес img-директории, который используется для хранилища. */
-  private def DIR_REL = configuration.getString("m.local.img.dir.rel")
+  private def DIR_REL = configuration.getOptional[String]("m.local.img.dir.rel")
     .getOrElse("picture/local")
 
   /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
-  val DIR = current.getFile(DIR_REL)
+  val DIR = current.environment.getFile(DIR_REL)
 
   DIR.mkdirs()
 
@@ -98,9 +98,9 @@ class MLocalImgs @Inject() (
     }(asyncUtil.singleThreadIoContext)
   }
 
-  override def getStream(mimg: MLocalImg): Enumerator[Array[Byte]] = {
+  override def getStream(mimg: MLocalImg): Source[ByteString, _] = {
     val file = fileOf(mimg)
-    Enumerator.fromFile(file)
+    FileIO.fromPath( file.toPath )
   }
 
   def identify(mimg: MLocalImg) = {

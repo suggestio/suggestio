@@ -3,7 +3,7 @@ package util.showcase
 import java.time.LocalDate
 
 import akka.stream.scaladsl.Source
-import com.google.inject.Inject
+import javax.inject.Inject
 import controllers.routes
 import io.suggest.async.StreamsUtil
 import io.suggest.model.n2.edge.MPredicates

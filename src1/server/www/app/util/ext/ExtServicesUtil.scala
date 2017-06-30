@@ -1,6 +1,6 @@
 package util.ext
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import models.mext.{IExtService, MExtServices}
 import models.mproj.ICommonDi
 

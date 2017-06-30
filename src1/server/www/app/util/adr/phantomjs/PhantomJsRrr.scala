@@ -2,7 +2,7 @@ package util.adr.phantomjs
 
 import java.io.{File, FileWriter}
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import com.google.inject.assistedinject.Assisted
 import io.suggest.async.AsyncUtil
 import models.MImgSizeT

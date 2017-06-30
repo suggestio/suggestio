@@ -1,6 +1,6 @@
 package io.suggest.di
 
-import play.api.cache.CacheApi
+import play.api.cache.AsyncCacheApi
 
 /**
  * Suggest.io
@@ -10,6 +10,6 @@ import play.api.cache.CacheApi
  */
 trait ICacheApi {
 
-  def cache: CacheApi
+  def cache: AsyncCacheApi
 
 }

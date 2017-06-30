@@ -20,26 +20,28 @@ trait Get extends ISwfsClientWs {
     lazy val logPrefix = s"get($startMs):"
     LOGGER.trace(s"$logPrefix Starting GET $url\n $args")
 
-    val streamFut = wsClient.url( url ).getStream()
+    val streamFut = wsClient.url( url )
+      .stream()
 
     streamFut.onFailure { case ex: Throwable =>
       LOGGER.error(s"$logPrefix Req failed: GET $url\n $args", ex)
     }
 
     for {
-      (headers, enumerator)  <-  streamFut
+      sr <- streamFut
+      //(headers, enumerator)  <-  streamFut
     } yield {
 
-      val s = headers.status
-      LOGGER.trace(s"$logPrefix Streaming GET resp, status = $s, took ${System.currentTimeMillis - startMs} ms")
+      val respStatus = sr.status
+      LOGGER.trace(s"$logPrefix Streaming GET resp, status = $respStatus, took ${System.currentTimeMillis - startMs} ms")
 
-      if ( SwfsClientWs.isStatus2xx(headers.status) ) {
-        Some( GetResponse(headers, enumerator) )
-      } else if (headers.status == 404) {
+      if ( SwfsClientWs.isStatus2xx(respStatus) ) {
+        Some( GetResponse(sr.headers, sr.bodyAsSource) )
+      } else if (respStatus == 404) {
         None
       } else {
-        LOGGER.warn(s"Unexpected response for GET $url => ${headers.status}")
-        throw FileOpUnknownResponseException("GET", url, headers.status, None)
+        LOGGER.warn(s"Unexpected response for GET $url => $respStatus")
+        throw FileOpUnknownResponseException("GET", url, respStatus, None)
       }
     }
   }

@@ -2,7 +2,7 @@ package util.adn.mapf
 
 import java.time.{LocalDate, OffsetDateTime}
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.bill.price.dsl._
 import io.suggest.bill.MGetPriceResp

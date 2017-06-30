@@ -2,7 +2,7 @@ package util.img
 
 import java.io.File
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import models._
@@ -38,7 +38,7 @@ class DynImgUtil @Inject() (
   /** Сколько времени кешировать результат подготовки картинки?
     * Кеш используется для подавления параллельных запросов. */
   val ENSURE_DYN_CACHE_TTL = {
-    configuration.getInt("img.dyn.ensure.cache.ttl.seconds")
+    configuration.getOptional[Int]("img.dyn.ensure.cache.ttl.seconds")
       .getOrElse(10)
       .seconds
   }
@@ -46,14 +46,14 @@ class DynImgUtil @Inject() (
   /** Если true, то производные от оригинала картники будут дублироваться в cassandra.
     * Если false, то производные будут только на локалхосте. */
   val SAVE_DERIVATIVES_TO_PERMANENT: Boolean = {
-    configuration.getBoolean("img.dyn.derivative.save.to.permanent.enabled")
+    configuration.getOptional[Boolean]("img.dyn.derivative.save.to.permanent.enabled")
       .getOrElse(true)
   }
 
   /** Активен ли префетчинг, т.е. опережающая подготовка картинки?
     * Префетчинг начинается асинхронно в момент генерации ссылки на картинку. */
   val PREFETCH_ENABLED: Boolean = {
-    configuration.getBoolean("img.dyn.prefetch.enabled")
+    configuration.getOptional[Boolean]("img.dyn.prefetch.enabled")
       .getOrElse(true)
   }
 
@@ -139,7 +139,7 @@ class DynImgUtil @Inject() (
       .append(":eIR")
       .toString()
     // TODO Тут наверное можно задейстовать cacheApiUtil.
-    cache.get [Future[MLocalImg]] (ck) match {
+    cache.get [Future[MLocalImg]] (ck).foreach {
       // Результирующего фьючерс нет в кеше. Запускаем поиск/генерацию картинки:
       case None =>
         val localImgResult = mImgs3.toLocalImg( args )
@@ -175,7 +175,7 @@ class DynImgUtil @Inject() (
   }
 
   val CONVERT_CACHE_TTL: FiniteDuration = {
-    configuration.getInt("dyn.img.convert.cache.seconds")
+    configuration.getOptional[Int]("dyn.img.convert.cache.seconds")
       .getOrElse(10)
       .seconds
   }

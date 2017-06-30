@@ -1,7 +1,7 @@
 package util.seo
 
 import akka.stream.scaladsl.Source
-import com.google.inject.Inject
+import javax.inject.Inject
 import models.crawl.SiteMapUrlT
 import util.showcase.ScSitemapsXml
 

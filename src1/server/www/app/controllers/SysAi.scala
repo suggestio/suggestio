@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.ai._
 import models.mproj.ICommonDi

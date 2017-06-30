@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import javax.inject.{Inject, Singleton}
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeReq, MReq}
 
 import scala.concurrent.Future
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 /**
  * Suggest.io
@@ -20,10 +20,9 @@ import play.api.mvc.{ActionBuilder, Request, Result}
 class IsSuNode @Inject() (
                            aclUtil    : AclUtil,
                            isSu       : IsSu,
+                           reqUtil    : ReqUtil,
                            mCommonDi  : ICommonDi
-                         )
-  extends SioActionBuilderOuter
-{
+                         ) {
 
   import mCommonDi._
 
@@ -31,8 +30,8 @@ class IsSuNode @Inject() (
   /** Часто нужно админить узлы рекламной сети. Тут комбинация IsSuperuser + IsAdnAdmin.
     * @param nodeId id запрашиваемого узла.
     */
-  def apply(nodeId: String): ActionBuilder[MNodeReq] = {
-    new SioActionBuilderImpl[MNodeReq] {
+  def apply(nodeId: String): ActionBuilder[MNodeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

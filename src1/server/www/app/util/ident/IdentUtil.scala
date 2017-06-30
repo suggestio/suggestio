@@ -1,6 +1,6 @@
 package util.ident
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}

@@ -13,6 +13,8 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   Seq(
+    "com.google.inject" % "guice" % Common.Vsn.GUICE,
+
     Common.ORG          %% "util" % "2.0.1-SNAPSHOT" changing()
       exclude("org.jruby", "jruby-complete")
       exclude("org.slf4j", "slf4j-log4j12")

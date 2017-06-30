@@ -3,7 +3,8 @@ package io.suggest.sec.m
 import java.security.SecureRandom
 
 import io.suggest.util.logs.IMacroLogs
-import play.api.Play.{configuration, current, isProd}
+import play.api.Mode
+import play.api.Play.current
 
 import scala.annotation.tailrec
 import scala.util.Random
@@ -22,7 +23,7 @@ trait SecretGetter extends IMacroLogs {
   def getRandom = new Random(new SecureRandom())
 
   /** Кажется, этот параметр надо переименовать. Т.к. он по сути работает задом наперед. */
-  def useRandomIfMissing: Boolean = isProd
+  def useRandomIfMissing: Boolean = current.mode == Mode.Prod
 
   def secretKeyLen: Int = 64
 
@@ -69,13 +70,13 @@ trait SecretGetter extends IMacroLogs {
     }
   }
 
-  def getSecret = configuration.getString(confKey)
+  def getSecret = current.configuration.getOptional[String](confKey)
 
   /**
    * Используя имеющиеся данные, попытаться извлечь из конфига значение секретного ключа
    * и принять последующие решения.
    * @return Значение секретного ключа строкой либо экзепшен.
    */
-  def apply(): String = getSecret getOrElse secretMissing
+  def apply(): String = getSecret.getOrElse( secretMissing )
 
 }

@@ -10,7 +10,7 @@ import io.suggest.img.SioImageUtilT
 import scala.concurrent.Future
 import java.lang
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.mproj.ICommonDi
@@ -39,7 +39,7 @@ class ImgFormUtil @Inject() (
 
   /** Включение ревалидации уже сохраненных картинок при обновлении позволяет убирать картинки "дырки",
     * появившиеся в ходе ошибочной логики. */
-  private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getBoolean("img.update.revalidate.already.saved")
+  private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getOptional[Boolean]("img.update.revalidate.already.saved")
     .getOrElse(false)
 
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
@@ -75,11 +75,16 @@ class ImgFormUtil @Inject() (
 
   // Валидация значений crop'а.
   /** Минимальный размер откропанной стороны. */
-  private val CROP_SIDE_MIN_PX = configuration.getInt("img.crop.side.max") getOrElse 10
+  private val CROP_SIDE_MIN_PX = configuration.getOptional[Int]("img.crop.side.max")
+    .getOrElse(10)
+
   /** Максимальный размер откропанной стороны. */
-  private val CROP_SIDE_MAX_PX = configuration.getInt("img.crop.side.max") getOrElse 20000
+  private val CROP_SIDE_MAX_PX = configuration.getOptional[Int]("img.crop.side.max")
+    .getOrElse(20000)
+
   /** Максимальный размер сдвига относительно левого верхнего узла. */
-  private val CROP_OFFSET_MAX_PX = configuration.getInt("img.crop.offset.max") getOrElse 60000
+  private val CROP_OFFSET_MAX_PX = configuration.getOptional[Int]("img.crop.offset.max")
+    .getOrElse(60000)
 
   /** Проверка одной стороны кропа на соотвествие критериям. */
   private def isCropSideValid(sideVal: Int): Boolean = {
@@ -282,26 +287,26 @@ class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override val MIN_SZ_PX: Int = configuration.getInt("img.orig.sz.min.px").getOrElse(256)
+  override val MIN_SZ_PX: Int = configuration.getOptional[Int]("img.orig.sz.min.px").getOrElse(256)
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
   override val MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = {
-    val kib = configuration.getInt("img.org.preserve.src.max.len.kib").getOrElse(90)
+    val kib = configuration.getOptional[Int]("img.org.preserve.src.max.len.kib").getOrElse(90)
     Some(kib * 1024L)
   }
 
   /** Качество сжатия jpeg. */
-  override val JPEG_QUALITY_PC: Double = configuration.getDouble("img.orig.jpeg.quality").getOrElse(90.0)
+  override val JPEG_QUALITY_PC: Double = configuration.getOptional[Double]("img.orig.jpeg.quality").getOrElse(90.0)
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
   override val DOWNSIZE_HORIZ_PX: Integer  = {
-    val szPx = configuration.getInt("img.orig.maxsize.h.px").getOrElse(2048)
+    val szPx = configuration.getOptional[Int]("img.orig.maxsize.h.px").getOrElse(2048)
     Integer.valueOf(szPx)
   }
   override val DOWNSIZE_VERT_PX:  Integer  = {
-    configuration.getInt("img.orig.maxsize.v.px")
+    configuration.getOptional[Int]("img.orig.maxsize.v.px")
       .fold(DOWNSIZE_HORIZ_PX)(Integer.valueOf)
   }
 

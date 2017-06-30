@@ -1,6 +1,6 @@
 package util.billing.cron
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
@@ -33,13 +33,13 @@ class BillingCronTasks @Inject()(
 
   /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
   private def CRON_BILLING_CHECK_ENABLED: Boolean = {
-    configuration.getBoolean("bill.cron.enabled")
+    configuration.getOptional[Boolean]("bill.cron.enabled")
       .getOrElse(true)
   }
 
   /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
   private def CHECK_ADVS_OK_DURATION: FiniteDuration = {
-    configuration.getInt("bill.cron.check.every.seconds")
+    configuration.getOptional[Int]("bill.cron.check.every.seconds")
       .getOrElse(20)
       .seconds
   }

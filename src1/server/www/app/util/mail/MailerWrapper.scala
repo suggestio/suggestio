@@ -3,7 +3,8 @@ package util.mail
 import javax.mail.Authenticator
 
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.google.inject.ImplementedBy
+import javax.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs.MacroLogsImplLazy
 import org.apache.commons.mail.{DefaultAuthenticator, HtmlEmail, SimpleEmail}
@@ -137,7 +138,7 @@ class PlayMailerEmailBuilder @Inject() (
       to        = _recipients,
       bodyText  = _text,
       bodyHtml  = _html,
-      replyTo   = _replyTo
+      replyTo   = _replyTo.toList
     )
     val mailId = mailClient.send(email)
     Future.successful(mailId)
@@ -218,18 +219,18 @@ class MailerWrapper @Inject() (
 {
 
   /** Использовать ли play mailer для отправки электронной почты? */
-  val USE_PLAY_MAILER = configuration.getBoolean("email.use.play.mailer").getOrElse(true)
+  val USE_PLAY_MAILER = configuration.getOptional[Boolean]("email.use.play.mailer").getOrElse(true)
 
   private lazy val _playEmailFactory    = injector.instanceOf[PlayMailerEmailBuildersFactory]
   private lazy val _commonsEmailFactory = injector.instanceOf[CommonsEmailBuildersFactory]
 
   /** Неизменяемая резидентная инфа по fallback'у. */
   private lazy val fallBackInfo: FallbackState = {
-    val username = configuration.getString("smtp.user").get
-    val password = configuration.getString("smtp.password").get
+    val username = configuration.getOptional[String]("smtp.user").get
+    val password = configuration.getOptional[String]("smtp.password").get
     FallbackState(
       auth = new DefaultAuthenticator(username, password),
-      host = configuration.getString("smtp.host").get
+      host = configuration.getOptional[String]("smtp.host").get
     )
   }
 

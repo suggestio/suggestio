@@ -71,14 +71,14 @@ trait ScRemoteError
    */
   def handleScError = /*bruteForceProtect(_BFP_ARGS)*/ {
     maybeAuth(U.PersonNode).async { implicit request =>
-      lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteAddress}]:"
+      lazy val logPrefix = s"handleScError(${System.currentTimeMillis()}) [${request.remoteClientAddress}]:"
       errorFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.warn(logPrefix + " Request body bind failed:\n " + formatFormErrors(formWithErrors))
           NotAcceptable("Failed to parse response. See server logs.")
         },
         {merr0 =>
-          val remoteAddrFixed = geoIpUtil.fixRemoteAddr( request.remoteAddress )
+          val remoteAddrFixed = geoIpUtil.fixRemoteAddr( request.remoteClientAddress )
 
           // Запустить геолокацию текущего юзера по IP.
           val geoLocOptFut = geoIpUtil.findIpCached( remoteAddrFixed.remoteAddr )

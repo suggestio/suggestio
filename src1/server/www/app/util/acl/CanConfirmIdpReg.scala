@@ -1,17 +1,17 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
 import models.usr.MExtIdents
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdentUtil
 
 import scala.concurrent.Future
@@ -29,17 +29,17 @@ class CanConfirmIdpReg @Inject() (
                                    mNodes                   : MNodes,
                                    mExtIdents               : MExtIdents,
                                    isAuth                   : IsAuth,
+                                   reqUtil                  : ReqUtil,
                                    mCommonDi                : ICommonDi
                                  )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
 
 
   /** Код базовой реализации ActionBuilder'ов, проверяющих возможность подтверждения регистрации. */
-  class ImplC extends SioActionBuilderImpl[MReq] {
+  private class ImplC extends reqUtil.SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val user = aclUtil.userFromRequest(request)
@@ -102,11 +102,9 @@ class CanConfirmIdpReg @Inject() (
   }
 
 
-  val Impl = new ImplC
+  private val Impl: ActionBuilder[MReq, AnyContent] = new ImplC
 
   @inline
-  final def apply(): ActionBuilder[MReq] = {
-    Impl
-  }
+  final def apply() = Impl
 
 }

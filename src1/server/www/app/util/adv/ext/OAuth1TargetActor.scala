@@ -2,7 +2,7 @@ package util.adv.ext
 
 import java.io.File
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ahc.upload.IMpUploadArgs
 import io.suggest.fsm.FsmActor
@@ -41,13 +41,13 @@ trait OAuth1TargetActorFactory {
 class OAuth1TargetActor @Inject() (
                                     @Assisted override val args   : IOAuth1AdvTargetActorArgs,
                                     override val n2NodesUtil      : N2NodesUtil,
-                                    override val advExtFormUtil       : AdvExtFormUtil,
+                                    override val advExtFormUtil   : AdvExtFormUtil,
                                     override val adRenderUtil     : AdRenderUtil,
                                     override val extServicesUtil  : ExtServicesUtil,
                                     override val ctxUtil          : ContextUtil,
                                     implicit val wsClient         : WSClient,
                                     override val mCommonDi        : ICommonDi
-)
+                                  )
   extends FsmActor
   with AdvExtTargetActorUtil
   with ReplyTo

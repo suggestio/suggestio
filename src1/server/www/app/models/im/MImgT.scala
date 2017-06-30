@@ -3,8 +3,8 @@ package models.im
 import java.io.FileNotFoundException
 import java.util.UUID
 
+import io.suggest.async.StreamsUtil
 import io.suggest.di.ICacheApiUtil
-import io.suggest.itee.IteeUtil
 import io.suggest.model.n2.media.IMMedias
 import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -37,7 +37,7 @@ import scala.concurrent.duration._
 
 object MImgT extends MacroLogsImpl { model =>
 
-  import play.api.Play.{current, isProd}
+  import play.api.Play.current
 
   def SIGN_FN   = "sig"
   def IMG_ID_FN = "id"
@@ -72,7 +72,6 @@ object MImgT extends MacroLogsImpl { model =>
   private val SIGN_SECRET: String = {
     val sg = new SecretGetter {
       override val confKey = "dynimg.sign.key"
-      override def useRandomIfMissing = isProd
       override def LOGGER = model.LOGGER
     }
     sg()
@@ -146,6 +145,9 @@ trait MImgsT
 
   import mCommonDi._
 
+  protected val streamsUtil: StreamsUtil
+
+
   protected def _mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
     mMedias.getById(mimg._mediaId)
   }
@@ -162,7 +164,7 @@ trait MImgsT
       // Защищаемся от параллельных чтений одной и той же картинки. Это может создать ненужную нагрузку на сеть.
       cacheApiUtil.getOrElseFut(mimg.fileName + ".2LOC", 4.seconds) {
         // Запускаем поточное чтение из модели.
-        val enumer = getStream(mimg)
+        val source = getStream(mimg)
 
         // Подготовится к запуску записи в файл.
         mLocalImgs.prepareWriteFile( inst )
@@ -170,7 +172,7 @@ trait MImgsT
         // Запустить запись в файл.
         val toFile = mLocalImgs.fileOf(inst)
         val writeFut = for {
-          _ <- IteeUtil.writeIntoFile(enumer, toFile)
+          _ <- streamsUtil.sourceIntoFile(source, toFile)
         } yield {
           Option(inst)
         }
@@ -194,7 +196,7 @@ trait MImgsT
     }
   }
 
-  val ORIG_META_CACHE_SECONDS: Int = configuration.getInt("m.img.org.meta.cache.ttl.seconds")
+  val ORIG_META_CACHE_SECONDS: Int = configuration.getOptional[Int]("m.img.org.meta.cache.ttl.seconds")
     .getOrElse(60)
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */

@@ -2,7 +2,7 @@ package util.img.cron
 
 import java.nio.file.Files
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.async.AsyncUtil
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
@@ -39,18 +39,18 @@ class PeriodicallyDeleteNotExistingInPermanent @Inject() (
   private def DNEIP_CONF_PREFIX = "m.img.local.dneip"
 
   /** Включено ли автоудаление директорий? */
-  def DNEIP_ENABLED = configuration.getBoolean(DNEIP_CONF_PREFIX + ".enabled") getOrElse true
+  def DNEIP_ENABLED = configuration.getOptional[Boolean](DNEIP_CONF_PREFIX + ".enabled").getOrElse(true)
 
   /** Задержка первого запуска после старта play. */
-  def DNEIP_START_DELAY = configuration.getInt(DNEIP_CONF_PREFIX + ".start.delay.seconds")
+  def DNEIP_START_DELAY = configuration.getOptional[Int](DNEIP_CONF_PREFIX + ".start.delay.seconds")
     .getOrElse(15)
     .seconds
 
   /** Как часто проводить проверки? */
-  def DNEIP_EVERY = configuration.getInt(DNEIP_CONF_PREFIX + ".every.minutes")
+  def DNEIP_EVERY = configuration.getOptional[Int](DNEIP_CONF_PREFIX + ".every.minutes")
     .fold[FiniteDuration] (3.hours)(_.minutes)
 
-  def DNEIP_OLD_DIR_AGE_MS: Long = configuration.getInt(DNEIP_CONF_PREFIX + ".old.age.minutes")
+  def DNEIP_OLD_DIR_AGE_MS: Long = configuration.getOptional[Int](DNEIP_CONF_PREFIX + ".old.age.minutes")
     .fold(2.hours)(_.minutes)
     .toMillis
 

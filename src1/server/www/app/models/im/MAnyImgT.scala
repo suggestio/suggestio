@@ -1,12 +1,13 @@
 package models.im
 
 import java.util.UUID
+import javax.inject.{Inject, Singleton}
 
-import com.google.inject.{Inject, Singleton}
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.{IImgMeta, ISize2di, ImgCrop}
-import play.api.libs.iteratee.Enumerator
 
 import scala.concurrent.Future
 
@@ -116,7 +117,7 @@ trait MAnyImgsT[T <: MAnyImgT] {
   def toLocalImg(mimg: T): Future[Option[MLocalImg]]
 
   /** Асинхронно стримить картинку из хранилища. */
-  def getStream(mimg: T): Enumerator[Array[Byte]]
+  def getStream(mimg: T): Source[ByteString, _]
 
   /** Получить ширину и длину картинки. */
   def getImageWH(mimg: T): Future[Option[ISize2di]]
@@ -158,7 +159,7 @@ class MAnyImgs @Inject() (
     }
   }
 
-  override def getStream(mimg: MAnyImgT): Enumerator[Array[Byte]] = {
+  override def getStream(mimg: MAnyImgT): Source[ByteString, _] = {
     mimg match {
       case mimg3: MImg3 =>
         mImgs3.getStream(mimg3)

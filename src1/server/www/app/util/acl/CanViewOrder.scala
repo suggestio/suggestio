@@ -1,14 +1,14 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MNodeOrderReq, MUserInit}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -24,10 +24,10 @@ class CanViewOrder @Inject() (
                                mOrders         : MOrders,
                                isAuth          : IsAuth,
                                isNodeAdmin     : IsNodeAdmin,
+                               reqUtil         : ReqUtil,
                                mCommonDi       : ICommonDi
                              )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -42,13 +42,14 @@ class CanViewOrder @Inject() (
              orderId    : Gid_t,
              onNodeId   : MEsUuId,
              userInits1 : MUserInit*
-           ): ActionBuilder[MNodeOrderReq] = {
+           ): ActionBuilder[MNodeOrderReq, AnyContent] = {
 
-    new SioActionBuilderImpl[MNodeOrderReq] with InitUserCmds {
+    new reqUtil.SioActionBuilderImpl[MNodeOrderReq] with InitUserCmds {
 
       override def userInits = userInits1
 
-      override def invokeBlock[A](request: Request[A], block: (MNodeOrderReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request0: Request[A], block: (MNodeOrderReq[A]) => Future[Result]): Future[Result] = {
+        val request = aclUtil.reqFromRequest( request0 )
         val user = aclUtil.userFromRequest(request)
 
         // Отказ юзеру в обслуживании: для защиты от сканирования id и прочего, ответ непонятным юзерам всегда один.
@@ -71,7 +72,7 @@ class CanViewOrder @Inject() (
           // Запускаем инициализацию полей модели user, т.к. маловероятно, что этот реквест пойдёт мимо кассы.
           maybeInitUser(user)
 
-          lazy val logPrefix = s"invokeBlock($orderId)[${request.remoteAddress}]:"
+          lazy val logPrefix = s"invokeBlock($orderId)[${request.remoteClientAddress}]:"
 
           // Узел скорее всего в кеше, поэтому проверяем по узлу в первую очередь.
           nodeAdmOptFut.flatMap {

@@ -1,7 +1,8 @@
 package io.suggest.es.model
 
 import akka.stream.Materializer
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import javax.inject.{Inject, Singleton}
+import com.google.inject.ImplementedBy
 import io.suggest.es.util.IEsClient
 import io.suggest.event.SioNotifierStaticClientI
 import io.suggest.model.{ICommonDiValBase, IMCommonDiBase}

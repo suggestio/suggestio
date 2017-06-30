@@ -16,9 +16,10 @@
  */
 package securesocial.core
 
-import play.api.mvc.{ Result, AnyContent, Request }
+import play.api.mvc.{AnyContent, Request, Result}
 import play.api.Play
 import securesocial.util.LazyLoggerImpl
+
 import concurrent.Future
 
 /**
@@ -56,20 +57,6 @@ object IdentityProvider extends LazyLoggerImpl {
 
   val SessionId = "sid"
 
-  // todo: do I want this here?
-  val sslEnabled: Boolean = {
-    import Play.current
-    val result = current.configuration.getBoolean("securesocial.ssl").getOrElse(false)
-    if (!result && Play.isProd) {
-      logger.warn(
-        "[securesocial] IMPORTANT: Play is running in production mode but you did not turn SSL on for SecureSocial." +
-          "Not using SSL can make it really easy for an attacker to steal your users' credentials and/or the " +
-          "authenticator cookie and gain access to the system."
-      )
-    }
-    result
-  }
-
   /**
    * Reads a property from the application.conf
    * @param property
@@ -77,7 +64,7 @@ object IdentityProvider extends LazyLoggerImpl {
    */
   def loadProperty(providerId: String, property: String, optional: Boolean = false): Option[String] = {
     val key = s"securesocial.$providerId.$property"
-    val result = Play.current.configuration.getString(key)
+    val result = Play.current.configuration.getOptional[String](key)
     if (!result.isDefined && !optional) {
       logger.warn(s"[securesocial] Missing property: $key ")
     }

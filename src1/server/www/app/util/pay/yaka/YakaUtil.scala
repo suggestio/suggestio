@@ -3,7 +3,7 @@ package util.pay.yaka
 import models.mpay.yaka._
 import play.api.data._
 import Forms._
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
@@ -73,14 +73,14 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
     val iter = for {
       confSeq <- configuration.getConfigSeq(CONF_PREFIX + "profiles").iterator
       conf    <- confSeq
-      scId    <- conf.getLong("scid")
-      modeId  <- conf.getString("mode")
+      scId    <- conf.getOptional[Long]("scid")
+      modeId  <- conf.getOptional[String]("mode")
     } yield {
       val mode = MPayModes.withName(modeId)
       val yProf = YakaProfile(
         scId = scId,
         mode = mode,
-        md5Password = conf.getString("password")
+        md5Password = conf.getOptional[String]("password")
       )
       LOGGER.debug(s"PROFILES: Found profile $yProf")
       mode -> yProf

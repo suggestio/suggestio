@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MNodeEactReq, MReq}
 import models.usr.{EmailActivations, EmailPwIdents}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -22,10 +22,10 @@ class NodeEact @Inject() (
                            emailPwIdents          : EmailPwIdents,
                            emailActivations       : EmailActivations,
                            isAuth                 : IsAuth,
+                           reqUtil                : ReqUtil,
                            mCommonDi              : ICommonDi
                          )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -39,8 +39,8 @@ class NodeEact @Inject() (
     *                  $1 - reason
     *                  $2 - sio-реквест.
     */
-  def apply(nodeId: String, eaId: String)(notFoundF: (String, MReq[_]) => Future[Result]): ActionBuilder[MNodeEactReq] = {
-    new SioActionBuilderImpl[MNodeEactReq] {
+  def apply(nodeId: String, eaId: String)(notFoundF: (String, MReq[_]) => Future[Result]): ActionBuilder[MNodeEactReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeEactReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeEactReq[A]) => Future[Result]): Future[Result] = {
         val eaOptFut = emailActivations.getById(eaId)

@@ -5,6 +5,7 @@ import io.suggest.common.css.OnlyOneAdTopLeft
 import io.suggest.util.logs.IMacroLogs
 import models._
 import models.blk.{OneAdQsArgs, szMulted}
+import play.api.http.FileMimeTypes
 import util.acl.GetAnyAd
 import util.adr.IAdRenderUtilDi
 import views.html.blocks.common.standaloneTpl
@@ -23,6 +24,9 @@ trait ScOnlyOneAd
 {
 
   protected val getAnyAd: GetAnyAd
+
+  implicit protected val fileMimeTypes: FileMimeTypes
+
 
   import mCommonDi._
 

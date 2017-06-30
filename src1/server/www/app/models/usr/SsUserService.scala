@@ -1,6 +1,6 @@
 package models.usr
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.MPersonMeta

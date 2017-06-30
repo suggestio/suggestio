@@ -8,7 +8,7 @@ version := "3.4.0sio-SNAPSHOT"
 //generateRefReverseRouter := false
 
 libraryDependencies ++= Seq(
-  cache,
+  cacheApi,
   ws,
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
   "com.typesafe.play" %% "filters-helpers" % Common.playVsn,

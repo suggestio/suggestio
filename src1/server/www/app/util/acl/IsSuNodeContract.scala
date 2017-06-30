@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.contract.MContracts
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeContractReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -20,10 +20,9 @@ class IsSuNodeContract @Inject() (
                                    aclUtil      : AclUtil,
                                    mContracts   : MContracts,
                                    isSu         : IsSu,
+                                   reqUtil      : ReqUtil,
                                    mCommonDi    : ICommonDi
-                                 )
-  extends SioActionBuilderOuter
-{
+                                 ) {
 
   import mCommonDi._
 
@@ -31,8 +30,8 @@ class IsSuNodeContract @Inject() (
   /** Доступ к узлу с контрактом.
     * @param nodeId id запрашиваемого узла.
     */
-  def apply(nodeId: String): ActionBuilder[MNodeContractReq] = {
-    new SioActionBuilderImpl[MNodeContractReq] {
+  def apply(nodeId: String): ActionBuilder[MNodeContractReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeContractReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MNodeContractReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

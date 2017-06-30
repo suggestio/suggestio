@@ -1,8 +1,8 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
 import models.usr._
@@ -27,10 +27,10 @@ class CanRecoverPw @Inject() (
                                identUtil              : IdentUtil,
                                emailPwIdents          : EmailPwIdents,
                                emailActivations       : EmailActivations,
+                               reqUtil                : ReqUtil,
                                mCommonDi              : ICommonDi
                              )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -42,9 +42,9 @@ class CanRecoverPw @Inject() (
     * @param keyNotFoundF Не найден ключ для восстановления.
     */
   def apply(eActId: String, userInits1: MUserInit*)
-           (keyNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MRecoverPwReq] = {
+           (keyNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MRecoverPwReq, AnyContent] = {
 
-    new SioActionBuilderImpl[MRecoverPwReq] with InitUserCmds {
+    new reqUtil.SioActionBuilderImpl[MRecoverPwReq] with InitUserCmds {
 
       override def userInits = userInits1
 

@@ -1,6 +1,6 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.sec.util.SessionUtil
 import models.req._
 import play.api.mvc.{Request, RequestHeader}

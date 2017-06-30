@@ -1,6 +1,6 @@
 package io.suggest.model.n2.media.storage
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.fio.{IReadResponse, IWriteRequest}
 import io.suggest.primo.TypeT
@@ -17,8 +17,8 @@ import scala.concurrent.Future
  * Description: Данные по backend-хранилищу, задействованному в хранении файлов.
  */
 class IMediaStorages @Inject() (
-  injector  : Injector
-)
+                                 injector  : Injector
+                               )
   extends IGenEsMappingProps
   with IMediaStorageStatic
 {

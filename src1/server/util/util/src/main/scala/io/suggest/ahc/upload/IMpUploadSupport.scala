@@ -6,8 +6,8 @@ import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{IExecutionContext, IWsClient}
 import io.suggest.util.logs.IMacroLogs
-import org.asynchttpclient.AsyncHttpClient
-import org.asynchttpclient.request.body.multipart.{FilePart, Part}
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
+import play.shaded.ahc.org.asynchttpclient.request.body.multipart.{FilePart, Part}
 import play.api.http.HeaderNames
 import play.api.libs.oauth.RequestToken
 import play.api.libs.ws.WSResponse

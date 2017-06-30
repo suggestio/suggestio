@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.item
 
 import java.time.OffsetDateTime
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.{IMPrice, MPrice}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.geo.IGeoShape
@@ -37,7 +37,7 @@ import slick.sql.SqlAction
 class MItems @Inject() (
                          override protected val profile  : SioPgSlickProfileT,
                          override val mOrders            : MOrders
-)
+                       )
   extends GidSlick
   with PriceSlick
   with CurrencyCodeSlick

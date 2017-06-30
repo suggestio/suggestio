@@ -1,11 +1,11 @@
 package util.ext.tw
 
-import io.suggest.ahc.upload.{IMpUploadArgs, MpUploadSupportDflt}
+import io.suggest.ahc.upload.IMpUploadArgs
 import models.mext.tw.TwMediaAtt
-import org.asynchttpclient.AsyncHttpClient
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth.OAuthCalculator
 import play.api.libs.ws.WSResponse
-import util.ext.{ExtServiceHelperMpUpload, IExtMpUploadSupport, IOAuth1Support}
+import util.ext.{ExtServiceHelperMpUpload, IOAuth1Support}
 
 /**
  * Suggest.io

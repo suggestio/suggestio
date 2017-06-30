@@ -15,7 +15,7 @@ object Common {
     /** Версия moment.js. */
     def momentJs = "2.17.1"
 
-    val GUICE = "4.0"
+    val GUICE = "4.1.0"
 
     /** Версия typesafe slick. */
     val SLICK        = "3.2.0"
@@ -26,7 +26,10 @@ object Common {
     val SLICK_PG     = "0.15.0-RC"
 
     /** Версия play-slick прослойки. */
-    val PLAY_SLICK   = "2.1.0"
+    val PLAY_SLICK   = "3.0.0"
+
+    /** Версия play-json. Он выведен из под основного проекта. */
+    val PLAY_JSON_VSN = "2.6.0"
 
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
@@ -58,6 +61,12 @@ object Common {
 
     val REACT_IMAGE_GALLERY = "0.7.15"
 
+    /** Версия play-ws, который уехал за пределы play начиная с play-2.6.0.
+      * @see [[https://playframework.com/documentation/2.6.x/WSMigration26]]
+      *      [[https://github.com/playframework/play-ws]]
+      */
+    val PLAY_WS = "1.0.0"
+
   }
 
 
@@ -82,17 +91,17 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.5.15"
+  val playVsn         = "2.6.0"
 
 
   /** Версия bouncy castle. */
   def bcVsn           = "1.56"
 
   /** Версия scalatest+play. */
-  def scalaTestPlusPlayVsn = "2.0.0-M1"
+  def scalaTestPlusPlayVsn = "3.0.0"
 
   /** Версия используемого плагина play-mailer. */
-  def playMailerVsn     = "5.0.0-M1"
+  def playMailerVsn     = "6.0.0"
 
 
   /** Версия jquery-фасада для scalajs.

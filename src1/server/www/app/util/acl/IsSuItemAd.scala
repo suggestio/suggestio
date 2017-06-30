@@ -1,13 +1,13 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemAdReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -21,10 +21,10 @@ class IsSuItemAd @Inject() (
                              aclUtil                : AclUtil,
                              isSu                   : IsSu,
                              mItems                 : MItems,
+                             reqUtil                : ReqUtil,
                              mCommonDi              : ICommonDi
                            )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -33,8 +33,8 @@ class IsSuItemAd @Inject() (
   /**
     * @param itemId Ключ item'а в таблице MItems.
     */
-  def apply(itemId: Gid_t): ActionBuilder[MItemAdReq] = {
-    new SioActionBuilderImpl[MItemAdReq] {
+  def apply(itemId: Gid_t): ActionBuilder[MItemAdReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MItemAdReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MItemAdReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

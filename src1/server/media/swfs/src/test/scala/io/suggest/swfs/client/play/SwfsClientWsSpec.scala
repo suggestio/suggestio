@@ -2,7 +2,7 @@ package io.suggest.swfs.client.play
 
 import java.io.File
 
-import io.suggest.itee.IteeUtil
+import io.suggest.async.StreamsUtil
 import io.suggest.swfs.client.proto.delete.DeleteRequest
 import io.suggest.swfs.client.proto.get.GetRequest
 import io.suggest.swfs.client.proto.lookup.LookupRequest
@@ -11,9 +11,10 @@ import org.apache.commons.io.FileUtils
 import org.scalatest.concurrent.ScalaFutures._
 import org.scalatest.Matchers._
 import org.scalatest.time.{Seconds, Span}
-import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
-import play.api.test.FakeApplication
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
+import org.scalatestplus.play.guice.GuiceOneAppPerSuite
+import org.scalatestplus.play.PlaySpec
+import play.api.{Application, Configuration}
+import play.api.inject.guice.GuiceApplicationBuilder
 
 /**
  * Suggest.io
@@ -21,19 +22,20 @@ import play.api.libs.concurrent.Execution.Implicits.defaultContext
  * Created: 08.10.15 12:02
  * Description: Тесты для play-клиента seaweedfs: [[SwfsClientWs]].
  */
-class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
+class SwfsClientWsSpec extends PlaySpec with GuiceOneAppPerSuite {
 
-  override implicit lazy val app: FakeApplication = {
-    new FakeApplication(
-      path = new File("target/"),
-      additionalConfiguration = Map(
+  override implicit lazy val app: Application = {
+    GuiceApplicationBuilder(
+      configuration = Configuration(
         SwfsClientWs.MASTERS_CK     -> Seq("localhost:9333")
       )
     )
+      .build()
   }
 
 
-  private lazy val cl = app.injector.instanceOf( classOf[SwfsClientWs] )
+  private lazy val cl = app.injector.instanceOf[SwfsClientWs]
+  private lazy val streamsUtil = app.injector.instanceOf[StreamsUtil]
 
 
   "SeaWeedFS client" when {
@@ -147,8 +149,8 @@ class SwfsClientWsSpec extends PlaySpec with OneAppPerSuite {
           assert(getResp.nonEmpty, getResp)
         }
         val gr = getResp.get
-        val fcontentFut = IteeUtil.dumpBlobs( gr.data )
-          .map { new String(_) }
+        val fcontentFut = streamsUtil.mergeByteStrings( gr.data )
+          .map { bs => new String( bs.toArray ) }
         "have expected resp.body lenght" in {
           gr.sizeB shouldBe f.length()
         }

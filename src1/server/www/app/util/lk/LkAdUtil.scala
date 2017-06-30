@@ -1,6 +1,6 @@
 package util.lk
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.IExecutionContext
 import models.blk.SzMult_t

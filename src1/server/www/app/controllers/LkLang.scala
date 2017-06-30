@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import controllers.clk.LkJsMessages
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.MNodes
@@ -57,8 +57,17 @@ class LkLang @Inject() (
   }
 
   private def _showLangSwitcher(langForm: Form[Lang], r: Option[String], rs: Status)(implicit ctx: Context): Future[Result] = {
-    val langCodes = langs.availables
-      .sortBy(_.code)
+
+    val langCodes = mCommonDi.langs
+      .availables
+
+    val langCode2msgs = mCommonDi.langs.availables
+      .iterator
+      .map { lang =>
+        val msgs = messagesApi.preferred( lang :: Nil )
+        lang.code -> msgs
+      }
+      .toMap
 
     val englishLang = langCodes
       .filter(_.language == "en")
@@ -66,16 +75,17 @@ class LkLang @Inject() (
       .headOption
       .getOrElse { Lang.defaultLang }
 
-    val english = ctx.messages.copy(lang = englishLang)
+    val english = messagesApi.preferred( englishLang :: Nil )
     val nodeOpt = None    // TODO Нужно собственную ноду получать из параметра и проверять админские права.
 
     val html = langChooserTpl(
       english = english,
       lf      = langForm,
       isNowEnglish = ctx.messages.lang.language == "en",
-      langs   = langCodes,
+      langs   = langCodes.sortBy(_.code),
       nodeOpt = nodeOpt,
-      rr      = r
+      rr      = r,
+      langCode2msgs = langCode2msgs
     )(ctx)
 
     rs(html)
@@ -130,7 +140,7 @@ class LkLang @Inject() (
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
           RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
-            .withLang(newLang)
+            .withLang(newLang)( mCommonDi.messagesApi )
         }
       )
     }

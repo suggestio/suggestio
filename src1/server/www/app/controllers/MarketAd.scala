@@ -1,8 +1,8 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import javax.inject.{Inject, Singleton}
+
 import com.google.inject.name.Named
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.init.routed.MJsiTgs
@@ -22,6 +22,7 @@ import models.mproj.ICommonDi
 import models.req.{IAdProdReq, INodeReq, IReq}
 import play.api.data.Forms._
 import play.api.data._
+import play.api.libs.Files.SingletonTemporaryFileCreator
 import play.api.libs.json.JsValue
 import play.api.libs.streams.ActorFlow
 import play.api.mvc.{Call, Request, Result, WebSocket}
@@ -508,7 +509,7 @@ class MarketAd @Inject() (
   // ============================== common-методы =================================
 
   private def blockImgBp = parse.multipartFormData(
-    Multipart.handleFilePartAsTemporaryFile,
+    Multipart.handleFilePartAsTemporaryFile( SingletonTemporaryFileCreator ),
     maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong
   )
 

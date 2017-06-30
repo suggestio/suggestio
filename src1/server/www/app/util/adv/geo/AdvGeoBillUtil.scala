@@ -2,7 +2,7 @@ package util.adv.geo
 
 import java.time.{LocalDate, OffsetDateTime}
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.adv.geo.MFormS
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill._

@@ -1,6 +1,6 @@
 package util.billing
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.tf.daily._
 import io.suggest.bill.{Amount_t, MCurrencies, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}

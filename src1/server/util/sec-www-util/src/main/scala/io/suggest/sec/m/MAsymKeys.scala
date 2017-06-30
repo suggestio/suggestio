@@ -1,6 +1,6 @@
 package io.suggest.sec.m
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.JacksonParsing

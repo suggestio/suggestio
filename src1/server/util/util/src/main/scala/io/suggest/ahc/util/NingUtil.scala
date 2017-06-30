@@ -3,7 +3,7 @@ package io.suggest.ahc.util
 import java.util.concurrent.Executor
 
 import io.suggest.util.SioFutureUtil.RunnableListenableFutureWrapper
-import org.asynchttpclient.{ListenableFuture, Response => AHCResponse}
+import play.shaded.ahc.org.asynchttpclient.{ListenableFuture, Response => AHCResponse}
 import play.api.libs.ws.ahc.AhcWSResponse
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -45,7 +45,7 @@ object NingUtil {
   implicit def ningFut2wsScalaFut(nfut: ListenableFuture[AHCResponse])
                                  (implicit ec: ExecutionContext): Future[AhcWSResponse] = {
     ningFut2scalaFut(nfut)
-      .map { AhcWSResponse.apply }
+      .map { r => new AhcWSResponse(r) }
   }
 
 }

@@ -1,6 +1,6 @@
 package util.adv.direct
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.adv.AdvConstants
 import models.adv.direct.{DirectAdvFormM_t, FormResult, OneNodeInfo}
 import play.api.data.Forms._

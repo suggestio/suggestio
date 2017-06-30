@@ -1,7 +1,7 @@
 package util.xplay
 
 import akka.stream.Materializer
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.sec.csp.Csp
 import play.api.mvc.{Filter, RequestHeader, Result}
 import util.acl.AclUtil
@@ -71,7 +71,7 @@ class SecHeadersFilter @Inject() (
     val rh = aclUtil.reqHdrFromRequestHdr( rh0 )
     val respFut = f(rh)
 
-    val isSecure = rh.secure
+    val isSecure = rh.isTransferSecure
 
     for (resp <- respFut) yield {
       // Добавить только заголовки, которые отсутсвуют в исходнике.

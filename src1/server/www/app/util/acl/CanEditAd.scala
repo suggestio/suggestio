@@ -1,13 +1,13 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.req.{IReqHdr, MAdProdReq, MReq, MUserInit}
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -26,10 +26,10 @@ class CanEditAd @Inject() (
                             isNodeAdmin             : IsNodeAdmin,
                             n2NodesUtil             : N2NodesUtil,
                             isAuth                  : IsAuth,
+                            reqUtil                 : ReqUtil,
                             mCommonDi               : ICommonDi
                           )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -57,8 +57,8 @@ class CanEditAd @Inject() (
   }
 
 
-  def apply(adId1: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq] = {
-    new SioActionBuilderImpl[MAdProdReq] with AdEditBase with InitUserCmds {
+  def apply(adId1: String, userInits1: MUserInit*): ActionBuilder[MAdProdReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAdProdReq] with AdEditBase with InitUserCmds {
 
       override def adId = adId1
 

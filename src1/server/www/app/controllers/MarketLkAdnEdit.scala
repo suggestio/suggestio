@@ -1,8 +1,8 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
@@ -21,7 +21,7 @@ import models.mproj.ICommonDi
 import models.req.{INodeReq, IReq}
 import play.api.data.Forms._
 import play.api.data.{Form, Mapping}
-import play.api.libs.Files.TemporaryFile
+import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile}
 import play.api.mvc.{MultipartFormData, Result}
 import play.core.parsers.Multipart
 import play.twirl.api.Html
@@ -63,7 +63,7 @@ class MarketLkAdnEdit @Inject() (
 
   /** Макс. байтовая длина загружаемой картинки в галлерею. */
   private val IMG_GALLERY_MAX_LEN_BYTES: Int = {
-    val mib = configuration.getInt("adn.node.img.gallery.len.max.mib") getOrElse 20
+    val mib = configuration.getOptional[Int]("adn.node.img.gallery.len.max.mib").getOrElse( 20 )
     mib * 1024 * 1024
   }
 
@@ -421,7 +421,7 @@ class MarketLkAdnEdit @Inject() (
 
 
   private def imgUploadBp = parse.multipartFormData(
-    Multipart.handleFilePartAsTemporaryFile,
+    Multipart.handleFilePartAsTemporaryFile( SingletonTemporaryFileCreator ),
     maxLength = IMG_GALLERY_MAX_LEN_BYTES
   )
   /** Обертка экшена для всех экшенов загрузки картинков. */

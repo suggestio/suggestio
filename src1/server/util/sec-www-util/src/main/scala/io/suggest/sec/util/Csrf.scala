@@ -1,6 +1,6 @@
 package io.suggest.sec.util
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import play.api.http.HeaderNames
 import play.api.mvc._
 import play.filters.csrf.{CSRFAddToken, CSRFCheck}

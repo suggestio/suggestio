@@ -76,7 +76,7 @@ trait ScSiteBase
         // Логгируем этот этап работы.
         lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
         fut.onComplete {
-          case Success(None)    => LOGGER.debug(s"$logPrefix No linked nodes not found. Request from ${_request.remoteAddress}")
+          case Success(None)    => LOGGER.debug(s"$logPrefix No linked nodes not found. Request from ${_request.remoteClientAddress}")
           case Success(Some(r)) => LOGGER.trace(s"$logPrefix Found node[${r.idOrNull}] ${r.guessDisplayNameOrIdOrEmpty}")
           case Failure(ex)      => LOGGER.warn(s"$logPrefix Unable to make nodes search request:\n $msearch", ex)
         }
@@ -277,7 +277,7 @@ trait ScSiteGeo
     if (maybeJsState.nonEmpty) {
       // Было раньше MovedPermanently, но почему-то оно может сбойнуть и закешироваться на CDN.
       // 2016.02.04 Логгирование тут усилено для отлова memleak'а с зацикливанием здесь.
-      LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteAddress}]")
+      LOGGER.trace(s"geoSite($siteArgs): Qs js state is nonEmpty, redirecting from ${request.path} [${request.remoteClientAddress}]")
       val call = routes.Sc.geoSite(x = siteArgs).url + "#!?" + maybeJsState.toQs()
       Redirect(call)
 

@@ -1,6 +1,6 @@
 package util.showcase
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
@@ -35,14 +35,14 @@ class ShowcaseNodeListUtil @Inject() (
   import mCommonDi._
 
   /** Показывать все города в выдаче или только текущий? */
-  private val SHOW_ALL_TOWNS: Boolean = configuration.getBoolean("showcase.nodes.towns.show.all")
+  private val SHOW_ALL_TOWNS: Boolean = configuration.getOptional[Boolean]("showcase.nodes.towns.show.all")
     .contains(true)   // .getOrElse(false)
 
   /** Если включён вывод списка городов, то надо определить макс.длину этого списка. */
-  private val MAX_TOWNS: Int = configuration.getInt("showcase.nodes.towns.max").getOrElse(10)
+  private val MAX_TOWNS: Int = configuration.getOptional[Int]("showcase.nodes.towns.max").getOrElse(10)
 
   /** Использовать сортировку не по имени, а по расстоянию до узлов. */
-  private val DISTANCE_SORT: Boolean = configuration.getBoolean("showcase.nodes.sort.distance")
+  private val DISTANCE_SORT: Boolean = configuration.getOptional[Boolean]("showcase.nodes.sort.distance")
     .contains(true)   // .getOrElse(false)
 
 

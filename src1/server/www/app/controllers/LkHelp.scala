@@ -1,6 +1,7 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.Inject
+
 import io.suggest.util.logs.MacroLogsImplLazy
 import models._
 import models.mhelp.MLkSupportRequest
@@ -9,7 +10,7 @@ import models.req.{INodeReq, IReq, IReqHdr}
 import models.usr.MPersonIdents
 import play.api.data.Forms._
 import play.api.data._
-import play.api.mvc.{ActionBuilder, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Result}
 import util.acl._
 import util.ident.IdentUtil
 import util.mail.IMailerWrapper
@@ -142,7 +143,7 @@ class LkHelp @Inject()(
       {lsr =>
         val personId = request.user.personIdOpt.get
         val userEmailsFut = mPersonIdents.findAllEmails(personId)
-        trace(logPrefix + "Processing from ip=" + request.remoteAddress)
+        trace(logPrefix + "Processing from ip=" + request.remoteClientAddress)
 
         val msg = mailer.instance
         msg.setReplyTo(lsr.replyEmail)
@@ -196,7 +197,7 @@ class LkHelp @Inject()(
           val personId = request.user.personIdOpt.get
 
           val emailsFut = mPersonIdents.findAllEmails(personId)
-          trace(logPrefix + "Processing from ip=" + request.remoteAddress)
+          trace(logPrefix + "Processing from ip=" + request.remoteClientAddress)
           // собираем письмо админам s.io
 
           val msg = mailer.instance
@@ -243,7 +244,7 @@ class LkHelp @Inject()(
     * @return Страница с инфой о компании.
     */
   def companyAbout(onNodeId: Option[String]) = csrf.AddToken {
-    val actionBuilder = onNodeId.fold[ActionBuilder[IReq]]( isAuth() )( isNodeAdmin(_) )
+    val actionBuilder = onNodeId.fold[ActionBuilder[IReq, AnyContent]]( isAuth() )( isNodeAdmin(_) )
     actionBuilder { implicit request =>
       val mnodeOpt = request match {
         case nreq: INodeReq[_] =>

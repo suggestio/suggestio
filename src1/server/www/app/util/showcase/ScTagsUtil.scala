@@ -1,6 +1,6 @@
 package util.showcase
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.tags.TagFacesUtil
 import io.suggest.geo.{CircleGs, CircleGsJvm}
 import io.suggest.model.n2.edge.MPredicates

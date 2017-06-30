@@ -1,8 +1,8 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
 import play.api.mvc._
@@ -19,10 +19,11 @@ import scala.language.higherKinds
 class IsSuOrNotProduction @Inject() (
                                       aclUtil   : AclUtil,
                                       isSu      : IsSu,
+                                      dab       : DefaultActionBuilder,
+                                      reqUtil   : ReqUtil,
                                       mCommonDi : ICommonDi
                                     )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
 
@@ -36,25 +37,21 @@ class IsSuOrNotProduction @Inject() (
 
     } else {
       // Нельзя исполнять текущий экшен.
-      LOGGER.warn(s"filter: User#${user.personIdOpt.orNull} not allowed to action, because is not a SU and app.mode=${mCommonDi.current.mode}. ip=${mreq.remoteAddress}")
+      LOGGER.warn(s"filter: User#${user.personIdOpt.orNull} not allowed to action, because is not a SU and app.mode=${mCommonDi.current.mode}. ip=${mreq.remoteClientAddress}")
       isSu.supOnUnauthFut(mreq)
     }
   }
 
 
   def apply[A](action: Action[A]): Action[A] = {
-    new Action[A] {
-      override def parser = action.parser
-
-      override def apply(request: Request[A]): Future[Result] = {
-        _apply(request)(action.apply)
-      }
+    dab.async(action.parser) { request: Request[A] =>
+      _apply(request)(action.apply)
     }
   }
 
 
-  def apply(): ActionBuilder[MReq] = {
-    new SioActionBuilderImpl[MReq] {
+  def apply(): ActionBuilder[MReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MReq] {
       override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]) = {
         _apply(request)(block)
       }

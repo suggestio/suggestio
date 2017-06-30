@@ -1,6 +1,6 @@
 package util.showcase
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.sc.tile.ColumnsCountT
 import models._
@@ -34,19 +34,19 @@ class ShowcaseUtil @Inject() (
   def SC_INDEX_CACHE_SECONDS = 20
 
   /** Дефолтовое имя ноды. */
-  val SITE_NAME_GEO = configuration.getString("market.showcase.nodeName.dflt").getOrElse("Suggest.io")
+  val SITE_NAME_GEO = configuration.getOptional[String]("market.showcase.nodeName.dflt").getOrElse("Suggest.io")
 
   /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getString("market.showcase.color.bg.dflt").getOrElse("333333")
+  val SITE_BGCOLOR_DFLT = configuration.getOptional[String]("market.showcase.color.bg.dflt").getOrElse("333333")
 
-  val SITE_BGCOLOR_GEO = configuration.getString("market.showcase.color.bg.geo").getOrElse(SITE_BGCOLOR_DFLT)
+  val SITE_BGCOLOR_GEO = configuration.getOptional[String]("market.showcase.color.bg.geo").getOrElse(SITE_BGCOLOR_DFLT)
 
 
   /** Дефолтовый цвет элементов переднего плана. */
-  val SITE_FGCOLOR_DFLT = configuration.getString("market.showcase.color.fg.dflt").getOrElse("FFFFFF")
+  val SITE_FGCOLOR_DFLT = configuration.getOptional[String]("market.showcase.color.fg.dflt").getOrElse("FFFFFF")
 
   /** Цвет для выдачи, которая вне узла. */
-  val SITE_FGCOLOR_GEO = configuration.getString("market.showcase.color.fg.geo").getOrElse(SITE_FGCOLOR_DFLT)
+  val SITE_FGCOLOR_GEO = configuration.getOptional[String]("market.showcase.color.fg.geo").getOrElse(SITE_FGCOLOR_DFLT)
 
   /**
     * Сгруппировать "узкие" карточки, чтобы они были вместе.
@@ -154,7 +154,7 @@ class ShowcaseUtil @Inject() (
   override val MIN_SZ_MULT = super.MIN_SZ_MULT
 
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
-  private val TILES_SZ_MULTS: List[SzMult_t] = configuration.getDoubleSeq("sc.tiles.szmults")
+  private val TILES_SZ_MULTS: List[SzMult_t] = configuration.getOptional[Seq[Double]]("sc.tiles.szmults")
     .map { _.map(_.toFloat).toList }
     .getOrElse {
       List(
@@ -169,11 +169,11 @@ class ShowcaseUtil @Inject() (
   override def TILE_PADDING_CSSPX = super.TILE_PADDING_CSSPX
 
   /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
-  private val FOCUSED_PADDING_CSSPX = configuration.getInt("sc.focused.padding.hsides.csspx").getOrElse(10)
+  private val FOCUSED_PADDING_CSSPX = configuration.getOptional[Int]("sc.focused.padding.hsides.csspx").getOrElse(10)
 
   /** Макс. кол-во вертикальных колонок. */
-  override val TILE_MAX_COLUMNS = configuration.getInt("sc.tiles.columns.max").getOrElse(4)
-  override val TILE_MIN_COLUMNS = configuration.getInt("sc.tiles.columns.min").getOrElse( super.TILE_MIN_COLUMNS )
+  override val TILE_MAX_COLUMNS = configuration.getOptional[Int]("sc.tiles.columns.max").getOrElse(4)
+  override val TILE_MIN_COLUMNS = configuration.getOptional[Int]("sc.tiles.columns.min").getOrElse( super.TILE_MIN_COLUMNS )
 
   def MIN_W1 = -1F
 

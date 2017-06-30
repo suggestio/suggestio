@@ -9,7 +9,7 @@ import io.suggest.es.util.SioEsUtil._
 import org.elasticsearch.action.index.IndexRequestBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.primo.id.OptStrId

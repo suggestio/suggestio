@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.Files
 
 import akka.stream.Materializer
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import com.googlecode.htmlcompressor.compressor.HtmlCompressor
 import com.mohiva.play.htmlcompressor.HTMLCompressorFilter
 import io.suggest.playx.IsAppModes
@@ -47,7 +47,7 @@ class HtmlCompressUtil @Inject() (
 
   /** Прочитать булево значение из конфига через строку, которая может быть не только true/false. */
   private def getBool(confKey: String, dflt: Boolean): Boolean = {
-    val result = configuration.getString(confKey).map {
+    val result = configuration.getOptional[String](confKey).map {
       _.toLowerCase match {
         case "true"  | "1" | "+" | "yes" | "on" => true
         case "false" | "0" | "-" | "no" | "off" => false

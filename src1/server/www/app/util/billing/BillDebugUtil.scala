@@ -2,7 +2,7 @@ package util.billing
 
 import java.time.{LocalDate, OffsetDateTime}
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.price.dsl.IPriceDslTerm
 import io.suggest.bin.ConvCodecs
 import io.suggest.dt.YmdHelpersJvm

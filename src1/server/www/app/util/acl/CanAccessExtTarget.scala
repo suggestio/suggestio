@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -22,18 +22,18 @@ class CanAccessExtTarget @Inject() (
                                      aclUtil            : AclUtil,
                                      mExtTargets        : MExtTargets,
                                      isNodeAdmin        : IsNodeAdmin,
+                                     reqUtil            : ReqUtil,
                                      mCommonDi          : ICommonDi
                                    )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 { outer =>
 
   import mCommonDi._
 
 
   /** @param tgId id ранее сохранённого экземпляра [[models.adv.MExtTarget]]. */
-  def apply(tgId: String): ActionBuilder[MExtTargetNodeReq] = {
-    new SioActionBuilderImpl[MExtTargetNodeReq] {
+  def apply(tgId: String): ActionBuilder[MExtTargetNodeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MExtTargetNodeReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MExtTargetNodeReq[A]) => Future[Result]): Future[Result] = {
         val tgOptFut = mExtTargets.getById(tgId)

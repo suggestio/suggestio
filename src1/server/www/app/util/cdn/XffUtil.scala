@@ -1,15 +1,15 @@
 package util.cdn
 
 import akka.stream.Materializer
-import com.google.inject.Inject
+import javax.inject.Inject
+
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
 
 import scala.concurrent.Future
 import play.api.http.HeaderNames._
-
-import scala.collection.JavaConversions._
+import util.acl.AclUtil
 
 /**
  * Suggest.io
@@ -22,6 +22,7 @@ import scala.collection.JavaConversions._
 
 class DumpXffHeaders @Inject() (
   configuration             : Configuration,
+  aclUtil                   : AclUtil,
   override implicit val mat : Materializer
 )
   extends Filter
@@ -30,13 +31,14 @@ class DumpXffHeaders @Inject() (
 
   /** Какие заголовки дампить? Если фильтр отключён, то эта настройка всё равно прочитается. */
   lazy val DUMP_HEADER_NAMES: Seq[String] = {
-    configuration.getStringList("xff.dump.headers.names")
+    configuration.getOptional[Seq[String]]("xff.dump.headers.names")
       .map(_.toSeq)
       .getOrElse { Seq(HOST, X_FORWARDED_FOR, "X-Client-Ip", "X-Real-Ip", X_FORWARDED_PROTO, X_FORWARDED_HOST) }
   }
 
   /** Применить фильтр для обработки одного запроса. */
-  override def apply(f: (RequestHeader) => Future[Result])(rh: RequestHeader): Future[Result] = {
+  override def apply(f: (RequestHeader) => Future[Result])(rh0: RequestHeader): Future[Result] = {
+    val rh = aclUtil.reqHdrFromRequestHdr( rh0 )
     val resultFut = f(rh)
 
     // Параллельно начинаем дампить хидеры в лог.
@@ -46,8 +48,8 @@ class DumpXffHeaders @Inject() (
         .append(' ')
         .append(rh.uri)
         .append(" <- ")
-        .append(rh.remoteAddress)
-        .append(" secure=").append(rh.secure).append(":\n")
+        .append(rh.remoteClientAddress)
+        .append(" secure=").append(rh.isTransferSecure).append(":\n")
 
       rh.headers
         .toMap

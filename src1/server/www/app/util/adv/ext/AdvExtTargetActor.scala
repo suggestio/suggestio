@@ -3,7 +3,7 @@ package util.adv.ext
 import java.io.File
 
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.ahc.upload.{IMpUploadArgs, UploadRefusedException}
 import io.suggest.common.geom.d2.INamedSize2di
 import io.suggest.fsm.FsmActor
@@ -345,7 +345,7 @@ class AeTgJsAdpActorUtil @Inject()(
 
   /** Макс.число попыток fillCtx. Нужно чтобы избегать ситуаций бесконечного заполнения контекста. */
   val MAX_FILL_CTX_TRIES = {
-    configuration.getInt("adv.ext.target.fillCtx.try.max")
+    configuration.getOptional[Int]("adv.ext.target.fillCtx.try.max")
       .getOrElse(2)
   }
 

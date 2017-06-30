@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import models.mproj.ICommonDi
 import util.acl.IsSu
 import util.adv.direct.AdvRcvrsUtil

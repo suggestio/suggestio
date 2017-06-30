@@ -2,7 +2,7 @@ package util.adv.ext
 
 import java.net.URL
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.adv.ext.view.RunnerPage
 import models.adv._
 import models.mext.MExtService

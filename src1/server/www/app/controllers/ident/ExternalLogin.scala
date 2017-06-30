@@ -1,6 +1,7 @@
 package controllers.ident
 
-import com.google.inject.Inject
+import javax.inject.Inject
+
 import controllers.{SioController, routes}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.node.IMNodes
@@ -15,13 +16,15 @@ import models.mproj.ICommonDi
 import models.req.IReq
 import models.usr._
 import models.{ExtRegConfirmForm_t, MNode, MNodeTypes}
+import play.api.cache.AsyncCacheApi
 import play.api.data.Form
+import play.api.libs.ws.{WSClient, WSRequest}
 import play.api.mvc._
 import play.twirl.api.Html
 import securesocial.controllers.ProviderControllerHelper._
 import securesocial.core.RuntimeEnvironment.Default
 import securesocial.core._
-import securesocial.core.services.RoutesService
+import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import util.acl._
 import util.adn.INodesUtil
 import util.di.IIdentUtil
@@ -34,6 +37,7 @@ import views.html.ident.reg.ext._
 import scala.collection.immutable.ListMap
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -45,6 +49,8 @@ import scala.concurrent.duration._
 class ExternalLogin_ @Inject() (
   routesSvc                       : SsRoutesService,
   ssUserService                   : SsUserService,
+  ssHttpService                   : SsHttpService,
+  ssCacheService                  : SsCacheService,
   override val identUtil          : IdentUtil,
   mCommonDi                       : ICommonDi
 )
@@ -56,7 +62,7 @@ class ExternalLogin_ @Inject() (
 
   /** Фильтровать присылаемый ttl. */
   val MAX_SESSION_TTL_SECONDS = {
-    configuration.getInt("login.ext.session.ttl.max.minutes")
+    configuration.getOptional[Int]("login.ext.session.ttl.max.minutes")
       .getOrElse(86400)
       .minutes
       .toSeconds
@@ -65,6 +71,8 @@ class ExternalLogin_ @Inject() (
   /** secure-social настраивается через этот Enviroment. */
   implicit val env: RuntimeEnvironment[SsUser] = {
     new Default[SsUser] {
+      override def cacheService = ssCacheService
+      override def httpService = ssHttpService
       override lazy val routes = routesSvc
       override def userService = ssUserService
       override lazy val providers: ListMap[String, IdentityProvider] = {
@@ -308,9 +316,9 @@ trait ExternalLogin
 }
 
 
-class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService.Default {
+class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService {
 
-  override def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
+  private def absoluteUrl(call: Call)(implicit req: RequestHeader): String = {
     if(call.isInstanceOf[ExternalCall])
       call.url
     else
@@ -321,11 +329,35 @@ class SsRoutesService @Inject() (ctxUtil: ContextUtil) extends RoutesService.Def
                                 (implicit req: RequestHeader): String = {
     val prov = ILoginProvider.maybeWithName(providerId).get
     val relUrl = routes.Ident.idViaProvider(prov, redirectTo)
-    absoluteUrl(relUrl)
+    absoluteUrl( relUrl )
   }
 
   override def loginPageUrl(implicit req: RequestHeader): String = {
-    absoluteUrl( routes.Ident.emailPwLoginForm() )
+    val call = routes.Ident.emailPwLoginForm()
+    absoluteUrl( call )
   }
 
 }
+
+
+class SsHttpService @Inject() (ws: WSClient) extends HttpService {
+  override def url(url: String): WSRequest = ws.url(url)
+}
+
+
+class SsCacheService @Inject() (cacheApi: AsyncCacheApi) extends CacheService {
+
+  override def set[T](key: String, value: T, ttlInSeconds: Int): Future[_] = {
+    cacheApi.set(key, value, expiration = ttlInSeconds.seconds)
+  }
+
+  override def getAs[T](key: String)(implicit ct: ClassTag[T]): Future[Option[T]] = {
+    cacheApi.get[T](key)
+  }
+
+  override def remove(key: String): Future[_] = {
+    cacheApi.remove(key)
+  }
+
+}
+

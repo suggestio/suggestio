@@ -2,7 +2,7 @@ package util.img.cron
 
 import java.nio.file.{Files, Path}
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.async.AsyncUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.im.MLocalImgs
@@ -36,15 +36,15 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
   private def EDD_CONF_PREFIX = "m.img.local.edd"
 
   /** Включено ли периодическое удаление пустых директорий из под картинок? */
-  private def DELETE_EMPTY_DIRS_ENABLED = configuration.getBoolean(EDD_CONF_PREFIX + ".enabled")
+  private def DELETE_EMPTY_DIRS_ENABLED = configuration.getOptional[Boolean](EDD_CONF_PREFIX + ".enabled")
     .contains(true)
 
   /** Как часто инициировать проверку? */
-  private def DELETE_EMPTY_DIRS_EVERY = configuration.getInt(EDD_CONF_PREFIX + ".every.minutes")
+  private def DELETE_EMPTY_DIRS_EVERY = configuration.getOptional[Int](EDD_CONF_PREFIX + ".every.minutes")
     .fold [FiniteDuration] (12.hours) (_.minutes)
 
   /** На сколько отодвигать старт проверки. */
-  private def DELETE_EMPTY_DIRS_START_DELAY = configuration.getInt(EDD_CONF_PREFIX + ".start.delay.seconds")
+  private def DELETE_EMPTY_DIRS_START_DELAY = configuration.getOptional[Int](EDD_CONF_PREFIX + ".start.delay.seconds")
     .getOrElse(60)
     .seconds
 

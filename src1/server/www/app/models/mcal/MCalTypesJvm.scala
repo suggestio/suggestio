@@ -4,7 +4,6 @@ import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.common.empty.EmptyUtil
 import play.api.data.Forms._
 import play.api.data.Mapping
-import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -30,7 +29,7 @@ class MCalTypesJvm {
   /** Поддержка обязательного маппинга из/в JSON. */
   implicit val mCalTypeFormat: Format[MCalType] = {
     val reads = mCalTypeOptFormat
-      .filter( ValidationError("error.unknown.name") )(_.nonEmpty)
+      .filter( JsonValidationError("error.unknown.name") )(_.nonEmpty)
       .map(_.get)
     val writes = (mCalTypeOptFormat: Writes[Option[MCalType]])
       .contramap[MCalType]( EmptyUtil.someF )

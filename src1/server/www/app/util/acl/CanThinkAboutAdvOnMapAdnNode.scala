@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MAdProdRcvrReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.adv.geo.AdvGeoRcvrsUtil
 
 import scala.concurrent.Future
@@ -24,10 +24,10 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
                                                advGeoRcvrsUtil        : AdvGeoRcvrsUtil,
                                                isNodeAdmin            : IsNodeAdmin,
                                                isAuth                 : IsAuth,
+                                               reqUtil                : ReqUtil,
                                                mCommonDi              : ICommonDi
                                              )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -40,8 +40,8 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
     * @param adId id рекламной карточки, которую юзер хочет разместить на узле.
     * @param nodeId id узла, на который юзер хочет что-то размещать.
     */
-  def apply(adId: String, nodeId: String): ActionBuilder[MAdProdRcvrReq] = {
-    new SioActionBuilderImpl[MAdProdRcvrReq] {
+  def apply(adId: String, nodeId: String): ActionBuilder[MAdProdRcvrReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAdProdRcvrReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdProdRcvrReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
@@ -60,7 +60,7 @@ class CanThinkAboutAdvOnMapAdnNode @Inject() (
 
           // Подготовить синхронные данные:
           val reqBlank = MReq(request, user)
-          lazy val logPrefix = s"${getClass.getSimpleName}[${reqBlank.remoteAddress}]#${user.personIdOpt.orNull}:"
+          lazy val logPrefix = s"${getClass.getSimpleName}[${reqBlank.remoteClientAddress}]#${user.personIdOpt.orNull}:"
 
           // Когда придёт ответ от БД по запрошенной карточке...
           madOptFut.flatMap {

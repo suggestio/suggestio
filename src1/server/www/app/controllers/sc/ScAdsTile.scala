@@ -100,7 +100,7 @@ trait ScAdsTileBase
 
       } else {
         // Нет поисковых критериев -- сразу же ничего не ищем.
-        LOGGER.info(s"$logPrefix No data to ads search: ${_request.uri} remote ${_request.remoteAddress}")
+        LOGGER.info(s"$logPrefix No data to ads search: ${_request.uri} remote ${_request.remoteClientAddress}")
         Future.successful(Nil)
       }
     }

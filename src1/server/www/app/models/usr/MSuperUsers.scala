@@ -1,6 +1,6 @@
 package models.usr
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -52,7 +52,7 @@ class MSuperUsers @Inject()(
     // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
     // юзеров в MNode, при наличии уже существующих в MPerson.
     val ck = "start.ensure.superusers"
-    val createIfMissing = configuration.getBoolean(ck).getOrElse(false)
+    val createIfMissing = configuration.getOptional[Boolean](ck).contains(true)
     val fut = resetSuperuserIds(createIfMissing)
     if (!createIfMissing)
       debug("Does not ensuring superusers in permanent models: " + ck + " != true")

@@ -3,7 +3,7 @@ package models.ai
 import java.time.ZoneId
 
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptStrId

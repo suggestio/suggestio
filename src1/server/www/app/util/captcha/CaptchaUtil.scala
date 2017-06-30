@@ -1,10 +1,11 @@
 package util.captcha
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
+
 import io.suggest.sec.util.CipherUtil
-import play.api.Configuration
+import models.mproj.ICommonDi
 import play.api.http.HeaderNames
-import play.api.mvc.{RequestHeader, Session}
+import play.api.mvc.{RequestHeader, SessionCookieBaker}
 import play.api.data.Forms._
 import util.FormUtil._
 
@@ -31,16 +32,19 @@ object CaptchaUtil {
 @Singleton
 class CaptchaUtil @Inject() (
   protected val cipherUtil    : CipherUtil,
-  configuration               : Configuration
+  mCommonDi                   : ICommonDi
 ) {
+
+  import mCommonDi.configuration
 
   def CAPTCHA_FMT_LC = "png"
 
   /** Кол-во цифр в цифровой капче (длина строки капчи). */
   def DIGITS_CAPTCHA_LEN = 5
 
-  val COOKIE_MAXAGE_SECONDS = configuration.getInt("captcha.cookie.maxAge.seconds").getOrElse(1800)
-  val COOKIE_FLAG_SECURE = configuration.getBoolean("captcha.cookie.secure").getOrElse(Session.secure)
+  val COOKIE_MAXAGE_SECONDS = configuration.getOptional[Int]("captcha.cookie.maxAge.seconds").getOrElse(1800)
+  val COOKIE_FLAG_SECURE = configuration.getOptional[Boolean]("captcha.cookie.secure")
+    .getOrElse( mCommonDi.current.injector.instanceOf[SessionCookieBaker].secure )
 
   /** Маппер формы для hidden поля, содержащего id капчи. */
   def captchaIdM = nonEmptyText(maxLength = 16)

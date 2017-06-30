@@ -41,7 +41,7 @@ trait SetLangCookieUtil extends I18nSupport with IMCommonDi {
   def setLangCookie5(resFut: Future[Result], langOpt: Option[Lang]): Future[Result] = {
     langOpt match {
       case Some(lang) =>
-        resFut.map { _.withLang(lang) }
+        resFut.map { _.withLang(lang)(mCommonDi.messagesApi) }
       case None =>
         resFut
     }

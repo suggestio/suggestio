@@ -11,17 +11,12 @@ trait IRequestHeaderWrap extends RequestHeader {
 
   def request: RequestHeader
 
-  override def id             = request.id
-  override def secure         = request.secure
-  override def uri            = request.uri
-  override def remoteAddress  = request.remoteAddress
-  override def queryString    = request.queryString
   override def method         = request.method
   override def headers        = request.headers
-  override def path           = request.path
   override def version        = request.version
-  override def tags           = request.tags
-  override def clientCertificateChain = request.clientCertificateChain
+  override def connection     = request.connection
+  override def target         = request.target
+  override def attrs          = request.attrs
 
 }
 

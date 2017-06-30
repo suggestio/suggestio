@@ -3,7 +3,7 @@ package models.usr
 import io.suggest.common.menum.EnumMaybeWithName
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.model.EsModelUtil._
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelPlayJsonStaticT, EsModelStaticT, EsModelT}
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.util.logs.MacroLogsImpl

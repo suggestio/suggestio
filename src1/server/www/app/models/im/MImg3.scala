@@ -2,8 +2,11 @@ package models.im
 
 import java.time.OffsetDateTime
 import java.util.{NoSuchElementException, UUID}
+import javax.inject.{Inject, Singleton}
 
-import com.google.inject.{Inject, Singleton}
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.fio.WriteRequest
 import io.suggest.model.img.ImgSzDated
@@ -14,11 +17,10 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.MBasicMeta
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
-import io.suggest.util.logs.{MacroLogsImplLazy, MacroLogsImpl}
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.{IImgMeta, _}
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
-import play.api.libs.iteratee.Enumerator
 import util.img.ImgFileNameParsersImpl
 
 import scala.concurrent.Future
@@ -35,6 +37,7 @@ class MImgs3 @Inject() (
   val iMediaStorages        : IMediaStorages,
   val mMedias               : MMedias,
   val mNodes                : MNodes,
+  override val streamsUtil  : StreamsUtil,
   override val cacheApiUtil : CacheApiUtil,
   override val mLocalImgs   : MLocalImgs,
   val mCommonDi             : ICommonDi
@@ -60,14 +63,14 @@ class MImgs3 @Inject() (
   }
 
   /** Выполнить стриминг данных картинки из SeaWeedFS. */
-  override def getStream(mimg: MImgT): Enumerator[Array[Byte]] = {
-    val enumFut = for {
+  override def getStream(mimg: MImgT): Source[ByteString, _] = {
+    val srcFut = for {
       mm <- _mediaFut( _mediaOptFut(mimg) )
       rr <- iMediaStorages.read( mm.storage )
     } yield {
       rr.data
     }
-    Enumerator.flatten( enumFut )
+    Source.fromFutureSource( srcFut )
   }
 
   override protected def _getImgMeta(mimg: MImgT): Future[Option[IImgMeta]] = {

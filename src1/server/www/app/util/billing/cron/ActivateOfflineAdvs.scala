@@ -1,6 +1,6 @@
 package util.billing.cron
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{MItem, MItems}

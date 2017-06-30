@@ -2,7 +2,7 @@ package io.suggest.mbill2.m.contract
 
 import java.time.OffsetDateTime
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.mbill2.m.common.InsertOneReturning
 import io.suggest.mbill2.m.dt.DateCreatedSlick
@@ -60,7 +60,7 @@ class MContracts @Inject()(
   override type El_t = MContract
 
   /** Дефолтовый суффикс контракта, может быть использован при создании инстанса MContract. */
-  lazy val SUFFIX_DFLT = configuration.getString("bill.contract.suffix.dflt").getOrElse("CEO")
+  lazy val SUFFIX_DFLT = configuration.getOptional[String]("bill.contract.suffix.dflt").getOrElse("CEO")
 
   /** slick-описание таблицы контрактов. */
   class MContractsTable(tag: Tag)

@@ -47,7 +47,7 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    */
   def cacheKey(id: String): String = id + CACHE_KEY_SUFFIX
 
-  def getByIdFromCache(id: String): Option[T1] = {
+  def getByIdFromCache(id: String): Future[Option[T1]] = {
     val ck = cacheKey(id)
     cache.get[T1](ck)
   }
@@ -60,9 +60,11 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   def getById(id: String): Future[Option[T1]] = {
     // 2014.nov.24: Форсируем полный асинхрон при работе с кешем.
     val ck = cacheKey(id)
-    Future { cache.get[T1](ck) }
+    cache.get[T1](ck)
       .filter { _.isDefined }
-      .recoverWith { case ex: NoSuchElementException => getByIdAndCache(id, ck) }
+      .recoverWith { case _: NoSuchElementException =>
+        getByIdAndCache(id, ck)
+      }
   }
 
   /**
@@ -72,30 +74,37 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
    * @return Результаты в неопределённом порядке.
    */
   def multiGet(ids: TraversableOnce[String], acc0: List[T1] = Nil): Future[Seq[T1]] = {
-    val (cached, nonCachedIds) = ids.foldLeft [(List[T1], List[String])] (acc0 -> Nil) {
-      case ((accCached, notCached), id) =>
-        getByIdFromCache(id) match {
-          case Some(adnNode) =>
-            (adnNode :: accCached) -> notCached
-          case None =>
-            accCached -> (id :: notCached)
-        }
-    }
-    val resultFut = companion.multiGetRev(nonCachedIds, acc0 = cached)
-    // Асинхронно отправить в кеш всё, чего там ещё не было.
-    if (nonCachedIds.nonEmpty) {
-      resultFut.onSuccess { case results =>
-        val ncisSet = nonCachedIds.toSet
-        results.foreach { result =>
-          val id = result.idOrNull
-          if (ncisSet contains id) {
-            val ck = cacheKey(id)
-            cache.set(ck, result, EXPIRE)
+    val accsFut2 = ids
+      .foldLeft (Future.successful(acc0 -> List.empty[String])) {
+        (accsFut0, id) =>
+          for {
+            mnodeOpt                <- getByIdFromCache(id)
+            (accCached, notCached)  <- accsFut0
+          } yield {
+            mnodeOpt.fold {
+              accCached -> (id :: notCached)
+            } { mnode =>
+              (mnode :: accCached) -> notCached
+            }
+          }
+      }
+    accsFut2.flatMap { case (cached, nonCachedIds) =>
+      val resultFut = companion.multiGetRev(nonCachedIds, acc0 = cached)
+      // Асинхронно отправить в кеш всё, чего там ещё не было.
+      if (nonCachedIds.nonEmpty) {
+        resultFut.onSuccess { case results =>
+          val ncisSet = nonCachedIds.toSet
+          results.foreach { result =>
+            val id = result.idOrNull
+            if (ncisSet contains id) {
+              val ck = cacheKey(id)
+              cache.set(ck, result, EXPIRE)
+            }
           }
         }
       }
+      resultFut
     }
-    resultFut
   }
 
   def multiGetMap(ids: TraversableOnce[String], acc0: List[T1] = Nil): Future[Map[String, T1]] = {

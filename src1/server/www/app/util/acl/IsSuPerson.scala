@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.node.MNodeTypes
 import models.MNode
 import models.req.{MPersonReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -21,16 +21,15 @@ import scala.concurrent.Future
 class IsSuPerson @Inject()(
                             aclUtil   : AclUtil,
                             isSu      : IsSu,
+                            reqUtil   : ReqUtil,
                             mCommonDi : ICommonDi
-                          )
-  extends SioActionBuilderOuter
-{
+                          ) {
 
   import mCommonDi._
 
   /** @param personId id юзера. */
-  def apply(personId: String): ActionBuilder[MPersonReq] = {
-    new SioActionBuilderImpl[MPersonReq] {
+  def apply(personId: String): ActionBuilder[MPersonReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MPersonReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MPersonReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

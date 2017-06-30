@@ -2,7 +2,7 @@ package util.adr
 
 import java.io.File
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ym.model.common.MImgInfoMeta
@@ -46,7 +46,7 @@ class AdRenderUtil @Inject() (
   /** Используемый по умолчанию рендерер. Влияет на дефолтовый рендеринг карточки. */
   val (_RRR_FACTORY, _RRR_UTIL) = {
     val ck = "ad.render.renderer.dflt"
-    configuration.getString(ck)
+    configuration.getOptional[String](ck)
       .fold [(IAdRrrDiFactory, IAdRrrUtil)] (_wkHtmlFactory) { raw =>
         if ( raw.startsWith("wkhtml") ) {
           _wkHtmlFactory

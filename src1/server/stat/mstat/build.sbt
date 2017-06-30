@@ -17,6 +17,9 @@ resolvers ++= {
 
 libraryDependencies ++= {
   Seq(
+    "com.google.inject"             % "guice"                % Common.Vsn.GUICE,
+    "com.google.inject.extensions"  % "guice-assistedinject" % Common.Vsn.GUICE,
+
     "org.threeten"          % "threeten-extra"        % Common.Vsn.THREETEN_EXTRA,
     "org.scalatest"         %% "scalatest"            % Common.scalaTestVsn         % Test
   )

@@ -10,7 +10,8 @@ import models.mctx.IContextUtilDi
 import models.mext.{IExtPostInfo, IOAuth1MkPostArgs, MExtPostInfo}
 import models.mproj.IMCommonDi
 import models.msc.SiteQsArgs
-import org.asynchttpclient.AsyncHttpClient
+import play.api.libs.json.JsValue
+import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.api.libs.oauth._
 import util.n2u.IN2NodesUtilDi
 import util.{FormUtil, TplDataFormatUtil}
@@ -106,8 +107,8 @@ trait OAuth1Support
   override lazy val consumerKey: ConsumerKey = {
     val cp = ssConfPrefix
     ConsumerKey(
-      key     = configuration.getString(cp + ".consumerKey").get,
-      secret  = configuration.getString(cp + ".consumerSecret").get
+      key     = configuration.getOptional[String](cp + ".consumerKey").get,
+      secret  = configuration.getOptional[String](cp + ".consumerSecret").get
     )
   }
 
@@ -120,9 +121,9 @@ trait OAuth1Support
     val cp = ssConfPrefix
     OAuth(
       ServiceInfo(
-        requestTokenURL  = configuration.getString(cp + ".requestTokenUrl")
+        requestTokenURL  = configuration.getOptional[String](cp + ".requestTokenUrl")
           .getOrElse( REQUEST_TOKEN_URL_DFLT ),
-        accessTokenURL   = configuration.getString(cp + ".accessTokenUrl")
+        accessTokenURL   = configuration.getOptional[String](cp + ".accessTokenUrl")
           .getOrElse( ACCESS_TOKEN_URL_DFLT ),
         // securesocial должна по идее использовать /authentificate, а не authorize. Поэтому, отвязываем значение.
         authorizationURL = AUTHORIZATION_URL,
@@ -214,7 +215,7 @@ trait OAuth1Support
     ning.executeRequest(req)
       .map { resp =>
         if (resp.status == 200) {
-          val tweetId = (resp.json \ "id_str").as[String]
+          val tweetId = (resp.body[JsValue] \ "id_str").as[String]
           LOGGER.trace("New tweet posted: " + tweetId + " resp.body =\n  " + resp.body)
           MExtPostInfo( tweetId )
         } else {

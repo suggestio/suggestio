@@ -22,12 +22,16 @@ libraryDependencies ++= {
  val tikaVsn       = "1.12"
  Seq(
   //jdbc exclude("com.h2database", "h2"),
-  //"com.typesafe.play" %% "anorm" % "2.5.0",
-  cache,
-  json,
+  guice,
+  ehcache,
+  "com.typesafe.play" %% "play-json" % Common.Vsn.PLAY_JSON_VSN,
 
   ws exclude("commons-logging", "commons-logging"),
+  
+  // Поддержка отслыки почты.
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
+  "com.typesafe.play" %% "play-mailer-guice" % Common.playMailerVsn,
+
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.6.3",  // https://github.com/mohiva/play-html-compressor
   //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
@@ -206,6 +210,7 @@ excludeFilter in gzip := "*.woff" || "*.woff2"
 // Дополнительные импорты для twirl-шаблонов.
 TwirlKeys.templateImports ++= Seq(
   "io.suggest.mbill2.m.gid.Gid_t",
+  "play.twirl.api.HtmlFormat",
   "models.mctx.Context"
 )
 

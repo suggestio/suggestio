@@ -2,7 +2,7 @@ package io.suggest.sec.util
 
 import java.io.{InputStream, OutputStream}
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
@@ -44,7 +44,7 @@ class PgpUtil @Inject() (
   /** Пароль для секретного ключа сервиса. Можно добавить префикс пароля через конфиг. */
   private val SEC_KEY_PASSWORD: String = {
     val passwordRoot = """Y$mo[@QS-=S!A+W#ZMi;m]l9!,SNC]Ad_(9txd,?jb&"i{O#y'(\!)1yrTsI3m(@"""
-    configuration.getString("pgp.key.password.prefix")
+    configuration.getOptional[String]("pgp.key.password.prefix")
       .fold (passwordRoot) { _ + passwordRoot }
   }
 
@@ -70,7 +70,7 @@ class PgpUtil @Inject() (
   /** Запустить инициализацию, если задано в конфиге. */
   def maybeInit(): Option[Future[_]] = {
     val cfk = "pgp.keyring.init.enabled"
-    if ( configuration.getBoolean(cfk).getOrElse(false) ) {
+    if ( configuration.getOptional[Boolean](cfk).contains(true) ) {
       Some(init())
     } else {
       mAsymKeys.getById(LOCAL_STOR_KEY_ID)

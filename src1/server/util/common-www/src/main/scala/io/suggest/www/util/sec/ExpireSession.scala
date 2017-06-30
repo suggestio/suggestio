@@ -1,7 +1,7 @@
 package io.suggest.www.util.sec
 
 import akka.stream.Materializer
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.sec.m.msession.Keys._
 import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
 import io.suggest.util.logs.MacroLogsImpl
@@ -136,12 +136,13 @@ class ExpireSessionUtil @Inject() (
   */
 @Singleton
 class ExpireSessionAction @Inject() (
+                                      dab                        : DefaultActionBuilder,
                                       expireSessionUtil          : ExpireSessionUtil
                                     ) {
 
   /** Завернуть экшен. */
   def apply[A](action: Action[A]): Action[A] = {
-    Action.async(action.parser) { request =>
+    dab.async(action.parser) { request =>
       expireSessionUtil._applyAction(request)(action.apply)
     }
   }

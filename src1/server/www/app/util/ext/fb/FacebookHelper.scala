@@ -1,6 +1,6 @@
 package util.ext.fb
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.geom.d2.INamedSize2di
 import models.MNode
 import models.blk.SzMult_t

@@ -1,9 +1,9 @@
 package io.suggest.swfs.client.proto.get
 
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import io.suggest.fio.IReadResponse
 import play.api.http.HeaderNames
-import play.api.libs.iteratee.Enumerator
-import play.api.libs.ws.WSResponseHeaders
 
 /**
  * Suggest.io
@@ -14,17 +14,17 @@ import play.api.libs.ws.WSResponseHeaders
 trait IGetResponse extends IReadResponse {
 
   /** Сырые заголовки HTTP-ответа. */
-  def headers: WSResponseHeaders
+  def headers: Map[String, Seq[String]]
 
   override def contentType: String = {
-    headers.headers
+    headers
       .get( HeaderNames.CONTENT_TYPE )
       .flatMap(_.headOption)
       .getOrElse("application/octet-stream")
   }
 
   override def sizeB: Long = {
-    headers.headers
+    headers
       .get( HeaderNames.CONTENT_LENGTH )
       .flatMap(_.headOption)
       .fold(0L)(_.toLong)
@@ -34,7 +34,7 @@ trait IGetResponse extends IReadResponse {
 
 
 case class GetResponse(
-  override val headers      : WSResponseHeaders,
-  override val data         : Enumerator[Array[Byte]]
-)
+                        override val headers      : Map[String, Seq[String]],
+                        override val data         : Source[ByteString, _]
+                      )
   extends IGetResponse

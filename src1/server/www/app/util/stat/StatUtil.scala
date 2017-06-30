@@ -1,6 +1,6 @@
 package util.stat
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.IGeoFindIpResult
@@ -145,7 +145,7 @@ class StatUtil @Inject()(
     def userSaOpt: Option[MAction]
 
     /** Оверрайдить при уже наличии нормального адреса. */
-    def remoteAddr = geoIpUtil.fixRemoteAddr( ctx.request.remoteAddress )
+    def remoteAddr = geoIpUtil.fixRemoteAddr( ctx.request.remoteClientAddress )
 
     /** Является ли текущий клиент "локальным", т.е. не очень-то интересным для статистики. */
     def isLocalClient: Boolean = {

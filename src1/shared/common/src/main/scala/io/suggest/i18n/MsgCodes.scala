@@ -164,4 +164,7 @@ object MsgCodes {
   val `locale.momentjs` = "locale.momentjs"
   val `Advertising.period` = "Advertising.period"
 
+
+  val `__This.lang.name__` = "__This.lang.name__"
+
 }

@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.geo.MGeoPoint
@@ -265,7 +265,7 @@ class AdvGeoLocUtil @Inject() (
           }
           // Ищем начальную точку карты из geoip
           .orElse {
-            FromRemoteAddr( request.remoteAddress )
+            FromRemoteAddr( request.remoteClientAddress )
           }
           // Если ничего не удалось, то выставить совсем дефолтовую начальную точку.
           .orElse( FromDefaultGeoPoint )

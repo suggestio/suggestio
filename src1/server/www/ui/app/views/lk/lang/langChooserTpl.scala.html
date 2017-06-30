@@ -1,5 +1,5 @@
 @(english: Messages, lf: Form[Lang], isNowEnglish: Boolean, langs: Seq[Lang], nodeOpt: Option[MNode],
-  rr: Option[String])(implicit ctx: Context)
+  rr: Option[String], langCode2msgs: Map[String, Messages])(implicit ctx: Context)
 
 @* Страница с выбором языка для пользователя.
    Скрываем кнопку смены магазина, чтобы не сбивать людей. *@
@@ -8,6 +8,7 @@
 @import ctx.{messages, request}
 @import helper._
 @import util.FC.langSelectFc
+@import io.suggest.i18n.MsgCodes
 
 @lkBaseLayout(
   title   = english("Select.your.lang") + (if(!isNowEnglish) {" | " + messages("Select.your.lang")} else ""),
@@ -20,12 +21,15 @@
       @* TODO Сделать автопереключение. Кнопку завернуть наверное в noscript-тег. *@
       @inputRadioGroup(
         lf("lang"),
-        options = langs.map { l => l.code -> messages.copy(lang = l)("This.lang") }
+        options = langs.map( l =>
+          l.code -> langCode2msgs.get(l.code).fold(l.code)(_.apply( MsgCodes.`__This.lang.name__` ))
+        )
       )
       <br/>
 
       <div class="btn-w __size-M">
-        <input class="btn __size-M1 __major" type="submit" value="@english("Save")@if(!isNowEnglish) { | @messages("Save")}" />
+        <input class="btn __size-M1 __major" type="submit"
+               value="@english("Save")@if(!isNowEnglish) { | @messages("Save")}" />
       </div>
     }
   </div>

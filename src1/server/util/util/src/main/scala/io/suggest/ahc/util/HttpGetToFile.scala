@@ -1,11 +1,11 @@
 package io.suggest.ahc.util
 
 import java.io.File
+import javax.inject.{Inject, Singleton}
 
-import com.google.inject.{Inject, Singleton}
 import io.suggest.async.StreamsUtil
 import play.api.http.HttpVerbs
-import play.api.libs.ws.{WSClient, WSResponseHeaders}
+import play.api.libs.ws.{WSClient, WSResponse}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -48,7 +48,7 @@ class HttpGetToFile @Inject() (
     def tempFileSuffix: String = ""
 
     /** Какой экзепшен генерить, если http status не выдержал проверки? */
-    def statusCodeInvalidException(resp: WSResponseHeaders): Exception = {
+    def statusCodeInvalidException(resp: WSResponse): Exception = {
       new IllegalArgumentException("Unexpected HTTP status: " + resp.status)
     }
 
@@ -65,13 +65,13 @@ class HttpGetToFile @Inject() (
         .stream()
 
       respFut.flatMap { sr =>
-        if (!isStatusValid(sr.headers.status)) {
-          val ex = statusCodeInvalidException(sr.headers)
+        if (!isStatusValid(sr.status)) {
+          val ex = statusCodeInvalidException(sr)
           Future.failed(ex)
         } else {
           val f = File.createTempFile(tempFilePrefix, tempFileSuffix)
           for {
-            _ <- streamsUtil.sourceIntoFile(sr.body, f)
+            _ <- streamsUtil.sourceIntoFile(sr.bodyAsSource, f)
           } yield {
             // Вернуть готовый файл, когда всё закончится.
             DlResp(sr.headers, f)
@@ -93,4 +93,7 @@ class HttpGetToFile @Inject() (
 }
 
 /** Модель ответа от [[HttpGetToFile]].AbstractDownloader.request() */
-case class DlResp(headers: WSResponseHeaders, file: File)
+case class DlResp(
+                   headers  : Map[String, Seq[String]],
+                   file     : File
+                 )

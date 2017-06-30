@@ -1,7 +1,7 @@
 package util.acl
 
-import com.google.inject.Inject
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import javax.inject.Inject
+import io.suggest.www.util.req.ReqUtil
 import models.req.MReq
 import play.api.mvc._
 import util.ident.IdentUtil
@@ -16,12 +16,11 @@ import scala.concurrent.Future
  */
 final class IsAnon @Inject()(
                               aclUtil                : AclUtil,
+                              reqUtil                : ReqUtil,
                               identUtil              : IdentUtil
-                            )
-  extends SioActionBuilderOuter
-{
+                            ) {
 
-  class ImplC extends SioActionBuilderImpl[MReq] {
+  private class ImplC extends reqUtil.SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val user = aclUtil.userFromRequest(request)
@@ -37,12 +36,10 @@ final class IsAnon @Inject()(
 
   }
 
-  val Impl = new ImplC
+  private val Impl: ActionBuilder[MReq, AnyContent] = new ImplC
 
   @inline
-  def apply(): ActionBuilder[MReq] = {
-    Impl
-  }
+  def apply() = Impl
 
 }
 

@@ -1,6 +1,6 @@
 package util.img
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.ImgCrop
 import io.suggest.ym.model.common.MImgInfoMeta

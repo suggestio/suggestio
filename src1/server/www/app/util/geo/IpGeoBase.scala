@@ -1,6 +1,6 @@
 package util.geo
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.loc.geo.ipgeobase.IpgbImporter
 import models.mcron.MCronTask
 import models.mproj.ICommonDi
@@ -15,8 +15,8 @@ import scala.concurrent.duration._
  * Description: Утиль для поддержки БД, взятых из [[http://ipgeobase.ru/]].
  */
 class IpGeoBaseImport @Inject() (
-  mCommonDi               : ICommonDi
-)
+                                  mCommonDi    : ICommonDi
+                                )
   extends ICronTasksProvider
 {
 
@@ -28,7 +28,7 @@ class IpGeoBaseImport @Inject() (
 
   /** Активация импорта требует явного включения этой функции в конфиге.
     * Отключена по умолчанию, т.к. она должна быть активна только на одной ноде. */
-  def IS_ENABLED: Boolean = configuration.getBoolean("ipgeobase.import.enabled")
+  def IS_ENABLED: Boolean = configuration.getOptional[Boolean]("ipgeobase.import.enabled")
     .contains(true)   //.getOrElse(false)
 
   override def cronTasks(): TraversableOnce[MCronTask] = {

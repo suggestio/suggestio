@@ -6,6 +6,7 @@ import java.time.{Instant, ZoneOffset}
 import _root_.util._
 import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.ConvertModes
@@ -24,6 +25,7 @@ import net.sf.jmimemagic.Magic
 import org.apache.commons.io.FileUtils
 import play.api.data.Forms._
 import play.api.data._
+import play.api.http.FileMimeTypes
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import play.twirl.api.Html
@@ -57,6 +59,7 @@ class Img @Inject() (
   override val asyncUtil          : AsyncUtil,
   isAuth                          : IsAuth,
   imgFormUtil                     : ImgFormUtil,
+  implicit protected val fileMimeTypes  : FileMimeTypes,
   override val mCommonDi          : ICommonDi
 )
   extends SioController

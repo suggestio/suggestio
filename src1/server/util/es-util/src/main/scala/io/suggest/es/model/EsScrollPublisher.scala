@@ -2,7 +2,7 @@ package io.suggest.es.model
 
 import javax.inject.Inject
 
-import akka.actor.{Actor, ActorRefFactory, PoisonPill, Props, Stash}
+import akka.actor.{Actor, ActorRefFactory, ActorSystem, PoisonPill, Props, Stash}
 import com.google.inject.assistedinject.Assisted
 import org.elasticsearch.ElasticsearchException
 import org.elasticsearch.client.Client
@@ -54,12 +54,12 @@ trait EsScrollSubscriptionFactory {
 class EsScrollSubscription @Inject() (
                                        @Assisted scrollArgs    : IScrollArgs,
                                        @Assisted s             : Subscriber[_ >: SearchHit],
-                                       actorRefFactory         : ActorRefFactory,
+                                       actorSystem             : ActorSystem,
                                        publishActoryFactory    : EsPublishActoryFactory
                                      )
   extends Subscription {
 
-  private val actor = actorRefFactory.actorOf {
+  private val actor = actorSystem.actorOf {
     Props(
       publishActoryFactory.publishActor(scrollArgs, s)
     )

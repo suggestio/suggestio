@@ -4,7 +4,6 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
-import play.api.data.validation.ValidationError
 import play.api.libs.json._
 import play.extras.geojson.{Geometry, LngLat}
 import GsTypesJvm.GS_TYPE_FORMAT
@@ -40,7 +39,7 @@ object GeoShapeJvm extends MacroLogsDyn {
         }
 
     case other =>
-      JsError( ValidationError("expected.jsobject", other) )
+      JsError( JsonValidationError("expected.jsobject", other) )
   }
 
   val WRITES = Writes[IGeoShape] { gs =>

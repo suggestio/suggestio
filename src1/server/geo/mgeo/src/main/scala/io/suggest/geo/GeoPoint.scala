@@ -10,7 +10,6 @@ import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
-import play.api.data.validation.ValidationError
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
@@ -111,7 +110,7 @@ object GeoPoint extends MacroLogsImpl {
         }
       }
     case other =>
-      JsError( ValidationError("expected.jsarray", other) )
+      JsError( JsonValidationError("expected.jsarray", other) )
   }
 
   val WRITES_GEO_ARRAY = Writes[MGeoPoint] { gp =>
@@ -131,7 +130,7 @@ object GeoPoint extends MacroLogsImpl {
     case JsString(raw) =>
       JsSuccess( apply(raw) )
     case other =>
-      JsError( ValidationError("expected.jsstring", other) )
+      JsError( JsonValidationError("expected.jsstring", other) )
   }
 
   /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */

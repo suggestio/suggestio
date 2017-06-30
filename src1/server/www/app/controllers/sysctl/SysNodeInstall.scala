@@ -6,7 +6,6 @@ import models.mctx.Context
 import models.msys.MSysNodeInstallFormData
 import models.req.INodeReq
 import play.api.data.Form
-import play.api.i18n.Messages
 import play.api.mvc.Result
 import util.acl.IIsSuNodeDi
 import util.adn.INodesUtil
@@ -52,8 +51,14 @@ trait SysNodeInstall
     for {
       srcNodes <- mNodesCache.multiGet(nodesUtil.ADN_IDS_INIT_ADS_SOURCE)
     } yield {
-      val allLangs = langs.availables.sortBy(_.code)
-      val html = installDfltMadsTpl(allLangs, request.mnode, form, srcNodes)(ctx)
+      val allLangs = langs.availables
+      val langsSorted = allLangs.sortBy(_.code)
+      val langCode2msgs = allLangs.iterator
+        .map { l =>
+          l.code -> mCommonDi.messagesApi.preferred( l :: Nil )
+        }
+        .toMap
+      val html = installDfltMadsTpl(allLangs, langCode2msgs, request.mnode, form, srcNodes)(ctx)
       rs(html)
     }
   }
@@ -69,8 +74,7 @@ trait SysNodeInstall
           _installRender(formWithErrors, NotAcceptable)
         },
         {fd =>
-          // TODO Надо как-то сделать, чтобы это дело скастовалось автоматом.
-          val msgs = new Messages(fd.lang, messagesApi)
+          val msgs = messagesApi.preferred( fd.lang :: Nil )
           nodesUtil.installDfltMads(adnId, count = fd.count)(msgs)
             .map { madIds =>
               val count = madIds.size

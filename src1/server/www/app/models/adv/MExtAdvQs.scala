@@ -5,7 +5,6 @@ import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
-import play.api.Play._
 
 /**
  * Suggest.io
@@ -21,7 +20,6 @@ object MExtAdvQs {
   private val SIGN_SECRET: String = {
     val sg = new SecretGetter with MacroLogsImplLazy {
       override val confKey = "ext.adv.qs.sign.key"
-      override def useRandomIfMissing = isProd
     }
     sg()
   }

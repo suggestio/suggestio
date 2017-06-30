@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.MItems
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -20,18 +20,17 @@ class IsSuItem @Inject() (
                            aclUtil     : AclUtil,
                            mItems      : MItems,
                            isSu        : IsSu,
+                           reqUtil     : ReqUtil,
                            mCommonDi   : ICommonDi
-                         )
-  extends SioActionBuilderOuter
-{
+                         ) {
 
   import mCommonDi._
 
   /**
     * @param itemId Ключ item'а в таблице MItems.
     */
-  def apply(itemId: Gid_t): ActionBuilder[MItemReq] = {
-    new SioActionBuilderImpl[MItemReq] {
+  def apply(itemId: Gid_t): ActionBuilder[MItemReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MItemReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MItemReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

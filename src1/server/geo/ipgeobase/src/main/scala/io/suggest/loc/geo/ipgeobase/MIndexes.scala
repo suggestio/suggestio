@@ -1,6 +1,6 @@
 package io.suggest.loc.geo.ipgeobase
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.settings.Settings
@@ -34,7 +34,7 @@ class MIndexes @Inject() (
     * Не val, т.е. часто оно надо только на dev-компе. В остальных случаях просто будет память занимать.
     */
   def REPLICAS_COUNT: Int = {
-    configuration.getInt("loc.geo.ipgeobase.index.replicas_count").getOrElse {
+    configuration.getOptional[Int]("loc.geo.ipgeobase.index.replicas_count").getOrElse {
       val _isProd = mCommonDi.isProd
       val r = if (_isProd) {
         2   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.

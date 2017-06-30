@@ -1,6 +1,5 @@
 package securesocial.core
 
-import securesocial.core.authenticator._
 import securesocial.core.providers._
 import securesocial.core.services._
 
@@ -17,11 +16,6 @@ trait RuntimeEnvironment[U] {
 
   def providers: Map[String, IdentityProvider]
 
-  def idGenerator: IdGenerator
-  def authenticatorService: AuthenticatorService[U]
-
-  def eventListeners: List[EventListener[U]]
-
   def userService: UserService[U]
 }
 
@@ -32,16 +26,6 @@ object RuntimeEnvironment {
    * You can start your app with with by only adding a userService to handle users.
    */
   abstract class Default[U] extends RuntimeEnvironment[U] {
-    override lazy val httpService: HttpService = new HttpService.Default()
-    override lazy val cacheService: CacheService = new CacheService.Default()
-    override lazy val idGenerator: IdGenerator = new IdGenerator.Default()
-
-    override lazy val authenticatorService = new AuthenticatorService(
-      new CookieAuthenticatorBuilder[U](new AuthenticatorStore.Default(cacheService), idGenerator),
-      new HttpHeaderAuthenticatorBuilder[U](new AuthenticatorStore.Default(cacheService), idGenerator)
-    )
-
-    override lazy val eventListeners: List[EventListener[U]] = List()
 
     protected def include(p: IdentityProvider) = p.id -> p
     protected def oauth1ClientFor(provider: String) = new OAuth1Client.Default(ServiceInfoHelper.forProvider(provider), httpService)
@@ -56,11 +40,11 @@ object RuntimeEnvironment {
       //include(new InstagramProvider(routes, cacheService, oauth2ClientFor(InstagramProvider.Instagram))),
       //include(new LinkedInOAuth2Provider(routes, cacheService,oauth2ClientFor(LinkedInOAuth2Provider.LinkedIn))),
       include(new VkProvider(routes, cacheService, oauth2ClientFor(VkProvider.Vk)))
-      //include(new DropboxProvider(routes, cacheService, oauth2ClientFor(DropboxProvider.Dropbox))),
       // oauth 1 client providers
       //include(new LinkedInProvider(routes, cacheService, oauth1ClientFor(LinkedInProvider.LinkedIn))),
       //include(new TwitterProvider(routes, cacheService, oauth1ClientFor(TwitterProvider.Twitter)))
       // username password
     )
   }
+
 }

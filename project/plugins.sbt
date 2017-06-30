@@ -30,7 +30,7 @@ addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0.2-SNAPSHOT")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.15")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.0")
 
 //addSbtPlugin("com.typesafe.sbt" % "sbt-webdriver" % "1.0.0")
 
@@ -52,10 +52,10 @@ addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 
 // Этот плагин зависит от sbt-web, от play он независим, несмотря на название.
 // https://github.com/vmunier/sbt-play-scalajs/pull/12
-addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.5")
+//addSbtPlugin("com.vmunier" % "sbt-web-scalajs" % "1.0.6-SNAPSHOT")
 
 // Плагины для интеграции scalajs + npm + webpack.
-addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.6.0")
+addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.7.0-SNAPSHOT")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.7.0-SNAPSHOT")
 

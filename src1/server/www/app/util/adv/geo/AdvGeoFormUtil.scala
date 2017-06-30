@@ -1,6 +1,6 @@
 package util.adv.geo
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
 import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, CircleGs, MGeoPoint}
 import models.adv.geo.cur._

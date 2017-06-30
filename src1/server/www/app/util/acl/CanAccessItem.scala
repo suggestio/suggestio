@@ -1,15 +1,15 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.MOrders
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MItemReq, MUserInit}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -25,10 +25,10 @@ class CanAccessItem @Inject() (
                                 mItems                  : MItems,
                                 mOrders                 : MOrders,
                                 isAuth                  : IsAuth,
+                                reqUtil                 : ReqUtil,
                                 mCommonDi               : ICommonDi
                               )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -38,8 +38,8 @@ class CanAccessItem @Inject() (
     *             false -- планируется только чтение.
     *             true -- планируется изменение/удаление.
     */
-  def apply(itemId: Gid_t, edit: Boolean, userInits1: MUserInit*): ActionBuilder[MItemReq] = {
-    new SioActionBuilderImpl[MItemReq] with InitUserCmds {
+  def apply(itemId: Gid_t, edit: Boolean, userInits1: MUserInit*): ActionBuilder[MItemReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MItemReq] with InitUserCmds {
 
       override def userInits = userInits1
 

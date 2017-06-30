@@ -1,11 +1,12 @@
 package io.suggest.playx
 
-import com.google.inject.Inject
+import javax.inject.Inject
+
 import io.suggest.common.fut.FutureUtil
-import play.api.cache.CacheApi
+import play.api.cache.AsyncCacheApi
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.{ExecutionContext, Future, Promise}
 
 /**
  * Suggest.io
@@ -13,7 +14,10 @@ import scala.concurrent.{Promise, Future}
  * Created: 12.10.15 21:00
  * Description: Аналог CacheUtil для DI-интерфейс play Cache.
  */
-class CacheApiUtil @Inject() (cache: CacheApi) {
+class CacheApiUtil @Inject() (
+                               cache                    : AsyncCacheApi,
+                               implicit private val ec  : ExecutionContext
+                             ) {
 
   /**
    * Слегка ускоренный CacheApi.getOrElse(), ориентированный на async-работу.
@@ -27,7 +31,7 @@ class CacheApiUtil @Inject() (cache: CacheApi) {
     val p = Promise[T]()
     val pfut = p.future
 
-    val resFut: Future[T] = cache.get [Future[T]] (key) match {
+    val resFut: Future[T] = cache.get[Future[T]](key).flatMap {
       case None =>
         // Сразу сохранить в кеш будущий фьючерс
         cache.set(key, pfut, expiration)

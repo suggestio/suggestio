@@ -1,6 +1,6 @@
 package util.cdn
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.playx.ExternalCall
 import io.suggest.util.logs.MacroLogsImpl
@@ -27,14 +27,14 @@ class CdnUtil @Inject() (
 
   /** Прочитать из конфига список CDN-хостов для указанного протокола. */
   def getCdnHostsForProto(proto: String): List[String] = {
-    configuration.getStringList("cdn.hosts." + proto)
+    configuration.getOptional[Seq[String]]("cdn.hosts." + proto)
       .fold (List.empty[String]) (_.toList)
   }
 
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
-    configuration.getStringList("cdn.protocols")
-      .fold [Iterator[String]] (Iterator("http", "https"))  { protosRaw =>
+    configuration.getOptional[Seq[String]]("cdn.protocols")
+      .fold [Iterator[String]] (Iterator("http", "https")) { protosRaw =>
         protosRaw
           .iterator()
           .map(_.trim.toLowerCase)
@@ -48,13 +48,13 @@ class CdnUtil @Inject() (
 
   /** Раздавать ли шрифты через CDN? Дергается из шаблонов. Если Cors отключен, то этот параметр тоже отключается. */
   val FONTS_ENABLED: Boolean = {
-    configuration.getBoolean("cdn.fonts.enabled")
+    configuration.getOptional[Boolean]("cdn.fonts.enabled")
       .exists(_ && corsUtil.IS_ENABLED)
   }
 
   /** Отключено использование CDN на хостах: */
   val DISABLED_ON_HOSTS: Set[String] = {
-    configuration.getStringList("cdn.disabled.on.hosts")
+    configuration.getOptional[Seq[String]]("cdn.disabled.on.hosts")
       .fold (Set.empty[String]) (_.toSet)
   }
 

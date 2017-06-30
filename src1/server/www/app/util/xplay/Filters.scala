@@ -1,6 +1,6 @@
 package util.xplay
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.www.util.sec.ExpireSessionFilter
 import play.api.http.HttpFilters
 import play.api.mvc.EssentialFilter

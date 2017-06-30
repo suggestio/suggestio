@@ -1,15 +1,18 @@
-@(adnId: String, langs: Seq[Lang], ff: Form[_])(implicit ctx: Context)
+@(adnId: String, langs: Seq[Lang], langCode2msgs: Map[String, Messages], ff: Form[_])(implicit ctx: Context)
 
 @* Верстка формы установки дефолтовых карточек на текущий узел. *@
 
 @import helper._
 @import ctx._
+@import io.suggest.i18n.MsgCodes
 
 @form( CSRF(routes.SysMarket.installDfltMadsSubmit(adnId)) ) {
 
   @select(
     ff("lang"),
-    options = langs.map(l => l.code -> messages.copy(lang = l)("This.lang")),
+    options = langs.map(l =>
+      l.code -> langCode2msgs.get(l.code).fold(l.code)( _.apply( MsgCodes.`__This.lang.name__` ) )
+    ),
     '_label -> "Локализация"
   )
 

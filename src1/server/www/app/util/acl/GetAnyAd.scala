@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.model.n2.node.MNodeTypes
 import models.mproj.ICommonDi
 import models.req.MAdReq
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 
@@ -18,10 +18,9 @@ import scala.concurrent.Future
  */
 class GetAnyAd @Inject() (
                            aclUtil    : AclUtil,
+                           reqUtil    : ReqUtil,
                            mCommonDi  : ICommonDi
-                         )
-  extends SioActionBuilderOuter
-{
+                         ) {
 
   import mCommonDi._
 
@@ -30,8 +29,8 @@ class GetAnyAd @Inject() (
     *
     * @param adId id рекламной карточки.
     */
-  def apply(adId: String): ActionBuilder[MAdReq] = {
-    new SioActionBuilderImpl[MAdReq] {
+  def apply(adId: String): ActionBuilder[MAdReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAdReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MAdReq[A]) => Future[Result]): Future[Result] = {
         val madOptFut = mNodesCache.getByIdType(adId, MNodeTypes.Ad)

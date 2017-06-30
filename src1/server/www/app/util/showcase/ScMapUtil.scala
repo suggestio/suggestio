@@ -1,6 +1,6 @@
 package util.showcase
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.es.model.IMust
 import io.suggest.geo._
 import io.suggest.model.n2.edge.MPredicates

@@ -4,7 +4,7 @@ import java.io.File
 import java.net.JarURLConnection
 import java.time.Instant
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import io.suggest.util.logs.MacroLogsDyn
 
 /**

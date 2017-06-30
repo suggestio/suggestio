@@ -1,10 +1,10 @@
 package util.acl
 
-import com.google.inject.Inject
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import javax.inject.Inject
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MNodeOptReq, MUserInit}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
 
@@ -21,18 +21,17 @@ class IsAdnNodeAdminOptOrAuth @Inject() (
                                           aclUtil                 : AclUtil,
                                           isNodeAdmin             : IsNodeAdmin,
                                           isAuth                  : IsAuth,
+                                          reqUtil                 : ReqUtil,
                                           mCommonDi               : ICommonDi
-                                        )
-  extends SioActionBuilderOuter
-{
+                                        ) {
 
   import mCommonDi._
 
   /** Сборка action-builder'ов, занимающихся вышеописанной проверкой.
     * @param nodeIdOpt id узла, если есть.
     */
-  def apply(nodeIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MNodeOptReq] = {
-    new SioActionBuilderImpl[MNodeOptReq] with InitUserCmds {
+  def apply(nodeIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MNodeOptReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MNodeOptReq] with InitUserCmds {
 
       override def userInits = userInits1
 

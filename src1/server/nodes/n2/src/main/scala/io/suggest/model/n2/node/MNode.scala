@@ -1,6 +1,6 @@
 package io.suggest.model.n2.node
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.MNodeEdges
@@ -43,8 +43,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 final class MNodes @Inject() (
-  override val mCommonDi: MEsModelDiVal
-)
+                               override val mCommonDi: MEsModelDiVal
+                             )
   extends EsModelStatic
   with EsmV2Deserializer
   with MacroLogsImpl

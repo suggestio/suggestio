@@ -2,7 +2,7 @@ package io.suggest.es.util
 
 import java.net.InetSocketAddress
 
-import com.google.inject.{Inject, Provider, Singleton}
+import javax.inject.{Inject, Provider, Singleton}
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.client.Client
 import org.elasticsearch.client.transport.TransportClient

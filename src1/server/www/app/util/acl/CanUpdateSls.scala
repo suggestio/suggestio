@@ -1,8 +1,8 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models._
 import models.mproj.ICommonDi
 import models.req.{MAdProdReq, MReq}
@@ -24,16 +24,16 @@ class CanUpdateSls @Inject() (
                                isNodeAdmin            : IsNodeAdmin,
                                canEditAd              : CanEditAd,
                                n2NodesUtil            : N2NodesUtil,
+                               reqUtil                : ReqUtil,
                                mCommonDi              : ICommonDi
                              )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
 
-  def apply(adId1: String): ActionBuilder[MAdProdReq] = {
-    new SioActionBuilderImpl[MAdProdReq] with canEditAd.AdEditBase {
+  def apply(adId1: String): ActionBuilder[MAdProdReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAdProdReq] with canEditAd.AdEditBase {
 
       override final def adId = adId1
 

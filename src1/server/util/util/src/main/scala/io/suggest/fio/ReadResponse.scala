@@ -1,6 +1,7 @@
 package io.suggest.fio
 
-import play.api.libs.iteratee.Enumerator
+import akka.stream.scaladsl.Source
+import akka.util.ByteString
 
 /**
  * Suggest.io
@@ -12,7 +13,7 @@ import play.api.libs.iteratee.Enumerator
 trait IReadResponse extends IContentType {
 
   /** Содержимое файла. */
-  def data: Enumerator[Array[Byte]]
+  def data: Source[ByteString, _]
 
   /** Размер файла. */
   def sizeB: Long
@@ -20,9 +21,11 @@ trait IReadResponse extends IContentType {
 }
 
 
+/*
 case class ReadResponse(
   override val contentType  : String,
-  override val data         : Enumerator[Array[Byte]],
+  override val data         : Source[ByteString, _],
   override val sizeB        : Long
 )
   extends IReadResponse
+*/

@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.req.MCalendarReq
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 
@@ -17,19 +17,19 @@ import scala.concurrent.Future
  * Description: Доступ к календарю вообще без проверки ACL.
  */
 class CalendarAccessAny @Inject() (
-                                    aclUtil     : AclUtil,
-                                    mCalendars  : MCalendars,
-                                    mCommonDi   : ICommonDi
+                                    aclUtil               : AclUtil,
+                                    mCalendars            : MCalendars,
+                                    reqUtil               : ReqUtil,
+                                    mCommonDi             : ICommonDi
                                   )
-  extends SioActionBuilderOuter
 {
 
   import mCommonDi._
 
 
   /** @param calId id календаря, с которым происходит взаимодействие. */
-  def apply(calId: String): ActionBuilder[MCalendarReq] = {
-    new SioActionBuilderImpl[MCalendarReq] {
+  def apply(calId: String): ActionBuilder[MCalendarReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MCalendarReq] {
 
       def calNotFound(request: Request[_]): Future[Result] = {
         Results.NotFound(s"Calendar $calId does not exist.")

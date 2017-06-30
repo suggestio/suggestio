@@ -2,7 +2,7 @@ package controllers
 
 import java.net.{MalformedURLException, URL}
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}

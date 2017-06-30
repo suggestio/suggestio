@@ -1,6 +1,6 @@
 package util.img
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.util.logs.MacroLogsImpl

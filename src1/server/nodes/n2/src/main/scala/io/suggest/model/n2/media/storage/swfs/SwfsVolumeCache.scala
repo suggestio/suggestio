@@ -1,13 +1,14 @@
 package io.suggest.model.n2.media.storage.swfs
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
+
 import io.suggest.playx.CacheApiUtil
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.VolumeId_t
 import io.suggest.swfs.client.proto.lookup.{IVolumeLocation, LookupRequest}
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
-import play.api.cache.CacheApi
+import play.api.cache.AsyncCacheApi
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -21,7 +22,7 @@ import scala.concurrent.duration._
  */
 @Singleton
 class SwfsVolumeCache @Inject() (
-  cache                     : CacheApi,
+  cache                     : AsyncCacheApi,
   cacheUtil                 : CacheApiUtil,
   configuration             : Configuration,
   client                    : ISwfsClient,
@@ -32,7 +33,7 @@ class SwfsVolumeCache @Inject() (
 
   def CACHE_PREFIX = "swfs.vloc."
 
-  val CACHE_DURATION = configuration.getInt("swfs.vloc.cache.seconds")
+  val CACHE_DURATION = configuration.getOptional[Int]("swfs.vloc.cache.seconds")
     .getOrElse(3600)
     .seconds
 

@@ -1,6 +1,6 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import models.req.MReq
 import play.api.mvc._
 
@@ -9,7 +9,7 @@ import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.id.IdentConst
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import play.api.http.{HeaderNames, MimeTypes}
 
 /**
@@ -22,10 +22,10 @@ import play.api.http.{HeaderNames, MimeTypes}
 /** Аддон для контроллеров, добавляющий поддержку IsAuth action builder'ов. */
 @Singleton
 class IsAuth @Inject() (
-                         aclUtil                : AclUtil
+                         aclUtil            : AclUtil,
+                         reqUtil            : ReqUtil
                        )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   /** Основная синхронная реакция на выявленную необходимость залогинится.
@@ -59,7 +59,7 @@ class IsAuth @Inject() (
 
 
   /** реализация action-builder'а с поддержкой автоматического управления сессией. */
-  sealed class Impl extends SioActionBuilderImpl[MReq] {
+  private class Impl extends reqUtil.SioActionBuilderImpl[MReq] {
 
     override def invokeBlock[A](request: Request[A], block: (MReq[A]) => Future[Result]): Future[Result] = {
       val user = aclUtil.userFromRequest(request)
@@ -78,7 +78,7 @@ class IsAuth @Inject() (
 
 
   /** Проверка на залогиненность юзера без CSRF-дейстий. */
-  val IsAuth = new Impl
+  val IsAuth: ActionBuilder[MReq, AnyContent] = new Impl
 
   @inline
   def apply() = IsAuth

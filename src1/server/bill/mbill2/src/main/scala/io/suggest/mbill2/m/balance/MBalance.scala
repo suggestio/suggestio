@@ -1,6 +1,6 @@
 package io.suggest.mbill2.m.balance
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill.{Amount_t, IMCurrency, MCurrency, MPrice}
 import io.suggest.common.m.sql.ITableName
 import io.suggest.slick.profile.pg.SioPgSlickProfileT

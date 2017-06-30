@@ -1,7 +1,7 @@
 package util.blocks
 
 import akka.actor.{ActorRef, Props}
-import com.google.inject.Inject
+import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.util.logs.MacroLogsImplLazy
 import util.ws._

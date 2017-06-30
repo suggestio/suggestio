@@ -1,6 +1,6 @@
 package util.es
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.es.model.{CopyContentResult, EsModelCommonStaticT, EsModelUtil}
 import io.suggest.es.util.{EsClientUtil, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
@@ -70,13 +70,13 @@ class SiowebEsModel @Inject() (
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
-    if (configuration.getBoolean("es.mapping.model.conflict.check.enabled").getOrElse(true))
+    if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElse(true))
       EsModelUtil.errorIfIncorrectModels(ES_MODELS)
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS): Future[Boolean] = {
-    val ignoreExist = configuration.getBoolean("es.mapping.model.ignore_exist")
+    val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
       .contains(true)    // .getOrElse(false)
     trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModelUtil.putAllMappings(models, ignoreExist)

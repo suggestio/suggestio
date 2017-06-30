@@ -6,7 +6,7 @@ import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import play.api.Configuration
 import io.suggest.util.UuidUtil._
 import io.suggest.util.logs.MacroLogsImpl
@@ -33,18 +33,18 @@ class StatCookiesUtil @Inject()(
 
   /** Строка секрета для генерации подписи к кукису.
     * Длина ключа HMAC 32 байта, поэтому ASCII-строка в 64 байта будет вполне ок. */
-  private val SECRET_UID_STR = configuration.getString("stat.uid.cookie.secret") getOrElse {
+  private val SECRET_UID_STR = configuration.getOptional[String]("stat.uid.cookie.secret").getOrElse {
     """zPuQ=Zztfy@8Ic'ga9KK8Dj4{@MveN|2M<eV_g_yZ`<&-F|vMzw\\Q6vJPZe)5f-^"""
   }
 
   /** Названия куки, которое содержит id клиента для сбора статистики. */
-  val STAT_UID_COOKIE_NAME = configuration.getString("stat.uid.cookie.name") getOrElse "statid"
+  val STAT_UID_COOKIE_NAME = configuration.getOptional[String]("stat.uid.cookie.name").getOrElse("statid")
 
   /** maxAge для куки. По умолчанию - до конца сессии. */
-  val STAT_UID_COOKIE_MAXAGE_SECONDS: Option[Int] = configuration.getInt("stat.uid.cookie.maxAge.seconds")
+  val STAT_UID_COOKIE_MAXAGE_SECONDS = configuration.getOptional[Int]("stat.uid.cookie.maxAge.seconds")
 
   /** Используемый крипто-провайдера. Дефолтовый в частности. */
-  private val CRYPTO_PROVIDER_STR = configuration.getString("stat.uid.crypto.provider")
+  private val CRYPTO_PROVIDER_STR = configuration.getOptional[String]("stat.uid.crypto.provider")
 
   /** Длина uid в байтах. Т.к. используются uuid, то тут константа как бы. */
   val UID_BYTE_LEN = 16

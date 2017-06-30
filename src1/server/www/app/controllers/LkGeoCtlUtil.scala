@@ -1,7 +1,7 @@
 package controllers
 
 import akka.util.ByteString
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.adv.geo._
 import io.suggest.async.StreamsUtil
 import io.suggest.dt.YmdHelpersJvm

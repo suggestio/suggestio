@@ -6,7 +6,7 @@ import models.mext.ILoginProvider
 import org.elasticsearch.index.query.QueryBuilders
 import securesocial.core.IProfileDflt
 import io.suggest.util.JacksonParsing.stringParser
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model.{EsModelJMXBaseImpl, EsModelJMXMBeanI, EsmV2Deserializer, IEsDocMeta}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi

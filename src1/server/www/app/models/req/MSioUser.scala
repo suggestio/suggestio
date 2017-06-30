@@ -1,6 +1,7 @@
 package models.req
 
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import javax.inject.{Inject, Singleton}
+import com.google.inject.ImplementedBy
 import com.google.inject.assistedinject.Assisted
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil

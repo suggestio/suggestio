@@ -2,7 +2,7 @@ package util.ai.mad
 
 import java.io.FileInputStream
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.ahc.util.HttpGetToFile
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
@@ -123,7 +123,7 @@ class MadAiUtil @Inject() (
         val parseCtx = new MAiParserCtxT with MAiCtxWrapper {
           override def openInputStream  = new FileInputStream( dlResp.file )
           override def urlOpt           = Some(url)
-          override def respHeaders      = dlResp.headers.headers
+          override def respHeaders      = dlResp.headers
           override def mAiCtx           = madAi
         }
         parseSource(source.contentHandlers, parseCtx)

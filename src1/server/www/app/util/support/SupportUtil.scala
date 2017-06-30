@@ -1,6 +1,6 @@
 package util.support
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import play.api.Configuration
 
 /**
@@ -17,7 +17,7 @@ class SupportUtil @Inject() (configuration: Configuration) {
     * поэтому на продакшене первый мыльник должен быть 100% публичным. См. [[views.html.lk.support.supportFormTpl]].
     */
   val FEEDBACK_RCVR_EMAILS: Seq[String] = {
-    configuration.getStringSeq("feedback.send.to.emails")
+    configuration.getOptional[Seq[String]]("feedback.send.to.emails")
       .getOrElse( "support@suggest.io" :: Nil )
   }
 

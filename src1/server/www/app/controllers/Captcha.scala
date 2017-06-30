@@ -6,7 +6,7 @@ import javax.imageio.ImageIO
 import javax.inject.Singleton
 
 import com.google.code.kaptcha.util.Config
-import com.google.inject.Inject
+import javax.inject.Inject
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import io.suggest.text.util.TextUtil

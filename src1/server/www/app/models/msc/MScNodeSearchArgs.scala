@@ -2,7 +2,7 @@ package models.msc
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models._
-import play.api.Play.{configuration, current}
+import play.api.Play.current
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
@@ -29,16 +29,16 @@ case class MScNodeSearchArgs(
 object MScNodeSearchArgs {
 
   /** Ограничение сверху для значения max results. */
-  val MAX_RESULTS_LIMIT_HARD  = configuration.getInt("nodes.search.results.max.hard") getOrElse 50
+  val MAX_RESULTS_LIMIT_HARD  = current.configuration.getInt("nodes.search.results.max.hard").getOrElse(50)
 
   /** Дефолтовое значение для max_results. */
-  val MAX_RESULTS_DFLT        = configuration.getInt("nodes.search.results.max.dflt") getOrElse MAX_RESULTS_LIMIT_HARD
+  val MAX_RESULTS_DFLT        = current.configuration.getInt("nodes.search.results.max.dflt").getOrElse(MAX_RESULTS_LIMIT_HARD)
 
   /** Ограничение сверху на максимальный сдвиг в выдаче. */
-  val OFFSET_LIMIT_HARD       = configuration.getInt("nodes.search.results.offset.max.hard") getOrElse 300
+  val OFFSET_LIMIT_HARD       = current.configuration.getInt("nodes.search.results.offset.max.hard").getOrElse(300)
 
   /** Макс.длина тектового поискового запроса. */
-  val QSTR_LEN_MAX            = configuration.getInt("nodes.search.qstr.len.max") getOrElse 70
+  val QSTR_LEN_MAX            = current.configuration.getInt("nodes.search.qstr.len.max").getOrElse(70)
 
 
   /** Урезание длины строки, если она превышает указанный предел. */

@@ -2,7 +2,7 @@ package util.health
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
@@ -45,7 +45,7 @@ class AdnGeoParentsHealth @Inject() (
   import mCommonDi._
 
   /** Включено ли автоматическое тестирование узлов? */
-  private val GEO_PARENTS_AUTO = configuration.getBoolean("health.tests.adn.geo.parent.periodical").getOrElse(false)
+  private val GEO_PARENTS_AUTO = configuration.getOptional[Boolean]("health.tests.adn.geo.parent.periodical").contains(true)
 
 
   /** Список задач, которые надо вызывать по таймеру. */

@@ -1,6 +1,6 @@
 package util.adn.mapf
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.adn.mapf.{AdnMapFormConstants, MLamForm}
 import io.suggest.adv.geo.MMapProps
 import io.suggest.geo.{CircleGs, MGeoPoint}

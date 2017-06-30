@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
 import models.req.{MAdProdNodesChainReq, MUserInit}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -22,10 +22,10 @@ class CanFreelyAdvAdOnNode @Inject() (
                                        aclUtil                  : AclUtil,
                                        canAdvAd                 : CanAdvAd,
                                        isNodeAdmin              : IsNodeAdmin,
+                                       reqUtil                  : ReqUtil,
                                        implicit private val ec  : ExecutionContext
                                      )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   /** Выполнение проверки полного доступа к карточке и к цепочки узлов.
@@ -34,8 +34,8 @@ class CanFreelyAdvAdOnNode @Inject() (
     * @param nodeKey Ключ узла в виде списка-цепочки узлов.
     * @param userInits1 Инициализация user-модели, если требуется.
     */
-  def apply(adId: String, nodeKey: RcvrKey, userInits1: MUserInit*): ActionBuilder[MAdProdNodesChainReq] = {
-    new SioActionBuilderImpl[MAdProdNodesChainReq] with InitUserCmds {
+  def apply(adId: String, nodeKey: RcvrKey, userInits1: MUserInit*): ActionBuilder[MAdProdNodesChainReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MAdProdNodesChainReq] with InitUserCmds {
 
       override def userInits = userInits1
 

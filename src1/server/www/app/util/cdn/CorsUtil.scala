@@ -1,7 +1,7 @@
 package util.cdn
 
 import akka.stream.Materializer
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
@@ -27,25 +27,25 @@ class CorsUtil @Inject() (
 ) {
 
   /** Активен ли механизм CORS вообще? */
-  val IS_ENABLED = configuration.getBoolean("cors.enabled").getOrElse(true)
+  val IS_ENABLED = configuration.getOptional[Boolean]("cors.enabled").getOrElse(true)
 
   /** Включен ли доступ к preflight-запросам? */
-  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getBoolean("cors.preflight.allowed").getOrElse(true)
+  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getOptional[Boolean]("cors.preflight.allowed").getOrElse(true)
 
   val allowOrigins: String = {
     // Макс один домен. Чтобы не трахаться с доменами, обычно достаточно "*".
-    configuration.getString("cors.allow.origin") getOrElse "*"
+    configuration.getOptional[String]("cors.allow.origin").getOrElse("*")
   }
 
   def allowMethods = {
-    configuration.getStringList("cors.allow.methods")
+    configuration.getOptional[Seq[String]]("cors.allow.methods")
       .fold("GET") { _.mkString(", ") }
   }
 
   def allowHeaders = {
     // Эти хидеры нужны для boopickle-общения через CDN. Т.е. бинарь подразумевает эти необычные хидеры:
     val hdrs0 = Set( CONTENT_TYPE, ACCEPT )
-    val v = configuration.getStringList("cors.allow.headers")
+    val v = configuration.getOptional[Seq[String]]("cors.allow.headers")
       .fold( hdrs0 ) { hdrs0 ++ _ }
       .mkString(", ")
     Some(v)
@@ -83,7 +83,7 @@ class CorsUtil @Inject() (
 
   /** На какие запросы навешивать CORS-allow хидеры? */
   val ADD_HEADERS_URL_RE: Regex = {
-    configuration.getString("cors.allow.headers.for.url.regex")
+    configuration.getOptional[String]("cors.allow.headers.for.url.regex")
       .getOrElse { "^/(v?assets/|~)" }
       .r
   }

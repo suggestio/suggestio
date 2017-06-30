@@ -1,13 +1,13 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
 import models.event.MEvents
 import models.mproj.ICommonDi
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future
 
@@ -22,10 +22,10 @@ class CanAccessEvent @Inject() (
                                  aclUtil                : AclUtil,
                                  isNodeAdmin            : IsNodeAdmin,
                                  mEvents                : MEvents,
+                                 reqUtil                : ReqUtil,
                                  mCommonDi              : ICommonDi
                                )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 { outer =>
 
   import mCommonDi._
@@ -39,10 +39,10 @@ class CanAccessEvent @Inject() (
     */
   def apply(eventId          : String,
             onlyCloseable    : Boolean,
-            userInits        : MUserInit*): ActionBuilder[MNodeEventReq] = {
+            userInits        : MUserInit*): ActionBuilder[MNodeEventReq, AnyContent] = {
 
     val userInits1 = userInits
-    new SioActionBuilderImpl[MNodeEventReq] with InitUserCmds {
+    new reqUtil.SioActionBuilderImpl[MNodeEventReq] with InitUserCmds {
 
       override def userInits = userInits1
 

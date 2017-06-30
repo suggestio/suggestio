@@ -1,6 +1,6 @@
 package util.ext.tw
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.ext.Mad2ImgUrlCalc

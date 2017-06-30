@@ -1,11 +1,11 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import models.mcal.MCalendars
 import models.req.{MCalendarReq, MReq}
-import play.api.mvc.{ActionBuilder, Request, Result, Results}
+import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -20,16 +20,15 @@ class IsSuCalendar @Inject()(
                               aclUtil                 : AclUtil,
                               mCalendars              : MCalendars,
                               isSu                    : IsSu,
+                              reqUtil                 : ReqUtil,
                               implicit private val ec : ExecutionContext
-                            )
-  extends SioActionBuilderOuter
-{
+                            ) {
 
   /**
     * @param calId id календаря, вокруг которого идёт работа.
     */
-  def apply(calId: String): ActionBuilder[MCalendarReq] = {
-    new SioActionBuilderImpl[MCalendarReq] {
+  def apply(calId: String): ActionBuilder[MCalendarReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MCalendarReq] {
 
       override def invokeBlock[A](request: Request[A], block: (MCalendarReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)

@@ -1,6 +1,6 @@
 package util.adv.build
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}

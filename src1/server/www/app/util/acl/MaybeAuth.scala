@@ -1,7 +1,7 @@
 package util.acl
 
-import com.google.inject.{Inject, Singleton}
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import javax.inject.{Inject, Singleton}
+import io.suggest.www.util.req.ReqUtil
 import models.req.{MReq, MUserInit}
 import play.api.mvc._
 
@@ -15,14 +15,13 @@ import scala.concurrent.Future
  */
 @Singleton
 class MaybeAuth @Inject() (
+                            reqUtil: ReqUtil,
                             aclUtil: AclUtil
-                          )
-  extends SioActionBuilderOuter
-{
+                          ) {
 
   /** Собрать MaybeAuth action-builder. */
-  def apply(userInits1: MUserInit*): ActionBuilder[MReq] = {
-    new SioActionBuilderImpl[MReq] with InitUserCmds {
+  def apply(userInits1: MUserInit*): ActionBuilder[MReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MReq] with InitUserCmds {
 
       override def userInits = userInits1
 

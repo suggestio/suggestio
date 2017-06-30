@@ -1,14 +1,14 @@
 package util.geo
 
 import java.net.InetAddress
+import javax.inject.{Inject, Singleton}
 
-import com.google.inject.{Inject, Singleton}
 import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mgeo.MGeoLoc
 import models.mproj.ICommonDi
-import models.req.{IRemoteAddrInfo, MRemoteAddrInfo}
+import models.req.{IRemoteAddrInfo, IReqHdr, MRemoteAddrInfo}
 import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
@@ -25,9 +25,9 @@ import scala.concurrent.duration._
   */
 @Singleton
 class GeoIpUtil @Inject() (
-  ipgbUtil    : IpgbUtil,
-  mCommonDi   : ICommonDi
-)
+                            ipgbUtil    : IpgbUtil,
+                            mCommonDi   : ICommonDi
+                          )
   extends IGeoFindIp
   with MacroLogsImpl
 {
@@ -110,8 +110,8 @@ class GeoIpUtil @Inject() (
         )
     }
   }
-  def fixedRemoteAddrFromRequest(implicit request: RequestHeader): IRemoteAddrInfo = {
-    fixRemoteAddr( request.remoteAddress )
+  def fixedRemoteAddrFromRequest(implicit request: IReqHdr): IRemoteAddrInfo = {
+    fixRemoteAddr( request.remoteClientAddress )
   }
 
 

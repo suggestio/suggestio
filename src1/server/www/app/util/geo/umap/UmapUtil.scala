@@ -1,6 +1,6 @@
 package util.geo.umap
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.geo.{GsTypes, MultiPolygonGs}
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import models.MNode
@@ -18,7 +18,7 @@ class UmapUtil @Inject() (
 ) {
 
   /** 2014.09.23: Umap не поддерживает тип фигур MultiPolygon. Можно их сплиттить на полигоны. */
-  val SPLIT_MULTIPOLYGON: Boolean = configuration.getBoolean("umap.mpoly.split") getOrElse true
+  val SPLIT_MULTIPOLYGON: Boolean = configuration.getOptional[Boolean]("umap.mpoly.split").getOrElse(true)
 
 
   /**

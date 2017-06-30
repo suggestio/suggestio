@@ -1,6 +1,6 @@
 package io.suggest.sec.util
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc.{RequestHeader, Session}

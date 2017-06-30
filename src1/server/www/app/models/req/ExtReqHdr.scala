@@ -73,12 +73,20 @@ import ExtReqHdr._
 /** Расширение play RequestHeader полями и функциями S.io. */
 trait ExtReqHdr extends RequestHeader {
 
-  /** Сюда перенесён код из Context.isSecure для возможности проброса логики внутрь play. */
-  abstract override lazy val secure: Boolean = {
+  /**
+    * Является ли передача данных к юзеру безопасной?
+    *
+    * В отличие от флага Request.secure, который просто проверяет https'ность связи с reverse-proxy,
+    * данный флаг смотрит в ПЕРВУЮ очередь в заголовки, выставленные на стороне nginx во время проксирования.
+    *
+    * Изначально этот флаг оверрайдил флаг secure (который тоже был lazy val, что небезопасно),
+    * но в play-2.6 этот жестокий беспредел решили прикрыть.
+    */
+  lazy val isTransferSecure: Boolean = {
     headers
       .get( HeaderNames.X_FORWARDED_PROTO )
       .filter(!_.isEmpty)
-      .fold (super.secure) { protos =>
+      .fold (secure) { protos =>
         firstForwarded(protos)
           .toLowerCase()
           .startsWith( "https" )
@@ -87,7 +95,7 @@ trait ExtReqHdr extends RequestHeader {
 
   /** Что используется для связи? http или https. */
   lazy val myProto: String = {
-    if (secure) "https" else "http"
+    if (isTransferSecure) "https" else "http"
   }
 
   /**
@@ -95,11 +103,11 @@ trait ExtReqHdr extends RequestHeader {
    * значение X_FORWARDED_FOR, то nginx допишет через запятую новый адрес и прокинет сюда.
    * Тут мы это исправляем, чтобы не было проблем в будущем.
    */
-  abstract override lazy val remoteAddress: String = {
+  lazy val remoteClientAddress: String = {
     headers
       .get(HeaderNames.X_FORWARDED_FOR)
       .map { firstForwardedAddr }
-      .getOrElse { super.remoteAddress }
+      .getOrElse { remoteAddress }
   }
 
   /** Кравлеры при индексации !#-страниц используют ссылки, содержащие что-то типа "?_escaped_fragment_=...". */
@@ -131,7 +139,7 @@ trait ExtReqHdr extends RequestHeader {
         case Right(res) =>
           Some(res)
         case Left(errMsg) =>
-          LOGGER.warn(s"_geoSiteResult(): Failed to bind ajax escaped_fragment '$ajaxEscapedFragment' from '$remoteAddress': $errMsg")
+          LOGGER.warn(s"_geoSiteResult(): Failed to bind ajax escaped_fragment '$ajaxEscapedFragment' from '$remoteClientAddress': $errMsg")
           None
       }
   }

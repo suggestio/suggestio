@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.IMacroLogs
 import models.blk.BlockMeta
 import models.blk.{BlockHeights, BlockMetaUtil, BlockWidths}
@@ -23,8 +23,8 @@ import scala.concurrent.Future
  * Description: Аддон для SysImg-контроллера, добавляющий экшены для отладки make-движков.
  */
 class SysImgMakeUtil @Inject() (
-  blockMetaUtil       : BlockMetaUtil
-) {
+                                 blockMetaUtil       : BlockMetaUtil
+                               ) {
 
   import play.api.data.Forms._
 

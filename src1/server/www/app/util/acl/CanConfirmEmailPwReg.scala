@@ -1,12 +1,12 @@
 package util.acl
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.acl.SioActionBuilderOuter
+import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReq, MEmailActivationReq, MReq}
 import models.usr.{EmailActivations, IEaEmailId}
-import play.api.mvc.{ActionBuilder, Request, Result}
+import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 import util.ident.IdentUtil
 
 import scala.concurrent.Future
@@ -33,10 +33,10 @@ class CanConfirmEmailPwReg @Inject()(
                                       identUtil               : IdentUtil,
                                       emailActivations        : EmailActivations,
                                       isAuth                  : IsAuth,
+                                      reqUtil                 : ReqUtil,
                                       mCommonDi               : ICommonDi
                                     )
-  extends SioActionBuilderOuter
-  with MacroLogsImpl
+  extends MacroLogsImpl
 {
 
   import mCommonDi._
@@ -47,12 +47,13 @@ class CanConfirmEmailPwReg @Inject()(
     * @param eaNotFoundF Что делать, когда нет искомой email activation.
     * @return
     */
-  def apply(eaInfo: IEaEmailId)(eaNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MEmailActivationReq] = {
-    new SioActionBuilderImpl[MEmailActivationReq] {
+  def apply(eaInfo: IEaEmailId)(eaNotFoundF: IReq[_] => Future[Result]): ActionBuilder[MEmailActivationReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MEmailActivationReq] {
 
-      override def invokeBlock[A](request: Request[A], block: (MEmailActivationReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request0: Request[A], block: (MEmailActivationReq[A]) => Future[Result]): Future[Result] = {
         val eaFut = emailActivations.maybeGetById(eaInfo.id)
 
+        val request = aclUtil.reqFromRequest( request0 )
         val user = aclUtil.userFromRequest(request)
 
         eaFut.flatMap {
@@ -68,7 +69,7 @@ class CanConfirmEmailPwReg @Inject()(
 
           // [xakep] Внезапно, кто-то пытается пропихнуть левую активацию из какого-то другого места.
           case Some(ea) =>
-            LOGGER.warn(s"Client ip[${request.remoteAddress}] User#${user.personIdOpt.orNull} tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
+            LOGGER.warn(s"Client ip[${request.remoteClientAddress}] User#${user.personIdOpt.orNull} tried to use foreign activation key:\n  eaInfo = $eaInfo\n  ea = $ea")
             isAuth.onUnauth(request)
         }
       }

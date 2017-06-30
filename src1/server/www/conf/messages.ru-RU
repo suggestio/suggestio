@@ -593,7 +593,7 @@ Advertise=Разместить рекламу
 How.it.works=Как это работает
 
 Select.your.lang=Выберите свой язык
-This.lang=Русский
+__This.lang.name__=Русский
 Switch.lang=Сменить язык
 
 Login.page.title=Вход

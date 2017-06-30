@@ -1,6 +1,6 @@
 package controllers
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.bill.MPrice
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.{MItem, MItems}

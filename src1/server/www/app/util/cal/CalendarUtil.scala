@@ -2,7 +2,7 @@ package util.cal
 
 import java.net.URL
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import de.jollyday.HolidayManager
 import de.jollyday.parameter.UrlManagerParameter
@@ -33,7 +33,7 @@ class CalendarUtil @Inject() (
     * Передать в менеджер календарей календарь пока получилось только через абсолютный URL
     * к SysCalendar-контроллеру.
     */
-  private val MYSELF_URL_PREFIX: String = configuration.getString("mmp.daily.localhost.url.prefix").getOrElse {
+  private val MYSELF_URL_PREFIX: String = configuration.getOptional[String]("mmp.daily.localhost.url.prefix").getOrElse {
     val myPort = Option(System.getProperty("http.port")).fold(9000)(_.toInt)
     s"http://localhost:$myPort"
   }

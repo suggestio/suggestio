@@ -1,7 +1,7 @@
 package util.adv.ext
 
 import akka.actor.Props
-import com.google.inject.Inject
+import javax.inject.Inject
 import com.google.inject.assistedinject.Assisted
 import io.suggest.fsm.FsmActor
 import io.suggest.text.util.UrlUtil

@@ -2,7 +2,7 @@ package util.billing
 
 import java.time.{Duration, OffsetDateTime}
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.bill._
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
@@ -63,7 +63,7 @@ class Bill2Util @Inject() (
   val CBCA_NODE_ID: String = {
     val ck = "bill.cbca.node.id"
     val res = configuration
-      .getString(ck)
+      .getOptional[String](ck)
       .getOrElse {
         val r = "-vr-hrgNRd6noyQ3_teu_A"
         LOGGER.debug("CBCA node id defaulted to " + r)
@@ -81,7 +81,7 @@ class Bill2Util @Inject() (
 
   /** Через сколько времени считать ордер повисшим и разворачивать его назад в ордер-корзину? */
   private val RELEASE_HOLD_ORDERS_AFTER_HOURS: Int = {
-    configuration.getInt("billing.orders.release.hold.after.hours")
+    configuration.getOptional[Int]("billing.orders.release.hold.after.hours")
       .getOrElse(24)
   }
 

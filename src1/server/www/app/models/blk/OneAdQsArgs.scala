@@ -4,7 +4,6 @@ import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.im.{OutImgFmt, OutImgFmts}
-import play.api.Play._
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
 
@@ -23,7 +22,6 @@ object OneAdQsArgs {
   private[this] val SIGN_SECRET: String = {
     val sg = new SecretGetter with MacroLogsImplLazy {
       override val confKey = "only.one.ad.qs.sign.key"
-      override def useRandomIfMissing = isProd
     }
     sg()
   }

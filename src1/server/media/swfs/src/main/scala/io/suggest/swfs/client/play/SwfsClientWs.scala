@@ -1,6 +1,7 @@
 package io.suggest.swfs.client.play
 
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import javax.inject.{Inject, Singleton}
+import com.google.inject.ImplementedBy
 import io.suggest.di.IWsClient
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}

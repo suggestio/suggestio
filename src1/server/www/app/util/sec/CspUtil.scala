@@ -1,6 +1,6 @@
 package util.sec
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
@@ -21,14 +21,14 @@ class CspUtil @Inject() (
                           contextUtil    : ContextUtil
                         ) {
 
-  val IS_ENABLED = configuration.getBoolean("csp.enabled").getOrElse(true)
+  val IS_ENABLED = configuration.getOptional[Boolean]("csp.enabled").getOrElse(true)
 
   /** Заголовок CSP, который можно модификацировать в контроллерах для разных нужд. */
   val CSP_DFLT_OPT: Option[CspHeader] = {
     if (IS_ENABLED) {
 
       /** CSP: Только репортить или репортить и запрещать вместе. */
-      val CSP_REPORT_ONLY = configuration.getBoolean("csp.report.only").getOrElse(true)   // TODO сделать по дефолту false.
+      val CSP_REPORT_ONLY = configuration.getOptional[Boolean]("csp.report.only").getOrElse(true)   // TODO сделать по дефолту false.
 
       val commonSources = {
         // Т.к. сайт https-only, то игнорим протоколы, используем все CDN-хосты.

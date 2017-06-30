@@ -3,7 +3,8 @@ package util.adv.build
 import java.time.OffsetDateTime
 
 import com.google.inject.assistedinject.Assisted
-import com.google.inject.{ImplementedBy, Inject, Singleton}
+import com.google.inject.ImplementedBy
+import javax.inject.{Inject, Singleton}
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem, MItems}
@@ -240,7 +241,7 @@ class AdvBuilderDi @Inject() (
   /** Создавать ли узлы-теги для геотегов?
     * Изначально они создавались, но особо были нужны.
     */
-  val AGT_CREATE_TAG_NODES: Boolean = configuration.getBoolean("adv.geo.tag.create.nodes").getOrElse(false)
+  val AGT_CREATE_TAG_NODES: Boolean = configuration.getOptional[Boolean]("adv.geo.tag.create.nodes").getOrElse(false)
 
 }
 

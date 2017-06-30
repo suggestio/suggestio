@@ -1,6 +1,6 @@
 package util.adv.geo.tag
 
-import com.google.inject.Inject
+import javax.inject.Inject
 import io.suggest.es.util.SioEsUtil
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses

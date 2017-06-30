@@ -3,7 +3,7 @@ package util.img
 import java.time.Instant
 
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import com.google.inject.Inject
+import javax.inject.Inject
 import play.api.libs.json.{JsObject, JsString}
 import play.api.mvc.{Call, RequestHeader}
 import play.twirl.api.Html

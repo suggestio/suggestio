@@ -1,12 +1,12 @@
 package util.geo.osm
 
-import com.google.inject.Inject
+import javax.inject.Inject
+
 import io.suggest.ahc.util.HttpGetToFile
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
-import play.api.libs.ws._
+import play.api.libs.ws.WSResponse
 import util.geo.osm.OsmElemTypes.OsmElemType
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -15,8 +15,9 @@ import scala.concurrent.Future
  * Description: Статический клиент для доступа к OSM API. Для парсинга используется парсеры для xml api.
  */
 class OsmClient @Inject() (
-  httpGetToFile : HttpGetToFile
-) {
+                            httpGetToFile           : HttpGetToFile,
+                            implicit private val ec : ExecutionContext
+                          ) {
 
   /**
    * Отфетчить элемент из инета, распарсить и вернуть результат.
@@ -29,7 +30,7 @@ class OsmClient @Inject() (
     val fetcher = new httpGetToFile.AbstractDownloader {
       override def urlStr = typ.xmlUrl(id)
       override def followRedirects = false
-      override def statusCodeInvalidException(resp: WSResponseHeaders) = {
+      override def statusCodeInvalidException(resp: WSResponse): Exception = {
         OsmClientStatusCodeInvalidException(resp.status)
       }
     }

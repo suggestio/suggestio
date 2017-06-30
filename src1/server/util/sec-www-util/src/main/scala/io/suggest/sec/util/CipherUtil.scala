@@ -4,7 +4,7 @@ import java.security.{MessageDigest, SecureRandom, Security}
 import javax.crypto.Cipher
 import javax.crypto.spec.{IvParameterSpec, SecretKeySpec}
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.lang3.ArrayUtils
 import org.bouncycastle.jce.provider.BouncyCastleProvider

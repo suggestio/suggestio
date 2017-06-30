@@ -1,10 +1,11 @@
 package io.suggest.www.util.req
 
 import boopickle.Pickler
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
-import play.api.mvc.{BodyParser, BodyParsers, Result, Results}
+import play.api.mvc._
+import scala.language.higherKinds
 
 import scala.concurrent.ExecutionContext
 
@@ -15,12 +16,27 @@ import scala.concurrent.ExecutionContext
   * Description: Утиль для какой-то обобщённой работы с реквестами.
   */
 @Singleton
-class ReqUtil @Inject() (
-                          implicit private val ec: ExecutionContext
-                        )
-  extends BodyParsers
-  with MacroLogsImpl
+final class ReqUtil @Inject() (
+                                parse                   : PlayBodyParsers,
+                                implicit private val ec : ExecutionContext
+                              )
+  extends MacroLogsImpl
 {
+
+  /**
+    * Для снижения кодогенерации компилятором, используем этот класс вместо трейтов ActionBuilder'а.
+    * ActionBuilderImpl не котируем, т.к. завязан на ванильный Request вместо IReq[A].
+    *
+    * Дефолтовый BodyParser и ExecutionContext просто пробрасываются тут снаружи.
+    */
+  abstract class SioActionBuilderImpl[R[_]] extends ActionBuilder[R, AnyContent] {
+
+    override def parser: BodyParser[AnyContent] = parse.default
+
+    override protected def executionContext = ec
+
+  }
+
 
   /** Сборка BodyParser'а, который десериализует тело запроса через boopickle. */
   def picklingBodyParser[T](implicit pickler: Pickler[T]): BodyParser[T] = {
