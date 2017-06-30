@@ -40,7 +40,7 @@ class MStatIndexes @Inject() (
     * Не val, т.е. часто оно надо только на dev-компе. В остальных случаях просто будет память занимать.
     */
   def REPLICAS_COUNT: Int = {
-    configuration.getInt("stat.index.replicas_count").getOrElse {
+    configuration.getOptional[Int]("stat.index.replicas_count").getOrElse {
       val _isProd = mCommonDi.isProd
       val r = if (_isProd) {
         1   // Когда писался этот код, было три ноды. Т.е. одна primary шарда + две реплики.

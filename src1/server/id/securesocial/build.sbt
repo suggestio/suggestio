@@ -11,10 +11,10 @@ libraryDependencies ++= Seq(
   cacheApi,
   ws,
   "com.typesafe.play" %% "play-mailer" % Common.playMailerVsn,
-  "com.typesafe.play" %% "filters-helpers" % Common.playVsn,
-  "org.mindrot" % "jbcrypt" % "0.3m",
-  "org.specs2" %% "specs2" % "2.3.12" % "test",
-  "org.mockito" % "mockito-all" % "1.9.5" % "test"
+  "com.typesafe.play" %% "filters-helpers" % Common.playVsn
+  //"org.mindrot" % "jbcrypt" % "0.3m"
+  //"org.specs2" %% "specs2" % "2.3.12" % "test",
+  //"org.mockito" % "mockito-all" % "1.9.5" % "test"
 )
 
 resolvers ++= Seq(

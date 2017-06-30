@@ -2,11 +2,12 @@ package io.suggest.util.logs
 
 /** Трейты поддержки логгирования через макросы. */
 
-import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
-import org.slf4j.LoggerFactory
+import com.typesafe.scalalogging.{Logger => MacroLogger}
+//import com.typesafe.scalalogging.slf4j.{Logger => MacroLogger}
+//import org.slf4j.LoggerFactory
 
 object MacroLogs extends Serializable {
-  def getMacroLogger(clazz: Class[_]) = MacroLogger(LoggerFactory.getLogger(clazz))
+  def getMacroLogger(clazz: Class[_]) = MacroLogger( clazz )
 }
 
 

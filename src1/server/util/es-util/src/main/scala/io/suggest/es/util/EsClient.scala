@@ -10,7 +10,6 @@ import org.elasticsearch.common.transport.InetSocketTransportAddress
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 
-import scala.collection.JavaConversions._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
@@ -69,12 +68,12 @@ class TransportEsClient @Inject() (
 
     // Закинуть имя кластера из оригинального конфига.
     // TODO Переименовать параметры sio-конфига во что-то, начинающееся с es.client.
-    val clusterNameOpt = configuration.getString("cluster.name")
+    val clusterNameOpt = configuration.getOptional[String]("cluster.name")
     debug(s"$logPrefix Cluster name: ${clusterNameOpt.orNull}")
 
     // Законнектить свеженький клиент согласно адресам из конфига, если они там указаны.
     val addrs = configuration
-      .getStringList("es.client.transport.addrs")
+      .getOptional[Seq[String]]("es.client.transport.addrs")
       .fold [Iterator[InetSocketAddress]] {
         val local = new InetSocketAddress(
           "localhost",
@@ -82,7 +81,8 @@ class TransportEsClient @Inject() (
         )
         Iterator(local)
       } { addrsStrs =>
-        addrsStrs.iterator()
+        addrsStrs
+          .iterator
           .filter(_.nonEmpty)
           .map { addrStr =>
             EsClientUtil.parseHostPortStr(addrStr)

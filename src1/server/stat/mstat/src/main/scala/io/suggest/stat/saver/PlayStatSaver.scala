@@ -45,7 +45,7 @@ class PlayStatSaver @Inject() (
   /** Используемый backend для сохранения статистики. */
   val BACKEND: StatSaverBackend = {
     val ck = "sc.stat.saver.type"
-    configuration.getString(ck)
+    configuration.getOptional[String](ck)
       .fold [StatSaverBackend] (defaultBackend) { raw =>
         raw.trim.toLowerCase match {
           case "plain" | ""     =>

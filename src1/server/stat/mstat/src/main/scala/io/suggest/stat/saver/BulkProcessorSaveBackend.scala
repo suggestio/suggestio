@@ -26,12 +26,14 @@ class BulkProcessorSaveBackend @Inject() (
 
   /** Не хранить в очереди дольше указанного интервала (в секундах). */
   def FLUSH_INTERVAL_SECONDS: Long = {
-    configuration.getLong("sc.stat.saver.bp.flush.interval.seconds").getOrElse(20L)
+    //configuration.getOptional[Long]("sc.stat.saver.bp.flush.interval.seconds").getOrElse(20L)
+    20L
   }
 
   /** Максимальный размер bulk-реквеста в байтах. */
   def BULK_SIZE_BYTES: Long = {
-    configuration.getLong("sc.stat.saver.bp.size.bytes").getOrElse(200000L)
+    //configuration.getOptional[Long]("sc.stat.saver.bp.size.bytes").getOrElse(200000L)
+    200000L
   }
 
   /** Используемый bulk processor. */

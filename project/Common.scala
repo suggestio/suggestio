@@ -71,6 +71,7 @@ object Common {
 
 
   val SCALA_VSN = "2.11.8"
+  //val SCALA_VSN = "2.12.1"
   val SCALA_VSN_JS = "2.12.1"
 
   val ORG = "io.suggest"

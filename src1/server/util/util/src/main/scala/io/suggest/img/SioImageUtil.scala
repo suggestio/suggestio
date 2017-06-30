@@ -1,11 +1,13 @@
 package io.suggest.img
 
 import io.suggest.ym.model.common.MImgSizeT
-import org.im4java.core.{Info, ConvertCmd, IMOperation}
-import java.io.{FileInputStream, File}
+import org.im4java.core.{ConvertCmd, IMOperation, Info}
+import java.io.{File, FileInputStream}
 import java.nio.file.Files
-import com.typesafe.scalalogging.slf4j.Logger
+
 import io.suggest.img.ConvertModes.ConvertMode
+import io.suggest.util.logs.IMacroLogs
+
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.collection.JavaConversions._
 
@@ -18,9 +20,7 @@ import scala.collection.JavaConversions._
  * уже можно делать конкретную реализацию (обычно через object).
  */
 
-trait SioImageUtilT {
-
-  protected def LOGGER: Logger
+trait SioImageUtilT extends IMacroLogs {
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
@@ -123,7 +123,7 @@ trait SioImageUtilT {
 
     } else if (imageInfo.getImageHeight <= MIN_SZ_PX || imageInfo.getImageWidth <= MIN_SZ_PX) {
       // Слишком маленькая картинка, чтобы её куда-то ресайзить.
-      throw new PictureTooSmallException(fileOld.getAbsolutePath)
+      throw PictureTooSmallException(fileOld.getAbsolutePath)
 
     } else if (MAX_SOURCE_JPEG_NORSZ_BYTES.isDefined && imageInfo.getImageFormat.equalsIgnoreCase("JPEG")) {
       // Изображение умещается в желаемые размеры и это JPEG. Стрипануть и проверить размер.
