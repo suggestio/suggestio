@@ -18,6 +18,7 @@ trait IRequestHeaderWrap extends RequestHeader {
   override def target         = request.target
   override def attrs          = request.attrs
 
+
 }
 
 /** Абстрактная реализация [[IRequestHeaderWrap]]. */

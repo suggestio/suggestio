@@ -29,7 +29,7 @@ object Common {
     val PLAY_SLICK   = "3.0.0"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.6.0"
+    val PLAY_JSON_VSN = "2.6.1"
 
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
@@ -40,10 +40,16 @@ object Common {
     val ELASTIC_SEARCH = "5.4.2"
 
     /** Бывает, что используется slf4j. Тут его версия.
-      * По-хорошему, у нас на сервере logback, на клиенте -- самописный логгинг.
+      * По-хорошему, у нас на сервере logback, на клиенте -- scala-logging поверх slf4j.
       * И SLF4J депендится только в некоторых тестах.
       */
     val SLF4J      = "1.7.+"
+
+    /** elasticsearch и сотоварищи используют log4j impl (вместо log4j-api, ага!).
+      * es-5.0 -> log4j-2.7
+      * @see [[https://github.com/elastic/elasticsearch/issues/19415#issuecomment-257840940]]
+      */
+    val LOG4J      = "2.7"
 
     /** Версия авторских аддонов для JSR-310: threeten-extra. */
     val THREETEN_EXTRA = "1.0"
@@ -70,9 +76,9 @@ object Common {
   }
 
 
-  val SCALA_VSN = "2.11.8"
-  //val SCALA_VSN = "2.12.1"
-  val SCALA_VSN_JS = "2.12.1"
+  val SCALA_VSN = "2.11.11"
+  //val SCALA_VSN = "2.12.2"
+  val SCALA_VSN_JS = "2.12.2"
 
   val ORG = "io.suggest"
 

@@ -2,6 +2,7 @@ package controllers.clk
 
 import controllers.SioController
 import io.suggest.i18n.I18nConst
+import io.suggest.util.logs.IMacroLogs
 import play.api.i18n.Messages
 import util.acl.IMaybeAuth
 import util.i18n.IJsMessagesUtilDi
@@ -17,6 +18,7 @@ trait LkJsMessages
   extends SioController
   with IMaybeAuth
   with IJsMessagesUtilDi
+  with IMacroLogs
 {
 
   /** Глобальное имя на клиенте, в которое будет залита функция локализации. */
@@ -51,6 +53,7 @@ trait LkJsMessages
       }
 
     } else {
+      LOGGER.trace(s"${request.path} hash=$hash must be ${jsMessagesUtil.hash}")
       NotFound("hash: " + hash)
     }
   }

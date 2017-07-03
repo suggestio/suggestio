@@ -19,7 +19,7 @@ resolvers ++= {
 
 
 libraryDependencies ++= {
-  //val slf4jVsn      = Common.Vsn.SLF4J 
+  val slf4jVsn      = Common.Vsn.SLF4J 
   val akkaVsn       = "2.4.+"
   //val morphVsn      = "1.3-SNAPSHOT"
   Seq(
@@ -41,8 +41,8 @@ libraryDependencies ++= {
     //"com.typesafe.akka" %% "akka-remote" % akkaVsn,
 
     // TEST
-    //"org.slf4j" % "slf4j-api" % slf4jVsn % Test,
-    //"org.slf4j" % "slf4j-log4j12" % slf4jVsn % Test,
+    "org.slf4j" % "slf4j-api" % slf4jVsn % Test,
+    "org.slf4j" % "slf4j-log4j12" % slf4jVsn % Test,
     "org.scalatest" %% "scalatest" % Common.scalaTestVsn % Test
   )
 }

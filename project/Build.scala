@@ -300,7 +300,7 @@ object Sio2Build extends Build {
   lazy val lkSjs = {
     Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
       //.enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
-      .enablePlugins(ScalaJSWeb)
+      .enablePlugins(WebScalaJS)
       .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs)
       // Чтобы clean/test в lk-sjs срабатывал и на зависимых вещах, перечисляем их здесь:
       .aggregate(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdvCommonSjs, lkCommonSjs, lkAdnMapSjs, lkNodesFormSjs)
@@ -318,7 +318,7 @@ object Sio2Build extends Build {
   lazy val scSjs = {
     Project(id = "sc-sjs", base = file(DIR0 + "client/sc/main"))
       //.enablePlugins(ScalaJSBundlerPlugin, ScalaJSWeb)
-      .enablePlugins(ScalaJSWeb)
+      .enablePlugins(WebScalaJS)
       .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
   }
 
@@ -378,7 +378,7 @@ object Sio2Build extends Build {
   /** веб-интерфейс suggest.io v2. */
   lazy val www = project
     .in( file(DIR0 + "server/www") )
-    .enablePlugins(PlayScala, SbtWeb, WebScalaJSBundlerPlugin)
+    .enablePlugins(PlayScala, WebScalaJSBundlerPlugin)
     .dependsOn(
       securesocial,
       esUtil, mgeo, n2, mbill2,
@@ -387,9 +387,10 @@ object Sio2Build extends Build {
       svgUtil, ipgeobase, stat
     )
     .settings(
+      // Это связка для
       scalaJSProjects := Seq(lkSjs, scSjs),
-      // TODO sbt-0.13.14 и выше сбоит тут капительно: found: sbt.Task[]   required: sbt.TaskKey[]
-      //pipelineStages in Assets += scalaJSPipeline,
+      pipelineStages in Assets ++= Seq(scalaJSPipeline),
+      // Скопипастить некоторые ассеты прямо из npm:
       npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
         (nodeModules / "react-datepicker" / "dist") * "*.min.css"
       }.value,

@@ -11,8 +11,10 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 libraryDependencies ++= {
   Seq(
-    // Полу-официальная поддержка GeoJSON для play:
-    "com.typesafe.play.extras" %% "play-geojson" % "1.4.+",
+    // Около-официальная поддержка GeoJSON для play:
+    // 1.4.1-SNAPSHOT - т.к. ожидаем мёржа https://github.com/jroper/play-geojson/pull/21
+    "com.typesafe.play.extras"  %% "play-geojson" % "1.4.1-SNAPSHOT",
+
     // остальное geo
     "org.locationtech.spatial4j"  % "spatial4j"   % Common.Vsn.SPATIAL4J,
     "com.vividsolutions"          % "jts-core"    % Common.Vsn.JTS,
