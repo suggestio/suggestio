@@ -156,9 +156,7 @@ excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
 
 // sbt-web
-// TODO rjs не нужен, но его очевидная замена на uglify калечит исходники css-ассетов в simpleUrlUpdate.
-//pipelineStages ++= Seq(uglify, cssCompress, digest, simpleUrlUpdate, digest, filter, gzip)
-pipelineStages ++= Seq(rjs, digest, simpleUrlUpdate, digest, filter, gzip)
+pipelineStages ++= Seq(digest, simpleUrlUpdate, digest, filter, gzip)
 
 //excludeFilter in simpleUrlUpdate := "*.md5"
 //includeFilter in simpleUrlUpdate := "*.css"

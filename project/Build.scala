@@ -53,12 +53,6 @@ object Sio2Build extends Build {
     Project(id = name, base = file(DIR0 + "client/" ++ name))
       //.enablePlugins(ScalaJSBundlerPlugin)
       .dependsOn(commonJS)
-      // Хз нужен ли этот инклюд сорцов прямо здесь.
-      /*.settings(
-        List(commonJS).map { p =>
-          unmanagedSourceDirectories in Compile <++= unmanagedSourceDirectories in (p, Compile)
-        } : _*
-      )*/
   }
 
   /** Расшаренная утиль для интеграции с react.js через scalajs-react. */

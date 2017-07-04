@@ -5,9 +5,9 @@ import io.suggest.stat.m.MStat
 import scala.concurrent.Future
 
 
-
 /** Интерфейс для backend'ов сохранения статистики. */
 trait StatSaverBackend {
+
   /** Сохранение. Бэкэнд может отправлять в свою очередь или в хранилище. */
   def save(stat: MStat): Future[_]
 
@@ -16,5 +16,6 @@ trait StatSaverBackend {
 
   /** Завершение работы backend'a. */
   def close(): Future[_]
+
 }
 
