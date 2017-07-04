@@ -22,7 +22,6 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class StatIndexUtil @Inject() (
   mStatIndexes      : MStatIndexes,
-  //mStats          : MStats,
   mStatsTmpFactory  : MStatsTmpFactory,
   mCommonDi         : IEsModelDiVal
 )
@@ -46,6 +45,7 @@ class StatIndexUtil @Inject() (
     // Подготовить новое имя индекса.
     val newInxName = EsIndexUtil.newIndexName( mStatIndexes.INDEX_ALIAS_NAME )
     lazy val logPrefix = s"reNewCurrIndex() [$newInxName] :"
+    LOGGER.info(s"$logPrefix Starting. newIndexName = $newInxName")
 
     val okFut = for {
       // Создать новый индекс
@@ -262,9 +262,9 @@ final class StatIndexUtilJmx @Inject() (
 
   override def jmxName = "io.suggest:type=stat,name=" + getClass.getSimpleName.replace("Jmx", "")
 
-  private def _usingToStringFut(f: => Future[AnyRef]): String = {
+  private def _usingToStringFut(f: () => Future[AnyRef]): String = {
     val fut = for {
-      result <- statIndexUtil.maybeReNewCurrIndex()
+      result <- f()
     } yield {
       result.toString
     }
@@ -273,31 +273,31 @@ final class StatIndexUtilJmx @Inject() (
 
 
   override def reNewCurrIndex(): String = {
-    _usingToStringFut {
+    _usingToStringFut { () =>
       statIndexUtil.reNewCurrIndex()
     }
   }
 
   override def getCurrIndexInfo(): String = {
-    _usingToStringFut {
+    _usingToStringFut { () =>
       statIndexUtil.getCurrIndexInfo()
     }
   }
 
   override def maybeReNewCurrIndex(): String = {
-    _usingToStringFut {
+    _usingToStringFut { () =>
       statIndexUtil.maybeReNewCurrIndex()
     }
   }
 
   override def findTooOldIndex(): String = {
-    _usingToStringFut {
+    _usingToStringFut { () =>
       statIndexUtil.findTooOldIndex()
     }
   }
 
   override def maybeDeleteTooOldIndex(): String = {
-    _usingToStringFut {
+    _usingToStringFut { () =>
       statIndexUtil.maybeDeleteTooOldIndex()
     }
   }

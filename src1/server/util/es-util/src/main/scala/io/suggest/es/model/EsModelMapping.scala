@@ -5,6 +5,7 @@ import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.xcontent.XContentBuilder
 
 import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -59,13 +60,19 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
 
   /** Отправить маппинг в elasticsearch. */
   def putMapping(): Future[Boolean] = {
-    LOGGER.debug(s"putMapping(): $ES_INDEX_NAME/$ES_TYPE_NAME")
-    esClient.admin().indices()
+    lazy val logPrefix = s"putMapping[${System.currentTimeMillis()}]:"
+    LOGGER.debug(s"$logPrefix $ES_INDEX_NAME/$ES_TYPE_NAME")
+    val fut = esClient.admin().indices()
       .preparePutMapping(ES_INDEX_NAME)
       .setType(ES_TYPE_NAME)
       .setSource(generateMapping)
       .execute()
       .map { _.isAcknowledged }
+    fut.onComplete {
+      case Success(res) => LOGGER.info(s"$logPrefix Done, ack=$res")
+      case Failure(ex)  => LOGGER.error(s"$logPrefix Failed", ex)
+    }
+    fut
   }
 
   def ensureIndex() = {

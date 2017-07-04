@@ -30,7 +30,7 @@ trait EsIndexDynCreate extends IEsModelDi with IMacroLogs {
 
     lazy val logPrefix = s"createIndex($newIndexName):"
     fut.onComplete {
-      case Success(res) => LOGGER.debug(s"$logPrefix Ok, $res")
+      case Success(res) => LOGGER.info(s"$logPrefix Ok, $res")
       case Failure(ex)  => LOGGER.error(s"$logPrefix failed", ex)
     }
 

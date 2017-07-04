@@ -24,6 +24,9 @@ trait EsIndexStaticAlias extends IEsModelDi with IMacroLogs {
   /** Выставить алиас на текущий индекс, забыв о предыдущих данных алиаса. */
   def resetIndexAliasTo(newIndexName: String): Future[_] = {
     val aliasName = INDEX_ALIAS_NAME
+    lazy val logPrefix = s"installIndexAliasTo($newIndexName <= $aliasName)[${System.currentTimeMillis()}]:"
+    LOGGER.info(s"$logPrefix Starting, alias = $aliasName")
+
     val fut = esClient.admin().indices()
       .prepareAliases()
       // Удалить все алиасы с необходимым именем.
@@ -34,7 +37,6 @@ trait EsIndexStaticAlias extends IEsModelDi with IMacroLogs {
       .map( _.isAcknowledged )
 
     // Подключить логгирование к работе...
-    lazy val logPrefix = s"installIndexAliasTo($newIndexName <= $aliasName):"
     fut.onComplete {
       case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
       case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
