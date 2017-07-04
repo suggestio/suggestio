@@ -19,9 +19,9 @@ trait HasGeoPoint extends DynSearchArgs {
     val q0 = super.toEsQuery
     hasGeoPoint.fold(q0) { has =>
       val fn = MNodeFields.Geo.POINT_FN
-      val filterer = QueryBuilders.existsQuery(fn)
       val bq = QueryBuilders.boolQuery()
         .must(q0)
+      val filterer = QueryBuilders.existsQuery(fn)
       if (has)
         bq.filter( filterer )
       else
