@@ -775,7 +775,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
           helper.mapSearchHit(searchHit) :: Nil
         } catch {
           case ex: Throwable =>
-            LOGGER.error(s"$logPrefix Failed to helper.as() for hit#${searchHit.getId} = $searchHit", ex)
+            LOGGER.error(s"$logPrefix Failed to helper.mapSearchHit() for hit#${searchHit.getId} = $searchHit", ex)
             Nil
         }
       }

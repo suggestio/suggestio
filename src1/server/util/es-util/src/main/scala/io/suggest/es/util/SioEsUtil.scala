@@ -236,7 +236,6 @@ object SioEsUtil extends MacroLogsImpl {
       IndexSettings(
         number_of_shards = shards,
         number_of_replicas = replicas,
-        cache_field_type = "soft",
 
         filters = Seq(
           FilterStandard(STD_FN),
@@ -345,7 +344,6 @@ object SioEsUtil extends MacroLogsImpl {
       IndexSettings(
         number_of_replicas = replicas,
         number_of_shards = shards,
-        cache_field_type = "soft",
 
         filters = Seq(
           // v2.0
@@ -600,8 +598,7 @@ case class IndexSettings(
   tokenizers          : Seq[Tokenizer] = Nil,
   filters             : Seq[Filter] = Nil,
   number_of_shards    : Int = -1,
-  number_of_replicas  : Int = -1,
-  cache_field_type    : String = ""
+  number_of_replicas  : Int = -1
 ) extends JsonObject {
 
   override def id = null
@@ -612,8 +609,6 @@ case class IndexSettings(
       b.field("number_of_shards",   number_of_shards)
     if (number_of_replicas > 0)
       b.field("number_of_replicas", number_of_replicas)
-    if (cache_field_type != null & !cache_field_type.isEmpty)
-      b.field("cache.field_type",   cache_field_type)
 
     // Рендерим параметры анализа
     if (analyzers != Nil || tokenizers != Nil || filters != Nil) {
@@ -1315,44 +1310,6 @@ case class FieldNestedObject(
 }
 
 
-/** lat_lon флаг позволяет управлять отдельной индексацией широты и долготы.
-  *
-  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_indexed_fields]] */
-trait LatLon extends Field {
-  def latLon: Boolean
-
-  override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder
-    b.field("lat_lon", latLon)
-  }
-}
-
-/** geohash -- система кодирования координат в географические регионы.
-  *
-  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_geohashes]]
- */
-trait Geohash extends Field {
-  def geohash: Boolean
-  def geohashPrecision: String    // "12" | "20m"
-  def geohashPrefix: Boolean      // Note: This option implicitly enables geohash
-
-  override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder
-    if (geohash)
-      b.field("geohash", geohash)
-    if (geohashPrecision != null && !geohashPrecision.isEmpty) {
-      val ghFn = "geohash_precision"
-      if (geohashPrecision matches "\\d+") {
-        b.field(ghFn, geohashPrecision.toInt)
-      } else {
-        b.field(ghFn, geohashPrecision)
-      }
-    }
-    if (geohashPrefix)
-      b.field("geohash_prefix", geohashPrefix)
-  }
-}
-
 /** Поле с флагом для валидации. */
 trait Validate extends Field {
   def validate: Boolean
@@ -1452,8 +1409,6 @@ case class FieldGeoPoint(
   fieldData     : GeoPointFieldData = null
 )
   extends DocField
-  with LatLon
-  with Geohash
   //with Validate with ValidateLatLon
   //with Normalize with NormalizeLatLon
   //with PrecisionStep

@@ -46,10 +46,6 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
     List(
       FieldGeoPoint(
         id                = Fields.POINT_FN,
-        latLon            = true,
-        geohash           = true,
-        geohashPrefix     = true,
-        geohashPrecision  = "8",
         fieldData         = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
       )
     )

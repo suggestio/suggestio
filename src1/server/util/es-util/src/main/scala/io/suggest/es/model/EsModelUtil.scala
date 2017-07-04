@@ -91,8 +91,9 @@ object EsModelUtil extends MacroLogsImpl {
   /** Сколько раз по дефолту повторять попытку update при конфликте версий. */
   def UPDATE_RETRIES_MAX_DFLT = 5
 
-  /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей.
-    * Имя должно быть коротким и лексикографически предшествовать именам остальных временных индексов. */
+  /** Имя индекса, который будет использоваться для хранения данных для большинства остальных моделей. */
+  // es-5.0+ запрещает создание индексов, начинающихся с -/+ или прочего непотребства.
+  // Однако, индекс "-sio" уже давно с нами, со всеми данными надо промигрировать.
   val DFLT_INDEX        = "-sio"
 
 
@@ -115,6 +116,21 @@ object EsModelUtil extends MacroLogsImpl {
 
   def SHARDS_COUNT_DFLT   = 5
   def REPLICAS_COUNT_DFLT = 1
+
+
+  object Settings {
+
+    object Index {
+
+      private def INDEX_PREFIX = "index."
+
+      def REFRESH_INTERVAL = INDEX_PREFIX + "refresh_interval"
+      def NUMBER_OF_REPLICAS = INDEX_PREFIX + "number_of_replicas"
+      def NUMBER_OF_SHARDS = INDEX_PREFIX + "number_of_shards"
+
+    }
+
+  }
 
 
   /**
@@ -141,7 +157,7 @@ object EsModelUtil extends MacroLogsImpl {
 
   /** Пройтись по всем ES_MODELS и проверить, что всех ихние индексы существуют. */
   def ensureEsModelsIndices(models: Seq[EsModelCommonStaticT])
-                           (implicit ec:ExecutionContext, client: Client): Future[_] = {
+                           (implicit ec: ExecutionContext, client: Client): Future[_] = {
     val indices = models.map { esModel =>
       esModel.ES_INDEX_NAME -> (esModel.SHARDS_COUNT, esModel.REPLICAS_COUNT)
     }.toMap

@@ -22,12 +22,14 @@ trait EsIndexDynDelete extends IEsModelDi with IMacroLogs {
     val fut: Future[_] = esClient.admin().indices()
       .prepareDelete(oldIndexName)
       .execute()
+      .map { _.isAcknowledged }
 
     val logPrefix = s"deleteIndex($oldIndexName):"
 
     // Отрабатывать ситуацию, когда индекс не найден.
     val fut1 = fut.recover { case ex: ResourceNotFoundException =>
       LOGGER.debug(s"$logPrefix Looks like, index not exist, already deleted?", ex)
+      false
     }
 
     // Логгировать завершение команды.

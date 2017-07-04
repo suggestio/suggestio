@@ -54,9 +54,9 @@ class MIndexes @Inject() (
   override def indexSettingsCreate: Settings = {
     Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
-      .put("index.refresh",  -1)
-      .put("index.number_of_replicas", 0)
-      .put("index.number_of_shards", 1)
+      .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,   -1 )
+      .put( EsModelUtil.Settings.Index.NUMBER_OF_REPLICAS,  0 )
+      .put( EsModelUtil.Settings.Index.NUMBER_OF_SHARDS,    1 )
       .build()
   }
 

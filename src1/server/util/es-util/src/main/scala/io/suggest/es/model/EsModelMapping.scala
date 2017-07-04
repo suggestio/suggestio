@@ -1,7 +1,6 @@
 package io.suggest.es.model
 
 import io.suggest.es.util.SioEsUtil._
-import io.suggest.util._
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.common.xcontent.XContentBuilder
 
@@ -72,5 +71,6 @@ trait EsModelStaticMapping extends EsModelStaticMappingGenerators with IMacroLog
   def ensureIndex() = {
     EsModelUtil.ensureIndex(ES_INDEX_NAME, shards = SHARDS_COUNT, replicas = REPLICAS_COUNT)
   }
+
 }
 

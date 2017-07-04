@@ -21,13 +21,12 @@ trait EsIndexDynCreate extends IEsModelDi with IMacroLogs {
 
   /** Собрать новый индекс для заливки туда моделей ipgeobase. */
   def createIndex(newIndexName: String): Future[_] = {
-    val fut: Future[_] = {
-      esClient.admin().indices()
-        .prepareCreate(newIndexName)
-        // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
-        .setSettings( indexSettingsCreate )
-        .execute()
-    }
+    val fut = esClient.admin().indices()
+      .prepareCreate(newIndexName)
+      // Надо сразу отключить index refresh в целях оптимизации bulk-заливки в индекс.
+      .setSettings( indexSettingsCreate )
+      .execute()
+      .map(_.isShardsAcked)
 
     lazy val logPrefix = s"createIndex($newIndexName):"
     fut.onComplete {
