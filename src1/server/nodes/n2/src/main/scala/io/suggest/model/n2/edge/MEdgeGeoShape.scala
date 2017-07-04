@@ -5,7 +5,7 @@ import java.time.OffsetDateTime
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.IGeoShape
-import io.suggest.geo.GeoShapeJvm.GEO_SHAPE_FORMAT
+import io.suggest.geo.GeoShapeJvm._
 import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -121,11 +121,11 @@ object MEdgeGeoShape extends IGenEsMappingProps {
           val ngl: NodeGeoLevel = nglv
           FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
       }
-    FieldString(Fields.GLEVEL_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false, store = true) ::
-      FieldBoolean(Fields.GJSON_COMPAT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false) ::
-      FieldString(Fields.FROM_URL_FN, index = FieldIndexingVariants.no, include_in_all = false) ::
-      FieldDate(Fields.DATE_EDITED_FN, index = FieldIndexingVariants.no, include_in_all = false) ::
-      FieldNumber(Fields.ID_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.no, include_in_all = false) ::
+    FieldKeyword(Fields.GLEVEL_FN, index = true, include_in_all = false, store = true) ::
+      FieldBoolean(Fields.GJSON_COMPAT_FN, index = true, include_in_all = false) ::
+      FieldText(Fields.FROM_URL_FN, index = false, include_in_all = false) ::
+      FieldDate(Fields.DATE_EDITED_FN, index = false, include_in_all = false) ::
+      FieldNumber(Fields.ID_FN, fieldType = DocFieldTypes.integer, index = false, include_in_all = false) ::
       nglFields
   }
 

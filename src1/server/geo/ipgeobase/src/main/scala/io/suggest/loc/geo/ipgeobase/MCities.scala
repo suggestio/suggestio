@@ -80,9 +80,9 @@ abstract class MCitiesAbstract
   override def generateMappingProps: List[DocField] = {
     List(
       // Ничего не индексируется за ненадобность. При необходимости всегда можно пересоздать свежий индекс с иными параметрами.
-      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(NAME_FN, index = FieldIndexingVariants.no, include_in_all = true),
-      FieldString(REGION_FN, index = FieldIndexingVariants.no, include_in_all = true),
+      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = false, include_in_all = false),
+      FieldText(NAME_FN, index = false, include_in_all = true),
+      FieldText(REGION_FN, index = false, include_in_all = true),
       FieldGeoPoint(CENTER_FN)
     )
   }

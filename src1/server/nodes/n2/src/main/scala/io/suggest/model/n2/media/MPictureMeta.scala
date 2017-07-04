@@ -28,7 +28,7 @@ object MPictureMeta extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     def _n(fn: String) = {
-      FieldNumber(fn, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldNumber(fn, fieldType = DocFieldTypes.integer, index = false, include_in_all = false)
     }
     List(
       _n(WIDTH_FN),

@@ -48,9 +48,9 @@ object MTfDaily extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(CURRENCY_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldKeyword(CURRENCY_FN, index = true, include_in_all = false),
       FieldObject(CLAUSES_FN, enabled = true, properties = MDayClause.generateMappingProps),
-      FieldNumber(COMISSION_PC_FN, fieldType = DocFieldTypes.double, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldNumber(COMISSION_PC_FN, fieldType = DocFieldTypes.double, index = false, include_in_all = false)
     )
   }
 

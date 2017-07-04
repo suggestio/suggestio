@@ -6,7 +6,6 @@ import search.IEventsSearchArgs
 import io.suggest.event.SioNotifier.{Classifier, Event}
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import io.suggest.es.util.SioEsUtil._
-import org.elasticsearch.action.index.IndexRequestBuilder
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import javax.inject.{Inject, Singleton}
@@ -16,7 +15,6 @@ import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
 
-import scala.concurrent.duration._
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
 
@@ -90,12 +88,12 @@ class MEvents @Inject() (
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(EVT_TYPE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(OWNER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldKeyword(EVT_TYPE_ESFN, index = true, include_in_all = false),
+      FieldKeyword(OWNER_ID_ESFN, index = true, include_in_all = false),
       FieldObject(ARGS_ESFN, enabled = false, properties = ArgsInfo.generateMappingProps),
-      FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false),
-      FieldBoolean(IS_CLOSEABLE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldBoolean(IS_UNSEEN_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldDate(DATE_CREATED_ESFN, index = true, include_in_all = false),
+      FieldBoolean(IS_CLOSEABLE_ESFN, index = false, include_in_all = false),
+      FieldBoolean(IS_UNSEEN_ESFN, index = true, include_in_all = false)
     )
   }
 
@@ -142,14 +140,6 @@ class MEvents @Inject() (
       (etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen) =>
         MEvent(etype, ownerId, argsInfo, dateCreated, isCloseable, isUnseen, id = meta.id, versionOpt = meta.version)
     }
-  }
-
-  /** Генератор indexRequestBuilder'ов. Помогает при построении bulk-реквестов. */
-  override def prepareIndexNoVsn(m: T): IndexRequestBuilder = {
-    val irb = super.prepareIndexNoVsn(m)
-    if (m.ttlDays.isDefined)
-      irb.setTTL( m.ttlDays.get.days.toMillis )
-    irb
   }
 
 

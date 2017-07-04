@@ -41,8 +41,8 @@ object MDomainExtra extends IGenEsMappingProps {
   /** Описание полей суб-модели для elasticsearch. */
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(DKEY_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(MODE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldKeyword(DKEY_FN, index = true, include_in_all = true),
+      FieldKeyword(MODE_FN, index = true, include_in_all = false)
     )
   }
 

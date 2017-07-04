@@ -56,9 +56,9 @@ object MDayClause extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NAME_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldNumber(AMOUNT_FN, fieldType = DocFieldTypes.double, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(CAL_ID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldText(NAME_FN, index = false, include_in_all = false),
+      FieldNumber(AMOUNT_FN, fieldType = DocFieldTypes.double, index = false, include_in_all = false),
+      FieldKeyword(CAL_ID_FN, index = true, include_in_all = false)
     )
   }
 

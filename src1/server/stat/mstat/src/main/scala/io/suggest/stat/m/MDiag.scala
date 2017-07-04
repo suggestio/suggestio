@@ -51,8 +51,8 @@ object MDiag extends IGenEsMappingProps with IEmpty {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(MESSAGE_FN, index = FieldIndexingVariants.no, include_in_all = true),
-      FieldString(STATE_FN,   index = FieldIndexingVariants.no, include_in_all = false)
+      FieldText(MESSAGE_FN, index = false, include_in_all = true),
+      FieldText(STATE_FN,   index = false, include_in_all = false)
     )
   }
 

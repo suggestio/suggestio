@@ -56,7 +56,7 @@ object MNodeBilling extends IGenEsMappingProps with IEmpty {
   import io.suggest.es.util.SioEsUtil._
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNumber(CONTRACT_ID_FN, fieldType = DocFieldTypes.long, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldNumber(CONTRACT_ID_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false),
       FieldObject(TARIFFS_FN, enabled = true, properties = MNodeTariffs.generateMappingProps)
     )
   }

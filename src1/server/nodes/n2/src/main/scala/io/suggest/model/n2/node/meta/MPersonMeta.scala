@@ -53,10 +53,10 @@ object MPersonMeta extends IGenEsMappingProps with IEmpty {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NAME_FIRST_FN,    index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(NAME_LAST_FN,     index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(EXT_AVA_URL_FN,   index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(EMAIL_FN,         index = FieldIndexingVariants.no, include_in_all = false)
+      FieldText(NAME_FIRST_FN,    index = true, include_in_all = true),
+      FieldText(NAME_LAST_FN,     index = true, include_in_all = true),
+      FieldText(EXT_AVA_URL_FN,   index = false, include_in_all = false),
+      FieldText(EMAIL_FN,         index = false, include_in_all = false)
     )
   }
 

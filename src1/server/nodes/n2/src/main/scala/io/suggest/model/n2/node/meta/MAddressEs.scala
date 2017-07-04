@@ -36,11 +36,11 @@ object MAddressEs extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(TOWN_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(ADDRESS_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(PHONE_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(FLOOR_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(SECTION_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldText(TOWN_FN, index = true, include_in_all = true),
+      FieldText(ADDRESS_FN, index = true, include_in_all = true),
+      FieldText(PHONE_FN, index = true, include_in_all = true),
+      FieldKeyword(FLOOR_FN, index = true, include_in_all = true),
+      FieldKeyword(SECTION_FN, index = true, include_in_all = true)
     )
   }
 

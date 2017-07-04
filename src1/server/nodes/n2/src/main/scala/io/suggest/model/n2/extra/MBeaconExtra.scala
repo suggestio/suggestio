@@ -38,14 +38,14 @@ object MBeaconExtra extends IGenEsMappingProps {
     FieldNumber(
       id              = fn,
       fieldType       = DocFieldTypes.integer,
-      index           = FieldIndexingVariants.not_analyzed,
+      index           = true,
       include_in_all  = true
     )
   }
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(UUID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldKeyword(UUID_FN, index = true, include_in_all = true),
       _fieldNumber(MAJOR_FN),
       _fieldNumber(MINOR_FN)
     )

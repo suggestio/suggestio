@@ -24,6 +24,9 @@ import scala.concurrent.{ExecutionContext, Future}
  * Description: Модель для хранения email-активаций.
  */
 
+// TODO Потеряли поле TTL, оно тут было до наступления es-5.x.
+// Не ясно, надо ли оно: email-регистрацию собирались дропать ведь, заменить всё на OAuth,
+// как требуют новые законы РФ.
 
 /** Статическая часть модели [[EmailActivation]].
   * Модель нужна для хранения ключей для проверки/активации почтовых ящиков. */
@@ -65,12 +68,6 @@ class EmailActivations @Inject() (
   }
 
 
-  /** Сборка static-полей маппинга. В этом маппинге должен быть ttl, чтобы старые записи автоматически выпиливались. */
-  override def generateMappingStaticFields: List[Field] = {
-    FieldTtl(enabled = true, default = EmailActivation.TTL_DFLT) ::
-      super.generateMappingStaticFields
-  }
-
   /** Найти элементы по ключу. */
   def findByKey(key: String): Future[Seq[EmailActivation]] = {
     val keyQuery = QueryBuilders.termQuery(KEY_ESFN, key)
@@ -93,9 +90,6 @@ object EmailActivation {
 
   /** Длина генерируемых ключей для активации. */
   def KEY_LEN = 16  // current.configuration.getInt("ident.email.act.key.len") getOrElse 16
-
-  /** Период ttl, если иное не указано в документе. Записывается в маппинг. */
-  def TTL_DFLT = "2d" // current.configuration.getString("ident.email.act.ttl.period") getOrElse "2d"
 
   /** Сгенерить новый рандомный ключ активации.
     *

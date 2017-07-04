@@ -55,13 +55,13 @@ object MUa extends IGenEsMappingProps with IEmpty {
 
   import io.suggest.es.util.SioEsUtil._
 
-  private def _fieldString(id: String): FieldString = {
-    FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+  private def _fieldString(id: String) = {
+    FieldKeyword(id, index = true, include_in_all = true)
   }
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(UA_STR_FN, index = FieldIndexingVariants.no, include_in_all = true),
+      FieldText(UA_STR_FN, index = false, include_in_all = true),
       _fieldString(BROWSER_FN),
       _fieldString(DEVICE_FN),
       _fieldString(OS_FAMILY_FN),

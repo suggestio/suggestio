@@ -1,5 +1,7 @@
 package io.suggest.stat.m
 
+import java.util.concurrent.TimeUnit
+
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import org.elasticsearch.common.settings.Settings
@@ -63,7 +65,7 @@ class MStatIndexes @Inject() (
   override def indexSettingsCreate: Settings = {
     Settings.builder()
       // Индекс ipgeobase не обновляется после заливки, только раз в день полной перезаливкой. Поэтому refresh не нужен.
-      .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,    INDEX_REFRESH_INTERVAL_SEC)
+      .put( EsModelUtil.Settings.Index.REFRESH_INTERVAL,    INDEX_REFRESH_INTERVAL_SEC + "s")
       .put( EsModelUtil.Settings.Index.NUMBER_OF_REPLICAS,  REPLICAS_COUNT)
       .put( EsModelUtil.Settings.Index.NUMBER_OF_SHARDS,    NUMBER_OF_SHARDS)
       .build()

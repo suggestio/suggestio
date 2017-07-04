@@ -63,13 +63,12 @@ object MAdnExtra extends IGenEsMappingProps {
   import io.suggest.es.util.SioEsUtil._
 
   override def generateMappingProps: List[DocField] = {
-    import FieldIndexingVariants._
     List(
-      FieldString(RIGHTS.fn, index = not_analyzed, include_in_all = false),
-      FieldBoolean(IS_BY_USER.fn, index = not_analyzed, include_in_all = false),
-      FieldString(SHOWN_TYPE.fn, index = not_analyzed, include_in_all = false),
-      FieldBoolean(IS_TEST.fn, index = not_analyzed, include_in_all = false),
-      FieldBoolean(SHOW_IN_SC_NL.fn, index = not_analyzed, include_in_all = false)
+      FieldKeyword(RIGHTS.fn, index = true, include_in_all = false),
+      FieldBoolean(IS_BY_USER.fn, index = true, include_in_all = false),
+      FieldKeyword(SHOWN_TYPE.fn, index = true, include_in_all = false),
+      FieldBoolean(IS_TEST.fn, index = true, include_in_all = false),
+      FieldBoolean(SHOW_IN_SC_NL.fn, index = true, include_in_all = false)
     )
   }
 

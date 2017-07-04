@@ -39,7 +39,7 @@ object BlockMeta extends IGenEsMappingProps {
     FieldNumber(
       id              = fn,
       fieldType       = DocFieldTypes.integer,
-      index           = FieldIndexingVariants.not_analyzed,
+      index           = true,
       include_in_all  = false
     )
   }
@@ -49,7 +49,7 @@ object BlockMeta extends IGenEsMappingProps {
       _fint(BLOCK_ID_ESFN),
       _fint(HEIGHT_ESFN),
       _fint(WIDTH_ESFN),
-      FieldBoolean(WIDE_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldBoolean(WIDE_ESFN, index = true, include_in_all = false)
     )
   }
 

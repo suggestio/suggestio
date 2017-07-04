@@ -30,7 +30,6 @@ import scala.concurrent.{ExecutionContext, Future, Promise}
 object SioEsUtil extends MacroLogsImpl {
 
   import DocFieldTypes.DocFieldType
-  import FieldIndexingVariants.FieldIndexingVariant
   import LOGGER._
   import TermVectorVariants.TermVectorVariant
 
@@ -60,7 +59,6 @@ object SioEsUtil extends MacroLogsImpl {
     def FIELD_ROUTING       = RoutingFieldMapper.NAME
     def FIELD_ID            = IdFieldMapper.NAME
     def FIELD_UID           = UidFieldMapper.NAME
-    def FIELD_TTL           = TTLFieldMapper.NAME
     def FIELD_VERSION       = VersionFieldMapper.NAME
     def FIELD_PARENT        = ParentFieldMapper.NAME
     def FIELD_DOC           = "_doc"
@@ -471,15 +469,15 @@ object SioEsUtil extends MacroLogsImpl {
 
   /** Генератор мульти-полей title и contentText для маппинга страниц. Helper для getPageMapping(). */
   private def multiFieldFtsNgram(name: String, boostFts: Float, boostNGram: Float) = {
-    FieldString(
+    FieldText(
       id = name,
       include_in_all  = true,
-      index           = FieldIndexingVariants.no,
+      index           = false,
       boost           = Some(boostFts),
       fields = Seq(
-        FieldString(
+        FieldText(
           id              = SUBFIELD_ENGRAM,
-          index           = FieldIndexingVariants.analyzed,
+          index           = true,
           analyzer        = ENGRAM_AN_2,
           search_analyzer = MINIMAL_AN,
           term_vector     = TermVectorVariants.with_positions_offsets,
@@ -507,38 +505,38 @@ object SioEsUtil extends MacroLogsImpl {
         ),
 
         properties = Seq(
-          FieldString(
+          FieldText(
             id = FIELD_URL,
-            index = FieldIndexingVariants.no,
+            index = false,
             include_in_all = false
           ),
-          FieldString(
+          FieldText(
             id = FIELD_IMAGE_ID,
-            index = FieldIndexingVariants.no,
+            index = false,
             include_in_all = false
           ),
           FieldNumber(
             id = FIELD_DATE_KILOSEC,
             fieldType = DocFieldTypes.long,
-            index = FieldIndexingVariants.no,
+            index = false,
             include_in_all = false
           ),
           multiFieldFtsNgram(FIELD_TITLE, 4.1f, 2.7f),
           multiFieldFtsNgram(FIELD_CONTENT_TEXT, 1.0f, 0.7f),
-          FieldString(
+          FieldKeyword(
             id = FIELD_LANGUAGE,
-            index = FieldIndexingVariants.not_analyzed,
+            index = true,
             include_in_all = false
           ),
-          FieldString(
+          FieldKeyword(
             id = FIELD_DKEY,
-            index = FieldIndexingVariants.no,
+            index = false,
             include_in_all = false
           ),
           // Тут array-поле, но для ES одинакого -- одно значение в поле или целый массив.
-          FieldString(
+          FieldKeyword(
             id = FIELD_PAGE_TAGS,
-            index = FieldIndexingVariants.not_analyzed,
+            index = true,
             store = false,
             include_in_all = false
           )
@@ -562,13 +560,6 @@ object SioEsUtil extends MacroLogsImpl {
   }
 
 
-object FieldIndexingVariants extends Enumeration {
-  type FieldIndexingVariant = Value
-  val analyzed, not_analyzed, no = Value
-  def default = analyzed
-  def isIndexed(fiv: FieldIndexingVariant) = fiv != no
-}
-
 object TermVectorVariants extends Enumeration {
   type TermVectorVariant = Value
   val no, yes, with_offsets, with_positions, with_positions_offsets = Value
@@ -577,7 +568,7 @@ object TermVectorVariants extends Enumeration {
 
 object DocFieldTypes extends Enumeration {
   type DocFieldType = Value
-  val string, short, integer, long, float, double, boolean, `null`,
+  val text, keyword, short, integer, long, float, double, boolean, `null`,
       multi_field, ip, geo_point, geo_shape, attachment, date, binary,
       nested, `object` = Value
 }
@@ -914,11 +905,10 @@ trait FieldStoreable extends Field {
 }
 
 trait FieldIndexable extends Field {
-  def index : FieldIndexingVariant
+  def index : Boolean
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
-    if (index != null)
-      b.field("index", index.toString)
+    b.field("index", index)
   }
 }
 
@@ -963,10 +953,10 @@ with FieldIncludeInAll
 with FieldBoostable
 with FieldNullable
 
-/** Поле строки. */
-case class FieldString(
+
+case class FieldText(
   id : String,
-  index : FieldIndexingVariant,
+  index : Boolean,
   include_in_all : Boolean,
   index_name : String = null,
   // _field_indexable
@@ -985,7 +975,7 @@ case class FieldString(
 
 ) extends DocFieldIndexable with TextField with MultiFieldT {
 
-  override def fieldType = DocFieldTypes.string
+  override def fieldType = DocFieldTypes.text
 
   override def fieldsBuilder(implicit b: XContentBuilder) {
     super.fieldsBuilder
@@ -998,6 +988,31 @@ case class FieldString(
       b.field("ignore_above", ignore_above.get)
     if (position_offset_gap.isDefined)
       b.field("position_offset_gap", position_offset_gap.get)
+  }
+}
+
+case class FieldKeyword(
+  id : String,
+  index : Boolean,
+  include_in_all : Boolean,
+  index_name : String = null,
+  // _field_indexable
+  store : Boolean = false,
+  boost : Option[Float] = None,
+  null_value : String = null,
+  // _field_string
+  ignore_above : Option[Boolean] = None,
+  override val fields: Traversable[DocField] = Nil
+
+) extends DocFieldIndexable with MultiFieldT {
+
+  override def fieldType = DocFieldTypes.keyword
+
+  override def fieldsBuilder(implicit b: XContentBuilder) {
+    super.fieldsBuilder
+
+    if (ignore_above.isDefined)
+      b.field("ignore_above", ignore_above.get)
   }
 }
 
@@ -1024,7 +1039,7 @@ case class FieldIp(
   override val boost          : Option[Float]         = None,
   override val docValues      : Option[Boolean]       = None,
   override val include_in_all : Boolean               = true,
-  override val index          : FieldIndexingVariant  = FieldIndexingVariants.not_analyzed,
+  override val index          : Boolean,
   override val null_value     : String                = null,
   override val precisionStep  : Int                   = -1,
   override val store          : Boolean               = false
@@ -1064,7 +1079,7 @@ trait FieldDocValues extends Field {
 case class FieldNumber(
   id : String,
   fieldType : DocFieldType,
-  index : FieldIndexingVariant,
+  index : Boolean,
   include_in_all : Boolean,
   index_name : String = null,
   store : Boolean = false,
@@ -1079,7 +1094,7 @@ case class FieldNumber(
 /** Поле с датой. */
 case class FieldDate(
   id : String,
-  index : FieldIndexingVariant,
+  index : Boolean,
   include_in_all : Boolean,
   index_name : String = null,
   store : Boolean = false,
@@ -1095,7 +1110,7 @@ case class FieldDate(
 /** Булево значение. */
 case class FieldBoolean(
   id : String,
-  index : FieldIndexingVariant,
+  index : Boolean,
   include_in_all : Boolean,
   index_name : String = null,
   store : Boolean = false,
@@ -1140,27 +1155,6 @@ trait TextField extends Field {
   }
 }
 
-/** Задание времени жизни документов в маппинге.
-  *
-  * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-ttl-field.html]] */
-case class FieldTtl(
-  enabled : Boolean = false,
-  default : String = null,
-  //store: Boolean = true,
-  index   : FieldIndexingVariant = null    // По дефолту not_analyzed - это техническая необходимость.
-)
-  extends FieldEnableable
-  //with FieldStoreable
-  with FieldIndexable
-{
-  override def id: String = FIELD_TTL
-
-  override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder
-    if (default != null)
-      b.field("default", default)
-  }
-}
 
 /** Поле _all */
 case class FieldAll(
@@ -1175,8 +1169,8 @@ case class FieldAll(
 
 
 case class FieldId(
-  index: FieldIndexingVariant = null,
-  store: Boolean = false
+  override val index: Boolean,
+  override val store: Boolean = false
 ) extends FieldStoreable with FieldIndexable {
   override def id = FIELD_ID
 }
@@ -1206,7 +1200,7 @@ trait FieldWithPath extends Field {
 case class FieldRouting(
   required : Boolean = false,
   store : Boolean = false,
-  index : FieldIndexingVariant = null,
+  index : Boolean,
   path  : String = null
 ) extends FieldStoreable with FieldIndexable with FieldWithPath {
   override def id = FIELD_ROUTING
@@ -1364,57 +1358,23 @@ trait PrecisionStep extends Field {
 }
 
 
-// TODO Кажется, это дело удалили в 2.0. Или compressed удалили, хз. Но оно в 2.0 работает ведь как-то.
-object GeoPointFieldDataFormats extends Enumeration {
-  type GeoPointFieldDataFormat = Value
-  val compressed, array = Value
-}
-
-import GeoPointFieldDataFormats._
-
-case class GeoPointFieldData(format: GeoPointFieldDataFormat, precision: String = null)
-trait GeoPointFieldDataField extends Field {
-  def fieldData: GeoPointFieldData
-
-  override def fieldsBuilder(implicit b: XContentBuilder) {
-    super.fieldsBuilder
-    val fd = fieldData
-    if (fd != null) {
-      b.startObject("fielddata")
-        .field("format", fd.format.toString)
-      if (fd.precision != null)
-        b.field("precision", fd.precision)
-      b.endObject()
-    }
-  }
-}
-
 
 /** Маппинг для географической точки на земле. Точка выражается через координаты либо геохеш оных.
   *
   * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html]] */
 case class FieldGeoPoint(
-  id            : String,
-  latLon        : Boolean = false,
-  geohash       : Boolean = false,
-  geohashPrecision: String = null,      // "12" | "20m"
-  geohashPrefix : Boolean = false,      // Note: This option implicitly enables geohash
-  //validate      : Boolean = false,
-  //validateLat   : Boolean = false,
-  //validateLon   : Boolean = false,
-  //normalize     : Boolean = true,
-  //normalizeLat  : Boolean = false,
-  //normalizeLon  : Boolean = false,
-  //precisionStep : Int = -1,
-  fieldData     : GeoPointFieldData = null
+  id                : String,
+  ignoreMalformed   : Option[Boolean] = None
 )
   extends DocField
-  //with Validate with ValidateLatLon
-  //with Normalize with NormalizeLatLon
-  //with PrecisionStep
-  with GeoPointFieldDataField
 {
   override def fieldType = DocFieldTypes.geo_point
+
+  override def fieldsBuilder(implicit b: XContentBuilder): Unit = {
+    super.fieldsBuilder
+    for (im <- ignoreMalformed)
+      b.field("ignore_malformed", im)
+  }
 }
 
 object GeoShapeTrees extends Enumeration {

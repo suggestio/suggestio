@@ -74,12 +74,12 @@ class MExtTargets @Inject() (
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(SERVICE_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(ADN_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldText(URL_ESFN, index = true, include_in_all = true),
+      FieldKeyword(SERVICE_ID_ESFN, index = true, include_in_all = true),
+      FieldText(NAME_ESFN, index = true, include_in_all = true),
+      FieldKeyword(ADN_ID_ESFN, index = true, include_in_all = false),
       // Для сортировке по дате требуется индексация.
-      FieldDate(DATE_CREATED_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
+      FieldDate(DATE_CREATED_ESFN, index = true, include_in_all = false)
     )
   }
 

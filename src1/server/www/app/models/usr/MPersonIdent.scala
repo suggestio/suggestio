@@ -162,10 +162,10 @@ trait EsModelStaticIdentT extends EsModelStaticT with EsModelPlayJsonStaticT {
 
   def generateMappingProps: List[DocField] = {
     List(
-      FieldString(PERSON_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(KEY_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(VALUE_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldBoolean(IS_VERIFIED_ESFN, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldKeyword(PERSON_ID_ESFN, index = true, include_in_all = false),
+      FieldKeyword(KEY_ESFN, index = true, include_in_all = true),
+      FieldText(VALUE_ESFN, index = false, include_in_all = false),
+      FieldBoolean(IS_VERIFIED_ESFN, index = true, include_in_all = false)
     )
   }
 

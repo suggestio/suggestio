@@ -70,8 +70,8 @@ object MAction extends IGenEsMappingProps {
 
   import io.suggest.es.util.SioEsUtil._
 
-  private def _strField(id: String): FieldString = {
-    FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+  private def _strField(id: String) = {
+    FieldKeyword(id, index = true, include_in_all = true)
   }
 
   override def generateMappingProps: List[DocField] = {
@@ -79,8 +79,8 @@ object MAction extends IGenEsMappingProps {
       _strField(ACTION_FN),
       _strField(NODE_ID_FN),
       _strField(NODE_NAME_FN),
-      FieldNumber(COUNT_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(TEXT_NI_FN, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldNumber(COUNT_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = true),
+      FieldText(TEXT_NI_FN, index = false, include_in_all = false)
     )
   }
 

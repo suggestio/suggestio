@@ -55,7 +55,20 @@ class Crontab @Inject() (
   )
 
   // Constructor -------------------------------
-  private var _startedTimers = startTimers()
+  private var _startedTimers = List.empty[Cancellable]
+
+  // akka-2.5+: Чтобы избегать экзепшенов прямо в конструкторе, запуск таймеров скидываем в отдельный тред.
+  for {
+    ex <- {
+      val fut = Future {
+        _startedTimers = startTimers()
+      }
+      fut.failed
+    }
+  } {
+    LOGGER.error("startTimers() totally failed! Crontab doesn't work at all.", ex)
+  }
+
 
   // Destructor --------------------------------
   lifecycle.addStopHook { () =>

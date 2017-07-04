@@ -20,8 +20,8 @@ object AiSource {
 
   def generateMappingProps: Seq[DocField] = {
     Seq(
-      FieldString(URL_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(CONTENT_HANDLERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldText(URL_ESFN, index = true, include_in_all = true),
+      FieldKeyword(CONTENT_HANDLERS_ESFN, index = true, include_in_all = false)
     )
   }
 

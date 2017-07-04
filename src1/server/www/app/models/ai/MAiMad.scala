@@ -55,11 +55,11 @@ class MAiMads @Inject() (
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NAME_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false),
-      FieldString(TPL_AD_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(DESCR_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldString(RENDERERS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(TIMEZONE_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldText(NAME_ESFN, index = true, include_in_all = false),
+      FieldKeyword(TPL_AD_ID_ESFN, index = true, include_in_all = false),
+      FieldText(DESCR_ESFN, index = true, include_in_all = true),
+      FieldKeyword(RENDERERS_ESFN, index = true, include_in_all = true),
+      FieldText(TIMEZONE_ESFN, index = true, include_in_all = true),
       FieldObject(SOURCES_ESFN, enabled = true, properties = AiSource.generateMappingProps)
     )
   }

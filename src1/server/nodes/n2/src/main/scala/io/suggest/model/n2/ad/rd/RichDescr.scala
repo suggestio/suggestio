@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.rd
 
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil.{DocField, FieldIndexingVariants, FieldString}
+import io.suggest.es.util.SioEsUtil.{DocField, FieldKeyword, FieldText}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -19,8 +19,8 @@ object RichDescr extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(BG_COLOR_ESFN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(TEXT_ESFN, index = FieldIndexingVariants.analyzed, include_in_all = false)
+      FieldKeyword(BG_COLOR_ESFN, index = false, include_in_all = false),
+      FieldText(TEXT_ESFN, index = true, include_in_all = false)
     )
   }
 

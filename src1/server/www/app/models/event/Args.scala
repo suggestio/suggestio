@@ -121,9 +121,9 @@ object ArgsInfo {
 
   /** Поля аргументов тоже индексируются. В первую очередь, чтобы их можно было легко и быстро удалять. */
   def generateMappingProps: List[DocField] = List(
-    FieldString(AdnId.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(AdvExtTarget.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-    FieldString(AdId.strId, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldKeyword(AdnId.strId, index = true, include_in_all = false),
+    FieldKeyword(AdvExtTarget.strId, index = true, include_in_all = false),
+    FieldKeyword(AdId.strId, index = true, include_in_all = false)
   )
 
 }

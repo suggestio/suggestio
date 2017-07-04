@@ -34,7 +34,7 @@ object MEntity extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNumber(Fields.ID_FN, index = FieldIndexingVariants.no, include_in_all = false, fieldType = DocFieldTypes.integer),
+      FieldNumber(Fields.ID_FN, index = false, include_in_all = false, fieldType = DocFieldTypes.integer),
       FieldObject(Fields.Text.TEXT_FN, enabled = true, properties = TextEnt.generateMappingProps)
     )
   }

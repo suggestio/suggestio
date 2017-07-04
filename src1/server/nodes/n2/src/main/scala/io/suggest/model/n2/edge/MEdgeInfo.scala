@@ -111,24 +111,24 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
   /** Сборка полей ES-маппинга. */
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(
+      FieldText(
         id              = DYN_IMG_ARGS_FN,
-        index           = FieldIndexingVariants.no,
+        index           = false,
         include_in_all  = false
       ),
       FieldDate(
         id              = DATE_NI_FN,
-        index           = FieldIndexingVariants.no,
+        index           = false,
         include_in_all  = false
       ),
-      FieldString(
+      FieldText(
         id              = COMMENT_NI_FN,
-        index           = FieldIndexingVariants.no,
+        index           = false,
         include_in_all  = false
       ),
       FieldBoolean(
         id              = FLAG_FN,
-        index           = FieldIndexingVariants.not_analyzed,
+        index           = true,
         include_in_all  = false
       ),
       FieldNumber(
@@ -136,22 +136,22 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         fieldType       = DocFieldTypes.long,
         // Изначально было not_analyzed, но как-то не удалось придумать ни одной ситуации, когда оно пригодится.
         // Ибо весь биллинг самодостаточен и живёт в postgresql, здесь просто подсказка для обратной связи с MItems.
-        index           = FieldIndexingVariants.no,
+        index           = false,
         include_in_all  = false
       ),
       // 2016.mar.24 Теперь теги живут внутри эджей.
-      FieldString(
+      FieldText(
         id              = TAGS_FN,
-        index           = FieldIndexingVariants.analyzed,
+        index           = true,
         include_in_all  = true,
         analyzer        = SioConstants.ENGRAM_AN_1,
         search_analyzer = SioConstants.DFLT_AN,
         fields = Seq(
           // Для аггрегации нужны ненормированные термы. Они позволят получать необрезанные слова.
-          FieldString(
+          FieldText(
             id              = Tags.RAW_FN,
             include_in_all  = false,
-            index           = FieldIndexingVariants.analyzed,
+            index           = true,
             analyzer        = SioConstants.KW_LC_AN
           )
         )

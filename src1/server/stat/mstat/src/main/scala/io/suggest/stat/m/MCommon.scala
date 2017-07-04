@@ -43,13 +43,13 @@ object MCommon extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(COMPONENT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldIp(CLIENT_IP_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(CLIENT_UID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(REQ_URI_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(DOMAIN_3P_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldBoolean(IS_LOCAL_CLIENT_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldNumber(GEN_FN, fieldType = DocFieldTypes.long, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldKeyword(COMPONENT_FN, index = true, include_in_all = true),
+      FieldIp(CLIENT_IP_FN, index = true, include_in_all = true),
+      FieldKeyword(CLIENT_UID_FN, index = true, include_in_all = true),
+      FieldText(REQ_URI_FN, index = false, include_in_all = false),
+      FieldKeyword(DOMAIN_3P_FN, index = true, include_in_all = true),
+      FieldBoolean(IS_LOCAL_CLIENT_FN, index = true, include_in_all = false),
+      FieldNumber(GEN_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false)
     )
   }
 

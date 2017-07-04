@@ -34,9 +34,9 @@ object MViewPort extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldNumber(WIDTH_PX_FN,  fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldNumber(HEIGHT_PX_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldNumber(PX_RATIO_FN,  fieldType = DocFieldTypes.float, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldNumber(WIDTH_PX_FN,  fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+      FieldNumber(HEIGHT_PX_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+      FieldNumber(PX_RATIO_FN,  fieldType = DocFieldTypes.float,   index = true, include_in_all = false)
     )
   }
 

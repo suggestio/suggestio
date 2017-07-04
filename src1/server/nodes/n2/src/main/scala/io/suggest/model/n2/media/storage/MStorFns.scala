@@ -22,23 +22,15 @@ object MStorFns extends EnumValue2Val {
 
   // common
   val STYPE       : T = new Val("t") {
-    override def esMappingProp = FieldString(fn, FieldIndexingVariants.not_analyzed, include_in_all = false)
-  }
-
-  // cassandra
-  val QUALIFIER   : T = new Val("q") {
-    override def esMappingProp = FieldString(fn, FieldIndexingVariants.no, include_in_all = false)
-  }
-  val ROW_KEY     : T = new Val("u") {
-    override def esMappingProp = FieldString(fn, FieldIndexingVariants.no, include_in_all = false)
+    override def esMappingProp = FieldKeyword(fn, index = true, include_in_all = false)
   }
 
   // seaweedfs
   val FID         : T = new Val("i") {
     override def esMappingProp: DocField = {
       FieldObject(fn, enabled = true, properties = Seq(
-        FieldNumber(Fid.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-        FieldString(Fid.FILE_ID_FN, index = FieldIndexingVariants.no, include_in_all = false)
+        FieldNumber(Fid.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+        FieldKeyword(Fid.FILE_ID_FN, index = false, include_in_all = false)
       ))
     }
   }

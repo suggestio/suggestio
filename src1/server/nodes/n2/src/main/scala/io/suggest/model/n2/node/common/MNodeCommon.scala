@@ -34,10 +34,10 @@ object MNodeCommon extends IGenEsMappingProps {
   /** ES-схема полей модели. */
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NODE_TYPE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldBoolean(IS_DEPEND_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldBoolean(IS_ENABLED_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(DISABLE_REASON_FN, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldKeyword(NODE_TYPE_FN, index = true, include_in_all = false),
+      FieldBoolean(IS_DEPEND_FN, index = true, include_in_all = false),
+      FieldBoolean(IS_ENABLED_FN, index = true, include_in_all = false),
+      FieldText(DISABLE_REASON_FN, index = false, include_in_all = false)
     )
   }
 

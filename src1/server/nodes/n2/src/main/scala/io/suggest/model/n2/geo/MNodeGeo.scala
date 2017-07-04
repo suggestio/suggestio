@@ -44,10 +44,7 @@ object MNodeGeo extends IGenEsMappingProps with IEmpty {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldGeoPoint(
-        id                = Fields.POINT_FN,
-        fieldData         = GeoPointFieldData(format = GeoPointFieldDataFormats.compressed, precision = "3m")
-      )
+      FieldGeoPoint( Fields.POINT_FN )
     )
   }
 

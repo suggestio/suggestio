@@ -108,9 +108,9 @@ abstract class MIpRangesAbstract
   override def generateMappingProps: List[DocField] = {
     // Индексируем все поля. ip - чтобы искать, остальное -- для возможности просмотра индекса в kibana.
     List(
-      FieldString(COUNTRY_CODE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldIp(IP_RANGE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldKeyword(COUNTRY_CODE_FN, index = true, include_in_all = true),
+      FieldIp(IP_RANGE_FN, index = true, include_in_all = true),
+      FieldNumber(CITY_ID_FN, fieldType = EsCityIdFieldType, index = true, include_in_all = true)
     )
   }
 

@@ -39,7 +39,7 @@ class MExtIdents @Inject() (
   import MExtIdent._
 
   override def generateMappingProps: List[DocField] = {
-    FieldString(PROVIDER_ID_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = true) ::
+    FieldKeyword(PROVIDER_ID_ESFN, index = true, include_in_all = true) ::
     super.generateMappingProps
   }
 

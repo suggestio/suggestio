@@ -56,9 +56,9 @@ class MCalendars @Inject() (
   import Fields._
 
   override def generateMappingProps: List[DocField] = List(
-    FieldString(NAME_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-    FieldString(DATA_FN, index = FieldIndexingVariants.no, include_in_all = false),
-    FieldString(CAL_TYPE_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    FieldText(NAME_FN, index = true, include_in_all = true),
+    FieldText(DATA_FN, index = false, include_in_all = false),
+    FieldKeyword(CAL_TYPE_FN, index = true, include_in_all = false)
   )
 
   @deprecated("Use deserializeOne2() instead", "2015.sep.05")

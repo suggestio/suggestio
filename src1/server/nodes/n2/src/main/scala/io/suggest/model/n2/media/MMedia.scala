@@ -86,7 +86,7 @@ class MMedias @Inject() (
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NODE_ID_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
+      FieldKeyword(NODE_ID_FN, index = true, include_in_all = true),
       FieldObject(FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
       FieldObject(STORAGE_FN, enabled = true, properties = iMediaStorages.generateMappingProps),
       FieldObject(PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)

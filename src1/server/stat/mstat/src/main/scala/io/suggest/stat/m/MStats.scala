@@ -116,7 +116,7 @@ abstract class MStatsAbstract
     List(
       _fieldObject(COMMON_FN,     MCommon),
       FieldNestedObject(ACTIONS_FN, enabled = true, properties = MAction.generateMappingProps),
-      FieldDate(TIMESTAMP_FN, index = null, include_in_all = false),
+      FieldDate(TIMESTAMP_FN, index = true, include_in_all = false),
       _fieldObject(UA_FN,         MUa),
       _fieldObject(SCREEN_FN,     MScreen),
       _fieldObject(LOCATION_FN,   MLocation),
@@ -196,6 +196,14 @@ abstract class MStatsAbstract
       lazy val logPrefix = s"findMaxTimestamp(${System.currentTimeMillis}):"
       for {
         agg   <- Option( resp.getAggregations.get[Max](aggName) )
+        // Если 0 записей статистики, то результат всё равно не пустой. Будет что-то типа:
+        // Agg result: v=-Infinity vStr=-292275055-05-16T16:47:04.192Z
+        if {
+          val isValueValid = agg.getValue > 1000 && agg.getValue < Double.PositiveInfinity
+          if (!isValueValid)
+            debug( s"$logPrefix Agg value dropped as invalid: ${agg.getValue}. This usually means, that all stat indices are empty." )
+          isValueValid
+        }
         dtStr <- {
           trace( s"$logPrefix Agg result: v=${agg.getValue} vStr=${agg.getValueAsString}" )
           Option( agg.getValueAsString )

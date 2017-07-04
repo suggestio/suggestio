@@ -38,7 +38,7 @@ class SiowebEsModel @Inject() (
   emailActivations    : EmailActivations,
   mExtIdents          : MExtIdents,
   mAsymKeys           : MAsymKeys,
-  mStats              : MStats,
+  //mStats              : MStats,
   mCommonDi           : ICommonDi
 )
   extends MacroLogsImplLazy
@@ -64,8 +64,8 @@ class SiowebEsModel @Inject() (
     mExtTargets,
     mEvents,
     mAsymKeys,
-    mMedias,
-    mStats // Модель живёт в скользящих индексах, но это наверное безопасно...
+    mMedias
+    //mStats // Модель живёт в скользящих индексах, но это наверное безопасно...
   )
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */

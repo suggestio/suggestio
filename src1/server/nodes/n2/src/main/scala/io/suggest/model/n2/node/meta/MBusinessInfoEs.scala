@@ -36,10 +36,10 @@ object MBusinessInfoEs extends IGenEsMappingProps {
   import io.suggest.es.util.SioEsUtil._
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(SITE_URL_FN, index = FieldIndexingVariants.analyzed, include_in_all = true, boost = Some(0.33F)),
-      FieldString(AUDIENCE_DESCR_FN, index = FieldIndexingVariants.analyzed, include_in_all = false),
-      FieldNumber(HUMAN_TRAFFIC_AVG_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(BDESCR_FN, index = FieldIndexingVariants.analyzed, include_in_all = true, boost = Some(0.1F))
+      FieldText(SITE_URL_FN, index = true, include_in_all = true, boost = Some(0.33F)),
+      FieldText(AUDIENCE_DESCR_FN, index = true, include_in_all = false),
+      FieldNumber(HUMAN_TRAFFIC_AVG_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+      FieldText(BDESCR_FN, index = true, include_in_all = true, boost = Some(0.1F))
     )
   }
 

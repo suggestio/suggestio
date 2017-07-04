@@ -34,11 +34,11 @@ object MFileMeta extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(MIME_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
-      FieldNumber(SIZE_B_FN, fieldType = DocFieldTypes.long, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldBoolean(IS_ORIGINAL_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(SHA1_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldDate(DATE_CREATED_FN, index = null, include_in_all = false)
+      FieldText(MIME_FN, index = true, include_in_all = true),
+      FieldNumber(SIZE_B_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false),
+      FieldBoolean(IS_ORIGINAL_FN, index = true, include_in_all = false),
+      FieldKeyword(SHA1_FN, index = false, include_in_all = false),
+      FieldDate(DATE_CREATED_FN, index = true, include_in_all = false)
     )
   }
 

@@ -39,7 +39,7 @@ object MScreen extends IGenEsMappingProps with IEmpty {
   override def generateMappingProps: List[DocField] = {
     val vportFields = MViewPort.generateMappingProps
     List(
-      FieldString(ORIENTATION_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldKeyword(ORIENTATION_FN, index = true, include_in_all = false),
       FieldObject(VPORT_PHYS_FN, enabled = true, properties = vportFields),
       FieldObject(VPORT_QUANTED_FN, enabled = true, properties = vportFields)
     )

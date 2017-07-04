@@ -31,11 +31,12 @@ trait EsIndexStaticAlias extends IEsModelDi with IMacroLogs {
       // Добавить алиас на новый индекс.
       .addAlias(newIndexName, aliasName)
       .execute()
+      .map( _.isAcknowledged )
 
     // Подключить логгирование к работе...
-    lazy val logPrefix = s"installIndexAliase($newIndexName <= $aliasName):"
+    lazy val logPrefix = s"installIndexAliasTo($newIndexName <= $aliasName):"
     fut.onComplete {
-      case Success(r)  => LOGGER.debug(s"$logPrefix OK, result = $r")
+      case Success(r)  => LOGGER.debug(s"$logPrefix OK, ack=$r")
       case Failure(ex) => LOGGER.error(s"$logPrefix Failed to update index alias $aliasName", ex)
     }
 

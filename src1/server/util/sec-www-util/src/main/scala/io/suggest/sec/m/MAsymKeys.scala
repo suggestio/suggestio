@@ -47,8 +47,8 @@ class MAsymKeys @Inject() (
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(PUB_KEY_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(SEC_KEY_FN, index = FieldIndexingVariants.no, include_in_all = false)
+      FieldText(PUB_KEY_FN, index = false, include_in_all = false),
+      FieldText(SEC_KEY_FN, index = false, include_in_all = false)
     )
   }
 

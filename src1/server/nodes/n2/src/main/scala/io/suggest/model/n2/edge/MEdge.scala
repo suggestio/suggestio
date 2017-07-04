@@ -99,12 +99,12 @@ object MEdge extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     // Все поля эджей должны быть include_in_all = false, ибо это сугубо техническая вещь.
-    def fsNa(id: String) = FieldString(id, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+    def fsNa(id: String) = FieldKeyword(id, index = true, include_in_all = false)
     List(
       fsNa(PREDICATE_FN),
       fsNa(NODE_ID_FN),
       // orderId -- not_analyzed, используется в т.ч. для хранения статистики использования геотегов, как это не странно...
-      FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
+      FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
       FieldObject(INFO_FN, enabled = true, properties = MEdgeInfo.generateMappingProps)
     )
   }

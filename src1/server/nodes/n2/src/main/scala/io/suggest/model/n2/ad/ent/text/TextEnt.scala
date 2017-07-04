@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.ent.text
 
 import io.suggest.model.n2.ad.ent.Coords2d
-import io.suggest.es.util.SioEsUtil.{DocField, FieldIndexingVariants, FieldString}
+import io.suggest.es.util.SioEsUtil.{DocField, FieldText}
 import ValueEnt._
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
@@ -17,9 +17,9 @@ import play.api.libs.functional.syntax._
 object TextEnt extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
-    val fstr = FieldString(
+    val fstr = FieldText(
       id              = VALUE_ESFN,
-      index           = FieldIndexingVariants.no,
+      index           = false,
       include_in_all  = true,
       boost           = Some(1.1F)
     )

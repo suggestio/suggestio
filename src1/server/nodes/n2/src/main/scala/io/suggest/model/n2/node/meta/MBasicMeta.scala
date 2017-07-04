@@ -69,16 +69,16 @@ object MBasicMeta extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldString(NAME_FN, index = FieldIndexingVariants.analyzed, include_in_all = true),
+      FieldText(NAME_FN, index = true, include_in_all = true),
       // 2014.oct.01: Разделение поля на analyzed и not_analyzed. Последнее нужно для сортировки.
-      FieldString(NAME_SHORT_FN, index = FieldIndexingVariants.analyzed, include_in_all = true, fields = Seq(
-        FieldString(NOTOK_SUF, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldText(NAME_SHORT_FN, index = true, include_in_all = true, fields = Seq(
+        FieldKeyword(NOTOK_SUF, index = true, include_in_all = true)
       )),
-      FieldString(TECHNICAL_NAME_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(HIDDEN_DESCR_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldDate(DATE_CREATED_FN, index = null, include_in_all = false),
-      FieldDate(DATE_EDITED_FN, index = FieldIndexingVariants.no, include_in_all = false),
-      FieldString(LANGS_ESFN, index = FieldIndexingVariants.not_analyzed, include_in_all = false)
+      FieldText(TECHNICAL_NAME_FN, index = false, include_in_all = false),
+      FieldText(HIDDEN_DESCR_FN, index = false, include_in_all = false),
+      FieldDate(DATE_CREATED_FN, index = true, include_in_all = false),
+      FieldDate(DATE_EDITED_FN, index = true, include_in_all = false),
+      FieldKeyword(LANGS_ESFN, index = true, include_in_all = false)
     )
   }
 

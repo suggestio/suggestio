@@ -46,9 +46,9 @@ object MGeoLocData extends IGenEsMappingProps with IEmpty {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldGeoPoint( COORDS_FN ),
-      FieldNumber(ACCURACY_FN, fieldType = DocFieldTypes.integer, index = FieldIndexingVariants.not_analyzed, include_in_all = false),
-      FieldString(TOWN_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true),
-      FieldString(COUNTRY_FN, index = FieldIndexingVariants.not_analyzed, include_in_all = true)
+      FieldNumber(ACCURACY_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
+      FieldKeyword(TOWN_FN, index = true, include_in_all = true),
+      FieldKeyword(COUNTRY_FN, index = true, include_in_all = true)
     )
   }
 
