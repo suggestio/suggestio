@@ -1,6 +1,7 @@
 package util.jmx
 
 import javax.inject.Inject
+
 import io.suggest.model.n2.media.MMediasJmx
 import io.suggest.model.n2.node.MNodesJmx
 import models.adv.MExtTargetsJmx
@@ -12,6 +13,7 @@ import java.lang.management.ManagementFactory
 
 import io.suggest.loc.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
 import io.suggest.sec.util.SCryptUtilJmx
+import io.suggest.stat.inx.StatIndexUtilJmx
 import io.suggest.stat.m.MStatsJmx
 import io.suggest.util.JMXBase
 import io.suggest.util.JMXHelpers._
@@ -47,6 +49,7 @@ class JMXImpl @Inject() (
                           mCitiesJmx                    : MCitiesJmx,
                           mStatsJmx                     : MStatsJmx,
                           ipgbImporterJmx               : IpgbImporterJmx,
+                          statIndexUtilJmx              : StatIndexUtilJmx,
                           sCryptUtilJmx                 : SCryptUtilJmx,
                           lifecycle                     : ApplicationLifecycle,
                           implicit private val ec       : ExecutionContext
@@ -75,6 +78,7 @@ class JMXImpl @Inject() (
       mMediasJmx,
       mStatsJmx,
       ipgbImporterJmx,
+      statIndexUtilJmx,
       sCryptUtilJmx
     )
   }

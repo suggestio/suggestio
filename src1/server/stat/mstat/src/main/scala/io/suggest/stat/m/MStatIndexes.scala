@@ -1,7 +1,5 @@
 package io.suggest.stat.m
 
-import java.util.concurrent.TimeUnit
-
 import com.google.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import org.elasticsearch.common.settings.Settings

@@ -1,16 +1,17 @@
 package io.suggest.stat.inx
 
 import java.time.Instant
+import javax.inject.{Inject, Singleton}
 
-import com.google.inject.{Inject, Singleton}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.{EsIndexUtil, IEsModelDiVal}
 import io.suggest.stat.m.{MStatIndexes, MStatInxInfo, MStatsTmpFactory}
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.JMXBase
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import org.threeten.extra.Interval
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Suggest.io
@@ -145,7 +146,7 @@ class StatIndexUtil @Inject() (
         None
       }
       // Если одна из проверок была зафейлена, то произвести обновление индекса:
-      .recoverWith { case ex: NoSuchElementException =>
+      .recoverWith { case _: NoSuchElementException =>
         debug(s"maybeReNewCurrIndex(): Current index needs to be reNewed...")
         reNewCurrIndex()
           .map( EmptyUtil.someF )
@@ -230,6 +231,74 @@ class StatIndexUtil @Inject() (
     } yield {
       // Вернуть результаты поиска старого индекса, которого больше нет.
       inxNameOpt
+    }
+  }
+
+}
+
+
+sealed trait StatIndexUtilJmxMBean {
+
+  def reNewCurrIndex(): String
+
+  def getCurrIndexInfo(): String
+
+  def maybeReNewCurrIndex(): String
+
+  def findTooOldIndex(): String
+
+  def maybeDeleteTooOldIndex(): String
+
+}
+
+final class StatIndexUtilJmx @Inject() (
+                                         statIndexUtil            : StatIndexUtil,
+                                         implicit private val ec  : ExecutionContext
+                                       )
+  extends JMXBase
+  with StatIndexUtilJmxMBean
+  with MacroLogsImplLazy
+{
+
+  override def jmxName = "io.suggest:type=stat,name=" + getClass.getSimpleName.replace("Jmx", "")
+
+  private def _usingToStringFut(f: => Future[AnyRef]): String = {
+    val fut = for {
+      result <- statIndexUtil.maybeReNewCurrIndex()
+    } yield {
+      result.toString
+    }
+    awaitString(fut)
+  }
+
+
+  override def reNewCurrIndex(): String = {
+    _usingToStringFut {
+      statIndexUtil.reNewCurrIndex()
+    }
+  }
+
+  override def getCurrIndexInfo(): String = {
+    _usingToStringFut {
+      statIndexUtil.getCurrIndexInfo()
+    }
+  }
+
+  override def maybeReNewCurrIndex(): String = {
+    _usingToStringFut {
+      statIndexUtil.maybeReNewCurrIndex()
+    }
+  }
+
+  override def findTooOldIndex(): String = {
+    _usingToStringFut {
+      statIndexUtil.findTooOldIndex()
+    }
+  }
+
+  override def maybeDeleteTooOldIndex(): String = {
+    _usingToStringFut {
+      statIndexUtil.maybeDeleteTooOldIndex()
     }
   }
 
