@@ -136,7 +136,7 @@ class ScMapUtil @Inject() (
       .execute()
 
     for (resp <- nodesPointsFut) yield {
-      lazy val logPrefix = s"getPoints(${System.currentTimeMillis()}):"
+      lazy val logPrefix = s"findAdnPoints(${System.currentTimeMillis()}):"
       val hits = resp.getHits.getHits
 
       LOGGER.trace(s"$logPrefix Found ${hits.length} of total ${resp.getHits.getTotalHits} hits. Took ${resp.getTookInMillis} ms.")
@@ -145,12 +145,14 @@ class ScMapUtil @Inject() (
       hits.iterator
         .flatMap { hit =>
           lazy val hitInfo = s"${hit.getIndex}/${hit.getType}/${hit.getId}"
-          // формат данных здесь примерно такой: { "g.p": [30.23424234, -5.56756756] }
+          // формат данных здесь меняется от версии к версии ES:
+          // es-2.x: { "g.p": [30.23424234, -5.56756756] }
+          // es-5.x: es.GeoPoint()
           val fieldValue = hit.getField(fn)
-          val rOpt = GeoPoint.fromArraySeq( fieldValue.getValues.iterator() )
-          if (rOpt.isEmpty)
+          val geoPointOpt = GeoPoint.from( fieldValue.getValue )    // Намеренно не паримся насчёт формата здесь, пусть GeoPoint разбирается
+          if (geoPointOpt.isEmpty)
             LOGGER.error(s"$logPrefix Agg.values parsing failed for hit $hitInfo")
-          rOpt
+          geoPointOpt
         }
     }
   }

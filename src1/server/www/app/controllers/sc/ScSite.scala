@@ -32,7 +32,7 @@ import scala.util.{Failure, Success}
  */
 
 /** Базовый трейт с утилью для сборки конкретных реализация экшенов раздачи "сайтов" выдачи. */
-trait ScSiteBase
+trait ScSite
   extends ScController
   with IMacroLogs
   with IStatUtil
@@ -41,6 +41,7 @@ trait ScSiteBase
   with IMNodes
   with IContextUtilDi
   with ICspUtilDi
+  with IMaybeAuth
 {
 
   import mCommonDi._
@@ -261,15 +262,9 @@ trait ScSiteBase
 
   }
 
-}
 
 
-/** Поддержка гео-сайта. */
-trait ScSiteGeo
-  extends ScSiteBase
-  with IStatUtil
-  with IMaybeAuth
-{
+  // Экшены реализации поддержки sc-сайта.
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
   // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.

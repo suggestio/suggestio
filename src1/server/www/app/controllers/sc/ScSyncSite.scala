@@ -28,12 +28,11 @@ import scala.concurrent.Future
 trait ScSyncSite
   extends SioController
   with IMacroLogs
-  with ScSiteGeo
+  with ScSite
   with ScIndex
   with ScAdsTileBase
   with ScFocusedAdsV2
   with ScNodesListBase
-  with ScSiteBase
   with IMaybeAuth
 {
 

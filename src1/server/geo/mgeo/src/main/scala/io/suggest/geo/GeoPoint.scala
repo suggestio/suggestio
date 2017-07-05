@@ -81,6 +81,37 @@ object GeoPoint extends MacroLogsImpl {
   }
 
 
+  /** Извлечение гео-точки из различных форматов данных.
+    *
+    * @param r Исходный инстанс.
+    * @return Опциональная точка.
+    */
+  def from(r: AnyRef): Option[MGeoPoint] = {
+    def logPrefix = s"from($r):"
+    Option(r).flatMap {
+      case esgp: EsGeoPoint =>
+        Some( apply(esgp) )
+      case sp4jPoint: Point =>
+        Some( apply(sp4jPoint) )
+      case str: String =>
+        try {
+          Option( apply(str) )
+        } catch {
+          case ex: Throwable =>
+            LOGGER.warn(s"$logPrefix Failed to parse geo point from string", ex)
+            None
+        }
+      case mgp: MGeoPoint =>
+        Some( mgp )
+      // TraversableOnce наверное не нужен вообще, был нужен для es-2.x и ранее.
+      case lonLatColl: TraversableOnce[Any] =>
+        fromArraySeq( lonLatColl )
+      case _ =>
+        LOGGER.warn(s"$logPrefix Totally unknown geopoint format type.")
+        None
+    }
+  }
+
   private def getCommaIndex(str: String) = str indexOf ','
 
   private def fromLatLonComma(latLon: String, commaIndex: Int): MGeoPoint = {

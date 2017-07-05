@@ -61,7 +61,7 @@ class Sc @Inject() (
 )
   extends SioControllerImpl
   with MacroLogsImpl
-  with ScSiteGeo
+  with ScSite
   with ScIndex
   with ScSyncSite
   with ScAdsTile
