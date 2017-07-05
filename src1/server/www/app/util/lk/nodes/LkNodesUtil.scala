@@ -1,6 +1,6 @@
 package util.lk.nodes
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.ble.BeaconUtil
 import io.suggest.lk.nodes.MLknNodeReq

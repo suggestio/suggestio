@@ -1,6 +1,6 @@
 package util.ble
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}

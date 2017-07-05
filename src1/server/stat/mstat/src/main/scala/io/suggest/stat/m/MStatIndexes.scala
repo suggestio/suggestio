@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.es.model._
 import org.elasticsearch.common.settings.Settings
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture

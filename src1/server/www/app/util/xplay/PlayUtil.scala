@@ -1,6 +1,6 @@
 package util.xplay
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 
 /**
  * Suggest.io

@@ -1,6 +1,6 @@
 package util.n2u
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.ICriteria
 import io.suggest.model.n2.extra.domain.MDomainModes

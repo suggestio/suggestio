@@ -1,6 +1,6 @@
 package io.suggest.stat.saver
 
-import com.google.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton}
 import io.suggest.async.AsyncUtil
 import io.suggest.es.model.IEsModelDiVal
 import io.suggest.stat.m.{MStat, MStats}

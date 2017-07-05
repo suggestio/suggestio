@@ -1,6 +1,6 @@
 package util.ad
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.{MNodeAd, ent}

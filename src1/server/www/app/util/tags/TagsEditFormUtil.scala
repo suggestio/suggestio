@@ -1,6 +1,6 @@
 package util.tags
 
-import com.google.inject.Singleton
+import javax.inject.Singleton
 import models.mtag.{MTagsAddFormBinded, MTagBinded, TagsEditForm_t}
 import play.api.data.{Form, Mapping}
 import play.api.data.Forms._
