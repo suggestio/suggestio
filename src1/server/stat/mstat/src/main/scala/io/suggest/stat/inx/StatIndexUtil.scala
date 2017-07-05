@@ -80,7 +80,7 @@ class StatIndexUtil @Inject() (
     * @return None если текущего индекса внезапно нет.
     *         Some(имя индекса).
     */
-  def getCurrIndexInfo(): Future[Option[MStatInxInfo]] = {
+  def currIndexInfo(): Future[Option[MStatInxInfo]] = {
     for {
       // Прочитать значение алиасов.
       aliasedNames <- mStatIndexes.getAliasedIndexName()
@@ -129,7 +129,7 @@ class StatIndexUtil @Inject() (
     */
   def maybeReNewCurrIndex(): Future[Option[String]] = {
     def logPrefix = "maybeReNewCurrIndex():"
-    getCurrIndexInfo()
+    currIndexInfo()
       // Failure(NSEE) - проверки индекса не пройдены, нужно обновлять его.
       // Success(_) если индекс пока обновлять не требуется.
       .filter { infoOpt =>
@@ -241,7 +241,7 @@ sealed trait StatIndexUtilJmxMBean {
 
   def reNewCurrIndex(): String
 
-  def getCurrIndexInfo(): String
+  def currIndexInfo(): String
 
   def maybeReNewCurrIndex(): String
 
@@ -273,32 +273,32 @@ final class StatIndexUtilJmx @Inject() (
 
 
   override def reNewCurrIndex(): String = {
-    _usingToStringFut { () =>
-      statIndexUtil.reNewCurrIndex()
+    _usingToStringFut {
+      statIndexUtil.reNewCurrIndex
     }
   }
 
-  override def getCurrIndexInfo(): String = {
-    _usingToStringFut { () =>
-      statIndexUtil.getCurrIndexInfo()
+  override def currIndexInfo(): String = {
+    _usingToStringFut {
+      statIndexUtil.currIndexInfo
     }
   }
 
   override def maybeReNewCurrIndex(): String = {
-    _usingToStringFut { () =>
-      statIndexUtil.maybeReNewCurrIndex()
+    _usingToStringFut {
+      statIndexUtil.maybeReNewCurrIndex
     }
   }
 
   override def findTooOldIndex(): String = {
-    _usingToStringFut { () =>
-      statIndexUtil.findTooOldIndex()
+    _usingToStringFut {
+      statIndexUtil.findTooOldIndex
     }
   }
 
   override def maybeDeleteTooOldIndex(): String = {
-    _usingToStringFut { () =>
-      statIndexUtil.maybeDeleteTooOldIndex()
+    _usingToStringFut {
+      statIndexUtil.maybeDeleteTooOldIndex
     }
   }
 
