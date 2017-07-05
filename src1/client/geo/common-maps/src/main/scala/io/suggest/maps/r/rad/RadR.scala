@@ -10,6 +10,7 @@ import react.leaflet.layer.LayerGroupR
 import react.leaflet.popup.{LPopupPropsR, LPopupR}
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import MRadT.MRadTFastEq
+import io.suggest.react.ReactCommonUtil
 
 /**
   * Suggest.io
@@ -42,7 +43,7 @@ object RadR {
 
           } else {
             // !v.enabled -- галочка размещения на карте выключена.
-            null
+            ReactCommonUtil.VdomNullElement
           },
 
           // Попап управления центром.

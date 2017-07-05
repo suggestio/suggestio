@@ -3,6 +3,7 @@ package io.suggest.lk.r
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
+import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -36,7 +37,7 @@ object ImgGalR {
     def render(p: Props): VdomElement = {
       p()
         .filter(_.imgUrls.nonEmpty)
-        .fold[VdomElement](null) { v =>
+        .fold[VdomElement]( ReactCommonUtil.VdomNullElement ) { v =>
           val inner = <.div(
             ^.`class` := Css.Lk.BxSlider.JS_PHOTO_SLIDER,
 
