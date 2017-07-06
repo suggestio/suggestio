@@ -1,12 +1,13 @@
 package util.ai.mad.render
 
+import javax.inject.Inject
+
 import io.suggest.model.n2.ad.EntMap_t
 import models.ai.ContentHandlerResult
 import models.{MNode, TextEnt}
 import org.clapper.scalasti.ST
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -14,7 +15,11 @@ import scala.concurrent.Future
  * Created: 01.12.14 19:29
  * Description: Статический рендерер динамических карточек, использующий scala-sti рендерер.
  */
-object ScalaStiRenderer extends MadAiRenderedT {
+class ScalaStiRenderer @Inject() (
+                                  implicit private val ec: ExecutionContext
+                                 )
+  extends MadAiRenderedT
+{
 
   /**
    * Компиляция текстовых шаблонов в карточке.

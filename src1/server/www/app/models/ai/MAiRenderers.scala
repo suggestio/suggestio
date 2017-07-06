@@ -3,6 +3,8 @@ package models.ai
 import io.suggest.common.menum.EnumMaybeWithName
 import util.ai.mad.render.{MadAiRenderedT, ScalaStiRenderer}
 
+import scala.reflect.ClassTag
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -11,9 +13,10 @@ import util.ai.mad.render.{MadAiRenderedT, ScalaStiRenderer}
  */
 
 object MAiRenderers extends EnumMaybeWithName {
+
   /** Экземпляр модели. */
   protected sealed abstract class Val(val name: String) extends super.Val(name) {
-    def getRenderer(): MadAiRenderedT
+    def getRendererClass: ClassTag[_ <: MadAiRenderedT]
   }
 
   type MAiRenderer = Val
@@ -21,7 +24,7 @@ object MAiRenderers extends EnumMaybeWithName {
 
   /** Вызов рендера шаблонов scalasti. */
   val ScalaSti: MAiRenderer = new Val("scalasti") {
-    override def getRenderer() = ScalaStiRenderer
+    override def getRendererClass = ClassTag( classOf[ScalaStiRenderer] )
   }
 
 }

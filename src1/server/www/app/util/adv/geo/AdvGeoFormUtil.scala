@@ -12,12 +12,10 @@ import models.adv.geo.cur._
 import play.extras.geojson.{Feature, LngLat}
 import util.adv.AdvFormUtil
 
-//import scalaz.{Validation, ValidationNel}
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.syntax.validation._
 import scalaz.std.iterable._
-//import ScalazUtil.HellImplicits.StringMonoid
 
 /**
  * Suggest.io

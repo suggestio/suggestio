@@ -93,11 +93,12 @@ class MadAiUtil @Inject() (
                   targetAds: Seq[MNode]): Future[Seq[MNode]] = {
     // Параллельно маппим все рекламные карточки. Это нарушает исходный порядок, но на это плевать.
     Future.traverse( targetAds ) { targetAd =>
-      renderers.foldLeft(Future successful targetAd) {
+      val injector = mCommonDi.current.injector
+      renderers.foldLeft( Future.successful(targetAd) ) {
         (acc, renderer) =>
           acc.flatMap { mad0 =>
-            renderer
-              .getRenderer()
+            injector
+              .instanceOf( renderer.getRendererClass )
               .renderTplAd(tplAd, args, targetAd = mad0)
           }
       }

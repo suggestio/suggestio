@@ -278,14 +278,19 @@ trait ScSite
 
     } else {
 
-      // Сразу собираем логику ответа. Она может не использоваться по прямому назначению, но сойдёт в качестве передавалки параметров.
-      val logic = new SiteScriptLogicV2 {
-        override def _siteQsArgs  = siteArgs
-        override def _request     = request
-      }
+      if (siteArgs.apiVsn.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+        // Сразу собираем логику ответа. Она может не использоваться по прямому назначению, но сойдёт в качестве передавалки параметров.
+        val logic = new SiteScriptLogicV2 {
+          override def _siteQsArgs = siteArgs
+          override def _request = request
+        }
 
-      // Запуск исполнения экшена.
-      _geoSiteResult(logic)
+        // Запуск исполнения экшена.
+        _geoSiteResult(logic)
+
+      } else {
+        NotImplemented( s"sc.api.vsn=${siteArgs.apiVsn} not implemented" )
+      }
     }
   }
 
@@ -293,7 +298,7 @@ trait ScSite
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    */
-  protected def _geoSiteResult(logic: SiteScriptLogicV2): Future[Result] = {
+  protected def _geoSiteResult(logic: SiteLogic): Future[Result] = {
     // Сборка обычного результата.
     val resFut = logic.resultFut
 

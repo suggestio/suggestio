@@ -41,7 +41,7 @@ trait ScSyncSite
   /**
    * Раздавалка "сайта" выдачи первой страницы. Можно переопределять, для изменения/расширения функционала.
    */
-  override protected def _geoSiteResult(logic: SiteScriptLogicV2): Future[Result] = {
+  override protected def _geoSiteResult(logic: SiteLogic): Future[Result] = {
     logic._request.ajaxJsScState.fold [Future[Result]] {
       super._geoSiteResult(logic)
     } { jsState =>
