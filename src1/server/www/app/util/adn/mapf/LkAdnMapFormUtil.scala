@@ -1,10 +1,16 @@
 package util.adn.mapf
 
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
+
 import io.suggest.adn.mapf.{AdnMapFormConstants, MLamForm}
 import io.suggest.adv.geo.MMapProps
+import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.{CircleGs, MGeoPoint}
-import util.data.{AccordUtil, AccordValidateFormUtilT}
+import io.suggest.scalaz.ValidateFormUtilT
+import util.adv.AdvFormUtil
+
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -15,10 +21,11 @@ import util.data.{AccordUtil, AccordValidateFormUtilT}
   *
   * Будем всячески избегать ситуации в проекте, когда точек узла может быть больше одной.
   */
+@Singleton
 class LkAdnMapFormUtil @Inject() (
-                                   accordUtil        : AccordUtil
+                                   advFormUtil: AdvFormUtil
                                  )
-  extends AccordValidateFormUtilT[MLamForm]
+  extends ValidateFormUtilT[MLamForm]
 {
 
   def mapProps0(gp0: MGeoPoint): MMapProps = {
@@ -36,22 +43,24 @@ class LkAdnMapFormUtil @Inject() (
   }
 
 
-  import accordUtil._
-  import com.wix.accord.dsl._
-
-  implicit val geoCircleV = validator[CircleGs] { gc =>
-    gc.center is valid
-    gc.radiusM should be >= AdnMapFormConstants.Rad.RadiusM.MIN_M.toDouble
-    gc.radiusM should be <= AdnMapFormConstants.Rad.RadiusM.MAX_M.toDouble
+  /** Валидация гео-круга под нужды формы .  */
+  def adnRadCircleV(gc: CircleGs): ValidationNel[String, CircleGs] = {
+    CircleGs.validate(gc, AdnMapFormConstants.Rad.RadiusM)
   }
 
+
   /** Основной валидатор для MLamForm. */
-  // TODO Кривой wix.accord глючит, если написать implicit val тут. Но оно implicit в трейте, поэтому пока терпим.
-  override val mainValidator = validator[MLamForm] { mf =>
-    mf.datePeriod is valid
-    mf.mapCursor is valid
-    mf.mapProps is valid
-    mf.tzOffsetMinutes is valid( jsDateTzOffsetMinutesV )
+  def lamFormV(mf: MLamForm): ValidationNel[String, MLamForm] = {
+    (
+       advFormUtil.datePeriodV( mf.datePeriod ) |@|
+       adnRadCircleV( mf.mapCursor ) |@|
+       MMapProps.validate( mf.mapProps ) |@|
+       CommonDateTimeUtil.jsDateTzOffsetMinutesV( mf.tzOffsetMinutes )
+    ) { (_,_,_,_) => mf }
+  }
+
+  override def doValidation(v: MLamForm): ValidationNel[String, MLamForm] = {
+    lamFormV(v)
   }
 
 }

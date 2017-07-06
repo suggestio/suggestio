@@ -4,6 +4,9 @@ import boopickle.Default._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.GeoConstants.Qs
 
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -63,6 +66,14 @@ object MGeoPoint {
       case _ =>
         None
     }
+  }
+
+
+  def validator(mgp: MGeoPoint): ValidationNel[String, MGeoPoint] = {
+    (
+      Lat.validator( mgp.lat ) |@|
+      Lon.validator( mgp.lon )
+    ) { (_, _) => mgp }
   }
 
 }

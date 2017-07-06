@@ -3,6 +3,9 @@ package io.suggest.dt
 import boopickle.Default._
 import io.suggest.dt.interval.{MRangeYmd, QuickAdvIsoPeriod, QuickAdvPeriod, QuickAdvPeriods}
 
+import scalaz.ValidationNel
+import scalaz.syntax.validation._
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -23,6 +26,13 @@ object IPeriodInfo {
   }
 
   def default = MIsoPeriod()
+
+  def validateUsing(periodInfo: IPeriodInfo)(f: MRangeYmd => ValidationNel[String, _]): ValidationNel[String, IPeriodInfo] = {
+    periodInfo.customRangeOpt.fold( periodInfo.successNel[String] ) { r =>
+      f(r)
+        .map(_ => periodInfo)
+    }
+  }
 
 }
 

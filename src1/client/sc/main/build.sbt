@@ -29,3 +29,5 @@ enableReloadWorkflow := true
 
 emitSourceMaps := false
 
+scalaJSUseMainModuleInitializer := true
+

@@ -31,7 +31,7 @@ requiresDOM in Test := true
 // skip in packageJSDependencies := true
 
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-//enableReloadWorkflow := true
+enableReloadWorkflow := true
 
 emitSourceMaps := false
 
@@ -39,4 +39,6 @@ npmDependencies in Compile ++= Seq(
   "react"     -> Common.reactJsVsn,
   "react-dom" -> Common.reactJsVsn
 )
+
+scalaJSUseMainModuleInitializer := true
 

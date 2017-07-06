@@ -40,6 +40,7 @@ import util.mdr.MdrUtil
 import util.sec.CspUtil
 import util.tags.TagsEditFormUtil
 import views.html.lk.adv.geo._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 import scala.concurrent.Future
 
@@ -267,7 +268,7 @@ class LkAdvGeo @Inject() (
       // Хватаем бинарные данные из тела запроса...
       advGeoFormUtil.validateFromRequest().fold(
         {violations =>
-          LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString("\n", "\n ", "")}")
+          LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.iterator.mkString("\n", "\n ", "")}")
           NotAcceptable( violations.toString )
         },
 
@@ -364,7 +365,7 @@ class LkAdvGeo @Inject() (
 
       advGeoFormUtil.validateFromRequest().fold(
         {violations =>
-          LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.mkString("\n", "\n ", "")}")
+          LOGGER.debug(s"$logPrefix Failed to validate form data: ${violations.iterator.mkString("\n", "\n ", "")}")
           NotAcceptable( violations.toString )
         },
         {mFormS =>

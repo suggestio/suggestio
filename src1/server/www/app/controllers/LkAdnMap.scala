@@ -28,6 +28,7 @@ import util.billing.Bill2Util
 import util.mdr.MdrUtil
 import util.sec.CspUtil
 import views.html.lk.adn.mapf._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 import scala.concurrent.Future
 
@@ -168,7 +169,7 @@ class LkAdnMap @Inject() (
       lkAdnMapFormUtil.validateFromRequest().fold(
         // Забиндить не удалось, вернуть страницу с формой назад.
         {violations =>
-          val violsStr = violations.mkString(", ")
+          val violsStr = violations.iterator.mkString(", ")
           debug(s"$logPrefix: Unable to bind form:\n $violsStr")
           NotAcceptable( violsStr )
         },
@@ -251,7 +252,7 @@ class LkAdnMap @Inject() (
       lkAdnMapFormUtil.validateFromRequest().fold(
         // Неудачно почему-то. Пусть будет ошибка.
         {violations =>
-          val violationsStr = violations.mkString(", ")
+          val violationsStr = violations.iterator.mkString(", ")
           LOGGER.error(s"$logPrefix Failed to bind form:\n $violationsStr")
           NotAcceptable( violationsStr )
         },

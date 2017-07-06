@@ -45,7 +45,7 @@ object BeaconUtil {
       val hexCharRe = "[a-f0-9]"
       val pre = "{"
       val post = "}"
-      hexCharRe + pre + NS_ID_HEX_LEN + post + ID_DELIM + hexCharRe + pre +INST_ID_HEX_LEN + post
+      hexCharRe + pre + NS_ID_HEX_LEN + post + ID_DELIM + hexCharRe + pre + INST_ID_HEX_LEN + post
     }
 
   }

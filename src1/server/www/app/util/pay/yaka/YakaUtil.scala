@@ -4,6 +4,7 @@ import models.mpay.yaka._
 import play.api.data._
 import Forms._
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.bill._
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IEsModelDiVal
@@ -12,6 +13,7 @@ import io.suggest.text.util.TextHashUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mpay.{MPayMode, MPayModes}
 import org.apache.commons.codec.digest.DigestUtils
+import play.api.Configuration
 import util.{FormUtil, TplDataFormatUtil}
 import play.api.http.HttpVerbs
 
@@ -71,7 +73,7 @@ class YakaUtil @Inject() (mCommonDi: IEsModelDiVal)
   /** Доступные для работы конфигурации яндекс-кассы. */
   val PROFILES: Map[MPayMode, IYakaProfile] = {
     val iter = for {
-      confSeq <- configuration.getConfigSeq(CONF_PREFIX + "profiles").iterator
+      confSeq <- configuration.getOptional[Seq[Configuration]](CONF_PREFIX + "profiles").iterator
       conf    <- confSeq
       scId    <- conf.getOptional[Long]("scid")
       modeId  <- conf.getOptional[String]("mode")

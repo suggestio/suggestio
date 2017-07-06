@@ -1,6 +1,7 @@
 package util.billing
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.bill.tf.daily._
 import io.suggest.bill.{Amount_t, MCurrencies, MPrice}
 import io.suggest.cal.m.{MCalType, MCalTypes}
@@ -8,6 +9,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
+import io.suggest.scalaz.ScalazUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode
 import models.mcal.MCalendars
@@ -17,7 +19,11 @@ import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil.{currencyM, doubleM, esIdM}
 import util.TplDataFormatUtil
+import MPrice.HellImplicits.AmountMonoid
 
+import scalaz._
+import scalaz.syntax.apply._
+import scalaz.std.option._
 import scala.concurrent.Future
 
 /**
@@ -323,36 +329,30 @@ class TfDailyUtil @Inject()(
     }
   }
 
-  import com.wix.accord.dsl._
-  import com.wix.accord._
 
 
-  private val tfDailyAmountV = {
+  def tfDailyAmountV(amount: Amount_t): ValidationNel[String, Amount_t] = {
     val n = TfDailyConst.Amount
-    validator[Amount_t] { amount =>
-      amount should be >= n.MIN
-      amount should be <= n.MAX
-    }
+    (
+      Validation.liftNel(amount)(_ < n.MIN, "e.amount.too.small") |@|
+      Validation.liftNel(amount)(_ > n.MAX, "e.amount.too.big")
+    )( (_, _) => amount )
   }
 
-  implicit private val tfModeV = validator[ITfDailyMode] { tfdm =>
-    tfdm.amountOpt.each.should(tfDailyAmountV)
+  private def tfModeAmountOptV(tfdm: ITfDailyMode): ValidationNel[String, ITfDailyMode] = {
+    ScalazUtil.validateAll(tfdm.amountOpt)(tfDailyAmountV)
+      .map { _ => tfdm }
   }
 
   /** Валидация режима тарификации, задаваемого юзером. */
-  def validateTfDailyMode(tfdm: ITfDailyMode): Either[Set[Violation], ITfDailyMode] = {
+  def validateTfDailyMode(tfdm: ITfDailyMode): ValidationNel[String, ITfDailyMode] = {
     val tfdm2 = tfdm.manualOpt.fold(tfdm) { manTf =>
       val mprice = MPrice( manTf.amount, MCurrencies.default )
       manTf.withAmount(
         mprice.normalizeAmountByExponent.amount
       )
     }
-    validate( tfdm2 ) match {
-      case Success =>
-        Right(tfdm2)
-      case Failure(violations) =>
-        Left(violations)
-    }
+    tfModeAmountOptV(tfdm2)
   }
 
 }

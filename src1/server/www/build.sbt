@@ -60,7 +60,7 @@ libraryDependencies ++= {
   "joda-time"             %  "joda-time"            % "2.8.+",
 
   //"com.ning" % "async-http-client" % "1.9.+",   // 2.5 migration, ahc -> 2.0.x. Удалить, если не понадобится возвращать.
-  "org.slf4j" % "log4j-over-slf4j" % "1.+",
+  "org.slf4j" % "log4j-over-slf4j" % Common.Vsn.SLF4J,
   "com.google.guava" % "guava" % "18.+",
   // Календарь праздников
   "de.jollyday" % "jollyday" % "0.5.+",
@@ -78,7 +78,7 @@ libraryDependencies ++= {
   "org.clapper" %% "scalasti" % "2.+",
   
   // Валидация: по идее это должно быть на уровне common, но scala-2.12 пока не пашет, оно тут:
-  "com.wix"      %% "accord-core"     % Common.wixAccordVsn,
+  //"com.wix"      %% "accord-core"     % Common.wixAccordVsn,
 
   // Поддержка JsMessages для client-side локализации сообщений
   "org.julienrf" %% "play-jsmessages" % "3.0.0",

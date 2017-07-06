@@ -38,6 +38,14 @@ sealed trait ICoordDesc {
     )
   }
 
+
+  import scalaz.Validation
+  import scalaz.ValidationNel
+
+  def validator(value: Double): ValidationNel[String, Double] = {
+    Validation.liftNel(value)(!isValid(_), E_INVALID)
+  }
+
 }
 
 

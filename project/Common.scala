@@ -42,8 +42,10 @@ object Common {
     /** Бывает, что используется slf4j. Тут его версия.
       * По-хорошему, у нас на сервере logback, на клиенте -- scala-logging поверх slf4j.
       * И SLF4J депендится только в некоторых тестах.
+      *
+      * 2017.jul.6: Версии 1.7 и 1.8 несовместимы из-за jigsaw, нужно и logback тоже обновлять.
       */
-    val SLF4J      = "1.7.+"
+    val SLF4J      = "1.7.25"
 
     /** elasticsearch и сотоварищи используют log4j impl (вместо log4j-api, ага!).
       * es-5.0 -> log4j-2.7
@@ -73,6 +75,13 @@ object Common {
       */
     val PLAY_WS = "1.0.0"
 
+    /** Версия scalaz.
+      * Изначально добавлена в проект, чтобы наконец выкинуть вечно-кривую валидацию через wix/accord.
+      *
+      * https://github.com/scalaz/scalaz#getting-scalaz
+      */
+    val SCALAZ = "7.2.14"
+
   }
 
 
@@ -82,19 +91,22 @@ object Common {
 
   val ORG = "io.suggest"
 
-  /** Очень общие сеттинги для проектов. */
-  val settingsOrg = Seq[Setting[_]](
-    scalaVersion := SCALA_VSN,
+  val settingsBase = Seq[Setting[_]](
     organization := ORG,
+    // Выключение сборки документации
     sources in (Compile, doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false
+    publishArtifact in (Compile, packageDoc) := false,
+    // Ускорение резолва зависимостей путём запрета их резолва без явной необходимости.
+    offline := true
   )
 
-  val settingsOrgJS = Seq[Setting[_]](
-    scalaVersion := SCALA_VSN_JS,
-    organization := ORG,
-    sources in (Compile, doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false
+  /** Очень общие сеттинги для проектов. */
+  val settingsOrg = settingsBase ++ Seq[Setting[_]](
+    scalaVersion := SCALA_VSN
+  )
+
+  val settingsOrgJS = settingsBase ++ Seq[Setting[_]](
+    scalaVersion := SCALA_VSN_JS
   )
 
   /** Версия play. */
@@ -175,13 +187,6 @@ object Common {
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]
     */
   val enumeratumVsn = "1.5.3"
-
-  /** Версия wix accord validation.
-    * @see [[http://wix.github.io/accord/index.html#getting-started]]
-    * 
-    * v[,0.6.1] имеют серьезную проблему: https://github.com/wix/accord/issues/97
-    */
-  val wixAccordVsn = "0.7-SNAPSHOT"
 
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]

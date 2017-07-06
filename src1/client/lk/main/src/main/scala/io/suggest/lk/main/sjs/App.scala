@@ -18,26 +18,22 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
 
-import scala.scalajs.js.annotation.JSExport
-import scala.scalajs.js.JSApp
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 16.03.15 15:09
  * Description: Запуск js личного кабинета.
  */
-object App extends JSApp with Log {
+object App extends Log {
 
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
-  @JSExport
-  override def main(): Unit = {
-    new LkInitRouter()
+  def main(args: Array[String]): Unit = {
+    val initFut = new LkInitRouter()
       .init()
-      .failed
-      .foreach { ex =>
-        LOG.error(msg = "Init failed", ex = ex)
-      }
+
+    for (ex <- initFut.failed) {
+      LOG.error(msg = "Init failed", ex = ex)
+    }
   }
 
 }

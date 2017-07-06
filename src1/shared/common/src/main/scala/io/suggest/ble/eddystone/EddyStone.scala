@@ -1,7 +1,9 @@
 package io.suggest.ble.eddystone
 
-import io.suggest.ble.BeaconSignal
+import io.suggest.ble.{BeaconSignal, BeaconUtil}
 import io.suggest.common.radio.IRadioSignal
+
+import scalaz.{Validation, ValidationNel}
 
 /**
   * Suggest.io
@@ -10,8 +12,20 @@ import io.suggest.common.radio.IRadioSignal
   * Description: Модель payload'а по одному eddystone-фрейму.
   *
   * Для упрощения, поддержка URL пока отброшена.
-  *
   */
+object EddyStoneUtil {
+
+   /** Валидация id маячка. Ожидается строка в нижнем регистре. */
+  def validateEddyStoneNodeId(eddyId: String): ValidationNel[String, String] = {
+    Validation.liftNel( eddyId )(
+      !_.matches( BeaconUtil.EddyStone.EDDY_STONE_NODE_ID_RE_LC ),
+      "e.eddy.stone.id.invalid"
+    )
+  }
+
+}
+
+
 trait IEddyStoneSignal extends IRadioSignal {
 
   /** Тип фрейма EddyStone. В первом байте каждого eddystone-фрейма. */

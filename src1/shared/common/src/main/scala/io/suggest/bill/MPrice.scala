@@ -1,5 +1,7 @@
 package io.suggest.bill
 
+import scalaz.Monoid
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -19,6 +21,17 @@ object MPrice {
   implicit val mPricePickler: Pickler[MPrice] = {
     implicit val currencyP = MCurrency.pickler
     generatePickler[MPrice]
+  }
+
+
+  object HellImplicits {
+    /** Монойд для amount_t, который является double. */
+    implicit def AmountMonoid: Monoid[Amount_t] = {
+      new Monoid[Amount_t] {
+        override def zero: Amount_t = 0d
+        override def append(f1: Amount_t, f2: => Amount_t): Amount_t = f1 + f2
+      }
+    }
   }
 
 

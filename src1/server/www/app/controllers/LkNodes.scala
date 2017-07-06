@@ -34,6 +34,7 @@ import util.adn.NodesUtil
 import util.billing.{Bill2Util, TfDailyUtil}
 import util.lk.nodes.LkNodesUtil
 import views.html.lk.nodes._
+import io.suggest.scalaz.ScalazUtil.Implicits._
 
 import scala.concurrent.Future
 
@@ -285,8 +286,10 @@ class LkNodes @Inject() (
 
         lkNodesUtil.validateNodeReq( request.body, isEdit = false ).fold(
           {violations =>
-            LOGGER.debug(s"$logPrefix Failed to validate data:\n ${request.body}\n Violations: ${violations.mkString(", ")}")
-            NotAcceptable(s"Invalidated: ${violations.mkString("\n", ",\n", "")}")
+            // Конвертим violations в нормальную коллекцию, чтобы просто её отформатировать без боли.
+            val violsList = violations.asIterable
+            LOGGER.debug(s"$logPrefix Failed to validate data:\n ${request.body}\n Violations: ${violsList.mkString(", ")}")
+            NotAcceptable(s"Invalidated: ${violsList.mkString("\n", ",\n", "")}")
           },
 
           // Данные по создаваемому узлу приняты и выверены. Произвести создание нового узла.
@@ -489,7 +492,7 @@ class LkNodes @Inject() (
 
         lkNodesUtil.validateNodeReq( request.body, isEdit = true ).fold(
           {violations =>
-            LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.mkString(", ")}")
+            LOGGER.debug(s"$logPrefix Failed to bind form: ${violations.iterator.mkString(", ")}")
             NotAcceptable("Invalid name.")
           },
 
@@ -653,7 +656,7 @@ class LkNodes @Inject() (
       tfDailyUtil.validateTfDailyMode( request.body ).fold(
         // Ошибка проверки данных реквеста.
         {violations =>
-          val violsStr = violations.mkString("\n ")
+          val violsStr = violations.iterator.mkString("\n ")
           LOGGER.debug(s"$logPrefix Failed to validate tf-mode:\n $violsStr")
           NotAcceptable( violsStr )
         },

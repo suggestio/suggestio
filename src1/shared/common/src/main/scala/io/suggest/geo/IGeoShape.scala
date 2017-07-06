@@ -1,7 +1,11 @@
 package io.suggest.geo
 
 import boopickle.Default._
+import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.primo.IApply1
+
+import scalaz.{Validation, ValidationNel}
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -101,10 +105,22 @@ case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
 /** Гео-шейп круга. */
 // TODO Замёржить common-модель MGeoCircle в этот шейп.
 object CircleGs {
+
   implicit val CIRCLE_GS_PICKLER: Pickler[CircleGs] = {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[CircleGs]
   }
+
+  /** Валидация гео-круга под нужды какой-то абстрактной формы.  */
+  def validate(gc: CircleGs, radiusConstrains: IMinMaxM): ValidationNel[String, CircleGs] = {
+    val ePrefix = "e.adn.rad.radius.too"
+    (
+      MGeoPoint.validator( gc.center ) |@|
+      Validation.liftNel(gc.radiusM)( _ < radiusConstrains.MIN_M.toDouble, s"$ePrefix.small" ) |@|
+      Validation.liftNel(gc.radiusM)( _ > radiusConstrains.MAX_M.toDouble, s"$ePrefix.big")
+    )( (_,_,_) => gc )
+  }
+
 }
 case class CircleGs(
                      center   : MGeoPoint,

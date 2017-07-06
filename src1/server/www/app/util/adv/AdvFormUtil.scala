@@ -1,22 +1,29 @@
 package util.adv
 
 import java.time.LocalDate
-
 import javax.inject.{Inject, Singleton}
+
+import scalaz._
+import scalaz.syntax.apply._
+import scalaz.std.iterable._
+import io.suggest.scalaz.ScalazUtil.HellImplicits.StringMonoid
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.adv.free.MAdv4FreeProps
+import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MGetPriceResp
 import io.suggest.common.empty.OptionUtil
-import io.suggest.dt.interval.{PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
+import io.suggest.dt.{IPeriodInfo, MAdvPeriod, MYmd, YmdHelpersJvm}
+import io.suggest.dt.interval.{MRangeYmd, PeriodsConstants, QuickAdvIsoPeriod, QuickAdvPeriods}
 import io.suggest.i18n.MsgCodes
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.scalaz.ScalazUtil
 import models.adv.form._
 import models.mctx.Context
 import models.req.{IReq, IReqHdr}
 import play.api.data.Forms._
 import play.api.data.{Form, _}
-import util.TplDataFormatUtil
+import util.{FormUtil, TplDataFormatUtil}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -28,8 +35,12 @@ import scala.concurrent.{ExecutionContext, Future}
  */
 @Singleton
 class AdvFormUtil @Inject() (
-                             implicit private val ec: ExecutionContext
+                              dtUtilJvm         : YmdHelpersJvm,
+                              implicit private val ec: ExecutionContext
                             ) {
+
+  import dtUtilJvm.Implicits._
+
 
   /** Отдельный маппинг для adv-формы, который парсит исходные данные по бесплатному размещению. */
   def freeAdvFormM: Form[Option[Boolean]] = {
@@ -180,6 +191,65 @@ class AdvFormUtil @Inject() (
 
   def a4fCheckedOpt(a4fPropsOpt: Option[MAdv4FreeProps]): Option[Boolean] = {
     a4fPropsOpt.map(_ => true)
+  }
+
+
+
+  def validateYmdIsForAdvNow(ld: LocalDate, now: LocalDate): ValidationNel[String, LocalDate] = {
+    val notBeforeNow = Validation.liftNel(ld)( _.isBefore(now), "e.date.in.past" )
+    val beforeFarFuture = Validation.liftNel(ld)( _.isAfter( now.plusYears(1) ), "e.date.after.far.future" )
+    (notBeforeNow |@| beforeFarFuture) { (_,_) => ld }
+  }
+
+
+  def dateRangeYmdIsForAdv(r: MRangeYmd): ValidationNel[String, MRangeYmd] = {
+    import Validation.FlatMap._
+
+    val now = LocalDate.now()
+
+    // Проверка одной даты, т.е. даты начала или окончания.
+    def _validateOneDate(ymd: MYmd, name: String) ={
+      Validation.fromTryCatchNonFatal( ymd.to[LocalDate] )
+        .leftMap(_ => s"e.$name.date.invalid")
+        .toValidationNel
+        .flatMap( validateYmdIsForAdvNow(_, now) )
+    }
+
+    // Дата начала корректна:
+    val ldStartV = _validateOneDate( r.dateStart, "start" )
+    // Дата окончания корректна:
+    val ldEndV = _validateOneDate( r.dateEnd, "end" )
+
+    // Объединить оба валидатора, вернув общий кортеж.
+    (ldStartV |@| ldEndV)((_,_))
+      // И убедится, что дата окончания находится после даты начала.
+      .flatMap { case (ldStart, ldEnd) =>
+        Validation.liftNel(r)(
+          {_ => !ldStart.isBefore(ldEnd) },
+          "e.date.range.invalid"
+        )
+      }
+  }
+
+
+  def periodInfoV(p: IPeriodInfo): ValidationNel[String, IPeriodInfo] = {
+    IPeriodInfo.validateUsing(p)(dateRangeYmdIsForAdv)
+  }
+
+
+  def datePeriodV(advPeriod: MAdvPeriod): ValidationNel[String, MAdvPeriod] = {
+    periodInfoV( advPeriod.info )
+      .map(_ => advPeriod)
+  }
+
+  def rcvrIdV(rcvrId: String): ValidationNel[String, String] = {
+    Validation.liftNel(rcvrId)( !FormUtil.isEsIdValid(_), "e.rcvr.id.format" )
+  }
+
+  def rcvrKeyV(rcvrKey: RcvrKey): ValidationNel[String, RcvrKey] = {
+    val v1 = Validation.liftNel(rcvrKey)(_.isEmpty, "e.rcvr.key.empty")
+    val v2 = ScalazUtil.validateAll(rcvrKey)(rcvrIdV)
+    (v1 |@| v2) { (_,_) => rcvrKey }
   }
 
 }

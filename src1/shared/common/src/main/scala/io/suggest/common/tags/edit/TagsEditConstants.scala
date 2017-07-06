@@ -2,6 +2,9 @@ package io.suggest.common.tags.edit
 
 import io.suggest.common.html.HtmlConstants
 
+import scalaz.{Validation, ValidationNel}
+import scalaz.syntax.apply._
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -88,6 +91,19 @@ object TagsEditConstants {
 
     /** Сколько тегов юзер может добавить за один запрос максимум. */
     def TAGS_PER_ADD_MAX = 20
+
+
+    /** Валидация названия тега. */
+    def tagFaceV(tagFace: String): ValidationNel[String, String] = {
+      val l = tagFace.length
+      val C = TagsEditConstants.Constraints
+      val ePrefix = "e.tag.face.too"
+      val maxLenV = Validation.liftNel(l)(_ > C.TAG_LEN_MAX, s"$ePrefix.big")
+      val minLenV = Validation.liftNel(l)(_ < C.TAG_LEN_MIN, s"$ePrefix.small")
+      (maxLenV |@| minLenV)( (_,_) => tagFace )
+    }
+
+
 
   }
 

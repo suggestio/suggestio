@@ -1,11 +1,23 @@
 package util.adv.geo
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.adv.geo.{AdvGeoConstants, MFormS, MMapProps, RcvrsMap_t}
-import io.suggest.geo.{CircleGsJvm, GeoShapeJvm, CircleGs, MGeoPoint}
+import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.tags.edit.MTagsEditProps
+import io.suggest.geo.{CircleGs, CircleGsJvm, GeoShapeJvm, MGeoPoint}
+import io.suggest.scalaz.{ScalazUtil, ValidateFormUtilT}
 import models.adv.geo.cur._
 import play.extras.geojson.{Feature, LngLat}
-import util.data.{AccordUtil, AccordValidateFormUtilT}
+import util.adv.AdvFormUtil
+
+//import scalaz.{Validation, ValidationNel}
+import scalaz._
+import scalaz.syntax.apply._
+import scalaz.syntax.validation._
+import scalaz.std.iterable._
+//import ScalazUtil.HellImplicits.StringMonoid
 
 /**
  * Suggest.io
@@ -15,9 +27,9 @@ import util.data.{AccordUtil, AccordValidateFormUtilT}
  */
 @Singleton
 class AdvGeoFormUtil @Inject() (
-                                 accordUtil        : AccordUtil
+                                 advFormUtil: AdvFormUtil
                                )
-  extends AccordValidateFormUtilT[MFormS]
+  extends ValidateFormUtilT[MFormS]
 {
 
 
@@ -69,28 +81,41 @@ class AdvGeoFormUtil @Inject() (
   }
 
 
-  import com.wix.accord.dsl._
-  import accordUtil._
 
-
-  implicit val rcvrsMapV = validator[RcvrsMap_t] { rm =>
-    rm.size should be <= AdvGeoConstants.AdnNodes.MAX_RCVRS_PER_TIME
-    rm.keys.each is valid
+  def rcvrsMapV(rm: RcvrsMap_t): ValidationNel[String, RcvrsMap_t] = {
+    var vld = Validation.liftNel(rm)( _.size > AdvGeoConstants.AdnNodes.MAX_RCVRS_PER_TIME, "e.rcvr.too.many" )
+    // Провалидировать все ключи, если они есть.
+    if (rm.keys.nonEmpty) {
+      // Затычка для scalaz, чтобы можно было провалидировать коллекцию из RcvrKey.
+      implicit val rcvrKeyDirtyMonoid = new Monoid[RcvrKey] {
+        override def zero: RcvrKey = Nil
+        override def append(f1: RcvrKey, f2: => RcvrKey): RcvrKey = f2
+      }
+      val v2 = ScalazUtil.validateAll(rm.keys)(advFormUtil.rcvrKeyV)
+      vld = (vld |@| v2) { (_,_) => rm }
+    }
+    vld
   }
 
-  implicit val geoCircleV = validator[CircleGs] { gc =>
-    gc.center is valid
-    gc.radiusM should be >= AdvGeoConstants.Radius.MIN_M.toDouble
-    gc.radiusM should be <= AdvGeoConstants.Radius.MAX_M.toDouble
+  def advGeoRadCircleV(gc: CircleGs): ValidationNel[String, CircleGs] = {
+    CircleGs.validate(gc, AdvGeoConstants.Radius)
   }
 
+  def mAdvGeoFormV(m: MFormS): ValidationNel[String, MFormS] = {
+    (
+      MMapProps.validate( m.mapProps ) |@|
+      advFormUtil.datePeriodV( m.datePeriod ) |@|
+      rcvrsMapV( m.rcvrsMap ) |@|
+      MTagsEditProps.validate( m.tagsEdit ) |@|
+      // TODO Тут какой-то адовый говнокод, т.к. пол-часа на осиливание scalaz - это маловато. Нужно провалидировать опциональное значение с помощью обязательного валидатора:
+      m.radCircle
+        .map(advGeoRadCircleV)
+        .fold( Option.empty[CircleGs].successNel[String] )(_.map(EmptyUtil.someF))
+    ) { (_,_,_,_,_) => m }
+  }
 
-  override val mainValidator = validator[MFormS] { m =>
-    m.mapProps is valid
-    m.datePeriod is valid
-    m.rcvrsMap is valid
-    m.tagsEdit is valid
-    m.radCircle.each is valid
+  override protected def doValidation(v: MFormS): ValidationNel[String, MFormS] = {
+    mAdvGeoFormV(v)
   }
 
 }
