@@ -26,6 +26,7 @@ class IsNodeAdmin @Inject()(
                              aclUtil          : AclUtil,
                              isAuth           : IsAuth,
                              reqUtil          : ReqUtil,
+                             dab              : DefaultActionBuilder,
                              mCommonDi        : ICommonDi
                            )
   extends MacroLogsImpl
@@ -192,7 +193,7 @@ class IsNodeAdmin @Inject()(
   }
 
   def A[A](nodeId: String, userInits: MUserInit*)(action: Action[A]): Action[A] = {
-    Action.async(action.parser) { request =>
+    dab.async(action.parser) { request =>
       _applyId(nodeId, userInits, request)(action.apply)
     }
   }

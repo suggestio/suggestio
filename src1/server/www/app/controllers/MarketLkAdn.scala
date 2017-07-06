@@ -292,7 +292,7 @@ class MarketLkAdn @Inject() (
           debug(s"${logPrefix}Form bind failed: ${formatFormErrors(formWithErrors)}")
           NotAcceptable(invite.inviteAcceptFormTpl(mnode, eact, formWithErrors, withOfferText = false))
 
-        }, { case (contractAgreed, passwordOpt) =>
+        }, { case (_, passwordOpt) =>
           val isAuth = request.user.isAuth
           if (passwordOpt.isEmpty && !isAuth) {
             debug(s"${logPrefix}Password check failed. isEmpty=${passwordOpt.isEmpty} ;; request.isAuth=$isAuth")
@@ -304,7 +304,7 @@ class MarketLkAdn @Inject() (
           } else {
             // Сначала удаляем запись об активации, убедившись что она не была удалена асинхронно.
             for {
-              isDeleted <- emailActivations.deleteById(eActId)
+              _ <- emailActivations.deleteById(eActId)
 
               personIdOpt <- {
                 if (!isAuth) {
@@ -316,7 +316,7 @@ class MarketLkAdn @Inject() (
                     meta = MMeta(
                       basic = MBasicMeta(
                         nameOpt = Some(eact.email),
-                        langs = List( request2lang.code )
+                        langs = List( request.messages.lang.code )
                       ),
                       person = MPersonMeta(
                         emails = List(eact.email)

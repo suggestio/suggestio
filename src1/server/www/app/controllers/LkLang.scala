@@ -39,7 +39,7 @@ class LkLang @Inject() (
   import LOGGER._
   import mCommonDi._
 
-  private def chooseLangFormM(implicit currLang: Lang): Form[Lang] = {
+  private def chooseLangFormM(currLang: Lang): Form[Lang] = {
     Form(
       "lang" -> uiLangM(Some(currLang))
     )
@@ -95,7 +95,7 @@ class LkLang @Inject() (
   /** Сабмит формы выбора текущего языка. Нужно выставить язык в куку и текущему юзеру в MPerson. */
   def selectLangSubmit(r: Option[String]) = csrf.Check {
     maybeAuth().async { implicit request =>
-      chooseLangFormM.bindFromRequest().fold(
+      chooseLangFormM( request.messages.lang ).bindFromRequest().fold(
         {formWithErrors =>
           debug("selectLangSubmit(): Failed to bind lang form: \n" + formatFormErrors(formWithErrors))
           _showLangSwitcher(formWithErrors, r, NotAcceptable)
@@ -140,7 +140,7 @@ class LkLang @Inject() (
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
           RdrBackOr(r)(routes.Ident.rdrUserSomewhere())
-            .withLang(newLang)( mCommonDi.messagesApi )
+            .withLang(newLang)
         }
       )
     }

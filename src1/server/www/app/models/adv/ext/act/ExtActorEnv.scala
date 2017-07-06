@@ -53,7 +53,7 @@ trait ExtServiceActorEnv extends ExtActorEnv {
 
 
 /**
- * Базовое описание окружения актора [[ExtTargetActor]].
+ * Базовое описание окружения актора [[util.adv.ext.AdvExtTargetActor]].
  * Нужно для описания внутренних моделей, имеющие доступ к этому окружению.
  */
 trait ExtTargetActorEnv

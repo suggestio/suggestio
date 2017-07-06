@@ -3,7 +3,7 @@ package controllers
 import models.mctx.ContextT
 import models.mproj.IMCommonDi
 import models.req.MUserInits
-import play.api.i18n.{I18nSupport, Lang}
+import play.api.i18n.{I18nSupport, Lang, Messages}
 import play.api.mvc._
 import util.jsa.init.CtlJsInitT
 import util.ws.IWsDispatcherActorsDi
@@ -26,14 +26,12 @@ import scala.util.{Failure, Success}
  * Description: Базовый хелпер для контроллеров suggest.io. Используется почти всегда вместо обычного Controller.
  */
 trait SioController
-  extends Controller
+  extends InjectedController
   with ContextT
   with I18nSupport
   with CtlJsInitT
   with IMCommonDi
 {
-
-  override def messagesApi = mCommonDi.messagesApi
 
   import mCommonDi._
 
@@ -81,9 +79,10 @@ trait SioController
     r.withHeaders(CACHE_CONTROL -> v)
   }
 
+
   /** 2015.mar.30: Если в выбранном языке не указана страна, то нужно её туда прикрутить.
     * Появилось после добавления кодов стран к языкам messages. У части людей остались старые кукисы. */
-   override implicit def request2lang(implicit request: RequestHeader): Lang = {
+  override implicit def request2Messages(implicit request: RequestHeader): Messages = {
     // TODO Следует брать дефолтовый Lang с учетом возможного ?lang=ru в qs запрашиваемой ссылки.
     // Тут должна быть проверка экземпляра реквеста http://www.mariussoutier.com/blog/2012/12/11/playframework-routes-part-2-advanced/
     // На уровне action builder'ов должна быть поддержка выставления языка из url qs.
@@ -91,21 +90,24 @@ trait SioController
     /*val lang0 = request.getQueryString(LangUtil.LANG_QS_ARG_NAME)
       .flatMap { Lang.get }
       .getOrElse { super.request2lang }*/
-    val lang0 = super.request2lang
+    val messages0 = super.request2Messages
+    val lang0 = messages0.lang
     if (!lang0.country.isEmpty) {
-      lang0
+      messages0
     } else {
       // Нужно трансформировать язык к локаль исходя из доступных messages-локалей
       val avails = langs.availables
-      avails
+      val lang2 = avails
         .find { _.language == lang0.language }
         .orElse { Lang.get("en-US") }
         .orElse { avails.headOption }
         .getOrElse { Lang.defaultLang }
+      messagesApi.preferred( lang2 :: lang0 :: Nil )
     }
   }
 
 }
+
 /** Абстрактная реализация контроллера с дедубликации скомпиленного кода между контроллерами. */
 abstract class SioControllerImpl extends SioController
 

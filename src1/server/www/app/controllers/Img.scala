@@ -25,7 +25,6 @@ import net.sf.jmimemagic.Magic
 import org.apache.commons.io.FileUtils
 import play.api.data.Forms._
 import play.api.data._
-import play.api.http.FileMimeTypes
 import play.api.libs.Files.TemporaryFile
 import play.api.mvc._
 import play.twirl.api.Html
@@ -59,7 +58,6 @@ class Img @Inject() (
   override val asyncUtil          : AsyncUtil,
   isAuth                          : IsAuth,
   imgFormUtil                     : ImgFormUtil,
-  implicit protected val fileMimeTypes  : FileMimeTypes,
   override val mCommonDi          : ICommonDi
 )
   extends SioController
@@ -72,14 +70,12 @@ class Img @Inject() (
   import mCommonDi._
 
   /** Сколько времени можно кешировать на клиенте оригинал картинки. */
-  val CACHE_ORIG_CLIENT_SECONDS = {
+  private val CACHE_ORIG_CLIENT_SECONDS = {
     // TODO Кажется, этот параметр изменил свой смысл...
-    val cacheDuration = configuration.getInt("img.orig.cache.client.hours").map(_.hours).getOrElse {
-      if (isProd) {
-        2.days
-      } else {
-        30.seconds
-      }
+    val cacheDuration =if (isProd) {
+      2.days
+    } else {
+      30.seconds
     }
     cacheDuration.toSeconds.toInt
   }
@@ -325,7 +321,7 @@ trait TempImgSupport
     val resultFut: Future[Result] = request.body.file("picture") match {
       case Some(pictureFile) =>
         val fileRef = pictureFile.ref
-        val srcFile = fileRef.file
+        val srcFile = fileRef.path.toFile
         val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
         // Отрабатываем svg: не надо конвертить.
         val srcMime = srcMagicMatch.getMimeType
@@ -405,7 +401,7 @@ trait TempImgSupport
     resultFut.onComplete { _ =>
       // Удалить все файлы, которые были приняты в реквесте.
       request.body.files.foreach { f =>
-        f.ref.file.delete()
+        f.ref.path.toFile.delete()
       }
     }
 

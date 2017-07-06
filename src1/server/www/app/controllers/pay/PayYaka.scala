@@ -241,7 +241,7 @@ class PayYaka @Inject() (
       .mkString(d, d, "")
   }
 
-  def YREQ_BP = parse.urlFormEncoded(60000)
+  def YREQ_BP = parse.formUrlEncoded(60000)
 
 
   /** Сделать исключение, если не-суперюзер пытается платить через демокассу. */

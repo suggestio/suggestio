@@ -25,7 +25,7 @@ trait LkBillTxns
 
   import mCommonDi._
 
-  private val TXNS_PER_PAGE: Int = configuration.getInt("lk.bill.txns.list.size") getOrElse 10
+  private def TXNS_PER_PAGE = 10
 
 
   /** Подгрузка страницы из списка транзакций. */

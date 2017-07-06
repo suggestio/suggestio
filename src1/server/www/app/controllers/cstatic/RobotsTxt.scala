@@ -16,9 +16,7 @@ trait RobotsTxt extends SioController with IIgnoreAuth {
 
   /** Время кеширования /robots.txt ответа на клиенте. */
   private val ROBOTS_TXT_CACHE_TTL_SECONDS: Int = {
-    configuration.getInt("robots.txt.cache.ttl.seconds") getOrElse {
-      if (isDev) 5 else 120
-    }
+    if (isDev) 5 else 120
   }
 
   /** Раздача содержимого robots.txt. */

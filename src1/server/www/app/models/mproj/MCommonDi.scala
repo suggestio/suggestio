@@ -39,7 +39,7 @@ trait ICommonDi
 {
   // Для возможно оптимизации, всё объявляем как val, т.к. по сути так оно и есть.
   val contextFactory                  : Context2Factory
-  implicit val messagesApi            : MessagesApi
+  val messagesApi                     : MessagesApi
   val htmlCompressUtil                : HtmlCompressUtil
   // DI-модель языков Langs необходима внутри SioController (и следовательно почти везде):
   val langs                           : Langs
@@ -69,7 +69,7 @@ final class MCommonDi @Inject() (
                                   override val mNodesCache            : MNodesCache,
                                   override val esScrollPublisherFactory: EsScrollPublisherFactory,
                                   override val _slickConfigProvider   : DatabaseConfigProvider,
-                                  override implicit val messagesApi   : MessagesApi,
+                                  override val messagesApi            : MessagesApi,
                                   override implicit val current       : Application,
                                   override implicit val mat           : Materializer,
                                   override implicit val ec            : ExecutionContext,

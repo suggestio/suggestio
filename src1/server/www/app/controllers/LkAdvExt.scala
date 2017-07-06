@@ -61,9 +61,7 @@ class LkAdvExt @Inject() (
 
 
   /** Сколько секунд с момента генерации ссылки можно попытаться запустить процесс работы, в секундах. */
-  private val WS_BEST_BEFORE_SECONDS = configuration
-    .getInt("adv.ext.ws.api.best.before.seconds")
-    .getOrElse(600)
+  private def WS_BEST_BEFORE_SECONDS = 600
 
 
   /** CSP-заголовок, разрешающий работу системы внешнего размещения карточек. */

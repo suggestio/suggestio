@@ -77,7 +77,7 @@ class MarketAd @Inject() (
 
   /** Макс.длина загружаемой картинки в байтах. */
   private val IMG_UPLOAD_MAXLEN_BYTES: Int = {
-    val mib = current.configuration.getInt("ad.img.len.max.mib") getOrElse 40
+    val mib = 40 // current.configuration.getOptional[Int]("ad.img.len.max.mib") getOrElse 40
     mib * 1024 * 1024
   }
 
@@ -135,7 +135,7 @@ class MarketAd @Inject() (
     * @param adnId id магазина.
     */
   def createAdSubmit(adnId: String) = csrf.Check {
-    isNodeAdmin(adnId).async(parse.urlFormEncoded) { implicit request =>
+    isNodeAdmin(adnId).async(parse.formUrlEncoded) { implicit request =>
       import request.mnode
       lazy val logPrefix = s"createAdSubmit($adnId): "
       val bc = BlocksConf.DEFAULT
@@ -246,7 +246,7 @@ class MarketAd @Inject() (
     * @param adId id рекламной карточки.
     */
   def editAdSubmit(adId: String) = csrf.Check {
-    canEditAd(adId).async(parse.urlFormEncoded) { implicit request =>
+    canEditAd(adId).async(parse.formUrlEncoded) { implicit request =>
       lazy val logPrefix = s"editShopAdSubmit($adId): "
       adFormM.bindFromRequest().fold(
         {formWithErrors =>

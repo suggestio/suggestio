@@ -33,8 +33,8 @@ class MdrUtil @Inject() (
   /** Кого надо уведомить о необходимости заняться модерацией? */
   val MDR_NOTIFY_EMAILS: Seq[String] = {
     val confKey = "mdr.notify.emails"
-    val res = configuration.getStringList(confKey)
-      .filter(!_.isEmpty)
+    val res = configuration.getOptional[Seq[String]](confKey)
+      .filter(_.nonEmpty)
       .fold {
         LOGGER.info(s"$confKey is undefined. Using all superusers as moderators.")
         current.injector
@@ -42,7 +42,6 @@ class MdrUtil @Inject() (
           .SU_EMAILS
       } { notifyEmails =>
         LOGGER.trace(s"Successfully aquired moderators emails from $confKey")
-        import scala.collection.JavaConversions._
         notifyEmails
       }
     LOGGER.info(s"Moderators are: ${res.mkString(", ")}")

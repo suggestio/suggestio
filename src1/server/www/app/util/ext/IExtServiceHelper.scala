@@ -27,7 +27,9 @@ trait IExtServiceHelper extends IMCommonDi {
   def mExtService: MExtService
 
   /** id приложения на стороне сервиса. */
-  lazy val APP_ID_OPT = configuration.getString(s"ext.adv.${mExtService.strId}.api.id")
+  lazy val APP_ID_OPT: Option[String] = {
+    configuration.getOptional[String](s"ext.adv.${mExtService.strId}.api.id")
+  }
 
   /** Тестирование хоста на принадлежность к текущему сервису. */
   def isForHost(host: String): Boolean
@@ -60,7 +62,8 @@ trait IExtServiceHelper extends IMCommonDi {
     *
     * @return SzMult_t.
     */
-  lazy val szMult: SzMult_t = configuration.getDouble(s"ext.adv.${mExtService.strId}.szMult")
+    // TODO хз надо ли это через конфиг задавать? Оно тут для отладки было.
+  lazy val szMult: SzMult_t = configuration.getOptional[Double](s"ext.adv.${mExtService.strId}.szMult")
     .fold(szMultDflt)(_.toFloat)
 
   /** Дефолтовое значение szMult, если в конфиге не задано. */
@@ -87,7 +90,7 @@ trait IExtServiceHelper extends IMCommonDi {
   }
 
   /** Формат рендера в картинку загружаемой карточки. */
-  lazy val imgFmt: OutImgFmt = configuration.getString(s"ext.adv.${mExtService.strId}.fmt")
+  lazy val imgFmt: OutImgFmt = configuration.getOptional[String](s"ext.adv.${mExtService.strId}.fmt")
     .fold(imgFmtDflt)(OutImgFmts.withName)
 
   /** Дефолтовый формат изображения, если не задан в конфиге. */

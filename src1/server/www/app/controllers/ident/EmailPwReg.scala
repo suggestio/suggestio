@@ -199,8 +199,9 @@ trait EmailPwReg
           NotAcceptable(confirmTpl(request.eact, formWithErrors))
         },
         {data =>
+          implicit val ctx = implicitly[Context]
           // Создать юзера и его ident, удалить активацию, создать новый узел-ресивер.
-          val lang = request2lang
+          val lang = ctx.messages.lang
           val mperson0 = MNode(
             common = MNodeCommon(
               ntype = MNodeTypes.Person,
@@ -243,9 +244,9 @@ trait EmailPwReg
 
           } yield {
             val args = nodesUtil.nodeRegSuccessArgs(mnode)
-            Ok( regSuccessTpl(args) )
+            Ok( regSuccessTpl(args)(ctx) )
               .addingToSession(Keys.PersonId.name -> personId)
-              .withLang(lang)( mCommonDi.messagesApi )
+              .withLang(lang)
           }
         } // Form.fold right
       )   // Form.fold

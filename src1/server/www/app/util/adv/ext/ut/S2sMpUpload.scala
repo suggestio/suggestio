@@ -116,13 +116,14 @@ trait S2sMpUploadRender
         val sb = new StringBuilder(512)
         sb.append("uploadFailed():\n")
           .append("  ").append(refused.msg)
-        refused.wsResp.allHeaders
-          .foreach { case (k, vs) =>
-            sb.append("\n    ").append(k).append(": ")
-            vs.foreach { v =>
-              sb.append(v).append(';')
-            }
+        for {
+          (k, vs) <- refused.wsResp.headers
+        } {
+          sb.append("\n    ").append(k).append(": ")
+          vs.foreach { v =>
+            sb.append(v).append(';')
           }
+        }
         sb.toString()
       }
     }

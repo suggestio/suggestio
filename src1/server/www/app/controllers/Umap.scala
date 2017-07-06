@@ -245,7 +245,7 @@ class Umap @Inject() (
         Json.parse(is)
       } finally {
         is.close()
-        tempFile.ref.file.delete()
+        tempFile.ref.path.toFile.delete()
       }
 
       val maybeLayerData = playJson.validate[FeatureCollection]

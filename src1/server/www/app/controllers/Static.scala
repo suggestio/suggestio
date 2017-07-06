@@ -43,6 +43,7 @@ class Static @Inject() (
                          cspUtil                         : CspUtil,
                          isSuOrDevelOr404                : IsSuOrDevelOr404,
                          maybeAuth                       : MaybeAuth,
+                         assets                          : Assets,
                          override val mCommonDi          : ICommonDi
                        )
   extends SioControllerImpl
@@ -91,7 +92,7 @@ class Static @Inject() (
    */
   def vassetsSudo(path: String, asset: Assets.Asset) = isSuOrDevelOr404().async { implicit request =>
     // TODO Запретить раздачу привелигированных ассетов через CDN в продакшене? Чтобы отладка главной страницы шла только по vpn.
-    val resFut = Assets.versioned(path, asset)(request)
+    val resFut = assets.versioned(path, asset)(request)
     // Для привелегированных ассетов нужно запретить промежуточные кеширования.
     resFut.map { res =>
       val ttl = if (isProd) 300 else 10

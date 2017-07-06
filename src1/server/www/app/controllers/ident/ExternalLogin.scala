@@ -195,7 +195,7 @@ trait ExternalLogin
                     basic = MBasicMeta(
                       nameOpt   = profile.fullName,
                       techName  = Some(profile.providerId + ":" + profile.userId),
-                      langs     = List(request2lang.code)
+                      langs     = request.messages.lang.code :: Nil
                     ),
                     person  = MPersonMeta(
                       nameFirst   = profile.firstName,
@@ -217,7 +217,7 @@ trait ExternalLogin
                   )
                   val save2Fut = mExtIdents.save(mei)
                   LOGGER.debug(s"$logPrefix Registered new user $personId from ext.login service, remote user_id = ${profile.userId}")
-                  save2Fut.map { savedId => mei }
+                  save2Fut.map { _ => mei }
                 }
                 val mpersonFut = mpersonSaveFut.map { personId =>
                   mperson0.copy(id = Some(personId))
@@ -241,7 +241,7 @@ trait ExternalLogin
                 case None =>
                   mNodes.getByIdType(ident.personId, MNodeTypes.Person)
                 case some =>
-                  Future successful some
+                  Future.successful( some )
               }
               val isNew = newMpersonOpt.isDefined
               val rdrFut: Future[Result] = if (isNew) {

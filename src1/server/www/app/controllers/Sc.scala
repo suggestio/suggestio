@@ -9,7 +9,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.make.IMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
-import play.api.http.FileMimeTypes
 import util.acl.{BruteForceProtect, GetAnyAd, MaybeAuth}
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
@@ -47,7 +46,6 @@ class Sc @Inject() (
                      override val cspUtil            : CspUtil,
                      override val getAnyAd           : GetAnyAd,
                      override val maybeAuth          : MaybeAuth,
-                     override implicit val fileMimeTypes     : FileMimeTypes,
                      @Named("blk") override val blkImgMaker  : IMaker,
                      override val scMapUtil          : ScMapUtil,
                      override val ctxUtil            : ContextUtil,
