@@ -82,6 +82,18 @@ object Common {
       */
     val SCALAZ = "7.2.14"
 
+    /** Версия scalaCSS. Изначально появилась в sc-v3 для замены около-динамических стилей,
+      * геморройно подгружаемых с сервера.
+      *
+      * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
+      */
+    val SCALACSS = "0.5.3"
+
+    /** Улучшенное жестко-типизированное сравнение.
+      * @see [[https://github.com/japgolly/univeq#scalaz]]
+      */
+    val UNIVEQ = "1.+"
+
   }
 
 
@@ -143,14 +155,12 @@ object Common {
    *  Версия react.js, используемая в проекте. 
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  //val reactJsVsn         = "15.3.2"
   val reactJsVsn         = "15.5.4"
 
   /** 
    *  Версия scalajs-react, используемая в проекте.
    *  @see [[https://github.com/japgolly/scalajs-react/blob/master/doc/USAGE.md#setup]]
    */
-  //val reactSjsVsn        = "0.11.4-bundler-SNAPSHOT"
   val reactSjsVsn        = "1.0.1"
 
   /** 

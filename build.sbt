@@ -1,10 +1,7 @@
 import play.sbt.PlayScala
-import webscalajs._
 import sbt._
 import Keys._
-import com.typesafe.sbt.web._
 import com.typesafe.sbt.web.SbtWeb.autoImport._
-import org.scalajs.sbtplugin._
 import WebScalaJS.autoImport._
 import ScalaJSPlugin.autoImport._
 
@@ -24,9 +21,13 @@ lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shar
     version := "0.0.0-SNAPSHOT",
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     libraryDependencies ++= Seq(
+      // Универсальные зависимости для клиента и сервера. Наследуются во ВСЕ компоненты проекта.
       "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
       "org.scalaz"   %%% "scalaz-core" % Common.Vsn.SCALAZ,
+      "com.github.japgolly.univeq"   %%% "univeq-scalaz" % Common.Vsn.UNIVEQ,
+      "com.github.japgolly.scalacss" %%% "core"          % Common.Vsn.SCALACSS,
+      // Тесты, только [common] и не наследуются (наверное).
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
     )
   )
@@ -291,6 +292,12 @@ lazy val scSjs = {
   Project(id = "sc-sjs", base = file(DIR0 + "client/sc/main"))
     .enablePlugins(WebScalaJS)
     .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
+}
+
+lazy val sc3Sjs = {
+  Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
+    //.enablePlugins(WebScalaJS)    // Выключено, поддержка скрипта v3-выдачи пока не реализована в [www]
+    .dependsOn(commonReactSjs, bleBeaconerSjs, cordovaSjs)
 }
 
 /** Внутренний форк securesocial. */

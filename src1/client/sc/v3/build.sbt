@@ -1,25 +1,25 @@
 Common.settingsOrgJS
 
-name := "sc-sjs"
+name := "sc3-sjs"
 
 version := "0.0.0-SNAPSHOT"
 
 enablePlugins(ScalaJSBundlerPlugin)
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "common-sjs"          % "0.0.0-SNAPSHOT",
-  Common.ORG      %%% "scalajs-mapboxgl"    % "0.0.0-SNAPSHOT",
-  Common.ORG      %%% "ble-beaconer-sjs"    % "0.0.0-SNAPSHOT",
-  Common.ORG      %%% "scalajs-cordova"     % "0.0.0-SNAPSHOT",
-  "io.monix"      %%% "minitest"            % Common.minitestVsn  % Test
+  // С самого начала был нужен js-роутер.
+  "com.github.japgolly.scalajs-react" %%% "extra" % Common.reactSjsVsn,
+
+  // И сразу же завязываем генерацию css на scalacss, чтобы style="" костыли не городить.
+  "com.github.japgolly.scalacss" %%% "ext-react"  % Common.Vsn.SCALACSS,
+
+  // testing
+  "io.monix"      %%% "minitest"                  % Common.minitestVsn  % Test
 )
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
 requiresDOM in Test := true
-
-// Без зависимостей. Всё минималистичненько.
-skip in packageJSDependencies := true
 
 // TODO Надо бы выставлять это на ci, но НЕ выставлять на продакшенах.
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")

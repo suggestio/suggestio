@@ -13,8 +13,8 @@ scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
     Common.ORG      %%% "common-sjs"                  % "0.0.0-SNAPSHOT",
-    //"org.scala-js"  %%% "scalajs-dom"                 % Common.sjsDomVsn,
-    "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn
+    "com.github.japgolly.scalajs-react" %%% "core"    % Common.reactSjsVsn,
+    "io.suzaku"     %%% "diode-react"                 % Common.diodeVsn
 )
 
 npmDependencies in Compile ++= Seq(

@@ -49,7 +49,7 @@ object Css {
   def VALUE     = "value"
   private def _NODENAME_ = "nodename"
 
-  private def __ = "__"
+  def __ = "__"
 
   def CLICKABLE = "clickable"
 
@@ -62,7 +62,7 @@ object Css {
     def LINK = "link"
     def BLUE_LINK = "blue-" + LINK
 
-    private def _SM_PREFIX_ = "sm-"
+    def _SM_PREFIX_ = "sm-"
     def SM_NOTE = _SM_PREFIX_ + "note"
 
     def PREFIX = "lk-"
