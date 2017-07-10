@@ -9,7 +9,7 @@ import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.raw.HTMLDivElement
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

@@ -1,13 +1,14 @@
 package io.suggest.sc.hdr.v
 
-import diode.react.ModelProxy
-import io.suggest.model.n2.node.meta.colors.MColors
+import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sc.ScCss
-import io.suggest.sc.hdr.m.MHeaderState
+import io.suggest.sc.hdr.m.{MHeaderState, MHeaderStates}
 import io.suggest.sc.m.MScNodeInfo
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.sjs.common.spa.OptFastEq.Plain
 
 import scalacss.ScalaCssReact._
 
@@ -32,16 +33,30 @@ object HeaderR {
   type Props = ModelProxy[PropsVal]
 
 
-  class Backend($: BackendScope[Props, Unit]) {
+  /** Коннекшены для props'ов кнопок. */
+  protected case class State(
+                              plainGridC : ReactConnectProxy[Option[MColorData]],
+                              menuC      : ReactConnectProxy[Option[MColorData]],
+                              searchC    : ReactConnectProxy[Option[MColorData]]
+                            )
 
-    def render(p: Props): VdomElement = {
+
+  /** Рендерер. */
+  protected class Backend($: BackendScope[Props, State]) {
+
+    def render(s: State): VdomElement = {
       <.div(
         ScCss.Header.header,
 
         // #smRootProducerHeaderButtons
-        <.span(
-          // TODO Кнопки в зависимости от состояния.
-        ),
+        // Кнопки в зависимости от состояния.
+        // Кнопки при нахождении в обычной выдаче без посторонних вещей.
+        s.plainGridC { fgColorDataOptProxy =>
+          <.span(
+            MenuBtnR( fgColorDataOptProxy ),
+            SearchBtnR( fgColorDataOptProxy )
+          )
+        },
 
         // #smHdrNodeLogo
         <.span(
@@ -56,7 +71,21 @@ object HeaderR {
 
 
   val component = ScalaComponent.builder[Props]("Header")
-    .stateless
+    .initialStateFromProps { propsProxy =>
+      def __fgColorDataOptProxy(hStates: MHeaderState*) = {
+        propsProxy.connect { props =>
+          props.node
+            .filter { _ => hStates.contains( props.hdrState ) }
+            .flatMap(_.colors.fg)
+        }
+      }
+      val HS = MHeaderStates
+      State(
+        plainGridC  = __fgColorDataOptProxy( HS.PlainGrid ),
+        menuC       = __fgColorDataOptProxy( HS.Menu ),
+        searchC     = __fgColorDataOptProxy( HS.Search )
+      )
+    }
     .renderBackend[Backend]
     .build
 

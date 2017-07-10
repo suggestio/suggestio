@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.{MRad, RadOnOff}
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.html_<^._

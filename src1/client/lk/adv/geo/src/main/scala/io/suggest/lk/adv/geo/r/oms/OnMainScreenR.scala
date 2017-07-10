@@ -8,7 +8,7 @@ import io.suggest.lk.adv.geo.m.SetOnMainScreen
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

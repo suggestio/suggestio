@@ -11,7 +11,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.{AddCurrentTag, SetTagSearchQuery}
 import io.suggest.sjs.common.i18n.Messages
 import org.scalajs.dom.ext.KeyCode
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

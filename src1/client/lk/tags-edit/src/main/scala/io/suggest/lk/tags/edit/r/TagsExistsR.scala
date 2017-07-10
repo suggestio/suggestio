@@ -8,7 +8,7 @@ import io.suggest.common.html.HtmlConstants.SPACE
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.tags.edit.m.RmTag
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

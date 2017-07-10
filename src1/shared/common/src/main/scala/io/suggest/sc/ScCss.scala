@@ -2,7 +2,8 @@ package io.suggest.sc
 
 import io.suggest.css.Css
 
-import scalacss.DevDefaults._
+import ScScalaCssDefaults._
+import io.suggest.i18n.MsgCodes
 
 /**
   * Suggest.io
@@ -80,20 +81,60 @@ object ScCss extends StyleSheet.Inline {
       /** Выравнивание кнопок. */
       object Align {
         private def __aligned(where: String) = __ + where + "-aligned"
-        def LEFT  = __aligned("left")
-        def RIGHT = __aligned("right")
+        def LEFT  = __aligned( MsgCodes.`left` )
+        def RIGHT = __aligned( MsgCodes.`right` )
       }
 
       //val leftGeoBtn = _styleAddClasses( _btnMx, HEADER + "_geo-button", Align.LEFT )
 
-      /** Стиль для кнопки поиска. */
+      private def _btnClass(root: String) = HEADER + "_" + root + "-" + `BUTTON`
+
+      /** Стиль кнопки поиска. */
       val search = _styleAddClasses(
-        (HEADER + "_search-" + `BUTTON`) :: Align.RIGHT :: _allBtnStyles: _*
+        _btnClass("search") :: Align.RIGHT :: _allBtnStyles: _*
+      )
+
+      /** Стиль кнопки меню слева. */
+      val menu = _styleAddClasses(
+        _btnClass("geo") :: Align.LEFT :: _allBtnStyles: _*
+      )
+
+      /** Стиль кнопки заголовка, который указывает вправо. */
+      val right = _styleAddClasses(
+        Align.RIGHT :: _allBtnStyles: _*
+      )
+
+      /** Стиль кнопки заголовка, которая указывает влево. */
+      val left = _styleAddClasses(
+        Align.LEFT :: _allBtnStyles: _*
       )
 
     }
 
-  }
 
+    /** Доступ к стилям логотипа узла. */
+    object Logo {
+
+      /** Суффикс названия css-классов разных логотипов. */
+      private def `-logo` = "-logo"
+
+      /** Стили текстового логотипа узла.*/
+      object Txt {
+
+        private def TXT_LOGO = HEADER + "_txt" + `-logo`
+        val txtLogo = _styleAddClasses( TXT_LOGO )
+
+        /** Точки по краям названия узла. */
+        object Dots {
+          private val DOT = TXT_LOGO + "-dot"
+          val left = _styleAddClasses( DOT, __ + MsgCodes.`left` )
+          val right = _styleAddClasses( DOT, __ + MsgCodes.`right` )
+        }
+
+      }
+
+    }
+
+  }
 
 }

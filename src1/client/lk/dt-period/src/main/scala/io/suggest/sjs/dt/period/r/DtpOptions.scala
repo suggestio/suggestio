@@ -21,7 +21,7 @@ import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 // TODO import io.suggest.sjs.common.dt.JsDateUtil.MRangeYmdFastEq + OptFastEq.Wrapped
 
 import scala.scalajs.js

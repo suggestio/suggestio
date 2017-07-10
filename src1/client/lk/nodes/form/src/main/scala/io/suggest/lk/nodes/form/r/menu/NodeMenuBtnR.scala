@@ -3,7 +3,7 @@ package io.suggest.lk.nodes.form.r.menu
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m.NodeMenuBtnClick
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 

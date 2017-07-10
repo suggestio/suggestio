@@ -9,7 +9,7 @@ import io.suggest.lk.adv.m.SetAdv4Free
 import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

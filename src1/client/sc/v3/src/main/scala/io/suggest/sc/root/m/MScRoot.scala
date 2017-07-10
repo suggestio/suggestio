@@ -1,5 +1,8 @@
 package io.suggest.sc.root.m
 
+import diode.FastEq
+import io.suggest.sc.m.MScNodeInfo
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,8 +10,19 @@ package io.suggest.sc.root.m
   * Description: Корневая модель состояния выдачи v3.
   * Всё, что описывает основной интерфейс выдачи, должно быть описано тут.
   */
-case class MScRoot(
+object MScRoot {
 
+  implicit case object MScRootFastEq extends FastEq[MScRoot] {
+    override def eqv(a: MScRoot, b: MScRoot): Boolean = {
+      a.currNode eq b.currNode
+    }
+  }
+
+}
+
+
+case class MScRoot(
+                    currNode: Option[MScNodeInfo] = None
                   )
 {
 

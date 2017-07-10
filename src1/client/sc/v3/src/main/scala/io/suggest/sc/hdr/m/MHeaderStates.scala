@@ -15,9 +15,10 @@ sealed class MHeaderState extends EnumEntry
 /** Модель состояний заголовка. */
 object MHeaderStates extends Enum[MHeaderState] {
 
-  case object Main extends MHeaderState
+  case object PlainGrid extends MHeaderState
   //case object Focused extends MHeaderState
-  //case object Search extends MHeaderState
+  case object Search extends MHeaderState
+  case object Menu extends MHeaderState
 
   override val values = findValues
 

@@ -2,7 +2,7 @@ package io.suggest.maps.r.rad
 
 import diode.react.ModelProxy
 import io.suggest.geo.MGeoPoint
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.IMapsAction
 import io.suggest.maps.u.MapsUtil
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}

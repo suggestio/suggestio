@@ -5,7 +5,7 @@ import io.suggest.lk.nodes.form.m.{DocumentClick, MLkNodesRoot}
 import io.suggest.lk.nodes.form.r.tree.TreeR
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

@@ -5,7 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.ReqRcvrPopup
 import io.suggest.maps.nodes.MGeoNodesResp

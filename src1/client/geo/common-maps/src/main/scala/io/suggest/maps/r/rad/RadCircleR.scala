@@ -6,7 +6,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.MapsUtil
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.circle.{CirclePropsR, CircleR}
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.RadAreaClick
 import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb

@@ -7,7 +7,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.adv.m.{IRcvrPopupProps, OpenNodeInfoClick}
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.sjs.common.i18n.Messages

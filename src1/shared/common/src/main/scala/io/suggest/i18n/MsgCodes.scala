@@ -167,4 +167,8 @@ object MsgCodes {
 
   val `__This.lang.name__` = "__This.lang.name__"
 
+  // Эти коды без messages используются. Вполне вероятно, что в будущем у них появится локализация по языкам.
+  val `left` = "left"
+  val `right` = "right"
+
 }

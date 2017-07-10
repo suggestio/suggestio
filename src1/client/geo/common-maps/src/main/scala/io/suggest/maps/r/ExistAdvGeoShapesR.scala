@@ -16,7 +16,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.gj.{GeoJsonPropsR, GeoJsonR}
 import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.maps.m.OpenAdvGeoExistPopup
 import io.suggest.sjs.common.model.loc.MGeoPointJs

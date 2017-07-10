@@ -1,4 +1,4 @@
-package io.suggest.lk.r
+package io.suggest.react
 
 import diode.ActionType
 import diode.react.ModelProxy

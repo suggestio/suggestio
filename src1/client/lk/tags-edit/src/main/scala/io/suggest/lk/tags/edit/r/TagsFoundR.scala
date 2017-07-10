@@ -14,7 +14,7 @@ import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEventFromHtml, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io

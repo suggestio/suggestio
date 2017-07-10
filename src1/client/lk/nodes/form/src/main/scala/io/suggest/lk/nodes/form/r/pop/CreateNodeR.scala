@@ -13,7 +13,7 @@ import io.suggest.sjs.common.i18n.Messages
 import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import PopupR.PopupPropsValFastEq
 
 /**

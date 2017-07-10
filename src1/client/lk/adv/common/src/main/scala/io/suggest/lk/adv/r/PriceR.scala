@@ -12,7 +12,7 @@ import io.suggest.lk.adv.m.{DoFormSubmit, MPriceS}
 import io.suggest.sjs.common.i18n.{JsFormatUtil, Messages}
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.lk.r.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 /**
   * Suggest.io
