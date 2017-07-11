@@ -1,9 +1,14 @@
 package io.suggest.sc
 
+import io.suggest.sc.log.ScRmeLogAppender
+import io.suggest.sc.root.m.JsRouterStatus
 import io.suggest.sc.root.v.ScRootR
+import io.suggest.sc.router.SrvRouter
+import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react.vdom.Implicits._
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io
@@ -17,15 +22,31 @@ object Sc3Main {
 
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
+    // Сразу поискать js-роутер на странице.
+    val jsRouterFut = SrvRouter.getRouter()
+
     val body = DocumentVm().body
 
     // Самый корневой рендер -- отрабатывается первым.
     val rootDiv = VUtil.newDiv()
     body.appendChild( rootDiv )
 
-    Sc3Circuit
+    // Подготовить центральную цепочку.
+    val mainCircuit = Sc3Circuit
+
+    mainCircuit
       .wrap(m => m)( ScRootR.apply )
       .renderIntoDOM(rootDiv)
+
+    // Активировать отправку логов на сервер, когда js-роутер будет готов.
+    for (_ <- jsRouterFut) {
+      Logging.LOGGERS ::= new ScRmeLogAppender
+    }
+
+    // Уведомить основную цепь по поводу готовности js-роутера...
+    jsRouterFut.andThen { case tryRes =>
+      mainCircuit.dispatch( JsRouterStatus(tryRes) )
+    }
 
     // TODO Запустить разные FSM: геолокация, platform, BLE. Переписав их в circuit'ы предварительно.
   }

@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.app
 
+import io.suggest.sc.log.{GlobalErrorHandler, ScRmeLogAppender}
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.c.search.SearchFsm
-import io.suggest.sc.sjs.util.logs.{GlobalErrorHandler, ScRmeLogAppender}
 import io.suggest.sjs.common.log.Logging
 
 /**

@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.c.gloc
 
 import io.suggest.sc.sjs.m.mgeo._
-import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
 import io.suggest.sjs.common.model.loc.MGeoLoc
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.{Geolocation, Position, PositionError}
 
 /**
@@ -48,7 +48,7 @@ trait Watching extends GeoLocFsmStub {
     override def afterBecome(): Unit = {
       super.afterBecome()
 
-      for (glApi <- SafeWnd.geolocation) {
+      for (glApi <- WindowVm().geolocation) {
         // При переключение на состояние надо активировать watcher'ы геолокации.
         val sd0 = _stateData
 
@@ -202,7 +202,7 @@ trait Watching extends GeoLocFsmStub {
       for {
         s     <- sd0.suppressor
         if s.generation == st.generation
-        glApi <- SafeWnd.geolocation
+        glApi <- WindowVm().geolocation
       } {
         val watches1Iter = _startWatchersFor(
           wtypes  = s.minWatch.allPrevious.iterator,

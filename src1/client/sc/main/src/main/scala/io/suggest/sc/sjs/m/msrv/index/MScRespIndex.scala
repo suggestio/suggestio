@@ -4,9 +4,9 @@ import io.suggest.geo.MGeoPoint
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.router.routes
 import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp, MSrv}
-import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs

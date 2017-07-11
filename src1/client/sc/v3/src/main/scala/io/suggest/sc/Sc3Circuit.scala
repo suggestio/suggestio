@@ -2,6 +2,7 @@ package io.suggest.sc
 
 import diode.react.ReactConnector
 import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 
@@ -20,9 +21,14 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
     MScRoot()
   }
 
-  override protected def actionHandler = {
-    // TODO
-    ???
+  // TODO actionHandler нужно будет пересобирать на-лету TODO исходя из флагов состояния и TODO кэшировать для ускорения.
+  override protected val actionHandler = {
+    // Листенер инициализации роутера. TODO Выкидывать его после окончания инициализации.
+    val jsRouterInitAh = new JsRouterInitAh(
+      modelRW = zoomRW(_.jsRouter)(_.withJsRouter(_))
+    )
+
+    jsRouterInitAh
   }
 
 }

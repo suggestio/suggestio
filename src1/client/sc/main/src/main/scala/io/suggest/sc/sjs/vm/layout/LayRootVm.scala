@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.vm.layout
 
 import io.suggest.sc.ScConstants.Layout
-import io.suggest.sc.sjs.vm.SafeDoc
-import io.suggest.sc.sjs.vm.util.EraseBg
-import io.suggest.sjs.common.vm.child.{SubTagFind, ChildElOrFind}
+import io.suggest.sjs.common.vm.child.{ChildElOrFind, SubTagFind}
 import io.suggest.sjs.common.vm.create.CreateDivWithId
 import io.suggest.sjs.common.vm.VmT
+import io.suggest.sjs.common.vm.content.EraseBg
+import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.vm.find.FindDiv
 import org.scalajs.dom.raw.HTMLDivElement
 
@@ -59,7 +59,8 @@ trait LayRootVmT extends VmT with SubTagFind with ChildElOrFind with EraseBg {
 
   /** Затолкать в DOM этот model view. Используется при ручном создании layout'а. */
   def insertIntoDom(): Unit = {
-    SafeDoc.body
+    DocumentVm()
+      .body
       .appendChild( _underlying )
   }
 

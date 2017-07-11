@@ -1,12 +1,12 @@
-package io.suggest.sc.sjs.util.router.srv
+package io.suggest.sc.router
 
 import io.suggest.sc.ScConstants.JsRouter._
 import org.scalajs.dom.Window
 
+import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 import scala.scalajs.js.annotation.JSName
-import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -15,7 +15,7 @@ import scala.language.implicitConversions
  * Description: Расширение DOM Window API для доступа к play js routes, т.е. к роутеру, которого может и не быть.
  */
 @js.native
-trait WindowWithRouterSafe extends Window {
+sealed trait WindowWithScRouterSafe extends js.Object {
 
   /**
    * Доступ к необязательному объекту-коду jsRoutes через window.
@@ -36,11 +36,11 @@ trait WindowWithRouterSafe extends Window {
 }
 
 
-object WindowWithRouterSafe {
+object WindowWithScRouterSafe {
 
   /** Приведение окна к вышеуказанному API. */
-  implicit def wnd2routerWnd(wnd: Window): WindowWithRouterSafe = {
-    wnd.asInstanceOf[WindowWithRouterSafe]
+  implicit def wnd2routerWnd(wnd: Window): WindowWithScRouterSafe = {
+    wnd.asInstanceOf[WindowWithScRouterSafe]
   }
 
 }

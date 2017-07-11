@@ -1,11 +1,11 @@
-package io.suggest.sc.sjs.util.router.srv
+package io.suggest.sc.router
 
 import io.suggest.sc.ScConstants.JsRouter.NAME
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
-import scala.scalajs.js.{Any, Dictionary}
 import scala.scalajs.js.annotation.JSGlobal
+import scala.scalajs.js.{Any, Dictionary}
 
 /**
  * Suggest.io

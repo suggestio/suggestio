@@ -1,9 +1,9 @@
-package io.suggest.sc.sjs.vm.layout
+package io.suggest.sc.router
 
 import io.suggest.sc.ScConstants.JsRouter.{URI, DOM_ID => ID}
-import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.create.CreateEl
+import io.suggest.sjs.common.vm.doc.DocumentVm
 import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom.raw.HTMLScriptElement
 

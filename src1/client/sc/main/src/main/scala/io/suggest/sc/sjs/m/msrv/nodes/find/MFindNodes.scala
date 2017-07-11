@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.nodes.find
 
-import io.suggest.sc.sjs.util.router.srv.routes
+import io.suggest.sc.router.routes
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 

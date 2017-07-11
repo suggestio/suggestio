@@ -3,9 +3,9 @@ package io.suggest.sc.sjs.c.scfsm
 import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc._
-import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.fsm._
 import io.suggest.sjs.common.model.browser.MBrowser
+import io.suggest.sjs.common.vm.wnd.WindowVm
 
 /**
  * Suggest.io
@@ -50,7 +50,7 @@ object ScFsm
     become( _initPhaseEnter1st )
 
     // Подписать этот FSM на события навигации по истории браузера.
-    SafeWnd.addEventListener("popstate")( _signalCallbackF(PopStateSignal) )
+    WindowVm().addEventListener("popstate")( _signalCallbackF(PopStateSignal) )
     // TODO Заимплементить когда-нибудь реакцию на ручное редактирование URL.
     //SafeWnd.addEventListener("hashchange")( _signalCallbackF(HashChangedSignal) )
   }

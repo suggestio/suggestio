@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.v.global
 import io.suggest.sc.sjs.c.DocumentCtl
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
-import io.suggest.sc.sjs.vm.SafeDoc
+import io.suggest.sjs.common.vm.doc.DocumentVm
 import org.scalajs.dom.TouchEvent
 import org.scalajs.dom.raw.KeyboardEvent
 
@@ -17,7 +17,7 @@ import org.scalajs.dom.raw.KeyboardEvent
 object DocumentView {
 
   def initDocEvents(): Unit = {
-    val ds = SafeDoc
+    val ds = DocumentVm()
     // TODO Слать touch-lock события в ScFsm
 
     // Повесить события блокировки touch-событий на document.

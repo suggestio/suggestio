@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msrv.foc
 
+import io.suggest.sc.router.routes
 import io.suggest.sc.sjs.m.msrv._
-import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 

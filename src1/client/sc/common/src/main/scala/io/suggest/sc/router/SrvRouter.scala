@@ -1,10 +1,9 @@
-package io.suggest.sc.sjs.util.router.srv
+package io.suggest.sc.router
 
-import io.suggest.sc.sjs.vm.SafeBody
-import io.suggest.sc.sjs.vm.layout.JsRouterTag
+import io.suggest.sjs.common.vm.doc.SafeBody
 import org.scalajs.dom
 
-import scala.concurrent.{Promise, Future}
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js
 
 /**
@@ -22,7 +21,7 @@ object SrvRouter {
    * @return Фьючерс с роутером.
    */
   def getRouter(): Future[routes.type] = {
-    val wnd = dom.window : WindowWithRouterSafe
+    val wnd = dom.window : WindowWithScRouterSafe
 
     if (wnd.jsRoutes.nonEmpty) {
       // Роутер уже на странице и готов к работе. Такое возможно, если скрипт роутера был загружен до начала исполнения этого модуля.

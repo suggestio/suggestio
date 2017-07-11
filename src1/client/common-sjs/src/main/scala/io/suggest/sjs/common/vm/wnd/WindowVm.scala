@@ -36,6 +36,9 @@ trait WindowVmT
       .map { NavigatorVm.apply }
   }
 
+  /** Безопасный упрощённый доступ к navigator.geolocation. */
+  def geolocation = navigator.flatMap(_.geolocation)
+
 }
 
 

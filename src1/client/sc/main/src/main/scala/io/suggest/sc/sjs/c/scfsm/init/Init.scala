@@ -1,19 +1,19 @@
 package io.suggest.sc.sjs.c.scfsm.init
 
 import io.suggest.common.event.WndEvents
+import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{OrientationChange, WndResize}
 import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.msc.MUrlUtil
-import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sc.sjs.v.global.DocumentView
-import io.suggest.sc.sjs.vm.SafeWnd
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.PlatformReady
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.doc.DocumentVm
+import io.suggest.sjs.common.vm.wnd.WindowVm
 
 /**
  * Suggest.io
@@ -38,7 +38,7 @@ trait Init extends ScFsmStub with IUrl2State { scFsm =>
       DocumentView.initDocEvents()
 
       // Добавляем реакцию на изменение размера окна/экрана.
-      val w = SafeWnd
+      val w = WindowVm()
       w.addEventListener(WndEvents.RESIZE)( _signalCallbackF(WndResize) )
       w.addEventListener(WndEvents.ORIENTATION_CHANGE)( _signalCallbackF(OrientationChange) )
 

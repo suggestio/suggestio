@@ -3,12 +3,12 @@ package io.suggest.sc.sjs.c.scfsm.geo
 import io.suggest.ble.beaconer.fsm.BeaconerFsm
 import io.suggest.ble.beaconer.m.signals.BeaconsNearby
 import io.suggest.ble.beaconer.m.{signals => bb}
+import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.sjs.c.gloc.GeoLocFsm
 import io.suggest.sc.sjs.c.plat.PlatformFsm
 import io.suggest.sc.sjs.c.scfsm.node.Index
 import io.suggest.sc.sjs.m.mdev.{PlatEventListen, PlatformEvents}
 import io.suggest.sc.sjs.m.mgeo
-import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

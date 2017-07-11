@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msrv.tile
 
+import io.suggest.sc.router.routes
 import io.suggest.sc.sjs.m.msrv.MSrv
-import io.suggest.sc.sjs.util.router.srv.routes
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future

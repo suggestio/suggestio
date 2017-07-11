@@ -1,6 +1,6 @@
-package io.suggest.sc.sjs.util.logs
+package io.suggest.sc.log
 
-import io.suggest.sc.sjs.util.router.srv.routes
+import io.suggest.sc.router.routes
 import io.suggest.sjs.common.log.Severities
 import io.suggest.sjs.common.model.rme.RmeLogAppender
 

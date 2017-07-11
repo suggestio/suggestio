@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.msc.{MScSd, MUrlUtil}
-import io.suggest.sc.sjs.vm.SafeWnd
+import io.suggest.sjs.common.vm.wnd.WindowVm
 
 /**
   * Suggest.io
@@ -23,7 +23,7 @@ trait State2UrlT extends ScFsmStub {
     /** Заброс текущего состояния FSM в историю. */
     def pushCurrState(): Unit = {
       // Сериализовать куски текущего состояния в URL.
-      for (hApi <- SafeWnd.history) {
+      for (hApi <- WindowVm().history) {
         val qsStr = MScSd.toQsStr( _stateData )
 
         // Сверять URL с текущим значением window.location, отличается ли?

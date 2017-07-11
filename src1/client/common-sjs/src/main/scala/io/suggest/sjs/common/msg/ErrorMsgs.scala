@@ -119,4 +119,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def ADN_MAP_CIRCUIT_ERROR            = E(53)
 
+  /** Исключение в FSM миксера запросов WebSocket/XHR. */
+  def WS_XHR_MIXING_ERROR              = E(54)
+
 }

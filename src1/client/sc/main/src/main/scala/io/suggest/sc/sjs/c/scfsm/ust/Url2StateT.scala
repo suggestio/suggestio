@@ -1,6 +1,7 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
 import io.suggest.geo.MGeoPoint
+import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.c.scfsm.foc.FocCommon
 import io.suggest.sc.sjs.c.scfsm.nav.NavUtil
@@ -9,7 +10,6 @@ import io.suggest.sc.sjs.m.mfoc.{MFocCurrSd, MFocSd}
 import io.suggest.sc.sjs.m.msc.{MGen, MScSd, MUrlUtil, PopStateSignal}
 import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
-import io.suggest.sc.sjs.util.router.srv.SrvRouter
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.model.loc.MGeoLoc

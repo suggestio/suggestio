@@ -287,18 +287,26 @@ lazy val bleBeaconerSjs = {
     .dependsOn(commonSjs, cordovaSjs, cordovaBleSjs)
 }
 
+
+/** Утили для выдачи. Общий код выдач разных поколений. */
+lazy val scCommonSjs = {
+  Project(id = "sc-common", base = file(DIR0 + "client/sc/common"))
+    .dependsOn( commonSjs )
+}
+
 /** Выдача suggest.io, написанная с помощью scala.js. */
 lazy val scSjs = {
   Project(id = "sc-sjs", base = file(DIR0 + "client/sc/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(commonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
+    .dependsOn(scCommonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
 }
 
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(commonReactSjs, bleBeaconerSjs, cordovaSjs)
+    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs)
 }
+
 
 /** Внутренний форк securesocial. */
 lazy val securesocial = project
@@ -396,7 +404,7 @@ lazy val sio2 = {
       commonJS, commonJVM, logsMacro,
       commonSjs, commonReactSjs,
       leafletSjs, leafletReactSjs, mapBoxGlSjs,
-      lkSjs, scSjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
+      lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,

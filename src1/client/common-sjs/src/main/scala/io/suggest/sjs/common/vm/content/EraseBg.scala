@@ -1,4 +1,4 @@
-package io.suggest.sc.sjs.vm.util
+package io.suggest.sjs.common.vm.content
 
 import io.suggest.sjs.common.vm.IVm
 import org.scalajs.dom.raw.HTMLElement
