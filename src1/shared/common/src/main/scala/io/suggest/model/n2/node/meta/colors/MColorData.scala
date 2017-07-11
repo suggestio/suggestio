@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.meta.colors
 
 import boopickle.Default._
+import io.suggest.common.html.HtmlConstants
 
 /**
   * Suggest.io
@@ -24,4 +25,8 @@ object MColorData {
 
 case class MColorData(
   code: String
-)
+) {
+
+  def hexCode = HtmlConstants.DIEZ + code
+
+}

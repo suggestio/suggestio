@@ -54,6 +54,9 @@ object ScConstants {
       */
     def CORDOVA_JSONHTML    = 3
 
+    /** React.sjs выдача (выдача поколения 3). */
+    def REACT_SJS           = 4
+
   }
 
   /** Константы геолокации. */

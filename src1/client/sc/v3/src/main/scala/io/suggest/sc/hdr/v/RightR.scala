@@ -1,7 +1,7 @@
 package io.suggest.sc.hdr.v
 
-import io.suggest.sc.ScCss
 import io.suggest.sc.hdr.m.HRightBtnClick
+import io.suggest.sc.styl.ScCss.scCss
 
 /**
   * Suggest.io
@@ -13,7 +13,7 @@ object RightR extends HdrBtn {
 
   override protected[this] def _compName = "Right"
 
-  override protected[this] def cssStyle = ScCss.Header.Buttons.right
+  override protected[this] def cssStyle = scCss.Header.Buttons.right
 
   override protected[this] def _btnClickAction = HRightBtnClick
 

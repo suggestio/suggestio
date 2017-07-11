@@ -1,6 +1,5 @@
 package io.suggest.sc
 
-import ScScalaCssDefaults._
 import io.suggest.sc.root.v.ScRootR
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -18,13 +17,12 @@ object Sc3Main {
 
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
-
-    // Добавить статичные стили в css-документа. Динамические стили будут рендерится прямо через <.style() теги.
-    ScCss.addToDocument()
+    val body = DocumentVm().body
 
     // Самый корневой рендер -- отрабатывается первым.
     val rootDiv = VUtil.newDiv()
-    DocumentVm().body.appendChild( rootDiv )
+    body.appendChild( rootDiv )
+
     Sc3Circuit
       .wrap(m => m)( ScRootR.apply )
       .renderIntoDOM(rootDiv)

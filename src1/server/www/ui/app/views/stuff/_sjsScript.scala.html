@@ -1,8 +1,8 @@
-@(prefix: String, withLauncherJs: Boolean = false)(implicit ctx: Context)
+@(prefix: String)(implicit ctx: Context)
+
+@* HTML-рендер для доступа к sjs-скрипту. *@
 
 @import ctx.api.cdn
 
-<script src="@cdn.asset(prefix + (if(ctx.api.isProd) "-" else "-fast") + "opt-bundle.js")"></script>
-@*if( withLauncherJs ) {
-  <script src="@cdn.asset(prefix + "-launcher.js")"></script>
-}*@
+<script type="text/javascript"
+        src="@cdn.asset(prefix + (if(ctx.api.isProd) "-" else "-fast") + "opt-bundle.js")"></script>

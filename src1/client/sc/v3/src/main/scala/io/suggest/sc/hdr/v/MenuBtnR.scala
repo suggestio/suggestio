@@ -1,7 +1,7 @@
 package io.suggest.sc.hdr.v
 
-import io.suggest.sc.ScCss
 import io.suggest.sc.hdr.m.HMenuBtnClick
+import io.suggest.sc.styl.ScCss.scCss
 
 /**
   * Suggest.io
@@ -13,7 +13,7 @@ object MenuBtnR extends HdrBtn {
 
   override protected[this] def _compName: String = "Menu"
 
-  override protected[this] def cssStyle = ScCss.Header.Buttons.menu
+  override protected[this] def cssStyle = scCss.Header.Buttons.menu
 
   override protected[this] def _btnClickAction = HMenuBtnClick
 

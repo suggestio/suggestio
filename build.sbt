@@ -296,7 +296,7 @@ lazy val scSjs = {
 
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
-    //.enablePlugins(WebScalaJS)    // Выключено, поддержка скрипта v3-выдачи пока не реализована в [www]
+    .enablePlugins(WebScalaJS)
     .dependsOn(commonReactSjs, bleBeaconerSjs, cordovaSjs)
 }
 
@@ -366,7 +366,7 @@ lazy val www = project
   )
   .settings(
     // Это связка для
-    scalaJSProjects := Seq(lkSjs, scSjs),
+    scalaJSProjects := Seq(lkSjs, scSjs, sc3Sjs),
     pipelineStages in Assets ++= Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
     npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>

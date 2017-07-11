@@ -1,11 +1,11 @@
-package io.suggest
+package io.suggest.sc
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
-  * Created: 10.07.17 10:51
+  * Created: 11.07.17 13:59
   */
-package object sc {
+package object styl {
 
   /** Дефолтовые настройки для генерации CSS выдачи через ScalaCSS. */
   val ScScalaCssDefaults = scalacss.DevDefaults

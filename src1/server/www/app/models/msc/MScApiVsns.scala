@@ -66,6 +66,10 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with MacroLogsImpl {
   }
 
 
+  /** Выдача на React.sjs (sc3). */
+  val ReactSjs3: T = new Val( Vsns.REACT_SJS )
+
+
   /** Какую версию использовать, если версия API не указана? */
   def unknownVsn: T = {
     Sjs1

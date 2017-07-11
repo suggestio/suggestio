@@ -1,7 +1,7 @@
 package io.suggest.sc.hdr.v
 
-import io.suggest.sc.ScCss
 import io.suggest.sc.hdr.m.HSearchBtnClick
+import io.suggest.sc.styl.ScCss.scCss
 
 /**
   * Suggest.io
@@ -14,7 +14,7 @@ object SearchBtnR extends HdrBtn {
 
   override protected[this] def _compName: String = "Search"
 
-  override protected[this] def cssStyle = ScCss.Header.Buttons.search
+  override protected[this] def cssStyle = scCss.Header.Buttons.search
 
   override protected[this] def _btnClickAction = HSearchBtnClick
 

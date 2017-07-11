@@ -56,6 +56,12 @@ trait ScSite
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
 
+    def scriptRenderArgs: IScScriptRenderArgs = {
+      ScScriptRenderArgs(
+        apiVsn = _siteQsArgs.apiVsn
+      )
+    }
+
     // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
     lazy val domainNodeOptFut: Future[Option[MNode]] = {
       val myHost = ctx.request.host
@@ -225,13 +231,7 @@ trait ScSite
   /** Когда нужно рендерить site script, подмешиваем это. */
   protected abstract class SiteScriptLogicV2 extends SiteLogic {
 
-    import views.html.sc.script._
-
-    def scriptRenderArgs: IScScriptRenderArgs = {
-      ScScriptRenderArgs(
-        apiVsn = _siteQsArgs.apiVsn
-      )
-    }
+    import views.html.sc.site.v2._
 
     /** Добавки к тегу head в siteTpl. */
     override def headAfterFut: Future[List[Html]] = {
@@ -264,6 +264,41 @@ trait ScSite
 
 
 
+  protected abstract class SiteScriptLogicV3 extends SiteLogic {
+
+    import views.html.sc.site.v3._
+
+
+    /** Добавки к тегу head в siteTpl. */
+    override def headAfterFut: Future[List[Html]] = {
+      val fut0 = super.headAfterFut
+      val headAfterHtml = _headAfterV3Tpl(scriptRenderArgs)(ctx)
+      for (htmls0 <- fut0) yield {
+        headAfterHtml :: htmls0
+      }
+    }
+
+    override def scriptHtmlFut: Future[Html] = {
+      val html = _scriptV3Tpl(scriptRenderArgs)(ctx)
+      Future.successful(html)
+    }
+
+    /** Сформулировать данные для начального состояния выдачи. */
+    override def customScStateOptFut: Future[Option[ScJsState]] = {
+      for {
+        nodeOpt <- nodeOptFutVal
+      } yield {
+        for (mnode <- nodeOpt) yield {
+          ScJsState(adnId = mnode.id)
+        }
+      }
+    }
+
+    override def _syncRender = false
+
+  }
+
+
   // Экшены реализации поддержки sc-сайта.
 
   /** Пользователь заходит в sio.market напрямую через интернет, без помощи сторонних узлов. */
@@ -279,13 +314,19 @@ trait ScSite
     } else {
 
       if (siteArgs.apiVsn.majorVsn == MScApiVsns.Sjs1.majorVsn) {
-        // Сразу собираем логику ответа. Она может не использоваться по прямому назначению, но сойдёт в качестве передавалки параметров.
+        // sc v2 -- первая выдача на scala.js.
         val logic = new SiteScriptLogicV2 {
           override def _siteQsArgs = siteArgs
           override def _request = request
         }
+        _geoSiteResult(logic)
 
-        // Запуск исполнения экшена.
+      } else if (siteArgs.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
+        // Логика sc3
+        val logic = new SiteScriptLogicV3 {
+          override implicit def _request = request
+          override def _siteQsArgs = siteArgs
+        }
         _geoSiteResult(logic)
 
       } else {

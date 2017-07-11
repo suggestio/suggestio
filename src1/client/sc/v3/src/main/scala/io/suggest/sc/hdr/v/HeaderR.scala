@@ -1,10 +1,11 @@
 package io.suggest.sc.hdr.v
 
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.model.n2.node.meta.colors.MColorData
-import io.suggest.sc.ScCss
 import io.suggest.sc.hdr.m.{MHeaderState, MHeaderStates}
 import io.suggest.sc.m.MScNodeInfo
+import io.suggest.sc.styl.ScCss.scCss
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -30,6 +31,13 @@ object HeaderR {
                        node       : Option[MScNodeInfo]
                      )
 
+  implicit object HeaderPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.hdrState eq b.hdrState) &&
+        (a.node eq b.node)
+    }
+  }
+
   type Props = ModelProxy[PropsVal]
 
 
@@ -37,7 +45,8 @@ object HeaderR {
   protected case class State(
                               plainGridC : ReactConnectProxy[Option[MColorData]],
                               menuC      : ReactConnectProxy[Option[MColorData]],
-                              searchC    : ReactConnectProxy[Option[MColorData]]
+                              searchC    : ReactConnectProxy[Option[MColorData]],
+                              nodeOptC   : ReactConnectProxy[LogoR.PropsVal]
                             )
 
 
@@ -46,10 +55,9 @@ object HeaderR {
 
     def render(s: State): VdomElement = {
       <.div(
-        ScCss.Header.header,
+        scCss.Header.header,
 
-        // #smRootProducerHeaderButtons
-        // Кнопки в зависимости от состояния.
+        // Кнопки заголовка в зависимости от состояния.
         // Кнопки при нахождении в обычной выдаче без посторонних вещей.
         s.plainGridC { fgColorDataOptProxy =>
           <.span(
@@ -58,12 +66,8 @@ object HeaderR {
           )
         },
 
-        // #smHdrNodeLogo
-        <.span(
-          // TODO Текстовый логотип.
-          // TODO Логотип картинкой.
-        )
-
+        // Логотип посередине заголовка.
+        s.nodeOptC { LogoR.apply }
       )
     }
 
@@ -83,7 +87,8 @@ object HeaderR {
       State(
         plainGridC  = __fgColorDataOptProxy( HS.PlainGrid ),
         menuC       = __fgColorDataOptProxy( HS.Menu ),
-        searchC     = __fgColorDataOptProxy( HS.Search )
+        searchC     = __fgColorDataOptProxy( HS.Search ),
+        nodeOptC    = propsProxy.connect( _.node )
       )
     }
     .renderBackend[Backend]

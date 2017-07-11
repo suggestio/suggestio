@@ -1,9 +1,9 @@
-package io.suggest.sc
-
-import io.suggest.css.Css
+package io.suggest.sc.styl
 
 import ScScalaCssDefaults._
+import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
+import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 
 /**
   * Suggest.io
@@ -11,7 +11,31 @@ import io.suggest.i18n.MsgCodes
   * Created: 07.07.17 15:01
   * Description: scalaCSS для выдачи s.io.
   */
-object ScCss extends StyleSheet.Inline {
+
+object ScCss {
+
+  /** Хранилище для инстанса [[ScCss]]. */
+  var scCss: ScCss = apply()
+
+
+  // TODO Исходные цвета надо бы брать откуда-то, с сервера например.
+  def COLORS_DFLT = MColors(
+    bg = Some(MColorData( "111111" )),
+    fg = Some(MColorData( "ffffff" ))
+  )
+
+}
+
+
+/** Стили для выдачи.
+  *
+  * @param colors Цвета оформления узла и выдачи. Или дефолтовое значение.
+  */
+case class ScCss(
+                  colors     : MColors = ScCss.COLORS_DFLT
+                )
+  extends StyleSheet.Inline
+{
 
   import dsl._
 
@@ -25,6 +49,10 @@ object ScCss extends StyleSheet.Inline {
   private def `BUTTON` = "button"
   private def _SM_BUTTON = _SM_ + `BUTTON`
 
+  private def _colorCss( colorOpt: Option[MColorData] ) = Color( colorOpt.get.hexCode )
+  private val _bgColorCss = _colorCss( colors.bg )
+  private val _fgColorCss = _colorCss( colors.fg )
+
   //val button = _styleAddClasses( _SM_BUTTON )
 
   /** Стили для html.body . */
@@ -36,8 +64,8 @@ object ScCss extends StyleSheet.Inline {
 
     /** Фоновый SVG-логотип ЯПРЕДЛАГАЮ. Его в теории может и не быть, поэтому оно отдельно от класса body. */
     object BgLogo {
-      val ru = _styleAddClasses( __ + "ru" )
-      val en = _styleAddClasses( __ + "en" )
+      lazy val ru = _styleAddClasses( __ + "ru" )
+      lazy val en = _styleAddClasses( __ + "en" )
     }
 
     /** Исторически как-то сложилось, что активация body происходит через style-аттрибут. Но это плевать наверое. */
@@ -65,7 +93,11 @@ object ScCss extends StyleSheet.Inline {
     private def HEADER = _SM_ + "producer-header"
 
     /** Стили контейнера любого заголовка. */
-    val header = _styleAddClasses( HEADER, Css.Position.ABSOLUTE )
+    val header = style(
+      addClassNames( HEADER, Css.Position.ABSOLUTE ),
+      backgroundColor( _bgColorCss ),
+      borderColor( _fgColorCss )
+    )
 
     object Buttons {
 
@@ -121,20 +153,57 @@ object ScCss extends StyleSheet.Inline {
       /** Стили текстового логотипа узла.*/
       object Txt {
 
-        private def TXT_LOGO = HEADER + "_txt" + `-logo`
-        val txtLogo = _styleAddClasses( TXT_LOGO )
+        private val TXT_LOGO = HEADER + "_txt" + `-logo`
+
+        val txtLogo = {
+          style(
+            addClassName( TXT_LOGO ),
+            color( _fgColorCss ),
+            borderColor( _fgColorCss )
+          )
+        }
 
         /** Точки по краям названия узла. */
         object Dots {
           private val DOT = TXT_LOGO + "-dot"
-          val left = _styleAddClasses( DOT, __ + MsgCodes.`left` )
-          val right = _styleAddClasses( DOT, __ + MsgCodes.`right` )
+
+          /** Стиль для одной точки. */
+          val dot = style(
+            addClassName( DOT ),
+            backgroundColor( _fgColorCss )
+          )
+
+          val left = _styleAddClasses( __ + MsgCodes.`left` )
+          val right = _styleAddClasses( __ + MsgCodes.`right` )
+          def allSides = left :: right :: Nil
         }
 
+      }
+
+
+      /** CSS для картинки-логотипа. */
+      object Img {
+        /** Алиас основного стиля логотипа. */
+        val logo = _styleAddClasses( HEADER + `-logo` )
+        def IMG_HEIGHT_CSSPX = 30
       }
 
     }
 
   }
+
+
+  /** Инициализация ленивых scala-объектов для заполнения стилей выдачи.
+    *
+    * Некоторые вещи не требуют явной инициализации, т.к. не содержат какой-либо стилистики.
+    * Поэтому, тут перечислены объекты, стили которых подразумевают css-рендер.
+    *
+    * @see [[https://japgolly.github.io/scalacss/book/gotchas.html]]
+    */
+  initInnerObjects(
+    Body.BgLogo.ru,
+    Header.Buttons.search,
+    Header.Logo.Txt.Dots.dot
+  )
 
 }

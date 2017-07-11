@@ -12,12 +12,4 @@
 <script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.Sc.scJsRouter() )">
 </script>
 
-@_sjsScript("sc-sjs", withLauncherJs = true)
-
-@* Подгрузить JS карт. *@
-@_mapBoxGlJsTpl()
-
-@* Ссылка для скачивания карты всех узлов системы должна проходить через CDN. *@
-<input type="hidden"
-       id="@ALL_URL_INPUT_ID"
-       value="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall(routes.Sc.renderMapNodesAll()) )"/>
+@_sjsScript("sc3-sjs")
