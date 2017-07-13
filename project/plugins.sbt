@@ -39,9 +39,3 @@ addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalajs-bundler" % "0.7.0")
 
 addSbtPlugin("ch.epfl.scala" % "sbt-web-scalajs-bundler" % "0.7.0")
-
-// play-2.6.x: на релизе всплыл косяк с отсутствующей slf4j implementation.
-// Когда выйдет play-2.6.1
-// https://github.com/playframework/playframework/issues/7422
-//libraryDependencies += "org.slf4j" % "slf4j-simple" % "1.7.25"
-
