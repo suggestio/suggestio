@@ -22,10 +22,18 @@ lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shar
     testFrameworks += new TestFramework("minitest.runner.Framework"),
     libraryDependencies ++= Seq(
       // Универсальные зависимости для клиента и сервера. Наследуются во ВСЕ компоненты проекта.
+      // Сериализация:
+      // - 1. быстрая-компактная-ломучая бинарщина boopickle:
       "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
+      // - 2. Play-json стал кросс-платформенным, ура.
+      "org.julienrf" %%% "play-json-derived-codecs" % "4.0.0",
+      // Вместо scala.Enumeration используем сие:
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
+      // scalaz появилась для Validation.
       "org.scalaz"   %%% "scalaz-core" % Common.Vsn.SCALAZ,
+      // UnivEq позволяет избегать fruitless comparison даже с дженериками. Надо внедрять потихоньку.
       "com.github.japgolly.univeq"   %%% "univeq-scalaz" % Common.Vsn.UNIVEQ,
+      // ScalaCSS генерит CSS в выдаче.
       "com.github.japgolly.scalacss" %%% "core"          % Common.Vsn.SCALACSS,
       // Тесты, только [common] и не наследуются (наверное).
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test

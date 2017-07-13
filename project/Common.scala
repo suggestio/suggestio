@@ -29,7 +29,7 @@ object Common {
     val PLAY_SLICK   = "3.0.0"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.6.1"
+    val PLAY_JSON_VSN = "2.6.2"
 
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
@@ -122,7 +122,7 @@ object Common {
   )
 
   /** Версия play. */
-  val playVsn         = "2.6.0"
+  val playVsn         = "2.6.1"
 
 
   /** Версия bouncy castle. */
