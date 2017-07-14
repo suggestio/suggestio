@@ -2,11 +2,10 @@ package io.suggest.sc.sjs.m.msc
 
 import io.suggest.ble.MBeaconData
 import io.suggest.dev.MScreen
-import io.suggest.geo.MGeoLoc
+import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.sjs.m.magent.MResizeDelay
 import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.model.loc.ILocEnv
 
 /**
   * Suggest.io
@@ -15,7 +14,7 @@ import io.suggest.sjs.common.model.loc.ILocEnv
   * Description: Модель-контейнер очень общих частей FSM-состояния [[MScSd]].
   * Появилась с целью облегчения [[MScSd]] и группировки разных простых полей верхнего уровня.
   */
-trait IScCommon extends ILocEnv {
+trait IScCommon {
 
   def screen       : MScreen
   def browser      : IBrowser
@@ -25,6 +24,8 @@ trait IScCommon extends ILocEnv {
   def geoLocOpt    : Option[MGeoLoc]
   def tagOpt       : Option[MTagInfo]
   def bleBeacons   : Seq[MBeaconData]
+
+  def locEnv = MLocEnv(geoLocOpt, bleBeacons)
 
 }
 
@@ -46,9 +47,9 @@ case class MScCommon(
                       override val generation   : Long,
                       override val adnIdOpt     : Option[String]        = None,
                       override val resizeOpt    : Option[MResizeDelay]  = None,
-                      override val geoLocOpt    : Option[MGeoLoc]    = None,
+                      override val geoLocOpt    : Option[MGeoLoc]       = None,
                       override val tagOpt       : Option[MTagInfo]      = None,
-                      override val bleBeacons   : Seq[MBeaconData]   = Nil
+                      override val bleBeacons   : Seq[MBeaconData]      = Nil
 )
   extends IScCommon
 {

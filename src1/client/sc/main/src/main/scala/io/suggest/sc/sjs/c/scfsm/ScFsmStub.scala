@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.c.scfsm
 
 import io.suggest.dev.MScreen
 import io.suggest.fsm.StateData
+import io.suggest.geo.MLocEnv
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
 import io.suggest.sc.sjs.m.magent.{IVpSzChanged, VpSzChanged}
 import io.suggest.sc.sjs.m.mfsm.signals.KbdKeyUp
@@ -9,7 +10,6 @@ import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._
-import io.suggest.sjs.common.model.loc.ILocEnv
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.sjs.common.vsz.ViewportSz
@@ -162,7 +162,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
   // API, в т.ч. публичное.
 
   /** Текущая локация системы. */
-  def currLocEnv: ILocEnv = {
+  def currLocEnv: MLocEnv = {
     _stateData.locEnv
   }
 

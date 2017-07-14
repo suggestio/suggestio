@@ -1,7 +1,7 @@
 package io.suggest.sjs.common.tags.search
 
+import io.suggest.geo.{MLocEnv, MLocEnvJs}
 import io.suggest.sc.TagSearchConstants.Req._
-import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -32,8 +32,8 @@ object MTagSearchArgs {
       d(OFFSET_FN) = _offset
 
     val _locEnv = args.locEnv
-    if ( MLocEnv.nonEmpty(_locEnv))
-      d(LOC_ENV_FN) = MLocEnv.toJson(_locEnv)
+    if ( _locEnv.nonEmpty )
+      d(LOC_ENV_FN) = MLocEnvJs.toJson(_locEnv)
 
     d
   }
@@ -46,5 +46,5 @@ case class MTagSearchArgs(
   faceFts  : Option[String]    = None,
   limit    : Option[Int]       = None,
   offset   : Option[Int]       = None,
-  locEnv   : ILocEnv           = MLocEnv.empty
+  locEnv   : MLocEnv           = MLocEnv.empty
 )

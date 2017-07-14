@@ -2,8 +2,8 @@ package io.suggest.sc.sjs.m.msrv.tile
 
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.dev.MScreen
+import io.suggest.geo.{MLocEnv, MLocEnvJs}
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
-import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -22,7 +22,7 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def offset      : Option[Int]
   def receiverId  : Option[String]
   def generation  : Option[Long]
-  def locEnv      : ILocEnv
+  def locEnv      : MLocEnv
   def screenInfo  : Option[MScreen]
   def tagNodeId   : Option[String]
 
@@ -42,8 +42,8 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
       d(GENERATION_FN) = gen
 
     val _le = locEnv
-    if (MLocEnv.nonEmpty(_le))
-      d(LOC_ENV_FN) = MLocEnv.toJson(_le)
+    if ( _le.nonEmpty )
+      d(LOC_ENV_FN) = MLocEnvJs.toJson(_le)
 
     for (scrInfo <- screenInfo)
       d(SCREEN_INFO_FN) = scrInfo.toQsValue
@@ -63,7 +63,7 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def offset      : Option[Int]       = None
   override def receiverId  : Option[String]    = None
   override def generation  : Option[Long]      = None
-  override def locEnv      : ILocEnv           = MLocEnv.empty
+  override def locEnv      : MLocEnv           = MLocEnv.empty
   override def screenInfo  : Option[MScreen]  = None
   override def tagNodeId   : Option[String] = None
 }

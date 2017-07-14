@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.m.msrv.index
 
 import io.suggest.dev.MScreen
+import io.suggest.geo.{MLocEnv, MLocEnvJs}
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 import io.suggest.sc.ScConstants.ReqArgs._
-import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -19,7 +19,7 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
   def withWelcome: Boolean
 
   /** Физические данные по текущей локации. */
-  def locEnv  : ILocEnv
+  def locEnv  : MLocEnv
 
   /** Данные по экрану клиентского устройства. */
   def screen  : Option[MScreen]
@@ -35,8 +35,8 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
       d(ADN_ID_FN) = adnId
 
     val _le = locEnv
-    if ( MLocEnv.nonEmpty(_le) )
-      d(LOC_ENV_FN) = MLocEnv.toJson(_le)
+    if ( _le.nonEmpty )
+      d(LOC_ENV_FN) = MLocEnvJs.toJson(_le)
 
     for (scr <- screen)
       d(SCREEN_FN) = scr.toQsValue
@@ -52,7 +52,7 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
 /** Дефолтовая реализация [[IScIndexArgs]]. */
 case class MScIndexArgs(
                          override val adnIdOpt     : Option[String],
-                         override val locEnv       : ILocEnv,
+                         override val locEnv       : MLocEnv,
                          override val screen       : Option[MScreen],
                          override val withWelcome  : Boolean
 )

@@ -1,11 +1,11 @@
 package io.suggest.sc.sjs.m.msc
 
+import io.suggest.geo.MLocEnv
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.m.mgrid.{MGridData, MGridState}
 import io.suggest.sc.sjs.m.mnav.MNavState
 import io.suggest.sc.sjs.m.msearch.MSearchSd
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.model.loc.ILocEnv
 import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.scalajs.js.URIUtils
@@ -180,7 +180,7 @@ trait IScSd {
       common.generation != sd2.common.generation
   }
 
-  def locEnv: ILocEnv = common
+  def locEnv: MLocEnv = common.locEnv
 
 }
 
