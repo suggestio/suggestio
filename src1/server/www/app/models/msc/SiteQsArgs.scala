@@ -22,10 +22,10 @@ object SiteQsArgs {
   val empty = SiteQsArgs()
 
   /** query-string-биндер модели. */
-  implicit def qsb(implicit
-                   strOptB: QueryStringBindable[Option[String]],
-                   apiVsnB: QueryStringBindable[MScApiVsn]
-                  ): QueryStringBindable[SiteQsArgs] = {
+  implicit def siteQsArgsQsb(implicit
+                             strOptB: QueryStringBindable[Option[String]],
+                             apiVsnB: QueryStringBindable[MScApiVsn]
+                            ): QueryStringBindable[SiteQsArgs] = {
     new QueryStringBindableImpl[SiteQsArgs] {
       /** Маппер из qs. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, SiteQsArgs]] = {

@@ -1,7 +1,6 @@
 package io.suggest.ble.beaconer.m.signals
 
-import io.suggest.ble.BeaconSignal
-import io.suggest.sjs.common.ble.MBleBeaconInfo
+import io.suggest.ble.{IBeaconSignal, MBeaconData}
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
 
 /**
@@ -27,15 +26,15 @@ case class UnSubscribe( fsm: SjsFsm )
 
 /** Сигнал об обнаружении одного ble-маячка. */
 case class BeaconDetected(
-  beacon  : BeaconSignal,
-  seen    : Long = System.currentTimeMillis()
+                           beacon  : IBeaconSignal,
+                           seen    : Long = System.currentTimeMillis()
 )
   extends IBeaconerInFsmMsg
 
 
 /** Исходящий сигнал о наблюдаемых маячках в текущий момент времени. */
 case class BeaconsNearby(
-  beacons: Seq[MBleBeaconInfo]
+  beacons: Seq[MBeaconData]
 )
   extends IFsmMsg
 {

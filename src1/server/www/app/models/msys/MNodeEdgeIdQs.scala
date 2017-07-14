@@ -31,11 +31,11 @@ object MNodeEdgeIdQs {
   import Fields._
 
   /** Поддержка в play router. */
-  implicit def qsb(implicit
-                   strB   : QueryStringBindable[String],
-                   longB  : QueryStringBindable[Long],
-                   intB   : QueryStringBindable[Int]
-                  ): QueryStringBindable[MNodeEdgeIdQs] = {
+  implicit def mNodeEdgeIdQsQsb(implicit
+                                strB   : QueryStringBindable[String],
+                                longB  : QueryStringBindable[Long],
+                                intB   : QueryStringBindable[Int]
+                               ): QueryStringBindable[MNodeEdgeIdQs] = {
 
     new QueryStringBindableImpl[MNodeEdgeIdQs] {
 

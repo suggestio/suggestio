@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.m
 
-import io.suggest.ble.BeaconSignal
+import io.suggest.ble.IBeaconSignal
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.beacon.BeaconAccuracyMeasurer
 import io.suggest.sjs.common.fsm.SjsFsm
@@ -50,7 +50,7 @@ case class MBeaconerFsmSd(
 
 /** Состояние по одному маячку. */
 case class BeaconSd(
-  beacon      : BeaconSignal,
-  lastSeenMs  : Long,
-  accuracies  : BeaconAccuracyMeasurer  = new BeaconAccuracyMeasurer
+                     beacon      : IBeaconSignal,
+                     lastSeenMs  : Long,
+                     accuracies  : BeaconAccuracyMeasurer  = new BeaconAccuracyMeasurer
 )

@@ -50,7 +50,7 @@ object MYakaReturnActions extends Enum[MYakaAction] {
   override def values = findValues
 
 
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MYakaAction] = {
+  implicit def mYakaActionQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MYakaAction] = {
     new QueryStringBindableImpl[MYakaAction] {
 
       override def bind(key: String, params: Map[String, Seq[String]]) = {

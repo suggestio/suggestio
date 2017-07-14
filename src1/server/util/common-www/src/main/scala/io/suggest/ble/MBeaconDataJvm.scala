@@ -1,9 +1,8 @@
-package models.mgeo
+package io.suggest.ble
 
-import io.suggest.ble.BeaconData
+import io.suggest.ble.BleConstants.Beacon.Qs._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
-import io.suggest.ble.BleConstants.Beacon.Qs._
 
 /**
   * Suggest.io
@@ -12,16 +11,16 @@ import io.suggest.ble.BleConstants.Beacon.Qs._
   * Description: Модель данных одного обноруженного устройством BLE-маячка.
   * Часть полей совпадает с хранимой ES-моделью
   */
-object MBleBeaconInfo {
+object MBeaconDataJvm {
 
   /** Поддержка биндинга инстансов модели в play router. */
-  implicit def qsb(implicit
-                   strB         : QueryStringBindable[String],
-                   intB         : QueryStringBindable[Int]
-                  ): QueryStringBindable[MBleBeaconInfo] = {
+  implicit def mBeaconDataQsb(implicit
+                              strB         : QueryStringBindable[String],
+                              intB         : QueryStringBindable[Int]
+                             ): QueryStringBindable[MBeaconData] = {
 
-    new QueryStringBindableImpl[MBleBeaconInfo] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MBleBeaconInfo]] = {
+    new QueryStringBindableImpl[MBeaconData] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MBeaconData]] = {
         val k = key1F(key)
         for {
           // TODO проверять по uuid | uuid_major_minor
@@ -32,7 +31,7 @@ object MBleBeaconInfo {
             uuidStr       <- uuidStrE.right
             distanceCm    <- distanceCmE.right
           } yield {
-            MBleBeaconInfo(
+            MBeaconData(
               uid         = uuidStr,
               distanceCm  = distanceCm
             )
@@ -40,7 +39,7 @@ object MBleBeaconInfo {
         }
       }
 
-      override def unbind(key: String, value: MBleBeaconInfo): String = {
+      override def unbind(key: String, value: MBeaconData): String = {
         _mergeUnbinded {
           val k = key1F(key)
           Iterator(
@@ -53,17 +52,3 @@ object MBleBeaconInfo {
   }
 
 }
-
-
-/**
-  * Класс для инстансов модели с инфой о наблюдаемом в эфире BLE-маячке.
-  * @param uid Уникальный идентификатор наблюдаемого маячка:
-  *            iBeacon:   "$uuid:$major:$minor"
-  *            EddyStone: "$gid$bid"
-  * @param distanceCm Расстояние в сантиметрах, если известно.
-  */
-case class MBleBeaconInfo(
-  override val uid         : String,
-  override val distanceCm  : Int
-)
-  extends BeaconData

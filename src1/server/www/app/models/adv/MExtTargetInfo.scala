@@ -21,7 +21,7 @@ object MExtTargetInfo extends ExtTargetInfoParsers with MacroLogsDyn {
   def DELIMITER = ','
 
   /** QueryStringBindable для экземпляров текущей модели. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]) = {
+  implicit def mExtTargetInfoQsb(implicit strB: QueryStringBindable[String]) = {
     new QueryStringBindableImpl[MExtTargetInfo] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MExtTargetInfo]] = {
         for {

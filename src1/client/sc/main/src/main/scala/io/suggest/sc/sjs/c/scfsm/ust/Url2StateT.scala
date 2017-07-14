@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.ust
 
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.sjs.c.scfsm.ScFsm
 import io.suggest.sc.sjs.c.scfsm.foc.FocCommon
@@ -12,7 +12,6 @@ import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.model.loc.MGeoLoc
 import org.scalajs.dom
 
 import scala.concurrent.Future

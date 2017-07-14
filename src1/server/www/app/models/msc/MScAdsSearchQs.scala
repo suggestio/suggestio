@@ -1,11 +1,11 @@
 package models.msc
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import models.mgeo.MLocEnv
 import play.api.mvc.QueryStringBindable
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.es.model.MEsUuId
+import io.suggest.geo.MLocEnv
 
 /**
   * Suggest.io
@@ -16,12 +16,12 @@ import io.suggest.es.model.MEsUuId
 object MScAdsSearchQs {
 
   /** Поддержка интеграции с URL query string через play router. */
-  implicit def qsb(implicit
-                   esIdOptB   : QueryStringBindable[Option[MEsUuId]],
-                   longOptB   : QueryStringBindable[Option[Long]],
-                   intOptB    : QueryStringBindable[Option[Int]],
-                   locEnvB    : QueryStringBindable[MLocEnv]
-                  ): QueryStringBindable[MScAdsSearchQs] = {
+  implicit def mScAdsSearchQsQsb(implicit
+                                 esIdOptB   : QueryStringBindable[Option[MEsUuId]],
+                                 longOptB   : QueryStringBindable[Option[Long]],
+                                 intOptB    : QueryStringBindable[Option[Int]],
+                                 locEnvB    : QueryStringBindable[MLocEnv]
+                                ): QueryStringBindable[MScAdsSearchQs] = {
     new QueryStringBindableImpl[MScAdsSearchQs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAdsSearchQs]] = {
         val k = key1F(key)
@@ -115,9 +115,9 @@ trait IScAdSearchQs {
 
 /** Контейнер qs-аргументов для поиска карточек. */
 case class MScAdsSearchQs(
-                           override val prodIdOpt     : Option[MEsUuId]       = None,
-                           override val rcvrIdOpt     : Option[MEsUuId]       = None,
-                           override val tagNodeIdOpt  : Option[MEsUuId]       = None,
+                           override val prodIdOpt     : Option[MEsUuId]     = None,
+                           override val rcvrIdOpt     : Option[MEsUuId]     = None,
+                           override val tagNodeIdOpt  : Option[MEsUuId]     = None,
                            override val locEnv        : MLocEnv             = MLocEnv.empty,
                            override val genOpt        : Option[Long]        = None,
                            override val limitOpt      : Option[Int]         = None,

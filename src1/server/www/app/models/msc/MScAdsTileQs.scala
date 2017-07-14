@@ -15,11 +15,11 @@ import play.api.mvc.QueryStringBindable
   */
 object MScAdsTileQs {
 
-  implicit def qsb(implicit
-                   scAdsSearchArgsB : QueryStringBindable[MScAdsSearchQs],
-                   devScreenOptB    : QueryStringBindable[Option[DevScreen]],
-                   apiVsnB          : QueryStringBindable[MScApiVsn]
-                  ): QueryStringBindable[MScAdsTileQs] = {
+  implicit def mScAdsTileQsQsb(implicit
+                               scAdsSearchArgsB : QueryStringBindable[MScAdsSearchQs],
+                               devScreenOptB    : QueryStringBindable[Option[DevScreen]],
+                               apiVsnB          : QueryStringBindable[MScApiVsn]
+                              ): QueryStringBindable[MScAdsTileQs] = {
     new QueryStringBindableImpl[MScAdsTileQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAdsTileQs]] = {

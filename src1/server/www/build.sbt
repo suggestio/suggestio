@@ -95,6 +95,10 @@ libraryDependencies ++= {
   ,
 
   "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
+
+  // jsRevRouter используется специальный escaping:
+  "org.apache.commons" % "commons-text" % Common.Vsn.COMMONS_TEXT,
+
   // test
   "org.scalatestplus.play" %% "scalatestplus-play" % Common.scalaTestPlusPlayVsn % Test
     exclude("commons-logging", "commons-logging")
@@ -144,7 +148,12 @@ routesImport ++= Seq(
   "io.suggest.geo.GeoPoint.Implicits._",
 
   // 2017.apr.5: Вынос кое-каких моделей биллинга в [common]:
-  "io.suggest.mbill2.m.item.typ.MItemTypesJvm._"
+  "io.suggest.mbill2.m.item.typ.MItemTypesJvm._",
+
+  // 2017.jul.14: Распиливание моделей выдачи и деланье их кросс-платформенными:
+  "io.suggest.ble.MBeaconDataJvm._",
+  "io.suggest.geo.MGeoLocJvm._",
+  "io.suggest.geo.MLocEnvJvm._"
 )
 
 

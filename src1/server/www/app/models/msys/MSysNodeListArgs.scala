@@ -21,11 +21,11 @@ object MSysNodeListArgs {
   def LIMIT_DFLT    = 1000
   def OFFSET_DFLT   = 0
 
-  implicit def qsb(implicit
-                   ntypeOptB  : QueryStringBindable[Option[MNodeType]],
-                   stiOptB    : QueryStringBindable[Option[AdnShownType]],
-                   intOptB    : QueryStringBindable[Option[Int]]
-                  ): QueryStringBindable[MSysNodeListArgs] = {
+  implicit def mSysNodeListArgsQsb(implicit
+                                   ntypeOptB  : QueryStringBindable[Option[MNodeType]],
+                                   stiOptB    : QueryStringBindable[Option[AdnShownType]],
+                                   intOptB    : QueryStringBindable[Option[Int]]
+                                  ): QueryStringBindable[MSysNodeListArgs] = {
     new QueryStringBindableImpl[MSysNodeListArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSysNodeListArgs]] = {
         val k = key1F(key)

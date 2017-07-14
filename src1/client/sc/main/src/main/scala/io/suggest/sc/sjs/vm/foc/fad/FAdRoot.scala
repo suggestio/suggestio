@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
-import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.Focused.FAd.MAD_ID_ATTR
 import io.suggest.sc.sjs.m.msc.IScCommon
 import io.suggest.sjs.common.vm.VmT
@@ -37,7 +37,7 @@ object FAdRoot
   }
 
   /** Приведение параметров экрана к ширине ячейки focused-выдачи. */
-  def screen2cellWidth(screen: IMScreen): Int = {
+  def screen2cellWidth(screen: MScreen): Int = {
     screen.width
   }
 
@@ -64,7 +64,7 @@ trait FAdRootT
   override def setLeftPx(leftPx: Int) = super.setLeftPx(leftPx)
 
   /** Выставить значение left в ячейках focused-выдачи. Т.к. в ширинах экрана. */
-  def setLeft(cell: Int, screen: IMScreen): Unit = {
+  def setLeft(cell: Int, screen: MScreen): Unit = {
     setLeftPx(cell * screen2cellWidth(screen))
   }
 

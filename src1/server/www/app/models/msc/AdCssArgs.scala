@@ -34,7 +34,7 @@ object AdCssArgs {
   }
 
   /** Подписываемый QSB для списка AdCssArgs. */
-  implicit def qsbSeq: QueryStringBindable[Seq[AdCssArgs]] = {
+  implicit def adCssArgsSeqQsb: QueryStringBindable[Seq[AdCssArgs]] = {
     new QueryStringBindableImpl[Seq[AdCssArgs]] {
 
       private def getSigner = new QsbSigner(SIGN_SECRET, "sig")

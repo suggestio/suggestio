@@ -150,7 +150,7 @@ object BlocksConf
   }
 
   /** Поддержка биндинга блока из routes. */
-  implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[T] = {
+  implicit def blocksConfQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for {

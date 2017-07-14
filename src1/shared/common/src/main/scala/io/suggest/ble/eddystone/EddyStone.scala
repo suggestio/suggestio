@@ -1,6 +1,6 @@
 package io.suggest.ble.eddystone
 
-import io.suggest.ble.{BeaconSignal, BeaconUtil}
+import io.suggest.ble.{IBeaconSignal, BeaconUtil}
 import io.suggest.common.radio.IRadioSignal
 
 import scalaz.{Validation, ValidationNel}
@@ -35,7 +35,7 @@ trait IEddyStoneSignal extends IRadioSignal {
 
 
 /** Трейт для eddystone-фреймов, содержащих в себе данные txPower. */
-trait IEddyStoneTxSignal extends IEddyStoneSignal with BeaconSignal {
+trait IEddyStoneTxSignal extends IEddyStoneSignal with IBeaconSignal {
 
   /** Мощность антенны в дБ. */
   def txPower: Int

@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mmap
 
+import io.suggest.geo.MGeoLoc
 import io.suggest.sjs.common.fsm.IFsmMsg
-import io.suggest.sjs.common.model.loc.MGeoLoc
 
 /**
   * Suggest.io

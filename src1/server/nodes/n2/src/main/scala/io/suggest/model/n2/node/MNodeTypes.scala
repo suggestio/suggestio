@@ -138,7 +138,7 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
 
 
   /** Поддержка binding'а из URL query string, для play router'а. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+  implicit def mNodeTypeQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for (strIdEith <- strB.bind(key, params)) yield {

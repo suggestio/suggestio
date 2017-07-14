@@ -80,14 +80,14 @@ object MImgT extends MacroLogsImpl { model =>
   def qsbStandalone = {
     import ImOp._
     import QueryStringBindable._
-    qsb
+    mImgTQsb
   }
 
   /** routes-биндер для query-string. */
-  implicit def qsb(implicit
-                   strB: QueryStringBindable[String],
-                   imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]
-                  ): QueryStringBindable[MImgT] = {
+  implicit def mImgTQsb(implicit
+                        strB: QueryStringBindable[String],
+                        imOpsOptB: QueryStringBindable[Option[Seq[ImOp]]]
+                       ): QueryStringBindable[MImgT] = {
     new QueryStringBindableImpl[MImgT] {
 
       /** Создать подписывалку для qs. */

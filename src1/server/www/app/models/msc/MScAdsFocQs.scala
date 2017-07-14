@@ -17,14 +17,14 @@ import play.api.mvc.QueryStringBindable
 object MScAdsFocQs {
 
   /** Поддержка биндинга инстансов модели из URL qs. */
-  implicit def qsb(implicit
-                   scAdsSearchArgsB : QueryStringBindable[MScAdsSearchQs],
-                   devScreenOptB    : QueryStringBindable[Option[DevScreen]],
-                   apiVsnB          : QueryStringBindable[MScApiVsn],
-                   boolB            : QueryStringBindable[Boolean],
-                   strB             : QueryStringBindable[String],
-                   lookupModeB      : QueryStringBindable[MLookupMode]
-                  ): QueryStringBindable[MScAdsFocQs] = {
+  implicit def mScAdsFocQsQsb(implicit
+                              scAdsSearchArgsB : QueryStringBindable[MScAdsSearchQs],
+                              devScreenOptB    : QueryStringBindable[Option[DevScreen]],
+                              apiVsnB          : QueryStringBindable[MScApiVsn],
+                              boolB            : QueryStringBindable[Boolean],
+                              strB             : QueryStringBindable[String],
+                              lookupModeB      : QueryStringBindable[MLookupMode]
+                             ): QueryStringBindable[MScAdsFocQs] = {
     new QueryStringBindableImpl[MScAdsFocQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAdsFocQs]] = {

@@ -4,7 +4,6 @@ import io.suggest.adv.geo.MMapProps
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.geo._
 import io.suggest.maps.m.MMapS
-import io.suggest.sjs.common.model.loc.MGeoPointJs
 import io.suggest.sjs.leaflet.{Leaflet, PolygonLatLngs_t}
 import io.suggest.sjs.leaflet.map.{LatLng, Point}
 

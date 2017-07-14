@@ -1,9 +1,9 @@
 package models.msc.tag
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.geo.MLocEnv
 import io.suggest.model.play.qsb.{QsbUtil, QueryStringBindableImpl}
 import io.suggest.sc.TagSearchConstants.Req._
-import models.mgeo.MLocEnv
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -26,11 +26,11 @@ object MScTagsSearchQs {
 
 
   /** Поддержка интеграции с play-роутером в области URL Query string. */
-  implicit def qsb(implicit
-                   strOptB    : QueryStringBindable[Option[String]],
-                   intOptB    : QueryStringBindable[Option[Int]],
-                   locEnvB    : QueryStringBindable[MLocEnv]
-                  ): QueryStringBindable[MScTagsSearchQs] = {
+  implicit def mScTagsSearchQsQsb(implicit
+                                  strOptB    : QueryStringBindable[Option[String]],
+                                  intOptB    : QueryStringBindable[Option[Int]],
+                                  locEnvB    : QueryStringBindable[MLocEnv]
+                                 ): QueryStringBindable[MScTagsSearchQs] = {
 
     new QueryStringBindableImpl[MScTagsSearchQs] {
 

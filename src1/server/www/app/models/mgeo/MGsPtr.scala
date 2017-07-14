@@ -15,9 +15,9 @@ object MGsPtr {
   def NODE_ID_FN = "n"
   def GS_ID_FN   = "i"
 
-  implicit def qsb(implicit
-                   strB: QueryStringBindable[String],
-                   intB: QueryStringBindable[Int]): QueryStringBindable[MGsPtr] = {
+  implicit def mGsPtrQsb(implicit
+                         strB: QueryStringBindable[String],
+                         intB: QueryStringBindable[Int]): QueryStringBindable[MGsPtr] = {
     new QueryStringBindableImpl[MGsPtr] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGsPtr]] = {
         val k = key1F(key)

@@ -146,7 +146,7 @@ object IEaEmailId {
   def ID_FN    = "k"
   def EMAIL_FN = "e"
 
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[IEaEmailId] = {
+  implicit def eaEmailIdQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[IEaEmailId] = {
     new QueryStringBindableImpl[IEaEmailId] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, IEaEmailId]] = {
         val k = key1F(key)

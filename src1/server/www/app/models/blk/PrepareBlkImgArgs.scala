@@ -18,11 +18,11 @@ object PrepareBlkImgArgs {
   def BIM_KEY_FN  = "i"
   def WS_ID_FN    = "w"
 
-  implicit def qsb(implicit
-                   bcB      : QueryStringBindable[BlockConf],
-                   bimKeyB  : QueryStringBindable[BimKey_t],
-                   strOptB  : QueryStringBindable[Option[String]]
-                  ): QueryStringBindable[PrepareBlkImgArgs] = {
+  implicit def prepareBlkImgArgsQsb(implicit
+                                    bcB      : QueryStringBindable[BlockConf],
+                                    bimKeyB  : QueryStringBindable[BimKey_t],
+                                    strOptB  : QueryStringBindable[Option[String]]
+                                   ): QueryStringBindable[PrepareBlkImgArgs] = {
     new QueryStringBindableImpl[PrepareBlkImgArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, PrepareBlkImgArgs]] = {
         val k = key1F(key)

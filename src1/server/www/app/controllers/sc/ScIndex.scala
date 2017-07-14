@@ -3,7 +3,7 @@ package controllers.sc
 import _root_.util.di._
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
-import io.suggest.geo._
+import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
@@ -11,7 +11,6 @@ import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models._
 import models.im.MImgT
-import models.mgeo.MGeoLoc
 import models.msc._
 import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespIndex}
 import play.api.libs.json.Json
@@ -206,12 +205,12 @@ trait ScIndex
             override def limit = 1
             // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
             override def withGeoDistanceSort: Option[MGeoPoint] = {
-              Some(geoLoc.center)
+              Some(geoLoc.point)
             }
             // Неактивные узлы сразу вылетают из выдачи.
             override def isEnabled = someTrue
             override def outEdges: Seq[ICriteria] = {
-              val circle = CircleGs(geoLoc.center, radiusM = 10)
+              val circle = CircleGs(geoLoc.point, radiusM = 10)
               val qShape = CircleGsJvm.toEsQueryMaker( circle )
               val gsCr = GsCriteria(
                 levels = ngl :: Nil,
@@ -507,7 +506,7 @@ trait ScIndex
           .fold[Future[Option[MGeoLoc]]] (reqGeoLocFutVal) { _ => Future.successful(None) }
       } yield {
         geoLocOpt
-          .map(_.center)
+          .map(_.point)
       }
 
       val _titleFut = titleFut

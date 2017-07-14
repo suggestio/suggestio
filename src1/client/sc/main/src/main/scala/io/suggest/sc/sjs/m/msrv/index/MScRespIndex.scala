@@ -41,7 +41,7 @@ object MScRespIndex extends Log with IApplyUndef1 {
     val fut = MSrv.doRequest(route)
       .map(_scResp2index)
 
-    fut.onFailure { case ex: Throwable =>
+    for (ex <- fut.failed) {
       LOG.error( ErrorMsgs.GET_NODE_INDEX_FAILED, ex )
     }
 

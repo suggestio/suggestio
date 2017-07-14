@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.layout
 
+import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.Layout
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.vm.foc.FRoot
 import io.suggest.sc.sjs.vm.grid.GRoot
 import io.suggest.sc.sjs.vm.hdr.HRoot
@@ -35,7 +35,7 @@ trait LayContentVmT extends VmT with SetInnerHtml {
   override type T = HTMLDivElement
 
   /** Выставить css-класс отображения для layoutDiv. */
-  def setWndClass(scrWh: IMScreen): Unit = {
+  def setWndClass(scrWh: MScreen): Unit = {
     setWndClass(scrWh.width)
   }
   def setWndClass(w: Int): Unit = {

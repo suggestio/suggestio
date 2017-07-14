@@ -8,7 +8,7 @@
  *@
 
 @import io.suggest.common.qs.QsConstants._
-@import org.apache.commons.lang3.StringEscapeUtils.{ escapeEcmaScript => esc }
+@import org.apache.commons.text.StringEscapeUtils.{ escapeEcmaScript => esc }
 @import ctx.request
 @import ctx.api.ctxUtil.HTTPS_ENABLED
 @import ctx.api.cdn.ctx2CdnHost

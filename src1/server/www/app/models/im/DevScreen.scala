@@ -21,7 +21,7 @@ object DevScreen extends DevScreenParsers {
   def maybeFromString(s: String) = parse(devScreenP, s)
 
   /** Биндер для отработки значения screen из ссылки. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[DevScreen] = {
+  implicit def devScreenQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[DevScreen] = {
     new QueryStringBindableImpl[DevScreen] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, DevScreen]] = {
         for {

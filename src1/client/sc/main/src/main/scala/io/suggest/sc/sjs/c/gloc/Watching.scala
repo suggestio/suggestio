@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.c.gloc
 
+import io.suggest.geo.MGeoLocJs
 import io.suggest.sc.sjs.m.mgeo._
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.fsm.signals.IVisibilityChangeSignal
-import io.suggest.sjs.common.model.loc.MGeoLoc
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.{Geolocation, Position, PositionError}
@@ -24,7 +24,7 @@ trait Watching extends GeoLocFsmStub {
           // Вешаем непрерывную слушалку событий геолокации.
           val wid = glApi.watchPosition(
             { p: Position =>
-              val mgl = MGeoLoc(p)
+              val mgl = MGeoLocJs(p)
               _sendEventSyncSafe( GlLocation(mgl, wtype) )
             }, { pe: PositionError =>
               _sendEventSync( GlError(pe, wtype) )

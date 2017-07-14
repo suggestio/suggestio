@@ -24,7 +24,7 @@ libraryDependencies ++= {
   //val morphVsn      = "1.3-SNAPSHOT"
   Seq(
     "org.gnu.inet" % "libidn" % "1.15",
-    "org.apache.commons" % "commons-lang3" % "3.+",
+    "org.apache.commons" % "commons-lang3" % Common.Vsn.COMMONS_LANG3,
     "org.im4java" % "im4java" % "1.+",
 
     // JSON

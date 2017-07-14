@@ -40,7 +40,7 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
 
 
   /** Поддержка биндинга этой простой фигуры в play router. */
-  implicit def qsb(implicit geoPointB: QueryStringBindable[MGeoPoint]): QueryStringBindable[EnvelopeGs] = {
+  implicit def envelopeGsQsb(implicit geoPointB: QueryStringBindable[MGeoPoint]): QueryStringBindable[EnvelopeGs] = {
     new QueryStringBindableImpl[EnvelopeGs] {
 
       override def KEY_DELIM = Qs.DELIM

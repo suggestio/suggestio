@@ -27,6 +27,7 @@ lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shar
       "io.suzaku"    %%% "boopickle"   % Common.boopickleVsn,
       // - 2. Play-json стал кросс-платформенным, ура.
       "org.julienrf" %%% "play-json-derived-codecs" % "4.0.0",
+      "com.typesafe.play" %% "play-json" % Common.Vsn.PLAY_JSON_VSN,
       // Вместо scala.Enumeration используем сие:
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
       // scalaz появилась для Validation.

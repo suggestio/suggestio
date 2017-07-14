@@ -25,7 +25,7 @@ object ImOp extends MacroLogsImpl with JavaTokenParsers {
   val SPLIT_ON_BRACKETS_RE = "[\\[\\]]+".r
 
   /** qsb для биндинга списка трансформаций картинки (последовательности ImOp). */
-  implicit def qsbSeq = new ImOpsQsb
+  implicit def imOpsSeqQsb = new ImOpsQsb
 
   def twoFracZeroesFormat: DecimalFormat = {
     val df = new DecimalFormat("0.00")

@@ -10,8 +10,7 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 libraryDependencies ++= {
   Seq(
-    //Common.ORG  %% "commonJVM"    % "0.0.0-SNAPSHOT",
-    "org.apache.commons" % "commons-lang3" % "3.+",
+    "org.apache.commons" % "commons-lang3" % Common.Vsn.COMMONS_LANG3,
     "commons-codec" % "commons-codec" % "1.+",
 
     // Импортируем Lucene с помощью импорта ElasticSearch. Глупо, но так удобнее.

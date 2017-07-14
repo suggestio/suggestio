@@ -36,13 +36,13 @@ import io.suggest.pay.yaka.YakaConst._
   */
 object MYakaReturnQs {
 
-  implicit def qsb(implicit
-                   longB      : QueryStringBindable[Long],
-                   strB       : QueryStringBindable[String],
-                   esUuIdB    : QueryStringBindable[MEsUuId]
-                  ): QueryStringBindable[MYakaReturnQs] = {
+  implicit def mYakaReturnQsQsb(implicit
+                                longB      : QueryStringBindable[Long],
+                                strB       : QueryStringBindable[String],
+                                esUuIdB    : QueryStringBindable[MEsUuId]
+                               ): QueryStringBindable[MYakaReturnQs] = {
 
-    val retActionB = MYakaReturnActions.qsb
+    val retActionB = MYakaReturnActions.mYakaActionQsb
 
     new QueryStringBindableImpl[MYakaReturnQs] {
 

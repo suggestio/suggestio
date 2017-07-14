@@ -1,9 +1,10 @@
 package util.stat
 
 import javax.inject.Inject
+
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
-import io.suggest.geo.IGeoFindIpResult
+import io.suggest.geo.{IGeoFindIpResult, MLocEnv}
 import io.suggest.stat.m._
 import io.suggest.stat.saver.PlayStatSaver
 import io.suggest.util.UuidUtil
@@ -11,7 +12,6 @@ import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im.DevScreen
 import models.mctx.{Context, ContextUtil}
-import models.mgeo.MLocEnv
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, ISioUser}
 import net.sf.uadetector.service.UADetectorServiceFactory
@@ -268,7 +268,7 @@ class StatUtil @Inject()(
           val _geoOpt = locEnvOpt.flatMap(_.geoLocOpt)
           MGeoLocData(
             coords = _geoOpt
-              .map(_.center),
+              .map(_.point),
             accuracy = _geoOpt
               .flatMap(_.accuracyOptM)
               .map(_.toInt)

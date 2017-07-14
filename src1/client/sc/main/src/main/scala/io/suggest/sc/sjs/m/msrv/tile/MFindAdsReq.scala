@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msrv.tile
 
 import io.suggest.ad.search.AdSearchConstants._
-import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.dev.MScreen
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
 
@@ -23,7 +23,7 @@ trait MFindAdsReq extends ToJsonWithApiVsnT {
   def receiverId  : Option[String]
   def generation  : Option[Long]
   def locEnv      : ILocEnv
-  def screenInfo  : Option[IMScreen]
+  def screenInfo  : Option[MScreen]
   def tagNodeId   : Option[String]
 
   /** Собрать итоговый json для передачи в router. */
@@ -64,7 +64,7 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def receiverId  : Option[String]    = None
   override def generation  : Option[Long]      = None
   override def locEnv      : ILocEnv           = MLocEnv.empty
-  override def screenInfo  : Option[IMScreen]  = None
+  override def screenInfo  : Option[MScreen]  = None
   override def tagNodeId   : Option[String] = None
 }
 

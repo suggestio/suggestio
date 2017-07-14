@@ -76,7 +76,7 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with MacroLogsImpl {
   }
 
   /** Биндинги для url query string. */
-  implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[MScApiVsn] = {
+  implicit def mScApiVsnQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[MScApiVsn] = {
     new QueryStringBindableImpl[MScApiVsn] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScApiVsn]] = {
         val optRes = for {

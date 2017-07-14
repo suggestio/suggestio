@@ -57,7 +57,7 @@ object OutImgFmts extends Enumeration with EnumValue2Val with EnumMaybeWithName 
 
 
   /** query string биндер для этой модели. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+  implicit def outImgFmtQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       /** Биндинг значения из карты аргументов. */
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {

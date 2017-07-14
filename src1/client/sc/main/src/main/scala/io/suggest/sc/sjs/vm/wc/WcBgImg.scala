@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.wc
 
 import io.suggest.common.geom.d2.Size2di
-import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.Welcome.BG_IMG_ID
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.attr.DataWh
@@ -26,7 +26,7 @@ trait WcBgImgT extends VmT with WcImgUtil with DataWh {
   override type T = HTMLImageElement
 
   /** Подогнать картинку под экран текущего устройства. */
-  def adjust(screen: IMScreen): Unit = {
+  def adjust(screen: MScreen): Unit = {
     val iwh = getDataWh.get
     val newWh: Size2di = {
       if (iwh.width.toDouble / iwh.height.toDouble < screen.width.toDouble / screen.height.toDouble) {

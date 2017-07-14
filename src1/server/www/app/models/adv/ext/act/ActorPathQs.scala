@@ -30,7 +30,7 @@ object ActorPathQs extends MacroLogsDyn {
 
 
   /** qsb для извлечения нотариально заверенного путя из URL qs. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[ActorPathQs] = {
+  implicit def actorPathQsQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[ActorPathQs] = {
     new QueryStringBindableImpl[ActorPathQs] {
 
       /** Фасад для работы с секретным ключом подписи. */

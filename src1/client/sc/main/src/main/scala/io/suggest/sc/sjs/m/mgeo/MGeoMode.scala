@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.geo.GeoConstants
-import io.suggest.sjs.common.model.loc.MGeoLoc
+import io.suggest.geo.{GeoConstants, MGeoLoc}
 
 /**
  * Suggest.io
@@ -38,6 +37,6 @@ case object MGeoModeIp extends IMGeoMode {
 @deprecated("use loc env option geo Some instead", "2016.sep.16")
 case class MGeoModeLoc(gl: MGeoLoc) extends IMGeoMode {
   override def toQsStr: String = {
-    gl.point.toQsStr + "," + gl.accuracyM
+    gl.point.toQsStr + "," + gl.accuracyOptM
   }
 }

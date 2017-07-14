@@ -1,14 +1,14 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.geo.{CircleGs, CircleGsJvm}
+import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.ym.model.NodeGeoLevels
-import models.mgeo.MGeoLoc
 import models.msc.tag.MScTagsSearchQs
 
 import scala.concurrent.Future
@@ -56,7 +56,7 @@ class ScTagsUtil @Inject()(
       // Отработать геолокацию: искать только теги, размещенные в текущей области.
       gsIntersect = for (geoLoc <- geoLocOpt2) yield {
         val circle = CircleGs(
-          center  = geoLoc.center,
+          center  = geoLoc.point,
           radiusM = 1
         )
         GsCriteria(

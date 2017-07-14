@@ -1,9 +1,10 @@
-package models.mgeo
+package io.suggest.geo
 
+import io.suggest.ble.MBeaconData
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.loc.LocationConstants._
 import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
 import play.api.mvc.QueryStringBindable
-import io.suggest.loc.LocationConstants._
 
 /**
   * Suggest.io
@@ -15,12 +16,12 @@ import io.suggest.loc.LocationConstants._
   *
   * Это неявно-пустая модель: все поля могут быть None/Nil.
   */
-object MLocEnv {
+object MLocEnvJvm {
 
-  implicit def qsb(implicit
-                   geoLocOptB: QueryStringBindable[Option[MGeoLoc]],
-                   beaconsB  : QueryStringBindable[QsbSeq[MBleBeaconInfo]]
-                  ): QueryStringBindable[MLocEnv] = {
+  implicit def mLocEnvQsb(implicit
+                          geoLocOptB: QueryStringBindable[Option[MGeoLoc]],
+                          beaconsB  : QueryStringBindable[QsbSeq[MBeaconData]]
+                         ): QueryStringBindable[MLocEnv] = {
     new QueryStringBindableImpl[MLocEnv] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLocEnv]] = {
         val k = key1F(key)
@@ -50,18 +51,4 @@ object MLocEnv {
     }
   }
 
-  val empty = apply()
-
 }
-
-
-/**
-  * Класс экземпляров модели информации о локации.
-  * @param geoLocOpt Данные геолокации.
-  * @param bleBeacons Данные BLE-локации на основе маячков.
-  */
-case class MLocEnv(
-  geoLocOpt     : Option[MGeoLoc]     = None,
-  bleBeacons    : Seq[MBleBeaconInfo] = Nil
-)
-  extends EmptyProduct

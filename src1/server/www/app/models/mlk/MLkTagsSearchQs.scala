@@ -25,10 +25,10 @@ object MLkTagsSearchQs {
 
 
   /** Поддержка интеграции с play-роутером в области URL Query string. */
-  implicit def qsb(implicit
-                   strB       : QueryStringBindable[String],
-                   intOptB    : QueryStringBindable[Option[Int]]
-                  ): QueryStringBindable[MLkTagsSearchQs] = {
+  implicit def mLkTagsSearchQsQsb(implicit
+                                  strB       : QueryStringBindable[String],
+                                  intOptB    : QueryStringBindable[Option[Int]]
+                                 ): QueryStringBindable[MLkTagsSearchQs] = {
 
     new QueryStringBindableImpl[MLkTagsSearchQs] {
 

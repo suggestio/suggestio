@@ -1,6 +1,6 @@
 package io.suggest.ble.ibeacon
 
-import io.suggest.ble.{BeaconSignal, BleConstants}
+import io.suggest.ble.{IBeaconSignal, BleConstants}
 
 /**
   * Suggest.io
@@ -16,7 +16,7 @@ case class MiBeacon(
   major               : Int,
   minor               : Int
 )
-  extends BeaconSignal
+  extends IBeaconSignal
 {
 
   override def distance0m: Int = 1

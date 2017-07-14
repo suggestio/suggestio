@@ -268,7 +268,7 @@ trait Context {
       }
       .flatMap {
         case kv @ (k, vs) =>
-          DevScreen.qsb
+          DevScreen.devScreenQsb
             .bind(k, Map(kv))
             .filter(_.isRight)
             .map(_.right.get)

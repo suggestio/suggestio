@@ -13,7 +13,7 @@ import play.api.mvc.QueryStringBindable
 object MItemTypesJvm {
 
   /** Поддержка маппинга для play router. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MItemType] = {
+  implicit def mitQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MItemType] = {
     new QueryStringBindableImpl[MItemType] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MItemType]] = {
         for {

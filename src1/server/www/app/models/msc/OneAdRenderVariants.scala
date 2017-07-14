@@ -66,7 +66,7 @@ object OneAdRenderVariants extends Enumeration with EnumMaybeWithName {
   }
 
   /** routes qsb для модели. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+  implicit def oneAdRenderVariantQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for {

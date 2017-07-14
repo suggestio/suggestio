@@ -94,6 +94,16 @@ object Common {
       */
     val UNIVEQ = "1.+"
 
+    /** Apache commons lang3
+      * @see [[https://commons.apache.org/proper/commons-lang/]]
+      */
+    val COMMONS_LANG3 = "3.+"
+
+    /** Apache commons text
+      * @see [[https://commons.apache.org/proper/commons-text/]]
+      */
+    val COMMONS_TEXT  = "1.+"
+
   }
 
 

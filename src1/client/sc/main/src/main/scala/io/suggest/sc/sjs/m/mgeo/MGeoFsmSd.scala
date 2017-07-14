@@ -1,8 +1,8 @@
 package io.suggest.sc.sjs.m.mgeo
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.geo.MGeoLoc
 import io.suggest.sjs.common.fsm.SjsFsm
-import io.suggest.sjs.common.model.loc.MGeoLoc
 
 /**
   * Suggest.io

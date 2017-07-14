@@ -32,11 +32,11 @@ object MExtAdvQs {
   /** Разделитель id'шников с поле targetIds. */
   def TARGET_IDS_DELIM = ","
 
-  implicit def qsb(implicit
-                    longB    : QueryStringBindable[Long],
-                    strB    : QueryStringBindable[String],
-                    infosB  : QueryStringBindable[List[MExtTargetInfo]]
-                  ): QueryStringBindable[MExtAdvQs] = {
+  implicit def mExtAdvQsQsb(implicit
+                            longB    : QueryStringBindable[Long],
+                            strB    : QueryStringBindable[String],
+                            infosB  : QueryStringBindable[List[MExtTargetInfo]]
+                           ): QueryStringBindable[MExtAdvQs] = {
     new QueryStringBindableImpl[MExtAdvQs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")

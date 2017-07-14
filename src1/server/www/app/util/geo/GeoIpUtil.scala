@@ -3,10 +3,9 @@ package util.geo
 import java.net.InetAddress
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult}
+import io.suggest.geo.{IGeoFindIp, IGeoFindIpResult, MGeoLoc}
 import io.suggest.loc.geo.ipgeobase.IpgbUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mgeo.MGeoLoc
 import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, IReqHdr, MRemoteAddrInfo}
 import play.api.mvc.RequestHeader

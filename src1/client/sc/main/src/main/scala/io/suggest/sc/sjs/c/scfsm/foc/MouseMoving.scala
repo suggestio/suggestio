@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.dev.MScreen
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.vm.foc.fad.FArrow
-import io.suggest.sjs.common.model.{MHands, MHand}
+import io.suggest.sjs.common.model.{MHand, MHands}
 import org.scalajs.dom.MouseEvent
 
 /**
@@ -38,11 +38,11 @@ trait MouseMoving extends ScFsmStub {
     }
 
     /** Находится ли курсор мыши в левой части экрана? */
-    protected def _isMouseRight(event: MouseEvent, screen: IMScreen): Boolean = {
+    protected def _isMouseRight(event: MouseEvent, screen: MScreen): Boolean = {
       event.clientX > screen.width / 2
     }
 
-    protected def _mouse2hand(event: MouseEvent, screen: IMScreen): MHand = {
+    protected def _mouse2hand(event: MouseEvent, screen: MScreen): MHand = {
       if (_isMouseRight(event, screen))
         MHands.Right
       else

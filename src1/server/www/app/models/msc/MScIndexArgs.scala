@@ -1,10 +1,10 @@
 package models.msc
 
+import io.suggest.geo.MLocEnv
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models.im.DevScreen
 import play.api.mvc.QueryStringBindable
 import io.suggest.sc.ScConstants.ReqArgs._
-import models.mgeo.MLocEnv
 
 /**
   * Suggest.io
@@ -18,13 +18,13 @@ import models.mgeo.MLocEnv
 object MScIndexArgs {
 
   /** routes-Биндер для параметров showcase'а. */
-  implicit def qsb(implicit
-                   locEnvB    : QueryStringBindable[MLocEnv],
-                   boolB      : QueryStringBindable[Boolean],
-                   devScrB    : QueryStringBindable[Option[DevScreen]],
-                   strOptB    : QueryStringBindable[Option[String]],
-                   apiVsnB    : QueryStringBindable[MScApiVsn]
-                  ): QueryStringBindable[MScIndexArgs] = {
+  implicit def mScIndexArgsQsb(implicit
+                               locEnvB    : QueryStringBindable[MLocEnv],
+                               boolB      : QueryStringBindable[Boolean],
+                               devScrB    : QueryStringBindable[Option[DevScreen]],
+                               strOptB    : QueryStringBindable[Option[String]],
+                               apiVsnB    : QueryStringBindable[MScApiVsn]
+                              ): QueryStringBindable[MScIndexArgs] = {
     new QueryStringBindableImpl[MScIndexArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScIndexArgs]] = {
         val f = key1F(key)
@@ -91,7 +91,10 @@ trait MScIndexArgs {
   override def toString: String = {
     import QueryStringBindable._
     import io.suggest.geo.GeoPoint.Implicits._
-    MScIndexArgs.qsb.unbind("a", this)
+    import io.suggest.geo.MGeoLocJvm._
+    import io.suggest.geo.MLocEnvJvm._
+    import io.suggest.ble.MBeaconDataJvm._
+    MScIndexArgs.mScIndexArgsQsb.unbind("a", this)
   }
 }
 

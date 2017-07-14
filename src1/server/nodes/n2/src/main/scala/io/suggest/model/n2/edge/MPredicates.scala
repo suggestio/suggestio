@@ -211,7 +211,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
 
   /** Поддержка биндинга из routes. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+  implicit def mPredicateQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for (strIdEith <- strB.bind(key, params)) yield {

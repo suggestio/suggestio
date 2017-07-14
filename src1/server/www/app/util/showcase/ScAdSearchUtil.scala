@@ -1,7 +1,8 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.ble.BeaconUtil
+
+import io.suggest.ble.{BeaconUtil, MBeaconData}
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{PointGs, PointGsJvm}
@@ -11,7 +12,6 @@ import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.NodeGeoLevels
-import models.mgeo.MBleBeaconInfo
 import models.mproj.ICommonDi
 import models.msc.IScAdSearchQs
 import util.ble.BleUtil
@@ -91,7 +91,7 @@ class ScAdSearchUtil @Inject() (
             must        = must,
             gsIntersect = Some(GsCriteria(
               levels = NodeGeoLevels.geoPlace :: Nil,
-              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.center) ) :: Nil
+              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             ))
           )
         }
@@ -105,7 +105,7 @@ class ScAdSearchUtil @Inject() (
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
             GsCriteria(
               levels = NodeGeoLevels.geoTag :: Nil,
-              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.center) ) :: Nil
+              shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             )
           }
         )
@@ -177,7 +177,7 @@ class ScAdSearchUtil @Inject() (
 
 
   /** Генерация поисковых запросов по маячкам. */
-  def _bleBeacons2search(bcns: Seq[MBleBeaconInfo]): Future[Iterable[MSubSearch]] = {
+  def _bleBeacons2search(bcns: Seq[MBeaconData]): Future[Iterable[MSubSearch]] = {
     if (bcns.isEmpty) {
       Future.successful( Nil )
 

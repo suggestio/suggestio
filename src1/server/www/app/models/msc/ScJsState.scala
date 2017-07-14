@@ -32,19 +32,19 @@ object ScJsState extends MacroLogsImpl {
   def qsbStandalone: QueryStringBindable[ScJsState] = {
     import QueryStringBindable._
     import util.qsb.QSBs._
-    qsb
+    scJsStateQsb
   }
 
   private def noFalse(boolOpt: Option[Boolean]) = boolOpt.filter(identity)
   private def strNonEmpty(strOpt: Option[String]) = strOpt.filter(!_.isEmpty)
 
-  implicit def qsb(implicit
-                   strOptB      : QueryStringBindable[Option[String]],
-                   boolOptB     : QueryStringBindable[Option[Boolean]],
-                   longOptB     : QueryStringBindable[Option[Long]],
-                   intOptB      : QueryStringBindable[Option[Int]],
-                   nglsMapB     : QueryStringBindable[Option[NglsStateMap_t]]
-                  ): QueryStringBindable[ScJsState] = {
+  implicit def scJsStateQsb(implicit
+                            strOptB      : QueryStringBindable[Option[String]],
+                            boolOptB     : QueryStringBindable[Option[Boolean]],
+                            longOptB     : QueryStringBindable[Option[Long]],
+                            intOptB      : QueryStringBindable[Option[Int]],
+                            nglsMapB     : QueryStringBindable[Option[NglsStateMap_t]]
+                           ): QueryStringBindable[ScJsState] = {
     val geoPointOptB = pipeDelimitedQsbOpt
     new QueryStringBindableImpl[ScJsState] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, ScJsState]] = {

@@ -13,7 +13,7 @@ disablePlugins(PlayLayoutPlugin)
 
 libraryDependencies ++= {
   Seq(
-    "org.apache.commons" % "commons-lang3" % "3.+",
+    "org.apache.commons" % "commons-lang3" % Common.Vsn.COMMONS_LANG3,
     "com.lambdaworks" % "scrypt" % "1.4.0",
 
     // bouncy castle используется для шифрования. pg используется для стойкого шифрования с подписью.

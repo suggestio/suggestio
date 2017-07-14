@@ -34,15 +34,16 @@ object OneAdQsArgs {
   def WIDE_FN      = "w"
 
   /** routes qsb для сериализации/десериализации экземпляра [[OneAdQsArgs]]. */
-  implicit def qsb(implicit strB: QueryStringBindable[String],
-                   floatB   : QueryStringBindable[SzMult_t],
-                   longOptB : QueryStringBindable[Option[Long]],
-                   wideOptB : QueryStringBindable[Option[OneAdWideQsArgs]],
-                   // compat: Формат в qs опционален, т.к. его не было вообще до 13 марта 2015, а ссылки на картинки уже были в фейсбуке (в тестовых акк-ах).
-                   // Потом когда-нибудь наверное можно будет убрать option, окончательно закрепив обязательность формата.
-                   // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
-                   imgFmtB  : QueryStringBindable[Option[OutImgFmt]]
-                  ) : QueryStringBindable[OneAdQsArgs] = {
+  implicit def onAdQsArgsQsb(implicit
+                             strB     : QueryStringBindable[String],
+                             floatB   : QueryStringBindable[SzMult_t],
+                             longOptB : QueryStringBindable[Option[Long]],
+                             wideOptB : QueryStringBindable[Option[OneAdWideQsArgs]],
+                             // compat: Формат в qs опционален, т.к. его не было вообще до 13 марта 2015, а ссылки на картинки уже были в фейсбуке (в тестовых акк-ах).
+                             // Потом когда-нибудь наверное можно будет убрать option, окончательно закрепив обязательность формата.
+                             // Есть также случаи, когда это обязательное поле не нужно (см. scaladoc для класса-компаньона).
+                             imgFmtB  : QueryStringBindable[Option[OutImgFmt]]
+                            ) : QueryStringBindable[OneAdQsArgs] = {
     new QueryStringBindableImpl[OneAdQsArgs] {
 
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, "sig")

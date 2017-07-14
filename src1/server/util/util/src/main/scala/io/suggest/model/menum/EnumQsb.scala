@@ -12,7 +12,7 @@ import play.api.mvc.QueryStringBindable
   */
 trait EnumQsb extends StrIdValT with IMaybeWithName {
 
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+  implicit def enumEntryQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {

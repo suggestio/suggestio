@@ -1,8 +1,7 @@
-package models.mgeo
+package io.suggest.geo
 
-import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.geo.GeoConstants.GeoLocQs._
-import io.suggest.geo.MGeoPoint
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -14,13 +13,13 @@ import play.api.mvc.QueryStringBindable
   * Необходимо помнить, что юзер может вручную по карте обозначить своё присутствие,
   * тем самым вручную задав местоположение.
   */
-object MGeoLoc {
+object MGeoLocJvm {
 
   /** Поддержка биндинга внутри play-router. */
-  implicit def qsb(implicit
-                   geoPointB  : QueryStringBindable[MGeoPoint],
-                   doubleOptB : QueryStringBindable[Option[Double]]
-                  ): QueryStringBindable[MGeoLoc] = {
+  implicit def mGeoLocQsb(implicit
+                          geoPointB  : QueryStringBindable[MGeoPoint],
+                          doubleOptB : QueryStringBindable[Option[Double]]
+                         ): QueryStringBindable[MGeoLoc] = {
     new QueryStringBindableImpl[MGeoLoc] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MGeoLoc]] = {
         val k = key1F(key)
@@ -33,7 +32,7 @@ object MGeoLoc {
             accuracyOptM    <- accuracyOptE.right
           } yield {
             MGeoLoc(
-              center        = center,
+              point        = center,
               accuracyOptM  = accuracyOptM
             )
           }
@@ -44,7 +43,7 @@ object MGeoLoc {
         _mergeUnbinded {
           val k = key1F(key)
           Iterator(
-            geoPointB .unbind (k(CENTER_FN),      value.center),
+            geoPointB .unbind (k(CENTER_FN),      value.point),
             doubleOptB.unbind (k(ACCURACY_M_FN),  value.accuracyOptM)
           )
         }
@@ -54,13 +53,3 @@ object MGeoLoc {
 
 }
 
-
-/**
-  * Контейнер данных геолокации устройства.
-  * @param center Центр круга, описывающего геолокацию.
-  * @param accuracyOptM Радиус точности, если есть.
-  */
-case class MGeoLoc(
-  center        : MGeoPoint,
-  accuracyOptM  : Option[Double] = None
-)

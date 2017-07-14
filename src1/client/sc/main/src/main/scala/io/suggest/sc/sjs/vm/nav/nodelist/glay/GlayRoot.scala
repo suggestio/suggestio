@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.vm.nav.nodelist.glay
 
+import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.NavPane.{GNL_BODY_CSS_CLASS, GNL_BODY_HIDDEN_CSS_CLASS, GNL_DOM_HEIGHT, SCREEN_OFFSET}
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sjs.common.model.browser.IBrowser
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.child.OfMyCssClass
@@ -57,7 +57,7 @@ trait GlayRootT extends GlayT with LayerIndex with GlayContainerT {
    * @param screen экран.
    * @param layersCount кол-во слоёв.
    */
-  def fixHeightExpanded(screen: IMScreen, layersCount: Int, browser: IBrowser): Unit = {
+  def fixHeightExpanded(screen: MScreen, layersCount: Int, browser: IBrowser): Unit = {
     for {
       _wrapper <- wrapper
       _content <- _wrapper.content

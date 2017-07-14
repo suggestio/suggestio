@@ -151,7 +151,7 @@ object AdnShownTypes extends EnumMaybeWithName {
 
 
   /** Поддержка со стороны play router'а. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
+  implicit def adnShowTypeQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for (nameEith <- strB.bind(key, params)) yield {

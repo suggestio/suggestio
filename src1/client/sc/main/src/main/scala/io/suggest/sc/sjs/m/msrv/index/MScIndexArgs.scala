@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.index
 
-import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.dev.MScreen
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 import io.suggest.sc.ScConstants.ReqArgs._
 import io.suggest.sjs.common.model.loc.{ILocEnv, MLocEnv}
@@ -22,7 +22,7 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
   def locEnv  : ILocEnv
 
   /** Данные по экрану клиентского устройства. */
-  def screen  : Option[IMScreen]
+  def screen  : Option[MScreen]
 
   /** id узла index-выдачи. */
   def adnIdOpt: Option[String]
@@ -51,9 +51,9 @@ trait IScIndexArgs extends ToJsonWithApiVsnT {
 
 /** Дефолтовая реализация [[IScIndexArgs]]. */
 case class MScIndexArgs(
-  override val adnIdOpt     : Option[String],
-  override val locEnv       : ILocEnv,
-  override val screen       : Option[IMScreen],
-  override val withWelcome  : Boolean
+                         override val adnIdOpt     : Option[String],
+                         override val locEnv       : ILocEnv,
+                         override val screen       : Option[MScreen],
+                         override val withWelcome  : Boolean
 )
   extends IScIndexArgs

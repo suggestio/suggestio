@@ -1,6 +1,5 @@
-package io.suggest.sjs.common.model.loc
+package io.suggest.geo
 
-import io.suggest.geo.{IGeoPoint, Lat, Lon, MGeoPoint}
 import io.suggest.sjs.common.geo.json.{GjCoord_t, GjGeometry, GjTypes}
 import org.scalajs.dom.Coordinates
 
@@ -11,11 +10,6 @@ import scala.scalajs.js
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 22.05.15 9:48
   * Description: js-поддержка модели географической точки.
-  *
-  * 2016.dec.14: Из-за внедрения boopicke в lk-adv-geo-form-sjs возникла необходимость дедублицировать
-  * case class модели геоточки с [common] IGeoPoint.
-  * Теперь тут только JS-утиль для MGeoPoint, сама же модель окончательно переехала в [common]
-  * и пошарена между клиентом и сервером на уровне реализации.
   */
 
 object MGeoPointJs {

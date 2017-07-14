@@ -1,10 +1,12 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.sc.sjs.m.magent.{IMScreen, MResizeDelay}
+import io.suggest.ble.MBeaconData
+import io.suggest.dev.MScreen
+import io.suggest.geo.MGeoLoc
+import io.suggest.sc.sjs.m.magent.MResizeDelay
 import io.suggest.sc.sjs.m.mtags.MTagInfo
-import io.suggest.sjs.common.ble.MBleBeaconInfo
 import io.suggest.sjs.common.model.browser.IBrowser
-import io.suggest.sjs.common.model.loc.{IGeoLocMin, ILocEnv}
+import io.suggest.sjs.common.model.loc.ILocEnv
 
 /**
   * Suggest.io
@@ -15,14 +17,14 @@ import io.suggest.sjs.common.model.loc.{IGeoLocMin, ILocEnv}
   */
 trait IScCommon extends ILocEnv {
 
-  def screen       : IMScreen
+  def screen       : MScreen
   def browser      : IBrowser
   def generation   : Long
   def adnIdOpt     : Option[String]
   def resizeOpt    : Option[MResizeDelay]
-  def geoLocOpt    : Option[IGeoLocMin]
+  def geoLocOpt    : Option[MGeoLoc]
   def tagOpt       : Option[MTagInfo]
-  def bleBeacons   : Seq[MBleBeaconInfo]
+  def bleBeacons   : Seq[MBeaconData]
 
 }
 
@@ -39,21 +41,21 @@ trait IScCommon extends ILocEnv {
   * @param bleBeacons BLE-маячки, на которые ориентирована текущая выдача.
   */
 case class MScCommon(
-  override val screen       : IMScreen,
-  override val browser      : IBrowser,
-  override val generation   : Long,
-  override val adnIdOpt     : Option[String]        = None,
-  override val resizeOpt    : Option[MResizeDelay]  = None,
-  override val geoLocOpt    : Option[IGeoLocMin]    = None,
-  override val tagOpt       : Option[MTagInfo]      = None,
-  override val bleBeacons   : Seq[MBleBeaconInfo]   = Nil
+                      override val screen       : MScreen,
+                      override val browser      : IBrowser,
+                      override val generation   : Long,
+                      override val adnIdOpt     : Option[String]        = None,
+                      override val resizeOpt    : Option[MResizeDelay]  = None,
+                      override val geoLocOpt    : Option[MGeoLoc]    = None,
+                      override val tagOpt       : Option[MTagInfo]      = None,
+                      override val bleBeacons   : Seq[MBeaconData]   = Nil
 )
   extends IScCommon
 {
 
-  def withBeacons(beacons2: Seq[MBleBeaconInfo]) = copy(bleBeacons = beacons2)
+  def withBeacons(beacons2: Seq[MBeaconData]) = copy(bleBeacons = beacons2)
 
-  def withGeoLoc(geoLocOpt2: Option[IGeoLocMin]) = copy(geoLocOpt = geoLocOpt2)
+  def withGeoLoc(geoLocOpt2: Option[MGeoLoc]) = copy(geoLocOpt = geoLocOpt2)
 
   def withTagInfo(tagInfo2: Option[MTagInfo]) = copy(tagOpt = tagInfo2)
 

@@ -51,13 +51,13 @@ object MScNodeSearchArgs {
 
 
   /** Биндилка для simpleNodesSearchArgs, вызываемая из routes. */
-  implicit def qsb(implicit
-                   strOptB  : QueryStringBindable[Option[String]],
-                   geoModeB : QueryStringBindable[GeoMode],
-                   intOptB  : QueryStringBindable[Option[Int]],
-                   boolOptB : QueryStringBindable[Option[Boolean]],
-                   apiVsnB  : QueryStringBindable[MScApiVsn]
-                  ): QueryStringBindable[MScNodeSearchArgs] = {
+  implicit def mScNodeSearchArgsQsb(implicit
+                                    strOptB  : QueryStringBindable[Option[String]],
+                                    geoModeB : QueryStringBindable[GeoMode],
+                                    intOptB  : QueryStringBindable[Option[Int]],
+                                    boolOptB : QueryStringBindable[Option[Boolean]],
+                                    apiVsnB  : QueryStringBindable[MScApiVsn]
+                                   ): QueryStringBindable[MScNodeSearchArgs] = {
 
     new QueryStringBindableImpl[MScNodeSearchArgs] {
 

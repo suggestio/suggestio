@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.search
 
+import io.suggest.geo.MGeoLoc
 import io.suggest.sc.sjs.c.scfsm.grid.OnGrid
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.c.search.SearchFsm
@@ -75,7 +76,7 @@ trait OnSearch extends OnGrid with State2UrlT {
       val sd1 = sd0.copy(
         common = sd0.common.copy(
           adnIdOpt  = None,
-          geoLocOpt = Some(newGeoLoc)
+          geoLocOpt = Some( MGeoLoc( newGeoLoc.point, accuracyOptM = None ) )
         ),
         grid = sd0.grid.withState(
           sd0.grid.state.nothingLoaded()

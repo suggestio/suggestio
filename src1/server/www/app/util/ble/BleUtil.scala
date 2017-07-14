@@ -1,10 +1,11 @@
 package util.ble
 
 import javax.inject.Singleton
+
+import io.suggest.ble.MBeaconData
 import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import models.mgeo.MBleBeaconInfo
 import org.elasticsearch.common.lucene.search.function.{CombineFunction, FiltersFunctionScoreQuery}
 import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder.FilterFunctionBuilder
 import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders
@@ -23,7 +24,7 @@ class BleUtil {
     * Новый поиск нод маячков, завязанный на function-score и ровно один нижележащий
     * поисковый запрос для всех id маячков.
     */
-  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: TraversableOnce[MBleBeaconInfo]): Option[MNodeSearch] = {
+  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: TraversableOnce[MBeaconData]): Option[MNodeSearch] = {
     if (bcns.isEmpty) {
       None
 

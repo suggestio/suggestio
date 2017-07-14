@@ -3,7 +3,7 @@ package io.suggest.maps.r
 import diode.data.Pot
 import diode.react.ModelProxy
 import io.suggest.adv.AdvConstants.CurrShapes
-import io.suggest.geo.{GeoConstants, MGeoPoint}
+import io.suggest.geo.{GeoConstants, MGeoPoint, MGeoPointJs}
 import io.suggest.maps.m.MGeoAdvExistGjFtProps.fromAny
 import io.suggest.sjs.common.geo.json.{GjFeature, GjFeatureCollection, GjGeometry}
 import io.suggest.sjs.common.log.Log
@@ -19,7 +19,6 @@ import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
 import io.suggest.maps.m.OpenAdvGeoExistPopup
-import io.suggest.sjs.common.model.loc.MGeoPointJs
 import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js

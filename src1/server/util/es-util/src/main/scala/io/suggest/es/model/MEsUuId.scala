@@ -36,7 +36,7 @@ object MEsUuId {
   }
 
   /** Поддержка биндинга из/в qs. */
-  implicit def qsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MEsUuId] = {
+  implicit def nEsUuIdQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MEsUuId] = {
     new QueryStringBindableImpl[MEsUuId] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MEsUuId]] = {
         for (esIdE <- strB.bind(key, params)) yield {

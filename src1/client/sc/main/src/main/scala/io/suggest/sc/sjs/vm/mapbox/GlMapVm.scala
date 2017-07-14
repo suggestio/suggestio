@@ -1,12 +1,11 @@
 package io.suggest.sc.sjs.vm.mapbox
 
 import io.suggest.common.maps.mapbox.MapBoxConstants.{ILayerConst, TargetPoint, UserGeoLoc}
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint, MGeoPointJs}
 import io.suggest.sc.map.ScMapConstants
 import io.suggest.sc.map.ScMapConstants.Nodes.Sources
 import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sjs.common.empty.JsOptionUtil
-import io.suggest.sjs.common.model.loc.{MGeoLoc, MGeoPointJs}
 import io.suggest.sjs.common.vm.IVm
 import io.suggest.sjs.mapbox.gl.{Color_t, Filter_t}
 import io.suggest.sjs.mapbox.gl.event.EventData

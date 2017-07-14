@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.wc
 
-import io.suggest.sc.sjs.m.magent.IMScreen
+import io.suggest.dev.MScreen
 import io.suggest.sc.sjs.m.mwc.WcClick
 import io.suggest.sc.sjs.vm.util.InitOnClickToScFsmT
 import io.suggest.sc.ScConstants.Welcome.ROOT_ID
@@ -44,7 +44,7 @@ trait WcRootT extends VmT with WillAnimateT with InitOnClickToScFsmT {
   }
 
   /** Инициализация отображения. */
-  def initLayout(screen: IMScreen): Unit = {
+  def initLayout(screen: MScreen): Unit = {
     // Картинка фона.
     for (_bgImg <- bgImg) {
       _bgImg.adjust(screen)

@@ -19,7 +19,7 @@ object OneAdWideQsArgs {
   def WIDTH_FN = "w"
 
   /** Поддержка биндинга в routes и в qsb. */
-  implicit def qsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[OneAdWideQsArgs] = {
+  implicit def oneAdWideQsArgsQsb(implicit intB: QueryStringBindable[Int]): QueryStringBindable[OneAdWideQsArgs] = {
     new QueryStringBindableImpl[OneAdWideQsArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, OneAdWideQsArgs]] = {
         // Оформлено многословно через for{}, т.к. в будущем очень возможно расширения списка аргументов.

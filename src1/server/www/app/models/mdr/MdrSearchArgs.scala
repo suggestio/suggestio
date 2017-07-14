@@ -28,11 +28,11 @@ object MdrSearchArgs {
   def HIDE_AD_ID_FN           = "h"
 
 
-  implicit def qsb(implicit
-                   strOptB   : QueryStringBindable[Option[String]],
-                   intOptB   : QueryStringBindable[Option[Int]],
-                   boolOptB  : QueryStringBindable[Option[Boolean]]
-                  ): QueryStringBindable[MdrSearchArgs] = {
+  implicit def mdrSearchArgsQsb(implicit
+                                strOptB   : QueryStringBindable[Option[String]],
+                                intOptB   : QueryStringBindable[Option[Int]],
+                                boolOptB  : QueryStringBindable[Option[Boolean]]
+                               ): QueryStringBindable[MdrSearchArgs] = {
     new QueryStringBindableImpl[MdrSearchArgs] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MdrSearchArgs]] = {
         val k1 = key1F(key)

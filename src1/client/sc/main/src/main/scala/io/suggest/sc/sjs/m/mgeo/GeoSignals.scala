@@ -1,8 +1,7 @@
 package io.suggest.sc.sjs.m.mgeo
 
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoLoc, MGeoPoint}
 import io.suggest.sjs.common.fsm.{IFsmMsg, IFsmMsgCompanion, SjsFsm}
-import io.suggest.sjs.common.model.loc.{IGeoLocMin, MGeoLoc}
 import org.scalajs.dom.PositionError
 
 /**
@@ -89,6 +88,4 @@ object SuppressTimeout extends IFsmMsgCompanion[Long]
 
 
 /** Сигнал от MbFsm к ScFsm о смене текущей обозреваемой геолокации. */
-case class NewGeoLoc(override val point: MGeoPoint) extends IFsmMsg with IGeoLocMin {
-  override def accuracyM: Option[Double] = None
-}
+case class NewGeoLoc(point: MGeoPoint) extends IFsmMsg

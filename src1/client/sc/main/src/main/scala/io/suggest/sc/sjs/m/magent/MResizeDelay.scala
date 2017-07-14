@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.magent
 
+import io.suggest.dev.MScreen
 import io.suggest.sc.sjs.m.mgrid.ICwCm
 import io.suggest.sjs.common.fsm.IFsmMsg
 
@@ -15,10 +16,10 @@ import io.suggest.sjs.common.fsm.IFsmMsg
   * @param gContSz опциональный инстанс sd0.grid.data.contSzOpt на момент самого начала ресайза.
   */
 case class MResizeDelay(
-  timerId   : Int,
-  timerGen  : Long,
-  screen    : IMScreen,
-  gContSz   : Option[ICwCm]
+                         timerId   : Int,
+                         timerGen  : Long,
+                         screen    : MScreen,
+                         gContSz   : Option[ICwCm]
 )
 
 

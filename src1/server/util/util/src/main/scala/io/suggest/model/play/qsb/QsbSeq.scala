@@ -17,7 +17,7 @@ import io.suggest.util.logs.MacroLogsImplLazy
 object QsbSeq extends MacroLogsImplLazy {
 
   /** Поддержка биндинга в play routes. */
-  implicit def qsb[T: QueryStringBindable]: QueryStringBindable[QsbSeq[T]] = {
+  implicit def qsbSeqT[T: QueryStringBindable]: QueryStringBindable[QsbSeq[T]] = {
     new QueryStringBindableImpl[QsbSeq[T]] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, QsbSeq[T]]] = {

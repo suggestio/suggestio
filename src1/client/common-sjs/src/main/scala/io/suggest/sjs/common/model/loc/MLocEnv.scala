@@ -1,9 +1,9 @@
 package io.suggest.sjs.common.model.loc
 
-import io.suggest.ble.BeaconData
+import io.suggest.ble.{IBeaconData, MBeaconDataJs}
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.geo.{MGeoLoc, MGeoLocJs}
 import io.suggest.loc.LocationConstants._
-import io.suggest.sjs.common.ble.MBleBeaconInfo
 
 import scala.scalajs.js
 
@@ -14,14 +14,14 @@ import scala.scalajs.js
   * Description: Неявно-пустая модель данных для сервера о состоянии физического окружения текущего устройства.
   */
 trait ILocEnv {
-  def geoLocOpt     : Option[IGeoLocMin]
-  def bleBeacons    : Seq[BeaconData]
+  def geoLocOpt     : Option[MGeoLoc]
+  def bleBeacons    : Seq[IBeaconData]
 }
 
 /** Дефолтовая реализация модели-контейнера [[ILocEnv]]. */
 case class MLocEnv(
-  override val geoLocOpt     : Option[IGeoLocMin]    = None,
-  override val bleBeacons    : Seq[BeaconData]       = Nil
+                    override val geoLocOpt     : Option[MGeoLoc]    = None,
+                    override val bleBeacons    : Seq[IBeaconData]       = Nil
 )
   extends EmptyProduct
   with ILocEnv
@@ -40,10 +40,10 @@ object MLocEnv {
     val d = js.Dictionary[js.Any]()
 
     for (g <- v.geoLocOpt)
-      d(GEO_LOC_FN) = IGeoLocMin.toJson(g)
+      d(GEO_LOC_FN) = MGeoLocJs.toJson(g)
 
     if (v.bleBeacons.nonEmpty)
-      d(BLE_BEACONS_FN) = js.Array[js.Any]( v.bleBeacons.map(MBleBeaconInfo.toJson): _* )
+      d(BLE_BEACONS_FN) = js.Array[js.Any]( v.bleBeacons.map(MBeaconDataJs.toJson): _* )
 
     d
   }

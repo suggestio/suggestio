@@ -1,7 +1,7 @@
 package io.suggest.ble.api.cordova.ble
 
 import evothings.ble.DeviceInfo
-import io.suggest.ble.BeaconSignal
+import io.suggest.ble.IBeaconSignal
 import io.suggest.primo.{IApply1, TypeT}
 import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsg_t
@@ -16,7 +16,7 @@ import scala.scalajs.js.JSON
   */
 trait BeaconParser extends TypeT with ILog {
 
-  override type T <: BeaconSignal
+  override type T <: IBeaconSignal
 
   /** Алиас для типа возвращаемого результата парсинга. */
   type ParseRes_t = Option[Either[Any, T]]

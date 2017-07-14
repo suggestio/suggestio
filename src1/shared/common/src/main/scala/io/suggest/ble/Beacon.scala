@@ -9,7 +9,7 @@ import io.suggest.common.radio.IDistantRadioSignal
   * Description: Трейт наблюдаемых данных по ровно одному маячку.
   * Изначально назывался IBeacon, но это слегка конфликтовало с ябло-брендом.
   */
-trait BeaconSignal extends IDistantRadioSignal {
+trait IBeaconSignal extends IDistantRadioSignal {
 
   /** Некий внутренний уникальный id/ключ маячка, если он вообще есть.
     *
@@ -22,7 +22,8 @@ trait BeaconSignal extends IDistantRadioSignal {
 
 
 /** Итоговые полезные данные по маячку: ключ маячка и расстояние до него. */
-trait BeaconData {
+// TODO Удалить интерфейс, когда останется ровно одна реализация.
+trait IBeaconData {
 
   /** id маячка. */
   def uid: String
@@ -30,4 +31,21 @@ trait BeaconData {
   /** Расстояние до маячка в сантиметрах. */
   def distanceCm: Int
 
+}
+
+
+/**
+  * Класс для инстансов модели с инфой о наблюдаемом в эфире BLE-маячке.
+  * @param uid Уникальный идентификатор наблюдаемого маячка:
+  *            iBeacon:   "$uuid:$major:$minor"
+  *            EddyStone: "$gid$bid"
+  * @param distanceCm Расстояние в сантиметрах, если известно.
+  */
+case class MBeaconData(
+  override val uid          : String,
+  override val distanceCm   : Int
+)
+  extends IBeaconData
+{
+  override def toString: String = "B(" + uid + "," + distanceCm + "cm)"
 }

@@ -49,7 +49,7 @@ object MNodeAdsModes extends Enumeration with MacroLogsImplLazy with EnumValue2V
 
 
   /** qsb-маппер, линкуемый в routes. */
-  implicit def qsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[T] = {
+  implicit def mNodeAdsModeQsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
       import util.qsb.QsbUtil._
 

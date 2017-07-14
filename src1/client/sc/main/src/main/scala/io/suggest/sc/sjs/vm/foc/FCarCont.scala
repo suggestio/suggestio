@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm.foc
 
 import io.suggest.common.css.CssSzImplicits
+import io.suggest.dev.MScreen
 import io.suggest.primo.IReset
 import io.suggest.sc.ScConstants.Focused._
 import io.suggest.sc.sjs.c.scfsm.ScFsm
-import io.suggest.sc.sjs.m.magent.IMScreen
 import io.suggest.sc.sjs.m.mfoc.MouseClick
 import io.suggest.sc.sjs.m.mfsm.touch.{TouchCancel, TouchEnd, TouchStart}
 import io.suggest.sc.sjs.m.msc.IScCommon
@@ -43,7 +43,7 @@ object FCarCont extends FindDiv {
    * @param screen Экран.
    * @return Координата в пикселях. Её можно в transform:translate* и в left подставлять.
    */
-  def indexToLeftPx(index: Int, screen: IMScreen): Int = {
+  def indexToLeftPx(index: Int, screen: MScreen): Int = {
     -index * screen.width
   }
 
@@ -64,7 +64,7 @@ with ChildrenVms {
     _underlying.firstChild == null
   }
 
-  def setCellWidth(lastIndex: Int, screen: IMScreen): Unit = {
+  def setCellWidth(lastIndex: Int, screen: MScreen): Unit = {
     setWidthPx( (lastIndex + 1) * screen.width )
   }
 
