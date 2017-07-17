@@ -10,7 +10,6 @@ import io.suggest.geo.GeoConstants.Qs
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
-import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
 import play.extras.geojson.LngLat
@@ -123,39 +122,6 @@ object GeoPoint extends MacroLogsImpl {
     )
   }
 
-  val READS_GEO_ARRAY = Reads[MGeoPoint] {
-    case JsArray(Seq(lonV, latV)) =>
-      val latOpt = latV.asOpt[Double]
-      if ( !latOpt.exists(Lat.isValid) ) {
-        JsError( Lat.E_INVALID )
-      } else {
-        val lonOpt = lonV.asOpt[Double]
-        if ( !lonOpt.exists(Lon.isValid) ) {
-          JsError( Lon.E_INVALID )
-        } else {
-          val gp = MGeoPoint(
-            lat = latOpt.get,
-            lon = lonOpt.get
-          )
-          JsSuccess(gp)
-        }
-      }
-    case other =>
-      JsError( JsonValidationError("expected.jsarray", other) )
-  }
-
-  val WRITES_GEO_ARRAY = Writes[MGeoPoint] { gp =>
-    JsArray(
-      Seq(
-        JsNumber(gp.lon),
-        JsNumber(gp.lat)
-      )
-    )
-  }
-
-  /** Десериализация из js-массива вида [-13.22,45.34]. */
-  val FORMAT_GEO_ARRAY = Format[MGeoPoint](READS_GEO_ARRAY, WRITES_GEO_ARRAY)
-
   /** Десериализация из строки вида "45.34,-13.22". */
   val READS_STRING = Reads[MGeoPoint] {
     case JsString(raw) =>
@@ -165,21 +131,21 @@ object GeoPoint extends MacroLogsImpl {
   }
 
   /** JSON-формат для ввода-вывода в виде JSON-объекта с полями lat и lon. */
-  val FORMAT_OBJECT: Format[MGeoPoint] = (
-    (__ \ Lat.ES_FN).format[Double] and
-    (__ \ Lon.ES_FN).format[Double]
-  )(MGeoPoint.apply, unlift(MGeoPoint.unapply))
+  val FORMAT_ES_OBJECT: Format[MGeoPoint] = MGeoPoint.objFormat(
+    latName = Lat.ES_FN,
+    lonName = Lon.ES_FN
+  )
 
   /** Десериализация из JSON из различных видов представления геоточки. */
   val READS_ANY: Reads[MGeoPoint] = {
-    FORMAT_GEO_ARRAY
-      .orElse( FORMAT_OBJECT )
+    MGeoPoint.FORMAT_GEO_ARRAY
+      .orElse( FORMAT_ES_OBJECT )
       .orElse( READS_STRING )
   }
 
   /** Дефолтовый JSON-форматтер для десериализации из разных форматов,
     * но сериализации в JSON object с полями lat и lon. */
-  val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, FORMAT_GEO_ARRAY)
+  val FORMAT_ANY_TO_ARRAY = Format[MGeoPoint](READS_ANY, MGeoPoint.FORMAT_GEO_ARRAY)
 
 
   // Экспорт инстансов IGeoPoint, вынесен из класса GeoPoint перед его депортацией в [common].

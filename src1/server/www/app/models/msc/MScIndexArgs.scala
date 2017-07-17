@@ -34,7 +34,7 @@ object MScIndexArgs {
           withWelcomeE        <- boolB.bind  (f(WITH_WELCOME_FN),     params)
           prevAdnIdOptE       <- strOptB.bind(f(PREV_ADN_ID_FN),      params)
           apiVsnE             <- apiVsnB.bind(f(VSN_FN),              params)
-          adnIdOptE           <- strOptB.bind(f(ADN_ID_FN),           params)
+          adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),           params)
         } yield {
           for {
             _apiVsn           <- apiVsnE.right
@@ -64,7 +64,7 @@ object MScIndexArgs {
             devScrB.unbind(f(SCREEN_FN),            value.screen),
             boolB.unbind  (f(WITH_WELCOME_FN),      value.withWelcome),
             strOptB.unbind(f(PREV_ADN_ID_FN),       value.prevAdnId),
-            strOptB.unbind(f(ADN_ID_FN),            value.adnIdOpt),
+            strOptB.unbind(f(NODE_ID_FN),            value.adnIdOpt),
             apiVsnB.unbind(f(VSN_FN),               value.apiVsn)
           )
         }

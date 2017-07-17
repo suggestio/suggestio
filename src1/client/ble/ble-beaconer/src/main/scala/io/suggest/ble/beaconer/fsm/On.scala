@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.fsm
 
-import io.suggest.ble.{BeaconUtil, MBeaconData}
+import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.ble.api.IBleBeaconsApi
 import io.suggest.ble.beaconer.m.BeaconSd
 import io.suggest.ble.beaconer.m.signals.{BeaconDetected, BeaconsNearby}
@@ -313,7 +313,7 @@ trait On extends BeaconerFsmStub { thisFsm =>
               accuracyCm    <- v.accuracies.average
               uid           <- v.beacon.beaconUid
             } yield {
-              (k, MBeaconData(uid, accuracyCm))
+              (k, MUidBeacon(uid, accuracyCm))
             }
             if (res.isEmpty)
               LOG.warn( WarnMsgs.BEACON_ACCURACY_UNKNOWN, msg = v )

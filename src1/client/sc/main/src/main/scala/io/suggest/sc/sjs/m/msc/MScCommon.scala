@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.msc
 
-import io.suggest.ble.MBeaconData
+import io.suggest.ble.MUidBeacon
 import io.suggest.dev.MScreen
 import io.suggest.geo.{MGeoLoc, MLocEnv}
 import io.suggest.sc.sjs.m.magent.MResizeDelay
@@ -23,7 +23,7 @@ trait IScCommon {
   def resizeOpt    : Option[MResizeDelay]
   def geoLocOpt    : Option[MGeoLoc]
   def tagOpt       : Option[MTagInfo]
-  def bleBeacons   : Seq[MBeaconData]
+  def bleBeacons   : Seq[MUidBeacon]
 
   def locEnv = MLocEnv(geoLocOpt, bleBeacons)
 
@@ -49,12 +49,12 @@ case class MScCommon(
                       override val resizeOpt    : Option[MResizeDelay]  = None,
                       override val geoLocOpt    : Option[MGeoLoc]       = None,
                       override val tagOpt       : Option[MTagInfo]      = None,
-                      override val bleBeacons   : Seq[MBeaconData]      = Nil
+                      override val bleBeacons   : Seq[MUidBeacon]      = Nil
 )
   extends IScCommon
 {
 
-  def withBeacons(beacons2: Seq[MBeaconData]) = copy(bleBeacons = beacons2)
+  def withBeacons(beacons2: Seq[MUidBeacon]) = copy(bleBeacons = beacons2)
 
   def withGeoLoc(geoLocOpt2: Option[MGeoLoc]) = copy(geoLocOpt = geoLocOpt2)
 

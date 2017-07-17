@@ -76,13 +76,64 @@ object MGeoPoint {
     ) { (_, _) => mgp }
   }
 
+
+  import play.api.libs.json._
+  import play.api.libs.functional.syntax._
+
+  val READS_GEO_ARRAY = Reads[MGeoPoint] {
+    case JsArray(Seq(lonV, latV)) =>
+      val latOpt = latV.asOpt[Double]
+      if ( !latOpt.exists(Lat.isValid) ) {
+        JsError( Lat.E_INVALID )
+      } else {
+        val lonOpt = lonV.asOpt[Double]
+        if ( !lonOpt.exists(Lon.isValid) ) {
+          JsError( Lon.E_INVALID )
+        } else {
+          val mgp = MGeoPoint(
+            lat = latOpt.get,
+            lon = lonOpt.get
+          )
+          MGeoPoint.validator(mgp).fold(
+            errors  => JsError(errors.head),
+            success => JsSuccess( success )
+          )
+        }
+      }
+    case other =>
+      JsError( JsonValidationError("expected.jsarray", other) )
+  }
+
+  val WRITES_GEO_ARRAY = Writes[MGeoPoint] { gp =>
+    Json.arr( gp.lon, gp.lat )
+  }
+
+  /** Десериализация из js-массива вида [-13.22,45.34]. */
+  val FORMAT_GEO_ARRAY = Format[MGeoPoint](READS_GEO_ARRAY, WRITES_GEO_ARRAY)
+
+  def objFormat(latName: String, lonName: String): OFormat[MGeoPoint] = (
+    (__ \ latName).format[Double] and
+    (__ \ lonName).format[Double]
+  )(apply, unlift(unapply))
+
+
+  object Implicits {
+
+    /** JSON-формат для ввода-вывода в виде JSON-объекта, подлежащего рендеру в query_string
+      * с полями "a" для lat и "o" для lon. */
+    implicit val MGEO_POINT_FORMAT_QS_OBJECT: OFormat[MGeoPoint] = objFormat(
+      latName = Lat.QS_FN,
+      lonName = Lon.QS_FN
+    )
+  }
+
 }
 
 
 /** Дефолтовая, пошаренная между клиентом и сервером, реализация [[IGeoPoint]]. */
 case class MGeoPoint(
                       // TODO Надо обменять порядок аргументов на (lon,lat).
-                      // TODO Надо это учесть в FormUtil.geoPointM и в GeoPoint.FORMAT_OBJECT
+                      // TODO Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT.
                       override val lat: Double,
                       override val lon: Double
                     )

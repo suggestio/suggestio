@@ -2,7 +2,7 @@ package util.ble
 
 import javax.inject.Singleton
 
-import io.suggest.ble.MBeaconData
+import io.suggest.ble.MUidBeacon
 import io.suggest.model.n2.edge.MPredicate
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
@@ -24,7 +24,7 @@ class BleUtil {
     * Новый поиск нод маячков, завязанный на function-score и ровно один нижележащий
     * поисковый запрос для всех id маячков.
     */
-  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: TraversableOnce[MBeaconData]): Option[MNodeSearch] = {
+  def scoredByDistanceBeaconSearch(maxBoost: Float, predicates: Seq[MPredicate], bcns: TraversableOnce[MUidBeacon]): Option[MNodeSearch] = {
     if (bcns.isEmpty) {
       None
 

@@ -21,7 +21,7 @@ object PointGsJvm extends GsStaticJvmQuerable {
   /** play-json deserializer. */
   override def DATA_FORMAT: Format[PointGs] = {
     (__ \ COORDS_ESFN)
-      .format( GeoPoint.FORMAT_GEO_ARRAY )
+      .format( MGeoPoint.FORMAT_GEO_ARRAY )
       .inmap(PointGs.apply, unlift(PointGs.unapply))
   }
 

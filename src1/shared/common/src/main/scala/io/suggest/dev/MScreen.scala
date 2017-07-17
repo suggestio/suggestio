@@ -21,7 +21,9 @@ object MScreen {
 
 
   def roundPxRation(pxRatioRaw: Double): Double = {
-    Math.round(pxRatioRaw * 10) / 10
+    // Коэффициент недоскругления, точность до 0.1 - достаточная.
+    val r = 10
+    Math.round(pxRatioRaw * r).toDouble / r
   }
 
 }

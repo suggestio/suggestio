@@ -17,10 +17,10 @@ object MBeaconDataJvm {
   implicit def mBeaconDataQsb(implicit
                               strB         : QueryStringBindable[String],
                               intB         : QueryStringBindable[Int]
-                             ): QueryStringBindable[MBeaconData] = {
+                             ): QueryStringBindable[MUidBeacon] = {
 
-    new QueryStringBindableImpl[MBeaconData] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MBeaconData]] = {
+    new QueryStringBindableImpl[MUidBeacon] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MUidBeacon]] = {
         val k = key1F(key)
         for {
           // TODO проверять по uuid | uuid_major_minor
@@ -31,7 +31,7 @@ object MBeaconDataJvm {
             uuidStr       <- uuidStrE.right
             distanceCm    <- distanceCmE.right
           } yield {
-            MBeaconData(
+            MUidBeacon(
               uid         = uuidStr,
               distanceCm  = distanceCm
             )
@@ -39,7 +39,7 @@ object MBeaconDataJvm {
         }
       }
 
-      override def unbind(key: String, value: MBeaconData): String = {
+      override def unbind(key: String, value: MUidBeacon): String = {
         _mergeUnbinded {
           val k = key1F(key)
           Iterator(

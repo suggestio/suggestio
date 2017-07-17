@@ -1,6 +1,6 @@
 package io.suggest.ble.beaconer.m.signals
 
-import io.suggest.ble.{IBeaconSignal, MBeaconData}
+import io.suggest.ble.{IBeaconSignal, MUidBeacon}
 import io.suggest.sjs.common.fsm.{IFsmMsg, SjsFsm}
 
 /**
@@ -34,7 +34,7 @@ case class BeaconDetected(
 
 /** Исходящий сигнал о наблюдаемых маячках в текущий момент времени. */
 case class BeaconsNearby(
-  beacons: Seq[MBeaconData]
+  beacons: Seq[MUidBeacon]
 )
   extends IFsmMsg
 {

@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.ble.MBeaconDataJs
+import io.suggest.ble.MUidBeaconJs
 import io.suggest.loc.LocationConstants._
 
 import scala.scalajs.js
@@ -22,7 +22,7 @@ object MLocEnvJs {
       d(GEO_LOC_FN) = MGeoLocJs.toJson(g)
 
     if (v.bleBeacons.nonEmpty)
-      d(BLE_BEACONS_FN) = js.Array[js.Any]( v.bleBeacons.map(MBeaconDataJs.toJson): _* )
+      d(BLE_BEACONS_FN) = js.Array[js.Any]( v.bleBeacons.map(MUidBeaconJs.toJson): _* )
 
     d
   }

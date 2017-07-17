@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.ble.MBeaconData
+import io.suggest.ble.MUidBeacon
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.loc.LocationConstants._
 import io.suggest.model.play.qsb.{QsbSeq, QueryStringBindableImpl}
@@ -20,7 +20,7 @@ object MLocEnvJvm {
 
   implicit def mLocEnvQsb(implicit
                           geoLocOptB: QueryStringBindable[Option[MGeoLoc]],
-                          beaconsB  : QueryStringBindable[QsbSeq[MBeaconData]]
+                          beaconsB  : QueryStringBindable[QsbSeq[MUidBeacon]]
                          ): QueryStringBindable[MLocEnv] = {
     new QueryStringBindableImpl[MLocEnv] {
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MLocEnv]] = {

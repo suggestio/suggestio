@@ -4,6 +4,7 @@ import io.suggest.geo.MGeoPoint
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.m.MScIndexArgs
 import io.suggest.sc.router.routes
 import io.suggest.sc.sjs.m.mgeo.MGeoPointExt
 import io.suggest.sc.sjs.m.msrv.{IFocResp, MScResp, MSrv}
@@ -33,9 +34,9 @@ object MScRespIndex extends Log with IApplyUndef1 {
    * @param args Аргументы поиска index.
    * @return Фьючерс с MNodeIndex внутри.
    */
-  def getIndex(args: IScIndexArgs): Future[MScRespIndex] = {
+  def getIndex(args: MScIndexArgs): Future[MScRespIndex] = {
     // Собрать и отправить запрос за данными index.
-    val route = routes.controllers.Sc.index( args.toJson )
+    val route = routes.controllers.Sc.index( MScIndexArgsJs.toJson(args) )
 
     // Запустить асинхронный запрос и распарсить результат.
     val fut = MSrv.doRequest(route)

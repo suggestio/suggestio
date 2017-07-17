@@ -10,9 +10,9 @@ import scala.scalajs.js
   * Created: 14.10.16 16:51
   * Description: Модель отчёта по одному маячку.
   */
-object MBeaconDataJs {
+object MUidBeaconJs {
 
-  def toJson(m: IBeaconData): js.Dictionary[js.Any] = {
+  def toJson(m: MUidBeacon): js.Dictionary[js.Any] = {
     val d = js.Dictionary.empty[js.Any]
 
     d(UID_FN)          = m.uid

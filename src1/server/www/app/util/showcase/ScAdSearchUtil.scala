@@ -2,7 +2,7 @@ package util.showcase
 
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.ble.{BeaconUtil, MBeaconData}
+import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
 import io.suggest.geo.{PointGs, PointGsJvm}
@@ -177,7 +177,7 @@ class ScAdSearchUtil @Inject() (
 
 
   /** Генерация поисковых запросов по маячкам. */
-  def _bleBeacons2search(bcns: Seq[MBeaconData]): Future[Iterable[MSubSearch]] = {
+  def _bleBeacons2search(bcns: Seq[MUidBeacon]): Future[Iterable[MSubSearch]] = {
     if (bcns.isEmpty) {
       Future.successful( Nil )
 
