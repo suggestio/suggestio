@@ -13,18 +13,14 @@ import io.suggest.media.MediaConst
 
 trait ISize2di extends IWidth with IHeight {
 
-  /** Сравнение c другим размером. */
-  def sizeWhEquals(sz1: ISize2di): Boolean = {
-    sz1.width == width  &&  sz1.height == height
-  }
-
-  /** Вернуть инстанс [[MSize2di]]. */
-  def toSize2di: MSize2di = {
-    MSize2di(width = width, height = height)
-  }
-
   override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
+
+  def whRatio: Double = {
+    width.toDouble / height.toDouble
+  }
+
 }
+
 
 /** Интерфейс для доступа к ширине. Т.е. одномерная проекция горизонтального размера. */
 trait IWidth {
@@ -91,8 +87,6 @@ final case class MSize2di(
   with IntMathModifiers[MSize2di]
 {
 
-  override def toSize2di = this
-
   /** Модифицировать ширину и длину одной математической операцией. */
   override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MSize2di = {
     copy(
@@ -100,6 +94,9 @@ final case class MSize2di(
       height  = op(height, arg2)
     )
   }
+
+  def withWidth(width: Int)   = copy( width = width )
+  def withHeight(height: Int) = copy( height = height )
 
 }
 

@@ -3,6 +3,8 @@ package io.suggest.sc.root.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.hdr.m.MHeaderStates
 import io.suggest.sc.hdr.v.HeaderR
+import io.suggest.sc.inx.m.MScIndex
+import io.suggest.sc.inx.v.IndexR
 import io.suggest.sc.root.m.MScRoot
 import io.suggest.sc.styl.ScCss.scCss
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -21,12 +23,14 @@ object ScRootR {
 
   import HeaderR.HeaderPropsValFastEq
   import io.suggest.sjs.common.spa.OptFastEq.Plain
+  import MScIndex.MScIndexFastEq
 
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
                                     colorsOptC     : ReactConnectProxy[ScCssR.PropsVal],
-                                    headerProps    : ReactConnectProxy[HeaderR.PropsVal]
+                                    headerPropsC   : ReactConnectProxy[HeaderR.PropsVal],
+                                    indexPropsC    : ReactConnectProxy[MScIndex]
                                   )
 
 
@@ -42,7 +46,10 @@ object ScRootR {
           scCss.Root.root,
 
           // Компонент заголовка выдачи:
-          s.headerProps { HeaderR.apply }
+          s.headerPropsC { HeaderR.apply },
+
+          // Компонент index'а выдачи:
+          s.indexPropsC { IndexR.apply }
 
           // TODO Focused
           // TODO Grid
@@ -62,12 +69,13 @@ object ScRootR {
             .toOption
             .map(_.colors)
         },
-        headerProps = propsProxy.connect { props =>
+        headerPropsC = propsProxy.connect { props =>
           HeaderR.PropsVal(
             hdrState = MHeaderStates.PlainGrid,   // TODO Определять маркер состояния на основе состояния полей в props.
             node     = props.index.resp.toOption
           )
-        }
+        },
+        indexPropsC = propsProxy.connect(_.index)
       )
     }
     .renderBackend[Backend]

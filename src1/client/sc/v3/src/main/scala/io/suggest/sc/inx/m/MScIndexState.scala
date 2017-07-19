@@ -36,7 +36,7 @@ case class MScIndexState(
                           screen          : MScreen,
                           rcvrIds         : List[String]        = Nil,
                           geoPoint        : Option[MGeoPoint]   = None,
-                          welcomeState    : WelcomeState        = MWelcomeStates.NotShown
+                          welcomeState    : MWelcomeState       = MWelcomeStates.ShownNow
                         ) {
 
   // val или lazy val, т.к. часто нужен инстанс именно текущего узла.
@@ -46,7 +46,7 @@ case class MScIndexState(
   def withScreenOpt( screen: MScreen ) = copy( screen = screen )
   def withRcvrNodeId( rcvrNodeId: List[String] ) = copy( rcvrIds = rcvrNodeId )
   def withGeoPoint( geoPoint: Option[MGeoPoint] ) = copy( geoPoint = geoPoint )
-  def withWelcomeState( welcomeState: WelcomeState ) = copy( welcomeState = welcomeState )
+  def withWelcomeState( welcomeState: MWelcomeState ) = copy( welcomeState = welcomeState )
 
 }
 
@@ -55,13 +55,13 @@ case class MScIndexState(
 object MWelcomeStates {
 
   /** Экран приветствия отображается сейчас. */
-  def ShownNow: WelcomeState  = Some(true)
+  def ShownNow   : MWelcomeShowingState = Some(true)
 
   /** Экран приветствия находится в анимации сокрытия. */
-  def HidingNow: WelcomeState = Some(false)
+  def HidingNow  : MWelcomeShowingState = Some(false)
 
   /** Экран приветствия отсутствует в DOM, потому что скрыт окончательно или вообще отсутсвует. */
-  def NotShown: WelcomeState  = None
+  def NotShown   : MWelcomeState        = None
 
 }
 

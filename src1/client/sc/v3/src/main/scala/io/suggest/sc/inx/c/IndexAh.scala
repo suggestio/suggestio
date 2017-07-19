@@ -7,6 +7,7 @@ import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
 import io.suggest.sc.inx.m.{GetIndex, HandleScResp}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.styl.ScCss
 
 import scala.util.Success
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -62,7 +63,13 @@ class IndexAh[M](
           scResp.respActions
             .find(_.acType == MScRespActionTypes.Index)
             .flatMap( _.index )
-            .fold { v0.fail( new NoSuchElementException("index") ) } (v0.ready)
+            .fold { v0.fail( new NoSuchElementException("index") ) } { scIndexResp =>
+              // TODO Говнокод: пересобрать стили, если пришли новые цвета, затем запихать их в глобальную переменную.
+              if (ScCss.scCss.colors != scIndexResp.colors)
+                ScCss.scCss = ScCss( scIndexResp.colors )
+              // Вернуть положительный результат в состояние
+              v0.ready(scIndexResp)
+            }
         }
       )
 

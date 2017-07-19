@@ -1,7 +1,9 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.fut.FutureUtil
+import io.suggest.sc.ScConstants
 import io.suggest.sc.tile.ColumnsCountT
 import models._
 import models.blk._
@@ -33,20 +35,12 @@ class ShowcaseUtil @Inject() (
   /** Значение cache-control для index-выдачи. */
   def SC_INDEX_CACHE_SECONDS = 20
 
-  /** Дефолтовое имя ноды. */
-  val SITE_NAME_GEO = configuration.getOptional[String]("market.showcase.nodeName.dflt").getOrElse("Suggest.io")
-
   /** Дефолтовый цвет выдачи, если нет ничего. */
-  val SITE_BGCOLOR_DFLT = configuration.getOptional[String]("market.showcase.color.bg.dflt").getOrElse("333333")
-
-  val SITE_BGCOLOR_GEO = configuration.getOptional[String]("market.showcase.color.bg.geo").getOrElse(SITE_BGCOLOR_DFLT)
-
+  def SITE_BGCOLOR_DFLT = ScConstants.Defaults.BG_COLOR
 
   /** Дефолтовый цвет элементов переднего плана. */
-  val SITE_FGCOLOR_DFLT = configuration.getOptional[String]("market.showcase.color.fg.dflt").getOrElse("FFFFFF")
+  def SITE_FGCOLOR_DFLT = ScConstants.Defaults.FG_COLOR
 
-  /** Цвет для выдачи, которая вне узла. */
-  val SITE_FGCOLOR_GEO = configuration.getOptional[String]("market.showcase.color.fg.geo").getOrElse(SITE_FGCOLOR_DFLT)
 
   /**
     * Сгруппировать "узкие" карточки, чтобы они были вместе.
@@ -275,7 +269,7 @@ class ShowcaseUtil @Inject() (
 
 
   /** Обычные цвета выдачи, не нужны в 99% случаев. */
-  private def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_GEO, fgColor = SITE_FGCOLOR_GEO)
+  private def SC_COLORS_GEO = ScSiteColors(bgColor = SITE_BGCOLOR_DFLT, fgColor = SITE_FGCOLOR_DFLT)
 
   def siteScColors(nodeOpt: Option[MNode]): IScSiteColors = {
     nodeOpt.fold(SC_COLORS_GEO) { mnode =>

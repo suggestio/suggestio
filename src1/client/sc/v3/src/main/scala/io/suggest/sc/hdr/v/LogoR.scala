@@ -41,19 +41,7 @@ object LogoR {
         // Нужно решить, что вообще надо рендерить: логотип, название узла или что-то иное?
         nodeInfo.logoOpt.fold[VdomElement] {
           // Графический логотип не доступен. Попробовать отрендерить текстовый логотип.
-          s.nodeNameOptC { nodeNameOpt =>
-            nodeNameOpt().whenDefinedEl { nodeName =>
-              val styles = logoCss.Txt
-              val dotsStyles = styles.Dots
-              // Отрендерить название текущего узла.
-              <.span(
-                styles.txtLogo,
-                nodeName,
-                <.span( dotsStyles.dot, dotsStyles.left ),
-                <.span( dotsStyles.dot, dotsStyles.right )
-              )
-            }
-          }
+          s.nodeNameOptC { NodeNameR.apply }
 
         } { logoInfo =>
           val imgStyles = logoCss.Img

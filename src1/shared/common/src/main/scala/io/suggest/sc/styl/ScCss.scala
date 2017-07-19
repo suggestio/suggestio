@@ -4,6 +4,7 @@ import ScScalaCssDefaults._
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.sc.ScConstants
 
 /**
   * Suggest.io
@@ -32,7 +33,7 @@ object ScCss {
   * @param colors Цвета оформления узла и выдачи. Или дефолтовое значение.
   */
 case class ScCss(
-                  colors     : MColors = ScCss.COLORS_DFLT
+                  colors        : MColors = ScCss.COLORS_DFLT
                 )
   extends StyleSheet.Inline
 {
@@ -49,9 +50,9 @@ case class ScCss(
   private def `BUTTON` = "button"
   private def _SM_BUTTON = _SM_ + `BUTTON`
 
-  private def _colorCss( colorOpt: Option[MColorData] ) = Color( colorOpt.get.hexCode )
-  private val _bgColorCss = _colorCss( colors.bg )
-  private val _fgColorCss = _colorCss( colors.fg )
+  private def _colorCss( colorOpt: Option[MColorData], dflt: => String ) = Color( colorOpt.fold(dflt)(_.hexCode) )
+  private val _bgColorCss = _colorCss( colors.bg, ScConstants.Defaults.BG_COLOR )
+  private val _fgColorCss = _colorCss( colors.fg, ScConstants.Defaults.FG_COLOR )
 
   //val button = _styleAddClasses( _SM_BUTTON )
 
@@ -82,6 +83,31 @@ case class ScCss(
 
     /** корневой div-контейнер. */
     val root = _styleAddClasses( _SM_ + "showcase" )
+
+  }
+
+
+  object Welcome {
+
+    private val _SM_WELCOME_AD = _SM_ + "welcome-ad"
+
+    val welcome = style(
+      addClassNames( _SM_WELCOME_AD ),
+      backgroundColor( _bgColorCss )
+    )
+
+    object Bg {
+      val bgImg = style(
+        addClassName( _SM_WELCOME_AD + "_bg-img" ),
+        backgroundColor( _bgColorCss )
+      )
+    }
+
+    object Fg {
+      val fgImg = _styleAddClasses( _SM_WELCOME_AD + "_fg-img" )
+      val fgText = _styleAddClasses( _SM_WELCOME_AD + "_fg-text" )
+      val helper = _styleAddClasses( _SM_WELCOME_AD + "_helper" )
+    }
 
   }
 
@@ -202,6 +228,8 @@ case class ScCss(
     */
   initInnerObjects(
     Body.BgLogo.ru,
+    Welcome.Bg.bgImg,
+    Welcome.Fg.fgImg,
     Header.Buttons.search,
     Header.Logo.Txt.Dots.dot
   )

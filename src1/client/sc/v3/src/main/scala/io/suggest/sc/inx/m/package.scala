@@ -7,6 +7,7 @@ package io.suggest.sc.inx
   */
 package object m {
 
-  type WelcomeState = Option[Boolean]
+  type MWelcomeState = Option[Boolean]
+  type MWelcomeShowingState = Some[Boolean]
 
 }
