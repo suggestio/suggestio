@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.wc
 
-import io.suggest.common.geom.d2.Size2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.Welcome.BG_IMG_ID
 import io.suggest.sjs.common.vm.VmT
@@ -28,15 +28,15 @@ trait WcBgImgT extends VmT with WcImgUtil with DataWh {
   /** Подогнать картинку под экран текущего устройства. */
   def adjust(screen: MScreen): Unit = {
     val iwh = getDataWh.get
-    val newWh: Size2di = {
+    val newWh: MSize2di = {
       if (iwh.width.toDouble / iwh.height.toDouble < screen.width.toDouble / screen.height.toDouble) {
         val w = screen.width
         val h = w * iwh.height / iwh.width
-        Size2di(w, height = h)
+        MSize2di(w, height = h)
       } else {
         val h = screen.height
         val w = h * iwh.width / iwh.height
-        Size2di(w, height = h)
+        MSize2di(w, height = h)
       }
     }
     val marginTopPx = - newWh.height / 2

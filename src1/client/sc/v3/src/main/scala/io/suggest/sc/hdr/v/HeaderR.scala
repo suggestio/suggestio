@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sc.hdr.m.{MHeaderState, MHeaderStates}
-import io.suggest.sc.m.MScNodeInfo
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.styl.ScCss.scCss
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -28,7 +28,7 @@ object HeaderR {
     */
   case class PropsVal(
                        hdrState   : MHeaderState,
-                       node       : Option[MScNodeInfo]
+                       node       : Option[MSc3IndexResp]
                      )
 
   implicit object HeaderPropsValFastEq extends FastEq[PropsVal] {

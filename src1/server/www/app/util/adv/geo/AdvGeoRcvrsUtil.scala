@@ -5,7 +5,7 @@ import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.geom.d2.Size2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.maps.nodes.{MAdvGeoMapNodeProps, MGeoNodePropsShapes, MGeoNodesResp, MMapNodeIconInfo}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
@@ -123,7 +123,7 @@ class AdvGeoRcvrsUtil @Inject()(
               } { wh =>
                 LOGGER.trace(s"$logPrefix wh = $wh for img $logo")
                 val wh2 = if (dpr.pixelRatio != 1.0F) {
-                  Size2di(
+                  MSize2di(
                     width  = (wh.width  / dpr.pixelRatio).toInt,
                     height = (wh.height / dpr.pixelRatio).toInt
                   )
@@ -162,7 +162,7 @@ class AdvGeoRcvrsUtil @Inject()(
           } yield {
             MMapNodeIconInfo(
               url = ctx.dynImgCall( logoInfo.logo ).url,
-              wh  = Size2di(
+              wh  = MSize2di(
                 width  = logoInfo.wh.width,
                 height = logoInfo.wh.height
               )

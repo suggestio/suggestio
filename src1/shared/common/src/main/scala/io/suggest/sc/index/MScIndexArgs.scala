@@ -1,11 +1,11 @@
-package io.suggest.sc.m
+package io.suggest.sc.index
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.dev.MScreen
 import io.suggest.geo.MLocEnv
 import io.suggest.sc.ScConstants.ReqArgs._
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -21,13 +21,14 @@ import play.api.libs.functional.syntax._
 object MScIndexArgs {
 
   /** Поддержка JSON-сериализации */
-  // TODO Writes вместо Format, потому чт MScreen пока не поддерживает Reads.
+  // TODO Writes вместо Format, потому что MScreen пока не поддерживает Reads.
   implicit val MSC_INDEX_ARGS_WRITES: OWrites[MScIndexArgs] = (
     (__ \ NODE_ID_FN).writeNullable[String] and
     (__ \ LOC_ENV_FN).writeNullable[MLocEnv]
       .contramap[MLocEnv]( EmptyUtil.implEmpty2OptF ) and
     (__ \ SCREEN_FN).writeNullable[MScreen] and
-    (__ \ WITH_WELCOME_FN).write[Boolean]
+    (__ \ WITH_WELCOME_FN).write[Boolean] and
+    (__ \ VSN_FN).write[Int]
   )( unlift(unapply) )
 
 }
@@ -35,14 +36,15 @@ object MScIndexArgs {
 
 /** Класс модели аргументов запросов sc index с сервера.
   *
-  * @param nodeIdOpt id узла, если есть.
+  * @param nodeId id узла-ресивера, если есть.
   * @param locEnv Описание текущей локации устройства (неявно-пустая модель).
   * @param screen Описание экрана устройства.
   * @param withWelcome Планируется ли рендерить splash-screen приветствия?
   */
 case class MScIndexArgs(
-                         nodeIdOpt    : Option[String],
+                         nodeId       : Option[String],
                          locEnv       : MLocEnv,
                          screen       : Option[MScreen],
-                         withWelcome  : Boolean
+                         withWelcome  : Boolean,
+                         apiVsn       : Int
                        )

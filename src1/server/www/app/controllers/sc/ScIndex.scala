@@ -1,18 +1,24 @@
 package controllers.sc
 
 import _root_.util.di._
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
 import io.suggest.geo.{MGeoLoc, _}
+import io.suggest.i18n.MsgCodes
+import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
+import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
+import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
+import io.suggest.sc.resp.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models._
-import models.im.MImgT
+import models.im.{IImgWithWhInfo, MImgT}
 import models.msc._
-import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespIndex}
+import models.msc.resp.{MScResp, MScRespAction, MScRespIndex}
 import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
@@ -49,6 +55,7 @@ trait ScIndex
   with IGeoIpUtilDi
   with IStatUtil
   with IBleUtilDi
+  with IDynImgUtil
 {
 
   import mCommonDi._
@@ -64,43 +71,67 @@ trait ScIndex
     */
   // U.PersonNode запрашивается в фоне для сбора статистики внутри экшена.
   def index(args: MScIndexArgs) = maybeAuth(U.PersonNode).async { implicit request =>
-    val logic = new ScIndexUniLogicImpl {
-      override def _reqArgs  = args
-      override def _syncArgs = MScIndexSyncArgs.empty
-      override def _request  = request
-    }
 
-    // Собираем http-ответ.
-    val resultFut = for (res <- logic.result) yield {
-      // Настроить кэш-контрол. Если нет locEnv, то для разных ip будут разные ответы, и CDN кешировать их не должна.
-      val (cacheControlMode, hdrs0) = if (!args.locEnv.isEmpty) {
-        "private" -> List(VARY -> X_FORWARDED_FOR)
-      } else {
-        "public" -> Nil
+    lazy val logPrefix = s"index[${System.currentTimeMillis()}]:"
+
+    // В зависимости от версии API выбрать используемую логику сборки ответа.
+    val logicOrNull = if (args.apiVsn.majorVsn == MScApiVsns.Sjs1.majorVsn) {
+      new ScIndexLogicV2 {
+        override def _reqArgs  = args
+        override def _syncArgs = MScIndexSyncArgs.empty
+        override def _request  = request
       }
-      val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=${scUtil.SC_INDEX_CACHE_SECONDS}"  ::  hdrs0
-      res.withHeaders(hdrs1: _*)
+    } else if (args.apiVsn.majorVsn == MScApiVsns.ReactSjs3.majorVsn) {
+      new ScIndexLogicV3 {
+        override def _syncArgs = MScIndexSyncArgs.empty
+        override def _reqArgs  = args
+        override def _request  = request
+      }
+    } else {
+      LOGGER.error(s"$logPrefix No logic available for api vsn: ${args.apiVsn}. Forgot to implement? args = $args")
+      null
     }
 
-    // Собираем статистику второго поколения...
-    logic.saveScStat()
+    // В зависимости от наличия или отсутствия заимплеменченной логики, разрулить ситуацию:
+    Option(logicOrNull).fold [Future[Result]] {
+      NotImplemented(s"Sc Index API not implemented for ${args.apiVsn}.")
+    } { logic =>
+      // Собираем http-ответ.
+      val resultFut = for (res <- logic.result) yield {
+        // Настроить кэш-контрол. Если нет locEnv, то для разных ip будут разные ответы, и CDN кешировать их не должна.
+        val (cacheControlMode, hdrs0) = if (!args.locEnv.isEmpty) {
+          "private" -> ((VARY -> X_FORWARDED_FOR) :: Nil)
+        } else {
+          "public" -> Nil
+        }
+        val hdrs1 = CACHE_CONTROL -> s"$cacheControlMode, max-age=${scUtil.SC_INDEX_CACHE_SECONDS}" ::
+          hdrs0
+        res.withHeaders(hdrs1: _*)
+      }
 
-    resultFut.recover { case ex: NodeNotFoundException =>
-      // Эта ветвь вообще когда-нибудь вызывается? indexNodeFut всегда какой-то узел вроде возвращает.
-      LOGGER.trace(s"index($args) ${logic.logPrefix}: everything is missing", ex)
-      NotFound( ex.getMessage )
+      // Собираем статистику второго поколения...
+      logic.saveScStat()
+
+      resultFut.recover { case ex: NodeNotFoundException =>
+        // Эта ветвь вообще когда-нибудь вызывается? indexNodeFut всегда какой-то узел вроде возвращает.
+        LOGGER.trace(s"$logPrefix ${logic.logPrefix}: everything is missing; args = $args", ex)
+        NotFound( ex.getMessage )
+      }
     }
   }
 
 
   /** Унифицированная логика выдачи в фазе index. */
-  trait ScIndexUniLogic extends LogicCommonT { logic =>
+  abstract class ScIndexLogic extends LogicCommonT { logic =>
 
     /** qs-аргументы реквеста. */
     def _reqArgs: MScIndexArgs
 
     /** Параметры, приходящие из sync site.  */
     def _syncArgs: IScIndexSyncArgs
+
+    /** Тип sc-responce экшена. */
+    def respActionType = MScRespActionTypes.Index
 
     lazy val logPrefix = s"scIndex[${ctx.timestamp}]"
 
@@ -145,7 +176,7 @@ trait ScIndex
       }
       // Залоггировать возможное неизвестное исключение
       rFut.onFailure {
-        case ex: NodeNotFoundException =>
+        case _: NodeNotFoundException =>
           LOGGER.warn(s"$logPrefix Rcvr node missing: $adnIdOpt! Somebody scanning our nodes? I'll try to geolocate rcvr node.")
         case ex: Throwable if !ex.isInstanceOf[NoSuchElementException] =>
           LOGGER.warn(s"$logPrefix Unknown exception while getting rcvr node $adnIdOpt", ex)
@@ -282,7 +313,7 @@ trait ScIndex
     def l99_ephemeralNode: MIndexNodeInfo = {
       MIndexNodeInfo(
         mnode = nodesUtil.userNodeInstance(
-          nameOpt     = Some("iSuggest"),
+          nameOpt     = Some( MsgCodes.`iSuggest` ),
           personIdOpt = None
         ),
         isRcvr = false
@@ -363,15 +394,77 @@ trait ScIndex
     }
 
 
-    /** Рендер indexTpl. */
-    def respHtmlFut: Future[Html] = {
-      for (renderArgs <- indexTplRenderArgsFut) yield {
-        indexTpl(renderArgs)(ctx)
+    /** Определение заголовка выдачи. */
+    lazy val titleFut: Future[String] = {
+      for (inxNodeInfo <- indexNodeFutVal) yield {
+        inxNodeInfo.mnode
+          .meta
+          .basic
+          .nameOpt
+          .getOrElse {
+            ctx.messages
+              .translate("isuggest", Nil)
+              .getOrElse( MsgCodes.`iSuggest` )
+          }
       }
     }
 
-    /** Рендер минифицированного indexTpl. */
-    def respHtml4JsFut = respHtmlFut.map( htmlCompressUtil.html2str4json )
+    def currInxNodeIdOptFut: Future[Option[String]] = {
+      for (inxNodeInfo <- indexNodeFutVal) yield {
+        inxNodeInfo.mnode.id
+          .filter(_ => inxNodeInfo.isRcvr)
+      }
+    }
+
+    def result: Future[Result]
+
+
+    override def scStat: Future[Stat2] = {
+      // Запуск асинхронных задач в фоне.
+      val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
+      val _indexNodeFut     = indexNodeFutVal
+      val _geoIpResOptFut   = logic.geoIpResOptFut
+
+      // Исполнение синхронных задач.
+      val _remoteIp         = logic._remoteIp
+
+      // Сборка асинхронного результата.
+      for {
+        _userSaOpt          <- _userSaOptFut
+        _indexNode          <- _indexNodeFut
+        _geoIpResOpt        <- _geoIpResOptFut
+      } yield {
+        // Сбилдить статистику по данному index'у.
+        new Stat2 {
+          override def userSaOpt: Option[MAction] = _userSaOpt
+          override def statActions: List[MAction] = {
+            val actType = if (_indexNode.isRcvr) {
+              MActionTypes.ScIndexRcvr
+            } else {
+              MActionTypes.ScIndexCovering
+            }
+            val inxSa = MAction(
+              actions   = Seq(actType),
+              nodeId    = _indexNode.mnode.id.toSeq,
+              nodeName  = _indexNode.mnode.guessDisplayName.toSeq
+            )
+            inxSa :: Nil
+          }
+          override def components = MComponents.Index :: super.components
+          override def remoteAddr   = _remoteIp
+          override def devScreenOpt = _reqArgs.screen
+          override def locEnvOpt    = Some(_reqArgs.locEnv)
+          override def geoIpLoc     = _geoIpResOpt
+        }
+      }
+    }
+
+  }
+
+
+  /** Дефолтовая реализация логики ScIndexLogic v2 (sjs1) для снижения объемов кодогенерации байткода
+    * в конкретных реализациях. */
+  abstract class ScIndexLogicV2 extends ScIndexLogic {
 
     /** Контейнер палитры выдачи. */
     lazy val colorsFut: Future[IColors] = {
@@ -389,7 +482,6 @@ trait ScIndex
         HBtnArgs(fgColor = colors.fgColor)
       }
     }
-
 
     /** Если узел с географией не связан, и есть "предыдущий" узел, то надо отрендерить кнопку "назад". */
     def topLeftBtnHtmlFut: Future[Html] = {
@@ -444,21 +536,6 @@ trait ScIndex
       }
     }
 
-    /** Определение заголовка выдачи. */
-    lazy val titleFut: Future[String] = {
-      for (inxNodeInfo <- indexNodeFutVal) yield {
-        inxNodeInfo.mnode
-          .meta
-          .basic
-          .nameOpt
-          .getOrElse {
-            ctx.messages
-              .translate("isuggest", Nil)
-              .getOrElse("iSuggest")
-          }
-      }
-    }
-
         /** Сборка аргументов рендера indexTpl. */
     def indexTplRenderArgsFut: Future[ScRenderArgs] = {
       val _logoImgOptFut      = logoImgOptFut
@@ -488,10 +565,26 @@ trait ScIndex
       }
     }
 
-    def currInxNodeIdOptFut: Future[Option[String]] = {
-      for (inxNodeInfo <- indexNodeFutVal) yield {
-        inxNodeInfo.mnode.id
-          .filter(_ => inxNodeInfo.isRcvr)
+
+    /** Рендер indexTpl. */
+    def respHtmlFut: Future[Html] = {
+      for (renderArgs <- indexTplRenderArgsFut) yield {
+        indexTpl(renderArgs)(ctx)
+      }
+    }
+
+    /** Рендер минифицированного indexTpl. */
+    def respHtml4JsFut = respHtmlFut.map( htmlCompressUtil.html2str4json )
+
+
+    /** HTTP-ответ клиенту. */
+    override def result: Future[Result] = {
+      for {
+        args <- respArgsFut
+      } yield {
+        statCookiesUtil.resultWithStatCookie {
+          Ok( Json.toJson(args) )
+        }(ctx.request)
       }
     }
 
@@ -520,7 +613,7 @@ trait ScIndex
         MScResp(
           scActions = Seq(
             MScRespAction(
-              acType = MScRespActionTypes.Index,
+              acType = respActionType,
               index = Some(
                 MScRespIndex(
                   indexHtml     = html,
@@ -536,72 +629,105 @@ trait ScIndex
 
     }
 
-    /** HTTP-ответ клиенту. */
-    def result: Future[Result] = {
-      for {
-        args <- respArgsFut
-      } yield {
-        statCookiesUtil.resultWithStatCookie {
-          _resultVsn(args)
-        }(ctx.request)
+  }
+
+
+
+  /** Раздача индекса выдачи v3.
+    *
+    * По сравнению с v2 здесь существенное упрощение серверной части,
+    * т.к. вся генерация html идёт на клиенте.
+    *
+    * Сервер отвечает только параметрами для рендера, без html.
+    */
+  abstract class ScIndexLogicV3 extends ScIndexLogic {
+
+    private def _img2mediaInfo(mimg: MImgT, whPxOpt: Option[MSize2di]): MMediaInfo = {
+      MMediaInfo(
+        giType = MMediaTypes.Image,
+        url    = cdnUtil.maybeAbsUrl(_reqArgs.apiVsn.forceAbsUrls) {
+          cdnUtil.forCall( dynImgUtil.imgCall(mimg) )(ctx)
+        }(ctx),
+        whPx   = whPxOpt
+      )
+    }
+
+    private def _imgWithWhOpt2mediaInfo(iwwiOpt: Option[IImgWithWhInfo]): Option[MMediaInfo] = {
+      for (ii <- iwwiOpt) yield {
+        _img2mediaInfo( ii.mimg, whPxOpt = Some(MSize2di.applyOrThis(ii.meta)) )
       }
     }
 
-    /** Результат запроса. */
-    protected def _resultVsn(args: MScResp): Result = {
-      val v = _reqArgs.apiVsn
-      if (v.majorVsn == MScApiVsns.Sjs1.majorVsn) {
-        Ok(Json.toJson(args))
-      } else {
-        throw new UnsupportedOperationException("Unsupported API vsn: " + v)
+    /** Подготовка данных по логотипу узла. */
+    def logoMediaInfoOptFut: Future[Option[IMediaInfo]] = {
+      for (logoOpt <- logoImgOptFut) yield {
+        for (logoImg <- logoOpt) yield {
+          // Пока без wh, т.к. у логотипа была константная высота, заданная в css-пикселях ScConstants.Logo.HEIGHT_CSSPX
+          _img2mediaInfo( logoImg, whPxOpt = None )
+        }
       }
     }
 
+    /** Завернуть данные для рендера welcome в выходной формат. */
+    def welcomeInfoOptFut: Future[Option[MWelcomeInfo]] = {
+      for (wcOpt <- welcomeOptFut) yield {
+        for (wc <- wcOpt) yield {
+          MWelcomeInfo(
+            bgColor = wc.bg.left.toOption.map( MColorData.apply ),
+            bgImage = _imgWithWhOpt2mediaInfo( wc.bg.right.toOption ),
+            fgImage = _imgWithWhOpt2mediaInfo( wc.fgImage )
+          )
+        }
+      }
+    }
 
-    override def scStat: Future[Stat2] = {
-      // Запуск асинхронных задач в фоне.
-      val _userSaOptFut     = statUtil.userSaOptFutFromRequest()
-      val _indexNodeFut     = indexNodeFutVal
-      val _geoIpResOptFut   = logic.geoIpResOptFut
-
-      // Исполнение синхронных задач.
-      val _remoteIp         = logic._remoteIp
-
-      // Сборка асинхронного результата.
+    /** index-ответ сервера с данными по узлу. */
+    def indexRespFut: Future[MSc3IndexResp] = {
+      val _nodeIdOptFut        = currInxNodeIdOptFut
+      val _nodeNameFut         = titleFut
+      val _nodeInfoFut         = indexNodeFutVal
+      val _logoMediaInfoOptFut = logoMediaInfoOptFut
+      val _welcomeInfoOptFut   = welcomeInfoOptFut
       for {
-        _userSaOpt          <- _userSaOptFut
-        _indexNode          <- _indexNodeFut
-        _geoIpResOpt        <- _geoIpResOptFut
+        nodeIdOpt       <- _nodeIdOptFut
+        nodeName        <- _nodeNameFut
+        nodeInfo        <- _nodeInfoFut
+        logoOpt         <- _logoMediaInfoOptFut
+        welcomeOpt      <- _welcomeInfoOptFut
       } yield {
-        // Сбилдить статистику по данному index'у.
-        new Stat2 {
-          override def userSaOpt: Option[MAction] = _userSaOpt
-          override def statActions: List[MAction] = {
-            val actType = if (_indexNode.isRcvr) {
-              MActionTypes.ScIndexRcvr
-            } else {
-              MActionTypes.ScIndexCovering
-            }
-            val inxSa = MAction(
-              actions   = Seq(actType),
-              nodeId    = _indexNode.mnode.id.toSeq,
-              nodeName  = _indexNode.mnode.guessDisplayName.toSeq
-            )
-            List(inxSa)
-          }
-          override def components = MComponents.Index :: super.components
-          override def remoteAddr   = _remoteIp
-          override def devScreenOpt = _reqArgs.screen
-          override def locEnvOpt    = Some(_reqArgs.locEnv)
-          override def geoIpLoc     = _geoIpResOpt
+        MSc3IndexResp(
+          nodeId        = nodeIdOpt,
+          name          = Option( nodeName ),
+          colors        = nodeInfo.mnode.meta.colors,
+          logoOpt       = logoOpt,
+          welcome       = welcomeOpt
+        )
+      }
+    }
+
+    /**
+      * v3-выдача рендерится на клиенте через react.js.
+      * С сервера отправляются только данные для рендера.
+      */
+    override def result: Future[Result] = {
+      for {
+        indexResp <- indexRespFut
+      } yield {
+        // Завернуть index-экшен в стандартный scv3-контейнер:
+        val scResp = MSc3Resp(
+          respActions = MSc3RespAction(
+            acType = respActionType,
+            index  = Some(indexResp)
+          ) :: Nil
+        )
+
+        // Вернуть HTTP-ответ.
+        cacheControlShort {
+          Ok( Json.toJson(scResp) )
         }
       }
     }
 
   }
-
-  /** Дефолтовая реализация логики ScIndexUniLogicImpl для снижения объемов кодогенерации байткода
-    * в конкретных реализациях. */
-  abstract class ScIndexUniLogicImpl extends ScIndexUniLogic
 
 }

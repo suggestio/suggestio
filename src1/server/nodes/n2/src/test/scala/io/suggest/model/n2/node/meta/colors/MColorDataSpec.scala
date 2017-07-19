@@ -11,8 +11,6 @@ import org.scalatest.FlatSpec
  */
 class MColorDataSpec extends FlatSpec with PlayJsonTestUtil {
 
-  import MColorDataJvm.MCOLOR_DATA_FORMAT
-
   override type T = MColorData
 
   "JSON" should "handle minimal model" in {

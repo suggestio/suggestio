@@ -3,7 +3,7 @@ package io.suggest.sc.sjs.m.msrv.index
 import io.suggest.geo.MLocEnvJs
 import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
 import io.suggest.sc.ScConstants.ReqArgs._
-import io.suggest.sc.m.MScIndexArgs
+import io.suggest.sc.index.MScIndexArgs
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -20,7 +20,7 @@ object MScIndexArgsJs {
   def toJson(o: MScIndexArgs): Dictionary[Any] = {
     val d = ToJsonWithApiVsnT.setApiVsn()
 
-    for (nodeId <- o.nodeIdOpt)
+    for (nodeId <- o.nodeId)
       d(NODE_ID_FN) = nodeId
 
     val _le = o.locEnv

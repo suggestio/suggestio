@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.msrv.foc
 
+import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.router.routes
 import io.suggest.sc.sjs.m.msrv._
 import io.suggest.sjs.common.msg.ErrorMsgs

@@ -16,7 +16,7 @@ import util.ble.BleUtil
 import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
-import util.img.{LogoUtil, WelcomeUtil}
+import util.img.{DynImgUtil, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.sec.CspUtil
 import util.showcase.{ScMapUtil, _}
@@ -47,6 +47,7 @@ class Sc @Inject() (
                      override val getAnyAd           : GetAnyAd,
                      override val maybeAuth          : MaybeAuth,
                      @Named("blk") override val blkImgMaker  : IMaker,
+                     override val dynImgUtil         : DynImgUtil,
                      override val scMapUtil          : ScMapUtil,
                      override val ctxUtil            : ContextUtil,
                      override val bruteForceProtect  : BruteForceProtect,
@@ -56,7 +57,7 @@ class Sc @Inject() (
                      override val geoIpUtil          : GeoIpUtil,
                      override val extServicesUtil    : ExtServicesUtil,
                      override val mCommonDi          : ICommonDi
-)
+                   )
   extends SioControllerImpl
   with MacroLogsImpl
   with ScSite

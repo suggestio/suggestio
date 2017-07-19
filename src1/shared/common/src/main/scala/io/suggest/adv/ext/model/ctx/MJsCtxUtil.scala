@@ -58,13 +58,6 @@ object MAdPictureCtx {
 }
 
 
-object Size2dCtx {
-
-  def WIDTH_FN = "width"
-  def HEIGHT_FN = "height"
-
-}
-
 
 object PicUploadCtx {
 

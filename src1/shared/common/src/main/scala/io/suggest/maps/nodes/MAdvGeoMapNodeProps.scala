@@ -1,7 +1,7 @@
 package io.suggest.maps.nodes
 
 import boopickle.Default._
-import io.suggest.common.geom.d2.Size2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.meta.colors.MColors
 
 /**
@@ -41,7 +41,7 @@ object MMapNodeIconInfo {
 
   /** Поддержка boopickle. */
   implicit val mMapNodeIconInfoPickler: Pickler[MMapNodeIconInfo] = {
-    implicit val size2diP = Size2di.size2diPickler
+    implicit val size2diP = MSize2di.size2diPickler
     generatePickler[MMapNodeIconInfo]
   }
 
@@ -49,5 +49,5 @@ object MMapNodeIconInfo {
 
 case class MMapNodeIconInfo(
   url     : String,
-  wh      : Size2di
+  wh      : MSize2di
 )

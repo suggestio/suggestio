@@ -50,7 +50,7 @@ object ILoginProvider {
 
   /** JSON deserializer. */
   implicit val reads: Reads[ILoginProvider] = {
-    __.read[String]
+    implicitly[Reads[String]]
       // TODO заменить это на какой-нибудь flatMap().
       .map { maybeWithName }
       .filter { _.nonEmpty }

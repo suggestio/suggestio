@@ -286,13 +286,13 @@ trait ScSyncSite
     }
 
 
-    def indexHtmlLogicFut: Future[ScIndexUniLogic] = {
+    def indexHtmlLogicFut: Future[ScIndexLogicV2] = {
       val _indexSyncArgsFut = indexSyncArgsFut
       for {
         indexReqArgs  <- indexReqArgsFut
         indexSyncArgs <- _indexSyncArgsFut
       } yield {
-        new ScIndexUniLogicImpl {
+        new ScIndexLogicV2 {
           override def _reqArgs   = indexReqArgs
           override def _syncArgs  = indexSyncArgs
           override def _request   = syncLogic._request

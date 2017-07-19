@@ -11,6 +11,6 @@ trait IStrId {
   /** Некий строковой ключ. Например, ключ элемента модели. */
   def strId: String
 
-  override def toString: String = strId
+  override def toString = strId
 
 }

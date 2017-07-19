@@ -148,6 +148,7 @@ object MsgCodes {
   val `Hello` = "Hello"
   val `Hello.0` = "Hello.0"
   val `Suggest.io` = "Suggest.io"
+  val `iSuggest` = "iSuggest"
   val `All.rights.reserved` = "All.rights.reserved"
   val `day24h` = "day24h"
 

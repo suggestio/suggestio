@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
+import io.suggest.dev.JsScreenUtil
 import io.suggest.sc.sjs.c.scfsm.nav.OnGridNav
 import io.suggest.sc.sjs.c.scfsm.ust.Url2StateT
 import io.suggest.sc.sjs.m.msc._
@@ -32,7 +33,7 @@ object ScFsm
   override protected var _stateData: SD = {
     MScSd(
       common = MScCommon(
-        screen      = _getScreen,
+        screen      = JsScreenUtil.getScreen,
         browser     = MBrowser.detectBrowser,
         generation  = MGen.random
       )

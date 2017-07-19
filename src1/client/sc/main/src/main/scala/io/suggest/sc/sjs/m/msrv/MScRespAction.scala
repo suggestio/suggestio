@@ -2,6 +2,7 @@ package io.suggest.sc.sjs.m.msrv
 
 import scala.scalajs.js
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.resp.{MScRespActionType, MScRespActionTypes}
 import io.suggest.sc.sjs.m.msrv.foc.{MScRespAdsFoc, MScRespAdsFocJson}
 import io.suggest.sc.sjs.m.msrv.index.{MScRespIndex, MScRespIndexJson}
 import io.suggest.sc.sjs.m.msrv.tile.{MScRespAdsTile, MScRespAdsTileJson}

@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.wc
 
-import io.suggest.common.geom.d2.Size2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.sc.ScConstants.Welcome.FG_IMG_ID
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.attr.DataWh
@@ -24,11 +24,11 @@ trait WcFgImgT extends VmT with WcImgUtil with DataWh {
 
   override type T = HTMLImageElement
 
-  def adjust(): Size2di = {
+  def adjust(): MSize2di = {
     val iwh = getDataWh.get
     val newWidth  = iwh.width  / 2
     val newHeight = iwh.height / 2
-    val newSz = Size2di(newWidth, height = newHeight)
+    val newSz = MSize2di(newWidth, height = newHeight)
     val marginTopPx = - (newHeight + 50) / 2
     setImageWhMargin(newSz, marginTopPx)
     newSz

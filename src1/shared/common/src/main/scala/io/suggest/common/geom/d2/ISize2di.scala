@@ -1,6 +1,7 @@
 package io.suggest.common.geom.d2
 
 import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
+import io.suggest.media.MediaConst
 
 
 /**
@@ -17,9 +18,9 @@ trait ISize2di extends IWidth with IHeight {
     sz1.width == width  &&  sz1.height == height
   }
 
-  /** Вернуть инстанс [[Size2di]]. */
-  def toSize2di: Size2di = {
-    Size2di(width = width, height = height)
+  /** Вернуть инстанс [[MSize2di]]. */
+  def toSize2di: MSize2di = {
+    MSize2di(width = width, height = height)
   }
 
   override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
@@ -40,30 +41,60 @@ trait IHeight {
 }
 
 
-object Size2di {
+object MSize2di {
+
+  import play.api.libs.json._
+  import play.api.libs.functional.syntax._
+
+  implicit val MSIZE2DI_FORMAT: OFormat[MSize2di] = {
+    val C = MediaConst.NamesShort
+    (
+      (__ \ C.WIDTH_FN).format[Int] and
+      (__ \ C.HEIGHT_FN).format[Int]
+    )(apply, unlift(unapply))
+  }
+
 
   import boopickle.Default._
 
-  /** Поддержка boopickle для инстансов [[Size2di]]. */
-  implicit val size2diPickler: Pickler[Size2di] = {
-    generatePickler[Size2di]
+  /** Поддержка boopickle для инстансов [[MSize2di]]. */
+  implicit val size2diPickler: Pickler[MSize2di] = {
+    generatePickler[MSize2di]
+  }
+
+  /** Собрать инстанс [[MSize2di]] из данных, записанных в [[ISize2di]] */
+  def apply(sz2d: ISize2di): MSize2di = {
+    apply(
+      width  = sz2d.width,
+      height = sz2d.height
+    )
+  }
+
+  /** Вернуть переданный либо собрать новый инстанс [[MSize2di]]. */
+  def applyOrThis(sz2d: ISize2di): MSize2di = {
+    sz2d match {
+      case msz2d: MSize2di =>
+        msz2d
+      case other =>
+        apply(other)
+    }
   }
 
 }
 
 /** Дефолтовая реализация [[ISize2di]]. */
-final case class Size2di(
+final case class MSize2di(
                           override val width  : Int,
                           override val height : Int
                         )
   extends ISize2di
-  with IntMathModifiers[Size2di]
+  with IntMathModifiers[MSize2di]
 {
 
   override def toSize2di = this
 
   /** Модифицировать ширину и длину одной математической операцией. */
-  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): Size2di = {
+  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MSize2di = {
     copy(
       width   = op(width, arg2),
       height  = op(height, arg2)

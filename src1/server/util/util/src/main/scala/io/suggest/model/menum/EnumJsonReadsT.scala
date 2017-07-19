@@ -13,7 +13,7 @@ import play.api.libs.json._
 trait EnumJsonReadsT extends IMaybeWithName {
 
   implicit def reads: Reads[T] = {
-    __.read[String]
+    implicitly[Reads[String]]
       // Чтобы не было экзепшенов, надо дергать maybeWithName() и смотреть значение Option.
       .map(maybeWithName)
       // TODO Хз как передать некорректное значение внутрь ValidationError... А надо бы, очень надо.

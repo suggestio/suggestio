@@ -2,6 +2,8 @@ package io.suggest.model.n2.node.meta.colors
 
 import boopickle.Default._
 import io.suggest.common.html.HtmlConstants
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -18,6 +20,12 @@ object MColorData {
   /** Поддержка boopickle. */
   implicit val mColorDataPickler: Pickler[MColorData] = {
     generatePickler[MColorData]
+  }
+
+  /** Поддержка JSON. */
+  implicit val MCOLOR_DATA_FORMAT: OFormat[MColorData] = {
+    (__ \ MColorData.CODE_FN).format[String]
+      .inmap(MColorData.apply, _.code)
   }
 
 }

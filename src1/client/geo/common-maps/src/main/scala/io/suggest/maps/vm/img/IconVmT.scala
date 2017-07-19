@@ -1,7 +1,7 @@
 package io.suggest.maps.vm.img
 
 import io.suggest.common.geom.coord.ICoords2di
-import io.suggest.common.geom.d2.{ISize2di, Size2di}
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.common.maps.MapFormConstants._
 import io.suggest.sjs.common.geom.Coords2di
 import io.suggest.sjs.common.vm.attr.{AttrVmT, GetImgSrc}
@@ -38,7 +38,7 @@ trait IconVmT
 
   /** Получить ширину и длину из аттрибутов. */
   def wh: Option[ISize2di] = {
-    _pair2v(ATTR_IMG_WIDTH, ATTR_IMG_HEIGHT)(Size2di.apply)
+    _pair2v(ATTR_IMG_WIDTH, ATTR_IMG_HEIGHT)(MSize2di.apply)
   }
 
   /** Получить какую-то координату из аттрибутов. */

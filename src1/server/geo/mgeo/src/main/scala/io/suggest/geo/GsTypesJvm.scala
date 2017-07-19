@@ -1,6 +1,6 @@
 package io.suggest.geo
 
-import io.suggest.enum.EnumeratumJvmUtil
+import io.suggest.enum2.EnumeratumUtil
 import play.api.libs.json.Format
 
 /**
@@ -13,7 +13,7 @@ object GsTypesJvm {
 
   /** Поддержка JSON сериализации/десериализации в JsString. */
   implicit val GS_TYPE_FORMAT: Format[GsType] = {
-    EnumeratumJvmUtil.enumEntryFormat(GsTypes)
+    EnumeratumUtil.enumEntryFormat(GsTypes)
   }
 
 

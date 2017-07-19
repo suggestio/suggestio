@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.vm.attr
 
-import io.suggest.common.geom.d2.Size2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.sc.ScConstants.{HEIGHT_ATTR, WIDTH_ATTR}
 
 /**
@@ -26,12 +26,12 @@ trait DataWidth extends AttrVmT {
 trait DataWh extends DataHeight with DataWidth {
 
   /** Прочитать оба значения ширины и длины, вернув их в контейнере Size2d. */
-  protected def getDataWh: Option[Size2di] = {
+  protected def getDataWh: Option[MSize2di] = {
     for {
       h <- getDataHeight
       w <- getDataWidth
     } yield {
-      Size2di(height = h, width = w)
+      MSize2di(height = h, width = w)
     }
   }
 

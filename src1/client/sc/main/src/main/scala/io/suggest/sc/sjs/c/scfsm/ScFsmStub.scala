@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm
 
-import io.suggest.dev.MScreen
+import io.suggest.dev.JsScreenUtil
 import io.suggest.fsm.StateData
 import io.suggest.geo.MLocEnv
 import io.suggest.sc.sjs.c.scfsm.ust.IUrl2State
@@ -10,9 +10,6 @@ import io.suggest.sc.sjs.m.msc.{MScSd, PopStateSignal}
 import io.suggest.sc.sjs.vm.nav.nodelist.NlRoot
 import io.suggest.sc.sjs.vm.search.SRoot
 import io.suggest.sjs.common.fsm._
-import io.suggest.sjs.common.msg.WarnMsgs
-import io.suggest.sjs.common.vm.wnd.WindowVm
-import io.suggest.sjs.common.vsz.ViewportSz
 import org.scalajs.dom.KeyboardEvent
 
 /**
@@ -27,36 +24,6 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
   override type SD      = MScSd
 
 
-  /** Детектор данных по экрану. */
-  protected def _getScreen: MScreen = {
-    val vszOpt = ViewportSz.getViewportSize
-    if (vszOpt.isEmpty)
-      LOG.warn( WarnMsgs.NO_SCREEN_VSZ_DETECTED )
-
-    val pxRatio = WindowVm()
-      .devicePixelRatio
-      .fold[Double] {
-        LOG.warn( WarnMsgs.SCREEN_PX_RATIO_MISSING )
-        1.0
-      }( MScreen.roundPxRation )
-
-    vszOpt.fold{
-      // Наврядли этот код будет вызываться когда-либо.
-      MScreen(
-        width  = 1024,
-        height = 768,
-        pxRatio = pxRatio
-      )
-    } { sz2d =>
-      MScreen(
-        width  = sz2d.width,
-        height = sz2d.height,
-        pxRatio = pxRatio
-      )
-    }
-  }
-
-
   /** Трейт для реализации разных логик реакции на изменение размера окна в зависимости от текущего состояния. */
   protected trait HandleViewPortChangedT {
 
@@ -66,7 +33,7 @@ trait ScFsmStub extends SjsFsm with StateData with DirectDomEventHandlerFsm with
     /** Дополняемая/настраивамая реакция на сигнал об изменении размеров окна или экрана устройства. */
     def _viewPortChanged(e: IVpSzChanged): Unit = {
       // Обновить данные состояния по текущему экрану.
-      val screen = _getScreen
+      val screen = JsScreenUtil.getScreen
       val sd0 = _stateData
       val sd1 = sd0.withCommon(
         sd0.common.copy(

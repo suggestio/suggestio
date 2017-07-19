@@ -23,7 +23,7 @@ object LsDataTypes extends Enumeration {
 
   /** JSON-маппер значения из переданных данны. */
   implicit def reads: Reads[T] = {
-    __.read[String]
+    implicitly[Reads[String]]
       .map { withName }
   }
 

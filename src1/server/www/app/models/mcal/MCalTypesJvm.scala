@@ -18,7 +18,7 @@ class MCalTypesJvm {
 
   /** Поддержка опционального маппинга из/в JSON. */
   implicit val mCalTypeOptFormat: Format[Option[MCalType]] = {
-    __.format[String]
+    implicitly[Format[String]]
       // Чтобы не было экзепшенов, надо дергать maybeWithName() и смотреть значение Option.
       .inmap [Option[MCalType]] (
         MCalTypes.withNameOption,

@@ -225,6 +225,16 @@ object Xhr extends Log {
     * @return Фьючерс с десериализованным JSON.
     */
   def requestJson(route: Route): Future[js.Dynamic] = {
+    for (jsonText <- requestJsonText(route)) yield {
+      JSON.parse( jsonText )
+    }
+  }
+
+  /**
+    * Запрос JSON сервера без парсинга JSON на клиенте.
+    * Метод появился как временный костыль к play-json, который через API парсит только строки.
+    */
+  def requestJsonText(route: Route): Future[String] = {
     val xhrFut = successIf200 {
       send(
         route   = route,
@@ -232,12 +242,9 @@ object Xhr extends Log {
       )
     }
     for (xhr <- xhrFut) yield {
-      JSON.parse {
-        xhr.responseText
-      }
+      xhr.responseText
     }
   }
-
 
   def requestHtml(route: Route): Future[String] = {
     val xhrFut = successIf200 {

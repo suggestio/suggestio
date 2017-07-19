@@ -3,6 +3,7 @@ package models.msc.resp
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.sc.ScConstants.Resp._
+import io.suggest.sc.resp.MScRespActionType
 
 /**
   * Suggest.io

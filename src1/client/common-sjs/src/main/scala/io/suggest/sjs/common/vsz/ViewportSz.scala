@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.vsz
 
-import io.suggest.common.geom.d2.Size2di
+import io.suggest.common.geom.d2.MSize2di
 
 /**
  * Suggest.io
@@ -15,12 +15,12 @@ trait IViewportSz {
   def widthPx : Option[Int]
   def heightPx: Option[Int]
 
-  def getViewportSize: Option[Size2di] = {
+  def getViewportSize: Option[MSize2di] = {
     for {
       w <- widthPx
       h <- heightPx
     } yield {
-      Size2di(width = w, height = h)
+      MSize2di(width = w, height = h)
     }
   }
 

@@ -2,6 +2,8 @@ package io.suggest.model.n2.node.meta.colors
 
 import boopickle.Default._
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -27,6 +29,13 @@ object MColors extends IEmpty {
     implicit val mColorsDataP = MColorData.mColorDataPickler
     generatePickler[MColors]
   }
+
+  /** Поддержка JSON. */
+  implicit val MCOLORS_FORMAT: OFormat[MColors] = (
+    (__ \ MColorKeys.Bg.strId).formatNullable[MColorData] and
+    (__ \ MColorKeys.Fg.strId).formatNullable[MColorData] and
+    (__ \ MColorKeys.Pattern.strId).formatNullable[MColorData]
+  )(MColors.apply, unlift(MColors.unapply))
 
 }
 

@@ -1,9 +1,8 @@
-package io.suggest.enum
+package io.suggest.enum2
 
 import enumeratum._
-import play.api.libs.json.Writes
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json.{Writes, _}
 
 import scala.language.implicitConversions
 
@@ -14,7 +13,7 @@ import scala.language.implicitConversions
   * Description: Серверная утиль для enumeratum.
   * Например, нормальная поддержка play-json для кросс-платформенных моделей.
   */
-object EnumeratumJvmUtil {
+object EnumeratumUtil {
 
   /** Поддержка JSON-десериализации из строки.
     *
@@ -23,7 +22,7 @@ object EnumeratumJvmUtil {
     * @return JSON Reads.
     */
   def enumEntryReads[T <: EnumEntry](model: Enum[T]): Reads[T] = {
-    __.read[String]
+    implicitly[Reads[String]]
       .map( model.withNameOption )
       .filter( JsonValidationError("error.unknown.name") )(_.nonEmpty)
       .map(_.get)
@@ -36,7 +35,7 @@ object EnumeratumJvmUtil {
     * @return JSON Writes.
     */
   implicit def enumEntryWrites[T <: EnumEntry]: Writes[T] = {
-    __.write[String]
+    implicitly[Writes[String]]
       .contramap(_.toString)
   }
 

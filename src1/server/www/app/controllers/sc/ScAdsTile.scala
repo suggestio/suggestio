@@ -7,6 +7,7 @@ import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
+import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
@@ -21,7 +22,7 @@ import play.api.libs.json._
 import scala.collection.immutable
 import scala.concurrent.Future
 import models._
-import models.msc.resp.{MScResp, MScRespAction, MScRespActionTypes, MScRespAdsTile}
+import models.msc.resp.{MScResp, MScRespAction, MScRespAdsTile}
 
 /**
  * Suggest.io

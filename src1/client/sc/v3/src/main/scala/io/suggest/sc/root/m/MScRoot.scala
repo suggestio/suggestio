@@ -2,7 +2,8 @@ package io.suggest.sc.root.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.sc.m.MScNodeInfo
+import io.suggest.geo.MLocEnv
+import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.router.routes
 
 /**
@@ -16,8 +17,8 @@ object MScRoot {
 
   implicit case object MScRootFastEq extends FastEq[MScRoot] {
     override def eqv(a: MScRoot, b: MScRoot): Boolean = {
-      (a.jsRouter eq b.jsRouter) &&
-        (a.currNode eq b.currNode)
+      (a.index eq b.index) &&
+        (a.jsRouter eq b.jsRouter)
     }
   }
 
@@ -25,11 +26,17 @@ object MScRoot {
 
 
 case class MScRoot(
-                    jsRouter      : Pot[routes.type]      = Pot.empty,
-                    currNode      : Option[MScNodeInfo]   = None
+                    index         : MScIndex,
+                    jsRouter      : Pot[routes.type]      = Pot.empty
                   ) {
 
-  def withJsRouter(jsRouter: Pot[routes.type]) = copy(jsRouter = jsRouter)
+  def withIndex( index: MScIndex ) = copy(index = index)
+  def withJsRouter( jsRouter: Pot[routes.type] ) = copy(jsRouter = jsRouter)
+
+  def locEnv: MLocEnv = {
+    // TODO собрать данные по маячкам и текущей локации
+    MLocEnv.empty
+  }
 
 }
 

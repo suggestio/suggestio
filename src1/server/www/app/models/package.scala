@@ -35,8 +35,8 @@ package object models {
 
   type ISize2di             = io.suggest.common.geom.d2.ISize2di
 
-  type Size2di              = io.suggest.common.geom.d2.Size2di
-  val  Size2di              = io.suggest.common.geom.d2.Size2di
+  type Size2di              = io.suggest.common.geom.d2.MSize2di
+  val  Size2di              = io.suggest.common.geom.d2.MSize2di
 
   type MImgSizeT            = ym.model.common.MImgSizeT
 

@@ -56,11 +56,16 @@ object ScRootR {
   val component = ScalaComponent.builder[Props]("Root")
     .initialStateFromProps { propsProxy =>
       State(
-        colorsOptC  = propsProxy.connect( _.currNode.map(_.colors) ),
+        colorsOptC  = propsProxy.connect { props =>
+          props.index
+            .resp
+            .toOption
+            .map(_.colors)
+        },
         headerProps = propsProxy.connect { props =>
           HeaderR.PropsVal(
             hdrState = MHeaderStates.PlainGrid,   // TODO Определять маркер состояния на основе состояния полей в props.
-            node     = props.currNode
+            node     = props.index.resp.toOption
           )
         }
       )

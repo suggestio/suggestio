@@ -2,7 +2,7 @@ package io.suggest.dev
 
 import io.suggest.common.geom.d2.ISize2di
 import play.api.libs.functional.syntax._
-import play.api.libs.json.{Writes, __}
+import play.api.libs.json.Writes
 
 /**
  * Suggest.io
@@ -15,7 +15,7 @@ object MScreen {
 
   /** Поддержка Play-json сериализации у нас очень простая. */
   implicit val MSCREEN_WRITES: Writes[MScreen] = {
-    __.write[String]
+    implicitly[Writes[String]]
       .contramap[MScreen]( _.toQsValue )
   }
 

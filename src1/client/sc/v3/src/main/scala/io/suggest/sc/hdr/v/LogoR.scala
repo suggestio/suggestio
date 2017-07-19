@@ -4,9 +4,9 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sc.m.MScNodeInfo
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.styl.ScCss.scCss
 
 import scalacss.ScalaCssReact._
@@ -23,7 +23,7 @@ import scalacss.ScalaCssReact._
   */
 object LogoR {
 
-  type PropsVal = Option[MScNodeInfo]
+  type PropsVal = Option[MSc3IndexResp]
   type Props = ModelProxy[PropsVal]
 
 
