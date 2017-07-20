@@ -1,6 +1,7 @@
 package io.suggest.react
 
 import diode.ActionType
+import diode.data.{PendingBase, Pot}
 import diode.react.ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
 
@@ -32,6 +33,14 @@ object ReactDiodeUtil {
 
   def eStopPropagationCB(e: ReactEvent): Callback = {
     e.stopPropagationCB
+  }
+
+
+  def isPendingWithStartTime[U](pot: Pot[U], validStartTime: Long): Boolean = {
+    pot match {
+      case pb: PendingBase => pb.startTime == validStartTime
+      case _ => false
+    }
   }
 
 }

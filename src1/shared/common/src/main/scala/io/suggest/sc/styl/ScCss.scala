@@ -61,7 +61,10 @@ case class ScCss(
   object Body {
 
     /** Главный обязательный статический класс для body. */
-    val smBody = _styleAddClasses( _SM_ + "body" )
+    val smBody = style(
+      //addClassName( _SM_ + "body" ),
+      overflow.hidden
+    )
 
     /** Фоновый SVG-логотип ЯПРЕДЛАГАЮ. Его в теории может и не быть, поэтому оно отдельно от класса body. */
     object BgLogo {
@@ -71,7 +74,6 @@ case class ScCss(
 
     /** Исторически как-то сложилось, что активация body происходит через style-аттрибут. Но это плевать наверое. */
     val smBodyReady = style(
-      overflow.hidden,
       backgroundColor.white
     )
 

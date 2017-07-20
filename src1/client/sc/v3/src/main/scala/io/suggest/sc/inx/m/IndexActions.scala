@@ -1,9 +1,6 @@
 package io.suggest.sc.inx.m
 
 import io.suggest.sc.m.ISc3Action
-import io.suggest.sc.resp.MSc3Resp
-
-import scala.util.Try
 
 /**
   * Suggest.io
@@ -18,5 +15,11 @@ sealed trait IIndexAction extends ISc3Action
 /** Дёрнуть индекс с сервера и накатить. */
 case class GetIndex(rcvrId: Option[String]) extends IIndexAction
 
-/** Ответ сервера на запрос */
-case class HandleScResp(timestampMs: Long, tryResp: Try[MSc3Resp]) extends IIndexAction
+
+/** Нажатие на экран приветствия. */
+case object WcClick extends IIndexAction
+
+/** Срабатывание таймера автоматического переключения фазы welcome.
+  * @param timestamp Таймштамп-отметка, для проверки актуальности сработавшего таймера.
+  */
+case class WcTimeOut(timestamp: Long) extends IIndexAction

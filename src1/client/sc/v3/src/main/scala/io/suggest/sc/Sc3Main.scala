@@ -1,9 +1,11 @@
 package io.suggest.sc
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.root.m.JsRouterStatus
 import io.suggest.sc.root.v.ScRootR
 import io.suggest.sc.router.SrvRouter
+import io.suggest.sc.styl.ScCss
 import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -47,6 +49,10 @@ object Sc3Main {
     jsRouterFut.andThen { case tryRes =>
       mainCircuit.dispatch( JsRouterStatus(tryRes) )
     }
+
+    val BodyCss = ScCss.scCss.Body
+    body.className += BodyCss.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
+    // TODO Добавить обеление фона body.
 
     // TODO Запустить разные FSM: геолокация, platform, BLE. Переписав их в circuit'ы предварительно.
   }

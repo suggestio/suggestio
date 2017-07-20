@@ -40,13 +40,13 @@ object IndexR {
           for {
             resp    <- props.resp.toOption
             wcInfo  <- resp.welcome
-            isWcHiding <- props.state.welcomeState
+            wcState <- props.welcome
           } yield {
             WelcomeR.PropsVal(
               wcInfo   = wcInfo,
               screen   = props.state.screen,
               nodeName = resp.name,
-              state    = Some(isWcHiding)
+              state    = wcState
             )
           }
         }

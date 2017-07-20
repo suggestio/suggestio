@@ -10,6 +10,6 @@ import io.suggest.sjs.common.model.TimeoutPromise
   */
 
 case class WcHideState(
-  isHiding: Boolean,
-  info: TimeoutPromise
+  isHiding  : Boolean,
+  info      : TimeoutPromise[None.type]
 )

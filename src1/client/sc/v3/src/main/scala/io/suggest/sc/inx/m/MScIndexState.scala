@@ -17,8 +17,7 @@ object MScIndexState {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
       (a.screen eq b.screen) &&
         (a.rcvrIds eq b.rcvrIds) &&
-        (a.geoPoint eq b.geoPoint) &&
-        (a.welcomeState eq b.welcomeState)
+        (a.geoPoint eq b.geoPoint)
     }
   }
 
@@ -35,8 +34,7 @@ object MScIndexState {
 case class MScIndexState(
                           screen          : MScreen,
                           rcvrIds         : List[String]        = Nil,
-                          geoPoint        : Option[MGeoPoint]   = None,
-                          welcomeState    : MWelcomeState       = MWelcomeStates.ShownNow
+                          geoPoint        : Option[MGeoPoint]   = None
                         ) {
 
   // val или lazy val, т.к. часто нужен инстанс именно текущего узла.
@@ -46,23 +44,5 @@ case class MScIndexState(
   def withScreenOpt( screen: MScreen ) = copy( screen = screen )
   def withRcvrNodeId( rcvrNodeId: List[String] ) = copy( rcvrIds = rcvrNodeId )
   def withGeoPoint( geoPoint: Option[MGeoPoint] ) = copy( geoPoint = geoPoint )
-  def withWelcomeState( welcomeState: MWelcomeState ) = copy( welcomeState = welcomeState )
 
 }
-
-
-/** Допустимые состояния поля welcomeState. */
-object MWelcomeStates {
-
-  /** Экран приветствия отображается сейчас. */
-  def ShownNow   : MWelcomeShowingState = Some(true)
-
-  /** Экран приветствия находится в анимации сокрытия. */
-  def HidingNow  : MWelcomeShowingState = Some(false)
-
-  /** Экран приветствия отсутствует в DOM, потому что скрыт окончательно или вообще отсутсвует. */
-  def NotShown   : MWelcomeState        = None
-
-}
-
-

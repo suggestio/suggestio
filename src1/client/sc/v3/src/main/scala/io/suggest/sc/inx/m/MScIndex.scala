@@ -15,18 +15,21 @@ object MScIndex {
   implicit object MScIndexFastEq extends FastEq[MScIndex] {
     override def eqv(a: MScIndex, b: MScIndex): Boolean = {
       (a.state eq b.state) &&
-        (a.resp eq b.resp)
+        (a.resp eq b.resp) &&
+        (a.welcome eq b.welcome)
     }
   }
 
 }
 
 case class MScIndex(
-                     state : MScIndexState,
-                     resp  : Pot[MSc3IndexResp] = Pot.empty
+                     state      : MScIndexState,
+                     resp       : Pot[MSc3IndexResp]      = Pot.empty,
+                     welcome    : Option[MWelcomeState]   = None
                    ) {
 
   def withState(state: MScIndexState)     = copy(state = state)
   def withResp(resp: Pot[MSc3IndexResp])  = copy(resp = resp)
+  def withWelcome(welcome: Option[MWelcomeState]) = copy(welcome = welcome)
 
 }

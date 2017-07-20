@@ -1,12 +1,13 @@
 package io.suggest.sc.inx.c
 
 import diode._
-import diode.data.{PendingBase, Pot}
-import io.suggest.sc.Sc3Api
+import diode.data.Pot
+import io.suggest.react.ReactDiodeUtil
+import io.suggest.sc.{Sc3Api, ScConstants}
 import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
-import io.suggest.sc.inx.m.{GetIndex, HandleScResp}
+import io.suggest.sc.inx.m.{GetIndex, MScIndex, MWelcomeState}
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.root.m.{HandleScResp, MScRoot}
 import io.suggest.sc.styl.ScCss
 
 import scala.util.Success
@@ -20,7 +21,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   */
 class IndexAh[M](
                   api       : IIndexApi,
-                  modelRW   : ModelRW[M, Pot[MSc3IndexResp]],
+                  modelRW   : ModelRW[M, MScIndex],
                   stateRO   : ModelRO[MScRoot]
                 )
   extends ActionHandler( modelRW )
@@ -49,31 +50,68 @@ class IndexAh[M](
             Success(HandleScResp(ts, tryRes))
           }
       }
-      val v2 = value.pending(ts)
+
+      val v0 = value
+      val v2 = v0.withResp(
+        v0.resp.pending(ts)
+      )
       updated( v2, fx )
 
 
     // Поступление ответа сервера, который ожидается
-    case m: HandleScResp if value.isPending && value.asInstanceOf[PendingBase].startTime == m.timestampMs =>
+    case m: HandleScResp if ReactDiodeUtil.isPendingWithStartTime(value.resp, m.reqTimestamp) =>
       val v0 = value
 
-      val v2: Pot[MSc3IndexResp] = m.tryResp.fold(
-        v0.fail,
+      // Запихать ответ в состояние.
+      val resp2: Pot[MSc3IndexResp] = m.tryResp.fold(
+        v0.resp.fail,
         {scResp =>
           scResp.respActions
             .find(_.acType == MScRespActionTypes.Index)
             .flatMap( _.index )
-            .fold { v0.fail( new NoSuchElementException("index") ) } { scIndexResp =>
+            .fold {
+              v0.resp.fail( new NoSuchElementException("index") )
+            } { scIndexResp =>
               // TODO Говнокод: пересобрать стили, если пришли новые цвета, затем запихать их в глобальную переменную.
               if (ScCss.scCss.colors != scIndexResp.colors)
                 ScCss.scCss = ScCss( scIndexResp.colors )
               // Вернуть положительный результат в состояние
-              v0.ready(scIndexResp)
+              v0.resp.ready(scIndexResp)
             }
         }
       )
+      val v1 = v0.withResp( resp2 )
 
-      updated( v2 )
+      // Инициализация приветствия. Подготовить состояние welcome.
+      val mWcSFutOpt = for {
+        resp <- v1.resp.toOption
+        if !v1.resp.isFailed      // Всякие FailingStale содержат старый ответ и новую ошибку, их надо отсеять.
+        _    <- resp.welcome
+      } yield {
+        val tstamp = System.currentTimeMillis()
+
+        // Собрать функцию для запуска неотменяемого таймера.
+        // Функция возвращает фьючерс, который исполнится через ~секунду.
+        val tpF = WelcomeUtil.timeoutF( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+
+        // Собрать начальное состояние приветствия:
+        val mWcS = MWelcomeState(
+          isHiding    = false,
+          timerTstamp = tstamp
+        )
+
+        (tpF, mWcS)
+      }
+      val v2 = v1.withWelcome( mWcSFutOpt.map(_._2) )
+
+      mWcSFutOpt.fold {
+        // Нет запущенного таймера, в виду отсутствия welcome видимо.
+        updated( v2 )
+
+      } { case (tpF, _) =>
+        // Есть запущенный таймер, организовать возврат с эффектом.
+        updated(v2, tpF)
+      }
 
   }
 

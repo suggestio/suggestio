@@ -5,15 +5,16 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MScreen
 import io.suggest.sc.index.MWelcomeInfo
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.ScConstants
 import io.suggest.sc.hdr.v.NodeNameR
-import io.suggest.sc.inx.m.{MWelcomeShowingState, MWelcomeStates}
+import io.suggest.sc.inx.m.{MWelcomeState, WcClick}
 import io.suggest.sc.styl.ScCss.scCss
 import io.suggest.sjs.common.spa.OptFastEq.Plain
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scalacss.ScalaCssReact._
 
@@ -30,7 +31,7 @@ object WelcomeR {
                        wcInfo     : MWelcomeInfo,
                        screen     : MScreen,
                        nodeName   : Option[String],
-                       state      : MWelcomeShowingState
+                       state      : MWelcomeState
                      )
 
   /** Модель внутреннего состояния компонента приветствия.
@@ -56,6 +57,10 @@ object WelcomeR {
 
   class Backend( $: BackendScope[Props, State] ) {
 
+    private def _onClick: Callback = {
+      dispatchOnProxyScopeCB( $, WcClick )
+    }
+
     private def _whMarginMod(wh: ISize2di, margin: ISize2di): TagMod = {
       TagMod(
         ^.height      := wh.height.px,
@@ -68,22 +73,23 @@ object WelcomeR {
     def render(propsProxy: Props, s: State): VdomElement = {
       propsProxy().whenDefinedEl { p =>
         val AnimCss = ScConstants.Welcome.Anim
-        val fadingOutNow = p.state == MWelcomeStates.HidingNow
+        val fadingOutNow = p.state.isHiding
+        val CSS = scCss.Welcome
 
         <.div(
-          scCss.Welcome.welcome,
+          CSS.welcome,
           ^.classSet1(
             AnimCss.WILL_FADEOUT_CSS_CLASS,
             AnimCss.TRANS_02_CSS_CLASS     -> fadingOutNow,
             AnimCss.FADEOUT_CSS_CLASS      -> fadingOutNow
           ),
 
-          // TODO onClick
+          ^.onClick --> _onClick,
 
           // Рендер фонового изображения.
           p.wcInfo.bgImage.whenDefined { bgImg =>
             <.img(
-              scCss.Welcome.Bg.bgImg,
+              CSS.Bg.bgImg,
               ^.src := bgImg.url,
 
               // Рендер параметров изображения: подгонка фона wh под экран и центровка.
@@ -112,11 +118,11 @@ object WelcomeR {
             // Есть графический логотип, отрендерить его изображение:
             TagMod(
               <.span(
-                scCss.Welcome.Fg.helper
+                CSS.Fg.helper
               ),
 
               <.img(
-                scCss.Welcome.Fg.fgImg,
+                CSS.Fg.fgImg,
                 ^.src := fgImg.url,
 
                 // Центровка логотипа под экран
@@ -130,9 +136,21 @@ object WelcomeR {
             )
           },
 
-          // Текстовый логотип-подпись.
-          // TODO XXX marginTop = (fgImgSz.height / 2).px
-          s.nodeNameC { NodeNameR.apply }
+          // Текстовый логотип-подпись, если доступно название узла.
+          p.nodeName.whenDefined { _ =>
+            <.div(
+              CSS.Fg.fgText,
+              // Выровнять по вертикали с учётом картинки переднего плана:
+              p.wcInfo
+                .fgImage
+                .flatMap(_.whPx)
+                .whenDefined { whPx =>
+                  ^.marginTop := (whPx.height / 2).px
+                },
+              // Отобразить текстовый логотип, такой же как и в заголовке:
+              s.nodeNameC { NodeNameR.apply }
+            )
+          }
 
         )
       }

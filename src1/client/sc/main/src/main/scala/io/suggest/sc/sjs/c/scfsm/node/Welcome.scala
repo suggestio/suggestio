@@ -129,7 +129,7 @@ trait Welcome extends grid.OnGrid with State2UrlT {
         if (!wcInfo.isHiding) {
           // Педалируем завершения фьючерса не дожидаясь его таймера.
           DomQuick.clearTimeout(wcInfo.info.timerId)
-          wcInfo.info.promise.trySuccess()
+          wcInfo.info.promise.trySuccess(None)
         }
       }
     }

@@ -48,10 +48,13 @@ object DomQuick {
     * @param timeMs Через сколько миллисекунд исполнить возвращаемый Promise.
     * @return Контейнер с данными, касающиеся новоиспечённого Promise'а.
     */
-  def timeoutPromise(timeMs: Double): TimeoutPromise = {
-    val p = Promise[Any]()
+  def timeoutPromise(timeMs: Double): TimeoutPromise[None.type] = {
+    timeoutPromiseT(timeMs)(None)
+  }
+  def timeoutPromiseT[T](timeMs: Double)(res: T): TimeoutPromise[T] = {
+    val p = Promise[T]()
     val timerId = setTimeout(timeMs) { () =>
-      p.success(None)
+      p.success(res)
     }
     TimeoutPromise(p, timerId)
   }
