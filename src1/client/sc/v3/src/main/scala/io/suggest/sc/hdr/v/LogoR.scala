@@ -1,12 +1,13 @@
 package io.suggest.sc.hdr.v
 
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.media.IMediaInfo
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.styl.ScCss.scCss
 
 import scalacss.ScalaCssReact._
@@ -23,8 +24,19 @@ import scalacss.ScalaCssReact._
   */
 object LogoR {
 
-  type PropsVal = Option[MSc3IndexResp]
-  type Props = ModelProxy[PropsVal]
+  type Props = ModelProxy[Option[PropsVal]]
+
+  case class PropsVal(
+                       logoOpt      : Option[IMediaInfo],
+                       nodeNameOpt  : Option[String]
+                     )
+
+  implicit object LogoPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.logoOpt eq b.logoOpt) &&
+        (a.nodeNameOpt eq b.nodeNameOpt)
+    }
+  }
 
 
   protected[this] case class State(
@@ -49,7 +61,7 @@ object LogoR {
           <.img(
             imgStyles.logo,
             ^.src := logoInfo.url,
-            nodeInfo.name.whenDefined { nodeName =>
+            nodeInfo.nodeNameOpt.whenDefined { nodeName =>
               ^.title := nodeName
             },
             ^.height := imgStyles.IMG_HEIGHT_CSSPX.px
@@ -65,7 +77,7 @@ object LogoR {
   val component = ScalaComponent.builder[Props]("Logo")
     .initialStateFromProps { proxy =>
       State(
-        nodeNameOptC = proxy.connect( _.flatMap(_.name) )
+        nodeNameOptC = proxy.connect( _.flatMap(_.nodeNameOpt) )
       )
     }
     .renderBackend[Backend]

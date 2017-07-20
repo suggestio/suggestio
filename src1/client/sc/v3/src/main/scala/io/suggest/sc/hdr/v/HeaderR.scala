@@ -9,7 +9,8 @@ import io.suggest.sc.styl.ScCss.scCss
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sjs.common.spa.OptFastEq.Plain
+import io.suggest.sjs.common.spa.OptFastEq
+import io.suggest.react.ReactCommonUtil.Implicits._
 
 import scalacss.ScalaCssReact._
 
@@ -19,7 +20,9 @@ import scalacss.ScalaCssReact._
   * Created: 07.07.17 17:49
   * Description: Компонент заголовка выдачи.
   */
+
 object HeaderR {
+
 
   /** Модель пропертисов для рендера компонента заголовка.
     *
@@ -28,7 +31,7 @@ object HeaderR {
     */
   case class PropsVal(
                        hdrState   : MHeaderState,
-                       node       : Option[MSc3IndexResp]
+                       node       : MSc3IndexResp
                      )
 
   implicit object HeaderPropsValFastEq extends FastEq[PropsVal] {
@@ -38,37 +41,39 @@ object HeaderR {
     }
   }
 
-  type Props = ModelProxy[PropsVal]
+  type Props = ModelProxy[Option[PropsVal]]
 
 
   /** Коннекшены для props'ов кнопок. */
   protected case class State(
-                              plainGridC : ReactConnectProxy[Option[MColorData]],
-                              menuC      : ReactConnectProxy[Option[MColorData]],
-                              searchC    : ReactConnectProxy[Option[MColorData]],
-                              nodeOptC   : ReactConnectProxy[LogoR.PropsVal]
+                              plainGridC      : ReactConnectProxy[Option[MColorData]],
+                              menuC           : ReactConnectProxy[Option[MColorData]],
+                              searchC         : ReactConnectProxy[Option[MColorData]],
+                              logoPropsOptC   : ReactConnectProxy[Option[LogoR.PropsVal]]
                             )
 
 
   /** Рендерер. */
   protected class Backend($: BackendScope[Props, State]) {
 
-    def render(s: State): VdomElement = {
-      <.div(
-        scCss.Header.header,
+    def render(propsProxy: Props, s: State): VdomElement = {
+      propsProxy().whenDefinedEl { _ =>
+        <.div(
+          scCss.Header.header,
 
-        // Кнопки заголовка в зависимости от состояния.
-        // Кнопки при нахождении в обычной выдаче без посторонних вещей.
-        s.plainGridC { fgColorDataOptProxy =>
-          <.span(
-            MenuBtnR( fgColorDataOptProxy ),
-            SearchBtnR( fgColorDataOptProxy )
-          )
-        },
+          // Кнопки заголовка в зависимости от состояния.
+          // Кнопки при нахождении в обычной выдаче без посторонних вещей.
+          s.plainGridC { fgColorDataOptProxy =>
+            <.span(
+              MenuBtnR( fgColorDataOptProxy ),
+              SearchBtnR( fgColorDataOptProxy )
+            )
+          },
 
-        // Логотип посередине заголовка.
-        s.nodeOptC { LogoR.apply }
-      )
+          // Логотип посередине заголовка.
+          s.logoPropsOptC { LogoR.apply }
+        )
+      }
     }
 
   }
@@ -78,17 +83,25 @@ object HeaderR {
     .initialStateFromProps { propsProxy =>
       def __fgColorDataOptProxy(hStates: MHeaderState*) = {
         propsProxy.connect { props =>
-          props.node
-            .filter { _ => hStates.contains( props.hdrState ) }
+          props
+            .map(_.node)
+            .filter { _ => props.map(_.hdrState).exists(hStates.contains) }
             .flatMap(_.colors.fg)
-        }
+        }( OptFastEq.Plain )
       }
       val HS = MHeaderStates
       State(
         plainGridC  = __fgColorDataOptProxy( HS.PlainGrid ),
         menuC       = __fgColorDataOptProxy( HS.Menu ),
         searchC     = __fgColorDataOptProxy( HS.Search ),
-        nodeOptC    = propsProxy.connect( _.node )
+        logoPropsOptC    = propsProxy.connect { propsOpt =>
+          for (props <- propsOpt) yield {
+            LogoR.PropsVal(
+              logoOpt     = props.node.logoOpt,
+              nodeNameOpt = props.node.name
+            )
+          }
+        }( OptFastEq.Wrapped( LogoR.LogoPropsValFastEq ) )
       )
     }
     .renderBackend[Backend]
