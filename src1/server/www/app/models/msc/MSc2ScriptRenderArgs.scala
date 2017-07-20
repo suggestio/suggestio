@@ -10,18 +10,10 @@ package models.msc
   * Все конечно удалены, но возможно надо удалить и модель,
   * если окажется она тоже не нужна после перепиливания геолокации выдачи?
   *
-  * 2016.nov.9 Понадобилось значение API VSN в шаблоне [[views.html.sc.script._scriptV2Tpl]].
+  * 2016.nov.9 Понадобилось значение API VSN в шаблоне [[views.html.sc.site.v2._scriptV2Tpl]].
   * Может унифицировать эту модель с SiteQsArgs?
   */
-trait IScScriptRenderArgs {
 
-  def apiVsn: MScApiVsn
-
-}
-
-
-/** Дефолтовая реализация [[IScScriptRenderArgs]]. */
-case class ScScriptRenderArgs(
-  override val apiVsn: MScApiVsn
+case class MSc2ScriptRenderArgs(
+  apiVsn: MScApiVsn
 )
-  extends IScScriptRenderArgs

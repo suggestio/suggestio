@@ -3,6 +3,7 @@ package io.suggest.sc.inx.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.sc.search.m.MScSearch
 
 /**
   * Suggest.io
@@ -16,7 +17,8 @@ object MScIndex {
     override def eqv(a: MScIndex, b: MScIndex): Boolean = {
       (a.state eq b.state) &&
         (a.resp eq b.resp) &&
-        (a.welcome eq b.welcome)
+        (a.welcome eq b.welcome) &&
+        (a.search eq b.search)
     }
   }
 
@@ -25,11 +27,13 @@ object MScIndex {
 case class MScIndex(
                      state      : MScIndexState,
                      resp       : Pot[MSc3IndexResp]      = Pot.empty,
-                     welcome    : Option[MWelcomeState]   = None
+                     welcome    : Option[MWelcomeState]   = None,
+                     search     : MScSearch
                    ) {
 
-  def withState(state: MScIndexState)     = copy(state = state)
-  def withResp(resp: Pot[MSc3IndexResp])  = copy(resp = resp)
+  def withState(state: MScIndexState)             = copy(state = state)
+  def withResp(resp: Pot[MSc3IndexResp])          = copy(resp = resp)
   def withWelcome(welcome: Option[MWelcomeState]) = copy(welcome = welcome)
+  def withSearch(search: MScSearch)               = copy(search = search)
 
 }

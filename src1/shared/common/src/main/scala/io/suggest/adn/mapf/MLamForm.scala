@@ -1,8 +1,8 @@
 package io.suggest.adn.mapf
 
-import io.suggest.adv.geo.MMapProps
 import io.suggest.dt.MAdvPeriod
 import io.suggest.geo.{CircleGs, MGeoPoint}
+import io.suggest.maps.MMapProps
 
 /**
   * Suggest.io

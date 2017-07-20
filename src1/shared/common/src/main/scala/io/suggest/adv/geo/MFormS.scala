@@ -4,6 +4,7 @@ import boopickle.Default._
 import io.suggest.common.tags.edit.MTagsEditProps
 import io.suggest.dt.MAdvPeriod
 import io.suggest.geo.CircleGs
+import io.suggest.maps.MMapProps
 
 /**
   * Suggest.io

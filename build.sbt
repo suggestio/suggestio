@@ -313,7 +313,7 @@ lazy val scSjs = {
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs)
+    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs)
 }
 
 

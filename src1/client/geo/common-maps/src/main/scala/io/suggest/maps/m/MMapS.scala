@@ -1,7 +1,7 @@
 package io.suggest.maps.m
 
 import diode.FastEq
-import io.suggest.adv.geo.MMapProps
+import io.suggest.maps.MMapProps
 
 /**
   * Suggest.io
@@ -32,9 +32,9 @@ object MMapS {
   *                      None Нет ни геолокации, ничего.
   */
 case class MMapS(
-  props         : MMapProps,
-  locationFound : Option[Boolean] = None
-) {
+                  props         : MMapProps,
+                  locationFound : Option[Boolean] = None
+                ) {
 
   def withProps(mmp: MMapProps) = copy(props = mmp)
   def withLocationFound(lf: Option[Boolean]) = copy(locationFound = lf)

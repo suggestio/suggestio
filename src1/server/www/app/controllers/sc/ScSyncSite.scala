@@ -354,6 +354,7 @@ trait ScSyncSite
 
     /** Реализация [[SiteLogic]] для нужд [[ScSyncSite]]. */
     protected class SyncSiteLogic extends SiteLogic {
+      override def customCspPolicyOpt = None
       // Линкуем исходные данные логики с полями outer-класса.
       override implicit lazy val ctx  = syncLogic.ctx
       override def _siteQsArgs        = syncLogic._siteArgs

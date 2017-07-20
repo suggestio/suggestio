@@ -2,14 +2,19 @@ package io.suggest.sc
 
 import diode.react.ReactConnector
 import io.suggest.dev.JsScreenUtil
+import io.suggest.maps.m.MMapS
+import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
 import io.suggest.sc.root.m.MScRoot
 import io.suggest.sc.router.c.JsRouterInitAh
+import io.suggest.sc.search.m.MScSearch
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.sjs.common.spa.StateInp
+import play.api.libs.json.Json
 
 import scala.concurrent.Future
 
@@ -29,10 +34,14 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
 
   override protected def initialModel = {
     // TODO Десериализовать состояние из URL или откуда-нибудь ещё.
+    val state0 = Json.parse( StateInp.find().get.value.get ).as[MSc3Init]
     MScRoot(
       index = MScIndex(
         state = MScIndexState(
           screen = JsScreenUtil.getScreen
+        ),
+        search = MScSearch(
+          mapState = MMapS( state0.mapProps )
         )
       )
     )

@@ -87,7 +87,7 @@ class CspUtil @Inject() (
   object CustomPolicies {
 
     /** CSP-заголовок сайта выдачи. Выдача нуждается в доступе к tile'ам карты. */
-    val ScSiteHdrOpt = mkCustomPolicyHdr( _.allowMapBoxGl )
+    val PageWithMapboxGl = mkCustomPolicyHdr( _.allowMapBoxGl )
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
     val PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )

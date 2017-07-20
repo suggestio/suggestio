@@ -24,8 +24,8 @@ object MGeoNodesResp {
   * @param nodes Мета-данные и гео-шейпы узлов.
   */
 case class MGeoNodesResp(
-                              nodes   : Iterable[MGeoNodePropsShapes]
-                            )
+                          nodes   : Iterable[MGeoNodePropsShapes]
+                        )
 
 
 /** Контейнер props и shapes.

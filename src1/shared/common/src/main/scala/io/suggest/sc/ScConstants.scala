@@ -48,6 +48,7 @@ object ScConstants {
     /** Дефолтовый цвет элементов переднего плана. */
     def FG_COLOR = "FFFFFF"
 
+
   }
 
 

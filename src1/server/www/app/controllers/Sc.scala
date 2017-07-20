@@ -12,6 +12,7 @@ import models.mproj.ICommonDi
 import util.acl.{BruteForceProtect, GetAnyAd, MaybeAuth}
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
+import util.adv.geo.AdvGeoLocUtil
 import util.ble.BleUtil
 import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
@@ -49,6 +50,7 @@ class Sc @Inject() (
                      @Named("blk") override val blkImgMaker  : IMaker,
                      override val dynImgUtil         : DynImgUtil,
                      override val scMapUtil          : ScMapUtil,
+                     override val advGeoLocUtil      : AdvGeoLocUtil,
                      override val ctxUtil            : ContextUtil,
                      override val bruteForceProtect  : BruteForceProtect,
                      override val scAdSearchUtil     : ScAdSearchUtil,

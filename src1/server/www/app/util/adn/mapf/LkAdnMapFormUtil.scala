@@ -3,9 +3,9 @@ package util.adn.mapf
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.adn.mapf.{AdnMapFormConstants, MLamForm}
-import io.suggest.adv.geo.MMapProps
 import io.suggest.dt.CommonDateTimeUtil
 import io.suggest.geo.{CircleGs, MGeoPoint}
+import io.suggest.maps.MMapProps
 import io.suggest.scalaz.ValidateFormUtilT
 import util.adv.AdvFormUtil
 

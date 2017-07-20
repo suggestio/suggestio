@@ -5,6 +5,8 @@ import io.suggest.sc.hdr.m.MHeaderStates
 import io.suggest.sc.hdr.v.HeaderR
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.wc.WelcomeR
+import io.suggest.sc.search.m.MScSearch
+import io.suggest.sc.search.v.SearchR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,25 +21,30 @@ import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 object IndexR {
 
   import HeaderR.HeaderPropsValFastEq
+  import MScSearch.MScSearchFastEq
 
 
   type Props = ModelProxy[MScIndex]
 
   protected[this] case class State(
                                     headerPropsC  : ReactConnectProxy[Option[HeaderR.PropsVal]],
-                                    wcPropsOptC   : ReactConnectProxy[Option[WelcomeR.PropsVal]]
+                                    wcPropsOptC   : ReactConnectProxy[Option[WelcomeR.PropsVal]],
+                                    searchC       : ReactConnectProxy[MScSearch]
                                   )
 
   class Backend( $: BackendScope[Props, State] ) {
 
-    def render(propsProxy: Props, s: State): VdomElement = {
+    def render(s: State): VdomElement = {
       <.div(
 
         // Экран приветствия узла:
         s.wcPropsOptC { WelcomeR.apply },
 
         // Компонент заголовка выдачи:
-        s.headerPropsC { HeaderR.apply }
+        s.headerPropsC { HeaderR.apply },
+
+        // TODO Правая панель.
+        s.searchC { SearchR.apply }
 
       )
     }
@@ -71,7 +78,8 @@ object IndexR {
               state    = wcState
             )
           }
-        }
+        },
+        searchC = propsProxy.connect(_.search)
       )
     }
     .renderBackend[Backend]

@@ -1,4 +1,4 @@
-@(args: msc.IScScriptRenderArgs)(implicit ctx: Context)
+@(args: msc.MSc3ScriptRenderArgs)(implicit ctx: Context)
 
 @* HTML для подключения скрипта второй версии выдачи (sc-sjs). *@
 
@@ -7,6 +7,9 @@
 @import ctx.api.cdn
 @import io.suggest.sc.ScConstants.JsRouter.DOM_ID
 @import io.suggest.sc.map.ScMapConstants.Nodes.ALL_URL_INPUT_ID
+@import lk.lkwdgts._formStateInputTpl
+
+@_formStateInputTpl( args.state0 )
 
 @* id-атрибут у script-тега нарушает HTML-валидацию, но это плевать. *@
 <script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.Sc.scJsRouter() )">

@@ -2,18 +2,23 @@ package controllers.sc
 
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
+import io.suggest.geo.MGeoPoint
+import io.suggest.maps.MMapProps
 import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.sc.init.MSc3Init
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models._
 import models.mctx.IContextUtilDi
 import models.msc._
 import models.req.IReq
+import play.api.libs.json.Json
 import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
+import util.adv.geo.IAdvGeoLocUtilDi
 import util.di.IScUtil
 import util.ext.IExtServicesUtilDi
 import util.sec.ICspUtilDi
@@ -42,6 +47,7 @@ trait ScSite
   with IContextUtilDi
   with ICspUtilDi
   with IMaybeAuth
+  with IAdvGeoLocUtilDi
 {
 
   import mCommonDi._
@@ -55,12 +61,6 @@ trait ScSite
 
     /** Исходный http-реквест. */
     implicit def _request: IReq[_]
-
-    def scriptRenderArgs: IScScriptRenderArgs = {
-      ScScriptRenderArgs(
-        apiVsn = _siteQsArgs.apiVsn
-      )
-    }
 
     // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
     lazy val domainNodeOptFut: Future[Option[MNode]] = {
@@ -176,11 +176,14 @@ trait ScSite
       }
     }
 
+    /** Кастомные настройки CSP, или None, если не требуются. */
+    def customCspPolicyOpt: Option[(String, String)]
+
     /** Собрать ответ на HTTP-запрос сайта. */
     def resultFut: Future[Result] = {
       for (rargs <- renderArgsFut) yield {
         val render = siteTpl(rargs)(ctx)
-        cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.ScSiteHdrOpt ) {
+        cspUtil.applyCspHdrOpt( customCspPolicyOpt ) {
           cacheControlShort {
             Ok(render)
           }
@@ -233,16 +236,23 @@ trait ScSite
 
     import views.html.sc.site.v2._
 
+    override def customCspPolicyOpt: Option[(String, String)] = {
+      cspUtil.CustomPolicies.PageWithMapboxGl
+    }
+
     /** Добавки к тегу head в siteTpl. */
     override def headAfterFut: Future[List[Html]] = {
       val fut0 = super.headAfterFut
-      val headAfterHtml = _headAfterV2Tpl(scriptRenderArgs)(ctx)
+      val headAfterHtml = _headAfterV2Tpl()(ctx)
       for (htmls0 <- fut0) yield {
         headAfterHtml :: htmls0
       }
     }
 
     override def scriptHtmlFut: Future[Html] = {
+      val scriptRenderArgs = MSc2ScriptRenderArgs(
+        apiVsn = _siteQsArgs.apiVsn
+      )
       val html = _scriptV2Tpl(scriptRenderArgs)(ctx)
       Future.successful(html)
     }
@@ -268,19 +278,44 @@ trait ScSite
 
     import views.html.sc.site.v3._
 
+    override def customCspPolicyOpt: Option[(String, String)] = {
+      cspUtil.CustomPolicies.PageWithOsmLeaflet
+    }
 
     /** Добавки к тегу head в siteTpl. */
     override def headAfterFut: Future[List[Html]] = {
       val fut0 = super.headAfterFut
-      val headAfterHtml = _headAfterV3Tpl(scriptRenderArgs)(ctx)
+      val headAfterHtml = _headAfterV3Tpl()(ctx)
       for (htmls0 <- fut0) yield {
         headAfterHtml :: htmls0
       }
     }
 
+    private def geoPoint0Fut: Future[MGeoPoint] = {
+      import advGeoLocUtil.Detectors._
+
+      FromRemoteAddr( _request.remoteClientAddress )
+        .orElse( FromDefaultGeoPoint )
+        .get
+    }
+
     override def scriptHtmlFut: Future[Html] = {
-      val html = _scriptV3Tpl(scriptRenderArgs)(ctx)
-      Future.successful(html)
+      val _geoPoint0Fut = geoPoint0Fut
+      for {
+        geoPoint0 <- _geoPoint0Fut
+      } yield {
+        val state0 = MSc3Init(
+          mapProps = MMapProps(
+            center = geoPoint0,
+            zoom   = 11     // TODO Цифра с потолка.
+          )
+        )
+        val scriptRenderArgs = MSc3ScriptRenderArgs(
+          state0 = Json.toJson(state0).toString()
+        )
+        _scriptV3Tpl(scriptRenderArgs)(ctx)
+      }
+
     }
 
     /** Сформулировать данные для начального состояния выдачи. */

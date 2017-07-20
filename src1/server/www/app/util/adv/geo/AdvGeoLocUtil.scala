@@ -275,3 +275,8 @@ class AdvGeoLocUtil @Inject() (
   }
 
 }
+
+
+trait IAdvGeoLocUtilDi {
+  val advGeoLocUtil: AdvGeoLocUtil
+}
