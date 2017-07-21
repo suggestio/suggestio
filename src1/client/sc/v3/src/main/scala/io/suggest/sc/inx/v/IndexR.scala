@@ -60,7 +60,12 @@ object IndexR {
             resp <- props.resp.toOption
           } yield {
             HeaderR.PropsVal(
-              hdrState  = MHeaderStates.PlainGrid, // TODO Определять маркер состояния на основе состояния полей в props.
+              // TODO Определять маркер состояния на основе состояния полей в props.
+              hdrState  = if (props.search.isShown) {
+                MHeaderStates.Search
+              } else {
+                MHeaderStates.PlainGrid
+              },
               node      = resp
             )
           }

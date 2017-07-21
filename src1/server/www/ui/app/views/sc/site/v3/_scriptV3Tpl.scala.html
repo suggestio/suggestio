@@ -15,4 +15,7 @@
 <script id="@DOM_ID" type="text/javascript" async src="@cdn.forCall( routes.Sc.scJsRouter() )">
 </script>
 
+@* Рендер jsMessages прямо тут. *@
+@jsTpl2HtmlTpl( withScriptTag = true )( args.jsMessagesJs )
+
 @_sjsScript("sc3-sjs")

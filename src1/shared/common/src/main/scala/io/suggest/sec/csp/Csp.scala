@@ -282,6 +282,14 @@ case class CspPolicy(
     addImgSrc( "*.tile.openstreetmap.org" )
   }
 
+  def jsUnsafeInline: CspPolicy = {
+    addScriptSrc( Csp.Sources.UNSAFE_INLINE )
+  }
+
+  def styleUnsafeInline: CspPolicy = {
+    addStyleSrc( Csp.Sources.UNSAFE_INLINE )
+  }
+
   override def toString = CspPolicy.format(this)
 
 }

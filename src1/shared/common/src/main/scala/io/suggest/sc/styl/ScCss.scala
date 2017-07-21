@@ -56,6 +56,11 @@ case class ScCss(
 
   //val button = _styleAddClasses( _SM_BUTTON )
 
+  val clear = _styleAddClasses( Css.CLEAR )
+
+  val smFlex = _styleAddClasses( _SM_ + "flex" )
+  val smOverflowScrolling = _styleAddClasses( _SM_ + "overflow-scrolling" )
+
   /** Стили для html.body . */
   // TODO Этот код наверное не нужен. Т.к. оно вне react-компонента.
   object Body {
@@ -221,6 +226,76 @@ case class ScCss(
   }
 
 
+  /** Панель поиска. */
+  object Search {
+
+    private val _PANEL = _SM_ + "categories-screen"
+
+    /** CSS-класс div-контейнера правой панели. */
+    val panel = _styleAddClasses( _PANEL )
+
+    /** CSS-класс заголовка внутри панели поиска. */
+    //val panelHeader = _styleAddClasses( _PANEL + "_header" )
+
+
+    /** Поля текстового поиска и контейнер оной. */
+    object SearchBar {
+
+      private val _BAR = _SM_ + "search-bar"
+
+      val bar       = _styleAddClasses( _BAR )
+
+      /** Сообщение, например "ничего не найдено". */
+      val message   = _styleAddClasses( _BAR + "_message" )
+
+      /** CSS для текстовых полей поиска. */
+      object Field {
+        val field         = _styleAddClasses( _BAR + "_field" )
+        val active        = _styleAddClasses( __ + "active" )
+        val fieldWrapper  = _styleAddClasses( _BAR + "_wrapper" )
+        val input         = _styleAddClasses( _BAR + "_input" )
+      }
+
+    }
+
+
+    /** Табы на поисковой панели. */
+    object Tabs {
+
+      private val _TABS = _PANEL + "_tabs"
+
+      /** div-контейнер заголовков табов. */
+      val tabs = _styleAddClasses( _TABS )
+
+      val tabsWrapper = _styleAddClasses( _TABS + "-wrapper" )
+
+      /** Стили для одного таба. */
+      object Single {
+
+        val tabOuter = _styleAddClasses( _PANEL + "_single-tab" )
+        val tabInner = _styleAddClasses( _SM_ + "tab" )
+        val inactive = _styleAddClasses( __ + "inactive" )
+
+        object Rounded {
+          private val _ROUNDED_ = __ + "rounded-"
+          val left  = _styleAddClasses( _ROUNDED_ + "left" )
+          val right = _styleAddClasses( _ROUNDED_ + "right" )
+        }
+
+      }
+
+      /** Стили содержимого вкладки с гео-картой. */
+      object MapTab {
+        private val OUTER = _SM_ + "categories"
+        val outer = _styleAddClasses( OUTER )
+        val inner = _styleAddClasses( OUTER + "_content" )
+      }
+
+    }
+
+  }
+
+
   /** Инициализация ленивых scala-объектов для заполнения стилей выдачи.
     *
     * Некоторые вещи не требуют явной инициализации, т.к. не содержат какой-либо стилистики.
@@ -232,8 +307,13 @@ case class ScCss(
     Body.BgLogo.ru,
     Welcome.Bg.bgImg,
     Welcome.Fg.fgImg,
+
     Header.Buttons.search,
-    Header.Logo.Txt.Dots.dot
+    Header.Logo.Txt.Dots.dot,
+
+    Search.SearchBar.Field.active,
+    Search.Tabs.Single.Rounded.right,
+    Search.Tabs.MapTab.inner
   )
 
 }

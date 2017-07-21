@@ -17,6 +17,7 @@ import util.ble.BleUtil
 import util.cdn.CdnUtil
 import util.ext.ExtServicesUtil
 import util.geo.GeoIpUtil
+import util.i18n.JsMessagesUtil
 import util.img.{DynImgUtil, LogoUtil, WelcomeUtil}
 import util.n2u.N2NodesUtil
 import util.sec.CspUtil
@@ -51,6 +52,7 @@ class Sc @Inject() (
                      override val dynImgUtil         : DynImgUtil,
                      override val scMapUtil          : ScMapUtil,
                      override val advGeoLocUtil      : AdvGeoLocUtil,
+                     override val jsMessagesUtil     : JsMessagesUtil,
                      override val ctxUtil            : ContextUtil,
                      override val bruteForceProtect  : BruteForceProtect,
                      override val scAdSearchUtil     : ScAdSearchUtil,

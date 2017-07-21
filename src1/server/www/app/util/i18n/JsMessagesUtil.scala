@@ -226,6 +226,16 @@ class JsMessagesUtil @Inject() (
       Nil
   }
 
+
+  /** Сообщения для react-выдачи. */
+  private def SC: TraversableOnce[String] = {
+    MsgCodes.`Quick.search.for.offers` ::
+      MsgCodes.`Map` ::
+      MsgCodes.`Tags` ::
+      Nil
+  }
+
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -252,6 +262,16 @@ class JsMessagesUtil @Inject() (
     val jsm = jsMessagesFactory.filtering( msgs.contains )
     val hash = msgs.hashCode()
     (jsm, hash)
+  }
+
+
+
+  /** jsMessages для выдачи. */
+  val scJsMsgsFactory: JsMessages = {
+    val msgs = SC.toSet
+    val jsm = jsMessagesFactory.filtering( msgs.contains )
+    // TODO Вычислять hash для кеширования?
+    jsm
   }
 
 }

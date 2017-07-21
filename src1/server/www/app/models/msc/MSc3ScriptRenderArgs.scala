@@ -1,5 +1,7 @@
 package models.msc
 
+import play.twirl.api.JavaScript
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,5 +9,6 @@ package models.msc
   * Description: Модель параметров рендера скрипта для React-sc (третье поколение).
   */
 case class MSc3ScriptRenderArgs(
-                                 state0: String
+                                 state0         : String,
+                                 jsMessagesJs   : JavaScript
                                )

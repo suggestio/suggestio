@@ -172,4 +172,9 @@ object MsgCodes {
   val `left` = "left"
   val `right` = "right"
 
+
+  val `Quick.search.for.offers` = "Quick.search.for.offers"
+  val `Map` = "Map"
+  val `Tags` = "Tags"
+
 }

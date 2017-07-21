@@ -12,4 +12,7 @@ import io.suggest.sjs.common.spa.DAction
 /** Маркер-интерфейс для  */
 trait ISc3Action extends DAction
 
+/** Изменились параметры экрана устройства.
+  * Экшен может приходить несколько раз или вообще оптом. */
+case object ScreenReset extends ISc3Action
 

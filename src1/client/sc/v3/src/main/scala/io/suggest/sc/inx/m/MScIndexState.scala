@@ -41,7 +41,7 @@ case class MScIndexState(
   // А т.к. это "часто" завязано на посторонние FastEq[?], то следует юзать тут val вместо def.
   lazy val currRcvrId = rcvrIds.headOption
 
-  def withScreenOpt( screen: MScreen ) = copy( screen = screen )
+  def withScreen(screen: MScreen ) = copy( screen = screen )
   def withRcvrNodeId( rcvrNodeId: List[String] ) = copy( rcvrIds = rcvrNodeId )
   def withGeoPoint( geoPoint: Option[MGeoPoint] ) = copy( geoPoint = geoPoint )
 

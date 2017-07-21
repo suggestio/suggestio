@@ -122,4 +122,6 @@ object ErrorMsgs extends MsgsStaticT {
   /** Исключение в FSM миксера запросов WebSocket/XHR. */
   def WS_XHR_MIXING_ERROR              = E(54)
 
+  def EVENT_LISTENER_SUBSCRIBE_ERROR   = E(55)
+
 }

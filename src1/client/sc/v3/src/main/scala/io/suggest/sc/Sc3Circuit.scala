@@ -1,19 +1,24 @@
 package io.suggest.sc
 
 import diode.react.ReactConnector
+import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
 import io.suggest.maps.m.MMapS
 import io.suggest.sc.init.MSc3Init
-import io.suggest.sc.inx.c.{IndexAh, WelcomeAh}
+import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
+import io.suggest.sc.m.ScreenReset
 import io.suggest.sc.root.m.MScRoot
 import io.suggest.sc.router.c.JsRouterInitAh
+import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.spa.StateInp
+import io.suggest.sjs.common.vm.wnd.WindowVm
+import org.scalajs.dom.Event
 import play.api.libs.json.Json
 
 import scala.concurrent.Future
@@ -29,12 +34,17 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
   import MScIndex.MScIndexFastEq
   import io.suggest.sc.inx.m.MWelcomeState.MWelcomeStateFastEq
 
+  import MScSearch.MScSearchFastEq
+
 
   override protected def CIRCUIT_ERROR_CODE: ErrorMsg_t = ErrorMsgs.SC_FSM_EVENT_FAILED
 
   override protected def initialModel = {
     // TODO Десериализовать состояние из URL или откуда-нибудь ещё.
-    val state0 = Json.parse( StateInp.find().get.value.get ).as[MSc3Init]
+    val state0 = Json
+      .parse( StateInp.find().get.value.get )
+      .as[MSc3Init]
+
     MScRoot(
       index = MScIndex(
         state = MScIndexState(
@@ -49,14 +59,32 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
 
   val api = new Sc3ApiXhrImpl
 
-  private val jsRouterRW = zoomRW(_.jsRouter)(_.withJsRouter(_))
+  // Кэш zoom'ов модели:
+  private val jsRouterRW = zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
-  private val indexRW = zoomRW(_.index)(_.withIndex(_))
-  private val indexWelcomeRW = indexRW.zoomRW(_.welcome)(_.withWelcome(_))
+  private val indexRW = zoomRW(_.index) { _.withIndex(_) }
+  private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
+  private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
+
+  private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
 
   val rootRO = zoom(m => m)
 
-  // TODO actionHandler нужно будет пересобирать на-лету TODO исходя из флагов состояния и TODO кэшировать для ускорения.
+
+  // Кэш action-handler'ов
+  private val searchAh = new SearchAh( modelRW = searchRW )
+
+  private val indexAh = new IndexAh(
+    api     = api,
+    modelRW = indexRW,
+    stateRO = rootRO
+  )
+
+  private val indexStateAh = new IndexStateAh(
+    modelRW = indexStateRW
+  )
+
+
   override protected def actionHandler = {
     var acc = List.empty[HandlerFunction]
 
@@ -67,16 +95,18 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
       )
     }
 
+    // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
+    acc ::= searchAh
+
     // index всегда доступен для приёма управляющих сигналов.
-    acc ::= new IndexAh(
-      api     = api,
-      modelRW = indexRW,
-      stateRO = rootRO
-    )
+    acc ::= indexAh
 
     if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )
 
+    // Базовые экшены всей выдачи перехватываем всегда и в самую первую очередь.
+    // Сюда приходят оптовые или частые сообщения от геолокации, маячков, листенеров размеров экрана.
+    acc ::= indexStateAh
 
     // Собрать все контроллеры в пачку.
     composeHandlers( acc: _* )
@@ -84,8 +114,25 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
 
 
   // constructor
-  Future {
-    dispatch( GetIndex( None ) )
+  {
+    // Подписаться на глобальные события window
+    val wnd = WindowVm()
+    val listenF = { _: Event => dispatch(ScreenReset) }
+    for {
+      evtName <- WndEvents.RESIZE :: WndEvents.ORIENTATION_CHANGE :: Nil
+    } {
+      try {
+        wnd.addEventListener( evtName )( listenF )
+      } catch {
+        case ex: Throwable =>
+          LOG.error( ErrorMsgs.EVENT_LISTENER_SUBSCRIBE_ERROR, ex, evtName )
+      }
+    }
+
+    // Заставить систему получить index с сервера. TODO Ожидать геолокации, маячков с помощью таймера.
+    Future {
+      dispatch( GetIndex( None ) )
+    }
   }
 
 }

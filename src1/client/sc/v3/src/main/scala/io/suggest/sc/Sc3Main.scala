@@ -1,6 +1,5 @@
 package io.suggest.sc
 
-import io.suggest.common.html.HtmlConstants
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.root.m.JsRouterStatus
 import io.suggest.sc.root.v.ScRootR
@@ -52,6 +51,7 @@ object Sc3Main {
 
     val BodyCss = ScCss.scCss.Body
     body.className += BodyCss.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
+
     // TODO Добавить обеление фона body.
 
     // TODO Запустить разные FSM: геолокация, platform, BLE. Переписав их в circuit'ы предварительно.

@@ -3,6 +3,7 @@ package controllers.sc
 import controllers.routes
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
+import io.suggest.i18n.I18nConst
 import io.suggest.maps.MMapProps
 import io.suggest.model.n2.extra.domain.{DomainCriteria, MDomainModes}
 import io.suggest.model.n2.node.IMNodes
@@ -21,6 +22,7 @@ import util.acl._
 import util.adv.geo.IAdvGeoLocUtilDi
 import util.di.IScUtil
 import util.ext.IExtServicesUtilDi
+import util.i18n.IJsMessagesUtilDi
 import util.sec.ICspUtilDi
 import util.stat.IStatUtil
 import views.html.sc._
@@ -48,6 +50,7 @@ trait ScSite
   with ICspUtilDi
   with IMaybeAuth
   with IAdvGeoLocUtilDi
+  with IJsMessagesUtilDi
 {
 
   import mCommonDi._
@@ -69,14 +72,14 @@ trait ScSite
         val msearch = new MNodeSearchDfltImpl {
           override def domains: Seq[DomainCriteria] = {
             val cr = DomainCriteria(
-              dkeys = Seq( myHost ),
-              modes = Seq( MDomainModes.ScServeIncomingRequests )
+              dkeys = myHost :: Nil,
+              modes = MDomainModes.ScServeIncomingRequests :: Nil
             )
             Seq(cr)
           }
           override def limit          = 1
           override def isEnabled      = Some(true)
-          override def withAdnRights  = Seq( AdnRights.RECEIVER )
+          override def withAdnRights  = AdnRights.RECEIVER :: Nil
         }
         val fut = mNodes.dynSearchOne(msearch)
 
@@ -207,15 +210,15 @@ trait ScSite
             // Возможный stat-экшен POV-просмотра сайта с т.з. карточки.
             val mPovActions = _siteQsArgs.povAdId.fold [List[MAction]] (Nil) { povAdId =>
               val mPovAct = MAction(
-                actions   = Seq( MActionTypes.PovNode ),
-                nodeId    = Seq(povAdId),
+                actions   = MActionTypes.PovNode :: Nil,
+                nodeId    = povAdId :: Nil,
                 nodeName  = Nil
               )
-              List(mPovAct)
+              mPovAct :: Nil
             }
             // Экшен посещения sc site.
             val mSiteAction = MAction(
-              actions   = Seq( MActionTypes.ScSite ),
+              actions   = MActionTypes.ScSite :: Nil,
               nodeId    = _nodeOpt.flatMap(_.id).toSeq,
               nodeName  = _nodeOpt.flatMap(_.guessDisplayName).toSeq
             )
@@ -274,12 +277,21 @@ trait ScSite
 
 
 
+  // TODO Сделать val, когда произойдёт переключение на v3-выдачу по дефолту.
+  private def cspV3 = cspUtil.mkCustomPolicyHdr { pol0 =>
+    pol0
+      .allowOsmLeaflet
+      .jsUnsafeInline
+      .styleUnsafeInline
+  }
+
+  /** Реализация SiteLogic для v3-выдачи на базе react с client-side рендером. */
   protected abstract class SiteScriptLogicV3 extends SiteLogic {
 
     import views.html.sc.site.v3._
 
     override def customCspPolicyOpt: Option[(String, String)] = {
-      cspUtil.CustomPolicies.PageWithOsmLeaflet
+      cspV3
     }
 
     /** Добавки к тегу head в siteTpl. */
@@ -300,7 +312,13 @@ trait ScSite
     }
 
     override def scriptHtmlFut: Future[Html] = {
+      // Поиска начальную точку для гео.карты.
       val _geoPoint0Fut = geoPoint0Fut
+
+      // Синхронно скомпилить js-messages для рендера прямо в html-шаблоне.
+      val jsMessagesJs = jsMessagesUtil.scJsMsgsFactory( Some(I18nConst.WINDOW_JSMESSAGES_NAME) )(ctx.messages)
+
+      // Собрать все результаты в итоговый скрипт.
       for {
         geoPoint0 <- _geoPoint0Fut
       } yield {
@@ -311,11 +329,11 @@ trait ScSite
           )
         )
         val scriptRenderArgs = MSc3ScriptRenderArgs(
-          state0 = Json.toJson(state0).toString()
+          state0        = Json.toJson(state0).toString(),
+          jsMessagesJs  = jsMessagesJs
         )
         _scriptV3Tpl(scriptRenderArgs)(ctx)
       }
-
     }
 
     /** Сформулировать данные для начального состояния выдачи. */
