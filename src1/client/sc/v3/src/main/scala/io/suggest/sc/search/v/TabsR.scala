@@ -17,7 +17,7 @@ import scalacss.ScalaCssReact._
   * Created: 21.07.17 14:13
   * Description: Переключалка табов поисковой панели.
   */
-object TabsR {
+class TabsR {
 
   type Props = ModelProxy[MSearchTab]
 

@@ -14,7 +14,7 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 11.07.17 16:09
   * Description: React-компонент, рендерящий динамический css выдачи.
   */
-object ScCssR {
+class ScCssR {
 
   type PropsVal = Option[MColors]
   type Props = ModelProxy[PropsVal]

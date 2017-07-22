@@ -22,7 +22,9 @@ import scalacss.ScalaCssReact._
   * например, просмотр карточек-предложений в каком-то теге.
   * Логотип узла как бы отражает эту сущность.
   */
-object LogoR {
+class LogoR(
+             nodeNameR: NodeNameR
+           ) {
 
   type Props = ModelProxy[Option[PropsVal]]
 
@@ -53,7 +55,7 @@ object LogoR {
         // Нужно решить, что вообще надо рендерить: логотип, название узла или что-то иное?
         nodeInfo.logoOpt.fold[VdomElement] {
           // Графический логотип не доступен. Попробовать отрендерить текстовый логотип.
-          s.nodeNameOptC { NodeNameR.apply }
+          s.nodeNameOptC { nodeNameR.apply }
 
         } { logoInfo =>
           val imgStyles = logoCss.Img

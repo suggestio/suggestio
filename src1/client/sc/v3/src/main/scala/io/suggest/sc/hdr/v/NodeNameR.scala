@@ -14,7 +14,7 @@ import scalacss.ScalaCssReact._
   * Created: 19.07.17 18:13
   * Description: Вывод названия узла в рамочке.
   */
-object NodeNameR {
+class NodeNameR {
 
   type Props = ModelProxy[Option[String]]
 

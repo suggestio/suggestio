@@ -21,7 +21,11 @@ import scalacss.ScalaCssReact._
   * Description: Компонент заголовка выдачи.
   */
 
-object HeaderR {
+class HeaderR(
+               menuBtnR                   : MenuBtnR,
+               searchBtnR                 : SearchBtnR,
+               protected[this] val logoR  : LogoR
+             ) {
 
 
   /** Модель пропертисов для рендера компонента заголовка.
@@ -49,7 +53,7 @@ object HeaderR {
                               plainGridC      : ReactConnectProxy[Option[MColorData]],
                               menuC           : ReactConnectProxy[Option[MColorData]],
                               searchC         : ReactConnectProxy[Option[MColorData]],
-                              logoPropsOptC   : ReactConnectProxy[Option[LogoR.PropsVal]]
+                              logoPropsOptC   : ReactConnectProxy[Option[logoR.PropsVal]]
                             )
 
 
@@ -65,13 +69,13 @@ object HeaderR {
           // Кнопки при нахождении в обычной выдаче без посторонних вещей.
           s.plainGridC { fgColorDataOptProxy =>
             <.span(
-              MenuBtnR( fgColorDataOptProxy ),
-              SearchBtnR( fgColorDataOptProxy )
+              menuBtnR( fgColorDataOptProxy ),
+              searchBtnR( fgColorDataOptProxy )
             )
           },
 
           // Логотип посередине заголовка.
-          s.logoPropsOptC { LogoR.apply }
+          s.logoPropsOptC { logoR.apply }
         )
       }
     }
@@ -96,12 +100,12 @@ object HeaderR {
         searchC     = __fgColorDataOptProxy( HS.Search ),
         logoPropsOptC    = propsProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {
-            LogoR.PropsVal(
+            logoR.PropsVal(
               logoOpt     = props.node.logoOpt,
               nodeNameOpt = props.node.name
             )
           }
-        }( OptFastEq.Wrapped( LogoR.LogoPropsValFastEq ) )
+        }( OptFastEq.Wrapped( logoR.LogoPropsValFastEq ) )
       )
     }
     .renderBackend[Backend]

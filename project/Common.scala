@@ -104,6 +104,12 @@ object Common {
       */
     val COMMONS_TEXT  = "1.+"
 
+    /** MacWire -- scala compile-time DI framework.
+      *
+      * @see [[https://github.com/adamw/macwire#installation-using-with-sbt]]
+     */
+    val MACWIRE = "2.3.0"
+
   }
 
 

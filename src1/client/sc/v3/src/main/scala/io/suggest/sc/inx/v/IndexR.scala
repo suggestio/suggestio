@@ -18,17 +18,21 @@ import io.suggest.sjs.common.spa.OptFastEq.Wrapped
   * Created: 19.07.17 22:49
   * Description: React-компонент индекса выдачи.
   */
-object IndexR {
+class IndexR(
+              searchR                         : SearchR,
+              protected[this] val headerR     : HeaderR,
+              protected[this] val welcomeR    : WelcomeR
+            ) {
 
-  import HeaderR.HeaderPropsValFastEq
+  import headerR.HeaderPropsValFastEq
   import MScSearch.MScSearchFastEq
 
 
   type Props = ModelProxy[MScIndex]
 
   protected[this] case class State(
-                                    headerPropsC  : ReactConnectProxy[Option[HeaderR.PropsVal]],
-                                    wcPropsOptC   : ReactConnectProxy[Option[WelcomeR.PropsVal]],
+                                    headerPropsC  : ReactConnectProxy[Option[headerR.PropsVal]],
+                                    wcPropsOptC   : ReactConnectProxy[Option[welcomeR.PropsVal]],
                                     searchC       : ReactConnectProxy[MScSearch]
                                   )
 
@@ -38,13 +42,13 @@ object IndexR {
       <.div(
 
         // Экран приветствия узла:
-        s.wcPropsOptC { WelcomeR.apply },
+        s.wcPropsOptC { welcomeR.apply },
 
         // Компонент заголовка выдачи:
-        s.headerPropsC { HeaderR.apply },
+        s.headerPropsC { headerR.apply },
 
-        // TODO Правая панель.
-        s.searchC { SearchR.apply }
+        // Правая панель (поиск)
+        s.searchC { searchR.apply }
 
       )
     }
@@ -59,7 +63,7 @@ object IndexR {
           for {
             resp <- props.resp.toOption
           } yield {
-            HeaderR.PropsVal(
+            headerR.PropsVal(
               // TODO Определять маркер состояния на основе состояния полей в props.
               hdrState  = if (props.search.isShown) {
                 MHeaderStates.Search
@@ -76,7 +80,7 @@ object IndexR {
             wcInfo  <- resp.welcome
             wcState <- props.welcome
           } yield {
-            WelcomeR.PropsVal(
+            welcomeR.PropsVal(
               wcInfo   = wcInfo,
               screen   = props.state.screen,
               nodeName = resp.name,

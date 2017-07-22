@@ -10,7 +10,7 @@ import io.suggest.sc.styl.ScCss.scCss
   * Description: React-компонент для кнопки поиска на панели заголовка.
   * Для рендера используется inline SVG также как и в предыдущих версиях системы.
   */
-object SearchBtnR extends HdrBtn {
+class SearchBtnR extends HdrBtn {
 
   override protected[this] def _compName: String = "Search"
 

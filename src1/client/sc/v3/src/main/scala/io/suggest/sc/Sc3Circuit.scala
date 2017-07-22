@@ -29,7 +29,12 @@ import scala.concurrent.Future
   * Created: 07.07.17 12:00
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
-object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
+class Sc3Circuit(
+                  api: ISc3Api
+                )
+  extends CircuitLog[MScRoot]
+  with ReactConnector[MScRoot]
+{
 
   import MScIndex.MScIndexFastEq
   import io.suggest.sc.inx.m.MWelcomeState.MWelcomeStateFastEq
@@ -57,7 +62,6 @@ object Sc3Circuit extends CircuitLog[MScRoot] with ReactConnector[MScRoot] {
     )
   }
 
-  val api = new Sc3ApiXhrImpl
 
   // Кэш zoom'ов модели:
   private val jsRouterRW = zoomRW(_.jsRouter) { _.withJsRouter(_) }

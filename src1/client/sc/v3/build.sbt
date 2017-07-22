@@ -13,6 +13,9 @@ libraryDependencies ++= Seq(
   // И сразу же завязываем генерацию css на scalacss, чтобы style="" костыли не городить.
   "com.github.japgolly.scalacss" %%% "ext-react"  % Common.Vsn.SCALACSS,
 
+  // Compile-time DI без рантаймового кода (кроме нагенеренной примитивщины):
+  "com.softwaremill.macwire"     %% "macros"     % Common.Vsn.MACWIRE % "provided",
+
   // testing
   "io.monix"      %%% "minitest"                  % Common.minitestVsn  % Test
 )

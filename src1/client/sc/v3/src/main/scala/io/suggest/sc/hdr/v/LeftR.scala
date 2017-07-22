@@ -9,7 +9,7 @@ import io.suggest.sc.styl.ScCss.scCss
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-object LeftR extends HdrBtn {
+class LeftR extends HdrBtn {
 
   override protected[this] def _compName = "Left"
 

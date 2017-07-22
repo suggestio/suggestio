@@ -9,7 +9,7 @@ import io.suggest.sc.styl.ScCss.scCss
   * Created: 10.07.17 15:44
   * Description: Компонент кнопки меню.
   */
-object MenuBtnR extends HdrBtn {
+class MenuBtnR extends HdrBtn {
 
   override protected[this] def _compName: String = "Menu"
 

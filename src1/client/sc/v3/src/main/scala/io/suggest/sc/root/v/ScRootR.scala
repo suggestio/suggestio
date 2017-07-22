@@ -1,7 +1,6 @@
 package io.suggest.sc.root.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.sc.hdr.v.HeaderR
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.IndexR
 import io.suggest.sc.root.m.MScRoot
@@ -18,7 +17,10 @@ import scalacss.ScalaCssReact._
   * Created: 07.07.17 14:06
   * Description: Корневой react-компонент для выдачи третьего поколения.
   */
-object ScRootR {
+class ScRootR (
+                indexR                      : IndexR,
+                protected[this] val scCssR  : ScCssR
+              ) {
 
   import io.suggest.sjs.common.spa.OptFastEq.Plain
   import MScIndex.MScIndexFastEq
@@ -26,7 +28,7 @@ object ScRootR {
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
-                                    colorsOptC     : ReactConnectProxy[ScCssR.PropsVal],
+                                    colorsOptC     : ReactConnectProxy[scCssR.PropsVal],
                                     indexPropsC    : ReactConnectProxy[MScIndex]
                                   )
 
@@ -36,7 +38,7 @@ object ScRootR {
     def render(s: State): VdomElement = {
       <.div(
         // Рендер стилей перед снаружи и перед остальной выдачей.
-        s.colorsOptC { ScCssR.apply },
+        s.colorsOptC { scCssR.apply },
 
         <.div(
           // Ссылаемся на стиль.
@@ -44,7 +46,7 @@ object ScRootR {
 
 
           // Компонент index'а выдачи:
-          s.indexPropsC { IndexR.apply }
+          s.indexPropsC { indexR.apply }
 
           // TODO Focused
           // TODO Grid

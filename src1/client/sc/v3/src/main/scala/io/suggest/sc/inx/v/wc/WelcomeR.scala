@@ -24,7 +24,9 @@ import scalacss.ScalaCssReact._
   * Created: 19.07.17 16:58
   * Description: React-компонент экрана приветствия.
   */
-object WelcomeR {
+class WelcomeR(
+                nodeNameR: NodeNameR
+              ) {
 
   /** Props-модель данного компонента. */
   case class PropsVal(
@@ -148,7 +150,7 @@ object WelcomeR {
                   ^.marginTop := (whPx.height / 2).px
                 },
               // Отобразить текстовый логотип, такой же как и в заголовке:
-              s.nodeNameC { NodeNameR.apply }
+              s.nodeNameC { nodeNameR.apply }
             )
           }
 

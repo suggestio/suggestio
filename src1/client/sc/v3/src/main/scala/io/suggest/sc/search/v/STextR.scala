@@ -19,7 +19,7 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент поиского поля.
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
-object STextR {
+class STextR {
 
   type Props = ModelProxy[Option[MScSearchText]]
 

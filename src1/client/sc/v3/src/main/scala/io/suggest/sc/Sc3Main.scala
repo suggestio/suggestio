@@ -2,7 +2,6 @@ package io.suggest.sc
 
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.root.m.JsRouterStatus
-import io.suggest.sc.root.v.ScRootR
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.styl.ScCss
 import io.suggest.sjs.common.log.Logging
@@ -17,7 +16,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   * Created: 07.07.17 11:42
   * Description: Запускалка выдачи третьего поколения.
   */
-object Sc3Main {
+object Sc3Main extends Sc3Module {
 
   import io.suggest.sc.root.m.MScRoot.MScRootFastEq
 
@@ -33,10 +32,10 @@ object Sc3Main {
     body.appendChild( rootDiv )
 
     // Подготовить центральную цепочку.
-    val mainCircuit = Sc3Circuit
+    val mainCircuit = sc3Circuit
 
     mainCircuit
-      .wrap(m => m)( ScRootR.apply )
+      .wrap(m => m)( scRootR.apply )
       .renderIntoDOM(rootDiv)
 
     // Активировать отправку логов на сервер, когда js-роутер будет готов.

@@ -23,7 +23,10 @@ import scalacss.ScalaCssReact._
   * Created: 20.07.17 14:24
   * Description: Компонент поисковой панели (живёт справа).
   */
-object SearchR {
+class SearchR(
+               sTextR     : STextR,
+               tabsR      : TabsR
+             ) {
 
   import MMapS.MMapSFastEq
   import MScSearchText.MScSearchTextFastEq
@@ -57,10 +60,10 @@ object SearchR {
           //),
 
           // Рендер текстового поля поиска.
-          s.textOptC { STextR.apply },
+          s.textOptC { sTextR.apply },
 
           // Переключалка вкладок карта-теги
-          s.tabC { TabsR.apply },
+          s.tabC { tabsR.apply },
 
           // Карта.
           s.mmapC { mmapS =>
@@ -86,7 +89,7 @@ object SearchR {
                     LMapR(lMapProps)(
 
                       // Рендерим основную плитку карты.
-                      ReactLeafletUtil.Tiles.OsmDefault,
+                      ReactLeafletUtil.Tiles.OsmDefaultNoAttrib,
 
                       // Плагин для геолокации текущего юзера.
                       LocateControlR(),
