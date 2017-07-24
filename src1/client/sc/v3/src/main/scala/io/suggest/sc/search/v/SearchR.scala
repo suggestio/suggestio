@@ -6,7 +6,7 @@ import io.suggest.maps.m.MMapS
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.sc.search.m.{MScSearch, MScSearchText, MSearchTab, MSearchTabs}
-import io.suggest.sc.styl.ScCss.scCss
+import io.suggest.sc.styl.GetScCssF
 import io.suggest.sjs.common.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
@@ -25,7 +25,8 @@ import scalacss.ScalaCssReact._
   */
 class SearchR(
                sTextR     : STextR,
-               tabsR      : TabsR
+               tabsR      : TabsR,
+               getScCssF  : GetScCssF
              ) {
 
   import MMapS.MMapSFastEq
@@ -45,6 +46,7 @@ class SearchR(
   class Backend( $: BackendScope[Props, State] ) {
 
     def render(s: State): VdomElement = {
+      val scCss = getScCssF()
       val CSS = scCss.Search
 
       s.isShownC { isShownProxy =>

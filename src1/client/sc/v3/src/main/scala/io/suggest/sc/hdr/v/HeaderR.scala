@@ -5,12 +5,12 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sc.hdr.m.{MHeaderState, MHeaderStates}
 import io.suggest.sc.index.MSc3IndexResp
-import io.suggest.sc.styl.ScCss.scCss
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.spa.OptFastEq
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.styl.GetScCssF
 
 import scalacss.ScalaCssReact._
 
@@ -24,6 +24,7 @@ import scalacss.ScalaCssReact._
 class HeaderR(
                menuBtnR                   : MenuBtnR,
                searchBtnR                 : SearchBtnR,
+               getScCssF                  : GetScCssF,
                protected[this] val logoR  : LogoR
              ) {
 
@@ -62,6 +63,7 @@ class HeaderR(
 
     def render(propsProxy: Props, s: State): VdomElement = {
       propsProxy().whenDefinedEl { _ =>
+        val scCss = getScCssF()
         <.div(
           scCss.Header.header,
 

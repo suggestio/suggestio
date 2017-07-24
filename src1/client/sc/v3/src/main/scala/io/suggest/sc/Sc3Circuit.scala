@@ -12,6 +12,7 @@ import io.suggest.sc.root.m.MScRoot
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.MScSearch
+import io.suggest.sc.styl.{MScCssArgs, ScCss, ScCssFactoryModule}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -30,7 +31,8 @@ import scala.concurrent.Future
   * Description: Main circuit новой выдачи. Отрабатывает весь интерфейс выдачи v3.
   */
 class Sc3Circuit(
-                  api: ISc3Api
+                  scCssFactoryModule    : ScCssFactoryModule,
+                  api                   : ISc3Api
                 )
   extends CircuitLog[MScRoot]
   with ReactConnector[MScRoot]
@@ -66,7 +68,7 @@ class Sc3Circuit(
   // Кэш zoom'ов модели:
   private val jsRouterRW = zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
-  private val indexRW = zoomRW(_.index) { _.withIndex(_) }
+  protected[this] val indexRW = zoomRW(_.index) { _.withIndex(_) }
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
   private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
@@ -136,6 +138,34 @@ class Sc3Circuit(
     // Заставить систему получить index с сервера. TODO Ожидать геолокации, маячков с помощью таймера.
     Future {
       dispatch( GetIndex( None ) )
+    }
+  }
+
+
+  /** Зуммер для получения инстанса динамических аргументов рендера ScCss. */
+  val scCssArgsRO = indexRW.zoom { index =>
+    MScCssArgs(
+      customColorsOpt = index.resp.toOption.map(_.colors),
+      screen          = index.state.screen
+    )
+  }
+
+  private var _scCssCacheOpt: Option[ScCss] = None
+
+  // Подписка на события реальных изменений, связанных со стилями ScCss:
+  subscribe(scCssArgsRO) { _ =>
+    // Изменились какие-то параметры, связанные со стилями. Просто сбросить кэш ScCss:
+    _scCssCacheOpt = None
+  }
+
+  def scCss(): ScCss = {
+    _scCssCacheOpt.getOrElse {
+      // Заполнить кэш ScCss согласно текущим параметрам рендера:
+      synchronized {
+        val scCss = scCssFactoryModule.mkScCss( scCssArgsRO() )
+        _scCssCacheOpt = Some( scCss )
+        scCss
+      }
     }
   }
 

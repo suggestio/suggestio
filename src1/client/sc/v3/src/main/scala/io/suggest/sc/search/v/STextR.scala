@@ -3,10 +3,10 @@ package io.suggest.sc.search.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.i18n.MsgCodes
 import io.suggest.sc.search.m.MScSearchText
+import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sc.styl.ScCss.scCss
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 
@@ -19,7 +19,7 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент поиского поля.
   * Скорее всего, его можно использовать через .wrap() вместо .connect.
   */
-class STextR {
+class STextR( getScCssF: GetScCssF ) {
 
   type Props = ModelProxy[Option[MScSearchText]]
 
@@ -31,6 +31,7 @@ class STextR {
   class Backend( $: BackendScope[Props, State] ) {
 
     def render(s: State): VdomElement = {
+      val scCss = getScCssF()
       val CSS = scCss.Search.SearchBar
 
       <.div(

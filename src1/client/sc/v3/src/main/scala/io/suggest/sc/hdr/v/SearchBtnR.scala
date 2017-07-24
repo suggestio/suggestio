@@ -1,7 +1,7 @@
 package io.suggest.sc.hdr.v
 
 import io.suggest.sc.hdr.m.HSearchBtnClick
-import io.suggest.sc.styl.ScCss.scCss
+import io.suggest.sc.styl.GetScCssF
 
 /**
   * Suggest.io
@@ -10,11 +10,11 @@ import io.suggest.sc.styl.ScCss.scCss
   * Description: React-компонент для кнопки поиска на панели заголовка.
   * Для рендера используется inline SVG также как и в предыдущих версиях системы.
   */
-class SearchBtnR extends HdrBtn {
+class SearchBtnR( getScCssF: GetScCssF ) extends HdrBtn {
 
   override protected[this] def _compName: String = "Search"
 
-  override protected[this] def cssStyle = scCss.Header.Buttons.search
+  override protected[this] def cssStyle = getScCssF().Header.Buttons.search
 
   override protected[this] def _btnClickAction = HSearchBtnClick
 

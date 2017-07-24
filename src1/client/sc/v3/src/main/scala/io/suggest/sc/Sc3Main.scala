@@ -3,7 +3,6 @@ package io.suggest.sc
 import io.suggest.sc.log.ScRmeLogAppender
 import io.suggest.sc.root.m.JsRouterStatus
 import io.suggest.sc.router.SrvRouter
-import io.suggest.sc.styl.ScCss
 import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
@@ -16,7 +15,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
   * Created: 07.07.17 11:42
   * Description: Запускалка выдачи третьего поколения.
   */
-object Sc3Main extends Sc3Module {
+object Sc3Main {
 
   import io.suggest.sc.root.m.MScRoot.MScRootFastEq
 
@@ -31,11 +30,13 @@ object Sc3Main extends Sc3Module {
     val rootDiv = VUtil.newDiv()
     body.appendChild( rootDiv )
 
+    val modules = new Sc3Modules
+
     // Подготовить центральную цепочку.
-    val mainCircuit = sc3Circuit
+    val mainCircuit = modules.sc3CircuitModule.sc3Circuit
 
     mainCircuit
-      .wrap(m => m)( scRootR.apply )
+      .wrap(m => m)( modules.sc3Module.scRootR.apply )
       .renderIntoDOM(rootDiv)
 
     // Активировать отправку логов на сервер, когда js-роутер будет готов.
@@ -48,7 +49,7 @@ object Sc3Main extends Sc3Module {
       mainCircuit.dispatch( JsRouterStatus(tryRes) )
     }
 
-    val BodyCss = ScCss.scCss.Body
+    val BodyCss = modules.scCssModule.getScCssF().Body
     body.className += BodyCss.smBody.htmlClass //+ HtmlConstants.SPACE + BodyCss.BgLogo.ru.htmlClass
 
     // TODO Добавить обеление фона body.

@@ -12,9 +12,9 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.ScConstants
 import io.suggest.sc.hdr.v.NodeNameR
 import io.suggest.sc.inx.m.{MWelcomeState, WcClick}
-import io.suggest.sc.styl.ScCss.scCss
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.styl.GetScCssF
 
 import scalacss.ScalaCssReact._
 
@@ -25,7 +25,8 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент экрана приветствия.
   */
 class WelcomeR(
-                nodeNameR: NodeNameR
+                nodeNameR: NodeNameR,
+                getScCssF: GetScCssF
               ) {
 
   /** Props-модель данного компонента. */
@@ -76,6 +77,8 @@ class WelcomeR(
       propsProxy().whenDefinedEl { p =>
         val AnimCss = ScConstants.Welcome.Anim
         val fadingOutNow = p.state.isHiding
+
+        val scCss = getScCssF()
         val CSS = scCss.Welcome
 
         <.div(

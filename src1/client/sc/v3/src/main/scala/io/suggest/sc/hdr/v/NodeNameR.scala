@@ -1,11 +1,12 @@
 package io.suggest.sc.hdr.v
 
 import diode.react.ModelProxy
-import io.suggest.sc.styl.ScCss.scCss
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+
 import scalacss.ScalaCssReact._
 
 /**
@@ -14,7 +15,7 @@ import scalacss.ScalaCssReact._
   * Created: 19.07.17 18:13
   * Description: Вывод названия узла в рамочке.
   */
-class NodeNameR {
+class NodeNameR( getScCssF: GetScCssF ) {
 
   type Props = ModelProxy[Option[String]]
 
@@ -23,6 +24,7 @@ class NodeNameR {
     def render(nodeNameOptProxy: Props): VdomElement = {
       nodeNameOptProxy().whenDefinedEl { nodeName =>
         // Отрендерить название текущего узла.
+        val scCss = getScCssF()
         val styles = scCss.Header.Logo.Txt
         val dotsStyles = styles.Dots
         <.span(

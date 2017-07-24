@@ -1,7 +1,7 @@
 package io.suggest.sc.hdr.v
 
 import io.suggest.sc.hdr.m.HRightBtnClick
-import io.suggest.sc.styl.ScCss.scCss
+import io.suggest.sc.styl.GetScCssF
 
 /**
   * Suggest.io
@@ -9,11 +9,11 @@ import io.suggest.sc.styl.ScCss.scCss
   * Created: 10.07.17 16:56
   * Description: Компонент кнопки, указывающей вправо (или "вперёд").
   */
-class RightR extends HdrBtn {
+class RightR( getScCssF: GetScCssF ) extends HdrBtn {
 
   override protected[this] def _compName = "Right"
 
-  override protected[this] def cssStyle = scCss.Header.Buttons.right
+  override protected[this] def cssStyle = getScCssF().Header.Buttons.right
 
   override protected[this] def _btnClickAction = HRightBtnClick
 

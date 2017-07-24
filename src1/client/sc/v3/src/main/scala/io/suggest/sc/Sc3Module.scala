@@ -1,11 +1,12 @@
 package io.suggest.sc
 
 import com.softwaremill.macwire._
-import io.suggest.sc.hdr.v._
+import io.suggest.sc.hdr.HeaderModule
+import io.suggest.sc.inx.IndexModule
 import io.suggest.sc.inx.v.IndexR
-import io.suggest.sc.inx.v.wc.WelcomeR
 import io.suggest.sc.root.v.{ScCssR, ScRootR}
-import io.suggest.sc.search.v.{STextR, SearchR, TabsR}
+import io.suggest.sc.search.SearchModule
+import io.suggest.sc.styl.{ScCssFactoryModule, ScCssModule}
 
 /**
   * Suggest.io
@@ -16,30 +17,55 @@ import io.suggest.sc.search.v.{STextR, SearchR, TabsR}
   * Используется macwire, т.к. прост и лёгок: никаких runtime-зависимостей,
   * весь банальнейший код генерится во время компиляции.
   */
-trait Sc3Module {
+class Sc3CircuitModule {
 
   lazy val sc3Api = wire[Sc3ApiXhrImpl]
 
+  lazy val scCssFactoryModule = wire[ScCssFactoryModule]
+
   lazy val sc3Circuit = wire[Sc3Circuit]
 
+}
 
-  lazy val scRootR = wire[ScRootR]
 
-  lazy val indexR  = wire[IndexR]
-  lazy val indexWelcomeR = wire[WelcomeR]
+/** DI-модуль линковки самого верхнего уровня sc3.
+  * Конструктор для линковки тут не используется, чтобы можно было быстро дёрнуть инстанс.
+  * Все аргументы-зависимости объявлены и линкуются внутри тела модуля.
+  */
+class Sc3Modules {
 
-  lazy val headerR = wire[HeaderR]
-  lazy val headerLogoR = wire[LogoR]
-  lazy val headerMenuBtnR = wire[MenuBtnR]
-  lazy val nodeNameR = wire[NodeNameR]
-  lazy val headerLeftR = wire[LeftR]
-  lazy val headerRightR = wire[RightR]
-  lazy val headerSearchBtnR = wire[SearchBtnR]
+  // Ручная линковка модулей, т.к. из-за @Module кажется, что есть проблемы.
+
+  lazy val sc3CircuitModule = wire[Sc3CircuitModule]
+
+  lazy val scCssModule = wire[ScCssModule]
+
+
+  // Deps: не используем конструктор класса, чтобы скрыть всё DI позади new/extends.
+
+  lazy val headerModule = wire[HeaderModule]
+
+  lazy val searchModule = wire[SearchModule]
+
+  lazy val indexModule = wire[IndexModule]
+
+  lazy val sc3Module = wire[Sc3Module]
+
+}
+
+
+class Sc3Module(
+                 scCssModule  : ScCssModule,
+                 indexModule  : IndexModule
+               ) {
+
+  import scCssModule._
+  import indexModule._
 
   lazy val scCssR  = wire[ScCssR]
 
-  lazy val searchR = wire[SearchR]
-  lazy val searchTextR = wire[STextR]
-  lazy val searchTabsR = wire[TabsR]
+  // sc3 data
+
+  lazy val scRootR = wire[ScRootR]
 
 }

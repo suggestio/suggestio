@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.IndexR
 import io.suggest.sc.root.m.MScRoot
-import io.suggest.sc.styl.ScCss.scCss
+import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,7 +19,8 @@ import scalacss.ScalaCssReact._
   */
 class ScRootR (
                 indexR                      : IndexR,
-                protected[this] val scCssR  : ScCssR
+                protected[this] val scCssR  : ScCssR,
+                getScCssF                   : GetScCssF
               ) {
 
   import io.suggest.sjs.common.spa.OptFastEq.Plain
@@ -36,6 +37,7 @@ class ScRootR (
   class Backend($: BackendScope[Props, State]) {
 
     def render(s: State): VdomElement = {
+      val scCss = getScCssF()
       <.div(
         // Рендер стилей перед снаружи и перед остальной выдачей.
         s.colorsOptC { scCssR.apply },
@@ -43,7 +45,6 @@ class ScRootR (
         <.div(
           // Ссылаемся на стиль.
           scCss.Root.root,
-
 
           // Компонент index'а выдачи:
           s.indexPropsC { indexR.apply }

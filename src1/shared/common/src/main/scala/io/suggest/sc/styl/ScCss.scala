@@ -2,6 +2,7 @@ package io.suggest.sc.styl
 
 import ScScalaCssDefaults._
 import io.suggest.css.Css
+import io.suggest.dev.MScreen
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.sc.ScConstants
@@ -15,10 +16,6 @@ import io.suggest.sc.ScConstants
 
 object ScCss {
 
-  /** Хранилище для инстанса [[ScCss]]. */
-  var scCss: ScCss = apply()
-
-
   // TODO Исходные цвета надо бы брать откуда-то, с сервера например.
   def COLORS_DFLT = MColors(
     bg = Some(MColorData( "111111" )),
@@ -28,17 +25,24 @@ object ScCss {
 }
 
 
+/** Интерфейс модели параметров для вызова ScCss. */
+trait IScCssArgs {
+  def customColorsOpt   : Option[MColors]
+  def screen            : MScreen
+}
+
+
 /** Стили для выдачи.
   *
-  * @param colors Цвета оформления узла и выдачи. Или дефолтовое значение.
+  * @param args Цвета и экран для оформления выдачи.
   */
-case class ScCss(
-                  colors        : MColors = ScCss.COLORS_DFLT
-                )
+case class ScCss( args: IScCssArgs )
   extends StyleSheet.Inline
 {
 
   import dsl._
+
+  val colors = args.customColorsOpt.getOrElse( ScCss.COLORS_DFLT )
 
   /** Строковые обозначения стилей наподобии i.s.css.Css. */
   private def __ = Css.__

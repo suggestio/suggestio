@@ -5,9 +5,9 @@ import io.suggest.sc.search.m.{MSearchTab, MSearchTabs, SwitchTab}
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sc.styl.ScCss.scCss
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sc.styl.GetScCssF
 
 import scalacss.ScalaCssReact._
 
@@ -17,7 +17,7 @@ import scalacss.ScalaCssReact._
   * Created: 21.07.17 14:13
   * Description: Переключалка табов поисковой панели.
   */
-class TabsR {
+class TabsR( getScCssF: GetScCssF ) {
 
   type Props = ModelProxy[MSearchTab]
 
@@ -28,6 +28,7 @@ class TabsR {
     }
 
     def render(propsProxy: Props): VdomElement = {
+      val scCss = getScCssF()
       val CSS = scCss.Search.Tabs
       val SCSS = CSS.Single
 

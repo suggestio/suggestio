@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sc.styl.ScCss.scCss
+import io.suggest.sc.styl.GetScCssF
 
 import scalacss.ScalaCssReact._
 
@@ -23,7 +23,8 @@ import scalacss.ScalaCssReact._
   * Логотип узла как бы отражает эту сущность.
   */
 class LogoR(
-             nodeNameR: NodeNameR
+             nodeNameR: NodeNameR,
+             getScCssF: GetScCssF
            ) {
 
   type Props = ModelProxy[Option[PropsVal]]
@@ -50,6 +51,7 @@ class LogoR(
     def render(propsProxy: Props, s: State): VdomElement = {
       propsProxy().whenDefinedEl { nodeInfo =>
 
+        val scCss = getScCssF()
         val logoCss = scCss.Header.Logo
 
         // Нужно решить, что вообще надо рендерить: логотип, название узла или что-то иное?
