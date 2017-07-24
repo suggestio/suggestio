@@ -27,12 +27,23 @@ object MScSearch {
 }
 
 
+/** Класс состояния панели поиска.
+  *
+  * @param mapState Состояние гео-карты.
+  * @param text Состояние текстового поиска.
+  * @param rcvrsGeo Гео-данные ресиверов.
+  * @param currTab Текущий таб на панели поиска.
+  * @param isShown Открыта ли панель поиска на экране?
+  * @param isMapInitialized Используется ленивая инициализация карты, т.е. пока не открыт таб
+  *                 в первый раз -- нет инициализации карты. В т.ч. из-за проблемы [[https://stackoverflow.com/a/36257493]]
+  */
 case class MScSearch(
                       mapState    : MMapS,
                       text        : Option[MScSearchText] = None,
                       rcvrsGeo    : Pot[MGeoNodesResp]    = Pot.empty,
                       currTab     : MSearchTab            = MSearchTabs.default,
-                      isShown     : Boolean               = false
+                      isShown     : Boolean               = false,
+                      isMapInitialized    : Boolean               = false
                     ) {
 
   def withMapState( mapState: MMapS ) = copy(mapState = mapState)
@@ -40,5 +51,6 @@ case class MScSearch(
   def withRcvrsGeo( rcvrsGeo: Pot[MGeoNodesResp] ) = copy( rcvrsGeo = rcvrsGeo )
   def withCurrTab( currTab: MSearchTab ) = copy( currTab = currTab )
   def withIsShown( isShown: Boolean ) = copy( isShown = isShown )
+  def withMapInitialized(mapReady: Boolean ) = copy( isMapInitialized = mapReady )
 
 }

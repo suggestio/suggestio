@@ -119,7 +119,7 @@ object AdvGeoFormR {
 
         // Рендер географической карты:
         s.mmapC { mapProps =>
-          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapProps )
+          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapProps, Css.Lk.Maps.MAP_CONTAINER )
           LMapR(lMapProps)(
 
             // Рендерим основную плитку карты.

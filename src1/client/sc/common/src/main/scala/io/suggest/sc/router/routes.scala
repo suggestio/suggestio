@@ -1,5 +1,6 @@
 package io.suggest.sc.router
 
+import io.suggest.routes.StaticRoutesController
 import io.suggest.sc.ScConstants.JsRouter.NAME
 import io.suggest.sjs.common.model.Route
 
@@ -23,7 +24,7 @@ object routes extends js.Object {
 
 /** Контроллеры роутера. */
 @js.native
-sealed trait Ctls extends js.Object {
+sealed trait Ctls extends StaticRoutesController {
   def Sc: ScCtl = js.native
 }
 

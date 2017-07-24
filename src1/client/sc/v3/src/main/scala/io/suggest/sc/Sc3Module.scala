@@ -3,7 +3,6 @@ package io.suggest.sc
 import com.softwaremill.macwire._
 import io.suggest.sc.hdr.HeaderModule
 import io.suggest.sc.inx.IndexModule
-import io.suggest.sc.inx.v.IndexR
 import io.suggest.sc.root.v.{ScCssR, ScRootR}
 import io.suggest.sc.search.SearchModule
 import io.suggest.sc.styl.{ScCssFactoryModule, ScCssModule}

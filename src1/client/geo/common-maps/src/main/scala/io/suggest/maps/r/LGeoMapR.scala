@@ -29,8 +29,8 @@ object LGeoMapR {
     * @param dispatcher Прокси MMapS.
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( dispatcher: ModelProxy[MMapS] ): LMapPropsR = {
-    lmMapSProxy2lMapProps( dispatcher(), dispatcher )
+  def lmMapSProxy2lMapProps( dispatcher: ModelProxy[MMapS], cssClass: String ): LMapPropsR = {
+    lmMapSProxy2lMapProps( dispatcher(), dispatcher, cssClass )
   }
 
   /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
@@ -39,7 +39,7 @@ object LGeoMapR {
     * @param dispatcher Прокси для отправки экшенов-событий наверх.
     * @return Инстанс LMapPropsR.
     */
-  def lmMapSProxy2lMapProps( v: MMapS, dispatcher: ModelProxy[_] ): LMapPropsR = {
+  def lmMapSProxy2lMapProps( v: MMapS, dispatcher: ModelProxy[_], cssClass: String ): LMapPropsR = {
 
     def _onLocationFound(locEvent: LocationEvent): Callback = {
       val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
@@ -64,7 +64,7 @@ object LGeoMapR {
       override val zoom      = v.props.zoom
       // Значение требует markercluster, цифра взята почти с потолка:
       override val maxZoom   = 16
-      override val className = Css.Lk.Maps.MAP_CONTAINER
+      override val className = cssClass
       override val useFlyTo  = true
       override val onLocationFound = {
         if ( v.locationFound.contains(true) ) {

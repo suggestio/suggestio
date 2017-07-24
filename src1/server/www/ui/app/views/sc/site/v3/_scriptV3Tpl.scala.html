@@ -8,6 +8,7 @@
 @import io.suggest.sc.ScConstants.JsRouter.DOM_ID
 @import io.suggest.sc.map.ScMapConstants.Nodes.ALL_URL_INPUT_ID
 @import lk.lkwdgts._formStateInputTpl
+@import stuff.geo.maps._
 
 @_formStateInputTpl( args.state0 )
 
@@ -19,3 +20,12 @@
 @jsTpl2HtmlTpl( withScriptTag = true )( args.jsMessagesJs )
 
 @_sjsScript("sc3-sjs")
+
+
+@* Рендерим маркеры, необходимые гео-карте. *@
+@_mapMarkersContTpl() {
+
+  @* Нужен pin-маркер для marker-cluster. *@
+  @_mapMarkersPinTpl()
+
+}

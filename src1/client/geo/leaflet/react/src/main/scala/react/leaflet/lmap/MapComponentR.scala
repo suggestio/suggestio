@@ -22,7 +22,7 @@ class MapComponentR[Props <: js.Any](
 
   type El_t <: js.Object
 
-  protected var leafletElement: El_t = js.native
+  var leafletElement: El_t = js.native
 
   def componentWillMount(): Unit = js.native
 

@@ -3,6 +3,7 @@ package io.suggest.lk.router
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 import io.suggest.js.JsRoutesConst.GLOBAL_NAME
+import io.suggest.routes.StaticRoutesController
 
 /**
  * Suggest.io
@@ -20,12 +21,10 @@ object jsRoutes extends js.Object {
 
 
 @js.native
-sealed trait Controllers extends js.Object {
+sealed trait Controllers extends StaticRoutesController {
 
   def LkBill2: LkBill2Routes = js.native
 
   def MarketAd: MarketAdFormCtl = js.native
-
-  def Static: StaticRoutes = js.native
 
 }

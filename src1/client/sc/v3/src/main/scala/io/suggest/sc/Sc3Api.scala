@@ -1,6 +1,8 @@
 package io.suggest.sc
 
+import io.suggest.lk.router.{AbstractStaticHttpApi, IStaticApi}
 import io.suggest.sc.inx.c.{IIndexApi, IndexApiXhrImpl}
+import io.suggest.sc.router.routes
 
 /**
   * Suggest.io
@@ -19,9 +21,17 @@ object Sc3Api {
 /** Интерфейс полного API. Не ясно, нужен ли. */
 trait ISc3Api
   extends IIndexApi
+  with IStaticApi
 
 
 /** XHR-реализация API. */
 class Sc3ApiXhrImpl
   extends ISc3Api
   with IndexApiXhrImpl
+  with AbstractStaticHttpApi
+{
+
+  override def advRcvrsMapRoute = routes.controllers.Static.advRcvrsMap()
+
+}
+

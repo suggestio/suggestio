@@ -13,16 +13,8 @@ import scala.scalajs.js
   * Created: 07.06.17 16:27
   * Description: js-роуты для Static-контроллера.
   */
-@js.native
-trait StaticRoutes extends js.Object {
 
-  /** Роута для доступа к данным гео.карты рекламщиков.
-    * Обычно проходит через CDN, но это уже разруливает серверный js-роутер. */
-  def advRcvrsMap(): Route = js.native
-
-}
-
-
+/** Интерфейс для статического API. */
 trait IStaticApi {
 
   /** Получение десериализованного инстанса с данными гео.карты рекламщиков. */
@@ -31,16 +23,26 @@ trait IStaticApi {
 }
 
 
-/** Реализация [[IStaticApi]] поверх HTTP через js-роутер. */
-class StaticHttpApi extends IStaticApi {
+/** Реализация [[IStaticApi]] поверх HTTP XHR, но без конкретной js-роуты. */
+trait AbstractStaticHttpApi extends IStaticApi {
+
+  /** http-роута для получения гео-данных по ресиверам. */
+  def advRcvrsMapRoute: Route
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
   override def advRcvrsMap(): Future[MGeoNodesResp] = {
     // Надо запустить запрос на сервер для получения списка узлов.
-    val route = jsRoutes.controllers.Static.advRcvrsMap()
     Xhr.unBooPickleResp[MGeoNodesResp] {
-      Xhr.requestBinary(route)
+      Xhr.requestBinary( advRcvrsMapRoute )
     }
   }
+
+}
+
+
+/** Реализация [[IStaticApi]] поверх HTTP через js-роутер. */
+class StaticHttpApi extends AbstractStaticHttpApi {
+
+  override def advRcvrsMapRoute = jsRoutes.controllers.Static.advRcvrsMap()
 
 }

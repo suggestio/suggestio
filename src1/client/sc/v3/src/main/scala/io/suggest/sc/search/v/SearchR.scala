@@ -5,6 +5,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.search.m.{MScSearch, MScSearchText, MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
 import io.suggest.sjs.common.spa.OptFastEq
@@ -40,7 +41,8 @@ class SearchR(
                                     rcvrsGeoC           : ReactConnectProxy[Pot[MGeoNodesResp]],
                                     textOptC            : ReactConnectProxy[Option[MScSearchText]],
                                     tabC                : ReactConnectProxy[MSearchTab],
-                                    isShownC            : ReactConnectProxy[Some[Boolean]]
+                                    isShownC            : ReactConnectProxy[Some[Boolean]],
+                                    isMapInitializedC   : ReactConnectProxy[Some[Boolean]]
                                   )
 
   class Backend( $: BackendScope[Props, State] ) {
@@ -68,9 +70,11 @@ class SearchR(
           s.tabC { tabsR.apply },
 
           // Карта.
+
+          // Тело текущего таба.
           s.mmapC { mmapS =>
-            val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mmapS )
             val mapCSS = CSS.Tabs.MapTab
+            val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mmapS, mapCSS.geomap.htmlClass )
 
             s.tabC { currTabProxy =>
               val currTab = currTabProxy()
@@ -84,22 +88,30 @@ class SearchR(
                   ^.display.none,
 
                 <.div(
-                  scCss.smFlex, scCss.smOverflowScrolling,
+                  mapCSS.wrapper, scCss.smFlex, scCss.smOverflowScrolling,
                   <.div(
                     mapCSS.inner,
 
-                    LMapR(lMapProps)(
+                    // Боремся с проблемой https://stackoverflow.com/a/36257493 с помощью отложенной инициализации.
+                    s.isMapInitializedC { isMapInitializedSomeProxy =>
+                      if (isMapInitializedSomeProxy.value.value) {
+                        LMapR(lMapProps)(
 
-                      // Рендерим основную плитку карты.
-                      ReactLeafletUtil.Tiles.OsmDefaultNoAttrib,
+                          // Рендерим основную плитку карты.
+                          ReactLeafletUtil.Tiles.OsmDefaultNoAttrib,
 
-                      // Плагин для геолокации текущего юзера.
-                      LocateControlR(),
+                          // Плагин для геолокации текущего юзера.
+                          LocateControlR(),
 
-                      // Рендер шейпов и маркеров текущий узлов.
-                      s.rcvrsGeoC( RcvrMarkersR(_)() )
+                          // Рендер шейпов и маркеров текущий узлов.
+                          s.rcvrsGeoC( RcvrMarkersR(_)() )
 
-                    )
+                        )
+                      } else {
+                        ReactCommonUtil.VdomNullElement
+                      }
+                    }
+
                   )
                 )
               )
@@ -121,7 +133,8 @@ class SearchR(
         rcvrsGeoC = propsProxy.connect( _.rcvrsGeo ),
         textOptC  = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
-        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.PlainVal )
+        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.PlainVal ),
+        isMapInitializedC = propsProxy.connect(p => Some(p.isMapInitialized))( OptFastEq.PlainVal )
       )
     }
     .renderBackend[Backend]

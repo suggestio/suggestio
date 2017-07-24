@@ -23,6 +23,33 @@ object ScCss {
     fg = Some(MColorData( "ffffff" ))
   )
 
+  lazy val isSafari = cssEnv.platform.name.contains("Safari")
+
+  /**
+    * Некоторые браузеры скроллят внешний контейнер вместо внутреннего, когда оба скроллабельны.
+    * С помощью это флага можно активировать логику перезаписи scrollbar'а внутренним контейнером,
+    * чтобы быстро исправить недоразумение.
+    * @return true, когда требуется спровоцировать внутренний скроллбар через шаманство с высотами.
+    *         false, когда костыли не нужны (по умолчанию).
+    */
+  lazy val needOverrideScroll: Boolean = {
+    /*
+     * Мобильная сафари не может скроллить внутренний контейнер, когда можно скроллить внешний.
+     * Нужно форсировать появление скроллбара у внутреннего контейнера.
+     * TODO Проверить, нуждается ли ipad в таком костыле.
+     * TODO Актуально ли это всё в 2017 году?
+     */
+    isSafari &&
+      cssEnv.platform.userAgent.exists( _.contains("Mobile/") )
+  }
+
+  /**
+    * Оффсет при наличии заголовка табов поиска.
+    * Если нет заголовка табов, то можно делать бОльший offset.
+    * if (tabsHdr.isEmpty) 115 else 165
+    */
+  val TABS_OFFSET_PX = 115
+
 }
 
 
@@ -119,6 +146,7 @@ case class ScCss( args: IScCssArgs )
       )
     }
 
+    /** Контейнер стилей элементов фона экрана приветствия. */
     object Bg {
 
       /** Стили фонового изображения экрана приветствия */
@@ -151,6 +179,7 @@ case class ScCss( args: IScCssArgs )
 
     }
 
+    /** Контейнер стилей элементов переднего плана экрана приветствия. */
     object Fg {
 
       /** Стили логотипа экрана приветствия. */
@@ -327,6 +356,18 @@ case class ScCss( args: IScCssArgs )
 
       val tabsWrapper = _styleAddClasses( _TABS + "-wrapper" )
 
+      private val TAB_BODY_HEIGHT_PX = args.screen.height - ScCss.TABS_OFFSET_PX
+
+      private val TAB_BODY_HEIGHT    = height( TAB_BODY_HEIGHT_PX.px )
+
+      /** Форсировать скроллбар во внутреннем контейнере, если этого требует окружение. */
+      private val TAB_BODY_CONTENT_HEIGHT = if (ScCss.needOverrideScroll) {
+        height( (TAB_BODY_HEIGHT_PX + 1).px )
+      } else {
+        TAB_BODY_HEIGHT
+      }
+
+
       /** Стили для одного таба. */
       object Single {
 
@@ -344,9 +385,31 @@ case class ScCss( args: IScCssArgs )
 
       /** Стили содержимого вкладки с гео-картой. */
       object MapTab {
+
         private val OUTER = _SM_ + "categories"
-        val outer = _styleAddClasses( OUTER )
-        val inner = _styleAddClasses( OUTER + "_content" )
+
+        /** Стиль внешнего контейнера. */
+        val outer = style(
+          addClassName( OUTER ),
+          TAB_BODY_HEIGHT
+        )
+
+        /** Стиль wrap-контейнера. */
+        val wrapper = style(
+          TAB_BODY_HEIGHT
+        )
+
+        val inner = style(
+          addClassName( OUTER + "_content" ),
+          TAB_BODY_CONTENT_HEIGHT
+        )
+
+        /** Стиль контейнера карты. Контейнер порождается js'кой гео-карты, а не нами. */
+        val geomap = style(
+          width( 100.%% ),
+          height( 100.%% )
+        )
+
       }
 
     }

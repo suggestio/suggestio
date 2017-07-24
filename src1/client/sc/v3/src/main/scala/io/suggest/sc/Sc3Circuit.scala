@@ -3,7 +3,8 @@ package io.suggest.sc
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
-import io.suggest.maps.m.MMapS
+import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
+import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
@@ -74,6 +75,8 @@ class Sc3Circuit(
   private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
   private val searchRW = indexRW.zoomRW(_.search) { _.withSearch(_) }
+  private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
+  private val mmapRW = searchRW.zoomRW(_.mapState) { _.withMapState(_) }
 
   val rootRO = zoom(m => m)
 
@@ -91,6 +94,9 @@ class Sc3Circuit(
     modelRW = indexStateRW
   )
 
+  private lazy val mapCommonAh = new MapCommonAh(
+    mmapRW = mmapRW
+  )
 
   override protected def actionHandler = {
     var acc = List.empty[HandlerFunction]
@@ -102,6 +108,10 @@ class Sc3Circuit(
       )
     }
 
+    // Инициализатор карты ресиверов на гео-карте.
+    if ( !searchMapRcvrsPotRW.value.isReady )
+      acc ::= new RcvrMarkersInitAh( api, searchMapRcvrsPotRW )
+
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh
 
@@ -110,6 +120,9 @@ class Sc3Circuit(
 
     if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )
+
+    if ( searchRW.value.isMapInitialized )
+      acc ::= mapCommonAh
 
     // Базовые экшены всей выдачи перехватываем всегда и в самую первую очередь.
     // Сюда приходят оптовые или частые сообщения от геолокации, маячков, листенеров размеров экрана.
@@ -140,6 +153,14 @@ class Sc3Circuit(
     Future {
       dispatch( GetIndex( None ) )
     }
+
+    // Запустить инициализацию маркеров на гео-карте.
+    if (searchMapRcvrsPotRW.value.isEmpty) {
+      Future {
+        dispatch(RcvrMarkersInit)
+      }
+    }
+
   }
 
 
@@ -149,7 +170,7 @@ class Sc3Circuit(
   private var _scCssCacheOpt: Option[ScCss] = None
 
   // Подписка на события реальных изменений, связанных со стилями ScCss:
-  subscribe(scCssArgsRO) { _ =>
+  subscribe(scCssArgsRO) { v2 =>
     // Изменились какие-то параметры, связанные со стилями. Просто сбросить кэш ScCss:
     _scCssCacheOpt = None
   }

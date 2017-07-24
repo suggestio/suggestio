@@ -69,7 +69,7 @@ object LamFormR {
 
         // Рендер географической карты:
         s.mmapC { mapPropsProxy =>
-          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy )
+          val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mapPropsProxy, Css.Lk.Maps.MAP_CONTAINER )
           LMapR(lMapProps)(
 
             // Рендерим основную плитку карты.

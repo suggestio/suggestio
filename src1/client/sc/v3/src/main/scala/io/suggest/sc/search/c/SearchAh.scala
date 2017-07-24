@@ -20,11 +20,17 @@ class SearchAh[M](
 
     // Клик по кнопке открытия поисковой панели.
     case HSearchBtnClick =>
-      val v2 = value.withIsShown( true )
+      var v2 = value.withIsShown( true )
+
+      // Сбросить флаг инициализации карты, чтобы гео.карта тоже отрендерилась на экране.
+      if (!v2.isMapInitialized)
+        v2 = v2.withMapInitialized( true )
+
       updated( v2 )
 
     // Клик по кнопке закрытия поисковой выдачи.
     //case
+
 
     // Смена текущего таба на панели поиска.
     case m: SwitchTab =>

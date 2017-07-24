@@ -1,9 +1,10 @@
 package react.leaflet.lmap
 
 import io.suggest.sjs.leaflet.event.{Event, LocationEvent, PopupEvent}
-import io.suggest.sjs.leaflet.map.{LatLngBounds, MapOptions}
+import io.suggest.sjs.leaflet.map.{LMap, LatLngBounds, MapOptions}
 import japgolly.scalajs.react.vdom.VdomNode
 import japgolly.scalajs.react.{Children, JsComponent}
+import react.leaflet.Context
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
@@ -20,6 +21,7 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
 object LMapR {
 
   val component = JsComponent[LMapPropsR, Children.Varargs, Null]( LMapJsR )
+    .addFacade[LMapJsR]
 
   def apply(props: LMapPropsR)(children: VdomNode*) = component(props)(children: _*)
 
@@ -28,7 +30,20 @@ object LMapR {
 
 @JSImport("react-leaflet", "Map")
 @js.native
+sealed class LMapJsR(
+                       props   : LMapPropsR,
+                       context : Context
+                     )
+  extends MapComponentR(props, context)
+{
+  override type El_t = LMap
+}
+
+
+@JSImport("react-leaflet", "Map")
+@js.native
 object LMapJsR extends js.Object
+
 
 @ScalaJSDefined
 trait LMapPropsR extends MapOptions {
