@@ -40,6 +40,7 @@ class Sc3Circuit(
 
   import MScIndex.MScIndexFastEq
   import io.suggest.sc.inx.m.MWelcomeState.MWelcomeStateFastEq
+  import io.suggest.sc.styl.MScCssArgs.MScCssArgsFastEq
 
   import MScSearch.MScSearchFastEq
 

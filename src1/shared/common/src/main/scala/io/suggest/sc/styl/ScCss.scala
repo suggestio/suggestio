@@ -1,6 +1,7 @@
 package io.suggest.sc.styl
 
 import ScScalaCssDefaults._
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
 import io.suggest.dev.MScreen
 import io.suggest.i18n.MsgCodes
@@ -29,6 +30,8 @@ object ScCss {
 trait IScCssArgs {
   def customColorsOpt   : Option[MColors]
   def screen            : MScreen
+  def wcBgWh            : Option[MSize2di]
+  def wcFgWh            : Option[MSize2di]
 }
 
 
@@ -107,16 +110,67 @@ case class ScCss( args: IScCssArgs )
       backgroundColor( _bgColorCss )
     )
 
-    object Bg {
-      val bgImg = style(
-        addClassName( _SM_WELCOME_AD + "_bg-img" ),
-        backgroundColor( _bgColorCss )
+    private def _imgWhMixin(wh: ISize2di, margin: ISize2di) = {
+      mixin(
+        height( wh.height.px ),
+        width( wh.width.px ),
+        marginTop( margin.height.px ),
+        marginLeft( margin.width.px )
       )
     }
 
+    object Bg {
+
+      /** Стили фонового изображения экрана приветствия */
+      val bgImg = {
+        // В зависимости от наличия или отсутствия размера welcome background, стили могут отличаться.
+        val whMx = args.wcBgWh.fold( StyleS.empty ) { wh0 =>
+          val wh2 = if (wh0.whRatio < args.screen.whRatio) {
+            val w = args.screen.width
+            MSize2di(
+              width  = w,
+              height = w * wh0.height / wh0.width
+            )
+          } else {
+            val h = args.screen.height
+            MSize2di(
+              width  = h * wh0.width / wh0.height,
+              height = h
+            )
+          }
+          val margin2 = wh2 / (-2)
+          _imgWhMixin( wh2, margin2 )
+        }
+
+        style(
+          addClassName( _SM_WELCOME_AD + "_bg-img" ),
+          backgroundColor( _bgColorCss ),
+          whMx
+        )
+      }
+
+    }
+
     object Fg {
-      val fgImg = _styleAddClasses( _SM_WELCOME_AD + "_fg-img" )
+
+      /** Стили логотипа экрана приветствия. */
+      val fgImg = {
+        // Подготнка логотипа приветствия под текущий экран: центровка.
+        val whMx = args.wcFgWh.fold( StyleS.empty ) { wh0 =>
+          val wh2 = wh0 / 2
+          val margin0 = wh2 / (-2)
+          val margin2 = margin0.withHeight( margin0.height + 25 )
+          _imgWhMixin( wh2, margin2 )
+        }
+
+        style(
+          addClassName( _SM_WELCOME_AD + "_fg-img" ),
+          whMx
+        )
+      }
+
       val fgText = _styleAddClasses( _SM_WELCOME_AD + "_fg-text" )
+
       val helper = _styleAddClasses( _SM_WELCOME_AD + "_helper" )
     }
 

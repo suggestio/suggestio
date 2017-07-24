@@ -2,7 +2,8 @@ package io.suggest.sc.inx.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.sc.index.MSc3IndexResp
+import io.suggest.media.IMediaInfo
+import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sc.styl.MScCssArgs
 
@@ -37,9 +38,18 @@ case class MScIndex(
   def withWelcome(welcome: Option[MWelcomeState]) = copy(welcome = welcome)
   def withSearch(search: MScSearch)               = copy(search = search)
 
-  lazy val scCssArgs = MScCssArgs(
-    customColorsOpt = resp.toOption.map(_.colors),
-    screen          = state.screen
-  )
+
+  /** Инстанс модели аргументов рендера ScCss. */
+  lazy val scCssArgs: MScCssArgs = {
+    val wcOpt = resp.toOption.flatMap(_.welcome)
+    def __whOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
+
+    MScCssArgs(
+      customColorsOpt = resp.toOption.map(_.colors),
+      screen          = state.screen,
+      wcBgWh          = __whOpt( _.bgImage ),
+      wcFgWh          = __whOpt( _.fgImage )
+    )
+  }
 
 }

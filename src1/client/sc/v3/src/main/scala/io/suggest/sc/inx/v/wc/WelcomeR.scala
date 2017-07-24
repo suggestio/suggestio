@@ -2,7 +2,6 @@ package io.suggest.sc.inx.v.wc
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MScreen
 import io.suggest.sc.index.MWelcomeInfo
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
@@ -64,14 +63,6 @@ class WelcomeR(
       dispatchOnProxyScopeCB( $, WcClick )
     }
 
-    private def _whMarginMod(wh: ISize2di, margin: ISize2di): TagMod = {
-      TagMod(
-        ^.height      := wh.height.px,
-        ^.width       := wh.width.px,
-        ^.marginTop   := margin.height.px,
-        ^.marginLeft  := margin.width.px
-      )
-    }
 
     def render(propsProxy: Props, s: State): VdomElement = {
       propsProxy().whenDefinedEl { p =>
@@ -94,27 +85,9 @@ class WelcomeR(
           // Рендер фонового изображения.
           p.wcInfo.bgImage.whenDefined { bgImg =>
             <.img(
+              // Подгонка фона wh под экран и центровка происходит в ScCss:
               CSS.Bg.bgImg,
-              ^.src := bgImg.url,
-
-              // Рендер параметров изображения: подгонка фона wh под экран и центровка.
-              bgImg.whPx.whenDefined { wh0 =>
-                val wh2 = if (wh0.whRatio < p.screen.whRatio) {
-                  val w = p.screen.width
-                  MSize2di(
-                    width  = w,
-                    height = w * wh0.height / wh0.width
-                  )
-                } else {
-                  val h = p.screen.height
-                  MSize2di(
-                    width  = h * wh0.width / wh0.height,
-                    height = h
-                  )
-                }
-                val margin2 = wh2 / (-2)
-                _whMarginMod( wh2, margin2 )
-              }
+              ^.src := bgImg.url
             )
           },
 
@@ -127,16 +100,9 @@ class WelcomeR(
               ),
 
               <.img(
+                // Центровка лого происходит в ScCss.
                 CSS.Fg.fgImg,
-                ^.src := fgImg.url,
-
-                // Центровка логотипа под экран
-                fgImg.whPx.whenDefined { wh0 =>
-                  val wh2 = wh0 / 2
-                  val margin0 = wh2 / (-2)
-                  val margin2 = margin0.withHeight( margin0.height + 25 )
-                  _whMarginMod( wh2, margin2 )
-                }
+                ^.src := fgImg.url
               )
             )
           },

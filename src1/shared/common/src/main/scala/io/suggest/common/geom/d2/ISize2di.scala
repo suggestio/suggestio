@@ -13,11 +13,22 @@ import io.suggest.media.MediaConst
 
 trait ISize2di extends IWidth with IHeight {
 
-  override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
-
   def whRatio: Double = {
     width.toDouble / height.toDouble
   }
+
+  override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
+
+  override def equals(obj: Any): Boolean = {
+    obj match {
+      case sz2d: ISize2di =>
+        sz2d.height == height && sz2d.width == width
+      case _ =>
+        false
+    }
+  }
+
+  override def hashCode(): Int = width + (31 * height)
 
 }
 
