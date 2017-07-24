@@ -4,6 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.sc.index.MSc3IndexResp
 import io.suggest.sc.search.m.MScSearch
+import io.suggest.sc.styl.MScCssArgs
 
 /**
   * Suggest.io
@@ -35,5 +36,10 @@ case class MScIndex(
   def withResp(resp: Pot[MSc3IndexResp])          = copy(resp = resp)
   def withWelcome(welcome: Option[MWelcomeState]) = copy(welcome = welcome)
   def withSearch(search: MScSearch)               = copy(search = search)
+
+  lazy val scCssArgs = MScCssArgs(
+    customColorsOpt = resp.toOption.map(_.colors),
+    screen          = state.screen
+  )
 
 }

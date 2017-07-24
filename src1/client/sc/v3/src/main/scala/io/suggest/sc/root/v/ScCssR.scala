@@ -2,8 +2,7 @@ package io.suggest.sc.root.v
 
 import diode.react.ModelProxy
 import io.suggest.sc.styl.ScScalaCssDefaults._
-import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -16,11 +15,10 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class ScCssR( getScCssF: GetScCssF ) {
 
-  type PropsVal = Option[MColors]
-  type Props = ModelProxy[PropsVal]
+  type Props = ModelProxy[MScCssArgs]
 
   class Backend($: BackendScope[Props, Unit]) {
-    def render(p: Props): VdomElement = {
+    def render: VdomElement = {
       val scCss = getScCssF()
 
       <.styleTag(

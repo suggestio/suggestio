@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.IndexR
 import io.suggest.sc.root.m.MScRoot
-import io.suggest.sc.styl.GetScCssF
+import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -23,13 +23,12 @@ class ScRootR (
                 getScCssF                   : GetScCssF
               ) {
 
-  import io.suggest.sjs.common.spa.OptFastEq.Plain
   import MScIndex.MScIndexFastEq
 
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
-                                    colorsOptC     : ReactConnectProxy[scCssR.PropsVal],
+                                    colorsOptC     : ReactConnectProxy[MScCssArgs],
                                     indexPropsC    : ReactConnectProxy[MScIndex]
                                   )
 
@@ -61,12 +60,7 @@ class ScRootR (
   val component = ScalaComponent.builder[Props]("Root")
     .initialStateFromProps { propsProxy =>
       State(
-        colorsOptC  = propsProxy.connect { props =>
-          props.index
-            .resp
-            .toOption
-            .map(_.colors)
-        },
+        colorsOptC  = propsProxy.connect(_.index.scCssArgs),
         indexPropsC = propsProxy.connect(_.index)
       )
     }

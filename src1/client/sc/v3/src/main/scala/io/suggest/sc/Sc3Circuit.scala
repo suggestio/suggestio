@@ -12,7 +12,7 @@ import io.suggest.sc.root.m.MScRoot
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.MScSearch
-import io.suggest.sc.styl.{MScCssArgs, ScCss, ScCssFactoryModule}
+import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -68,7 +68,7 @@ class Sc3Circuit(
   // Кэш zoom'ов модели:
   private val jsRouterRW = zoomRW(_.jsRouter) { _.withJsRouter(_) }
 
-  protected[this] val indexRW = zoomRW(_.index) { _.withIndex(_) }
+  private val indexRW = zoomRW(_.index) { _.withIndex(_) }
   private val indexWelcomeRW = indexRW.zoomRW(_.welcome) { _.withWelcome(_) }
   private val indexStateRW = indexRW.zoomRW(_.state) { _.withState(_) }
 
@@ -143,12 +143,7 @@ class Sc3Circuit(
 
 
   /** Зуммер для получения инстанса динамических аргументов рендера ScCss. */
-  val scCssArgsRO = indexRW.zoom { index =>
-    MScCssArgs(
-      customColorsOpt = index.resp.toOption.map(_.colors),
-      screen          = index.state.screen
-    )
-  }
+  private val scCssArgsRO = indexRW.zoom(_.scCssArgs)
 
   private var _scCssCacheOpt: Option[ScCss] = None
 
