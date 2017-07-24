@@ -80,7 +80,7 @@ class SearchR(
               val currTab = currTabProxy()
 
               <.div(
-                mapCSS.outer, scCss.smFlex,
+                mapCSS.outer,
 
                 if (currTab == MSearchTabs.GeoMap)
                   ^.display.block
@@ -88,7 +88,7 @@ class SearchR(
                   ^.display.none,
 
                 <.div(
-                  mapCSS.wrapper, scCss.smFlex, scCss.smOverflowScrolling,
+                  mapCSS.wrapper,
                   <.div(
                     mapCSS.inner,
 

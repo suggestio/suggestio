@@ -79,6 +79,16 @@ case class ScCss( args: IScCssArgs )
   private def _NAME_TOKENS_DELIM = "-"
   private def _SM_ = Css.Lk._SM_PREFIX_
 
+  val overflowScrollingMx: StyleS = {
+    if (ScCss.needOverrideScroll) {
+      mixin(
+        addClassName( _SM_ + "overflow-scrolling"  )
+      )
+    } else {
+      StyleS.empty
+    }
+  }
+
   private def _styleAddClasses(cssClasses: String*) = style( addClassNames(cssClasses: _*) )
 
   private def `BUTTON` = "button"
@@ -93,7 +103,6 @@ case class ScCss( args: IScCssArgs )
   val clear = _styleAddClasses( Css.CLEAR )
 
   val smFlex = _styleAddClasses( _SM_ + "flex" )
-  val smOverflowScrolling = _styleAddClasses( _SM_ + "overflow-scrolling" )
 
   /** Стили для html.body . */
   // TODO Этот код наверное не нужен. Т.к. оно вне react-компонента.
@@ -391,11 +400,14 @@ case class ScCss( args: IScCssArgs )
         /** Стиль внешнего контейнера. */
         val outer = style(
           addClassName( OUTER ),
+          smFlex,
           TAB_BODY_HEIGHT
         )
 
         /** Стиль wrap-контейнера. */
         val wrapper = style(
+          overflowScrollingMx,
+          smFlex,
           TAB_BODY_HEIGHT
         )
 
