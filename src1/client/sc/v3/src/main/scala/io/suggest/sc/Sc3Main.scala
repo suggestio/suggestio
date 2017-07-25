@@ -1,7 +1,6 @@
 package io.suggest.sc
 
 import io.suggest.sc.log.ScRmeLogAppender
-import io.suggest.sc.root.m.JsRouterStatus
 import io.suggest.sc.router.SrvRouter
 import io.suggest.sjs.common.log.Logging
 import io.suggest.sjs.common.view.VUtil
@@ -22,7 +21,7 @@ object Sc3Main {
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
     // Сразу поискать js-роутер на странице.
-    val jsRouterFut = SrvRouter.getRouter()
+    val jsRouterFut = SrvRouter.ensureJsRouter()
 
     val body = DocumentVm().body
 
@@ -39,14 +38,9 @@ object Sc3Main {
       .wrap(m => m)( modules.sc3Module.scRootR.apply )
       .renderIntoDOM(rootDiv)
 
-    // Активировать отправку логов на сервер, когда js-роутер будет готов.
-    for (_ <- jsRouterFut) {
-      Logging.LOGGERS ::= new ScRmeLogAppender
-    }
-
-    // Уведомить основную цепь по поводу готовности js-роутера...
     jsRouterFut.andThen { case tryRes =>
-      mainCircuit.dispatch( JsRouterStatus(tryRes) )
+      // Активировать отправку логов на сервер, когда js-роутер будет готов.
+      Logging.LOGGERS ::= new ScRmeLogAppender
     }
 
     val BodyCss = modules.scCssModule.getScCssF().Body

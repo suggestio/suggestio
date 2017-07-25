@@ -32,7 +32,7 @@ trait Init extends ScFsmStub with IUrl2State { scFsm =>
       super.afterBecome()
 
       // Запускаем инициализацию js-роутера в фоне.
-      SrvRouter.getRouter()
+      SrvRouter.ensureJsRouter()
 
       // TODO Это нужно вообще или нет?
       DocumentView.initDocEvents()

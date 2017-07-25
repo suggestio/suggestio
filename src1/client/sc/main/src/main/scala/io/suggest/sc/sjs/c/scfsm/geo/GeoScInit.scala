@@ -69,7 +69,7 @@ trait GeoScInit extends Index { me =>
       )
 
       // Запустить получение js-роутера. Это просто нужно, в т.ч. для получения sc-индекса.
-      val jsRouterFut = SrvRouter.getRouter()
+      val jsRouterFut = SrvRouter.ensureJsRouter()
 
       // Запустить в фоне поиск BLE-маячков, если возможно...
       // device ready уже должен был быть отработан.

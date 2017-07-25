@@ -202,7 +202,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
       val c = sd0.common
       if (c.adnIdOpt.nonEmpty || c.geoLocOpt.nonEmpty) {
         // Задан id узла выдачи, перейти в него.
-        val routerFut = SrvRouter.getRouter()
+        val routerFut = SrvRouter.ensureJsRouter()
         for (_ <- routerFut) yield {
           new NodeIndex_Get_Wait_State
         }

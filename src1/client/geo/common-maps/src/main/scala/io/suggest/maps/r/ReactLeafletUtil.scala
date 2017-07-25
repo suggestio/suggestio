@@ -6,7 +6,6 @@ import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import react.leaflet.layer.{TileLayerPropsR, TileLayerR}
 
-import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
 /**
@@ -15,9 +14,6 @@ import scala.scalajs.js.UndefOr
   * Created: 18.04.17 21:58
   * Description: Утиль для react + leaflet.
   */
-trait OsmDefaultT extends TileLayerPropsR {
-
-}
 
 object ReactLeafletUtil extends Log {
 
@@ -40,18 +36,15 @@ object ReactLeafletUtil extends Log {
       }
     }
 
-    def mkDefaultLayer(withAttribution: Boolean = true) = {
+    def mkDefaultLayer() = {
       TileLayerR(
         new TileLayerPropsR {
-          override val url           = LeafletConstants.Tiles.URL_OSM_DFLT
+          override val url = LeafletConstants.Tiles.URL_OSM_DFLT
           override val detectRetina: UndefOr[Boolean] = {
             isDetectRetina()
           }
           override val attribution: UndefOr[String] = {
-            if (withAttribution)
-              LeafletConstants.Tiles.ATTRIBUTION_OSM
-            else
-              js.undefined
+            LeafletConstants.Tiles.ATTRIBUTION_OSM
           }
         }
       )
@@ -59,8 +52,6 @@ object ReactLeafletUtil extends Log {
 
     /** Константный инстанс TileLayer компонента лежит в памяти отдельно, т.к. никаких изменений в нём не требуется. */
     lazy val OsmDefault = mkDefaultLayer()
-
-    lazy val OsmDefaultNoAttrib = mkDefaultLayer( withAttribution = false )
 
   }
 

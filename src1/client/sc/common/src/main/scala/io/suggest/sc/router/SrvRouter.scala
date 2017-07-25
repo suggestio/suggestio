@@ -20,7 +20,7 @@ object SrvRouter {
    * Получить роутер: со страницы или запросить с сервера асинхронно, если на странице отсутствует.
    * @return Фьючерс с роутером.
    */
-  def getRouter(): Future[routes.type] = {
+  def ensureJsRouter(): Future[routes.type] = {
     val wnd = dom.window : WindowWithScRouterSafe
 
     if (wnd.jsRoutes.nonEmpty) {
@@ -35,7 +35,8 @@ object SrvRouter {
 
       /** Функция для исполнения фьючерса. */
       def pSuccessF(): Unit = {
-        p.success( wnd.jsRoutes.get )
+        for ( jsRouter <- wnd.jsRoutes if !p.isCompleted )
+          p.success( jsRouter )
       }
 
       val fun: js.Function0[_] = asyncInitOpt.fold[js.Function0[_]] {

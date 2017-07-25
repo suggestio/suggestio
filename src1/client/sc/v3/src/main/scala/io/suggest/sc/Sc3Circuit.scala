@@ -9,7 +9,9 @@ import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
 import io.suggest.sc.m.ScreenReset
-import io.suggest.sc.root.m.MScRoot
+import io.suggest.sc.root.c.NoOpAh
+import io.suggest.sc.root.m.{JsRouterStatus, MScRoot}
+import io.suggest.sc.router.SrvRouter
 import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.MScSearch
@@ -23,7 +25,7 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import org.scalajs.dom.Event
 import play.api.libs.json.Json
 
-import scala.concurrent.Future
+import scala.concurrent.Promise
 
 /**
   * Suggest.io
@@ -82,6 +84,9 @@ class Sc3Circuit(
 
 
   // Кэш action-handler'ов
+
+  private val noOpAh = new NoOpAh( jsRouterRW )
+
   private val searchAh = new SearchAh( modelRW = searchRW )
 
   private val indexAh = new IndexAh(
@@ -100,6 +105,9 @@ class Sc3Circuit(
 
   override protected def actionHandler = {
     var acc = List.empty[HandlerFunction]
+
+    // В самый хвост списка добавить дефолтовый обработчик для некоторых событий, которые можно дропать.
+    acc ::= noOpAh
 
     // Листенер инициализации роутера. Выкидывать его после окончания инициализации.
     if ( !jsRouterRW().isReady ) {
@@ -133,8 +141,39 @@ class Sc3Circuit(
   }
 
 
-  // constructor
+  // Отработать инициализацию роутера в самом начале конструктора.
   {
+    val jsRouterFut = SrvRouter.ensureJsRouter()
+    jsRouterFut.andThen { case tryRes =>
+      dispatch( JsRouterStatus(tryRes) )
+    }
+
+    val jsRouterReadyP = Promise[None.type]()
+    val unSubscribeJsRouterF = subscribe( jsRouterRW ) { jsRouterPotProxy =>
+      if (jsRouterPotProxy.value.nonEmpty) {
+        // Запустить инициализацию начального индекса выдачи.
+        try {
+          if (indexRW.value.resp.isEmpty) {
+            dispatch( GetIndex( None ) )
+          }
+          // Запустить получения гео-маркеров с сервера.
+          if (searchMapRcvrsPotRW.value.isEmpty) {
+            dispatch( RcvrMarkersInit )
+          }
+          jsRouterReadyP.success( None )
+        } catch {
+          case ex: Throwable =>
+            jsRouterReadyP.failure(ex)
+        }
+      }
+    }
+    // Удалить listener роутера можно только вызвав функцию, которую возвращает subscribe().
+    jsRouterReadyP.future.onComplete { tryRes =>
+      unSubscribeJsRouterF()
+      for (ex <- tryRes.failed)
+        LOG.error(ErrorMsgs.JS_ROUTER_INIT_FAILED, ex = ex)
+    }
+
     // Подписаться на глобальные события window
     val wnd = WindowVm()
     val listenF = { _: Event => dispatch(ScreenReset) }
@@ -149,18 +188,6 @@ class Sc3Circuit(
       }
     }
 
-    // Заставить систему получить index с сервера. TODO Ожидать геолокации, маячков с помощью таймера.
-    Future {
-      dispatch( GetIndex( None ) )
-    }
-
-    // Запустить инициализацию маркеров на гео-карте.
-    if (searchMapRcvrsPotRW.value.isEmpty) {
-      Future {
-        dispatch(RcvrMarkersInit)
-      }
-    }
-
   }
 
 
@@ -169,8 +196,8 @@ class Sc3Circuit(
 
   private var _scCssCacheOpt: Option[ScCss] = None
 
-  // Подписка на события реальных изменений, связанных со стилями ScCss:
-  subscribe(scCssArgsRO) { v2 =>
+  // Постоянная подписка на события реальных изменений, связанных со стилями ScCss:
+  subscribe(scCssArgsRO) { _ =>
     // Изменились какие-то параметры, связанные со стилями. Просто сбросить кэш ScCss:
     _scCssCacheOpt = None
   }

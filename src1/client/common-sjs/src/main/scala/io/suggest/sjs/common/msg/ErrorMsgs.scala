@@ -124,4 +124,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def EVENT_LISTENER_SUBSCRIBE_ERROR   = E(55)
 
+  def JS_ROUTER_INIT_FAILED            = E(56)
+
 }

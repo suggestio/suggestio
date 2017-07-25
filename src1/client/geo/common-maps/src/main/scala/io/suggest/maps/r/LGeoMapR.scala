@@ -1,7 +1,6 @@
 package io.suggest.maps.r
 
 import diode.react.ModelProxy
-import io.suggest.css.Css
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb

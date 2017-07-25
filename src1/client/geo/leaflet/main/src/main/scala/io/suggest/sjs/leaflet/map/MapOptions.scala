@@ -13,6 +13,29 @@ import scala.scalajs.js.annotation.ScalaJSDefined
  *
  * scalajs-0.6.14+ required.
  */
+object MapOptions {
+
+  /** Доп.утиль вокруг инстансов [[MapOptions]]. */
+  implicit class MapOptionsExtOps[T <: MapOptions](val raw: T) extends AnyVal {
+
+    /** Поработать с MapOptions как будто бы со словарём. */
+    private def _mutateAsDict[U](f: js.Dictionary[js.Any] => U): T = {
+      val jsDict = raw.asInstanceOf[js.Dictionary[js.Any]]
+      f(jsDict)
+      raw
+    }
+
+    /** Убрать attribution ИЗНУТРИ текущего инстанса. */
+    def noAttribution: T = _mutateAsDict { jsDict =>
+      jsDict("attributionControl") = false
+    }
+
+  }
+
+}
+
+
+/** JSON-модель опций сборки новой карты. */
 @ScalaJSDefined
 trait MapOptions extends js.Object {
 

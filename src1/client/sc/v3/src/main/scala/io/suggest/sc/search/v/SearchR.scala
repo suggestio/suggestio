@@ -14,8 +14,10 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.sjs.leaflet.map.MapOptions
 import react.leaflet.lmap.LMapR
 
+import scala.scalajs.js
 import scalacss.ScalaCssReact._
 
 /**
@@ -74,7 +76,6 @@ class SearchR(
           // Тело текущего таба.
           s.mmapC { mmapS =>
             val mapCSS = CSS.Tabs.MapTab
-            val lMapProps = LGeoMapR.lmMapSProxy2lMapProps( mmapS, mapCSS.geomap.htmlClass )
 
             s.tabC { currTabProxy =>
               val currTab = currTabProxy()
@@ -95,10 +96,14 @@ class SearchR(
                     // Боремся с проблемой https://stackoverflow.com/a/36257493 с помощью отложенной инициализации.
                     s.isMapInitializedC { isMapInitializedSomeProxy =>
                       if (isMapInitializedSomeProxy.value.value) {
+                        val lMapProps = LGeoMapR
+                          .lmMapSProxy2lMapProps( mmapS, mapCSS.geomap.htmlClass )
+                          .noAttribution
+
                         LMapR(lMapProps)(
 
                           // Рендерим основную плитку карты.
-                          ReactLeafletUtil.Tiles.OsmDefaultNoAttrib,
+                          ReactLeafletUtil.Tiles.OsmDefault,
 
                           // Плагин для геолокации текущего юзера.
                           LocateControlR(),
