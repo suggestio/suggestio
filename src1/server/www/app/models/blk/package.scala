@@ -21,8 +21,6 @@ package object blk {
 
   type FontSize    = FontSizes.FontSize
 
-  type IBlockMeta  = io.suggest.model.n2.ad.blk.IBlockMeta
-
   type BlockMeta   = io.suggest.model.n2.ad.blk.BlockMeta
   val  BlockMeta   = io.suggest.model.n2.ad.blk.BlockMeta
 

@@ -1,7 +1,8 @@
 package models.im.make
 
-import models.blk.{IBlockMeta, SzMult_t}
-import models.im.{MImgT, DevScreen, CompressMode}
+import io.suggest.model.n2.ad.blk.BlockMeta
+import models.blk.SzMult_t
+import models.im.{CompressMode, DevScreen, MImgT}
 
 /**
  * Suggest.io
@@ -19,20 +20,21 @@ trait IMakeArgs {
   def img: MImgT
 
   /** Метаданные исходного блока. А вообще тут размеры объекта, к которому относится эта картинка. */
-  def blockMeta: IBlockMeta
+  def blockMeta: BlockMeta
 
   /** Коэфф. масштабирования. */
   def szMult: SzMult_t
 
   /** Используемая программа компрессии картинки вместо дефолтовой. */
   def compressMode: Option[CompressMode]
+
 }
 
 
 /** Дефолтовая реализация [[IMakeArgs]]. */
 case class MakeArgs(
   override val img          : MImgT,
-  override val blockMeta    : IBlockMeta,
+  override val blockMeta    : BlockMeta,
   override val szMult       : SzMult_t,
   override val devScreenOpt : Option[DevScreen],
   override val compressMode : Option[CompressMode] = None

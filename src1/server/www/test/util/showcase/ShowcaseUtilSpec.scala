@@ -6,7 +6,6 @@ import models.blk.SzMult_t
 import models.im.{DevScreen, DevPixelRatios}
 import models.msc.TileArgs
 import org.scalatestplus.play._
-import util.blocks.BlocksConf
 
 /**
  * Suggest.io
@@ -16,7 +15,7 @@ import util.blocks.BlocksConf
  */
 class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
 
-  lazy val scUtil = app.injector.instanceOf[ShowcaseUtil]
+  private lazy val scUtil = app.injector.instanceOf[ShowcaseUtil]
 
   import scUtil._
 
@@ -66,7 +65,6 @@ class ShowcaseUtilSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart {
   "fitBlockToScreen() for focused ad" must {
     def t(bw: Int, bh: Int, dscr: DevScreen, res: SzMult_t): Unit = {
       val bm = BlockMeta(
-        blockId = BlocksConf.DEFAULT.id,
         height = bh,
         width = bw
       )

@@ -9,7 +9,6 @@ import models.im.make.{IMakeArgs, MakeArgs, Makers, SysForm_t}
 import models.mctx.Context
 import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
-import util.blocks.BlocksConf
 import util.FormUtil
 import util.acl.IIsSu
 import views.html.sys1.img.make._
@@ -80,7 +79,6 @@ trait SysImgMake
           img = img,
           blockMeta = bmDflt getOrElse {
             BlockMeta(
-              blockId = BlocksConf.DEFAULT.id,
               height  = BlockHeights.default.heightPx,
               width   = BlockWidths.default.widthPx,
               wide    = true

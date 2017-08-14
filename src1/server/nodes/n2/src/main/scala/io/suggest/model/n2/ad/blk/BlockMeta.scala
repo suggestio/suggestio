@@ -9,10 +9,8 @@ import play.api.libs.functional.syntax._
 import play.api.mvc.QueryStringBindable
 
 /** Модель метаданных по блоку рекламной карточки. */
-
 object BlockMeta extends IGenEsMappingProps {
 
-  val BLOCK_ID_ESFN = "blockId"
   val HEIGHT_ESFN   = "height"
   val WIDTH_ESFN    = "width"
   val WIDE_ESFN     = "wide"
@@ -25,14 +23,13 @@ object BlockMeta extends IGenEsMappingProps {
     * Эта архитектурная особенность в 2017г. является устаревшей и излишней,
     * но от неё пока зависит много кода.
     */
-  //@deprecated("Blocks are deprected", "14.aug.2017")
-  def BLOCK_ID_DFLT = 20
+  //@deprecated("Blocks are deprecated", "14.aug.2017")
+  def BLOCK_ID = 20
 
-  val DEFAULT = BlockMeta(blockId = BLOCK_ID_DFLT, height = 300, width = WIDTH_DFLT)
+  val DEFAULT = BlockMeta( height = 300, width = WIDTH_DFLT )
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[BlockMeta] = (
-    (__ \ BLOCK_ID_ESFN).format[Int] and
     (__ \ HEIGHT_ESFN).format[Int] and
     (__ \ WIDTH_ESFN).formatNullable[Int]
       .inmap [Int] (_.getOrElse(WIDTH_DFLT), someF) and
@@ -54,7 +51,6 @@ object BlockMeta extends IGenEsMappingProps {
 
   def generateMappingProps: List[DocField] = {
     List(
-      _fint(BLOCK_ID_ESFN),
       _fint(HEIGHT_ESFN),
       _fint(WIDTH_ESFN),
       FieldBoolean(WIDE_ESFN, index = true, include_in_all = false)
@@ -71,7 +67,6 @@ object BlockMeta extends IGenEsMappingProps {
     new QueryStringBindableImpl[BlockMeta] {
       def WIDTH_FN     = "a"
       def HEIGHT_FN    = "b"
-      def BLOCK_ID_FN  = "c"
       def IS_WIDE_FN   = "d"
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, BlockMeta]] = {
@@ -79,19 +74,16 @@ object BlockMeta extends IGenEsMappingProps {
         for {
           maybeWidth    <- intB.bind  (k(WIDTH_FN), params)
           maybeHeight   <- intB.bind  (k(HEIGHT_FN), params)
-          maybeBlockId  <- intB.bind  (k(BLOCK_ID_FN), params)
           maybeIsWide   <- boolB.bind (k(IS_WIDE_FN), params)
         } yield {
           for {
             width   <- maybeWidth.right
             height  <- maybeHeight.right
-            blockId <- maybeBlockId.right
             isWide  <- maybeIsWide.right
           } yield {
             BlockMeta(
               width   = width,
               height  = height,
-              blockId = blockId,
               wide    = isWide
             )
           }
@@ -104,7 +96,6 @@ object BlockMeta extends IGenEsMappingProps {
           Iterator(
             intB.unbind ( k(WIDTH_FN),     value.width),
             intB.unbind ( k(HEIGHT_FN),    value.height),
-            intB.unbind ( k(BLOCK_ID_FN),  value.blockId),
             boolB.unbind( k(IS_WIDE_FN),   value.wide)
           )
         }
@@ -115,28 +106,20 @@ object BlockMeta extends IGenEsMappingProps {
 }
 
 
-/** Интерфейс для экземпляром BlockMeta. */
-trait IBlockMeta extends MImgSizeT {
-
-  /** id шаблона блока. */
-  def blockId   : Int
-
-  /** Использовать широкое отображение? */
-  def wide      : Boolean
-
-}
-
-
-
 /**
  * Неизменяемое представление глобальных парамеров блока.
- * @param blockId id блока согласно BlocksConf.
  * @param height высота блока.
  */
 case class BlockMeta(
-  override val blockId : Int,
-  override val height  : Int,
-  override val width   : Int,
-  override val wide    : Boolean = false
-)
-  extends IBlockMeta
+                      override val height  : Int,
+                      override val width   : Int,
+                      wide                 : Boolean = false
+                    )
+  extends MImgSizeT
+{
+
+  /** id блока согласно BlocksConf. */
+  // Запоздалый и окончательный уход от BlocksConf намекает, что поле осталось только для совместимости, не более.
+  def blockId = BlockMeta.BLOCK_ID
+
+}

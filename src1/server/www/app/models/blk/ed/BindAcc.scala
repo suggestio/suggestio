@@ -26,7 +26,7 @@ case class BindAcc(
    * @return Неизменяемый экземпляр BlockMeta.
    */
   def toBlockMeta(blockId: Int): BlockMeta = {
-    BlockMeta(blockId = blockId, height = height, width = width, wide = isWide)
+    BlockMeta(height = height, width = width, wide = isWide)
   }
 
   def toBindResult(blockId: Int): BindResult = {

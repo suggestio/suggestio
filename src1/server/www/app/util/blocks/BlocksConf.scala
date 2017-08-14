@@ -95,7 +95,7 @@ object BlocksConf
     try {
       apply(n)
     } catch {
-      case ex: NoSuchElementException =>
+      case _: NoSuchElementException =>
         DEFAULT
     }
   }

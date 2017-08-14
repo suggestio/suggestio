@@ -1,7 +1,6 @@
 package models.blk
 
 import play.api.data.Mapping
-import util.blocks.BlocksConf
 
 /**
  * Suggest.io
@@ -15,15 +14,14 @@ class BlockMetaUtil {
   import play.api.data.Forms._
 
   /** Маппинг для интерфейса IBlockMeta. */
-  def imapping: Mapping[IBlockMeta] = {
+  def imapping: Mapping[BlockMeta] = {
     mapping(
       "width"   -> BlockWidths.idMapping,
       "height"  -> BlockHeights.idMapping,
-      "blockId" -> BlocksConf.idMapping,
       "wide"    -> boolean
     )
-    { BlockMeta.apply(_, _, _, _) : IBlockMeta }
-    { ibm => Some((ibm.width, ibm.height, ibm.blockId, ibm.wide)) }
+    { BlockMeta.apply }
+    { BlockMeta.unapply }
   }
 
 }

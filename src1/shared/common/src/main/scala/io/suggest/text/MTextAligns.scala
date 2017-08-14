@@ -6,7 +6,7 @@ import io.suggest.primo.IStrId
 import play.api.libs.json.Format
 
 
-/** Статическая поддержк для классов модели [[MTextAlign]]. */
+/** Статическая поддержка для классов модели [[MTextAlign]]. */
 object MTextAlign {
 
   /** Поддержка play-json для всех элементов модели [[MTextAligns]]. */
