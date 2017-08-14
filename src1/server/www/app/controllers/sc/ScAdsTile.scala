@@ -247,7 +247,7 @@ trait ScAdsTileBase
 }
 
 
-/** Поддержка ответов на выдачу v1. */
+/** Поддержка ответов плитки карточек на запросы из выдачи. */
 trait ScAdsTile
   extends ScAdsTileBase
   with IStatUtil
@@ -263,7 +263,7 @@ trait ScAdsTile
     */
   def findAds(adSearch: MScAdsTileQs) = maybeAuth().async { implicit request =>
     // В зависимости от версии API, используем ту или иную реализацию логики.
-    val logic = TileAdsLogicV(adSearch)
+    val logic = TileAdsLogicV( adSearch )
     val resultFut = logic.resultFut
 
     // В фоне собираем статистику
@@ -276,6 +276,7 @@ trait ScAdsTile
 
   /** Компаньон логик для разруливания версий логик обработки HTTP-запросов. */
   protected object TileAdsLogicV {
+
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
     def apply(adSearch: MScAdsTileQs)(implicit request: IReq[_]): TileAdsLogicV = {
       val v = adSearch.apiVsn
@@ -285,7 +286,9 @@ trait ScAdsTile
         throw new UnsupportedOperationException("Unsupported API version: " + v)
       }
     }
+
   }
+
 
   /** Action logic содержит в себе более конкретную логику для сборки http-json-ответа по findAds(). */
   protected trait TileAdsLogicV extends TileAdsLogic {
@@ -297,7 +300,8 @@ trait ScAdsTile
   }
 
 
-  /** Логика сборки HTTP-ответа для API v2. */
+
+  /** Логика сборки HTTP-ответа для API v2 (на базе голой scala.js). */
   protected class TileAdsLogicV2(override val _qs: MScAdsTileQs)
                                 (implicit val _request: IReq[_]) extends TileAdsLogicV {
 
@@ -343,6 +347,7 @@ trait ScAdsTile
       }
     }
   }
+
 
 
 }

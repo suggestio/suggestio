@@ -80,7 +80,7 @@ class Sc3Circuit(
   private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapRW = searchRW.zoomRW(_.mapState) { _.withMapState(_) }
 
-  val rootRO = zoom(m => m)
+  private val rootRO = zoom(m => m)
 
 
   // Кэш action-handler'ов

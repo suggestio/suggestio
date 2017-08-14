@@ -20,7 +20,15 @@ object BlockMeta extends IGenEsMappingProps {
   /** Поле ширины долго жило в настройках блока, а когда пришло время переезжать, возникла проблема с дефолтовым значением. */
   def WIDTH_DFLT = 300
 
-  val DEFAULT = BlockMeta(blockId = 20, height = 300, width = WIDTH_DFLT)
+  /** id блока.
+    * В 2015г. редактор карточек поддерживал различные режимы для блоков.
+    * Эта архитектурная особенность в 2017г. является устаревшей и излишней,
+    * но от неё пока зависит много кода.
+    */
+  //@deprecated("Blocks are deprected", "14.aug.2017")
+  def BLOCK_ID_DFLT = 20
+
+  val DEFAULT = BlockMeta(blockId = BLOCK_ID_DFLT, height = 300, width = WIDTH_DFLT)
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[BlockMeta] = (

@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.ent.text
 
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.n2.ad.ent.Coords2d
 import io.suggest.es.util.SioEsUtil.{DocField, FieldObject}
 
 /**
@@ -34,6 +34,6 @@ object ValueEnt extends IGenEsMappingProps {
 trait ValueEnt {
 
   def font: EntFont
-  def coords: Option[Coords2d]
+  def coords: Option[MCoords2di]
 
 }

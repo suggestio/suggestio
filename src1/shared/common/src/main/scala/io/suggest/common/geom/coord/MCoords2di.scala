@@ -1,8 +1,7 @@
-package io.suggest.model.n2.ad.ent
+package io.suggest.common.geom.coord
 
-import io.suggest.common.geom.coord.ICoords2di
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -11,24 +10,28 @@ import play.api.libs.functional.syntax._
  * Description: Модель двумерных координат объектов/сущностей рекламной карточки.
  */
 
-object Coords2d {
+object MCoords2di {
 
   val X_FN = "x"
   val Y_FN = "y"
 
   /** Поддержка JSON для экземпляров модели черех play-json. */
-  implicit val FORMAT: OFormat[Coords2d] = (
+  implicit val FORMAT: OFormat[MCoords2di] = (
     (__ \ X_FN).format[Int] and
     (__ \ Y_FN).format[Int]
   )(apply, unlift(unapply))
-  
+
 }
 
 
-
-case class Coords2d(
-  override val x: Int,
-  override val y: Int
-)
+/** Дефолтовая реализация модели целочисленной двумерной координаты.
+  *
+  * @param x Горизонтальная координата.
+  * @param y Вертикальная координата.
+  */
+case class MCoords2di(
+                      override val x: Int,
+                      override val y: Int
+                    )
   extends ICoords2di
 

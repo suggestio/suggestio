@@ -1,6 +1,8 @@
 package io.suggest.geo
 
 import enumeratum._
+import io.suggest.enum2.EnumeratumUtil
+import play.api.libs.json.Format
 
 object GsType {
 
@@ -20,6 +22,11 @@ object GsType {
       .addConcreteType[MultiPolygon.type]
       .addConcreteType[GeometryCollection.type]
       .addConcreteType[Envelope.type]
+  }
+
+  /** Поддержка JSON сериализации/десериализации в JsString. */
+  implicit val GS_TYPE_FORMAT: Format[GsType] = {
+    EnumeratumUtil.enumEntryFormat(GsTypes)
   }
 
 }

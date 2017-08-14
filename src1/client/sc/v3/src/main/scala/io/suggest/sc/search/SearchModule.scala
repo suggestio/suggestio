@@ -3,6 +3,7 @@ package io.suggest.sc.search
 import com.softwaremill.macwire._
 import io.suggest.sc.search.v._
 import io.suggest.sc.styl.ScCssModule
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>

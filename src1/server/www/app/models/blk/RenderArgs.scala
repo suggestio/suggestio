@@ -1,7 +1,7 @@
 package models.blk
 
 import io.suggest.common.css.ITopLeft
-import io.suggest.common.geom.coord.ICoords2di
+import io.suggest.common.geom.coord.{ICoords2di, MCoords2di}
 import io.suggest.model.n2.ad.ent.text
 import models._
 import models.im.make.{IMakeResult, MakeResult}
@@ -103,7 +103,7 @@ trait FieldCssRenderArgsT extends IRenderArgs {
   def aovf          : text.ValueEnt
   def bf            : BlockAOValueFieldT
   def fieldCssClass : String
-  def xy            : ICoords2di
+  def xy            : MCoords2di
 
   override def indexOpt: Option[Int] = None
 }
@@ -130,7 +130,7 @@ case class FieldCssRenderArgs2(
   with IRenderArgsWrapper0
 {
 
-  override def xy: ICoords2di = Coords2d(38, 70*( offerN + 1) + yoff)
+  override def xy = MCoords2di(38, 70*( offerN + 1) + yoff)
   override lazy val fieldCssClass: String = s"$fid-$offerN"
 
 }

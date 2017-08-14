@@ -1,6 +1,6 @@
 package io.suggest.common.tags
 
-import io.suggest.common.text.StringUtil
+import io.suggest.text.StringUtil
 
 /**
   * Suggest.io

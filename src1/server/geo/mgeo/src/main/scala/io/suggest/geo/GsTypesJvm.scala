@@ -1,8 +1,5 @@
 package io.suggest.geo
 
-import io.suggest.enum2.EnumeratumUtil
-import play.api.libs.json.Format
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -10,12 +7,6 @@ import play.api.libs.json.Format
   * Description: Серверная утиль для кросс-платформенной enum-модели GsTypes.
   */
 object GsTypesJvm {
-
-  /** Поддержка JSON сериализации/десериализации в JsString. */
-  implicit val GS_TYPE_FORMAT: Format[GsType] = {
-    EnumeratumUtil.enumEntryFormat(GsTypes)
-  }
-
 
   /** Раньше метод обращения к объекту-компаньону жил прямо в GsType.
     *

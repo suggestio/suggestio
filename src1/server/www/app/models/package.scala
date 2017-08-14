@@ -1,4 +1,5 @@
 import controllers.routes
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2
 import io.suggest.ym
 import models.usr.EmailPwConfirmInfo
@@ -58,11 +59,6 @@ package object models {
   type BfNoValueT           = util.blocks.BfNoValueT
 
   type ICoords2di           = io.suggest.common.geom.coord.ICoords2di
-  type Coords2d             = io.suggest.model.n2.ad.ent.Coords2d
-  val  Coords2d             = io.suggest.model.n2.ad.ent.Coords2d
-
-  val  TextAligns           = io.suggest.model.n2.ad.ent.text.TextAligns
-  type TextAlign            = io.suggest.model.n2.ad.ent.text.TextAlign
 
   type AdnShownType         = AdnShownTypes.T
 

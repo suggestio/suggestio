@@ -6,7 +6,6 @@ import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.libs.json._
 import play.extras.geojson.{Geometry, LngLat}
-import GsTypesJvm.GS_TYPE_FORMAT
 
 /**
   * Suggest.io

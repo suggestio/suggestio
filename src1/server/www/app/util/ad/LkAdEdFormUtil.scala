@@ -1,12 +1,15 @@
 package util.ad
 
 import javax.inject.Singleton
+
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.ad.rd.RichDescr
-import io.suggest.model.n2.ad.{MNodeAd, ent}
+import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo}
+import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.blk.{AdColorFns, _}
@@ -26,17 +29,17 @@ import util.TplDataFormatUtil
 class LkAdEdFormUtil extends MacroLogsImpl {
 
   /** Маппинг для выравнивания текста в рамках поля. */
-  def textAlignOptM: Mapping[Option[TextAlign]] = {
+  def textAlignOptM: Mapping[Option[MTextAlign]] = {
     optional(text(maxLength = 10))
-      .transform[Option[TextAlign]](
+      .transform[Option[MTextAlign]](
         {_.filter(_.length <= 10)
           .flatMap { s =>
             if (s.length == 1) {
-              TextAligns.maybeWithName(s)
+              MTextAligns.withNameOption(s)
             } else if (s.length == 0) {
               None
             } else {
-              TextAligns.maybeWithCssName(s)
+              MTextAligns.withCssNameOption(s)
             }
           }
         },
@@ -159,17 +162,17 @@ class LkAdEdFormUtil extends MacroLogsImpl {
       .verifying("error.coord.too.big", { _ <= 2048 })
       .transform[Int](Math.max(0, _), identity)
   }
-  def coords2DM: Mapping[ent.Coords2d] = {
+  def coords2DM: Mapping[MCoords2di] = {
     // сохраняем маппинг в переменную на случай если coordM станет def вместо val.
     val _coordM = coordM
     mapping(
       "x" -> _coordM,
       "y" -> _coordM
     )
-    { Coords2d.apply }
-    { Coords2d.unapply }
+    { MCoords2di.apply }
+    { MCoords2di.unapply }
   }
-  def coords2DOptM: Mapping[Option[ent.Coords2d]] = optional(coords2DM)
+  def coords2DOptM: Mapping[Option[MCoords2di]] = optional(coords2DM)
 
 
   /** Маппим строковое поле с настройками шрифта. */

@@ -8,9 +8,9 @@ import java.util.Locale
 import io.suggest.bill.{IMCurrency, IPrice, MCurrency, MPrice}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.common.html.HtmlConstants.ELLIPSIS
-import io.suggest.common.text.StringUtil
 import io.suggest.geo._
 import io.suggest.i18n.MsgCodes
+import io.suggest.text.StringUtil
 import models.mctx.Context
 import play.twirl.api.{Html, HtmlFormat}
 import views.html.fc._

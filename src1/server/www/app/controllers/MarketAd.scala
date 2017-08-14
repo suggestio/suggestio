@@ -5,6 +5,7 @@ import javax.inject.{Inject, Singleton}
 
 import com.google.inject.name.Named
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
@@ -487,7 +488,7 @@ class MarketAd @Inject() (
             text = Some(TextEnt(
               value = ctx.messages("bf.text.example", offerN),
               font = EntFont(),
-              coords = Some(Coords2d(
+              coords = Some(MCoords2di(
                 x = height / 2,
                 y = width / 4
               ))  // Coords2D

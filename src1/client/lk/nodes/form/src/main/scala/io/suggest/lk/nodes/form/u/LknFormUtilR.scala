@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.u
 
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.ble.BeaconUtil
-import io.suggest.common.text.StringUtil
+import io.suggest.text.StringUtil
 
 /**
   * Suggest.io
