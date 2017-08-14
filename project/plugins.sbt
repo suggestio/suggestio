@@ -22,7 +22,7 @@ addSbtPlugin("org.neolin.sbt" % "sbt-simple-url-update" % "1.0.0.2-SNAPSHOT")
 
 
 // Use the Play sbt plugin for Play projects
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.2")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.6.3")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.1")
 
@@ -31,7 +31,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
 addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.9-SNAPSHOT")
 
-addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.18")
+addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.19")
 
 addSbtPlugin("com.slidingautonomy.sbt" % "sbt-filter" % "1.0.1")
 

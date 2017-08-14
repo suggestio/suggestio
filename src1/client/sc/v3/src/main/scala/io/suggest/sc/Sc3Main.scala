@@ -38,7 +38,7 @@ object Sc3Main {
       .wrap(m => m)( modules.sc3Module.scRootR.apply )
       .renderIntoDOM(rootDiv)
 
-    jsRouterFut.andThen { case tryRes =>
+    jsRouterFut.andThen { case _ =>
       // Активировать отправку логов на сервер, когда js-роутер будет готов.
       Logging.LOGGERS ::= new ScRmeLogAppender
     }
