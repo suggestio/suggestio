@@ -1,6 +1,6 @@
 package io.suggest.model.n2.ad.ent
 
-import io.suggest.common.empty.{EmptyUtil, IIsNonEmpty}
+import io.suggest.common.empty.IIsNonEmpty
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.n2.ad.ent.text.TextEnt
@@ -31,13 +31,8 @@ object MEntity extends IGenEsMappingProps {
     /** Поля для текстоты. */
     object Text {
 
-      /** 2017.aug.15: Раньше координаты хранились прямо внутри .text.coords.
-        * Вынос на уровень выше с учётом совместимости.
-        */
-        // TODO Удалить после MNode.resaveMany().
-      private[ent] val OLD_COORDS_ESFN       = "coords"
-
       val TEXT_FN = "t"
+
     }
   }
 
@@ -52,39 +47,27 @@ object MEntity extends IGenEsMappingProps {
 
 
   /** Поддержка JSON. */
-  implicit val MENTITY_FORMAT: OFormat[MEntity] = {
-    val textPath = __ \ Fields.Text.TEXT_FN
-    val coordsPath = __ \ Fields.COORDS_ESFN
-
-    // TODO Костыли для совместимости со старым форматом: координаты внутри .text. Надо это будет удалить после MNode.resaveMany().
-    val coordsReads = coordsPath.read[MCoords2di]
-      .map { EmptyUtil.someF }
-      .orElse {
-        (textPath \ Fields.Text.OLD_COORDS_ESFN).readNullable[MCoords2di]
-          .map { resOpt =>
-            if (resOpt.nonEmpty)
-              LOGGER.warn("Format.reads(): deprecated coords format found. Use MNode.resaveMany()")
-            resOpt
-          }
-      }
-    val coordsWrites = coordsPath.writeNullable[MCoords2di]
-    val coordsFmt = OFormat(coordsReads, coordsWrites)
-
-    (
-      (__ \ Fields.ID_FN).format[Int] and
-      textPath.formatNullable[TextEnt] and
-      coordsFmt
-    )(apply, unlift(unapply))
-  }
+  implicit val MENTITY_FORMAT: OFormat[MEntity] = (
+    (__ \ Fields.ID_FN).format[Int] and
+    (__ \ Fields.Text.TEXT_FN).formatNullable[TextEnt] and
+    (__ \ Fields.COORDS_ESFN).formatNullable[MCoords2di]
+  )(apply, unlift(unapply))
 
 }
 
 
+/** Entity -- это модель одного объекта на рекламной карточке.
+  * Самый простой пример объекта -- текст, который привязан к каким-то координатам.
+  *
+  * @param id Entity id, т.е. некий уникальный и порядковый номер среди других entities этой же карточки.
+  * @param text Опциональный текстовый контент, если есть.
+  * @param coords Пиксельные координаты для позиционирования объекта на экране.
+  */
 case class MEntity(
-  id      : Int,
-  text    : Option[TextEnt],
-  coords  : Option[MCoords2di]
-)
+                    id      : Int,
+                    text    : Option[TextEnt],
+                    coords  : Option[MCoords2di]
+                  )
   extends IIsNonEmpty
 {
 
