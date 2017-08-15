@@ -4,6 +4,7 @@
 
 @import views.txt.blocks.common._
 @import io.suggest.ad.form.AdFormConstants._
+@import io.suggest.sc.ScConstants.Block.Text.{FIELD_TEXT_NAME, fieldTextId}
 
 @defining( args.inlineStyles || args.mad.id.isEmpty ) { isStylesInline =>
 
@@ -13,29 +14,32 @@
     <style>@Html(_blockCss(args).toString.trim)</style>
   }
 
-  @args.mad.ad.entities.valuesIterator.map { offer =>
 
-    @defining("title") { fid =>
-    @for(aosf <- offer.text) {
-      <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.id"
-           @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id].@fid"}>
-        <div class="@fid @fid-@offer.id">@Html(aosf.value)</div>
-      </div>
+  @defining( FIELD_TEXT_NAME ) { fid =>
+
+    @for( offer <- args.mad.ad.entities.valuesIterator) {
+
+      @* Рендер текстового поля. *@
+      @for(aosf <- offer.text) {
+        <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.id"
+             @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id].@fid"}>
+          <div class="@fid @fieldTextId(offer.id)">@Html(aosf.value)</div>
+        </div>
+      }
+
       @if(isStylesInline) {
         <style>
           @Html(_textCss(blk.FieldCssRenderArgs(
-            aovf    = aosf,
             bf      = bc.titleBf,
             brArgs  = args,
-            entityId = offer.id,
+            entity  = offer,
             yoff    = 0,
-            fid     = fid,
             cssClasses = args.cssClasses,
             isFocused  = args.isFocused
           )).toString.trim)
         </style>
       }
-    }
+
     }
 
   }

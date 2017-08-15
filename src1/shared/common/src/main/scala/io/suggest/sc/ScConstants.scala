@@ -275,6 +275,15 @@ object ScConstants {
     /** Имя аттрибута с id продьюсера указанной карточки. */
     def PRODUCER_ID_ATTR  = _ATTR_PRODUCER_ID
 
+
+    object Text {
+
+      /** Название может не совсем точно суть отражать, но это слово использовалось для сборки fieldId (fid). */
+      def FIELD_TEXT_NAME = "title"
+
+      def fieldTextId( entityId: Int ) = FIELD_TEXT_NAME + "-" + entityId
+    }
+
   }
 
 

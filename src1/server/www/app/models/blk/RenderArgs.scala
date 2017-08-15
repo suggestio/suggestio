@@ -2,7 +2,7 @@ package models.blk
 
 import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.model.n2.ad.ent.text.TextEnt
+import io.suggest.model.n2.ad.ent.MEntity
 import models._
 import models.im.make.{IMakeResult, MakeResult}
 import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}
@@ -102,17 +102,14 @@ case class RenderArgs(
 /**
  * Контейнер параметров рендера css-стиля блока.
  * @param bf Экземпляр BlockField
- * @param entityId порядкой номер оффера в карточке.
+ * @param entity Текущее поле карточки.
  * @param yoff Сдвиг по оси y.
- * @param fid title либо descr обычно.
  */
 case class FieldCssRenderArgs(
                                brArgs      : blk.IRenderArgs,
-                               aovf        : TextEnt,
                                bf          : BfText,
-                               entityId      : Int, // TODO N2 Переименовать в entityId.
+                               entity      : MEntity,
                                yoff        : Int,
-                               fid         : String,
                                override val isFocused : Boolean     = false,
                                override val cssClasses: Seq[String] = Nil
 )
@@ -120,8 +117,8 @@ case class FieldCssRenderArgs(
 {
   override def indexOpt: Option[Int] = None
 
-  def aovfCoords = aovf.coords
-  def xy = MCoords2di(38, 70*( entityId + 1) + yoff)
-  lazy val fieldCssClass: String = s"$fid-$entityId"
+  def aovfCoords = entity.text.flatMap(_.coords)
+
+  def xy = MCoords2di(38, 70*( entity.id + 1) + yoff)
 
 }

@@ -82,21 +82,15 @@ trait ScCssUtil
       val bc = n2NodesUtil.bc(mad)
       mad.ad.entities
         .valuesIterator
-        .flatMap { ent =>
-          val t1 = ent.text.map { text1 => ("title", text1, bc.titleBf, 0) }
-          val fields = t1.toSeq
-          fields.iterator.map { case (fid, aosf, bf, yoff) =>
-            blk.FieldCssRenderArgs(
-              aovf        = aosf,
-              bf          = bf,
-              brArgs      = brArgs,
-              entityId      = ent.id,
-              yoff        = yoff,
-              fid         = fid,
-              cssClasses  = cssClasses,
-              isFocused   = brArgs.isFocused
-            )
-          }
+        .map { ent =>
+          blk.FieldCssRenderArgs(
+            bf          = bc.titleBf,
+            brArgs      = brArgs,
+            entity      = ent,
+            yoff        = 0,
+            cssClasses  = cssClasses,
+            isFocused   = brArgs.isFocused
+          )
         }
     }
 

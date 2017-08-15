@@ -2,6 +2,7 @@ package util.blocks
 
 import io.suggest.model.n2.ad.ent.MEntity
 import io.suggest.model.n2.ad.ent.text.TextEnt
+import io.suggest.sc.ScConstants
 import models.blk.ed.{AdFormM, BindAcc, BindResult}
 import play.api.data.{FormError, Mapping}
 
@@ -14,7 +15,7 @@ import play.api.data.{FormError, Mapping}
 
 object Title extends MergeBindAccEntity[TextEnt] {
 
-  val BF_NAME_DFLT = "title"
+  val BF_NAME_DFLT = ScConstants.Block.Text.FIELD_TEXT_NAME
   val BF_TITLE_DFLT = BfText(BF_NAME_DFLT)
 
   override def updateEntityWith(blk: MEntity, titleOpt: Option[TextEnt]): MEntity = {

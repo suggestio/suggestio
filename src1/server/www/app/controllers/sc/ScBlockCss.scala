@@ -5,7 +5,6 @@ import io.suggest.model.n2.node.IMNodes
 import io.suggest.util.logs.IMacroLogs
 import models.msc.AdCssArgs
 import models.blk
-import play.api.mvc.Action
 import play.twirl.api.Txt
 import util.n2u.IN2NodesUtilDi
 import views.txt.blocks.common._
@@ -55,12 +54,8 @@ trait ScBlockCss
           )
           val offerFieldsTxts = mad.ad.entities
             .valuesIterator
-            .flatMap { offer =>
-              offer.text.map { t1 =>
-                blk.FieldCssRenderArgs(brArgs, t1, bc.titleBf, offer.id, yoff = 0, fid = "title")
-              }
-            }
-            .map { cssRenderArgs =>
+            .map { entity =>
+              val cssRenderArgs = blk.FieldCssRenderArgs(brArgs, bc.titleBf, entity, yoff = 0 )
               _textCss(cssRenderArgs): Txt
             }
             .toList
@@ -75,7 +70,8 @@ trait ScBlockCss
       }
     }
     resFut map {
-      Ok(_).as("text/css")
+      Ok(_)
+        .as( CSS )
     }
   }
 
