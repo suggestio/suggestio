@@ -1,8 +1,8 @@
 package util.blocks
 
-import io.suggest.model.n2.ad.ent.text.ValueEnt
+import io.suggest.model.n2.ad.ent.MEntity
+import io.suggest.model.n2.ad.ent.text.{TextEnt, ValueEnt}
 import models.blk.ed.{AdFormM, BindAcc, BindResult}
-import models.{MEntity, TextEnt}
 import play.api.data.Forms._
 import play.api.data._
 

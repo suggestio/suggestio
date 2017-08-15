@@ -177,4 +177,6 @@ object MsgCodes {
   val `Map` = "Map"
   val `Tags` = "Tags"
 
+  val `Activation.impossible` = "Activation.impossible"
+
 }

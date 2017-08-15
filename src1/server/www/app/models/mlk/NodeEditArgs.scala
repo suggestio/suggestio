@@ -1,8 +1,9 @@
 package models.mlk
 
+import io.suggest.model.n2.node.MNode
+import io.suggest.model.n2.node.meta.MMeta
 import models.im.MImgT
 import models.im.logo.LogoOpt_t
-import models.{MMeta, MNode}
 import play.api.data.Form
 
 /**

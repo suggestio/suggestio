@@ -57,7 +57,7 @@ trait ScBlockCss
             .valuesIterator
             .flatMap { offer =>
               offer.text.map { t1 =>
-                blk.FieldCssRenderArgs2(brArgs, t1, bc.titleBf, offer.id, yoff = 0, fid = "title")
+                blk.FieldCssRenderArgs(brArgs, t1, bc.titleBf, offer.id, yoff = 0, fid = "title")
               }
             }
             .map { cssRenderArgs =>

@@ -7,6 +7,7 @@
    Изначально был divFc, но он не умеет радио-кнопки. *@
 @import util.FC.checkboxFc
 @import ctx.{messages, request}
+@import io.suggest.common.{MHands, MHand}
 
 @* Верстка управляющих кнопок очень похожа, дедублицируем... *@
 @__btn(color: Int, float: MHand, cls: String)(content: Html) = {

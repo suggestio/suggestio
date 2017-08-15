@@ -140,7 +140,7 @@ trait ScAdsTileBase
       }
     }
 
-    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgsT]] = {
+    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[FieldCssRenderArgs]] = {
       for {
         brArgss <- madsBrArgs4CssFut
       } yield {

@@ -8,10 +8,12 @@ import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.ad.MNodeAd
+import io.suggest.model.n2.ad.ent.MEntity
+import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt}
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.blk.PrepareBlkImgArgs

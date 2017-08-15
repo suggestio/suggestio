@@ -1,10 +1,11 @@
 package controllers.ident
 
 import controllers.{CaptchaValidator, SioController, routes}
+import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
@@ -175,7 +176,7 @@ trait EmailPwReg
     }
     // TODO Отправлять на страницу, где описание проблема, а не туда, куда взбредёт.
     for (rdr <- rdrFut) yield {
-      rdr.flashing(FLASH.ERROR -> "Activation.impossible")
+      rdr.flashing(FLASH.ERROR -> MsgCodes.`Activation.impossible`)
     }
   }
 
@@ -210,10 +211,10 @@ trait EmailPwReg
             meta = MMeta(
               basic = MBasicMeta(
                 nameOpt = Some(eaInfo.email),
-                langs   = List( lang.code )
+                langs   = lang.code :: Nil
               ),
               person = MPersonMeta(
-                emails = List(eaInfo.email)
+                emails = eaInfo.email :: Nil
               )
             )
           )

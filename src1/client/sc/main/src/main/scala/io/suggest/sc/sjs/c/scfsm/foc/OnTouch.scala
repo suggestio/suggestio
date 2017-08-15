@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.common.MHands
 import io.suggest.sc.sjs.m.mfoc.MFocTouchSd
-import io.suggest.sc.sjs.m.mfsm.touch.{TouchEnd, ITouchFinish}
+import io.suggest.sc.sjs.m.mfsm.touch.{ITouchFinish, TouchEnd}
 import io.suggest.sc.sjs.vm.foc.FCarCont
 import io.suggest.sjs.common.geom.Coord2dD
-import io.suggest.sjs.common.model.MHands
 import org.scalajs.dom.TouchEvent
 import io.suggest.common.geom.coord.CoordOps._
 

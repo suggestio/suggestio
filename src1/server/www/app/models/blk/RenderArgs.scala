@@ -1,8 +1,8 @@
 package models.blk
 
 import io.suggest.common.css.ITopLeft
-import io.suggest.common.geom.coord.{ICoords2di, MCoords2di}
-import io.suggest.model.n2.ad.ent.text
+import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.model.n2.ad.ent.text.TextEnt
 import models._
 import models.im.make.{IMakeResult, MakeResult}
 import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}
@@ -98,39 +98,30 @@ case class RenderArgs(
 
 
 
-/** Интерфейс аргументов шаблона _blockStyleCss для рендера стиля блока. */
-trait FieldCssRenderArgsT extends IRenderArgs {
-  def aovf          : text.ValueEnt
-  def bf            : BlockAOValueFieldT
-  def fieldCssClass : String
-  def xy            : MCoords2di
-
-  override def indexOpt: Option[Int] = None
-}
 
 /**
  * Контейнер параметров рендера css-стиля блока.
  * @param bf Экземпляр BlockField
- * @param offerN порядкой номер оффера в карточке.
+ * @param entityId порядкой номер оффера в карточке.
  * @param yoff Сдвиг по оси y.
  * @param fid title либо descr обычно.
  */
-case class FieldCssRenderArgs2(
-  brArgs      : blk.IRenderArgs,
-  aovf        : TextEnt,
-  bf          : BfText,
-  offerN      : Int,    // TODO N2 Переименовать в entityId.
-  yoff        : Int,
-  fid         : String,
-  override val isFocused : Boolean     = false,
-  override val cssClasses: Seq[String] = Nil
-
+case class FieldCssRenderArgs(
+                               brArgs      : blk.IRenderArgs,
+                               aovf        : TextEnt,
+                               bf          : BfText,
+                               entityId      : Int, // TODO N2 Переименовать в entityId.
+                               yoff        : Int,
+                               fid         : String,
+                               override val isFocused : Boolean     = false,
+                               override val cssClasses: Seq[String] = Nil
 )
-  extends FieldCssRenderArgsT
-  with IRenderArgsWrapper0
+  extends IRenderArgsWrapper0
 {
+  override def indexOpt: Option[Int] = None
 
-  override def xy = MCoords2di(38, 70*( offerN + 1) + yoff)
-  override lazy val fieldCssClass: String = s"$fid-$offerN"
+  def aovfCoords = aovf.coords
+  def xy = MCoords2di(38, 70*( entityId + 1) + yoff)
+  lazy val fieldCssClass: String = s"$fid-$entityId"
 
 }

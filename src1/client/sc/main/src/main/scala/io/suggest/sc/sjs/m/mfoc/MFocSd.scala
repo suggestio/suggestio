@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.mfoc
 
+import io.suggest.common.MHand
 import io.suggest.common.m.mad.IMadId
-import io.suggest.sjs.common.model.MHand
 
 object MFocSd {
 

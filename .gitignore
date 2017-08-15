@@ -36,7 +36,7 @@ ui/bower_components
 ui/twirl
 app-2.11/
 conf/log*.xml
-
+*_jb_tmp_*
 
 src1/server/www/conf/application.conf
 src1/server/www/conf/application.conf.dev

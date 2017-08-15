@@ -49,7 +49,7 @@ trait ScCssUtil
      * Вернуть данные по пакетному рендеру css блоков одновременно с текущим запросом.
      * @return последовательность аргументов для вызова рендера как можно скорее.
      */
-    def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]]
+    def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgs]]
 
     def adsFieldCssRenderFut: Future[immutable.Seq[Txt]] = {
       adsCssFieldRenderArgsFut flatMap { args =>
@@ -77,7 +77,7 @@ trait ScCssUtil
     }
 
     /** Вспомогательная функция для подготовки данных к рендеру css'ок: приведение рекламной карточки к css-параметрам. */
-    protected def mad2craIter(brArgs: blk.IRenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgsT] = {
+    protected def mad2craIter(brArgs: blk.IRenderArgs, cssClasses: Seq[String]): Iterator[blk.FieldCssRenderArgs] = {
       import brArgs.mad
       val bc = n2NodesUtil.bc(mad)
       mad.ad.entities
@@ -86,11 +86,11 @@ trait ScCssUtil
           val t1 = ent.text.map { text1 => ("title", text1, bc.titleBf, 0) }
           val fields = t1.toSeq
           fields.iterator.map { case (fid, aosf, bf, yoff) =>
-            blk.FieldCssRenderArgs2(
+            blk.FieldCssRenderArgs(
               aovf        = aosf,
               bf          = bf,
               brArgs      = brArgs,
-              offerN      = ent.id,
+              entityId      = ent.id,
               yoff        = yoff,
               fid         = fid,
               cssClasses  = cssClasses,

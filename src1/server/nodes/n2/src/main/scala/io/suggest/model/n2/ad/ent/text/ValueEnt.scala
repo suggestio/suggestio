@@ -1,6 +1,5 @@
 package io.suggest.model.n2.ad.ent.text
 
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.es.util.SioEsUtil.{DocField, FieldObject}
 
@@ -31,9 +30,11 @@ object ValueEnt extends IGenEsMappingProps {
 }
 
 
+/** Трейт, помечающий класс как entity payload.
+  * Остался для совместимости с blocks-подсистемой. */
+// TODO Можно удалить вслед за blocks ad editor.
 trait ValueEnt {
 
   def font: EntFont
-  def coords: Option[MCoords2di]
 
 }

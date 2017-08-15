@@ -14,7 +14,7 @@ import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}

@@ -1,7 +1,6 @@
 package io.suggest.sc.sjs.m.mfoc
 
 import io.suggest.sjs.common.geom.Coord2dD
-import io.suggest.sjs.common.model.{MHands, MHand}
 
 /**
  * Suggest.io

@@ -1,5 +1,4 @@
 import controllers.routes
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2
 import io.suggest.ym
 import models.usr.EmailPwConfirmInfo
@@ -19,14 +18,6 @@ package object models {
 
 
   type Receivers_t          = n2.edge.NodeEdgesMap_t
-
-  val  TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
-  type TextEnt              = io.suggest.model.n2.ad.ent.text.TextEnt
-
-  val  EntFont              = io.suggest.model.n2.ad.ent.text.EntFont
-  type EntFont              = io.suggest.model.n2.ad.ent.text.EntFont
-
-  type ValueEnt             = io.suggest.model.n2.ad.ent.text.ValueEnt
 
   val  MImgInfo             = ym.model.common.MImgInfo
   type MImgInfo             = ym.model.common.MImgInfo
@@ -75,8 +66,6 @@ package object models {
 
   type IImgMeta             = io.suggest.model.img.IImgMeta
 
-  type MHand                = MHands.T
-
 
   /** Тип формы для регистрации по email (шаг 1 - указание email). */
   type EmailPwRegReqForm_t  = Form[String]
@@ -111,17 +100,8 @@ package object models {
   type MPredicate           = n2.edge.MPredicate
   val  MPredicates          = n2.edge.MPredicates
 
-  val  MMeta                = n2.node.meta.MMeta
-  type MMeta                = n2.node.meta.MMeta
-
-  val  MPersonMeta          = n2.node.meta.MPersonMeta
-  type MPersonMeta          = n2.node.meta.MPersonMeta
-
   val  MMedia               = n2.media.MMedia
   type MMedia               = n2.media.MMedia
-
-  val  MEntity              = n2.ad.ent.MEntity
-  type MEntity              = n2.ad.ent.MEntity
 
   type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MTfDaily
   type MContract            = io.suggest.mbill2.m.contract.MContract

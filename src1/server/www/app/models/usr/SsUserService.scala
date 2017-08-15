@@ -1,9 +1,10 @@
 package models.usr
 
 import javax.inject.Inject
+
 import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.meta.MPersonMeta
 import io.suggest.util.logs.MacroLogsImpl
-import models.MPersonMeta
 import models.mext.ILoginProvider
 import models.mproj.ICommonDi
 import securesocial.core.{IProfile, PasswordInfo}

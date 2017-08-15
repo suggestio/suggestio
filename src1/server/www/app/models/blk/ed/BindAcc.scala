@@ -1,6 +1,6 @@
 package models.blk.ed
 
-import models.MEntity
+import io.suggest.model.n2.ad.ent.MEntity
 import models.blk._
 
 /**

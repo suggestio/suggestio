@@ -1,4 +1,4 @@
-@(args: blk.FieldCssRenderArgsT)
+@(args: blk.FieldCssRenderArgs)
 
 @* Стили для одного текстового поля одного оффера одного блока. *@
 
@@ -7,7 +7,7 @@
 
 .sm-block@{mad.id}@cssClasses.map{c =>.@c } .mvbl-@{fieldCssClass} {
   position: absolute;
-  @defining(aovf.coords getOrElse xy) { c =>
+  @defining( args.aovfCoords getOrElse xy ) { c =>
     left: @{c.x * szMult}px;
     top: @{c.y * szMult}px;
   }

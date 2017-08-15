@@ -4,7 +4,7 @@ import io.suggest.model.n2.edge.MEdgeInfo
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
+import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.util.logs.MacroLogsDyn
 import models._
 import models.msys.{MSysNodeInstallFormData, NodeCreateParams}

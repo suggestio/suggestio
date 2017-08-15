@@ -370,7 +370,7 @@ trait ScFocusedAdsBase
       }
     }
 
-    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgsT]] = {
+    override def adsCssFieldRenderArgsFut: Future[immutable.Seq[blk.FieldCssRenderArgs]] = {
       for (mbas <- mads2andBrArgsFut) yield {
         mbas.iterator
           .flatMap { mba =>  mad2craIter(mba, mba.cssClasses) }

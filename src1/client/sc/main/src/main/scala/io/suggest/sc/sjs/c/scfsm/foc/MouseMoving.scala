@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.common.{MHand, MHands}
 import io.suggest.dev.MScreen
 import io.suggest.sc.sjs.c.scfsm.ScFsmStub
 import io.suggest.sc.sjs.m.mfoc.MFocSd
 import io.suggest.sc.sjs.vm.foc.fad.FArrow
-import io.suggest.sjs.common.model.{MHand, MHands}
 import org.scalajs.dom.MouseEvent
 
 /**

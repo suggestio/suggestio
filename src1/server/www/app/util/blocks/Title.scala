@@ -1,7 +1,8 @@
 package util.blocks
 
+import io.suggest.model.n2.ad.ent.MEntity
+import io.suggest.model.n2.ad.ent.text.TextEnt
 import models.blk.ed.{AdFormM, BindAcc, BindResult}
-import models.{MEntity, TextEnt}
 import play.api.data.{FormError, Mapping}
 
 /**

@@ -1,15 +1,15 @@
 package util.adn
 
 import java.time.OffsetDateTime
-
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.MBasicMeta
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
@@ -43,10 +43,6 @@ class NodesUtil @Inject() (
 
   import LOGGER._
   import mCommonDi._
-
-  /** Дефолтовый лимит на размещение у самого себя на главной. */
-  private val SL_START_PAGE_LIMIT_DFLT: Int = configuration.getOptional[Int]("user.node.adn.sl.out.statpage.limit.dflt")
-    .getOrElse(50)
 
   /** Через сколько секунд отправлять юзера в ЛК ноды после завершения реги юзера. */
   private val NODE_CREATED_SUCCESS_RDR_AFTER: Int = configuration.getOptional[Int]("user.node.created.success.redirect.after.sec")

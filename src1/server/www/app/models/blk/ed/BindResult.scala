@@ -1,7 +1,8 @@
 package models.blk.ed
 
+import io.suggest.model.n2.ad.ent.MEntity
 import models.blk.BlockMeta
-import models.{BfImage, MEntity}
+import models.BfImage
 
 /**
  * Suggest.io

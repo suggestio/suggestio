@@ -9,7 +9,7 @@ import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
 import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo}
+import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.util.logs.MacroLogsImpl
 import models._
 import models.im.logo.LogoOpt_t

@@ -1,10 +1,10 @@
 package io.suggest.sc.sjs.vm.foc.fad
 
-import io.suggest.sc.ScConstants.Focused.{ARROW_ID, arrowClass, ARROW_OFFSET_PX}
-import io.suggest.sjs.common.model.MHand
+import io.suggest.common.MHand
+import io.suggest.sc.ScConstants.Focused.{ARROW_ID, ARROW_OFFSET_PX, arrowClass}
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.find.FindDiv
-import io.suggest.sjs.common.vm.style.{StyleTop, StyleLeft}
+import io.suggest.sjs.common.vm.style.{StyleLeft, StyleTop}
 import org.scalajs.dom.raw.HTMLDivElement
 
 /**
