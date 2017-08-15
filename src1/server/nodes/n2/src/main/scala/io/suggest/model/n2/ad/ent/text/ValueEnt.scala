@@ -17,13 +17,11 @@ import io.suggest.es.util.SioEsUtil.{DocField, FieldObject}
 object ValueEnt extends IGenEsMappingProps {
 
   val FONT_ESFN         = "font"
-  val COORDS_ESFN       = "coords"
   val VALUE_ESFN        = "value"
 
   override def generateMappingProps: List[DocField] = {
     List(
-      FieldObject(FONT_ESFN, enabled = false, properties = Nil),
-      FieldObject(COORDS_ESFN, enabled = false, properties = Nil)
+      FieldObject(FONT_ESFN, enabled = false, properties = Nil)
     )
   }
 

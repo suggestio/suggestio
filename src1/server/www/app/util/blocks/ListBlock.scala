@@ -1,5 +1,6 @@
 package util.blocks
 
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.ad.ent.MEntity
 import io.suggest.model.n2.ad.ent.text.{TextEnt, ValueEnt}
 import models.blk.ed.{AdFormM, BindAcc, BindResult}
@@ -94,6 +95,8 @@ trait SingleListBlockT extends ListBlock {
 
   type T1 <: ValueEnt
   type BfT1 <: BlockAOValueFieldT { type T = T1 }
+  type BindedPayload = (Option[T1], Option[MCoords2di])
+
   def bf1(offerNopt: Option[Int]): BfT1
 
   /** Реализация добавления отображаемых полей редактора. */
@@ -114,9 +117,10 @@ trait SingleListBlockT extends ListBlock {
   }
 
   protected def offerMapping = {
-    mapping(
-      bf1(None).getOptionalStrictMappingKV
-    )(identity)(Some.apply)
+    tuple(
+      bf1(None).getOptionalStrictMappingKV,
+      "coords" -> BlocksUtil.lkAdEdFormUtil.coords2DOptM
+    )
   }
 
   // Маппинг для списка офферов.
@@ -128,27 +132,27 @@ trait SingleListBlockT extends ListBlock {
   }
 
   /** Собрать AOBlock на основе куска выхлопа формы. */
-  protected def applyAOBlocks(l: List[Option[T1]]): List[MEntity] = {
+  protected def applyAOBlocks(l: List[BindedPayload]): List[MEntity] = {
     l.iterator
       // Делаем zipWithIndex перед фильтром чтобы сохранять выравнивание на странице (css-классы), если 1 или 2 элемент пропущен.
       .zipWithIndex
       // Выкинуть пустые офферы
       .filter {
-        case (titleOpt, _) => titleOpt.isDefined
+        case (payload, _) => payload._1.isDefined
       }
       // Оставшиеся офферы завернуть в AOBlock
       .map {
-        case (v1Opt, i) => applyAOBlock(i, v1Opt)
+        case (payload, i) => applyAOBlock(i, payload)
       }
       .toList
   }
 
-  protected def applyAOBlock(offerN: Int, v1: Option[T1]): MEntity
+  protected def applyAOBlock(offerN: Int, payload: BindedPayload): MEntity
 
 
   /** unapply для offersMapping. Вынесен для упрощения кода. Метод восстанавливает исходный выхлоп формы,
     * даже если были пропущены какие-то группы полей. */
-  protected def unapplyAOBlocks(aoBlocks: Seq[MEntity]): List[Option[T1]] = {
+  protected def unapplyAOBlocks(aoBlocks: Seq[MEntity]): List[BindedPayload] = {
     // без if isEmpty будет экзепшен в maxBy().
     if (aoBlocks.isEmpty) {
       Nil
@@ -161,7 +165,7 @@ trait SingleListBlockT extends ListBlock {
         .toMap
       // Восстанавливаем новый список выхлопов мапперов на основе длины и имеющихся экземпляров AOBlock.
       (N0 to maxN)
-        .map { n =>
+        .flatMap { n =>
           aoBlocksNS
             .get(n)
             .flatMap { unapplyAOBlock }
@@ -170,7 +174,7 @@ trait SingleListBlockT extends ListBlock {
     }
   }
 
-  def unapplyAOBlock(blk: MEntity): Option[T1]
+  def unapplyAOBlock(blk: MEntity): Option[BindedPayload]
 
 }
 
@@ -184,12 +188,12 @@ trait TitleListBlockT extends SingleListBlockT {
   override def bf1(offerNopt: Option[Int]) = ListBlock.mkBfText(TITLE_FN, offerNopt)
   def titleBf = bf1(None)
 
-  override protected def applyAOBlock(offerN: Int, v1: Option[T1]): MEntity = {
-    MEntity(id = offerN, text = v1)
+  override protected def applyAOBlock(offerN: Int, payload: BindedPayload): MEntity = {
+    MEntity(id = offerN, text = payload._1, coords = payload._2)
   }
 
-  override def unapplyAOBlock(blk: MEntity): Option[T1] = {
-    blk.text
+  override def unapplyAOBlock(blk: MEntity): Option[BindedPayload] = {
+    Some((blk.text, blk.coords))
   }
 
   /** Реализация добавления отображаемых полей редактора с учётом реально необходимого кол-ва полей. */

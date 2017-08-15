@@ -486,15 +486,15 @@ class MarketAd @Inject() (
       ad = MNodeAd(
         entities = {
           val ent = MEntity(
-            id = offerN,
-            text = Some(TextEnt(
+            id     = offerN,
+            text   = Some(TextEnt(
               value = ctx.messages("bf.text.example", offerN),
-              font = EntFont(),
-              coords = Some(MCoords2di(
-                x = height / 2,
-                y = width / 4
-              ))  // Coords2D
-            ))    // AOStringField
+              font  = EntFont()
+            )),
+            coords = Some(MCoords2di(
+              x = height / 2,
+              y = width / 4
+            ))
           )
           MNodeAd.toEntMap(ent)
         }

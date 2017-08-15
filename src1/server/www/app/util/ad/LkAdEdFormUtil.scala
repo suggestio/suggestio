@@ -177,23 +177,14 @@ class LkAdEdFormUtil extends MacroLogsImpl {
 
 
   /** Маппим строковое поле с настройками шрифта. */
-  def aoStringFieldM(m: Mapping[String], fontM: Mapping[EntFont], withCoords: Boolean): Mapping[TextEnt] = {
-    if (withCoords) {
-      mapping(
-        "value"   -> m,
-        "font"    -> fontM,
-        "coords"  -> coords2DOptM
-      )
-      { TextEnt.apply }
-      { TextEnt.unapply }
-    } else {
-      mapping(
-        "value" -> m,
-        "font"  -> fontM
-      )
-      { TextEnt.apply(_, _) }
-      { aosf => TextEnt.unapply(aosf).map { u => u._1 -> u._2 } }
-    }
+  def aoStringFieldM(m: Mapping[String], fontM: Mapping[EntFont]): Mapping[TextEnt] = {
+    // TODO "coords"  -> coords2DOptM
+    mapping(
+      "value" -> m,
+      "font"  -> fontM
+    )
+    { TextEnt.apply }
+    { TextEnt.unapply }
   }
 
 

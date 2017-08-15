@@ -117,7 +117,7 @@ case class FieldCssRenderArgs(
 {
   override def indexOpt: Option[Int] = None
 
-  def aovfCoords = entity.text.flatMap(_.coords)
+  def aovfCoords = entity.coords
 
   def xy = MCoords2di(38, 70*( entity.id + 1) + yoff)
 

@@ -22,7 +22,7 @@
       @* Рендер текстового поля. *@
       @for(aosf <- offer.text) {
         <div class="@if(args.withEdit){js-mvbl} mvbl-@fid mvbl-@fid-@offer.id"
-             @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id].@fid"}>
+             @if(args.withEdit) {data-connected-input="@(OFFER_K).offer[@offer.id]"}>
           <div class="@fid @fieldTextId(offer.id)">@Html(aosf.value)</div>
         </div>
       }

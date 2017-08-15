@@ -1,6 +1,5 @@
 package io.suggest.model.n2.ad.ent.text
 
-import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 
@@ -20,8 +19,7 @@ class TextEntSpec extends FlatSpec with PlayJsonTestUtil {
         value = "test test hellow workd",
         font  = EntFont(
           color = "afafaf"
-        ),
-        coords = Some(MCoords2di(100, 200))
+        )
       )
     }
   }

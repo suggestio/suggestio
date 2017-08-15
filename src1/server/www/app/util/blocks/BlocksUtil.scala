@@ -26,7 +26,7 @@ object BlocksUtil {
 
   private def inj = play.api.Play.current.injector
   private[blocks] val imgFormUtil       = inj.instanceOf[ImgFormUtil]
-  private[blocks] val marketAdFormUtil  = inj.instanceOf[LkAdEdFormUtil]
+  private[blocks] val lkAdEdFormUtil    = inj.instanceOf[LkAdEdFormUtil]
 
   def defaultOpt[T](m0: Mapping[T], defaultOpt: Option[T]): Mapping[T] = {
     if (defaultOpt.isDefined)
@@ -74,8 +74,8 @@ object BlocksEditorFields extends EnumValue2Val {
     override type VT = Int
     override type BFT = BfWidth
     override def fieldTemplate = _widthTpl
-  } 
- 
+  }
+
   /** Ввод голой строки. */
   val InputString = new Val("inputStr") {
     override type VT = String
@@ -102,7 +102,7 @@ object BlocksEditorFields extends EnumValue2Val {
     override type BFT = BfColor
     override def fieldTemplate = _colorTpl
   }
-  
+
   val Checkbox = new Val("checkbox") {
     override type VT = Boolean
     override type BFT = BfCheckbox
@@ -133,7 +133,6 @@ trait BlockFieldT { that =>
   def mappingBase: Mapping[T]
 
   def getStrictMapping: Mapping[T] = defaultOpt(mappingBase, defaultValue)
-  def getStrictMappingKV = name -> getStrictMapping
 
   def getOptionalStrictMapping: Mapping[Option[T]] = optional(mappingBase)
   def getOptionalStrictMappingKV = name -> getOptionalStrictMapping
@@ -142,6 +141,7 @@ trait BlockFieldT { that =>
 
   def offerNopt: Option[Int]
   def offerN = offerNopt getOrElse 0
+  def withCoords: Boolean = false
 }
 
 
@@ -154,9 +154,9 @@ trait BlockAOValueFieldT extends BlockFieldT {
   def withFontFamily: Boolean
   def withTextAlign: Boolean
   def defaultFont: EntFont = BlocksUtil.defaultFont
-  def getFontMapping = marketAdFormUtil.fontM
+  def getFontMapping = lkAdEdFormUtil.fontM
 
-  def withCoords: Boolean
+  //def withCoords: Boolean
 }
 
 
@@ -223,7 +223,7 @@ case class BfText(
   withFontColor                 : Boolean         = true,
   fontSizeDflt                  : Option[Int]     = None,
   withFontFamily                : Boolean         = true,
-  withCoords                    : Boolean         = true,
+  override val withCoords       : Boolean         = true,
   withTextAlign                 : Boolean         = true
 )
   extends BlockAOValueFieldT
@@ -237,7 +237,7 @@ case class BfText(
   override val mappingBase: Mapping[T] = {
     val m0 = text(minLength = minLen, maxLength = maxLen)
       .transform(replaceEOLwithBR andThen strTrimBrOnlyF,  replaceBRwithEOL andThen strUnescapeF)
-    marketAdFormUtil.aoStringFieldM(m0, getFontMapping, withCoords)
+    lkAdEdFormUtil.aoStringFieldM(m0, getFontMapping)
   }
 
   /** Когда очень нужно получить от поля какое-то значение, можно использовать fallback. */
@@ -264,7 +264,7 @@ case class BfString(
   override val defaultValue     : Option[String] = None,
   withFontColor                 : Boolean = true,
   withFontFamily                : Boolean = false,
-  withCoords                    : Boolean = false,
+  override val withCoords       : Boolean = false,
   withTextAlign                 : Boolean = false,
   minLen                        : Int = 0,
   maxLen                        : Int = 16000
@@ -447,7 +447,7 @@ trait MergeBindAccEntity[T] extends MergeBindAcc[Option[T]] {
         val (found, rest) = acc0.offers
           .partition { _.id == offerN }
         val off00 = found.headOption
-        val off0 = off00 getOrElse MEntity(offerN, text = None)
+        val off0 = off00 getOrElse MEntity(offerN, text = None, coords = None)
         val off1 = updateEntityWith(off0, vOpt)
         off1 :: rest
       }
