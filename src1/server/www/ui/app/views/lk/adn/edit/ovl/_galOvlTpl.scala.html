@@ -8,6 +8,7 @@
 @import io.suggest.img.crop.CropConstants._
 @import views.html.lk.forms.img._
 @import ctx.api.dynImgUtil
+@import io.suggest.common.geom.d2.MSize2di
 
 @_jsPreviewOverlayTpl(
   btnText       = messages("Edit"),
@@ -16,5 +17,5 @@
   imgPreviewUrl = dynImgUtil.thumb256Call(imgId, fillArea = false),
   divCss        = Seq("__size-M", "f-left"),
   btnCss        = Seq("image_edit-btn", CROP_IMAGE_BTN_CLASS),
-  whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
+  whOpt         = Some(MSize2di(width = 790, height = 250))
 )

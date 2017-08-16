@@ -3,6 +3,7 @@ package util.stat
 import javax.inject.Inject
 
 import io.suggest.common.fut.FutureUtil
+import io.suggest.common.geom.d2.MOrientations2d
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo.{IGeoFindIpResult, MLocEnv}
 import io.suggest.stat.m._
@@ -228,7 +229,7 @@ class StatUtil @Inject()(
     def mscreen: MScreen = {
       val devScrOpt = devScreenOpt
       MScreen(
-        orientation   = devScrOpt.map(_.orientation),
+        orientation   = devScrOpt.map(MOrientations2d.forSize2d),
         vportPhys     = for (dso <- devScrOpt) yield {
           MViewPort(
             widthPx   = dso.width,

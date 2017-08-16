@@ -3,9 +3,9 @@ package util.img
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.edge.MEdge
 import io.suggest.sc.ScConstants
-import io.suggest.ym.model.common.MImgInfoMeta
 import models._
 import models.blk._
 import models.im._
@@ -116,7 +116,7 @@ class LogoUtil @Inject() (
     // Вернуть скомпленную картинку.
     val logoImg2 = logoImg.withDynOps(
       Seq(
-        AbsResizeOp(MImgInfoMeta(heightPx, width = 0)),
+        AbsResizeOp(MSize2di(height = heightPx, width = 0)),
         StripOp,
         pxRatio.fgCompression.imQualityOp
       )

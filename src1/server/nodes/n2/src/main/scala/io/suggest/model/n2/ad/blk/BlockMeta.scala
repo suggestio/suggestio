@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.blk
 
-import io.suggest.ym.model.common.MImgSizeT
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.libs.json._
@@ -115,7 +115,7 @@ case class BlockMeta(
                       override val width   : Int,
                       wide                 : Boolean = false
                     )
-  extends MImgSizeT
+  extends ISize2di
 {
 
   /** id блока согласно BlocksConf. */

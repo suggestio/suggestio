@@ -243,13 +243,6 @@ class ImgFormUtil @Inject() (
       .toSet
   }
 
-  def img2imgInfo(mimg: MImgT): Future[MImgInfo] = {
-    for {
-      wh <- mImgs3.getImageWH(mimg)
-    } yield {
-      MImgInfo(mimg.fileName, wh.map(MImgInfoMeta.apply))
-    }
-  }
 
   /**
    * Проверить и уточнить значение кропа картинки.

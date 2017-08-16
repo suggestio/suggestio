@@ -6,18 +6,18 @@ import java.time.{LocalDate, ZoneId}
 import io.suggest.adn.edit.NodeEditConstants
 import io.suggest.bill.{MCurrencies, MCurrency}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
 import io.suggest.es.model.MEsUuId
-import io.suggest.geo.{CircleGs, CircleGsJvm, Distance, MGeoPoint}
+import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.UuidUtil
 import io.suggest.www.util.dt.DateTimeUtil
-import io.suggest.ym.model.common.MImgSizeT
 import models._
 import models.blk.SzMult_t
-import org.apache.commons.lang3.StringEscapeUtils
+import org.apache.commons.text.StringEscapeUtils
 import org.elasticsearch.common.unit.DistanceUnit
 import org.postgresql.util.PGInterval
 import play.api.data.Forms._
@@ -489,14 +489,14 @@ object FormUtil {
 
 
   /** Маппер размеров, заданные через width и height. Например, размеры картинки. */
-  def whSizeM: Mapping[MImgSizeT] = {
+  def whSizeM: Mapping[ISize2di] = {
     val sideM = number(min = 10, max = 2048)
     mapping(
       "height" -> sideM,
       "width"  -> sideM
     )
     {(height, width) =>
-      MImgInfoMeta(height = height, width = width)  : MImgSizeT
+      MSize2di(height = height, width = width)  : ISize2di
     }
     {mim =>
       Some((mim.height, mim.height))

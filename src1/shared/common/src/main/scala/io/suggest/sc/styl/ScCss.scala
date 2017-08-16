@@ -162,7 +162,7 @@ case class ScCss( args: IScCssArgs )
       val bgImg = {
         // В зависимости от наличия или отсутствия размера welcome background, стили могут отличаться.
         val whMx = args.wcBgWh.fold( StyleS.empty ) { wh0 =>
-          val wh2 = if (wh0.whRatio < args.screen.whRatio) {
+          val wh2 = if (ISize2di.whRatio(wh0) < ISize2di.whRatio(args.screen)) {
             val w = args.screen.width
             MSize2di(
               width  = w,

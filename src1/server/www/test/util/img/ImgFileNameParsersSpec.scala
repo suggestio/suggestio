@@ -1,6 +1,7 @@
 package util.img
 
 import functional.{OneAppPerSuiteNoGlobalStart, RegexParsersTesting}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.img.ImgCrop
 import io.suggest.util.UuidUtil.base64ToUuid
 import models._
@@ -65,12 +66,12 @@ class ImgFileNameParsersSpec
     "parse serialized imgId with dynArgs: simple '...~c=256x256' - [AbsResizeOp]" in {
       val pr = parseFileName("8wQs1SQQRXavk4UFF0v7-A~c=256x256'")
       pr._1         mustBe base64ToUuid("8wQs1SQQRXavk4UFF0v7-A")
-      pr._2         mustBe List(AbsResizeOp(MImgInfoMeta(256, 256)))
+      pr._2         mustBe List(AbsResizeOp(MSize2di(256, 256)))
     }
     "parse serialized img filename with dynArgs: simple: ...?c=256x256 (unfamiliar url-qs-like syntax)" in {
       val pr = parseFileName("8wQs1SQQRXavk4UFF0v7-A~c=256x256'")
       pr._1         mustBe base64ToUuid("8wQs1SQQRXavk4UFF0v7-A")
-      pr._2         mustBe List(AbsResizeOp(MImgInfoMeta(256, 256)))
+      pr._2         mustBe List(AbsResizeOp(MSize2di(256, 256)))
     }
 
     "parse serialized img filename with several imOps: ...~i=a&c=140x140a&h=&d=a&j=a&f=80" in {
@@ -78,7 +79,7 @@ class ImgFileNameParsersSpec
       pr._1         mustBe base64ToUuid("8wQs1SQQRXavk4UFF0v7-A")
       pr._2         mustBe List(
         ImFilters.Lanczos,
-        AbsResizeOp(MImgInfoMeta(140, 140), ImResizeFlags.IgnoreAspectRatio),
+        AbsResizeOp(MSize2di(140, 140), ImResizeFlags.IgnoreAspectRatio),
         StripOp,
         ImInterlace.Plane,
         ImSamplingFactors.SF_1x1,

@@ -1,9 +1,10 @@
 package util.img
 
 import javax.inject.{Inject, Singleton}
+
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.ImgCrop
-import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.im._
@@ -61,7 +62,7 @@ class StrictWideMaker @Inject() (
       .getOrElse(CompressModes.Fg)
       .fromDpr(pxRatio)
 
-    val szReal = MImgInfoMeta(height = height, width = width)
+    val szReal = MSize2di(height = height, width = width)
 
     // Собираем набор инструкций для imagemagick.
     val imOps = List[ImOp](
@@ -75,7 +76,7 @@ class StrictWideMaker @Inject() (
       compression.imQualityOp
     )
 
-    val szCss = MImgInfoMeta(height = szRounded(heightCssRaw),  width = widthCssPx)
+    val szCss = MSize2di(height = szRounded(heightCssRaw),  width = widthCssPx)
 
     MakeResult(
       szCss       = szCss,

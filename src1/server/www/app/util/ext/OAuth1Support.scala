@@ -1,11 +1,10 @@
 package util.ext
 
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.di.IWsClient
 import io.suggest.util.logs.IMacroLogs
-import io.suggest.ym.model.common.MImgInfoMeta
-import models.MImgSizeT
 import models.mctx.IContextUtilDi
 import models.mext.{IExtPostInfo, IOAuth1MkPostArgs, MExtPostInfo}
 import models.mproj.IMCommonDi
@@ -36,7 +35,7 @@ trait IOAuth1Support {
   def consumerKey: ConsumerKey = client.info.key
 
   /** В каких размерах должно открываться окно авторизации OAuth1. */
-  def popupWndSz: MImgSizeT = MImgInfoMeta(height = 400, width = 400)
+  def popupWndSz: ISize2di = MSize2di(height = 400, width = 400)
 
   /** Проверка валидности access_token'a силами модели. */
   def isAcTokValid(acTok: RequestToken): Future[Boolean]

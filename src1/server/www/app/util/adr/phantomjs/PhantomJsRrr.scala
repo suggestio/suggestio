@@ -1,11 +1,11 @@
 package util.adr.phantomjs
 
 import java.io.{File, FileWriter}
-
 import javax.inject.{Inject, Singleton}
+
 import com.google.inject.assistedinject.Assisted
 import io.suggest.async.AsyncUtil
-import models.MImgSizeT
+import io.suggest.common.geom.d2.ISize2di
 import models.adr.IAdRenderArgs
 import models.im.{OutImgFmt, OutImgFmts}
 import models.mproj.ICommonDi
@@ -23,7 +23,7 @@ import views.txt.js.phantom.renderOneAdJs
 class PhantomJsRrrUtil extends IAdRrrUtil {
 
   /** Дефолтовое значение quality, если не задано. */
-  override def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = {
+  override def qualityDflt(scrSz: ISize2di, fmt: OutImgFmt): Option[Int] = {
     fmt match {
       case OutImgFmts.JPEG => Some(94)
       case _               => super.qualityDflt(scrSz, fmt)

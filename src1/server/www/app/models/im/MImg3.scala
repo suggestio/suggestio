@@ -86,7 +86,7 @@ class MImgs3 @Inject() (
 
   /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
     * т.е. метаданные обязательные изначально. */
-  override protected def _updateMetaWith(mimg: MImgT, localWh: MImgSizeT, localImg: MLocalImg): Unit = {
+  override protected def _updateMetaWith(mimg: MImgT, localWh: ISize2di, localImg: MLocalImg): Unit = {
     // should never happen
     // Необходимость апдейта метаданных возникает, когда обнаруживается, что нет метаданных.
     // В случае N2 MMedia, метаданные без блоба существовать не могут, и необходимость не должна наступать.

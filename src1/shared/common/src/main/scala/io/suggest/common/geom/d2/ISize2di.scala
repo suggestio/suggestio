@@ -8,16 +8,47 @@ import io.suggest.media.MediaConst
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 25.03.15 15:58
- * Description: Размер двумерный целочисленный.
+ * Description: Модель размеров двумерный целочисленный.
  */
 
-trait ISize2di extends IWidth with IHeight {
+object ISize2di {
 
-  def whRatio: Double = {
-    width.toDouble / height.toDouble
+  def isVertical(sz: ISize2di): Boolean = {
+    sz.height > sz.width
   }
 
-  override def toString: String = "Sz2D(w=" + width + ";h=" + height + ")"
+  def isHorizontal(sz: ISize2di): Boolean = {
+    sz.width > sz.height
+  }
+
+  def isSmallerThan(outer: ISize2di, than: ISize2di): Boolean = {
+    outer.height < than.height  &&  outer.width < than.width
+  }
+
+  def isIncudesSz(outer: ISize2di, than: ISize2di): Boolean = {
+    outer.height >= than.height  &&  outer.width >= than.width
+  }
+
+  def isLargerThan(outer: ISize2di, than: ISize2di): Boolean = {
+    outer.height > than.height  &&  outer.width > than.width
+  }
+
+  /** Отрендерить в строку вида WxH. */
+  def toString(sz2d: ISize2di): String = {
+    s"${sz2d.width}x${sz2d.height}"
+  }
+
+  def whRatio(sz2d: ISize2di): Double = {
+    sz2d.width.toDouble / sz2d.height.toDouble
+  }
+
+}
+
+
+/** Интерфейс моделей двумерных целочисленных размеров. */
+trait ISize2di extends IWidth with IHeight {
+
+  override def toString = ISize2di.toString(this)
 
   override def equals(obj: Any): Boolean = {
     obj match {

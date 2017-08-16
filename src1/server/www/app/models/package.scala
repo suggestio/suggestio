@@ -19,9 +19,6 @@ package object models {
 
   type Receivers_t          = n2.edge.NodeEdgesMap_t
 
-  val  MImgInfo             = ym.model.common.MImgInfo
-  type MImgInfo             = ym.model.common.MImgInfo
-
   type ImgCrop              = io.suggest.img.ImgCrop
   val  ImgCrop              = io.suggest.img.ImgCrop
 
@@ -29,11 +26,6 @@ package object models {
 
   type Size2di              = io.suggest.common.geom.d2.MSize2di
   val  Size2di              = io.suggest.common.geom.d2.MSize2di
-
-  type MImgSizeT            = ym.model.common.MImgSizeT
-
-  val  MImgInfoMeta         = ym.model.common.MImgInfoMeta
-  type MImgInfoMeta         = ym.model.common.MImgInfoMeta
 
   val  BlocksConf           = util.blocks.BlocksConf
   type BlockConf            = BlocksConf.T

@@ -1,7 +1,6 @@
 package models.im
 
-import io.suggest.common.geom.d2.ISize2di
-import io.suggest.ym.model.common.{MImgInfoMeta, MImgSizeT}
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import org.im4java.core.IMOperation
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -30,10 +29,10 @@ object AbsResizeOp extends JavaTokenParsers {
     _.flatten
   }
 
-  def sizeP: Parser[MImgSizeT] = {
+  def sizeP: Parser[ISize2di] = {
     val numP = numRe ^^ { _.toInt }
     (numP ~ (whDelimRe ~> numP)) ^^ {
-      case width ~ height  =>  MImgInfoMeta(width = width, height = height)
+      case width ~ height  =>  MSize2di(width = width, height = height)
     }
   }
 
@@ -47,7 +46,7 @@ object AbsResizeOp extends JavaTokenParsers {
     parse(aroParser, raw).get
   }
 
-  def apply(sz: MImgSizeT, flag: ImResizeFlag): AbsResizeOp = {
+  def apply(sz: ISize2di, flag: ImResizeFlag): AbsResizeOp = {
     AbsResizeOp(sz, Seq(flag))
   }
 

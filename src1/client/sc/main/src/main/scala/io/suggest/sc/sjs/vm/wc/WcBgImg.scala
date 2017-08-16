@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.vm.wc
 
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.dev.MScreen
 import io.suggest.sc.ScConstants.Welcome.BG_IMG_ID
 import io.suggest.sjs.common.vm.VmT
@@ -29,7 +29,7 @@ trait WcBgImgT extends VmT with WcImgUtil with DataWh {
   def adjust(screen: MScreen): Unit = {
     val iwh = getDataWh.get
     val newWh: MSize2di = {
-      if (iwh.whRatio < screen.whRatio) {
+      if (ISize2di.whRatio(iwh) < ISize2di.whRatio(screen)) {
         val w = screen.width
         val h = w * iwh.height / iwh.width
         MSize2di(w, height = h)

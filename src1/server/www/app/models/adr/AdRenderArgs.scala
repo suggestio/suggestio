@@ -1,6 +1,6 @@
 package models.adr
 
-import models.MImgSizeT
+import io.suggest.common.geom.d2.ISize2di
 import models.im._
 
 /**
@@ -19,7 +19,7 @@ trait IAdRenderArgs {
 
   /** 2015.03.06 ЭТО 100% !!ОБЯЗАТЕЛЬНЫЙ!! размер окна браузера и картинки (если кроп не задан) и не обсуждается.
     * В доках wkhtml обязательность этого параметра не отражена толком, а --height в man вообще не упоминается. */
-  def scrSz   : MImgSizeT
+  def scrSz   : ISize2di
 
   /** Качество сжатия результирующей картинки. */
   def quality : Option[Int]
@@ -45,7 +45,7 @@ trait IAdRenderArgsWrapper extends IAdRenderArgs {
 /** Дефолтовая реализация модели-контейнера данных для рендера карточек в картинки. */
 case class MAdRenderArgs(
   src         : String,
-  scrSz       : MImgSizeT,
+  scrSz       : ISize2di,
   outFmt      : OutImgFmt,
   quality     : Option[Int]
 )
@@ -57,7 +57,7 @@ case class MAdRenderArgs(
 trait IAdRendererCompanion {
 
   /** Дефолтовое значение quality, если не задано. */
-  def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = None
+  def qualityDflt(scrSz: ISize2di, fmt: OutImgFmt): Option[Int] = None
 
 }
 

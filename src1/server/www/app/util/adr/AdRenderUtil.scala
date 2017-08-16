@@ -1,11 +1,11 @@
 package util.adr
 
 import java.io.File
-
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
-import io.suggest.ym.model.common.MImgInfoMeta
+import io.suggest.common.geom.d2.MSize2di
 import models.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
@@ -135,7 +135,7 @@ class AdRenderUtil @Inject() (
 
     // Собираем параметры рендера воедино.
     val fmt = adArgs.imgFmt
-    val scrSz = MImgInfoMeta(width = extWidth, height = height)
+    val scrSz = MSize2di(width = extWidth, height = height)
     val rArgs = MAdRenderArgs(
       src     = adImgLocalUrl(adArgs),
       scrSz   = scrSz,

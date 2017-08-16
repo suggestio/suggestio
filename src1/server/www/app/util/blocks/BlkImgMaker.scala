@@ -1,6 +1,8 @@
 package util.blocks
 
 import javax.inject.{Inject, Singleton}
+
+import io.suggest.common.geom.d2.MSize2di
 import models.blk.{SzMult_t, szMulted}
 import models.im._
 
@@ -34,12 +36,12 @@ class BlkImgMaker @Inject() (
    * @param devScreen Данные по экрану устройства.
    * @return Параметры для картинки.
    */
-  private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreen: DevScreen): MImgInfoMeta = {
+  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, devScreen: DevScreen): MSize2di = {
     getRenderSz(szMult, blockMeta, devScreen, devScreen.pixelRatio)
   }
-  private def getRenderSz(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatio: DevPixelRatio): MImgInfoMeta = {
+  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, devScreenSz: ISize2di, pxRatio: DevPixelRatio): MSize2di = {
     val imgResMult = getImgResMult(szMult, blockMeta, devScreenSz, pxRatio)
-    MImgInfoMeta(
+    MSize2di(
       height = szMulted(blockMeta.height, imgResMult),
       width  = szMulted(blockMeta.width, imgResMult)
     )
@@ -54,7 +56,7 @@ class BlkImgMaker @Inject() (
    * @param pxRatio Плотность пикселей устройства.
    * @return Мультипликатор, на который надо домножать пиксельный размер стороны картинки.
    */
-  private def getImgResMult(szMult: SzMult_t, blockMeta: MImgSizeT, devScreenSz: MImgSizeT, pxRatio: DevPixelRatio): SzMult_t = {
+  private def getImgResMult(szMult: SzMult_t, blockMeta: ISize2di, devScreenSz: ISize2di, pxRatio: DevPixelRatio): SzMult_t = {
     // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
     val sizeMult = detectMaxSzMult(szMult, blockMeta, screenSz = devScreenSz)
     // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
@@ -74,7 +76,7 @@ class BlkImgMaker @Inject() (
    * @return Множитель.
    */
   // TODO Вероятно, этот метод не нужен. Мнение контроллера по вопросам рендера не должно "корректироваться" на нижнем уровне.
-  @tailrec private def detectMaxSzMult(szMult: SzMult_t, blockSz: MImgSizeT, screenSz: MImgSizeT): SzMult_t = {
+  @tailrec private def detectMaxSzMult(szMult: SzMult_t, blockSz: ISize2di, screenSz: ISize2di): SzMult_t = {
     if (szMult <= 1F) {
       1F
     } else if (blockSz.width * szMult <= screenSz.width) {

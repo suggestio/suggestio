@@ -8,14 +8,13 @@ import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.img.ConvertModes
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.svg.SvgUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import io.suggest.www.util.dt.DateTimeUtil
-import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.mctx.Context
 import models.mfs.FileUtil
@@ -117,7 +116,7 @@ class Img @Inject() (
       imetaOpt <- mImgs3.getImageWH(iik)
     } yield {
       val imeta: ISize2di = imetaOpt getOrElse {
-        val stub = MImgInfoMeta(640, 480)
+        val stub = MSize2di(640, 480)
         warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
         stub
       }
@@ -412,7 +411,7 @@ trait TempImgSupport
   /** IM Resize-операция по генерации превьюшки для картинки в редакторе. */
   def _imgRszPreviewOp = {
     AbsResizeOp(
-      MImgInfoMeta(TEMP_IMG_PREVIEW_SIDE_SIZE_PX, TEMP_IMG_PREVIEW_SIDE_SIZE_PX),
+      MSize2di(TEMP_IMG_PREVIEW_SIDE_SIZE_PX, TEMP_IMG_PREVIEW_SIDE_SIZE_PX),
       ImResizeFlags.OnlyShrinkLarger
     )
   }

@@ -1,8 +1,8 @@
 package util.qsb
 
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImplLazy
-import io.suggest.ym.model.common.MImgSizeT
 import play.api.mvc.QueryStringBindable
 import models._
 import util.img.PicSzParsers
@@ -60,24 +60,24 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   }
 
 
-  def sizeP: Parser[MImgInfoMeta] = {
+  def sizeP: Parser[MSize2di] = {
     resolutionRawP ^^ {
-      case w ~ h  =>  MImgInfoMeta(width = w, height = h)
+      case w ~ h  =>  MSize2di(width = w, height = h)
     }
   }
   
-  def parseWxH(wxh: String): ParseResult[MImgInfoMeta] = {
+  def parseWxH(wxh: String): ParseResult[MSize2di] = {
     parse(sizeP, wxh)
   }
 
-  def unParseWxH(value: MImgSizeT): String = {
-    s"${value.width}x${value.height}"
+  def unParseWxH(value: ISize2di): String = {
+    ISize2di.toString( value )
   }
 
   /** qsb для бинда значения длины*ширины из qs. */
-  implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MImgInfoMeta] = {
-    new QueryStringBindableImpl[MImgInfoMeta] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MImgInfoMeta]] = {
+  implicit def mImgInfoMetaQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[MSize2di] = {
+    new QueryStringBindableImpl[MSize2di] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MSize2di]] = {
         strB.bind(key, params).map { maybeWxh =>
           maybeWxh.right.flatMap { wxh =>
             val pr = parseWxH(wxh)
@@ -89,7 +89,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
         }
       }
 
-      override def unbind(key: String, value: MImgInfoMeta): String = {
+      override def unbind(key: String, value: MSize2di): String = {
         unParseWxH(value)
       }
     }

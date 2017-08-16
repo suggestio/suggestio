@@ -1,7 +1,7 @@
 package models.im
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.model.play.qsb.QueryStringBindableImpl
-import io.suggest.ym.model.common.MImgSizeT
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 import util.img.{DevScreenParsers, PicSzParsers}
@@ -84,7 +84,7 @@ case class DevScreen(
   height        : Int,
   pixelRatioOpt : Option[DevPixelRatio]
 ) 
-  extends MImgSizeT with ImgOrientationT
+  extends ISize2di
 {
 
   def pixelRatio: DevPixelRatio = {

@@ -1,8 +1,8 @@
 package io.suggest.stat.m
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import io.suggest.common.geom.d2.MOrientation2d
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.geom.d2.MOrientation2d
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

@@ -1,6 +1,6 @@
 package models.im
 
-import io.suggest.ym.model.common.MImgSizeT
+import io.suggest.common.geom.d2.ISize2di
 import org.im4java.core.IMOperation
 import util.qsb.QSBs
 
@@ -20,7 +20,7 @@ object ExtentOp {
 
 }
 
-case class ExtentOp(wh: MImgSizeT) extends ImOp {
+case class ExtentOp(wh: ISize2di) extends ImOp {
   override def opCode = ImOpCodes.Extent
 
   override def qsValue: String = {

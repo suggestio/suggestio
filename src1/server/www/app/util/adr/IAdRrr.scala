@@ -4,9 +4,9 @@ import java.io.File
 import java.nio.file.Files
 
 import io.suggest.async.IAsyncUtilDi
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.primo.IToPublicString
 import io.suggest.util.logs.MacroLogsImpl
-import models.MImgSizeT
 import models.adr.IAdRenderArgs
 import models.im.OutImgFmt
 import models.mproj.IMCommonDi
@@ -129,7 +129,7 @@ case class AdRrrFailedException(now: Long, msg: String, privateMsg: String) exte
 
 /** Трейт для реализации статической утили рендереров. */
 trait IAdRrrUtil {
-  def qualityDflt(scrSz: MImgSizeT, fmt: OutImgFmt): Option[Int] = None
+  def qualityDflt(scrSz: ISize2di, fmt: OutImgFmt): Option[Int] = None
 }
 
 /** Интерфейс для будущих DI Factory, собирающих инстансы рендереров. */

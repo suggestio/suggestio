@@ -1,14 +1,14 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.common.geom.d2.ISize2di
+
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.common.MImgInfoMeta
 import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.mproj.ICommonDi
-import models.{ImgCrop, MImgSizeT}
+import models.ImgCrop
 
 import scala.annotation.tailrec
 import scala.concurrent.{ExecutionContext, Future}
@@ -59,7 +59,7 @@ class ScWideMaker @Inject() (
   }
 
   /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
-  def getAbsCropOrFail(iik: MAnyImgT, wideWh: MImgSizeT)(implicit ec: ExecutionContext): Future[ImgCrop] = {
+  def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di)(implicit ec: ExecutionContext): Future[ImgCrop] = {
     iik.cropOpt match {
       case Some(crop0) =>
         val origWhFut = for {
@@ -94,7 +94,7 @@ class ScWideMaker @Inject() (
     }
   }
   /** Сделать из опционального исходнго кропа новый wide-кроп с указанием гравитации. */
-  def getWideCropInfo(iik: MAnyImgT, wideWh: MImgSizeT)(implicit ec: ExecutionContext): Future[ImgCropInfo] = {
+  def getWideCropInfo(iik: MAnyImgT, wideWh: ISize2di)(implicit ec: ExecutionContext): Future[ImgCropInfo] = {
     getAbsCropOrFail(iik, wideWh)
       .map { crop1 => ImgCropInfo(crop1, isCenter = false) }
       .recover { case ex: Exception =>
@@ -177,7 +177,7 @@ class ScWideMaker @Inject() (
     val cropWidth = szMulted(cropWidthCssPx, pxRatio.pixelRatio)
 
     // Запустить сбор инфы по кропу.
-    val wideWh = MImgInfoMeta(height = tgtHeightReal, width = cropWidth)
+    val wideWh = MSize2di(height = tgtHeightReal, width = cropWidth)
     val cropInfoFut = getWideCropInfo(img, wideWh)
 
     // Начинаем собирать список трансформаций по ресайзу:
@@ -209,7 +209,7 @@ class ScWideMaker @Inject() (
       }
 
     // Вычислить размер картинки в css-пикселях.
-    val szCss = MImgInfoMeta(
+    val szCss = MSize2di(
       height = szRounded(tgtHeightCssRaw),
       width  = cropWidthCssPx
     )

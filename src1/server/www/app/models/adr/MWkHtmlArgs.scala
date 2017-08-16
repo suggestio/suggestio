@@ -1,7 +1,8 @@
 package models.adr
 
+import io.suggest.common.geom.d2.ISize2di
 import models.im._
-import models.{ImgCrop, MImgSizeT}
+import models.ImgCrop
 
 /**
  * Suggest.io
@@ -50,14 +51,14 @@ trait IWhHtmlArgsDflt extends IWkHtmlArgsT {
   * расширенный набор аргументов, уже реализованных к моменту DI-рефакторинга.
   */
 case class MWkHtmlArgs(
-  override val src         : String,
-  override val scrSz       : MImgSizeT,
-  override val outFmt      : OutImgFmt,
-  override val quality     : Option[Int],
-  override val zoomOpt     : Option[Float]     = MWkHtmlArgs.ZOOM_OPT_DFLT,
-  override val plugins     : Boolean           = MWkHtmlArgs.WITH_PLUGINS_DFLT,
-  override val crop        : Option[ImgCrop]   = MWkHtmlArgs.CROP_DFLT,
-  override val smartWidth  : Boolean           = MWkHtmlArgs.SMART_WIDTH_DFLT
+                        override val src         : String,
+                        override val scrSz       : ISize2di,
+                        override val outFmt      : OutImgFmt,
+                        override val quality     : Option[Int],
+                        override val zoomOpt     : Option[Float]     = MWkHtmlArgs.ZOOM_OPT_DFLT,
+                        override val plugins     : Boolean           = MWkHtmlArgs.WITH_PLUGINS_DFLT,
+                        override val crop        : Option[ImgCrop]   = MWkHtmlArgs.CROP_DFLT,
+                        override val smartWidth  : Boolean           = MWkHtmlArgs.SMART_WIDTH_DFLT
 )
   extends IWkHtmlArgsT
 

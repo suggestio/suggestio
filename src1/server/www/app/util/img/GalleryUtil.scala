@@ -2,8 +2,8 @@ package util.img
 
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.model.n2.edge.{MEdge, MPredicates}
-import io.suggest.ym.model.common.MImgInfoMeta
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.model.n2.edge.MPredicates
 import models.im._
 import models.mctx.Context
 import models.{MEdge, MNode}
@@ -85,7 +85,7 @@ class GalleryUtil @Inject() (
       .fold(DevPixelRatios.default)(_.pixelRatio)
     // Всегда ресайзим до необходимого отображаемого размера. Используем fg-качество для сжатия.
     // TODO Height должен быть необязательный, но максимум 200 пикселей.
-    val newSz = MImgInfoMeta(
+    val newSz = MSize2di(
       width  = szMulted(LK_NODE_GALLERY_SHOW_WIDTH_PX,  devPixelRatio.pixelRatio),
       height = szMulted(LK_NODE_GALLERY_SHOW_HEIGHT_PX, devPixelRatio.pixelRatio)
     )

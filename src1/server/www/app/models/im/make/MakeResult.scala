@@ -1,6 +1,6 @@
 package models.im.make
 
-import io.suggest.ym.model.common.MImgSizeT
+import io.suggest.common.geom.d2.ISize2di
 import models.im.MImgT
 import models.mctx.Context
 import play.api.mvc.Call
@@ -12,10 +12,10 @@ import play.api.mvc.Call
 trait IMakeResult {
 
   /** Данные о размере картинки в css-пикселях, т.е. без учета плотности пикселей девайса. */
-  def szCss         : MImgSizeT
+  def szCss         : ISize2di
 
   /** Данные о размере картинки в реальных экранных пикселях экрана устройства. Превышают szCss в szMult раз. */
-  def szReal        : MImgSizeT
+  def szReal        : ISize2di
 
   /** Данные для сборки ссылки на картинку. */
   def dynCallArgs   : MImgT
@@ -32,8 +32,8 @@ trait IMakeResult {
 
 /** Дефолтовая реализация [[IMakeResult]]. */
 case class MakeResult(
-  override val szCss         : MImgSizeT,
-  override val szReal        : MImgSizeT,
+  override val szCss         : ISize2di,
+  override val szReal        : ISize2di,
   override val dynCallArgs   : MImgT,
   override val isWide        : Boolean
 )

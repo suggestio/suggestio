@@ -1,6 +1,6 @@
 package models.im
 
-import io.suggest.ym.model.common.MImgSizeT
+import io.suggest.common.geom.d2.ISize2di
 
 /**
  * Suggest.io
@@ -13,8 +13,7 @@ object BasicScreenSizes extends Enumeration {
 
   protected case class Val(width: Int, height: Int)
     extends super.Val(s"${width}x$height")
-    with MImgSizeT
-    with ImgOrientationT
+    with ISize2di
 
   type BasicScreenSize = Val
 
@@ -67,16 +66,10 @@ object BasicScreenSizes extends Enumeration {
   implicit def value2val(x: Value): BasicScreenSize = x.asInstanceOf[BasicScreenSize]
 
   /** Найти подходящее разрешение, если есть. */
-  def includesSize(sz: MImgSizeT): Option[BasicScreenSize] = {
+  def includesSize(sz: ISize2di): Option[BasicScreenSize] = {
     values
-      .find { _ isIncudesSz sz }
+      .find { ISize2di.isIncudesSz(_, sz) }
       .map { value2val }
-  }
-
-  /** Найти подходящее разрешение или выбрать максимальное. */
-  def includesSizeOrMax(sz: MImgSizeT): BasicScreenSize = {
-    includesSize(sz)
-      .getOrElse { if (sz.isHorizontal) FHD_H else FHD_V }
   }
 
 }

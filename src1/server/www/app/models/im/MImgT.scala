@@ -4,6 +4,7 @@ import java.io.FileNotFoundException
 import java.util.UUID
 
 import io.suggest.async.StreamsUtil
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.di.ICacheApiUtil
 import io.suggest.model.n2.media.IMMedias
 import io.suggest.model.n2.media.storage.MStorage
@@ -54,8 +55,8 @@ object MImgT extends MacroLogsImpl { model =>
               Right(raw)
             } catch {
               case ex: Exception =>
-                val msg = "img id missing or invalid: "
-                LOGGER.warn( s"bind($key) $msg: $raw" )
+                val msg = "img id missing or invalid : "
+                LOGGER.warn( s"bind($key) $msg: $raw (${ex.getClass.getSimpleName})" )
                 Left(msg)
             }
           }
@@ -236,7 +237,7 @@ trait MImgsT
         val whOptFut = toLocalImgFut.flatMap { localImgOpt =>
           localImgOpt.fold {
             LOGGER.warn(logPrefix + "local img was NOT read. cannot collect img meta.")
-            Future.successful( Option.empty[MImgInfoMeta] )
+            Future.successful( Option.empty[MSize2di] )
           } { mLocalImgs.getImageWH }
         }
         if (ex.isInstanceOf[NoSuchElementException])
@@ -262,7 +263,7 @@ trait MImgsT
 
   /** Потенциально ненужная операция обновления метаданных. В новой архитектуре её быть не должно бы,
     * т.е. метаданные обязательные изначально. */
-  protected def _updateMetaWith(mimg: MImgT, localWh: MImgSizeT, localImg: MLocalImg): Unit
+  protected def _updateMetaWith(mimg: MImgT, localWh: ISize2di, localImg: MLocalImg): Unit
 
   override def rawImgMeta(mimg: MImgT): Future[Option[IImgMeta]] = {
     permMetaCached(mimg)

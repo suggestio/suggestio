@@ -1,11 +1,11 @@
 package util.img
 
 import java.io.File
-
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.im._
 import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
@@ -224,7 +224,7 @@ class DynImgUtil @Inject() (
   }
   def thumb256Call(img: MImgT, fillArea: Boolean): Call = {
     val flags = if (fillArea) Seq(ImResizeFlags.FillArea) else Nil
-    val op = AbsResizeOp(MImgInfoMeta(256, 256), flags)
+    val op = AbsResizeOp(MSize2di(256, 256), flags)
     val imgThumb = img.withDynOps(
       img.dynImgOps ++ Seq(op)
     )

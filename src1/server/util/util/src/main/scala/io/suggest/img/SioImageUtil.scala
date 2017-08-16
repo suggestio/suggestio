@@ -1,10 +1,10 @@
 package io.suggest.img
 
-import io.suggest.ym.model.common.MImgSizeT
 import org.im4java.core.{ConvertCmd, IMOperation, Info}
 import java.io.{File, FileInputStream}
 import java.nio.file.Files
 
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.ConvertModes.ConvertMode
 import io.suggest.util.logs.IMacroLogs
 
@@ -252,7 +252,7 @@ object ImgCrop extends ImgCropParsers {
   }
 }
 
-case class ImgCrop(width: Int, height: Int, offX: Int, offY: Int) extends MImgSizeT {
+case class ImgCrop(width: Int, height: Int, offX: Int, offY: Int) extends ISize2di {
   import ImgCrop.optSign
 
   /**

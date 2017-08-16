@@ -1,4 +1,5 @@
-@(call: Call, fieldName: String, multiUploadCounter: Option[Int] = None, whOpt: Option[MImgSizeT] = None)(implicit ctx: Context)
+@(call: Call, fieldName: String, multiUploadCounter: Option[Int] = None,
+  whOpt: Option[io.suggest.common.geom.d2.ISize2di] = None)(implicit ctx: Context)
 
 @* Рендер field type=input для отправки картинки на сервер для её кадрирования. *@
 @import ctx._

@@ -8,6 +8,7 @@
 @import io.suggest.vlines.VLines
 @import io.suggest.img.ImgConstants
 @import io.suggest.img.crop.CropConstants._
+@import io.suggest.common.geom.d2.MSize2di
 @import io.suggest.adn.edit.NodeEditConstants
 @import io.suggest.js.UploadConstants
 @import views.html.lk.forms.img._
@@ -112,7 +113,7 @@
             call          = routes.MarketLkAdnEdit.handleGalleryImg(),
             fieldName     = GALLERY_FN,
             multiUploadCounter = gf.indexes.lastOption.orElse( Some(-1) ),
-            whOpt         = Some(MImgInfoMeta(width = 790, height = 250))
+            whOpt         = Some(MSize2di(width = 790, height = 250))
           )
           <a class="image_add-btn js-file-upload-btn" title="@messages("Upload.photo")">
             <span>@Html( messages("Add.photo", "<br/>") )</span>

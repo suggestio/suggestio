@@ -1,6 +1,6 @@
 package io.suggest.stat.m
 
-import io.suggest.model.geom.d2.MOrientations2d
+import io.suggest.common.geom.d2.MOrientations2d
 import org.scalatest.FlatSpec
 
 /**

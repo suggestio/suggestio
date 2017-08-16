@@ -8,10 +8,10 @@ import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.{FileIO, Source}
 import akka.util.ByteString
 import io.suggest.async.AsyncUtil
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.common.MImgInfoMeta
 import models.IImgMeta
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
@@ -117,10 +117,10 @@ class MLocalImgs @Inject() (
   }
 
   /** Получить ширину и длину картинки. */
-  override def getImageWH(mimg: MLocalImg): Future[Option[MImgInfoMeta]] = {
+  override def getImageWH(mimg: MLocalImg): Future[Option[MSize2di]] = {
     identifyCached(mimg)
       .map { info =>
-        val imeta = MImgInfoMeta(
+        val imeta = MSize2di(
           height = info.getImageHeight,
           width  = info.getImageWidth
         )
