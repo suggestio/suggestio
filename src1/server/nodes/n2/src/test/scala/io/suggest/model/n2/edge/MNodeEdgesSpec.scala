@@ -41,7 +41,6 @@ class MNodeEdgesSpec extends FlatSpec with PlayJsonTestUtil {
           dateNi = Some( OffsetDateTime.now().minusDays(1) ),
           commentNi = Some("asdas asd as a#$!#@$ds'ad''''!"),
           flag = Some(true),
-          itemIds = Set(123213L),
           tags    = Set("asd", "bbb"),
           geoShapes = List(
             MEdgeGeoShape(

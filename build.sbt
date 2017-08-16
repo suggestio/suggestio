@@ -73,6 +73,19 @@ lazy val commonReactSjs = {
     .dependsOn(commonSjs)
 }
 
+/** Поддержка голого tinymce в scala.js.
+  * Изначально создан просто для доступа к npm/tinymce/dist/ файлам и ресурсам через sjs-bundler npmAssets.
+  */
+lazy val tinyMceSjs = {
+  Project(id = "scalajs-tinymce", base = file(DIR0 + "client/scalajs/tinymce"))
+}
+
+/** Sjs-фасад для react-компонента tinymce. */
+lazy val reactTinyMceSjs = {
+  Project(id = "scalajs-react-tinymce", base = file(DIR0 + "client/scalajs/react-tinymce"))
+    .dependsOn(commonReactSjs, tinyMceSjs)
+}
+
 /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из www. */
 lazy val svgUtil = {
   val name = "svg-util"
@@ -89,6 +102,13 @@ lazy val lkAdvExtSjs = {
   Project(id = name, base = file(DIR0 + "client/lk/adv/ext"))
     //.enablePlugins(ScalaJSBundlerPlugin)
     .dependsOn(commonSjs)
+}
+
+/** Редактор рекламных карточкек на базе scala.js. */
+lazy val lkAdEditorSjs = {
+  val name = "lk-ad-editor-sjs"
+  Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
+    .dependsOn( lkCommonSjs, reactTinyMceSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -286,7 +306,7 @@ lazy val lkAdnMapSjs = {
 lazy val lkSjs = {
   Project(id = "lk-sjs", base = file(DIR0 + "client/lk/main"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs)
+    .dependsOn(lkAdvExtSjs, lkAdvDirectSjs, lkAdvGeoSjs, lkAdnMapSjs, lkNodesFormSjs, lkAdEditorSjs)
 }
 
 /** scala.js реализация системы мониторинга js-маячков. */
@@ -415,6 +435,7 @@ lazy val sio2 = {
       leafletSjs, leafletReactSjs, mapBoxGlSjs,
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
+      tinyMceSjs, reactTinyMceSjs, lkAdEditorSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
       mgeo, commonWww, nodesWww,

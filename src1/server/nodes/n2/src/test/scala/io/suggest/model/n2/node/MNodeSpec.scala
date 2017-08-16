@@ -68,7 +68,6 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
                   nodeIds = Set("fa4f493wfr3420f3904__4"),
                   info = MEdgeInfo(
                     flag = Some(true),
-                    itemIds = Set(123213L),
                     geoShapes = List(
                       MEdgeGeoShape(
                         id = 1,

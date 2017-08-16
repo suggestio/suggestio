@@ -110,6 +110,15 @@ object Common {
      */
     val MACWIRE = "2.3.0"
 
+    /** @see [[https://www.npmjs.com/package/react-tinymce]] */
+    val REACT_TINYMCE = "0.6.0"
+
+    /** react-tinymce неявно зависит от tinymce, который должен бы быть в global scope.
+      *
+      * @see [[https://github.com/instructure-react/react-tinymce#dependency]]
+      */
+    val TINYMCE = "4.2"
+
   }
 
 

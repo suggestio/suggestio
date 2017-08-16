@@ -30,7 +30,6 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
         dateNi      = Some( OffsetDateTime.now().minusDays(3) ),
         commentNi   = Some("test test 2"),
         flag        = Some(true),
-        itemIds     = Set(13242134L),
         tags        = Set("test", "vasya", "123"),
         geoShapes   = List(
           MEdgeGeoShape(

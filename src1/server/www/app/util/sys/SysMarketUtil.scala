@@ -259,20 +259,18 @@ class SysMarketUtil extends MacroLogsDyn {
       "dynImgArgs" -> optional( nonEmptyText(minLength = 2, maxLength = 256) ),
       "commentNi"  -> optional( text(maxLength = 256) ),
       "flag"       -> optional( boolean ),
-      "itemIds"    -> itemIdsListM,
       "tags"       -> tagsListM
     )
-    { (dynImgArgsOpt, commentNiOpt, flagOpt, itemIds, tags) =>
+    { (dynImgArgsOpt, commentNiOpt, flagOpt, tags) =>
       MEdgeInfo(
         dynImgArgs  = dynImgArgsOpt,
         commentNi   = commentNiOpt,
         flag        = flagOpt,
-        itemIds     = itemIds,
         tags        = tags
       )
     }
     { ei =>
-      Some((ei.dynImgArgs, ei.commentNi, ei.flag, ei.itemIds, ei.tags))
+      Some((ei.dynImgArgs, ei.commentNi, ei.flag, ei.tags))
     }
   }
 
@@ -312,7 +310,6 @@ class SysMarketUtil extends MacroLogsDyn {
           dynImgArgs  = i.dynImgArgs,
           commentNi   = i.commentNi,
           flag        = i.flag,
-          itemIds     = i.itemIds,
           tags        = i.tags
         )
       }

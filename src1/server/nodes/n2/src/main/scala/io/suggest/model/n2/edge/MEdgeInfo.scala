@@ -2,7 +2,7 @@ package io.suggest.model.n2.edge
 
 import java.time.OffsetDateTime
 
-import io.suggest.common.empty.{EmptyProduct, IEmpty, IIsNonEmpty}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.geo.{GeoPoint, MGeoPoint}
 import io.suggest.geo.GeoPoint.Implicits._
@@ -41,7 +41,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     val COMMENT_NI_FN     = "coni"
     val FLAG_FN           = "flag"
     val GEO_SHAPES_FN     = "gss"
-    val ITEM_IDS_FN       = "bgid"
     val TAGS_FN           = "tags"
     val GEO_POINT_FN      = "gpt"
 
@@ -81,11 +80,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
     (__ \ DATE_NI_FN).formatNullable[OffsetDateTime] and
     (__ \ COMMENT_NI_FN).formatNullable[String] and
     (__ \ FLAG_FN).formatNullable[Boolean] and
-    (__ \ ITEM_IDS_FN).formatNullable[Set[Long]]
-      .inmap [Set[Long]] (
-        _.getOrElse( Set.empty ),
-        { bgs => if (bgs.nonEmpty) Some(bgs) else None }
-      ) and
     (__ \ TAGS_FN).formatNullable[Set[String]]
       .inmap [Set[String]] (
         _.getOrElse(Set.empty),
@@ -131,14 +125,6 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
         index           = true,
         include_in_all  = false
       ),
-      FieldNumber(
-        id              = ITEM_IDS_FN,
-        fieldType       = DocFieldTypes.long,
-        // Изначально было not_analyzed, но как-то не удалось придумать ни одной ситуации, когда оно пригодится.
-        // Ибо весь биллинг самодостаточен и живёт в postgresql, здесь просто подсказка для обратной связи с MItems.
-        index           = false,
-        include_in_all  = false
-      ),
       // 2016.mar.24 Теперь теги живут внутри эджей.
       FieldText(
         id              = TAGS_FN,
@@ -173,42 +159,29 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 }
 
 
-/** Интерфейс элементов модели. */
-trait IEdgeInfo extends IIsNonEmpty {
 
-  /** При указании на картинку бывает нужно указать исходный кроп или что-то ещё. */
-  def dynImgArgs   : Option[String]
-
-  /** Неиднексируемая дата. */
-  def dateNi       : Option[OffsetDateTime]
-
-  /** Неиндексируемый комментарий. */
-  def commentNi    : Option[String]
-
-  /** Индексируемое значение некоторого флага. */
-  def flag         : Option[Boolean]
-
-  /** Список геошейпов, которые связаны с данным эджем.
-    * Изначально было Seq, но из-за частой пошаговой пересборки этого лучше подходит List. */
-  def geoShapes    : List[MEdgeGeoShape]
-
-  /**
-   * item ids, напрямую связанные с данным эджем.
-   * НЕ надо сюда запихивать эджи, которые живут внутри карты гео-шейпов. Т.е. например размещения в гео-тегах.
-   * Теоретически например, некое размещение direct adv в несколько параллельных заходов на одном и том же узле.
-   * В норме здесь не более одного id.
-   * Поле не индексируется: нет смысла, всё уже проиндексировано в биллинге. И не возникалов нужды.
-   * Поле используется только как подсказка для самоконтроля или некий вспомогательный инструмент.
-   * НЕ надо переделывать в Option[Long] -- от этого ушли ещё в начале 2016.
-   */
-  def itemIds       : Set[Long]
-
-  /** Названия тегов, которые индексируются для полноценного поиска по тегам. */
-  def tags          : Set[String]
-
-  /** Некие опорные точки, если есть. */
-  def geoPoints     : Seq[MGeoPoint]
-
+/** Класс экземпляров модели MEdgeInfo.
+  *
+  * @param dynImgArgs При указании на картинку бывает нужно указать исходный кроп или что-то ещё.
+  * @param dateNi Неиднексируемая дата.
+  * @param commentNi Неиндексируемый комментарий.
+  * @param flag Индексируемое значение некоторого флага.
+  * @param tags Названия тегов, которые индексируются для полноценного поиска по тегам.
+  * @param geoShapes Список геошейпов, которые связаны с данным эджем.
+  * Изначально было Seq, но из-за частой пошаговой пересборки этого лучше подходит List.
+  * @param geoPoints Некие опорные геокоординаты, если есть.
+  */
+case class MEdgeInfo(
+  dynImgArgs   : Option[String]          = None,
+  dateNi       : Option[OffsetDateTime]  = None,
+  commentNi    : Option[String]          = None,
+  flag         : Option[Boolean]         = None,
+  tags         : Set[String]             = Set.empty,
+  geoShapes    : List[MEdgeGeoShape]     = Nil,
+  geoPoints    : Seq[MGeoPoint]          = Nil
+)
+  extends EmptyProduct
+{
 
   /** Форматирование для вывода в шаблонах. */
   override def toString: String = {
@@ -230,15 +203,6 @@ trait IEdgeInfo extends IIsNonEmpty {
       sb.append("commentNi=")
         .append(comment)
         .append(' ')
-    }
-
-    val _itemIds = itemIds
-    if (_itemIds.nonEmpty) {
-      sb.append("itemIds=")
-      for (bgid <- _itemIds) {
-        sb.append(bgid).append(',')
-      }
-      sb.append(' ')
     }
 
     val _tags = tags
@@ -267,25 +231,5 @@ trait IEdgeInfo extends IIsNonEmpty {
 
     sb.toString()
   }
-
-}
-
-
-/** Класс экземпляров модели [[IEdgeInfo]]. */
-case class MEdgeInfo(
-  override val dynImgArgs   : Option[String]          = None,
-  override val dateNi       : Option[OffsetDateTime]  = None,
-  override val commentNi    : Option[String]          = None,
-  override val flag         : Option[Boolean]         = None,
-  override val itemIds      : Set[Long]               = Set.empty,
-  override val tags         : Set[String]             = Set.empty,
-  override val geoShapes    : List[MEdgeGeoShape]     = Nil,
-  override val geoPoints    : Seq[MGeoPoint]          = Nil
-)
-  extends EmptyProduct
-  with IEdgeInfo
-{
-
-  override def toString = super.toString
 
 }
