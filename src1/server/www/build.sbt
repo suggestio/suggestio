@@ -139,6 +139,7 @@ routesImport ++= Seq(
   "io.suggest.es.model.MEsUuId",
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
+  "io.suggest.model.n2.ad.blk.BlockMeta",
 
   // 2017.mar.16: Поддержка RcvrKey в роутере.
   "io.suggest.adv.rcvr.RcvrKey",

@@ -21,9 +21,6 @@ package object blk {
 
   type FontSize    = FontSizes.FontSize
 
-  type BlockMeta   = io.suggest.model.n2.ad.blk.BlockMeta
-  val  BlockMeta   = io.suggest.model.n2.ad.blk.BlockMeta
-
 
   // Т.к. SzMult_t является примитивным типом, то модели у него своей нет, и утиль выброшена прямо сюда.
   def szMulted(origPx: Int, szMult: SzMult_t): Int = {

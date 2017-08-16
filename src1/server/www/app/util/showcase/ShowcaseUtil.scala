@@ -3,6 +3,7 @@ package util.showcase
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.fut.FutureUtil
+import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.sc.ScConstants
 import io.suggest.sc.tile.ColumnsCountT
 import models._
