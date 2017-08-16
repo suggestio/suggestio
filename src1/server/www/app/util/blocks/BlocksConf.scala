@@ -103,7 +103,7 @@ object BlocksConf
     nOpt.fold(DEFAULT)(applyOrDefault)
   }
   def applyOrDefault(mad: MNode): T = {
-    applyOrDefault( mad.ad.blockMeta.map(_.blockId) )
+    DEFAULT
   }
 
   // Начало значений
@@ -122,7 +122,7 @@ object BlocksConf
     override def ordering = 1000
     override def template = _block20Tpl
   }
-  val Block20 = new Val( io.suggest.model.n2.ad.blk.BlockMeta.BLOCK_ID ) with Block20t with EmptyKey {
+  val Block20 = new Val( 20 ) with Block20t with EmptyKey {
     override def mappingWithNewKey(newKey: String) = Block20Wrapper(key = newKey)
     override val strictMapping = super.strictMapping
   }

@@ -77,12 +77,7 @@ class N2NodesUtil {
 
   /** Определить BlockConf для карточки или иного узла. */
   def bc(mad: MNode): BlockConf = {
-    val blockIdOpt = {
-      mad.ad
-        .blockMeta
-        .map(_.blockId)
-    }
-    BlocksConf.applyOrDefault(blockIdOpt)
+    BlocksConf.DEFAULT
   }
 
   /**

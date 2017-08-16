@@ -1,6 +1,5 @@
 package io.suggest.model.n2.ad.blk
 
-import io.suggest.common.empty.EmptyUtil._
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -15,26 +14,14 @@ object BlockMeta extends IGenEsMappingProps {
   val WIDTH_ESFN    = "width"
   val WIDE_ESFN     = "wide"
 
-  /** Поле ширины долго жило в настройках блока, а когда пришло время переезжать, возникла проблема с дефолтовым значением. */
-  def WIDTH_DFLT = 300
 
-  /** id блока.
-    * В 2015г. редактор карточек поддерживал различные режимы для блоков.
-    * Эта архитектурная особенность в 2017г. является устаревшей и излишней,
-    * но от неё пока зависит много кода.
-    */
-  //@deprecated("Blocks are deprecated", "14.aug.2017")
-  def BLOCK_ID = 20
-
-  val DEFAULT = BlockMeta( height = 300, width = WIDTH_DFLT )
+  val DEFAULT = BlockMeta( height = 300, width = 300 )
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[BlockMeta] = (
     (__ \ HEIGHT_ESFN).format[Int] and
-    (__ \ WIDTH_ESFN).formatNullable[Int]
-      .inmap [Int] (_.getOrElse(WIDTH_DFLT), someF) and
-    (__ \ WIDE_ESFN).formatNullable[Boolean]
-      .inmap [Boolean] (_.getOrElse(false), someF)
+    (__ \ WIDTH_ESFN).format[Int] and
+    (__ \ WIDE_ESFN).format[Boolean]
   )(apply, unlift(unapply))
 
 
@@ -116,10 +103,3 @@ case class BlockMeta(
                       wide                 : Boolean = false
                     )
   extends ISize2di
-{
-
-  /** id блока согласно BlocksConf. */
-  // Запоздалый и окончательный уход от BlocksConf намекает, что поле осталось только для совместимости, не более.
-  def blockId = BlockMeta.BLOCK_ID
-
-}
