@@ -95,7 +95,6 @@ package object models {
 
   type MEdge                = n2.edge.MEdge
   val  MEdge                = n2.edge.MEdge
-  type IEdge                = n2.edge.IEdge
 
   type MPredicate           = n2.edge.MPredicate
   val  MPredicates          = n2.edge.MPredicates

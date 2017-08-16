@@ -1,11 +1,12 @@
 package util.img
 
-import javax.inject.{Singleton, Inject}
-import io.suggest.model.n2.edge.MPredicates
+import javax.inject.{Inject, Singleton}
+
+import io.suggest.model.n2.edge.{MEdge, MPredicates}
 import io.suggest.ym.model.common.MImgInfoMeta
 import models.im._
 import models.mctx.Context
-import models.{IEdge, MEdge, MNode}
+import models.{MEdge, MNode}
 import models.madn.EditConstants
 import play.api.Configuration
 import play.api.data.Forms._
@@ -42,7 +43,7 @@ class GalleryUtil @Inject() (
 
   def galleryKM = EditConstants.GALLERY_FN -> galleryM
 
-  def gallery2iiks(gallery: TraversableOnce[IEdge]): Iterator[MImgT] = {
+  def gallery2iiks(gallery: TraversableOnce[MEdge]): Iterator[MImgT] = {
     gallery
       .toIterator
       .map { medge =>
@@ -54,7 +55,7 @@ class GalleryUtil @Inject() (
       .map(_._1)
   }
 
-  def galEdge2img(edge: IEdge): MImgT = {
+  def galEdge2img(edge: MEdge): MImgT = {
     MImg3(edge)
   }
 

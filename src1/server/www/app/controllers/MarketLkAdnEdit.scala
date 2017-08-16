@@ -320,6 +320,7 @@ class MarketLkAdnEdit @Inject() (
   private def applyNodeChanges(mnode: MNode, meta2: MMeta, newLogoOpt: Option[MImgT], waFgEdgeOpt: Option[MEdge],
                                newImgGallery: Seq[MImgT]): MNode = {
     mnode.copy(
+      // Записать новые метаданные узла:
       meta = mnode.meta.copy(
         basic = mnode.meta.basic.copy(
           nameOpt     = meta2.basic.nameOpt,
@@ -342,6 +343,7 @@ class MarketLkAdnEdit @Inject() (
           siteUrl         = meta2.business.siteUrl
         )
       ),
+      // Обновить эджи, относящиеся к форме.
       edges = {
         import MPredicates._
         // Готовим начальный итератор эджей-результатов.

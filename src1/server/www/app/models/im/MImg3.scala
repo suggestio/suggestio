@@ -289,7 +289,7 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
   /** Экстракция указателя на картинку из эджа узла N2.
     * @throws java.util.NoSuchElementException когда id узла-картинки не задан.
     */
-  def apply(medge: IEdge): MImg3 = {
+  def apply(medge: MEdge): MImg3 = {
     val dops = {
       medge.info
         .dynImgArgs

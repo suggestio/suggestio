@@ -103,9 +103,9 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
     * Узнать следующий номер для order id.
     *
     * @param edges Эджи.
-    * @return Значение Order id, пригодное для сборки нового [[IEdge]].
+    * @return Значение Order id, пригодное для сборки нового [[MEdge]].
     */
-  def nextOrderId(edges: TraversableOnce[IEdge]): Int = {
+  def nextOrderId(edges: TraversableOnce[MEdge]): Int = {
     val iter = edges.toIterator.flatMap(_.order)
     if (iter.isEmpty) 0 else iter.max + 1
   }

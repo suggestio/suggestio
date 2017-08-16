@@ -1,6 +1,6 @@
 package util.sys
 
-import io.suggest.model.n2.edge.MEdgeInfo
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -299,7 +299,7 @@ class SysMarketUtil extends MacroLogsDyn {
 
 
   /** Накатить результат формы edgeFormM на существующий эдж. */
-  def updateEdge(mEdge0: MEdge, e: IEdge): MEdge = {
+  def updateEdge(mEdge0: MEdge, e: MEdge): MEdge = {
     mEdge0.copy(
       predicate = e.predicate,
       nodeIds   = e.nodeIds,

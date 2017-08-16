@@ -1,7 +1,9 @@
 package util.img
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.model.n2.edge.MEdge
 import io.suggest.sc.ScConstants
 import io.suggest.ym.model.common.MImgInfoMeta
 import models._
@@ -24,7 +26,7 @@ class LogoUtil @Inject() (
 ) {
 
   /** Приведение ребра графа к метаданным изображения логотипа. */
-  def edge2logoImg(medge: IEdge): MImgT = {
+  def edge2logoImg(medge: MEdge): MImgT = {
     MImg3(medge.nodeIds.head, Nil)
   }
 

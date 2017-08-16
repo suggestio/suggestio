@@ -1,6 +1,7 @@
 package models.msys
 
-import models.{IEdge, MNode}
+import io.suggest.model.n2.edge.MEdge
+import models.MNode
 import models.im.MImgT
 
 /**
@@ -41,4 +42,4 @@ case class MShowAdTplArgs(
 
 
 /** Контейнер для инфы по edge'у картинки карточки. */
-case class MImgEdge(edge: IEdge, img: MImgT)
+case class MImgEdge(edge: MEdge, img: MImgT)

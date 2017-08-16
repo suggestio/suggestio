@@ -112,22 +112,22 @@ object MEdge extends IGenEsMappingProps {
 }
 
 
-/** Интерфейс экземпляров эдж-модели. */
-trait IEdge {
 
-  /** Предикат. */
-  def predicate : MPredicate
-
-  /** id ноды на дальнем конце эджа, если есть. */
-  def nodeIds   : Set[String]
-
-  /** Для поддержкания порядка эджей можно использовать это опциональное поле.
-    * Можно также использовать для некоего внутреннего доп.идентификатора. */
-  def order     : Option[Int]
-
-  /** Какие-то доп.данные текущего ребра. */
-  def info      : MEdgeInfo
-
+/** Реализация node edge-модели.
+  *
+  * @param predicate Предикат, т.е. некоторый тип эджа.
+  * @param nodeIds id ноды на дальнем конце эджа, если есть.
+  * @param order Для поддержкания порядка эджей можно использовать это опциональное поле.
+  * Можно также использовать для некоего внутреннего доп.идентификатора.
+  * @param info Контейнер доп.данных текущего эджа.
+  */
+case class MEdge(
+                  predicate  : MPredicate,
+                  // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
+                  nodeIds    : Set[String]    = Set.empty,
+                  order      : Option[Int]    = None,
+                  info       : MEdgeInfo      = MEdgeInfo.empty
+                ) {
 
   override def toString: String = {
     val sb = new StringBuilder(64)
@@ -151,14 +151,3 @@ trait IEdge {
   }
 
 }
-
-
-/** Реализация node edge-модели. */
-case class MEdge(
-  override val predicate  : MPredicate,
-  // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
-  override val nodeIds    : Set[String]    = Set.empty,
-  override val order      : Option[Int]    = None,
-  override val info       : MEdgeInfo      = MEdgeInfo.empty
-)
-  extends IEdge
