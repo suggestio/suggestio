@@ -8,11 +8,12 @@
 
 @import io.suggest.common.maps.MapFormConstants._
 @import io.suggest.common.geom.coord.MCoords2di
+@import io.suggest.common.geom.d2.MSize2di
 
 @_markerImg(
   id  = IMG_ID_MARKER,
   baseName = "leaflet/marker-icon.png",
-  wh  = Some(Size2di(width = 25, height = 41)),
+  wh  = Some(MSize2di(width = 25, height = 41)),
   xy  = Some(MCoords2di(x = 13, y = 41))
 )
 
@@ -24,6 +25,6 @@
 @_markerImg(
   id  = IMG_ID_MARKER_SHADOW,
   baseName = "leaflet/marker-shadow.png",
-  wh  = Some(Size2di(41, 41)),
+  wh  = Some(MSize2di(41, 41)),
   xy  = Some(MCoords2di(x = 12, y = 41))
 )
