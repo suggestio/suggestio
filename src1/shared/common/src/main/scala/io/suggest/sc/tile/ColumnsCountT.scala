@@ -1,5 +1,6 @@
 package io.suggest.sc.tile
 
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.geom.d2.ISize2di
 
 /**
@@ -38,7 +39,7 @@ trait ColumnsCountT {
   protected def TILE_MIN_COLUMNS = 1
 
   /** Размер одной ячейки в плитке. */
-  protected def CELL_WIDTH_CSSPX = TileConstants.CELL_WIDTH_140_CSSPX
+  protected def CELL_WIDTH_CSSPX = BlockWidths.NARROW.value
 
   /**
    * Рассчитать целевое кол-во колонок в плитке. Считаем это по минимальному padding'у.

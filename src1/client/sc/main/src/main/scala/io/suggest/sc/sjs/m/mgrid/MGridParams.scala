@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.m.mgrid
 
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.sc.tile.ColumnsCountT
 import io.suggest.sc.tile.TileConstants._
@@ -22,7 +23,7 @@ object MGridParams {
 
 
 case class MGridParams(
-  cellSize      : Int = CELL_WIDTH_140_CSSPX,
+  cellSize      : Int = BlockWidths.NARROW.value,
   cellPadding   : Int = PADDING_CSSPX,
   topOffset     : Int = 70,
   bottomOffset  : Int = 20

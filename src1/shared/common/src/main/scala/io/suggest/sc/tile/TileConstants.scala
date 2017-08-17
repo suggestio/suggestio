@@ -8,10 +8,6 @@ package io.suggest.sc.tile
  */
 object TileConstants {
 
-  /** Узкий блок. */
-  @deprecated("Use BlockWidths.NARROW.value", "2017.aug.17")
-  final val CELL_WIDTH_140_CSSPX = 140
-
   def CELL140_COLUMNS_MAX = 8
   def CELL300_COLUMNS_MAX = 4
 

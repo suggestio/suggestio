@@ -5,6 +5,7 @@ import _root_.util.di.{IScNlUtil, IScUtil}
 import _root_.util.blocks.IBlkImgMakerDI
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.model.n2.node.IMNodes
 import io.suggest.primo.TypeT
 import io.suggest.sc.resp.MScRespActionTypes

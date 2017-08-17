@@ -1,5 +1,6 @@
 package models.blk
 
+import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.model.n2.ad.blk.BlockMeta
 import play.api.data.Mapping

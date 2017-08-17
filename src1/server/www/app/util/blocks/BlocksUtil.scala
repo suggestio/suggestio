@@ -2,11 +2,11 @@ package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt, ValueEnt}
-import models.blk._
 import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap}
 import models.mctx.Context
 import play.api.data._
 import Forms._
+import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.model.n2.ad.ent.MEntity
 import util.FormUtil._
 import models._

@@ -1,4 +1,4 @@
-package models.blk
+package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 
@@ -8,6 +8,7 @@ import enumeratum.values.{IntEnum, IntEnumEntry}
  * Created: 14.10.14 16:47
  * Description: Допустимые высоты блоков.
  */
+
 sealed abstract class BlockHeight(override val value: Int) extends IntEnumEntry {
 
   /** Относительный размер в условных "шагах". */

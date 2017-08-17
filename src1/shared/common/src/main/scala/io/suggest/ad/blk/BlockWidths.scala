@@ -1,4 +1,4 @@
-package models.blk
+package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 

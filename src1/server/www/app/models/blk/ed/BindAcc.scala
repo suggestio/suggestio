@@ -1,8 +1,8 @@
 package models.blk.ed
 
+import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.ad.ent.MEntity
-import models.blk._
 
 /**
  * Suggest.io
