@@ -1,6 +1,6 @@
 package io.suggest.model.n2.ad
 
-import io.suggest.ad.blk.ent.MEntity
+import io.suggest.ad.blk.ent.{MEntity, MEntityJvm}
 import io.suggest.ad.blk.{BlockMeta, BlockMetaJvm}
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
@@ -46,7 +46,7 @@ object MNodeAd extends IGenEsMappingProps with IEmpty {
       FieldNestedObject(
         id          = Fields.Entities.ENTITIES_FN,
         enabled     = true,
-        properties  = MEntity.generateMappingProps
+        properties  = MEntityJvm.generateMappingProps
       ),
       FieldObject(
         id          = Fields.RDescr.RDESCR_FN,

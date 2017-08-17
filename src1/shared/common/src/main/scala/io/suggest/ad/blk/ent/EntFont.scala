@@ -31,7 +31,6 @@ object EntFont {
 }
 
 
-
 /**
  * Описание шрифтоты.
  * @param color Цвет шрифта.

@@ -2,8 +2,6 @@ package io.suggest.ad.blk.ent
 
 import io.suggest.common.empty.IIsNonEmpty
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -17,7 +15,7 @@ import play.api.libs.json._
  * AOBlock (из в прошлой архитектуры) упразднён, т.е. AdOfferT напряму видит TextEnt (бывш.AOStringField).
  * AOBlock.href переносится в meta.business.siteUrl, т.к. по факту он жил отдельно от AOBlock.
  */
-object MEntity extends IGenEsMappingProps {
+object MEntity {
 
   object Fields {
 
@@ -33,15 +31,6 @@ object MEntity extends IGenEsMappingProps {
       val TEXT_FN = "t"
 
     }
-  }
-
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldNumber( Fields.ID_FN, index = false, include_in_all = false, fieldType = DocFieldTypes.integer),
-      FieldObject( Fields.Text.TEXT_FN, enabled = true, properties = TextEntJvm.generateMappingProps),
-      FieldObject( Fields.COORDS_ESFN, enabled = false, properties = Nil)
-    )
   }
 
 
