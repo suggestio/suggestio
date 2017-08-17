@@ -139,7 +139,6 @@ routesImport ++= Seq(
   "io.suggest.es.model.MEsUuId",
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
-  "io.suggest.model.n2.ad.blk.BlockMeta",
 
   // 2017.mar.16: Поддержка RcvrKey в роутере.
   "io.suggest.adv.rcvr.RcvrKey",
@@ -154,7 +153,10 @@ routesImport ++= Seq(
   // 2017.jul.14: Распиливание моделей выдачи и деланье их кросс-платформенными:
   "io.suggest.ble.MBeaconDataJvm._",
   "io.suggest.geo.MGeoLocJvm._",
-  "io.suggest.geo.MLocEnvJvm._"
+  "io.suggest.geo.MLocEnvJvm._",
+
+  // 2017.aug.17: Распиливания BlockMeta для выноса основной её части в [common].
+  "io.suggest.ad.blk.BlockMetaJvm._"
 )
 
 

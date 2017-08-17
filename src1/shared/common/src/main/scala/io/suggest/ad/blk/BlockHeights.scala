@@ -1,6 +1,8 @@
 package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import play.api.libs.json.Format
 
 /**
  * Suggest.io
@@ -9,6 +11,17 @@ import enumeratum.values.{IntEnum, IntEnumEntry}
  * Description: Допустимые высоты блоков.
  */
 
+object BlockHeight {
+
+  /** Поддержка play-json. */
+  implicit val BLOCK_HEIGHT_FORMAT: Format[BlockHeight] = {
+    EnumeratumUtil.valueEnumEntryFormat( BlockHeights )
+  }
+
+}
+
+
+/** Класс одного элемента модели. */
 sealed abstract class BlockHeight(override val value: Int) extends IntEnumEntry {
 
   /** Относительный размер в условных "шагах". */

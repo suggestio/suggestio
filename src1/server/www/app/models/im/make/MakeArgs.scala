@@ -1,6 +1,6 @@
 package models.im.make
 
-import io.suggest.model.n2.ad.blk.BlockMeta
+import io.suggest.ad.blk.BlockMeta
 import models.blk.SzMult_t
 import models.im.{CompressMode, DevScreen, MImgT}
 

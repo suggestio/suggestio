@@ -1,9 +1,12 @@
 package io.suggest.enum2
 
+import enumeratum.{EnumEntry, Enum}
 import enumeratum.values.{IntEnum, IntEnumEntry, ValueEnum, ValueEnumEntry}
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.data.Forms._
+import play.api.mvc.QueryStringBindable
 
 /**
   * Suggest.io
@@ -52,6 +55,63 @@ object EnumeratumJvmUtil {
       },
       fallback = fallbackF
     )
+  }
+
+
+  /** Сборка QueryStringBindable для моделей enumeratum ValueEnum.
+    *
+    * @param m Модель со всеми инстансами.
+    *          Ленивое, потому что не факт, что она потребуется.
+    * @param vQsb QSB-биндер для типа ключа.
+    * @tparam V Тип ключа.
+    * @tparam VEE Тип одного значения enum-модели.
+    * @return QSB для элементов модели.
+    */
+  def valueEnumQsb[V, VEE <: ValueEnumEntry[V]](m: => ValueEnum[V, VEE])
+                                               (implicit vQsb: QueryStringBindable[V]): QueryStringBindable[VEE] = {
+    _anyEnumQsb[V, VEE](m.withValueOpt, _.value)
+  }
+
+  /** Сборка QueryStringBindable для моделей enumeratum Enum.
+    *
+    * @param m Enum-модель со строковыми ключами.
+    *          Ленивое, потому что не факт, что она потребуется.
+    * @param strQsb QSB для строк.
+    * @tparam EE Тип элемента enum-модели.
+    * @return QSB[EE].
+    */
+  def enumQsb[EE <: EnumEntry](m: => Enum[EE])
+                              (implicit strQsb: QueryStringBindable[String]): QueryStringBindable[EE] = {
+    _anyEnumQsb[String, EE](m.withNameOption, _.entryName)
+  }
+
+
+  /** Сборка QSB для произвольных enum-подобных моделей.
+    *
+    * @param withValueOpt Функция поиска значения в enum-модели.
+    * @param vee2v Получение ключа из элемента enum-модели.
+    * @param vQsb QSB-биндер для ключей элементов модели.
+    * @tparam V Тип ключей модели.
+    * @tparam VEE Тип элементов модели.
+    * @return QSB для элементов enum-модели.
+    */
+  private def _anyEnumQsb[V, VEE](withValueOpt: V => Option[VEE], vee2v: VEE => V)
+                                 (implicit vQsb: QueryStringBindable[V]): QueryStringBindable[VEE] = {
+    new QueryStringBindableImpl[VEE] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, VEE]] = {
+        for {
+          vEith <- vQsb.bind(key, params)
+        } yield {
+          vEith.right.flatMap { v =>
+            withValueOpt(v).toRight("e.invalid")
+          }
+        }
+      }
+
+      override def unbind(key: String, value: VEE): String = {
+        vQsb.unbind(key, vee2v(value))
+      }
+    }
   }
 
 }

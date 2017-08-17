@@ -1,5 +1,6 @@
 package io.suggest.model.n2.ad.blk
 
+import io.suggest.ad.blk.BlockMeta
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 

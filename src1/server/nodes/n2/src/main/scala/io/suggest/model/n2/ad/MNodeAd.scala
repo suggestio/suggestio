@@ -1,8 +1,8 @@
 package io.suggest.model.n2.ad
 
+import io.suggest.ad.blk.{BlockMeta, BlockMetaJvm}
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.ad.ent.MEntity
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.es.util.SioEsUtil.{DocField, FieldNestedObject, FieldObject}
@@ -56,7 +56,7 @@ object MNodeAd extends IGenEsMappingProps with IEmpty {
       FieldObject(
         id          = Fields.BlockMeta.BLOCK_META_FN,
         enabled     = true,
-        properties  = BlockMeta.generateMappingProps
+        properties  = BlockMetaJvm.generateMappingProps
       )
     )
   }

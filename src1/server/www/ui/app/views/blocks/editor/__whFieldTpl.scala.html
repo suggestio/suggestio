@@ -1,4 +1,4 @@
-@(bf: util.blocks.IntBlockSizeBf, bfNameBase: String, af: Form[_], bc: BlockConf, inputId: String, name: String, i18nCode: String)(implicit ctx: Context)
+@(bf: util.blocks.IntValueEnumBlockSizeBf, bfNameBase: String, af: Form[_], bc: BlockConf, inputId: String, name: String, i18nCode: String)(implicit ctx: Context)
 
 @* Шаблон для width и height-полей. *@
 
@@ -15,7 +15,7 @@
     <input type="hidden" name="@formField.name" id="@inputId"
            value="@formField.value.orElse(bf.defaultValue)"
            @* data-min-аттрибуты не нужны новому js. Можно удалить после выпиливания adForm из mx_cof.js.  *@
-           data-min-value="@bf.availableVals.min" data-max-value="@bf.availableVals.max"/>
+           data-min-value="@bf.availableValsMin.value" data-max-value="@bf.availableValsMax.value"/>
   }
 
 </div>

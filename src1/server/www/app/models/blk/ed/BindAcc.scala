@@ -1,7 +1,6 @@
 package models.blk.ed
 
-import io.suggest.ad.blk.{BlockHeights, BlockWidths}
-import io.suggest.model.n2.ad.blk.BlockMeta
+import io.suggest.ad.blk._
 import io.suggest.model.n2.ad.ent.MEntity
 
 /**
@@ -14,8 +13,8 @@ import io.suggest.model.n2.ad.ent.MEntity
 
 case class BindAcc(
                     offers  : List[MEntity]         = Nil,
-                    height  : Int                   = BlockHeights.default.value,
-                    width   : Int                   = BlockWidths.default.value,
+                    height  : BlockHeight           = BlockHeights.default,
+                    width   : BlockWidth            = BlockWidths.default,
                     isWide  : Boolean               = false,
                     href    : Option[String]        = None,
                     bim     : List[BlockImgEntry]   = Nil
@@ -27,7 +26,7 @@ case class BindAcc(
    * @return Неизменяемый экземпляр BlockMeta.
    */
   def toBlockMeta(blockId: Int): BlockMeta = {
-    BlockMeta(height = height, width = width, wide = isWide)
+    BlockMeta(h = height, w = width, wide = isWide)
   }
 
   def toBindResult(blockId: Int): BindResult = {

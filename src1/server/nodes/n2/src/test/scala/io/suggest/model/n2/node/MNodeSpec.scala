@@ -1,9 +1,9 @@
 package io.suggest.model.n2.node
 
+import io.suggest.ad.blk.BlockMeta
 import io.suggest.geo.{CircleGs, MGeoPoint}
 import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
 import io.suggest.model.n2.geo.MNodeGeo

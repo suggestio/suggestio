@@ -2,6 +2,7 @@ package io.suggest.enum2
 
 import enumeratum._
 import enumeratum.values.{ValueEnum, ValueEnumEntry}
+import io.suggest.common.empty.EmptyUtil
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Writes, _}
 
@@ -23,11 +24,25 @@ object EnumeratumUtil {
     * @return JSON Reads.
     */
   def enumEntryReads[T <: EnumEntry](model: Enum[T]): Reads[T] = {
-    implicitly[Reads[String]]
-      .map( model.withNameOption )
-      .filter( JsonValidationError("error.unknown.name") )(_.nonEmpty)
-      .map(_.get)
+    _optReads2reads {
+      implicitly[Reads[String]]
+        .map(model.withNameOption)
+    }
   }
+
+  def valueEnumEntryReads[V, VEE <: ValueEnumEntry[V]](model: ValueEnum[V, VEE])(implicit rawReads: Reads[V]): Reads[VEE] = {
+    _optReads2reads {
+      rawReads
+        .map( model.withValueOpt )
+    }
+  }
+
+  private def _optReads2reads[T](rOpt: Reads[Option[T]]): Reads[T] = {
+    rOpt
+      .filter( JsonValidationError("error.unknown.id") )(_.nonEmpty)
+      .map( EmptyUtil.getF )
+  }
+
 
 
   /** Поддержка JSON-сериализации в строку.
@@ -40,6 +55,11 @@ object EnumeratumUtil {
       .contramap(_.toString)
   }
 
+  implicit def valueEnumEntryWrites[T, VEE <: ValueEnumEntry[T]](implicit writes: Writes[T]): Writes[VEE] = {
+    writes
+      .contramap( valueF )
+  }
+
 
   /** JSON Format на базе Reads и Writes.
     *
@@ -50,6 +70,9 @@ object EnumeratumUtil {
   def enumEntryFormat[T <: EnumEntry](model: Enum[T]): Format[T] = {
     Format(enumEntryReads(model), enumEntryWrites)
   }
+  def valueEnumEntryFormat[V, VEE <: ValueEnumEntry[V]](model: ValueEnum[V, VEE])(implicit format: Format[V]): Format[VEE] = {
+    Format(valueEnumEntryReads(model), valueEnumEntryWrites)
+  }
 
 
   /** Просто функция для доступа к value-ключу. */
@@ -57,16 +80,20 @@ object EnumeratumUtil {
     _.value
   }
 
+  /** Просто функция для доступа к value-ключу. */
+  def entryNameF: EnumEntry => String = {
+    _.entryName
+  }
 
   /** При рендере html-шаблонов в play с помощью @select() бывает удобно сериализовать модель в список option'ов. */
   def toSelectOptions[EE <: EnumEntry](m: Enum[EE]): Seq[(String, String)] = {
     toSelectOptions(
-      m.values.iterator.map(_.entryName)
+      m.values.iterator.map( entryNameF )
     )
   }
   def toSelectOptions[V, VEE <: ValueEnumEntry[V]](m: ValueEnum[V, VEE]): Seq[(String, String)] = {
     toSelectOptions(
-      m.values.map(_.value)
+      m.values.map( valueF )
     )
   }
   def toSelectOptions[T](items: TraversableOnce[T]): Seq[(String, String)] = {

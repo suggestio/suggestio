@@ -1,6 +1,7 @@
 package io.suggest.model.n2.ad
 
-import io.suggest.model.n2.ad.blk.BlockMeta
+import io.suggest.ad.blk.BlockMeta
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.ad.ent.MEntity
 import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt}
 import io.suggest.model.n2.ad.rd.RichDescr
@@ -27,11 +28,13 @@ class MNodeAdSpec extends FlatSpec with PlayJsonTestUtil {
         entities = {
           val e1 = MEntity(
             id = 1,
-            text = Some(TextEnt("asdasd", EntFont("FFFFFF")))
+            text = Some(TextEnt("asdasd", EntFont("FFFFFF"))),
+            coords = Some( MCoords2di(11, -10) )
           )
           val e3 = MEntity(
             id = 3,
-            text = Some(TextEnt("yyh rthgrt", EntFont("AAFF44")))
+            text = Some(TextEnt("yyh rthgrt", EntFont("AAFF44"))),
+            coords = Some( MCoords2di(222, 333) )
           )
           MNodeAd.toEntMap(e1, e3)
         },

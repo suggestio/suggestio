@@ -6,7 +6,8 @@ import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap}
 import models.mctx.Context
 import play.api.data._
 import Forms._
-import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import enumeratum.values.ValueEnumEntry
+import io.suggest.ad.blk._
 import io.suggest.model.n2.ad.ent.MEntity
 import util.FormUtil._
 import models._
@@ -65,13 +66,13 @@ object BlocksEditorFields extends EnumValue2Val {
 
   /** Скрытое поле для указания высоты блока. */
   val Height = new Val("height") {
-    override type VT = Int
+    override type VT = BlockHeight
     override type BFT = BfHeight
     override def fieldTemplate = _heightTpl
   }
 
   val Width = new Val("width") {
-    override type VT = Int
+    override type VT = BlockWidth
     override type BFT = BfWidth
     override def fieldTemplate = _widthTpl
   }
@@ -161,35 +162,40 @@ trait BlockAOValueFieldT extends BlockFieldT {
 
 
 /** Хелпер для полей ширины и высоты. */
-sealed trait IntBlockSizeBf extends BlockFieldT {
-  override type T = Int
+sealed trait IntValueEnumBlockSizeBf extends BlockFieldT {
+  override type T <: ValueEnumEntry[Int]
   override def offerNopt: Option[Int] = None
-  def availableVals: Set[Int]
 
-  override def mappingBase: Mapping[Int] = {
-    number
-      .verifying("error.invalid", availableVals.contains(_))
-  }
+  def availableVals: Seq[T]
+  def availableValsMin = availableVals.head
+  def availableValsMax = availableVals.last
+
 }
 
 // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
 object BfHeight {
-  def HEIGHT_DFLT = BlockHeights.default.value
-  val SOME_HEIGHT_DFLT = Some(BlockHeights.default.value)
-  val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values.map(_.value)
+  def HEIGHT_DFLT = BlockHeights.default
+  val SOME_HEIGHT_DFLT = Some(BlockHeights.default)
+  //val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values
 }
 
 
 /** Поле для какой-то цифры. */
 case class BfHeight(
   override val name             : String,
-  override val defaultValue     : Option[Int]  = BfHeight.SOME_HEIGHT_DFLT,
-  override val availableVals    : Set[Int]     = BfHeight.HEIGHTS_AVAILABLE_DFLT.toSet
+  override val defaultValue     : Option[BlockHeight]  = BfHeight.SOME_HEIGHT_DFLT
 )
-  extends IntBlockSizeBf
+  extends IntValueEnumBlockSizeBf
 {
+
+  override type T = BlockHeight
+  override def availableVals = BlockHeights.values
+
   override def field = BlocksEditorFields.Height
-  override def fallbackValue: T = BlockHeights.H140.value
+  override def fallbackValue: T = availableValsMin
+
+  override def mappingBase = BlockMetaJvm.blockHeightMapping
+  override def offerNopt = None
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
@@ -198,19 +204,23 @@ case class BfHeight(
 
 
 object BfWidth {
-  val WIDTH_DFLT = Some( BlockWidths.default.value )
-  val WIDTHS_AVAILABLE_DFLT = BlockWidths.values.map(_.value)
+  val WIDTH_DFLT = Some( BlockWidths.default )
 }
 case class BfWidth(
-  name          : String,
-  defaultValue  : Option[Int] = BfWidth.WIDTH_DFLT,
-  availableVals : Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT.toSet
-) extends IntBlockSizeBf {
+  override val name          : String,
+  override val defaultValue  : Option[BlockWidth] = BfWidth.WIDTH_DFLT
+) extends IntValueEnumBlockSizeBf {
+
+  override type T = BlockWidth
+
+  override def mappingBase = BlockMetaJvm.blockWidthMapping
+  override def offerNopt = None
+  override def availableVals = BlockWidths.values
   override def field = BlocksEditorFields.Width
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
-  override def fallbackValue = BlockWidths.default.value
+  override def fallbackValue = BlockWidths.default
 }
 
 
@@ -420,7 +430,7 @@ trait MergeBindAcc[T] {
                    offerN: Int = 0): Either[Seq[FormError], BindAcc] = {
     (maybeAcc, maybeV) match {
       case (Right(acc0), Right(v)) =>
-        val acc1 = updateAcc(offerN, acc0, v)
+        val acc1= updateAcc(offerN, acc0, v)
         Right(acc1)
 
       case (Left(_), Right(_)) =>

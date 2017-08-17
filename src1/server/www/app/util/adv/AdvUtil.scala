@@ -3,12 +3,11 @@ package util.adv
 import java.time.{DayOfWeek, LocalDate}
 import javax.inject.Inject
 
-import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.{MYmd, YmdHelpersJvm}
-import io.suggest.model.n2.ad.blk.BlockMeta
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
 import models.MNode

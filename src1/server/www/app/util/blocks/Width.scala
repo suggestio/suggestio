@@ -1,6 +1,7 @@
 package util.blocks
 
-import models.blk.ed.{AdFormM, BindResult, BindAcc}
+import io.suggest.ad.blk.BlockWidth
+import models.blk.ed.{AdFormM, BindAcc, BindResult}
 import play.api.data.FormError
 import play.api.data.Mapping
 
@@ -10,13 +11,13 @@ import play.api.data.Mapping
  * Created: 14.10.14 16:34
  * Description:
  */
-object Width extends MergeBindAcc[Int] {
+object Width extends MergeBindAcc[BlockWidth] {
 
   val BF_WIDTH_NAME_DFLT = "width"
   val BF_WIDTH_DFLT = BfWidth(BF_WIDTH_NAME_DFLT)
 
   /** Как-то обновить акк. */
-  override def updateAcc(offerN: Int, acc0: BindAcc, v: Int): BindAcc = {
+  override def updateAcc(offerN: Int, acc0: BindAcc, v: BlockWidth): BindAcc = {
     if (acc0.width != v) {
       acc0.copy(
         width = v
@@ -59,13 +60,13 @@ trait Width extends ValT with WidthI {
   }
 
   abstract override def unbind(value: BindResult): Map[String, String] = {
-    val v = m.unbind( value.blockMeta.width )
+    val v = m.unbind( value.blockMeta.w )
     super.unbind(value) ++ v
   }
 
   abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.blockMeta.width
+    val c = value.blockMeta.w
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }

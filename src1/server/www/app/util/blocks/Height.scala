@@ -1,7 +1,8 @@
 package util.blocks
 
-import models.blk.ed.{AdFormM, BindResult, BindAcc}
-import play.api.data.{Mapping, FormError}
+import io.suggest.ad.blk.BlockHeight
+import models.blk.ed.{AdFormM, BindAcc, BindResult}
+import play.api.data.{FormError, Mapping}
 
 /**
  * Suggest.io
@@ -13,11 +14,11 @@ import play.api.data.{Mapping, FormError}
  * Высоты не рендерится в одном из блоков, но всегда доступно для маппинга.
  */
 
-object Height extends MergeBindAcc[Int] {
+object Height extends MergeBindAcc[BlockHeight] {
   val BF_HEIGHT_NAME_DFLT = "height"
   val BF_HEIGHT_DFLT = BfHeight(BF_HEIGHT_NAME_DFLT)
 
-  def updateAcc(offerN: Int, acc0: BindAcc, height: Int): BindAcc = {
+  def updateAcc(offerN: Int, acc0: BindAcc, height: BlockHeight): BindAcc = {
     if (acc0.height != height) {
       acc0.copy(
         height = height
@@ -59,13 +60,13 @@ trait Height extends ValT with HeightI {
   }
 
   abstract override def unbind(value: BindResult): Map[String, String] = {
-    val v = m.unbind( value.blockMeta.height )
+    val v = m.unbind( value.blockMeta.h )
     super.unbind(value) ++ v
   }
 
   abstract override def unbindAndValidate(value: BindResult): (Map[String, String], Seq[FormError]) = {
     val (ms, fes) = super.unbindAndValidate(value)
-    val c = value.blockMeta.height
+    val c = value.blockMeta.h
     val (cms, cfes) = m.unbindAndValidate(c)
     (ms ++ cms) -> (fes ++ cfes)
   }

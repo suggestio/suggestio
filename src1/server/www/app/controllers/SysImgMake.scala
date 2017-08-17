@@ -2,10 +2,8 @@ package controllers
 
 import javax.inject.Inject
 
-import io.suggest.ad.blk.{BlockHeights, BlockWidths}
-import io.suggest.model.n2.ad.blk.BlockMeta
+import io.suggest.ad.blk.{BlockMeta, BlockMetaJvm}
 import io.suggest.util.logs.IMacroLogs
-import models.blk.BlockMetaUtil
 import models.im.{CompressModes, DevScreen, MImgT}
 import models.im.make.{IMakeArgs, MakeArgs, Makers, SysForm_t}
 import models.mctx.Context
@@ -23,16 +21,14 @@ import scala.concurrent.Future
  * Created: 21.04.15 22:50
  * Description: Аддон для SysImg-контроллера, добавляющий экшены для отладки make-движков.
  */
-class SysImgMakeUtil @Inject() (
-                                 blockMetaUtil       : BlockMetaUtil
-                               ) {
+class SysImgMakeUtil @Inject() () {
 
   import play.api.data.Forms._
 
   /** Маппинг для [[models.im.make.IMakeArgs]] под нужды этого контроллера. */
   def makeArgsM(img: MImgT): Mapping[IMakeArgs] = {
     mapping(
-      "blockMeta" -> blockMetaUtil.imapping,
+      "blockMeta" -> BlockMetaJvm.formMapping,
       "szMult"    -> FormUtil.szMultM,
       "devScreen" -> optional(DevScreen.mappingFat),
       "compress"  -> CompressModes.mappingOpt
@@ -79,12 +75,8 @@ trait SysImgMake
         Makers.StrictWide,
         MakeArgs(
           img = img,
-          blockMeta = bmDflt getOrElse {
-            BlockMeta(
-              height  = BlockHeights.default.value,
-              width   = BlockWidths.default.value,
-              wide    = true
-            )
+          blockMeta = bmDflt.getOrElse {
+            BlockMeta.DEFAULT.withWide(true)
           },
           szMult = 1.0F,
           devScreenOpt = ctx.deviceScreenOpt

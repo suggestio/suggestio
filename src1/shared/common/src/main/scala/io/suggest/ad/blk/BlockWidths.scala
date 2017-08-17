@@ -1,6 +1,8 @@
 package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
+import io.suggest.enum2.EnumeratumUtil
+import play.api.libs.json.Format
 
 /**
  * Suggest.io
@@ -8,6 +10,17 @@ import enumeratum.values.{IntEnum, IntEnumEntry}
  * Created: 14.10.14 16:45
  * Description: Модель допустимых ширин блоков.
  */
+object BlockWidth {
+
+  /** Поддержка play-json. */
+  implicit val BLOCK_WIDTH_FORMAT: Format[BlockWidth] = {
+    EnumeratumUtil.valueEnumEntryFormat( BlockWidths )
+  }
+
+}
+
+
+/** Класс одного элемента модели. */
 sealed abstract class BlockWidth(override val value: Int) extends IntEnumEntry {
 
   /** Нормированный размер в единицах размера. Для ширины по сути - 1 или 2. */
