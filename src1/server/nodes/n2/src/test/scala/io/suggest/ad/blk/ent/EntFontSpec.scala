@@ -1,4 +1,4 @@
-package io.suggest.model.n2.ad.ent.text
+package io.suggest.ad.blk.ent
 
 import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.text.MTextAligns

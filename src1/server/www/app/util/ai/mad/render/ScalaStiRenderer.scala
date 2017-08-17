@@ -2,8 +2,8 @@ package util.ai.mad.render
 
 import javax.inject.Inject
 
+import io.suggest.ad.blk.ent.TextEnt
 import io.suggest.model.n2.ad.EntMap_t
-import io.suggest.model.n2.ad.ent.text.TextEnt
 import models.ai.ContentHandlerResult
 import models.MNode
 import org.clapper.scalasti.ST

@@ -4,12 +4,11 @@ import java.time.OffsetDateTime
 import javax.inject.{Inject, Singleton}
 
 import com.google.inject.name.Named
+import io.suggest.ad.blk.ent.{EntFont, MEntity, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.ad.ent.MEntity
-import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt}
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.common.MNodeCommon

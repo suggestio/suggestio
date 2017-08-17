@@ -3,11 +3,11 @@ package util.ad
 import javax.inject.Singleton
 
 import io.suggest.ad.blk.BlockMeta
+import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}

@@ -1,9 +1,9 @@
 package io.suggest.model.n2.ad
 
+import io.suggest.ad.blk.ent.MEntity
 import io.suggest.ad.blk.{BlockMeta, BlockMetaJvm}
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.n2.ad.ent.MEntity
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.es.util.SioEsUtil.{DocField, FieldNestedObject, FieldObject}
 import play.api.libs.json._

@@ -1,14 +1,13 @@
 package util.blocks
 
 import io.suggest.common.menum.EnumValue2Val
-import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt, ValueEnt}
 import models.blk.ed.{BimKey_t, BindAcc, BlockImgMap}
 import models.mctx.Context
 import play.api.data._
 import Forms._
 import enumeratum.values.ValueEnumEntry
 import io.suggest.ad.blk._
-import io.suggest.model.n2.ad.ent.MEntity
+import io.suggest.ad.blk.ent.{EntFont, MEntity, TextEnt, ValueEnt}
 import util.FormUtil._
 import models._
 import views.html.blocks.editor._

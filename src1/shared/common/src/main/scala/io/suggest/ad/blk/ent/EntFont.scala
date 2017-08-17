@@ -1,4 +1,4 @@
-package io.suggest.model.n2.ad.ent.text
+package io.suggest.ad.blk.ent
 
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.text.MTextAlign

@@ -1,7 +1,7 @@
 package models.blk.ed
 
 import io.suggest.ad.blk.BlockMeta
-import io.suggest.model.n2.ad.ent.MEntity
+import io.suggest.ad.blk.ent.MEntity
 import models.BfImage
 
 /**

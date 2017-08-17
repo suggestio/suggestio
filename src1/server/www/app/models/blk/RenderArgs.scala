@@ -1,8 +1,8 @@
 package models.blk
 
+import io.suggest.ad.blk.ent.MEntity
 import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.model.n2.ad.ent.MEntity
 import models._
 import models.im.make.{IMakeResult, MakeResult}
 import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}

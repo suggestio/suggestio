@@ -1,8 +1,7 @@
 package util.blocks
 
+import io.suggest.ad.blk.ent.{MEntity, TextEnt, ValueEnt}
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.model.n2.ad.ent.MEntity
-import io.suggest.model.n2.ad.ent.text.{TextEnt, ValueEnt}
 import models.blk.ed.{AdFormM, BindAcc, BindResult}
 import play.api.data.Forms._
 import play.api.data._

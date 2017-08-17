@@ -1,7 +1,4 @@
-package io.suggest.model.n2.ad.ent.text
-
-import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil.{DocField, FieldObject}
+package io.suggest.ad.blk.ent
 
 /**
  * Suggest.io
@@ -14,16 +11,10 @@ import io.suggest.es.util.SioEsUtil.{DocField, FieldObject}
  * от float-полей (Price, Discount).
  */
 
-object ValueEnt extends IGenEsMappingProps {
+object ValueEnt {
 
   val FONT_ESFN         = "font"
   val VALUE_ESFN        = "value"
-
-  override def generateMappingProps: List[DocField] = {
-    List(
-      FieldObject(FONT_ESFN, enabled = false, properties = Nil)
-    )
-  }
 
 }
 

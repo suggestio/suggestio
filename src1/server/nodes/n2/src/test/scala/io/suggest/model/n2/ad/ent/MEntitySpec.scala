@@ -1,7 +1,7 @@
 package io.suggest.model.n2.ad.ent
 
+import io.suggest.ad.blk.ent.{EntFont, MEntity, TextEnt}
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.model.n2.ad.ent.text.{EntFont, TextEnt}
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 

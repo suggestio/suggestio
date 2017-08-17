@@ -1,12 +1,11 @@
-package io.suggest.model.n2.ad.ent
+package io.suggest.ad.blk.ent
 
 import io.suggest.common.empty.IIsNonEmpty
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.model.n2.ad.ent.text.TextEnt
 import io.suggest.es.util.SioEsUtil._
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
  * Suggest.io
@@ -40,7 +39,7 @@ object MEntity extends IGenEsMappingProps {
   override def generateMappingProps: List[DocField] = {
     List(
       FieldNumber( Fields.ID_FN, index = false, include_in_all = false, fieldType = DocFieldTypes.integer),
-      FieldObject( Fields.Text.TEXT_FN, enabled = true, properties = TextEnt.generateMappingProps),
+      FieldObject( Fields.Text.TEXT_FN, enabled = true, properties = TextEntJvm.generateMappingProps),
       FieldObject( Fields.COORDS_ESFN, enabled = false, properties = Nil)
     )
   }
