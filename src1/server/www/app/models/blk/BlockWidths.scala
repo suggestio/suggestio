@@ -1,8 +1,6 @@
 package models.blk
 
-import io.suggest.common.menum.{EnumMaybeWithId, EnumValue2Val}
-import io.suggest.sc.tile.TileConstants
-import util.FormUtil.IdEnumFormMappings
+import enumeratum.values.{IntEnum, IntEnumEntry}
 
 /**
  * Suggest.io
@@ -10,57 +8,40 @@ import util.FormUtil.IdEnumFormMappings
  * Created: 14.10.14 16:45
  * Description: Модель допустимых ширин блоков.
  */
-object BlockWidths extends Enumeration with EnumValue2Val with EnumMaybeWithId with IdEnumFormMappings {
+sealed abstract class BlockWidth(override val value: Int) extends IntEnumEntry {
 
-  /**
-   * Экземпляр этой модели.
-   * @param widthPx Ширина в пикселях.
-   */
-  sealed protected[this] abstract class Val(val widthPx: Int)
-    extends super.Val(widthPx)
-    with IntParam
-    with RelSz
-  {
-    /** Нормированный размер в единицах размера. Для ширины по сути - 1 или 2. */
-    def relSz: Int
-    /** Узкий размер? */
-    def isNarrow: Boolean
-    override def intValue = widthPx
-    override def toString(): String = s"[$widthPx]"
+  /** Нормированный размер в единицах размера. Для ширины по сути - 1 или 2. */
+  def relSz: Int
+
+  /** Узкий размер? */
+  def isNarrow: Boolean
+
+  override final def toString = {
+    s"[$value]"
   }
 
-  override type T = Val
+}
+
+
+/** Модель допустимых ширин блока. */
+object BlockWidths extends IntEnum[BlockWidth] {
 
   /** Самый узкий блок. */
-  val NARROW: T = new Val(TileConstants.CELL_WIDTH_140_CSSPX) {
+  case object NARROW extends BlockWidth( 140 ) {
     override def relSz = 1
     override def isNarrow = true
   }
 
   /** Обычная ширина блока. */
-  val NORMAL: T = new Val(TileConstants.CELL_WIDTH_300_CSSPX) {
+  case object NORMAL extends BlockWidth( 300 ) {
     override def relSz = 2
     override def isNarrow = false
   }
 
+  override val values = findValues
 
-  def default = NORMAL
-  def max = NORMAL
-  def min = NARROW
-
-  def maybeWithWidth(width: Int): Option[T] = {
-    maybeWithId(width)
-  }
-  def withWidth(width: Int): BlockWidth = {
-    maybeWithWidth(width).get
-  }
-
-  /** Все допустимые ширИны по возрастанию. */
-  val allSorted: Seq[T] = {
-    values
-      .toSeq
-      .map(value2val)
-      .sortBy(_.widthPx)
-  }
+  def default : BlockWidth = NORMAL
+  def max     : BlockWidth = NORMAL
+  def min     : BlockWidth = NARROW
 
 }

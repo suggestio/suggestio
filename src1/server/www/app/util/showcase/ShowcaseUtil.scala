@@ -60,7 +60,7 @@ class ShowcaseUtil @Inject() (
     val (enOpt1, acc0) = ads.foldLeft [(Option[T], List[T])] (None -> Nil) {
       case ((enOpt, acc), e) =>
         val bwidth: BlockWidth = e.ad.blockMeta
-          .fold(BlockWidths.default)(bm => BlockWidths(bm.width))
+          .fold(BlockWidths.default)(bm => BlockWidths.withValue(bm.width))
         if (bwidth.isNarrow) {
           enOpt match {
             case Some(en) =>
@@ -175,7 +175,7 @@ class ShowcaseUtil @Inject() (
 
   /** Размер одной ячейки в плитке. */
   override protected def CELL_WIDTH_CSSPX = getBlockWidthPx
-  private def getBlockWidthPx = BlockWidths.NORMAL.widthPx
+  private def getBlockWidthPx = BlockWidths.NORMAL.value
 
 
   def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
@@ -242,8 +242,8 @@ class ShowcaseUtil @Inject() (
     val hfloat = bm.height.toFloat
 
     val szMultIter0 = for {
-      bh <- BlockHeights.valuesT.iterator
-      heightPx = bh.heightPx
+      bh <- BlockHeights.values.iterator
+      heightPx = bh.value
       if heightPx < dscr.height && heightPx >= bm.height
     } yield {
       heightPx.toFloat / hfloat

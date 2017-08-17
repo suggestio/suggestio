@@ -80,8 +80,8 @@ trait SysImgMake
           img = img,
           blockMeta = bmDflt getOrElse {
             BlockMeta(
-              height  = BlockHeights.default.heightPx,
-              width   = BlockWidths.default.widthPx,
+              height  = BlockHeights.default.value,
+              width   = BlockWidths.default.value,
               wide    = true
             )
           },

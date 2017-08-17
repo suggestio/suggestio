@@ -174,9 +174,9 @@ sealed trait IntBlockSizeBf extends BlockFieldT {
 
 // TODO Нужно зафиксировать значения высоты через Enumeration. Это избавит от проблем с расчетами стоимостей рекламных модулей.
 object BfHeight {
-  def HEIGHT_DFLT = BlockHeights.default.heightPx
-  val SOME_HEIGHT_DFLT = Some(BlockHeights.default.heightPx)
-  val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values.map(_.heightPx)
+  def HEIGHT_DFLT = BlockHeights.default.value
+  val SOME_HEIGHT_DFLT = Some(BlockHeights.default.value)
+  val HEIGHTS_AVAILABLE_DFLT = BlockHeights.values.map(_.value)
 }
 
 
@@ -184,12 +184,12 @@ object BfHeight {
 case class BfHeight(
   override val name             : String,
   override val defaultValue     : Option[Int]  = BfHeight.SOME_HEIGHT_DFLT,
-  override val availableVals    : Set[Int]     = BfHeight.HEIGHTS_AVAILABLE_DFLT
+  override val availableVals    : Set[Int]     = BfHeight.HEIGHTS_AVAILABLE_DFLT.toSet
 )
   extends IntBlockSizeBf
 {
   override def field = BlocksEditorFields.Height
-  override def fallbackValue: T = BlockHeights.H140.heightPx
+  override def fallbackValue: T = BlockHeights.H140.value
 
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
@@ -198,19 +198,19 @@ case class BfHeight(
 
 
 object BfWidth {
-  val WIDTH_DFLT = Some( BlockWidths.default.widthPx )
-  val WIDTHS_AVAILABLE_DFLT = BlockWidths.values.map(_.widthPx)
+  val WIDTH_DFLT = Some( BlockWidths.default.value )
+  val WIDTHS_AVAILABLE_DFLT = BlockWidths.values.map(_.value)
 }
 case class BfWidth(
   name          : String,
   defaultValue  : Option[Int] = BfWidth.WIDTH_DFLT,
-  availableVals : Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT
+  availableVals : Set[Int] = BfWidth.WIDTHS_AVAILABLE_DFLT.toSet
 ) extends IntBlockSizeBf {
   override def field = BlocksEditorFields.Width
   override def renderEditorField(bfNameBase: String, af: Form[_], bc: BlockConf)(implicit ctx: Context): Html = {
     field.renderEditorField(this, bfNameBase, af, bc)
   }
-  override def fallbackValue = BlockWidths.default.widthPx
+  override def fallbackValue = BlockWidths.default.value
 }
 
 

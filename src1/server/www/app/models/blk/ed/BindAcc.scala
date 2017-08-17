@@ -13,12 +13,12 @@ import models.blk._
  */
 
 case class BindAcc(
-  offers  : List[MEntity]         = Nil,
-  height  : Int                   = BlockHeights.default.heightPx,
-  width   : Int                   = BlockWidths.default.widthPx,
-  isWide  : Boolean               = false,
-  href    : Option[String]        = None,
-  bim     : List[BlockImgEntry]   = Nil
+                    offers  : List[MEntity]         = Nil,
+                    height  : Int                   = BlockHeights.default.value,
+                    width   : Int                   = BlockWidths.default.value,
+                    isWide  : Boolean               = false,
+                    href    : Option[String]        = None,
+                    bim     : List[BlockImgEntry]   = Nil
 ) {
 
   /**

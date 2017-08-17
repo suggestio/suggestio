@@ -1,5 +1,6 @@
 package models.blk
 
+import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.model.n2.ad.blk.BlockMeta
 import play.api.data.Mapping
 
@@ -14,15 +15,23 @@ class BlockMetaUtil {
 
   import play.api.data.Forms._
 
+  def blockHeightMapping = EnumeratumJvmUtil.intIdMapping( BlockHeights )
+
+  def blockWidthMapping = EnumeratumJvmUtil.intIdMapping( BlockWidths )
+
   /** Маппинг для интерфейса IBlockMeta. */
   def imapping: Mapping[BlockMeta] = {
     mapping(
-      "width"   -> BlockWidths.idMapping,
-      "height"  -> BlockHeights.idMapping,
+      "width"   -> blockWidthMapping,
+      "height"  -> blockHeightMapping,
       "wide"    -> boolean
     )
-    { BlockMeta.apply }
-    { BlockMeta.unapply }
+    { (w, h, wide) =>
+      BlockMeta(height = h.value, width = w.value, wide = wide)
+    }
+    { bm =>
+      Some((BlockWidths.withValue(bm.width), BlockHeights.withValue(bm.height), bm.wide ))
+    }
   }
 
 }

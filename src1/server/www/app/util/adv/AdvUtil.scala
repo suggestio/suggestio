@@ -70,9 +70,9 @@ class AdvUtil @Inject() (
   }
   def getAdModulesCount(bm: BlockMeta): Int = {
     // Мультипликатор по ширине
-    val wmul = BlockWidths(bm.width).relSz
+    val wmul = BlockWidths.withValue(bm.width).relSz
     // Мультипликатор по высоте
-    val hmul = BlockHeights(bm.height).relSz
+    val hmul = BlockHeights.withValue(bm.height).relSz
     wmul * hmul
   }
   def maybeAdModulesCount(mad: MNode): Option[Int] = {

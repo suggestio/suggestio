@@ -5,6 +5,7 @@
 @import helper._
 @import ctx._
 @import blk.{BlockWidths, BlockHeights}
+@import io.suggest.enum2.EnumeratumUtil.toSelectOptions
 
 @form( CSRF(submitCall) ) {
 
@@ -27,13 +28,13 @@
 
   @select(
     mf("args.blockMeta.width"),
-    options = BlockWidths.values.iterator.map(w => w.id.toString -> w.widthPx.toString).toSeq,
+    options = toSelectOptions( BlockWidths ),
     '_label -> "Ширина блока (cssPx)"
   )
 
   @select(
     mf("args.blockMeta.height"),
-    options = BlockHeights.values.iterator.map(h => h.id.toString -> h.heightPx.toString).toSeq,
+    options = toSelectOptions( BlockHeights ),
     '_label -> "Высота блока (cssPx)"
   )
 

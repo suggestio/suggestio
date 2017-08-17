@@ -1,4 +1,4 @@
-package io.suggest.common.cart
+package io.suggest.bill.cart
 
 /**
   * Suggest.io

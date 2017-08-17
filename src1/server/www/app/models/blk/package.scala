@@ -8,9 +8,6 @@ package models
  */
 package object blk {
 
-  type BlockWidth  = BlockWidths.T
-  type BlockHeight = BlockHeights.T
-
   type Font        = Fonts.T
 
   // TODO Наверное надо перенести SzMult_t на уровень models.

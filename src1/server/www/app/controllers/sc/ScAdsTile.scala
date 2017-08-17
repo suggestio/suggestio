@@ -295,7 +295,7 @@ trait ScAdsTile
     /** Рендер HTTP-результата. */
     def resultFut: Future[Result]
 
-    def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.widthPx, tileArgs.szMult)
+    def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.value, tileArgs.szMult)
     def cellPaddingCssPx: Int = szMulted(scUtil.TILE_PADDING_CSSPX, tileArgs.szMult)
   }
 

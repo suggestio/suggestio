@@ -1,6 +1,7 @@
 package io.suggest.enum2
 
 import enumeratum._
+import enumeratum.values.{ValueEnum, ValueEnumEntry}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Writes, _}
 
@@ -48,6 +49,33 @@ object EnumeratumUtil {
     */
   def enumEntryFormat[T <: EnumEntry](model: Enum[T]): Format[T] = {
     Format(enumEntryReads(model), enumEntryWrites)
+  }
+
+
+  /** Просто функция для доступа к value-ключу. */
+  def valueF[ValueType]: ValueEnumEntry[ValueType] => ValueType = {
+    _.value
+  }
+
+
+  /** При рендере html-шаблонов в play с помощью @select() бывает удобно сериализовать модель в список option'ов. */
+  def toSelectOptions[EE <: EnumEntry](m: Enum[EE]): Seq[(String, String)] = {
+    toSelectOptions(
+      m.values.iterator.map(_.entryName)
+    )
+  }
+  def toSelectOptions[V, VEE <: ValueEnumEntry[V]](m: ValueEnum[V, VEE]): Seq[(String, String)] = {
+    toSelectOptions(
+      m.values.map(_.value)
+    )
+  }
+  def toSelectOptions[T](items: TraversableOnce[T]): Seq[(String, String)] = {
+    items
+      .map { raw =>
+        val s = raw.toString
+        s -> s
+      }
+      .toSeq
   }
 
 }
