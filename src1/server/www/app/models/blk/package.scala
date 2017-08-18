@@ -16,8 +16,6 @@ package object blk {
   val  AdColorFns  = io.suggest.ym.model.ad.AdColorFns
   type AdColorFn   = AdColorFns.T
 
-  type FontSize    = FontSizes.FontSize
-
 
   // Т.к. SzMult_t является примитивным типом, то модели у него своей нет, и утиль выброшена прямо сюда.
   def szMulted(origPx: Int, szMult: SzMult_t): Int = {

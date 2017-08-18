@@ -3,15 +3,15 @@ package util.showcase
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.img.ImgCrop
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.mproj.ICommonDi
-import models.ImgCrop
 
 import scala.annotation.tailrec
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -59,7 +59,7 @@ class ScWideMaker @Inject() (
   }
 
   /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
-  def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di)(implicit ec: ExecutionContext): Future[ImgCrop] = {
+  def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di): Future[ImgCrop] = {
     iik.cropOpt match {
       case Some(crop0) =>
         val origWhFut = for {
@@ -76,7 +76,7 @@ class ScWideMaker @Inject() (
   }
 
   /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
-  def updateCrop0(crop0: ImgCrop, wideWh: ISize2di, origWhFut: Future[ISize2di])(implicit ec: ExecutionContext): Future[ImgCrop] = {
+  def updateCrop0(crop0: ImgCrop, wideWh: ISize2di, origWhFut: Future[ISize2di]): Future[ImgCrop] = {
     origWhFut.map { origWh =>
       // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
       // Результат должен изнутри быть вписан в исходник по размерам.
@@ -94,7 +94,7 @@ class ScWideMaker @Inject() (
     }
   }
   /** Сделать из опционального исходнго кропа новый wide-кроп с указанием гравитации. */
-  def getWideCropInfo(iik: MAnyImgT, wideWh: ISize2di)(implicit ec: ExecutionContext): Future[ImgCropInfo] = {
+  def getWideCropInfo(iik: MAnyImgT, wideWh: ISize2di): Future[ImgCropInfo] = {
     getAbsCropOrFail(iik, wideWh)
       .map { crop1 => ImgCropInfo(crop1, isCenter = false) }
       .recover { case ex: Exception =>

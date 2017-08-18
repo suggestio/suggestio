@@ -53,7 +53,7 @@ trait MaybeWithMultiNameMap extends MaybeWithNameMap with ILightEnumeration {
 }
 
 
-/** Гибрид scala.Enumeration и [[MaybeWithMultiNameMap. */
+/** Гибрид scala.Enumeration и [[MaybeWithMultiNameMap]]. */
 trait EnumMaybeWithMultiNameMap extends Enumeration with MaybeWithMultiNameMap {
 
   override protected def _values: TraversableOnce[T] = {

@@ -3,6 +3,7 @@
 @* Стили для одного текстового поля одного оффера одного блока. *@
 
 @import blk.Fonts
+@import io.suggest.font.FontSizes
 @import io.suggest.sc.ScConstants.Block.Text.fieldTextId
 
 
@@ -21,8 +22,8 @@
 .sm-block@{args.mad.id}@args.cssClasses.map{c =>.@c } .@{fieldCssClass} {
   color: #@aovf.font.color!important;
 
-  @aovf.font.size.flatMap(blk.FontSizes.maybeWithSize).map { fsz =>
-    font-size: @{fsz.size * args.szMult}px!important;
+  @for(fsz <- aovf.font.size) {
+    font-size: @{fsz.value * args.szMult}px!important;
     @* TODO возможно стоит сделать font-size и line-height одинаковыми *@
     line-height: @{fsz.lineHeight * args.szMult}px!important;
   }

@@ -19,9 +19,6 @@ package object models {
 
   type Receivers_t          = n2.edge.NodeEdgesMap_t
 
-  type ImgCrop              = io.suggest.img.ImgCrop
-  val  ImgCrop              = io.suggest.img.ImgCrop
-
   type ISize2di             = io.suggest.common.geom.d2.ISize2di
 
   val  BlocksConf           = util.blocks.BlocksConf

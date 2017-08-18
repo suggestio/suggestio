@@ -105,7 +105,7 @@ object MNodeAd extends IGenEsMappingProps with IEmpty {
 
 
 case class MNodeAd(
-  entities      : EntMap_t              = Map.empty,
+  entities      : EntMap_t              = Map.empty,    // TODO Сделать Option[MEntity.type=document]
   richDescr     : Option[RichDescr]     = None,
   blockMeta     : Option[BlockMeta]     = None
 )

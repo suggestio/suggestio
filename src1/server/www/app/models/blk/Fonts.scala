@@ -1,8 +1,7 @@
 package models.blk
 
-import io.suggest.common.menum.{EnumValue2Val, EnumMaybeWithMultiNameMap}
-import io.suggest.util.JacksonParsing.FieldsJsonAcc
-import play.api.libs.json.{JsString, JsObject, JsArray}
+import io.suggest.common.menum.{EnumMaybeWithMultiNameMap, EnumValue2Val}
+import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 
 /**
  * Suggest.io
@@ -15,12 +14,13 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
 
   /** Трейт экземпляра модели. */
   sealed protected[this] trait ValT extends super.ValT {
+
     /**
      * tinymce принимает данные по шрифту в style_formats в таком формате.
      * @param tail Дополнительные json-поля.
      * @return JsObject для передачи в init() style_formats.
      */
-    def toJsonTinyMce(tail: FieldsJsonAcc = Nil): JsObject = {
+    def toJsonTinyMce(tail: List[(String, JsValue)] = Nil): JsObject = {
       val title = "title" -> JsString(descr)
       val styles = "styles" -> JsObject(Seq(
         "font-family" -> JsString(fileName)
@@ -30,10 +30,13 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
 
     /** Название CSS font-family. */
     def fileName: String
+
     /** Отображаемое название шрифта. */
     def descr: String
+
     /** Имена прошлые и текущие. */
     override def _names = List(fileName)
+
   }
 
   /**
@@ -118,7 +121,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   }
 
   val OpenSansRegular      : T = new Val("opensans-regular") {
-    override def descr: String = "OpenSans Regular"
+    override def descr  = "OpenSans Regular"
   }
 
   val OctinTeamHeavy      : T = new Val("octin-team-heavy") {
@@ -160,7 +163,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
 
   /** Для рендера json-конфига tinyMCE лучше использовать этот метод. */
   def valuesJsonTinyMce: JsArray = {
-    val inlineSpan: FieldsJsonAcc = List(
+    val inlineSpan = List(
       "inline" -> JsString("span")
     )
     // iterator + toSeq используется из-за того, что values() - это Set[], а не Seq.

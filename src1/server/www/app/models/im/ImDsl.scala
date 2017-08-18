@@ -3,11 +3,11 @@ package models.im
 import java.text.DecimalFormat
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.img.ImgCrop
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.IStrId
 import io.suggest.util.logs.MacroLogsImpl
 import org.im4java.core.IMOperation
-import models._
 import util.FormUtil
 
 import scala.util.parsing.combinator.JavaTokenParsers

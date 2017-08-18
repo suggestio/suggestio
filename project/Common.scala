@@ -31,6 +31,8 @@ object Common {
     /** Версия play-json. Он выведен из под основного проекта. */
     val PLAY_JSON_VSN = "2.6.3"
 
+    val PLAY_GEOJSON = "1.4.1-SNAPSHOT"   // TODO "1.5.0" - scala 2.12!
+
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
      */

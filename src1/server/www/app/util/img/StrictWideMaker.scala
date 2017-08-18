@@ -3,8 +3,8 @@ package util.img
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.img.ImgCrop
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.ImgCrop
 import models.blk._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.im._

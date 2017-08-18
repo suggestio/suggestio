@@ -1,6 +1,7 @@
 package io.suggest.ad.blk.ent
 
 import io.suggest.common.empty.EmptyUtil._
+import io.suggest.font.FontSize
 import io.suggest.text.MTextAlign
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -9,6 +10,7 @@ import play.api.libs.json._
 
 object EntFont {
 
+  // Нельзя переименовывать значения имён полей: это хранится в ES!
   val FAMILY_FN       = "family"
   val SIZE_FN         = "size"
   val COLOR_FN        = "color"
@@ -23,7 +25,7 @@ object EntFont {
         _.getOrElse(FONT_COLOR_DFLT),
         someF
       ) and
-    (__ \ SIZE_FN).formatNullable[Int] and
+    (__ \ SIZE_FN).formatNullable[FontSize] and
     (__ \ ALIGN_FN).formatNullable[MTextAlign] and
     (__ \ FAMILY_FN).formatNullable[String]
   )(apply, unlift(unapply))
@@ -38,7 +40,7 @@ object EntFont {
   */
 case class EntFont(
                     color       : String              = EntFont.FONT_COLOR_DFLT,
-                    size        : Option[Int]         = None,
+                    size        : Option[FontSize]    = None,
                     align       : Option[MTextAlign]  = None,
                     family      : Option[String]      = None
                   )

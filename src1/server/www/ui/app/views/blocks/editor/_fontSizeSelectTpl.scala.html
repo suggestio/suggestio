@@ -2,13 +2,15 @@
 
 @* Шаблон, где надо выбрать размер шрифта. *@
 
+@import io.suggest.font.{FontSizes, FontSize}
+
 @defining( bfNameBase + ".font.size" ) { fsName =>
 
   <div class="lk-field-tools__editor">
     <select class="js-custom-font-select" name="@fsName">
-      @defining( af(fsName).value.filter(!_.isEmpty).map(_.toInt).orElse(bf.fontSizeDflt).orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt: Option[Int] =>
-        @for(fsz <- blk.FontSizes.valuesSorted) {
-          <option value="@fsz.size" @if(fsValueOpt.exists(_ == fsz.size)) {selected="selected"}>@fsz.size</option>
+      @defining( af(fsName).value.filter(!_.isEmpty).map(_.toInt).orElse(bf.fontSizeDflt).flatMap(FontSizes.withValueOpt).orElse(bf.defaultValue.flatMap(_.font.size)) ) { fsValueOpt: Option[FontSize] =>
+        @for(fsz <- FontSizes.values) {
+          <option value="@fsz.value" @if(fsValueOpt.contains(fsz)) {selected="selected"}>@fsz.value</option>
         }
       }
     </select>

@@ -5,9 +5,10 @@ import javax.inject.{Inject, Singleton}
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import io.suggest.img.ImgCrop
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.{IImgMeta, ISize2di, ImgCrop}
+import models.{IImgMeta, ISize2di}
 
 import scala.concurrent.Future
 

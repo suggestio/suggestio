@@ -1,6 +1,6 @@
 package models.im
 
-import models.ImgCrop
+import io.suggest.img.ImgCrop
 
 /**
  * Suggest.io

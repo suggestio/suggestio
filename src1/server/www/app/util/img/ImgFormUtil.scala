@@ -5,14 +5,13 @@ import java.util.UUID
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
 import models.im._
-import io.suggest.img.SioImageUtilT
+import io.suggest.img.{ImgCrop, SioImageUtilT}
 
 import scala.concurrent.Future
 import java.lang
-
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.mproj.ICommonDi
 
 /**

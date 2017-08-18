@@ -1,6 +1,6 @@
 package models.im
 
-import models.ImgCrop
+import io.suggest.img.ImgCrop
 import org.im4java.core.IMOperation
 
 /**
