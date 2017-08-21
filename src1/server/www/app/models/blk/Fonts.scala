@@ -35,7 +35,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     def descr: String
 
     /** Имена прошлые и текущие. */
-    override def _names = List(fileName)
+    override def _names = fileName :: Nil
 
   }
 

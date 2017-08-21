@@ -7,7 +7,7 @@ import java.{lang => jl, util => ju}
 
 import play.api.libs.json.{JsString, JsValue}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Suggest.io
@@ -28,33 +28,26 @@ object JacksonParsing {
   // TODO Это устаревший код. Его нужно удалять, MEvent и MExtTarget тянут за собой эти старинные парсеры.
   // ES-выхлопы страдают динамической типизацией, поэтому нужна коллекция парсеров для примитивных типов.
   // Следует помнить, что любое поле может быть списком значений.
-  def intParser: PartialFunction[Any, Int] = {
-    case null =>
-      _parseEx("int")
-    case is: jl.Iterable[_] =>
-      intParser(is.head.asInstanceOf[AnyRef])
-    case i: Integer =>
-      i.intValue()
-  }
+
   def stringParser: PartialFunction[Any, String] = {
     case null =>
       _parseEx("string")
     case strings: jl.Iterable[_] =>
-      stringParser(strings.head.asInstanceOf[AnyRef])
+      stringParser(strings.asScala.head.asInstanceOf[AnyRef])
     case s: String  => s
   }
   def booleanParser: PartialFunction[Any, Boolean] = {
     case null =>
       _parseEx("bool")
     case bs: jl.Iterable[_] =>
-      booleanParser(bs.head.asInstanceOf[AnyRef])
+      booleanParser(bs.asScala.head.asInstanceOf[AnyRef])
     case b: jl.Boolean =>
       b.booleanValue()
   }
   def dateTimeParser: PartialFunction[Any, OffsetDateTime] = {
     case null => null
     case dates: jl.Iterable[_] =>
-      dateTimeParser(dates.head.asInstanceOf[AnyRef])
+      dateTimeParser(dates.asScala.head.asInstanceOf[AnyRef])
     case s: String           => OffsetDateTime.parse(s)
     case d: ju.Date          => dateTimeParser( d.toInstant )
     case dt: OffsetDateTime  => dt
@@ -72,7 +65,7 @@ object JacksonParsing {
     case null =>
       Iterator.empty
     case l: jl.Iterable[_] =>
-      l.iterator()
+      l.iterator().asScala
   }
 
   /** Парсер список строк. */

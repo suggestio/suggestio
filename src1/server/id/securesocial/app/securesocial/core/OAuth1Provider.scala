@@ -85,10 +85,10 @@ object ServiceInfoHelper {
    */
   def forProvider(id: String): ServiceInfo = {
     val result = for {
-      requestTokenUrl <- loadProperty(id, OAuth1Provider.RequestTokenUrl);
-      accessTokenUrl <- loadProperty(id, OAuth1Provider.AccessTokenUrl);
-      authorizationUrl <- loadProperty(id, OAuth1Provider.AuthorizationUrl);
-      consumerKey <- loadProperty(id, OAuth1Provider.ConsumerKey);
+      requestTokenUrl <- loadProperty(id, OAuth1Provider.RequestTokenUrl)
+      accessTokenUrl <- loadProperty(id, OAuth1Provider.AccessTokenUrl)
+      authorizationUrl <- loadProperty(id, OAuth1Provider.AuthorizationUrl)
+      consumerKey <- loadProperty(id, OAuth1Provider.ConsumerKey)
       consumerSecret <- loadProperty(id, OAuth1Provider.ConsumerSecret)
     } yield {
       ServiceInfo(requestTokenUrl, accessTokenUrl, authorizationUrl, ConsumerKey(consumerKey, consumerSecret))

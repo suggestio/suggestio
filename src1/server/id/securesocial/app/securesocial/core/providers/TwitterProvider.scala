@@ -17,11 +17,9 @@
 package securesocial.core.providers
 
 import securesocial.core._
-import play.api.libs.oauth.{ RequestToken, OAuthCalculator }
-import play.api.Logger
 import TwitterProvider._
 import scala.concurrent.{ ExecutionContext, Future }
-import securesocial.core.services.{ RoutesService, CacheService, HttpService }
+import securesocial.core.services.{ RoutesService, CacheService }
 
 /**
  * A Twitter Provider

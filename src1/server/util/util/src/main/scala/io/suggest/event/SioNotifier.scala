@@ -356,7 +356,7 @@ trait SioNotifier extends Actor with IExecutionContext with MacroLogsImpl {
       val fut = Future {
         subscriber.publish(event)
       }
-      fut.onFailure { case ex =>
+      for (ex <- fut.failed) {
         error(s"Subscriber $subscriber failed to handle event $event", ex)
       }
     }

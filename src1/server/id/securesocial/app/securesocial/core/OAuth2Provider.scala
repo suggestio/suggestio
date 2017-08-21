@@ -27,7 +27,7 @@ import play.api.mvc._
 import securesocial.core.services.{CacheService, HttpService, RoutesService}
 import securesocial.util.LoggerImpl
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.{ExecutionContext, Future}
 
 trait OAuth2Client {
@@ -249,11 +249,13 @@ object OAuth2Settings {
       val scope = loadProperty(id, OAuth2Settings.Scope, optional = true)
       val authorizationUrlParams: Map[String, String] =
         config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AuthorizationUrlParams).map { o =>
-          o.unwrapped.toMap.mapValues(_.toString)
+          o.unwrapped.asScala
+            .mapValues(_.toString)
+            .toMap
         }.getOrElse(Map())
 
       val accessTokenUrlParams: Map[String, String] = config.getOptional[ConfigObject](propertyKey + OAuth2Settings.AccessTokenUrlParams).map { o =>
-        o.unwrapped.toMap.mapValues(_.toString)
+        o.unwrapped.asScala.mapValues(_.toString).toMap
       }.getOrElse(Map())
       OAuth2Settings(authorizationUrl, accessToken, clientId, clientSecret, scope, authorizationUrlParams, accessTokenUrlParams)
     }
