@@ -1,0 +1,20 @@
+[error] module.js:491
+[error]     throw err;
+[error]     ^
+[error] 
+[error] Error: Cannot find module '/mnt/src/user/projects/sio/sio2/src1/client/lk/main/target/scala-2.12/scalajs-bundler/test/node_modules/webpack/bin/webpack'
+[error]     at Function.Module._resolveFilename (module.js:489:15)
+[error]     at Function.Module._load (module.js:439:25)
+[error]     at Function.Module.runMain (module.js:609:10)
+[error]     at startup (bootstrap_node.js:158:16)
+[error]     at bootstrap_node.js:578:3
+[trace] Stack trace suppressed: run last lk-sjs/test:loadedTestFrameworks for the full output.
+[error] (lk-sjs/test:loadedTestFrameworks) Non-zero exit code: 1
+[error] Total time: 12 s, completed 21.08.2017 13:20:12
+
+
+https://github.com/scalacenter/scalajs-bundler/issues/130
+
+npm-5.x как-то неправильно устанавливает webpack в node_modules: его там просто нет.
+
+Надо откатиться на nodejs-7.10 и npm-4.6.

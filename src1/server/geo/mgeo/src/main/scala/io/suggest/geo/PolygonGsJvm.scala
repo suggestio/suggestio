@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LngLat, Polygon}
+import au.id.jazzy.play.geojson.{LngLat, Polygon}
 
 /**
  * Suggest.io

@@ -8,7 +8,7 @@ import org.elasticsearch.common.geo.builders.{ShapeBuilder, ShapeBuilders}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
-import play.extras.geojson.{LngLat, Polygon}
+import au.id.jazzy.play.geojson.{LngLat, Polygon}
 
 /**
   * Suggest.io

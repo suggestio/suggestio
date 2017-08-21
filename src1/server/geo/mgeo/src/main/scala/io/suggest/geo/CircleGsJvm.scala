@@ -1,5 +1,6 @@
 package io.suggest.geo
 
+import au.id.jazzy.play.geojson.{Geometry, LngLat}
 import io.suggest.geo.GeoShapeJvm.COORDS_ESFN
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
@@ -7,7 +8,6 @@ import org.elasticsearch.common.geo.builders.ShapeBuilders
 import org.elasticsearch.common.unit.DistanceUnit
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{Geometry, LngLat}
 
 /**
  * Suggest.io

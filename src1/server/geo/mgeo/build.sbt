@@ -8,12 +8,11 @@ version := "0.0.0-SNAPSHOT"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
+resolvers += "jroper-maven" at Common.Repo.JROPER_MAVEN_REPO
 
 libraryDependencies ++= {
   Seq(
-    // Около-официальная поддержка GeoJSON для play:
-    // 1.4.1-SNAPSHOT - т.к. ожидаем мёржа https://github.com/jroper/play-geojson/pull/21
-    "com.typesafe.play.extras"  %% "play-geojson" % Common.Vsn.PLAY_GEOJSON,
+    "au.id.jazzy" %% "play-geojson" % Common.Vsn.PLAY_GEOJSON,
 
     // остальное geo
     "org.locationtech.spatial4j"  % "spatial4j"   % Common.Vsn.SPATIAL4J,

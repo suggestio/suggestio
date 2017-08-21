@@ -3,7 +3,7 @@ package io.suggest.geo
 import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{Geometry, GeometryCollection, LngLat}
+import au.id.jazzy.play.geojson.{Geometry, GeometryCollection, LngLat}
 import GeoShapeJvm.GEO_SHAPE_FORMAT
 
 /**

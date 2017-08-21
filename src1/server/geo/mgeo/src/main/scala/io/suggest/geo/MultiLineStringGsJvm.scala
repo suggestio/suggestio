@@ -6,7 +6,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.{MultiLineStringBuilder, ShapeBuilders}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LngLat, MultiLineString}
+import au.id.jazzy.play.geojson.{LngLat, MultiLineString}
 
 
 /**

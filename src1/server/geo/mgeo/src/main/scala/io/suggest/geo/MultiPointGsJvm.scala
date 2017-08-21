@@ -8,7 +8,7 @@ import io.suggest.util.JacksonParsing.FieldsJsonAcc
 import org.elasticsearch.common.geo.builders.ShapeBuilders
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import play.extras.geojson.{LngLat, MultiPoint}
+import au.id.jazzy.play.geojson.{LngLat, MultiPoint}
 import java.{util => ju}
 
 /**

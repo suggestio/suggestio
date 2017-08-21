@@ -15,7 +15,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid
 import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import play.api.libs.json.JsObject
-import play.extras.geojson.{Feature, FeatureCollection, LngLat}
+import au.id.jazzy.play.geojson.{Feature, FeatureCollection, LngLat}
 
 import scala.collection.JavaConversions._
 import scala.concurrent.Future

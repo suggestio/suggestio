@@ -31,7 +31,7 @@ object Common {
     /** Версия play-json. Он выведен из под основного проекта. */
     val PLAY_JSON_VSN = "2.6.3"
 
-    val PLAY_GEOJSON = "1.4.1-SNAPSHOT"   // TODO "1.5.0" - scala 2.12!
+    val PLAY_GEOJSON = "1.5.0" // 1.4.1-SNAPSHOT"   // TODO "1.5.0" - scala 2.12!
 
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
@@ -126,7 +126,7 @@ object Common {
 
   val SCALA_VSN = "2.11.11"
   //val SCALA_VSN = "2.12.2"
-  val SCALA_VSN_JS = "2.12.2"
+  val SCALA_VSN_JS = "2.12.3"
 
   val ORG = "io.suggest"
 
@@ -246,6 +246,8 @@ object Common {
     def APACHE_RELEASES_URL           = ARTIFACTORY_URL + "apache-releases"
 
     def JCENTER_URL                   = ARTIFACTORY_URL + "jcenter"
+
+    val JROPER_MAVEN_REPO             = ARTIFACTORY_URL + "jroper-maven"
 
     //val CONJARS_REPO_URL            = ARTIFACTORY_URL + "conjars-repo"
     //val MAVEN_TWTTR_COM_URL         = ARTIFACTORY_URL + "maven-twttr-com"

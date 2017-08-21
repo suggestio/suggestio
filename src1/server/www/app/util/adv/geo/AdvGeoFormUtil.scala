@@ -10,12 +10,13 @@ import io.suggest.geo.{CircleGs, CircleGsJvm, GeoShapeJvm, MGeoPoint}
 import io.suggest.maps.MMapProps
 import io.suggest.scalaz.{ScalazUtil, ValidateFormUtilT}
 import models.adv.geo.cur._
-import play.extras.geojson.{Feature, LngLat}
+import au.id.jazzy.play.geojson.{Feature, LngLat}
 import util.adv.AdvFormUtil
 
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.syntax.validation._
+// НЕ УДАЛЯТЬ!! could not find implicit value for evidence parameter of type scalaz.Foldable[Iterable]: ScalazUtil.validateAll(rm.keys)(advFormUtil.rcvrKeyV)
 import scalaz.std.iterable._
 
 /**

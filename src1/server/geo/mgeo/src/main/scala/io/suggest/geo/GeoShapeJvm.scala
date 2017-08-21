@@ -5,7 +5,7 @@ import io.suggest.util.logs.MacroLogsDyn
 import org.elasticsearch.common.geo.builders.ShapeBuilder
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import play.api.libs.json._
-import play.extras.geojson.{Geometry, LngLat}
+import au.id.jazzy.play.geojson.{Geometry, LngLat}
 
 /**
   * Suggest.io

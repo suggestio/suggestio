@@ -12,7 +12,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import org.elasticsearch.common.geo.{GeoPoint => EsGeoPoint}
 import play.api.libs.json._
 import play.api.mvc.QueryStringBindable
-import play.extras.geojson.LngLat
+import au.id.jazzy.play.geojson.LngLat
 
 /**
   * Suggest.io
