@@ -19,11 +19,6 @@ import au.id.jazzy.play.geojson.{Geometry, LngLat}
 
 object GeoShapeJvm extends MacroLogsDyn {
 
-  /** Распарсить шейп из json-выхлопа. */
-  def parse(raw: String): IGeoShape = {
-    Json.parse(raw).as[IGeoShape]
-  }
-
   val COORDS_ESFN = "coordinates"
   val TYPE_ESFN   = "type"
 
@@ -48,6 +43,11 @@ object GeoShapeJvm extends MacroLogsDyn {
   }
 
   implicit val GEO_SHAPE_FORMAT = Format(READS, WRITES)
+
+  /** Распарсить шейп из json-выхлопа. */
+  def parse(raw: String): IGeoShape = {
+    Json.parse(raw).as[IGeoShape]
+  }
 
   def WRITES_GJSON_COMPAT: OWrites[IGeoShape] = {
     OWrites { v =>

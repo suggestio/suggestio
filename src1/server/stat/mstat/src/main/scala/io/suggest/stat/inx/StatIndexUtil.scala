@@ -274,31 +274,31 @@ final class StatIndexUtilJmx @Inject() (
 
   override def reNewCurrIndex(): String = {
     _usingToStringFut {
-      statIndexUtil.reNewCurrIndex
+      statIndexUtil.reNewCurrIndex _
     }
   }
 
   override def currIndexInfo(): String = {
     _usingToStringFut {
-      statIndexUtil.currIndexInfo
+      statIndexUtil.currIndexInfo _
     }
   }
 
   override def maybeReNewCurrIndex(): String = {
     _usingToStringFut {
-      statIndexUtil.maybeReNewCurrIndex
+      statIndexUtil.maybeReNewCurrIndex _
     }
   }
 
   override def findTooOldIndex(): String = {
     _usingToStringFut {
-      statIndexUtil.findTooOldIndex
+      statIndexUtil.findTooOldIndex _
     }
   }
 
   override def maybeDeleteTooOldIndex(): String = {
     _usingToStringFut {
-      statIndexUtil.maybeDeleteTooOldIndex
+      statIndexUtil.maybeDeleteTooOldIndex _
     }
   }
 

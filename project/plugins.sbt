@@ -29,7 +29,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-js-engine" % "1.2.1")
 // stylus assets
 addSbtPlugin("com.typesafe.sbt" % "sbt-stylus" % "1.0.2s49-SNAPSHOT")
 
-addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.9-SNAPSHOT")
+//addSbtPlugin("com.tuplejump" % "sbt-yeoman" % "0.8.9-SNAPSHOT")
 
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.19")
 

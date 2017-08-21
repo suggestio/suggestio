@@ -20,9 +20,7 @@ object QsbUtil {
 
   // TODO Спилить эту утиль. От неё больше неочевидности, нежели пользы.
 
-  import scala.language.implicitConversions
-
-  implicit def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
+  def eitherOpt2option[T](e: Either[_, Option[T]]): Option[T] = {
     e.fold({_ => None}, identity)
   }
 

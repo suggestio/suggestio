@@ -9,6 +9,15 @@ import Keys._
 
 object Common {
 
+  /** Версия scala для сервной части и дефолтовая версия для scala.js. */
+  val SCALA_VSN = "2.12.3"
+
+  /** Версия scala для scala.js. */
+  @inline final def SCALA_VSN_JS = SCALA_VSN
+
+  val ORG = "io.suggest"
+
+
   /** Контейнер версий зависимостей. Вместо свалки полей в форме, записывать их надо в Vsn. */
   object Vsn {
 
@@ -123,12 +132,6 @@ object Common {
 
   }
 
-
-  val SCALA_VSN = "2.11.11"
-  //val SCALA_VSN = "2.12.2"
-  val SCALA_VSN_JS = "2.12.3"
-
-  val ORG = "io.suggest"
 
   val settingsBase = Seq[Setting[_]](
     organization := ORG,

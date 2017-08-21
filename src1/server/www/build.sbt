@@ -3,7 +3,6 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
-import com.tuplejump.sbt.yeoman.Yeoman
 
 Common.settingsOrg
 
@@ -34,12 +33,7 @@ libraryDependencies ++= {
 
   "com.googlecode.owasp-java-html-sanitizer" % "owasp-java-html-sanitizer" % "r173", // html-фильтр для пользовательского контента.
   "com.mohiva" %% "play-html-compressor" % "0.7.1",  // https://github.com/mohiva/play-html-compressor
-  //"com.yahoo.platform.yui" % "yuicompressor" % "2.4.+",
   // io.suggest stuff
-  //Common.ORG %% "mbill2" % "0.0.0-SNAPSHOT",
-  //Common.ORG %% "svg-util" % "0.0.0-SNAPSHOT",
-  //Common.ORG %% "ipgeobase" % "0.0.0-SNAPSHOT",
-  //Common.ORG %% "stat" % "0.0.0-SNAPSHOT",
   Common.ORG %% "util" % "2.0.1-SNAPSHOT" changing()
     exclude("org.jruby", "jruby-complete")
     exclude("org.slf4j", "slf4j-log4j12")
@@ -104,10 +98,6 @@ libraryDependencies ++= {
     exclude("commons-logging", "commons-logging")
     exclude("org.w3c.css", "sac")
 )}
-
-// 2015.feb.26 Не надо этого делать, иначе в sio/2/Build.scala начинается тихий конфликт с доп.сеттингами оттуда.
-//play.Play.projectSettings
-
 
 // После импорта настроек, typesafe-репа не кешируется. Это надо бы исправить.
 resolvers ~= {
@@ -193,8 +183,6 @@ unmanagedJars in Compile ~= {uj =>
 
 // play-2.4: нужно устранить всякие import controllers... из шаблонов и иных мест.
 routesGenerator := InjectedRoutesGenerator
-
-Yeoman.yeomanSettings ++ Yeoman.withTemplates
 
 // Вычистить гарантировано ненунжные ассеты. Они появляются из-за двойного вызова sbt-digest.
 // У плагина sbt-filter почему-то фильтры наоборот работают. Об этом в README сказано.

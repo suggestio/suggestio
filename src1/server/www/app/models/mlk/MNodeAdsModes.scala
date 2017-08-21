@@ -4,6 +4,7 @@ import io.suggest.common.menum.EnumValue2Val
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
+import util.qsb.QsbUtil
 
 import scala.language.implicitConversions
 
@@ -51,13 +52,12 @@ object MNodeAdsModes extends Enumeration with MacroLogsImplLazy with EnumValue2V
   /** qsb-маппер, линкуемый в routes. */
   implicit def mNodeAdsModeQsb(implicit strOptB: QueryStringBindable[Option[String]]): QueryStringBindable[T] = {
     new QueryStringBindableImpl[T] {
-      import util.qsb.QsbUtil._
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
         for {
           maybeModeStr <- strOptB.bind(key, params)
         } yield {
-          val result = (maybeModeStr : Option[String]).fold(ALL_ADS) { shortId =>
+          val result = QsbUtil.eitherOpt2option(maybeModeStr).fold(ALL_ADS) { shortId =>
             values.find(_.shortId == shortId) getOrElse {
               warn(s"qsb(): Unknown ads mode: $shortId. Fallbacking to ALL_ADS.")
               ALL_ADS

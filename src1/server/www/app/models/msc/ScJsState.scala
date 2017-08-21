@@ -8,8 +8,8 @@ import io.suggest.ym.model.NodeGeoLevel
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
-import util.qsb.QsbUtil._
 import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
+import util.qsb.QsbUtil
 
 import scala.util.Random
 
@@ -62,16 +62,18 @@ object ScJsState extends MacroLogsImpl {
 
         } yield {
           val r = ScJsState(
-            adnId               = strNonEmpty( maybeAdnId ),
-            searchScrOpenedOpt  = noFalse( maybeCatScreenOpened ),
-            navScrOpenedOpt     = noFalse( maybeGeoScreenOpened ),
-            generationOpt       = maybeGeneration orElse generationDflt,
-            fadOpenedIdOpt      = strNonEmpty( maybeFadsOpened ),
-            fadsOffsetOpt       = maybeFadsOffset,
-            searchTabListOpt    = noFalse( maybeSearchTab ),
-            fadsProdIdOpt       = strNonEmpty( maybeProducerAdnId ),
-            navNglsMap          = maybeNglsMap.getOrElse( Map.empty ),
-            geoPoint            = geoPointOptEith
+            adnId               = strNonEmpty( QsbUtil.eitherOpt2option(maybeAdnId) ),
+            searchScrOpenedOpt  = noFalse( QsbUtil.eitherOpt2option(maybeCatScreenOpened) ),
+            navScrOpenedOpt     = noFalse( QsbUtil.eitherOpt2option(maybeGeoScreenOpened) ),
+            generationOpt       = QsbUtil.eitherOpt2option(maybeGeneration)
+              .orElse(generationDflt),
+            fadOpenedIdOpt      = strNonEmpty( QsbUtil.eitherOpt2option(maybeFadsOpened) ),
+            fadsOffsetOpt       = QsbUtil.eitherOpt2option(maybeFadsOffset),
+            searchTabListOpt    = noFalse( QsbUtil.eitherOpt2option(maybeSearchTab) ),
+            fadsProdIdOpt       = strNonEmpty( QsbUtil.eitherOpt2option(maybeProducerAdnId) ),
+            navNglsMap          = QsbUtil.eitherOpt2option(maybeNglsMap)
+              .getOrElse( Map.empty ),
+            geoPoint            = QsbUtil.eitherOpt2option( geoPointOptEith )
           )
           Right(r)
         }

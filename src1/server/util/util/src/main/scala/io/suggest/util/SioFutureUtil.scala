@@ -115,7 +115,7 @@ object SioFutureUtil extends MacroLogsImpl {
   def ec2jexecutor(ec: ExecutionContext): Executor = {
     ec match {
       case exc: Executor => exc
-      case _ => scala.concurrent.ExecutionContext.Implicits.global
+      case _ => scala.concurrent.ExecutionContext.global
     }
   }
 

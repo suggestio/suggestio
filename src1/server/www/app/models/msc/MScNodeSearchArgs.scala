@@ -2,11 +2,10 @@ package models.msc
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import models._
-import play.api.Play.current
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbUtil._
 import io.suggest.sc.NodeSearchConstants._
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
+import util.qsb.QsbUtil
 
 /**
  * Suggest.io
@@ -29,16 +28,13 @@ case class MScNodeSearchArgs(
 object MScNodeSearchArgs {
 
   /** Ограничение сверху для значения max results. */
-  val MAX_RESULTS_LIMIT_HARD  = current.configuration.getInt("nodes.search.results.max.hard").getOrElse(50)
-
-  /** Дефолтовое значение для max_results. */
-  val MAX_RESULTS_DFLT        = current.configuration.getInt("nodes.search.results.max.dflt").getOrElse(MAX_RESULTS_LIMIT_HARD)
+  private def MAX_RESULTS_LIMIT_HARD  = 50
 
   /** Ограничение сверху на максимальный сдвиг в выдаче. */
-  val OFFSET_LIMIT_HARD       = current.configuration.getInt("nodes.search.results.offset.max.hard").getOrElse(300)
+  private def OFFSET_LIMIT_HARD       = 300
 
   /** Макс.длина тектового поискового запроса. */
-  val QSTR_LEN_MAX            = current.configuration.getInt("nodes.search.qstr.len.max").getOrElse(70)
+  private def QSTR_LEN_MAX            = 70
 
 
   /** Урезание длины строки, если она превышает указанный предел. */
@@ -80,13 +76,18 @@ object MScNodeSearchArgs {
           } yield {
             //trace(s"bind($key): q=$maybeQOpt ; geo=$maybeGeo ; offset = $maybeOffset ; limit = $maybeMaxResults")
             MScNodeSearchArgs(
-              qStr          = maybeQOpt.map(limitStrLen(_, QSTR_LEN_MAX)),
+              qStr          = QsbUtil.eitherOpt2option(maybeQOpt)
+                .map(limitStrLen(_, QSTR_LEN_MAX)),
               geoMode       = geo,
-              offset        = maybeOffset.filter(_ <= OFFSET_LIMIT_HARD),
-              maxResults    = maybeMaxResults.filter(_ <= MAX_RESULTS_LIMIT_HARD),
-              currAdnId     = maybeCurAdnId,
-              isNodeSwitch  = maybeNodeSwitch getOrElse false,
-              withNeighbors = maybeWithNeigh getOrElse true,
+              offset        = QsbUtil.eitherOpt2option(maybeOffset)
+                .filter(_ <= OFFSET_LIMIT_HARD),
+              maxResults    = QsbUtil.eitherOpt2option(maybeMaxResults)
+                .filter(_ <= MAX_RESULTS_LIMIT_HARD),
+              currAdnId     = QsbUtil.eitherOpt2option( maybeCurAdnId ),
+              isNodeSwitch  = QsbUtil.eitherOpt2option(maybeNodeSwitch)
+                .contains(false), // getOrElse(false)
+              withNeighbors = QsbUtil.eitherOpt2option(maybeWithNeigh)
+                .getOrElse(true),
               apiVsn        = apiVsn
             )
           }
