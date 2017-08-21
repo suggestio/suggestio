@@ -43,15 +43,8 @@ class AdvUtil @Inject() (
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
-    import scala.collection.JavaConversions._
-
-    configuration.getOptional[Seq[Int]]("weekend.days")
-      .fold[TraversableOnce[Int]] {
-        Iterator(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
-          .map(_.getValue)
-      } {
-        _.iterator().map(_.intValue)
-      }
+    Iterator(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+      .map(_.getValue)
       .toSet
   }
 

@@ -134,9 +134,8 @@ class LkLang @Inject() (
           }
 
           // Залоггировать ошибки.
-          saveUserLangFut.onFailure { case ex: Throwable =>
+          for (ex <- saveUserLangFut.failed)
             error("Failed to save lang for mperson", ex)
-          }
 
           // Сразу возвращаем результат ничего не дожидаясь. Сохранение может занять время, а необходимости ждать его нет.
           RdrBackOr(r)(routes.Ident.rdrUserSomewhere())

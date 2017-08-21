@@ -11,7 +11,7 @@ import models.mproj.ICommonDi
 import org.im4java.core.{ConvertCmd, IMOperation}
 import play.api.mvc.Call
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Promise}
 import scala.util.{Failure, Success}
@@ -25,10 +25,11 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class DynImgUtil @Inject() (
-  mImgs3                    : MImgs3,
-  mLocalImgs                : MLocalImgs,
-  mCommonDi                 : ICommonDi
-)
+                             mImgs3                    : MImgs3,
+                             mLocalImgs                : MLocalImgs,
+                             im4jAsyncUtil             : Im4jAsyncUtil,
+                             mCommonDi                 : ICommonDi
+                           )
   extends MacroLogsImpl
 {
 
@@ -37,25 +38,16 @@ class DynImgUtil @Inject() (
 
   /** Сколько времени кешировать результат подготовки картинки?
     * Кеш используется для подавления параллельных запросов. */
-  val ENSURE_DYN_CACHE_TTL = {
-    configuration.getOptional[Int]("img.dyn.ensure.cache.ttl.seconds")
-      .getOrElse(10)
-      .seconds
-  }
+  private val ENSURE_DYN_CACHE_TTL = 10.seconds
 
   /** Если true, то производные от оригинала картники будут дублироваться в cassandra.
     * Если false, то производные будут только на локалхосте. */
-  val SAVE_DERIVATIVES_TO_PERMANENT: Boolean = {
-    configuration.getOptional[Boolean]("img.dyn.derivative.save.to.permanent.enabled")
-      .getOrElse(true)
-  }
+  private def SAVE_DERIVATIVES_TO_PERMANENT = true
 
   /** Активен ли префетчинг, т.е. опережающая подготовка картинки?
     * Префетчинг начинается асинхронно в момент генерации ссылки на картинку. */
-  val PREFETCH_ENABLED: Boolean = {
-    configuration.getOptional[Boolean]("img.dyn.prefetch.enabled")
-      .getOrElse(true)
-  }
+  private def PREFETCH_ENABLED = true
+
 
   trace(s"DynImgUtil: ensureCache=$ENSURE_DYN_CACHE_TTL, saveDerivatives=$SAVE_DERIVATIVES_TO_PERMANENT, prefetch=$PREFETCH_ENABLED")
 
@@ -68,8 +60,9 @@ class DynImgUtil @Inject() (
     if (PREFETCH_ENABLED) {
       Future {
         ensureImgReady(dargs, cacheResult = true)
-      } .flatMap(identity)
-        .onFailure { case ex =>
+      }
+        .flatMap(identity)
+        .failed.foreach { ex =>
           error("Failed to prefetch dyn.image: " + dargs.fileName, ex)
         }
     }
@@ -106,10 +99,10 @@ class DynImgUtil @Inject() (
           newLocalImg
         }
       }
-    fut.onFailure { case ex =>
+    for (ex <- fut.failed) {
       val logPrefix = s"mkReadyImgToFile($args): "
       val msg = ex match {
-        case nsee: NoSuchElementException =>
+        case _: NoSuchElementException =>
           "Image original does not exists in storage"
         case _ =>
           "Unknown exception during image prefetch"
@@ -156,9 +149,8 @@ class DynImgUtil @Inject() (
             val localResultFut = mkReadyImgToFile(args)
             // В фоне запускаем сохранение полученной картинки в permanent-хранилище (если включено):
             if (saveToPermanent) {
-              localResultFut.onSuccess { case localImg2 =>
+              for (localImg2 <- localResultFut)
                 mImgs3.saveToPermanent( localImg2.toWrappedImg )
-              }
             }
             // Заполняем результат, который уже в кеше:
             resultP.completeWith( localResultFut )
@@ -201,13 +193,13 @@ class DynImgUtil @Inject() (
     // Пытаемся подавить двойные вызовы через короткий Cache.
     cacheApiUtil.getOrElseFut[Int](opStr, expiration = CONVERT_CACHE_TTL) {
       // Запускаем генерацию картинки.
-      val listener = new Im4jAsyncSuccessProcessListener
+      val listener = new im4jAsyncUtil.Im4jAsyncSuccessProcessListener
       cmd.addProcessEventListener(listener)
       cmd.run(op)
       val resFut = listener.future
       if (LOGGER.underlying.isTraceEnabled()) {
         val tstamp = System.currentTimeMillis() * imOps.hashCode() * in.hashCode()
-        trace(s"convert(): [$tstamp] ${cmd.getCommand.mkString(" ")} $opStr")
+        trace(s"convert(): [$tstamp] ${cmd.getCommand.iterator().asScala.mkString(" ")} $opStr")
         for (res <- resFut) {
           trace(s"convert(): [$tstamp] returned $res, result ${out.length} bytes")
         }

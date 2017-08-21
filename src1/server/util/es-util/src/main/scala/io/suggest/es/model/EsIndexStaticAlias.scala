@@ -4,7 +4,7 @@ import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.util.logs.IMacroLogs
 import org.elasticsearch.ResourceNotFoundException
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
 
@@ -60,6 +60,7 @@ trait EsIndexStaticAlias extends IEsModelDi with IMacroLogs {
         LOGGER.trace(s"${_gAIN_logPrefix} Ok, found ${resp.getAliases.size()} indexes.")
         resp.getAliases
           .keysIt()
+          .asScala
           .toSet
       }
       .recover { case ex: ResourceNotFoundException =>

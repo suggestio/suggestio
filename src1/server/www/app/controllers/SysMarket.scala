@@ -436,7 +436,7 @@ class SysMarket @Inject() (
     def f(flag: Boolean, errMsg: => String)(action: => Future[_]): Future[_] = {
       if (flag) {
         val fut: Future[_] = action
-        fut onFailure { case ex: Throwable =>
+        for (ex <- fut.failed) {
           warn(errMsg, ex)
         }
         fut

@@ -408,7 +408,7 @@ class GeoTagsUtil @Inject() (
       _         <- {
         info(s"$logPrefix Starting tags rebuild, $tmapSize tags to go.")
         val rbldFut = rebuildTags(tmap.values)
-        rbldFut.onFailure { case ex: Throwable =>
+        for (ex <- rbldFut.failed) {
           error(s"$logPrefix Failed to rebuild the tags", ex)
         }
         rbldFut

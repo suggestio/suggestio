@@ -7,10 +7,12 @@ import javax.inject.Singleton
 
 import com.google.code.kaptcha.util.Config
 import javax.inject.Inject
+
 import com.google.code.kaptcha.Producer
 import com.google.code.kaptcha.impl.DefaultKaptcha
 import io.suggest.text.util.TextUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
+import models.mproj.ICommonDi
 import play.api.data.Form
 import play.api.mvc._
 import util.captcha.{CaptchaUtil, ICaptchaUtilDi}
@@ -26,15 +28,17 @@ import scala.util.Random
  */
 @Singleton
 class Captcha @Inject() (
-  override val captchaUtil: CaptchaUtil
-)
-  extends KaptchaGenerator
+                          override val captchaUtil: CaptchaUtil,
+                          override val mCommonDi  : ICommonDi
+                        )
+  extends SioControllerImpl
+  with KaptchaGenerator
   with MacroLogsImpl
 
 
 /** Абстрактный кусок контроллера для генерации капч с помощью какой-то неопределённой библиотеки. */
 trait CaptchaGeneratorBase
-  extends Controller
+  extends BaseController
   with IMacroLogs
   with ICaptchaUtilDi
 {

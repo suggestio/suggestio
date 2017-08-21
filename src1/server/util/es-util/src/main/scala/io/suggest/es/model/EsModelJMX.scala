@@ -153,13 +153,13 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
 
   import java.{util => ju}
-  import scala.collection.JavaConversions._
+  import scala.collection.JavaConverters._
 
   /** Общий код парсинга и добавления элементов в хранилище вынесен сюда. */
   private def _saveOne(idOpt: Option[String], dataMap: ju.Map[String, AnyRef], versionOpt: Option[Long] = None): Future[String] = {
     val inst = companion
       // TODO Придумать что-то, использующее deserializeOne2()
-      .deserializeOne(idOpt, dataMap, version = None)
+      .deserializeOne(idOpt, dataMap.asScala, version = None)
     companion.save(inst)
   }
 

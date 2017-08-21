@@ -21,7 +21,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 import org.elasticsearch.search.SearchHit
 import org.elasticsearch.search.sort.SortBuilders
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
@@ -139,13 +139,11 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
       .flatMap { searchResp =>
         EsModelUtil.foldSearchScroll(searchResp, acc0 = 0, firstReq = true, keepAliveMs = SCROLL_KEEPALIVE_MS_DFLT) {
           (acc01, hits) =>
-            hits
-              .iterator()
-              .foreach { hit =>
-                val req = esClient.prepareDelete(hit.getIndex, hit.getType, hit.getId)
-                  .request()
-                bp.add(req)
-              }
+            for (hit <- hits.iterator().asScala) {
+              val req = esClient.prepareDelete(hit.getIndex, hit.getType, hit.getId)
+                .request()
+              bp.add(req)
+            }
             val docsDeletedNow = hits.getHits.length
             val acc02 = acc01 + docsDeletedNow
             LOGGER.trace(s"$logPrefix $docsDeletedNow docs queued for deletion, total queued now: $acc02 docs.")
@@ -220,6 +218,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
           (acc01, hits) =>
             val acc02 = hits
               .iterator()
+              .asScala
               .map { deserializeSearchHit }
               .foldLeft(acc01)(f)
             Future.successful( acc02 )
@@ -253,8 +252,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
         EsModelUtil.foldSearchScroll(searchResp, acc0, firstReq = true, keepAliveMs) {
           (acc01, hits) =>
             hits.iterator()
+              .asScala
               .map { deserializeSearchHit }
-              .foldLeft(Future successful acc01)(f)
+              .foldLeft(Future.successful(acc01))( f )
         }
       }
   }
@@ -428,6 +428,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   def searchRespMap[A](searchResp: SearchResponse)(f: SearchHit => A): Iterator[A] = {
     searchResp.getHits
       .iterator()
+      .asScala
       .map(f)
   }
 
@@ -587,7 +588,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
           (acc0, hits) =>
             LOGGER.trace(s"$logPrefix${hits.getHits.length} hits read from source")
             // Нужно запустить bulk request, который зальёт все хиты в toClient
-            val iter = hits.iterator().toIterator
+            val iter = hits.iterator().asScala
             if (iter.nonEmpty) {
               val bulk = toClient.prepareBulk()
               for (hit <- iter) {
@@ -597,7 +598,9 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
               for (bulkResult <- bulk.execute()) yield {
                 if (bulkResult.hasFailures)
                   LOGGER.error("copyContent(): Failed to write bulk into target:\n " + bulkResult.buildFailureMessage())
-                val failedCount = bulkResult.iterator().count(_.isFailed)
+                val failedCount = bulkResult.iterator()
+                  .asScala
+                  .count(_.isFailed)
                 val acc1 = acc0.copy(
                   success = acc0.success + bulkResult.getItems.length - failedCount,
                   failed  = acc0.failed + failedCount

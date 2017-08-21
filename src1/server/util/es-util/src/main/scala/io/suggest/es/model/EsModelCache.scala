@@ -90,11 +90,12 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
       }
     accsFut2.flatMap { case (cached, nonCachedIds) =>
       val resultFut = companion.multiGetRev(nonCachedIds, acc0 = cached)
+
       // Асинхронно отправить в кеш всё, чего там ещё не было.
       if (nonCachedIds.nonEmpty) {
-        resultFut.onSuccess { case results =>
+        for (results <- resultFut) {
           val ncisSet = nonCachedIds.toSet
-          results.foreach { result =>
+          for (result <- results) {
             val id = result.idOrNull
             if (ncisSet contains id) {
               val ck = cacheKey(id)
@@ -103,6 +104,8 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
           }
         }
       }
+
+      // Вернуть ожидаемый результат.
       resultFut
     }
   }
@@ -136,10 +139,9 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
   def getByIdAndCache(id: String, ck0: String = null): Future[Option[T1]] = {
     val ck: String = if (ck0 == null) cacheKey(id) else ck0
     val resultFut = companion.getById(id)
-    resultFut onSuccess {
-      case Some(adnn) =>
+    for (adnnOpt <- resultFut) {
+      for (adnn <- adnnOpt)
         cache.set(ck, adnn, EXPIRE)
-      case _ => // do nothing
     }
     resultFut
   }

@@ -12,7 +12,7 @@ import util.cron.ICronTasksProvider
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Suggest.io
@@ -36,27 +36,23 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
   private def EDD_CONF_PREFIX = "m.img.local.edd"
 
   /** Включено ли периодическое удаление пустых директорий из под картинок? */
-  private def DELETE_EMPTY_DIRS_ENABLED = configuration.getOptional[Boolean](EDD_CONF_PREFIX + ".enabled")
-    .contains(true)
+  private def DELETE_EMPTY_DIRS_ENABLED = true
 
   /** Как часто инициировать проверку? */
-  private def DELETE_EMPTY_DIRS_EVERY = configuration.getOptional[Int](EDD_CONF_PREFIX + ".every.minutes")
-    .fold [FiniteDuration] (12.hours) (_.minutes)
+  private def DELETE_EMPTY_DIRS_EVERY = 12.hours
 
   /** На сколько отодвигать старт проверки. */
-  private def DELETE_EMPTY_DIRS_START_DELAY = configuration.getOptional[Int](EDD_CONF_PREFIX + ".start.delay.seconds")
-    .getOrElse(60)
-    .seconds
+  private def DELETE_EMPTY_DIRS_START_DELAY = 60.seconds
+
 
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(): TraversableOnce[ICronTask] = {
     if (DELETE_EMPTY_DIRS_ENABLED) {
       val ct2 = MCronTask(startDelay = DELETE_EMPTY_DIRS_START_DELAY, every = DELETE_EMPTY_DIRS_EVERY, displayName = EDD_CONF_PREFIX) {
-        findAndDeleteEmptyDirsAsync().onFailure { case ex =>
+        for (ex <- findAndDeleteEmptyDirsAsync().failed)
           LOGGER.warn("Failed to findAndDeleteEmptyDirs()", ex)
-        }
       }
-      List(ct2)
+      ct2 :: Nil
     } else {
       Nil
     }
@@ -75,6 +71,7 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
     try {
       dirStream
         .iterator()
+        .asScala
         .foreach { imgDirPath =>
           if (imgDirPath.toFile.isDirectory)
             maybeDeleteDirIfEmpty(imgDirPath)
@@ -89,7 +86,9 @@ class PeriodicallyDeleteEmptyDirs @Inject() (
     val dirStream = Files.newDirectoryStream(dirPath)
 
     val dirEmpty = try {
-      dirStream.iterator().isEmpty
+      dirStream.iterator()
+        .asScala
+        .isEmpty
     } finally {
       dirStream.close()
     }

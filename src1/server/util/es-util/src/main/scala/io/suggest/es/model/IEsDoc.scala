@@ -3,7 +3,7 @@ package io.suggest.es.model
 import org.elasticsearch.action.get.GetResponse
 import org.elasticsearch.search.SearchHit
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * Suggest.io
@@ -28,7 +28,7 @@ object IEsDoc {
       v.getSourceAsString
     }
     override def bodyAsScalaMap(v: SearchHit): collection.Map[String, AnyRef] = {
-      v.getSource
+      v.getSource.asScala
     }
   }
 
@@ -48,7 +48,7 @@ object IEsDoc {
       v.getSourceAsString
     }
     override def bodyAsScalaMap(v: GetResponse): collection.Map[String, AnyRef] = {
-      v.getSourceAsMap
+      v.getSourceAsMap.asScala
     }
   }
 

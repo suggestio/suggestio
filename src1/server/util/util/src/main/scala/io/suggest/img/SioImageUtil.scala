@@ -9,7 +9,7 @@ import io.suggest.img.ConvertModes.ConvertMode
 import io.suggest.util.logs.IMacroLogs
 
 import scala.util.parsing.combinator.JavaTokenParsers
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
  * Suggest.io
@@ -187,7 +187,7 @@ trait SioImageUtilT extends IMacroLogs {
     op.quality(JPEG_QUALITY_PC)
     op.samplingFactor(2.0, 1.0)
     op.addImage(fileNew.getAbsolutePath)
-    LOGGER.trace("convert(): " + cmd.getCommand.mkString(" ") + " " + op.toString)
+    LOGGER.trace("convert(): " + cmd.getCommand.iterator().asScala.mkString(" ") + " " + op.toString)
     cmd.run(op)
   }
 

@@ -75,7 +75,7 @@ trait ScIndexAdOpen
         val prodFut = mNodesCache.getById(producerId)
           .map(_.get)
         // Как выяснилось, бывают карточки-сироты (продьюсер удален, карточка -- нет). Нужно сообщать об этой ошибке.
-        prodFut.onFailure { case ex =>
+        for (ex <- prodFut.failed) {
           val msg = s"Producer node[$producerId] does not exist."
           if (ex.isInstanceOf[NoSuchElementException])
             LOGGER.error(msg)

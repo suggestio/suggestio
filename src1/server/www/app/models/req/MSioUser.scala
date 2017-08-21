@@ -126,7 +126,7 @@ sealed trait ISioUserT extends ISioUser with MacroLogsDyn {
   override def personNodeOptFut: Future[Option[MNode]] = {
     FutureUtil.optFut2futOpt( personIdOpt ) { personId =>
       val optFut0 = mNodeCache.getByIdType(personId, MNodeTypes.Person)
-      optFut0.onSuccess { case None =>
+      for (resOpt <- optFut0 if resOpt.isEmpty) {
         // should never happen
         LOGGER.warn(s"personNodeOptFut(): Person[$personId] doesn't exist, but it should!")
       }

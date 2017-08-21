@@ -175,11 +175,12 @@ trait ScIndex
         MIndexNodeInfo(mnode, isRcvr = true)
       }
       // Залоггировать возможное неизвестное исключение
-      rFut.onFailure {
+      rFut.failed.foreach {
         case _: NodeNotFoundException =>
           LOGGER.warn(s"$logPrefix Rcvr node missing: $adnIdOpt! Somebody scanning our nodes? I'll try to geolocate rcvr node.")
         case ex: Throwable if !ex.isInstanceOf[NoSuchElementException] =>
           LOGGER.warn(s"$logPrefix Unknown exception while getting rcvr node $adnIdOpt", ex)
+        case _ => // do nothing
       }
       rFut
     }

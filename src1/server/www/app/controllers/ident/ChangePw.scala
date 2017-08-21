@@ -104,9 +104,8 @@ trait ChangePwAction
                     isVerified  = true
                   )
                   val fut = emailPwIdents.save(epw)
-                  fut.onSuccess {
-                    case epwId =>
-                      LOGGER.info(s"${logPrefix}Created new epw-ident $epwId for non-pw email $email")
+                  for (epwId <- fut) {
+                    LOGGER.info(s"${logPrefix}Created new epw-ident $epwId for non-pw email $email")
                   }
                   fut
                 }

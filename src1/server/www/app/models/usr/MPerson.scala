@@ -41,7 +41,7 @@ class MPerson @Inject() (
   private def personCacheKey(personId: String) = personId + ".pu"
 
   /** Сколько секунд кешировать найденный юзернейм в кеше play? */
-  val USERNAME_CACHE_EXPIRATION_SEC: Int = configuration.getOptional[Int]("mperson.username.cache.seconds").getOrElse(100)
+  private def USERNAME_CACHE_EXPIRATION_SEC = 100
 
   /** Асинхронно найти подходящее имя для юзера используя кеш. */
   def findUsernameCached(personId: String): Future[Option[String]] = {
@@ -51,11 +51,12 @@ class MPerson @Inject() (
         Future.successful(res)
       } else {
         val resultFut = findUsername(personId)
-        resultFut onSuccess {
-          case Some(result) =>
-            cache.set(cacheKey, result, USERNAME_CACHE_EXPIRATION_SEC.seconds)
-          case None =>
+        for (resultOpt <- resultFut) {
+          resultOpt.fold[Unit] {
             LOGGER.warn(s"findUsernameCached($personId): Username not found for user. Invalid session?")
+          } { result =>
+            cache.set(cacheKey, result, USERNAME_CACHE_EXPIRATION_SEC.seconds)
+          }
         }
         resultFut
       }

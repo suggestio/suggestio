@@ -12,7 +12,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute
 import org.apache.lucene.analysis._
 import org.tartarus.snowball.ext.{EnglishStemmer, RussianStemmer}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.util.parsing.combinator.JavaTokenParsers
 
 /**
@@ -38,6 +38,7 @@ object YmStringsAnalyzer extends JavaTokenParsers {
         }
     }
     cas.iterator()
+      .asScala
       .filter(stopSetFilterF)
       .asInstanceOf[Iterator[Array[Char]]]
   }

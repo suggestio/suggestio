@@ -99,10 +99,10 @@ class OAuth1ServiceActor @Inject() (
     val keyId = pgpUtil.LOCAL_STOR_KEY_ID
     val fut = mAsymKeys.getById(keyId)
       .map(_.get)
-    fut.onFailure {
+    fut.failed.foreach {
       case _: NoSuchElementException =>
         warn("Server normal PGP key not yet created! I cannot store access tokens!")
-      case ex: Throwable =>
+      case ex =>
         error("Cannot read server PGP key: " + keyId, ex)
     }
     fut
@@ -112,7 +112,7 @@ class OAuth1ServiceActor @Inject() (
   lazy val lsValueKey = s"adv.ext.svc.${args.service.strId}.access.${args.request.user.personIdOpt.getOrElse("__ANON__")}"
 
   /** Имя js-попапа, в рамках которого происходит авторизация пользователя сервисом. */
-  def domWndTargetName = "popup-authz-" + args.service.strId
+  private def domWndTargetName = "popup-authz-" + args.service.strId
 
   /** Запуск актора. Выставить исходное состояние. */
   override def preStart(): Unit = {

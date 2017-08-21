@@ -13,7 +13,7 @@ import models.mproj.IMCommonDi
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 
 /**
   * Suggest.io
@@ -56,7 +56,7 @@ abstract class IAdRrr
 
     // Удалить файл с диска через некоторое время, зависящие от времени кеширования.
     val deleteAt = System.currentTimeMillis() + (_cacheSeconds * 2).seconds.toMillis
-    fut.onSuccess { case file =>
+    for (file <- fut) {
       val deleteAfterNow = Math.abs(deleteAt - System.currentTimeMillis()).milliseconds
       actorSystem.scheduler.scheduleOnce(deleteAfterNow) {
         file.delete
@@ -83,7 +83,10 @@ abstract class IAdRrr
 
       lazy val logMsg = {
         val cmd = args.mkString(" ")
-        val stdOutStr = new String( Files.readAllLines(stdOutFile.toPath).mkString(" | ", "\n | ", "\n") )
+        val stdOutStr = Files.readAllLines(stdOutFile.toPath)
+          .iterator()
+          .asScala
+          .mkString(" | ", "\n | ", "\n")
         s"[$now] $cmd  ===>>>  $result ; took = $tookMs ms\n $stdOutStr"
       }
 

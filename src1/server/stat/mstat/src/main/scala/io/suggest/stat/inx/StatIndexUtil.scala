@@ -64,7 +64,7 @@ class StatIndexUtil @Inject() (
     }
 
     // При ошибках надо удалять новосозданный индекс.
-    okFut.onFailure { case ex: Throwable =>
+    for (ex <- okFut.failed) {
       val deleteFut = mStatIndexes.deleteIndex( newInxName )
       error(s"$logPrefix Failed to reNew to index. Deleting new index...", ex)
       deleteFut.onComplete { res =>

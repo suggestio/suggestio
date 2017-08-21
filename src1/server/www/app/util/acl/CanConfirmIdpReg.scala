@@ -64,7 +64,7 @@ class CanConfirmIdpReg @Inject() (
           }
           val pcntFut = mNodes.dynCount(msearch)
           // Запустить поиск имеющихся внешних идентов
-          val hasExtIdent = mExtIdents.countByPersonId(personId)
+          val hasExtIdentFut = mExtIdents.countByPersonId(personId)
             .map(_ > 0L)
           // Дождаться результата поиска узлов.
           pcntFut.flatMap { pcnt =>
@@ -73,11 +73,13 @@ class CanConfirmIdpReg @Inject() (
               false
             } else {
               // Юзер пока не имеет узлов. Проверить наличие идентов.
-              hasExtIdent.filter(identity).onFailure {
-                case _: NoSuchElementException =>
-                  LOGGER.debug(s"User[$personId] has no MExtIdents. IdP reg not allowed.")
+              for {
+                hasExtIdent <- hasExtIdentFut
+                if !hasExtIdent
+              } {
+                LOGGER.debug(s"User[$personId] has no MExtIdents. IdP reg not allowed.")
               }
-              hasExtIdent
+              hasExtIdentFut
             }
           }
         }

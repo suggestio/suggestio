@@ -76,10 +76,11 @@ class PgpUtil @Inject() (
       mAsymKeys.getById(LOCAL_STOR_KEY_ID)
         // TODO проверять, что пароль соответствует ключу. Нужно пытаться зашифровать какие-то простые данные.
         .filter { _.isDefined }
-        .onFailure {
+        .failed
+        .foreach {
           case _ : NoSuchElementException =>
             LOGGER.warn("PGP key does not exists and creation is disabled on this node: " + cfk)
-          case ex: Throwable =>
+          case ex =>
             LOGGER.error("Failed to check status of server's pgp key.", ex)
         }
       None
@@ -94,9 +95,8 @@ class PgpUtil @Inject() (
         val k = genNewNormalKey()
         mAsymKeys.save(k)
       }
-    fut.onFailure {
-      case ex: Throwable =>
-        LOGGER.error("Failed to initialize server's PGP key", ex)
+    for (ex <- fut.failed) {
+      LOGGER.error("Failed to initialize server's PGP key", ex)
     }
     fut
   }

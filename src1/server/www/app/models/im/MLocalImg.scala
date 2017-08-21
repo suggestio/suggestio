@@ -50,19 +50,18 @@ class MLocalImgs @Inject() (
 
 
   /** Сколько модель должна кешировать в голове результат вызова identify? */
-  val IDENTIFY_CACHE_TTL_SECONDS = configuration.getOptional[Int]("m.local.img.identify.cache.ttl.seconds")
-    .getOrElse(120)
+  private def IDENTIFY_CACHE_TTL_SECONDS = 120
 
   /** Адрес img-директории, который используется для хранилища. */
   private def DIR_REL = configuration.getOptional[String]("m.local.img.dir.rel")
     .getOrElse("picture/local")
 
   /** Экземпляр File, точно указывающий на директорию с данными этой модели. */
-  val DIR = current.environment.getFile(DIR_REL)
+  def DIR = current.environment.getFile(DIR_REL)
 
   DIR.mkdirs()
 
-  def getFsImgDir(mimg: MLocalImg): File   = getFsImgDir(mimg.rowKeyStr)
+  def getFsImgDir(mimg: MLocalImg): File    = getFsImgDir(mimg.rowKeyStr)
   def getFsImgDir(rowKeyStr: String): File  = new File(DIR, rowKeyStr)
   def getFsImgDir(rowKey: UUID): File       = getFsImgDir( UuidUtil.uuidToBase64(rowKey) )
 
@@ -196,7 +195,7 @@ class MLocalImgs @Inject() (
     val fut = Future {
       FileUtil.getMimeMatch(file)
     }
-    fut.onFailure { case ex: Throwable =>
+    for (ex <- fut.failed) {
       LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", ex)
     }
     fut

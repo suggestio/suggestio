@@ -19,7 +19,6 @@ import play.api.{Application, Configuration, Environment}
 import play.api.http.HeaderNames._
 import play.api.i18n.Messages
 import play.api.mvc.Call
-import play.api.routing.Router.Tags._
 import util.cdn.CdnUtil
 import util.i18n.JsMessagesUtil
 import util.img.{DynImgUtil, GalleryUtil}
@@ -276,27 +275,6 @@ trait Context {
       .toStream
       .headOption
   }
-
-  /**
-   * Текущий контроллер, если вызывается. (fqcn)
-   * @return "controllers.LkAdvExt" например.
-   */
-  def controller: Option[String] = request.tags.get(RouteController)
-
-  /**
-   * Короткое имя класса.
-   * @return "LkAdvExt".
-   */
-  def controllerSimple = controller.map { className =>
-    val i = className.lastIndexOf('.')
-    className.substring(i + 1)
-  }
-
-  /**
-   * Текущий экшен, если исполняется.
-   * @return "forAd"
-   */
-  def action: Option[String] = request.tags.get(RouteActionMethod)
 
   /** Кастомные данные в контексте. */
   def data: CtxData

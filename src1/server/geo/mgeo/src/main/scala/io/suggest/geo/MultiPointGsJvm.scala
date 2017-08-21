@@ -32,9 +32,10 @@ object MultiPointGsJvm extends MultiPointShapeStatic {
   override protected[this] def applier = MultiPointGs
 
   def geoPoints2esCoords(points: Seq[MGeoPoint]): ju.List[Coordinate] = {
-    import scala.collection.JavaConversions._
+    import scala.collection.JavaConverters._
     points
       .map { GeoPoint.toJtsCoordinate }
+      .asJava
   }
 
 }

@@ -6,7 +6,7 @@ import org.elasticsearch.common.settings.Settings
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.util.logs.MacroLogsImpl
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 
 /**
@@ -84,7 +84,9 @@ class MStatIndexes @Inject() (
         if (as.isEmpty) {
           Nil
         } else {
-          val allInxNames = as.keysIt().toSeq
+          val allInxNames = as.keysIt()
+            .asScala
+            .toSeq
           trace(s"findStatIndices(): All stat indices: ${allInxNames.mkString(", ")}")
           allInxNames
         }

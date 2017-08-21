@@ -209,14 +209,13 @@ trait SbNodeContract
       }
 
       // Отработать сценарии, когда возникает ошибка при сохранении узла.
-      deleteFut.onSuccess { case _ =>
-        nodeSaveFut.onFailure { case ex: Throwable =>
+      for (_ <- deleteFut) {
+        for (ex <- nodeSaveFut) {
           val act2 = mContracts.insertOne( request.mcontract )
           val reInsFut = slick.db.run(act2)
           LOGGER.error(s"$logPrefix Re-inserting deleted contract after node update failure: ${request.mcontract}", ex)
-          reInsFut.onFailure { case ex2 =>
+          for (ex2 <- reInsFut.failed)
             LOGGER.error(s"$logPrefix Unable to re-insert $act2", ex2)
-          }
         }
       }
 

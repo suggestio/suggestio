@@ -124,10 +124,8 @@ trait ScTags
         override def geoIpLoc     = geoIpResOpt
         override def components   = MComponents.Tags :: super.components
       }
-      statUtil.saveStat(sstat)
-        .onFailure { case ex: Throwable =>
-          LOGGER.error(s"tagsSearch($qs): Failed to save tags stats", ex)
-        }
+      for (ex <- statUtil.saveStat(sstat).failed)
+        LOGGER.error(s"tagsSearch($qs): Failed to save tags stats", ex)
     }
 
     // Возвращаем исходный асинхронный ответ.

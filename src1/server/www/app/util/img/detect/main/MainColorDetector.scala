@@ -21,18 +21,19 @@ import scala.concurrent.Future
  */
 @Singleton
 class MainColorDetector @Inject() (
-  mImgs3        : MImgs3,
-  mLocalImgs    : MLocalImgs,
-  mCommonDi     : ICommonDi
-)
+                                    mImgs3        : MImgs3,
+                                    mLocalImgs    : MLocalImgs,
+                                    im4jAsyncUtil : Im4jAsyncUtil,
+                                    mCommonDi     : ICommonDi
+                                  )
   extends MacroLogsImpl
 {
 
   import LOGGER._
-  import mCommonDi.{configuration, ec}
+  import mCommonDi.ec
 
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
-  val PALETTE_MAX_COLORS_DFLT = configuration.getOptional[Int]("mcd.palette.colors.max.dflt").getOrElse(8)
+  private def PALETTE_MAX_COLORS_DFLT = 8
 
 
   /**
@@ -58,7 +59,7 @@ class MainColorDetector @Inject() (
     op.addRawArgs("histogram:info:" + outFilepath)
     val cmd = new ConvertCmd
     cmd.setAsyncMode(true)
-    val listener = new Im4jAsyncSuccessProcessListener
+    val listener = new im4jAsyncUtil.Im4jAsyncSuccessProcessListener
     cmd.addProcessEventListener(listener)
 
     val loggingEnabled = LOGGER.underlying.isDebugEnabled
@@ -251,7 +252,4 @@ class MainColorDetector @Inject() (
   }
 
 }
-
-
-
 

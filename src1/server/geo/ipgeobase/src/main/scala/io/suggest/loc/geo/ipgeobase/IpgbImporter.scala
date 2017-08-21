@@ -39,37 +39,37 @@ class IpgbImporter @Inject() (
   import LOGGER._
 
   /** Ссылка для скачивания текущей базы. */
-  def ARCHIVE_DOWNLOAD_URL = configuration.getOptional[String]("ipgeobase.archive.url")
+  private def ARCHIVE_DOWNLOAD_URL = configuration.getOptional[String]("ipgeobase.archive.url")
     .getOrElse("http://ipgeobase.ru/files/db/Main/geo_files.zip")
 
   /** Поверхностная проверка скачанного архива на профпригодность. */
-  def ARCHIVE_MAGIC_NUMBER = configuration.getOptional[Int]("ipgeobase.archive.magic")
+  private def ARCHIVE_MAGIC_NUMBER = configuration.getOptional[Int]("ipgeobase.archive.magic")
     .getOrElse(0x504b0304)
 
   /** Минимально допустимая длина архива с данными. */
-  def ARCHIVE_MIN_LENGTH = configuration.getOptional[Int]("ipgeobase.archive.size.min")
+  private def ARCHIVE_MIN_LENGTH = configuration.getOptional[Int]("ipgeobase.archive.size.min")
     .getOrElse(1900000)
 
   /** Имя файл, содержащего диапазоны.*/
-  def IP_RANGES_FILENAME = configuration.getOptional[String]("ipgeobase.cidr_optim.filename")
+  private def IP_RANGES_FILENAME = configuration.getOptional[String]("ipgeobase.cidr_optim.filename")
     .getOrElse("cidr_optim.txt")
 
   /** Кодировка файла с дампами диапазонов. Исторически там win-1251.
     * Корректное значение названия кодировки надо брать из колонки java.nio нижеуказанной ссылки.
     * @see [[http://docs.oracle.com/javase/8/docs/technotes/guides/intl/encoding.doc.html]]. */
-  def IP_RANGES_FILE_ENCODING = configuration.getOptional[String]("ipgeobase.cidr_optim.encoding")
+  private def IP_RANGES_FILE_ENCODING = configuration.getOptional[String]("ipgeobase.cidr_optim.encoding")
     .getOrElse("windows-1251")
 
   /** Название файла, в котором лежит карта городов. */
-  def CITIES_FILENAME = configuration.getOptional[String]("ipgeobase.cities.filename")
+  private def CITIES_FILENAME = configuration.getOptional[String]("ipgeobase.cities.filename")
     .getOrElse("cities.txt")
 
   /** Кодировка содержимого файла городов. */
-  def CITIES_FILE_ENCODING = configuration.getOptional[String]("ipgeobase.cities.encoding")
+  private def CITIES_FILE_ENCODING = configuration.getOptional[String]("ipgeobase.cities.encoding")
     .getOrElse(IP_RANGES_FILE_ENCODING)
 
   /** Кол-во item'ов в очереди на удаление. */
-  def BULK_QUEUE_LEN = 900
+  private def BULK_QUEUE_LEN = 900
 
 
   /** Скачать файл с дампом базы в tmp. */
@@ -252,7 +252,7 @@ class IpgbImporter @Inject() (
     }
 
     // Если была ошибка во время doFut, то удалить новый индекс.
-    doFut.onFailure { case ex: Throwable =>
+    for (ex <- doFut.failed) {
       error(s"$logPrefix FAILED. Deleting NEW index, it may be corrupted.", ex)
       mIndexes.deleteIndex(newIndexName)
     }

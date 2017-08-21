@@ -149,7 +149,7 @@ class LkEvents @Inject() (
 
       // Автоматически помечать все сообщения как прочитанные при первом заходе на страницу событий:
       if (offset == 0 && !inline) {
-        evtsRndrFut.onSuccess { case _ =>
+        for (_ <- evtsRndrFut) {
           lkEventsUtil.markAllSeenForNode(adnId) onComplete {
             case Success(count) =>
               if (count > 0)

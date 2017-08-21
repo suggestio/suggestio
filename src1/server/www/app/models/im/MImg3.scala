@@ -150,9 +150,8 @@ class MImgs3 @Inject() (
     lazy val logPrefix = s"_doSaveInPermanent($loc):"
 
     if (LOGGER.underlying.isTraceEnabled()) {
-      media0Fut.onSuccess { case res =>
+      for (res <- media0Fut)
         LOGGER.trace(s"$logPrefix MMedia already exist: $res")
-      }
     }
 
     val imgFile = mLocalImgs.fileOf(loc)
@@ -203,9 +202,8 @@ class MImgs3 @Inject() (
     // Параллельно запустить поиск и сохранение экземпляра MNode.
     val mnodeSaveFut = ensureMnode(mimg)
 
-    mnodeSaveFut.onFailure { case ex: Throwable =>
+    for (ex <- mnodeSaveFut.failed)
       LOGGER.error(s"$logPrefix Failed to save picture MNode for local img " + loc)
-    }
 
     // Параллельно выполнить заливку файла в постоянное надежное хранилище.
     val storWriteFut = for {
@@ -222,9 +220,8 @@ class MImgs3 @Inject() (
       res
     }
 
-    storWriteFut.onFailure { case ex: Throwable =>
+    for (_ <- storWriteFut.failed)
       LOGGER.error("Failed to send to storage local image: " + loc)
-    }
 
     // Дождаться завершения всех паралельных операций.
     for {
@@ -250,7 +247,7 @@ class MImgs3 @Inject() (
         false
     }
     // Залоггировать неожиданные экзепшены.
-    isExistsFut.onFailure { case ex: Throwable =>
+    for (ex <- isExistsFut.failed) {
       if (!ex.isInstanceOf[NoSuchElementException])
         LOGGER.warn("existsInPermanent($mimg) or _mediaFut failed", ex)
     }
