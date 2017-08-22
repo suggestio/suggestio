@@ -19,6 +19,43 @@ object MPredicate {
     EnumeratumUtil.valueEnumEntryFormat( MPredicates )
   }
 
+
+  /**
+    * Запись предиката в список вместе с родительскими предикатами.
+    * Это используется для полиморфной индексации.
+    */
+  val MPREDICATE_DEEP_FORMAT: Format[MPredicate] = {
+    /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
+    val PARENTRAL_WRITES: Writes[MPredicate] = {
+      // Костыль из-за проблем contramap(). http://stackoverflow.com/a/27481370
+      Writes[MPredicate] { mpred =>
+        val p = implicitly[Writes[MPredicate]]
+        val preds = mpred
+          .meAndParentsIterator
+          .map { p.writes }
+          .toSeq
+        JsArray( preds )
+      }
+    }
+
+    /** Десериализация из JSON-списка в первый элемент этого списка. */
+    val PARENTRAL_READS: Reads[MPredicate] = {
+      Reads[MPredicate] {
+        case arr: JsArray =>
+          if (arr.value.isEmpty)
+            JsError("expected.nonempty.jsarray")
+          else
+            MPREDICATE_FORMAT.reads(arr.value.head)
+        case str: JsString =>
+          MPREDICATE_FORMAT.reads(str)
+        case _ =>
+          JsError("expected.jsstring.or.jsarray")
+      }
+    }
+
+    Format(PARENTRAL_READS, PARENTRAL_WRITES)
+  }
+
 }
 
 
@@ -30,7 +67,8 @@ sealed abstract class MPredicate(override val value: String)
 { that: MPredicate =>
 
   /** Некий строковой ключ. Например, ключ элемента модели. */
-  override final def strId: String = value    // TODO Выкинуть это?
+  // TODO Выкинуть strId?
+  @inline override final def strId: String = value
 
   /** Код i18n-сообщения с названием предиката в единственном числе. */
   def singular: String = {
@@ -42,40 +80,6 @@ sealed abstract class MPredicate(override val value: String)
 
 /** Модель предикатов эджей. */
 object MPredicates extends StringEnum[MPredicate] {
-
-  /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
-  val PARENTRAL_WRITES: Writes[MPredicate] = {
-    // Костыль из-за проблем contramap(). http://stackoverflow.com/a/27481370
-    Writes[MPredicate] { mpred =>
-      val p = implicitly[Writes[MPredicate]]
-      val preds = mpred
-        .meAndParentsIterator
-        .map { p.writes }
-        .toSeq
-      JsArray( preds )
-    }
-  }
-
-  private def _READS = implicitly[Reads[MPredicate]]
-
-  /** Десериализация из JSON-списка в первый элемент этого списка. */
-  val PARENTRAL_READS: Reads[MPredicate] = {
-    Reads[MPredicate] {
-      case arr: JsArray =>
-        if (arr.value.isEmpty)
-          JsError("expected.nonempty.jsarray")
-        else
-          _READS.reads(arr.value.head)
-      case str: JsString =>
-        _READS.reads(str)
-      case _ =>
-        JsError("expected.jsstring.or.jsarray")
-    }
-  }
-
-  val PARENTAL_FORMAT: Format[MPredicate] = {
-    Format(PARENTRAL_READS, PARENTRAL_WRITES)
-  }
 
 
   // ------------------------------------------------------------------------
