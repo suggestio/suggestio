@@ -32,14 +32,13 @@ class ImgFormUtil @Inject() (
   import play.api.data.Forms._
   import play.api.data.Mapping
   import LOGGER._
-  import mCommonDi.{configuration, ec}
+  import mCommonDi.ec
 
   private def IIK_MAXLEN = 80
 
   /** Включение ревалидации уже сохраненных картинок при обновлении позволяет убирать картинки "дырки",
     * появившиеся в ходе ошибочной логики. */
-  private val REVALIDATE_ALREADY_SAVED_IMGS = configuration.getOptional[Boolean]("img.update.revalidate.already.saved")
-    .getOrElse(false)
+  private def REVALIDATE_ALREADY_SAVED_IMGS = false
 
   // TODO Нужна тут подпись через MAC? Или отдельными мапперами запилить?
 
@@ -74,16 +73,13 @@ class ImgFormUtil @Inject() (
 
   // Валидация значений crop'а.
   /** Минимальный размер откропанной стороны. */
-  private val CROP_SIDE_MIN_PX = configuration.getOptional[Int]("img.crop.side.max")
-    .getOrElse(10)
+  private def CROP_SIDE_MIN_PX = 10
 
   /** Максимальный размер откропанной стороны. */
-  private val CROP_SIDE_MAX_PX = configuration.getOptional[Int]("img.crop.side.max")
-    .getOrElse(20000)
+  private def CROP_SIDE_MAX_PX = 20000
 
   /** Максимальный размер сдвига относительно левого верхнего узла. */
-  private val CROP_OFFSET_MAX_PX = configuration.getOptional[Int]("img.crop.offset.max")
-    .getOrElse(60000)
+  private def CROP_OFFSET_MAX_PX = 60000
 
   /** Проверка одной стороны кропа на соотвествие критериям. */
   private def isCropSideValid(sideVal: Int): Boolean = {
@@ -279,27 +275,25 @@ class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
   override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
 
   /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override val MIN_SZ_PX: Int = configuration.getOptional[Int]("img.orig.sz.min.px").getOrElse(256)
+  override def MIN_SZ_PX: Int = 256
 
   /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
     * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
-  override val MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = {
-    val kib = configuration.getOptional[Int]("img.org.preserve.src.max.len.kib").getOrElse(90)
-    Some(kib * 1024L)
+  override def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = {
+    Some(90 * 1024L)
   }
 
   /** Качество сжатия jpeg. */
-  override val JPEG_QUALITY_PC: Double = configuration.getOptional[Double]("img.orig.jpeg.quality").getOrElse(90.0)
+  override def JPEG_QUALITY_PC: Double = 90
 
   /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
     * прямоугольник с указанныыми сторонами). */
-  override val DOWNSIZE_HORIZ_PX: Integer  = {
-    val szPx = configuration.getOptional[Int]("img.orig.maxsize.h.px").getOrElse(2048)
-    Integer.valueOf(szPx)
+  override def DOWNSIZE_HORIZ_PX: Integer = {
+    Integer.valueOf(2048)
   }
-  override val DOWNSIZE_VERT_PX:  Integer  = {
-    configuration.getOptional[Int]("img.orig.maxsize.v.px")
-      .fold(DOWNSIZE_HORIZ_PX)(Integer.valueOf)
+
+  override def DOWNSIZE_VERT_PX: Integer = {
+    DOWNSIZE_HORIZ_PX
   }
 
   override def GAUSSIAN_BLUG: Option[lang.Double] = None

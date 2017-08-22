@@ -3,6 +3,7 @@ package util.stat
 import javax.inject.Inject
 import io.suggest.stat.inx.StatIndexUtil
 import io.suggest.util.logs.MacroLogsDyn
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import models.mcron.{ICronTask, MCronTask}
 import models.mproj.ICommonDi
 import util.cron.ICronTasksProvider
@@ -32,7 +33,7 @@ class StatCronTasks @Inject()(
     * Флаг активности этих cron-задач.
     * По умолчанию - выключено, т.е. надо вручную активировать в конфиге.
     */
-  def IS_ENABLED = configuration.getOptional[Boolean](_CONF_KEY).contains(true)
+  def IS_ENABLED = configuration.getOptional[Boolean](_CONF_KEY).getOrElseFalse
 
   /** Список задач, которые надо вызывать по таймеру. */
   override def cronTasks(): TraversableOnce[ICronTask] = {

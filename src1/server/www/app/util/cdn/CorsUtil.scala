@@ -5,11 +5,11 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.http.HeaderNames._
 
-import scala.collection.JavaConversions._
 import scala.util.matching.Regex
 
 /**
@@ -27,10 +27,10 @@ class CorsUtil @Inject() (
 ) {
 
   /** Активен ли механизм CORS вообще? */
-  val IS_ENABLED = configuration.getOptional[Boolean]("cors.enabled").getOrElse(true)
+  val IS_ENABLED: Boolean = configuration.getOptional[Boolean]("cors.enabled").getOrElseTrue
 
   /** Включен ли доступ к preflight-запросам? */
-  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getOptional[Boolean]("cors.preflight.allowed").getOrElse(true)
+  val CORS_PREFLIGHT_ALLOWED: Boolean = configuration.getOptional[Boolean]("cors.preflight.allowed").getOrElseTrue
 
   val allowOrigins: String = {
     // Макс один домен. Чтобы не трахаться с доменами, обычно достаточно "*".
@@ -51,7 +51,7 @@ class CorsUtil @Inject() (
     Some(v)
   }
 
-  def allowCreds = configuration.getBoolean("cors.allow.credentials")
+  def allowCreds = configuration.getOptional[Boolean]("cors.allow.credentials")
 
   lazy val PREFLIGHT_CORS_HEADERS: List[(String, String)] = {
     var acc: List[(String, String)] = Nil

@@ -1,6 +1,5 @@
 package controllers.cstatic
 
-import play.api.mvc._
 import util.cdn.ICorsUtilDi
 import controllers.SioController
 import play.api.http.HeaderNames

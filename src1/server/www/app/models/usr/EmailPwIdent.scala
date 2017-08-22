@@ -8,6 +8,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -59,7 +60,7 @@ class EmailPwIdents @Inject() (
     (__ \ VALUE_ESFN).format[String] and
     (__ \ IS_VERIFIED_ESFN).formatNullable[Boolean]
       .inmap [Boolean] (
-        { _.getOrElse(false) },
+        { _.getOrElseFalse },
         { b => if (b) Some(b) else None }
       )
   )(EmailPwIdent.apply, unlift(EmailPwIdent.unapply))

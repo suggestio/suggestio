@@ -17,7 +17,7 @@ import org.elasticsearch.search.aggregations.bucket.nested.Nested
 import play.api.libs.json.JsObject
 import au.id.jazzy.play.geojson.{Feature, FeatureCollection, LngLat}
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -217,6 +217,7 @@ class ScMapUtil @Inject() (
       gridAgg
         .getBuckets
         .iterator()
+        .asScala
         .flatMap { bucket =>
           val geoHash = bucket.getKeyAsString
           try {
@@ -224,7 +225,7 @@ class ScMapUtil @Inject() (
             Seq( gp )
           } catch {
             case ex: Throwable =>
-              LOGGER.error(s"$logPrefix Cannot parse bucket key $geoHash as geohash.")
+              LOGGER.error(s"$logPrefix Cannot parse bucket key $geoHash as geohash.", ex)
               Nil
           }
         }

@@ -244,20 +244,21 @@ abstract class AdvsUpdate
     val resFut = slick.db.run( updateAction.transactionally )
 
     // Залоггировать итоги работы:
-    resFut.onFailure {
+    for {
+      ex <- resFut.failed
+      if ex.isInstanceOf[NoSuchElementException]
+    } {
       // NSEE *обычно* значит, что hasItemsForProcessing() вернул false. Такое возможно, когда карточка была отработана одновременно с поиском.
-      case ex: NoSuchElementException =>
-        // ex НЕ логгируем, оно залогируется где-нибудь уровнем выше.
-        for (madOpt <- madOptFut) {
-          if (madOpt.nonEmpty) {
-            warn(s"$logPrefix Possibly no items for ad[$adId], but they expected to be moments ago. Race conditions?")
-
-          } else {
-            // Какая-то инфа о размещении карточки (узла), которая уже удалена.
-            warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
-            purgeItemsForAd(adId)
-          }
+      // ex НЕ логгируем, оно залогируется где-нибудь уровнем выше.
+      for (madOpt <- madOptFut) {
+        if (madOpt.nonEmpty) {
+          warn(s"$logPrefix Possibly no items for ad[$adId], but they expected to be moments ago. Race conditions?")
+        } else {
+          // Какая-то инфа о размещении карточки (узла), которая уже удалена.
+          warn(s"$logPrefix Node(ad) is missing, but zombie items is here. Purging zombies...")
+          purgeItemsForAd(adId)
         }
+      }
     }
 
     resFut

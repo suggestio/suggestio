@@ -77,7 +77,7 @@ class MadAiUtil @Inject() (
             .toMap
         }
       }
-    Future.reduce(running)(_ ++ _)
+    Future.reduceLeft(running)(_ ++ _)
   }
 
 

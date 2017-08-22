@@ -5,15 +5,17 @@ import javax.mail.Authenticator
 import com.google.inject.assistedinject.Assisted
 import com.google.inject.ImplementedBy
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.async.AsyncUtil
+import io.suggest.di.IExecutionContext
 import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import org.apache.commons.mail.{DefaultAuthenticator, HtmlEmail, SimpleEmail}
 import play.api.Configuration
 import play.api.inject.Injector
 import play.api.libs.mailer.{Email, MailerClient}
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -39,7 +41,10 @@ import MailerWrapper._
 
 
 /** Класс-сырец для билдера писем. */
-sealed abstract class EmailBuilder extends MacroLogsImplLazy {
+sealed abstract class EmailBuilder
+  extends MacroLogsImplLazy
+  with IExecutionContext
+{
 
   type T = this.type
 
@@ -62,7 +67,7 @@ sealed abstract class EmailBuilder extends MacroLogsImplLazy {
       _doSend()
     }
       .flatMap(identity)
-    fut.onFailure { case ex: Throwable =>
+    for (ex <- fut.failed) {
       LOGGER.error("Failed to send email message:\n" + this, ex)
     }
     fut
@@ -110,7 +115,7 @@ sealed abstract class EmailBuilderShared extends EmailBuilder {
     _subject = Some(s)
     this
   }
-  protected def _getSubject = _subject.getOrElse(SUBJECT_DFLT)
+  protected def _getSubject: String = _subject.getOrElse(SUBJECT_DFLT)
 
   override def setRecipients(rcpts: String*): T = {
     _recipients = rcpts
@@ -124,8 +129,9 @@ sealed abstract class EmailBuilderShared extends EmailBuilder {
 
 /** Билдер для play-mailer'а. */
 class PlayMailerEmailBuilder @Inject() (
-  mailClient        : MailerClient
-)
+                                         mailClient                : MailerClient,
+                                         override implicit val ec  : ExecutionContext
+                                       )
   extends EmailBuilderShared
 {
 
@@ -153,9 +159,10 @@ trait PlayMailerEmailBuildersFactory {
 
 /** Если play-mailer не работает, то можно использовать вот это. */
 class CommonsEmailBuilder @Inject() (
-  @Assisted state : FallbackState,
-  asyncUtil       : AsyncUtil
-)
+                                      @Assisted state           : FallbackState,
+                                      asyncUtil                 : AsyncUtil,
+                                      override implicit val ec  : ExecutionContext
+                                    )
   extends EmailBuilderShared
   with MacroLogsImplLazy
 {
@@ -206,7 +213,9 @@ trait IMailerWrapper {
   def instance: EmailBuilder
 
   /** Адреса получателей, если требуется отправлять письмо программерам. */
-  final def EMAILS_PROGRAMMERS = "konstantin.nikiforov@cbca.ru" :: Nil
+  final def EMAILS_PROGRAMMERS: List[String] = {
+    "konstantin.nikiforov@cbca.ru" :: Nil
+  }
 
 }
 
@@ -219,7 +228,7 @@ class MailerWrapper @Inject() (
 {
 
   /** Использовать ли play mailer для отправки электронной почты? */
-  val USE_PLAY_MAILER = configuration.getOptional[Boolean]("email.use.play.mailer").getOrElse(true)
+  private val USE_PLAY_MAILER = configuration.getOptional[Boolean]("email.use.play.mailer").getOrElseTrue
 
   private lazy val _playEmailFactory    = injector.instanceOf[PlayMailerEmailBuildersFactory]
   private lazy val _commonsEmailFactory = injector.instanceOf[CommonsEmailBuildersFactory]

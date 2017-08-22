@@ -13,6 +13,7 @@ import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.Messages
 import models._
 import models.mproj.ICommonDi
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.Future
 
@@ -36,14 +37,14 @@ class ShowcaseNodeListUtil @Inject() (
 
   /** Показывать все города в выдаче или только текущий? */
   private val SHOW_ALL_TOWNS: Boolean = configuration.getOptional[Boolean]("showcase.nodes.towns.show.all")
-    .contains(true)   // .getOrElse(false)
+    .getOrElseFalse
 
   /** Если включён вывод списка городов, то надо определить макс.длину этого списка. */
-  private val MAX_TOWNS: Int = configuration.getOptional[Int]("showcase.nodes.towns.max").getOrElse(10)
+  private def MAX_TOWNS: Int = 10
 
   /** Использовать сортировку не по имени, а по расстоянию до узлов. */
   private val DISTANCE_SORT: Boolean = configuration.getOptional[Boolean]("showcase.nodes.sort.distance")
-    .contains(true)   // .getOrElse(false)
+    .getOrElseFalse
 
 
   /**

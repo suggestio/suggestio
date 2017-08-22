@@ -7,6 +7,7 @@ import io.suggest.es.model.IEsModelDiVal
 import io.suggest.sec.m.{IAsymKey, MAsymKey, MAsymKeys}
 import io.suggest.util.logs.MacroLogsDyn
 import io.trbl.bcpg.{KeyFactory, KeyFactoryFactory, SecretKey}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.Future
 
@@ -70,7 +71,7 @@ class PgpUtil @Inject() (
   /** Запустить инициализацию, если задано в конфиге. */
   def maybeInit(): Option[Future[_]] = {
     val cfk = "pgp.keyring.init.enabled"
-    if ( configuration.getOptional[Boolean](cfk).contains(true) ) {
+    if ( configuration.getOptional[Boolean](cfk).getOrElseFalse ) {
       Some(init())
     } else {
       mAsymKeys.getById(LOCAL_STOR_KEY_ID)
@@ -91,7 +92,7 @@ class PgpUtil @Inject() (
   def init(): Future[_] = {
     val fut = mAsymKeys.getById(LOCAL_STOR_KEY_ID)
       .filter { _.isDefined }
-      .recoverWith { case ex: NoSuchElementException =>
+      .recoverWith { case _: NoSuchElementException =>
         val k = genNewNormalKey()
         mAsymKeys.save(k)
       }

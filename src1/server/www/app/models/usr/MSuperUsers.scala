@@ -7,6 +7,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.sec.util.ScryptUtil
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success}
@@ -52,7 +53,7 @@ class MSuperUsers @Inject()(
     // Это также нужно было при миграции с MPerson на MNode, чтобы не произошло повторного создания новых
     // юзеров в MNode, при наличии уже существующих в MPerson.
     val ck = "start.ensure.superusers"
-    val createIfMissing = configuration.getOptional[Boolean](ck).contains(true)
+    val createIfMissing = configuration.getOptional[Boolean](ck).getOrElseFalse
     val fut = resetSuperuserIds(createIfMissing)
     if (!createIfMissing)
       debug("Does not ensuring superusers in permanent models: " + ck + " != true")

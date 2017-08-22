@@ -234,16 +234,6 @@ class AdvBuilderDi @Inject() (
   with IMCommonDi
   with IMItems
   with IAdvBuilderUtilDi
-{
-
-  import mCommonDi.configuration
-
-  /** Создавать ли узлы-теги для геотегов?
-    * Изначально они создавались, но особо были нужны.
-    */
-  val AGT_CREATE_TAG_NODES: Boolean = configuration.getOptional[Boolean]("adv.geo.tag.create.nodes").getOrElse(false)
-
-}
 
 
 /** Финальная реализация [[IAdvBuilder]]. */

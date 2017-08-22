@@ -40,8 +40,8 @@ class TwitterHelper @Inject() (
   override def mExtService = MExtServices.TWITTER
 
   // TODO Нужно нормальную длину узнать. Там какой-то гемор с ссылками, что даже 100 символов - многовато.
-  override def LEAD_TEXT_LEN      = 90 //configuration.getInt(s"ext.$strId.msg.text.maxlen").getOrElse(90)
-  override def WITH_URL           = true //configuration.getBoolean(s"ext.$strId.msg.with.url").getOrElse(true)
+  override def LEAD_TEXT_LEN      = 90
+  override def WITH_URL           = true
   override def MK_MESSAGE_URL     = "https://api.twitter.com/1.1/statuses/update.json"
   override def AC_TOK_VERIFY_URL  = "https://api.twitter.com/1.1/account/verify_credentials.json?include_entities=false&skip_status=true"
 

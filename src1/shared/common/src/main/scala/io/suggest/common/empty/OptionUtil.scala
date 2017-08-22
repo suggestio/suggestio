@@ -48,4 +48,22 @@ object OptionUtil {
     }
   }
 
+
+  /** Дополнительные операции для Option[Boolean]. */
+  implicit class BoolOptOps(val boolOpt: Option[Boolean]) extends AnyVal {
+
+    /** Оптимизированный аналог boolOpt.getOrElse(false).
+      * Позволяет обойтись без функции, хотя начиная со scala 2.12 это не очень актуально.
+      */
+    def getOrElseFalse: Boolean = {
+      boolOpt.contains(true)
+    }
+
+    def getOrElseTrue: Boolean = {
+      boolOpt.getOrElse(true)
+    }
+
+
+  }
+
 }

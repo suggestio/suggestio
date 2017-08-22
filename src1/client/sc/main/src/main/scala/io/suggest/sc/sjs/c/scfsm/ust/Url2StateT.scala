@@ -12,6 +12,7 @@ import io.suggest.sc.sjs.m.msearch.{MTabSwitchSignal, MTabs}
 import io.suggest.sc.sjs.m.mtags.MTagInfo
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -123,7 +124,7 @@ trait Url2StateT extends IUrl2State { scFsm: ScFsm.type =>
               None
           }
         }
-        .contains(true)   // None => false
+        .getOrElseFalse
       sd0Nav.copy(
         panelOpened = flag
       )

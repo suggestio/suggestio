@@ -1,10 +1,10 @@
 package util.geo.umap
 
 import javax.inject.Inject
+
 import io.suggest.geo.{GsTypes, MultiPolygonGs}
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
 import models.MNode
-import play.api.Configuration
 
 /**
  * Suggest.io
@@ -12,13 +12,10 @@ import play.api.Configuration
  * Created: 16.09.14 9:14
  * Description: Утиль для работы с фронтендом UMap (leaflet-storage).
  */
-
-class UmapUtil @Inject() (
-  configuration: Configuration
-) {
+class UmapUtil @Inject() () {
 
   /** 2014.09.23: Umap не поддерживает тип фигур MultiPolygon. Можно их сплиттить на полигоны. */
-  val SPLIT_MULTIPOLYGON: Boolean = configuration.getOptional[Boolean]("umap.mpoly.split").getOrElse(true)
+  private def SPLIT_MULTIPOLYGON = true
 
 
   /**
@@ -49,7 +46,8 @@ class UmapUtil @Inject() (
                         )
                       }
 
-                    case s => Seq(s)
+                    case s =>
+                      s :: Nil
                   }
                 )
               )

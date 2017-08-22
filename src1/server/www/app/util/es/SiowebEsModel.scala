@@ -6,7 +6,6 @@ import io.suggest.es.util.{EsClientUtil, SioEsUtil}
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.MNodes
 import io.suggest.sec.m.MAsymKeys
-import io.suggest.stat.m.MStats
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.adv.MExtTargets
@@ -16,6 +15,7 @@ import models.mcal.MCalendars
 import models.mproj.ICommonDi
 import models.usr.{EmailActivations, EmailPwIdents, MExtIdents}
 import org.elasticsearch.common.transport.{InetSocketTransportAddress, TransportAddress}
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
@@ -38,7 +38,6 @@ class SiowebEsModel @Inject() (
   emailActivations    : EmailActivations,
   mExtIdents          : MExtIdents,
   mAsymKeys           : MAsymKeys,
-  //mStats              : MStats,
   mCommonDi           : ICommonDi
 )
   extends MacroLogsImplLazy
@@ -70,14 +69,14 @@ class SiowebEsModel @Inject() (
 
   /** Вернуть экзепшен, если есть какие-то проблемы при обработке ES-моделей. */
   def maybeErrorIfIncorrectModels() {
-    if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElse(true))
+    if (configuration.getOptional[Boolean]("es.mapping.model.conflict.check.enabled").getOrElseTrue)
       EsModelUtil.errorIfIncorrectModels(ES_MODELS)
   }
 
   /** Отправить маппинги всех моделей в хранилище. */
   def putAllMappings(models: Seq[EsModelCommonStaticT] = ES_MODELS): Future[Boolean] = {
     val ignoreExist = configuration.getOptional[Boolean]("es.mapping.model.ignore_exist")
-      .contains(true)    // .getOrElse(false)
+      .getOrElseFalse
     trace("putAllMappings(): ignoreExists = " + ignoreExist)
     EsModelUtil.putAllMappings(models, ignoreExist)
   }
@@ -185,7 +184,7 @@ final class SiowebEsModelJmx @Inject() (
       .find( _.getClass.getSimpleName.equalsIgnoreCase(modelStr1) )
       .get
     val fut = _importModelsFromRemote(remotes, Seq(model))
-    fut.onFailure { case ex =>
+    for (ex <- fut.failed) {
       error(s"importModelsFromRemote($modelStr, $remotes): Failed", ex)
     }
     awaitString(fut)
@@ -193,7 +192,7 @@ final class SiowebEsModelJmx @Inject() (
 
   override def importModelsFromRemote(remotes: String): String = {
     val fut = _importModelsFromRemote(remotes, siowebEsModel.ES_MODELS)
-    fut.onFailure { case ex =>
+    for (ex <- fut.failed) {
       error(s"importModelsFromRemote($remotes): Failed", ex)
     }
     awaitString(fut)

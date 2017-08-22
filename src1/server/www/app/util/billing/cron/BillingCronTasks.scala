@@ -7,6 +7,7 @@ import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
 import util.billing.Bill2Util
 import util.cron.ICronTasksProvider
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.duration._
 
@@ -34,7 +35,7 @@ class BillingCronTasks @Inject()(
   /** Включен ли биллинг по крону? Будет выполнятся публикация карточек, их сокрытие и т.д. */
   private def CRON_BILLING_CHECK_ENABLED: Boolean = {
     configuration.getOptional[Boolean]("bill.cron.enabled")
-      .getOrElse(true)
+      .getOrElseTrue
   }
 
   /** Как часто надо проверять таблицу advsOK на предмет необходимости изменений в выдаче. */
@@ -44,8 +45,6 @@ class BillingCronTasks @Inject()(
       .seconds
   }
 
-  /** Не раньше какого времени можно запускать auto-accept. */
-  //private val AUTO_ACCEPT_REQS_AFTER_HOURS = configuration.getInt("mmp.daily.accept.auto.after.hours") getOrElse 16
 
   /** Сборщик спеки периодических задач биллинга. */
   override def cronTasks(): TraversableOnce[ICronTask] = {
@@ -75,10 +74,11 @@ class BillingCronTasks @Inject()(
         every = 10.minutes,
         displayName = "unStallHoldedOrders()"
       ) {
-        bill2Util.findReleaseStalledHoldOrders()
-          .onFailure { case ex: Throwable =>
-            LOGGER.error("Failed to findReleaseStalledHoldOrders()", ex)
-          }
+        for {
+          ex <- bill2Util.findReleaseStalledHoldOrders().failed
+        } {
+          LOGGER.error("Failed to findReleaseStalledHoldOrders()", ex)
+        }
       }
       List(depubExpired, advOfflineAdvs, unStallHoldedOrders)
 

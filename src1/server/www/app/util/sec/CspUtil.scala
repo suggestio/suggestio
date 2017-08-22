@@ -21,15 +21,15 @@ class CspUtil @Inject() (
                           contextUtil    : ContextUtil
                         ) {
 
-  val IS_ENABLED = configuration.getOptional[Boolean]("csp.enabled").getOrElse(true)
+  /** Включена ли поддержка CSP-заголовков? */
+  private def IS_ENABLED = true
+
+  /** CSP: Только репортить или репортить и запрещать вместе. */
+  private def CSP_REPORT_ONLY = false
 
   /** Заголовок CSP, который можно модификацировать в контроллерах для разных нужд. */
   val CSP_DFLT_OPT: Option[CspHeader] = {
     if (IS_ENABLED) {
-
-      /** CSP: Только репортить или репортить и запрещать вместе. */
-      val CSP_REPORT_ONLY = configuration.getOptional[Boolean]("csp.report.only").getOrElse(true)   // TODO сделать по дефолту false.
-
       val commonSources = {
         // Т.к. сайт https-only, то игнорим протоколы, используем все CDN-хосты.
         val cdnHostsIter = cdnUtil.CDN_PROTO_HOSTS.valuesIterator.flatten

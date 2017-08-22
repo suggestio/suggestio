@@ -208,7 +208,7 @@ class Bill2Util @Inject() (
       val fut = slick.db.run {
         mContracts.getById(contractId)
       }
-      fut.onSuccess { case None =>
+      for (opt <- fut if opt.isEmpty) {
         // should never happen
         LOGGER.warn(s"$logPrefix Contract[$contractId] is missing, but is saved into node.billing.")
       }

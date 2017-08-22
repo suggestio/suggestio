@@ -12,6 +12,7 @@ import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.util.UuidUtil
 import io.suggest.www.m.mctx.CtxData
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
@@ -60,9 +61,9 @@ final class ContextUtil @Inject() (
   private def MAIN_DOMAIN_DFLT = "suggest.io"
 
   /** На dev-системах удобно глобально выключить https в конфиге. */
-  val HTTPS_DISABLED = configuration.getOptional[Boolean]("sio.https.disabled").contains(true)
+  val HTTPS_DISABLED: Boolean = configuration.getOptional[Boolean]("sio.https.disabled").getOrElseFalse
 
-  def HTTPS_ENABLED = !HTTPS_DISABLED
+  def HTTPS_ENABLED: Boolean = !HTTPS_DISABLED
 
   /** Дефолтовый протокол работы suggest.io. */
   def PROTO: String = {
@@ -70,16 +71,16 @@ final class ContextUtil @Inject() (
   }
 
   /** Хост:порт сайта suggest.io. */
-  val HOST_PORT = configuration.getOptional[String]("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
+  val HOST_PORT: String = configuration.getOptional[String]("sio.hostport.dflt").getOrElse(MAIN_DOMAIN_DFLT)
 
   /** Префикс абсолютных ссылок на сайт. */
-  val URL_PREFIX = PROTO + "://" + HOST_PORT
+  val URL_PREFIX: String = PROTO + "://" + HOST_PORT
 
 
   /** Основной хост и порт, на котором крутится выдача sio-market. */
-  def SC_HOST_PORT = HOST_PORT // configuration.getString("sio.sc.hostport").getOrElse(HOST_PORT)
-  def SC_PROTO = PROTO //configuration.getString("sio.sc.proto").getOrElse(PROTO)
-  def SC_URL_PREFIX = URL_PREFIX //SC_PROTO + "://" + SC_HOST_PORT
+  def SC_HOST_PORT: String = HOST_PORT
+  def SC_PROTO: String = PROTO
+  def SC_URL_PREFIX: String = URL_PREFIX
 
   /** Генерация абсолютной ссылки через выдачу на основе строке относительной ссылки. */
   def toScAbsUrl(relUrl: String): String = {
@@ -91,9 +92,9 @@ final class ContextUtil @Inject() (
   }
 
   /** Хост и порт, на котором живёт часть сервиса с ограниченным доступом. */
-  def LK_HOST_PORT = HOST_PORT //configuration.getString("sio.lk.hostport").getOrElse(HOST_PORT)
-  def LK_PROTO = PROTO //configuration.getString("sio.lk.proto").getOrElse(PROTO)
-  def LK_URL_PREFIX = URL_PREFIX //LK_PROTO + "://" + LK_HOST_PORT
+  def LK_HOST_PORT: String = HOST_PORT
+  def LK_PROTO: String = PROTO
+  def LK_URL_PREFIX: String = URL_PREFIX
 
 
   /** Бывает, что необходимо заменить локалхост на 127.0.0.1. Например, при разработке под твиттер.
@@ -130,7 +131,7 @@ final class ContextUtil @Inject() (
   }
 
   /** Относится ли хост в запросе к собственным хостам suggest.io. */
-  def isMyHostSio(myHost: String) = {
+  def isMyHostSio(myHost: String): Boolean = {
     // По идее, надо бы фильтровать тут левые адреса, но пока надеемся на nginx
     // и на около-нулевую возможную опасность возможной уязвимости на фоне блокирующего резолва внутрях InetAddress.
     /*val inet = InetAddress.getByName(myHost)

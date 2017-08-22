@@ -8,7 +8,6 @@ import io.suggest.loc.geo.ipgeobase.IpgbUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.req.{IRemoteAddrInfo, IReqHdr, MRemoteAddrInfo}
-import play.api.mvc.RequestHeader
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
@@ -54,9 +53,9 @@ class GeoIpUtil @Inject() (
     // Логгировать результат, если трассировка активна.
     if (LOGGER.underlying.isTraceEnabled()) {
       val startedAtMs = System.currentTimeMillis()
-      resFut.onSuccess { case r =>
+
+      for (r <- resFut)
         LOGGER.trace(s"findIp($ip) => $r ;; Took ${System.currentTimeMillis() - startedAtMs} ms.")
-      }
     }
 
     // Вернуть исходный фьючерс.

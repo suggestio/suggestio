@@ -14,6 +14,7 @@ import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.primo.id.OptStrId
 import io.suggest.util.JacksonParsing
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.collection.Map
 import scala.concurrent.ExecutionContext
@@ -131,7 +132,7 @@ class MEvents @Inject() (
     (__ \ IS_CLOSEABLE_ESFN).readNullable[Boolean]
       .map(_ getOrElse isCloseableDflt) and
     (__ \ IS_UNSEEN_ESFN).readNullable[Boolean]
-      .map(_.getOrElse(true))
+      .map(_.getOrElseTrue)
   }
 
   /** Вернуть JSON reads для десериализации тела документа с имеющимися метаданными. */

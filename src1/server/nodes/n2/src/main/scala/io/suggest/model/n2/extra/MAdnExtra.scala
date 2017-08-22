@@ -6,6 +6,7 @@ import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 /**
  * Suggest.io
@@ -43,18 +44,18 @@ object MAdnExtra extends IGenEsMappingProps {
       ) and
     (__ \ IS_BY_USER.fn).formatNullable[Boolean]
       .inmap [Boolean] (
-        _.contains(true), // getOrElse false,
+        _.getOrElseFalse,
         someF
       ) and
     (__ \ SHOWN_TYPE.fn).formatNullable[String] and
     (__ \ IS_TEST.fn).formatNullable[Boolean]
       .inmap [Boolean] (
-        _.contains(true), // getOrElse false,
+        _.getOrElseFalse,
         someF
       ) and
     (__ \ SHOW_IN_SC_NL.fn).formatNullable[Boolean]
       .inmap [Boolean] (
-        _.getOrElse(true),
+        _.getOrElseTrue,
         someF
       )
   )(apply, unlift(unapply))

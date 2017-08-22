@@ -6,6 +6,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import models.AdnShownTypes
 import models.mcron.{ICronTask, MCronTask}
 import models.mctx.ContextUtil
@@ -45,7 +46,7 @@ class AdnGeoParentsHealth @Inject() (
   import mCommonDi._
 
   /** Включено ли автоматическое тестирование узлов? */
-  private val GEO_PARENTS_AUTO = configuration.getOptional[Boolean]("health.tests.adn.geo.parent.periodical").contains(true)
+  private val GEO_PARENTS_AUTO = configuration.getOptional[Boolean]("health.tests.adn.geo.parent.periodical").getOrElseFalse
 
 
   /** Список задач, которые надо вызывать по таймеру. */
@@ -103,7 +104,7 @@ class AdnGeoParentsHealth @Inject() (
               Some( NodeProblem(mnode, ex) )
             }
         }
-        Future.fold(testsFut)(acc0Fut) { (_acc0Fut, testResOpt) =>
+        Future.foldLeft(testsFut)(acc0Fut) { (_acc0Fut, testResOpt) =>
           testResOpt.fold(_acc0Fut) { testRes =>
             _acc0Fut.map { testRes :: _ }
           }

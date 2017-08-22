@@ -33,12 +33,10 @@ class AdnNodeEvents @Inject() (
   import mCommonDi._
 
   /** Автодобавление уведомления о создании нового магазина можно отключить через конфиг. */
-  private val EVT_YOU_CAN_ADD_NEW_SHOPS = configuration.getOptional[Boolean]("node.evn.created.youCanAddNewShopsEvent")
-    .getOrElse(true)
+  private def EVT_YOU_CAN_ADD_NEW_SHOPS = true
 
   /** Автодобавление уведомления о возможности использования менеджера рекламных карточек. */
-  private val EVT_START_YOUR_WORK_USING_CARD_MGR = configuration.getOptional[Boolean]("node.evt.created.startYourWorkUsingCardMgr")
-    .getOrElse(true)
+  private def EVT_START_YOUR_WORK_USING_CARD_MGR = true
 
 
   /** Карта подписки на события [[SiowebNotifier]]. */
@@ -68,9 +66,8 @@ class AdnNodeEvents @Inject() (
       isUnseen    = true
     )
     val fut = mEvents.save(evt)
-    fut.onFailure {
-      case ex =>
-        error("Failed to save welcome event: " + evt, ex)
+    for (ex <- fut.failed) {
+      error("Failed to save welcome event: " + evt, ex)
     }
     fut
   }

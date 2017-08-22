@@ -37,6 +37,7 @@ import io.suggest.maps.m.MExistGeoS.MExistGeoSFastEq
 import MPopupsS.MPopupsFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.Future
 
@@ -66,7 +67,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
         adv4free = for (a4fProps <- mFormInit.adv4FreeProps) yield {
           MAdv4Free(
             static  = a4fProps,
-            checked = mFormInit.form.adv4freeChecked.contains(true)   // getOrElse(false)
+            checked = mFormInit.form.adv4freeChecked.getOrElseFalse
           )
         },
         tags = MTagsEditState(

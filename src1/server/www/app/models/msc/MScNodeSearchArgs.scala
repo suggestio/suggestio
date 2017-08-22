@@ -6,6 +6,7 @@ import play.api.mvc.QueryStringBindable
 import io.suggest.sc.NodeSearchConstants._
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 import util.qsb.QsbUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 /**
  * Suggest.io
@@ -85,9 +86,9 @@ object MScNodeSearchArgs {
                 .filter(_ <= MAX_RESULTS_LIMIT_HARD),
               currAdnId     = QsbUtil.eitherOpt2option( maybeCurAdnId ),
               isNodeSwitch  = QsbUtil.eitherOpt2option(maybeNodeSwitch)
-                .contains(false), // getOrElse(false)
+                .getOrElseFalse,
               withNeighbors = QsbUtil.eitherOpt2option(maybeWithNeigh)
-                .getOrElse(true),
+                .getOrElseTrue,
               apiVsn        = apiVsn
             )
           }

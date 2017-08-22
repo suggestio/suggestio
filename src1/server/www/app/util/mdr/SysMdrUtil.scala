@@ -145,7 +145,7 @@ class SysMdrUtil @Inject() (
     }
 
     // Обрадовать другие компоненты системы новым событием
-    saveFut.onSuccess { case res =>
+    for (res <- saveFut) {
       sn.publish( ItemStatusChanged(res.mitem) )
     }
 

@@ -8,9 +8,6 @@ import models.mctx.Context
 import play.api.Configuration
 import play.api.mvc.Call
 
-import scala.collection.JavaConversions._
-
-
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -36,7 +33,7 @@ class CdnUtil @Inject() (
     configuration.getOptional[Seq[String]]("cdn.protocols")
       .fold [Iterator[String]] (Iterator("http", "https")) { protosRaw =>
         protosRaw
-          .iterator()
+          .iterator
           .map(_.trim.toLowerCase)
       }
       .map { proto =>
@@ -58,7 +55,7 @@ class CdnUtil @Inject() (
       .fold (Set.empty[String]) (_.toSet)
   }
 
-  val HAS_ANY_CDN = CDN_PROTO_HOSTS.nonEmpty
+  val HAS_ANY_CDN: Boolean = CDN_PROTO_HOSTS.nonEmpty
 
 
   // Печатаем карту в консоль при запуске.

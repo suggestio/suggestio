@@ -5,6 +5,7 @@ import io.suggest.loc.geo.ipgeobase.IpgbImporter
 import models.mcron.MCronTask
 import models.mproj.ICommonDi
 import util.cron.ICronTasksProvider
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.duration._
 
@@ -29,7 +30,7 @@ class IpGeoBaseImport @Inject() (
   /** Активация импорта требует явного включения этой функции в конфиге.
     * Отключена по умолчанию, т.к. она должна быть активна только на одной ноде. */
   def IS_ENABLED: Boolean = configuration.getOptional[Boolean]("ipgeobase.import.enabled")
-    .contains(true)   //.getOrElse(false)
+    .getOrElseFalse
 
   override def cronTasks(): TraversableOnce[MCronTask] = {
     if (IS_ENABLED) {

@@ -1,6 +1,5 @@
 package io.suggest.playx
 
-import play.api.Mode.Mode
 import play.api.{Application, Configuration, Mode}
 
 /**
