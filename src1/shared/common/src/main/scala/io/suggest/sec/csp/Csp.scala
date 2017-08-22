@@ -263,20 +263,6 @@ case class CspPolicy(
 
   // TODO Вынести весь код ниже в контроллер или утиль.
 
-  /** Использование векторных карт MapBox (mapbox-gl.js) требует кое-каких дополнительных разрешений CSP.
-    * @return Обновлённая CSP policy.
-    */
-  def allowMapBoxGl: CspPolicy = {
-    val mbHost = "https://*.mapbox.com"
-    val blob = Csp.Sources.BLOB
-
-    addDefaultSrc( blob )
-      .addConnectSrc( mbHost )
-      .addScriptSrc( blob, Csp.Sources.UNSAFE_EVAL )
-      // Хз, надо ли imgSrc, т.к. она векторная и через XHR свои тайлы получает.
-      .addImgSrc( mbHost, blob )
-  }
-
 
   /** Разрешить доступ для OSM-карт для leaflet.js. */
   def allowOsmLeaflet: CspPolicy = {

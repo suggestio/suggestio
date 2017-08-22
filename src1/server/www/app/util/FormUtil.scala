@@ -577,7 +577,7 @@ object FormUtil {
         .transform(strTrimSanitizeF, strIdentityF)
     )
     .transform [Option[MPredicate]] (
-      _.flatMap(MPredicates.maybeWithName),
+      _.flatMap(MPredicates.withValueOpt),
       _.map(_.strId)
     )
   }

@@ -1,9 +1,9 @@
 package io.suggest.model.n2.edge
 
-import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, EnumTree}
-import io.suggest.model.play.qsb.QueryStringBindableImpl
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.{EnumeratumUtil, TreeEnumEntry}
+import io.suggest.primo.IStrId
 import play.api.libs.json._
-import play.api.mvc.QueryStringBindable
 
 /**
   * Suggest.io
@@ -12,40 +12,42 @@ import play.api.mvc.QueryStringBindable
   * Description: Статическая синхронная модель предикатов, т.е. "типов" ребер графа N2.
   * Создана по мотивам модели zotonic m_predicate, но сильно ушла от неё уже.
   */
-object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree {
+object MPredicate {
 
-  /** Трейт элемента модели. */
-  protected sealed trait ValT extends super.ValT { that: T =>
-    def singular = "edge.predicate." + strId
+  /** Поддержка play-json. */
+  implicit val MPREDICATE_FORMAT: Format[MPredicate] = {
+    EnumeratumUtil.valueEnumEntryFormat( MPredicates )
   }
 
+}
 
-  /** Класс одного элемента модели. */
-  protected[this] sealed class Val(override val strId: String)
-    extends super.Val(strId)
-    with ValT
-  { that =>
 
-    /** Дочерние предикаты, если есть. */
-    override def children: List[T] = Nil
+/** Базовый класс для каждого элемента модели [[MPredicates]]. */
+sealed abstract class MPredicate(override val value: String)
+  extends StringEnumEntry
+  with TreeEnumEntry[MPredicate]
+  with IStrId
+{ that: MPredicate =>
 
-    /** Родительский предикат, если есть. */
-    override def parent: Option[T] = None
+  /** Некий строковой ключ. Например, ключ элемента модели. */
+  override final def strId: String = value    // TODO Выкинуть это?
 
-    /** Трейт для дочерних элементов. Они обычно наследуют черты родителей. */
-    protected trait _Child { child: ValT =>
-      override def parent: Option[T] = Some(that)
-    }
+  /** Код i18n-сообщения с названием предиката в единственном числе. */
+  def singular: String = {
+    "edge.predicate." + strId
   }
 
-  override type T = Val
+}
 
+
+/** Модель предикатов эджей. */
+object MPredicates extends StringEnum[MPredicate] {
 
   /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
-  val PARENTRAL_WRITES: Writes[T] = {
+  val PARENTRAL_WRITES: Writes[MPredicate] = {
     // Костыль из-за проблем contramap(). http://stackoverflow.com/a/27481370
-    Writes[T] { mpred =>
-      val p = implicitly[Writes[T]]
+    Writes[MPredicate] { mpred =>
+      val p = implicitly[Writes[MPredicate]]
       val preds = mpred
         .meAndParentsIterator
         .map { p.writes }
@@ -54,10 +56,11 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     }
   }
 
-  private def _READS = implicitly[Reads[T]]
+  private def _READS = implicitly[Reads[MPredicate]]
+
   /** Десериализация из JSON-списка в первый элемент этого списка. */
-  val PARENTRAL_READS: Reads[T] = {
-    Reads[T] {
+  val PARENTRAL_READS: Reads[MPredicate] = {
+    Reads[MPredicate] {
       case arr: JsArray =>
         if (arr.value.isEmpty)
           JsError("expected.nonempty.jsarray")
@@ -70,14 +73,8 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     }
   }
 
-  /** compat-десериализация, поддерживает ввод как через meAndParents[], так и plain-предикат. */
-  val PARENTAL_OR_DIRECT_READS: Reads[T] = {
-    PARENTRAL_READS
-      .orElse(_READS)
-  }
-
-  val PARENTAL_OR_DIRECT_FORMAT: Format[T] = {
-    Format(PARENTAL_OR_DIRECT_READS, PARENTRAL_WRITES)
+  val PARENTAL_FORMAT: Format[MPredicate] = {
+    Format(PARENTRAL_READS, PARENTRAL_WRITES)
   }
 
 
@@ -86,30 +83,32 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
   // ------------------------------------------------------------------------
 
   /** Субъект имеет право владения субъектом. */
-  val OwnedBy: T = new Val("a")
+  case object OwnedBy extends MPredicate("a")
+
 
   /**
     * Предикат создателя какого-то узла в системе. Обычно создатель -- это юзер или что-то такое.
     * from -- любой узел, например карточка или магазин.
     * to   -- юзер.
     */
-  val CreatedBy: T = new Val("d")
+  case object CreatedBy extends MPredicate("d")
 
 
   /** Указание на картинку-логотип узла-учреждения.  */
-  val Logo: T = new Val("e")
+  case object Logo extends MPredicate("e")
 
 
   /** Ребро указывает на родительский узел в географическом смысле.
     * Не обязательно это прямой гео-родитель. */
-  val GeoParent = new Val("f") {
+  case object GeoParent extends MPredicate("f") {
 
     /** Предикат прямого гео-родителя. */
-    val Direct: T = new Val("g") with _Child
+    case object Direct extends MPredicate("g") with _Child
 
-    override def children: List[T] = {
+    override def children: List[MPredicate] = {
       Direct :: super.children
     }
+
   }
 
 
@@ -119,51 +118,52 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     * После ветки root:mad-to-n2 предикат стал использоваться для указания на логотип приветствия.
     * а неудавшаяся модель карточки приветствия окончательно отмерла.
     */
-  val WcLogo: T = new Val("h")
+  case object WcLogo extends MPredicate("h")
 
 
   /** Предикат, направляемый в сторону картинки или иного объекта, являющегося предметом галлереи. */
-  val GalleryItem: T = new Val("i")
+  case object GalleryItem extends MPredicate("i")
 
 
   /** Предикат на юзера, выполнившего модерацию текущего узла.
     * Такой эдж модерации должен содержать инфу о результате модерации. */
-  val ModeratedBy: T = new Val("j")
+  case object ModeratedBy extends MPredicate("j")
 
 
   /** Предикат для ресивера. Изначально, ресивером был узел (с ЛК), а объектом предиката -- рекламная карточка. */
-  val Receiver = new Val("k") {
+  case object Receiver extends MPredicate("k") {
 
     /** Саморазмещение, т.е. ресивера, указывающего на продьюсера той же (текущей) карточки. */
-    val Self: T = new Val("ks") with _Child
+    case object Self extends MPredicate("ks") with _Child
 
     /** Проплаченный узел-ресивер, купленный через подсистемы adv. */
-    val AdvDirect: T = new Val("ka") with _Child
+    case object AdvDirect extends MPredicate("ka") with _Child
 
-    override def children: List[T] = {
+    override def children: List[MPredicate] = {
       Self :: AdvDirect :: super.children
     }
+
   }
 
 
   /** Предикат указания на тег. */
-  val TaggedBy = new Val("l") {
+  case object TaggedBy extends MPredicate("l") {
 
     /** Adv geo tags: платное размещение в гео-тегах. */
-    val Agt: T = new Val("lg") with _Child
+    case object Agt extends MPredicate("lg") with _Child
 
     /** Узел сам-себе тег. В этом эдже лежит его tag payload: tag face'ы, гео-шейпы.
       * Все tag face'ы со всех узлов храняться в одном индексе, в т.ч. и этот.
       * В этом же эдже должна лежать пачка гео-шейпов со всех размещенных карточек. */
-    val Self: T = new Val("ls") with _Child
+    case object Self extends MPredicate("ls") with _Child
 
     /**
       * Прямое размещение тега на каком-то узле.
       * Появилось как побочный продукт интеграции ресиверов в форму георазмещения.
       */
-    val DirectTag: T = new Val("ld") with _Child
+    case object DirectTag extends MPredicate("ld") with _Child
 
-    override def children: List[T] = {
+    override def children: List[MPredicate] = {
       Agt :: Self :: DirectTag :: super.children
     }
 
@@ -171,7 +171,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
 
 
   /** Фоновый объект по отношению к текущему объекту. */
-  val Bg: T = new Val("m")
+  case object Bg extends MPredicate("m")
 
 
   /**
@@ -180,7 +180,7 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     * SysAdnGeo, упавляющий геоформами вручную, исторически пишет в корневой предикат.
     * Поиск геолокации идёт всегда по корневому предикату.
     */
-  val NodeLocation = new Val("n") {
+  case object NodeLocation extends MPredicate("n") {
 
     // TODO Сделать manual-эдж отдельными, а не корневым. Для этого надо обновление узлов произвести.
     // Можно "n"-эдж сделать дочерним для нового корневого, и запустить пересохранение всех узлов.
@@ -188,41 +188,34 @@ object MPredicates extends EnumMaybeWithName with EnumJsonReadsValT with EnumTre
     /** 2017.may.17: Платные размещения на карте геолокации, подчиняются биллингу.
       * Выставляются и вычищаются биллингом в соотв. adv-билдере.
       */
-    val Paid: T = new Val("np") with _Child
+    case object Paid extends MPredicate("np") with _Child
 
-    override def children = Paid :: super.children
+    override def children: List[MPredicate] = {
+      Paid :: super.children
+    }
 
   }
 
 
   /** Предикат для эджей, описывающих размещение карточек просто в шейпе на карте. */
-  val AdvGeoPlace: T = new Val("o")
+  case object AdvGeoPlace extends MPredicate("o")
+
 
   /**
     * Что-то находится внутри чего-то.
     * Например, маячок "лежит" внутри ТЦ или магазина. Т.е. %предмет% -в-> %контейнере%.
     */
-  val PlacedIn: T = new Val("p")
+  case object PlacedIn extends MPredicate("p")
+
 
   /** Размещение ADN-узла на географической карте рекламополучателей. */
   @deprecated("Толком никакой смысловой нагрузки не было, и оно замёржено в NodeLocation", "2017-06-02")
-  val AdnMap: T = new Val("r")
+  case object AdnMap extends MPredicate("r")
 
 
-  /** Поддержка биндинга из routes. */
-  implicit def mPredicateQsb(implicit strB: QueryStringBindable[String]): QueryStringBindable[T] = {
-    new QueryStringBindableImpl[T] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, T]] = {
-        for (strIdEith <- strB.bind(key, params)) yield {
-          strIdEith.right.flatMap { strId =>
-            maybeWithName(strId)
-              .toRight("e.predicate.unknown")
-          }
-        }
-      }
-      override def unbind(key: String, value: T): String = {
-        strB.unbind(key, value.strId)
-      }
+  override val values = {
+    findValues.flatMap { v =>
+      v :: v.deepChildren
     }
   }
 

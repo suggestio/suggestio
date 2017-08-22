@@ -146,7 +146,8 @@ routesImport ++= Seq(
   "io.suggest.geo.MLocEnvJvm._",
 
   // 2017.aug.17: Распиливания BlockMeta для выноса основной её части в [common].
-  "io.suggest.ad.blk.BlockMetaJvm._"
+  "io.suggest.ad.blk.BlockMetaJvm._",
+  "io.suggest.model.n2.edge.MPredicatesJvm._"
 )
 
 

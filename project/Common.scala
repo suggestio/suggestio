@@ -226,7 +226,7 @@ object Common {
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]
     */
-  val enumeratumVsn = "1.5.3"
+  val enumeratumVsn = "1.5.12"
 
   /** Версия minitest, используемого для простых кросс-платформенных тестов.
     * @see [[https://github.com/monix/minitest]]

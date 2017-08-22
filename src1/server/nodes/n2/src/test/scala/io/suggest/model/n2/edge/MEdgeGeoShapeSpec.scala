@@ -4,7 +4,6 @@ import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 
 import io.suggest.geo._
 import io.suggest.test.json.PlayJsonTestUtil
-import MNodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
 import org.scalatest.FlatSpec
 

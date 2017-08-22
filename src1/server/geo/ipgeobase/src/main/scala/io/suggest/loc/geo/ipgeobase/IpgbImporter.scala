@@ -78,7 +78,7 @@ class IpgbImporter @Inject() (
     // TODO Нужно ограничивать max-size для возвращаемых данных. 5 метров макс. будет достаточно.
     val downloader = httpGetToFile.Downloader(dlUrlStr, followRedirects = true)
     val resultFut = downloader.request()
-    resultFut.onFailure { case ex =>
+    for (ex <- resultFut.failed) {
       info(s"download(): Failed to fetch $dlUrlStr into file.", ex)
     }
 

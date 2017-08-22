@@ -9,7 +9,7 @@
 
   @select(
     ef("predicate"),
-    options = MPredicates.valuesT
+    options = MPredicates.values
       .iterator
       .map { p =>
         p.strId -> messages(p.singular)

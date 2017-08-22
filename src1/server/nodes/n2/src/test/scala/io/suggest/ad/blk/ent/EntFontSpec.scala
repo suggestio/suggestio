@@ -1,6 +1,6 @@
 package io.suggest.ad.blk.ent
 
-import io.suggest.font.MFontSizes
+import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.test.json.PlayJsonTestUtil
 import io.suggest.text.MTextAligns
 import org.scalatest.FlatSpec
@@ -25,7 +25,7 @@ class EntFontSpec extends FlatSpec with PlayJsonTestUtil {
         color   = "55ff33",
         size    = Some( MFontSizes.F14 ),
         align   = Some( MTextAligns.Center ),
-        family  = Some( "comic-sans" )
+        family  = Some( MFonts.NewspaperSans )
       )
     }
   }

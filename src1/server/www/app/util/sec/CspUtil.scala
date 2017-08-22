@@ -84,10 +84,21 @@ class CspUtil @Inject() (
     hdrOpt.fold(result)( result.withHeaders(_) )
   }
 
+
+  /** Готовые кастомные CSP-политики. */
   object CustomPolicies {
 
     /** CSP-заголовок сайта выдачи. Выдача нуждается в доступе к tile'ам карты. */
-    val PageWithMapboxGl = mkCustomPolicyHdr( _.allowMapBoxGl )
+    val PageWithMapboxGl = mkCustomPolicyHdr { p0 =>
+      val mbHost = "https://*.mapbox.com"
+      val blob = Csp.Sources.BLOB
+
+      p0.addDefaultSrc( blob )
+        .addConnectSrc( mbHost )
+        .addScriptSrc( blob, Csp.Sources.UNSAFE_EVAL )
+        // Хз, надо ли imgSrc, т.к. она векторная и через XHR свои тайлы получает.
+        .addImgSrc( mbHost, blob )
+    }
 
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
     val PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )
