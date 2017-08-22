@@ -7,15 +7,16 @@ import io.suggest.es.search.MSubSearch
 import io.suggest.geo.{MGeoLoc, _}
 import io.suggest.i18n.MsgCodes
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
-import io.suggest.model.n2.node.{IMNodes, NodeNotFoundException}
+import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
 import io.suggest.sc.resp.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
-import models._
+import models.AdnShownTypes
 import models.im.{IImgWithWhInfo, MImgT}
 import models.msc._
 import models.msc.resp.{MScResp, MScRespAction, MScRespIndex}
@@ -232,7 +233,7 @@ trait ScIndex
 
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
         val someTrue = Some(true)
-        val nglsResultsFut = Future.traverse(NodeGeoLevels.valuesT: Iterable[NodeGeoLevel]) { ngl =>
+        val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
             // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим

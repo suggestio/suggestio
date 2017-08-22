@@ -114,7 +114,7 @@ sealed trait GeoMode {
   def exactGeodata: Option[MGeoPoint]
 
   /** Уровни, по которым надо искать. */
-  def nodeDetectLevels: Seq[NodeGeoLevel]
+  def nodeDetectLevels: Seq[MNodeGeoLevel]
 
   def asGeoLocation: Option[GeoLocation] = None
 
@@ -221,7 +221,7 @@ case object GeoIp extends GeoMode with MacroLogsImpl {
 
   override def exactGeodata: Option[MGeoPoint] = None
 
-  override def nodeDetectLevels = Seq(NodeGeoLevels.NGL_TOWN)
+  override def nodeDetectLevels = Seq(MNodeGeoLevels.NGL_TOWN)
 }
 
 
@@ -278,9 +278,9 @@ final case class GeoLocation(geoPoint: MGeoPoint, accuracyMeters: Option[Double]
   override def exactGeodata = Some(geoPoint)
 
   /** Список уровней для детектирования в порядке употребления. Тут они выстраиваются с учётом точности. */
-  override lazy val nodeDetectLevels: Seq[NodeGeoLevel] = {
+  override lazy val nodeDetectLevels: Seq[MNodeGeoLevel] = {
     // Порядок ngl-значений должен быть такой: здание, район, город.
-    val s0 = NodeGeoLevels.valuesNgl
+    val s0 = MNodeGeoLevels.values
       .iterator
     accuracyMeters
       .fold( s0 ) { am =>

@@ -5,12 +5,19 @@ import io.suggest.primo.IStrId
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 27.11.14 12:16
- * Description: Модель шрифтов. До её появления шрифты были захардкожены прямо в шаблонах.
- * initial = 0 -- это проверка испрользуется в adFormBase на "первость" элемента модели.
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 27.11.14 12:16
+  * Description: Модель шрифтов. До её появления шрифты были захардкожены прямо в шаблонах.
+  * initial = 0 -- это проверка испрользуется в adFormBase на "первость" элемента модели.
+  *
+  * 2017.aug.22: Решено явно разделить названия css-классов, файлов и id элементов модели,
+  * заодно переведя модель на enumeratum.
+  * Но тут есть проблема: надо сначала портировать все карточки на dtags,
+  * распарсив rich descr html тоже в dtags, написав весь рендер (в т.ч. tinyMCE с маппингом css <=> id),
+  * и только потом можно сделать явное окончательное разделение и портирование,
+  * выкинув устаревшие части этой модели.
+  */
 
 object MFonts
   extends Enumeration(0)
@@ -35,14 +42,16 @@ object MFonts
       JsObject(title :: styles :: tail)
     }
 
+    def fileName: String
+
     /** Название CSS font-family. */
-    def cssClass: String = strId
+    def cssClass: String = fileName
 
     /** Отображаемое название шрифта. */
     def descr: String
 
     /** Имена прошлые и текущие. */
-    override def _names = strId :: Nil
+    override def _names = fileName :: strId :: Nil
 
   }
 
@@ -61,105 +70,127 @@ object MFonts
 
   // Экземпляры шрифтов в АЛФАВИТНОМ ПОРЯДКЕ
 
-  val AaHigherup          : T = new Val("aa-higherup") {
+  val AaHigherup          : T = new Val("aahu") {
+    override def fileName = "aa-higherup"
     override def descr  = "Higherup"
     override def _names = "aa_higherup-webfont" :: super._names
   }
 
-  val BlocExtCond         : T = new Val("bloc-ext-con-c") {
+  val BlocExtCond         : T = new Val("blecc") {
+    override def fileName = "bloc-ext-con-c"
     override def descr  = "BlocExt Cond"
     override def _names = "blocextconc-webfont" :: super._names
   }
 
-  val BodonConc           : T = new Val("bodon-con-c") {
+  val BodonConc           : T = new Val("bocc") {
+    override def fileName = "bodon-con-c"
     override def descr  = "Bodon Conc"
     override def _names = "bodonconc-webfont" :: super._names
   }
 
-  val Confic              : T = new Val("confic") {
+  val Confic              : T = new Val("cf") {
+    override def fileName = "confic"
     override def descr  = "Confic"
     override def _names = "confic-webfont" :: super._names
   }
 
-  val FavCondCBold        : T = new Val("favorit-cond-c-bold") {
+  val FavCondCBold        : T = new Val("fvccb") {
+    override def fileName = "favorit-cond-c-bold"
     override def descr  = "Favorit Cond C Bold"
     override def _names = "favoritcondc-bold-webfont" :: super._names
   }
 
-  val FavLightCondCReg    : T = new Val("favorit-light-cond-c-regular") {
+  val FavLightCondCReg    : T = new Val("fvlccr") {
+    override def fileName = "favorit-light-cond-c-regular"
     override def descr  = "Favorit Light Cond C Regular"
     override def _names = "favoritlightcondcregular" :: super._names
   }
 
-  val FuturaFuturisC      : T = new Val("futura-futuris-c") {
+  val FuturaFuturisC      : T = new Val("fufuc") {
+    override def fileName = "futura-futuris-c"
     override def descr  = "Futur Fut C"
     override def _names = "futurfutc-webfont" :: super._names
   }
 
-  val GazTransport        : T = new Val("gaz-transport") {
+  val GazTransport        : T = new Val("gzt") {
+    override def fileName = "gaz-transport"
     override def descr  = "GAZ Transport"
   }
 
-  val Georgia             : T = new Val("Georgia") {
-    override def descr  = strId
+  val Georgia             : T = new Val("g") {
+    override def fileName = "Georgia"
+    override def descr  = fileName
   }
 
-  val HeliosCondLight     : T = new Val("helios-cond-light") {
+  val HeliosCondLight     : T = new Val("hecl") {
+    override def fileName = "helios-cond-light"
     override def descr  = "Helios Cond Light"
     override def _names = "helioscondlight-webfont" :: super._names
   }
 
-  val HeliosThin          : T = new Val("helios-thin") {
+  val HeliosThin          : T = new Val("het") {
+    override def fileName = "helios-thin"
     override def descr  = "Helios Thin"
     override def _names = "heliosthin" :: super._names
   }
 
-  val NewspaperSans       : T = new Val("news-paper-sans-regular") {
+  val NewspaperSans       : T = new Val("npsr") {
+    override def fileName = "news-paper-sans-regular"
     override def descr  = "Newspaper Sans"
     override def _names = "newspsan-webfont" :: super._names
   }
 
-  val Meloranic           : T = new Val("meloriac") {
+  val Meloranic           : T = new Val("mr") {
+    override def fileName = "meloriac"
     override def descr  = "Meloriac"
   }
 
-  val OpenSansLight       : T = new Val("opensans-light") {
+  val OpenSansLight       : T = new Val("osl") {
+    override def fileName = "opensans-light"
     override def descr  = "OpenSans Light Regular"
   }
 
-  val OpenSansRegular      : T = new Val("opensans-regular") {
+  val OpenSansRegular      : T = new Val("osr") {
+    override def fileName = "opensans-regular"
     override def descr  = "OpenSans Regular"
   }
 
-  val OctinTeamHeavy      : T = new Val("octin-team-heavy") {
+  val OctinTeamHeavy      : T = new Val("oth") {
+    override def fileName = "octin-team-heavy"
     override def descr  = "Octin Team Heavy"
   }
 
-  val Perforama           : T = new Val("perforama") {
+  val Perforama           : T = new Val("pr") {
+    override def fileName = "perforama"
     override def descr  = "Perforama"
     override def _names = "perforama-webfont" :: super._names
   }
 
-  val PfDinTextCompProMed : T = new Val("pf-din-comp-pro-medium") {
+  val PfDinTextCompProMed : T = new Val("pdcpm") {
+    override def fileName = "pf-din-comp-pro-medium"
     override def descr  = "PF Din Text Comp Pro Medium"
     override def _names = "PFDinTextCompPro-Medium" :: super._names
   }
 
-  val PharmadinCondLight  : T = new Val("pharmadin-condensed-light") {
+  val PharmadinCondLight  : T = new Val("pcl") {
+    override def fileName = "pharmadin-condensed-light"
     override def descr  = "Pharmadin Condensed Light"
     override def _names = "PharmadinCondensedLight" :: super._names
   }
 
-  val Posterboard         : T = new Val("posterboard") {
+  val Posterboard         : T = new Val("pb") {
+    override def fileName = "posterboard"
     override def descr  = "Posterboard"
   }
 
-  val PtSansNarrow        : T = new Val("pt-sans-narrow") {
+  val PtSansNarrow        : T = new Val("psn") {
+    override def fileName = "pt-sans-narrow"
     override def descr  = "PT Sans Narrow"
     override def _names = "PT_Sans-Narrow" :: super._names
   }
 
-  val RexBold             : T = new Val("rex-bold") {
+  val RexBold             : T = new Val("rxb") {
+    override def fileName = "rex-bold"
     override def descr  = "Rex Bold"
     override def _names = "rex_bold-webfont" :: super._names
   }

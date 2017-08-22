@@ -3,7 +3,7 @@ package io.suggest.model.n2.edge
 import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.ym.model.NodeGeoLevel
+import io.suggest.geo.MNodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -48,7 +48,7 @@ object MEdge extends IGenEsMappingProps {
       import F.{GeoShapes => Gs}
       def INFO_GS_GLEVEL_FN                     = _fullFn( Gs.GS_GLEVEL_FN )
       def INFO_GS_GJSON_COMPAT_FN               = _fullFn( Gs.GS_GJSON_COMPAT_FN )
-      def INFO_GS_SHAPE_FN(ngl: NodeGeoLevel)   = _fullFn( Gs.GS_SHAPE_FN(ngl) )
+      def INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel)   = _fullFn( Gs.GS_SHAPE_FN(ngl) )
 
       // Гео-точки
       def INFO_GEO_POINTS_FN                    = _fullFn( F.GEO_POINT_FN )

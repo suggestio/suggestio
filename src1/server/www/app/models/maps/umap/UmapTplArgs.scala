@@ -1,6 +1,6 @@
 package models.maps.umap
 
-import models._
+import io.suggest.geo.MNodeGeoLevel
 import play.api.i18n.Messages
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -15,9 +15,9 @@ import play.api.libs.functional.syntax._
 object UmapTplArgs {
 
 
-  def nodeGeoLevelsJson(ngls: Seq[NodeGeoLevel])(implicit messages: Messages): JsArray = {
+  def nodeGeoLevelsJson(ngls: Seq[MNodeGeoLevel])(implicit messages: Messages): JsArray = {
 
-    implicit val nglWrites: OWrites[NodeGeoLevel] = (
+    implicit val nglWrites: OWrites[MNodeGeoLevel] = (
       (__ \ "displayOnLoad").write[Boolean] and
       (__ \ "name").write[String] and
       (__ \ "id").write[Int]
@@ -41,7 +41,7 @@ trait IUmapTplArgs {
   def dlGetUrl    : String
   def editAllowed : Boolean
   def title       : String
-  def ngls        : Seq[NodeGeoLevel]
+  def ngls        : Seq[MNodeGeoLevel]
 
   def nglsJson(implicit lang: Messages) = UmapTplArgs.nodeGeoLevelsJson(ngls)
 
@@ -55,7 +55,7 @@ case class UmapTplArgs(
   override val dlGetUrl    : String,
   override val editAllowed : Boolean = true,
   override val title       : String,
-  override val ngls        : Seq[NodeGeoLevel]
+  override val ngls        : Seq[MNodeGeoLevel]
 )
   extends IUmapTplArgs
 

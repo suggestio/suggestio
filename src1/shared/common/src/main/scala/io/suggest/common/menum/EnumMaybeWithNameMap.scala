@@ -46,7 +46,8 @@ trait MaybeWithMultiNameMap extends MaybeWithNameMap with ILightEnumeration {
     _values
       .toIterator
       .flatMap { v =>
-        v._names.toIterator
+        v._names
+          .toIterator
           .map { _ -> v }
       }
   }

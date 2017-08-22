@@ -4,18 +4,18 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoPoint, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.NodeGeoLevels
 import models.msc.{GeoDetectResult, GeoNodesLayer}
 import org.elasticsearch.search.sort.SortOrder
 import play.api.i18n.Messages
-import models._
 import models.mproj.ICommonDi
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.model.n2.edge.MPredicates
+import models.{AdnShownType, AdnShownTypes, GeoMode, GeoSearchInfo}
 
 import scala.concurrent.Future
 
@@ -59,7 +59,7 @@ class ShowcaseNodeListUtil @Inject() (
     * @return Фьючерс с результатом детектирования. Если не удалось, то будет exception.
     */
   def detectCurrentNodeUsing[T](geoMode: GeoMode, gsiOptFut: Future[Option[GeoSearchInfo]])
-                               (searchF: MNodeSearch => Future[Seq[T]]): Future[(NodeGeoLevel, T)] = {
+                               (searchF: MNodeSearch => Future[Seq[T]]): Future[(MNodeGeoLevel, T)] = {
     for {
       gsiOpt <- gsiOptFut
 
@@ -235,7 +235,7 @@ class ShowcaseNodeListUtil @Inject() (
   }
 
   def town2layer(townNode: MNode, expanded: Boolean = false) = {
-    GeoNodesLayer( Seq(townNode), NodeGeoLevels.NGL_TOWN )
+    GeoNodesLayer( Seq(townNode), MNodeGeoLevels.NGL_TOWN )
   }
 
 
@@ -253,14 +253,14 @@ class ShowcaseNodeListUtil @Inject() (
   /** Обернуть список городов в гео-слой. */
   def townsToLayer(townNodes: Seq[MNode], expanded: Boolean)(implicit messages: Messages): GeoNodesLayer = {
     if (townNodes.isEmpty) {
-      GeoNodesLayer(Seq.empty, NodeGeoLevels.NGL_TOWN, expanded = expanded)
+      GeoNodesLayer(Seq.empty, MNodeGeoLevels.NGL_TOWN, expanded = expanded)
     } else if (townNodes.size == 1) {
       town2layer(townNodes.head, expanded)
     } else {
       GeoNodesLayer(
         nodes     = townNodes,
-        ngl       = NodeGeoLevels.NGL_TOWN,
-        nameOpt   = Some( messages(NodeGeoLevels.NGL_TOWN.l10nPluralShort)),
+        ngl       = MNodeGeoLevels.NGL_TOWN,
+        nameOpt   = Some( messages(MNodeGeoLevels.NGL_TOWN.l10nPluralShort)),
         expanded  = expanded
       )
     }
@@ -289,7 +289,7 @@ class ShowcaseNodeListUtil @Inject() (
                   .flatMap(_.ngls.headOption)
               }.getOrElse {
                 // should never happen
-                NodeGeoLevels.default
+                MNodeGeoLevels.default
               }
             GeoDetectResult(glevel, mnode)
           }
@@ -329,10 +329,10 @@ class ShowcaseNodeListUtil @Inject() (
           .flatMap(_.extras.adn)
           .flatMap(_.shownTypeIdOpt)
           .flatMap(AdnShownTypes.maybeWithName)
-          .fold(NodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort)(_.pluralNoTown)
+          .fold(MNodeGeoLevels.NGL_TOWN_DISTRICT.l10nPluralShort)(_.pluralNoTown)
         GeoNodesLayer(
           nodes   = districtNodes,
-          ngl     = NodeGeoLevels.NGL_TOWN_DISTRICT,
+          ngl     = MNodeGeoLevels.NGL_TOWN_DISTRICT,
           nameOpt = Some( messages(nameL10n) ),
           expanded = expanded
         )
@@ -394,7 +394,7 @@ class ShowcaseNodeListUtil @Inject() (
                 .flatMap(_.id)
                 .contains(currAdnId)
             }
-            GeoNodesLayer(lsSorted, NodeGeoLevels.NGL_BUILDING, Some(messages(ast.pluralNoTown)), expanded = expanded)
+            GeoNodesLayer(lsSorted, MNodeGeoLevels.NGL_BUILDING, Some(messages(ast.pluralNoTown)), expanded = expanded)
           }
           .toList
           .sortBy(_.nameOpt.getOrElse(""))
@@ -410,7 +410,7 @@ class ShowcaseNodeListUtil @Inject() (
     * @param currNodeLayer Уровень, на котором находится текущий узел.
     * @return Фьючерс со слоями в порядке рендера (город внизу).
     */
-  def collectLayers(geoMode: Option[GeoMode], currNode: MNode, currNodeLayer: NodeGeoLevel)
+  def collectLayers(geoMode: Option[GeoMode], currNode: MNode, currNodeLayer: MNodeGeoLevel)
                    (implicit messages: Messages): Future[Seq[GeoNodesLayer]] = {
     // Задаём опорные геоточки для гео-сортировки и гео-поиска.
     val (gravity0, gravity1) = if (DISTANCE_SORT && geoMode.isDefined) {
@@ -425,7 +425,7 @@ class ShowcaseNodeListUtil @Inject() (
     // На scala < 2.11.2 тут вылетает warning: match may not be exhausive. См. https://issues.scala-lang.org/browse/SI-8708
     currNodeLayer match {
       // Это -- город.
-      case NodeGeoLevels.NGL_TOWN =>
+      case MNodeGeoLevels.NGL_TOWN =>
         val districtsLayerFut = getDistrictsLayerForTown(currNode, gravity0)
         // 2014.sep.25: Нужна возможность выдавать другие города. Это должно быть отлючаемо.
         val townsLayerFut: Future[GeoNodesLayer] = if (SHOW_ALL_TOWNS) {
@@ -444,7 +444,7 @@ class ShowcaseNodeListUtil @Inject() (
         }
 
       // Юзер сейчас находится на уровне района. Нужно найти узлы в этом районе, город и остальные районы.
-      case NodeGeoLevels.NGL_TOWN_DISTRICT =>
+      case MNodeGeoLevels.NGL_TOWN_DISTRICT =>
         val townFut = getTownOfNode(currNode)
         val buildingsFut = getBuildingsLayersOfDistrict(currNode.id.get, gravity1)
         val districtsOptFut: Future[Option[GeoNodesLayer]] = {
@@ -475,7 +475,7 @@ class ShowcaseNodeListUtil @Inject() (
         }
 
       // Юзер гуляет на уровне зданий района. Нужно отобразить другие здания района, список районов, город.
-      case NodeGeoLevels.NGL_BUILDING =>
+      case MNodeGeoLevels.NGL_BUILDING =>
         val townFut = getTownOfNode(currNode)
         // Если нет текущей геолокации, то можно использовать геолокацию зданию. Или не стоит так делать?
         val districtsLayerFut = townFut flatMap { townNode =>

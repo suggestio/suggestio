@@ -1,32 +1,47 @@
 package io.suggest.model.n2.media.storage
 
-import io.suggest.common.menum.EnumValue2Val
+import enumeratum._
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.es.util.SioEsUtil._
+
+/** Класс модели названий полей storage-моделей. */
+sealed abstract class MStorFn extends EnumEntry {
+
+  /** Идентификатор (название) поля на стороне ES. */
+  def fn: String
+
+  /** ES-описание поля. */
+  def esMappingProp: DocField
+
+  override def entryName = fn
+
+}
+
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 29.09.15 20:57
- * Description: Имена полей для моделей [[IMediaStorage]].
+ * Description: Модель имён полей для моделей [[IMediaStorage]].
  */
-object MStorFns extends EnumValue2Val {
-
-  protected[this] abstract class Val(val fn: String)
-    extends super.Val(fn)
-  {
-    def esMappingProp: DocField
-  }
-
-  override type T = Val
+object MStorFns extends Enum[MStorFn] {
 
   // common
-  val STYPE       : T = new Val("t") {
-    override def esMappingProp = FieldKeyword(fn, index = true, include_in_all = false)
+  case object STYPE extends MStorFn {
+
+    override def fn: String = "t"
+
+    override def esMappingProp: DocField = {
+      FieldKeyword(fn, index = true, include_in_all = false)
+    }
   }
 
+
   // seaweedfs
-  val FID         : T = new Val("i") {
+  case object FID extends MStorFn {
+
+    override def fn: String = "i"
+
     override def esMappingProp: DocField = {
       FieldObject(fn, enabled = true, properties = Seq(
         FieldNumber(Fid.VOLUME_ID_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
@@ -34,5 +49,8 @@ object MStorFns extends EnumValue2Val {
       ))
     }
   }
+
+
+  override val values = findValues
 
 }

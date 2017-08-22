@@ -3,12 +3,11 @@ package util.showcase
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.tags.TagFacesUtil
-import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc}
+import io.suggest.geo.{CircleGs, CircleGsJvm, MGeoLoc, MNodeGeoLevels}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, TagCriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
-import io.suggest.ym.model.NodeGeoLevels
 import models.msc.tag.MScTagsSearchQs
 
 import scala.concurrent.Future
@@ -60,7 +59,7 @@ class ScTagsUtil @Inject()(
           radiusM = 1
         )
         GsCriteria(
-          levels = NodeGeoLevels.geoTag :: Nil,
+          levels = MNodeGeoLevels.geoTag :: Nil,
           shapes = CircleGsJvm.toEsQueryMaker(circle) :: Nil
         )
       }

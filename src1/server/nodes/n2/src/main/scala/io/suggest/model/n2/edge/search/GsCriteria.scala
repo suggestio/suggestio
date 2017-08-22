@@ -1,7 +1,6 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.geo.IToEsQueryFn
-import io.suggest.ym.model.NodeGeoLevel
+import io.suggest.geo.{IToEsQueryFn, MNodeGeoLevel}
 
 /**
   * Suggest.io
@@ -12,7 +11,7 @@ import io.suggest.ym.model.NodeGeoLevel
 trait IGsCriteria {
 
   /** Есть указанный/любой шейп на указанных гео-уровнях. */
-  def levels: Seq[NodeGeoLevel]
+  def levels: Seq[MNodeGeoLevel]
 
   /** Геошейпы, по которым нужно матчить. */
   def shapes: Seq[IToEsQueryFn]
@@ -32,9 +31,9 @@ trait IGsCriteria {
 
 /** Дефолтовая реализация модели [[IGsCriteria]]. */
 case class GsCriteria(
-  override val levels             : Seq[NodeGeoLevel]   = Nil,
-  override val shapes             : Seq[IToEsQueryFn]   = Nil,
-  override val gjsonCompat        : Option[Boolean]     = None
+                       override val levels             : Seq[MNodeGeoLevel]   = Nil,
+                       override val shapes             : Seq[IToEsQueryFn]   = Nil,
+                       override val gjsonCompat        : Option[Boolean]     = None
 )
   extends IGsCriteria
 {

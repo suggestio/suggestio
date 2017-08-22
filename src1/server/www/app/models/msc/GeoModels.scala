@@ -1,6 +1,8 @@
 package models.msc
 
-import models._
+import io.suggest.geo.MNodeGeoLevel
+import io.suggest.model.n2.node.MNode
+
 
 /**
  * Suggest.io
@@ -11,8 +13,8 @@ import models._
 
 /** Результат работы детектора текущего узла. */
 case class GeoDetectResult(
-  ngl   : NodeGeoLevel,
-  node  : MNode
+                            ngl   : MNodeGeoLevel,
+                            node  : MNode
 )
 
 
@@ -23,8 +25,8 @@ case class GeoDetectResult(
  * @param expanded Отображать уже развёрнутов? false по умолчанию.
  */
 case class GeoNodesLayer(
-  nodes     : Seq[MNode],
-  ngl       : NodeGeoLevel,
-  nameOpt   : Option[String] = None,
-  expanded  : Boolean = false
+                          nodes     : Seq[MNode],
+                          ngl       : MNodeGeoLevel,
+                          nameOpt   : Option[String] = None,
+                          expanded  : Boolean = false
 )

@@ -2,9 +2,8 @@ package io.suggest.model.n2.edge
 
 import java.time.OffsetDateTime
 
-import io.suggest.geo.{CircleGs, Distance, MGeoPoint}
+import io.suggest.geo.{CircleGs, Distance, MGeoPoint, MNodeGeoLevels}
 import io.suggest.test.json.PlayJsonTestUtil
-import io.suggest.ym.model.NodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
 import org.scalatest.FlatSpec
 
@@ -34,7 +33,7 @@ class MEdgeInfoSpec extends FlatSpec with PlayJsonTestUtil {
         geoShapes   = List(
           MEdgeGeoShape(
             id     = 5,
-            glevel = NodeGeoLevels.NGL_BUILDING,
+            glevel = MNodeGeoLevels.NGL_BUILDING,
             shape  = CircleGs(
               center  = MGeoPoint(lat = 10.1, lon = 11.2),
               radiusM = Distance(10.55, DistanceUnit.KILOMETERS).meters

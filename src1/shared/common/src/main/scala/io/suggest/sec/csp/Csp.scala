@@ -261,6 +261,7 @@ case class CspPolicy(
   def withFrameAncestors(frameAncestors1: Set[String]) = copy(frameAncestors = frameAncestors1)
   def withPluginTypes(pluginTypes1: Set[String]) = copy(pluginTypes = pluginTypes1)
 
+  // TODO Вынести весь код ниже в контроллер или утиль.
 
   /** Использование векторных карт MapBox (mapbox-gl.js) требует кое-каких дополнительных разрешений CSP.
     * @return Обновлённая CSP policy.
@@ -280,6 +281,12 @@ case class CspPolicy(
   /** Разрешить доступ для OSM-карт для leaflet.js. */
   def allowOsmLeaflet: CspPolicy = {
     addImgSrc( "*.tile.openstreetmap.org" )
+  }
+
+  /** Umap-карта на базе Leaflet. */
+  def allowUmap: CspPolicy = {
+    allowOsmLeaflet
+      .addScriptSrc( Csp.Sources.UNSAFE_EVAL, Csp.Sources.UNSAFE_INLINE )
   }
 
   def jsUnsafeInline: CspPolicy = {

@@ -1,10 +1,10 @@
 package controllers
 
 import java.time.OffsetDateTime
-
 import javax.inject.Inject
+
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import models.mgeo.MGsPtr
 import models.mproj.ICommonDi
@@ -13,15 +13,15 @@ import models.req.INodeReq
 import play.api.data._
 import Forms._
 import io.suggest.geo._
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImplLazy
+import models.AdnShownTypes
 import play.api.mvc.Result
 import util.FormUtil._
 import util.acl._
 import util.geo.osm.{OsmClient, OsmClientStatusCodeInvalidException}
 import views.html.sys1.market.adn.geo._
-import models._
 
 import scala.concurrent.Future
 
@@ -119,7 +119,7 @@ class SysAdnGeo @Inject() (
     }
   }
 
-  private def guessGeoLevel(implicit request: INodeReq[_]): Option[NodeGeoLevel] = {
+  private def guessGeoLevel(implicit request: INodeReq[_]): Option[MNodeGeoLevel] = {
     AdnShownTypes.node2valOpt( request.mnode )
       .flatMap( _.ngls.headOption )
   }
@@ -218,7 +218,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Повесить recover на фьючерс фетч-парсинга osm.xml чтобы вернуть админу на экран нормальную ошибку. */
-  private def recoverOsm(fut: Future[Result], glevel: NodeGeoLevel, urlPrOpt: Option[OsmUrlParseResult]): Future[Result] = {
+  private def recoverOsm(fut: Future[Result], glevel: MNodeGeoLevel, urlPrOpt: Option[OsmUrlParseResult]): Future[Result] = {
     fut recover { case ex: Exception =>
       val rest = urlPrOpt.fold("-") { urlPr =>
         urlPr.osmType.xmlUrl(urlPr.id)
@@ -435,7 +435,7 @@ class SysAdnGeo @Inject() (
   /** Рендер страницы с формой создания круга. */
   def createCircle(nodeId: String) = csrf.AddToken {
     isSuNode(nodeId).apply { implicit request =>
-      val ngl = guessGeoLevel getOrElse NodeGeoLevels.default
+      val ngl = guessGeoLevel getOrElse MNodeGeoLevels.default
       // Нередко в узле указана geo point, характеризующая её. Надо попытаться забиндить её в круг.
       val gpStub = request.mnode.geo.point
         .getOrElse( MGeoPoint(lat = 0, lon = 0) )
@@ -583,7 +583,7 @@ class SysAdnGeo @Inject() (
   }
 
   /** Сбор узлов, находящихся на указанных уровнях. TODO: Нужен радиус обнаружения или сортировка по близости к какой-то точке. */
-  private def collectNodesOnLevels(glevels: Seq[NodeGeoLevel]): Future[Seq[MNode]] = {
+  private def collectNodesOnLevels(glevels: Seq[MNodeGeoLevel]): Future[Seq[MNode]] = {
     // Собрать настройки поиска узлов:
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
@@ -688,12 +688,12 @@ class SysAdnGeo @Inject() (
       .map(_.glevel)
       .toSeq
       .headOption
-      .fold (List.empty[NodeGeoLevel]) { _.allUpperLevels }
+      .fold (List.empty[MNodeGeoLevel]) { _.allUpperLevels }
     // Бывает, что нет результатов.
     val glevels = if (glevels0.nonEmpty) {
       glevels0
     } else {
-      NodeGeoLevels.NGL_TOWN :: NodeGeoLevels.NGL_TOWN_DISTRICT :: Nil
+      MNodeGeoLevels.NGL_TOWN :: MNodeGeoLevels.NGL_TOWN_DISTRICT :: Nil
     }
     collectNodesOnLevels(glevels) map nodes2nodesMap
   }

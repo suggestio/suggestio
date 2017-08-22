@@ -4,7 +4,7 @@ import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.model.PrefixedFn
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.ym.model.NodeGeoLevel
+import io.suggest.geo.MNodeGeoLevel
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -50,7 +50,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
       def OUT_INFO_GS_FN                = _fullFn( Info.INFO_GS_FN )
       def OUT_INFO_GS_GLEVEL_FN         = _fullFn( Info.INFO_GS_GLEVEL_FN )
       def OUT_INFO_GS_GJSON_COMPAT_FN   = _fullFn( Info.INFO_GS_GJSON_COMPAT_FN )
-      def OUT_INFO_GS_SHAPE_FN(ngl: NodeGeoLevel) = _fullFn( Info.INFO_GS_SHAPE_FN(ngl) )
+      def OUT_INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel) = _fullFn( Info.INFO_GS_SHAPE_FN(ngl) )
 
       // Гео-точки
       def OUT_INFO_GEO_POINTS_FN        = _fullFn( Info.INFO_GEO_POINTS_FN )

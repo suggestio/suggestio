@@ -92,6 +92,9 @@ class CspUtil @Inject() (
     /** Страницы, которые содержат Leaflet-карту, живут по этой политике: */
     val PageWithOsmLeaflet = mkCustomPolicyHdr( _.allowOsmLeaflet )
 
+    /** Страницы содержат Umap-карту на базе Leaflet. */
+    val Umap = mkCustomPolicyHdr( _.allowUmap )
+
   }
 
 

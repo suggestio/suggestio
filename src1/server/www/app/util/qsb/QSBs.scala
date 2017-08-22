@@ -1,10 +1,10 @@
 package util.qsb
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.mvc.QueryStringBindable
-import models._
 import util.img.PicSzParsers
 
 import scala.util.parsing.combinator.JavaTokenParsers
@@ -31,16 +31,16 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
 
   /** qsb для NodeGeoLevel, записанной в виде int или string (esfn). */
   implicit def nodeGeoLevelQSB(implicit strB: QueryStringBindable[String],
-                               intB: QueryStringBindable[Int]): QueryStringBindable[NodeGeoLevel] = {
-    new QueryStringBindableImpl[NodeGeoLevel] {
-      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, NodeGeoLevel]] = {
-        val nglOpt: Option[NodeGeoLevel] = intB.bind(key, params)
+                               intB: QueryStringBindable[Int]): QueryStringBindable[MNodeGeoLevel] = {
+    new QueryStringBindableImpl[MNodeGeoLevel] {
+      override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MNodeGeoLevel]] = {
+        val nglOpt: Option[MNodeGeoLevel] = intB.bind(key, params)
           .filter(_.isRight)
-          .flatMap { eith => NodeGeoLevels.maybeWithId(eith.right.get) }
+          .flatMap { eith => MNodeGeoLevels.withIdOption(eith.right.get) }
           .orElse {
             strB.bind(key, params)
               .filter(_.isRight)
-              .flatMap { eith => NodeGeoLevels.maybeWithName(eith.right.get) }
+              .flatMap { eith => MNodeGeoLevels.withNameOption(eith.right.get) }
           }
         val result = nglOpt match {
           case Some(ngl) =>
@@ -51,7 +51,7 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
         Some(result)
       }
 
-      override def unbind(key: String, value: NodeGeoLevel): String = {
+      override def unbind(key: String, value: MNodeGeoLevel): String = {
         intB.unbind(key, value.id)
       }
     }
@@ -94,14 +94,14 @@ object QSBs extends JavaTokenParsers with PicSzParsers {
   }
 
 
-  type NglsStateMap_t = Map[NodeGeoLevel, Boolean]
+  type NglsStateMap_t = Map[MNodeGeoLevel, Boolean]
 
   implicit def nglsMapQsb: QueryStringBindable[NglsStateMap_t] = {
     new QueryStringBindableImpl[NglsStateMap_t] with MacroLogsImplLazy {
       import LOGGER._
 
       def vP: Parser[Boolean] = opt("_" ^^^ false) ^^ { _ getOrElse true }
-      def kP: Parser[NodeGeoLevel] = "[a-z]{2}".r ^^ NodeGeoLevels.withName
+      def kP: Parser[MNodeGeoLevel] = "[a-z]{2}".r ^^ MNodeGeoLevels.withName
       def kvP = (kP ~ vP) ^^ { case k ~ v => (k, v) }
       def mapP = rep(kvP) ^^ { _.toMap }
 

@@ -2,10 +2,10 @@ package io.suggest.model.n2.edge.search
 
 import io.suggest.es.model.{MWrapClause, QueryUtil}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
+import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.node.MNodeFields
 import io.suggest.model.n2.node.MNodeFields.Edges._
 import io.suggest.util.logs.IMacroLogs
-import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import org.apache.lucene.search.join.ScoreMode
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
@@ -70,8 +70,8 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
 
         // Есть какие-то критерии поиска. Сразу пытаемся искать по шейпам...
         val nq: QueryBuilder = if (gsi.shapes.nonEmpty) {
-          val levels1: Iterable[NodeGeoLevel] = if (gsi.levels.isEmpty)
-            NodeGeoLevels.valuesT
+          val levels1: Iterable[MNodeGeoLevel] = if (gsi.levels.isEmpty)
+            MNodeGeoLevels.values
           else
             gsi.levels
           val queriesIter = for {
@@ -229,3 +229,4 @@ trait OutEdgesWrap extends OutEdges with DynSearchArgsWrapper {
   override type WT <: OutEdges
   override def outEdges = _dsArgsUnderlying.outEdges
 }
+

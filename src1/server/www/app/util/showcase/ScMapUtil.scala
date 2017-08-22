@@ -9,7 +9,6 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNodeFields, MNodeTypes, MNodes}
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.geogrid.GeoHashGrid
@@ -115,7 +114,7 @@ class ScMapUtil @Inject() (
           gsIntersect = Some(
             // Сборка геопоискового критерия с area или без.
             GsCriteria(
-              levels = NodeGeoLevels.NGL_BUILDING :: Nil,
+              levels = MNodeGeoLevels.NGL_BUILDING :: Nil,
               shapes = areaOpt.map(GeoShapeJvm.toEsQueryMaker).toList
             )
           ),

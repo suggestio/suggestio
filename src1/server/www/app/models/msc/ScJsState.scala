@@ -1,14 +1,13 @@
 package models.msc
 
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoPoint, MNodeGeoLevel}
+import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.NodeGeoLevel
 import play.api.mvc.QueryStringBindable
 import play.twirl.api.Html
 import util.qsb.QSBs.NglsStateMap_t
-import io.suggest.geo.GeoPoint.pipeDelimitedQsbOpt
 import util.qsb.QsbUtil
 
 import scala.util.Random
@@ -121,16 +120,16 @@ object ScJsState extends MacroLogsImpl {
  * @param geoPoint Данные по текущему месту юзера на карте, если есть.
  */
 case class ScJsState(
-  adnId               : Option[String]   = None,
-  searchScrOpenedOpt  : Option[Boolean]  = None,
-  navScrOpenedOpt     : Option[Boolean]  = None,
-  generationOpt       : Option[Long]     = ScJsState.generationDflt,
-  fadOpenedIdOpt      : Option[String]   = None,
-  fadsOffsetOpt       : Option[Int]      = None,
-  searchTabListOpt    : Option[Boolean]  = None,
-  fadsProdIdOpt       : Option[String]   = None,
-  navNglsMap          : Map[NodeGeoLevel, Boolean] = Map.empty,
-  geoPoint            : Option[MGeoPoint] = None
+                      adnId               : Option[String]   = None,
+                      searchScrOpenedOpt  : Option[Boolean]  = None,
+                      navScrOpenedOpt     : Option[Boolean]  = None,
+                      generationOpt       : Option[Long]     = ScJsState.generationDflt,
+                      fadOpenedIdOpt      : Option[String]   = None,
+                      fadsOffsetOpt       : Option[Int]      = None,
+                      searchTabListOpt    : Option[Boolean]  = None,
+                      fadsProdIdOpt       : Option[String]   = None,
+                      navNglsMap          : Map[MNodeGeoLevel, Boolean] = Map.empty,
+                      geoPoint            : Option[MGeoPoint] = None
 )
   extends EmptyProduct
 { that =>

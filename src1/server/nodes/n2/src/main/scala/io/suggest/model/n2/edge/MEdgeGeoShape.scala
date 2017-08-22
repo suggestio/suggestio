@@ -4,9 +4,8 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.geo.IGeoShape
+import io.suggest.geo.{IGeoShape, MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.geo.GeoShapeJvm._
-import io.suggest.ym.model.{NodeGeoLevel, NodeGeoLevels}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -34,7 +33,9 @@ object MEdgeGeoShape extends IGenEsMappingProps {
     val ID_FN                       = "id"
 
     /** Название поля на стороне ES для самого шейпа в каком-то масштабе индексации. */
-    def SHAPE_FN(ngl: NodeGeoLevel)  = ngl.esfn
+    def SHAPE_FN(ngl: MNodeGeoLevel): String = {
+      ngl.esfn
+    }
 
   }
 
@@ -46,7 +47,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
 
     import Fields._
 
-    val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[NodeGeoLevel]
+    val GLEVEL_FORMAT       = (__ \ GLEVEL_FN).format[MNodeGeoLevel]
     val GJC_FORMAT          = (__ \ GJSON_COMPAT_FN).format[Boolean]
     val FROM_URL_FORMAT     = (__ \ FROM_URL_FN).formatNullable[String]
     val DATE_EDITED_FORMAT  = (__ \ DATE_EDITED_FN).formatNullable[OffsetDateTime]
@@ -58,7 +59,7 @@ object MEdgeGeoShape extends IGenEsMappingProps {
         EmptyUtil.someF
       )
 
-    def _shapeFormat(ngl: NodeGeoLevel): OFormat[IGeoShape] = {
+    def _shapeFormat(ngl: MNodeGeoLevel): OFormat[IGeoShape] = {
       (__ \ SHAPE_FN(ngl)).format[IGeoShape]
     }
 
@@ -115,10 +116,10 @@ object MEdgeGeoShape extends IGenEsMappingProps {
 
   /** ES-маппинги полей. */
   override def generateMappingProps: List[DocField] = {
-    val nglFields = NodeGeoLevels.values
+    val nglFields = MNodeGeoLevels.values
       .foldLeft( List.empty[DocField] ) {
         (acc, nglv)  =>
-          val ngl: NodeGeoLevel = nglv
+          val ngl: MNodeGeoLevel = nglv
           FieldGeoShape( Fields.SHAPE_FN(ngl), precision = ngl.precision)  ::  acc
       }
     FieldKeyword(Fields.GLEVEL_FN, index = true, include_in_all = false, store = true) ::
@@ -159,8 +160,8 @@ object MEdgeGeoShape extends IGenEsMappingProps {
   */
 case class MEdgeGeoShape(
                           id            : Int,
-                          glevel        : NodeGeoLevel,
+                          glevel        : MNodeGeoLevel,
                           shape         : IGeoShape,
                           fromUrl       : Option[String]          = None,
                           dateEdited    : Option[OffsetDateTime]  = None
-)
+                        )

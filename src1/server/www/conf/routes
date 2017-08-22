@@ -277,13 +277,13 @@ POST /sys/adn/geodata/edit/:nodeId       @controllers.SysAdnGeo.editAdnNodeGeoda
 
 ## Карта umap
 GET  /sys/umap/nodes                     @controllers.Umap.getAdnNodesMap
-GET  /sys/umap/nodes/datalayer           @controllers.Umap.getDataLayerGeoJson(ngl: NodeGeoLevel)
+GET  /sys/umap/nodes/datalayer           @controllers.Umap.getDataLayerGeoJson(ngl: io.suggest.geo.MNodeGeoLevel)
 POST /sys/umap/nodes/settings            @controllers.Umap.saveMapSettingsSubmit
-POST /sys/umap/nodes/datalayer           @controllers.Umap.saveMapDataLayer(ngl: NodeGeoLevel)
+POST /sys/umap/nodes/datalayer           @controllers.Umap.saveMapDataLayer(ngl: io.suggest.geo.MNodeGeoLevel)
 POST /sys/umap/nodes/datalayer/new       @controllers.Umap.createMapDataLayer
 GET  /sys/umap/node/:adnId               @controllers.Umap.getAdnNodeMap(adnId)
-GET  /sys/umap/node/:adnId/datalayer     @controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: NodeGeoLevel)
-POST /sys/umap/node/:adnId/datalayer     @controllers.Umap.saveNodeDataLayer(adnId, ngl: NodeGeoLevel)
+GET  /sys/umap/node/:adnId/datalayer     @controllers.Umap.getDataLayerNodeGeoJson(adnId, ngl: io.suggest.geo.MNodeGeoLevel)
+POST /sys/umap/node/:adnId/datalayer     @controllers.Umap.saveNodeDataLayer(adnId, ngl: io.suggest.geo.MNodeGeoLevel)
 
 ## sys/Картинки
 GET  /sys/img                            @controllers.SysImg.index(q: Option[String] ?= None)

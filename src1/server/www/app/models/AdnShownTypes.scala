@@ -1,6 +1,7 @@
 package models
 
 import io.suggest.common.menum.EnumMaybeWithName
+import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.extra.MAdnExtra
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
@@ -31,7 +32,7 @@ object AdnShownTypes extends EnumMaybeWithName {
     def isBuilding: Boolean = false
     def isTown: Boolean = false
 
-    def ngls: List[NodeGeoLevel]
+    def ngls: List[MNodeGeoLevel]
     def showWithTown: Boolean = true
 
     /** Имеет ли смысл пытаться искать гео-дочерние узлы у узла данного уровня. */
@@ -56,14 +57,14 @@ object AdnShownTypes extends EnumMaybeWithName {
   /** Это район города. */
   sealed protected trait TownDistrictT extends ValT {
     override def isTownDistrict = true
-    override def ngls = List(NodeGeoLevels.NGL_TOWN_DISTRICT)
+    override def ngls = List(MNodeGeoLevels.NGL_TOWN_DISTRICT)
   }
   private class TownDistrictVal(name: String) extends Val(name: String) with TownDistrictT
   
   /** Это здание. */
   sealed trait BuildingT extends ValT {
     override def isBuilding = true
-    override def ngls = List(NodeGeoLevels.NGL_BUILDING)
+    override def ngls = List(MNodeGeoLevels.NGL_BUILDING)
     override def mayHaveGeoChildren = false
   }
   private class BuildingVal(name: String) extends Val(name) with BuildingT
@@ -98,7 +99,7 @@ object AdnShownTypes extends EnumMaybeWithName {
 
   /** Город, населенный пункт. */
   val TOWN: T = new Val("d") {
-    override def ngls = List(NodeGeoLevels.NGL_TOWN)
+    override def ngls = List(MNodeGeoLevels.NGL_TOWN)
     override def showWithTown = false
     override def isTown = true
     override def isTopLevel = true

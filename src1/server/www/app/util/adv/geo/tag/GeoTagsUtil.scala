@@ -1,7 +1,9 @@
 package util.adv.geo.tag
 
 import javax.inject.Inject
+
 import io.suggest.es.util.SioEsUtil
+import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.MItemTypes
@@ -14,7 +16,6 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.NodeGeoLevels
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 
@@ -274,7 +275,7 @@ class GeoTagsUtil @Inject() (
           .map { case (s, i) =>
             MEdgeGeoShape(
               id = i + MEdgeGeoShape.SHAPE_ID_START,
-              glevel  = NodeGeoLevels.geoTag,
+              glevel  = MNodeGeoLevels.geoTag,
               shape = s
             )
           }

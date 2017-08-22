@@ -1,6 +1,5 @@
 import controllers.routes
 import io.suggest.model.n2
-import io.suggest.ym
 import models.usr.EmailPwConfirmInfo
 import play.api.data.Form
 
@@ -38,9 +37,6 @@ package object models {
   type NodeRightPanelLink   = NodeRightPanelLinks.T
   type BillingRightPanelLink= BillingRightPanelLinks.T
   type LkLeftPanelLink      = LkLeftPanelLinks.T
-
-  val  NodeGeoLevels        = ym.model.NodeGeoLevels
-  type NodeGeoLevel         = ym.model.NodeGeoLevel
 
 
   /** Вызов на главную страницу. */

@@ -1,10 +1,10 @@
 package util.adv.geo.tag
 
+import io.suggest.geo.MNodeGeoLevels
 import io.suggest.mbill2.m.item.MItem
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.model.n2.edge._
-import io.suggest.ym.model.NodeGeoLevels
 import util.adv.build.IAdvBuilder
 
 /**
@@ -91,7 +91,7 @@ trait AgtBuilder extends IAdvBuilder {
                   tags      = tagFacesSet,
                   geoShapes = List(MEdgeGeoShape(
                     id      = MEdgeGeoShape.SHAPE_ID_START,
-                    glevel  = NodeGeoLevels.geoTag,
+                    glevel  = MNodeGeoLevels.geoTag,
                     shape   = gs
                   )),
                   geoPoints = geoPoints

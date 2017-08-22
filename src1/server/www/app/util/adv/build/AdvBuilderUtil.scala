@@ -1,13 +1,13 @@
 package util.adv.build
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.empty.OptionUtil
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoPoint, MNodeGeoLevels}
 import io.suggest.mbill2.m.item.typ.{MItemType, MItemTypes}
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MEdgeGeoShape, MEdgeInfo, MNodeEdges}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.NodeGeoLevels
 import models.MPredicate
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
@@ -146,7 +146,7 @@ class AdvBuilderUtil @Inject() (
           case ((acc, counter), mitem) =>
             val meGs = MEdgeGeoShape(
               id      = counter,
-              glevel  = NodeGeoLevels.geoPlace,
+              glevel  = MNodeGeoLevels.geoPlace,
               shape   = mitem.geoShape.get
             )
             (meGs :: acc) -> (counter + 1)

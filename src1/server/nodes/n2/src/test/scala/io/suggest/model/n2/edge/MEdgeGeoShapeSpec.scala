@@ -4,7 +4,7 @@ import java.time.{LocalDateTime, OffsetDateTime, ZoneOffset}
 
 import io.suggest.geo._
 import io.suggest.test.json.PlayJsonTestUtil
-import io.suggest.ym.model.NodeGeoLevels
+import MNodeGeoLevels
 import org.elasticsearch.common.unit.DistanceUnit
 import org.scalatest.FlatSpec
 
@@ -21,7 +21,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
   private def _gs0 = {
     MEdgeGeoShape(
       id     = 1,
-      glevel = NodeGeoLevels.NGL_BUILDING,
+      glevel = MNodeGeoLevels.NGL_BUILDING,
       shape  = CircleGs(
         center  = MGeoPoint(lat = 10.1, lon = 11.2),
         radiusM = Distance(10.55, DistanceUnit.KILOMETERS).meters
@@ -47,7 +47,7 @@ class MEdgeGeoShapeSpec extends FlatSpec with PlayJsonTestUtil {
     jsonTest {
       MEdgeGeoShape(
         id     = 10,
-        glevel = NodeGeoLevels.NGL_TOWN,
+        glevel = MNodeGeoLevels.NGL_TOWN,
         shape  = PolygonGs(
           outer = LineStringGs(Seq(
             MGeoPoint(lat = 10, lon = 10),

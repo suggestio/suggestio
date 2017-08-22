@@ -4,11 +4,10 @@ import java.time.OffsetDateTime
 
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.geo.{GeoPoint, MGeoPoint}
+import io.suggest.geo.{GeoPoint, MGeoPoint, MNodeGeoLevel}
 import io.suggest.geo.GeoPoint.Implicits._
 import io.suggest.model.PrefixedFn
 import io.suggest.util.SioConstants
-import io.suggest.ym.model.NodeGeoLevel
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -65,7 +64,7 @@ object MEdgeInfo extends IGenEsMappingProps with IEmpty {
 
       def GS_GLEVEL_FN                    = _fullFn( Fs.GLEVEL_FN )
       def GS_GJSON_COMPAT_FN              = _fullFn( Fs.GJSON_COMPAT_FN )
-      def GS_SHAPE_FN(ngl: NodeGeoLevel)  = _fullFn( Fs.SHAPE_FN(ngl) )
+      def GS_SHAPE_FN(ngl: MNodeGeoLevel)  = _fullFn( Fs.SHAPE_FN(ngl) )
 
     }
 

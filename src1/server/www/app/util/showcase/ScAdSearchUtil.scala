@@ -5,13 +5,12 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.ble.{BeaconUtil, MUidBeacon}
 import io.suggest.es.model.IMust
 import io.suggest.es.search.{MRandomSortData, MSubSearch}
-import io.suggest.geo.{PointGs, PointGsJvm}
+import io.suggest.geo.{MNodeGeoLevels, PointGs, PointGsJvm}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.NodeGeoLevels
 import models.mproj.ICommonDi
 import models.msc.IScAdSearchQs
 import util.ble.BleUtil
@@ -90,7 +89,7 @@ class ScAdSearchUtil @Inject() (
             predicates  = MPredicates.AdvGeoPlace :: Nil,
             must        = must,
             gsIntersect = Some(GsCriteria(
-              levels = NodeGeoLevels.geoPlace :: Nil,
+              levels = MNodeGeoLevels.geoPlace :: Nil,
               shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             ))
           )
@@ -104,7 +103,7 @@ class ScAdSearchUtil @Inject() (
           must       = must,
           gsIntersect = for (geoLoc <- args.locEnv.geoLocOpt) yield {
             GsCriteria(
-              levels = NodeGeoLevels.geoTag :: Nil,
+              levels = MNodeGeoLevels.geoTag :: Nil,
               shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             )
           }

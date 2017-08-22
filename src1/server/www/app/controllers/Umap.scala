@@ -4,14 +4,16 @@ import java.io.FileInputStream
 
 import _root_.util.acl._
 import _root_.util.geo.umap._
+import _root_.util.sec.CspUtil
 import javax.inject.Inject
-import io.suggest.geo.{GsTypes, PointGs}
-import io.suggest.model.n2.edge.{MEdgeGeoShape, MEdgeInfo, MNodeEdges}
+
+import io.suggest.geo.{GsTypes, MNodeGeoLevel, MNodeGeoLevels, PointGs}
+import io.suggest.model.n2.edge._
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
-import models._
+import models.AdnShownTypes
 import models.maps.umap._
 import models.mproj.ICommonDi
 import models.req.{IReq, IReqHdr}
@@ -36,6 +38,7 @@ class Umap @Inject() (
   mNodes                          : MNodes,
   isSu                            : IsSu,
   isSuNode                        : IsSuNode,
+  cspUtil                         : CspUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl
@@ -51,6 +54,9 @@ class Umap @Inject() (
       .contains(true)
   }
 
+  private def _withUmapCsp(result: Result): Result = {
+    cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.Umap )(result)
+  }
 
   /** Рендер статической карты для всех узлов, которая запросит и отобразит географию узлов. */
   def getAdnNodesMap = csrf.AddToken {
@@ -62,9 +68,11 @@ class Umap @Inject() (
         dlGetUrl      = dlUrl,
         editAllowed   = GLOBAL_MAP_EDIT_ALLOWED,
         title         = "Сводная карта всех узлов",
-        ngls          = NodeGeoLevels.valuesNgl.toSeq.sortBy(_.id)
+        ngls          = MNodeGeoLevels.values
       )
-      Ok( mapBaseTpl(args) )
+      _withUmapCsp {
+        Ok( mapBaseTpl(args) )
+      }
     }
   }
 
@@ -96,17 +104,19 @@ class Umap @Inject() (
         ngls          = request.mnode
           .extras
           .adn
-          .fold (List.empty[NodeGeoLevel]) { adn =>
+          .fold (List.empty[MNodeGeoLevel]) { adn =>
             AdnShownTypes.adnInfo2val(adn).ngls
           }
       )
-      Ok( mapBaseTpl(args) )
+      _withUmapCsp {
+        Ok( mapBaseTpl(args) )
+      }
     }
   }
 
 
   /** Рендер одного слоя, перечисленного в карте слоёв. */
-  def getDataLayerGeoJson(ngl: NodeGeoLevel) = isSu().async { implicit request =>
+  def getDataLayerGeoJson(ngl: MNodeGeoLevel) = isSu().async { implicit request =>
     val msearch = new MNodeSearchDfltImpl {
       override def outEdges: Seq[ICriteria] = {
         // Ищем только с node-location'ами на текущем уровне.
@@ -131,7 +141,7 @@ class Umap @Inject() (
 
 
   /** Общий код экшенов, занимающихся рендером слоёв в geojson-представление, пригодное для фронтенда. */
-  private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: NodeGeoLevel, nodes: Seq[MNode])
+  private def _getDataLayerGeoJson(adnIdOpt: Option[String], ngl: MNodeGeoLevel, nodes: Seq[MNode])
                                   (implicit request: IReqHdr): Result = {
     val msgs = implicitly[Messages]
     val centerMsg = msgs("Center")
@@ -182,7 +192,7 @@ class Umap @Inject() (
 
 
   /** Получение геослоя в рамках карты одного узла. */
-  def getDataLayerNodeGeoJson(nodeId: String, ngl: NodeGeoLevel) = isSuNode(nodeId).async { implicit request =>
+  def getDataLayerNodeGeoJson(nodeId: String, ngl: MNodeGeoLevel) = isSuNode(nodeId).async { implicit request =>
     val adnIdOpt = request.mnode.id
     val nodes = Seq(request.mnode)
     _getDataLayerGeoJson(adnIdOpt, ngl, nodes)
@@ -206,7 +216,7 @@ class Umap @Inject() (
 
 
   /** Сабмит одного слоя на глобальной карте. */
-  def saveMapDataLayer(ngl: NodeGeoLevel) = csrf.Check {
+  def saveMapDataLayer(ngl: MNodeGeoLevel) = csrf.Check {
     isSu().async(parse.multipartFormData) { implicit request =>
       // Банальная проверка на доступ к этому экшену.
       if (!GLOBAL_MAP_EDIT_ALLOWED)
@@ -222,7 +232,7 @@ class Umap @Inject() (
 
 
   /** Сабмит одного слоя на карте узла. */
-  def saveNodeDataLayer(adnId: String, ngl: NodeGeoLevel) = csrf.Check {
+  def saveNodeDataLayer(adnId: String, ngl: MNodeGeoLevel) = csrf.Check {
     isSuNode(adnId).async(parse.multipartFormData) { implicit request =>
       _saveMapDataLayer(ngl, request.mnode.id){ _ => adnId }
     }
@@ -230,7 +240,7 @@ class Umap @Inject() (
 
 
   /** Общий код экшенов, занимающихся сохранением геослоёв. */
-  private def _saveMapDataLayer(ngl: NodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: Feature => String)
+  private def _saveMapDataLayer(ngl: MNodeGeoLevel, adnIdOpt: Option[String])(getAdnIdF: Feature => String)
                                (implicit request: IReq[MultipartFormData[TemporaryFile]]): Future[Result] = {
     // Готовимся к сохранению присланных данных.
     val logPrefix = s"saveMapDataLayer($ngl): "
@@ -335,7 +345,7 @@ class Umap @Inject() (
   }
 
 
-  private def layerJson2(ngl: NodeGeoLevel)(implicit messages: Messages): Layer = {
+  private def layerJson2(ngl: MNodeGeoLevel)(implicit messages: Messages): Layer = {
     Layer(
       name          = messages("ngls." + ngl.esfn),
       id            = ngl.id,
