@@ -6,7 +6,7 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.font.{FontSize, FontSizes}
+import io.suggest.font.{MFontSize, MFontSizes}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -52,11 +52,11 @@ class LkAdEdFormUtil extends MacroLogsImpl {
 
 
   /** Маппинг для размера шрифта. */
-  def fontSizeM: Mapping[FontSize] = {
-    number(min = FontSizes.min.value, max = FontSizes.max.value)
-      .transform [Option[FontSize]] (FontSizes.withValueOpt, _.getOrElse(FontSizes.min).value)
+  def fontSizeM: Mapping[MFontSize] = {
+    number(min = MFontSizes.min.value, max = MFontSizes.max.value)
+      .transform [Option[MFontSize]] (MFontSizes.withValueOpt, _.getOrElse(MFontSizes.min).value)
       .verifying("error.unavailable.font.size", _.isDefined)
-      .transform[FontSize](_.get, Some.apply)
+      .transform[MFontSize](_.get, Some.apply)
   }
 
 
@@ -126,8 +126,8 @@ class LkAdEdFormUtil extends MacroLogsImpl {
       )
     }
     {aoff =>
-      val fsz: FontSize = aoff.size
-        .getOrElse { FontSizes.min }
+      val fsz: MFontSize = aoff.size
+        .getOrElse { MFontSizes.min }
       import aoff._
       val fontOpt = family.flatMap { Fonts.maybeWithName }
       Some((color, fsz, align, fontOpt))

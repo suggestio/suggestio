@@ -3,7 +3,6 @@
 @* Стили для одного текстового поля одного оффера одного блока. *@
 
 @import blk.Fonts
-@import io.suggest.font.FontSizes
 @import io.suggest.sc.ScConstants.Block.Text.fieldTextId
 
 
