@@ -1,11 +1,37 @@
 package io.suggest.model.n2.media.storage
 
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.menum.EnumJsonReadsT
+import enumeratum._
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.model.n2.media.storage.swfs.SwfsStorages
-import play.api.libs.json.__
+import io.suggest.primo.IStrId
+import play.api.libs.json.{Format, OFormat, __}
 
 import scala.reflect.ClassTag
+
+object MStorage {
+
+  implicit val MSTORAGE_FORMAT: Format[MStorage] = {
+    EnumeratumUtil.enumEntryFormat( MStorages )
+  }
+
+  /** JSON format для поля типа storage модели MMedia. */
+  val STYPE_FN_FORMAT: OFormat[MStorage] = {
+    (__ \ MStorFns.STYPE.fn).format[MStorage]
+  }
+
+}
+
+
+/** Класс одного элемента модели. */
+sealed abstract class MStorage extends EnumEntry with IStrId {
+
+  override def entryName = strId
+
+  /** Данные по классу-компаниону модели для возможности инжекции класса по типу. */
+  def companionCt: ClassTag[IMediaStorageStaticImpl]
+
+}
+
 
 /**
  * Suggest.io
@@ -13,27 +39,16 @@ import scala.reflect.ClassTag
  * Created: 29.09.15 20:04
  * Description: Модель типов используемых хранилищь для media-файлов.
  */
-object MStorages extends EnumMaybeWithName with EnumJsonReadsT {
-
-  /** Экземпляр модели. */
-  protected[this] abstract class Val(val strId: String)
-    extends super.Val(strId)
-  {
-    /** Данные по классу-компаниону модели для возможности инжекции класса по типу. */
-    def companionCt: ClassTag[IMediaStorageStaticImpl]
-  }
-
-  override type T = Val
-
+object MStorages extends Enum[MStorage] {
 
   /** SeaWeedFS.
     * Хранилище на смену кассандре (oct.2015-...). */
-  val SeaWeedFs: T = new Val("s") {
+  case object SeaWeedFs extends MStorage {
+    /** Данные по классу-компаниону модели для возможности инжекции класса по типу. */
     override def companionCt = ClassTag( classOf[SwfsStorages] )
+    override def strId = "s"
   }
 
-
-  /** JSON format для поля типа storage модели MMedia. */
-  val STYPE_FN_FORMAT = (__ \ MStorFns.STYPE.fn).format[T]
+  override val values = findValues
 
 }

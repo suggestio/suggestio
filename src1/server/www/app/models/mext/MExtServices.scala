@@ -2,7 +2,7 @@ package models.mext
 
 import io.suggest.adv.ext.model.MServices._
 import io.suggest.adv.ext.model._
-import io.suggest.model.menum.EnumJsonReadsT
+import io.suggest.common.menum.EnumJsonReadsT
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.mext.fb.FacebookService
 import models.mext.tw.TwitterService

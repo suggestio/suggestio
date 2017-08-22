@@ -6,7 +6,7 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.font.{MFontSize, MFontSizes}
+import io.suggest.font.{MFont, MFonts, MFontSize, MFontSizes}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -15,7 +15,7 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
-import models.blk.{AdColorFns, _}
+import models.blk.AdColorFns
 import models.{MColorData, _}
 import play.api.data.Forms._
 import play.api.data._
@@ -60,21 +60,21 @@ class LkAdEdFormUtil extends MacroLogsImpl {
   }
 
 
-  private def _fontFamilyOptM: Mapping[Option[Font]] = {
+  private def _fontFamilyOptM: Mapping[Option[MFont]] = {
     text(maxLength = 32)
-      .transform [Option[Font]] (
-        Fonts.maybeWithName,
-        _.fold("")(_.fileName)
+      .transform [Option[MFont]] (
+        MFonts.maybeWithName,
+        _.fold("")(_.strId)
       )
   }
 
   /** Маппер для значения font.family. */
-  def fontFamilyOptM: Mapping[Option[Font]] = {
+  def fontFamilyOptM: Mapping[Option[MFont]] = {
     optional( _fontFamilyOptM )
-      .transform[Option[Font]](_.flatten, Some.apply )
+      .transform[Option[MFont]](_.flatten, Some.apply )
   }
 
-  def fontFamily: Mapping[Font] = {
+  def fontFamily: Mapping[MFont] = {
     _fontFamilyOptM
       .verifying("error.font.unknown", _.nonEmpty)
       .transform(_.get, Some.apply)
@@ -122,15 +122,14 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         color  = color,
         size   = Some(fsz),
         align  = align,
-        family = family.map(_.fileName)
+        family = family
       )
     }
     {aoff =>
       val fsz: MFontSize = aoff.size
         .getOrElse { MFontSizes.min }
       import aoff._
-      val fontOpt = family.flatMap { Fonts.maybeWithName }
-      Some((color, fsz, align, fontOpt))
+      Some((color, fsz, align, aoff.family))
     }
   }
 

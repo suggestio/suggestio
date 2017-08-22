@@ -1,6 +1,5 @@
-package io.suggest.model.menum
+package io.suggest.common.menum
 
-import io.suggest.common.menum.IMaybeWithName
 import play.api.libs.json._
 
 /**
@@ -17,7 +16,7 @@ trait EnumJsonReadsT extends IMaybeWithName {
       // Чтобы не было экзепшенов, надо дергать maybeWithName() и смотреть значение Option.
       .map(maybeWithName)
       // TODO Хз как передать некорректное значение внутрь ValidationError... А надо бы, очень надо.
-      .filter( JsonValidationError("error.unknown.name") )(_.nonEmpty)
+      .filter( JsonValidationError("e.name.unknown") )(_.nonEmpty)
       .map(_.get)
   }
 

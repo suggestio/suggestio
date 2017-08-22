@@ -1,7 +1,6 @@
 package io.suggest.stat.m
 
-import io.suggest.common.menum.{EnumMaybeWithName, StrIdValT}
-import io.suggest.model.menum.EnumJsonReadsValT
+import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, StrIdValT}
 
 /**
   * Suggest.io

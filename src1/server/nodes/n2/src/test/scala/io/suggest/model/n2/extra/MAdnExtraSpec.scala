@@ -1,7 +1,7 @@
 package io.suggest.model.n2.extra
 
+import io.suggest.adn.MAdnRights
 import io.suggest.test.json.PlayJsonTestUtil
-import io.suggest.ym.model.common.AdnRights
 import org.scalatest.FlatSpec
 
 /**
@@ -22,7 +22,7 @@ class MAdnExtraSpec extends FlatSpec with PlayJsonTestUtil {
   it should "support full-filled model" in {
     jsonTest {
       MAdnExtra(
-        rights = Set( AdnRights.PRODUCER, AdnRights.RECEIVER ),
+        rights = Set( MAdnRights.PRODUCER, MAdnRights.RECEIVER ),
         isUser = true,
         shownTypeIdOpt = Some("a"),
         testNode = true,

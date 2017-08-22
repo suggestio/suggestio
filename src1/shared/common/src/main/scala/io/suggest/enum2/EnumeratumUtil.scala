@@ -52,7 +52,7 @@ object EnumeratumUtil {
     */
   implicit def enumEntryWrites[T <: EnumEntry]: Writes[T] = {
     implicitly[Writes[String]]
-      .contramap(_.toString)
+      .contramap( _.entryName )
   }
 
   implicit def valueEnumEntryWrites[T, VEE <: ValueEnumEntry[T]](implicit writes: Writes[T]): Writes[VEE] = {
@@ -87,21 +87,23 @@ object EnumeratumUtil {
 
   /** При рендере html-шаблонов в play с помощью @select() бывает удобно сериализовать модель в список option'ов. */
   def toSelectOptions[EE <: EnumEntry](m: Enum[EE]): Seq[(String, String)] = {
-    toSelectOptions(
-      m.values.iterator.map( entryNameF )
-    )
+    toSelectOptions(m.values) { ee =>
+      val k = ee.entryName
+      val v = ee.toString
+      (k, v)
+    }
   }
   def toSelectOptions[V, VEE <: ValueEnumEntry[V]](m: ValueEnum[V, VEE]): Seq[(String, String)] = {
-    toSelectOptions(
-      m.values.map( valueF )
-    )
+    toSelectOptions(m.values) { vee =>
+      val k = vee.value.toString
+      val v = vee.toString
+      (k, v)
+    }
   }
-  def toSelectOptions[T](items: TraversableOnce[T]): Seq[(String, String)] = {
+  def toSelectOptions[EE](items: TraversableOnce[EE])(kvF: EE => (String, String)): Seq[(String, String)] = {
     items
-      .map { raw =>
-        val s = raw.toString
-        s -> s
-      }
+      .toIterator
+      .map(kvF)
       .toSeq
   }
 

@@ -1,9 +1,11 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+
 import controllers.sysctl._
 import controllers.sysctl.domain.SmDomains
 import controllers.sysctl.invite.SmSendEmailInvite
+import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.item.status.MItemStatuses
@@ -736,7 +738,7 @@ class SysMarket @Inject() (
         mNodes.dynSearchOne {
           new MNodeSearchDfltImpl {
             override def nodeTypes = Seq( MNodeTypes.AdnNode )
-            override def withAdnRights = Seq( AdnRights.RECEIVER )
+            override def withAdnRights = Seq( MAdnRights.RECEIVER )
             override def limit = 1
           }
         }

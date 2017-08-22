@@ -6,7 +6,7 @@
 @import helper._
 @import io.suggest.ad.form.AdFormConstants._
 @import io.suggest.js.JsRoutesConst
-@import io.suggest.font.MFontSizes
+@import io.suggest.font.{MFontSizes, MFonts}
 
 @headAfter = {
   <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
@@ -61,7 +61,7 @@
       toolbar: ["styleselect | fontsizeselect | alignleft aligncenter alignright | bold italic | colorpicker | link | removeformat"],
       content_css: '@routes.Assets.versioned("stylesheets/market/descr.css")',
       fontsize_formats: '@MFontSizes.values.iterator.map {fs =>@{fs.value}px@if(!fs.isLast){ }}',
-      style_formats: @Html(blk.Fonts.valuesJsonTinyMce.toString),
+      style_formats: @Html(MFonts.valuesJsonTinyMce.toString),
       @if(messages.lang.language != "en") {
         @defining( messages.lang.toLocale ) { locale =>
           language: '@{locale.getCountry}_@{locale.getLanguage}',

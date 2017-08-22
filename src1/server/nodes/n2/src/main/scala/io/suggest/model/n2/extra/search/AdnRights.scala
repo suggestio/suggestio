@@ -1,9 +1,9 @@
 package io.suggest.model.n2.extra.search
 
+import io.suggest.adn.MAdnRight
 import io.suggest.es.model.{IMust, MWrapClause, QueryUtil}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
-import io.suggest.ym.model.common.AdnRight
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 
 /**
@@ -15,7 +15,7 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
 trait AdnRights extends DynSearchArgs {
 
   /** Права, которые должны быть у узла. */
-  def withAdnRights: Seq[AdnRight]
+  def withAdnRights: Seq[MAdnRight]
 
   /** Сборка EsQuery сверху вниз. */
   override def toEsQueryOpt: Option[QueryBuilder] = {
@@ -62,7 +62,7 @@ trait AdnRights extends DynSearchArgs {
 
 /** Дефолтовая реализация абстрактных кусков [[AdnRights]]. */
 trait AdnRightsDflt extends AdnRights {
-  override def withAdnRights: Seq[AdnRight] = Seq.empty
+  override def withAdnRights: Seq[MAdnRight] = Seq.empty
 }
 
 

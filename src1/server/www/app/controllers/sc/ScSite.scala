@@ -1,6 +1,7 @@
 package controllers.sc
 
 import controllers.routes
+import io.suggest.adn.MAdnRights
 import io.suggest.common.empty.OptionUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.i18n.I18nConst
@@ -79,7 +80,7 @@ trait ScSite
           }
           override def limit          = 1
           override def isEnabled      = Some(true)
-          override def withAdnRights  = AdnRights.RECEIVER :: Nil
+          override def withAdnRights  = MAdnRights.RECEIVER :: Nil
         }
         val fut = mNodes.dynSearchOne(msearch)
 

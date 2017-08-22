@@ -7,8 +7,6 @@ package io.suggest.model.n2.media
  */
 package object storage {
 
-  type MStorage = MStorages.T
-
   type MStorFn  = MStorFns.T
 
 }

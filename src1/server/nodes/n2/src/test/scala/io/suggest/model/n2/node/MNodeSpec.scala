@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node
 
 import io.suggest.ad.blk.BlockMeta
+import io.suggest.adn.MAdnRights
 import io.suggest.geo.{CircleGs, MGeoPoint}
 import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.ad.MNodeAd
@@ -10,7 +11,6 @@ import io.suggest.model.n2.geo.MNodeGeo
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.ym.model.NodeGeoLevels
-import io.suggest.ym.model.common.AdnRights
 import org.scalatest.Matchers._
 import org.scalatestplus.play.{OneAppPerSuite, PlaySpec}
 
@@ -57,7 +57,7 @@ class MNodeSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
           ),
           extras = MNodeExtras(
             adn = Some(MAdnExtra(
-              rights = Set(AdnRights.PRODUCER)
+              rights = Set(MAdnRights.PRODUCER)
             ))
           ),
           edges = MNodeEdges(

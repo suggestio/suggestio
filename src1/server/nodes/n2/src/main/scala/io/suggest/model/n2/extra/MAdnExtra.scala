@@ -1,7 +1,7 @@
 package io.suggest.model.n2.extra
 
+import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.ym.model.common.{AdnRight, AdnRights}
 import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model.IGenEsMappingProps
 import play.api.libs.json._
@@ -37,8 +37,8 @@ object MAdnExtra extends IGenEsMappingProps {
 
   /** Поддержка JSON. */
   implicit val FORMAT: OFormat[MAdnExtra] = (
-    (__ \ RIGHTS.fn).formatNullable[Set[AdnRight]]
-      .inmap [Set[AdnRight]] (
+    (__ \ RIGHTS.fn).formatNullable[Set[MAdnRight]]
+      .inmap [Set[MAdnRight]] (
         _.getOrElse( Set.empty ),
         { rights => if (rights.isEmpty) None else Some(rights) }
       ) and
@@ -86,15 +86,15 @@ object MAdnExtra extends IGenEsMappingProps {
   * @param showInScNl Можно ли узел отображать в списке узлов выдачи?
   */
 case class MAdnExtra(
-  rights                : Set[AdnRight]             = Set.empty,
-  isUser                : Boolean                   = false,
-  shownTypeIdOpt        : Option[String]            = None,
-  testNode              : Boolean                   = false,
-  showInScNl            : Boolean                   = true
+                      rights                : Set[MAdnRight]             = Set.empty,
+                      isUser                : Boolean                   = false,
+                      shownTypeIdOpt        : Option[String]            = None,
+                      testNode              : Boolean                   = false,
+                      showInScNl            : Boolean                   = true
 ) {
 
 
-  def isProducer: Boolean = rights.contains( AdnRights.PRODUCER )
-  def isReceiver: Boolean = rights.contains( AdnRights.RECEIVER )
+  def isProducer: Boolean = rights.contains( MAdnRights.PRODUCER )
+  def isReceiver: Boolean = rights.contains( MAdnRights.RECEIVER )
 
 }

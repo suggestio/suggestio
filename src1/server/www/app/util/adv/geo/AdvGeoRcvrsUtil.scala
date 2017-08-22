@@ -1,6 +1,8 @@
 package util.adv.geo
 
 import javax.inject.Inject
+
+import io.suggest.adn.MAdnRights
 import io.suggest.adv.geo.AdvGeoConstants
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.async.StreamsUtil
@@ -12,7 +14,6 @@ import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.common.AdnRights
 import models.ISize2di
 import models.im.{DevPixelRatios, MAnyImgs, MImgT}
 import models.mctx.Context
@@ -85,7 +86,7 @@ class AdvGeoRcvrsUtil @Inject()(
       override def testNode   = Some(false)
       // проверка типа узла на верхнем уровне НЕ нужна. MPredicate.AdnMap идёт через биллинг и надо подчиняться
       // воле финансов, даже если узел не очень Adn.
-      override def withAdnRights = AdnRights.RECEIVER :: Nil
+      override def withAdnRights = MAdnRights.RECEIVER :: Nil
       override def limit      = limit1
       // Фильтровать по id узлов, если таковые заданы... А такое тут часто.
       override def withIds    = onlyWithIds
@@ -354,7 +355,7 @@ class AdvGeoRcvrsUtil @Inject()(
         )
         cr :: Nil
       }
-      override def withAdnRights  = AdnRights.RECEIVER :: Nil
+      override def withAdnRights  = MAdnRights.RECEIVER :: Nil
       override def withNameSort   = Some( SortOrder.ASC )
       override def limit          = limit1
       override def withIds        = onlyWithIds

@@ -2,8 +2,7 @@ package models.adv.js.ctx
 
 import io.suggest.adv.ext.model.ctx.MPicUploadModesT
 import io.suggest.adv.ext.model.ctx.PicUploadCtx._
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.menum.EnumJsonReadsT
+import io.suggest.common.menum.{EnumJsonReadsT, EnumMaybeWithName}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 

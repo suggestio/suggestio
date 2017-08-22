@@ -2,7 +2,7 @@ package io.suggest.model.n2.media.storage.swfs
 
 import javax.inject.{Inject, Singleton}
 import io.suggest.fio.IWriteRequest
-import io.suggest.model.n2.media.storage.MStorages.STYPE_FN_FORMAT
+import io.suggest.model.n2.media.storage.MStorage.STYPE_FN_FORMAT
 import io.suggest.model.n2.media.storage._
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.swfs.client.proto.Replication
@@ -134,7 +134,7 @@ class SwfsStorages @Inject() (
 object SwfsStorage {
 
   /** JSON-маппер для поля file id. */
-  val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
+  private val FID_FORMAT = (__ \ MStorFns.FID.fn).format[Fid]
 
   /** Поддержка JSON сериализации/десериализации. */
   implicit val FORMAT: OFormat[SwfsStorage] = {

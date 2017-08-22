@@ -1,6 +1,8 @@
 package controllers
 
 import javax.inject.Inject
+
+import io.suggest.adn.MAdnRights
 import io.suggest.bill.MPrice
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.{MItem, MItems}
@@ -494,7 +496,7 @@ class MarketAdv @Inject() (
       LOGGER.debug(s"collectAllReceivers(${producer.id.get}): Searching for isolated nodes with isTest = true")
 
     val msearch = new MNodeSearchDfltImpl {
-      override def withAdnRights  = Seq(AdnRights.RECEIVER)
+      override def withAdnRights  = Seq(MAdnRights.RECEIVER)
       override def testNode       = isTestOpt
       override def limit          = 500
       override def withoutIds     = producer.id.toSeq
@@ -514,7 +516,7 @@ class MarketAdv @Inject() (
     mnodes
       .toIterator
       .filter { mnode =>
-        mnode.extras.adn.exists(_.rights.contains(AdnRights.RECEIVER)) &&
+        mnode.extras.adn.exists(_.rights.contains(MAdnRights.RECEIVER)) &&
           mnode.common.ntype == MNodeTypes.AdnNode
       }
       .toSeq

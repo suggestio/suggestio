@@ -64,7 +64,7 @@ object MFontSizes extends IntEnum[MFontSize] {
   override val values = findValues
 
 
-  def min = values.head
-  def max = values.last
+  def min: MFontSize = values.head
+  def max: MFontSize = values.last
 
 }

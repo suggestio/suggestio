@@ -1,6 +1,8 @@
 package util.showcase
 
 import javax.inject.{Inject, Singleton}
+
+import io.suggest.adn.MAdnRights
 import io.suggest.common.fut.FutureUtil
 import io.suggest.geo.MGeoPoint
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
@@ -304,7 +306,7 @@ class ShowcaseNodeListUtil @Inject() (
   def getDistrictsForTown(townNodeId: String, gravity: Option[MGeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 20
-      override def withAdnRights = Seq(AdnRights.RECEIVER)
+      override def withAdnRights = Seq(MAdnRights.RECEIVER)
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(Seq(townNodeId), Seq(MPredicates.GeoParent.Direct))
         Seq(cr)
@@ -347,7 +349,7 @@ class ShowcaseNodeListUtil @Inject() (
   def getBuildingsOfDistrict(districtAdnId: String, gravity: Option[MGeoPoint]): Future[Seq[MNode]] = {
     val sargs = new SmNodesSearchArgsT {
       override def limit = 30
-      override def withAdnRights = Seq(AdnRights.RECEIVER)
+      override def withAdnRights = Seq(MAdnRights.RECEIVER)
       override def outEdges: Seq[ICriteria] = {
         val cr = Criteria(Seq(districtAdnId), Seq(MPredicates.GeoParent.Direct))
         Seq(cr)

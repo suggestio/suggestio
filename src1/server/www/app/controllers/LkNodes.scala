@@ -4,9 +4,11 @@ import java.time.OffsetDateTime
 
 import akka.util.ByteString
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.bin.ConvCodecs
 import io.suggest.common.fut.FutureUtil
 import FutureUtil.HellImplicits._
+import io.suggest.adn.MAdnRights
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.tf.daily.ITfDailyMode
 import io.suggest.common.empty.EmptyUtil
@@ -24,7 +26,6 @@ import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.IId
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
-import io.suggest.ym.model.common.AdnRights
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
 import models.mproj.ICommonDi
@@ -350,7 +351,7 @@ class LkNodes @Inject() (
               // Это узел-ресивер, поэтому заполняем профиль ADN-узла:
               extras = MNodeExtras(
                 adn = Some(MAdnExtra(
-                  rights      = Set( AdnRights.RECEIVER ),
+                  rights      = Set( MAdnRights.RECEIVER ),
                   isUser      = !request.user.isSuper,
                   showInScNl  = false
                 ))

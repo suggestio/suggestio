@@ -1,8 +1,7 @@
 package io.suggest.model.n2.extra.domain
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.menum.EnumJsonReadsValT
+import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName}
 import io.suggest.primo.IStrId
 import play.api.data.Mapping
 

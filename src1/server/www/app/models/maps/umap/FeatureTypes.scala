@@ -1,7 +1,6 @@
 package models.maps.umap
 
-import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.model.menum.EnumJsonReadsValT
+import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName}
 
 /**
   * Suggest.io

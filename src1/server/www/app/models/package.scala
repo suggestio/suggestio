@@ -13,10 +13,6 @@ import play.api.data.Form
 
 package object models {
 
-  val  AdnRights            = ym.model.common.AdnRights
-  type AdnRight             = ym.model.common.AdnRight
-
-
   type Receivers_t          = n2.edge.NodeEdgesMap_t
 
   type ISize2di             = io.suggest.common.geom.d2.ISize2di

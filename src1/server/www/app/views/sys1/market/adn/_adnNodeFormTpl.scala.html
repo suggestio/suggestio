@@ -6,6 +6,7 @@
 @import helper._
 @import ctx._
 @import util.FC.tdFc
+@import io.suggest.adn.MAdnRights
 
 @form( CSRF(call) ) {
 
@@ -92,7 +93,7 @@
     @inputText(af("meta.siteUrl"), 'placeholder -> "http://",         '_label -> "Адрес сайта в интернете")
   </table>
 
-  @for(adnRight <- AdnRights.values.iterator) {
+  @for(adnRight <- MAdnRights.values.iterator) {
     <table class="input-w __size-L">
       @checkbox(af(s"adn.rights.${adnRight.longName}"), '_label -> adnRight.longName, '_class -> "sys-checkbox")
     </table>

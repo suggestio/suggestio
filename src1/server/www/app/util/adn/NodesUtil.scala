@@ -4,6 +4,7 @@ import java.time.OffsetDateTime
 import javax.inject.{Inject, Singleton}
 
 import controllers.routes
+import io.suggest.adn.MAdnRights
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
@@ -115,7 +116,7 @@ class NodesUtil @Inject() (
       ),
       extras = MNodeExtras(
         adn =  Some(MAdnExtra(
-          rights          = Set(AdnRights.PRODUCER, AdnRights.RECEIVER),
+          rights          = Set(MAdnRights.PRODUCER, MAdnRights.RECEIVER),
           isUser          = true,
           shownTypeIdOpt  = Some(AdnShownTypes.SHOP.name),
           testNode        = false,

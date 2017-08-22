@@ -2,7 +2,6 @@
 
 @* Стили для одного текстового поля одного оффера одного блока. *@
 
-@import blk.Fonts
 @import io.suggest.sc.ScConstants.Block.Text.fieldTextId
 
 
@@ -28,7 +27,7 @@
   }
 
   @* TODO Fonts.maybeWithName должно жить на уровне десериализации модели, а не здесь. *@
-  @aovf.font.family.flatMap(Fonts.maybeWithName).map {ff =>font-family: @(ff.fileName)!important;}
+  @aovf.font.family.map {ff =>font-family: @(ff.cssClass)!important;}
 
   @aovf.font.align.map {ta =>text-align: @ta.cssName!important;}
 }

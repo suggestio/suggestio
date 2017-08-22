@@ -1,6 +1,7 @@
-package models.blk
+package io.suggest.font
 
-import io.suggest.common.menum.{EnumMaybeWithMultiNameMap, EnumValue2Val}
+import io.suggest.common.menum.{EnumJsonReadsT, EnumMaybeWithMultiNameMap, EnumValue2Val}
+import io.suggest.primo.IStrId
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 
 /**
@@ -10,10 +11,16 @@ import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
  * Description: Модель шрифтов. До её появления шрифты были захардкожены прямо в шаблонах.
  * initial = 0 -- это проверка испрользуется в adFormBase на "первость" элемента модели.
  */
-object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValue2Val {
+
+object MFonts
+  extends Enumeration(0)
+  with EnumMaybeWithMultiNameMap
+  with EnumValue2Val
+  with EnumJsonReadsT
+{
 
   /** Трейт экземпляра модели. */
-  sealed protected[this] trait ValT extends super.ValT {
+  sealed protected[this] trait ValT extends super.ValT with IStrId {
 
     /**
      * tinymce принимает данные по шрифту в style_formats в таком формате.
@@ -23,28 +30,28 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     def toJsonTinyMce(tail: List[(String, JsValue)] = Nil): JsObject = {
       val title = "title" -> JsString(descr)
       val styles = "styles" -> JsObject(Seq(
-        "font-family" -> JsString(fileName)
+        "font-family" -> JsString(cssClass)
       ))
       JsObject(title :: styles :: tail)
     }
 
     /** Название CSS font-family. */
-    def fileName: String
+    def cssClass: String = strId
 
     /** Отображаемое название шрифта. */
     def descr: String
 
     /** Имена прошлые и текущие. */
-    override def _names = fileName :: Nil
+    override def _names = strId :: Nil
 
   }
 
+
   /**
    * Класс-экземпляр модели.
-   * @param fileName base filename шрифта.
    */
-  abstract sealed protected[this] class Val(override val fileName: String)
-    extends super.Val(fileName)
+  abstract sealed protected[this] class Val(override val strId: String)
+    extends super.Val(strId)
     with ValT
 
 
@@ -53,7 +60,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
 
 
   // Экземпляры шрифтов в АЛФАВИТНОМ ПОРЯДКЕ
-  
+
   val AaHigherup          : T = new Val("aa-higherup") {
     override def descr  = "Higherup"
     override def _names = "aa_higherup-webfont" :: super._names
@@ -78,7 +85,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
     override def descr  = "Favorit Cond C Bold"
     override def _names = "favoritcondc-bold-webfont" :: super._names
   }
-  
+
   val FavLightCondCReg    : T = new Val("favorit-light-cond-c-regular") {
     override def descr  = "Favorit Light Cond C Regular"
     override def _names = "favoritlightcondcregular" :: super._names
@@ -94,7 +101,7 @@ object Fonts extends Enumeration(0) with EnumMaybeWithMultiNameMap with EnumValu
   }
 
   val Georgia             : T = new Val("Georgia") {
-    override def descr  = fileName
+    override def descr  = strId
   }
 
   val HeliosCondLight     : T = new Val("helios-cond-light") {

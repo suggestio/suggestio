@@ -1,5 +1,6 @@
 package util.sys
 
+import io.suggest.adn.MAdnRight
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
@@ -67,14 +68,14 @@ class SysMarketUtil extends MacroLogsDyn {
     ))
   }
 
-  private def adnRightsM: Mapping[Set[AdnRight]] = {
-    import AdnRights._
+  private def adnRightsM: Mapping[Set[MAdnRight]] = {
+    import io.suggest.adn.MAdnRights._
     mapping(
       PRODUCER.longName -> boolean,
       RECEIVER.longName -> boolean
     )
     {(isProd, isRcvr) =>
-      var acc: List[AdnRight] = Nil
+      var acc: List[MAdnRight] = Nil
       if (isProd) acc ::= PRODUCER
       if (isRcvr) acc ::= RECEIVER
       acc.toSet

@@ -1,8 +1,7 @@
 package io.suggest.model.n2.node
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.menum.{EnumMaybeWithName, EnumTree}
-import io.suggest.model.menum.EnumJsonReadsValT
+import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName, EnumTree}
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.mvc.QueryStringBindable
 

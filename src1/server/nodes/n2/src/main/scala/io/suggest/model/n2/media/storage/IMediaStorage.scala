@@ -27,7 +27,7 @@ class IMediaStorages @Inject() (
 
   /** Карта инстансов статических моделей поддерживаемых media-сторэджей. */
   val STORAGES_MAP: Map[MStorage, IMediaStorageStaticImpl] = {
-    MStorages.valuesT
+    MStorages.values
       .iterator
       .map { mStorType =>
         val inst = injector.instanceOf( mStorType.companionCt )
@@ -40,7 +40,7 @@ class IMediaStorages @Inject() (
   implicit val FORMAT: OFormat[T] = {
     val READS: Reads[T] = new Reads[T] {
       override def reads(json: JsValue): JsResult[T] = {
-        json.validate( MStorages.STYPE_FN_FORMAT )
+        json.validate( MStorage.STYPE_FN_FORMAT )
           .flatMap { stype =>
             json.validate( _getModel(stype).FORMAT )
           }

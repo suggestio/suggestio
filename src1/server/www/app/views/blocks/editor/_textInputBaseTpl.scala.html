@@ -4,6 +4,7 @@
 @import ctx._
 @import helper._
 @import models.blk._
+@import io.suggest.font.MFonts
 
 @* Шаблон для рендера кнопки выравнивания текста. *@
 @_tAlignBtn(name: String, field: Field) = {
@@ -22,8 +23,8 @@
             <div class="lk-field-tools__editor">
               <select name="@ffname" class="js-custom-font-family-select">
                 @defining( af(ffname) ) { ff =>
-                  @Fonts.values.iterator.zipWithIndex.map { case (font, i) =>
-                    <option value="@font.fileName" @if( ff.value.exists(_ == font.fileName) ){selected="selected"}>@font.descr</option>
+                  @MFonts.values.iterator.zipWithIndex.map { case (font, i) =>
+                    <option value="@font.strId" @if( ff.value.contains(font.strId) ){selected="selected"}>@font.descr</option>
                   }
                 }
               </select>
