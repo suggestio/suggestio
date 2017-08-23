@@ -1,7 +1,7 @@
 package models.msc
 
 import controllers.routes
-import models._
+import io.suggest.model.n2.node.MNode
 import models.blk.SzMult_t
 import play.twirl.api.Html
 

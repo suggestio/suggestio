@@ -10,19 +10,12 @@ import io.suggest.common.geom.d2.{ISize2di, ISize2diWrap}
  * Created: 29.09.15 17:15
  * Description: Очень абстрактный доступ к метаданным изображения.
  */
-trait IImgMeta extends ISize2di {
-
-  def dateCreated: OffsetDateTime
-
-}
-
 
 case class ImgSzDated(
-  sz          : ISize2di,
-  dateCreated : OffsetDateTime
+  sz                : ISize2di,
+  dateCreated       : OffsetDateTime
 )
-  extends IImgMeta
-  with ISize2diWrap
+  extends ISize2diWrap
 {
   override def _sz2dUnderlying = sz
 }

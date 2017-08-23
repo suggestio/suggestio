@@ -1,11 +1,11 @@
 package controllers
 
 import javax.inject.Inject
+
 import controllers.clk.LkJsMessages
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
-import models.MNode
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.data.Form

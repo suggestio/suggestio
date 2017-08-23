@@ -12,10 +12,6 @@ import play.api.data.Form
 
 package object models {
 
-  type Receivers_t          = n2.edge.NodeEdgesMap_t
-
-  type ISize2di             = io.suggest.common.geom.d2.ISize2di
-
   val  BlocksConf           = util.blocks.BlocksConf
   type BlockConf            = BlocksConf.T
 
@@ -42,8 +38,6 @@ package object models {
   /** Вызов на главную страницу. */
   def MAIN_PAGE_CALL        = routes.Sc.geoSite()
 
-  type IImgMeta             = io.suggest.model.img.IImgMeta
-
 
   /** Тип формы для регистрации по email (шаг 1 - указание email). */
   type EmailPwRegReqForm_t  = Form[String]
@@ -63,10 +57,9 @@ package object models {
   /** Тип формы создания нового узла-магазина силами юзера. */
   type UsrCreateNodeForm_t  = Form[String]
 
-  type MColorData           = n2.node.meta.colors.MColorData
+  type ContractForm_t       = Form[io.suggest.mbill2.m.contract.MContract]
 
   type MNode                = n2.node.MNode
-  val  MNode                = n2.node.MNode
 
   type MNodeType            = n2.node.MNodeType
   val  MNodeTypes           = n2.node.MNodeTypes
@@ -76,11 +69,5 @@ package object models {
 
   type MPredicate           = n2.edge.MPredicate
   val  MPredicates          = n2.edge.MPredicates
-
-  val  MMedia               = n2.media.MMedia
-  type MMedia               = n2.media.MMedia
-
-  type MDailyTf             = io.suggest.model.n2.bill.tariff.daily.MTfDaily
-  type MContract            = io.suggest.mbill2.m.contract.MContract
 
 }

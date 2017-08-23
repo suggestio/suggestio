@@ -8,9 +8,9 @@ import io.suggest.bill._
 import io.suggest.bill.price.dsl._
 import io.suggest.cal.m.MCalTypes
 import io.suggest.dt.{MYmd, YmdHelpersJvm}
+import io.suggest.model.n2.node.MNode
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
-import models.MNode
 import models.adv.{IAdvBillCtx, MAdvBillCtx}
 import models.mcal.MCalsCtx
 import models.mctx.Context

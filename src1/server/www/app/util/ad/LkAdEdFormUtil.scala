@@ -6,9 +6,10 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.font.{MFont, MFonts, MFontSize, MFontSizes}
+import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
+import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
@@ -16,11 +17,11 @@ import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.blk.AdColorFns
-import models.{MColorData, _}
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
 import util.TplDataFormatUtil
+import util.blocks.BlocksConf
 
 /**
  * Suggest.io

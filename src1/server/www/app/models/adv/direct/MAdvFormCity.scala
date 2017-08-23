@@ -1,6 +1,7 @@
 package models.adv.direct
 
-import models._
+import io.suggest.model.n2.node.MNode
+
 
 /** advForm: Описание одного города в списке городов. */
 case class MAdvFormCity(

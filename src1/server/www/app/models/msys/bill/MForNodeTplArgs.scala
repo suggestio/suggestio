@@ -2,7 +2,7 @@ package models.msys.bill
 
 import io.suggest.mbill2.m.balance.MBalance
 import io.suggest.mbill2.m.contract.MContract
-import models.MNode
+import io.suggest.model.n2.node.MNode
 
 /**
  * Suggest.io

@@ -5,13 +5,12 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.js.UploadConstants
-import io.suggest.model.n2.edge.{MEdgeInfo, MNodeEdges}
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.MAdnExtra
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.im.logo.LogoOpt_t
 import models.im.{MImg3, MImgT}
 import models.madn.EditConstants._
@@ -345,7 +344,7 @@ class MarketLkAdnEdit @Inject() (
       ),
       // Обновить эджи, относящиеся к форме.
       edges = {
-        import MPredicates._
+        import MPredicates.{WcLogo, Logo, GalleryItem}
         // Готовим начальный итератор эджей-результатов.
         var edgesIter = mnode.edges
           .withoutPredicateIter(WcLogo, Logo, GalleryItem)

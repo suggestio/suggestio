@@ -1,6 +1,6 @@
 package models.adv.geo.tag
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.adv.IAdvFreeForAdCommonTplArgs
 import models.adv.form.IAdvForAdFormCommonTplArgs
 

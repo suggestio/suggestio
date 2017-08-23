@@ -4,10 +4,10 @@ import io.suggest.adn.MAdnRight
 import io.suggest.model.n2.edge.{MEdge, MEdgeInfo}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
+import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MAddress, MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.util.logs.MacroLogsDyn
-import models._
 import models.msys.{MSysNodeInstallFormData, NodeCreateParams}
 import play.api.data.Forms._
 import play.api.data._

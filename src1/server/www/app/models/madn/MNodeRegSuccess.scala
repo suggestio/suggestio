@@ -1,6 +1,6 @@
 package models.madn
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import play.api.mvc.Call
 
 /**

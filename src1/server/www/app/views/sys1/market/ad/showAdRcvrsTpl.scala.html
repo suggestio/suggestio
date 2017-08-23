@@ -5,7 +5,7 @@
 @import helper._
 @import ctx._
 
-@_rcvrsMap(rcvrs: Receivers_t) = {
+@_rcvrsMap(rcvrs: Seq[MEdge]) = {
   @if(rcvrs.isEmpty) {
     Карта пуста. Карточка нигде не отображается.
 

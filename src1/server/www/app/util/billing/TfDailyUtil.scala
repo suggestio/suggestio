@@ -8,10 +8,9 @@ import io.suggest.cal.m.{MCalType, MCalTypes}
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.bill.tariff.daily.{MDayClause, MTfDaily}
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.scalaz.ScalazUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.MNode
 import models.mcal.MCalendars
 import models.mctx.Context
 import models.mproj.ICommonDi

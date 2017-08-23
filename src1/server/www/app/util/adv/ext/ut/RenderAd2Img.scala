@@ -3,9 +3,9 @@ package util.adv.ext.ut
 import java.io.File
 
 import io.suggest.fsm.FsmActor
+import io.suggest.model.n2.node.MNode
 import io.suggest.primo.IToPublicString
 import io.suggest.util.logs.IMacroLogs
-import models.MNode
 import models.blk.OneAdQsArgs
 import models.event.{ErrorInfo, MEventTypes}
 import models.mproj.IMCommonDi

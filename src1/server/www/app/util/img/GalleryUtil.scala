@@ -3,10 +3,10 @@ package util.img
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{MEdge, MPredicates}
+import io.suggest.model.n2.node.MNode
 import models.im._
 import models.mctx.Context
-import models.{MEdge, MNode}
 import models.madn.EditConstants
 import play.api.Configuration
 import play.api.data.Forms._

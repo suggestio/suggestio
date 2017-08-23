@@ -9,12 +9,12 @@ import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicate, MPredicates}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.util.logs.MacroLogsImpl
-import models._
+import models.BlockConf
 import models.blk.PrepareBlkImgArgs
 import models.blk.ed.{AdFormM, AdFormResult, BlockImgMap}
 import models.im.MImg3
@@ -32,7 +32,7 @@ import play.core.parsers.Multipart
 import play.twirl.api.Html
 import util.acl._
 import util.ad.LkAdEdFormUtil
-import util.blocks.{BgImg, ListBlock, LkEditorWsActors}
+import util.blocks.{BgImg, BlocksConf, ListBlock, LkEditorWsActors}
 import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
 import views.html.lk.ad._
@@ -390,7 +390,7 @@ class MarketAd @Inject() (
               .toStream
               .headOption
 
-            val mapOpt: Option[NodeEdgesMap_t] = if (isEnabled) {
+            val mapOpt: Option[Seq[MEdge]] = if (isEnabled) {
               e0Opt.fold [Option[Seq[MEdge]]] {
                 // Эджа саморазмещения не существует. Это нормально, создать его на узле:
                 val e2 = MEdge(

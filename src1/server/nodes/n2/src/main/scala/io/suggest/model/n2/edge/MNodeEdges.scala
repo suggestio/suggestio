@@ -67,9 +67,9 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
   }
 
   implicit val FORMAT: Format[MNodeEdges] = {
-    (__ \ Fields.OUT_FN).formatNullable[NodeEdgesMap_t]
+    (__ \ Fields.OUT_FN).formatNullable[Seq[MEdge]]
       // Приведение опциональной карты к неопциональной.
-      .inmap [NodeEdgesMap_t] (
+      .inmap [Seq[MEdge]] (
         opt2ImplEmpty1F( Nil ),
         {mnes => if (mnes.isEmpty) None else Some(mnes) }
       )
@@ -92,10 +92,10 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
   def edgesToMapIter(edges: MEdge*): Seq[MEdge] = {
     edges
   }
-  def edgesToMap1(edges: TraversableOnce[MEdge]): NodeEdgesMap_t = {
+  def edgesToMap1(edges: TraversableOnce[MEdge]): Seq[MEdge] = {
     edges.toSeq
   }
-  def edgesToMap(edges: MEdge*): NodeEdgesMap_t = {
+  def edgesToMap(edges: MEdge*): Seq[MEdge] = {
     edgesToMap1(edges)
   }
 
@@ -116,7 +116,7 @@ object MNodeEdges extends IGenEsMappingProps with IEmpty {
 //      Оно какое-то топорное, наверное можно придумать что-то по-лучше.
 
 case class MNodeEdges(
-  out   : NodeEdgesMap_t    = Nil
+  out   : Seq[MEdge]    = Nil
 )
   extends EmptyProduct
 {

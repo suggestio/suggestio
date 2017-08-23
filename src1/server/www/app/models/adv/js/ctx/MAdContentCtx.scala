@@ -2,7 +2,7 @@ package models.adv.js.ctx
 
 import _root_.util.{FormUtil, TplDataFormatUtil}
 import io.suggest.adv.ext.model.ctx.MAdContentCtx._
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 

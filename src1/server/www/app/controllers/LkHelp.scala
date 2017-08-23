@@ -2,8 +2,8 @@ package controllers
 
 import javax.inject.Inject
 
+import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImplLazy
-import models._
 import models.mhelp.MLkSupportRequest
 import models.mproj.ICommonDi
 import models.req.{INodeReq, IReq, IReqHdr}

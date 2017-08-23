@@ -1,7 +1,7 @@
 package util.xplay
 
+import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import models.mproj.IMCommonDi
-import models.{MNode, MNodeTypes}
 import play.api.i18n.{I18nSupport, Lang}
 import play.api.mvc.Result
 

@@ -2,12 +2,11 @@ package util.blocks
 
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import models.blk.{SzMult_t, szMulted}
 import models.im._
 
 import scala.annotation.tailrec
-import models._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
 import models.mproj.ICommonDi
 

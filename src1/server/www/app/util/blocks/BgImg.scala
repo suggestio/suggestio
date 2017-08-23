@@ -2,8 +2,8 @@ package util.blocks
 
 import io.suggest.common.fut.FutureUtil
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.MNode
 import models.blk._
 import models.blk.ed._
 import models.im.{DevScreen, MImg3, MImgT}

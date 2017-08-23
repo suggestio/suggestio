@@ -1,7 +1,7 @@
 package models.req
 
-import models.MNode
-import models.adv.{MExtTarget, MExtReturn}
+import io.suggest.model.n2.node.MNode
+import models.adv.{MExtReturn, MExtTarget}
 import play.api.data.Form
 import play.api.mvc.Request
 

@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.MSize2di
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._

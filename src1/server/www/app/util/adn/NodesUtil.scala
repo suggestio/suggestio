@@ -6,15 +6,15 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.adn.MAdnRights
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.edge.{MNodeEdges, NodeEdgesMap_t}
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.extra.{MAdnExtra, MNodeExtras}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
-import models._
+import models.AdnShownTypes
 import models.adv.MExtTargets
 import models.madn.{MNodeRegSuccess, NodeDfltColors}
 import models.mext.MExtServices
@@ -125,7 +125,7 @@ class NodesUtil @Inject() (
       ),
       edges = MNodeEdges(
         out = {
-          personIdOpt.fold[NodeEdgesMap_t] (Nil) { personId =>
+          personIdOpt.fold[Seq[MEdge]] (Nil) { personId =>
             val medge = MEdge(
               predicate = MPredicates.OwnedBy,
               nodeIds   = Set(personId)

@@ -1,7 +1,7 @@
 package models.req
 
-import models.MNode
-import models.usr.{EmailPwIdent, EmailActivation}
+import io.suggest.model.n2.node.MNode
+import models.usr.{EmailActivation, EmailPwIdent}
 import play.api.mvc.Request
 
 /**

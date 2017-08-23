@@ -10,13 +10,12 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.MNodeEdges
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodeType, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.im.MImg3
@@ -819,7 +818,7 @@ class SysMarket @Inject() (
 
       // Достаём из кэша узлы.
       val nodesMapFut: Future[Map[String, MNode]] = {
-        def _nodeIds(rcvrs: Receivers_t): Set[String] = {
+        def _nodeIds(rcvrs: Seq[MEdge]): Set[String] = {
           if (rcvrs.nonEmpty) {
             rcvrs.iterator
               .map(_.nodeIds)

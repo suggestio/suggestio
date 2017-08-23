@@ -3,7 +3,8 @@ package models.blk
 import io.suggest.ad.blk.ent.MEntity
 import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
-import models._
+import io.suggest.model.n2.node.MNode
+import models.{BfText, BlockConf, blk}
 import models.im.make.{IMakeResult, MakeResult}
 import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}
 

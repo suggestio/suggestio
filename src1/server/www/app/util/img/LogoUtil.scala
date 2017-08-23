@@ -4,9 +4,9 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.model.n2.edge.MEdge
+import io.suggest.model.n2.edge.{MEdge, MPredicates}
+import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
-import models._
 import models.blk._
 import models.im._
 import models.im.logo._

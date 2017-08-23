@@ -5,10 +5,11 @@ import javax.inject.{Inject, Singleton}
 
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.ImgCrop
+import io.suggest.model.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.{IImgMeta, ISize2di}
 
 import scala.concurrent.Future
 
@@ -123,7 +124,7 @@ trait MAnyImgsT[T <: MAnyImgT] {
   /** Получить ширину и длину картинки. */
   def getImageWH(mimg: T): Future[Option[ISize2di]]
 
-  def rawImgMeta(mimg: T): Future[Option[IImgMeta]]
+  def rawImgMeta(mimg: T): Future[Option[ImgSzDated]]
 
 }
 
@@ -178,7 +179,7 @@ class MAnyImgs @Inject() (
     }
   }
 
-  override def rawImgMeta(mimg: MAnyImgT): Future[Option[IImgMeta]] = {
+  override def rawImgMeta(mimg: MAnyImgT): Future[Option[ImgSzDated]] = {
     mimg match {
       case mimg3: MImg3 =>
         mImgs3.rawImgMeta(mimg3)

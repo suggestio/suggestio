@@ -1,12 +1,11 @@
 package util.ai.mad
 
 import java.io.FileInputStream
-
 import javax.inject.Inject
+
 import io.suggest.ahc.util.HttpGetToFile
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.node.{MNode, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
-import models.MNode
 import models.ai._
 import models.mproj.ICommonDi
 import org.apache.tika.metadata.{Metadata, TikaMetadataKeys}

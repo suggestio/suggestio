@@ -1,9 +1,9 @@
 package models.mbill
 
 import io.suggest.mbill2.m.gid.Gid_t
-import models.MNode
 import io.suggest.mbill2.m.txn.{MTxn => MTxn2}
 import io.suggest.mbill2.m.balance.{MBalance => MBalance2}
+import io.suggest.model.n2.node.MNode
 
 /**
   * Suggest.io

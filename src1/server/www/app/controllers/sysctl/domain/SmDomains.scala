@@ -2,9 +2,8 @@ package controllers.sysctl.domain
 
 import controllers.{SioController, routes}
 import io.suggest.model.n2.extra.domain.MDomainExtra
-import io.suggest.model.n2.node.IMNodes
+import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.util.logs.IMacroLogs
-import models.MNode
 import models.msys.{MSysNodeDomainCreateFormTplArgs, MSysNodeDomainEditFormTplArgs}
 import models.req.INodeReq
 import play.api.data.Form

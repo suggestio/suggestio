@@ -1,6 +1,6 @@
 package models.msys
 
-import models.{MNodeType, MNode}
+import io.suggest.model.n2.node.{MNode, MNodeType}
 
 /**
  * Suggest.io

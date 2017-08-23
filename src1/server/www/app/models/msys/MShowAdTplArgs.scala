@@ -1,7 +1,7 @@
 package models.msys
 
 import io.suggest.model.n2.edge.MEdge
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.im.MImgT
 
 /**

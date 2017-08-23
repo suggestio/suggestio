@@ -1,10 +1,11 @@
 package controllers.sysctl.invite
 
 import controllers.SioController
+import io.suggest.model.n2.node.MNode
 import models.mctx.Context
 import models.req.IReqHdr
 import models.usr.EmailActivation
-import models.{AdnShownTypes, _}
+import models.AdnShownTypes
 import util.mail.IMailerWrapperDi
 import views.html.lk.adn.invite.emailNodeOwnerInviteTpl
 

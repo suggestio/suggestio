@@ -1,7 +1,8 @@
 package models.msc
 
-import models.mbase.{IProducerWrapper, IProducer}
-import models.{blk, MNode}
+import io.suggest.model.n2.node.MNode
+import models.mbase.{IProducer, IProducerWrapper}
+import models.blk
 
 /**
  * Suggest.io

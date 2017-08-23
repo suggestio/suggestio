@@ -1,6 +1,6 @@
 package models.adv.build
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 
 import scala.concurrent.Future
 

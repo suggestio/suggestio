@@ -1,12 +1,14 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.mproj.ICommonDi
 import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.MNode
 import io.suggest.www.util.req.ReqUtil
 
 import scala.concurrent.Future

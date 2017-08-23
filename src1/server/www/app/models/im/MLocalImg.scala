@@ -12,7 +12,6 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.IImgMeta
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
@@ -132,7 +131,7 @@ class MLocalImgs @Inject() (
       }
   }
 
-  override def rawImgMeta(mimg: MLocalImg): Future[Option[IImgMeta]] = {
+  override def rawImgMeta(mimg: MLocalImg): Future[Option[ImgSzDated]] = {
     if (isExists(mimg)) {
       for (metaOpt <- getImageWH(mimg)) yield {
         for (meta <- metaOpt) yield {

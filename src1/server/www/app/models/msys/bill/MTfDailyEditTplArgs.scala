@@ -1,7 +1,8 @@
 package models.msys.bill
 
+import io.suggest.model.n2.bill.tariff.daily.MTfDaily
+import io.suggest.model.n2.node.MNode
 import models.mcal.MCalendar
-import models.{MDailyTf, MNode}
 import play.api.data.Form
 
 /**
@@ -17,7 +18,7 @@ trait ITfDailyFormTplArgs {
   def mcals: Seq[MCalendar]
 
   /** Маппинг формы. */
-  def tf: Form[MDailyTf]
+  def tf: Form[MTfDaily]
 
 }
 
@@ -33,6 +34,6 @@ trait ITfDailyEditTplArgs extends ITfDailyFormTplArgs {
 case class MTfDailyEditTplArgs(
   override val mnode        : MNode,
   override val mcals        : Seq[MCalendar],
-  override val tf           : Form[MDailyTf]
+  override val tf           : Form[MTfDaily]
 )
   extends ITfDailyEditTplArgs

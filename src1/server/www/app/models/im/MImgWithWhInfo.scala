@@ -1,6 +1,6 @@
 package models.im
 
-import models.ISize2di
+import io.suggest.common.geom.d2.ISize2di
 
 /**
  * Suggest.io

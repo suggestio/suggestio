@@ -1,8 +1,9 @@
 package util.ext.fb
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.geom.d2.INamedSize2di
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.blk.SzMult_t
 import models.im.OutImgFmts
 import models.mext.MExtServices

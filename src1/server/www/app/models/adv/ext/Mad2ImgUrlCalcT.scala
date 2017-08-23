@@ -1,7 +1,7 @@
 package models.adv.ext
 
 import io.suggest.common.geom.d2.INamedSize2di
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.blk.OneAdQsArgs
 import util.blocks.BgImg
 import models.blk.szMulted

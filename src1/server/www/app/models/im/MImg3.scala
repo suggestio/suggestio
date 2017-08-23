@@ -8,17 +8,18 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.WriteRequest
 import io.suggest.model.img.ImgSzDated
+import io.suggest.model.n2.edge.MEdge
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
-import io.suggest.model.n2.media.{MFileMeta, MMedias, MPictureMeta}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.media.{MFileMeta, MMedia, MMedias, MPictureMeta}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
-import models.{IImgMeta, _}
 import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import util.img.ImgFileNameParsersImpl
@@ -73,7 +74,7 @@ class MImgs3 @Inject() (
     Source.fromFutureSource( srcFut )
   }
 
-  override protected def _getImgMeta(mimg: MImgT): Future[Option[IImgMeta]] = {
+  override protected def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
     for (mmediaOpt <- _mediaOptFut(mimg)) yield {
       for (mmedia <- mmediaOpt) yield {
         ImgSzDated(

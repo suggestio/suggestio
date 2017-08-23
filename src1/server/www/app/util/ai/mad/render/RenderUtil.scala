@@ -1,6 +1,6 @@
 package util.ai.mad.render
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.ai.ContentHandlerResult
 
 import scala.concurrent.Future

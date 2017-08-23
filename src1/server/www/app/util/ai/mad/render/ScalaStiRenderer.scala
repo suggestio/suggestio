@@ -4,8 +4,8 @@ import javax.inject.Inject
 
 import io.suggest.ad.blk.ent.TextEnt
 import io.suggest.model.n2.ad.EntMap_t
+import io.suggest.model.n2.node.MNode
 import models.ai.ContentHandlerResult
-import models.MNode
 import org.clapper.scalasti.ST
 
 import scala.concurrent.{ExecutionContext, Future}

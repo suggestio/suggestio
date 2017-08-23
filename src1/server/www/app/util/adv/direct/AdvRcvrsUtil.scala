@@ -1,17 +1,16 @@
 package util.adv.direct
 
 import java.time.OffsetDateTime
-
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
-import io.suggest.model.n2.edge.MNodeEdges
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
 import models.mproj.ICommonDi
 import util.adv.build.AdvBuilderFactory
@@ -266,8 +265,8 @@ class AdvRcvrsUtil @Inject()(
     }
   }
 
-  private def _orderedRcvrs(rs: Receivers_t) = rs.sortBy(_.toString)
-  def isRcvrsMapEquals(map1: Receivers_t, map2: Receivers_t): Boolean = {
+  private def _orderedRcvrs(rs: Seq[MEdge]) = rs.sortBy(_.toString)
+  def isRcvrsMapEquals(map1: Seq[MEdge], map2: Seq[MEdge]): Boolean = {
     _orderedRcvrs(map1) == _orderedRcvrs(map2)
   }
 
@@ -312,7 +311,7 @@ class AdvRcvrsUtil @Inject()(
   }
 
   /** Заменить ресиверов в узле без сохранения. */
-  def updateReceivers(mad: MNode, rcvrs1: Receivers_t): MNode = {
+  def updateReceivers(mad: MNode, rcvrs1: Seq[MEdge]): MNode = {
     mad.withEdges(
       edges = mad.edges.copy(
         out = {

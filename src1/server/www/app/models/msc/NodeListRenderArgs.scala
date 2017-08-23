@@ -1,6 +1,6 @@
 package models.msc
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 
 /**
  * Suggest.io

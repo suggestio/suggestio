@@ -1,12 +1,14 @@
 package util.lk
 
 import javax.inject.Inject
+
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.IExecutionContext
+import io.suggest.model.n2.node.MNode
 import models.blk.SzMult_t
 import models.im.DevScreen
 import models.im.make.{MakeArgs, Makers}
-import models.{MNode, blk}
+import models.blk
 import play.api.inject.Injector
 import util.blocks.{BgImg, BlocksConf}
 

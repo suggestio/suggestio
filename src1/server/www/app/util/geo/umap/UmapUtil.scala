@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import io.suggest.geo.{GsTypes, MultiPolygonGs}
 import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
-import models.MNode
+import io.suggest.model.n2.node.MNode
 
 /**
  * Suggest.io

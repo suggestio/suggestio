@@ -1,11 +1,11 @@
 package controllers.sysctl.bill
 
 import controllers.{SioController, routes}
+import io.suggest.model.n2.bill.tariff.daily.MTfDaily
 import io.suggest.util.logs.IMacroLogs
 import models.mcal.IMCalendars
 import models.msys.bill.MTfDailyEditTplArgs
 import models.req.INodeReq
-import models.MDailyTf
 import play.api.data.Form
 import play.api.mvc.Result
 import util.acl.IIsSuNodeDi
@@ -50,7 +50,7 @@ trait SbNodeTfDaily
     }
   }
 
-  private def _editNodeTfDaily(formFut: Future[Form[MDailyTf]], rs: Status)
+  private def _editNodeTfDaily(formFut: Future[Form[MTfDaily]], rs: Status)
                               (implicit request: INodeReq[_]): Future[Result] = {
     // Собираем доступные календари.
     val mcalsFut = mCalendars.getAll()

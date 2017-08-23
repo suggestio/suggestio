@@ -1,5 +1,6 @@
 package io.suggest.ad.doc.dtag
 
+import io.suggest.model.n2.edge.EdgeUid_t
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -16,8 +17,8 @@ object PlainPayload {
 
   /** Поддержка play-json. */
   implicit val PLAIN_PAYLOAD_FORMAT: OFormat[PlainPayload] = {
-    (__ \ "r").format[Int]
-      .inmap[PlainPayload]( apply, _.resourceId )
+    (__ \ "r").format[EdgeUid_t]
+      .inmap[PlainPayload]( apply, _.edgeId )
   }
 
 }
@@ -25,10 +26,10 @@ object PlainPayload {
 
 /** Класс тега просто рендера элемента payload'а.
   *
-  * @param resourceId id payload-элемента, который требуется отрендерить.
+  * @param edgeId id payload-элемента, который требуется отрендерить.
   */
 case class PlainPayload(
-                         resourceId: Int
+                         edgeId: EdgeUid_t
                        )
   extends IDocTag {
 

@@ -1,10 +1,12 @@
 package util.img
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.common.fut.FutureUtil
-import io.suggest.model.n2.edge.MEdgeInfo
+import io.suggest.common.geom.d2.ISize2di
+import io.suggest.model.n2.edge.{MEdge, MEdgeInfo, MPredicates}
+import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.im._
 import models.madn.EditConstants
 import models.mctx.Context

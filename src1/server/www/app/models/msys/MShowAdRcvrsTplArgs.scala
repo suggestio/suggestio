@@ -1,6 +1,7 @@
 package models.msys
 
-import models.{Receivers_t, MNode}
+import io.suggest.model.n2.edge.MEdge
+import io.suggest.model.n2.node.MNode
 
 /**
  * Suggest.io
@@ -14,7 +15,7 @@ trait IShowAdRcvrsTplArgs {
   def mad         : MNode
 
   /** Рассчетная карта ресиверов. */
-  def newRcvrsMap : Receivers_t
+  def newRcvrsMap : Seq[MEdge]
 
   /** Карта узлов. */
   def nodesMap    : Map[String, MNode]
@@ -23,7 +24,7 @@ trait IShowAdRcvrsTplArgs {
   def nodeOpt     : Option[MNode]
 
   /** Карта ресиверов. */
-  def rcvrsMap    : Receivers_t
+  def rcvrsMap    : Seq[MEdge]
 
   /** В норме ли текущая карта ресиверов? */
   def rcvrsMapOk  : Boolean
@@ -34,10 +35,10 @@ trait IShowAdRcvrsTplArgs {
 /** Дефолтовая реализация модели [[IShowAdRcvrsTplArgs]]. */
 case class MShowAdRcvrsTplArgs(
   override val mad         : MNode,
-  override val newRcvrsMap : Receivers_t,
+  override val newRcvrsMap : Seq[MEdge],
   override val nodesMap    : Map[String, MNode],
   override val nodeOpt     : Option[MNode],
-  override val rcvrsMap    : Receivers_t,
+  override val rcvrsMap    : Seq[MEdge],
   override val rcvrsMapOk  : Boolean
 )
   extends IShowAdRcvrsTplArgs

@@ -1,7 +1,8 @@
 package models.mlk
 
-import io.suggest.mbill2.m.item.status.{MItemStatuses, MItemStatus}
-import models.{MNode, blk}
+import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
+import io.suggest.model.n2.node.MNode
+import models.blk
 
 /**
  * Suggest.io

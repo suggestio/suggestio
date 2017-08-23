@@ -7,11 +7,12 @@ import io.suggest.bill.MPrice
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.mbill2.m.order.{MOrderStatuses, MOrderWithItems}
-import io.suggest.model.n2.node.MNodes
+import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
-import models._
+import models.{AdnShownType, AdnShownTypes}
 import models.adv.direct._
 import models.adv.price.GetPriceResp
 import models.mctx.Context

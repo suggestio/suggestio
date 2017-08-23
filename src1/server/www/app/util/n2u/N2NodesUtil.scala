@@ -1,10 +1,12 @@
 package util.n2u
 
 import javax.inject.Singleton
-import io.suggest.model.n2.edge.{MNodeEdges, MPredicates}
+
+import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
 import io.suggest.model.n2.edge.search.ICriteria
 import io.suggest.model.n2.extra.domain.MDomainModes
-import models.{BlockConf, MEdge, MNode, Receivers_t}
+import io.suggest.model.n2.node.MNode
+import models.BlockConf
 import util.blocks.BlocksConf
 
 /**
@@ -55,7 +57,7 @@ class N2NodesUtil {
   }
 
   /** Собрать карту ресиверов. */
-  def receiversMap(mad: MNode): Receivers_t = {
+  def receiversMap(mad: MNode): Seq[MEdge] = {
     MNodeEdges.edgesToMap1( receivers(mad) )
   }
 

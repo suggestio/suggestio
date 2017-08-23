@@ -1,7 +1,8 @@
 package models.msys
 
+import io.suggest.model.n2.node.MNode
 import models.mdr.MdrSearchArgs
-import models.{MNode, blk}
+import models.blk
 
 /**
  * Suggest.io

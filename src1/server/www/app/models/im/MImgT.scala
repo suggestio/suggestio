@@ -4,16 +4,16 @@ import java.io.FileNotFoundException
 import java.util.UUID
 
 import io.suggest.async.StreamsUtil
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.di.ICacheApiUtil
-import io.suggest.model.n2.media.IMMedias
+import io.suggest.model.img.ImgSzDated
+import io.suggest.model.n2.media.{IMMedias, MMedia}
 import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.TypeT
 import io.suggest.sec.m.SecretGetter
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
-import models.{IImgMeta, _}
 import models.mproj.IMCommonDi
 import play.api.mvc.QueryStringBindable
 import util.qsb.QsbSigner
@@ -37,8 +37,6 @@ import scala.concurrent.duration._
   */
 
 object MImgT extends MacroLogsImpl { model =>
-
-  import play.api.Play.current
 
   def SIGN_FN   = "sig"
   def IMG_ID_FN = "id"
@@ -201,13 +199,13 @@ trait MImgsT
     .getOrElse(60)
 
   /** Закешированный результат чтения метаданных из постоянного хранилища. */
-  def permMetaCached(mimg: MImgT): Future[Option[IImgMeta]] = {
+  def permMetaCached(mimg: MImgT): Future[Option[ImgSzDated]] = {
     cacheApiUtil.getOrElseFut(mimg.fileName + ".giwh", ORIG_META_CACHE_SECONDS.seconds) {
       _getImgMeta(mimg)
     }
   }
 
-  protected def _getImgMeta(mimg: MImgT): Future[Option[IImgMeta]]
+  protected def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]]
 
   /** Получить ширину и длину картинки. */
   override def getImageWH(mimg: MImgT): Future[Option[ISize2di]] = {
@@ -265,7 +263,7 @@ trait MImgsT
     * т.е. метаданные обязательные изначально. */
   protected def _updateMetaWith(mimg: MImgT, localWh: ISize2di, localImg: MLocalImg): Unit
 
-  override def rawImgMeta(mimg: MImgT): Future[Option[IImgMeta]] = {
+  override def rawImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
     permMetaCached(mimg)
       .filter(_.isDefined)
       .recoverWith {

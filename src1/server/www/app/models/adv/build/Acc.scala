@@ -2,8 +2,7 @@ package models.adv.build
 
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.util.effect.RWT
-import io.suggest.model.n2.node.IMNodes
-import models._
+import io.suggest.model.n2.node.{IMNodes, MNode}
 import slick.dbio.{DBIOAction, NoStream}
 
 import scala.concurrent.Future

@@ -1,8 +1,8 @@
 package models.msys
 
 import io.suggest.model.n2.edge.MEdgeGeoShape
+import io.suggest.model.n2.node.MNode
 import models.mgeo.MGsPtr
-import models.MNode
 import play.api.data.Form
 
 /**

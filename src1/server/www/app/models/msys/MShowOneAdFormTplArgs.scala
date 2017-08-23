@@ -1,6 +1,7 @@
 package models.msys
 
-import models.{blk, MNode}
+import io.suggest.model.n2.node.MNode
+import models.blk
 import models.msc.OneAdRenderVariant
 import play.api.data.Form
 

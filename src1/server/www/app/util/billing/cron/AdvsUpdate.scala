@@ -6,8 +6,8 @@ import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.mbill2.m.item.typ.MItemType
 import io.suggest.mbill2.m.item.{IMItems, MItem}
+import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.MacroLogsImpl
-import models.MNode
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT, MCtxOuter}
 import models.mproj.IMCommonDi
 import slick.sql.SqlAction

@@ -1,6 +1,6 @@
 package models.req
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.event.MEvent
 import play.api.mvc.Request
 

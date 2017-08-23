@@ -1,9 +1,10 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
+
+import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.util.req.ReqUtil
-import models._
 import models.mproj.ICommonDi
 import models.req._
 import play.api.mvc._

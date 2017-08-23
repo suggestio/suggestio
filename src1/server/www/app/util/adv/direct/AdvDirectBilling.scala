@@ -1,16 +1,17 @@
 package util.adv.direct
 
 import java.time.ZoneId
-
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.bill.MPrice
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.status.{MItemStatus, MItemStatuses}
 import io.suggest.mbill2.m.item.typ.MItemTypes
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.model.n2.bill.tariff.daily.MTfDaily
+import io.suggest.model.n2.node.MNode
 import io.suggest.primo.id.OptId
 import io.suggest.util.logs.MacroLogsImpl
-import models._
 import models.adv.MAdvBillCtx
 import models.adv.direct.{AdvFormEntry, FormResult}
 import models.mcal.ICalsCtx
@@ -158,7 +159,7 @@ class AdvDirectBilling @Inject() (
     * @return db-экшен, добавляющий запросы размещения в корзину.
     */
   def mkAdvReqItems(orderId: Gid_t, mad: MNode, advs: TraversableOnce[AdvFormEntry], status: MItemStatus,
-                    rcvrTfs: Map[String, MDailyTf], mcalsCtx: ICalsCtx, rcvrsMap: Map[String, MNode]): Iterator[MItem] = {
+                    rcvrTfs: Map[String, MTfDaily], mcalsCtx: ICalsCtx, rcvrsMap: Map[String, MNode]): Iterator[MItem] = {
     val bmc = advUtil.maybeAdModulesCount(mad)
 
     for {

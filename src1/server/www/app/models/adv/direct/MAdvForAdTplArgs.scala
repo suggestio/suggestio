@@ -1,7 +1,7 @@
 package models.adv.direct
 
 import io.suggest.bill.MGetPriceResp
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.adv.IAdvForAdCommonTplArgs
 
 /**

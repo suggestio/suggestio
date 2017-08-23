@@ -1,6 +1,6 @@
 package models.msc
 
-import models._
+import io.suggest.model.n2.node.MNode
 import play.twirl.api.Html
 
 /**

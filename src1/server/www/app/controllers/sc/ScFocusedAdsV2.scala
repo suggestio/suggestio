@@ -1,7 +1,7 @@
 package controllers.sc
 
+import io.suggest.model.n2.node.MNode
 import io.suggest.sc.resp.MScRespActionTypes
-import models.MNode
 import models.mlu.{MLookupMode, MLookupModes}
 import models.msc._
 import models.msc.resp._

@@ -1,6 +1,6 @@
 package models.adv.ext
 
-import models.MNode
+import io.suggest.model.n2.node.MNode
 import models.adv._
 import play.api.data.Form
 

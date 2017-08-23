@@ -1,6 +1,7 @@
 package models.adv
 
-import models.{MDailyTf, MNode}
+import io.suggest.model.n2.bill.tariff.daily.MTfDaily
+import io.suggest.model.n2.node.MNode
 import models.mcal.ICalsCtx
 import models.mdt.IDateStartEnd
 
@@ -14,7 +15,7 @@ import models.mdt.IDateStartEnd
   */
 trait IAdvBillCtx {
 
-  def tfsMap              : Map[String, MDailyTf]
+  def tfsMap              : Map[String, MTfDaily]
 
   /** Кол-во блоков карточки (площадь карточки). */
   def blockModulesCount   : Option[Int]
@@ -54,7 +55,7 @@ trait IAdvBillCtxWrap extends IAdvBillCtx {
 case class MAdvBillCtx(
                         override val blockModulesCount   : Option[Int],
                         override val mcalsCtx            : ICalsCtx,
-                        override val tfsMap              : Map[String, MDailyTf],
+                        override val tfsMap              : Map[String, MTfDaily],
                         override val ivl                 : IDateStartEnd,
                         override val rcvrsMap            : Map[String, MNode]
                       )

@@ -218,11 +218,6 @@ object Common {
     */
   val boopickleVsn = "1.2.6"
 
-  /** Версия autowire для клиента и сервера.
-    *  @see [[https://github.com/lihaoyi/autowire]]
-    */
-  //val autowireVsn  = "0.2.6"
-
   /** Версия enumeratum, версия нарисована прямо в заголовке на maven badge.
     * @see [[https://github.com/lloydmeta/enumeratum#enumeratum------]]
     */
