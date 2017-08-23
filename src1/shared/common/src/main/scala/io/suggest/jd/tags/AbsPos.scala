@@ -1,8 +1,8 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
 import io.suggest.common.geom.coord.MCoords2di
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -42,6 +42,6 @@ case class AbsPos(
                  )
   extends IDocTag {
 
-  override def dtName = MDtNames.AbsPos
+  override def dtName = MJdTagNames.AbsPos
 
 }

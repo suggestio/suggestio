@@ -1,4 +1,4 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
 import enumeratum._
 import io.suggest.enum2.EnumeratumUtil
@@ -15,7 +15,7 @@ object MDtName {
 
   /** Поддержка play-json. */
   implicit val MDOC_TAG_NAME_FORMAT: Format[MDtName] = {
-    EnumeratumUtil.enumEntryFormat( MDtNames )
+    EnumeratumUtil.enumEntryFormat( MJdTagNames )
   }
 
 }
@@ -30,7 +30,7 @@ sealed abstract class MDtName extends EnumEntry with IStrId {
 
 
 /** Модель типов элементов структуры документа. */
-object MDtNames extends Enum[MDtName] {
+object MJdTagNames extends Enum[MDtName] {
 
   /** Документ - это корневой "тег" структуры документа.
     * С него начинается любой "документ" рекламной карточки.

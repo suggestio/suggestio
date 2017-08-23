@@ -1,4 +1,4 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.common.geom.coord.MCoords2di
@@ -32,13 +32,13 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: Empty document") {
-    val doc = Document()()
+    val doc = JsonDocument()()
     _writeReadMatchTest( doc )
   }
 
 
   test("JSON: Simple Document( Strip(PlainPayload()) )") {
-    val doc = Document()(
+    val doc = JsonDocument()(
       Strip( bm300x140 )(
         PlainPayload(1)
       )
@@ -48,7 +48,7 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: Document with two strips, each with several children") {
-    val doc = Document()(
+    val doc = JsonDocument()(
       Strip( bm300x140 )(
         PlainPayload(2),
         Picture(555),
@@ -66,7 +66,7 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: 3-level document tree with inner children") {
-    val doc = Document()(
+    val doc = JsonDocument()(
       Strip( bm300x140 )(
         AbsPos( MCoords2di(10, 20) ) (
           PlainPayload(2)

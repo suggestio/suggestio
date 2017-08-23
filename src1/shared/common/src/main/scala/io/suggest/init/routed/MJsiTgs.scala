@@ -94,6 +94,11 @@ object MJsiTgs extends Enum[MJsiTg] {
     override def toString = LK_NODES_FORM
   }
 
+  /** Цель инициализации формы ЛК-редактора рекламной карточки на базе react. */
+  case object LkAdEditR extends MJsiTg {
+    override def toString = LK_AD_EDITOR_REACT
+  }
+
 
   override def values = findValues
 

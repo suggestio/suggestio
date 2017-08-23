@@ -1,8 +1,8 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
 import io.suggest.model.n2.edge.EdgeUid_t
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -10,7 +10,7 @@ import play.api.libs.functional.syntax._
   * Created: 18.08.17 16:35
   * Description: Тег, обозначающий необходимость plain-рендера какого-то элемента payload.
   *
-  * Основным случаем такого рендера является... СТРОКА ТЕКСТА!
+  * Основным случаем такого рендера является строка текста (без какой-либо html-разметки).
   * Текст хранится отдельно, т.к. его так можно удобно индексировать в ES, и дедублицировать везде.
   */
 object PlainPayload {
@@ -33,7 +33,7 @@ case class PlainPayload(
                        )
   extends IDocTag {
 
-  override def dtName = MDtNames.PlainPayload
+  override def dtName = MJdTagNames.PlainPayload
 
   override def children = Nil
 

@@ -1,7 +1,7 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
-import play.api.libs.json.OFormat
 import play.api.libs.functional.syntax._
+import play.api.libs.json.OFormat
 
 /**
   * Suggest.io
@@ -10,19 +10,19 @@ import play.api.libs.functional.syntax._
   * Description: Struct-тег документа. Содержит только дочерние элементы.
   */
 
-object Document {
+object JsonDocument {
 
   /** Поддержка play-json. */
-  implicit val DOCUMENT_FORMAT: OFormat[Document] = {
+  implicit val DOCUMENT_FORMAT: OFormat[JsonDocument] = {
     IDocTag.CHILDREN_IDOC_TAG_FORMAT
-      .inmap[Document]( rawApply, _.children )
+      .inmap[JsonDocument]( rawApply, _.children )
   }
 
-  def rawApply(chs: Seq[IDocTag]): Document = {
+  def rawApply(chs: Seq[IDocTag]): JsonDocument = {
     apply()(chs: _*)
   }
 
-  def rawUnapply(d: Document): Option[Seq[IDocTag]] = {
+  def rawUnapply(d: JsonDocument): Option[Seq[IDocTag]] = {
     Some(d.children)
   }
 
@@ -30,11 +30,11 @@ object Document {
 
 
 /** Класс документа-корня. */
-case class Document()(
-                     override val children: IDocTag*
-                   )
+case class JsonDocument()(
+                          override val children: IDocTag*
+                         )
   extends IDocTag {
 
-  override def dtName = MDtNames.Document
+  override def dtName = MJdTagNames.Document
 
 }

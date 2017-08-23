@@ -63,4 +63,7 @@ object JsInitConstants {
   /** id таргета формы управления узлами в личном кабинете. */
   def LK_NODES_FORM               = "p"
 
+  /** Инициализация редактора рекламной карточки на базе react. */
+  def LK_AD_EDITOR_REACT            = "q"
+
 }

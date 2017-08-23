@@ -100,6 +100,8 @@ GET  /lk/mad/delete/:adId               @controllers.MarketAd.deleteWnd(adId)
 POST /lk/mad/delete/:adId               @controllers.MarketAd.deleteSubmit(adId)
 GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
+## ЛК: Редактор рекламных карточек v2:
+GET  /lk/mad/edit2/:adId                @controllers.LkAdEdit.editAd(adId: MEsUuId)
 
 ## ЛК: Управление под-узлами.
 GET  /lk/subnodes/of/:nodeId                        @controllers.LkNodes.nodesOf(nodeId: MEsUuId)

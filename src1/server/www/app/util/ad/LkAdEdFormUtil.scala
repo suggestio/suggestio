@@ -2,13 +2,16 @@ package util.ad
 
 import javax.inject.Singleton
 
-import io.suggest.ad.blk.BlockMeta
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
+import io.suggest.ad.edit.m.MAdEditForm
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
+import io.suggest.jd.tags.{JsonDocument, Strip}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
+import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
@@ -17,6 +20,7 @@ import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.blk.AdColorFns
+import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
 import util.FormUtil._
@@ -265,7 +269,32 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     )
   }
 
+
+  //---------------------------------------------------------------------------
+  // v2 react form
+
+  /** Срендерить дефолтовый документ для текущего языка. */
+  def defaultEmptyDocument(implicit ctx: Context): MAdEditForm = {
+    MAdEditForm(
+      template = JsonDocument()(
+        // TODO Strip1 содержит описание того, что это основная полоса.
+        Strip(
+          bm = BlockMeta(
+            w = BlockWidths.default,
+            h = BlockHeights.default,
+            wide = true
+          )
+        )(
+          ???
+        )
+        // TODO strip2 содержит предложение добавить описание или что-то ещё.
+      ),
+      edges = ???
+    )
+  }
+
 }
+
 
 /** Интерфейс для DI-поля с инстаном [[LkAdEdFormUtil]]. */
 trait ILkAdEdFormUtil {

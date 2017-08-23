@@ -217,6 +217,10 @@ object MPredicates extends StringEnum[MPredicate] {
   @deprecated("Толком никакой смысловой нагрузки не было, и оно замёржено в NodeLocation", "2017-06-02")
   case object AdnMap extends MPredicate("r")
 
+  /** Эдж текста.
+    * Исходная суть его в просто хранении текстового контента для json-doc-контента узла. */
+  case object Text extends MPredicate("s")
+
 
   override val values = {
     findValues.flatMap { v =>

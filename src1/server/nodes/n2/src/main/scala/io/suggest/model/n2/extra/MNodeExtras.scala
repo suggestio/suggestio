@@ -3,6 +3,7 @@ package io.suggest.model.n2.extra
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
+import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
 import io.suggest.model.n2.extra.domain.MDomainExtra
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
@@ -63,6 +64,16 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       def MODE_FN   = _fullFn( F.MODE_FN )
     }
 
+
+    object MNDoc extends PrefixedFn {
+      val MNDOC_FN = "o"
+      override protected def _PARENT_FN = MNDOC_FN
+
+      // TODO Хз, надо ли это с момента создания. Document -- это шаблон без данных и не индексируем.
+      import MNodeDoc.{Fields => F}
+      def DOCUMENT_FN = _fullFn( F.TEMPLATE_FN )
+    }
+
   }
 
 
@@ -75,7 +86,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       .inmap [Seq[MDomainExtra]] (
         _.getOrElse(Nil),
         { domains => if (domains.isEmpty) None else Some(domains) }
-      )
+      ) and
+    (__ \ Fields.MNDoc.MNDOC_FN).formatNullable[MNodeDoc]
   )(apply, unlift(unapply))
 
 
@@ -88,7 +100,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
     List(
       _obj(Fields.Adn.ADN_FN,       MAdnExtra),
       _obj(Fields.Beacon.BEACON_FN, MBeaconExtra),
-      FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps)
+      FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps),
+      _obj(Fields.MNDoc.MNDOC_FN,   MNodeDocJvm)
     )
   }
 
@@ -97,8 +110,9 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
 
 /** Класс-контейнер-реализация модели. */
 case class MNodeExtras(
-  adn       : Option[MAdnExtra]         = None,
-  beacon    : Option[MBeaconExtra]      = None,
-  domains   : Seq[MDomainExtra]         = Nil
-)
+                        adn       : Option[MAdnExtra]         = None,
+                        beacon    : Option[MBeaconExtra]      = None,
+                        domains   : Seq[MDomainExtra]         = Nil,
+                        doc       : Option[MNodeDoc]          = None
+                      )
   extends EmptyProduct

@@ -1,0 +1,22 @@
+@(mad: Option[MNode], parent: MNode, state0: String)(implicit ctx: Context)
+
+@* Шаблон страницы формы редактирования рекламной карточки. *@
+
+@import ctx.messages
+@import lk.lkwdgts._formStateInputTpl
+@import views.html.stuff._preLoaderLkTpl
+@import io.suggest.ad.form.AdFormConstants
+
+@adEditBase(
+  title       = messages("Ad.card.edit"),
+  parent      = parent
+) {
+
+  @_formStateInputTpl( state0 )
+
+  @* TODO div-контейнер для рендера react-формы. *@
+  <div id="@AdFormConstants.AD_EDIT_FORM_CONT_ID">
+    @_preLoaderLkTpl()
+  </div>
+
+}

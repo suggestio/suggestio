@@ -8,17 +8,20 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 /**
- * Suggest.io
- * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
- * Created: 02.10.15 11:09
- * Description: Модель эджа, карта которых хранится внутри N2-узла [[io.suggest.model.n2.node.MNode]].
- *
- * Изначально, этот эдж был направленным ребром N2-графа. При этом сама направленность нигде не использовалась.
- * Потом, появилась параметризация эджа каким-то дополнительным payload'ом.
- * Затем, nodeId стал необязательным, и эдж стал некоей совсем абстрактной перечисляемой единицей данных,
- * которая в частном случае является ребром графа N2.
- * Теперь основная суть MEdge: описывать отношения узла с остальным миром (в широком смысле).
- */
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 02.10.15 11:09
+  * Description: Модель эджа, карта которых хранится внутри N2-узла [[io.suggest.model.n2.node.MNode]].
+  *
+  * Изначально, этот эдж был направленным ребром N2-графа.
+  * Потом, появилась параметризация эджа каким-то дополнительным payload'ом.
+  * Затем, nodeId стал необязательным, и эдж стал некоей совсем абстрактной перечисляемой единицей объекта данных,
+  * которая лишь в частном случае является параметризованным мульти-ребром графа N2.
+  *
+  * При запиливании doc-tags для сборки абстрактного документа карточки,
+  * было решено хранить и индексировать куски текста в эджах, наравне с отсылками к Media-узлам и прочим вещам.
+  * Таким образом, эджи стали абстрактной удобной моделью представления данных на базе nested-объектов.
+  */
 object MEdge extends IGenEsMappingProps {
 
   /** Контейнер имён полей. */
@@ -28,8 +31,10 @@ object MEdge extends IGenEsMappingProps {
     val NODE_ID_FN    = "i"
     val ORDER_FN      = "o"
     val INFO_FN       = "n"
+    val DOC_FN        = "d"
 
-    /** Модель названий полей, проброшенных сюда из под-моделей. */
+
+    /** Модель названий полей, проброшенных сюда из полей [[MEdgeInfo]]-модели. */
     object Info extends PrefixedFn {
 
       override protected def _PARENT_FN = INFO_FN
@@ -48,10 +53,22 @@ object MEdge extends IGenEsMappingProps {
       import F.{GeoShapes => Gs}
       def INFO_GS_GLEVEL_FN                     = _fullFn( Gs.GS_GLEVEL_FN )
       def INFO_GS_GJSON_COMPAT_FN               = _fullFn( Gs.GS_GJSON_COMPAT_FN )
-      def INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel)   = _fullFn( Gs.GS_SHAPE_FN(ngl) )
+      def INFO_GS_SHAPE_FN(ngl: MNodeGeoLevel)  = _fullFn( Gs.GS_SHAPE_FN(ngl) )
 
       // Гео-точки
       def INFO_GEO_POINTS_FN                    = _fullFn( F.GEO_POINT_FN )
+
+    }
+
+
+    /** Модель полных названий [[MEdgeDoc]]-полей. */
+    object DocFns extends PrefixedFn {
+
+      import MEdgeDoc.{Fields => F}
+      override protected def _PARENT_FN = DOC_FN
+
+      def TEXT_FN = _fullFn( F.TEXT_FN )
+      def UID_FN  = _fullFn( F.UID_FN )
 
     }
 
@@ -91,6 +108,11 @@ object MEdge extends IGenEsMappingProps {
       .inmap [MEdgeInfo] (
         opt2ImplMEmptyF( MEdgeInfo ),
         implEmpty2OptF
+      ) and
+    (__ \ DOC_FN).formatNullable[MEdgeDoc]
+      .inmap [MEdgeDoc] (
+        opt2ImplMEmptyF( MEdgeDoc ),
+        implEmpty2OptF
       )
   )(apply, unlift(unapply))
 
@@ -105,7 +127,8 @@ object MEdge extends IGenEsMappingProps {
       fsNa(NODE_ID_FN),
       // orderId -- not_analyzed, используется в т.ч. для хранения статистики использования геотегов, как это не странно...
       FieldNumber(ORDER_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false),
-      FieldObject(INFO_FN, enabled = true, properties = MEdgeInfo.generateMappingProps)
+      FieldObject(INFO_FN, enabled = true, properties = MEdgeInfo.generateMappingProps),
+      FieldObject(DOC_FN, enabled = true, properties = MEdgeDocJvm.generateMappingProps)
     )
   }
 
@@ -126,7 +149,8 @@ case class MEdge(
                   // Обычно nodeId задан, поэтому без default тут для защиты от возможных ошибок.
                   nodeIds    : Set[String]    = Set.empty,
                   order      : Option[Int]    = None,
-                  info       : MEdgeInfo      = MEdgeInfo.empty
+                  info       : MEdgeInfo      = MEdgeInfo.empty,
+                  doc        : MEdgeDoc       = MEdgeDoc.empty
                 ) {
 
   override def toString: String = {

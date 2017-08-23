@@ -1,7 +1,7 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -39,11 +39,11 @@ object IDocTag {
   implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = {
     // Собрать читалку на основе прочитанного имени тега.
     val r: Reads[IDocTag] = _IDT_NAME_FORMAT.flatMap[IDocTag] {
-      case MDtNames.PlainPayload  => _toIdtReads[PlainPayload]
-      case MDtNames.Picture       => _toIdtReads[Picture]
-      case MDtNames.AbsPos        => _toIdtReads[AbsPos]
-      case MDtNames.Strip         => _toIdtReads[Strip]
-      case MDtNames.Document      => _toIdtReads[Document]
+      case MJdTagNames.PlainPayload  => _toIdtReads[PlainPayload]
+      case MJdTagNames.Picture       => _toIdtReads[Picture]
+      case MJdTagNames.AbsPos        => _toIdtReads[AbsPos]
+      case MJdTagNames.Strip         => _toIdtReads[Strip]
+      case MJdTagNames.Document      => _toIdtReads[JsonDocument]
       case _ => ???
     }
 
@@ -58,7 +58,7 @@ object IDocTag {
         case p: Picture           => _writeJsObj(p)(Picture.PICTURE_FORMAT)
         case ap: AbsPos           => _writeJsObj(ap)(AbsPos.ABS_POS_FORMAT)
         case s: Strip             => _writeJsObj(s)(Strip.STRIP_FORMAT)
-        case d: Document          => _writeJsObj(d)(Document.DOCUMENT_FORMAT)
+        case d: JsonDocument          => _writeJsObj(d)(JsonDocument.DOCUMENT_FORMAT)
         case _ => ???
       }
       // Добавить информацию по типу в уже отрендеренный JSON.

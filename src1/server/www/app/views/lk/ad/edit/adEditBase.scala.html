@@ -1,0 +1,36 @@
+@(title: String, parent: MNode)(content: Html)(implicit ctx: Context)
+
+@* Страница с внешней версткой для формы _adFormTpl. *@
+
+@import ctx.{messages, request}
+@import helper._
+@import io.suggest.ad.form.AdFormConstants._
+@import io.suggest.js.JsRoutesConst
+@import io.suggest.font.{MFontSizes, MFonts}
+@import views.js.stuff.jsRevRouterTpl
+@import views.html.stuff.jsTpl2HtmlTpl
+
+@headAfter = {
+  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+}
+
+@lk.lkBase(
+  title         = title,
+  nodeOpt       = Some(parent),
+  leftCurrEl    = Some(LkLeftPanelLinks.LPL_ADS),
+  headAfter     = Some(headAfter)
+) {
+
+  <div class="viewport">
+    <article class="page_cnt __ad-editor">
+      <h1 class="page_title">@title</h1>
+      @content
+    </article>
+  </div>
+
+  @jsTpl2HtmlTpl( withScriptTag = true )(
+    jsRevRouterTpl( csrfAll = true, cdn = true )(
+    )
+  )
+
+}

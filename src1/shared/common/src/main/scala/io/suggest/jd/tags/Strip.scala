@@ -1,8 +1,8 @@
-package io.suggest.ad.doc.dtag
+package io.suggest.jd.tags
 
 import io.suggest.ad.blk.BlockMeta
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -45,6 +45,6 @@ case class Strip(
                 )
   extends IDocTag {
 
-  override def dtName = MDtNames.Strip
+  override def dtName = MJdTagNames.Strip
 
 }

@@ -45,4 +45,10 @@ object AdFormConstants {
   def DESCR_K     = "descr"
   def BG_COLOR_K  = "bgColor"
 
+
+  // v2: react-form
+
+  /** id контейнера react-формы создания/редактирования рекламной карточки. */
+  def AD_EDIT_FORM_CONT_ID = "aef"
+
 }

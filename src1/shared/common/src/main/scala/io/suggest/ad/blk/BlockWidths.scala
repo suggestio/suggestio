@@ -29,9 +29,7 @@ sealed abstract class BlockWidth(override val value: Int) extends IntEnumEntry {
   /** Узкий размер? */
   def isNarrow: Boolean
 
-  override final def toString = {
-    s"[$value]"
-  }
+  override final def toString = value.toString
 
 }
 

@@ -126,4 +126,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def JS_ROUTER_INIT_FAILED            = E(56)
 
+  def AD_EDIT_CIRCUIT_ERROR            = E(57)
+
 }

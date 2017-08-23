@@ -27,6 +27,8 @@ sealed abstract class BlockHeight(override val value: Int) extends IntEnumEntry 
   /** Относительный размер в условных "шагах". */
   def relSz: Int
 
+  override final def toString = value.toString
+
 }
 
 

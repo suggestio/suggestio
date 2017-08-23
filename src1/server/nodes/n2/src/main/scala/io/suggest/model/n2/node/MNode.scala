@@ -20,7 +20,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.Map
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -173,6 +173,7 @@ final class MNodes @Inject() (
           .get[Terms](aggName)
           .getBuckets
           .iterator()
+          .asScala
           .map { bucket =>
             val ntype: MNodeType = MNodeTypes.withName( bucket.getKeyAsString )
             ntype -> bucket.getDocCount
