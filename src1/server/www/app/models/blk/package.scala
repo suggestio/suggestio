@@ -11,10 +11,6 @@ package object blk {
   // TODO Наверное надо перенести SzMult_t на уровень models.
   type SzMult_t    = Float
 
-  val  AdColorFns  = io.suggest.ym.model.ad.AdColorFns
-  type AdColorFn   = AdColorFns.T
-
-
   // Т.к. SzMult_t является примитивным типом, то модели у него своей нет, и утиль выброшена прямо сюда.
   def szMulted(origPx: Int, szMult: SzMult_t): Int = {
     szMulted(origPx.toFloat, szMult)

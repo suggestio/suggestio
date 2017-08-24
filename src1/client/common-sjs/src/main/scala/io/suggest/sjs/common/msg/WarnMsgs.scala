@@ -122,4 +122,7 @@ object WarnMsgs extends MsgsStaticT {
   /** Транзакция уже закрыта или ещё не открыта, но запрошено действие, подразумевающее наличие открытой транзакции. */
   def TXN_NOT_OPENED                         = E(51)
 
+  /** Неожиданно пустой документ. */
+  def UNEXPECTED_EMPTY_DOCUMENT              = E(52)
+
 }

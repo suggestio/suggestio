@@ -100,7 +100,6 @@ lazy val svgUtil = {
 lazy val lkAdvExtSjs = {
   val name = "lk-adv-ext-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/adv/ext"))
-    //.enablePlugins(ScalaJSBundlerPlugin)
     .dependsOn(commonSjs)
 }
 
@@ -108,7 +107,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, reactTinyMceSjs )
+    .dependsOn( lkCommonSjs, reactTinyMceSjs, jdRenderSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -336,6 +335,11 @@ lazy val sc3Sjs = {
     .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs)
 }
 
+/** json document react renderer */
+lazy val jdRenderSjs = {
+  Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
+    .dependsOn( lkCommonSjs )
+}
 
 /** Внутренний форк securesocial. */
 lazy val securesocial = project

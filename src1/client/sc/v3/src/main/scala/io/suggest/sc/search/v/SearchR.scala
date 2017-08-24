@@ -14,10 +14,8 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
-import io.suggest.sjs.leaflet.map.MapOptions
 import react.leaflet.lmap.LMapR
 
-import scala.scalajs.js
 import scalacss.ScalaCssReact._
 
 /**

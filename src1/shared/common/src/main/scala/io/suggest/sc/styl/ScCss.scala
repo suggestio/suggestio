@@ -1,6 +1,6 @@
 package io.suggest.sc.styl
 
-import ScScalaCssDefaults._
+import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
 import io.suggest.dev.MScreen

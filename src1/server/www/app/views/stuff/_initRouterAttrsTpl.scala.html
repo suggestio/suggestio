@@ -12,6 +12,6 @@
 
 @defining( ctx.data.jsiTgs ) { itgs =>
   @if(itgs.nonEmpty) {
-    @RI_ATTR_NAME="@itgs.iterator.map(_.strId).mkString(";")"
+    @RI_ATTR_NAME="@itgs.iterator.map(_.value).mkString(";")"
   }
 }

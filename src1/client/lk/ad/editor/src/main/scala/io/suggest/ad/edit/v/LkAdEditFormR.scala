@@ -16,6 +16,7 @@ object LkAdEditFormR {
 
   type Props = ModelProxy[MAdEditRoot]
 
+  /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
   protected case class State()
 
   protected class Backend($: BackendScope[Props, State]) {

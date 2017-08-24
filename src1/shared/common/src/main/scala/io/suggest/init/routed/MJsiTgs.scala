@@ -1,103 +1,67 @@
 package io.suggest.init.routed
 
-import io.suggest.primo.IStrId
-import enumeratum._
-import JsInitConstants._
+import enumeratum.values.{StringEnum, StringEnumEntry}
 
 
 /** Трейт для всех инстансов модели. */
-sealed trait MJsiTg extends EnumEntry with IStrId {
-  override final def strId = toString
+sealed class MJsiTg(override val value: String) extends StringEnumEntry {
+  override final def toString = value
 }
 
 
 /** Кросс-платформенная модель целей js-инициализации. */
-object MJsiTgs extends Enum[MJsiTg] {
+object MJsiTgs extends StringEnum[MJsiTg] {
 
   /** Активация всплывающих уведомлений. */
-  case object Flashing extends MJsiTg {
-    override def toString = ID_FLASHING
-  }
+  case object Flashing extends MJsiTg("a")
 
   /** Вертикальная центровка вертикальных линий. */
-  case object VCenterLines extends MJsiTg {
-    override def toString = ID_VCENTER_LINES
-  }
+  case object VCenterLines extends MJsiTg("b")
 
   /** js для формы внешнего размещения карточки. */
-  case object LkAdvExtForm extends MJsiTg {
-    override def toString = ID_LK_ADV_EXT_FORM
-  }
+  case object LkAdvExtForm extends MJsiTg("c")
 
   /** js-исполнитель внешнего размещения. */
-  case object AdvExtRunner extends MJsiTg {
-    override def toString = ID_ADV_EXT_RUNNER
-  }
+  case object AdvExtRunner extends MJsiTg("d")
 
   /** Вертикальная центровка в ident. */
-  case object IdentVCenterContent extends MJsiTg {
-    override def toString = ID_IDENT_VCENTER_CONTENT
-  }
+  case object IdentVCenterContent extends MJsiTg("e")
 
   /** Форма редактирования узла в личном кабинете. */
-  case object LkNodeEditForm extends MJsiTg {
-    override def toString = ID_LK_NODE_EDIT_FORM
-  }
+  case object LkNodeEditForm extends MJsiTg("f")
 
   /** Обработать все .js-hidden элементы. */
-  case object JsHidden extends MJsiTg {
-    override def toString = ID_JS_HIDDEN
-  }
+  case object JsHidden extends MJsiTg("g")
 
   /** Инициализировать поддержку попапов. */
-  case object Popups extends MJsiTg {
-    override def toString = ID_POPUPS
-  }
+  case object Popups extends MJsiTg("h")
 
   /** init-target инициализации работы формы создания/редактирования рекламной карточки. */
-  case object AdForm extends MJsiTg {
-    override def toString = ID_AD_FORM
-  }
+  case object AdForm extends MJsiTg("i")
 
   /** init-target для включения js к форме ввода капчи. */
-  case object CaptchaForm extends MJsiTg {
-    override def toString = ID_CAPTCHA_FORM
-  }
+  case object CaptchaForm extends MJsiTg("j")
 
   /** Цель инициализации для поддержки скрытой капчи, загружаемой и отображаемой опционально. */
-  case object HiddenCaptcha extends MJsiTg {
-    override def toString = ID_HIDDEN_CAPTCHA
-  }
+  case object HiddenCaptcha extends MJsiTg("k")
 
   /** Цель для инициализации страницы списка транзакций биллинга. */
-  case object BillTxnsList extends MJsiTg {
-    override def toString = ID_BILL_TXNS_LIST
-  }
+  case object BillTxnsList extends MJsiTg("l")
 
   /** Цель для инициализации страницы размещения в геотегах. */
-  case object AdvGeoForm extends MJsiTg {
-    override def toString = ADV_GEO_FORM
-  }
+  case object AdvGeoForm extends MJsiTg("m")
 
   /** Цель инициализации формы прямого размещения карточки на узлах. */
-  case object AdvDirectForm extends MJsiTg {
-    override def toString = ADV_DIRECT_FORM
-  }
+  case object AdvDirectForm extends MJsiTg("n")
 
   /** Цель инициализации формы размещения ADN-узла на географической карте. */
-  case object AdnMapForm extends MJsiTg {
-    override def toString = ADN_MAP_FORM
-  }
+  case object AdnMapForm extends MJsiTg("o")
 
   /** Цель инициализации формы управления узлами в ЛК узла. */
-  case object LkNodesForm extends MJsiTg {
-    override def toString = LK_NODES_FORM
-  }
+  case object LkNodesForm extends MJsiTg("p")
 
   /** Цель инициализации формы ЛК-редактора рекламной карточки на базе react. */
-  case object LkAdEditR extends MJsiTg {
-    override def toString = LK_AD_EDITOR_REACT
-  }
+  case object LkAdEditR extends MJsiTg("q")
 
 
   override def values = findValues

@@ -1,6 +1,7 @@
 package util.img.detect.main
 
-import models.blk.AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
+import io.suggest.ym.model.ad.AdColorFns
+import AdColorFns.IMG_BG_COLOR_FN.{toString => IMG_BG_COLOR_FN}
 
 /**
  * Suggest.io

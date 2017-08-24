@@ -85,7 +85,7 @@ trait InitRouter extends Log with SafeSyncVoid {
       val all = attr.split("\\s*;\\s*")
         .iterator
         .flatMap { raw =>
-          val res = MJsiTgs.withNameOption(raw)
+          val res = MJsiTgs.withValueOpt(raw)
           if (res.isEmpty)
             LOG.warn( ErrorMsgs.INIT_ROUTER_UNIMPLEMENTED_TARGET, msg = raw )
           res

@@ -1,5 +1,6 @@
 package io.suggest.jd
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate}
 import io.suggest.primo.id.IId
 import play.api.libs.json._
@@ -23,6 +24,7 @@ object MJdEditEdge {
     val TEXT_FN         = "t"
     val NODE_ID_FN      = "n"
     val URL_FN          = "u"
+    val WH_FN           = "w"
   }
 
   /** Поддержка play-json между клиентом и сервером. */
@@ -31,7 +33,8 @@ object MJdEditEdge {
     (__ \ Fields.UID_FN).format[EdgeUid_t] and
     (__ \ Fields.TEXT_FN).formatNullable[String] and
     (__ \ Fields.NODE_ID_FN).formatNullable[String] and
-    (__ \ Fields.URL_FN).formatNullable[String]
+    (__ \ Fields.URL_FN).formatNullable[String] and
+    (__ \ Fields.WH_FN).formatNullable[MSize2di]
   )(apply, unlift(unapply))
 
 }
@@ -48,6 +51,7 @@ case class MJdEditEdge(
                         override val id     : EdgeUid_t,
                         text                : Option[String] = None,
                         nodeId              : Option[String] = None,
-                        url                 : Option[String] = None
+                        url                 : Option[String] = None,
+                        whOpt               : Option[MSize2di] = None
                       )
   extends IId[EdgeUid_t]

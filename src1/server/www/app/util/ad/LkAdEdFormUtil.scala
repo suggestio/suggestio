@@ -20,8 +20,8 @@ import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.ym.model.ad.AdColorFns
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
-import models.blk.AdColorFns
 import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
@@ -250,9 +250,8 @@ class LkAdEdFormUtil extends MacroLogsImpl {
       href      = mad.meta.business.siteUrl
     )
     val pattern = mad.meta.colors.pattern
-    import AdColorFns._
     val bgColor = mad.meta.colors.bg
-      .getOrElse( MColorData(IMG_BG_COLOR_FN.default) )
+      .getOrElse( MColorData( AdColorFns.IMG_BG_COLOR_FN.default) )
     Some( (bmr, pattern, mad.ad.richDescr, bgColor) )
   }
 
