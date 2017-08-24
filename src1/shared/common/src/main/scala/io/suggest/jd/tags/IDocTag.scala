@@ -39,11 +39,11 @@ object IDocTag {
   implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = {
     // Собрать читалку на основе прочитанного имени тега.
     val r: Reads[IDocTag] = _IDT_NAME_FORMAT.flatMap[IDocTag] {
-      case MJdTagNames.PlainPayload  => _toIdtReads[PlainPayload]
-      case MJdTagNames.Picture       => _toIdtReads[Picture]
-      case MJdTagNames.AbsPos        => _toIdtReads[AbsPos]
-      case MJdTagNames.Strip         => _toIdtReads[Strip]
-      case MJdTagNames.Document      => _toIdtReads[JsonDocument]
+      case MJdTagNames.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
+      case MJdTagNames.PICTURE       => _toIdtReads[Picture]
+      case MJdTagNames.ABS_POS        => _toIdtReads[AbsPos]
+      case MJdTagNames.STRIP         => _toIdtReads[Strip]
+      case MJdTagNames.DOCUMENT      => _toIdtReads[JsonDocument]
       case _ => ???
     }
 

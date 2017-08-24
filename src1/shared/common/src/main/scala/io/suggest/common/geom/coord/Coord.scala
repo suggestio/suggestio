@@ -38,8 +38,3 @@ trait ICoord2d[V] extends ICoord1d[V] {
   }
 
 }
-
-
-/** 2D int-координаты. */
-trait ICoords2di
-  extends ICoord2d[Int]

@@ -26,8 +26,6 @@ package object models {
   type BfCheckbox           = util.blocks.BfCheckbox
   type BfNoValueT           = util.blocks.BfNoValueT
 
-  type ICoords2di           = io.suggest.common.geom.coord.ICoords2di
-
   type AdnShownType         = AdnShownTypes.T
 
   type NodeRightPanelLink   = NodeRightPanelLinks.T

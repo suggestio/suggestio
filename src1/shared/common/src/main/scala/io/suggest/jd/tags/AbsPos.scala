@@ -42,6 +42,6 @@ case class AbsPos(
                  )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.AbsPos
+  override def dtName = MJdTagNames.ABS_POS
 
 }

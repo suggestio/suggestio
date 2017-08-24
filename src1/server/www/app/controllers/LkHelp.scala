@@ -37,7 +37,7 @@ class LkHelp @Inject()(
                                   isNodeAdmin                     : IsNodeAdmin,
                                   override val mCommonDi          : ICommonDi
 )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImplLazy
 {
 

@@ -53,7 +53,7 @@ class Ident @Inject() (
                         override val isAuth               : IsAuth,
                         override val mCommonDi            : ICommonDi
                       )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
   with EmailPwLogin
   with CaptchaValidator

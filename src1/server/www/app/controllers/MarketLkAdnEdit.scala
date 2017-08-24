@@ -53,7 +53,7 @@ class MarketLkAdnEdit @Inject() (
                                   isAuth                          : IsAuth,
                                   override val mCommonDi          : ICommonDi
 )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
 {
 

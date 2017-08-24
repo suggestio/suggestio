@@ -59,7 +59,7 @@ class Img @Inject() (
   imgFormUtil                     : ImgFormUtil,
   override val mCommonDi          : ICommonDi
 )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
   with TempImgSupport
 {

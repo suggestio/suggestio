@@ -19,7 +19,7 @@ class SysDebug @Inject() (
                            isSu                          : IsSu,
                            override val mCommonDi        : ICommonDi
 )
-  extends SioController
+  extends SioControllerImpl
 {
 
   import mCommonDi._

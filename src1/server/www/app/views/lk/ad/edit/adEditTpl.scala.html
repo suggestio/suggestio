@@ -8,7 +8,7 @@
 @import io.suggest.ad.form.AdFormConstants
 
 @adEditBase(
-  title       = messages("Ad.card.edit"),
+  title       = messages( mad.fold("Ad.card.create")(_ => "Ad.card.edit") ),
   parent      = parent
 ) {
 

@@ -19,9 +19,9 @@ object MJdEditEdge {
   /** Названия полей модели для сериализации в JSON. */
   object Fields {
     val PREDICATE_FN    = "p"
-    val UID_FN          = "u"
+    val UID_FN          = "i"
     val TEXT_FN         = "t"
-    val NODE_ID_FN      = "i"
+    val NODE_ID_FN      = "n"
     val URL_FN          = "u"
   }
 
@@ -46,8 +46,8 @@ object MJdEditEdge {
 case class MJdEditEdge(
                         predicate           : MPredicate,
                         override val id     : EdgeUid_t,
-                        text                : Option[String],
-                        nodeId              : Option[String],
-                        url                 : Option[String]
+                        text                : Option[String] = None,
+                        nodeId              : Option[String] = None,
+                        url                 : Option[String] = None
                       )
   extends IId[EdgeUid_t]

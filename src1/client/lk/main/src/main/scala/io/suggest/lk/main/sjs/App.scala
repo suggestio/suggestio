@@ -1,5 +1,6 @@
 package io.suggest.lk.main.sjs
 
+import io.suggest.ad.edit.LkAdEditInit
 import io.suggest.lk.ad.form.init.AdFormInitRouter
 import io.suggest.lk.adn.edit.init.NodeEditInitRouter
 import io.suggest.lk.adn.map.init.LkAdnMapFormInitRouter
@@ -43,6 +44,7 @@ object App extends Log {
 class LkInitRouter
   extends Log
   with CenterContentInitRouter
+  with LkAdEditInit
   with TxnsListInit
   with CaptchaFormInit
   with HiddenCaptchaInit

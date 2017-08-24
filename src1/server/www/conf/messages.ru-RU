@@ -937,3 +937,6 @@ _Cbca.bank.name_=ФИЛИАЛ "САНКТ-ПЕТЕРБУРГСКИЙ" АО "АЛ
 Bank.BIK=БИК банка
 Correspondent.account=Корреспондентский счет
 
+Upper.block=Верхний блок
+also.displayed.in.grid=отображается в плитке
+

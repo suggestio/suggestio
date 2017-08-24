@@ -1,5 +1,6 @@
 package io.suggest.common.geom.coord
 
+import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -33,5 +34,16 @@ case class MCoords2di(
                       override val x: Int,
                       override val y: Int
                     )
-  extends ICoords2di
+  extends ICoord2d[Int]
+  with IntMathModifiers[MCoords2di]
+{
+
+  override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MCoords2di = {
+    copy(
+      x = op(x, arg2),
+      y = op(y, arg2)
+    )
+  }
+
+}
 

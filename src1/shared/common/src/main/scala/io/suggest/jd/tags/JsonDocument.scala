@@ -35,6 +35,6 @@ case class JsonDocument()(
                          )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.Document
+  override def dtName = MJdTagNames.DOCUMENT
 
 }

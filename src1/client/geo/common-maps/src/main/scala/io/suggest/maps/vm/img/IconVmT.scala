@@ -1,9 +1,8 @@
 package io.suggest.maps.vm.img
 
-import io.suggest.common.geom.coord.ICoords2di
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.common.maps.MapFormConstants._
-import io.suggest.sjs.common.geom.Coords2di
 import io.suggest.sjs.common.vm.attr.{AttrVmT, GetImgSrc}
 import io.suggest.sjs.common.vm.find.FindElT
 import org.scalajs.dom.raw.HTMLImageElement
@@ -42,8 +41,8 @@ trait IconVmT
   }
 
   /** Получить какую-то координату из аттрибутов. */
-  def xy: Option[ICoords2di] = {
-    _pair2v(ATTR_IMG_ANCHOR_X, ATTR_IMG_ANCHOR_Y)(Coords2di.apply)
+  def xy: Option[MCoords2di] = {
+    _pair2v(ATTR_IMG_ANCHOR_X, ATTR_IMG_ANCHOR_Y)(MCoords2di.apply)
   }
 
 }

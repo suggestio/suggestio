@@ -179,4 +179,8 @@ object MsgCodes {
 
   val `Activation.impossible` = "Activation.impossible"
 
+  val `Upper.block` = "Upper.block"
+  val `also.displayed.in.grid` = "also.displayed.in.grid"
+  val `Description` = "Description"
+
 }

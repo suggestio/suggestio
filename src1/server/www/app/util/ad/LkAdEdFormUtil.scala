@@ -8,10 +8,12 @@ import io.suggest.ad.edit.m.MAdEditForm
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
-import io.suggest.jd.tags.{JsonDocument, Strip}
+import io.suggest.i18n.MsgCodes
+import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.tags.{AbsPos, JsonDocument, PlainPayload, Strip}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.extra.doc.MNodeDoc
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
@@ -26,6 +28,8 @@ import play.api.data._
 import util.FormUtil._
 import util.TplDataFormatUtil
 import util.blocks.BlocksConf
+
+import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -273,24 +277,73 @@ class LkAdEdFormUtil extends MacroLogsImpl {
   //---------------------------------------------------------------------------
   // v2 react form
 
-  /** Срендерить дефолтовый документ для текущего языка. */
-  def defaultEmptyDocument(implicit ctx: Context): MAdEditForm = {
-    MAdEditForm(
+  /** Срендерить и вернуть дефолтовый документ пустой карточки для текущего языка. */
+  def defaultEmptyDocument(implicit ctx: Context): Future[MAdEditForm] = {
+    // TODO Брать готовую карточку из какого-то узла и пробегаться по эджам с использованием messages.
+
+    // Тут просто очень временный документ.
+    // Потом надо будет просто искать карточки на определённом узле, и возвращать их документ
+    // и эджи (эджи - прорендерив через ctx.messages). Карточки сгенерить через новый редактор (который ещё не написан).
+    val upperBlockEdgeId = 1
+    val alsoDisplayedInGridEdgeId = upperBlockEdgeId + 1
+    val descriptionEdgeId = alsoDisplayedInGridEdgeId + 1
+
+    val w1 = BlockWidths.default
+    val h1 = BlockHeights.default
+
+    val textPred = MPredicates.Text
+
+    val r = MAdEditForm(
       template = JsonDocument()(
-        // TODO Strip1 содержит описание того, что это основная полоса.
+        // Strip1 содержит намёк на то, что это верхний блок.
         Strip(
-          bm = BlockMeta(
-            w = BlockWidths.default,
-            h = BlockHeights.default,
+          bm = Some(BlockMeta(
+            w = w1,
+            h = h1,
             wide = true
-          )
+          )),
+          bgColor = Some(MColorData(
+            code = "222222"
+          ))
         )(
-          ???
+          // Надпись "Верхний блок"
+          AbsPos( MCoords2di(x = w1.value, y = h1.value) / 3 )(
+            PlainPayload( upperBlockEdgeId )
+          ),
+
+          // Надпись "также отображается в плитке"
+          AbsPos( MCoords2di(x = w1.value/3*2, y = h1.value / 2) )(
+            PlainPayload( alsoDisplayedInGridEdgeId )
+          )
+        ),
+
+        // strip2 содержит предложение добавить описание или что-то ещё.
+        Strip()(
+          AbsPos( MCoords2di(100, 100) )(
+            PlainPayload(descriptionEdgeId)
+          )
         )
-        // TODO strip2 содержит предложение добавить описание или что-то ещё.
       ),
-      edges = ???
+      edges = Seq(
+        MJdEditEdge(
+          predicate = textPred,
+          id        = upperBlockEdgeId,
+          text      = Some( ctx.messages( MsgCodes.`Upper.block` ) ),
+        ),
+        MJdEditEdge(
+          predicate = textPred,
+          id        = alsoDisplayedInGridEdgeId,
+          text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) )
+        ),
+        MJdEditEdge(
+          predicate = textPred,
+          id        = descriptionEdgeId,
+          text      = Some( ctx.messages( MsgCodes.`Description` ) )
+        )
+      )
     )
+
+    Future.successful(r)
   }
 
 }

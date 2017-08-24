@@ -30,7 +30,7 @@ trait AdnRights extends DynSearchArgs {
       // Собираем terms query, объединяя через AND (must).
       val allTermsQ = QueryUtil.maybeWrapToBool {
         for (r <- _war) yield {
-          MWrapClause(IMust.MUST, QueryBuilders.termQuery(fn, r.name))
+          MWrapClause(IMust.MUST, QueryBuilders.termQuery(fn, r.value))
         }
       }
 

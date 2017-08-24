@@ -35,14 +35,14 @@ object MJdTagNames extends Enum[MDtName] {
   /** Документ - это корневой "тег" структуры документа.
     * С него начинается любой "документ" рекламной карточки.
     */
-  case object Document extends MDtName {
+  case object DOCUMENT extends MDtName {
     override def strId = "d"
   }
 
   /** "Полоса" карточки, т.е. элемент вертикальной разбивки документа наподобии
     * абзаца или страницы.
     */
-  case object Strip extends MDtName {
+  case object STRIP extends MDtName {
     override def strId = "s"
   }
 
@@ -51,20 +51,20 @@ object MJdTagNames extends Enum[MDtName] {
     * Хранение вне дерева и линковка по id ресурса является простым решением проблемы с индексацией,
     * поиском и highlight'ом некоторых частей документа без дубликации этих самых частей.
     */
-  case object PlainPayload extends MDtName {
+  case object PLAIN_PAYLOAD extends MDtName {
     override def strId = "p"
   }
 
   /** Картинка.
     * Фоновая или нет -- не суть важно, это описывается параметрами самой картинки.
     */
-  case object Picture extends MDtName {
+  case object PICTURE extends MDtName {
     override def strId = "i"
   }
 
 
   /** Имя тега абсолютного позиционирования элемента. */
-  case object AbsPos extends MDtName {
+  case object ABS_POS extends MDtName {
     override def strId = "a"
   }
 

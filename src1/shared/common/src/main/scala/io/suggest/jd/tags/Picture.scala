@@ -33,7 +33,7 @@ case class Picture(
                   )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.Picture
+  override def dtName = MJdTagNames.PICTURE
 
   override def children = Nil
 

@@ -929,3 +929,6 @@ _Cbca.bank.name_=AO «ALFA-BANK», SAINT PETERBURG BRANCH
 Bank.BIK=Bank BIK
 Correspondent.account=Correspondent account
 
+Upper.block=Upper block
+also.displayed.in.grid=also displayed in grid
+

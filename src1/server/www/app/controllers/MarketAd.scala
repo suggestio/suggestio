@@ -62,7 +62,7 @@ class MarketAd @Inject() (
                            override val marketAdFormUtil           : LkAdEdFormUtil,
                            override val mCommonDi                  : ICommonDi
 )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
   with MarketAdPreview
 {
@@ -114,7 +114,7 @@ class MarketAd @Inject() (
     * @param adnId id узла рекламной сети.
     */
   def createAd(adnId: String) = csrf.AddToken {
-    isNodeAdmin(adnId, U.Balance).async { implicit request =>
+    isNodeAdmin(adnId, U.Lk).async { implicit request =>
       _renderCreateFormWith(
         af      = adFormM,
         adnNode = request.mnode,

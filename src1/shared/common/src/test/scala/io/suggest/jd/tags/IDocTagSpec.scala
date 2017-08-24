@@ -27,8 +27,8 @@ object IDocTagSpec extends SimpleTestSuite {
     assertEquals( v2, v )
   }
 
-  private val bm300x140 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, wide = false)
-  private val bm300x300 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H300, wide = true)
+  private val bm300x140 = Some( BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, wide = false) )
+  private val bm300x300 = Some( BlockMeta(BlockWidths.NORMAL, BlockHeights.H300, wide = true) )
 
 
   test("JSON: Empty document") {

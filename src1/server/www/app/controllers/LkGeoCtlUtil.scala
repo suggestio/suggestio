@@ -41,7 +41,7 @@ protected class LkGeoCtlUtil @Inject() (
                                          advGeoBillUtil          : AdvGeoBillUtil,
                                          override val mCommonDi  : MCommonDi
                                        )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
 {
 

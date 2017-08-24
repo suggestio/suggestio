@@ -1,6 +1,6 @@
 package io.suggest.sjs.common.geom
 
-import io.suggest.common.geom.coord.{ICoords2di, ICoord2d}
+import io.suggest.common.geom.coord.ICoord2d
 import org.scalajs.dom.Touch
 
 /**
@@ -25,10 +25,3 @@ case class Coord2dD(
   override val y: Double
 )
   extends ICoord2d[Double]
-
-
-case class Coords2di(
-  override val x: Int,
-  override val y: Int
-)
-  extends ICoords2di

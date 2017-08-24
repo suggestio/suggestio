@@ -66,7 +66,7 @@ class MarketLkAdn @Inject() (
                               override val scryptUtil             : ScryptUtil,
                               override val mCommonDi              : ICommonDi
 )
-  extends SioController
+  extends SioControllerImpl
   with MacroLogsImpl
   with ChangePwAction
 {

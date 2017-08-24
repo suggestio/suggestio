@@ -22,6 +22,7 @@ object LkAdEditCircuit extends CircuitLog[MAdEditRoot] with ReactConnector[MAdEd
     // Найти на странице текстовое поле с сериализованным состянием формы.
     val stateInp = StateInp.find().get
     val jsonStr = stateInp.value.get
+
     val mFormInit = Json
       .parse( jsonStr )
       .as[MAdEditFormInit]
