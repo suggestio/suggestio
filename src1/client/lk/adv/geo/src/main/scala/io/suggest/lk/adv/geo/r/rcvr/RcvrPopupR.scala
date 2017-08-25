@@ -7,7 +7,7 @@ import io.suggest.css.Css
 import io.suggest.lk.adv.geo.m.{MRcvr, SetRcvrStatus}
 import io.suggest.lk.adv.r.RcvrPopupBackendBaseR
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.r.RangeYmdR
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}

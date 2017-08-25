@@ -1,7 +1,10 @@
 package io.suggest.jd.tags
 
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+
+import scala.runtime.ScalaRunTime
 
 /**
   * Suggest.io
@@ -38,34 +41,45 @@ object IDocTag {
   /** Полиморфная поддержка play-json. */
   implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = {
     // Собрать читалку на основе прочитанного имени тега.
+    val tns = MJdTagNames
     val r: Reads[IDocTag] = _IDT_NAME_FORMAT.flatMap[IDocTag] {
-      case MJdTagNames.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
-      case MJdTagNames.PICTURE       => _toIdtReads[Picture]
-      case MJdTagNames.ABS_POS        => _toIdtReads[AbsPos]
-      case MJdTagNames.STRIP         => _toIdtReads[Strip]
-      case MJdTagNames.DOCUMENT      => _toIdtReads[JsonDocument]
+      case tns.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
+      case tns.LINE_BREAK     => Reads.pure( LineBreak )
+      case tns.PICTURE        => _toIdtReads[Picture]
+      case tns.ABS_POS        => _toIdtReads[AbsPos]
+      case tns.STRIP          => _toIdtReads[Strip]
+      case tns.DOCUMENT       => _toIdtReads[JsonDocument]
       case _ => ???
     }
 
     // Собрать в-JSON-рендерер на основе названия тега.
     // TODO Writes указаны явно, потому что компилятор цепляет везде IDOC_TAG_FORMAT вместо нужного типа из-за Writes[-A].
     val w = OWrites[IDocTag] { docTag =>
-      val dsTypeField = _IDT_NAME_FORMAT.writes( docTag.dtName )
-        .value
-        .head
-      val dataJsObj = docTag match {
+
+      // Всякие теги без контента (и без writes) должны возращать null. Остальные -- JsObject.
+      val dataJsObjOrNull = docTag match {
         case pp: PlainPayload     => _writeJsObj(pp)(PlainPayload.PLAIN_PAYLOAD_FORMAT)
+        case LineBreak            => null
         case p: Picture           => _writeJsObj(p)(Picture.PICTURE_FORMAT)
         case ap: AbsPos           => _writeJsObj(ap)(AbsPos.ABS_POS_FORMAT)
         case s: Strip             => _writeJsObj(s)(Strip.STRIP_FORMAT)
-        case d: JsonDocument          => _writeJsObj(d)(JsonDocument.DOCUMENT_FORMAT)
+        case d: JsonDocument      => _writeJsObj(d)(JsonDocument.DOCUMENT_FORMAT)
         case _ => ???
       }
+
+      val jdTagNameObj = _IDT_NAME_FORMAT.writes( docTag.jdTagName )
+
       // Добавить информацию по типу в уже отрендеренный JSON.
-      dataJsObj.copy(
-        underlying = dataJsObj.value + dsTypeField
-      )
+      Option( dataJsObjOrNull )
+        // Бывают теги без контента, для них надо просто вернуть объект с их типом.
+        .fold( jdTagNameObj ) { dataJsObj =>
+          val jdTagNameField = jdTagNameObj.value.head
+          dataJsObj.copy(
+            underlying = dataJsObj.value + jdTagNameField
+          )
+        }
     }
+
     OFormat(r, w)
   }
 
@@ -84,16 +98,51 @@ object IDocTag {
   }
 
 
+  implicit def univEq: UnivEq[IDocTag] = UnivEq.force
+
 }
 
 
 /** Интерфейс для всех "тегов" структуры документа. */
-trait IDocTag {
+trait IDocTag extends Product {
 
   /** Название тега. */
-  def dtName: MDtName
+  def jdTagName: MDtName
 
   /** Дочерние теги. */
   def children: Seq[IDocTag]
+
+
+  /** Итератор текущего элемента и всех его под-элементов со всех под-уровней. */
+  def deepIter: Iterator[IDocTag] = {
+    Iterator(this) ++ deepChildrenIter
+  }
+
+  /** Итератор всех дочерних элементов со всех под-уровней. */
+  def deepChildrenIter: Iterator[IDocTag] = {
+    children.iterator
+      .flatMap { _.deepIter }
+  }
+
+
+  // Теги из дерева используются как ключи в Map[X,_] прямо во время рендера.
+  // Во время тормозных react-рендеров и перерендеров в браузере, ключи должны **очень** быстро работать,
+  // поэтому всё оптимизировано по самые уши.
+
+  /**
+    * Реализация хеширования, когда операций сравнения на повтоных вызовах сведено к O(1).
+    * Это надо для быстрого рендера, который зависит от Map[IDocTag,_] (внутри scalaCSS Domain).
+    */
+  // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
+  override final lazy val hashCode = ScalaRunTime._hashCode(this)
+
+  /** Сравнивание по указателям, т.е. O(1).
+    * Это чрезвычайно суровое решение, но так надо, чтобы подружить scalaCSS Domains и рендеринг. */
+  override final def equals(obj: Any): Boolean = {
+    obj match {
+      case idt: IDocTag => idt eq this
+      case _ => false
+    }
+  }
 
 }

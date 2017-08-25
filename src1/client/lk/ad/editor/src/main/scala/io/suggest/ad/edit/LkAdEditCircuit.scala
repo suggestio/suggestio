@@ -2,6 +2,7 @@ package io.suggest.ad.edit
 
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m.{MAdEditFormInit, MAdEditRoot, MDocS}
+import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdRenderArgs}
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -14,7 +15,7 @@ import play.api.libs.json.Json
   * Created: 23.08.17 18:28
   * Description: Diode-circuit редактора рекламных карточек второго поколения.
   */
-object LkAdEditCircuit extends CircuitLog[MAdEditRoot] with ReactConnector[MAdEditRoot] {
+class LkAdEditCircuit extends CircuitLog[MAdEditRoot] with ReactConnector[MAdEditRoot] {
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.AD_EDIT_CIRCUIT_ERROR
 
@@ -30,8 +31,18 @@ object LkAdEditCircuit extends CircuitLog[MAdEditRoot] with ReactConnector[MAdEd
     MAdEditRoot(
       conf = mFormInit.conf,
       doc  = MDocS(
-        template = mFormInit.form.template,
-        edges = IId.els2idMap( mFormInit.form.edges )
+        jdArgs = MJdArgs(
+          template = mFormInit.form.template,
+          renderArgs = MJdRenderArgs(
+            edges = IId.els2idMap( mFormInit.form.edges )
+          ),
+          conf = MJdConf(
+            withEdit  = true,
+            szMult    = 2
+          )
+        )
+        //template = mFormInit.form.template,
+        //edges =
       )
     )
   }

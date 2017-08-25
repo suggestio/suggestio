@@ -17,7 +17,7 @@ import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.gj.{GeoJsonPropsR, GeoJsonR}
 import io.suggest.sjs.leaflet.path.circle.{CircleMarkerOptions, CircleOptions}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.maps.m.OpenAdvGeoExistPopup
 import japgolly.scalajs.react.vdom.VdomElement
 

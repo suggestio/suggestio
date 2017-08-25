@@ -6,7 +6,7 @@ import io.suggest.adv.free.MAdv4Free
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.lk.adv.m.SetAdv4Free
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent, ReactEventFromInput}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB

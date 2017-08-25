@@ -1,9 +1,10 @@
 package io.suggest.jd.render.v
 
 import scalacss.DevDefaults._
-import io.suggest.jd.render.m.MJdBlockRa
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.jd.render.m.MJdCssArgs
+import io.suggest.jd.tags.{AbsPos, IDocTag, Strip}
 
+import scala.reflect.ClassTag
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -11,54 +12,20 @@ import scalacss.internal.mutable.StyleSheet
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 24.08.17 15:40
   * Description: Динамические CSS-стили для рендера блоков плитки.
+  *
+  * Таблица стилей плоская для всех документов сразу.
   */
 
-class JdCss(id2docMap: Map[String, MJdBlockRa]) extends StyleSheet.Inline {
+class JdCss( jdCssArgs: MJdCssArgs )
+  extends StyleSheet.Inline {
 
   import dsl._
 
+  // TODO Вынести статические стили в ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
     addClassName("sm-block")
   )
-
-  /** Домен позволяет собрать styleF() */
-  private val docIdsDomain = Domain.ofValues(
-    id2docMap.keys.toSeq: _*
-  )
-
-  /** sm-block может содержать какие-то данные для рендера, например размер или цвет фона. */
-  val smBlockOuterF = styleF(docIdsDomain) { nodeId =>
-    val d = id2docMap( nodeId )
-    val stylBg = d.templateBlockStrip.bgColor.fold(StyleS.empty) { mcd =>
-      styleS(
-        backgroundColor( Color(mcd.hexCode) )
-      )
-    }
-    val stylWh = d.templateBlockStrip.bm.fold(StyleS.empty) { bm =>
-      styleS(
-        width( bm.width.px ),
-        height( bm.height.px )
-      )
-    }
-    stylBg.compose( stylWh )
-  }
-
-
-  /** Словарь картинок. */
-  /*private val imgsEdgesMap = {
-    val iter = for {
-      (nodeId, jd)      <- id2docMap.iterator
-      (edgeUid, medge)  <- jd.common.edges.iterator
-      if medge.predicate == MPredicates.Bg
-    } yield {
-      (nodeId, edgeUid) -> medge
-    }
-    iter.toMap
-  }*/
-
-  /** Домен изображений, ориентировка по doc_id и edge uid. */
-  //private val imgsDomain = Domain.ofValues( imgsEdgesMap.keys.toSeq: _* )
 
   /** Ширина и длина -- 100%. */
   val wh100 = {
@@ -69,7 +36,83 @@ class JdCss(id2docMap: Map[String, MJdBlockRa]) extends StyleSheet.Inline {
     )
   }
 
-  /** Стили для изображений: положения, размеры, фон и т.д. */
 
+  /** Итератор тегов указанного типа (класса) со всех уровней. */
+  private def _jdTagsIter[T <: IDocTag : ClassTag]: Iterator[T] = {
+    jdCssArgs.templates
+      .iterator
+      .flatMap(_.deepChildrenIter)
+      .flatMap {
+        case ap: T => ap :: Nil
+        case _ => Nil
+      }
+  }
+
+  /** Сборка домена для всех указанных тегов из всех документов. */
+  private def _mkJdTagDomain[T <: IDocTag : ClassTag]: Domain[T] = {
+    val absPoses = _jdTagsIter[T]
+      .toIndexedSeq
+    new Domain.OverSeq( absPoses )
+  }
+
+
+
+  // -------------------------------------------------------------------------------
+  // Strip
+  private val _stripsDomain = _mkJdTagDomain[Strip]
+
+  /** Стили контейнеров полосок. */
+  val stripOuterStyleF = styleF(_stripsDomain) { strip =>
+    // Стиль фона полосы
+    val stylBg = strip.bgColor.fold(StyleS.empty) { mcd =>
+      styleS(
+        backgroundColor(Color(mcd.hexCode))
+      )
+    }
+
+    // Стиль размеров блока-полосы.
+    val stylWh = strip.bm.fold(StyleS.empty) { bm =>
+      styleS(
+        width( bm.width.px ),
+        height( bm.height.px )
+      )
+    }
+
+    // Объединить все стили одного стрипа.
+    stylWh.compose( stylBg )
+  }
+
+
+
+  // -------------------------------------------------------------------------------
+  // AbsPos
+
+  private val _absPosDomain = _mkJdTagDomain[AbsPos]
+
+  /** Общий стиль для всех AbsPos-тегов. */
+  val absPosStyleAll = style(
+    position.absolute,
+    zIndex(5)
+  )
+
+  /** Стили для элементов, отпозиционированных абсолютно. */
+  val absPosStyleF = styleF(_absPosDomain) { absPos =>
+    styleS(
+      top( absPos.topLeft.y.px ),
+      left( absPos.topLeft.x.px )
+    )
+  }
+
+}
+
+
+import com.softwaremill.macwire._
+
+/** DI-factory для сборки инстансов [[JdCss]]. */
+class JdCssFactory {
+
+  def mkJdCss( jdCssArgs: MJdCssArgs ): JdCss = {
+    wire[JdCss]
+  }
 
 }

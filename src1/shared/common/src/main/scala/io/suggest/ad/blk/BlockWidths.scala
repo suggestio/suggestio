@@ -2,6 +2,7 @@ package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
 /**
@@ -10,14 +11,6 @@ import play.api.libs.json.Format
  * Created: 14.10.14 16:45
  * Description: Модель допустимых ширин блоков.
  */
-object BlockWidth {
-
-  /** Поддержка play-json. */
-  implicit val BLOCK_WIDTH_FORMAT: Format[BlockWidth] = {
-    EnumeratumUtil.valueEnumEntryFormat( BlockWidths )
-  }
-
-}
 
 
 /** Класс одного элемента модели. */
@@ -56,3 +49,16 @@ object BlockWidths extends IntEnum[BlockWidth] {
   def min     : BlockWidth = NARROW
 
 }
+
+
+object BlockWidth {
+
+  /** Поддержка play-json. */
+  implicit val BLOCK_WIDTH_FORMAT: Format[BlockWidth] = {
+    EnumeratumUtil.valueEnumEntryFormat( BlockWidths )
+  }
+
+  implicit def univEq: UnivEq[BlockWidth] = UnivEq.derive
+
+}
+

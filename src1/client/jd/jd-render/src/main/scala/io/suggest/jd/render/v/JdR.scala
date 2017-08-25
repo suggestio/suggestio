@@ -1,12 +1,10 @@
 package io.suggest.jd.render.v
 
-import scalacss.ScalaCssReact._
 import diode.react.ModelProxy
-import io.suggest.jd.render.m.{MJdBlockRa, MJdCommonRa}
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.jd.render.m.MJdArgs
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.html_<^._
+import scalacss.internal.mutable.GlobalRegistry
 
 /**
   * Suggest.io
@@ -14,27 +12,27 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 24.08.17 15:21
   * Description: Компонент для рендера одного документа-блока для карточки.
   */
-class JdBlockR(
-                blockCssF: () => JdCss
-              ) {
+class JdR(
+           jdRendererFactory: JdRendererFactory
+         ) {
 
-  type Props = ModelProxy[MJdBlockRa]
+  type Props = ModelProxy[MJdArgs]
 
   class Backend($: BackendScope[Props, Unit]) {
 
-
     def render(propsProxy: Props): VdomElement = {
-      val bCss = blockCssF()
+      val bCss = GlobalRegistry[JdCss].get
       val props = propsProxy()
 
-      new JdRendererR(bCss, props.common)
-        .render(props.templateBlockStrip)
+      // Собрать и запустить рендерер:
+      jdRendererFactory.mkRenderer(bCss, props.renderArgs)
+        .renderDocument( props.template )
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props]("JdBlk")
+  val component = ScalaComponent.builder[Props]("Jd")
     .stateless
     .renderBackend[Backend]
     .build

@@ -1,6 +1,5 @@
 package io.suggest.ad.edit
 
-import io.suggest.ad.edit.v.LkAdEditFormR
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -36,11 +35,13 @@ trait LkAdEditInit extends InitRouter {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 
+    val module = new LkAdEditModule
+
     // Инициализировать circuit
-    val circuit = LkAdEditCircuit
+    val circuit = module.lkAdEditCircuit
 
     // Произвести рендер компонента формы:
-    val formComponent = circuit.wrap(m => m)(LkAdEditFormR.apply)
+    val formComponent = circuit.wrap(m => m)(module.lkAdEditFormR.apply)
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )
     formComponent.renderIntoDOM( formTarget )
   }

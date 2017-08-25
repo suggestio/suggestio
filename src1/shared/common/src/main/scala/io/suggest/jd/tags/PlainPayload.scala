@@ -33,7 +33,7 @@ case class PlainPayload(
                        )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.PLAIN_PAYLOAD
+  override def jdTagName = MJdTagNames.PLAIN_PAYLOAD
 
   override def children = Nil
 

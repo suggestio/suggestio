@@ -2,6 +2,7 @@ package io.suggest.ad.blk
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
 /**
@@ -10,15 +11,6 @@ import play.api.libs.json.Format
  * Created: 14.10.14 16:47
  * Description: Допустимые высоты блоков.
  */
-
-object BlockHeight {
-
-  /** Поддержка play-json. */
-  implicit val BLOCK_HEIGHT_FORMAT: Format[BlockHeight] = {
-    EnumeratumUtil.valueEnumEntryFormat( BlockHeights )
-  }
-
-}
 
 
 /** Класс одного элемента модели. */
@@ -61,3 +53,16 @@ object BlockHeights extends IntEnum[BlockHeight] {
   def adsListMinZzHeight: BlockHeight = H300
 
 }
+
+
+object BlockHeight {
+
+  /** Поддержка play-json. */
+  implicit val BLOCK_HEIGHT_FORMAT: Format[BlockHeight] = {
+    EnumeratumUtil.valueEnumEntryFormat( BlockHeights )
+  }
+
+  implicit def univEq: UnivEq[BlockHeight] = UnivEq.derive
+
+}
+

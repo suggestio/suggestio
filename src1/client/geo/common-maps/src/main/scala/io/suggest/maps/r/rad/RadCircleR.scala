@@ -8,7 +8,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import react.leaflet.circle.{CirclePropsR, CircleR}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.maps.m.RadAreaClick
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.leaflet.event.MouseEvent
 import japgolly.scalajs.react.vdom.VdomElement

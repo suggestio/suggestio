@@ -9,7 +9,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.i18n.MsgCodes
 import io.suggest.lk.m.PleaseWaitPopupCloseClick
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import PopupR.PopupPropsValFastEq
 
 /**

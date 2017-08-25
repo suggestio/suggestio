@@ -1,6 +1,7 @@
 package io.suggest.common.geom.coord
 
 import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -21,6 +22,9 @@ object MCoords2di {
     (__ \ X_FN).format[Int] and
     (__ \ Y_FN).format[Int]
   )(apply, unlift(unapply))
+
+
+  implicit def univEq: UnivEq[MCoords2di] = UnivEq.derive
 
 }
 

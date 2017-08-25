@@ -5,7 +5,7 @@ import io.suggest.lk.m.NodeInfoPopupClose
 import io.suggest.lk.pop.PopupR
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.bill.MPrice

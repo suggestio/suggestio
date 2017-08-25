@@ -10,7 +10,7 @@ import io.suggest.lk.m.ErrorPopupCloseClick
 import io.suggest.lk.pop.PopupR
 import io.suggest.sjs.common.i18n.Messages
 import PopupR.PopupPropsValFastEq
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 
 /**
   * Suggest.io

@@ -1,6 +1,7 @@
 package io.suggest.ad.blk
 
 import io.suggest.common.geom.d2.ISize2di
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -22,6 +23,8 @@ object BlockMeta {
     (__ \ WIDE_ESFN).format[Boolean]
   )(apply, unlift(unapply))
 
+
+  implicit def univEq: UnivEq[BlockMeta] = UnivEq.derive
 
 }
 

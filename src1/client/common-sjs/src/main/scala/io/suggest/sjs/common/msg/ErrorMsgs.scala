@@ -128,4 +128,9 @@ object ErrorMsgs extends MsgsStaticT {
 
   def AD_EDIT_CIRCUIT_ERROR            = E(57)
 
+  /** На вход ожидалось изображение, а пришло что-то иное. */
+  def IMG_EXPECTED                     = E(58)
+
+  def TEXT_EXPECTED                    = E(59)
+
 }

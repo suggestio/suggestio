@@ -5,7 +5,7 @@ import io.suggest.geo.MGeoPoint
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.marker.{MarkerPropsR, MarkerR}
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.maps.m.{RadiusDragEnd, RadiusDragStart, RadiusDragging}
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}

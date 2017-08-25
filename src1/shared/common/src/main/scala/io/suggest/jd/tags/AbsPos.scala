@@ -1,6 +1,7 @@
 package io.suggest.jd.tags
 
 import io.suggest.common.geom.coord.MCoords2di
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -27,6 +28,8 @@ object AbsPos {
     Some((ap.topLeft, ap.children))
   }
 
+  implicit def univEq: UnivEq[AbsPos] = UnivEq.derive
+
 }
 
 
@@ -42,6 +45,6 @@ case class AbsPos(
                  )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.ABS_POS
+  override def jdTagName = MJdTagNames.ABS_POS
 
 }

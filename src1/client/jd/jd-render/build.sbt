@@ -10,7 +10,10 @@ version := "0.0.0-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG          %%% "lk-common-sjs"       % "0.0.0-SNAPSHOT",
-  "com.github.japgolly.scalacss" %%% "ext-react"  % Common.Vsn.SCALACSS
+  Common.ORG                     %%% "lk-common-sjs"    % "0.0.0-SNAPSHOT",
+  
+  "com.softwaremill.macwire"     %%  "macros"           % Common.Vsn.MACWIRE % "provided",
+
+  "com.github.japgolly.scalacss" %%% "ext-react"        % Common.Vsn.SCALACSS
 )
 

@@ -35,7 +35,7 @@ case class JsonDocument()(
                          )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.DOCUMENT
+  override def jdTagName = MJdTagNames.DOCUMENT
 
   /** Вернуть самый первый стрип для рендера блоком плитки. */
   def firstBlockStrip: Option[Strip] = {

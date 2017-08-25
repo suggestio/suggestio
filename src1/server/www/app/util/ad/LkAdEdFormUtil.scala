@@ -285,7 +285,12 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     // и эджи (эджи - прорендерив через ctx.messages). Карточки сгенерить через новый редактор (который ещё не написан).
     val upperBlockEdgeId = 1
     val alsoDisplayedInGridEdgeId = upperBlockEdgeId + 1
+
     val descriptionEdgeId = alsoDisplayedInGridEdgeId + 1
+    val descrContentEdgeId = descriptionEdgeId + 1
+
+    val fr3text1EdgeId = descrContentEdgeId + 1
+    val fr3text2EdgeId = fr3text1EdgeId + 1
 
     val w1 = BlockWidths.default
     val h1 = BlockHeights.default
@@ -302,7 +307,7 @@ class LkAdEdFormUtil extends MacroLogsImpl {
             wide = true
           )),
           bgColor = Some(MColorData(
-            code = "222222"
+            code = "060d45"
           ))
         )(
           // Надпись "Верхний блок"
@@ -317,13 +322,44 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         ),
 
         // strip2 содержит предложение добавить описание или что-то ещё.
-        Strip()(
-          AbsPos( MCoords2di(100, 100) )(
+        Strip(
+          bm = Some(BlockMeta(
+            w = w1,
+            h = BlockHeights.H140,
+            wide = true
+          )),
+          bgColor = Some(MColorData(
+            code = "bcf014"
+          ))
+        )(
+          AbsPos( MCoords2di(5, 10) )(
             PlainPayload(descriptionEdgeId)
+          ),
+          AbsPos( MCoords2di(33, 50) )(
+            PlainPayload( descrContentEdgeId )
+          )
+        ),
+
+        Strip(
+          bm = Some(BlockMeta(
+            w = w1,
+            h = BlockHeights.H460,
+            wide = true
+          )),
+          bgColor = Some(MColorData(
+            code = "111111"
+          ))
+        )(
+          AbsPos( MCoords2di(15, 200) )(
+            PlainPayload( fr3text1EdgeId )
+          ),
+          AbsPos( MCoords2di(35, 400) )(
+            PlainPayload( fr3text2EdgeId )
           )
         )
       ),
       edges = Seq(
+        // strip1
         MJdEditEdge(
           predicate = textPred,
           id        = upperBlockEdgeId,
@@ -334,10 +370,29 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           id        = alsoDisplayedInGridEdgeId,
           text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) )
         ),
+
+        // strip2
         MJdEditEdge(
           predicate = textPred,
           id        = descriptionEdgeId,
           text      = Some( ctx.messages( MsgCodes.`Description` ) )
+        ),
+        MJdEditEdge(
+          predicate = textPred,
+          id        = descrContentEdgeId,
+          text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga" )
+        ),
+
+        // strip3
+        MJdEditEdge(
+          predicate = textPred,
+          id        = fr3text1EdgeId,
+          text      = Some( "lorem ipsum und uber blochHeight wr2 34t" )
+        ),
+        MJdEditEdge(
+          predicate = textPred,
+          id        = fr3text2EdgeId,
+          text      = Some( "webkit-transition: transform 0.2s linear" )
         )
       )
     )

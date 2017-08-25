@@ -12,7 +12,7 @@ import io.suggest.lk.tags.edit.r.TagsEditR
 import io.suggest.maps.m.{MExistGeoPopupS, MMapS, MRad}
 import io.suggest.maps.r.rad.{RadEnabledR, RadR}
 import io.suggest.maps.r._
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._

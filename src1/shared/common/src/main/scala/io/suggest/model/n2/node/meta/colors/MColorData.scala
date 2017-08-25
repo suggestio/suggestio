@@ -2,6 +2,7 @@ package io.suggest.model.n2.node.meta.colors
 
 import boopickle.Default._
 import io.suggest.common.html.HtmlConstants
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,8 +26,10 @@ object MColorData {
   /** Поддержка JSON. */
   implicit val MCOLOR_DATA_FORMAT: OFormat[MColorData] = {
     (__ \ MColorData.CODE_FN).format[String]
-      .inmap(MColorData.apply, _.code)
+      .inmap(apply, _.code)
   }
+
+  implicit def univEq: UnivEq[MColorData] = UnivEq.derive
 
 }
 

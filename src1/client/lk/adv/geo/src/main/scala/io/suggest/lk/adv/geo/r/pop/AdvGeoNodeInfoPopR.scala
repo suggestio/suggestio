@@ -3,7 +3,7 @@ package io.suggest.lk.adv.geo.r.pop
 import diode.react.ModelProxy
 import io.suggest.lk.adv.geo.m.MNodeInfoPopupS
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}

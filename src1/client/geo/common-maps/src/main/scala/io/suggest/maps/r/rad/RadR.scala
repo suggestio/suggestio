@@ -3,7 +3,7 @@ package io.suggest.maps.r.rad
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.layer.LayerGroupR

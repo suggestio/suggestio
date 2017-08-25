@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.svg_<^._
 import japgolly.scalajs.react.vdom.html_<^.{< => html, ^ => htmlAttrs}
 
 import scalacss.ScalaCssReact._
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.hdr.m.IScHdrAction
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 

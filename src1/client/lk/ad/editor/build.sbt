@@ -10,7 +10,8 @@ version := "0.0.0-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG          %%% "lk-common-sjs"       % "0.0.0-SNAPSHOT",
-  "org.scala-js"      %%% "scalajs-dom"         % Common.sjsDomVsn
+  Common.ORG                     %%% "lk-common-sjs"       % "0.0.0-SNAPSHOT",
+  "com.softwaremill.macwire"     %%  "macros"              % Common.Vsn.MACWIRE % "provided",
+  "org.scala-js"                 %%% "scalajs-dom"         % Common.sjsDomVsn
 )
 

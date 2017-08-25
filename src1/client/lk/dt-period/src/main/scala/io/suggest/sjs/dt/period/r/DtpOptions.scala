@@ -15,7 +15,7 @@ import io.suggest.sjs.dt.period.m.{DtpInputFn, DtpInputFns, SetDateStartEnd, Set
 import japgolly.scalajs.react._
 //import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactCommonUtil.Implicits.vdomElOptionExt
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.i18n.MsgCodes

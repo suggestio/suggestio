@@ -10,16 +10,15 @@ import io.suggest.model.n2.edge.EdgeUid_t
   * Description: Модель-контейнер данных для рендера одного JSON-документа.
   */
 
+
 /** Класс-контейнер обобщённых данных для реднера JSON-документа.
   *
   * @param edges Карта данных по эджам, с сервера.
-  * @param szMult Мультипликатор размера карточки.
-  * @param nodeId Реальный или эфемерный id карточки, главное чтобы он был.
   */
-case class MJdCommonRa(
-                        edges     : Map[EdgeUid_t, MJdEditEdge],
-                        szMult    : Double,
-                        nodeId    : String
-                      ) {
+case class MJdRenderArgs(
+                          edges     : Map[EdgeUid_t, MJdEditEdge]
+                        ) {
+
+  def withEdges(edges: Map[Int, MJdEditEdge]) = copy(edges = edges)
 
 }

@@ -2,6 +2,7 @@ package io.suggest.jd.tags
 
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.model.n2.node.meta.colors.MColorData
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -24,13 +25,14 @@ object Strip {
   )( rawApply, unlift(rawUnapply) )
 
   def rawApply(bm: Option[BlockMeta], bgColor: Option[MColorData], chs: Seq[IDocTag]): Strip = {
-    apply(bm)(chs: _*)
+    apply(bm, bgColor)(chs: _*)
   }
 
   def rawUnapply(s: Strip): Option[(Option[BlockMeta], Option[MColorData], Seq[IDocTag])] = {
     Some((s.bm, s.bgColor, s.children))
   }
 
+  implicit def univEq: UnivEq[Strip] = UnivEq.derive
 
 }
 
@@ -49,6 +51,6 @@ case class Strip(
                 )
   extends IDocTag {
 
-  override def dtName = MJdTagNames.STRIP
+  override def jdTagName = MJdTagNames.STRIP
 
 }

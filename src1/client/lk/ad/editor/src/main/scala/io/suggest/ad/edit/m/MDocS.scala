@@ -1,8 +1,6 @@
 package io.suggest.ad.edit.m
 
-import io.suggest.jd.MJdEditEdge
-import io.suggest.jd.render.m.IJdFocRenderData
-import io.suggest.jd.tags.JsonDocument
+import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
 
 /**
   * Suggest.io
@@ -11,17 +9,12 @@ import io.suggest.jd.tags.JsonDocument
   * Description: Модель состояния документа в редакторе.
   */
 case class MDocS(
-                  override val template  : JsonDocument,
-                  override val edges     : Map[Int, MJdEditEdge]
-                )
-  extends IJdFocRenderData
-{
+                  jdArgs    : MJdArgs
+                ) {
 
-  def withTemplate(template: JsonDocument) = copy(template = template)
-  def withEdges(edges: Map[Int, MJdEditEdge]) = copy(edges = edges)
-
+  def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
 
   /** Выдать экземпляр данных для рендера json-документа, т.е. контента рекламной карточки. */
-  def jdRenderData: IJdFocRenderData = this
+  def jdCommonRa: MJdRenderArgs = ???
 
 }
