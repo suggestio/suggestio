@@ -1,6 +1,8 @@
 package io.suggest.ad.edit.m
 
-import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
+import diode.FastEq
+import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.tags.IDocTag
 
 /**
   * Suggest.io
@@ -8,13 +10,29 @@ import io.suggest.jd.render.m.{MJdArgs, MJdRenderArgs}
   * Created: 23.08.17 18:33
   * Description: Модель состояния документа в редакторе.
   */
+object MDocS {
+
+  /** Реализация FastEq для инстансов [[MDocS]]. */
+  implicit object MDocSFastEq extends FastEq[MDocS] {
+    override def eqv(a: MDocS, b: MDocS): Boolean = {
+      (a.jdArgs eq b.jdArgs) &&
+        (a.selectedTag eq b.selectedTag)
+    }
+  }
+
+}
+
+
+/** Класс модели состояния работы с документом.
+  *
+  * @param jdArgs Текущий набор данных для рендера шаблона.
+  * @param selectedTag Текущий выделенный элемент, с которым происходит взаимодействие юзера.
+  */
 case class MDocS(
-                  jdArgs    : MJdArgs
+                  jdArgs        : MJdArgs,
+                  selectedTag   : Option[IDocTag]   = None
                 ) {
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
-
-  /** Выдать экземпляр данных для рендера json-документа, т.е. контента рекламной карточки. */
-  def jdCommonRa: MJdRenderArgs = ???
 
 }

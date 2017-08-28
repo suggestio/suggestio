@@ -10,7 +10,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
-import io.suggest.jd.tags.{AbsPos, JsonDocument, PlainPayload, Strip}
+import io.suggest.jd.tags._
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.MPredicates
@@ -312,12 +312,16 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         )(
           // Надпись "Верхний блок"
           AbsPos( MCoords2di(x = w1.value, y = h1.value) / 3 )(
-            PlainPayload( upperBlockEdgeId )
+            Text()(
+              PlainPayload( upperBlockEdgeId )
+            )
           ),
 
           // Надпись "также отображается в плитке"
           AbsPos( MCoords2di(x = w1.value/3*2, y = h1.value / 2) )(
-            PlainPayload( alsoDisplayedInGridEdgeId )
+            Text()(
+              PlainPayload( alsoDisplayedInGridEdgeId )
+            )
           )
         ),
 
@@ -333,10 +337,14 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           ))
         )(
           AbsPos( MCoords2di(5, 10) )(
-            PlainPayload(descriptionEdgeId)
+            Text()(
+              PlainPayload( descriptionEdgeId )
+            )
           ),
           AbsPos( MCoords2di(33, 50) )(
-            PlainPayload( descrContentEdgeId )
+            Text()(
+              PlainPayload( descrContentEdgeId )
+            )
           )
         ),
 
@@ -351,10 +359,14 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           ))
         )(
           AbsPos( MCoords2di(15, 200) )(
-            PlainPayload( fr3text1EdgeId )
+            Text()(
+              PlainPayload( fr3text1EdgeId )
+            )
           ),
           AbsPos( MCoords2di(35, 400) )(
-            PlainPayload( fr3text2EdgeId )
+            Text()(
+              PlainPayload( fr3text2EdgeId )
+            )
           )
         )
       ),

@@ -22,6 +22,7 @@ object Css {
     def HIDDEN        = "hidden"
     def BLOCK         = "block"
     def VISIBLE       = "visible"
+    def INVISIBLE     = "visibility-hidden"
     def INLINE_BLOCK  = "inline-block"
   }
 

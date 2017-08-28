@@ -45,6 +45,7 @@ object IDocTag {
     val r: Reads[IDocTag] = _IDT_NAME_FORMAT.flatMap[IDocTag] {
       case tns.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
       case tns.LINE_BREAK     => Reads.pure( LineBreak )
+      case tns.TEXT           => _toIdtReads[Text]
       case tns.PICTURE        => _toIdtReads[Picture]
       case tns.ABS_POS        => _toIdtReads[AbsPos]
       case tns.STRIP          => _toIdtReads[Strip]
@@ -60,6 +61,7 @@ object IDocTag {
       val dataJsObjOrNull = docTag match {
         case pp: PlainPayload     => _writeJsObj(pp)(PlainPayload.PLAIN_PAYLOAD_FORMAT)
         case LineBreak            => null
+        case t: Text              => _writeJsObj(t)(Text.TEXT_FORMAT)
         case p: Picture           => _writeJsObj(p)(Picture.PICTURE_FORMAT)
         case ap: AbsPos           => _writeJsObj(ap)(AbsPos.ABS_POS_FORMAT)
         case s: Strip             => _writeJsObj(s)(Strip.STRIP_FORMAT)

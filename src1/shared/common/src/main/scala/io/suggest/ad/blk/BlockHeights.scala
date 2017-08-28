@@ -1,6 +1,6 @@
 package io.suggest.ad.blk
 
-import enumeratum.values.{IntEnum, IntEnumEntry}
+import enumeratum.values.IntEnum
 import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
@@ -14,7 +14,9 @@ import play.api.libs.json.Format
 
 
 /** Класс одного элемента модели. */
-sealed abstract class BlockHeight(override val value: Int) extends IntEnumEntry {
+sealed abstract class BlockHeight(override val value: Int)
+  extends IBlockSize
+{
 
   /** Относительный размер в условных "шагах". */
   def relSz: Int
@@ -25,7 +27,7 @@ sealed abstract class BlockHeight(override val value: Int) extends IntEnumEntry 
 
 
 /** Модель высот блока. */
-object BlockHeights extends IntEnum[BlockHeight] {
+case object BlockHeights extends IntEnum[BlockHeight] with IBlockSizes {
 
   case object H140 extends BlockHeight(140) {
     override def relSz    = 1

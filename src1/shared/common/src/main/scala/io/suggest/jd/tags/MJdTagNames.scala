@@ -62,6 +62,11 @@ object MJdTagNames extends StringEnum[MDtName] {
   case object LINE_BREAK extends MDtName("b")
 
 
+  /** Название тега текстового элемента. */
+  case object TEXT extends MDtName("t")
+
+  // ------------------------------------------------------------------------------
+
   /** Все элементы модели. */
   override val values = findValues
 

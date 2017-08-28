@@ -37,15 +37,4 @@ case class JsonDocument()(
 
   override def jdTagName = MJdTagNames.DOCUMENT
 
-  /** Вернуть самый первый стрип для рендера блоком плитки. */
-  def firstBlockStrip: Option[Strip] = {
-    children
-      .headOption
-      .flatMap {
-        case s: Strip => Some(s)
-        case _ => None
-      }
-      .filter(_.bm.nonEmpty)
-  }
-
 }

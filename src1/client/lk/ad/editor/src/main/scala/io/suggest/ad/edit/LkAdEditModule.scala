@@ -1,7 +1,7 @@
 package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
-import io.suggest.ad.edit.v.LkAdEditFormR
+import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
 
 /**
@@ -16,6 +16,7 @@ class LkAdEditModule {
 
   import jdRenderModule._
 
+  lazy val lkAdEditCss = wire[LkAdEditCss]
 
   lazy val lkAdEditFormR = wire[LkAdEditFormR]
 

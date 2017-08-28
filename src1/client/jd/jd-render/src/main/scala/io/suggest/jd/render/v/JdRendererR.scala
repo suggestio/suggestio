@@ -76,6 +76,16 @@ class JdRendererR(
   }
 
 
+  /** Рендер текстового объекта: просто рендерить children. */
+  def renderText(t: Text): VdomNode = {
+    <.div(
+      // TODO Вроде бы должен быть класс title или что-то такое.
+      // TODO в edit-режиме нужна поддержка draggable.
+      renderChildren(t)
+    )
+  }
+
+
   /** Рендер картинки. */
   def renderPicture(p: Picture): VdomElement = {
     jdArgs.edges
@@ -155,6 +165,7 @@ class JdRendererR(
     idt match {
       case pp: PlainPayload           => renderPlainPayload( pp )
       case LineBreak                  => renderLineBreak
+      case t: Text                    => renderText(t)
       case p: Picture                 => renderPicture( p )
       case ap: AbsPos                 => renderAbsPost(ap)
       case s: Strip                   => renderStrip( s )
@@ -169,8 +180,11 @@ import com.softwaremill.macwire._
 
 /** DI-factory для сборки инстансов [[JdRendererR]]. */
 class JdRendererFactory {
+
+  /** Собрать новый инстанс JD2HTML-рендерера. */
   def mkRenderer(bCss       : JdCss,
                  jdArgs     : MJdRenderArgs): JdRendererR = {
     wire[JdRendererR]
   }
+
 }
