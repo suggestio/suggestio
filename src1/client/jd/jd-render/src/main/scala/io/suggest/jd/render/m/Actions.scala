@@ -19,4 +19,4 @@ sealed trait IJdTagClick extends IJdAction {
 
 
 /** Клик по стрипу. */
-case class StripClick( override val jdTag: Strip ) extends IJdTagClick
+case class JdTagClick( override val jdTag: IDocTag ) extends IJdTagClick

@@ -3,7 +3,7 @@ package io.suggest.jd.render.v
 import diode.react.ModelProxy
 
 import scalacss.ScalaCssReact._
-import io.suggest.jd.render.m.{IJdAction, MJdArgs, StripClick}
+import io.suggest.jd.render.m.{IJdAction, MJdArgs, JdTagClick}
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.MPredicates
 import japgolly.scalajs.react.vdom.VdomElement
@@ -87,6 +87,8 @@ class JdRendererR(
   def renderText(t: Text): VdomNode = {
     <.div(
       ^.key := t.hashCode.toString,
+      _maybeSelected(t),
+      _clickableOnEdit(t),
       // TODO Вроде бы должен быть класс title или что-то такое.
       // TODO в edit-режиме нужна поддержка draggable.
       renderChildren(t)
@@ -125,7 +127,7 @@ class JdRendererR(
 
 
   /** Рендер контейнера, спозиционированного на экране абсолютно. */
-  def renderAbsPost(ap: AbsPos): VdomElement = {
+  def renderAbsPos(ap: AbsPos): VdomElement = {
     <.div(
       ^.key := ap.hashCode.toString,
       jdArgs.jdCss.absPosStyleAll,
@@ -148,10 +150,23 @@ class JdRendererR(
     * Если да, то присвоить ему соотв.стиль для выделения визуально.
     */
   private def _maybeSelected(dt: IDocTag): TagMod = {
-    if (jdArgs.selectedTag.contains(dt))
+    if (jdArgs.selectedTag.contains(dt)) {
       jdArgs.jdCss.selectedTag
-    else
+    } else {
       EmptyVdom
+    }
+  }
+
+  private def _clickableOnEdit(jdt: IDocTag): TagMod = {
+    // В режиме редактирования -- надо слать инфу по кликам на стрипах
+    if (jdArgs.conf.withEdit) {
+      ^.onClick ==> { e =>
+        // Если не сделать stopPropagation, то наружный strip перехватит клик
+        e.stopPropagationCB >> _sendActionCB( JdTagClick(jdt) )
+      }
+    } else {
+      EmptyVdom
+    }
   }
 
   /** Рендер strip, т.е. одной "полосы" контента. */
@@ -160,14 +175,9 @@ class JdRendererR(
       ^.key := s.hashCode.toString,
       jdArgs.jdCss.smBlock,
       jdArgs.jdCss.stripOuterStyleF( s ),
-      _maybeSelected( s ),
 
-      // В режиме редактирования -- надо слать инфу по кликам на стрипах
-      if (jdArgs.conf.withEdit) {
-        ^.onClick --> _sendActionCB( StripClick(s) )
-      } else {
-        EmptyVdom
-      },
+      _maybeSelected( s ),
+      _clickableOnEdit( s ),
 
       renderChildren( s )
     )
@@ -197,7 +207,7 @@ class JdRendererR(
       case LineBreak                  => renderLineBreak
       case t: Text                    => renderText(t)
       case p: Picture                 => renderPicture( p )
-      case ap: AbsPos                 => renderAbsPost(ap)
+      case ap: AbsPos                 => renderAbsPos(ap)
       case s: Strip                   => renderStrip( s )
       case jd: JsonDocument           => renderDocument( jd )
     }

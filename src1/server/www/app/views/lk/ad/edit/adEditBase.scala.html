@@ -11,7 +11,9 @@
 @import views.html.stuff.jsTpl2HtmlTpl
 
 @headAfter = {
-  <link rel="stylesheet" type="text/css" href='@routes.Assets.versioned("javascripts/lib/colorpicker/css/colorpicker.css")'/>
+  @* Стили для tinyMCE *@
+  <link rel="stylesheet" type="text/css"
+        href="@routes.Assets.versioned("tinymce/skins/lightgray/skin.min.css")"/>
 }
 
 @lk.lkBase(
@@ -32,5 +34,7 @@
     jsRevRouterTpl( csrfAll = true, cdn = true )(
     )
   )
+
+  <script type="text/javascript" src="@routes.Assets.versioned("tinymce/tinymce.min.js")"></script>
 
 }

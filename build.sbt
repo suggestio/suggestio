@@ -410,12 +410,15 @@ lazy val www = project
     scalaJSProjects := Seq(lkSjs, scSjs, sc3Sjs),
     pipelineStages in Assets ++= Seq(scalaJSPipeline),
     // Скопипастить некоторые ассеты прямо из npm:
+    // react DatePicker
     npmAssets ++= NpmAssets.ofProject(reactDatePickerSjs) { nodeModules =>
       (nodeModules / "react-datepicker" / "dist") * "*.min.css"
     }.value,
+    // react-image-gallery
     npmAssets ++= NpmAssets.ofProject(reactImageGallerySjs) { nodeModules =>
       (nodeModules / "react-image-gallery" / "build") * "*.css"
     }.value,
+    // leaflet LocateControl
     npmAssets ++= NpmAssets.ofProject(leafletSjs) { nodeModules =>
       val llcCss = (nodeModules / "leaflet.locatecontrol" / "dist") * "*.min.css"
       val lDist = nodeModules / "leaflet" / "dist"
@@ -423,8 +426,18 @@ lazy val www = project
       val lImages = (lDist / "images").***
       llcCss +++ lCss +++ lImages
     }.value,
+    // leaflet MarkerCluster
     npmAssets ++= NpmAssets.ofProject(leafletMarkerClusterSjs) { nodeModules =>
       (nodeModules / "leaflet.markercluster" / "dist") * "*.css"
+    }.value,
+    // tinymce
+    npmAssets ++= NpmAssets.ofProject(tinyMceSjs) { nodeModules =>
+      val rootPath = nodeModules / "tinymce"
+      val js = rootPath * "tinymce.min.js"
+      val themes = (rootPath / "themes").***
+      val skins = (rootPath / "skins").***
+      val plugins = (rootPath / "plugins").***
+      js +++ themes +++ skins +++ plugins
     }.value
   )
 

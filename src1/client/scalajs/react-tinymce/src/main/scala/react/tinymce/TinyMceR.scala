@@ -24,7 +24,8 @@ object TinyMceR {
 
 
 /** js-компонент из react-tinymce. */
-@JSImport("react-tinymce", "TinyMCE")
+// Судя по докам, должно быть @JSImport("react-tinymce", "TinyMCE"). Но по факту, нужно импортировать корень.
+@JSImport("react-tinymce", JSImport.Namespace)
 @js.native
 object TinyMceJsR extends js.Object
 
