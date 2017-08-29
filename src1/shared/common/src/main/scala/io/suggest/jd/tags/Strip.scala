@@ -22,17 +22,15 @@ object Strip {
     (__ \ "bm").formatNullable[BlockMeta] and
     (__ \ "bg").formatNullable[MColorData] and
     IDocTag.CHILDREN_IDOC_TAG_FORMAT
-  )( rawApply, unlift(rawUnapply) )
+  )( apply, unlift(unapply) )
 
-  def rawApply(bm: Option[BlockMeta], bgColor: Option[MColorData], chs: Seq[IDocTag]): Strip = {
-    apply(bm, bgColor)(chs: _*)
+  def a( bm        : Option[BlockMeta]   = None,
+         bgColor   : Option[MColorData]  = None
+       )( children: IDocTag* ): Strip = {
+    apply(bm, bgColor, children)
   }
 
-  def rawUnapply(s: Strip): Option[(Option[BlockMeta], Option[MColorData], Seq[IDocTag])] = {
-    Some((s.bm, s.bgColor, s.children))
-  }
-
-  implicit def univEq: UnivEq[Strip] = UnivEq.derive
+  implicit def univEq: UnivEq[Strip] = UnivEq.force
 
 }
 
@@ -45,12 +43,17 @@ object Strip {
   */
 case class Strip(
                   bm        : Option[BlockMeta]   = None,
-                  bgColor   : Option[MColorData]  = None
-                )(
-                  override val children: IDocTag*
+                  bgColor   : Option[MColorData]  = None,
+                  override val children: Seq[IDocTag]
                 )
   extends IDocTag {
 
   override def jdTagName = MJdTagNames.STRIP
+
+  override def withChildren(children: Seq[IDocTag]): Strip = {
+    copy( children = children )
+  }
+
+  def withBlockMeta(bm: Option[BlockMeta]) = copy(bm = bm)
 
 }

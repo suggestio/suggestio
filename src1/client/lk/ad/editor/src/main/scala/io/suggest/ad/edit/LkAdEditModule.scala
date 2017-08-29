@@ -1,6 +1,8 @@
 package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
+import diode.ModelRW
+import io.suggest.ad.edit.v.edit.strip.{PlusMinusControlsR, StripEditR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
 
@@ -12,14 +14,26 @@ import io.suggest.jd.render.JdRenderModule
   */
 class LkAdEditModule {
 
+
   lazy val jdRenderModule = wire[JdRenderModule]
 
   import jdRenderModule._
 
+
+  // css deps
   lazy val lkAdEditCss = wire[LkAdEditCss]
+
+
+  // views deps
+  lazy val plusMinusControlsR = wire[PlusMinusControlsR]
+
+  lazy val stripEditR = wire[StripEditR]
 
   lazy val lkAdEditFormR = wire[LkAdEditFormR]
 
+
+  // circuit deps
   lazy val lkAdEditCircuit = wire[LkAdEditCircuit]
 
 }
+

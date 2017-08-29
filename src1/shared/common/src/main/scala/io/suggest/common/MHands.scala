@@ -51,6 +51,6 @@ object MHands extends Enum[MHand] {
     override def isLeft       = false
   }
 
-  override def values = findValues
+  override val values = findValues
 
 }

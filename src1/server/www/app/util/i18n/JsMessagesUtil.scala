@@ -236,6 +236,14 @@ class JsMessagesUtil @Inject() (
   }
 
 
+  /** Сообщения для react-редактора карточек. */
+  private def LK_AD_EDIT_MSGS: TraversableOnce[String] = {
+    MsgCodes.`Width` ::
+      MsgCodes.`Height` ::
+      Nil
+  }
+
+
   /** Готовенькие сообщения для раздачи через js сообщения на всех поддерживаемых языках. */
   val (lkJsMsgsFactory, hash): (JsMessages, Int) = {
     val msgs = Iterator(
@@ -252,7 +260,8 @@ class JsMessagesUtil @Inject() (
       ITEM_TYPES,
       LK_ADN_MAP_MSGS,
       LK_COMMON,
-      LK_NODES_MSGS
+      LK_NODES_MSGS,
+      LK_AD_EDIT_MSGS
     )
       .flatten
       .toSet
@@ -263,7 +272,6 @@ class JsMessagesUtil @Inject() (
     val hash = msgs.hashCode()
     (jsm, hash)
   }
-
 
 
   /** jsMessages для выдачи. */

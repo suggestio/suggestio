@@ -21,7 +21,7 @@ class JdCss( jdCssArgs: MJdCssArgs )
 
   import dsl._
 
-  // TODO Вынести статические стили в ScCss?
+  // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
     addClassName("sm-block")
@@ -35,6 +35,12 @@ class JdCss( jdCssArgs: MJdCssArgs )
       height(pc100)
     )
   }
+
+  /** Текущий выбранный тег выделяется на картинке. */
+  val selectedTag = style(
+    outline.dashed,
+    zIndex(10)
+  )
 
 
   /** Итератор тегов указанного типа (класса) со всех уровней. */

@@ -28,7 +28,7 @@ sealed abstract class BlockWidth(override val value: Int) extends IBlockSize {
 
 
 /** Модель допустимых ширин блока. */
-case object BlockWidths extends IntEnum[BlockWidth] with IBlockSizes {
+case object BlockWidths extends IntEnum[BlockWidth] with IBlockSizes[BlockWidth] {
 
   /** Самый узкий блок. */
   case object NARROW extends BlockWidth( 140 ) {
@@ -44,9 +44,9 @@ case object BlockWidths extends IntEnum[BlockWidth] with IBlockSizes {
 
   override val values = findValues
 
-  def default : BlockWidth = NORMAL
-  def max     : BlockWidth = NORMAL
-  def min     : BlockWidth = NARROW
+  def default          : BlockWidth = NORMAL
+  override def max     : BlockWidth = NORMAL
+  override def min     : BlockWidth = NARROW
 
 }
 

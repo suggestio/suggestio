@@ -2,11 +2,14 @@ package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAdEditRoot
-import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
-import io.suggest.jd.render.v.{JdCssR, JdR}
+import io.suggest.ad.edit.v.edit.strip.StripEditR
+import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
+import io.suggest.jd.tags.Strip
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.sjs.common.spa.OptFastEq
 
 /**
   * Suggest.io
@@ -15,8 +18,9 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Description: React-компонент всей формы react-редактора карточек.
   */
 class LkAdEditFormR(
-                     jdCssR   : JdCssR,
-                     jdR      : JdR
+                     jdCssR       : JdCssR,
+                     jdR          : JdR,
+                     stripEditR   : StripEditR
                    ) {
 
   import MJdArgs.MJdWithArgsFastEq
@@ -25,8 +29,9 @@ class LkAdEditFormR(
 
   /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
   protected case class State(
-                              jdPreviewArgsC : ReactConnectProxy[MJdArgs],
-                              jdCssArgsC     : ReactConnectProxy[MJdCssArgs]
+                              jdPreviewArgsC    : ReactConnectProxy[MJdArgs],
+                              jdCssArgsC        : ReactConnectProxy[JdCss],
+                              currStripOptC     : ReactConnectProxy[Option[Strip]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -38,7 +43,11 @@ class LkAdEditFormR(
         s.jdCssArgsC { jdCssR.apply },
 
         // Рендер preview
-        s.jdPreviewArgsC { jdR.apply }
+        s.jdPreviewArgsC { jdR.apply },
+
+
+        // Рендер редакторов
+        s.currStripOptC { stripEditR.apply }
 
       )
     }
@@ -53,8 +62,14 @@ class LkAdEditFormR(
           mroot.doc.jdArgs
         },
         jdCssArgsC = p.connect { mroot =>
-          mroot.doc.jdArgs.singleCssArgs
-        }
+          mroot.doc.jdArgs.jdCss
+        },
+        currStripOptC = p.connect { mroot =>
+          mroot.doc.jdArgs.selectedTag.flatMap {
+            case s: Strip => Some(s)
+            case _ => None
+          }
+        }( OptFastEq.Plain )
       )
     }
     .renderBackend[Backend]

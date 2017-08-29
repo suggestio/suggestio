@@ -147,4 +147,62 @@ trait IDocTag extends Product {
     }
   }
 
+  /** Найти в дереве указанный тег в дереве и обновить его с помощью функции. */
+  def deepUpdateOne[T <: IDocTag](what: T, updated: Seq[IDocTag]): Seq[IDocTag] = {
+    // Обновляем текущий тег
+    if (this == what) {
+      updated
+    } else {
+      // Попробовать пообнавлять children'ов.
+      deepUpdateChild( what, updated )
+    }
+  }
+
+
+  /** Найти в дереве указанный тег в дочерних поддеревьях и обновить его с помощью функции.
+    * Поиск в дереве идёт исходят из того, что элемент там есть, и он должен быть найден
+    * как можно ближе к корню дерева. Поэтому сначала обрабатывается полностью над-уровень, и
+    * только если там ничего не найдено, то происходит рекурсивное погружение на следующий уровень.
+    *
+    * Если вдруг одинаковый инстанс тега встречается несколько раз на разных уровнях,
+    * то будет обновлён только наиболее верхний уровень с найденными тегами. Но это считается
+    * вообще ненормальной и неправильной ситуацией, поэтому не следует использовать boopickle
+    * для редактируемых json-документов.
+    *
+    * @param what Инстанс искомого тега.
+    * @param updated Функция обновления дерева.
+    * @tparam T Тип искомого тега.
+    * @return Обновлённое дерево.
+    */
+  def deepUpdateChild[T <: IDocTag](what: T, updated: Seq[IDocTag]): Seq[IDocTag] = {
+    if (children.isEmpty) {
+      this :: Nil
+
+    } else {
+      val children2 = if (children.contains(what)) {
+        // Обновление элемента на текущем уровне
+        children.flatMap { jdt =>
+          if (jdt == what) {
+            updated
+          } else {
+            jdt :: Nil
+          }
+        }
+
+      } else {
+        // Обновление элементов где-то на подуровнях дочерних элементов.
+        children.flatMap { jdt =>
+          jdt.deepUpdateChild(what, updated)
+        }
+      }
+      withChildren(children2) :: Nil
+    }
+  }
+
+
+  /** Вернуть инстанс текущего тега с обновлённым набором children'ов. */
+  def withChildren(children: Seq[IDocTag]): IDocTag = {
+    throw new UnsupportedOperationException
+  }
+
 }

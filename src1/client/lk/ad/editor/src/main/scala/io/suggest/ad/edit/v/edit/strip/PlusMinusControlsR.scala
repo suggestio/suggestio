@@ -1,7 +1,9 @@
 package io.suggest.ad.edit.v.edit.strip
 
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.blk.IBlockSizes
+import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
+import io.suggest.ad.edit.m.BlockSizeBtnClick
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.{MHand, MHands}
 import io.suggest.css.Css
@@ -9,6 +11,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sjs.common.i18n.Messages
 
 import scalacss.ScalaCssReact._
 import scalacss.internal.StyleA
@@ -27,13 +30,20 @@ class PlusMinusControlsR(
 
   /** Контейнер настроек для работы этого компонента. */
   case class PropsVal(
-                       label     : String,
-                       contCss   : StyleA,
-                       model     : IBlockSizes,
-                       min       : Int,
-                       current   : Int,
-                       max       : Int
+                       labelMsgCode     : String,
+                       contCss          : StyleA,
+                       model            : IBlockSizes[_ <: IBlockSize],
+                       current          : IBlockSize
                      )
+  implicit object PlusMinusControlsPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.labelMsgCode eq b.labelMsgCode) &&
+        (a.contCss eq b.contCss) &&
+        (a.model eq b.model) &&
+        (a.current eq b.current)
+    }
+  }
+
 
   type Props = ModelProxy[Option[PropsVal]]
 
@@ -45,10 +55,15 @@ class PlusMinusControlsR(
   /** Бэкэнд рендера. */
   class Backend($: BackendScope[Props, State]) {
 
-    def onBtnClick(mhand: MHand): Callback = {
-      ???
+    /** Реакция на клик по одной из кнопок увеличения/уменьшения размера. */
+    private def onBtnClick(mhand: MHand): Callback = {
+      $.props >>= { p =>
+        p.dispatchCB( BlockSizeBtnClick(p.value.get.model, mhand) )
+      }
     }
 
+
+    /** Рендеринг компонента. */
     def render(p: Props, s: State): VdomElement = {
       p().whenDefinedEl { props =>
         val whCss = css.WhControls
@@ -67,7 +82,7 @@ class PlusMinusControlsR(
 
           <.label(
             whCss.label,
-            props.label
+            Messages( props.labelMsgCode )
           ),
 
           <.div(
@@ -75,19 +90,15 @@ class PlusMinusControlsR(
 
             MHands.values.toVdomArray { mhand =>
               val (handCssClass, isEnabledSomeC) = _mhand2css( mhand )
-              isEnabledSomeC { isEnabledSomeProxy =>
+
+              isEnabledSomeC.withKey(mhand.strId) { isEnabledSomeProxy =>
+                // TODO Выключать кнопку при неактивности
                 val isEnabled = isEnabledSomeProxy.value.value
                 <.div(
                   whCss.btn,
                   handCssClass,
-                  ^.classSet(
-                    Css.Display.INVISIBLE -> !isEnabled
-                  ),
-                  if (isEnabled) {
-                    ^.onClick --> onBtnClick(mhand)
-                  } else {
-                    EmptyVdom
-                  }
+                  (^.onClick --> onBtnClick(mhand))
+                    .when(isEnabled)
                 )
               }
             }
@@ -108,10 +119,10 @@ class PlusMinusControlsR(
       }
       State(
         leftEnabledC = __enabledC { props =>
-          props.current > props.min
+          props.current.value > props.model.min.value
         },
         rightEnabledC = __enabledC { props =>
-          props.max < props.current
+          props.current.value < props.model.max.value
         }
       )
     }

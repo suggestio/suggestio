@@ -4,7 +4,6 @@ import diode.react.ModelProxy
 import io.suggest.jd.render.m.MJdArgs
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
-import scalacss.internal.mutable.GlobalRegistry
 
 /**
   * Suggest.io
@@ -13,7 +12,7 @@ import scalacss.internal.mutable.GlobalRegistry
   * Description: Компонент для рендера одного документа-блока для карточки.
   */
 class JdR(
-           jdRendererFactory: JdRendererFactory
+           jdRendererF: ModelProxy[MJdArgs] => JdRendererR
          ) {
 
   type Props = ModelProxy[MJdArgs]
@@ -21,12 +20,9 @@ class JdR(
   class Backend($: BackendScope[Props, Unit]) {
 
     def render(propsProxy: Props): VdomElement = {
-      val bCss = GlobalRegistry[JdCss].get
-      val props = propsProxy()
-
       // Собрать и запустить рендерер:
-      jdRendererFactory.mkRenderer(bCss, props.renderArgs)
-        .renderDocument( props.template )
+      jdRendererF( propsProxy )
+        .renderDocument()
     }
 
   }

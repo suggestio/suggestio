@@ -19,15 +19,15 @@ object Text {
   /** Поддержка play-json. */
   implicit val TEXT_FORMAT: OFormat[Text] = {
     IDocTag.CHILDREN_IDOC_TAG_FORMAT
-      .inmap[Text]( applyPlain, _.children)
+      .inmap[Text]( apply, _.children)
   }
 
-  def applyPlain(children: Seq[IDocTag]): Text = {
-    apply()(children: _*)
+  def a()(children: IDocTag*): Text = {
+    apply(children)
   }
 
   /** Поддержка UnivEq. */
-  implicit def univEq: UnivEq[Text] = UnivEq.derive
+  implicit def univEq: UnivEq[Text] = UnivEq.force
 
 }
 
@@ -36,12 +36,16 @@ object Text {
   *
   * @param children Дочерние теги, т.е. форматированное текстового содержимое.
   */
-case class Text()(
-                  override val children: IDocTag*
-                 )
+case class Text(
+                 override val children: Seq[IDocTag]
+               )
   extends IDocTag
 {
 
   override def jdTagName = MJdTagNames.TEXT
+
+  override def withChildren(children: Seq[IDocTag]): Text = {
+    copy(children = children)
+  }
 
 }

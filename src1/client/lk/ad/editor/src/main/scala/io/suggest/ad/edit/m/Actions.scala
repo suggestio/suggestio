@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.m
 
-import io.suggest.ad.blk.IBlockSizes
+import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.sjs.common.spa.DAction
 
@@ -17,4 +17,4 @@ sealed trait ILkEditAction extends DAction
   * @param model Модель, указывающая на ширину или высоту блока?
   * @param direction Направление: увеличить или уменьшить.
   */
-case class BlockSizeBtnClick(model: IBlockSizes, direction: MHand) extends ILkEditAction
+case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends ILkEditAction

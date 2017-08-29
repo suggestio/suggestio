@@ -27,7 +27,7 @@ sealed abstract class BlockHeight(override val value: Int)
 
 
 /** Модель высот блока. */
-case object BlockHeights extends IntEnum[BlockHeight] with IBlockSizes {
+case object BlockHeights extends IntEnum[BlockHeight] with IBlockSizes[BlockHeight] {
 
   case object H140 extends BlockHeight(140) {
     override def relSz    = 1
@@ -48,8 +48,8 @@ case object BlockHeights extends IntEnum[BlockHeight] with IBlockSizes {
   override val values = findValues
 
   def default : BlockHeight = H300
-  def max     : BlockHeight = values.last
-  def min     : BlockHeight = values.head
+  override def max     : BlockHeight = values.last
+  override def min     : BlockHeight = values.head
 
   /** Высота, после которой в adsListTpl применяется zigZag mask, для сокрытия всего, что не влезает. */
   def adsListMinZzHeight: BlockHeight = H300

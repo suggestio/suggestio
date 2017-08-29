@@ -15,7 +15,7 @@ class LkAdEditCss extends StyleSheet.Inline {
 
 
   /** Стиль для поля редактора. */
-  val editorFieldContainer = "edit-ad_block-field"
+  val editorFieldContainer = _classNameStyle( "edit-ad_block-field" )
 
 
   /** Короткий код для создания стилей-алиасов, указывающих на внешние стили. */

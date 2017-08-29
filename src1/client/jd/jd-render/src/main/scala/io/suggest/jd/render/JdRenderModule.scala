@@ -1,7 +1,9 @@
 package io.suggest.jd.render
 
 import com.softwaremill.macwire._
-import io.suggest.jd.render.v.{JdCssFactory, JdCssR, JdR, JdRendererFactory}
+import diode.react.ModelProxy
+import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.render.v._
 
 /**
   * Suggest.io
@@ -15,7 +17,7 @@ class JdRenderModule {
 
   lazy val jdCssR = wire[JdCssR]
 
-  lazy val jdRenderFactory = wire[JdRendererFactory]
+  lazy val jdRendererF = (jdArgsProxy: ModelProxy[MJdArgs]) => wire[JdRendererR]
 
   lazy val jdR = wire[JdR]
 

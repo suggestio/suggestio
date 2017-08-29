@@ -17,18 +17,14 @@ object AbsPos {
   implicit val ABS_POS_FORMAT: OFormat[AbsPos] = (
     (__ \ "tl").format[MCoords2di] and
     IDocTag.CHILDREN_IDOC_TAG_FORMAT
-  )(rawApply, unlift(rawUnapply))
+  )(apply, unlift(unapply))
 
 
-  def rawApply(topLeft: MCoords2di, children: Seq[IDocTag]): AbsPos = {
-    apply(topLeft)(children: _*)
+  def a(topLeft: MCoords2di)(children: IDocTag*): AbsPos = {
+    apply(topLeft, children)
   }
 
-  def rawUnapply(ap: AbsPos): Option[(MCoords2di, Seq[IDocTag])] = {
-    Some((ap.topLeft, ap.children))
-  }
-
-  implicit def univEq: UnivEq[AbsPos] = UnivEq.derive
+  implicit def univEq: UnivEq[AbsPos] = UnivEq.force
 
 }
 
@@ -39,12 +35,15 @@ object AbsPos {
   * @param children Дочерние теги.
   */
 case class AbsPos(
-                   topLeft: MCoords2di
-                 )(
-                   override val children: IDocTag*
+                   topLeft: MCoords2di,
+                   override val children: Seq[IDocTag]
                  )
   extends IDocTag {
 
   override def jdTagName = MJdTagNames.ABS_POS
+
+  override def withChildren(children: Seq[IDocTag]): AbsPos = {
+    copy( children = children )
+  }
 
 }

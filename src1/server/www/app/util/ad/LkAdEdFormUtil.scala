@@ -298,9 +298,9 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     val textPred = MPredicates.Text
 
     val r = MAdEditForm(
-      template = JsonDocument()(
+      template = JsonDocument.a()(
         // Strip1 содержит намёк на то, что это верхний блок.
-        Strip(
+        Strip.a(
           bm = Some(BlockMeta(
             w = w1,
             h = h1,
@@ -311,22 +311,22 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           ))
         )(
           // Надпись "Верхний блок"
-          AbsPos( MCoords2di(x = w1.value, y = h1.value) / 3 )(
-            Text()(
+          AbsPos.a( MCoords2di(x = w1.value, y = h1.value) / 3 )(
+            Text.a()(
               PlainPayload( upperBlockEdgeId )
             )
           ),
 
           // Надпись "также отображается в плитке"
-          AbsPos( MCoords2di(x = w1.value/3*2, y = h1.value / 2) )(
-            Text()(
+          AbsPos.a( MCoords2di(x = w1.value/3*2, y = h1.value / 2) )(
+            Text.a()(
               PlainPayload( alsoDisplayedInGridEdgeId )
             )
           )
         ),
 
         // strip2 содержит предложение добавить описание или что-то ещё.
-        Strip(
+        Strip.a(
           bm = Some(BlockMeta(
             w = w1,
             h = BlockHeights.H140,
@@ -336,19 +336,19 @@ class LkAdEdFormUtil extends MacroLogsImpl {
             code = "bcf014"
           ))
         )(
-          AbsPos( MCoords2di(5, 10) )(
-            Text()(
+          AbsPos.a( MCoords2di(5, 10) )(
+            Text.a()(
               PlainPayload( descriptionEdgeId )
             )
           ),
-          AbsPos( MCoords2di(33, 50) )(
-            Text()(
+          AbsPos.a( MCoords2di(33, 50) )(
+            Text.a()(
               PlainPayload( descrContentEdgeId )
             )
           )
         ),
 
-        Strip(
+        Strip.a(
           bm = Some(BlockMeta(
             w = w1,
             h = BlockHeights.H460,
@@ -358,13 +358,13 @@ class LkAdEdFormUtil extends MacroLogsImpl {
             code = "111111"
           ))
         )(
-          AbsPos( MCoords2di(15, 200) )(
-            Text()(
+          AbsPos.a( MCoords2di(15, 200) )(
+            Text.a()(
               PlainPayload( fr3text1EdgeId )
             )
           ),
-          AbsPos( MCoords2di(35, 400) )(
-            Text()(
+          AbsPos.a( MCoords2di(35, 400) )(
+            Text.a()(
               PlainPayload( fr3text2EdgeId )
             )
           )

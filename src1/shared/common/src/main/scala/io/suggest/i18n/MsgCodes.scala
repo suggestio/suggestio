@@ -183,4 +183,7 @@ object MsgCodes {
   val `also.displayed.in.grid` = "also.displayed.in.grid"
   val `Description` = "Description"
 
+  val `Height` = "Height"
+  val `Width`  = "Width"
+
 }

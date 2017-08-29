@@ -8,6 +8,8 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
 import play.api.libs.json.Json
+import io.suggest.ad.edit.c.DocEditAh
+import io.suggest.jd.render.v.JdCssFactory
 
 /**
   * Suggest.io
@@ -15,7 +17,10 @@ import play.api.libs.json.Json
   * Created: 23.08.17 18:28
   * Description: Diode-circuit редактора рекламных карточек второго поколения.
   */
-class LkAdEditCircuit extends CircuitLog[MAdEditRoot] with ReactConnector[MAdEditRoot] {
+class LkAdEditCircuit( jdCssFactory: JdCssFactory )
+  extends CircuitLog[MAdEditRoot]
+  with ReactConnector[MAdEditRoot]
+{
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.AD_EDIT_CIRCUIT_ERROR
 
@@ -30,26 +35,39 @@ class LkAdEditCircuit extends CircuitLog[MAdEditRoot] with ReactConnector[MAdEdi
 
     MAdEditRoot(
       conf = mFormInit.conf,
-      doc  = MDocS(
-        jdArgs = MJdArgs(
-          template = mFormInit.form.template,
-          renderArgs = MJdRenderArgs(
-            edges = IId.els2idMap( mFormInit.form.edges )
-          ),
-          conf = MJdConf(
-            withEdit  = true,
-            szMult    = 2
+      doc  = {
+        val conf = MJdConf(
+          withEdit  = true,
+          szMult    = 2
+        )
+        val tpl = mFormInit.form.template
+        val jdCssArgs = MJdArgs.singleCssArgs( tpl, conf )
+        val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
+        MDocS(
+          jdArgs = MJdArgs(
+            template   = tpl,
+            renderArgs = MJdRenderArgs(
+              edges = IId.els2idMap( mFormInit.form.edges )
+            ),
+            jdCss      = jdCss,
+            conf       = conf
           )
         )
-        //template = mFormInit.form.template,
-        //edges =
-      )
+      }
     )
   }
 
 
+  private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
+
+  private val docAh = new DocEditAh(
+    modelRW       = mDocSRw,
+    jdCssFactory  = jdCssFactory
+  )
+
+
   override protected def actionHandler: HandlerFunction = {
-    ???
+    docAh
   }
 
 }

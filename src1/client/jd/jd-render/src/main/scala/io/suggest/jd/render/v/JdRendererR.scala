@@ -1,7 +1,9 @@
 package io.suggest.jd.render.v
 
+import diode.react.ModelProxy
+
 import scalacss.ScalaCssReact._
-import io.suggest.jd.render.m.MJdRenderArgs
+import io.suggest.jd.render.m.{IJdAction, MJdArgs, StripClick}
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.MPredicates
 import japgolly.scalajs.react.vdom.VdomElement
@@ -10,6 +12,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
+import japgolly.scalajs.react.Callback
 
 /**
   * Suggest.io
@@ -41,20 +44,24 @@ object JdRendererR extends Log {
 
 /** Класс рендерера jd-контента.
   *
-  * @param bCss CSS для рендера.
-  * @param jdArgs Базовые данные.
+  * @param proxy Шаблон и данные для рендера.
   */
 class JdRendererR(
-                   bCss       : JdCss,
-                   jdArgs     : MJdRenderArgs
+                   proxy      : ModelProxy[MJdArgs]
                  ) {
 
   import JdRendererR.{LOG, _maybeSuppress}
 
+  private val jdArgs = proxy.value
+
+  private def _sendActionCB(e: IJdAction): Callback = {
+    proxy.dispatchCB( e )
+  }
+
 
   /** Рендер payload'а. */
   def renderPlainPayload(pp: PlainPayload): VdomNode = {
-    jdArgs.edges
+    jdArgs.renderArgs.edges
       .get( pp.edgeId )
       .whenDefinedNode { e =>
         e.predicate match {
@@ -79,6 +86,7 @@ class JdRendererR(
   /** Рендер текстового объекта: просто рендерить children. */
   def renderText(t: Text): VdomNode = {
     <.div(
+      ^.key := t.hashCode.toString,
       // TODO Вроде бы должен быть класс title или что-то такое.
       // TODO в edit-режиме нужна поддержка draggable.
       renderChildren(t)
@@ -88,7 +96,7 @@ class JdRendererR(
 
   /** Рендер картинки. */
   def renderPicture(p: Picture): VdomElement = {
-    jdArgs.edges
+    jdArgs.renderArgs.edges
       .get( p.edgeUid )
       .whenDefinedEl { e =>
         e.predicate match {
@@ -120,8 +128,8 @@ class JdRendererR(
   def renderAbsPost(ap: AbsPos): VdomElement = {
     <.div(
       ^.key := ap.hashCode.toString,
-      bCss.absPosStyleAll,
-      bCss.absPosStyleF(ap),
+      jdArgs.jdCss.absPosStyleAll,
+      jdArgs.jdCss.absPosStyleF(ap),
 
       renderChildren(ap)
     )
@@ -135,25 +143,47 @@ class JdRendererR(
     chs.toVdomArray( renderDocTag )
   }
 
+  /**
+    * Является ли указанный тег текущим выделенным?
+    * Если да, то присвоить ему соотв.стиль для выделения визуально.
+    */
+  private def _maybeSelected(dt: IDocTag): TagMod = {
+    if (jdArgs.selectedTag.contains(dt))
+      jdArgs.jdCss.selectedTag
+    else
+      EmptyVdom
+  }
 
   /** Рендер strip, т.е. одной "полосы" контента. */
   def renderStrip(s: Strip): VdomElement = {
     <.div(
       ^.key := s.hashCode.toString,
-      bCss.smBlock,
-      bCss.stripOuterStyleF( s ),
+      jdArgs.jdCss.smBlock,
+      jdArgs.jdCss.stripOuterStyleF( s ),
+      _maybeSelected( s ),
+
+      // В режиме редактирования -- надо слать инфу по кликам на стрипах
+      if (jdArgs.conf.withEdit) {
+        ^.onClick --> _sendActionCB( StripClick(s) )
+      } else {
+        EmptyVdom
+      },
 
       renderChildren( s )
     )
   }
 
 
+  /** Выполнить рендер текущего документа, переданного в jdArgs. */
+  def renderDocument(): VdomElement = {
+    renderDocument( jdArgs.template )
+  }
 
-  /** Рендер целого документа. */
+  /** Рендер указанного документа. */
   def renderDocument(jd: JsonDocument): VdomElement = {
     <.div(
       ^.key := jd.hashCode.toString,
-      renderChildren(jd)
+      renderChildren( jd )
     )
   }
 
@@ -173,18 +203,5 @@ class JdRendererR(
     }
   }
 
-}
-
-
-import com.softwaremill.macwire._
-
-/** DI-factory для сборки инстансов [[JdRendererR]]. */
-class JdRendererFactory {
-
-  /** Собрать новый инстанс JD2HTML-рендерера. */
-  def mkRenderer(bCss       : JdCss,
-                 jdArgs     : MJdRenderArgs): JdRendererR = {
-    wire[JdRendererR]
-  }
 
 }

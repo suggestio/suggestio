@@ -16,19 +16,14 @@ import scalacss.internal.mutable.GlobalRegistry
   */
 class JdCssR( jdCssFactory: JdCssFactory ) {
 
-  type Props = ModelProxy[MJdCssArgs]
+  type Props = ModelProxy[JdCss]
 
   val component = ScalaComponent.builder[Props]("JdCss")
     .stateless
     .render_P { propsProxy =>
-      val jdCss = jdCssFactory.mkJdCss( propsProxy.value )
-
-      // Сохранить отрендеренный css в глобально-доступном контейнере
-      GlobalRegistry.register( jdCss )
-
       // Отрендерить style-тег:
       <.styleTag(
-        jdCss.render[String]
+        propsProxy.value.render[String]
       )
     }
     .build
