@@ -130,6 +130,18 @@ object Common {
       */
     val TINYMCE = "4.2"
 
+
+    /** Версия wysiwyg-редактора quill, который будем пытаться использовать заместо tinymce.
+      * @see [[https://github.com/quilljs/quill]]
+      */
+    val QUILL = "1.3.1"
+    val QUILL_DELTA = "3.5.0"
+
+    /** Версия react-quill
+      * @see [[https://www.npmjs.com/package/react-quill]]
+      */
+    val REACT_QUILL = "1.1.0"
+
   }
 
 

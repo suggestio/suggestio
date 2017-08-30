@@ -1,13 +1,18 @@
 package io.suggest.ad.edit.v.v.edit.text
 
+import com.github.zenoamaro.react.quill.{ContentValue_t, ReactQuill, ReactQuillPropsR}
+import com.quilljs.delta.Delta
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
 import io.suggest.jd.tags.Text
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import react.tinymce.{TinyMcePropsR, TinyMceR}
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -17,10 +22,22 @@ import react.tinymce.{TinyMcePropsR, TinyMceR}
   */
 class TextEditR extends Log {
 
-  type Props = ModelProxy[Option[Text]]
+  case class PropsVal(
+                       jdText   : Text,
+                       qDelta   : Delta
+                     )
+  implicit object PropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.jdText eq b.jdText) &&
+        (a.qDelta eq b.qDelta)
+    }
+  }
+
+
+  type Props = ModelProxy[Option[PropsVal]]
 
   protected case class State(
-                              htmlContentStrC     : ReactConnectProxy[String]
+                              quillValueC: ReactConnectProxy[ContentValue_t]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -35,29 +52,29 @@ class TextEditR extends Log {
 
         // tinymce: редактор работает как сингтон, в котором появляется или исчезает содержимое.
         try {
-          s.htmlContentStrC { htmlContentStrProxy =>
-            TinyMceR(
-              new TinyMcePropsR {
-                override val content = htmlContentStrProxy.value
+          s.quillValueC { quillValueProxy =>
+            ReactQuill(
+              new ReactQuillPropsR {
+                override val value: UndefOr[ContentValue_t] = quillValueProxy.value
               }
             )
           }
         } catch {
           case ex: Throwable =>
-            LOG.error("TinyMCE!", ex, props)
+            LOG.error(ErrorMsgs.EXT_COMP_INIT_FAILED, ex, props)
             EmptyVdom
         }
-
       )
     }
 
   }
 
+
   val component = ScalaComponent.builder[Props]("TextEd")
     .initialStateFromProps { propsOptProxy =>
       State(
-        htmlContentStrC = propsOptProxy.connect { propsOpt =>
-          propsOpt.fold("")(_.toString)
+        quillValueC = propsOptProxy.connect { propsOpt =>
+          propsOpt.fold[ContentValue_t]("")(_.qDelta)
         }
       )
     }

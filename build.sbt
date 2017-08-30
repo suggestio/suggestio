@@ -86,6 +86,23 @@ lazy val reactTinyMceSjs = {
     .dependsOn(commonReactSjs, tinyMceSjs)
 }
 
+/** Sjs-фасад для JSON-формата Quill Delta. */
+lazy val quillDeltaSjs = {
+  Project(id = "scalajs-quill-delta", base = file(DIR0 + "client/scalajs/quill/quill-delta"))
+}
+
+/** Sjs-фасад для quill.js */
+lazy val quillSjs = {
+  Project(id = "scalajs-quill", base = file(DIR0 + "client/scalajs/quill/quill"))
+    .dependsOn( quillDeltaSjs )
+}
+
+/** Sjs-фасад для react-quill. */
+lazy val reactQuillSjs = {
+  Project(id = "scalajs-react-quill", base = file(DIR0 + "client/scalajs/quill/react-quill"))
+    .dependsOn(commonReactSjs, quillSjs)
+}
+
 /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из www. */
 lazy val svgUtil = {
   val name = "svg-util"
@@ -107,7 +124,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, reactTinyMceSjs, jdRenderSjs )
+    .dependsOn( lkCommonSjs, reactQuillSjs, jdRenderSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -430,14 +447,12 @@ lazy val www = project
     npmAssets ++= NpmAssets.ofProject(leafletMarkerClusterSjs) { nodeModules =>
       (nodeModules / "leaflet.markercluster" / "dist") * "*.css"
     }.value,
-    // tinymce
-    npmAssets ++= NpmAssets.ofProject(tinyMceSjs) { nodeModules =>
-      val rootPath = nodeModules / "tinymce"
-      val js = rootPath * "tinymce.min.js"
-      val themes = (rootPath / "themes").***
-      val skins = (rootPath / "skins").***
-      val plugins = (rootPath / "plugins").***
-      js +++ themes +++ skins +++ plugins
+    // quill
+    npmAssets ++= NpmAssets.ofProject(reactQuillSjs) { nodeModules =>
+      val rootPath = nodeModules / "quill"
+      val assets = (rootPath / "assets").***
+      val distCss = (rootPath / "dist") * "*.css"
+      assets +++ distCss
     }.value
   )
 
@@ -452,7 +467,9 @@ lazy val sio2 = {
       leafletSjs, leafletReactSjs, mapBoxGlSjs,
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
-      tinyMceSjs, reactTinyMceSjs, lkAdEditorSjs,
+      tinyMceSjs, reactTinyMceSjs,
+      quillDeltaSjs, quillSjs, reactQuillSjs,
+      lkAdEditorSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
       mgeo, commonWww, nodesWww,

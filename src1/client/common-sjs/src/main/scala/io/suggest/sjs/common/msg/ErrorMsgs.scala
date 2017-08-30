@@ -133,4 +133,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def TEXT_EXPECTED                    = E(59)
 
+  /** Ошибка во внешнем компоненте (не-react, но внутри react, например). */
+  def EXT_COMP_INIT_FAILED             = E(60)
+
 }

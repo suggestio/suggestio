@@ -19,13 +19,14 @@ import io.suggest.sjs.common.spa.OptFastEq
   * Description: React-компонент всей формы react-редактора карточек.
   */
 class LkAdEditFormR(
-                     jdCssR       : JdCssR,
-                     jdR          : JdR,
-                     stripEditR   : StripEditR,
-                     textEditR    : TextEditR
+                     jdCssR         : JdCssR,
+                     jdR            : JdR,
+                     stripEditR     : StripEditR,
+                     val textEditR  : TextEditR
                    ) {
 
   import MJdArgs.MJdWithArgsFastEq
+  import textEditR.PropsValFastEq
 
   type Props = ModelProxy[MAdEditRoot]
 
@@ -34,7 +35,7 @@ class LkAdEditFormR(
                               jdPreviewArgsC    : ReactConnectProxy[MJdArgs],
                               jdCssArgsC        : ReactConnectProxy[JdCss],
                               currStripOptC     : ReactConnectProxy[Option[Strip]],
-                              currTextOptC      : ReactConnectProxy[Option[Text]]
+                              textPropsOptC     : ReactConnectProxy[Option[textEditR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -54,7 +55,7 @@ class LkAdEditFormR(
         s.currStripOptC { stripEditR.apply },
 
         // Редактор текста
-        s.currTextOptC { textEditR.apply }
+        s.textPropsOptC { textEditR.apply }
 
       )
     }
@@ -80,12 +81,21 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Plain ),
 
-        currTextOptC = p.connect { mroot =>
-          mroot.doc.jdArgs.selectedTag.flatMap {
-            case s: Text => Some(s)
-            case _ => None
+        textPropsOptC = p.connect { mroot =>
+          for {
+            jdTag   <- mroot.doc.jdArgs.selectedTag
+            jdText  <- jdTag match {
+              case s: Text  => Some(s)
+              case _        => None
+            }
+            qDelta  <- mroot.doc.qDelta
+          } yield {
+            textEditR.PropsVal(
+              jdText = jdText,
+              qDelta = qDelta
+            )
           }
-        }( OptFastEq.Plain )
+        }( OptFastEq.Wrapped )
       )
     }
     .renderBackend[Backend]

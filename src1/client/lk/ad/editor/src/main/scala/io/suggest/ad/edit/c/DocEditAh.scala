@@ -3,10 +3,11 @@ package io.suggest.ad.edit.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS}
+import io.suggest.ad.edit.u.DeltaJsUtil
 import io.suggest.common.MHands
 import io.suggest.jd.render.m.{IJdTagClick, MJdArgs}
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.jd.tags.{JsonDocument, Strip}
+import io.suggest.jd.tags.{JsonDocument, Strip, Text}
 
 /**
   * Suggest.io
@@ -26,10 +27,24 @@ class DocEditAh[M](
     // Клик по элементу карточки.
     case m: IJdTagClick =>
       val v0 = value
-      val v2 = v0.withJdArgs(
-        v0.jdArgs.withSelectedTag( Some(m.jdTag) )
-      )
-      updated( v2 )
+      if (v0.jdArgs.selectedTag contains m.jdTag) {
+        // Бывают повторные щелчки по уже выбранным элементам, это нормально.
+        noChange
+
+      } else {
+        // Юзер выбрал какой-то новый элемент.
+        val v1 = v0.withJdArgs(
+          v0.jdArgs.withSelectedTag( Some(m.jdTag) )
+        )
+        val v2 = m.jdTag match {
+          case t: Text =>
+            // Нужно собрать и залить текущую дельту текста в состояние.
+            val delta2 = DeltaJsUtil.text2delta(t, v0.jdArgs.renderArgs.edges)
+            v1.withQDelta( Some(delta2) )
+          case _ => v1
+        }
+        updated( v2 )
+      }
 
     // Клик по кнопкам управления размером текущего блока
     case m: BlockSizeBtnClick =>

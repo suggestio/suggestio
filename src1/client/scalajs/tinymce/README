@@ -1,0 +1,13 @@
+tinymce
+
+Для загрузки ассетов в play надо:
+
+    npmAssets ++= NpmAssets.ofProject(tinyMceSjs) { nodeModules =>
+      val rootPath = nodeModules / "tinymce"
+      val js = rootPath * "tinymce.min.js"
+      val themes = (rootPath / "themes").***
+      val skins = (rootPath / "skins").***
+      val plugins = (rootPath / "plugins").***
+      js +++ themes +++ skins +++ plugins
+    }.value
+
