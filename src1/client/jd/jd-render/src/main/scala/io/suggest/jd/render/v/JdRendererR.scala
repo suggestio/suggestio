@@ -3,9 +3,11 @@ package io.suggest.jd.render.v
 import diode.react.ModelProxy
 
 import scalacss.ScalaCssReact._
-import io.suggest.jd.render.m.{IJdAction, MJdArgs, JdTagClick}
+import io.suggest.jd.render.m.{IJdAction, JdTagClick, MJdArgs}
 import io.suggest.jd.tags._
+import io.suggest.jd.tags.qd.{MQdAttrs, MQdOpTypes, QdTag}
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.primo.ISetUnset
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
@@ -198,11 +200,80 @@ class JdRendererR(
   }
 
 
+  /** Рендер перекодированных данных quill delta.
+    *
+    * @param qdTag Тег с кодированными данными Quill delta.
+    * @return Элемент vdom.
+    */
+  def renderQd( qdTag: QdTag ): VdomElement = {
+    val children = qdTag.ops
+      .iterator
+      .zipWithIndex
+      .toVdomArray { case (qdOp, i) =>
+        val node = qdOp.opType match {
+          // По идее, тут только инзерты.
+          case MQdOpTypes.Insert =>
+            qdOp.edgeInfo.fold[VdomNode] {
+              // TODO Внешний embed?
+              ???
+            } { qdEi =>
+              val e = jdArgs.renderArgs.edges(qdEi.edgeUid)
+              e.predicate match {
+                case MPredicates.Text =>
+                  // Рендер текста. Нужно отработать аттрибуты рендера текста.
+                  renderQdText( e.text.get, qdOp.attrs )
+                // TODO Надо image через предикат
+              }
+            }
+        }
+
+        // TODO Дописать внутрь тега ключ.
+        <.span(
+          ^.key := i.toString,
+          node
+        )
+      }
+    <.div(
+      _maybeSelected(qdTag),
+      _clickableOnEdit(qdTag),
+      children
+    )
+  }
+
+  /** Рендер текста. */
+  def renderQdText(text: String, attrsOpt: Option[MQdAttrs]): VdomNode = {
+    var acc: VdomNode = text
+
+    // Обвешать текст заданной аттрибутикой
+    for (attrs <- attrsOpt) {
+      /** Рендер f() только по true-флагу в Set. */
+      def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => VdomNode): Unit = {
+        for (xSU <- attrs.bold; isEnabled <- xSU.toOption if isEnabled)
+          acc = f
+      }
+
+      __rBool(attrs.bold) {
+        <.strong(acc)
+      }
+      __rBool(attrs.italic) {
+        <.em(acc)
+      }
+      __rBool(attrs.underline) {
+        <.u(acc)
+      }
+
+      // TODO Надо и другие особенности текста подцеплять тут...
+
+    }
+    acc
+  }
+
   /**
     * Запуск рендеринга произвольных тегов.
     */
   def renderDocTag(idt: IDocTag): VdomNode = {
     idt match {
+      case qd: QdTag                  => renderQd( qd )
       case pp: PlainPayload           => renderPlainPayload( pp )
       case LineBreak                  => renderLineBreak
       case t: Text                    => renderText(t)

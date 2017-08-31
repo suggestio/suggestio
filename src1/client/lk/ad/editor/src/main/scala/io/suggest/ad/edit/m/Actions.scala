@@ -1,5 +1,6 @@
 package io.suggest.ad.edit.m
 
+import com.quilljs.delta.Delta
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.sjs.common.spa.DAction
@@ -12,9 +13,17 @@ import io.suggest.sjs.common.spa.DAction
   */
 sealed trait ILkEditAction extends DAction
 
+
 /** Клик по какой-то кнопке управления размером блока.
   *
   * @param model Модель, указывающая на ширину или высоту блока?
   * @param direction Направление: увеличить или уменьшить.
   */
 case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends ILkEditAction
+
+
+/** Юзер редактирует текст.
+  *
+  * @param fullDelta Обновлённый полный текст в quill-delta-формате.
+  */
+case class TextChanged(fullDelta: Delta, html: String) extends ILkEditAction

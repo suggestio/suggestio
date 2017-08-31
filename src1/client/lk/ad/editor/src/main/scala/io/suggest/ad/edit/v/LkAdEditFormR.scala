@@ -3,7 +3,7 @@ package io.suggest.ad.edit.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAdEditRoot
 import io.suggest.ad.edit.v.edit.strip.StripEditR
-import io.suggest.ad.edit.v.v.edit.text.TextEditR
+import io.suggest.ad.edit.v.edit.text.TextEditR
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.jd.tags.{Strip, Text}

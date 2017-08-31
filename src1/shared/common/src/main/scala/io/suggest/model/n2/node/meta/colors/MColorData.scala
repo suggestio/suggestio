@@ -31,6 +31,16 @@ object MColorData {
 
   implicit def univEq: UnivEq[MColorData] = UnivEq.derive
 
+
+  def stripingDiez(colorCode: String): MColorData = {
+    val cc2 = if (colorCode.startsWith( HtmlConstants.DIEZ )) {
+      colorCode.replaceFirst( HtmlConstants.DIEZ, "" )
+    } else {
+      colorCode
+    }
+    MColorData(cc2)
+  }
+
 }
 
 

@@ -10,10 +10,10 @@ import play.api.libs.json.Format
   * Created: 18.08.17 12:21
   * Description: Doc Tag Name -- статически-типизированное имя (название) тега.
   */
-object MDtName {
+object MJdTagName {
 
   /** Поддержка play-json. */
-  implicit val MDOC_TAG_NAME_FORMAT: Format[MDtName] = {
+  implicit val MDOC_TAG_NAME_FORMAT: Format[MJdTagName] = {
     EnumeratumUtil.valueEnumEntryFormat( MJdTagNames )
   }
 
@@ -21,7 +21,7 @@ object MDtName {
 
 
 /** Класс каждого элемента модели типов структуры документа. */
-sealed abstract class MDtName(override val value: String) extends StringEnumEntry {
+sealed abstract class MJdTagName(override val value: String) extends StringEnumEntry {
 
   override final def toString = value
 
@@ -29,41 +29,46 @@ sealed abstract class MDtName(override val value: String) extends StringEnumEntr
 
 
 /** Модель типов элементов структуры документа. */
-object MJdTagNames extends StringEnum[MDtName] {
+object MJdTagNames extends StringEnum[MJdTagName] {
 
   /** Документ - это корневой "тег" структуры документа.
     * С него начинается любой "документ" рекламной карточки.
     */
-  case object DOCUMENT extends MDtName("d")
+  case object DOCUMENT extends MJdTagName("d")
 
   /** "Полоса" карточки, т.е. элемент вертикальной разбивки документа наподобии
     * абзаца или страницы.
     */
-  case object STRIP extends MDtName("s")
+  case object STRIP extends MJdTagName("s")
 
   /** Отсылка к ресурсу, который живёт вне этого дерева.
     *
     * Хранение вне дерева и линковка по id ресурса является простым решением проблемы с индексацией,
     * поиском и highlight'ом некоторых частей документа без дубликации этих самых частей.
     */
-  case object PLAIN_PAYLOAD extends MDtName("p")
+  case object PLAIN_PAYLOAD extends MJdTagName("p")
 
   /** Картинка.
     * Фоновая или нет -- не суть важно, это описывается параметрами самой картинки.
     */
-  case object PICTURE extends MDtName("i")
+  case object PICTURE extends MJdTagName("i")
 
 
   /** Имя тега абсолютного позиционирования элемента. */
-  case object ABS_POS extends MDtName("a")
+  case object ABS_POS extends MJdTagName("a")
 
 
   /** line BReak, в частности br-тег в html. */
-  case object LINE_BREAK extends MDtName("b")
+  case object LINE_BREAK extends MJdTagName("b")
 
 
   /** Название тега текстового элемента. */
-  case object TEXT extends MDtName("t")
+  case object TEXT extends MJdTagName("t")
+
+
+  /** Тег, хранящий текст, отформатированный через quill-editor. */
+  case object QUILL_DELTA extends MJdTagName("q")
+
 
   // ------------------------------------------------------------------------------
 

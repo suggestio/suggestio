@@ -1,18 +1,22 @@
-package io.suggest.ad.edit.v.v.edit.text
+package io.suggest.ad.edit.v.edit.text
 
-import com.github.zenoamaro.react.quill.{ContentValue_t, ReactQuill, ReactQuillPropsR}
+import com.github.zenoamaro.react.quill._
 import com.quilljs.delta.Delta
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.ad.edit.m.TextChanged
 import io.suggest.css.Css
 import io.suggest.jd.tags.Text
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
-import scala.scalajs.js.UndefOr
+import scala.scalajs.js
+import scala.scalajs.js.JSON
 
 /**
   * Suggest.io
@@ -40,7 +44,19 @@ class TextEditR extends Log {
                               quillValueC: ReactConnectProxy[ContentValue_t]
                             )
 
+
   class Backend($: BackendScope[Props, State]) {
+
+    /** Callback реагирования на изменение текста в редакторе. */
+    private def onTextChanged(html: String, changeset: Delta, source: Source_t,
+                              editorProxy: QuillUnpriveledged): Callback = {
+      dispatchOnProxyScopeCB($, TextChanged(
+        fullDelta = editorProxy.getContents(),
+        html      = html
+      ))
+    }
+
+    private val _onTextChangedF = ReactCommonUtil.cbFun4ToJsCb( onTextChanged )
 
     def render(propsProxy: Props, s: State): VdomElement = {
       val props = propsProxy.value
@@ -55,7 +71,8 @@ class TextEditR extends Log {
           s.quillValueC { quillValueProxy =>
             ReactQuill(
               new ReactQuillPropsR {
-                override val value: UndefOr[ContentValue_t] = quillValueProxy.value
+                override val value    = quillValueProxy.value
+                override val onChange = _onTextChangedF
               }
             )
           }

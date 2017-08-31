@@ -16,7 +16,7 @@ import japgolly.scalajs.react._
 //import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.react.ReactCommonUtil.cbFun2TojsCallback
+import io.suggest.react.ReactCommonUtil.cbFun2ToJsCb
 import io.suggest.dt.moment.MomentJsUtil.Implicits.MomentDateExt
 import io.suggest.i18n.MsgCodes
 import io.suggest.sjs.common.empty.JsOptionUtil.opt2undef
@@ -134,7 +134,7 @@ object DtpOptions {
 
                               // TODO Opt инстансы callback-функций можно прооптимизировать, вынеся в val-карту функций или в state, например.
                               override val onChange: js.UndefOr[js.Function2[Date_t, ReactEvent, Unit]] = js.defined {
-                                cbFun2TojsCallback { (newDate, _) =>
+                                cbFun2ToJsCb { (newDate, _) =>
                                   onCustomDateChange(fn, newDate)
                                 }
                               }

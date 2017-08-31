@@ -2,8 +2,8 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
-import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS}
-import io.suggest.ad.edit.u.DeltaJsUtil
+import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS, TextChanged}
+import io.suggest.ad.edit.u.QuillDeltaJsUtil
 import io.suggest.common.MHands
 import io.suggest.jd.render.m.{IJdTagClick, MJdArgs}
 import io.suggest.jd.render.v.JdCssFactory
@@ -24,6 +24,10 @@ class DocEditAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    case m: TextChanged =>
+      // TODO
+      noChange
+
     // Клик по элементу карточки.
     case m: IJdTagClick =>
       val v0 = value
@@ -39,7 +43,7 @@ class DocEditAh[M](
         val v2 = m.jdTag match {
           case t: Text =>
             // Нужно собрать и залить текущую дельту текста в состояние.
-            val delta2 = DeltaJsUtil.text2delta(t, v0.jdArgs.renderArgs.edges)
+            val delta2 = QuillDeltaJsUtil.text2delta(t, v0.jdArgs.renderArgs.edges)
             v1.withQDelta( Some(delta2) )
           case _ => v1
         }

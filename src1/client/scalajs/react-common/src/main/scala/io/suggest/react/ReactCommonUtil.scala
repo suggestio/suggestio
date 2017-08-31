@@ -33,10 +33,16 @@ object ReactCommonUtil {
       .andThen( _.runNow() )
   }
 
-  // unused
-  def cbFun2TojsCallback[Arg1, Arg2, Res](fun: (Arg1, Arg2) => CallbackTo[Res]): js.Function2[Arg1, Arg2, Res] = {
+  def cbFun2ToJsCb[Arg1, Arg2, Res](fun: (Arg1, Arg2) => CallbackTo[Res]): js.Function2[Arg1, Arg2, Res] = {
     { (arg1, arg2) =>
       fun(arg1, arg2)
+        .runNow()
+    }
+  }
+
+  def cbFun4ToJsCb[A1,A2,A3,A4,Res](fun: (A1,A2,A3,A4) => CallbackTo[Res]): js.Function4[A1,A2,A3,A4,Res] = {
+    { (a1, a2, a3, a4) =>
+      fun(a1, a2, a3, a4)
         .runNow()
     }
   }

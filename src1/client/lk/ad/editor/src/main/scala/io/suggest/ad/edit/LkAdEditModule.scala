@@ -2,7 +2,7 @@ package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
 import io.suggest.ad.edit.v.edit.strip.{PlusMinusControlsR, StripEditR}
-import io.suggest.ad.edit.v.v.edit.text.TextEditR
+import io.suggest.ad.edit.v.edit.text.TextEditR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
 

@@ -14,6 +14,9 @@ import play.api.libs.functional.syntax._
   *
   * За него можно таскать, его можно целиком удалять, создавать, и всё такое.
   */
+
+// TODO Удалить этот text во имя QdTag? Никакой нагрузки Text не несёт.
+
 object Text {
 
   /** Поддержка play-json. */

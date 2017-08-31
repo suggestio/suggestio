@@ -85,9 +85,7 @@ trait ReactQuillPropsR extends js.Object {
     * Defaults to document.body. */
   val bounds: UndefOr[Bounds_t] = js.undefined
 
-  /** Change event listener defined as mandatory,
-    * because too-many arguments are here and it is usually defined. */
-  val onChange: UndefOr[js.Function4[ContentValue_t, Delta, Source_t, QuillUnpriveledged, _]] = js.undefined
+  val onChange: UndefOr[js.Function4[Html_t, Delta, Source_t, QuillUnpriveledged, _]] = js.undefined
 
   val onChangeSelection: UndefOr[js.Function3[Range_t, Source_t, QuillUnpriveledged, _]] = js.undefined
 

@@ -1,5 +1,6 @@
 package io.suggest.jd.tags
 
+import io.suggest.jd.tags.qd.QdTag
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -25,7 +26,7 @@ object IDocTag {
   }
 
 
-  private val _IDT_NAME_FORMAT = (__ \ Fields.TYPE_FN).format[MDtName]
+  private val _IDT_NAME_FORMAT = (__ \ Fields.TYPE_FN).format[MJdTagName]
 
   /** Приведение Reads[Реализация IDocTag] к Reads[IDocTag]. Компилятор не хочет этого делать сам. */
   private def _toIdtReads[X <: IDocTag](implicit rx: Reads[X]): Reads[IDocTag] = {
@@ -43,11 +44,12 @@ object IDocTag {
     // Собрать читалку на основе прочитанного имени тега.
     val tns = MJdTagNames
     val r: Reads[IDocTag] = _IDT_NAME_FORMAT.flatMap[IDocTag] {
+      case tns.QUILL_DELTA    => _toIdtReads[QdTag]
+      case tns.ABS_POS        => _toIdtReads[AbsPos]
       case tns.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
       case tns.LINE_BREAK     => Reads.pure( LineBreak )
       case tns.TEXT           => _toIdtReads[Text]
       case tns.PICTURE        => _toIdtReads[Picture]
-      case tns.ABS_POS        => _toIdtReads[AbsPos]
       case tns.STRIP          => _toIdtReads[Strip]
       case tns.DOCUMENT       => _toIdtReads[JsonDocument]
       case _ => ???
@@ -59,13 +61,14 @@ object IDocTag {
 
       // Всякие теги без контента (и без writes) должны возращать null. Остальные -- JsObject.
       val dataJsObjOrNull = docTag match {
-        case pp: PlainPayload     => _writeJsObj(pp)(PlainPayload.PLAIN_PAYLOAD_FORMAT)
+        case qd: QdTag            => _writeJsObj(qd)( QdTag.QD_TAG_FORMAT )
+        case ap: AbsPos           => _writeJsObj(ap)( AbsPos.ABS_POS_FORMAT )
+        case pp: PlainPayload     => _writeJsObj(pp)( PlainPayload.PLAIN_PAYLOAD_FORMAT )
         case LineBreak            => null
-        case t: Text              => _writeJsObj(t)(Text.TEXT_FORMAT)
-        case p: Picture           => _writeJsObj(p)(Picture.PICTURE_FORMAT)
-        case ap: AbsPos           => _writeJsObj(ap)(AbsPos.ABS_POS_FORMAT)
-        case s: Strip             => _writeJsObj(s)(Strip.STRIP_FORMAT)
-        case d: JsonDocument      => _writeJsObj(d)(JsonDocument.DOCUMENT_FORMAT)
+        case t: Text              => _writeJsObj(t)(  Text.TEXT_FORMAT )
+        case p: Picture           => _writeJsObj(p)(  Picture.PICTURE_FORMAT )
+        case s: Strip             => _writeJsObj(s)(  Strip.STRIP_FORMAT )
+        case d: JsonDocument      => _writeJsObj(d)(  JsonDocument.DOCUMENT_FORMAT )
         case _ => ???
       }
 
@@ -109,7 +112,7 @@ object IDocTag {
 trait IDocTag extends Product {
 
   /** Название тега. */
-  def jdTagName: MDtName
+  def jdTagName: MJdTagName
 
   /** Дочерние теги. */
   def children: Seq[IDocTag]

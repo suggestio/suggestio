@@ -11,6 +11,7 @@ import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags._
+import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp, MQdOpTypes, QdTag}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.MPredicates
@@ -359,8 +360,11 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           ))
         )(
           AbsPos.a( MCoords2di(15, 200) )(
-            Text.a()(
-              PlainPayload( fr3text1EdgeId )
+            QdTag.a()(
+              MQdOp(
+                opType = MQdOpTypes.Insert,
+                edgeInfo = Some(MQdEdgeInfo( fr3text1EdgeId ))
+              )
             )
           ),
           AbsPos.a( MCoords2di(35, 400) )(

@@ -13,9 +13,11 @@ import scala.scalajs.js.|
   */
 package object quill {
 
-  type ContentValue_t = String | Delta
+  type Html_t = String
 
-  type Source_t = js.Object
+  type ContentValue_t = Html_t | Delta
+
+  type Source_t = String    // "api" | ...
 
   type Range_t = js.Object
 
