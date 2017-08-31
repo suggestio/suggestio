@@ -7,7 +7,8 @@ import io.suggest.ad.edit.u.QuillDeltaJsUtil
 import io.suggest.common.MHands
 import io.suggest.jd.render.m.{IJdTagClick, MJdArgs}
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.jd.tags.{JsonDocument, Strip, Text}
+import io.suggest.jd.tags.qd.QdTag
+import io.suggest.jd.tags.{JsonDocument, Strip}
 
 /**
   * Suggest.io
@@ -25,8 +26,39 @@ class DocEditAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     case m: TextChanged =>
-      // TODO
-      noChange
+      val v0 = value
+      if (v0.qDelta contains m.fullDelta) {
+        // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
+        noChange
+      } else {
+        // Текст действительно изменился. Пересобрать json-document.
+        val currTag0 = v0.jdArgs.selectedTag.get
+        val (qdTag2, edges2) = QuillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
+
+        // Собрать новый json-document
+        val jsonDoc2 = v0.jdArgs
+          .template
+          .deepUpdateChild( currTag0, qdTag2 :: Nil )
+          .head
+          .asInstanceOf[JsonDocument]
+
+        val jdArgs1 = v0.jdArgs.copy(
+          template    = jsonDoc2,
+          renderArgs  = v0.jdArgs.renderArgs.withEdges(edges2),
+          selectedTag = Some(qdTag2),
+        )
+        val jdArgs2 = jdArgs1.withJdCss(
+          jdCssFactory.mkJdCss( MJdArgs.singleCssArgs(jdArgs1) )
+        )
+
+        // Залить все данные в новое состояние.
+        val v2 = v0.copy(
+          jdArgs = jdArgs2,
+          qDelta = Some(m.fullDelta)
+        )
+
+        updated(v2)
+      }
 
     // Клик по элементу карточки.
     case m: IJdTagClick =>
@@ -41,11 +73,15 @@ class DocEditAh[M](
           v0.jdArgs.withSelectedTag( Some(m.jdTag) )
         )
         val v2 = m.jdTag match {
-          case t: Text =>
+          case qdt: QdTag =>
             // Нужно собрать и залить текущую дельту текста в состояние.
-            val delta2 = QuillDeltaJsUtil.text2delta(t, v0.jdArgs.renderArgs.edges)
+            val delta2 = QuillDeltaJsUtil.qdTag2delta(qdt, v0.jdArgs.renderArgs.edges)
             v1.withQDelta( Some(delta2) )
-          case _ => v1
+          case _ =>
+            if (v1.qDelta.nonEmpty)
+              v1.withQDelta(None)
+            else
+              v1
         }
         updated( v2 )
       }

@@ -6,7 +6,7 @@ import io.suggest.ad.edit.v.edit.strip.StripEditR
 import io.suggest.ad.edit.v.edit.text.TextEditR
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
-import io.suggest.jd.tags.{Strip, Text}
+import io.suggest.jd.tags.Strip
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -83,15 +83,9 @@ class LkAdEditFormR(
 
         textPropsOptC = p.connect { mroot =>
           for {
-            jdTag   <- mroot.doc.jdArgs.selectedTag
-            jdText  <- jdTag match {
-              case s: Text  => Some(s)
-              case _        => None
-            }
             qDelta  <- mroot.doc.qDelta
           } yield {
             textEditR.PropsVal(
-              jdText = jdText,
               qDelta = qDelta
             )
           }

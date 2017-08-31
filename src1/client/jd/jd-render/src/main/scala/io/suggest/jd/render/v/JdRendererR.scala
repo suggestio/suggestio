@@ -8,13 +8,14 @@ import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.{MQdAttrs, MQdOpTypes, QdTag}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.{HtmlTopNode, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react.Callback
+import org.scalajs.dom.Element
 
 /**
   * Suggest.io
@@ -210,6 +211,7 @@ class JdRendererR(
       .iterator
       .zipWithIndex
       .toVdomArray { case (qdOp, i) =>
+        val key = ^.key := i.toString
         val node = qdOp.opType match {
           // По идее, тут только инзерты.
           case MQdOpTypes.Insert =>
@@ -221,17 +223,12 @@ class JdRendererR(
               e.predicate match {
                 case MPredicates.Text =>
                   // Рендер текста. Нужно отработать аттрибуты рендера текста.
-                  renderQdText( e.text.get, qdOp.attrs )
+                  renderQdText( e.text.get, qdOp.attrs, key )
                 // TODO Надо image через предикат
               }
             }
         }
-
-        // TODO Дописать внутрь тега ключ.
-        <.span(
-          ^.key := i.toString,
-          node
-        )
+        node
       }
     <.div(
       _maybeSelected(qdTag),
@@ -241,30 +238,24 @@ class JdRendererR(
   }
 
   /** Рендер текста. */
-  def renderQdText(text: String, attrsOpt: Option[MQdAttrs]): VdomNode = {
+  def renderQdText(text: String, attrsOpt: Option[MQdAttrs], tm0: TagMod): VdomNode = {
     var acc: VdomNode = text
 
     // Обвешать текст заданной аттрибутикой
-    for (attrs <- attrsOpt) {
+    attrsOpt.filter(_.nonEmpty).fold[Unit] {
+      acc = <.span(tm0, acc)
+    } { attrs =>
       /** Рендер f() только по true-флагу в Set. */
-      def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => VdomNode): Unit = {
+      def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
         for (xSU <- attrs.bold; isEnabled <- xSU.toOption if isEnabled)
-          acc = f
+          acc = f(tm0, acc)
       }
 
-      __rBool(attrs.bold) {
-        <.strong(acc)
-      }
-      __rBool(attrs.italic) {
-        <.em(acc)
-      }
-      __rBool(attrs.underline) {
-        <.u(acc)
-      }
-
-      // TODO Надо и другие особенности текста подцеплять тут...
-
+      __rBool(attrs.bold)( <.strong )
+      __rBool(attrs.italic)( <.em )
+      __rBool(attrs.underline)( <.u )
     }
+
     acc
   }
 

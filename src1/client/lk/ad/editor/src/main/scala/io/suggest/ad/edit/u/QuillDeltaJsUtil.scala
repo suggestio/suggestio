@@ -2,7 +2,7 @@ package io.suggest.ad.edit.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.jd.MJdEditEdge
-import io.suggest.jd.tags.Text
+import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
 import io.suggest.model.n2.edge.MPredicates
@@ -21,18 +21,6 @@ import scala.scalajs.js.{JSON, |}
   * Description: Утиль для работы с quill delta.
   */
 object QuillDeltaJsUtil {
-
-  /** Рендер текстового jd-тега в Delta-текст для запихивания в quill.
-    *
-    * @param t Исходный текстовый тег.
-    * @param edges Карта эджей.
-    * @return Скомпиленная дельта, пригодная для отправки в quill.
-    */
-  def text2delta(t: Text, edges: Map[Int, MJdEditEdge]): Delta = {
-    // TODO Сгенерить дельту
-    new Delta()
-      .insert("test 112345")
-  }
 
   /** Конверсия из QdTag в дельту, понятную quill-редактору.
     *
@@ -180,13 +168,26 @@ object QuillDeltaJsUtil {
     * @param edges0 Исходная карта эджей.
     * @return Инстанс Text и обновлённая карта эджей.
     */
-  def delta2text(d: Delta, edges0: Map[Int, MJdEditEdge]): (QdTag, Map[Int, MJdEditEdge]) = {
+  def delta2qdTag(d: Delta, jdTag0: IDocTag, edges0: Map[Int, MJdEditEdge]): (QdTag, Map[Int, MJdEditEdge]) = {
 
     val textPred = MPredicates.Text
 
+    // Собрать id любых старых эджей текущего тега
+    val oldEdgeIds = jdTag0.deepIter
+      .flatMap {
+        case qd: QdTag => qd :: Nil
+        case _ => Nil
+      }
+      .flatMap(_.ops)
+      .flatMap(_.edgeInfo)
+      .map(_.edgeUid)
+      .toSet
+
+
     // Отсеять все текстовые эджи, они более не актуальны.
-    val edgesNoText = edges0.filter { case (_, e) =>
-      e.predicate != textPred
+    // TODO XXX нужно дропать только то, что относится к текущему QdTag, а не всё сразу.
+    val edgesNoText = edges0.filterNot { case (_, e) =>
+      e.predicate == textPred && oldEdgeIds.contains(e.id)
     }
 
     // Множество edge id, которые уже заняты.

@@ -313,15 +313,21 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         )(
           // Надпись "Верхний блок"
           AbsPos.a( MCoords2di(x = w1.value, y = h1.value) / 3 )(
-            Text.a()(
-              PlainPayload( upperBlockEdgeId )
+            QdTag.a()(
+              MQdOp(
+                opType = MQdOpTypes.Insert,
+                edgeInfo = Some(MQdEdgeInfo( upperBlockEdgeId ))
+              )
             )
           ),
 
           // Надпись "также отображается в плитке"
           AbsPos.a( MCoords2di(x = w1.value/3*2, y = h1.value / 2) )(
-            Text.a()(
-              PlainPayload( alsoDisplayedInGridEdgeId )
+            QdTag.a()(
+              MQdOp(
+                opType = MQdOpTypes.Insert,
+                edgeInfo = Some(MQdEdgeInfo( alsoDisplayedInGridEdgeId ))
+              )
             )
           )
         ),
@@ -338,13 +344,19 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           ))
         )(
           AbsPos.a( MCoords2di(5, 10) )(
-            Text.a()(
-              PlainPayload( descriptionEdgeId )
+            QdTag.a()(
+              MQdOp(
+                opType = MQdOpTypes.Insert,
+                edgeInfo = Some(MQdEdgeInfo( descriptionEdgeId ))
+              )
             )
           ),
           AbsPos.a( MCoords2di(33, 50) )(
-            Text.a()(
-              PlainPayload( descrContentEdgeId )
+            QdTag.a()(
+              MQdOp(
+                opType = MQdOpTypes.Insert,
+                edgeInfo = Some(MQdEdgeInfo( descrContentEdgeId ))
+              )
             )
           )
         ),
@@ -368,8 +380,11 @@ class LkAdEdFormUtil extends MacroLogsImpl {
             )
           ),
           AbsPos.a( MCoords2di(35, 400) )(
-            Text.a()(
-              PlainPayload( fr3text2EdgeId )
+            QdTag.a()(
+              MQdOp(
+                opType = MQdOpTypes.Insert,
+                edgeInfo = Some(MQdEdgeInfo( fr3text2EdgeId ))
+              )
             )
           )
         )
