@@ -411,19 +411,19 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         MJdEditEdge(
           predicate = textPred,
           id        = descrContentEdgeId,
-          text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga" )
+          text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
         ),
 
         // strip3
         MJdEditEdge(
           predicate = textPred,
           id        = fr3text1EdgeId,
-          text      = Some( "lorem ipsum und uber blochHeight wr2 34t" )
+          text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
         ),
         MJdEditEdge(
           predicate = textPred,
           id        = fr3text2EdgeId,
-          text      = Some( "webkit-transition: transform 0.2s linear" )
+          text      = Some( "webkit-transition: transform 0.2s linear\n" )
         )
       )
     )

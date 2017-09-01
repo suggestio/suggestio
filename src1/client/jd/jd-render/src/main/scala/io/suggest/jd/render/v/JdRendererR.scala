@@ -1,22 +1,19 @@
 package io.suggest.jd.render.v
 
 import diode.react.ModelProxy
-import io.suggest.common.html.HtmlConstants
-
-import scalacss.ScalaCssReact._
 import io.suggest.jd.render.m.{IJdAction, JdTagClick, MJdArgs}
 import io.suggest.jd.tags._
-import io.suggest.jd.tags.qd.{MQdAttrs, MQdOpTypes, QdTag}
+import io.suggest.jd.tags.qd.QdTag
 import io.suggest.model.n2.edge.MPredicates
-import io.suggest.primo.ISetUnset
-import japgolly.scalajs.react.vdom.VdomElement
-import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react.Callback
-import org.scalajs.dom.Element
+import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.html_<^._
+
+import scalacss.ScalaCssReact._
 
 /**
   * Suggest.io
@@ -188,12 +185,16 @@ class JdRendererR(
     * @return Элемент vdom.
     */
   def renderQd( qdTag: QdTag ): VdomElement = {
-    val tagMods = qdTag.html.fold[TagMod] {
-      // нет готового html -- пытаемся рендерить по представленю delta.
-      renderQdFromDelta( qdTag )
-    } { htmlStr =>
-      // Есть строка html. Подменяем рендер этой строкой. TODO Избавиться от inner-html рендера, допилив до ума delta-рендер.
-      ^.dangerouslySetInnerHtml := htmlStr
+    val tagMods = {
+      qdTag.html.fold[TagMod] {
+        // нет готового html -- пытаемся рендерить по представленю delta.
+        val qdRrr = new QdRrrHtml(jdArgs, qdTag)
+        // renderQdFromDelta( qdTag )
+        qdRrr.render()
+      } { htmlStr =>
+        // Есть строка html. Подменяем рендер этой строкой. TODO Избавиться от inner-html рендера, допилив до ума delta-рендер.
+        ^.dangerouslySetInnerHtml := htmlStr
+      }
     }
     <.div(
       ^.key := qdTag.hashCode.toString,
@@ -203,80 +204,6 @@ class JdRendererR(
     )
   }
 
-  def renderQdFromDelta( qdTag: QdTag ): VdomNode = {
-    val children = qdTag.ops
-      .iterator
-      // Требуется ранняя разбивка на строки/параграфы/абзацы, т.к. они не слишком явные, и обозначаются как \n прямо внутри строк.
-      .zipWithIndex
-      .toVdomArray { case (qdOp, i) =>
-        val key = ^.key := i.toString
-        val node = qdOp.opType match {
-          // По идее, тут только инзерты.
-          case MQdOpTypes.Insert =>
-            qdOp.edgeInfo.fold[VdomNode] {
-              // TODO Внешний embed?
-              ???
-            } { qdEi =>
-              val e = jdArgs.renderArgs.edges(qdEi.edgeUid)
-              e.predicate match {
-                case MPredicates.Text =>
-                  // Рендер текста. Нужно отработать аттрибуты рендера текста.
-                  renderQdText( e.text.get, qdOp.attrs, key )
-                // TODO Надо image через предикат
-              }
-            }
-        }
-        node
-      }
-    children
-  }
-
-  /** Рендер строки текста без каких-либо аттрибутов. */
-  def renderQdString(text: String, tm0: TagMod): VdomNode = {
-    // Есть тонкости: в конце параграфа ожидается \n.
-    // Если в тексте встречаются \n, то надо это отработать параграфами.
-    val nl = HtmlConstants.NEWLINE_UNIX
-
-    if (text.contains(nl)) {
-      text
-        .split('\n')
-        .toVdomArray { textLine =>
-          <.p(
-            if (textLine.isEmpty)
-              <.br
-            else
-              textLine
-          )
-        }
-    } else {
-      text
-    }
-    // TODO Если в тексте есть повторяющиеся пробелы, то нужно их заменять nbsp?
-  }
-
-
-  /** Рендер текста с учётом возможных аттрибутов. */
-  def renderQdText(text: String, attrsOpt: Option[MQdAttrs], tm0: TagMod): VdomNode = {
-    var acc: VdomNode = renderQdString( text, tm0 )
-
-    // Обвешать текст заданной аттрибутикой
-    for {
-      attrs <- attrsOpt
-      if attrs.nonEmpty
-    } {
-      // Рендер f() только по true-флагу в Set.
-      def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
-        for (boolSU <- boolSuOpt; bool <- boolSU.toOption if bool)
-          acc = f(tm0, acc)
-      }
-
-      __rBool(attrs.bold)( <.strong )
-      __rBool(attrs.italic)( <.em )
-      __rBool(attrs.underline)( <.u )
-    }
-
-    acc
-  }
 
   /**
     * Запуск рендеринга произвольных тегов.
@@ -294,3 +221,4 @@ class JdRendererR(
 
 
 }
+

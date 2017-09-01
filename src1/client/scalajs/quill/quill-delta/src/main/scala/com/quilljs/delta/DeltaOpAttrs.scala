@@ -30,6 +30,6 @@ trait DeltaOpAttrs extends js.Object {
 
   var src: UndefOr[String] = js.undefined
 
-  //var alt: UndefOr[String] = js.undefined
+  var list: UndefOr[String] = js.undefined
 
 }

@@ -125,4 +125,7 @@ object WarnMsgs extends MsgsStaticT {
   /** Неожиданно пустой документ. */
   def UNEXPECTED_EMPTY_DOCUMENT              = E(52)
 
+  /** Отработка какой-то проблемы, связанные с отсутствием завершающего \n в документе. */
+  def QDELTA_FINAL_NEWLINE_PROBLEM           = E(53)
+
 }

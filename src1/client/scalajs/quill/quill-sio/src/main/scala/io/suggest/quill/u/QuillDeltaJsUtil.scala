@@ -81,6 +81,11 @@ class QuillDeltaJsUtil {
     }
   }
 
+  private def _listType2s(attrValue: js.UndefOr[String]): Option[ISetUnset[MQdListType]] = {
+    _string2s(attrValue)
+      .map { _.map(MQdListTypes.withValue) }
+  }
+
   /** Конвертация undefined|"#ffeecc"|null в scala. */
   private def _color2s(attrValue: js.UndefOr[String]): Option[ISetUnset[MColorData]] = {
     _string2s(attrValue)
@@ -105,7 +110,8 @@ class QuillDeltaJsUtil {
       color     = _color2s( attrs.color ),
       link      = _string2s( attrs.link ),
       header    = _val2s( attrs.header ),
-      src       = _string2s( attrs.src )
+      src       = _string2s( attrs.src ),
+      list      = _listType2s( attrs.list )
     )
     if (qdAttrs.isEmpty)
       None
@@ -152,6 +158,8 @@ class QuillDeltaJsUtil {
       doa.header = setUnsetOrNullVal( header )
     for (src <- qdAttrs.src)
       doa.src = js.defined( setUnsetOrNullRef( src ) )
+    for (listSU <- qdAttrs.list)
+      doa.list = setUnsetOrNullRef( listSU.map(_.value) )
 
     // Вернуть результат, если в аккамуляторе есть хоть какие-то данные:
     if (doa.asInstanceOf[js.Dictionary[js.Any]].nonEmpty) {
