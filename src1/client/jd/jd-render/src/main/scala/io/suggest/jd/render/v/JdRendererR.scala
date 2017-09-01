@@ -1,6 +1,7 @@
 package io.suggest.jd.render.v
 
 import diode.react.ModelProxy
+import io.suggest.common.html.HtmlConstants
 
 import scalacss.ScalaCssReact._
 import io.suggest.jd.render.m.{IJdAction, JdTagClick, MJdArgs}
@@ -189,6 +190,7 @@ class JdRendererR(
   def renderQd( qdTag: QdTag ): VdomElement = {
     val children = qdTag.ops
       .iterator
+      // Требуется ранняя разбивка на строки/параграфы/абзацы, т.к. они не слишком явные, и обозначаются как \n прямо внутри строк.
       .zipWithIndex
       .toVdomArray { case (qdOp, i) =>
         val key = ^.key := i.toString
@@ -217,14 +219,18 @@ class JdRendererR(
     )
   }
 
-  /** Рендер текста. */
-  def renderQdText(text: String, attrsOpt: Option[MQdAttrs], tm0: TagMod): VdomNode = {
-    var acc: VdomNode = {
-      // Если в тексте встречаются \n, то надо это отработать параграфами.
+
+  /** Рендер строки текста без каких-либо аттрибутов. */
+  def renderQdString(text: String, tm0: TagMod): VdomNode = {
+    // Есть тонкости: в конце параграфа ожидается \n.
+    // Если в тексте встречаются \n, то надо это отработать параграфами.
+    println(text)
+    val nl = HtmlConstants.NEWLINE_UNIX
+
+    if (text.contains(nl)) {
       text
         .split('\n')
         .toVdomArray { textLine =>
-          // TODO Если в тексте есть повторяющиеся пробелы, то нужно их заменять nbsp?
           <.p(
             if (textLine.isEmpty)
               <.br
@@ -232,15 +238,25 @@ class JdRendererR(
               textLine
           )
         }
+    } else {
+      text
     }
+    // TODO Если в тексте есть повторяющиеся пробелы, то нужно их заменять nbsp?
+  }
+
+
+  /** Рендер текста с учётом возможных аттрибутов. */
+  def renderQdText(text: String, attrsOpt: Option[MQdAttrs], tm0: TagMod): VdomNode = {
+    var acc: VdomNode = renderQdString( text, tm0 )
 
     // Обвешать текст заданной аттрибутикой
-    attrsOpt.filter(_.nonEmpty).fold[Unit] {
-      acc = <.span(tm0, acc)
-    } { attrs =>
-      /** Рендер f() только по true-флагу в Set. */
+    for {
+      attrs <- attrsOpt
+      if attrs.nonEmpty
+    } {
+      // Рендер f() только по true-флагу в Set.
       def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
-        for (xSU <- attrs.bold; isEnabled <- xSU.toOption if isEnabled)
+        for (boolSU <- boolSuOpt; bool <- boolSU.toOption if bool)
           acc = f(tm0, acc)
       }
 

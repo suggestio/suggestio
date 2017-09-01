@@ -15,4 +15,5 @@ libraryDependencies ++= Seq(
   "io.monix"                     %%% "minitest"            % Common.minitestVsn  % Test
 )
 
+testFrameworks += new TestFramework("minitest.runner.Framework")
 

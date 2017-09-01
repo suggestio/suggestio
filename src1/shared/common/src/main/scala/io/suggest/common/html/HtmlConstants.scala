@@ -24,6 +24,8 @@ object HtmlConstants {
 
   val DIEZ                    = "#"
 
+  def NEWLINE_UNIX            = '\n'
+
   @inline
   def TAG_PREFIX              = DIEZ
 

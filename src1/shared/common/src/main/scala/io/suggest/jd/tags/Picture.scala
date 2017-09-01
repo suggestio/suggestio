@@ -37,4 +37,6 @@ case class Picture(
 
   override def children = Nil
 
+  override def deepEdgesUidsIter = Iterator(edgeUid)
+
 }

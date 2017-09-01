@@ -11,6 +11,8 @@ import io.suggest.jd.tags.{JsonDocument, Strip}
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
 
+import scala.scalajs.js.JSON
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -29,6 +31,7 @@ class DocEditAh[M](
 
     case m: TextChanged =>
       val v0 = value
+      println("DELTA = \n " + JSON.stringify(m.fullDelta) )
       if (v0.qDelta contains m.fullDelta) {
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange

@@ -1,10 +1,12 @@
 package io.suggest.jd.tags
 
 import io.suggest.jd.tags.qd.QdTag
+import io.suggest.model.n2.edge.EdgeUid_t
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import scala.reflect.ClassTag
 import scala.runtime.ScalaRunTime
 
 /**
@@ -125,6 +127,25 @@ trait IDocTag extends Product {
       .flatMap { _.deepIter }
   }
 
+  def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
+    deepChildrenIter.flatMap(_.deepEdgesUidsIter)
+  }
+
+  def deepChildrenOfTypeIter[T <: IDocTag : ClassTag]: Iterator[T] = {
+    deepChildrenIter
+      .flatMap {
+        case t: T => t :: Nil
+        case _ => Nil
+      }
+  }
+
+  def deepOfTypeIter[T <: IDocTag : ClassTag]: Iterator[T] = {
+    val chIter = deepChildrenOfTypeIter[T]
+    this match {
+      case t: T => Iterator(t) ++ chIter
+      case _    => chIter
+    }
+  }
 
   // Теги из дерева используются как ключи в Map[X,_] прямо во время рендера.
   // Во время тормозных react-рендеров и перерендеров в браузере, ключи должны **очень** быстро работать,

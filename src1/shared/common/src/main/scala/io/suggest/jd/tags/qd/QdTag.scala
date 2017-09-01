@@ -33,4 +33,11 @@ case class QdTag(
 
   override def children = Nil
 
+  override def deepEdgesUidsIter = {
+    ops
+      .iterator
+      .flatMap(_.edgeInfo)
+      .map(_.edgeUid)
+  }
+
 }

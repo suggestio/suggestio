@@ -5,7 +5,7 @@ import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
@@ -28,7 +28,7 @@ class QuillDeltaJsUtil {
     * @param edges Карта эджей.
     * @return Инстанс js.native-дельты дял отправки в редактор.
     */
-  def qdTag2delta(qd: QdTag, edges: Map[Int, MJdEditEdge]): Delta = {
+  def qdTag2delta(qd: QdTag, edges: Map[EdgeUid_t, MJdEditEdge]): Delta = {
     qd.ops.foldLeft( new Delta() ) { (delta, qdOp) =>
       qdOp.opType match {
         case MQdOpTypes.Insert =>
@@ -168,19 +168,14 @@ class QuillDeltaJsUtil {
     * @param edges0 Исходная карта эджей.
     * @return Инстанс Text и обновлённая карта эджей.
     */
-  def delta2qdTag(d: Delta, jdTag0: IDocTag, edges0: Map[Int, MJdEditEdge]): (QdTag, Map[Int, MJdEditEdge]) = {
+  def delta2qdTag(d: Delta, jdTag0: IDocTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (QdTag, Map[EdgeUid_t, MJdEditEdge]) = {
 
     val textPred = MPredicates.Text
 
     // Собрать id любых старых эджей текущего тега
-    val oldEdgeIds = jdTag0.deepIter
-      .flatMap {
-        case qd: QdTag => qd :: Nil
-        case _ => Nil
-      }
-      .flatMap(_.ops)
-      .flatMap(_.edgeInfo)
-      .map(_.edgeUid)
+    val oldEdgeIds = jdTag0
+      .deepOfTypeIter[QdTag]
+      .flatMap( _.deepEdgesUidsIter )
       .toSet
 
 
@@ -193,11 +188,17 @@ class QuillDeltaJsUtil {
     // Множество edge id, которые уже заняты.
     val busyEdgeIds = edgesNoText.keySet
 
-    var edgeUidCounter = 0
+    // Переменная-счётчик для эджей во время цикла. Можно её запихать в аккамулятор и идти через foldLeft + List.reverse вместо map.
+    var edgeUidCounter = if (busyEdgeIds.isEmpty) {
+      -1
+    } else {
+      busyEdgeIds.max
+    }
 
-    @tailrec def __nextEdgeUid(): Int = {
+    // Получение незанятого id'шника для нового эджа.
+    @tailrec def __nextEdgeUid(): EdgeUid_t = {
+      edgeUidCounter += 1
       if (busyEdgeIds contains edgeUidCounter) {
-        edgeUidCounter += 1
         __nextEdgeUid()
       } else {
         edgeUidCounter
@@ -251,11 +252,11 @@ class QuillDeltaJsUtil {
             .flatMap( deltaAtts2qdAttrs )
         )
       }
-      .toSeq
+      .toList
 
     // Собрать и вернуть результаты исполнения.
     val tag = QdTag( qdOps )
-    val edges2 = edgesNoText ++ IId.els2idMapIter[Int, MJdEditEdge]( newTextEdgesMap.valuesIterator )
+    val edges2 = edgesNoText ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newTextEdgesMap.valuesIterator )
 
     (tag, edges2)
   }
