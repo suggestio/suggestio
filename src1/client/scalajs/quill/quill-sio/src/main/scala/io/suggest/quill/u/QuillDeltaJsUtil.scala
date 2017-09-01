@@ -255,7 +255,10 @@ class QuillDeltaJsUtil {
       .toList
 
     // Собрать и вернуть результаты исполнения.
-    val tag = QdTag( qdOps )
+    val tag = QdTag(
+      html = None,
+      ops  = qdOps
+    )
     val edges2 = edgesNoText ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newTextEdgesMap.valuesIterator )
 
     (tag, edges2)

@@ -188,6 +188,22 @@ class JdRendererR(
     * @return Элемент vdom.
     */
   def renderQd( qdTag: QdTag ): VdomElement = {
+    val tagMods = qdTag.html.fold[TagMod] {
+      // нет готового html -- пытаемся рендерить по представленю delta.
+      renderQdFromDelta( qdTag )
+    } { htmlStr =>
+      // Есть строка html. Подменяем рендер этой строкой. TODO Избавиться от inner-html рендера, допилив до ума delta-рендер.
+      ^.dangerouslySetInnerHtml := htmlStr
+    }
+    <.div(
+      ^.key := qdTag.hashCode.toString,
+      _maybeSelected(qdTag),
+      _clickableOnEdit(qdTag),
+      tagMods
+    )
+  }
+
+  def renderQdFromDelta( qdTag: QdTag ): VdomNode = {
     val children = qdTag.ops
       .iterator
       // Требуется ранняя разбивка на строки/параграфы/абзацы, т.к. они не слишком явные, и обозначаются как \n прямо внутри строк.
@@ -212,19 +228,13 @@ class JdRendererR(
         }
         node
       }
-    <.div(
-      _maybeSelected(qdTag),
-      _clickableOnEdit(qdTag),
-      children
-    )
+    children
   }
-
 
   /** Рендер строки текста без каких-либо аттрибутов. */
   def renderQdString(text: String, tm0: TagMod): VdomNode = {
     // Есть тонкости: в конце параграфа ожидается \n.
     // Если в тексте встречаются \n, то надо это отработать параграфами.
-    println(text)
     val nl = HtmlConstants.NEWLINE_UNIX
 
     if (text.contains(nl)) {

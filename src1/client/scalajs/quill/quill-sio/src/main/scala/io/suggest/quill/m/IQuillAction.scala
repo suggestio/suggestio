@@ -15,6 +15,7 @@ sealed trait IQuillAction extends DAction
 /** Юзер редактирует текст.
   *
   * @param fullDelta Обновлённый полный текст в quill-delta-формате.
+  * @param html строка готового HTML-рендера.
   */
-case class TextChanged(fullDelta: Delta) extends IQuillAction
+case class TextChanged(fullDelta: Delta, html: String) extends IQuillAction
 

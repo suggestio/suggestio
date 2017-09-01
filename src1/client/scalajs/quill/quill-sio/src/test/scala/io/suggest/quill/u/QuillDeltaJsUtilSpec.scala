@@ -25,13 +25,13 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
   private val quillDeltaJsUtil = wire[QuillSioModule].quillDeltaJsUtil
 
 
-
   test("Convert simple plain-text nothing-changing delta into qd-tag with edges") {
     val theString = "Hello world!\n\n"
     val delta1 = new Delta()
       .insert(theString)
     val hwEdgeId: EdgeUid_t = 1
     val jdTag0 = QdTag(
+      html = None,
       ops = Seq(
         MQdOp(
           opType = MQdOpTypes.Insert,
@@ -65,6 +65,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       .insert( newString )
     val hwEdgeId: EdgeUid_t = 1
     val jdTag0 = QdTag(
+      html = None,
       ops = Seq(
         MQdOp(
           opType = MQdOpTypes.Insert,
@@ -114,7 +115,8 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     // Пусть исходный документ будет пустым. Для чистоты эксперимента.
     val edges0 = Map.empty[EdgeUid_t, MJdEditEdge]
     val jdTag0 = QdTag(
-      ops = Nil
+      html = None,
+      ops  = Nil
     )
 
     val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)

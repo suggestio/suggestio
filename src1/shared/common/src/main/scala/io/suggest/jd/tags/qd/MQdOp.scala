@@ -36,8 +36,8 @@ object MQdOp {
 case class MQdOp(
                  opType     : MQdOpType,
                  edgeInfo   : Option[MQdEdgeInfo]  = None,
-                 extEmbed   : Option[MEmbedExt]   = None,
-                 index      : Option[Int]         = None,
+                 extEmbed   : Option[MEmbedExt]    = None,
+                 index      : Option[Int]          = None,
                  attrs      : Option[MQdAttrs]     = None
                )
 

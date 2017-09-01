@@ -30,15 +30,18 @@ class DocEditAh[M](
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
     case m: TextChanged =>
+      println( JSON.stringify( m.fullDelta ) )
       val v0 = value
-      println("DELTA = \n " + JSON.stringify(m.fullDelta) )
+
       if (v0.qDelta contains m.fullDelta) {
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange
+
       } else {
         // Текст действительно изменился. Пересобрать json-document.
         val currTag0 = v0.jdArgs.selectedTag.get
-        val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
+        val (qdTag1, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
+        val qdTag2 = qdTag1.withHtml( Some(m.html) )
 
         // Собрать новый json-document
         val jsonDoc2 = v0.jdArgs
