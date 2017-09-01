@@ -103,6 +103,12 @@ lazy val reactQuillSjs = {
     .dependsOn(commonReactSjs, quillSjs)
 }
 
+/** sio-утиль для sjs-фасадов quill, react-quill, quill-delta и прочих смежных вещей. */
+lazy val quillSioSjs = {
+  Project(id = "quill-sio-sjs", base = file(DIR0 + "client/scalajs/quill/quill-sio"))
+    .dependsOn(reactQuillSjs, quillDeltaSjs)
+}
+
 /** 2016.jan.22: SVG-утиль свалена выведена в отдельный подпроект из www. */
 lazy val svgUtil = {
   val name = "svg-util"
@@ -124,7 +130,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, reactQuillSjs, jdRenderSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -468,7 +474,7 @@ lazy val sio2 = {
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
-      quillDeltaSjs, quillSjs, reactQuillSjs,
+      quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,

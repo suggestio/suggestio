@@ -1,4 +1,4 @@
-package io.suggest.ad.edit.u
+package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.jd.MJdEditEdge
@@ -20,7 +20,7 @@ import scala.scalajs.js.{JSON, |}
   * Created: 30.08.17 18:11
   * Description: Утиль для работы с quill delta.
   */
-object QuillDeltaJsUtil {
+class QuillDeltaJsUtil {
 
   /** Конверсия из QdTag в дельту, понятную quill-редактору.
     *
@@ -75,7 +75,7 @@ object QuillDeltaJsUtil {
 
   /** Конвертация undefined|"..."|null в scala. */
   private def _string2s(attrValue: js.UndefOr[String]): Option[ISetUnset[String]] = {
-    attrValue.toOption.map { colorOrNull =>
+    for (colorOrNull <- attrValue.toOption) yield {
       Option( colorOrNull )
         .fold [ISetUnset[String]] ( UnSetVal ) { SetVal.apply }
     }
@@ -88,7 +88,7 @@ object QuillDeltaJsUtil {
   }
 
   private def _val2s[T <: AnyVal](attrValue: js.UndefOr[T | Null]): Option[ISetUnset[T]] = {
-    attrValue.toOption.map { valueOrNull =>
+    for (valueOrNull <- attrValue.toOption) yield {
       Option(valueOrNull)
         .fold[ISetUnset[T]](UnSetVal) { value =>
           SetVal( value.asInstanceOf[T] )

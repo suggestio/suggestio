@@ -1,10 +1,13 @@
 package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
+import diode.ModelRW
+import io.suggest.ad.edit.c.DocEditAh
+import io.suggest.ad.edit.m.{MAdEditRoot, MDocS}
 import io.suggest.ad.edit.v.edit.strip.{PlusMinusControlsR, StripEditR}
-import io.suggest.ad.edit.v.edit.text.TextEditR
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
+import io.suggest.quill.QuillSioModule
 
 /**
   * Suggest.io
@@ -14,10 +17,13 @@ import io.suggest.jd.render.JdRenderModule
   */
 class LkAdEditModule {
 
-
   lazy val jdRenderModule = wire[JdRenderModule]
 
+  lazy val quillSioModule = wire[QuillSioModule]
+
+
   import jdRenderModule._
+  import quillSioModule._
 
 
   // css deps
@@ -31,11 +37,11 @@ class LkAdEditModule {
 
   lazy val lkAdEditFormR = wire[LkAdEditFormR]
 
-  lazy val textEditR = wire[TextEditR]
-
 
   // circuit deps
   lazy val lkAdEditCircuit = wire[LkAdEditCircuit]
+
+  def docEditAhFactory = (modelRW: ModelRW[MAdEditRoot, MDocS]) => wire[DocEditAh[MAdEditRoot]]
 
 }
 

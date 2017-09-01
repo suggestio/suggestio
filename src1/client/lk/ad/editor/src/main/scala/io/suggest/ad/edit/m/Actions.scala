@@ -21,9 +21,3 @@ sealed trait ILkEditAction extends DAction
   */
 case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends ILkEditAction
 
-
-/** Юзер редактирует текст.
-  *
-  * @param fullDelta Обновлённый полный текст в quill-delta-формате.
-  */
-case class TextChanged(fullDelta: Delta, html: String) extends ILkEditAction

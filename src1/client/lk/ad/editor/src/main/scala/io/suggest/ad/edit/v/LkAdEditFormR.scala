@@ -3,10 +3,10 @@ package io.suggest.ad.edit.v
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAdEditRoot
 import io.suggest.ad.edit.v.edit.strip.StripEditR
-import io.suggest.ad.edit.v.edit.text.TextEditR
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.jd.tags.Strip
+import io.suggest.quill.v.QuillEditorR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -19,14 +19,14 @@ import io.suggest.sjs.common.spa.OptFastEq
   * Description: React-компонент всей формы react-редактора карточек.
   */
 class LkAdEditFormR(
-                     jdCssR         : JdCssR,
-                     jdR            : JdR,
-                     stripEditR     : StripEditR,
-                     val textEditR  : TextEditR
+                     jdCssR             : JdCssR,
+                     jdR                : JdR,
+                     stripEditR         : StripEditR,
+                     val quillEditorR   : QuillEditorR
                    ) {
 
   import MJdArgs.MJdWithArgsFastEq
-  import textEditR.PropsValFastEq
+  import quillEditorR.PropsValFastEq
 
   type Props = ModelProxy[MAdEditRoot]
 
@@ -35,7 +35,7 @@ class LkAdEditFormR(
                               jdPreviewArgsC    : ReactConnectProxy[MJdArgs],
                               jdCssArgsC        : ReactConnectProxy[JdCss],
                               currStripOptC     : ReactConnectProxy[Option[Strip]],
-                              textPropsOptC     : ReactConnectProxy[Option[textEditR.PropsVal]]
+                              textPropsOptC     : ReactConnectProxy[Option[quillEditorR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -55,7 +55,7 @@ class LkAdEditFormR(
         s.currStripOptC { stripEditR.apply },
 
         // Редактор текста
-        s.textPropsOptC { textEditR.apply }
+        s.textPropsOptC { quillEditorR.apply }
 
       )
     }
@@ -85,7 +85,7 @@ class LkAdEditFormR(
           for {
             qDelta  <- mroot.doc.qDelta
           } yield {
-            textEditR.PropsVal(
+            quillEditorR.PropsVal(
               qDelta = qDelta
             )
           }

@@ -1,5 +1,6 @@
 package io.suggest.ad.edit
 
+import diode.ModelRW
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m.{MAdEditFormInit, MAdEditRoot, MDocS}
 import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdRenderArgs}
@@ -17,7 +18,10 @@ import io.suggest.jd.render.v.JdCssFactory
   * Created: 23.08.17 18:28
   * Description: Diode-circuit редактора рекламных карточек второго поколения.
   */
-class LkAdEditCircuit( jdCssFactory: JdCssFactory )
+class LkAdEditCircuit(
+                       jdCssFactory     : JdCssFactory,
+                       docEditAhFactory : (ModelRW[MAdEditRoot, MDocS]) => DocEditAh[MAdEditRoot]
+                     )
   extends CircuitLog[MAdEditRoot]
   with ReactConnector[MAdEditRoot]
 {
@@ -60,10 +64,7 @@ class LkAdEditCircuit( jdCssFactory: JdCssFactory )
 
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
-  private val docAh = new DocEditAh(
-    modelRW       = mDocSRw,
-    jdCssFactory  = jdCssFactory
-  )
+  private val docAh = docEditAhFactory( mDocSRw )
 
 
   override protected def actionHandler: HandlerFunction = {

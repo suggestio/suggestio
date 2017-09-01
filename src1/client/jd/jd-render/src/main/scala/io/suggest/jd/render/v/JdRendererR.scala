@@ -8,7 +8,7 @@ import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd.{MQdAttrs, MQdOpTypes, QdTag}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
-import japgolly.scalajs.react.vdom.{HtmlTopNode, VdomElement}
+import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
@@ -76,26 +76,6 @@ class JdRendererR(
             _maybeSuppress
         }
       }
-  }
-
-  /** Рендер разрыва строки.
-    * Используем lazy val для дедубликации одинаковых инстансов в рамках одного рендера.
-    */
-  lazy val renderLineBreak: VdomElement = {
-    <.br
-  }
-
-
-  /** Рендер текстового объекта: просто рендерить children. */
-  def renderText(t: Text): VdomNode = {
-    <.div(
-      ^.key := t.hashCode.toString,
-      _maybeSelected(t),
-      _clickableOnEdit(t),
-      // TODO Вроде бы должен быть класс title или что-то такое.
-      // TODO в edit-режиме нужна поддержка draggable.
-      renderChildren(t)
-    )
   }
 
 
@@ -239,7 +219,20 @@ class JdRendererR(
 
   /** Рендер текста. */
   def renderQdText(text: String, attrsOpt: Option[MQdAttrs], tm0: TagMod): VdomNode = {
-    var acc: VdomNode = text
+    var acc: VdomNode = {
+      // Если в тексте встречаются \n, то надо это отработать параграфами.
+      text
+        .split('\n')
+        .toVdomArray { textLine =>
+          // TODO Если в тексте есть повторяющиеся пробелы, то нужно их заменять nbsp?
+          <.p(
+            if (textLine.isEmpty)
+              <.br
+            else
+              textLine
+          )
+        }
+    }
 
     // Обвешать текст заданной аттрибутикой
     attrsOpt.filter(_.nonEmpty).fold[Unit] {
@@ -266,8 +259,6 @@ class JdRendererR(
     idt match {
       case qd: QdTag                  => renderQd( qd )
       case pp: PlainPayload           => renderPlainPayload( pp )
-      case LineBreak                  => renderLineBreak
-      case t: Text                    => renderText(t)
       case p: Picture                 => renderPicture( p )
       case ap: AbsPos                 => renderAbsPos(ap)
       case s: Strip                   => renderStrip( s )

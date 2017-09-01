@@ -2,13 +2,14 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
-import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS, TextChanged}
-import io.suggest.ad.edit.u.QuillDeltaJsUtil
+import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS}
 import io.suggest.common.MHands
 import io.suggest.jd.render.m.{IJdTagClick, MJdArgs}
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.qd.QdTag
 import io.suggest.jd.tags.{JsonDocument, Strip}
+import io.suggest.quill.m.TextChanged
+import io.suggest.quill.u.QuillDeltaJsUtil
 
 /**
   * Suggest.io
@@ -17,8 +18,9 @@ import io.suggest.jd.tags.{JsonDocument, Strip}
   * Description: Контроллер событий редактирования документа.
   */
 class DocEditAh[M](
-                    jdCssFactory  : JdCssFactory,
-                    modelRW       : ModelRW[M, MDocS]
+                    modelRW           : ModelRW[M, MDocS],
+                    jdCssFactory      : JdCssFactory,
+                    quillDeltaJsUtil  : QuillDeltaJsUtil
                   )
   extends ActionHandler( modelRW )
 {
@@ -33,7 +35,7 @@ class DocEditAh[M](
       } else {
         // Текст действительно изменился. Пересобрать json-document.
         val currTag0 = v0.jdArgs.selectedTag.get
-        val (qdTag2, edges2) = QuillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
+        val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
 
         // Собрать новый json-document
         val jsonDoc2 = v0.jdArgs
@@ -52,9 +54,9 @@ class DocEditAh[M](
         )
 
         // Залить все данные в новое состояние.
-        val v2 = v0.copy(
-          jdArgs = jdArgs2,
-          qDelta = Some(m.fullDelta)
+        val v2 = v0.withJdArgs(
+          jdArgs = jdArgs2
+          //qDelta = Some(m.fullDelta)    // Не обновляем дельту при редактировании, т.к. у нас тут только initial-значения
         )
 
         updated(v2)
@@ -75,7 +77,7 @@ class DocEditAh[M](
         val v2 = m.jdTag match {
           case qdt: QdTag =>
             // Нужно собрать и залить текущую дельту текста в состояние.
-            val delta2 = QuillDeltaJsUtil.qdTag2delta(qdt, v0.jdArgs.renderArgs.edges)
+            val delta2 = quillDeltaJsUtil.qdTag2delta(qdt, v0.jdArgs.renderArgs.edges)
             v1.withQDelta( Some(delta2) )
           case _ =>
             if (v1.qDelta.nonEmpty)

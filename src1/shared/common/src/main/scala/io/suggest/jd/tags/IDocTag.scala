@@ -47,8 +47,6 @@ object IDocTag {
       case tns.QUILL_DELTA    => _toIdtReads[QdTag]
       case tns.ABS_POS        => _toIdtReads[AbsPos]
       case tns.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
-      case tns.LINE_BREAK     => Reads.pure( LineBreak )
-      case tns.TEXT           => _toIdtReads[Text]
       case tns.PICTURE        => _toIdtReads[Picture]
       case tns.STRIP          => _toIdtReads[Strip]
       case tns.DOCUMENT       => _toIdtReads[JsonDocument]
@@ -64,8 +62,6 @@ object IDocTag {
         case qd: QdTag            => _writeJsObj(qd)( QdTag.QD_TAG_FORMAT )
         case ap: AbsPos           => _writeJsObj(ap)( AbsPos.ABS_POS_FORMAT )
         case pp: PlainPayload     => _writeJsObj(pp)( PlainPayload.PLAIN_PAYLOAD_FORMAT )
-        case LineBreak            => null
-        case t: Text              => _writeJsObj(t)(  Text.TEXT_FORMAT )
         case p: Picture           => _writeJsObj(p)(  Picture.PICTURE_FORMAT )
         case s: Strip             => _writeJsObj(s)(  Strip.STRIP_FORMAT )
         case d: JsonDocument      => _writeJsObj(d)(  JsonDocument.DOCUMENT_FORMAT )

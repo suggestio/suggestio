@@ -1,12 +1,13 @@
-package io.suggest.ad.edit.v.edit.text
+package io.suggest.quill.v
 
 import com.github.zenoamaro.react.quill._
 import com.quilljs.delta.Delta
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.TextChanged
+import diode.react.ModelProxy
 import io.suggest.css.Css
-import io.suggest.react.ReactCommonUtil, ReactCommonUtil.Implicits._
+import io.suggest.quill.m.TextChanged
+import io.suggest.react.ReactCommonUtil
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -18,16 +19,16 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 29.08.17 21:50
-  * Description: react-компонент для редактирования текстового тега.
+  * Description: react-компонент для редактирования текста.
   */
-class TextEditR extends Log {
+class QuillEditorR extends Log {
 
   case class PropsVal(
                        qDelta   : Delta
                      )
   implicit object PropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      true //(a.qDelta eq b.qDelta)
+      a.qDelta eq b.qDelta
     }
   }
 
@@ -40,8 +41,7 @@ class TextEditR extends Log {
     private def onTextChanged(html: String, changeset: Delta, source: Source_t,
                               editorProxy: QuillUnpriveledged): Callback = {
       dispatchOnProxyScopeCB($, TextChanged(
-        fullDelta = editorProxy.getContents(),
-        html      = html
+        fullDelta = editorProxy.getContents()
       ))
     }
 
@@ -56,11 +56,11 @@ class TextEditR extends Log {
             Css.Display.HIDDEN -> propsOpt.isEmpty
           ),
 
-          // Защита нечитабельных багрепортов в console.
+          // Защита от нечитабельных или непонятных багрепортов в console при проблемах инициализации компонента.
           try {
             ReactQuill(
               new ReactQuillPropsR {
-                override val defaultValue = props.qDelta
+                override val value    = props.qDelta
                 override val onChange = _onTextChangedF
               }
             )

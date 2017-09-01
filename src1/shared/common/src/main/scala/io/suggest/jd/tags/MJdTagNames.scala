@@ -58,14 +58,6 @@ object MJdTagNames extends StringEnum[MJdTagName] {
   case object ABS_POS extends MJdTagName("a")
 
 
-  /** line BReak, в частности br-тег в html. */
-  case object LINE_BREAK extends MJdTagName("b")
-
-
-  /** Название тега текстового элемента. */
-  case object TEXT extends MJdTagName("t")
-
-
   /** Тег, хранящий текст, отформатированный через quill-editor. */
   case object QUILL_DELTA extends MJdTagName("q")
 
