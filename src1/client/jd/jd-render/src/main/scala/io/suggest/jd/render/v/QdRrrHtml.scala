@@ -76,7 +76,8 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       case Nil =>
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
-          LOG.error( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
+          //throw new IllegalStateException("CR/LF error: " + qdTag)
+          LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
           // Надо принудительно закрыть кривую строку.
           _handleEol( None )
         }
@@ -129,16 +130,18 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     _linesAccRev ::= (attrsOpt, lineContent)
   }
 
+
   /** Отработать просто текст с возможными \n внутри. */
   private def _insertPlainTextWithNls(text: String, attrsOpt: Option[MQdAttrs]): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
     if (text contains nlCh) {
       // Внутри строки есть символы \n. Это бывает у простых строк без форматирования.
       val splits = text.split( nlCh )
-      val lastSplitIndex = splits.length - 1
-      for ((split, i) <- splits.iterator.zipWithIndex) {
+      // Возможно, тут лишний \n появляется: в самом конце самой последней строки документа. TODO Но почему-то получается, что наоборот: так и надо, иначе возникает ошибка в самой последней строке. Почему?
+      //val lastSplitIndex = splits.length - 1
+      for (split <- splits.iterator) {
         _insertVeryPlainText(split, attrsOpt)
-        if (i < lastSplitIndex)
+        //if (i <= lastSplitIndex)
           _handleEol( None )
       }
 
@@ -288,12 +291,15 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         }
 
         // TODO key как-то надо присвоить? Завернуть в span?
-        lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
-          htag(
-            ^.key := i.toString,
-            line
-          )
-        }
+        lines
+          .iterator
+          .zipWithIndex
+          .toVdomArray { case (line, i) =>
+            htag(
+              ^.key := i.toString,
+              line
+            )
+          }
       }
   }
 

@@ -19,6 +19,13 @@ object MJdCssArgs {
     }
   }
 
+  def singleCssArgs(template: JsonDocument, conf: MJdConf): MJdCssArgs = {
+    MJdCssArgs(
+      templates = template :: Nil,
+      conf      = conf
+    )
+  }
+
 }
 
 

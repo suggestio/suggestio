@@ -2,8 +2,9 @@ package io.suggest.jd.render.v
 
 import diode.react.ModelProxy
 import io.suggest.jd.render.m.MJdArgs
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
+import org.scalajs.dom.DragEvent
 
 /**
   * Suggest.io
@@ -12,7 +13,7 @@ import japgolly.scalajs.react.vdom.VdomElement
   * Description: Компонент для рендера одного документа-блока для карточки.
   */
 class JdR(
-           jdRendererF: ModelProxy[MJdArgs] => JdRendererR
+           jdRendererFactory: ModelProxy[MJdArgs] => JdRendererR
          ) {
 
   type Props = ModelProxy[MJdArgs]
@@ -21,7 +22,7 @@ class JdR(
 
     def render(propsProxy: Props): VdomElement = {
       // Собрать и запустить рендерер:
-      jdRendererF( propsProxy )
+      jdRendererFactory( propsProxy )
         .renderDocument()
     }
 
@@ -37,3 +38,9 @@ class JdR(
 
 }
 
+
+trait IJdBackend {
+
+  def onDragStart(e: DragEvent): Callback
+
+}

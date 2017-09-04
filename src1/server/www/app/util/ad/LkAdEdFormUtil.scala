@@ -394,19 +394,19 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         MJdEditEdge(
           predicate = textPred,
           id        = upperBlockEdgeId,
-          text      = Some( ctx.messages( MsgCodes.`Upper.block` ) ),
+          text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" ),
         ),
         MJdEditEdge(
           predicate = textPred,
           id        = alsoDisplayedInGridEdgeId,
-          text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) )
+          text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) + "\n" )
         ),
 
         // strip2
         MJdEditEdge(
           predicate = textPred,
           id        = descriptionEdgeId,
-          text      = Some( ctx.messages( MsgCodes.`Description` ) )
+          text      = Some( ctx.messages( MsgCodes.`Description` ) + "\n" )
         ),
         MJdEditEdge(
           predicate = textPred,

@@ -17,7 +17,7 @@ class JdRenderModule {
 
   lazy val jdCssR = wire[JdCssR]
 
-  lazy val jdRendererF = (jdArgsProxy: ModelProxy[MJdArgs]) => wire[JdRendererR]
+  lazy val jdRendererFactory = (jdArgsProxy: ModelProxy[MJdArgs]) => wire[JdRendererR]
 
   lazy val jdR = wire[JdR]
 

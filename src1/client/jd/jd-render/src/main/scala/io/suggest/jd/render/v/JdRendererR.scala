@@ -131,7 +131,7 @@ class JdRendererR(
     * Если да, то присвоить ему соотв.стиль для выделения визуально.
     */
   private def _maybeSelected(dt: IDocTag): TagMod = {
-    if (jdArgs.selectedTag.contains(dt)) {
+    if (jdArgs.selectedTag contains dt) {
       jdArgs.jdCss.selectedTag
     } else {
       EmptyVdom
@@ -145,6 +145,23 @@ class JdRendererR(
         // Если не сделать stopPropagation, то наружный strip перехватит клик
         e.stopPropagationCB >> _sendActionCB( JdTagClick(jdt) )
       }
+    } else {
+      EmptyVdom
+    }
+  }
+
+
+  private def _draggableOnEdit(jdt: IDocTag): TagMod = {
+    if (jdArgs.conf.withEdit) {
+      TagMod(
+        ^.draggable := true,
+        ^.onDragStart ==> { e =>
+          Callback {
+            // TODO Обязательно надо в setData() что-то передать, но что-то осмысленное, надо бы.
+            e.dataTransfer.setData("text/plain", "asdasd")
+          }
+        }
+      )
     } else {
       EmptyVdom
     }
@@ -200,6 +217,7 @@ class JdRendererR(
       ^.key := qdTag.hashCode.toString,
       _maybeSelected(qdTag),
       _clickableOnEdit(qdTag),
+      _draggableOnEdit(qdTag),
       tagMods
     )
   }

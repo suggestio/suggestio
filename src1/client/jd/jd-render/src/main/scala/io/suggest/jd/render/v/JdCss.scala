@@ -45,13 +45,10 @@ class JdCss( jdCssArgs: MJdCssArgs )
 
   /** Итератор тегов указанного типа (класса) со всех уровней. */
   private def _jdTagsIter[T <: IDocTag : ClassTag]: Iterator[T] = {
-    jdCssArgs.templates
+    jdCssArgs
+      .templates
       .iterator
-      .flatMap(_.deepChildrenIter)
-      .flatMap {
-        case ap: T => ap :: Nil
-        case _ => Nil
-      }
+      .flatMap(_.deepChildrenOfTypeIter[T])
   }
 
   /** Сборка домена для всех указанных тегов из всех документов. */

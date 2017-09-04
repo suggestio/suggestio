@@ -3,7 +3,7 @@ package io.suggest.ad.edit
 import diode.ModelRW
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m.{MAdEditFormInit, MAdEditRoot, MDocS}
-import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdRenderArgs}
+import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -45,7 +45,7 @@ class LkAdEditCircuit(
           szMult    = 2
         )
         val tpl = mFormInit.form.template
-        val jdCssArgs = MJdArgs.singleCssArgs( tpl, conf )
+        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, conf )
         val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
         MDocS(
           jdArgs = MJdArgs(

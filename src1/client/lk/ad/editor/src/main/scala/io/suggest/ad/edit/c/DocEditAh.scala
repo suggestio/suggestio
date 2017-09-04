@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS}
 import io.suggest.common.MHands
-import io.suggest.jd.render.m.{IJdTagClick, MJdArgs}
+import io.suggest.jd.render.m.{IJdTagClick, MJdCssArgs}
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.qd.QdTag
 import io.suggest.jd.tags.{JsonDocument, Strip}
@@ -29,6 +29,7 @@ class DocEditAh[M](
 
   override protected def handle: PartialFunction[Any, ActionResult[M]] = {
 
+    // Набор текста в wysiwyg-редакторе.
     case m: TextChanged =>
       println( JSON.stringify( m.fullDelta ) )
       val v0 = value
@@ -50,13 +51,13 @@ class DocEditAh[M](
           .head
           .asInstanceOf[JsonDocument]
 
-        val jdArgs1 = v0.jdArgs.copy(
+        val jdArgs2 = v0.jdArgs.copy(
           template    = jsonDoc2,
           renderArgs  = v0.jdArgs.renderArgs.withEdges(edges2),
           selectedTag = Some(qdTag2),
-        )
-        val jdArgs2 = jdArgs1.withJdCss(
-          jdCssFactory.mkJdCss( MJdArgs.singleCssArgs(jdArgs1) )
+          jdCss       = jdCssFactory.mkJdCss(
+            MJdCssArgs.singleCssArgs(jsonDoc2, v0.jdArgs.conf)
+          )
         )
 
         // Залить все данные в новое состояние.
@@ -67,6 +68,7 @@ class DocEditAh[M](
 
         updated(v2)
       }
+
 
     // Клик по элементу карточки.
     case m: IJdTagClick =>
@@ -93,6 +95,7 @@ class DocEditAh[M](
         }
         updated( v2 )
       }
+
 
     // Клик по кнопкам управления размером текущего блока
     case m: BlockSizeBtnClick =>
@@ -123,21 +126,19 @@ class DocEditAh[M](
         Some( bm2 )
       )
 
+      val template2 = v0.jdArgs
+        .template
+        .deepUpdateOne( strip0, strip2 :: Nil )
+        .head
+        .asInstanceOf[JsonDocument]
+
       // Обновить и дерево, и currentTag новым инстансом.
       val v2 = v0.withJdArgs(
-        jdArgs = {
-          val jdArgs1 = v0.jdArgs
-            .withSelectedTag( Some( strip2 ) )
-            .withTemplate(
-              v0.jdArgs
-                .template
-                .deepUpdateOne( strip0, strip2 :: Nil )
-                .head
-                .asInstanceOf[JsonDocument]
-            )
-          val jdCss = jdCssFactory.mkJdCss( MJdArgs.singleCssArgs(jdArgs1) )
-          jdArgs1.withJdCss( jdCss )
-        }
+        jdArgs = v0.jdArgs.copy(
+          selectedTag = Some( strip2 ),
+          template    = template2,
+          jdCss       = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf) )
+        )
       )
 
       updated( v2 )

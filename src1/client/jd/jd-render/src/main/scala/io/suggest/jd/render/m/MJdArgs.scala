@@ -23,17 +23,6 @@ object MJdArgs {
     }
   }
 
-  def singleCssArgs(template: JsonDocument, conf: MJdConf): MJdCssArgs = {
-    MJdCssArgs(
-      templates = template :: Nil,
-      conf      = conf
-    )
-  }
-  /** Сброка инстанса css-args для рендера одного текущего шаблона. */
-  def singleCssArgs(jdArgs: MJdArgs): MJdCssArgs = {
-    singleCssArgs(jdArgs.template, jdArgs.conf)
-  }
-
 }
 
 
