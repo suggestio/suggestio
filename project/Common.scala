@@ -134,8 +134,8 @@ object Common {
     /** Версия wysiwyg-редактора quill, который будем пытаться использовать заместо tinymce.
       * @see [[https://github.com/quilljs/quill]]
       */
-    val QUILL = "1.3.1"
-    val QUILL_DELTA = "3.5.0"
+    val QUILL = "1.3.2"
+    val QUILL_DELTA = "3.6.0"
 
     /** Версия react-quill
       * @see [[https://www.npmjs.com/package/react-quill]]

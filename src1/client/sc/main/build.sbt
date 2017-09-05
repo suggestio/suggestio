@@ -14,9 +14,7 @@ libraryDependencies ++= Seq(
   "io.monix"      %%% "minitest"            % Common.minitestVsn  % Test
 )
 
-testFrameworks += new TestFramework("minitest.runner.Framework")
-
-requiresDOM in Test := true
+//testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // Без зависимостей. Всё минималистичненько.
 skip in packageJSDependencies := true

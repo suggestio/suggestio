@@ -1,23 +1,18 @@
 SiO2 - suggest.io v2.
 
-2016.jan.9: переезд с пачки жестко-связанных hg-репозиториев на на git monorepo
-с сохранением вообще всей истории.
-Кравлер и кое-какие неиспользовуемые/нежелательные подпроекты были пока остались в hg.
 
 Первая сборка:
 
 $ git clone ... sio2
 $ cd sio2
-$ npm install jsdom
+$ npm install jsdom   ## TODO не ясно, надо ли это сейчас?
 $ sbt
-> project www
-> npm install
-> bower install
 
 Первый запуск:
 $ cd src1/server/www/conf
 Инициализировать application.conf, elasticsearch.yml, logger.xml на основе файлов-примеров.
 $ cd ../../../..
 $ sbt
+> project www
 > run
 
