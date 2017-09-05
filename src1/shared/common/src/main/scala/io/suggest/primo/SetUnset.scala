@@ -39,6 +39,7 @@ sealed trait ISetUnset[+T] {
   def toList: List[T]
   def toOption: Option[T]
   def map[A](f: T => A): ISetUnset[A]
+  def foreach[U](f: T => U): Unit
 }
 
 
@@ -53,6 +54,7 @@ case class SetVal[T](value: T) extends ISetUnset[T] {
   override def toList   = value :: Nil
   override def toOption = Some(value)
   override def map[A](f: T => A) = SetVal(f(value))
+  override def foreach[U](f: (T) => U): Unit = f(value)
 }
 
 
@@ -63,6 +65,7 @@ case object UnSetVal extends ISetUnset[Nothing] {
   override def toList   = Nil
   override def toOption = None
   override def map[A](f: Nothing => A) = this
+  override def foreach[U](f: (Nothing) => U): Unit = {}
 
   implicit def univEq: UnivEq[UnSetVal.type] = UnivEq.derive
 }

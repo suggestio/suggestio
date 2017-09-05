@@ -2,12 +2,12 @@ package io.suggest.jd.tags
 
 import io.suggest.jd.tags.qd.QdTag
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
 import scala.reflect.ClassTag
-import scala.runtime.ScalaRunTime
 
 /**
   * Suggest.io
@@ -106,8 +106,19 @@ object IDocTag {
 }
 
 
-/** Интерфейс для всех "тегов" структуры документа. */
-trait IDocTag extends Product {
+/** Интерфейс для всех "тегов" структуры документа.
+  *
+  * IIdentityFastEq:
+  * Теги из дерева используются как ключи в ScalaCSS styleF Map[X,_] прямо во время рендера.
+  * Во время тормозных react-рендеров и перерендеров в браузере, ключи должны **очень** быстро работать,
+  * поэтому всё оптимизировано по самые уши ценой невозможности сравнивания разных тегов между собой.
+  */
+trait IDocTag
+  extends Product
+  // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
+  with IHashCodeLazyVal
+  with IEqualsEq
+{
 
   /** Название тега. */
   def jdTagName: MJdTagName
@@ -147,25 +158,6 @@ trait IDocTag extends Product {
     }
   }
 
-  // Теги из дерева используются как ключи в Map[X,_] прямо во время рендера.
-  // Во время тормозных react-рендеров и перерендеров в браузере, ключи должны **очень** быстро работать,
-  // поэтому всё оптимизировано по самые уши.
-
-  /**
-    * Реализация хеширования, когда операций сравнения на повтоных вызовах сведено к O(1).
-    * Это надо для быстрого рендера, который зависит от Map[IDocTag,_] (внутри scalaCSS Domain).
-    */
-  // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
-  override final lazy val hashCode = ScalaRunTime._hashCode(this)
-
-  /** Сравнивание по указателям, т.е. O(1).
-    * Это чрезвычайно суровое решение, но так надо, чтобы подружить scalaCSS Domains и рендеринг. */
-  override final def equals(obj: Any): Boolean = {
-    obj match {
-      case idt: IDocTag => idt eq this
-      case _ => false
-    }
-  }
 
   /** Найти в дереве указанный тег в дереве и обновить его с помощью функции. */
   def deepUpdateOne[T <: IDocTag](what: T, updated: Seq[IDocTag]): Seq[IDocTag] = {

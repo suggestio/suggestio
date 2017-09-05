@@ -1,5 +1,6 @@
 package io.suggest.jd.render.v
 
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.qd._
@@ -11,6 +12,7 @@ import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
 
+import scalacss.ScalaCssReact._
 import scala.annotation.tailrec
 
 /**
@@ -111,7 +113,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   /** Рендер insert-op с текстом. */
   private def _insertText(text: String, qdOp: MQdOp): Unit = {
     text match {
-      // Специальный случай: тег завершения строки с возможной стилистикой.
+      // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
       case "\n" =>
         _handleEol( qdOp.attrsLine )
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
@@ -154,23 +156,46 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   private def _insertVeryPlainText(text: String, qdOp: MQdOp): Unit = {
     if ( !text.isEmpty ) {
+      // Для максимальной скорости работы и некоторого удобства, тут много переменных.
       var acc: VdomNode = text
 
       // Обвешать текст заданной аттрибутикой
       for {
-        attrs <- qdOp.attrs
+        attrs <- qdOp.attrsText
         if attrs.nonEmpty
       } {
-        // Рендер f() только по true-флагу в Set.
-        def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
-          for (boolSU <- boolSuOpt; bool <- boolSU.toOption if bool)
-            acc = f(acc)
+        // Отрендерить цвет текста и цвет фона, одним style.
+        // Стилизуем текст только через самый внутренний тег оформления текста, управляя этим через переменную.
+        var textStyleOpt = OptionUtil.maybe[TagMod]( attrs.isCssStyled ) {
+          jdArgs.jdCss.textStyleF( attrs )
         }
 
+        // Рендер f() только по true-флагу внутри SetVal().
+        def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
+          for (boolSU <- boolSuOpt; bool <- boolSU.toOption if bool) {
+            var fArgs: List[TagMod] = acc :: Nil
+            for (textStyle <- textStyleOpt) {
+              fArgs ::= textStyle
+              // Опустошить акк стилей, чтобы на след.теге не было повторного остиливания:
+              textStyleOpt = None
+            }
+            acc = f( fArgs: _* )
+          }
+        }
+
+        // Орудуем с использованием __rBool() над различными аттрибутами форматирования текста:
         __rBool(attrs.bold)(<.strong)
         __rBool(attrs.italic)(<.em)
         __rBool(attrs.underline)(<.u)
         __rBool(attrs.strike)(<.s)
+
+        // Если всё ещё требуется навесить css-стили на текст, но ни одного тега не было, то сделать span.
+        for (textStyle <- textStyleOpt) {
+          acc = <.span(
+            textStyle,
+            acc
+          )
+        }
       }
 
       _currLineAccRev ::= acc
@@ -261,79 +286,87 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   private def _renderLinesGroup(attrs: MQdAttrsLine, lines: List[TagMod], tm0: TagMod): TagMod = {
     // list: bullet, ordered
-    attrs.list
-      .flatMap(_.toOption)
-      .map { listType =>
-        val outerTag = listType match {
-          case MQdListTypes.Bullet  => <.ul
-          case MQdListTypes.Ordered => <.ol
+    _renderAttrSuOpt( attrs.list ) { listType =>
+      val outerTag = listType match {
+        case MQdListTypes.Bullet  => <.ul
+        case MQdListTypes.Ordered => <.ol
+      }
+      outerTag(
+        tm0,
+        lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
+          <.li(
+            ^.key := i.toString,
+            line
+          )
         }
-        outerTag(
-          tm0,
-          lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
-            <.li(
+      )
+    }
+    // - header: 1, 2, 3, ...
+    .orElse {
+      _renderAttrSuOpt( attrs.header ) { headerLevel =>
+        val htag = headerLevel match {
+          case 1 => <.h1
+          case 2 => <.h2
+          case 3 => <.h3
+          case 4 => <.h4
+          case 5 => <.h5
+          case _ => <.h6
+        }
+
+        // TODO key как-то надо присвоить? Завернуть в span?
+        lines
+          .iterator
+          .zipWithIndex
+          .toVdomArray { case (line, i) =>
+            htag(
               ^.key := i.toString,
               line
             )
           }
+      }
+    }
+    // code-block
+    .orElse {
+      _renderBoolAttrSuOpt( attrs.codeBlock ) { _ =>
+        <.pre(
+          tm0 :: lines: _*
         )
       }
-      // - header: 1, 2, 3, ...
-      .orElse {
-        attrs.header
-          .flatMap(_.toOption)
-          .map { headerLevel =>
-            val htag = headerLevel match {
-              case 1 => <.h1
-              case 2 => <.h2
-              case 3 => <.h3
-              case 4 => <.h4
-              case 5 => <.h5
-              case _ => <.h6
-            }
-
-            // TODO key как-то надо присвоить? Завернуть в span?
-            lines
-              .iterator
-              .zipWithIndex
-              .toVdomArray { case (line, i) =>
-                htag(
-                  ^.key := i.toString,
-                  line
-                )
-              }
-          }
+    }
+    // blockquote
+    .orElse {
+      _renderBoolAttrSuOpt( attrs.blockQuote ) { _ =>
+        <.blockquote(
+          tm0 :: lines: _*
+        )
       }
-      // code-block
-      .orElse {
-        attrs.codeBlock
-          .flatMap(_.toOption)
-          .filter(identity)
-          .map { _ =>
-            <.pre(
-              tm0 :: lines: _*
-            )
-          }
-      }
-      // blockquote
-      .orElse {
-        attrs.blockQuote
-          .flatMap(_.toOption)
-          .filter(identity)
-          .map { _ =>
-            <.blockquote(
-              tm0 :: lines: _*
-            )
-          }
-      }
-      // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
-      .getOrElse {
-        LOG.error( ErrorMsgs.UNSUPPORTED_TEXT_LINE_ATTRS, msg = attrs )
-        TagMod.fromTraversableOnce( lines )
-      }
+    }
+    // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
+    .getOrElse {
+      LOG.error( ErrorMsgs.UNSUPPORTED_TEXT_LINE_ATTRS, msg = attrs )
+      TagMod.fromTraversableOnce( lines )
+    }
 
     // TODO indent
 
+  }
+
+
+
+  private def __attrSuOptFlatten[T](attrsSuOpt: Option[ISetUnset[T]]): Option[T] = {
+    attrsSuOpt
+      .flatMap(_.toOption)
+  }
+
+  private def _renderAttrSuOpt[T, R](attrsSuOpt: Option[ISetUnset[T]])(f: T => R): Option[R] = {
+    __attrSuOptFlatten( attrsSuOpt )
+      .map(f)
+  }
+
+  private def _renderBoolAttrSuOpt[R](attrsSuOpt: Option[ISetUnset[Boolean]])(f: Boolean => R): Option[R] = {
+    __attrSuOptFlatten( attrsSuOpt )
+      .filter(identity)
+      .map(f)
   }
 
 }

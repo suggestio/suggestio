@@ -2,7 +2,7 @@ package io.suggest.jd.tags.qd
 
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.model.n2.node.meta.colors.MColorData
-import io.suggest.primo.ISetUnset
+import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -13,10 +13,10 @@ import play.api.libs.functional.syntax._
   * Created: 31.08.17 15:45
   * Description: Модель аттрибутов текста.
   */
-object MQdAttrs {
+object MQdAttrsText {
 
   /** Поддержка play-json. */
-  implicit val QD_ATTRS_FORMAT: OFormat[MQdAttrs] = (
+  implicit val QD_ATTRS_FORMAT: OFormat[MQdAttrsText] = (
     (__ \ "b").formatNullable[ISetUnset[Boolean]] and
     (__ \ "i").formatNullable[ISetUnset[Boolean]] and
     (__ \ "u").formatNullable[ISetUnset[Boolean]] and
@@ -27,13 +27,13 @@ object MQdAttrs {
     (__ \ "s").formatNullable[ISetUnset[String]]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MQdAttrs] = UnivEq.derive
+  implicit def univEq: UnivEq[MQdAttrsText] = UnivEq.derive
 
 }
 
 
 /** Класс модели аттрибутов quill-delta-операции. */
-case class MQdAttrs(
+case class MQdAttrsText(
                      bold        : Option[ISetUnset[Boolean]]       = None,
                      italic      : Option[ISetUnset[Boolean]]       = None,
                      underline   : Option[ISetUnset[Boolean]]       = None,
@@ -44,3 +44,12 @@ case class MQdAttrs(
                      src         : Option[ISetUnset[String]]        = None,
                    )
   extends EmptyProduct
+  // Для ScalaCSS-рендера: Максимальная скорость работы `==` и hashCode()
+  with IHashCodeLazyVal
+  with IEqualsEq
+{
+
+  /** Подразумевает ли данный набор аттрибутов необходимость использования css-стилей? */
+  def isCssStyled = color.isDefined || background.isDefined
+
+}

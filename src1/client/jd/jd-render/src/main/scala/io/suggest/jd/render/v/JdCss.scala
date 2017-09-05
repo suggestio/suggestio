@@ -2,9 +2,14 @@ package io.suggest.jd.render.v
 
 import scalacss.DevDefaults._
 import io.suggest.jd.render.m.MJdCssArgs
+import io.suggest.jd.tags.qd.QdTag
 import io.suggest.jd.tags.{AbsPos, IDocTag, Strip}
+import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.primo.ISetUnset
 
 import scala.reflect.ClassTag
+import scalacss.internal.DslBase.ToStyle
+import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -104,6 +109,47 @@ class JdCss( jdCssArgs: MJdCssArgs )
       top( absPos.topLeft.y.px ),
       left( absPos.topLeft.x.px )
     )
+  }
+
+
+  // -------------------------------------------------------------------------------
+  // Text styles
+
+  /** Домен стилей для текстов. */
+  private val _textStylesDomain = {
+    val textAttrsSeq = _jdTagsIter[QdTag]
+      .flatMap(_.ops)
+      .flatMap(_.attrsText.iterator)
+      .filter(_.isCssStyled)
+      .toIndexedSeq
+
+    new Domain.OverSeq( textAttrsSeq )
+  }
+
+  /** styleF для стилей текстов. */
+  val textStyleF = {
+    // Получаем на руки инстансы, чтобы по-быстрее использовать их в цикле и обойтись без lazy call-by-name cssAttr в __applyToColor().
+    val _colorAttr = color
+    val _bgColorAttr = backgroundColor
+
+    styleF( _textStylesDomain ) { attrsText =>
+      var acc = List.empty[ToStyle]
+
+      // Отрендерить аттрибут одного цвета.
+      // cssAttr не всегда обязателен, но его обязательная передача компенсируется через _colorAttr и _bgColorAttr.
+      def __applyToColor(cssAttr: TypedAttr_Color,  mcdSuOpt: Option[ISetUnset[MColorData]]): Unit = {
+        for (colorSU <- mcdSuOpt; color <- colorSU)
+          acc ::= cssAttr( Color(color.hexCode) )
+      }
+
+      __applyToColor( _colorAttr, attrsText.color )
+      __applyToColor( _bgColorAttr, attrsText.background )
+
+      // Вернуть накопленный стиль.
+      styleS(
+        acc: _*
+      )
+    }
   }
 
 }

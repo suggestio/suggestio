@@ -17,7 +17,7 @@ object MQdOp {
     (__ \ "g").formatNullable[MQdEdgeInfo] and
     (__ \ "x").formatNullable[MEmbedExt] and
     (__ \ "i").formatNullable[Int] and
-    (__ \ "a").formatNullable[MQdAttrs] and
+    (__ \ "a").formatNullable[MQdAttrsText] and
     (__ \ "l").formatNullable[MQdAttrsLine]
   )(apply, unlift(unapply))
 
@@ -32,14 +32,15 @@ object MQdOp {
   * @param edgeInfo embed, живущий среди эджей узла.
   * @param extEmbed Внешний embed, описанный прямо здесь.
   * @param index Индекс для retain/delete операций.
-  * @param attrs Аттрибутика операции.
+  * @param attrsText Аттрибуты рендера текста.
+  * @param attrsLine Аттрибуты рендера текущей строки.
   */
 case class MQdOp(
-                 opType     : MQdOpType,
-                 edgeInfo   : Option[MQdEdgeInfo]  = None,
-                 extEmbed   : Option[MEmbedExt]    = None,
-                 index      : Option[Int]          = None,
-                 attrs      : Option[MQdAttrs]     = None,
-                 attrsLine  : Option[MQdAttrsLine] = None
+                  opType     : MQdOpType,
+                  edgeInfo   : Option[MQdEdgeInfo]  = None,
+                  extEmbed   : Option[MEmbedExt]    = None,
+                  index      : Option[Int]          = None,
+                  attrsText  : Option[MQdAttrsText] = None,
+                  attrsLine  : Option[MQdAttrsLine] = None
                )
 

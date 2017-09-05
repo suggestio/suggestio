@@ -102,8 +102,8 @@ class QuillDeltaJsUtil {
   }
 
 
-  def deltaAtts2qdAttrs(attrs: DeltaOpAttrs): Option[MQdAttrs] = {
-    val qdAttrs = MQdAttrs(
+  def deltaAtts2qdAttrs(attrs: DeltaOpAttrs): Option[MQdAttrsText] = {
+    val qdAttrs = MQdAttrsText(
       bold        = _val2s( attrs.bold ),
       italic      = _val2s( attrs.italic ),
       underline   = _val2s( attrs.underline ),
@@ -147,7 +147,7 @@ class QuillDeltaJsUtil {
   def qdAttrsOpt2deltaAttrs(qdOp: MQdOp): js.UndefOr[DeltaOpAttrs] = {
     val doa = js.Object().asInstanceOf[DeltaOpAttrs]
 
-    for (attrsText <- qdOp.attrs)
+    for (attrsText <- qdOp.attrsText)
       qdAttrsTextIntoDeltaAttrs( attrsText, doa )
 
     for (attrsLine <- qdOp.attrsLine)
@@ -166,7 +166,7 @@ class QuillDeltaJsUtil {
   }
 
 
-  def qdAttrsTextIntoDeltaAttrs(qdAttrs: MQdAttrs, attrs0: DeltaOpAttrs): Unit = {
+  def qdAttrsTextIntoDeltaAttrs(qdAttrs: MQdAttrsText, attrs0: DeltaOpAttrs): Unit = {
     for (boldSU <- qdAttrs.bold)
       attrs0.bold = setUnsetOrNullVal( boldSU )
     for (italicSU <- qdAttrs.italic)
@@ -286,7 +286,7 @@ class QuillDeltaJsUtil {
           index = dOp.delete
             .toOption
             .orElse( dOp.retain.toOption ),
-          attrs = deltaAttrsOpt
+          attrsText = deltaAttrsOpt
             .flatMap( deltaAtts2qdAttrs ),
           attrsLine = deltaAttrsOpt
             .flatMap( deltaAttrs2qdAttrsLine )
