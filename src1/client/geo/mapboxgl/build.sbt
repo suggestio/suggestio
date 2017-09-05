@@ -16,10 +16,7 @@ libraryDependencies ++= Seq(
     "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn
 )
 
-//requiresDOM in Test := true
-jsDependencies ++= Seq(
-  // TODO unresolved dependency: org.webjars.npm#geojson-vt, ...
-  //"org.webjars.npm" % "mapbox-gl" % "0.16.0" / "0.16.0/dist/mapbox-gl.js",
-  RuntimeDOM % "test"
-)
+// TODO jsDependencies: unresolved dependency: org.webjars.npm#geojson-vt, ...
+//"org.webjars.npm" % "mapbox-gl" % "0.16.0" / "0.16.0/dist/mapbox-gl.js",
+
 

@@ -40,6 +40,9 @@ trait LkAdEditInit extends InitRouter {
     // Инициализировать circuit
     val circuit = module.lkAdEditCircuit
 
+    // Инициализировать quill для редактора карточе
+    module.quillSioModule.quillInit.forAdEditor()
+
     // Произвести рендер компонента формы:
     val formComponent = circuit.wrap(m => m)(module.lkAdEditFormR.apply)
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )

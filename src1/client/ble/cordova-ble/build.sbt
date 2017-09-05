@@ -14,7 +14,5 @@ libraryDependencies ++= Seq(
   "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn
 )
 
-jsDependencies ++= Seq(
-  RuntimeDOM    % "test"
-)
+//jsEnv in Test := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv
 

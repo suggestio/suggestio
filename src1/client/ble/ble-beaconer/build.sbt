@@ -15,5 +15,3 @@ libraryDependencies ++= Seq(
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
-jsDependencies += RuntimeDOM % "test"
-

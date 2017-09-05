@@ -203,15 +203,15 @@ class JdRendererR(
     */
   def renderQd( qdTag: QdTag ): VdomElement = {
     val tagMods = {
-      qdTag.html.fold[TagMod] {
+      //qdTag.html.fold[TagMod] {
         // нет готового html -- пытаемся рендерить по представленю delta.
         val qdRrr = new QdRrrHtml(jdArgs, qdTag)
         // renderQdFromDelta( qdTag )
         qdRrr.render()
-      } { htmlStr =>
+      //} { htmlStr =>
         // Есть строка html. Подменяем рендер этой строкой. TODO Избавиться от inner-html рендера, допилив до ума delta-рендер.
-        ^.dangerouslySetInnerHtml := htmlStr
-      }
+      //  ^.dangerouslySetInnerHtml := htmlStr
+      //}
     }
     <.div(
       ^.key := qdTag.hashCode.toString,

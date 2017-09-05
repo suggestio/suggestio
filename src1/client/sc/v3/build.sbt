@@ -23,8 +23,6 @@ libraryDependencies ++= Seq(
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
-requiresDOM in Test := true
-
 // TODO Надо бы выставлять это на ci, но НЕ выставлять на продакшенах.
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 

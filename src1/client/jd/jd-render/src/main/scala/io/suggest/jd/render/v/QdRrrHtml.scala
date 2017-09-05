@@ -6,7 +6,7 @@ import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
@@ -45,7 +45,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     * Затем можно reverse и последовательно группировать по ключу,
     * чтобы отработать пакетное форматирование, распространяющиееся на неск.строк (list'ы например).
     */
-  private var _linesAccRev: List[(Option[MQdAttrs], TagMod)] = Nil
+  private var _linesAccRev: List[(Option[MQdAttrsLine], TagMod)] = Nil
 
 
   /** Набор delta-операций, подлежащих проработке.
@@ -77,9 +77,9 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
           //throw new IllegalStateException("CR/LF error: " + qdTag)
-          LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
+          //LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
           // Надо принудительно закрыть кривую строку.
-          _handleEol( None )
+          _handleEol()
         }
         // Всё ок, как и ожидалось. Перейти к рендеру строк.
         _renderLines()
@@ -100,7 +100,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
           e.predicate match {
             case MPredicates.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
-              _insertText( e.text.get, qdOp.attrs )
+              _insertText( e.text.get, qdOp )
             // TODO Надо осилить image через предикат
           }
         }
@@ -109,20 +109,20 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Рендер insert-op с текстом. */
-  private def _insertText(text: String, attrsOpt: Option[MQdAttrs]): Unit = {
+  private def _insertText(text: String, qdOp: MQdOp): Unit = {
     text match {
       // Специальный случай: тег завершения строки с возможной стилистикой.
       case "\n" =>
-        _handleEol(attrsOpt)
+        _handleEol( qdOp.attrsLine )
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
       case _ =>
-        _insertPlainTextWithNls(text, attrsOpt)
+        _insertPlainTextWithNls(text, qdOp)
     }
   }
 
 
   /** Отработать конец строки. */
-  private def _handleEol(attrsOpt: Option[MQdAttrs]): Unit = {
+  private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None): Unit = {
     // Это операция рендера накопленной ранее строки. Развернуть отрендеренный контент текущей строки.
     val currLineContent = _currLineAccRev.reverse
     _currLineAccRev = Nil
@@ -132,33 +132,33 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Отработать просто текст с возможными \n внутри. */
-  private def _insertPlainTextWithNls(text: String, attrsOpt: Option[MQdAttrs]): Unit = {
+  private def _insertPlainTextWithNls(text: String, qdOp: MQdOp): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
     if (text contains nlCh) {
       // Внутри строки есть символы \n. Это бывает у простых строк без форматирования.
       val splits = text.split( nlCh )
       // Возможно, тут лишний \n появляется: в самом конце самой последней строки документа. TODO Но почему-то получается, что наоборот: так и надо, иначе возникает ошибка в самой последней строке. Почему?
-      //val lastSplitIndex = splits.length - 1
-      for (split <- splits.iterator) {
-        _insertVeryPlainText(split, attrsOpt)
-        //if (i <= lastSplitIndex)
-          _handleEol( None )
+      val lastSplitIndex = splits.length - 1
+      for ((split, i) <- splits.iterator.zipWithIndex) {
+        _insertVeryPlainText(split, qdOp)
+        if (i < lastSplitIndex)
+          _handleEol()
       }
 
     } else {
       // Текст без переносов строк.
-      _insertVeryPlainText(text, attrsOpt)
+      _insertVeryPlainText(text, qdOp)
     }
   }
 
 
-  private def _insertVeryPlainText(text: String, attrsOpt: Option[MQdAttrs]): Unit = {
+  private def _insertVeryPlainText(text: String, qdOp: MQdOp): Unit = {
     if ( !text.isEmpty ) {
       var acc: VdomNode = text
 
       // Обвешать текст заданной аттрибутикой
       for {
-        attrs <- attrsOpt
+        attrs <- qdOp.attrs
         if attrs.nonEmpty
       } {
         // Рендер f() только по true-флагу в Set.
@@ -170,6 +170,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         __rBool(attrs.bold)(<.strong)
         __rBool(attrs.italic)(<.em)
         __rBool(attrs.underline)(<.u)
+        __rBool(attrs.strike)(<.s)
       }
 
       _currLineAccRev ::= acc
@@ -186,11 +187,37 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       .iterator
       .zipWithIndex
       .foldLeft( LinesRrrAcc() ) { case (acc0, ((attrsOpt, line), i)) =>
-        val keyAttr = ^.key := i.toString
+        val iStr = i.toString
+        val keyAttr = ^.key := iStr
 
-        if (attrsOpt.exists(_.nonEmpty)) {
+        // Отработать аттрибуты строки, если они есть.
+        attrsOpt.filter(_.nonEmpty).fold {
+          // Нет строковых аттрибутов у текущей строки. Возможно, надо опустошить текущую группу.
+          // TODO дедублицировать с аналогичным кодом внутри if-then.
+          val renderAcc1 = acc0.currLineGrpAttrs.fold {
+            // Нет аттрибутов -- нет и текущей группы.
+            acc0.renderAcc
+          } { grpAttrs =>
+            // Есть уже открытая группа с аттрибутами. Закрыть и отрендерить её.
+            _renderLinesGroup(grpAttrs, acc0.currLineGrpAcc, keyAttr) :: acc0.renderAcc
+          }
+
+          // Текущая строка аттрибутов не имеет, поэтому можно её сразу же рендерить без группирования.
+          val firstLine = _renderLineAlone(
+            line,
+            ^.key := (iStr + "s")   // чтобы не было duplicate key
+          )
+          val renderAcc2 = firstLine :: renderAcc1
+
+          // Залить весь рендер в аккамулятор, сбросив curr-grp поля в исходное состояние.
+          acc0.copy(
+            renderAcc         = renderAcc2,
+            currLineGrpAttrs  = None,
+            currLineGrpAcc    = Nil
+          )
+
+        } { attrs =>
           // Есть какие-то аттрибуты строки. Надо понять, совпадает ли это с текущей группой.
-          val attrs = attrsOpt.get
           if (acc0.currLineGrpAttrs contains attrs) {
             // Аттрибуты такие же, как и у предыдущих строк. Запихиваем в акк группы.
             acc0.copy(
@@ -216,26 +243,6 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
             )
           }
 
-        } else {
-          // Нет строковых аттрибутов у текущей строки. Возможно, надо опустошить текущую группу.
-          // TODO дедублицировать с аналогичным кодом внутри if-then.
-          val renderAcc1 = acc0.currLineGrpAttrs.fold {
-            // Нет аттрибутов -- нет и текущей группы.
-            acc0.renderAcc
-          } { grpAttrs =>
-            // Есть уже открытая группа с аттрибутами. Закрыть и отрендерить её.
-            _renderLinesGroup(grpAttrs, acc0.currLineGrpAcc, keyAttr) :: acc0.renderAcc
-          }
-
-          // Текущая строка аттрибутов не имеет, поэтому можно её сразу же рендерить без группирования.
-          val renderAcc2 = _renderLineAlone( line, keyAttr ) :: renderAcc1
-
-          // Залить весь рендер в аккамулятор, сбросив curr-grp поля в исходное состояние.
-          acc0.copy(
-            renderAcc         = renderAcc2,
-            currLineGrpAttrs  = None,
-            currLineGrpAcc    = Nil
-          )
         }
       }
 
@@ -252,55 +259,81 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     )
   }
 
-  private def _renderLinesGroup(attrs: MQdAttrs, lines: List[TagMod], tm0: TagMod): TagMod = {
-    // У группы строк могут быть такие аттрибуты:
-    // - header: 1, 2, 3.
-    // - list: ordered, bullet
-    attrs.header
+  private def _renderLinesGroup(attrs: MQdAttrsLine, lines: List[TagMod], tm0: TagMod): TagMod = {
+    // list: bullet, ordered
+    attrs.list
       .flatMap(_.toOption)
-      .fold {
-        // Это не header
-        attrs.list
-          .flatMap(_.toOption)
-          .fold {
-            // Хз что, какой-то неподдерживаемый сейчас аттрибут
-            LOG.error( ErrorMsgs.UNSUPPORTED_TEXT_LINE_ATTRS, msg = attrs )
-            TagMod.fromTraversableOnce( lines )
-          } { listType =>
-            val outerTag = listType match {
-              case MQdListTypes.Bullet  => <.ul
-              case MQdListTypes.Ordered => <.ol
-            }
-            outerTag(
-              tm0,
-              lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
-                <.li(
-                  ^.key := i.toString,
-                  line
-                )
-              }
-            )
-          }
-
-      } { headerLevel =>
-        val htag = headerLevel match {
-          case 1 => <.h1
-          case 2 => <.h2
-          case 3 => <.h3
-          case _ => <.h4
+      .map { listType =>
+        val outerTag = listType match {
+          case MQdListTypes.Bullet  => <.ul
+          case MQdListTypes.Ordered => <.ol
         }
-
-        // TODO key как-то надо присвоить? Завернуть в span?
-        lines
-          .iterator
-          .zipWithIndex
-          .toVdomArray { case (line, i) =>
-            htag(
+        outerTag(
+          tm0,
+          lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
+            <.li(
               ^.key := i.toString,
               line
             )
           }
+        )
       }
+      // - header: 1, 2, 3, ...
+      .orElse {
+        attrs.header
+          .flatMap(_.toOption)
+          .map { headerLevel =>
+            val htag = headerLevel match {
+              case 1 => <.h1
+              case 2 => <.h2
+              case 3 => <.h3
+              case 4 => <.h4
+              case 5 => <.h5
+              case _ => <.h6
+            }
+
+            // TODO key как-то надо присвоить? Завернуть в span?
+            lines
+              .iterator
+              .zipWithIndex
+              .toVdomArray { case (line, i) =>
+                htag(
+                  ^.key := i.toString,
+                  line
+                )
+              }
+          }
+      }
+      // code-block
+      .orElse {
+        attrs.codeBlock
+          .flatMap(_.toOption)
+          .filter(identity)
+          .map { _ =>
+            <.pre(
+              tm0 :: lines: _*
+            )
+          }
+      }
+      // blockquote
+      .orElse {
+        attrs.blockQuote
+          .flatMap(_.toOption)
+          .filter(identity)
+          .map { _ =>
+            <.blockquote(
+              tm0 :: lines: _*
+            )
+          }
+      }
+      // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
+      .getOrElse {
+        LOG.error( ErrorMsgs.UNSUPPORTED_TEXT_LINE_ATTRS, msg = attrs )
+        TagMod.fromTraversableOnce( lines )
+      }
+
+    // TODO indent
+
   }
 
 }
@@ -312,9 +345,9 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   * @param currLineGrpAcc Аккамулятор текущей группы строк.
   */
 protected case class LinesRrrAcc(
-                                  renderAcc         : List[TagMod] = Nil,
-                                  currLineGrpAttrs  : Option[MQdAttrs] = None,
-                                  currLineGrpAcc    : List[TagMod] = Nil
+                                  renderAcc         : List[TagMod]          = Nil,
+                                  currLineGrpAttrs  : Option[MQdAttrsLine]  = None,
+                                  currLineGrpAcc    : List[TagMod]          = Nil
                                 )
 
 

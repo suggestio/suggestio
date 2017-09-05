@@ -43,7 +43,7 @@ class QuillDeltaJsUtil {
               ???
             }
             .get
-          delta.insert( arg1, qdAttrsOpt2deltaAttrs(qdOp.attrs) )
+          delta.insert( arg1, qdAttrsOpt2deltaAttrs(qdOp) )
 
         case MQdOpTypes.Delete =>
           delta.delete(
@@ -53,7 +53,7 @@ class QuillDeltaJsUtil {
         case MQdOpTypes.Retain =>
           delta.retain(
             length     = qdOp.index.get,
-            attributes = qdAttrsOpt2deltaAttrs(qdOp.attrs)
+            attributes = qdAttrsOpt2deltaAttrs(qdOp)
           )
       }
     }
@@ -104,20 +104,30 @@ class QuillDeltaJsUtil {
 
   def deltaAtts2qdAttrs(attrs: DeltaOpAttrs): Option[MQdAttrs] = {
     val qdAttrs = MQdAttrs(
-      bold      = _val2s( attrs.bold ),
-      italic    = _val2s( attrs.italic ),
-      underline = _val2s( attrs.underline ),
-      color     = _color2s( attrs.color ),
-      link      = _string2s( attrs.link ),
-      header    = _val2s( attrs.header ),
-      src       = _string2s( attrs.src ),
-      list      = _listType2s( attrs.list )
+      bold        = _val2s( attrs.bold ),
+      italic      = _val2s( attrs.italic ),
+      underline   = _val2s( attrs.underline ),
+      strike      = _val2s( attrs.strike ),
+      color       = _color2s( attrs.color ),
+      background  = _color2s( attrs.background ),
+      link        = _string2s( attrs.link ),
+      src         = _string2s( attrs.src )
     )
-    if (qdAttrs.isEmpty)
-      None
-    else
-      Some(qdAttrs)
+    qdAttrs.optional
   }
+
+
+  def deltaAttrs2qdAttrsLine(attrs: DeltaOpAttrs): Option[MQdAttrsLine] = {
+    val qdAttrs = MQdAttrsLine(
+      header      = _val2s( attrs.header ),
+      list        = _listType2s( attrs.list ),
+      indent      = _val2s( attrs.indent ),
+      codeBlock   = _val2s( attrs.`code-block` ),
+      blockQuote  = _val2s( attrs.blockquote )
+    )
+    qdAttrs.optional
+  }
+
 
   def setUnsetOrNullVal[T <: AnyVal](su: ISetUnset[T]): T | Null = {
     su match {
@@ -134,32 +144,14 @@ class QuillDeltaJsUtil {
   }
 
 
-  def qdAttrsOpt2deltaAttrs(qdAttrsOpt: Option[MQdAttrs]): js.UndefOr[DeltaOpAttrs] = {
-    if (qdAttrsOpt.isEmpty) {
-      js.undefined
-    } else {
-      qdAttrs2deltaAttrs( qdAttrsOpt.get )
-    }
-  }
-  def qdAttrs2deltaAttrs(qdAttrs: MQdAttrs): js.UndefOr[DeltaOpAttrs] = {
+  def qdAttrsOpt2deltaAttrs(qdOp: MQdOp): js.UndefOr[DeltaOpAttrs] = {
     val doa = js.Object().asInstanceOf[DeltaOpAttrs]
 
-    for (boldSU <- qdAttrs.bold)
-      doa.bold = setUnsetOrNullVal( boldSU )
-    for (italicSU <- qdAttrs.italic)
-      doa.italic = setUnsetOrNullVal( italicSU )
-    for (underlineSU <- qdAttrs.underline)
-      doa.underline = setUnsetOrNullVal( underlineSU )
-    for (colorSU <- qdAttrs.color)
-      doa.color = setUnsetOrNullRef( colorSU.map(_.hexCode) )
-    for (link <- qdAttrs.link)
-      doa.link = js.defined( setUnsetOrNullRef( link ) )
-    for (header <- qdAttrs.header)
-      doa.header = setUnsetOrNullVal( header )
-    for (src <- qdAttrs.src)
-      doa.src = js.defined( setUnsetOrNullRef( src ) )
-    for (listSU <- qdAttrs.list)
-      doa.list = setUnsetOrNullRef( listSU.map(_.value) )
+    for (attrsText <- qdOp.attrs)
+      qdAttrsTextIntoDeltaAttrs( attrsText, doa )
+
+    for (attrsLine <- qdOp.attrsLine)
+      qdAttrsLineIntoDeltaAttrs( attrsLine, doa )
 
     // Вернуть результат, если в аккамуляторе есть хоть какие-то данные:
     if (doa.asInstanceOf[js.Dictionary[js.Any]].nonEmpty) {
@@ -167,6 +159,44 @@ class QuillDeltaJsUtil {
     } else {
       js.undefined
     }
+  }
+
+  private def _colorSUToStringSU(mcdSU: ISetUnset[MColorData]): ISetUnset[String] = {
+    mcdSU.map(_.hexCode)
+  }
+
+
+  def qdAttrsTextIntoDeltaAttrs(qdAttrs: MQdAttrs, attrs0: DeltaOpAttrs): Unit = {
+    for (boldSU <- qdAttrs.bold)
+      attrs0.bold = setUnsetOrNullVal( boldSU )
+    for (italicSU <- qdAttrs.italic)
+      attrs0.italic = setUnsetOrNullVal( italicSU )
+    for (underlineSU <- qdAttrs.underline)
+      attrs0.underline = setUnsetOrNullVal( underlineSU )
+    for (strikeSU <- qdAttrs.strike)
+      attrs0.strike = setUnsetOrNullVal( strikeSU )
+    for (colorSU <- qdAttrs.color)
+      attrs0.color = js.defined( setUnsetOrNullRef( _colorSUToStringSU(colorSU) ) )
+    for (backgroundSU <- qdAttrs.background)
+      attrs0.background = js.defined( setUnsetOrNullRef( _colorSUToStringSU(backgroundSU) ) )
+    for (link <- qdAttrs.link)
+      attrs0.link = js.defined( setUnsetOrNullRef( link ) )
+    for (src <- qdAttrs.src)
+      attrs0.src = js.defined( setUnsetOrNullRef( src ) )
+  }
+
+
+  def qdAttrsLineIntoDeltaAttrs(qdAttrsLine: MQdAttrsLine, attrs0: DeltaOpAttrs): Unit = {
+    for (headerSU <- qdAttrsLine.header)
+      attrs0.header = setUnsetOrNullVal( headerSU )
+    for (listSU <- qdAttrsLine.list)
+      attrs0.list = setUnsetOrNullRef( listSU.map(_.value) )
+    for (indentSU <- qdAttrsLine.indent)
+      attrs0.indent = setUnsetOrNullVal( indentSU )
+    for (codeBlockSU <- qdAttrsLine.codeBlock)
+      attrs0.`code-block` = setUnsetOrNullVal( codeBlockSU )
+    for (blockQuoteSU <- qdAttrsLine.blockQuote)
+      attrs0.blockquote = setUnsetOrNullVal( blockQuoteSU )
   }
 
 
@@ -220,6 +250,7 @@ class QuillDeltaJsUtil {
     val qdOps = d.ops
       .toIterator
       .map { dOp =>
+        val deltaAttrsOpt = dOp.attributes.toOption
         MQdOp(
           opType = deltaOp2qdType( dOp ),
           edgeInfo = dOp.insert.toOption.flatMap { raw =>
@@ -255,9 +286,10 @@ class QuillDeltaJsUtil {
           index = dOp.delete
             .toOption
             .orElse( dOp.retain.toOption ),
-          attrs = dOp.attributes
-            .toOption
-            .flatMap( deltaAtts2qdAttrs )
+          attrs = deltaAttrsOpt
+            .flatMap( deltaAtts2qdAttrs ),
+          attrsLine = deltaAttrsOpt
+            .flatMap( deltaAttrs2qdAttrsLine )
         )
       }
       .toList

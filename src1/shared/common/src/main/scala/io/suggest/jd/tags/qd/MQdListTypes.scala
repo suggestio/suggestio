@@ -15,10 +15,10 @@ import play.api.libs.json.Format
 object MQdListTypes extends StringEnum[MQdListType] {
 
   /** Тип списка: нумерованный список. */
-  case object Ordered extends MQdListType("ordered")
+  case object Ordered extends MQdListType( "ordered" )
 
   /** Тип списка: маркерованный список. */
-  case object Bullet extends MQdListType("bullet")
+  case object Bullet extends MQdListType( "bullet" )
 
   override val values = findValues
 

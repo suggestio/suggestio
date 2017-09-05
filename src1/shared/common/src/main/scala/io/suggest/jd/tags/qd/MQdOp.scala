@@ -17,7 +17,8 @@ object MQdOp {
     (__ \ "g").formatNullable[MQdEdgeInfo] and
     (__ \ "x").formatNullable[MEmbedExt] and
     (__ \ "i").formatNullable[Int] and
-    (__ \ "a").formatNullable[MQdAttrs]
+    (__ \ "a").formatNullable[MQdAttrs] and
+    (__ \ "l").formatNullable[MQdAttrsLine]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MQdOp] = UnivEq.derive
@@ -38,6 +39,7 @@ case class MQdOp(
                  edgeInfo   : Option[MQdEdgeInfo]  = None,
                  extEmbed   : Option[MEmbedExt]    = None,
                  index      : Option[Int]          = None,
-                 attrs      : Option[MQdAttrs]     = None
+                 attrs      : Option[MQdAttrs]     = None,
+                 attrsLine  : Option[MQdAttrsLine] = None
                )
 

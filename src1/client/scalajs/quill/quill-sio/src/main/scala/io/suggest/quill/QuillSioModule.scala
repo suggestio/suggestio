@@ -1,7 +1,7 @@
 package io.suggest.quill
 
 import com.softwaremill.macwire._
-import io.suggest.quill.u.QuillDeltaJsUtil
+import io.suggest.quill.u.{QuillDeltaJsUtil, QuillInit}
 import io.suggest.quill.v.QuillEditorR
 
 /**
@@ -15,5 +15,7 @@ class QuillSioModule {
   lazy val quillEditorR = wire[QuillEditorR]
 
   lazy val quillDeltaJsUtil = wire[QuillDeltaJsUtil]
+
+  lazy val quillInit = wire[QuillInit]
 
 }

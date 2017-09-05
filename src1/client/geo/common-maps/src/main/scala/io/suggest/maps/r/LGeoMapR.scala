@@ -61,8 +61,8 @@ object LGeoMapR {
     new LMapPropsR {
       override val center    = MapsUtil.geoPoint2LatLng( v.props.center )
       override val zoom      = v.props.zoom
-      // Значение требует markercluster, цифра взята почти с потолка:
-      override val maxZoom   = 16
+      // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
+      override val maxZoom   = 18
       override val className = cssClass
       override val useFlyTo  = true
       override val onLocationFound = {

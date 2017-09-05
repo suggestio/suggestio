@@ -6,6 +6,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.quill.m.TextChanged
+import io.suggest.quill.u.QuillInit
 import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
@@ -21,7 +22,10 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
   * Created: 29.08.17 21:50
   * Description: react-компонент для редактирования текста.
   */
-class QuillEditorR extends Log {
+class QuillEditorR(
+                    quillInit: QuillInit
+                  )
+  extends Log {
 
   case class PropsVal(
                        qDelta   : Delta
@@ -35,6 +39,7 @@ class QuillEditorR extends Log {
 
   type Props = ModelProxy[Option[PropsVal]]
 
+
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback реагирования на изменение текста в редакторе. */
@@ -47,6 +52,8 @@ class QuillEditorR extends Log {
     }
 
     private val _onTextChangedF = ReactCommonUtil.cbFun4ToJsCb( onTextChanged )
+
+    private val _quillModulesConf = quillInit.adEditorModules
 
     def render(propsProxy: Props): VdomElement = {
       val propsOpt = propsProxy.value
@@ -63,6 +70,7 @@ class QuillEditorR extends Log {
               new ReactQuillPropsR {
                 override val value    = props.qDelta
                 override val onChange = _onTextChangedF
+                override val modules  = _quillModulesConf
               }
             )
           } catch {
@@ -72,7 +80,6 @@ class QuillEditorR extends Log {
           }
         )
       }
-
     }
 
   }

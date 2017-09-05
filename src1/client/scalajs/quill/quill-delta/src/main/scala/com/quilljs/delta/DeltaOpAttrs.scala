@@ -21,8 +21,12 @@ trait DeltaOpAttrs extends js.Object {
 
   var underline: UndefOr[Boolean | Null] = js.undefined
 
+  var strike: UndefOr[Boolean | Null] = js.undefined
+
   /** #rrggbb or #rgb or ... */
   var color: UndefOr[String] = js.undefined
+
+  var background: UndefOr[String] = js.undefined
 
   var link: UndefOr[String] = js.undefined
 
@@ -31,5 +35,11 @@ trait DeltaOpAttrs extends js.Object {
   var src: UndefOr[String] = js.undefined
 
   var list: UndefOr[String] = js.undefined
+
+  var indent: UndefOr[Int | Null] = js.undefined
+
+  var `code-block`: UndefOr[Boolean | Null] = js.undefined
+
+  var blockquote: UndefOr[Boolean | Null] = js.undefined
 
 }

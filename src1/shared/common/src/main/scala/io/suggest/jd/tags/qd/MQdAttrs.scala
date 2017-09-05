@@ -20,11 +20,11 @@ object MQdAttrs {
     (__ \ "b").formatNullable[ISetUnset[Boolean]] and
     (__ \ "i").formatNullable[ISetUnset[Boolean]] and
     (__ \ "u").formatNullable[ISetUnset[Boolean]] and
+    (__ \ "r").formatNullable[ISetUnset[Boolean]] and
     (__ \ "c").formatNullable[ISetUnset[MColorData]] and
+    (__ \ "g").formatNullable[ISetUnset[MColorData]] and
     (__ \ "l").formatNullable[ISetUnset[String]] and
-    (__ \ "h").formatNullable[ISetUnset[Int]] and
-    (__ \ "s").formatNullable[ISetUnset[String]] and
-    (__ \ "t").formatNullable[ISetUnset[MQdListType]]
+    (__ \ "s").formatNullable[ISetUnset[String]]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MQdAttrs] = UnivEq.derive
@@ -37,10 +37,10 @@ case class MQdAttrs(
                      bold        : Option[ISetUnset[Boolean]]       = None,
                      italic      : Option[ISetUnset[Boolean]]       = None,
                      underline   : Option[ISetUnset[Boolean]]       = None,
+                     strike      : Option[ISetUnset[Boolean]]       = None,
                      color       : Option[ISetUnset[MColorData]]    = None,
+                     background  : Option[ISetUnset[MColorData]]    = None,
                      link        : Option[ISetUnset[String]]        = None,
-                     header      : Option[ISetUnset[Int]]           = None,
                      src         : Option[ISetUnset[String]]        = None,
-                     list        : Option[ISetUnset[MQdListType]]   = None
                    )
   extends EmptyProduct

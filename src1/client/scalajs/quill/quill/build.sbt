@@ -24,5 +24,5 @@ npmDependencies in Compile ++= Seq(
   "quill"   -> Common.Vsn.QUILL
 )
 
-//requiresDOM in Test := true
+scalacOptions += "-P:scalajs:sjsDefinedByDefault"
 
