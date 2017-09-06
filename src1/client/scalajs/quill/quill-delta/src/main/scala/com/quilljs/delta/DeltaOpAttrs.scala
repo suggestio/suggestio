@@ -44,4 +44,7 @@ trait DeltaOpAttrs extends js.Object {
 
   var font: UndefOr[String] = js.undefined
 
+  // String вида "46", т.е. строковое представление кегля.
+  var size: UndefOr[String] = js.undefined
+
 }

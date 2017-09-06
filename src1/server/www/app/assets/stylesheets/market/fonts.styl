@@ -9,15 +9,6 @@ xfontface2( name )
     font-weight: normal
     font-style: normal
 
-  // For quill wysiwyg editor: fonts support
-  .ql-font-{name}
-    font-family: name
-
-  .ql-snow .ql-picker.ql-font
-    .ql-picker-item[data-value={name}]::before, .ql-picker-label[data-value={name}]::before
-      font-family: name
-      content: name
-
 
 xfontface2( 'aa-higherup' )
 xfontface2( 'bloc-ext-con-c' )
@@ -41,9 +32,6 @@ xfontface2( 'pharmadin-condensed-light' )
 xfontface2( 'posterboard' )
 xfontface2( 'pt-sans-narrow' )
 xfontface2( 'rex-bold' )
-
-.ql-snow .ql-picker.ql-font
-  width: 150px!important
 
 .ft-XS
   ft(12px)

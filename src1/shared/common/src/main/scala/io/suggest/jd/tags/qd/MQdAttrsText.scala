@@ -1,7 +1,7 @@
 package io.suggest.jd.tags.qd
 
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.font.MFont
+import io.suggest.font.{MFont, MFontSize}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
 import japgolly.univeq.UnivEq
@@ -26,7 +26,8 @@ object MQdAttrsText {
     (__ \ "g").formatNullable[ISetUnset[MColorData]] and
     (__ \ "l").formatNullable[ISetUnset[String]] and
     (__ \ "s").formatNullable[ISetUnset[String]] and
-    (__ \ "f").formatNullable[ISetUnset[MFont]]
+    (__ \ "f").formatNullable[ISetUnset[MFont]] and
+    (__ \ "z").formatNullable[ISetUnset[MFontSize]]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MQdAttrsText] = UnivEq.derive
@@ -44,7 +45,8 @@ case class MQdAttrsText(
                      background  : Option[ISetUnset[MColorData]]    = None,
                      link        : Option[ISetUnset[String]]        = None,
                      src         : Option[ISetUnset[String]]        = None,
-                     font        : Option[ISetUnset[MFont]]         = None
+                     font        : Option[ISetUnset[MFont]]         = None,
+                     size        : Option[ISetUnset[MFontSize]]     = None
                    )
   extends EmptyProduct
   // Для ScalaCSS-рендера: Максимальная скорость работы `==` и hashCode()
@@ -52,17 +54,12 @@ case class MQdAttrsText(
   with IEqualsEq
 {
 
-  private def attrsForCssStyles: List[Option[ISetUnset[Any]]] = {
-    color ::
-      background ::
-      font ::
-      Nil
-  }
-
   /** Подразумевает ли данный набор аттрибутов необходимость использования css-стилей? */
   def isCssStyled: Boolean = {
-    attrsForCssStyles
-      .exists(_.exists(_.nonEmpty))
+    font.isDefined ||
+      size.isDefined ||
+      color.isDefined ||
+      background.isDefined
   }
 
 }

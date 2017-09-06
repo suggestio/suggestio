@@ -1,7 +1,7 @@
 package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
-import io.suggest.font.MFonts
+import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
@@ -113,10 +113,16 @@ class QuillDeltaJsUtil {
       background  = _color2s( attrs.background ),
       link        = _string2s( attrs.link ),
       src         = _string2s( attrs.src ),
-      font        = _string2s( attrs.font ).map { fontCssClassSu =>
-        fontCssClassSu.map { fontCssClass =>
+      font        = for (fontCssClassSu <- _string2s( attrs.font )) yield {
+        for (fontCssClass <- fontCssClassSu) yield {
           // TODO legacy-enum, нельзя тут юзать withName(), т.к. у них разные множества ключей. Перейти на withCssClass(), когда MFonts будет Enumeratum-моделью.
           MFonts.maybeWithName( fontCssClass ).get
+        }
+      },
+      size = for (sizeStrSU <- _string2s( attrs.size )) yield {
+        for (sizeStr <- sizeStrSU) yield {
+          val sizeInt = sizeStr.toInt
+          MFontSizes.withValue( sizeInt )
         }
       }
     )
@@ -193,6 +199,8 @@ class QuillDeltaJsUtil {
     // В delta-аттрибуты нужно передать css-класс шрифта, а не его id
     for (fontSU <- qdAttrs.font)
       attrs0.font = js.defined( setUnsetOrNullRef( fontSU.map(_.cssFontFamily) ) )
+    for (sizeSU <- qdAttrs.size)
+      attrs0.size = js.defined( setUnsetOrNullRef( sizeSU.map(_.value.toString) ) )
   }
 
 

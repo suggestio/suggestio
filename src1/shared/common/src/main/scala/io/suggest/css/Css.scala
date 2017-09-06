@@ -18,6 +18,12 @@ object Css {
     cssClasses.mkString( HtmlConstants.SPACE )
   }
 
+  /** Всякие строковые литералы внутри CSS должны быть в ковычках. */
+  def quoted(s: String): String = {
+    val q = "'"
+    q + s + q
+  }
+
   object Display {
     def HIDDEN        = "hidden"
     def BLOCK         = "block"

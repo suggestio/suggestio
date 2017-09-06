@@ -1,5 +1,7 @@
 package io.suggest.jd.render.v
 
+import io.suggest.css.Css
+
 import scalacss.DevDefaults._
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.qd.QdTag
@@ -114,7 +116,7 @@ class JdCss( jdCssArgs: MJdCssArgs )
 
 
   // -------------------------------------------------------------------------------
-  // Text styles
+  // fonts
 
   /** Домен стилей для текстов. */
   private val _textStylesDomain = {
@@ -132,7 +134,9 @@ class JdCss( jdCssArgs: MJdCssArgs )
     // Получаем на руки инстансы, чтобы по-быстрее использовать их в цикле и обойтись без lazy call-by-name cssAttr в __applyToColor().
     val _colorAttr = color
     val _bgColorAttr = backgroundColor
-    val _fontFamilyAttr = fontFamily
+    val _fontFamilyAttr = fontFamily.attr
+    val _fontSizeAttr = fontSize
+    val _lineHeightAttr = lineHeight
 
     styleF( _textStylesDomain ) { attrsText =>
       var acc = List.empty[ToStyle]
@@ -149,9 +153,17 @@ class JdCss( jdCssArgs: MJdCssArgs )
 
       // Если задан font, то нужно отрендерить font-family:
       for (fontSU <- attrsText.font; font <- fontSU)
-        acc ::= _fontFamilyAttr( font.cssFontFamily )
+        acc ::= ( _fontFamilyAttr := Css.quoted(font.cssFontFamily) )
 
-      // Вернуть накопленный стиль.
+      // Если задан font-size, то нужно отрендерить его вместе с сопуствующими аттрибутами.
+      for (fontSizeSU <- attrsText.size; fontSize <- fontSizeSU) {
+        // Рендер размера шрифта
+        acc ::= _lineHeightAttr( fontSize.lineHeight.px )
+        // Отрендерить размер шрифта
+        acc ::= _fontSizeAttr( fontSize.value.px )
+      }
+
+      // Вернуть скомпонованный стиль.
       styleS(
         acc: _*
       )

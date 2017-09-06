@@ -2,33 +2,8 @@ package io.suggest.font
 
 import enumeratum.values.{IntEnum, IntEnumEntry}
 import io.suggest.enum2.EnumeratumUtil
+import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
-
-
-/** Статическая поддержка для элементов модели [[MFontSize]]. */
-object MFontSize {
-
-  /** Поддержка play-json. */
-  implicit val FONT_SIZE_FORMAT: Format[MFontSize] = {
-    EnumeratumUtil.valueEnumEntryFormat( MFontSizes )
-  }
-
-}
-
-/** Класс модели размера шрифта.
-  *
-  * @param value CSS font-size.
-  */
-sealed abstract class MFontSize(override val value: Int) extends IntEnumEntry {
-
-  private def _lineHeightDiff: Int = if (value >= 32) 4 else 2
-
-  /** CSS line-height */
-  def lineHeight: Int = value - _lineHeightDiff
-
-  def isLast: Boolean = false
-
-}
 
 
 /** Модель допустимых размеров шрифтов и инфа по ним. */
@@ -68,3 +43,33 @@ object MFontSizes extends IntEnum[MFontSize] {
   def max: MFontSize = values.last
 
 }
+
+
+/** Класс модели размера шрифта.
+  *
+  * @param value CSS font-size.
+  */
+sealed abstract class MFontSize(override val value: Int) extends IntEnumEntry {
+
+  private def _lineHeightDiff: Int = if (value >= 32) 4 else 2
+
+  /** CSS line-height */
+  def lineHeight: Int = value - _lineHeightDiff
+
+  def isLast: Boolean = false
+
+}
+
+
+/** Статическая поддержка для элементов модели [[MFontSize]]. */
+object MFontSize {
+
+  /** Поддержка play-json. */
+  implicit val FONT_SIZE_FORMAT: Format[MFontSize] = {
+    EnumeratumUtil.valueEnumEntryFormat( MFontSizes )
+  }
+
+  implicit def univEq: UnivEq[MFontSize] = UnivEq.derive
+
+}
+

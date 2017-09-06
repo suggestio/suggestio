@@ -3,7 +3,7 @@ package io.suggest.quill.u
 import com.github.zenoamaro.react.quill.Quill
 import com.quilljs.quill.modules.formats._
 import com.quilljs.quill.modules.{QuillModules, QuillModulesNames}
-import io.suggest.font.MFonts
+import io.suggest.font.{MFontSizes, MFonts}
 
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
@@ -16,10 +16,13 @@ import scala.scalajs.js.JSConverters._
   */
 class QuillInit {
 
-  def fontNamesJsArray = MFonts.values
+  def fontNamesJsArray: js.Array[String] = {
+    MFonts.values
       .iterator
       .map(_.cssFontFamily)
       .toJSArray
+  }
+
 
   /** Подготовить Quill для редактора карточек. */
   def forAdEditor(): Unit = {
@@ -27,6 +30,20 @@ class QuillInit {
     val QFont = Quill.`import`[Font]( QuillModulesNames.Formats.FONT_PATH )
     QFont.whitelist = fontNamesJsArray
     Quill.register2(QFont, suppressWarnings = true)
+
+    val QSizes = Quill.`import`[SizeClass]( QuillModulesNames.Attributors.Clazz.SIZE )
+    QSizes.whitelist = fontSizesStringArray
+    Quill.register2(QSizes, suppressWarnings = false)
+  }
+
+
+  def fontSizesStringArray: js.Array[String] = {
+
+    MFontSizes
+      .values
+      .iterator
+      .map(mfs => mfs.value.toString)
+      .toJSArray
   }
 
 
@@ -50,7 +67,7 @@ class QuillInit {
           override val font = fontNamesJsArray
         },
         new SizeTb {
-          override val size = noValue
+          override val size = fontSizesStringArray
         }
       ),
 

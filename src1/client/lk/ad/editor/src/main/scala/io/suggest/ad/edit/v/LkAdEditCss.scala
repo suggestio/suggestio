@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v
 
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.font.MFonts
+import io.suggest.font.{MFontSizes, MFonts}
 
 import scalacss.internal.mutable.StyleSheet
 
@@ -67,5 +67,11 @@ class LkAdEditCss extends StyleSheet.Inline {
     )
 
   }
+
+
+  initInnerObjects(
+    WhControls.contWidth,
+    Layout.editorsCont
+  )
 
 }

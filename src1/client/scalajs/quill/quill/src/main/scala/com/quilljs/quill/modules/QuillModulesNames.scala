@@ -1,5 +1,7 @@
 package com.quilljs.quill.modules
 
+import com.quilljs.quill.modules.formats.Size
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -8,10 +10,12 @@ package com.quilljs.quill.modules
   */
 object QuillModulesNames {
 
+  private def DELIM = "/"
+
   object Formats {
 
     /** path prefix for all formats. */
-    def FORMATS_ = "formats/"
+    def FORMATS_ = "formats" + DELIM
 
     def FONT = "font"
     def FONT_PATH = FORMATS_ + FONT
@@ -38,6 +42,21 @@ object QuillModulesNames {
     def VIDEO = "video"
 
     def CLEAN = "clean"
+
+  }
+
+  object Attributors {
+    def ATTRIBUTORS = "attributors"
+
+    object Style {
+      def STYLE = "style"
+      def SIZE = ATTRIBUTORS + DELIM + STYLE + DELIM + Size.SIZE
+    }
+
+    object Clazz {
+      def CLAZZ = "class"
+      def SIZE = ATTRIBUTORS + DELIM + CLAZZ + DELIM + Size.SIZE
+    }
 
   }
 

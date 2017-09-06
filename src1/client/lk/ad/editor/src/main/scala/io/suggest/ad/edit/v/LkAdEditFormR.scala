@@ -7,12 +7,12 @@ import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.jd.tags.Strip
-import io.suggest.quill.v.QuillEditorR
+import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-
 import io.suggest.css.ScalaCssDefaults._
+
 import scalacss.ScalaCssReact._
 import io.suggest.sjs.common.spa.OptFastEq
 
@@ -27,6 +27,7 @@ class LkAdEditFormR(
                      jdR                : JdR,
                      stripEditR         : StripEditR,
                      lkAdEditCss        : LkAdEditCss,
+                     quillCss           : QuillCss,
                      val quillEditorR   : QuillEditorR
                    ) {
 
@@ -49,6 +50,11 @@ class LkAdEditFormR(
       val LCSS = lkAdEditCss.Layout
       <.div(
         ^.`class` := Css.Overflow.HIDDEN,
+
+        // Отрендерить доп.стили для quill-редактора.
+        <.styleTag(
+          quillCss.render[String]
+        ),
 
         // Отрендерить стили редактора.
         <.styleTag(
