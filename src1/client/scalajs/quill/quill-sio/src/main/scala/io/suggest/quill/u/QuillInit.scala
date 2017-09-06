@@ -26,7 +26,7 @@ class QuillInit {
     // Залить список наших шрифтов в quill font format:
     val QFont = Quill.`import`[Font]( QuillModulesNames.Formats.FONT_PATH )
     QFont.whitelist = fontNamesJsArray
-    Quill.register2(QFont, suppressWarnings = false)
+    Quill.register2(QFont, suppressWarnings = true)
   }
 
 

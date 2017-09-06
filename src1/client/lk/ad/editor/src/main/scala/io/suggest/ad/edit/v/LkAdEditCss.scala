@@ -1,6 +1,8 @@
 package io.suggest.ad.edit.v
 
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.font.MFonts
+
 import scalacss.internal.mutable.StyleSheet
 
 /**
@@ -42,6 +44,27 @@ class LkAdEditCss extends StyleSheet.Inline {
 
     val increase = _classNameStyle( "__increase" )
     val decrease = _classNameStyle( "__decrease" )
+
+  }
+
+
+  object Layout {
+
+    private def _PREFIX = "lk-ad-block-edit-form"
+
+    val outerCont = _classNameStyle( _PREFIX )
+
+    private def _PREVIEW_OUTER_CONT_PREFIX = _PREFIX + "__preview"
+    val previewOuterCont = _classNameStyle( _PREVIEW_OUTER_CONT_PREFIX )
+
+    val previewInnerCont = _classNameStyle( _PREVIEW_OUTER_CONT_PREFIX + "_container" )
+
+    val editorsCont = style(
+      addClassName( _PREFIX + "__editor" ),
+      position.fixed,
+      minHeight( (MFonts.values.size * 30).px ),
+      left( 400.px )
+    )
 
   }
 

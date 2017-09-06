@@ -1,12 +1,9 @@
 package io.suggest.jd.render.v
 
 import diode.react.ModelProxy
-import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.css.ScalaCssDefaults._
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.html_<^._
-
-import scalacss.internal.mutable.GlobalRegistry
 
 /**
   * Suggest.io
