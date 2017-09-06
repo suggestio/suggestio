@@ -189,6 +189,20 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         __rBool(attrs.underline)(<.u)
         __rBool(attrs.strike)(<.s)
 
+        // Отработать sup/sub теги
+        for (qdScriptSU <- attrs.script; qdScript <- qdScriptSU) {
+          val scriptTag = qdScript match {
+            case MQdScripts.Super => <.sup
+            case MQdScripts.Sub   => <.sub
+          }
+          var scriptAttrs = List[TagMod]( acc )
+          for (textStyle <- textStyleOpt) {
+            scriptAttrs ::= textStyle
+            textStyleOpt = None
+          }
+          acc = scriptTag( scriptAttrs: _* )
+        }
+
         // Если задан аттрибут link, то завернуть итоговый выхлоп в ссылку (с учётом возможного textStyleOpt).
         for (linkSU <- attrs.link; link <- linkSU) {
           var hrefAttrs = List[TagMod](

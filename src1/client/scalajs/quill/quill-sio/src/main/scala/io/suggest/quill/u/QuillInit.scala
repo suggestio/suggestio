@@ -33,7 +33,7 @@ class QuillInit {
 
     val QSizes = Quill.`import`[SizeClass]( QuillModulesNames.Attributors.Clazz.SIZE )
     QSizes.whitelist = fontSizesStringArray
-    Quill.register2(QSizes, suppressWarnings = false)
+    Quill.register2(QSizes, suppressWarnings = true)
   }
 
 

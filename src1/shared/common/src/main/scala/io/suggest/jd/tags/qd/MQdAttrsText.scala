@@ -27,7 +27,8 @@ object MQdAttrsText {
     (__ \ "l").formatNullable[ISetUnset[String]] and
     (__ \ "s").formatNullable[ISetUnset[String]] and
     (__ \ "f").formatNullable[ISetUnset[MFont]] and
-    (__ \ "z").formatNullable[ISetUnset[MFontSize]]
+    (__ \ "z").formatNullable[ISetUnset[MFontSize]] and
+    (__ \ "p").formatNullable[ISetUnset[MQdScript]]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MQdAttrsText] = UnivEq.derive
@@ -37,17 +38,18 @@ object MQdAttrsText {
 
 /** Класс модели аттрибутов quill-delta-операции. */
 case class MQdAttrsText(
-                     bold        : Option[ISetUnset[Boolean]]       = None,
-                     italic      : Option[ISetUnset[Boolean]]       = None,
-                     underline   : Option[ISetUnset[Boolean]]       = None,
-                     strike      : Option[ISetUnset[Boolean]]       = None,
-                     color       : Option[ISetUnset[MColorData]]    = None,
-                     background  : Option[ISetUnset[MColorData]]    = None,
-                     link        : Option[ISetUnset[String]]        = None,
-                     src         : Option[ISetUnset[String]]        = None,
-                     font        : Option[ISetUnset[MFont]]         = None,
-                     size        : Option[ISetUnset[MFontSize]]     = None
-                   )
+                         bold        : Option[ISetUnset[Boolean]]       = None,
+                         italic      : Option[ISetUnset[Boolean]]       = None,
+                         underline   : Option[ISetUnset[Boolean]]       = None,
+                         strike      : Option[ISetUnset[Boolean]]       = None,
+                         color       : Option[ISetUnset[MColorData]]    = None,
+                         background  : Option[ISetUnset[MColorData]]    = None,
+                         link        : Option[ISetUnset[String]]        = None,
+                         src         : Option[ISetUnset[String]]        = None,
+                         font        : Option[ISetUnset[MFont]]         = None,
+                         size        : Option[ISetUnset[MFontSize]]     = None,
+                         script      : Option[ISetUnset[MQdScript]]     = None
+                       )
   extends EmptyProduct
   // Для ScalaCSS-рендера: Максимальная скорость работы `==` и hashCode()
   with IHashCodeLazyVal

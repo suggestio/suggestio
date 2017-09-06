@@ -124,6 +124,11 @@ class QuillDeltaJsUtil {
           val sizeInt = sizeStr.toInt
           MFontSizes.withValue( sizeInt )
         }
+      },
+      script      = for (scriptRawSU <- _string2s( attrs.script )) yield {
+        for (scriptRaw <- scriptRawSU) yield {
+          MQdScripts.withQuillNameOpt( scriptRaw ).get
+        }
       }
     )
     qdAttrs.optional
@@ -201,6 +206,8 @@ class QuillDeltaJsUtil {
       attrs0.font = js.defined( setUnsetOrNullRef( fontSU.map(_.cssFontFamily) ) )
     for (sizeSU <- qdAttrs.size)
       attrs0.size = js.defined( setUnsetOrNullRef( sizeSU.map(_.value.toString) ) )
+    for (scriptSU <- qdAttrs.script)
+      attrs0.script = js.defined( setUnsetOrNullRef( scriptSU.map(_.quillName) ) )
   }
 
 
