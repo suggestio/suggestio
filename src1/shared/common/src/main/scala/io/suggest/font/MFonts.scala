@@ -37,7 +37,7 @@ object MFonts
     def toJsonTinyMce(tail: List[(String, JsValue)] = Nil): JsObject = {
       val title = "title" -> JsString(descr)
       val styles = "styles" -> JsObject(Seq(
-        "font-family" -> JsString(cssClass)
+        "font-family" -> JsString(cssFontFamily)
       ))
       JsObject(title :: styles :: tail)
     }
@@ -45,7 +45,7 @@ object MFonts
     def fileName: String
 
     /** Название CSS font-family. */
-    def cssClass: String = fileName
+    def cssFontFamily: String = fileName
 
     /** Отображаемое название шрифта. */
     def descr: String

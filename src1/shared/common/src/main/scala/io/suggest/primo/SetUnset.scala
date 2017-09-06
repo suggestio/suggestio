@@ -1,5 +1,6 @@
 package io.suggest.primo
 
+import io.suggest.common.empty.NonEmpty
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, OFormat, __}
@@ -33,7 +34,7 @@ object ISetUnset {
 }
 
 /** Интерфейс модели Set/unset. */
-sealed trait ISetUnset[+T] {
+sealed trait ISetUnset[+T] extends NonEmpty {
   def isSet: Boolean
   def get: T
   def toList: List[T]
@@ -55,6 +56,7 @@ case class SetVal[T](value: T) extends ISetUnset[T] {
   override def toOption = Some(value)
   override def map[A](f: T => A) = SetVal(f(value))
   override def foreach[U](f: (T) => U): Unit = f(value)
+  override def isEmpty = false
 }
 
 
@@ -66,6 +68,7 @@ case object UnSetVal extends ISetUnset[Nothing] {
   override def toOption = None
   override def map[A](f: Nothing => A) = this
   override def foreach[U](f: (Nothing) => U): Unit = {}
+  override def isEmpty = true
 
   implicit def univEq: UnivEq[UnSetVal.type] = UnivEq.derive
 }

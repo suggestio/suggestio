@@ -16,13 +16,19 @@ import scala.scalajs.js.JSConverters._
   */
 class QuillInit {
 
+  def fontNamesJsArray = MFonts.values
+      .iterator
+      .map(_.cssFontFamily)
+      .toJSArray
+
   /** Подготовить Quill для редактора карточек. */
   def forAdEditor(): Unit = {
     // Залить список наших шрифтов в quill font format:
     val QFont = Quill.`import`[Font]( QuillModulesNames.Formats.FONT_PATH )
-    QFont.whitelist = MFonts.values.iterator.map(_.cssClass).toJSArray
-    Quill.register2(QFont, suppressWarnings = true)
+    QFont.whitelist = fontNamesJsArray
+    Quill.register2(QFont, suppressWarnings = false)
   }
+
 
   /** Рендер JSON-а со списком модулей для текстового редактора в рекламной карточке.
     *
@@ -41,7 +47,7 @@ class QuillInit {
 
       js.Array[js.Any](
         new FontTb {
-          override val font = noValue
+          override val font = fontNamesJsArray
         },
         new SizeTb {
           override val size = noValue

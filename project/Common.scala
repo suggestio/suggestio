@@ -98,7 +98,8 @@ object Common {
       *
       * @see [[https://japgolly.github.io/scalacss/book/quickstart/index.html]]
       */
-    val SCALACSS = "0.5.3"
+    // TODO обновится на основную ветку. когда добавят/замёржат fontFamily(String)
+    val SCALACSS = "0.5.4sio-SNAPSHOT"
 
     /** Улучшенное жестко-типизированное сравнение.
       * @see [[https://github.com/japgolly/univeq#scalaz]]

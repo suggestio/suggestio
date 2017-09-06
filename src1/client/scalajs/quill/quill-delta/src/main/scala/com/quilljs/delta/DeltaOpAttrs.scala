@@ -42,4 +42,6 @@ trait DeltaOpAttrs extends js.Object {
 
   var blockquote: UndefOr[Boolean | Null] = js.undefined
 
+  var font: UndefOr[String] = js.undefined
+
 }

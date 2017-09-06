@@ -8,6 +8,7 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 
 import scala.reflect.ClassTag
+import scalacss.internal.CssEntry.FontFace
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
@@ -131,6 +132,7 @@ class JdCss( jdCssArgs: MJdCssArgs )
     // Получаем на руки инстансы, чтобы по-быстрее использовать их в цикле и обойтись без lazy call-by-name cssAttr в __applyToColor().
     val _colorAttr = color
     val _bgColorAttr = backgroundColor
+    val _fontFamilyAttr = fontFamily
 
     styleF( _textStylesDomain ) { attrsText =>
       var acc = List.empty[ToStyle]
@@ -144,6 +146,10 @@ class JdCss( jdCssArgs: MJdCssArgs )
 
       __applyToColor( _colorAttr, attrsText.color )
       __applyToColor( _bgColorAttr, attrsText.background )
+
+      // Если задан font, то нужно отрендерить font-family:
+      for (fontSU <- attrsText.font; font <- fontSU)
+        acc ::= _fontFamilyAttr( font.cssFontFamily )
 
       // Вернуть накопленный стиль.
       styleS(

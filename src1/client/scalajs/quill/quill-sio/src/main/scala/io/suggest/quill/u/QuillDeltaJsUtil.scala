@@ -1,6 +1,7 @@
 package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
+import io.suggest.font.MFonts
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
@@ -111,7 +112,13 @@ class QuillDeltaJsUtil {
       color       = _color2s( attrs.color ),
       background  = _color2s( attrs.background ),
       link        = _string2s( attrs.link ),
-      src         = _string2s( attrs.src )
+      src         = _string2s( attrs.src ),
+      font        = _string2s( attrs.font ).map { fontCssClassSu =>
+        fontCssClassSu.map { fontCssClass =>
+          // TODO legacy-enum, нельзя тут юзать withName(), т.к. у них разные множества ключей. Перейти на withCssClass(), когда MFonts будет Enumeratum-моделью.
+          MFonts.maybeWithName( fontCssClass ).get
+        }
+      }
     )
     qdAttrs.optional
   }
@@ -183,6 +190,9 @@ class QuillDeltaJsUtil {
       attrs0.link = js.defined( setUnsetOrNullRef( link ) )
     for (src <- qdAttrs.src)
       attrs0.src = js.defined( setUnsetOrNullRef( src ) )
+    // В delta-аттрибуты нужно передать css-класс шрифта, а не его id
+    for (fontSU <- qdAttrs.font)
+      attrs0.font = js.defined( setUnsetOrNullRef( fontSU.map(_.cssFontFamily) ) )
   }
 
 
