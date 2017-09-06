@@ -189,6 +189,19 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         __rBool(attrs.underline)(<.u)
         __rBool(attrs.strike)(<.s)
 
+        // Если задан аттрибут link, то завернуть итоговый выхлоп в ссылку (с учётом возможного textStyleOpt).
+        for (linkSU <- attrs.link; link <- linkSU) {
+          var hrefAttrs = List[TagMod](
+            ^.href := link,
+            acc
+          )
+          for (textStyle <- textStyleOpt) {
+            hrefAttrs ::= textStyle
+            textStyleOpt = None
+          }
+          acc = <.a( hrefAttrs: _* )
+        }
+
         // Если всё ещё требуется навесить css-стили на текст, но ни одного тега не было, то сделать span.
         for (textStyle <- textStyleOpt) {
           acc = <.span(

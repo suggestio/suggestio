@@ -10,7 +10,6 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 
 import scala.reflect.ClassTag
-import scalacss.internal.CssEntry.FontFace
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
@@ -152,8 +151,10 @@ class JdCss( jdCssArgs: MJdCssArgs )
       __applyToColor( _bgColorAttr, attrsText.background )
 
       // Если задан font, то нужно отрендерить font-family:
-      for (fontSU <- attrsText.font; font <- fontSU)
-        acc ::= ( _fontFamilyAttr := Css.quoted(font.cssFontFamily) )
+      for (fontSU <- attrsText.font; font <- fontSU) {
+        val av = _fontFamilyAttr := Css.quoted( font.cssFontFamily )
+        acc ::= av
+      }
 
       // Если задан font-size, то нужно отрендерить его вместе с сопуствующими аттрибутами.
       for (fontSizeSU <- attrsText.size; fontSize <- fontSizeSU) {
