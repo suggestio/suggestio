@@ -8,6 +8,7 @@ import io.suggest.jd.tags.qd.QdTag
 import io.suggest.jd.tags.{AbsPos, IDocTag, Strip}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
+import io.suggest.text.MTextAligns
 
 import scala.reflect.ClassTag
 import scalacss.internal.DslBase.ToStyle
@@ -169,6 +170,23 @@ class JdCss( jdCssArgs: MJdCssArgs )
         acc: _*
       )
     }
+  }
+
+
+  // Для строк и групп строк стили более точечные
+  private val textAlignsDomain = new Domain.OverSeq( MTextAligns.values )
+
+  val textAlignsStyleF = styleF( textAlignsDomain ) { align =>
+    val taAttr = textAlign
+    val av = align match {
+      case MTextAligns.Left    => taAttr.left
+      case MTextAligns.Center  => taAttr.center
+      case MTextAligns.Right   => taAttr.right
+      case MTextAligns.Justify => taAttr.justify
+    }
+    styleS(
+      av
+    )
   }
 
 }

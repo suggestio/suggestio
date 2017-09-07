@@ -48,7 +48,7 @@ class LkAdEdFormUtil extends MacroLogsImpl {
         {_.filter(_.length <= 10)
           .flatMap { s =>
             if (s.length == 1) {
-              MTextAligns.withNameOption(s)
+              MTextAligns.withValueOpt( s )
             } else if (s.length == 0) {
               None
             } else {

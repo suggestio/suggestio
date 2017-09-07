@@ -2,6 +2,7 @@ package io.suggest.jd.render.v
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
+import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
@@ -240,7 +241,6 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       .zipWithIndex
       .foldLeft( LinesRrrAcc() ) { case (acc0, ((attrsOpt, line), i)) =>
         val iStr = i.toString
-        val keyAttr = ^.key := iStr
 
         // Отработать аттрибуты строки, если они есть.
         attrsOpt.filter(_.nonEmpty).fold {
@@ -251,7 +251,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
             acc0.renderAcc
           } { grpAttrs =>
             // Есть уже открытая группа с аттрибутами. Закрыть и отрендерить её.
-            _renderLinesGroup(grpAttrs, acc0.currLineGrpAcc, keyAttr) :: acc0.renderAcc
+            _renderLinesGroup(grpAttrs, acc0.currLineGrpAcc, iStr) :: acc0.renderAcc
           }
 
           // Текущая строка аттрибутов не имеет, поэтому можно её сразу же рендерить без группирования.
@@ -279,7 +279,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
             // Аттрибуты у данной строки не такие, как у предыдущей группы строк. Опустошить текущую группу строк.
             val renderAcc1 = if (acc0.currLineGrpAcc.nonEmpty) {
               // Есть начатая группа. Рендерить её.
-              _renderLinesGroup(attrs, acc0.currLineGrpAcc, keyAttr) :: acc0.renderAcc
+              _renderLinesGroup(attrs, acc0.currLineGrpAcc, iStr) :: acc0.renderAcc
             } else {
               // Нет начатой группы.
               acc0.renderAcc
@@ -311,7 +311,17 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     )
   }
 
-  private def _renderLinesGroup(attrs: MQdAttrsLine, lines: List[TagMod], tm0: TagMod): TagMod = {
+  private def _renderLinesGroup(attrs: MQdAttrsLine, lines: List[TagMod], keyStr: String): TagMod = {
+    // Компилим значение text-align
+    val textAlignTm = attrs.align
+      .flatMap(_.toOption)
+      .fold( EmptyVdom ) { mTextAlign =>
+        ^.`class` := Css.flat(
+          jdArgs.jdCss.textAlignsStyleF( mTextAlign ).htmlClass,
+          Css.Display.BLOCK
+        )
+      }
+
     // list: bullet, ordered
     _renderAttrSuOpt( attrs.list ) { listType =>
       val outerTag = listType match {
@@ -319,10 +329,11 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         case MQdListTypes.Ordered => <.ol
       }
       outerTag(
-        tm0,
+        ^.key := keyStr,
         lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
           <.li(
             ^.key := i.toString,
+            textAlignTm,
             line
           )
         }
@@ -346,32 +357,36 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
           .zipWithIndex
           .toVdomArray { case (line, i) =>
             htag(
-              ^.key := i.toString,
+              ^.key := (keyStr + "." + i),
+              textAlignTm,
               line
             )
           }
       }
     }
-    // code-block
-    .orElse {
-      _renderBoolAttrSuOpt( attrs.codeBlock ) { _ =>
-        <.pre(
-          tm0 :: lines: _*
-        )
-      }
-    }
-    // blockquote
-    .orElse {
-      _renderBoolAttrSuOpt( attrs.blockQuote ) { _ =>
-        <.blockquote(
-          tm0 :: lines: _*
-        )
-      }
-    }
-    // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
     .getOrElse {
-      LOG.error( ErrorMsgs.UNSUPPORTED_TEXT_LINE_ATTRS, msg = attrs )
-      TagMod.fromTraversableOnce( lines )
+      val tagMods = (^.key := keyStr) ::
+        textAlignTm ::
+        lines
+
+      // code-block
+      val tag = {
+        _renderBoolAttrSuOpt( attrs.codeBlock ) { _ =>
+          <.pre
+        }.orElse {
+          // blockquote
+          _renderBoolAttrSuOpt( attrs.blockQuote ) { _ =>
+            <.blockquote
+          }
+        }.getOrElse {
+          // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
+          <.span
+        }
+      }
+
+      tag(
+        tagMods: _*
+      )
     }
 
     // TODO indent

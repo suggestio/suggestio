@@ -10,6 +10,7 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
+import io.suggest.text.MTextAligns
 
 import scala.annotation.tailrec
 import scala.scalajs.js
@@ -141,7 +142,10 @@ class QuillDeltaJsUtil {
       list        = _listType2s( attrs.list ),
       indent      = _val2s( attrs.indent ),
       codeBlock   = _val2s( attrs.`code-block` ),
-      blockQuote  = _val2s( attrs.blockquote )
+      blockQuote  = _val2s( attrs.blockquote ),
+      align       = for ( quillAlignSU <- _string2s( attrs.align )) yield {
+        quillAlignSU.map( MTextAligns.withQuillName(_).get )
+      }
     )
     qdAttrs.optional
   }
@@ -222,6 +226,8 @@ class QuillDeltaJsUtil {
       attrs0.`code-block` = setUnsetOrNullVal( codeBlockSU )
     for (blockQuoteSU <- qdAttrsLine.blockQuote)
       attrs0.blockquote = setUnsetOrNullVal( blockQuoteSU )
+    for (alignSU <- qdAttrsLine.align; align <- alignSU; quillAlignName <- align.quillName)
+      attrs0.align = quillAlignName
   }
 
 

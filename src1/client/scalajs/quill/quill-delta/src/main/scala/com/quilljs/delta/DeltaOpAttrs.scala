@@ -49,4 +49,6 @@ trait DeltaOpAttrs extends js.Object {
 
   var script: UndefOr[String] = js.undefined
 
+  var align: UndefOr[String] = js.undefined
+
 }
