@@ -31,13 +31,22 @@ object MFontSizes extends IntEnum[MFontSize] {
   case object F70 extends MFontSize(70)
   case object F74 extends MFontSize(74)
   case object F80 extends MFontSize(80)
-  case object F84 extends MFontSize(84) {
-    override def isLast = true
-  }
-
+  case object F84 extends MFontSize(84)
+  case object F90 extends MFontSize(90)
+  case object F100 extends MFontSize(100)
+  case object F110 extends MFontSize(110)
+  case object F120 extends MFontSize(120)
+  case object F130 extends MFontSize(130)
+  case object F140 extends MFontSize(140)
+  case object F150 extends MFontSize(150)
+  case object F170 extends MFontSize(170)
+  case object F200 extends MFontSize(200)
+  case object F220 extends MFontSize(220)
+  case object F240 extends MFontSize(240)
+  case object F260 extends MFontSize(260)
+  case object F300 extends MFontSize(300)
 
   override val values = findValues
-
 
   def min: MFontSize = values.head
   def max: MFontSize = values.last
@@ -56,7 +65,9 @@ sealed abstract class MFontSize(override val value: Int) extends IntEnumEntry {
   /** CSS line-height */
   def lineHeight: Int = value - _lineHeightDiff
 
-  def isLast: Boolean = false
+  override final def hashCode = value
+
+  override final def toString = value.toString
 
 }
 
