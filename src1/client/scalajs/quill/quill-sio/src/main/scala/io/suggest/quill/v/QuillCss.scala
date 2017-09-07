@@ -35,6 +35,24 @@ class QuillCss extends StyleSheet.Standalone {
 
   private val VALUE_ATTR_NAME = HtmlConstants.ATTR_PREFIX + "value"
 
+
+  // Отрендерить общие стили отображения всех шрифтов.
+  for {
+    (suffix, fsz)  <- List(
+      ITEM  -> 20,
+      LABEL -> 18
+    )
+  } {
+    QL_SNOW_CSS_SEL - (
+      &(QL_PICKER_CSS_SEL + QL_ + Font.FONT) - (
+        &(QL_PICKER_CSS_SEL + NAME_DELIM + suffix).before - (
+          fontSize( fsz.px )
+        )
+      )
+    )
+  }
+
+
   // Отрендерить стили для MFonts.
   for (mfont <- MFonts.valuesT) {
 

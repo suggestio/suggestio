@@ -179,10 +179,19 @@
 .ql-snow
   .ql-picker
     &.ql-font
-      width: 150px!important
+      width           190px !important
+
+      .ql-picker-label::before
+        font-size     18px
+
+      .ql-picker-item::before
+        font-size     20px
 
     &.ql-expanded
       .ql-picker-options
-        overflow-y   scroll
-        max-height   60vh
+        overflow-y    scroll
+        max-height    60vh
+
+    &.ql-size
+      width           42px !important
 
