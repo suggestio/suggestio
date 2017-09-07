@@ -45,7 +45,7 @@ object LkNodesFormCircuit extends CircuitLog[MLkNodesRoot] with ReactConnector[M
       tree = {
         MTree(
           nodes = {
-            mFormInit.nodes0.map { node0 =>
+            for (node0 <- mFormInit.nodes0) yield {
               val mns0 = MNodeState(node0)
               // Если нет дочерних элементов, но это узел текущий, то это значит, что они просто не существуют, а не незапрошены.
               if (mns0.children.isEmpty  &&  node0.info.id == mFormInit.conf.onNodeId) {

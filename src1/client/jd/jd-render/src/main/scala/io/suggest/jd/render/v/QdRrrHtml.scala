@@ -8,7 +8,7 @@ import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.msg.WarnMsgs
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
@@ -80,11 +80,11 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         // Если delta-синтаксис валиден, то currLineOpsAcc должен быть пустым благодаря финализирующей \n.
         if (_currLineAccRev.nonEmpty) {
           //throw new IllegalStateException("CR/LF error: " + qdTag)
-          //LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
+          LOG.warn( WarnMsgs.QDELTA_FINAL_NEWLINE_PROBLEM, msg = qdTag )
           // Надо принудительно закрыть кривую строку.
           _handleEol()
         }
-        // Всё ок, как и ожидалось. Перейти к рендеру строк.
+        // Пора перейти к рендеру строк.
         _renderLines()
 
     }
@@ -116,6 +116,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     text match {
       // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
       case "\n" =>
+        println("!!!!!!! NEW LINE !!!!!!!!!!!!")
         _handleEol( qdOp.attrsLine )
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
       case _ =>
@@ -126,11 +127,13 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   /** Отработать конец строки. */
   private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None): Unit = {
+    println("handleEol(): " + attrsOpt + " acc = " + _currLineAccRev)
     // Это операция рендера накопленной ранее строки. Развернуть отрендеренный контент текущей строки.
     val currLineContent = _currLineAccRev.reverse
-    _currLineAccRev = Nil
     val lineContent = TagMod.fromTraversableOnce(currLineContent)
     _linesAccRev ::= (attrsOpt, lineContent)
+    _currLineAccRev = Nil
+    println(_linesAccRev)
   }
 
 
@@ -143,12 +146,14 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       // Возможно, тут лишний \n появляется: в самом конце самой последней строки документа. TODO Но почему-то получается, что наоборот: так и надо, иначе возникает ошибка в самой последней строке. Почему?
       val lastSplitIndex = splits.length - 1
       for ((split, i) <- splits.iterator.zipWithIndex) {
+        println(split, i, lastSplitIndex)
         _insertVeryPlainText(split, qdOp)
         if (i < lastSplitIndex)
           _handleEol()
       }
 
     } else {
+      println(text)
       // Текст без переносов строк.
       _insertVeryPlainText(text, qdOp)
     }
@@ -227,6 +232,9 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       }
 
       _currLineAccRev ::= acc
+
+    } else {
+      println("******************* EMPTY TEXT !!!!!!!!!!!! " + text)
     }
   }
 
@@ -234,9 +242,20 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   /** Отработать аккамулятор строк, массово отформатировав все накопленные строки. */
   private def _renderLines(): VdomElement = {
 
+    // Есть сценарий рендера пройденной группы.
+    def __renderPrevLinesGrp(acc0: LinesRrrAcc, iStr: String): List[TagMod] = {
+      acc0.currLineGrpAttrs.fold {
+        // Нет аттрибутов -- нет и текущей группы.
+        acc0.renderAcc
+      } { grpAttrs =>
+        // Есть уже открытая группа с аттрибутами. Закрыть и отрендерить её.
+        _renderLinesGroup(grpAttrs, acc0.currLineGrpAcc, iStr) :: acc0.renderAcc
+      }
+    }
+
     // Пройтись последовательно по строкам, сгруппировав строки с одинаковыми аттрибутами.
     // Затем, каждую группу отправлять на line-format рендер.
-    val renderedLineGroups = _linesAccRev
+    val acc9 = _linesAccRev
       .iterator
       .zipWithIndex
       .foldLeft( LinesRrrAcc() ) { case (acc0, ((attrsOpt, line), i)) =>
@@ -244,15 +263,8 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
         // Отработать аттрибуты строки, если они есть.
         attrsOpt.filter(_.nonEmpty).fold {
-          // Нет строковых аттрибутов у текущей строки. Возможно, надо опустошить текущую группу.
-          // TODO дедублицировать с аналогичным кодом внутри if-then.
-          val renderAcc1 = acc0.currLineGrpAttrs.fold {
-            // Нет аттрибутов -- нет и текущей группы.
-            acc0.renderAcc
-          } { grpAttrs =>
-            // Есть уже открытая группа с аттрибутами. Закрыть и отрендерить её.
-            _renderLinesGroup(grpAttrs, acc0.currLineGrpAcc, iStr) :: acc0.renderAcc
-          }
+          // Нет строковых аттрибутов у текущей строки. Надо отрендерить предшествующую группу, если она есть.
+          val renderAcc1 = __renderPrevLinesGrp(acc0, iStr)
 
           // Текущая строка аттрибутов не имеет, поэтому можно её сразу же рендерить без группирования.
           val firstLine = _renderLineAlone(
@@ -276,14 +288,8 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
               currLineGrpAcc = line :: acc0.currLineGrpAcc
             )
           } else {
-            // Аттрибуты у данной строки не такие, как у предыдущей группы строк. Опустошить текущую группу строк.
-            val renderAcc1 = if (acc0.currLineGrpAcc.nonEmpty) {
-              // Есть начатая группа. Рендерить её.
-              _renderLinesGroup(attrs, acc0.currLineGrpAcc, iStr) :: acc0.renderAcc
-            } else {
-              // Нет начатой группы.
-              acc0.renderAcc
-            }
+            // Аттрибуты у данной строки НЕтакие, как у предыдущей группы строк. Отрендерить прошедшую группу строк, начав новую группу.
+            val renderAcc1 = __renderPrevLinesGrp(acc0, iStr)
 
             // Обновить аккамулятор.
             acc0.copy(
@@ -298,9 +304,12 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         }
       }
 
+    // Убедиться, что последняя незакрытая группа отрендерена
+    val renderAcc2 = __renderPrevLinesGrp( acc9, "x" )
+
     // Вернуть итог
     <.div(
-      TagMod.fromTraversableOnce( renderedLineGroups.renderAcc )
+      TagMod.fromTraversableOnce( renderAcc2 )
     )
   }
 
@@ -312,15 +321,25 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   }
 
   private def _renderLinesGroup(attrs: MQdAttrsLine, lines: List[TagMod], keyStr: String): TagMod = {
-    // Компилим значение text-align
-    val textAlignTm = attrs.align
-      .flatMap(_.toOption)
-      .fold( EmptyVdom ) { mTextAlign =>
-        ^.`class` := Css.flat(
-          jdArgs.jdCss.textAlignsStyleF( mTextAlign ).htmlClass,
-          Css.Display.BLOCK
-        )
-      }
+    val customTm: TagMod = {
+      // Компилим значение text-align
+      val textAlignTm = attrs.align
+        .flatMap(_.toOption)
+        .fold( EmptyVdom ) { mTextAlign =>
+          ^.`class` := Css.flat(
+            jdArgs.jdCss.textAlignsStyleF( mTextAlign ).htmlClass,
+            Css.Display.BLOCK
+          )
+        }
+
+      val indentTm = attrs.indent
+        .flatMap(_.toOption)
+        .fold( EmptyVdom ) { indentLevel =>
+          jdArgs.jdCss.indentStyleF( indentLevel )
+        }
+
+      TagMod( textAlignTm, indentTm )
+    }
 
     // list: bullet, ordered
     _renderAttrSuOpt( attrs.list ) { listType =>
@@ -333,7 +352,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         lines.iterator.zipWithIndex.toVdomArray { case (line, i) =>
           <.li(
             ^.key := i.toString,
-            textAlignTm,
+            customTm,
             line
           )
         }
@@ -358,30 +377,28 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
           .toVdomArray { case (line, i) =>
             htag(
               ^.key := (keyStr + "." + i),
-              textAlignTm,
+              customTm,
               line
             )
           }
       }
     }
+    // Всякие остальные теги, обрамляющие все строки сразу.
     .getOrElse {
       val tagMods = (^.key := keyStr) ::
-        textAlignTm ::
+        customTm ::
         lines
 
       // code-block
       val tag = {
-        _renderBoolAttrSuOpt( attrs.codeBlock ) { _ =>
-          <.pre
-        }.orElse {
-          // blockquote
-          _renderBoolAttrSuOpt( attrs.blockQuote ) { _ =>
-            <.blockquote
+        _renderBoolAttrSuOpt( attrs.codeBlock )( <.pre )
+          .orElse {
+            // blockquote
+            _renderBoolAttrSuOpt( attrs.blockQuote )( <.blockquote )
+          }.getOrElse {
+            // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
+            <.p
           }
-        }.getOrElse {
-          // Нет отдельного исключительного формата строк: рендерим строки, как они есть.
-          <.span
-        }
       }
 
       tag(
@@ -405,10 +422,10 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       .map(f)
   }
 
-  private def _renderBoolAttrSuOpt[R](attrsSuOpt: Option[ISetUnset[Boolean]])(f: Boolean => R): Option[R] = {
+  private def _renderBoolAttrSuOpt[R](attrsSuOpt: Option[ISetUnset[Boolean]])(f: => R): Option[R] = {
     __attrSuOptFlatten( attrsSuOpt )
       .filter(identity)
-      .map(f)
+      .map(_ => f)
   }
 
 }

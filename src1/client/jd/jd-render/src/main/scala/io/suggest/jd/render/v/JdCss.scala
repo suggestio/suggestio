@@ -173,20 +173,47 @@ class JdCss( jdCssArgs: MJdCssArgs )
   }
 
 
-  // Для строк и групп строк стили более точечные
-  private val textAlignsDomain = new Domain.OverSeq( MTextAligns.values )
+  // -------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------
+  // Для строк и групп строк стили более точечные.
 
-  val textAlignsStyleF = styleF( textAlignsDomain ) { align =>
-    val taAttr = textAlign
-    val av = align match {
-      case MTextAligns.Left    => taAttr.left
-      case MTextAligns.Center  => taAttr.center
-      case MTextAligns.Right   => taAttr.right
-      case MTextAligns.Justify => taAttr.justify
+  // TODO Opt Унести стили ниже в статические, рендерящиеся однократно. Их рендер не зависит ни от чего, они рендерятся всегда одинаково.
+
+  // -------------------------------------------------------------------------------
+  // text-align
+
+  /** styleF допустимых выравниваний текста. */
+  val textAlignsStyleF = {
+     // Домен допустимых выравниваний текста по горизонтали.
+    val textAlignsDomain = new Domain.OverSeq( MTextAligns.values )
+
+    styleF( textAlignsDomain ) { align =>
+      val taAttr = textAlign
+      val av = align match {
+        case MTextAligns.Left    => taAttr.left
+        case MTextAligns.Center  => taAttr.center
+        case MTextAligns.Right   => taAttr.right
+        case MTextAligns.Justify => taAttr.justify
+      }
+      styleS(
+        av
+      )
     }
-    styleS(
-      av
-    )
+  }
+
+
+  // -------------------------------------------------------------------------------
+  // text indents.
+
+  /** Стили сдвигов выравниваний. */
+  val indentStyleF = {
+    // quill допускает сдвиги от 1 до 8 включительно.
+    val indentLevelsDomain = Domain.ofRange(1 to 8)
+    styleF( indentLevelsDomain ) { indentLevel =>
+      styleS(
+        paddingLeft( (indentLevel * 3).em )
+      )
+    }
   }
 
 }
