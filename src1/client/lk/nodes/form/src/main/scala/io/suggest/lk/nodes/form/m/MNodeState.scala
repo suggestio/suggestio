@@ -70,14 +70,16 @@ object MNodeState
   def apply(resp: MLknNodeResp): MNodeState = {
     MNodeState(
       info = resp.info,
-      children = if (resp.children.isEmpty) {
-        // TODO А если дочерних элементов просто нет?
-        Pot.empty
-      } else {
-        val childrenStates = for (ch <- resp.children) yield {
-          MNodeState(ch)
+      children = {
+        if (resp.children.isEmpty) {
+          // А если дочерних узлов не существует, то children надо пропатчить через .withChildren() самостоятельно.
+          Pot.empty
+        } else {
+          val chs = for (ch <- resp.children) yield {
+            MNodeState(ch)
+          }
+          Ready(chs)
         }
-        Ready(childrenStates)
       }
     )
   }
