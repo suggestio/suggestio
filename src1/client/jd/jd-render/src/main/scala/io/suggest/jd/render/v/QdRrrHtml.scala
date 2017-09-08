@@ -113,57 +113,75 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   /** Рендер insert-op с текстом. */
   private def _insertText(text: String, qdOp: MQdOp): Unit = {
-    text match {
+    if (text matches "[\n]+") {
       // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
-      case "\n" =>
-        println("!!!!!!! NEW LINE !!!!!!!!!!!!")
+      for (_ <- 1 to text.length)
         _handleEol( qdOp.attrsLine )
+    } else {
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
-      case _ =>
-        _insertPlainTextWithNls(text, qdOp)
+      _insertPlainTextWithNls(text, qdOp)
     }
   }
 
+  private def _emptyLineContent = <.br
 
   /** Отработать конец строки. */
   private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None): Unit = {
-    println("handleEol(): " + attrsOpt + " acc = " + _currLineAccRev)
     // Это операция рендера накопленной ранее строки. Развернуть отрендеренный контент текущей строки.
+    if (_currLineAccRev.isEmpty) {
+      // Бывает, что данных в акке нет. Поэтому нужно исправить рендер этим костылём.
+      _currLineAccRev ::= _emptyLineContent
+    }
+
     val currLineContent = _currLineAccRev.reverse
     val lineContent = TagMod.fromTraversableOnce(currLineContent)
     _linesAccRev ::= (attrsOpt, lineContent)
     _currLineAccRev = Nil
-    println(_linesAccRev)
   }
+
+  /** Нарезать строку по \n.
+    * Символы \n очень важны в quill-выхлопе, нельзя их терять или рубить неаккуратно.
+    */
 
 
   /** Отработать просто текст с возможными \n внутри. */
   private def _insertPlainTextWithNls(text: String, qdOp: MQdOp): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
     if (text contains nlCh) {
-      // Внутри строки есть символы \n. Это бывает у простых строк без форматирования.
-      val splits = text.split( nlCh )
-      // Возможно, тут лишний \n появляется: в самом конце самой последней строки документа. TODO Но почему-то получается, что наоборот: так и надо, иначе возникает ошибка в самой последней строке. Почему?
+      // Внутри строки есть символы \n. Обычно, такое возможно при отсуствии какого-либо форматирования.
+      // -1 -- иначе "...\n" в конце текста будут утрачены. https://stackoverflow.com/a/14602089
+      val splits = text.split( nlCh.toString, -1 )
+
+      // Возможно, тут лишний \n появляется: в самом конце самой последней строки документа.
       val lastSplitIndex = splits.length - 1
-      for ((split, i) <- splits.iterator.zipWithIndex) {
-        println(split, i, lastSplitIndex)
-        _insertVeryPlainText(split, qdOp)
-        if (i < lastSplitIndex)
+      for {
+        (split, i) <- splits.iterator.zipWithIndex
+      } {
+        // /!\ Острожно: здесь самый дикий быдлокод
+        // Quill всегда добавляет в конец последней операции \n из каких-то благих намерений.
+        // Его нужно правильно отрабатывать, т.е. срезать.
+        val isNotLastSplit = i < lastSplitIndex
+        if (isNotLastSplit || split.nonEmpty || qdOp.attrsLine.nonEmpty)
+          _insertVeryPlainText(split, qdOp)
+
+        if (isNotLastSplit)
           _handleEol()
       }
 
     } else {
-      println(text)
       // Текст без переносов строк.
       _insertVeryPlainText(text, qdOp)
     }
   }
 
 
-  private def _insertVeryPlainText(text: String, qdOp: MQdOp): Unit = {
-    if ( !text.isEmpty ) {
+  private def _insertVeryPlainText(text0: String, qdOp: MQdOp): Unit = {
       // Для максимальной скорости работы и некоторого удобства, тут много переменных.
-      var acc: VdomNode = text
+      var acc: VdomNode = if ( text0.isEmpty ) {
+        _emptyLineContent
+      } else {
+        text0
+      }
 
       // Обвешать текст заданной аттрибутикой
       for {
@@ -232,10 +250,6 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       }
 
       _currLineAccRev ::= acc
-
-    } else {
-      println("******************* EMPTY TEXT !!!!!!!!!!!! " + text)
-    }
   }
 
 
@@ -370,7 +384,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
           case _ => <.h6
         }
 
-        // TODO key как-то надо присвоить? Завернуть в span?
+        // Присваиваем внутри списка свои уникальные под-ключи относительно исходного ключа.
         lines
           .iterator
           .zipWithIndex
