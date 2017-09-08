@@ -7,8 +7,8 @@ package io.suggest.ad.edit.m
   * Description: Корневая модель состояния формы редактора рекламной карточки.
   */
 case class MAdEditRoot(
-                        conf  : MAdEditFormConf,
-                        doc   : MDocS
+                        conf      : MAdEditFormConf,
+                        doc       : MDocS
                       ) {
 
   /** Экспорт данных формы. */

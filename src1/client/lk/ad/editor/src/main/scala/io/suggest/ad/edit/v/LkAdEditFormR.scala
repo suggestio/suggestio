@@ -25,7 +25,7 @@ import io.suggest.sjs.common.spa.OptFastEq
 class LkAdEditFormR(
                      jdCssR             : JdCssR,
                      jdR                : JdR,
-                     stripEditR         : StripEditR,
+                     val stripEditR     : StripEditR,
                      lkAdEditCss        : LkAdEditCss,
                      quillCssFactory    : => QuillCss,
                      val quillEditorR   : QuillEditorR
@@ -33,6 +33,7 @@ class LkAdEditFormR(
 
   import MJdArgs.MJdWithArgsFastEq
   import quillEditorR.PropsValFastEq
+  import stripEditR.StripEditRPropsValFastEq
 
   type Props = ModelProxy[MAdEditRoot]
 
@@ -40,8 +41,8 @@ class LkAdEditFormR(
   protected case class State(
                               jdPreviewArgsC    : ReactConnectProxy[MJdArgs],
                               jdCssArgsC        : ReactConnectProxy[JdCss],
-                              currStripOptC     : ReactConnectProxy[Option[Strip]],
-                              textPropsOptC     : ReactConnectProxy[Option[quillEditorR.PropsVal]]
+                              stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
+                              quillEdOptC       : ReactConnectProxy[Option[quillEditorR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -74,6 +75,7 @@ class LkAdEditFormR(
             <.div(
               LCSS.previewInnerCont,
 
+              // Тело превьюшки
               s.jdPreviewArgsC { jdR.apply },
 
               <.div(
@@ -87,10 +89,10 @@ class LkAdEditFormR(
             LCSS.editorsCont,
 
             // Редактор strip'а
-            s.currStripOptC { stripEditR.apply },
+            s.stripEdOptC { stripEditR.apply },
 
             // Редактор текста
-            s.textPropsOptC { quillEditorR.apply }
+            s.quillEdOptC { quillEditorR.apply }
           )
 
         )
@@ -111,14 +113,16 @@ class LkAdEditFormR(
           mroot.doc.jdArgs.jdCss
         },
 
-        currStripOptC = p.connect { mroot =>
-          mroot.doc.jdArgs.selectedTag.flatMap {
-            case s: Strip => Some(s)
-            case _ => None
+        stripEdOptC = p.connect { mroot =>
+          for (stripEd <- mroot.doc.stripEd; selJd <- mroot.doc.jdArgs.selectedTag) yield {
+            stripEditR.PropsVal(
+              strip = selJd.asInstanceOf[Strip],
+              edS   = stripEd
+            )
           }
-        }( OptFastEq.Plain ),
+        }( OptFastEq.Wrapped ),
 
-        textPropsOptC = p.connect { mroot =>
+        quillEdOptC = p.connect { mroot =>
           for {
             qDelta  <- mroot.doc.qDelta
           } yield {

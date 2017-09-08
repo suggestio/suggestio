@@ -2,6 +2,7 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS}
 import io.suggest.common.MHands
 import io.suggest.jd.render.m.{IJdTagClick, MJdCssArgs}
@@ -10,8 +11,6 @@ import io.suggest.jd.tags.qd.QdTag
 import io.suggest.jd.tags.{JsonDocument, Strip}
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
-
-import scala.scalajs.js.JSON
 
 /**
   * Suggest.io
@@ -31,7 +30,6 @@ class DocEditAh[M](
 
     // Набор текста в wysiwyg-редакторе.
     case m: TextChanged =>
-      println( JSON.stringify( m.fullDelta ) )
       val v0 = value
 
       if (v0.qDelta contains m.fullDelta) {
@@ -77,22 +75,33 @@ class DocEditAh[M](
         noChange
 
       } else {
-        // Юзер выбрал какой-то новый элемент.
+        // Юзер выбрал какой-то новый элемент. Залить новый тег в seleted:
         val v1 = v0.withJdArgs(
           v0.jdArgs.withSelectedTag( Some(m.jdTag) )
         )
+
+        // Если это QdTag, то отработать состояние quill-delta:
         val v2 = m.jdTag match {
+          // Это qd-тег, значит нужно собрать и залить текущую дельту текста в состояние.
           case qdt: QdTag =>
-            // Нужно собрать и залить текущую дельту текста в состояние.
             val delta2 = quillDeltaJsUtil.qdTag2delta(qdt, v0.jdArgs.renderArgs.edges)
             v1.withQDelta( Some(delta2) )
+          // Очистить состояние от дельты.
           case _ =>
-            if (v1.qDelta.nonEmpty)
-              v1.withQDelta(None)
-            else
-              v1
+            v1.withOutQDelta
         }
-        updated( v2 )
+
+        // Если это strip, то активировать состояние strip-редактора.
+        val v3 = m.jdTag match {
+          // Переключение на новый стрип. Инициализировать состояние stripEd:
+          case s: Strip =>
+            v2.withStripEd( Some(MStripEdS()) )
+          // Это не strip, обнулить состояние stripEd, если оно существует:
+          case _ =>
+            v2.withOutStripEd
+        }
+
+        updated( v3 )
       }
 
 

@@ -376,19 +376,7 @@ class QuillDeltaJsUtil extends Log {
                   id        = __nextEdgeUid(),
                   text      = inlineImageOpt,
                   url       = OptionUtil.maybe(inlineImageOpt.isEmpty)(anyStrContent)
-                  // Оригинальные значения для whOpt не ставим, т.к. их измерит сервер при необходимости, а не тут.
-                  /*whOpt     = for {
-                    embedAttrs  <- embedAttrsOpt
-                    widthSU     <- embedAttrs.width
-                    width       <- widthSU
-                    heightSU    <- embedAttrs.height
-                    height      <- heightSU
-                  } yield {
-                    MSize2di(
-                      width   = width,
-                      height  = height
-                    )
-                  }*/
+                  // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
                 )
               })
             } else {

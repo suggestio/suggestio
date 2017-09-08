@@ -51,6 +51,10 @@ trait DeltaOpAttrs extends js.Object {
 
   var align: UndefOr[String] = js.undefined
 
+  // С width и height есть особенности: это размеры картинки (или иного визуального 2D-объекта).
+  // Официально, image resize не поддерживается. https://github.com/quilljs/quill/issues/753
+  // Но они работают в Firefox! Единственное, что это сырые аттрибуты, т.е. строки вида "543".
+  // Мы исходим из того, что тип данных могут внезапно заменить на int, и ПОКА поддерживаем одновременно оба варианта.
   var width: UndefOr[String | Int] = js.undefined
 
   var height: UndefOr[String | Int] = js.undefined

@@ -6,7 +6,6 @@ import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.ad.edit.m.BlockSizeBtnClick
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.{MHand, MHands}
-import io.suggest.css.Css
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -57,6 +56,7 @@ class PlusMinusControlsR(
 
     /** Реакция на клик по одной из кнопок увеличения/уменьшения размера. */
     private def onBtnClick(mhand: MHand): Callback = {
+      // Надо бы применить dispatchOnProxyScopeCB(), но тут зависимость от props.value...
       $.props >>= { p =>
         p.dispatchCB( BlockSizeBtnClick(p.value.get.model, mhand) )
       }

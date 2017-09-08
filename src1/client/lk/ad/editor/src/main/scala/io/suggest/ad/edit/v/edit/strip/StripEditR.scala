@@ -1,7 +1,9 @@
 package io.suggest.ad.edit.v.edit.strip
 
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.Strip
@@ -19,17 +21,32 @@ import io.suggest.sjs.common.spa.OptFastEq.Wrapped
   */
 class StripEditR(
                   val plusMinusControlsR    : PlusMinusControlsR,
-                  css                       : LkAdEditCss
+                  css                       : LkAdEditCss,
+                  deleteStripBtnR           : DeleteStripBtnR
                 ) {
 
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
+  import MStripEdS.MEditStripSFastEq
+
+  case class PropsVal(
+                       strip  : Strip,
+                       edS    : MStripEdS
+                     )
+
+  implicit object StripEditRPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.strip eq b.strip) &&
+        (a.edS eq b.edS)
+    }
+  }
 
   /** Алиас сложного типа для пропертисов. */
-  type Props = ModelProxy[Option[Strip]]
+  type Props = ModelProxy[Option[PropsVal]]
 
   protected case class State(
                               heightPropsOptC   : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
-                              widthPropsOptC    : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]]
+                              widthPropsOptC    : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
+                              stripEdSOptC      : ReactConnectProxy[Option[MStripEdS]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -39,10 +56,16 @@ class StripEditR(
         <.div(
 
           // Кнопки управление шириной и высотой блока.
-          s.heightPropsOptC { plusMinusControlsR.apply },
+          <.div(
+            s.heightPropsOptC { plusMinusControlsR.apply },
 
-          s.widthPropsOptC { plusMinusControlsR.apply }
+            s.widthPropsOptC { plusMinusControlsR.apply }
+          ),
 
+          // Кнопка удаления текущего блока.
+          s.stripEdSOptC { deleteStripBtnR.apply }
+
+          //
           // TODO Загрузка фоновой картинки и выбора цвета фона.
 
         )
@@ -59,7 +82,7 @@ class StripEditR(
       def __mkWhPmProps(f: BlockMeta => plusMinusControlsR.PropsVal) = {
         propsOptProxy.connect { propsOpt =>
           propsOpt
-            .flatMap(_.bm)
+            .flatMap(_.strip.bm)
             .map(f)
         }
       }
@@ -81,6 +104,10 @@ class StripEditR(
             model         = BlockWidths,
             current       = bm.w
           )
+        },
+
+        stripEdSOptC = propsOptProxy.connect { propsOpt =>
+          propsOpt.map(_.edS)
         }
       )
     }

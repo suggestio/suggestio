@@ -1,6 +1,5 @@
 package io.suggest.ad.edit.m
 
-import com.quilljs.delta.Delta
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.sjs.common.spa.DAction
@@ -21,3 +20,9 @@ sealed trait ILkEditAction extends DAction
   */
 case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends ILkEditAction
 
+
+/** Экшен клика по кнопке удаления текущего выделенного strip'а. */
+case object DeleteStrip extends ILkEditAction
+
+/** Экшен отказа от удаления блока. */
+case object DeleteCancel extends ILkEditAction
