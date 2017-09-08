@@ -46,8 +46,7 @@ class QuillEditorR(
     private def onTextChanged(html: String, changeset: Delta, source: Source_t,
                               editorProxy: QuillUnpriveledged): Callback = {
       dispatchOnProxyScopeCB($, TextChanged(
-        fullDelta = editorProxy.getContents(),
-        html      = html
+        fullDelta = editorProxy.getContents()
       ))
     }
 

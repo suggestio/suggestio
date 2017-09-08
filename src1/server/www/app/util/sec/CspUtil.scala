@@ -21,6 +21,16 @@ class CspUtil @Inject() (
                           contextUtil    : ContextUtil
                         ) {
 
+  private val VIDEO_SRCS = {
+    val proto = "https://"
+    Set(
+      proto + "youtube.com",
+      proto + "*.youtube.com",
+      proto + "vimeo.com",
+      proto + "*.vimeo.com"
+    )
+  }
+
   /** Включена ли поддержка CSP-заголовков? */
   private def IS_ENABLED = true
 
@@ -50,7 +60,9 @@ class CspUtil @Inject() (
             // Разрешить веб-сокеты в same-origin.
             s"ws${if (contextUtil.HTTPS_ENABLED) "s" else ""}://${contextUtil.HOST_PORT}"
           ),
-          reportUri = Some( routes.Static.handleCspReport().url )
+          reportUri = Some( routes.Static.handleCspReport().url ),
+          frameSrc = VIDEO_SRCS,
+          childSrc = VIDEO_SRCS
         ),
         reportOnly = CSP_REPORT_ONLY
       )

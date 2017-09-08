@@ -80,6 +80,7 @@ sealed abstract class MPredicate(override val value: String)
 }
 
 
+
 /** Модель предикатов эджей. */
 object MPredicates extends StringEnum[MPredicate] {
 
@@ -217,9 +218,28 @@ object MPredicates extends StringEnum[MPredicate] {
   @deprecated("Толком никакой смысловой нагрузки не было, и оно замёржено в NodeLocation", "2017-06-02")
   case object AdnMap extends MPredicate("r")
 
-  /** Эдж текста.
-    * Исходная суть его в просто хранении текстового контента для json-doc-контента узла. */
-  case object Text extends MPredicate("s")
+
+  /** Неявный эдж для jd-content'а, т.е. частей содержимого некоего json-документа.
+    * Обычно не используется напрямую, а дёргаются конкретные дочерние эджи.
+    * Появилось для кодирования эджей в jd-контексте.
+    */
+  case object JdContent extends MPredicate("s") {
+
+    /** Эдж текста.
+      * Исходная суть его в просто хранении текстового контента для json-doc-контента узла. */
+    case object Text extends MPredicate("st") with _Child
+
+    /** Картинка/изображение. */
+    case object Image extends MPredicate("si") with _Child
+
+    /** Видео. */
+    case object Video extends MPredicate("sv") with _Child
+
+    override def children: List[MPredicate] = {
+      Text :: Image :: Video :: super.children
+    }
+
+  }
 
 
   override val values = {

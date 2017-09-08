@@ -74,7 +74,7 @@ trait TreeEnumEntry[T <: TreeEnumEntry[T]] { that: T =>
 
 
   /** Трейт для дочерних элементов. Они обычно наследуют черты родителей. */
-  protected trait _Child { child: T =>
+  trait _Child { child: T =>
     override def parent = Some(that)
   }
 

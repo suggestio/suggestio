@@ -13,24 +13,22 @@ import play.api.libs.functional.syntax._
 
 object QdTag {
 
-  implicit val QD_TAG_FORMAT: OFormat[QdTag] = (
-    (__ \ "h").formatNullable[String] and
+  implicit val QD_TAG_FORMAT: OFormat[QdTag] = {
     (__ \ "o").format[Seq[MQdOp]]
-  )(apply, unlift(unapply))
+      .inmap(apply, _.ops)
+  }
 
 
-  def a(html: Option[String] = None)(ops: MQdOp*) = apply(html, ops)
+  def a()(ops: MQdOp*) = apply(ops)
 
 }
 
 
 /** Класс модели представления цельной quill-дельты.
   *
-  * @param html html-текст, отрендеренный редактором.
   * @param ops Delta-операции.
   */
 case class QdTag(
-                  html  : Option[String],
                   ops   : Seq[MQdOp]
                 )
   extends IDocTag
@@ -48,6 +46,5 @@ case class QdTag(
   }
 
   def withOps(ops: Seq[MQdOp]) = copy(ops = ops)
-  def withHtml(html: Option[String]) = copy(html = html)
 
 }

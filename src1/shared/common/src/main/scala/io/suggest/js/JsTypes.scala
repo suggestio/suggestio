@@ -8,19 +8,19 @@ package io.suggest.js
   */
 object JsTypes {
 
-  def STRING = "string"
+  final val STRING = "string"
 
   // в т.ч. для null
-  def OBJECT = "object"
+  final val OBJECT = "object"
 
-  def NUMBER = "number"
+  final val NUMBER = "number"
 
-  def BOOLEAN = "boolean"
+  final val BOOLEAN = "boolean"
 
-  def FUNCTION = "function"
+  final val FUNCTION = "function"
 
-  def UNDEFINED = "undefined"
+  final val UNDEFINED = "undefined"
 
-  def SYMBOL = "symbol"
+  final val SYMBOL = "symbol"
 
 }

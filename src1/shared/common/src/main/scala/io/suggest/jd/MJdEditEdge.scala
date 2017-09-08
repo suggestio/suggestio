@@ -47,7 +47,7 @@ object MJdEditEdge {
   * @param url Ссылка на ресурс, на картинку, например.
   */
 case class MJdEditEdge(
-                        predicate           : MPredicate,
+                        predicate           : MPredicate,   // TODO MPredicate заменить на MPredicates.JdContent.Child или что-то типа него.
                         override val id     : EdgeUid_t,
                         text                : Option[String] = None,
                         nodeId              : Option[String] = None,

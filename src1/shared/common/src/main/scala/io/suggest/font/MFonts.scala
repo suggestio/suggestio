@@ -216,6 +216,6 @@ object MFonts
 
 
   /** Дефолтовый шрифт. */
-  def default: MFont = OpenSansLight
+  def default: MFont = HeliosThin
 
 }

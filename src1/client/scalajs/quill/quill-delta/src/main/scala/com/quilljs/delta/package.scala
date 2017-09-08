@@ -9,6 +9,6 @@ import scala.scalajs.js.|
   */
 package object delta {
 
-  type DeltaInsertData_t = String | Int | IEmbed
+  type DeltaInsertData_t = String | Int | DeltaEmbed
 
 }

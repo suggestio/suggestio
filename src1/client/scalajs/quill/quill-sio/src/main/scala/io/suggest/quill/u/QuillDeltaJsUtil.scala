@@ -1,6 +1,7 @@
 package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
+import io.suggest.common.empty.OptionUtil
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
@@ -10,11 +11,13 @@ import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
+import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.text.MTextAligns
 
 import scala.annotation.tailrec
 import scala.scalajs.js
-import scala.scalajs.js.{JSON, |}
+import scala.scalajs.js.{JSON, UndefOr, |}
 
 /**
   * Suggest.io
@@ -22,7 +25,7 @@ import scala.scalajs.js.{JSON, |}
   * Created: 30.08.17 18:11
   * Description: Утиль для работы с quill delta.
   */
-class QuillDeltaJsUtil {
+class QuillDeltaJsUtil extends Log {
 
   /** Конверсия из QdTag в дельту, понятную quill-редактору.
     *
@@ -34,18 +37,37 @@ class QuillDeltaJsUtil {
     qd.ops.foldLeft( new Delta() ) { (delta, qdOp) =>
       qdOp.opType match {
         case MQdOpTypes.Insert =>
-          val arg1: DeltaInsertData_t = qdOp.edgeInfo
-            .flatMap { qdEi =>
-              edges
-                .get( qdEi.edgeUid )
-                .flatMap(_.text)
+          val eOpt = qdOp.edgeInfo
+            .flatMap { qdEi => edges.get( qdEi.edgeUid ) }
+          val resOpt = for {
+            e    <- eOpt
+            data <- {
+              e.predicate match {
+                case MPredicates.JdContent.Text =>
+                  e.text
+                    .map(t => t: DeltaInsertData_t)
+                case _ =>
+                  val jsObj = js.Object().asInstanceOf[DeltaEmbed]
+                  e.predicate match {
+                    case MPredicates.JdContent.Image =>
+                      for ( imgSrc <- e.url.orElse(e.text) ) yield {
+                        jsObj.image = imgSrc
+                        jsObj: DeltaInsertData_t
+                      }
+                    case MPredicates.JdContent.Video =>
+                      for (videoUrl <- e.url) yield {
+                        jsObj.video = videoUrl
+                        jsObj: DeltaInsertData_t
+                      }
+                  }
+              }
             }
-            .orElse {
-              // TODO Реализовать поддержку IEmbed => Delta JSON
-              ???
-            }
-            .get
-          delta.insert( arg1, qdAttrsOpt2deltaAttrs(qdOp) )
+          } yield {
+            delta.insert( data, qdAttrsOpt2deltaAttrs(qdOp) )
+          }
+          if (resOpt.isEmpty)
+            LOG.warn( ErrorMsgs.INSERT_PAYLOAD_EXPECTED, msg = List(qdOp.edgeInfo, eOpt) )
+          delta
 
         case MQdOpTypes.Delete =>
           delta.delete(
@@ -60,8 +82,6 @@ class QuillDeltaJsUtil {
       }
     }
   }
-
-
   /** Вычисление scala-типа delta-операции. */
   def deltaOp2qdType(dOp: DeltaOp): MQdOpType = {
     if (dOp.insert.nonEmpty) {
@@ -150,6 +170,24 @@ class QuillDeltaJsUtil {
     qdAttrs.optional
   }
 
+  private def _attrToIntFromDirty( av: UndefOr[String | Int] ): Option[ISetUnset[Int]] = {
+    for (valueOrNull <- av.toOption) yield {
+      js.typeOf( valueOrNull.asInstanceOf[js.Any] ) match {
+        case JsTypes.STRING => SetVal( valueOrNull.asInstanceOf[String].toInt )
+        case JsTypes.NUMBER => SetVal( valueOrNull.asInstanceOf[Int] )
+        case _              => UnSetVal
+      }
+    }
+  }
+
+  def deltaAttrs2qdAttrsEmbed(attrs: DeltaOpAttrs): Option[MQdAttrsEmbed] = {
+    val qdAttrs = MQdAttrsEmbed(
+      width  = _attrToIntFromDirty( attrs.width ),
+      height = _attrToIntFromDirty( attrs.height )
+    )
+    qdAttrs.optional
+  }
+
 
   def setUnsetOrNullVal[T <: AnyVal](su: ISetUnset[T]): T | Null = {
     su match {
@@ -175,6 +213,9 @@ class QuillDeltaJsUtil {
     for (attrsLine <- qdOp.attrsLine)
       qdAttrsLineIntoDeltaAttrs( attrsLine, doa )
 
+    for (attrsEmbed <- qdOp.attrsEmbed)
+      qdAttrsEmbedIntoDeltaAttrs( attrsEmbed, doa )
+
     // Вернуть результат, если в аккамуляторе есть хоть какие-то данные:
     if (doa.asInstanceOf[js.Dictionary[js.Any]].nonEmpty) {
       doa
@@ -188,7 +229,7 @@ class QuillDeltaJsUtil {
   }
 
 
-  def qdAttrsTextIntoDeltaAttrs(qdAttrs: MQdAttrsText, attrs0: DeltaOpAttrs): Unit = {
+  private def qdAttrsTextIntoDeltaAttrs(qdAttrs: MQdAttrsText, attrs0: DeltaOpAttrs): Unit = {
     for (boldSU <- qdAttrs.bold)
       attrs0.bold = setUnsetOrNullVal( boldSU )
     for (italicSU <- qdAttrs.italic)
@@ -215,7 +256,7 @@ class QuillDeltaJsUtil {
   }
 
 
-  def qdAttrsLineIntoDeltaAttrs(qdAttrsLine: MQdAttrsLine, attrs0: DeltaOpAttrs): Unit = {
+  private def qdAttrsLineIntoDeltaAttrs(qdAttrsLine: MQdAttrsLine, attrs0: DeltaOpAttrs): Unit = {
     for (headerSU <- qdAttrsLine.header)
       attrs0.header = setUnsetOrNullVal( headerSU )
     for (listSU <- qdAttrsLine.list)
@@ -231,6 +272,14 @@ class QuillDeltaJsUtil {
   }
 
 
+  private def qdAttrsEmbedIntoDeltaAttrs(qdAttrsEmbed: MQdAttrsEmbed, attrs0: DeltaOpAttrs): Unit = {
+    for (widthSU <- qdAttrsEmbed.width)
+      attrs0.width = js.defined { setUnsetOrNullRef( widthSU.map(_.toString) ) }
+    for (heightSu <- qdAttrsEmbed.height)
+      attrs0.height = js.defined { setUnsetOrNullRef( heightSu.map(_.toString) ) }
+  }
+
+
   /** Конвертация дельты из quill-редактора в jd Text и обновлённую карту эджей.
     *
     * @param d Исходная дельта.
@@ -239,7 +288,7 @@ class QuillDeltaJsUtil {
     */
   def delta2qdTag(d: Delta, jdTag0: IDocTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (QdTag, Map[EdgeUid_t, MJdEditEdge]) = {
 
-    val textPred = MPredicates.Text
+    val jdContPred = MPredicates.JdContent
 
     // Собрать id любых старых эджей текущего тега
     val oldEdgeIds = jdTag0
@@ -248,14 +297,14 @@ class QuillDeltaJsUtil {
       .toSet
 
 
-    // Отсеять все текстовые эджи, они более не актуальны.
-    // TODO XXX нужно дропать только то, что относится к текущему QdTag, а не всё сразу.
-    val edgesNoText = edges0.filterNot { case (_, e) =>
-      e.predicate == textPred && oldEdgeIds.contains(e.id)
+    // Отсеять все контент-эджи, они более неактуальны.
+    val edgesNoJdCont = edges0.filterNot { case (_, e) =>
+      (e.predicate ==>> jdContPred) &&
+        (oldEdgeIds contains e.id)
     }
 
     // Множество edge id, которые уже заняты.
-    val busyEdgeIds = edgesNoText.keySet
+    val busyEdgeIds = edgesNoJdCont.keySet
 
     // Переменная-счётчик для эджей во время цикла. Можно её запихать в аккамулятор и идти через foldLeft + List.reverse вместо map.
     var edgeUidCounter = if (busyEdgeIds.isEmpty) {
@@ -275,7 +324,7 @@ class QuillDeltaJsUtil {
     }
 
     // Карта новых текстовых эджей.
-    val newTextEdgesMap = scala.collection.mutable.HashMap[String, MJdEditEdge]()
+    val newContEdgesMap = scala.collection.mutable.HashMap[String, MJdEditEdge]()
 
     // Пройтись по delta-операциям:
     val qdOps = d.ops
@@ -284,53 +333,91 @@ class QuillDeltaJsUtil {
         val deltaAttrsOpt = dOp.attributes.toOption
         MQdOp(
           opType = deltaOp2qdType( dOp ),
-          edgeInfo = dOp.insert.toOption.flatMap { raw =>
+          edgeInfo = for (raw <- dOp.insert.toOption) yield {
             val typeOfRaw = js.typeOf(raw)
-            if (typeOfRaw == JsTypes.STRING) {
-              val text = raw.asInstanceOf[String]
-              val te = newTextEdgesMap.getOrElse(text, {
-                val textEdge = MJdEditEdge(
-                  predicate = textPred,
-                  id = __nextEdgeUid(),
-                  text = Some(text)
-                )
-                newTextEdgesMap(text) = textEdge
-                textEdge
-              })
-              val qdEdgeInfo = MQdEdgeInfo(
-                edgeUid = te.id
-              )
-              Some(qdEdgeInfo)
 
-            } else if (typeOfRaw == JsTypes.NUMBER) {
-              // TODO Бывает, что какой-то embed-контент задан через embed type id (1 или другие числа какие-то, хз).
-              val embedTypeId = typeOfRaw.asInstanceOf[Int]
-              ???
+            // Проанализировать тип значения insert-поля.
+            val jdEdge = if (typeOfRaw == JsTypes.STRING) {
+              val text = raw.asInstanceOf[String]
+              newContEdgesMap.getOrElseUpdate(text, {
+                MJdEditEdge(
+                  predicate = jdContPred.Text,
+                  id        = __nextEdgeUid(),
+                  text      = Some(text)
+                )
+              })
+
             } else if (typeOfRaw == JsTypes.OBJECT) {
-              // TODO Embed задан объектом. Это нормально.
-              ???
+              // TODO Дедублицировать с JsTypes.STRING ветвью: часть кода очень похожа, хотя отличий тоже хватает.
+              val deltaEmbed = raw.asInstanceOf[DeltaEmbed]
+              // Внутри или image, или video
+              val pred = if (deltaEmbed.image.nonEmpty) {
+                jdContPred.Image
+              } else if (deltaEmbed.video.nonEmpty) {
+                jdContPred.Video
+              } else {
+                LOG.error( ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED, msg = JSON.stringify(deltaEmbed) )
+                throw new IllegalArgumentException(ErrorMsgs.EMBEDDABLE_MEDIA_INFO_EXPECTED)
+              }
+
+              val anyStrContent = deltaEmbed.image
+                .orElse( deltaEmbed.video )
+                .get
+
+              newContEdgesMap.getOrElseUpdate(anyStrContent, {
+                // Если инлайновая картинка, то тут будет Some()
+                val inlineImageOpt = deltaEmbed.image
+                  .toOption
+                  .filter( _.startsWith("data:image/") )
+
+                // Собрать embed edge
+                MJdEditEdge(
+                  predicate = pred,
+                  id        = __nextEdgeUid(),
+                  text      = inlineImageOpt,
+                  url       = OptionUtil.maybe(inlineImageOpt.isEmpty)(anyStrContent)
+                  // Оригинальные значения для whOpt не ставим, т.к. их измерит сервер при необходимости, а не тут.
+                  /*whOpt     = for {
+                    embedAttrs  <- embedAttrsOpt
+                    widthSU     <- embedAttrs.width
+                    width       <- widthSU
+                    heightSU    <- embedAttrs.height
+                    height      <- heightSU
+                  } yield {
+                    MSize2di(
+                      width   = width,
+                      height  = height
+                    )
+                  }*/
+                )
+              })
             } else {
               throw new IllegalArgumentException("op.i=" + raw)
             }
+
+            MQdEdgeInfo(
+              edgeUid = jdEdge.id
+            )
           },
-          extEmbed = None, // TODO Надо поискать в insert данные по внешнему video/image
           index = dOp.delete
             .toOption
             .orElse( dOp.retain.toOption ),
+          // TODO Opt: Можно выборочно грузить аттрибуты в зависимости от результатов предыдущих шагов.
           attrsText = deltaAttrsOpt
             .flatMap( deltaAtts2qdAttrs ),
           attrsLine = deltaAttrsOpt
-            .flatMap( deltaAttrs2qdAttrsLine )
+            .flatMap( deltaAttrs2qdAttrsLine ),
+          attrsEmbed = deltaAttrsOpt
+            .flatMap( deltaAttrs2qdAttrsEmbed )
         )
       }
       .toList
 
     // Собрать и вернуть результаты исполнения.
     val tag = QdTag(
-      html = None,
       ops  = qdOps
     )
-    val edges2 = edgesNoText ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newTextEdgesMap.valuesIterator )
+    val edges2 = edgesNoJdCont ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newContEdgesMap.valuesIterator )
 
     (tag, edges2)
   }

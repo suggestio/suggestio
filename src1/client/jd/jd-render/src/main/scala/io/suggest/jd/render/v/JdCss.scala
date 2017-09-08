@@ -5,7 +5,7 @@ import io.suggest.font.{MFontSizes, MFonts}
 
 import scalacss.DevDefaults._
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.tags.qd.QdTag
+import io.suggest.jd.tags.qd.{MQdOp, QdTag}
 import io.suggest.jd.tags.{AbsPos, IDocTag, Strip}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
@@ -122,10 +122,14 @@ class JdCss( jdCssArgs: MJdCssArgs )
   // -------------------------------------------------------------------------------
   // fonts
 
+  private def _qdOpsIter: Iterator[MQdOp] = {
+    _jdTagsIter[QdTag]
+      .flatMap(_.ops)
+  }
+
   /** Домен стилей для текстов. */
   private val _textStylesDomain = {
-    val textAttrsSeq = _jdTagsIter[QdTag]
-      .flatMap(_.ops)
+    val textAttrsSeq = _qdOpsIter
       .flatMap(_.attrsText.iterator)
       .filter(_.isCssStyled)
       .toIndexedSeq
@@ -216,6 +220,32 @@ class JdCss( jdCssArgs: MJdCssArgs )
     styleF( indentLevelsDomain ) { indentLevel =>
       styleS(
         paddingLeft( (indentLevel * 3).em )
+      )
+    }
+  }
+
+
+  // -------------------------------------------------------------------------------
+  // text indents.
+
+  val embedAttrStyleF = {
+    val embedAttrsSeq = _qdOpsIter
+      .flatMap( _.attrsEmbed )
+      .filter( _.nonEmpty )
+      .toIndexedSeq
+
+    val embedAttrsDomain = new Domain.OverSeq( embedAttrsSeq )
+
+    styleF( embedAttrsDomain ) { embedAttrs =>
+      var acc = List.empty[ToStyle]
+
+      for (heightSU <- embedAttrs.height; heightPx <- heightSU )
+        acc ::= height( heightPx.px )
+      for (widthSU <- embedAttrs.width; widthPx <- widthSU)
+        acc ::= width( widthPx.px )
+
+      styleS(
+        acc: _*
       )
     }
   }

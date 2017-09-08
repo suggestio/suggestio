@@ -31,7 +31,6 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       .insert(theString)
     val hwEdgeId: EdgeUid_t = 1
     val jdTag0 = QdTag(
-      html = None,
       ops = Seq(
         MQdOp(
           opType = MQdOpTypes.Insert,
@@ -41,7 +40,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
     val edges0 = Map(
       hwEdgeId -> MJdEditEdge(
-        predicate = MPredicates.Text,
+        predicate = MPredicates.JdContent.Text,
         id        = hwEdgeId,
         text      = Some( theString )
       )
@@ -65,7 +64,6 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       .insert( newString )
     val hwEdgeId: EdgeUid_t = 1
     val jdTag0 = QdTag(
-      html = None,
       ops = Seq(
         MQdOp(
           opType = MQdOpTypes.Insert,
@@ -75,7 +73,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
     val edges0 = Map(
       hwEdgeId -> MJdEditEdge(
-        predicate = MPredicates.Text,
+        predicate = MPredicates.JdContent.Text,
         id        = hwEdgeId,
         text      = Some( "Please write the text here" )
       )
@@ -115,7 +113,6 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     // Пусть исходный документ будет пустым. Для чистоты эксперимента.
     val edges0 = Map.empty[EdgeUid_t, MJdEditEdge]
     val jdTag0 = QdTag(
-      html = None,
       ops  = Nil
     )
 

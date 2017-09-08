@@ -296,7 +296,7 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     val w1 = BlockWidths.default
     val h1 = BlockHeights.default
 
-    val textPred = MPredicates.Text
+    val textPred = MPredicates.JdContent.Text
 
     val r = MAdEditForm(
       template = JsonDocument.a()(

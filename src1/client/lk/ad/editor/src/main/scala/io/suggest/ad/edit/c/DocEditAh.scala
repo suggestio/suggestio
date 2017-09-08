@@ -41,8 +41,7 @@ class DocEditAh[M](
       } else {
         // Текст действительно изменился. Пересобрать json-document.
         val currTag0 = v0.jdArgs.selectedTag.get
-        val (qdTag1, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
-        val qdTag2 = qdTag1.withHtml( Some(m.html) )
+        val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
 
         // Собрать новый json-document
         val jsonDoc2 = v0.jdArgs

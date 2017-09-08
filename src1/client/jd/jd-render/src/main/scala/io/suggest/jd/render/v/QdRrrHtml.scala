@@ -3,12 +3,13 @@ package io.suggest.jd.render.v
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
@@ -89,21 +90,83 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   /** Прорендерить текущую операцию, распихав изменения по аккамуляторам. */
   private def _renderOp(qdOp: MQdOp): Unit = {
-    qdOp.opType match {
+    val resOpt = qdOp.opType match {
       case MQdOpTypes.Insert =>
-        qdOp.edgeInfo.fold[Unit] {
-          // TODO Внешний embed?
-          ???
-        } { qdEi =>
-          val e = jdArgs.renderArgs.edges(qdEi.edgeUid)
+        for {
+          qdEi <- qdOp.edgeInfo
+          e <- jdArgs.renderArgs.edges.get( qdEi.edgeUid )
+        } yield {
           e.predicate match {
-            case MPredicates.Text =>
+            case MPredicates.JdContent.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
               _insertText( e.text.get, qdOp )
-              // TODO Надо осилить image через предикат
+            // Рендер картинки.
+            case MPredicates.JdContent.Image =>
+              _insertImage( e, qdOp )
+            // Рендер видео.
+            case MPredicates.JdContent.Video =>
+              _insertVideo( e )
           }
         }
     }
+    if (resOpt.isEmpty)
+      LOG.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = qdOp.edgeInfo)
+  }
+
+
+
+  /** Вставка картинки-изображения. */
+  private def _insertImage(e: MJdEditEdge, qdOp: MQdOp): Unit = {
+    val resOpt = for {
+      // Находим src. Без него нет смысла продолжать.
+      src <- e.url.orElse {
+        // Картинка может быть заинлайнена текстом: data:image/png;base64,ABC123DEF5436...
+        // Это норма во время при редактирования карточки.
+        e.text
+      }
+    } yield {
+      // Аккамулируем аттрибуты для рендера img-тега.
+      var imgArgsAcc = List.empty[TagMod]
+
+      // Отработать ширину/длину файла изображения.
+      for (wh <- e.whOpt) {
+        imgArgsAcc =
+          (^.width := wh.width.px) ::
+            (^.height := wh.height.px) ::
+            imgArgsAcc
+      }
+
+      // wh экранного представления картинки задаётся в CSS согласно рекомендациям ведущих собаководов:
+      for (embedAttrs <- qdOp.attrsEmbed)
+        imgArgsAcc ::= jdArgs.jdCss.embedAttrStyleF(embedAttrs)
+
+      // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
+      imgArgsAcc ::=
+        (^.src := src)
+
+      _currLineAccRev ::= <.img(
+        imgArgsAcc: _*
+      )
+    }
+
+    if (resOpt.isEmpty)
+      LOG.warn(ErrorMsgs.IMG_EXPECTED, msg = e)
+  }
+
+
+  /** Рендер video. */
+  private def _insertVideo(e: MJdEditEdge): Unit = {
+    val resOpt = for {
+      src <- e.url
+    } yield {
+      _currLineAccRev ::= <.iframe(
+        ^.src := src,
+        ^.allowFullScreen := true
+      )
+    }
+
+    if (resOpt.isEmpty)
+      LOG.warn(ErrorMsgs.VIDEO_EXPECTED, msg = e)
   }
 
 

@@ -129,7 +129,7 @@ class LkAdEdit @Inject() (
       }
 
       // Собрать тексты из эджей
-      val textPred = MPredicates.Text
+      val textPred = MPredicates.JdContent.Text
       val textEdgesIter = for {
         textEdge <- request.mad.edges
           .withPredicateIter( textPred )

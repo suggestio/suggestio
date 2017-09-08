@@ -66,7 +66,7 @@ class JdRendererR(
       .get( pp.edgeId )
       .whenDefinedNode { e =>
         e.predicate match {
-          case MPredicates.Text =>
+          case MPredicates.JdContent.Text =>
             e.text
               .whenDefinedNode(identity(_))
           case _ =>

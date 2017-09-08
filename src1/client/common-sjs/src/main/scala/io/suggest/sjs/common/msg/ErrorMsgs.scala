@@ -138,4 +138,12 @@ object ErrorMsgs extends MsgsStaticT {
 
   def UNSUPPORTED_TEXT_LINE_ATTRS      = E(61)
 
+  def VIDEO_EXPECTED                   = E(62)
+
+  def EDGE_NOT_EXISTS                  = E(63)
+
+  def INSERT_PAYLOAD_EXPECTED          = E(64)
+
+  def EMBEDDABLE_MEDIA_INFO_EXPECTED   = E(65)
+
 }
