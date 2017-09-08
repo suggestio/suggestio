@@ -10,7 +10,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
-import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement, VdomNode}
+import japgolly.scalajs.react.vdom.{HtmlTagOf, TagMod, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
 
@@ -59,8 +59,11 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Выполнить рендеринг текущего qd-тега. */
-  @tailrec
   final def render(): VdomElement = {
+    render(0)
+  }
+  @tailrec
+  private def render(i: Int): VdomElement = {
     _restOps match {
       // Есть операция для обработки.
       case qdOp :: restOpsTail =>
@@ -68,8 +71,8 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         // Надо обработать текущую операцию: поискать \n в тексте.
         // Если это текст, то текст может быть с \n или без \n.
         // Либо только "\n", что будет означать форматирование всей накопленной строки целиком.
-        _renderOp( qdOp )
-        render()
+        _renderOp( qdOp, i )
+        render(i + 1)
 
 
       // Больше не осталось операций для проработки
@@ -89,7 +92,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Прорендерить текущую операцию, распихав изменения по аккамуляторам. */
-  private def _renderOp(qdOp: MQdOp): Unit = {
+  private def _renderOp(qdOp: MQdOp, i: Int): Unit = {
     val resOpt = qdOp.opType match {
       case MQdOpTypes.Insert =>
         for {
@@ -99,13 +102,13 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
           e.predicate match {
             case MPredicates.JdContent.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
-              _insertText( e.text.get, qdOp )
+              _insertText( e.text.get, qdOp, i )
             // Рендер картинки.
             case MPredicates.JdContent.Image =>
-              _insertImage( e, qdOp )
+              _insertImage( e, qdOp, i )
             // Рендер видео.
             case MPredicates.JdContent.Video =>
-              _insertVideo( e )
+              _insertVideo( e, i )
           }
         }
     }
@@ -116,7 +119,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Вставка картинки-изображения. */
-  private def _insertImage(e: MJdEditEdge, qdOp: MQdOp): Unit = {
+  private def _insertImage(e: MJdEditEdge, qdOp: MQdOp, i: Int): Unit = {
     val resOpt = for {
       // Находим src. Без него нет смысла продолжать.
       src <- e.url.orElse {
@@ -141,8 +144,10 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         imgArgsAcc ::= jdArgs.jdCss.embedAttrStyleF(embedAttrs)
 
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
-      imgArgsAcc ::=
-        (^.src := src)
+      imgArgsAcc =
+        (^.key := i.toString) ::
+        (^.src := src) ::
+        imgArgsAcc
 
       _currLineAccRev ::= <.img(
         imgArgsAcc: _*
@@ -155,12 +160,13 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Рендер video. */
-  private def _insertVideo(e: MJdEditEdge): Unit = {
+  private def _insertVideo(e: MJdEditEdge, i: Int): Unit = {
     val resOpt = for {
       src <- e.url
     } yield {
       _currLineAccRev ::= <.iframe(
         ^.src := src,
+        ^.key := i.toString,
         ^.allowFullScreen := true
       )
     }
@@ -171,25 +177,28 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Рендер insert-op с текстом. */
-  private def _insertText(text: String, qdOp: MQdOp): Unit = {
+  private def _insertText(text: String, qdOp: MQdOp, i: Int): Unit = {
     if (text matches "[\n]+") {
       // Специальный случай: тег завершения строки с возможной стилистикой всей прошедшей строки.
       for (_ <- 1 to text.length)
-        _handleEol( qdOp.attrsLine )
+        _handleEol( qdOp.attrsLine, Some(i) )
     } else {
       // Это обычный текст. Но он может содержать в себе \n-символы в неограниченном количестве.
-      _insertPlainTextWithNls(text, qdOp)
+      _insertPlainTextWithNls(text, qdOp, i)
     }
   }
 
-  private def _emptyLineContent = <.br
+  private def _emptyLineContent(iOpt: Option[Int] = None): TagMod = {
+    val tag = <.br
+    iOpt.fold[TagMod](tag) { i => ^.key := i.toString }
+  }
 
   /** Отработать конец строки. */
-  private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None): Unit = {
+  private def _handleEol(attrsOpt: Option[MQdAttrsLine] = None, iOpt: Option[Int] = None): Unit = {
     // Это операция рендера накопленной ранее строки. Развернуть отрендеренный контент текущей строки.
     if (_currLineAccRev.isEmpty) {
       // Бывает, что данных в акке нет. Поэтому нужно исправить рендер этим костылём.
-      _currLineAccRev ::= _emptyLineContent
+      _currLineAccRev ::= _emptyLineContent(iOpt)
     }
 
     val currLineContent = _currLineAccRev.reverse
@@ -204,7 +213,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Отработать просто текст с возможными \n внутри. */
-  private def _insertPlainTextWithNls(text: String, qdOp: MQdOp): Unit = {
+  private def _insertPlainTextWithNls(text: String, qdOp: MQdOp, i: Int): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
     if (text contains nlCh) {
       // Внутри строки есть символы \n. Обычно, такое возможно при отсуствии какого-либо форматирования.
@@ -214,12 +223,12 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       // Возможно, тут лишний \n появляется: в самом конце самой последней строки документа.
       val lastSplitIndex = splits.length - 1
       for {
-        (split, i) <- splits.iterator.zipWithIndex
+        (split, j) <- splits.iterator.zipWithIndex
       } {
         // /!\ Острожно: здесь самый дикий быдлокод
         // Quill всегда добавляет в конец последней операции \n из каких-то благих намерений.
         // Его нужно правильно отрабатывать, т.е. срезать.
-        val isNotLastSplit = i < lastSplitIndex
+        val isNotLastSplit = j < lastSplitIndex
         if (isNotLastSplit || split.nonEmpty || qdOp.attrsLine.nonEmpty)
           _insertVeryPlainText(split, qdOp)
 
@@ -236,8 +245,8 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   private def _insertVeryPlainText(text0: String, qdOp: MQdOp): Unit = {
       // Для максимальной скорости работы и некоторого удобства, тут много переменных.
-      var acc: VdomNode = if ( text0.isEmpty ) {
-        _emptyLineContent
+      var acc: TagMod = if ( text0.isEmpty ) {
+        _emptyLineContent()
       } else {
         text0
       }
@@ -328,10 +337,12 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
     // Пройтись последовательно по строкам, сгруппировав строки с одинаковыми аттрибутами.
     // Затем, каждую группу отправлять на line-format рендер.
+    val linesAccLen = _linesAccRev.size
     val acc9 = _linesAccRev
       .iterator
       .zipWithIndex
-      .foldLeft( LinesRrrAcc() ) { case (acc0, ((attrsOpt, line), i)) =>
+      .foldLeft( LinesRrrAcc() ) { case (acc0, ((attrsOpt, line), iRev)) =>
+        val i = linesAccLen - iRev
         val iStr = i.toString
 
         // Отработать аттрибуты строки, если они есть.

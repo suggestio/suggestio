@@ -78,7 +78,7 @@ class JdRendererR(
 
 
   /** Рендер картинки. */
-  def renderPicture(p: Picture): VdomElement = {
+  def renderPicture(p: Picture, i: Int): VdomElement = {
     jdArgs.renderArgs.edges
       .get( p.edgeUid )
       .whenDefinedEl { e =>
@@ -86,7 +86,7 @@ class JdRendererR(
           case MPredicates.Bg =>
             e.url.whenDefinedEl { url =>
               <.img(
-                ^.key := p.hashCode.toString,
+                ^.key := i.toString,
                 ^.src := url,
                 // TODO Отрендерить фактические аттрибуты wh загружаемого файла изображения.
                 e.whOpt.whenDefined { wh =>
@@ -108,9 +108,9 @@ class JdRendererR(
 
 
   /** Рендер контейнера, спозиционированного на экране абсолютно. */
-  def renderAbsPos(ap: AbsPos): VdomElement = {
+  def renderAbsPos(ap: AbsPos, i: Int): VdomElement = {
     <.div(
-      ^.key := ap.hashCode.toString,
+      ^.key := i.toString,
       jdArgs.jdCss.absPosStyleAll,
       jdArgs.jdCss.absPosStyleF(ap),
 
@@ -123,7 +123,11 @@ class JdRendererR(
     renderChildren( dt.children )
   }
   def renderChildren(chs: TraversableOnce[IDocTag]): VdomArray = {
-    chs.toVdomArray( renderDocTag )
+    chs.toIterator
+      .zipWithIndex
+      .toVdomArray { case (jd, i) =>
+        renderDocTag(jd, i)
+      }
   }
 
   /**
@@ -168,9 +172,9 @@ class JdRendererR(
   }
 
   /** Рендер strip, т.е. одной "полосы" контента. */
-  def renderStrip(s: Strip): VdomElement = {
+  def renderStrip(s: Strip, i: Int): VdomElement = {
     <.div(
-      ^.key := s.hashCode.toString,
+      ^.key := i.toString,
       jdArgs.jdCss.smBlock,
       jdArgs.jdCss.stripOuterStyleF( s ),
 
@@ -183,14 +187,14 @@ class JdRendererR(
 
 
   /** Выполнить рендер текущего документа, переданного в jdArgs. */
-  def renderDocument(): VdomElement = {
-    renderDocument( jdArgs.template )
+  def renderDocument(i: Int = 0): VdomElement = {
+    renderDocument( jdArgs.template, i )
   }
 
   /** Рендер указанного документа. */
-  def renderDocument(jd: JsonDocument): VdomElement = {
+  def renderDocument(jd: JsonDocument, i: Int): VdomElement = {
     <.div(
-      ^.key := jd.hashCode.toString,
+      ^.key := i.toString,
       renderChildren( jd )
     )
   }
@@ -201,20 +205,13 @@ class JdRendererR(
     * @param qdTag Тег с кодированными данными Quill delta.
     * @return Элемент vdom.
     */
-  def renderQd( qdTag: QdTag ): VdomElement = {
+  def renderQd( qdTag: QdTag, i: Int ): VdomElement = {
     val tagMods = {
-      //qdTag.html.fold[TagMod] {
-        // нет готового html -- пытаемся рендерить по представленю delta.
-        val qdRrr = new QdRrrHtml(jdArgs, qdTag)
-        // renderQdFromDelta( qdTag )
-        qdRrr.render()
-      //} { htmlStr =>
-        // Есть строка html. Подменяем рендер этой строкой. TODO Избавиться от inner-html рендера, допилив до ума delta-рендер.
-      //  ^.dangerouslySetInnerHtml := htmlStr
-      //}
+      val qdRrr = new QdRrrHtml(jdArgs, qdTag)
+      qdRrr.render()
     }
     <.div(
-      ^.key := qdTag.hashCode.toString,
+      ^.key := i.toString,
       _maybeSelected(qdTag),
       _clickableOnEdit(qdTag),
       _draggableOnEdit(qdTag),
@@ -226,14 +223,14 @@ class JdRendererR(
   /**
     * Запуск рендеринга произвольных тегов.
     */
-  def renderDocTag(idt: IDocTag): VdomNode = {
+  def renderDocTag(idt: IDocTag, i: Int): VdomNode = {
     idt match {
-      case qd: QdTag                  => renderQd( qd )
+      case qd: QdTag                  => renderQd( qd, i )
       case pp: PlainPayload           => renderPlainPayload( pp )
-      case p: Picture                 => renderPicture( p )
-      case ap: AbsPos                 => renderAbsPos(ap)
-      case s: Strip                   => renderStrip( s )
-      case jd: JsonDocument           => renderDocument( jd )
+      case p: Picture                 => renderPicture( p, i )
+      case ap: AbsPos                 => renderAbsPos(ap, i)
+      case s: Strip                   => renderStrip( s, i )
+      case jd: JsonDocument           => renderDocument( jd, i )
     }
   }
 
