@@ -57,10 +57,6 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   private var _restOps: List[MQdOp] = qdTag.ops.toList
 
 
-  /** Reverse-акк, куда сбрасываются все окончательно отрендеренные данные. */
-  //private var _finalAccRev: List[TagMod] = Nil
-
-
   /** Выполнить рендеринг текущего qd-тега. */
   @tailrec
   final def render(): VdomElement = {
@@ -104,7 +100,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
             case MPredicates.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
               _insertText( e.text.get, qdOp )
-            // TODO Надо осилить image через предикат
+              // TODO Надо осилить image через предикат
           }
         }
     }
@@ -419,9 +415,6 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         tagMods: _*
       )
     }
-
-    // TODO indent
-
   }
 
 

@@ -1,6 +1,7 @@
 package io.suggest.jd.render.v
 
 import io.suggest.css.Css
+import io.suggest.font.{MFontSizes, MFonts}
 
 import scalacss.DevDefaults._
 import io.suggest.jd.render.m.MJdCssArgs
@@ -32,7 +33,10 @@ class JdCss( jdCssArgs: MJdCssArgs )
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
-    addClassName("sm-block")
+    addClassName("sm-block"),
+    // Дефолтовые настройки шрифтов.
+    fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
+    fontSize( MFontSizes.default.value.px )
   )
 
   /** Ширина и длина -- 100%. */

@@ -18,6 +18,6 @@ class QuillSioModule {
 
   lazy val quillInit = wire[QuillInit]
 
-  lazy val quillCss = wire[QuillCss]
+  def quillCss = wire[QuillCss]
 
 }

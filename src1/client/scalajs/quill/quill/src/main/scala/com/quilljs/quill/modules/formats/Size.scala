@@ -31,7 +31,7 @@ trait SizeStyle extends IQuillFormat {
 trait SizeTb extends js.Object {
 
   @JSName( Size.SIZE )
-  val size: js.Array[String]
+  val size: js.Any
 
 }
 

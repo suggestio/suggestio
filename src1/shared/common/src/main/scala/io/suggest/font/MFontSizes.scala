@@ -51,6 +51,10 @@ object MFontSizes extends IntEnum[MFontSize] {
   def min: MFontSize = values.head
   def max: MFontSize = values.last
 
+
+  /** Дефолтовое значение. */
+  def default = F18
+
 }
 
 

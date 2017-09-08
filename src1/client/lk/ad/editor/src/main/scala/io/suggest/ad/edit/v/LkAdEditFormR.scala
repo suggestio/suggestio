@@ -27,7 +27,7 @@ class LkAdEditFormR(
                      jdR                : JdR,
                      stripEditR         : StripEditR,
                      lkAdEditCss        : LkAdEditCss,
-                     quillCss           : QuillCss,
+                     quillCssFactory    : => QuillCss,
                      val quillEditorR   : QuillEditorR
                    ) {
 
@@ -53,7 +53,7 @@ class LkAdEditFormR(
 
         // Отрендерить доп.стили для quill-редактора.
         <.styleTag(
-          quillCss.render[String]
+          quillCssFactory.render[String]
         ),
 
         // Отрендерить стили редактора.

@@ -214,4 +214,8 @@ object MFonts
 
   override protected val _nameMapVal = _nameMap
 
+
+  /** Дефолтовый шрифт. */
+  def default: MFont = OpenSansLight
+
 }

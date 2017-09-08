@@ -5,6 +5,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.css.ScalaCssDefaults._
+import japgolly.scalajs.react.vdom.html_<^.<
 
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.mutable.StyleSheet
@@ -53,6 +54,28 @@ class QuillCss extends StyleSheet.Standalone {
   }
 
 
+  private val SPAN = <.span.name
+
+
+  private val FONT_DFLT = MFonts.default
+
+  {
+    val xFontFamilyName = FONT_DFLT.cssFontFamily
+    val ffAV = fontFamily.attr := Css.quoted( xFontFamilyName )
+    val cAV = content := Css.quoted( xFontFamilyName )
+    for (what <- List(ITEM, LABEL)) {
+      QL_SNOW_CSS_SEL - (
+        &(QL_PICKER_CSS_SEL + QL_ + Font.FONT) - (
+          &( QL_PICKER_CSS_SEL + NAME_DELIM + what ).before - (
+            ffAV,
+            cAV
+          )
+        )
+      )
+    }
+  }
+
+
   // Отрендерить стили для MFonts.
   for (mfont <- MFonts.valuesT) {
 
@@ -84,12 +107,7 @@ class QuillCss extends StyleSheet.Standalone {
      */
     QL_SNOW_CSS_SEL - (
       &(QL_PICKER_CSS_SEL + QL_ + Font.FONT) - (
-
-        // TODO Как объединить/дедублицировать селекторы воедино? Они ведь почти одинаковые.
-        &(QL_PICKER_CSS_SEL + NAME_DELIM + ITEM).attr(VALUE_ATTR_NAME, xFontFamilyName).before - (
-          pickerCssAttrs: _*
-        ),
-        &(QL_PICKER_CSS_SEL + NAME_DELIM + LABEL).attr(VALUE_ATTR_NAME, xFontFamilyName).before - (
+        &( SPAN ).attr(VALUE_ATTR_NAME, xFontFamilyName).before - (
           pickerCssAttrs: _*
         )
 
@@ -98,6 +116,40 @@ class QuillCss extends StyleSheet.Standalone {
 
   }
 
+
+  private val FONT_SIZE_DFLT = MFontSizes.default
+
+  {
+    val mFontSize = FONT_SIZE_DFLT
+    val sizeStr = mFontSize.value.toString
+    val lineHeightPx = mFontSize.lineHeight.px
+
+    val labelCssAttrs = List[ToStyle](
+      content := Css.quoted( sizeStr )
+    )
+
+    val fontSizeAV: ToStyle = fontSize( mFontSize.value.px )
+    val lineHeightAV: ToStyle = lineHeight( lineHeightPx )
+
+    val itemCssAttrs: List[ToStyle] =
+      fontSizeAV ::
+        lineHeightAV ::
+        labelCssAttrs
+
+    QL_SNOW_CSS_SEL - (
+      &(QL_PICKER_CSS_SEL + QL_ + Size.SIZE) - (
+
+        &( QL_PICKER_CSS_SEL + NAME_DELIM + LABEL ).before - (
+          labelCssAttrs: _*
+        ),
+
+        &(QL_PICKER_CSS_SEL + NAME_DELIM + ITEM).before - (
+          itemCssAttrs: _*
+        )
+
+      )
+    )
+  }
 
   // Отрендерить стили для размеров шрифтов.
   for (mFontSize <- MFontSizes.values) {
@@ -115,7 +167,7 @@ class QuillCss extends StyleSheet.Standalone {
     val itemCssAttrs: List[ToStyle] =
       fontSizeAV ::
         lineHeightAV ::
-        labelCssAttrs
+        Nil
 
     s"$QL_${Size.SIZE}$NAME_DELIM$sizeStr" - (
       fontSizeAV,
@@ -125,12 +177,12 @@ class QuillCss extends StyleSheet.Standalone {
     QL_SNOW_CSS_SEL - (
       &(QL_PICKER_CSS_SEL + QL_ + Size.SIZE) - (
 
-        // TODO Как объединить/дедублицировать селекторы воедино? Они ведь почти одинаковые.
+        &(SPAN).attr(VALUE_ATTR_NAME, sizeStr).before - (
+          labelCssAttrs: _*
+        ),
+
         &(QL_PICKER_CSS_SEL + NAME_DELIM + ITEM).attr(VALUE_ATTR_NAME, sizeStr).before - (
           itemCssAttrs: _*
-        ),
-        &(QL_PICKER_CSS_SEL + NAME_DELIM + LABEL).attr(VALUE_ATTR_NAME, sizeStr).before - (
-          labelCssAttrs: _*
         )
 
       )
@@ -140,6 +192,10 @@ class QuillCss extends StyleSheet.Standalone {
 
 
 
+  (QL_ + "container") - (
+    fontFamily.attr := Css.quoted( FONT_DFLT.cssFontFamily ),
+    fontSize( MFontSizes.default.value.px )
+  )
 
 
 }

@@ -24,6 +24,17 @@ class QuillInit {
   }
 
 
+  def fontSizesStringArray: js.Array[String] = {
+    MFontSizes
+      .values
+      .iterator
+      .map { mfs =>
+        mfs.value.toString
+      }
+      .toJSArray
+  }
+
+
   /** Подготовить Quill для редактора карточек. */
   def forAdEditor(): Unit = {
     // Залить список наших шрифтов в quill font format:
@@ -34,16 +45,6 @@ class QuillInit {
     val QSizes = Quill.`import`[SizeClass]( QuillModulesNames.Attributors.Clazz.SIZE )
     QSizes.whitelist = fontSizesStringArray
     Quill.register2(QSizes, suppressWarnings = true)
-  }
-
-
-  def fontSizesStringArray: js.Array[String] = {
-
-    MFontSizes
-      .values
-      .iterator
-      .map(mfs => mfs.value.toString)
-      .toJSArray
   }
 
 
@@ -64,10 +65,35 @@ class QuillInit {
 
       js.Array[js.Any](
         new FontTb {
-          override val font = fontNamesJsArray
+          override val font = {
+            val dfltFont = MFonts.default
+            MFonts
+              .values
+              .iterator
+              .map[js.Any] { mfont =>
+                if (mfont eq dfltFont) {
+                  false
+                } else {
+                  mfont.cssFontFamily
+                }
+              }
+              .toJSArray
+          }
         },
         new SizeTb {
-          override val size = fontSizesStringArray
+          override val size = {
+            val dfltSz = MFontSizes.default
+            MFontSizes
+              .values
+              .iterator
+              .map[js.Any] { mfsz =>
+                if (mfsz eq dfltSz)
+                  false
+                else
+                  mfsz.value.toString
+              }
+              .toJSArray
+          }
         }
       ),
 
