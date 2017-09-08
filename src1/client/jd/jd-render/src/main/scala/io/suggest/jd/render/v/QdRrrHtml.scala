@@ -60,10 +60,10 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
   /** Выполнить рендеринг текущего qd-тега. */
   final def render(): VdomElement = {
-    render(0)
+    _doRender()
   }
   @tailrec
-  private def render(i: Int): VdomElement = {
+  private def _doRender(counters: QdRrrOpKeyCounters = QdRrrOpKeyCounters()): VdomElement = {
     _restOps match {
       // Есть операция для обработки.
       case qdOp :: restOpsTail =>
@@ -71,8 +71,10 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         // Надо обработать текущую операцию: поискать \n в тексте.
         // Если это текст, то текст может быть с \n или без \n.
         // Либо только "\n", что будет означать форматирование всей накопленной строки целиком.
-        _renderOp( qdOp, i )
-        render(i + 1)
+        val counters2 = _renderOp( qdOp, counters )
+          .getOrElse( counters )
+
+        _doRender( counters2 )
 
 
       // Больше не осталось операций для проработки
@@ -92,28 +94,41 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
 
   /** Прорендерить текущую операцию, распихав изменения по аккамуляторам. */
-  private def _renderOp(qdOp: MQdOp, i: Int): Unit = {
-    val resOpt = qdOp.opType match {
+  private def _renderOp(qdOp: MQdOp, counters: QdRrrOpKeyCounters): Option[QdRrrOpKeyCounters] = {
+    val counters2Opt = qdOp.opType match {
       case MQdOpTypes.Insert =>
         for {
           qdEi <- qdOp.edgeInfo
           e <- jdArgs.renderArgs.edges.get( qdEi.edgeUid )
         } yield {
+          var videosCnt = counters.video
+          var imagesCnt = counters.image
+          var othersCnt = counters.other
           e.predicate match {
             case MPredicates.JdContent.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
-              _insertText( e.text.get, qdOp, i )
+              _insertText( e.text.get, qdOp, othersCnt )
+              othersCnt += 1
             // Рендер картинки.
             case MPredicates.JdContent.Image =>
-              _insertImage( e, qdOp, i )
+              _insertImage( e, qdOp, imagesCnt )
+              imagesCnt += 1
+
             // Рендер видео.
             case MPredicates.JdContent.Video =>
-              _insertVideo( e, i )
+              _insertVideo( e, videosCnt )
+              videosCnt += 1
           }
+          counters.copy(
+            video = videosCnt,
+            image = imagesCnt,
+            other = othersCnt
+          )
         }
     }
-    if (resOpt.isEmpty)
+    if (counters2Opt.isEmpty)
       LOG.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = qdOp.edgeInfo)
+    counters2Opt
   }
 
 
@@ -145,7 +160,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
       imgArgsAcc =
-        (^.key := i.toString) ::
+        (^.key := s"I$i") ::
         (^.src := src) ::
         imgArgsAcc
 
@@ -166,7 +181,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     } yield {
       _currLineAccRev ::= <.iframe(
         ^.src := src,
-        ^.key := i.toString,
+        ^.key := s"V$i",
         ^.allowFullScreen := true
       )
     }
@@ -189,8 +204,11 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   }
 
   private def _emptyLineContent(iOpt: Option[Int] = None): TagMod = {
+    _emptyLineContent1( iOpt.map(_.toString) )
+  }
+  private def _emptyLineContent1(iOpt: Option[String] = None): TagMod = {
     val tag = <.br
-    iOpt.fold[TagMod](tag) { i => ^.key := i.toString }
+    iOpt.fold[TagMod](tag) { i => ^.key := i }
   }
 
   /** Отработать конец строки. */
@@ -207,11 +225,10 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
     _currLineAccRev = Nil
   }
 
+
   /** Нарезать строку по \n.
     * Символы \n очень важны в quill-выхлопе, нельзя их терять или рубить неаккуратно.
     */
-
-
   /** Отработать просто текст с возможными \n внутри. */
   private def _insertPlainTextWithNls(text: String, qdOp: MQdOp, i: Int): Unit = {
     val nlCh = HtmlConstants.NEWLINE_UNIX
@@ -230,7 +247,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
         // Его нужно правильно отрабатывать, т.е. срезать.
         val isNotLastSplit = j < lastSplitIndex
         if (isNotLastSplit || split.nonEmpty || qdOp.attrsLine.nonEmpty)
-          _insertVeryPlainText(split, qdOp)
+          _insertVeryPlainText(split, qdOp, s"$i.$j")
 
         if (isNotLastSplit)
           _handleEol()
@@ -238,86 +255,90 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
 
     } else {
       // Текст без переносов строк.
-      _insertVeryPlainText(text, qdOp)
+      _insertVeryPlainText(text, qdOp, i.toString)
     }
   }
 
 
-  private def _insertVeryPlainText(text0: String, qdOp: MQdOp): Unit = {
-      // Для максимальной скорости работы и некоторого удобства, тут много переменных.
-      var acc: TagMod = if ( text0.isEmpty ) {
-        _emptyLineContent()
-      } else {
-        text0
+  private def _insertVeryPlainText(text0: String, qdOp: MQdOp, keyPrefix: String): Unit = {
+    // Для максимальной скорости работы и некоторого удобства, тут много переменных.
+    var acc: TagMod = if ( text0.isEmpty ) {
+      _emptyLineContent1( Some(keyPrefix) )
+    } else {
+      text0
+    }
+
+    // Обвешать текст заданной аттрибутикой
+    for {
+      attrs <- qdOp.attrsText
+      if attrs.nonEmpty
+    } {
+      // Отрендерить цвет текста и цвет фона, одним style.
+      // Стилизуем текст только через самый внутренний тег оформления текста, управляя этим через переменную.
+      var textStyleOpt = OptionUtil.maybe[TagMod]( attrs.isCssStyled ) {
+        jdArgs.jdCss.textStyleF( attrs )
       }
 
-      // Обвешать текст заданной аттрибутикой
-      for {
-        attrs <- qdOp.attrsText
-        if attrs.nonEmpty
-      } {
-        // Отрендерить цвет текста и цвет фона, одним style.
-        // Стилизуем текст только через самый внутренний тег оформления текста, управляя этим через переменную.
-        var textStyleOpt = OptionUtil.maybe[TagMod]( attrs.isCssStyled ) {
-          jdArgs.jdCss.textStyleF( attrs )
-        }
+      val keyTm = ^.key := keyPrefix
 
-        // Рендер f() только по true-флагу внутри SetVal().
-        def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
-          for (boolSU <- boolSuOpt; bool <- boolSU.toOption if bool) {
-            var fArgs: List[TagMod] = acc :: Nil
-            for (textStyle <- textStyleOpt) {
-              fArgs ::= textStyle
-              // Опустошить акк стилей, чтобы на след.теге не было повторного остиливания:
-              textStyleOpt = None
-            }
-            acc = f( fArgs: _* )
-          }
-        }
-
-        // Орудуем с использованием __rBool() над различными аттрибутами форматирования текста:
-        __rBool(attrs.bold)(<.strong)
-        __rBool(attrs.italic)(<.em)
-        __rBool(attrs.underline)(<.u)
-        __rBool(attrs.strike)(<.s)
-
-        // Отработать sup/sub теги
-        for (qdScriptSU <- attrs.script; qdScript <- qdScriptSU) {
-          val scriptTag = qdScript match {
-            case MQdScripts.Super => <.sup
-            case MQdScripts.Sub   => <.sub
-          }
-          var scriptAttrs = List[TagMod]( acc )
+      // Рендер f() только по true-флагу внутри SetVal().
+      def __rBool(boolSuOpt: Option[ISetUnset[Boolean]])(f: => HtmlTagOf[_ <: Element]): Unit = {
+        for (boolSU <- boolSuOpt; bool <- boolSU.toOption if bool) {
+          var fArgs: List[TagMod] = acc :: keyTm :: Nil
           for (textStyle <- textStyleOpt) {
-            scriptAttrs ::= textStyle
+            fArgs ::= textStyle
+            // Опустошить акк стилей, чтобы на след.теге не было повторного остиливания:
             textStyleOpt = None
           }
-          acc = scriptTag( scriptAttrs: _* )
+          acc = f( fArgs: _* )
         }
+      }
 
-        // Если задан аттрибут link, то завернуть итоговый выхлоп в ссылку (с учётом возможного textStyleOpt).
-        for (linkSU <- attrs.link; link <- linkSU) {
-          var hrefAttrs = List[TagMod](
-            ^.href := link,
-            acc
-          )
-          for (textStyle <- textStyleOpt) {
-            hrefAttrs ::= textStyle
-            textStyleOpt = None
-          }
-          acc = <.a( hrefAttrs: _* )
+      // Орудуем с использованием __rBool() над различными аттрибутами форматирования текста:
+      __rBool(attrs.bold)(<.strong)
+      __rBool(attrs.italic)(<.em)
+      __rBool(attrs.underline)(<.u)
+      __rBool(attrs.strike)(<.s)
+
+      // Отработать sup/sub теги
+      for (qdScriptSU <- attrs.script; qdScript <- qdScriptSU) {
+        val scriptTag = qdScript match {
+          case MQdScripts.Super => <.sup
+          case MQdScripts.Sub   => <.sub
         }
-
-        // Если всё ещё требуется навесить css-стили на текст, но ни одного тега не было, то сделать span.
+        var scriptAttrs = List[TagMod]( keyTm, acc )
         for (textStyle <- textStyleOpt) {
-          acc = <.span(
-            textStyle,
-            acc
-          )
+          scriptAttrs ::= textStyle
+          textStyleOpt = None
         }
+        acc = scriptTag( scriptAttrs: _* )
       }
 
-      _currLineAccRev ::= acc
+      // Если задан аттрибут link, то завернуть итоговый выхлоп в ссылку (с учётом возможного textStyleOpt).
+      for (linkSU <- attrs.link; link <- linkSU) {
+        var hrefAttrs = List[TagMod](
+          keyTm,
+          ^.href := link,
+          acc
+        )
+        for (textStyle <- textStyleOpt) {
+          hrefAttrs ::= textStyle
+          textStyleOpt = None
+        }
+        acc = <.a( hrefAttrs: _* )
+      }
+
+      // Если всё ещё требуется навесить css-стили на текст, но ни одного тега не было, то сделать span.
+      for (textStyle <- textStyleOpt) {
+        acc = <.span(
+          keyTm,
+          textStyle,
+          acc
+        )
+      }
+    }
+
+    _currLineAccRev ::= acc
   }
 
 
@@ -525,4 +546,18 @@ protected case class LinesRrrAcc(
 
 
 object QdRrrHtml extends Log
+
+
+
+/** Модель счётчиков для выставления оптимальных порядковых react key.
+  * Для снижения кол-ва пере-рендеров использются раздельные счётчики для разных вариантов.
+  * Т.е. отредерив текст инкрементится other, а после реднера видео инкрементится video.
+  *
+  * Это позволяет избежать пере-рендера video-фрейма при добавлении новой строки в тексте перед видео.
+  */
+protected sealed case class QdRrrOpKeyCounters(
+                                                image   : Int     = 0,
+                                                video   : Int     = 0,
+                                                other   : Int     = 0
+                                              )
 
