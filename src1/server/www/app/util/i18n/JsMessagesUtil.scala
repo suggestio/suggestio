@@ -240,6 +240,7 @@ class JsMessagesUtil @Inject() (
   private def LK_AD_EDIT_MSGS: TraversableOnce[String] = {
     MsgCodes.`Width` ::
       MsgCodes.`Height` ::
+      MsgCodes.`Delete.block` ::
       Nil
   }
 

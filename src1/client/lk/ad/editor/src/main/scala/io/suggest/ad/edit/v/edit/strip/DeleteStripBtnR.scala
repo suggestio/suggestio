@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v.edit.strip
 
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.{DeleteCancel, DeleteStrip}
+import io.suggest.ad.edit.m.{StripDeleteCancel, StripDelete}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -10,6 +10,7 @@ import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
 
@@ -26,46 +27,58 @@ class DeleteStripBtnR {
   class Backend($: BackendScope[Props, Unit]) {
 
     /** callback клика по кнопке удаления узла. */
-    private def onDeleteBtnClick: Callback = {
-      dispatchOnProxyScopeCB($, DeleteStrip)
+    private def onDeleteBtnClick(confirmed: Boolean): Callback = {
+      dispatchOnProxyScopeCB($, StripDelete(confirmed))
     }
 
     private def onCancelBtnClick: Callback = {
-      dispatchOnProxyScopeCB($, DeleteCancel)
+      dispatchOnProxyScopeCB($, StripDeleteCancel)
     }
 
-    private def _delBtn(text: String) = {
+    private def _delBtn(text: String, confirmed: Boolean) = {
       val C = Css.Buttons
       <.a(
         ^.`class` := Css.flat( C.BTN, Css.Size.M, C.NEGATIVE ),
-        ^.onClick --> onDeleteBtnClick,
+        ^.onClick --> onDeleteBtnClick(confirmed),
         text
       )
     }
 
+
     def render(p: Props): VdomElement = {
       p.value.whenDefinedEl { stripEd =>
-        <.div(
+        if (stripEd.isLastStrip) {
+          VdomNullElement
+        } else {
+          <.div(
+            ^.`class` := Css.Display.INLINE_BLOCK,
 
-          if (stripEd.confirmDelete) {
-            // Идёт подтверждение удаления текущего блока.
-            val C = Css.Buttons
-            <.div(
-              Messages( MsgCodes.`Are.you.sure` ),
-              _delBtn( Messages(MsgCodes.`Yes.delete.it`) ),
-              <.a(
-                ^.`class` := Css.flat( C.BTN, Css.Size.M, C.MINOR ),
-                ^.onClick --> onCancelBtnClick,
-                Messages( MsgCodes.`Cancel` )
+            if (stripEd.confirmingDelete) {
+              // Идёт подтверждение удаления текущего блока.
+              val C = Css.Buttons
+              <.div(
+                Messages( MsgCodes.`Are.you.sure` ),
+                <.a(
+                  ^.`class` := Css.flat( C.BTN, Css.Size.M, C.MINOR ),
+                  ^.onClick --> onCancelBtnClick,
+                  Messages( MsgCodes.`Cancel` )
+                ),
+                _delBtn(
+                  Messages(MsgCodes.`Yes.delete.it`),
+                  confirmed = true
+                )
               )
-            )
 
-          } else {
-            // Просто отобразить кнопку удаления текущего блока, диалог подтверждения удаления сейчас отсутствует.
-            // TODO Вместо Delete надо бы Delete.current.strip
-            _delBtn( Messages(MsgCodes.`Delete`) + HtmlConstants.ELLIPSIS )
-          }
-        )
+            } else {
+              // Просто отобразить кнопку удаления текущего блока, диалог подтверждения удаления сейчас отсутствует.
+              // TODO Вместо Delete надо бы Delete.current.strip
+              _delBtn(
+                Messages(MsgCodes.`Delete.block`) + HtmlConstants.ELLIPSIS,
+                confirmed = false
+              )
+            }
+          )
+        }
       }
 
     }

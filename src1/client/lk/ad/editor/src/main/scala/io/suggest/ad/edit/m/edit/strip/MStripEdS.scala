@@ -12,7 +12,7 @@ object MStripEdS {
 
   implicit object MEditStripSFastEq extends FastEq[MStripEdS] {
     override def eqv(a: MStripEdS, b: MStripEdS): Boolean = {
-      a.confirmDelete == b.confirmDelete
+      a.confirmingDelete == b.confirmingDelete
     }
   }
 
@@ -21,12 +21,13 @@ object MStripEdS {
 
 /** Класс модели пропертисов редактора блока.
   *
-  * @param confirmDelete Отображается подтверждение удаления блока?
+  * @param confirmingDelete Отображается подтверждение удаления блока?
   */
 case class MStripEdS(
-                        confirmDelete: Boolean = false
-                      ) {
+                      isLastStrip     : Boolean,
+                      confirmingDelete: Boolean = false,
+                    ) {
 
-  def withConfirmDelete(confirmDelete: Boolean) = copy(confirmDelete = confirmDelete)
+  def withConfirmDelete(confirmDelete: Boolean) = copy(confirmingDelete = confirmDelete)
 
 }

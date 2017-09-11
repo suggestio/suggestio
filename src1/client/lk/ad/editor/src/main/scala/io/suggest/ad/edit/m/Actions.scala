@@ -21,8 +21,12 @@ sealed trait ILkEditAction extends DAction
 case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends ILkEditAction
 
 
-/** Экшен клика по кнопке удаления текущего выделенного strip'а. */
-case object DeleteStrip extends ILkEditAction
+/** Экшен клика по кнопке удаления текущего выделенного strip'а.
+  *
+  * @param confirmed true - Юзер подтверждает удаление.
+  *                  false -- Юзер первый раз нажал на "удалить".
+  */
+case class StripDelete(confirmed: Boolean) extends ILkEditAction
 
 /** Экшен отказа от удаления блока. */
-case object DeleteCancel extends ILkEditAction
+case object StripDeleteCancel extends ILkEditAction
