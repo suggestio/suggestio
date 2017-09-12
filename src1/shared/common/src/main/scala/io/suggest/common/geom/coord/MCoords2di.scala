@@ -14,13 +14,10 @@ import play.api.libs.json._
 
 object MCoords2di {
 
-  val X_FN = "x"
-  val Y_FN = "y"
-
   /** Поддержка JSON для экземпляров модели черех play-json. */
-  implicit val FORMAT: OFormat[MCoords2di] = (
-    (__ \ X_FN).format[Int] and
-    (__ \ Y_FN).format[Int]
+  implicit val MCOORD_2DI_FORMAT: OFormat[MCoords2di] = (
+    (__ \ ICoord.X_FN).format[Int] and
+    (__ \ ICoord.Y_FN).format[Int]
   )(apply, unlift(unapply))
 
 
@@ -48,6 +45,16 @@ case class MCoords2di(
       y = op(y, arg2)
     )
   }
+
+  def toDouble: MCoords2dD = {
+    MCoords2dD(
+      x = x.toDouble,
+      y = y.toDouble
+    )
+  }
+
+  override def withX(x: Int) = copy(x = x)
+  override def withY(y: Int) = copy(y = y)
 
 }
 

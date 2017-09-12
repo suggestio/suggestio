@@ -222,6 +222,7 @@ case class CspPolicy(
                       fontSrc           : Set[String]     = Set.empty,
                       objectSrc         : Set[String]     = Set.empty,
                       mediaSrc          : Set[String]     = Set.empty,
+                      @deprecated("Directive ‘frame-src’ has been deprecated. Please use directive ‘child-src’ instead.", "CSP Level 2")
                       frameSrc          : Set[String]     = Set.empty,
                       reportUri         : Option[String]  = None,
                       // CSP Level 2
@@ -252,6 +253,7 @@ case class CspPolicy(
   def withFontSrc(fontSrcs: Set[String]) = copy(fontSrc = fontSrcs)
   def withObjectSrc(objectSrcs: Set[String]) = copy(objectSrc = objectSrcs)
   def withMediaSrc(mediaSrcs: Set[String]) = copy(mediaSrc = mediaSrcs)
+  @deprecated("Directive ‘frame-src’ has been deprecated. Please use directive ‘child-src’ instead.", "CSP Level 2")
   def withFrameSrc(frameSrcs: Set[String]) = copy(frameSrc = frameSrcs)
   def withReportUri(reportUri1: String = null) = copy(reportUri = Option(reportUri1))
 

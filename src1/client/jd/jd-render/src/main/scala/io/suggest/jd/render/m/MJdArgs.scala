@@ -19,7 +19,8 @@ object MJdArgs {
         (a.renderArgs eq b.renderArgs) &&
         (a.jdCss eq b.jdCss) &&
         (a.conf eq b.conf) &&
-        (a.selectedTag eq b.selectedTag)
+        (a.selectedTag eq b.selectedTag) &&
+        (a.dnd eq b.dnd)
     }
   }
 
@@ -33,13 +34,15 @@ object MJdArgs {
   * @param jdCss css для рендера.
   * @param conf Общий конфиг рендеринга.
   * @param selectedTag Текущий выделенный элемент, с которым происходит взаимодействие юзера.
+  * @param dnd Состояние драг-н-дропа, который может прийти сюда из неизвестности.
   */
 case class MJdArgs(
                     template     : JsonDocument,
                     renderArgs   : MJdRenderArgs,
                     jdCss        : JdCss,
                     conf         : MJdConf,
-                    selectedTag  : Option[IDocTag]   = None
+                    selectedTag  : Option[IDocTag]   = None,
+                    dnd          : MJdDndS           = MJdDndS.empty
                   ) {
 
   def withJdCss(jdCss: JdCss) = copy(jdCss = jdCss)
@@ -47,6 +50,7 @@ case class MJdArgs(
   def withRenderArgs(renderArgs: MJdRenderArgs) = copy(renderArgs = renderArgs)
   def withConf(conf: MJdConf) = copy(conf = conf)
   def withSelectedTag(selectedTag: Option[IDocTag]) = copy(selectedTag = selectedTag)
+  def withDnd(dnd: MJdDndS) = copy(dnd = dnd)
 
 }
 

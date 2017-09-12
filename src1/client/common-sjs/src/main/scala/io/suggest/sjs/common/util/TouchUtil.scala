@@ -1,7 +1,9 @@
 package io.suggest.sjs.common.util
 
+import io.suggest.common.geom.coord.MCoords2dD
 import org.scalajs.dom
-import org.scalajs.dom.Window
+import org.scalajs.dom.{Touch, Window}
+
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
@@ -53,6 +55,14 @@ object TouchUtil {
    */
   def clickEvtNamesJq: String = {
     clickEvtNames.mkString(" ")
+  }
+
+
+  def touch2coord(touch: Touch): MCoords2dD = {
+    MCoords2dD(
+      x = touch.pageX,
+      y = touch.clientY   // TODO Это правильно? Или что это такое? В SCv2 выдаче так оно и работало...
+    )
   }
 
 }

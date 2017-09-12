@@ -62,7 +62,7 @@ class CspUtil @Inject() (
             s"ws${if (contextUtil.HTTPS_ENABLED) "s" else ""}://${contextUtil.HOST_PORT}"
           ),
           reportUri = Some( routes.Static.handleCspReport().url ),
-          frameSrc = VIDEO_SRCS,
+          //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
           childSrc = VIDEO_SRCS
         ),
         reportOnly = CSP_REPORT_ONLY

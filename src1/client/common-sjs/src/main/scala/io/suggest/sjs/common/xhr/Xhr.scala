@@ -3,7 +3,7 @@ package io.suggest.sjs.common.xhr
 import java.nio.ByteBuffer
 
 import io.suggest.id.IdentConst
-import io.suggest.pick.PickleUtil
+import io.suggest.pick.{MimeConst, PickleUtil}
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
@@ -35,10 +35,11 @@ object Xhr extends Log {
     def ANY       = ""
   }
 
-  def MIME_JSON           = "application/json"
-  def MIME_TEXT_HTML      = "text/html"
-  def MIME_TEXT_PLAIN     = "text/plain"
-  def MIME_OCTET_STREAM   = "application/octet-stream"
+  // TODO Удалить MIME_* отсюда. Надо дёргать MimeConst напрямую.
+  final def MIME_JSON           = MimeConst.APPLICATION_JSON
+  final def MIME_TEXT_HTML      = MimeConst.TEXT_HTML
+  final def MIME_TEXT_PLAIN     = MimeConst.TEXT_PLAIN
+  final def MIME_OCTET_STREAM   = MimeConst.APPLICATION_OCTET_STREAM
 
   def HDR_ACCEPT          = "Accept"
   def HDR_LOCATION        = "Location"

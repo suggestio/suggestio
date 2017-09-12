@@ -1,6 +1,6 @@
 package io.suggest.sc.sjs.m.mfoc
 
-import io.suggest.sjs.common.geom.Coord2dD
+import io.suggest.common.geom.coord.MCoords2dD
 
 /**
  * Suggest.io
@@ -10,7 +10,7 @@ import io.suggest.sjs.common.geom.Coord2dD
  */
 
 case class MFocTouchSd(
-  start       : Coord2dD,
-  lastX       : Double,
-  lastDeltaX  : Option[Double] = None
+                        start       : MCoords2dD,
+                        lastX       : Double,
+                        lastDeltaX  : Option[Double] = None
 )

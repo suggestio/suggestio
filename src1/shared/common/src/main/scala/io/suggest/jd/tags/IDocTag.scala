@@ -1,5 +1,6 @@
 package io.suggest.jd.tags
 
+import io.suggest.common.coll.Lists
 import io.suggest.jd.tags.qd.QdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
@@ -103,6 +104,63 @@ object IDocTag {
 
   implicit def univEq: UnivEq[IDocTag] = UnivEq.force
 
+
+
+  def batchUpdateOne(source: IDocTag)(batches: JdBatch_t*): Seq[IDocTag] = {
+    batchUpdateOne2(source, batches)
+  }
+  def batchUpdateOne2(source: IDocTag, batches: JdBatches_t): Seq[IDocTag] = {
+    // Отработать children
+    val children0 = source.children
+    val source2 = if (children0.nonEmpty) {
+      val children2 = batchUpdate2(children0, batches)
+      // Изменилось ли хоть что-то?
+      if ( Lists.isElemsEqs(children0, children2) ) {
+        // Дочерние элементы не изменились.
+        source
+      } else {
+        // Да, есть изменение -- заливаем новые children внутрь.
+        source.withChildren( children2 )
+      }
+    } else {
+      // Нет children -- пропускаем их обработку.
+      source
+    }
+    // Отработать текущий тег.
+    // Пройтись по списку batch'ей на предмет совпадения тега.
+    batches.foldLeft [Seq[IDocTag]] ( source2 :: Nil ) {
+      case (acc0, (fdt, f)) =>
+        if (source == fdt) {
+          // Применить текущую batch-функцию к аккамулятору.
+          f(acc0)
+        } else {
+          acc0
+        }
+    }
+  }
+  def batchUpdate(source: IDocTag*)(batches: JdBatch_t*): Seq[IDocTag] = {
+    batchUpdate2(source, batches)
+  }
+  /** Пакетный апдейт списка исходных тегов с помощью списка функций. */
+  def batchUpdate2(sources: Seq[IDocTag], batches: JdBatches_t): Seq[IDocTag] = {
+    sources.flatMap { jdt0 =>
+      batchUpdateOne2(jdt0, batches)
+    }
+  }
+
+  /** Типичные Batch-фунцкии и batch'и. */
+  object Batches {
+    /** Batch-функция удаления тега/тегов. */
+    def delete(what: IDocTag): JdBatch_t = replace(what)
+
+    def replaceF(replacements: IDocTag*): JdBatchF_t = {
+      {_: Seq[IDocTag] => replacements }
+    }
+    def replace(what: IDocTag, replacements: IDocTag*): JdBatch_t = {
+      what -> replaceF(replacements: _*)
+    }
+  }
+
 }
 
 
@@ -187,27 +245,36 @@ trait IDocTag
     * @return Обновлённое дерево.
     */
   def deepUpdateChild[T <: IDocTag](what: T, updated: Seq[IDocTag]): Seq[IDocTag] = {
-    if (children.isEmpty) {
+    val _children = children
+    if (_children.isEmpty) {
       this :: Nil
 
     } else {
-      val children2 = if (children.contains(what)) {
+      val this2 = if (_children contains what) {
         // Обновление элемента на текущем уровне
-        children.flatMap { jdt =>
+        val children2 = _children.flatMap { jdt =>
           if (jdt == what) {
             updated
           } else {
             jdt :: Nil
           }
         }
+        withChildren(children2)
 
       } else {
         // Обновление элементов где-то на подуровнях дочерних элементов.
-        children.flatMap { jdt =>
+        val children2 = _children.flatMap { jdt =>
           jdt.deepUpdateChild(what, updated)
         }
+        // Возможно, что ничего не изменилось. И тогда можно возвращать исходный элемент вместо пересобранного инстанса.
+        if ( Lists.isElemsEqs(_children, children2) ) {
+          this
+        } else {
+          withChildren( children2 )
+        }
       }
-      withChildren(children2) :: Nil
+
+      this2 :: Nil
     }
   }
 
@@ -215,6 +282,43 @@ trait IDocTag
   /** Вернуть инстанс текущего тега с обновлённым набором children'ов. */
   def withChildren(children: Seq[IDocTag]): IDocTag = {
     throw new UnsupportedOperationException
+  }
+
+
+  /** Глубинный flatMap(): на каждом уровне сначала отрабатываются дочерние элементы, затем родительский. */
+  def flatMap(f: IDocTag => Seq[IDocTag]): Seq[IDocTag] = {
+    val this2 = if (children.isEmpty) {
+      this
+    } else {
+      withChildren(
+        children.flatMap { ch =>
+          ch.flatMap(f)
+        }
+      )
+    }
+    f(this2)
+  }
+
+
+  def map(f: IDocTag => IDocTag): IDocTag = {
+    val this2 = if (children.isEmpty) {
+      this
+    } else {
+      withChildren(
+        for (ch <- children) yield {
+          ch.map(f)
+        }
+      )
+    }
+    f(this2)
+  }
+
+
+  def foreach[U](f: IDocTag => U): Unit = {
+    for (ch <- children) {
+      ch.foreach(f)
+    }
+    f(this)
   }
 
 }

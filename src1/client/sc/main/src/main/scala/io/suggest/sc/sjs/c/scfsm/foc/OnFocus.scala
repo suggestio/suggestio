@@ -7,7 +7,6 @@ import io.suggest.sc.sjs.m.mfoc._
 import io.suggest.sc.sjs.m.mfsm.touch.TouchStart
 import io.suggest.sc.sjs.vm.foc.{FCarCont, FRoot}
 import io.suggest.sc.sjs.vm.foc.fad.{FAdRoot, FAdWrapper, FArrow}
-import io.suggest.sjs.common.geom.Coord2dD
 import io.suggest.sc.ScConstants.Focused.FAd.KBD_SCROLL_STEP_PX
 import io.suggest.sc.sjs.c.scfsm.grid.OnGridBase
 import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
@@ -17,6 +16,7 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.util.TouchUtil
 import org.scalajs.dom.{KeyboardEvent, MouseEvent, TouchEvent}
 import org.scalajs.dom.ext.KeyCode
 
@@ -332,7 +332,7 @@ trait OnFocusBase
       val sd1 = sd0.copy(
         focused = sd0.focused.map( _.copy(
           touch = Some(MFocTouchSd(
-            start = Coord2dD( touch ),
+            start = TouchUtil.touch2coord( touch ),
             lastX = touch.pageX
           ))
         ))

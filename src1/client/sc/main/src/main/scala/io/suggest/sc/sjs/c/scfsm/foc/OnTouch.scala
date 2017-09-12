@@ -1,12 +1,13 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
 import io.suggest.common.MHands
+import io.suggest.common.geom.coord.MCoords2dD
 import io.suggest.sc.sjs.m.mfoc.MFocTouchSd
 import io.suggest.sc.sjs.m.mfsm.touch.{ITouchFinish, TouchEnd}
 import io.suggest.sc.sjs.vm.foc.FCarCont
-import io.suggest.sjs.common.geom.Coord2dD
 import org.scalajs.dom.TouchEvent
 import io.suggest.common.geom.coord.CoordOps._
+import io.suggest.sjs.common.util.TouchUtil
 
 /**
  * Suggest.io
@@ -68,7 +69,7 @@ trait OnTouch extends OnFocusBase {
         fState    <- sd0.focused
         touchSd   <- fState.touch
       } {
-        val coord2 = Coord2dD(touch)
+        val coord2 = TouchUtil.touch2coord( touch )
 
         val dx = touchSd.start.deltaX( coord2 )
         val dy = touchSd.start.deltaY( coord2 )

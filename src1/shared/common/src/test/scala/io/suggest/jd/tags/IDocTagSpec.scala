@@ -11,9 +11,20 @@ import play.api.libs.json.{Json, OFormat}
   * Created: 18.08.17 21:52
   * Description: Тесты для древовидной рекурсивной модели [[IDocTag]].
   */
-// TODO trait вместо object, т.к. тест сломан наглухо из-за IDocTag.equals, который теперь зависит от eq-сравнения.
 // Надо как-то это разрулить наверное...
-trait IDocTagSpec extends SimpleTestSuite {
+object IDocTagSpec extends SimpleTestSuite {
+
+  /** Сравнивать разные инстансы тегов напрямую нельзя, т.к. они используют eq для equals.
+    * Но для тестов можно сравнивать выхлопы toString с поправкой на children, чтобы везде была однотипная коллекция. */
+  private def _normForToStringEq(jdt: IDocTag): IDocTag = {
+    for (t <- jdt) yield {
+      if (t.children.nonEmpty && !t.children.isInstanceOf[List[IDocTag]]) {
+        t.withChildren( t.children.toList )
+      } else {
+        t
+      }
+    }
+  }
 
   /** Тестирование сериализации и десериализации переданного объекта.
     *
@@ -21,12 +32,15 @@ trait IDocTagSpec extends SimpleTestSuite {
     * @param jsonFmt play JSON formatter.
     * @tparam T Тип тестируемого значения.
     */
-  private def _writeReadMatchTest[T](v: T)(implicit jsonFmt: OFormat[T]): Unit = {
+  private def _writeReadMatchTest[T <: IDocTag](v: T)(implicit jsonFmt: OFormat[T]): Unit = {
     val jsonStr = jsonFmt.writes(v).toString()
     val jsRes = jsonFmt.reads( Json.parse( jsonStr ) )
     assert( jsRes.isSuccess, jsRes.toString )
     val v2 = jsRes.get
-    assertEquals( v2, v )
+    assertEquals(
+      _normForToStringEq(v2).toString,
+      _normForToStringEq(v).toString
+    )
   }
 
   private val bm300x140 = Some( BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, wide = false) )

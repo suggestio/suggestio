@@ -146,4 +146,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def EMBEDDABLE_MEDIA_INFO_EXPECTED   = E(65)
 
+  def DND_DRAG_OVER_ERROR              = E(66)
+  def DND_DROP_ERROR                   = E(67)
+
 }

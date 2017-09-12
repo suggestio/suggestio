@@ -6,6 +6,14 @@ package io.suggest.common.geom.coord
  * Created: 21.08.15 11:16
  * Description: Сборка хранения абстрактных координат в n-мерном эвклидовом пространстве.
  */
+object ICoord {
+
+  val X_FN = "x"
+  val Y_FN = "y"
+
+}
+
+
 trait ICoord[V]
 
 trait ICoord1d[V] extends ICoord[V] {
@@ -18,6 +26,8 @@ trait ICoord1d[V] extends ICoord[V] {
   def deltaX(p2: This1)(implicit evidence: ICoord1dOps[V, This1]): V = {
     evidence.deltaX(this, p2)
   }
+
+  def withX(x: V): ICoord1d[V]
 
 }
 
@@ -36,5 +46,7 @@ trait ICoord2d[V] extends ICoord1d[V] {
   def distance(p2: This2)(implicit evidence: ICoord2dOps[V, This2]): V = {
     evidence.distance(this, p2)
   }
+
+  def withY(y: V): ICoord2d[V]
 
 }

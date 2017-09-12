@@ -331,4 +331,33 @@ object Lists {
       .foldLeft( List.empty[T] ) { (acc, e) => e :: acc }
   }
 
+
+  /** Быстро сравнить (eq) содержимое двух последовательных коллекций без учёта типов коллекций. */
+  def isElemsEqs[T <: AnyRef](tr1: TraversableOnce[T], tr2: TraversableOnce[T]): Boolean = {
+    isElemsEqsIter( tr1.toIterator, tr2.toIterator )
+  }
+
+  /** Пройти по двум итераторам, сравнивая элементы через eq. */
+  def isElemsEqsIter[T <: AnyRef](tr1: Iterator[T], tr2: Iterator[T]): Boolean = {
+    val tr1HasNext = tr1.hasNext
+    val tr2HasNext = tr2.hasNext
+    if (tr1HasNext && tr2HasNext) {
+      if ( tr1.next() eq tr2.next() ) {
+        // Идти дальше по итераторам
+        isElemsEqsIter(tr1, tr2)
+      } else {
+        // Есть различающийся элемент.
+        false
+      }
+
+    } else if (tr1HasNext || tr2HasNext) {
+      // Один hasNext, другой !hasNext. Значит, длина итераторов различается => коллекции не равны.
+      false
+
+    } else {
+      // Оба итератора закочились одновременно. Значит они равны.
+      true
+    }
+  }
+
 }
