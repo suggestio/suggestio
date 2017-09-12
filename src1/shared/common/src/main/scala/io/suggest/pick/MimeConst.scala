@@ -25,11 +25,8 @@ object MimeConst {
 
     final private def MIME_PREFIX = Words.APPLICATION_ + "prs.sio-"
 
-    /** Строка названия типа данных с Drag-n-Drop cookie. */
-    final def DND_COOKIE = MIME_PREFIX + "dnd-cookie"
-
     /** MIME тип для JSON-представления JSON-document-тега. */
-    final def JDTAG_JSON = MIME_PREFIX + "jdt+" + Words.JSON
+    //final def JDTAG_JSON = MIME_PREFIX + "jdt+" + Words.JSON
 
     /** Mime-тип с координатами в виде JSON. */
     final def COORD_2D_JSON = MIME_PREFIX + "coords-2d+" + Words.JSON

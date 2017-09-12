@@ -18,10 +18,8 @@ import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import org.scalajs.dom.Element
-import org.scalajs.dom.raw.HTMLElement
 import play.api.libs.json.Json
 
-import scala.scalajs.js
 import scalacss.ScalaCssReact._
 
 /**
@@ -52,10 +50,6 @@ class JdR extends Log {
   }
 
 
-  /** Значение рандомного кукиса. */
-  private lazy val _DND_COOKIE = System.currentTimeMillis().toString
-
-
   /** Рендерер дерева jd-тегов. */
   protected class Backend($: BackendScope[Props, Unit]) {
 
@@ -80,7 +74,6 @@ class JdR extends Log {
     private def jdTagDragStart(jdt: IDocTag)(e: ReactDragEvent): Callback = {
       // Обязательно надо в setData() что-то передать.
       val mimes = MimeConst.Sio
-      e.dataTransfer.setData( mimes.DND_COOKIE, _DND_COOKIE )
 
       // Засунуть в состояние сериализованный инстанс таскаемого тега TODO с эджами, чтобы можно было перетаскивать за пределы этой страницы
       //e.dataTransfer.setData( mimes.JDTAG_JSON, Json.toJson(jdt).toString() )
@@ -111,33 +104,8 @@ class JdR extends Log {
 
 
     private def jdStripDragOver(e: ReactDragEvent): Callback = {
-      def __checkSrcData(mime: String)(f: String => Boolean): Boolean = {
-        try {
-          val dataOrEmpty = e.dataTransfer.getData(mime)
-          Option( dataOrEmpty )
-            .exists(f)
-        } catch {
-          case ex: Throwable =>
-            LOG.warn( ErrorMsgs.DND_DRAG_OVER_ERROR, ex, e )
-            false
-        }
-      }
-
-      val mimes = MimeConst.Sio
-      if (
-        __checkSrcData(mimes.DND_COOKIE)(_ == _DND_COOKIE) ||
-          __checkSrcData(mimes.JDTAG_JSON) { jsonStr =>
-            Json.parse(jsonStr)
-              .validate[IDocTag]
-              .isSuccess
-          }
-      ) {
-        // Такое таскание элементов поддерживается, разрешаем дропать.
-        e.preventDefaultCB
-      } else {
-        Callback.empty
-      }
-
+      // В b9710f2 здесь была проверка cookie через getData, но webkit/chrome не поддерживают доступ в getData во время dragOver. Ппппппц.
+      e.preventDefaultCB
     }
 
 
