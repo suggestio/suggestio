@@ -32,29 +32,6 @@ class DocEditAh[M](
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
-    // Происходит таскание тега
-    case m: JdTagDragging =>
-      val v0 = value
-      val dndS = v0.jdArgs.dnd
-      val isSameTag = dndS.jdt.contains(m.jdTag)
-      if ( isSameTag && dndS.coords.contains(m.coords) ) {
-        noChange
-      } else {
-        var dnd2 = dndS.withCoords( Some(m.coords) )
-        // Выставить тег из сообщения.
-        if (!isSameTag)
-          dnd2 = dnd2.withJdt( Some(m.jdTag) )
-
-        val v2 = v0.withJdArgs(
-          v0.jdArgs.withDnd(
-            dnd2
-          )
-        )
-
-        updated(v2)
-      }
-
-
     // Набор текста в wysiwyg-редакторе.
     case m: TextChanged =>
       val v0 = value

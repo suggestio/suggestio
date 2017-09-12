@@ -25,7 +25,6 @@ case class JdTagClick( override val jdTag: IDocTag ) extends IJdTagClick
 
 /** Начато перетаскивание тега. */
 case class JdTagDragStart( jdTag: IDocTag, coordDiff: MCoords2dD ) extends IJdAction
-case class JdTagDragging( jdTag: IDocTag, coords: MCoords2dD ) extends IJdAction
 case class JdTagDragEnd( jdTag: IDocTag ) extends IJdAction
 
 /** Что-то маячит над целевым тегом, в который произойдёт сброс. */

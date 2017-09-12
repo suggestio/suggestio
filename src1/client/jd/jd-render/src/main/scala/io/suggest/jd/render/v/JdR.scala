@@ -194,17 +194,7 @@ class JdR extends Log {
         ^.key := i.toString,
         jdArgs.jdCss.absPosStyleAll,
         _draggableOnEdit(ap, jdArgs),
-
-        // Если происходит перетаскивание этого элемента, то надо отрендерить его в нужном месте:
-        if (jdArgs.dnd.jdt.contains(ap) && jdArgs.dnd.coords.nonEmpty) {
-          val dndCoords = jdArgs.dnd.coords.get
-          TagMod(
-            ^.top  := dndCoords.y.px,
-            ^.left := dndCoords.x.px
-          )
-        } else {
-          jdArgs.jdCss.absPosStyleF(ap)
-        },
+        jdArgs.jdCss.absPosStyleF(ap),
 
         renderChildren(ap, jdArgs)
       )
