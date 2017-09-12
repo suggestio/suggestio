@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 
 import io.suggest.id.IdentConst
 import io.suggest.pick.{MimeConst, PickleUtil}
+import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.ex._
 import org.scalajs.dom.XMLHttpRequest
@@ -33,65 +34,6 @@ object Xhr extends Log {
   object RespTypes {
     def ARRAY_BUF = "arraybuffer"
     def ANY       = ""
-  }
-
-  // TODO Удалить MIME_* отсюда. Надо дёргать MimeConst напрямую.
-  final def MIME_JSON           = MimeConst.APPLICATION_JSON
-  final def MIME_TEXT_HTML      = MimeConst.TEXT_HTML
-  final def MIME_TEXT_PLAIN     = MimeConst.TEXT_PLAIN
-  final def MIME_OCTET_STREAM   = MimeConst.APPLICATION_OCTET_STREAM
-
-  def HDR_ACCEPT          = "Accept"
-  def HDR_LOCATION        = "Location"
-  def HDR_CONTENT_TYPE    = "Content-Type"
-  def HDR_CONTENT_LENGHT  = "Content-Lenght"
-  def HDR_CONNECTION      = "Connection"
-
-  /** See StandardValues.scala */
-  object Status {
-
-    val OK = 200
-    val CREATED = 201
-    val ACCEPTED = 202
-    val NON_AUTHORITATIVE_INFORMATION = 203
-    val NO_CONTENT = 204
-    val RESET_CONTENT = 205
-    val PARTIAL_CONTENT = 206
-    val MULTI_STATUS = 207
-
-    val MULTIPLE_CHOICES = 300
-    val MOVED_PERMANENTLY = 301
-    val FOUND = 302
-    val SEE_OTHER = 303
-    val NOT_MODIFIED = 304
-    val USE_PROXY = 305
-    val TEMPORARY_REDIRECT = 307
-    val PERMANENT_REDIRECT = 308
-
-    val BAD_REQUEST = 400
-    val UNAUTHORIZED = 401
-    val PAYMENT_REQUIRED = 402
-    val FORBIDDEN = 403
-    val NOT_FOUND = 404
-    val METHOD_NOT_ALLOWED = 405
-    val NOT_ACCEPTABLE = 406
-    val PROXY_AUTHENTICATION_REQUIRED = 407
-    val REQUEST_TIMEOUT = 408
-    val CONFLICT = 409
-    val GONE = 410
-    val LENGTH_REQUIRED = 411
-    val PRECONDITION_FAILED = 412
-    val REQUEST_ENTITY_TOO_LARGE = 413
-    val REQUEST_URI_TOO_LONG = 414
-    val UNSUPPORTED_MEDIA_TYPE = 415
-    val REQUESTED_RANGE_NOT_SATISFIABLE = 416
-    val EXPECTATION_FAILED = 417
-    val UNPROCESSABLE_ENTITY = 422
-    val LOCKED = 423
-    val FAILED_DEPENDENCY = 424
-    val UPGRADE_REQUIRED = 426
-    val TOO_MANY_REQUESTS = 429
-
   }
 
 
@@ -239,7 +181,7 @@ object Xhr extends Log {
     val xhrFut = successIf200 {
       send(
         route   = route,
-        headers = Seq(HDR_ACCEPT -> MIME_JSON)
+        headers = Seq(HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON)
       )
     }
     for (xhr <- xhrFut) yield {
@@ -251,7 +193,7 @@ object Xhr extends Log {
     val xhrFut = successIf200 {
       send(
         route   = route,
-        headers = Seq(HDR_ACCEPT -> MIME_TEXT_HTML)
+        headers = Seq(HttpConst.Headers.ACCEPT -> MimeConst.TEXT_HTML)
       )
     }
     for (xhr <- xhrFut) yield {
@@ -277,7 +219,7 @@ object Xhr extends Log {
           route     = route,
           body      = body,
           respType  = RESP_ARRAY_BUFFER,
-          headers   = (HDR_ACCEPT -> MIME_OCTET_STREAM) :: Nil
+          headers   = (HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_OCTET_STREAM) :: Nil
         )
       }
     }
@@ -290,7 +232,7 @@ object Xhr extends Log {
         url             = route2url(route),
         data            = body.asInstanceOf[Ajax.InputData],
         timeout         = 0,
-        headers         = ((HDR_CONTENT_TYPE -> MIME_OCTET_STREAM) :: headers).toMap,
+        headers         = ((HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_OCTET_STREAM) :: headers).toMap,
         withCredentials = false,
         responseType    = respType
       )
@@ -305,7 +247,7 @@ object Xhr extends Log {
   private def _handleUnauthorized(xhrFut: Future[XMLHttpRequest]): Future[XMLHttpRequest] = {
     xhrFut.failed.foreach {
       case AjaxException(xhr) =>
-        if (xhr.status == Status.UNAUTHORIZED) {
+        if (xhr.status == HttpConst.Status.UNAUTHORIZED) {
           // 401 в ответе означает, что сессия истекла и продолжать нормальную работу невозможно.
           DomQuick.reloadPage()
         }
@@ -315,7 +257,7 @@ object Xhr extends Log {
 
     // Повесить слушалку на как-будто-бы-положительные XHR-ответы, чтобы выявлять редиректы из-за отсутствия сессии.
     for (xhr <- xhrFut) {
-      if (xhr.status == Status.OK && Option(xhr.getResponseHeader(IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP)).nonEmpty ) {
+      if (xhr.status == HttpConst.Status.OK && Option(xhr.getResponseHeader(IdentConst.HTTP_HDR_SUDDEN_AUTH_FORM_RESP)).nonEmpty ) {
         // Пришла HTML-форма в ответе. Такое бывает, когда сессия истекла, но "Accept:" допускает HTML-ответы.
         DomQuick.reloadPage()
       }

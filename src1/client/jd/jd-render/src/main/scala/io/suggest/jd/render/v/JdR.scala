@@ -99,7 +99,7 @@ class JdR extends Log {
     }
 
     private def jdTagDragEnd(jdt: IDocTag)(e: ReactDragEvent): Callback = {
-      dispatchOnProxyScopeCB($, JdTagDragEnd(jdt ) )
+      dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
     }
 
 

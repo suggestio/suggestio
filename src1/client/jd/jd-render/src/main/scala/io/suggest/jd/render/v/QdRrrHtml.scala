@@ -158,6 +158,11 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
       for (embedAttrs <- qdOp.attrsEmbed)
         imgArgsAcc ::= jdArgs.jdCss.embedAttrStyleF(embedAttrs)
 
+      // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
+      if (jdArgs.conf.withEdit) {
+        imgArgsAcc ::= (^.draggable := false)
+      }
+
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
       imgArgsAcc =
         (^.key := s"I$i") ::

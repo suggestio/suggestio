@@ -115,7 +115,7 @@ class LkNodesApiHttpImpl extends ILkNodesApi {
 
 
   override def deleteNode(nodeId: String): Future[Boolean] = {
-    import Xhr.Status._
+    import io.suggest.proto.HttpConst.Status._
     for {
       resp <- Xhr.successIfStatus( NO_CONTENT, NOT_FOUND ) {
         Xhr.send(

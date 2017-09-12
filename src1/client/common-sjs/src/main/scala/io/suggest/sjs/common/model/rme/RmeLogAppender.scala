@@ -1,5 +1,7 @@
 package io.suggest.sjs.common.model.rme
 
+import io.suggest.pick.MimeConst
+import io.suggest.proto.HttpConst
 import io.suggest.sjs.common.log.{ILogAppender, LogMsg, Severity}
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -31,7 +33,7 @@ abstract class RmeLogAppender extends ILogAppender {
       Xhr.send(
         route   = route,      // TODO Отработать отсутствие роуты через /sc/error
         headers = {
-          val hdrCt = Xhr.HDR_CONTENT_TYPE -> Xhr.MIME_JSON
+          val hdrCt = HttpConst.Headers.CONTENT_TYPE -> MimeConst.APPLICATION_JSON
           hdrCt :: Nil
         },
         body    = {
