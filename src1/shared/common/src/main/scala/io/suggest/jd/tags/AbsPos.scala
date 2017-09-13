@@ -46,4 +46,12 @@ case class AbsPos(
     copy( children = children )
   }
 
+  override def shrink: Seq[IDocTag] = {
+    if (children.isEmpty) {
+      Nil
+    } else {
+      super.shrink
+    }
+  }
+
 }

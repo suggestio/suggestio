@@ -52,6 +52,7 @@ class DocEditAh[M](
 
       } else {
         // Текст действительно изменился. Пересобрать json-document.
+        println( JSON.stringify(m.fullDelta) )
         val currTag0 = v0.jdArgs.selectedTag.get
         val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
 
@@ -126,9 +127,32 @@ class DocEditAh[M](
             v2.withOutStripEd
         }
 
-        // TODO Может быть, был qd-tag и весь текст теперь в нём удалён? Пустая дельта имеет вид {"ops":[{"insert":"\n"}]}
+        // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
+        val v4 = v0.jdArgs.selectedTag.fold(v3) {
+          case qd: QdTag if qd.isEmpty(v0.jdArgs.renderArgs.edges) && v3.jdArgs.template.contains(qd) =>
+            val tpl2 = v3.jdArgs.template.deepUpdateOne(qd, Nil)
+              .head
+              .shrink
+              .head
+              .asInstanceOf[JsonDocument]
+            // Очистить эджи от лишнего контента
+            val edgesMap2 = quillDeltaJsUtil.purgeUnusedEdges(tpl2, v3.jdArgs.renderArgs.edges)
+            v3.withJdArgs(
+              v3.jdArgs.copy(
+                template    = tpl2,
+                renderArgs  = v3.jdArgs.renderArgs.copy(
+                  edges = edgesMap2
+                ),
+                jdCss       = jdCssFactory.mkJdCss(
+                  MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf)
+                )
+              )
+            )
 
-        updated( v3 )
+          case _ => v3
+        }
+
+        updated( v4 )
       }
 
 

@@ -2,6 +2,7 @@ package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
@@ -26,6 +27,11 @@ import scala.scalajs.js.{JSON, UndefOr, |}
   * Description: Утиль для работы с quill delta.
   */
 class QuillDeltaJsUtil extends Log {
+
+  def purgeUnusedEdges(tpl: IDocTag, edgesMap: Map[EdgeUid_t, MJdEditEdge]): Map[EdgeUid_t, MJdEditEdge] = {
+    val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
+    edgesMap.filterKeys(usedEdgeIds.contains)
+  }
 
   /** Конверсия из QdTag в дельту, понятную quill-редактору.
     *

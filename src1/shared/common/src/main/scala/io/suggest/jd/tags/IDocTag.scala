@@ -229,6 +229,23 @@ trait IDocTag
   }
 
 
+  /** Прооптимизировать текущее дерево. */
+  def shrink: Seq[IDocTag] = {
+    val children0 = children
+    val this2 = if (children.nonEmpty) {
+      val children2 = children.flatMap(_.shrink)
+      if ( Lists.isElemsEqs(children0, children2) ) {
+        this
+      } else {
+        withChildren( children2 )
+      }
+    } else {
+      this
+    }
+    this2 :: Nil
+  }
+
+
   /** Найти в дереве указанный тег в дочерних поддеревьях и обновить его с помощью функции.
     * Поиск в дереве идёт исходят из того, что элемент там есть, и он должен быть найден
     * как можно ближе к корню дерева. Поэтому сначала обрабатывается полностью над-уровень, и
