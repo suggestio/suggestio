@@ -11,10 +11,11 @@ import io.suggest.common.html.HtmlConstants
 object Css {
 
   /** Для рендера перечисления css-классов можно юзать этот метод. */
-  def flat(cssClasses: String*): String = {
+  final def flat(cssClasses: String*): String = {
     flat1(cssClasses)
   }
-  def flat1(cssClasses: Seq[String]): String = {
+
+  final def flat1(cssClasses: Seq[String]): String = {
     cssClasses.mkString( HtmlConstants.SPACE )
   }
 
@@ -25,43 +26,49 @@ object Css {
   }
 
   object Display {
-    def HIDDEN        = "hidden"
-    def BLOCK         = "block"
-    def VISIBLE       = "visible"
-    def INVISIBLE     = "visibility-hidden"
-    def INLINE_BLOCK  = "inline-block"
+    final def HIDDEN        = "hidden"
+    final def BLOCK         = "block"
+    final def VISIBLE       = "visible"
+    final def INVISIBLE     = "visibility-hidden"
+    final def INLINE_BLOCK  = "inline-block"
   }
 
   object Position {
-    def RELATIVE      = "relative"
-    def ABSOLUTE      = "abs"
+    final def RELATIVE      = "relative"
+    final def ABSOLUTE      = "abs"
   }
 
   object Overflow {
-    def HIDDEN = "ovh"
+    final def HIDDEN = "ovh"
   }
 
-  def INFO_BLACK = "info-black"
+  final def INFO_BLACK = "info-black"
 
-  def JS_PREFIX = "js-"
+  final def JS_PREFIX = "js-"
 
-  def CLEAR     = "clear"
-  def CLEARFIX  = CLEAR + "fix"
+  final def CLEAR     = "clear"
+  final def CLEARFIX  = CLEAR + "fix"
 
-  def _TITLE      = "title"
-  def _WIDGET     = "widget"
-  def _PREFIX     = "prefix"
-  def _CONTAINER  = "container"
-  def NAME      = "name"
-  def VALUE     = "value"
-  private def _NODENAME_ = "nodename"
+  final def _TITLE      = "title"
+  final def _WIDGET     = "widget"
+  final def _PREFIX     = "prefix"
+  final def _CONTAINER  = "container"
+  final def NAME      = "name"
+  final def VALUE     = "value"
+  private final def _NODENAME_ = "nodename"
 
-  def __ = "__"
+  final def __ = "__"
 
-  def CLICKABLE = "clickable"
+  final def CLICKABLE = "clickable"
 
   object Text {
-    def CENTERED = "centered"
+    final def CENTERED = "centered"
+  }
+
+
+  object Coord {
+    final def TOP = "top"
+    final def LEFT = "left"
   }
 
   object Lk {
@@ -364,6 +371,16 @@ object Css {
     private def _PREFIX_ = "f-"
     def LEFT  = _PREFIX_ + "left"
     def RIGHT = _PREFIX_ + "right"
+  }
+
+
+  object Cursor {
+    final private def PREFIX_ = "cursor-"
+    final def MOVE = PREFIX_ + "move"
+    final def POINTER = PREFIX_ + "pointer"
+    final def GRAB = PREFIX_ + "grab"
+    final def GRABBING = PREFIX_ + "grabbing"
+    final def VERTICAL_RESIZE = PREFIX_ + "resize-v"
   }
 
 }

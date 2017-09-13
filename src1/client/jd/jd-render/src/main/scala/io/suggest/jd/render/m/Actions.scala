@@ -24,11 +24,9 @@ case class JdTagClick( override val jdTag: IDocTag ) extends IJdTagClick
 
 
 /** Начато перетаскивание тега. */
-case class JdTagDragStart( jdTag: IDocTag, coordDiff: MCoords2dD ) extends IJdAction
+case class JdTagDragStart( jdTag: IDocTag ) extends IJdAction
 case class JdTagDragEnd( jdTag: IDocTag ) extends IJdAction
 
-/** Что-то маячит над целевым тегом, в который произойдёт сброс. */
-//case class JdStripDragOver(s: Strip ) extends IJdAction
 
 /** Текущий перетаскиваемый элемент был дропнут в указанный strip.
   *
@@ -36,5 +34,14 @@ case class JdTagDragEnd( jdTag: IDocTag ) extends IJdAction
   * @param clXy Координаты точки сброса.
   * @param foreignTag Если тег притащен откуда-то извне, то тут Some() с распарсенным doc-tag'ом.
   */
-case class JdStripDrop(strip: IDocTag, clXy: MCoords2di, foreignTag: Option[IDocTag]) extends IJdAction
+case class JdDropContent(strip: IDocTag, clXy: MCoords2di, foreignTag: Option[IDocTag]) extends IJdAction
+
+
+/** Экшен сброса текущего перетаскиваемого стрипа на новый стрип.
+  *
+  * @param targetStrip Целевой стрип, на который сброшен другой стрип.
+  * @param isUpper true, если дроп выше середины текущего стрипа.
+  *                false, если ниже середины.
+  */
+case class JdDropStrip(targetStrip: IDocTag, isUpper: Boolean) extends IJdAction
 

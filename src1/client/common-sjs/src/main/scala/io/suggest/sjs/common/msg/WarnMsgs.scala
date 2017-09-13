@@ -128,4 +128,6 @@ object WarnMsgs extends MsgsStaticT {
   /** Отработка какой-то проблемы, связанные с отсутствием завершающего \n в документе. */
   def QDELTA_FINAL_NEWLINE_PROBLEM           = E(53)
 
+  def DND_DROP_UNSUPPORTED                   = E(54)
+
 }

@@ -272,7 +272,7 @@ class DocEditAh[M](
 
 
     // Юзер отпустил перетаскиваемый объект на какой-то стрип. Нужно запихать этот объект в дерево текущего стрипа.
-    case m: JdStripDrop =>
+    case m: JdDropContent =>
       val v0 = value
       val tpl0 = v0.jdArgs.template
 
@@ -376,6 +376,41 @@ class DocEditAh[M](
       )
 
       updated(v2)
+
+    // Реакцие на завершение перетаскивания целого стрипа.
+    case m: JdDropStrip =>
+      val v0 = value
+      val droppedStrip = v0.jdArgs.dnd.jdt.get
+      val targetStrip = m.targetStrip
+      if (droppedStrip == targetStrip) {
+        noChange
+      } else {
+        val strips2 = v0.jdArgs.template
+          .deepOfTypeIter[Strip]
+          .filter(_ != droppedStrip)
+          .flatMap { s =>
+            if (s == targetStrip) {
+              if (m.isUpper) {
+                // Поместить dropped strip сверху
+                droppedStrip :: s :: Nil
+              } else {
+                // Поместить перемещаемый стрип снизу
+                s :: droppedStrip :: Nil
+              }
+            } else {
+              // Это не тот стрип, на который шло перемещение.
+              s :: Nil
+            }
+          }
+          .toList
+        // Залить обновлённый список стрипов в исходный документ
+        val tpl2 = v0.jdArgs.template
+          .withChildren(strips2)
+        val v2 = v0.withJdArgs(
+          v0.jdArgs.withTemplate(tpl2)
+        )
+        updated(v2)
+      }
 
   }
 

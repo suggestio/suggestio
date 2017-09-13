@@ -23,10 +23,13 @@ object ReactDiodeUtil {
     * @tparam A Тип сообщения msg.
     * @return Callback.
     */
-  def dispatchOnProxyScopeCB[P <: ModelProxy[_], S, A]($: BackendScope[P, S], msg: A)
-                                                      (implicit ev: ActionType[A]): Callback = {
+  def dispatchOnProxyScopeCB[P <: ModelProxy[_], S, A: ActionType]($: BackendScope[P, S], msg: A): Callback = {
+    dispatchOnProxyScopeCBf($)(_ => msg)
+  }
+
+  def dispatchOnProxyScopeCBf[P <: ModelProxy[_], S, A: ActionType]($: BackendScope[P, S])(f: P => A): Callback = {
     $.props >>= { p =>
-      p.dispatchCB( msg )
+      p.dispatchCB( f(p) )
     }
   }
 
