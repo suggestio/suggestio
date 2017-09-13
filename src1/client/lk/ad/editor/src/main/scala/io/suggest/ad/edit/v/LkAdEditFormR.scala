@@ -2,6 +2,8 @@ package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAdEditRoot
+import io.suggest.ad.edit.m.edit.MAddS
+import io.suggest.ad.edit.v.edit.AddR
 import io.suggest.ad.edit.v.edit.strip.StripEditR
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
@@ -25,6 +27,7 @@ import io.suggest.sjs.common.spa.OptFastEq
 class LkAdEditFormR(
                      jdCssR             : JdCssR,
                      jdR                : JdR,
+                     addR               : AddR,
                      val stripEditR     : StripEditR,
                      lkAdEditCss        : LkAdEditCss,
                      quillCssFactory    : => QuillCss,
@@ -34,6 +37,7 @@ class LkAdEditFormR(
   import MJdArgs.MJdWithArgsFastEq
   import quillEditorR.PropsValFastEq
   import stripEditR.StripEditRPropsValFastEq
+  import MAddS.MAddSFastEq
 
   type Props = ModelProxy[MAdEditRoot]
 
@@ -41,6 +45,7 @@ class LkAdEditFormR(
   protected case class State(
                               jdPreviewArgsC    : ReactConnectProxy[MJdArgs],
                               jdCssArgsC        : ReactConnectProxy[JdCss],
+                              addC              : ReactConnectProxy[Option[MAddS]],
                               stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
                               quillEdOptC       : ReactConnectProxy[Option[quillEditorR.PropsVal]]
                             )
@@ -88,11 +93,18 @@ class LkAdEditFormR(
           <.div(
             LCSS.editorsCont,
 
+
             // Редактор strip'а
             s.stripEdOptC { stripEditR.apply },
 
             // Редактор текста
-            s.quillEdOptC { quillEditorR.apply }
+            s.quillEdOptC { quillEditorR.apply },
+
+            <.br,
+
+            // Форма добавления новых элементов.
+            s.addC { addR.apply }
+
           )
 
         )
@@ -112,6 +124,10 @@ class LkAdEditFormR(
         jdCssArgsC = p.connect { mroot =>
           mroot.doc.jdArgs.jdCss
         },
+
+        addC = p.connect { mroot =>
+          mroot.doc.addS
+        }(OptFastEq.Wrapped),
 
         stripEdOptC = p.connect { mroot =>
           for (stripEd <- mroot.doc.stripEd; selJd <- mroot.doc.jdArgs.selectedTag) yield {

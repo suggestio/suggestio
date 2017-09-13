@@ -4,6 +4,7 @@ import com.softwaremill.macwire._
 import diode.ModelRW
 import io.suggest.ad.edit.c.DocEditAh
 import io.suggest.ad.edit.m.{MAdEditRoot, MDocS}
+import io.suggest.ad.edit.v.edit.AddR
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, StripEditR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
@@ -38,6 +39,8 @@ class LkAdEditModule {
   lazy val lkAdEditFormR = wire[LkAdEditFormR]
 
   lazy val deleteStripBtnR = wire[DeleteStripBtnR]
+
+  lazy val addR = wire[AddR]
 
 
   // circuit deps

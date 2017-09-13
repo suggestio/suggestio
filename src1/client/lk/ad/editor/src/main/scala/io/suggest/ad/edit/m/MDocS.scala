@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m
 
 import com.quilljs.delta.Delta
 import diode.FastEq
+import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.jd.render.m.MJdArgs
 
@@ -18,7 +19,8 @@ object MDocS {
     override def eqv(a: MDocS, b: MDocS): Boolean = {
       (a.jdArgs eq b.jdArgs) &&
         (a.qDelta eq b.qDelta) &&
-        (a.stripEd eq b.stripEd)
+        (a.stripEd eq b.stripEd) &&
+        (a.addS eq b.addS)
     }
   }
 
@@ -30,12 +32,14 @@ object MDocS {
   * @param jdArgs Текущий набор данных для рендера шаблона.
   * @param qDelta Исходная Delta редактируемного текста в quill-редакторе.
   *               Выставляется в начале редактирования, и НЕ обновляется во время редактирования.
-  * @param stripEd Состояние strip-редактора.
+  * @param stripEd Состояние strip-редактора, если открыт.
+  * @param addS Состояние формочки добавления нового элемента.
   */
 case class MDocS(
                   jdArgs        : MJdArgs,
                   qDelta        : Option[Delta]         = None,
-                  stripEd       : Option[MStripEdS]     = None
+                  stripEd       : Option[MStripEdS]     = None,
+                  addS          : Option[MAddS]         = None
                 ) {
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
@@ -45,5 +49,7 @@ case class MDocS(
 
   def withStripEd(strip: Option[MStripEdS]) = copy(stripEd = strip)
   def withOutStripEd = if (stripEd.nonEmpty) withStripEd(None) else this
+
+  def withAddS(addS: Option[MAddS]) = copy(addS = addS)
 
 }

@@ -19,6 +19,6 @@ case class MJdRenderArgs(
                           edges     : Map[EdgeUid_t, MJdEditEdge]
                         ) {
 
-  def withEdges(edges: Map[Int, MJdEditEdge]) = copy(edges = edges)
+  def withEdges(edges: Map[EdgeUid_t, MJdEditEdge]) = copy(edges = edges)
 
 }

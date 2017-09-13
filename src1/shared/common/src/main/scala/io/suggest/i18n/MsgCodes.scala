@@ -187,5 +187,9 @@ object MsgCodes {
   val `Width`  = "Width"
 
   val `Delete.block` = "Delete.block"
+  val `What.to.add` = "What.to.add"
+  val `Content` = "Content"
+  val `Block` = "Block"
+  val `Example.text` = "Example.text"
 
 }

@@ -1,19 +1,29 @@
 package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.ad.edit.m.{BlockSizeBtnClick, MDocS, StripDelete, StripDeleteCancel}
+import io.suggest.ad.edit.m._
+import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.common.MHands
 import io.suggest.common.coll.Lists
+import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.i18n.MsgCodes
+import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.jd.tags.qd.QdTag
+import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp, MQdOpTypes, QdTag}
 import io.suggest.jd.tags._
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
+import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
+
+import scala.scalajs.js.JSON
+import scala.util.Random
 
 /**
   * Suggest.io
@@ -115,6 +125,8 @@ class DocEditAh[M](
           case _ =>
             v2.withOutStripEd
         }
+
+        // TODO Может быть, был qd-tag и весь текст теперь в нём удалён? Пустая дельта имеет вид {"ops":[{"insert":"\n"}]}
 
         updated( v3 )
       }
@@ -412,7 +424,171 @@ class DocEditAh[M](
         updated(v2)
       }
 
-  }
 
+    // Реакция на клик по кнопке создания нового элемента.
+    case AddBtnClick =>
+      val v0 = value
+      if (v0.addS.nonEmpty) {
+        noChange
+      } else {
+        val v2 = v0.withAddS(
+          Some( MAddS.default )
+        )
+        updated(v2)
+      }
+
+    case AddContentClick =>
+      val v0 = value
+      val intoStrip0 = v0.jdArgs.selectedTag.fold[Strip] {
+        v0.jdArgs.template
+          .deepOfTypeIter[Strip]
+          .next()
+      } {
+        // Если выбран strip, то его и вернуть
+        case s: Strip =>
+          s
+        // Если выбран какой-то не-strip элемент, то найти его strip
+        case selJdt =>
+          v0.jdArgs.template
+            .deepOfTypeIter[Strip]
+            .find { s =>
+              s.contains(selJdt)
+            }
+            .get
+      }
+
+      val rnd = new Random()
+      val bm0 = intoStrip0.bm.getOrElse( BlockMeta.DEFAULT )
+      val coordsRnd = MCoords2di(
+        x = rnd.nextInt( bm0.w.value/3 ) + 10,
+        y = rnd.nextInt( (bm0.h.value * 0.75).toInt ) + (bm0.h.value * 0.12).toInt
+      )
+
+      val textL10ed = Messages( MsgCodes.`Example.text` )
+
+      val textPred = MPredicates.JdContent.Text
+      val edgesMap0 = v0.jdArgs.renderArgs.edges
+      val (edgesMap2, edgeUid) = edgesMap0
+        .valuesIterator
+        .find { e =>
+          e.predicate == textPred &&
+            e.text.contains( textL10ed )
+        }
+        .fold [(Map[EdgeUid_t, MJdEditEdge], Int)] {
+          // Нет примера текста в эджах: добавить его туда.
+          val existEdgeUids = edgesMap0.keySet
+          val nextEdgeUid = if (existEdgeUids.isEmpty)  0  else  existEdgeUids.max + 1
+          val e = MJdEditEdge(
+            predicate = textPred,
+            id        = nextEdgeUid,
+            text      = Some(textL10ed)
+          )
+          val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
+          (edgesMap1, nextEdgeUid)
+        } { exampleTextEdge =>
+          (edgesMap0, exampleTextEdge.id)
+        }
+
+      val qdt = QdTag(Seq(
+          MQdOp(
+            opType = MQdOpTypes.Insert,
+            edgeInfo = Some(MQdEdgeInfo(
+              edgeUid = edgeUid
+            ))
+          )
+        ))
+      val contentJdt = AbsPos.a(coordsRnd)(qdt)
+
+      val intoStrip2 = intoStrip0.withChildren {
+        intoStrip0.children ++ Seq( contentJdt )
+      }
+
+      val tpl2 = v0.jdArgs.template
+        .deepUpdateChild(intoStrip0, intoStrip2 :: Nil)
+        .head
+        .asInstanceOf[JsonDocument]
+
+      val v2 = v0.copy(
+        jdArgs = v0.jdArgs.copy(
+          template    = tpl2,
+          renderArgs  = v0.jdArgs.renderArgs
+            .withEdges( edgesMap2 ),
+          jdCss       = jdCssFactory.mkJdCss(
+            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+          ),
+          selectedTag = Some(qdt)
+        ),
+        qDelta = Some {
+          quillDeltaJsUtil.qdTag2delta(qdt, edgesMap2)
+        },
+        stripEd = None,
+        addS = None
+      )
+      updated(v2)
+
+    // Клик по кнопке добавления нового стрипа.
+    case AddStripClick =>
+      val v0 = value
+      val beforeStripOpt = v0.jdArgs
+        // Попробовать текущеий выделенный strip
+        .selectedTag
+        .flatMap {
+          case s: Strip => Some(s)
+          case _        => None
+        }
+        .orElse {
+          // добавить в конец списка стрипов, если есть хотя бы один стрип.
+          v0.jdArgs.template
+            .deepOfTypeIter[Strip]
+            .toStream
+            .lastOption
+        }
+
+      val iter0 = v0.jdArgs.template
+        .deepOfTypeIter[Strip]
+
+      val newStrip = Strip.a(
+        bm      = Some(BlockMeta.DEFAULT),
+        bgColor = Some(MColorData("ffffff"))
+      )()
+
+      val iter2 = beforeStripOpt.fold {
+        iter0 ++ Seq(newStrip)
+      } { beforeStrip =>
+        v0.jdArgs.template
+          .deepOfTypeIter[Strip]
+          .flatMap { s =>
+            if (s == beforeStrip) {
+              s :: newStrip :: Nil
+            } else {
+              s :: Nil
+            }
+          }
+      }
+
+      val tpl2 = v0.jdArgs.template.withChildren( iter2.toSeq )
+
+      val v2 = v0
+        .withAddS(None)
+        .withJdArgs(
+          v0.jdArgs.copy(
+            template    = tpl2,
+            selectedTag = Some(newStrip),
+            jdCss       = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+          )
+        )
+      updated(v2)
+
+    // Отмена добавления чего-либо.
+    case AddCancelClick =>
+      val v0 = value
+      if (v0.addS.isEmpty) {
+        noChange
+      } else {
+        val v2 = v0.withAddS( None )
+        updated( v2 )
+      }
+
+  }
 
 }

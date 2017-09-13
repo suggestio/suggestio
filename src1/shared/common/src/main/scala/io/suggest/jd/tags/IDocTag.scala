@@ -321,4 +321,9 @@ trait IDocTag
     f(this)
   }
 
+
+  def contains(jdt: IDocTag): Boolean = {
+    deepChildrenIter.contains( jdt )
+  }
+
 }

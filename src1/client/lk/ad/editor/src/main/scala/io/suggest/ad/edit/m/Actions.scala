@@ -30,3 +30,13 @@ case class StripDelete(confirmed: Boolean) extends ILkEditAction
 
 /** Экшен отказа от удаления блока. */
 case object StripDeleteCancel extends ILkEditAction
+
+
+/** Клик по кнопке добавления (открытия формы добавления). */
+case object AddBtnClick extends ILkEditAction
+/** Клик по кнопке добавления контента. */
+case object AddContentClick extends ILkEditAction
+/** Клик по кнопке добавления стрипа. */
+case object AddStripClick extends ILkEditAction
+/** Клик по кнопке отмены добавления чего-либо. */
+case object AddCancelClick extends ILkEditAction

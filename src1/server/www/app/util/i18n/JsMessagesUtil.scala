@@ -241,6 +241,10 @@ class JsMessagesUtil @Inject() (
     MsgCodes.`Width` ::
       MsgCodes.`Height` ::
       MsgCodes.`Delete.block` ::
+      MsgCodes.`What.to.add` ::
+      MsgCodes.`Block` ::
+      MsgCodes.`Content` ::
+      MsgCodes.`Example.text` ::
       Nil
   }
 
