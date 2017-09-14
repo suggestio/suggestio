@@ -22,7 +22,6 @@ import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import japgolly.univeq._
 
-import scala.scalajs.js.JSON
 import scala.util.Random
 
 /**
@@ -52,7 +51,7 @@ class DocEditAh[M](
 
       } else {
         // Текст действительно изменился. Пересобрать json-document.
-        println( JSON.stringify(m.fullDelta) )
+        //println( JSON.stringify(m.fullDelta) )
         val currTag0 = v0.jdArgs.selectedTag.get
         val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
 
@@ -132,6 +131,7 @@ class DocEditAh[M](
           case qd: QdTag if qd.isEmpty(v0.jdArgs.renderArgs.edges) && v3.jdArgs.template.contains(qd) =>
             val tpl2 = v3.jdArgs.template.deepUpdateOne(qd, Nil)
               .head
+              // Нужно shrink'ать, потому что иначе могут быть пустые AbsPos() теги.
               .shrink
               .head
               .asInstanceOf[JsonDocument]

@@ -3,6 +3,7 @@ package com.github.hacker0x01.react.date.picker
 import com.momentjs.Moment
 import minitest._
 
+import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 
 /**
@@ -15,7 +16,7 @@ object DatePickerSpec extends SimpleTestSuite {
 
   test("DatePicker is a class") {
     val v = DatePickerJs
-    assert( v != null )
+    assert( v != null && !js.isUndefined(v) )
   }
 
   test("DatePicker JsComponent must be non-null") {

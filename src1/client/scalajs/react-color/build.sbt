@@ -5,9 +5,9 @@ Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-name := "scalajs-react-date-picker"
+name := "scalajs-react-color"
 
-version := "0.39.0"
+version := "2.13.8"
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
@@ -17,10 +17,11 @@ scalacOptions += "-feature"
 libraryDependencies ++= Seq(
   Common.ORG      %%% "scalajs-react-common"  % "0.0.0-SNAPSHOT",
   "io.monix"      %%% "minitest" % Common.minitestVsn % Test
-  // moment
 )
 
 npmDependencies in Compile ++= Seq(
-  "react-datepicker" -> version.value
+  "react-color" -> version.value
 )
+
+scalacOptions += "-P:scalajs:sjsDefinedByDefault"
 

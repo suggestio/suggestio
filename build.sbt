@@ -130,7 +130,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -187,6 +187,12 @@ lazy val momentSioSjs = {
 lazy val reactDatePickerSjs = {
   Project(id = "scalajs-react-date-picker", base = file(DIR0 + "client/scalajs/react-date-picker"))
     .dependsOn(commonReactSjs, momentSioSjs)
+}
+
+/** Scala.js API для react-color. */
+lazy val reactColorSjs = {
+  Project(id = "scalajs-react-color", base = file(DIR0 + "client/scalajs/react-color"))
+    .dependsOn(commonReactSjs)
 }
 
 /** Фасады scala.js для react-image-gallery. */
