@@ -20,9 +20,11 @@ libraryDependencies ++= Seq(
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-webpackBundlingMode := BundlingMode.LibraryAndApplication()
+//webpackBundlingMode := BundlingMode.LibraryAndApplication()
 
 emitSourceMaps := true
+
+(emitSourceMaps in fullOptJS) := true
 
 npmDependencies in Compile ++= Seq(
   "react"     -> Common.reactJsVsn,

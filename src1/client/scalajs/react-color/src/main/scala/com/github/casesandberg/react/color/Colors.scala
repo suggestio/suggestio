@@ -10,11 +10,13 @@ import scala.scalajs.js.|
   * Description:
   */
 
+@js.native
 sealed trait RgbHslColorBase extends js.Object {
   val a: js.UndefOr[Double | String] = js.undefined
 }
 
 /** RGB color. */
+@js.native
 trait Rgb extends RgbHslColorBase {
   val r: Int
   val g: Int
@@ -22,6 +24,7 @@ trait Rgb extends RgbHslColorBase {
 }
 
 /** HSL color. */
+@js.native
 trait Hsl extends RgbHslColorBase {
   val h: Int
   val s: Double
@@ -38,7 +41,8 @@ trait Color extends js.Object {
 }
 
 
-trait NamedColor {
+@js.native
+trait NamedColor extends js.Object {
   val color: String
   val title: js.UndefOr[String] = js.undefined
 }
