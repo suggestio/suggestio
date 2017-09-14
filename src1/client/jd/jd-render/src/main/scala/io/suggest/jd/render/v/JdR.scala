@@ -269,7 +269,8 @@ class JdR extends Log {
       * Если да, то присвоить ему соотв.стиль для выделения визуально.
       */
     private def _maybeSelected(dt: IDocTag, jdArgs: MJdArgs): TagMod = {
-      if (jdArgs.selectedTag contains dt) {
+      // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
+      if (jdArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.contains(dt)) {
         jdArgs.jdCss.selectedTag
       } else {
         EmptyVdom

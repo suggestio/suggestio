@@ -277,12 +277,13 @@ class DocEditAh[M](
     // Началось перетаскивание какого-то jd-тега из текущего документа.
     case m: JdTagDragStart =>
       val v0 = value
-      if (v0.jdArgs.dnd.jdt contains m.jdTag) {
+      val dnd0 = v0.jdArgs.dnd
+      if (dnd0.jdt contains m.jdTag) {
         noChange
       } else {
         val v2 = v0.withJdArgs(
           v0.jdArgs.withDnd(
-            v0.jdArgs.dnd.withJdt(
+            dnd0.withJdt(
               jdt = Some( m.jdTag )
             )
           )
@@ -291,12 +292,14 @@ class DocEditAh[M](
       }
 
 
-    case m: JdTagDragEnd =>
+    // dragend. Нередко, он не наступает вообще. Т.е. код тут ненадёжен и срабатывает редко, почему-то.
+    case _: JdTagDragEnd =>
       val v0 = value
-      if (v0.jdArgs.dnd.jdt contains m.jdTag) {
+      val dnd0 = v0.jdArgs.dnd
+      if (dnd0.jdt.nonEmpty) {
         val v2 = v0.withJdArgs(
           v0.jdArgs.withDnd(
-            v0.jdArgs.dnd.withJdt(
+            dnd0.withJdt(
               jdt = None
             )
           )
@@ -443,7 +446,9 @@ class DocEditAh[M](
         val tpl2 = v0.jdArgs.template
           .withChildren(strips2)
         val v2 = v0.withJdArgs(
-          v0.jdArgs.withTemplate(tpl2)
+          v0.jdArgs
+            .withTemplate(tpl2)
+            .withDnd()
         )
         updated(v2)
       }

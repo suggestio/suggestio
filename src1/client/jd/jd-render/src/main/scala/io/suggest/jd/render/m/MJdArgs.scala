@@ -50,7 +50,7 @@ case class MJdArgs(
   def withRenderArgs(renderArgs: MJdRenderArgs) = copy(renderArgs = renderArgs)
   def withConf(conf: MJdConf) = copy(conf = conf)
   def withSelectedTag(selectedTag: Option[IDocTag]) = copy(selectedTag = selectedTag)
-  def withDnd(dnd: MJdDndS) = copy(dnd = dnd)
+  def withDnd(dnd: MJdDndS = MJdDndS.empty) = copy(dnd = dnd)
 
 }
 

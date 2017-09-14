@@ -8,8 +8,8 @@ package com.github.hacker0x01.react.date.picker
   */
 object DropDownModes {
 
-  def SCROLL = "scroll"
+  final def SCROLL = "scroll"
 
-  def SELECT = "select"
+  final def SELECT = "select"
 
 }
