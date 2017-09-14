@@ -1,7 +1,8 @@
 package io.suggest.ad.edit.v
 
+import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.font.{MFontSizes, MFonts}
+import io.suggest.font.MFonts
 
 import scalacss.internal.mutable.StyleSheet
 
@@ -32,6 +33,10 @@ class LkAdEditCss extends StyleSheet.Inline {
   object WhControls {
 
     private def _CSS_PREFIX = "block-height-editor"
+
+    val outer = style(
+      display.tableCell
+    )
 
     val contWidth  = _classNameStyle( "__width" )
     val contHeight = _classNameStyle( "__height" )
@@ -69,9 +74,36 @@ class LkAdEditCss extends StyleSheet.Inline {
   }
 
 
+  /** Стили для опционального цвета фона. */
+  object BgColorOptPicker {
+
+    val container = style(
+      addClassName( Css.Display.BLOCK ),
+      height( 50.px ),
+      lineHeight( 33.px )
+    )
+
+    val label = style(
+      addClassName( Css.CLICKABLE ),
+      verticalAlign.top
+    )
+
+    val colorRound = {
+      val whPx = 30.px
+      style(
+        addClassNames(Css.Lk.COLOR, Css.Display.INLINE_BLOCK),
+        width( whPx ),
+        height( whPx )
+      )
+    }
+
+  }
+
+
   initInnerObjects(
     WhControls.contWidth,
-    Layout.editorsCont
+    Layout.editorsCont,
+    BgColorOptPicker.colorRound
   )
 
 }

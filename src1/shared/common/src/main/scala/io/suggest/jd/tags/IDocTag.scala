@@ -202,10 +202,7 @@ trait IDocTag
 
   def deepChildrenOfTypeIter[T <: IDocTag : ClassTag]: Iterator[T] = {
     deepChildrenIter
-      .flatMap {
-        case t: T => t :: Nil
-        case _ => Nil
-      }
+      .flatMap( Lists.ofTypeF[IDocTag, T] )
   }
 
   def deepOfTypeIter[T <: IDocTag : ClassTag]: Iterator[T] = {

@@ -4,7 +4,6 @@ import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
-import scala.scalajs.js.|
 
 /**
   * Suggest.io
@@ -23,7 +22,7 @@ object Sketch {
 
 @JSImport("react-color", "SketchPicker")
 @js.native
-object SketchJs extends js.Object
+protected object SketchJs extends js.Object
 
 
 /** Props for [[Sketch]]. */
@@ -36,6 +35,6 @@ trait SketchProps
   with OnSwatchHover
 {
 
-  val presetColors: js.UndefOr[js.Array[String | NamedColor]] = js.undefined
+  val presetColors: js.UndefOr[PresetColors_t] = js.undefined
 
 }

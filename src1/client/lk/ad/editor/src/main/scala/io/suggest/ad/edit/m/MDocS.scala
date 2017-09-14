@@ -5,6 +5,7 @@ import diode.FastEq
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.jd.render.m.MJdArgs
+import io.suggest.ad.edit.m.edit.MColorsState
 
 /**
   * Suggest.io
@@ -20,7 +21,8 @@ object MDocS {
       (a.jdArgs eq b.jdArgs) &&
         (a.qDelta eq b.qDelta) &&
         (a.stripEd eq b.stripEd) &&
-        (a.addS eq b.addS)
+        (a.addS eq b.addS) &&
+        (a.colorsState eq b.colorsState)
     }
   }
 
@@ -34,12 +36,14 @@ object MDocS {
   *               Выставляется в начале редактирования, и НЕ обновляется во время редактирования.
   * @param stripEd Состояние strip-редактора, если открыт.
   * @param addS Состояние формочки добавления нового элемента.
+  * @param colorsState Общее состояние редактирования цветов: разные часто-используемые или подходящие цвета, например.
   */
 case class MDocS(
                   jdArgs        : MJdArgs,
                   qDelta        : Option[Delta]         = None,
                   stripEd       : Option[MStripEdS]     = None,
-                  addS          : Option[MAddS]         = None
+                  addS          : Option[MAddS]         = None,
+                  colorsState   : MColorsState          = MColorsState.empty
                 ) {
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
@@ -51,5 +55,7 @@ case class MDocS(
   def withOutStripEd = if (stripEd.nonEmpty) withStripEd(None) else this
 
   def withAddS(addS: Option[MAddS]) = copy(addS = addS)
+
+  def withColorsState(colorsState : MColorsState) = copy(colorsState = colorsState)
 
 }

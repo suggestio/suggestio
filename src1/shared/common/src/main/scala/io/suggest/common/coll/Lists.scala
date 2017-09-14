@@ -4,6 +4,7 @@ import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 import scala.language.higherKinds
+import scala.reflect.ClassTag
 
 /**
  * Suggest.io
@@ -359,5 +360,13 @@ object Lists {
       true
     }
   }
+
+
+  /** Вернуть функцию для flatMap(), которая будет возвращать только элементы указанного типа. */
+  def ofTypeF[X, T <: X: ClassTag]: PartialFunction[X, List[T]] = {
+    case t: T => t :: Nil
+    case _    => Nil
+  }
+
 
 }

@@ -1,6 +1,7 @@
 package io.suggest.common.empty
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.reflect.ClassTag
 
 /**
   * Suggest.io
@@ -63,6 +64,20 @@ object OptionUtil {
       boolOpt.getOrElse(true)
     }
 
+  }
+
+
+  def ofTypeF[X, T <: X: ClassTag]: PartialFunction[X, Option[T]] = {
+    case t: T => Some(t)
+    case _    => None
+  }
+
+
+  implicit class AnyOptOps[X](val option: Option[X]) extends AnyVal {
+
+    def filterByType[T <: X: ClassTag]: Option[T] = {
+      option.flatMap( ofTypeF[X, T] )
+    }
 
   }
 

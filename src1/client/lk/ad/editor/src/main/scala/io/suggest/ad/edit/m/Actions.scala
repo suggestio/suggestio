@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
+import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.spa.DAction
 
 /**
@@ -40,3 +41,16 @@ case object AddContentClick extends ILkEditAction
 case object AddStripClick extends ILkEditAction
 /** Клик по кнопке отмены добавления чего-либо. */
 case object AddCancelClick extends ILkEditAction
+
+
+/** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
+case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
+
+/** Изменился цвет в bg color picker'е.
+  * @param isCompleted Окончательное выставление цвета?
+  *                    Если false, то юзер пока ещё выбирает.
+  */
+case class ColorChanged(mcd: MColorData, isCompleted: Boolean) extends ILkEditAction
+
+/** Клик на "цвете" для выбора цвета. */
+case object ColorBtnClick extends ILkEditAction

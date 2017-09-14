@@ -2,9 +2,10 @@ package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
 import diode.ModelRW
-import io.suggest.ad.edit.c.DocEditAh
-import io.suggest.ad.edit.m.{MAdEditRoot, MDocS}
-import io.suggest.ad.edit.v.edit.AddR
+import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
+import io.suggest.ad.edit.m.edit.MColorPick
+import io.suggest.ad.edit.m.{MAeRoot, MDocS}
+import io.suggest.ad.edit.v.edit.{AddR, ColorPickR}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, StripEditR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
@@ -17,6 +18,8 @@ import io.suggest.quill.QuillSioModule
   * Description: Compile-time DI для редактора карточек.
   */
 class LkAdEditModule {
+
+  final type M = MAeRoot
 
   lazy val jdRenderModule = wire[JdRenderModule]
 
@@ -42,11 +45,16 @@ class LkAdEditModule {
 
   lazy val addR = wire[AddR]
 
+  lazy val colorPickR = wire[ColorPickR]
+
 
   // circuit deps
-  lazy val lkAdEditCircuit = wire[LkAdEditCircuit]
 
-  def docEditAhFactory = (modelRW: ModelRW[MAdEditRoot, MDocS]) => wire[DocEditAh[MAdEditRoot]]
+  def docEditAhFactory = (modelRW: ModelRW[M, MDocS]) => wire[DocEditAh[M]]
+
+  def colorPickAh = (modelRW: ModelRW[M, Option[MColorPick]]) => wire[ColorPickAh[M]]
+
+  lazy val lkAdEditCircuit = wire[LkAdEditCircuit]
 
 }
 

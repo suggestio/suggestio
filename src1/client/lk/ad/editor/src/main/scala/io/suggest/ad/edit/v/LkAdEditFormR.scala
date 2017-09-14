@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.MAdEditRoot
+import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.v.edit.AddR
 import io.suggest.ad.edit.v.edit.strip.StripEditR
@@ -39,7 +39,7 @@ class LkAdEditFormR(
   import stripEditR.StripEditRPropsValFastEq
   import MAddS.MAddSFastEq
 
-  type Props = ModelProxy[MAdEditRoot]
+  type Props = ModelProxy[MAeRoot]
 
   /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
   protected case class State(
@@ -93,7 +93,6 @@ class LkAdEditFormR(
           <.div(
             LCSS.editorsCont,
 
-
             // Редактор strip'а
             s.stripEdOptC { stripEditR.apply },
 
@@ -132,8 +131,9 @@ class LkAdEditFormR(
         stripEdOptC = p.connect { mroot =>
           for (stripEd <- mroot.doc.stripEd; selJd <- mroot.doc.jdArgs.selectedTag) yield {
             stripEditR.PropsVal(
-              strip = selJd.asInstanceOf[Strip],
-              edS   = stripEd
+              strip       = selJd.asInstanceOf[Strip],
+              edS         = stripEd,
+              colorsState = mroot.doc.colorsState
             )
           }
         }( OptFastEq.Wrapped ),

@@ -1,12 +1,15 @@
 package io.suggest.ad.edit
 
+import io.suggest.ad.edit.m.MAeRoot
 import io.suggest.ad.form.AdFormConstants
+import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
+import com.softwaremill.macwire._
 
 import scala.concurrent.Future
 
@@ -35,16 +38,16 @@ trait LkAdEditInit extends InitRouter {
     // Инициализировать хранилку ссылки на гифку прелоадера, т.к. тот будет стёрт входе react-рендера.
     LkPreLoader.PRELOADER_IMG_URL
 
-    val module = new LkAdEditModule
+    val modules = wire[LkAdEditModule]
 
     // Инициализировать circuit
-    val circuit = module.lkAdEditCircuit
+    val circuit = modules.lkAdEditCircuit
 
     // Инициализировать quill для редактора карточе
-    module.quillSioModule.quillInit.forAdEditor()
+    modules.quillSioModule.quillInit.forAdEditor()
 
     // Произвести рендер компонента формы:
-    val formComponent = circuit.wrap(m => m)(module.lkAdEditFormR.apply)
+    val formComponent = circuit.wrap(m => m)(modules.lkAdEditFormR.apply)
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )
     formComponent.renderIntoDOM( formTarget )
   }

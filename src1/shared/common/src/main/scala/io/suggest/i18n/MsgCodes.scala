@@ -191,5 +191,6 @@ object MsgCodes {
   val `Content` = "Content"
   val `Block` = "Block"
   val `Example.text` = "Example.text"
+  val `Bg.color` = "Bg.color"
 
 }

@@ -480,6 +480,7 @@ lazy val sio2 = {
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
+      reactImageGallerySjs, reactColorSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,

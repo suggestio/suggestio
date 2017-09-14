@@ -22,5 +22,3 @@ npmDependencies in Compile ++= Seq(
   "leaflet.locatecontrol" -> Common.leafletControlLocateJsVsn
 )
 
-requiresDOM in Test := true
-

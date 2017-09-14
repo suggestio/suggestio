@@ -8,10 +8,6 @@ version := "0.0.0-SNAPSHOT"
 
 enablePlugins(ScalaJSBundlerPlugin)
 
-//resolvers ++= Seq(
-//  "sonatype-oss-snapshots" at Common.Repo.SONATYPE_OSS_SNAPSHOTS_URL
-//)
-
 libraryDependencies ++= Seq(
   "be.doeraene"         %%% "scalajs-jquery"      % Common.sjsJqueryVsn,
   Common.ORG            %%% "lk-adv-ext-sjs"      % "0.0.0-SNAPSHOT",
@@ -23,17 +19,10 @@ libraryDependencies ++= Seq(
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
-requiresDOM in Test := true
-
-//scalaJSOutputMode := OutputMode.ECMAScript6
-
-// Пока не нужно, ибо не минифицировано и не версия jquery у нас более старая. Но потом надо будет это заюзать.
-// skip in packageJSDependencies := true
-
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-enableReloadWorkflow := true
+webpackBundlingMode := BundlingMode.LibraryAndApplication()
 
-emitSourceMaps := false
+emitSourceMaps := true
 
 npmDependencies in Compile ++= Seq(
   "react"     -> Common.reactJsVsn,

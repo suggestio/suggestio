@@ -25,11 +25,10 @@ object DatePickerR {
 /** Native component facade. */
 @JSImport("react-datepicker", JSImport.Namespace)
 @js.native
-object DatePickerJs extends js.Object // JsComponentType[DatePickerPropsR, js.Object, TopNode]
+protected object DatePickerJs extends js.Object
 
 
 /** Component properties. */
-@ScalaJSDefined
 trait DatePickerPropsR extends js.Object {
 
   val autoComplete: UndefOr[String] = js.undefined

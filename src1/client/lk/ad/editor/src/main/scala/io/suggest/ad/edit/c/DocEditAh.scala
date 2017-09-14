@@ -108,7 +108,7 @@ class DocEditAh[M](
         // Если это strip, то активировать состояние strip-редактора.
         val v3 = m.jdTag match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
-          case _: Strip =>
+          case s: Strip =>
             v2.withStripEd(
               Some(MStripEdS(
                 isLastStrip = {

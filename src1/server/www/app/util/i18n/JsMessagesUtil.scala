@@ -245,6 +245,7 @@ class JsMessagesUtil @Inject() (
       MsgCodes.`Block` ::
       MsgCodes.`Content` ::
       MsgCodes.`Example.text` ::
+      MsgCodes.`Bg.color` ::
       Nil
   }
 

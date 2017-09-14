@@ -55,5 +55,6 @@ case class Strip(
   }
 
   def withBlockMeta(bm: Option[BlockMeta]) = copy(bm = bm)
+  def withBgColor(bgColor: Option[MColorData]) = copy(bgColor = bgColor)
 
 }

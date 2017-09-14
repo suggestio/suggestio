@@ -13,7 +13,7 @@ import scala.scalajs.js.{UndefOr, |}
   */
 trait ColorPickerProps extends js.Object {
 
-  val color: String | Rgb | Hsl
+  val color: Color_t
 
   val onChange: UndefOr[js.Function2[Color, ReactEvent, _]] = js.undefined
 

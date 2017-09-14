@@ -23,7 +23,7 @@ skip in packageJSDependencies := true
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-enableReloadWorkflow := true
+webpackBundlingMode := BundlingMode.LibraryAndApplication()
 
 emitSourceMaps := false
 

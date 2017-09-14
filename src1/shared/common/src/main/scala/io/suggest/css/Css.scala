@@ -73,6 +73,9 @@ object Css {
 
   object Lk {
 
+    /** div class=color для круглого div'а, заливаемого через css bg-color. */
+    def COLOR = "color"
+
     def LINK = "link"
     def BLUE_LINK = "blue-" + LINK
 
