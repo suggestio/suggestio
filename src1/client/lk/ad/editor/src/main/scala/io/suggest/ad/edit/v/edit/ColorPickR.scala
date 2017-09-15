@@ -33,17 +33,21 @@ class ColorPickR(
 
   class Backend($: BackendScope[Props, _]) {
 
+    /** Реакция на клики по галочке заливки цветом. */
     private def _onCheckBoxChanged(e: ReactEventFromInput): Callback = {
       val isChecked = e.target.checked
       dispatchOnProxyScopeCB($, ColorCheckboxChange(isChecked))
     }
 
 
+    /** Реакция на настройку цвета. */
     private def _onColorChanged(color: Color, e: ReactEvent): Callback = {
       _onColorChangedBody(color, isComplete = false)
     }
     lazy val _onColorChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onColorChanged )
 
+
+    /** Реакция на завершение выбора цвета. */
     private def _onColorCompletelyChanged(color: Color, e: ReactEvent): Callback = {
       _onColorChangedBody(color, isComplete = true)
     }
@@ -55,10 +59,16 @@ class ColorPickR(
     }
 
 
-    private def _onColorRoundClick: Callback = {
+    /** Реакция на клик по кружочку цвета. */
+    private def _onColorRoundClick(e: ReactMouseEvent): Callback = {
       dispatchOnProxyScopeCB($, ColorBtnClick)
     }
 
+
+    private def _onPickerBlur: Callback = {
+      println("Blurred")
+      Callback.empty
+    }
 
     def render(propsOptProxy: Props, pc: PropsChildren): VdomElement = {
       val propsOpt = propsOptProxy.value
@@ -92,6 +102,7 @@ class ColorPickR(
 
             <.span(
               ^.`class` := Css.flat(Css.CLICKABLE, Css.Display.INLINE_BLOCK),
+              ^.onClick ==> ReactCommonUtil.stopPropagationCB,
 
               HtmlConstants.NBSP_STR,
               HtmlConstants.NBSP_STR,
@@ -100,25 +111,27 @@ class ColorPickR(
               <.div(
                 C.colorRound,
                 ^.backgroundColor := colorHex,
-                ^.onClick --> _onColorRoundClick
+                ^.onClick ==> _onColorRoundClick
               ),
 
               if (props.pickS.isShown) {
-                Sketch(
-                  new SketchProps {
-                    override val color = colorHex
-                    override val disableAlpha = true
-                    override val onChange = _onColorChangedCbF
-                    override val onChangeComplete = _onColorCompletelyChangedCbF
-                    override val presetColors = {
-                      props.colorsState.colorPresets
-                        .iterator
-                        .map { mcd =>
-                          mcd.hexCode: PresetColor_t
-                        }
-                        .toJSArray
+                <.span(
+                  Sketch(
+                    new SketchProps {
+                      override val color = colorHex
+                      override val disableAlpha = true
+                      override val onChange = _onColorChangedCbF
+                      override val onChangeComplete = _onColorCompletelyChangedCbF
+                      override val presetColors = {
+                        props.colorsState.colorPresets
+                          .iterator
+                          .map { mcd =>
+                            mcd.hexCode: PresetColor_t
+                          }
+                          .toJSArray
+                      }
                     }
-                  }
+                  )
                 )
               } else {
                 EmptyVdom

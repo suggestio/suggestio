@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.ad.edit.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange}
+import io.suggest.ad.edit.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange, DocBodyClick}
 import io.suggest.ad.edit.m.edit.MColorPick
 import io.suggest.model.n2.node.meta.colors.MColorData
 
@@ -27,6 +27,15 @@ class ColorPickAh[M](
       val v0 = value.get
       val v2 = v0.withColorOpt(
         colorOpt = Some( m.mcd )
+      )
+      updated( Some(v2) )
+
+
+    // Клик где-то за пределами picker'а, когда тот открыт. Значит надо скрыть текущий picker.
+    case DocBodyClick if value.exists(_.pickS.isShown) =>
+      val v0 = value.get
+      val v2 = v0.withPickS(
+        v0.pickS.withIsShown( false )
       )
       updated( Some(v2) )
 

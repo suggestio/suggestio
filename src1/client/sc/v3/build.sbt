@@ -27,7 +27,7 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-webpackBundlingMode := BundlingMode.LibraryAndApplication()
+webpackBundlingMode := BundlingMode.LibraryOnly()
 
 emitSourceMaps := false
 

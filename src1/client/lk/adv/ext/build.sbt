@@ -15,7 +15,5 @@ libraryDependencies ++= Seq(
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 
-// требуется DOM в тестах. http://www.scala-js.org/doc/tutorial.html
-//jsDependencies += RuntimeDOM
-requiresDOM in Test := true
+// TODO требуется DOM в тестах.
 

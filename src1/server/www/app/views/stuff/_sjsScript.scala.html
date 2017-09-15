@@ -1,8 +1,29 @@
 @(prefix: String)(implicit ctx: Context)
 
-@* HTML-рендер для доступа к sjs-скрипту. *@
+@**
+  * HTML для подключения к sjs-скрипта на страницах.
+  *
+  * 2017.sep.17 В связи с переездом на scalajs-bundler 0.8,
+  * был выполнен переход использование режима libraryOnly,
+  * который подразумевает разделение на либу, приложение и loader.
+  *
+  * @see [[https://scalacenter.github.io/scalajs-bundler/reference.html#bundling-mode-library-only Дока]]
+  * @see [[https://github.com/scalacenter/scalajs-bundler/pull/149 scalajs-buidler PR#149]]
+  * @see [[https://github.com/vmunier/scalajs-scripts Кое-что для информации]]
+  *@
 
 @import ctx.api.cdn
 
-<script type="text/javascript"
-        src="@cdn.asset(prefix + (if(ctx.api.isProd) "-" else "-fast") + "opt-bundle.js")"></script>
+@__jsScript(suffix: String) = {
+  <script type="text/javascript" src="@cdn.asset(s"$prefix-${if(ctx.api.isProd) "" else "fast"}opt$suffix.js")"></script>
+}
+
+@* LibraryOnly: дёргаем либу *@
+@__jsScript("-library")
+
+@* LibraryOnly: loader из двух строчек.
+   TODO Может его прямо сюда захардкодить? С CSP всё будет нормально? *@
+@__jsScript("-loader")
+
+@* LibraryOnly: само приложение, наконец *@
+@__jsScript("")

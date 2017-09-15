@@ -25,8 +25,7 @@ import scalacss.internal.mutable.StyleSheet
   * Таблица стилей плоская для всех документов сразу.
   */
 
-class JdCss( jdCssArgs: MJdCssArgs )
-  extends StyleSheet.Inline {
+class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 

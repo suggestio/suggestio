@@ -51,7 +51,7 @@ case class MDocS(
   def withQDelta(qDelta: Option[Delta]) = copy(qDelta = qDelta)
   def withOutQDelta = if (qDelta.nonEmpty) withQDelta(None) else this
 
-  def withStripEd(strip: Option[MStripEdS]) = copy(stripEd = strip)
+  def withStripEd(stripEd: Option[MStripEdS]) = copy(stripEd = stripEd)
   def withOutStripEd = if (stripEd.nonEmpty) withStripEd(None) else this
 
   def withAddS(addS: Option[MAddS]) = copy(addS = addS)

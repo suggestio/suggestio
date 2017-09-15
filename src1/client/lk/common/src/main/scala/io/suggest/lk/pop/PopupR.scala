@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.react.ReactDiodeUtil
+import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
@@ -43,7 +43,7 @@ object PopupR {
       <.div(
         ^.`class`  := Css.flat1( Css.Lk.Popup.POPUP :: p.hSize :: p.css ),
         ^.top      := p.topPc.pct,
-        ^.onClick ==> ReactDiodeUtil.eStopPropagationCB,
+        ^.onClick ==> ReactCommonUtil.stopPropagationCB,
 
         p.closeable.whenDefined { closeCB =>
           <.div(

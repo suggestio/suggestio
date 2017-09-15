@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.MAeRoot
+import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.v.edit.AddR
 import io.suggest.ad.edit.v.edit.strip.StripEditR
@@ -10,10 +10,11 @@ import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.jd.tags.Strip
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scalacss.ScalaCssReact._
 import io.suggest.sjs.common.spa.OptFastEq
@@ -52,10 +53,17 @@ class LkAdEditFormR(
 
   protected class Backend($: BackendScope[Props, State]) {
 
+    private def _onClick: Callback = {
+      dispatchOnProxyScopeCB($, DocBodyClick)
+    }
+
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
       <.div(
         ^.`class` := Css.Overflow.HIDDEN,
+
+        // TODO Opt спиливать onClick, когда по состоянию нет ни одного открытого modal'а, например открытого color-picker'а.
+        ^.onClick --> _onClick,
 
         // Отрендерить доп.стили для quill-редактора.
         <.styleTag(

@@ -1,7 +1,7 @@
 package io.suggest.react
 
 import japgolly.scalajs.react.vdom.{TagMod, TagOf, TopNode, VdomElement}
-import japgolly.scalajs.react.CallbackTo
+import japgolly.scalajs.react.{Callback, CallbackTo, ReactEvent}
 import japgolly.scalajs.react.internal.OptionLike
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -15,6 +15,10 @@ import scala.language.{higherKinds, implicitConversions}
   * Description: Вспомогательная утиль для react-компонентов.
   */
 object ReactCommonUtil {
+
+  def stopPropagationCB(e: ReactEvent): Callback = {
+    e.stopPropagationCB
+  }
 
   /**
     * Приведение функции, возвращающей js Callback к js-функции-листенеру.

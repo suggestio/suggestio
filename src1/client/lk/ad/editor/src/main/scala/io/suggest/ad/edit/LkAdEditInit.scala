@@ -1,15 +1,14 @@
 package io.suggest.ad.edit
 
-import io.suggest.ad.edit.m.MAeRoot
-import io.suggest.ad.form.AdFormConstants
+import com.softwaremill.macwire._
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
-import io.suggest.sjs.common.controller.InitRouter
+import io.suggest.ad.form.AdFormConstants
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
-import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
-import com.softwaremill.macwire._
+import org.scalajs.dom.raw.HTMLDivElement
 
 import scala.concurrent.Future
 

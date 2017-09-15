@@ -3,6 +3,7 @@ import PlayKeys._
 import play.twirl.sbt.Import._
 import play.twirl.sbt.SbtTwirl
 import com.typesafe.sbt.web._
+import com.typesafe.sbt.web.Import.WebKeys.deduplicators
 
 Common.settingsOrg
 
@@ -150,6 +151,7 @@ routesImport ++= Seq(
   "io.suggest.model.n2.edge.MPredicatesJvm._"
 )
 
+deduplicators += { s: Seq[File] => s.headOption }
 
 // Stylus
 includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
@@ -157,11 +159,13 @@ includeFilter in (Assets, StylusKeys.stylus) := "*.styl"
 excludeFilter in (Assets, StylusKeys.stylus) := "_*.styl"
 
 
+excludeFilter in digest := "*.scala"
 
 // sbt-web
+//pipelineStages ++= Seq(digest, filter, gzip)
 pipelineStages ++= Seq(digest, simpleUrlUpdate, digest, filter, gzip)
 
-//excludeFilter in simpleUrlUpdate := "*.md5"
+excludeFilter in simpleUrlUpdate := "*.map"
 //includeFilter in simpleUrlUpdate := "*.css"
 
 
@@ -189,7 +193,8 @@ routesGenerator := InjectedRoutesGenerator
 // У плагина sbt-filter почему-то фильтры наоборот работают. Об этом в README сказано.
 // https://github.com/rgcottrell/sbt-filter
 includeFilter in filter := {
-  "*.md5.md5" || "*.scala.*" || "*.scala" ||
+  "*.md5.md5" ||
+  "*.scala.*" || "*.scala" || "*.map.md5" ||
   "*.js.src.js" || "*.js.src.js.md5" ||
   "*.coffee" || "*.coffee.md5" || "*.coffee.map" ||
   "*.styl" || "*.styl.md5" ||
@@ -204,7 +209,7 @@ dockerExposedPorts := Seq(9000, 9443, 9200, 9201, 9300, 9301)
 
 
 // Есть ассеты, которые нет смысла сжимать. Правда, они в /public, но на всякий случай сделаем.
-excludeFilter in gzip := "*.woff" || "*.woff2"
+excludeFilter in gzip := "*.woff" || "*.woff2" || "*.md5" || "*.sha1"
 
 // Дополнительные импорты для twirl-шаблонов.
 TwirlKeys.templateImports ++= Seq(

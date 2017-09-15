@@ -43,8 +43,8 @@ object App extends Log {
 /** Stackable-реализация routed init. */
 class LkInitRouter
   extends Log
-  with CenterContentInitRouter
   with LkAdEditInit
+  with CenterContentInitRouter
   with TxnsListInit
   with CaptchaFormInit
   with HiddenCaptchaInit

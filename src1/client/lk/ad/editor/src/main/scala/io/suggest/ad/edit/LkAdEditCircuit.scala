@@ -9,7 +9,7 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
 import play.api.libs.json.Json
-import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
+import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh, TailAh}
 import io.suggest.ad.edit.m.edit.MColorPick
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.common.empty.OptionUtil._
@@ -115,6 +115,7 @@ class LkAdEditCircuit(
             stripEd0.withBgColorPick( mColorAh.pickS )
           }
         }
+        .withColorsState( mColorAh.colorsState )
     }
     // Чисто теоретически возможна какая-то нештатная ситуация, но мы подавляем её в пользу исходного состояния circuit.
     mdoc2Opt.getOrElse {
@@ -123,12 +124,15 @@ class LkAdEditCircuit(
     }
   }
 
-  val stripBgColorAh = colorPickAhFactory( stripBgRw )
+  private val stripBgColorAh = colorPickAhFactory( stripBgRw )
 
-  override protected def actionHandler: HandlerFunction = {
+  private val tailAh = new TailAh(mDocSRw)
+
+  override protected val actionHandler: HandlerFunction = {
     composeHandlers(
       docAh,
-      stripBgColorAh
+      stripBgColorAh,
+      tailAh
     )
   }
 

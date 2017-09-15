@@ -54,3 +54,6 @@ case class ColorChanged(mcd: MColorData, isCompleted: Boolean) extends ILkEditAc
 
 /** Клик на "цвете" для выбора цвета. */
 case object ColorBtnClick extends ILkEditAction
+
+/** Клик просто где-то в body. */
+case object DocBodyClick extends ILkEditAction

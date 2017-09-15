@@ -34,11 +34,6 @@ object ReactDiodeUtil {
   }
 
 
-  def eStopPropagationCB(e: ReactEvent): Callback = {
-    e.stopPropagationCB
-  }
-
-
   def isPendingWithStartTime[U](pot: Pot[U], validStartTime: Long): Boolean = {
     pot match {
       case pb: PendingBase => pb.startTime == validStartTime

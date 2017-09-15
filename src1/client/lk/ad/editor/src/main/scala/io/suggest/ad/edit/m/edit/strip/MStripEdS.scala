@@ -29,7 +29,7 @@ object MStripEdS {
 case class MStripEdS(
                       isLastStrip       : Boolean,
                       bgColorPick       : MColorPickerS     = MColorPickerS.empty,
-                      confirmingDelete  : Boolean         = false,
+                      confirmingDelete  : Boolean           = false,
                     ) {
 
   def withConfirmDelete(confirmDelete: Boolean) = copy(confirmingDelete = confirmDelete)
