@@ -10,20 +10,36 @@
   * @see [[https://scalacenter.github.io/scalajs-bundler/reference.html#bundling-mode-library-only Дока]]
   * @see [[https://github.com/scalacenter/scalajs-bundler/pull/149 scalajs-buidler PR#149]]
   * @see [[https://github.com/vmunier/scalajs-scripts Кое-что для информации]]
+  *
+  * Из-за [[https://github.com/scalacenter/scalajs-bundler/issues/178]] не получается нормально собрать
+  * fullOptJS-билды для продакшена. Поэтому тут есть проверка, какой модуль скомпилен для скрипта.
   *@
 
 @import ctx.api.cdn
 
-@__jsScript(suffix: String) = {
-  <script type="text/javascript" src="@cdn.asset(s"$prefix-${if(ctx.api.isProd) "" else "fast"}opt$suffix.js")"></script>
+@__fileName(suffix: String) = @{ s"$prefix-${if(ctx.api.isProd) "" else "fast"}opt$suffix.js" }
+
+@__jsScript(fileName: String) = {
+  <script type="text/javascript" src="@cdn.asset( fileName )"></script>
 }
 
-@* LibraryOnly: дёргаем либу *@
-@__jsScript("-library")
+@* Нужно определить, что на руках: бандл или library? *@
+@defining( __fileName("-bundle") ) { bundleFileName =>
+  @if( getClass.getResource( s"/public/$bundleFileName" ) != null ) {
+    @* Рендер bundle-сборки. *@
+    @__jsScript( bundleFileName )
 
-@* LibraryOnly: loader из двух строчек.
-   TODO Может его прямо сюда захардкодить? С CSP всё будет нормально? *@
-@__jsScript("-loader")
+  } else {
+    @* Рендер library-режима *@
+    @* LibraryOnly: дёргаем либу *@
+    @__jsScript( __fileName("-library") )
 
-@* LibraryOnly: само приложение, наконец *@
-@__jsScript("")
+    @* LibraryOnly: loader из двух строчек.
+       TODO Может его прямо сюда захардкодить? С CSP всё будет нормально? *@
+    @__jsScript( __fileName("-loader") )
+
+    @* LibraryOnly: само приложение, наконец *@
+    @__jsScript( __fileName("") )
+  }
+
+}

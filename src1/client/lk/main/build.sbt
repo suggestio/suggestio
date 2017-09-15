@@ -20,7 +20,11 @@ libraryDependencies ++= Seq(
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
 // https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-webpackBundlingMode := BundlingMode.LibraryOnly()
+// https://github.com/scalacenter/scalajs-bundler/issues/178
+webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
+
+webpackBundlingMode in fullOptJS := BundlingMode.Application
+
 
 emitSourceMaps := true
 

@@ -20,6 +20,6 @@ libraryDependencies ++= Seq(
 )
 
 npmDependencies in Compile ++= Seq(
-  "react-leaflet" -> "1.2.2"
+  "react-leaflet" -> Common.Vsn.REACT_LEAFLET
 )
 

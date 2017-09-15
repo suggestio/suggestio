@@ -143,6 +143,8 @@ object Common {
       */
     val REACT_QUILL = "1.1.0"
 
+    val REACT_LEAFLET = "1.6.6"
+
   }
 
 
@@ -211,14 +213,13 @@ object Common {
    *  Где-то в leaflet-плагинах есть зависимость от wildcard-версии вида [1.0.0,),
    *  что может вызвать проблемы на сборке с пустым ivy2-кешем во время освежения версии в webjars.
    */
-  val leafletJsVsn              = "1.0.3"
+  val leafletJsVsn              = "1.2.0"
 
   /** Версия L.control.locate.js. */
-  val leafletControlLocateJsVsn = "0.61.0"
-  val leafletControlLocateWjVsn = leafletControlLocateJsVsn + "-1"
+  val leafletControlLocateJsVsn = "0.62.0"
 
   /** Версия Leaflet.markercluster.js. */
-  val leafletMarkerClusterJsVsn = "1.0.5"
+  val leafletMarkerClusterJsVsn = "1.1.0"
 
   
   /** Версия diode.

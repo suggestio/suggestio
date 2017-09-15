@@ -25,6 +25,8 @@ class CspUtil @Inject() (
     // По идее, proto нужен только на dev, где всё по http. На prod будет https автоматом, т.к. там он везде.
     val proto = "https://"
     Set(
+      Csp.Sources.BLOB,
+      Csp.Sources.SELF,
       proto + "youtube.com",
       proto + "*.youtube.com",
       proto + "vimeo.com",
