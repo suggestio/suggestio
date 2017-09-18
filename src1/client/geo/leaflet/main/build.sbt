@@ -13,8 +13,8 @@ version := "0.1s-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-    Common.ORG      %%% "common-sjs"       % "0.0.0-SNAPSHOT",
-    "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn
+  Common.ORG      %%% "common-sjs"       % "0.0.0-SNAPSHOT",
+  "org.scala-js"  %%% "scalajs-dom"      % Common.sjsDomVsn
 )
 
 npmDependencies in Compile ++= Seq(

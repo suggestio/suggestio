@@ -1,9 +1,7 @@
 package io.suggest.jd.tags.qd
 
-import io.suggest.common.html.HtmlConstants
-import io.suggest.jd.MJdEditEdge
-import io.suggest.jd.tags.{IDocTag, MJdTagNames}
-import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.jd.tags.{IBgColorOpt, IDocTag, MJdTagNames}
+import io.suggest.model.n2.node.meta.colors.MColorData
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -16,13 +14,16 @@ import play.api.libs.functional.syntax._
 
 object QdTag {
 
-  implicit val QD_TAG_FORMAT: OFormat[QdTag] = {
-    (__ \ "o").format[Seq[MQdOp]]
-      .inmap(apply, _.ops)
+  /** Поддержка play-json. */
+  implicit val QD_TAG_FORMAT: OFormat[QdTag] = (
+    (__ \ "o").format[Seq[MQdOp]] and
+    IBgColorOpt.bgColorOptFormat
+  )(apply, unlift(unapply))
+
+
+  def a( bgColor: Option[MColorData] = None )(ops: MQdOp*): QdTag = {
+    apply(ops, bgColor)
   }
-
-
-  def a()(ops: MQdOp*) = apply(ops)
 
 }
 
@@ -32,10 +33,14 @@ object QdTag {
   * @param ops Delta-операции.
   */
 case class QdTag(
-                  ops   : Seq[MQdOp]
+                  ops                     : Seq[MQdOp],
+                  override val bgColor    : Option[MColorData]  = None
                 )
   extends IDocTag
+  with IBgColorOpt
 {
+
+  override type T = QdTag
 
   override def jdTagName = MJdTagNames.QUILL_DELTA
 
@@ -60,19 +65,6 @@ case class QdTag(
     }
   }
 
-  /** Является ли дельта пустой? */
-  def isEmpty(edgesMap: Map[EdgeUid_t, MJdEditEdge]): Boolean = {
-    // Обычно, пустая дельта выглядит так: {"ops":[{"insert":"\n"}]}
-    val l = ops.length
-    l == 0 || (l == 1 && {
-      ops.head
-        .edgeInfo
-        .flatMap { ei =>
-          edgesMap.get(ei.edgeUid)
-        }
-        .flatMap(_.text)
-        .contains( HtmlConstants.NEWLINE_UNIX.toString )
-    })
-  }
+  override def withBgColor(bgColor: Option[MColorData]) = copy(bgColor = bgColor)
 
 }

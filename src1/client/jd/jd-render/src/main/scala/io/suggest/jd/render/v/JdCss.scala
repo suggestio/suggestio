@@ -6,7 +6,7 @@ import io.suggest.font.{MFontSizes, MFonts}
 import scalacss.DevDefaults._
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.qd.{MQdOp, QdTag}
-import io.suggest.jd.tags.{AbsPos, IDocTag, Strip}
+import io.suggest.jd.tags.{AbsPos, IBgColorOpt, IDocTag, Strip}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
@@ -73,29 +73,40 @@ class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   // -------------------------------------------------------------------------------
   // Strip
-  private val _stripsDomain = _mkJdTagDomain[Strip]
 
   /** Стили контейнеров полосок. */
-  val stripOuterStyleF = styleF(_stripsDomain) { strip =>
-    // Стиль фона полосы
-    val stylBg = strip.bgColor.fold(StyleS.empty) { mcd =>
-      styleS(
-        backgroundColor(Color(mcd.hexCode))
-      )
-    }
+  val stripOuterStyleF = {
+    val _stripsDomain = _mkJdTagDomain[Strip]
+    styleF(_stripsDomain) { strip =>
+      // Стиль размеров блока-полосы.
+      val stylWh = strip.bm.fold(StyleS.empty) { bm =>
+        styleS(
+          width( bm.width.px ),
+          height( bm.height.px )
+        )
+      }
 
-    // Стиль размеров блока-полосы.
-    val stylWh = strip.bm.fold(StyleS.empty) { bm =>
-      styleS(
-        width( bm.width.px ),
-        height( bm.height.px )
-      )
+      // Объединить все стили одного стрипа.
+      stylWh
     }
-
-    // Объединить все стили одного стрипа.
-    stylWh.compose( stylBg )
   }
 
+
+  /** Цвет фона бывает у разнотипных тегов, поэтому выносим CSS для цветов фона в отдельный каталог стилей. */
+  val bgColorOptStyleF = {
+    val bgColorsHex1 =
+      _jdTagsIter[IBgColorOpt]
+        .flatMap(_.bgColor)
+        .map(_.hexCode)
+        .toSet
+        .toIndexedSeq
+    val bgColorsDomain = new Domain.OverSeq( bgColorsHex1 )
+    styleF( bgColorsDomain ) { bgColorHex =>
+      styleS(
+        backgroundColor( Color(bgColorHex) )
+      )
+    }
+  }
 
 
   // -------------------------------------------------------------------------------

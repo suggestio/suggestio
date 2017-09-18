@@ -20,7 +20,7 @@ object Strip {
   /** Поддержка play-json для полос контента. */
   implicit val STRIP_FORMAT: OFormat[Strip] = (
     (__ \ "bm").formatNullable[BlockMeta] and
-    (__ \ "bg").formatNullable[MColorData] and
+    IBgColorOpt.bgColorOptFormat and
     IDocTag.CHILDREN_IDOC_TAG_FORMAT
   )( apply, unlift(unapply) )
 
@@ -42,11 +42,15 @@ object Strip {
   * @param children Содержимое этой полосы.
   */
 case class Strip(
-                  bm        : Option[BlockMeta]   = None,
-                  bgColor   : Option[MColorData]  = None,
-                  override val children: Seq[IDocTag]
+                  bm                      : Option[BlockMeta]   = None,
+                  override val bgColor    : Option[MColorData]  = None,
+                  override val children   : Seq[IDocTag]
                 )
-  extends IDocTag {
+  extends IDocTag
+  with IBgColorOpt
+{
+
+  override type T = Strip
 
   override def jdTagName = MJdTagNames.STRIP
 

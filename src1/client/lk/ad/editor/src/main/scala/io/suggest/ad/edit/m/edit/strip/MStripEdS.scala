@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.m.edit.strip
 
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.MColorPickerS
+import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPickerS}
 
 /**
   * Suggest.io
@@ -27,12 +27,16 @@ object MStripEdS {
   * @param confirmingDelete Отображается подтверждение удаления блока?
   */
 case class MStripEdS(
-                      isLastStrip       : Boolean,
-                      bgColorPick       : MColorPickerS     = MColorPickerS.empty,
-                      confirmingDelete  : Boolean           = false,
-                    ) {
+                      isLastStrip                 : Boolean,
+                      override val bgColorPick    : MColorPickerS     = MColorPickerS.empty,
+                      confirmingDelete            : Boolean           = false,
+                    )
+  extends IBgColorPickerS
+{
+
+  override type T = MStripEdS
 
   def withConfirmDelete(confirmDelete: Boolean) = copy(confirmingDelete = confirmDelete)
-  def withBgColorPick(bgColorPick: MColorPickerS) = copy(bgColorPick = bgColorPick)
+  override def withBgColorPick(bgColorPick: MColorPickerS) = copy(bgColorPick = bgColorPick)
 
 }

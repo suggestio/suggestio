@@ -2,7 +2,6 @@ package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
@@ -292,16 +291,14 @@ class QuillDeltaJsUtil extends Log {
     * @param edges0 Исходная карта эджей.
     * @return Инстанс Text и обновлённая карта эджей.
     */
-  def delta2qdTag(d: Delta, jdTag0: IDocTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (QdTag, Map[EdgeUid_t, MJdEditEdge]) = {
+  def delta2qdTag(d: Delta, qdTag0: QdTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (QdTag, Map[EdgeUid_t, MJdEditEdge]) = {
 
     val jdContPred = MPredicates.JdContent
 
     // Собрать id любых старых эджей текущего тега
-    val oldEdgeIds = jdTag0
-      .deepOfTypeIter[QdTag]
-      .flatMap( _.deepEdgesUidsIter )
+    val oldEdgeIds = qdTag0
+      .deepEdgesUidsIter
       .toSet
-
 
     // Отсеять все контент-эджи, они более неактуальны.
     val edgesNoJdCont = edges0.filterNot { case (_, e) =>
@@ -408,9 +405,7 @@ class QuillDeltaJsUtil extends Log {
       .toList
 
     // Собрать и вернуть результаты исполнения.
-    val tag = QdTag(
-      ops  = qdOps
-    )
+    val tag = qdTag0.withOps( qdOps )
     val edges2 = edgesNoJdCont ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newContEdgesMap.valuesIterator )
 
     (tag, edges2)

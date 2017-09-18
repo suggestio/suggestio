@@ -1,11 +1,9 @@
 package io.suggest.ad.edit.m
 
-import com.quilljs.delta.Delta
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.MAddS
+import io.suggest.ad.edit.m.edit.{MAddS, MColorsState, MQdEditS}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.ad.edit.m.edit.MColorsState
 
 /**
   * Suggest.io
@@ -19,7 +17,7 @@ object MDocS {
   implicit object MDocSFastEq extends FastEq[MDocS] {
     override def eqv(a: MDocS, b: MDocS): Boolean = {
       (a.jdArgs eq b.jdArgs) &&
-        (a.qDelta eq b.qDelta) &&
+        (a.qdEdit eq b.qdEdit) &&
         (a.stripEd eq b.stripEd) &&
         (a.addS eq b.addS) &&
         (a.colorsState eq b.colorsState)
@@ -32,15 +30,14 @@ object MDocS {
 /** Класс модели состояния работы с документом.
   *
   * @param jdArgs Текущий набор данных для рендера шаблона.
-  * @param qDelta Исходная Delta редактируемного текста в quill-редакторе.
-  *               Выставляется в начале редактирования, и НЕ обновляется во время редактирования.
+  * @param qdEdit Состояние редактирования контента, если есть.
   * @param stripEd Состояние strip-редактора, если открыт.
   * @param addS Состояние формочки добавления нового элемента.
   * @param colorsState Общее состояние редактирования цветов: разные часто-используемые или подходящие цвета, например.
   */
 case class MDocS(
                   jdArgs        : MJdArgs,
-                  qDelta        : Option[Delta]         = None,
+                  qdEdit        : Option[MQdEditS]      = None,
                   stripEd       : Option[MStripEdS]     = None,
                   addS          : Option[MAddS]         = None,
                   colorsState   : MColorsState          = MColorsState.empty
@@ -48,8 +45,8 @@ case class MDocS(
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
 
-  def withQDelta(qDelta: Option[Delta]) = copy(qDelta = qDelta)
-  def withOutQDelta = if (qDelta.nonEmpty) withQDelta(None) else this
+  def withQdEdit(qdEdit: Option[MQdEditS]) = copy(qdEdit = qdEdit)
+  def withOutQdEdit = if (qdEdit.nonEmpty) withQdEdit(None) else this
 
   def withStripEd(stripEd: Option[MStripEdS]) = copy(stripEd = stripEd)
   def withOutStripEd = if (stripEd.nonEmpty) withStripEd(None) else this

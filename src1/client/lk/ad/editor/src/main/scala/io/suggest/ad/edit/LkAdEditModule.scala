@@ -5,7 +5,7 @@ import diode.ModelRW
 import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
 import io.suggest.ad.edit.m.edit.MColorPick
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
-import io.suggest.ad.edit.v.edit.{AddR, ColorPickR}
+import io.suggest.ad.edit.v.edit.{AddR, ColorPickR, QdEditR}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, StripEditR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
@@ -38,6 +38,8 @@ class LkAdEditModule {
   lazy val plusMinusControlsR = wire[PlusMinusControlsR]
 
   lazy val stripEditR = wire[StripEditR]
+
+  lazy val qdEditR = wire[QdEditR]
 
   lazy val lkAdEditFormR = wire[LkAdEditFormR]
 

@@ -4,7 +4,7 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m._
-import io.suggest.ad.edit.m.edit.MAddS
+import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
 import io.suggest.common.MHands
 import io.suggest.common.coll.Lists
 import io.suggest.common.geom.coord.MCoords2di
@@ -12,7 +12,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp, MQdOpTypes, QdTag}
+import io.suggest.jd.tags.qd._
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
@@ -45,14 +45,14 @@ class DocEditAh[M](
     case m: TextChanged =>
       val v0 = value
 
-      if (v0.qDelta contains m.fullDelta) {
+      if ( v0.qdEdit.exists(_.qDelta == m.fullDelta) ) {
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange
 
       } else {
         // Текст действительно изменился. Пересобрать json-document.
         //println( JSON.stringify(m.fullDelta) )
-        val currTag0 = v0.jdArgs.selectedTag.get
+        val currTag0 = v0.jdArgs.selectedTag.get.asInstanceOf[QdTag]
         val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
 
         // Собрать новый json-document
@@ -99,16 +99,22 @@ class DocEditAh[M](
           // Это qd-тег, значит нужно собрать и залить текущую дельту текста в состояние.
           case qdt: QdTag =>
             val delta2 = quillDeltaJsUtil.qdTag2delta(qdt, v0.jdArgs.renderArgs.edges)
-            v1.withQDelta( Some(delta2) )
+            v1.withQdEdit(
+              Some(
+                MQdEditS(
+                  qDelta  = delta2
+                )
+              )
+            )
           // Очистить состояние от дельты.
           case _ =>
-            v1.withOutQDelta
+            v1.withOutQdEdit
         }
 
         // Если это strip, то активировать состояние strip-редактора.
         val v3 = m.jdTag match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
-          case s: Strip =>
+          case _: Strip =>
             v2.withStripEd(
               Some(MStripEdS(
                 isLastStrip = {
@@ -128,7 +134,7 @@ class DocEditAh[M](
 
         // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
         val v4 = v0.jdArgs.selectedTag.fold(v3) {
-          case qd: QdTag if qd.isEmpty(v0.jdArgs.renderArgs.edges) && v3.jdArgs.template.contains(qd) =>
+          case qd: QdTag if QdUtil.isEmpty(qd, v0.jdArgs.renderArgs.edges) && v3.jdArgs.template.contains(qd) =>
             val tpl2 = v3.jdArgs.template.deepUpdateOne(qd, Nil)
               .head
               // Нужно shrink'ать, потому что иначе могут быть пустые AbsPos() теги.
@@ -245,8 +251,9 @@ class DocEditAh[M](
               jdCss       = jdCss2,
               selectedTag = None
             ),
-            qDelta  = None,   // Вроде бы это сюда не относится, ну да и ладно: сбросим заодно и текстовый редактор.
-            stripEd = None
+            stripEd = None,
+            // qdEdit: Вроде бы это сюда не относится вообще. Сбросим заодно и текстовый редактор:
+            qdEdit  = None
           )
 
           updated( v2 )
@@ -466,6 +473,8 @@ class DocEditAh[M](
         updated(v2)
       }
 
+
+    // Реакция на клик по кнопке создания "контента", который у нас является синонимом QdTag.
     case AddContentClick =>
       val v0 = value
       val intoStrip0 = v0.jdArgs.selectedTag.fold[Strip] {
@@ -518,14 +527,14 @@ class DocEditAh[M](
           (edgesMap0, exampleTextEdge.id)
         }
 
-      val qdt = QdTag(Seq(
-          MQdOp(
-            opType = MQdOpTypes.Insert,
-            edgeInfo = Some(MQdEdgeInfo(
-              edgeUid = edgeUid
-            ))
-          )
-        ))
+      val qdt = QdTag.a()(
+        MQdOp(
+          opType = MQdOpTypes.Insert,
+          edgeInfo  = Some(MQdEdgeInfo(
+            edgeUid = edgeUid
+          ))
+        )
+      )
       val contentJdt = AbsPos.a(coordsRnd)(qdt)
 
       val intoStrip2 = intoStrip0.withChildren {
@@ -547,13 +556,16 @@ class DocEditAh[M](
           ),
           selectedTag = Some(qdt)
         ),
-        qDelta = Some {
-          quillDeltaJsUtil.qdTag2delta(qdt, edgesMap2)
+        qdEdit = Some {
+          MQdEditS(
+            qDelta = quillDeltaJsUtil.qdTag2delta(qdt, edgesMap2)
+          )
         },
         stripEd = None,
         addS = None
       )
       updated(v2)
+
 
     // Клик по кнопке добавления нового стрипа.
     case AddStripClick =>
@@ -607,6 +619,7 @@ class DocEditAh[M](
           )
         )
       updated(v2)
+
 
     // Отмена добавления чего-либо.
     case AddCancelClick =>

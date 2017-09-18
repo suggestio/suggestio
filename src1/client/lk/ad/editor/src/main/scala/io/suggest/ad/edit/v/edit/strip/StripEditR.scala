@@ -26,7 +26,7 @@ import io.suggest.sjs.common.spa.OptFastEq.Wrapped
   */
 class StripEditR(
                   val plusMinusControlsR    : PlusMinusControlsR,
-                  val colorPickR            : ColorPickR,
+                  colorPickR                : ColorPickR,
                   css                       : LkAdEditCss,
                   deleteStripBtnR           : DeleteStripBtnR
                 ) {

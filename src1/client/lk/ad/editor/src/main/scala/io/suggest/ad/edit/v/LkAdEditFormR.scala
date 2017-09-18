@@ -2,18 +2,19 @@ package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
-import io.suggest.ad.edit.m.edit.MAddS
-import io.suggest.ad.edit.v.edit.AddR
+import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
+import io.suggest.ad.edit.v.edit.{AddR, QdEditR}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.jd.tags.Strip
-import io.suggest.quill.v.{QuillCss, QuillEditorR}
+import io.suggest.quill.v.QuillCss
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.jd.tags.qd.QdTag
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scalacss.ScalaCssReact._
@@ -32,13 +33,13 @@ class LkAdEditFormR(
                      val stripEditR     : StripEditR,
                      lkAdEditCss        : LkAdEditCss,
                      quillCssFactory    : => QuillCss,
-                     val quillEditorR   : QuillEditorR
+                     val qdEditR        : QdEditR
                    ) {
 
   import MJdArgs.MJdWithArgsFastEq
-  import quillEditorR.PropsValFastEq
   import stripEditR.StripEditRPropsValFastEq
   import MAddS.MAddSFastEq
+  import qdEditR.QdEditRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -48,7 +49,7 @@ class LkAdEditFormR(
                               jdCssArgsC        : ReactConnectProxy[JdCss],
                               addC              : ReactConnectProxy[Option[MAddS]],
                               stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
-                              quillEdOptC       : ReactConnectProxy[Option[quillEditorR.PropsVal]]
+                              qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -105,7 +106,7 @@ class LkAdEditFormR(
             s.stripEdOptC { stripEditR.apply },
 
             // Редактор текста
-            s.quillEdOptC { quillEditorR.apply },
+            s.qdEditOptC { qdEditR.apply },
 
             <.br,
 
@@ -146,12 +147,15 @@ class LkAdEditFormR(
           }
         }( OptFastEq.Wrapped ),
 
-        quillEdOptC = p.connect { mroot =>
+        qdEditOptC = p.connect { mroot =>
           for {
-            qDelta  <- mroot.doc.qDelta
+            qdEdit <- mroot.doc.qdEdit
+            selJd  <- mroot.doc.jdArgs.selectedTag
           } yield {
-            quillEditorR.PropsVal(
-              qDelta = qDelta
+            qdEditR.PropsVal(
+              qdEdit      = qdEdit,
+              bgColor     = selJd.asInstanceOf[QdTag].bgColor,
+              colorsState = mroot.doc.colorsState
             )
           }
         }( OptFastEq.Wrapped )

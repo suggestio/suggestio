@@ -308,10 +308,12 @@ class JdR extends Log {
 
     /** Рендер strip, т.е. одной "полосы" контента. */
     def renderStrip(s: Strip, i: Int, jdArgs: MJdArgs): VdomElement = {
+      val C = jdArgs.jdCss
       <.div(
         ^.key := i.toString,
-        jdArgs.jdCss.smBlock,
-        jdArgs.jdCss.stripOuterStyleF( s ),
+        C.smBlock,
+        C.stripOuterStyleF( s ),
+        _bgColorOpt(s, jdArgs),
 
         _maybeSelected( s, jdArgs ),
         _clickableOnEdit( s, jdArgs ),
@@ -345,6 +347,11 @@ class JdR extends Log {
       )
     }
 
+    private def _bgColorOpt(jdTag: IBgColorOpt, jdArgs: MJdArgs): TagMod = {
+      jdTag.bgColor.whenDefined { mcd =>
+        jdArgs.jdCss.bgColorOptStyleF( mcd.hexCode )
+      }
+    }
 
     /** Рендер перекодированных данных quill delta.
       *
@@ -358,6 +365,9 @@ class JdR extends Log {
       }
       <.div(
         ^.key := i.toString,
+
+        // Опциональный цвет фона
+        _bgColorOpt( qdTag, jdArgs ),
 
         _maybeSelected(qdTag, jdArgs),
         _clickableOnEdit(qdTag, jdArgs),

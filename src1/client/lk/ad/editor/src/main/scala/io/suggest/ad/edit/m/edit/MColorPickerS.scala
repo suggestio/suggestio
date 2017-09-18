@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m.edit
 
 import diode.FastEq
 import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.primo.TypeT
 
 /**
   * Suggest.io
@@ -39,5 +40,17 @@ case class MColorPickerS(
   def withIsShown(isShown: Boolean) = copy(isShown = isShown)
 
   def withIsShownInverted = withIsShown( !isShown )
+
+}
+
+
+/** Интерфейс состояния color-picker'а с цветом фона. */
+trait IBgColorPickerS extends TypeT {
+
+  override type T <: IBgColorPickerS
+
+  def bgColorPick: MColorPickerS
+
+  def withBgColorPick(bgColor: MColorPickerS): T
 
 }
