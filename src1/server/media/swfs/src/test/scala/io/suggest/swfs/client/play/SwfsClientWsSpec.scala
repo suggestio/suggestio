@@ -16,6 +16,8 @@ import org.scalatestplus.play.PlaySpec
 import play.api.{Application, Configuration}
 import play.api.inject.guice.GuiceApplicationBuilder
 
+import scala.concurrent.ExecutionContext
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -36,6 +38,7 @@ class SwfsClientWsSpec extends PlaySpec with GuiceOneAppPerSuite {
 
   private lazy val cl = app.injector.instanceOf[SwfsClientWs]
   private lazy val streamsUtil = app.injector.instanceOf[StreamsUtil]
+  implicit private lazy val ec = app.injector.instanceOf[ExecutionContext]
 
 
   "SeaWeedFS client" when {

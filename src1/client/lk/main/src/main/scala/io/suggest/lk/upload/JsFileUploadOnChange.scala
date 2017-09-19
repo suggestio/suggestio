@@ -1,5 +1,6 @@
 package io.suggest.lk.upload
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.js.UploadConstants
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.sjs.common.log.ILog
@@ -31,7 +32,7 @@ trait InputFileUploadOnChange extends IContainers with ILog with IHandleFile4Upl
     _imgInputContainers.foreach { cont =>
       cont.on("change", "." + UploadConstants.JS_FILE_UPLOAD_CLASS, {
         (input: HTMLInputElement, e: JQueryEventObject) =>
-          if (input.`type` == "file") {
+          if (input.`type` == HtmlConstants.Input.file) {
             e.preventDefault()
             val files = input.files
             if (files.length > 0) {

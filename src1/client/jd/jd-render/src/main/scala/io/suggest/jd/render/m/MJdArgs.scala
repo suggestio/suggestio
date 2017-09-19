@@ -2,7 +2,7 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.{IDocTag, JsonDocument}
+import io.suggest.jd.tags.IDocTag
 
 /**
   * Suggest.io
@@ -37,7 +37,7 @@ object MJdArgs {
   * @param dnd Состояние драг-н-дропа, который может прийти сюда из неизвестности.
   */
 case class MJdArgs(
-                    template     : JsonDocument,
+                    template     : IDocTag,
                     renderArgs   : MJdRenderArgs,
                     jdCss        : JdCss,
                     conf         : MJdConf,
@@ -46,7 +46,7 @@ case class MJdArgs(
                   ) {
 
   def withJdCss(jdCss: JdCss) = copy(jdCss = jdCss)
-  def withTemplate(template: JsonDocument) = copy(template = template)
+  def withTemplate(template: IDocTag) = copy(template = template)
   def withRenderArgs(renderArgs: MJdRenderArgs) = copy(renderArgs = renderArgs)
   def withConf(conf: MJdConf) = copy(conf = conf)
   def withSelectedTag(selectedTag: Option[IDocTag]) = copy(selectedTag = selectedTag)

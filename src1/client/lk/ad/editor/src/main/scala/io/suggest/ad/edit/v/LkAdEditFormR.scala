@@ -2,19 +2,17 @@ package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
-import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
+import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.v.edit.{AddR, QdEditR}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
-import io.suggest.jd.tags.Strip
 import io.suggest.quill.v.QuillCss
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.jd.tags.qd.QdTag
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 
 import scalacss.ScalaCssReact._
@@ -138,9 +136,12 @@ class LkAdEditFormR(
         }(OptFastEq.Wrapped),
 
         stripEdOptC = p.connect { mroot =>
-          for (stripEd <- mroot.doc.stripEd; selJd <- mroot.doc.jdArgs.selectedTag) yield {
+          for {
+            stripEd <- mroot.doc.stripEd
+            selJd   <- mroot.doc.jdArgs.selectedTag
+          } yield {
             stripEditR.PropsVal(
-              strip       = selJd.asInstanceOf[Strip],
+              strip       = selJd,
               edS         = stripEd,
               colorsState = mroot.doc.colorsState
             )
@@ -154,7 +155,7 @@ class LkAdEditFormR(
           } yield {
             qdEditR.PropsVal(
               qdEdit      = qdEdit,
-              bgColor     = selJd.asInstanceOf[QdTag].bgColor,
+              bgColor     = selJd.props1.bgColor,
               colorsState = mroot.doc.colorsState
             )
           }

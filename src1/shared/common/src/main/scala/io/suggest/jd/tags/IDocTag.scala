@@ -1,14 +1,16 @@
 package io.suggest.jd.tags
 
+import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.coll.Lists
-import io.suggest.jd.tags.qd.QdTag
+import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-
-import scala.reflect.ClassTag
 
 /**
   * Suggest.io
@@ -23,87 +25,38 @@ object IDocTag {
 
     val TYPE_FN = "t"
 
+    val PROPS_FN = "p"
+
     /** Имя поля с дочерними элементами. По идее -- оно одно на все реализации. */
     val CHILDREN_FN = "c"
 
   }
 
-
-  private val _IDT_NAME_FORMAT = (__ \ Fields.TYPE_FN).format[MJdTagName]
-
-  /** Приведение Reads[Реализация IDocTag] к Reads[IDocTag]. Компилятор не хочет этого делать сам. */
-  private def _toIdtReads[X <: IDocTag](implicit rx: Reads[X]): Reads[IDocTag] = {
-    // TODO .map(d => d: IDocTag) - это небесплатный костыль в коде. Разруливаем через asInstanceOf[], что суть есть zero-cost костыле-хак. Надо как-то нормально это разрулить.
-    rx.asInstanceOf[Reads[IDocTag]] //.map(d => d: IDocTag)
-  }
-
-  /** Отрендерить в JsObject. Это аналог Json.writes[X].writes(x) */
-  private def _writeJsObj[X <: IDocTag](x: X)(implicit ow: OWrites[X]): JsObject = {
-    ow.writes(x)
-  }
-
   /** Полиморфная поддержка play-json. */
-  implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = {
-    // Собрать читалку на основе прочитанного имени тега.
-    val tns = MJdTagNames
-    val r: Reads[IDocTag] = _IDT_NAME_FORMAT.flatMap[IDocTag] {
-      case tns.QUILL_DELTA    => _toIdtReads[QdTag]
-      case tns.ABS_POS        => _toIdtReads[AbsPos]
-      case tns.PLAIN_PAYLOAD  => _toIdtReads[PlainPayload]
-      case tns.PICTURE        => _toIdtReads[Picture]
-      case tns.STRIP          => _toIdtReads[Strip]
-      case tns.DOCUMENT       => _toIdtReads[JsonDocument]
-      case _ => ???
-    }
-
-    // Собрать в-JSON-рендерер на основе названия тега.
-    // TODO Writes указаны явно, потому что компилятор цепляет везде IDOC_TAG_FORMAT вместо нужного типа из-за Writes[-A].
-    val w = OWrites[IDocTag] { docTag =>
-
-      // Всякие теги без контента (и без writes) должны возращать null. Остальные -- JsObject.
-      val dataJsObjOrNull = docTag match {
-        case qd: QdTag            => _writeJsObj(qd)( QdTag.QD_TAG_FORMAT )
-        case ap: AbsPos           => _writeJsObj(ap)( AbsPos.ABS_POS_FORMAT )
-        case pp: PlainPayload     => _writeJsObj(pp)( PlainPayload.PLAIN_PAYLOAD_FORMAT )
-        case p: Picture           => _writeJsObj(p)(  Picture.PICTURE_FORMAT )
-        case s: Strip             => _writeJsObj(s)(  Strip.STRIP_FORMAT )
-        case d: JsonDocument      => _writeJsObj(d)(  JsonDocument.DOCUMENT_FORMAT )
-        case _ => ???
-      }
-
-      val jdTagNameObj = _IDT_NAME_FORMAT.writes( docTag.jdTagName )
-
-      // Добавить информацию по типу в уже отрендеренный JSON.
-      Option( dataJsObjOrNull )
-        // Бывают теги без контента, для них надо просто вернуть объект с их типом.
-        .fold( jdTagNameObj ) { dataJsObj =>
-          val jdTagNameField = jdTagNameObj.value.head
-          dataJsObj.copy(
-            underlying = dataJsObj.value + jdTagNameField
-          )
-        }
-    }
-
-    OFormat(r, w)
-  }
-
-
-  /** Поддержка play-json для поля children. */
-  val CHILDREN_IDOC_TAG_FORMAT: OFormat[Seq[IDocTag]] = {
+  implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = (
+    (__ \ Fields.TYPE_FN).format[MJdTagName] and
+    (__ \ Fields.PROPS_FN).formatNullable[MJdtProps1]
+      .inmap[MJdtProps1](
+        EmptyUtil.opt2ImplMEmptyF(MJdtProps1),
+        EmptyUtil.implEmpty2OptF
+      ) and
     (__ \ Fields.CHILDREN_FN).lazyFormatNullable( implicitly[Format[Seq[IDocTag]]] )
       .inmap[Seq[IDocTag]](
-        {tagsOpt =>
-          tagsOpt.fold[Seq[IDocTag]](Nil)(identity)
-        },
-        {tags =>
-          if (tags.isEmpty) None else Some(tags)
-        }
+        EmptyUtil.opt2ImplEmpty1F(Nil),
+        { chs => if (chs.isEmpty) None else Some(chs) }
       )
-  }
-
+  )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[IDocTag] = UnivEq.force
 
+
+  /** Билдер-функция для более удобной ручной сборки инстансов [[IDocTag]] по сравнению с apply.
+    * Нельзя объединить с apply() из-за ограничений copy().
+    */
+  def a(jdTagName : MJdTagName, props1: MJdtProps1 = MJdtProps1.empty)
+       (children: IDocTag*): IDocTag = {
+    apply(jdTagName, props1, children)
+  }
 
 
   def batchUpdateOne(source: IDocTag)(batches: JdBatch_t*): Seq[IDocTag] = {
@@ -130,7 +83,7 @@ object IDocTag {
     // Пройтись по списку batch'ей на предмет совпадения тега.
     batches.foldLeft [Seq[IDocTag]] ( source2 :: Nil ) {
       case (acc0, (fdt, f)) =>
-        if (source == fdt) {
+        if (source ==* fdt) {
           // Применить текущую batch-функцию к аккамулятору.
           f(acc0)
         } else {
@@ -161,6 +114,56 @@ object IDocTag {
     }
   }
 
+
+  /** Краткая форма сборки top-level jd-тега с контентом. */
+  def document(children: IDocTag*): IDocTag = {
+    apply(MJdTagNames.DOCUMENT, children = children)
+  }
+
+  /** Сборка IDocTag, рендерящего примитивный текст по его id эджа. */
+  def edgeQd(edgeUid: EdgeUid_t, topLeft: MCoords2di): IDocTag = {
+    IDocTag.a(
+      MJdTagNames.QUILL_DELTA,
+      props1 = MJdtProps1(
+        topLeft = Some(topLeft),
+        qdOps   = List(
+          MQdOp(
+            opType    = MQdOpTypes.Insert,
+            edgeInfo  = Some( MQdEdgeInfo(edgeUid) )
+          )
+        )
+      )
+    )()
+  }
+
+  /** Быстрая сборка стрипа. */
+  def strip(bm: BlockMeta, bgColor: Option[MColorData] = None)(children: IDocTag*): IDocTag = {
+    apply(
+      MJdTagNames.STRIP,
+      props1 = MJdtProps1(
+        bgColor = bgColor,
+        bm      = Some(bm)
+      ),
+      children = children
+    )
+  }
+
+
+  /** Неявная утиль для тегов. */
+  object Implicits {
+
+    /** Дополнительные методы для Option[IDocTag]. */
+    implicit class DocTagOptExt(val opt: Option[IDocTag]) extends AnyVal {
+
+      /** Быстрая фильтрация Option'а по типу.  */
+      def filterByType(jdtName: MJdTagName): Option[IDocTag] = {
+        opt.filter(_.jdTagName ==* jdtName)
+      }
+
+    }
+
+  }
+
 }
 
 
@@ -171,18 +174,23 @@ object IDocTag {
   * Во время тормозных react-рендеров и перерендеров в браузере, ключи должны **очень** быстро работать,
   * поэтому всё оптимизировано по самые уши ценой невозможности сравнивания разных тегов между собой.
   */
-trait IDocTag
-  extends Product
+final case class IDocTag(
+                          jdTagName : MJdTagName,
+                          props1    : MJdtProps1    = MJdtProps1.empty,
+                          children  : Seq[IDocTag]  = Nil
+                        )
+  extends IHashCodeLazyVal
   // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
-  with IHashCodeLazyVal
   with IEqualsEq
 {
 
-  /** Название тега. */
-  def jdTagName: MJdTagName
+  def withJdTagName(jdTagName: MJdTagName)    = copy(jdTagName = jdTagName)
 
-  /** Дочерние теги. */
-  def children: Seq[IDocTag]
+  def withProps1(props1: MJdtProps1)          = copy(props1 = props1)
+  /** Для удобства написания тестов, props1 можно обновлять функцией. */
+  def updateProps1(f: MJdtProps1 => MJdtProps1) = withProps1(f(props1))
+
+  def withChildren(children: Seq[IDocTag])    = copy(children = children)
 
 
   /** Итератор текущего элемента и всех его под-элементов со всех под-уровней. */
@@ -197,27 +205,33 @@ trait IDocTag
   }
 
   def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
-    deepChildrenIter.flatMap(_.deepEdgesUidsIter)
+    val iter1 = props1.qdOps.iterator.flatMap(_.edgeInfo).map(_.edgeUid)
+    val iter2 = props1.bgImg.iterator.map(_.edgeUid)
+    val iter3 = deepChildrenIter.flatMap(_.deepEdgesUidsIter)
+    (iter1 :: iter2 :: iter3 :: Nil)
+      .iterator
+      .flatten
   }
 
-  def deepChildrenOfTypeIter[T <: IDocTag : ClassTag]: Iterator[T] = {
+  def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {
     deepChildrenIter
-      .flatMap( Lists.ofTypeF[IDocTag, T] )
+      .filter( _.jdTagName ==* jdtName )
   }
 
-  def deepOfTypeIter[T <: IDocTag : ClassTag]: Iterator[T] = {
-    val chIter = deepChildrenOfTypeIter[T]
-    this match {
-      case t: T => Iterator(t) ++ chIter
-      case _    => chIter
+  def deepOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {
+    val chIter = deepChildrenOfTypeIter(jdtName)
+    if (jdTagName ==* jdtName) {
+      Iterator(this) ++ chIter
+    } else {
+      chIter
     }
   }
 
 
   /** Найти в дереве указанный тег в дереве и обновить его с помощью функции. */
-  def deepUpdateOne[T <: IDocTag](what: T, updated: Seq[IDocTag]): Seq[IDocTag] = {
+  def deepUpdateOne(what: IDocTag, updated: Seq[IDocTag]): Seq[IDocTag] = {
     // Обновляем текущий тег
-    if (this == what) {
+    if (this ==* what) {
       updated
     } else {
       // Попробовать пообнавлять children'ов.
@@ -255,10 +269,10 @@ trait IDocTag
     *
     * @param what Инстанс искомого тега.
     * @param updated Функция обновления дерева.
-    * @tparam T Тип искомого тега.
     * @return Обновлённое дерево.
     */
-  def deepUpdateChild[T <: IDocTag](what: T, updated: Seq[IDocTag]): Seq[IDocTag] = {
+  // TODO Возвращать IDocTag? Seq[] здесь чисто-искусственный.
+  def deepUpdateChild(what: IDocTag, updated: Seq[IDocTag]): Seq[IDocTag] = {
     val _children = children
     if (_children.isEmpty) {
       this :: Nil
@@ -267,7 +281,7 @@ trait IDocTag
       val this2 = if (_children contains what) {
         // Обновление элемента на текущем уровне
         val children2 = _children.flatMap { jdt =>
-          if (jdt == what) {
+          if (jdt ==* what) {
             updated
           } else {
             jdt :: Nil
@@ -290,12 +304,6 @@ trait IDocTag
 
       this2 :: Nil
     }
-  }
-
-
-  /** Вернуть инстанс текущего тега с обновлённым набором children'ов. */
-  def withChildren(children: Seq[IDocTag]): IDocTag = {
-    throw new UnsupportedOperationException
   }
 
 

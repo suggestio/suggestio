@@ -1,9 +1,9 @@
 package io.suggest.sc.sjs.m.msrv.foc
 
+import io.suggest.primo.IApplyUndef1
 import io.suggest.sc.ScConstants.Resp._
 import io.suggest.sc.sjs.m.mfoc.MFocAd
 import io.suggest.sc.sjs.m.msrv.IFocResp
-import io.suggest.sjs.common.primo.IApplyUndef1
 
 import scala.scalajs.js
 import scala.scalajs.js._

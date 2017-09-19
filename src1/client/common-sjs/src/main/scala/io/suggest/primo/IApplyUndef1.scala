@@ -1,6 +1,4 @@
-package io.suggest.sjs.common.primo
-
-import io.suggest.primo.IApplyOpt1
+package io.suggest.primo
 
 import scala.scalajs.js
 

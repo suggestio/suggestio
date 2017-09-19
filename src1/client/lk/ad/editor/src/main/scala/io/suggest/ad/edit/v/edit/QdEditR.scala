@@ -57,7 +57,7 @@ class QdEditR(
         s.quillEdOptC { quillEditorR.apply },
 
         <.br,
-        
+
         // Цвет фона контента.
         s.colorPickOptS {
           colorPickR(_)(

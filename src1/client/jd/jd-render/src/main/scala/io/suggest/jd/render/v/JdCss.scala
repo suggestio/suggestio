@@ -1,12 +1,12 @@
 package io.suggest.jd.render.v
 
 import io.suggest.css.Css
+import io.suggest.css.ScalaCssDefaults._
+import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.{MFontSizes, MFonts}
-
-import scalacss.DevDefaults._
 import io.suggest.jd.render.m.MJdCssArgs
-import io.suggest.jd.tags.qd.{MQdOp, QdTag}
-import io.suggest.jd.tags.{AbsPos, IBgColorOpt, IDocTag, Strip}
+import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
@@ -53,53 +53,44 @@ class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     zIndex(10)
   )
 
-
-  /** Итератор тегов указанного типа (класса) со всех уровней. */
-  private def _jdTagsIter[T <: IDocTag : ClassTag]: Iterator[T] = {
+  private def _allJdTagsIter: Iterator[IDocTag] = {
     jdCssArgs
       .templates
       .iterator
-      .flatMap(_.deepChildrenOfTypeIter[T])
+      .flatMap( _.deepIter )
   }
-
-  /** Сборка домена для всех указанных тегов из всех документов. */
-  private def _mkJdTagDomain[T <: IDocTag : ClassTag]: Domain[T] = {
-    val absPoses = _jdTagsIter[T]
-      .toIndexedSeq
-    new Domain.OverSeq( absPoses )
-  }
-
 
 
   // -------------------------------------------------------------------------------
   // Strip
 
-  /** Стили контейнеров полосок. */
-  val stripOuterStyleF = {
-    val _stripsDomain = _mkJdTagDomain[Strip]
-    styleF(_stripsDomain) { strip =>
+  /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
+  val bmStyleF = {
+    val strips = _allJdTagsIter
+      .filter(_.props1.bm.nonEmpty)
+      .toIndexedSeq
+
+    val stripsDomain = new Domain.OverSeq( strips )
+
+    styleF(stripsDomain) { strip =>
       // Стиль размеров блока-полосы.
-      val stylWh = strip.bm.fold(StyleS.empty) { bm =>
+      strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
           width( bm.width.px ),
           height( bm.height.px )
         )
       }
-
-      // Объединить все стили одного стрипа.
-      stylWh
     }
   }
 
 
   /** Цвет фона бывает у разнотипных тегов, поэтому выносим CSS для цветов фона в отдельный каталог стилей. */
   val bgColorOptStyleF = {
-    val bgColorsHex1 =
-      _jdTagsIter[IBgColorOpt]
-        .flatMap(_.bgColor)
-        .map(_.hexCode)
-        .toSet
-        .toIndexedSeq
+    val bgColorsHex1 = _allJdTagsIter
+      .flatMap(_.props1.bgColor)
+      .map(_.hexCode)
+      .toSet
+      .toIndexedSeq
     val bgColorsDomain = new Domain.OverSeq( bgColorsHex1 )
     styleF( bgColorsDomain ) { bgColorHex =>
       styleS(
@@ -112,8 +103,6 @@ class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // AbsPos
 
-  private val _absPosDomain = _mkJdTagDomain[AbsPos]
-
   /** Общий стиль для всех AbsPos-тегов. */
   val absPosStyleAll = style(
     position.absolute,
@@ -121,11 +110,25 @@ class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   )
 
   /** Стили для элементов, отпозиционированных абсолютно. */
-  val absPosStyleF = styleF(_absPosDomain) { absPos =>
-    styleS(
-      top( absPos.topLeft.y.px ),
-      left( absPos.topLeft.x.px )
-    )
+  val absPosStyleF = {
+    val absPosDomain = {
+      val tags = jdCssArgs
+        .templates
+        .iterator
+        .flatMap(_.deepIter)
+        .filter(_.props1.topLeft.nonEmpty)
+        .toIndexedSeq
+
+      new Domain.OverSeq(tags)
+    }
+    styleF(absPosDomain) { jdt =>
+      jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
+        styleS(
+          top( topLeft.y.px ),
+          left( topLeft.x.px )
+        )
+      }
+    }
   }
 
 
@@ -133,8 +136,8 @@ class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // fonts
 
   private def _qdOpsIter: Iterator[MQdOp] = {
-    _jdTagsIter[QdTag]
-      .flatMap(_.ops)
+    _allJdTagsIter
+      .flatMap(_.props1.qdOps)
   }
 
   /** Домен стилей для текстов. */

@@ -11,7 +11,6 @@ import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags._
-import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp, MQdOpTypes, QdTag}
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.MPredicates
@@ -299,94 +298,52 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     val textPred = MPredicates.JdContent.Text
 
     val r = MAdEditForm(
-      template = JsonDocument.a()(
+      template = IDocTag.document(
         // Strip1 содержит намёк на то, что это верхний блок.
-        Strip.a(
-          bm = Some(BlockMeta(
+        IDocTag.strip(
+          bm = BlockMeta(
             w = w1,
             h = h1,
             wide = true
-          )),
+          ),
           bgColor = Some(MColorData(
             code = "060d45"
           ))
         )(
           // Надпись "Верхний блок"
-          AbsPos.a( MCoords2di(x = w1.value, y = h1.value) / 3 )(
-            QdTag.a()(
-              MQdOp(
-                opType = MQdOpTypes.Insert,
-                edgeInfo = Some(MQdEdgeInfo( upperBlockEdgeId ))
-              )
-            )
-          ),
+          IDocTag.edgeQd(upperBlockEdgeId, MCoords2di(x = w1.value, y = h1.value) / 3),
 
           // Надпись "также отображается в плитке"
-          AbsPos.a( MCoords2di(x = w1.value/3*2, y = h1.value / 2) )(
-            QdTag.a()(
-              MQdOp(
-                opType = MQdOpTypes.Insert,
-                edgeInfo = Some(MQdEdgeInfo( alsoDisplayedInGridEdgeId ))
-              )
-            )
-          )
+          IDocTag.edgeQd( alsoDisplayedInGridEdgeId, MCoords2di(x = w1.value/3*2, y = h1.value / 2) )
         ),
 
         // strip2 содержит предложение добавить описание или что-то ещё.
-        Strip.a(
-          bm = Some(BlockMeta(
+        IDocTag.strip(
+          bm = BlockMeta(
             w = w1,
             h = BlockHeights.H140,
             wide = true
-          )),
+          ),
           bgColor = Some(MColorData(
             code = "bcf014"
           ))
         )(
-          AbsPos.a( MCoords2di(5, 10) )(
-            QdTag.a()(
-              MQdOp(
-                opType = MQdOpTypes.Insert,
-                edgeInfo = Some(MQdEdgeInfo( descriptionEdgeId ))
-              )
-            )
-          ),
-          AbsPos.a( MCoords2di(33, 50) )(
-            QdTag.a()(
-              MQdOp(
-                opType = MQdOpTypes.Insert,
-                edgeInfo = Some(MQdEdgeInfo( descrContentEdgeId ))
-              )
-            )
-          )
+          IDocTag.edgeQd( descriptionEdgeId,  MCoords2di(5,  10) ),
+          IDocTag.edgeQd( descrContentEdgeId, MCoords2di(33, 50) )
         ),
 
-        Strip.a(
-          bm = Some(BlockMeta(
+        IDocTag.strip(
+          bm = BlockMeta(
             w = w1,
             h = BlockHeights.H460,
             wide = true
-          )),
+          ),
           bgColor = Some(MColorData(
             code = "111111"
           ))
         )(
-          AbsPos.a( MCoords2di(15, 200) )(
-            QdTag.a()(
-              MQdOp(
-                opType = MQdOpTypes.Insert,
-                edgeInfo = Some(MQdEdgeInfo( fr3text1EdgeId ))
-              )
-            )
-          ),
-          AbsPos.a( MCoords2di(35, 400) )(
-            QdTag.a()(
-              MQdOp(
-                opType = MQdOpTypes.Insert,
-                edgeInfo = Some(MQdEdgeInfo( fr3text2EdgeId ))
-              )
-            )
-          )
+          IDocTag.edgeQd( fr3text1EdgeId, MCoords2di(15, 200) ),
+          IDocTag.edgeQd( fr3text2EdgeId, MCoords2di(35, 400) )
         )
       ),
       edges = Seq(

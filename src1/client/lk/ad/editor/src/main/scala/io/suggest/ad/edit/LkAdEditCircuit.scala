@@ -13,13 +13,9 @@ import play.api.libs.json.Json
 import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh, TailAh}
 import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPick, MQdEditS}
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.common.empty.OptionUtil._
-import io.suggest.jd.tags.{IBgColorOpt, IDocTag, JsonDocument, Strip}
+import io.suggest.jd.tags._
 import MColorPick.MColorPickFastEq
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.jd.tags.qd.QdTag
-
-import scala.reflect.ClassTag
 
 /**
   * Suggest.io
@@ -81,23 +77,26 @@ class LkAdEditCircuit(
     *
     * @param doc2bgColorContF Фунция доступа к опциональному модели контейнеру с полем bgColorPick.
     * @param bgColorCont2mdoc Фунция сборки нового инстанса MDocS на основе старого инстанса и обновлённого состояния StateOuter_t.
-    * @tparam DocTag_t Реализация IDocTag. Например, Strip.
     * @tparam StateOuter_t Состояние редактирования текущего типа компонента, например MStripEdS.
     * @return ZoomRW до Option[MColorPick].
     */
-  private def _zoomToBgColorPickS[DocTag_t <: IDocTag with IBgColorOpt { type T = DocTag_t }: ClassTag,
-                                  StateOuter_t <: IBgColorPickerS { type T = StateOuter_t }]
+  private def _zoomToBgColorPickS[StateOuter_t <: IBgColorPickerS { type T = StateOuter_t }]
+                                 (jdtName: MJdTagName)
                                  (doc2bgColorContF: MDocS => Option[StateOuter_t])
                                  (bgColorCont2mdoc: (MDocS, Option[StateOuter_t]) => MDocS) = {
+    def __filteredSelTag(mdoc: MDocS) = {
+      mdoc.jdArgs
+        .selectedTag
+        .filter(_.jdTagName == jdtName)
+    }
+
     mDocSRw.zoomRW[Option[MColorPick]] { mdoc =>
       for {
-        currTag <- mdoc.jdArgs
-          .selectedTag
-          .filterByType[DocTag_t]
+        currTag <- __filteredSelTag(mdoc)
         mColorCont <- doc2bgColorContF( mdoc )
       } yield {
         MColorPick(
-          colorOpt    = currTag.bgColor,
+          colorOpt    = currTag.props1.bgColor,
           colorsState = mdoc.colorsState,
           pickS       = mColorCont.bgColorPick
         )
@@ -106,16 +105,17 @@ class LkAdEditCircuit(
       // Что-то изменилось с моделью MColorAhOpt во время деятельности контроллера.
       // Нужно обновить текущий стрип.
       val mdoc2Opt = for {
-        strip0   <- mdoc0.jdArgs.selectedTag.filterByType[DocTag_t]
+        jdt0     <- __filteredSelTag( mdoc0 )
         mColorAh <- mColorAhOpt
       } yield {
-        val strip2 = strip0.withBgColor(
-          mColorAh.colorOpt
+        val strip2 = jdt0.withProps1(
+          jdt0.props1.withBgColor(
+            mColorAh.colorOpt
+          )
         )
         val tpl2 = mdoc0.jdArgs.template
-          .deepUpdateOne(strip0, strip2 :: Nil)
+          .deepUpdateOne(jdt0, strip2 :: Nil)
           .head
-          .asInstanceOf[JsonDocument]
         val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
 
         val stateOuter2 = for (state <- doc2bgColorContF(mdoc0)) yield {
@@ -143,12 +143,12 @@ class LkAdEditCircuit(
 
   /** Контроллер настройки цвета фона стрипа. */
   private val stripBgColorAh = colorPickAhFactory(
-    _zoomToBgColorPickS[Strip, MStripEdS](_.stripEd) { _.withStripEd(_) }
+    _zoomToBgColorPickS[MStripEdS](MJdTagNames.STRIP)(_.stripEd) { _.withStripEd(_) }
   )
 
   /** Контроллер настройки цвета фона контента. */
   private val qdTagBgColorAh = colorPickAhFactory(
-    _zoomToBgColorPickS[QdTag, MQdEditS](_.qdEdit) { _.withQdEdit(_) }
+    _zoomToBgColorPickS[MQdEditS](MJdTagNames.QUILL_DELTA)(_.qdEdit) { _.withQdEdit(_) }
   )
 
 
@@ -163,10 +163,14 @@ class LkAdEditCircuit(
 
     // Если допускается выбор цвета фона текущего jd-тега, то подцепить соотв. контроллер.
     val mDocS = mDocSRw.value
-    mDocS.jdArgs.selectedTag.foreach {
-      case _: Strip => acc ::= stripBgColorAh
-      case _: QdTag => acc ::= qdTagBgColorAh
-      case _ => // do nothing
+    mDocS.jdArgs.selectedTag.foreach { selTag =>
+      selTag.jdTagName match {
+        case MJdTagNames.STRIP =>
+          acc ::= stripBgColorAh
+        case MJdTagNames.QUILL_DELTA =>
+          acc ::= qdTagBgColorAh
+        case _ => // do nothing
+      }
     }
 
     // В голове -- обработчик всех основных операций на документом.

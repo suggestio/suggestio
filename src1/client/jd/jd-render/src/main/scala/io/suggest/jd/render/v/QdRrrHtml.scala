@@ -5,6 +5,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m.MJdArgs
+import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
@@ -33,7 +34,7 @@ import scala.annotation.tailrec
   * - Форматирование сегментов текста внутри строк - тривиально, т.е. также как и в первой версии рендерера.
   *
   */
-class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
+class QdRrrHtml(jdArgs: MJdArgs, qdTag: IDocTag ) {
 
   import QdRrrHtml.LOG
 
@@ -55,7 +56,7 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: QdTag ) {
   /** Набор delta-операций, подлежащих проработке.
     * В конце работы должен остаться Nil.
     */
-  private var _restOps: List[MQdOp] = qdTag.ops.toList
+  private var _restOps: List[MQdOp] = qdTag.props1.qdOps.toList
 
 
   /** Выполнить рендеринг текущего qd-тега. */

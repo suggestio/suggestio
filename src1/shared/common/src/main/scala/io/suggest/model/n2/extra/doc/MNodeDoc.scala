@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.doc
 
-import io.suggest.jd.tags.JsonDocument
+import io.suggest.jd.tags.IDocTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -29,7 +29,7 @@ object MNodeDoc {
 
   /** Поддержка play-json. */
   implicit val MNODE_AD2_FORMAT: OFormat[MNodeDoc] = {
-    (__ \ Fields.TEMPLATE_FN).format[JsonDocument]
+    (__ \ Fields.TEMPLATE_FN).format[IDocTag]
       .inmap[MNodeDoc](apply, _.template)
   }
 
@@ -43,5 +43,5 @@ object MNodeDoc {
   *                 В узле контент представлен эджами, которые слинкованы с документом по предикатам и/или edge-uid'ам.
   */
 case class MNodeDoc(
-                     template: JsonDocument
+                     template: IDocTag
                    )

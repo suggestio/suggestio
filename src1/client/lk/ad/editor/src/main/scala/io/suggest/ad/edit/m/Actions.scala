@@ -4,6 +4,7 @@ import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.spa.DAction
+import org.scalajs.dom.File
 
 /**
   * Suggest.io
@@ -57,3 +58,7 @@ case object ColorBtnClick extends ILkEditAction
 
 /** Клик просто где-то в body. */
 case object DocBodyClick extends ILkEditAction
+
+
+/** Изменилось file-поле выбора картинки. */
+case class PictureFileChanged(files: Seq[File]) extends ILkEditAction

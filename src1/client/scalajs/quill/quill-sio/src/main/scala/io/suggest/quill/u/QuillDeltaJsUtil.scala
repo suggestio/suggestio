@@ -38,8 +38,8 @@ class QuillDeltaJsUtil extends Log {
     * @param edges Карта эджей.
     * @return Инстанс js.native-дельты дял отправки в редактор.
     */
-  def qdTag2delta(qd: QdTag, edges: Map[EdgeUid_t, MJdEditEdge]): Delta = {
-    qd.ops.foldLeft( new Delta() ) { (delta, qdOp) =>
+  def qdTag2delta(qd: IDocTag, edges: Map[EdgeUid_t, MJdEditEdge]): Delta = {
+    qd.props1.qdOps.foldLeft( new Delta() ) { (delta, qdOp) =>
       qdOp.opType match {
         case MQdOpTypes.Insert =>
           val eOpt = qdOp.edgeInfo
@@ -291,7 +291,7 @@ class QuillDeltaJsUtil extends Log {
     * @param edges0 Исходная карта эджей.
     * @return Инстанс Text и обновлённая карта эджей.
     */
-  def delta2qdTag(d: Delta, qdTag0: QdTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (QdTag, Map[EdgeUid_t, MJdEditEdge]) = {
+  def delta2qdTag(d: Delta, qdTag0: IDocTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (IDocTag, Map[EdgeUid_t, MJdEditEdge]) = {
 
     val jdContPred = MPredicates.JdContent
 
@@ -405,7 +405,11 @@ class QuillDeltaJsUtil extends Log {
       .toList
 
     // Собрать и вернуть результаты исполнения.
-    val tag = qdTag0.withOps( qdOps )
+    val tag = qdTag0.withProps1(
+      qdTag0.props1.withQdOps(
+        qdOps
+      )
+    )
     val edges2 = edgesNoJdCont ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newContEdgesMap.valuesIterator )
 
     (tag, edges2)

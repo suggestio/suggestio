@@ -8,7 +8,7 @@ import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.ad.edit.v.edit.ColorPickR
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.tags.Strip
+import io.suggest.jd.tags.IDocTag
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -36,7 +36,7 @@ class StripEditR(
   import MColorPick.MColorPickFastEq
 
   case class PropsVal(
-                       strip        : Strip,
+                       strip        : IDocTag,
                        edS          : MStripEdS,
                        colorsState  : MColorsState
                      )
@@ -101,7 +101,7 @@ class StripEditR(
       def __mkWhPmProps(f: BlockMeta => plusMinusControlsR.PropsVal) = {
         propsOptProxy.connect { propsOpt =>
           propsOpt
-            .flatMap(_.strip.bm)
+            .flatMap(_.strip.props1.bm)
             .map(f)
         }
       }
@@ -132,7 +132,7 @@ class StripEditR(
         bgColorPropsOptC = propsOptProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {
             MColorPick(
-              colorOpt    = props.strip.bgColor,
+              colorOpt    = props.strip.props1.bgColor,
               colorsState = props.colorsState,
               pickS       = props.edS.bgColorPick
             )

@@ -16,7 +16,7 @@ import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
   */
 object LayerGroupR {
 
-  val component = JsComponent[LayerGroupPropsR, Children.Varargs, Null]( LLayerGroupJsR )
+  val component = JsComponent[LayerGroupPropsR, Children.Varargs, Null]( LayerGroupJsR )
 
   def apply(props  : LayerGroupPropsR = new LayerGroupPropsR {})(children: VdomNode*) = {
     component(props)(children: _*)
@@ -27,7 +27,7 @@ object LayerGroupR {
 
 @JSImport("react-leaflet", "LayerGroup")
 @js.native
-object LLayerGroupJsR extends js.Object
+protected object LayerGroupJsR extends js.Object
 
 
 @ScalaJSDefined

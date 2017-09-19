@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.jd.MJdEditEdge
-import io.suggest.jd.tags.JsonDocument
+import io.suggest.jd.tags.IDocTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -21,7 +21,7 @@ object MAdEditForm {
 
   /** Поддержка play-json. */
   implicit val MAD_EDIT_FORM_FORMAT: OFormat[MAdEditForm] = (
-    (__ \ Fields.TEMPATE_FN).format[JsonDocument] and
+    (__ \ Fields.TEMPATE_FN).format[IDocTag] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
     (__ \ Fields.EDGES_FN).format[Iterable[MJdEditEdge]]
   )(apply, unlift(unapply))
@@ -36,6 +36,6 @@ object MAdEditForm {
   * @param edges Эджи с данными для рендера документа.
   */
 case class MAdEditForm(
-                        template    : JsonDocument,
+                        template    : IDocTag,
                         edges       : Iterable[MJdEditEdge]
                       )

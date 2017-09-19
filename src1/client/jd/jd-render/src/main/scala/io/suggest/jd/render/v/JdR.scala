@@ -5,8 +5,6 @@ import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.css.Css
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
-import io.suggest.jd.tags.qd.QdTag
-import io.suggest.model.n2.edge.MPredicates
 import io.suggest.pick.MimeConst
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
@@ -192,7 +190,8 @@ class JdR extends Log {
     // Internal API
 
     /** Рендер payload'а. */
-    def renderPlainPayload(pp: PlainPayload, jdArgs: MJdArgs): VdomNode = {
+    /*
+    private def renderPlainPayload(pp: PlainPayload, jdArgs: MJdArgs): VdomNode = {
       jdArgs.renderArgs.edges
         .get( pp.edgeId )
         .whenDefinedNode { e =>
@@ -206,10 +205,12 @@ class JdR extends Log {
           }
         }
     }
+    */
 
 
     /** Рендер картинки. */
-    def renderPicture(p: Picture, i: Int, jdArgs: MJdArgs): VdomElement = {
+    /*
+    private def renderPicture(p: Picture, i: Int, jdArgs: MJdArgs): VdomElement = {
       jdArgs.renderArgs.edges
         .get( p.edgeUid )
         .whenDefinedEl { e =>
@@ -236,10 +237,12 @@ class JdR extends Log {
           }
         }
     }
+    */
 
 
     /** Рендер контейнера, спозиционированного на экране абсолютно. */
-    def renderAbsPos(ap: AbsPos, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
+    /*
+    private def renderAbsPos(ap: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
       <.div(
         ^.key := i.toString,
         jdArgs.jdCss.absPosStyleAll,
@@ -253,6 +256,7 @@ class JdR extends Log {
         renderChildren(ap, jdArgs)
       )
     }
+    */
 
 
     def renderChildren(dt: IDocTag, jdArgs: MJdArgs): VdomArray = {
@@ -307,12 +311,12 @@ class JdR extends Log {
     }
 
     /** Рендер strip, т.е. одной "полосы" контента. */
-    def renderStrip(s: Strip, i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderStrip(s: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
       val C = jdArgs.jdCss
       <.div(
         ^.key := i.toString,
         C.smBlock,
-        C.stripOuterStyleF( s ),
+        C.bmStyleF( s ),
         _bgColorOpt(s, jdArgs),
 
         _maybeSelected( s, jdArgs ),
@@ -340,15 +344,15 @@ class JdR extends Log {
     }
 
     /** Рендер указанного документа. */
-    def renderDocument(jd: JsonDocument, i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderDocument(jd: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
       <.div(
         ^.key := i.toString,
         renderChildren( jd, jdArgs )
       )
     }
 
-    private def _bgColorOpt(jdTag: IBgColorOpt, jdArgs: MJdArgs): TagMod = {
-      jdTag.bgColor.whenDefined { mcd =>
+    private def _bgColorOpt(jdTag: IDocTag, jdArgs: MJdArgs): TagMod = {
+      jdTag.props1.bgColor.whenDefined { mcd =>
         jdArgs.jdCss.bgColorOptStyleF( mcd.hexCode )
       }
     }
@@ -358,7 +362,7 @@ class JdR extends Log {
       * @param qdTag Тег с кодированными данными Quill delta.
       * @return Элемент vdom.
       */
-    def renderQd( qdTag: QdTag, i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderQd( qdTag: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
       val tagMods = {
         val qdRrr = new QdRrrHtml(jdArgs, qdTag)
         qdRrr.render()
@@ -371,6 +375,15 @@ class JdR extends Log {
 
         _maybeSelected(qdTag, jdArgs),
         _clickableOnEdit(qdTag, jdArgs),
+
+        // Поддержка перетаскивания
+        jdArgs.jdCss.absPosStyleAll,
+        if (jdArgs.conf.withEdit && !jdArgs.selectedTag.contains(parent)) {
+          _draggableUsing(qdTag, jdArgs) { jdTagDragStart(qdTag) }
+        } else {
+          EmptyVdom
+        },
+        jdArgs.jdCss.absPosStyleF(qdTag),
 
         // Рендерить особые указатели мыши в режиме редактирования.
         if (jdArgs.conf.withEdit) {
@@ -394,14 +407,16 @@ class JdR extends Log {
     /**
       * Запуск рендеринга произвольных тегов.
       */
+    // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
     def renderDocTag(idt: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomNode = {
-      idt match {
-        case qd: QdTag                  => renderQd( qd, i, jdArgs )
-        case pp: PlainPayload           => renderPlainPayload( pp, jdArgs )
-        case p: Picture                 => renderPicture( p, i, jdArgs )
-        case ap: AbsPos                 => renderAbsPos(ap, i, jdArgs, parent)
-        case s: Strip                   => renderStrip( s, i, jdArgs )
-        case jd: JsonDocument           => renderDocument( jd, i, jdArgs )
+      import MJdTagNames._
+      idt.jdTagName match {
+        case QUILL_DELTA                => renderQd( idt, i, jdArgs, parent )
+        //case pp: PlainPayload           => renderPlainPayload( pp, jdArgs )
+        //case p: Picture                 => renderPicture( p, i, jdArgs )
+        //case ap: AbsPos                 => renderAbsPos(ap, i, jdArgs, parent)
+        case STRIP                      => renderStrip( idt, i, jdArgs )
+        case DOCUMENT                   => renderDocument( idt, i, jdArgs )
       }
     }
 

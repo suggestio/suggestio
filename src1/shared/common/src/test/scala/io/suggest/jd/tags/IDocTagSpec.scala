@@ -43,20 +43,25 @@ object IDocTagSpec extends SimpleTestSuite {
     )
   }
 
-  private val bm300x140 = Some( BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, wide = false) )
-  private val bm300x300 = Some( BlockMeta(BlockWidths.NORMAL, BlockHeights.H300, wide = true) )
+  private val bm300x140 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H140, wide = false)
+  private val bm300x300 = BlockMeta(BlockWidths.NORMAL, BlockHeights.H300, wide = true)
+
+
+  private def coord1 = MCoords2di(10, 20)
+  private def coord2 = MCoords2di(40, 40)
+  private def coord3 = MCoords2di(111, 10)
 
 
   test("JSON: Empty document") {
-    val doc = JsonDocument.a()()
+    val doc = IDocTag.document()
     _writeReadMatchTest( doc )
   }
 
 
   test("JSON: Simple Document( Strip(PlainPayload()) )") {
-    val doc = JsonDocument.a()(
-      Strip.a( bm300x140 )(
-        PlainPayload(1)
+    val doc = IDocTag.document(
+      IDocTag.strip( bm300x140 )(
+        IDocTag.edgeQd(1, coord1)
       )
     )
     _writeReadMatchTest( doc )
@@ -64,17 +69,16 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: Document with two strips, each with several children") {
-    val doc = JsonDocument.a()(
-      Strip.a( bm300x140 )(
-        PlainPayload(2),
-        Picture(555),
-        PlainPayload(4)
+    val doc = IDocTag.document(
+      IDocTag.strip( bm300x140 )(
+        IDocTag.edgeQd(2, coord1),
+        IDocTag.edgeQd(4, coord2)
       ),
-      Strip.a( bm300x300 )(
-        Picture(333),
-        PlainPayload(5),
-        PlainPayload(1),
-        PlainPayload(2)
+      IDocTag.strip( bm300x300 )(
+        //_picture( 333 ),
+        IDocTag.edgeQd(5, coord1),
+        IDocTag.edgeQd(1, coord2),
+        IDocTag.edgeQd(2, coord3)
       )
     )
     _writeReadMatchTest(doc)
@@ -82,21 +86,18 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: 3-level document tree with inner children") {
-    val doc = JsonDocument.a()(
-      Strip.a( bm300x140 )(
-        AbsPos.a( MCoords2di(10, 20) ) (
-          PlainPayload(2)
-        ),
-        Picture(555),
-        PlainPayload(4)
+    val doc = IDocTag.document(
+      IDocTag.strip(bm300x140)(
+        IDocTag.edgeQd(2, coord1)
+          .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(10, 20)) ) ),
+        //_picture(555),
+        IDocTag.edgeQd(4, coord2)
       ),
-      Strip.a( bm300x300 )(
-        Picture(333),
-        AbsPos.a( MCoords2di(40, 45) )(
-          PlainPayload(5),
-          PlainPayload(1)
-        ),
-        PlainPayload(2)
+      IDocTag.strip(bm300x300)(
+        //_picture(333),
+        IDocTag.edgeQd(5, coord3)
+          .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(45, 40)) ) ),
+        IDocTag.edgeQd(2, coord1)
       )
     )
     _writeReadMatchTest(doc)

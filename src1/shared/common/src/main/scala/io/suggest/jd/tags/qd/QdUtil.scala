@@ -1,6 +1,7 @@
 package io.suggest.jd.tags.qd
 
 import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.tags.IDocTag
 import io.suggest.model.n2.edge.EdgeUid_t
 
 /**
@@ -18,12 +19,12 @@ object QdUtil {
     * Возможно, такой агрессивный режим приведёт к невозможности использовать закрашенные
     * пробелы для рисования прямоугольников поверх фона.
     */
-  def isEmpty(qd: QdTag, edgesMap: Map[EdgeUid_t, MJdEditEdge]): Boolean = {
+  def isEmpty(qd: IDocTag, edgesMap: Map[EdgeUid_t, MJdEditEdge]): Boolean = {
     // Обычно, пустая дельта выглядит так: {"ops":[{"insert":"\n"}]}
     // Но мы будем анализировать весь список: допускаем целый список инзертов с итоговым пустым текстом.
-    qd.ops.isEmpty || {
+    qd.props1.qdOps.isEmpty || {
       val re = "\\s*".r.pattern
-      qd.ops
+      qd.props1.qdOps
         .iterator
         .flatMap(_.edgeInfo)
         .flatMap { ei =>

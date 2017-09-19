@@ -39,6 +39,7 @@ object HtmlConstants {
     val text = "text"
     val radio = "radio"
     val submit = "submit"
+    val file = "file"
 
   }
 

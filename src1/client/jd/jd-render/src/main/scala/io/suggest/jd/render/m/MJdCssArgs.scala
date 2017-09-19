@@ -1,7 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import io.suggest.jd.tags.JsonDocument
+import io.suggest.jd.tags.IDocTag
 
 /**
   * Suggest.io
@@ -19,7 +19,7 @@ object MJdCssArgs {
     }
   }
 
-  def singleCssArgs(template: JsonDocument, conf: MJdConf): MJdCssArgs = {
+  def singleCssArgs(template: IDocTag, conf: MJdConf): MJdCssArgs = {
     MJdCssArgs(
       templates = template :: Nil,
       conf      = conf
@@ -35,6 +35,6 @@ object MJdCssArgs {
   * @param conf Конфигурация рендеринга.
   */
 case class MJdCssArgs(
-                       templates  : Seq[JsonDocument],
+                       templates  : Seq[IDocTag],
                        conf       : MJdConf
                      )

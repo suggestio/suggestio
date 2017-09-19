@@ -3,6 +3,7 @@ package io.suggest.model.n2.edge
 import enumeratum.values.{StringEnum, StringEnumEntry}
 import io.suggest.enum2.{EnumeratumUtil, TreeEnumEntry}
 import io.suggest.primo.IStrId
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 
 /**
@@ -12,74 +13,6 @@ import play.api.libs.json._
   * Description: Статическая синхронная модель предикатов, т.е. "типов" ребер графа N2.
   * Создана по мотивам модели zotonic m_predicate, но сильно ушла от неё уже.
   */
-object MPredicate {
-
-  /** Поддержка play-json. */
-  implicit val MPREDICATE_FORMAT: Format[MPredicate] = {
-    EnumeratumUtil.valueEnumEntryFormat( MPredicates )
-  }
-
-
-  /**
-    * Запись предиката в список вместе с родительскими предикатами.
-    * Это используется для полиморфной индексации (на стороне ES).
-    *
-    * Для связи между клиентом и сервером -- это в общем-то функция около-нулевой полезности.
-    */
-  val MPREDICATE_DEEP_FORMAT: Format[MPredicate] = {
-    /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
-    val PARENTRAL_WRITES: Writes[MPredicate] = {
-      // Костыль из-за проблем contramap(). http://stackoverflow.com/a/27481370
-      Writes[MPredicate] { mpred =>
-        val p = implicitly[Writes[MPredicate]]
-        val preds = mpred
-          .meAndParentsIterator
-          .map { p.writes }
-          .toSeq
-        JsArray( preds )
-      }
-    }
-
-    /** Десериализация из JSON-списка в первый элемент этого списка. */
-    val PARENTRAL_READS: Reads[MPredicate] = {
-      Reads[MPredicate] {
-        case arr: JsArray =>
-          if (arr.value.isEmpty)
-            JsError("expected.nonempty.jsarray")
-          else
-            MPREDICATE_FORMAT.reads(arr.value.head)
-        case str: JsString =>
-          MPREDICATE_FORMAT.reads(str)
-        case _ =>
-          JsError("expected.jsstring.or.jsarray")
-      }
-    }
-
-    Format(PARENTRAL_READS, PARENTRAL_WRITES)
-  }
-
-}
-
-
-/** Базовый класс для каждого элемента модели [[MPredicates]]. */
-sealed abstract class MPredicate(override val value: String)
-  extends StringEnumEntry
-  with TreeEnumEntry[MPredicate]
-  with IStrId
-{ that: MPredicate =>
-
-  /** Некий строковой ключ. Например, ключ элемента модели. */
-  // TODO Выкинуть strId?
-  @inline override final def strId: String = value
-
-  /** Код i18n-сообщения с названием предиката в единственном числе. */
-  def singular: String = {
-    "edge.predicate." + strId
-  }
-
-}
-
-
 
 /** Модель предикатов эджей. */
 object MPredicates extends StringEnum[MPredicate] {
@@ -247,5 +180,74 @@ object MPredicates extends StringEnum[MPredicate] {
       v :: v.deepChildren
     }
   }
+
+}
+
+
+/** Базовый класс для каждого элемента модели [[MPredicates]]. */
+sealed abstract class MPredicate(override val value: String)
+  extends StringEnumEntry
+  with TreeEnumEntry[MPredicate]
+  with IStrId
+{ that: MPredicate =>
+
+  /** Некий строковой ключ. Например, ключ элемента модели. */
+  // TODO Выкинуть strId?
+  @inline override final def strId: String = value
+
+  /** Код i18n-сообщения с названием предиката в единственном числе. */
+  def singular: String = {
+    "edge.predicate." + strId
+  }
+
+}
+
+
+object MPredicate {
+
+  /** Поддержка play-json. */
+  implicit val MPREDICATE_FORMAT: Format[MPredicate] = {
+    EnumeratumUtil.valueEnumEntryFormat( MPredicates )
+  }
+
+  /**
+    * Запись предиката в список вместе с родительскими предикатами.
+    * Это используется для полиморфной индексации (на стороне ES).
+    *
+    * Для связи между клиентом и сервером -- это в общем-то функция около-нулевой полезности.
+    */
+  val MPREDICATE_DEEP_FORMAT: Format[MPredicate] = {
+    /** Сериализация в JSON, первый элемент -- текущий, второй и последующие -- родительские. */
+    val PARENTRAL_WRITES: Writes[MPredicate] = {
+      // Костыль из-за проблем contramap(). http://stackoverflow.com/a/27481370
+      Writes[MPredicate] { mpred =>
+        val p = implicitly[Writes[MPredicate]]
+        val preds = mpred
+          .meAndParentsIterator
+          .map { p.writes }
+          .toSeq
+        JsArray( preds )
+      }
+    }
+
+    /** Десериализация из JSON-списка в первый элемент этого списка. */
+    val PARENTRAL_READS: Reads[MPredicate] = {
+      Reads[MPredicate] {
+        case arr: JsArray =>
+          if (arr.value.isEmpty)
+            JsError("expected.nonempty.jsarray")
+          else
+            MPREDICATE_FORMAT.reads(arr.value.head)
+        case str: JsString =>
+          MPREDICATE_FORMAT.reads(str)
+        case _ =>
+          JsError("expected.jsstring.or.jsarray")
+      }
+    }
+
+    Format(PARENTRAL_READS, PARENTRAL_WRITES)
+  }
+
+  implicit def univEq: UnivEq[MPredicate] = UnivEq.derive
 
 }
