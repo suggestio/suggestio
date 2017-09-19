@@ -104,7 +104,9 @@ trait RcvrPopupBackendBaseR[PropsVal <: IRcvrPopupProps, State] {
         MapIcons.preloaderLMarkerPot( v.popupResp, latLng ),
 
         // Рендер попапа. когда всё готово.
-        v.popupResp.renderReady { resp =>
+        // TODO Pot.renderReady, renderPending: react тут начала выбрасывать ошибку, что react element expected, а мы шлём ей массивы.
+        //v.popupResp.renderReady { resp =>
+        v.popupResp.toOption.whenDefinedEl { resp =>
           LPopupR(
             new LPopupPropsR {
               override val position = latLng

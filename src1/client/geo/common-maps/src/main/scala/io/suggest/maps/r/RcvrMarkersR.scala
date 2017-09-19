@@ -71,7 +71,7 @@ object RcvrMarkersR {
     private val _onMarkerClickedF = cbFun1ToJsCb( onMarkerClicked )
 
     // Внутренний класс вместо кортежа, т.к. у scalac крышу срывает от кортежей с RComp_t внутри.
-    private case class ResTuple( latLng: LatLng, jsComp: VdomNode )
+    private case class ResTuple( latLng: LatLng, jsComp: VdomElement )
 
 
     /** Рендер всей гео.карты. */
@@ -139,7 +139,7 @@ object RcvrMarkersR {
                     _onClickCbF( _center )
                   }
                 }
-                val rc = CircleR( opts ): VdomNode
+                val rc = CircleR( opts )
                 ResTuple(_centerLatLng, rc)
 
               // Рендерить полигон или мультиполигон.
@@ -203,7 +203,7 @@ object RcvrMarkersR {
 
         // Превратить итератор аккамуляторов в два стабильных аккамулятора.
         val (markers9, shapeComponents9) = iter
-          .foldLeft( (List.empty[List[Marker]], List.empty[List[VdomNode]]) ) {
+          .foldLeft( (List.empty[List[Marker]], List.empty[List[VdomElement]]) ) {
             case ((markersAcc, shapeComponentsAcc), (markers, shapeComponents)) =>
               (markers :: markersAcc,
                 shapeComponents :: shapeComponentsAcc)

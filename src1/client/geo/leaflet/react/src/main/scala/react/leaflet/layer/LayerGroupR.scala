@@ -18,6 +18,7 @@ object LayerGroupR {
 
   val component = JsComponent[LayerGroupPropsR, Children.Varargs, Null]( LayerGroupJsR )
 
+  // TODO children: VdomNode выставлен, т.к. react тут иногда ожидает именно элемент начиная с sjs-react 1.1.0 или как-то так. Что делать?
   def apply(props  : LayerGroupPropsR = new LayerGroupPropsR {})(children: VdomNode*) = {
     component(props)(children: _*)
   }
