@@ -10,7 +10,7 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.{OptFastEq, StateInp}
 import play.api.libs.json.Json
-import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh, PictureAh, TailAh}
+import io.suggest.ad.edit.c._
 import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPick, MPictureAh, MQdEditS}
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
@@ -68,6 +68,8 @@ class LkAdEditCircuit(
     )
   }
 
+  /** Используется извне, в init например. */
+  val rootRO = zoom(m => m)
 
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
@@ -185,6 +187,8 @@ class LkAdEditCircuit(
 
   private val pictureAh = new PictureAh( mPictureAhRW )
 
+  private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
+
   private val tailAh = new TailAh(mDocSRw)
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
@@ -212,7 +216,11 @@ class LkAdEditCircuit(
     // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
     acc ::= pictureAh
 
-    composeHandlers( acc: _* )
+    // Навешиваем параллельные handler'ы.
+    foldHandlers(
+      composeHandlers(acc: _*),
+      stripBgColorPickAfterAh
+    )
   }
 
 }

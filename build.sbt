@@ -130,7 +130,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -192,6 +192,12 @@ lazy val reactDatePickerSjs = {
 /** Scala.js API для react-color. */
 lazy val reactColorSjs = {
   Project(id = "scalajs-react-color", base = file(DIR0 + "client/scalajs/react-color"))
+    .dependsOn(commonReactSjs)
+}
+
+/** Scala.js API для react-image-crop. */
+lazy val reactImageCropSjs = {
+  Project(id = "scalajs-react-image-crop", base = file(DIR0 + "client/scalajs/react-image-crop"))
     .dependsOn(commonReactSjs)
 }
 
@@ -480,7 +486,7 @@ lazy val sio2 = {
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
-      reactImageGallerySjs, reactColorSjs,
+      reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,

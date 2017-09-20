@@ -82,12 +82,11 @@ class PictureR {
                 ^.`class` := C.IMAGE_REMOVE_BTN,
                 ^.title   := Messages( MsgCodes.`Delete` ),
                 ^.onClick --> fileDeleted,
-
                 <.span
               )
+
             )
           }
-
         }
 
       )

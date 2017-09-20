@@ -315,6 +315,8 @@ class JdR extends Log {
     /** Рендер strip, т.е. одной "полосы" контента. */
     def renderStrip(s: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
       val C = jdArgs.jdCss
+      val isSelected = jdArgs.selectedTag.contains(s)
+      val isEditSelected = isSelected && jdArgs.conf.withEdit
       <.div(
         ^.key := i.toString,
         C.smBlock,
@@ -326,7 +328,7 @@ class JdR extends Log {
         _droppableOnEdit( s, jdArgs ),
 
         // Если текущий стрип выделен, то его можно таскать.
-        if (jdArgs.conf.withEdit && jdArgs.selectedTag.contains(s)) {
+        if (isEditSelected) {
           TagMod(
             _draggableUsing(s, jdArgs)(stripDragStart(s)),
             ^.`class` := Css.Cursor.GRAB
@@ -350,12 +352,22 @@ class JdR extends Log {
             <.img(
               ^.`class` := Css.Block.BG,
               ^.src := bgImgSrc,
+              // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
+              if (jdArgs.conf.withEdit) {
+                ^.draggable := false
+              } else {
+                EmptyVdom
+              },
               s.props1.bm.whenDefined { bm =>
                 TagMod(
                   ^.width  := bm.width.px,
                   ^.height := bm.height.px
                 )
-              }
+              },
+              // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
+              jdArgs.renderArgs.selJdtBgImgMod
+                .filter(_ => isSelected)
+                .whenDefined
             )
           }
         },

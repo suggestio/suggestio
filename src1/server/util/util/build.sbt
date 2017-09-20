@@ -20,7 +20,7 @@ resolvers ++= {
 
 libraryDependencies ++= {
   val slf4jVsn      = Common.Vsn.SLF4J 
-  val akkaVsn       = "2.4.+"
+  //val akkaVsn       = "2.5.+"
   //val morphVsn      = "1.3-SNAPSHOT"
   Seq(
     "org.gnu.inet" % "libidn" % "1.15",
@@ -37,7 +37,7 @@ libraryDependencies ++= {
     "commons-io" % "commons-io" % Common.apacheCommonsIoVsn,
 
     // akka
-    "com.typesafe.akka" %% "akka-actor"  % akkaVsn,
+    //"com.typesafe.akka" %% "akka-actor"  % akkaVsn,
     //"com.typesafe.akka" %% "akka-remote" % akkaVsn,
 
     // TEST

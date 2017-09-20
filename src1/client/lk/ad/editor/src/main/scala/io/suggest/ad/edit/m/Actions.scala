@@ -15,33 +15,37 @@ import org.scalajs.dom.File
 sealed trait ILkEditAction extends DAction
 
 
+trait IStripAction extends ILkEditAction
+
 /** Клик по какой-то кнопке управления размером блока.
   *
   * @param model Модель, указывающая на ширину или высоту блока?
   * @param direction Направление: увеличить или уменьшить.
   */
-case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends ILkEditAction
+case class BlockSizeBtnClick(model: IBlockSizes[_ <: IBlockSize], direction: MHand) extends IStripAction
 
 
+sealed trait IStripDeleteAction extends IStripAction
 /** Экшен клика по кнопке удаления текущего выделенного strip'а.
   *
   * @param confirmed true - Юзер подтверждает удаление.
   *                  false -- Юзер первый раз нажал на "удалить".
   */
-case class StripDelete(confirmed: Boolean) extends ILkEditAction
+case class StripDelete(confirmed: Boolean) extends IStripDeleteAction
 
 /** Экшен отказа от удаления блока. */
-case object StripDeleteCancel extends ILkEditAction
+case object StripDeleteCancel extends IStripDeleteAction
 
 
+sealed trait IAddAction extends ILkEditAction
 /** Клик по кнопке добавления (открытия формы добавления). */
-case object AddBtnClick extends ILkEditAction
+case object AddBtnClick extends IAddAction
 /** Клик по кнопке добавления контента. */
-case object AddContentClick extends ILkEditAction
+case object AddContentClick extends IAddAction
 /** Клик по кнопке добавления стрипа. */
-case object AddStripClick extends ILkEditAction
+case object AddStripClick extends IAddAction
 /** Клик по кнопке отмены добавления чего-либо. */
-case object AddCancelClick extends ILkEditAction
+case object AddCancelClick extends IAddAction
 
 
 /** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */
