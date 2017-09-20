@@ -57,8 +57,8 @@ class PictureR {
           blobUrlOpt.value.whenDefinedEl { blobUrl =>
             <.img(
               ^.src := blobUrl,
-              ^.width := 140.px,
-              ^.height := 85.px
+              ^.width := 140.px
+              //^.height := 85.px   // Чтобы не плющило картинки, пусть лучше обрезает снизу
             )
           }
         },

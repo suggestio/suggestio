@@ -34,7 +34,10 @@ import scala.annotation.tailrec
   * - Форматирование сегментов текста внутри строк - тривиально, т.е. также как и в первой версии рендерера.
   *
   */
-class QdRrrHtml(jdArgs: MJdArgs, qdTag: IDocTag ) {
+class QdRrrHtml(
+                 jdArgs   : MJdArgs,
+                 qdTag    : IDocTag
+               ) {
 
   import QdRrrHtml.LOG
 
@@ -151,8 +154,8 @@ class QdRrrHtml(jdArgs: MJdArgs, qdTag: IDocTag ) {
       for (wh <- e.whOpt) {
         imgArgsAcc =
           (^.width := wh.width.px) ::
-            (^.height := wh.height.px) ::
-            imgArgsAcc
+          (^.height := wh.height.px) ::
+          imgArgsAcc
       }
 
       // wh экранного представления картинки задаётся в CSS согласно рекомендациям ведущих собаководов:

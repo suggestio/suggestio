@@ -310,12 +310,13 @@ class QuillDeltaJsUtil extends Log {
     val busyEdgeIds = edgesNoJdCont.keySet
 
     // Переменная-счётчик для эджей во время цикла. Можно её запихать в аккамулятор и идти через foldLeft + List.reverse вместо map.
-    var edgeUidCounter = EdgesUtil.nextEdgeUidFrom( busyEdgeIds )
+    // TODO Задействовать EdgesUtil.nextEdgeUidFrom( busyEdgeIds ), но почему-то тест сразу ломается вместе с эджами.
+    var edgeUidCounter = if (busyEdgeIds.isEmpty) -1 else busyEdgeIds.max
 
     // Получение незанятого id'шника для нового эджа.
     @tailrec def __nextEdgeUid(): EdgeUid_t = {
+      edgeUidCounter += 1
       if (busyEdgeIds contains edgeUidCounter) {
-        edgeUidCounter += 1
         __nextEdgeUid()
       } else {
         edgeUidCounter
