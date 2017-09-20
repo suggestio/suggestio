@@ -10,11 +10,12 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.{OptFastEq, StateInp}
 import play.api.libs.json.Json
-import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh, TailAh}
-import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPick, MQdEditS}
+import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh, PictureAh, TailAh}
+import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPick, MPictureAh, MQdEditS}
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
 import MColorPick.MColorPickFastEq
+import MPictureAh.MPictureAhFastEq
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 
 /**
@@ -151,6 +152,38 @@ class LkAdEditCircuit(
     _zoomToBgColorPickS[MQdEditS](MJdTagNames.QUILL_DELTA)(_.qdEdit) { _.withQdEdit(_) }
   )
 
+  private val mPictureAhRW = mDocSRw.zoomRW[MPictureAh] { mdoc =>
+    MPictureAh(
+      files       = mdoc.files,
+      edges       = mdoc.jdArgs.renderArgs.edges,
+      selectedTag = mdoc.jdArgs.selectedTag,
+      errors      = mdoc.errors
+    )
+  } { (mdoc0, mPictureAh) =>
+    mdoc0
+      .withFiles( mPictureAh.files )
+      .withJdArgs {
+        val jdArgs1 = mdoc0.jdArgs
+          .withRenderArgs(
+            mdoc0.jdArgs.renderArgs.withEdges(
+              mPictureAh.edges
+            )
+          )
+          .withSelectedTag( mPictureAh.selectedTag )
+        // Продублировать обновлённый selected-тег в шаблон и css:
+        mPictureAh.selectedTag.fold(jdArgs1) { selJdt =>
+          val tpl2 = jdArgs1.template
+            .deepUpdateOne(mdoc0.jdArgs.selectedTag.get, selJdt :: Nil)
+            .head
+          jdArgs1
+            .withTemplate( tpl2 )
+            .withJdCss( jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, jdArgs1.conf) ) )
+        }
+      }
+      .withErrors( mPictureAh.errors )
+  }
+
+  private val pictureAh = new PictureAh( mPictureAhRW )
 
   private val tailAh = new TailAh(mDocSRw)
 
@@ -175,6 +208,9 @@ class LkAdEditCircuit(
 
     // В голове -- обработчик всех основных операций на документом.
     acc ::= docAh
+
+    // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
+    acc ::= pictureAh
 
     composeHandlers( acc: _* )
   }

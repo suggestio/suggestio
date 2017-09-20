@@ -193,4 +193,6 @@ object MsgCodes {
   val `Example.text` = "Example.text"
   val `Bg.color` = "Bg.color"
 
+  val `File.is.not.a.picture` = "File.is.not.a.picture"
+
 }

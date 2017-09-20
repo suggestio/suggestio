@@ -5,6 +5,7 @@ import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.css.Css
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.pick.MimeConst
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
@@ -16,6 +17,7 @@ import io.suggest.sjs.common.vm.wnd.WindowVm
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 import org.scalajs.dom.Element
 import play.api.libs.json.Json
 
@@ -331,6 +333,31 @@ class JdR extends Log {
           )
         } else {
           EmptyVdom
+        },
+
+        // Если задана фоновая картинка, от отрендерить её.
+        {
+          val bgImgOpt = for {
+            bgImgEi <- s.props1.bgImg
+            edgeUid = bgImgEi.edgeUid
+            edge    <- jdArgs.renderArgs.edges.get( edgeUid )
+            if edge.predicate ==* MPredicates.Bg
+            src     <- edge.url.orElse( edge.text )
+          } yield {
+            src
+          }
+          bgImgOpt.whenDefined { bgImgSrc =>
+            <.img(
+              ^.`class` := Css.Block.BG,
+              ^.src := bgImgSrc,
+              s.props1.bm.whenDefined { bm =>
+                TagMod(
+                  ^.width  := bm.width.px,
+                  ^.height := bm.height.px
+                )
+              }
+            )
+          }
         },
 
         renderChildren( s, jdArgs )

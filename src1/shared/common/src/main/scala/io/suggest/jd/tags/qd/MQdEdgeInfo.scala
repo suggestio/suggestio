@@ -29,5 +29,5 @@ object MQdEdgeInfo {
   * @param edgeUid id в карте эджей.
   */
 case class MQdEdgeInfo(
-                       edgeUid: EdgeUid_t
-                     )
+                        edgeUid: EdgeUid_t
+                      )

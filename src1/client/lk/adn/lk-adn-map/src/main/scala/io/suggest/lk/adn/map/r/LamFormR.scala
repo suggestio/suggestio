@@ -83,7 +83,7 @@ object LamFormR {
             s.rcvrsC { rcvrsProxy =>
 
               // Рендерить текущий размещения и rad-маркер всегда в верхнем слое:
-              val lg = List[VdomNode](
+              val lg = List[VdomElement](
                 // Рендер текущих размещений.
                 s.currentPotC { CurrentGeoR.apply },
                 // Маркер местоположения узла.

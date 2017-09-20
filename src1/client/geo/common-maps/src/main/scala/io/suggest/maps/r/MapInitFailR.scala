@@ -30,7 +30,7 @@ object MapInitFailR {
           Messages( MsgCodes.`Unable.to.initialize.map` ),
           <.br,
           ex.toString
-        ): VdomElement
+        )
       }
     }
     .build

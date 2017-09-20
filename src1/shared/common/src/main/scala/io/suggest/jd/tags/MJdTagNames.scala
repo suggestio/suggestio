@@ -28,23 +28,6 @@ object MJdTagNames extends StringEnum[MJdTagName] {
     */
   case object STRIP extends MJdTagName("s")
 
-  /** Отсылка к ресурсу, который живёт вне этого дерева.
-    *
-    * Хранение вне дерева и линковка по id ресурса является простым решением проблемы с индексацией,
-    * поиском и highlight'ом некоторых частей документа без дубликации этих самых частей.
-    */
-  //case object PLAIN_PAYLOAD extends MJdTagName("p")
-
-  /** Картинка.
-    * Фоновая или нет -- не суть важно, это описывается параметрами самой картинки.
-    */
-  //case object PICTURE extends MJdTagName("i")
-
-
-  /** Имя тега абсолютного позиционирования элемента. */
-  case object ABS_POS extends MJdTagName("a")
-
-
   /** Тег, хранящий текст, отформатированный через quill-editor. */
   case object QUILL_DELTA extends MJdTagName("q")
 

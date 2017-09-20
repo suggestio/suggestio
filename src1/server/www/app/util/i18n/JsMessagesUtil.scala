@@ -246,6 +246,7 @@ class JsMessagesUtil @Inject() (
       MsgCodes.`Content` ::
       MsgCodes.`Example.text` ::
       MsgCodes.`Bg.color` ::
+      MsgCodes.`File.is.not.a.picture` ::
       Nil
   }
 

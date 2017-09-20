@@ -14,9 +14,11 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IReq
 import play.api.libs.json.Json
+import play.api.mvc.Result
 import util.acl.{CanEditAd, IsNodeAdmin}
 import util.ad.LkAdEdFormUtil
 import util.img.DynImgUtil
+import util.sec.CspUtil
 import views.html.lk.ad.edit._
 
 import scala.concurrent.Future
@@ -36,6 +38,7 @@ class LkAdEdit @Inject() (
                            //@Named("blk") override val blkImgMaker : IMaker,
                            dynImgUtil                             : DynImgUtil,
                            isNodeAdmin                            : IsNodeAdmin,
+                           cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
                            override val mCommonDi                 : ICommonDi
                          )
@@ -44,6 +47,10 @@ class LkAdEdit @Inject() (
 {
 
   import mCommonDi._
+
+  private def _applyCspToEditPage(res0: Result): Result = {
+    cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.AdEdit )(res0)
+  }
 
 
   /** Страница создания новой карточки.
@@ -89,7 +96,11 @@ class LkAdEdit @Inject() (
           parent  = request.mnode,
           state0  = formInitJsonStr
         )(ctx)
-        Ok( html )
+
+        // Вернуть ответ с коррективами в CSP-политике.
+        _applyCspToEditPage(
+          Ok( html )
+        )
       }
     }
   }

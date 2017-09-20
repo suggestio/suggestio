@@ -1,5 +1,7 @@
 package io.suggest.i18n
 
+import japgolly.univeq.UnivEq
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -31,6 +33,8 @@ object MMessage {
   def a(message: String, args: Int*): MMessage = {
     MMessage(message, args)
   }
+
+  implicit def univEq: UnivEq[MMessage] = UnivEq.force
 
 }
 

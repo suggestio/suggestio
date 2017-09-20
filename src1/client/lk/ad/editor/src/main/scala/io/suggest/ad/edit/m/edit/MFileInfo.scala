@@ -3,6 +3,7 @@ package io.suggest.ad.edit.m.edit
 import diode.FastEq
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.File
+import org.scalajs.dom.raw.XMLHttpRequest
 
 /**
   * Suggest.io
@@ -21,7 +22,8 @@ object MFileInfo {
     override def eqv(a: MFileInfo, b: MFileInfo): Boolean = {
       (a.file eq b.file) &&
         (a.blobUrl eq b.blobUrl) &&
-        (a.uploadProgress eq b.uploadProgress)
+        (a.uploadProgress eq b.uploadProgress) &&
+        (a.uploadXhr eq b.uploadXhr)
     }
   }
 
@@ -38,14 +40,17 @@ object MFileInfo {
   * @param file Файл, который описывается.
   * @param blobUrl Ссылка на блоб в памяти браузера, если есть.
   * @param uploadProgress Прогресс заливки картинки на сервер, если есть.
+  * @param uploadXhr XHR-реквест, производящий сейчас upload файла на сервер.
   */
 case class MFileInfo(
                       file              : File,
-                      blobUrl           : Option[String]    = None,
-                      uploadProgress    : Option[Int]       = None
+                      blobUrl           : Option[String]          = None,
+                      uploadProgress    : Option[Int]             = None,
+                      uploadXhr         : Option[XMLHttpRequest]  = None
                     ) {
 
-  def withBlobUrl(blobUrl: Option[String]) = copy(blobUrl = blobUrl)
-  def withUploadProgress(uploadProgress : Option[Int]) = copy(uploadProgress = uploadProgress)
+  def withBlobUrl(blobUrl: Option[String])                = copy(blobUrl = blobUrl)
+  def withUploadProgress(uploadProgress : Option[Int])    = copy(uploadProgress = uploadProgress)
+  def withUploadXhr(uploadXhr: Option[XMLHttpRequest])    = copy(uploadXhr = uploadXhr)
 
 }

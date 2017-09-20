@@ -121,6 +121,11 @@ class CspUtil @Inject() (
     /** Страницы содержат Umap-карту на базе Leaflet. */
     val Umap = mkCustomPolicyHdr( _.allowUmap )
 
+    /** Редактор карточек активно работает с "blob:", а quill-editor - ещё и с "data:" . */
+    val AdEdit = mkCustomPolicyHdr { p0 =>
+      p0.addImgSrc( Csp.Sources.BLOB, Csp.Sources.DATA )
+    }
+
   }
 
 

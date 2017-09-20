@@ -2,6 +2,7 @@ package io.suggest.dom
 
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.File
+import org.scalajs.dom.raw.XMLHttpRequest
 
 /**
   * Suggest.io
@@ -11,6 +12,8 @@ import org.scalajs.dom.File
   */
 object DomUnivEq {
 
-  implicit def fileUnivEq: UnivEq[File] = UnivEq.force
+  implicit def fileUe: UnivEq[File] = UnivEq.force
+
+  implicit def xhrUe: UnivEq[XMLHttpRequest] = UnivEq.force
 
 }

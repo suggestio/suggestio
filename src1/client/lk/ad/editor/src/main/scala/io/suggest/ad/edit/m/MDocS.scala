@@ -3,6 +3,7 @@ package io.suggest.ad.edit.m
 import diode.FastEq
 import io.suggest.ad.edit.m.edit.{MAddS, MColorsState, MFileInfo, MQdEditS}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
+import io.suggest.i18n.MMessage
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.model.n2.edge.EdgeUid_t
 
@@ -45,7 +46,8 @@ case class MDocS(
                   stripEd       : Option[MStripEdS]             = None,
                   addS          : Option[MAddS]                 = None,
                   colorsState   : MColorsState                  = MColorsState.empty,
-                  files         : Map[EdgeUid_t, MFileInfo]     = Map.empty
+                  files         : Map[EdgeUid_t, MFileInfo]     = Map.empty,
+                  errors        : List[MMessage]                = Nil
                 ) {
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
@@ -61,5 +63,7 @@ case class MDocS(
   def withColorsState(colorsState : MColorsState) = copy(colorsState = colorsState)
 
   def withFiles(files: Map[EdgeUid_t, MFileInfo]) = copy(files = files)
+
+  def withErrors(errors: List[MMessage]) = copy(errors = errors)
 
 }

@@ -14,7 +14,7 @@ import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.qd._
 import io.suggest.jd.tags._
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.quill.m.TextChanged
 import IDocTag.Implicits._
@@ -513,8 +513,7 @@ class DocEditAh[M](
         }
         .fold [(Map[EdgeUid_t, MJdEditEdge], Int)] {
           // Нет примера текста в эджах: добавить его туда.
-          val existEdgeUids = edgesMap0.keySet
-          val nextEdgeUid = if (existEdgeUids.isEmpty)  0  else  existEdgeUids.max + 1
+          val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( edgesMap0 )
           val e = MJdEditEdge(
             predicate = textPred,
             id        = nextEdgeUid,

@@ -7,7 +7,7 @@ import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
-import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
@@ -310,16 +310,12 @@ class QuillDeltaJsUtil extends Log {
     val busyEdgeIds = edgesNoJdCont.keySet
 
     // Переменная-счётчик для эджей во время цикла. Можно её запихать в аккамулятор и идти через foldLeft + List.reverse вместо map.
-    var edgeUidCounter = if (busyEdgeIds.isEmpty) {
-      -1
-    } else {
-      busyEdgeIds.max
-    }
+    var edgeUidCounter = EdgesUtil.nextEdgeUidFrom( busyEdgeIds )
 
     // Получение незанятого id'шника для нового эджа.
     @tailrec def __nextEdgeUid(): EdgeUid_t = {
-      edgeUidCounter += 1
       if (busyEdgeIds contains edgeUidCounter) {
+        edgeUidCounter += 1
         __nextEdgeUid()
       } else {
         edgeUidCounter

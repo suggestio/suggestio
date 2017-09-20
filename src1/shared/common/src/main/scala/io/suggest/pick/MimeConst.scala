@@ -14,6 +14,12 @@ object MimeConst {
     final def APPLICATION_ = "application" + DELIM1
     final def TEXT_ = "text" + DELIM1
     final def JSON = "json"
+
+    final def IMAGE   = "image"
+    final def JPEG    = "jpeg"
+    final def GIF     = "gif"
+    final def PNG     = "png"
+
   }
 
 
@@ -47,6 +53,34 @@ object MimeConst {
 
     /** Mime-тип с координатами в виде JSON. */
     final def COORD_2D_JSON = MIME_PREFIX + "coords-2d+" + Words.JSON
+
+  }
+
+
+  /** Mime-типы для картинок и сопутствующая им утиль. */
+  object Image {
+
+    final def PREFIX  = Words.IMAGE + Words.DELIM1
+
+    final def JPEG    = PREFIX + Words.JPEG
+    final def PNG     = PREFIX + Words.PNG
+    final def GIF     = PREFIX + Words.GIF
+
+    def isImage(ct: String): Boolean = {
+      val ct2 = ct.toLowerCase()
+      val prefix = PREFIX
+      (ct2 startsWith prefix) && {
+        val afterSlash = ct2.substring( prefix.length )
+        (Words.JPEG :: Words.PNG :: Words.GIF :: Nil)
+          .contains(afterSlash)
+      }
+    }
+
+    /** Проверка Content-Type на предмет допустимости для upload'а
+      * на сервер в качестве иллюстрации в рекламной карточке. */
+    def isImageForAd(ct: String): Boolean = {
+      isImage(ct)
+    }
 
   }
 

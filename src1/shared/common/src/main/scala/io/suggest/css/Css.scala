@@ -229,6 +229,12 @@ object Css {
       def LIGHT = __ + "light"
     }
 
+    object AdEdit {
+
+      def IMAGE = "image"
+
+    }
+
   }
 
 
@@ -252,6 +258,8 @@ object Css {
 
   object Block {
     def BLOCK = "block"
+    /** bg image блока */
+    def BG = "bg"
   }
 
 
