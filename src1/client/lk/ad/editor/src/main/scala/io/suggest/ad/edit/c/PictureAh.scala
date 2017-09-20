@@ -35,23 +35,25 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
     case m: PictureFileChanged =>
       val v0 = value
       val selJdt0 = v0.selectedTag.get
-      val selJdtEdgeUids = selJdt0.deepEdgesUidsIter.toSet
 
       // Посмотреть, что пришло в сообщении...
       if (m.files.isEmpty) {
-        // В теории, файл может быть удалён, т.е. список файлов изменился в []
-        val deleteKeyF = { k: EdgeUid_t => !selJdtEdgeUids.contains(k) }
-        val edges2 = v0.edges.filterKeys( deleteKeyF )
-        val files2 = v0.files.filterKeys( deleteKeyF )
-        val selJdt2 = selJdt0.withProps1(
-          selJdt0.props1.withBgImg( None )
-        )
-        val v2 = v0.copy(
-          files       = files2,
-          edges       = edges2,
-          selectedTag = Some( selJdt2 )
-        )
-        updated( v2 )
+        // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid.
+        selJdt0.props1.bgImg.fold( noChange ) { bgImgOld =>
+          val edgeUidOld = bgImgOld.edgeUid
+          val deleteKeyF = { k: EdgeUid_t => k !=* edgeUidOld }
+          val edges2 = v0.edges.filterKeys( deleteKeyF )
+          val files2 = v0.files.filterKeys( deleteKeyF )
+          val selJdt2 = selJdt0.withProps1(
+            selJdt0.props1.withBgImg( None )
+          )
+          val v2 = v0.copy(
+            files       = files2,
+            edges       = edges2,
+            selectedTag = Some( selJdt2 )
+          )
+          updated( v2 )
+        }
 
       } else {
 

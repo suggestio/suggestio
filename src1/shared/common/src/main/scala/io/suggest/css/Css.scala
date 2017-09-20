@@ -231,7 +231,10 @@ object Css {
 
     object AdEdit {
 
-      def IMAGE = "image"
+      object Image {
+        def IMAGE = "image"
+        def IMAGE_REMOVE_BTN = IMAGE + "_remove-" + Buttons.BTN
+      }
 
     }
 
