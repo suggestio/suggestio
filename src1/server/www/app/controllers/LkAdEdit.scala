@@ -84,7 +84,8 @@ class LkAdEdit @Inject() (
       } yield {
         val formInit = MAdEditFormInit(
           conf = formConf,
-          form = docForm
+          form = docForm,
+          files = Nil
         )
         _formInit2str( formInit )
       }
@@ -170,7 +171,9 @@ class LkAdEdit @Inject() (
       val nodeDoc = request.mad.extras.doc.get    // TODO .getOrElse(defaultDoc)
 
       // Собрать модель и отрендерить:
-      val formInitStrFut = for (ctx <- ctxFut) yield {
+      val formInitStrFut = for {
+        ctx <- ctxFut
+      } yield {
         val formInit = MAdEditFormInit(
           conf = MAdEditFormConf(
             producerId  = request.producer.id.get,
@@ -180,7 +183,8 @@ class LkAdEdit @Inject() (
           form = MAdEditForm(
             template  = nodeDoc.template,
             edges     = edEdges
-          )
+          ),
+          files = Nil      // TODO сграбить все файлы (ориг.картинки) карточки из MMedia
         )
         _formInit2str( formInit )
       }

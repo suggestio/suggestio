@@ -4,10 +4,10 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
-import io.suggest.ad.edit.m.edit.MFileInfo
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.ad.edit.v.edit.{ColorPickR, PictureR}
+import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.IDocTag
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -42,7 +42,7 @@ class StripEditR(
                        strip        : IDocTag,
                        edS          : MStripEdS,
                        colorsState  : MColorsState,
-                       bgImgFileOpt : Option[MFileInfo]
+                       bgImgFileOpt : Option[MJsFileInfo]
                      )
 
   implicit object StripEditRPropsValFastEq extends FastEq[PropsVal] {

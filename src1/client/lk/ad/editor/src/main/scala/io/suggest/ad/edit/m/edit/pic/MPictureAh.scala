@@ -1,8 +1,8 @@
 package io.suggest.ad.edit.m.edit.pic
 
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.MFileInfo
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
+import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MMessage
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
@@ -44,14 +44,14 @@ object MPictureAh {
   *                   Например, когда файл не является картинкой.
   */
 case class MPictureAh(
-                       files          : Map[EdgeUid_t, MFileInfo],
+                       files          : Map[EdgeUid_t, MJsFileInfo],
                        edges          : Map[EdgeUid_t, MJdEditEdge],
                        selectedTag    : Option[IDocTag],
                        errorPopup     : Option[MErrorPopupS],
                        cropPopup      : Option[MPictureCropPopup]
                      ) {
 
-  def withFiles(files: Map[EdgeUid_t, MFileInfo])   = copy(files = files)
+  def withFiles(files: Map[EdgeUid_t, MJsFileInfo])   = copy(files = files)
   def withEdges(edges: Map[EdgeUid_t, MJdEditEdge]) = copy(edges = edges)
   def withSelectedTag(selectedTag: Option[IDocTag]) = copy(selectedTag = selectedTag)
   def withErrorPopup(errorPopup: Option[MErrorPopupS])          = copy(errorPopup = errorPopup)

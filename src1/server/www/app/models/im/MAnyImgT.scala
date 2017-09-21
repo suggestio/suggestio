@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.ImgCrop
+import io.suggest.img.crop.MCrop
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
@@ -38,7 +38,7 @@ trait MAnyImgT extends ImgFilename with DynImgOpsString {
   def original: MAnyImgT
 
   /** Нащупать crop. Используется скорее как compat к прошлой форме работы с картинками. */
-  def cropOpt: Option[ImgCrop] = {
+  def cropOpt: Option[MCrop] = {
     val iter = dynImgOps
       .iterator
       .flatMap {

@@ -1,7 +1,7 @@
 package models.adr
 
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.img.ImgCrop
+import io.suggest.img.crop.MCrop
 import models.im._
 
 /**
@@ -14,7 +14,7 @@ import models.im._
 object MWkHtmlArgs {
   def ZOOM_OPT_DFLT     : Option[Float]     = None
   def WITH_PLUGINS_DFLT : Boolean           = false
-  def CROP_DFLT         : Option[ImgCrop]   = None
+  def CROP_DFLT         : Option[MCrop]   = None
   def SMART_WIDTH_DFLT  : Boolean           = true
 }
 
@@ -29,7 +29,7 @@ trait IWkHtmlArgsT extends IAdRenderArgs {
   def plugins : Boolean
 
   /** Необязательный кроп. */
-  def crop    : Option[ImgCrop]
+  def crop    : Option[MCrop]
 
   /** Разрешать ли wkhtml переопределять заданную ширину? Нужно patched Qt version installed. */
   def smartWidth: Boolean
@@ -41,7 +41,7 @@ trait IWhHtmlArgsDflt extends IWkHtmlArgsT {
   import MWkHtmlArgs._
   override def zoomOpt     : Option[Float]     = ZOOM_OPT_DFLT
   override def plugins     : Boolean           = WITH_PLUGINS_DFLT
-  override def crop        : Option[ImgCrop]   = CROP_DFLT
+  override def crop        : Option[MCrop]   = CROP_DFLT
   override def smartWidth  : Boolean           = SMART_WIDTH_DFLT
 }
 
@@ -57,7 +57,7 @@ case class MWkHtmlArgs(
                         override val quality     : Option[Int],
                         override val zoomOpt     : Option[Float]     = MWkHtmlArgs.ZOOM_OPT_DFLT,
                         override val plugins     : Boolean           = MWkHtmlArgs.WITH_PLUGINS_DFLT,
-                        override val crop        : Option[ImgCrop]   = MWkHtmlArgs.CROP_DFLT,
+                        override val crop        : Option[MCrop]   = MWkHtmlArgs.CROP_DFLT,
                         override val smartWidth  : Boolean           = MWkHtmlArgs.SMART_WIDTH_DFLT
 )
   extends IWkHtmlArgsT

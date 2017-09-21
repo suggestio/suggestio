@@ -3,7 +3,7 @@ package models.im
 import java.text.DecimalFormat
 
 import io.suggest.common.menum.EnumMaybeWithName
-import io.suggest.img.ImgCrop
+import io.suggest.img.ImgCropParsersImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.primo.IStrId
 import io.suggest.util.logs.MacroLogsImpl
@@ -187,7 +187,7 @@ object ImOpCodes extends EnumMaybeWithName {
 
   val AbsCrop: T = new Val("a") {
     override def mkOp(vs: Seq[String]) = {
-      AbsCropOp(ImgCrop(vs.head))
+      AbsCropOp( new ImgCropParsersImpl().apply(vs.head))
     }
   }
   val Gravity: T = new Val("b") {
@@ -237,7 +237,7 @@ object ImOpCodes extends EnumMaybeWithName {
   }
   val PercentSzCrop: T = new Val("k") {
     override def mkOp(vs: Seq[String]): ImOp = {
-      PercentSzCropOp(ImgCrop(vs.head))
+      PercentSzCropOp(new ImgCropParsersImpl().apply(vs.head))
     }
   }
 

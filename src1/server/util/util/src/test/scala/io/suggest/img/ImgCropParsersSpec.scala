@@ -1,5 +1,6 @@
 package io.suggest.img
 
+import io.suggest.img.crop.MCrop
 import org.scalatest._
 
 /**
@@ -16,13 +17,13 @@ class ImgCropParsersSpec extends FlatSpec with Matchers {
   "cropStrP" should "parse simple string: 305x468_409_0" in {
     val pr = parseAll(cropStrP, "305x468_409_0")
     pr.successful shouldBe  true
-    pr.get        shouldBe  ImgCrop(305, 468, 409, 0)
+    pr.get        shouldBe  MCrop(305, 468, 409, 0)
   }
 
   it should "parse other simple string: 319x319_258_0" in {
     val pr = parseAll(cropStrP, "319x319_258_0")
     pr.successful shouldBe  true
-    pr.get        shouldBe  ImgCrop(319, 319, 258, 0)
+    pr.get        shouldBe  MCrop(319, 319, 258, 0)
   }
 
 }

@@ -1,6 +1,6 @@
 package models.im
 
-import io.suggest.img.ImgCrop
+import io.suggest.img.crop.MCrop
 
 /**
  * Suggest.io
@@ -9,6 +9,6 @@ import io.suggest.img.ImgCrop
  * Description: Модель для представления инфы по кроппингу.
  */
 case class ImgCropInfo(
-  crop      : ImgCrop,
-  isCenter  : Boolean
+                        crop      : MCrop,
+                        isCenter  : Boolean
 )

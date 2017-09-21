@@ -3,7 +3,7 @@ package util.img
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.img.ImgCrop
+import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImplLazy
 import models.blk._
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
@@ -68,7 +68,7 @@ class StrictWideMaker @Inject() (
     val imOps = List[ImOp](
       ImGravities.Center,
       AbsResizeOp(szReal, ImResizeFlags.FillArea),
-      AbsCropOp( ImgCrop(width = width, height = height, offX = 0, offY = 0) ),
+      AbsCropOp( MCrop(width = width, height = height, offX = 0, offY = 0) ),
       //ImFilters.Lanczos,
       StripOp,
       ImInterlace.Plane,

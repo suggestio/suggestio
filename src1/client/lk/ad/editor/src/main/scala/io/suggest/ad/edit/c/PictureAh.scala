@@ -3,9 +3,9 @@ package io.suggest.ad.edit.c
 import com.github.dominictobias.react.image.crop.PercentCrop
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.{CropCancel, CropChanged, CropOpen, PictureFileChanged}
-import io.suggest.ad.edit.m.edit.MFileInfo
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
+import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.qd.MQdEdgeInfo
@@ -90,9 +90,9 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             val blobUrl = URL.createObjectURL( fileNew )
 
             // Записать текущий файл в состояние.
-            val fileInfo2 = MFileInfo(
-              file = fileNew,
-              blobUrl = Option(blobUrl)
+            val fileInfo2 = MJsFileInfo(
+              file    = Option( fileNew ),
+              blobUrl = Option( blobUrl )
             )
             val edge2 = MJdEditEdge(
               predicate   = MPredicates.Bg,
@@ -122,9 +122,9 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
               }
 
               // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
-              for (_ <- fileOld.blobUrl) {
+              for (_ <- fileOld.blobUrl; file <- fileOld.file) {
                 Future {
-                  fileOld.file.close()
+                  file.close()
                 }
               }
 
@@ -169,6 +169,8 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
       ))
       updated( v2 )
 
+
+    // Выставлен новый кроп для картинки.
     case m: CropChanged =>
       val v0 = value
       val cropPopup0 = v0.cropPopup.get
@@ -179,6 +181,8 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
       val v2 = v0.withCropPopup( Some(cropPopup2) )
       updated(v2)
 
+
+    // Отмена кропа
     case CropCancel =>
       val v0 = value
       v0.cropPopup.fold(noChange) { _ =>

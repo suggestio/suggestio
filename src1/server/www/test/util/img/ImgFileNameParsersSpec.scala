@@ -2,7 +2,7 @@ package util.img
 
 import functional.{OneAppPerSuiteNoGlobalStart, RegexParsersTesting}
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.img.ImgCrop
+import io.suggest.img.crop.MCrop
 import io.suggest.util.UuidUtil.base64ToUuid
 import models._
 import models.im._
@@ -54,12 +54,12 @@ class ImgFileNameParsersSpec
     "parse serialized compat. imgId~crop:  RJInLazORcmqjV-74oMUdQ~305x468_409_0" in {
       val pr = parseFileName("RJInLazORcmqjV-74oMUdQ~305x468_409_0")
       pr._1         mustBe base64ToUuid("RJInLazORcmqjV-74oMUdQ")
-      pr._2         mustBe List(AbsCropOp(ImgCrop(305, 468, 409, 0)))
+      pr._2         mustBe List(AbsCropOp(MCrop(305, 468, 409, 0)))
     }
     "parse serialize compat#2. : Zr7DfeinSqCCTaAIcUzwwQ~319x319_258_0" in {
       val pr = parseFileName("Zr7DfeinSqCCTaAIcUzwwQ~319x319_258_0")
       pr._1         mustBe base64ToUuid("Zr7DfeinSqCCTaAIcUzwwQ")
-      pr._2         mustBe List(AbsCropOp(ImgCrop(319, 319, 258, 0)))
+      pr._2         mustBe List(AbsCropOp(MCrop(319, 319, 258, 0)))
     }
 
 

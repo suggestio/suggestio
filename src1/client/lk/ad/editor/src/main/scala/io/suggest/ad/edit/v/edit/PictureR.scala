@@ -3,9 +3,9 @@ package io.suggest.ad.edit.v.edit
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{CropOpen, PictureFileChanged}
-import io.suggest.ad.edit.m.edit.MFileInfo
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
+import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -26,7 +26,7 @@ import io.suggest.sjs.common.i18n.Messages
 class PictureR {
 
   case class PropsVal(
-                       img: MFileInfo
+                       img: MJsFileInfo
                      )
   implicit object PictureRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {

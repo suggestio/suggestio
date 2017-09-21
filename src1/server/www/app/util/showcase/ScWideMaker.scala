@@ -3,7 +3,7 @@ package util.showcase
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.img.ImgCrop
+import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{SzMult_t, szMulted, szMultedF, szRounded}
 import models.im._
@@ -59,7 +59,7 @@ class ScWideMaker @Inject() (
   }
 
   /** Попытаться подправить опциональный исходный кроп, если есть. Если нет, то фейл. */
-  def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di): Future[ImgCrop] = {
+  def getAbsCropOrFail(iik: MAnyImgT, wideWh: ISize2di): Future[MCrop] = {
     iik.cropOpt match {
       case Some(crop0) =>
         val origWhFut = for {
@@ -76,7 +76,7 @@ class ScWideMaker @Inject() (
   }
 
   /** Поправить исходный кроп под wide-картинку. Гравитация производного кропа совпадает с исходным кропом. */
-  def updateCrop0(crop0: ImgCrop, wideWh: ISize2di, origWhFut: Future[ISize2di]): Future[ImgCrop] = {
+  def updateCrop0(crop0: MCrop, wideWh: ISize2di, origWhFut: Future[ISize2di]): Future[MCrop] = {
     origWhFut.map { origWh =>
       // Есть ширина-длина сырца. Нужно придумать кроп с центром как можно ближе к центру исходного кропа.
       // Результат должен изнутри быть вписан в исходник по размерам.
@@ -85,7 +85,7 @@ class ScWideMaker @Inject() (
       val rszRatio  = Math.max(1.0F, Math.min(rszRatioH, rszRatioV))
       val w = szMulted(wideWh.width, rszRatio)
       val h = szMulted(wideWh.height, rszRatio)
-      ImgCrop(
+      MCrop(
         width = w, height = h,
         // Для пересчета координат центра нужна поправка, иначе откропанное изображение будет за экраном.
         offX = translatedCropOffset(ocOffCoord = crop0.offX, ocSz = crop0.width, targetSz = w, oiSz = origWh.width, rszRatio = rszRatio),
@@ -103,7 +103,7 @@ class ScWideMaker @Inject() (
         else
           debug("Failed to get abs crop: " + ex.getMessage)
         // По какой-то причине, нет возможности/необходимости сдвигать окно кропа. Делаем новый кроп от центра:
-        val c = ImgCrop(width = wideWh.width, height = wideWh.height, 0, 0)
+        val c = MCrop(width = wideWh.width, height = wideWh.height, 0, 0)
         ImgCropInfo(c, isCenter = true)
       }
   }

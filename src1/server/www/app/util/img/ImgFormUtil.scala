@@ -5,12 +5,13 @@ import java.util.UUID
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.util.UuidUtil
 import models.im._
-import io.suggest.img.{ImgCrop, SioImageUtilT}
+import io.suggest.img.{ImgCropParsersImpl, SioImageUtilT}
 
 import scala.concurrent.Future
 import java.lang
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.img.crop.MCrop
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 
@@ -91,11 +92,11 @@ class ImgFormUtil @Inject() (
   }
 
   /** Маппинг обязательного параметра кропа на реальность. */
-  def imgCropM: Mapping[ImgCrop] = {
+  def imgCropM: Mapping[MCrop] = {
     nonEmptyText(minLength = 4, maxLength = 16)
-      .transform[Option[ImgCrop]] (ImgCrop.maybeApply, _.map(_.toCropStr).getOrElse(""))
+      .transform[Option[MCrop]] (new ImgCropParsersImpl().maybeApply, _.map(_.toCropStr).getOrElse(""))
       .verifying("crop.invalid", _.isDefined)
-      .transform[ImgCrop](_.get, Some.apply)
+      .transform[MCrop](_.get, Some.apply)
       .verifying("crop.height.invalid",   {crop => isCropSideValid(crop.height)} )
       .verifying("crop.width.invalid",    {crop => isCropSideValid(crop.width)} )
       .verifying("crop.offset.x.invalid", {crop => isCropOffsetValid(crop.offX)} )
@@ -248,7 +249,7 @@ class ImgFormUtil @Inject() (
    * @param srcSz Исходный размер картинки.
    * @return Пофикшенный crop.
    */
-  def repairCrop(crop: ImgCrop, targetSz: ISize2di, srcSz: ISize2di): ImgCrop = {
+  def repairCrop(crop: MCrop, targetSz: ISize2di, srcSz: ISize2di): MCrop = {
     var newCrop = crop
     // Пофиксить offset'ы кропа. Кроп может по сдвигу уезжать за пределы допустимой ширины/длины.
     if (crop.offX + crop.width > srcSz.width)
@@ -268,20 +269,6 @@ class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
   extends SioImageUtilT
   with MacroLogsImpl
 {
-
-  import mCommonDi.configuration
-
-  /** Если на выходе получилась слишком жирная превьюшка, то отсеять её. */
-  override def MAX_OUT_FILE_SIZE_BYTES: Option[Int] = None
-
-  /** Картинка считается слишком маленькой для обработки, если хотя бы одна сторона не превышает этот порог. */
-  override def MIN_SZ_PX: Int = 256
-
-  /** Если исходный jpeg после стрипа больше этого размера, то сделать resize.
-    * Иначе попытаться стрипануть icc-профиль по jpegtran, чтобы снизить размер без пересжатия. */
-  override def MAX_SOURCE_JPEG_NORSZ_BYTES: Option[Long] = {
-    Some(90 * 1024L)
-  }
 
   /** Качество сжатия jpeg. */
   override def JPEG_QUALITY_PC: Double = 90
