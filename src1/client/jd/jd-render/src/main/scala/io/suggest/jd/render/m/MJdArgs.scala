@@ -3,6 +3,8 @@ package io.suggest.jd.render.m
 import diode.FastEq
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.IDocTag
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -15,14 +17,16 @@ object MJdArgs {
   /** Поддержка FastEq для инстансов [[MJdArgs]]. */
   implicit object MJdWithArgsFastEq extends FastEq[MJdArgs] {
     override def eqv(a: MJdArgs, b: MJdArgs): Boolean = {
-      (a.template eq b.template) &&
-        (a.renderArgs eq b.renderArgs) &&
-        (a.jdCss eq b.jdCss) &&
-        (a.conf eq b.conf) &&
-        (a.selectedTag eq b.selectedTag) &&
-        (a.dnd eq b.dnd)
+      (a.template       ===* b.template) &&
+        (a.renderArgs   ===* b.renderArgs) &&
+        (a.jdCss        ===* b.jdCss) &&
+        (a.conf         ===* b.conf) &&
+        (a.selectedTag  ===* b.selectedTag) &&
+        (a.dnd          ===* b.dnd)
     }
   }
+
+  implicit def univEq: UnivEq[MJdArgs] = UnivEq.derive
 
 }
 

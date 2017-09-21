@@ -4,6 +4,8 @@ import diode.FastEq
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.File
 import org.scalajs.dom.raw.XMLHttpRequest
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.UnivEqJsUtil._
 
 /**
   * Suggest.io
@@ -20,17 +22,14 @@ object MFileInfo {
   /** Поддержка FastEq для инстансов [[MFileInfo]]. */
   implicit object MPictureInfoFastEq extends FastEq[MFileInfo] {
     override def eqv(a: MFileInfo, b: MFileInfo): Boolean = {
-      (a.file eq b.file) &&
-        (a.blobUrl eq b.blobUrl) &&
-        (a.uploadProgress eq b.uploadProgress) &&
-        (a.uploadXhr eq b.uploadXhr)
+      (a.file ===* b.file) &&
+        (a.blobUrl ===* b.blobUrl) &&
+        (a.uploadProgress ===* b.uploadProgress) &&
+        (a.uploadXhr ===* b.uploadXhr)
     }
   }
 
-  implicit def univEq: UnivEq[MFileInfo] = {
-    import io.suggest.dom.DomUnivEq._
-    UnivEq.derive
-  }
+  implicit def univEq: UnivEq[MFileInfo] = UnivEq.derive
 
 }
 

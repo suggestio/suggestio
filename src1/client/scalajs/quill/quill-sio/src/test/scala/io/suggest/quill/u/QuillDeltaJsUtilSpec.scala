@@ -78,7 +78,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
 
 
-  test("Convert to qd-tag of minimally-bolded string like 'bla bla <b>BOLDED</b> bla bla'") {
+  test("Convert to qd-tag of minimally-bolded string like 'bla bla <b>BOLDED</b> bla bla' (absolutely empty document0)") {
     // Пример нерабочей дельты взят прямо из редактора.
     // {"ops":[
     //   {"insert":"lorem ipsum und uber "},
@@ -108,6 +108,94 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
     assertEquals( jdTag2.props1.qdOps.size, 3 )
     assertEquals( edges2.size, 3 )
+
+    val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
+    assertEquals( revDelta.ops.length, 3 )
+
+    val diffDelta = delta2.diff(revDelta)
+
+    assert(diffDelta.ops.isEmpty)
+  }
+
+
+  test("Convert to qd-tag of minimally-bolded string like 'bla bla <b>BOLDED</b> bla bla' (non-empty document0)") {
+    // {"ops":[
+    //   {"insert":"lorem ipsum und uber "},
+    //   {"attributes":{"bold":true},"insert":"blochHeight"},
+    //   {"insert":" wr2 34t\n"}
+    // ]}
+    val strBefore = "lorem ipsum und uber "
+    val strBolded = "blochHeight"
+    val strAfter  = " wr2 34t\n"
+
+    val delta2 = new Delta()
+      .insert( strBefore )
+      .insert( strBolded,
+        attributes = {
+          val dAttrs = js.Object().asInstanceOf[DeltaOpAttrs]
+          dAttrs.bold = js.defined( true )
+          dAttrs
+        }
+      )
+      .insert( strAfter )
+
+    // Пусть исходный документ будет пустым. Для чистоты эксперимента.
+    val edges0 = Map[EdgeUid_t, MJdEditEdge](
+      1 -> MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")),
+      3 -> MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")),
+      4 -> MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364"))
+    )
+
+    val jdTag0 = IDocTag.edgeQd(-1, coords)
+      .updateProps1(_.withQdOps(Nil))
+
+    val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    assertEquals( edges2.size, 6 )
+
+    val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
+    assertEquals( revDelta.ops.length, 3 )
+
+    val diffDelta = delta2.diff(revDelta)
+
+    assert(diffDelta.ops.isEmpty)
+  }
+
+
+  test("Convert to qd-tag of minimally-bolded string like 'bla bla <b>BOLDED</b> bla bla' (non-empty document0 with related edges0)") {
+    // {"ops":[
+    //   {"insert":"lorem ipsum und uber "},
+    //   {"attributes":{"bold":true},"insert":"blochHeight"},
+    //   {"insert":" wr2 34t\n"}
+    // ]}
+    val strBefore = "lorem ipsum und uber "
+    val strBolded = "blochHeight"
+    val strAfter  = " wr2 34t\n"
+
+    val delta2 = new Delta()
+      .insert( strBefore )
+      .insert( strBolded,
+        attributes = {
+          val dAttrs = js.Object().asInstanceOf[DeltaOpAttrs]
+          dAttrs.bold = js.defined( true )
+          dAttrs
+        }
+      )
+      .insert( strAfter )
+
+    // Пусть исходный документ будет пустым. Для чистоты эксперимента.
+    val edges0 = Map[EdgeUid_t, MJdEditEdge](
+      1 -> MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")),
+      3 -> MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")),
+      4 -> MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")),
+      0 -> MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd"))
+    )
+
+    val jdTag0 = IDocTag.edgeQd(0, coords)
+
+    val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    assertEquals( edges2.size, 6 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
     assertEquals( revDelta.ops.length, 3 )

@@ -1,5 +1,6 @@
 package io.suggest.ad.edit.m
 
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -14,12 +15,16 @@ object MAdEditFormConf {
   object Fields {
     val PRODUCER_ID_FN = "p"
     val AD_ID_FN       = "a"
+    val SRV_CTX_ID     = "c"
   }
 
   implicit val MAD_EDIT_FORM_CONF_FORMAT: OFormat[MAdEditFormConf] = (
     (__ \ Fields.PRODUCER_ID_FN).format[String] and
-    (__ \ Fields.AD_ID_FN).formatNullable[String]
+    (__ \ Fields.AD_ID_FN).formatNullable[String] and
+    (__ \ Fields.SRV_CTX_ID).format[String]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MAdEditFormConf] = UnivEq.derive
 
 }
 
@@ -28,8 +33,10 @@ object MAdEditFormConf {
   *
   * @param producerId id текущего узла-владельца карточки.
   * @param adId id текущей рекламной карточки.
+  * @param srvCtxId Значение Context.ctxIdStr, заданное на сервере.
   */
 case class MAdEditFormConf(
                             producerId  : String,
                             adId        : Option[String],
+                            srvCtxId    : String
                           )

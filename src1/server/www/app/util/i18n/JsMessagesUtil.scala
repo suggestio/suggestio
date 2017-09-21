@@ -21,6 +21,8 @@ class JsMessagesUtil @Inject() (
   jsMessagesFactory     : JsMessagesFactory
 ) {
 
+  private val MC = MsgCodes
+
   /** Локализация для периодов рекламного размещения. */
   private def ADV_DATES_PERIOD_MSGS: TraversableOnce[String] = {
     val static = "Today" ::
@@ -53,24 +55,24 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения редактора тегов. */
   private def TAGS_EDITOR_MSGS: TraversableOnce[String] = {
-    MsgCodes.`Add` ::
+    MC.`Add` ::
       "Tags.choosing" ::
-      MsgCodes.`Add.tags` ::
-      MsgCodes.`Delete` ::
+      MC.`Add.tags` ::
+      MC.`Delete` ::
       Nil
   }
 
   private def DAYS_OF_WEEK_MSGS: TraversableOnce[String] = {
     DAYS_OF_WEEK.iterator.flatMap { dow =>
-      MsgCodes.`DayOfWeek.N.`(dow) ::
-        MsgCodes.`DayOfW.N.`(dow) ::
+      MC.`DayOfWeek.N.`(dow) ::
+        MC.`DayOfW.N.`(dow) ::
         Nil
     }
   }
 
   private def OF_MONTHS_OF_YEAR: Traversable[String] = {
     for (m <- MONTHS_OF_YEAR) yield {
-      MsgCodes.`ofMonth.N.`( m )
+      MC.`ofMonth.N.`( m )
     }
   }
 
@@ -81,32 +83,32 @@ class JsMessagesUtil @Inject() (
 
   /** Локализация для client-side нужд формы георазмещения. */
   private def ADV_GEO_FORM_MSGS: TraversableOnce[String] = {
-    MsgCodes.`Adv.on.map` :: MsgCodes.`Adv.on.map.hint` ::
-      MsgCodes.`Main.screen` ::
-      MsgCodes.`GeoTag` ::
-      MsgCodes.`_adv.Online.now` ::
-      MsgCodes.`Radius` :: MsgCodes.`in.radius.of.0.from.1` ::
-      MsgCodes.`N.modules` ::
-      MsgCodes.`Adv.on.main.screen` ::
-      MsgCodes.`Unable.to.initialize.map` ::
-      MsgCodes.`Please.wait` ::
-      MsgCodes.`Adv.on.main.screen` :: MsgCodes.`Coverage.area` ::
-      MsgCodes.`Ad.area.modules.count` :: MsgCodes.`Tag` ::
-      MsgCodes.`Date` :: MsgCodes.`Price` ::
+    MC.`Adv.on.map` :: MC.`Adv.on.map.hint` ::
+      MC.`Main.screen` ::
+      MC.`GeoTag` ::
+      MC.`_adv.Online.now` ::
+      MC.`Radius` :: MC.`in.radius.of.0.from.1` ::
+      MC.`N.modules` ::
+      MC.`Adv.on.main.screen` ::
+      MC.`Unable.to.initialize.map` ::
+      MC.`Please.wait` ::
+      MC.`Adv.on.main.screen` :: MC.`Coverage.area` ::
+      MC.`Ad.area.modules.count` :: MC.`Tag` ::
+      MC.`Date` :: MC.`Price` ::
       // Как бы документация.
-      MsgCodes.`Read.more` ::
-      MsgCodes.`Adv.geo.form.descr1` ::
-      MsgCodes.`User.located.inside.are.or.location.will.see.your.offer` ::
-      MsgCodes.`Good.to.know.that` ::
-      MsgCodes.`Geo.circle.does.not.touch.any.nodes` ::
-      MsgCodes.`Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons` ::
-      MsgCodes.`Adv.geo.form.descr.price` ::
+      MC.`Read.more` ::
+      MC.`Adv.geo.form.descr1` ::
+      MC.`User.located.inside.are.or.location.will.see.your.offer` ::
+      MC.`Good.to.know.that` ::
+      MC.`Geo.circle.does.not.touch.any.nodes` ::
+      MC.`Nodes.can.contain.subnodes.sublocations.routers.tvs.beacons` ::
+      MC.`Adv.geo.form.descr.price` ::
       Nil
   }
 
   /** Коды ошибок форм. */
   private def FORM_ERRORS: TraversableOnce[String] = {
-    MsgCodes.`Error` ::
+    MC.`Error` ::
       "Something.gone.wrong" ::
       "error.maxLength" ::
       "error.minLength" ::
@@ -116,35 +118,35 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для формы управления узлами/подузлами. */
   private def LK_NODES_MSGS: TraversableOnce[String] = {
-    val l1 = MsgCodes.`Create` ::
-      MsgCodes.`Name` ::
+    val l1 = MC.`Create` ::
+      MC.`Name` ::
       "Identifier" ::
       "Beacon.name.example" ::
       "Server.request.in.progress.wait" ::
       "Example.id.0" ::
-      MsgCodes.`Is.enabled` ::
-      MsgCodes.`Edit` ::
-      MsgCodes.`Change` ::
-      MsgCodes.`Yes` :: MsgCodes.`No` ::
+      MC.`Is.enabled` ::
+      MC.`Edit` ::
+      MC.`Change` ::
+      MC.`Yes` :: MC.`No` ::
       "Are.you.sure" ::
-      MsgCodes.`Delete` ::
-      MsgCodes.`Deletion` ::
-      MsgCodes.`Subnodes` :: MsgCodes.`N.nodes` :: MsgCodes.`N.disabled` ::
-      MsgCodes.`Yes.delete.it` ::
+      MC.`Delete` ::
+      MC.`Deletion` ::
+      MC.`Subnodes` :: MC.`N.nodes` :: MC.`N.disabled` ::
+      MC.`Yes.delete.it` ::
       "New.node" ::
       "Node.with.such.id.already.exists" ::
-      MsgCodes.`Type.new.name.for.beacon.0` ::
+      MC.`Type.new.name.for.beacon.0` ::
       "For.example.0" ::
-      MsgCodes.`Show.details` ::
-      MsgCodes.`Close` ::
-      MsgCodes.`Save` ::
-      MsgCodes.`Cancel` ::
+      MC.`Show.details` ::
+      MC.`Close` ::
+      MC.`Save` ::
+      MC.`Cancel` ::
       // Тарифы узлов
-      MsgCodes.`Adv.tariff` ::
-      MsgCodes.`Inherited` :: MsgCodes.`Set.manually` ::
-      MsgCodes.`_per_.day` ::
-      MsgCodes.`Comission.0.pct.for.sio` ::
-      MsgCodes.`Cost` ::
+      MC.`Adv.tariff` ::
+      MC.`Inherited` :: MC.`Set.manually` ::
+      MC.`_per_.day` ::
+      MC.`Comission.0.pct.for.sio` ::
+      MC.`Cost` ::
       Nil
 
     Iterator(l1, CAL_TYPES)
@@ -152,8 +154,8 @@ class JsMessagesUtil @Inject() (
   }
 
   private def DIST_UNITS: TraversableOnce[String] = {
-    MsgCodes.`n.km._kilometers` ::
-      MsgCodes.`n.m._meters` ::
+    MC.`n.km._kilometers` ::
+      MC.`n.m._meters` ::
       Nil
   }
 
@@ -175,7 +177,7 @@ class JsMessagesUtil @Inject() (
 
   /** пн, вт, ср, ... */
   private def DOWS_LC: TraversableOnce[String] = {
-    DAYS_OF_WEEK.map { MsgCodes.`dayOfW.N.` }
+    DAYS_OF_WEEK.map { MC.`dayOfW.N.` }
   }
 
   /** Названия календарей. */
@@ -187,21 +189,21 @@ class JsMessagesUtil @Inject() (
 
   /** Коды сообщений инфы по размещению. */
   private def ADV_INFO: TraversableOnce[String] = {
-    val msgs = MsgCodes.`Please.try.again.later` ::
-      MsgCodes.`Tariff.rate.of.0` ::
-      MsgCodes.`Information` ::
-      MsgCodes.`day24h` ::
-      MsgCodes.`Minimal.module` ::
-      MsgCodes.`scheme.left` ::
-      MsgCodes.`Current.ad` ::
-      MsgCodes.`N.modules` ::
-      MsgCodes.`Agreement.btw.CBCA.and.node.tariffs.for.year` ::
-      MsgCodes.`Town` ::
-      MsgCodes.`Address` ::
-      MsgCodes.`Site` ::
-      MsgCodes.`Info.about.prods.and.svcs` ::
-      MsgCodes.`Daily.people.traffic` ::
-      MsgCodes.`Audience.descr` ::
+    val msgs = MC.`Please.try.again.later` ::
+      MC.`Tariff.rate.of.0` ::
+      MC.`Information` ::
+      MC.`day24h` ::
+      MC.`Minimal.module` ::
+      MC.`scheme.left` ::
+      MC.`Current.ad` ::
+      MC.`N.modules` ::
+      MC.`Agreement.btw.CBCA.and.node.tariffs.for.year` ::
+      MC.`Town` ::
+      MC.`Address` ::
+      MC.`Site` ::
+      MC.`Info.about.prods.and.svcs` ::
+      MC.`Daily.people.traffic` ::
+      MC.`Audience.descr` ::
       Nil
 
     Iterator( msgs, DOWS_LC, CAL_TYPES )
@@ -209,7 +211,7 @@ class JsMessagesUtil @Inject() (
   }
 
   private def LK_COMMON: TraversableOnce[String] = {
-    MsgCodes.`Something.gone.wrong` ::
+    MC.`Something.gone.wrong` ::
       Nil
   }
 
@@ -220,8 +222,8 @@ class JsMessagesUtil @Inject() (
   }
 
   private def LK_ADN_MAP_MSGS: TraversableOnce[String] = {
-    MsgCodes.`You.can.place.adn.node.on.map.below` ::
-      MsgCodes.`Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle` ::
+    MC.`You.can.place.adn.node.on.map.below` ::
+      MC.`Your.sc.will.be.opened.auto.when.user.geolocated.inside.circle` ::
       MReasonTypes.GeoLocCapture.msgCodeI18n ::
       Nil
   }
@@ -229,24 +231,27 @@ class JsMessagesUtil @Inject() (
 
   /** Сообщения для react-выдачи. */
   private def SC: TraversableOnce[String] = {
-    MsgCodes.`Quick.search.for.offers` ::
-      MsgCodes.`Map` ::
-      MsgCodes.`Tags` ::
+    MC.`Quick.search.for.offers` ::
+      MC.`Map` ::
+      MC.`Tags` ::
       Nil
   }
 
 
   /** Сообщения для react-редактора карточек. */
   private def LK_AD_EDIT_MSGS: TraversableOnce[String] = {
-    MsgCodes.`Width` ::
-      MsgCodes.`Height` ::
-      MsgCodes.`Delete.block` ::
-      MsgCodes.`What.to.add` ::
-      MsgCodes.`Block` ::
-      MsgCodes.`Content` ::
-      MsgCodes.`Example.text` ::
-      MsgCodes.`Bg.color` ::
-      MsgCodes.`File.is.not.a.picture` ::
+    MC.`Width` ::
+      MC.`Height` ::
+      MC.`Delete.block` ::
+      MC.`What.to.add` ::
+      MC.`Block` ::
+      MC.`Content` ::
+      MC.`Example.text` ::
+      MC.`Bg.color` ::
+      MC.`File.is.not.a.picture` ::
+      MC.`Apply` ::
+      MC.`Crop` ::
+      MC.`Picture.editing` ::
       Nil
   }
 

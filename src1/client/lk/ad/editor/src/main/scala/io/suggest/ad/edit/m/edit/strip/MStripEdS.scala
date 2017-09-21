@@ -1,7 +1,9 @@
 package io.suggest.ad.edit.m.edit.strip
 
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPickerS}
+import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPickerS}
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -11,13 +13,15 @@ import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPickerS}
   */
 object MStripEdS {
 
-  implicit object MEditStripSFastEq extends FastEq[MStripEdS] {
+  implicit object MStripEdSFastEq extends FastEq[MStripEdS] {
     override def eqv(a: MStripEdS, b: MStripEdS): Boolean = {
-      (a.isLastStrip == b.isLastStrip) &&
-        (a.bgColorPick eq b.bgColorPick) &&
-        (a.confirmingDelete == b.confirmingDelete)
+      (a.isLastStrip ==* b.isLastStrip) &&
+        (a.bgColorPick ===* b.bgColorPick) &&
+        (a.confirmingDelete ==* b.confirmingDelete)
     }
   }
+
+  implicit def univEq: UnivEq[MStripEdS] = UnivEq.derive
 
 }
 

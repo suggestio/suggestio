@@ -10,8 +10,8 @@ import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
+import japgolly.univeq.UnivEq
 
-import scala.reflect.ClassTag
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.ValueT.TypedAttr_Color
 import scalacss.internal.mutable.StyleSheet
@@ -25,7 +25,11 @@ import scalacss.internal.mutable.StyleSheet
   * Таблица стилей плоская для всех документов сразу.
   */
 
-class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
+object JdCss {
+  implicit def univEq: UnivEq[JdCss] = UnivEq.derive
+}
+
+case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 

@@ -1,11 +1,13 @@
 package io.suggest.ad.edit.m
 
 import diode.FastEq
-import io.suggest.ad.edit.m.edit.{MAddS, MColorsState, MFileInfo, MQdEditS}
+import io.suggest.ad.edit.m.edit.color.MColorsState
+import io.suggest.ad.edit.m.edit.{MAddS, MFileInfo, MQdEditS}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.i18n.MMessage
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -18,14 +20,16 @@ object MDocS {
   /** Реализация FastEq для инстансов [[MDocS]]. */
   implicit object MDocSFastEq extends FastEq[MDocS] {
     override def eqv(a: MDocS, b: MDocS): Boolean = {
-      (a.jdArgs eq b.jdArgs) &&
-        (a.qdEdit eq b.qdEdit) &&
-        (a.stripEd eq b.stripEd) &&
-        (a.addS eq b.addS) &&
-        (a.colorsState eq b.colorsState) &&
-        (a.files eq b.files)
+      (a.jdArgs ===* b.jdArgs) &&
+        (a.qdEdit ===* b.qdEdit) &&
+        (a.stripEd ===* b.stripEd) &&
+        (a.addS ===* b.addS) &&
+        (a.colorsState ===* b.colorsState) &&
+        (a.files ===* b.files)
     }
   }
+
+  implicit def univEq: UnivEq[MDocS] = UnivEq.derive
 
 }
 
@@ -46,8 +50,7 @@ case class MDocS(
                   stripEd       : Option[MStripEdS]             = None,
                   addS          : Option[MAddS]                 = None,
                   colorsState   : MColorsState                  = MColorsState.empty,
-                  files         : Map[EdgeUid_t, MFileInfo]     = Map.empty,
-                  errors        : List[MMessage]                = Nil
+                  files         : Map[EdgeUid_t, MFileInfo]     = Map.empty
                 ) {
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
@@ -63,7 +66,5 @@ case class MDocS(
   def withColorsState(colorsState : MColorsState) = copy(colorsState = colorsState)
 
   def withFiles(files: Map[EdgeUid_t, MFileInfo]) = copy(files = files)
-
-  def withErrors(errors: List[MMessage]) = copy(errors = errors)
 
 }

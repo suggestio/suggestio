@@ -3,6 +3,7 @@ package io.suggest.lk.adn.map.r
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.lk.adn.map.m.MRoot
+import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
@@ -10,6 +11,8 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.sjs.common.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
+import MErrorPopupS.MErrorPopupSFastEq
+import io.suggest.sjs.common.spa.OptFastEq
 
 /**
   * Suggest.io
@@ -24,7 +27,7 @@ object LamPopupsR {
   protected case class State(
                               popContPropsC             : ReactConnectProxy[PopupsContR.PropsVal],
                               nodeAdvInfoOptC           : ReactConnectProxy[Option[MNodeAdvInfo]],
-                              exOptC                    : ReactConnectProxy[Option[Throwable]]
+                              exOptC                    : ReactConnectProxy[Option[MErrorPopupS]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -58,7 +61,11 @@ object LamPopupsR {
           )
         },
         nodeAdvInfoOptC = mrootProxy.connect { _.rcvrs.popupResp.toOption },
-        exOptC = mrootProxy.connect { _.rcvrs.popupResp.exceptionOption }
+        exOptC = mrootProxy.connect { mroot =>
+          MErrorPopupS.fromExOpt(
+            mroot.rcvrs.popupResp.exceptionOption
+          )
+        }( OptFastEq.Wrapped )
       )
     }
     .renderBackend[Backend]

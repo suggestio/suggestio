@@ -1,5 +1,6 @@
 package io.suggest.ad.edit.m
 
+import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.model.n2.node.meta.colors.MColorData
@@ -66,3 +67,16 @@ case object DocBodyClick extends ILkEditAction
 
 /** Изменилось file-поле выбора картинки. */
 case class PictureFileChanged(files: Seq[File]) extends ILkEditAction
+
+
+sealed trait IPictureCropAction extends ILkEditAction
+
+/** Сигнал к отрытию попапа редактирования изображения. */
+case object CropOpen extends IPictureCropAction
+/** Сигнал к закрытию попапа кропа изображения. */
+case object CropCancel extends IPictureCropAction
+/** Измение кропа текущего изображения. */
+case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop) extends IPictureCropAction
+/** Подтверждение сохранения кропа. */
+case object CropSave extends IPictureCropAction
+

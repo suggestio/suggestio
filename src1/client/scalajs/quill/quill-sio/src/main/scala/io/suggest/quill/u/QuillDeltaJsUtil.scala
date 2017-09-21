@@ -7,13 +7,14 @@ import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
-import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.text.MTextAligns
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 import scala.scalajs.js
@@ -337,7 +338,7 @@ class QuillDeltaJsUtil extends Log {
             val typeOfRaw = js.typeOf(raw)
 
             // Проанализировать тип значения insert-поля.
-            val jdEdge = if (typeOfRaw == JsTypes.STRING) {
+            val jdEdge = if (typeOfRaw ==* JsTypes.STRING) {
               val text = raw.asInstanceOf[String]
               newContEdgesMap.getOrElseUpdate(text, {
                 MJdEditEdge(
@@ -347,7 +348,7 @@ class QuillDeltaJsUtil extends Log {
                 )
               })
 
-            } else if (typeOfRaw == JsTypes.OBJECT) {
+            } else if (typeOfRaw ==* JsTypes.OBJECT) {
               // TODO Дедублицировать с JsTypes.STRING ветвью: часть кода очень похожа, хотя отличий тоже хватает.
               val deltaEmbed = raw.asInstanceOf[DeltaEmbed]
               // Внутри или image, или video

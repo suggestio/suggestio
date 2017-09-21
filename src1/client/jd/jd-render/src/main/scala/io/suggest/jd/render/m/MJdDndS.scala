@@ -3,6 +3,8 @@ package io.suggest.jd.render.m
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.jd.tags.IDocTag
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -17,9 +19,11 @@ object MJdDndS {
   /** Поддержка FastEq для интсансов [[MJdDndS]]. */
   implicit object MJdDndSFastEq extends FastEq[MJdDndS] {
     override def eqv(a: MJdDndS, b: MJdDndS): Boolean = {
-      a.jdt eq b.jdt
+      a.jdt ===* b.jdt
     }
   }
+
+  implicit def univEq: UnivEq[MJdDndS] = UnivEq.derive
 
 }
 

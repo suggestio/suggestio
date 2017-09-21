@@ -3,13 +3,14 @@ package io.suggest.ad.edit.v.edit.strip
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
-import io.suggest.ad.edit.m.edit.{MColorPick, MColorsState, MFileInfo}
+import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
+import io.suggest.ad.edit.m.edit.MFileInfo
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.ad.edit.v.edit.{ColorPickR, PictureR}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.IDocTag
-import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -33,7 +34,7 @@ class StripEditR(
                 ) {
 
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
-  import MStripEdS.MEditStripSFastEq
+  import MStripEdS.MStripEdSFastEq
   import MColorPick.MColorPickFastEq
   import pictureR.PictureRPropsValFastEq
 

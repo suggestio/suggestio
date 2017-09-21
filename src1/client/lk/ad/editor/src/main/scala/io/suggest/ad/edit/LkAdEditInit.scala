@@ -1,8 +1,8 @@
 package io.suggest.ad.edit
 
 import com.softwaremill.macwire._
-import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.form.AdFormConstants
+import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.view.VUtil
@@ -52,9 +52,10 @@ trait LkAdEditInit extends InitRouter {
     val formTarget = VUtil.getElementByIdOrNull[HTMLDivElement]( AdFormConstants.AD_EDIT_FORM_CONT_ID )
     formComponent.renderIntoDOM( formTarget )
 
-    // TODO Контейнер попапов.
-    //val popupContComponent =
-
+    // Рендерить контейнер попапов...
+    circuit
+      .wrap(rootRO)(modules.laePopupsR.apply)
+      .renderIntoDOM( PopupsContR.initDocBody() )
   }
 
 }

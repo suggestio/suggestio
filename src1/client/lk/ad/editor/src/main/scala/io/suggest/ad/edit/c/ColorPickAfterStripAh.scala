@@ -2,10 +2,11 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m._
-import io.suggest.jd.render.m.{IJdAction, IJdTagClick}
+import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.MJdTagNames
-import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq._
+import io.suggest.ueq.ReactUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -66,7 +67,7 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
   private def _maybeSetNewTrasform(tmOpt: Option[TagMod], v0: MDocS): ActionResult[M] = {
     val ra0 = v0.jdArgs.renderArgs
     // Проверить, изменилось ли хоть что-нибудь:
-    if (ra0.selJdtBgImgMod == tmOpt) {
+    if (ra0.selJdtBgImgMod ==* tmOpt) {   // TODO есть сомнения в том, что данное сравнение работает вообще.
       noChange
     } else {
       // Сохранить новые настройки трансформации в состояние.
@@ -84,7 +85,7 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
   private def BG_IMG_TRANSFORM: TagMod = {
     // Отгибаем нижний правый угол:
     // matrix3d(1.149423, 0.000334, 0, 0.000334, 0, 1.123908, 0, 0.000457, 0, 0, 1, 0, -0, 2.123451, 0, 1)
-    // Матрица построена через http://www.useragentman.com/matrix/
+    // Матрица построена через http://www.useragentman.com/matrix/#E4UwziAuBCCumQPYDsBMBeASuKACAYosALYBkAZsIsQAwAe6NFVtAnugLQCMpS9jvRDXY9K1Lu1QA2Hki4MmcyVIAszaqgaoAnLMSb0AZhoBWQahGDDWgOxmkhySsOkAJokMARdJGCwQpACWrlzoAMqwAEbEgZBBrhjYEHEAFpDEADYAwiiQIMiQ6AA8AA4AfAAqKYFguDW4AIa4kRmIAMYA1rggGSDE+ZAAdEUA9OUAUKRtYGA5BQPoIwBU47hLBCA9uJSbuEjdrrGNyKy4iOR7KSC4YJCsvbWRPYgA7oOrSyPj48vdyGCwUCNDIZS7XHp9Aa1W73ECuZrPF64WAQZpEVwgYAcSKIOhrL6DFrtDoAGlwAGIAObAYK4ADeq1wTJxdA4YECAC9AshKQAuNHADFYlkAbnGAF9vr8qtdEJEAFYgNqQBHkIjXI71XwNf5qkhw-HjcmILj0xnMhqdamIWDIVz88nkchtF1tMWSn7rGVnBVKlUNch5YB1FUpBqPTbIPbAHVgPX9eGfI36M1Mi1Wqi2+0U11tJ3uqXrHLEYgoG53B7bIhovFyxXKsCDQ2E1qdVNptUFNmckD87lXGmQd24Qu4LJhMJV4OQK64am0pNUmnwhlp5qWjrWrP8wEZAAUACJAsQGpTwCNIhut3bBpTAuQDwBKXCgEogBoqsBtKgg3A0P+4C81R5GKa5XIElJpPyAAcNA0CUdCgWmJSIOykCBCg-KgBkH6BAAbiASFMogBHAOQrQvPy1SuBiyAFvEhjhFEMQqgAEhUACyAAyxzwuOYTxCo6BZDqbQ9PEJjoG0rQQPEUhSTJIBAA
     val matrix =
       1.149423 :: 0.000334 :: 0 :: 0.000334 ::
       0        :: 1.123908 :: 0 :: 0.000457 ::
@@ -92,7 +93,7 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
       -0       :: 2.123451 :: 0 :: 1        ::
       Nil
 
-    ^.transform       := "matrix3d(" + matrix.mkString(",") + ")"
+    ^.transform := "matrix3d(" + matrix.mkString(",") + ")"
   }
 
   private def BG_IMG_ALL_TRANSFORM: TagMod = {

@@ -1,6 +1,7 @@
 package io.suggest.ad.edit.m.edit
 
 import diode.FastEq
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -17,6 +18,8 @@ object MAddS {
   }
 
   def default = MAddS()
+
+  implicit def univEq: UnivEq[MAddS] = UnivEq.derive
 
 }
 

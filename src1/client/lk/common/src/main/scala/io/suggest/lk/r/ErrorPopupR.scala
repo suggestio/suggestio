@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.m.ErrorPopupCloseClick
+import io.suggest.lk.m.{ErrorPopupCloseClick, MErrorPopupS}
 import io.suggest.lk.pop.PopupR
 import io.suggest.sjs.common.i18n.Messages
 import PopupR.PopupPropsValFastEq
@@ -20,7 +20,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
   */
 object ErrorPopupR {
 
-  type Props = ModelProxy[Option[Throwable]]
+  type Props = ModelProxy[Option[MErrorPopupS]]
 
   protected class Backend($: BackendScope[Props, Unit]) {
 
@@ -29,37 +29,58 @@ object ErrorPopupR {
     }
 
     def render(proxy: Props): VdomElement = {
-      proxy().whenDefinedEl { ex =>
+      proxy().whenDefinedEl { popupS =>
         proxy.wrap { _ =>
           PopupR.PropsVal(
             closeable = Some(closeBtnClick)
           )
         } { popupPropsProxy =>
           PopupR(popupPropsProxy)(
-            <.h2(
-              ^.`class` := Css.Lk.MINOR_TITLE,
-              Messages( MsgCodes.`Something.gone.wrong` )
-            ),
-
             <.div(
-              ^.`class` := Css.Colors.RED,
-              Messages( MsgCodes.`Error` )
-            ),
+              <.h2(
+                ^.`class` := Css.Lk.MINOR_TITLE,
+                Messages(MsgCodes.`Something.gone.wrong`)
+              ),
 
-            <.div(
-              ex.toString()
-            ),
-            <.br,
+              popupS.messages.headOption.whenDefined { _ =>
+                <.div(
+                  <.ul(
+                    popupS.messages.iterator.zipWithIndex.toVdomArray { case (msg, i) =>
+                      <.li(
+                        ^.key := i.toString,
+                        Messages( msg )
+                      )
+                    }
+                  ),
+                  <.br
+                )
+              },
 
-            Messages( MsgCodes.`Please.try.again.later` ),
-            <.br,
+              popupS.exception.whenDefined { ex =>
+                <.div(
+                  <.div(
+                    ^.`class` := Css.Colors.RED,
+                    Messages( MsgCodes.`Error` )
+                  ),
 
-            <.a(
-              ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.BTN_W, Css.Buttons.NEGATIVE, Css.Size.M ),
-              ^.onClick --> closeBtnClick,
-              Messages( MsgCodes.`Close` )
-            ),
-            <.br
+                  <.div(
+                    ex.toString()
+                  ),
+                  <.br,
+
+                  Messages( MsgCodes.`Please.try.again.later` )
+                )
+              },
+
+              <.br,
+
+              <.a(
+                ^.`class` := Css.flat( Css.Buttons.BTN, Css.Buttons.BTN_W, Css.Buttons.MINOR, Css.Size.M ),
+                ^.onClick --> closeBtnClick,
+                Messages( MsgCodes.`Close` )
+              ),
+              <.br
+            )
           )
         }
       }

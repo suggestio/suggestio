@@ -2,7 +2,8 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.edit.{MColorPick, MColorsState, MQdEditS}
+import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
+import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.quill.v.QuillEditorR

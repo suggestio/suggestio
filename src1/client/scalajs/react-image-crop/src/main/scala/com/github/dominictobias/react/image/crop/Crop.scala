@@ -18,6 +18,9 @@ sealed trait AbstractCrop[V <: AnyVal] extends js.Object {
 
   val height: js.UndefOr[V] = js.undefined
 
+  /** Forced aspect ratio. For example: 16/9. */
+  val aspect: js.UndefOr[Double] = js.undefined
+
 }
 
 

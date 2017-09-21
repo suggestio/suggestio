@@ -2,6 +2,10 @@ package io.suggest.ad.edit.m.edit
 
 import com.quilljs.delta.Delta
 import diode.FastEq
+import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPickerS}
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.QuillUnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -14,10 +18,12 @@ object MQdEditS {
   /** Поддержка FastEq для инстансов [[MQdEditS]]. */
   implicit object MQdEditSFastEq extends FastEq[MQdEditS] {
     override def eqv(a: MQdEditS, b: MQdEditS): Boolean = {
-      (a.qDelta eq b.qDelta) &&
-        (a.bgColorPick eq b.bgColorPick)
+      (a.qDelta ===* b.qDelta) &&
+        (a.bgColorPick ===* b.bgColorPick)
     }
   }
+
+  implicit def univEq: UnivEq[MQdEditS] = UnivEq.derive
 
 }
 

@@ -471,6 +471,10 @@ lazy val www = project
       val assets = (rootPath / "assets").***
       val distCss = (rootPath / "dist") * "*.css"
       assets +++ distCss
+    }.value,
+    // react-image-crop
+    npmAssets ++= NpmAssets.ofProject( reactImageCropSjs ) { nodeModules =>
+      (nodeModules / "react-image-crop" / "dist") * "*.css"
     }.value
   )
 

@@ -1,8 +1,10 @@
-package io.suggest.ad.edit.m.edit
+package io.suggest.ad.edit.m.edit.color
 
 import diode.FastEq
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.TypeT
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -18,10 +20,12 @@ object MColorPickerS {
   /** Поддержка FastEq для инстансов [[MColorPickerS]]. */
   implicit object MColorPickerSFastEq extends FastEq[MColorPickerS] {
     override def eqv(a: MColorPickerS, b: MColorPickerS): Boolean = {
-      (a.oldColor eq b.oldColor) &&
-        (a.isShown == b.isShown)
+      (a.oldColor ===* b.oldColor) &&
+        (a.isShown ==* b.isShown)
     }
   }
+
+  implicit def univEq: UnivEq[MColorPickerS] = UnivEq.derive
 
 }
 

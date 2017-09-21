@@ -1,6 +1,6 @@
 package io.suggest.ad.edit
 
-import diode.ModelRW
+import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, MDocS}
 import MDocS.MDocSFastEq
@@ -11,12 +11,13 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.{OptFastEq, StateInp}
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
-import io.suggest.ad.edit.m.edit.{IBgColorPickerS, MColorPick, MPictureAh, MQdEditS}
+import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick}
+import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
-import MColorPick.MColorPickFastEq
-import MPictureAh.MPictureAhFastEq
+import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
+import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 
 /**
   * Suggest.io
@@ -68,8 +69,9 @@ class LkAdEditCircuit(
     )
   }
 
+  private val rootRW = zoomRW(m => m) { (_, mroot2) => mroot2 }
   /** Используется извне, в init например. */
-  val rootRO = zoom(m => m)
+  val rootRO: ModelRO[MAeRoot] = rootRW
 
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
@@ -154,17 +156,22 @@ class LkAdEditCircuit(
     _zoomToBgColorPickS[MQdEditS](MJdTagNames.QUILL_DELTA)(_.qdEdit) { _.withQdEdit(_) }
   )
 
-  private val mPictureAhRW = mDocSRw.zoomRW[MPictureAh] { mdoc =>
+  private val mPictureAhRW = zoomRW[MPictureAh] { mroot =>
+    val mdoc = mroot.doc
     MPictureAh(
       files       = mdoc.files,
       edges       = mdoc.jdArgs.renderArgs.edges,
       selectedTag = mdoc.jdArgs.selectedTag,
-      errors      = mdoc.errors
+      errorPopup  = mroot.popups.error,
+      cropPopup   = mroot.popups.pictureCrop
     )
-  } { (mdoc0, mPictureAh) =>
-    mdoc0
+  } { (mroot0, mPictureAh) =>
+    val mdoc0 = mroot0.doc
+
+    val mdoc2 = mdoc0
       .withFiles( mPictureAh.files )
       .withJdArgs {
+        // TODO Opt поменять местами две операции, кучу jdArgs.with*() заменить на один jdArgs.copy().
         val jdArgs1 = mdoc0.jdArgs
           .withRenderArgs(
             mdoc0.jdArgs.renderArgs.withEdges(
@@ -182,14 +189,21 @@ class LkAdEditCircuit(
             .withJdCss( jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, jdArgs1.conf) ) )
         }
       }
-      .withErrors( mPictureAh.errors )
+
+    mroot0.copy(
+      doc    = mdoc2,
+      popups = mroot0.popups.copy(
+        pictureCrop = mPictureAh.cropPopup,
+        error       = mPictureAh.errorPopup
+      )
+    )
   }
 
   private val pictureAh = new PictureAh( mPictureAhRW )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
 
-  private val tailAh = new TailAh(mDocSRw)
+  private val tailAh = new TailAh( rootRW )
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {

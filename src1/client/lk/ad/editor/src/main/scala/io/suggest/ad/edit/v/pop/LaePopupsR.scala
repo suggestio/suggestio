@@ -2,12 +2,14 @@ package io.suggest.ad.edit.v.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
-import io.suggest.i18n.IMessage
+import io.suggest.ad.edit.m.pop.MPictureCropPopup
+import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.pop.PopupsContR
-import io.suggest.lk.r.ErrorMsgsPopupR
+import io.suggest.lk.r.ErrorPopupR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io
@@ -15,15 +17,18 @@ import japgolly.scalajs.react.vdom.html_<^._
   * Created: 20.09.17 16:27
   * Description: Lk Ad Edit Popups -- все попапы формы живут здесь.
   */
-class LaePopupsR {
+class LaePopupsR(
+                  val pictureCropPopupR: PictureCropPopupR
+                ) {
 
-  import PopupsContR.PopContPropsValFastEq
+  import MPictureCropPopup.MPictureCropPopupFastEq
 
   type Props = ModelProxy[MAeRoot]
 
   protected case class State(
                               popupsContPropsC    : ReactConnectProxy[PopupsContR.PropsVal],
-                              errorMsgsC          : ReactConnectProxy[Seq[IMessage]]
+                              errorMsgsC          : ReactConnectProxy[Option[MErrorPopupS]],
+                              cropPopPropsOptC    : ReactConnectProxy[Option[MPictureCropPopup]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -32,9 +37,10 @@ class LaePopupsR {
         PopupsContR(popupContProps)(
 
           // Попап с ~отрендеренными ошибками:
-          s.errorMsgsC { ErrorMsgsPopupR.apply }
+          s.errorMsgsC { ErrorPopupR.apply },
 
-          // TODO Попап кропа картинки.
+          // Попап кропа картинки:
+          s.cropPopPropsOptC { pictureCropPopupR.apply }
 
         )
       }
@@ -45,14 +51,17 @@ class LaePopupsR {
   val component = ScalaComponent.builder[Props]("LaePops")
     .initialStateFromProps { rootProxy =>
       State(
+
         popupsContPropsC = rootProxy.connect { mroot =>
           PopupsContR.PropsVal(
-            visible = mroot.doc.errors.nonEmpty
+            visible = mroot.popups.nonEmpty
           )
         },
-        errorMsgsC = rootProxy.connect { mroot =>
-          mroot.doc.errors
-        }
+
+        errorMsgsC = rootProxy.connect { _.popups.error },
+
+        cropPopPropsOptC = rootProxy.connect { _.popups.pictureCrop }
+
       )
     }
     .renderBackend[Backend]

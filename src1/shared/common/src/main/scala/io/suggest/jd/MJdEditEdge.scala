@@ -3,6 +3,7 @@ package io.suggest.jd
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicate}
 import io.suggest.primo.id.IId
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -36,6 +37,8 @@ object MJdEditEdge {
     (__ \ Fields.URL_FN).formatNullable[String] and
     (__ \ Fields.WH_FN).formatNullable[MSize2di]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MJdEditEdge] = UnivEq.derive
 
 }
 

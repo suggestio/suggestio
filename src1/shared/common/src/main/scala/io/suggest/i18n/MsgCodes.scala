@@ -194,5 +194,8 @@ object MsgCodes {
   val `Bg.color` = "Bg.color"
 
   val `File.is.not.a.picture` = "File.is.not.a.picture"
+  val `Apply` = "Apply"
+  val `Picture.editing` = "Picture.editing"
+  val `Crop` = "Crop"
 
 }

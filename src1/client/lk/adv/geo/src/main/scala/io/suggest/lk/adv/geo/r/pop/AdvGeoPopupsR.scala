@@ -7,9 +7,11 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import PopupsContR.PopContPropsValFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
+import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.r.{ErrorPopupR, PleaseWaitPopupR}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
+import MErrorPopupS.MErrorPopupSFastEq
 
 /**
   * Suggest.io
@@ -25,7 +27,7 @@ object AdvGeoPopupsR {
                               popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
                               nodeInfoConn        : ReactConnectProxy[Option[MNodeInfoPopupS]],
                               pendingOptConn      : ReactConnectProxy[Option[Long]],
-                              errorOptConn        : ReactConnectProxy[Option[Throwable]]
+                              errorOptConn        : ReactConnectProxy[Option[MErrorPopupS]]
                             )
 
 
@@ -64,7 +66,11 @@ object AdvGeoPopupsR {
         },
         nodeInfoConn    = propsProxy.connect( _.nodeInfo ),
         pendingOptConn  = propsProxy.connect( _.firstPotPending ),
-        errorOptConn    = propsProxy.connect( _.firstPotFailed )
+        errorOptConn    = propsProxy.connect { props =>
+          MErrorPopupS.fromExOpt(
+            props.firstPotFailed
+          )
+        }
       )
     }
     .renderBackend[Backend]

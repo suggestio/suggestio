@@ -1,26 +1,22 @@
 package io.suggest.ad.edit.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.m.edit.MAddS
-import io.suggest.ad.edit.v.edit.{AddR, QdEditR}
+import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
-import io.suggest.common.html.HtmlConstants
+import io.suggest.ad.edit.v.edit.{AddR, QdEditR}
 import io.suggest.css.Css
+import io.suggest.css.ScalaCssDefaults._
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
-import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sjs.common.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.css.ScalaCssDefaults._
-import io.suggest.i18n.{MMessage, MsgCodes}
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.i18n.Messages
+import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
 import scalacss.ScalaCssReact._
-import io.suggest.sjs.common.spa.OptFastEq
 
 /**
   * Suggest.io
@@ -38,10 +34,10 @@ class LkAdEditFormR(
                      val qdEditR        : QdEditR
                    ) {
 
-  import MJdArgs.MJdWithArgsFastEq
-  import stripEditR.StripEditRPropsValFastEq
   import MAddS.MAddSFastEq
+  import MJdArgs.MJdWithArgsFastEq
   import qdEditR.QdEditRPropsValFastEq
+  import stripEditR.StripEditRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -51,8 +47,7 @@ class LkAdEditFormR(
                               jdCssArgsC        : ReactConnectProxy[JdCss],
                               addC              : ReactConnectProxy[Option[MAddS]],
                               stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
-                              qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
-                              errorsC           : ReactConnectProxy[List[MMessage]]
+                              qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -104,29 +99,6 @@ class LkAdEditFormR(
           // Рендер редакторов
           <.div(
             LCSS.editorsCont,
-
-            // Рендер ошибок редактирования.
-            s.errorsC { errorsProxy =>
-              val errors = errorsProxy.value
-              errors.headOption.whenDefinedEl { _ =>
-                <.div(
-                  <.strong(
-                    Messages( MsgCodes.`Error` ),
-                    ":"
-                  ),
-
-                  <.ul(
-                    errors.iterator.zipWithIndex.toVdomArray { case (mmsg, i) =>
-                      <.li(
-                        ^.key     := i.toString,
-                        ^.`class` := Css.Colors.RED,
-                        Messages( mmsg )
-                      )
-                    }
-                  )
-                )
-              }
-            },
 
             // Редактор strip'а
             s.stripEdOptC { stripEditR.apply },
@@ -192,11 +164,8 @@ class LkAdEditFormR(
               colorsState = mroot.doc.colorsState
             )
           }
-        }( OptFastEq.Wrapped ),
+        }( OptFastEq.Wrapped )
 
-        errorsC = p.connect { mroot =>
-          mroot.doc.errors
-        }
       )
     }
     .renderBackend[Backend]

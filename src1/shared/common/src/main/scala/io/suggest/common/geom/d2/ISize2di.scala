@@ -2,6 +2,7 @@ package io.suggest.common.geom.d2
 
 import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
 import io.suggest.media.MediaConst
+import japgolly.univeq.UnivEq
 
 
 /**
@@ -117,6 +118,8 @@ object MSize2di {
         apply(other)
     }
   }
+
+  implicit def univEq: UnivEq[MSize2di] = UnivEq.derive
 
 }
 

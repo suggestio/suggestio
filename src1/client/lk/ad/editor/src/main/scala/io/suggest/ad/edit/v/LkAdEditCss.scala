@@ -100,10 +100,24 @@ class LkAdEditCss extends StyleSheet.Inline {
   }
 
 
+  /** Стили для кропа. */
+  object Crop {
+
+    val popup = {
+      style(
+        maxWidth( 600.px ),
+        overflow.visible
+      )
+    }
+
+  }
+
+
   initInnerObjects(
     WhControls.contWidth,
     Layout.editorsCont,
-    BgColorOptPicker.colorRound
+    BgColorOptPicker.colorRound,
+    Crop.popup
   )
 
 }

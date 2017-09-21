@@ -69,14 +69,18 @@ class LkAdEdit @Inject() (
       val docFormFut = ctxFut.flatMap(lkAdEdFormUtil.defaultEmptyDocument(_))
 
       // Конфиг формы содержит только данные о родительском узле-продьюсере.
-      val formConf = MAdEditFormConf(
-        producerId  = producerId,
-        adId        = None
-      )
+      val formConfFut = for (ctx <- ctxFut) yield {
+        MAdEditFormConf(
+          producerId  = producerId,
+          adId        = None,
+          srvCtxId    = ctx.ctxIdStr
+        )
+      }
 
       // Собрать модель инициализации формы редактора
       val formInitJsonStrFut0 = for {
-        docForm <- docFormFut
+        docForm  <- docFormFut
+        formConf <- formConfFut
       } yield {
         val formInit = MAdEditFormInit(
           conf = formConf,
@@ -116,6 +120,9 @@ class LkAdEdit @Inject() (
     canEditAd(adId, U.Lk).async { implicit request =>
       // Запускаем фоновые операции: подготовить ctxData:
       val ctxData1Fut = _ctxDataFut
+      val ctxFut = ctxData1Fut.map { implicit ctxData0 =>
+        implicitly[Context]
+      }
 
       // Нужно собрать начальное состояние формы. Для этого нужно собрать ресурсы текущей карточки.
       val imgPredicate = MPredicates.Bg
@@ -163,33 +170,34 @@ class LkAdEdit @Inject() (
       val nodeDoc = request.mad.extras.doc.get    // TODO .getOrElse(defaultDoc)
 
       // Собрать модель и отрендерить:
-      val formInit = MAdEditFormInit(
-        conf = MAdEditFormConf(
-          producerId = request.producer.id.get,
-          adId = request.mad.id
-        ),
-        form = MAdEditForm(
-          template  = nodeDoc.template,
-          edges     = edEdges
+      val formInitStrFut = for (ctx <- ctxFut) yield {
+        val formInit = MAdEditFormInit(
+          conf = MAdEditFormConf(
+            producerId  = request.producer.id.get,
+            adId        = request.mad.id,
+            srvCtxId    = ctx.ctxIdStr
+          ),
+          form = MAdEditForm(
+            template  = nodeDoc.template,
+            edges     = edEdges
+          )
         )
-      )
-
-      val formInitJsonStr = _formInit2str( formInit )
+        _formInit2str( formInit )
+      }
 
       // Дождаться готовности фоновых операций и отрендерить результат.
       for {
-        ctxData1 <- ctxData1Fut
+        ctx         <- ctxFut
+        formInitStr <- formInitStrFut
       } yield {
-        implicit val ctxData9 = ctxData1
-
         // Вернуть HTTP-ответ, т.е. страницу с формой.
-        Ok(adEditTpl(
+        val html = adEditTpl(
           mad     = Some(request.mad),
           parent  = request.producer,
-          state0  = formInitJsonStr
-        ))
+          state0  = formInitStr
+        )(ctx)
+        Ok(html)
       }
-
     }
   }
 

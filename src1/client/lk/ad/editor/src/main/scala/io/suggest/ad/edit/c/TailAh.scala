@@ -1,7 +1,8 @@
 package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.ad.edit.m.DocBodyClick
+import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
+import io.suggest.lk.m.ErrorPopupCloseClick
 
 /**
   * Suggest.io
@@ -9,13 +10,22 @@ import io.suggest.ad.edit.m.DocBodyClick
   * Created: 15.09.17 11:21
   * Description: Хвостовой ActionHandler, т.е. перехватывает всякие необязательные к обработке экшены.
   */
-class TailAh[M, T](modelRW: ModelRW[M, T]) extends ActionHandler(modelRW) {
+class TailAh[M](modelRW: ModelRW[M, MAeRoot]) extends ActionHandler(modelRW) {
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Перехват ненужного события клика в документе.
     case DocBodyClick =>
       noChange
+
+    // Клик по кнопке закрытия попапа ошибки.
+    case ErrorPopupCloseClick =>
+      val v0 = value
+      val v2 = v0.withPopups(
+        v0.popups
+          .withErrors( None )
+      )
+      updated( v2 )
 
   }
 

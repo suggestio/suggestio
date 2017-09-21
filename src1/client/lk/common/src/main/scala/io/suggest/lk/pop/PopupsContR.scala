@@ -47,7 +47,8 @@ object PopupsContR {
       <.aside(
         ^.classSet1(
           Css.flat( Css.Lk.Popup.POPUPS, Css.Lk.Popup.POPUPS_CONTAINER, p.css ),
-          Css.Display.VISIBLE -> p.visible
+          Css.Display.VISIBLE -> p.visible,
+          Css.Display.BLOCK   -> p.visible
         ),
 
         ^.onClick --> onBgClick,

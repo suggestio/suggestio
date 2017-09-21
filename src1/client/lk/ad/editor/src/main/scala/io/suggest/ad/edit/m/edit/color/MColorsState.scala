@@ -1,7 +1,9 @@
-package io.suggest.ad.edit.m.edit
+package io.suggest.ad.edit.m.edit.color
 
 import diode.FastEq
 import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -15,9 +17,11 @@ object MColorsState {
 
   implicit object MColorsDataSFastEq extends FastEq[MColorsState] {
     override def eqv(a: MColorsState, b: MColorsState): Boolean = {
-      a.colorPresets eq b.colorPresets
+      a.colorPresets ===* b.colorPresets
     }
   }
+
+  implicit def univEq: UnivEq[MColorsState] = UnivEq.derive
 
 }
 

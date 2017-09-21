@@ -1,11 +1,15 @@
 package io.suggest.ad.edit.c
 
+import com.github.dominictobias.react.image.crop.PercentCrop
 import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.ad.edit.m.PictureFileChanged
-import io.suggest.ad.edit.m.edit.{MFileInfo, MPictureAh}
+import io.suggest.ad.edit.m.{CropCancel, CropChanged, CropOpen, PictureFileChanged}
+import io.suggest.ad.edit.m.edit.MFileInfo
+import io.suggest.ad.edit.m.edit.pic.MPictureAh
+import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.qd.MQdEdgeInfo
+import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.pick.MimeConst
 import io.suggest.sjs.common.log.Log
@@ -65,9 +69,12 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             MimeConst.Image.isImageForAd(fileNew.`type`)
           }
           .fold [MPictureAh] {
-            println( "no valid faile found" )
             // Не найдено картинок среди новых файлов.
-            v0.withErrors( errMsg :: Nil )
+            v0.withErrorPopup(
+              Some(MErrorPopupS(
+                messages = errMsg :: Nil
+              ))
+            )
 
           } { fileNew =>
             // Найти в состоянии текущий файл, если он там есть.
@@ -102,8 +109,7 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             val v1 = v0.copy(
               files       = v0.files + (edgeUid2 -> fileInfo2),
               edges       = v0.edges + (edgeUid2 -> edge2),
-              selectedTag = Some(selJdt2),
-              errors      = v0.errors.filter(_ !=* errMsg)
+              selectedTag = Some(selJdt2)
             )
 
             // Если есть старый файл...
@@ -136,6 +142,48 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
           }
 
         updated(v9)
+      }
+
+
+    // Клик по кнопке открытия попапа для кропа.
+    case CropOpen =>
+      val v0 = value
+      val selJdt = v0.selectedTag.get
+      val bgImg = selJdt.props1.bgImg.get
+      val edge = v0.edges( bgImg.edgeUid )
+      val imgSrc = edge.url.getOrElse( edge.text.get )
+      val bm = selJdt.props1.bm.get
+
+      val percentCrop = new PercentCrop {
+        override val aspect = bm.width.toDouble / bm.height.toDouble
+        override val height = 100
+        override val x = 0
+        override val y = 0
+      }
+
+      val v2 = v0.withCropPopup( Some(
+        MPictureCropPopup(
+          imgSrc      = imgSrc,
+          percentCrop = percentCrop,
+        )
+      ))
+      updated( v2 )
+
+    case m: CropChanged =>
+      val v0 = value
+      val cropPopup0 = v0.cropPopup.get
+      val cropPopup2 = cropPopup0.copy(
+        percentCrop = m.percentCrop,
+        pixelCrop   = Some( m.pixelCrop )
+      )
+      val v2 = v0.withCropPopup( Some(cropPopup2) )
+      updated(v2)
+
+    case CropCancel =>
+      val v0 = value
+      v0.cropPopup.fold(noChange) { _ =>
+        val v2 = v0.withCropPopup( None )
+        updated(v2)
       }
 
   }

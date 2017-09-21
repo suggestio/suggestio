@@ -11,9 +11,13 @@
 @import views.html.stuff.jsTpl2HtmlTpl
 
 @headAfter = {
-  @* Стили для tinyMCE *@
+  @* Стили для quill editor. *@
   <link rel="stylesheet" type="text/css"
-        href="@routes.Assets.versioned("quill/dist/quill.snow.css")"/>
+        href="@routes.Assets.versioned("quill/dist/quill.snow.css")" />
+
+  @* Стили для react-image-crop. *@
+  <link rel="stylesheet" type="text/css"
+        href="@routes.Assets.versioned("react-image-crop/dist/ReactCrop.css")" />
 }
 
 @lk.lkBase(

@@ -2,7 +2,7 @@ package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.ad.edit.m.PictureFileChanged
+import io.suggest.ad.edit.m.{CropOpen, PictureFileChanged}
 import io.suggest.ad.edit.m.edit.MFileInfo
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
@@ -44,52 +44,71 @@ class PictureR {
   class Backend($: BackendScope[Props, State]) {
 
     /** Реакция на выбор файла в file input. */
-    private def fileChanged(e: ReactEventFromInput): Callback = {
+    private def _onFileChange(e: ReactEventFromInput): Callback = {
       val files = DomListSeq( e.target.files )
       dispatchOnProxyScopeCB($, PictureFileChanged(files))
     }
 
-    private def fileDeleted: Callback ={
+    /** Клик по кнопке удаления файла. */
+    private def _onDeleteFileClick: Callback = {
       dispatchOnProxyScopeCB($, PictureFileChanged(Nil))
+    }
+
+    /** Клик по кнопке кадрирования картинки. */
+    private def _onCropClick: Callback = {
+      dispatchOnProxyScopeCB($, CropOpen)
     }
 
 
     def render(p: Props, s: State): VdomElement = {
       val C = Css.Lk.AdEdit.Image
-      <.div(
-        ^.`class` := Css.flat( C.IMAGE, Css.Size.M ),
+      // Отрендерить текущую картинку
+      s.blobUrlOptC { blobUrlOptProxy =>
+        val blobUrlOpt = blobUrlOptProxy.value
+        <.div(
+          <.div(
+            ^.`class` := Css.flat( C.IMAGE, Css.Size.M ),
 
-        // Отрендерить текущую картинку
-        s.blobUrlOptC { blobUrlOpt =>
-          blobUrlOpt.value.fold[VdomElement] {
-            // Картинки нет. Можно загрузить файл.
-            <.input(
-              ^.`type`    := HtmlConstants.Input.file,
-              ^.onChange ==> fileChanged
-            )
-
-          } { blobUrl =>
-            <.div(
-              // thumbnail картинки.
-              <.img(
-                ^.src := blobUrl,
-                ^.width := 140.px
-                //^.height := 85.px   // Чтобы не плющило картинки, пусть лучше обрезает снизу
-              ),
-
-              // Ссылка-кнопка удаления картинки.
-              <.a(
-                ^.`class` := C.IMAGE_REMOVE_BTN,
-                ^.title   := Messages( MsgCodes.`Delete` ),
-                ^.onClick --> fileDeleted,
-                <.span
+            blobUrlOpt.fold[VdomElement] {
+              // Картинки нет. Можно загрузить файл.
+              <.input(
+                ^.`type`    := HtmlConstants.Input.file,
+                ^.onChange ==> _onFileChange
               )
 
+            } { blobUrl =>
+              <.div(
+                // thumbnail картинки.
+                <.img(
+                  ^.src := blobUrl,
+                  ^.width := 140.px
+                  //^.height := 85.px   // Чтобы не плющило картинки, пусть лучше обрезает снизу
+                ),
+
+                // Ссылка-кнопка удаления картинки.
+                <.a(
+                  ^.`class` := C.IMAGE_REMOVE_BTN,
+                  ^.title   := Messages( MsgCodes.`Delete` ),
+                  ^.onClick --> _onDeleteFileClick,
+                  <.span
+                )
+              )
+            }
+          ),
+
+          // Кнопка для кропа изображения.
+          blobUrlOpt.whenDefined { _ =>
+            val B = Css.Buttons
+            <.a(
+              ^.`class` := Css.flat( B.BTN, B.BTN_W, B.MINOR, Css.Size.M ),
+              ^.onClick --> _onCropClick,
+              Messages( MsgCodes.`Crop` ), HtmlConstants.ELLIPSIS
             )
           }
-        }
 
-      )
+        )
+      }
+
     }
 
   }

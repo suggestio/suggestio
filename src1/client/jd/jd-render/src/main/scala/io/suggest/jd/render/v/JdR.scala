@@ -134,7 +134,7 @@ class JdR extends Log {
       val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
       val clientY = e.clientY
 
-      if ( dataType == mimes.DataContentTypes.CONTENT_ELEMENT ) {
+      if ( dataType ==* mimes.DataContentTypes.CONTENT_ELEMENT ) {
         // Перенос контента.
         val coordsJsonStr = e.dataTransfer.getData( mimes.COORD_2D_JSON )
         val clientX = e.clientX
@@ -168,7 +168,7 @@ class JdR extends Log {
           )
         }
 
-      } else if (dataType == mimes.DataContentTypes.STRIP) {
+      } else if (dataType ==* mimes.DataContentTypes.STRIP) {
         // Перетаскивание целого стрипа. Нужно вычислить, стрип дропнут выше или ниже он середины текущего стрипа.
         val tgEl = e.target.asInstanceOf[Element]
         dispatchOnProxyScopeCBf($) { _ =>
@@ -360,7 +360,7 @@ class JdR extends Log {
               },
               s.props1.bm.whenDefined { bm =>
                 TagMod(
-                  ^.width  := bm.width.px,
+                  //^.width  := bm.width.px,    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
                   ^.height := bm.height.px
                 )
               },

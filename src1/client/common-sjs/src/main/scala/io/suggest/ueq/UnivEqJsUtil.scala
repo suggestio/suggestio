@@ -1,4 +1,4 @@
-package io.suggest.dom
+package io.suggest.ueq
 
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.File
@@ -8,9 +8,10 @@ import org.scalajs.dom.raw.XMLHttpRequest
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.09.17 12:58
-  * Description: Утиль для скрещивания DOM и UnivEq.
+  * Description: Утиль для UnivEq в контексте использования на стороне JS.
+  * Изначально, тут жили implicit-костыли для DOM.
   */
-object DomUnivEq {
+object UnivEqJsUtil {
 
   implicit def fileUe: UnivEq[File] = UnivEq.force
 
