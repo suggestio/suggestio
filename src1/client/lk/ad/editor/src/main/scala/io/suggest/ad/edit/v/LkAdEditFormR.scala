@@ -144,10 +144,12 @@ class LkAdEditFormR(
               strip         = selJd,
               edS           = stripEd,
               colorsState   = mroot.doc.colorsState,
-              bgImgFileOpt  = selJd.props1
+              bgImgSrcOpt   = selJd.props1
                 .bgImg
                 .flatMap { ei =>
-                  mroot.doc.files.get(ei.edgeUid)
+                  mroot.doc.jdArgs.renderArgs.edges
+                    .get(ei.edgeUid)
+                    .flatMap(_.imgSrcOpt)
                 }
             )
           }

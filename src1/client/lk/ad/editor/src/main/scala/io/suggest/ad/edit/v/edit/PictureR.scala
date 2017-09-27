@@ -1,19 +1,18 @@
 package io.suggest.ad.edit.v.edit
 
 import diode.FastEq
-import diode.react.{ModelProxy, ReactConnectProxy}
+import diode.react.ModelProxy
 import io.suggest.ad.edit.m.{CropOpen, PictureFileChanged}
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.model.dom.DomListSeq
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sjs.common.spa.OptFastEq
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.ueq.UnivEqUtil._
 import io.suggest.sjs.common.i18n.Messages
 
 /**
@@ -26,22 +25,18 @@ import io.suggest.sjs.common.i18n.Messages
 class PictureR {
 
   case class PropsVal(
-                       img: MJsFileInfo
+                       imgSrcOpt: Option[String]
                      )
   implicit object PictureRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.img eq b.img)
+      a.imgSrcOpt ===* b.imgSrcOpt
     }
   }
 
   type Props = ModelProxy[Option[PropsVal]]
 
-  protected case class State(
-                              blobUrlOptC     : ReactConnectProxy[Option[String]]
-                            )
 
-
-  class Backend($: BackendScope[Props, State]) {
+  class Backend($: BackendScope[Props, Unit]) {
 
     /** Реакция на выбор файла в file input. */
     private def _onFileChange(e: ReactEventFromInput): Callback = {
@@ -60,11 +55,11 @@ class PictureR {
     }
 
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(p: Props): VdomElement = {
       val C = Css.Lk.AdEdit.Image
       // Отрендерить текущую картинку
-      s.blobUrlOptC { blobUrlOptProxy =>
-        val blobUrlOpt = blobUrlOptProxy.value
+      p.value.whenDefinedEl { props =>
+        val blobUrlOpt = props.imgSrcOpt
         <.div(
           <.div(
             ^.`class` := Css.flat( C.IMAGE, Css.Size.M ),
@@ -115,13 +110,7 @@ class PictureR {
 
 
   val component = ScalaComponent.builder[Props]("Pic")
-    .initialStateFromProps { propsOptProxy =>
-      State(
-        blobUrlOptC = propsOptProxy.connect { propsOpt =>
-          propsOpt.flatMap(_.img.blobUrl)
-        }(OptFastEq.Plain)
-      )
-    }
+    .stateless
     .renderBackend[Backend]
     .build
 

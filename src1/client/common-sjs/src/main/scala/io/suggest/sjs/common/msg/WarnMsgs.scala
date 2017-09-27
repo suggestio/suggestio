@@ -130,4 +130,10 @@ object WarnMsgs extends MsgsStaticT {
 
   def DND_DROP_UNSUPPORTED                   = E(54)
 
+  /** Ожидалось, что эффектов не будет, а они есть. */
+  def UNEXPECTED_EFFECTS                     = E(55)
+
+  /** Файл (изображение) потерялось куда-то в ходе блобификации. */
+  def SOURCE_FILE_NOT_FOUND_AFTER_BLOBBING   = E(56)
+
 }

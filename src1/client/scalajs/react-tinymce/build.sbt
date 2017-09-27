@@ -18,7 +18,7 @@ scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
   Common.ORG        %%% "scalajs-react-common"  % "0.0.0-SNAPSHOT"
-  //"io.monix"      %%% "minitest" % Common.minitestVsn % "test"
+  //"io.monix"      %%% "minitest" % Common.minitestVsn % Test
 )
 
 npmDependencies in Compile ++= Seq(

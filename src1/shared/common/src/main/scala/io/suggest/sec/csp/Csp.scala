@@ -1,6 +1,8 @@
 package io.suggest.sec.csp
 
 import io.suggest.common.empty.{EmptyProduct, OptionUtil}
+import io.suggest.common.html.HtmlConstants
+import io.suggest.proto.HttpConst
 
 /**
   * Suggest.io
@@ -38,12 +40,12 @@ object Csp {
     val NONE = "'none'"
 
     /** Allows loading resources via the data scheme (eg Base64 encoded images). */
-    def DATA = "data:"
+    def DATA = HtmlConstants.Proto.DATA_
 
-    def BLOB = "blob:"
+    def BLOB = HtmlConstants.Proto.BLOB_
 
     /** Allows loading resources only over HTTPS on any domain. */
-    def HTTPS = "https:"
+    def HTTPS = HttpConst.Proto.HTTPS_
 
     /** Allows use of inline source elements such as style attribute, onclick, or script tag bodies (depends on the context of the source it is applied to) and javascript: URIs */
     def UNSAFE_INLINE = "'unsafe-inline'"

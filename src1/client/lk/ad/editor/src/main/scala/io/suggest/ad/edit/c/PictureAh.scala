@@ -10,7 +10,8 @@ import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.qd.MQdEdgeInfo
 import io.suggest.lk.m.MErrorPopupS
-import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
+import io.suggest.model.n2.edge.{EdgesUtil, MPredicates}
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -45,14 +46,11 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
         // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid.
         selJdt0.props1.bgImg.fold( noChange ) { bgImgOld =>
           val edgeUidOld = bgImgOld.edgeUid
-          val deleteKeyF = { k: EdgeUid_t => k !=* edgeUidOld }
-          val edges2 = v0.edges.filterKeys( deleteKeyF )
-          val files2 = v0.files.filterKeys( deleteKeyF )
+          val edges2 = v0.edges.filterKeys { _ !=* edgeUidOld }
           val selJdt2 = selJdt0.withProps1(
             selJdt0.props1.withBgImg( None )
           )
           val v2 = v0.copy(
-            files       = files2,
             edges       = edges2,
             selectedTag = Some( selJdt2 )
           )
@@ -80,7 +78,7 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             // Найти в состоянии текущий файл, если он там есть.
             val bgImgOldOpt = selJdt0.props1.bgImg
             val edgeUidOldOpt = bgImgOldOpt.map(_.edgeUid)
-            val fileOldOpt = edgeUidOldOpt.flatMap( v0.files.get )
+            val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
 
             // Вычислить новый edgeUid.
             val edgeUid2 = edgeUidOldOpt.getOrElse {
@@ -90,14 +88,17 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             val blobUrl = URL.createObjectURL( fileNew )
 
             // Записать текущий файл в состояние.
-            val fileInfo2 = MJsFileInfo(
-              file    = Option( fileNew ),
-              blobUrl = Option( blobUrl )
-            )
-            val edge2 = MJdEditEdge(
-              predicate   = MPredicates.Bg,
-              id          = edgeUid2,
-              url         = Some( blobUrl )
+            val dataEdge2 = MEdgeDataJs(
+              jdEdge = MJdEditEdge(
+                predicate   = MPredicates.Bg,
+                id          = edgeUid2,
+                url         = Some( blobUrl )
+              ),
+              fileJs = Some(MJsFileInfo(
+                blob      = fileNew,
+                blobUrl   = Option( blobUrl ),
+                fileName  = Option( fileNew.name )
+              ))
               // TODO Запустить upload XHR, и выставить 0% upload progress
             )
             val edgeInfo2 = MQdEdgeInfo( edgeUid2 )
@@ -107,33 +108,30 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
 
             // Собрать обновлённое состояние.
             val v1 = v0.copy(
-              files       = v0.files + (edgeUid2 -> fileInfo2),
-              edges       = v0.edges + (edgeUid2 -> edge2),
+              edges       = v0.edges.updated(edgeUid2, dataEdge2),
               selectedTag = Some(selJdt2)
             )
 
             // Если есть старый файл...
-            for (fileOld <- fileOldOpt) {
+            for (dataEdgeOld <- dataEdgeOldOpt; fileJsOld <- dataEdgeOld.fileJs) {
               // Закрыть старый blobURL в фоне, после пере-рендера.
-              for (blobUrl <- fileOld.blobUrl) {
+              for (fileJs <- fileJsOld.blobUrl) {
                 Future {
                   URL.revokeObjectURL( blobUrl )
                 }
               }
 
               // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
-              for (_ <- fileOld.blobUrl; file <- fileOld.file) {
-                Future {
-                  file.close()
-                }
+              Future {
+                fileJsOld.blob.close()
               }
 
               // Прервать upload файла на сервер, есть возможно.
-              for (upXhr <- fileOld.uploadXhr) {
+              for (upXhr <- fileJsOld.uploadXhr) {
                 try {
                   upXhr.abort()
                 } catch { case ex: Throwable =>
-                  LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, fileOld)
+                  LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
                 }
               }
             }
@@ -151,7 +149,8 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
       val selJdt = v0.selectedTag.get
       val bgImg = selJdt.props1.bgImg.get
       val edge = v0.edges( bgImg.edgeUid )
-      val imgSrc = edge.url.getOrElse( edge.text.get )
+      // TODO Для кропа подходит только оригинал картинки. Т.е. нужно или blobUrl, или что-то в этом роде
+      val imgSrc = edge.imgSrcOpt.get
       val bm = selJdt.props1.bm.get
 
       val percentCrop = new PercentCrop {

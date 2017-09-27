@@ -202,6 +202,7 @@ object Xhr extends Log {
   }
 
   val RESP_ARRAY_BUFFER = "arraybuffer"
+  val RESP_BLOB = "blob"
 
   /**
     * Запрос бинарщины с сервера. Ответ обычно подхватывается через boopickle.

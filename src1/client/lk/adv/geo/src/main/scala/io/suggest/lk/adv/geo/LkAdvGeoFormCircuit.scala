@@ -20,7 +20,7 @@ import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
+import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh

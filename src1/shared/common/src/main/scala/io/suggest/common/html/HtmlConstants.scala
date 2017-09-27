@@ -8,8 +8,18 @@ package io.suggest.common.html
  */
 object HtmlConstants {
 
+  final def DATA = "data"
+  final def BLOB = "blob"
+
+
+  object Proto {
+    final def DATA_ = DATA + COLON
+    final def BLOB_ = BLOB + COLON
+  }
+
+
   /** Префикс кастомных html-атрибутов. */
-  def ATTR_PREFIX             = "data-"
+  final def ATTR_PREFIX       = DATA + "-"
 
   /** Имя атрибута с id узла. */
   def ATTR_NODE_ID            = ATTR_PREFIX + "node-id"
@@ -24,7 +34,9 @@ object HtmlConstants {
 
   val DIEZ                    = "#"
 
-  def NEWLINE_UNIX            = '\n'
+  val NEWLINE_UNIX            = '\n'
+
+  val COLON                   = ":"
 
   @inline
   def TAG_PREFIX              = DIEZ

@@ -12,7 +12,7 @@ import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.spa.StateInp
-import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
+import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import io.suggest.lk.nodes.form.m.MCreateNodeS.MCreateNodeSFastEq

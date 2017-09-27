@@ -1,7 +1,7 @@
 package io.suggest.ueq
 
 import japgolly.univeq.UnivEq
-import org.scalajs.dom.File
+import org.scalajs.dom.{Blob, File}
 import org.scalajs.dom.raw.XMLHttpRequest
 
 /**
@@ -16,5 +16,7 @@ object UnivEqJsUtil {
   implicit def fileUe: UnivEq[File] = UnivEq.force
 
   implicit def xhrUe: UnivEq[XMLHttpRequest] = UnivEq.force
+
+  implicit def blobUe: UnivEq[Blob] = UnivEq.force
 
 }

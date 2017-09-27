@@ -191,76 +191,6 @@ class JdR extends Log {
 
     // Internal API
 
-    /** Рендер payload'а. */
-    /*
-    private def renderPlainPayload(pp: PlainPayload, jdArgs: MJdArgs): VdomNode = {
-      jdArgs.renderArgs.edges
-        .get( pp.edgeId )
-        .whenDefinedNode { e =>
-          e.predicate match {
-            case MPredicates.JdContent.Text =>
-              e.text
-                .whenDefinedNode(identity(_))
-            case _ =>
-              LOG.error( ErrorMsgs.TEXT_EXPECTED, msg = e )
-              _maybeSuppress
-          }
-        }
-    }
-    */
-
-
-    /** Рендер картинки. */
-    /*
-    private def renderPicture(p: Picture, i: Int, jdArgs: MJdArgs): VdomElement = {
-      jdArgs.renderArgs.edges
-        .get( p.edgeUid )
-        .whenDefinedEl { e =>
-          e.predicate match {
-            case MPredicates.Bg =>
-              e.url.whenDefinedEl { url =>
-                <.img(
-                  ^.key := i.toString,
-                  ^.src := url,
-                  // TODO Отрендерить фактические аттрибуты wh загружаемого файла изображения.
-                  e.whOpt.whenDefined { wh =>
-                    // Это фактические размеры изображения внутри файла по указанной ссылке.
-                    TagMod(
-                      ^.width  := wh.width.px,
-                      ^.height := wh.height.px
-                    )
-                  }
-                )
-              }
-
-            case _ =>
-              LOG.error(ErrorMsgs.IMG_EXPECTED, msg = e)
-              _maybeSuppress
-          }
-        }
-    }
-    */
-
-
-    /** Рендер контейнера, спозиционированного на экране абсолютно. */
-    /*
-    private def renderAbsPos(ap: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
-      <.div(
-        ^.key := i.toString,
-        jdArgs.jdCss.absPosStyleAll,
-        if (jdArgs.conf.withEdit && !jdArgs.selectedTag.contains(parent)) {
-          _draggableUsing(ap, jdArgs) { jdTagDragStart(ap) }
-        } else {
-          EmptyVdom
-        },
-        jdArgs.jdCss.absPosStyleF(ap),
-
-        renderChildren(ap, jdArgs)
-      )
-    }
-    */
-
-
     def renderChildren(dt: IDocTag, jdArgs: MJdArgs): VdomArray = {
       dt.children
         .iterator
@@ -343,8 +273,8 @@ class JdR extends Log {
             bgImgEi <- s.props1.bgImg
             edgeUid = bgImgEi.edgeUid
             edge    <- jdArgs.renderArgs.edges.get( edgeUid )
-            if edge.predicate ==* MPredicates.Bg
-            src     <- edge.url.orElse( edge.text )
+            if edge.jdEdge.predicate ==* MPredicates.Bg
+            src     <- edge.imgSrcOpt
           } yield {
             src
           }
@@ -360,8 +290,9 @@ class JdR extends Log {
               },
               s.props1.bm.whenDefined { bm =>
                 TagMod(
-                  //^.width  := bm.width.px,    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
-                  ^.height := bm.height.px
+                  // По дефолту -- заполнение по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
+                  ^.width  := bm.width.px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
+                  //^.height := bm.height.px
                 )
               },
               // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
@@ -451,9 +382,6 @@ class JdR extends Log {
       import MJdTagNames._
       idt.jdTagName match {
         case QUILL_DELTA                => renderQd( idt, i, jdArgs, parent )
-        //case pp: PlainPayload           => renderPlainPayload( pp, jdArgs )
-        //case p: Picture                 => renderPicture( p, i, jdArgs )
-        //case ap: AbsPos                 => renderAbsPos(ap, i, jdArgs, parent)
         case STRIP                      => renderStrip( idt, i, jdArgs )
         case DOCUMENT                   => renderDocument( idt, i, jdArgs )
       }

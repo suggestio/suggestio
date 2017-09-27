@@ -10,6 +10,7 @@ import japgolly.univeq.UnivEq
   */
 object UnivEqUtil {
 
+  /** Расширенные операции для UnivEq. */
   implicit final class UnivEqExtOps2[A <: AnyRef](private val a: A) extends AnyVal {
 
     /**
@@ -22,6 +23,8 @@ object UnivEqUtil {
 
   }
 
+
+  // Поддержка разных типов для UnivEq.
   @inline implicit def doubleUe           : UnivEq[Double]          = UnivEq.force
   @inline implicit def floadUe            : UnivEq[Float]           = UnivEq.force
 

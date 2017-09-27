@@ -1,8 +1,10 @@
-package io.suggest.sjs.common.bin
+package io.suggest.pick
 
 import io.suggest.bin.BinaryUtil
+import org.scalajs.dom.{Blob, FileReader, UIEvent}
 
 import scala.annotation.tailrec
+import scala.concurrent.{Future, Promise}
 import scala.scalajs.js.typedarray.{ArrayBuffer, TypedArray, Uint8Array}
 
 /**
@@ -141,7 +143,13 @@ object JsBinaryUtil {
    */
   def base64DecToArr(sBase64: String, nBlocksSize: Int = -1): Uint8Array = {
     val sB64Enc = sBase64.replace("[^A-Za-z0-9+/]", "")
-    val nInLen = sB64Enc.length
+    cleanBase64DecToArr(sB64Enc, nBlocksSize)
+  }
+  /** Конвертация чистой (без \s) base64-последовательности в Uint8Array.
+    * Этим методом можно сэкономить время и ресурсы благодаря пропуску стадии очистки base64-строки с помощью регэкспа.
+    */
+  def cleanBase64DecToArr(cleanBase64: CharSequence, nBlocksSize: Int = -1): Uint8Array = {
+    val nInLen = cleanBase64.length
     val nOutLen = if (nBlocksSize > 0) {
       Math.ceil((nInLen * 3 + 1 >> 2) / nBlocksSize).toInt * nBlocksSize
     } else {
@@ -156,7 +164,7 @@ object JsBinaryUtil {
     def _loop0(nInIdx: Int = 0): Unit = {
       if (nInIdx < nInLen) {
         nMod4 = nInIdx & 3
-        nUint24 |= BinaryUtil.b64ToUint6(sB64Enc.charAt(nInIdx).toInt) << 18 - 6 * nMod4
+        nUint24 |= BinaryUtil.b64ToUint6(cleanBase64.charAt(nInIdx).toInt) << 18 - 6 * nMod4
         if (nMod4 == 3 || nInLen - nInIdx == 1) {
           @tailrec
           def _loop1(nMode3: Int = 0): Unit = {
@@ -218,6 +226,26 @@ object JsBinaryUtil {
   }
   def typedArrayToHexString(buf: ArrayBuffer): String = {
     typedArrayToHexString( new Uint8Array(buf) )
+  }
+
+
+  /** Прочитать указанный Blob в новый ArrayBuffer.
+    *
+    * Следует аккуратнее дёргать этот метод на реальных задачах:
+    * метод приводит к загрузке всего бинаря целиком в память JS VM, а бинарь может быть очень большим...
+    *
+    * @param blob Исходный блоб, подлежащий чтению.
+    * @see [[https://stackoverflow.com/a/15981017]]
+    * @return Инстанс ArrayBuffer.
+    */
+  def blob2arrBuf(blob: Blob): Future[ArrayBuffer] = {
+    val fr = new FileReader()
+    val p = Promise[ArrayBuffer]()
+    fr.onload = { _: UIEvent =>
+      p.success( fr.result.asInstanceOf[ArrayBuffer] )
+    }
+    fr.readAsArrayBuffer(blob)
+    p.future
   }
 
 }

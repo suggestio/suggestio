@@ -10,6 +10,7 @@ object MimeConst {
 
   /** Общие куски слов, из которых можно составлять MIME-типы. */
   object Words {
+
     final def DELIM1 = "/"
     final def APPLICATION_ = "application" + DELIM1
     final def TEXT_ = "text" + DELIM1
@@ -19,6 +20,8 @@ object MimeConst {
     final def JPEG    = "jpeg"
     final def GIF     = "gif"
     final def PNG     = "png"
+
+    final def BASE64  = "base64"
 
   }
 

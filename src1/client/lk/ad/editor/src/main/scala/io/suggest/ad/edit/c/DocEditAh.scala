@@ -1,28 +1,37 @@
 package io.suggest.ad.edit.c
 
-import diode.{ActionHandler, ActionResult, ModelRW}
+import diode._
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
-import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m._
+import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
 import io.suggest.common.MHands
 import io.suggest.common.coll.Lists
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.common.html.HtmlConstants
+import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.jd.tags.qd._
+import io.suggest.jd.tags.IDocTag.Implicits._
 import io.suggest.jd.tags._
+import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.pick.Base64JsUtil
 import io.suggest.quill.m.TextChanged
-import IDocTag.Implicits._
 import io.suggest.quill.u.QuillDeltaJsUtil
+import io.suggest.react.ReactDiodeUtil
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.univeq._
+import org.scalajs.dom.raw.URL
 
+import scala.scalajs.js.JSON
 import scala.util.Random
 
 /**
@@ -40,6 +49,70 @@ class DocEditAh[M](
   with Log
 {
 
+  /** Пост-процессинг изменившихся эджей.
+    * Удобен после внесения каких-то изменений из quill.
+    *
+    * @param oldEdges Карта старых эджей.
+    * @param tpl Обновлённый шаблон
+    * @param edges Новая карта эджей.
+    * @return Возможный эффект и обновлённая карта эджей.
+    */
+  private def _ppEdges(oldEdges: Map[EdgeUid_t, MEdgeDataJs],
+                       tpl: IDocTag,
+                       edges: Map[EdgeUid_t, MEdgeDataJs]): (Option[Effect], Map[EdgeUid_t, MEdgeDataJs]) = {
+    // 10. Очистить эджи от неиспользуемых.
+    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( tpl, edges )
+
+    // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
+    val dataPrefix = HtmlConstants.Proto.DATA_
+    val blobEffectsIter = edges2
+      .valuesIterator
+      .flatMap[Effect] { edgeData =>
+        val jde = edgeData.jdEdge
+        // Три варианта:
+        // - Просто эдж, который надо молча завернуть в EdgeData. Текст, например.
+        // - Эдж, сейчас который проходит асинхронную процедуру приведения к блобу. Он уже есть в исходной карте эджей со ссылкой в виде base64.
+        // - Эдж, который с base64-URL появился в новой карте, но отсутсвует в старой. Нужно запустить его блоббирование.
+        val blobFxOpt = jde.url
+          .filter(_ startsWith dataPrefix)
+          .fold [Option[Effect]] {
+            // Это не-dataURL. А blob или просто без URL. В любом случае -- пропуск без изменений.
+            None
+          } { dataUrl =>
+            // Это dataURL. Тут два варианта: юзер загрузил новую картинку только что, либо загружена ранее.
+            // Смотрим в old-эджи, есть ли там текущий эдж с этой картинкой.
+            oldEdges
+              .get( jde.id )
+              .fold [Option[Effect]] {
+                // Это новая картинка. Организовать перегонку в blob.
+                val fx = Effect {
+                  val fut = for (blob <- Base64JsUtil.b64Url2Blob(dataUrl)) yield {
+                    B64toBlobDone(dataUrl, blob)
+                  }
+                  for (ex <- fut.failed)
+                    LOG.error(ErrorMsgs.BASE64_TO_BLOB_FAILED, ex = ex)
+                  fut
+                }
+                Some(fx)
+              } { _ =>
+                // Этот dataURL-эдж уже был ранее, значит blob уже должен обрабатываться в фоне.
+                None
+              }
+          }
+
+        // Аккамулировать эффект и обновлённый data-edge
+        blobFxOpt
+      }
+
+    // 90. Объединить все собранные эффекты воедино.
+    val totalFxOpt = ReactDiodeUtil.mergeEffectsSet( blobEffectsIter )
+
+    // Вернуть итоговую карту эджей и объединённый эффект.
+    (totalFxOpt, edges2)
+  }
+
+
+
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Набор текста в wysiwyg-редакторе.
@@ -54,7 +127,9 @@ class DocEditAh[M](
         // Текст действительно изменился. Пересобрать json-document.
         //println( JSON.stringify(m.fullDelta) )
         val currTag0 = v0.jdArgs.selectedTag.get
-        val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, v0.jdArgs.renderArgs.edges)
+        // Спроецировать карту сборных эджей в jd-эджи
+        val edgesData0 = v0.jdArgs.renderArgs.edges
+        val (qdTag2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, edgesData0)
 
         // Собрать новый json-document
         val jsonDoc2 = v0.jdArgs
@@ -62,9 +137,13 @@ class DocEditAh[M](
           .deepUpdateChild( currTag0, qdTag2 :: Nil )
           .head
 
+        // Пост-процессить новые эджи, т.к. там может быть мусор или эджи, требующие фоновой обработи.
+        val (fxOpt, edgesData3) = _ppEdges( edgesData0, jsonDoc2, edgesData2 )
+
         val jdArgs2 = v0.jdArgs.copy(
           template    = jsonDoc2,
-          renderArgs  = v0.jdArgs.renderArgs.withEdges(edges2),
+          renderArgs  = v0.jdArgs.renderArgs
+            .withEdges( edgesData3 ),
           selectedTag = Some(qdTag2),
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(jsonDoc2, v0.jdArgs.conf)
@@ -77,7 +156,8 @@ class DocEditAh[M](
           //qDelta = Some(m.fullDelta)    // Не обновляем дельту при редактировании, т.к. у нас тут только initial-значения
         )
 
-        updated(v2)
+        // Объединить все эффекты, если они есть.
+        fxOpt.fold( updated(v2) ) { updated(v2, _) }
       }
 
 
@@ -98,7 +178,10 @@ class DocEditAh[M](
         val v2 = m.jdTag.jdTagName match {
           // Это qd-тег, значит нужно собрать и залить текущую дельту текста в состояние.
           case MJdTagNames.QUILL_DELTA =>
-            val delta2 = quillDeltaJsUtil.qdTag2delta(m.jdTag, v0.jdArgs.renderArgs.edges)
+            val delta2 = quillDeltaJsUtil.qdTag2delta(
+              qd    = m.jdTag,
+              edges = v0.jdArgs.renderArgs.edges
+            )
             v1.withQdEdit(
               Some(
                 MQdEditS(
@@ -134,9 +217,10 @@ class DocEditAh[M](
 
         // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
         val v4 = v0.jdArgs.selectedTag.fold(v3) { jdt =>
+          val dataEdges0 = v0.jdArgs.renderArgs.edges
           if (
             jdt.jdTagName == MJdTagNames.QUILL_DELTA &&
-            QdUtil.isEmpty(jdt, v0.jdArgs.renderArgs.edges) &&
+            QdJsUtil.isEmpty(jdt, dataEdges0) &&
             v3.jdArgs.template.contains(jdt)
           ) {
             val tpl2 = v3.jdArgs.template.deepUpdateOne(jdt, Nil)
@@ -145,13 +229,12 @@ class DocEditAh[M](
               .shrink
               .head
             // Очистить эджи от лишнего контента
-            val edgesMap2 = quillDeltaJsUtil.purgeUnusedEdges(tpl2, v3.jdArgs.renderArgs.edges)
+            val dataEdges2 = quillDeltaJsUtil.purgeUnusedEdges(tpl2, dataEdges0)
             v3.withJdArgs(
               v3.jdArgs.copy(
                 template    = tpl2,
-                renderArgs  = v3.jdArgs.renderArgs.copy(
-                  edges = edgesMap2
-                ),
+                renderArgs  = v3.jdArgs.renderArgs
+                  .withEdges( dataEdges2 ),
                 jdCss       = jdCssFactory.mkJdCss(
                   MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf)
                 )
@@ -163,6 +246,58 @@ class DocEditAh[M](
         }
 
         updated( v4 )
+      }
+
+
+    // Завершена фоновая конвертация base64-URL в Blob.
+    case m: B64toBlobDone =>
+      val v0 = value
+      val dataEdgesMap0 = v0.jdArgs.renderArgs.edges
+
+      // Вычислить обновлённый эдж, если есть старый эдж для данной картинки.
+      val dataEdgeOpt2 = for {
+        // Поиска по исходной URL, потому что карта эджей могла изменится за время фоновой задачи.
+        dataEdge0 <- dataEdgesMap0.valuesIterator.find { e =>
+          e.jdEdge.imgSrcOpt contains m.b64Url
+        }
+      } yield {
+        // Найден исходный эдж. Залить в него инфу по блобу, выкинув оттуда dataURL:
+        val blobUrlOpt = Option( URL.createObjectURL( m.blob ) )
+        dataEdge0.withFileJs {
+          // Нельзя забыть Base64 dataURL, потому что quill их не понимает, заменяя их на "//:0".
+          // Сохранить инфу по блобу.
+          val fileJs2 = dataEdge0.fileJs.fold {
+            MJsFileInfo(
+              blob = m.blob,
+              blobUrl = blobUrlOpt
+            )
+          } { fileJs0 =>
+            fileJs0
+              .withBlob( m.blob )
+              .withBlobUrl( blobUrlOpt )
+          }
+          Some( fileJs2 )
+        }
+      }
+
+      // Залить в состояние обновлённый эдж.
+      dataEdgeOpt2.fold {
+        LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND_AFTER_BLOBBING, msg = m.blob )
+        noChange
+      } { dataEdge2 =>
+        val dataEdgesMap2 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
+        val v2 = v0
+          .withJdArgs(
+            v0.jdArgs.withRenderArgs(
+              v0.jdArgs.renderArgs.withEdges(
+                dataEdgesMap2
+              )
+            )
+          )
+          // Ссылка изменилась на blob, но нельзя трогать delta: quill не поддерживает blob-ссылки.
+
+        // TODO Запустить эффект получения оригинальный w/h картинки, если это картинка.
+        updated(v2)
       }
 
 
@@ -412,14 +547,12 @@ class DocEditAh[M](
           template    = tpl2,
           jdCss       = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) ),
           dnd         = MJdDndS.empty,
-          // Один или два strip'а будет перестроено, поэтому обнуляем selectedTag только если там strip.
-          // TODO Нужно выставлять сюда инстанс нового/старого стрипа, если там был новый или старый стрип.
-          selectedTag = v0.jdArgs.selectedTag
-            .filterNot(_.jdTagName ==* MJdTagNames.STRIP)
+          selectedTag = Some(apJdt2)
         )
       )
 
       updated(v2)
+
 
     // Реакцие на завершение перетаскивания целого стрипа.
     case m: JdDropStrip =>
@@ -508,16 +641,18 @@ class DocEditAh[M](
       val (edgesMap2, edgeUid) = edgesMap0
         .valuesIterator
         .find { e =>
-          e.predicate ==* textPred &&
-            e.text.contains( textL10ed )
+          e.jdEdge.predicate ==* textPred &&
+            e.jdEdge.text.contains( textL10ed )
         }
-        .fold [(Map[EdgeUid_t, MJdEditEdge], Int)] {
+        .fold [(Map[EdgeUid_t, MEdgeDataJs], Int)] {
           // Нет примера текста в эджах: добавить его туда.
           val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( edgesMap0 )
-          val e = MJdEditEdge(
-            predicate = textPred,
-            id        = nextEdgeUid,
-            text      = Some(textL10ed)
+          val e = MEdgeDataJs(
+            jdEdge = MJdEditEdge(
+              predicate = textPred,
+              id        = nextEdgeUid,
+              text      = Some(textL10ed)
+            )
           )
           val edgesMap1 = edgesMap0 + (nextEdgeUid -> e)
           (edgesMap1, nextEdgeUid)
@@ -547,7 +682,10 @@ class DocEditAh[M](
         ),
         qdEdit = Some {
           MQdEditS(
-            qDelta = quillDeltaJsUtil.qdTag2delta(qdt, edgesMap2)
+            qDelta = quillDeltaJsUtil.qdTag2delta(
+              qd    = qdt,
+              edges = edgesMap2
+            )
           )
         },
         stripEd = None,

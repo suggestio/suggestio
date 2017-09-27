@@ -2,7 +2,7 @@ package io.suggest.pick
 
 import boopickle.Pickler
 import io.suggest.bin.ConvCodecs
-import io.suggest.sjs.common.bin.Base64JsUtil.SjsBase64JsDecoder
+import Base64JsUtil.SjsBase64JsDecoder
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr

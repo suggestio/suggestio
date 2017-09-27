@@ -1,8 +1,8 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import io.suggest.jd.MJdEditEdge
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.MEdgeDataJs
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
@@ -36,11 +36,11 @@ object MJdRenderArgs {
   *                       Появилась для возможности заглядывать "под" изображение в редакторе, чтобы увидеть фон.
   */
 case class MJdRenderArgs(
-                          edges               : Map[EdgeUid_t, MJdEditEdge],
+                          edges               : Map[EdgeUid_t, MEdgeDataJs],
                           selJdtBgImgMod      : Option[TagMod]              = None
                         ) {
 
-  def withEdges(edges: Map[EdgeUid_t, MJdEditEdge]) = copy(edges = edges)
+  def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs]) = copy(edges = edges)
   def withSelJdtBgImgMod(selJdtBgImgMod: Option[TagMod]) = copy(selJdtBgImgMod = selJdtBgImgMod)
 
 }

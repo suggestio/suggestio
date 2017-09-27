@@ -18,6 +18,8 @@ import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
+import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.MEdgeDataJs
 
 /**
   * Suggest.io
@@ -59,7 +61,13 @@ class LkAdEditCircuit(
           jdArgs = MJdArgs(
             template   = tpl,
             renderArgs = MJdRenderArgs(
-              edges = IId.els2idMap( mFormInit.form.edges )
+              edges = IId.els2idMap[EdgeUid_t, MEdgeDataJs] {
+                mFormInit.form.edges
+                  .iterator
+                  .map {
+                    MEdgeDataJs(_)
+                  }
+              }
             ),
             jdCss      = jdCss,
             conf       = conf
@@ -159,7 +167,6 @@ class LkAdEditCircuit(
   private val mPictureAhRW = zoomRW[MPictureAh] { mroot =>
     val mdoc = mroot.doc
     MPictureAh(
-      files       = mdoc.files,
       edges       = mdoc.jdArgs.renderArgs.edges,
       selectedTag = mdoc.jdArgs.selectedTag,
       errorPopup  = mroot.popups.error,
@@ -169,7 +176,6 @@ class LkAdEditCircuit(
     val mdoc0 = mroot0.doc
 
     val mdoc2 = mdoc0
-      .withFiles( mPictureAh.files )
       .withJdArgs {
         // TODO Opt поменять местами две операции, кучу jdArgs.with*() заменить на один jdArgs.copy().
         val jdArgs1 = mdoc0.jdArgs

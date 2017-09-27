@@ -8,7 +8,6 @@ import models.im._
 import io.suggest.img.{ImgCropParsersImpl, SioImageUtilT}
 
 import scala.concurrent.Future
-import java.lang
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.img.crop.MCrop
@@ -64,12 +63,16 @@ class ImgFormUtil @Inject() (
   }
 
   /** Маппер для новых картинок на базе MMedia. */
-  def img3IdOptM = mkImgIdOptM[MImgT](MImg3)
+  def img3IdOptM: Mapping[Option[MImgT]] = {
+    mkImgIdOptM[MImgT](MImg3)
+  }
 
   /** Обязательный маппинг MImg3-картинки. */
-  def img3IdM = img3IdOptM
-    .verifying("error.required", _.isDefined)
-    .transform [MImgT] (_.get, Some.apply)
+  def img3IdM: Mapping[MImgT] = {
+    img3IdOptM
+      .verifying("error.required", _.isDefined)
+      .transform [MImgT] (_.get, Some.apply)
+  }
 
 
   // Валидация значений crop'а.
@@ -262,10 +265,10 @@ class ImgFormUtil @Inject() (
 }
 
 
-// TODO OrigImageUtilk -- очень древний компонент, но он ещё используется немного. Нужно, чтобы его не было вообще.
+// TODO OrigImageUtilk -- очень древний компонент, но он ещё используется. Может быть сделать, чтобы его не было вообще? Там по сути только вызов convert внутри.
 
 /** Резайзилка картинок, используемая для генерация "оригиналов", т.е. картинок, которые затем будут кадрироваться. */
-class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
+class OrigImageUtil
   extends SioImageUtilT
   with MacroLogsImpl
 {
@@ -273,17 +276,7 @@ class OrigImageUtil @Inject() (mCommonDi: ICommonDi)
   /** Качество сжатия jpeg. */
   override def JPEG_QUALITY_PC: Double = 90
 
-  /** Максимальный размер сторон будущей картинки (новая картинка должна вписываться в
-    * прямоугольник с указанныыми сторонами). */
-  override def DOWNSIZE_HORIZ_PX: Integer = {
-    Integer.valueOf(2048)
-  }
-
-  override def DOWNSIZE_VERT_PX: Integer = {
-    DOWNSIZE_HORIZ_PX
-  }
-
-  override def GAUSSIAN_BLUG: Option[lang.Double] = None
+  override def GAUSSIAN_BLUG = None
 
 }
 

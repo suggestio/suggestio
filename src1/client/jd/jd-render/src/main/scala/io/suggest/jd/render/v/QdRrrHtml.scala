@@ -8,6 +8,7 @@ import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.ISetUnset
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
@@ -108,10 +109,10 @@ class QdRrrHtml(
           var videosCnt = counters.video
           var imagesCnt = counters.image
           var othersCnt = counters.other
-          e.predicate match {
+          e.jdEdge.predicate match {
             case MPredicates.JdContent.Text =>
               // Рендер текста. Нужно отработать аттрибуты рендера текста.
-              _insertText( e.text.get, qdOp, othersCnt )
+              _insertText( e.jdEdge.text.get, qdOp, othersCnt )
               othersCnt += 1
             // Рендер картинки.
             case MPredicates.JdContent.Image =>
@@ -138,25 +139,23 @@ class QdRrrHtml(
 
 
   /** Вставка картинки-изображения. */
-  private def _insertImage(e: MJdEditEdge, qdOp: MQdOp, i: Int): Unit = {
+  private def _insertImage(e: MEdgeDataJs, qdOp: MQdOp, i: Int): Unit = {
     val resOpt = for {
-      // Находим src. Без него нет смысла продолжать.
-      src <- e.url.orElse {
-        // Картинка может быть заинлайнена текстом: data:image/png;base64,ABC123DEF5436...
-        // Это норма во время при редактирования карточки.
-        e.text
-      }
+      // Определяем img.src. Quill не понимает blob-ссылки, только data или http.
+      imgSrc <- e.imgSrcOpt
     } yield {
       // Аккамулируем аттрибуты для рендера img-тега.
       var imgArgsAcc = List.empty[TagMod]
 
       // Отработать ширину/длину файла изображения.
+      /*
       for (wh <- e.whOpt) {
         imgArgsAcc =
           (^.width := wh.width.px) ::
           (^.height := wh.height.px) ::
           imgArgsAcc
       }
+      */
 
       // wh экранного представления картинки задаётся в CSS согласно рекомендациям ведущих собаководов:
       for (embedAttrs <- qdOp.attrsEmbed)
@@ -170,7 +169,7 @@ class QdRrrHtml(
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
       imgArgsAcc =
         (^.key := s"I$i") ::
-        (^.src := src) ::
+        (^.src := imgSrc) ::
         imgArgsAcc
 
       _currLineAccRev ::= <.img(
@@ -184,9 +183,9 @@ class QdRrrHtml(
 
 
   /** Рендер video. */
-  private def _insertVideo(e: MJdEditEdge, i: Int): Unit = {
+  private def _insertVideo(e: MEdgeDataJs, i: Int): Unit = {
     val resOpt = for {
-      src <- e.url
+      src <- e.jdEdge.url
     } yield {
       _currLineAccRev ::= <.iframe(
         ^.src := src,

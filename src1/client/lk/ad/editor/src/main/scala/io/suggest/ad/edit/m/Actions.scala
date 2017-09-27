@@ -3,9 +3,11 @@ package io.suggest.ad.edit.m
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
+import io.suggest.common.html.HtmlConstants
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.spa.DAction
-import org.scalajs.dom.File
+import io.suggest.text.StringUtil
+import org.scalajs.dom.{Blob, File}
 
 /**
   * Suggest.io
@@ -80,3 +82,8 @@ case class CropChanged(percentCrop: PercentCrop, pixelCrop: PixelCrop) extends I
 /** Подтверждение сохранения кропа. */
 case object CropSave extends IPictureCropAction
 
+
+/** Сообщение о завершении фоновой конвертации из base64 data-URL в натуральный блоб. */
+case class B64toBlobDone(b64Url: String, blob: Blob) extends ILkEditAction {
+  override def toString = s"$productPrefix(${StringUtil.strLimitLen(b64Url, 16, HtmlConstants.ELLIPSIS)}${HtmlConstants.COMMA}$blob)"
+}

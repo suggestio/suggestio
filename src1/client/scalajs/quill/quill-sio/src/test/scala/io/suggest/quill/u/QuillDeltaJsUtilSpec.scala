@@ -6,6 +6,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.quill.QuillSioModule
 import minitest._
 
@@ -36,17 +37,19 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val jdTag0 = IDocTag.edgeQd( hwEdgeId, coords )
 
     val edges0 = Map(
-      hwEdgeId -> MJdEditEdge(
-        predicate = MPredicates.JdContent.Text,
-        id        = hwEdgeId,
-        text      = Some( theString )
+      hwEdgeId -> MEdgeDataJs(
+        jdEdge = MJdEditEdge(
+          predicate = MPredicates.JdContent.Text,
+          id        = hwEdgeId,
+          text      = Some( theString )
+        )
       )
     )
     val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
 
     assertEquals( qdTag2.props1.qdOps.size, 1 )
     assertEquals( edges2.size, 1 )
-    assert( edges2.head._2.text.contains(theString), edges2.toString )
+    assert( edges2.head._2.jdEdge.text.contains(theString), edges2.toString )
     // Проверить совпадение id'шников
     assertEquals(
       qdTag2.props1.qdOps.head.edgeInfo.get.edgeUid,
@@ -62,18 +65,21 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val hwEdgeId: EdgeUid_t = 1
     val jdTag0 = IDocTag.edgeQd(hwEdgeId, coords)
     val edges0 = Map(
-      hwEdgeId -> MJdEditEdge(
-        predicate = MPredicates.JdContent.Text,
-        id        = hwEdgeId,
-        text      = Some( "Please write the text here" )
+      hwEdgeId -> MEdgeDataJs(
+        jdEdge = MJdEditEdge(
+          predicate = MPredicates.JdContent.Text,
+          id        = hwEdgeId,
+          text      = Some( "Please write the text here" )
+        )
       )
     )
-    val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
+    val (qdTag2, edges1) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
+    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( qdTag2, edges1 )
 
     assertEquals( qdTag2.props1.qdOps.size, 1 )
     assertEquals( edges2.size, 1 )
     assertEquals( edges2.head._1, qdTag2.deepEdgesUidsIter.next() )
-    assertEquals( edges2.head._2.text.get, newString )
+    assertEquals( edges2.head._2.jdEdge.text.get, newString )
   }
 
 
@@ -101,7 +107,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       .insert( strAfter )
 
     // Пусть исходный документ будет пустым. Для чистоты эксперимента.
-    val edges0 = Map.empty[EdgeUid_t, MJdEditEdge]
+    val edges0 = Map.empty[EdgeUid_t, MEdgeDataJs]
     val jdTag0 = IDocTag.edgeQd(-1, coords)
       .updateProps1(_.withQdOps(Nil))
 
@@ -139,11 +145,11 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       )
       .insert( strAfter )
 
-    // Пусть исходный документ будет пустым. Для чистоты эксперимента.
-    val edges0 = Map[EdgeUid_t, MJdEditEdge](
-      1 -> MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")),
-      3 -> MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")),
-      4 -> MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364"))
+    // В эджах какой-то мусор. Но он не должен потеряться.
+    val edges0 = Map[EdgeUid_t, MEdgeDataJs](
+      1 -> MEdgeDataJs( MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
     )
 
     val jdTag0 = IDocTag.edgeQd(-1, coords)
@@ -162,7 +168,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
   }
 
 
-  test("Convert to qd-tag of minimally-bolded string like 'bla bla <b>BOLDED</b> bla bla' (non-empty document0 with related edges0)") {
+  test("Convert to qd-tag of minimally-bolded string like 'bla bla <b>BOLDED</b> bla bla' (non-empty document0 with garbadge in edges0)") {
     // {"ops":[
     //   {"insert":"lorem ipsum und uber "},
     //   {"attributes":{"bold":true},"insert":"blochHeight"},
@@ -183,19 +189,65 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       )
       .insert( strAfter )
 
-    // Пусть исходный документ будет пустым. Для чистоты эксперимента.
-    val edges0 = Map[EdgeUid_t, MJdEditEdge](
-      1 -> MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")),
-      3 -> MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")),
-      4 -> MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")),
-      0 -> MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd"))
+    // Пусть исходные эджи содержат только мусор:
+    val edges0 = Map[EdgeUid_t, MEdgeDataJs](
+      1 -> MEdgeDataJs( MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
+      0 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
+    )
+
+    val jdTag0 = IDocTag.edgeQd(0, coords)
+
+    val (jdTag2, edges1) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( jdTag2, edges1 )
+    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    assertEquals( edges2.size, 3 )
+
+    val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
+    assertEquals( revDelta.ops.length, 3 )
+
+    val diffDelta = delta2.diff(revDelta)
+
+    assert(diffDelta.ops.isEmpty)
+  }
+
+
+  test("~Complex DELTA => QdTag, non-empty document0 with mostly unrelated edges0") {
+    // {"ops":[
+    //   {"insert":"lorem ipsum und uber "},
+    //   {"attributes":{"bold":true},"insert":"blochHeight"},
+    //   {"insert":" wr2 34t\n"}
+    // ]}
+    val strBefore = "lorem ipsum und uber "
+    val strBolded = "blochHeight"
+    val strAfter  = " wr2 34t\n"
+
+    val delta2 = new Delta()
+      .insert( strBefore )
+      .insert( strBolded,
+        attributes = {
+          val dAttrs = js.Object().asInstanceOf[DeltaOpAttrs]
+          dAttrs.bold = js.defined( true )
+          dAttrs
+        }
+      )
+      .insert( strAfter )
+
+    // Пусть исходные эджи содержат только что-то, отсосящиеся к другим частям документа:
+    val edges0 = Map[EdgeUid_t, MEdgeDataJs](
+      1 -> MEdgeDataJs( MJdEditEdge(MPredicates.Bg, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEditEdge(MPredicates.Bg, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
+      0 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) ),
+      5 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
     )
 
     val jdTag0 = IDocTag.edgeQd(0, coords)
 
     val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
     assertEquals( jdTag2.props1.qdOps.size, 3 )
-    assertEquals( edges2.size, 6 )
+    assertEquals( edges2.size, 7 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
     assertEquals( revDelta.ops.length, 3 )

@@ -9,7 +9,6 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.async.{AsyncUtil, IAsyncUtilDi}
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
-import io.suggest.img.ConvertModes
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
 import io.suggest.svg.SvgUtil
@@ -221,7 +220,7 @@ class Img @Inject() (
         }
 
         ensureFut.recover {
-          case ex: NoSuchElementException =>
+          case _: NoSuchElementException =>
             debug("Img not found anywhere: " + args.fileName)
             NotFound("No such image.")
               .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
@@ -260,12 +259,12 @@ trait TempImgSupport
   import imgCtlUtil._
 
   /** Размер генерируемой палитры. */
-  private def MAIN_COLORS_PALETTE_SIZE = 8 //configuration.getInt(s"img.$MY_CONF_NAME.palette.size") getOrElse 8
+  private def MAIN_COLORS_PALETTE_SIZE = 8
 
   /** Размер возвращаемой по WebSocket палитры. */
-  private def MAIN_COLORS_PALETTE_SHRINK_SIZE = 4 //configuration.getInt(s"img.$MY_CONF_NAME.palette.shrink.size") getOrElse 4
+  private def MAIN_COLORS_PALETTE_SHRINK_SIZE = 4
 
-  private def TEMP_IMG_PREVIEW_SIDE_SIZE_PX = 620 //configuration.getInt(s"img.$MY_CONF_NAME.temp.preview.side.px") getOrElse 620
+  private def TEMP_IMG_PREVIEW_SIDE_SIZE_PX = 620
 
   /** Настройка кеширования для  */
   protected def CACHE_COLOR_HISTOGRAM_SEC = 10
@@ -327,7 +326,7 @@ trait TempImgSupport
 
         // Отрабатываем опциональный рендеринг html-поля с оверлеем.
         val mptmp = MLocalImg()
-        lazy val ovlOpt = ovlRrr.map { hrrr =>
+        lazy val ovlOpt = for (hrrr <- ovlRrr) yield {
           hrrr(mptmp.fileName, implicitly[Context])
         }
         // Далее, загрузка для svg и растровой графики расветвляется...
@@ -357,7 +356,7 @@ trait TempImgSupport
               } else {
                 Future {
                   // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
-                  origImageUtil.convert(srcFile, tmpFile, ConvertModes.STRIP)
+                  origImageUtil.convert(srcFile, tmpFile, strip = true)
                 }(asyncUtil.singleThreadCpuContext)
               }
             }

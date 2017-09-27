@@ -149,4 +149,6 @@ object ErrorMsgs extends MsgsStaticT {
   def DND_DRAG_OVER_ERROR              = E(66)
   def DND_DROP_ERROR                   = E(67)
 
+  def BASE64_TO_BLOB_FAILED            = E(68)
+
 }

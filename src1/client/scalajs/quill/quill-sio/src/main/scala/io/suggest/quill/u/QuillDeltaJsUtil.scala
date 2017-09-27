@@ -1,7 +1,6 @@
 package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
-import io.suggest.common.empty.OptionUtil
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
@@ -9,6 +8,7 @@ import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}
 import io.suggest.sjs.common.log.Log
@@ -16,7 +16,6 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
 
-import scala.annotation.tailrec
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr, |}
 
@@ -28,10 +27,12 @@ import scala.scalajs.js.{JSON, UndefOr, |}
   */
 class QuillDeltaJsUtil extends Log {
 
-  def purgeUnusedEdges(tpl: IDocTag, edgesMap: Map[EdgeUid_t, MJdEditEdge]): Map[EdgeUid_t, MJdEditEdge] = {
+  /** Поиск и устранение неиспользуемых эджей. */
+  def purgeUnusedEdges(tpl: IDocTag, edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MEdgeDataJs] = {
     val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
     edgesMap.filterKeys(usedEdgeIds.contains)
   }
+
 
   /** Конверсия из QdTag в дельту, понятную quill-редактору.
     *
@@ -39,7 +40,7 @@ class QuillDeltaJsUtil extends Log {
     * @param edges Карта эджей.
     * @return Инстанс js.native-дельты дял отправки в редактор.
     */
-  def qdTag2delta(qd: IDocTag, edges: Map[EdgeUid_t, MJdEditEdge]): Delta = {
+  def qdTag2delta(qd: IDocTag, edges: Map[EdgeUid_t, MEdgeDataJs]): Delta = {
     qd.props1.qdOps.foldLeft( new Delta() ) { (delta, qdOp) =>
       qdOp.opType match {
         case MQdOpTypes.Insert =>
@@ -48,20 +49,20 @@ class QuillDeltaJsUtil extends Log {
           val resOpt = for {
             e    <- eOpt
             data <- {
-              e.predicate match {
+              e.jdEdge.predicate match {
                 case MPredicates.JdContent.Text =>
-                  e.text
+                  e.jdEdge.text
                     .map(t => t: DeltaInsertData_t)
                 case _ =>
                   val jsObj = js.Object().asInstanceOf[DeltaEmbed]
-                  e.predicate match {
+                  e.jdEdge.predicate match {
                     case MPredicates.JdContent.Image =>
-                      for ( imgSrc <- e.url.orElse(e.text) ) yield {
+                      for ( imgSrc <- e.jdEdge.imgSrcOpt ) yield {
                         jsObj.image = imgSrc
                         jsObj: DeltaInsertData_t
                       }
                     case MPredicates.JdContent.Video =>
-                      for (videoUrl <- e.url) yield {
+                      for (videoUrl <- e.jdEdge.url) yield {
                         jsObj.video = videoUrl
                         jsObj: DeltaInsertData_t
                       }
@@ -290,42 +291,41 @@ class QuillDeltaJsUtil extends Log {
     *
     * @param d Исходная дельта.
     * @param edges0 Исходная карта эджей.
-    * @return Инстанс Text и обновлённая карта эджей.
+    * @return Инстанс Text и ДОПОЛНЕННАЯ карта эджей.
+    *         В выходной карте почти всегда есть никем неиспользуемые элементы:
+    *         тут внутри метода нельзя определить, используется ли тот или иной эдж на самом деле.
+    *         Надо чистить карту снаружи на основе всего документа через purgeUnusedEdges
     */
-  def delta2qdTag(d: Delta, qdTag0: IDocTag, edges0: Map[EdgeUid_t, MJdEditEdge]): (IDocTag, Map[EdgeUid_t, MJdEditEdge]) = {
-
+  def delta2qdTag(d: Delta, qdTag0: IDocTag,
+                  edges0: Map[EdgeUid_t, MEdgeDataJs]): (IDocTag, Map[EdgeUid_t, MEdgeDataJs]) = {
+    // Часто-используемый предикат берём в оборот...
     val jdContPred = MPredicates.JdContent
 
-    // Собрать id любых старых эджей текущего тега
-    val oldEdgeIds = qdTag0
-      .deepEdgesUidsIter
-      .toSet
+    // Множество edge uids, которые уже заняты.
+    val busyEdgeIds = edges0.keySet
 
-    // Отсеять все контент-эджи, они более неактуальны.
-    val edgesNoJdCont = edges0.filterNot { case (_, e) =>
-      (e.predicate ==>> jdContPred) &&
-        (oldEdgeIds contains e.id)
-    }
-
-    // Множество edge id, которые уже заняты.
-    val busyEdgeIds = edgesNoJdCont.keySet
-
-    // Переменная-счётчик для эджей во время цикла. Можно её запихать в аккамулятор и идти через foldLeft + List.reverse вместо map.
-    // TODO Задействовать EdgesUtil.nextEdgeUidFrom( busyEdgeIds ), но почему-то тест сразу ломается вместе с эджами.
-    var edgeUidCounter = if (busyEdgeIds.isEmpty) -1 else busyEdgeIds.max
-
-    // Получение незанятого id'шника для нового эджа.
-    @tailrec def __nextEdgeUid(): EdgeUid_t = {
-      edgeUidCounter += 1
-      if (busyEdgeIds contains edgeUidCounter) {
-        __nextEdgeUid()
-      } else {
-        edgeUidCounter
+    // Карта новых текстовых эджей. Ключ -- это строка, например текст, URL или ещё что-то текстовое.
+    val str2EdgeMap = {
+      val b = scala.collection.mutable.HashMap.newBuilder[String, MEdgeDataJs]
+      b ++= {
+        // Некоторые эджи из исходной карты могут быть потеряны. Это не страшно: потом надо просто объеденить старую и новую эдж-карты.
+        for {
+          e   <- edges0.valuesIterator
+          key <- e.jdEdge.text.orElse( e.imgSrcOpt )
+        } yield {
+          key -> e
+        }
       }
+      b.result()
     }
 
-    // Карта новых текстовых эджей.
-    val newContEdgesMap = scala.collection.mutable.HashMap[String, MJdEditEdge]()
+    // Счётчик id эджей.
+    var lastEdgeUid = if (busyEdgeIds.isEmpty) -1 else busyEdgeIds.max
+    // Инкрементор и возвращатор счётчика id эджей.
+    def nextEdgeUid(): Int = {
+      lastEdgeUid += 1
+      lastEdgeUid
+    }
 
     // Пройтись по delta-операциям:
     val qdOps = d.ops
@@ -337,14 +337,16 @@ class QuillDeltaJsUtil extends Log {
           edgeInfo = for (raw <- dOp.insert.toOption) yield {
             val typeOfRaw = js.typeOf(raw)
 
-            // Проанализировать тип значения insert-поля.
+            // Проанализировать тип значения insert-поля: там или строка текста, или object с данными embed'а.
             val jdEdge = if (typeOfRaw ==* JsTypes.STRING) {
               val text = raw.asInstanceOf[String]
-              newContEdgesMap.getOrElseUpdate(text, {
-                MJdEditEdge(
-                  predicate = jdContPred.Text,
-                  id        = __nextEdgeUid(),
-                  text      = Some(text)
+              str2EdgeMap.getOrElseUpdate(text, {
+                MEdgeDataJs(
+                  jdEdge = MJdEditEdge(
+                    predicate = jdContPred.Text,
+                    id        = nextEdgeUid(),
+                    text      = Some(text)
+                  )
                 )
               })
 
@@ -365,19 +367,15 @@ class QuillDeltaJsUtil extends Log {
                 .orElse( deltaEmbed.video )
                 .get
 
-              newContEdgesMap.getOrElseUpdate(anyStrContent, {
-                // Если инлайновая картинка, то тут будет Some()
-                val inlineImageOpt = deltaEmbed.image
-                  .toOption
-                  .filter( _.startsWith("data:image/") )
-
+              str2EdgeMap.getOrElseUpdate(anyStrContent, {
                 // Собрать embed edge
-                MJdEditEdge(
-                  predicate = pred,
-                  id        = __nextEdgeUid(),
-                  text      = inlineImageOpt,
-                  url       = OptionUtil.maybe(inlineImageOpt.isEmpty)(anyStrContent)
-                  // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
+                MEdgeDataJs(
+                  jdEdge = MJdEditEdge(
+                    predicate = pred,
+                    id        = nextEdgeUid(),
+                    url       = Some( anyStrContent )
+                    // Файловые значения для whOpt не ставим в эдж, потому что мы тут не знаем их. Их выставляет сервер.
+                  )
                 )
               })
             } else {
@@ -399,6 +397,7 @@ class QuillDeltaJsUtil extends Log {
           attrsEmbed = deltaAttrsOpt
             .flatMap( deltaAttrs2qdAttrsEmbed )
         )
+        // Вернуть аккамулятор, т.е. новый edgeUid.
       }
       .toList
 
@@ -408,7 +407,9 @@ class QuillDeltaJsUtil extends Log {
         qdOps
       )
     )
-    val edges2 = edgesNoJdCont ++ IId.els2idMapIter[EdgeUid_t, MJdEditEdge]( newContEdgesMap.valuesIterator )
+
+    // Объеденить старую и обновлённые эдж-карты.
+    val edges2 = edges0 ++ IId.els2idMapIter[EdgeUid_t, MEdgeDataJs]( str2EdgeMap.valuesIterator )
 
     (tag, edges2)
   }

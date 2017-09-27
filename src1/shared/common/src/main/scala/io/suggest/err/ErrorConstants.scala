@@ -39,4 +39,14 @@ object ErrorConstants {
 
   }
 
+
+  /** Аналог scala.assert(), но без ELIDEABLE и без Error. */
+  def assertArg(assertion: Boolean): Unit = {
+    if (!assertion)
+      throw AssertArgException
+  }
+
 }
+
+/** Exception, выстреливаемый из assertArg(). */
+case object AssertArgException extends IllegalArgumentException

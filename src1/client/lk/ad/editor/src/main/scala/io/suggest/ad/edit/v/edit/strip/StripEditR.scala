@@ -7,7 +7,6 @@ import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.ad.edit.v.edit.{ColorPickR, PictureR}
-import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.IDocTag
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -42,7 +41,7 @@ class StripEditR(
                        strip        : IDocTag,
                        edS          : MStripEdS,
                        colorsState  : MColorsState,
-                       bgImgFileOpt : Option[MJsFileInfo]
+                       bgImgSrcOpt  : Option[String]
                      )
 
   implicit object StripEditRPropsValFastEq extends FastEq[PropsVal] {
@@ -50,7 +49,7 @@ class StripEditR(
       (a.strip eq b.strip) &&
         (a.edS eq b.edS) &&
         (a.colorsState eq b.colorsState) &&
-        (a.bgImgFileOpt eq b.bgImgFileOpt)
+        (a.bgImgSrcOpt eq b.bgImgSrcOpt)
     }
   }
 
@@ -149,10 +148,9 @@ class StripEditR(
         bgPicutureOptC = propsOptProxy.connect { propsOpt =>
           for {
             props     <- propsOpt
-            bgImgFile <- props.bgImgFileOpt
           } yield {
             pictureR.PropsVal(
-              img = bgImgFile
+              imgSrcOpt = props.bgImgSrcOpt
             )
           }
         }

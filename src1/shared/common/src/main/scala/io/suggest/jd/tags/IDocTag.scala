@@ -205,12 +205,11 @@ final case class IDocTag(
   }
 
   def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
-    val iter1 = props1.qdOps.iterator.flatMap(_.edgeInfo).map(_.edgeUid)
-    val iter2 = props1.bgImg.iterator.map(_.edgeUid)
-    val iter3 = deepChildrenIter.flatMap(_.deepEdgesUidsIter)
-    (iter1 :: iter2 :: iter3 :: Nil)
-      .iterator
-      .flatten
+    val iter1 = props1.qdOps.iterator.flatMap(_.edgeInfo)
+    val iter2 = props1.bgImg.iterator
+    val iter12 = (iter1 ++ iter2).map(_.edgeUid)
+    val iterChs = deepChildrenIter.flatMap(_.deepEdgesUidsIter)
+    iter12 ++ iterChs
   }
 
   def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {

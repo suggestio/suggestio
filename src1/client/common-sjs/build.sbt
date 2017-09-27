@@ -22,8 +22,10 @@ libraryDependencies ++= Seq(
   "io.suzaku"           %%% "diode"               % Common.diodeVsn,
 
   // Тестирование...
-  "io.monix"            %%% "minitest"            % Common.minitestVsn  % "test"
+  "io.monix"            %%% "minitest"            % Common.minitestVsn  % Test
 )
+
+jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv()
 
 testFrameworks += new TestFramework("minitest.runner.Framework")
 

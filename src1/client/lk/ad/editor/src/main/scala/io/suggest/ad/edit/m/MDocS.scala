@@ -4,9 +4,7 @@ import diode.FastEq
 import io.suggest.ad.edit.m.edit.color.MColorsState
 import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.file.MJsFileInfo
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -25,8 +23,7 @@ object MDocS {
         (a.qdEdit ===* b.qdEdit) &&
         (a.stripEd ===* b.stripEd) &&
         (a.addS ===* b.addS) &&
-        (a.colorsState ===* b.colorsState) &&
-        (a.files ===* b.files)
+        (a.colorsState ===* b.colorsState)
     }
   }
 
@@ -43,15 +40,13 @@ object MDocS {
   * @param addS Состояние формочки добавления нового элемента.
   * @param colorsState Общее состояние редактирования цветов:
   *                    разные часто-используемые или подходящие цвета, например.
-  * @param files Карта всякой рантаймовой инфы по файлам, где ключ -- uid эджа.
   */
 case class MDocS(
                   jdArgs        : MJdArgs,
                   qdEdit        : Option[MQdEditS]              = None,
                   stripEd       : Option[MStripEdS]             = None,
                   addS          : Option[MAddS]                 = None,
-                  colorsState   : MColorsState                  = MColorsState.empty,
-                  files         : Map[EdgeUid_t, MJsFileInfo]     = Map.empty
+                  colorsState   : MColorsState                  = MColorsState.empty
                 ) {
 
   def withJdArgs(jdArgs: MJdArgs) = copy(jdArgs = jdArgs)
@@ -65,7 +60,5 @@ case class MDocS(
   def withAddS(addS: Option[MAddS]) = copy(addS = addS)
 
   def withColorsState(colorsState : MColorsState) = copy(colorsState = colorsState)
-
-  def withFiles(files: Map[EdgeUid_t, MJsFileInfo]) = copy(files = files)
 
 }

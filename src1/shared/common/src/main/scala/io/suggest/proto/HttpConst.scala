@@ -1,5 +1,7 @@
 package io.suggest.proto
 
+import io.suggest.common.html.HtmlConstants
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -12,12 +14,21 @@ object HttpConst {
     final def Content_ = "Content-"
   }
 
+
   object Headers {
     final def ACCEPT                = "Accept"
     final def LOCATION              = "Location"
     final def CONTENT_TYPE          = Words.Content_ + "Type"
     final def CONTENT_LENGHT        = Words.Content_ + "Lenght"
     final def CONNECTION            = "Connection"
+  }
+
+
+  object Methods {
+    final def GET     = "GET"
+    final def POST    = "POST"
+    final def PUT     = "PUT"
+    final def DELETE  = "DELETE"
   }
 
 
@@ -65,6 +76,19 @@ object HttpConst {
     final val FAILED_DEPENDENCY = 424
     final val UPGRADE_REQUIRED = 426
     final val TOO_MANY_REQUESTS = 429
+
+  }
+
+
+  object Proto {
+
+    private def _coloned(s: String) = s + HtmlConstants.COLON
+
+    final def HTTP = "http"
+    final def HTTP_ = _coloned(HTTP)
+
+    final def HTTPS = HTTP + "s"
+    final def HTTPS_ = _coloned(HTTPS)
 
   }
 

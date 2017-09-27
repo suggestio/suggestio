@@ -1,9 +1,10 @@
 package io.suggest.react
 
-import diode.ActionType
+import diode.{ActionType, Effect, EffectSet}
 import diode.data.{PendingBase, Pot}
 import diode.react.ModelProxy
-import japgolly.scalajs.react.{BackendScope, Callback, ReactEvent}
+import japgolly.scalajs.react.{BackendScope, Callback}
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 /**
   * Suggest.io
@@ -38,6 +39,28 @@ object ReactDiodeUtil {
     pot match {
       case pb: PendingBase => pb.startTime == validStartTime
       case _ => false
+    }
+  }
+
+
+  /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
+    *
+    * @param effects Эффекты.
+    * @return None, если передан пустой список эффектов.
+    *         Some(fx) с объединённым, либо единственным, эффектом.
+    */
+  def mergeEffectsSet(effects: TraversableOnce[Effect]): Option[Effect] = {
+    if (effects.isEmpty) {
+      None
+    } else {
+      val iter = effects.toIterator
+      val fx1 = iter.next()
+      val allFx = if (iter.hasNext) {
+        new EffectSet(fx1, iter.toSet, defaultExecCtx)
+      } else {
+        fx1
+      }
+      Some(allFx)
     }
   }
 
