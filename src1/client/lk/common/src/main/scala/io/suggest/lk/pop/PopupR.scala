@@ -23,7 +23,8 @@ object PopupR {
                        closeable  : Option[Callback]  = None,
                        hSize      : String            = Css.Size.M,
                        css        : List[String]      = Nil,
-                       topPc      : Int               = 32
+                       topPc      : Int               = 32,
+                       tagMod     : Option[TagMod]    = None
                      )
 
   implicit object PopupPropsValFastEq extends FastEq[PropsVal] {
@@ -31,7 +32,8 @@ object PopupR {
       (a.closeable eq b.closeable) &&
         (a.hSize eq b.hSize) &&
         (a.css eq b.css) &&
-        (a.topPc == b.topPc)
+        (a.topPc == b.topPc) &&
+        (a.tagMod eq b.tagMod)
     }
   }
 
@@ -43,6 +45,8 @@ object PopupR {
       <.div(
         ^.`class`  := Css.flat1( Css.Lk.Popup.POPUP :: p.hSize :: p.css ),
         ^.top      := p.topPc.pct,
+        p.tagMod.whenDefined,
+
         ^.onClick ==> ReactCommonUtil.stopPropagationCB,
 
         p.closeable.whenDefined { closeCB =>

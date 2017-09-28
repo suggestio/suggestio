@@ -5,11 +5,12 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
+import io.suggest.common.geom.d2.ISize2di
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.img.crop.MCrop
-import io.suggest.jd.{MJdEditEdge, MJdEdgeId}
+import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
 import io.suggest.jd.render.m.SetImgWh
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.{EdgesUtil, MPredicates}
@@ -20,6 +21,7 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -196,53 +198,89 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
       val edge = v0.edges( bgImg.imgEdge.edgeUid )
       val bm = selJdt.props1.bm.get
 
-      val aspectRatio = bm.width.toDouble / bm.height.toDouble
+      val bmWhRatio = ISize2di.whRatio(bm)
+
+      val origWhOpt = edge.fileJs
+        .flatMap(_.whPx)
+
+      val c100 = 100d
 
       // Попытаемся восстановить %crop на основе кропа из состояния:
       val existingPcCrop = for {
         crop    <- bgImg.crop
-        fileJs  <- edge.fileJs
-        origWh  <- fileJs.whPx
+        origWh  <- origWhOpt
       } yield {
-        val c100 = 100d
         val heightPc = crop.height / origWh.height.toDouble * c100
+        //val widthPc = crop.width / origWh.width.toDouble * c100
         val xPc = crop.offX / origWh.width.toDouble * c100
         val yPc = crop.offY / origWh.height.toDouble * c100
-        (heightPc, xPc, yPc)
+        (/*widthPc,*/ heightPc, xPc, yPc)
       }
 
-      println( existingPcCrop )
+      // TODO Надо осилить выставление начального кропа. Тут серьезная проблема в этом быдлокоде
+      /*
+      val (widthPc, heightPc, xPc, yPc) = existingPcCrop.getOrElse {
+        val (w9, h9) = origWhOpt
+          .filter { origWh =>
+            val orient = MOrientations2d.forSize2d( origWh )
+            orient ==* MOrientations2d.Vertical
+          }
+          .fold {
+            // Горизонтальная/квадратная ориентация исходной картинки. Или ориентация неизвестна вообще.
+            val h = c100
+            val w = h / bmWhRatio
+            (w, h)
+          } { origWh =>
+            // Вертикальная ориентация.
+            val w = c100
+            val h = w * bmWhRatio
+            println(origWh, bmWhRatio, w, h)
+            (w, h)
+          }
+        println(w9, h9)
+        (w9, h9, 0d, 0d)
+      }
+      */
 
       val (heightPc, xPc, yPc) = existingPcCrop.getOrElse {
-        // Нет кропа - в дефолт
         (100d, 0d, 0d)
       }
 
       val cropPc = new PercentCrop {
-        override val aspect = aspectRatio
+        override val aspect = bmWhRatio
         override val height = heightPc
+        //override val width  = widthPc
         override val x      = xPc
         override val y      = yPc
       }
 
       val v2 = v0.withCropPopup( Some(
         MPictureCropPopup(
+          origCrop    = bgImg.crop,
           imgEdgeUid  = edge.id,
           percentCrop = cropPc,
         )
       ))
+
+      //val v2 = _updateSelectedTag(v1)
       updated( v2 )
 
 
     // Выставлен новый кроп для картинки.
     case m: CropChanged =>
       val v0 = value
+      // TODO Надо фильтровать ошибочные кропы.
+
       val cropPopup0 = v0.cropPopup.get
       val cropPopup2 = cropPopup0.copy(
         percentCrop = m.percentCrop,
         pixelCrop   = Some( m.pixelCrop )
       )
-      val v2 = v0.withCropPopup( Some(cropPopup2) )
+
+      val v1 = v0.withCropPopup( Some(cropPopup2) )
+
+      // Надо рендерить crop и в самой карточке.
+      val v2 = _updateSelectedTag( v1 )
       updated(v2)
 
 
@@ -254,27 +292,10 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
       val iEdgeUid = cropPopup0.imgEdgeUid
       val iEdge = v0.edges( iEdgeUid )
 
-      val pcCrop = cropPopup0.percentCrop
-      val origWhOpt = iEdge.fileJs.flatMap(_.whPx)
+      val origWh = iEdge.fileJs.flatMap(_.whPx).get
 
-      // Вычисляем MCrop в пикселях. TODO Переехать полностью на % crop вместо пикселей?
-      val pixelCrop = cropPopup0.pixelCrop.fold {
-        val origWh = origWhOpt.get
-        // Попытаться перемножить percent crop и image wh
-        MCrop(
-          width  = _imult2(origWh.width,  pcCrop.width),
-          height = _imult2(origWh.height, pcCrop.height),
-          offX   = _imult3(origWh.width,  pcCrop.x, 0),
-          offY   = _imult3(origWh.height, pcCrop.y, 0)
-        )
-      } { pxCrop =>
-        MCrop(
-          width  = pxCrop.width.getOrElse( origWhOpt.get.width ),
-          height = pxCrop.height.getOrElse( origWhOpt.get.height ),
-          offX   = _orZero( pxCrop.x ),
-          offY   = _orZero( pxCrop.y )
-        )
-      }
+      // Вычисляем MCrop в пикселях.
+      val pixelCrop = _cropPopupS2mcrop(cropPopup0, origWh)
 
       // Сохранить в текущий тег параметры кропа.
       val bgImg2 = for (bgImg0 <- selJdt0.props1.bgImg) yield {
@@ -299,8 +320,30 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
     // Отмена кропа
     case CropCancel =>
       val v0 = value
-      v0.cropPopup.fold(noChange) { _ =>
-        val v2 = v0.withCropPopup( None )
+      v0.cropPopup.fold(noChange) { cropPopup =>
+        val v1 = v0.withCropPopup( None )
+        // Восстановить настройки кропа.
+        val v2 = if (
+          v1.selectedTag.exists(
+            _.props1.bgImg.exists(
+              _.crop ===* cropPopup.origCrop))
+        ) {
+          // Исходный кроп и текущий эквивалентны. Поэтому пропускаем всё как есть.
+          v1
+        } else {
+          // Восстановить исходный кроп sel-тега в состоянии.
+          v1.withSelectedTag(
+            v1.selectedTag.map { selJdt0 =>
+              selJdt0.withProps1(
+                selJdt0.props1.withBgImg(
+                  selJdt0.props1.bgImg.map { bgImg =>
+                    bgImg.withCrop( cropPopup.origCrop )
+                  }
+                )
+              )
+            }
+          )
+        }
         updated(v2)
       }
 
@@ -311,5 +354,54 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
   private def _imult3(a: Int, b: UndefOr[Double], dflt: Int)  : Int = b.fold(dflt)(x => (a * x / 100).toInt)
   private def _imult2(a: Int, b: UndefOr[Double])             : Int = _imult3(a, b, a)
   private def _orZero(a: js.UndefOr[Int])                     : Int = a.getOrElse(0)
+
+
+  /** Вычисляем MCrop в пикселях на основе данных состояния и wh изображения. */
+  private def _cropPopupS2mcrop(cropPopup: MPictureCropPopup, origWh: ISize2di): MCrop = {
+    cropPopup.pixelCrop.fold {
+      val pcCrop = cropPopup.percentCrop
+      // Попытаться перемножить percent crop и image wh
+      MCrop(
+        width  = _imult2(origWh.width,  pcCrop.width),
+        height = _imult2(origWh.height, pcCrop.height),
+        offX   = _imult3(origWh.width,  pcCrop.x, 0),
+        offY   = _imult3(origWh.height, pcCrop.y, 0)
+      )
+    } { pxCrop =>
+      MCrop(
+        width  = pxCrop.width.getOrElse( origWh.width ),
+        height = pxCrop.height.getOrElse( origWh.height ),
+        offX   = _orZero( pxCrop.x ),
+        offY   = _orZero( pxCrop.y )
+      )
+    }
+  }
+
+
+  /** Когда надо рендерить кроп на экране в карточке, то использовать этот код. */
+  private def _updateSelectedTag(v0: MPictureAh): MPictureAh = {
+    val selJdt2 = for {
+      cropPopup <- v0.cropPopup
+      e       <- v0.edges.get( cropPopup.imgEdgeUid )
+      fileJs  <- e.fileJs
+      origWh  <- fileJs.whPx
+      mcrop2  = _cropPopupS2mcrop(cropPopup, origWh)
+      selJdt0 <- v0.selectedTag
+      bgImg   <- selJdt0.props1.bgImg
+      // Не обновлять ничего, если ничего не изменилось.
+      if !bgImg.crop.contains( mcrop2 )
+    } yield {
+      selJdt0.withProps1(
+        selJdt0.props1.withBgImg(Some(
+          bgImg
+            .withCrop( Some(mcrop2) )
+        ))
+      )
+    }
+
+    selJdt2.fold(v0) { _ =>
+      v0.withSelectedTag( selJdt2 )
+    }
+  }
 
 }

@@ -65,7 +65,10 @@ class PictureCropPopupR(
           PopupR.PropsVal(
             closeable = Some(closeBtnClick),
             css       = laeCss.Crop.popup.htmlClass :: Nil,
-            topPc     = 10
+            topPc     = 10,
+            tagMod    = Some {
+              ^.right := (-19).pct
+            }
           )
         } { popupPropsProxy =>
           val B = Css.Buttons
@@ -100,7 +103,7 @@ class PictureCropPopupR(
             <.a(
               ^.`class` := Css.flat( B.BTN, B.BTN_W, B.NEGATIVE, Css.Size.M ),
               ^.onClick --> closeBtnClick,
-              Messages( MsgCodes.`Close` )
+              Messages( MsgCodes.`Cancel` )
             ),
             <.br
           )

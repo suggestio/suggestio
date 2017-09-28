@@ -3,6 +3,7 @@ package io.suggest.common.geom.d2
 import enumeratum._
 import io.suggest.enum2.EnumeratumUtil
 import io.suggest.primo.IStrId
+import japgolly.univeq.UnivEq
 import play.api.libs.json.Format
 
 /**
@@ -13,25 +14,6 @@ import play.api.libs.json.Format
   *
   * В основном -- это для хранения статистики на сервере.
   */
-
-object MOrientation2d {
-
-  /** Поддержка play-json. */
-  implicit val MORIENTATION2D_FORMAT: Format[MOrientation2d] = {
-    EnumeratumUtil.enumEntryFormat( MOrientations2d )
-  }
-
-}
-
-
-/** Класс одного элемента модели [[MOrientations2d]]. */
-sealed abstract class MOrientation2d
-  extends EnumEntry
-  with IStrId
-{
-  override final def toString = super.toString
-}
-
 
 /** Модель воспринимаемых двумерных ориентаций.
   * strId все являются human-readable, потому модель используется для хранения статистики и kibana.
@@ -64,3 +46,25 @@ object MOrientations2d extends Enum[MOrientation2d] {
   }
 
 }
+
+
+/** Класс одного элемента модели [[MOrientations2d]]. */
+sealed abstract class MOrientation2d
+  extends EnumEntry
+  with IStrId
+{
+  override final def toString = super.toString
+}
+
+
+object MOrientation2d {
+
+  /** Поддержка play-json. */
+  implicit val MORIENTATION2D_FORMAT: Format[MOrientation2d] = {
+    EnumeratumUtil.enumEntryFormat( MOrientations2d )
+  }
+
+  implicit def univEq: UnivEq[MOrientation2d] = UnivEq.derive
+
+}
+

@@ -53,16 +53,7 @@ trait ISize2di extends IWidth with IHeight {
 
   override def toString = ISize2di.toString(this)
 
-  override def equals(obj: Any): Boolean = {
-    obj match {
-      case sz2d: ISize2di =>
-        sz2d.height == height && sz2d.width == width
-      case _ =>
-        false
-    }
-  }
-
-  override def hashCode(): Int = width + (31 * height)
+  // 2017.sep.28: Нельзя тут определять всякие equals, hashCode и прочее.
 
 }
 
