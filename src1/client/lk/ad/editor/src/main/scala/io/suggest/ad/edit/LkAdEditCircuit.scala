@@ -193,10 +193,8 @@ class LkAdEditCircuit(
           val oldCssArgs = MJdCssArgs.singleCssArgs(mdoc0.jdArgs.template, mdoc0.jdArgs.conf, mdoc0.jdArgs.renderArgs.edges)
           val newCssArgs = MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mPictureAh.edges)
           if (MJdCssArgs.MJdCssArgsFastEq.eqv(oldCssArgs, newCssArgs)) {
-            //println("No css changes")
             mdoc0.jdArgs.jdCss
           } else {
-            //println("CSS Updated")
             // Что-то важное изменилось, отправляем CSS на пересборку.
             jdCssFactory.mkJdCss(
               MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mPictureAh.edges )

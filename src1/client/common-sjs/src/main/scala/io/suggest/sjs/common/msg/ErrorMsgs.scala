@@ -151,4 +151,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def BASE64_TO_BLOB_FAILED            = E(68)
 
+  def FILE_CLEANUP_FAIL                = E(69)
+
 }

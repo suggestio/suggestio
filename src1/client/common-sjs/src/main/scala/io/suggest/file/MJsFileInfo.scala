@@ -43,8 +43,8 @@ object MJsFileInfo {
   * @param blobUrl Ссылка на блоб в памяти браузера, если есть.
   * @param fileName Название файла, если известно.
   * @param whPx Ширина и длина картинки.
-  * param uploadProgress Прогресс заливки картинки на сервер, если есть.
-  * param uploadXhr XHR-реквест, производящий сейчас upload файла на сервер.
+  * @param uploadProgress Прогресс заливки картинки на сервер, если есть.
+  * @param uploadXhr XHR-реквест, производящий сейчас upload файла на сервер.
   */
 case class MJsFileInfo(
                         blob              : Blob,

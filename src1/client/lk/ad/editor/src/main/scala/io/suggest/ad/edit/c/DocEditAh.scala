@@ -103,8 +103,6 @@ class DocEditAh[M](
         blobFxOpt
       }
 
-    // TODO 30. Поискать картинки, требующие вычисления w/h. Запустить в фоне это вычисление.
-
     // 90. Объединить все собранные эффекты воедино.
     val totalFxOpt = ReactDiodeUtil.mergeEffectsSet( blobEffectsIter )
 
@@ -298,6 +296,26 @@ class DocEditAh[M](
           // Ссылка изменилась на blob, но нельзя трогать delta: quill не поддерживает blob-ссылки.
 
         // TODO Запустить эффект получения оригинальный w/h картинки, если это картинка.
+        updated(v2)
+      }
+
+
+    // Поступила команда на проведение чистки карты эджей.
+    case PurgeUnusedEdges =>
+      val v0 = value
+      val edges0 = v0.jdArgs.renderArgs.edges
+      val edges2 = quillDeltaJsUtil.purgeUnusedEdges( v0.jdArgs.template, edges0 )
+      if ( edges0.size == edges2.size ) {
+        noChange
+      } else {
+        //println(s"edges count changed: ${edges0.size} => ${edges2.size}")
+        val v2 = v0.withJdArgs(
+          v0.jdArgs.withRenderArgs(
+            v0.jdArgs.renderArgs.withEdges(
+              edges2
+            )
+          )
+        )
         updated(v2)
       }
 

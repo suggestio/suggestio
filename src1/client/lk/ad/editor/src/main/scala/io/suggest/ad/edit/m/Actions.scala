@@ -89,3 +89,7 @@ case object CropSave extends IPictureCropAction
 case class B64toBlobDone(b64Url: String, blob: Blob) extends ILkEditAction {
   override def toString = s"$productPrefix(${StringUtil.strLimitLen(b64Url, 16, HtmlConstants.ELLIPSIS)}${HtmlConstants.COMMA}$blob)"
 }
+
+
+/** Команда принудительной прочистки эджей, не исходит от юзера, а является продуктом работы других контроллеров. */
+case object PurgeUnusedEdges extends ILkEditAction

@@ -374,7 +374,6 @@ class QuillDeltaJsUtil extends Log {
                 .get
 
               str2EdgeMap.getOrElseUpdate(anyStrContent, {
-                println(anyStrContent, str2EdgeMap.mkString("\n", "\n", "\n"))
                 // Собрать embed edge
                 MEdgeDataJs(
                   jdEdge = MJdEditEdge(

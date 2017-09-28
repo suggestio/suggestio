@@ -65,13 +65,7 @@ class ColorPickR(
     }
 
 
-    private def _onPickerBlur: Callback = {
-      println("Blurred")
-      Callback.empty
-    }
-
     def render(propsOptProxy: Props, pc: PropsChildren): VdomElement = {
-      val propsOpt = propsOptProxy.value
       propsOptProxy.value.whenDefinedEl { props =>
         val C = lkAdEditCss.BgColorOptPicker
 

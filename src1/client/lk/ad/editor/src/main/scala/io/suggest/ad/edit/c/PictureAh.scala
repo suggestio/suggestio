@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
-import diode.{ActionHandler, ActionResult, ModelRW}
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
@@ -49,19 +49,22 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
 
       // Посмотреть, что пришло в сообщении...
       if (m.files.isEmpty) {
-        // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid.
-        selJdt0.props1.bgImg.fold( noChange ) { bgImgOld =>
-          val edgeUidOld = bgImgOld.imgEdge.edgeUid
-          val edges2 = v0.edges.filterKeys { _ !=* edgeUidOld }
-          val selJdt2 = selJdt0.withProps1(
-            selJdt0.props1.withBgImg( None )
-          )
-          val v2 = v0.copy(
-            edges       = edges2,
-            selectedTag = Some( selJdt2 )
-          )
-          updated( v2 )
-        }
+        // Файл удалён, т.е. список файлов изменился в []. Удалить bgImg и сопутствующий edgeUid, если файл более никому не нужен.
+        selJdt0.props1
+          .bgImg
+          .fold( noChange ) { _ =>
+            // Не чистим эджи, пусть другие контроллеры проконтроллируют карту эджей на предмет ненужных эджей.
+            // Это нужно, чтобы избежать удаления файла, который используется в каком-то другом теге.
+            val selJdt2 = selJdt0.withProps1(
+              selJdt0.props1.withBgImg( None )
+            )
+            val v2 = v0.withSelectedTag(
+              selectedTag = Some( selJdt2 )
+            )
+            // Отправить в очередь задачу по зачистке карты эджей:
+            val fx = Effect.action(PurgeUnusedEdges)
+            updated( v2, fx )
+          }
 
       } else {
 
@@ -81,71 +84,103 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             )
 
           } { fileNew =>
-            // Найти в состоянии текущий файл, если он там есть.
-            val bgImgOldOpt = selJdt0.props1.bgImg
-            val edgeUidOldOpt = bgImgOldOpt.map(_.imgEdge.edgeUid)
-            val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
+            // Попробовать найти в состоянии файл с такими же характеристиками.
+            // TODO Искать не только в эджах, но и среди известных файлов с сервера.
+            val (dataEdge9, edges9) = v0.edges
+              .valuesIterator
+              .flatMap { e =>
+                for {
+                  fileJs <- e.fileJs
+                  if fileJs.blob.size ==* fileNew.size &&
+                    // TODO Нужен хэш вместо имени, надо бы через asm-crypto.js SHA1 это реализовать.
+                    fileJs.fileName.contains( fileNew.name )
+                } yield {
+                  e
+                }
+              }
+              .toStream
+              .headOption
+              .fold {
+                // Новый файл выбран юзером, который пока неизвестен.
+                // Найти в состоянии текущий файл, если он там есть.
+                val bgImgOldOpt = selJdt0.props1.bgImg
+                val edgeUidOldOpt = bgImgOldOpt.map(_.imgEdge.edgeUid)
+                val dataEdgeOldOpt = edgeUidOldOpt.flatMap( v0.edges.get )
 
-            // Вычислить новый edgeUid.
-            val edgeUid2 = edgeUidOldOpt.getOrElse {
-              EdgesUtil.nextEdgeUidFromMap( v0.edges )
-            }
+                // Вычислить новый edgeUid.
+                val edgeUid2 = edgeUidOldOpt.getOrElse {
+                  EdgesUtil.nextEdgeUidFromMap( v0.edges )
+                }
 
-            val blobUrlNew = URL.createObjectURL( fileNew )
+                val blobUrlNew = URL.createObjectURL( fileNew )
 
-            // Записать текущий файл в состояние.
-            val dataEdge2 = MEdgeDataJs(
-              jdEdge = MJdEditEdge(
-                predicate   = MPredicates.Bg,
-                id          = edgeUid2,
-                url         = Some( blobUrlNew )
-              ),
-              fileJs = Some(MJsFileInfo(
-                blob      = fileNew,
-                blobUrl   = Option( blobUrlNew ),
-                fileName  = Option( fileNew.name )
-              ))
-              // TODO Запустить upload XHR, и выставить 0% upload progress
-            )
+                // Записать текущий файл в состояние.
+                val dataEdge2 = MEdgeDataJs(
+                  jdEdge = MJdEditEdge(
+                    predicate   = MPredicates.Bg,
+                    id          = edgeUid2,
+                    url         = Some( blobUrlNew )
+                  ),
+                  fileJs = Some(MJsFileInfo(
+                    blob      = fileNew,
+                    blobUrl   = Option( blobUrlNew ),
+                    fileName  = Option( fileNew.name )
+                  ))
+                  // TODO Запустить upload XHR, и выставить 0% upload progress
+                )
+
+                // Если есть старый файл, то нужно позаботиться о его удалении...
+                Future {
+                  for (dataEdgeOld <- dataEdgeOldOpt; fileJsOld <- dataEdgeOld.fileJs) {
+                    // Закрыть старый blobURL в фоне, после пере-рендера.
+                    for (blobUrlOld <- fileJsOld.blobUrl) {
+                      Future {
+                        URL.revokeObjectURL(blobUrlOld)
+                      }
+                    }
+
+                    // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
+                    Future {
+                      fileJsOld.blob.close()
+                    }
+
+                    // Прервать upload файла на сервер, есть возможно.
+                    for (upXhrOld <- fileJsOld.uploadXhr) {
+                      try {
+                        upXhrOld.abort()
+                      } catch {
+                        case ex: Throwable =>
+                          LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
+                      }
+                    }
+                  }
+                } .failed
+                  .foreach { ex =>
+                    LOG.error( ErrorMsgs.FILE_CLEANUP_FAIL, ex, msg = dataEdgeOldOpt )
+                  }
+
+                val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
+                (dataEdge2, edges2)
+
+              } { edge =>
+                // Внезапно, этот файл уже известен.
+                //println("dup: " + fileNew.name + " | " + fileNew.size + " bytes")
+                (edge, v0.edges)
+              }
+
             val selJdt2 = selJdt0.withProps1(
               selJdt0.props1.withBgImg( Some(
                 MImgEdgeWithOps(
-                  imgEdge = MJdEdgeId( edgeUid2 ),
+                  imgEdge = MJdEdgeId( dataEdge9.id ),
                 )
               ))
             )
 
             // Собрать обновлённое состояние.
-            val v1 = v0.copy(
-              edges       = v0.edges.updated(edgeUid2, dataEdge2),
+            v0.copy(
+              edges       = edges9,
               selectedTag = Some(selJdt2)
             )
-
-            // Если есть старый файл...
-            for (dataEdgeOld <- dataEdgeOldOpt; fileJsOld <- dataEdgeOld.fileJs) {
-              // Закрыть старый blobURL в фоне, после пере-рендера.
-              for (blobUrlOld <- fileJsOld.blobUrl) {
-                Future {
-                  URL.revokeObjectURL( blobUrlOld )
-                }
-              }
-
-              // Старый файл надо закрыть. В фоне, чтобы избежать теоретически-возможных
-              Future {
-                fileJsOld.blob.close()
-              }
-
-              // Прервать upload файла на сервер, есть возможно.
-              for (upXhrOld <- fileJsOld.uploadXhr) {
-                try {
-                  upXhrOld.abort()
-                } catch { case ex: Throwable =>
-                  LOG.warn(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, dataEdgeOld)
-                }
-              }
-            }
-
-            v1
           }
 
         updated(v9)
