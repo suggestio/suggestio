@@ -55,19 +55,20 @@ class LkAdEditCircuit(
           szMult    = 2
         )
         val tpl = mFormInit.form.template
-        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, conf )
+        val edges = IId.els2idMap[EdgeUid_t, MEdgeDataJs] {
+          mFormInit.form.edges
+            .iterator
+            .map {
+              MEdgeDataJs(_)
+            }
+        }
+        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, conf, edges )
         val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
         MDocS(
           jdArgs = MJdArgs(
             template   = tpl,
             renderArgs = MJdRenderArgs(
-              edges = IId.els2idMap[EdgeUid_t, MEdgeDataJs] {
-                mFormInit.form.edges
-                  .iterator
-                  .map {
-                    MEdgeDataJs(_)
-                  }
-              }
+              edges = edges
             ),
             jdCss      = jdCss,
             conf       = conf
@@ -129,7 +130,7 @@ class LkAdEditCircuit(
         val tpl2 = mdoc0.jdArgs.template
           .deepUpdateOne(jdt0, strip2 :: Nil)
           .head
-        val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
+        val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mdoc0.jdArgs.renderArgs.edges) )
 
         val stateOuter2 = for (state <- doc2bgColorContF(mdoc0)) yield {
           state.withBgColorPick( mColorAh.pickS )
@@ -177,23 +178,41 @@ class LkAdEditCircuit(
 
     val mdoc2 = mdoc0
       .withJdArgs {
-        // TODO Opt поменять местами две операции, кучу jdArgs.with*() заменить на один jdArgs.copy().
-        val jdArgs1 = mdoc0.jdArgs
-          .withRenderArgs(
-            mdoc0.jdArgs.renderArgs.withEdges(
-              mPictureAh.edges
-            )
-          )
-          .withSelectedTag( mPictureAh.selectedTag )
         // Продублировать обновлённый selected-тег в шаблон и css:
-        mPictureAh.selectedTag.fold(jdArgs1) { selJdt =>
-          val tpl2 = jdArgs1.template
+        val tpl2Opt = for (selJdt <- mPictureAh.selectedTag) yield {
+          mdoc0.jdArgs
+            .template
             .deepUpdateOne(mdoc0.jdArgs.selectedTag.get, selJdt :: Nil)
             .head
-          jdArgs1
-            .withTemplate( tpl2 )
-            .withJdCss( jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, jdArgs1.conf) ) )
         }
+        val tpl2 = tpl2Opt.getOrElse( mdoc0.jdArgs.template )
+
+        // css обновляем только после FastEq, чтобы избежать жирного перерендера без необходимости.
+        // TODO Вынести этот код куда-нибудь.
+        val css2 = {
+          val oldCssArgs = MJdCssArgs.singleCssArgs(mdoc0.jdArgs.template, mdoc0.jdArgs.conf, mdoc0.jdArgs.renderArgs.edges)
+          val newCssArgs = MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mPictureAh.edges)
+          if (MJdCssArgs.MJdCssArgsFastEq.eqv(oldCssArgs, newCssArgs)) {
+            //println("No css changes")
+            mdoc0.jdArgs.jdCss
+          } else {
+            //println("CSS Updated")
+            // Что-то важное изменилось, отправляем CSS на пересборку.
+            jdCssFactory.mkJdCss(
+              MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mPictureAh.edges )
+            )
+          }
+        }
+
+        // Залить всё в итоговое состояние пачкой:
+        mdoc0.jdArgs.copy(
+          template    = tpl2,
+          renderArgs  = mdoc0.jdArgs.renderArgs.withEdges(
+            mPictureAh.edges
+          ),
+          selectedTag = mPictureAh.selectedTag,
+          jdCss       = css2
+        )
       }
 
     mroot0.copy(

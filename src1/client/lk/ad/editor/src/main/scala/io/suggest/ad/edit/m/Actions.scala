@@ -3,7 +3,9 @@ package io.suggest.ad.edit.m
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
+import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.spa.DAction
 import io.suggest.text.StringUtil

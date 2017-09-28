@@ -4,13 +4,13 @@ import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.render.m.MJdCssArgs
+import io.suggest.jd.render.m.{MEmuCropCssArgs, MJdCssArgs}
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 
 import scalacss.internal.DslBase.ToStyle
 import scalacss.internal.ValueT.TypedAttr_Color
@@ -263,6 +263,75 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       styleS(
         acc: _*
+      )
+    }
+  }
+
+
+  // -------------------------------------------------------------------------------
+  // images + crop.
+
+  // Делаем имитацию кропа прямо на экране, без участия сервера, с помощью css
+  // https://stackoverflow.com/a/493329
+
+  // Закомменчено пока: стили для контейнера не требуются, поэтому пропускаем из мимо ушей.
+  /*
+  val imgCropContainerF = {
+    // Сборка области допустимых значений кропов.
+    val imgCropsDomain = {
+      val crops = _allJdTagsIter
+        .flatMap { s =>
+          s.props1
+            .bgImg
+            .flatMap(_.crop)
+        }
+        .toIndexedSeq
+      new Domain.OverSeq( crops )
+    }
+    // Функция стиля.
+    styleF( imgCropsDomain ) { mcrop =>
+      styleS(
+        width( mcrop.width.px ),
+        height( mcrop.height.px ),
+        overflow.hidden
+      )
+    }
+  }
+  */
+
+  /** Стили для эмуляции кропа на фоновом изображении блока. */
+  val blkBgImgCropEmuF = {
+    val emuCrops = {
+      val cropsIter = for {
+        jdt       <- _allJdTagsIter
+        bm        <- jdt.props1.bm
+        bgImg     <- jdt.props1.bgImg
+        mcrop     <- bgImg.crop
+        e         <- jdCssArgs.edges.get( bgImg.imgEdge.edgeUid )
+        fileJs    <- e.fileJs
+        origWh    <- fileJs.whPx
+      } yield {
+        MEmuCropCssArgs(mcrop, origWh, bm)
+      }
+      cropsIter.toIndexedSeq
+    }
+
+    val cropsDomain = new Domain.OverSeq( emuCrops )
+
+    styleF(cropsDomain) { ecArgs =>
+      // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
+      // margin: -20px 0px 0px -16px; -- сдвиг вверх и влево.
+      // Для этого надо вписать размеры кропа в размеры блока
+
+      // Вычисляем отношение стороны кропа к стороне блока. Считаем, что обе стороны соотносятся одинаково.
+      val outer2cropRatio = ecArgs.outerWh.height.toDouble / ecArgs.crop.height.toDouble
+
+      // Проецируем это отношение на натуральные размеры картинки, top и left:
+      styleS(
+        width     ( (ecArgs.origWh.width  * outer2cropRatio).toInt.px ),
+        height    ( (ecArgs.origWh.height * outer2cropRatio).toInt.px ),
+        marginLeft( -(ecArgs.crop.offX * outer2cropRatio).toInt.px ),
+        marginTop ( -(ecArgs.crop.offY * outer2cropRatio).toInt.px )
       )
     }
   }

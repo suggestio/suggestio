@@ -31,7 +31,6 @@ import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 
-import scala.scalajs.js.JSON
 import scala.util.Random
 
 /**
@@ -104,6 +103,8 @@ class DocEditAh[M](
         blobFxOpt
       }
 
+    // TODO 30. Поискать картинки, требующие вычисления w/h. Запустить в фоне это вычисление.
+
     // 90. Объединить все собранные эффекты воедино.
     val totalFxOpt = ReactDiodeUtil.mergeEffectsSet( blobEffectsIter )
 
@@ -146,7 +147,7 @@ class DocEditAh[M](
             .withEdges( edgesData3 ),
           selectedTag = Some(qdTag2),
           jdCss       = jdCssFactory.mkJdCss(
-            MJdCssArgs.singleCssArgs(jsonDoc2, v0.jdArgs.conf)
+            MJdCssArgs.singleCssArgs(jsonDoc2, v0.jdArgs.conf, edgesData3)
           )
         )
 
@@ -236,7 +237,7 @@ class DocEditAh[M](
                 renderArgs  = v3.jdArgs.renderArgs
                   .withEdges( dataEdges2 ),
                 jdCss       = jdCssFactory.mkJdCss(
-                  MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf)
+                  MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf, dataEdges2)
                 )
               )
             )
@@ -342,7 +343,9 @@ class DocEditAh[M](
         jdArgs = v0.jdArgs.copy(
           selectedTag = Some( strip2 ),
           template    = template2,
-          jdCss       = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf) )
+          jdCss       = jdCssFactory.mkJdCss(
+            MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
+          )
         )
       )
 
@@ -380,7 +383,7 @@ class DocEditAh[M](
         if (tpl2.children.nonEmpty) {
 
           val jdCss2 = jdCssFactory.mkJdCss(
-            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
           )
 
           val v2 = v0.copy(
@@ -545,7 +548,9 @@ class DocEditAh[M](
       val v2 = v0.withJdArgs(
         v0.jdArgs.copy(
           template    = tpl2,
-          jdCss       = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) ),
+          jdCss       = jdCssFactory.mkJdCss(
+            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
+          ),
           dnd         = MJdDndS.empty,
           selectedTag = Some(apJdt2)
         )
@@ -676,7 +681,7 @@ class DocEditAh[M](
           renderArgs  = v0.jdArgs.renderArgs
             .withEdges( edgesMap2 ),
           jdCss       = jdCssFactory.mkJdCss(
-            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
+            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, edgesMap2)
           ),
           selectedTag = Some(qdt)
         ),
@@ -739,7 +744,9 @@ class DocEditAh[M](
           v0.jdArgs.copy(
             template    = tpl2,
             selectedTag = Some(newStrip),
-            jdCss       = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf) )
+            jdCss       = jdCssFactory.mkJdCss(
+              MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
+            )
           )
         )
       updated(v2)

@@ -1,5 +1,6 @@
 package io.suggest.jd.tags.qd
 
+import io.suggest.jd.MJdEdgeId
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -18,7 +19,7 @@ object MQdOp {
 
   implicit val QD_OP_FORMAT: OFormat[MQdOp] = (
     (__ \ "y").format[MQdOpType] and
-    (__ \ "g").formatNullable[MQdEdgeInfo] and
+    (__ \ "g").formatNullable[MJdEdgeId] and
     (__ \ "i").formatNullable[Int] and
     (__ \ "a").formatNullable[MQdAttrsText] and
     (__ \ "l").formatNullable[MQdAttrsLine] and
@@ -40,7 +41,7 @@ object MQdOp {
   */
 case class MQdOp(
                   opType     : MQdOpType,
-                  edgeInfo   : Option[MQdEdgeInfo]    = None,
+                  edgeInfo   : Option[MJdEdgeId]    = None,
                   index      : Option[Int]            = None,
                   attrsText  : Option[MQdAttrsText]   = None,
                   attrsLine  : Option[MQdAttrsLine]   = None,

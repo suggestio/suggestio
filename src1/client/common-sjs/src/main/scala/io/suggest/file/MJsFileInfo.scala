@@ -2,11 +2,11 @@ package io.suggest.file
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.ueq.UnivEqJsUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
-import org.scalajs.dom.Blob
-import org.scalajs.dom.raw.XMLHttpRequest
+import org.scalajs.dom.{Blob, XMLHttpRequest}
 
 /**
   * Suggest.io
@@ -26,7 +26,7 @@ object MJsFileInfo {
       (a.blob               ===* b.blob) &&
         (a.blobUrl          ===* b.blobUrl) &&
         (a.fileName         ===* b.fileName) &&
-        (a.hash             ===* b.hash) &&
+        (a.whPx             ===* b.whPx) &&
         (a.uploadProgress   ===* b.uploadProgress) &&
         (a.uploadXhr        ===* b.uploadXhr)
     }
@@ -42,15 +42,15 @@ object MJsFileInfo {
   * @param blob Локально-доступный бинарь, который описывается моделью.
   * @param blobUrl Ссылка на блоб в памяти браузера, если есть.
   * @param fileName Название файла, если известно.
-  * @param hash Результат поверхностного хеширования файла.
-  * @param uploadProgress Прогресс заливки картинки на сервер, если есть.
-  * @param uploadXhr XHR-реквест, производящий сейчас upload файла на сервер.
+  * @param whPx Ширина и длина картинки.
+  * param uploadProgress Прогресс заливки картинки на сервер, если есть.
+  * param uploadXhr XHR-реквест, производящий сейчас upload файла на сервер.
   */
 case class MJsFileInfo(
                         blob              : Blob,
                         blobUrl           : Option[String]          = None,
                         fileName          : Option[String]          = None,
-                        hash              : Option[Int]             = None,
+                        whPx              : Option[MSize2di]        = None,
                         uploadProgress    : Option[Int]             = None,
                         uploadXhr         : Option[XMLHttpRequest]  = None
                       )
@@ -60,7 +60,7 @@ case class MJsFileInfo(
   def withBlob(blob: Blob)                                = copy(blob = blob)
   def withBlobUrl(blobUrl: Option[String])                = copy(blobUrl = blobUrl)
   def withFileName(fileName: Option[String])              = copy(fileName = fileName)
-  def withHash(hash: Option[Int])                         = copy(hash = hash)
+  def withWhPx(whPx: Option[MSize2di])                    = copy(whPx = whPx)
   def withUploadProgress(uploadProgress: Option[Int])     = copy(uploadProgress = uploadProgress)
   def withUploadXhr(uploadXhr: Option[XMLHttpRequest])    = copy(uploadXhr = uploadXhr)
 

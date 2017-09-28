@@ -4,7 +4,8 @@ import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.coll.Lists
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp, MQdOpTypes}
+import io.suggest.jd.MJdEdgeId
+import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
@@ -22,15 +23,12 @@ import play.api.libs.json._
 object IDocTag {
 
   object Fields {
-
     val TYPE_FN = "t"
-
     val PROPS_FN = "p"
-
     /** Имя поля с дочерними элементами. По идее -- оно одно на все реализации. */
     val CHILDREN_FN = "c"
-
   }
+
 
   /** Полиморфная поддержка play-json. */
   implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = (
@@ -129,7 +127,7 @@ object IDocTag {
         qdOps   = List(
           MQdOp(
             opType    = MQdOpTypes.Insert,
-            edgeInfo  = Some( MQdEdgeInfo(edgeUid) )
+            edgeInfo  = Some( MJdEdgeId(edgeUid) )
           )
         )
       )
@@ -205,8 +203,10 @@ final case class IDocTag(
   }
 
   def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
-    val iter1 = props1.qdOps.iterator.flatMap(_.edgeInfo)
+    val iter1 = props1.qdOps.iterator
+      .flatMap(_.edgeInfo)
     val iter2 = props1.bgImg.iterator
+      .map(_.imgEdge)
     val iter12 = (iter1 ++ iter2).map(_.edgeUid)
     val iterChs = deepChildrenIter.flatMap(_.deepEdgesUidsIter)
     iter12 ++ iterChs

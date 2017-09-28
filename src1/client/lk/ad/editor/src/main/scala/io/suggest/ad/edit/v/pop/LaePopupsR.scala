@@ -2,7 +2,6 @@ package io.suggest.ad.edit.v.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
-import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
@@ -21,14 +20,16 @@ class LaePopupsR(
                   val pictureCropPopupR: PictureCropPopupR
                 ) {
 
-  import MPictureCropPopup.MPictureCropPopupFastEq
+  import pictureCropPopupR.PictureCropPopupPropsFastEq
+  import MErrorPopupS.MErrorPopupSFastEq
+  import PopupsContR.PopContPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
   protected case class State(
                               popupsContPropsC    : ReactConnectProxy[PopupsContR.PropsVal],
                               errorMsgsC          : ReactConnectProxy[Option[MErrorPopupS]],
-                              cropPopPropsOptC    : ReactConnectProxy[Option[MPictureCropPopup]]
+                              cropPopPropsOptC    : ReactConnectProxy[Option[pictureCropPopupR.PropsVal]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -60,7 +61,18 @@ class LaePopupsR(
 
         errorMsgsC = rootProxy.connect { _.popups.error },
 
-        cropPopPropsOptC = rootProxy.connect { _.popups.pictureCrop }
+        cropPopPropsOptC = rootProxy.connect { root =>
+          for {
+            mcrop       <- root.popups.pictureCrop
+            edge        <- root.doc.jdArgs.renderArgs.edges.get( mcrop.imgEdgeUid )
+            imgSrc      <- edge.imgSrcOpt
+          } yield {
+            pictureCropPopupR.PropsVal(
+              imgSrc = imgSrc,
+              percentCrop = mcrop.percentCrop
+            )
+          }
+        }
 
       )
     }

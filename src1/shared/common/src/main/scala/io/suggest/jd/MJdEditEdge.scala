@@ -73,9 +73,7 @@ case class MJdEditEdge(
   def imgSrcOpt: Option[String] = {
     fileSrv
       .map(_.url)
-      .orElse {
-        url
-      }
+      .orElse(url)
   }
 
 }

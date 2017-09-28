@@ -1,7 +1,9 @@
 package io.suggest.jd.render.m
 
-import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
+import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.jd.tags.IDocTag
+import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.sjs.common.spa.DAction
 
 /**
@@ -45,3 +47,6 @@ case class JdDropContent(strip: IDocTag, clXy: MCoords2di, foreignTag: Option[ID
   */
 case class JdDropStrip(targetStrip: IDocTag, isUpper: Boolean) extends IJdAction
 
+
+/** Уведомить систему о ширине и длине загруженной картинки. */
+case class SetImgWh(edgeUid: EdgeUid_t, wh: MSize2di) extends IJdAction

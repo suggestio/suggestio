@@ -2,7 +2,7 @@ package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.{MJdEditEdge, MJdEdgeId}
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
@@ -311,7 +311,13 @@ class QuillDeltaJsUtil extends Log {
         // Некоторые эджи из исходной карты могут быть потеряны. Это не страшно: потом надо просто объеденить старую и новую эдж-карты.
         for {
           e   <- edges0.valuesIterator
-          key <- e.jdEdge.text.orElse( e.imgSrcOpt )
+          key <- (
+            e.jdEdge.text ::
+            e.jdEdge.url ::
+            //e.fileJs.flatMap(_.blobUrl) ::    // 2017.sep.28 Quill не поддерживает, игнорим.
+            e.jdEdge.fileSrv.map(_.url) ::
+            Nil
+          ).flatten
         } yield {
           key -> e
         }
@@ -368,6 +374,7 @@ class QuillDeltaJsUtil extends Log {
                 .get
 
               str2EdgeMap.getOrElseUpdate(anyStrContent, {
+                println(anyStrContent, str2EdgeMap.mkString("\n", "\n", "\n"))
                 // Собрать embed edge
                 MEdgeDataJs(
                   jdEdge = MJdEditEdge(
@@ -382,7 +389,7 @@ class QuillDeltaJsUtil extends Log {
               throw new IllegalArgumentException("op.i=" + raw)
             }
 
-            MQdEdgeInfo(
+            MJdEdgeId(
               edgeUid = jdEdge.id
             )
           },

@@ -148,7 +148,7 @@ class LkAdEditFormR(
                 .bgImg
                 .flatMap { ei =>
                   mroot.doc.jdArgs.renderArgs.edges
-                    .get(ei.edgeUid)
+                    .get(ei.imgEdge.edgeUid)
                     .flatMap(_.imgSrcOpt)
                 }
             )

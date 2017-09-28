@@ -6,7 +6,6 @@ import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.MJdTagNames
 import japgolly.univeq._
 import io.suggest.ueq.ReactUnivEqUtil._
-import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io

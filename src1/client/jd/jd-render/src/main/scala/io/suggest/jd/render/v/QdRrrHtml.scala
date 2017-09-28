@@ -3,7 +3,6 @@ package io.suggest.jd.render.v
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
@@ -34,10 +33,14 @@ import scala.annotation.tailrec
   *   Например, заворачивать всю пачку строк в список.
   * - Форматирование сегментов текста внутри строк - тривиально, т.е. также как и в первой версии рендерера.
   *
+  * @param qdTag Текущий jd-тег для рендера.
+  * @param imgEdgeMods Опциональная функция, возвращающая TagMod при рендере картинок.
+  *                    Используется в редакторе для навешивания дополнительных листенеров.
   */
 class QdRrrHtml(
-                 jdArgs   : MJdArgs,
-                 qdTag    : IDocTag
+                 jdArgs       : MJdArgs,
+                 qdTag        : IDocTag,
+                 imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None
                ) {
 
   import QdRrrHtml.LOG
@@ -165,6 +168,10 @@ class QdRrrHtml(
       if (jdArgs.conf.withEdit) {
         imgArgsAcc ::= (^.draggable := false)
       }
+
+      // Доп.модификации извне.
+      for (f <- imgEdgeMods)
+        imgArgsAcc ::= f( e )
 
       // Наконец, отработать src (в самое начало списка -- просто на всякий случай).
       imgArgsAcc =

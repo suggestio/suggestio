@@ -1,11 +1,15 @@
 package io.suggest.jd.render.v
 
 import diode.react.ModelProxy
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.Css
+import io.suggest.err.ErrorConstants
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
@@ -19,6 +23,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.Element
+import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
 import scalacss.ScalaCssReact._
@@ -189,6 +194,27 @@ class JdR extends Log {
     }
 
 
+    /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
+    private def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
+      // Прочитать natural w/h из экшена.
+      try {
+        val img = e.target.asInstanceOf[Image]
+        val sz = MSize2di(
+          // IDEA почему-то ругается на deprecated, это ошибка в scala-плагине.
+          width  = img.naturalWidth,
+          height = img.naturalHeight
+        )
+        ErrorConstants.assertArg( sz.width > 0 )
+        ErrorConstants.assertArg( sz.height > 0 )
+        dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
+      } catch {
+        case ex: Throwable =>
+          LOG.error( ErrorMsgs.IMG_EXPECTED, ex = ex, msg = (edgeUid, e.target.toString) )
+          Callback.empty
+      }
+    }
+
+
     // Internal API
 
     def renderChildren(dt: IDocTag, jdArgs: MJdArgs): VdomArray = {
@@ -242,6 +268,19 @@ class JdR extends Log {
       )
     }
 
+
+    /** Повесить onload для картинки, считывающий ей wh.
+      * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
+    private def _notifyImgWhOnEdit(e: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
+      // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
+      if ( jdArgs.conf.withEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
+        ^.onLoad ==> onNewImageLoaded(e.id)
+      } else {
+        EmptyVdom
+      }
+    }
+
+
     /** Рендер strip, т.е. одной "полосы" контента. */
     def renderStrip(s: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
       val C = jdArgs.jdCss
@@ -270,37 +309,57 @@ class JdR extends Log {
         // Если задана фоновая картинка, от отрендерить её.
         {
           val bgImgOpt = for {
-            bgImgEi <- s.props1.bgImg
-            edgeUid = bgImgEi.edgeUid
-            edge    <- jdArgs.renderArgs.edges.get( edgeUid )
+            bgImgData <- s.props1.bgImg
+            edgeUid   = bgImgData.imgEdge.edgeUid
+            edge      <- jdArgs.renderArgs.edges.get( edgeUid )
             if edge.jdEdge.predicate ==* MPredicates.Bg
-            src     <- edge.imgSrcOpt
+            bgImgSrc  <- edge.imgSrcOpt
           } yield {
-            src
-          }
-          bgImgOpt.whenDefined { bgImgSrc =>
+            // Поддержка имитации кропа: рассчитываем аргументы кропа, если есть.
+            val cropEmuOpt = for {
+              crop    <- bgImgData.crop
+              bm      <- s.props1.bm
+              fileJs  <- edge.fileJs
+              origWh  <- fileJs.whPx
+            } yield {
+              MEmuCropCssArgs(crop, origWh, bm)
+            }
+
             <.img(
               ^.`class` := Css.Block.BG,
               ^.src := bgImgSrc,
+
               // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
               if (jdArgs.conf.withEdit) {
                 ^.draggable := false
               } else {
                 EmptyVdom
               },
-              s.props1.bm.whenDefined { bm =>
-                TagMod(
-                  // По дефолту -- заполнение по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
-                  ^.width  := bm.width.px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
-                  //^.height := bm.height.px
-                )
+
+              // Если запрошена эмуляция кропа, то выполнить это:
+              cropEmuOpt.fold[TagMod] {
+                // Просто заполнение всего блока картинкой. TODO Унести в jdCss.
+                s.props1.bm.whenDefined { bm =>
+                  // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
+                  TagMod(
+                    ^.width  := bm.width.px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
+                    //^.height := bm.height.px
+                  )
+                }
+              } { cropEmu =>
+                C.blkBgImgCropEmuF( cropEmu )
               },
+
+              // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
+              _notifyImgWhOnEdit(edge, jdArgs),
+
               // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
               jdArgs.renderArgs.selJdtBgImgMod
                 .filter(_ => isSelected)
                 .whenDefined
             )
           }
+          bgImgOpt.whenDefined
         },
 
         renderChildren( s, jdArgs )
@@ -334,7 +393,14 @@ class JdR extends Log {
       */
     def renderQd( qdTag: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
       val tagMods = {
-        val qdRrr = new QdRrrHtml(jdArgs, qdTag)
+        val qdRrr = new QdRrrHtml(
+          jdArgs      = jdArgs,
+          qdTag       = qdTag,
+          // Для редактора: следует проверить эдж
+          imgEdgeMods = OptionUtil.maybe( jdArgs.conf.withEdit ) {
+            _notifyImgWhOnEdit(_, jdArgs)
+          }
+        )
         qdRrr.render()
       }
       <.div(

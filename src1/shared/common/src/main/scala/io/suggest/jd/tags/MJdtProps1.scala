@@ -3,8 +3,10 @@ package io.suggest.jd.tags
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.jd.tags.qd.{MQdEdgeInfo, MQdOp}
+import io.suggest.img.MImgEdgeWithOps
+import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.model.n2.node.meta.colors.MColorData
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -26,7 +28,7 @@ object MJdtProps1 extends IEmpty {
   /** Поддержка play-json. */
   implicit val MJD_TAG_PROPS1_FORMAT: OFormat[MJdtProps1] = (
     (__ \ "a").formatNullable[MColorData] and
-    (__ \ "b").formatNullable[MQdEdgeInfo] and
+    (__ \ "b").formatNullable[MImgEdgeWithOps] and
     (__ \ "c").formatNullable[BlockMeta] and
     (__ \ "d").formatNullable[MCoords2di] and
     (__ \ "e").formatNullable[Seq[MQdOp]]
@@ -36,8 +38,10 @@ object MJdtProps1 extends IEmpty {
       )
   )(apply, unlift(unapply))
 
-  // Seq[MQdOp] заменить на List?
-  //implicit def univEq: UnivEq[MJdTagProps1] = UnivEq.derive
+  implicit def univEq: UnivEq[MJdtProps1] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
+  }
 
 }
 
@@ -51,19 +55,19 @@ object MJdtProps1 extends IEmpty {
   * @param qdOps Список qd-операций для постройки контента (quill-delta).
   */
 case class MJdtProps1(
-                       bgColor  : Option[MColorData]    = None,
-                       bgImg    : Option[MQdEdgeInfo]   = None,
-                       bm       : Option[BlockMeta]     = None,
-                       topLeft  : Option[MCoords2di]    = None,
-                       qdOps    : Seq[MQdOp]            = Nil
+                       bgColor  : Option[MColorData]        = None,
+                       bgImg    : Option[MImgEdgeWithOps]   = None,
+                       bm       : Option[BlockMeta]         = None,
+                       topLeft  : Option[MCoords2di]        = None,
+                       qdOps    : Seq[MQdOp]                = Nil,
                      )
   extends EmptyProduct
 {
 
-  def withBgColor(bgColor: Option[MColorData])    = copy(bgColor = bgColor)
-  def withBgImg(bgImg: Option[MQdEdgeInfo])       = copy(bgImg = bgImg)
-  def withBm(bm: Option[BlockMeta])               = copy(bm = bm)
-  def withTopLeft(topLeft: Option[MCoords2di])    = copy(topLeft = topLeft)
-  def withQdOps(qdOps: Seq[MQdOp])                = copy(qdOps = qdOps)
+  def withBgColor(bgColor: Option[MColorData])        = copy(bgColor = bgColor)
+  def withBgImg(bgImg: Option[MImgEdgeWithOps])       = copy(bgImg = bgImg)
+  def withBm(bm: Option[BlockMeta])                   = copy(bm = bm)
+  def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
+  def withQdOps(qdOps: Seq[MQdOp])                    = copy(qdOps = qdOps)
 
 }

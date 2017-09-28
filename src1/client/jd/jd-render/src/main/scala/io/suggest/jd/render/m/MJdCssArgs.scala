@@ -2,6 +2,8 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.jd.tags.IDocTag
+import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.MEdgeDataJs
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 
@@ -17,14 +19,16 @@ object MJdCssArgs {
   implicit object MJdCssArgsFastEq extends FastEq[MJdCssArgs] {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
       (a.templates ===* b.templates) &&
-        (a.conf ===* b.conf)
+        (a.conf ===* b.conf) &&
+        (a.edges ===* b.edges)
     }
   }
 
-  def singleCssArgs(template: IDocTag, conf: MJdConf): MJdCssArgs = {
+  def singleCssArgs(template: IDocTag, conf: MJdConf, edges: Map[EdgeUid_t, MEdgeDataJs]): MJdCssArgs = {
     MJdCssArgs(
       templates = template :: Nil,
-      conf      = conf
+      conf      = conf,
+      edges     = edges
     )
   }
 
@@ -37,8 +41,11 @@ object MJdCssArgs {
   *
   * @param templates Все документы.
   * @param conf Конфигурация рендеринга.
+  * @param edges Текущая карта эджей.
   */
 case class MJdCssArgs(
                        templates  : Seq[IDocTag],
-                       conf       : MJdConf
+                       conf       : MJdConf,
+                     // TODO От эджей требуются лишь минимальная инфа. А тут этой инфы с избытком.
+                       edges      : Map[EdgeUid_t, MEdgeDataJs]
                      )

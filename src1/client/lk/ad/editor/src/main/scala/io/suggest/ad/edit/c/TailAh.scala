@@ -1,8 +1,9 @@
 package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
+import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
-import io.suggest.lk.m.ErrorPopupCloseClick
+import io.suggest.lk.m.{CloseAllPopups, ErrorPopupCloseClick}
 
 /**
   * Suggest.io
@@ -24,6 +25,14 @@ class TailAh[M](modelRW: ModelRW[M, MAeRoot]) extends ActionHandler(modelRW) {
       val v2 = v0.withPopups(
         v0.popups
           .withErrors( None )
+      )
+      updated( v2 )
+
+    // Закрытие всех попапов.
+    case CloseAllPopups =>
+      val v0 = value
+      val v2 = v0.withPopups(
+        MAePopupsS.empty
       )
       updated( v2 )
 

@@ -1,8 +1,8 @@
 package io.suggest.ad.edit.v.pop
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop, ReactCrop, ReactCropProps}
+import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.ad.edit.m.{CropCancel, CropChanged, CropSave}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
@@ -16,6 +16,8 @@ import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.ReactImageCropUnivEqUtil._
 
 /**
   * Suggest.io
@@ -27,7 +29,19 @@ class PictureCropPopupR(
                          laeCss: LkAdEditCss
                        ) {
 
-  type Props = ModelProxy[Option[MPictureCropPopup]]
+  case class PropsVal(
+                       imgSrc       : String,
+                       percentCrop  : PercentCrop
+                     )
+  implicit object PictureCropPopupPropsFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      (a.imgSrc ===* b.imgSrc) &&
+        (a.percentCrop ===* b.percentCrop)
+    }
+  }
+
+
+  type Props = ModelProxy[Option[PropsVal]]
 
   class Backend($: BackendScope[Props, Unit]) {
 
@@ -67,6 +81,7 @@ class PictureCropPopupR(
                   override val src          = props.imgSrc
                   override val crop         = props.percentCrop
                   override val onComplete   = onCropChangeF
+                  // TODO Соотнести minWH с percentCrop или aspect, чтобы не было скачков на экране.
                   override val minHeight    = 50
                   override val minWidth     = 50
                 }
