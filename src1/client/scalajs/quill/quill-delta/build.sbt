@@ -1,8 +1,3 @@
-// https://www.npmjs.com/package/react-tinymce
-//
-// И надо не забывать добавлять tinymce.js в html-исходники:
-// https://github.com/instructure-react/react-tinymce#dependency
-
 Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
@@ -17,7 +12,6 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  //  "org.scala-js" %%% "scalajs-dom" % Common.sjsDomVsn
   "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
 )
 

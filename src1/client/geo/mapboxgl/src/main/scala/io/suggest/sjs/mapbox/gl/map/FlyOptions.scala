@@ -6,7 +6,6 @@ import io.suggest.sjs.mapbox.gl.camera.CameraOptions
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -17,7 +16,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * FlyOptions = CameraOptions | AnimationOptions + [real fly options]
   */
 
-@ScalaJSDefined
 trait FlyOptions extends AnimationOptions with CameraOptions {
 
   val curve   : UndefOr[Double]   = js.undefined

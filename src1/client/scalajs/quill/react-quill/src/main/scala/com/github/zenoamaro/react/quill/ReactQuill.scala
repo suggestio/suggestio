@@ -1,13 +1,13 @@
 package com.github.zenoamaro.react.quill
 
 import com.quilljs.delta.Delta
+import com.quilljs.quill.QuillEditor
 import com.quilljs.quill.events.{KeyDownEvent, KeyPressEvent, KeyUpEvent}
-import com.quilljs.quill.Quill
 import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -32,7 +32,7 @@ trait ReactQuillJsMounted extends js.Object {
 
   def blur(): Unit = js.native
 
-  def getEditor(): Quill = js.native
+  def getEditor(): QuillEditor = js.native
 
 }
 
@@ -45,7 +45,6 @@ object ReactQuillJs extends js.Object
 
 
 /** react-quill component properties JSON. */
-@ScalaJSDefined
 trait ReactQuillPropsR extends js.Object {
 
   val id : UndefOr[String] = js.undefined

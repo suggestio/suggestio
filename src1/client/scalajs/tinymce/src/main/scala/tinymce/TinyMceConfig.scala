@@ -2,7 +2,6 @@ package tinymce
 
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, undefined, |}
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -12,7 +11,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   */
 
 /** tinyMCE JSON config part with params, suitable for both react and plain use-cases. */
-@ScalaJSDefined
 trait TinyMceConfigCommon extends js.Object {
 
   val width                   : UndefOr[Int]      = undefined
@@ -44,7 +42,6 @@ trait TinyMceConfigCommon extends js.Object {
 
 
 /** Конфиг tinyMCE для прямой инициализации (без react-обёртки). */
-@ScalaJSDefined
 trait TinyMceConfig extends TinyMceConfigCommon {
 
   /** tinymce rendering target. */

@@ -192,7 +192,7 @@ class TreeAh[M](
         } { mns0 =>
           if (mns0.adv.nonEmpty) {
             // Нельзя тыкать галочку, когда уже идёт обновление состояния на сервере.
-            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = m + HtmlConstants.SPACE + mns0 )
+            LOG.log( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, mns0) )
             noChange
 
           } else {

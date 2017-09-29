@@ -16,6 +16,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
 
@@ -25,10 +26,12 @@ import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
  * Created: 16.03.15 15:09
  * Description: Запуск js личного кабинета.
  */
-object App extends Log {
+object LkMain extends Log {
 
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   def main(args: Array[String]): Unit = {
+    Leaflet.noConflict()
+
     val initFut = new LkInitRouter()
       .init()
 

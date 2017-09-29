@@ -4,7 +4,6 @@ import io.suggest.sjs.mapbox.gl.layer.LayoutProps
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,7 +12,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: Model of Symbol layout properties.
   */
 
-@ScalaJSDefined
 trait SymbolLayoutProps extends LayoutProps {
 
   val `text-field`: UndefOr[String] = js.undefined

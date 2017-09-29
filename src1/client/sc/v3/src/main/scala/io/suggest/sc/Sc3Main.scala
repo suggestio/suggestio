@@ -7,6 +7,7 @@ import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react.vdom.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.leaflet.Leaflet
 
 /**
   * Suggest.io
@@ -20,6 +21,9 @@ object Sc3Main {
 
   /** Здесь начинается исполнение кода выдачи. */
   def main(args: Array[String]): Unit = {
+    // Выпиливаем leaflet из window.L.
+    Leaflet.noConflict()
+
     // Сразу поискать js-роутер на странице.
     val jsRouterFut = SrvRouter.ensureJsRouter()
 

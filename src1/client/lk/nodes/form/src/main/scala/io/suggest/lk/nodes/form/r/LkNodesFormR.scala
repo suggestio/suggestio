@@ -1,7 +1,7 @@
 package io.suggest.lk.nodes.form.r
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.lk.nodes.form.m.{DocumentClick, MLkNodesRoot}
+import io.suggest.lk.nodes.form.m.{MLkNodesRoot}
 import io.suggest.lk.nodes.form.r.tree.TreeR
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.html_<^._
@@ -29,13 +29,13 @@ object LkNodesFormR {
   /** Вся суть react-компонента формы обитает здесь. */
   class Backend($: BackendScope[Props, State]) {
 
-    private def onFormClick: Callback = {
-      dispatchOnProxyScopeCB($, DocumentClick)
-    }
+    //private def onFormClick: Callback = {
+    //  dispatchOnProxyScopeCB($, DocumentClick)
+    //}
 
     def render(p: Props, s: State): VdomElement = {
       <.div(
-        ^.onClick    --> onFormClick,
+        //^.onClick    --> onFormClick,
 
         // Рендер текущего дерева узлов
         s.treeC { TreeR.apply }

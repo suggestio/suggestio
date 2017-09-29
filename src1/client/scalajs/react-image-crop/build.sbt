@@ -23,5 +23,3 @@ npmDependencies in Compile ++= Seq(
   "react-image-crop" -> version.value
 )
 
-scalacOptions += "-P:scalajs:sjsDefinedByDefault"
-

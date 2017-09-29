@@ -2,13 +2,12 @@ package react.leaflet.marker.cluster
 
 import io.suggest.sjs.leaflet.marker.cluster._
 import io.suggest.sjs.leaflet.marker.{Marker, MarkerEvent}
-import japgolly.scalajs.react.{JsComponent, Children}
+import japgolly.scalajs.react.{Children, JsComponent}
 import react.leaflet.Context
 import react.leaflet.layer.MapLayerR
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -31,7 +30,6 @@ object MarkerClusterGroupR {
 
 
 /** Реализация компонента, овладевающего кластерами из маркеров. */
-@ScalaJSDefined
 sealed class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context)
   extends MapLayerR[MarkerClusterGroupPropsR](_props, _ctx)
 {
@@ -57,7 +55,6 @@ sealed class MarkerClusterGroupC(_props: MarkerClusterGroupPropsR, _ctx: Context
 }
 
 
-@ScalaJSDefined
 trait MarkerClusterGroupPropsR extends MarkerClusterGroupOptions {
 
   val markers       : js.Array[Marker]

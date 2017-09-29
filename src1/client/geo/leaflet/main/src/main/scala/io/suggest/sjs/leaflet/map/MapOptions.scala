@@ -2,7 +2,6 @@ package io.suggest.sjs.leaflet.map
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -36,7 +35,6 @@ object MapOptions {
 
 
 /** JSON-модель опций сборки новой карты. */
-@ScalaJSDefined
 trait MapOptions extends js.Object {
 
   val center                : UndefOr[LatLng]           = js.undefined

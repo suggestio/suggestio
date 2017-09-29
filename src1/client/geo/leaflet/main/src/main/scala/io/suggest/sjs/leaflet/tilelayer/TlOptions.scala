@@ -4,7 +4,6 @@ import io.suggest.sjs.leaflet.map.{LatLngBounds, Zoom_t}
 
 import scala.scalajs.js
 import scala.scalajs.js.{UndefOr, `|`}
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,7 +12,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: Interface for TileLayer options model.
   */
 
-@ScalaJSDefined
 trait TlOptions extends js.Object {
 
   val minZoom             : UndefOr[Zoom_t]         = js.undefined

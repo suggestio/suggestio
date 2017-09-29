@@ -5,7 +5,6 @@ import io.suggest.sjs.mapbox.gl.ll.LngLat
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -14,7 +13,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: Camera options API.
   */
 
-@ScalaJSDefined
 trait CameraOptions extends js.Object {
 
   val center    : UndefOr[LngLat]      = js.undefined

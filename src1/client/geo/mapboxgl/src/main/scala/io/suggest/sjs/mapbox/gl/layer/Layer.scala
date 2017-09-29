@@ -4,7 +4,6 @@ import io.suggest.sjs.mapbox.gl.{Filter_t, Zoom_t}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,7 +12,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: API for layer instances.
   */
 
-@ScalaJSDefined
 trait Layer extends js.Object {
 
   val id: String

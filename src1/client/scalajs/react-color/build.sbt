@@ -23,5 +23,3 @@ npmDependencies in Compile ++= Seq(
   "react-color" -> version.value
 )
 
-scalacOptions += "-P:scalajs:sjsDefinedByDefault"
-

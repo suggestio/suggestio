@@ -13,10 +13,15 @@ version := "0.0.0-SNAPSHOT"
 scalacOptions += "-feature"
 
 libraryDependencies ++= Seq(
-  Common.ORG      %%% "scalajs-leaflet"  % "0.1s-SNAPSHOT"
+//  Common.ORG      %%% "scalajs-leaflet"  % "0.1s-SNAPSHOT"
 )
 
 npmDependencies in Compile ++= Seq(
   "leaflet.markercluster" -> Common.leafletMarkerClusterJsVsn
+)
+
+npmDevDependencies in Compile ++= Seq(
+  "imports-loader" -> Common.Vsn.IMPORTS_LOADER_JS,
+  "exports-loader" -> Common.Vsn.EXPORTS_LOADER_JS
 )
 

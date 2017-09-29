@@ -5,7 +5,6 @@ import io.suggest.sjs.mapbox.gl.layer.PaintProps
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -14,7 +13,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: API for painting properties for the circle layer.
   */
 
-@ScalaJSDefined
 trait CirclePaintProps extends PaintProps {
 
   val `circle-radius`          : UndefOr[Int]            = js.undefined

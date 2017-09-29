@@ -5,7 +5,7 @@ import tinymce.TinyMceConfigCommon
 import tinymce.events.TinyMceEvent
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -32,7 +32,6 @@ object TinyMceJsR extends js.Object
 
 
 /** TinyMCE component properties. */
-@ScalaJSDefined
 trait TinyMcePropsR extends js.Object {
 
   /** HTML-контент в редакторе. */

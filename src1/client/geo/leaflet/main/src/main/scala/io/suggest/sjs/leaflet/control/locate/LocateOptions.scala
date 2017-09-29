@@ -3,7 +3,6 @@ package io.suggest.sjs.leaflet.control.locate
 import io.suggest.sjs.leaflet.control.ControlOptions
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.scalajs.js.{Dictionary, UndefOr}
 
 /**
@@ -13,7 +12,6 @@ import scala.scalajs.js.{Dictionary, UndefOr}
   * Description: Locate constructor options model.
   */
 
-@ScalaJSDefined
 trait LocateOptions extends ControlOptions {
 
   //val layer: new L.LayerGroup(),  // use your own layer for the location marker

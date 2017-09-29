@@ -2,7 +2,6 @@ package react.image.gallery
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -10,7 +9,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Created: 27.04.17 18:35
   * Description: Image gallery Item.
   */
-@ScalaJSDefined
 trait IgItem extends js.Object {
 
   /** image src url */

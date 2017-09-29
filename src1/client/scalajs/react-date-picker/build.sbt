@@ -24,4 +24,3 @@ npmDependencies in Compile ++= Seq(
   "react-datepicker" -> version.value
 )
 
-scalacOptions += "-P:scalajs:sjsDefinedByDefault"

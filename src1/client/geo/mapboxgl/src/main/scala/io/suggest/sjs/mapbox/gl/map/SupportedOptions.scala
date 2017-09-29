@@ -2,7 +2,6 @@ package io.suggest.sjs.mapbox.gl.map
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,7 +10,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: API for options of mapboxgl.supported().
   */
 
-@ScalaJSDefined
 trait SupportedOptions extends js.Object {
 
   val failIfMajorPerformanceCaveat: UndefOr[Boolean] = js.undefined

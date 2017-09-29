@@ -4,7 +4,6 @@ import io.suggest.sjs.leaflet.path.PathOptions
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -12,7 +11,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
  * Created: 20.11.15 23:11
  * Description: Polyline constructor options.
  */
-@ScalaJSDefined
 trait PolylineOptions extends PathOptions {
 
   val smoothFactor  : UndefOr[Double]   = js.undefined

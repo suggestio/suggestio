@@ -4,7 +4,6 @@ import io.suggest.sjs.leaflet.path.PathOptions
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -13,7 +12,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: Extended PathOptions with radius in pixels.
   */
 
-@ScalaJSDefined
 trait CircleMarkerOptions extends PathOptions {
 
   /** Radius in css-pixels. [10 px] */

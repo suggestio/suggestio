@@ -3,11 +3,11 @@ package react.leaflet.marker
 import io.suggest.sjs.leaflet.event.{DragEndEvent, Event}
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.marker.MarkerOptions
-import japgolly.scalajs.react.{JsComponent, Children}
+import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -30,7 +30,6 @@ object MarkerR {
 object LMarkerJs extends js.Object // JsComponentType[MarkerPropsR, js.Object, TopNode]
 
 
-@ScalaJSDefined
 trait MarkerPropsR extends MarkerOptions {
 
   /** lat-lng coordinates for marker position. */

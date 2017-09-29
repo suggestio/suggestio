@@ -6,7 +6,7 @@ import japgolly.scalajs.react.{JsComponent, Children}
 import react.leaflet.event.MapComponentEventsProps
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -31,7 +31,6 @@ object CircleR {
 object LCircleJs extends js.Object
 
 
-@ScalaJSDefined
 trait CirclePropsR extends MapComponentEventsProps with CircleOptions {
 
   /** Circle center. */

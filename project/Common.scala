@@ -24,10 +24,10 @@ object Common {
     /** Версия moment.js. */
     def momentJs = "2.17.1"
 
-    val GUICE = "4.1.0"
+    val GUICE = "4.1.+"
 
     /** Версия typesafe slick. */
-    val SLICK        = "3.2.0"
+    val SLICK        = "3.2.+"
 
     /** Версия slick-pg.
       * @see [[https://github.com/tminglei/slick-pg#install]]
@@ -35,12 +35,12 @@ object Common {
     val SLICK_PG     = "0.15.0-RC"
 
     /** Версия play-slick прослойки. */
-    val PLAY_SLICK   = "3.0.0"
+    val PLAY_SLICK   = "3.0.+"
 
     /** Версия play-json. Он выведен из под основного проекта. */
-    val PLAY_JSON_VSN = "2.6.3"
+    val PLAY_JSON_VSN = "2.6.+"
 
-    val PLAY_GEOJSON = "1.5.0" // 1.4.1-SNAPSHOT"   // TODO "1.5.0" - scala 2.12!
+    val PLAY_GEOJSON = "1.5.+"
 
     /** Версия yandex-money-sdk-java.
      *  @see [[https://github.com/yandex-money/yandex-money-sdk-java#gradle-dependency-jcenter]]
@@ -145,6 +145,23 @@ object Common {
 
     val REACT_LEAFLET = "1.6.6"
 
+    /** Окостыливание экспортов js-модулей для совместимости с webpack и es-modules.
+      * @see [[https://github.com/webpack-contrib/exports-loader]]
+      * @see [[https://www.npmjs.com/package/exports-loader]]
+      */
+    val EXPORTS_LOADER_JS = "0.6.4"
+
+    /** Окостыливание импортов js-модулей для совместимости с webpack.
+      * @see [[https://github.com/webpack-contrib/imports-loader]]
+      */
+    val IMPORTS_LOADER_JS = "0.7.1"
+
+    /**
+      * @see [[]]
+      * @see [[https://www.npmjs.com/package/prunecluster]]
+      */
+    //val PRUNE_CLUSTER = ""
+
   }
 
 
@@ -157,17 +174,20 @@ object Common {
     offline := true
   )
 
-  /** Очень общие сеттинги для проектов. */
+  /** Очень общие сеттинги для jvm-проектов. */
   val settingsOrg = settingsBase ++ Seq[Setting[_]](
     scalaVersion := SCALA_VSN
   )
 
+  /** Очень общие сеттинги для js-проектов. */
   val settingsOrgJS = settingsBase ++ Seq[Setting[_]](
-    scalaVersion := SCALA_VSN_JS
+    scalaVersion := SCALA_VSN_JS,
+    // scala.js [0.6.18 .. 1.0) Включить @ScalaJSDefined по умолчанию.
+    scalacOptions += "-P:scalajs:sjsDefinedByDefault"
   )
 
   /** Версия play. */
-  val playVsn         = "2.6.2"
+  val playVsn         = "2.6.5"
 
 
   /** Версия bouncy castle. */

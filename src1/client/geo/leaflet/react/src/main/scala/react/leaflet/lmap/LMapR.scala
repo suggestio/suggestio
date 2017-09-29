@@ -8,7 +8,7 @@ import react.leaflet.Context
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -45,7 +45,6 @@ sealed class LMapJsR(
 object LMapJsR extends js.Object
 
 
-@ScalaJSDefined
 trait LMapPropsR extends MapOptions {
 
   val animate         : UndefOr[Boolean]        = js.undefined

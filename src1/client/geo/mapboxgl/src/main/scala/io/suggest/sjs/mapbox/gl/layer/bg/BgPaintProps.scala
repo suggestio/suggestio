@@ -5,7 +5,6 @@ import io.suggest.sjs.mapbox.gl.layer.PaintProps
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -14,7 +13,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: Common API for layer paint properties.
   */
 
-@ScalaJSDefined
 trait BgPaintProps extends PaintProps {
 
   val `background-color`    : UndefOr[Color_t]  = js.undefined

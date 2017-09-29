@@ -4,7 +4,6 @@ import io.suggest.sjs.leaflet.marker.icon.Icon
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -13,7 +12,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
  * Description: API for marker options.
  */
 
-@ScalaJSDefined
 trait MarkerOptions extends js.Object {
 
   val icon          : UndefOr[Icon]     = js.undefined

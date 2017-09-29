@@ -5,7 +5,6 @@ import io.suggest.sjs.leaflet.map.{LatLng, Layer}
 import io.suggest.sjs.leaflet.path.PathOptions
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -19,7 +18,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Need scala 0.6.14+.
   */
 
-@ScalaJSDefined
 trait GjOptions extends js.Object {
 
   val style: js.UndefOr[js.Function1[GjFeature, PathOptions]]             = js.undefined

@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.geo.json
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -22,7 +21,6 @@ object GjFeatureCollection {
 }
 
 
-@ScalaJSDefined
 trait GjFeatureCollection extends GjType {
 
   val features: js.Array[GjFeature]

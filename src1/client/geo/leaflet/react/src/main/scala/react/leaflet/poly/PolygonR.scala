@@ -2,11 +2,11 @@ package react.leaflet.poly
 
 import io.suggest.sjs.leaflet.PolygonLatLngs_t
 import io.suggest.sjs.leaflet.path.poly.PolylineOptions
-import japgolly.scalajs.react.{JsComponent, Children}
+import japgolly.scalajs.react.{Children, JsComponent}
 import react.leaflet.event.MapComponentEventsProps
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -30,7 +30,6 @@ object LPolygonJsR extends js.Object  // JsComponentType[PolygonPropsR, js.Objec
 
 
 /** Polyline props & options. */
-@ScalaJSDefined
 trait PolygonPropsR
   extends MapComponentEventsProps
   with PolylineOptions

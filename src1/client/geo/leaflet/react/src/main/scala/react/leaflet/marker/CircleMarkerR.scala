@@ -2,11 +2,11 @@ package react.leaflet.marker
 
 import io.suggest.sjs.leaflet.map.LatLng
 import io.suggest.sjs.leaflet.path.circle.CircleMarkerOptions
-import japgolly.scalajs.react.{JsComponent, Children}
+import japgolly.scalajs.react.{Children, JsComponent}
 import react.leaflet.event.MapComponentEventsProps
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -29,7 +29,6 @@ object LCircleMarkerJs extends js.Object // JsComponentType[CircleMarkerPropsR, 
 
 
 /** Circle-marker rendering args. */
-@ScalaJSDefined
 trait CircleMarkerPropsR extends CircleMarkerOptions with MapComponentEventsProps {
 
   /** Circle marker center coords. */

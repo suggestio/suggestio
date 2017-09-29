@@ -4,7 +4,7 @@ import io.suggest.sjs.leaflet.geojson.GjOptions
 import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -27,7 +27,6 @@ object GeoJsonR {
 object LGeoJsonJs extends js.Object
 
 
-@ScalaJSDefined
 trait GeoJsonPropsR extends GjOptions {
 
   /** Обязательные данные для рендера. */

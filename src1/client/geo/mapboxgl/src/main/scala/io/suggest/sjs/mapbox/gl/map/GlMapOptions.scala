@@ -5,7 +5,6 @@ import io.suggest.sjs.mapbox.gl.ll.LngLatBounds
 import org.scalajs.dom.Element
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.scalajs.js.{UndefOr, |}
 
 /**
@@ -16,7 +15,6 @@ import scala.scalajs.js.{UndefOr, |}
   * @see [[https://www.mapbox.com/mapbox-gl-js/api/#Map]]
   */
 
-@ScalaJSDefined
 trait GlMapOptions extends SupportedOptions {
 
   val touchZoomRotate: UndefOr[Boolean] = js.undefined

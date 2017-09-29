@@ -2,7 +2,6 @@ package io.suggest.sjs.leaflet.marker.cluster
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -10,7 +9,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Created: 31.10.16 19:28
   * Description: API for [[MarkerClusterGroup]] constructor: L.markerClusterGroup(options).
   */
-@ScalaJSDefined
 trait MarkerClusterGroupOptions extends js.Object {
 
   val showCoverageOnHover         : UndefOr[Boolean]    = js.undefined

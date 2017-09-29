@@ -1,7 +1,6 @@
 package io.suggest.sjs.common.geo.json
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.scalajs.js.{Any, Dictionary, UndefOr}
 
 /**
@@ -27,7 +26,6 @@ object GjFeature {
 }
 
 
-@ScalaJSDefined
 trait GjFeature extends GjType {
 
   val properties: UndefOr[ Dictionary[Any] ] = js.undefined

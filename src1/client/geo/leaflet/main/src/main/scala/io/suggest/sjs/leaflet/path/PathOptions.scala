@@ -1,7 +1,6 @@
 package io.suggest.sjs.leaflet.path
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,7 +10,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   *
   * For scala 0.6.14+.
   */
-@ScalaJSDefined
 trait PathOptions extends js.Object {
 
   //true   Whether to draw stroke along the path. Set it to false to disable borders on polygons or circles.

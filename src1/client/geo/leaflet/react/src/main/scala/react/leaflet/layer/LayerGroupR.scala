@@ -6,7 +6,7 @@ import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -31,7 +31,6 @@ object LayerGroupR {
 protected object LayerGroupJsR extends js.Object
 
 
-@ScalaJSDefined
 trait LayerGroupPropsR extends js.Object {
 
   val onClick       : UndefOr[js.Function1[MouseEvent, Unit]]         = js.undefined

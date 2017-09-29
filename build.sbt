@@ -130,7 +130,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs/*, asmCryptoJsSjs*/ )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -305,6 +305,13 @@ lazy val mmgeoip2 = {
 //    .dependsOn(leafletSjs)
 //}
 
+/** Scala.js API facades for asmcrypto.js library. */
+/*
+lazy val asmCryptoJsSjs = {
+  Project(id = "scalajs-asmcryptojs", base = file(DIR0 + "client/scalajs/asmcryptojs"))
+}
+*/
+
 /** mapbox-gl API. */
 lazy val mapBoxGlSjs = {
   Project(id = "scalajs-mapboxgl", base = file(DIR0 + "client/geo/mapboxgl"))
@@ -459,7 +466,9 @@ lazy val www = project
       val lDist = nodeModules / "leaflet" / "dist"
       val lCss = lDist * "*.css"
       val lImages = (lDist / "images").***
-      llcCss +++ lCss +++ lImages
+      // Из-за использования этого через webpack externals: // TODO Надо ли это, если переезд на prunecluster?
+      val lJs = lDist * "leaflet.js"
+      llcCss +++ lCss +++ lImages +++ lJs
     }.value,
     // leaflet MarkerCluster
     npmAssets ++= NpmAssets.ofProject(leafletMarkerClusterSjs) { nodeModules =>

@@ -5,7 +5,6 @@ import react.leaflet.Context
 import japgolly.scalajs.react.{JsComponent, Children}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -29,7 +28,6 @@ object LocateControlR {
 
 
 /** Рабочий (благодаря jsConstructor) прототип фасада ES6-класса LocateControl. */
-@ScalaJSDefined
 sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
   extends MapControlR[LocateOptions](_props, _ctx)
 {
@@ -43,6 +41,5 @@ sealed class LocateControlC(_props: LocateOptions, _ctx: Context)
 }
 
 
-@ScalaJSDefined
 trait LocateControlPropsR extends LocateOptions {
 }

@@ -6,7 +6,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -29,7 +29,6 @@ object LPopupR {
 object LPopupJs extends js.Object
 
 
-@ScalaJSDefined
 trait LPopupPropsR extends js.Object {
 
   val position  : LatLng

@@ -2,7 +2,6 @@ package io.suggest.sjs.mapbox.gl.anim
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -11,7 +10,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
   * Description: Animation options API.
   */
 
-@ScalaJSDefined
 trait AnimationOptions extends js.Object {
 
   val duration  : UndefOr[Double]                         = js.undefined

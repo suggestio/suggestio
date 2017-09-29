@@ -1,8 +1,3 @@
-// https://www.npmjs.com/package/react-tinymce
-//
-// И надо не забывать добавлять tinymce.js в html-исходники:
-// https://github.com/instructure-react/react-tinymce#dependency
-
 Common.settingsOrgJS
 
 enablePlugins(ScalaJSBundlerPlugin)
@@ -23,6 +18,4 @@ libraryDependencies ++= Seq(
 npmDependencies in Compile ++= Seq(
   "quill"   -> Common.Vsn.QUILL
 )
-
-scalacOptions += "-P:scalajs:sjsDefinedByDefault"
 

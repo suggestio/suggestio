@@ -1,10 +1,10 @@
 package react.leaflet.layer
 
 import io.suggest.sjs.leaflet.tilelayer.TlOptions
-import japgolly.scalajs.react.{JsComponent, Children}
+import japgolly.scalajs.react.{Children, JsComponent}
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -27,7 +27,6 @@ object TileLayerR {
 object TileLayerJsR extends js.Object // JsComponentType[TileLayerPropsR, js.Object, TopNode]
 
 
-@ScalaJSDefined
 trait TileLayerPropsR extends TlOptions {
 
   /** URL template for retriving tiles. */

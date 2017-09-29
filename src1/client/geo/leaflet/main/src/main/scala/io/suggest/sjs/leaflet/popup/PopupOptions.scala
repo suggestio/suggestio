@@ -4,7 +4,6 @@ import io.suggest.sjs.leaflet.map.Point
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
  * Suggest.io
@@ -13,7 +12,6 @@ import scala.scalajs.js.annotation.ScalaJSDefined
  * Description: API for popup options JSON.
  */
 
-@ScalaJSDefined
 trait PopupOptions extends js.Object {
 
   val maxWidth: UndefOr[Int] = js.undefined

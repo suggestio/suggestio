@@ -13,7 +13,7 @@ import scala.scalajs.js.annotation.{JSImport, JSName}
   */
 //@JSImport("quill", "Quill")   // TODO Вероятно, надо default
 @js.native
-trait Quill extends js.Object
+trait QuillEditor extends js.Object
 
 
 /** Static API trait for Quill. */

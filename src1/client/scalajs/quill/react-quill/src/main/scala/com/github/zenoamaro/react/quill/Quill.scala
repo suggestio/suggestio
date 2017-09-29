@@ -2,6 +2,7 @@ package com.github.zenoamaro.react.quill
 
 import com.quilljs.quill.QuillStatic
 
+import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 /**
@@ -12,4 +13,5 @@ import scala.scalajs.js.annotation.JSImport
   * It is a Quill instance, used by ReactQuill.
   */
 @JSImport("react-quill", "Quill")
+@js.native
 object Quill extends QuillStatic

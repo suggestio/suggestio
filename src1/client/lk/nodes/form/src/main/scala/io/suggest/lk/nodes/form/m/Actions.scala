@@ -186,5 +186,5 @@ case object TfDailyManualMode
 
 
 /** Клик где-то в документе. Нужно скрывания выпадающей менюшки, если она отображается. */
-case object DocumentClick
-  extends LkNodesAction
+//case object DocumentClick
+//  extends LkNodesAction

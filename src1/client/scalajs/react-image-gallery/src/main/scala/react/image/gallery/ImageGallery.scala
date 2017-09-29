@@ -1,12 +1,12 @@
 package react.image.gallery
 
-import japgolly.scalajs.react.{JsComponent, Children}
+import japgolly.scalajs.react.{Children, JsComponent}
 import org.scalajs.dom.Event
 import org.scalajs.dom.raw.HTMLElement
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
-import scala.scalajs.js.annotation.{JSImport, ScalaJSDefined}
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
@@ -48,7 +48,6 @@ object ImageGalleryC extends js.Object {
 /**
   * JSON properties model.
   */
-@ScalaJSDefined
 trait ImageGalleryPropsR extends js.Object {
 
   val items: js.Array[IgItem]

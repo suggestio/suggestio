@@ -5,7 +5,6 @@ import io.suggest.sjs.common.msg.WarnMsgs
 
 import scala.scalajs.js
 import scala.scalajs.js.JSON
-import scala.scalajs.js.annotation.ScalaJSDefined
 
 /**
   * Suggest.io
@@ -48,7 +47,6 @@ object GjGeometry extends Log {
 }
 
 
-@ScalaJSDefined
 trait GjGeometry extends GjType {
 
   val coordinates: GjGeometryCoords_t
