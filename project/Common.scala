@@ -156,11 +156,12 @@ object Common {
       */
     val IMPORTS_LOADER_JS = "0.7.1"
 
-    /**
-      * @see [[]]
-      * @see [[https://www.npmjs.com/package/prunecluster]]
+    /** AsmCrypto.js hi-speed crypto routines.
+      *
+      * @see [[https://github.com/vibornoff/asmcrypto.js]]
+      * @see [[https://www.npmjs.com/package/asmcrypto.js]]
       */
-    //val PRUNE_CLUSTER = ""
+    val ASM_CRYPTO_JS = "0.0.11"
 
   }
 

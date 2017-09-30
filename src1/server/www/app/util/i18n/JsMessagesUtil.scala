@@ -252,6 +252,7 @@ class JsMessagesUtil @Inject() (
       MC.`Apply` ::
       MC.`Crop` ::
       MC.`Picture.editing` ::
+      MC.`Cannot.checksum.file` ::
       Nil
   }
 

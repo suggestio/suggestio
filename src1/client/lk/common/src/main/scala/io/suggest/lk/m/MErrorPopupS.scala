@@ -44,7 +44,7 @@ case class MErrorPopupS(
                          exception    : Option[Throwable]   = None
                        ) {
 
-  def withErrorMsgs(errorMsgs: List[MMessage])     = copy(messages = errorMsgs)
-  def withException(exception: Option[Exception])  = copy(exception = exception)
+  def withMessages(errorMsgs: List[MMessage])       = copy(messages = errorMsgs)
+  def withException(exception: Option[Exception])   = copy(exception = exception)
 
 }

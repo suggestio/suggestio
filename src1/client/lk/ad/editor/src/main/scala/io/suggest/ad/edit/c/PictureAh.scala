@@ -1,6 +1,7 @@
 package io.suggest.ad.edit.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
+import com.github.vibornoff.asmcryptojs.AsmCrypto
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
@@ -13,11 +14,11 @@ import io.suggest.img.crop.MCrop
 import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
 import io.suggest.jd.render.m.SetImgWh
 import io.suggest.lk.m.MErrorPopupS
-import io.suggest.model.n2.edge.{EdgesUtil, MPredicates}
+import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.pick.MimeConst
+import io.suggest.pick.{JsBinaryUtil, MimeConst}
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.ErrorMsgs
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
@@ -26,6 +27,7 @@ import io.suggest.ueq.UnivEqUtil._
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -71,22 +73,23 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
         val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )
 
         // Выставлен новый файл. Надо записать его в состояние.
-        val v9 = m.files
+        val (v9, fxOpt9) = m.files
           .find { fileNew =>
             MimeConst.Image.isImageForAd(fileNew.`type`)
           }
-          .fold [MPictureAh] {
+          .fold [(MPictureAh, Option[Effect])] {
             // Не найдено картинок среди новых файлов.
-            v0.withErrorPopup(
+            val v1 = v0.withErrorPopup(
               Some(MErrorPopupS(
                 messages = errMsg :: Nil
               ))
             )
+            v1 -> None
 
           } { fileNew =>
             // Попробовать найти в состоянии файл с такими же характеристиками.
             // TODO Искать не только в эджах, но и среди известных файлов с сервера.
-            val (dataEdge9, edges9) = v0.edges
+            val (dataEdge9, edges9, fxOpt) = v0.edges
               .valuesIterator
               .flatMap { e =>
                 for {
@@ -100,7 +103,7 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
               }
               .toStream
               .headOption
-              .fold {
+              .fold [(MEdgeDataJs, Map[EdgeUid_t, MEdgeDataJs], Option[Effect])] {
                 // Новый файл выбран юзером, который пока неизвестен.
                 // Найти в состоянии текущий файл, если он там есть.
                 val bgImgOldOpt = selJdt0.props1.bgImg
@@ -159,13 +162,23 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
                     LOG.error( ErrorMsgs.FILE_CLEANUP_FAIL, ex, msg = dataEdgeOldOpt )
                   }
 
+                // Прохешировать файл в фоне.
+                val sha1hexFx = Effect {
+                  JsBinaryUtil
+                    .blob2arrBuf(fileNew)
+                    .map { AsmCrypto.SHA1.hex(_) }
+                    .transform { tryRes =>
+                      Success( FileHashRes(edgeUid2, blobUrlNew, tryRes) )
+                    }
+                }
+
                 val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
-                (dataEdge2, edges2)
+                (dataEdge2, edges2, Some(sha1hexFx))
 
               } { edge =>
                 // Внезапно, этот файл уже известен.
                 //println("dup: " + fileNew.name + " | " + fileNew.size + " bytes")
-                (edge, v0.edges)
+                (edge, v0.edges, None)
               }
 
             val selJdt2 = selJdt0.withProps1(
@@ -177,14 +190,68 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             )
 
             // Собрать обновлённое состояние.
-            v0.copy(
+            val v1 = v0.copy(
               edges       = edges9,
               selectedTag = Some(selJdt2)
             )
+            v1 -> fxOpt
           }
 
-        updated(v9)
+        fxOpt9
+          .fold(updated(v9))(updated(v9, _))
       }
+
+
+    // Сигнал окончания рассчёта sha1-хэша файла. Найти эдж файла и вписать туда.
+    case m: FileHashRes =>
+      val v0 = value
+      m.hex.fold [ActionResult[M]] (
+        { ex =>
+          // Отрендерить попап с ошибкой.
+          val v2 = v0.withErrorPopup(
+            Some( MErrorPopupS(
+              // TODO Передать имя файла $0-параметром сообщения
+              messages  = MMessage(MsgCodes.`Cannot.checksum.file`) ::
+                // Не стирать предыдущие ошибки, если есть:
+                v0.errorPopup.fold(List.empty[MMessage])(_.messages),
+              exception = Option(ex)
+            ))
+          )
+          updated(v2)
+        },
+        { sha1Hex =>
+          // Сохранить рассчётный хэш в состояние.
+          val blobUrlFilterF = { e: MEdgeDataJs =>
+            e.fileJs.exists(_.blobUrl.contains( m.blobUrl ))
+          }
+          v0.edges
+            .get(m.edgeUid)
+            .filter(blobUrlFilterF)
+            .orElse {
+              // Нет эджа с таким id и url, возможна карта эджей изменилась с тех пор.
+              v0.edges
+                .valuesIterator
+                .find(blobUrlFilterF)
+            }
+            .fold {
+              // Нет такого файла. Вероятно, пока считался хэш, юзер уже выбрал какой-то другой файл.
+              LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
+              noChange
+            } { edge0 =>
+              val edge2 = edge0.withFileJs(
+                edge0.fileJs.map { fileJs0 =>
+                  fileJs0.withSha1Hex( Option(sha1Hex) )
+                }
+              )
+              val v2 = v0.withEdges(
+                v0.edges.updated( edge0.id, edge2 )
+              )
+
+              // TODO Запустить эффект аплоада на сервер.
+              updated(v2)
+            }
+        }
+      )
 
 
     // Загрузилась картинка, и стали известны некоторые параметры этой самой картинки.

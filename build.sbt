@@ -130,7 +130,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs/*, asmCryptoJsSjs*/ )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs, asmCryptoJsSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -306,11 +306,9 @@ lazy val mmgeoip2 = {
 //}
 
 /** Scala.js API facades for asmcrypto.js library. */
-/*
 lazy val asmCryptoJsSjs = {
   Project(id = "scalajs-asmcryptojs", base = file(DIR0 + "client/scalajs/asmcryptojs"))
 }
-*/
 
 /** mapbox-gl API. */
 lazy val mapBoxGlSjs = {

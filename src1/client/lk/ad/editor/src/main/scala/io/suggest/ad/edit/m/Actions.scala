@@ -11,6 +11,8 @@ import io.suggest.sjs.common.spa.DAction
 import io.suggest.text.StringUtil
 import org.scalajs.dom.{Blob, File}
 
+import scala.util.Try
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -93,3 +95,7 @@ case class B64toBlobDone(b64Url: String, blob: Blob) extends ILkEditAction {
 
 /** Команда принудительной прочистки эджей, не исходит от юзера, а является продуктом работы других контроллеров. */
 case object PurgeUnusedEdges extends ILkEditAction
+
+
+/** Завершение асинхронного хэширования файла. */
+case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hex: Try[String]) extends ILkEditAction

@@ -22,8 +22,10 @@ import scala.scalajs.js.annotation.{JSImport, JSName}
   * Created: 19.11.15 16:51
   * Description: Core interface of leaflet.
   */
+
 @js.native
-sealed trait ILeaflet extends js.Object {
+@JSImport("leaflet", JSImport.Namespace)
+object Leaflet extends js.Object {
 
   def map(target: MapTarget, options: MapOptions = js.native): LMap = js.native
 
@@ -75,12 +77,6 @@ sealed trait ILeaflet extends js.Object {
   def geoJson(data: js.Any = js.native, options: GjOptions = js.native): GeoJson = js.native
 
   /** Rollback window.L to previous value. */
-  def noConflict(): ILeaflet = js.native
+  def noConflict(): Leaflet.type | js.Any = js.native
 
 }
-
-
-/** ES-module (leaflet 1.x+). */
-@JSImport("leaflet", JSImport.Namespace, "L")
-@js.native
-object Leaflet extends ILeaflet

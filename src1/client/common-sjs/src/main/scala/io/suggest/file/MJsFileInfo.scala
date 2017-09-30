@@ -26,6 +26,7 @@ object MJsFileInfo {
       (a.blob               ===* b.blob) &&
         (a.blobUrl          ===* b.blobUrl) &&
         (a.fileName         ===* b.fileName) &&
+        (a.sha1hex          ===* b.sha1hex) &&
         (a.whPx             ===* b.whPx) &&
         (a.uploadProgress   ===* b.uploadProgress) &&
         (a.uploadXhr        ===* b.uploadXhr)
@@ -50,7 +51,9 @@ case class MJsFileInfo(
                         blob              : Blob,
                         blobUrl           : Option[String]          = None,
                         fileName          : Option[String]          = None,
+                        sha1hex           : Option[String]          = None,
                         whPx              : Option[MSize2di]        = None,
+                        // TODO Вынести upload-поля в отдельную модель. Дополнить её Pot'ом реквеста.
                         uploadProgress    : Option[Int]             = None,
                         uploadXhr         : Option[XMLHttpRequest]  = None
                       )
@@ -60,6 +63,7 @@ case class MJsFileInfo(
   def withBlob(blob: Blob)                                = copy(blob = blob)
   def withBlobUrl(blobUrl: Option[String])                = copy(blobUrl = blobUrl)
   def withFileName(fileName: Option[String])              = copy(fileName = fileName)
+  def withSha1Hex(sha1hex: Option[String])                = copy(sha1hex = None)
   def withWhPx(whPx: Option[MSize2di])                    = copy(whPx = whPx)
   def withUploadProgress(uploadProgress: Option[Int])     = copy(uploadProgress = uploadProgress)
   def withUploadXhr(uploadXhr: Option[XMLHttpRequest])    = copy(uploadXhr = uploadXhr)

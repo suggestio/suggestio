@@ -20,7 +20,6 @@ import scala.scalajs.js.annotation.JSImport
 object MarkerClusterGroup {
 
   def apply(options: MarkerClusterGroupOptions): MarkerClusterGroup = {
-    //Leaflet.markerClusterGroup(options)
     new MarkerClusterGroup(options)
   }
 

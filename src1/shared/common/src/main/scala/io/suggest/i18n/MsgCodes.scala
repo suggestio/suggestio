@@ -198,4 +198,6 @@ object MsgCodes {
   val `Picture.editing` = "Picture.editing"
   val `Crop` = "Crop"
 
+  val `Cannot.checksum.file` = "Cannot.checksum.file"
+
 }
