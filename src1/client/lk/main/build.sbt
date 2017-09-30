@@ -19,15 +19,9 @@ libraryDependencies ++= Seq(
 
 //testFrameworks += new TestFramework("minitest.runner.Framework")
 
-// Пытаемся разрулить проблему с Leaflet, потому что MarkerCluster не может без глобальной L,
-// а без L.noConflict() конфликт с выхлопом webpack, который тоже что-то записывает в L.
-//webpackConfigFile := Some(baseDirectory.value / "lk.webpack.config.js")
-
-// https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
+// Была когда-то проблема с LibraryOnly и Leaflet.js:
 // https://github.com/scalacenter/scalajs-bundler/issues/178
-webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
-
-webpackBundlingMode in fullOptJS := BundlingMode.LibraryOnly()  // BundlingMode.Application
+webpackBundlingMode := BundlingMode.LibraryOnly()
 
 
 emitSourceMaps := true

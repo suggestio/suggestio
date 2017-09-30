@@ -26,11 +26,7 @@ testFrameworks += new TestFramework("minitest.runner.Framework")
 // TODO Надо бы выставлять это на ci, но НЕ выставлять на продакшенах.
 //scalacOptions in Compile ++= Seq("-Xelide-below", "WARNING")
 
-// https://scalacenter.github.io/scalajs-bundler/cookbook.html#performance
-// https://github.com/scalacenter/scalajs-bundler/issues/178
-webpackBundlingMode in fastOptJS := BundlingMode.LibraryOnly()
-
-webpackBundlingMode in fullOptJS := BundlingMode.Application
+webpackBundlingMode := BundlingMode.LibraryOnly()
 
 
 emitSourceMaps := false
