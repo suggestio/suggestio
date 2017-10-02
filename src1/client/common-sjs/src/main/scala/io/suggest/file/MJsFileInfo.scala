@@ -3,10 +3,12 @@ package io.suggest.file
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.crypto.hash.MHash
+import io.suggest.file.up.MFileUploadS
 import io.suggest.ueq.UnivEqJsUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
-import org.scalajs.dom.{Blob, XMLHttpRequest}
+import org.scalajs.dom.Blob
 
 /**
   * Suggest.io
@@ -26,10 +28,9 @@ object MJsFileInfo {
       (a.blob               ===* b.blob) &&
         (a.blobUrl          ===* b.blobUrl) &&
         (a.fileName         ===* b.fileName) &&
-        (a.sha1hex          ===* b.sha1hex) &&
+        (a.hashesHex        ===* b.hashesHex) &&
         (a.whPx             ===* b.whPx) &&
-        (a.uploadProgress   ===* b.uploadProgress) &&
-        (a.uploadXhr        ===* b.uploadXhr)
+        (a.upload           ===* b.upload)
     }
   }
 
@@ -43,19 +44,17 @@ object MJsFileInfo {
   * @param blob Локально-доступный бинарь, который описывается моделью.
   * @param blobUrl Ссылка на блоб в памяти браузера, если есть.
   * @param fileName Название файла, если известно.
+  * @param hashesHex Мапа с хэшами текущего файла (блоба).
   * @param whPx Ширина и длина картинки.
-  * @param uploadProgress Прогресс заливки картинки на сервер, если есть.
-  * @param uploadXhr XHR-реквест, производящий сейчас upload файла на сервер.
+  * @param upload Состояние заливки картинки на сервер, если есть.
   */
 case class MJsFileInfo(
                         blob              : Blob,
                         blobUrl           : Option[String]          = None,
                         fileName          : Option[String]          = None,
-                        sha1hex           : Option[String]          = None,
+                        hashesHex         : Map[MHash, String]      = Map.empty,
                         whPx              : Option[MSize2di]        = None,
-                        // TODO Вынести upload-поля в отдельную модель. Дополнить её Pot'ом реквеста.
-                        uploadProgress    : Option[Int]             = None,
-                        uploadXhr         : Option[XMLHttpRequest]  = None
+                        upload            : Option[MFileUploadS]    = None
                       )
   extends EmptyProduct
 {
@@ -63,9 +62,8 @@ case class MJsFileInfo(
   def withBlob(blob: Blob)                                = copy(blob = blob)
   def withBlobUrl(blobUrl: Option[String])                = copy(blobUrl = blobUrl)
   def withFileName(fileName: Option[String])              = copy(fileName = fileName)
-  def withSha1Hex(sha1hex: Option[String])                = copy(sha1hex = None)
+  def withHashesHex(hashesHex: Map[MHash, String])        = copy(hashesHex = hashesHex)
   def withWhPx(whPx: Option[MSize2di])                    = copy(whPx = whPx)
-  def withUploadProgress(uploadProgress: Option[Int])     = copy(uploadProgress = uploadProgress)
-  def withUploadXhr(uploadXhr: Option[XMLHttpRequest])    = copy(uploadXhr = uploadXhr)
+  def withUpload(upload: Option[MFileUploadS])            = copy(upload = upload)
 
 }

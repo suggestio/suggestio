@@ -7,6 +7,7 @@ import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.edit.m.MAdEditForm
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
@@ -30,6 +31,7 @@ import util.TplDataFormatUtil
 import util.blocks.BlocksConf
 
 import scala.concurrent.Future
+import scalaz.ValidationNel
 
 /**
  * Suggest.io
@@ -386,6 +388,20 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     )
 
     Future.successful(r)
+  }
+
+
+  /** Валидация данных файла, готовящегося к заливке.
+    *
+    * @param fileProps Присланные клиентом данные по файлу.
+    * @return ValidationNel с выверенными данными или ошибкой.
+    */
+  def f4upPropsV(fileProps: MFile4UpProps): ValidationNel[String, MFile4UpProps] = {
+    MFile4UpProps.validate(
+      m         = fileProps,
+      minSizeB  = 1024,
+      maxSizeB  = 30*1024*1024
+    )
   }
 
 }

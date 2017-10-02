@@ -1,12 +1,13 @@
 package io.suggest.ad.edit.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
-import com.github.vibornoff.asmcryptojs.AsmCrypto
 import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.common.geom.d2.ISize2di
+import io.suggest.crypto.asm.HashWwTask
+import io.suggest.crypto.hash.MHashes
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
@@ -16,13 +17,14 @@ import io.suggest.jd.render.m.SetImgWh
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
-import io.suggest.pick.{JsBinaryUtil, MimeConst}
+import io.suggest.pick.MimeConst
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ww._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -134,7 +136,10 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
 
                 // Если есть старый файл, то нужно позаботиться о его удалении...
                 Future {
-                  for (dataEdgeOld <- dataEdgeOldOpt; fileJsOld <- dataEdgeOld.fileJs) {
+                  for {
+                    dataEdgeOld   <- dataEdgeOldOpt
+                    fileJsOld     <- dataEdgeOld.fileJs
+                  } {
                     // Закрыть старый blobURL в фоне, после пере-рендера.
                     for (blobUrlOld <- fileJsOld.blobUrl) {
                       Future {
@@ -148,7 +153,10 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
                     }
 
                     // Прервать upload файла на сервер, есть возможно.
-                    for (upXhrOld <- fileJsOld.uploadXhr) {
+                    for {
+                      fUpload     <- fileJsOld.upload
+                      upXhrOld    <- fUpload.xhr
+                    } {
                       try {
                         upXhrOld.abort()
                       } catch {
@@ -163,17 +171,22 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
                   }
 
                 // Прохешировать файл в фоне.
-                val sha1hexFx = Effect {
-                  JsBinaryUtil
-                    .blob2arrBuf(fileNew)
-                    .map { AsmCrypto.SHA1.hex(_) }
-                    .transform { tryRes =>
-                      Success( FileHashRes(edgeUid2, blobUrlNew, tryRes) )
+                val hashFx = (MHashes.Sha1 :: MHashes.Sha256 :: Nil)
+                  .map { mhash =>
+                    Effect {
+                      // Отправить в веб-воркер описание задачи по хэшированию кода.
+                      WwMgr
+                        .runTask( HashWwTask(mhash, fileNew) )
+                        // Обернуть результат работы в понятный экшен:
+                        .transform { tryRes =>
+                          Success( FileHashRes(edgeUid2, blobUrlNew, mhash, tryRes) )
+                        }
                     }
-                }
+                  }
+                  .reduce[Effect](_ + _)
 
                 val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
-                (dataEdge2, edges2, Some(sha1hexFx))
+                (dataEdge2, edges2, Some(hashFx))
 
               } { edge =>
                 // Внезапно, этот файл уже известен.
@@ -219,7 +232,7 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
           )
           updated(v2)
         },
-        { sha1Hex =>
+        { hashHex =>
           // Сохранить рассчётный хэш в состояние.
           val blobUrlFilterF = { e: MEdgeDataJs =>
             e.fileJs.exists(_.blobUrl.contains( m.blobUrl ))
@@ -240,7 +253,9 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
             } { edge0 =>
               val edge2 = edge0.withFileJs(
                 edge0.fileJs.map { fileJs0 =>
-                  fileJs0.withSha1Hex( Option(sha1Hex) )
+                  fileJs0.withHashesHex(
+                    fileJs0.hashesHex + (m.hash -> hashHex)
+                  )
                 }
               )
               val v2 = v0.withEdges(
@@ -248,6 +263,7 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
               )
 
               // TODO Запустить эффект аплоада на сервер.
+
               updated(v2)
             }
         }

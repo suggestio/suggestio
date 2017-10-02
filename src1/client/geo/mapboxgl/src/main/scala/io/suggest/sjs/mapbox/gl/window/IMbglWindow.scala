@@ -5,6 +5,7 @@ import org.scalajs.dom.Window
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
 import io.suggest.sjs.mapbox.gl.{mapboxgl => api}
+
 import scala.language.implicitConversions
 
 /**
@@ -15,7 +16,7 @@ import scala.language.implicitConversions
   * Also suitable for checking persistence of mapboxgl.js in runtime.
   */
 @js.native
-sealed class IMbglWindow extends Window {
+sealed trait IMbglWindow extends Window {
 
   var mapboxgl: UndefOr[api.type] = js.native
 

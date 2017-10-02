@@ -54,6 +54,7 @@ class Img @Inject() (
   override val wsDispatcherActors : WsDispatcherActors,
   override val origImageUtil      : OrigImageUtil,
   override val asyncUtil          : AsyncUtil,
+  fileUtil                        : FileUtil,
   isAuth                          : IsAuth,
   imgFormUtil                     : ImgFormUtil,
   override val mCommonDi          : ICommonDi
@@ -85,7 +86,7 @@ class Img @Inject() (
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
     val resultRaw = Ok.sendFile(file, inline = true)
     trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
-    val mmOpt = FileUtil.getMimeMatch(file)
+    val mmOpt = fileUtil.getMimeMatch(file)
 
     val ct = mmOpt
       .flatMap { mm => Option(mm.getMimeType) }

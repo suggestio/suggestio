@@ -5,6 +5,7 @@ import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.common.MHand
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
+import io.suggest.crypto.hash.MHash
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.spa.DAction
@@ -98,4 +99,4 @@ case object PurgeUnusedEdges extends ILkEditAction
 
 
 /** Завершение асинхронного хэширования файла. */
-case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hex: Try[String]) extends ILkEditAction
+case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkEditAction

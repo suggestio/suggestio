@@ -1,6 +1,7 @@
 package util.img
 
 import java.io.File
+import javax.inject.Inject
 
 import io.suggest.svg.SvgUtil
 import models.mfs.FileUtil
@@ -12,10 +13,10 @@ import net.sf.jmimemagic.MagicMatch
  * Created: 29.09.15 11:16
  * Description: Утиль для работы с файлами изображений.
  */
-class ImgFileUtil {
+class ImgFileUtil @Inject()(fileUtil: FileUtil) {
 
   def getMime(file: File): Option[String] = {
-    getMime( FileUtil.getMimeMatch(file) )
+    getMime( fileUtil.getMimeMatch(file) )
   }
   def getMime(mmOpt: Option[MagicMatch]): Option[String] = {
     mmOpt.flatMap( getMime )

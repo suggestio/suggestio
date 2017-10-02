@@ -209,7 +209,7 @@ object Common {
   /** Версия scalajs-dom.
    * @see [[https://github.com/scala-js/scala-js-dom]]
    */
-  def sjsDomVsn         = "0.9.1"
+  def sjsDomVsn         = "0.9.3"
 
   /** Версия Apache commons-io. */
   def apacheCommonsIoVsn = "2.4"

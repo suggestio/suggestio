@@ -1,5 +1,6 @@
 package io.suggest.ueq
 
+import diode.data.Pot
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.{Blob, File}
 import org.scalajs.dom.raw.XMLHttpRequest
@@ -13,10 +14,12 @@ import org.scalajs.dom.raw.XMLHttpRequest
   */
 object UnivEqJsUtil {
 
-  implicit def fileUe: UnivEq[File] = UnivEq.force
+  implicit def fileUe   : UnivEq[File] = UnivEq.force
 
-  implicit def xhrUe: UnivEq[XMLHttpRequest] = UnivEq.force
+  implicit def xhrUe    : UnivEq[XMLHttpRequest] = UnivEq.force
 
-  implicit def blobUe: UnivEq[Blob] = UnivEq.force
+  implicit def blobUe   : UnivEq[Blob] = UnivEq.force
+
+  implicit def potUe[T] : UnivEq[Pot[T]] = UnivEq.force
 
 }

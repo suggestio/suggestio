@@ -4,9 +4,12 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.es.model.MEsUuId
+import io.suggest.file.up.{MFile4UpProps, MUploadResp}
+import io.suggest.i18n.MMessage
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEditEdge
 import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.media.MMedias
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.m.mctx.CtxData
 import models.im.MImg3
@@ -20,6 +23,7 @@ import util.ad.LkAdEdFormUtil
 import util.img.DynImgUtil
 import util.sec.CspUtil
 import views.html.lk.ad.edit._
+import io.suggest.scalaz.ScalazUtil.Implicits.RichNel
 
 import scala.concurrent.Future
 
@@ -40,6 +44,7 @@ class LkAdEdit @Inject() (
                            isNodeAdmin                            : IsNodeAdmin,
                            cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
+                           //mMedias                              : MMedias,
                            override val mCommonDi                 : ICommonDi
                          )
   extends SioControllerImpl
@@ -224,5 +229,36 @@ class LkAdEdit @Inject() (
     Json.toJson(formInit).toString()
   }
 
+
+  /** Экшен подготовки к загрузке файла на сервер.
+    *
+    * Подразумевается POST-запрос, потому что:
+    * - csrf.Check
+    * - Запрос немного влияет (или может влиять) на состояние сервера
+    * - Содержит JSON-тело с описанием загружаемого файла.
+    *
+    * @param adIdU id рекламной карточки для которой подготавливается загрузка файла.
+    * @return JSON-ответ.
+    */
+  def prepareUpload(adIdU: MEsUuId) = csrf.Check {
+    val adId = adIdU.id
+    // TODO Использовать какой-нибудь canUploadFile или canUploadFile4Ad.
+    canEditAd(adId, U.Lk).async(parse.json[MFile4UpProps]) { implicit request =>
+      lkAdEdFormUtil.f4upPropsV( request.body ).fold(
+        {errorsNel =>
+          // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
+          val resp = MUploadResp(
+            errors = errorsNel.iterator.map { msg => MMessage(msg) }.toSeq
+          )
+          NotAcceptable( Json.toJson(resp) )
+        },
+        {fprops =>
+          // Успешно провалидированы данные файла для загрузки.
+          // TODO Нужно поискать файл с такими параметрами в MMedia.
+          ???
+        }
+      )
+    }
+  }
 
 }

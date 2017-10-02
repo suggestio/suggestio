@@ -1,6 +1,9 @@
 package io.suggest.i18n
 
+import io.suggest.common.empty.EmptyUtil
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -38,6 +41,16 @@ object MMessage {
     import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
+
+
+  implicit val MMESSAGE_FORMAT: OFormat[MMessage] = (
+    (__ \ "m").format[String] and
+    (__ \ "a").formatNullable[Seq[Int]]
+      .inmap[Seq[Int]](
+        EmptyUtil.opt2ImplEmpty1F(Nil),
+        { args => if (args.isEmpty) None else Some(args) }
+      )
+  )(apply, unlift(unapply))
 
 }
 

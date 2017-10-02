@@ -130,7 +130,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs, asmCryptoJsSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -307,7 +307,14 @@ lazy val mmgeoip2 = {
 
 /** Scala.js API facades for asmcrypto.js library. */
 lazy val asmCryptoJsSjs = {
-  Project(id = "scalajs-asmcryptojs", base = file(DIR0 + "client/scalajs/asmcryptojs"))
+  Project(id = "scalajs-asmcryptojs", base = file(DIR0 + "client/scalajs/asmcrypto/asmcryptojs"))
+}
+
+/** Sio-утиль для asmCrypto.js. */
+lazy val asmCryptoSioSjs = {
+  Project(id = "asmcrypto-sio-sjs", base = file(DIR0 + "client/scalajs/asmcrypto/asmcrypto-sio"))
+    .dependsOn( asmCryptoJsSjs, commonSjs )
+    .aggregate( asmCryptoJsSjs )
 }
 
 /** mapbox-gl API. */
@@ -500,6 +507,7 @@ lazy val sio2 = {
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
+      asmCryptoJsSjs, asmCryptoSioSjs,
       util, esUtil, textUtil, swfs, n2, securesocial,
       ipgeobase, stat,
       mgeo, commonWww, nodesWww,

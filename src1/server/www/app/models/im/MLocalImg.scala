@@ -39,6 +39,7 @@ class MLocalImgs @Inject() (
   origImageUtil : OrigImageUtil,
   imgFileUtil   : ImgFileUtil,
   asyncUtil     : AsyncUtil,
+  fileUtil      : FileUtil,
   mCommonDi     : ICommonDi
 )
   extends MAnyImgsT[MLocalImg]
@@ -192,7 +193,7 @@ class MLocalImgs @Inject() (
   def mimeMatchOptFut(mimg: MLocalImg) = {
     val file = fileOf(mimg)
     val fut = Future {
-      FileUtil.getMimeMatch(file)
+      fileUtil.getMimeMatch(file)
     }
     for (ex <- fut.failed) {
       LOGGER.error(s"Failed to get mime for file: $file [${file.length()} bytes]", ex)

@@ -15,16 +15,16 @@ import scala.concurrent.ExecutionContext
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.09.15 16:31
  * Description: Модель инфы о загруженных и производных медифайлах: картинки, видео, аудио и т.д.
- * Вообще теоретически тут могут описываться быть любые файлы.
+ * Вообще теоретически тут могут описываться любые файлы.
  *
  * Модель создана по мотивам m_media. Имя файла вынесено в MNode.meta.name.
  * Поле _id должно формироваться клиентом и включать в себя значение поля nodeId.
  */
 @Singleton
 class MMedias @Inject() (
-  iMediaStorages          : IMediaStorages,
-  override val mCommonDi  : IEsModelDiVal
-)
+                          iMediaStorages          : IMediaStorages,
+                          override val mCommonDi  : IEsModelDiVal
+                        )
   extends EsModelStatic
   with EsmV2Deserializer
   with MacroLogsImpl
@@ -112,6 +112,16 @@ object MMedia {
 
 }
 
+
+/** Класс модели mmedia, хранящей инфу о файле.
+  *
+  * @param nodeId id узла.
+  * @param file Данные по файлу.
+  * @param storage Хранилище.
+  * @param id id записи.
+  * @param picture Метаданные картинки, если это картинка.
+  * @param versionOpt Версия.
+  */
 case class MMedia(
   nodeId                    : String,
   file                      : MFileMeta,

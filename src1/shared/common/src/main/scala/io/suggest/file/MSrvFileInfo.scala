@@ -1,8 +1,11 @@
 package io.suggest.file
 
+import io.suggest.common.empty.EmptyUtil
+import io.suggest.crypto.hash.MHash
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import io.suggest.crypto.hash.HashesHex.MHASHES_HEX_FORMAT_TRASPORT
 
 /**
   * Suggest.io
@@ -19,7 +22,12 @@ object MSrvFileInfo {
     (__ \ "u").format[String] and
     (__ \ "s").formatNullable[Int] and
     (__ \ "a").formatNullable[String] and
-    (__ \ "m").formatNullable[String]
+    (__ \ "m").formatNullable[String] and
+    (__ \ "h").formatNullable[Map[MHash, String]]
+      .inmap[Map[MHash, String]](
+        EmptyUtil.opt2ImplEmpty1F(Map.empty),
+        { mapa => if (mapa.isEmpty) None else Some(mapa) }
+      )
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
@@ -34,12 +42,14 @@ object MSrvFileInfo {
   * @param sizeB Размер файла в байтах.
   * @param name Пользовательское название файла, если есть.
   * @param mimeType MIME-тип файла.
+  * @param hashesHex Хэши файла, если есть.
   */
 case class MSrvFileInfo(
-                         nodeId   : String,
-                         url      : String,
-                         sizeB    : Option[Int],
-                         name     : Option[String],
-                         mimeType : Option[String]
+                         nodeId     : String,
+                         url        : String,
+                         sizeB      : Option[Int],
+                         name       : Option[String],
+                         mimeType   : Option[String],
+                         hashesHex  : Map[MHash, String]
                        )
 

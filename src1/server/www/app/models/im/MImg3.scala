@@ -10,6 +10,7 @@ import io.suggest.async.StreamsUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.fio.WriteRequest
+import io.suggest.js.UploadConstants
 import io.suggest.model.img.ImgSzDated
 import io.suggest.model.n2.edge.MEdge
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
@@ -38,6 +39,7 @@ class MImgs3 @Inject() (
   val iMediaStorages        : IMediaStorages,
   val mMedias               : MMedias,
   val mNodes                : MNodes,
+  fileUtil                  : FileUtil,
   override val streamsUtil  : StreamsUtil,
   override val cacheApiUtil : CacheApiUtil,
   override val mLocalImgs   : MLocalImgs,
@@ -160,9 +162,8 @@ class MImgs3 @Inject() (
     val mediaFut: Future[MMedia] = media0Fut.recoverWith { case ex: Throwable =>
       // Перезаписывать нечего, т.к. элемент ещё не существует в MMedia.
       val whOptFut = mLocalImgs.getImageWH(loc)
-      val sha1Fut = Future {
-        FileUtil.sha1(imgFile)
-      }
+      // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
+      val hashesHexFut = fileUtil.mkHashesHexAsync(imgFile, UploadConstants.CleverUp.PICTURE_FILE_HASHES)
       val storFut = iMediaStorages.assignNew( mimg.storage )
 
       if (!ex.isInstanceOf[NoSuchElementException])
@@ -171,10 +172,10 @@ class MImgs3 @Inject() (
       val szB = imgFile.length()
 
       for {
-        whOpt <- whOptFut
-        mime  <- mimeFut
-        sha1  <- sha1Fut
-        stor  <- storFut
+        whOpt       <- whOptFut
+        mime        <- mimeFut
+        hashesHex   <- hashesHexFut
+        stor        <- storFut
       } yield {
         MMedia(
           nodeId  = mimg.rowKeyStr,
@@ -183,7 +184,7 @@ class MImgs3 @Inject() (
             mime        = mime,
             sizeB       = szB,
             isOriginal  = mimg.isOriginal,
-            sha1        = Some(sha1)
+            hashesHex   = hashesHex
           ),
           picture = whOpt.map(MPictureMeta.apply),
           storage = stor

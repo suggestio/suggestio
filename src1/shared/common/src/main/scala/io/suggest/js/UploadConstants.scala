@@ -1,5 +1,7 @@
 package io.suggest.js
 
+import io.suggest.crypto.hash.{MHash, MHashes}
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -19,5 +21,21 @@ object UploadConstants {
 
   /** Название параметра в qs ссылки, где содержится индекс для генерируемого имени поля формы. */
   def NAME_INDEX_QS_NAME          = "_ni"
+
+
+
+  /** Константы умной заливки файлов второго поколения. */
+  object CleverUp {
+
+    /**
+      * Какими алгоритмами требуется хэшировать файл, загружаемый на сервер?
+      * И на клиенте, и на сервере.
+      */
+    final def PICTURE_FILE_HASHES: Set[MHash] = {
+      Set[MHash](MHashes.Sha1, MHashes.Sha256)
+    }
+
+  }
+
 
 }
