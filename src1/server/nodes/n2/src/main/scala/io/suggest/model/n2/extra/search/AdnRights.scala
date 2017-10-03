@@ -1,7 +1,7 @@
 package io.suggest.model.n2.extra.search
 
 import io.suggest.adn.MAdnRight
-import io.suggest.es.model.{IMust, MWrapClause, QueryUtil}
+import io.suggest.es.model.{IMust, MWrapClause}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
 import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
@@ -28,7 +28,7 @@ trait AdnRights extends DynSearchArgs {
       val fn = MNodeFields.Extras.ADN_RIGHTS_FN
 
       // Собираем terms query, объединяя через AND (must).
-      val allTermsQ = QueryUtil.maybeWrapToBool {
+      val allTermsQ = IMust.maybeWrapToBool {
         for (r <- _war) yield {
           MWrapClause(IMust.MUST, QueryBuilders.termQuery(fn, r.value))
         }

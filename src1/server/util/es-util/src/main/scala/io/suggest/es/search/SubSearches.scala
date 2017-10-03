@@ -1,6 +1,6 @@
 package io.suggest.es.search
 
-import io.suggest.es.model.{IMust, MWrapClause, Must_t, QueryUtil}
+import io.suggest.es.model.{IMust, MWrapClause, Must_t}
 import org.elasticsearch.index.query.QueryBuilder
 
 /**
@@ -45,7 +45,7 @@ trait SubSearches extends DynSearchArgs {
         }
         .toTraversable
 
-      val q1 = QueryUtil.maybeWrapToBool( subQueries )
+      val q1 = IMust.maybeWrapToBool( subQueries )
 
       Some(q1)
     }

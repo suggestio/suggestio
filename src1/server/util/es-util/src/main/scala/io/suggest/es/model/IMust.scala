@@ -8,7 +8,14 @@ import org.elasticsearch.index.query.{QueryBuilder, QueryBuilders}
   * Created: 31.03.16 18:20
   * Description: Утиль для сборки запросов к ES.
   */
-object QueryUtil {
+
+object IMust {
+
+  // Множество значений поля must.
+  def SHOULD    : Must_t  = None
+  def MUST      : Must_t  = Some(true)
+  def MUST_NOT  : Must_t  = Some(false)
+
 
   /**
     * Сборка списка скомпиленных запросов в один запрос.
@@ -17,7 +24,7 @@ object QueryUtil {
     * @param clauses Входящий список критериев и готовых QueryBuilder'ов.
     * @return Итоговый QueryBuilder.
     */
-  def maybeWrapToBool(clauses: Traversable[IWrapClause]): QueryBuilder = {
+  def maybeWrapToBool(clauses: Traversable[MWrapClause]): QueryBuilder = {
     if (clauses.size > 1 || clauses.exists(_.must.contains(false)) ) {
       // Возврат значения происходит через закидывание сгенеренной query в BoolQuery.
       var shouldClauses = 0
@@ -49,25 +56,12 @@ object QueryUtil {
 }
 
 
-/** Интерфейс для каждого clause-аргумента в maybeWrapToBool(). */
-trait IWrapClause extends IMust {
-  def queryBuilder: QueryBuilder
-}
-
-/** Дефолтовая реализация [[IWrapClause]]. */
+/** Один search query builder в связке с [[IMust]]. */
 case class MWrapClause(
   override val must         : Must_t,
-  override val queryBuilder : QueryBuilder
+  queryBuilder              : QueryBuilder
 )
-  extends IWrapClause
-
-
-/** Множество значений поля must. */
-object IMust {
-  def SHOULD    : Must_t  = None
-  def MUST      : Must_t  = Some(true)
-  def MUST_NOT  : Must_t  = Some(false)
-}
+  extends IMust
 
 
 /** Интерфейс к must-полям, которые описывают выбор между should, must и mustNot. */
@@ -85,8 +79,3 @@ trait IMust {
 
 }
 
-/** Дефолтовая реализация [[IMust]]. */
-case class MMust(
-  override val must: Must_t = IMust.SHOULD
-)
-  extends IMust

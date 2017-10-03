@@ -1,6 +1,6 @@
 package io.suggest.model.n2.edge.search
 
-import io.suggest.es.model.{MWrapClause, QueryUtil}
+import io.suggest.es.model.{MWrapClause, IMust}
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.geo.{MNodeGeoLevel, MNodeGeoLevels}
 import io.suggest.model.n2.node.MNodeFields
@@ -47,7 +47,7 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
           MWrapClause(tcr.must, tq)
         }
 
-        val tq = QueryUtil.maybeWrapToBool(tQueries)
+        val tq = IMust.maybeWrapToBool(tQueries)
         // Первый в списке if, поэтому сразу как Some().
         _qOpt = Some(tq)
       }
@@ -176,7 +176,7 @@ trait OutEdges extends DynSearchArgs with IMacroLogs {
       .toStream
 
     // Объеденить запросы в единый запрос.
-    QueryUtil.maybeWrapToBool(clauses)
+    IMust.maybeWrapToBool(clauses)
   }
 
 

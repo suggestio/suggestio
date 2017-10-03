@@ -2,7 +2,7 @@ package io.suggest.model.n2.media.search
 
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.crypto.hash.MHash
-import io.suggest.es.model.{IMust, MWrapClause, Must_t, QueryUtil}
+import io.suggest.es.model.{IMust, MWrapClause, Must_t}
 import io.suggest.es.search.DynSearchArgs
 import io.suggest.model.n2.media.MMediaFields
 import org.apache.lucene.search.join.ScoreMode
@@ -57,7 +57,7 @@ trait FileHashSearch extends DynSearchArgs {
       val crQbs = crQbsIter.toSeq
 
       // Объеденить все qb как must.
-      val allCrsQb = QueryUtil.maybeWrapToBool( crQbs )
+      val allCrsQb = IMust.maybeWrapToBool( crQbs )
 
       // Завернуть в nested query
       val allCrsNestedQb = QueryBuilders.nestedQuery( F.HASHES_FN, allCrsQb, ScoreMode.Max )
