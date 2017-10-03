@@ -3,7 +3,8 @@ package models.mfs
 import java.io.{File, FileInputStream}
 import javax.inject.Inject
 
-import io.suggest.crypto.hash.{HashesHex, MHash, MHashes}
+import io.suggest.crypto.hash.{MHash, MHashes}
+import io.suggest.model.n2.media.MFileMetaHash
 import io.suggest.util.logs.MacroLogsImpl
 import net.sf.jmimemagic.{Magic, MagicMatch, MagicMatchNotFoundException}
 import org.apache.commons.codec.digest.DigestUtils
@@ -44,14 +45,17 @@ class FileUtil @Inject()(
     }
   }
 
-  def mkHashesHexAsync(file: File, hashes: TraversableOnce[MHash]): Future[HashesHex] = {
+  def mkHashesHexAsync(file: File, hashes: TraversableOnce[MHash]): Future[Seq[MFileMetaHash]] = {
     val futs = Future.traverse(hashes) { mhash =>
       Future {
-        mhash -> mkFileHash(mhash, file)
+        MFileMetaHash(
+          hType      = mhash,
+          hexValue  = mkFileHash(mhash, file)
+        )
       }
     }
     for (kvs <- futs) yield {
-      kvs.toMap
+      kvs.toSeq
     }
   }
 

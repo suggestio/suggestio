@@ -37,36 +37,34 @@ class MMedias @Inject() (
 
   override val ES_TYPE_NAME = "media"
 
-  val NODE_ID_FN      = "ni"
-  val FILE_META_FN    = "fm"
-  val PICTURE_META_FN = "pm"
-  val STORAGE_FN      = "st"
-
   @deprecated("use deserializeOne2() instead", "2015.sep.27")
   override def deserializeOne(id: Option[String], m: Map[String, AnyRef], version: Option[Long]): T = {
     throw new UnsupportedOperationException("deprecated api not implemented")
   }
 
   /** Поддержка JSON для сериализации-десериализации тела документа elasticsearch. */
-  val FORMAT_DATA: OFormat[T] = (
-    (__ \ NODE_ID_FN).format[String] and
-    (__ \ FILE_META_FN).format[MFileMeta] and
-    (__ \ STORAGE_FN).format[IMediaStorage] and
-    (__ \ PICTURE_META_FN).formatNullable[MPictureMeta]
-  )(
-    {(nodeId, fileMeta, storage, pictureMetaOpt) =>
-      MMedia(
-        nodeId    = nodeId,
-        file      = fileMeta,
-        storage   = storage,
-        picture   = pictureMetaOpt,
-        id        = None
-      )
-    },
-    {mmedia =>
-      (mmedia.nodeId, mmedia.file, mmedia.storage, mmedia.picture)
-    }
-  )
+  val FORMAT_DATA: OFormat[T] = {
+    val F = MMediaFields
+    (
+      (__ \ F.NODE_ID_FN).format[String] and
+      (__ \ F.FileMeta.FILE_META_FN).format[MFileMeta] and
+      (__ \ F.Storage.STORAGE_FN).format[IMediaStorage] and
+      (__ \ F.PictureMeta.PICTURE_META_FN).formatNullable[MPictureMeta]
+    )(
+      {(nodeId, fileMeta, storage, pictureMetaOpt) =>
+        MMedia(
+          nodeId    = nodeId,
+          file      = fileMeta,
+          storage   = storage,
+          picture   = pictureMetaOpt,
+          id        = None
+        )
+      },
+      {mmedia =>
+        (mmedia.nodeId, mmedia.file, mmedia.storage, mmedia.picture)
+      }
+    )
+  }
 
   override def esDocWrites = FORMAT_DATA
   override protected def esDocReads(meta: IEsDocMeta): Reads[T] = {
@@ -85,11 +83,12 @@ class MMedias @Inject() (
   }
 
   override def generateMappingProps: List[DocField] = {
+    val F = MMediaFields
     List(
-      FieldKeyword(NODE_ID_FN, index = true, include_in_all = true),
-      FieldObject(FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
-      FieldObject(STORAGE_FN, enabled = true, properties = iMediaStorages.generateMappingProps),
-      FieldObject(PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
+      FieldKeyword(F.NODE_ID_FN, index = true, include_in_all = true),
+      FieldObject(F.FileMeta.FILE_META_FN, enabled = true, properties = MFileMeta.generateMappingProps),
+      FieldObject(F.Storage.STORAGE_FN, enabled = true, properties = iMediaStorages.generateMappingProps),
+      FieldObject(F.PictureMeta.PICTURE_META_FN, enabled = true, properties = MPictureMeta.generateMappingProps)
     )
   }
 

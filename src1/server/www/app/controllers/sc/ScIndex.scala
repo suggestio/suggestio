@@ -1,6 +1,7 @@
 package controllers.sc
 
 import _root_.util.di._
+import io.suggest.adn.{MAdnRight, MAdnRights}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
@@ -261,7 +262,8 @@ trait ScIndex
             for (mnode <- mnodeOpt) yield {
               MIndexNodeInfo(
                 mnode  = mnode,
-                isRcvr = ngl.isLowest     // Только здания могут выступать ресиверами.
+                // TODO isRcvr: было: ngl.isLowest с коммментом// Только здания могут выступать ресиверами. Это видимо не работало при размещении узла на карте (lk-adn-map).
+                isRcvr = mnode.extras.adn.exists(_.rights.contains( MAdnRights.RECEIVER ))
               )
             }
           }

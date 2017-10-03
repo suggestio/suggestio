@@ -546,6 +546,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
    * @return
    */
   def resaveMany(maxResults: Int = MAX_RESULTS_DFLT): Future[BulkResponse] = {
+    // TODO XXX Переписать на Sources/Streams, т.к. более 9999 оно не переваривает тут.
     val allFut = getAll(maxResults, withVsn = true)
     val br = esClient.prepareBulk()
     allFut.flatMap { results =>

@@ -3,11 +3,11 @@ package io.suggest.model.n2.media
 import java.time.OffsetDateTime
 
 import io.suggest.common.empty.EmptyUtil
-import io.suggest.crypto.hash.{HashesHex, HashesHexEs, MHashes}
+import io.suggest.crypto.hash.MHashes
 import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.model.PrefixedFn
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import HashesHexEs.MHASHES_HEX_FORMAT_ES
 
 /**
  * Suggest.io
@@ -21,7 +21,14 @@ object MFileMeta extends IGenEsMappingProps {
     val MIME_FN             = "mm"
     val SIZE_B_FN           = "sz"
     val IS_ORIGINAL_FN      = "orig"
+
     val HASHES_HEX_FN       = "hh"
+    object HashesHexFields extends PrefixedFn {
+      override protected def _PARENT_FN = HASHES_HEX_FN
+      def HASH_TYPE_FN  = _fullFn( MFileMetaHash.Fields.HASH_TYPE_FN )
+      def HASH_VALUE_FN = _fullFn( MFileMetaHash.Fields.HEX_VALUE_FN )
+    }
+
     val DATE_CREATED_FN     = "dc"
 
     /** Имя legacy-поля, хранившего sha1-хеш. Заменено на карту хешей. */
@@ -34,18 +41,18 @@ object MFileMeta extends IGenEsMappingProps {
 
     // 2017.10.02 Костыль для поддержки старого и нового формата контрольных сумм одновременно.
     // TODO Удалить compat-костыли после MMedias.resaveMany()
-    val hhFormat: OFormat[HashesHex] = {
-      val newFmt = (__ \ F.HASHES_HEX_FN).formatNullable[HashesHex]
-        .inmap[HashesHex](
-          { EmptyUtil.opt2ImplEmpty1F(Map.empty) },
+    val hhFormat: OFormat[Seq[MFileMetaHash]] = {
+      val newFmt = (__ \ F.HASHES_HEX_FN).formatNullable[Seq[MFileMetaHash]]
+        .inmap[Seq[MFileMetaHash]](
+          { EmptyUtil.opt2ImplEmpty1F(Nil) },
           { hh => if (hh.isEmpty) None else Some(hh) }
         )
       val readsCompat = newFmt.orElse {
         // Пытаемся прочитать старое поле SHA1
         (__ \ F.SHA1_FN).formatNullable[String]
-          .map[HashesHex] {
-            case Some(sha1hex) => Map(MHashes.Sha1 -> sha1hex.toLowerCase)
-            case None          => Map.empty
+          .map[Seq[MFileMetaHash]] {
+            case Some(sha1hex) => MFileMetaHash(MHashes.Sha1, sha1hex.toLowerCase) :: Nil
+            case None          => Nil
           }
       }
       OFormat(readsCompat, newFmt)
@@ -69,7 +76,7 @@ object MFileMeta extends IGenEsMappingProps {
       FieldText(F.MIME_FN, index = true, include_in_all = true),
       FieldNumber(F.SIZE_B_FN, fieldType = DocFieldTypes.long, index = true, include_in_all = false),
       FieldBoolean(F.IS_ORIGINAL_FN, index = true, include_in_all = false),
-      FieldNestedObject(F.HASHES_HEX_FN, enabled = true, properties = HashesHexEs.generateMappingProps),
+      FieldNestedObject(F.HASHES_HEX_FN, enabled = true, properties = MFileMetaHash.generateMappingProps),
       //FieldKeyword(F.SHA1_FN, index = false, include_in_all = false),
       FieldDate(F.DATE_CREATED_FN, index = true, include_in_all = false)
     )
@@ -82,6 +89,6 @@ case class MFileMeta(
   mime          : String,
   sizeB         : Long,
   isOriginal    : Boolean,
-  hashesHex     : HashesHex,
-  dateCreated   : OffsetDateTime = OffsetDateTime.now()
+  hashesHex     : Seq[MFileMetaHash]  = Nil,
+  dateCreated   : OffsetDateTime      = OffsetDateTime.now()
 )

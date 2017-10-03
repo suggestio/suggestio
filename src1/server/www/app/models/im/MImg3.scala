@@ -195,7 +195,7 @@ class MImgs3 @Inject() (
     val mediaSavedFut = media0Fut.recoverWith { case ex: Throwable =>
       for {
         mmedia      <- mediaFut
-        _mmediaId   <- mMedias.save(mmedia)
+        _           <- mMedias.save(mmedia)
       } yield {
         mmedia
       }
