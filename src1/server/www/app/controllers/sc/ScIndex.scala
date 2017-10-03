@@ -235,6 +235,7 @@ trait ScIndex
         // Пройтись по всем геоуровням, запустить везде параллельные поиски узлов в точке, закинув в recover'ы.
         val someTrue = Some(true)
         val nglsResultsFut = Future.traverse(MNodeGeoLevels.values: Iterable[MNodeGeoLevel]) { ngl =>
+          val nodeLocPred = MPredicates.NodeLocation
           val msearch = new MNodeSearchDfltImpl {
             override def limit = 1
             // Очень маловероятно, что сортировка по близости к точке нужна, но мы её всё же оставим
@@ -251,7 +252,7 @@ trait ScIndex
                 shapes = qShape :: Nil
               )
               val cr = Criteria(
-                predicates  = MPredicates.NodeLocation :: Nil,
+                predicates  = nodeLocPred :: Nil,
                 gsIntersect = Some(gsCr)
               )
               cr :: Nil
@@ -262,8 +263,12 @@ trait ScIndex
             for (mnode <- mnodeOpt) yield {
               MIndexNodeInfo(
                 mnode  = mnode,
-                // TODO isRcvr: было: ngl.isLowest с коммментом// Только здания могут выступать ресиверами. Это видимо не работало при размещении узла на карте (lk-adn-map).
-                isRcvr = mnode.extras.adn.exists(_.rights.contains( MAdnRights.RECEIVER ))
+                isRcvr = {
+                  // Нужно избегать ситуации попападания в выдачу города или района. Отсеить их через проверку наличия *ЛЮБОГО* Paid-подПредиката:
+                  mnode.edges.withPredicateIter( nodeLocPred.Paid ).nonEmpty &&
+                    // Рутинная проверка на принадлежность к ресиверам. Почти всегда true в текущей ситуации.
+                    mnode.extras.adn.exists(_.rights.contains( MAdnRights.RECEIVER ))
+                }
               )
             }
           }
