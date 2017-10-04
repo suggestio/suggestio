@@ -26,6 +26,7 @@ object MUploadTargetQs {
     val PERSON_ID_FN      = "p"
     val VALID_TILL_FN     = "c"
     val STORAGE_FN        = "s"
+    val STORAGE_HOST_FN   = "o"
     val STORAGE_INFO_FN   = "i"
 
     val SIGNATURE_FN      = "z"
@@ -46,7 +47,7 @@ object MUploadTargetQs {
                                  hashesHexB     : QueryStringBindable[HashesHex],
                                  strB           : QueryStringBindable[String],
                                  longB          : QueryStringBindable[Long],
-                                 storageOptB    : QueryStringBindable[Option[MStorage]],
+                                 storageB       : QueryStringBindable[MStorage],
                                  strOptB        : QueryStringBindable[Option[String]]
                                 ): QueryStringBindable[MUploadTargetQs] = {
     new QueryStringBindableImpl[MUploadTargetQs] {
@@ -63,8 +64,9 @@ object MUploadTargetQs {
           fileSizeE         <- longB.bind         ( k(F.FILE_SIZE_B_FN),  params )
           personIdOptE      <- strOptB.bind       ( k(F.PERSON_ID_FN),    params )
           validTillE        <- longB.bind         ( k(F.VALID_TILL_FN),   params )
-          storageOptE       <- storageOptB.bind   ( k(F.STORAGE_FN),      params )
-          storInfoOptE      <- strOptB.bind       ( k(F.STORAGE_INFO_FN), params )
+          storageE          <- storageB.bind      ( k(F.STORAGE_FN),      params )
+          storHostE         <- strB.bind          ( k(F.STORAGE_HOST_FN), params )
+          storInfoE         <- strB.bind          ( k(F.STORAGE_INFO_FN), params )
         } yield {
           for {
             hashesHex       <- hashesHexE.right
@@ -72,8 +74,9 @@ object MUploadTargetQs {
             fileSize        <- fileSizeE.right
             personIdOpt     <- personIdOptE.right
             validTill       <- validTillE.right
-            storageOpt      <- storageOptE.right
-            storInfoOpt     <- storInfoOptE.right
+            storage         <- storageE.right
+            storHost        <- storHostE.right
+            storInfo        <- storInfoE.right
           } yield {
             MUploadTargetQs(
               hashesHex     = hashesHex,
@@ -81,8 +84,9 @@ object MUploadTargetQs {
               fileSizeB     = fileSize,
               personId      = personIdOpt,
               validTillS    = validTill,
-              storage       = storageOpt,
-              storInfo      = storInfoOpt
+              storage       = storage,
+              storHost      = storHost,
+              storInfo      = storInfo
             )
           }
         }
@@ -94,13 +98,14 @@ object MUploadTargetQs {
         val F = Fields
         val k = key1F(key)
         val unsigned = _mergeUnbinded1(
-          hashesHexB.unbind   ( k(F.HASHES_HEX_FN),       value.hashesHex ),
-          strB.unbind         ( k(F.MIME_TYPE_FN),        value.mimeType ),
-          longB.unbind        ( k(F.FILE_SIZE_B_FN),      value.fileSizeB ),
-          strOptB.unbind      ( k(F.PERSON_ID_FN),        value.personId ),
-          longB.unbind        ( k(F.VALID_TILL_FN),       value.validTillS ),
-          storageOptB.unbind  ( k(F.STORAGE_FN),          value.storage ),
-          strOptB.unbind      ( k(F.STORAGE_INFO_FN),     value.storInfo )
+          hashesHexB.unbind   ( k(F.HASHES_HEX_FN),       value.hashesHex   ),
+          strB.unbind         ( k(F.MIME_TYPE_FN),        value.mimeType    ),
+          longB.unbind        ( k(F.FILE_SIZE_B_FN),      value.fileSizeB   ),
+          strOptB.unbind      ( k(F.PERSON_ID_FN),        value.personId    ),
+          longB.unbind        ( k(F.VALID_TILL_FN),       value.validTillS  ),
+          storageB.unbind     ( k(F.STORAGE_FN),          value.storage     ),
+          strB.unbind         ( k(F.STORAGE_HOST_FN),     value.storHost    ),
+          strB.unbind         ( k(F.STORAGE_INFO_FN),     value.storInfo    )
         )
         // Подписать это всё.
         getQsbSigner(key)
@@ -120,6 +125,7 @@ object MUploadTargetQs {
   * @param personId id юзера.
   * @param validTillS TTL. Вычисляется как currentTimeMillis/1000 + TTL в момент генерации ссылки (в секундах).
   * @param storage Отправить файл на хранение в указанный storage. Например, SeaWeedFS.
+  * @param storHost Хост стораджа, т.к. URL hostname не покрывается сигнатурой модели.
   * @param storInfo Строка данных, воспринимаемая конкретным storage'ем, нужная для сохранения.
   *                 Например, для SeaWeedFS это будет зарезрвированный fid.
   */
@@ -129,6 +135,7 @@ case class MUploadTargetQs(
                             fileSizeB   : Long,
                             personId    : Option[String],
                             validTillS  : Long,
-                            storage     : Option[MStorage],
-                            storInfo    : Option[String]
+                            storage     : MStorage,
+                            storHost    : String,
+                            storInfo    : String
                           )

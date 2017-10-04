@@ -22,7 +22,11 @@ object MUploadResp {
 
   /** Поддержка play-json для инстансов [[MUploadResp]]. */
   implicit val MUPLOAD_RESP_FORMAT: OFormat[MUploadResp] = (
-    (__ \ "u").formatNullable[String] and
+    (__ \ "u").formatNullable[Seq[String]]
+      .inmap[Seq[String]](
+        EmptyUtil.opt2ImplEmpty1F(Nil),
+        { urls => if (urls.isEmpty) None else Some(urls) }
+      ) and
     (__ \ "x").formatNullable[MSrvFileInfo] and
     (__ \ "e").formatNullable[Seq[MMessage]]
       .inmap[Seq[MMessage]](
@@ -41,12 +45,12 @@ object MUploadResp {
 
 /** Класс модели ответа сервера по поводу аплоада.
   *
-  * @param upUrl Ссылка для произведения аплоада.
+  * @param upUrls Ссылка для произведения аплоада.
   * @param fileExist Инфа об уже существующем файле на сервере.
   * @param errors Список сообщений об ошибках, из-за которых продолжение не очень возможно.
   */
 case class MUploadResp(
-                        upUrl        : Option[String]        = None,
+                        upUrls       : Seq[String]           = Nil,
                         fileExist    : Option[MSrvFileInfo]  = None,
                         errors       : Seq[MMessage]         = Nil
                       )

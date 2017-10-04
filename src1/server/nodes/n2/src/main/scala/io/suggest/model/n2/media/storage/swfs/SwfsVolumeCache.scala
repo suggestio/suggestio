@@ -66,13 +66,14 @@ class SwfsVolumeCache @Inject() (
             LOGGER.warn(s"Failed to lookup volumeId=$volumeId due to: ${err.error}")
             err.locations
         }
+
       // Если нет нормального результата, то нужно удалить фьючерс из кеша.
-      fut.filter(_.nonEmpty)
-        .onFailure { case ex: Throwable =>
-          cache.remove(ck)
-          if (!ex.isInstanceOf[NoSuchElementException])
-            LOGGER.error(s"Volume $volumeId lookup failed", ex)
-        }
+      for (ex <- fut.filter(_.nonEmpty).failed) {
+        cache.remove(ck)
+        if (!ex.isInstanceOf[NoSuchElementException])
+          LOGGER.error(s"Volume $volumeId lookup failed", ex)
+      }
+
       // Вернуть фьючерс результата
       fut
     }

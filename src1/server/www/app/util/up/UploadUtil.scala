@@ -1,5 +1,9 @@
 package util.up
 
+import javax.inject.{Inject, Singleton}
+
+import models.mproj.ICommonDi
+
 import scala.concurrent.duration._
 
 /**
@@ -9,7 +13,20 @@ import scala.concurrent.duration._
   * Description: Утиль для аплоада файлов второго поколения.
   * Ориентирована на возможность балансировки файлов между нодами.
   */
-class UploadUtil {
+@Singleton
+class UploadUtil @Inject()(
+                            mCommonDi: ICommonDi
+                          ) {
+
+  import mCommonDi.configuration
+
+  /**
+    * Публичное имя хоста текущего узла.
+    * Используется для распределённого хранилища файлов.
+    * Ожидается что-то типа "s2.nodes.suggest.io".
+    */
+  val MY_NODE_PUBLIC_URL = configuration.get[String]("upload.host.my.public")
+
 
   /** Текущее время в часах upload util. */
   def rightNow() = System.currentTimeMillis().milliseconds

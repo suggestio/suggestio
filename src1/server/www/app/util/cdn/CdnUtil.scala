@@ -134,7 +134,7 @@ class CdnUtil @Inject() (
     if (forceAbsoluteUrl) {
       import ctx.request
       val absUrl = call.absoluteURL()
-      if (absUrl.startsWith("//") ) {
+      if (absUrl startsWith "//") {
         // Вот так бывает: протокол не указан, потому что forCall() больше не пишет протокол.
         // Значит, уже отсылка к CDN, и значит дописываем https:
         "https:" + absUrl

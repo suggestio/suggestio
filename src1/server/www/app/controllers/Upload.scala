@@ -22,6 +22,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Result
 import play.core.parsers.Multipart
 import util.acl.CanUploadFile
+import util.cdn.CdnUtil
 import util.up.UploadUtil
 import views.html.helper.CSRF
 
@@ -40,6 +41,7 @@ class Upload @Inject()(
                         mMedias                   : MMedias,
                         uploadUtil                : UploadUtil,
                         canUploadFile             : CanUploadFile,
+                        cdnUtil                   : CdnUtil,
                         override val mCommonDi    : ICommonDi
                       )
   extends SioControllerImpl
@@ -97,25 +99,33 @@ class Upload @Inject()(
           val (respStatus, respDataFut) = fileSearchRes
             .headOption
             .fold [(Status, Future[MUploadResp])] {
+              val assignFidFut = swfsClient.assign()
+              LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
+
               val upDataFut = for {
-                assignResp <- swfsClient.assign()
+                assignResp <- assignFidFut
               } yield {
-                LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
+                LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
                 val upData = MUploadTargetQs(
                   hashesHex   = upFileProps.hashesHex,
                   mimeType    = upFileProps.mimeType,
                   fileSizeB   = upFileProps.sizeB,
                   personId    = request.user.personIdOpt,
                   validTillS  = uploadUtil.ttlFromNow(),
-                  storage     = Some( MStorages.SeaWeedFs ),
-                  // TODO Зарезервировать fid в swfs, по fid определить ноду для фактической заливки файла, дописать хост в ссылку.
-                  storInfo    = Some( assignResp.fid )
+                  storage     = MStorages.SeaWeedFs,
+                  storHost    = assignResp.url,
+                  storInfo    = assignResp.fid
+                )
+                // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
+                val hostnames = Seq(
+                  assignResp.publicUrl
+                  // TODO Вписать запасные хостнеймы для аплоада?
                 )
                 MUploadResp(
-                  // TODO IMG_DIST Надо absURL, включающее в себя хост, в который производить заливку файла.
-                  upUrl = Some(
-                    CSRF( routes.Upload.doFileUpload(upData) ).url
-                  )
+                  // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
+                  upUrls = for (host <- hostnames) yield {
+                    "//" + host + CSRF(routes.Upload.doFileUpload(upData)).url
+                  }
                 )
               }
               (Created, upDataFut)
