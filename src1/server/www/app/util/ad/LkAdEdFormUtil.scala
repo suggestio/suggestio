@@ -12,6 +12,7 @@ import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags._
+import io.suggest.js.UploadConstants
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.MPredicates
@@ -19,6 +20,7 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
+import io.suggest.pick.MimeConst
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.ad.AdColorFns
@@ -41,6 +43,13 @@ import scalaz.ValidationNel
  */
 @Singleton
 class LkAdEdFormUtil extends MacroLogsImpl {
+
+  /** Макс.длина загружаемой картинки в байтах. */
+  val IMG_UPLOAD_MAXLEN_BYTES: Int = {
+    val mib = 40 // current.configuration.getOptional[Int]("ad.img.len.max.mib") getOrElse 40
+    mib * 1024 * 1024
+  }
+
 
   /** Маппинг для выравнивания текста в рамках поля. */
   def textAlignOptM: Mapping[Option[MTextAlign]] = {
@@ -396,11 +405,14 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     * @param fileProps Присланные клиентом данные по файлу.
     * @return ValidationNel с выверенными данными или ошибкой.
     */
-  def f4upPropsV(fileProps: MFile4UpProps): ValidationNel[String, MFile4UpProps] = {
+  def image4UploadPropsV(fileProps: MFile4UpProps): ValidationNel[String, MFile4UpProps] = {
     MFile4UpProps.validate(
-      m         = fileProps,
-      minSizeB  = 1024,
-      maxSizeB  = 30*1024*1024
+      m             = fileProps,
+      // Бывает, что загружается просто png-рамка, например:
+      minSizeB      = 256,
+      maxSizeB      = IMG_UPLOAD_MAXLEN_BYTES,
+      mimeVerifierF = MimeConst.Image.isImageForAd,
+      mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
     )
   }
 
@@ -409,6 +421,6 @@ class LkAdEdFormUtil extends MacroLogsImpl {
 
 /** Интерфейс для DI-поля с инстаном [[LkAdEdFormUtil]]. */
 trait ILkAdEdFormUtil {
-  def marketAdFormUtil: LkAdEdFormUtil
+  def lkAdEdFormUtil: LkAdEdFormUtil
 }
 

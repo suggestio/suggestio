@@ -28,6 +28,7 @@ object MPictureMeta extends IGenEsMappingProps {
 
   override def generateMappingProps: List[DocField] = {
     def _n(fn: String) = {
+      // TODO Тут index = false почему-то, хз.
       FieldNumber(fn, fieldType = DocFieldTypes.integer, index = false, include_in_all = false)
     }
     List(
@@ -36,6 +37,7 @@ object MPictureMeta extends IGenEsMappingProps {
     )
   }
 
+  // TODO Удалить этот днищще-метод. wh должно быть полем этой модели.
   def apply(sz2d: ISize2di): MPictureMeta = {
     MPictureMeta(
       width   = sz2d.width,

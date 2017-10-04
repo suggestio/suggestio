@@ -186,13 +186,14 @@ class MImgs3 @Inject() (
             isOriginal  = mimg.isOriginal,
             hashesHex   = hashesHex
           ),
+          // TODO Перепилить MPictureMeta, чтобы wh были просто полем-объектом, ИНДЕКСИРУЕМЫМ!
           picture = whOpt.map(MPictureMeta.apply),
           storage = stor
         )
       }
     }
 
-    val mediaSavedFut = media0Fut.recoverWith { case ex: Throwable =>
+    val mediaSavedFut = media0Fut.recoverWith { case _: Throwable =>
       for {
         mmedia      <- mediaFut
         _           <- mMedias.save(mmedia)
@@ -204,7 +205,7 @@ class MImgs3 @Inject() (
     // Параллельно запустить поиск и сохранение экземпляра MNode.
     val mnodeSaveFut = ensureMnode(mimg)
 
-    for (ex <- mnodeSaveFut.failed)
+    for (_ <- mnodeSaveFut.failed)
       LOGGER.error(s"$logPrefix Failed to save picture MNode for local img " + loc)
 
     // Параллельно выполнить заливку файла в постоянное надежное хранилище.
@@ -245,7 +246,7 @@ class MImgs3 @Inject() (
     // возвращать false при ошибках.
     val resFut = isExistsFut.recover {
       // Если подавлять все ошибки связи, то система будет удалять все local imgs.
-      case ex: NoSuchElementException =>
+      case _: NoSuchElementException =>
         false
     }
     // Залоггировать неожиданные экзепшены.
@@ -301,6 +302,11 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
       }
     }
     MImg3(medge.nodeIds.head, dops)
+  }
+
+  def apply(mmedia: MMedia): MImg3 = {
+    // TODO Безопасно ли? По идее да, но лучше потестить или использовать какие-то данные из иных мест.
+    apply( mmedia.id.get )
   }
 
   override def fromImg(img: MAnyImgT, dynOps2: Option[List[ImOp]] = None): MImg3 = {

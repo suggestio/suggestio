@@ -20,7 +20,7 @@ object MSrvFileInfo {
   implicit val MSRV_FILE_INFO: OFormat[MSrvFileInfo] = (
     (__ \ "n").format[String] and
     (__ \ "u").format[String] and
-    (__ \ "s").formatNullable[Int] and
+    (__ \ "s").formatNullable[Long] and
     (__ \ "a").formatNullable[String] and
     (__ \ "m").formatNullable[String] and
     (__ \ "h").formatNullable[Map[MHash, String]]
@@ -47,7 +47,7 @@ object MSrvFileInfo {
 case class MSrvFileInfo(
                          nodeId     : String,
                          url        : String,
-                         sizeB      : Option[Int],
+                         sizeB      : Option[Long],
                          name       : Option[String],
                          mimeType   : Option[String],
                          hashesHex  : Map[MHash, String]

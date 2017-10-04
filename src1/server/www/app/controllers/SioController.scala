@@ -6,18 +6,13 @@ import models.req.MUserInits
 import play.api.i18n.{I18nSupport, Lang, Messages}
 import play.api.mvc._
 import util.jsa.init.CtlJsInitT
-import util.ws.IWsDispatcherActorsDi
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 import play.api.data.Form
 import play.api.mvc.Result
 
 import scala.language.implicitConversions
 import io.suggest.flash.FlashConstants
-import io.suggest.util.logs.IMacroLogs
-
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -111,44 +106,3 @@ trait SioController
 /** Абстрактная реализация контроллера с дедубликации скомпиленного кода между контроллерами. */
 abstract class SioControllerImpl extends SioController
 
-
-
-/** Утиль для связи с акторами, обрабатывающими ws-соединения. */
-trait NotifyWs extends SioController with IMacroLogs with IWsDispatcherActorsDi {
-
-  import mCommonDi._
-
-  /** Сколько асинхронных попыток предпринимать. */
-  private def NOTIFY_WS_WAIT_RETRIES_MAX = 15
-
-  /** Пауза между повторными попытками отправить уведомление. */
-  private def NOTIFY_WS_RETRY_PAUSE_MS = 1000L
-
-  /** Послать сообщение ws-актору с указанным wsId. Если WS-актор ещё не появился, то нужно подождать его
-    * некоторое время. Если WS-актор так и не появился, то выразить соболезнования в логи. */
-  def _notifyWs(wsId: String, msg: Any, counter: Int = 0): Unit = {
-    wsDispatcherActors.getForWsId(wsId)
-      .onComplete {
-        case Success(Some(wsActorRef)) =>
-          wsActorRef ! msg
-        case other =>
-          if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
-            actorSystem.scheduler.scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
-              _notifyWs(wsId, msg, counter + 1)
-            }
-            other match {
-              //case Success(None) =>
-              //  LOGGER.trace(s"WS actor $wsId not exists right now. Will retry after $NOTIFY_WS_RETRY_PAUSE_MS ms...")
-              case Failure(ex) =>
-                LOGGER.warn(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
-              // подавляем warning на Success(Some(_)), который отрабатывается выше
-              case _ =>
-                // should never happen
-            }
-          } else {
-            LOGGER.debug(s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was: $other")
-          }
-      }
-  }
-
-}

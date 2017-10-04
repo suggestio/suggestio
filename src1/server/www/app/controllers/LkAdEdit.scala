@@ -4,12 +4,11 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.es.model.MEsUuId
-import io.suggest.file.up.{MFile4UpProps, MUploadResp}
-import io.suggest.i18n.MMessage
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEditEdge
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.media.MMedias
+import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.www.m.mctx.CtxData
 import models.im.MImg3
@@ -17,13 +16,13 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.req.IReq
 import play.api.libs.json.Json
-import play.api.mvc.Result
+import play.api.mvc._
 import util.acl.{CanEditAd, IsNodeAdmin}
 import util.ad.LkAdEdFormUtil
 import util.img.DynImgUtil
 import util.sec.CspUtil
+import util.up.UploadUtil
 import views.html.lk.ad.edit._
-import io.suggest.scalaz.ScalazUtil.Implicits.RichNel
 
 import scala.concurrent.Future
 
@@ -44,7 +43,11 @@ class LkAdEdit @Inject() (
                            isNodeAdmin                            : IsNodeAdmin,
                            cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
-                           //mMedias                              : MMedias,
+                           mMedias                                : MMedias,
+                           uploadUtil                             : UploadUtil,
+                           uploadCtl                              : Upload,
+                           dab                                    : DefaultActionBuilder,
+                           swfsClient                             : ISwfsClient,
                            override val mCommonDi                 : ICommonDi
                          )
   extends SioControllerImpl
@@ -230,6 +233,7 @@ class LkAdEdit @Inject() (
   }
 
 
+
   /** Экшен подготовки к загрузке файла на сервер.
     *
     * Подразумевается POST-запрос, потому что:
@@ -238,26 +242,37 @@ class LkAdEdit @Inject() (
     * - Содержит JSON-тело с описанием загружаемого файла.
     *
     * @param adIdU id рекламной карточки для которой подготавливается загрузка файла.
+    *              None, если происходит создание новой карточки.
+    * @param nodeIdU id текущего узла-продьюсера, когда не задан id редактируемой карточки.
+    *                None, если задан id карточки.
     * @return JSON-ответ.
     */
-  def prepareUpload(adIdU: MEsUuId) = csrf.Check {
-    val adId = adIdU.id
-    // TODO Использовать какой-нибудь canUploadFile или canUploadFile4Ad.
-    canEditAd(adId, U.Lk).async(parse.json[MFile4UpProps]) { implicit request =>
-      lkAdEdFormUtil.f4upPropsV( request.body ).fold(
-        {errorsNel =>
-          // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
-          val resp = MUploadResp(
-            errors = errorsNel.iterator.map { msg => MMessage(msg) }.toSeq
-          )
-          NotAcceptable( Json.toJson(resp) )
-        },
-        {fprops =>
-          // Успешно провалидированы данные файла для загрузки.
-          // TODO Нужно поискать файл с такими параметрами в MMedia.
-          ???
+  def prepareImgUpload(adIdU: Option[MEsUuId], nodeIdU: Option[MEsUuId]) = csrf.Check {
+    lazy val logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:"
+    val bp = uploadCtl.prepareUploadBp
+
+    // Нельзя, чтобы было два Some или оба None.
+    if (adIdU.isEmpty == nodeIdU.isEmpty) {
+      dab(bp) { implicit request =>
+        val msg = "Exact one arg expected"
+        LOGGER.warn(s"$logPrefix $msg adId=$adIdU, nodeId=$nodeIdU, body=${request.body}")
+        PreconditionFailed(msg)
+      }
+
+    } else {
+      val ab = adIdU
+        .map[ActionBuilder[IReq, AnyContent]] { canEditAd(_) }
+        .getOrElse {
+          isNodeAdmin( nodeIdU.get.id )
         }
-      )
+
+      // TODO Использовать какой-нибудь canUploadFile или canUploadFile4Ad.
+      ab.async(bp) { implicit request =>
+        val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
+
+        // И просто запустить API-метод prepareUpload() из Upload-контроллера.
+        uploadCtl.prepareUploadLogic( logPrefix, validated )
+      }
     }
   }
 

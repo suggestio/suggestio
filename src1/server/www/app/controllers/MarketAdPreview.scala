@@ -45,7 +45,7 @@ trait MarketAdPreview
    */
   def adFormPreviewSubmit(adnId: String, isFull: Boolean) = csrf.Check {
     isNodeAdmin(adnId).async { implicit request =>
-      marketAdFormUtil.adFormM.bindFromRequest().fold(
+      lkAdEdFormUtil.adFormM.bindFromRequest().fold(
         {formWithErrors =>
           LOGGER.debug(s"adFormPreviewSubmit($adnId): form bind failed: " + formatFormErrors(formWithErrors))
           NotAcceptable("Preview form bind failed.")

@@ -1,5 +1,7 @@
 package io.suggest.pick
 
+import scalaz.{Validation, ValidationNel}
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -32,6 +34,7 @@ object MimeConst {
   final def APPLICATION_OCTET_STREAM    = Words.APPLICATION_ + "octet-stream"
 
 
+  /** Внутренние sio-mime-типы. */
   object Sio {
 
     final private def MIME_PREFIX = Words.APPLICATION_ + "prs.sio-"
@@ -85,6 +88,16 @@ object MimeConst {
       isImage(ct)
     }
 
+  }
+
+
+  /** Валидация mime-типа картинки.
+    *
+    * @param mime MIME-тип, требующий проверки.
+    * @return ValidationNel.
+    */
+  def validateMimeUsing(mime: String, verifierF: String => Boolean): ValidationNel[String, String] = {
+    Validation.liftNel(mime)( !verifierF(_), "e.mime.unexpected" )
   }
 
 }

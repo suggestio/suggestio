@@ -1,7 +1,10 @@
 package io.suggest.model.n2.media
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.es.model._
+import io.suggest.es.search.EsDynSearchStatic
+import io.suggest.model.n2.media.search.MMediaSearch
 import io.suggest.model.n2.media.storage.{IMediaStorage, IMediaStorages}
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.libs.json._
@@ -29,6 +32,7 @@ class MMedias @Inject() (
   with EsmV2Deserializer
   with MacroLogsImpl
   with EsModelJsonWrites
+  with EsDynSearchStatic[MMediaSearch]
 { that =>
 
   import iMediaStorages.FORMAT

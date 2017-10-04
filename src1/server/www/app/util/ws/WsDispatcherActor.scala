@@ -4,6 +4,7 @@ import akka.actor._
 import akka.pattern.ask
 import akka.util.Timeout
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import util.SiowebSup
@@ -11,6 +12,7 @@ import util.SiowebSup
 import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -19,7 +21,7 @@ import scala.concurrent.duration._
  * Description: Актор, поддерживающий карту wsId -> actorRef.
  */
 @Singleton
-class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) {
+class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl {
 
   import mCommonDi._
 
@@ -39,6 +41,34 @@ class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) {
   def getForWsId(wsId: String): Future[Option[ActorRef]] = {
     (actorSelection ? GetForId(wsId))
       .asInstanceOf[Future[Option[ActorRef]]]
+  }
+
+
+
+  /** Сколько асинхронных попыток предпринимать. */
+  private def NOTIFY_WS_WAIT_RETRIES_MAX = 10
+
+  /** Пауза между повторными попытками отправить уведомление. */
+  private def NOTIFY_WS_RETRY_PAUSE_MS = 1000L
+
+  /** Послать сообщение ws-актору с указанным wsId. Если WS-актор ещё не появился, то нужно подождать его
+    * некоторое время. Если WS-актор так и не появился, то выразить соболезнования в логи. */
+  def notifyWs(wsId: String, msg: Any, counter: Int = 0): Unit = {
+    getForWsId(wsId)
+      .onComplete {
+        case Success(Some(wsActorRef)) =>
+          wsActorRef ! msg
+        case Failure(ex) =>
+          if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
+            actorSystem.scheduler
+              .scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
+                notifyWs(wsId, msg, counter + 1)
+              }
+            LOGGER.warn(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
+          } else {
+            LOGGER.debug(s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was:", ex)
+          }
+      }
   }
 
 }

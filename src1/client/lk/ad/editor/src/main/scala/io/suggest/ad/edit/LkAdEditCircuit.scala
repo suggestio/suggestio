@@ -18,6 +18,7 @@ import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
+import io.suggest.ad.edit.srv.AdEditSrvApiHttp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 
@@ -81,6 +82,10 @@ class LkAdEditCircuit(
   private val rootRW = zoomRW(m => m) { (_, mroot2) => mroot2 }
   /** Используется извне, в init например. */
   val rootRO: ModelRO[MAeRoot] = rootRW
+
+  val confRO = zoom(_.conf)
+
+  val api = new AdEditSrvApiHttp( confRO )
 
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
@@ -222,7 +227,11 @@ class LkAdEditCircuit(
     )
   }
 
-  private val pictureAh = new PictureAh( mPictureAhRW )
+  /** Контроллер изображений. */
+  private val pictureAh = new PictureAh(
+    api     = api,
+    modelRW = mPictureAhRW
+  )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
 

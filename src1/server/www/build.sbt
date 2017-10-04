@@ -148,7 +148,10 @@ routesImport ++= Seq(
 
   // 2017.aug.17: Распиливания BlockMeta для выноса основной её части в [common].
   "io.suggest.ad.blk.BlockMetaJvm._",
-  "io.suggest.model.n2.edge.MPredicatesJvm._"
+  "io.suggest.model.n2.edge.MPredicatesJvm._",
+
+  // 2017.oct.3: Аплоад с балансировкой по серверам требует новых комплексных клиент-серверных моделей:
+  "io.suggest.crypto.hash.HashesHexJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

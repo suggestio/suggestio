@@ -28,7 +28,7 @@ object AdCssArgs {
   /** Ключ для подписи ссылок. */
   private val SIGN_SECRET: String = {
     val sg = new SecretGetter with MacroLogsDyn {
-      override val confKey = "ads.css.url.sign.key"
+      override def confKey = "ads.css.url.sign.key"
     }
     sg()
   }

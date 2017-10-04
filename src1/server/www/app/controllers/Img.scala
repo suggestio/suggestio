@@ -30,7 +30,7 @@ import util.acl._
 import util.di.{IDynImgUtil, IMImg3Di}
 import util.img.detect.main.MainColorDetector
 import util.img.{ImgCtlUtil, _}
-import util.ws.WsDispatcherActors
+import util.ws.{IWsDispatcherActorsDi, WsDispatcherActors}
 import views.html.img._
 
 import scala.concurrent.Future
@@ -242,7 +242,7 @@ class Img @Inject() (
 trait TempImgSupport
   extends SioController
   with IMacroLogs
-  with NotifyWs
+  with IWsDispatcherActorsDi
   with IDynImgUtil
   with IMImg3Di
   with IOrigImageUtilDi
@@ -270,7 +270,6 @@ trait TempImgSupport
   /** Настройка кеширования для  */
   protected def CACHE_COLOR_HISTOGRAM_SEC = 10
 
-
   /**
    * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
    *
@@ -297,7 +296,7 @@ trait TempImgSupport
         } else {
           result
         }
-        _notifyWs(wsId, res2)
+        wsDispatcherActors.notifyWs(wsId, res2)
       case Failure(ex) =>
         LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
     }

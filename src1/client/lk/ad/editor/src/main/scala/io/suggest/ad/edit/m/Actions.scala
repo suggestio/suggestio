@@ -6,6 +6,7 @@ import io.suggest.common.MHand
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
+import io.suggest.file.up.MUploadResp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sjs.common.spa.DAction
@@ -100,3 +101,7 @@ case object PurgeUnusedEdges extends ILkEditAction
 
 /** Завершение асинхронного хэширования файла. */
 case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkEditAction
+
+
+/** Завершён запрос подготовки сервера к аплоаду файла. */
+case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkEditAction

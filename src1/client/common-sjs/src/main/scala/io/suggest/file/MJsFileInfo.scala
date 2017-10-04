@@ -3,7 +3,7 @@ package io.suggest.file
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.crypto.hash.MHash
+import io.suggest.crypto.hash.HashesHex
 import io.suggest.file.up.MFileUploadS
 import io.suggest.ueq.UnivEqJsUtil._
 import io.suggest.ueq.UnivEqUtil._
@@ -52,7 +52,7 @@ case class MJsFileInfo(
                         blob              : Blob,
                         blobUrl           : Option[String]          = None,
                         fileName          : Option[String]          = None,
-                        hashesHex         : Map[MHash, String]      = Map.empty,
+                        hashesHex         : HashesHex               = Map.empty,
                         whPx              : Option[MSize2di]        = None,
                         upload            : Option[MFileUploadS]    = None
                       )
@@ -62,7 +62,7 @@ case class MJsFileInfo(
   def withBlob(blob: Blob)                                = copy(blob = blob)
   def withBlobUrl(blobUrl: Option[String])                = copy(blobUrl = blobUrl)
   def withFileName(fileName: Option[String])              = copy(fileName = fileName)
-  def withHashesHex(hashesHex: Map[MHash, String])        = copy(hashesHex = hashesHex)
+  def withHashesHex(hashesHex: HashesHex)                 = copy(hashesHex = hashesHex)
   def withWhPx(whPx: Option[MSize2di])                    = copy(whPx = whPx)
   def withUpload(upload: Option[MFileUploadS])            = copy(upload = upload)
 

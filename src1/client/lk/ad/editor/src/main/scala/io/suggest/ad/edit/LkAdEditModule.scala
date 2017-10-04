@@ -5,6 +5,7 @@ import diode.ModelRW
 import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
+import io.suggest.ad.edit.srv.AdEditSrvApiHttp
 import io.suggest.ad.edit.v.edit.{AddR, ColorPickR, PictureR, QdEditR}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, StripEditR}
 import io.suggest.ad.edit.v.pop.{LaePopupsR, PictureCropPopupR}
@@ -29,6 +30,8 @@ class LkAdEditModule {
 
   import jdRenderModule._
   import quillSioModule._
+
+  // srv deps
 
 
   // css deps

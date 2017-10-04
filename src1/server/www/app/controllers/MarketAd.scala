@@ -59,7 +59,7 @@ class MarketAd @Inject() (
                            aclUtil                                 : AclUtil,
                            bruteForceProtect                       : BruteForceProtect,
                            override val isNodeAdmin                : IsNodeAdmin,
-                           override val marketAdFormUtil           : LkAdEdFormUtil,
+                           override val lkAdEdFormUtil             : LkAdEdFormUtil,
                            override val mCommonDi                  : ICommonDi
 )
   extends SioControllerImpl
@@ -69,19 +69,12 @@ class MarketAd @Inject() (
 
   import LOGGER._
   import mCommonDi._
-  import marketAdFormUtil._
+  import lkAdEdFormUtil._
 
   type ReqSubmit = Request[collection.Map[String, Seq[String]]]
   type DetectForm_t = Either[AdFormM, (BlockConf, AdFormM)]
 
   private def _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(3)
-
-
-  /** Макс.длина загружаемой картинки в байтах. */
-  private val IMG_UPLOAD_MAXLEN_BYTES: Int = {
-    val mib = 40 // current.configuration.getOptional[Int]("ad.img.len.max.mib") getOrElse 40
-    mib * 1024 * 1024
-  }
 
 
   /** Полный ключ доступа к полю bgImg в маппинге формы. */
@@ -512,7 +505,7 @@ class MarketAd @Inject() (
 
   private def blockImgBp = parse.multipartFormData(
     Multipart.handleFilePartAsTemporaryFile( SingletonTemporaryFileCreator ),
-    maxLength = IMG_UPLOAD_MAXLEN_BYTES.toLong
+    maxLength = lkAdEdFormUtil.IMG_UPLOAD_MAXLEN_BYTES.toLong
   )
 
   /** Подготовка картинки, которая загружается в динамическое поле блока. */

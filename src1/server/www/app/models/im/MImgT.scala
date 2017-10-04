@@ -70,7 +70,7 @@ object MImgT extends MacroLogsImpl { model =>
   /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
   private val SIGN_SECRET: String = {
     val sg = new SecretGetter {
-      override val confKey = "dynimg.sign.key"
+      override def confKey = "dynimg.sign.key"
       override def LOGGER = model.LOGGER
     }
     sg()

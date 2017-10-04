@@ -1,19 +1,22 @@
 package io.suggest.ad.edit.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
-import diode.{ActionHandler, ActionResult, Effect, ModelRW}
+import diode._
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
+import io.suggest.ad.edit.srv.IAdEditSrvApi
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
-import io.suggest.crypto.hash.MHashes
+import io.suggest.crypto.hash.{HashesHex, MHashes}
 import io.suggest.file.MJsFileInfo
+import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.img.crop.MCrop
 import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
 import io.suggest.jd.render.m.SetImgWh
+import io.suggest.js.UploadConstants
 import io.suggest.lk.m.MErrorPopupS
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
@@ -37,7 +40,10 @@ import scala.util.Success
   * Created: 18.09.17 19:03
   * Description: Контроллер управления картинками.
   */
-class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
+class PictureAh[M](
+                    api     : IAdEditSrvApi,
+                    modelRW : ModelRW[M, MPictureAh]
+                  )
   extends ActionHandler(modelRW)
   with Log
 {
@@ -131,7 +137,6 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
                     blobUrl   = Option( blobUrlNew ),
                     fileName  = Option( fileNew.name )
                   ))
-                  // TODO Запустить upload XHR, и выставить 0% upload progress
                 )
 
                 // Если есть старый файл, то нужно позаботиться о его удалении...
@@ -234,41 +239,79 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
         },
         { hashHex =>
           // Сохранить рассчётный хэш в состояние.
-          val blobUrlFilterF = { e: MEdgeDataJs =>
-            e.fileJs.exists(_.blobUrl.contains( m.blobUrl ))
-          }
-          v0.edges
-            .get(m.edgeUid)
-            .filter(blobUrlFilterF)
-            .orElse {
-              // Нет эджа с таким id и url, возможна карта эджей изменилась с тех пор.
-              v0.edges
-                .valuesIterator
-                .find(blobUrlFilterF)
-            }
+          _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl)
             .fold {
               // Нет такого файла. Вероятно, пока считался хэш, юзер уже выбрал какой-то другой файл.
               LOG.log( WarnMsgs.UNEXPECTED_EMPTY_DOCUMENT, msg = m )
               noChange
             } { edge0 =>
-              val edge2 = edge0.withFileJs(
-                edge0.fileJs.map { fileJs0 =>
-                  fileJs0.withHashesHex(
-                    fileJs0.hashesHex + (m.hash -> hashHex)
-                  )
-                }
-              )
-              val v2 = v0.withEdges(
-                v0.edges.updated( edge0.id, edge2 )
-              )
+              // Дедубликация кода обновления текущего эджа:
+              def __v2F(fileJs9: MJsFileInfo): MPictureAh = {
+                val edge2 = edge0.withFileJs( Some( fileJs9 ) )
+                v0.withEdges(
+                  v0.edges.updated( edge0.id, edge2 )
+                )
+              }
 
-              // TODO Запустить эффект аплоада на сервер.
+              val fileJs0 = edge0.fileJs.get
+              val hashesHex2: HashesHex = fileJs0.hashesHex + (m.hash -> hashHex)
 
-              updated(v2)
+              val fileJs1 = fileJs0
+                .withHashesHex( hashesHex2 )
+
+              // Попытаться провалидировать хеши так же, как это сделает сервер.
+              // Это поможет определить достаточность собранной карты хешей для запуска аплоада.
+              HashesHex
+                .hashesHexV(hashesHex2, UploadConstants.CleverUp.PICTURE_FILE_HASHES)
+                .fold(
+                  // Хешей пока недостаточно, ждать ещё хэшей...
+                  {_ =>
+                    val edge2 = edge0.withFileJs( Some( fileJs1 ) )
+                    val v2 = v0.withEdges(
+                      v0.edges.updated( edge0.id, edge2 )
+                    )
+                    updated( __v2F(fileJs1) )
+                  },
+                  // Собрано достаточно хешей для аплоада. Запустить процедуру аплоада на сервер:
+                  {_ =>
+                    val fx =
+                      Effect {
+                        val upProps = MFile4UpProps(
+                          sizeB     = fileJs0.blob.size.toLong,
+                          hashesHex = hashesHex2,
+                          mimeType  = fileJs0.blob.`type`
+                        )
+                        val edgeUid = edge0.id
+                        val blobUrl = fileJs0.blobUrl.get
+                        api
+                          .prepareUpload( upProps )
+                          .transform { tryRes =>
+                            Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
+                          }
+                      }
+
+                    val fileJs2 = fileJs1.withUpload {
+                      val upState0 = fileJs0.upload.getOrElse( MFileUploadS.empty )
+                      Some( upState0
+                        .withPrepareReq(
+                          upState0.prepareReq.pending()
+                        )
+                      )
+                    }
+
+                    val v2 = __v2F(fileJs2)
+                    updated(v2, fx)
+                  }
+                )
+
             }
         }
       )
 
+
+    case m: PrepUploadResp =>
+      LOG.error("TODO", msg = m)
+      noChange
 
     // Загрузилась картинка, и стали известны некоторые параметры этой самой картинки.
     case m: SetImgWh =>
@@ -520,6 +563,23 @@ class PictureAh[M]( modelRW: ModelRW[M, MPictureAh] )
     selJdt2.fold(v0) { _ =>
       v0.withSelectedTag( selJdt2 )
     }
+  }
+
+
+
+  def _findEdgeByIdOrBlobUrl(edges: Map[EdgeUid_t, MEdgeDataJs], edgeUid: EdgeUid_t, blobUrl: String): Option[MEdgeDataJs] = {
+    val blobUrlFilterF = { e: MEdgeDataJs =>
+      e.fileJs.exists(_.blobUrl.contains( blobUrl ))
+    }
+    edges
+      .get(edgeUid)
+      .filter(blobUrlFilterF)
+      .orElse {
+        // Нет эджа с таким id и url, возможна карта эджей изменилась с тех пор.
+        edges
+          .valuesIterator
+          .find(blobUrlFilterF)
+      }
   }
 
 }

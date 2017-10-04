@@ -103,6 +103,7 @@ GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offer
 ## ЛК: Редактор рекламных карточек v2:
 GET  /lk/mad/new2/:nodeId               @controllers.LkAdEdit.createAd(nodeId: MEsUuId)
 GET  /lk/mad/edit2/:adId                @controllers.LkAdEdit.editAd(adId: MEsUuId)
+POST /lk/mad/up/img                     @controllers.LkAdEdit.prepareImgUpload(adId: Option[MEsUuId] ?= None, nodeId: Option[MEsUuId] ?= None)
 
 ## ЛК: Управление под-узлами.
 GET  /lk/subnodes/of/:nodeId                        @controllers.LkNodes.nodesOf(nodeId: MEsUuId)
@@ -186,8 +187,11 @@ POST /img/crop                          @controllers.Img.imgCropSubmit
 GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaId, cp: String)
 GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
 
+## Upload controller
+POST /up/file/do                        @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs)
 
-# sys
+
+## sys
 GET  /sys                               @controllers.SysMarket.sysIndex
 # sys.market
 GET  /sys/market                        @controllers.SysMarket.index

@@ -19,7 +19,7 @@ object MExtAdvQs {
   /** Статический секретный ключ для подписывания запросов. */
   private val SIGN_SECRET: String = {
     val sg = new SecretGetter with MacroLogsImplLazy {
-      override val confKey = "ext.adv.qs.sign.key"
+      override def confKey = "ext.adv.qs.sign.key"
     }
     sg()
   }

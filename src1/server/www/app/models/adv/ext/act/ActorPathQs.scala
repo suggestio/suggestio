@@ -22,7 +22,7 @@ object ActorPathQs extends MacroLogsDyn {
   /** Статический секретный ключ для подписывания запросов к dyn-картинкам. */
   private[models] val SIGN_SECRET: String = {
     val sg = new SecretGetter {
-      override val confKey = "qsb.actor.path.sign.key"
+      override def confKey = "qsb.actor.path.sign.key"
       override def LOGGER = ActorPathQs.LOGGER
     }
     sg()

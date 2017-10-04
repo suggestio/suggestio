@@ -15,6 +15,8 @@ import japgolly.univeq.UnivEq
   */
 object MFileUploadS {
 
+  def empty = MFileUploadS()
+
   /** Поддержка FastEq для инстансов [[MFileUploadS]]. */
   implicit object MFileUploadSFastEq extends FastEq[MFileUploadS] {
     override def eqv(a: MFileUploadS, b: MFileUploadS): Boolean = {

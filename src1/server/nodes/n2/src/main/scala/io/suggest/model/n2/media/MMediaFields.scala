@@ -26,6 +26,10 @@ object MMediaFields {
     def HASHES_TYPE_FN        = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_TYPE_FN )
     def HASHES_VALUE_FN       = _fullFn( MFileMeta.Fields.HashesHexFields.HASH_VALUE_FN )
 
+    def SIZE_B_FN             = _fullFn( MFileMeta.Fields.SIZE_B_FN )
+
+    def IS_ORIGINAL_FN        = _fullFn( MFileMeta.Fields.IS_ORIGINAL_FN )
+
   }
 
 

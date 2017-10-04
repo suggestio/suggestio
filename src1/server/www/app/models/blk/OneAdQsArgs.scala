@@ -21,7 +21,7 @@ object OneAdQsArgs {
   /** Статический секретный ключ для подписывания запросов. */
   private[this] val SIGN_SECRET: String = {
     val sg = new SecretGetter with MacroLogsImplLazy {
-      override val confKey = "only.one.ad.qs.sign.key"
+      override def confKey = "only.one.ad.qs.sign.key"
     }
     sg()
   }
