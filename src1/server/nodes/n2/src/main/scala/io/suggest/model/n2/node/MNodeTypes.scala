@@ -113,7 +113,12 @@ object MNodeTypes extends EnumMaybeWithName with EnumJsonReadsValT with EnumTree
     /** Загруженная картинка. */
     val Image: T  = new ValNoSub("i") with _Parent
 
-    override def children = List[T](Image)
+    // TODO Video, Audio, Document, etc...
+
+    /** Файл, не относящийся ни к картикам, ни к видео, ни к иным категориям из Media. */
+    val OtherFile: T = new ValNoSub("mf") with _Parent
+
+    override def children = List[T](Image, OtherFile)
 
   }
 

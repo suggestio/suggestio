@@ -14,6 +14,7 @@ import io.suggest.www.m.mctx.CtxData
 import models.im.MImg3
 import models.mctx.Context
 import models.mproj.ICommonDi
+import models.mup.MUploadFileHandlers
 import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -271,7 +272,12 @@ class LkAdEdit @Inject() (
         val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
 
         // И просто запустить API-метод prepareUpload() из Upload-контроллера.
-        uploadCtl.prepareUploadLogic( logPrefix, validated )
+        uploadCtl.prepareUploadLogic(
+          logPrefix = logPrefix,
+          validated = validated,
+          // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
+          uploadFileHandler = Some( MUploadFileHandlers.Picture )
+        )
       }
     }
   }

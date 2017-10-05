@@ -5,7 +5,7 @@ name := "svg-util"
 version := "0.0.0-SNAPSHOT"
 
 libraryDependencies ++= {
-  val baticVsn = "1.7"
+  val baticVsn = Common.Vsn.APACHE_BATIK
   val xgOrg = "org.apache.xmlgraphics"
   Seq(
     Common.ORG %% "logs-macro"     % "0.0.0-SNAPSHOT",
@@ -13,6 +13,8 @@ libraryDependencies ++= {
     xgOrg       % "batik-svg-dom"  % baticVsn intransitive(),
     xgOrg       % "batik-dom"      % baticVsn intransitive(),
     xgOrg       % "batik-css"      % baticVsn intransitive(),
+    xgOrg       % "batik-i18n"     % baticVsn intransitive(),
+    xgOrg       % "batik-constants" % baticVsn intransitive(),
     xgOrg       % "batik-xml"      % baticVsn intransitive(),
     xgOrg       % "batik-util"     % baticVsn intransitive(),
     xgOrg       % "batik-parser"   % baticVsn intransitive(),

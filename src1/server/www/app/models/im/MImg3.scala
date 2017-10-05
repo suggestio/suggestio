@@ -21,9 +21,9 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.playx.CacheApiUtil
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
-import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import util.img.ImgFileNameParsersImpl
+import util.up.FileUtil
 
 import scala.concurrent.Future
 
@@ -103,7 +103,7 @@ class MImgs3 @Inject() (
     mNodesCache
       .getById( mimg.rowKeyStr )
       .map(_.get)
-      .recoverWith { case ex: NoSuchElementException =>
+      .recoverWith { case _: NoSuchElementException =>
         saveMnode(mimg)
       }
   }
@@ -188,7 +188,7 @@ class MImgs3 @Inject() (
           ),
           // TODO Перепилить MPictureMeta, чтобы wh были просто полем-объектом, ИНДЕКСИРУЕМЫМ!
           picture = whOpt.map(MPictureMeta.apply),
-          storage = stor
+          storage = stor._1
         )
       }
     }

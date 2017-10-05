@@ -5,8 +5,6 @@ import io.suggest.enum2.EnumeratumUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 
-import scalaz.ValidationNel
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -15,16 +13,20 @@ import scalaz.ValidationNel
   */
 object MHashes extends StringEnum[MHash] {
 
+  private def SHA_ = "SHA-"
+
   /** SHA-1 хэш.
     * @see [[https://ru.wikipedia.org/wiki/SHA-1]] */
   case object Sha1 extends MHash("s1") {
     override def byteSize = 20
+    override def fullStdName = SHA_ + "1"
   }
 
   /** SHA-256 хэш.
     * @see [[https://ru.wikipedia.org/wiki/SHA-256]] */
   case object Sha256 extends MHash("s256") {
     override def byteSize = 32
+    override def fullStdName = SHA_ + bitSize
   }
 
 
@@ -46,6 +48,9 @@ sealed abstract class MHash(override val value: String) extends StringEnumEntry 
 
   /** Размер хэша в битах: в 1 байте - 8 бит. */
   def bitSize = byteSize * 8
+
+  /** Полное стандартное имя. */
+  def fullStdName: String
 
 }
 

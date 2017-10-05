@@ -42,7 +42,7 @@ class IMediaStorages @Inject() (
       override def reads(json: JsValue): JsResult[T] = {
         json.validate( MStorage.STYPE_FN_FORMAT )
           .flatMap { stype =>
-            json.validate( _getModel(stype).FORMAT )
+            json.validate( getModel(stype).FORMAT )
           }
       }
     }
@@ -65,9 +65,10 @@ class IMediaStorages @Inject() (
 
   private type X = T
   private def _getModel(ptr: T): IMediaStorageStaticImpl { type T = X } = {
-    _getModel(ptr.sType)
+    getModel(ptr.sType)
   }
-  private def _getModel(sType: MStorage): IMediaStorageStaticImpl { type T = X } = {
+
+  def getModel(sType: MStorage): IMediaStorageStaticImpl { type T = X } = {
     STORAGES_MAP(sType)
       // Страшненький костыль, чтобы избавится от ошибок компилятора по поводу внутреннего типа.
       // Он же не в курсе, что значение в карте жестко связано с MStorage.
@@ -96,8 +97,8 @@ class IMediaStorages @Inject() (
   }
 
   /** Награбить новый указатель в хранилище указанного типа. */
-  def assignNew(stype: MStorage): Future[IMediaStorage] = {
-    _getModel(stype)
+  def assignNew(stype: MStorage): Future[(IMediaStorage, AnyRef)] = {
+    getModel(stype)
       .assignNew()
   }
 
@@ -151,7 +152,7 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
     * Подготовить новый указатель в текущем хранилище для загрузки очередного блобика.
     * @return Фьючерс с инстансом свежего указателя.
     */
-  def assignNew(): Future[T]
+  def assignNew(): Future[(T, AnyRef)]
 
 }
 

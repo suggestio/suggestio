@@ -163,6 +163,11 @@ object Common {
       */
     val ASM_CRYPTO_JS = "0.0.11"
 
+    /** Версия Apache Batik для работы с SVG.
+      * @see [[https://xmlgraphics.apache.org/batik/download.html]]
+      */
+    val APACHE_BATIK = "1.9"
+
   }
 
 

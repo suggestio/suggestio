@@ -16,7 +16,6 @@ import io.suggest.util.logs.{IMacroLogs, MacroLogsImpl}
 import io.suggest.www.util.dt.DateTimeUtil
 import models.im._
 import models.mctx.Context
-import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import models.req.IReq
 import net.sf.jmimemagic.Magic
@@ -30,6 +29,7 @@ import util.acl._
 import util.di.{IDynImgUtil, IMImg3Di}
 import util.img.detect.main.MainColorDetector
 import util.img.{ImgCtlUtil, _}
+import util.up.FileUtil
 import util.ws.{IWsDispatcherActorsDi, WsDispatcherActors}
 import views.html.img._
 
@@ -321,7 +321,6 @@ trait TempImgSupport
         val fileRef = pictureFile.ref
         val srcFile = fileRef.path.toFile
         val srcMagicMatch = Magic.getMagicMatch(srcFile, false)
-        // Отрабатываем svg: не надо конвертить.
         val srcMime = srcMagicMatch.getMimeType
 
         // Отрабатываем опциональный рендеринг html-поля с оверлеем.
@@ -346,14 +345,15 @@ trait TempImgSupport
         } else {
           // Это растровая картинка (jpeg, png, etc).
           try {
-            // Конвертим в JPEG всякие левые форматы.
             val imgPrepareFut: Future[_] = {
+              // Проверяем формат принятой картинки на совместимость: // TODO Это не нужно, оригинал можно ведь и не раздавать никогда.
               if (preserveUnknownFmt || OutImgFmts.forImageMime(srcMime).isDefined) {
                 // TODO Вызывать jpegtran или другие вещи для lossless-обработки. В фоне, параллельно.
                 Future {
                   FileUtils.moveFile(srcFile, tmpFile)
                 }(asyncUtil.singleThreadIoContext)
               } else {
+                // Конвертим в JPEG всякие левые форматы.
                 Future {
                   // Использовать что-то более гибкое и полезное. Вдруг зальют негатив .arw какой-нить в hi-res.
                   origImageUtil.convert(srcFile, tmpFile, strip = true)

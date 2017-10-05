@@ -21,6 +21,7 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.pick.MimeConst
+import io.suggest.svg.SvgUtil
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.ym.model.ad.AdColorFns
@@ -411,7 +412,10 @@ class LkAdEdFormUtil extends MacroLogsImpl {
       // Бывает, что загружается просто png-рамка, например:
       minSizeB      = 256,
       maxSizeB      = IMG_UPLOAD_MAXLEN_BYTES,
-      mimeVerifierF = MimeConst.Image.isImageForAd,
+      mimeVerifierF = { mimeType =>
+        MimeConst.Image.isImageForAd(mimeType) ||
+          SvgUtil.maybeSvgMime(mimeType)
+      },
       mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
     )
   }

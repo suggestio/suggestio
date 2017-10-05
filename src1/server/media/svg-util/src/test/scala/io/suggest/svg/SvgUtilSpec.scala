@@ -65,4 +65,12 @@ class SvgUtilSpec extends FlatSpec {
     testFile("uca.xml", isSvg = false)
   }
 
+  it should "accept SVG-signature of Ekaterina II" in {
+    testFile("Catherine_The_Great_Signature.svg", isSvg = true)
+  }
+
+  it should "accept SVG world map of voltage frequencies" in {
+    testFile("world-map-voltage-frequencies.svg", isSvg = true)
+  }
+
 }

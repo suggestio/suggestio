@@ -12,10 +12,10 @@ import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.img.ImgSzDated
 import io.suggest.util.UuidUtil
 import io.suggest.util.logs.MacroLogsImpl
-import models.mfs.FileUtil
 import models.mproj.ICommonDi
 import org.apache.commons.io.FileUtils
 import util.img.{ImgFileNameParsersImpl, ImgFileUtil, OrigImageUtil}
+import util.up.FileUtil
 
 import scala.concurrent.duration._
 import scala.concurrent.Future
@@ -119,10 +119,7 @@ class MLocalImgs @Inject() (
   override def getImageWH(mimg: MLocalImg): Future[Option[MSize2di]] = {
     identifyCached(mimg)
       .map { info =>
-        val imeta = MSize2di(
-          height = info.getImageHeight,
-          width  = info.getImageWidth
-        )
+        val imeta = imgFileUtil.identityInfo2wh(info)
         Some(imeta)
       }
       .recover {

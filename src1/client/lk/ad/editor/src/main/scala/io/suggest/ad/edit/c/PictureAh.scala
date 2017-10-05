@@ -309,9 +309,49 @@ class PictureAh[M](
       )
 
 
+    // Сигнал о завершении запроса подготовки к аплоаду файла.
     case m: PrepUploadResp =>
-      LOG.error("TODO", msg = m)
-      noChange
+      val v0 = value
+      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid_t, m.blobUrl).fold {
+        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        noChange
+      } { edge0 =>
+        m.tryRes.fold(
+          {ex =>
+            // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
+            val fileJsOpt2 = edge0.fileJs.map { fileJs0 =>
+              fileJs0.withUpload(
+                fileJs0.upload.map { upload0 =>
+                  upload0
+                    .withXhr(None)
+                    .withPrepareReq( upload0.prepareReq.fail(ex) )
+                }
+              )
+            }
+            val edge2 = edge0.withFileJs( fileJsOpt2 )
+            //
+            val errPopup0 = v0.errorPopup.getOrElse( MErrorPopupS() )
+            val v2 = v0
+              .withEdges( v0.edges + (edge0.id -> edge2) )
+              // Распахнуть попап с ошибкой закачки файла:
+              .withErrorPopup( Some(
+                errPopup0.withException( Some(ex) )
+              ))
+            updated(v2)
+          },
+          {resp =>
+            resp.upUrls.headOption
+              .map { firstUrl =>
+                // Инициировать непосредственную заливку файла.
+              }
+            // TODO Три варианта осталось: есть url для заливки | найден уже существующий файл | какая-то ошибка с данными файла.
+            LOG.error("TODO", msg = m)
+            noChange
+          }
+        )
+
+      }
+
 
     // Загрузилась картинка, и стали известны некоторые параметры этой самой картинки.
     case m: SetImgWh =>

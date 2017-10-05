@@ -23,6 +23,7 @@ object MUploadTargetQs {
     val HASHES_HEX_FN     = "h"
     val MIME_TYPE_FN      = "m"
     val FILE_SIZE_B_FN    = "b"
+    val FILE_HANDLER_FN   = "d"
     val PERSON_ID_FN      = "p"
     val VALID_TILL_FN     = "c"
     val STORAGE_FN        = "s"
@@ -44,11 +45,12 @@ object MUploadTargetQs {
 
   /** Поддержка QueryStringBindable. */
   implicit def uploadTargetQsQsb(implicit
-                                 hashesHexB     : QueryStringBindable[HashesHex],
-                                 strB           : QueryStringBindable[String],
-                                 longB          : QueryStringBindable[Long],
-                                 storageB       : QueryStringBindable[MStorage],
-                                 strOptB        : QueryStringBindable[Option[String]]
+                                 hashesHexB         : QueryStringBindable[HashesHex],
+                                 strB               : QueryStringBindable[String],
+                                 longB              : QueryStringBindable[Long],
+                                 fileHandlerOptB    : QueryStringBindable[Option[MUploadFileHandler]],
+                                 storageB           : QueryStringBindable[MStorage],
+                                 strOptB            : QueryStringBindable[Option[String]]
                                 ): QueryStringBindable[MUploadTargetQs] = {
     new QueryStringBindableImpl[MUploadTargetQs] {
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
@@ -59,19 +61,21 @@ object MUploadTargetQs {
         val k = key1F(key)
         for {
           params            <- getQsbSigner(key).signedOrNone(k(""), params0)
-          hashesHexE        <- hashesHexB.bind    ( k(F.HASHES_HEX_FN),   params )
-          mimeTypeE         <- strB.bind          ( k(F.MIME_TYPE_FN),    params )
-          fileSizeE         <- longB.bind         ( k(F.FILE_SIZE_B_FN),  params )
-          personIdOptE      <- strOptB.bind       ( k(F.PERSON_ID_FN),    params )
-          validTillE        <- longB.bind         ( k(F.VALID_TILL_FN),   params )
-          storageE          <- storageB.bind      ( k(F.STORAGE_FN),      params )
-          storHostE         <- strB.bind          ( k(F.STORAGE_HOST_FN), params )
-          storInfoE         <- strB.bind          ( k(F.STORAGE_INFO_FN), params )
+          hashesHexE        <- hashesHexB.bind        ( k(F.HASHES_HEX_FN),   params )
+          mimeTypeE         <- strB.bind              ( k(F.MIME_TYPE_FN),    params )
+          fileSizeE         <- longB.bind             ( k(F.FILE_SIZE_B_FN),  params )
+          fileHandlerOptE   <- fileHandlerOptB.bind   ( k(F.FILE_HANDLER_FN), params )
+          personIdOptE      <- strOptB.bind           ( k(F.PERSON_ID_FN),    params )
+          validTillE        <- longB.bind             ( k(F.VALID_TILL_FN),   params )
+          storageE          <- storageB.bind          ( k(F.STORAGE_FN),      params )
+          storHostE         <- strB.bind              ( k(F.STORAGE_HOST_FN), params )
+          storInfoE         <- strB.bind              ( k(F.STORAGE_INFO_FN), params )
         } yield {
           for {
             hashesHex       <- hashesHexE.right
             mimeType        <- mimeTypeE.right
             fileSize        <- fileSizeE.right
+            fileHandlerOpt  <- fileHandlerOptE.right
             personIdOpt     <- personIdOptE.right
             validTill       <- validTillE.right
             storage         <- storageE.right
@@ -82,6 +86,7 @@ object MUploadTargetQs {
               hashesHex     = hashesHex,
               mimeType      = mimeType,
               fileSizeB     = fileSize,
+              fileHandler   = fileHandlerOpt,
               personId      = personIdOpt,
               validTillS    = validTill,
               storage       = storage,
@@ -98,14 +103,15 @@ object MUploadTargetQs {
         val F = Fields
         val k = key1F(key)
         val unsigned = _mergeUnbinded1(
-          hashesHexB.unbind   ( k(F.HASHES_HEX_FN),       value.hashesHex   ),
-          strB.unbind         ( k(F.MIME_TYPE_FN),        value.mimeType    ),
-          longB.unbind        ( k(F.FILE_SIZE_B_FN),      value.fileSizeB   ),
-          strOptB.unbind      ( k(F.PERSON_ID_FN),        value.personId    ),
-          longB.unbind        ( k(F.VALID_TILL_FN),       value.validTillS  ),
-          storageB.unbind     ( k(F.STORAGE_FN),          value.storage     ),
-          strB.unbind         ( k(F.STORAGE_HOST_FN),     value.storHost    ),
-          strB.unbind         ( k(F.STORAGE_INFO_FN),     value.storInfo    )
+          hashesHexB.unbind         ( k(F.HASHES_HEX_FN),       value.hashesHex   ),
+          strB.unbind               ( k(F.MIME_TYPE_FN),        value.mimeType    ),
+          longB.unbind              ( k(F.FILE_SIZE_B_FN),      value.fileSizeB   ),
+          fileHandlerOptB.unbind    ( k(F.FILE_HANDLER_FN),     value.fileHandler ),
+          strOptB.unbind            ( k(F.PERSON_ID_FN),        value.personId    ),
+          longB.unbind              ( k(F.VALID_TILL_FN),       value.validTillS  ),
+          storageB.unbind           ( k(F.STORAGE_FN),          value.storage     ),
+          strB.unbind               ( k(F.STORAGE_HOST_FN),     value.storHost    ),
+          strB.unbind               ( k(F.STORAGE_INFO_FN),     value.storInfo    )
         )
         // Подписать это всё.
         getQsbSigner(key)
@@ -122,6 +128,7 @@ object MUploadTargetQs {
   *
   * @param hashesHex Карта контрольных сумм файла.
   * @param fileSizeB Размер файла.
+  * @param fileHandler Опциональный режим перехвата файла в контроллере, чтобы вместо /tmp/... сразу сохранять в иное место.
   * @param personId id юзера.
   * @param validTillS TTL. Вычисляется как currentTimeMillis/1000 + TTL в момент генерации ссылки (в секундах).
   * @param storage Отправить файл на хранение в указанный storage. Например, SeaWeedFS.
@@ -133,6 +140,7 @@ case class MUploadTargetQs(
                             hashesHex   : HashesHex,
                             mimeType    : String,
                             fileSizeB   : Long,
+                            fileHandler : Option[MUploadFileHandler],
                             personId    : Option[String],
                             validTillS  : Long,
                             storage     : MStorage,

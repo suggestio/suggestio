@@ -3,7 +3,7 @@ package io.suggest.svg
 import java.io.{File, FileInputStream, InputStream}
 
 import io.suggest.util.logs.MacroLogsImpl
-import org.apache.batik.dom.svg.SAXSVGDocumentFactory
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory
 import org.apache.batik.util.XMLResourceDescriptor
 
 /**
@@ -14,8 +14,6 @@ import org.apache.batik.util.XMLResourceDescriptor
  */
 object SvgUtil extends MacroLogsImpl {
 
-  import LOGGER._
-
   def isSvgFileValid(f: File): Boolean = {
     val is = new FileInputStream(f)
     try {
@@ -25,21 +23,26 @@ object SvgUtil extends MacroLogsImpl {
     }
   }
 
+
   /**
    * Проверка svg-файла на валидность.
    * @param is Данные.
    * @return true, если svg валиден, иначе false.
    */
   def isSvgValid(is: InputStream): Boolean = {
+    def logPrefix = s"isSvgValid($is):"
     try {
       val parser = XMLResourceDescriptor.getXMLParserClassName
-      val factory = new SAXSVGDocumentFactory(parser)
+      val factory = new SAXSVGDocumentFactory( parser )
       val doc = factory.createDocument("http://suggest.io/test.svg", is)
       // TODO Добавить ещё проверки для распарсенного документа?
-      doc != null
+      val r = doc != null
+      if (!r)
+        LOGGER.warn(s"$logPrefix doc is empty")
+      r
     } catch {
       case ex: Throwable =>
-        warn("isSvgValid(): Invalid svg data", ex)
+        LOGGER.warn(s"$logPrefix Invalid SVG data", ex)
         false
     }
   }

@@ -3,9 +3,11 @@ package util.img
 import java.io.File
 import javax.inject.Inject
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.svg.SvgUtil
-import models.mfs.FileUtil
 import net.sf.jmimemagic.MagicMatch
+import org.im4java.core.Info
+import util.up.FileUtil
 
 /**
  * Suggest.io
@@ -41,6 +43,15 @@ class ImgFileUtil @Inject()(fileUtil: FileUtil) {
 
   def getMimeOrUnknown(file: File): String = {
     orUnknown( getMime(file) )
+  }
+
+
+  /** Извлечь параметры картинки из identify Info. */
+  def identityInfo2wh(info: Info): MSize2di = {
+    MSize2di(
+      height = info.getImageHeight,
+      width  = info.getImageWidth
+    )
   }
 
 }

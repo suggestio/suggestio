@@ -1,4 +1,4 @@
-package models.mfs
+package util.up
 
 import java.io.{File, FileInputStream}
 import javax.inject.Inject
@@ -10,6 +10,8 @@ import net.sf.jmimemagic.{Magic, MagicMatch, MagicMatchNotFoundException}
 import org.apache.commons.codec.digest.DigestUtils
 
 import scala.concurrent.{ExecutionContext, Future}
+
+// TODO Унести в [util] или ещё куда-нибудь. Нет необходимости держать это в [www].
 
 /**
  * Suggest.io
