@@ -3,11 +3,12 @@ package util.img.detect.main
 import java.io.File
 
 import functional.OneAppPerSuiteNoGlobalStart
-import models.im.RGB
+import models.im.MRgb
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.scalatestplus.play._
-import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}
+
+import scala.concurrent.ExecutionContext
 
 /**
  * Suggest.io
@@ -21,11 +22,13 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
 
   private lazy val mainColorDetector = app.injector.instanceOf[MainColorDetector]
 
+  implicit private lazy val ec: ExecutionContext = app.injector.instanceOf[ExecutionContext]
+
   /** Путь к ресурсом в рамках classpath. Ресурсы лежат внутри sioweb21/test/resources/. */
   private val RSC_BASEPATH = "/util/img/"
 
   /** Максимальная погрешность при сравнении желаемого цвета с найденным (макс. цветовое расстояние в 3д пространстве). */
-  private val maxColorDistance: Double = app.configuration.getDouble("mcd.test.distance.error.max") getOrElse 15.0
+  private val maxColorDistance: Double = app.configuration.getOptional[Double]("mcd.test.distance.error.max") getOrElse 15.0
 
 
   "detectFileMainColor()" must {
@@ -46,9 +49,10 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
       val detectResult = await(detectResultFut)
       detectResult.nonEmpty  mustBe  true
       val dmchRgb = detectResult.get.rgb
-      mainColorsHex foreach { mch =>
-        val mchRgb = RGB(mch)
-        val distance = mainColorDetector.colorDistance3D(dmchRgb, mchRgb)
+      val dmchRgbXyz = dmchRgb.toCoord3d
+      for (mch <- mainColorsHex) {
+        val mchRgb = MRgb(mch)
+        val distance = dmchRgbXyz distance3dTo mchRgb.toCoord3d
         distance mustBe <= (maxColorDistance)
       }
     }

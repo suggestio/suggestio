@@ -2,7 +2,7 @@ package io.suggest.sc.hdr.v
 
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.color.MColorData
 import io.suggest.sc.hdr.m.{MHeaderState, MHeaderStates}
 import io.suggest.sc.index.MSc3IndexResp
 import japgolly.scalajs.react._

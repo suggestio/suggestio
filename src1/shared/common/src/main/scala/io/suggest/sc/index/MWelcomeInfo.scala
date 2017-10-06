@@ -1,8 +1,8 @@
 package io.suggest.sc.index
 
+import io.suggest.color.MColorData
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.media.IMediaInfo
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.sc.ScConstants.Welcome.Args._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._

@@ -6,10 +6,10 @@ import io.suggest.ad.edit.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange}
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.react.ReactCommonUtil
 import ReactCommonUtil.Implicits._
 import io.suggest.ad.edit.m.edit.color.MColorPick
+import io.suggest.color.MColorData
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement

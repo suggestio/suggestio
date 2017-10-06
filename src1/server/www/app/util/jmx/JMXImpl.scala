@@ -15,7 +15,7 @@ import io.suggest.loc.geo.ipgeobase.{IpgbImporterJmx, MCitiesJmx, MIpRangesJmx}
 import io.suggest.sec.util.SCryptUtilJmx
 import io.suggest.stat.inx.StatIndexUtilJmx
 import io.suggest.stat.m.MStatsJmx
-import io.suggest.util.JMXBase
+import io.suggest.util.{JMXBase, JMXHelpers}
 import io.suggest.util.JMXHelpers._
 import io.suggest.util.logs.MacroLogsImplLazy
 import play.api.inject.ApplicationLifecycle
@@ -101,7 +101,7 @@ class JMXImpl @Inject() (
     for (jmxMB <- JMX_MODELS) {
       val name = jmxMB.jmxName
       try {
-        srv.registerMBean(jmxMB, name)
+        srv.registerMBean(jmxMB, JMXHelpers.string2objectName(name) )
       } catch {
         case _: javax.management.InstanceAlreadyExistsException =>
           warn("Instance already registered: " + jmxMB)
@@ -117,7 +117,7 @@ class JMXImpl @Inject() (
     for (jmxMB <- JMX_MODELS) {
       val name = jmxMB.jmxName
       try {
-        srv.unregisterMBean(name)
+        srv.unregisterMBean( JMXHelpers.string2objectName(name) )
       } catch {
         case _: javax.management.InstanceNotFoundException =>
           warn("JMX instance not registered: " + jmxMB)

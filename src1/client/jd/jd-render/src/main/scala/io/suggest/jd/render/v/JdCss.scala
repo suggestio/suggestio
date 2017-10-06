@@ -1,5 +1,6 @@
 package io.suggest.jd.render.v
 
+import io.suggest.color.MColorData
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
@@ -7,7 +8,6 @@ import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.render.m.{MEmuCropCssArgs, MJdCssArgs}
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
 import japgolly.univeq._

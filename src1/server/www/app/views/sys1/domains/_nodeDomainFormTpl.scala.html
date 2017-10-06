@@ -16,7 +16,7 @@
 
   @select(
     args.form("mode"),
-    options = MDomainModes.valuesT.iterator.map(m => m.strId -> messages(m.i18nCode)).toSeq
+    options = MDomainModes.values.iterator.map(m => m.value -> messages(m.i18nCode)).toSeq
   )
 
   <input type="submit" value="@messages(btnText)"/>

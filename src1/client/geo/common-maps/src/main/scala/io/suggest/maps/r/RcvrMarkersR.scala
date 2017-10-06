@@ -2,6 +2,7 @@ package io.suggest.maps.r
 
 import diode.data.Pot
 import diode.react.ModelProxy
+import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo._
@@ -10,7 +11,6 @@ import io.suggest.maps.m.MonkeyNodeId.forJsObject
 import io.suggest.maps.m.ReqRcvrPopup
 import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.u.{MapIcons, MapsUtil}
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.cbFun1ToJsCb
 import io.suggest.sjs.common.empty.JsOptionUtil

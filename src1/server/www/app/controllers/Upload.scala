@@ -4,7 +4,9 @@ import java.io.File
 import java.nio.file.Path
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
+import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.IMust
 import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
@@ -38,6 +40,7 @@ import util.up.{FileUtil, UploadUtil}
 import views.html.helper.CSRF
 import japgolly.univeq._
 import util.img.ImgFileUtil
+import util.img.detect.main.ColorDetectWsUtil
 
 import scala.concurrent.Future
 import scala.util.Try
@@ -59,6 +62,8 @@ class Upload @Inject()(
                         val iMediaStorages        : IMediaStorages,
                         mNodes                    : MNodes,
                         mLocalImgs                : MLocalImgs,
+                        mCtxIds                   : MCtxIds,
+                        colorDetectWsUtil         : ColorDetectWsUtil,
                         imgFileUtil               : ImgFileUtil,
                         override val mCommonDi    : ICommonDi
                       )
@@ -81,7 +86,7 @@ class Upload @Inject()(
     * @return Created | Accepted | NotAcceptable  + JSON-body в формате MFile4UpProps.
     */
   def prepareUploadLogic(logPrefix: String, validated: ValidationNel[String, MFile4UpProps],
-                         uploadFileHandler: Option[MUploadFileHandler] = None)
+                         uploadFileHandler: Option[MUploadFileHandler] = None, colorDetect: Boolean = false)
                         (implicit request: IReq[MFile4UpProps]) : Future[Result] = {
     validated.fold(
       // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
@@ -140,7 +145,8 @@ class Upload @Inject()(
                   validTillS  = uploadUtil.ttlFromNow(),
                   storage     = storageType,
                   storHost    = swfsAssignResp.url,
-                  storInfo    = swfsAssignResp.fid
+                  storInfo    = swfsAssignResp.fid,
+                  colorDetect = colorDetect
                 )
                 // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
                 val hostnames = Seq(
@@ -150,6 +156,8 @@ class Upload @Inject()(
                 MUploadResp(
                   // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
                   upUrls = for (host <- hostnames) yield {
+                    // TODO В будущем нужно возвращать только хост и аргументы, а клиент пусть сам через js-роутер ссылку собирает.
+                    // TODO Для этого нужно MUploadTargetQs сделать JSON-моделью с отдельным полем сигнатуры.
                     "//" + host + CSRF(routes.Upload.doFileUpload(upData)).url
                   }
                 )
@@ -217,8 +225,11 @@ class Upload @Inject()(
 
   /** Экшен фактического аплоада файла с клиента.
     * Файл приходит как часть multipart.
+    *
+    * @param uploadArgs Подписанные данные аплоада
+    * @param ctxIdOpt Подписанный (но пока непроверенный) ctxId.
     */
-  def doFileUpload(uploadArgs: MUploadTargetQs) = csrf.Check {
+  def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = csrf.Check {
     val bp = _uploadFileBp(uploadArgs)
 
     canUploadFile(uploadArgs).async(bp) { implicit request =>
@@ -234,8 +245,17 @@ class Upload @Inject()(
 
       // Начинаем с синхронных проверок:
       val resFutOpt: Option[Future[Result]] = for {
+
         // Поискать файл в теле запроса:
         filePart <- request.body.data.file( UploadConstants.MPART_FILE_FN )
+
+        // Сразу же надо провалидировать принятый ctxId, если он указан в запросе:
+        if {
+          val r = ctxIdOpt.fold(true)( mCtxIds.verify )
+          if (!r)
+            __appendErr("Invalid CtxID.")
+          r
+        }
 
         // Проверить Content-Type, заявленный в теле запроса:
         if {
@@ -349,7 +369,7 @@ class Upload @Inject()(
           }
 
           // Создаём новый узел для загруженного файла.
-          mnodeId <- {
+          mnodeIdFut = {
             // Проверки закончены. Пора переходить к действиям по сохранению и анализу файла.
             val nodeIdOpt0 = request.body.localImg.map(_.rowKeyStr)
             val MediaTypes = MNodeTypes.Media
@@ -387,12 +407,28 @@ class Upload @Inject()(
             fut
           }
 
-          // Наконец, сохраняем в MMedia:
-          mmediaId <- {
+          // Сразу в фоне запускаем анализ цветов картинки, если он был запрошен.
+          // Очень маловероятно, что сохранение сломается и будет ошибка, поэтому и параллелимся со спокойной душой.
+          colorDetectOptFut = for {
+            mimg  <- request.body.localImg
+            if uploadArgs.colorDetect
+            ctxId <- {
+              if (ctxIdOpt.isEmpty)
+                LOGGER.error(s"$logPrefix Color detection requested for uploaded image, but ctxId is empty.")
+              ctxIdOpt
+            }
+          } yield {
+            colorDetectWsUtil.detectPalletteToWs( mimg, ctxId.toString )
+          }
+
+          mnodeId <- mnodeIdFut
+
+          // Наконец, переходим к MMedia:
+          mmedia0 = {
             val mimg3Opt = for (_ <- imgIdentifyInfoOpt) yield
               MImg3( mnodeId, Nil, fileNameOpt )
             val mediaIdOpt0 = mimg3Opt.map(_._mediaId)
-            val mmedia0 = MMedia(
+            MMedia(
               nodeId = mnodeId,
               id   = mediaIdOpt0,
               file = MFileMeta(
@@ -401,11 +437,16 @@ class Upload @Inject()(
                 isOriginal = true,
                 hashesHex  = hashesHex2
               ),
-              picture = imgIdentifyInfoOpt
+              picture = MPictureMeta(
+                whPxOpt = imgIdentifyInfoOpt
                 .map(imgFileUtil.identityInfo2wh)
-                .map(MPictureMeta.apply),
+              ),
               storage = mediaStor
             )
+          }
+
+          // И сохраняем MMedia:
+          mmediaId <- {
             val fut = mMedias.save( mmedia0 )
 
             // При ошибке сохранения MMedia надо удалить узел и файл:
@@ -427,6 +468,21 @@ class Upload @Inject()(
 
           // Дожидаемся окончания заливки файла в хранилище:
           _ <- {
+            // TODO Сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta
+            for (colorDetectFut <- colorDetectOptFut) {
+              for (colorHist <- colorDetectFut) {
+                if (colorHist.sorted.nonEmpty) {
+                  val mcds = colorHist.sorted
+                    .iterator
+                    .map { histEntry => MColorData.stripingDiez(histEntry.colorHex) }
+                    .toSeq
+                  val mmedia1 = mmedia0.withId( Some(mmediaId) )
+                  // TODO Залезть в MPictureMeta... и повторносохранить.
+                  ???
+                }
+              }
+            }
+
             // При ошибке заливки файла, надо удалять созданный узел и запись в MMedia:
             for {
               ex <- saveFileToShardFut.failed
@@ -445,7 +501,6 @@ class Upload @Inject()(
 
         } yield {
           // Процедура проверки и сохранения аплоада завершёна успешно!
-          // TODO Запустить анализ цветов, если требуется + тут картинка + задан ctxId.
 
           // Вернуть 200 Ok с данными по файлу
           val resp = MSrvFileInfo(

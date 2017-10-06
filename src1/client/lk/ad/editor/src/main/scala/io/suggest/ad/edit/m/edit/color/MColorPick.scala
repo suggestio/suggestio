@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.m.edit.color
 
 import diode.FastEq
-import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.color.MColorData
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 

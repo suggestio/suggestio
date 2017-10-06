@@ -296,9 +296,6 @@ trait MImgsT
   * на N2 с MMedia, сохраняя совместимость, поэтому MImg слегка разделилась на куски. */
 abstract class MImgT extends MAnyImgT {
 
-  def rowKey: UUID
-  def dynImgOps: Seq[ImOp]
-
   /** id в рамках модели MMedia. */
   def _mediaId: String
 
@@ -306,7 +303,7 @@ abstract class MImgT extends MAnyImgT {
 
   lazy val toLocalInstance = MLocalImg(rowKey, dynImgOps)
 
-  def rowKeyStr = UuidUtil.uuidToBase64(rowKey)
+  override def rowKeyStr = UuidUtil.uuidToBase64(rowKey)
 
   /** Используемое медиа-хранилище для данного элемента модели permanent img. */
   def storage: MStorage

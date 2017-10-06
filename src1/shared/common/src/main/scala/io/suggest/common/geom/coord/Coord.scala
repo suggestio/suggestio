@@ -27,8 +27,6 @@ trait ICoord1d[V] extends ICoord[V] {
     evidence.deltaX(this, p2)
   }
 
-  def withX(x: V): ICoord1d[V]
-
 }
 
 
@@ -43,10 +41,37 @@ trait ICoord2d[V] extends ICoord1d[V] {
     evidence.deltaY(this, p2)
   }
 
-  def distance(p2: This2)(implicit evidence: ICoord2dOps[V, This2]): V = {
+  def distance2dTo(p2: This2)(implicit evidence: ICoord2dOps[V, This2]): V = {
     evidence.distance(this, p2)
   }
 
-  def withY(y: V): ICoord2d[V]
+}
+
+
+
+object ICoord3d {
+
+  /** Дистанция между точками в трехмерном пространстве цветов. Считаем по теореме Пифагора. */
+  def distance[V](p1: ICoord3d[V], p2: ICoord3d[V])(implicit n: Numeric[V]): Double = {
+    import n._
+    val exp = 2d
+    val expDst = Math.pow( (p2.x - p1.x).toDouble(), exp) +
+      Math.pow((p2.y - p1.y).toDouble(), exp) +
+      Math.pow((p2.z - p1.z).toDouble(), exp)
+    Math.pow(expDst, 1d / exp)
+  }
+
+}
+
+
+trait ICoord3d[V] extends ICoord2d[V] {
+
+  type This3 = ICoord3d[V]
+
+  def z: V
+
+  def distance3dTo(p2: This3)(implicit n: Numeric[V]): Double = {
+    ICoord3d.distance(this, p2)
+  }
 
 }

@@ -1,5 +1,6 @@
 package io.suggest.model.n2.media
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.MockedEsSn
 import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import io.suggest.swfs.client.proto.fid.Fid
@@ -49,10 +50,12 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
     "handle full-filled model" in {
       t {
         m1.copy(
-          picture = Some(MPictureMeta(
-            width = 640,
-            height = 480
-          )),
+          picture = MPictureMeta(
+            whPxOpt = Some(MSize2di(
+              width  = 640,
+              height = 480
+            ))
+          ),
           id = Some("asdaffafr23?awf349025234=f3w4fewfgse98ug3jg"),
           versionOpt = Some(45L)
         )

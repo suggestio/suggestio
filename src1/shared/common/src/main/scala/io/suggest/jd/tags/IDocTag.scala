@@ -1,13 +1,13 @@
 package io.suggest.jd.tags
 
 import io.suggest.ad.blk.BlockMeta
+import io.suggest.color.MColorData
 import io.suggest.common.coll.Lists
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
 import japgolly.univeq._
 import play.api.libs.functional.syntax._

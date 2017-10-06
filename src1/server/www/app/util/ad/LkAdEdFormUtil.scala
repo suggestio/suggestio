@@ -6,6 +6,7 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.edit.m.MAdEditForm
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.color.MColorData
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
@@ -18,7 +19,7 @@ import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
-import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.pick.MimeConst
 import io.suggest.svg.SvgUtil

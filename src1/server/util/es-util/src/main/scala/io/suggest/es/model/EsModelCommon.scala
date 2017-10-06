@@ -126,11 +126,7 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
     }
 
     // Собираем асинхронный bulk-процессор, т.к. элементов может быть ну очень много.
-    val bp = BulkProcessor
-      .builder(esClient, listener)
-      .setName(logPrefix)
-      .setBulkActions(BULK_DELETE_QUEUE_LEN)
-      .build()
+    val bp = bulkProcessor(logPrefix, listener, BULK_DELETE_QUEUE_LEN)
 
     // Интересуют только id документов
     val totalFut = scroller
@@ -301,27 +297,8 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
 
     val logPrefix = s"update(${System.currentTimeMillis}):"
 
-    val listener = new BulkProcessor.Listener {
-      /** Перед отправкой каждого bulk-реквеста. */
-      override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
-        LOGGER.trace(s"$logPrefix Going to execute bulk req with ${request.numberOfActions()} actions.")
-      }
-
-      /** Данные успешно отправлены в индекс. */
-      override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
-        LOGGER.trace(s"$logPrefix afterBulk OK with resp $response")
-      }
-
-      /** Ошибка индексации. */
-      override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
-        LOGGER.error(s"$logPrefix Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
-      }
-    }
-
-    val bp = BulkProcessor.builder(esClient, listener)
-      .setName(logPrefix)
-      .setBulkActions(100)
-      .build()
+    val bpListener = new BulkProcessorListener(logPrefix)
+    val bp = bulkProcessor(logPrefix, bpListener)
 
     // Создаём атомный счетчик, который будет инкрементится из разных потоков одновременно.
     // Можно счетчик гнать через аккамулятор, но это будет порождать много бессмысленного мусора.
@@ -540,21 +517,73 @@ trait EsModelCommonStaticT extends EsModelStaticMapping with TypeT { outer =>
   }
 
 
+  abstract class BulkProcessorListenerBase extends BulkProcessor.Listener {
+
+    protected def _logPrefix: String
+
+    /** Перед отправкой каждого bulk-реквеста. */
+    override def beforeBulk(executionId: Long, request: BulkRequest): Unit = {
+      LOGGER.trace(s"${_logPrefix} Going to execute bulk req with ${request.numberOfActions()} actions.")
+    }
+
+    /** Данные успешно отправлены в индекс. */
+    override def afterBulk(executionId: Long, request: BulkRequest, response: BulkResponse): Unit = {
+      LOGGER.trace(s"${_logPrefix} afterBulk OK, took ${response.getTook}ms${if (response.hasFailures) "\n " + response.buildFailureMessage() else ""}")
+    }
+
+    /** Ошибка индексации. */
+    override def afterBulk(executionId: Long, request: BulkRequest, failure: Throwable): Unit = {
+      LOGGER.error(s"${_logPrefix} Failed to execute bulk req with ${request.numberOfActions} actions!", failure)
+    }
+
+  }
+  class BulkProcessorListener(override val _logPrefix: String) extends BulkProcessorListenerBase
+
+
+
+  def bulkProcessor(name: String, listener: BulkProcessor.Listener, queueLen: Int = 100): BulkProcessor = {
+    BulkProcessor.builder(esClient, listener)
+      .setName(name)
+      .setBulkActions( queueLen )
+      .build()
+  }
+
   /**
    * Пересохранение всех данных модели. По сути getAll + all.map(_.save). Нужно при ломании схемы.
    *
    * @return
    */
-  def resaveMany(maxResults: Int = MAX_RESULTS_DFLT): Future[BulkResponse] = {
+  def resaveAll(): Future[Int] = {
     // TODO XXX Переписать на Sources/Streams, т.к. более 9999 оно не переваривает тут.
-    val allFut = getAll(maxResults, withVsn = true)
-    val br = esClient.prepareBulk()
-    allFut.flatMap { results =>
-      for (r <- results) {
-        br.add( prepareIndexNoVsn(r) )
+    val I = Implicits
+    import I._
+    val src = source[T]( QueryBuilders.matchAllQuery() )
+
+    val logPrefix = s"resaveMany()#${System.currentTimeMillis()}:"
+    val listener = new BulkProcessorListener(logPrefix)
+    val bp = bulkProcessor(logPrefix, listener)
+
+    val counter = new AtomicInteger(0)
+
+    val sourceFut = src.runForeach { elT =>
+      try {
+        bp.add( prepareIndex(elT).request() )
+      } catch {
+        case ex: Throwable =>
+          LOGGER.error(s"$logPrefix Failing to add element#${elT.idOrNull} counter=${counter.get}", ex)
       }
-      br.execute()
+      counter.addAndGet(1)
     }
+
+    sourceFut
+      .recover { case ex =>
+        LOGGER.error(s"$logPrefix Failure occured during execution, counter=${counter.get()} elements.", ex)
+      }
+      .map { _ =>
+        LOGGER.info(s"$logPrefix finished, total processed ${counter.get()} elements.")
+        bp.close()
+        counter.get()
+      }
   }
 
 

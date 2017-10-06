@@ -1,7 +1,7 @@
 package io.suggest.sc.hdr.v
 
 import diode.react.ModelProxy
-import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.color.MColorData
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.svg_<^._

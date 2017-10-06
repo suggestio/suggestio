@@ -276,7 +276,8 @@ class LkAdEdit @Inject() (
           logPrefix = logPrefix,
           validated = validated,
           // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
-          uploadFileHandler = Some( MUploadFileHandlers.Picture )
+          uploadFileHandler = Some( MUploadFileHandlers.Picture ),
+          colorDetect       = true
         )
       }
     }

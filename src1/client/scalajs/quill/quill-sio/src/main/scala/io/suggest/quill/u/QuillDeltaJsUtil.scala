@@ -1,13 +1,13 @@
 package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
+import io.suggest.color.MColorData
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.{MJdEditEdge, MJdEdgeId}
+import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
 import io.suggest.jd.tags.IDocTag
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.primo.id.IId
 import io.suggest.primo.{ISetUnset, SetVal, UnSetVal}

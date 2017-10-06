@@ -1,8 +1,7 @@
 package io.suggest.enum2
 
-import enumeratum.{EnumEntry, Enum}
-import enumeratum.values.{IntEnum, IntEnumEntry, ValueEnum, ValueEnumEntry}
-import io.suggest.common.empty.EmptyUtil
+import enumeratum.{Enum, EnumEntry}
+import enumeratum.values._
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import play.api.data.Mapping
 import play.api.data.Forms._
@@ -16,23 +15,21 @@ import play.api.mvc.QueryStringBindable
   */
 object EnumeratumJvmUtil {
 
-
   /** Собрать play form mapping для ValueEnum.
+    *
+    * Можно использовать FormMappingUtil.optMapping2required() для избавления от Option[].
     *
     * @param m Модель со значенями.
     * @tparam ValueType Тип enum-ключа.
     * @tparam EntryType Тип одного элемента enum-модели.
     * @return play form mapping типа EntryType.
     */
-  def valueIdMapping[ValueType, EntryType <: ValueEnumEntry[ValueType]]
-                    (m: ValueEnum[ValueType, EntryType], mapping0: Mapping[ValueType], fallback: => ValueType): Mapping[EntryType] = {
-    mapping0
-      .transform[Option[EntryType]](
-        m.withValueOpt,
-        _.fold(fallback)(_.value)
-      )
-      .verifying("error.required", _.nonEmpty)
-      .transform[EntryType](EmptyUtil.getF, EmptyUtil.someF)
+  def valueIdOptMapping[ValueType, EntryType <: ValueEnumEntry[ValueType]]
+                       (m: ValueEnum[ValueType, EntryType], mapping0: Mapping[ValueType], fallback: => ValueType): Mapping[Option[EntryType]] = {
+    mapping0.transform[Option[EntryType]](
+      m.withValueOpt,
+      _.fold(fallback)(_.value)
+    )
   }
 
 
@@ -42,9 +39,9 @@ object EnumeratumJvmUtil {
     * @tparam EntryType Тип значения.
     * @return
     */
-  def intIdMapping[EntryType <: IntEnumEntry](m: IntEnum[EntryType]): Mapping[EntryType] = {
+  def intIdOptMapping[EntryType <: IntEnumEntry](m: IntEnum[EntryType]): Mapping[Option[EntryType]] = {
     def fallbackF = Int.MinValue
-    valueIdMapping(
+    valueIdOptMapping(
       m = m,
       mapping0 = {
         val f = EnumeratumUtil.valueF[Int]
@@ -54,6 +51,25 @@ object EnumeratumJvmUtil {
         )
       },
       fallback = fallbackF
+    )
+  }
+
+
+  /** Option[String] mapping на базе StringEnum[].
+    * Для раскрытия Option[] можно использовать FormMappingUtil.optMapping2required().
+    */
+  def stringIdOptMapping[EntryType <: StringEnumEntry](m: StringEnum[EntryType]): Mapping[Option[EntryType]] = {
+    valueIdOptMapping(
+      m = m,
+      mapping0 = {
+        text(
+          minLength = 1,
+          maxLength = m.values
+            .headOption
+            .fold(1)( _ => m.values.iterator.map(_.value.length).max )
+        )
+      },
+      fallback = ""
     )
   }
 

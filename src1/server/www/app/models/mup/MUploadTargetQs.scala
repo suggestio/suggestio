@@ -29,6 +29,7 @@ object MUploadTargetQs {
     val STORAGE_FN        = "s"
     val STORAGE_HOST_FN   = "o"
     val STORAGE_INFO_FN   = "i"
+    val COLOR_DETECT_FN   = "l"
 
     val SIGNATURE_FN      = "z"
 
@@ -50,7 +51,8 @@ object MUploadTargetQs {
                                  longB              : QueryStringBindable[Long],
                                  fileHandlerOptB    : QueryStringBindable[Option[MUploadFileHandler]],
                                  storageB           : QueryStringBindable[MStorage],
-                                 strOptB            : QueryStringBindable[Option[String]]
+                                 strOptB            : QueryStringBindable[Option[String]],
+                                 boolB              : QueryStringBindable[Boolean]
                                 ): QueryStringBindable[MUploadTargetQs] = {
     new QueryStringBindableImpl[MUploadTargetQs] {
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
@@ -70,6 +72,7 @@ object MUploadTargetQs {
           storageE          <- storageB.bind          ( k(F.STORAGE_FN),      params )
           storHostE         <- strB.bind              ( k(F.STORAGE_HOST_FN), params )
           storInfoE         <- strB.bind              ( k(F.STORAGE_INFO_FN), params )
+          colorDetectE      <- boolB.bind             ( k(F.COLOR_DETECT_FN), params )
         } yield {
           for {
             hashesHex       <- hashesHexE.right
@@ -81,6 +84,7 @@ object MUploadTargetQs {
             storage         <- storageE.right
             storHost        <- storHostE.right
             storInfo        <- storInfoE.right
+            colorDetect     <- colorDetectE.right
           } yield {
             MUploadTargetQs(
               hashesHex     = hashesHex,
@@ -91,7 +95,8 @@ object MUploadTargetQs {
               validTillS    = validTill,
               storage       = storage,
               storHost      = storHost,
-              storInfo      = storInfo
+              storInfo      = storInfo,
+              colorDetect   = colorDetect
             )
           }
         }
@@ -111,7 +116,8 @@ object MUploadTargetQs {
           longB.unbind              ( k(F.VALID_TILL_FN),       value.validTillS  ),
           storageB.unbind           ( k(F.STORAGE_FN),          value.storage     ),
           strB.unbind               ( k(F.STORAGE_HOST_FN),     value.storHost    ),
-          strB.unbind               ( k(F.STORAGE_INFO_FN),     value.storInfo    )
+          strB.unbind               ( k(F.STORAGE_INFO_FN),     value.storInfo    ),
+          boolB.unbind              ( k(F.COLOR_DETECT_FN),     value.colorDetect )
         )
         // Подписать это всё.
         getQsbSigner(key)
@@ -135,6 +141,7 @@ object MUploadTargetQs {
   * @param storHost Хост стораджа, т.к. URL hostname не покрывается сигнатурой модели.
   * @param storInfo Строка данных, воспринимаемая конкретным storage'ем, нужная для сохранения.
   *                 Например, для SeaWeedFS это будет зарезрвированный fid.
+  * @param colorDetect Запустить MainColorDetector после.
   */
 case class MUploadTargetQs(
                             hashesHex   : HashesHex,
@@ -145,5 +152,6 @@ case class MUploadTargetQs(
                             validTillS  : Long,
                             storage     : MStorage,
                             storHost    : String,
-                            storInfo    : String
+                            storInfo    : String,
+                            colorDetect : Boolean
                           )

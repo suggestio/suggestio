@@ -1,11 +1,12 @@
 package io.suggest.sc.styl
 
+import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
 import io.suggest.dev.MScreen
 import io.suggest.i18n.MsgCodes
-import io.suggest.model.n2.node.meta.colors.{MColorData, MColors}
+import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.ScConstants
 
 /**

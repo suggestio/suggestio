@@ -1,8 +1,8 @@
 package io.suggest.jd.tags.qd
 
+import io.suggest.color.MColorData
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.font.{MFont, MFontSize}
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._

@@ -1,6 +1,7 @@
 package io.suggest.model.n2.extra.domain
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.enum2.EnumeratumUtil
 import io.suggest.es.search.{DynSearchArgs, DynSearchArgsWrapper}
 import io.suggest.model.n2.node.MNodeFields
 import org.apache.lucene.search.join.ScoreMode
@@ -43,7 +44,7 @@ trait DomainsSearch extends DynSearchArgs {
 
         // Затем отработать режимы, если они заданы.
         if (cr.modes.nonEmpty) {
-          val qm = QueryBuilders.termsQuery( MNodeFields.Extras.DOMAIN_MODE_FN, cr.modes.map(_.strId): _* )
+          val qm = QueryBuilders.termsQuery( MNodeFields.Extras.DOMAIN_MODE_FN, cr.modes.map(EnumeratumUtil.valueF): _* )
           innerQ.must(qm)
         }
 

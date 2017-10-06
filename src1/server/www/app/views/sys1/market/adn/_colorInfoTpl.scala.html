@@ -1,4 +1,4 @@
-@(title: String, cdOpt: Option[io.suggest.model.n2.node.meta.colors.MColorData])(implicit ctx: Context)
+@(title: String, cdOpt: Option[io.suggest.color.MColorData])(implicit ctx: Context)
 
 @cdOpt.map { cd =>
   @title<span style="background-color: #@cd.code;">&nbsp;&nbsp;&nbsp;&nbsp;</span>

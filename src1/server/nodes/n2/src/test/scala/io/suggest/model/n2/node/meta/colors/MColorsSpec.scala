@@ -1,5 +1,6 @@
 package io.suggest.model.n2.node.meta.colors
 
+import io.suggest.color.MColorData
 import io.suggest.test.json.PlayJsonTestUtil
 import org.scalatest.FlatSpec
 

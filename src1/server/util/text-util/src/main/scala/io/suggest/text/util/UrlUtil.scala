@@ -132,7 +132,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param relativeUrl Относительная ссылка, найденная на странице.
    * @return Option[URL].
    */
-  def ensureAbsoluteUrl(baseUrl:URL, relativeUrl:String) : Option[URL] = {
+  def ensureAbsoluteUrl(baseUrl: URL, relativeUrl: String) : Option[URL] = {
     if (IGNORED_PROTOCOL_PATTERN.matcher(relativeUrl).find)
       return None
 
@@ -158,8 +158,10 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param url :: String | URL
    * @return вернуть строку.
    */
-  def makeProtocolAndDomain(url:String):String = makeProtocolAndDomain(new URL(url))
-  def makeProtocolAndDomain(url:URL) : String = {
+  def makeProtocolAndDomain(url: String):String = {
+    makeProtocolAndDomain(new URL(url))
+  }
+  def makeProtocolAndDomain(url: URL) : String = {
     val result = new StringBuilder(url.getProtocol)
     result.append("://")
 
@@ -261,7 +263,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param reservedChars
    * @return
    */
-  private def encodeUrlComponent(component:String, reservedChars:String) : String = {
+  private def encodeUrlComponent(component: String, reservedChars: String) : String = {
     component.foldLeft(new StringBuilder) {
       (sb:StringBuilder, c:Char) =>
         val cp:Int = c.asInstanceOf[Int]
@@ -283,7 +285,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param x
    * @return
    */
-  private def formatPc(x:Any) = "%%%02X".format(x)
+  private def formatPc(x: Any) = "%%%02X".format(x)
 
 
   /**
@@ -304,17 +306,30 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
 
   /**
    * Нормализация хостнейма. Пока в lower-case и убираются точка в конце.
-   * @param hostname
+   * @param host
    * @return
    */
-  def normalizeHostname(hostname:String) : String = {
-    var result = hostname.toLowerCase
+  def normalizeHostname(host: String) : String = {
+    var result = host.toLowerCase
     if (result.endsWith(".")) {
       result = result.substring(0, result.length - 1)
     }
     if (result.startsWith("."))
       result = result.tail
-    IDNA.toASCII(result)
+    //
+    idnaToAsciiSafe( host )
+  }
+
+
+  /** IDNA строгая, может ругаться на двоеточие в хостнейме. */
+  def idnaToAsciiSafe(host: String): String = {
+    try {
+      IDNA.toASCII( host )
+    } catch {
+      case ex: Throwable =>
+        LOGGER.error(s"normalizeHostname(): Suppress exception in IDNA.toASCII('$host') (unnormed hostname = '$host').", ex)
+        host
+    }
   }
 
 
@@ -323,7 +338,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param path
    * @return
    */
-  def normalizePath(path:String) : String = {
+  def normalizePath(path: String) : String = {
     // First, handle relative paths
     var matcher = RELATIVE_PATH_PATTERN.matcher(path)
     var path1 : String = path
@@ -344,7 +359,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
         acc
     }
 
-    if (newPath.length == 0)
+    if (newPath.isEmpty)
       "/"
     else {
       if (path.endsWith("/") && newPath.charAt(newPath.length -1) != '/')
@@ -359,7 +374,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param query
    * @return
    */
-  def normalizeQuery(query:String) : String = {
+  def normalizeQuery(query: String) : String = {
     if (query == null || query == "")
       return ""
 
@@ -478,7 +493,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param hostname хост
    * @return true, если всё ок.
    */
-  def isHostnameValid(hostname:String) : Boolean = {
+  def isHostnameValid(hostname: String) : Boolean = {
     !INVALID_HOSTNAME_RE.pattern.matcher(hostname).matches()
   }
 
@@ -488,7 +503,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param imageLink ссылка/линк на картинку.
    * @return true, если всё ок.
    */
-  def isImageLinkValid(imageLink:String) : Boolean = {
+  def isImageLinkValid(imageLink: String) : Boolean = {
     !INVALID_IMAGE_RE.pattern.matcher(imageLink).matches()
   }
 
@@ -498,7 +513,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param url URL строка.
    * @return true, если всё верно.
    */
-  def isPageUrlValid(url:String): Boolean = {
+  def isPageUrlValid(url: String): Boolean = {
     !INVALID_URL_PATTERNS.exists(_.pattern.matcher(url).find())
   }
 
@@ -507,27 +522,29 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * Донормализовать хостнейм до dkey.
    * @param host хост.
    * @return строка dkey
+    *        Exception, если что-то не так. Особенно с IDNA.
    */
-  def host2dkey(host:String): String = {
+  def host2dkey(host: String): String = {
     stripHostnameWww(
       normalizeHostname(host)
     )
   }
+
 
   /**
    * Извлечь dkey из ссылки.
    * @param url Исходная ссылка
    * @return Строка dkey.
    */
-  def url2dkey(url:String): String = url2dkey(new URL(url))
-  def url2dkey(url:URL): String    = host2dkey(url.getHost)
+  def url2dkey(url: String): String = url2dkey(new URL(url))
+  def url2dkey(url: URL): String    = host2dkey(url.getHost)
 
   /**
    * Срезать все www. в начале хостнейма.
    * @param host хостнейм
    * @return
    */
-  @tailrec def stripHostnameWww(host:String) : String = {
+  @tailrec def stripHostnameWww(host: String) : String = {
     if (host.startsWith("www."))
       stripHostnameWww(host.substring(4))
     else
@@ -540,7 +557,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param domain Исходное доменное имя.
    * @return Обратное доменное имя.
    */
-  def reverseDomain(domain:String): String = {
+  def reverseDomain(domain: String): String = {
     domain
       .split('.')
       .reverse
@@ -552,14 +569,14 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param urlStr Строка URL.
    * @return Строка row-key.
    */
-  def url2rowKey(urlStr:String): String = url2rowKey(new URL(urlStr))
+  def url2rowKey(urlStr: String): String = url2rowKey(new URL(urlStr))
 
   /**
    * Перегнать ссылку в нормальный row-key для HBase.
    * @param url Ссыль.
    * @return Строка row-key.
    */
-  def url2rowKey(url:URL): String = {
+  def url2rowKey(url: URL): String = {
     // TODO: hbase-ключ может содержать utf8 символы. Можно не дергать IDNA тут, хотя это экономии практически никакой не даст.
     val dkeyR = reverseDomain(
                  host2dkey(
@@ -584,7 +601,7 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
    * @param rowKey rowKey в виде строки (результат url2rowKey()).
    * @return dkey.
    */
-  def rowKey2dkey(rowKey:String): String = {
+  def rowKey2dkey(rowKey: String): String = {
     val reversedDkey = rowKey.indexOf('/') match {
       case pos if pos > 3 => rowKey.substring(0, pos)
       case -1             => rowKey

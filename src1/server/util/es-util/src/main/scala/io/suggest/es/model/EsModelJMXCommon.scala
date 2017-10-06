@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 trait EsModelJMXMBeanCommonI {
 
   /** Асинхронно вызвать переиндексацию всех данных в модели. */
-  def resaveMany(maxResults: Int): String
+  def resaveAll(): String
 
   /**
    * Существует ли указанный маппинг сейчас?
@@ -72,10 +72,10 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
     ex.getClass.getName + ": " + ex.getMessage + "\n\n" + ex.getStackTrace.mkString("\n")
   }
 
-  override def resaveMany(maxResults: Int): String = {
-    warn(s"resaveMany(maxResults = $maxResults)")
-    val fut = for (resp <- companion.resaveMany(maxResults)) yield {
-      s"Total: ${resp.getItems.length} took=${resp.getTook.seconds()}s\n---------\n ${resp.buildFailureMessage()}"
+  override def resaveAll(): String = {
+    warn(s"resaveMany()")
+    val fut = for (totalProcessed <- companion.resaveAll()) yield {
+      s"Total: $totalProcessed; failures: ??? (unawailable here, see logs)"
     }
     awaitString(fut)
   }

@@ -1,9 +1,10 @@
 package io.suggest.model.n2.extra.domain
 
-import io.suggest.common.empty.EmptyUtil
-import io.suggest.common.menum.{EnumJsonReadsValT, EnumMaybeWithName}
-import io.suggest.primo.IStrId
-import play.api.data.Mapping
+import enumeratum.values.{StringEnum, StringEnumEntry}
+import io.suggest.enum2.{EnumeratumJvmUtil, EnumeratumUtil}
+import io.suggest.playx.FormMappingUtil
+import japgolly.univeq.UnivEq
+import play.api.libs.json.Format
 
 /**
   * Suggest.io
@@ -14,44 +15,37 @@ import play.api.data.Mapping
   * gen 1 : Поддержка только режима отображения выдачи s.io на стороннем домене.
   * gen ~2: Поддерка режима индексации домена с помощью s.io-кравлера.
   */
-object MDomainModes extends EnumMaybeWithName with EnumJsonReadsValT {
-
-  /** Класс для всех экземпляров модели. */
-  protected class Val(override val strId: String)
-    extends super.Val(strId)
-    with IStrId
-  {
-
-    /** Код названия по базе play i18n messages. */
-    def i18nCode = "Domain.mode." + strId
-
-  }
-
-  override type T = Val
+object MDomainModes extends StringEnum[MDomainMode] {
 
   /**
     * Режим обслуживания домена, когда владелец в DNS выставляет всё так,
     * чтобы запросы с домена попадали на сервера s.io.
     * Тогда, активация этого режима включает подхватывание входящих http-запросов выдачей sio на текущем узле.
     */
-  val ScServeIncomingRequests: T = new Val("sc")
+  case object ScServeIncomingRequests extends MDomainMode("sc")
+
+  override val values = findValues
+
+}
 
 
-  /** play form маппинг с опциональным значением режима домена. */
-  def mappingOpt: Mapping[Option[MDomainMode]] = {
-    import play.api.data.Forms._
-    nonEmptyText(minLength = 1, maxLength = 10)
-      .transform [Option[T]] (
-        { raw => maybeWithName( raw.trim.toLowerCase() ) },
-        _.fold("")(_.strId)
-      )
-  }
+sealed abstract class MDomainMode(override val value: String) extends StringEnumEntry {
 
-  /** play form маппинг с обязательным значением режима домена. */
-  def mapping: Mapping[MDomainMode] = {
-    mappingOpt
-      .verifying("error.required", _.nonEmpty)
-      .transform [MDomainMode] ( EmptyUtil.getF[MDomainMode], EmptyUtil.someF[MDomainMode] )
+  /** Код названия по базе play i18n messages. */
+  def i18nCode = "Domain.mode." + value
+
+}
+
+
+object MDomainMode {
+
+  implicit def univEq: UnivEq[MDomainMode] = UnivEq.derive
+
+  def mappingOpt = EnumeratumJvmUtil.stringIdOptMapping( MDomainModes )
+  def mapping = FormMappingUtil.optMapping2required( mappingOpt )
+
+  implicit def MDOMAIN_MODE_FORMAT: Format[MDomainMode] = {
+    EnumeratumUtil.valueEnumEntryFormat( MDomainModes )
   }
 
 }

@@ -1,10 +1,10 @@
-package io.suggest.model.n2.node.meta.colors
+package io.suggest.color
 
 import boopickle.Default._
 import io.suggest.common.html.HtmlConstants
 import japgolly.univeq.UnivEq
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -45,8 +45,9 @@ object MColorData {
 
 
 case class MColorData(
-  code: String
-) {
+                       code: String
+                       // TODO Добавить rgb: js.Object{r,g,b}. Добавить normed_frequency: Int = 0..10.
+                     ) {
 
   def hexCode = HtmlConstants.DIEZ + code
 

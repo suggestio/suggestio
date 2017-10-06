@@ -2,6 +2,7 @@ package io.suggest.model.n2.media
 
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.model.n2.media.search.MMediaSearch
@@ -54,13 +55,17 @@ class MMedias @Inject() (
       (__ \ F.FileMeta.FILE_META_FN).format[MFileMeta] and
       (__ \ F.Storage.STORAGE_FN).format[IMediaStorage] and
       (__ \ F.PictureMeta.PICTURE_META_FN).formatNullable[MPictureMeta]
+        .inmap[MPictureMeta](
+          EmptyUtil.opt2ImplMEmptyF(MPictureMeta),
+          EmptyUtil.implEmpty2OptF[MPictureMeta]
+        )
     )(
-      {(nodeId, fileMeta, storage, pictureMetaOpt) =>
+      {(nodeId, fileMeta, storage, pictureMeta) =>
         MMedia(
           nodeId    = nodeId,
           file      = fileMeta,
           storage   = storage,
-          picture   = pictureMetaOpt,
+          picture   = pictureMeta,
           id        = None
         )
       },
@@ -130,7 +135,7 @@ case class MMedia(
   file                      : MFileMeta,
   storage                   : IMediaStorage,
   override val id           : Option[String],
-  picture                   : Option[MPictureMeta]  = None,
+  picture                   : MPictureMeta          = MPictureMeta.empty,
   override val versionOpt   : Option[Long]          = None
 )
   extends EsModelT
@@ -138,6 +143,10 @@ case class MMedia(
 
   def withDocMeta(dmeta: IEsDocMeta): MMedia = {
     copy(id = dmeta.id, versionOpt = dmeta.version)
+  }
+
+  def withId(id: Option[String]): MMedia = {
+    copy(id = id)
   }
 
 }

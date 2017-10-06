@@ -1,6 +1,7 @@
 package io.suggest.model.n2.extra.domain
 
 import io.suggest.es.model.IGenEsMappingProps
+import io.suggest.text.util.UrlUtil
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -52,8 +53,9 @@ object MDomainExtra extends IGenEsMappingProps {
 
   def mappingM: Mapping[MDomainExtra] = {
     mapping(
-      "dkey" -> nonEmptyText,    // TODO dkey verify, normalize
-      "mode" -> MDomainModes.mapping
+      "dkey" -> nonEmptyText
+        .transform[String](UrlUtil.host2dkey, identity),
+      "mode" -> MDomainMode.mapping
     )
     { MDomainExtra.apply }
     { MDomainExtra.unapply }

@@ -2,6 +2,7 @@ package controllers.sc
 
 import _root_.util.di._
 import io.suggest.adn.{MAdnRight, MAdnRights}
+import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
 import io.suggest.es.search.MSubSearch
@@ -10,7 +11,6 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.media.{IMediaInfo, MMediaInfo, MMediaTypes}
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
 import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}

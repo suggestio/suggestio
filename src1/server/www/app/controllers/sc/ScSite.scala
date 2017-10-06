@@ -12,6 +12,7 @@ import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.sc.init.MSc3Init
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
+import io.suggest.text.util.UrlUtil
 import io.suggest.util.logs.IMacroLogs
 import models.mctx.IContextUtilDi
 import models.msc._
@@ -69,11 +70,24 @@ trait ScSite
     // 2016.sep.9: Геолокация выходит за пределы geo. Тут добавляется поддержка доменов в качестве подсказки для поиска узла:
     lazy val domainNodeOptFut: Future[Option[MNode]] = {
       val myHost = ctx.request.host
+        .replaceFirst(":.+$", "")
+
       OptionUtil.maybeFut( !ctxUtil.isMyHostSio(myHost) ) {
+        // Логгируем этот этап работы.
+        lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
+
+        val dkey = try {
+          UrlUtil.host2dkey(myHost)
+        } catch {
+          case ex: Throwable =>
+            LOGGER.warn(s"$logPrefix Failed to normalize host '$myHost' into dkey", ex)
+            myHost
+        }
+
         val msearch = new MNodeSearchDfltImpl {
           override def domains: Seq[DomainCriteria] = {
             val cr = DomainCriteria(
-              dkeys = myHost :: Nil,
+              dkeys = dkey :: Nil,
               modes = MDomainModes.ScServeIncomingRequests :: Nil
             )
             Seq(cr)
@@ -84,8 +98,6 @@ trait ScSite
         }
         val fut = mNodes.dynSearchOne(msearch)
 
-        // Логгируем этот этап работы.
-        lazy val logPrefix = s"${classOf[SiteLogic].getSimpleName}.nodeOptFut(myHost=$myHost):"
         fut.onComplete {
           case Success(None)    => LOGGER.debug(s"$logPrefix No linked nodes not found. Request from ${_request.remoteClientAddress}")
           case Success(Some(r)) => LOGGER.trace(s"$logPrefix Found node[${r.idOrNull}] ${r.guessDisplayNameOrIdOrEmpty}")

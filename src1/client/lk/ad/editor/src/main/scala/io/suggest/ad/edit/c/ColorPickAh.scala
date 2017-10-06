@@ -3,7 +3,7 @@ package io.suggest.ad.edit.c
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange, DocBodyClick}
-import io.suggest.model.n2.node.meta.colors.MColorData
+import io.suggest.color.MColorData
 
 /**
   * Suggest.io

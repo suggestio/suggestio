@@ -53,8 +53,8 @@ case class MCoords2di(
     )
   }
 
-  override def withX(x: Int) = copy(x = x)
-  override def withY(y: Int) = copy(y = y)
+  def withX(x: Int) = copy(x = x)
+  def withY(y: Int) = copy(y = y)
 
 }
 

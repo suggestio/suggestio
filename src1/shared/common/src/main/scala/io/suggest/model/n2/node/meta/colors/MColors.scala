@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node.meta.colors
 
 import boopickle.Default._
+import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

@@ -1,11 +1,11 @@
 package io.suggest.jd.tags
 
 import io.suggest.ad.blk.BlockMeta
+import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.model.n2.node.meta.colors.MColorData
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

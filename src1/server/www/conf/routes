@@ -188,7 +188,7 @@ GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaI
 GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
 
 ## Upload controller
-POST /up/file/do                        @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs)
+POST /up/file/do                        @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs, c: Option[io.suggest.ctx.MCtxId] ?= None)
 
 
 ## sys

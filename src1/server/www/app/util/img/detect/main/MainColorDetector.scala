@@ -3,8 +3,8 @@ package util.img.detect.main
 import java.io.File
 import java.nio.file.Files
 import java.text.ParseException
-
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
@@ -21,7 +21,7 @@ import scala.concurrent.Future
  */
 @Singleton
 class MainColorDetector @Inject() (
-                                    mImgs3        : MImgs3,
+                                    mAnyImgs      : MAnyImgs,
                                     mLocalImgs    : MLocalImgs,
                                     im4jAsyncUtil : Im4jAsyncUtil,
                                     mCommonDi     : ICommonDi
@@ -137,19 +137,6 @@ class MainColorDetector @Inject() (
   }
 
 
-  /** Дистанция между точками в трехмерном целочисленном пространстве цветов. Считаем по теореме Пифагора.
-    * @param p1 Точка 1.
-    * @param p2 Точка 2.
-    * @param exp Значение показателя степеней. В теореме Пифагора используется степень и корень по показателю 2,
-    *            но можно задать любой другой.
-    * @return Расстояние между точками в 3-мерном пространстве.
-    */
-  def colorDistance3D(p1: ColorPoint3D, p2: ColorPoint3D, exp: Double = 2.0): Double = {
-    val expDst = Math.pow(p2.x - p1.x, exp)  +  Math.pow(p2.y - p1.y, exp)  +  Math.pow(p2.z - p1.z, exp)
-    Math.pow(expDst, 1.0 / exp)
-  }
-
-
   /** Результат вызова prepareImg(). */
   case class PrepareImgResult(localOpt: Option[MLocalImg], imOps: Seq[ImOp])
 
@@ -158,15 +145,15 @@ class MainColorDetector @Inject() (
    * @param bgImg4s Данные по картинке.
    * @return Фьючерс с данными картинки.
    */
-  def prepareImg(bgImg4s: MImgT): Future[PrepareImgResult] = {
+  def prepareImg(bgImg4s: MAnyImgT): Future[PrepareImgResult] = {
     lazy val logPrefix = s"prepareImg(${bgImg4s.fileName}): "
 
     // toLocalImg не существовует обычно вообще (ибо голый orig [+ crop]). Поэтому сразу ищем оригинал, но не теряя надежды.
-    val localOrigImgFut = mImgs3.toLocalImg(bgImg4s.original)
+    val localOrigImgFut = mAnyImgs.toLocalImg(bgImg4s.original)
 
     // Всё-таки ищем отропанный результат.
     var localImg2Fut = for {
-      locImgOpt <- mImgs3.toLocalImg(bgImg4s)
+      locImgOpt <- mAnyImgs.toLocalImg(bgImg4s)
       if locImgOpt.exists { locImg =>
         mLocalImgs.isExists(locImg)
       }
@@ -178,7 +165,7 @@ class MainColorDetector @Inject() (
     if (bgImg4s.hasImgOps) {
       // Если исходная картинка - обрезок, то можно изъять операции из исходной картинки и повторить их на оригинале вместе с генерацией гистограммы.
       localImg2Fut = localImg2Fut.recoverWith {
-        case ex: NoSuchElementException =>
+        case _: NoSuchElementException =>
           val resFut = for (v <- localOrigImgFut) yield {
             PrepareImgResult(v, bgImg4s.dynImgOps)
           }
@@ -223,7 +210,7 @@ class MainColorDetector @Inject() (
    * @param maxColors Макс.размер результирующей палитры.
    * @return Фьючерс с гистограммой, где самый частый в начале, и далее по убыванию.
    */
-  def detectPaletteFor(bgImg4s: MImgT, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
+  def detectPaletteFor(bgImg4s: MAnyImgT, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
     prepareImg(bgImg4s).flatMap {
       case PrepareImgResult(Some(localImg), preImOps) =>
         for {

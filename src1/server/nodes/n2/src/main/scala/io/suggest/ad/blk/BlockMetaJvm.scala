@@ -3,6 +3,7 @@ package io.suggest.ad.blk
 import io.suggest.enum2.EnumeratumJvmUtil
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.playx.FormMappingUtil
 import play.api.data.Mapping
 import play.api.mvc.QueryStringBindable
 
@@ -91,9 +92,15 @@ object BlockMetaJvm extends IGenEsMappingProps {
     }
   }
 
-  def blockHeightMapping = EnumeratumJvmUtil.intIdMapping( BlockHeights )
+  def blockHeightMapping: Mapping[BlockHeight] = {
+    FormMappingUtil.optMapping2required(
+      EnumeratumJvmUtil.intIdOptMapping( BlockHeights ) )
+  }
 
-  def blockWidthMapping = EnumeratumJvmUtil.intIdMapping( BlockWidths )
+  def blockWidthMapping: Mapping[BlockWidth] = {
+    FormMappingUtil.optMapping2required(
+      EnumeratumJvmUtil.intIdOptMapping( BlockWidths ) )
+  }
 
   /** Маппинг для интерфейса IBlockMeta. */
   def formMapping: Mapping[BlockMeta] = {

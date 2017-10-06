@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.{Await, Awaitable}
 import scala.concurrent.duration._
 
+import scala.language.implicitConversions
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -14,7 +16,7 @@ import scala.concurrent.duration._
  */
 object JMXHelpers {
 
-  implicit def string2objectName(name:String):ObjectName = new ObjectName(name)
+  def string2objectName(name: String): ObjectName = new ObjectName(name)
 
 }
 
@@ -23,7 +25,7 @@ trait JMXBase {
 
   def jmxName: String
 
-  def futureTimeout: FiniteDuration = 10.seconds
+  def futureTimeout: FiniteDuration = 30.seconds
 
   /** Хелпер для быстрой синхронизации фьючерсов. */
   implicit protected def awaitFuture[T](fut: Awaitable[T]) = {

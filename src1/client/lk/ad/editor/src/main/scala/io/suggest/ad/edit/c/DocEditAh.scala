@@ -5,6 +5,7 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
+import io.suggest.color.MColorData
 import io.suggest.common.MHands
 import io.suggest.common.coll.Lists
 import io.suggest.common.geom.coord.MCoords2di
@@ -18,7 +19,6 @@ import io.suggest.jd.tags.IDocTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
-import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.Base64JsUtil
 import io.suggest.quill.m.TextChanged

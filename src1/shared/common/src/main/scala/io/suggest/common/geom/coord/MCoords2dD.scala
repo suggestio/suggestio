@@ -49,7 +49,7 @@ case class MCoords2dD(
     )
   }
 
-  override def withX(x: Double) = copy(x = x)
-  override def withY(y: Double) = copy(y = y)
+  def withX(x: Double) = copy(x = x)
+  def withY(y: Double) = copy(y = y)
 
 }

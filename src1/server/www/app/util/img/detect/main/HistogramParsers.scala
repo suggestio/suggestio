@@ -2,7 +2,7 @@ package util.img.detect.main
 
 import java.io.{File, FileInputStream, InputStreamReader}
 
-import models.im.{HistogramEntry, RGB}
+import models.im.{HistogramEntry, MRgb}
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.StreamReader
@@ -24,7 +24,7 @@ class HistogramParsers extends JavaTokenParsers {
 
   def COMMA_SP_SEP: Parser[_] = """,\s*""".r
 
-  protected def RGB_P: Parser[RGB] = {
+  protected def RGB_P: Parser[MRgb] = {
     val np = BYTE_NUMBER_P
     val comma = COMMA_SP_SEP
     val npc = np <~ comma
@@ -32,7 +32,7 @@ class HistogramParsers extends JavaTokenParsers {
     val p = (npc ~ npc ~ np) <~ alphaP
     p ^^ {
       case r ~ g ~ b  =>
-        RGB(red = r, green = g, blue = b)
+        MRgb(red = r, green = g, blue = b)
     }
   }
 
