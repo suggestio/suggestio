@@ -2,7 +2,6 @@ package models.mctx
 
 import java.net.IDN
 import java.time.{Instant, OffsetDateTime, ZoneId}
-import java.util.UUID
 
 import _root_.models.im.{DevScreen, MImgT}
 import com.google.inject.assistedinject.Assisted
@@ -11,9 +10,8 @@ import javax.inject.{Inject, Singleton}
 import controllers.routes
 import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
-import io.suggest.util.UuidUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
-import io.suggest.ctx.CtxData
+import io.suggest.ctx.{CtxData, MCtxId, MCtxIds}
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers
@@ -239,8 +237,8 @@ trait Context {
 
   /** Рандомный id, существующий в рамках контекста.
     * Использутся, когда необходимо как-то индентифицировать весь текущий рендер (вебсокеты, например). */
-  lazy val ctxId = UUID.randomUUID()
-  lazy val ctxIdStr = UuidUtil.uuidToBase64(ctxId)
+  lazy val ctxId: MCtxId = api.mCtxIds()
+  lazy val ctxIdStr: String = MCtxId.intoString(ctxId)
 
   /** Собрать ссылку на веб-сокет с учетом текущего соединения. */
   lazy val wsUrlPrefix: String = {
@@ -254,9 +252,10 @@ trait Context {
 
   /** Пользователю может потребоваться помощь на любой странице. Нужны генератор ссылок в зависимости от обстоятельств. */
   def supportFormCall(adnIdOpt: Option[String] = None) = {
+    val lkHelp = routes.LkHelp
     adnIdOpt match {
-      case Some(adnId) => routes.LkHelp.supportFormNode(adnId, r)
-      case None        => routes.LkHelp.supportForm(r)
+      case Some(adnId) => lkHelp.supportFormNode(adnId, r)
+      case None        => lkHelp.supportForm(r)
     }
   }
 
@@ -268,7 +267,7 @@ trait Context {
         ctxUtil.SCREEN_ARG_NAME_RE.pattern.matcher(k).matches()
       }
       .flatMap {
-        case kv @ (k, vs) =>
+        case kv @ (k, _) =>
           DevScreen.devScreenQsb
             .bind(k, Map(kv))
             .filter(_.isRight)
@@ -309,6 +308,7 @@ class ContextApi @Inject() (
   val n2NodesUtil         : N2NodesUtil,
   val mSuperUsers         : MSuperUsers,
   val jsMessagesUtil      : JsMessagesUtil,
+  val mCtxIds             : MCtxIds,
   val supportUtil         : SupportUtil,
   override implicit val current: Application
 )

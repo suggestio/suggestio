@@ -1,7 +1,6 @@
 package io.suggest.sec
 
 import javax.crypto.Mac
-import javax.crypto.spec.SecretKeySpec
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.util.logs.MacroLogsImpl
@@ -16,9 +15,6 @@ import play.core.parsers.FormUrlEncodedParser
  * Description: QSB для подписывания qs с помощью HMAC.
  */
 object QsbSigner {
-
-  /** Алгоритм для подписывания. */
-  def ALGO_DFLT = "HmacSHA1"
 
   def SIG_INVALID_MSG = "Invalid signature."
 
@@ -50,12 +46,8 @@ class QsbSigner(secretKey: String, signKeyName: String)
   }
 
 
-  def mkMac: Mac = {
-    val algo = ALGO_DFLT
-    val mac = Mac.getInstance(algo)
-    val sks = new SecretKeySpec(secretKey.getBytes, algo)
-    mac.init(sks)
-    mac
+  def mkMac(): Mac = {
+    HmacUtil.mkMac( HmacAlgos.HMAC_SHA1, secretKey )
   }
 
 
@@ -65,13 +57,15 @@ class QsbSigner(secretKey: String, signKeyName: String)
     mkSignForMap(params2)
   }
   def mkSignForMap(params: TraversableOnce[(String, Seq[String])]): String = {
-    val mac = mkMac
+    val mac = mkMac()
     // Объявляем вне цикла используемые разделители ключей, значений и их пар:
     val kvDelim = "=".getBytes
     val kkDelim = "&".getBytes
     // Нужно отсортировать все данные:
     params.toIterator
-      .map { case (k, vs) => k -> vs.sorted}
+      .map { case (k, vs) =>
+        k -> vs.sorted
+      }
       .toSeq
       .sortBy(_._1)
       // Последовательно закидываем все данные в mac-аккамулятор:
@@ -107,7 +101,7 @@ class QsbSigner(secretKey: String, signKeyName: String)
           // Всё ок, собираем подходящие результаты в кучу.
           Right(pfk.toMap)
         } else {
-          warn(s"Invalid qsb signature for key '$key': expected=$signature real=$realSignature\n params = $params")
+          warn(s"Invalid QSB signature for key '$key': expected=$signature real=$realSignature\n params = $params")
           Left(SIG_INVALID_MSG)
         }
       }

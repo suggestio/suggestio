@@ -1,10 +1,9 @@
-package io.suggest.www.util.dt
+package io.suggest.dt
 
 import java.time.{ZoneId, ZonedDateTime}
 
-import io.suggest.dt.DateTimeUtil
-import org.scalatest._
 import org.scalatest.Matchers._
+import org.scalatest._
 
 /**
   * Suggest.io
