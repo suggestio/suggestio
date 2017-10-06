@@ -1,13 +1,14 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.util.logs.MacroLogsImpl
 import models.event.MEvents
 import models.mproj.ICommonDi
 import models.req.{IReq, MNodeEventReq, MReq, MUserInit}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 
 import scala.concurrent.Future
 

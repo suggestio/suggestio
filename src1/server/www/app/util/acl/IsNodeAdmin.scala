@@ -9,7 +9,7 @@ import models.req._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.node.MNode
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 
 import scala.concurrent.Future
 import play.api.mvc._

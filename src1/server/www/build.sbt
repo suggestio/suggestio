@@ -133,7 +133,7 @@ routesImport ++= Seq(
 
   // 2017.mar.16: Поддержка RcvrKey в роутере.
   "io.suggest.adv.rcvr.RcvrKey",
-  "io.suggest.www.util.nodes.RcvrKeyUtil.Implicits._",
+  "io.suggest.n2.RcvrKeyUtil.Implicits._",
 
   // 2016.dec.15: GeoPoint class унифицирован на уровне [common], поэтому для его QSB теперь требуется особое приглашение:
   "io.suggest.geo.GeoPoint.Implicits._",

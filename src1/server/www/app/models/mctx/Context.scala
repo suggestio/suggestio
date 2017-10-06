@@ -7,12 +7,13 @@ import java.util.UUID
 import _root_.models.im.{DevScreen, MImgT}
 import com.google.inject.assistedinject.Assisted
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
 import io.suggest.i18n.MessagesF_t
 import io.suggest.playx.{ICurrentAppHelpers, IsAppModes}
 import io.suggest.util.UuidUtil
-import io.suggest.www.m.mctx.CtxData
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import io.suggest.ctx.CtxData
 import models.mproj.IMCommonDi
 import models.req.IReqHdr
 import models.usr.MSuperUsers

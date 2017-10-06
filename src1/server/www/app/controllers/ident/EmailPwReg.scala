@@ -1,6 +1,7 @@
 package controllers.ident
 
 import controllers.{CaptchaValidator, SioController, routes}
+import io.suggest.ctx.CtxData
 import io.suggest.i18n.MsgCodes
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.model.n2.node.{IMNodes, MNode, MNodeTypes}
@@ -9,7 +10,6 @@ import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta, MPersonMeta}
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
-import io.suggest.www.m.mctx.CtxData
 import models.{EmailPwConfirmForm_t, EmailPwRegReqForm_t}
 import models.mctx.Context
 import models.req.IReq

@@ -1,4 +1,4 @@
-package io.suggest.www.util.dt
+package io.suggest.dt
 
 import java.time.format.DateTimeFormatter
 import java.time.{OffsetDateTime, ZoneOffset}

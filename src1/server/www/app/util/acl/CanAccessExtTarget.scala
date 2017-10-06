@@ -1,12 +1,13 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.util.logs.MacroLogsImpl
 import models.adv.MExtTargets
 import models.req.{MExtTargetNodeReq, MReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future

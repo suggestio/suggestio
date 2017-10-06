@@ -1,11 +1,12 @@
 package util.acl
 
 import javax.inject.Inject
+
 import models.ai.MAiMads
 import models.mproj.ICommonDi
 import models.req.{MAiMadReq, MReq}
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 
 import scala.concurrent.Future
 import play.api.mvc._

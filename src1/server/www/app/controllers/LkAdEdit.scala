@@ -3,6 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
+import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEditEdge
@@ -10,7 +11,6 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.media.MMedias
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.m.mctx.CtxData
 import models.im.MImg3
 import models.mctx.Context
 import models.mproj.ICommonDi

@@ -25,8 +25,8 @@ import io.suggest.model.n2.node.MNode
 import io.suggest.pick.PickleUtil
 import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.OptId
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.adv.geo.tag.MForAdTplArgs
 import models.mctx.Context
 import models.mproj.ICommonDi

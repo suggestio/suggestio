@@ -1,9 +1,10 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.contract.MContracts
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeContractReq, MReq}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}

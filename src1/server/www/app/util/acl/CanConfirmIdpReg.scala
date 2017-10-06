@@ -1,13 +1,14 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.MNodes
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.MReq
 import models.usr.MExtIdents

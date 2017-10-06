@@ -2,6 +2,7 @@ package models.mproj
 
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
+
 import com.google.inject.ImplementedBy
 import controllers.{ErrorHandler, IErrorHandler}
 import io.suggest.event.SioNotifierStaticClientI
@@ -12,11 +13,10 @@ import play.api.Application
 import play.api.cache.AsyncCacheApi
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.i18n.{Langs, MessagesApi}
-import io.suggest.di.ICacheApi
+import io.suggest.di.{ICacheApi, ISlickDbConfig}
 import io.suggest.es.model.{EsScrollPublisherFactory, IEsModelDiVal}
 import io.suggest.model.n2.node.{INodeCache, MNodesCache}
 import io.suggest.sec.util.Csrf
-import io.suggest.www.util.di.ISlickDbConfig
 import util.HtmlCompressUtil
 
 import scala.concurrent.ExecutionContext

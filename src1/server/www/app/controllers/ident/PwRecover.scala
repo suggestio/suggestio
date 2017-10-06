@@ -2,11 +2,11 @@ package controllers.ident
 
 import controllers._
 import io.suggest.common.fut.FutureUtil
+import io.suggest.ctx.CtxData
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.sec.m.msession.Keys
 import io.suggest.sec.util.IScryptUtilDi
 import io.suggest.util.logs.IMacroLogs
-import io.suggest.www.m.mctx.CtxData
 import models.mctx.Context
 import models.req.{IRecoverPwReq, IReq}
 import models.usr._

@@ -1,7 +1,8 @@
-package io.suggest.www.util.sec
+package io.suggest.sec
+
+import javax.inject.{Inject, Singleton}
 
 import akka.stream.Materializer
-import javax.inject.{Inject, Singleton}
 import io.suggest.sec.m.msession.Keys._
 import io.suggest.sec.m.msession.{Keys, LoginTimestamp}
 import io.suggest.util.logs.MacroLogsImpl

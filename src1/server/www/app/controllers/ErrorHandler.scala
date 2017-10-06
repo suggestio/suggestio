@@ -2,8 +2,9 @@ package controllers
 
 import _root_.util.jsa.init.ITargetsEmpty
 import javax.inject.{Inject, Provider, Singleton}
+
+import io.suggest.ctx.CtxData
 import io.suggest.sec.util.SessionUtil
-import io.suggest.www.m.mctx.CtxData
 import models.mctx.{Context, Context2Factory}
 import models.req.{IReqHdr, MReqHdr, MSioUsers}
 import play.api._

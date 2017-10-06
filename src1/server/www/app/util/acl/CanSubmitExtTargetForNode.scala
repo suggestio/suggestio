@@ -10,7 +10,7 @@ import play.api.mvc._
 import util.adv.ext.AdvExtFormUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 
 import scala.concurrent.Future
 

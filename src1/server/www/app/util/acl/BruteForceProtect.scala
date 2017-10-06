@@ -2,11 +2,12 @@ package util.acl
 
 import akka.actor.ActorSystem
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.util.logs.MacroLogsImpl
 import models.req.{BfpArgs, IReq}
 import play.api.mvc._
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 import play.api.cache.AsyncCacheApi
 
 import scala.concurrent.{ExecutionContext, Future, Promise}

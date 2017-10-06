@@ -4,7 +4,6 @@ import javax.inject.Inject
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.mup.{MSwfsUploadReqInfo, MUploadReq, MUploadTargetQs}
 import models.req.IReq
 import play.api.mvc._
@@ -12,6 +11,7 @@ import util.up.UploadUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.model.n2.media.storage.MStorages
 import io.suggest.model.n2.media.storage.swfs.SwfsVolumeCache
+import io.suggest.req.ReqUtil
 import io.suggest.swfs.client.proto.fid.Fid
 import japgolly.univeq._
 import models.mproj.ICommonDi

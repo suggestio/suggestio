@@ -8,6 +8,7 @@ import io.suggest.bill.{MCurrencies, MCurrency}
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.common.menum.{EnumMaybeWithId, EnumMaybeWithName, EnumValue2Val}
+import io.suggest.dt.DateTimeUtil
 import io.suggest.es.model.MEsUuId
 import io.suggest.geo._
 import io.suggest.model.n2.edge.{MPredicate, MPredicates}
@@ -15,7 +16,6 @@ import io.suggest.model.n2.node.meta.colors.MColorData
 import io.suggest.text.parse.dt.DateParseUtil
 import io.suggest.text.util.UrlUtil
 import io.suggest.util.UuidUtil
-import io.suggest.www.util.dt.DateTimeUtil
 import models.{AdnShownType, AdnShownTypes}
 import models.blk.SzMult_t
 import org.apache.commons.text.StringEscapeUtils

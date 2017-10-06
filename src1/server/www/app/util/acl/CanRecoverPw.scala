@@ -1,8 +1,9 @@
 package util.acl
 
 import javax.inject.Inject
+
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReq, MRecoverPwReq, MReq, MUserInit}
 import models.usr._

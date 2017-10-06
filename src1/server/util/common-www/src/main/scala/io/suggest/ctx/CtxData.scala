@@ -1,4 +1,4 @@
-package io.suggest.www.m.mctx
+package io.suggest.ctx
 
 import io.suggest.init.routed.MJsiTg
 import io.suggest.mbill2.m.balance.MBalance

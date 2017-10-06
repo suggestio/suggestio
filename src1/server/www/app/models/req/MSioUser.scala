@@ -6,13 +6,13 @@ import com.google.inject.ImplementedBy
 import com.google.inject.assistedinject.Assisted
 import io.suggest.bill.{MCurrencies, MPrice}
 import io.suggest.common.fut.FutureUtil
+import io.suggest.ctx.CtxData
+import io.suggest.di.ISlickDbConfig
 import io.suggest.init.routed.MJsiTg
 import io.suggest.mbill2.m.balance.{MBalance, MBalances}
 import io.suggest.mbill2.m.contract.{MContract, MContracts}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodesCache}
 import io.suggest.util.logs.{MacroLogsDyn, MacroLogsImpl}
-import io.suggest.www.m.mctx.CtxData
-import io.suggest.www.util.di.ISlickDbConfig
 import models.event.MEvents
 import models.event.search.MEventsSearchArgs
 import models.usr.MSuperUsers

@@ -1,6 +1,7 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.model.n2.node.{MNode, MNodes}
 import models.mproj.ICommonDi
 import util.adv.direct.AdvDirectBilling
@@ -8,8 +9,8 @@ import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.req.{IReqHdr, ISioUser, MNodeReq}
 import play.api.mvc._
 

@@ -1,13 +1,14 @@
-package io.suggest.www.util.req
+package io.suggest.req
+
+import javax.inject.{Inject, Singleton}
 
 import boopickle.Pickler
-import javax.inject.{Inject, Singleton}
 import io.suggest.pick.PickleUtil
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.mvc._
-import scala.language.higherKinds
 
 import scala.concurrent.ExecutionContext
+import scala.language.higherKinds
 
 /**
   * Suggest.io

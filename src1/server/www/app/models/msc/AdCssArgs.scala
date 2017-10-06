@@ -1,11 +1,11 @@
 package models.msc
 
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsDyn
 import models.blk.SzMult_t
 import play.api.mvc.QueryStringBindable
-import util.qsb.QsbSigner
 
 /**
  * Suggest.io

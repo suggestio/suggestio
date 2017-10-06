@@ -1,4 +1,4 @@
-package io.suggest.www.util.di
+package io.suggest.di
 
 import io.suggest.slick.profile.pg.SioPgSlickProfileT
 import play.api.db.slick.DatabaseConfigProvider

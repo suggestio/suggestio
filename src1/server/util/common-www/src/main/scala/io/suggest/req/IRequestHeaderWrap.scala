@@ -1,4 +1,4 @@
-package io.suggest.www.m.mreq
+package io.suggest.req
 
 import play.api.mvc.{Request, RequestHeader}
 

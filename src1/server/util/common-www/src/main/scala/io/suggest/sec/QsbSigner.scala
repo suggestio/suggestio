@@ -1,4 +1,4 @@
-package util.qsb
+package io.suggest.sec
 
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -24,7 +24,7 @@ object QsbSigner {
 
 }
 
-import QsbSigner._
+import io.suggest.sec.QsbSigner._
 
 
 /**

@@ -1,11 +1,12 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.es.model.MEsUuId
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.order.MOrders
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MNodeOrderReq, MUserInit}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}

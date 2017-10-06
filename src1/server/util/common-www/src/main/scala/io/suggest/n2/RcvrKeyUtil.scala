@@ -1,4 +1,4 @@
-package io.suggest.www.util.nodes
+package io.suggest.n2
 
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.model.play.psb.PathBindableImpl

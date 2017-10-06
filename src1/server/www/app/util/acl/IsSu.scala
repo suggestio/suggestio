@@ -1,8 +1,9 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
+
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.req.{IReqHdr, ISioUser, MReq}
 
 import scala.concurrent.Future

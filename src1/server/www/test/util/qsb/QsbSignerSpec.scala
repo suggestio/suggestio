@@ -1,6 +1,7 @@
 package util.qsb
 
 import functional.OneAppPerSuiteNoGlobalStart
+import io.suggest.sec.QsbSigner
 import io.suggest.util.logs.MacroLogsImpl
 import org.scalatestplus.play._
 import play.core.parsers.FormUrlEncodedParser

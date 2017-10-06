@@ -1,7 +1,8 @@
 package util.xplay
 
 import javax.inject.Inject
-import io.suggest.www.util.sec.ExpireSessionFilter
+
+import io.suggest.sec.ExpireSessionFilter
 import play.api.http.HttpFilters
 import play.api.mvc.EssentialFilter
 import util.HtmlCompressFilter

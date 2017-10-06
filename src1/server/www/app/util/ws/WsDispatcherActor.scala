@@ -58,15 +58,23 @@ class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl 
       .onComplete {
         case Success(Some(wsActorRef)) =>
           wsActorRef ! msg
-        case Failure(ex) =>
+        case other =>
           if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
             actorSystem.scheduler
               .scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
                 notifyWs(wsId, msg, counter + 1)
               }
-            LOGGER.warn(s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]", ex)
+            val warnMsg = s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]"
+            other match {
+              case Failure(ex) => LOGGER.warn(warnMsg, ex)
+              case _           => LOGGER.warn(warnMsg)
+            }
           } else {
-            LOGGER.debug(s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was:", ex)
+            def debugMsg = s"WS message to $wsId was not sent and dropped, because actor not found: $msg , Last error was:"
+            other match {
+              case Failure(ex) => LOGGER.debug(debugMsg, ex)
+              case _           => LOGGER.debug(debugMsg)
+            }
           }
       }
   }

@@ -2,6 +2,7 @@ package io.suggest.www.util.dt
 
 import java.time.{ZoneId, ZonedDateTime}
 
+import io.suggest.dt.DateTimeUtil
 import org.scalatest._
 import org.scalatest.Matchers._
 

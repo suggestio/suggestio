@@ -24,8 +24,8 @@ import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.pick.PickleUtil
 import io.suggest.pick.PickleSrvUtil._
 import io.suggest.primo.id.IId
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.mctx.Context
 import models.mlk.nodes.{MLkAdNodesTplArgs, MLkNodesTplArgs}
 import models.mproj.ICommonDi

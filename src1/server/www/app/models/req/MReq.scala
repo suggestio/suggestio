@@ -1,6 +1,6 @@
 package models.req
 
-import io.suggest.www.m.mreq.{IRequestHeaderWrap, IRequestWrap}
+import io.suggest.req.{IRequestHeaderWrap, IRequestWrap}
 import play.api.mvc.{AnyContent, Request, RequestHeader}
 
 /**

@@ -1,7 +1,8 @@
 package util.acl
 
 import javax.inject.Inject
-import io.suggest.www.util.req.ReqUtil
+
+import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{MNodeOptReq, MUserInit}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}

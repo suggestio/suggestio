@@ -1,7 +1,8 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.www.util.req.ReqUtil
+
+import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MNodeReq, MReq}
 

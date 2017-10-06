@@ -1,10 +1,11 @@
 package util.acl
 
 import javax.inject.Inject
+
 import io.suggest.mbill2.m.gid.Gid_t
 import io.suggest.mbill2.m.item.{MItem, MItems}
+import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.www.util.req.ReqUtil
 import models.mproj.ICommonDi
 import models.req.{IReqHdr, MItemAdReq, MReq}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}

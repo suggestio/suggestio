@@ -1,6 +1,7 @@
 package util.acl
 
 import javax.inject.{Inject, Singleton}
+
 import models.req.MReq
 import play.api.mvc._
 
@@ -9,7 +10,7 @@ import controllers.routes
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.id.IdentConst
-import io.suggest.www.util.req.ReqUtil
+import io.suggest.req.ReqUtil
 import play.api.http.{HeaderNames, MimeTypes}
 
 /**

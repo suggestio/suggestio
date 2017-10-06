@@ -1,7 +1,8 @@
 package util.acl
 
 import javax.inject.Inject
-import io.suggest.www.util.req.ReqUtil
+
+import io.suggest.req.ReqUtil
 import models.req.MReq
 import play.api.mvc._
 import util.ident.IdentUtil
