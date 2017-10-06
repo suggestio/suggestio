@@ -349,7 +349,7 @@ trait IpgbImporterJmxMBean {
 
 final class IpgbImporterJmx @Inject()(
                              injector                 : Injector,
-                             implicit private val ec  : ExecutionContext
+                             implicit val ec          : ExecutionContext
                            )
   extends JMXBase
   with IpgbImporterJmxMBean

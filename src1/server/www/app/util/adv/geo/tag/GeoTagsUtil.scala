@@ -15,11 +15,11 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.primo.id.OptId
 import io.suggest.util.JMXBase
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.adv.build.MCtxOuter
 import models.mproj.ICommonDi
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 /**
@@ -448,14 +448,13 @@ trait GeoTagsUtilJmxMBean {
 }
 
 class GeoTagsUtilJmx @Inject() (
-  geoTagsUtil : GeoTagsUtil,
-  mCommonDi   : ICommonDi
-)
+                                 geoTagsUtil               : GeoTagsUtil,
+                                 override implicit val ec  : ExecutionContext
+                               )
   extends JMXBase
   with GeoTagsUtilJmxMBean
+  with MacroLogsImplLazy
 {
-
-  import mCommonDi._
 
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 

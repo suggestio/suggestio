@@ -163,9 +163,9 @@ trait SiowebEsModelJmxMBean {
 
 /** Реализация jmx-бина, открывающая доступ к функциям [[SiowebEsModel]]. */
 final class SiowebEsModelJmx @Inject() (
-  siowebEsModel           : SiowebEsModel,
-  implicit private val ec : ExecutionContext
-)
+                                         siowebEsModel           : SiowebEsModel,
+                                         implicit val ec         : ExecutionContext
+                                       )
   extends JMXBase
   with SiowebEsModelJmxMBean
   with MacroLogsImplLazy

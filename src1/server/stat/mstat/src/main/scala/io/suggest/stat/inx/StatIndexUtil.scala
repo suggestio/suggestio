@@ -253,7 +253,7 @@ sealed trait StatIndexUtilJmxMBean {
 
 final class StatIndexUtilJmx @Inject() (
                                          statIndexUtil            : StatIndexUtil,
-                                         implicit private val ec  : ExecutionContext
+                                         implicit val ec          : ExecutionContext
                                        )
   extends JMXBase
   with StatIndexUtilJmxMBean

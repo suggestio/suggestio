@@ -7,16 +7,16 @@ import io.suggest.es.model.EsModelUtil
 import io.suggest.mbill2.m.item.status.MItemStatuses
 import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.model.n2.edge.{MEdge, MNodeEdges, MPredicates}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes, MNodesCache}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.util.JMXBase
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.util.logs.{MacroLogsImpl, MacroLogsImplLazy}
 import models.adv.build.{Acc, AdvMNodesTryUpdateBuilderT}
 import models.mproj.ICommonDi
 import util.adv.build.AdvBuilderFactory
 import util.n2u.N2NodesUtil
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -360,14 +360,14 @@ trait AdvRcvrsUtilJmxMBean {
 
 /** Реализация MBean'а для прямого взаимодействия с AdvUtil. */
 final class AdvRcvrsUtilJmx @Inject()(
-                                       advRcvrsUtil            : AdvRcvrsUtil,
-                                       mCommonDi               : ICommonDi
+                                       advRcvrsUtil                 : AdvRcvrsUtil,
+                                       mNodesCache                  : MNodesCache,
+                                       override implicit val ec     : ExecutionContext
                                      )
   extends AdvRcvrsUtilJmxMBean
   with JMXBase
+  with MacroLogsImplLazy
 {
-
-  import mCommonDi._
 
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
 

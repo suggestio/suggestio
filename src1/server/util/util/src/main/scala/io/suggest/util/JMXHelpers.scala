@@ -1,12 +1,14 @@
 package io.suggest.util
 
 import javax.management.ObjectName
-import org.slf4j.LoggerFactory
 
-import scala.concurrent.{Await, Awaitable}
+import io.suggest.di.IExecutionContext
+import io.suggest.util.logs.IMacroLogs
+
+import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
-
 import scala.language.implicitConversions
+import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -21,26 +23,31 @@ object JMXHelpers {
 }
 
 // Базовые костыли для всех реализаций jmx-адаптеров.
-trait JMXBase {
+trait JMXBase extends IMacroLogs with IExecutionContext {
 
   def jmxName: String
 
-  def futureTimeout: FiniteDuration = 30.seconds
+  def futureTimeout: FiniteDuration = 60.seconds
 
   /** Хелпер для быстрой синхронизации фьючерсов. */
-  implicit protected def awaitFuture[T](fut: Awaitable[T]) = {
+  implicit protected def awaitFuture[T](fut: Future[T]): T = {
+    // Есть ненулевой риск не дождаться результата. На этот случай, надо вписать результат в логи:
+    fut.onComplete {
+      case Success(res) => LOGGER.info(s"JMX ok: $res")
+      case Failure(ex)  => LOGGER.error(s"JXM fail", ex)
+    }
+    // Синхронное дожидание результата.
     try {
       Await.result(fut, futureTimeout)
     } catch {
       case ex: Throwable =>
-        val logger = LoggerFactory.getLogger(getClass)
-        logger.error("Failed to execute async JMX action: " + fut.toString, ex)
+        LOGGER.error("Failed to execute async JMX action: " + fut.toString, ex)
         throw ex
     }
   }
 
   /** Если на выходе ожидается строка, то можно отрендерить экзепшен вместо re-throw. */
-  def awaitString(fut: Awaitable[String]): String = {
+  def awaitString(fut: Future[String]): String = {
     try {
       fut: String
     } catch {

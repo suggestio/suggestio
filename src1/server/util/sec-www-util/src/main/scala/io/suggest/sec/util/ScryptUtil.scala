@@ -1,8 +1,12 @@
 package io.suggest.sec.util
 
 import javax.inject.{Inject, Singleton}
+
 import com.lambdaworks.crypto.SCryptUtil
 import io.suggest.util.JMXBase
+import io.suggest.util.logs.MacroLogsImplLazy
+
+import scala.concurrent.ExecutionContext
 
 /**
   * Suggest.io
@@ -93,10 +97,12 @@ trait SCryptUtilJmxMBean {
 
 /** Реализация JMX Mbean'а [[SCryptUtilJmx]] для [[SCryptUtil]]. */
 class SCryptUtilJmx @Inject() (
-                                scryptUtil: ScryptUtil
+                                scryptUtil      : ScryptUtil,
+                                override val ec : ExecutionContext
                               )
   extends JMXBase
   with SCryptUtilJmxMBean
+  with MacroLogsImplLazy
 {
 
   override def jmxName = "io.suggest:type=util,name=" + getClass.getSimpleName.replace("Jmx", "")
