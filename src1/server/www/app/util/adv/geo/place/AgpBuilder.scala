@@ -29,6 +29,9 @@ trait AgpBuilder extends IAdvBuilder {
     val (gItems, other) = di.advBuilderUtil.partitionItemsByType(items, _ITYPE)
     val this2 = super.installNode(other)
 
+    if (gItems.nonEmpty)
+      LOGGER.debug(s"installNode(): Found ${gItems.size} geo-place items for geoInstallNode processing: [${gItems.iterator.flatMap(_.id).mkString(",")}]")
+
     di.advBuilderUtil.geoInstallNode(
       b0        = this2,
       items     = gItems,

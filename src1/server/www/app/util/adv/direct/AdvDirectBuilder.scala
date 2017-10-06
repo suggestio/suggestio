@@ -74,35 +74,32 @@ trait AdvDirectBuilder extends IAdvBuilder {
     val accFut2 = for {
       acc0 <- super.clearNode(full).accFut
     } yield {
-      acc0.withMnode(
-        mnode = acc0.mnode.withEdges(
-          acc0.mnode.edges.copy(
-            out = {
-              // Полная чистка удаляет всех ресиверов. Обычная -- касается только AdvDirect.
-              val preds = if (full) {
-                PREDICATES_FULL
-              } else {
-                PREDICATES_STRICT
-              }
-              // Собрать новую карту эджей.
-              MNodeEdges.edgesToMap1(
-                acc0.mnode.edges
-                  .withoutPredicateIter( preds : _* )
-              )
-            }
-          )
+      // Полная чистка удаляет всех ресиверов. Обычная -- касается только AdvDirect.
+      val predsForClear = if (full) {
+        PREDICATES_FULL
+      } else {
+        PREDICATES_STRICT
+      }
+      val mnode2 = acc0.mnode.withEdges(
+        acc0.mnode.edges.copy(
+          out = {
+            // Собрать новую карту эджей.
+            MNodeEdges.edgesToMap1(
+              acc0.mnode.edges
+                .withoutPredicateIter( predsForClear : _* )
+            )
+          }
         )
       )
+      LOGGER.debug(s"clearNode($full): Cleared node#${acc0.mnode.idOrNull} ${acc0.mnode.edges.out.size}=>${mnode2.edges.out.size} edges from predicates: [${predsForClear.mkString(", ")}]")
+      acc0.withMnode( mnode2 )
     }
     withAcc( accFut2 )
   }
 
 
   override def installNode(items: Iterable[MItem]): IAdvBuilder = {
-    val itypes = SUPPORTED_TYPES    // Без .toSet, т.к. коллекция типов очень маленькая.
-    val (ditems, others) = items.partition { i =>
-      itypes.contains(i.iType)
-    }
+    val (ditems, others) = advBuilderUtil.partitionItemsByType(items, SUPPORTED_TYPES:_*)
 
     val this2 = super.installNode(others)
 
@@ -110,32 +107,38 @@ trait AdvDirectBuilder extends IAdvBuilder {
       this2
     } else {
       // Группировать по параметрам эджа, потом каждую группу перегонять в единственный эдж. Это снизит кол-во эджей.
-      val edgesIter = ditems
+      lazy val logPrefix = s"ADB.installNode()#${System.currentTimeMillis()}:"
+      LOGGER.debug(s"$logPrefix Found ${ditems.size} for direct-adv building. ")
+
+      val newEdges = ditems
         .toSeq
         .groupBy { i =>
           (i.iType, i.tagFaceOpt)
         }
         .iterator
-        .map { case ((iType, tagFaceOpt), slsItems) =>
-          MEdge(
+        .map { case ((iType, tagFaceOpt), itemsGroup) =>
+          val e = MEdge(
             predicate = itypeToPredicate(iType),
-            nodeIds   = slsItems.iterator.flatMap(_.rcvrIdOpt).toSet,
+            nodeIds   = itemsGroup.iterator
+              .flatMap(_.rcvrIdOpt)
+              .toSet,
             info = MEdgeInfo(
               tags = tagFaceOpt.toSet
             )
           )
+          LOGGER.trace(s"$logPrefix Built new edge: item%$iType##[${itemsGroup.flatMap(_.id).mkString(",")}] => $e")
+          e
         }
+        .toStream
 
       this2.withAccUpdated { acc0 =>
-        acc0.withMnode(
-          acc0.mnode.withEdges(
-            acc0.mnode.edges.copy(
-              out = MNodeEdges.edgesToMap1(
-                acc0.mnode.edges.iterator ++ edgesIter
-              )
-            )
+        val mnode2 = acc0.mnode.withEdges(
+          acc0.mnode.edges.copy(
+            out = acc0.mnode.edges.out ++ newEdges
           )
         )
+        LOGGER.debug(s"$logPrefix Edges count changed: ${acc0.mnode.edges.out.size} => ${mnode2.edges.out.size}. ${newEdges.size} edges created:\n ${newEdges.mkString(",\n ")}")
+        acc0.withMnode( mnode2 )
       }
     }
   }

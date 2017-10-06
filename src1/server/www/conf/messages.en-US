@@ -713,7 +713,8 @@ edge.predicate.ls=Self-tag
 edge.predicate.ld=Directly tagged
 edge.predicate.m=Background
 edge.predicate.n=Node location
-edge.predicate.o=Adv in place
+edge.predicate.np=Node geo-adv
+edge.predicate.o=Geo-adv in place
 edge.predicate.p=Placed in
 edge.predicate.r=Advertisers map
 

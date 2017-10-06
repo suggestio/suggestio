@@ -39,10 +39,12 @@ trait GeoLocBuilder extends IAdvBuilder {
     if (gItems.isEmpty) {
       this2
     } else {
+      val lastItemOpt = di.advBuilderUtil.lastStartedItem(gItems)
+      LOGGER.debug(s"installNode(): There are ${gItems.size} items to geoInstallNode (##${gItems.iterator.flatMap(_.id).mkString(",")}), but we interested only in last item#${lastItemOpt.flatMap(_.id).orNull}.")
       di.advBuilderUtil.geoInstallNode(
         b0        = this2,
         // Интересует только самый последний item
-        items     = di.advBuilderUtil.lastStartedItem(gItems).toList,
+        items     = lastItemOpt.toList,
         predicate = _PRED
       )
     }

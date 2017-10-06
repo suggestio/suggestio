@@ -722,7 +722,8 @@ edge.predicate.ls=Сам себе тег
 edge.predicate.ld=Прямой теггинг
 edge.predicate.m=Фон
 edge.predicate.n=Локация узла
-edge.predicate.o=Размещение в месте
+edge.predicate.np=Гео-размещение узла
+edge.predicate.o=Гео-размещение рекламной карточки
 edge.predicate.p=Находится внутри
 edge.predicate.r=Карта рекламодателей
 
