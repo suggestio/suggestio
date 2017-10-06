@@ -110,8 +110,8 @@ class NodesUtil @Inject() (
         colors = {
           val dc = NodeDfltColors.getOneRandom()
           MColors(
-            bg = Some( MColorData(dc.bgColor) ),
-            fg = Some( MColorData(dc.fgColor) )
+            bg = Some( MColorData(code = dc.bgColor) ),
+            fg = Some( MColorData(code = dc.fgColor) )
           )
         }
       ),

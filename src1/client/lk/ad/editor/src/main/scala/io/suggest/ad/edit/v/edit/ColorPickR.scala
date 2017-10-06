@@ -54,7 +54,9 @@ class ColorPickR(
     lazy val _onColorCompletelyChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onColorCompletelyChanged )
 
     private def _onColorChangedBody(color: Color, isComplete: Boolean): Callback = {
-      val mcd = MColorData.stripingDiez(color.hex)
+      val mcd = MColorData(
+        code = MColorData.stripDiez(color.hex)
+      )
       dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = false))
     }
 

@@ -118,7 +118,7 @@ class QuillDeltaJsUtil extends Log {
   /** Конвертация undefined|"#ffeecc"|null в scala. */
   private def _color2s(attrValue: js.UndefOr[String]): Option[ISetUnset[MColorData]] = {
     _string2s(attrValue)
-      .map( _.map(MColorData.stripingDiez) )
+      .map( _.map { hexCode => MColorData( MColorData.stripDiez(hexCode) ) } )
   }
 
   private def _val2s[T <: AnyVal](attrValue: js.UndefOr[T | Null]): Option[ISetUnset[T]] = {

@@ -264,7 +264,9 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     )
     val pattern = mad.meta.colors.pattern
     val bgColor = mad.meta.colors.bg
-      .getOrElse( MColorData( AdColorFns.IMG_BG_COLOR_FN.default) )
+      .getOrElse( MColorData(
+        code = AdColorFns.IMG_BG_COLOR_FN.default
+      ))
     Some( (bmr, pattern, mad.ad.richDescr, bgColor) )
   }
 

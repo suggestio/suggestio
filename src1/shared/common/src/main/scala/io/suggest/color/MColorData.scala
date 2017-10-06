@@ -15,8 +15,10 @@ import play.api.libs.json._
 
 object MColorData {
 
-  /** Название поля с кодом цвета. Обычно цвет задан как RGB. */
-  val CODE_FN = "c"
+  object Fields {
+    /** Название поля с кодом цвета. Обычно цвет задан как RGB. */
+    val CODE_FN = "c"
+  }
 
   /** Поддержка boopickle. */
   implicit val mColorDataPickler: Pickler[MColorData] = {
@@ -25,20 +27,20 @@ object MColorData {
 
   /** Поддержка JSON. */
   implicit val MCOLOR_DATA_FORMAT: OFormat[MColorData] = {
-    (__ \ MColorData.CODE_FN).format[String]
+    val F = Fields
+    (__ \ F.CODE_FN).format[String]
       .inmap(apply, _.code)
   }
 
   implicit def univEq: UnivEq[MColorData] = UnivEq.derive
 
 
-  def stripingDiez(colorCode: String): MColorData = {
-    val cc2 = if (colorCode.startsWith( HtmlConstants.DIEZ )) {
+  def stripDiez(colorCode: String): String = {
+    if (colorCode.startsWith( HtmlConstants.DIEZ )) {
       colorCode.replaceFirst( HtmlConstants.DIEZ, "" )
     } else {
       colorCode
     }
-    MColorData(cc2)
   }
 
 }

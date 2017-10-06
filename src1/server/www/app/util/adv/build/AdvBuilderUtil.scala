@@ -216,7 +216,7 @@ class AdvBuilderUtil @Inject() (
           .toSet
 
         if (myNodeIds.nonEmpty) {
-          LOGGER.debug(s"$logPrefix Will search for online items for nodes#[${myNodeIds.mkString(", ")}] to interruption...")
+          LOGGER.trace(s"$logPrefix Will search for online items for nodes#[${myNodeIds.mkString(", ")}] to interruption...")
           val dbAction = billDebugUtil.findAndInterruptItemsLike(myNodeIds, itypes: _*)
           acc0
             .withDbActions(

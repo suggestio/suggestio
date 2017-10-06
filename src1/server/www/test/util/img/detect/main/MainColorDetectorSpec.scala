@@ -30,7 +30,6 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
   /** Максимальная погрешность при сравнении желаемого цвета с найденным (макс. цветовое расстояние в 3д пространстве). */
   private val maxColorDistance: Double = app.configuration.getOptional[Double]("mcd.test.distance.error.max") getOrElse 15.0
 
-
   "detectFileMainColor()" must {
 
     /** Метод, производящий тестирование одного файла и проверяет конечные результаты. */
@@ -51,7 +50,7 @@ class MainColorDetectorSpec extends PlaySpec with OneAppPerSuiteNoGlobalStart wi
       val dmchRgb = detectResult.get.rgb
       val dmchRgbXyz = dmchRgb.toCoord3d
       for (mch <- mainColorsHex) {
-        val mchRgb = MRgb(mch)
+        val mchRgb = MRgb.hex2rgb(mch)
         val distance = dmchRgbXyz distance3dTo mchRgb.toCoord3d
         distance mustBe <= (maxColorDistance)
       }

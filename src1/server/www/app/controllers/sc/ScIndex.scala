@@ -1,7 +1,7 @@
 package controllers.sc
 
 import _root_.util.di._
-import io.suggest.adn.{MAdnRight, MAdnRights}
+import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
@@ -682,7 +682,11 @@ trait ScIndex
       for (wcOpt <- welcomeOptFut) yield {
         for (wc <- wcOpt) yield {
           MWelcomeInfo(
-            bgColor = wc.bg.left.toOption.map( MColorData.apply ),
+            bgColor = for (hexCode <- wc.bg.left.toOption) yield {
+              MColorData(
+                code = hexCode
+              )
+            },
             bgImage = _imgWithWhOpt2mediaInfo( wc.bg.right.toOption ),
             fgImage = _imgWithWhOpt2mediaInfo( wc.fgImage )
           )

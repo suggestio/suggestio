@@ -474,7 +474,11 @@ class Upload @Inject()(
                 if (colorHist.sorted.nonEmpty) {
                   val mcds = colorHist.sorted
                     .iterator
-                    .map { histEntry => MColorData.stripingDiez(histEntry.colorHex) }
+                    .map { histEntry =>
+                      MColorData(
+                        code = MColorData.stripDiez(histEntry.colorHex)
+                      )
+                    }
                     .toSeq
                   val mmedia1 = mmedia0.withId( Some(mmediaId) )
                   // TODO Залезть в MPictureMeta... и повторносохранить.
