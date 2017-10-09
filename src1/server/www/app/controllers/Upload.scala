@@ -5,6 +5,7 @@ import java.nio.file.Path
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.IMust
@@ -43,7 +44,7 @@ import util.img.ImgFileUtil
 import util.img.detect.main.ColorDetectWsUtil
 
 import scala.concurrent.Future
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 import scalaz.ValidationNel
 
 /**
@@ -247,7 +248,14 @@ class Upload @Inject()(
       val resFutOpt: Option[Future[Result]] = for {
 
         // Поискать файл в теле запроса:
-        filePart <- request.body.data.file( UploadConstants.MPART_FILE_FN )
+        filePart <- {
+          val partName = UploadConstants.MPART_FILE_FN
+          val fpOpt = request.body.data.file( partName )
+          LOGGER.trace(s"$logPrefix File part '$partName' lookup: found?${fpOpt.nonEmpty}: ${fpOpt.orNull}")
+          if (fpOpt.isEmpty)
+            __appendErr(s"Missing file part with name '$partName'.")
+          fpOpt
+        }
 
         // Сразу же надо провалидировать принятый ctxId, если он указан в запросе:
         if {
@@ -261,6 +269,7 @@ class Upload @Inject()(
         if {
           val r = filePart.contentType
             .exists(_ equalsIgnoreCase uploadArgs.mimeType)
+          LOGGER.trace(s"$logPrefix Content-type verify: expected=${uploadArgs.mimeType} filePart=${filePart.contentType} ;; match?$r")
           if (!r)
             __appendErr( s"Expected Content-type '${uploadArgs.mimeType}' not matching to Multipart part's content-type '${filePart.contentType.orNull}'." )
           r
@@ -273,6 +282,7 @@ class Upload @Inject()(
         if {
           val srcLen = srcFile.length()
           val r = srcLen ==* uploadArgs.fileSizeB
+          LOGGER.trace(s"$logPrefix File size check: expected=${uploadArgs.fileSizeB} detected=$srcLen ;; match? $r")
           if (!r)
             __appendErr(s"Size of file $srcLen bytes, but expected is ${uploadArgs.fileSizeB} bytes.")
           r
@@ -293,6 +303,7 @@ class Upload @Inject()(
         // Сравнить фактический MIME-тип с заявленным.
         if {
           val r = mimeType ==* uploadArgs.mimeType
+          LOGGER.trace(s"$logPrefix Mime type matching: detected=$mimeType declared=${uploadArgs.mimeType} ;; matching? => $r")
           if (!r)
             __appendErr( s"Detected file MIME type '$mimeType' does not match to expected ${uploadArgs.mimeType}." )
           r
@@ -317,6 +328,7 @@ class Upload @Inject()(
                   .map { MFileMetaHash(mhash, _) }
             }
           } yield {
+            LOGGER.trace(s"$logPrefix Validated hashes hex:\n ${hashesHexIterable2.mkString(",\n ")}")
             hashesHexIterable2.toSeq
           }
 
@@ -331,6 +343,7 @@ class Upload @Inject()(
               infoOpt = Option(info)
               if infoOpt.nonEmpty
             } yield {
+              LOGGER.trace(s"$logPrefix Identify => ${info.getImageFormat} ${info.getImageWidth()}x${info.getImageHeight} ${info.getImageClass} // $info")
               infoOpt
             }
           }
@@ -347,6 +360,7 @@ class Upload @Inject()(
             if (!isValidIfSvg) errSb.synchronized {
               __appendErr( s"SVG-file looks invalid." )
             }
+            LOGGER.trace(s"$logPrefix checked SVG: isImg=$isImg isSvg=$isImgIsSvg isValidSvg => $isValidIfSvg")
             isValidIfSvg
           }
 
@@ -364,6 +378,7 @@ class Upload @Inject()(
               file         = srcFile,
               origFileName = fileNameOpt
             )
+            LOGGER.trace(s"$logPrefix Will save file $wr to storage $mediaStor ...")
             iMediaStorages
               .write( mediaStor, wr )
           }
@@ -425,8 +440,11 @@ class Upload @Inject()(
 
           // Наконец, переходим к MMedia:
           mmedia0 = {
-            val mimg3Opt = for (_ <- imgIdentifyInfoOpt) yield
+            LOGGER.info(s"$logPrefix Created node#$mnodeId. Preparing mmedia...")
+
+            val mimg3Opt = for (_ <- imgIdentifyInfoOpt) yield {
               MImg3( mnodeId, Nil, fileNameOpt )
+            }
             val mediaIdOpt0 = mimg3Opt.map(_._mediaId)
             MMedia(
               nodeId = mnodeId,
@@ -438,7 +456,7 @@ class Upload @Inject()(
                 hashesHex  = hashesHex2
               ),
               picture = MPictureMeta(
-                whPxOpt = imgIdentifyInfoOpt
+                whPx = imgIdentifyInfoOpt
                 .map(imgFileUtil.identityInfo2wh)
               ),
               storage = mediaStor
@@ -466,27 +484,69 @@ class Upload @Inject()(
             fut
           }
 
-          // Дожидаемся окончания заливки файла в хранилище:
-          _ <- {
-            // TODO Сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta
+          // Собрать в голове сохранённый инстанс MMedia:  // TODO надо бы lazy, т.к. он может не понадобится.
+          mmedia1 = {
+            LOGGER.info(s"$logPrefix Created mmedia#$mmediaId")
+            mmedia0
+              .withFirstVersion
+              .withId( Some(mmediaId) )
+          }
+
+
+          // Потом сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
+          _ = {
             for (colorDetectFut <- colorDetectOptFut) {
-              for (colorHist <- colorDetectFut) {
+              val saveColorsFut = for (colorHist <- colorDetectFut) yield {
                 if (colorHist.sorted.nonEmpty) {
+                  // Считаем общее кол-во пикселей для нормировки частот цветов:
+                  val totalPixels = colorHist.sorted
+                    .iterator
+                    .map(_.frequencyVerySafe)
+                    .sum
+                  val totalPixelsNotZero = totalPixels > 0
+
                   val mcds = colorHist.sorted
                     .iterator
                     .map { histEntry =>
                       MColorData(
-                        code = MColorData.stripDiez(histEntry.colorHex)
+                        code   = MColorData.stripDiez(histEntry.colorHex),
+                        rgb    = Some(histEntry.rgb),
+                        freqPc = OptionUtil.maybe( totalPixelsNotZero ) {
+                          (histEntry.frequencyVerySafe * 100 / totalPixels).toInt
+                        }
                       )
                     }
                     .toSeq
-                  val mmedia1 = mmedia0.withId( Some(mmediaId) )
-                  // TODO Залезть в MPictureMeta... и повторносохранить.
-                  ???
+
+                  lazy val mcdsCount = mcds.size
+
+                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${mcds.mkString(",\n ")}")
+
+                  val mmedia2OptFut = mMedias.tryUpdate(mmedia1) { m =>
+                    m.withPicture(
+                      m.picture.withColors( mcds )
+                    )
+                  }
+
+                  mmedia2OptFut.onComplete {
+                    case Success(res) => LOGGER.debug(s"$logPrefix Saved MMedia#$mmediaId with $mcdsCount main colors. r => $res")
+                    case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to update MMedia#$mmediaId with main colors", ex)
+                  }
+
+                } else {
+                  LOGGER.warn(s"$logPrefix Color detector returned NO colors o_O")
                 }
               }
-            }
 
+              // Логгировать ошибки:
+              for (cdEx <- saveColorsFut.failed) {
+                LOGGER.error(s"$logPrefix Detect/save main colors failure", cdEx)
+              }
+            }
+          }
+
+          // Дожидаемся окончания заливки файла в хранилище
+          saveFileToShardRes <- {
             // При ошибке заливки файла, надо удалять созданный узел и запись в MMedia:
             for {
               ex <- saveFileToShardFut.failed
@@ -505,6 +565,7 @@ class Upload @Inject()(
 
         } yield {
           // Процедура проверки и сохранения аплоада завершёна успешно!
+          LOGGER.info(s"$logPrefix File storage: saved ok. r => $saveFileToShardRes")
 
           // Вернуть 200 Ok с данными по файлу
           val resp = MSrvFileInfo(

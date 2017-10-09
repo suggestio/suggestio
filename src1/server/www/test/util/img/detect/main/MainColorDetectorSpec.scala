@@ -3,7 +3,7 @@ package util.img.detect.main
 import java.io.File
 
 import functional.OneAppPerSuiteNoGlobalStart
-import models.im.MRgb
+import io.suggest.color.MRgb
 import org.apache.commons.io.{FileUtils, FilenameUtils}
 import org.scalatestplus.play._
 import play.api.test.{DefaultAwaitTimeout, FutureAwaits}

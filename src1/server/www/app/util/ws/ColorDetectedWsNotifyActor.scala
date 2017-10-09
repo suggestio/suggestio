@@ -1,7 +1,7 @@
 package util.ws
 
 import akka.actor.{Actor, ActorRef}
-import models.im.Histogram
+import models.im.MHistogram
 import play.api.libs.json.{JsArray, JsObject, JsString, JsValue}
 import io.suggest.ad.form.AdFormConstants.{TYPE_COLOR_PALETTE, WS_MSG_DATA_FN, WS_MSG_TYPE_FN}
 import io.suggest.util.logs.IMacroLogs
@@ -21,7 +21,7 @@ trait ColorDetectedWsNotifyActor extends Actor with IMacroLogs {
   abstract override def receive: Receive = super.receive orElse {
 
     // Пришла гистограмма с палитрой предлагаемых цветов.
-    case h: Histogram =>
+    case h: MHistogram =>
       //LOGGER.trace(s"Forwarding color histogram info to $out\n$h")
       val data = JsArray( h.sorted.map(c => JsString(c.colorHex)) )
       out ! _toWsMsgJson(TYPE_COLOR_PALETTE, data)

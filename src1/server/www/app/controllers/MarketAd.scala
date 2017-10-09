@@ -33,6 +33,7 @@ import play.twirl.api.Html
 import util.acl._
 import util.ad.LkAdEdFormUtil
 import util.blocks.{BgImg, BlocksConf, ListBlock, LkEditorWsActors}
+import util.img.detect.main.ColorDetectWsUtil
 import util.mdr.SysMdrUtil
 import util.n2u.N2NodesUtil
 import views.html.lk.ad._
@@ -48,6 +49,7 @@ import scala.concurrent.Future
 @Singleton
 class MarketAd @Inject() (
                            tempImgSupport                          : TempImgSupport,
+                           colorDetectWsUtil                       : ColorDetectWsUtil,
                            mNodes                                  : MNodes,
                            sysMdrUtil                              : SysMdrUtil,
                            lkEditorWsActors                        : LkEditorWsActors,
@@ -92,7 +94,7 @@ class MarketAd @Inject() (
     try {
       for (v <- vOpt) {
         val im = MImg3(v)
-        tempImgSupport._detectPalletteWs(im, wsId = ctx.ctxIdStr)
+        colorDetectWsUtil.detectPalletteToWs(im, wsId = ctx.ctxIdStr)
       }
     } catch {
       case ex: Throwable =>

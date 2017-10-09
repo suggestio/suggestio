@@ -141,13 +141,14 @@ case class MMedia(
   extends EsModelT
 {
 
-  def withDocMeta(dmeta: IEsDocMeta): MMedia = {
-    copy(id = dmeta.id, versionOpt = dmeta.version)
-  }
+  def withDocMeta(dmeta: IEsDocMeta)          : MMedia  = copy(id = dmeta.id, versionOpt = dmeta.version)
 
-  def withId(id: Option[String]): MMedia = {
-    copy(id = id)
-  }
+  def withStorage(storage: IMediaStorage)     : MMedia  = copy(storage = storage)
+  def withId(id: Option[String])              : MMedia  = copy(id = id)
+  def withPicture(picture: MPictureMeta)      : MMedia  = copy(picture = picture)
+  def withVersion(versionOpt: Option[Long])   : MMedia  = copy(versionOpt = versionOpt)
+  // После самого первого сохранения выставляется вот эта вот версия:
+  def withFirstVersion                        : MMedia  = copy(versionOpt = Some(1L))
 
 }
 

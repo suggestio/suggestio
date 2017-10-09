@@ -2,7 +2,8 @@ package util.img.detect.main
 
 import java.io.{File, FileInputStream, InputStreamReader}
 
-import models.im.{HistogramEntry, MRgb}
+import io.suggest.color.MRgb
+import models.im.MHistogramEntry
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.StreamReader
@@ -55,7 +56,7 @@ class HistogramParsers extends JavaTokenParsers {
     val p = (FREQ_P <~ ":") ~ RGB_TUPLE_P ~ HEX_COLOR_P <~ (SRGB_REC_P | COLOR_NAME_P)
     p ^^ {
       case freq ~ rgb ~ hexColor =>
-        HistogramEntry(freq, hexColor, rgb = rgb)
+        MHistogramEntry(freq, hexColor, rgb = rgb)
     }
   }
 
@@ -67,7 +68,7 @@ class HistogramParsers extends JavaTokenParsers {
    * @param histogramFile Файл, который будет считан поточно.
    * @return Результат работы парсера, который содержит
    */
-  def parseFromFile(histogramFile: File): ParseResult[List[HistogramEntry]] = {
+  def parseFromFile(histogramFile: File): ParseResult[List[MHistogramEntry]] = {
     val is = new FileInputStream(histogramFile)
     try {
       val reader = StreamReader( new InputStreamReader(is) )

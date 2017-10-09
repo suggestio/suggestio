@@ -78,7 +78,7 @@ class MImgs3 @Inject() (
 
   override protected def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
     for (mmediaOpt <- _mediaOptFut(mimg)) yield {
-      for (mmedia <- mmediaOpt; whPx <- mmedia.picture.whPxOpt) yield {
+      for (mmedia <- mmediaOpt; whPx <- mmedia.picture.whPx) yield {
         ImgSzDated(
           sz          = whPx,
           dateCreated = mmedia.file.dateCreated
@@ -187,7 +187,7 @@ class MImgs3 @Inject() (
             hashesHex   = hashesHex
           ),
           picture = MPictureMeta(
-            whPxOpt = whOpt
+            whPx = whOpt
           ),
           storage = stor._1
         )

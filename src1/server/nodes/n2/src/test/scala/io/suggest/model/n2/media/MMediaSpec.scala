@@ -51,7 +51,7 @@ class MMediaSpec extends PlaySpec with OneAppPerSuite with MockedEsSn {
       t {
         m1.copy(
           picture = MPictureMeta(
-            whPxOpt = Some(MSize2di(
+            whPx = Some(MSize2di(
               width  = 640,
               height = 480
             ))

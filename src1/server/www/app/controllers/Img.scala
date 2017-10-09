@@ -27,15 +27,13 @@ import play.api.mvc._
 import play.twirl.api.Html
 import util.acl._
 import util.di.{IDynImgUtil, IMImg3Di}
-import util.img.detect.main.MainColorDetector
+import util.img.detect.main.{ColorDetectWsUtil, IColorDetectWsUtilDi, MainColorDetector}
 import util.img.{ImgCtlUtil, _}
 import util.up.FileUtil
-import util.ws.{IWsDispatcherActorsDi, WsDispatcherActors}
 import views.html.img._
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{Failure, Success}
 
 /**
  * Suggest.io
@@ -47,11 +45,11 @@ import scala.util.{Failure, Success}
 @Singleton
 class Img @Inject() (
   override val mainColorDetector  : MainColorDetector,
+  override val colorDetectWsUtil  : ColorDetectWsUtil,
   override val mImgs3             : MImgs3,
   override val mLocalImgs         : MLocalImgs,
   override val dynImgUtil         : DynImgUtil,
   override val imgCtlUtil         : ImgCtlUtil,
-  override val wsDispatcherActors : WsDispatcherActors,
   override val origImageUtil      : OrigImageUtil,
   override val asyncUtil          : AsyncUtil,
   fileUtil                        : FileUtil,
@@ -64,7 +62,6 @@ class Img @Inject() (
   with TempImgSupport
 {
 
-  import LOGGER._
   import imgCtlUtil._
   import mCommonDi._
 
@@ -85,7 +82,7 @@ class Img @Inject() (
   private def serveImgFromFile(file: File, cacheSeconds: Int, modelInstant: Instant): Result = {
     // Enumerator.fromFile() вроде как асинхронный, поэтому запускаем его тут как можно раньше.
     val resultRaw = Ok.sendFile(file, inline = true)
-    trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
+    LOGGER.trace(s"serveImgFromFile(${file.getParentFile.getName}/${file.getName}): 200 OK, file size = ${file.length} bytes.")
     val mmOpt = fileUtil.getMimeMatch(file)
 
     val ct = mmOpt
@@ -117,7 +114,7 @@ class Img @Inject() (
     } yield {
       val imeta: ISize2di = imetaOpt getOrElse {
         val stub = MSize2di(640, 480)
-        warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
+        LOGGER.warn("Failed to fetch image w/h metadata for iik " + iik + " . Returning stub metadata: " + stub)
         stub
       }
       val id = CropConstants.CROPPER_DIV_ID
@@ -138,7 +135,7 @@ class Img @Inject() (
   def imgCropSubmit = isAuth().async { implicit request =>
     imgCropFormM.bindFromRequest().fold(
       {formWithErrors =>
-        debug("imgCropSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
+        LOGGER.debug("imgCropSubmit(): Failed to bind form: " + formatFormErrors(formWithErrors))
         NotAcceptable("crop request parse failed")
       },
       {case (iik0, icrop, targetSz) =>
@@ -222,11 +219,11 @@ class Img @Inject() (
 
         ensureFut.recover {
           case _: NoSuchElementException =>
-            debug("Img not found anywhere: " + args.fileName)
+            LOGGER.debug("Img not found anywhere: " + args.fileName)
             NotFound("No such image.")
               .withHeaders(CACHE_CONTROL -> s"public, max-age=30")
           case ex: Throwable =>
-            error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKey}]\n  args = $args", ex)
+            LOGGER.error(s"Unknown exception occured during fetchg/processing of source image id[${args.rowKey}]\n  args = $args", ex)
             ServiceUnavailable("Internal error occured during fetching/creating an image.")
               .withHeaders(RETRY_AFTER -> "60")
         }
@@ -242,7 +239,7 @@ class Img @Inject() (
 trait TempImgSupport
   extends SioController
   with IMacroLogs
-  with IWsDispatcherActorsDi
+  with IColorDetectWsUtilDi
   with IDynImgUtil
   with IMImg3Di
   with IOrigImageUtilDi
@@ -259,48 +256,7 @@ trait TempImgSupport
 
   import imgCtlUtil._
 
-  /** Размер генерируемой палитры. */
-  private def MAIN_COLORS_PALETTE_SIZE = 8
-
-  /** Размер возвращаемой по WebSocket палитры. */
-  private def MAIN_COLORS_PALETTE_SHRINK_SIZE = 4
-
   private def TEMP_IMG_PREVIEW_SIDE_SIZE_PX = 620
-
-  /** Настройка кеширования для  */
-  protected def CACHE_COLOR_HISTOGRAM_SEC = 10
-
-  /**
-   * Запуск в фоне определения палитры и отправки уведомления по веб-сокету.
-   *
-   * @param im Картинка для обработки.
-   * @param wsId id для уведомления.
-   */
-  def _detectPalletteWs(im: MImgT, wsId: String): Future[Histogram] = {
-    // Кеширование ресурсоемких результатов работы MCD.
-    val f = { () =>
-      mainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
-    }
-    val cacheSec = CACHE_COLOR_HISTOGRAM_SEC
-    val fut = if (cacheSec > 0) {
-      cacheApiUtil.getOrElseFut("mcd." + im.rowKeyStr + ".hist", cacheSec.seconds)(f())
-    } else {
-      f()
-    }
-    fut.andThen {
-      case Success(result) =>
-        val res2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
-          result.copy(
-            sorted = result.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
-          )
-        } else {
-          result
-        }
-        wsDispatcherActors.notifyWs(wsId, res2)
-      case Failure(ex) =>
-        LOGGER.warn("Failed to execute color detector on tmp img " + im.fileName, ex)
-    }
-  }
 
   /** Обработчик полученной картинки в контексте реквеста, содержащего необходимые данные. Считается, что ACL-проверка уже сделана.
     *
@@ -374,7 +330,7 @@ trait TempImgSupport
             if (runEarlyColorDetector) {
               if (wsId.isDefined) {
                 imgPrepareFut flatMap { _ =>
-                  _detectPalletteWs(im, wsId.get)
+                  colorDetectWsUtil.detectPalletteToWs(im, wsId.get)
                 }
               } else {
                 LOGGER.error(s"Calling MainColorDetector makes no sense, because websocket is disabled. Img was " + im.fileName)

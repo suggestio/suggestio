@@ -30,7 +30,7 @@ class MainColorDetector @Inject() (
 {
 
   import LOGGER._
-  import mCommonDi.ec
+  import mCommonDi.{ec, cacheApiUtil}
 
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
   private def PALETTE_MAX_COLORS_DFLT = 8
@@ -81,7 +81,7 @@ class MainColorDetector @Inject() (
    * @param img Исходная картинка.
    */
   def detectFilePaletteUnsorted(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT,
-                        preImOps: Seq[ImOp] = Nil): Future[List[HistogramEntry]] = {
+                        preImOps: Seq[ImOp] = Nil): Future[List[MHistogramEntry]] = {
     // Создаём временный файл для сохранения выхлопа convert histogram:info:
     val resultFile = File.createTempFile(getClass.getSimpleName, ".txt")
     val resultFut = convertToHistogram(img.getAbsolutePath, resultFile.getAbsolutePath, maxColors, preImOps) map { _ =>
@@ -124,7 +124,7 @@ class MainColorDetector @Inject() (
    * @return None при ошибке и suppressErrors или если картинка вообще не содержит цветов.
    */
   def detectFileMainColor(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT,
-                          preImOps: Seq[ImOp] = Nil): Future[Option[HistogramEntry]] = {
+                          preImOps: Seq[ImOp] = Nil): Future[Option[MHistogramEntry]] = {
     detectFilePaletteUnsorted(img, suppressErrors, maxColors, preImOps) map { hist =>
       if (hist.isEmpty) {
         debug("Detected colors pallette is empty. img = " + img.getAbsolutePath)
@@ -210,7 +210,7 @@ class MainColorDetector @Inject() (
    * @param maxColors Макс.размер результирующей палитры.
    * @return Фьючерс с гистограммой, где самый частый в начале, и далее по убыванию.
    */
-  def detectPaletteFor(bgImg4s: MAnyImgT, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[Histogram] = {
+  def detectPaletteFor(bgImg4s: MAnyImgT, maxColors: Int = PALETTE_MAX_COLORS_DFLT): Future[MHistogram] = {
     prepareImg(bgImg4s).flatMap {
       case PrepareImgResult(Some(localImg), preImOps) =>
         for {
@@ -221,7 +221,7 @@ class MainColorDetector @Inject() (
             maxColors       = maxColors
           )
         } yield {
-          Histogram( hist.sortBy(v => -v.frequency) )
+          MHistogram( hist.sortBy(v => -v.frequency) )
         }
 
       case other =>
@@ -230,12 +230,26 @@ class MainColorDetector @Inject() (
     }
   }
 
+
   /** Конвертация выхлопа detectMainColor() в инструкцию по обновлению карты цветов. */
-  def he2updateAction(heOpt: Option[HistogramEntry], default: ImgBgColorUpdateAction = Keep): ImgBgColorUpdateAction = {
+  def he2updateAction(heOpt: Option[MHistogramEntry], default: ImgBgColorUpdateAction = Keep): ImgBgColorUpdateAction = {
     if (heOpt.isDefined)
       Update(heOpt.get.colorHex)
     else
       default
+  }
+
+
+  import scala.concurrent.duration._
+
+  private def CACHE_COLOR_HISTOGRAM_DURATION = 10.seconds
+
+  /** Закэшировать выполнение detectPaletteFor(). */
+  def cached(bgImg4s: MAnyImgT)(detectF: => Future[MHistogram]): Future[MHistogram] = {
+    cacheApiUtil.getOrElseFut(
+      key         = "mcd." + bgImg4s.rowKeyStr + ".hist",
+      expiration  = CACHE_COLOR_HISTOGRAM_DURATION
+    )(detectF)
   }
 
 }

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.media
 
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MColorDataEs}
 import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.geom.d2.{MSize2di, MSize2diEs}
 import io.suggest.es.model.IGenEsMappingProps
@@ -25,8 +25,8 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
 
   object Fields {
 
-    val WH_FN           = "wh"
-    val MAIN_COLORS_FN  = "mc"
+    val WH_PX_FN        = "wh"
+    val COLORS_FN       = "c"
 
   }
 
@@ -36,8 +36,8 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
   override def generateMappingProps: List[DocField] = {
     val F = Fields
     List(
-      FieldObject(F.WH_FN, enabled = true, properties = MSize2diEs.generateMappingProps),
-      FieldObject(F.MAIN_COLORS_FN, enabled = false, properties = Nil)
+      FieldObject(F.WH_PX_FN, enabled = true, properties = MSize2diEs.generateMappingProps),
+      FieldNestedObject(F.COLORS_FN, enabled = true, properties = MColorDataEs.generateMappingProps)
     )
   }
 
@@ -47,8 +47,8 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
     val F = Fields
 
     val modernFormat = (
-      (__ \ F.WH_FN).formatNullable[MSize2di] and
-      (__ \ F.MAIN_COLORS_FN).formatNullable[Seq[MColorData]]
+      (__ \ F.WH_PX_FN).formatNullable[MSize2di] and
+      (__ \ F.COLORS_FN).formatNullable[Seq[MColorData]]
         .inmap[Seq[MColorData]](
           EmptyUtil.opt2ImplEmpty1F(Nil),
           { colors => if (colors.isEmpty) None else Some(colors) }
@@ -59,7 +59,7 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
     val compatReads = {
       for ( mSize2d <- implicitly[Reads[MSize2di]]) yield {
         MPictureMeta(
-          whPxOpt = Some(mSize2d)
+          whPx = Some(mSize2d)
         )
       }
     }
@@ -80,11 +80,17 @@ object MPictureMeta extends IGenEsMappingProps with IEmpty {
 
 /** Неявно-пустой класс модели данных по картинке (видео, изображение).
   *
-  * @param whPxOpt Пиксельный двумерный размер картинки.
-  * @param mainColors Основные цвета.
+  * @param whPx Пиксельный двумерный размер картинки.
+  * @param colors Основные цвета.
   */
 case class MPictureMeta(
-                         whPxOpt    : Option[MSize2di]  = None,
-                         mainColors : Seq[MColorData]   = Nil
+                         whPx       : Option[MSize2di]  = None,
+                         colors     : Seq[MColorData]   = Nil
                        )
   extends EmptyProduct
+{
+
+  def withWhPx(whPx: Option[MSize2di])        = copy(whPx = whPx)
+  def withColors(colors: Seq[MColorData])     = copy(colors = colors)
+
+}

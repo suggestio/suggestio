@@ -1,11 +1,11 @@
-package models.im
+package io.suggest.color
 
 import java.awt.Color
 
 import io.suggest.common.geom.coord.MCoords3d
 import japgolly.univeq.UnivEq
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -16,7 +16,9 @@ import play.api.libs.functional.syntax._
 
 /** Цвет-точка в 3-мерном пространстве цветов RGB. */
 case class MRgb(red: Int, green: Int, blue: Int) {
+
   def toCoord3d = MCoords3d(x = red, y = green, z = blue)
+
 }
 
 
