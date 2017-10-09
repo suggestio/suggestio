@@ -1,4 +1,4 @@
-package io.suggest.lk.router
+package io.suggest.routes
 
 import io.suggest.sjs.common.model.Route
 

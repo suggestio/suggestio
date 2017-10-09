@@ -1,6 +1,6 @@
 package io.suggest.ad.edit.srv
 
-import io.suggest.lk.router.Controllers
+import io.suggest.routes.Controllers
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
@@ -16,7 +16,7 @@ object JsRoutes_Controllers_LkAdEdit {
 
   import scala.language.implicitConversions
 
-  implicit def apply(controllers: Controllers): JsRoutes_Controllers_LkAdEdit = {
+  implicit def toLkAdEditControllers(controllers: Controllers): JsRoutes_Controllers_LkAdEdit = {
     controllers.asInstanceOf[JsRoutes_Controllers_LkAdEdit]
   }
 

@@ -1,9 +1,10 @@
 package io.suggest.lk.ad.form.init
 
 import io.suggest.lk.ad.form.model.MColorPalette
-import io.suggest.lk.router.jsRoutes
+import io.suggest.routes.JsRoutes_LkControllers._
 import io.suggest.sjs.common.controller.IInit
 import io.suggest.ad.form.AdFormConstants._
+import io.suggest.routes.routes
 import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.view.{CommonPage, VUtil}
@@ -51,7 +52,7 @@ trait AdFormWsInit extends IInit with ILog {
 
   /** Непосредственная инициализация ws. */
   private def _initWsForId(wsId: String): Unit = {
-    val route = jsRoutes.controllers.MarketAd.ws(wsId)
+    val route = routes.controllers.MarketAd.ws(wsId)
     val wsUrl = route.webSocketURL( CommonPage.isSecure )
     val ws = new WebSocket(wsUrl)
     // Закрывать ws при закрытии вкладки.

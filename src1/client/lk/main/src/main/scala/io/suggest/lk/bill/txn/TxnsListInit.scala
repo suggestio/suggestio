@@ -1,7 +1,8 @@
 package io.suggest.lk.bill.txn
 
-import io.suggest.lk.router.jsRoutes
+import io.suggest.routes.JsRoutes_LkControllers._
 import io.suggest.bill.TxnsListConstants._
+import io.suggest.routes.routes
 import io.suggest.sjs.common.controller.{DomQuick, IInit, InitRouter}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
@@ -56,7 +57,7 @@ sealed class TxnList extends IInit with Log {
         .toInt
       val nextPage = currPage + 1
       // Узнаем ссылку для ajax-запроса.
-      val route = jsRoutes.controllers.LkBill2.txnsList(adnId, nextPage, inline = true)
+      val route = routes.controllers.LkBill2.txnsList(adnId, nextPage, inline = true)
 
       // Собрать и запустить ajax-запрос:
       val ajaxSettingsJson = Dictionary[Any](

@@ -5,8 +5,8 @@ import io.suggest.adv.geo.{MFormS, MGeoAdvExistPopupResp}
 import io.suggest.bill.MGetPriceResp
 import io.suggest.lk.adv.a.{IRcvrPopupApi, RcvrPopupHttpApiImpl}
 import io.suggest.lk.adv.geo.m.MOther
-import io.suggest.lk.router.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, jsRoutes}
 import io.suggest.pick.PickleUtil
+import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.model.Route
@@ -57,20 +57,21 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
 {
 
   import MGeoAdvExistPopupResp.pickler
+  import io.suggest.routes.JsRoutes_LkControllers._
   import io.suggest.lk.adv.geo.u.LkAdvGeoRoutes._
 
   /** Функция-генератор роуты поиска тегов на сервере. */
-  override protected def _tagsSearchRoute = jsRoutes.controllers.LkAdvGeo.tagsSearch2
+  override protected def _tagsSearchRoute = routes.controllers.LkAdvGeo.tagsSearch2
 
   override protected def _rcvrPopupRoute(nodeId: String): Route = {
-    jsRoutes.controllers.LkAdvGeo.rcvrMapPopup(
+    routes.controllers.LkAdvGeo.rcvrMapPopup(
       adId    = confRO().adId,
       nodeId  = nodeId
     )
   }
 
   override def existGeoAdvsMap(): Future[js.Array[GjFeature]] = {
-    val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsMap(
+    val route = routes.controllers.LkAdvGeo.existGeoAdvsMap(
       adId = confRO().adId
     )
     Xhr.requestJson(route)
@@ -78,7 +79,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   }
 
   override def existGeoAdvsShapePopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
-    val route = jsRoutes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId)
+    val route = routes.controllers.LkAdvGeo.existGeoAdvsShapePopup(itemId)
     Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
       Xhr.requestBinary(route)
     }
@@ -86,7 +87,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
 
   /** Запросить у сервера рассчёт цены. */
   override def getPrice(mFormS: MFormS): Future[MGetPriceResp] = {
-    val route = jsRoutes.controllers.LkAdvGeo.getPriceSubmit(
+    val route = routes.controllers.LkAdvGeo.getPriceSubmit(
       adId = confRO().adId
     )
     val bbuf = PickleUtil.pickle(mFormS)
@@ -96,7 +97,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
   }
 
   override def formSubmit(mFormS: MFormS): Future[String] = {
-    val route = jsRoutes.controllers.LkAdvGeo.forAdSubmit(
+    val route = routes.controllers.LkAdvGeo.forAdSubmit(
       adId = confRO().adId
     )
     val bbuf = PickleUtil.pickle(mFormS)
@@ -110,7 +111,7 @@ class LkAdvGeoHttpApiImpl( confRO: ModelRO[MOther] )
 
 
   override protected[this] def _nodeAdvInfoRoute(nodeId: String): Route = {
-    jsRoutes.controllers.LkBill2.nodeAdvInfo(
+    routes.controllers.LkBill2.nodeAdvInfo(
       nodeId  = nodeId,
       forAdId = confRO().adId
     )

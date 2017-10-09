@@ -1,8 +1,9 @@
 package io.suggest.sc.log
 
-import io.suggest.sc.router.routes
+import io.suggest.routes.scRoutes
 import io.suggest.sjs.common.log.Severities
 import io.suggest.sjs.common.model.rme.RmeLogAppender
+import io.suggest.routes.JsRoutes_ScControllers._
 
 /**
   * Suggest.io
@@ -12,7 +13,7 @@ import io.suggest.sjs.common.model.rme.RmeLogAppender
   */
 class ScRmeLogAppender extends RmeLogAppender {
 
-  override def route        = routes.controllers.Sc.handleScError()
+  override def route        = scRoutes.controllers.Sc.handleScError()
 
   override def minSeverity  = Severities.ALL
 

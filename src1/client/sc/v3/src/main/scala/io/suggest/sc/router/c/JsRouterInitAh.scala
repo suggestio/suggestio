@@ -2,8 +2,8 @@ package io.suggest.sc.router.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import diode.data.Pot
+import io.suggest.routes.scRoutes
 import io.suggest.sc.root.m.JsRouterStatus
-import io.suggest.sc.router.routes
 
 /**
   * Suggest.io
@@ -12,7 +12,7 @@ import io.suggest.sc.router.routes
   * Description: Обработчик событий готовности js-роутера к работе.
   */
 class JsRouterInitAh[M](
-                         modelRW: ModelRW[M, Pot[routes.type]]
+                         modelRW: ModelRW[M, Pot[scRoutes.type]]
                        )
   extends ActionHandler( modelRW )
 {

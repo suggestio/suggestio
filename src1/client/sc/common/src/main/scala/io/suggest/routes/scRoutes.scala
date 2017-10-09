@@ -1,9 +1,9 @@
-package io.suggest.sc.router
+package io.suggest.routes
 
-import io.suggest.routes.StaticRoutesController
 import io.suggest.sc.ScConstants.JsRouter.NAME
 import io.suggest.sjs.common.model.Route
 
+import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSGlobal
 import scala.scalajs.js.{Any, Dictionary}
@@ -17,21 +17,23 @@ import scala.scalajs.js.{Any, Dictionary}
 
 @js.native
 @JSGlobal(NAME)
-object routes extends js.Object {
-  def controllers: Ctls = js.native
-}
+object scRoutes extends IJsRouter
 
 
-/** Контроллеры роутера. */
 @js.native
-sealed trait Ctls extends StaticRoutesController {
-  def Sc: ScCtl = js.native
+sealed trait JsRoutes_ScControllers extends js.Object {
+  val Sc: ScController = js.native
+}
+object JsRoutes_ScControllers {
+  implicit def toScControllers(controllers: Controllers): JsRoutes_ScControllers = {
+    controllers.asInstanceOf[JsRoutes_ScControllers]
+  }
 }
 
 
 /** Контроллер выдачи, а точнее его экшены. */
 @js.native
-sealed trait ScCtl extends js.Object {
+sealed trait ScController extends js.Object {
 
   /** index выдачи для любой ситуации. */
   def index(args: Dictionary[Any]): Route = js.native

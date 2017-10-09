@@ -1,5 +1,6 @@
-package io.suggest.sjs.common.controller._router
+package io.suggest.routes
 
+import io.suggest.js.JsRoutesConst.GLOBAL_NAME
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
@@ -16,10 +17,22 @@ import scala.scalajs.js.annotation.JSGlobal
  * вызов к сборке соответствующего javascriptRouter'а.
  */
 
-/** Интерфейс routes.controllers с доступом к static-контроллеру. */
-@JSGlobal
 @js.native
-class Controllers extends js.Object {
+trait IJsRouter extends js.Object {
+
+  /** Все экспортированные контроллеры. */
+  def controllers: Controllers = js.native
+
+}
+
+@JSGlobal( GLOBAL_NAME )
+@js.native
+object routes extends IJsRouter
+
+
+/** Интерфейс routes.controllers с доступом к static-контроллеру. */
+@js.native
+sealed trait Controllers extends js.Object {
 
   /** Роуты для static-контроллера. */
   def Static: StaticController = js.native
@@ -36,7 +49,13 @@ class Controllers extends js.Object {
 /** Интерфейс контроллера Static. */
 @js.native
 sealed trait StaticController extends js.Object {
+
   def popupCheckContent(): Route = js.native
+
+  /** Роута для доступа к данным гео.карты рекламщиков.
+    * Обычно проходит через CDN, но это уже разруливает серверный js-роутер. */
+  def advRcvrsMap(): Route = js.native
+
 }
 
 

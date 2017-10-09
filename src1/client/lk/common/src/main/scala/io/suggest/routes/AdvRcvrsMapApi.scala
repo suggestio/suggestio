@@ -1,11 +1,9 @@
-package io.suggest.lk.router
+package io.suggest.routes
 
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.Xhr
 
 import scala.concurrent.Future
-import scala.scalajs.js
 
 /**
   * Suggest.io
@@ -15,7 +13,7 @@ import scala.scalajs.js
   */
 
 /** Интерфейс для статического API. */
-trait IStaticApi {
+trait IAdvRcvrsMapApi {
 
   /** Получение десериализованного инстанса с данными гео.карты рекламщиков. */
   def advRcvrsMap(): Future[MGeoNodesResp]
@@ -23,26 +21,16 @@ trait IStaticApi {
 }
 
 
-/** Реализация [[IStaticApi]] поверх HTTP XHR, но без конкретной js-роуты. */
-trait AbstractStaticHttpApi extends IStaticApi {
-
-  /** http-роута для получения гео-данных по ресиверам. */
-  def advRcvrsMapRoute: Route
+/** Реализация [[IAdvRcvrsMapApi]] поверх HTTP через js-роутер. */
+class AdvRcvrsMapApiHttp extends IAdvRcvrsMapApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
   override def advRcvrsMap(): Future[MGeoNodesResp] = {
+    val route = routes.controllers.Static.advRcvrsMap()
     // Надо запустить запрос на сервер для получения списка узлов.
     Xhr.unBooPickleResp[MGeoNodesResp] {
-      Xhr.requestBinary( advRcvrsMapRoute )
+      Xhr.requestBinary( route )
     }
   }
-
-}
-
-
-/** Реализация [[IStaticApi]] поверх HTTP через js-роутер. */
-class StaticHttpApi extends AbstractStaticHttpApi {
-
-  override def advRcvrsMapRoute = jsRoutes.controllers.Static.advRcvrsMap()
 
 }

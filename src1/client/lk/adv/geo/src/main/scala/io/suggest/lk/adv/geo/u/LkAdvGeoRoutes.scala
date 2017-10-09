@@ -1,6 +1,6 @@
 package io.suggest.lk.adv.geo.u
 
-import io.suggest.lk
+import io.suggest.routes.Controllers
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
@@ -23,7 +23,7 @@ sealed trait LkAdvGeoRoutes extends js.Object {
 
 /** Поддержка приведения ЛК js-роутера к js-роутеру ЛК-страницы гео-размещения. */
 object LkAdvGeoRoutes {
-  implicit def apply(lkJsRoutes: lk.router.Controllers): LkAdvGeoRoutes = {
+  implicit def toLkAdvGeoRoutes(lkJsRoutes: Controllers): LkAdvGeoRoutes = {
     lkJsRoutes.asInstanceOf[LkAdvGeoRoutes]
   }
 }

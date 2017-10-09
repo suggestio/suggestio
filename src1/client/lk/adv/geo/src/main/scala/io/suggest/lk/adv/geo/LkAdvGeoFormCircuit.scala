@@ -24,10 +24,10 @@ import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MOther.MOtherFastEq
 import io.suggest.lk.adv.geo.a.DocAh
 import io.suggest.lk.adv.geo.a.oms.OnMainScreenAh
-import io.suggest.lk.router.StaticHttpApi
 import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
+import io.suggest.routes.AdvRcvrsMapApiHttp
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -186,7 +186,7 @@ object LkAdvGeoFormCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] 
       modelRW = geoAdvRW.zoomRW(_.popup) { _.withPopup(_) }
     )
 
-    val STATIC_API = new StaticHttpApi
+    val STATIC_API = new AdvRcvrsMapApiHttp
     val rcvrsMapInitAh = new RcvrMarkersInitAh(
       api       = STATIC_API,
       modelRW   = rcvrRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }

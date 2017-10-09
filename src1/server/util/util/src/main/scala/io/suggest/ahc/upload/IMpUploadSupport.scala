@@ -5,6 +5,7 @@ import java.io.File
 import io.suggest.ahc.util.NingUtil.ningFut2wsScalaFut
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{IExecutionContext, IWsClient}
+import io.suggest.pick.MimeConst
 import io.suggest.util.logs.IMacroLogs
 import play.shaded.ahc.org.asynchttpclient.AsyncHttpClient
 import play.shaded.ahc.org.asynchttpclient.request.body.multipart.{FilePart, Part}
@@ -66,7 +67,7 @@ trait MpUploadSupportDflt
   /** Создание экземпляра нового реквеста. */
   def newRequest(args: IMpUploadArgs, client: AsyncHttpClient) = {
     client.preparePost( getUploadUrl(args) )
-      .setHeader(HeaderNames.CONTENT_TYPE, "multipart/form-data")
+      .setHeader(HeaderNames.CONTENT_TYPE, MimeConst.MULTIPART_FORM_DATA)
   }
 
   /** Является ли ответ по запросу правильным. false - если ошибка. */

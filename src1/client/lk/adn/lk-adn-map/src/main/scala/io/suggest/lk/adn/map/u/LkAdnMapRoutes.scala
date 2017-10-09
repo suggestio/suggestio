@@ -1,6 +1,6 @@
 package io.suggest.lk.adn.map.u
 
-import io.suggest.lk.router.Controllers
+import io.suggest.routes.Controllers
 import io.suggest.sjs.common.model.Route
 
 import scala.scalajs.js
@@ -15,7 +15,7 @@ import scala.language.implicitConversions
 
 object LkAdnMapControllers {
 
-  implicit def apply(ctl: Controllers): LkAdnMapControllers = {
+  implicit def toLkAdnMapControllers(ctl: Controllers): LkAdnMapControllers = {
     ctl.asInstanceOf[LkAdnMapControllers]
   }
 

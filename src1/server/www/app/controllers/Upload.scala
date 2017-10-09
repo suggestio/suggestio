@@ -10,7 +10,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.IMust
 import io.suggest.file.MSrvFileInfo
-import io.suggest.file.up.{MFile4UpProps, MUploadResp}
+import io.suggest.file.up.{MFile4UpProps, MUploadResp, MUploadUrlData}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.js.UploadConstants
@@ -150,16 +150,20 @@ class Upload @Inject()(
                   colorDetect = colorDetect
                 )
                 // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
-                val hostnames = Seq(
+                val hostnames = List(
                   swfsAssignResp.publicUrl
                   // TODO Вписать запасные хостнеймы для аплоада?
                 )
+                val relUrl = CSRF(routes.Upload.doFileUpload(upData)).url
                 MUploadResp(
                   // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
                   upUrls = for (host <- hostnames) yield {
                     // TODO В будущем нужно возвращать только хост и аргументы, а клиент пусть сам через js-роутер ссылку собирает.
                     // TODO Для этого нужно MUploadTargetQs сделать JSON-моделью с отдельным полем сигнатуры.
-                    "//" + host + CSRF(routes.Upload.doFileUpload(upData)).url
+                    MUploadUrlData(
+                      host = host,
+                      relUrl = relUrl
+                    )
                   }
                 )
               }
@@ -171,7 +175,7 @@ class Upload @Inject()(
                 fileExist = Some(MSrvFileInfo(
                   nodeId    = foundFile.nodeId,
                   // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                  url       = if ( MimeConst.Image.isImage(foundFile.file.mime) ) {
+                  url       = if (MimeConst.Image.isImage( foundFile.file.mime )) {
                     // TODO IMG_DIST: Вписать хост расположения картинки.
                     // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
                     routes.Img.dynImg( MImg3(foundFile) ).url

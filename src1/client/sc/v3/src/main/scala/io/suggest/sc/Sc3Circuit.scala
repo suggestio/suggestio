@@ -5,6 +5,7 @@ import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
+import io.suggest.routes.AdvRcvrsMapApiHttp
 import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
@@ -103,7 +104,9 @@ class Sc3Circuit(
     mmapRW = mmapRW
   )
 
-  override protected def actionHandler = {
+  private val advRcvrsMapApi = new AdvRcvrsMapApiHttp
+
+  override protected def actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]
 
     // В самый хвост списка добавить дефолтовый обработчик для некоторых событий, которые можно дропать.
@@ -118,7 +121,7 @@ class Sc3Circuit(
 
     // Инициализатор карты ресиверов на гео-карте.
     if ( !searchMapRcvrsPotRW.value.isReady )
-      acc ::= new RcvrMarkersInitAh( api, searchMapRcvrsPotRW )
+      acc ::= new RcvrMarkersInitAh( advRcvrsMapApi, searchMapRcvrsPotRW )
 
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh

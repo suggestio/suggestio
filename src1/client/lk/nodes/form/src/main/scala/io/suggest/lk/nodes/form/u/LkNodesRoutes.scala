@@ -1,6 +1,6 @@
 package io.suggest.lk.nodes.form.u
 
-import io.suggest.lk
+import io.suggest.routes.Controllers
 import io.suggest.sjs.common.model.Route
 
 import scala.language.implicitConversions
@@ -21,7 +21,7 @@ sealed trait LkNodesRoutes extends js.Object {
 }
 
 object LkNodesRoutes {
-  implicit def apply(lkJsRoutes: lk.router.Controllers): LkNodesRoutes = {
+  implicit def toLkNodesControllers(lkJsRoutes: Controllers): LkNodesRoutes = {
     lkJsRoutes.asInstanceOf[LkNodesRoutes]
   }
 }

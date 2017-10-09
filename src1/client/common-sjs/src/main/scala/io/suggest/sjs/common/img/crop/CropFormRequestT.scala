@@ -3,7 +3,7 @@ package io.suggest.sjs.common.img.crop
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.img.crop.CropConstants
 import io.suggest.popup.PopupConstants
-import io.suggest.sjs.common.controller.routes
+import io.suggest.routes.routes
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.model.ex.XhrFailedException
 import org.scalajs.jquery._

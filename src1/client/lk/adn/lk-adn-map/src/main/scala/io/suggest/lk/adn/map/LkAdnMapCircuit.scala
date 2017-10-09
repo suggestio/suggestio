@@ -22,7 +22,7 @@ import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MLamRad.MLamRadFastEq
 import MMapS.MMapSFastEq
 import IRadOpts.IRadOptsFastEq
-import io.suggest.lk.router.StaticHttpApi
+import io.suggest.routes.AdvRcvrsMapApiHttp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.concurrent.Future
@@ -148,7 +148,7 @@ class LkAdnMapCircuit extends CircuitLog[MRoot] with ReactConnector[MRoot] {
     val rcvrsRw = zoomRW(_.rcvrs) { _.withRcvrs(_) }
 
     // Карта покрытия с данными ресиверов:
-    val staticApi = new StaticHttpApi
+    val staticApi = new AdvRcvrsMapApiHttp
     val rcvrsInitAh = new RcvrMarkersInitAh(
       api     = staticApi,
       modelRW = rcvrsRw.zoomRW(_.nodesResp) { _.withNodesResp(_) }

@@ -90,6 +90,9 @@ object HttpConst {
     final def HTTPS = HTTP + "s"
     final def HTTPS_ = _coloned(HTTPS)
 
+    final def CURR_PROTO = "//"
+    final def DELIM = ":" + CURR_PROTO
+
   }
 
 }

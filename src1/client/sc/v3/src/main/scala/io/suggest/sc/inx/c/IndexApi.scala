@@ -1,12 +1,13 @@
 package io.suggest.sc.inx.c
 
+import io.suggest.routes.scRoutes
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.resp.MSc3Resp
-import io.suggest.sc.router.routes
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import play.api.libs.json.Json
+import io.suggest.routes.JsRoutes_ScControllers._
 
 import scala.concurrent.Future
 
@@ -34,7 +35,7 @@ trait IndexApiXhrImpl extends IIndexApi {
   override def getIndex(args: MScIndexArgs): Future[MSc3Resp] = {
     val argsPj = Json.toJsObject( args )
     val argsJsDict = PlayJsonSjsUtil.toNativeJsonObj( argsPj )
-    val route = routes.controllers.Sc.index( argsJsDict )
+    val route = scRoutes.controllers.Sc.index( argsJsDict )
     for {
       respJsonText <- Xhr.requestJsonText( route )
     } yield {

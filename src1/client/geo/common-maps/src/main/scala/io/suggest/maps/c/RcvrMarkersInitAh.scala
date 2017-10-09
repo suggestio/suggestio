@@ -2,9 +2,9 @@ package io.suggest.maps.c
 
 import diode._
 import diode.data.Pot
-import io.suggest.lk.router.IStaticApi
 import io.suggest.maps.m.{InstallRcvrMarkers, RcvrMarkersInit}
 import io.suggest.maps.nodes.MGeoNodesResp
+import io.suggest.routes.IAdvRcvrsMapApi
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 
@@ -17,7 +17,7 @@ import scala.util.Success
   * Description: Diode action handler для инициализации карты ресиверов.
   */
 class RcvrMarkersInitAh[M](
-                            api       : IStaticApi,
+                            api       : IAdvRcvrsMapApi,
                             modelRW   : ModelRW[M, Pot[MGeoNodesResp]]
                           )
   extends ActionHandler(modelRW)

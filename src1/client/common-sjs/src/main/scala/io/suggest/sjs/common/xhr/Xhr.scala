@@ -71,12 +71,11 @@ object Xhr extends Log {
 
   /** Флаг предпочтения https над http при сборки абсолютных ссылок. */
   lazy val PREFER_SECURE_URLS: Boolean = {
-    val r = myHttpProto.fold(true) { proto =>
+    myHttpProto.fold(true) { proto =>
       // Обычно протокол описан как "http:" или "https:". Поэтому просто проверяем наличие буквы s в строке.
       proto.contains("s")
     }
-    println("Xhr.secure = " + r)    // Нельзя тут LOG, иначе будет StackOverflowError во время инициализации RME-логгера.
-    r
+    //println("Xhr.secure = " + r)    // Нельзя тут LOG, иначе будет StackOverflowError во время инициализации RME-логгера.
   }
 
 

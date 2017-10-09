@@ -1,5 +1,6 @@
 package io.suggest.ad.edit.m
 
+import io.suggest.ctx.ICtxIdStrOpt
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -40,3 +41,7 @@ case class MAdEditFormConf(
                             adId        : Option[String],
                             srvCtxId    : String
                           )
+  extends ICtxIdStrOpt
+{
+  override def ctxIdOpt = Some(srvCtxId)
+}

@@ -1,8 +1,9 @@
 package io.suggest.sc.sjs.m.msrv.tile
 
-import io.suggest.sc.router.routes
+import io.suggest.routes.scRoutes
 import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.routes.JsRoutes_ScControllers._
 
 import scala.concurrent.Future
 
@@ -20,7 +21,7 @@ object MFindAdsTile {
    * @return Фьючерс с результатом запроса.
    */
   def findAds(adSearch: MFindAdsReq): Future[MScRespAdsTile] = {
-    val route = routes.controllers.Sc.findAds( adSearch.toJson )
+    val route = scRoutes.controllers.Sc.findAds( adSearch.toJson )
 
     for {
       mResp <- MSrv.doRequest(route)

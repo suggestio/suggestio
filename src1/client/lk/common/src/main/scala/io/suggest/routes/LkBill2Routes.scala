@@ -1,8 +1,9 @@
-package io.suggest.lk.router
+package io.suggest.routes
 
 import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.sjs.common.model.Route
 import io.suggest.sjs.common.xhr.Xhr
+import JsRoutes_LkControllers._
 
 import scala.concurrent.Future
 import scala.scalajs.js
@@ -36,7 +37,7 @@ trait ILkBill2NodeAdvInfoApi {
 trait LkBill2NodeAdvInfoHttpApiImpl extends ILkBill2NodeAdvInfoApi {
 
   protected[this] def _nodeAdvInfoRoute(nodeId: String): Route = {
-    jsRoutes.controllers.LkBill2.nodeAdvInfo( nodeId = nodeId )
+    routes.controllers.LkBill2.nodeAdvInfo( nodeId = nodeId )
   }
 
   override def nodeAdvInfo(nodeId: String): Future[MNodeAdvInfo] = {

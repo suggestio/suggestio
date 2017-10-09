@@ -3,8 +3,8 @@ package io.suggest.lk.adn.map.u
 import io.suggest.adn.mapf.MLamForm
 import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.bill.MGetPriceResp
-import io.suggest.lk.router.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, jsRoutes}
 import io.suggest.pick.PickleUtil
+import io.suggest.routes.{ILkBill2NodeAdvInfoApi, LkBill2NodeAdvInfoHttpApiImpl, routes}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.geo.json.GjFeature
 import io.suggest.sjs.common.xhr.Xhr
@@ -48,7 +48,7 @@ class LkAdnMapApiHttpImpl
   override def getPriceSubmit(nodeId: String, mForm: MLamForm): Future[MGetPriceResp] = {
     Xhr.unBooPickleResp[MGetPriceResp](
       Xhr.requestBinary(
-        route = jsRoutes.controllers.LkAdnMap.getPriceSubmit(nodeId),
+        route = routes.controllers.LkAdnMap.getPriceSubmit(nodeId),
         body  = PickleUtil.pickle( mForm )
       )
     )
@@ -59,7 +59,7 @@ class LkAdnMapApiHttpImpl
     for {
       xhr <- Xhr.successIf200 {
         Xhr.sendBinary(
-          route     = jsRoutes.controllers.LkAdnMap.forNodeSubmit(nodeId),
+          route     = routes.controllers.LkAdnMap.forNodeSubmit(nodeId),
           body      = PickleUtil.pickle( mForm ),
           respType  = Xhr.RespTypes.ANY
         )
@@ -71,14 +71,14 @@ class LkAdnMapApiHttpImpl
 
 
   override def currentNodeGeoGj(nodeId: String): Future[js.Array[GjFeature]] = {
-    val route = jsRoutes.controllers.LkAdnMap.currentNodeGeoGj( nodeId )
+    val route = routes.controllers.LkAdnMap.currentNodeGeoGj( nodeId )
     Xhr.requestJson(route)
       .asInstanceOf[Future[js.Array[GjFeature]]]
   }
 
 
   override def currentGeoItemPopup(itemId: Double): Future[MGeoAdvExistPopupResp] = {
-    val route = jsRoutes.controllers.LkAdnMap.currentGeoItemPopup(itemId)
+    val route = routes.controllers.LkAdnMap.currentGeoItemPopup(itemId)
     Xhr.unBooPickleResp[MGeoAdvExistPopupResp] {
       Xhr.requestBinary(route)
     }

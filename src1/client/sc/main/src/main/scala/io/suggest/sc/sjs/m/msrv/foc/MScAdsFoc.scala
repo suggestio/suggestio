@@ -1,10 +1,11 @@
 package io.suggest.sc.sjs.m.msrv.foc
 
+import io.suggest.routes.scRoutes
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.router.routes
 import io.suggest.sc.sjs.m.msrv._
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.routes.JsRoutes_ScControllers._
 
 import scala.concurrent.Future
 
@@ -23,7 +24,7 @@ object MScAdsFoc {
    * @return Фьючерс с распарсенным ответом.
    */
   protected def _findJson(args: MFocAdSearch): Future[MScResp] = {
-    val route = routes.controllers.Sc.focusedAds(args.toJson)
+    val route = scRoutes.controllers.Sc.focusedAds(args.toJson)
     MSrv.doRequest(route)
   }
 

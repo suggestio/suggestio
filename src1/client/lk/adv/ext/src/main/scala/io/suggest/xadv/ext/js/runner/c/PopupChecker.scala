@@ -1,6 +1,7 @@
 package io.suggest.xadv.ext.js.runner.c
 
-import io.suggest.sjs.common.controller.{DomQuick, routes}
+import io.suggest.routes.routes
+import io.suggest.sjs.common.controller.DomQuick
 import org.scalajs.dom
 import org.scalajs.dom.raw.Window
 

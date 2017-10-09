@@ -21,6 +21,7 @@ import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.edit.srv.AdEditSrvApiHttp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
+import io.suggest.up.UploadApiHttp
 
 /**
   * Suggest.io
@@ -227,10 +228,13 @@ class LkAdEditCircuit(
     )
   }
 
+  val uploadApi = new UploadApiHttp( confRO )
+
   /** Контроллер изображений. */
   private val pictureAh = new PictureAh(
-    api     = api,
-    modelRW = mPictureAhRW
+    api         = api,
+    uploadApi   = uploadApi,
+    modelRW     = mPictureAhRW
   )
 
   private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )

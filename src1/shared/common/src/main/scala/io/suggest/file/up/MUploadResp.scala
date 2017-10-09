@@ -22,8 +22,8 @@ object MUploadResp {
 
   /** Поддержка play-json для инстансов [[MUploadResp]]. */
   implicit val MUPLOAD_RESP_FORMAT: OFormat[MUploadResp] = (
-    (__ \ "u").formatNullable[Seq[String]]
-      .inmap[Seq[String]](
+    (__ \ "u").formatNullable[List[MUploadUrlData]]
+      .inmap[List[MUploadUrlData]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
         { urls => if (urls.isEmpty) None else Some(urls) }
       ) and
@@ -50,7 +50,7 @@ object MUploadResp {
   * @param errors Список сообщений об ошибках, из-за которых продолжение не очень возможно.
   */
 case class MUploadResp(
-                        upUrls       : Seq[String]           = Nil,
+                        upUrls       : List[MUploadUrlData]  = Nil,
                         fileExist    : Option[MSrvFileInfo]  = None,
                         errors       : Seq[MMessage]         = Nil
                       )

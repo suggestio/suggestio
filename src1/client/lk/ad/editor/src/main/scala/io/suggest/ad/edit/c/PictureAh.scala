@@ -10,7 +10,7 @@ import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
 import io.suggest.file.MJsFileInfo
-import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
+import io.suggest.file.up.{MFile4UpProps, MFileUploadS, MUploadUrlData}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.img.crop.MCrop
@@ -27,6 +27,7 @@ import org.scalajs.dom.raw.URL
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.up.IUploadApi
 import io.suggest.ww._
 
 import scala.concurrent.Future
@@ -41,8 +42,9 @@ import scala.util.Success
   * Description: Контроллер управления картинками.
   */
 class PictureAh[M](
-                    api     : IAdEditSrvApi,
-                    modelRW : ModelRW[M, MPictureAh]
+                    api         : IAdEditSrvApi,
+                    uploadApi   : IUploadApi,
+                    modelRW     : ModelRW[M, MPictureAh]
                   )
   extends ActionHandler(modelRW)
   with Log
@@ -317,11 +319,11 @@ class PictureAh[M](
         noChange
       } { edge0 =>
         m.tryRes.fold(
+          // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
           {ex =>
-            // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
-            val fileJsOpt2 = edge0.fileJs.map { fileJs0 =>
+            val fileJsOpt2 = for (fileJs0 <- edge0.fileJs) yield {
               fileJs0.withUpload(
-                fileJs0.upload.map { upload0 =>
+                for (upload0 <- fileJs0.upload) yield {
                   upload0
                     .withXhr(None)
                     .withPrepareReq( upload0.prepareReq.fail(ex) )
@@ -339,14 +341,28 @@ class PictureAh[M](
               ))
             updated(v2)
           },
+          // Сервер вернул читабельный ответ. Разобраться что там в ответе:
           {resp =>
-            resp.upUrls.headOption
-              .map { firstUrl =>
-                // Инициировать непосредственную заливку файла.
+            if (resp.upUrls.nonEmpty) {
+              edge0.fileJs.fold {
+                LOG.error( ErrorMsgs.FILE_MISSING_EXPECTED, msg = edge0 )
+                noChange
+              } { fileJs =>
+                // Есть ссылка для заливки файла. Перейти к процессу заливания.
+                def __tryUpload(upData: MUploadUrlData, rest: List[MUploadUrlData]): Future[_] = {
+                  val upRespFut = uploadApi.doFileUpload(upData, fileJs)
+                  // Одновременно наладить связь с хостом через websocket для опознания цвета картинки:
+                  ???
+                }
+
+                ???
               }
-            // TODO Три варианта осталось: есть url для заливки | найден уже существующий файл | какая-то ошибка с данными файла.
-            LOG.error("TODO", msg = m)
-            noChange
+
+            } else if (resp.fileExist.nonEmpty) {
+              ???
+            } else {
+              ???
+            }
           }
         )
 

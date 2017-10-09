@@ -1,7 +1,7 @@
 package io.suggest.sc.root.m
 
+import io.suggest.routes.scRoutes
 import io.suggest.sc.resp.MSc3Resp
-import io.suggest.sc.router.routes
 import io.suggest.sjs.common.spa.DAction
 
 import scala.util.Try
@@ -17,7 +17,7 @@ import scala.util.Try
 sealed trait IScRootAction extends DAction
 
 /** Сигнал основной цепочке о состоянии основного js-роутера. */
-case class JsRouterStatus( payload: Try[routes.type] ) extends IScRootAction
+case class JsRouterStatus( payload: Try[scRoutes.type] ) extends IScRootAction
 
 /** Получен какой-то ответ сервера. */
 case class HandleScResp( reqTimestamp: Long, tryResp: Try[MSc3Resp] ) extends IScRootAction
