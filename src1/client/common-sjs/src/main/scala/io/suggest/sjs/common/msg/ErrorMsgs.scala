@@ -155,4 +155,12 @@ object ErrorMsgs extends MsgsStaticT {
 
   def FILE_MISSING_EXPECTED            = E(70)
 
+  def SHOULD_NEVER_HAPPEN              = E(71)
+
+  def WEB_SOCKET_OPEN_FAILED           = E(72)
+
+  def CONNECTION_ERROR                 = E(73)
+
+  def CALLBACK_FUNCTION_FAILED         = E(74)
+
 }

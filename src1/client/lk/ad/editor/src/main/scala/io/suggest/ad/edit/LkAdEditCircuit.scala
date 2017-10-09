@@ -2,7 +2,7 @@ package io.suggest.ad.edit
 
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
-import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, MDocS}
+import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit, MAeRoot, MDocS}
 import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
 import io.suggest.primo.id.IId
@@ -18,10 +18,11 @@ import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
-import io.suggest.ad.edit.srv.AdEditSrvApiHttp
+import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
+import com.softwaremill.macwire._
 
 /**
   * Suggest.io
@@ -84,9 +85,11 @@ class LkAdEditCircuit(
   /** Используется извне, в init например. */
   val rootRO: ModelRO[MAeRoot] = rootRW
 
-  val confRO = zoom(_.conf)
+  private val confRO = zoom(_.conf)
 
-  val api = new AdEditSrvApiHttp( confRO )
+  private val uploadApi = wire[UploadApiHttp[MAdEditFormConf]]
+
+  private val api = wire[LkAdEditApiHttp]
 
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
@@ -228,18 +231,12 @@ class LkAdEditCircuit(
     )
   }
 
-  val uploadApi = new UploadApiHttp( confRO )
-
   /** Контроллер изображений. */
-  private val pictureAh = new PictureAh(
-    api         = api,
-    uploadApi   = uploadApi,
-    modelRW     = mPictureAhRW
-  )
+  private val pictureAh = wire[PictureAh[MAeRoot]]
 
-  private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
+  private val stripBgColorPickAfterAh = wire[ColorPickAfterStripAh[MAeRoot]]
 
-  private val tailAh = new TailAh( rootRW )
+  private val tailAh = wire[TailAh[MAeRoot]]
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {

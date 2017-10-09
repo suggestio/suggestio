@@ -32,4 +32,6 @@ object UnivEqUtil {
 
   @inline implicit def throwableUe        : UnivEq[Throwable]       = UnivEq.force
 
+  @inline implicit def fun1Ue[T, R]       : UnivEq[(T) => R]        = UnivEq.force
+
 }

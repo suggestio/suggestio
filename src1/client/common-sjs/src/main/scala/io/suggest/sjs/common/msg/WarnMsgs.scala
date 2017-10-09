@@ -136,4 +136,9 @@ object WarnMsgs extends MsgsStaticT {
   /** Файл (изображение) потерялось куда-то в ходе блобификации. */
   def SOURCE_FILE_NOT_FOUND_AFTER_BLOBBING   = E(56)
 
+  /** Не удаётся закрыть файл/коннекшен/что-то. */
+  def CANNOT_CLOSE_SOMETHING                 = E(57)
+
+  def UNKNOWN_CONNECTION                     = E(58)
+
 }

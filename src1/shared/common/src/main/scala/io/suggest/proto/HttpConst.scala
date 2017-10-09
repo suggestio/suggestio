@@ -87,11 +87,20 @@ object HttpConst {
     final def HTTP = "http"
     final def HTTP_ = _coloned(HTTP)
 
-    final def HTTPS = HTTP + "s"
+    final def SECURE_SUFFIX = "s"
+
+    final def HTTPS = HTTP + SECURE_SUFFIX
     final def HTTPS_ = _coloned(HTTPS)
 
+    def httpOrHttps(secure: Boolean): String = if (secure) HTTPS else HTTP
+
     final def CURR_PROTO = "//"
-    final def DELIM = ":" + CURR_PROTO
+    final def DELIM = HtmlConstants.COLON + CURR_PROTO
+
+    final def WS = "ws"
+    final def WSS = WS + SECURE_SUFFIX
+
+    def wsOrWss(secure: Boolean): String = if (secure) WSS else WS
 
   }
 

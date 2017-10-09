@@ -5,12 +5,12 @@ import diode._
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
-import io.suggest.ad.edit.srv.IAdEditSrvApi
+import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
 import io.suggest.file.MJsFileInfo
-import io.suggest.file.up.{MFile4UpProps, MFileUploadS, MUploadUrlData}
+import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.img.crop.MCrop
@@ -28,6 +28,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
+import io.suggest.url.MHostUrl
+import io.suggest.ws.pool.m.WsEnsureConn
 import io.suggest.ww._
 
 import scala.concurrent.Future
@@ -42,7 +44,7 @@ import scala.util.Success
   * Description: Контроллер управления картинками.
   */
 class PictureAh[M](
-                    api         : IAdEditSrvApi,
+                    api         : ILkAdEditApi,
                     uploadApi   : IUploadApi,
                     modelRW     : ModelRW[M, MPictureAh]
                   )
@@ -331,7 +333,6 @@ class PictureAh[M](
               )
             }
             val edge2 = edge0.withFileJs( fileJsOpt2 )
-            //
             val errPopup0 = v0.errorPopup.getOrElse( MErrorPopupS() )
             val v2 = v0
               .withEdges( v0.edges + (edge0.id -> edge2) )
@@ -343,26 +344,51 @@ class PictureAh[M](
           },
           // Сервер вернул читабельный ответ. Разобраться что там в ответе:
           {resp =>
-            if (resp.upUrls.nonEmpty) {
-              edge0.fileJs.fold {
-                LOG.error( ErrorMsgs.FILE_MISSING_EXPECTED, msg = edge0 )
-                noChange
-              } { fileJs =>
-                // Есть ссылка для заливки файла. Перейти к процессу заливания.
-                def __tryUpload(upData: MUploadUrlData, rest: List[MUploadUrlData]): Future[_] = {
-                  val upRespFut = uploadApi.doFileUpload(upData, fileJs)
-                  // Одновременно наладить связь с хостом через websocket для опознания цвета картинки:
+            resp.upUrls
+              .headOption
+              .map { firstUpUrl =>
+                edge0.fileJs.fold {
+                  LOG.error( ErrorMsgs.FILE_MISSING_EXPECTED, msg = edge0 )
+                  noChange
+                } { fileJs =>
+                  // Есть ссылка для заливки файла. TODO Перейти к процессу заливания.
+                  val uploadFx = /*Effect*/ {
+                    def __tryUpload(upData: MHostUrl, rest: List[MHostUrl]): Future[_] = {
+                      val upRespFut = uploadApi.doFileUpload(upData, fileJs)
+                      ???
+                    }
+                    ???
+                  }
+
+                  // TODO Одновременно наладить связь с хостом через websocket для опознания цвета картинки:
+                  /*
+                  val wsConnFx = Effect.action {
+                    WsEnsureConn(
+                      hostUrl =
+                    )
+                  }
+                  */
+
                   ???
                 }
-
-                ???
               }
-
-            } else if (resp.fileExist.nonEmpty) {
-              ???
-            } else {
-              ???
-            }
+              // Нет ссылок для аплоада. Проверить fileExists-поле:
+              .orElse {
+                for (fe <- resp.fileExist) yield {
+                  // Файл уже залит на сервере. Это нормально.
+                  ???
+                }
+              }
+              .orElse {
+                for (firstError <- resp.errors.headOption) yield {
+                  ???
+                }
+              }
+              // Некорректный ответ сервера или некорректный код разбора в этом контроллере.
+              .getOrElse {
+                LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = resp )
+                noChange
+              }
           }
         )
 

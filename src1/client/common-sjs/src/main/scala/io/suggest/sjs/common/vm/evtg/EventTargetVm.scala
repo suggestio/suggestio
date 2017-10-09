@@ -48,6 +48,15 @@ object EventTargetVm {
     }
   }
 
+
+  /** AnyVal-экстеншены для EventTarget, чтобы не мутить новые vm-классы,
+    * а просто юзать scala-синтаксис без лишнего гемора. */
+  implicit class RichEventTarget(val underlying: EventTarget) extends AnyVal {
+    def addEventListener4s[T <: Event](eventType: String)(listener: (T) => _): Unit = {
+      FACADE.addEventListener(underlying, eventType, listener)
+    }
+  }
+
 }
 
 
@@ -67,7 +76,6 @@ trait EventTargetVmT extends IVm {
   }
 
 }
-
 
 
 /** Безопасный интерфейс для доступа к DOM-элементу в области вешанья событий. */

@@ -3,6 +3,7 @@ package io.suggest.file.up
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.file.MSrvFileInfo
 import io.suggest.i18n.MMessage
+import io.suggest.url.MHostUrl
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -22,8 +23,8 @@ object MUploadResp {
 
   /** Поддержка play-json для инстансов [[MUploadResp]]. */
   implicit val MUPLOAD_RESP_FORMAT: OFormat[MUploadResp] = (
-    (__ \ "u").formatNullable[List[MUploadUrlData]]
-      .inmap[List[MUploadUrlData]](
+    (__ \ "u").formatNullable[List[MHostUrl]]
+      .inmap[List[MHostUrl]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
         { urls => if (urls.isEmpty) None else Some(urls) }
       ) and
@@ -50,7 +51,7 @@ object MUploadResp {
   * @param errors Список сообщений об ошибках, из-за которых продолжение не очень возможно.
   */
 case class MUploadResp(
-                        upUrls       : List[MUploadUrlData]  = Nil,
+                        upUrls       : List[MHostUrl]  = Nil,
                         fileExist    : Option[MSrvFileInfo]  = None,
                         errors       : Seq[MMessage]         = Nil
                       )

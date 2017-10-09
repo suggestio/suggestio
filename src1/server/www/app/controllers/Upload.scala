@@ -10,7 +10,7 @@ import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.es.model.IMust
 import io.suggest.file.MSrvFileInfo
-import io.suggest.file.up.{MFile4UpProps, MUploadResp, MUploadUrlData}
+import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.fio.WriteRequest
 import io.suggest.i18n.MMessage
 import io.suggest.js.UploadConstants
@@ -26,6 +26,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.svg.SvgUtil
 import io.suggest.swfs.client.proto.fid.Fid
+import io.suggest.url.MHostUrl
 import models.im.{MImg3, MLocalImg, MLocalImgs}
 import models.mproj.ICommonDi
 import models.mup.{MUploadFileHandler, MUploadFileHandlers, MUploadTargetQs}
@@ -160,7 +161,7 @@ class Upload @Inject()(
                   upUrls = for (host <- hostnames) yield {
                     // TODO В будущем нужно возвращать только хост и аргументы, а клиент пусть сам через js-роутер ссылку собирает.
                     // TODO Для этого нужно MUploadTargetQs сделать JSON-моделью с отдельным полем сигнатуры.
-                    MUploadUrlData(
+                    MHostUrl(
                       host = host,
                       relUrl = relUrl
                     )
