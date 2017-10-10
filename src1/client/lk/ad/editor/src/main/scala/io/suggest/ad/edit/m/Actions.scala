@@ -7,6 +7,7 @@ import io.suggest.common.MHand
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
+import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.MUploadResp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.sjs.common.spa.DAction
@@ -105,3 +106,6 @@ case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Tr
 
 /** Завершён запрос подготовки сервера к аплоаду файла. */
 case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkEditAction
+/** Завершён запрос заливки файла на сервер. */
+case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkEditAction
+// TODO Объеденить оба case class'а?

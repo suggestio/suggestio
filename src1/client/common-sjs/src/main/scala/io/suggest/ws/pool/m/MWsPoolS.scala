@@ -13,6 +13,8 @@ import japgolly.univeq.UnivEq
   */
 object MWsPoolS {
 
+  def empty = apply()
+
   /** Поддержка FastEq для инстансов [[MWsPoolS]]. */
   implicit object MWsPoolSFastEq extends FastEq[MWsPoolS] {
     override def eqv(a: MWsPoolS, b: MWsPoolS): Boolean = {

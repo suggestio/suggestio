@@ -1,12 +1,12 @@
 package io.suggest.sjs.common.view
 
+import io.suggest.common.event.DomEvents
+import io.suggest.proto.HttpConst
 import org.scalajs.dom
-import org.scalajs.dom.{WebSocket, Document}
-import org.scalajs.dom.raw.{HTMLBodyElement, HTMLHeadElement, HTMLElement}
+import org.scalajs.dom.WebSocket
 import org.scalajs.jquery._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 
 /**
  * Suggest.io
@@ -26,7 +26,7 @@ object CommonPage {
   /** Запустить переданный код при закрытии/обновлении страницы. */
   def onClose(f: () => _): Unit = {
     jQuery(dom.window)
-      .on("beforeunload", f: js.Function0[_])
+      .on(DomEvents.BEFORE_UNLOAD, f: js.Function0[_])
   }
 
 
@@ -40,7 +40,7 @@ object CommonPage {
     * @see [[http://stackoverflow.com/q/414809]]
     */
   def isSecure: Boolean = {
-    dom.document.location.protocol == "https:"
+    dom.document.location.protocol == HttpConst.Proto.HTTPS_
   }
 
 }

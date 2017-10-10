@@ -2,6 +2,7 @@ package io.suggest.ad.edit.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
 import diode._
+import diode.data.Pending
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
@@ -9,7 +10,7 @@ import io.suggest.ad.edit.srv.ILkAdEditApi
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
-import io.suggest.file.MJsFileInfo
+import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
@@ -319,21 +320,19 @@ class PictureAh[M](
       _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid_t, m.blobUrl).fold {
         LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
         noChange
+
       } { edge0 =>
+        // Ожидаемый ответ. Разобраться, что там прислал сервер.
         m.tryRes.fold(
           // Ошибка выполнения запроса к серверу. Залить её в состояние для текущего файла.
           {ex =>
-            val fileJsOpt2 = for (fileJs0 <- edge0.fileJs) yield {
-              fileJs0.withUpload(
-                for (upload0 <- fileJs0.upload) yield {
-                  upload0
-                    .withXhr(None)
-                    .withPrepareReq( upload0.prepareReq.fail(ex) )
-                }
-              )
+            val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs) { upload0 =>
+              upload0
+                .withXhr(None)
+                .withPrepareReq( upload0.prepareReq.fail(ex) )
             }
             val edge2 = edge0.withFileJs( fileJsOpt2 )
-            val errPopup0 = v0.errorPopup.getOrElse( MErrorPopupS() )
+            val errPopup0 = v0.errorPopup.getOrElse( MErrorPopupS.empty )
             val v2 = v0
               .withEdges( v0.edges + (edge0.id -> edge2) )
               // Распахнуть попап с ошибкой закачки файла:
@@ -342,46 +341,85 @@ class PictureAh[M](
               ))
             updated(v2)
           },
+
           // Сервер вернул читабельный ответ. Разобраться что там в ответе:
           {resp =>
             resp.upUrls
               .headOption
               .map { firstUpUrl =>
                 edge0.fileJs.fold {
-                  LOG.error( ErrorMsgs.FILE_MISSING_EXPECTED, msg = edge0 )
+                  // Внезапно нет файла, который заказчиваются. Такое может быть только по воле юзера.
+                  LOG.warn( ErrorMsgs.EXPECTED_FILE_MISSING, msg = edge0 )
                   noChange
+
                 } { fileJs =>
                   // Есть ссылка для заливки файла. TODO Перейти к процессу заливания.
-                  val uploadFx = /*Effect*/ {
-                    def __tryUpload(upData: MHostUrl, rest: List[MHostUrl]): Future[_] = {
-                      val upRespFut = uploadApi.doFileUpload(upData, fileJs)
-                      ???
+                  val uploadFx = Effect {
+                    val upRespFut = uploadApi.doFileUpload(firstUpUrl, fileJs)
+                    // TODO Пописаться на события xhr.upload.onprogress, чтобы мониторить ход заливки.
+                    // TODO наладить связь с целевым хостом через websocket для опознания цвета картинки.
+                    //val wsFx = WsEnsureConn(
+                    //  hostUrl = upData.withRelUrl(  )
+                    //)
+                    // Завернуть ответ сервера в итоговый Action:
+                    upRespFut.transform { tryRes =>
+                      Success( UploadRes(tryRes, m.edgeUid_t, m.blobUrl) )
                     }
-                    ???
                   }
 
-                  // TODO Одновременно наладить связь с хостом через websocket для опознания цвета картинки:
-                  /*
-                  val wsConnFx = Effect.action {
-                    WsEnsureConn(
-                      hostUrl =
+                  // Залить изменения в состояние:
+                  val fileJsOpt2 = _fileJsWithUpload(edge0.fileJs) { upload0 =>
+                    upload0.copy(
+                      xhr         = None,
+                      prepareReq  = upload0.prepareReq.ready(resp),
+                      uploadReq   = upload0.uploadReq.pending()
                     )
                   }
-                  */
-
-                  ???
+                  val edge2 = edge0.withFileJs( fileJsOpt2 )
+                  val v2 = v0
+                    .withEdges( v0.edges + (edge0.id -> edge2) )
+                  updated(v2, uploadFx)
                 }
               }
               // Нет ссылок для аплоада. Проверить fileExists-поле:
               .orElse {
-                for (fe <- resp.fileExist) yield {
-                  // Файл уже залит на сервере. Это нормально.
-                  ???
+                for (_ <- resp.fileExist) yield {
+                  // Файл уже залит на сервер. Это нормально. Залить данные по файлу в состояние.
+                  val edge2 = edge0.copy(
+                    jdEdge = edge0.jdEdge
+                      .withFileSrv( resp.fileExist ),
+                    fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
+                      upload0
+                        .withXhr(None)
+                        .withPrepareReq(
+                          upload0.prepareReq.ready(resp)
+                        )
+                    }
+                  )
+                  val v2 = v0.withEdges(
+                    v0.edges.updated(edge2.id, edge2)
+                  )
+                  updated(v2)
                 }
               }
+              // Есть проблемы с принятием такого файла: его нельзя отправить на сервер.
+              // Возможно, великоват или MIME не поддерживается. Сообщить юзеру, чтобы подобное больше не предлагал.
               .orElse {
-                for (firstError <- resp.errors.headOption) yield {
-                  ???
+                for (_ <- resp.errors.headOption) yield {
+                  val v2 = v0.copy(
+                    // Удалить эдж текущего файла.
+                    edges = v0.edges - edge0.id,
+                    selectedTag = for (selJdt <- v0.selectedTag) yield {
+                      selJdt.withProps1(
+                        selJdt
+                          .props1
+                          .withBgImg(None)
+                      )
+                    },
+                    // Вывести попап с ошибками, присланными сервером:
+                    errorPopup = _errorPopupWithMessages( v0.errorPopup, resp.errors )
+                  )
+                  updated(v2)
                 }
               }
               // Некорректный ответ сервера или некорректный код разбора в этом контроллере.
@@ -392,6 +430,72 @@ class PictureAh[M](
           }
         )
 
+      }
+
+
+    // Выполнен аплоад на сервер. Пришёл результат выполнения запроса.
+    case m: UploadRes =>
+      val v0 = value
+      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid_t, m.blobUrl).fold {
+        LOG.log( WarnMsgs.SRV_RESP_INACTUAL_ANYMORE, msg = m )
+        noChange
+
+      } { edge0 =>
+        m.tryRes.fold(
+          // Ошибка выполнения upload'а.
+          {ex =>
+            val edge2 = edge0.withFileJs(
+              _fileJsWithUpload(edge0.fileJs) { upload0 =>
+                upload0.copy(
+                  xhr       = None,
+                  uploadReq = upload0.uploadReq.fail(ex),
+                  progress  = None
+                )
+              }
+            )
+            val v2 = v0.withEdges(
+              v0.edges.updated(edge2.id, edge2)
+            )
+            updated( v2 )
+          },
+          // Сервер ответил что-то внятное. Осталось понять, что именно:
+          {resp =>
+            resp.fileExist
+              .map { _ =>
+                // Файл успешно залит на сервер. Сервер присылает только базовые данные по загруженному файлу, надо не забывать это.
+                // Сохранить это в состояние:
+                val edge2 = edge0.copy(
+                  jdEdge = edge0.jdEdge
+                    .withFileSrv( resp.fileExist ),
+                  fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
+                    upload0.copy(
+                      xhr       = None,
+                      uploadReq = upload0.uploadReq.ready(resp),
+                      progress  = None
+                    )
+                  }
+                )
+                val v2 = v0.withEdges(
+                  v0.edges.updated(edge2.id, edge2)
+                )
+                updated(v2)
+              }
+              // Возможно, что-то пошло на сервере не так. Нужно отрендерить .errors:
+              .orElse {
+                for (_ <- resp.errors.headOption) yield {
+                  val v2 = v0
+                    .withErrorPopup(
+                      _errorPopupWithMessages( v0.errorPopup, resp.errors )
+                    )
+                  updated(v2)
+                }
+              }
+              .getOrElse {
+                LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = m)
+                noChange
+              }
+          }
+        )
       }
 
 
@@ -662,6 +766,25 @@ class PictureAh[M](
           .valuesIterator
           .find(blobUrlFilterF)
       }
+  }
+
+
+  private def _errorPopupWithMessages(errorPopupOpt0: Option[MErrorPopupS], messages: TraversableOnce[MMessage]): Some[MErrorPopupS] = {
+    val ep0 = errorPopupOpt0.getOrElse( MErrorPopupS.empty )
+    val ep2 = ep0.withMessages(
+      ep0.messages ++ messages
+    )
+    Some(ep2)
+  }
+
+
+  private def _fileJsWithUpload(fileJsOpt0: Option[MJsFileInfo])(f: MFileUploadS => MFileUploadS): Option[MJsFileInfo] = {
+    for (fileJs0 <- fileJsOpt0) yield {
+      fileJs0.withUpload(
+        fileJs0.upload
+          .map(f)
+      )
+    }
   }
 
 }

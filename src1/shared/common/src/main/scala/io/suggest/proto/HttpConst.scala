@@ -21,6 +21,7 @@ object HttpConst {
     final def CONTENT_TYPE          = Words.Content_ + "Type"
     final def CONTENT_LENGHT        = Words.Content_ + "Lenght"
     final def CONNECTION            = "Connection"
+    final def BOUNDARY              = "Boundary"
   }
 
 

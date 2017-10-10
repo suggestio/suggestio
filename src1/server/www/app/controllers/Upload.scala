@@ -573,7 +573,7 @@ class Upload @Inject()(
           LOGGER.info(s"$logPrefix File storage: saved ok. r => $saveFileToShardRes")
 
           // Вернуть 200 Ok с данными по файлу
-          val resp = MSrvFileInfo(
+          val srvFileInfo = MSrvFileInfo(
             nodeId    = mnodeId,
             url       = if (isImg) {
               "TODO.need.good.abs.img.link"
@@ -586,6 +586,9 @@ class Upload @Inject()(
             name      = None,
             mimeType  = None,
             hashesHex = Map.empty
+          )
+          val resp = MUploadResp(
+            fileExist = Some(srvFileInfo)
           )
           Ok( Json.toJson(resp) )
         }

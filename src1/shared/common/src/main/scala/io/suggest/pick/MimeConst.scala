@@ -35,6 +35,8 @@ object MimeConst {
   final def TEXT_HTML                   = Words.TEXT_ + "html"
   final def TEXT_PLAIN                  = Words.TEXT_ + "plain"
   final def APPLICATION_OCTET_STREAM    = Words.APPLICATION_ + "octet-stream"
+
+  // !!! Если выставлять это в запросы вручную, то надо не зыбывать обязательный "; boundary=..."
   final def MULTIPART_FORM_DATA         = Words.MULTIPART + Words.DELIM1 + Words.FORM + "-" + Words.DATA
 
 

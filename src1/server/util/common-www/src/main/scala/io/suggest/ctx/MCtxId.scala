@@ -84,17 +84,15 @@ case class MCtxId private[ctx](
                                 key  : String,
                                 sig  : String
                               ) {
-  override def toString = MCtxId.intoString( this )
+
+  override def toString: String = {
+    MCtxId.intoString( this )
+  }
+
 }
 
 
 object MCtxId extends MacroLogsImplLazy {
-
-  object QsFields {
-    def KEY_FN = "k"
-    def SIG_FN = "s"
-  }
-
 
   private def TO_STRING_SEP = "."
 
@@ -130,43 +128,34 @@ object MCtxId extends MacroLogsImplLazy {
     new QueryStringBindableImpl[MCtxId] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MCtxId]] = {
-        val k = key1F( key )
-        val F = QsFields
-        for {
-          keyE <- strB.bind( k(F.KEY_FN), params )
-          sigE <- strB.bind( k(F.SIG_FN), params )
-        } yield {
-          for {
-            key <- keyE.right
-            sig <- sigE.right
-          } yield {
-            MCtxId(
-              key = key,
-              sig = sig
+        for (ctxIdStrE <- strB.bind(key, params)) yield {
+          ctxIdStrE.right.flatMap { ctxStr =>
+            _fromStringOpt2eith(
+              fromString(ctxStr)
             )
           }
         }
       }
 
       override def unbind(key: String, value: MCtxId): String = {
-        val k = key1F( key )
-        val F = QsFields
-        _mergeUnbinded1(
-          strB.unbind( k(F.KEY_FN), value.key ),
-          strB.unbind( k(F.SIG_FN), value.sig )
-        )
+        strB.unbind(key, intoString(value))
       }
 
     }
   }
 
+  private def _fromStringOpt2eith( fromStringRes: Option[MCtxId] ) = {
+    fromStringRes
+      .toRight("e.ctxid.fromString")
+  }
 
   /** Поддержка биндинга значения из URL path. */
   implicit def mCtxIdPathBindable(implicit strB: PathBindable[String]): PathBindable[MCtxId] = {
     new PathBindableImpl[MCtxId] {
       override def bind(key: String, value: String): Either[String, MCtxId] = {
-        fromString(value)
-          .toRight("e.ctxid.fromString")
+        _fromStringOpt2eith {
+          fromString(value)
+        }
       }
 
       override def unbind(key: String, value: MCtxId): String = {

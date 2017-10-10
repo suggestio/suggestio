@@ -13,6 +13,8 @@ import japgolly.univeq.UnivEq
   */
 object MErrorPopupS {
 
+  def empty = apply()
+
   /** Поддержка FastEq для [[MErrorPopupS]]. */
   implicit object MErrorPopupSFastEq extends FastEq[MErrorPopupS] {
     override def eqv(a: MErrorPopupS, b: MErrorPopupS): Boolean = {

@@ -51,7 +51,7 @@ object MUploadResp {
   * @param errors Список сообщений об ошибках, из-за которых продолжение не очень возможно.
   */
 case class MUploadResp(
-                        upUrls       : List[MHostUrl]  = Nil,
+                        upUrls       : List[MHostUrl]        = Nil,
                         fileExist    : Option[MSrvFileInfo]  = None,
                         errors       : Seq[MMessage]         = Nil
                       )

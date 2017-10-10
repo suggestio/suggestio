@@ -3,6 +3,7 @@ package io.suggest.ad.edit.m
 import diode.FastEq
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ws.pool.m.MWsPoolS
 import japgolly.univeq.UnivEq
 
 /**
@@ -35,13 +36,15 @@ object MAeRoot {
 case class MAeRoot(
                     conf        : MAdEditFormConf,
                     doc         : MDocS,
-                    popups      : MAePopupsS        = MAePopupsS.empty
+                    popups      : MAePopupsS        = MAePopupsS.empty,
+                    wsPool      : MWsPoolS          = MWsPoolS.empty
                   ) {
 
   /** Экспорт данных формы. */
   def toForm: MAdEditForm = ???
 
-  def withDoc(doc: MDocS) = copy(doc = doc)
-  def withPopups(popups: MAePopupsS) = copy(popups = popups)
+  def withDoc(doc: MDocS)               = copy(doc = doc)
+  def withPopups(popups: MAePopupsS)    = copy(popups = popups)
+  def withWsPool(wsPool: MWsPoolS)      = copy(wsPool = wsPool)
 
 }

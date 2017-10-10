@@ -188,8 +188,8 @@ GET  /captcha/get/:captchaId            @controllers.Captcha.getCaptcha(captchaI
 GET  /captcha/digital/:captchaId        @controllers.Captcha.getDigitalCaptcha(captchaId, cp: String)
 
 ## Upload controller
-## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено в UploadApi.
-POST /up/file/do                        @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs, c: Option[io.suggest.ctx.MCtxId] ?= None)
+## TODO Запилить поддержку подписанных JSON-моделей в jsRoutes. Название параметра "c" пока захардкожено на клиенте в UploadApi.
+POST /upload/file                       @controllers.Upload.doFileUpload(u: mup.MUploadTargetQs, c: Option[io.suggest.ctx.MCtxId] ?= None)
 
 
 ## sys

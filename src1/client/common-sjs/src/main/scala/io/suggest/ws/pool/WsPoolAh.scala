@@ -11,10 +11,11 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.xhr.Xhr
 import io.suggest.ws.pool.m._
-import org.scalajs.dom.{CloseEvent, ErrorEvent, MessageEvent}
+import org.scalajs.dom.{CloseEvent, ErrorEvent, Event, MessageEvent}
 import org.scalajs.dom.raw.WebSocket
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
 import io.suggest.url.MHostUrl
+import org.scalajs.dom
 
 import scala.concurrent.Future
 
@@ -32,6 +33,14 @@ class WsPoolAh[M](
   extends ActionHandler(modelRW)
   with Log
 {
+
+  /** Подписаться на глобальные события. Вызывается из circuita только один раз. */
+  def initGlobalEvents(): Unit = {
+    dom.window.addEventListener4s( DomEvents.BEFORE_UNLOAD ) { _: Event =>
+      dispatcher( WsCloseAll )
+    }
+  }
+
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -69,7 +78,7 @@ class WsPoolAh[M](
 
           // Подписаться на сообщения из сокета.
           ws.addEventListener4s(DomEvents.MESSAGE) { e: MessageEvent =>
-            dispatcher(WsMsg(key, e.data))
+            dispatcher( WsMsg(key, e.data) )
           }
 
           // Желательно узнать о незапланированном закрытии сокета.
@@ -162,7 +171,7 @@ class WsPoolAh[M](
         updated(v2)
       }
 
-    // Команда к закрытию всех коннекшенов. Полезно при закрытии/уходе с текущей страницы браузера.
+    // Команда к закрытию всех коннекшенов. Полезно при закрытии/уходе с текущей страницы браузера (window beforeunload).
     case WsCloseAll =>
       val v0 = value
       v0.conns

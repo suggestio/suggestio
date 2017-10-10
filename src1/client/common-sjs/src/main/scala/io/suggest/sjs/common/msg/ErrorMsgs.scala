@@ -153,7 +153,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def FILE_CLEANUP_FAIL                = E(69)
 
-  def FILE_MISSING_EXPECTED            = E(70)
+  def EXPECTED_FILE_MISSING            = E(70)
 
   def SHOULD_NEVER_HAPPEN              = E(71)
 

@@ -3,7 +3,7 @@ package io.suggest.up
 import diode.ModelRO
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.ctx.ICtxIdStrOpt
-import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
+import io.suggest.file.MJsFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
 import io.suggest.js.UploadConstants
 import io.suggest.pick.MimeConst
@@ -40,7 +40,7 @@ trait IUploadApi {
     * @param file Данные по файлу.
     * @return Фьючерс с ответом сервера.
     */
-  def doFileUpload(upData: MHostUrl, file: MJsFileInfo): Future[MSrvFileInfo]
+  def doFileUpload(upData: MHostUrl, file: MJsFileInfo): Future[MUploadResp]
 
 }
 
@@ -87,10 +87,10 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
   }
 
 
-  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo): Future[MSrvFileInfo] = {
+  override def doFileUpload(upData: MHostUrl, file: MJsFileInfo): Future[MUploadResp] = {
     // Отправить как обычно, т.е. через multipart/form-data:
-    val fd = new FormData()
-    fd.append(
+    val formData = new FormData()
+    formData.append(
       name      = UploadConstants.MPART_FILE_FN,
       value     = file.blob,
       // TODO orNull: Может быть надо undefined вместо null?
@@ -104,17 +104,16 @@ class UploadApiHttp[Conf <: ICtxIdStrOpt]( confRO: ModelRO[Conf] ) extends IUplo
         // TODO Здесь дописывается &c=ctxId в хвост ссылки. А надо организовать сборку URL через jsRoutes. Для этого надо вместо ссылки брать подписанную JS-модель.
         url     = "//" + upData.host + upData.relUrl + confRO.value.ctxIdOpt.fold(""){ ctxId => "&c=" + ctxId },
         headers = Seq(
-          HttpConst.Headers.ACCEPT        -> MimeConst.APPLICATION_JSON,
-          HttpConst.Headers.CONTENT_TYPE  -> MimeConst.MULTIPART_FORM_DATA
+          HttpConst.Headers.ACCEPT        -> MimeConst.APPLICATION_JSON
         ),
-        body    = fd
+        body    = formData
       )
 
     } yield {
       // Ответ сервера надо бы распарсить.
       Json
         .parse( xhr.responseText )
-        .as[MSrvFileInfo]
+        .as[MUploadResp]
     }
   }
 

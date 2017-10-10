@@ -35,6 +35,7 @@ trait FileHashSearch extends DynSearchArgs {
       val F = MMediaFields.FileMeta
       val hashesTypeFn = F.HASHES_TYPE_FN
       val hashesValueFn = F.HASHES_VALUE_FN
+      val nestedPath = F.HASHES_FN
 
       val crQbsIter = for (cr <- fhhIter) yield {
         // Сборка одной query по одному критерию (внутри nested).
@@ -52,9 +53,11 @@ trait FileHashSearch extends DynSearchArgs {
           )
         }
 
+        val qbNest = QueryBuilders.nestedQuery( nestedPath, qb, ScoreMode.Max )
+
         MWrapClause(
           must          = cr.must,
-          queryBuilder  = qb
+          queryBuilder  = qbNest
         )
       }
       val crQbs = crQbsIter.toSeq
@@ -62,16 +65,13 @@ trait FileHashSearch extends DynSearchArgs {
       // Объеденить все qb как must.
       val allCrsQb = IMust.maybeWrapToBool( crQbs )
 
-      // Завернуть в nested query
-      val allCrsNestedQb = QueryBuilders.nestedQuery( F.HASHES_FN, allCrsQb, ScoreMode.Max )
-
       // Сборка итоговой query
       qbOpt0.map { qb0 =>
         QueryBuilders.boolQuery()
           .must( qb0 )
-          .must( allCrsNestedQb )
+          .must( allCrsQb )
       }.orElse {
-        Some( allCrsNestedQb )
+        Some( allCrsQb )
       }
     }
   }

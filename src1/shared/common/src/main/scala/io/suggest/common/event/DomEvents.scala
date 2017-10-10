@@ -22,4 +22,9 @@ object DomEvents
 
   def ERROR = "error"
 
+  private def BEFORE = "before"
+  private def UNLOAD = "unload"
+
+  def BEFORE_UNLOAD = BEFORE + UNLOAD
+
 }

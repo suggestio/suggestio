@@ -23,6 +23,7 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import com.softwaremill.macwire._
+import io.suggest.ws.pool.WsPoolAh
 
 /**
   * Suggest.io
@@ -94,6 +95,8 @@ class LkAdEditCircuit(
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
   private val docAh = docEditAhFactory( mDocSRw )
+
+  private val wsPoolRW = zoomRW(_.wsPool) { _.withWsPool(_) }
 
 
   /** Сборка RW-зума до опционального инстанса MColorPick.
@@ -236,12 +239,15 @@ class LkAdEditCircuit(
 
   private val stripBgColorPickAfterAh = wire[ColorPickAfterStripAh[MAeRoot]]
 
+  private val wsPoolAh = new WsPoolAh( wsPoolRW, this )
+
   private val tailAh = wire[TailAh[MAeRoot]]
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
     var acc = List[HandlerFunction](
+      wsPoolAh,
       tailAh
     )
 
@@ -257,11 +263,11 @@ class LkAdEditCircuit(
       }
     }
 
-    // В голове -- обработчик всех основных операций на документом.
-    acc ::= docAh
-
     // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
     acc ::= pictureAh
+
+    // В голове -- обработчик всех основных операций на документом.
+    acc ::= docAh
 
     // Навешиваем параллельные handler'ы.
     foldHandlers(
@@ -269,5 +275,9 @@ class LkAdEditCircuit(
       stripBgColorPickAfterAh
     )
   }
+
+
+  // Финальные действа: подписаться на события, так желаемые контроллерами.
+  wsPoolAh.initGlobalEvents()
 
 }
