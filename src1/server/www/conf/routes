@@ -42,6 +42,7 @@ GET  /img/dyn                           @controllers.Img.dynImg(i: im.MImgT)
 OPTIONS /*path                          @controllers.Static.corsPreflight(path)
 GET  /robots.txt                        @controllers.Static.robotsTxt
 GET  /sitemap.xml                       @controllers.Static.siteMapXml
+GET  /ws/ch/:c                          @controllers.Static.wsChannel( c: io.suggest.ctx.MCtxId )
 
 ## Входы в личные кабинеты
 GET  /lk/nodes                          @controllers.MarketLkAdn.lkList(fromNode: Option[String] ?= None)

@@ -7,7 +7,7 @@ import javax.inject.{Inject, Singleton}
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
-import io.suggest.ctx.{MCtxId, MCtxIds}
+import io.suggest.ctx.MCtxId
 import io.suggest.es.model.IMust
 import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
@@ -64,7 +64,6 @@ class Upload @Inject()(
                         val iMediaStorages        : IMediaStorages,
                         mNodes                    : MNodes,
                         mLocalImgs                : MLocalImgs,
-                        mCtxIds                   : MCtxIds,
                         colorDetectWsUtil         : ColorDetectWsUtil,
                         imgFileUtil               : ImgFileUtil,
                         override val mCommonDi    : ICommonDi
@@ -238,7 +237,7 @@ class Upload @Inject()(
   def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = csrf.Check {
     val bp = _uploadFileBp(uploadArgs)
 
-    canUploadFile(uploadArgs).async(bp) { implicit request =>
+    canUploadFile(uploadArgs, ctxIdOpt).async(bp) { implicit request =>
 
       lazy val logPrefix = s"doFileUpload()#${System.currentTimeMillis()}:"
       LOGGER.trace(s"$logPrefix Starting w/args: $uploadArgs")
@@ -260,14 +259,6 @@ class Upload @Inject()(
           if (fpOpt.isEmpty)
             __appendErr(s"Missing file part with name '$partName'.")
           fpOpt
-        }
-
-        // Сразу же надо провалидировать принятый ctxId, если он указан в запросе:
-        if {
-          val r = ctxIdOpt.fold(true)( mCtxIds.verify )
-          if (!r)
-            __appendErr("Invalid CtxID.")
-          r
         }
 
         // Проверить Content-Type, заявленный в теле запроса:

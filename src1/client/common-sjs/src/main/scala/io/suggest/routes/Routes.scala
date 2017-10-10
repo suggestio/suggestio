@@ -56,6 +56,9 @@ sealed trait StaticController extends js.Object {
     * Обычно проходит через CDN, но это уже разруливает серверный js-роутер. */
   def advRcvrsMap(): Route = js.native
 
+  /** Роута для доступа к унифицированному websocket channel. */
+  def wsChannerl(ctxId: String): Route = js.native
+
 }
 
 

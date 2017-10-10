@@ -18,7 +18,7 @@ trait OneAppPerSuiteNoGlobalStart extends GuiceOneAppPerSuite { this: TestSuite 
     * Нужен только доступ к конфигу. Ускоряем запуск:
     */
   override implicit lazy val app: Application = {
-    GuiceApplicationBuilder(global = None)
+    GuiceApplicationBuilder()
       .in( Mode.Test )
       .build()
   }

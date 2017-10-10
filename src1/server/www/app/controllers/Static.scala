@@ -4,21 +4,26 @@ import javax.inject.{Inject, Singleton}
 
 import akka.util.ByteString
 import controllers.cstatic.{CorsPreflight, RobotsTxt, SiteMapsXml}
+import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.pick.PickleUtil
 import io.suggest.sec.csp.CspViolationReport
 import io.suggest.stat.m.{MComponents, MDiag}
 import models.mctx.Context
 import models.mproj.ICommonDi
 import play.api.libs.json.JsValue
-import play.api.mvc.BodyParser
+import play.api.libs.streams.ActorFlow
+import play.api.mvc.{BodyParser, WebSocket}
 import util.acl._
 import util.adv.geo.AdvGeoRcvrsUtil
 import util.cdn.CorsUtil
 import util.sec.CspUtil
 import util.seo.SiteMapUtil
 import util.stat.StatUtil
+import util.ws.{MWsChannelActorArgs, WsChannelActors}
 import util.xplay.SecHeadersFilterUtil
 import views.html.static._
+
+import scala.concurrent.Future
 import scala.concurrent.duration._
 
 /**
@@ -41,8 +46,11 @@ class Static @Inject() (
                          aclUtil                         : AclUtil,
                          secHeadersFilterUtil            : SecHeadersFilterUtil,
                          cspUtil                         : CspUtil,
+                         mCtxIds                         : MCtxIds,
                          isSuOrDevelOr404                : IsSuOrDevelOr404,
                          maybeAuth                       : MaybeAuth,
+                         canOpenWsChannel                : CanOpenWsChannel,
+                         wsChannelActors                 : WsChannelActors,
                          assets                          : Assets,
                          override val mCommonDi          : ICommonDi
                        )
@@ -245,6 +253,40 @@ class Static @Inject() (
           )
       }
     }
+  }
+
+
+  /** Общий websocket-канал обмена данными между клиентом и конкретной нодой.
+    * Появилась для объединения всех будущих ws-экшенов, делающих примерно одно и тоже.
+    *
+    * @param ctxId Контекстный id текущей страницы, привязанный к текущему юзеру.
+    * @return WebSocket, если всё ок.
+    */
+  def wsChannel(ctxId: MCtxId) = WebSocket.acceptOrResult[JsValue, JsValue] { implicit rh =>
+    def logPrefix = s"wsChannel():"
+
+    // Используем match вместо .fold, чтобы не прописывать тут сложный тип вида Future[Either[...,Flow[...]]]
+    val res = canOpenWsChannel.can(ctxId) match {
+      // Разрешаем коннекшен
+      case Some(mrh) =>
+        LOGGER.trace(s"$logPrefix Opening connection for user#${mrh.user.personIdOpt.orNull} ctx#${ctxId.key}...")
+        val aFlow = ActorFlow.actorRef(
+          props = { out =>
+            val args = MWsChannelActorArgs(out, ctxId)
+            wsChannelActors.props(args)
+          }
+        )
+        Right(aFlow)
+
+      // Не разрешён коннект: чтоо-то нет так с ctxId.
+      case None =>
+        val ctxIdStr = ctxId.toString
+        LOGGER.warn(s"$logPrefix not allowed: $ctxIdStr")
+        val result = Forbidden(s"Forbidden: $ctxIdStr")
+        Left(result)
+    }
+
+    Future.successful(res)
   }
 
 }

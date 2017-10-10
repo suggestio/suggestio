@@ -2,7 +2,7 @@ package io.suggest.ctx
 
 import java.util.UUID
 import java.util.regex.Pattern
-import javax.inject.Inject
+import javax.inject.{Inject, Singleton}
 
 import io.suggest.model.play.psb.PathBindableImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
@@ -24,6 +24,7 @@ import play.api.mvc.{PathBindable, QueryStringBindable}
   *
   * Модель [[MCtxId]] защищает ctxId от модификаций с помощью сигнатуры.
   */
+@Singleton
 class MCtxIds @Inject() (
                           configuration: Configuration
                         )
@@ -35,31 +36,37 @@ class MCtxIds @Inject() (
 
 
   /** Посчитать сигнатуру для указанного UUID-ключа. */
-  def keyUuid2sig(key: String): String = {
-    val keyUuid = UuidUtil.base64ToUuid( key )
-    keyUuid2sig( keyUuid )
-  }
-  def keyUuid2sig(keyUuid: UUID): String = {
+  def keyUuid2sig(keyUuid: UUID, personIdOpt: Option[String]): String = {
     val sigMac = HmacUtil.mkMac( HmacAlgos.HMAC_SHA1, SECRET_KEY )
     sigMac.update( UuidUtil.uuidToBytes(keyUuid) )
+
+    // Отработать значение personId
+    for (personId <- personIdOpt) {
+      sigMac.update( MCtxId.TO_STRING_SEP.getBytes() )
+      sigMac.update( personId.getBytes() )
+    }
+
     val macBytes = sigMac.doFinal()
     Base64.encodeBase64URLSafeString( macBytes )
   }
 
+
   /** Вернуть рандомный валидный инстанс. */
-  def apply(): MCtxId = {
+  def apply(personIdOpt: Option[String]): MCtxId = {
     val keyUuid = UUID.randomUUID()
     MCtxId(
-      key = UuidUtil.uuidToBase64( keyUuid ),
-      sig = keyUuid2sig( keyUuid )
+      key       = UuidUtil.uuidToBase64( keyUuid ),
+      personId  = personIdOpt,
+      sig       = keyUuid2sig( keyUuid, personIdOpt )
     )
   }
 
 
   /** Проверка валидности инстанса. */
-  def verify(m: MCtxId): Boolean = {
+  def checkSig(m: MCtxId): Boolean = {
     try {
-      val sig = keyUuid2sig( m.key )
+      val keyUuid = UuidUtil.base64ToUuid( m.key )
+      val sig = keyUuid2sig( keyUuid, m.personId )
       m.sig ==* sig
 
     } catch {
@@ -69,6 +76,11 @@ class MCtxIds @Inject() (
     }
   }
 
+
+  /** Проверка валидности инстанса для текущего юзера. */
+  def validate(m: MCtxId, personIdOpt: Option[String]): Boolean = {
+    checkSig(m) && personIdOpt ==* m.personId
+  }
 
 }
 
@@ -81,8 +93,9 @@ class MCtxIds @Inject() (
   * @param sig Сигнатура.
   */
 case class MCtxId private[ctx](
-                                key  : String,
-                                sig  : String
+                                key       : String,
+                                personId  : Option[String],
+                                sig       : String
                               ) {
 
   override def toString: String = {
@@ -94,11 +107,12 @@ case class MCtxId private[ctx](
 
 object MCtxId extends MacroLogsImplLazy {
 
-  private def TO_STRING_SEP = "."
+  private[ctx] def TO_STRING_SEP = "."
 
   /** Сериализация инстанса [[MCtxId]] в строку. */
   def intoString(m: MCtxId): String = {
-    s"${m.key}$TO_STRING_SEP${m.sig}"
+    val s = TO_STRING_SEP
+    s"${m.key}$s${m.personId.getOrElse("")}$s${m.sig}"
   }
 
 
@@ -109,8 +123,13 @@ object MCtxId extends MacroLogsImplLazy {
     try {
       // TODO Opt Использовать indexOf() + substring() вместо регэкспов?
       SPLIT_RE.split(s) match {
-        case Array(key, sig) =>
-          Some( MCtxId(key, sig) )
+        case Array(key, personIdOrEmpty, sig) =>
+          val personIdOpt = if (personIdOrEmpty.isEmpty) {
+            None
+          } else {
+            Some( personIdOrEmpty )
+          }
+          Some( MCtxId(key, personIdOpt, sig) )
         case other =>
           LOGGER.warn(s"fromString(): Cannot parse string: $s ;; after split => $other")
           None

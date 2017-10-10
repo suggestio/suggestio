@@ -38,7 +38,7 @@ trait HtmlUnitIE11Factory extends HtmlUnitCustomBrowserFactory {
 
 /** Имитация Firefox 24 ESR. */
 trait HtmlUnitFF24Factory extends HtmlUnitCustomBrowserFactory {
-  override def huBrowserVersion = BrowserVersion.FIREFOX_38
+  override def huBrowserVersion = BrowserVersion.FIREFOX_52
 }
 
 

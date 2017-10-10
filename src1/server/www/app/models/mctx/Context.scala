@@ -237,7 +237,7 @@ trait Context {
 
   /** Рандомный id, существующий в рамках контекста.
     * Использутся, когда необходимо как-то индентифицировать весь текущий рендер (вебсокеты, например). */
-  lazy val ctxId: MCtxId = api.mCtxIds()
+  lazy val ctxId: MCtxId = api.mCtxIds( user.personIdOpt )
   lazy val ctxIdStr: String = MCtxId.intoString(ctxId)
 
   /** Собрать ссылку на веб-сокет с учетом текущего соединения. */

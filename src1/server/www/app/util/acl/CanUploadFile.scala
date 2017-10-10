@@ -5,10 +5,10 @@ import javax.inject.Inject
 import io.suggest.common.empty.OptionUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mup.{MSwfsUploadReqInfo, MUploadReq, MUploadTargetQs}
-import models.req.IReq
 import play.api.mvc._
 import util.up.UploadUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.ctx.{MCtxId, MCtxIds}
 import io.suggest.model.n2.media.storage.MStorages
 import io.suggest.model.n2.media.storage.swfs.SwfsVolumeCache
 import io.suggest.req.ReqUtil
@@ -30,6 +30,7 @@ class CanUploadFile @Inject()(
                                uploadUtil                 : UploadUtil,
                                dab                        : DefaultActionBuilder,
                                swfsVolumeCache            : SwfsVolumeCache,
+                               mCtxIds                    : MCtxIds,
                                mCommonDi                  : ICommonDi
                              )
   extends MacroLogsImpl
@@ -46,7 +47,7 @@ class CanUploadFile @Inject()(
     * @tparam A Тип BodyParser'а.
     * @return Фьючерс результата.
     */
-  private def _apply[A](upTg: MUploadTargetQs, request0: Request[A])(f: MUploadReq[A] => Future[Result]): Future[Result] = {
+  private def _apply[A](upTg: MUploadTargetQs, ctxIdOpt: Option[MCtxId], request0: Request[A])(f: MUploadReq[A] => Future[Result]): Future[Result] = {
 
     lazy val logPrefix = s"[${System.currentTimeMillis}]:"
 
@@ -65,6 +66,13 @@ class CanUploadFile @Inject()(
         // Ссылка была выдана не текущему, а какому-то другому юзеру.
         val msg = "Unexpected userId"
         LOGGER.warn(s"$logPrefix [SEC] $msg: req.user#${user.personIdOpt} != args.user#${upTg.personId}")
+        Results.Forbidden(msg)
+
+      } else if (ctxIdOpt.exists(ctxId => !mCtxIds.validate(ctxId, user.personIdOpt))) {
+        val ctxId = ctxIdOpt.get
+        // Юзер прислал неправильный ctxId. Такое возможно, если юзер перелогинился в одной вкладке, но не в другой. Либо попытка подмены.
+        val msg = "CtxId is not valid."
+        LOGGER.warn(s"$logPrefix $msg for user#${user.personIdOpt.orNull}, userMatchesCtxId?${user.personIdOpt ==* ctxId.personId}, raw ctxId = $ctxId")
         Results.Forbidden(msg)
 
       } else {
@@ -121,19 +129,19 @@ class CanUploadFile @Inject()(
 
 
   /** Сборка ActionBuilder'а, проверяющего возможность для аплоада файла. */
-  def apply(upTg: MUploadTargetQs): ActionBuilder[IReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[IReq] {
-      override def invokeBlock[A](request: Request[A], block: (IReq[A]) => Future[Result]): Future[Result] = {
-        _apply(upTg, request)(block)
+  def apply(upTg: MUploadTargetQs, ctxIdOpt: Option[MCtxId]): ActionBuilder[MUploadReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MUploadReq] {
+      override def invokeBlock[A](request: Request[A], block: (MUploadReq[A]) => Future[Result]): Future[Result] = {
+        _apply(upTg, ctxIdOpt, request)(block)
       }
     }
   }
 
 
   /** Сборка заворачивающего экшена, который проверяет возможность для аплоада файла. */
-  def A[A](upTg: MUploadTargetQs)(action: Action[A]): Action[A] = {
+  def A[A](upTg: MUploadTargetQs, ctxIdOpt: Option[MCtxId])(action: Action[A]): Action[A] = {
     dab.async(action.parser) { request =>
-      _apply(upTg, request)(action.apply)
+      _apply(upTg, ctxIdOpt, request)(action.apply)
     }
   }
 
