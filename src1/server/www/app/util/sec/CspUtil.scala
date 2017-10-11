@@ -1,7 +1,9 @@
 package util.sec
 
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
+import io.suggest.proto.HttpConst
 import io.suggest.sec.csp.{Csp, CspHeader, CspPolicy, CspViolationReport}
 import models.mctx.ContextUtil
 import play.api.Configuration
@@ -47,7 +49,8 @@ class CspUtil @Inject() (
         // Т.к. сайт https-only, то игнорим протоколы, используем все CDN-хосты.
         val cdnHostsIter = cdnUtil.CDN_PROTO_HOSTS.valuesIterator.flatten
         val selfHosts = Csp.Sources.SELF :: Nil
-        (cdnHostsIter ++ selfHosts)
+        val selfNodes = "*.nodes.suggest.io" :: Nil  // TODO Добавить cdn-nodes-домены сюда же.
+        (cdnHostsIter ++ selfHosts ++ selfNodes)
           .toSet
       }
       val commonSourcesWithInline = commonSources + Csp.Sources.UNSAFE_INLINE
@@ -59,10 +62,14 @@ class CspUtil @Inject() (
           scriptSrc   = commonSourcesWithInline,
           // Коннекты: обычно, коннекты идут прямо на suggest.io. Для WebSocket надо явно прописать адреса из-за протокола.
           // Бывают XHR-коннекты через CDN, например GeoJSON для точек на карте выдачи.
-          connectSrc  = commonSources ++ Seq(
-            // Разрешить веб-сокеты в same-origin.
-            s"ws${if (contextUtil.HTTPS_ENABLED) "s" else ""}://${contextUtil.HOST_PORT}"
-          ),
+          connectSrc  = {
+            val wsProto = HttpConst.Proto.wsOrWss( contextUtil.HTTPS_ENABLED )
+            commonSources ++ Seq(
+              // Разрешить веб-сокеты в same-origin.
+              s"$wsProto://${contextUtil.HOST_PORT}",
+              s"$wsProto://*.${contextUtil.HOST_PORT}"
+            )
+          },
           reportUri = Some( routes.Static.handleCspReport().url ),
           //frameSrc = VIDEO_SRCS,    // frameSrc is depreacted.
           childSrc = VIDEO_SRCS
