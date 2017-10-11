@@ -8,7 +8,6 @@ import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
-import io.suggest.url.MHostUrl
 import io.suggest.ws.MWsMsg
 import io.suggest.ws.pool.m._
 import org.scalajs.dom
@@ -47,7 +46,7 @@ class WsPoolAh[M](
     // Сообщение из открытого сокета.
     case m: WsRawMsg =>
       val v0 = value
-      v0.conns.get( m.from ).fold {
+      v0.conns.get( m.target ).fold {
         // Внезапно, не найден коннекшен.
         LOG.warn( WarnMsgs.UNKNOWN_CONNECTION, msg = m )
         noChange
@@ -56,7 +55,7 @@ class WsPoolAh[M](
         // Есть коннекшен, значит разрешаем полученное сообщение. Парсим и отправляем наверх, чтобы кто-нибудь другой подхватил.
         val mWsMsgFx = Effect.action {
           WsChannelMsg(
-            from = m.from,
+            target = m.target,
             msg = Json
               .parse(m.payload.asInstanceOf[String])
               .as[MWsMsg]
@@ -69,12 +68,12 @@ class WsPoolAh[M](
     // Поступил запрос на открытие ws-коннекшена.
     case m: WsEnsureConn =>
       val v0 = value
-      val key = m.hostUrl
+      val key = m.target
       v0.conns.get( key ).fold {
         // Нет коннекшена с данными координатами. Просто открываем новый ws-коннекшен:
         val wsOpenFx = Effect {
           wsChannelApi
-            .wsChannel(key.host)
+            .wsChannel(key)
             .transform { tryRes =>
               Success( WsOpenedConn(key, tryRes, m.closeAfterSec) )
             }
@@ -82,7 +81,7 @@ class WsPoolAh[M](
 
         // Собрать состояние WS-коннекшена и сохранить.
         val wsConnS = MWsConnS(
-          hostUrl     = key,
+          target     = key,
           conn        = Pending(),
           closeTimer  = None
         )
@@ -109,7 +108,7 @@ class WsPoolAh[M](
     // Сообщение о том, что завершён эффект открытия веб-сокета
     case m: WsOpenedConn =>
       val v0 = value
-      val key = m.hostUrl
+      val key = m.target
       v0.conns.get( key ).fold {
         // Should never happen: было выполнено открытие закрытого/неизвестного коннекшена.
         LOG.warn( WarnMsgs.UNKNOWN_CONNECTION, msg = m )
@@ -127,7 +126,7 @@ class WsPoolAh[M](
               existConn.conn.fail( ex )
             )
             val v2 = v0.withConns(
-              v0.conns.updated(m.hostUrl, conn2)
+              v0.conns.updated(m.target, conn2)
             )
             updated(v2)
           },
@@ -157,7 +156,7 @@ class WsPoolAh[M](
                   _closeTimerOpt(key, m.closeAfterSec)
                 )
               val v2 = v0.withConns(
-                v0.conns.updated(m.hostUrl, conn2)
+                v0.conns.updated(m.target, conn2)
               )
               updated(v2)
 
@@ -182,9 +181,10 @@ class WsPoolAh[M](
     // Сигнал (авто)закрытия какого-то коннекшена:
     case m: WsCloseConn =>
       val v0 = value
-      v0.conns.get(m.hostUrl).fold {
+      println( m, v0 )
+      v0.conns.get(m.target).fold {
         // Нет искомого коннекшена в состоянии.
-        LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m.hostUrl )
+        LOG.log( ErrorMsgs.NODE_NOT_FOUND, msg = m.target )
         noChange
 
       } { existConn =>
@@ -194,7 +194,7 @@ class WsPoolAh[M](
 
         // Удалить данные по коннекшену из состояния:
         val v2 = v0.withConns(
-          v0.conns - m.hostUrl
+          v0.conns - m.target
         )
         updated(v2)
       }
@@ -212,7 +212,7 @@ class WsPoolAh[M](
 
 
   /** Сборка таймера авто-закрытия указанного ws-коннекшена через указанное время (в секундах). */
-  private def _closeTimerOpt(key: MHostUrl, closeAfterSecOpt: Option[Int]): Option[Int] = {
+  private def _closeTimerOpt(key: MWsConnTg, closeAfterSecOpt: Option[Int]): Option[Int] = {
     for (closeAfterSeconds <- closeAfterSecOpt) yield {
       DomQuick.setTimeout( closeAfterSeconds * 1000 ) { () =>
         dispatcher( WsCloseConn(key) )

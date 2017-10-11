@@ -140,17 +140,22 @@ class LkAdEditFormR(
             stripEd <- mroot.doc.stripEd
             selJd   <- mroot.doc.jdArgs.selectedTag
           } yield {
+            val bgEdge = selJd.props1
+              .bgImg
+              .flatMap { ei =>
+                mroot.doc.jdArgs.renderArgs.edges
+                  .get(ei.imgEdge.edgeUid)
+              }
             stripEditR.PropsVal(
               strip         = selJd,
               edS           = stripEd,
               colorsState   = mroot.doc.colorsState,
-              bgImgSrcOpt   = selJd.props1
-                .bgImg
-                .flatMap { ei =>
-                  mroot.doc.jdArgs.renderArgs.edges
-                    .get(ei.imgEdge.edgeUid)
-                    .flatMap(_.imgSrcOpt)
-                }
+              bgImgSrcOpt   = bgEdge.flatMap { _.imgSrcOpt },
+              bgImgHist = {
+                bgEdge
+                  .flatMap(_.jdEdge.nodeId)
+                  .flatMap(mroot.doc.colorsState.histograms.get)
+              }
             )
           }
         }( OptFastEq.Wrapped ),

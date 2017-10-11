@@ -2,7 +2,6 @@ package io.suggest.ws.pool.m
 
 import diode.FastEq
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.url.MHostUrl
 import japgolly.univeq.UnivEq
 
 /**
@@ -32,9 +31,9 @@ object MWsPoolS {
   * @param conns Карта коннекшенов, где ключ -- это данные ws/wss-url.
   */
 case class MWsPoolS(
-                     conns        : Map[MHostUrl, MWsConnS]     = Map.empty
+                     conns        : Map[MWsConnTg, MWsConnS]     = Map.empty
                    ) {
 
-  def withConns(conns: Map[MHostUrl, MWsConnS])       = copy(conns = conns)
+  def withConns(conns: Map[MWsConnTg, MWsConnS])       = copy(conns = conns)
 
 }

@@ -948,4 +948,5 @@ Example.text=Пример текста
 File.is.not.a.picture=Файл не является изображением
 Apply=Применить
 Cannot.checksum.file.0=Не удалётся рассчитать контрольную сумму файла {0}
+Suggested.bg.colors=Предлагаемые цвета фона
 

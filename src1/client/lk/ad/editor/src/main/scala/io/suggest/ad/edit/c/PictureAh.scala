@@ -29,8 +29,8 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
-import io.suggest.ws.{MWsMsg, MWsMsgTypes}
-import io.suggest.ws.pool.m.WsEnsureConn
+import io.suggest.ws.MWsMsgTypes
+import io.suggest.ws.pool.m.{MWsConnTg, WsChannelMsg, WsEnsureConn}
 import io.suggest.ww._
 
 import scala.concurrent.Future
@@ -378,11 +378,12 @@ class PictureAh[M](
               }
               // Нет ссылок для аплоада. Проверить fileExists-поле:
               .orElse {
-                for (_ <- resp.fileExist) yield {
+                for (fe <- resp.fileExist) yield {
                   // Файл уже залит на сервер. Это нормально. Залить данные по файлу в состояние.
                   val edge2 = edge0.copy(
                     jdEdge = edge0.jdEdge
-                      .withFileSrv( resp.fileExist ),
+                      .withFileSrv( resp.fileExist )
+                      .withNodeId( Some(fe.nodeId) ),
                     fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
                       upload0
                         .withXhr(None)
@@ -391,9 +392,16 @@ class PictureAh[M](
                         )
                     }
                   )
-                  val v2 = v0.withEdges(
-                    v0.edges.updated(edge2.id, edge2)
+                  val v1 = v0.withEdges(
+                    v0.edges
+                      .updated(edge2.id, edge2)
                   )
+                  // Если пришла гистограмма, то залить её в состояние.
+                  val v2 = fe.colors.fold(v1) { histogram =>
+                    v1.withHistograms(
+                      v1.histograms.updated(fe.nodeId, histogram)
+                    )
+                  }
                   updated(v2)
                 }
               }
@@ -456,12 +464,13 @@ class PictureAh[M](
           // Сервер ответил что-то внятное. Осталось понять, что именно:
           {resp =>
             resp.fileExist
-              .map { _ =>
+              .map { fileExist =>
                 // Файл успешно залит на сервер. Сервер присылает только базовые данные по загруженному файлу, надо не забывать это.
                 // Сохранить это в состояние:
                 val edge2 = edge0.copy(
                   jdEdge = edge0.jdEdge
-                    .withFileSrv( resp.fileExist ),
+                    .withFileSrv( resp.fileExist )
+                    .withNodeId( Some(fileExist.nodeId) ),
                   fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
                     upload0.copy(
                       xhr       = None,
@@ -476,8 +485,10 @@ class PictureAh[M](
                 // В фоне: запустить открытие websocket'а для связи с сервером.
                 val wsEnsureFx = Effect.action {
                   WsEnsureConn(
-                    hostUrl       = m.hostUrl,
-                    closeAfterSec = Some(30)
+                    target       = MWsConnTg(
+                      host = m.hostUrl.host
+                    ),
+                    closeAfterSec = Some(120)
                   )
                 }
                 updated(v2, wsEnsureFx)
@@ -502,15 +513,16 @@ class PictureAh[M](
 
 
     // Сообщение из WebSocket с гистограммой цветов к какой-то картинке.
-    case m: MWsMsg if m.typ ==* MWsMsgTypes.ColorsHistogram =>
+    case m: WsChannelMsg if m.msg.typ ==* MWsMsgTypes.ColorsHistogram =>
       try {
-        val histWs = m.payload.as[MHistogramWs]
+        val histWs = m.msg.payload.as[MHistogramWs]
         // Поискать эдж с таким nodeId среди картинок. Ищем
         val v0 = value
         val v2 = v0.withHistograms(
           v0.histograms
             .updated(histWs.nodeId, histWs.hist)
         )
+        //println("wsChannel => hist: " + histWs + s" \n hists: ${v0.histograms} => ${v2.histograms}")
         updated( v2 )
 
       } catch {

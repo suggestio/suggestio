@@ -176,7 +176,7 @@ class Upload @Inject()(
               (Created, upDataFut)
 
             } { foundFile =>
-              LOGGER.debug(s"$logPrefix Found existing file: $foundFile for props $upFileProps")
+              LOGGER.debug(s"$logPrefix Found existing file media#${foundFile.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}]")
 
               // Собираем гистограмму цветов.
               val mediaColorsFut = if (foundFile.picture.colors.isEmpty &&
@@ -194,8 +194,9 @@ class Upload @Inject()(
                   }
                 }
               } else {
-                LOGGER.debug(s"$logPrefix No color histogram available for media#${foundFile.idOrNull}")
-                Future.successful( foundFile.picture.colors )
+                val colors = foundFile.picture.colors
+                LOGGER.debug(s"$logPrefix Existing color histogram for media#${foundFile.idOrNull}: [${colors.iterator.map(_.hexCode).mkString(", ")}]")
+                Future.successful( colors )
               }
 
               // Собрать ответ с помощью награбленных цветов.
@@ -544,7 +545,7 @@ class Upload @Inject()(
                   }
 
                   mmedia2OptFut.onComplete {
-                    case Success(res) => LOGGER.debug(s"$logPrefix Saved MMedia#$mmediaId with $mcdsCount main colors. r => $res")
+                    case Success(res) => LOGGER.debug(s"$logPrefix Updated MMedia#$mmediaId with $mcdsCount main colors, v=${res.versionOpt.orNull}.")
                     case Failure(ex)  => LOGGER.error(s"$logPrefix Failed to update MMedia#$mmediaId with main colors", ex)
                   }
 

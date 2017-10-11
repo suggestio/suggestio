@@ -6,7 +6,8 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
-import io.suggest.ad.edit.v.edit.{ColorPickR, PictureR}
+import io.suggest.ad.edit.v.edit.{ColorPickR, ColorsSuggestR, PictureR}
+import io.suggest.color.MHistogram
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.IDocTag
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
@@ -17,6 +18,7 @@ import scalacss.ScalaCssReact._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.spa.OptFastEq.Wrapped
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -29,27 +31,31 @@ class StripEditR(
                   colorPickR                : ColorPickR,
                   css                       : LkAdEditCss,
                   deleteStripBtnR           : DeleteStripBtnR,
-                  val pictureR              : PictureR
+                  val pictureR              : PictureR,
+                  val colorsSuggestR        : ColorsSuggestR
                 ) {
 
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
   import MStripEdS.MStripEdSFastEq
   import MColorPick.MColorPickFastEq
   import pictureR.PictureRPropsValFastEq
+  import colorsSuggestR.ColorsSuggestPropsValFastEq
 
   case class PropsVal(
                        strip        : IDocTag,
                        edS          : MStripEdS,
                        colorsState  : MColorsState,
-                       bgImgSrcOpt  : Option[String]
+                       bgImgSrcOpt  : Option[String],
+                       bgImgHist    : Option[MHistogram]
                      )
 
   implicit object StripEditRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.strip eq b.strip) &&
-        (a.edS eq b.edS) &&
-        (a.colorsState eq b.colorsState) &&
-        (a.bgImgSrcOpt eq b.bgImgSrcOpt)
+      (a.strip ===* b.strip) &&
+        (a.edS ===* b.edS) &&
+        (a.colorsState ===* b.colorsState) &&
+        (a.bgImgSrcOpt ===* b.bgImgSrcOpt) &&
+        (a.bgImgHist ===* b.bgImgHist)
     }
   }
 
@@ -61,7 +67,8 @@ class StripEditR(
                               widthPropsOptC    : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               stripEdSOptC      : ReactConnectProxy[Option[MStripEdS]],
                               bgColorPropsOptC  : ReactConnectProxy[Option[MColorPick]],
-                              bgPicutureOptC    : ReactConnectProxy[Option[pictureR.PropsVal]]
+                              bgPicutureOptC    : ReactConnectProxy[Option[pictureR.PropsVal]],
+                              colSuggPropsOptC  : ReactConnectProxy[Option[colorsSuggestR.PropsVal]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -85,6 +92,10 @@ class StripEditR(
             )
           },
 
+          // Предлагаемые цвета на основе гистограммы фоновой картинки.
+          s.colSuggPropsOptC { colorsSuggestR.apply },
+
+          <.br,
           <.br,
 
           // Кнопка удаления текущего блока.
@@ -151,6 +162,18 @@ class StripEditR(
           } yield {
             pictureR.PropsVal(
               imgSrcOpt = props.bgImgSrcOpt
+            )
+          }
+        },
+
+        colSuggPropsOptC = propsOptProxy.connect { propsOpt =>
+          for {
+            props <- propsOpt
+            hist  <- props.bgImgHist
+          } yield {
+            colorsSuggestR.PropsVal(
+              titleMsgCode = MsgCodes.`Suggested.bg.colors`,
+              colors       = hist.sorted
             )
           }
         }

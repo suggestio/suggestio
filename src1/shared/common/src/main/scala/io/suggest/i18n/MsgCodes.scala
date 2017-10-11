@@ -200,4 +200,6 @@ object MsgCodes {
 
   val `Cannot.checksum.file` = "Cannot.checksum.file"
 
+  val `Suggested.bg.colors` = "Suggested.bg.colors"
+
 }

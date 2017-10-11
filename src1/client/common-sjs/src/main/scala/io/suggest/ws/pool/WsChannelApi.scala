@@ -4,6 +4,7 @@ import diode.ModelRO
 import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
 import io.suggest.sjs.common.xhr.Xhr
+import io.suggest.ws.pool.m.MWsConnTg
 import org.scalajs.dom.raw.WebSocket
 
 import scala.concurrent.Future
@@ -19,10 +20,10 @@ trait IWsChannelApi {
 
   /** Открыть WS-channel до указанного хоста.
     *
-    * @param host Сервер, на который долбимся с запросом.
+    * @param target Данные целевого хоста для ws-коннекшена.
     * @return Фьючерс с веб-сокетом.
     */
-  def wsChannel(host: String): Future[WebSocket]
+  def wsChannel(target: MWsConnTg): Future[WebSocket]
 
 }
 
@@ -30,11 +31,11 @@ trait IWsChannelApi {
 /** Реализация [[IWsChannelApi]] через HTTP. */
 class WsChannelApiHttp(ctxIdRO: ModelRO[String]) extends IWsChannelApi {
 
-  override def wsChannel(host: String): Future[WebSocket] = {
+  override def wsChannel(target: MWsConnTg): Future[WebSocket] = {
     val route = routes.controllers.Static.wsChannel( ctxIdRO.value )
 
     val wsProto = HttpConst.Proto.wsOrWss( Xhr.PREFER_SECURE_URLS )
-    val wsUrl = wsProto + HttpConst.Proto.DELIM + host + route.url
+    val wsUrl = wsProto + HttpConst.Proto.DELIM + target.host + route.url
 
     val ws = new WebSocket(wsUrl)
     // TODO Стоит наверное задействовать open event. Но в MDN написано, что это experimental feature.

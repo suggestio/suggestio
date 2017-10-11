@@ -280,9 +280,10 @@ class LkAdEdit @Inject() (
           uploadFileHandler = Some( MUploadFileHandlers.Picture ),
           colorDetect       = Some {
             val cdConst = AdFormConstants.ColorDetect
+            val sz = cdConst.PALETTE_SIZE
             MColorDetectArgs(
-              paletteSize   = cdConst.PALETTE_SIZE,
-              wsPaletteSize = cdConst.PALETTE_SHRINK_SIZE
+              paletteSize   = sz,
+              wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
             )
           }
         )

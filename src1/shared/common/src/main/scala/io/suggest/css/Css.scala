@@ -265,6 +265,14 @@ object Css {
     def BG = "bg"
   }
 
+  /** Стили для пачки цветов. Например,  */
+  object ColorsBlock {
+    /** Квадратик одного цвета. */
+    def COLOR_BLOCK       = "color-block"
+    private def PREFIX_   = COLOR_BLOCK + "_"
+    /** Контейнер списка цветов. */
+    def LIST              = PREFIX_ + "lst"
+  }
 
   trait _EuSizes {
     def PREFIX_ROOT: String

@@ -61,5 +61,5 @@ object MColorDetectArgs {
   */
 case class MColorDetectArgs(
                              paletteSize    : Int,
-                             wsPaletteSize  : Int
+                             wsPaletteSize  : Int   // TODO Удалить это или сделать опциональным!
                            )

@@ -1,7 +1,6 @@
 package io.suggest.ws.pool.m
 
 import io.suggest.spa.DAction
-import io.suggest.url.MHostUrl
 import io.suggest.ws.{MWsMsg, MWsMsgType}
 import org.scalajs.dom.raw.WebSocket
 
@@ -20,11 +19,11 @@ sealed trait IWsPoolAction extends DAction
 /** Организовать в пуле коннекшенов новый коннекшен.
   * Если коннекшен уже существует, то будет обновлён ttl.
   *
-  * @param hostUrl Хост и url path.
+  * @param target Хост и url path.
   * @param closeAfterSec Автозакрытие спустя указанное время.
   */
 case class WsEnsureConn(
-                         hostUrl          : MHostUrl,
+                         target           : MWsConnTg,
                          closeAfterSec    : Option[Int] = None
                        )
   extends IWsPoolAction
@@ -32,7 +31,7 @@ case class WsEnsureConn(
 
 /** Сообщение об успешном открытии веб-сокета. */
 case class WsOpenedConn(
-                         hostUrl        : MHostUrl,
+                         target         : MWsConnTg,
                          ws             : Try[WebSocket],
                          closeAfterSec  : Option[Int]
                        )
@@ -40,28 +39,22 @@ case class WsOpenedConn(
 
 
 /** Принудительно закрыть указанный коннекшен. */
-case class WsCloseConn( hostUrl: MHostUrl ) extends IWsPoolAction
+case class WsCloseConn( target: MWsConnTg ) extends IWsPoolAction
 
 
 /** Поступило новое сообщение из сокета. */
-case class WsRawMsg(from: MHostUrl, payload: Any) extends IWsPoolAction
+case class WsRawMsg(target: MWsConnTg, payload: Any) extends IWsPoolAction
 
 /** Результат обработки [[WsRawMsg]]: распарсенное сообщение из websocket WS-Channel.
   *
-  * @param from Ключ websocket'а в пуле сокетов.
+  * @param target Ключ websocket'а в пуле сокетов.
   * @param msg Распарсенное сообщение.
-  * @param retry Порядковый номер попытки отправки.
-  *              Бывает попытка обработки race conditions, когда сообщение приходит раньше,
-  *              чем система может отработать его.
   */
-case class WsChannelMsg(from: MHostUrl, msg: MWsMsg, retry: Int = 0) extends IWsPoolAction {
-  def withRetry(retry: Int) = copy(retry = retry)
-  def incrRetry = withRetry(retry + 1)
-}
+case class WsChannelMsg(target: MWsConnTg, msg: MWsMsg) extends IWsPoolAction
 
 
 /** Сообщение об ошибке сокета. */
-case class WsError(from: MHostUrl, message: String) extends IWsPoolAction
+case class WsError(target: MWsConnTg, message: String) extends IWsPoolAction
 
 
 /** Сигнал к закрытию всех имеющихся ws-коннекшенов. */

@@ -110,3 +110,4 @@ case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUr
 /** Завершён запрос заливки файла на сервер. */
 case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkEditAction
 // TODO Объеденить оба case class'а?
+

@@ -5,7 +5,11 @@ import javax.inject.Inject
 
 import com.google.inject.assistedinject.Assisted
 import io.suggest.ctx.MCtxId
+import io.suggest.ueq.UnivEqUtilJvm._
 import io.suggest.util.logs.MacroLogsImplLazy
+import io.suggest.ws.MWsMsg
+import japgolly.univeq._
+import play.api.libs.json.Json
 
 /**
  * Suggest.io
@@ -40,13 +44,29 @@ case class WsChannelActor @Inject() (
                                     )
   extends WsActorDummy
   with SubscribeToWsDispatcher
-  //with ColorDetectedWsNotifyActor // TODO Написать и заинклюдить сюда трейт связи с MainColorDetector'ом.
   with MacroLogsImplLazy
 {
 
   import LOGGER._
 
   override final def wsId: String = args.ctxId.toString
+
+
+  override def receive = super.receive.orElse {
+
+    case m: MWsMsg =>
+      if (sender() ==* args.out) {
+        // Внезапное сообщение от клиента.
+        LOGGER.warn(s"Sent from remote client: $m. Cannot process client message.")
+
+      } else {
+        // Сообщение с сервера. Отправить на клиент.
+        val json = Json.toJson( m )
+        args.out ! json
+        LOGGER.trace(s"S2C message forwarded: $m")
+      }
+
+  }
 
   override def postStop(): Unit = {
     super.postStop()

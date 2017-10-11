@@ -5,7 +5,6 @@ import diode.data.Pot
 import org.scalajs.dom.WebSocket
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.UnivEqJsUtil._
-import io.suggest.url.MHostUrl
 import japgolly.univeq.UnivEq
 
 /**
@@ -19,7 +18,7 @@ object MWsConnS {
   /** Поддержка FastEq для инстансов [[MWsConnS]]. */
   implicit object MWsConnSFastEq extends FastEq[MWsConnS] {
     override def eqv(a: MWsConnS, b: MWsConnS): Boolean = {
-      (a.hostUrl ===* b.hostUrl) &&
+      (a.target ===* b.target) &&
         (a.conn ===* b.conn) &&
         (a.closeTimer ===* b.closeTimer)
     }
@@ -32,12 +31,12 @@ object MWsConnS {
 
 /** Класс-контейнер данных по одному websocket-коннекшену.
   *
-  * @param hostUrl Данные для сборки ссылки.
+  * @param target Данные для сборки ссылки.
   * @param conn WebSocket-коннекшен.
   * @param closeTimer Таймер автозакрытия коннекшена.
   */
 case class MWsConnS(
-                     hostUrl        : MHostUrl,
+                     target         : MWsConnTg,
                      conn           : Pot[WebSocket]    = Pot.empty,
                      closeTimer     : Option[Int]       = None
                    ) {
