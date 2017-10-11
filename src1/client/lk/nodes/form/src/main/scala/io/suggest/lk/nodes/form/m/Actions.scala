@@ -2,7 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import io.suggest.adv.rcvr.{IRcvrKey, RcvrKey}
 import io.suggest.lk.nodes.{MLknNode, MLknNodeResp}
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 import scala.util.Try
 

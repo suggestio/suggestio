@@ -1,7 +1,7 @@
 package io.suggest.lk.tags.edit.m
 
 import io.suggest.common.tags.search.MTagsFound
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io

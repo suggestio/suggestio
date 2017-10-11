@@ -52,7 +52,7 @@ class MImgs3 @Inject() (
   import mCommonDi._
 
   override def delete(mimg: MImgT): Future[_] = {
-    _mediaOptFut(mimg).flatMap {
+    mediaOptFut(mimg).flatMap {
       case Some(mm) =>
         for {
           _ <- iMediaStorages.delete( mm.storage )
@@ -68,7 +68,7 @@ class MImgs3 @Inject() (
   /** Выполнить стриминг данных картинки из SeaWeedFS. */
   override def getStream(mimg: MImgT): Source[ByteString, _] = {
     val srcFut = for {
-      mm <- _mediaFut( _mediaOptFut(mimg) )
+      mm <- _mediaFut( mediaOptFut(mimg) )
       rr <- iMediaStorages.read( mm.storage )
     } yield {
       rr.data
@@ -77,7 +77,7 @@ class MImgs3 @Inject() (
   }
 
   override protected def _getImgMeta(mimg: MImgT): Future[Option[ImgSzDated]] = {
-    for (mmediaOpt <- _mediaOptFut(mimg)) yield {
+    for (mmediaOpt <- mediaOptFut(mimg)) yield {
       for (mmedia <- mmediaOpt; whPx <- mmedia.picture.whPx) yield {
         ImgSzDated(
           sz          = whPx,
@@ -147,7 +147,7 @@ class MImgs3 @Inject() (
     val loc = mimg.toLocalInstance
     val mimeFut = mLocalImgs.mimeFut(loc)
     val media0Fut = _mediaFut {
-      _mediaOptFut( mimg )
+      mediaOptFut( mimg )
     }
 
     lazy val logPrefix = s"_doSaveInPermanent($loc):"
@@ -239,7 +239,7 @@ class MImgs3 @Inject() (
 
   /** Существует ли картинка в хранилище? */
   override def existsInPermanent(mimg: MImgT): Future[Boolean] = {
-    val isExistsFut = _mediaFut( _mediaOptFut(mimg) )
+    val isExistsFut = _mediaFut( mediaOptFut(mimg) )
       .flatMap { mmedia =>
         iMediaStorages.isExist( mmedia.storage )
       }

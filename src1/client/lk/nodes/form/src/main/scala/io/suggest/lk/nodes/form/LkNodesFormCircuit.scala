@@ -11,15 +11,15 @@ import io.suggest.lk.nodes.form.m.{MLkNodesRoot, MNodeState, MTree}
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.spa.StateInp
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.lk.nodes.form.m.MCreateNodeS.MCreateNodeSFastEq
 import io.suggest.lk.nodes.form.m.MDeleteNodeS.MDeleteNodeSFastEq
 import io.suggest.lk.nodes.form.m.MEditTfDailyS.MTfDailyEditSFastEq
 import io.suggest.lk.nodes.form.m.MTree.MTreeFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
+import io.suggest.spa.StateInp
 
 import scala.concurrent.Future
 

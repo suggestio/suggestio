@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.spa
+package io.suggest.spa
 
 import diode.FastEq
 

@@ -8,11 +8,11 @@ import io.suggest.lk.pop.PopupsContR
 import io.suggest.lk.r.ErrorPopupR
 import io.suggest.lk.r.adv.NodeAdvInfoPopR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import io.suggest.sjs.common.spa.OptFastEq.Plain
+import io.suggest.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import MErrorPopupS.MErrorPopupSFastEq
-import io.suggest.sjs.common.spa.OptFastEq
+import io.suggest.spa.OptFastEq
 
 /**
   * Suggest.io

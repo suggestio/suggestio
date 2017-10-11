@@ -8,12 +8,12 @@ import io.suggest.maps.r.{LGeoMapR, RcvrMarkersR, ReactLeafletUtil}
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sc.search.m.{MScSearch, MScSearchText, MSearchTab, MSearchTabs}
 import io.suggest.sc.styl.GetScCssF
-import io.suggest.sjs.common.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq
+import io.suggest.spa.OptFastEq.Wrapped
 import react.leaflet.lmap.LMapR
 
 import scalacss.ScalaCssReact._

@@ -10,8 +10,9 @@ import io.suggest.crypto.hash.MHash
 import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.MUploadResp
 import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 import io.suggest.text.StringUtil
+import io.suggest.url.MHostUrl
 import org.scalajs.dom.{Blob, File}
 
 import scala.util.Try
@@ -107,5 +108,5 @@ case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Tr
 /** Завершён запрос подготовки сервера к аплоаду файла. */
 case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkEditAction
 /** Завершён запрос заливки файла на сервер. */
-case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String) extends ILkEditAction
+case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkEditAction
 // TODO Объеденить оба case class'а?

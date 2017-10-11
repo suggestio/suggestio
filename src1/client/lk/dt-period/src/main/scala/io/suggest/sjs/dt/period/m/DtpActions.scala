@@ -2,7 +2,7 @@ package io.suggest.sjs.dt.period.m
 
 import com.momentjs.Moment
 import io.suggest.dt.interval.QuickAdvPeriod
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io

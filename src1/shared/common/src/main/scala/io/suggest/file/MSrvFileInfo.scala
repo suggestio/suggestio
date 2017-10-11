@@ -1,5 +1,6 @@
 package io.suggest.file
 
+import io.suggest.color.MHistogram
 import io.suggest.common.empty.EmptyUtil
 import io.suggest.crypto.hash.MHash
 import japgolly.univeq.UnivEq
@@ -27,7 +28,8 @@ object MSrvFileInfo {
       .inmap[Map[MHash, String]](
         EmptyUtil.opt2ImplEmpty1F(Map.empty),
         { mapa => if (mapa.isEmpty) None else Some(mapa) }
-      )
+      ) and
+    (__ \ "c").formatNullable[MHistogram]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
@@ -50,6 +52,7 @@ case class MSrvFileInfo(
                          sizeB      : Option[Long],
                          name       : Option[String],
                          mimeType   : Option[String],
-                         hashesHex  : Map[MHash, String]
+                         hashesHex  : Map[MHash, String],
+                         colors     : Option[MHistogram]
                        )
 

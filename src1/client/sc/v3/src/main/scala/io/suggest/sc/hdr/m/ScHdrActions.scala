@@ -1,6 +1,6 @@
 package io.suggest.sc.hdr.m
 
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io

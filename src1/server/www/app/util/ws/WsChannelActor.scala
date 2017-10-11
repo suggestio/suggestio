@@ -17,7 +17,7 @@ class WsChannelActors @Inject() (
                                   factory: IWsChannelActorFactory
                                 ) {
 
-  def props(args: MWsChannelActorArgs) = {
+  def props(args: MWsChannelActorArgs): Props = {
     Props( factory.create(args) )
   }
 
@@ -37,7 +37,7 @@ trait IWsChannelActorFactory {
 case class WsChannelActor @Inject() (
                                       @Assisted args                  : MWsChannelActorArgs,
                                       override val wsDispatcherActors : WsDispatcherActors
-)
+                                    )
   extends WsActorDummy
   with SubscribeToWsDispatcher
   //with ColorDetectedWsNotifyActor // TODO Написать и заинклюдить сюда трейт связи с MainColorDetector'ом.
@@ -46,7 +46,7 @@ case class WsChannelActor @Inject() (
 
   import LOGGER._
 
-  override final def wsId = args.ctxId.toString
+  override final def wsId: String = args.ctxId.toString
 
   override def postStop(): Unit = {
     super.postStop()

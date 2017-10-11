@@ -16,7 +16,6 @@ import io.suggest.maps.u.MapsUtil
 import io.suggest.pick.PickleUtil
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import MLamRad.MLamRadFastEq
@@ -24,6 +23,7 @@ import MMapS.MMapSFastEq
 import IRadOpts.IRadOptsFastEq
 import io.suggest.routes.AdvRcvrsMapApiHttp
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.spa.StateInp
 
 import scala.concurrent.Future
 

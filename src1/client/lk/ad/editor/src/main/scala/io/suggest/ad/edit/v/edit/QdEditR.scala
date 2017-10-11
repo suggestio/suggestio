@@ -8,7 +8,7 @@ import io.suggest.color.MColorData
 import io.suggest.i18n.MsgCodes
 import io.suggest.quill.v.QuillEditorR
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.sjs.common.spa.OptFastEq
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._

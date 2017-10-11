@@ -4,8 +4,8 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.sjs.common.spa.DAction
 import io.suggest.sjs.leaflet.map.Zoom_t
+import io.suggest.spa.DAction
 
 import scala.util.Try
 

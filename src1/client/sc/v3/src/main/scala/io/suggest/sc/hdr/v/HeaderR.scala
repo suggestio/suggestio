@@ -8,9 +8,9 @@ import io.suggest.sc.index.MSc3IndexResp
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sjs.common.spa.OptFastEq
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.styl.GetScCssF
+import io.suggest.spa.OptFastEq
 
 import scalacss.ScalaCssReact._
 

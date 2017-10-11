@@ -20,9 +20,9 @@ import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
-import io.suggest.sjs.common.spa.StateInp
+import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.spa.StateInp
 import org.scalajs.dom.Event
 import play.api.libs.json.Json
 

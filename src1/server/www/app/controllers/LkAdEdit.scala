@@ -3,6 +3,7 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
+import io.suggest.ad.form.AdFormConstants
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
 import io.suggest.init.routed.MJsiTgs
@@ -14,7 +15,7 @@ import io.suggest.util.logs.MacroLogsImpl
 import models.im.MImg3
 import models.mctx.Context
 import models.mproj.ICommonDi
-import models.mup.MUploadFileHandlers
+import models.mup.{MColorDetectArgs, MUploadFileHandlers}
 import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
@@ -82,7 +83,7 @@ class LkAdEdit @Inject() (
         MAdEditFormConf(
           producerId  = producerId,
           adId        = None,
-          srvCtxId    = ctx.ctxIdStr
+          ctxId    = ctx.ctxIdStr
         )
       }
 
@@ -187,7 +188,7 @@ class LkAdEdit @Inject() (
           conf = MAdEditFormConf(
             producerId  = request.producer.id.get,
             adId        = request.mad.id,
-            srvCtxId    = ctx.ctxIdStr
+            ctxId    = ctx.ctxIdStr
           ),
           form = MAdEditForm(
             template  = nodeDoc.template,
@@ -277,7 +278,13 @@ class LkAdEdit @Inject() (
           validated = validated,
           // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
           uploadFileHandler = Some( MUploadFileHandlers.Picture ),
-          colorDetect       = true
+          colorDetect       = Some {
+            val cdConst = AdFormConstants.ColorDetect
+            MColorDetectArgs(
+              paletteSize   = cdConst.PALETTE_SIZE,
+              wsPaletteSize = cdConst.PALETTE_SHRINK_SIZE
+            )
+          }
         )
       }
     }

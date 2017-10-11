@@ -19,7 +19,8 @@ object MColorData {
     /** Название поля с hex-кодом цвета. */
     val CODE_FN       = "c"
     val RGB_FN        = "rgb"
-    val FREQ_PC_FN    = "fq"
+    val FREQ_PC_FN    = "q"
+    val COUNT_FN      = "o"
   }
 
   /** Поддержка boopickle. */
@@ -33,7 +34,8 @@ object MColorData {
     (
       (__ \ F.CODE_FN).format[String] and
       (__ \ F.RGB_FN).formatNullable[MRgb] and
-      (__ \ F.FREQ_PC_FN).formatNullable[Int]
+      (__ \ F.FREQ_PC_FN).formatNullable[Int] and
+      (__ \ F.COUNT_FN).formatNullable[Long]
     )(apply, unlift(unapply))
   }
 
@@ -58,11 +60,14 @@ object MColorData {
   * @param freqPc Нормированная частота в картинке в процентах, если есть.
   *               Т.е. Option[0..100%].
   *               Частота == 0 -- это возможно, если частота слишком низка.
+  * @param count Абсолютное кол-во этого цвета.
+  *              Например, кол-во пикселей такого цвета на изображении.
   */
 case class MColorData(
                        code   : String,
                        rgb    : Option[MRgb]    = None,
-                       freqPc : Option[Int]     = None
+                       freqPc : Option[Int]     = None,
+                       count  : Option[Long]    = None
                      ) {
 
   // Тут для самоконтроля на ранних этапах использования. TODO Удалить этот мусор в будущем или вынести куда-нибудь:

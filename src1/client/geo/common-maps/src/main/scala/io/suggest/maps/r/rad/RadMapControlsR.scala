@@ -6,9 +6,9 @@ import io.suggest.maps.m.MRadT
 import japgolly.scalajs.react.ScalaComponent
 import japgolly.scalajs.react.vdom.Implicits._
 import react.leaflet.layer.LayerGroupR
-import io.suggest.sjs.common.spa.OptFastEq
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
 import RadCircleR.RadCirclePropsValFastEq
+import io.suggest.spa.OptFastEq
+import io.suggest.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io

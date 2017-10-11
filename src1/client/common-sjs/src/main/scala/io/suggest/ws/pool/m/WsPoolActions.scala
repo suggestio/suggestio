@@ -1,8 +1,11 @@
 package io.suggest.ws.pool.m
 
-import io.suggest.primo.MConflictAction
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 import io.suggest.url.MHostUrl
+import io.suggest.ws.{MWsMsg, MWsMsgType}
+import org.scalajs.dom.raw.WebSocket
+
+import scala.util.Try
 
 /**
   * Suggest.io
@@ -18,16 +21,20 @@ sealed trait IWsPoolAction extends DAction
   * Если коннекшен уже существует, то будет обновлён ttl.
   *
   * @param hostUrl Хост и url path.
-  * @param conflictRes Что делать, когда на коннекшене уже висит какой-то другой callback?
   * @param closeAfterSec Автозакрытие спустя указанное время.
-  * @param onOpenErrorF Что делать при ошибке сокета?
   */
 case class WsEnsureConn(
                          hostUrl          : MHostUrl,
-                         callbackF        : WsCallbackF,
-                         conflictRes       : MConflictAction,
-                         closeAfterSec    : Option[Int] = None,
-                         onOpenErrorF     : Option[Throwable => Unit] = None
+                         closeAfterSec    : Option[Int] = None
+                       )
+  extends IWsPoolAction
+
+
+/** Сообщение об успешном открытии веб-сокета. */
+case class WsOpenedConn(
+                         hostUrl        : MHostUrl,
+                         ws             : Try[WebSocket],
+                         closeAfterSec  : Option[Int]
                        )
   extends IWsPoolAction
 
@@ -37,7 +44,20 @@ case class WsCloseConn( hostUrl: MHostUrl ) extends IWsPoolAction
 
 
 /** Поступило новое сообщение из сокета. */
-case class WsMsg(from: MHostUrl, payload: Any) extends IWsPoolAction
+case class WsRawMsg(from: MHostUrl, payload: Any) extends IWsPoolAction
+
+/** Результат обработки [[WsRawMsg]]: распарсенное сообщение из websocket WS-Channel.
+  *
+  * @param from Ключ websocket'а в пуле сокетов.
+  * @param msg Распарсенное сообщение.
+  * @param retry Порядковый номер попытки отправки.
+  *              Бывает попытка обработки race conditions, когда сообщение приходит раньше,
+  *              чем система может отработать его.
+  */
+case class WsChannelMsg(from: MHostUrl, msg: MWsMsg, retry: Int = 0) extends IWsPoolAction {
+  def withRetry(retry: Int) = copy(retry = retry)
+  def incrRetry = withRetry(retry + 1)
+}
 
 
 /** Сообщение об ошибке сокета. */
@@ -46,4 +66,21 @@ case class WsError(from: MHostUrl, message: String) extends IWsPoolAction
 
 /** Сигнал к закрытию всех имеющихся ws-коннекшенов. */
 case object WsCloseAll extends IWsPoolAction
+
+
+
+/** При откладывании экшенов на базе сообщений из websocket'а WS-Channel может помочь эта модель.
+  * Она хранит исходный экшен в произвольном, а так же
+  *
+  * @param typ Тип ws-channel-сообщения.
+  * @param payload Данные экшена.
+  * @param retryCount Счётчик повторных попыток.
+  * @tparam T Тип завёрнутых внутри данных.
+  */
+case class WsRetriedAction[T](
+                               typ         : MWsMsgType,
+                               payload     : Try[T],
+                               retryCount  : Int          = 0
+                             )
+  extends IWsPoolAction
 

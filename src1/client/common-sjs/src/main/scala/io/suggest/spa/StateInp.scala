@@ -1,4 +1,4 @@
-package io.suggest.sjs.common.spa
+package io.suggest.spa
 
 import io.suggest.common.spa.SpaConst
 import io.suggest.sjs.common.vm.attr.StringInputValueT
@@ -20,7 +20,7 @@ object StateInp extends FindElT {
 }
 
 
-import StateInp.Dom_t
+import io.suggest.spa.StateInp.Dom_t
 
 case class StateInp(override val _underlying: Dom_t) extends StringInputValueT with SelfRemoveT {
 

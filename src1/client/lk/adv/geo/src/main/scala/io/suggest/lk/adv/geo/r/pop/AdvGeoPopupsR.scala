@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.lk.adv.geo.m.{MNodeInfoPopupS, MPopupsS}
 import io.suggest.lk.pop.PopupsContR
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import PopupsContR.PopContPropsValFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
 import io.suggest.lk.m.MErrorPopupS

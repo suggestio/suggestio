@@ -25,7 +25,6 @@ import io.suggest.pick.MimeConst
 import io.suggest.svg.SvgUtil
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
-import io.suggest.ym.model.ad.AdColorFns
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.mctx.Context
 import play.api.data.Forms._
@@ -265,7 +264,7 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     val pattern = mad.meta.colors.pattern
     val bgColor = mad.meta.colors.bg
       .getOrElse( MColorData(
-        code = AdColorFns.IMG_BG_COLOR_FN.default
+        code = "EEEEEE"
       ))
     Some( (bmr, pattern, mad.ad.richDescr, bgColor) )
   }

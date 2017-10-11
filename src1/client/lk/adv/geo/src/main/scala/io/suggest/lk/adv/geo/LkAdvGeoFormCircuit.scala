@@ -16,7 +16,6 @@ import io.suggest.lk.adv.m.{IRcvrPopupProps, MPriceS, ResetPrice}
 import io.suggest.lk.tags.edit.c.TagsEditAh
 import io.suggest.lk.tags.edit.m.{MTagsEditState, SetTagSearchQuery}
 import io.suggest.pick.PickleUtil
-import io.suggest.sjs.common.spa.StateInp
 import io.suggest.sjs.dt.period.r.DtpAh
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -28,6 +27,7 @@ import io.suggest.maps.c.{MapCommonAh, RadAh, RcvrMarkersInitAh}
 import io.suggest.maps.m._
 import io.suggest.maps.u.MapsUtil
 import io.suggest.routes.AdvRcvrsMapApiHttp
+import io.suggest.spa.StateInp
 // TODO import MAdv4Free....FastEq
 import MTagsEditState.MTagsEditStateFastEq
 import MRcvr.MRcvrFastEq
@@ -36,7 +36,7 @@ import io.suggest.maps.m.MExistGeoS.MExistGeoSFastEq
 // TODO import MAdvPeriod...FastEq
 import MPopupsS.MPopupsFastEq
 import MNodeInfoPopupS.MNodeInfoPopupFastEq
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 
 import scala.concurrent.Future

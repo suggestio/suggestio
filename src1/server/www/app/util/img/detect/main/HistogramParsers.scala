@@ -2,8 +2,7 @@ package util.img.detect.main
 
 import java.io.{File, FileInputStream, InputStreamReader}
 
-import io.suggest.color.MRgb
-import models.im.MHistogramEntry
+import io.suggest.color.{MColorData, MRgb}
 
 import scala.util.parsing.combinator.JavaTokenParsers
 import scala.util.parsing.input.StreamReader
@@ -19,9 +18,11 @@ class HistogramParsers extends JavaTokenParsers {
 
   // Используем def вместо val, чтобы сэкономить PermGen, т.к. парсер нужен изредка, а не постоянно.
 
-  def FREQ_P = wholeNumber ^^ { _.toLong }
+  def FREQ_P: Parser[Long] = wholeNumber ^^ { number =>
+    Math.max(0L, number.toLong)
+  }
 
-  def BYTE_NUMBER_P = """(2[0-4]\d|25[0-5]|1?\d{1,2})""".r ^^ { _.toInt }
+  def BYTE_NUMBER_P: Parser[Int] = """(2[0-4]\d|25[0-5]|1?\d{1,2})""".r ^^ { _.toInt }
 
   def COMMA_SP_SEP: Parser[_] = """,\s*""".r
 
@@ -38,7 +39,7 @@ class HistogramParsers extends JavaTokenParsers {
   }
 
   // 2014.oct.30: При парсинге PNG может вылетать RGBA-кортеж, который содержит прозрачность (обычно, нулевую) Мы её дропаем.
-  def RGB_TUPLE_P = "(" ~> RGB_P <~ ")"
+  def RGB_TUPLE_P: Parser[MRgb] = "(" ~> RGB_P <~ ")"
 
   def HEX_COLOR_P: Parser[String] = {
     val colorHexP = "(?i)[0-9A-F]{6}".r
@@ -47,20 +48,24 @@ class HistogramParsers extends JavaTokenParsers {
   }
 
   /** Запись цвета в srgb. Следует помнить, что для RGB(0,0,0) im возвращает строку "black". */
-  def SRGB_REC_P = "s?rgba?\\(".r ~> RGB_P <~ ")"
+  def SRGB_REC_P: Parser[MRgb] = "s?rgba?\\(".r ~> RGB_P <~ ")"
 
   /** "gray", "gray(255)", "white", etc. */
   def COLOR_NAME_P: Parser[String] = "(?i)[_a-z ]+[(0-9)]*".r
 
-  def LINE_PARSER = {
+  def LINE_PARSER: Parser[MColorData] = {
     val p = (FREQ_P <~ ":") ~ RGB_TUPLE_P ~ HEX_COLOR_P <~ (SRGB_REC_P | COLOR_NAME_P)
     p ^^ {
       case freq ~ rgb ~ hexColor =>
-        MHistogramEntry(freq, hexColor, rgb = rgb)
+        MColorData(
+          code    = hexColor,
+          rgb     = Some(rgb),
+          count   = Some(freq)
+        )
     }
   }
 
-  def MULTILINE_PARSER = rep(LINE_PARSER)
+  def MULTILINE_PARSER: Parser[List[MColorData]] = rep(LINE_PARSER)
 
 
   /**
@@ -68,7 +73,7 @@ class HistogramParsers extends JavaTokenParsers {
    * @param histogramFile Файл, который будет считан поточно.
    * @return Результат работы парсера, который содержит
    */
-  def parseFromFile(histogramFile: File): ParseResult[List[MHistogramEntry]] = {
+  def parseFromFile(histogramFile: File): ParseResult[List[MColorData]] = {
     val is = new FileInputStream(histogramFile)
     try {
       val reader = StreamReader( new InputStreamReader(is) )

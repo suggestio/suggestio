@@ -1,6 +1,7 @@
 package io.suggest.ueq
 
 import japgolly.univeq.UnivEq
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -33,5 +34,11 @@ object UnivEqUtil {
   @inline implicit def throwableUe        : UnivEq[Throwable]       = UnivEq.force
 
   @inline implicit def fun1Ue[T, R]       : UnivEq[(T) => R]        = UnivEq.force
+
+  @inline implicit def jsValueUe          : UnivEq[JsValue]         = UnivEq.force
+  @inline implicit def jsObjectUe         : UnivEq[JsObject]        = UnivEq.force
+  @inline implicit def jsStringUe         : UnivEq[JsString]        = UnivEq.force
+  @inline implicit def jsNumberUe         : UnivEq[JsNumber]        = UnivEq.force
+  @inline implicit def jsNullUe           : UnivEq[JsNull.type]     = UnivEq.force
 
 }

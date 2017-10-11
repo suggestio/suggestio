@@ -13,7 +13,7 @@ import io.suggest.lk.adv.r.{Adv4FreeR, ItemsPricesR}
 import io.suggest.sjs.dt.period.r.DatePeriodR
 import IRadOpts.IRadOptsFastEq
 import MExistGeoS.MExistGeoSFastEq
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import RadPopupR.PropsValFastEq
 import io.suggest.common.empty.OptionUtil
 import react.leaflet.layer.LayerGroupR

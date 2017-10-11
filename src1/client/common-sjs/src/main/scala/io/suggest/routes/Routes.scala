@@ -57,7 +57,7 @@ sealed trait StaticController extends js.Object {
   def advRcvrsMap(): Route = js.native
 
   /** Роута для доступа к унифицированному websocket channel. */
-  def wsChannerl(ctxId: String): Route = js.native
+  def wsChannel(ctxId: String): Route = js.native
 
 }
 

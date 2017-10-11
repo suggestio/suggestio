@@ -52,7 +52,7 @@ object MUploadTargetQs {
                                  fileHandlerOptB    : QueryStringBindable[Option[MUploadFileHandler]],
                                  storageB           : QueryStringBindable[MStorage],
                                  strOptB            : QueryStringBindable[Option[String]],
-                                 boolB              : QueryStringBindable[Boolean]
+                                 cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]]
                                 ): QueryStringBindable[MUploadTargetQs] = {
     new QueryStringBindableImpl[MUploadTargetQs] {
       def getQsbSigner(key: String) = new QsbSigner(SIGN_SECRET, Fields.SIGNATURE_FN)
@@ -72,7 +72,7 @@ object MUploadTargetQs {
           storageE          <- storageB.bind          ( k(F.STORAGE_FN),      params )
           storHostE         <- strB.bind              ( k(F.STORAGE_HOST_FN), params )
           storInfoE         <- strB.bind              ( k(F.STORAGE_INFO_FN), params )
-          colorDetectE      <- boolB.bind             ( k(F.COLOR_DETECT_FN), params )
+          colorDetectE      <- cdArgsOptB.bind        ( k(F.COLOR_DETECT_FN), params )
         } yield {
           for {
             hashesHex       <- hashesHexE.right
@@ -117,7 +117,7 @@ object MUploadTargetQs {
           storageB.unbind           ( k(F.STORAGE_FN),          value.storage     ),
           strB.unbind               ( k(F.STORAGE_HOST_FN),     value.storHost    ),
           strB.unbind               ( k(F.STORAGE_INFO_FN),     value.storInfo    ),
-          boolB.unbind              ( k(F.COLOR_DETECT_FN),     value.colorDetect )
+          cdArgsOptB.unbind         ( k(F.COLOR_DETECT_FN),     value.colorDetect )
         )
         // Подписать это всё.
         getQsbSigner(key)
@@ -142,6 +142,7 @@ object MUploadTargetQs {
   * @param storInfo Строка данных, воспринимаемая конкретным storage'ем, нужная для сохранения.
   *                 Например, для SeaWeedFS это будет зарезрвированный fid.
   * @param colorDetect Запустить MainColorDetector после.
+  *                    Значение -- кол-во цветов, которые надо отправить на клиент.
   */
 case class MUploadTargetQs(
                             hashesHex   : HashesHex,
@@ -153,5 +154,5 @@ case class MUploadTargetQs(
                             storage     : MStorage,
                             storHost    : String,
                             storInfo    : String,
-                            colorDetect : Boolean
+                            colorDetect : Option[MColorDetectArgs]
                           )

@@ -18,6 +18,7 @@ object DomEvents
 
   def PROGRESS = "progress"
 
+  def OPEN  = "open"
   def CLOSE = "close"
 
   def ERROR = "error"

@@ -2,7 +2,7 @@ package io.suggest.lk.adv.m
 
 import io.suggest.adv.rcvr.RcvrKey
 import io.suggest.bill.MGetPriceResp
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 import scala.util.Try
 

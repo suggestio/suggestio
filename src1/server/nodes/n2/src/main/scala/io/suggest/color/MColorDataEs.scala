@@ -1,7 +1,7 @@
 package io.suggest.color
 
 import io.suggest.es.model.IGenEsMappingProps
-import io.suggest.es.util.SioEsUtil.{DocField, FieldKeyword, FieldNestedObject}
+import io.suggest.es.util.SioEsUtil.{DocField, DocFieldTypes, FieldKeyword, FieldNestedObject, FieldNumber}
 
 /**
   * Suggest.io
@@ -19,7 +19,9 @@ object MColorDataEs extends IGenEsMappingProps {
     val F = MColorData.Fields
     List(
       FieldKeyword( F.CODE_FN, index = true, include_in_all = false ),
-      FieldNestedObject( F.RGB_FN, enabled = true, properties = MRgbEs.generateMappingProps )
+      FieldNestedObject( F.RGB_FN, enabled = true, properties = MRgbEs.generateMappingProps ),
+      FieldNumber( F.FREQ_PC_FN, fieldType = DocFieldTypes.integer, index = true, include_in_all = false ),
+      FieldNumber( F.COUNT_FN, fieldType = DocFieldTypes.long, index = false, include_in_all = false )
     )
   }
 

@@ -11,7 +11,7 @@ import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.ScConstants
 import io.suggest.sc.hdr.v.NodeNameR
 import io.suggest.sc.inx.m.{MWelcomeState, WcClick}
-import io.suggest.sjs.common.spa.OptFastEq.Plain
+import io.suggest.spa.OptFastEq.Plain
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sc.styl.GetScCssF
 

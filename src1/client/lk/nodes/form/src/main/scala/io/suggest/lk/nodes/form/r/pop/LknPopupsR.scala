@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
 import io.suggest.lk.nodes.form.m.{MCreateNodeS, MDeleteNodeS, MEditTfDailyS, MLknPopups}
 import io.suggest.lk.pop.PopupsContR
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._

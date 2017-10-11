@@ -147,7 +147,7 @@ trait MImgsT
   protected val streamsUtil: StreamsUtil
 
 
-  protected def _mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
+  def mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
     mMedias.getById(mimg._mediaId)
   }
   protected def _mediaFut(mediaOptFut: Future[Option[MMedia]]): Future[MMedia] = {

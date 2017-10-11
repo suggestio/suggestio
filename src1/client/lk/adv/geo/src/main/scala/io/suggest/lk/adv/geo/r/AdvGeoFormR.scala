@@ -18,7 +18,7 @@ import io.suggest.sjs.dt.period.r._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 import react.leaflet.control.LocateControlR
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import MExistGeoPopupS.MGeoCurPopupSFastEq
 import io.suggest.maps.nodes.MGeoNodesResp
 import react.leaflet.lmap.LMapR

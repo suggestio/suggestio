@@ -8,7 +8,7 @@ import io.suggest.maps.nodes.MGeoNodesResp
 import io.suggest.maps.r.RcvrMarkersR
 import io.suggest.maps.u.{MapIcons, MapsUtil}
 import io.suggest.react.ReactCommonUtil.Implicits._
-import io.suggest.sjs.common.spa.OptFastEq.Plain
+import io.suggest.spa.OptFastEq.Plain
 import japgolly.scalajs.react.vdom.{VdomElement, VdomNode}
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}

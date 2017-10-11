@@ -5,7 +5,7 @@ import io.suggest.lk.adn.map.m.IRadOpts
 import io.suggest.maps.m.MRadT
 import io.suggest.maps.m.MRadT.MRadTFastEq
 import io.suggest.maps.r.rad.RadMapControlsR
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.Implicits._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}

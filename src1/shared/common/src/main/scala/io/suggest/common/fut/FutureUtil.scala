@@ -1,6 +1,8 @@
 package io.suggest.common.fut
 
-import scala.concurrent.Future
+import io.suggest.common.empty.EmptyUtil
+
+import scala.concurrent.{ExecutionContext, Future}
 import scala.language.implicitConversions
 
 /**
@@ -57,6 +59,15 @@ object FutureUtil {
       Option.empty[R]
     } { v =>
       defined(v)
+    }
+  }
+
+
+  def optFut2futOptPlain[T](opt: Option[Future[T]])(implicit ec: ExecutionContext): Future[Option[T]] = {
+    opt.fold[Future[Option[T]]] {
+      Option.empty[T]
+    } { fut0 =>
+      fut0.map( EmptyUtil.someF )
     }
   }
 

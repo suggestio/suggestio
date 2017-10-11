@@ -1,23 +1,22 @@
 package io.suggest.ws.pool
 
-import diode.data.Ready
-import diode.{ActionHandler, ActionResult, ModelRW}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import diode.data.Pending
+import diode.{ActionHandler, ActionResult, Effect, ModelRW}
 import io.suggest.common.event.DomEvents
-import io.suggest.primo.MConflictRes
-import io.suggest.proto.HttpConst
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.DomQuick
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
-import io.suggest.sjs.common.xhr.Xhr
-import io.suggest.ws.pool.m._
-import org.scalajs.dom.{CloseEvent, ErrorEvent, Event, MessageEvent}
-import org.scalajs.dom.raw.WebSocket
 import io.suggest.sjs.common.vm.evtg.EventTargetVm.RichEventTarget
 import io.suggest.url.MHostUrl
+import io.suggest.ws.MWsMsg
+import io.suggest.ws.pool.m._
 import org.scalajs.dom
+import org.scalajs.dom.raw.WebSocket
+import org.scalajs.dom.{CloseEvent, ErrorEvent, Event, MessageEvent}
+import play.api.libs.json.Json
 
-import scala.concurrent.Future
+import scala.util.Success
 
 /**
   * Suggest.io
@@ -28,6 +27,7 @@ import scala.concurrent.Future
   */
 class WsPoolAh[M](
                    modelRW      : ModelRW[M, MWsPoolS],
+                   wsChannelApi : IWsChannelApi,
                    dispatcher   : diode.Dispatcher
                  )
   extends ActionHandler(modelRW)
@@ -45,23 +45,24 @@ class WsPoolAh[M](
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Сообщение из открытого сокета.
-    case m: WsMsg =>
+    case m: WsRawMsg =>
       val v0 = value
       v0.conns.get( m.from ).fold {
         // Внезапно, не найден коннекшен.
         LOG.warn( WarnMsgs.UNKNOWN_CONNECTION, msg = m )
         noChange
 
-      } { existConn =>
-        // Есть коннекшен, значит есть и callback-функция.
-        try {
-          val fxOpt = existConn.onMessageF(m.payload)
-          fxOpt.fold(noChange)(effectOnly)
-        } catch {
-          case ex: Throwable =>
-            LOG.error( ErrorMsgs.CALLBACK_FUNCTION_FAILED, ex, m )
-            noChange
+      } { _ =>
+        // Есть коннекшен, значит разрешаем полученное сообщение. Парсим и отправляем наверх, чтобы кто-нибудь другой подхватил.
+        val mWsMsgFx = Effect.action {
+          WsChannelMsg(
+            from = m.from,
+            msg = Json
+              .parse(m.payload.asInstanceOf[String])
+              .as[MWsMsg]
+          )
         }
+        effectOnly( mWsMsgFx )
       }
 
 
@@ -71,56 +72,24 @@ class WsPoolAh[M](
       val key = m.hostUrl
       v0.conns.get( key ).fold {
         // Нет коннекшена с данными координатами. Просто открываем новый ws-коннекшен:
-        val wsProto = HttpConst.Proto.wsOrWss( Xhr.PREFER_SECURE_URLS )
-        val wsUrl = wsProto + HttpConst.Proto.DELIM + m.hostUrl.host + m.hostUrl.relUrl
-        try {
-          val ws = new WebSocket(wsUrl)
-
-          // Подписаться на сообщения из сокета.
-          ws.addEventListener4s(DomEvents.MESSAGE) { e: MessageEvent =>
-            dispatcher( WsMsg(key, e.data) )
-          }
-
-          // Желательно узнать о незапланированном закрытии сокета.
-          ws.addEventListener4s(DomEvents.CLOSE) { _: CloseEvent =>
-            dispatcher( WsCloseConn(key) )
-          }
-
-          // Подписываемся на события ошибок сокета.
-          ws.addEventListener4s(DomEvents.ERROR) { e: ErrorEvent =>
-            LOG.error( ErrorMsgs.CONNECTION_ERROR, msg = (e.filename, e.lineno, e.colno, e.message))
-            dispatcher( WsError(key, e.message) )
-          }
-
-          // Собрать состояние WS-коннекшена
-          val wsConnS = MWsConnS(
-            hostUrl     = key,
-            onMessageF  = m.callbackF,
-            conn        = Ready( ws ),
-            closeTimer  = _closeTimerOpt(key, m.closeAfterSec)
-          )
-
-          // Сохранить данные о коннекшене в состояние:
-          val v2 = v0.withConns(
-            v0.conns + (key -> wsConnS)
-          )
-          updated( v2 )
-
-        } catch {
-          case ex: Throwable =>
-            // Не удалось открыть WebSocket или что-то ещё пошло не так.
-            LOG.error( ErrorMsgs.WEB_SOCKET_OPEN_FAILED, ex = ex, msg = wsUrl )
-
-            // В фоне запускаем callback обработки ошибки открытия сокета, если он задан.
-            for (onOpenErrorF <- m.onOpenErrorF) {
-              Future {
-                onOpenErrorF( ex )
-              }
+        val wsOpenFx = Effect {
+          wsChannelApi
+            .wsChannel(key.host)
+            .transform { tryRes =>
+              Success( WsOpenedConn(key, tryRes, m.closeAfterSec) )
             }
-
-            // Всё, больше тут делать нечего.
-            noChange
         }
+
+        // Собрать состояние WS-коннекшена и сохранить.
+        val wsConnS = MWsConnS(
+          hostUrl     = key,
+          conn        = Pending(),
+          closeTimer  = None
+        )
+        val v2 = v0.withConns(
+          v0.conns.updated(key, wsConnS)
+        )
+        updated( v2, wsOpenFx )
 
       } { existConn =>
         // Запрошенный коннекшен уже существует.
@@ -129,25 +98,84 @@ class WsPoolAh[M](
           _closeTimerOpt(key, m.closeAfterSec)
         )
 
-        // Обновляем callbackF согласно указанной в m политике разрешения конфликтов:
-        val conn2 = m.conflictRes match {
-          case MConflictRes.ReplaceOld => conn1.withOnMessageF( m.callbackF )
-          case MConflictRes.IgnoreNew  => conn1
-          case MConflictRes.Merge      =>
-            val oldCb = conn1.onMessageF
-            conn1.withOnMessageF { data =>
-              val fxs = oldCb(data) ++ m.callbackF(data)
-              if (fxs.isEmpty) None
-              else if (fxs.size == 1) Some( fxs.head )
-              else Some( fxs.reduceLeft(_ + _) )
-            }
-        }
-
         // Сохранить новое состояние коннекшена в состояние:
         val v2 = v0.withConns(
-          v0.conns + (key -> conn2)
+          v0.conns.updated(key, conn1)
         )
         updated( v2 )
+      }
+
+
+    // Сообщение о том, что завершён эффект открытия веб-сокета
+    case m: WsOpenedConn =>
+      val v0 = value
+      val key = m.hostUrl
+      v0.conns.get( key ).fold {
+        // Should never happen: было выполнено открытие закрытого/неизвестного коннекшена.
+        LOG.warn( WarnMsgs.UNKNOWN_CONNECTION, msg = m )
+        for (ws <- m.ws) {
+          _safeCloseWs( ws )
+        }
+        noChange
+
+      } { existConn =>
+        val v0 = value
+        m.ws.fold(
+          {ex =>
+            LOG.error( ErrorMsgs.CONNECTION_ERROR, ex, m )
+            val conn2 = existConn.withConn(
+              existConn.conn.fail( ex )
+            )
+            val v2 = v0.withConns(
+              v0.conns.updated(m.hostUrl, conn2)
+            )
+            updated(v2)
+          },
+          {ws =>
+            try {
+              // Подписаться на сообщения из сокета.
+              ws.addEventListener4s(DomEvents.MESSAGE) { e: MessageEvent =>
+                dispatcher(WsRawMsg(key, e.data))
+              }
+              // Желательно узнать о незапланированном закрытии сокета.
+              ws.addEventListener4s(DomEvents.CLOSE) { _: CloseEvent =>
+                dispatcher(WsCloseConn(key))
+              }
+              // Подписываемся на события ошибок сокета.
+              ws.addEventListener4s(DomEvents.ERROR) { e: ErrorEvent =>
+                LOG.error(ErrorMsgs.CONNECTION_ERROR, msg = (e.filename, e.lineno, e.colno, e.message))
+                dispatcher(WsError(key, e.message))
+              }
+
+              // Сохранить готовый сокет в состояние.
+              val conn2 = existConn
+                .withConn(
+                  existConn.conn
+                    .ready(ws)
+                )
+                .withCloseTimer(
+                  _closeTimerOpt(key, m.closeAfterSec)
+                )
+              val v2 = v0.withConns(
+                v0.conns.updated(m.hostUrl, conn2)
+              )
+              updated(v2)
+
+            } catch {
+              case ex: Throwable =>
+                // Не удалось обработать WebSocket, что-то пошло не так...
+                LOG.error( ErrorMsgs.WEB_SOCKET_OPEN_FAILED, ex = ex, msg = ws.url )
+                // В фоне запускаем callback обработки ошибки открытия сокета, если он задан.
+                //for (onOpenErrorF <- m.onOpenErrorF) {
+                //  Future {
+                //    onOpenErrorF( ex )
+                //  }
+                //}
+                // Всё, больше тут делать нечего.
+                noChange
+            }
+          }
+        )
       }
 
 
@@ -199,14 +227,18 @@ class WsPoolAh[M](
         DomQuick.clearTimeout( timerId )
       }
 
-      try {
-        // Обнулить onclose, чтобы ws не слал сообщений о своём очевидном закрытии.
-        ws.onclose = null
-        ws.close()
-      } catch {
-        case ex: Throwable =>
-          LOG.warn( WarnMsgs.CANNOT_CLOSE_SOMETHING, ex, msg = connS.hostUrl )
-      }
+      _safeCloseWs(ws)
+    }
+  }
+
+  private def _safeCloseWs(ws: WebSocket): Unit = {
+    try {
+      // Обнулить onclose, чтобы ws не слал сообщений о своём очевидном закрытии.
+      ws.onclose = null
+      ws.close()
+    } catch {
+      case ex: Throwable =>
+        LOG.warn( WarnMsgs.CANNOT_CLOSE_SOMETHING, ex, msg = ws.url )
     }
   }
 

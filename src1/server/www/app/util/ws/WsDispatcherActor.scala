@@ -49,7 +49,7 @@ class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl 
   private def NOTIFY_WS_WAIT_RETRIES_MAX = 10
 
   /** Пауза между повторными попытками отправить уведомление. */
-  private def NOTIFY_WS_RETRY_PAUSE_MS = 1000L
+  private def NOTIFY_WS_RETRY_PAUSE = 2.seconds
 
   /** Послать сообщение ws-актору с указанным wsId. Если WS-актор ещё не появился, то нужно подождать его
     * некоторое время. Если WS-актор так и не появился, то выразить соболезнования в логи. */
@@ -61,7 +61,7 @@ class WsDispatcherActors @Inject() (mCommonDi: ICommonDi) extends MacroLogsImpl 
         case other =>
           if (counter < NOTIFY_WS_WAIT_RETRIES_MAX) {
             actorSystem.scheduler
-              .scheduleOnce(NOTIFY_WS_RETRY_PAUSE_MS.milliseconds) {
+              .scheduleOnce(NOTIFY_WS_RETRY_PAUSE) {
                 notifyWs(wsId, msg, counter + 1)
               }
             val warnMsg = s"Failed to ask ws-actor-dispatcher about WS actor [$wsId]"

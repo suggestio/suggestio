@@ -1,7 +1,8 @@
-package io.suggest.sjs.common.spa
+package io.suggest.spa
 
 import diode.{ActionType, Effect}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -22,14 +23,16 @@ trait DAction {
 }
 
 
-trait DActionType extends ActionType[DAction]
-
 object DAction {
+
+  implicit def univEq: UnivEq[DAction] = UnivEq.force
 
   /** Требуется ActionType[X] в scope, чтобы компилятор узрел экшен. */
   implicit object DActionType extends DActionType
 
 }
+
+trait DActionType extends ActionType[DAction]
 
 
 /** Унифицированный для всех NOP-экшен, который не должен нигде отрабатываться. */

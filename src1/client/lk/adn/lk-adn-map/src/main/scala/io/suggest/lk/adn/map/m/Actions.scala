@@ -4,7 +4,7 @@ import io.suggest.adv.geo.MGeoAdvExistPopupResp
 import io.suggest.maps.m.OpenAdvGeoExistPopup
 import io.suggest.primo.IApply1
 import io.suggest.sjs.common.geo.json.GjFeature
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 import scala.scalajs.js
 import scala.util.Try

@@ -4,7 +4,7 @@ import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.MScreen
 import io.suggest.model.n2.node.meta.colors.MColors
-import io.suggest.sjs.common.spa.OptFastEq
+import io.suggest.spa.OptFastEq
 
 /**
   * Suggest.io

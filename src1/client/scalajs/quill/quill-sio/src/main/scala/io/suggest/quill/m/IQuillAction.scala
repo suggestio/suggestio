@@ -1,7 +1,7 @@
 package io.suggest.quill.m
 
 import com.quilljs.delta.Delta
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io

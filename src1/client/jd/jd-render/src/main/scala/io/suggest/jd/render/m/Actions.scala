@@ -4,7 +4,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.jd.tags.IDocTag
 import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io

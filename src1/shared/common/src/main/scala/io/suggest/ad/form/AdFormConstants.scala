@@ -46,6 +46,18 @@ object AdFormConstants {
   def BG_COLOR_K  = "bgColor"
 
 
+  /** Константы для запуска детектора основных цветов картинок. */
+  object ColorDetect {
+
+    /** Размер генерируемой палитры. */
+    def PALETTE_SIZE = 8
+
+    /** Размер возвращаемой по WebSocket палитры. */
+    def PALETTE_SHRINK_SIZE = 4
+
+  }
+
+
   // v2: react-form
 
   /** id контейнера react-формы создания/редактирования рекламной карточки. */

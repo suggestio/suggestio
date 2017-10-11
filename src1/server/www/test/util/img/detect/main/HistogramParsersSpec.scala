@@ -2,8 +2,7 @@ package util.img.detect.main
 
 import java.io.{File, PrintWriter}
 
-import io.suggest.color.MRgb
-import models.im.MHistogramEntry
+import io.suggest.color.{MColorData, MRgb}
 import org.scalatestplus.play._
 
 /**
@@ -21,41 +20,49 @@ class HistogramParsersSpec extends PlaySpec {
 
   private val parsedSubstr = "] parsed: "
 
-  private def parseLine(l: String, resultExpected: MHistogramEntry): Unit = {
+  private def parseLine(l: String, resultExpected: MColorData): Unit = {
     val pr = parseAll(LINE_PARSER, l)
     pr.toString   must include (parsedSubstr)
     pr.get        mustBe resultExpected
+  }
+
+  private def _histogramEntry(freq: Long, colorHex: String, rgb: MRgb): MColorData = {
+    MColorData(
+      code    = colorHex,
+      rgb     = Some(rgb),
+      count   = Some(freq)
+    )
   }
 
 
   "LINE_PARSER" must {
     // используем include вместо pr.successful mustBe true, чтобы на экран напечаталось сообщение об ошибке, а не просто экзепшен.
     "parse usual JPEG histogram line" in {
-      parseLine("    104654: (252,220, 29) #FCDC1D srgb(252,220,29)",     MHistogramEntry(104654L, "FCDC1D", MRgb(252, 220, 29)) )
+      parseLine("    104654: (252,220, 29) #FCDC1D srgb(252,220,29)",     _histogramEntry(104654L, "FCDC1D", MRgb(252, 220, 29)) )
     }
     "parse usual JPEG hist.line with \\n" in {
-      parseLine("    231983: (170,162, 95) #AAA25F srgb(170,162,95)\n",   MHistogramEntry(231983L, "AAA25F", MRgb(170, 162, 95)) )
+      parseLine("    231983: (170,162, 95) #AAA25F srgb(170,162,95)\n",   _histogramEntry(231983L, "AAA25F", MRgb(170, 162, 95)) )
     }
     "parse anothen unpopular histogram line" in {
-      parseLine("         1: ( 94, 70, 60) #5E463C srgb(94,70,60)",       MHistogramEntry(1L, "5E463C", MRgb(94, 70, 60)) )
+      parseLine("         1: ( 94, 70, 60) #5E463C srgb(94,70,60)",       _histogramEntry(1L, "5E463C", MRgb(94, 70, 60)) )
     }
     "parse 16272 line" in {
-      parseLine("    16272: (249,232,199) #F9E8C7 srgb(249,232,199)",     MHistogramEntry(16272, "F9E8C7", MRgb(249, 232, 199)) )
+      parseLine("    16272: (249,232,199) #F9E8C7 srgb(249,232,199)",     _histogramEntry(16272, "F9E8C7", MRgb(249, 232, 199)) )
     }
     "parse 1136 line" in {
-      parseLine("      1136: ( 17, 24,  9) #111809 srgb(17,24,9)",        MHistogramEntry(1136, "111809", MRgb(17, 24, 9)) )
+      parseLine("      1136: ( 17, 24,  9) #111809 srgb(17,24,9)",        _histogramEntry(1136, "111809", MRgb(17, 24, 9)) )
     }
 
     "parse SRGBA integer line" in {
-      parseLine("    1: (  0, 64,193,  0) #0040C100 srgba(0,64,193,0)",   MHistogramEntry(1, "0040C1", MRgb(0, 64, 193)) )
+      parseLine("    1: (  0, 64,193,  0) #0040C100 srgba(0,64,193,0)",   _histogramEntry(1, "0040C1", MRgb(0, 64, 193)) )
     }
     "parse SRGBA line with floating alpha" in {
-      parseLine("    1: (  0, 64,193,255) #0040C1FF srgba(0,64,193,0.999893)",   MHistogramEntry(1, "0040C1", MRgb(0, 64, 193)) )
+      parseLine("    1: (  0, 64,193,255) #0040C1FF srgba(0,64,193,0.999893)",   _histogramEntry(1, "0040C1", MRgb(0, 64, 193)) )
     }
 
     // 2015.aug.10: На картинки с белым фоном и небольшим логотипом в центре возникла проблема.
     "parse code description like gray(255)" in {
-      parseLine("    212300: (255,255,255) #FFFFFF gray(255)",            MHistogramEntry(212300, "FFFFFF", MRgb(255,255,255)))
+      parseLine("    212300: (255,255,255) #FFFFFF gray(255)",            _histogramEntry(212300, "FFFFFF", MRgb(255,255,255)))
     }
   }
 
@@ -72,10 +79,10 @@ class HistogramParsersSpec extends PlaySpec {
 
   /** Распарсенный пример выхлопа hist1. */
   private def hist1parsed = List(
-    MHistogramEntry(21689,  "2A2D0C", MRgb(42, 45, 12)),
-    MHistogramEntry(5487,   "362A12", MRgb(54, 42, 18)),
-    MHistogramEntry(83956,  "646021", MRgb(100, 96, 33)),
-    MHistogramEntry(176410, "908B5B", MRgb(144, 139, 91))
+    _histogramEntry(21689,  "2A2D0C", MRgb(42, 45, 12)),
+    _histogramEntry(5487,   "362A12", MRgb(54, 42, 18)),
+    _histogramEntry(83956,  "646021", MRgb(100, 96, 33)),
+    _histogramEntry(176410, "908B5B", MRgb(144, 139, 91))
   )
 
 
@@ -87,11 +94,11 @@ class HistogramParsersSpec extends PlaySpec {
     """.stripMargin
   }
   private def HIST2_PARSED = List(
-    MHistogramEntry(102691, "FAD20E", MRgb(250, 210, 14)),
-    MHistogramEntry(280189, "FFD300", MRgb(255, 211, 0))
+    _histogramEntry(102691, "FAD20E", MRgb(250, 210, 14)),
+    _histogramEntry(280189, "FFD300", MRgb(255, 211, 0))
   )
 
-  private def _testParseMultiline(text: String, res: List[MHistogramEntry]) = {
+  private def _testParseMultiline(text: String, res: List[MColorData]) = {
     val pr = parseAll( MULTILINE_PARSER, text )
     pr.successful mustBe true
     pr.get mustBe res

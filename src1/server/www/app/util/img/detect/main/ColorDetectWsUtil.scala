@@ -2,9 +2,10 @@ package util.img.detect.main
 
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.playx.CacheApiUtil
+import io.suggest.ad.form.AdFormConstants
+import io.suggest.color.MHistogram
 import io.suggest.util.logs.MacroLogsImpl
-import models.im.{MHistogram, MAnyImgT}
+import models.im.MAnyImgT
 import util.ws.WsDispatcherActors
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -18,18 +19,11 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class ColorDetectWsUtil @Inject()(
                                    mainColorDetector           : MainColorDetector,
-                                   cacheApiUtil                : CacheApiUtil,
                                    wsDispatcherActors          : WsDispatcherActors,
                                    implicit private val ec     : ExecutionContext
                                  )
   extends MacroLogsImpl
 {
-
-  /** Размер генерируемой палитры. */
-  private def MAIN_COLORS_PALETTE_SIZE = 8
-
-  /** Размер возвращаемой по WebSocket палитры. */
-  private def MAIN_COLORS_PALETTE_SHRINK_SIZE = 4
 
 
   /**
@@ -40,23 +34,17 @@ class ColorDetectWsUtil @Inject()(
    */
   // TODO Это compat-функция для старых карточек и старой схемы аплоада. Просто дёргает три разрые функции. Удалить её вместе со старым хламом.
   def detectPalletteToWs(im: MAnyImgT, wsId: String): Future[MHistogram] = {
-    shrinkedToWs(wsId) {
+    shrinked4adEditor(wsId) {
       mainColorDetector.cached(im) {
-        mainColorDetector.detectPaletteFor(im, maxColors = MAIN_COLORS_PALETTE_SIZE)
+        mainColorDetector.detectPaletteFor(im, maxColors = AdFormConstants.ColorDetect.PALETTE_SIZE)
       }
     }
   }
 
 
-  def shrinkedToWs(wsId: String)(fut: Future[MHistogram]): Future[MHistogram] = {
+  def shrinked4adEditor(wsId: String)(fut: Future[MHistogram]): Future[MHistogram] = {
     for (mhist0 <- fut) yield {
-      val mhist2 = if (MAIN_COLORS_PALETTE_SHRINK_SIZE < MAIN_COLORS_PALETTE_SIZE) {
-        mhist0.copy(
-          sorted = mhist0.sorted.take(MAIN_COLORS_PALETTE_SHRINK_SIZE)
-        )
-      } else {
-        mhist0
-      }
+      val mhist2 = mhist0.shrinkColorsCount( AdFormConstants.ColorDetect.PALETTE_SHRINK_SIZE )
       wsDispatcherActors.notifyWs(wsId, mhist2)
       mhist2
     }

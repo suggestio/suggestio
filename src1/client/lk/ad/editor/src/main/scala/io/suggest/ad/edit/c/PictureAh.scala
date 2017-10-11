@@ -2,15 +2,15 @@ package io.suggest.ad.edit.c
 
 import com.github.dominictobias.react.image.crop.PercentCrop
 import diode._
-import diode.data.Pending
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.ad.edit.srv.ILkAdEditApi
+import io.suggest.color.MHistogramWs
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
-import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
+import io.suggest.file.MJsFileInfo
 import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
@@ -29,7 +29,7 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.up.IUploadApi
-import io.suggest.url.MHostUrl
+import io.suggest.ws.{MWsMsg, MWsMsgTypes}
 import io.suggest.ws.pool.m.WsEnsureConn
 import io.suggest.ww._
 
@@ -271,29 +271,24 @@ class PictureAh[M](
                 .fold(
                   // Хешей пока недостаточно, ждать ещё хэшей...
                   {_ =>
-                    val edge2 = edge0.withFileJs( Some( fileJs1 ) )
-                    val v2 = v0.withEdges(
-                      v0.edges.updated( edge0.id, edge2 )
-                    )
                     updated( __v2F(fileJs1) )
                   },
                   // Собрано достаточно хешей для аплоада. Запустить процедуру аплоада на сервер:
                   {_ =>
-                    val fx =
-                      Effect {
-                        val upProps = MFile4UpProps(
-                          sizeB     = fileJs0.blob.size.toLong,
-                          hashesHex = hashesHex2,
-                          mimeType  = fileJs0.blob.`type`
-                        )
-                        val edgeUid = edge0.id
-                        val blobUrl = fileJs0.blobUrl.get
-                        api
-                          .prepareUpload( upProps )
-                          .transform { tryRes =>
-                            Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
-                          }
-                      }
+                    val fx = Effect {
+                      val upProps = MFile4UpProps(
+                        sizeB     = fileJs0.blob.size.toLong,
+                        hashesHex = hashesHex2,
+                        mimeType  = fileJs0.blob.`type`
+                      )
+                      val edgeUid = edge0.id
+                      val blobUrl = fileJs0.blobUrl.get
+                      api
+                        .prepareUpload( upProps )
+                        .transform { tryRes =>
+                          Success( PrepUploadResp(tryRes, edgeUid, blobUrl) )
+                        }
+                    }
 
                     val fileJs2 = fileJs1.withUpload {
                       val upState0 = fileJs0.upload.getOrElse( MFileUploadS.empty )
@@ -353,7 +348,7 @@ class PictureAh[M](
                   noChange
 
                 } { fileJs =>
-                  // Есть ссылка для заливки файла. TODO Перейти к процессу заливания.
+                  // Есть ссылка для заливки файла. Залить.
                   val uploadFx = Effect {
                     val upRespFut = uploadApi.doFileUpload(firstUpUrl, fileJs)
                     // TODO Пописаться на события xhr.upload.onprogress, чтобы мониторить ход заливки.
@@ -363,7 +358,7 @@ class PictureAh[M](
                     //)
                     // Завернуть ответ сервера в итоговый Action:
                     upRespFut.transform { tryRes =>
-                      Success( UploadRes(tryRes, m.edgeUid_t, m.blobUrl) )
+                      Success( UploadRes(tryRes, m.edgeUid_t, m.blobUrl, firstUpUrl) )
                     }
                   }
 
@@ -478,7 +473,14 @@ class PictureAh[M](
                 val v2 = v0.withEdges(
                   v0.edges.updated(edge2.id, edge2)
                 )
-                updated(v2)
+                // В фоне: запустить открытие websocket'а для связи с сервером.
+                val wsEnsureFx = Effect.action {
+                  WsEnsureConn(
+                    hostUrl       = m.hostUrl,
+                    closeAfterSec = Some(30)
+                  )
+                }
+                updated(v2, wsEnsureFx)
               }
               // Возможно, что-то пошло на сервере не так. Нужно отрендерить .errors:
               .orElse {
@@ -496,6 +498,25 @@ class PictureAh[M](
               }
           }
         )
+      }
+
+
+    // Сообщение из WebSocket с гистограммой цветов к какой-то картинке.
+    case m: MWsMsg if m.typ ==* MWsMsgTypes.ColorsHistogram =>
+      try {
+        val histWs = m.payload.as[MHistogramWs]
+        // Поискать эдж с таким nodeId среди картинок. Ищем
+        val v0 = value
+        val v2 = v0.withHistograms(
+          v0.histograms
+            .updated(histWs.nodeId, histWs.hist)
+        )
+        updated( v2 )
+
+      } catch {
+        case ex: Throwable =>
+          LOG.error( ErrorMsgs.JSON_PARSE_ERROR, ex, m )
+          noChange
       }
 
 

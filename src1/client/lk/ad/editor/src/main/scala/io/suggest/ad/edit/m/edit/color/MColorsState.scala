@@ -1,7 +1,7 @@
 package io.suggest.ad.edit.m.edit.color
 
 import diode.FastEq
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -17,7 +17,8 @@ object MColorsState {
 
   implicit object MColorsDataSFastEq extends FastEq[MColorsState] {
     override def eqv(a: MColorsState, b: MColorsState): Boolean = {
-      a.colorPresets ===* b.colorPresets
+      (a.colorPresets ===* b.colorPresets) &&
+        (a.histograms ===* b.histograms)
     }
   }
 
@@ -28,10 +29,12 @@ object MColorsState {
 
 case class MColorsState(
                          // TODO Надо бы карту презетов для разных картинок.
-                         colorPresets    : List[MColorData]     = Nil
+                         colorPresets    : List[MColorData]           = Nil,
+                         histograms      : Map[String, MHistogram]    = Map.empty
                        ) {
 
-  def withColorPresets(colorPresets: List[MColorData]) = copy(colorPresets = colorPresets)
+  def withColorPresets(colorPresets: List[MColorData])        = copy(colorPresets = colorPresets)
+  def withHistograms(histograms: Map[String, MHistogram])     = copy(histograms = histograms)
 
 }
 

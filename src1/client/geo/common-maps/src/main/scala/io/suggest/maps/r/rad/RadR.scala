@@ -8,7 +8,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import react.leaflet.layer.LayerGroupR
 import react.leaflet.popup.{LPopupPropsR, LPopupR}
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 import MRadT.MRadTFastEq
 import io.suggest.react.ReactCommonUtil
 

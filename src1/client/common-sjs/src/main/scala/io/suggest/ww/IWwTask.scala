@@ -2,7 +2,7 @@ package io.suggest.ww
 
 import scala.concurrent.Future
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sjs.common.spa.DAction
+import io.suggest.spa.DAction
 
 /**
   * Suggest.io

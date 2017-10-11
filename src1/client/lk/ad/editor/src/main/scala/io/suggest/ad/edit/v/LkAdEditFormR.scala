@@ -11,7 +11,7 @@ import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.sjs.common.spa.OptFastEq
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}

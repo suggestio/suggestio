@@ -8,7 +8,7 @@ import io.suggest.lk.r.ErrorPopupR
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io

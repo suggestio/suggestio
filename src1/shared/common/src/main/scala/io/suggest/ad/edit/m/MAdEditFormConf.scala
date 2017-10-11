@@ -34,14 +34,14 @@ object MAdEditFormConf {
   *
   * @param producerId id текущего узла-владельца карточки.
   * @param adId id текущей рекламной карточки.
-  * @param srvCtxId Значение Context.ctxIdStr, заданное на сервере.
+  * @param ctxId Значение Context.ctxIdStr, заданное на сервере.
   */
 case class MAdEditFormConf(
                             producerId  : String,
                             adId        : Option[String],
-                            srvCtxId    : String
+                            ctxId    : String
                           )
   extends ICtxIdStrOpt
 {
-  override def ctxIdOpt = Some(srvCtxId)
+  override def ctxIdOpt = Some(ctxId)
 }

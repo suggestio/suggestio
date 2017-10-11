@@ -16,7 +16,7 @@ import japgolly.scalajs.react.vdom.html_<^._
 import scalacss.ScalaCssReact._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.sjs.common.spa.OptFastEq.Wrapped
+import io.suggest.spa.OptFastEq.Wrapped
 
 /**
   * Suggest.io

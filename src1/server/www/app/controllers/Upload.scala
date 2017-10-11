@@ -4,7 +4,7 @@ import java.io.File
 import java.nio.file.Path
 import javax.inject.{Inject, Singleton}
 
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MHistogram, MHistogramWs}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.ctx.MCtxId
@@ -27,9 +27,10 @@ import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.svg.SvgUtil
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.url.MHostUrl
-import models.im.{MImg3, MLocalImg, MLocalImgs}
+import io.suggest.ws.{MWsMsg, MWsMsgTypes}
+import models.im.{MImg3, MImgs3, MLocalImg, MLocalImgs}
 import models.mproj.ICommonDi
-import models.mup.{MUploadFileHandler, MUploadFileHandlers, MUploadTargetQs}
+import models.mup.{MColorDetectArgs, MUploadFileHandler, MUploadFileHandlers, MUploadTargetQs}
 import models.req.IReq
 import net.sf.jmimemagic.Magic
 import play.api.libs.Files.{SingletonTemporaryFileCreator, TemporaryFile, TemporaryFileCreator}
@@ -42,7 +43,8 @@ import util.up.{FileUtil, UploadUtil}
 import views.html.helper.CSRF
 import japgolly.univeq._
 import util.img.ImgFileUtil
-import util.img.detect.main.ColorDetectWsUtil
+import util.img.detect.main.MainColorDetector
+import util.ws.WsDispatcherActors
 
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
@@ -63,9 +65,11 @@ class Upload @Inject()(
                         fileUtil                  : FileUtil,
                         val iMediaStorages        : IMediaStorages,
                         mNodes                    : MNodes,
+                        mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
-                        colorDetectWsUtil         : ColorDetectWsUtil,
                         imgFileUtil               : ImgFileUtil,
+                        mainColorDetector         : MainColorDetector,
+                        wsDispatcherActors        : WsDispatcherActors,
                         override val mCommonDi    : ICommonDi
                       )
   extends SioControllerImpl
@@ -86,8 +90,10 @@ class Upload @Inject()(
     *
     * @return Created | Accepted | NotAcceptable  + JSON-body в формате MFile4UpProps.
     */
-  def prepareUploadLogic(logPrefix: String, validated: ValidationNel[String, MFile4UpProps],
-                         uploadFileHandler: Option[MUploadFileHandler] = None, colorDetect: Boolean = false)
+  def prepareUploadLogic(logPrefix          : String,
+                         validated          : ValidationNel[String, MFile4UpProps],
+                         uploadFileHandler  : Option[MUploadFileHandler] = None,
+                         colorDetect        : Option[MColorDetectArgs] = None)
                         (implicit request: IReq[MFile4UpProps]) : Future[Result] = {
     validated.fold(
       // Ошибка валидации присланных данных. Вернуть ошибку клиенту.
@@ -171,25 +177,59 @@ class Upload @Inject()(
 
             } { foundFile =>
               LOGGER.debug(s"$logPrefix Found existing file: $foundFile for props $upFileProps")
-              val upResp = MUploadResp(
-                fileExist = Some(MSrvFileInfo(
-                  nodeId    = foundFile.nodeId,
-                  // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
-                  url       = if (MimeConst.Image.isImage( foundFile.file.mime )) {
-                    // TODO IMG_DIST: Вписать хост расположения картинки.
-                    // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
-                    routes.Img.dynImg( MImg3(foundFile) ).url
-                  } else {
-                    // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
-                    throw new UnsupportedOperationException(s"MIME ${foundFile.file.mime} don't know how to build URL")
-                  },
-                  sizeB     = Some( foundFile.file.sizeB ),
-                  name      = None,     // Имя пока не раскрываем. Файл мог быть был загружен другим юзером под иным именем.
-                  mimeType  = Some( foundFile.file.mime ),
-                  hashesHex = MFileMetaHash.toHashesHex( foundFile.file.hashesHex )
-                ))
-              )
-              (Accepted, Future.successful(upResp))
+
+              // Собираем гистограмму цветов.
+              val mediaColorsFut = if (foundFile.picture.colors.isEmpty &&
+                                       !foundFile.file.isOriginal &&
+                                       foundFile.picture.nonEmpty) {
+                // Для получения гистограммы цветов надо получить на руки оригинал картинки.
+                val origImg3 = MImg3( foundFile ).original
+                LOGGER.trace(s"$logPrefix Will try original img for colors histogram: $origImg3")
+                for (origMediaOpt <- mImgs3.mediaOptFut( origImg3 )) yield {
+                  // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
+                  if (origMediaOpt.isEmpty)
+                    LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3._mediaId}, but derivative media#${foundFile.idOrNull} is here: $foundFile")
+                  origMediaOpt.fold(Seq.empty[MColorData]) { origMedia =>
+                    origMedia.picture.colors
+                  }
+                }
+              } else {
+                LOGGER.debug(s"$logPrefix No color histogram available for media#${foundFile.idOrNull}")
+                Future.successful( foundFile.picture.colors )
+              }
+
+              // Собрать ответ с помощью награбленных цветов.
+              val upRespFut = for (mediaColors <- mediaColorsFut) yield {
+                MUploadResp(
+                  fileExist = Some(MSrvFileInfo(
+                    nodeId    = foundFile.nodeId,
+                    // TODO Сгенерить ссылку на файл. Если это картинка, то через dynImgArgs
+                    url       = if (MimeConst.Image.isImage( foundFile.file.mime )) {
+                      // TODO IMG_DIST: Вписать хост расположения картинки.
+                      // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
+                      routes.Img.dynImg( MImg3(foundFile) ).url
+                    } else {
+                      // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
+                      throw new UnsupportedOperationException(s"MIME ${foundFile.file.mime} don't know how to build URL")
+                    },
+                    sizeB     = Some( foundFile.file.sizeB ),
+                    name      = None,     // Имя пока не раскрываем. Файл мог быть был загружен другим юзером под иным именем.
+                    mimeType  = Some( foundFile.file.mime ),
+                    hashesHex = MFileMetaHash.toHashesHex( foundFile.file.hashesHex ),
+                    colors    = {
+                      // TODO !!! Выгребать из оригинала картинки, а не из любой найденной по хешам.
+                      OptionUtil.maybe( mediaColors.nonEmpty ) {
+                        MHistogram(
+                          sorted = mediaColors
+                            .sortBy(p => -p.freqPc.getOrElse(0))
+                            .toList
+                        )
+                      }
+                    }
+                  ))
+                )
+              }
+              (Accepted, upRespFut)
             }
 
           for (respData <- respDataFut) yield {
@@ -238,8 +278,8 @@ class Upload @Inject()(
     val bp = _uploadFileBp(uploadArgs)
 
     canUploadFile(uploadArgs, ctxIdOpt).async(bp) { implicit request =>
-
       lazy val logPrefix = s"doFileUpload()#${System.currentTimeMillis()}:"
+
       LOGGER.trace(s"$logPrefix Starting w/args: $uploadArgs")
 
       lazy val errSb = new StringBuilder()
@@ -421,17 +461,15 @@ class Upload @Inject()(
           // Сразу в фоне запускаем анализ цветов картинки, если он был запрошен.
           // Очень маловероятно, что сохранение сломается и будет ошибка, поэтому и параллелимся со спокойной душой.
           colorDetectOptFut = for {
-            mimg  <- request.body.localImg
-            if uploadArgs.colorDetect
-            ctxId <- {
-              if (ctxIdOpt.isEmpty)
-                LOGGER.error(s"$logPrefix Color detection requested for uploaded image, but ctxId is empty.")
-              ctxIdOpt
-            }
+            mimg        <- request.body.localImg
+            cdArgs      <- uploadArgs.colorDetect
           } yield {
-            colorDetectWsUtil.detectPalletteToWs( mimg, ctxId.toString )
+            mainColorDetector.cached(mimg) {
+              mainColorDetector.detectPaletteFor(mimg, maxColors = cdArgs.paletteSize)
+            }
           }
 
+          // Ожидаем окончания сохранения узла.
           mnodeId <- mnodeIdFut
 
           // Наконец, переходим к MMedia:
@@ -488,39 +526,20 @@ class Upload @Inject()(
               .withId( Some(mmediaId) )
           }
 
-
           // Потом сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
             for (colorDetectFut <- colorDetectOptFut) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
                 if (colorHist.sorted.nonEmpty) {
                   // Считаем общее кол-во пикселей для нормировки частот цветов:
-                  val totalPixels = colorHist.sorted
-                    .iterator
-                    .map(_.frequencyVerySafe)
-                    .sum
-                  val totalPixelsNotZero = totalPixels > 0
+                  val colorsHist2 = colorHist.withRelFrequences
+                  lazy val mcdsCount = colorsHist2.sorted.size
 
-                  val mcds = colorHist.sorted
-                    .iterator
-                    .map { histEntry =>
-                      MColorData(
-                        code   = MColorData.stripDiez(histEntry.colorHex),
-                        rgb    = Some(histEntry.rgb),
-                        freqPc = OptionUtil.maybe( totalPixelsNotZero ) {
-                          (histEntry.frequencyVerySafe * 100 / totalPixels).toInt
-                        }
-                      )
-                    }
-                    .toSeq
-
-                  lazy val mcdsCount = mcds.size
-
-                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${mcds.mkString(",\n ")}")
+                  LOGGER.trace(s"$logPrefix Detected $mcdsCount top-colors on media#$mmediaId:\n ${colorsHist2.sorted.mkString(",\n ")}")
 
                   val mmedia2OptFut = mMedias.tryUpdate(mmedia1) { m =>
                     m.withPicture(
-                      m.picture.withColors( mcds )
+                      m.picture.withColors( colorsHist2.sorted )
                     )
                   }
 
@@ -563,6 +582,32 @@ class Upload @Inject()(
           // Процедура проверки и сохранения аплоада завершёна успешно!
           LOGGER.info(s"$logPrefix File storage: saved ok. r => $saveFileToShardRes")
 
+          // Когда есть на руках nodeId, можно отправлять данные ColorDetect'ора по WebSocket.
+          // Отправляем как можно ПОЗЖЕ, чтобы максимально снизить race conditions между веб-сокетом и результатом экшена.
+          for {
+            colorDetectFut <- colorDetectOptFut
+            cdArgs         <- uploadArgs.colorDetect
+            ctxId          <- ctxIdOpt
+          } {
+            LOGGER.trace(s"$logPrefix ColorDetect+WS: for uploaded image, ctxId#${ctxId.key}")
+            val wsNotifyFut = for (mhist0 <- colorDetectFut) yield {
+              val mhist2 = mhist0.shrinkColorsCount( cdArgs.wsPaletteSize )
+              val wsMsg = MWsMsg(
+                typ     = MWsMsgTypes.ColorsHistogram,
+                payload = Json.toJson {
+                  MHistogramWs(
+                    nodeId = mnodeId,
+                    hist   = mhist2
+                  )
+                }
+              )
+              wsDispatcherActors.notifyWs(ctxId.toString, wsMsg)
+            }
+            // Залоггировать возможную ошибку:
+            for (ex <- wsNotifyFut.failed)
+              LOGGER.error(s"$logPrefix Failed to send color detection result to WebSocket ctxId#${ctxId.key} cdArgs=$cdArgs cdFut=$colorDetectFut", ex)
+          }
+
           // Вернуть 200 Ok с данными по файлу
           val srvFileInfo = MSrvFileInfo(
             nodeId    = mnodeId,
@@ -576,7 +621,10 @@ class Upload @Inject()(
             sizeB     = None,
             name      = None,
             mimeType  = None,
-            hashesHex = Map.empty
+            hashesHex = Map.empty,
+            // 1. Нельзя дожидаться детектора цветов, потому что надо отправить nodeId клиенту по-скорее.
+            // 2. Для цветов есть поддержка WebSocket'а, поэтому тут мы это не дублируем.
+            colors    = None
           )
           val resp = MUploadResp(
             fileExist = Some(srvFileInfo)
@@ -585,11 +633,36 @@ class Upload @Inject()(
         }
       }
 
+      // Функция запуска фонового удаления временных файлов:
+      def __deleteUploadedFiles(): Future[_] = {
+        Future {
+          for (f <- request.body.data.files) {
+            try {
+              LOGGER.debug(s"$logPrefix Deleting tmp.uploaded file ${f.ref.path}")
+              f.ref.delete()
+            } catch {
+              case ex: Throwable =>
+                LOGGER.error(s"$logPrefix Failed to delete tmp.file ${f.ref.path}", ex)
+            }
+          }
+        }
+      }
+
+      // Подхватить результаты работы вышестоящих for().
       resFutOpt.fold [Future[Result]] {
+        __deleteUploadedFiles()
         val errMsg = errSb.toString()
         LOGGER.warn(s"$logPrefix Failed to sync-validate upload data:\n$errMsg")
         NotAcceptable(s"Problems:\n\n$errMsg")
+
       } { resFut =>
+        // Если файл не подхвачен файловой моделью (типа MLocalImg или другой), то его надо удалить:
+        resFut.onComplete { tryRes =>
+          if ((tryRes.isSuccess && request.body.isDeleteFileOnSuccess) || tryRes.isFailure)
+            __deleteUploadedFiles()
+        }
+
+        // Отрендерить ответ клиенту:
         resFut.recover { case ex: Throwable =>
           val errMsg = errSb.toString()
           LOGGER.error(s"$logPrefix Async exception occured, possible reasons:\n$errMsg", ex)
@@ -639,6 +712,14 @@ class Upload @Inject()(
 protected class UploadBpRes(
                              val data     : MultipartFormData[TemporaryFile],
                              val localImg : Option[MLocalImg]
-                           )
+                           ) {
+
+  /** Надо ли удалять залитый файл? */
+  def isDeleteFileOnSuccess: Boolean = {
+    // Да, если файл не подхвачен какой-либо файловой моделью (MLocalImg, например).
+    localImg.isEmpty
+  }
+
+}
 
 

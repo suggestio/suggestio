@@ -8,7 +8,6 @@ import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
 import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
-import io.suggest.sjs.common.spa.{OptFastEq, StateInp}
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
 import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick}
@@ -23,7 +22,10 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import com.softwaremill.macwire._
-import io.suggest.ws.pool.WsPoolAh
+import io.suggest.spa.delay.ActionDelayerAh
+import io.suggest.spa.{OptFastEq, StateInp}
+import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -92,11 +94,16 @@ class LkAdEditCircuit(
 
   private val api = wire[LkAdEditApiHttp]
 
+  private val ctxIdRO = confRO.zoom(_.ctxId)
+  private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)
+
   private val mDocSRw = zoomRW(_.doc) { _.withDoc(_) }
 
   private val docAh = docEditAhFactory( mDocSRw )
 
   private val wsPoolRW = zoomRW(_.wsPool) { _.withWsPool(_) }
+
+  //private val delayerRW = zoomRW( _.delayer ) { _.withDelayer(_) }
 
 
   /** Сборка RW-зума до опционального инстанса MColorPick.
@@ -183,12 +190,13 @@ class LkAdEditCircuit(
       edges       = mdoc.jdArgs.renderArgs.edges,
       selectedTag = mdoc.jdArgs.selectedTag,
       errorPopup  = mroot.popups.error,
-      cropPopup   = mroot.popups.pictureCrop
+      cropPopup   = mroot.popups.pictureCrop,
+      histograms  = mdoc.colorsState.histograms
     )
   } { (mroot0, mPictureAh) =>
     val mdoc0 = mroot0.doc
 
-    val mdoc2 = mdoc0
+    val mdoc1 = mdoc0
       .withJdArgs {
         // Продублировать обновлённый selected-тег в шаблон и css:
         val tpl2Opt = for (selJdt <- mPictureAh.selectedTag) yield {
@@ -225,6 +233,18 @@ class LkAdEditCircuit(
         )
       }
 
+    // Гистограммы лежат вне mdoc, и обновляются нечасто, поэтому тут ленивый апдейт гистограмм в состоянии:
+    val mdoc2 = if (mdoc0.colorsState.histograms ===* mPictureAh.histograms) {
+      // Карта гистограмм не изменилась, пропускаем мимо ушей.
+      mdoc1
+    } else {
+      mdoc1.withColorsState(
+        mdoc1.colorsState.withHistograms(
+          mPictureAh.histograms
+        )
+      )
+    }
+
     mroot0.copy(
       doc    = mdoc2,
       popups = mroot0.popups.copy(
@@ -239,7 +259,9 @@ class LkAdEditCircuit(
 
   private val stripBgColorPickAfterAh = wire[ColorPickAfterStripAh[MAeRoot]]
 
-  private val wsPoolAh = new WsPoolAh( wsPoolRW, this )
+  //private val actionDelayerAh = new ActionDelayerAh(delayerRW)
+
+  private val wsPoolAh = new WsPoolAh( wsPoolRW, wsChannelApi, this )
 
   private val tailAh = wire[TailAh[MAeRoot]]
 

@@ -8,7 +8,7 @@ import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.sjs.common.spa.OptFastEq.Plain
+import io.suggest.spa.OptFastEq.Plain
 
 import scalacss.ScalaCssReact._
 

@@ -5,6 +5,7 @@ import java.nio.file.Files
 import java.text.ParseException
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.util.logs.MacroLogsImpl
 import models.im._
 import models.mproj.ICommonDi
@@ -29,7 +30,6 @@ class MainColorDetector @Inject() (
   extends MacroLogsImpl
 {
 
-  import LOGGER._
   import mCommonDi.{ec, cacheApiUtil}
 
   /** Дефолтовое значение размера промежуточной палитры цветовой гистограммы. */
@@ -68,7 +68,7 @@ class MainColorDetector @Inject() (
     val resFut = listener.future
     if (loggingEnabled) {
       resFut.onComplete { res =>
-        debug(s"convertToHistogram($tstampStart): convert to histogram finished.\n img=$imgFilepath\n out=$outFilepath\n maxColors=$maxColors\n Took ${System.currentTimeMillis() - tstampStart} ms.\n Cmd was: ${op.toString}\n Result: $res")
+        LOGGER.debug(s"convertToHistogram($tstampStart): convert to histogram finished.\n img=$imgFilepath\n out=$outFilepath\n maxColors=$maxColors\n Took ${System.currentTimeMillis() - tstampStart} ms.\n Cmd was: ${op.toString}\n Result: $res")
       }
     }
     resFut
@@ -81,7 +81,7 @@ class MainColorDetector @Inject() (
    * @param img Исходная картинка.
    */
   def detectFilePaletteUnsorted(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT,
-                        preImOps: Seq[ImOp] = Nil): Future[List[MHistogramEntry]] = {
+                                preImOps: Seq[ImOp] = Nil): Future[List[MColorData]] = {
     // Создаём временный файл для сохранения выхлопа convert histogram:info:
     val resultFile = File.createTempFile(getClass.getSimpleName, ".txt")
     val resultFut = convertToHistogram(img.getAbsolutePath, resultFile.getAbsolutePath, maxColors, preImOps) map { _ =>
@@ -96,7 +96,7 @@ class MainColorDetector @Inject() (
           .append( new String(histContent) )
         val msg = msgSb.toString()
         if (suppressErrors) {
-          warn(msg)
+          LOGGER.warn(msg)
           Nil
         } else {
           throw new ParseException(msg, -1)
@@ -109,7 +109,7 @@ class MainColorDetector @Inject() (
     if (suppressErrors) {
       resultFut.recoverWith {
         case ex: Exception =>
-          warn(s"Failed to extract palette from picture ${img.getAbsolutePath}", ex)
+          LOGGER.warn(s"Failed to extract palette from picture ${img.getAbsolutePath}", ex)
           Future.successful(Nil)
       }
     }
@@ -117,20 +117,24 @@ class MainColorDetector @Inject() (
   }
 
   /**
-   * Определить основной цвет на картинке.
-   * @param img Файл картинки.
-   * @param suppressErrors Подавлять ошибки?
-   * @param maxColors Необязательный размер промежуточной палитры и гистограммы.
-   * @return None при ошибке и suppressErrors или если картинка вообще не содержит цветов.
-   */
+    * Определить основной цвет на картинке.
+    * Метод используется только для тестов.
+    *
+    * @param img Файл картинки.
+    * @param suppressErrors Подавлять ошибки?
+    * @param maxColors Необязательный размер промежуточной палитры и гистограммы.
+    * @return None при ошибке и suppressErrors или если картинка вообще не содержит цветов.
+    */
   def detectFileMainColor(img: File, suppressErrors: Boolean, maxColors: Int = PALETTE_MAX_COLORS_DFLT,
-                          preImOps: Seq[ImOp] = Nil): Future[Option[MHistogramEntry]] = {
-    detectFilePaletteUnsorted(img, suppressErrors, maxColors, preImOps) map { hist =>
+                          preImOps: Seq[ImOp] = Nil): Future[Option[MColorData]] = {
+    for {
+      hist <- detectFilePaletteUnsorted(img, suppressErrors, maxColors, preImOps)
+    } yield {
       if (hist.isEmpty) {
-        debug("Detected colors pallette is empty. img = " + img.getAbsolutePath)
+        LOGGER.debug("Detected colors pallette is empty. img = " + img.getAbsolutePath)
         None
       } else {
-        val result = hist.maxBy(_.frequency)
+        val result = hist.maxBy(_.count.getOrElse(-1L))
         Some(result)
       }
     }
@@ -169,38 +173,15 @@ class MainColorDetector @Inject() (
           val resFut = for (v <- localOrigImgFut) yield {
             PrepareImgResult(v, bgImg4s.dynImgOps)
           }
-          trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgOps}")
+          LOGGER.trace(s"${logPrefix}Derived img not exists. Re-applying ${bgImg4s.dynImgOps.size} IM ops to original: ${bgImg4s.dynImgOps}")
           resFut
       }
     }
     // Подавляем возможные исключения.
     localImg2Fut.recover {
       case ex: Throwable =>
-        warn(s"${logPrefix}Failed to find img requested.", ex)
+        LOGGER.warn(s"${logPrefix}Failed to find img requested.", ex)
         PrepareImgResult(None, Nil)
-    }
-  }
-
-  /**
-   * Поиск "главного" цвета для указанной (через указатель) картинки.
-   * @param bgImg4s Исходная картинка.
-   * @return Фьючерс с результатом работы.
-   */
-  def detectColorFor(bgImg4s: MImgT): Future[ImgBgColorUpdateAction] = {
-    lazy val logPrefix = s"detectColorFor(${bgImg4s.fileName}): "
-    prepareImg(bgImg4s) flatMap {
-      case PrepareImgResult(Some(localImg), preImOps) =>
-        val imgFile = mLocalImgs.fileOf(localImg)
-        detectFileMainColor(imgFile, suppressErrors = true, preImOps = preImOps) map { heOpt =>
-          val result = he2updateAction(heOpt)
-          trace(s"${logPrefix}Detected color info for already saved orig img: $result")
-          result
-        }
-
-      // Почему-то нет картинки.
-      case _ =>
-        warn(s"${logPrefix}Img not found anywhere: ${bgImg4s.fileName}")
-        Future.successful(Keep)
     }
   }
 
@@ -221,22 +202,15 @@ class MainColorDetector @Inject() (
             maxColors       = maxColors
           )
         } yield {
-          MHistogram( hist.sortBy(v => -v.frequency) )
+          MHistogram(
+            sorted = hist.sortBy(v => -v.count.getOrElse(0L))
+          )
         }
 
       case other =>
         val ex = new IllegalArgumentException("Failed to extract palette. prepareImg() result is " + other)
         Future.failed(ex)
     }
-  }
-
-
-  /** Конвертация выхлопа detectMainColor() в инструкцию по обновлению карты цветов. */
-  def he2updateAction(heOpt: Option[MHistogramEntry], default: ImgBgColorUpdateAction = Keep): ImgBgColorUpdateAction = {
-    if (heOpt.isDefined)
-      Update(heOpt.get.colorHex)
-    else
-      default
   }
 
 
