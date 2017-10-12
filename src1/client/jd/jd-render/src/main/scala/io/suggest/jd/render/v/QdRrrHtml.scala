@@ -126,6 +126,9 @@ class QdRrrHtml(
             case MPredicates.JdContent.Video =>
               _insertVideo( e, videosCnt )
               videosCnt += 1
+
+            case other =>
+              throw new UnsupportedOperationException( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT + HtmlConstants.SPACE + (other, e) )
           }
           counters.copy(
             video = videosCnt,
@@ -133,6 +136,9 @@ class QdRrrHtml(
             other = othersCnt
           )
         }
+
+      case other =>
+        throw new UnsupportedOperationException( ErrorMsgs.NOT_IMPLEMENTED + HtmlConstants.SPACE + other )
     }
     if (counters2Opt.isEmpty)
       LOG.warn(ErrorMsgs.EDGE_NOT_EXISTS, msg = qdOp.edgeInfo)
@@ -161,8 +167,11 @@ class QdRrrHtml(
       */
 
       // wh экранного представления картинки задаётся в CSS согласно рекомендациям ведущих собаководов:
-      for (embedAttrs <- qdOp.attrsEmbed)
-        imgArgsAcc ::= jdArgs.jdCss.embedAttrStyleF(embedAttrs)
+      val embedStyleOpt = for (embedAttrs <- qdOp.attrsEmbed) yield {
+        val embStyl = jdArgs.jdCss.embedAttrStyleF( embedAttrs )
+        imgArgsAcc ::= embStyl
+        embStyl
+      }
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
       if (jdArgs.conf.withEdit) {
@@ -179,9 +188,22 @@ class QdRrrHtml(
         (^.src := imgSrc) ::
         imgArgsAcc
 
-      _currLineAccRev ::= <.img(
+      var finalTm: TagMod = <.img(
         imgArgsAcc: _*
       )
+
+      for (attrsText <- qdOp.attrsText if attrsText.isCssStyled) {
+        val img = finalTm
+        val CSS = Css
+        finalTm = <.span(
+          jdArgs.jdCss.textStyleF( attrsText ),
+          embedStyleOpt.whenDefined,
+          ^.`class` := CSS.flat(CSS.Display.INLINE_BLOCK, CSS.Overflow.HIDDEN),
+          img
+        )
+      }
+
+      _currLineAccRev ::= finalTm
     }
 
     if (resOpt.isEmpty)

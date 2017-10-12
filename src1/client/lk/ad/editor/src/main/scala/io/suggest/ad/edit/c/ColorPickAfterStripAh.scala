@@ -38,6 +38,9 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
     case _: ColorCheckboxChange =>
       _doTransform( true, value )
 
+    // Если идёт тыканье по рекомендуемым цветам, то там выставляется forceTransform.
+    case cc: ColorChanged if cc.forceTransform =>
+      _doTransform( true, value )
 
     case m if m == DocBodyClick ||
       m.isInstanceOf[IStripAction] ||

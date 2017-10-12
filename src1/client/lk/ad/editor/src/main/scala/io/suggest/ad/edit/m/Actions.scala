@@ -66,7 +66,7 @@ case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
   * @param isCompleted Окончательное выставление цвета?
   *                    Если false, то юзер пока ещё выбирает.
   */
-case class ColorChanged(mcd: MColorData, isCompleted: Boolean) extends ILkEditAction
+case class ColorChanged(mcd: MColorData, isCompleted: Boolean, forceTransform: Boolean = false) extends ILkEditAction
 
 /** Клик на "цвете" для выбора цвета. */
 case object ColorBtnClick extends ILkEditAction

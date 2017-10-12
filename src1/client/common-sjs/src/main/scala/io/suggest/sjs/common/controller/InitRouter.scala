@@ -87,7 +87,7 @@ trait InitRouter extends Log with SafeSyncVoid {
         .flatMap { raw =>
           val res = MJsiTgs.withValueOpt(raw)
           if (res.isEmpty)
-            LOG.warn( ErrorMsgs.INIT_ROUTER_UNIMPLEMENTED_TARGET, msg = raw )
+            LOG.warn( ErrorMsgs.NOT_IMPLEMENTED, msg = raw )
           res
         }
         .toSeq

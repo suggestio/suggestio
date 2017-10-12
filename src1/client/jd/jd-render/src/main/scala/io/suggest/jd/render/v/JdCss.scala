@@ -144,18 +144,18 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .flatMap(_.props1.qdOps)
   }
 
-  /** Домен стилей для текстов. */
-  private val _textStylesDomain = {
-    val textAttrsSeq = _qdOpsIter
-      .flatMap(_.attrsText.iterator)
-      .filter(_.isCssStyled)
-      .toIndexedSeq
-
-    new Domain.OverSeq( textAttrsSeq )
-  }
 
   /** styleF для стилей текстов. */
   val textStyleF = {
+    // Домен стилей для текстов.
+    val _textStylesDomain = {
+      val textAttrsSeq = _qdOpsIter
+        .flatMap(_.attrsText.iterator)
+        .filter(_.isCssStyled)
+        .toIndexedSeq
+      new Domain.OverSeq( textAttrsSeq )
+    }
+
     // Получаем на руки инстансы, чтобы по-быстрее использовать их в цикле и обойтись без lazy call-by-name cssAttr в __applyToColor().
     val _colorAttr = color
     val _bgColorAttr = backgroundColor

@@ -176,10 +176,11 @@ class Upload @Inject()(
               (Created, upDataFut)
 
             } { foundFile =>
-              LOGGER.debug(s"$logPrefix Found existing file media#${foundFile.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}]")
+              val existColors = foundFile.picture.colors
+              LOGGER.debug(s"$logPrefix Found existing file media#${foundFile.idOrNull} for hashes [${upFileProps.hashesHex.valuesIterator.mkString(", ")}] with ${existColors.size} colors.")
 
               // Собираем гистограмму цветов.
-              val mediaColorsFut = if (foundFile.picture.colors.isEmpty &&
+              val mediaColorsFut = if (existColors.isEmpty &&
                                        !foundFile.file.isOriginal &&
                                        foundFile.picture.nonEmpty) {
                 // Для получения гистограммы цветов надо получить на руки оригинал картинки.
@@ -194,9 +195,8 @@ class Upload @Inject()(
                   }
                 }
               } else {
-                val colors = foundFile.picture.colors
-                LOGGER.debug(s"$logPrefix Existing color histogram for media#${foundFile.idOrNull}: [${colors.iterator.map(_.hexCode).mkString(", ")}]")
-                Future.successful( colors )
+                LOGGER.trace(s"$logPrefix Existing color histogram for media#${foundFile.idOrNull}: [${existColors.iterator.map(_.hexCode).mkString(", ")}]")
+                Future.successful( existColors )
               }
 
               // Собрать ответ с помощью награбленных цветов.

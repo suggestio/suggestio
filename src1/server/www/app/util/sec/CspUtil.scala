@@ -45,11 +45,12 @@ class CspUtil @Inject() (
   /** Заголовок CSP, который можно модификацировать в контроллерах для разных нужд. */
   val CSP_DFLT_OPT: Option[CspHeader] = {
     if (IS_ENABLED) {
+      val nodesWildcard = s"*.nodes.${contextUtil.HOST_PORT}"
       val commonSources = {
         // Т.к. сайт https-only, то игнорим протоколы, используем все CDN-хосты.
         val cdnHostsIter = cdnUtil.CDN_PROTO_HOSTS.valuesIterator.flatten
         val selfHosts = Csp.Sources.SELF :: Nil
-        val selfNodes = "*.nodes.suggest.io" :: Nil  // TODO Добавить cdn-nodes-домены сюда же.
+        val selfNodes = nodesWildcard :: Nil  // TODO Добавить cdn-nodes-домены сюда же.
         (cdnHostsIter ++ selfHosts ++ selfNodes)
           .toSet
       }
@@ -67,7 +68,7 @@ class CspUtil @Inject() (
             commonSources ++ Seq(
               // Разрешить веб-сокеты в same-origin.
               s"$wsProto://${contextUtil.HOST_PORT}",
-              s"$wsProto://*.${contextUtil.HOST_PORT}"
+              s"$wsProto://$nodesWildcard"
             )
           },
           reportUri = Some( routes.Static.handleCspReport().url ),
@@ -130,7 +131,10 @@ class CspUtil @Inject() (
 
     /** Редактор карточек активно работает с "blob:", а quill-editor - ещё и с "data:" . */
     val AdEdit = mkCustomPolicyHdr { p0 =>
-      p0.addImgSrc( Csp.Sources.BLOB, Csp.Sources.DATA )
+      val DATA = Csp.Sources.DATA
+      p0.addImgSrc( Csp.Sources.BLOB, DATA )
+        // Хз зачем, но добавление картинок в quill без этого ругается в логи (хотя и работает).
+        .addConnectSrc( DATA )
     }
 
   }

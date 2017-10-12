@@ -85,7 +85,7 @@ object ErrorMsgs extends MsgsStaticT {
 
   def INIT_ROUTER_TARGET_RUN_FAIL  = E(39)
 
-  def INIT_ROUTER_UNIMPLEMENTED_TARGET = E(40)
+  def NOT_IMPLEMENTED              = E(40)
 
   /** Таргет почему-то пролетел мимо инициализации. */
   def INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED = E(41)
@@ -162,5 +162,7 @@ object ErrorMsgs extends MsgsStaticT {
   def CONNECTION_ERROR                 = E(73)
 
   def CALLBACK_FUNCTION_FAILED         = E(74)
+
+  def UNSUPPORTED_VALUE_OF_ARGUMENT    = E(75)
 
 }

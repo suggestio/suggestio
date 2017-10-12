@@ -5,6 +5,7 @@ import diode.react.ModelProxy
 import io.suggest.ad.edit.m.ColorChanged
 import io.suggest.color.MColorData
 import io.suggest.css.Css
+import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -46,12 +47,15 @@ class ColorsSuggestR {
   class Backend($: BackendScope[Props, Unit]) {
 
     private def _onColorClick(mcd: MColorData): Callback = {
-      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = true))
+      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = true, forceTransform = true))
     }
 
     def render(p: Props): VdomElement = {
       p.value.whenDefinedEl { props =>
         <.div(
+          // Чтобы не было DocBodyClick, который сбрасывает поворот картинки.
+          ^.onClick ==> ReactCommonUtil.stopPropagationCB,
+
           // Заголовок.
           <.h1(
             Messages( props.titleMsgCode )

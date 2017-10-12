@@ -58,6 +58,7 @@ class LkAdEdit @Inject() (
 
   import mCommonDi._
 
+  /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {
     cspUtil.applyCspHdrOpt( cspUtil.CustomPolicies.AdEdit )(res0)
   }
@@ -210,7 +211,10 @@ class LkAdEdit @Inject() (
           parent  = request.producer,
           state0  = formInitStr
         )(ctx)
-        Ok(html)
+
+        _applyCspToEditPage(
+          Ok(html)
+        )
       }
     }
   }
