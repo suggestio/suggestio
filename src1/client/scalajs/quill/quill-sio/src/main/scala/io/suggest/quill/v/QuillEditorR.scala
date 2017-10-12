@@ -15,6 +15,8 @@ import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.QuillUnivEqUtil._
 
 /**
   * Suggest.io
@@ -27,12 +29,31 @@ class QuillEditorR(
                   )
   extends Log {
 
+  /** Модель пропертисов компонента, учитывающая необходимость костылей.
+    * Quill теряет фокус и плохо себя ведёт, если его перерендеривать каждый.
+    * Поэтому пере-рендер делается только когда есть реальная необходимость.
+    * Однако, всё равно проблемы случаются, и рендер запускается в обход воли FastEq.
+    * Поэтому есть значение realDelta, который содержит фактическую текущую дельту.
+    *
+    * @param initDelta Начальная дельта на момент инициализации редактора.
+    * @param realDelta Текущая актуальная дельта, если отличается от initDelta.
+    */
   case class PropsVal(
-                       qDelta   : Delta
-                     )
+                       initDelta    : Delta,
+                       realDelta    : Option[Delta]
+                     ) {
+
+    /** Вернуть текущую актуальную дельту. */
+    def delta: Delta = {
+      realDelta.getOrElse( initDelta )
+    }
+
+  }
+
   implicit object PropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      a.qDelta eq b.qDelta
+      a.initDelta ===* b.initDelta
+      // Не учитываем realDelta в сравнении, см.коммент выше.
     }
   }
 
@@ -46,6 +67,7 @@ class QuillEditorR(
     private def onTextChanged(html: String, changeset: Delta, source: Source_t,
                               editorProxy: QuillUnpriveledged): Callback = {
       dispatchOnProxyScopeCB($, TextChanged(
+        diff      = changeset,
         fullDelta = editorProxy.getContents()
       ))
     }
@@ -56,6 +78,7 @@ class QuillEditorR(
 
     def render(propsProxy: Props): VdomElement = {
       val propsOpt = propsProxy.value
+      //println(propsOpt.map(p => JSON.stringify(p.initDelta)))
 
       propsOpt.whenDefinedEl { props =>
         <.div(
@@ -67,7 +90,7 @@ class QuillEditorR(
           try {
             ReactQuill(
               new ReactQuillPropsR {
-                override val value    = props.qDelta
+                override val value    = props.delta
                 override val onChange = _onTextChangedF
                 override val modules  = _quillModulesConf
               }

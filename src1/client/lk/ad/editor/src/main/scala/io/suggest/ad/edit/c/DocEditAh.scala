@@ -118,7 +118,7 @@ class DocEditAh[M](
     case m: TextChanged =>
       val v0 = value
 
-      if ( v0.qdEdit.exists(_.qDelta == m.fullDelta) ) {
+      if ( v0.qdEdit.exists(_.initDelta == m.fullDelta) ) {
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange
 
@@ -150,10 +150,16 @@ class DocEditAh[M](
         )
 
         // Залить все данные в новое состояние.
-        val v2 = v0.withJdArgs(
-          jdArgs = jdArgs2
-          //qDelta = Some(m.fullDelta)    // Не обновляем дельту при редактировании, т.к. у нас тут только initial-значения
-        )
+        val v2 = v0
+          .withJdArgs(
+            jdArgs = jdArgs2
+          )
+          // Не обновляем init-дельту при редактировании, заменяем только актуальный инстанс.
+          .withQdEdit(
+            for (qdEdit <- v0.qdEdit) yield {
+              qdEdit.withRealDelta( Some(m.fullDelta) )
+            }
+          )
 
         // Объединить все эффекты, если они есть.
         fxOpt.fold( updated(v2) ) { updated(v2, _) }
@@ -184,7 +190,7 @@ class DocEditAh[M](
             v1.withQdEdit(
               Some(
                 MQdEditS(
-                  qDelta  = delta2
+                  initDelta  = delta2
                 )
               )
             )
@@ -261,30 +267,33 @@ class DocEditAh[M](
         }
       } yield {
         // Найден исходный эдж. Залить в него инфу по блобу, выкинув оттуда dataURL:
-        val blobUrlOpt = Option( URL.createObjectURL( m.blob ) )
-        dataEdge0.withFileJs {
-          // Нельзя забыть Base64 dataURL, потому что quill их не понимает, заменяя их на "//:0".
-          // Сохранить инфу по блобу.
-          val fileJs2 = dataEdge0.fileJs.fold {
-            MJsFileInfo(
-              blob = m.blob,
-              blobUrl = blobUrlOpt
-            )
-          } { fileJs0 =>
-            fileJs0
-              .withBlob( m.blob )
-              .withBlobUrl( blobUrlOpt )
-          }
-          Some( fileJs2 )
+        val blobUrl = URL.createObjectURL( m.blob )
+        val blobUrlOpt = Option( blobUrl )
+        // Нельзя забыть Base64 dataURL, потому что quill их не понимает, заменяя их на "//:0".
+        // Сохранить инфу по блобу.
+        val fileJs2 = dataEdge0.fileJs.fold {
+          MJsFileInfo(
+            blob = m.blob,
+            blobUrl = blobUrlOpt
+          )
+        } { fileJs0 =>
+          // Ссылка изменилась на blob, но нельзя трогать delta: quill не поддерживает blob-ссылки.
+          fileJs0
+            .withBlob( m.blob )
+            .withBlobUrl( blobUrlOpt )
         }
+        val dataEdge1 = dataEdge0
+          .withFileJs( Some(fileJs2) )
+        (dataEdge1, blobUrl)
       }
 
       // Залить в состояние обновлённый эдж.
       dataEdgeOpt2.fold {
-        LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND_AFTER_BLOBBING, msg = m.blob )
+        LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m.blob )
         noChange
-      } { dataEdge2 =>
-        val dataEdgesMap2 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
+      } { case (dataEdge2, blobUrl) =>
+        val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
+        val dataEdgesMap2 = quillDeltaJsUtil.purgeUnusedEdges(v0.jdArgs.template, dataEdgesMap1)
         val v2 = v0
           .withJdArgs(
             v0.jdArgs.withRenderArgs(
@@ -293,10 +302,10 @@ class DocEditAh[M](
               )
             )
           )
-          // Ссылка изменилась на blob, но нельзя трогать delta: quill не поддерживает blob-ссылки.
 
-        // TODO Запустить эффект получения оригинальный w/h картинки, если это картинка.
-        updated(v2)
+        // Запустить эффект хэширования и дальнейшей закачки файла на сервер.
+        val hashFx = Effect.action( FileHashStart(dataEdge2.id, blobUrl) )
+        updated(v2, hashFx)
       }
 
 
@@ -704,11 +713,12 @@ class DocEditAh[M](
           selectedTag = Some(qdt)
         ),
         qdEdit = Some {
+          val qdelta = quillDeltaJsUtil.qdTag2delta(
+            qd    = qdt,
+            edges = edgesMap2
+          )
           MQdEditS(
-            qDelta = quillDeltaJsUtil.qdTag2delta(
-              qd    = qdt,
-              edges = edgesMap2
-            )
+            initDelta = qdelta
           )
         },
         stripEd = None,

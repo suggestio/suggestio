@@ -6,6 +6,7 @@ import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
+import io.suggest.file.MSrvFileInfo
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEditEdge
 import io.suggest.model.n2.edge.MPredicates
@@ -37,7 +38,6 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkAdEdit @Inject() (
-
                            tempImgSupport                         : TempImgSupport,
                            canEditAd                              : CanEditAd,
                            //@Named("blk") override val blkImgMaker : IMaker,
@@ -153,8 +153,12 @@ class LkAdEdit @Inject() (
           predicate   = imgPredicate,
           id          = edgeUid,
           text        = None,
-          nodeId      = Some(nodeId),
-          url         = Some( dynImgUtil.imgCall(mimg).url )
+          url         = Some( dynImgUtil.imgCall(mimg).url ),
+          fileSrv     = Some(MSrvFileInfo(
+            nodeId = nodeId,
+            url = "TODO.need.url"   // TODO Генерить тут нормальную ссылку на картинку для редактора.
+            // TODO Другие поля, надо извлечь их из MMedia.
+          ))
         )
       }
 
@@ -170,7 +174,6 @@ class LkAdEdit @Inject() (
           predicate = textPred,
           id        = edgeUid,
           text      = Some(text),
-          nodeId    = None,
           url       = None
         )
       }

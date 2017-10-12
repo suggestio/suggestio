@@ -18,7 +18,8 @@ object MQdEditS {
   /** Поддержка FastEq для инстансов [[MQdEditS]]. */
   implicit object MQdEditSFastEq extends FastEq[MQdEditS] {
     override def eqv(a: MQdEditS, b: MQdEditS): Boolean = {
-      (a.qDelta ===* b.qDelta) &&
+      (a.initDelta ===* b.initDelta) &&
+        (a.realDelta ===* b.realDelta) &&
         (a.bgColorPick ===* b.bgColorPick)
     }
   }
@@ -30,12 +31,17 @@ object MQdEditS {
 
 /** Класс-контейнер данных состояния редактирования тексто-контента.
   *
-  * @param qDelta Quill-delta инстанс ДЛЯ ИНИЦИАЛИЗАЦИИ/СБРОСА редактора.
+  * @param initDelta Quill-delta инстанс ДЛЯ ИНИЦИАЛИЗАЦИИ/СБРОСА редактора.
   *               Т.е. он теряет актуальность во время непосредственного редактирования.
+  * @param realDelta Реальная текущая дельта, актуальна в любой момент.
+  *                  Используется как fallback, чтобы в момент незапланированного пере-рендера
+  *                  quill-редактора, всё-таки был доступ к корректной дельте.
+  *                  None означает, что текущая актуальная дельта лежит в initDelta.
   * @param bgColorPick Цвет фона, если необходим.
   */
 case class MQdEditS(
-                     qDelta                     : Delta,
+                     initDelta                  : Delta,
+                     realDelta                  : Option[Delta]     = None,
                      override val bgColorPick   : MColorPickerS     = MColorPickerS.empty
                    )
   extends IBgColorPickerS
@@ -43,7 +49,8 @@ case class MQdEditS(
 
   override type T = MQdEditS
 
-  def withQDelta(qDelta: Delta) = copy(qDelta = qDelta)
-  override def withBgColorPick(bgColor: MColorPickerS) = copy(bgColorPick = bgColor)
+  def withInitDelta(initDelta: Delta)                     = copy(initDelta = initDelta)
+  def withRealDelta(realDelta: Option[Delta])             = copy(realDelta = realDelta)
+  override def withBgColorPick(bgColor: MColorPickerS)    = copy(bgColorPick = bgColor)
 
 }

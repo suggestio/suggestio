@@ -10,7 +10,7 @@ import io.suggest.color.MHistogramWs
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
-import io.suggest.file.MJsFileInfo
+import io.suggest.file.{MJsFileInfo, MSrvFileInfo}
 import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
@@ -82,15 +82,13 @@ class PictureAh[M](
           }
 
       } else {
-
-        val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )
-
         // Выставлен новый файл. Надо записать его в состояние.
         val (v9, fxOpt9) = m.files
           .find { fileNew =>
             MimeConst.Image.isImageForAd(fileNew.`type`)
           }
           .fold [(MPictureAh, Option[Effect])] {
+            val errMsg = MMessage( MsgCodes.`File.is.not.a.picture` )
             // Не найдено картинок среди новых файлов.
             val v1 = v0.withErrorPopup(
               Some(MErrorPopupS(
@@ -101,7 +99,6 @@ class PictureAh[M](
 
           } { fileNew =>
             // Попробовать найти в состоянии файл с такими же характеристиками.
-            // TODO Искать не только в эджах, но и среди известных файлов с сервера.
             val (dataEdge9, edges9, fxOpt) = v0.edges
               .valuesIterator
               .flatMap { e =>
@@ -180,21 +177,8 @@ class PictureAh[M](
                     LOG.error( ErrorMsgs.FILE_CLEANUP_FAIL, ex, msg = dataEdgeOldOpt )
                   }
 
-                // Прохешировать файл в фоне.
-                val hashFx = (MHashes.Sha1 :: MHashes.Sha256 :: Nil)
-                  .map { mhash =>
-                    Effect {
-                      // Отправить в веб-воркер описание задачи по хэшированию кода.
-                      WwMgr
-                        .runTask( HashWwTask(mhash, fileNew) )
-                        // Обернуть результат работы в понятный экшен:
-                        .transform { tryRes =>
-                          Success( FileHashRes(edgeUid2, blobUrlNew, mhash, tryRes) )
-                        }
-                    }
-                  }
-                  .reduce[Effect](_ + _)
-
+                // Запустить хеширование файла в фоне:
+                val hashFx = Effect.action( FileHashStart(edgeUid2, blobUrlNew) )
                 val edges2 = v0.edges.updated(edgeUid2, dataEdge2)
                 (dataEdge2, edges2, Some(hashFx))
 
@@ -222,6 +206,38 @@ class PictureAh[M](
 
         fxOpt9
           .fold(updated(v9))(updated(v9, _))
+      }
+
+
+    // Сигнал к запуску хеширования файлов.
+    case m: FileHashStart =>
+      val v0 = value
+      _findEdgeByIdOrBlobUrl(v0.edges, m.edgeUid, m.blobUrl).fold {
+        LOG.warn(WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m)
+        noChange
+      } { eData =>
+        eData.fileJs.fold {
+          LOG.warn(WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = (eData, m))
+          noChange
+        } { fileJs0 =>
+          // Есть js-файл на руках. Огранизовать хеширование:
+          val hashFx = (MHashes.Sha1 :: MHashes.Sha256 :: Nil)
+            .map { mhash =>
+              Effect {
+                // Отправить в веб-воркер описание задачи по хэшированию кода.
+                WwMgr
+                  .runTask( HashWwTask(mhash, fileJs0.blob) )
+                  // Обернуть результат работы в понятный экшен:
+                  .transform { tryRes =>
+                    Success( FileHashRes(m.edgeUid, m.blobUrl, mhash, tryRes) )
+                  }
+              }
+            }
+            .reduce[Effect](_ + _)
+
+          // TODO Может быть надо Pot[] для каждого хеша организовать? Чтобы вычисление хэшей отражалось в состоянии.
+          effectOnly( hashFx )
+        }
       }
 
 
@@ -379,11 +395,9 @@ class PictureAh[M](
               // Нет ссылок для аплоада. Проверить fileExists-поле:
               .orElse {
                 for (fe <- resp.fileExist) yield {
-                  // Файл уже залит на сервер. Это нормально. Залить данные по файлу в состояние.
+                  // Файл уже залит на сервер. Это нормально. Залить данные по файлу в состояние:
                   val edge2 = edge0.copy(
-                    jdEdge = edge0.jdEdge
-                      .withFileSrv( resp.fileExist )
-                      .withNodeId( Some(fe.nodeId) ),
+                    jdEdge = _srvFileIntoJdEdge( fe, edge0.jdEdge ),
                     fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
                       upload0
                         .withXhr(None)
@@ -397,11 +411,13 @@ class PictureAh[M](
                       .updated(edge2.id, edge2)
                   )
                   // Если пришла гистограмма, то залить её в состояние.
-                  val v2 = fe.colors.fold(v1) { histogram =>
-                    v1.withHistograms(
-                      v1.histograms.updated(fe.nodeId, histogram)
-                    )
-                  }
+                  val v2 = fe.colors
+                    .filter(_.nonEmpty)
+                    .fold(v1) { histogram =>
+                      v1.withHistograms(
+                        v1.histograms.updated(fe.nodeId, histogram)
+                      )
+                    }
                   updated(v2)
                 }
               }
@@ -468,9 +484,7 @@ class PictureAh[M](
                 // Файл успешно залит на сервер. Сервер присылает только базовые данные по загруженному файлу, надо не забывать это.
                 // Сохранить это в состояние:
                 val edge2 = edge0.copy(
-                  jdEdge = edge0.jdEdge
-                    .withFileSrv( resp.fileExist )
-                    .withNodeId( Some(fileExist.nodeId) ),
+                  jdEdge = _srvFileIntoJdEdge(fileExist, edge0.jdEdge),
                   fileJs = _fileJsWithUpload(edge0.fileJs) { upload0 =>
                     upload0.copy(
                       xhr       = None,
@@ -818,6 +832,17 @@ class PictureAh[M](
           .map(f)
       )
     }
+  }
+
+
+  // Объединяем старый и новый набор данных по файлу на сервере.
+  private def _srvFileIntoJdEdge(fileInfo: MSrvFileInfo, jdEdge0: MJdEditEdge): MJdEditEdge = {
+    val srvFileInfo0 = jdEdge0
+      .fileSrv
+      .getOrElse(MSrvFileInfo.empty)
+    val srvFileInfo2 = srvFileInfo0.updateFrom( fileInfo )
+    jdEdge0
+      .withFileSrv( Some(srvFileInfo2) )
   }
 
 }

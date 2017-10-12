@@ -14,7 +14,10 @@ sealed trait IQuillAction extends DAction
 
 /** Юзер редактирует текст.
   *
+  * @param diff Дельта изменений.
+  *             Используется для выявления свежедобавленных картинок, чтобы их на сервер сливать в фоне.
+  *             Например, добавление конца строки: {"ops":[{"retain":12},{"insert":"\n"}]}
   * @param fullDelta Обновлённый полный текст в quill-delta-формате.
   */
-case class TextChanged(fullDelta: Delta) extends IQuillAction
+case class TextChanged(diff: Delta, fullDelta: Delta) extends IQuillAction
 

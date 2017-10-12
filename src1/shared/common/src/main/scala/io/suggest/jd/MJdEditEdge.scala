@@ -23,7 +23,6 @@ object MJdEditEdge {
     val PREDICATE_FN    = "p"
     val UID_FN          = "i"
     val TEXT_FN         = "t"
-    val NODE_ID_FN      = "n"
     val URL_FN          = "u"
     val SRV_FILE_FN     = "f"
   }
@@ -35,7 +34,6 @@ object MJdEditEdge {
       (__ \ F.PREDICATE_FN).format[MPredicate] and
       (__ \ F.UID_FN).format[EdgeUid_t] and
       (__ \ F.TEXT_FN).formatNullable[String] and
-      (__ \ F.NODE_ID_FN).formatNullable[String] and
       (__ \ F.URL_FN).formatNullable[String] and
       (__ \ F.SRV_FILE_FN).formatNullable[MSrvFileInfo]
     )(apply, unlift(unapply))
@@ -49,7 +47,6 @@ object MJdEditEdge {
 /** Данные по эджу для редактируемого документа.
   *
   * @param predicate Предикат.
-  * @param nodeId id узла.
   * @param url Ссылка на ресурс, на картинку, например.
   * @param fileSrv КроссПлатформенная инфа по файлу-узлу на стороне сервера.
   */
@@ -57,23 +54,23 @@ case class MJdEditEdge(
                         predicate           : MPredicate,   // TODO MPredicate заменить на MPredicates.JdContent.Child или что-то типа него.
                         override val id     : EdgeUid_t,
                         text                : Option[String] = None,
-                        nodeId              : Option[String] = None,
                         url                 : Option[String] = None,
                         fileSrv             : Option[MSrvFileInfo]  = None
                       )
   extends IId[EdgeUid_t]
 {
 
-  def withNodeId(nodeId: Option[String])  = copy(nodeId = nodeId)
   def withText(text: Option[String])      = copy(text = text)
   def withUrl(url: Option[String])        = copy(url = url)
   def withFileSrv(fileSrv: Option[MSrvFileInfo]) = copy(fileSrv = fileSrv)
 
   /** Подобрать значение для imgSrc. */
   def imgSrcOpt: Option[String] = {
-    fileSrv
-      .map(_.url)
-      .orElse(url)
+    // Стараемся использовать собственную ссылку в первую очередь.
+    // Например, это полезно, когда есть base64-ссылка для нового файла, а сервер присылает ещё одну,
+    // которую надо будет ждать... а зачем ждать, когда всё уже есть?
+    url
+      .orElse { fileSrv.map(_.url) }
   }
 
 }

@@ -4,10 +4,8 @@ import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.color.MColorData
 import io.suggest.common.MHand
-import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
-import io.suggest.file.MSrvFileInfo
 import io.suggest.file.up.MUploadResp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.spa.DAction
@@ -100,6 +98,10 @@ case class B64toBlobDone(b64Url: String, blob: Blob) extends ILkEditAction {
 /** Команда принудительной прочистки эджей, не исходит от юзера, а является продуктом работы других контроллеров. */
 case object PurgeUnusedEdges extends ILkEditAction
 
+
+/** Экшен запуска хеширования файла в указанном эдже.
+  * Хэширование с последующим аплоадом может запускаться из разных мест: quill, strip editor, etc. */
+case class FileHashStart(edgeUid: EdgeUid_t, blobUrl: String) extends ILkEditAction
 
 /** Завершение асинхронного хэширования файла. */
 case class FileHashRes(edgeUid: EdgeUid_t, blobUrl: String, hash: MHash, hex: Try[String]) extends ILkEditAction

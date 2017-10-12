@@ -2,6 +2,7 @@ package io.suggest.quill.u
 
 import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.color.MColorData
+import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
 import io.suggest.jd.tags.IDocTag
@@ -30,7 +31,8 @@ class QuillDeltaJsUtil extends Log {
   /** Поиск и устранение неиспользуемых эджей. */
   def purgeUnusedEdges(tpl: IDocTag, edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MEdgeDataJs] = {
     val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
-    edgesMap.filterKeys(usedEdgeIds.contains)
+    edgesMap
+      .filterKeys { usedEdgeIds.contains }
   }
 
 
@@ -66,6 +68,9 @@ class QuillDeltaJsUtil extends Log {
                         jsObj.video = videoUrl
                         jsObj: DeltaInsertData_t
                       }
+
+                    case other =>
+                      throw new UnsupportedOperationException( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT + HtmlConstants.SPACE + (other, e))
                   }
               }
             }

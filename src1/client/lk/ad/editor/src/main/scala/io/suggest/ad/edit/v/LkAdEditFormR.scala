@@ -153,8 +153,10 @@ class LkAdEditFormR(
               bgImgSrcOpt   = bgEdge.flatMap { _.imgSrcOpt },
               bgImgHist = {
                 bgEdge
-                  .flatMap(_.jdEdge.nodeId)
-                  .flatMap(mroot.doc.colorsState.histograms.get)
+                  .flatMap(_.jdEdge.fileSrv)
+                  .flatMap { fileSrv =>
+                    mroot.doc.colorsState.histograms.get(fileSrv.nodeId)
+                  }
               }
             )
           }

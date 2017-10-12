@@ -81,7 +81,8 @@ class QdEditR(
             props   <- propsOpt
           } yield {
             quillEditorR.PropsVal(
-              qDelta = props.qdEdit.qDelta
+              initDelta = props.qdEdit.initDelta,
+              realDelta = props.qdEdit.realDelta
             )
           }
         }( OptFastEq.Wrapped ),
