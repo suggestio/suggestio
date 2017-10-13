@@ -95,7 +95,10 @@ object HttpConst {
 
     def httpOrHttps(secure: Boolean): String = if (secure) HTTPS else HTTP
 
-    final def CURR_PROTO = "//"
+    final def CURR_PROTO = {
+      val s = HtmlConstants.SLASH
+      s + s
+    }
     final def DELIM = HtmlConstants.COLON + CURR_PROTO
 
     final def WS = "ws"

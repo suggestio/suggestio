@@ -1,5 +1,6 @@
 package io.suggest.jd.render.m
 
+import io.suggest.dev.MSzMult
 import japgolly.univeq.UnivEq
 
 /**
@@ -18,7 +19,7 @@ object MJdConf {
 
 /** Класс модели общей конфигурации рендеринга.
   *
-  * @param withEdit Рендерить для редактора карточки.
+  * @param isEdit Рендерить для редактора карточки.
   *                 Это означает, например, что некоторые элементы становятся перемещаемыми
   *                 и генерят соотв.события.
   *
@@ -26,7 +27,12 @@ object MJdConf {
   *               Его можно переопределить на уровне каждого конкретного блока.
   */
 case class MJdConf(
-                    withEdit  : Boolean,
-                    szMult    : Double
-                  )
+                    isEdit    : Boolean,
+                    szMult    : MSzMult
+                  ) {
+
+  def withIsEdit(isEdit: Boolean)           = copy(isEdit = isEdit)
+  def withSzMult(szMult: MSzMult)           = copy(szMult = szMult)
+
+}
 

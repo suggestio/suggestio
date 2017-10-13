@@ -6,6 +6,7 @@ import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
+import io.suggest.dev.MSzMult
 import io.suggest.file.up.MUploadResp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.spa.DAction
@@ -119,3 +120,7 @@ case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: St
   * связанных с соответствующей узлу картинкой.
   */
 case class HandleNewHistogramInstalled(nodeId: String) extends ILkEditAction
+
+
+/** Сигнал изменения масштаба рендера. */
+case class SetScale(szMult: MSzMult) extends ILkEditAction

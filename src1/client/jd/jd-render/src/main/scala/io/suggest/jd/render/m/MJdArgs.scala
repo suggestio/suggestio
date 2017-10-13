@@ -45,6 +45,7 @@ case class MJdArgs(
                     renderArgs   : MJdRenderArgs,
                     jdCss        : JdCss,
                     conf         : MJdConf,
+                    // TODO selected-поле надо сделать трейсом до узла в дереве, а не инстансом тега. DocEditAh страдает при HandleNewHistogramInstalled.
                     selectedTag  : Option[IDocTag]   = None,
                     dnd          : MJdDndS           = MJdDndS.empty
                   ) {

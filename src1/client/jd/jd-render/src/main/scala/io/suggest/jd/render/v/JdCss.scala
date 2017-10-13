@@ -33,23 +33,17 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 
+  val szMultD = jdCssArgs.conf.szMult.toDouble
+
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
   val smBlock = style(
     addClassName("sm-block"),
     // Дефолтовые настройки шрифтов.
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
-    fontSize( MFontSizes.default.value.px )
+    fontSize( (MFontSizes.default.value * szMultD).px )
   )
 
-  /** Ширина и длина -- 100%. */
-  val wh100 = {
-    val pc100 = 100.%%
-    style(
-      width(pc100),
-      height(pc100)
-    )
-  }
 
   /** Текущий выбранный тег выделяется на картинке. */
   val selectedTag = style(
@@ -80,8 +74,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Стиль размеров блока-полосы.
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
-          width( bm.width.px ),
-          height( bm.height.px )
+          width( (bm.width * szMultD).px ),
+          height( (bm.height * szMultD).px )
         )
       }
     }
@@ -128,8 +122,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(absPosDomain) { jdt =>
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
         styleS(
-          top( topLeft.y.px ),
-          left( topLeft.x.px )
+          top( (topLeft.y * szMultD).px ),
+          left( (topLeft.x * szMultD).px )
         )
       }
     }
@@ -185,9 +179,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Если задан font-size, то нужно отрендерить его вместе с сопуствующими аттрибутами.
       for (fontSizeSU <- attrsText.size; fontSize <- fontSizeSU) {
         // Рендер размера шрифта
-        acc ::= _lineHeightAttr( fontSize.lineHeight.px )
+        acc ::= _lineHeightAttr( (fontSize.lineHeight * szMultD).px )
         // Отрендерить размер шрифта
-        acc ::= _fontSizeAttr( fontSize.value.px )
+        acc ::= _fontSizeAttr( (fontSize.value * szMultD).px )
       }
 
       // Вернуть скомпонованный стиль.
@@ -257,9 +251,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       var acc = List.empty[ToStyle]
 
       for (heightSU <- embedAttrs.height; heightPx <- heightSU )
-        acc ::= height( heightPx.px )
+        acc ::= height( (heightPx * szMultD).px )
       for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-        acc ::= width( widthPx.px )
+        acc ::= width( (widthPx * szMultD).px )
 
       styleS(
         acc: _*
@@ -328,10 +322,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       // Проецируем это отношение на натуральные размеры картинки, top и left:
       styleS(
-        width     ( (ecArgs.origWh.width  * outer2cropRatio).toInt.px ),
-        height    ( (ecArgs.origWh.height * outer2cropRatio).toInt.px ),
-        marginLeft( -(ecArgs.crop.offX * outer2cropRatio).toInt.px ),
-        marginTop ( -(ecArgs.crop.offY * outer2cropRatio).toInt.px )
+        width     ( (ecArgs.origWh.width  * outer2cropRatio * szMultD).px ),
+        height    ( (ecArgs.origWh.height * outer2cropRatio * szMultD).px ),
+        marginLeft( -(ecArgs.crop.offX * outer2cropRatio * szMultD).px ),
+        marginTop ( -(ecArgs.crop.offY * outer2cropRatio * szMultD).px )
       )
     }
   }

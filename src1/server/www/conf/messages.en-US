@@ -941,4 +941,5 @@ File.is.not.a.picture=File is not a picture
 Apply=Apply
 Cannot.checksum.file=Unable to calculate checksum of file {0}
 Suggested.bg.colors=Suggested background colors
+Scale=Scale
 

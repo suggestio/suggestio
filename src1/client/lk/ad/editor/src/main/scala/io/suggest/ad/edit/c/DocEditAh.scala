@@ -893,6 +893,24 @@ class DocEditAh[M](
         updated( v2 )
       }
 
+
+    // Выставить новый масштаб для рендера карточи.
+    case m: SetScale =>
+      val v0 = value
+      val conf2 = v0.jdArgs.conf
+        .withSzMult( m.szMult )
+      val v2 = v0
+        .withJdArgs(
+          v0.jdArgs
+            .withConf( conf2 )
+            .withJdCss(
+              jdCssFactory.mkJdCss(
+                MJdCssArgs.singleCssArgs(v0.jdArgs.template, conf2, v0.jdArgs.renderArgs.edges)
+              )
+            )
+        )
+      updated(v2)
+
   }
 
 }

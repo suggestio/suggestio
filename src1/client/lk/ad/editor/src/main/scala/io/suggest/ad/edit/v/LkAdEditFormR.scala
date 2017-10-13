@@ -4,9 +4,10 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
-import io.suggest.ad.edit.v.edit.{AddR, QdEditR}
+import io.suggest.ad.edit.v.edit.{AddR, QdEditR, ScaleR}
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
@@ -31,13 +32,15 @@ class LkAdEditFormR(
                      val stripEditR     : StripEditR,
                      lkAdEditCss        : LkAdEditCss,
                      quillCssFactory    : => QuillCss,
-                     val qdEditR        : QdEditR
+                     val qdEditR        : QdEditR,
+                     val scaleR         : ScaleR
                    ) {
 
   import MAddS.MAddSFastEq
   import MJdArgs.MJdWithArgsFastEq
   import qdEditR.QdEditRPropsValFastEq
   import stripEditR.StripEditRPropsValFastEq
+  import scaleR.ScaleRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -47,7 +50,8 @@ class LkAdEditFormR(
                               jdCssArgsC        : ReactConnectProxy[JdCss],
                               addC              : ReactConnectProxy[Option[MAddS]],
                               stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
-                              qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]]
+                              qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
+                              scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -109,7 +113,10 @@ class LkAdEditFormR(
             <.br,
 
             // Форма добавления новых элементов.
-            s.addC { addR.apply }
+            s.addC { addR.apply },
+
+            // Селектор масштаба карточки.
+            s.scalePropsOptC { scaleR.apply }
 
           )
 
@@ -173,7 +180,18 @@ class LkAdEditFormR(
               colorsState = mroot.doc.colorsState
             )
           }
-        }( OptFastEq.Wrapped )
+        }( OptFastEq.Wrapped ),
+
+        scalePropsOptC = {
+          val variants = MSzMults.forAdEditor
+          p.connect { mroot =>
+            val propsVal = scaleR.PropsVal(
+              current  = mroot.doc.jdArgs.conf.szMult,
+              variants = variants
+            )
+            Some(propsVal): Option[scaleR.PropsVal]
+          }( OptFastEq.Wrapped )
+        }
 
       )
     }

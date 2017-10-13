@@ -174,7 +174,7 @@ class QdRrrHtml(
       }
 
       // Если edit-режим, то запретить перетаскивание картинки, чтобы точно таскался весь QdTag сразу:
-      if (jdArgs.conf.withEdit) {
+      if (jdArgs.conf.isEdit) {
         imgArgsAcc ::= (^.draggable := false)
       }
 

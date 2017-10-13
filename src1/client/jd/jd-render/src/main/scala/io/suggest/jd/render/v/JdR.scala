@@ -145,7 +145,7 @@ class JdR extends Log {
         val clientX = e.clientX
 
         // Всё остальное (вне event) заносим в callback-функцию, чтобы максимально обленивить вычисления и дальнейшие действия.
-        dispatchOnProxyScopeCBf($) { _ =>
+        dispatchOnProxyScopeCBf($) { jdArgsProxy =>
           // Узнать разницу между коодинатами мыши и левым верхним углом. Десериализовать из dataTransfer.
           val offsetXy = try {
             Json
@@ -157,12 +157,14 @@ class JdR extends Log {
               MCoords2dD(0, 0)
           }
 
+          val szMultD = jdArgsProxy.value.conf.szMult.toDouble
+
           // Вычислить относительную координату в css-пикселях между точкой дропа и левой верхней точкой strip'а.
           // Считаем в client-координатах, т.к. рассчёты мгновенны, и client viewport не сдвинется за это время.
           // Если понадобятся page-координаты, то https://stackoverflow.com/a/37200339
           val topLeftXy = MCoords2di(
-            x = (clientX + offsetXy.x).toInt,
-            y = (clientY + offsetXy.y).toInt
+            x = ((clientX + offsetXy.x) / szMultD).toInt,
+            y = ((clientY + offsetXy.y) / szMultD).toInt
           )
           //println(s"e.client(${e.clientX} ${e.clientY}) +diff=$offsetXy => $topLeftXy")
 
@@ -177,6 +179,7 @@ class JdR extends Log {
         // Перетаскивание целого стрипа. Нужно вычислить, стрип дропнут выше или ниже он середины текущего стрипа.
         val tgEl = e.target.asInstanceOf[Element]
         dispatchOnProxyScopeCBf($) { _ =>
+          // szMult тут учитывать не требуется, т.к. вся работа идёт в client-координатах.
           val clRect = tgEl.getBoundingClientRect()
           val pointerY = clientY - clRect.top
           val isUpper = pointerY < clRect.height / 2
@@ -241,7 +244,7 @@ class JdR extends Log {
 
     private def _clickableOnEdit(jdt: IDocTag, jdArgs: MJdArgs): TagMod = {
       // В режиме редактирования -- надо слать инфу по кликам на стрипах
-      if (jdArgs.conf.withEdit) {
+      if (jdArgs.conf.isEdit) {
         ^.onClick ==> jdTagClick(jdt)
       } else {
         EmptyVdom
@@ -250,7 +253,7 @@ class JdR extends Log {
 
 
     private def _droppableOnEdit(jdt: IDocTag, jdArgs: MJdArgs): TagMod = {
-      if (jdArgs.conf.withEdit) {
+      if (jdArgs.conf.isEdit) {
         TagMod(
           ^.onDragOver ==> jdStripDragOver,
           ^.onDrop     ==> onDropToStrip(jdt)
@@ -273,7 +276,7 @@ class JdR extends Log {
       * Нужно, чтобы редактор мог узнать wh оригинала изображения. */
     private def _notifyImgWhOnEdit(e: MEdgeDataJs, jdArgs: MJdArgs): TagMod = {
       // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
-      if ( jdArgs.conf.withEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
+      if ( jdArgs.conf.isEdit && e.fileJs.exists(_.whPx.isEmpty) ) {
         ^.onLoad ==> onNewImageLoaded(e.id)
       } else {
         EmptyVdom
@@ -285,7 +288,7 @@ class JdR extends Log {
     def renderStrip(s: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
       val C = jdArgs.jdCss
       val isSelected = jdArgs.selectedTag.contains(s)
-      val isEditSelected = isSelected && jdArgs.conf.withEdit
+      val isEditSelected = isSelected && jdArgs.conf.isEdit
       <.div(
         ^.key := i.toString,
         C.smBlock,
@@ -330,7 +333,7 @@ class JdR extends Log {
               ^.src := bgImgSrc,
 
               // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
-              if (jdArgs.conf.withEdit) {
+              if (jdArgs.conf.isEdit) {
                 ^.draggable := false
               } else {
                 EmptyVdom
@@ -342,7 +345,7 @@ class JdR extends Log {
                 s.props1.bm.whenDefined { bm =>
                   // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
                   TagMod(
-                    ^.width  := bm.width.px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
+                    ^.width  := (bm.width * jdArgs.conf.szMult.toDouble).px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
                     //^.height := bm.height.px
                   )
                 }
@@ -397,7 +400,7 @@ class JdR extends Log {
           jdArgs      = jdArgs,
           qdTag       = qdTag,
           // Для редактора: следует проверить эдж
-          imgEdgeMods = OptionUtil.maybe( jdArgs.conf.withEdit ) {
+          imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
             _notifyImgWhOnEdit(_, jdArgs)
           }
         )
@@ -414,7 +417,7 @@ class JdR extends Log {
 
         // Поддержка перетаскивания
         jdArgs.jdCss.absPosStyleAll,
-        if (jdArgs.conf.withEdit && !jdArgs.selectedTag.contains(parent)) {
+        if (jdArgs.conf.isEdit && !jdArgs.selectedTag.contains(parent)) {
           _draggableUsing(qdTag, jdArgs) { jdTagDragStart(qdTag) }
         } else {
           EmptyVdom
@@ -422,7 +425,7 @@ class JdR extends Log {
         jdArgs.jdCss.absPosStyleF(qdTag),
 
         // Рендерить особые указатели мыши в режиме редактирования.
-        if (jdArgs.conf.withEdit) {
+        if (jdArgs.conf.isEdit) {
           ^.`class` := {
             if (jdArgs.selectedTag.contains(qdTag)) {
               // Текущий тег выделен. Значит, пусть будет move-указатель

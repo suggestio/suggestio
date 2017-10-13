@@ -202,6 +202,8 @@ object MsgCodes {
 
   val `Suggested.bg.colors` = "Suggested.bg.colors"
 
+  val `Scale` = "Scale"
+
   /** Непереводится на разные языки, однако бывает нужно. */
   val `TODO` = "TODO"
 

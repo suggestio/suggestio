@@ -254,6 +254,7 @@ class JsMessagesUtil @Inject() (
       MC.`Picture.editing` ::
       MC.`Cannot.checksum.file` ::
       MC.`Suggested.bg.colors` ::
+      MC.`Scale` ::
       Nil
   }
 

@@ -22,7 +22,7 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import com.softwaremill.macwire._
-import io.suggest.spa.delay.ActionDelayerAh
+import io.suggest.dev.{MSzMult, MSzMults}
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
@@ -56,9 +56,9 @@ class LkAdEditCircuit(
     MAeRoot(
       conf = mFormInit.conf,
       doc  = {
-        val conf = MJdConf(
-          withEdit  = true,
-          szMult    = 2
+        val jdConf = MJdConf(
+          isEdit  = true,
+          szMult    = MSzMults.`1.0`
         )
         val tpl = mFormInit.form.template
         val edges = IId.els2idMap[EdgeUid_t, MEdgeDataJs] {
@@ -68,7 +68,7 @@ class LkAdEditCircuit(
               MEdgeDataJs(_)
             }
         }
-        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, conf, edges )
+        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf, edges )
         val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
         MDocS(
           jdArgs = MJdArgs(
@@ -77,7 +77,7 @@ class LkAdEditCircuit(
               edges = edges
             ),
             jdCss      = jdCss,
-            conf       = conf
+            conf       = jdConf
           )
         )
       }

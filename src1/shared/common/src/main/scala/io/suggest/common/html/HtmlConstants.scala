@@ -38,6 +38,8 @@ object HtmlConstants {
 
   val COLON                   = ":"
 
+  val SLASH                   = "/"
+
   @inline
   def TAG_PREFIX              = DIEZ
 
@@ -48,6 +50,7 @@ object HtmlConstants {
   object Input {
 
     val checkbox = "checkbox"
+    val select = "select"
     val text = "text"
     val radio = "radio"
     val submit = "submit"
