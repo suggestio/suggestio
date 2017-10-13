@@ -368,5 +368,4 @@ object Lists {
     case _    => Nil
   }
 
-
 }

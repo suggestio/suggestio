@@ -2,7 +2,7 @@ package io.suggest.ad.edit.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
-import io.suggest.color.MColorData
+import io.suggest.color.{MColorData, MHistogram}
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
@@ -113,3 +113,9 @@ case class PrepUploadResp(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUr
 case class UploadRes(tryRes: Try[MUploadResp], edgeUid_t: EdgeUid_t, blobUrl: String, hostUrl: MHostUrl) extends ILkEditAction
 // TODO Объеденить оба case class'а?
 
+
+/** Экшен для запуска какой-то реакции на событие появления новой гистограммы в карте оных.
+  * Испускается из PictureAh, и попадает в DocEditAh для выставления bgColor на jd-элементах,
+  * связанных с соответствующей узлу картинкой.
+  */
+case class HandleNewHistogramInstalled(nodeId: String) extends ILkEditAction

@@ -29,6 +29,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom.raw.URL
 
 import scala.util.Random
@@ -621,6 +622,108 @@ class DocEditAh[M](
             .withDnd()
         )
         updated(v2)
+      }
+
+
+    // Появилась новая гистограмма в карте гисторамм. Нужно поправить эджи, у которых фон соответствует связанной картинке.
+    case m: HandleNewHistogramInstalled =>
+      val v0 = value
+      val edgeUids4mod = v0.jdArgs.renderArgs
+        .edges
+        .valuesIterator
+        .flatMap { e =>
+          for {
+            fileSrv <- e.jdEdge.fileSrv
+            if m.nodeId ==* fileSrv.nodeId
+          } yield {
+            e.id
+          }
+        }
+        .toSet
+
+      if (edgeUids4mod.isEmpty) {
+        // Если эджа для указанной гистограммы не найдено, то это палево какое-то.
+        LOG.warn( WarnMsgs.SOURCE_FILE_NOT_FOUND, msg = m )
+        noChange
+
+      } else {
+        // Найти гистограмму в карте
+        v0.colorsState
+          .histograms
+          .get(m.nodeId)
+          .filter( _.sorted.nonEmpty )
+          .fold {
+            // Should never happen: не найдена гистограмма, указанная в событии.
+            LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+            noChange
+          } { mhist =>
+            // Надо пробежаться по template, и всем элеметам, которые изменились, выставить обновлённые значения.
+            val topColorMcd = mhist.sorted
+              .maxBy { mcd =>
+                mcd.freqPc
+                  .getOrElse(-1)
+              }
+            val topColorMcdOpt = Some(topColorMcd)
+
+            // К сожалению, теги дерева сейчас дублируются в поле .selecetedTag. Нужно там обновлять инстанс тега одновременно с деревом с помощью var:
+            // TODO selJdt Ужаснейший быдлокод тут. Надо поле .selectedTag сделать трейсом до узла, а не инстансом узла. И перевести дерево документа на scalaz Tree.
+            var selJdt2 = v0.jdArgs.selectedTag
+            var modifiedElOpt: Option[IJdElement] = None
+            //println("selJdt0 =  " + selJdt2)
+            val tpl2 = v0.jdArgs
+              .template
+              .deepElMap { (el0, el1) =>
+                val bgImgEdgeId = el1.bgImgEdgeId
+                //println( bgImgEdgeId, edgeUids4mod )
+                if ( bgImgEdgeId.map(_.edgeUid).exists(edgeUids4mod.contains) ) {
+                  //println("replace bgColor with " + topColorMcd + " on " + el1)
+                  // Требуется замена bgColor на обновлённый вариант.
+                  val el2 = el1.setBgColor( topColorMcdOpt )
+                  modifiedElOpt = Some(el2)
+                  if ( selJdt2.contains(el0) )
+                    selJdt2 = Some( el2.asInstanceOf[IDocTag] )
+                  el2
+                } else {
+                  el1
+                }
+              }
+              .asInstanceOf[IDocTag]
+
+            // Сохранить новые темплейт в состояние.
+            var jdArgs2 = v0.jdArgs
+              .withTemplate(tpl2)
+              .withJdCss(
+                jdCssFactory.mkJdCss(
+                  MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
+                )
+              )
+
+            // Если selected-тег тоже изменился, то его тоже обновить.
+            val selJdtNeedUpdate = selJdt2 !===* v0.jdArgs.selectedTag
+            //println( selJdtNeedUpdate )
+            if (selJdtNeedUpdate)
+              jdArgs2 = jdArgs2.withSelectedTag( selJdt2 )
+            var v2 = v0.withJdArgs( jdArgs2 )
+
+            // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
+            for {
+              qdEdit0 <- v0.qdEdit
+              modifiedEl <- modifiedElOpt
+              qdTag <- tpl2.findTagsByChildQdEl(modifiedEl)
+            } {
+              // TODO selJdt Тут всё работает благодаря сайд-эффектам перефокусировки при рендере quill при обновлении состояния. selJdt2 содержит неправильный инстанс сейчас.
+              // А sleJdt при этом содержит неактуальное значение
+              //println( qdEdit0 )
+              v2 = v0.withQdEdit(
+                Some(qdEdit0.copy(
+                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag, v2.jdArgs.renderArgs.edges ),
+                  realDelta = None
+                ))
+              )
+            }
+
+            updated( v2 )
+          }
       }
 
 

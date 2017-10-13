@@ -53,4 +53,17 @@ case class MQdEditS(
   def withRealDelta(realDelta: Option[Delta])             = copy(realDelta = realDelta)
   override def withBgColorPick(bgColor: MColorPickerS)    = copy(bgColorPick = bgColor)
 
+
+  /** Залить realDelta в init, чтобы принудительно освежить состояние.
+    * Удобно, если надо перерендерить редактор.
+    */
+  def refresh: MQdEditS = {
+    realDelta.fold(this) { delta2 =>
+      copy(
+        initDelta = delta2,
+        realDelta = None
+      )
+    }
+  }
+
 }

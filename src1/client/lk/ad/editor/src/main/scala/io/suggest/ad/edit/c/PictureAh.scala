@@ -6,7 +6,7 @@ import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.pop.MPictureCropPopup
 import io.suggest.ad.edit.srv.ILkAdEditApi
-import io.suggest.color.MHistogramWs
+import io.suggest.color.{MHistogram, MHistogramWs}
 import io.suggest.common.geom.d2.ISize2di
 import io.suggest.crypto.asm.HashWwTask
 import io.suggest.crypto.hash.{HashesHex, MHashes}
@@ -52,6 +52,8 @@ class PictureAh[M](
   extends ActionHandler(modelRW)
   with Log
 {
+
+  private type ResPair_t = (MPictureAh, Effect)
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -368,10 +370,6 @@ class PictureAh[M](
                   val uploadFx = Effect {
                     val upRespFut = uploadApi.doFileUpload(firstUpUrl, fileJs)
                     // TODO Пописаться на события xhr.upload.onprogress, чтобы мониторить ход заливки.
-                    // TODO наладить связь с целевым хостом через websocket для опознания цвета картинки.
-                    //val wsFx = WsEnsureConn(
-                    //  hostUrl = upData.withRelUrl(  )
-                    //)
                     // Завернуть ответ сервера в итоговый Action:
                     upRespFut.transform { tryRes =>
                       Success( UploadRes(tryRes, m.edgeUid_t, m.blobUrl, firstUpUrl) )
@@ -411,14 +409,7 @@ class PictureAh[M](
                       .updated(edge2.id, edge2)
                   )
                   // Если пришла гистограмма, то залить её в состояние.
-                  val v2 = fe.colors
-                    .filter(_.nonEmpty)
-                    .fold(v1) { histogram =>
-                      v1.withHistograms(
-                        v1.histograms.updated(fe.nodeId, histogram)
-                      )
-                    }
-                  updated(v2)
+                  _maybeWithHistogram(fe, v1)
                 }
               }
               // Есть проблемы с принятием такого файла: его нельзя отправить на сервер.
@@ -496,16 +487,25 @@ class PictureAh[M](
                 val v2 = v0.withEdges(
                   v0.edges.updated(edge2.id, edge2)
                 )
-                // В фоне: запустить открытие websocket'а для связи с сервером.
-                val wsEnsureFx = Effect.action {
-                  WsEnsureConn(
-                    target       = MWsConnTg(
-                      host = m.hostUrl.host
-                    ),
-                    closeAfterSec = Some(120)
-                  )
+
+                // В ответе может быть гистограмма. Это важно проаналализировать и вынести решение:
+                val (v9, fx) = fileExist.colors.fold[ResPair_t] {
+                  // Сервер не прислал гистограмму. Она придёт по websocket'у.
+                  // В фоне: запустить открытие websocket'а для связи с сервером по поводу гистограммы.
+                  val wsEnsureFx = Effect.action {
+                    WsEnsureConn(
+                      target = MWsConnTg(
+                        host = m.hostUrl.host
+                      ),
+                      closeAfterSec = Some(120)
+                    )
+                  }
+                  (v2, wsEnsureFx)
+                } { histogram =>
+                  // Гистограмма уже есть в комплекте с ответом сервера. Внести гистограмму в карту и запустить дальнейший процессинг дерева документа:
+                  _withHistogram( fileExist.nodeId, histogram, v2 )
                 }
-                updated(v2, wsEnsureFx)
+                updated(v9, fx)
               }
               // Возможно, что-то пошло на сервере не так. Нужно отрендерить .errors:
               .orElse {
@@ -530,14 +530,10 @@ class PictureAh[M](
     case m: WsChannelMsg if m.msg.typ ==* MWsMsgTypes.ColorsHistogram =>
       try {
         val histWs = m.msg.payload.as[MHistogramWs]
-        // Поискать эдж с таким nodeId среди картинок. Ищем
-        val v0 = value
-        val v2 = v0.withHistograms(
-          v0.histograms
-            .updated(histWs.nodeId, histWs.hist)
-        )
         //println("wsChannel => hist: " + histWs + s" \n hists: ${v0.histograms} => ${v2.histograms}")
-        updated( v2 )
+        _resPair2res(
+          _withHistogram(histWs.nodeId, histWs.hist, value)
+        )
 
       } catch {
         case ex: Throwable =>
@@ -843,6 +839,29 @@ class PictureAh[M](
     val srvFileInfo2 = srvFileInfo0.updateFrom( fileInfo )
     jdEdge0
       .withFileSrv( Some(srvFileInfo2) )
+  }
+
+
+  private def _maybeWithHistogram(fe: MSrvFileInfo, v0: MPictureAh): ActionResult[M] = {
+    fe.colors
+      .filter(_.nonEmpty)
+      .fold(updated(v0)) { hist =>
+        _resPair2res(
+          _withHistogram(fe.nodeId, hist, v0)
+        )
+      }
+  }
+
+  private def _withHistogram(nodeId: String, colors: MHistogram, v0: MPictureAh): ResPair_t = {
+    val v2 = v0.withHistograms(
+      v0.histograms
+        .updated(nodeId, colors)
+    )
+    val fx = Effect.action( HandleNewHistogramInstalled(nodeId) )
+    (v2, fx)
+  }
+  private def _resPair2res(withHistRes: ResPair_t): ActionResult[M] = {
+    updated(withHistRes._1, withHistRes._2)
   }
 
 }

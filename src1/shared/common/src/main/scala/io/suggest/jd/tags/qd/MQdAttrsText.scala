@@ -16,6 +16,8 @@ import play.api.libs.functional.syntax._
   */
 object MQdAttrsText {
 
+  def empty = MQdAttrsText()
+
   /** Поддержка play-json. */
   implicit val QD_ATTRS_FORMAT: OFormat[MQdAttrsText] = (
     (__ \ "b").formatNullable[ISetUnset[Boolean]] and
@@ -63,5 +65,7 @@ case class MQdAttrsText(
       color.isDefined ||
       background.isDefined
   }
+
+  def withBackground(background: Option[ISetUnset[MColorData]]) = copy(background = background)
 
 }

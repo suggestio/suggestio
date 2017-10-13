@@ -13,6 +13,8 @@ import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import scalaz.Tree
+
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -180,6 +182,7 @@ final case class IDocTag(
   extends IHashCodeLazyVal
   // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
   with IEqualsEq
+  with IJdElement
 {
 
   def withJdTagName(jdTagName: MJdTagName)    = copy(jdTagName = jdTagName)
@@ -345,6 +348,63 @@ final case class IDocTag(
 
   def contains(jdt: IDocTag): Boolean = {
     deepChildrenIter.contains( jdt )
+  }
+
+
+  // IJdElement:
+
+  override def deepElMap(f: (IJdElement, IJdElement) => IJdElement): IDocTag = {
+    val jdt0 = this
+    val jdt1 = jdt0
+      .withProps1(
+        jdt0.props1
+          .withQdOps(
+            jdt0.props1
+              .qdOps
+              .map( _.deepElMap(f) )
+          )
+      )
+    val jdt2 = jdt1.withChildren(
+      jdt1.children
+        .map( _.deepElMap(f) )
+    )
+    f(jdt0, jdt2)
+      .asInstanceOf[IDocTag]
+  }
+
+
+  override def bgImgEdgeId = props1.bgImg.map(_.imgEdge)
+
+  override def setBgColor(bgColor: Option[MColorData]): IDocTag = {
+    withProps1(
+      props1.withBgColor(bgColor)
+    )
+  }
+
+  override def toScalazTree: Tree[IJdElement] = {
+    Tree.Node(
+      root   = this,
+      forest = {
+        Iterator(
+          children,
+          props1.qdOps
+        )
+          .filter(_.nonEmpty)
+          .flatten
+          .map(_.toScalazTree)
+          .toStream
+      }
+    )
+  }
+
+
+  def findTagsByChildQdEl(el: IJdElement): TraversableOnce[IDocTag] = {
+    val thisIter = if (props1.qdOps.contains(el)) {
+      Iterator(this)
+    } else {
+      Iterator.empty
+    }
+    thisIter ++ children.iterator.flatMap(_.findTagsByChildQdEl(el))
   }
 
 }

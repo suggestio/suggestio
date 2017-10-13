@@ -6,7 +6,6 @@ import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.model.n2.edge.EdgeUid_t
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._

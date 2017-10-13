@@ -527,7 +527,7 @@ class Upload @Inject()(
               .withId( Some(mmediaId) )
           }
 
-          // Потом сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
+          // Потом в фоне вне основного экшена сохранить результат детектирования основных цветов картинки в MMedia.PictureMeta:
           _ = {
             for (colorDetectFut <- colorDetectOptFut) {
               val saveColorsFut = for (colorHist <- colorDetectFut) yield {
@@ -583,30 +583,12 @@ class Upload @Inject()(
           // Процедура проверки и сохранения аплоада завершёна успешно!
           LOGGER.info(s"$logPrefix File storage: saved ok. r => $saveFileToShardRes")
 
-          // Когда есть на руках nodeId, можно отправлять данные ColorDetect'ора по WebSocket.
-          // Отправляем как можно ПОЗЖЕ, чтобы максимально снизить race conditions между веб-сокетом и результатом экшена.
-          for {
-            colorDetectFut <- colorDetectOptFut
-            cdArgs         <- uploadArgs.colorDetect
-            ctxId          <- ctxIdOpt
-          } {
-            LOGGER.trace(s"$logPrefix ColorDetect+WS: for uploaded image, ctxId#${ctxId.key}")
-            val wsNotifyFut = for (mhist0 <- colorDetectFut) yield {
-              val mhist2 = mhist0.shrinkColorsCount( cdArgs.wsPaletteSize )
-              val wsMsg = MWsMsg(
-                typ     = MWsMsgTypes.ColorsHistogram,
-                payload = Json.toJson {
-                  MHistogramWs(
-                    nodeId = mnodeId,
-                    hist   = mhist2
-                  )
-                }
-              )
-              wsDispatcherActors.notifyWs(ctxId.toString, wsMsg)
-            }
-            // Залоггировать возможную ошибку:
-            for (ex <- wsNotifyFut.failed)
-              LOGGER.error(s"$logPrefix Failed to send color detection result to WebSocket ctxId#${ctxId.key} cdArgs=$cdArgs cdFut=$colorDetectFut", ex)
+          // Пытаемся синхронно получить цвета из асихронного фьючерса, чтобы доставить их клиенту наиболее
+          // оптимальным путём и снижая race-condition между WebSocket и http-ответом этого экшена:
+          val colorsOpt: Option[MHistogram] = {
+            colorDetectOptFut
+              .flatMap(_.value)
+              .flatMap(_.toOption)
           }
 
           // Вернуть 200 Ok с данными по файлу
@@ -623,14 +605,47 @@ class Upload @Inject()(
             name      = None,
             mimeType  = None,
             hashesHex = Map.empty,
-            // 1. Нельзя дожидаться детектора цветов, потому что надо отправить nodeId клиенту по-скорее.
-            // 2. Для цветов есть поддержка WebSocket'а, поэтому тут мы это не дублируем.
-            colors    = None
+            colors    = colorsOpt
           )
           val resp = MUploadResp(
             fileExist = Some(srvFileInfo)
           )
-          Ok( Json.toJson(resp) )
+          val respJson = Json.toJson(resp)
+
+          // side-effect: Если оказалось, что MainColorDetector не успел всё сделать к текущему моменту (это нормально),
+          // то запустить передачу данных от него по websocket'у:
+          // Отправляем как можно ПОЗЖЕ, чтобы максимально снизить race conditions между веб-сокетом и результатом экшена.
+          if (colorsOpt.isEmpty) {
+            LOGGER.trace(s"$logPrefix ColorDetector not completed yet. Connect it with websocket.")
+            for {
+              colorDetectFut <- colorDetectOptFut
+              cdArgs         <- uploadArgs.colorDetect
+              ctxId          <- ctxIdOpt
+            } {
+              LOGGER.trace(s"$logPrefix ColorDetect+WS: for uploaded image, ctxId#${ctxId.key}")
+              val wsNotifyFut = for (mhist0 <- colorDetectFut) yield {
+                val mhist2 = mhist0.shrinkColorsCount( cdArgs.wsPaletteSize )
+                val wsMsg = MWsMsg(
+                  typ     = MWsMsgTypes.ColorsHistogram,
+                  payload = Json.toJson {
+                    MHistogramWs(
+                      nodeId = mnodeId,
+                      hist   = mhist2
+                    )
+                  }
+                )
+                wsDispatcherActors.notifyWs(ctxId.toString, wsMsg)
+              }
+              // Залоггировать возможную ошибку:
+              for (ex <- wsNotifyFut.failed)
+                LOGGER.error(s"$logPrefix Failed to send color detection result to WebSocket ctxId#${ctxId.key} cdArgs=$cdArgs cdFut=$colorDetectFut", ex)
+            }
+          } else {
+            LOGGER.trace(s"$logPrefix Color detector already finished work. Colors histogram attached to HTTP resp.")
+          }
+
+          // HTTP-ответ
+          Ok( respJson )
         }
       }
 
