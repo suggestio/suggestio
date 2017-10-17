@@ -7,7 +7,7 @@ import io.suggest.ad.edit.v.edit.strip.StripEditR
 import io.suggest.ad.edit.v.edit.{AddR, QdEditR, ScaleR}
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.dev.{MSzMult, MSzMults}
+import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss

@@ -104,4 +104,54 @@ object IDocTagSpec extends SimpleTestSuite {
   }
 
 
+
+  private def _tree1 = IDocTag.document(
+    IDocTag.strip(bm300x140)(
+      IDocTag.edgeQd(2, coord1)
+        .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(10, 20)) ) ),
+      //_picture(555),
+      IDocTag.edgeQd(4, coord2)
+    ),
+    IDocTag.strip(bm300x300)(
+      //_picture(333),
+      IDocTag.edgeQd(5, coord3)
+        .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(45, 40)) ) ),
+      IDocTag.edgeQd(2, coord1)
+    )
+  )
+
+  // Проверить node paths. Они все чисто-временные, поэтому тестов особо не требуется.
+  test("Node path: generate correct top-level path") {
+    val t1 = _tree1
+    assertEquals(
+      t1.nodeToPath( t1 ),
+      Some(Nil)
+    )
+  }
+
+  test("Handle correct top-level node path") {
+    val t1 = _tree1
+    assertEquals(
+      t1.pathToNode( Nil ),
+      Some(t1)
+    )
+  }
+
+  test("Node path: generate correct level-1 path") {
+    val t1 = _tree1
+    val ch12 = t1.children.tail.head
+    assertEquals(
+      t1.nodeToPath( ch12 ),
+      Some( List(1) )
+    )
+  }
+
+  test("Handle level-1 node path") {
+    val t1 = _tree1
+    assertEquals(
+      t1.pathToNode( List(1) ),
+      Some( t1.children.tail.head )
+    )
+  }
+
 }

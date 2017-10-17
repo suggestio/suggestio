@@ -3,6 +3,7 @@ package io.suggest.jd.render.m
 import diode.FastEq
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.IDocTag
+import io.suggest.scalaz.NodePath_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -21,7 +22,7 @@ object MJdArgs {
         (a.renderArgs   ===* b.renderArgs) &&
         (a.jdCss        ===* b.jdCss) &&
         (a.conf         ===* b.conf) &&
-        (a.selectedTag  ===* b.selectedTag) &&
+        (a.selPath      ===* b.selPath) &&
         (a.dnd          ===* b.dnd)
     }
   }
@@ -37,7 +38,7 @@ object MJdArgs {
   * @param renderArgs Контейнер параметров для рендера конкретно этого шаблона.
   * @param jdCss css для рендера.
   * @param conf Общий конфиг рендеринга.
-  * @param selectedTag Текущий выделенный элемент, с которым происходит взаимодействие юзера.
+  * @param selPath Путь до текущего выделенного элемента (с которым происходит взаимодействие юзера в редакторе).
   * @param dnd Состояние драг-н-дропа, который может прийти сюда из неизвестности.
   */
 case class MJdArgs(
@@ -45,17 +46,18 @@ case class MJdArgs(
                     renderArgs   : MJdRenderArgs,
                     jdCss        : JdCss,
                     conf         : MJdConf,
-                    // TODO selected-поле надо сделать трейсом до узла в дереве, а не инстансом тега. DocEditAh страдает при HandleNewHistogramInstalled.
-                    selectedTag  : Option[IDocTag]   = None,
-                    dnd          : MJdDndS           = MJdDndS.empty
+                    selPath      : Option[NodePath_t]   = None,
+                    dnd          : MJdDndS              = MJdDndS.empty
                   ) {
 
-  def withJdCss(jdCss: JdCss) = copy(jdCss = jdCss)
-  def withTemplate(template: IDocTag) = copy(template = template)
-  def withRenderArgs(renderArgs: MJdRenderArgs) = copy(renderArgs = renderArgs)
-  def withConf(conf: MJdConf) = copy(conf = conf)
-  def withSelectedTag(selectedTag: Option[IDocTag]) = copy(selectedTag = selectedTag)
-  def withDnd(dnd: MJdDndS = MJdDndS.empty) = copy(dnd = dnd)
+  def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
+  def withTemplate(template: IDocTag)               = copy(template = template)
+  def withRenderArgs(renderArgs: MJdRenderArgs)     = copy(renderArgs = renderArgs)
+  def withConf(conf: MJdConf)                       = copy(conf = conf)
+  def withSelPath(selPath: Option[NodePath_t])      = copy(selPath = selPath)
+  def withDnd(dnd: MJdDndS = MJdDndS.empty)         = copy(dnd = dnd)
+
+  lazy val selectedTag = selPath.flatMap { template.pathToNode }
 
 }
 

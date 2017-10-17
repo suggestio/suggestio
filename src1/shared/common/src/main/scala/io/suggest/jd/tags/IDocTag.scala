@@ -9,10 +9,12 @@ import io.suggest.jd.MJdEdgeId
 import io.suggest.jd.tags.qd.{MQdOp, MQdOpTypes}
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal}
+import io.suggest.scalaz.NodePath_t
 import japgolly.univeq._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import scala.annotation.tailrec
 import scalaz.Tree
 
 /**
@@ -160,6 +162,50 @@ object IDocTag {
         opt.filter(_.jdTagName ==* jdtName)
       }
 
+    }
+
+  }
+
+  /** Реализация операций для управления деревом, которое прямо внутри [[IDocTag]].
+    * Это устаревшее дерево, надо заменить его на scalaz.Tree[IDocTag].
+    *
+    * @param tree Дерево IDocTag-тегов.
+    */
+  implicit final class LegacyJdTreeOps(private val tree: IDocTag) extends AnyVal {
+
+    def nodeToPath(el: IDocTag): Option[NodePath_t] = {
+      if (tree ==* el) {
+        Some(Nil)
+      } else if (tree.children.isEmpty) {
+        None
+      } else {
+        tree
+          .children
+          .iterator
+          .zipWithIndex
+          .flatMap { case (node, i) =>
+            node
+              .nodeToPath(el)
+              .map(i :: _)
+          }
+          .toStream
+          .headOption
+      }
+    }
+
+    @tailrec
+    def pathToNode(path: NodePath_t): Option[IDocTag] = {
+      if (path.isEmpty) {
+        Some(tree)
+      } else {
+        val hd :: tl = path
+        if (tree.children isDefinedAt hd) {
+          val ch = tree.children(hd)
+          ch.pathToNode( tl )
+        } else {
+          None
+        }
+      }
     }
 
   }
@@ -353,7 +399,7 @@ final case class IDocTag(
 
   // IJdElement:
 
-  override def deepElMap(f: (IJdElement, IJdElement) => IJdElement): IDocTag = {
+  override def deepElMap(f: (IJdElement) => IJdElement): IDocTag = {
     val jdt0 = this
     val jdt1 = jdt0
       .withProps1(
@@ -368,7 +414,7 @@ final case class IDocTag(
       jdt1.children
         .map( _.deepElMap(f) )
     )
-    f(jdt0, jdt2)
+    f(jdt2)
       .asInstanceOf[IDocTag]
   }
 

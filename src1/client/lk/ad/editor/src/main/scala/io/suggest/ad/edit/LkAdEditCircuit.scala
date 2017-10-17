@@ -2,7 +2,7 @@ package io.suggest.ad.edit
 
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
-import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit, MAeRoot, MDocS}
+import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, MDocS}
 import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
 import io.suggest.primo.id.IId
@@ -21,11 +21,11 @@ import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
-import com.softwaremill.macwire._
-import io.suggest.dev.{MSzMult, MSzMults}
+import io.suggest.dev.MSzMults
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -90,9 +90,9 @@ class LkAdEditCircuit(
 
   private val confRO = zoom(_.conf)
 
-  private val uploadApi = wire[UploadApiHttp[MAdEditFormConf]]
+  private val uploadApi = new UploadApiHttp(confRO)
 
-  private val api = wire[LkAdEditApiHttp]
+  private val api = new LkAdEditApiHttp( confRO, uploadApi )
 
   private val ctxIdRO = confRO.zoom(_.ctxId)
   private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)
@@ -157,11 +157,9 @@ class LkAdEditCircuit(
 
         val mdoc1 = mdoc0
           .withJdArgs {
-            mdoc0.jdArgs.copy(
-              template    = tpl2,
-              jdCss       = css2,
-              selectedTag = Some(strip2)
-            )
+            mdoc0.jdArgs
+              .withTemplate( tpl2 )
+              .withJdCss( css2 )
           }
           .withColorsState( mColorAh.colorsState )
         bgColorCont2mdoc( mdoc1, stateOuter2 )
@@ -222,14 +220,21 @@ class LkAdEditCircuit(
           }
         }
 
+        val selPath2 = if (mPictureAh.selectedTag ==* mdoc0.jdArgs.selectedTag) {
+          mdoc0.jdArgs.selPath
+        } else {
+          mPictureAh.selectedTag
+            .flatMap(tpl2.nodeToPath)
+        }
+
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
           template    = tpl2,
           renderArgs  = mdoc0.jdArgs.renderArgs.withEdges(
             mPictureAh.edges
           ),
-          selectedTag = mPictureAh.selectedTag,
-          jdCss       = css2
+          jdCss       = css2,
+          selPath     = selPath2
         )
       }
 
@@ -255,15 +260,19 @@ class LkAdEditCircuit(
   }
 
   /** Контроллер изображений. */
-  private val pictureAh = wire[PictureAh[MAeRoot]]
+  private val pictureAh = new PictureAh(
+    api         = api,
+    uploadApi   = uploadApi,
+    modelRW     = mPictureAhRW
+  )
 
-  private val stripBgColorPickAfterAh = wire[ColorPickAfterStripAh[MAeRoot]]
+  private val stripBgColorPickAfterAh = new ColorPickAfterStripAh( mDocSRw )
 
   //private val actionDelayerAh = new ActionDelayerAh(delayerRW)
 
   private val wsPoolAh = new WsPoolAh( wsPoolRW, wsChannelApi, this )
 
-  private val tailAh = wire[TailAh[MAeRoot]]
+  private val tailAh = new TailAh( rootRW )
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
@@ -275,7 +284,8 @@ class LkAdEditCircuit(
 
     // Если допускается выбор цвета фона текущего jd-тега, то подцепить соотв. контроллер.
     val mDocS = mDocSRw.value
-    mDocS.jdArgs.selectedTag.foreach { selTag =>
+
+    for (selTag <- mDocS.jdArgs.selectedTag) {
       selTag.jdTagName match {
         case MJdTagNames.STRIP =>
           acc ::= stripBgColorAh

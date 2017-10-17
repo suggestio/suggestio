@@ -58,8 +58,8 @@ case class MQdOp(
   def withAttrsText(attrsText: Option[MQdAttrsText]) = copy(attrsText = attrsText)
 
 
-  override def deepElMap(f: (IJdElement, IJdElement) => IJdElement): MQdOp = {
-    f(this, this)
+  override def deepElMap(f: (IJdElement) => IJdElement): MQdOp = {
+    f(this)
       .asInstanceOf[MQdOp]
   }
 

@@ -29,7 +29,6 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import japgolly.univeq._
-import io.suggest.ueq.UnivEqUtil._
 import org.scalajs.dom.raw.URL
 
 import scala.util.Random
@@ -144,7 +143,6 @@ class DocEditAh[M](
           template    = jsonDoc2,
           renderArgs  = v0.jdArgs.renderArgs
             .withEdges( edgesData3 ),
-          selectedTag = Some(qdTag2),
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(jsonDoc2, v0.jdArgs.conf, edgesData3)
           )
@@ -177,7 +175,8 @@ class DocEditAh[M](
       } else {
         // Юзер выбрал какой-то новый элемент. Залить новый тег в seleted:
         val v1 = v0.withJdArgs(
-          v0.jdArgs.withSelectedTag( Some(m.jdTag) )
+          v0.jdArgs
+            .withSelPath( v0.jdArgs.template.nodeToPath(m.jdTag) )
         )
 
         // Если это QdTag, то отработать состояние quill-delta:
@@ -368,13 +367,13 @@ class DocEditAh[M](
 
       // Обновить и дерево, и currentTag новым инстансом.
       val v2 = v0.withJdArgs(
-        jdArgs = v0.jdArgs.copy(
-          selectedTag = Some( strip2 ),
-          template    = template2,
-          jdCss       = jdCssFactory.mkJdCss(
-            MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
+        jdArgs = v0.jdArgs
+          .withTemplate( template2 )
+          .withJdCss(
+            jdCssFactory.mkJdCss(
+              MJdCssArgs.singleCssArgs(template2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
+            )
           )
-        )
       )
 
       updated( v2 )
@@ -418,7 +417,7 @@ class DocEditAh[M](
             jdArgs = v0.jdArgs.copy(
               template    = tpl2,
               jdCss       = jdCss2,
-              selectedTag = None
+              selPath     = None
             ),
             stripEd = None,
             // qdEdit: Вроде бы это сюда не относится вообще. Сбросим заодно и текстовый редактор:
@@ -580,7 +579,7 @@ class DocEditAh[M](
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
           ),
           dnd         = MJdDndS.empty,
-          selectedTag = Some(apJdt2)
+          selPath     = tpl2.nodeToPath( apJdt2 )
         )
       )
 
@@ -617,9 +616,11 @@ class DocEditAh[M](
         val tpl2 = v0.jdArgs.template
           .withChildren(strips2)
         val v2 = v0.withJdArgs(
-          v0.jdArgs
-            .withTemplate(tpl2)
-            .withDnd()
+          v0.jdArgs.copy(
+            template  = tpl2,
+            dnd       = MJdDndS.empty,
+            selPath   = tpl2.nodeToPath(droppedStrip)
+          )
         )
         updated(v2)
       }
@@ -666,13 +667,11 @@ class DocEditAh[M](
             val topColorMcdOpt = Some(topColorMcd)
 
             // К сожалению, теги дерева сейчас дублируются в поле .selecetedTag. Нужно там обновлять инстанс тега одновременно с деревом с помощью var:
-            // TODO selJdt Ужаснейший быдлокод тут. Надо поле .selectedTag сделать трейсом до узла, а не инстансом узла. И перевести дерево документа на scalaz Tree.
-            var selJdt2 = v0.jdArgs.selectedTag
             var modifiedElOpt: Option[IJdElement] = None
             //println("selJdt0 =  " + selJdt2)
             val tpl2 = v0.jdArgs
               .template
-              .deepElMap { (el0, el1) =>
+              .deepElMap { el1 =>
                 val bgImgEdgeId = el1.bgImgEdgeId
                 //println( bgImgEdgeId, edgeUids4mod )
                 if ( bgImgEdgeId.map(_.edgeUid).exists(edgeUids4mod.contains) ) {
@@ -680,8 +679,6 @@ class DocEditAh[M](
                   // Требуется замена bgColor на обновлённый вариант.
                   val el2 = el1.setBgColor( topColorMcdOpt )
                   modifiedElOpt = Some(el2)
-                  if ( selJdt2.contains(el0) )
-                    selJdt2 = Some( el2.asInstanceOf[IDocTag] )
                   el2
                 } else {
                   el1
@@ -690,7 +687,7 @@ class DocEditAh[M](
               .asInstanceOf[IDocTag]
 
             // Сохранить новые темплейт в состояние.
-            var jdArgs2 = v0.jdArgs
+            val jdArgs2 = v0.jdArgs
               .withTemplate(tpl2)
               .withJdCss(
                 jdCssFactory.mkJdCss(
@@ -698,18 +695,13 @@ class DocEditAh[M](
                 )
               )
 
-            // Если selected-тег тоже изменился, то его тоже обновить.
-            val selJdtNeedUpdate = selJdt2 !===* v0.jdArgs.selectedTag
-            //println( selJdtNeedUpdate )
-            if (selJdtNeedUpdate)
-              jdArgs2 = jdArgs2.withSelectedTag( selJdt2 )
             var v2 = v0.withJdArgs( jdArgs2 )
 
             // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
             for {
-              qdEdit0 <- v0.qdEdit
-              modifiedEl <- modifiedElOpt
-              qdTag <- tpl2.findTagsByChildQdEl(modifiedEl)
+              qdEdit0     <- v0.qdEdit
+              modifiedEl  <- modifiedElOpt
+              qdTag       <- tpl2.findTagsByChildQdEl(modifiedEl)
             } {
               // TODO selJdt Тут всё работает благодаря сайд-эффектам перефокусировки при рендере quill при обновлении состояния. selJdt2 содержит неправильный инстанс сейчас.
               // А sleJdt при этом содержит неактуальное значение
@@ -813,7 +805,7 @@ class DocEditAh[M](
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, edgesMap2)
           ),
-          selectedTag = Some(qdt)
+          selPath     = tpl2.nodeToPath(qdt)
         ),
         qdEdit = Some {
           val qdelta = quillDeltaJsUtil.qdTag2delta(
@@ -874,7 +866,7 @@ class DocEditAh[M](
         .withJdArgs(
           v0.jdArgs.copy(
             template    = tpl2,
-            selectedTag = Some(newStrip),
+            selPath     = tpl2.nodeToPath(newStrip),
             jdCss       = jdCssFactory.mkJdCss(
               MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
             )

@@ -34,7 +34,7 @@ trait IJdElement {
     * $1 -- это очень исходный элемент.
     * $2 -- это текущий инстанс, который надо модифицировать.
     */
-  def deepElMap(f: (IJdElement, IJdElement) => IJdElement): IJdElement
+  def deepElMap(f: (IJdElement) => IJdElement): IJdElement
 
   def bgImgEdgeId: Option[MJdEdgeId]
 
