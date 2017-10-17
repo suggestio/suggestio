@@ -164,6 +164,45 @@ object IDocTag {
 
     }
 
+    /** Утиль для поддержки z.Tree с jd-тегами. */
+    implicit class IDocTagZTreeOps(private val tree: Tree[IDocTag]) extends AnyVal {
+
+      import io.suggest.scalaz.ZTreeUtil._
+
+      def deepEdgesUidsIter: Iterator[EdgeUid_t] = {
+        val jdt = tree.rootLabel
+        val iter1 = jdt.props1.qdOps
+          .iterator
+          .flatMap(_.edgeInfo)
+        val iter2 = jdt.props1.bgImg
+          .iterator
+          .map(_.imgEdge)
+        val iter12 = (iter1 ++ iter2).map(_.edgeUid)
+        val iterChs = tree.deepChildrenIter
+          .flatMap(_.deepEdgesUidsIter)
+        iter12 ++ iterChs
+      }
+
+
+      def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {
+        tree
+          .deepChildrenIter
+          .filter( _.jdTagName ==* jdtName )
+      }
+
+      def deepOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {
+        val chIter = deepChildrenOfTypeIter(jdtName)
+        val jdt = tree.rootLabel
+        if (jdt.jdTagName ==* jdtName) {
+          Iterator(jdt) ++ chIter
+        } else {
+          chIter
+        }
+      }
+
+
+    }
+
   }
 
   /** Реализация операций для управления деревом, которое прямо внутри [[IDocTag]].
@@ -206,6 +245,22 @@ object IDocTag {
           None
         }
       }
+    }
+
+    def deepMap(f: IDocTag => IDocTag): IDocTag = {
+      val tree1 = if (tree.children.isEmpty) {
+        tree
+      } else {
+        val chs2 = for (ch <- tree.children) yield {
+          ch.deepMap(f)
+        }
+        if (Lists.isElemsEqs(tree.children, chs2)) {
+          tree
+        } else {
+          tree.withChildren( chs2 )
+        }
+      }
+      f(tree1)
     }
 
   }
@@ -283,25 +338,8 @@ final case class IDocTag(
       updated
     } else {
       // Попробовать пообнавлять children'ов.
-      deepUpdateChild( what, updated )
+      deepUpdateChild( what, updated ) :: Nil
     }
-  }
-
-
-  /** Прооптимизировать текущее дерево. */
-  def shrink: Seq[IDocTag] = {
-    val children0 = children
-    val this2 = if (children.nonEmpty) {
-      val children2 = children.flatMap(_.shrink)
-      if ( Lists.isElemsEqs(children0, children2) ) {
-        this
-      } else {
-        withChildren( children2 )
-      }
-    } else {
-      this
-    }
-    this2 :: Nil
   }
 
 
@@ -319,11 +357,10 @@ final case class IDocTag(
     * @param updated Функция обновления дерева.
     * @return Обновлённое дерево.
     */
-  // TODO Возвращать IDocTag? Seq[] здесь чисто-искусственный.
-  def deepUpdateChild(what: IDocTag, updated: Seq[IDocTag]): Seq[IDocTag] = {
+  def deepUpdateChild(what: IDocTag, updated: Seq[IDocTag]): IDocTag = {
     val _children = children
     if (_children.isEmpty) {
-      this :: Nil
+      this
 
     } else {
       val this2 = if (_children contains what) {
@@ -340,7 +377,7 @@ final case class IDocTag(
       } else {
         // Обновление элементов где-то на подуровнях дочерних элементов.
         val children2 = _children.flatMap { jdt =>
-          jdt.deepUpdateChild(what, updated)
+          jdt.deepUpdateChild(what, updated) :: Nil
         }
         // Возможно, что ничего не изменилось. И тогда можно возвращать исходный элемент вместо пересобранного инстанса.
         if ( Lists.isElemsEqs(_children, children2) ) {
@@ -350,12 +387,13 @@ final case class IDocTag(
         }
       }
 
-      this2 :: Nil
+      this2
     }
   }
 
 
   /** Глубинный flatMap(): на каждом уровне сначала отрабатываются дочерние элементы, затем родительский. */
+  /*
   def flatMap(f: IDocTag => Seq[IDocTag]): Seq[IDocTag] = {
     val this2 = if (children.isEmpty) {
       this
@@ -368,28 +406,15 @@ final case class IDocTag(
     }
     f(this2)
   }
+  */
 
-
-  def map(f: IDocTag => IDocTag): IDocTag = {
-    val this2 = if (children.isEmpty) {
-      this
-    } else {
-      withChildren(
-        for (ch <- children) yield {
-          ch.map(f)
-        }
-      )
-    }
-    f(this2)
-  }
-
-
+/*
   def foreach[U](f: IDocTag => U): Unit = {
     for (ch <- children) {
       ch.foreach(f)
     }
     f(this)
-  }
+  }*/
 
 
   def contains(jdt: IDocTag): Boolean = {
@@ -401,19 +426,32 @@ final case class IDocTag(
 
   override def deepElMap(f: (IJdElement) => IJdElement): IDocTag = {
     val jdt0 = this
-    val jdt1 = jdt0
-      .withProps1(
-        jdt0.props1
-          .withQdOps(
-            jdt0.props1
-              .qdOps
-              .map( _.deepElMap(f) )
-          )
+
+    // Отработать qdOps с учётом того, что они могут не измениться.
+    val qdOps0 = jdt0.props1.qdOps
+    val qdOps2 = qdOps0
+      .map( _.deepElMap(f) )
+    val jdt1 = if (Lists.isElemsEqs(qdOps0, qdOps2)) {
+      jdt0
+    } else {
+      jdt0.withProps1(
+        jdt0.props1.withQdOps(
+          qdOps2
+        )
       )
-    val jdt2 = jdt1.withChildren(
-      jdt1.children
-        .map( _.deepElMap(f) )
-    )
+    }
+
+    // Отработать children, которые могут не измениться:
+    val children1 = jdt1.children
+    val children2 = children1
+      .map( _.deepElMap(f) )
+    val jdt2 = if (Lists.isElemsEqs(children1, children2)) {
+      jdt1
+    } else {
+      jdt1
+        .withChildren( children2 )
+    }
+
     f(jdt2)
       .asInstanceOf[IDocTag]
   }

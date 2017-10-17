@@ -1,10 +1,14 @@
 package io.suggest.common.coll
 
+import japgolly.univeq.UnivEq
+
 import scala.annotation.tailrec
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable
 import scala.language.higherKinds
 import scala.reflect.ClassTag
+import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -79,8 +83,8 @@ object Lists {
    * @tparam T Тип элементов в списках.
    * @return Общий хвост. Если такого нет, то будет Nil. Если длины списков разные, то IllegialArgumentException.
    */
-  def getCommonTail[T](l1: List[T], l2: List[T]): List[T] = {
-    if (l1 == l2) {
+  def getCommonTail[T: UnivEq](l1: List[T], l2: List[T]): List[T] = {
+    if (l1 ==* l2) {
       l1
     } else if (l1.isEmpty || l2.isEmpty) {
       throw new IllegalArgumentException("List arguments must have same length. Rests are: " + l1 + " and " + l2)
@@ -179,7 +183,7 @@ object Lists {
    * @tparam T Тип элементов массивов.
    * @return Непрерывная общая под-последовательность элементов или Nil, если ничего общего не найдено.
    */
-  def findRaggedLCS[T](x: Array[T], y: Array[T]): List[T] = {
+  def findRaggedLCS[T: UnivEq](x: Array[T], y: Array[T]): List[T] = {
     var i = 0
     var j = 0
     /* initialize the n x m matrix B and C for dynamic programming
@@ -204,7 +208,7 @@ object Lists {
     /* dynamic programming */
     for (i <- 1 to n) {
       for (j <- 1 to m) {
-        if (x(i-1) == y(j-1)) {
+        if (x(i-1) ==* y(j-1)) {
           c(i)(j) = c(i-1)(j-1) + 1
           b(i)(j) = 1    /* diagonal */
         } else if (c(i-1)(j) >= c(i)(j-1)) {
@@ -221,16 +225,16 @@ object Lists {
     i = n
     j = m
     while (i!=0 && j!=0) {
-      if (b(i)(j) == 1) {   /* diagonal */
+      if (b(i)(j) ==* 1) {   /* diagonal */
         lcs ::= x(i-1)
         i = i - 1
         j = j - 1
       }
-      if (b(i)(j) == 2) {   /* up */
+      if (b(i)(j) ==* 2) {   /* up */
         i = i - 1
       }
 
-      if (b(i)(j) == 3) {   /* backword */
+      if (b(i)(j) ==* 3) {   /* backword */
         j = j - 1
       }
     }
@@ -334,16 +338,17 @@ object Lists {
 
 
   /** Быстро сравнить (eq) содержимое двух последовательных коллекций без учёта типов коллекций. */
-  def isElemsEqs[T <: AnyRef](tr1: TraversableOnce[T], tr2: TraversableOnce[T]): Boolean = {
+  def isElemsEqs[T <: AnyRef: UnivEq](tr1: TraversableOnce[T], tr2: TraversableOnce[T]): Boolean = {
     isElemsEqsIter( tr1.toIterator, tr2.toIterator )
   }
 
   /** Пройти по двум итераторам, сравнивая элементы через eq. */
-  def isElemsEqsIter[T <: AnyRef](tr1: Iterator[T], tr2: Iterator[T]): Boolean = {
+  @tailrec
+  def isElemsEqsIter[T <: AnyRef: UnivEq](tr1: Iterator[T], tr2: Iterator[T]): Boolean = {
     val tr1HasNext = tr1.hasNext
     val tr2HasNext = tr2.hasNext
     if (tr1HasNext && tr2HasNext) {
-      if ( tr1.next() eq tr2.next() ) {
+      if ( tr1.next() ===* tr2.next() ) {
         // Идти дальше по итераторам
         isElemsEqsIter(tr1, tr2)
       } else {

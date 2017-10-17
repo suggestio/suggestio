@@ -134,7 +134,6 @@ class DocEditAh[M](
         val jsonDoc2 = v0.jdArgs
           .template
           .deepUpdateChild( currTag0, qdTag2 :: Nil )
-          .head
 
         // Пост-процессить новые эджи, т.к. там может быть мусор или эджи, требующие фоновой обработи.
         val (fxOpt, edgesData3) = _ppEdges( edgesData0, jsonDoc2, edgesData2 )
@@ -229,9 +228,6 @@ class DocEditAh[M](
             v3.jdArgs.template.contains(jdt)
           ) {
             val tpl2 = v3.jdArgs.template.deepUpdateOne(jdt, Nil)
-              .head
-              // Нужно shrink'ать, потому что иначе могут быть пустые AbsPos() теги.
-              .shrink
               .head
             // Очистить эджи от лишнего контента
             val dataEdges2 = quillDeltaJsUtil.purgeUnusedEdges(tpl2, dataEdges0)
@@ -666,9 +662,6 @@ class DocEditAh[M](
               }
             val topColorMcdOpt = Some(topColorMcd)
 
-            // К сожалению, теги дерева сейчас дублируются в поле .selecetedTag. Нужно там обновлять инстанс тега одновременно с деревом с помощью var:
-            var modifiedElOpt: Option[IJdElement] = None
-            //println("selJdt0 =  " + selJdt2)
             val tpl2 = v0.jdArgs
               .template
               .deepElMap { el1 =>
@@ -677,9 +670,7 @@ class DocEditAh[M](
                 if ( bgImgEdgeId.map(_.edgeUid).exists(edgeUids4mod.contains) ) {
                   //println("replace bgColor with " + topColorMcd + " on " + el1)
                   // Требуется замена bgColor на обновлённый вариант.
-                  val el2 = el1.setBgColor( topColorMcdOpt )
-                  modifiedElOpt = Some(el2)
-                  el2
+                  el1.setBgColor( topColorMcdOpt )
                 } else {
                   el1
                 }
@@ -700,15 +691,15 @@ class DocEditAh[M](
             // Надо заставить перерендерить quill, если он изменился и открыт сейчас:
             for {
               qdEdit0     <- v0.qdEdit
-              modifiedEl  <- modifiedElOpt
-              qdTag       <- tpl2.findTagsByChildQdEl(modifiedEl)
+              qdTag2      <- jdArgs2.selectedTag
+              if qdTag2.jdTagName ==* MJdTagNames.QUILL_DELTA
+              // Перерендеривать quill только если изменение гистограммы коснулось эджа внутри текущего qd-тега:
+              qdTag0      <- v0.jdArgs.selectedTag
+              if qdTag0 !=* qdTag2
             } {
-              // TODO selJdt Тут всё работает благодаря сайд-эффектам перефокусировки при рендере quill при обновлении состояния. selJdt2 содержит неправильный инстанс сейчас.
-              // А sleJdt при этом содержит неактуальное значение
-              //println( qdEdit0 )
               v2 = v0.withQdEdit(
                 Some(qdEdit0.copy(
-                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag, v2.jdArgs.renderArgs.edges ),
+                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdArgs.renderArgs.edges ),
                   realDelta = None
                 ))
               )
@@ -795,7 +786,6 @@ class DocEditAh[M](
 
       val tpl2 = v0.jdArgs.template
         .deepUpdateChild(intoStrip0, intoStrip2 :: Nil)
-        .head
 
       val v2 = v0.copy(
         jdArgs = v0.jdArgs.copy(

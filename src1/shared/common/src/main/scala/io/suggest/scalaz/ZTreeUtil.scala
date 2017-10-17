@@ -1,8 +1,7 @@
 package io.suggest.scalaz
 
-import japgolly.univeq._
-
 import scalaz.{Tree, TreeLoc}
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -53,6 +52,33 @@ object ZTreeUtil {
       */
     def pathToNode(path: NodePath_t): Option[TreeLoc[A]] = {
       _pathToNodeLoc(tree.loc, path)
+    }
+
+
+    // Старое API из IDocTag-дерева. Желательно портировать такой код на использование Tree/TreeLoc API напрямую.
+
+    /** Итератор текущего элемента и всех его под-элементов со всех под-уровней. */
+    def deepIter: Iterator[A] = {
+      Iterator(tree.rootLabel) ++ deepChildrenIter
+    }
+
+    /** Итератор всех дочерних элементов со всех под-уровней. */
+    def deepChildrenIter: Iterator[A] = {
+      tree
+        .subForest
+        .iterator
+        .flatMap(_.deepChildrenIter)
+    }
+
+    def contains(jdt: A): Boolean = {
+      deepChildrenIter.contains( jdt )
+    }
+
+    def deepMap(f: A => A)(implicit ue: UnivEq[A]): Tree[A] = {
+      tree
+        .loc
+        .map(f)
+        .toTree
     }
 
   }

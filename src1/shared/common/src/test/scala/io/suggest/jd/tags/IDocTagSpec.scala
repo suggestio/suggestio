@@ -17,7 +17,7 @@ object IDocTagSpec extends SimpleTestSuite {
   /** Сравнивать разные инстансы тегов напрямую нельзя, т.к. они используют eq для equals.
     * Но для тестов можно сравнивать выхлопы toString с поправкой на children, чтобы везде была однотипная коллекция. */
   private def _normForToStringEq(jdt: IDocTag): IDocTag = {
-    for (t <- jdt) yield {
+    jdt.deepMap { t =>
       if (t.children.nonEmpty && !t.children.isInstanceOf[List[IDocTag]]) {
         t.withChildren( t.children.toList )
       } else {
