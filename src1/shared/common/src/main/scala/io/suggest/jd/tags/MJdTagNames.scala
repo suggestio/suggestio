@@ -29,7 +29,12 @@ object MJdTagNames extends StringEnum[MJdTagName] {
   case object STRIP extends MJdTagName("s")
 
   /** Тег, хранящий текст, отформатированный через quill-editor. */
-  case object QUILL_DELTA extends MJdTagName("q")
+  case object QD_CONTENT extends MJdTagName("q")
+
+  /** Тег одной qd-операций.
+    * Ранее, операции лежали внутри jdt.props1.qdOps, но пришлось запихать из children.
+    */
+  case object QD_OP extends MJdTagName("o")
 
 
   // ------------------------------------------------------------------------------

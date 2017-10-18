@@ -18,6 +18,7 @@ import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -27,6 +28,7 @@ import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
 import scalacss.ScalaCssReact._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -220,12 +222,12 @@ class JdR extends Log {
 
     // Internal API
 
-    def renderChildren(dt: IDocTag, jdArgs: MJdArgs): VdomArray = {
-      dt.children
+    def renderChildren(dt: Tree[IDocTag], jdArgs: MJdArgs): VdomArray = {
+      dt.subForest
         .iterator
         .zipWithIndex
         .toVdomArray { case (jd, i) =>
-          renderDocTag(jd, i, jdArgs, dt)
+          renderDocTag(jd, i, jdArgs, dt.rootLabel)
         }
     }
 
@@ -235,7 +237,7 @@ class JdR extends Log {
       */
     private def _maybeSelected(dt: IDocTag, jdArgs: MJdArgs): TagMod = {
       // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
-      if (jdArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.contains(dt)) {
+      if (jdArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
         jdArgs.jdCss.selectedTag
       } else {
         EmptyVdom
@@ -285,9 +287,10 @@ class JdR extends Log {
 
 
     /** Рендер strip, т.е. одной "полосы" контента. */
-    def renderStrip(s: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderStrip(stripTree: Tree[IDocTag], i: Int, jdArgs: MJdArgs): VdomElement = {
+      val s = stripTree.rootLabel
       val C = jdArgs.jdCss
-      val isSelected = jdArgs.selectedTag.contains(s)
+      val isSelected = jdArgs.selectedTag.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
       <.div(
         ^.key := i.toString,
@@ -365,7 +368,7 @@ class JdR extends Log {
           bgImgOpt.whenDefined
         },
 
-        renderChildren( s, jdArgs )
+        renderChildren( stripTree, jdArgs )
       )
     }
 
@@ -376,7 +379,7 @@ class JdR extends Log {
     }
 
     /** Рендер указанного документа. */
-    def renderDocument(jd: IDocTag, i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderDocument(jd: Tree[IDocTag], i: Int, jdArgs: MJdArgs): VdomElement = {
       <.div(
         ^.key := i.toString,
         renderChildren( jd, jdArgs )
@@ -391,14 +394,14 @@ class JdR extends Log {
 
     /** Рендер перекодированных данных quill delta.
       *
-      * @param qdTag Тег с кодированными данными Quill delta.
+      * @param qdTagTree Тег с кодированными данными Quill delta.
       * @return Элемент vdom.
       */
-    def renderQd( qdTag: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
+    def renderQd( qdTagTree: Tree[IDocTag], i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
       val tagMods = {
         val qdRrr = new QdRrrHtml(
           jdArgs      = jdArgs,
-          qdTag       = qdTag,
+          qdTag       = qdTagTree,
           // Для редактора: следует проверить эдж
           imgEdgeMods = OptionUtil.maybe( jdArgs.conf.isEdit ) {
             _notifyImgWhOnEdit(_, jdArgs)
@@ -406,6 +409,7 @@ class JdR extends Log {
         )
         qdRrr.render()
       }
+      val qdTag = qdTagTree.rootLabel
       <.div(
         ^.key := i.toString,
 
@@ -417,7 +421,7 @@ class JdR extends Log {
 
         // Поддержка перетаскивания
         jdArgs.jdCss.absPosStyleAll,
-        if (jdArgs.conf.isEdit && !jdArgs.selectedTag.contains(parent)) {
+        if (jdArgs.conf.isEdit && !jdArgs.selectedTag.containsLabel(parent)) {
           _draggableUsing(qdTag, jdArgs) { jdTagDragStart(qdTag) }
         } else {
           EmptyVdom
@@ -427,7 +431,7 @@ class JdR extends Log {
         // Рендерить особые указатели мыши в режиме редактирования.
         if (jdArgs.conf.isEdit) {
           ^.`class` := {
-            if (jdArgs.selectedTag.contains(qdTag)) {
+            if (jdArgs.selectedTag.containsLabel(qdTag)) {
               // Текущий тег выделен. Значит, пусть будет move-указатель
               Css.Cursor.MOVE
             } else {
@@ -447,12 +451,17 @@ class JdR extends Log {
       * Запуск рендеринга произвольных тегов.
       */
     // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
-    def renderDocTag(idt: IDocTag, i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomNode = {
+    def renderDocTag(idt: Tree[IDocTag], i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomNode = {
       import MJdTagNames._
-      idt.jdTagName match {
-        case QUILL_DELTA                => renderQd( idt, i, jdArgs, parent )
-        case STRIP                      => renderStrip( idt, i, jdArgs )
-        case DOCUMENT                   => renderDocument( idt, i, jdArgs )
+      idt.rootLabel.name match {
+        case QD_CONTENT                => renderQd( idt, i, jdArgs, parent )
+        case STRIP                     => renderStrip( idt, i, jdArgs )
+        case DOCUMENT                  => renderDocument( idt, i, jdArgs )
+        // QD_OP: Должен быть отрабатон внутри QD_CONTENT:
+        case QD_OP =>
+          val l = idt.rootLabel
+          LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (l.name, l) )
+          VdomArray.empty()
       }
     }
 

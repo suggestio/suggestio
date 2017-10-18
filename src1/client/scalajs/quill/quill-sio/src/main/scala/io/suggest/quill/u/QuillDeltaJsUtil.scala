@@ -5,7 +5,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.{IDocTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
@@ -16,9 +16,11 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
+import IDocTag.Implicits._
 
 import scala.scalajs.js
 import scala.scalajs.js.{JSON, UndefOr, |}
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -29,7 +31,7 @@ import scala.scalajs.js.{JSON, UndefOr, |}
 class QuillDeltaJsUtil extends Log {
 
   /** Поиск и устранение неиспользуемых эджей. */
-  def purgeUnusedEdges(tpl: IDocTag, edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MEdgeDataJs] = {
+  def purgeUnusedEdges(tpl: Tree[IDocTag], edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MEdgeDataJs] = {
     val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
     edgesMap
       .filterKeys { usedEdgeIds.contains }
@@ -42,57 +44,58 @@ class QuillDeltaJsUtil extends Log {
     * @param edges Карта эджей.
     * @return Инстанс js.native-дельты дял отправки в редактор.
     */
-  def qdTag2delta(qd: IDocTag, edges: Map[EdgeUid_t, MEdgeDataJs]): Delta = {
-    qd.props1.qdOps.foldLeft( new Delta() ) { (delta, qdOp) =>
-      qdOp.opType match {
-        case MQdOpTypes.Insert =>
-          val eOpt = qdOp.edgeInfo
-            .flatMap { qdEi => edges.get( qdEi.edgeUid ) }
-          val resOpt = for {
-            e    <- eOpt
-            data <- {
-              e.jdEdge.predicate match {
-                case MPredicates.JdContent.Text =>
-                  e.jdEdge.text
-                    .map(t => t: DeltaInsertData_t)
-                case _ =>
-                  val jsObj = js.Object().asInstanceOf[DeltaEmbed]
-                  e.jdEdge.predicate match {
-                    case MPredicates.JdContent.Image =>
-                      for ( imgSrc <- e.jdEdge.imgSrcOpt ) yield {
-                        jsObj.image = imgSrc
-                        jsObj: DeltaInsertData_t
-                      }
-                    case MPredicates.JdContent.Video =>
-                      for (videoUrl <- e.jdEdge.url) yield {
-                        jsObj.video = videoUrl
-                        jsObj: DeltaInsertData_t
-                      }
+  def qdTag2delta(qd: Tree[IDocTag], edges: Map[EdgeUid_t, MEdgeDataJs]): Delta = {
+    qd.qdOpsIter
+      .foldLeft( new Delta() ) { (delta, qdOp) =>
+        qdOp.opType match {
+          case MQdOpTypes.Insert =>
+            val eOpt = qdOp.edgeInfo
+              .flatMap { qdEi => edges.get( qdEi.edgeUid ) }
+            val resOpt = for {
+              e    <- eOpt
+              data <- {
+                e.jdEdge.predicate match {
+                  case MPredicates.JdContent.Text =>
+                    e.jdEdge.text
+                      .map(t => t: DeltaInsertData_t)
+                  case _ =>
+                    val jsObj = js.Object().asInstanceOf[DeltaEmbed]
+                    e.jdEdge.predicate match {
+                      case MPredicates.JdContent.Image =>
+                        for ( imgSrc <- e.jdEdge.imgSrcOpt ) yield {
+                          jsObj.image = imgSrc
+                          jsObj: DeltaInsertData_t
+                        }
+                      case MPredicates.JdContent.Video =>
+                        for (videoUrl <- e.jdEdge.url) yield {
+                          jsObj.video = videoUrl
+                          jsObj: DeltaInsertData_t
+                        }
 
-                    case other =>
-                      throw new UnsupportedOperationException( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT + HtmlConstants.SPACE + (other, e))
-                  }
+                      case other =>
+                        throw new UnsupportedOperationException( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT + HtmlConstants.SPACE + (other, e))
+                    }
+                }
               }
+            } yield {
+              delta.insert( data, qdAttrsOpt2deltaAttrs(qdOp) )
             }
-          } yield {
-            delta.insert( data, qdAttrsOpt2deltaAttrs(qdOp) )
-          }
-          if (resOpt.isEmpty)
-            LOG.warn( ErrorMsgs.INSERT_PAYLOAD_EXPECTED, msg = List(qdOp.edgeInfo, eOpt) )
-          delta
+            if (resOpt.isEmpty)
+              LOG.warn( ErrorMsgs.INSERT_PAYLOAD_EXPECTED, msg = List(qdOp.edgeInfo, eOpt) )
+            delta
 
-        case MQdOpTypes.Delete =>
-          delta.delete(
-            howMany = qdOp.index.get
-          )
+          case MQdOpTypes.Delete =>
+            delta.delete(
+              howMany = qdOp.index.get
+            )
 
-        case MQdOpTypes.Retain =>
-          delta.retain(
-            length     = qdOp.index.get,
-            attributes = qdAttrsOpt2deltaAttrs(qdOp)
-          )
+          case MQdOpTypes.Retain =>
+            delta.retain(
+              length     = qdOp.index.get,
+              attributes = qdAttrsOpt2deltaAttrs(qdOp)
+            )
+        }
       }
-    }
   }
   /** Вычисление scala-типа delta-операции. */
   def deltaOp2qdType(dOp: DeltaOp): MQdOpType = {
@@ -301,8 +304,10 @@ class QuillDeltaJsUtil extends Log {
     *         тут внутри метода нельзя определить, используется ли тот или иной эдж на самом деле.
     *         Надо чистить карту снаружи на основе всего документа через purgeUnusedEdges
     */
-  def delta2qdTag(d: Delta, qdTag0: IDocTag,
-                  edges0: Map[EdgeUid_t, MEdgeDataJs]): (IDocTag, Map[EdgeUid_t, MEdgeDataJs]) = {
+  def delta2qdTag(d: Delta, qdTag0: Tree[IDocTag],
+                  edges0: Map[EdgeUid_t, MEdgeDataJs]): (Tree[IDocTag], Map[EdgeUid_t, MEdgeDataJs]) = {
+    assert( qdTag0.rootLabel.name ==* MJdTagNames.QD_CONTENT )
+
     // Часто-используемый предикат берём в оборот...
     val jdContPred = MPredicates.JdContent
 
@@ -343,7 +348,7 @@ class QuillDeltaJsUtil extends Log {
       .toIterator
       .map { dOp =>
         val deltaAttrsOpt = dOp.attributes.toOption
-        MQdOp(
+        val qdOp = MQdOp(
           opType = deltaOp2qdType( dOp ),
           edgeInfo = for (raw <- dOp.insert.toOption) yield {
             val typeOfRaw = js.typeOf(raw)
@@ -408,15 +413,20 @@ class QuillDeltaJsUtil extends Log {
           attrsEmbed = deltaAttrsOpt
             .flatMap( deltaAttrs2qdAttrsEmbed )
         )
+        // Завернуть в дерево.
+        Tree.Leaf(
+          IDocTag.qdOp(qdOp)
+        )
         // Вернуть аккамулятор, т.е. новый edgeUid.
       }
+      // .toList, потому что нам требуется неленивый Stream.
+      // Если ставить ленивый .toStream сразу, то выяснится, что delta является pure-js инстансом, который ПОВТОРНО используется quill'ом.
       .toList
 
     // Собрать и вернуть результаты исполнения.
-    val tag = qdTag0.withProps1(
-      qdTag0.props1.withQdOps(
-        qdOps
-      )
+    val tag = Tree.Node(
+      root   = qdTag0.rootLabel,
+      forest = qdOps.toStream
     )
 
     // Объеденить старую и обновлённые эдж-карты.

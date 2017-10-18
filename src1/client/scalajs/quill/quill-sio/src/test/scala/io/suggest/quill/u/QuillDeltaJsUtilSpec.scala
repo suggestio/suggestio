@@ -5,12 +5,14 @@ import com.softwaremill.macwire._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.IDocTag.Implicits._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.quill.QuillSioModule
 import minitest._
 
 import scala.scalajs.js
+import scalaz.Tree
 
 // TODO Есть проблемы со сложностью типов в Delta.insert(). Раздолбить insert API на несколько методов + JSName?
 import scala.language.existentials
@@ -34,7 +36,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       .insert(theString)
     val hwEdgeId: EdgeUid_t = 1
 
-    val jdTag0 = IDocTag.edgeQd( hwEdgeId, coords )
+    val jdTag0 = IDocTag.edgeQdTree( hwEdgeId, coords )
 
     val edges0 = Map(
       hwEdgeId -> MEdgeDataJs(
@@ -45,14 +47,16 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
         )
       )
     )
-    val (qdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
+    val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
 
-    assertEquals( qdTag2.props1.qdOps.size, 1 )
+    val qdOps2 = qdTagTree2.qdOpsIter.toSeq
+
+    assertEquals( qdOps2.size, 1 )
     assertEquals( edges2.size, 1 )
     assert( edges2.head._2.jdEdge.text.contains(theString), edges2.toString )
     // Проверить совпадение id'шников
     assertEquals(
-      qdTag2.props1.qdOps.head.edgeInfo.get.edgeUid,
+      qdOps2.head.edgeInfo.get.edgeUid,
       edges2.head._1
     )
   }
@@ -63,7 +67,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val delta1 = new Delta()
       .insert( newString )
     val hwEdgeId: EdgeUid_t = 1
-    val jdTag0 = IDocTag.edgeQd(hwEdgeId, coords)
+    val jdTag0 = IDocTag.edgeQdTree(hwEdgeId, coords)
     val edges0 = Map(
       hwEdgeId -> MEdgeDataJs(
         jdEdge = MJdEditEdge(
@@ -73,12 +77,12 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
         )
       )
     )
-    val (qdTag2, edges1) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
-    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( qdTag2, edges1 )
+    val (qdTagTree2, edges1) = quillDeltaJsUtil.delta2qdTag(delta1, jdTag0, edges0)
+    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( qdTagTree2, edges1 )
 
-    assertEquals( qdTag2.props1.qdOps.size, 1 )
+    assertEquals( qdTagTree2.qdOpsIter.size, 1 )
     assertEquals( edges2.size, 1 )
-    assertEquals( edges2.head._1, qdTag2.deepEdgesUidsIter.next() )
+    assertEquals( edges2.head._1, qdTagTree2.deepEdgesUidsIter.next() )
     assertEquals( edges2.head._2.jdEdge.text.get, newString )
   }
 
@@ -108,14 +112,15 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходный документ будет пустым. Для чистоты эксперимента.
     val edges0 = Map.empty[EdgeUid_t, MEdgeDataJs]
-    val jdTag0 = IDocTag.edgeQd(-1, coords)
-      .updateProps1(_.withQdOps(Nil))
+    val jdTag0 = Tree.Leaf(
+      IDocTag.qd( coords )
+    )
 
-    val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
     assertEquals( edges2.size, 3 )
 
-    val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
+    val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
     assertEquals( revDelta.ops.length, 3 )
 
     val diffDelta = delta2.diff(revDelta)
@@ -152,14 +157,15 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
     )
 
-    val jdTag0 = IDocTag.edgeQd(-1, coords)
-      .updateProps1(_.withQdOps(Nil))
+    val jdTag0 = Tree.Leaf(
+      IDocTag.qd( coords )
+    )
 
-    val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
     assertEquals( edges2.size, 6 )
 
-    val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
+    val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
     assertEquals( revDelta.ops.length, 3 )
 
     val diffDelta = delta2.diff(revDelta)
@@ -197,14 +203,14 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       0 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
     )
 
-    val jdTag0 = IDocTag.edgeQd(0, coords)
+    val jdTag0 = IDocTag.edgeQdTree(0, coords)
 
-    val (jdTag2, edges1) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( jdTag2, edges1 )
-    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    val (qdTagTree2, edges1) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
+    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( qdTagTree2, edges1 )
+    assertEquals( qdTagTree2.qdOpsIter.size, 3 )
     assertEquals( edges2.size, 3 )
 
-    val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)
+    val revDelta = quillDeltaJsUtil.qdTag2delta(qdTagTree2, edges2)
     assertEquals( revDelta.ops.length, 3 )
 
     val diffDelta = delta2.diff(revDelta)
@@ -243,10 +249,10 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       5 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
     )
 
-    val jdTag0 = IDocTag.edgeQd(0, coords)
+    val jdTag0 = IDocTag.edgeQdTree(0, coords)
 
     val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
-    assertEquals( jdTag2.props1.qdOps.size, 3 )
+    assertEquals( jdTag2.qdOpsIter.size, 3 )
     assertEquals( edges2.size, 7 )
 
     val revDelta = quillDeltaJsUtil.qdTag2delta(jdTag2, edges2)

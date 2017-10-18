@@ -4,6 +4,9 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.common.geom.coord.MCoords2di
 import minitest._
 import play.api.libs.json.{Json, OFormat}
+import io.suggest.scalaz.ZTreeUtil._
+
+import scalaz.{Show, Tree}
 
 /**
   * Suggest.io
@@ -14,32 +17,22 @@ import play.api.libs.json.{Json, OFormat}
 // Надо как-то это разрулить наверное...
 object IDocTagSpec extends SimpleTestSuite {
 
-  /** Сравнивать разные инстансы тегов напрямую нельзя, т.к. они используют eq для equals.
-    * Но для тестов можно сравнивать выхлопы toString с поправкой на children, чтобы везде была однотипная коллекция. */
-  private def _normForToStringEq(jdt: IDocTag): IDocTag = {
-    jdt.deepMap { t =>
-      if (t.children.nonEmpty && !t.children.isInstanceOf[List[IDocTag]]) {
-        t.withChildren( t.children.toList )
-      } else {
-        t
-      }
-    }
-  }
-
   /** Тестирование сериализации и десериализации переданного объекта.
     *
     * @param v Тестируемое значение.
     * @param jsonFmt play JSON formatter.
     * @tparam T Тип тестируемого значения.
     */
-  private def _writeReadMatchTest[T <: IDocTag](v: T)(implicit jsonFmt: OFormat[T]): Unit = {
-    val jsonStr = jsonFmt.writes(v).toString()
-    val jsRes = jsonFmt.reads( Json.parse( jsonStr ) )
+  private def _writeReadMatchTest[T <: IDocTag](v: Tree[T])(implicit jsonFmt: OFormat[T], show: Show[T]): Unit = {
+    val treeFmt = implicitly[OFormat[Tree[T]]]
+    val jsonStr = treeFmt.writes(v).toString()
+    val jsRes   = treeFmt.reads( Json.parse( jsonStr ) )
     assert( jsRes.isSuccess, jsRes.toString )
     val v2 = jsRes.get
+    // IEqualsEq запрещает сравнивать разные инстансы, даже с одинаковыми полями. Поэтому сравниваем string-рендеры деревьев.
     assertEquals(
-      _normForToStringEq(v2).toString,
-      _normForToStringEq(v).toString
+      v2.drawTree,
+      v.drawTree
     )
   }
 
@@ -53,15 +46,23 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: Empty document") {
-    val doc = IDocTag.document()
+    val doc = Tree.Leaf(
+      IDocTag.document
+    )
     _writeReadMatchTest( doc )
   }
 
 
   test("JSON: Simple Document( Strip(PlainPayload()) )") {
-    val doc = IDocTag.document(
-      IDocTag.strip( bm300x140 )(
-        IDocTag.edgeQd(1, coord1)
+    val doc = Tree.Node(
+      IDocTag.document,
+      Stream(
+        Tree.Node(
+          IDocTag.strip( bm300x140 ),
+          Stream(
+            IDocTag.edgeQdTree(1, coord1)
+          )
+        )
       )
     )
     _writeReadMatchTest( doc )
@@ -69,16 +70,24 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: Document with two strips, each with several children") {
-    val doc = IDocTag.document(
-      IDocTag.strip( bm300x140 )(
-        IDocTag.edgeQd(2, coord1),
-        IDocTag.edgeQd(4, coord2)
-      ),
-      IDocTag.strip( bm300x300 )(
-        //_picture( 333 ),
-        IDocTag.edgeQd(5, coord1),
-        IDocTag.edgeQd(1, coord2),
-        IDocTag.edgeQd(2, coord3)
+    val doc = Tree.Node(
+      IDocTag.document,
+      Stream(
+        Tree.Node(
+          IDocTag.strip( bm300x140 ),
+          Stream(
+            IDocTag.edgeQdTree(2, coord1),
+            IDocTag.edgeQdTree(4, coord2)
+          )
+        ),
+        Tree.Node(
+          IDocTag.strip( bm300x300 ),
+          Stream(
+            IDocTag.edgeQdTree(5, coord1),
+            IDocTag.edgeQdTree(1, coord2),
+            IDocTag.edgeQdTree(2, coord3)
+          )
+        )
       )
     )
     _writeReadMatchTest(doc)
@@ -86,72 +95,41 @@ object IDocTagSpec extends SimpleTestSuite {
 
 
   test("JSON: 3-level document tree with inner children") {
-    val doc = IDocTag.document(
-      IDocTag.strip(bm300x140)(
-        IDocTag.edgeQd(2, coord1)
-          .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(10, 20)) ) ),
-        //_picture(555),
-        IDocTag.edgeQd(4, coord2)
-      ),
-      IDocTag.strip(bm300x300)(
-        //_picture(333),
-        IDocTag.edgeQd(5, coord3)
-          .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(45, 40)) ) ),
-        IDocTag.edgeQd(2, coord1)
+    val doc = Tree.Node(
+      IDocTag.document,
+      Stream(
+        Tree.Node(
+          IDocTag.strip( bm300x140 ),
+          Stream(
+            IDocTag.edgeQdTree(2, coord1)
+              .loc
+              .modifyLabel { jdt =>
+                jdt.withProps1(
+                  jdt.props1.withTopLeft( Some(MCoords2di(10, 20)) )
+                )
+              }
+              .toTree,
+            //_picture(555),
+            IDocTag.edgeQdTree(4, coord2)
+          )
+        ),
+        Tree.Node(
+          IDocTag.strip( bm300x300 ),
+          Stream(
+            IDocTag.edgeQdTree(5, coord3)
+              .loc
+              .modifyLabel { jdt =>
+                jdt.withProps1(
+                  jdt.props1.withTopLeft( Some(MCoords2di(45, 40)) )
+                )
+              }
+              .toTree,
+            IDocTag.edgeQdTree(2, coord1)
+          )
+        )
       )
     )
     _writeReadMatchTest(doc)
-  }
-
-
-
-  private def _tree1 = IDocTag.document(
-    IDocTag.strip(bm300x140)(
-      IDocTag.edgeQd(2, coord1)
-        .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(10, 20)) ) ),
-      //_picture(555),
-      IDocTag.edgeQd(4, coord2)
-    ),
-    IDocTag.strip(bm300x300)(
-      //_picture(333),
-      IDocTag.edgeQd(5, coord3)
-        .updateProps1(p0 => p0.withTopLeft( Some(MCoords2di(45, 40)) ) ),
-      IDocTag.edgeQd(2, coord1)
-    )
-  )
-
-  // Проверить node paths. Они все чисто-временные, поэтому тестов особо не требуется.
-  test("Node path: generate correct top-level path") {
-    val t1 = _tree1
-    assertEquals(
-      t1.nodeToPath( t1 ),
-      Some(Nil)
-    )
-  }
-
-  test("Handle correct top-level node path") {
-    val t1 = _tree1
-    assertEquals(
-      t1.pathToNode( Nil ),
-      Some(t1)
-    )
-  }
-
-  test("Node path: generate correct level-1 path") {
-    val t1 = _tree1
-    val ch12 = t1.children.tail.head
-    assertEquals(
-      t1.nodeToPath( ch12 ),
-      Some( List(1) )
-    )
-  }
-
-  test("Handle level-1 node path") {
-    val t1 = _tree1
-    assertEquals(
-      t1.pathToNode( List(1) ),
-      Some( t1.children.tail.head )
-    )
   }
 
 }

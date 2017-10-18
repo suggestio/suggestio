@@ -5,6 +5,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.IDocTag.Implicits._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.n2.edge.MEdgeDataJs
@@ -17,6 +18,7 @@ import org.scalajs.dom.Element
 
 import scalacss.ScalaCssReact._
 import scala.annotation.tailrec
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -39,7 +41,7 @@ import scala.annotation.tailrec
   */
 class QdRrrHtml(
                  jdArgs       : MJdArgs,
-                 qdTag        : IDocTag,
+                 qdTag        : Tree[IDocTag],
                  imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None
                ) {
 
@@ -63,7 +65,11 @@ class QdRrrHtml(
   /** Набор delta-операций, подлежащих проработке.
     * В конце работы должен остаться Nil.
     */
-  private var _restOps: List[MQdOp] = qdTag.props1.qdOps.toList
+  private var _restOps: List[MQdOp] = {
+    qdTag
+      .qdOpsIter
+      .toList
+  }
 
 
   /** Выполнить рендеринг текущего qd-тега. */

@@ -6,6 +6,9 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.scalaz.ZTreeUtil._
+
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -24,7 +27,7 @@ object MJdCssArgs {
     }
   }
 
-  def singleCssArgs(template: IDocTag, conf: MJdConf, edges: Map[EdgeUid_t, MEdgeDataJs]): MJdCssArgs = {
+  def singleCssArgs(template: Tree[IDocTag], conf: MJdConf, edges: Map[EdgeUid_t, MEdgeDataJs]): MJdCssArgs = {
     MJdCssArgs(
       templates = template :: Nil,
       conf      = conf,
@@ -44,7 +47,7 @@ object MJdCssArgs {
   * @param edges Текущая карта эджей.
   */
 case class MJdCssArgs(
-                       templates  : Seq[IDocTag],
+                       templates  : Seq[Tree[IDocTag]],
                        conf       : MJdConf,
                      // TODO От эджей требуются лишь минимальная инфа. А тут этой инфы с избытком.
                        edges      : Map[EdgeUid_t, MEdgeDataJs]

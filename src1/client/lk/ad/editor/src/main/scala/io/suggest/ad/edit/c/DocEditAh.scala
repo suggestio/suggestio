@@ -7,7 +7,6 @@ import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
 import io.suggest.color.MColorData
 import io.suggest.common.MHands
-import io.suggest.common.coll.Lists
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
@@ -21,6 +20,7 @@ import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.Base64JsUtil
+import io.suggest.primo.SetVal
 import io.suggest.quill.m.TextChanged
 import io.suggest.quill.u.QuillDeltaJsUtil
 import io.suggest.react.ReactDiodeUtil
@@ -28,10 +28,13 @@ import io.suggest.sjs.common.i18n.Messages
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
+import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
+import io.suggest.scalaz.ZTreeUtil._
 
 import scala.util.Random
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -57,7 +60,7 @@ class DocEditAh[M](
     * @return Возможный эффект и обновлённая карта эджей.
     */
   private def _ppEdges(oldEdges: Map[EdgeUid_t, MEdgeDataJs],
-                       tpl: IDocTag,
+                       tpl: Tree[IDocTag],
                        edges: Map[EdgeUid_t, MEdgeDataJs]): (Option[Effect], Map[EdgeUid_t, MEdgeDataJs]) = {
     // 10. Очистить эджи от неиспользуемых.
     val edges2 = quillDeltaJsUtil.purgeUnusedEdges( tpl, edges )
@@ -118,7 +121,7 @@ class DocEditAh[M](
     case m: TextChanged =>
       val v0 = value
 
-      if ( v0.qdEdit.exists(_.initDelta == m.fullDelta) ) {
+      if ( v0.qdEdit.exists(_.initDelta ==* m.fullDelta) ) {
         // Бывают ложные срабатывания. Например, прямо при инициализации редактора. Но не факт конечно, что они тут подавляются.
         noChange
 
@@ -126,24 +129,28 @@ class DocEditAh[M](
         // Текст действительно изменился. Пересобрать json-document.
         //println( JSON.stringify(m.fullDelta) )
         val currTag0 = v0.jdArgs.selectedTag.get
+        val selJdtPath = v0.jdArgs.selPath.get
         // Спроецировать карту сборных эджей в jd-эджи
         val edgesData0 = v0.jdArgs.renderArgs.edges
         val (qdTag2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, edgesData0)
 
         // Собрать новый json-document
-        val jsonDoc2 = v0.jdArgs
+        val tpl2 = v0.jdArgs
           .template
-          .deepUpdateChild( currTag0, qdTag2 :: Nil )
+          .pathToNode( selJdtPath )
+          .get
+          .setTree( qdTag2 )
+          .toTree
 
         // Пост-процессить новые эджи, т.к. там может быть мусор или эджи, требующие фоновой обработи.
-        val (fxOpt, edgesData3) = _ppEdges( edgesData0, jsonDoc2, edgesData2 )
+        val (fxOpt, edgesData3) = _ppEdges( edgesData0, tpl2, edgesData2 )
 
         val jdArgs2 = v0.jdArgs.copy(
-          template    = jsonDoc2,
+          template    = tpl2,
           renderArgs  = v0.jdArgs.renderArgs
             .withEdges( edgesData3 ),
           jdCss       = jdCssFactory.mkJdCss(
-            MJdCssArgs.singleCssArgs(jsonDoc2, v0.jdArgs.conf, edgesData3)
+            MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, edgesData3)
           )
         )
 
@@ -167,23 +174,29 @@ class DocEditAh[M](
     // Клик по элементу карточки.
     case m: IJdTagClick =>
       val v0 = value
-      if (v0.jdArgs.selectedTag contains m.jdTag) {
+      if ( v0.jdArgs.selectedTag.containsLabel(m.jdTag) ) {
         // Бывают повторные щелчки по уже выбранным элементам, это нормально.
         noChange
 
       } else {
         // Юзер выбрал какой-то новый элемент. Залить новый тег в seleted:
+        val newSelJdtTreeLoc = v0.jdArgs.template
+          .loc
+          .findByLabel( m.jdTag )
+          .get
+        val newSelJdt = newSelJdtTreeLoc.toNodePath
         val v1 = v0.withJdArgs(
           v0.jdArgs
-            .withSelPath( v0.jdArgs.template.nodeToPath(m.jdTag) )
+            .withSelPath( Some(newSelJdt) )
         )
 
         // Если это QdTag, то отработать состояние quill-delta:
-        val v2 = m.jdTag.jdTagName match {
+        val v2 = m.jdTag.name match {
           // Это qd-тег, значит нужно собрать и залить текущую дельту текста в состояние.
-          case MJdTagNames.QUILL_DELTA =>
+          case MJdTagNames.QD_CONTENT =>
+            // Нужно получить текущее qd-под-дерево (для сборки дельты)
             val delta2 = quillDeltaJsUtil.qdTag2delta(
-              qd    = m.jdTag,
+              qd    = newSelJdtTreeLoc.tree,
               edges = v0.jdArgs.renderArgs.edges
             )
             v1.withQdEdit(
@@ -199,7 +212,7 @@ class DocEditAh[M](
         }
 
         // Если это strip, то активировать состояние strip-редактора.
-        val v3 = m.jdTag.jdTagName match {
+        val v3 = m.jdTag.name match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case MJdTagNames.STRIP =>
             v2.withStripEd(
@@ -220,15 +233,24 @@ class DocEditAh[M](
         }
 
         // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
-        val v4 = v0.jdArgs.selectedTag.fold(v3) { jdt =>
+        val v4 = v0.jdArgs.selectedTag.fold(v3) { jdtTree =>
+          val jdt = jdtTree.rootLabel
           val dataEdges0 = v0.jdArgs.renderArgs.edges
           if (
-            jdt.jdTagName == MJdTagNames.QUILL_DELTA &&
-            QdJsUtil.isEmpty(jdt, dataEdges0) &&
+            jdt.name ==* MJdTagNames.QD_CONTENT &&
+            QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
             v3.jdArgs.template.contains(jdt)
           ) {
-            val tpl2 = v3.jdArgs.template.deepUpdateOne(jdt, Nil)
-              .head
+            val tpl1 = v3.jdArgs.template
+            val tpl2 = tpl1
+              .loc
+              .findByLabel(jdt)
+              .flatMap(_.delete)
+              .map(_.toTree)
+              .getOrElse {
+                LOG.warn( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = jdt )
+                tpl1
+              }
             // Очистить эджи от лишнего контента
             val dataEdges2 = quillDeltaJsUtil.purgeUnusedEdges(tpl2, dataEdges0)
             v3.withJdArgs(
@@ -310,7 +332,7 @@ class DocEditAh[M](
       val v0 = value
       val edges0 = v0.jdArgs.renderArgs.edges
       val edges2 = quillDeltaJsUtil.purgeUnusedEdges( v0.jdArgs.template, edges0 )
-      if ( edges0.size == edges2.size ) {
+      if ( edges0.size ==* edges2.size ) {
         noChange
       } else {
         //println(s"edges count changed: ${edges0.size} => ${edges2.size}")
@@ -328,7 +350,10 @@ class DocEditAh[M](
     // Клик по кнопкам управления размером текущего блока
     case m: BlockSizeBtnClick =>
       val v0 = value
-      val strip0 = v0.jdArgs.selectedTag.get
+
+      val stripTreeLoc0 = v0.jdArgs.selectedTagLoc.get
+      val strip0 = stripTreeLoc0.getLabel
+
       val bm0 = strip0.props1.bm.get
       val bm2 = m.model match {
         case bhs @ BlockHeights =>
@@ -356,10 +381,9 @@ class DocEditAh[M](
         )
       )
 
-      val template2 = v0.jdArgs
-        .template
-        .deepUpdateOne( strip0, strip2 :: Nil )
-        .head
+      val template2 = stripTreeLoc0
+        .setLabel(strip2)
+        .toTree
 
       // Обновить и дерево, и currentTag новым инстансом.
       val v2 = v0.withJdArgs(
@@ -394,17 +418,16 @@ class DocEditAh[M](
 
       } else {
         // Второй шаг удаления, и юзер подтвердил удаление.
-        val strip4del = v0.jdArgs
-          .selectedTag
+        val strip4delLoc = v0.jdArgs
+          .selectedTagLoc
           .get
 
-        val tpl2 = v0.jdArgs
-          .template
-          .deepUpdateOne(strip4del, Nil)
-          .head
+        val tpl0 = v0.jdArgs.template
+        val tpl2 = strip4delLoc
+          .delete
+          .fold(tpl0) { _.toTree }
 
-        if (tpl2.children.nonEmpty) {
-
+        if (tpl2.subForest.nonEmpty) {
           val jdCss2 = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
           )
@@ -481,91 +504,106 @@ class DocEditAh[M](
       }
 
 
-    // Юзер отпустил перетаскиваемый объект на какой-то стрип. Нужно запихать этот объект в дерево текущего стрипа.
+    // Юзер отпустил перетаскиваемый объект на какой-то стрип. Нужно запихать этот объект в дерево нового стрипа.
     case m: JdDropContent =>
       val v0 = value
       val tpl0 = v0.jdArgs.template
 
-      // Удалить текущий тег из старого места, если возможно. Готовим через batch, чтобы избежать двойной пересборки дерева.
-      val delOldJdBatchOpt = for (currTag <- v0.jdArgs.dnd.jdt) yield {
-        IDocTag.Batches.delete(currTag)
+      // Найти tree loc текущего тега наиболее оптимальным путём. С некоторой вероятностью это -- selected-тег:
+      val dndJdtLoc = {
+        // Получить на руки инстанс сброшенного тега.
+        // Прячемся от общего scope, чтобы работать с элементом только через его tree loc.
+        val dndJdt = m.foreignTag
+          .orElse( v0.jdArgs.dnd.jdt )
+          .get
+
+        v0.jdArgs.selectedTagLoc
+          .filter { loc =>
+            // Убедиться, что текущий selected-тег содержит dndJdt:
+            dndJdt ==* loc.getLabel
+          }
+          .orElse {
+            // Это не selected-тег. Возможны перетаскивание без выделения тега: просто взял да потащил.
+            // Это нормально. Перебираем всё дерево:
+            tpl0.loc
+              .findByLabel( dndJdt )
+          }
+          .get
       }
 
-      // Получить на руки инстанс сброшенного тега
-      val dndJdt = m.foreignTag
-        .orElse( v0.jdArgs.dnd.jdt )
-        .get
+      // Извлекаем тег из старого местоположения:
+      val dndJdtTree0 = dndJdtLoc.tree
+      val dndJdtLocNoSrc = dndJdtLoc.delete.get
+      // Фокус на соседнем или родительском узле.
 
+      // Дополнительно обработать Y-координату.
       val clXy0 = m.clXy
-      // TODO Если strip изменился, то надо изменить Y на высоту пройденных стрипов от исходного стрипа (включительно) до конечного стрипа (исключительно).
-      // Найти исходный strip в исходном шаблоне
-      val fromStripOpt = tpl0
-        .deepOfTypeIter( MJdTagNames.STRIP )
-        .find { s =>
-          s.children contains dndJdt
-        }
-
-      // Смотрим, изменился ли strip...
-      val clXy2 = fromStripOpt.fold(clXy0) { fromStrip =>
-        if (fromStrip ==* m.strip) {
-          // Перемещение в рамках одного стрипа
-          clXy0
-        } else {
-          // Перемещение между разными strip'ами. Надо пофиксить координату Y, иначе добавляемый элемент отрендерится где-то за экраном.
-          val strips = tpl0
-            .deepOfTypeIter( MJdTagNames.STRIP )
-            .toSeq
-          // TODO Отработать ситуацию, когда хотя бы один из index'ов == -1
-          val fromStripIndex = strips.indexOf(fromStrip)
-          val toStripIndex = strips.indexOf(m.strip)
-          val (topStrip, bottomStrip, yModSign) = if (fromStripIndex <= toStripIndex) {
-            (fromStrip, m.strip, -1)
-          } else {
-            (m.strip, fromStrip, +1)
-          }
-          // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
-          val iter = tpl0
-            .deepOfTypeIter( MJdTagNames.STRIP )
-            .dropWhile(_ !=* topStrip)
-            .takeWhile(_ !=* bottomStrip)
-            .flatMap(_.props1.bm)
-          if (iter.nonEmpty) {
-            val yDiff = iter
-              .map { _.h.value }
-              .sum
-            val y2 = clXy0.y + yModSign * yDiff
-            //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
-            clXy0.withY( y2 )
-          } else {
-            // Странно: нет пройденных стрипов, хотя они должны бы быть
-            LOG.warn( msg = s"$clXy0 [$fromStrip => ${m.strip})" )
+      // Найти исходный strip в исходном шаблоне. Оптимально: подняться по parents от текущего таскаемого элемента.
+      val clXy2 = dndJdtLocNoSrc
+        .findUpByType( MJdTagNames.STRIP )
+        .fold(clXy0) { fromStripLoc =>
+          val fromStrip = fromStripLoc.getLabel
+          // Изменился стрип или сброшено на тот же?
+          if (fromStrip ==* m.strip) {
+            // Перемещение в рамках одного стрипа
             clXy0
+          } else {
+            // Перемещение между разными strip'ами. Надо пофиксить координату Y, иначе добавляемый элемент отрендерится где-то за экраном.
+            val strips = tpl0
+              .deepOfTypeIter( MJdTagNames.STRIP )
+              .toSeq
+            // TODO Отработать ситуацию, когда хотя бы один из index'ов == -1
+            val fromStripIndex = strips.indexOf(fromStrip)
+            val toStripIndex = strips.indexOf(m.strip)
+            val (topStrip, bottomStrip, yModSign) = if (fromStripIndex <= toStripIndex) {
+              (fromStrip, m.strip, -1)
+            } else {
+              (m.strip, fromStrip, +1)
+            }
+            // Собрать все стрипы от [текущего до целевого), просуммировать высоту блоков, вычесть из Y
+            val iter = tpl0
+              .deepOfTypeIter( MJdTagNames.STRIP )
+              .dropWhile(_ !=* topStrip)
+              .takeWhile(_ !=* bottomStrip)
+              .flatMap(_.props1.bm)
+            if (iter.nonEmpty) {
+              val yDiff = iter
+                .map { _.h.value }
+                .sum
+              val y2 = clXy0.y + yModSign * yDiff
+              //println(s"mod Y: ${clXy0.y} by $yDiff => $y2")
+              clXy0.withY( y2 )
+            } else {
+              // Странно: нет пройденных стрипов, хотя они должны бы быть
+              LOG.warn( msg = s"$clXy0 [$fromStrip => ${m.strip})" )
+              clXy0
+            }
           }
         }
-      }
-      // Рассчитать пиксельную высоту-разницу от исходного fromStrip до текущего m.strip
-
 
       // Выставить новые координаты тегу
-      val apJdt2 = dndJdt.withProps1(
-        dndJdt.props1
-          .withTopLeft( Some(clXy2) )
+      val dndJdtTree2 = Tree.Node(
+        root = {
+          val dndJdt0 = dndJdtTree0.rootLabel
+          dndJdt0
+            .withProps1(
+              dndJdt0.props1
+                .withTopLeft( Some(clXy2) )
+            )
+        },
+        forest = dndJdtTree0.subForest
       )
 
-      // Добавить перетащенный тег в текущий стрип.
-      val batches0 = List[JdBatch_t](
-        m.strip -> { strip1s: Seq[IDocTag] =>
-          val childrenTail = Seq(apJdt2)
-          for (s <- strip1s) yield {
-            s.withChildren( s.children ++ childrenTail )
-          }
-        }
-      )
+      // Добавить перетащенный тег в целевой стрип:
+      val dndJdtLoc3 = dndJdtLocNoSrc
+        // Найти целевой стрип:
+        .root
+        .findByLabel( m.strip )
+        .get
+        // Добавляем как последний дочерний элемент текущего стрипа. TODO Opt Может как начальный добавлять? Это быстрее будет, хоть и менее логично.
+        .insertDownLast( dndJdtTree2 )
 
-      val batches2 = Lists.prependOpt(delOldJdBatchOpt)( batches0 )
-
-      val tpl2 = IDocTag.batchUpdateOne2(tpl0, batches2)
-        .head
+      val tpl2 = dndJdtLoc3.toTree
 
       // Пересобрать данные для рендера.
       val v2 = v0.withJdArgs(
@@ -575,47 +613,48 @@ class DocEditAh[M](
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
           ),
           dnd         = MJdDndS.empty,
-          selPath     = tpl2.nodeToPath( apJdt2 )
+          selPath     = tpl2.nodeToPath( dndJdtTree2.rootLabel )
         )
       )
 
       updated(v2)
 
 
-    // Реакцие на завершение перетаскивания целого стрипа.
+    // Реакция на завершение перетаскивания целого стрипа.
     case m: JdDropStrip =>
       val v0 = value
-      val droppedStrip = v0.jdArgs.dnd.jdt.get
-      val targetStrip = m.targetStrip
-      if (droppedStrip == targetStrip) {
+      val droppedStripLabel = v0.jdArgs.dnd.jdt.get
+      val targetStripLabel = m.targetStrip
+      if (droppedStripLabel ==* targetStripLabel) {
         noChange
       } else {
-        val strips2 = v0.jdArgs.template
-          .deepOfTypeIter( MJdTagNames.STRIP )
-          .filter(_ !=* droppedStrip)
-          .flatMap { s =>
-            if (s ==* targetStrip) {
-              if (m.isUpper) {
-                // Поместить dropped strip сверху
-                droppedStrip :: s :: Nil
-              } else {
-                // Поместить перемещаемый стрип снизу
-                s :: droppedStrip :: Nil
-              }
-            } else {
-              // Это не тот стрип, на который шло перемещение.
-              s :: Nil
-            }
-          }
-          .toList
+        val tpl0 = v0.jdArgs.template
+        val droppedStripLoc = tpl0
+          .loc
+          .findByLabel( droppedStripLabel )
+          .get
+        val droppedStripTree = droppedStripLoc.tree
+
+        val targetStripLoc = droppedStripLoc
+          .delete
+          .get
+          .root
+          .findByLabel( targetStripLabel )
+          .get
+
+        val droppedStripLoc2 = if (m.isUpper) {
+          targetStripLoc.insertLeft( droppedStripTree )
+        } else {
+          targetStripLoc.insertRight( droppedStripTree )
+        }
+
+        val tpl2 = droppedStripLoc2.toTree
         // Залить обновлённый список стрипов в исходный документ
-        val tpl2 = v0.jdArgs.template
-          .withChildren(strips2)
         val v2 = v0.withJdArgs(
           v0.jdArgs.copy(
             template  = tpl2,
             dnd       = MJdDndS.empty,
-            selPath   = tpl2.nodeToPath(droppedStrip)
+            selPath   = tpl2.nodeToPath( droppedStripLabel )
           )
         )
         updated(v2)
@@ -662,20 +701,31 @@ class DocEditAh[M](
               }
             val topColorMcdOpt = Some(topColorMcd)
 
-            val tpl2 = v0.jdArgs
-              .template
-              .deepElMap { el1 =>
-                val bgImgEdgeId = el1.bgImgEdgeId
-                //println( bgImgEdgeId, edgeUids4mod )
-                if ( bgImgEdgeId.map(_.edgeUid).exists(edgeUids4mod.contains) ) {
-                  //println("replace bgColor with " + topColorMcd + " on " + el1)
-                  // Требуется замена bgColor на обновлённый вариант.
-                  el1.setBgColor( topColorMcdOpt )
-                } else {
-                  el1
-                }
+            val tpl2 = v0.jdArgs.template
+              .map { el1 =>
+                el1
+                  .edgeUids
+                  .map(_.edgeUid)
+                  .find(edgeUids4mod.contains)
+                  .fold(el1) { _ =>
+                    el1.qdProps.fold {
+                      el1.withProps1(
+                        el1.props1
+                          .withBgColor( topColorMcdOpt )
+                      )
+                    } { qdProps0 =>
+                      el1.withQdProps( Some(
+                        qdProps0.withAttrsText( Some(
+                          qdProps0.attrsText
+                            .getOrElse( MQdAttrsText.empty )
+                            .withBackground(
+                              topColorMcdOpt.map {SetVal.apply }
+                            )
+                        ))
+                      ))
+                    }
+                  }
               }
-              .asInstanceOf[IDocTag]
 
             // Сохранить новые темплейт в состояние.
             val jdArgs2 = v0.jdArgs
@@ -692,7 +742,7 @@ class DocEditAh[M](
             for {
               qdEdit0     <- v0.qdEdit
               qdTag2      <- jdArgs2.selectedTag
-              if qdTag2.jdTagName ==* MJdTagNames.QUILL_DELTA
+              if qdTag2.rootLabel.name ==* MJdTagNames.QD_CONTENT
               // Перерендеривать quill только если изменение гистограммы коснулось эджа внутри текущего qd-тега:
               qdTag0      <- v0.jdArgs.selectedTag
               if qdTag0 !=* qdTag2
@@ -726,27 +776,21 @@ class DocEditAh[M](
     // Реакция на клик по кнопке создания "контента", который у нас является синонимом QdTag.
     case AddContentClick =>
       val v0 = value
-      val intoStrip0 = v0.jdArgs.selectedTag.fold[IDocTag] {
-        v0.jdArgs.template
-          .deepOfTypeIter( MJdTagNames.STRIP )
-          .next()
-      } { jdt =>
-        if (jdt.jdTagName ==* MJdTagNames.STRIP) {
-          // Если выбран strip, то его и вернуть
-          jdt
-        } else {
-          // Если выбран какой-то не-strip элемент, то найти его strip
+      val stripName = MJdTagNames.STRIP
+      val intoStripLoc = v0.jdArgs.selectedTagLoc
+        .fold {
+          // Сейчас нет выделенных тегов. Найти первый попавшийся strip
           v0.jdArgs.template
-            .deepOfTypeIter( MJdTagNames.STRIP )
-            .find { s =>
-              s contains jdt
-            }
-            .get
+            .loc
+            .findByType( stripName )
+        } { selLoc =>
+          // Если выбран какой-то не-strip элемент, то найти его strip. Если выделен strip, то вернуть его.
+          selLoc.findUpByType( stripName )
         }
-      }
+        .get
 
       val rnd = new Random()
-      val bm0 = intoStrip0.props1.bm.get //OrElse( BlockMeta.DEFAULT )
+      val bm0 = intoStripLoc.getLabel.props1.bm.get //OrElse( BlockMeta.DEFAULT )
       val coordsRnd = MCoords2di(
         x = rnd.nextInt( bm0.w.value/3 ) + 10,
         y = rnd.nextInt( (bm0.h.value * 0.75).toInt ) + (bm0.h.value * 0.12).toInt
@@ -778,14 +822,18 @@ class DocEditAh[M](
           (edgesMap0, exampleTextEdge.id)
         }
 
-      val qdt = IDocTag.edgeQd( edgeUid, coordsRnd )
+      val qdtTree = Tree.Node(
+        root = IDocTag.qd(coordsRnd),
+        forest = Stream(
+          Tree.Leaf(
+            IDocTag.edgeQdOp( edgeUid )
+          )
+        )
+      )
 
-      val intoStrip2 = intoStrip0.withChildren {
-        intoStrip0.children ++ Seq( qdt )
-      }
+      val qdtLoc = intoStripLoc.insertRight( qdtTree )
 
-      val tpl2 = v0.jdArgs.template
-        .deepUpdateChild(intoStrip0, intoStrip2 :: Nil)
+      val tpl2 = qdtLoc.toTree
 
       val v2 = v0.copy(
         jdArgs = v0.jdArgs.copy(
@@ -795,11 +843,11 @@ class DocEditAh[M](
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, edgesMap2)
           ),
-          selPath     = tpl2.nodeToPath(qdt)
+          selPath     = tpl2.nodeToPath( qdtTree.rootLabel )
         ),
         qdEdit = Some {
           val qdelta = quillDeltaJsUtil.qdTag2delta(
-            qd    = qdt,
+            qd    = qdtTree,
             edges = edgesMap2
           )
           MQdEditS(
@@ -815,48 +863,36 @@ class DocEditAh[M](
     // Клик по кнопке добавления нового стрипа.
     case AddStripClick =>
       val v0 = value
-      val beforeStripOpt = v0.jdArgs
-        // Попробовать текущеий выделенный strip
-        .selectedTag
-        .filterByType( MJdTagNames.STRIP )
-        .orElse {
-          // добавить в конец списка стрипов, если есть хотя бы один стрип.
+
+      val newStripTree = Tree.Leaf(
+        IDocTag.strip(
+          bm      = BlockMeta.DEFAULT,
+          bgColor = Some(MColorData("ffffff"))
+        )
+      )
+
+      // Найти предшествующий стрип и воткнуть справа от него. Либо в конце подураня корня шаблона, если текущего стрипа нет.
+      val newStripLoc = v0.jdArgs.selectedTagLoc
+        .flatMap {
+          _.findUpByType( MJdTagNames.STRIP )
+        }
+        .fold {
+          // Нет текущего стрипа. Впихнуть просто в шаблон
           v0.jdArgs.template
-            .deepOfTypeIter( MJdTagNames.STRIP )
-            .toStream
-            .lastOption
+            .loc
+            .insertDownLast( newStripTree )
+        } { currStripLoc =>
+          currStripLoc.insertRight( newStripTree )
         }
 
-      val iter0 = v0.jdArgs.template
-        .deepOfTypeIter( MJdTagNames.STRIP )
-
-      val newStrip = IDocTag.strip(
-        bm = BlockMeta.DEFAULT,
-        bgColor = Some(MColorData("ffffff"))
-      )()
-
-      val iter2 = beforeStripOpt.fold {
-        iter0 ++ Seq(newStrip)
-      } { beforeStrip =>
-        v0.jdArgs.template
-          .deepOfTypeIter( MJdTagNames.STRIP )
-          .flatMap { s =>
-            if (s == beforeStrip) {
-              s :: newStrip :: Nil
-            } else {
-              s :: Nil
-            }
-          }
-      }
-
-      val tpl2 = v0.jdArgs.template.withChildren( iter2.toSeq )
+      val tpl2 = newStripLoc.toTree
 
       val v2 = v0
         .withAddS(None)
         .withJdArgs(
           v0.jdArgs.copy(
             template    = tpl2,
-            selPath     = tpl2.nodeToPath(newStrip),
+            selPath     = tpl2.nodeToPath( newStripTree.rootLabel ),
             jdCss       = jdCssFactory.mkJdCss(
               MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
             )

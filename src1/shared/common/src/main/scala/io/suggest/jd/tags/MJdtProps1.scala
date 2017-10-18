@@ -2,13 +2,12 @@ package io.suggest.jd.tags
 
 import io.suggest.ad.blk.BlockMeta
 import io.suggest.color.MColorData
-import io.suggest.common.empty.{EmptyProduct, EmptyUtil, IEmpty}
+import io.suggest.common.empty.{EmptyProduct, IEmpty}
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.img.MImgEdgeWithOps
-import io.suggest.jd.tags.qd.MQdOp
 import japgolly.univeq.UnivEq
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
 /**
   * Suggest.io
@@ -30,16 +29,10 @@ object MJdtProps1 extends IEmpty {
     (__ \ "a").formatNullable[MColorData] and
     (__ \ "b").formatNullable[MImgEdgeWithOps] and
     (__ \ "c").formatNullable[BlockMeta] and
-    (__ \ "d").formatNullable[MCoords2di] and
-    (__ \ "e").formatNullable[Seq[MQdOp]]
-      .inmap [Seq[MQdOp]] (
-        EmptyUtil.opt2ImplEmpty1F( Nil ),
-        {ops => if (ops.isEmpty) None else Some(ops) }
-      )
+    (__ \ "d").formatNullable[MCoords2di]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MJdtProps1] = {
-    import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
 
@@ -52,14 +45,12 @@ object MJdtProps1 extends IEmpty {
   * @param bgImg Фоновая картинка элемента.
   * @param topLeft css-px-координаты левого верхнего угла элемента для абсолютного позиционирования.
   * @param bm BlockMeta для блоков (стрипов).
-  * @param qdOps Список qd-операций для постройки контента (quill-delta).
   */
 case class MJdtProps1(
                        bgColor  : Option[MColorData]        = None,
                        bgImg    : Option[MImgEdgeWithOps]   = None,
                        bm       : Option[BlockMeta]         = None,
-                       topLeft  : Option[MCoords2di]        = None,
-                       qdOps    : Seq[MQdOp]                = Nil,
+                       topLeft  : Option[MCoords2di]        = None
                      )
   extends EmptyProduct
 {
@@ -68,6 +59,5 @@ case class MJdtProps1(
   def withBgImg(bgImg: Option[MImgEdgeWithOps])       = copy(bgImg = bgImg)
   def withBm(bm: Option[BlockMeta])                   = copy(bm = bm)
   def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
-  def withQdOps(qdOps: Seq[MQdOp])                    = copy(qdOps = qdOps)
 
 }

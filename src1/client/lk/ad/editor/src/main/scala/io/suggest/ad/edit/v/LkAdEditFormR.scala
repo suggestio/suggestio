@@ -5,6 +5,7 @@ import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
 import io.suggest.ad.edit.v.edit.{AddR, QdEditR, ScaleR}
+import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
@@ -145,7 +146,7 @@ class LkAdEditFormR(
         stripEdOptC = p.connect { mroot =>
           for {
             stripEd <- mroot.doc.stripEd
-            selJd   <- mroot.doc.jdArgs.selectedTag
+            selJd   <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
           } yield {
             val bgEdge = selJd.props1
               .bgImg
@@ -172,7 +173,7 @@ class LkAdEditFormR(
         qdEditOptC = p.connect { mroot =>
           for {
             qdEdit <- mroot.doc.qdEdit
-            selJd  <- mroot.doc.jdArgs.selectedTag
+            selJd  <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
           } yield {
             qdEditR.PropsVal(
               qdEdit      = qdEdit,

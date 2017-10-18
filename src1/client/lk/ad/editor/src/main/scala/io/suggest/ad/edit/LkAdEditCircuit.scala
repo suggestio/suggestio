@@ -25,6 +25,7 @@ import io.suggest.dev.MSzMults
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
+import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 
 /**
@@ -119,8 +120,8 @@ class LkAdEditCircuit(
                                  (bgColorCont2mdoc: (MDocS, Option[StateOuter_t]) => MDocS) = {
     def __filteredSelTag(mdoc: MDocS) = {
       mdoc.jdArgs
-        .selectedTag
-        .filter(_.jdTagName == jdtName)
+        .selectedTagLoc
+        .filter( IDocTag.treeLocByTypeFilterF(jdtName) )
     }
 
     mDocSRw.zoomRW[Option[MColorPick]] { mdoc =>
@@ -129,7 +130,7 @@ class LkAdEditCircuit(
         mColorCont <- doc2bgColorContF( mdoc )
       } yield {
         MColorPick(
-          colorOpt    = currTag.props1.bgColor,
+          colorOpt    = currTag.getLabel.props1.bgColor,
           colorsState = mdoc.colorsState,
           pickS       = mColorCont.bgColorPick
         )
@@ -141,14 +142,14 @@ class LkAdEditCircuit(
         jdt0     <- __filteredSelTag( mdoc0 )
         mColorAh <- mColorAhOpt
       } yield {
-        val strip2 = jdt0.withProps1(
-          jdt0.props1.withBgColor(
-            mColorAh.colorOpt
+        val strip2 = jdt0.modifyLabel { s0 =>
+          s0.withProps1(
+            s0.props1.withBgColor(
+              mColorAh.colorOpt
+            )
           )
-        )
-        val tpl2 = mdoc0.jdArgs.template
-          .deepUpdateOne(jdt0, strip2 :: Nil)
-          .head
+        }
+        val tpl2 = strip2.toTree
         val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mdoc0.jdArgs.renderArgs.edges) )
 
         val stateOuter2 = for (state <- doc2bgColorContF(mdoc0)) yield {
@@ -179,14 +180,14 @@ class LkAdEditCircuit(
 
   /** Контроллер настройки цвета фона контента. */
   private val qdTagBgColorAh = colorPickAhFactory(
-    _zoomToBgColorPickS[MQdEditS](MJdTagNames.QUILL_DELTA)(_.qdEdit) { _.withQdEdit(_) }
+    _zoomToBgColorPickS[MQdEditS](MJdTagNames.QD_CONTENT)(_.qdEdit) { _.withQdEdit(_) }
   )
 
   private val mPictureAhRW = zoomRW[MPictureAh] { mroot =>
     val mdoc = mroot.doc
     MPictureAh(
       edges       = mdoc.jdArgs.renderArgs.edges,
-      selectedTag = mdoc.jdArgs.selectedTag,
+      selectedTag = mdoc.jdArgs.selectedTagLoc.toLabelOpt,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
       histograms  = mdoc.colorsState.histograms
@@ -196,14 +197,16 @@ class LkAdEditCircuit(
 
     val mdoc1 = mdoc0
       .withJdArgs {
-        // Продублировать обновлённый selected-тег в шаблон и css:
-        val tpl2Opt = for (selJdt <- mPictureAh.selectedTag) yield {
-          mdoc0.jdArgs
-            .template
-            .deepUpdateOne(mdoc0.jdArgs.selectedTag.get, selJdt :: Nil)
-            .head
+        // Пробросить обновлённый selected-тег в шаблон:
+        val tpl2Opt = for {
+          selJdt2    <- mPictureAh.selectedTag
+          selJdtLoc0 <- mdoc0.jdArgs.selectedTagLoc
+          // Пересобирать дерево только если теги различаются.
+          if selJdtLoc0.getLabel !=* selJdt2
+        } yield {
+          selJdtLoc0.setLabel( selJdt2 )
         }
-        val tpl2 = tpl2Opt.getOrElse( mdoc0.jdArgs.template )
+        val tpl2 = tpl2Opt.fold(mdoc0.jdArgs.template)(_.toTree)
 
         // css обновляем только после FastEq, чтобы избежать жирного перерендера без необходимости.
         // TODO Вынести этот код куда-нибудь.
@@ -220,21 +223,13 @@ class LkAdEditCircuit(
           }
         }
 
-        val selPath2 = if (mPictureAh.selectedTag ==* mdoc0.jdArgs.selectedTag) {
-          mdoc0.jdArgs.selPath
-        } else {
-          mPictureAh.selectedTag
-            .flatMap(tpl2.nodeToPath)
-        }
-
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
           template    = tpl2,
           renderArgs  = mdoc0.jdArgs.renderArgs.withEdges(
             mPictureAh.edges
           ),
-          jdCss       = css2,
-          selPath     = selPath2
+          jdCss       = css2
         )
       }
 
@@ -286,10 +281,10 @@ class LkAdEditCircuit(
     val mDocS = mDocSRw.value
 
     for (selTag <- mDocS.jdArgs.selectedTag) {
-      selTag.jdTagName match {
+      selTag.rootLabel.name match {
         case MJdTagNames.STRIP =>
           acc ::= stripBgColorAh
-        case MJdTagNames.QUILL_DELTA =>
+        case MJdTagNames.QD_CONTENT =>
           acc ::= qdTagBgColorAh
         case _ => // do nothing
       }

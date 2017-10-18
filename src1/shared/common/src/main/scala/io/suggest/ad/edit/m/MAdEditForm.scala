@@ -4,6 +4,9 @@ import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.IDocTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
+
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -21,7 +24,7 @@ object MAdEditForm {
 
   /** Поддержка play-json. */
   implicit val MAD_EDIT_FORM_FORMAT: OFormat[MAdEditForm] = (
-    (__ \ Fields.TEMPATE_FN).format[IDocTag] and
+    (__ \ Fields.TEMPATE_FN).format[Tree[IDocTag]] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
     (__ \ Fields.EDGES_FN).format[Iterable[MJdEditEdge]]
   )(apply, unlift(unapply))
@@ -36,6 +39,6 @@ object MAdEditForm {
   * @param edges Эджи с данными для рендера документа.
   */
 case class MAdEditForm(
-                        template    : IDocTag,
+                        template    : Tree[IDocTag],
                         edges       : Iterable[MJdEditEdge]
                       )

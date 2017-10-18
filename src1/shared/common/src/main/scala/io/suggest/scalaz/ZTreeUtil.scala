@@ -1,7 +1,11 @@
 package io.suggest.scalaz
 
+import io.suggest.common.empty.EmptyUtil
+
 import scalaz.{Tree, TreeLoc}
 import japgolly.univeq._
+import play.api.libs.json._
+import play.api.libs.functional.syntax._
 
 /**
   * Suggest.io
@@ -11,6 +15,26 @@ import japgolly.univeq._
   */
 object ZTreeUtil {
 
+  /** Поддержка play-json (обходчик вложенных implicit'ов) */
+  private def _ZTREE_FORMAT[A: Format]: OFormat[Tree[A]] = {
+    implicit var fmt: OFormat[Tree[A]] = null
+    fmt = (
+      (__ \ "r").format[A] and
+      // По идее, implicitly[] дергает именно текущую implicit val fmt, а не ZTREE_FORMAT[].
+      (__ \ "c").lazyFormatNullable( implicitly[Format[Stream[Tree[A]]]] )
+        .inmap[Stream[Tree[A]]](
+          EmptyUtil.opt2ImplEmpty1F( Stream.empty ),
+          { chs => if (chs.isEmpty) None else Some(chs) }
+        )
+    )( Tree.Node.apply(_, _), unlift(Tree.Node.unapply[A]) )
+    fmt
+  }
+
+  /** Поддержка play-json. */
+  implicit def ZTREE_FORMAT[A: Format]: OFormat[Tree[A]] = _ZTREE_FORMAT[A]
+
+  implicit def zTreeUnivEq[A: UnivEq]: UnivEq[Tree[A]] = UnivEq.force
+  implicit def zTreeLocUnivEq[A: UnivEq]: UnivEq[TreeLoc[A]] = UnivEq.force
 
   /** Высокоуровневая утиль для деревьев на базе Scalaz Tree.
     *
@@ -25,23 +49,9 @@ object ZTreeUtil {
       */
     def nodeToPath(el: A)(implicit ue: UnivEq[A]): Option[NodePath_t] = {
       // Найти указанный элемент, а затем пройтись вверх
-      tree
-        .loc
-        .find { node =>
-          node.getLabel ==* el
-        }
-        .map { nodeLoc =>
-          val l0 = nodeLoc.lefts.length
-          // Пройтись вверх до самой макушки.
-          val pathWithTop0 = nodeLoc.parents
-            .iterator
-            .foldLeft[NodePath_t](l0 :: Nil) {
-              case (acc, (pLefts, _, _)) =>
-                pLefts.length :: acc
-            }
-          // Отбросить 0 с нулевого уровня.
-          pathWithTop0.tail
-        }
+      tree.loc
+        .findByLabel(el)
+        .toNodePathOpt
     }
 
 
@@ -57,21 +67,13 @@ object ZTreeUtil {
 
     // Старое API из IDocTag-дерева. Желательно портировать такой код на использование Tree/TreeLoc API напрямую.
 
-    /** Итератор текущего элемента и всех его под-элементов со всех под-уровней. */
-    def deepIter: Iterator[A] = {
-      Iterator(tree.rootLabel) ++ deepChildrenIter
-    }
-
     /** Итератор всех дочерних элементов со всех под-уровней. */
-    def deepChildrenIter: Iterator[A] = {
-      tree
-        .subForest
-        .iterator
-        .flatMap(_.deepChildrenIter)
+    def deepChildren: Stream[A] = {
+      tree.flatten.tail
     }
 
     def contains(jdt: A): Boolean = {
-      deepChildrenIter.contains( jdt )
+      tree.flatten.contains( jdt )
     }
 
     def deepMap(f: A => A)(implicit ue: UnivEq[A]): Tree[A] = {
@@ -82,7 +84,6 @@ object ZTreeUtil {
     }
 
   }
-
 
   /** Цикл погружения в TreeLoc и получения оттуда.
     *
@@ -104,11 +105,55 @@ object ZTreeUtil {
   }
 
 
+
+  implicit class TreeLocOps[A](private val treeLoc: TreeLoc[A]) extends AnyVal {
+
+    def toNodePath: NodePath_t = {
+      val l0 = treeLoc.lefts.length
+      // Пройтись вверх до самой макушки.
+      val pathWithTop0 = treeLoc.parents
+        .iterator
+        .foldLeft[NodePath_t](l0 :: Nil) {
+          case (acc, (pLefts, _, _)) =>
+            pLefts.length :: acc
+        }
+      // Отбросить 0 с нулевого уровня.
+      pathWithTop0.tail
+    }
+
+
+    def findByLabel(a: A)(implicit ue: UnivEq[A]): Option[TreeLoc[A]] = {
+      treeLoc
+        .find { node =>
+          node.getLabel ==* a
+        }
+    }
+
+  }
+
+
   /** Доп.утиль для инстансов Option[TreeLoc]. */
   implicit class TreeLocOptOps[A](private val treeLocOpt: Option[TreeLoc[A]]) extends AnyVal {
 
     /** Сконвертить опциональный TreeLoc в опциональный элемент дерева. */
     def toLabelOpt: Option[A] = treeLocOpt.map(_.getLabel)
+
+    def containsLabel(a: A)(implicit ue: UnivEq[A]): Boolean = {
+      treeLocOpt.exists( _.getLabel ==* a )
+    }
+
+    def toNodePathOpt: Option[NodePath_t] = {
+      treeLocOpt.map(_.toNodePath)
+    }
+
+  }
+
+
+  implicit class TreeOptOps[A](private val treeOpt: Option[Tree[A]]) extends AnyVal {
+
+    def containsLabel(a: A)(implicit ue: UnivEq[A]): Boolean = {
+      treeOpt.exists(_.rootLabel ==* a)
+    }
 
   }
 

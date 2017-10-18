@@ -1,8 +1,11 @@
 package io.suggest.jd.tags.qd
 
 import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.IDocTag.Implicits._
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
+
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -22,11 +25,12 @@ object QdJsUtil {
     * Возможно, такой агрессивный режим приведёт к невозможности использовать закрашенные
     * пробелы для рисования прямоугольников поверх фона.
     */
-  def isEmpty(qd: IDocTag, edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Boolean = {
+  def isEmpty(qdTree: Tree[IDocTag], edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Boolean = {
     // Обычно, пустая дельта выглядит так: {"ops":[{"insert":"\n"}]}
     // Но мы будем анализировать весь список: допускаем целый список инзертов с итоговым пустым текстом.
-    qd.props1.qdOps.isEmpty || {
-      qd.deepEdgesUidsIter
+    qdTree.qdOpsIter.isEmpty || {
+      qdTree
+        .deepEdgesUidsIter
         .flatMap { edgesMap.get }
         // Допускаем, что любая пустая дельта может состоять из прозрачного мусора.
         .forall( isEdgeDataEmpty )

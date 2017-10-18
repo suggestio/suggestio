@@ -1,14 +1,9 @@
 package io.suggest.jd.tags.qd
 
-import io.suggest.color.MColorData
 import io.suggest.jd.MJdEdgeId
-import io.suggest.jd.tags.IJdElement
-import io.suggest.primo.SetVal
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -52,17 +47,12 @@ case class MQdOp(
                   attrsLine  : Option[MQdAttrsLine]   = None,
                   attrsEmbed : Option[MQdAttrsEmbed]  = None
                )
-  extends IJdElement
 {
 
   def withAttrsText(attrsText: Option[MQdAttrsText]) = copy(attrsText = attrsText)
 
 
-  override def deepElMap(f: (IJdElement) => IJdElement): MQdOp = {
-    f(this)
-      .asInstanceOf[MQdOp]
-  }
-
+  /*
   override def bgImgEdgeId = edgeInfo
 
   override def setBgColor(bgColor: Option[MColorData]): MQdOp = {
@@ -75,10 +65,7 @@ case class MQdOp(
       )
     )
   }
-
-  override def toScalazTree: Tree[IJdElement] = {
-    Tree.Leaf(this)
-  }
+  */
 
 }
 

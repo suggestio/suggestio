@@ -55,7 +55,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     jdCssArgs
       .templates
       .iterator
-      .flatMap( _.deepIter )
+      .flatMap( _.flatten )
   }
 
 
@@ -69,6 +69,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .toIndexedSeq
 
     val stripsDomain = new Domain.OverSeq( strips )
+    //println( _allJdTagsIter.mkString(", ") )
 
     styleF(stripsDomain) { strip =>
       // Стиль размеров блока-полосы.
@@ -110,10 +111,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   /** Стили для элементов, отпозиционированных абсолютно. */
   val absPosStyleF = {
     val absPosDomain = {
-      val tags = jdCssArgs
-        .templates
-        .iterator
-        .flatMap(_.deepIter)
+      val tags = _allJdTagsIter
         .filter(_.props1.topLeft.nonEmpty)
         .toIndexedSeq
 
@@ -135,7 +133,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   private def _qdOpsIter: Iterator[MQdOp] = {
     _allJdTagsIter
-      .flatMap(_.props1.qdOps)
+      .flatMap(_.qdProps)
   }
 
 

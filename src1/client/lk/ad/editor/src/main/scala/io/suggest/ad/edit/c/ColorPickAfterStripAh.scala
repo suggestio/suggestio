@@ -6,6 +6,7 @@ import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.MJdTagNames
 import japgolly.univeq._
 import io.suggest.ueq.ReactUnivEqUtil._
+import io.suggest.scalaz.ZTreeUtil._
 
 /**
   * Suggest.io
@@ -23,8 +24,8 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
 
       val needTransformOpt = for {
         // Если выделен стрип, имеющий фоновое изображение...
-        selJdt <- v0.jdArgs.selectedTag
-        if selJdt.jdTagName ==* MJdTagNames.STRIP &&
+        selJdt <- v0.jdArgs.selectedTagLoc.toLabelOpt
+        if selJdt.name ==* MJdTagNames.STRIP &&
            selJdt.props1.bgImg.nonEmpty
         // и открыт стрип-редактор...
         stripEd <- v0.stripEd
