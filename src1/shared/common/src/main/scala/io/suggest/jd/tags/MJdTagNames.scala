@@ -26,7 +26,9 @@ object MJdTagNames extends StringEnum[MJdTagName] {
   /** "Полоса" карточки, т.е. элемент вертикальной разбивки документа наподобии
     * абзаца или страницы.
     */
-  case object STRIP extends MJdTagName("s")
+  case object STRIP extends MJdTagName("s") {
+    override def isBgImgAllowed = true
+  }
 
   /** Тег, хранящий текст, отформатированный через quill-editor. */
   case object QD_CONTENT extends MJdTagName("q")
@@ -49,6 +51,9 @@ object MJdTagNames extends StringEnum[MJdTagName] {
 sealed abstract class MJdTagName(override val value: String) extends StringEnumEntry {
 
   override final def toString = value
+
+  /** Допустимо ли использовать фоновое изображение для указанного тега? */
+  def isBgImgAllowed: Boolean = false
 
 }
 

@@ -53,6 +53,7 @@ class ColorsSuggestR {
     def render(p: Props): VdomElement = {
       p.value.whenDefinedEl { props =>
         <.div(
+          ^.`class` := Css.Overflow.HIDDEN,
           // Чтобы не было DocBodyClick, который сбрасывает поворот картинки.
           ^.onClick ==> ReactCommonUtil.stopPropagationCB,
 

@@ -6,11 +6,10 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.v.LkAdEditCss
-import io.suggest.ad.edit.v.edit.{ColorPickR, ColorsSuggestR, PictureR}
-import io.suggest.color.MHistogram
+import io.suggest.ad.edit.v.edit.ColorPickR
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.JdTag
-import japgolly.scalajs.react.{BackendScope, ScalaComponent}
+import japgolly.scalajs.react.{BackendScope, PropsChildren, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 
@@ -30,32 +29,24 @@ class StripEditR(
                   val plusMinusControlsR    : PlusMinusControlsR,
                   colorPickR                : ColorPickR,
                   css                       : LkAdEditCss,
-                  deleteStripBtnR           : DeleteStripBtnR,
-                  val pictureR              : PictureR,
-                  val colorsSuggestR        : ColorsSuggestR
+                  deleteStripBtnR           : DeleteStripBtnR
                 ) {
 
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
   import MStripEdS.MStripEdSFastEq
   import MColorPick.MColorPickFastEq
-  import pictureR.PictureRPropsValFastEq
-  import colorsSuggestR.ColorsSuggestPropsValFastEq
 
   case class PropsVal(
                        strip        : JdTag,
                        edS          : MStripEdS,
-                       colorsState  : MColorsState,
-                       bgImgSrcOpt  : Option[String],
-                       bgImgHist    : Option[MHistogram]
+                       colorsState  : MColorsState
                      )
 
   implicit object StripEditRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.strip ===* b.strip) &&
         (a.edS ===* b.edS) &&
-        (a.colorsState ===* b.colorsState) &&
-        (a.bgImgSrcOpt ===* b.bgImgSrcOpt) &&
-        (a.bgImgHist ===* b.bgImgHist)
+        (a.colorsState ===* b.colorsState)
     }
   }
 
@@ -66,14 +57,12 @@ class StripEditR(
                               heightPropsOptC   : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               widthPropsOptC    : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               stripEdSOptC      : ReactConnectProxy[Option[MStripEdS]],
-                              bgColorPropsOptC  : ReactConnectProxy[Option[MColorPick]],
-                              bgPicutureOptC    : ReactConnectProxy[Option[pictureR.PropsVal]],
-                              colSuggPropsOptC  : ReactConnectProxy[Option[colorsSuggestR.PropsVal]]
+                              bgColorPropsOptC  : ReactConnectProxy[Option[MColorPick]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
 
-    def render(p: Props, s: State): VdomElement = {
+    def render(p: Props, s: State, chs: PropsChildren): VdomElement = {
       p().whenDefinedEl { _ =>
         <.div(
 
@@ -92,17 +81,13 @@ class StripEditR(
             )
           },
 
-          // Предлагаемые цвета на основе гистограммы фоновой картинки.
-          s.colSuggPropsOptC { colorsSuggestR.apply },
+          chs,
 
           <.br,
           <.br,
 
           // Кнопка удаления текущего блока.
-          s.stripEdSOptC { deleteStripBtnR.apply },
-
-          // Загрузка фоновой картинки
-          s.bgPicutureOptC { pictureR.apply }
+          s.stripEdSOptC { deleteStripBtnR.apply }
 
         )
       }
@@ -154,36 +139,14 @@ class StripEditR(
               pickS       = props.edS.bgColorPick
             )
           }
-        },
-
-        bgPicutureOptC = propsOptProxy.connect { propsOpt =>
-          for {
-            props     <- propsOpt
-          } yield {
-            pictureR.PropsVal(
-              imgSrcOpt = props.bgImgSrcOpt
-            )
-          }
-        },
-
-        colSuggPropsOptC = propsOptProxy.connect { propsOpt =>
-          for {
-            props <- propsOpt
-            hist  <- props.bgImgHist
-          } yield {
-            colorsSuggestR.PropsVal(
-              titleMsgCode = MsgCodes.`Suggested.bg.colors`,
-              colors       = hist.sorted
-            )
-          }
         }
 
       )
     }
-    .renderBackend[Backend]
+    .renderBackendWithChildren[Backend]
     .build
 
 
-  def apply(stripOptProxy: Props) = component( stripOptProxy )
+  def apply(stripOptProxy: Props)(children: VdomNode*) = component( stripOptProxy )(children: _*)
 
 }

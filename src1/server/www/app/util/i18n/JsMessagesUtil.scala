@@ -255,6 +255,8 @@ class JsMessagesUtil @Inject() (
       MC.`Cannot.checksum.file` ::
       MC.`Suggested.bg.colors` ::
       MC.`Scale` ::
+      MC.`Preparing` ::
+      MC.`Uploading.file` ::
       Nil
   }
 

@@ -950,4 +950,6 @@ Apply=Применить
 Cannot.checksum.file.0=Не удалётся рассчитать контрольную сумму файла {0}
 Suggested.bg.colors=Предлагаемые цвета фона
 Scale=Масштаб
+Preparing=Подготовка
+Uploading.file=Загрузка файла
 

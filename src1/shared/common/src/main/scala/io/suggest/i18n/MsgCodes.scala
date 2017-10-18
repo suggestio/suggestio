@@ -207,4 +207,7 @@ object MsgCodes {
   /** Непереводится на разные языки, однако бывает нужно. */
   val `TODO` = "TODO"
 
+  val `Preparing`                   = "Preparing"
+  val `Uploading.file`              = "Uploading.file"
+
 }

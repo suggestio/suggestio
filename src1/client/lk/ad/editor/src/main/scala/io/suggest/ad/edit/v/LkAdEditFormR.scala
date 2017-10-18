@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
-import io.suggest.ad.edit.v.edit.{AddR, QdEditR, ScaleR}
+import io.suggest.ad.edit.v.edit.{AddR, PictureR, QdEditR, ScaleR}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -34,7 +34,8 @@ class LkAdEditFormR(
                      lkAdEditCss        : LkAdEditCss,
                      quillCssFactory    : => QuillCss,
                      val qdEditR        : QdEditR,
-                     val scaleR         : ScaleR
+                     val scaleR         : ScaleR,
+                     val pictureR       : PictureR
                    ) {
 
   import MAddS.MAddSFastEq
@@ -42,6 +43,7 @@ class LkAdEditFormR(
   import qdEditR.QdEditRPropsValFastEq
   import stripEditR.StripEditRPropsValFastEq
   import scaleR.ScaleRPropsValFastEq
+  import pictureR.PictureRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -51,6 +53,7 @@ class LkAdEditFormR(
                               jdCssArgsC        : ReactConnectProxy[JdCss],
                               addC              : ReactConnectProxy[Option[MAddS]],
                               stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
+                              picPropsOptC      : ReactConnectProxy[Option[pictureR.PropsVal]],
                               qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
                               scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]]
                             )
@@ -106,7 +109,12 @@ class LkAdEditFormR(
             LCSS.editorsCont,
 
             // Редактор strip'а
-            s.stripEdOptC { stripEditR.apply },
+            s.stripEdOptC { stripPropsOptProxy =>
+              stripEditR(stripPropsOptProxy)(
+                // Управление картинкой, если доступно:
+                s.picPropsOptC { pictureR.apply }
+              )
+            },
 
             // Редактор текста
             s.qdEditOptC { qdEditR.apply },
@@ -146,26 +154,38 @@ class LkAdEditFormR(
         stripEdOptC = p.connect { mroot =>
           for {
             stripEd <- mroot.doc.stripEd
-            selJd   <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
+            selJdt  <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
           } yield {
-            val bgEdge = selJd.props1
+            stripEditR.PropsVal(
+              strip         = selJdt,
+              edS           = stripEd,
+              colorsState   = mroot.doc.colorsState
+            )
+          }
+        }( OptFastEq.Wrapped ),
+
+        picPropsOptC = p.connect { mroot =>
+          for {
+            selJdt   <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
+            if selJdt.name.isBgImgAllowed
+          } yield {
+            val bgEdgeOpt = selJdt.props1
               .bgImg
               .flatMap { ei =>
                 mroot.doc.jdArgs.renderArgs.edges
                   .get(ei.imgEdge.edgeUid)
               }
-            stripEditR.PropsVal(
-              strip         = selJd,
-              edS           = stripEd,
-              colorsState   = mroot.doc.colorsState,
-              bgImgSrcOpt   = bgEdge.flatMap { _.imgSrcOpt },
-              bgImgHist = {
-                bgEdge
-                  .flatMap(_.jdEdge.fileSrv)
-                  .flatMap { fileSrv =>
-                    mroot.doc.colorsState.histograms.get(fileSrv.nodeId)
-                  }
-              }
+            pictureR.PropsVal(
+              imgSrcOpt = bgEdgeOpt
+                .flatMap(_.imgSrcOpt),
+              uploadState = bgEdgeOpt
+                .flatMap(_.fileJs)
+                .flatMap(_.upload),
+              histogram = bgEdgeOpt
+                .flatMap(_.jdEdge.fileSrv)
+                .flatMap { fileSrv =>
+                  mroot.doc.colorsState.histograms.get(fileSrv.nodeId)
+                }
             )
           }
         }( OptFastEq.Wrapped ),
