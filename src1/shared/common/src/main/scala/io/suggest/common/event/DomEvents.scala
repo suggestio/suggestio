@@ -28,4 +28,6 @@ object DomEvents
 
   def BEFORE_UNLOAD = BEFORE + UNLOAD
 
+  def SCROLL = "scroll"
+
 }

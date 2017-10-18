@@ -33,6 +33,7 @@ class PictureR(
               ) {
 
   import MFileUploadS.MFileUploadSFastEq
+  import colorsSuggestR.ColorsSuggestPropsValFastEq
 
   case class PropsVal(
                        imgSrcOpt      : Option[String],
@@ -205,7 +206,7 @@ class PictureR(
               colors       = hist.sorted
             )
           }
-        }
+        }( OptFastEq.Wrapped )
 
       )
     }

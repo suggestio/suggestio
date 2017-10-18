@@ -2,7 +2,7 @@ package io.suggest.ad.edit
 
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
-import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, MDocS}
+import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, MDocS, MLayoutS}
 import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
 import io.suggest.primo.id.IId
@@ -27,6 +27,7 @@ import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
+import org.scalajs.dom
 
 /**
   * Suggest.io
@@ -56,6 +57,7 @@ class LkAdEditCircuit(
 
     MAeRoot(
       conf = mFormInit.conf,
+
       doc  = {
         val jdConf = MJdConf(
           isEdit  = true,
@@ -81,9 +83,15 @@ class LkAdEditCircuit(
             conf       = jdConf
           )
         )
-      }
+      },
+
+      layout = MLayoutS(
+        // TODO Высчитывать начальную координату на основе текущих данных вертикального скрола.
+        rightPanelY = None
+      )
     )
   }
+
 
   private val rootRW = zoomRW(m => m) { (_, mroot2) => mroot2 }
   /** Используется извне, в init например. */
@@ -93,7 +101,7 @@ class LkAdEditCircuit(
 
   private val uploadApi = new UploadApiHttp(confRO)
 
-  private val api = new LkAdEditApiHttp( confRO, uploadApi )
+  private val adEditApi = new LkAdEditApiHttp( confRO, uploadApi )
 
   private val ctxIdRO = confRO.zoom(_.ctxId)
   private val wsChannelApi = new WsChannelApiHttp(ctxIdRO)
@@ -104,8 +112,12 @@ class LkAdEditCircuit(
 
   private val wsPoolRW = zoomRW(_.wsPool) { _.withWsPool(_) }
 
+  private val layoutRW = zoomRW(_.layout) { _.withLayout(_) }
+
   //private val delayerRW = zoomRW( _.delayer ) { _.withDelayer(_) }
 
+
+  private val layoutAh = new LayoutAh( layoutRW, mDocSRw )
 
   /** Сборка RW-зума до опционального инстанса MColorPick.
     *
@@ -256,7 +268,7 @@ class LkAdEditCircuit(
 
   /** Контроллер изображений. */
   private val pictureAh = new PictureAh(
-    api         = api,
+    api         = adEditApi,
     uploadApi   = uploadApi,
     modelRW     = mPictureAhRW
   )
@@ -293,6 +305,9 @@ class LkAdEditCircuit(
     // Управление картинками может происходить в фоне от всех, в т.ч. во время upload'а.
     acc ::= pictureAh
 
+    // Управление интерфейсом -- ближе к голове.
+    acc ::= layoutAh
+
     // В голове -- обработчик всех основных операций на документом.
     acc ::= docAh
 
@@ -305,6 +320,8 @@ class LkAdEditCircuit(
 
 
   // Финальные действа: подписаться на события, так желаемые контроллерами.
+  layoutAh.subscribeForScroll( dom.window, this )
+
   wsPoolAh.initGlobalEvents()
 
 }

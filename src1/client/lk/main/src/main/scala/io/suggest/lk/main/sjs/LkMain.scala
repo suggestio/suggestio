@@ -16,9 +16,12 @@ import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.log.Log
+import io.suggest.sjs.common.msg.ErrorMsgs
 import io.suggest.sjs.leaflet.Leaflet
 import io.suggest.xadv.ext.js.form.FormEventsInitRouter
 import io.suggest.xadv.ext.js.runner.c.RunnerInitRouter
+
+import scala.scalajs.js
 
 /**
  * Suggest.io
@@ -30,14 +33,25 @@ object LkMain extends Log {
 
   /** Запуск скрипта на исполнение. Нужно произвести направленную инициализацию. */
   def main(args: Array[String]): Unit = {
-    Leaflet.noConflict()
-
-    val initFut = new LkInitRouter()
-      .init()
-
-    for (ex <- initFut.failed) {
-      LOG.error(msg = "Init failed", ex = ex)
+    try {
+      Leaflet.noConflict()
+    } catch {
+      case ex: Throwable =>
+        LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, ex, Leaflet )
     }
+    println("L.noConflict() done. L = " + js.Dynamic.global.L.toString )
+
+    try {
+      val initFut = new LkInitRouter()
+        .init()
+      for (ex <- initFut.failed) {
+        LOG.error(msg = "Init failed", ex = ex)
+      }
+    } catch {
+      case ex: Throwable =>
+        LOG.error( ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, js.Dynamic.global.L.toString )
+    }
+
   }
 
 }

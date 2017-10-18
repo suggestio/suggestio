@@ -796,7 +796,7 @@ class PictureAh[M](
 
 
 
-  def _findEdgeByIdOrBlobUrl(edges: Map[EdgeUid_t, MEdgeDataJs], edgeUid: EdgeUid_t, blobUrl: String): Option[MEdgeDataJs] = {
+  private def _findEdgeByIdOrBlobUrl(edges: Map[EdgeUid_t, MEdgeDataJs], edgeUid: EdgeUid_t, blobUrl: String): Option[MEdgeDataJs] = {
     val blobUrlFilterF = { e: MEdgeDataJs =>
       e.fileJs.exists(_.blobUrl.contains( blobUrl ))
     }

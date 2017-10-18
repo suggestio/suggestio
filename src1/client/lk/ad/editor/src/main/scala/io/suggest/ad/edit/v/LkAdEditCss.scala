@@ -2,7 +2,6 @@ package io.suggest.ad.edit.v
 
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
-import io.suggest.font.MFonts
 
 import scalacss.internal.mutable.StyleSheet
 
@@ -60,15 +59,21 @@ class LkAdEditCss extends StyleSheet.Inline {
     val outerCont = _classNameStyle( _PREFIX )
 
     private def _PREVIEW_OUTER_CONT_PREFIX = _PREFIX + "__preview"
-    val previewOuterCont = _classNameStyle( _PREVIEW_OUTER_CONT_PREFIX )
+    val previewOuterCont = {
+      val px5 = 5.px
+      style(
+        addClassNames( _PREVIEW_OUTER_CONT_PREFIX, Css.Overflow.HIDDEN ),
+        width.auto,
+        padding( px5, 30.px, px5, px5 )
+      )
+    }
 
     val previewInnerCont = _classNameStyle( _PREVIEW_OUTER_CONT_PREFIX + "_container" )
 
     val editorsCont = style(
       addClassName( _PREFIX + "__editor" ),
-      position.fixed,
-      minHeight( (MFonts.values.size * 30).px ),
-      left( 400.px )
+      maxHeight( 67.vh ),
+      overflow.auto
     )
 
   }

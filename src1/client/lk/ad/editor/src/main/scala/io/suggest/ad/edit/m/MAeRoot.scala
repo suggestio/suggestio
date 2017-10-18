@@ -19,6 +19,7 @@ object MAeRoot {
     override def eqv(a: MAeRoot, b: MAeRoot): Boolean = {
       (a.conf ===* b.conf) &&
         (a.doc ===* b.doc) &&
+        (a.layout ===* b.layout) &&
         (a.popups ===* b.popups) &&
         (a.wsPool ===* b.wsPool)
     }
@@ -35,21 +36,22 @@ object MAeRoot {
   * @param doc Состояние редактирования документа. Там почти всё и живёт.
   * @param popups Состояние попапов.
   * @param wsPool Пул коннекшенов.
+  * @param layout Данные состояния layout'а формы редактирования.
   */
 case class MAeRoot(
                     conf        : MAdEditFormConf,
                     doc         : MDocS,
+                    layout      : MLayoutS,
                     popups      : MAePopupsS        = MAePopupsS.empty,
                     wsPool      : MWsPoolS          = MWsPoolS.empty,
-                    //delayer   : MDelayerS         = MDelayerS.default
                   ) {
 
   /** Экспорт данных формы. */
   def toForm: MAdEditForm = ???
 
   def withDoc(doc: MDocS)                     = copy(doc = doc)
+  def withLayout(layout: MLayoutS)            = copy(layout = layout)
   def withPopups(popups: MAePopupsS)          = copy(popups = popups)
   def withWsPool(wsPool: MWsPoolS)            = copy(wsPool = wsPool)
-  //def withDelayer(delayer: MDelayerS)         = copy(delayer = delayer)
 
 }

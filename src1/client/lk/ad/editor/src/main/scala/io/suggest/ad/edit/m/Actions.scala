@@ -124,3 +124,7 @@ case class HandleNewHistogramInstalled(nodeId: String) extends ILkEditAction
 
 /** Сигнал изменения масштаба рендера. */
 case class SetScale(szMult: MSzMult) extends ILkEditAction
+
+
+/** Сигнал вертикального скроллинга. */
+case class HandleVScroll(y: Double) extends ILkEditAction

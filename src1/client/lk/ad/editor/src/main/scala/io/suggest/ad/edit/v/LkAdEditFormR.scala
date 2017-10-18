@@ -55,7 +55,8 @@ class LkAdEditFormR(
                               stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
                               picPropsOptC      : ReactConnectProxy[Option[pictureR.PropsVal]],
                               qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
-                              scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]]
+                              scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]],
+                              rightYOptC        : ReactConnectProxy[Option[Int]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -105,29 +106,35 @@ class LkAdEditFormR(
           ),
 
           // Рендер редакторов
-          <.div(
-            LCSS.editorsCont,
+          s.rightYOptC { rightYOptProxy =>
+            <.div(
+              LCSS.editorsCont,
 
-            // Редактор strip'а
-            s.stripEdOptC { stripPropsOptProxy =>
-              stripEditR(stripPropsOptProxy)(
-                // Управление картинкой, если доступно:
-                s.picPropsOptC { pictureR.apply }
-              )
-            },
+              rightYOptProxy.value.whenDefined { rightY =>
+                ^.paddingTop := rightY.px
+              },
 
-            // Редактор текста
-            s.qdEditOptC { qdEditR.apply },
+              // Редактор strip'а
+              s.stripEdOptC { stripPropsOptProxy =>
+                stripEditR(stripPropsOptProxy)(
+                  // Управление картинкой, если доступно:
+                  s.picPropsOptC { pictureR.apply }
+                )
+              },
 
-            <.br,
+              // Редактор текста
+              s.qdEditOptC { qdEditR.apply },
 
-            // Форма добавления новых элементов.
-            s.addC { addR.apply },
+              <.br,
 
-            // Селектор масштаба карточки.
-            s.scalePropsOptC { scaleR.apply }
+              // Форма добавления новых элементов.
+              s.addC { addR.apply },
 
-          )
+              // Селектор масштаба карточки.
+              s.scalePropsOptC { scaleR.apply }
+
+            )
+          }
 
         )
       )
@@ -212,7 +219,11 @@ class LkAdEditFormR(
             )
             Some(propsVal): Option[scaleR.PropsVal]
           }( OptFastEq.Wrapped )
-        }
+        },
+
+        rightYOptC = p.connect { mroot =>
+          mroot.layout.rightPanelY
+        }( OptFastEq.PlainVal )
 
       )
     }

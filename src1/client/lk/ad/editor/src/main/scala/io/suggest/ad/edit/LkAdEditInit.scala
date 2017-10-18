@@ -44,7 +44,7 @@ trait LkAdEditInit extends InitRouter {
     // Инициализировать circuit
     val circuit = modules.lkAdEditCircuit
 
-    // Инициализировать quill для редактора карточе
+    // Инициализировать quill для редактора карточек
     modules.quillSioModule.quillInit.forAdEditor()
 
     val rootRO = circuit.rootRO

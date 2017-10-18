@@ -2,10 +2,10 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.scalaz.NodePath_t
 import io.suggest.ueq.UnivEqUtil._
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 import io.suggest.scalaz.ZTreeUtil._
 
 import scalaz.{Tree, TreeLoc}
@@ -54,7 +54,7 @@ case class MJdArgs(
                   ) {
 
   def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
-  def withTemplate(template: Tree[JdTag])         = copy(template = template)
+  def withTemplate(template: Tree[JdTag])           = copy(template = template)
   def withRenderArgs(renderArgs: MJdRenderArgs)     = copy(renderArgs = renderArgs)
   def withConf(conf: MJdConf)                       = copy(conf = conf)
   def withSelPath(selPath: Option[NodePath_t])      = copy(selPath = selPath)
@@ -73,6 +73,19 @@ case class MJdArgs(
   /** Аналог selectedTagLoc, но для перетаскиваемого тега. */
   lazy val draggingTagLoc: Option[TreeLoc[JdTag]] = {
     dnd.jdt.flatMap( template.pathToNode )
+  }
+
+  /** Вычислить высоту текущего шаблона. Используется при реакции на скроллинг. */
+  lazy val templateHeightCssPx: Int = {
+    template
+      // Считаем стрипы только на первом уровне.
+      .subForest
+      .iterator
+      .map(_.rootLabel)
+      .filter { _.name ==* MJdTagNames.STRIP }
+      .flatMap(_.props1.bm)
+      .map(_.height)
+      .sum
   }
 
 }
