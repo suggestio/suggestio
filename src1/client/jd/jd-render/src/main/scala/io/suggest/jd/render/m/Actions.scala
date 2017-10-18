@@ -15,14 +15,8 @@ import io.suggest.spa.DAction
 sealed trait IJdAction extends DAction
 
 
-/** Клик по какому-то элементу json-документа. */
-sealed trait IJdTagClick extends IJdAction {
-  def jdTag: IDocTag
-}
-
-
 /** Клик по стрипу. */
-case class JdTagClick( override val jdTag: IDocTag ) extends IJdTagClick
+case class JdTagSelect(jdTag: IDocTag ) extends IJdAction
 
 
 /** Начато перетаскивание тега. */

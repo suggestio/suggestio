@@ -172,7 +172,7 @@ class DocEditAh[M](
 
 
     // Клик по элементу карточки.
-    case m: IJdTagClick =>
+    case m: JdTagSelect =>
       val v0 = value
       if ( v0.jdArgs.selectedTag.containsLabel(m.jdTag) ) {
         // Бывают повторные щелчки по уже выбранным элементам, это нормально.
@@ -483,7 +483,16 @@ class DocEditAh[M](
             )
           )
         )
-        updated( v2 )
+        // Если запускается перетаскивание тега, который не является текущим, то надо "выбрать" таскаемый тег.
+        if ( v0.jdArgs.selectedTagLoc.toLabelOpt contains m.jdTag ) {
+          // Текущий тег перетаскивается, всё ок.
+          updated( v2 )
+        } else {
+          // Активировать текущий тег
+          val fx = Effect.action( JdTagSelect(m.jdTag) )
+          updated( v2, fx )
+        }
+
       }
 
 

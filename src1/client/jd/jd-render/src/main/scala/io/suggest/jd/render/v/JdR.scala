@@ -74,7 +74,7 @@ class JdR extends Log {
     private def jdTagClick(jdt: IDocTag)(e: ReactMouseEvent): Callback = {
       // Если не сделать stopPropagation, то наружный strip перехватит клик
       e.stopPropagationCB >>
-        dispatchOnProxyScopeCB($, JdTagClick(jdt) )
+        dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
     }
 
 
