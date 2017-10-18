@@ -4,8 +4,8 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.tags.IDocTag
-import io.suggest.jd.tags.IDocTag.Implicits._
+import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.n2.edge.MEdgeDataJs
@@ -41,7 +41,7 @@ import scalaz.Tree
   */
 class QdRrrHtml(
                  jdArgs       : MJdArgs,
-                 qdTag        : Tree[IDocTag],
+                 qdTag        : Tree[JdTag],
                  imgEdgeMods  : Option[MEdgeDataJs => TagMod] = None
                ) {
 

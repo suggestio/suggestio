@@ -12,10 +12,10 @@ import scalaz.{Show, Tree}
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 18.08.17 21:52
-  * Description: Тесты для древовидной рекурсивной модели [[IDocTag]].
+  * Description: Тесты для древовидной рекурсивной модели [[JdTag]].
   */
 // Надо как-то это разрулить наверное...
-object IDocTagSpec extends SimpleTestSuite {
+object JdTagSpec extends SimpleTestSuite {
 
   /** Тестирование сериализации и десериализации переданного объекта.
     *
@@ -23,7 +23,7 @@ object IDocTagSpec extends SimpleTestSuite {
     * @param jsonFmt play JSON formatter.
     * @tparam T Тип тестируемого значения.
     */
-  private def _writeReadMatchTest[T <: IDocTag](v: Tree[T])(implicit jsonFmt: OFormat[T], show: Show[T]): Unit = {
+  private def _writeReadMatchTest[T <: JdTag](v: Tree[T])(implicit jsonFmt: OFormat[T], show: Show[T]): Unit = {
     val treeFmt = implicitly[OFormat[Tree[T]]]
     val jsonStr = treeFmt.writes(v).toString()
     val jsRes   = treeFmt.reads( Json.parse( jsonStr ) )
@@ -47,7 +47,7 @@ object IDocTagSpec extends SimpleTestSuite {
 
   test("JSON: Empty document") {
     val doc = Tree.Leaf(
-      IDocTag.document
+      JdTag.document
     )
     _writeReadMatchTest( doc )
   }
@@ -55,12 +55,12 @@ object IDocTagSpec extends SimpleTestSuite {
 
   test("JSON: Simple Document( Strip(PlainPayload()) )") {
     val doc = Tree.Node(
-      IDocTag.document,
+      JdTag.document,
       Stream(
         Tree.Node(
-          IDocTag.strip( bm300x140 ),
+          JdTag.strip( bm300x140 ),
           Stream(
-            IDocTag.edgeQdTree(1, coord1)
+            JdTag.edgeQdTree(1, coord1)
           )
         )
       )
@@ -71,21 +71,21 @@ object IDocTagSpec extends SimpleTestSuite {
 
   test("JSON: Document with two strips, each with several children") {
     val doc = Tree.Node(
-      IDocTag.document,
+      JdTag.document,
       Stream(
         Tree.Node(
-          IDocTag.strip( bm300x140 ),
+          JdTag.strip( bm300x140 ),
           Stream(
-            IDocTag.edgeQdTree(2, coord1),
-            IDocTag.edgeQdTree(4, coord2)
+            JdTag.edgeQdTree(2, coord1),
+            JdTag.edgeQdTree(4, coord2)
           )
         ),
         Tree.Node(
-          IDocTag.strip( bm300x300 ),
+          JdTag.strip( bm300x300 ),
           Stream(
-            IDocTag.edgeQdTree(5, coord1),
-            IDocTag.edgeQdTree(1, coord2),
-            IDocTag.edgeQdTree(2, coord3)
+            JdTag.edgeQdTree(5, coord1),
+            JdTag.edgeQdTree(1, coord2),
+            JdTag.edgeQdTree(2, coord3)
           )
         )
       )
@@ -96,12 +96,12 @@ object IDocTagSpec extends SimpleTestSuite {
 
   test("JSON: 3-level document tree with inner children") {
     val doc = Tree.Node(
-      IDocTag.document,
+      JdTag.document,
       Stream(
         Tree.Node(
-          IDocTag.strip( bm300x140 ),
+          JdTag.strip( bm300x140 ),
           Stream(
-            IDocTag.edgeQdTree(2, coord1)
+            JdTag.edgeQdTree(2, coord1)
               .loc
               .modifyLabel { jdt =>
                 jdt.withProps1(
@@ -110,13 +110,13 @@ object IDocTagSpec extends SimpleTestSuite {
               }
               .toTree,
             //_picture(555),
-            IDocTag.edgeQdTree(4, coord2)
+            JdTag.edgeQdTree(4, coord2)
           )
         ),
         Tree.Node(
-          IDocTag.strip( bm300x300 ),
+          JdTag.strip( bm300x300 ),
           Stream(
-            IDocTag.edgeQdTree(5, coord3)
+            JdTag.edgeQdTree(5, coord3)
               .loc
               .modifyLabel { jdt =>
                 jdt.withProps1(
@@ -124,7 +124,7 @@ object IDocTagSpec extends SimpleTestSuite {
                 )
               }
               .toTree,
-            IDocTag.edgeQdTree(2, coord1)
+            JdTag.edgeQdTree(2, coord1)
           )
         )
       )

@@ -2,7 +2,7 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.jd.render.v.JdCss
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.JdTag
 import io.suggest.scalaz.NodePath_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -45,7 +45,7 @@ object MJdArgs {
   * @param dnd Состояние драг-н-дропа, который может прийти сюда из неизвестности.
   */
 case class MJdArgs(
-                    template     : Tree[IDocTag],
+                    template     : Tree[JdTag],
                     renderArgs   : MJdRenderArgs,
                     jdCss        : JdCss,
                     conf         : MJdConf,
@@ -54,24 +54,24 @@ case class MJdArgs(
                   ) {
 
   def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
-  def withTemplate(template: Tree[IDocTag])         = copy(template = template)
+  def withTemplate(template: Tree[JdTag])         = copy(template = template)
   def withRenderArgs(renderArgs: MJdRenderArgs)     = copy(renderArgs = renderArgs)
   def withConf(conf: MJdConf)                       = copy(conf = conf)
   def withSelPath(selPath: Option[NodePath_t])      = copy(selPath = selPath)
   def withDnd(dnd: MJdDndS = MJdDndS.empty)         = copy(dnd = dnd)
 
   /** Выяснить TreeLoc текущего выбранного узла в дереве. */
-  lazy val selectedTagLoc: Option[TreeLoc[IDocTag]] = {
+  lazy val selectedTagLoc: Option[TreeLoc[JdTag]] = {
     selPath.flatMap { template.pathToNode }
   }
 
   /** Текущий выбранный тег с его поддеревом. */
-  lazy val selectedTag: Option[Tree[IDocTag]] = {
+  lazy val selectedTag: Option[Tree[JdTag]] = {
     selectedTagLoc.map(_.tree)
   }
 
   /** Аналог selectedTagLoc, но для перетаскиваемого тега. */
-  lazy val draggingTagLoc: Option[TreeLoc[IDocTag]] = {
+  lazy val draggingTagLoc: Option[TreeLoc[JdTag]] = {
     dnd.jdt.flatMap( template.pathToNode )
   }
 

@@ -7,9 +7,9 @@ package io.suggest.jd
   */
 package object tags {
 
-  type JdBatchF_t  = Seq[IDocTag] => Seq[IDocTag]
+  type JdBatchF_t  = Seq[JdTag] => Seq[JdTag]
 
-  type JdBatch_t   = (IDocTag, JdBatchF_t)
+  type JdBatch_t   = (JdTag, JdBatchF_t)
 
   type JdBatches_t = Seq[JdBatch_t]
 

@@ -1,6 +1,6 @@
 package io.suggest.model.n2.extra.doc
 
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.JdTag
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
@@ -32,7 +32,7 @@ object MNodeDoc {
 
   /** Поддержка play-json. */
   implicit val MNODE_AD2_FORMAT: OFormat[MNodeDoc] = {
-    (__ \ Fields.TEMPLATE_FN).format[Tree[IDocTag]]
+    (__ \ Fields.TEMPLATE_FN).format[Tree[JdTag]]
       .inmap[MNodeDoc](apply, _.template)
   }
 
@@ -46,5 +46,5 @@ object MNodeDoc {
   *                 В узле контент представлен эджами, которые слинкованы с документом по предикатам и/или edge-uid'ам.
   */
 case class MNodeDoc(
-                     template: Tree[IDocTag]
+                     template: Tree[JdTag]
                    )

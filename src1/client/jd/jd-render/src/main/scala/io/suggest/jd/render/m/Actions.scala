@@ -2,7 +2,7 @@ package io.suggest.jd.render.m
 
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.spa.DAction
 
@@ -16,12 +16,12 @@ sealed trait IJdAction extends DAction
 
 
 /** Клик по стрипу. */
-case class JdTagSelect(jdTag: IDocTag ) extends IJdAction
+case class JdTagSelect(jdTag: JdTag ) extends IJdAction
 
 
 /** Начато перетаскивание тега. */
-case class JdTagDragStart( jdTag: IDocTag ) extends IJdAction
-case class JdTagDragEnd( jdTag: IDocTag ) extends IJdAction
+case class JdTagDragStart( jdTag: JdTag ) extends IJdAction
+case class JdTagDragEnd( jdTag: JdTag ) extends IJdAction
 
 
 /** Текущий перетаскиваемый элемент был дропнут в указанный strip.
@@ -30,7 +30,7 @@ case class JdTagDragEnd( jdTag: IDocTag ) extends IJdAction
   * @param clXy Координаты точки сброса.
   * @param foreignTag Если тег притащен откуда-то извне, то тут Some() с распарсенным doc-tag'ом.
   */
-case class JdDropContent(strip: IDocTag, clXy: MCoords2di, foreignTag: Option[IDocTag]) extends IJdAction
+case class JdDropContent(strip: JdTag, clXy: MCoords2di, foreignTag: Option[JdTag]) extends IJdAction
 
 
 /** Экшен сброса текущего перетаскиваемого стрипа на новый стрип.
@@ -39,7 +39,7 @@ case class JdDropContent(strip: IDocTag, clXy: MCoords2di, foreignTag: Option[ID
   * @param isUpper true, если дроп выше середины текущего стрипа.
   *                false, если ниже середины.
   */
-case class JdDropStrip(targetStrip: IDocTag, isUpper: Boolean) extends IJdAction
+case class JdDropStrip(targetStrip: JdTag, isUpper: Boolean) extends IJdAction
 
 
 /** Уведомить систему о ширине и длине загруженной картинки. */

@@ -312,13 +312,13 @@ class LkAdEdFormUtil extends MacroLogsImpl {
     val textPred = MPredicates.JdContent.Text
 
     val tplTree = Tree.Node(
-      root = IDocTag.document,
+      root = JdTag.document,
       forest = Stream(
         // Уровень стрипов. Рендерим три стрипа.
 
         // Strip#1 содержит намёк на то, что это верхний блок.
         Tree.Node(
-          root = IDocTag.strip(
+          root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
               h = h1,
@@ -330,16 +330,16 @@ class LkAdEdFormUtil extends MacroLogsImpl {
           ),
           forest = Stream(
             // Надпись "Верхний блок"
-            IDocTag.edgeQdTree( upperBlockEdgeId, MCoords2di(x = w1.value, y = h1.value) / 3 ),
+            JdTag.edgeQdTree( upperBlockEdgeId, MCoords2di(x = w1.value, y = h1.value) / 3 ),
 
             // Надпись "также отображается в плитке"
-            IDocTag.edgeQdTree( alsoDisplayedInGridEdgeId, MCoords2di(x = w1.value/3*2, y = h1.value / 2) )
+            JdTag.edgeQdTree( alsoDisplayedInGridEdgeId, MCoords2di(x = w1.value/3*2, y = h1.value / 2) )
           )
         ),
 
         // Strip#2 содержит предложение добавить описание или что-то ещё.
         Tree.Node(
-          root = IDocTag.strip(
+          root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
               h = BlockHeights.H140,
@@ -350,14 +350,14 @@ class LkAdEdFormUtil extends MacroLogsImpl {
             ))
           ),
           forest = Stream(
-            IDocTag.edgeQdTree( descriptionEdgeId,  MCoords2di(5,  10) ),
-            IDocTag.edgeQdTree( descrContentEdgeId, MCoords2di(33, 50) )
+            JdTag.edgeQdTree( descriptionEdgeId,  MCoords2di(5,  10) ),
+            JdTag.edgeQdTree( descrContentEdgeId, MCoords2di(33, 50) )
           )
         ),
 
         // Strip#3
         Tree.Node(
-          root = IDocTag.strip(
+          root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
               h = BlockHeights.H460,
@@ -368,8 +368,8 @@ class LkAdEdFormUtil extends MacroLogsImpl {
             ))
           ),
           forest = Stream(
-            IDocTag.edgeQdTree( fr3text1EdgeId, MCoords2di(15, 200) ),
-            IDocTag.edgeQdTree( fr3text2EdgeId, MCoords2di(35, 400) )
+            JdTag.edgeQdTree( fr3text1EdgeId, MCoords2di(15, 200) ),
+            JdTag.edgeQdTree( fr3text2EdgeId, MCoords2di(35, 400) )
           )
         )
 

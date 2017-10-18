@@ -1,7 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import japgolly.univeq.UnivEq
@@ -27,7 +27,7 @@ object MJdCssArgs {
     }
   }
 
-  def singleCssArgs(template: Tree[IDocTag], conf: MJdConf, edges: Map[EdgeUid_t, MEdgeDataJs]): MJdCssArgs = {
+  def singleCssArgs(template: Tree[JdTag], conf: MJdConf, edges: Map[EdgeUid_t, MEdgeDataJs]): MJdCssArgs = {
     MJdCssArgs(
       templates = template :: Nil,
       conf      = conf,
@@ -47,8 +47,8 @@ object MJdCssArgs {
   * @param edges Текущая карта эджей.
   */
 case class MJdCssArgs(
-                       templates  : Seq[Tree[IDocTag]],
+                       templates  : Seq[Tree[JdTag]],
                        conf       : MJdConf,
-                     // TODO От эджей требуются лишь минимальная инфа. А тут этой инфы с избытком.
+                       // TODO От эджей требуются лишь минимальная инфа. А тут этой инфы с избытком.
                        edges      : Map[EdgeUid_t, MEdgeDataJs]
                      )

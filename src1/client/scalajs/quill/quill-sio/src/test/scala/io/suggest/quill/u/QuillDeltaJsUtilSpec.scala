@@ -4,8 +4,8 @@ import com.quilljs.delta.{Delta, DeltaOpAttrs}
 import com.softwaremill.macwire._
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.jd.MJdEditEdge
-import io.suggest.jd.tags.IDocTag
-import io.suggest.jd.tags.IDocTag.Implicits._
+import io.suggest.jd.tags.JdTag
+import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.quill.QuillSioModule
@@ -36,7 +36,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       .insert(theString)
     val hwEdgeId: EdgeUid_t = 1
 
-    val jdTag0 = IDocTag.edgeQdTree( hwEdgeId, coords )
+    val jdTag0 = JdTag.edgeQdTree( hwEdgeId, coords )
 
     val edges0 = Map(
       hwEdgeId -> MEdgeDataJs(
@@ -67,7 +67,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val delta1 = new Delta()
       .insert( newString )
     val hwEdgeId: EdgeUid_t = 1
-    val jdTag0 = IDocTag.edgeQdTree(hwEdgeId, coords)
+    val jdTag0 = JdTag.edgeQdTree(hwEdgeId, coords)
     val edges0 = Map(
       hwEdgeId -> MEdgeDataJs(
         jdEdge = MJdEditEdge(
@@ -113,7 +113,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     // Пусть исходный документ будет пустым. Для чистоты эксперимента.
     val edges0 = Map.empty[EdgeUid_t, MEdgeDataJs]
     val jdTag0 = Tree.Leaf(
-      IDocTag.qd( coords )
+      JdTag.qd( coords )
     )
 
     val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
@@ -158,7 +158,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     )
 
     val jdTag0 = Tree.Leaf(
-      IDocTag.qd( coords )
+      JdTag.qd( coords )
     )
 
     val (qdTagTree2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
@@ -203,7 +203,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       0 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
     )
 
-    val jdTag0 = IDocTag.edgeQdTree(0, coords)
+    val jdTag0 = JdTag.edgeQdTree(0, coords)
 
     val (qdTagTree2, edges1) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
     val edges2 = quillDeltaJsUtil.purgeUnusedEdges( qdTagTree2, edges1 )
@@ -249,7 +249,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
       5 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
     )
 
-    val jdTag0 = IDocTag.edgeQdTree(0, coords)
+    val jdTag0 = JdTag.edgeQdTree(0, coords)
 
     val (jdTag2, edges2) = quillDeltaJsUtil.delta2qdTag(delta2, jdTag0, edges0)
     assertEquals( jdTag2.qdOpsIter.size, 3 )

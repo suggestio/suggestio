@@ -21,7 +21,7 @@ import scalaz.{Show, Tree, TreeLoc}
   * Description: Интерфейс каждого элемента структуры документа.
   * Структура аналогична html/xml-тегам, но завязана на JSON и названа структурой, чтобы не путаться.
   */
-object IDocTag {
+object JdTag {
 
   object Fields {
     val TYPE_FN = "t"
@@ -32,7 +32,7 @@ object IDocTag {
 
 
   /** Полиморфная поддержка play-json. */
-  implicit val IDOC_TAG_FORMAT: OFormat[IDocTag] = (
+  implicit val IDOC_TAG_FORMAT: OFormat[JdTag] = (
     (__ \ Fields.TYPE_FN).format[MJdTagName] and
     (__ \ Fields.PROPS_FN).formatNullable[MJdtProps1]
       .inmap[MJdtProps1](
@@ -42,25 +42,25 @@ object IDocTag {
     (__ \ Fields.QD_PROPS_FN).formatNullable[MQdOp]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[IDocTag] = UnivEq.derive
+  implicit def univEq: UnivEq[JdTag] = UnivEq.derive
 
 
-  /** Билдер-функция для более удобной ручной сборки инстансов [[IDocTag]] по сравнению с apply.
+  /** Билдер-функция для более удобной ручной сборки инстансов [[JdTag]] по сравнению с apply.
     * Нельзя объединить с apply() из-за ограничений copy().
     */
-  def a(jdTagName : MJdTagName, props1: MJdtProps1 = MJdtProps1.empty, qdProps: Option[MQdOp] = None): IDocTag = {
+  def a(jdTagName : MJdTagName, props1: MJdtProps1 = MJdtProps1.empty, qdProps: Option[MQdOp] = None): JdTag = {
     apply(jdTagName, props1, qdProps)
   }
 
 
   /** Краткая форма сборки top-level jd-тега с контентом. */
-  def document: IDocTag = {
+  def document: JdTag = {
     apply(MJdTagNames.DOCUMENT)
   }
 
   /** Сборка IDocTag, рендерящего примитивный текст по его id эджа. */
-  def qd(topLeft: MCoords2di): IDocTag = {
-    IDocTag.a(
+  def qd(topLeft: MCoords2di): JdTag = {
+    JdTag.a(
       MJdTagNames.QD_CONTENT,
       props1 = MJdtProps1(
         topLeft = Some(topLeft)
@@ -68,7 +68,7 @@ object IDocTag {
     )
   }
 
-  def edgeQdOp(edgeUid: EdgeUid_t): IDocTag = {
+  def edgeQdOp(edgeUid: EdgeUid_t): JdTag = {
     qdOp(
       MQdOp(
         opType    = MQdOpTypes.Insert,
@@ -77,26 +77,26 @@ object IDocTag {
     )
   }
 
-  def edgeQdTree(edgeUid: EdgeUid_t, coords: MCoords2di): Tree[IDocTag] = {
+  def edgeQdTree(edgeUid: EdgeUid_t, coords: MCoords2di): Tree[JdTag] = {
     Tree.Node(
-      IDocTag.qd(coords),
+      JdTag.qd(coords),
       forest = Stream(
         Tree.Leaf(
-          IDocTag.edgeQdOp( edgeUid )
+          JdTag.edgeQdOp( edgeUid )
         )
       )
     )
   }
 
-  def qdOp(qdOp: MQdOp): IDocTag = {
-    IDocTag(
+  def qdOp(qdOp: MQdOp): JdTag = {
+    JdTag(
       name    = MJdTagNames.QD_OP,
       qdProps = Some( qdOp )
     )
   }
 
   /** Быстрая сборка стрипа. */
-  def strip(bm: BlockMeta, bgColor: Option[MColorData] = None): IDocTag = {
+  def strip(bm: BlockMeta, bgColor: Option[MColorData] = None): JdTag = {
     apply(
       MJdTagNames.STRIP,
       props1 = MJdtProps1(
@@ -111,17 +111,17 @@ object IDocTag {
   object Implicits {
 
     /** Дополнительные методы для Option[IDocTag]. */
-    implicit class DocTagOptExt(val opt: Option[IDocTag]) extends AnyVal {
+    implicit class DocTagOptExt(val opt: Option[JdTag]) extends AnyVal {
 
       /** Быстрая фильтрация Option'а по типу.  */
-      def filterByType(jdtName: MJdTagName): Option[IDocTag] = {
+      def filterByType(jdtName: MJdTagName): Option[JdTag] = {
         opt.filter(_.name ==* jdtName)
       }
 
     }
 
     /** Утиль для поддержки z.Tree с jd-тегами. */
-    implicit class IDocTagZTreeOps(private val tree: Tree[IDocTag]) extends AnyVal {
+    implicit class IDocTagZTreeOps(private val tree: Tree[JdTag]) extends AnyVal {
 
       import io.suggest.scalaz.ZTreeUtil._
 
@@ -149,14 +149,14 @@ object IDocTag {
       }
 
 
-      def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {
+      def deepChildrenOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
         tree
           .deepChildren
           .iterator
           .filter( _.name ==* jdtName )
       }
 
-      def deepOfTypeIter(jdtName: MJdTagName): Iterator[IDocTag] = {
+      def deepOfTypeIter(jdtName: MJdTagName): Iterator[JdTag] = {
         val chIter = deepChildrenOfTypeIter(jdtName)
         val jdt = tree.rootLabel
         if (jdt.name ==* jdtName) {
@@ -170,9 +170,9 @@ object IDocTag {
 
 
     /** Дополнительная утиль для TreeLoc[IDocTag]. */
-    implicit class IDocTagZTreeLocOps(private val treeLoc: TreeLoc[IDocTag]) extends AnyVal {
+    implicit class IDocTagZTreeLocOps(private val treeLoc: TreeLoc[JdTag]) extends AnyVal {
 
-      def findUp(f: TreeLoc[IDocTag] => Boolean): Option[TreeLoc[IDocTag]] = {
+      def findUp(f: TreeLoc[JdTag] => Boolean): Option[TreeLoc[JdTag]] = {
         if ( f(treeLoc) ) {
           Some(treeLoc)
         } else {
@@ -182,11 +182,11 @@ object IDocTag {
         }
       }
 
-      def findUpByType(typ: MJdTagName): Option[TreeLoc[IDocTag]] = {
+      def findUpByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
         findUp( treeLocByTypeFilterF(typ) )
       }
 
-      def findByType(typ: MJdTagName): Option[TreeLoc[IDocTag]] = {
+      def findByType(typ: MJdTagName): Option[TreeLoc[JdTag]] = {
         treeLoc.find( treeLocByTypeFilterF(typ) )
       }
 
@@ -195,13 +195,13 @@ object IDocTag {
   }
 
   def treeLocByTypeFilterF(typ: MJdTagName) = {
-    loc: TreeLoc[IDocTag] =>
+    loc: TreeLoc[JdTag] =>
       loc.getLabel.name ==* typ
   }
 
 
   /** toString для scalaz. */
-  implicit def iDocTagShow: Show[IDocTag] = Show.showFromToString[IDocTag]
+  implicit def jdTagShow: Show[JdTag] = Show.showFromToString[JdTag]
 
 }
 
@@ -214,11 +214,11 @@ object IDocTag {
   * поэтому всё оптимизировано по самые уши ценой невозможности сравнивания разных тегов между собой.
   * @param qdProps Список qd-операций для постройки контента (quill-delta).
   */
-final case class IDocTag(
-                          name      : MJdTagName,
-                          props1    : MJdtProps1    = MJdtProps1.empty,
-                          qdProps   : Option[MQdOp] = None
-                        )
+final case class JdTag(
+                        name      : MJdTagName,
+                        props1    : MJdtProps1    = MJdtProps1.empty,
+                        qdProps   : Option[MQdOp] = None
+                      )
   extends IHashCodeLazyVal
   // TODO Opt: lazy val: на клиенте желательно val, на сервере - просто дефолт (def). Что тут делать, elidable нужен какой-то?
   with IEqualsEq

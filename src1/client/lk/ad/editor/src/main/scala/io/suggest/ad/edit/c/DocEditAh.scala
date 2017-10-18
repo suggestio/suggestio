@@ -14,7 +14,7 @@ import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
-import io.suggest.jd.tags.IDocTag.Implicits._
+import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.qd._
 import io.suggest.model.n2.edge.{EdgeUid_t, EdgesUtil, MPredicates}
@@ -60,7 +60,7 @@ class DocEditAh[M](
     * @return Возможный эффект и обновлённая карта эджей.
     */
   private def _ppEdges(oldEdges: Map[EdgeUid_t, MEdgeDataJs],
-                       tpl: Tree[IDocTag],
+                       tpl: Tree[JdTag],
                        edges: Map[EdgeUid_t, MEdgeDataJs]): (Option[Effect], Map[EdgeUid_t, MEdgeDataJs]) = {
     // 10. Очистить эджи от неиспользуемых.
     val edges2 = quillDeltaJsUtil.purgeUnusedEdges( tpl, edges )
@@ -832,10 +832,10 @@ class DocEditAh[M](
         }
 
       val qdtTree = Tree.Node(
-        root = IDocTag.qd(coordsRnd),
+        root = JdTag.qd(coordsRnd),
         forest = Stream(
           Tree.Leaf(
-            IDocTag.edgeQdOp( edgeUid )
+            JdTag.edgeQdOp( edgeUid )
           )
         )
       )
@@ -874,7 +874,7 @@ class DocEditAh[M](
       val v0 = value
 
       val newStripTree = Tree.Leaf(
-        IDocTag.strip(
+        JdTag.strip(
           bm      = BlockMeta.DEFAULT,
           bgColor = Some(MColorData("ffffff"))
         )

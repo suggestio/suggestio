@@ -121,7 +121,7 @@ class LkAdEditCircuit(
     def __filteredSelTag(mdoc: MDocS) = {
       mdoc.jdArgs
         .selectedTagLoc
-        .filter( IDocTag.treeLocByTypeFilterF(jdtName) )
+        .filter( JdTag.treeLocByTypeFilterF(jdtName) )
     }
 
     mDocSRw.zoomRW[Option[MColorPick]] { mdoc =>

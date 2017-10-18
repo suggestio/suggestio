@@ -6,7 +6,7 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.render.m.{MEmuCropCssArgs, MJdCssArgs}
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
@@ -51,7 +51,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     zIndex(10)
   )
 
-  private def _allJdTagsIter: Iterator[IDocTag] = {
+  private def _allJdTagsIter: Iterator[JdTag] = {
     jdCssArgs
       .templates
       .iterator

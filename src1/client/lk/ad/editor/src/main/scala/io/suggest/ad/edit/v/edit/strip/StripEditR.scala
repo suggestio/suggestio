@@ -9,7 +9,7 @@ import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.ad.edit.v.edit.{ColorPickR, ColorsSuggestR, PictureR}
 import io.suggest.color.MHistogram
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.tags.IDocTag
+import io.suggest.jd.tags.JdTag
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -42,7 +42,7 @@ class StripEditR(
   import colorsSuggestR.ColorsSuggestPropsValFastEq
 
   case class PropsVal(
-                       strip        : IDocTag,
+                       strip        : JdTag,
                        edS          : MStripEdS,
                        colorsState  : MColorsState,
                        bgImgSrcOpt  : Option[String],

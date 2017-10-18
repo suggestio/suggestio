@@ -71,7 +71,7 @@ class JdR extends Log {
     // Callbacks
 
     /** Реакция на клик по отрендеренному тегу. */
-    private def jdTagClick(jdt: IDocTag)(e: ReactMouseEvent): Callback = {
+    private def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback = {
       // Если не сделать stopPropagation, то наружный strip перехватит клик
       e.stopPropagationCB >>
         dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
@@ -79,7 +79,7 @@ class JdR extends Log {
 
 
     /** Начало таскания jd-тега. */
-    private def jdTagDragStart(jdt: IDocTag)(e: ReactDragEvent): Callback = {
+    private def jdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
       // Обязательно надо в setData() что-то передать.
       val mimes = MimeConst.Sio
 
@@ -116,14 +116,14 @@ class JdR extends Log {
     }
 
     /** Начинается перетаскивание целого стрипа. */
-    private def stripDragStart(jdt: IDocTag)(e: ReactDragEvent): Callback = {
+    private def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
       // Надо выставить в событие, что на руках у нас целый стрип.
       val mimes = MimeConst.Sio
       e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.STRIP )
       dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
     }
 
-    private def jdTagDragEnd(jdt: IDocTag)(e: ReactDragEvent): Callback = {
+    private def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback = {
       dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
     }
 
@@ -135,7 +135,7 @@ class JdR extends Log {
 
 
     /** Что-то было сброшено на указанный стрип. */
-    private def onDropToStrip(s: IDocTag)(e: ReactDragEvent): Callback = {
+    private def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
       val mimes = MimeConst.Sio
 
       val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
@@ -222,7 +222,7 @@ class JdR extends Log {
 
     // Internal API
 
-    def renderChildren(dt: Tree[IDocTag], jdArgs: MJdArgs): VdomArray = {
+    def renderChildren(dt: Tree[JdTag], jdArgs: MJdArgs): VdomArray = {
       dt.subForest
         .iterator
         .zipWithIndex
@@ -235,7 +235,7 @@ class JdR extends Log {
       * Является ли указанный тег текущим выделенным?
       * Если да, то присвоить ему соотв.стиль для выделения визуально.
       */
-    private def _maybeSelected(dt: IDocTag, jdArgs: MJdArgs): TagMod = {
+    private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
       // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
       if (jdArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
         jdArgs.jdCss.selectedTag
@@ -244,7 +244,7 @@ class JdR extends Log {
       }
     }
 
-    private def _clickableOnEdit(jdt: IDocTag, jdArgs: MJdArgs): TagMod = {
+    private def _clickableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
       // В режиме редактирования -- надо слать инфу по кликам на стрипах
       if (jdArgs.conf.isEdit) {
         ^.onClick ==> jdTagClick(jdt)
@@ -254,7 +254,7 @@ class JdR extends Log {
     }
 
 
-    private def _droppableOnEdit(jdt: IDocTag, jdArgs: MJdArgs): TagMod = {
+    private def _droppableOnEdit(jdt: JdTag, jdArgs: MJdArgs): TagMod = {
       if (jdArgs.conf.isEdit) {
         TagMod(
           ^.onDragOver ==> jdStripDragOver,
@@ -265,7 +265,7 @@ class JdR extends Log {
       }
     }
 
-    private def _draggableUsing(jdt: IDocTag, jdArgs: MJdArgs)(onDragStartF: ReactDragEvent => Callback): TagMod = {
+    private def _draggableUsing(jdt: JdTag, jdArgs: MJdArgs)(onDragStartF: ReactDragEvent => Callback): TagMod = {
       TagMod(
         ^.draggable := true,
         ^.onDragStart ==> onDragStartF,
@@ -287,7 +287,7 @@ class JdR extends Log {
 
 
     /** Рендер strip, т.е. одной "полосы" контента. */
-    def renderStrip(stripTree: Tree[IDocTag], i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): VdomElement = {
       val s = stripTree.rootLabel
       val C = jdArgs.jdCss
       val isSelected = jdArgs.selectedTag.containsLabel(s)
@@ -379,14 +379,14 @@ class JdR extends Log {
     }
 
     /** Рендер указанного документа. */
-    def renderDocument(jd: Tree[IDocTag], i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderDocument(jd: Tree[JdTag], i: Int, jdArgs: MJdArgs): VdomElement = {
       <.div(
         ^.key := i.toString,
         renderChildren( jd, jdArgs )
       )
     }
 
-    private def _bgColorOpt(jdTag: IDocTag, jdArgs: MJdArgs): TagMod = {
+    private def _bgColorOpt(jdTag: JdTag, jdArgs: MJdArgs): TagMod = {
       jdTag.props1.bgColor.whenDefined { mcd =>
         jdArgs.jdCss.bgColorOptStyleF( mcd.hexCode )
       }
@@ -397,7 +397,7 @@ class JdR extends Log {
       * @param qdTagTree Тег с кодированными данными Quill delta.
       * @return Элемент vdom.
       */
-    def renderQd( qdTagTree: Tree[IDocTag], i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomElement = {
+    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomElement = {
       val tagMods = {
         val qdRrr = new QdRrrHtml(
           jdArgs      = jdArgs,
@@ -451,7 +451,7 @@ class JdR extends Log {
       * Запуск рендеринга произвольных тегов.
       */
     // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
-    def renderDocTag(idt: Tree[IDocTag], i: Int, jdArgs: MJdArgs, parent: IDocTag): VdomNode = {
+    def renderDocTag(idt: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomNode = {
       import MJdTagNames._
       idt.rootLabel.name match {
         case QD_CONTENT                => renderQd( idt, i, jdArgs, parent )
