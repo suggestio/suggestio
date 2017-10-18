@@ -70,5 +70,10 @@ case class MJdArgs(
     selectedTagLoc.map(_.tree)
   }
 
+  /** Аналог selectedTagLoc, но для перетаскиваемого тега. */
+  lazy val draggingTagLoc: Option[TreeLoc[IDocTag]] = {
+    dnd.jdt.flatMap( template.pathToNode )
+  }
+
 }
 

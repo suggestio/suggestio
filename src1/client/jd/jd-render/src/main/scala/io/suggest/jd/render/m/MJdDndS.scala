@@ -2,7 +2,7 @@ package io.suggest.jd.render.m
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.jd.tags.IDocTag
+import io.suggest.scalaz.NodePath_t
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 
@@ -38,11 +38,11 @@ object MJdDndS {
   *            - ?? Если DnD извне, то тут будет десериализованный инстанс ??
   */
 case class MJdDndS(
-                    jdt             : Option[IDocTag]     = None
+                    jdt             : Option[NodePath_t]  = None
                   )
   extends EmptyProduct
 {
 
-  def withJdt( jdt: Option[IDocTag] )                     = copy(jdt = jdt)
+  def withJdt( jdt: Option[NodePath_t] )              = copy(jdt = jdt)
 
 }

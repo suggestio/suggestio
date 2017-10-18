@@ -472,13 +472,14 @@ class DocEditAh[M](
     case m: JdTagDragStart =>
       val v0 = value
       val dnd0 = v0.jdArgs.dnd
-      if (dnd0.jdt contains m.jdTag) {
+      val dnd0Jdt = v0.jdArgs.draggingTagLoc
+      if (dnd0Jdt.toLabelOpt contains m.jdTag) {
         noChange
       } else {
         val v2 = v0.withJdArgs(
           v0.jdArgs.withDnd(
             dnd0.withJdt(
-              jdt = Some( m.jdTag )
+              jdt = v0.jdArgs.template.nodeToPath(m.jdTag)
             )
           )
         )
@@ -490,7 +491,7 @@ class DocEditAh[M](
     case _: JdTagDragEnd =>
       val v0 = value
       val dnd0 = v0.jdArgs.dnd
-      if (dnd0.jdt.nonEmpty) {
+      dnd0.jdt.fold(noChange) { _ =>
         val v2 = v0.withJdArgs(
           v0.jdArgs.withDnd(
             dnd0.withJdt(
@@ -499,8 +500,6 @@ class DocEditAh[M](
           )
         )
         updated( v2 )
-      } else {
-        noChange
       }
 
 
@@ -514,7 +513,7 @@ class DocEditAh[M](
         // Получить на руки инстанс сброшенного тега.
         // Прячемся от общего scope, чтобы работать с элементом только через его tree loc.
         val dndJdt = m.foreignTag
-          .orElse( v0.jdArgs.dnd.jdt )
+          .orElse( v0.jdArgs.draggingTagLoc.toLabelOpt )
           .get
 
         v0.jdArgs.selectedTagLoc
@@ -525,7 +524,8 @@ class DocEditAh[M](
           .orElse {
             // Это не selected-тег. Возможны перетаскивание без выделения тега: просто взял да потащил.
             // Это нормально. Перебираем всё дерево:
-            tpl0.loc
+            tpl0
+              .loc
               .findByLabel( dndJdt )
           }
           .get
@@ -623,7 +623,7 @@ class DocEditAh[M](
     // Реакция на завершение перетаскивания целого стрипа.
     case m: JdDropStrip =>
       val v0 = value
-      val droppedStripLabel = v0.jdArgs.dnd.jdt.get
+      val droppedStripLabel = v0.jdArgs.draggingTagLoc.get.getLabel
       val targetStripLabel = m.targetStrip
       if (droppedStripLabel ==* targetStripLabel) {
         noChange
