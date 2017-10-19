@@ -5,10 +5,10 @@ import io.suggest.lk.img.JsRemoveImgInitT
 import io.suggest.lk.old.Market
 import io.suggest.lk.upload.{AjaxFileUpload, ImgUploadRenderOverlay, InitInputFileUploadOnChange}
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import org.scalajs.dom.raw.{HTMLElement, HTMLInputElement}
 import org.scalajs.jquery.{JQuery, JQueryEventObject, JQueryXHR, jQuery}
+import japgolly.univeq._
 
 import scala.concurrent.Future
 import scala.scalajs.js.Dictionary
@@ -21,12 +21,10 @@ import scala.scalajs.js.Dictionary
  */
 trait AdFormInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.AdForm) {
-      Future {
-        new AdFormInit()
-          .init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.AdForm) {
+      new AdFormInit()
+        .init()
     } else {
       super.routeInitTarget(itg)
     }

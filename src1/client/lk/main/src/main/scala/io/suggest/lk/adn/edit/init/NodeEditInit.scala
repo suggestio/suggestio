@@ -4,11 +4,10 @@ import io.suggest.lk.img.JsRemoveImgInitT
 import io.suggest.lk.upload._
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
 import io.suggest.sjs.common.util.SafeSyncVoid
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.adn.edit.NodeEditConstants._
 import io.suggest.sjs.common.log.Log
+import japgolly.univeq._
 
-import scala.concurrent.Future
 import org.scalajs.jquery.{JQuery, jQuery}
 
 /**
@@ -20,12 +19,10 @@ import org.scalajs.jquery.{JQuery, jQuery}
 
 trait NodeEditInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.LkNodeEditForm) {
-      Future {
-        new LkNodeEditFormEvents()
-          .init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.LkNodeEditForm) {
+      new LkNodeEditFormEvents()
+        .init()
     } else {
       super.routeInitTarget(itg)
     }

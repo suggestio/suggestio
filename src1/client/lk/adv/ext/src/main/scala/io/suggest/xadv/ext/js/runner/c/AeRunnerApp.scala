@@ -8,7 +8,7 @@ import io.suggest.xadv.ext.js.runner.m.ex.CustomException
 import io.suggest.xadv.ext.js.runner.m.{IAdapter, MJsCtx}
 import io.suggest.xadv.ext.js.runner.v.Page
 import io.suggest.xadv.ext.js.vk.c.VkAdapter
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -22,9 +22,9 @@ import scala.concurrent.Future
 /** Аддон для ri-sjs-контроллера LkAdvExt, чтобы был экшен для запуска runner'а. */
 trait RunnerInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.AdvExtRunner) {
-      Future( Runner.start() )
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.AdvExtRunner) {
+      Runner.start()
     } else {
       super.routeInitTarget(itg)
     }

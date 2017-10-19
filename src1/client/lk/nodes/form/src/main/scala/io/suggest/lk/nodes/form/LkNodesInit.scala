@@ -5,15 +5,13 @@ import io.suggest.lk.nodes.form.r.LkNodesFormR
 import io.suggest.lk.nodes.form.r.pop.LknPopupsR
 import io.suggest.lk.pop.PopupsContR
 import io.suggest.sjs.common.controller.InitRouter
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.lk.nodes.form.m.MLkNodesRoot.MLknRootFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
 import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
-
-import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -24,11 +22,9 @@ import scala.concurrent.Future
 trait LkNodesInitRouter extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.LkNodesForm) {
-      Future {
-        initLkNodesForm()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.LkNodesForm) {
+      initLkNodesForm()
     } else {
       super.routeInitTarget(itg)
     }

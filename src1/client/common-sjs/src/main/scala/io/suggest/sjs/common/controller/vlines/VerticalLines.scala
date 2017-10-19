@@ -4,9 +4,7 @@ import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.vlines.VLines._
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, jQuery}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-
-import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -49,11 +47,9 @@ object VerticalLines {
 /** Аддон для init-роутера для активации контроллера инициализации динамических вертикальных линий. */
 trait VerticalLinesInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.VCenterLines) {
-      Future {
-        VerticalLines.resetAllVLinesHeights()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.VCenterLines) {
+      VerticalLines.resetAllVLinesHeights()
     } else {
       super.routeInitTarget(itg)
     }

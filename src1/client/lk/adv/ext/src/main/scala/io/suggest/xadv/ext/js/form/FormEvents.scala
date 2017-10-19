@@ -5,9 +5,8 @@ import org.scalajs.dom
 import org.scalajs.dom.{Element, XMLHttpRequest}
 import org.scalajs.jquery._
 import io.suggest.adv.ext.view.FormPage._
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
 
-import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.{Dictionary, Any, Array}
 
@@ -21,12 +20,10 @@ import scala.scalajs.js.{Dictionary, Any, Array}
 /** Реализация роутера для подхвата цели инициализации формы. */
 trait FormEventsInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.LkAdvExtForm) {
-      Future {
-        new FormEvents()
-          .bindFormEvents()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.LkAdvExtForm) {
+      new FormEvents()
+        .bindFormEvents()
     } else {
       super.routeInitTarget(itg)
     }

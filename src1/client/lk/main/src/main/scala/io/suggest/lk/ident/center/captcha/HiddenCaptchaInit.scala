@@ -1,11 +1,10 @@
 package io.suggest.lk.ident.center.captcha
 
 import io.suggest.sjs.common.controller.InitRouter
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.jquery.{JQueryEventObject, jQuery}
 import io.suggest.captcha.CaptchaConstants._
+import japgolly.univeq._
 
-import scala.concurrent.Future
 import scala.scalajs.js.ThisFunction
 
 /**
@@ -19,11 +18,9 @@ import scala.scalajs.js.ThisFunction
 trait HiddenCaptchaInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.HiddenCaptcha) {
-      Future {
-        showHiddenCaptchaOnFormInputsActivity()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.HiddenCaptcha) {
+      showHiddenCaptchaOnFormInputsActivity()
     } else {
       super.routeInitTarget(itg)
     }

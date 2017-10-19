@@ -4,9 +4,8 @@ import io.suggest.err.ErrorConstants
 import io.suggest.sjs.common.controller.InitRouter
 import org.scalajs.jquery.{JQuery, jQuery}
 import io.suggest.js.hidden.JsHiddenConstants._
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
 
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -43,11 +42,9 @@ object JsHidden {
 
 /** Поддержка отработки этого в init-роутере. */
 trait JsHiddenInitRouter extends InitRouter {
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.JsHidden) {
-      Future {
-        JsHidden.processAll()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.JsHidden) {
+      JsHidden.processAll()
     } else {
       super.routeInitTarget(itg)
     }

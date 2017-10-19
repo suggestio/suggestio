@@ -3,9 +3,7 @@ package io.suggest.lk.adv.direct.init
 import io.suggest.lk.adv.direct.fsm.AdvDirectFormFsm
 import io.suggest.lk.adv.direct.vm.Form
 import io.suggest.sjs.common.controller.{IInitDummy, InitRouter}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-
-import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -16,11 +14,9 @@ import scala.concurrent.Future
 
 trait AdvDirectFormInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.AdvDirectForm) {
-      Future {
-        (new AdvDirectFormInit).init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.AdvDirectForm) {
+      (new AdvDirectFormInit).init()
     } else {
       super.routeInitTarget(itg)
     }

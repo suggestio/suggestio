@@ -1,12 +1,7 @@
 package io.suggest.init.routed
 
 import enumeratum.values.{StringEnum, StringEnumEntry}
-
-
-/** Трейт для всех инстансов модели. */
-sealed class MJsiTg(override val value: String) extends StringEnumEntry {
-  override final def toString = value
-}
+import japgolly.univeq.UnivEq
 
 
 /** Кросс-платформенная модель целей js-инициализации. */
@@ -66,4 +61,15 @@ object MJsiTgs extends StringEnum[MJsiTg] {
 
   override def values = findValues
 
+}
+
+
+
+/** Трейт для всех инстансов модели. */
+sealed abstract class MJsiTg(override val value: String) extends StringEnumEntry {
+  override final def toString = value
+}
+
+object MJsiTg {
+  implicit def univEq: UnivEq[MJsiTg] = UnivEq.derive
 }

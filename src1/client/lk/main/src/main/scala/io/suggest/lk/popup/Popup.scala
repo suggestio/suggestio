@@ -7,22 +7,36 @@ import io.suggest.sjs.common.controller.jshidden.JsHidden
 import io.suggest.sjs.common.controller.vlines.VerticalLines
 import io.suggest.sjs.common.util.TouchUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import org.scalajs.dom
 import org.scalajs.dom.Element
 import org.scalajs.jquery.{JQuery, JQueryEventObject, jQuery}
+import japgolly.univeq._
 
-import scala.concurrent.Future
 import scala.scalajs.js.Any
 
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 27.04.15 18:01
- * Description: Система управления попапами в личном кабинете.
- * В оригинале (mx_cof) компонент назывался CbcaPopup.
  */
+
+/** Аддон для роутера инициализации для активации системы попапов. */
+trait PopupsInitRouter extends InitRouter {
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.Popups) {
+      Popup.init()
+    } else {
+      super.routeInitTarget(itg)
+    }
+  }
+}
+
+
+/**
+  * Система управления попапами в личном кабинете.
+  * В оригинале (mx_cof) компонент назывался CbcaPopup.
+  */
 object Popup extends Log {
 
   def containerSelector =  "#" + CONTAINER_ID
@@ -257,15 +271,3 @@ object Popup extends Log {
 
 }
 
-/** Аддон для роутера инициализации для активации системы попапов. */
-trait PopupsInitRouter extends InitRouter {
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.Popups) {
-      Future {
-        Popup.init()
-      }
-    } else {
-      super.routeInitTarget(itg)
-    }
-  }
-}

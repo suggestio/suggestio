@@ -1,9 +1,7 @@
 package io.suggest.lk.adn.map.init
 
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.InitRouter
-
-import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -16,12 +14,10 @@ import scala.concurrent.Future
 
 trait LkAdnMapFormInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.AdnMapForm) {
-      Future {
-        (new LkAdnMapFormInit)
-          .init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.AdnMapForm) {
+      (new LkAdnMapFormInit)
+        .init()
     } else {
       super.routeInitTarget(itg)
     }

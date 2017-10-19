@@ -2,11 +2,9 @@ package io.suggest.lk.ident.center
 
 import io.suggest.sjs.common.controller.InitRouter
 import io.suggest.sjs.common.util.SafeSyncVoid
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import org.scalajs.dom
 import org.scalajs.jquery.{JQueryEventObject, JQuery, jQuery}
-
-import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -20,11 +18,9 @@ trait CenterContentInitRouter extends InitRouter with SafeSyncVoid {
 
   private def jqWnd = jQuery(dom.window)
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.IdentVCenterContent) {
-      Future {
-        ccInitSafe()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.IdentVCenterContent) {
+      ccInitSafe()
     } else {
       super.routeInitTarget(itg)
     }

@@ -4,11 +4,10 @@ import io.suggest.routes.JsRoutes_LkControllers._
 import io.suggest.bill.TxnsListConstants._
 import io.suggest.routes.routes
 import io.suggest.sjs.common.controller.{DomQuick, IInit, InitRouter}
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import org.scalajs.jquery.{JQueryAjaxSettings, JQueryEventObject, JQueryXHR, jQuery}
+import japgolly.univeq._
 
-import scala.concurrent.Future
 import scala.scalajs.js.{Any, Dictionary}
 
 /**
@@ -20,11 +19,9 @@ import scala.scalajs.js.{Any, Dictionary}
 trait TxnsListInit extends InitRouter {
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.BillTxnsList) {
-      Future {
-        new TxnList().init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.BillTxnsList) {
+      new TxnList().init()
     } else {
       super.routeInitTarget(itg)
     }

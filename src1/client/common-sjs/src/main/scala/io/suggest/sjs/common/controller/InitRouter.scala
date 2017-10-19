@@ -3,11 +3,8 @@ package io.suggest.sjs.common.controller
 import io.suggest.init.routed.{JsInitConstants, MJsiTg, MJsiTgs}
 import io.suggest.sjs.common.util.SafeSyncVoid
 import io.suggest.sjs.common.vm.doc.DocumentVm
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
-
-import scala.concurrent.Future
 
 /**
  * Suggest.io
@@ -39,16 +36,6 @@ import scala.concurrent.Future
  * @see [[http://viget.com/inspire/extending-paul-irishs-comprehensive-dom-ready-execution Причины использования data-аттрибутов]].
  */
 
-object InitRouter {
-
-  /** Метод для нижеуказанных трейтов, чтобы быстро генерить пустой успех работы. */
-  protected [controller] def done = Future successful None
-
-}
-
-
-import InitRouter._
-
 
 /** Заготовка главного контроллера, который производит инициализацию компонентов в контексте текущей страницы.
   * Контроллеры объединяются в единый роутер через stackable trait pattern. */
@@ -62,13 +49,12 @@ trait InitRouter extends Log with SafeSyncVoid {
   final type MInitTarget = MJsiTg
 
   /** Инициализация одной цели. IR-аддоны должны перезаписывать по цепочке этот метод своей логикой. */
-  protected def routeInitTarget(itg: MInitTarget): Future[_] = {
+  protected def routeInitTarget(itg: MInitTarget): Unit = {
     LOG.error( ErrorMsgs.INIT_ROUTER_KNOWN_TARGET_NOT_SUPPORTED, msg = itg)
-    done
   }
 
   /** Запуск системы инициализации. Этот метод должен вызываться из main(). */
-  def init(): Future[_] = {
+  def init(): Unit = {
     val attrName = JsInitConstants.RI_ATTR_NAME
     val body = DocumentVm().body
     val attrRaw = body.getAttribute(attrName)
@@ -77,9 +63,8 @@ trait InitRouter extends Log with SafeSyncVoid {
       .map { _.trim }
       .filter { !_.isEmpty }
 
-    attrOpt.fold [Future[_]] {
+    attrOpt.fold [Unit] {
       LOG.log( WarnMsgs.INIT_ROUTER_NO_TARGET_SPECIFIED )
-      done
 
     } { attr =>
       val all = attr.split("\\s*;\\s*")
@@ -91,22 +76,16 @@ trait InitRouter extends Log with SafeSyncVoid {
           res
         }
         .toSeq
-      val initFut = Future.traverse(all) { itg =>
-        val fut = try {
+      for (itg <- all) {
+        try {
           routeInitTarget(itg)
         } catch {
           case ex: Throwable =>
-            Future.failed(ex)
-        }
-        // Подавленеи ошибок. init must flow.
-        fut.recover { case ex: Throwable =>
-          LOG.error(ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, itg)
-          None
+            LOG.error(ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, itg)
         }
       }
       // Аттрибут со спекой инициализации больше не нужен, можно удалить его.
       body.removeAttribute(attrName)
-      initFut
     }
   }
 

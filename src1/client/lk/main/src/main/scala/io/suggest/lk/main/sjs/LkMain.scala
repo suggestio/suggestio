@@ -12,7 +12,6 @@ import io.suggest.lk.ident.center.CenterContentInitRouter
 import io.suggest.lk.ident.center.captcha.{CaptchaFormInit, HiddenCaptchaInit}
 import io.suggest.lk.nodes.form.LkNodesInitRouter
 import io.suggest.lk.popup.PopupsInitRouter
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.jshidden.JsHiddenInitRouter
 import io.suggest.sjs.common.controller.vlines.VerticalLinesInitRouter
 import io.suggest.sjs.common.log.Log
@@ -42,11 +41,8 @@ object LkMain extends Log {
     println("L.noConflict() done. L = " + js.Dynamic.global.L.toString )
 
     try {
-      val initFut = new LkInitRouter()
+      new LkInitRouter()
         .init()
-      for (ex <- initFut.failed) {
-        LOG.error(msg = "Init failed", ex = ex)
-      }
     } catch {
       case ex: Throwable =>
         LOG.error( ErrorMsgs.INIT_ROUTER_TARGET_RUN_FAIL, ex, js.Dynamic.global.L.toString )

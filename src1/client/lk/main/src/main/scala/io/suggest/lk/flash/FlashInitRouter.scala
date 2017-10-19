@@ -7,6 +7,7 @@ import org.scalajs.dom.Element
 import org.scalajs.jquery._
 import io.suggest.flash.FlashConstants._
 import io.suggest.sjs.common.log.Log
+import japgolly.univeq._
 
 import scala.concurrent.{Future, Promise}
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -22,12 +23,10 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 /** Аддон для сборки роутера инициализации с поддержкой flashing-уведомлений. */
 trait FlashInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.Flashing) {
-      Future {
-        new FlashInit()
-          .init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.Flashing) {
+      new FlashInit()
+        .init()
     } else {
       super.routeInitTarget(itg)
     }
@@ -61,7 +60,7 @@ class FlashInit extends SafeSyncVoid with Log {
         // Обойти, накапливая общий фьючерс. Таким образом в браузере запрограммируется цепочное отображение уведомлений.
         .foldLeft[Future[_]] (Future.successful(None)) { (fut, el) =>
           // Открыть уведомление, когда предыдущее будет закрыто. И повесить но новооткрытое уведомление обработчики.
-          fut flatMap { _ =>
+          fut.flatMap { _ =>
             processBar(el)
           }
         }

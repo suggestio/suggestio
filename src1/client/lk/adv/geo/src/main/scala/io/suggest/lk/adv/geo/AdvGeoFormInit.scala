@@ -9,14 +9,12 @@ import io.suggest.lk.adv.geo.r.AdvGeoFormR
 import io.suggest.lk.adv.geo.r.pop.AdvGeoPopupsR
 import io.suggest.lk.adv.r.PriceR
 import io.suggest.lk.pop.PopupsContR
-import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.controller.{IInit, InitRouter}
 import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.spa.LkPreLoader
 import org.scalajs.dom.raw.HTMLDivElement
 import japgolly.scalajs.react.vdom.Implicits._
-
-import scala.concurrent.Future
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -26,12 +24,10 @@ import scala.concurrent.Future
  */
 trait AdvGeoFormInitRouter extends InitRouter {
 
-  override protected def routeInitTarget(itg: MInitTarget): Future[_] = {
-    if (itg == MInitTargets.AdvGeoForm) {
-      Future {
-        new AdvGeoFormInit()
-          .init()
-      }
+  override protected def routeInitTarget(itg: MInitTarget): Unit = {
+    if (itg ==* MInitTargets.AdvGeoForm) {
+      new AdvGeoFormInit()
+        .init()
     } else {
       super.routeInitTarget(itg)
     }
