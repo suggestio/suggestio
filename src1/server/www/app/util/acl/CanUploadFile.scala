@@ -15,6 +15,7 @@ import io.suggest.req.ReqUtil
 import io.suggest.swfs.client.proto.fid.Fid
 import japgolly.univeq._
 import models.mproj.ICommonDi
+import models.req.MSioUsers
 
 import scala.concurrent.Future
 
@@ -25,8 +26,8 @@ import scala.concurrent.Future
   * Description: ACL-проверка на предмет возможности текущему юзеру производить заливку файла в suggest.io.
   */
 class CanUploadFile @Inject()(
-                               aclUtil                    : AclUtil,
                                reqUtil                    : ReqUtil,
+                               mSioUsers                  : MSioUsers,
                                uploadUtil                 : UploadUtil,
                                dab                        : DefaultActionBuilder,
                                swfsVolumeCache            : SwfsVolumeCache,
@@ -61,14 +62,9 @@ class CanUploadFile @Inject()(
       Results.NotAcceptable(msg)
 
     } else {
-      val user = aclUtil.userFromRequest( request0 )
-      if (upTg.personId !=* user.personIdOpt) {
-        // Ссылка была выдана не текущему, а какому-то другому юзеру.
-        val msg = "Unexpected userId"
-        LOGGER.warn(s"$logPrefix [SEC] $msg: req.user#${user.personIdOpt} != args.user#${upTg.personId}")
-        Results.Forbidden(msg)
-
-      } else if (ctxIdOpt.exists(ctxId => !mCtxIds.validate(ctxId, user.personIdOpt))) {
+      // 2017.oct.19 Для кукисов затянуты гайки, и они теперь точно не передаются на ноды. Берём данные сессии прямо из подписанного URL запроса.
+      val user = mSioUsers( upTg.personId )
+      if (ctxIdOpt.exists(ctxId => !mCtxIds.validate(ctxId, user.personIdOpt))) {
         val ctxId = ctxIdOpt.get
         // Юзер прислал неправильный ctxId. Такое возможно, если юзер перелогинился в одной вкладке, но не в другой. Либо попытка подмены.
         val msg = "CtxId is not valid."

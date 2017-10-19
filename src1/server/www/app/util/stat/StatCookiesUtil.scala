@@ -5,12 +5,13 @@ import java.{util => ju}
 import java.util.UUID
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
-
 import javax.inject.{Inject, Singleton}
+
 import play.api.Configuration
 import io.suggest.util.UuidUtil._
 import io.suggest.util.logs.MacroLogsImpl
 import org.apache.commons.codec.binary.Base64
+import play.api.mvc.Cookie.SameSite
 import play.api.mvc.{Cookie, RequestHeader, Result}
 
 /**
@@ -149,10 +150,11 @@ class StatCookiesUtil @Inject()(
   /** Добавить указанную stat-куку в результат запроса. */
   def resultWithStatCookie(statUid: String)(result: Result): Result = {
     val statCookie = Cookie(
-      name = STAT_UID_COOKIE_NAME,
-      value = statUid,
-      maxAge = STAT_UID_COOKIE_MAXAGE_SECONDS,
-      httpOnly = true
+      name      = STAT_UID_COOKIE_NAME,
+      value     = statUid,
+      maxAge    = STAT_UID_COOKIE_MAXAGE_SECONDS,
+      httpOnly  = true,
+      sameSite  = Some( SameSite.Strict )
     )
     result.withCookies(statCookie)
   }

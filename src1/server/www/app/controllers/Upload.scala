@@ -40,7 +40,6 @@ import play.core.parsers.Multipart
 import util.acl.CanUploadFile
 import util.cdn.CdnUtil
 import util.up.{FileUtil, UploadUtil}
-import views.html.helper.CSRF
 import japgolly.univeq._
 import util.img.ImgFileUtil
 import util.img.detect.main.MainColorDetector
@@ -76,7 +75,7 @@ class Upload @Inject()(
   with MacroLogsImpl
 {
 
-  import mCommonDi.{csrf, ec}
+  import mCommonDi.ec
 
 
   /** Body-parser для prepareUploadLogic. */
@@ -160,7 +159,7 @@ class Upload @Inject()(
                   swfsAssignResp.publicUrl
                   // TODO Вписать запасные хостнеймы для аплоада?
                 )
-                val relUrl = CSRF(routes.Upload.doFileUpload(upData)).url
+                val relUrl = routes.Upload.doFileUpload(upData).url
                 MUploadResp(
                   // IMG_DIST: URL включает в себя адрес ноды, на которую заливать.
                   upUrls = for (host <- hostnames) yield {
@@ -275,7 +274,8 @@ class Upload @Inject()(
     * @param uploadArgs Подписанные данные аплоада
     * @param ctxIdOpt Подписанный (но пока непроверенный) ctxId.
     */
-  def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = csrf.Check {
+  def doFileUpload(uploadArgs: MUploadTargetQs, ctxIdOpt: Option[MCtxId]) = {
+    // Csrf выключен, потому что session cookie не пробрасывается на ноды.
     val bp = _uploadFileBp(uploadArgs)
 
     canUploadFile(uploadArgs, ctxIdOpt).async(bp) { implicit request =>
