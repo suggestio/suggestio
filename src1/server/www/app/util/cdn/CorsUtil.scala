@@ -2,10 +2,12 @@ package util.cdn
 
 import akka.stream.Materializer
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
 import play.api.Configuration
 import play.api.mvc.{Filter, RequestHeader, Result}
 import io.suggest.common.empty.OptionUtil.BoolOptOps
+import models.mctx.ContextUtil
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.http.HeaderNames._
@@ -23,8 +25,9 @@ import scala.util.matching.Regex
  */
 @Singleton
 class CorsUtil @Inject() (
-  configuration: Configuration
-) {
+                           configuration: Configuration,
+                           contextUtil: ContextUtil
+                         ) {
 
   /** Активен ли механизм CORS вообще? */
   val IS_ENABLED: Boolean = configuration.getOptional[Boolean]("cors.enabled").getOrElseTrue
@@ -81,19 +84,24 @@ class CorsUtil @Inject() (
     acc
   }
 
+  private val lkOriginUrlPrefixRE = ("^" + contextUtil.LK_URL_PREFIX + "(/.*)?$" ).r
+
   /** На какие запросы навешивать CORS-allow хидеры? */
-  val ADD_HEADERS_URL_RE: Regex = {
-    configuration.getOptional[String]("cors.allow.headers.for.url.regex")
-      .getOrElse { "^/(v?assets/|~)" }
-      .r
-  }
+  private val ADD_HEADERS_URL_RE = "^/(v?assets/|~)".r
 
   /** Проверка хидеров на необходимость добавления CORS в ответ. */
   def isAppendAllowHdrsForRequest(rh: RequestHeader): Boolean = {
+    // TODO Отрефакторить этот быдлокод.
     SIMPLE_CORS_HEADERS.nonEmpty && {
       val uri = rh.uri
       ADD_HEADERS_URL_RE.pattern.matcher(uri).find ||
-        uri.startsWith(routes.Sc.renderMapNodesAll().url)
+        uri.startsWith(routes.Sc.renderMapNodesAll().url) || {
+        // Проверять Origin header -- это наверное правильно. Аплоад можно делать только из LK.
+        rh.headers
+          .get(ORIGIN)
+          .exists(s => lkOriginUrlPrefixRE.pattern.matcher(s).matches() ) &&
+            uri.startsWith("/upload/file")
+      }
     }
   }
 

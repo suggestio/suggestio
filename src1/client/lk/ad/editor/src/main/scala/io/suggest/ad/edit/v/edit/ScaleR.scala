@@ -3,8 +3,8 @@ package io.suggest.ad.edit.v.edit
 import diode.FastEq
 import diode.react.ModelProxy
 import io.suggest.ad.edit.m.SetScale
+import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.common.html.HtmlConstants
-import io.suggest.css.Css
 import io.suggest.dev.MSzMult
 import io.suggest.i18n.MsgCodes
 import io.suggest.ueq.UnivEqUtil._
@@ -13,6 +13,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sjs.common.i18n.Messages
+import scalacss.ScalaCssReact._
 import japgolly.univeq._
 
 /**
@@ -21,7 +22,9 @@ import japgolly.univeq._
   * Created: 13.10.17 18:56
   * Description: Компонент управления масштабом в виде select'а.
   */
-class ScaleR {
+class ScaleR(
+              lkAdEditCss        : LkAdEditCss
+            ) {
 
   /** Класс модели пропертисов компонента.
     *
@@ -68,7 +71,7 @@ class ScaleR {
     def render(propsOptProxy: Props): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
         <.div(
-          ^.`class`  := Css.Input.INPUT,
+          lkAdEditCss.Layout.scaleInputCont,
 
           <.h1(
             Messages( MsgCodes.`Scale` )
