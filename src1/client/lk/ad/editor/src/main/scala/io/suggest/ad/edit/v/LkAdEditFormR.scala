@@ -12,6 +12,7 @@ import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
+import io.suggest.common.html.HtmlConstants.{`(`, `)`, COMMA}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
@@ -111,7 +112,8 @@ class LkAdEditFormR(
               LCSS.editorsCont,
 
               rightYOptProxy.value.whenDefined { rightY =>
-                ^.paddingTop := rightY.px
+                //^.paddingTop := rightY.px
+                ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
               },
 
               // Редактор strip'а

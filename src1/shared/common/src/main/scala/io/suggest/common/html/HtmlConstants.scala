@@ -40,8 +40,10 @@ object HtmlConstants {
 
   val SLASH                   = "/"
 
-  val LBRACE                  = "("
-  val RBRACE                  = ")"
+  val `(`                     = "("
+  val `)`                     = ")"
+
+  val MINUS                   = "-"
 
   @inline
   def TAG_PREFIX              = DIEZ

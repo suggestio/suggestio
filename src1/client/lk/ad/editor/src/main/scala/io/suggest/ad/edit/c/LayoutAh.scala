@@ -67,6 +67,8 @@ class LayoutAh[M](
 
   }
 
+
+  /** Отключить позиционирование под экран. */
   private def _setNoY(v0: MLayoutS): ActionResult[M] = {
     if (v0.rightPanelY.isEmpty) {
       noChange

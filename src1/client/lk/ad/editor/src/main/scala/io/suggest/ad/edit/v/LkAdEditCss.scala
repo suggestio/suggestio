@@ -73,7 +73,11 @@ class LkAdEditCss extends StyleSheet.Inline {
     val editorsCont = style(
       addClassName( _PREFIX + "__editor" ),
       maxHeight( 67.vh ),
-      overflow.auto
+      overflow.auto,
+      transition := {
+        val t = Css.Anim.Transition
+        t.all(0.1, t.TimingFuns.EASE_OUT)
+      }
     )
 
   }

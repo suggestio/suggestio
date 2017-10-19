@@ -6,6 +6,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.{CropOpen, PictureFileChanged}
 import io.suggest.color.MHistogram
 import io.suggest.common.html.HtmlConstants
+import io.suggest.common.html.HtmlConstants.{`(`, `)`}
 import io.suggest.css.Css
 import io.suggest.file.up.MFileUploadS
 import io.suggest.i18n.MsgCodes
@@ -151,7 +152,7 @@ class PictureR(
 
                 upState.progress.whenDefined { progress =>
                   <.span(
-                    HtmlConstants.LBRACE, progress.pct, HtmlConstants.RBRACE
+                    `(`, progress.pct, `)`
                   )
                 },
 
@@ -175,7 +176,7 @@ class PictureR(
       <.span(
         ^.`class` := Css.Colors.RED,
         Messages( MsgCodes.`Error` ), HtmlConstants.COLON, SPACE,
-        HtmlConstants.LBRACE, Messages( commentCode ), HtmlConstants.RBRACE, SPACE,
+        `(`, Messages( commentCode ), `)`, SPACE,
 
         ex.toString,
         HtmlConstants.COLON, SPACE,

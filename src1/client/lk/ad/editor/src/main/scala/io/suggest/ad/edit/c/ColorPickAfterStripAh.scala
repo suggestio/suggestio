@@ -2,8 +2,10 @@ package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m._
+import io.suggest.css.Css
 import io.suggest.jd.render.m.IJdAction
 import io.suggest.jd.tags.MJdTagNames
+import io.suggest.common.html.HtmlConstants.{`(`, `)`, COMMA}
 import japgolly.univeq._
 import io.suggest.ueq.ReactUnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
@@ -96,13 +98,19 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
       -0       :: 2.123451 :: 0 :: 1        ::
       Nil
 
-    ^.transform := "matrix3d(" + matrix.mkString(",") + ")"
+    val transformStr = Css.Anim.Transform.MATRIX_3D + `(` + matrix.mkString(COMMA) + `)`
+    ^.transform := transformStr
   }
 
   private def BG_IMG_ALL_TRANSFORM: TagMod = {
+    val A = Css.Anim
     TagMod(
-      ^.transformOrigin := "top left",
-      ^.transition      := "all 1s ease-in-out"
+      ^.transformOrigin := A.Origin.TOP_LEFT,
+      ^.transition      := {
+        // "all 1s ease-in-out"
+        val t = A.Transition
+        t.all( 1, t.TimingFuns.EASE_IN_OUT )
+      }
     )
   }
 

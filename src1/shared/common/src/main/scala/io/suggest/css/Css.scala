@@ -405,4 +405,61 @@ object Css {
     final def VERTICAL_RESIZE = PREFIX_ + "resize-v"
   }
 
+
+  object Anim {
+
+    private def `3D` = "3d"
+
+    /** @see [[https://developer.mozilla.org/en-US/docs/Web/CSS/transition]] */
+    object Transition {
+
+      object Properties {
+        final def ALL = "all"
+      }
+
+      object TimingFuns {
+
+        private def EASE = "ease"
+        private def OUT  = "out"
+        private def IN   = "in"
+
+        final def EASE_OUT: String = EASE + HtmlConstants.MINUS + OUT
+        final def EASE_IN_OUT: String = {
+          val d = HtmlConstants.MINUS
+          EASE + d + IN + d + OUT
+        }
+
+      }
+
+      final def duration(durationSec: Double): String = {
+        durationSec + "s"
+      }
+
+      final def all(durationSec: Double, timingFun: String): String = {
+        val s = HtmlConstants.SPACE
+        Properties.ALL + s + duration(durationSec) + s + timingFun
+      }
+
+    }
+
+
+    object Origin {
+
+      def TOP_LEFT = Coord.TOP + HtmlConstants.SPACE + Coord.LEFT
+
+    }
+
+
+    object Transform {
+
+      final def TRANSLATE = "translate"
+      final def TRANSLATE_3D = TRANSLATE + `3D`
+
+      final def MATRIX = "matrix"
+      final def MATRIX_3D = MATRIX + `3D`
+
+    }
+
+  }
+
 }
