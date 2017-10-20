@@ -5,6 +5,8 @@ import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
+import scalaz.{Validation, ValidationNel}
+
 
 /** Модель метаданных по блоку рекламной карточки. */
 object BlockMeta {
@@ -26,12 +28,17 @@ object BlockMeta {
 
   implicit def univEq: UnivEq[BlockMeta] = UnivEq.derive
 
+  /** STUB: Валидация инстансов BlockMeta. */
+  def validate(bm: BlockMeta): ValidationNel[String, BlockMeta] = {
+    // Все поля модели очень жестко типизированы, поэтому валидировать нечего.
+    Validation.success(bm)
+  }
+
 }
 
 
 /**
- * Неизменяемое представление глобальных парамеров блока.
- * @param height высота блока.
+ * Класс модели парамеров блока (стрипа).
  */
 case class BlockMeta(
                       w         : BlockWidth,

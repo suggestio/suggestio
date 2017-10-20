@@ -30,12 +30,14 @@ trait DeltaOpAttrs extends js.Object {
 
   var link: UndefOr[String] = js.undefined
 
+  /** 1..6 */
   var header: UndefOr[Int | Null] = js.undefined
 
   var src: UndefOr[String] = js.undefined
 
   var list: UndefOr[String] = js.undefined
 
+  // undefined ==> 0, 0..8
   var indent: UndefOr[Int | Null] = js.undefined
 
   var `code-block`: UndefOr[Boolean | Null] = js.undefined

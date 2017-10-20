@@ -1,7 +1,9 @@
 package io.suggest.scalaz
 
+import io.suggest.common.empty.{EmptyUtil, IIsEmpty}
+
 import scala.collection.{AbstractIterable, AbstractIterator, AbstractSeq}
-import scalaz.{Foldable, IList, Monoid, NonEmptyList, ValidationNel}
+import scalaz.{Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
 import scala.language.higherKinds
 
@@ -25,12 +27,59 @@ object ScalazUtil {
     * @see Пародия на код, взятый отсюда [[https://www.47deg.com/blog/fp-for-the-average-joe-part-1-scalaz-validation/]]
     * @return Результат валидации.
     */
-  def validateAll[F[_] : Foldable, A, B: Monoid]
+  // TODO Сделать B[_] вместо B?
+  def validateAll[F[_] : Foldable, A, B: Monoid, E]
                  (in: F[A])
-                 (out: A => ValidationNel[String, B]): ValidationNel[String, B] = {
+                 (out: A => ValidationNel[E, B]): ValidationNel[E, B] = {
     in.foldMap { a =>
       out(a)
     }
+  }
+
+  /** Приведение функции валидации к опциональной ипостаси.
+    * None на входе всегда даёт success(None) на выходе.
+    */
+  def liftNelOpt[E, T](opt: Option[T])(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
+    _liftNelOpt(opt, Validation.success(opt))(f)
+  }
+  /** Аналог liftNelOpt, но None приводит к ошибке. */
+  def liftNelSome[E, T](opt: Option[T], errIfNone: => E)(f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
+    _liftNelOpt(opt, Validation.failureNel( errIfNone ))(f)
+  }
+
+  private def _liftNelOpt[E, T](opt: Option[T], empty: => ValidationNel[E, Option[T]])
+                               (f: T => ValidationNel[E, T]): ValidationNel[E, Option[T]] = {
+    // TODO Скорее всего, в scalaz есть более элегантное разруливание этого момента.
+    opt.fold(empty) { v =>
+      f(v)
+        .map(EmptyUtil.someF)
+    }
+  }
+
+  /** Валидация чего-то опционального, которое должно быть None. */
+  def liftNelNone[E, T](opt: Option[T], nonEmptyError: => E): ValidationNel[E, Option[T]] = {
+    opt.fold [ValidationNel[E, Option[T]]] ( Validation.success(opt) ) { _ =>
+      Validation.failureNel(nonEmptyError)
+    }
+  }
+
+  /** Неявно-пустая модель должна быть пустой.
+    *
+    * @param v Инстанс неявно-пустой модели.
+    * @param nonEmptyError Ошибка, если модель непуста.
+    * @return Результат валидации.
+    */
+  def liftNelEmpty[E, T <: IIsEmpty](v: T, nonEmptyError: => E): ValidationNel[E, T] = {
+    if (v.isEmpty) {
+      Validation.success( v )
+    } else {
+      Validation.failureNel(nonEmptyError)
+    }
+  }
+
+  /** Аналог  */
+  def someValidationOrFail[E, T](e: => E)(validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, T] = {
+    validationOpt.getOrElse( Validation.failureNel(e) )
   }
 
 
@@ -85,17 +134,6 @@ object ScalazUtil {
 
     /** Поддержка std api для NonEmptyList. */
     implicit class RichNel[T](nel: NonEmptyList[T]) extends RichIList(nel.list)
-
-  }
-
-
-  /** Всякие implicit'ы, с которыми надо бы аккуратнее. */
-  object HellImplicits {
-
-    implicit object StringMonoid extends Monoid[String] {
-      override def zero: String = ""
-      override def append(f1: String, f2: => String): String = f1 + f2
-    }
 
   }
 

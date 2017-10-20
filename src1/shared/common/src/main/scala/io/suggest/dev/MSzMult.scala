@@ -5,7 +5,7 @@ import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
-import io.suggest.math.MathConst.PERCENTS_COUNT
+import io.suggest.math.MathConst.Percents.PERCENTS_COUNT
 
 /**
   * Suggest.io

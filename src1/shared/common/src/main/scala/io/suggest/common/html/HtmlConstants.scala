@@ -45,6 +45,8 @@ object HtmlConstants {
 
   val MINUS                   = "-"
 
+  val `.`                     = "."
+
   @inline
   def TAG_PREFIX              = DIEZ
 

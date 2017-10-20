@@ -36,7 +36,7 @@ object HashesHex {
 
   import scalaz._
   import scalaz.syntax.apply._
-  import ScalazUtil.HellImplicits.StringMonoid
+  import scalaz.std.string._
   import scalaz.std.iterable._
 
   def hexRe = "[a-f0-9]+".r

@@ -1,10 +1,17 @@
 package io.suggest.jd.tags.qd
 
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.common.geom.d2.MSize2di
+import io.suggest.err.ErrorConstants
+import io.suggest.math.MathConst
+import io.suggest.media.MediaConst
 import io.suggest.primo.{IEqualsEq, IHashCodeLazyVal, ISetUnset}
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -14,14 +21,40 @@ import play.api.libs.json._
   */
 object MQdAttrsEmbed {
 
+  object Fields {
+    val WIDTH_FN  = MediaConst.NamesShort.WIDTH_FN
+    val HEIGHT_FN = MediaConst.NamesShort.HEIGHT_FN
+  }
+
+
   /** Поддержка play-json. */
-  implicit val MQD_ATTRS_EMBED_FORMAT: OFormat[MQdAttrsEmbed] = (
-    (__ \ "w").formatNullable[ISetUnset[Int]] and
-    (__ \ "h").formatNullable[ISetUnset[Int]]
-  )(apply, unlift(unapply))
+  implicit val MQD_ATTRS_EMBED_FORMAT: OFormat[MQdAttrsEmbed] = {
+    val F = Fields
+    (
+      (__ \ F.WIDTH_FN).formatNullable[ISetUnset[Int]] and
+      (__ \ F.HEIGHT_FN).formatNullable[ISetUnset[Int]]
+    )(apply, unlift(unapply))
+  }
 
   /** Поддержка UnivEq. */
   implicit def univEq: UnivEq[MQdAttrsEmbed] = UnivEq.derive
+
+
+  def validateForStore(attrsEmbed: MQdAttrsEmbed): ValidationNel[String, MQdAttrsEmbed] = {
+    val errMsgF = ErrorConstants.emsgF("embed")
+    def sideValidate(suOpt: Option[ISetUnset[Int]], fn: String) = {
+      ISetUnset.validateSetOpt( suOpt,  errMsgF(fn) ) { value =>
+        // TODO Вписать нормальные цифры, например исходя из размера внешнего контейнера.
+        // TODO Уменьшать цифры, если выходят за пределы контейнера. Пропорционально.
+        MathConst.Counts.validateMinMax(value, min = 10, max = 1000, errMsgF(fn) )
+      }
+    }
+    val F = Fields
+    (
+      sideValidate(attrsEmbed.width,  F.WIDTH_FN) |@|
+      sideValidate(attrsEmbed.height, F.HEIGHT_FN)
+    )(apply)
+  }
 
 }
 

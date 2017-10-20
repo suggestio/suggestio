@@ -1,5 +1,7 @@
 package io.suggest.err
 
+import io.suggest.common.html.HtmlConstants.`.`
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -7,6 +9,17 @@ package io.suggest.err
  * Description: Клиент-серверные константы, связанные с возникающими ошибками.
  */
 object ErrorConstants {
+
+  def EMSG_CODE_PREFIX = "e" + `.`
+
+
+  /** Сборка частой функции, генерирующей msg-коды ошибок.
+    * Обычно код начинается на "e.", затем идёт абстрактный идентификатор, затем суффикс конечного пояснения.
+    * Например: "e.strip.name".
+    */
+  def emsgF(root: String): String => String = { suffix: String =>
+    EMSG_CODE_PREFIX + root + `.` + suffix
+  }
 
   /** Класс ошибки в формах. */
   def FORM_CSS_CLASS = "__error"
@@ -44,6 +57,16 @@ object ErrorConstants {
   def assertArg(assertion: Boolean): Unit = {
     if (!assertion)
       throw AssertArgException
+  }
+
+  object Words {
+
+    def EXPECTED    = "expected"
+    def MISSING     = "missing"
+    def TOO_MANY    = "too.many"
+    def UNEXPECTED  = "un" + EXPECTED
+    def INVALID     = "invalid"
+
   }
 
 }

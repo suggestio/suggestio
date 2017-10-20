@@ -32,7 +32,7 @@ object JdTag {
 
 
   /** Полиморфная поддержка play-json. */
-  implicit val IDOC_TAG_FORMAT: OFormat[JdTag] = (
+  implicit val JD_TAG_FORMAT: OFormat[JdTag] = (
     (__ \ Fields.TYPE_FN).format[MJdTagName] and
     (__ \ Fields.PROPS_FN).formatNullable[MJdtProps1]
       .inmap[MJdtProps1](

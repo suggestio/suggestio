@@ -1,9 +1,12 @@
 package io.suggest.primo
 
 import io.suggest.common.empty.NonEmpty
+import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{Format, OFormat, __}
+
+import scalaz.{Validation, ValidationNel}
 
 /**
   * Suggest.io
@@ -29,6 +32,33 @@ object ISetUnset {
   /** Собрать из option'а. */
   def apply[T](vOpt: Option[T]): ISetUnset[T] = {
     vOpt.fold[ISetUnset[T]](UnSetVal)(SetVal.apply)
+  }
+
+
+  def validateSet[E, T](su: ISetUnset[T], errorIfUnset: => E,
+                        f: T => ValidationNel[E, T] = Validation.success): ValidationNel[E, ISetUnset[T]] = {
+    ScalazUtil.liftNelSome(su.toOption, errorIfUnset)(f)
+      .map(fromOption)
+  }
+
+
+  /** Провалидировать Set или None значение положительно.
+    * По сути, это враппер над validateSetOpt()(), потому что scala не переваривает дефолтовое значение в f.
+    */
+  def validateSetOptDflt[E, T](suOpt: Option[ISetUnset[T]], errorIfUnset: => E): ValidationNel[E, Option[ISetUnset[T]]] = {
+    validateSetOpt(suOpt, errorIfUnset)(Validation.success)
+  }
+  /** Провалидировать None положительно, Set с помощью функции, Unset отрицательно. */
+  def validateSetOpt[E, T](suOpt: Option[ISetUnset[T]], errorIfUnset: => E)
+                          (f: T => ValidationNel[E, T]): ValidationNel[E, Option[ISetUnset[T]]] = {
+    ScalazUtil.liftNelOpt(suOpt) { su =>
+      ISetUnset.validateSet(su, errorIfUnset, f)
+    }
+  }
+
+
+  def fromOption[T](opt: Option[T]): ISetUnset[T] = {
+    opt.fold[ISetUnset[T]](UnSetVal)(SetVal.apply)
   }
 
 }

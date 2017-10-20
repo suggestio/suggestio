@@ -376,45 +376,47 @@ class LkAdEdFormUtil extends MacroLogsImpl {
       )
     )
 
+    val edges = Seq(
+      // strip1
+      MJdEditEdge(
+        predicate = textPred,
+        id        = upperBlockEdgeId,
+        text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" ),
+      ),
+      MJdEditEdge(
+        predicate = textPred,
+        id        = alsoDisplayedInGridEdgeId,
+        text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) + "\n" )
+      ),
+
+      // strip2
+      MJdEditEdge(
+        predicate = textPred,
+        id        = descriptionEdgeId,
+        text      = Some( ctx.messages( MsgCodes.`Description` ) + "\n" )
+      ),
+      MJdEditEdge(
+        predicate = textPred,
+        id        = descrContentEdgeId,
+        text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
+      ),
+
+      // strip3
+      MJdEditEdge(
+        predicate = textPred,
+        id        = fr3text1EdgeId,
+        text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
+      ),
+      MJdEditEdge(
+        predicate = textPred,
+        id        = fr3text2EdgeId,
+        text      = Some( "webkit-transition: transform 0.2s linear\n" )
+      )
+    )
+
     val r = MAdEditForm(
       template = tplTree,
-      edges = Seq(
-        // strip1
-        MJdEditEdge(
-          predicate = textPred,
-          id        = upperBlockEdgeId,
-          text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" ),
-        ),
-        MJdEditEdge(
-          predicate = textPred,
-          id        = alsoDisplayedInGridEdgeId,
-          text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) + "\n" )
-        ),
-
-        // strip2
-        MJdEditEdge(
-          predicate = textPred,
-          id        = descriptionEdgeId,
-          text      = Some( ctx.messages( MsgCodes.`Description` ) + "\n" )
-        ),
-        MJdEditEdge(
-          predicate = textPred,
-          id        = descrContentEdgeId,
-          text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
-        ),
-
-        // strip3
-        MJdEditEdge(
-          predicate = textPred,
-          id        = fr3text1EdgeId,
-          text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
-        ),
-        MJdEditEdge(
-          predicate = textPred,
-          id        = fr3text2EdgeId,
-          text      = Some( "webkit-transition: transform 0.2s linear\n" )
-        )
-      )
+      edges    = edges
     )
 
     Future.successful(r)

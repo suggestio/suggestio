@@ -1,9 +1,13 @@
 package io.suggest.img.crop
 
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.{IHeight, ISize2di, IWidth, MSize2di}
+import io.suggest.math.MathConst
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+
+import scalaz.ValidationNel
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -22,19 +26,76 @@ object MCrop {
     }
   }
 
+  object Fields {
+    val WIDTH_FN    = "w"
+    val HEIGHT_FN   = "h"
+    val OFFSET_X_FN = "x"
+    val OFFSET_Y_FN = "y"
+  }
+
   /** Поддержка play-json. */
-  implicit val MCROP_FORMAT: OFormat[MCrop] = (
-    (__ \ "w").format[Int] and
-    (__ \ "h").format[Int] and
-    (__ \ "x").format[Int] and
-    (__ \ "y").format[Int]
-  )(apply, unlift(unapply))
+  implicit val MCROP_FORMAT: OFormat[MCrop] = {
+    val F = Fields
+    (
+      (__ \ F.WIDTH_FN).format[Int] and
+      (__ \ F.HEIGHT_FN).format[Int] and
+      (__ \ F.OFFSET_X_FN).format[Int] and
+      (__ \ F.OFFSET_Y_FN).format[Int]
+    )(apply, unlift(unapply))
+  }
 
   implicit def univEq: UnivEq[MCrop] = UnivEq.derive
+
+
+  /** Валидация в контексте картинки и контейнера.
+    *
+    * @param crop Валидируемый кроп.
+    * @param tgContSz Размеры целевого контейнера, ради которых происходил кроп.
+    * @param imgWh Размеры исходной картинки, которую кропали.
+    * @return Результат валидации с обновлённым инстансом MCrop.
+    */
+  def validate(crop: MCrop, tgContSz: ISize2di, imgWh: ISize2di): ValidationNel[String, MCrop] = {
+    val C = MathConst.Counts
+
+    def _validateSide(sideF: ISize2di => Int, fn: String) = {
+      C.validateMinMax(
+        v   = sideF(crop),
+        min = sideF(tgContSz),
+        max = sideF(imgWh),
+        eMsgPrefix = fn
+      )
+    }
+
+    val offsetsAsWh = crop.offsets2side2d
+    def _validateOffset(sideF: ISize2di => Int, fn: String) = {
+      C.validateMinMax(
+        v   = sideF(offsetsAsWh),
+        min = 0,
+        max = sideF(imgWh) - sideF(crop),
+        eMsgPrefix = "off" + fn.toUpperCase()
+      )
+    }
+
+    val F = Fields
+    (
+      _validateSide(IWidth.f,     F.WIDTH_FN)     |@|
+      _validateSide(IHeight.f,    F.HEIGHT_FN)    |@|
+      _validateOffset(IWidth.f,   F.OFFSET_X_FN)  |@|
+      _validateOffset(IHeight.f,  F.OFFSET_Y_FN)
+    ) { MCrop.apply }
+    // Пересборка инстанса просто для самоконтроля на случай добавления новых полей в конструктор класса.
+  }
 
 }
 
 
+/** Модель описания кропа.
+  *
+  * @param width Ширина кропа.
+  * @param height Высота кропа.
+  * @param offX Сдвиг по горизонтали.
+  * @param offY Сдвиг по вертикали.
+  */
 case class MCrop(
                   width   : Int,
                   height  : Int,
@@ -68,6 +129,9 @@ case class MCrop(
     MCrop.optSign(offY, posSign, sb)
     sb.toString()
   }
+
+  /** Изобразить оффсеты как размеры. */
+  def offsets2side2d = MSize2di(width = offX, height = offY)
 
   /**
    * IM допускает задание размеров по отношению к текущим размерам изображения.

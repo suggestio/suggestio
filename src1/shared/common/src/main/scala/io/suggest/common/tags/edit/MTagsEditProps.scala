@@ -6,7 +6,7 @@ import io.suggest.scalaz.ScalazUtil
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
 import scalaz.std.iterable._
-import ScalazUtil.HellImplicits.StringMonoid
+import scalaz.std.string._
 
 /**
   * Suggest.io

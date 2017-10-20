@@ -9,4 +9,6 @@ package object scalaz {
 
   type NodePath_t  = List[Int]
 
+  type StringValidationNel[T] = _root_.scalaz.ValidationNel[String, T]
+
 }

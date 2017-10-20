@@ -10,6 +10,7 @@ import scala.annotation.tailrec
 import scala.collection.SortedSet
 import scala.util.matching.Regex
 
+
 /**
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -516,7 +517,6 @@ object UrlUtil extends Serializable with MacroLogsImplLazy  {
   def isPageUrlValid(url: String): Boolean = {
     !INVALID_URL_PATTERNS.exists(_.pattern.matcher(url).find())
   }
-
 
   /**
    * Донормализовать хостнейм до dkey.

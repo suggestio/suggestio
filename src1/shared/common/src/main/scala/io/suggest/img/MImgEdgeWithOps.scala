@@ -1,10 +1,17 @@
 package io.suggest.img
 
+import io.suggest.common.geom.d2.ISize2di
+import io.suggest.err.ErrorConstants
 import io.suggest.img.crop.MCrop
-import io.suggest.jd.MJdEdgeId
+import io.suggest.jd.{MJdEdgeId, MJdEdgeVldInfo}
+import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.scalaz.ScalazUtil
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+
+import scalaz.{Validation, ValidationNel}
+import scalaz.syntax.apply._
 
 /**
   * Suggest.io
@@ -22,6 +29,36 @@ object MImgEdgeWithOps {
 
   implicit def univEq: UnivEq[MImgEdgeWithOps] = UnivEq.derive
 
+
+  /** Валидация инстанса [[MImgEdgeWithOps]] с помощью остальных данных.
+    *
+    * @param m Проверяемый инстанс [[MImgEdgeWithOps]].
+    * @param edges Карта допустимых эджей.
+    * @param imgContSzOpt Размер контейнера изображения (для проверки кропа).
+    * @return Результат валидации.
+    */
+  def validate(
+                m          : MImgEdgeWithOps,
+                edges      : Map[EdgeUid_t, MJdEdgeVldInfo],
+                imgContSzOpt  : Option[ISize2di]
+              ): ValidationNel[String, MImgEdgeWithOps] = {
+    val edgeInfoOpt = edges.get( m.imgEdge.edgeUid )
+    (
+      Validation.liftNel(m.imgEdge)( { _ => !edgeInfoOpt.exists(_.img.exists(_.isImg)) }, ErrorConstants.emsgF("img")("e") ) |@|
+      ScalazUtil.liftNelOpt(m.crop) { mcrop =>
+        ScalazUtil.someValidationOrFail("crop.args") {
+          for {
+            contSz   <- imgContSzOpt
+            edgeInfo <- edgeInfoOpt
+            img      <- edgeInfo.img
+          } yield {
+            MCrop.validate(mcrop, tgContSz = contSz, imgWh = img.imgWh)
+          }
+        }
+      }
+    ){ MImgEdgeWithOps(_, _) }
+  }
+
 }
 
 
@@ -36,6 +73,6 @@ case class MImgEdgeWithOps(
                           ) {
 
   def withImgEdge(imgEdge: MJdEdgeId) = copy(imgEdge = imgEdge)
-  def withCrop(crop: Option[MCrop])     = copy(crop = crop)
+  def withCrop(crop: Option[MCrop])   = copy(crop = crop)
 
 }

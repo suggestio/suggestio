@@ -58,18 +58,22 @@ trait ISize2di extends IWidth with IHeight {
 }
 
 
+object IWidth {
+  def f = { x: IWidth => x.width }
+}
 /** Интерфейс для доступа к ширине. Т.е. одномерная проекция горизонтального размера. */
 trait IWidth {
   /** Ширина. */
   def width: Int
-  override def toString = "W(" + width + ")"
 }
 
+object IHeight {
+  def f = { y: IHeight => y.height}
+}
 /** Интерфейс для доступа к высоте. Т.е. одномерная проекция вертикального размера. */
 trait IHeight {
   /** Высота. */
   def height: Int
-  override def toString = "H(" + height + ")"
 }
 
 

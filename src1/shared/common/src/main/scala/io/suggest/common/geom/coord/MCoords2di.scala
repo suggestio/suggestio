@@ -1,5 +1,6 @@
 package io.suggest.common.geom.coord
 
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.math.{IBinaryMathOp, IntMathModifiers}
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
@@ -55,6 +56,8 @@ case class MCoords2di(
 
   def withX(x: Int) = copy(x = x)
   def withY(y: Int) = copy(y = y)
+
+  def toSize = MSize2di(width = x, height = y)
 
 }
 

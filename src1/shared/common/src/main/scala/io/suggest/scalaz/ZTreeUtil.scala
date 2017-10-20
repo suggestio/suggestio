@@ -2,8 +2,10 @@ package io.suggest.scalaz
 
 import io.suggest.common.empty.EmptyUtil
 
-import scalaz.{Tree, TreeLoc}
+import scalaz.{Tree, TreeLoc, Validation, ValidationNel}
 import japgolly.univeq._
+
+import scalaz.syntax.apply._
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -81,6 +83,23 @@ object ZTreeUtil {
         .loc
         .map(f)
         .toTree
+    }
+
+
+    /** Валидация узла и его дочерних узлов. */
+    def validateNode[E](rootV   : A => ValidationNel[E, A])
+                       (forestV : Stream[Tree[A]] => ValidationNel[E, Stream[Tree[A]]]): ValidationNel[E, Tree[A]] = {
+      (
+        rootV(tree.rootLabel) |@|
+        forestV(tree.subForest)
+      )( Tree.Node(_, _) )
+    }
+
+    /** Валидация узла без подчинённых узлов. */
+    def validateLeaf[E](notLeafErr: => E)(rootV: A => ValidationNel[E, A]): ValidationNel[E, Tree[A]] = {
+      validateNode(rootV) { forest =>
+        Validation.liftNel(forest)(_.nonEmpty, notLeafErr)
+      }
     }
 
   }

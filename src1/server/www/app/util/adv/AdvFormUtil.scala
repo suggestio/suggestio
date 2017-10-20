@@ -6,7 +6,7 @@ import javax.inject.{Inject, Singleton}
 import scalaz._
 import scalaz.syntax.apply._
 import scalaz.std.iterable._
-import io.suggest.scalaz.ScalazUtil.HellImplicits.StringMonoid
+import scalaz.std.string._
 import io.suggest.adv.AdvConstants
 import io.suggest.adv.AdvConstants.Su
 import io.suggest.adv.free.MAdv4FreeProps
