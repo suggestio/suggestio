@@ -3,9 +3,11 @@ package io.suggest.ad.edit.c
 import diode.{ActionHandler, ActionResult, ModelRO, ModelRW}
 import io.suggest.ad.edit.m.{HandleVScroll, MDocS, MLayoutS}
 import io.suggest.common.event.DomEvents
-import org.scalajs.dom.{EventTarget, UIEvent}
-import japgolly.univeq._
+import org.scalajs.dom.{Element, EventTarget, UIEvent, Window}
 import io.suggest.sjs.common.vm.evtg.EventTargetVm._
+import org.scalajs.dom
+
+import scala.scalajs.js.UndefOr
 
 /**
   * Suggest.io
@@ -21,8 +23,16 @@ class LayoutAh[M](
 
   def subscribeForScroll(etg: EventTarget, dispatcher: diode.Dispatcher): Unit = {
     etg.addEventListener4s( DomEvents.SCROLL ) { e: UIEvent =>
-      // TODO Отфильтровать события горизонтального скроллинга.
-      val scrollTop = e.view.document.documentElement.scrollTop
+      // TODO Opt Отфильтровать события горизонтального скроллинга.
+      val scrollTop = ( e.view: UndefOr[Window] )
+        .fold[Element] {
+          // Поле e.view является undefined в хроме. Смотреть скроллинг в body.
+          dom.document.body
+        } { wnd =>
+          // Firefox: e.view есть, значит достучаться до documentElement.
+          wnd.document.documentElement
+        }
+        .scrollTop
       dispatcher( HandleVScroll(scrollTop) )
     }
   }
