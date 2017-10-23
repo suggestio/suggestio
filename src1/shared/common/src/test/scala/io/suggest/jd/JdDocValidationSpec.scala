@@ -19,10 +19,6 @@ import scalaz.Tree
 object JdDocValidationSpec extends SimpleTestSuite {
 
   test("Successfully pass example 3-block 0-img document from AdEdFormUtil") {
-
-        // Тут просто очень временный документ.
-    // Потом надо будет просто искать карточки на определённом узле, и возвращать их документ
-    // и эджи (эджи - прорендерив через ctx.messages). Карточки сгенерить через новый редактор (который ещё не написан).
     val upperBlockEdgeId = 1
     val alsoDisplayedInGridEdgeId = upperBlockEdgeId + 1
 
