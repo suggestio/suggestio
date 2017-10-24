@@ -38,24 +38,31 @@ object MImgEdgeWithOps {
     * @return Результат валидации.
     */
   def validate(
-                m          : MImgEdgeWithOps,
-                edges      : Map[EdgeUid_t, MJdEdgeVldInfo],
+                m             : MImgEdgeWithOps,
+                edges         : Map[EdgeUid_t, MJdEdgeVldInfo],
                 imgContSzOpt  : Option[ISize2di]
               ): ValidationNel[String, MImgEdgeWithOps] = {
     val edgeInfoOpt = edges.get( m.imgEdge.edgeUid )
+    val cropAndWhVldOpt = for {
+      mcrop     <- m.crop
+      contSz    <- imgContSzOpt
+      edgeInfo  <- edgeInfoOpt
+      img       <- edgeInfo.img
+      imgWh     <- img.imgWh
+    } yield {
+      MCrop.validate(
+        crop      = mcrop,
+        tgContSz  = contSz,
+        imgWh     = imgWh
+      )
+    }
+
     (
-      Validation.liftNel(m.imgEdge)( { _ => !edgeInfoOpt.exists(_.img.exists(_.isImg)) }, ErrorConstants.emsgF("img")("e") ) |@|
-      ScalazUtil.liftNelOpt(m.crop) { mcrop =>
-        ScalazUtil.someValidationOrFail("crop.args") {
-          for {
-            contSz   <- imgContSzOpt
-            edgeInfo <- edgeInfoOpt
-            img      <- edgeInfo.img
-          } yield {
-            MCrop.validate(mcrop, tgContSz = contSz, imgWh = img.imgWh)
-          }
-        }
-      }
+      Validation.liftNel(m.imgEdge)(
+        { _ => !edgeInfoOpt.exists(_.img.exists(_.isImg)) },
+        ErrorConstants.emsgF("img")("e")
+      ) |@|
+      ScalazUtil.optValidationOrNone( cropAndWhVldOpt )
     ){ MImgEdgeWithOps(_, _) }
   }
 

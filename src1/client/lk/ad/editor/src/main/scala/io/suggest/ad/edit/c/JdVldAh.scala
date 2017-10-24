@@ -25,10 +25,10 @@ class JdVldAh[M]( modelRW: ModelRW[M, MJdVldAh] ) extends ActionHandler(modelRW)
         edges = v0.edges.mapValues { eData =>
           MJdEdgeVldInfo(
             jdEdge = eData.jdEdge,
-            img = for (fileJs <- eData.fileJs; whPx <- fileJs.whPx) yield {
+            img = for (fileJs <- eData.fileJs) yield {
               MEdgePicInfo(
                 isImg = true,
-                imgWh = whPx
+                imgWh = fileJs.whPx
               )
             }
           )

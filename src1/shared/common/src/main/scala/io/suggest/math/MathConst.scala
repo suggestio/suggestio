@@ -35,8 +35,8 @@ object MathConst {
     def validateMinMax[T](v: T, min: T, max: T, eMsgPrefix: => String = "count")(implicit ev: Numeric[T]): ValidationNel[String, T] = {
       val errMsg = ErrorConstants.emsgF(eMsgPrefix + `.` + "too")
       (
-        Validation.liftNel(v)(ev.lteq(_, min), errMsg("low")) |@|
-        Validation.liftNel(v)(ev.gteq(_, max), errMsg("big"))
+        Validation.liftNel(v)(ev.lt(_, min), errMsg(s"low")) |@|
+        Validation.liftNel(v)(ev.gt(_, max), errMsg(s"big"))
       ) { (_, _) => v }
     }
 

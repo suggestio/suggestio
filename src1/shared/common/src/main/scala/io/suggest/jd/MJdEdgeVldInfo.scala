@@ -19,6 +19,6 @@ case class MJdEdgeVldInfo(
 /** Модель для доступа к данным эджа и связанный с ним картинки. */
 case class MEdgePicInfo(
                          isImg     : Boolean,
-                         imgWh     : ISize2di
+                         imgWh     : Option[ISize2di]
                        )
 

@@ -81,6 +81,10 @@ object ScalazUtil {
   def someValidationOrFail[E, T](e: => E)(validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, T] = {
     validationOpt.getOrElse( Validation.failureNel(e) )
   }
+  def optValidationOrNone[E, T](validationOpt: Option[ValidationNel[E, T]]): ValidationNel[E, Option[T]] = {
+    validationOpt
+      .fold[ValidationNel[E, Option[T]]] (Validation.success(None)) ( _.map(Some.apply) )
+  }
 
 
   object Implicits {
