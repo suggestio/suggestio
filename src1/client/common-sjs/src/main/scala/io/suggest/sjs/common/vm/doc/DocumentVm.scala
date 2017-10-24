@@ -4,11 +4,12 @@ import io.suggest.common.event.VisibilityChangeEvents
 import io.suggest.sjs.common.vm.evtg.EventTargetVmT
 import io.suggest.sjs.common.vm.head.HeadVm
 import org.scalajs.dom
-import org.scalajs.dom.Document
+import org.scalajs.dom.{Document, Element}
 import org.scalajs.dom.raw.{HTMLBodyElement, HTMLElement, HTMLHeadElement}
 
 import scala.scalajs.js
 import scala.scalajs.js.UndefOr
+import scala.language.implicitConversions
 
 /**
  * Suggest.io
@@ -24,18 +25,14 @@ trait DocumentVmT extends EventTargetVmT {
 
   override type T = Document
 
-  def _api(doc: Document = dom.document): SafeDocumentApi = {
-    doc.asInstanceOf[SafeDocumentApi]
-  }
-
   protected def _safeGetTag[T <: HTMLElement](name: String)(dsf: SafeDocumentApi => UndefOr[T]): T = {
-    val d = _underlying
-    val ds = _api(d)
+    val ds = SafeDocumentApi(_underlying)
     dsf(ds)
       .toOption
       .filter { _ != null }
       .getOrElse {
-        d.getElementsByTagName(name)(0)
+        _underlying
+          .getElementsByTagName(name)(0)
           .asInstanceOf[T]
       }
   }
@@ -46,6 +43,12 @@ trait DocumentVmT extends EventTargetVmT {
   /** Получить тег head, отрабатывая оптимальные и безопасные сценарии. */
   def head = HeadVm( _safeGetTag("head")(_.head) )
 
+  def scrollingElement: Element = {
+    val ds = SafeDocumentApi( _underlying )
+    ds.scrollingElement
+      .getOrElse( _underlying.documentElement )
+  }
+
 }
 
 
@@ -54,6 +57,12 @@ trait DocumentVmT extends EventTargetVmT {
 trait SafeDocumentApi extends js.Object {
   def body: UndefOr[HTMLBodyElement] = js.native
   def head: UndefOr[HTMLHeadElement] = js.native
+  def scrollingElement: UndefOr[HTMLElement] = js.native
+}
+object SafeDocumentApi {
+  implicit def apply(doc: Document): SafeDocumentApi = {
+    doc.asInstanceOf[SafeDocumentApi]
+  }
 }
 
 

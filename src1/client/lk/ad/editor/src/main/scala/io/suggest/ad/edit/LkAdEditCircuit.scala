@@ -2,7 +2,7 @@ package io.suggest.ad.edit
 
 import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
-import io.suggest.ad.edit.m.{MAdEditFormInit, MAeRoot, MDocS, MLayoutS}
+import io.suggest.ad.edit.m._
 import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
 import io.suggest.primo.id.IId
@@ -17,6 +17,7 @@ import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
+import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -43,6 +44,17 @@ class LkAdEditCircuit(
   extends CircuitLog[MAeRoot]
   with ReactConnector[MAeRoot]
 {
+
+  /** Флаг использования валидации на клиенте.
+    * Валидация на клиенте нежелательна, т.к. это очень жирный кусок js, который может
+    * превносить тормоза даже в простой набор текста.
+    *
+    * Можно управлять этим флагам.
+    *
+    * final val, чтобы значение флага было на 100% известно ещё на стадии компиляции.
+    */
+  final val DOC_VLD_ON_CLIENT: Boolean = scala.scalajs.LinkingInfo.developmentMode
+
 
   override protected def CIRCUIT_ERROR_CODE = ErrorMsgs.AD_EDIT_CIRCUIT_ERROR
 
@@ -281,6 +293,20 @@ class LkAdEditCircuit(
 
   private val tailAh = new TailAh( rootRW )
 
+  private lazy val jdVldAh = new JdVldAh(
+    modelRW = zoomRW { mroot =>
+      val jdArgs = mroot.doc.jdArgs
+      MJdVldAh(
+        template = jdArgs.template,
+        edges    = jdArgs.renderArgs.edges,
+        popups   = mroot.popups
+      )
+    } { (mroot, _) =>
+      // TODO Залить возможные изменения в основную модель.
+      mroot
+    }
+  )
+
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
@@ -311,11 +337,19 @@ class LkAdEditCircuit(
     // В голове -- обработчик всех основных операций на документом.
     acc ::= docAh
 
+
+    // -----------------------------------------------------------
+    // Аккамулятор параллельного связывания.
+    var parAcc = List.empty[HandlerFunction]
+
+    if (DOC_VLD_ON_CLIENT)
+      parAcc ::= jdVldAh
+
+    parAcc ::= stripBgColorPickAfterAh
+    parAcc ::= composeHandlers(acc: _*)
+
     // Навешиваем параллельные handler'ы.
-    foldHandlers(
-      composeHandlers(acc: _*),
-      stripBgColorPickAfterAh
-    )
+    foldHandlers( parAcc: _* )
   }
 
 
@@ -323,5 +357,12 @@ class LkAdEditCircuit(
   layoutAh.subscribeForScroll( dom.window, this )
 
   wsPoolAh.initGlobalEvents()
+
+  // Если валидация на клиенте, то мониторить jdArgs.template на предмет изменений шаблона.
+  if (DOC_VLD_ON_CLIENT) {
+    subscribe(mDocSRw.zoom(_.jdArgs.template)) { _ =>
+      dispatch( JdDocChanged )
+    }
+  }
 
 }

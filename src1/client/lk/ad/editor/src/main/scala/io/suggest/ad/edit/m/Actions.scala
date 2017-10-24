@@ -8,13 +8,16 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
 import io.suggest.dev.MSzMult
 import io.suggest.file.up.MUploadResp
+import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.scalaz.StringValidationNel
 import io.suggest.spa.DAction
 import io.suggest.text.StringUtil
 import io.suggest.url.MHostUrl
 import org.scalajs.dom.{Blob, File}
 
 import scala.util.Try
+import scalaz.{Tree, ValidationNel}
 
 /**
   * Suggest.io
@@ -128,3 +131,13 @@ case class SetScale(szMult: MSzMult) extends ILkEditAction
 
 /** Сигнал вертикального скроллинга. */
 case class HandleVScroll(y: Double) extends ILkEditAction
+
+
+/** Сигнал о любом изменении документа.
+  * Это обычно результат мониторинга документа на уровне circuit.
+  */
+case object JdDocChanged extends ILkEditAction
+
+/** Сигнал о завершении валидации. */
+case class JdVldResult( vldRes: StringValidationNel[Tree[JdTag]] ) extends ILkEditAction
+
