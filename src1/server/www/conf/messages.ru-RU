@@ -694,6 +694,7 @@ Ntype.t=Тег
 Ntype.m=Медиа
 Ntype.i=Картинка
 Ntype.b=Маячок BLE
+Ntype.mf=Файл
 
 Ntypes.p=Люди
 Ntypes.n=Кабинеты
@@ -702,6 +703,7 @@ Ntypes.t=Теги
 Ntypes.m=Медия
 Ntypes.i=Картинки
 Ntypes.b=Маячки BLE
+Ntypes.mf=Файлы
 Nodes=Узлы
 
 edge.predicate.a=Владелец

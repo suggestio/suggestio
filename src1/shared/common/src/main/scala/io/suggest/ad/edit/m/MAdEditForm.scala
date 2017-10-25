@@ -2,6 +2,8 @@ package io.suggest.ad.edit.m
 
 import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.JdTag
+import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.primo.id.IId
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
@@ -41,4 +43,9 @@ object MAdEditForm {
 case class MAdEditForm(
                         template    : Tree[JdTag],
                         edges       : Iterable[MJdEditEdge]
-                      )
+                      ) {
+
+  /** Кэшируемая карта эджей. */
+  lazy val edgesMap = IId.els2idMap[EdgeUid_t, MJdEditEdge]( edges )
+
+}

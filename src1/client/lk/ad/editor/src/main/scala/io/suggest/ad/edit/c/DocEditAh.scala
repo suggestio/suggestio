@@ -63,7 +63,7 @@ class DocEditAh[M](
                        tpl: Tree[JdTag],
                        edges: Map[EdgeUid_t, MEdgeDataJs]): (Option[Effect], Map[EdgeUid_t, MEdgeDataJs]) = {
     // 10. Очистить эджи от неиспользуемых.
-    val edges2 = quillDeltaJsUtil.purgeUnusedEdges( tpl, edges )
+    val edges2 = JdTag.purgeUnusedEdges( tpl, edges )
 
     // 20. Необходимо организовать блобификацию файлов эджей, заданных через dataURL.
     val dataPrefix = HtmlConstants.Proto.DATA_
@@ -252,7 +252,7 @@ class DocEditAh[M](
                 tpl1
               }
             // Очистить эджи от лишнего контента
-            val dataEdges2 = quillDeltaJsUtil.purgeUnusedEdges(tpl2, dataEdges0)
+            val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
             v3.withJdArgs(
               v3.jdArgs.copy(
                 template    = tpl2,
@@ -311,7 +311,7 @@ class DocEditAh[M](
         noChange
       } { case (dataEdge2, blobUrl) =>
         val dataEdgesMap1 = dataEdgesMap0.updated(dataEdge2.id, dataEdge2)
-        val dataEdgesMap2 = quillDeltaJsUtil.purgeUnusedEdges(v0.jdArgs.template, dataEdgesMap1)
+        val dataEdgesMap2 = JdTag.purgeUnusedEdges(v0.jdArgs.template, dataEdgesMap1)
         val v2 = v0
           .withJdArgs(
             v0.jdArgs.withRenderArgs(
@@ -331,7 +331,7 @@ class DocEditAh[M](
     case PurgeUnusedEdges =>
       val v0 = value
       val edges0 = v0.jdArgs.renderArgs.edges
-      val edges2 = quillDeltaJsUtil.purgeUnusedEdges( v0.jdArgs.template, edges0 )
+      val edges2 = JdTag.purgeUnusedEdges( v0.jdArgs.template, edges0 )
       if ( edges0.size ==* edges2.size ) {
         noChange
       } else {

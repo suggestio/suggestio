@@ -325,8 +325,8 @@ object MImg3 extends MacroLogsImpl with IMImgCompanion {
   */
 case class MImg3(
   override val rowKeyStr            : String,
-  override val dynImgOps            : Seq[ImOp],
-  override val userFileName         : Option[String] = None
+  override val dynImgOps            : Seq[ImOp]       = Nil,
+  override val userFileName         : Option[String]  = None
 )
   extends MImgT
 {

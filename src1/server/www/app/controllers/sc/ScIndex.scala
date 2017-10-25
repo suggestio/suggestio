@@ -263,11 +263,15 @@ trait ScIndex
             for (mnode <- mnodeOpt) yield {
               MIndexNodeInfo(
                 mnode  = mnode,
-                isRcvr = {
-                  // Нужно избегать ситуации попападания в выдачу города или района. Отсеить их через проверку наличия *ЛЮБОГО* Paid-подПредиката:
-                  mnode.edges.withPredicateIter( nodeLocPred.Paid ).nonEmpty &&
-                    // Рутинная проверка на принадлежность к ресиверам. Почти всегда true в текущей ситуации.
-                    mnode.extras.adn.exists(_.rights.contains( MAdnRights.RECEIVER ))
+                isRcvr = mnode.extras.adn.exists { adn =>
+                  // Нужно избегать ситуации попападания в выдачу города или района. Для этого проверяем отображаемый тип узла.
+                  // Раньше было отсеивание через проверку NodeLoc.Paid-предиката.
+                  // Эффективно, но это оказалось губительным для "ручных" узлов (некруговые фигуры на карте, размещённые вне-Paid-предикатов).
+                  val isTownOrDistrict = adn.shownTypeIdOpt
+                    .flatMap( AdnShownTypes.maybeWithName )
+                    .exists { ast => ast.isTown || ast.isTownDistrict }
+                  // Рутинная проверка на принадлежность к ресиверам. Почти всегда true в текущей ситуации.
+                  !isTownOrDistrict && adn.isReceiver
                 }
               )
             }

@@ -207,10 +207,11 @@ class Upload @Inject()(
                     url       = if (MimeConst.Image.isImage( foundFile.file.mime )) {
                       // TODO IMG_DIST: Вписать хост расположения картинки.
                       // TODO Нужна ссылка картинки на недо-оригинал картинки? Или как?
-                      routes.Img.dynImg( MImg3(foundFile) ).url
+                      Some( routes.Img.dynImg( MImg3(foundFile) ).url )
                     } else {
                       // TODO IMG_DIST Надо просто универсальную ссылку для скачивания файла, независимо от его типа.
-                      throw new UnsupportedOperationException(s"MIME ${foundFile.file.mime} don't know how to build URL")
+                      LOGGER.error(s"$logPrefix MIME ${foundFile.file.mime} don't know how to build URL")
+                      None
                     },
                     sizeB     = Some( foundFile.file.sizeB ),
                     name      = None,     // Имя пока не раскрываем. Файл мог быть был загружен другим юзером под иным именем.
@@ -595,10 +596,10 @@ class Upload @Inject()(
           val srvFileInfo = MSrvFileInfo(
             nodeId    = mnodeId,
             url       = if (isImg) {
-              "TODO.need.good.abs.img.link"
+              Some("TODO.need.good.abs.img.link")   // TODO XXX
             } else {
               LOGGER.error(s"$logPrefix TODO URL-generation not implemented for !isImg")
-              "TODO/NotImpl"
+              None
             },
             // Нет необходимости слать это всё назад, поэтому во всех заведомо известных клиенту поля None или empty:
             sizeB     = None,

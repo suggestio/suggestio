@@ -685,6 +685,7 @@ Ntype.t=Tag
 Ntype.m=Media
 Ntype.i=Picture
 Ntype.b=BLE-beacon
+Ntype.mf=File
 
 Ntype.p=People
 Ntype.n=Cabinets
@@ -693,6 +694,7 @@ Ntype.t=Tags
 Ntype.m=Medias
 Ntype.i=Pictures
 Ntype.b=BLE-beacons
+Ntype.mf=Files
 Nodes=Nodes
 
 edge.predicate.a=Owner

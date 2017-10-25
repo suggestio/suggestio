@@ -13,6 +13,7 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.media.MMedias
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.scalaz.ScalazUtil.Implicits._
 import models.im.MImg3
 import models.mctx.Context
 import models.mproj.ICommonDi
@@ -122,6 +123,52 @@ class LkAdEdit @Inject() (
   }
 
 
+  /** Сабмит формы создания новой карточки. */
+  def createAdSubmit(producerIdU: MEsUuId) = csrf.AddToken {
+    val producerId = producerIdU.id
+    isNodeAdmin(producerId).async( parse.json[MAdEditForm] ) { implicit request =>
+      // Взять форму из реквеста, провалидировать
+      lazy val logPrefix = s"createAdSubmit($producerId):"
+      lkAdEdFormUtil.earlyValidateEdges( request.body ).fold(
+        // Не удалось понять присланные эджи:
+        { errorsNel =>
+          LOGGER.warn(s"$logPrefix Failed to validate remote edges: ${errorsNel.iterator.mkString(", ")}")
+          NotAcceptable("edges")
+        },
+
+        // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
+        { edges2 =>
+          // Начальная валидация эджей прошла успешно. Поискать узлы, упомянутые в этих эджах.
+          val edgedNodeIds = edges2.iterator
+            .flatMap(_.fileSrv)
+            .map(_.nodeId)
+            .toSet
+          val edgedNodesMapFut = mNodesCache.multiGetMap(edgedNodeIds)
+
+          // Для валидации самого шаблона нужны данные по размерам связанных картинок. Поэтому залезаем в MMedia за оригиналами упомянутых картинок:
+          val imgNeededMap = lkAdEdFormUtil.collectNeededImgs( edges2 )
+          val imgsMediasFut = mMedias.multiGetMap {
+            imgNeededMap
+              .mapValues(_._mediaId)
+              .valuesIterator
+              .toSet
+          }
+
+          for {
+            imgsMediasMap <- imgsMediasFut
+            edgedNodesMap <- edgedNodesMapFut
+          } yield {
+            // Получены данные из базы по упомянутым картинкам. Надо проверить, что картинки найдены, собрать их wh.
+            ???
+          }
+          ???
+        }
+      )
+      ???
+    }
+  }
+
+
   /** Экшен рендера страницы с формой редактирования карточки.
     *
     * @param adIdU id рекламной карточки.
@@ -156,7 +203,7 @@ class LkAdEdit @Inject() (
           url         = Some( dynImgUtil.imgCall(mimg).url ),
           fileSrv     = Some(MSrvFileInfo(
             nodeId = nodeId,
-            url = "TODO.need.url"   // TODO Генерить тут нормальную ссылку на картинку для редактора.
+            url = Some("TODO.need.url")   // TODO Генерить тут нормальную ссылку на картинку для редактора.
             // TODO Другие поля, надо извлечь их из MMedia.
           ))
         )

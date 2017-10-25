@@ -7,8 +7,12 @@ import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.crypto.hash.HashesHex.MHASHES_HEX_FORMAT_TRASPORT
+import io.suggest.err.ErrorConstants
+import io.suggest.scalaz.StringValidationNel
 import io.suggest.text.StringUtil
 import io.suggest.ueq.UnivEqUtil._
+
+import scalaz.Validation
 
 /**
   * Suggest.io
@@ -21,17 +25,15 @@ object MSrvFileInfo {
 
   /** Собрать невалидный пустой инстанс. Использовать только когда ОЧЕНЬ надо. */
   def empty: MSrvFileInfo = {
-    val s = ""
     MSrvFileInfo(
-      nodeId    = s,
-      url       = s
+      nodeId = ""
     )
   }
 
   /** Поддержка play-json для связи между клиентом и сервером. */
   implicit val MSRV_FILE_INFO: OFormat[MSrvFileInfo] = (
     (__ \ "n").format[String] and
-    (__ \ "u").format[String] and
+    (__ \ "u").formatNullable[String] and
     (__ \ "s").formatNullable[Long] and
     (__ \ "a").formatNullable[String] and
     (__ \ "m").formatNullable[String] and
@@ -44,6 +46,21 @@ object MSrvFileInfo {
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
+
+
+  /** Провалидировать инстанс [[MSrvFileInfo]] перед сохранением на сервер.
+    * По факту, все поля кроме nodeId не нужны.
+    *
+    * @param fi Инстанс [[MSrvFileInfo]].
+    * @return Результат валидации с почищенным инстансом [[MSrvFileInfo]].
+    */
+  def validateC2sForStore(fi: MSrvFileInfo): StringValidationNel[MSrvFileInfo] = {
+    Validation
+      .liftNel(fi.nodeId)( {nodeId => !nodeId.matches("^[a-z0-9A-Z_-]{10,50}$") }, "e.nodeid." + ErrorConstants.Words.INVALID )
+      .map { nodeId =>
+        MSrvFileInfo( nodeId = nodeId )
+      }
+  }
 
 }
 
@@ -59,7 +76,7 @@ object MSrvFileInfo {
   */
 case class MSrvFileInfo(
                          nodeId     : String,
-                         url        : String,
+                         url        : Option[String]      = None,
                          sizeB      : Option[Long]        = None,
                          name       : Option[String]      = None,
                          mimeType   : Option[String]      = None,
@@ -83,8 +100,12 @@ case class MSrvFileInfo(
         nodeId = newInfo.nodeId,
         // Велосипед для фильтрации корректных ссылок.
         // Сервер, на ранних этапах запиливания кода, может возвращать TO*DO-мусор вместо ссылок.
-        url = StringUtil.firstStringMakesSence( newInfo.url, url )
-          .getOrElse(url),
+        url = {
+          val urls = newInfo.url ++ url
+          urls.headOption.flatMap { _ =>
+            StringUtil.firstStringMakesSence(urls.toSeq: _*)
+          }
+        },
         sizeB = newInfo.sizeB
           .orElse(sizeB),
         name = newInfo.name

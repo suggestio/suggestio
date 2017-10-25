@@ -1,7 +1,5 @@
 package io.suggest.scalaz
 
-import scalaz.ValidationNel
-
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
@@ -10,7 +8,7 @@ import scalaz.ValidationNel
   */
 trait IValidateDataT[T] {
 
-  protected def doValidation(v: T): ValidationNel[String, T]
+  protected def doValidation(v: T): StringValidationNel[T]
 
   def validateData(mf: T) = doValidation(mf).toEither
 

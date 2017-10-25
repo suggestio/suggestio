@@ -203,6 +203,21 @@ object JdTag {
   /** toString для scalaz. */
   implicit def jdTagShow: Show[JdTag] = Show.showFromToString[JdTag]
 
+
+  /** Поиск и устранение неиспользуемых эджей.
+    *
+    * @param tpl Шаблон документа.
+    * @param edgesMap Карта эджей, где значение не важно абсолютно.
+    * @tparam E Тип эджа (любой).
+    * @return Прочищенная карта эджей.
+    */
+  def purgeUnusedEdges[E](tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, E]): Map[EdgeUid_t, E] = {
+    import Implicits._
+    val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
+    edgesMap
+      .filterKeys { usedEdgeIds.contains }
+  }
+
 }
 
 

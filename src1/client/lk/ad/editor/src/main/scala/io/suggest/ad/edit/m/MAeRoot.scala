@@ -46,8 +46,14 @@ case class MAeRoot(
                     wsPool      : MWsPoolS          = MWsPoolS.empty,
                   ) {
 
-  /** Экспорт данных формы. */
-  def toForm: MAdEditForm = ???
+  /** Экспорт данных формы для отправки на сервер. */
+  def toForm: MAdEditForm = {
+    val jdArgs = doc.jdArgs
+    MAdEditForm(
+      template = jdArgs.template,
+      edges    = jdArgs.renderArgs.edges.mapValues(_.jdEdge).values
+    )
+  }
 
   def withDoc(doc: MDocS)                     = copy(doc = doc)
   def withLayout(layout: MLayoutS)            = copy(layout = layout)

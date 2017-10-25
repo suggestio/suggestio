@@ -18,4 +18,7 @@ object JdConst {
   /** Макс. кол-во qd-операций в одном "контенте". */
   def MAX_QD_OPS_COUNT = 70
 
+
+  def MAX_TEXT_LEN = 1024
+
 }

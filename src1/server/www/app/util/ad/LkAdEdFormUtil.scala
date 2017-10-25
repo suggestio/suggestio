@@ -7,25 +7,29 @@ import io.suggest.ad.blk.ent.{EntFont, TextEnt}
 import io.suggest.ad.edit.m.MAdEditForm
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.{MEdgePicInfo, MJdEdgeVldInfo, MJdEditEdge}
 import io.suggest.jd.tags._
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
+import io.suggest.model.n2.media.MMedia
 import io.suggest.model.n2.node.{MNode, MNodeTypes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.pick.MimeConst
+import io.suggest.scalaz.{IValidateDataT, ScalazUtil, StringValidationNel}
 import io.suggest.svg.SvgUtil
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
+import models.im.MImg3
 import models.mctx.Context
 import play.api.data.Forms._
 import play.api.data._
@@ -43,11 +47,13 @@ import scalaz.{Tree, ValidationNel}
  * Description: Общая утиль для работы с разными ad-формами: preview и обычными.
  */
 @Singleton
-class LkAdEdFormUtil extends MacroLogsImpl {
+class LkAdEdFormUtil
+  extends MacroLogsImpl
+{
 
   /** Макс.длина загружаемой картинки в байтах. */
   val IMG_UPLOAD_MAXLEN_BYTES: Int = {
-    val mib = 40 // current.configuration.getOptional[Int]("ad.img.len.max.mib") getOrElse 40
+    val mib = 40
     mib * 1024 * 1024
   }
 
@@ -440,6 +446,72 @@ class LkAdEdFormUtil extends MacroLogsImpl {
       },
       mustHashes    = UploadConstants.CleverUp.PICTURE_FILE_HASHES
     )
+  }
+
+
+  import scalaz.std.iterable._
+  import scalaz.std.list._
+
+  /** Запуск ранней синхронной валидации эджей, из присланной юзером JSON-формы.
+    * Происходит базовая проверка данных.
+    *
+    * @param form JSON-форма с клиента.
+    * @return Фьючерс с результатом валидации.
+    *         exception обозначает ошибку валидации.
+    */
+  def earlyValidateEdges(form: MAdEditForm): StringValidationNel[List[MJdEditEdge]] = {
+    // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
+    val edges1 = JdTag.purgeUnusedEdges( form.template, form.edgesMap )
+
+    // Ранняя валидация корректности присланных эджей:
+    val edgesVlds = ScalazUtil.validateAll(edges1.values) {
+      MJdEditEdge.validateForStore(_)
+        .map(List(_))
+    }
+
+    def logPrefix = s"validateEdges(${form.edges.size})[${System.currentTimeMillis()}]:"
+
+    if (edgesVlds.isFailure) {
+      LOGGER.warn(s"$logPrefix Failed to validate edges: $edgesVlds\n edges = $edges1")
+    }
+
+    edgesVlds
+  }
+
+  /** Извлечь данные по картинкам из карты эджей. */
+  def collectNeededImgs(edges: TraversableOnce[MJdEditEdge]): Map[EdgeUid_t, MImg3] = {
+    val needImgsIter = for {
+      e <- edges.toIterator
+      if e.predicate ==>> MPredicates.JdContent.Image
+      fileSrv <- e.fileSrv
+    } yield {
+      e.id -> MImg3(fileSrv.nodeId)
+    }
+    needImgsIter.toMap
+  }
+
+  /** Произвести валидацию шаблона на стороне сервера. */
+  def validateTemplate(template       : Tree[JdTag],
+                       jdEdges        : Iterable[MJdEditEdge],
+                       imgsNeededMap  : Map[EdgeUid_t, MImg3],
+                       nodesMap       : Map[String, MNode],
+                       mediasMap      : Map[String, MMedia]): StringValidationNel[Tree[JdTag]] = {
+    // Для валидации шаблона надо создать специальную карту vld-эджей.
+    val P = MPredicates.JdContent
+    jdEdges
+      .iterator
+      .map { jdEdge =>
+        MJdEdgeVldInfo(
+          jdEdge = jdEdge,
+          img    = OptionUtil.maybe( jdEdge.predicate ==>> P.Image ) {
+            MEdgePicInfo(
+              isImg = ???, //nodesMap.get(jdEdge)
+              imgWh = ???
+            )
+          }
+        )
+      }
+    ???
   }
 
 }

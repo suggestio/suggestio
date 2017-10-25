@@ -5,7 +5,6 @@ import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
 import MDocS.MDocSFastEq
 import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
-import io.suggest.primo.id.IId
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import play.api.libs.json.Json
@@ -19,7 +18,6 @@ import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
-import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
@@ -76,13 +74,8 @@ class LkAdEditCircuit(
           szMult    = MSzMults.`1.0`
         )
         val tpl = mFormInit.form.template
-        val edges = IId.els2idMap[EdgeUid_t, MEdgeDataJs] {
-          mFormInit.form.edges
-            .iterator
-            .map {
-              MEdgeDataJs(_)
-            }
-        }
+        val edges = mFormInit.form.edgesMap
+          .mapValues( MEdgeDataJs(_) )
         val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf, edges )
         val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
         MDocS(

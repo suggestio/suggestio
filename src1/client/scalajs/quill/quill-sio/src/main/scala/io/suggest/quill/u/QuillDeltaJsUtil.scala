@@ -30,14 +30,6 @@ import scalaz.Tree
   */
 class QuillDeltaJsUtil extends Log {
 
-  /** Поиск и устранение неиспользуемых эджей. */
-  def purgeUnusedEdges(tpl: Tree[JdTag], edgesMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MEdgeDataJs] = {
-    val usedEdgeIds = tpl.deepEdgesUidsIter.toSet
-    edgesMap
-      .filterKeys { usedEdgeIds.contains }
-  }
-
-
   /** Конверсия из QdTag в дельту, понятную quill-редактору.
     *
     * @param qd s.io-тег с quill-данными.
@@ -325,7 +317,7 @@ class QuillDeltaJsUtil extends Log {
             e.jdEdge.text ::
             e.jdEdge.url ::
             //e.fileJs.flatMap(_.blobUrl) ::    // 2017.sep.28 Quill не поддерживает, игнорим.
-            e.jdEdge.fileSrv.map(_.url) ::
+            e.jdEdge.fileSrv.flatMap(_.url) ::
             Nil
           ).flatten
         } yield {
