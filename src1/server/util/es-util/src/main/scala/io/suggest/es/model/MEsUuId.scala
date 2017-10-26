@@ -72,6 +72,7 @@ object MEsUuId {
   implicit def esId2string(esId: MEsUuId): String = esId.id
   implicit def string2esId(id: String): MEsUuId   = MEsUuId(id)
 
+  implicit def esIdOpt2strOpt(esIdOpt: Option[MEsUuId]): Option[String] = esIdOpt.map(esId2string)
 
 }
 

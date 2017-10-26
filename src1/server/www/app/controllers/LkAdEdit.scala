@@ -28,7 +28,7 @@ import models.req.IReq
 import play.api.Mode
 import play.api.libs.json.Json
 import play.api.mvc._
-import util.acl.{BruteForceProtect, CanEditAd, IsNodeAdmin}
+import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
 import util.ad.LkAdEdFormUtil
 import util.img.DynImgUtil
 import util.mdr.SysMdrUtil
@@ -50,6 +50,7 @@ import scala.concurrent.Future
 class LkAdEdit @Inject() (
                            tempImgSupport                         : TempImgSupport,
                            canEditAd                              : CanEditAd,
+                           canCreateOrEditAd                      : CanCreateOrEditAd,
                            //@Named("blk") override val blkImgMaker : IMaker,
                            dynImgUtil                             : DynImgUtil,
                            isNodeAdmin                            : IsNodeAdmin,
@@ -147,7 +148,7 @@ class LkAdEdit @Inject() (
     */
   def createAdSubmit(producerIdU: MEsUuId) = bruteForceProtect(_BFP_ARGS) {
     val producerId = producerIdU.id
-    csrf.AddToken {
+    csrf.Check {
       isNodeAdmin(producerId).async( parse.json[MAdEditForm] ) { implicit request =>
         // Взять форму из реквеста, провалидировать
         lazy val logPrefix = s"createAdSubmit($producerId):"
@@ -227,7 +228,6 @@ class LkAdEdit @Inject() (
                   }
 
                   val mnode0Fut = for {
-                    //edgedNodesMap <- edgedNodesMapFut
                     videoExtEdges <- videoExtEdgesFut
                   } yield {
                     MNode(
@@ -455,44 +455,29 @@ class LkAdEdit @Inject() (
     * @return JSON-ответ.
     */
   def prepareImgUpload(adIdU: Option[MEsUuId], nodeIdU: Option[MEsUuId]) = csrf.Check {
-    lazy val logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:"
     val bp = uploadCtl.prepareUploadBp
 
-    // Нельзя, чтобы было два Some или оба None.
-    if (adIdU.isEmpty == nodeIdU.isEmpty) {
-      dab(bp) { implicit request =>
-        val msg = "Exact one arg expected"
-        LOGGER.warn(s"$logPrefix $msg adId=$adIdU, nodeId=$nodeIdU, body=${request.body}")
-        PreconditionFailed(msg)
-      }
+    // Не используем canUpload*. Если юзер может создавать/редактировать карточку, то и картинки он может загружать.
+    canCreateOrEditAd(adIdOpt = adIdU, producerIdOpt = nodeIdU).async(bp) { implicit request =>
 
-    } else {
-      val ab = adIdU
-        .map[ActionBuilder[IReq, AnyContent]] { canEditAd(_) }
-        .getOrElse {
-          isNodeAdmin( nodeIdU.get.id )
+      lazy val logPrefix = s"prepareUpload(${adIdU.orElse(nodeIdU).orNull})#${System.currentTimeMillis()}:"
+      val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
+
+      // И просто запустить API-метод prepareUpload() из Upload-контроллера.
+      uploadCtl.prepareUploadLogic(
+        logPrefix = logPrefix,
+        validated = validated,
+        // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
+        uploadFileHandler = Some( MUploadFileHandlers.Picture ),
+        colorDetect       = Some {
+          val cdConst = AdFormConstants.ColorDetect
+          val sz = cdConst.PALETTE_SIZE
+          MColorDetectArgs(
+            paletteSize   = sz,
+            wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
+          )
         }
-
-      // TODO Использовать какой-нибудь canUploadFile или canUploadFile4Ad.
-      ab.async(bp) { implicit request =>
-        val validated = lkAdEdFormUtil.image4UploadPropsV( request.body )
-
-        // И просто запустить API-метод prepareUpload() из Upload-контроллера.
-        uploadCtl.prepareUploadLogic(
-          logPrefix = logPrefix,
-          validated = validated,
-          // Сразу отправлять принятый файл в MLocalImg минуя /tmp/.
-          uploadFileHandler = Some( MUploadFileHandlers.Picture ),
-          colorDetect       = Some {
-            val cdConst = AdFormConstants.ColorDetect
-            val sz = cdConst.PALETTE_SIZE
-            MColorDetectArgs(
-              paletteSize   = sz,
-              wsPaletteSize = sz  // cdConst.PALETTE_SHRINK_SIZE
-            )
-          }
-        )
-      }
+      )
     }
   }
 

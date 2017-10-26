@@ -4,14 +4,15 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.util.logs.MacroLogsImpl
 import models._
-import models.req.{IReqHdr, MAdProdReq, MReq, MUserInit}
+import models.req._
 import play.api.mvc._
 import util.n2u.N2NodesUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
 import io.suggest.req.ReqUtil
 import models.mproj.ICommonDi
+import japgolly.univeq._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -109,3 +110,4 @@ class CanEditAd @Inject() (
   }
 
 }
+

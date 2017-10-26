@@ -1,0 +1,79 @@
+package util.acl
+
+import javax.inject.{Inject, Singleton}
+
+import io.suggest.util.logs.MacroLogsImpl
+import models.req._
+import play.api.mvc._
+import io.suggest.common.fut.FutureUtil.HellImplicits.any2fut
+import io.suggest.req.ReqUtil
+import japgolly.univeq._
+
+import scala.concurrent.{ExecutionContext, Future}
+
+/**
+  * Suggest.io
+  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
+  * Created: 26.10.17 22:30
+  * Description: Класс для сборки ACL, пригодного для унифицированной операции между create и edit Ad.
+  *
+  * Т.е. если есть указан id карточки, то будет проверка доступа на карточку.
+  * Иначе, будет проверка доступа к узлу-продьюсеру.
+  */
+
+@Singleton
+class CanCreateOrEditAd @Inject() (
+                                    canEditAd   : CanEditAd,
+                                    isNodeAdmin : IsNodeAdmin,
+                                    reqUtil     : ReqUtil,
+                                    implicit private val ec: ExecutionContext
+                                  )
+  extends MacroLogsImpl
+{
+
+  def apply(adIdOpt: Option[String], producerIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MAdOptProdReq, AnyContent] = {
+    lazy val logPrefix = s"prepareUpload(${adIdOpt.orElse(producerIdOpt).orNull})#${System.currentTimeMillis()}:"
+
+    // Нельзя, чтобы было два Some или оба None.
+    if (adIdOpt.isEmpty ==* producerIdOpt.isEmpty) {
+      // Билдер-заглушка.
+      new reqUtil.SioActionBuilderImpl[MAdOptProdReq] {
+        override def invokeBlock[A](request: Request[A], block: (MAdOptProdReq[A]) => Future[Result]): Future[Result] = {
+          val msg = "Exact one arg expected"
+          LOGGER.warn(s"$logPrefix $msg adId=${adIdOpt.orNull}, nodeId=${producerIdOpt.orNull}, body=${request.body}")
+          Results.PreconditionFailed(msg)
+        }
+      }
+
+    } else {
+      // Сейчас ровно один из двух аргументов - Some, а другой None. Отработать две ситуации:
+      adIdOpt
+        // Отработать Some(adId)
+        .map [ActionBuilder[MAdOptProdReq, AnyContent]] { adId =>
+          canEditAd(adId).andThen {
+            LOGGER.trace(s"$logPrefix Using adEdit ACL for ad#$adId")
+            new ActionTransformer[MAdProdReq, MAdOptProdReq] {
+              override protected def transform[A](request: MAdProdReq[A]): Future[MAdOptProdReq[A]] = {
+                MAdOptProdReq( Some(request.mad), request )
+              }
+              override protected def executionContext = ec
+            }
+          }
+        }
+        // Если adId=None, то отработать Some(producerId):
+        .getOrElse {
+          val producerId = producerIdOpt.get
+          isNodeAdmin(producerId).andThen {
+            LOGGER.trace(s"$logPrefix Using isNodeAdmin ACL for node#$producerId")
+            new ActionTransformer[MNodeReq, MAdOptProdReq] {
+              override protected def transform[A](request: MNodeReq[A]): Future[MAdOptProdReq[A]] = {
+                MAdOptProdReq(None, request)
+              }
+              override protected def executionContext = ec
+            }
+          }
+        }
+    }
+  }
+
+}
