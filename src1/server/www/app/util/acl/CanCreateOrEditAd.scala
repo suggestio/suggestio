@@ -52,11 +52,10 @@ class CanCreateOrEditAd @Inject() (
         .map [ActionBuilder[MAdOptProdReq, AnyContent]] { adId =>
           canEditAd(adId).andThen {
             LOGGER.trace(s"$logPrefix Using adEdit ACL for ad#$adId")
-            new ActionTransformer[MAdProdReq, MAdOptProdReq] {
+            new reqUtil.ActionTransformerImpl[MAdProdReq, MAdOptProdReq] {
               override protected def transform[A](request: MAdProdReq[A]): Future[MAdOptProdReq[A]] = {
                 MAdOptProdReq( Some(request.mad), request )
               }
-              override protected def executionContext = ec
             }
           }
         }
@@ -65,11 +64,10 @@ class CanCreateOrEditAd @Inject() (
           val producerId = producerIdOpt.get
           isNodeAdmin(producerId).andThen {
             LOGGER.trace(s"$logPrefix Using isNodeAdmin ACL for node#$producerId")
-            new ActionTransformer[MNodeReq, MAdOptProdReq] {
+            new reqUtil.ActionTransformerImpl[MNodeReq, MAdOptProdReq] {
               override protected def transform[A](request: MNodeReq[A]): Future[MAdOptProdReq[A]] = {
                 MAdOptProdReq(None, request)
               }
-              override protected def executionContext = ec
             }
           }
         }

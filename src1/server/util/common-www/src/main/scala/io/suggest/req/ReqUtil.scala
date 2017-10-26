@@ -39,6 +39,13 @@ final class ReqUtil @Inject() (
   }
 
 
+  /** Дефолтовая реализация трейта ActionTransformer для снижения кодогенерации компилятором
+    * и повышения компактности кода. */
+  abstract class ActionTransformerImpl[-R[_], +P[_]] extends ActionTransformer[R, P] {
+    override protected def executionContext = ec
+  }
+
+
   /** Сборка BodyParser'а, который десериализует тело запроса через boopickle. */
   def picklingBodyParser[T](implicit pickler: Pickler[T]): BodyParser[T] = {
     parse.raw(maxLength = 2048)
