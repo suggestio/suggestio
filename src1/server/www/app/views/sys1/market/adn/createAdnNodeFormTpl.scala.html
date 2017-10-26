@@ -33,7 +33,7 @@
     @inputText(
       af("id"),
       '_label -> "Принудительный id узла",
-      'title  -> ("Обязательный для некоторых типов узлов (" + (for(mnt <- MNodeTypes.valuesT.iterator if !mnt.randomIdAllowed) yield messages(mnt.plural)).mkString(", ") + "). Иначе -- оставить пустым.")
+      'title  -> ("Обязательный для некоторых типов узлов (" + (for(mnt <- MNodeTypes.values.iterator if !mnt.randomIdAllowed) yield messages(mnt.plural)).mkString(", ") + "). Иначе -- оставить пустым.")
     )
   </table>
 }

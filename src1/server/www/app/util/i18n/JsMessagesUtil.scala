@@ -257,6 +257,8 @@ class JsMessagesUtil @Inject() (
       MC.`Scale` ::
       MC.`Preparing` ::
       MC.`Uploading.file` ::
+      MC.`Saving` ::
+      MC.`Saved` ::
       Nil
   }
 

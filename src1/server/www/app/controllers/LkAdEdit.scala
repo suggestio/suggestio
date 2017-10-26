@@ -4,13 +4,19 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
+import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
+import io.suggest.err.ErrorConstants
 import io.suggest.es.model.MEsUuId
 import io.suggest.file.MSrvFileInfo
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEditEdge
-import io.suggest.model.n2.edge.MPredicates
+import io.suggest.model.n2.edge._
+import io.suggest.model.n2.extra.MNodeExtras
+import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.media.MMedias
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
+import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -19,13 +25,16 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers}
 import models.req.IReq
+import play.api.Mode
 import play.api.libs.json.Json
 import play.api.mvc._
-import util.acl.{CanEditAd, IsNodeAdmin}
+import util.acl.{BruteForceProtect, CanEditAd, IsNodeAdmin}
 import util.ad.LkAdEdFormUtil
 import util.img.DynImgUtil
+import util.mdr.SysMdrUtil
 import util.sec.CspUtil
 import util.up.UploadUtil
+import util.vid.VideoUtil
 import views.html.lk.ad.edit._
 
 import scala.concurrent.Future
@@ -49,8 +58,12 @@ class LkAdEdit @Inject() (
                            mMedias                                : MMedias,
                            uploadUtil                             : UploadUtil,
                            uploadCtl                              : Upload,
+                           bruteForceProtect                      : BruteForceProtect,
                            dab                                    : DefaultActionBuilder,
+                           mNodes                                 : MNodes,
                            swfsClient                             : ISwfsClient,
+                           sysMdrUtil                             : SysMdrUtil,
+                           videoUtil                              : VideoUtil,
                            override val mCommonDi                 : ICommonDi
                          )
   extends SioControllerImpl
@@ -58,6 +71,11 @@ class LkAdEdit @Inject() (
 {
 
   import mCommonDi._
+
+  private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(2)
+
+  /** Новые карточки ломают слишком много, поэтому временно сохранение ограничено только в dev-режиме. */
+  private def IS_SAVING_ALLOWED = current.mode == Mode.Dev
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {
@@ -96,8 +114,7 @@ class LkAdEdit @Inject() (
       } yield {
         val formInit = MAdEditFormInit(
           conf = formConf,
-          form = docForm,
-          files = Nil
+          form = docForm
         )
         _formInit2str( formInit )
       }
@@ -123,48 +140,183 @@ class LkAdEdit @Inject() (
   }
 
 
-  /** Сабмит формы создания новой карточки. */
-  def createAdSubmit(producerIdU: MEsUuId) = csrf.AddToken {
+  /** Экшен сабмита формы создания новой карточки.
+    *
+    * @param producerIdU id узла-продьюсера, в рамках которого создаётся карточка.
+    * @return 201 Created + init-форма с обновлённой карточкой и данными.
+    */
+  def createAdSubmit(producerIdU: MEsUuId) = bruteForceProtect(_BFP_ARGS) {
     val producerId = producerIdU.id
-    isNodeAdmin(producerId).async( parse.json[MAdEditForm] ) { implicit request =>
-      // Взять форму из реквеста, провалидировать
-      lazy val logPrefix = s"createAdSubmit($producerId):"
-      lkAdEdFormUtil.earlyValidateEdges( request.body ).fold(
-        // Не удалось понять присланные эджи:
-        { errorsNel =>
-          LOGGER.warn(s"$logPrefix Failed to validate remote edges: ${errorsNel.iterator.mkString(", ")}")
-          NotAcceptable("edges")
-        },
+    csrf.AddToken {
+      isNodeAdmin(producerId).async( parse.json[MAdEditForm] ) { implicit request =>
+        // Взять форму из реквеста, провалидировать
+        lazy val logPrefix = s"createAdSubmit($producerId):"
+        lkAdEdFormUtil.earlyValidateEdges( request.body ).fold(
+          // Не удалось понять присланные эджи:
+          {errorsNel =>
+            LOGGER.warn(s"$logPrefix Failed to validate remote edges: ${errorsNel.iterator.mkString(", ")}")
+            NotAcceptable("edges")
+          },
 
-        // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
-        { edges2 =>
-          // Начальная валидация эджей прошла успешно. Поискать узлы, упомянутые в этих эджах.
-          val edgedNodeIds = edges2.iterator
-            .flatMap(_.fileSrv)
-            .map(_.nodeId)
-            .toSet
-          val edgedNodesMapFut = mNodesCache.multiGetMap(edgedNodeIds)
+          // Есть проверенные эджи, похожие на валидные. Надо заняться валидацией самого шаблона.
+          {edges2 =>
+            // Собрать данные по всем упомянутым в запросе узлам, не обрывая связь с исходными эджами.
+            val nodeId2edgesMap = (
+              for {
+                jdEdge  <- edges2.iterator
+                fileSrv <- jdEdge.fileSrv
+              } yield {
+                fileSrv.nodeId -> jdEdge
+              }
+            )
+              .toSeq
+              .groupBy(_._1)
+              .mapValues(_.map(_._2))
 
-          // Для валидации самого шаблона нужны данные по размерам связанных картинок. Поэтому залезаем в MMedia за оригиналами упомянутых картинок:
-          val imgNeededMap = lkAdEdFormUtil.collectNeededImgs( edges2 )
-          val imgsMediasFut = mMedias.multiGetMap {
-            imgNeededMap
-              .mapValues(_._mediaId)
-              .valuesIterator
-              .toSet
+            // Поискать узлы, упомянутые в этих эджах.
+            val edgedNodesMapFut = mNodesCache.multiGetMap( nodeId2edgesMap.keys )
+
+            // Для валидации самого шаблона нужны данные по размерам связанных картинок. Поэтому залезаем в MMedia за оригиналами упомянутых картинок:
+            val imgNeededMap = lkAdEdFormUtil.collectNeededImgs( edges2 )
+            val imgsMediasFut = mMedias.multiGetMap {
+              imgNeededMap
+                .mapValues(_.mediaId)
+                .valuesIterator
+                .toSet
+            }
+
+            // Когда будут собраны данные, произвести валидацию шаблона:
+            val vldResFut = for {
+              imgsMediasMap <- imgsMediasFut
+              edgedNodesMap <- edgedNodesMapFut
+            } yield {
+              lkAdEdFormUtil.validateTpl(
+                template      = request.body.template,
+                jdEdges       = edges2,
+                imgsNeededMap = imgNeededMap,
+                nodesMap      = edgedNodesMap,
+                mediasMap     = imgsMediasMap
+              )
+            }
+
+            // Дождаться результата валидации...
+            vldResFut.flatMap { vldRes =>
+              vldRes.fold(
+                {failedMsgs =>
+                  val msgsConcat = failedMsgs.iterator.mkString(", ")
+                  LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
+                  NotAcceptable( s"tpl: $msgsConcat" )
+                },
+                {tpl2 =>
+                  // Есть на руках валидный шаблон. Можно создавать новую карточку.
+                  ErrorConstants.assertArg( IS_SAVING_ALLOWED )
+
+                  val videoPred = MPredicates.JdContent.Video
+                  // Сграбить ссылки на внешнее видео -- для них надо создать videoExt-узлы, этим занимается VideoUtil:
+                  val videoExtEdgesFut = {
+                    val videoExtUrls = (
+                      for {
+                        jdEdge <- edges2.iterator
+                        if jdEdge.predicate ==>> videoPred
+                        url    <- jdEdge.url
+                      } yield {
+                        url -> jdEdge.id
+                      }
+                    ).toMap
+                    videoUtil.ensureExtVideoNodes(videoExtUrls.keys, request.user.personIdOpt)
+                  }
+
+                  val mnode0Fut = for {
+                    //edgedNodesMap <- edgedNodesMapFut
+                    videoExtEdges <- videoExtEdgesFut
+                  } yield {
+                    MNode(
+                      common = MNodeCommon(
+                        ntype       = MNodeTypes.Ad,
+                        isDependent = true
+                      ),
+                      extras  = MNodeExtras(
+                        doc = Some(MNodeDoc(
+                          template = tpl2
+                        ))
+                      ),
+                      edges = MNodeEdges(
+                        out = {
+                          // Нужно собрать в кучу все эджи: producer, creator, эджи от связанных узлов (картинок/файлов) итд.
+                          // Пропихиваем jd-эджи:
+                          var edgesAcc = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
+                            MEdge(
+                              predicate = jdEdge.predicate,
+                              nodeIds = {
+                                val videoNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> videoPred) {
+                                  jdEdge.url
+                                    .flatMap( videoExtEdges.get )
+                                    .flatMap( _.id )
+                                }
+                                videoNodeIdOpt
+                                  .orElse {
+                                    jdEdge.fileSrv.map(_.nodeId)
+                                  }
+                                  .iterator
+                                  .toSet
+                              },
+                              doc = MEdgeDoc(
+                                uid   = Some(jdEdge.id),
+                                text  = jdEdge.text.toSeq
+                              )
+                            ) :: acc0
+                          }
+
+                          // Собираем эдж до текущего узла-продьюсера:
+                          edgesAcc ::= MEdge(
+                            predicate = MPredicates.OwnedBy,
+                            nodeIds   = request.mnode.id.toSet
+                          )
+
+                          // Собираем эдж до текущего узла юзера-создателя:
+                          edgesAcc ::= MEdge(
+                            predicate = MPredicates.CreatedBy,
+                            nodeIds   = request.user.personIdOpt.toSet
+                          )
+
+                          // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
+                          if (request.user.isSuper)
+                            edgesAcc ::= sysMdrUtil.mdrEdge()
+
+                          edgesAcc
+                        }
+                      )
+                    )
+                  }
+
+                  // Сохранить карточку и вернуть результат.
+                  for {
+                    mnode0 <- mnode0Fut
+                    adId   <- mNodes.save( mnode0 )
+                  } yield {
+                    implicit val ctx = implicitly[Context]
+
+                    // Сохранено успешно. Вернуть ответ в виде обновлённой формы.
+                    val formReInit2 =MAdEditFormInit(
+                      conf = MAdEditFormConf(
+                        producerId  = request.mnode.id.get,
+                        adId        = Some(adId),
+                        ctxId       = ctx.ctxIdStr
+                      ),
+                      form = MAdEditForm(
+                        template  = tpl2,
+                        edges     = edges2
+                      )
+                    )
+
+                    Created( Json.toJson(formReInit2) )
+                  }
+                }
+              )
+            }
           }
-
-          for {
-            imgsMediasMap <- imgsMediasFut
-            edgedNodesMap <- edgedNodesMapFut
-          } yield {
-            // Получены данные из базы по упомянутым картинкам. Надо проверить, что картинки найдены, собрать их wh.
-            ???
-          }
-          ???
-        }
-      )
-      ???
+        )
+      }
     }
   }
 
@@ -239,13 +391,12 @@ class LkAdEdit @Inject() (
           conf = MAdEditFormConf(
             producerId  = request.producer.id.get,
             adId        = request.mad.id,
-            ctxId    = ctx.ctxIdStr
+            ctxId       = ctx.ctxIdStr
           ),
           form = MAdEditForm(
             template  = nodeDoc.template,
             edges     = edEdges
-          ),
-          files = Nil      // TODO сграбить все файлы (ориг.картинки) карточки из MMedia
+          )
         )
         _formInit2str( formInit )
       }

@@ -71,7 +71,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
   override def companion: EsModelStaticT { type T = X }
 
   override def resave(id: String): String = {
-    trace(s"resave($id): jmx")
+    info(s"resave($id): jmx")
     val fut = companion.resave(id) map {
       case Some(_id) => "Resaved " + _id
       case None      => "Not found id: " + id
@@ -87,7 +87,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def getById(id: String): String = {
     val id1 = id.trim
-    trace(s"getById($id1)")
+    debug(s"getById($id1)")
     val fut = for (res <- companion.getById(id1)) yield {
       res.fold("not found")(companion.toJsonPretty)
     }
@@ -96,7 +96,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def getRawById(id: String): String = {
     val id1 = id.trim
-    trace(s"getRawById($id1)")
+    debug(s"getRawById($id1)")
     val fut = for (res <- companion.getRawById(id1)) yield {
       res.fold("not found")(JacksonWrapper.prettify)
     }
@@ -105,7 +105,7 @@ trait EsModelJMXBase extends EsModelCommonJMXBase with EsModelJMXMBeanI {
 
   override def getRawContentById(id: String): String = {
     val id1 = id.trim
-    trace(s"getRawContentById($id1)")
+    debug(s"getRawContentById($id1)")
     val fut = for (res <- companion.getRawContentById(id1)) yield {
       res.fold("not found")(JacksonWrapper.prettify)
     }

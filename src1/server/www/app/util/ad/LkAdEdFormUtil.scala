@@ -12,7 +12,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.{MEdgePicInfo, MJdEdgeVldInfo, MJdEditEdge}
+import io.suggest.jd.{JdDocValidation, MEdgePicInfo, MJdEdgeVldInfo, MJdEditEdge}
 import io.suggest.jd.tags._
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.ad.rd.RichDescr
@@ -24,10 +24,12 @@ import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.model.n2.node.meta.{MBasicMeta, MBusinessInfo, MMeta}
 import io.suggest.pick.MimeConst
-import io.suggest.scalaz.{IValidateDataT, ScalazUtil, StringValidationNel}
+import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.svg.SvgUtil
 import io.suggest.text.{MTextAlign, MTextAligns}
 import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.vid.ext.VideoExtUrlParsers
+import japgolly.univeq._
 import models.blk.ed.{AdFormM, AdFormResult, BindResult}
 import models.im.MImg3
 import models.mctx.Context
@@ -464,8 +466,10 @@ class LkAdEdFormUtil
     val edges1 = JdTag.purgeUnusedEdges( form.template, form.edgesMap )
 
     // Ранняя валидация корректности присланных эджей:
+    val videoExtUrlParsers = new VideoExtUrlParsers
     val edgesVlds = ScalazUtil.validateAll(edges1.values) {
-      MJdEditEdge.validateForStore(_)
+      MJdEditEdge
+        .validateForStore(_, videoExtUrlParsers)
         .map(List(_))
     }
 
@@ -491,27 +495,49 @@ class LkAdEdFormUtil
   }
 
   /** Произвести валидацию шаблона на стороне сервера. */
-  def validateTemplate(template       : Tree[JdTag],
-                       jdEdges        : Iterable[MJdEditEdge],
-                       imgsNeededMap  : Map[EdgeUid_t, MImg3],
-                       nodesMap       : Map[String, MNode],
-                       mediasMap      : Map[String, MMedia]): StringValidationNel[Tree[JdTag]] = {
+  def validateTpl(template       : Tree[JdTag],
+                  jdEdges        : Iterable[MJdEditEdge],
+                  imgsNeededMap  : Map[EdgeUid_t, MImg3],
+                  nodesMap       : Map[String, MNode],
+                  mediasMap      : Map[String, MMedia]): StringValidationNel[Tree[JdTag]] = {
+    lazy val logPrefix = s"validateTpl()[${System.currentTimeMillis()}]:"
+    LOGGER.trace(s"$logPrefix Starting with ${jdEdges.size} edges, ${imgsNeededMap.size} imgs needed, ${nodesMap.size} nodes found, ${mediasMap.size} medias found.")
+
     // Для валидации шаблона надо создать специальную карту vld-эджей.
     val P = MPredicates.JdContent
-    jdEdges
+
+    val vldEdgesMap = jdEdges
       .iterator
       .map { jdEdge =>
-        MJdEdgeVldInfo(
+        val nodeIdOpt = jdEdge.fileSrv.map(_.nodeId)
+        val vldEdge = MJdEdgeVldInfo(
           jdEdge = jdEdge,
           img    = OptionUtil.maybe( jdEdge.predicate ==>> P.Image ) {
             MEdgePicInfo(
-              isImg = ???, //nodesMap.get(jdEdge)
-              imgWh = ???
+              isImg = nodeIdOpt
+                .flatMap { nodesMap.get }
+                .exists { _.common.ntype ==* MNodeTypes.Media.Image },
+              imgWh = imgsNeededMap.get( jdEdge.id )
+                .flatMap { mimg3 =>
+                  mediasMap.get( mimg3.mediaId )
+                }
+                .flatMap { mmedia =>
+                  mmedia.picture.whPx
+                }
             )
           }
         )
+        LOGGER.trace(s"$logPrefix Edge#${jdEdge.id}, nodeId#${nodeIdOpt.orNull} img=>${vldEdge.img}")
+        jdEdge.id -> vldEdge
       }
-    ???
+      .toMap
+
+    val vldtor = new JdDocValidation(vldEdgesMap)
+    val vldRes = vldtor.validateDocumentTree( template )
+
+    LOGGER.trace(s"$logPrefix Validation completed => $vldRes")
+
+    vldRes
   }
 
 }

@@ -175,11 +175,7 @@ object MPredicates extends StringEnum[MPredicate] {
   }
 
 
-  override val values = {
-    findValues.flatMap { v =>
-      v :: v.deepChildren
-    }
-  }
+  override val values = TreeEnumEntry.deepFindValue( findValues )
 
 }
 

@@ -103,6 +103,7 @@ GET  /ws/lk/mad/:wsId                   @controllers.MarketAd.ws(wsId: String)
 GET  /lk/mad/new/field/text/:offerN     @controllers.MarketAd.newTextField(offerN: Int, h: Int, w: Int)
 ## ЛК: Редактор рекламных карточек v2:
 GET  /lk/mad/new2/:nodeId               @controllers.LkAdEdit.createAd(nodeId: MEsUuId)
+POST /lk/mad/new2/:nodeId               @controllers.LkAdEdit.createAdSubmit(nodeId: MEsUuId)
 GET  /lk/mad/edit2/:adId                @controllers.LkAdEdit.editAd(adId: MEsUuId)
 POST /lk/mad/up/img                     @controllers.LkAdEdit.prepareImgUpload(adId: Option[MEsUuId] ?= None, nodeId: Option[MEsUuId] ?= None)
 

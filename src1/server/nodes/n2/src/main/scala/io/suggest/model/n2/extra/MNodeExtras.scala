@@ -5,6 +5,7 @@ import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.model.PrefixedFn
 import io.suggest.model.n2.extra.doc.{MNodeDoc, MNodeDocJvm}
 import io.suggest.model.n2.extra.domain.MDomainExtra
+import io.suggest.vid.ext.{MVideoExtInfo, MVideoExtInfoEs}
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{OFormat, _}
 
@@ -25,6 +26,7 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       override def nonEmpty = false
     }
   }
+
 
   /** Статическая модель полей модели [[MNodeExtras]]. */
   object Fields {
@@ -74,6 +76,16 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       def DOCUMENT_FN = _fullFn( F.TEMPLATE_FN )
     }
 
+
+    object VideoExt extends PrefixedFn {
+      val VIDEO_EXT_FN = "v"
+      override protected def _PARENT_FN = VIDEO_EXT_FN
+
+      import MVideoExtInfo.{Fields => F}
+      def VIDEO_SERVICE_FN  = _fullFn( F.VIDEO_SERVICE_FN )
+      def REMOTE_ID_FN      = _fullFn( F.REMOTE_ID_FN )
+    }
+
   }
 
 
@@ -87,7 +99,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
         _.getOrElse(Nil),
         { domains => if (domains.isEmpty) None else Some(domains) }
       ) and
-    (__ \ Fields.MNDoc.MNDOC_FN).formatNullable[MNodeDoc]
+    (__ \ Fields.MNDoc.MNDOC_FN).formatNullable[MNodeDoc] and
+    (__ \ Fields.VideoExt.VIDEO_EXT_FN).formatNullable[MVideoExtInfo]
   )(apply, unlift(unapply))
 
 
@@ -101,7 +114,8 @@ object MNodeExtras extends IGenEsMappingProps with IEmpty {
       _obj(Fields.Adn.ADN_FN,       MAdnExtra),
       _obj(Fields.Beacon.BEACON_FN, MBeaconExtra),
       FieldNestedObject(Fields.Domain.DOMAIN_FN, enabled = true, properties = MDomainExtra.generateMappingProps),
-      _obj(Fields.MNDoc.MNDOC_FN,   MNodeDocJvm)
+      _obj(Fields.MNDoc.MNDOC_FN,   MNodeDocJvm),
+      _obj(Fields.VideoExt.VIDEO_EXT_FN,  MVideoExtInfoEs)
     )
   }
 
@@ -113,6 +127,7 @@ case class MNodeExtras(
                         adn       : Option[MAdnExtra]         = None,
                         beacon    : Option[MBeaconExtra]      = None,
                         domains   : Seq[MDomainExtra]         = Nil,
-                        doc       : Option[MNodeDoc]          = None
+                        doc       : Option[MNodeDoc]          = None,
+                        videoExt  : Option[MVideoExtInfo]     = None
                       )
   extends EmptyProduct

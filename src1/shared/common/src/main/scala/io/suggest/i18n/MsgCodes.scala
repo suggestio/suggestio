@@ -32,6 +32,8 @@ object MsgCodes {
   val `Identifier` = "Identifier"
   val `Cancel` = "Cancel"
   val `Save` = "Save"
+  val `Saving` = "Saving"
+  val `Saved` = "Saved"
   val `Change` = "Change"
   val `For.example.0` = "For.example.0"
   val `Close` = "Close"

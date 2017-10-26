@@ -39,6 +39,8 @@ sealed trait LkAdEditRoutes extends js.Object {
 
   def prepareImgUpload(adId: String = null, nodeId: String = null): Route = js.native
 
+  def createAdSubmit(producerId: String): Route = js.native
+
 }
 
 

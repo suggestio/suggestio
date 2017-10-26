@@ -33,7 +33,7 @@ trait JMXBase extends IMacroLogs with IExecutionContext {
   implicit protected def awaitFuture[T](fut: Future[T]): T = {
     // Есть ненулевой риск не дождаться результата. На этот случай, надо вписать результат в логи:
     fut.onComplete {
-      case Success(res) => LOGGER.info(s"JMX ok: $res")
+      case Success(res) => LOGGER.debug(s"JMX ok: $res")
       case Failure(ex)  => LOGGER.error(s"JXM fail", ex)
     }
     // Синхронное дожидание результата.

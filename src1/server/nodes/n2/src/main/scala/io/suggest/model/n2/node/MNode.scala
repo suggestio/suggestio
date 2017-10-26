@@ -1,6 +1,7 @@
 package io.suggest.model.n2.node
 
 import javax.inject.{Inject, Singleton}
+
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.bill.MNodeBilling
 import io.suggest.model.n2.edge.MNodeEdges
@@ -15,6 +16,7 @@ import io.suggest.common.empty.EmptyUtil._
 import io.suggest.es.model._
 import io.suggest.es.search.EsDynSearchStatic
 import io.suggest.util.logs.MacroLogsImpl
+import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.search.aggregations.AggregationBuilders
 import org.elasticsearch.search.aggregations.bucket.terms.Terms
 import play.api.libs.functional.syntax._
@@ -175,7 +177,7 @@ final class MNodes @Inject() (
           .iterator()
           .asScala
           .map { bucket =>
-            val ntype: MNodeType = MNodeTypes.withName( bucket.getKeyAsString )
+            val ntype = MNodeTypes.withValue( bucket.getKeyAsString )
             ntype -> bucket.getDocCount
           }
           .toMap
@@ -206,10 +208,28 @@ final class MNodes @Inject() (
    */
   override def deleteById(id: String): Future[Boolean] = {
     val delFut = super.deleteById(id)
-    delFut onSuccess { case isDeleted =>
-      val evt = MNodeDeleted(id, isDeleted)
-      sn.publish(evt)
+    for (isDeleted <- delFut) {
+      _afterDelete(id, isDeleted)
     }
+    delFut
+  }
+
+  private def _afterDelete(id: String, isDeleted: Boolean = true): Unit = {
+    val evt = MNodeDeleted(id, isDeleted)
+    sn.publish(evt)
+  }
+
+
+  /** Удаляем сразу много элементов.
+    *
+    * @return Обычно Some(BulkResponse), но если нет id'шников в запросе, то будет None.
+    */
+  override def deleteByIds(ids: TraversableOnce[String]): Future[Option[BulkResponse]] = {
+    val idsColl = ids.toTraversable
+    val delFut = super.deleteByIds(idsColl)
+    for (_ <- delFut)
+      for (id <- idsColl)
+        _afterDelete(id)
     delFut
   }
 
@@ -241,7 +261,7 @@ final class MNodes @Inject() (
 /** Класс-реализация модели узла графа N2. */
 case class MNode(
   common                      : MNodeCommon,
-  meta                        : MMeta,
+  meta                        : MMeta           = MMeta(),
   extras                      : MNodeExtras     = MNodeExtras.empty,
   edges                       : MNodeEdges      = MNodeEdges.empty,
   geo                         : MNodeGeo        = MNodeGeo.empty,
@@ -251,6 +271,7 @@ case class MNode(
   override val versionOpt     : Option[Long]    = None
 )
   extends EsModelT
+  with EsModelVsnedT[MNode]
 {
 
   def withDocMeta(dmeta: IEsDocMeta): MNode = {
@@ -263,7 +284,7 @@ case class MNode(
   lazy val guessDisplayName: Option[String] = {
     meta.basic
       .guessDisplayName
-      .orElse { common.ntype.guessNodeDisplayName(this) }
+      .orElse { MNodeTypesJvm.guessNodeDisplayName(this) }
   }
 
   def guessDisplayNameOrId: Option[String] = {
@@ -283,8 +304,8 @@ case class MNode(
   }
 
   def withEdges(edges: MNodeEdges) = copy(edges = edges)
-
   def withId(idOpt: Option[String]) = copy(id = idOpt)
+  override def withVersion(versionOpt: Option[Long]) = copy(versionOpt = versionOpt)
 
 }
 

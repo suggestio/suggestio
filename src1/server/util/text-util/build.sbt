@@ -19,7 +19,7 @@ libraryDependencies ++= {
     // Морфология
     //"org.apache.lucene.morphology" % "russian" % morphVsn,
     //"org.apache.lucene.morphology" % "english" % morphVsn,
-    "org.scala-lang.modules" %% "scala-parser-combinators" % "1.+",
+    "org.scala-lang.modules" %% "scala-parser-combinators" % Common.Vsn.SCALA_PARSER_COMBINATORS,
 
     // TEST
     //"org.slf4j" % "slf4j-api" % slf4jVsn % Test,

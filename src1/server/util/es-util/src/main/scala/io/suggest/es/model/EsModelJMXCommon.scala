@@ -73,7 +73,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   }
 
   override def resaveAll(): String = {
-    warn(s"resaveMany()")
+    warn(s"resaveAll()")
     val fut = for (totalProcessed <- companion.resaveAll()) yield {
       s"Total: $totalProcessed; failures: ??? (unawailable here, see logs)"
     }
@@ -94,13 +94,13 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   }
 
   override def generateMapping(): String = {
-    trace("generateMapping()")
+    debug("generateMapping()")
     val mappingText = companion.generateMapping.string()
     JacksonWrapper.prettify(mappingText)
   }
 
   override def readCurrentMapping(): String = {
-    trace("readCurrentMapping()")
+    debug("readCurrentMapping()")
     val fut = for (res <- companion.getCurrentMapping()) yield {
       res.fold("Mapping not found.") { JacksonWrapper.prettify }
     }
@@ -108,20 +108,20 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   }
 
   override def getRoutingKey(idOrNull: String): String = {
-    trace(s"getRoutingKey($idOrNull)")
+    debug(s"getRoutingKey($idOrNull)")
     val idOrNull2 = if (idOrNull == null) idOrNull else idOrNull.trim
     companion.getRoutingKey(idOrNull2).toString
   }
 
   override def getAllIds(maxResults: Int): String = {
-    trace(s"getAllIds(maxResults = $maxResults)")
+    debug(s"getAllIds(maxResults = $maxResults)")
     val fut = companion.getAllIds(maxResults)
       .map { _.sorted.mkString("\n") }
     awaitString(fut)
   }
 
   override def getAll(maxResults: Int): String = {
-    trace(s"getAll(maxResults = $maxResults)")
+    info(s"getAll(maxResults = $maxResults)")
     val fut = companion.getAll(maxResults, withVsn = true)
       .map { r =>
         val resultNonPretty = companion.toEsJsonDocs(r)
@@ -134,6 +134,7 @@ trait EsModelCommonJMXBase extends JMXBase with EsModelJMXMBeanCommonI with Macr
   override def esIndexName: String = companion.ES_INDEX_NAME
 
   override def countAll(): String = {
+    debug(s"countAll()")
     val fut = companion.countAll()
       .map { _.toString }
     awaitString(fut)

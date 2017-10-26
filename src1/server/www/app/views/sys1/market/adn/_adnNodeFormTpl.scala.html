@@ -20,7 +20,7 @@
       @defining( af("common.ntype") ) { ntypeField =>
         <select name="@ntypeField.name">
           @for(mnt <- MNodeTypes.values) {
-            <option value="@mnt.strId" @if( ntypeField.value.contains(mnt.strId) ) {selected}>
+            <option value="@mnt.value" @if( ntypeField.value.contains(mnt.value) ) {selected}>
               @messages( mnt.singular )
             </option>
           }

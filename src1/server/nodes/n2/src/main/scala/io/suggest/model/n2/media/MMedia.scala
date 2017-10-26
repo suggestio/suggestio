@@ -139,6 +139,7 @@ case class MMedia(
   override val versionOpt   : Option[Long]          = None
 )
   extends EsModelT
+  with EsModelVsnedT[MMedia]
 {
 
   def withDocMeta(dmeta: IEsDocMeta)          : MMedia  = copy(id = dmeta.id, versionOpt = dmeta.version)
@@ -146,9 +147,7 @@ case class MMedia(
   def withStorage(storage: IMediaStorage)     : MMedia  = copy(storage = storage)
   def withId(id: Option[String])              : MMedia  = copy(id = id)
   def withPicture(picture: MPictureMeta)      : MMedia  = copy(picture = picture)
-  def withVersion(versionOpt: Option[Long])   : MMedia  = copy(versionOpt = versionOpt)
-  // После самого первого сохранения выставляется вот эта вот версия:
-  def withFirstVersion                        : MMedia  = copy(versionOpt = Some(1L))
+  override def withVersion(versionOpt: Option[Long]): MMedia = copy(versionOpt = versionOpt)
 
 }
 

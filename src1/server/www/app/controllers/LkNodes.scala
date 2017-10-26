@@ -115,7 +115,7 @@ class LkNodes @Inject() (
         info = MLknNode(
           id                    = nodeId,
           name                  = mnode.guessDisplayNameOrIdOrQuestions,
-          ntypeId               = mnode.common.ntype.strId,
+          ntypeId               = mnode.common.ntype.value,
           isEnabled             = mnode.common.isEnabled,
           canChangeAvailability = Some( canChangeAvailability ),
           hasAdv                = _hasAdv(nodeId, madOpt),
@@ -127,7 +127,7 @@ class LkNodes @Inject() (
           MLknNode(
             id                = chNodeId,
             name              = mnode.guessDisplayNameOrIdOrQuestions,
-            ntypeId           = mnode.common.ntype.strId,
+            ntypeId           = mnode.common.ntype.value,
             isEnabled         = mnode.common.isEnabled,
             // На уровне под-узлов это значение не важно, т.к. для редактирования надо зайти в под-узел и там будет уже нормальный ответ на вопрос.
             canChangeAvailability = None,
@@ -178,7 +178,7 @@ class LkNodes @Inject() (
             val mLknNode = MLknNode(
               id                        = mnodeId,
               name                      = mnode.guessDisplayNameOrIdOrQuestions,
-              ntypeId                   = mnode.common.ntype.strId,
+              ntypeId                   = mnode.common.ntype.value,
               isEnabled                 = mnode.common.isEnabled,
               canChangeAvailability     = someTrue,
               hasAdv                    = _hasAdv(mnodeId, madOpt),
@@ -379,7 +379,7 @@ class LkNodes @Inject() (
               val mResp = MLknNode(
                 id        = newNodeId,
                 name      = addNodeInfo.name,
-                ntypeId   = ntype.strId,
+                ntypeId   = ntype.value,
                 isEnabled = isEnabled,
                 // Текущий юзер создал юзер, значит он может его и удалить.
                 canChangeAvailability = Some(true),
@@ -440,7 +440,7 @@ class LkNodes @Inject() (
           val mLknNode = MLknNode(
             id                      = nodeId,
             name                    = request.mnode.guessDisplayNameOrIdOrQuestions,
-            ntypeId                 = request.mnode.common.ntype.strId,
+            ntypeId                 = request.mnode.common.ntype.value,
             isEnabled               = isEnabled,
             canChangeAvailability   = Some(true),
             hasAdv                  = None,
@@ -528,7 +528,7 @@ class LkNodes @Inject() (
               val m = MLknNode(
                 id                      = nodeId,
                 name                    = mnode.guessDisplayNameOrIdOrQuestions,
-                ntypeId                 = mnode.common.ntype.strId,
+                ntypeId                 = mnode.common.ntype.value,
                 isEnabled               = mnode.common.isEnabled,
                 canChangeAvailability   = Some(true),
                 hasAdv                  = None,
@@ -626,7 +626,7 @@ class LkNodes @Inject() (
         val mLknNode = MLknNode(
           id        = nodeId,
           name      = request.mnode.guessDisplayNameOrIdOrQuestions,
-          ntypeId   = request.mnode.common.ntype.strId,
+          ntypeId   = request.mnode.common.ntype.value,
           isEnabled = request.mnode.common.isEnabled,
           canChangeAvailability = Some(true),
           hasAdv    = Some(isEnabled),
@@ -692,7 +692,7 @@ class LkNodes @Inject() (
             val mLknNode = MLknNode(
               id        = mnode2.id.get,
               name      = mnode2.guessDisplayNameOrIdOrQuestions,
-              ntypeId   = mnode2.common.ntype.strId,
+              ntypeId   = mnode2.common.ntype.value,
               isEnabled = mnode2.common.isEnabled,
               canChangeAvailability = Some(true),
               hasAdv    = None,

@@ -58,6 +58,8 @@ class LkAdEditModule {
 
   lazy val scaleR = wire[ScaleR]
 
+  lazy val saveR = wire[SaveR]
+
 
   lazy val pictureCropPopupR = wire[PictureCropPopupR]
 

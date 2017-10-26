@@ -1,6 +1,7 @@
 package io.suggest.enum2
 
 import scala.collection.AbstractIterator
+import scala.collection.immutable
 
 /**
   * Suggest.io
@@ -9,6 +10,26 @@ import scala.collection.AbstractIterator
   * Description: Для сборки enumeratum'ов с древовидными внутренностями можно подмешать этот трейт
   * к базовому классу элементов enumeratum-модели.
   */
+object TreeEnumEntry {
+
+  /** Макрос findValues собирает только значения на верхнем уровне.
+    * Для подключения подуровней, надо результат макроса передать в этот метод,
+    * и получится правильное множество элементов со всех уровней дерева.
+    *
+    * @param findValuesRes Результат вызова макроса findValues.
+    * @tparam T Тип одного значения модели, реализующего TreeEnumEntry.
+    * @return Последовательность, включающая в себя элементы со всех подуровней.
+    */
+  def deepFindValue[T <: TreeEnumEntry[T]](findValuesRes: immutable.IndexedSeq[T]): immutable.IndexedSeq[T] = {
+    findValuesRes
+      .flatMap { v =>
+        v :: v.deepChildren
+      }
+  }
+
+}
+
+
 trait TreeEnumEntry[T <: TreeEnumEntry[T]] { that: T =>
 
   /** Подтипы этого типа. */

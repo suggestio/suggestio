@@ -2,7 +2,7 @@ package io.suggest.ad.edit.m
 
 import diode.FastEq
 import io.suggest.ad.edit.m.pop.MAePopupsS
-import io.suggest.spa.delay.MDelayerS
+import io.suggest.ad.edit.m.save.MSaveS
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
 import japgolly.univeq.UnivEq
@@ -21,7 +21,8 @@ object MAeRoot {
         (a.doc ===* b.doc) &&
         (a.layout ===* b.layout) &&
         (a.popups ===* b.popups) &&
-        (a.wsPool ===* b.wsPool)
+        (a.wsPool ===* b.wsPool) &&
+        (a.save ===* b.save)
     }
   }
 
@@ -44,6 +45,7 @@ case class MAeRoot(
                     layout      : MLayoutS,
                     popups      : MAePopupsS        = MAePopupsS.empty,
                     wsPool      : MWsPoolS          = MWsPoolS.empty,
+                    save        : MSaveS            = MSaveS.empty
                   ) {
 
   /** Экспорт данных формы для отправки на сервер. */
@@ -51,13 +53,18 @@ case class MAeRoot(
     val jdArgs = doc.jdArgs
     MAdEditForm(
       template = jdArgs.template,
-      edges    = jdArgs.renderArgs.edges.mapValues(_.jdEdge).values
+      edges    = jdArgs.renderArgs
+        .edges
+        .mapValues(_.jdEdge)
+        .values
     )
   }
 
+  def withConf(conf: MAdEditFormConf)         = copy(conf = conf)
   def withDoc(doc: MDocS)                     = copy(doc = doc)
   def withLayout(layout: MLayoutS)            = copy(layout = layout)
   def withPopups(popups: MAePopupsS)          = copy(popups = popups)
   def withWsPool(wsPool: MWsPoolS)            = copy(wsPool = wsPool)
+  def withSave(save: MSaveS)                  = copy(save = save)
 
 }

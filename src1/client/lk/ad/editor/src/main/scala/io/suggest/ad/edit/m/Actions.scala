@@ -141,3 +141,10 @@ case object JdDocChanged extends ILkEditAction
 /** Сигнал о завершении валидации. */
 case class JdVldResult( vldRes: StringValidationNel[Tree[JdTag]] ) extends ILkEditAction
 
+
+/** Экшен сохранения документа. */
+case object SaveAd extends ILkEditAction
+
+/** Результат запроса сохранения карточки на сервер. */
+case class SaveAdResp(timestamp: Long, tryResp: Try[MAdEditFormInit]) extends ILkEditAction
+

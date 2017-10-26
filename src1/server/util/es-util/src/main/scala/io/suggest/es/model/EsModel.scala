@@ -1,9 +1,11 @@
 package io.suggest.es.model
 
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.es.util.SioEsUtil._
 import io.suggest.primo.id.OptId
 import org.elasticsearch.action.DocWriteResponse.Result
+import org.elasticsearch.action.bulk.BulkResponse
 import org.elasticsearch.action.delete.{DeleteRequestBuilder, DeleteResponse}
 import org.elasticsearch.action.get.MultiGetRequest.Item
 import org.elasticsearch.action.index.IndexRequestBuilder
@@ -182,6 +184,24 @@ trait EsModelStaticT extends EsModelCommonStaticT {
       .map { EsModelStaticT.delResp2isDeleted }
   }
 
+  /** Удаляем сразу много элементов.
+    * @return Обычно Some(BulkResponse), но если нет id'шников в запросе, то будет None.
+    */
+  def deleteByIds(ids: TraversableOnce[String]): Future[Option[BulkResponse]] = {
+    if (ids.isEmpty) {
+      Future.successful(null)
+    } else {
+      val bulk = esClient.prepareBulk()
+      for (id <- ids) {
+        bulk.add(
+          prepareDelete(id)
+        )
+      }
+      bulk.execute()
+        .map( EmptyUtil.someF )
+    }
+  }
+
 
   def resave(id: String): Future[Option[String]] = {
     resaveBase( getById(id) )
@@ -213,3 +233,12 @@ abstract class EsModelStatic extends EsModelStaticT
 trait EsModelT extends EsModelCommonT {
 }
 
+/** Доп.API для инстансов ES-моделей с явной поддержкой версий. */
+trait EsModelVsnedT[T <: EsModelVsnedT[T]] extends EsModelCommonT {
+
+  def withVersion(versionOpt: Option[Long]): T // = copy(versionOpt = versionOpt)
+
+  // После самого первого сохранения выставляется вот эта вот версия:
+  def withFirstVersion = withVersion( Some(1L) )
+
+}

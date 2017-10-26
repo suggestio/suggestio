@@ -151,7 +151,9 @@ routesImport ++= Seq(
   "io.suggest.model.n2.edge.MPredicatesJvm._",
 
   // 2017.oct.3: Аплоад с балансировкой по серверам требует новых комплексных клиент-серверных моделей:
-  "io.suggest.crypto.hash.HashesHexJvm._"
+  "io.suggest.crypto.hash.HashesHexJvm._",
+  // 2017.oct.26: Попутный рефакторинг MNodeTypes:
+  "io.suggest.model.n2.node.MNodeTypesJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

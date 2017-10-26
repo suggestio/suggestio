@@ -112,7 +112,7 @@ object MMeta extends IGenEsMappingProps {
 
 /** Дичайшая убер-модель метаданных, например. */
 case class MMeta(
-  basic         : MBasicMeta,
+  basic         : MBasicMeta      = MBasicMeta(),
   person        : MPersonMeta     = MPersonMeta.empty,
   address       : MAddress        = MAddress.empty,
   business      : MBusinessInfo   = MBusinessInfo.empty,

@@ -179,7 +179,7 @@ class MImgs3 @Inject() (
       } yield {
         MMedia(
           nodeId  = mimg.rowKeyStr,
-          id      = Some( mimg._mediaId ),
+          id      = Some( mimg.mediaId ),
           file    = MFileMeta(
             mime        = mime,
             sizeB       = szB,
@@ -335,7 +335,7 @@ case class MImg3(
     UuidUtil.base64ToUuid(rowKeyStr)
   }
 
-  lazy val _mediaId = MMedia.mkId(rowKeyStr, qOpt)
+  lazy val mediaId = MMedia.mkId(rowKeyStr, qOpt)
 
   override def storage = MStorages.SeaWeedFs
   override type MImg_t = MImg3

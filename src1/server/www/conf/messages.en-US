@@ -21,6 +21,8 @@ Edit=Edit
 Shop=Shop
 Shops=Shops
 Save=Save
+Saving=Saving
+Saved=Saved
 Continue=Continue
 Next=Next
 Site=Site
@@ -686,6 +688,8 @@ Ntype.m=Media
 Ntype.i=Picture
 Ntype.b=BLE-beacon
 Ntype.mf=File
+Ntype.e=External resource
+Ntype.ev=Extranal video
 
 Ntype.p=People
 Ntype.n=Cabinets
@@ -695,6 +699,8 @@ Ntype.m=Medias
 Ntype.i=Pictures
 Ntype.b=BLE-beacons
 Ntype.mf=Files
+Ntype.e=External resources
+Ntype.ev=Extranal videos
 Nodes=Nodes
 
 edge.predicate.a=Owner

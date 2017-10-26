@@ -300,11 +300,20 @@ class LkAdEditCircuit(
     }
   )
 
+  /** Контроллер сохранения. */
+  private lazy val saveAh = new SaveAh(
+    lkAdEditApi = adEditApi,
+    confRO      = confRO,
+    modelRW     = rootRW
+  )
+
+
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
     var acc = List[HandlerFunction](
       wsPoolAh,
+      saveAh,
       tailAh
     )
 

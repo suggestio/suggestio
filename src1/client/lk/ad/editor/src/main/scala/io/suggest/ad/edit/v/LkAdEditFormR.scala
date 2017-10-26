@@ -4,7 +4,7 @@ import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
 import io.suggest.ad.edit.v.edit.strip.StripEditR
-import io.suggest.ad.edit.v.edit.{AddR, PictureR, QdEditR, ScaleR}
+import io.suggest.ad.edit.v.edit._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -12,7 +12,7 @@ import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
-import io.suggest.common.html.HtmlConstants.{`(`, `)`, COMMA}
+import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
@@ -36,7 +36,8 @@ class LkAdEditFormR(
                      quillCssFactory    : => QuillCss,
                      val qdEditR        : QdEditR,
                      val scaleR         : ScaleR,
-                     val pictureR       : PictureR
+                     val pictureR       : PictureR,
+                     val saveR          : SaveR
                    ) {
 
   import MAddS.MAddSFastEq
@@ -45,6 +46,7 @@ class LkAdEditFormR(
   import stripEditR.StripEditRPropsValFastEq
   import scaleR.ScaleRPropsValFastEq
   import pictureR.PictureRPropsValFastEq
+  import saveR.SaveRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -57,7 +59,8 @@ class LkAdEditFormR(
                               picPropsOptC      : ReactConnectProxy[Option[pictureR.PropsVal]],
                               qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
                               scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]],
-                              rightYOptC        : ReactConnectProxy[Option[Int]]
+                              rightYOptC        : ReactConnectProxy[Option[Int]],
+                              savePropsC        : ReactConnectProxy[saveR.PropsVal]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -133,7 +136,11 @@ class LkAdEditFormR(
               s.addC { addR.apply },
 
               // Селектор масштаба карточки.
-              s.scalePropsOptC { scaleR.apply }
+              s.scalePropsOptC { scaleR.apply },
+
+              <.br,
+              // Кнопка сохранения карточки.
+              s.savePropsC { saveR.apply }
 
             )
           }
@@ -225,7 +232,13 @@ class LkAdEditFormR(
 
         rightYOptC = p.connect { mroot =>
           mroot.layout.rightPanelY
-        }( OptFastEq.PlainVal )
+        }( OptFastEq.PlainVal ),
+
+        savePropsC = p.connect { mroot =>
+          saveR.PropsVal(
+            currentReq = mroot.save.saveReq
+          )
+        }
 
       )
     }

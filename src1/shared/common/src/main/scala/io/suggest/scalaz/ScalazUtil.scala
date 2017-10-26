@@ -6,6 +6,7 @@ import scala.collection.{AbstractIterable, AbstractIterator, AbstractSeq}
 import scalaz.{Foldable, IList, Monoid, NonEmptyList, Validation, ValidationNel}
 import scalaz.syntax.foldable._
 import scala.language.higherKinds
+import scala.util.parsing.combinator.Parsers
 
 /**
   * Suggest.io
@@ -86,6 +87,15 @@ object ScalazUtil {
       .fold[ValidationNel[E, Option[T]]] (Validation.success(None)) ( _.map(Some.apply) )
   }
 
+
+  def liftParseResult[E, T](pr: Parsers#ParseResult[T])(errorF: Parsers#NoSuccess => E): ValidationNel[E, T] = {
+    pr match {
+      case success: Parsers#Success[T] =>
+        Validation.success( success.result )
+      case noSuccess: Parsers#NoSuccess =>
+        Validation.failureNel( errorF(noSuccess) )
+    }
+  }
 
   object Implicits {
 

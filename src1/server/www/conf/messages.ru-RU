@@ -21,6 +21,8 @@ Edit=Редактировать
 Shop=Магазин
 Shops=Магазины
 Save=Сохранить
+Saving=Сохранение
+Saved=Сохранено
 Continue=Продолжить
 Next=Далее
 Site=Сайт
@@ -695,6 +697,8 @@ Ntype.m=Медиа
 Ntype.i=Картинка
 Ntype.b=Маячок BLE
 Ntype.mf=Файл
+Ntype.e=Внешний ресурс
+Ntype.ev=Внешнее видео
 
 Ntypes.p=Люди
 Ntypes.n=Кабинеты
@@ -704,6 +708,8 @@ Ntypes.m=Медия
 Ntypes.i=Картинки
 Ntypes.b=Маячки BLE
 Ntypes.mf=Файлы
+Ntypes.e=Внешние ресурсы
+Ntypes.ev=Внешние видео
 Nodes=Узлы
 
 edge.predicate.a=Владелец

@@ -34,7 +34,7 @@ trait NodeTypes extends DynSearchArgs {
         Some(qb1)
 
       } else {
-        val strNodeTypes = _nodeTypes.map(_.strId)
+        val strNodeTypes = _nodeTypes.map(_.value)
         val ntq = QueryBuilders.termsQuery(fn, strNodeTypes: _*)
         qbOpt0.map { qb0 =>
           QueryBuilders.boolQuery()

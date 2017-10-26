@@ -168,6 +168,12 @@ object Common {
       */
     val APACHE_BATIK = "1.9"
 
+    /** Версия scala-parser-combinators.
+      * @see [[https://github.com/scala/scala-parser-combinators]]
+      */
+    val SCALA_PARSER_COMBINATORS = "1.0.5"
+    // TODO Когда выйдет 1.0.7, выставить динамическую версию. sjs-релиз 1.0.6 неисправен. https://github.com/scala/scala-parser-combinators/issues/119
+
   }
 
 

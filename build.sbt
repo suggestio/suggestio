@@ -32,10 +32,12 @@ lazy val common = (crossProject.crossType( CrossType.Pure ) in file(DIR0 + "shar
       "com.beachape" %%% "enumeratum"  % Common.enumeratumVsn,
       // scalaz появилась для Validation.
       "org.scalaz"   %%% "scalaz-core" % Common.Vsn.SCALAZ,
-      // UnivEq позволяет избегать fruitless comparison даже с дженериками. Надо внедрять потихоньку.
+      // UnivEq позволяет избегать fruitless comparison даже с дженериками.
       "com.github.japgolly.univeq"   %%% "univeq-scalaz" % Common.Vsn.UNIVEQ,
       // ScalaCSS генерит CSS в выдаче.
       "com.github.japgolly.scalacss" %%% "core"          % Common.Vsn.SCALACSS,
+      // Комбинируемые парсеры. Раньше они не были доступны для scala.js, поэтому жили только на сервере.
+      "org.scala-lang.modules" %%% "scala-parser-combinators" % Common.Vsn.SCALA_PARSER_COMBINATORS,
       // Тесты, только [common] и не наследуются (наверное).
       "io.monix"     %%% "minitest"    % Common.minitestVsn  % Test
     )

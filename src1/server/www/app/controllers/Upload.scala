@@ -188,7 +188,7 @@ class Upload @Inject()(
                 for (origMediaOpt <- mImgs3.mediaOptFut( origImg3 )) yield {
                   // TODO Если не найдено оригинала, то может быть сразу ошибку? Потому что это будет нечто неюзабельное.
                   if (origMediaOpt.isEmpty)
-                    LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3._mediaId}, but derivative media#${foundFile.idOrNull} is here: $foundFile")
+                    LOGGER.warn(s"$logPrefix Orig.img $mImgs3 not found media#${origImg3.mediaId}, but derivative media#${foundFile.idOrNull} is here: $foundFile")
                   origMediaOpt.fold(Seq.empty[MColorData]) { origMedia =>
                     origMedia.picture.colors
                   }
@@ -481,7 +481,7 @@ class Upload @Inject()(
             val mimg3Opt = for (_ <- imgIdentifyInfoOpt) yield {
               MImg3( mnodeId, Nil, fileNameOpt )
             }
-            val mediaIdOpt0 = mimg3Opt.map(_._mediaId)
+            val mediaIdOpt0 = mimg3Opt.map(_.mediaId)
             MMedia(
               nodeId = mnodeId,
               id   = mediaIdOpt0,

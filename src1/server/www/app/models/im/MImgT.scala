@@ -148,7 +148,7 @@ trait MImgsT
 
 
   def mediaOptFut(mimg: MImgT): Future[Option[MMedia]] = {
-    mMedias.getById(mimg._mediaId)
+    mMedias.getById(mimg.mediaId)
   }
   protected def _mediaFut(mediaOptFut: Future[Option[MMedia]]): Future[MMedia] = {
     mediaOptFut.map(_.get)
@@ -297,7 +297,7 @@ trait MImgsT
 abstract class MImgT extends MAnyImgT {
 
   /** id в рамках модели MMedia. */
-  def _mediaId: String
+  def mediaId: String
 
   def thisT: MImg_t
 
