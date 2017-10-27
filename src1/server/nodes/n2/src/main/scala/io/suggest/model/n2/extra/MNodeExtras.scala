@@ -131,3 +131,8 @@ case class MNodeExtras(
                         videoExt  : Option[MVideoExtInfo]     = None
                       )
   extends EmptyProduct
+{
+
+  def withDoc(doc: Option[MNodeDoc]) = copy(doc = doc)
+
+}

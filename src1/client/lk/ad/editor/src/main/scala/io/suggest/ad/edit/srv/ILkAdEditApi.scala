@@ -34,7 +34,7 @@ trait ILkAdEditApi {
     * @param producerId id узла-продьюсера.
     * @return
     */
-  def createAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit]
+  def saveAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit]
 
 }
 
@@ -49,24 +49,35 @@ class LkAdEditApiHttp(
 
   import JsRoutes_Controllers_LkAdEdit._
 
+  private def _adProdArgs(): (String, String) = {
+    val conf = confRO.value
+    val adIdOpt = conf.adId.orNull
+    val producerIdOpt = conf.adId.fold(conf.producerId)(_ => null)
+    (adIdOpt, producerIdOpt)
+  }
 
   override def prepareUpload(file4UpProps: MFile4UpProps): Future[MUploadResp] = {
     val conf = confRO.value
+    val (adIdNull, producerIdNull) = _adProdArgs
     val route = routes.controllers.LkAdEdit.prepareImgUpload(
-      adId   = conf.adId.orNull,
-      nodeId = conf.adId.fold(conf.producerId)(_ => null)
+      adId   = adIdNull,
+      nodeId = producerIdNull
     )
     uploadApi.prepareUpload( route, file4UpProps )
   }
 
 
-  override def createAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit] = {
+  override def saveAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit] = {
     val conf = confRO.value
-    val route = routes.controllers.LkAdEdit.createAdSubmit( conf.producerId )
+    val (adIdNull, producerIdNull) = _adProdArgs
+    val route = routes.controllers.LkAdEdit.saveAdSubmit(
+      adId       = adIdNull,
+      producerId = producerIdNull
+    )
     val jsonMime = MimeConst.APPLICATION_JSON
 
     val xhrFut =
-      Xhr.successIfStatus(HttpConst.Status.CREATED) {
+      Xhr.successIf200 {
         Xhr.send(
           route = route,
           timeoutMsOpt = Some(13000),

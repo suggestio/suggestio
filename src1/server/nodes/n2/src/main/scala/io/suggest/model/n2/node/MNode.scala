@@ -306,6 +306,8 @@ case class MNode(
   def withEdges(edges: MNodeEdges) = copy(edges = edges)
   def withId(idOpt: Option[String]) = copy(id = idOpt)
   override def withVersion(versionOpt: Option[Long]) = copy(versionOpt = versionOpt)
+  def withExtras(extras: MNodeExtras) = copy(extras = extras)
+  def withAd(ad: MNodeAd = MNodeAd.empty) = copy(ad = ad)
 
 }
 

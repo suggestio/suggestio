@@ -53,4 +53,24 @@ case class MEdgeDoc(
                      text   : Seq[String]   = Nil
                    )
   extends EmptyProduct
+{
+  override def toString: String = {
+    val sb = new StringBuilder(64)
+    for (u <- uid)
+      sb.append("u#")
+        .append(u)
+        .append(",")
+
+    if (text.nonEmpty) {
+      sb.append("t=[")
+      for (t <- text) {
+        sb.append(t)
+          .append(", ")
+      }
+      sb.append("]")
+    }
+
+    sb.toString()
+  }
+}
 

@@ -170,6 +170,11 @@ case class MEdge(
         .append(info)
         .append('}')
     }
+    if (doc.nonEmpty) {
+      sb.append("d={")
+        .append(doc.toString)
+        .append("},")
+    }
     sb.append(')')
       .toString()
   }

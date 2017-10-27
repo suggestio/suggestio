@@ -11,12 +11,14 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.file.MSrvFileInfo
 import io.suggest.init.routed.MJsiTgs
 import io.suggest.jd.MJdEditEdge
+import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
+import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
@@ -74,9 +76,6 @@ class LkAdEdit @Inject() (
   import mCommonDi._
 
   private lazy val _BFP_ARGS = bruteForceProtect.ARGS_DFLT.withTryCountDivisor(2)
-
-  /** Новые карточки ломают слишком много, поэтому временно сохранение ограничено только в dev-режиме. */
-  private def IS_SAVING_ALLOWED = current.mode == Mode.Dev
 
   /** Накатить какие-то дополнительные CSP-политики для работы редактора. */
   private def _applyCspToEditPage(res0: Result): Result = {
@@ -146,12 +145,12 @@ class LkAdEdit @Inject() (
     * @param producerIdU id узла-продьюсера, в рамках которого создаётся карточка.
     * @return 201 Created + init-форма с обновлённой карточкой и данными.
     */
-  def createAdSubmit(producerIdU: MEsUuId) = bruteForceProtect(_BFP_ARGS) {
-    val producerId = producerIdU.id
+  def saveAdSubmit(adIdOptU: Option[MEsUuId], producerIdU: Option[MEsUuId]) = bruteForceProtect(_BFP_ARGS) {
     csrf.Check {
-      isNodeAdmin(producerId).async( parse.json[MAdEditForm] ) { implicit request =>
+      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MAdEditForm] ) { implicit request =>
         // Взять форму из реквеста, провалидировать
-        lazy val logPrefix = s"createAdSubmit($producerId):"
+        lazy val logPrefix = s"saveAdSubmit(${request.madOpt.fold("pro")(_ => "a")}d#${adIdOptU.orElse(producerIdU).orNull}):"
+
         lkAdEdFormUtil.earlyValidateEdges( request.body ).fold(
           // Не удалось понять присланные эджи:
           {errorsNel =>
@@ -203,14 +202,16 @@ class LkAdEdit @Inject() (
             // Дождаться результата валидации...
             vldResFut.flatMap { vldRes =>
               vldRes.fold(
+                // Не удалось провалидировать шаблон.
                 {failedMsgs =>
                   val msgsConcat = failedMsgs.iterator.mkString(", ")
                   LOGGER.warn(s"$logPrefix Unable to validate template: $msgsConcat")
                   NotAcceptable( s"tpl: $msgsConcat" )
                 },
+
+                // Есть на руках валидный шаблон. Можно создавать новую карточку.
                 {tpl2 =>
-                  // Есть на руках валидный шаблон. Можно создавать новую карточку.
-                  ErrorConstants.assertArg( IS_SAVING_ALLOWED )
+                  LOGGER.trace(s"$logPrefix Successfully validated template:\n${tpl2.drawTree}")
 
                   val videoPred = MPredicates.JdContent.Video
                   // Сграбить ссылки на внешнее видео -- для них надо создать videoExt-узлы, этим занимается VideoUtil:
@@ -227,80 +228,145 @@ class LkAdEdit @Inject() (
                     videoUtil.ensureExtVideoNodes(videoExtUrls.keys, request.user.personIdOpt)
                   }
 
-                  val mnode0Fut = for {
+                  val edgesAcc0Fut = for {
                     videoExtEdges <- videoExtEdgesFut
                   } yield {
-                    MNode(
-                      common = MNodeCommon(
-                        ntype       = MNodeTypes.Ad,
-                        isDependent = true
-                      ),
-                      extras  = MNodeExtras(
-                        doc = Some(MNodeDoc(
-                          template = tpl2
-                        ))
-                      ),
-                      edges = MNodeEdges(
-                        out = {
-                          // Нужно собрать в кучу все эджи: producer, creator, эджи от связанных узлов (картинок/файлов) итд.
-                          // Пропихиваем jd-эджи:
-                          var edgesAcc = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
-                            MEdge(
-                              predicate = jdEdge.predicate,
-                              nodeIds = {
-                                val videoNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> videoPred) {
-                                  jdEdge.url
-                                    .flatMap( videoExtEdges.get )
-                                    .flatMap( _.id )
-                                }
-                                videoNodeIdOpt
-                                  .orElse {
-                                    jdEdge.fileSrv.map(_.nodeId)
-                                  }
-                                  .iterator
-                                  .toSet
-                              },
-                              doc = MEdgeDoc(
-                                uid   = Some(jdEdge.id),
-                                text  = jdEdge.text.toSeq
-                              )
-                            ) :: acc0
+                    LOGGER.trace(s"$logPrefix VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
+
+                    var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
+                      MEdge(
+                        predicate = jdEdge.predicate,
+                        nodeIds = {
+                          val videoNodeIdOpt = OptionUtil.maybeOpt(jdEdge.predicate ==>> videoPred) {
+                            jdEdge.url
+                              .flatMap( videoExtEdges.get )
+                              .flatMap( _.id )
                           }
+                          videoNodeIdOpt
+                            .orElse {
+                              jdEdge.fileSrv.map(_.nodeId)
+                            }
+                            .iterator
+                            .toSet
+                        },
+                        doc = MEdgeDoc(
+                          uid   = Some(jdEdge.id),
+                          text  = jdEdge.text.toSeq
+                        )
+                      ) :: acc0
+                    }
 
-                          // Собираем эдж до текущего узла-продьюсера:
-                          edgesAcc ::= MEdge(
-                            predicate = MPredicates.OwnedBy,
-                            nodeIds   = request.mnode.id.toSet
+                    // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
+                    if (request.user.isSuper)
+                      _acc0 ::= sysMdrUtil.mdrEdge()
+
+                    _acc0
+                  }
+
+                  // Создать/обновить строковое название для узла карточки (на основе текстовых эджей)
+                  val edges2Map = lkAdEdFormUtil.mkEdgeTextsMap( edges2 )
+
+                  val nodeTechNameOpt = lkAdEdFormUtil.mkTechName(tpl2, edges2Map)
+                  LOGGER.trace(s"$logPrefix nodeTechName = ${nodeTechNameOpt.orNull}")
+
+                  // В зависимости от создания или редактирования карточки, делаем тот или иной апдейт.
+                  val madSavedFut = edgesAcc0Fut.flatMap { edgesAcc0 =>
+                    LOGGER.trace(s"$logPrefix JdEE->MEdge edges: [${edgesAcc0.mkString(", ")}]")
+
+                    request.madOpt.fold[Future[MNode]] {
+                      LOGGER.trace(s"$logPrefix Creating new ad...")
+                      // Создание новой карточки. Инициализировать новую карточку.
+                      val mad0 = MNode(
+                        common = MNodeCommon(
+                          ntype       = MNodeTypes.Ad,
+                          isDependent = true
+                        ),
+                        extras  = MNodeExtras(
+                          doc = Some(MNodeDoc(
+                            template = tpl2
+                          ))
+                        ),
+                        edges = MNodeEdges(
+                          out = {
+                            // Нужно собрать в кучу все эджи: producer, creator, эджи от связанных узлов (картинок/файлов) итд.
+                            // Пропихиваем jd-эджи:
+                            var edgesAcc = edgesAcc0
+                            // Собираем эдж до текущего узла-продьюсера:
+                            edgesAcc ::= MEdge(
+                              predicate = MPredicates.OwnedBy,
+                              nodeIds   = Set( request.producer.id.get )
+                            )
+
+                            // Собираем эдж до текущего узла юзера-создателя:
+                            edgesAcc ::= MEdge(
+                              predicate = MPredicates.CreatedBy,
+                              nodeIds   = request.user.personIdOpt.toSet
+                            )
+
+
+                            edgesAcc
+                          }
+                        ),
+                        meta = MMeta(
+                          basic = MBasicMeta(
+                            techName = nodeTechNameOpt
                           )
-
-                          // Собираем эдж до текущего узла юзера-создателя:
-                          edgesAcc ::= MEdge(
-                            predicate = MPredicates.CreatedBy,
-                            nodeIds   = request.user.personIdOpt.toSet
-                          )
-
-                          // Помечаем, как отмодерированный, если текущий юзер -- это супер-юзер.
-                          if (request.user.isSuper)
-                            edgesAcc ::= sysMdrUtil.mdrEdge()
-
-                          edgesAcc
-                        }
+                        )
                       )
-                    )
+                      for (adId <- mNodes.save( mad0 )) yield {
+                        LOGGER.trace(s"$logPrefix Created new ad#$adId")
+                        mad0.withId( Some(adId) )
+                      }
+                    } { mad00 =>
+                      LOGGER.trace(s"$logPrefix Will update existing ad: ${mad00.idOrNull}")
+                      if (mad00.ad.nonEmpty)
+                        LOGGER.info(s"$logPrefix Erasing old ad format data: ${mad00.ad}")
+                      if (mad00.extras.doc.isEmpty)
+                        LOGGER.info(s"$logPrefix Initialized new jd-template, previous ad template was empty.")
+
+                      // Сохраняемая карточка уже существует: перезаписать в ней некоторые эджи.
+                      mNodes.tryUpdate(mad00) { mad =>
+                        mad.copy(
+                          // Залить новые эджи:
+                          edges = mad.edges.copy(
+                            out = {
+                              // Убрать все существующие jd-content-эджи. ТODO Bg-предикат: удалить старый предикат фона (старый формат market ad).
+                              val edgesCleanIter = mad.edges
+                                .withoutPredicateIter( MPredicates.JdContent, MPredicates.Bg )
+                              // Добавить новые jd-эджи.
+                              MNodeEdges.edgesToMap1( edgesCleanIter ++ edgesAcc0 )
+                            }
+                          ),
+                          // Удалить данные старой карточки.
+                          ad = MNodeAd.empty,
+                          // Залить новый шаблон:
+                          extras = mad.extras.withDoc {
+                            Some(
+                              mad.extras.doc
+                                .fold(MNodeDoc(template = tpl2)) { _.withTemplate(tpl2) }
+                            )
+                          },
+                          meta = mad.meta.withBasic {
+                            mad.meta.basic
+                              .withTechName( nodeTechNameOpt )
+                          }
+                        )
+                      }
+                    }
                   }
 
                   // Сохранить карточку и вернуть результат.
                   for {
-                    mnode0 <- mnode0Fut
-                    adId   <- mNodes.save( mnode0 )
+                    mad2 <- madSavedFut
                   } yield {
+                    LOGGER.trace(s"$logPrefix Saved ok, ad#${mad2.idOrNull}")
                     implicit val ctx = implicitly[Context]
 
                     // Сохранено успешно. Вернуть ответ в виде обновлённой формы.
-                    val formReInit2 =MAdEditFormInit(
+                    val formReInit2 = MAdEditFormInit(
                       conf = MAdEditFormConf(
-                        producerId  = request.mnode.id.get,
-                        adId        = Some(adId),
+                        producerId  = request.producer.id.get,
+                        adId        = mad2.id,
                         ctxId       = ctx.ctxIdStr
                       ),
                       form = MAdEditForm(
@@ -309,7 +375,7 @@ class LkAdEdit @Inject() (
                       )
                     )
 
-                    Created( Json.toJson(formReInit2) )
+                    Ok( Json.toJson(formReInit2) )
                   }
                 }
               )
@@ -372,8 +438,7 @@ class LkAdEdit @Inject() (
         MJdEditEdge(
           predicate = textPred,
           id        = edgeUid,
-          text      = Some(text),
-          url       = None
+          text      = Some(text)
         )
       }
 

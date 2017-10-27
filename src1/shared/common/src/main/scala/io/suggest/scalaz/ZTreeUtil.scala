@@ -74,6 +74,12 @@ object ZTreeUtil {
       tree.flatten.tail
     }
 
+    def deepSubtreesIter: Iterator[Tree[A]] = {
+      Iterator.single(tree) ++ tree.subForest
+        .iterator
+        .flatMap(_.deepSubtreesIter)
+    }
+
     def contains(jdt: A): Boolean = {
       tree.flatten.contains( jdt )
     }

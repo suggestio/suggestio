@@ -14,6 +14,8 @@ import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.{JdDocValidation, MEdgePicInfo, MJdEdgeVldInfo, MJdEditEdge}
 import io.suggest.jd.tags._
+import io.suggest.jd.tags.JdTag.Implicits._
+import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.ad.rd.RichDescr
 import io.suggest.model.n2.ad.MNodeAd
@@ -27,6 +29,7 @@ import io.suggest.pick.MimeConst
 import io.suggest.scalaz.{ScalazUtil, StringValidationNel}
 import io.suggest.svg.SvgUtil
 import io.suggest.text.{MTextAlign, MTextAligns}
+import io.suggest.text.StringUtil.StringCollUtil
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.vid.ext.VideoExtUrlParsers
 import japgolly.univeq._
@@ -538,6 +541,41 @@ class LkAdEdFormUtil
     LOGGER.trace(s"$logPrefix Validation completed => $vldRes")
 
     vldRes
+  }
+
+
+  def mkEdgeTextsMap(edges: TraversableOnce[MJdEditEdge]): Map[EdgeUid_t, String] = {
+    val iter = for {
+      e <- edges.toIterator
+      text <- e.text
+    } yield {
+      e.id -> text
+    }
+    iter.toMap
+  }
+
+  def mkTechName(tpl: Tree[JdTag], edgeTextsMap: Map[EdgeUid_t, String]): Option[String] = {
+    val delim = " | "
+    val techName = tpl
+      .deepSubtreesIter
+      .zipWithIndex
+      .filter(_._1.rootLabel.name ==* MJdTagNames.QD_CONTENT)
+      .flatMap { case (qdTree, i) =>
+        // Внутри одного qd-тега склеить все тексты без разделителей
+        val iter0 = qdTree
+          .deepEdgesUidsIter
+          .flatMap( edgeTextsMap.get )
+          .filter(s => s.trim.nonEmpty && s.length >= 2)
+          .map(_.replace("\\s+", " "))
+        // Добавить разделитель, если требутся.
+        if (i > 0 && delim.nonEmpty)
+          Iterator.single(delim) ++ iter0
+        else
+          iter0
+      }
+      .mkStringLimitLen(40)
+      .trim
+    OptionUtil.maybe(techName.length >= 2)(techName)
   }
 
 }

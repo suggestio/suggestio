@@ -47,4 +47,8 @@ object MNodeDoc {
   */
 case class MNodeDoc(
                      template: Tree[JdTag]
-                   )
+                   ) {
+
+  def withTemplate(template: Tree[JdTag]) = copy(template = template)
+
+}

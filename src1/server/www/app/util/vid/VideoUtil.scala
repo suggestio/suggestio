@@ -41,6 +41,7 @@ class VideoUtil @Inject() (
     */
   def ensureExtVideoNodes(videoUrls: Iterable[String], personIdOpt: Option[String]): Future[Map[String, MNode]] = {
     if (videoUrls.isEmpty) {
+      LOGGER.trace("ensureExtVideoNodes(): No video urls, skipping.")
       Future.successful(Map.empty)
     } else {
       _ensureExtVideoNodes( videoUrls, personIdOpt )

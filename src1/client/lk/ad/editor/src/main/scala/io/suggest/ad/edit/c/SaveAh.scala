@@ -47,11 +47,7 @@ class SaveAh[M](
         val ts = pot2p.startTime
 
         val fx = Effect {
-          val saveFut = conf.adId.fold {
-            lkAdEditApi.createAdSubmit( conf.producerId, form )
-          } { adId =>
-            ???   // TODO Сохранение существующей редактируемой карточки.
-          }
+          val saveFut = lkAdEditApi.saveAdSubmit( conf.producerId, form )
           saveFut.transform { tryRes =>
             Success( SaveAdResp(ts, tryRes) )
           }

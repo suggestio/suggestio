@@ -17,7 +17,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Created: 26.10.17 22:30
   * Description: Класс для сборки ACL, пригодного для унифицированной операции между create и edit Ad.
   *
-  * Т.е. если есть указан id карточки, то будет проверка доступа на карточку.
+  * Т.е. если есть указанный id карточки, то будет проверка доступа на редактирование карточки.
   * Иначе, будет проверка доступа к узлу-продьюсеру.
   */
 
@@ -32,15 +32,15 @@ class CanCreateOrEditAd @Inject() (
 {
 
   def apply(adIdOpt: Option[String], producerIdOpt: Option[String], userInits1: MUserInit*): ActionBuilder[MAdOptProdReq, AnyContent] = {
-    lazy val logPrefix = s"prepareUpload(${adIdOpt.orElse(producerIdOpt).orNull})#${System.currentTimeMillis()}:"
+    lazy val logPrefix = s"(${adIdOpt.orElse(producerIdOpt).orNull})#${System.currentTimeMillis()}:"
 
     // Нельзя, чтобы было два Some или оба None.
     if (adIdOpt.isEmpty ==* producerIdOpt.isEmpty) {
-      // Билдер-заглушка.
+      // ActionBuilder, всегда возвращающий ошибку независимо от входных данных:
       new reqUtil.SioActionBuilderImpl[MAdOptProdReq] {
         override def invokeBlock[A](request: Request[A], block: (MAdOptProdReq[A]) => Future[Result]): Future[Result] = {
           val msg = "Exact one arg expected"
-          LOGGER.warn(s"$logPrefix $msg adId=${adIdOpt.orNull}, nodeId=${producerIdOpt.orNull}, body=${request.body}")
+          LOGGER.warn(s"$logPrefix $msg adId=${adIdOpt.orNull}, nodeId=${producerIdOpt.orNull}")
           Results.PreconditionFailed(msg)
         }
       }
