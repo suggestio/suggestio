@@ -131,29 +131,21 @@ routesImport ++= Seq(
   "io.suggest.mbill2.m.gid.Gid_t",
   "io.suggest.mbill2.m.item.typ.MItemType",
 
-  // 2017.mar.16: Поддержка RcvrKey в роутере.
   "io.suggest.adv.rcvr.RcvrKey",
   "io.suggest.n2.RcvrKeyUtil.Implicits._",
-
-  // 2016.dec.15: GeoPoint class унифицирован на уровне [common], поэтому для его QSB теперь требуется особое приглашение:
   "io.suggest.geo.GeoPoint.Implicits._",
-
-  // 2017.apr.5: Вынос кое-каких моделей биллинга в [common]:
   "io.suggest.mbill2.m.item.typ.MItemTypesJvm._",
 
-  // 2017.jul.14: Распиливание моделей выдачи и деланье их кросс-платформенными:
   "io.suggest.ble.MBeaconDataJvm._",
   "io.suggest.geo.MGeoLocJvm._",
   "io.suggest.geo.MLocEnvJvm._",
 
-  // 2017.aug.17: Распиливания BlockMeta для выноса основной её части в [common].
   "io.suggest.ad.blk.BlockMetaJvm._",
   "io.suggest.model.n2.edge.MPredicatesJvm._",
 
-  // 2017.oct.3: Аплоад с балансировкой по серверам требует новых комплексных клиент-серверных моделей:
   "io.suggest.crypto.hash.HashesHexJvm._",
-  // 2017.oct.26: Попутный рефакторинг MNodeTypes:
-  "io.suggest.model.n2.node.MNodeTypesJvm._"
+  "io.suggest.model.n2.node.MNodeTypesJvm._",
+  "io.suggest.file.up.MFile4UpPropsJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

@@ -1,11 +1,10 @@
 package io.suggest.model.n2.node
 
 import javax.inject.{Inject, Singleton}
-import io.suggest.es.model.EsModelCache
+
+import io.suggest.es.model.{EsModelCache, Sn4EsModelCache}
 import io.suggest.event.SioNotifier.Event
 import io.suggest.model.n2.node.event.{MNodeDeleted, MNodeSaved}
-import org.elasticsearch.client.Client
-import play.api.Configuration
 import play.api.cache.AsyncCacheApi
 
 import scala.concurrent.duration._
@@ -22,24 +21,17 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class MNodesCache @Inject()(
                              // Тут нельзя инжектить MCommonDi, т.к. будет circular dep.
-                             configuration                   : Configuration,
                              mNodes                          : MNodes,
                              override val cache              : AsyncCacheApi,
-                             override implicit val ec        : ExecutionContext,
-                             override implicit val esClient  : Client
+                             override implicit val ec        : ExecutionContext
                            )
   extends EsModelCache[MNode]
+  with Sn4EsModelCache
 {
 
-  override val EXPIRE: FiniteDuration = {
-    configuration.getOptional[Int]("adn.node.cache.expire.seconds")
-      .getOrElse(60)
-      .seconds
-  }
+  override val EXPIRE = 60.seconds
 
   override val CACHE_KEY_SUFFIX = ".nc"
-
-  override type GetAs_t = MNode
 
   /** Карта событий adnNode для статического подписывания в SioNotifier. */
   override def snMap = {
@@ -50,8 +42,7 @@ class MNodesCache @Inject()(
     )
   }
 
-  override type StaticModel_t = MNodes
-  override def companion: StaticModel_t = mNodes
+  override def companion = mNodes
 
   /** Извлекаем adnId из события. */
   override def event2id(event: Event): String = {

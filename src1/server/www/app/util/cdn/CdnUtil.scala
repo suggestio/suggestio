@@ -1,6 +1,7 @@
 package util.cdn
 
 import javax.inject.{Inject, Singleton}
+
 import controllers.routes
 import io.suggest.playx.ExternalCall
 import io.suggest.util.logs.MacroLogsImpl
@@ -145,9 +146,6 @@ class CdnUtil @Inject() (
       call.url
     }
   }
-
-
-  // TODO DIST_IMG Реализовать поддержку распределения media-файлов по нодам.
 
 }
 

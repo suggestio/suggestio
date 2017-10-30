@@ -1,11 +1,11 @@
 package models.mup
 
-import io.suggest.crypto.hash.HashesHex
-import io.suggest.model.n2.media.storage.MStorage
+import io.suggest.file.up.MFile4UpProps
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsImplLazy
+import models.mcdn.MAssignedStorage
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -20,15 +20,11 @@ object MUploadTargetQs {
   /** Имена полей модели. */
   object Fields {
 
-    val HASHES_HEX_FN     = "h"
-    val MIME_TYPE_FN      = "m"
-    val FILE_SIZE_B_FN    = "b"
+    val FILE_PROPS_FN     = "f"
     val FILE_HANDLER_FN   = "d"
     val PERSON_ID_FN      = "p"
     val VALID_TILL_FN     = "c"
     val STORAGE_FN        = "s"
-    val STORAGE_HOST_FN   = "o"
-    val STORAGE_INFO_FN   = "i"
     val COLOR_DETECT_FN   = "l"
 
     val SIGNATURE_FN      = "z"
@@ -46,11 +42,10 @@ object MUploadTargetQs {
 
   /** Поддержка QueryStringBindable. */
   implicit def uploadTargetQsQsb(implicit
-                                 hashesHexB         : QueryStringBindable[HashesHex],
-                                 strB               : QueryStringBindable[String],
+                                 file4UpPropsB      : QueryStringBindable[MFile4UpProps],
                                  longB              : QueryStringBindable[Long],
                                  fileHandlerOptB    : QueryStringBindable[Option[MUploadFileHandler]],
-                                 storageB           : QueryStringBindable[MStorage],
+                                 assignedStorageB   : QueryStringBindable[MAssignedStorage],
                                  strOptB            : QueryStringBindable[Option[String]],
                                  cdArgsOptB         : QueryStringBindable[Option[MColorDetectArgs]]
                                 ): QueryStringBindable[MUploadTargetQs] = {
@@ -63,39 +58,27 @@ object MUploadTargetQs {
         val k = key1F(key)
         for {
           params            <- getQsbSigner(key).signedOrNone(k(""), params0)
-          hashesHexE        <- hashesHexB.bind        ( k(F.HASHES_HEX_FN),   params )
-          mimeTypeE         <- strB.bind              ( k(F.MIME_TYPE_FN),    params )
-          fileSizeE         <- longB.bind             ( k(F.FILE_SIZE_B_FN),  params )
+          filePropsE        <- file4UpPropsB.bind     ( k(F.FILE_PROPS_FN),   params )
           fileHandlerOptE   <- fileHandlerOptB.bind   ( k(F.FILE_HANDLER_FN), params )
           personIdOptE      <- strOptB.bind           ( k(F.PERSON_ID_FN),    params )
           validTillE        <- longB.bind             ( k(F.VALID_TILL_FN),   params )
-          storageE          <- storageB.bind          ( k(F.STORAGE_FN),      params )
-          storHostE         <- strB.bind              ( k(F.STORAGE_HOST_FN), params )
-          storInfoE         <- strB.bind              ( k(F.STORAGE_INFO_FN), params )
+          storageE          <- assignedStorageB.bind  ( k(F.STORAGE_FN),      params )
           colorDetectE      <- cdArgsOptB.bind        ( k(F.COLOR_DETECT_FN), params )
         } yield {
           for {
-            hashesHex       <- hashesHexE.right
-            mimeType        <- mimeTypeE.right
-            fileSize        <- fileSizeE.right
+            fileProps       <- filePropsE.right
             fileHandlerOpt  <- fileHandlerOptE.right
             personIdOpt     <- personIdOptE.right
             validTill       <- validTillE.right
             storage         <- storageE.right
-            storHost        <- storHostE.right
-            storInfo        <- storInfoE.right
             colorDetect     <- colorDetectE.right
           } yield {
             MUploadTargetQs(
-              hashesHex     = hashesHex,
-              mimeType      = mimeType,
-              fileSizeB     = fileSize,
+              fileProps     = fileProps,
               fileHandler   = fileHandlerOpt,
               personId      = personIdOpt,
               validTillS    = validTill,
               storage       = storage,
-              storHost      = storHost,
-              storInfo      = storInfo,
               colorDetect   = colorDetect
             )
           }
@@ -108,15 +91,11 @@ object MUploadTargetQs {
         val F = Fields
         val k = key1F(key)
         val unsigned = _mergeUnbinded1(
-          hashesHexB.unbind         ( k(F.HASHES_HEX_FN),       value.hashesHex   ),
-          strB.unbind               ( k(F.MIME_TYPE_FN),        value.mimeType    ),
-          longB.unbind              ( k(F.FILE_SIZE_B_FN),      value.fileSizeB   ),
+          file4UpPropsB.unbind      ( k(F.FILE_PROPS_FN),       value.fileProps   ),
           fileHandlerOptB.unbind    ( k(F.FILE_HANDLER_FN),     value.fileHandler ),
           strOptB.unbind            ( k(F.PERSON_ID_FN),        value.personId    ),
           longB.unbind              ( k(F.VALID_TILL_FN),       value.validTillS  ),
-          storageB.unbind           ( k(F.STORAGE_FN),          value.storage     ),
-          strB.unbind               ( k(F.STORAGE_HOST_FN),     value.storHost    ),
-          strB.unbind               ( k(F.STORAGE_INFO_FN),     value.storInfo    ),
+          assignedStorageB.unbind   ( k(F.STORAGE_FN),          value.storage     ),
           cdArgsOptB.unbind         ( k(F.COLOR_DETECT_FN),     value.colorDetect )
         )
         // Подписать это всё.
@@ -132,27 +111,19 @@ object MUploadTargetQs {
 
 /** Класс модели для заливки данных на сервер.
   *
-  * @param hashesHex Карта контрольных сумм файла.
-  * @param fileSizeB Размер файла.
+  * @param fileProps Инстанс MFile4UpProps (с первой фазы аплоада).
   * @param fileHandler Опциональный режим перехвата файла в контроллере, чтобы вместо /tmp/... сразу сохранять в иное место.
   * @param personId id юзера.
   * @param validTillS TTL. Вычисляется как currentTimeMillis/1000 + TTL в момент генерации ссылки (в секундах).
-  * @param storage Отправить файл на хранение в указанный storage. Например, SeaWeedFS.
-  * @param storHost Хост стораджа, т.к. URL hostname не покрывается сигнатурой модели.
-  * @param storInfo Строка данных, воспринимаемая конкретным storage'ем, нужная для сохранения.
-  *                 Например, для SeaWeedFS это будет зарезрвированный fid.
+
   * @param colorDetect Запустить MainColorDetector после.
   *                    Значение -- кол-во цветов, которые надо отправить на клиент.
   */
 case class MUploadTargetQs(
-                            hashesHex   : HashesHex,
-                            mimeType    : String,
-                            fileSizeB   : Long,
+                            fileProps   : MFile4UpProps,
                             fileHandler : Option[MUploadFileHandler],
                             personId    : Option[String],
                             validTillS  : Long,
-                            storage     : MStorage,
-                            storHost    : String,
-                            storInfo    : String,
+                            storage     : MAssignedStorage,
                             colorDetect : Option[MColorDetectArgs]
                           )

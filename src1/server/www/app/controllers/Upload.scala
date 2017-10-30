@@ -16,7 +16,7 @@ import io.suggest.i18n.MMessage
 import io.suggest.js.UploadConstants
 import io.suggest.model.n2.media._
 import io.suggest.model.n2.media.search.{MHashCriteria, MMediaSearchDfltImpl}
-import io.suggest.model.n2.media.storage.swfs.{SwfsStorage, SwfsStorages}
+import io.suggest.model.n2.media.storage.swfs.SwfsStorage
 import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
@@ -38,7 +38,7 @@ import play.api.libs.json.Json
 import play.api.mvc.{BodyParser, MultipartFormData, Result}
 import play.core.parsers.Multipart
 import util.acl.CanUploadFile
-import util.cdn.CdnUtil
+import util.cdn.{CdnUtil, DistUtil}
 import util.up.{FileUtil, UploadUtil}
 import japgolly.univeq._
 import util.img.ImgFileUtil
@@ -66,6 +66,7 @@ class Upload @Inject()(
                         mNodes                    : MNodes,
                         mImgs3                    : MImgs3,
                         mLocalImgs                : MLocalImgs,
+                        distUtil                  : DistUtil,
                         imgFileUtil               : ImgFileUtil,
                         mainColorDetector         : MainColorDetector,
                         wsDispatcherActors        : WsDispatcherActors,
@@ -132,31 +133,25 @@ class Upload @Inject()(
           val (respStatus, respDataFut) = fileSearchRes
             .headOption
             .fold [(Status, Future[MUploadResp])] {
-              val storageType = MStorages.SeaWeedFs
-              val storageFacade = iMediaStorages.getModel( storageType ).asInstanceOf[SwfsStorages]
-              val assignRespFut = storageFacade.assignNew()
+              val assignRespFut = distUtil.assignDist(upFileProps)
               LOGGER.trace(s"$logPrefix No existing file, user will upload a new file.")
 
               val upDataFut = for {
                 assignResp <- assignRespFut
               } yield {
-                val swfsAssignResp = assignResp._2
                 LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
+
                 val upData = MUploadTargetQs(
-                  hashesHex   = upFileProps.hashesHex,
-                  mimeType    = upFileProps.mimeType,
-                  fileSizeB   = upFileProps.sizeB,
+                  fileProps   = upFileProps,
                   fileHandler = uploadFileHandler,
                   personId    = request.user.personIdOpt,
                   validTillS  = uploadUtil.ttlFromNow(),
-                  storage     = storageType,
-                  storHost    = swfsAssignResp.url,
-                  storInfo    = swfsAssignResp.fid,
+                  storage     = assignResp,
                   colorDetect = colorDetect
                 )
                 // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
                 val hostnames = List(
-                  swfsAssignResp.publicUrl
+                  assignResp.hostExt
                   // TODO Вписать запасные хостнеймы для аплоада?
                 )
                 val relUrl = routes.Upload.doFileUpload(upData).url
@@ -254,7 +249,7 @@ class Upload @Inject()(
     // Сборка самого BodyParser'а.
     val bp0 = parse.multipartFormData(
       Multipart.handleFilePartAsTemporaryFile( fileHandler ),
-      maxLength = uploadArgs.fileSizeB + 10000L
+      maxLength = uploadArgs.fileProps.sizeB + 10000L
     )
     // Завернуть итог парсинга в контейнер, содержащий данные MLocalImg или иные возможные поля.
     for (mpfd <- bp0) yield {
@@ -306,10 +301,10 @@ class Upload @Inject()(
         // Проверить Content-Type, заявленный в теле запроса:
         if {
           val r = filePart.contentType
-            .exists(_ equalsIgnoreCase uploadArgs.mimeType)
-          LOGGER.trace(s"$logPrefix Content-type verify: expected=${uploadArgs.mimeType} filePart=${filePart.contentType} ;; match?$r")
+            .exists(_ equalsIgnoreCase uploadArgs.fileProps.mimeType)
+          LOGGER.trace(s"$logPrefix Content-type verify: expected=${uploadArgs.fileProps.mimeType} filePart=${filePart.contentType} ;; match?$r")
           if (!r)
-            __appendErr( s"Expected Content-type '${uploadArgs.mimeType}' not matching to Multipart part's content-type '${filePart.contentType.orNull}'." )
+            __appendErr( s"Expected Content-type '${uploadArgs.fileProps.mimeType}' not matching to Multipart part's content-type '${filePart.contentType.orNull}'." )
           r
         }
 
@@ -319,10 +314,10 @@ class Upload @Inject()(
         // Сверить размер файла с заявленным размером
         if {
           val srcLen = srcFile.length()
-          val r = srcLen ==* uploadArgs.fileSizeB
-          LOGGER.trace(s"$logPrefix File size check: expected=${uploadArgs.fileSizeB} detected=$srcLen ;; match? $r")
+          val r = srcLen ==* uploadArgs.fileProps.sizeB
+          LOGGER.trace(s"$logPrefix File size check: expected=${uploadArgs.fileProps.sizeB} detected=$srcLen ;; match? $r")
           if (!r)
-            __appendErr(s"Size of file $srcLen bytes, but expected is ${uploadArgs.fileSizeB} bytes.")
+            __appendErr(s"Size of file $srcLen bytes, but expected is ${uploadArgs.fileProps.sizeB} bytes.")
           r
         }
 
@@ -340,10 +335,10 @@ class Upload @Inject()(
 
         // Сравнить фактический MIME-тип с заявленным.
         if {
-          val r = mimeType ==* uploadArgs.mimeType
-          LOGGER.trace(s"$logPrefix Mime type matching: detected=$mimeType declared=${uploadArgs.mimeType} ;; matching? => $r")
+          val r = mimeType ==* uploadArgs.fileProps.mimeType
+          LOGGER.trace(s"$logPrefix Mime type matching: detected=$mimeType declared=${uploadArgs.fileProps.mimeType} ;; matching? => $r")
           if (!r)
-            __appendErr( s"Detected file MIME type '$mimeType' does not match to expected ${uploadArgs.mimeType}." )
+            __appendErr( s"Detected file MIME type '$mimeType' does not match to expected ${uploadArgs.fileProps.mimeType}." )
           r
         }
 
@@ -353,7 +348,7 @@ class Upload @Inject()(
 
           // Сверить чек-суммы файла, все и параллельно.
           hashesHex2 <- for {
-            hashesHexIterable2 <- Future.traverse( uploadArgs.hashesHex ) {
+            hashesHexIterable2 <- Future.traverse( uploadArgs.fileProps.hashesHex ) {
               case (mhash, expectedHexVal) =>
                 Future( fileUtil.mkFileHash(mhash, srcFile) )
                   .filter { srcHash =>
@@ -405,8 +400,8 @@ class Upload @Inject()(
           fileNameOpt = Option( filePart.filename )
 
           // Собираем MediaStorage ptr:
-          mediaStor = uploadArgs.storage match {
-            case MStorages.SeaWeedFs => SwfsStorage( Fid(uploadArgs.storInfo) )
+          mediaStor = uploadArgs.storage.storageType match {
+            case MStorages.SeaWeedFs => SwfsStorage( Fid(uploadArgs.storage.storageInfo) )
           }
 
           // Запускаем в фоне заливку файла из ФС в надёжное распределённое хранилище:
@@ -487,7 +482,7 @@ class Upload @Inject()(
               id   = mediaIdOpt0,
               file = MFileMeta(
                 mime       = mimeType,
-                sizeB      = uploadArgs.fileSizeB,
+                sizeB      = uploadArgs.fileProps.sizeB,
                 isOriginal = true,
                 hashesHex  = hashesHex2
               ),

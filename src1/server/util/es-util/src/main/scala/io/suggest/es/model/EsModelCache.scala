@@ -3,7 +3,6 @@ package io.suggest.es.model
 import akka.actor.ActorContext
 import io.suggest.common.fut.FutureUtil
 import io.suggest.di.{ICacheApi, IExecutionContext}
-import io.suggest.es.util.IEsClient
 import io.suggest.event.SNStaticSubscriber
 import io.suggest.event.SioNotifier.Event
 import io.suggest.event.subscriber.SnClassSubscriber
@@ -24,21 +23,15 @@ import scala.reflect.ClassTag
 // TODO Следует засунуть поддержку ehcache в sioutil и отправить этот трейт с кеш-поддержкой туда.
 // TODO Это по идее как бы трейт, но из-за ClassTag использовать trait нельзя.
 abstract class EsModelCache[T1 <: EsModelT : ClassTag]
-  extends SNStaticSubscriber
-  with SnClassSubscriber
-  with ICacheApi
+  extends ICacheApi
   with IExecutionContext
-  with IEsClient
 {
 
 
-  type StaticModel_t <: EsModelStaticT { type T = T1 }
-  def companion: StaticModel_t
+  def companion: EsModelStaticT { type T = T1 }
 
   val EXPIRE            : FiniteDuration
   val CACHE_KEY_SUFFIX  : String
-
-  type GetAs_t
 
   /**
    * Генерация ключа кеша.
@@ -145,6 +138,18 @@ abstract class EsModelCache[T1 <: EsModelT : ClassTag]
     }
     resultFut
   }
+
+}
+
+
+/** Поддержка связи [[EsModelCache]] и событий SioNotifier. */
+trait Sn4EsModelCache
+  extends SNStaticSubscriber
+  with SnClassSubscriber
+  with ICacheApi
+{
+
+  def cacheKey(id: String): String
 
   /**
    * Фунцкия возвращает строку id, извлеченную из полученного события.

@@ -2,20 +2,17 @@ package util.acl
 
 import javax.inject.Inject
 
-import io.suggest.common.empty.OptionUtil
-import io.suggest.util.logs.MacroLogsImpl
-import models.mup.{MSwfsUploadReqInfo, MUploadReq, MUploadTargetQs}
-import play.api.mvc._
-import util.up.UploadUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
 import io.suggest.ctx.{MCtxId, MCtxIds}
-import io.suggest.model.n2.media.storage.MStorages
-import io.suggest.model.n2.media.storage.swfs.SwfsVolumeCache
 import io.suggest.req.ReqUtil
-import io.suggest.swfs.client.proto.fid.Fid
+import io.suggest.util.logs.MacroLogsImpl
 import japgolly.univeq._
 import models.mproj.ICommonDi
+import models.mup.{MUploadReq, MUploadTargetQs}
 import models.req.MSioUsers
+import play.api.mvc._
+import util.cdn.DistUtil
+import util.up.UploadUtil
 
 import scala.concurrent.Future
 
@@ -30,7 +27,7 @@ class CanUploadFile @Inject()(
                                mSioUsers                  : MSioUsers,
                                uploadUtil                 : UploadUtil,
                                dab                        : DefaultActionBuilder,
-                               swfsVolumeCache            : SwfsVolumeCache,
+                               distUtil                   : DistUtil,
                                mCtxIds                    : MCtxIds,
                                mCommonDi                  : ICommonDi
                              )
@@ -72,36 +69,8 @@ class CanUploadFile @Inject()(
         Results.Forbidden(msg)
 
       } else {
-        // Распарсить Swfs FID из URL и сопоставить полученный volumeID с текущей нодой sio.
-        val fidOpt = OptionUtil.maybe( upTg.storage ==* MStorages.SeaWeedFs ) {
-          Fid( upTg.storInfo )
-        }
-
-        val swfsInfoFut = fidOpt.fold [Future[Option[MSwfsUploadReqInfo]]] (None) { fid =>
-          for {
-            volLocs <- swfsVolumeCache.getLocations( fid.volumeId )
-          } yield {
-            // Может быть несколько результатов, если у volume существуют реплики.
-            // Нужно найти целевую мастер-шарду, которая располагается где-то очень близко к текущему локалхосту.
-            val myExtHost = uploadUtil.MY_NODE_PUBLIC_URL
-            val myVolOpt = volLocs
-              .find { volLoc =>
-                (volLoc.publicUrl ==* myExtHost) &&
-                  (upTg.storHost ==* volLoc.url)
-              }
-
-            if (myVolOpt.isEmpty)
-              LOGGER.error(s"$logPrefix Failed to find vol#${fid.volumeId} for fid='$fid' nearby. My=$myExtHost, upTgUrlHost=${upTg.storHost}. Other available volumes considered non-local: ${volLocs.mkString(", ")}")
-
-            // Пусть будет NSEE при нарушении, так и надо: .recover() отработает ошибку доступа.
-            val myVol = myVolOpt.get
-            Some( MSwfsUploadReqInfo(fid, myVol, volLocs) )
-          }
-        }
-
-        // Сюда можно вписать поддержку других хранилищ в будущем.
-
-        swfsInfoFut
+        distUtil
+          .checkForUpload( upTg.storage )
           .flatMap { swfsOpt =>
             // Всё ок, данные всех хранилищ выверены, собрать mreq и запустить экшен аплоада и проверки самого файла.
             LOGGER.trace(s"$logPrefix Allowed to process file upload, swfs=>${swfsOpt.orNull}")
@@ -116,7 +85,7 @@ class CanUploadFile @Inject()(
             // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
             // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
             LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
-            Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storHost}:${upTg.storInfo} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
+            Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storage.hostInt}:${upTg.storage.storageInfo} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
           }
       }
     }

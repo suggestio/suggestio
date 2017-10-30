@@ -6,7 +6,6 @@ import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
-import io.suggest.err.ErrorConstants
 import io.suggest.es.model.MEsUuId
 import io.suggest.file.MSrvFileInfo
 import io.suggest.init.routed.MJsiTgs
@@ -15,11 +14,10 @@ import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.MMedias
+import io.suggest.model.n2.media.{MMedias, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.swfs.client.ISwfsClient
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import models.im.MImg3
@@ -27,7 +25,6 @@ import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers}
 import models.req.IReq
-import play.api.Mode
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
@@ -35,7 +32,6 @@ import util.ad.LkAdEdFormUtil
 import util.img.DynImgUtil
 import util.mdr.SysMdrUtil
 import util.sec.CspUtil
-import util.up.UploadUtil
 import util.vid.VideoUtil
 import views.html.lk.ad.edit._
 
@@ -50,7 +46,6 @@ import scala.concurrent.Future
   */
 @Singleton
 class LkAdEdit @Inject() (
-                           tempImgSupport                         : TempImgSupport,
                            canEditAd                              : CanEditAd,
                            canCreateOrEditAd                      : CanCreateOrEditAd,
                            //@Named("blk") override val blkImgMaker : IMaker,
@@ -59,12 +54,10 @@ class LkAdEdit @Inject() (
                            cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
                            mMedias                                : MMedias,
-                           uploadUtil                             : UploadUtil,
                            uploadCtl                              : Upload,
                            bruteForceProtect                      : BruteForceProtect,
-                           dab                                    : DefaultActionBuilder,
+                           mMediasCache                           : MMediasCache,
                            mNodes                                 : MNodes,
-                           swfsClient                             : ISwfsClient,
                            sysMdrUtil                             : SysMdrUtil,
                            videoUtil                              : VideoUtil,
                            override val mCommonDi                 : ICommonDi
@@ -412,16 +405,15 @@ class LkAdEdit @Inject() (
         // id узла эджа -- это идентификатор картинки.
         edgeUid <- medge.doc.uid.iterator
         nodeId  <- medge.nodeIds
+        mimg    = MImg3(medge)
+        // TODO mmediaOpt <- mMediasCache.getById( mimg.mediaId )
       } yield {
-        val mimg = MImg3(medge)
         MJdEditEdge(
           predicate   = imgPredicate,
           id          = edgeUid,
-          text        = None,
-          url         = Some( dynImgUtil.imgCall(mimg).url ),
           fileSrv     = Some(MSrvFileInfo(
             nodeId = nodeId,
-            url = Some("TODO.need.url")   // TODO Генерить тут нормальную ссылку на картинку для редактора.
+            url = Some( dynImgUtil.imgCall(mimg).url )   // TODO Генерить тут нормальную ссылку на картинку для редактора.
             // TODO Другие поля, надо извлечь их из MMedia.
           ))
         )
