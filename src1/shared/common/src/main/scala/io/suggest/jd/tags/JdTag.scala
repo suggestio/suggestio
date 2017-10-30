@@ -160,7 +160,7 @@ object JdTag {
         val chIter = deepChildrenOfTypeIter(jdtName)
         val jdt = tree.rootLabel
         if (jdt.name ==* jdtName) {
-          Iterator(jdt) ++ chIter
+          Iterator.single(jdt) ++ chIter
         } else {
           chIter
         }

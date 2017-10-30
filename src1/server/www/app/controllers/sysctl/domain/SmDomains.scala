@@ -64,7 +64,7 @@ trait SmDomains
               mnode.extras.domains
                 .iterator
                 .filter { _.dkey != mdx.dkey }
-                .++( Iterator(mdx) )
+                .++( Iterator.single(mdx) )
                 .toSeq
             }
           }
@@ -119,7 +119,7 @@ trait SmDomains
               mnode.extras.domains
                 .iterator
                 .filter { mdx => !dkeysFilteredOut.contains(mdx.dkey) }
-                .++( Iterator(mdx2) )
+                .++( Iterator.single(mdx2) )
                 .toSeq
             }
           }

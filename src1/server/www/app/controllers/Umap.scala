@@ -315,7 +315,7 @@ class Umap @Inject() (
               edges = mnode0.edges.copy(
                 out = {
                   val keepIter = mnode0.edges.withoutPredicateIter( MPredicates.NodeLocation )
-                  val newIter = Iterator( locEdge )
+                  val newIter = Iterator.single( locEdge )
                   MNodeEdges.edgesToMap1( keepIter ++ newIter )
                 }
               ),

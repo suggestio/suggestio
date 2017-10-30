@@ -79,7 +79,7 @@ class TransportEsClient @Inject() (
           "localhost",
           EsClientUtil.TRANSPORT_PORT_DFTL
         )
-        Iterator(local)
+        Iterator.single(local)
       } { addrsStrs =>
         addrsStrs
           .iterator

@@ -350,7 +350,7 @@ class MarketLkAdnEdit @Inject() (
           .withoutPredicateIter(WcLogo, Logo, GalleryItem)
         // Отрабатываем карточку приветствия.
         for (waFgEdge <- waFgEdgeOpt) {
-          edgesIter ++= Iterator(waFgEdge)
+          edgesIter ++= Iterator.single(waFgEdge)
         }
         // Отрабатываем логотип
         for (newLogo <- newLogoOpt) {
@@ -358,7 +358,7 @@ class MarketLkAdnEdit @Inject() (
             predicate = Logo,
             nodeIds   = Set(newLogo.rowKeyStr)
           )
-          edgesIter ++= Iterator(logoEdge)
+          edgesIter ++= Iterator.single(logoEdge)
         }
         // Отрабатываем галлерею
         if (newImgGallery.nonEmpty) {

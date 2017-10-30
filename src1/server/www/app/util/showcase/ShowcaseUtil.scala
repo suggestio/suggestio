@@ -254,7 +254,7 @@ class ShowcaseUtil @Inject() (
     val szMultIter1: Iterator[SzMult_t] = if (bm.wide) {
       szMultIter0
     } else {
-      Iterator(FOCUSED_SZ_MULT) ++ szMultIter0
+      Iterator.single(FOCUSED_SZ_MULT) ++ szMultIter0
     }
 
     val maxHiter = (szMultIter1 ++ TILES_SZ_MULTS.iterator).filter { szMult =>

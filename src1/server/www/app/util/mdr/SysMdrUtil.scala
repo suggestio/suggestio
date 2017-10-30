@@ -74,7 +74,7 @@ class SysMdrUtil @Inject() (
         edges = mad0.edges.copy(
           out = {
             val iter0 = mad0.edges.withoutPredicateIter( MPredicates.ModeratedBy )
-            val iter2 = Iterator(mdr2)
+            val iter2 = Iterator.single(mdr2)
             MNodeEdges.edgesToMap1(iter0 ++ iter2)
           }
         )

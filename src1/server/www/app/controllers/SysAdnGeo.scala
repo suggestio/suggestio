@@ -197,7 +197,7 @@ class SysAdnGeo @Inject() (
                 mnode0.copy(
                   edges = mnode0.edges.copy(
                     out = {
-                      val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator(locEdge1)
+                      val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(locEdge1)
                       MNodeEdges.edgesToMap1(iter)
                     }
                   )
@@ -488,7 +488,7 @@ class SysAdnGeo @Inject() (
             mnode0.copy(
               edges = mnode0.edges.copy(
                 out = {
-                  val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator(edge0)
+                  val iter = mnode0.edges.withoutPredicateIter(p) ++ Iterator.single(edge0)
                   MNodeEdges.edgesToMap1(iter)
                 }
               )

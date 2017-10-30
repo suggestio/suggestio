@@ -297,7 +297,7 @@ class VkAdapter extends AsyncInitAdp {
     // Готовим содержимое картинки.
     val attachments = {
       val photoIdsIter = photos.iterator.map { _.id }
-      (photoIdsIter ++ Iterator(ocUrl)).toSeq
+      (photoIdsIter ++ Iterator.single(ocUrl)).toSeq
     }
     // Готовим целевого адресата
     val tgInfo = vkCtx.tgInfo.get

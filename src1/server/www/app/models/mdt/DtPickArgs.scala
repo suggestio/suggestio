@@ -25,7 +25,7 @@ object DtPickArgs {
           (for(m <- 1 to 12) yield jsStr("Month.N." + m)).toSeq
         ),
         "dayOfWeek" -> JsArray(
-          (for (d <- Iterator(7) ++ (1 to 6)) yield jsStr("DayOfW.N." + d)).toSeq
+          (for (d <- Iterator.single(7) ++ (1 to 6)) yield jsStr("DayOfW.N." + d)).toSeq
         )
       )
     )

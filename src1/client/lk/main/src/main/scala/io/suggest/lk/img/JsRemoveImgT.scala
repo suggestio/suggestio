@@ -25,7 +25,7 @@ trait JsRemoveImgT extends IContainers {
   /** Инициализация поддержки удаления картинки. */
   protected def initJsRemoveImg(): Unit = {
     val imgRmCssSel = _imgRmCssSel
-    val conts = Iterator(Popup.container) ++ _imgInputContainers.toIterator
+    val conts = Iterator.single(Popup.container) ++ _imgInputContainers.toIterator
     conts.foreach { cont =>
       cont.on("click", imgRmCssSel, { (that: HTMLElement, e: JQueryEventObject) =>
         _imgRmClick(that, cont, e)
