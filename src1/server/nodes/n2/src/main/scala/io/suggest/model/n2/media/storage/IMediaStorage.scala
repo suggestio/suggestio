@@ -1,10 +1,12 @@
 package io.suggest.model.n2.media.storage
 
 import javax.inject.Inject
+
 import io.suggest.es.model.IGenEsMappingProps
 import io.suggest.fio.{IReadResponse, IWriteRequest}
 import io.suggest.primo.TypeT
 import io.suggest.es.util.SioEsUtil.DocField
+import io.suggest.url.MHostInfo
 import play.api.inject.Injector
 import play.api.libs.json._
 
@@ -102,6 +104,21 @@ class IMediaStorages @Inject() (
       .assignNew()
   }
 
+  def getStorageHost(ptr: T): Future[Seq[MHostInfo]] = {
+    _getModel(ptr)
+      .getStorageHost(ptr)
+  }
+
+  def getStoragesHosts(ptrs: Traversable[T]): Future[Iterable[(T, Seq[MHostInfo])]] = {
+    if (ptrs.isEmpty) {
+      Future.successful( Nil )
+    } else {
+      val ptr = ptrs.head
+      _getModel(ptr)
+        .getStoragesHosts(ptrs)
+    }
+  }
+
 }
 
 
@@ -153,6 +170,20 @@ trait IMediaStorageStaticImpl extends IMediaStorageStatic {
     * @return Фьючерс с инстансом свежего указателя.
     */
   def assignNew(): Future[(T, AnyRef)]
+
+  /** Вернуть данные Assigned storage для указанных метаданных хранилища.
+    *
+    * @param ptr Media-указатель.
+    * @return Фьючерс с инстансом MAssignedStorage.
+    */
+  def getStorageHost(ptr: T): Future[Seq[MHostInfo]]
+
+  /** Пакетный аналог для getAssignedStorage().
+    *
+    * @param ptrs Все указатели.
+    * @return Фьючерс с набором результатов.
+    */
+  def getStoragesHosts(ptrs: Traversable[T]): Future[Iterable[(T, Seq[MHostInfo])]]
 
 }
 

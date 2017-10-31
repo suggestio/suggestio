@@ -145,7 +145,8 @@ routesImport ++= Seq(
 
   "io.suggest.crypto.hash.HashesHexJvm._",
   "io.suggest.model.n2.node.MNodeTypesJvm._",
-  "io.suggest.file.up.MFile4UpPropsJvm._"
+  "io.suggest.file.up.MFile4UpPropsJvm._",
+  "io.suggest.url.MHostInfoJvm._"
 )
 
 deduplicators += { s: Seq[File] => s.headOption }

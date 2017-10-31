@@ -54,14 +54,16 @@ object MJdEditEdge {
                        videoExtUrlParsers: VideoExtUrlParsersT = new VideoExtUrlParsers): StringValidationNel[MJdEditEdge] = {
     // Тут несколько вариантов: текст, картинка, видео. Поэтому разветвляем валидацию.
     val P = MPredicates.JdContent
+    val `PRED` = "pred"
+    val `JD` = "jd"
     if (e.predicate ==>> P) {
-      val errMsgF = ErrorConstants.emsgF( "jd.edge" )
+      val errMsgF = ErrorConstants.emsgF( `JD` + `.` + "edge" )
 
       val predVld = {
         // TODO Тут какой-то быдлокод: недо-валидация jd-предиката, больше похожая на сравнивание с самим собой.
         val expectedPred = P.children
           .find(pred => e.predicate ==>> pred)
-        Validation.liftNel(e.predicate)(!expectedPred.contains(_), errMsgF("pred" + `.` + ErrorConstants.Words.EXPECTED))
+        Validation.liftNel(e.predicate)(!expectedPred.contains(_), errMsgF(`PRED` + `.` + ErrorConstants.Words.EXPECTED))
       }
 
       val idVld = Validation.success(e.id)
@@ -101,7 +103,7 @@ object MJdEditEdge {
 
     } else {
       // Не jd-предикат, а что-то иное.
-      Validation.failureNel( ErrorConstants.EMSG_CODE_PREFIX + "pred" + `.` + ErrorConstants.Words.EXPECTED )
+      Validation.failureNel( ErrorConstants.EMSG_CODE_PREFIX + `JD` + `PRED` + `.` + ErrorConstants.Words.EXPECTED )
     }
   }
 
@@ -124,9 +126,9 @@ case class MJdEditEdge(
   extends IId[EdgeUid_t]
 {
 
-  def withText(text: Option[String])      = copy(text = text)
-  def withUrl(url: Option[String])        = copy(url = url)
-  def withFileSrv(fileSrv: Option[MSrvFileInfo]) = copy(fileSrv = fileSrv)
+  def withText(text: Option[String])              = copy(text = text)
+  def withUrl(url: Option[String] = None)         = copy(url = url)
+  def withFileSrv(fileSrv: Option[MSrvFileInfo])  = copy(fileSrv = fileSrv)
 
   /** Подобрать значение для imgSrc. */
   def imgSrcOpt: Option[String] = {

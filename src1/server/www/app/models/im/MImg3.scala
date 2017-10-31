@@ -164,6 +164,7 @@ class MImgs3 @Inject() (
       val whOptFut = mLocalImgs.getImageWH(loc)
       // TODO Допустить, что хэши уже просчитаны где-то в контроллере, не считать их тут...
       val hashesHexFut = fileUtil.mkHashesHexAsync(imgFile, UploadConstants.CleverUp.PICTURE_FILE_HASHES)
+      // TODO Ассигновать картинку на том же узле sio, что и оригинал. Надо удалить весь этот метод, чтобы руление картинками шло вне модели, в DynImgs, например.
       val storFut = iMediaStorages.assignNew( mimg.storage )
 
       if (!ex.isInstanceOf[NoSuchElementException])

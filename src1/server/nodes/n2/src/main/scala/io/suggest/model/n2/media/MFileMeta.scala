@@ -90,5 +90,6 @@ case class MFileMeta(
   sizeB         : Long,
   isOriginal    : Boolean,
   hashesHex     : Seq[MFileMetaHash]  = Nil,
+                    // TODO Сделать тип поля dateCreated более переносимым между js/jvm, и унифицировать модель с MSrvFileInfo.
   dateCreated   : OffsetDateTime      = OffsetDateTime.now()
 )

@@ -261,6 +261,8 @@ case class CspPolicy(
 
   // CSP L2
   def withChildSrc(childSrcs: Set[String]) = copy(childSrc = childSrcs)
+  def addChildSrc(childSrcs: String*) = withChildSrc( childSrc ++ childSrcs )
+
   def withFormAction(formActions: Set[String]) = copy(formAction = formActions)
   def withFrameAncestors(frameAncestors1: Set[String]) = copy(frameAncestors = frameAncestors1)
   def withPluginTypes(pluginTypes1: Set[String]) = copy(pluginTypes = pluginTypes1)

@@ -135,6 +135,8 @@ class CspUtil @Inject() (
       p0.addImgSrc( Csp.Sources.BLOB, DATA )
         // Хз зачем, но добавление картинок в quill без этого ругается в логи (хотя и работает).
         .addConnectSrc( DATA )
+        // Добавление видео производит манипуляции в DOM с видео.
+        .addChildSrc( DATA )
     }
 
   }

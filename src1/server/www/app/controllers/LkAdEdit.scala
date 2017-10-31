@@ -4,6 +4,7 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
+import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
@@ -14,10 +15,11 @@ import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.{MMedias, MMediasCache}
+import io.suggest.model.n2.media.{MFileMetaHash, MMedias, MMediasCache}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
+import io.suggest.proto.HttpConst
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import models.im.MImg3
@@ -29,6 +31,7 @@ import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
 import util.ad.LkAdEdFormUtil
+import util.cdn.DistUtil
 import util.img.DynImgUtil
 import util.mdr.SysMdrUtil
 import util.sec.CspUtil
@@ -56,6 +59,7 @@ class LkAdEdit @Inject() (
                            mMedias                                : MMedias,
                            uploadCtl                              : Upload,
                            bruteForceProtect                      : BruteForceProtect,
+                           distUtil                               : DistUtil,
                            mMediasCache                           : MMediasCache,
                            mNodes                                 : MNodes,
                            sysMdrUtil                             : SysMdrUtil,
@@ -224,7 +228,7 @@ class LkAdEdit @Inject() (
                   val edgesAcc0Fut = for {
                     videoExtEdges <- videoExtEdgesFut
                   } yield {
-                    LOGGER.trace(s"$logPrefix VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
+                    LOGGER.trace(s"$logPrefix ${videoExtEdges.size} VideoExtEdges = [${videoExtEdges.mapValues(_.idOrNull).mkString(", ")}]")
 
                     var _acc0 = edges2.foldLeft(List.empty[MEdge]) { (acc0, jdEdge) =>
                       MEdge(
@@ -388,61 +392,168 @@ class LkAdEdit @Inject() (
   def editAd(adIdU: MEsUuId) = csrf.AddToken {
     val adId = adIdU.id
     canEditAd(adId, U.Lk).async { implicit request =>
-      // Запускаем фоновые операции: подготовить ctxData:
+      lazy val logPrefix = s"editAd($adId):"
+
+      // Нужно собрать начальное состояние формы. Для этого нужно собрать ресурсы текущей карточки.
+      val imgPredicate = MPredicates.JdContent.Image
+
+      // Собираем картинки, используемые в карточке:
+      val edgesImgs = request.mad.edges
+        .withPredicateIter( imgPredicate, MPredicates.Bg )  // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
+        .map { medge =>
+          medge -> MImg3(medge)
+        }
+        .toSeq
+      LOGGER.trace(s"$logPrefix Found ${edgesImgs.size} img.edges: ${edgesImgs.iterator.map(_._2.fileName).mkString(", ")}")
+
+      // Собрать связанные инстансы MMedia
+      val imgOrigsMediasMapFut = mMediasCache.multiGetMap {
+        edgesImgs
+          .iterator
+          .map(_._2.mediaId)
+          .toSet
+      }
+
+      val videoPredicate = MPredicates.JdContent.Video
+      // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
+      val videoEdges = request.mad.edges
+        .withPredicateIter( videoPredicate )
+        .toSeq
+      LOGGER.trace(s"$logPrefix Found ${videoEdges.size} video edges: ${videoEdges.mkString(", ")}")
+
+      // Для имён файлов нужно собрать сами узлы.
+      val mediaNodesMapFut = mNodesCache.multiGetMap {
+        // Перечисляем все интересующие img-ноды:
+        val imgNodeIdsIter = edgesImgs
+          .iterator
+          .map(_._1)
+        // Присунуть сюда же video-ноды:
+        val videoNodeIdsIter = videoEdges
+          .iterator
+        // Всё объеденить и дедублицировать.
+        (imgNodeIdsIter ++ videoNodeIdsIter)
+          .flatMap(_.nodeIds)
+          .toSet
+      }
+
+      // Собрать инфу по хостам, хранящим интересующие media-файлы.
+      val imgMedia2hostsMapFut = imgOrigsMediasMapFut.flatMap { imgOrigsMediasMap =>
+        LOGGER.trace(s"$logPrefix Found ${imgOrigsMediasMap.size} linked img medias.")
+        distUtil.medias2hosts( imgOrigsMediasMap.values )
+      }
+
+      // Скомпилить jd-эджи картинок.
+      val imgJdEdgesFut = for {
+        mediasMap           <- imgOrigsMediasMapFut
+        mediaNodesMap       <- mediaNodesMapFut
+        imgMedia2hostsMap   <- imgMedia2hostsMapFut
+      } yield {
+        // Получены медиа-файлы на руки.
+        for {
+          // Пройти по BgImg-эджам карточки:
+          (medge, mimg)   <- edgesImgs
+          // id узла эджа -- это идентификатор картинки.
+          edgeUid         <- medge.doc.uid.iterator
+          nodeId          <- medge.nodeIds
+          mmedia          <- mediasMap.get(mimg.mediaId).iterator
+        } yield {
+          MJdEditEdge(
+            predicate = imgPredicate,
+            id        = edgeUid,
+            fileSrv   = Some(MSrvFileInfo(
+              nodeId    = nodeId,
+              url       = Some {
+                // Генерим тут нормальную ссылку на картинку для редактора: Нужен прямой хостнейм из swfs-хранилища.
+                val relUrl = dynImgUtil.imgCall(mimg).url
+                val urlProtoPrefix = HttpConst.Proto.CURR_PROTO
+                imgMedia2hostsMap.get( nodeId )
+                  .flatMap(_.headOption)
+                  .fold[String] {
+                    // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
+                    LOGGER.warn(s"$logPrefix Media host-name missing for $nodeId")
+                    relUrl
+                  } { hostInfo =>
+                    LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-node#$nodeId")
+                    // TODO А что делаем с CDN-хостами?
+                    urlProtoPrefix + hostInfo.namePublic + relUrl
+                  }
+              },
+              // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
+              sizeB     = Some( mmedia.file.sizeB ),
+              mimeType  = Some( mmedia.file.mime ),
+              hashesHex = MFileMetaHash.toHashesHex( mmedia.file.hashesHex ),
+              colors    = for (_ <- mmedia.picture.colors.headOption) yield {
+                MHistogram( mmedia.picture.colors )
+              },
+              name = mediaNodesMap.get( nodeId )
+                .flatMap(_.guessDisplayName)
+            ))
+          )
+        }
+      }
+
+      // Скомпилить jd-эджи для видосов:
+      val videoJdEdgesFut = for {
+        mediaNodesMap   <- mediaNodesMapFut
+      } yield {
+        val iter = for {
+          medge         <- videoEdges.iterator
+          edgeUid       <- medge.doc.uid.iterator
+          nodeId        <- medge.nodeIds.iterator
+          mnode         <- mediaNodesMap.get( nodeId )
+          videoExt      <- mnode.extras.videoExt
+        } yield {
+          MJdEditEdge(
+            predicate = videoPredicate,
+            id        = edgeUid,
+            url       = Some( videoUtil.toIframeUrl(videoExt) )
+          )
+        }
+        iter.toSeq
+      }
+
+      // Собрать тексты из эджей
+      val textJdEdges = {
+        val textPred = MPredicates.JdContent.Text
+        val textJdEdgesIter = for {
+          textEdge <- request.mad.edges
+            .withPredicateIter( textPred )
+          edgeUid  <- textEdge.doc.uid.iterator
+          text     <- textEdge.doc.text
+        } yield {
+          MJdEditEdge(
+            predicate = textPred,
+            id        = edgeUid,
+            text      = Some(text)
+          )
+        }
+        textJdEdgesIter.toSeq
+      }
+
+      // Объеденить все эджи.
+      val edEdgesFut = for {
+        imgJdEdges    <- imgJdEdgesFut
+        videoJdEdges  <- videoJdEdgesFut
+      } yield {
+        val r = Iterator(textJdEdges, imgJdEdges, videoJdEdges)
+          .flatten
+          .toSeq
+        LOGGER.trace(s"$logPrefix Compiled ${r.size} jd edges: text=${textJdEdges.size} img=${imgJdEdges.size} video=${videoJdEdges.size}")
+        r
+      }
+
+      val nodeDoc = request.mad.extras.doc.get    // TODO .getOrElse(defaultDoc)
+
+      // Подготовить ctxData:
       val ctxData1Fut = _ctxDataFut
       val ctxFut = ctxData1Fut.map { implicit ctxData0 =>
         implicitly[Context]
       }
 
-      // Нужно собрать начальное состояние формы. Для этого нужно собрать ресурсы текущей карточки.
-      val imgPredicate = MPredicates.Bg
-
-      // Собираем картинки, используемые в карточке:
-      val imgEdgesIter = for {
-        // Пройти по BgImg-эджам карточки:
-        medge   <- request.mad.edges
-          .withPredicateIter( imgPredicate )
-        // id узла эджа -- это идентификатор картинки.
-        edgeUid <- medge.doc.uid.iterator
-        nodeId  <- medge.nodeIds
-        mimg    = MImg3(medge)
-        // TODO mmediaOpt <- mMediasCache.getById( mimg.mediaId )
-      } yield {
-        MJdEditEdge(
-          predicate   = imgPredicate,
-          id          = edgeUid,
-          fileSrv     = Some(MSrvFileInfo(
-            nodeId = nodeId,
-            url = Some( dynImgUtil.imgCall(mimg).url )   // TODO Генерить тут нормальную ссылку на картинку для редактора.
-            // TODO Другие поля, надо извлечь их из MMedia.
-          ))
-        )
-      }
-
-      // Собрать тексты из эджей
-      val textPred = MPredicates.JdContent.Text
-      val textEdgesIter = for {
-        textEdge <- request.mad.edges
-          .withPredicateIter( textPred )
-        edgeUid  <- textEdge.doc.uid.iterator
-        text     <- textEdge.doc.text
-      } yield {
-        MJdEditEdge(
-          predicate = textPred,
-          id        = edgeUid,
-          text      = Some(text)
-        )
-      }
-
-      val edEdges = Iterator(imgEdgesIter, textEdgesIter)
-        .flatten
-        .toSeq
-
-      val nodeDoc = request.mad.extras.doc.get    // TODO .getOrElse(defaultDoc)
-
       // Собрать модель и отрендерить:
       val formInitStrFut = for {
-        ctx <- ctxFut
+        ctx     <- ctxFut
+        edEdges <- edEdgesFut
       } yield {
         val formInit = MAdEditFormInit(
           conf = MAdEditFormConf(

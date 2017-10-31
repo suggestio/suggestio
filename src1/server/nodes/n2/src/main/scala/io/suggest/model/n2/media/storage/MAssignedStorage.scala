@@ -1,7 +1,7 @@
-package models.mcdn
+package io.suggest.model.n2.media.storage
 
-import io.suggest.model.n2.media.storage.MStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.url.MHostInfo
 import play.api.mvc.QueryStringBindable
 
 /**
@@ -15,14 +15,14 @@ import play.api.mvc.QueryStringBindable
 object MAssignedStorage {
 
   object Fields {
-    def HOST_EXT_FN = "he"
-    def HOST_INT_FN = "hi"
-    def STORAGE_TYPE_FN = "st"
-    def STORAGE_INFO_FN = "si"
+    def HOST_FN           = "h"
+    def STORAGE_TYPE_FN   = "t"
+    def STORAGE_INFO_FN   = "i"
   }
 
   /** Поддержка биндинга для URL qs. */
   implicit def mDistAssignRespQsb(implicit
+                                  hostB     : QueryStringBindable[MHostInfo],
                                   strB      : QueryStringBindable[String],
                                   storageB  : QueryStringBindable[MStorage]
                                  ): QueryStringBindable[MAssignedStorage] = {
@@ -32,20 +32,17 @@ object MAssignedStorage {
         val k = key1F(key)
         val F = Fields
         for {
-          hostExtE          <- strB.bind( k(F.HOST_EXT_FN), params )
-          hostIntE          <- strB.bind( k(F.HOST_INT_FN), params )
+          hostE             <- hostB.bind( k(F.HOST_FN), params )
           storageTypeE      <- storageB.bind( k(F.STORAGE_TYPE_FN), params )
           storageInfoE      <- strB.bind( k(F.STORAGE_INFO_FN), params )
         } yield {
           for {
-            hostExt         <- hostExtE.right
-            hostInt         <- hostIntE.right
+            host            <- hostE.right
             storageType     <- storageTypeE.right
             storageInfo     <- storageInfoE.right
           } yield {
             MAssignedStorage(
-              hostExt       = hostExt,
-              hostInt       = hostInt,
+              host          = host,
               storageType   = storageType,
               storageInfo   = storageInfo
             )
@@ -57,8 +54,7 @@ object MAssignedStorage {
         val k = key1F(key)
         val F = Fields
         _mergeUnbinded1(
-          strB.unbind     ( k(F.HOST_EXT_FN),     value.hostExt ),
-          strB.unbind     ( k(F.HOST_INT_FN),     value.hostInt ),
+          hostB.unbind    ( k(F.HOST_FN),         value.host ),
           storageB.unbind ( k(F.STORAGE_TYPE_FN), value.storageType ),
           strB.unbind     ( k(F.STORAGE_INFO_FN), value.storageInfo )
         )
@@ -72,14 +68,11 @@ object MAssignedStorage {
 
 /** Класс-контейнер данных по хосту и стораджу для распределённого хранения данных.
   *
-  * @param hostExt Внешний (публичный) хостнейм, доступный для всех.
-  * @param hostInt Внутренний хост.
   * @param storageType Используемый сторадж.
   * @param storageInfo Данные хранения, понятные конкретному стораджу.
   */
 case class MAssignedStorage(
-                             hostExt     : String,
-                             hostInt     : String,
+                             host        : MHostInfo,
                              storageType : MStorage,
                              storageInfo : String
                            )

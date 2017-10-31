@@ -1,5 +1,6 @@
 package io.suggest.swfs.client.proto.lookup
 
+import io.suggest.url.MHostInfo
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -23,10 +24,14 @@ object VolumeLocation {
 
 
 trait IVolumeLocation {
+
   /** Внешний URL сервера, обслуживающего текущий volume. */
   def publicUrl : String
   /** Внутренний URL сервера, обслуживающего текущий volume. */
   def url       : String
+
+  def hostInfo = MHostInfo(nameInt = url, namePublic = publicUrl)
+
 }
 
 

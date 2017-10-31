@@ -132,7 +132,7 @@ class PictureAh[M](
                 // Записать текущий файл в состояние.
                 val dataEdge2 = MEdgeDataJs(
                   jdEdge = MJdEditEdge(
-                    predicate   = MPredicates.Bg,
+                    predicate   = MPredicates.JdBgPred,
                     id          = edgeUid2,
                     url         = Some( blobUrlNew )
                   ),

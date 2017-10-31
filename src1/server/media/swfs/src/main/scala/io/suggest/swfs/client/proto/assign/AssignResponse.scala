@@ -1,7 +1,8 @@
 package io.suggest.swfs.client.proto.assign
 
 import io.suggest.swfs.client.proto.fid.Fid
-import io.suggest.swfs.client.proto.lookup.{VolumeLocation, IVolumeLocation}
+import io.suggest.swfs.client.proto.lookup.{IVolumeLocation, VolumeLocation}
+import io.suggest.url.MHostInfo
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -25,10 +26,12 @@ object AssignResponse {
 
 /** Интерфейс ответа. */
 trait IAssignResponse extends IVolumeLocation {
+
   def count       : Int
   def fid         : String
 
   def fidParsed = Fid(fid)
+
 }
 
 

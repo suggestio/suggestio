@@ -112,6 +112,9 @@ object MPredicates extends StringEnum[MPredicate] {
   /** Фоновый объект по отношению к текущему объекту. */
   case object Bg extends MPredicate("m")
 
+  /** Как-то получилось, что Bg-предикат использовался в Jd-контенте одновременно с JdContent.Image. */
+  // TODO Заинлайнить сие, если уход с Bg-предиката будет нормален.
+  def JdBgPred = JdContent.Image
 
   /**
     * Эдж для задания гео-шейпов геолокации узла в выдаче.

@@ -151,7 +151,7 @@ class Upload @Inject()(
                 )
                 // Список хостнеймов: в будущем возможно, что ссылок для заливки будет несколько: основная и запасная. Или ещё что-то.
                 val hostnames = List(
-                  assignResp.hostExt
+                  assignResp.host.namePublic
                   // TODO Вписать запасные хостнеймы для аплоада?
                 )
                 val relUrl = routes.Upload.doFileUpload(upData).url

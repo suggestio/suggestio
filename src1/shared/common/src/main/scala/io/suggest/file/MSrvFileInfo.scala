@@ -77,6 +77,7 @@ object MSrvFileInfo {
 case class MSrvFileInfo(
                          nodeId     : String,
                          url        : Option[String]      = None,
+                         // TODO Поля ниже очень сильно дублируют n2 MFileMeta (MMedia.file). Сходу не удаётся унифицировать из-за поля date_created.
                          sizeB      : Option[Long]        = None,
                          name       : Option[String]      = None,
                          mimeType   : Option[String]      = None,

@@ -85,7 +85,7 @@ class CanUploadFile @Inject()(
             // Рядом с текущим узлом нет искомой swfs volume. Это значит, что юзер подменил хостнейм в сгенеренной ссылке,
             // и пытается залить файл мимо целевого сервера (либо какая-то ошибка в конфигурации).
             LOGGER.warn(s"$logPrefix Failed to validate SWFS upload args", ex)
-            Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storage.hostInt}:${upTg.storage.storageInfo} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
+            Results.ExpectationFailed(s"Storage ${upTg.storage}:${upTg.storage.host.nameInt}:${upTg.storage.storageInfo} looks unavailable for upload from ${uploadUtil.MY_NODE_PUBLIC_URL}.")
           }
       }
     }

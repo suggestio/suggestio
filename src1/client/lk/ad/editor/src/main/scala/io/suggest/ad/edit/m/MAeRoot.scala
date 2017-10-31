@@ -3,9 +3,10 @@ package io.suggest.ad.edit.m
 import diode.FastEq
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.save.MSaveS
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -53,10 +54,18 @@ case class MAeRoot(
     val jdArgs = doc.jdArgs
     MAdEditForm(
       template = jdArgs.template,
-      edges    = jdArgs.renderArgs
-        .edges
-        .mapValues(_.jdEdge)
-        .values
+      edges    = {
+        val videoPred = MPredicates.JdContent.Video
+        jdArgs.renderArgs
+          .edges
+          .mapValues { e =>
+            var jde = e.jdEdge
+            if (jde.predicate !=* videoPred)
+              jde = e.jdEdge.withUrl()
+            jde
+          }
+          .values
+      }
     )
   }
 

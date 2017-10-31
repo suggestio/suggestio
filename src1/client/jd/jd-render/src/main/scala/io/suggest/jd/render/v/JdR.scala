@@ -318,7 +318,7 @@ class JdR extends Log {
             bgImgData <- s.props1.bgImg
             edgeUid   = bgImgData.imgEdge.edgeUid
             edge      <- jdArgs.renderArgs.edges.get( edgeUid )
-            if edge.jdEdge.predicate ==* MPredicates.Bg
+            if edge.jdEdge.predicate ==* MPredicates.JdBgPred
             bgImgSrc  <- edge.imgSrcOpt
           } yield {
             // Поддержка имитации кропа: рассчитываем аргументы кропа, если есть.

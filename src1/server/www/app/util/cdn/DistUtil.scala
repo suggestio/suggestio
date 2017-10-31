@@ -4,15 +4,16 @@ import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.empty.OptionUtil
 import io.suggest.file.up.MFile4UpProps
-import io.suggest.model.n2.media.storage.{IMediaStorages, MStorages}
+import io.suggest.model.n2.media.storage.{IMediaStorages, MAssignedStorage, MStorages}
 import io.suggest.model.n2.media.storage.swfs.{SwfsStorages, SwfsVolumeCache}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.util.logs.MacroLogsImpl
-import models.mcdn.MAssignedStorage
 import models.mup.MSwfsUploadReqInfo
 import japgolly.univeq._
 import util.up.UploadUtil
 import io.suggest.common.fut.FutureUtil.HellImplicits._
+import io.suggest.model.n2.media.MMedia
+import io.suggest.url.MHostInfo
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -59,8 +60,7 @@ class DistUtil @Inject()(
       LOGGER.trace(s"$logPrefix Assigned swfs resp: $assignResp")
       val swfsAssignResp = assignResp._2
       MAssignedStorage(
-        hostExt       = swfsAssignResp.publicUrl,
-        hostInt       = swfsAssignResp.url,
+        host          = swfsAssignResp.hostInfo,
         storageType   = storageType,
         storageInfo   = swfsAssignResp.fid
       )
@@ -93,7 +93,7 @@ class DistUtil @Inject()(
         val myVolOpt = volLocs
           .find { volLoc =>
             (volLoc.publicUrl ==* myExtHost) &&
-              (storage.hostInt ==* volLoc.url)
+              (storage.host.nameInt ==* volLoc.url)
           }
 
         if (myVolOpt.isEmpty)
@@ -103,6 +103,26 @@ class DistUtil @Inject()(
         val myVol = myVolOpt.get
         Some( MSwfsUploadReqInfo(fid, myVol, volLocs) )
       }
+    }
+  }
+
+
+  /** Вернуть карту медиа-хосты для указанных media.
+    *
+    * @param medias Список интересующих media.
+    * @return Карта nodeId -> hostname.
+    */
+  def medias2hosts(medias: Traversable[MMedia]): Future[Map[String, Seq[MHostInfo]]] = {
+    for {
+      storages2hosts <- iMediaStorages.getStoragesHosts( medias.map(_.storage) )
+    } yield {
+      val storages2hostsMap = storages2hosts.toMap
+      medias
+        .toIterator
+        .map { media =>
+          media.nodeId -> storages2hostsMap(media.storage)
+        }
+        .toMap
     }
   }
 

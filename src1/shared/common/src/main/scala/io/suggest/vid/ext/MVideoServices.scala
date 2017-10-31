@@ -13,9 +13,17 @@ import play.api.libs.json.Format
   */
 object MVideoServices extends StringEnum[MVideoService] {
 
-  case object YouTube extends MVideoService("yt")
+  case object YouTube extends MVideoService("yt") {
+    override def iframeSrc(videoId: String): String = {
+      "https://www.youtube.com/embed/" + videoId
+    }
+  }
 
-  case object Vimeo extends MVideoService("vm")
+  case object Vimeo extends MVideoService("vm") {
+    override def iframeSrc(videoId: String): String = {
+      "https://player.vimeo.com/video/" + videoId
+    }
+  }
 
 
   override def values = findValues
@@ -23,7 +31,13 @@ object MVideoServices extends StringEnum[MVideoService] {
 }
 
 
-sealed abstract class MVideoService(override val value: String) extends StringEnumEntry
+sealed abstract class MVideoService(override val value: String) extends StringEnumEntry {
+
+  /** Сборка iframe-ссылки. */
+  def iframeSrc(videoId: String): String
+
+}
+
 
 object MVideoService {
 

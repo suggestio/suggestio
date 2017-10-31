@@ -11,11 +11,14 @@ import io.suggest.swfs.client.proto.assign.{AssignRequest, IAssignResponse}
 import io.suggest.swfs.client.proto.delete.{DeleteRequest, IDeleteResponse}
 import io.suggest.swfs.client.proto.fid.Fid
 import io.suggest.swfs.client.proto.get.{GetRequest, IGetResponse}
+import io.suggest.swfs.client.proto.lookup.IVolumeLocation
 import io.suggest.swfs.client.proto.put.{IPutResponse, PutRequest}
+import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import play.api.Configuration
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
+import japgolly.univeq._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -61,6 +64,50 @@ class SwfsStorages @Inject() (
       resp <- client.assign(areq)
     } yield {
       SwfsStorage(resp.fidParsed) -> resp
+    }
+  }
+
+  override def getStorageHost(ptr: SwfsStorage): Future[Seq[MHostInfo]] = {
+    for {
+      lookupResp <- volCache.getLocations( ptr.fid.volumeId )
+    } yield {
+      LOGGER.trace(s"getAssignedStorage($ptr): Resp => ${lookupResp.mkString(", ")}")
+      // TODO Берём только первый ответ, с остальными что делать-то?
+      _assignedStorResp(ptr, lookupResp)
+    }
+  }
+
+  override def getStoragesHosts(ptrs: Traversable[T]): Future[Iterable[(T, Seq[MHostInfo])]] = {
+    // Собрать множество всех необходимых volumeId.
+    val volumeId2ptrs = ptrs
+      .groupBy(_.fid.volumeId)
+
+    val perVolFut = Future.traverse(volumeId2ptrs) { case (volumeId, volPtrs) =>
+      for {
+        lookupResp <- volCache.getLocations( volPtrs.head.fid.volumeId )
+      } yield {
+        LOGGER.trace(s"getAssignedStorages(): Resp for vol#$volumeId => ${lookupResp.mkString(", ")}")
+        volPtrs
+          .toIterator
+          .map { ptr =>
+            ptr -> _assignedStorResp(ptr, lookupResp)
+          }
+          .toSeq
+      }
+    }
+
+    for (perVol <- perVolFut) yield {
+      perVol.flatten
+    }
+  }
+
+  /** Общий код сборки результата getAssignedStorage() и getAssignedStorages(). */
+  private def _assignedStorResp(ptr: T, lookupResp: Seq[IVolumeLocation]): Seq[MHostInfo] = {
+    for (r <- lookupResp) yield {
+      MHostInfo(
+        nameInt       = r.url,
+        namePublic    = r.publicUrl
+      )
     }
   }
 
@@ -141,7 +188,7 @@ object SwfsStorage {
   implicit val FORMAT: OFormat[SwfsStorage] = {
     val READS: Reads[SwfsStorage] = (
       // TODO Opt можно удалить отсюда проверку по STYPE? Она проверяется в IMediaStorage.FORMAT, а тут повторно проверяется.
-      STYPE_FN_FORMAT.filter { _ == MStorages.SeaWeedFs } and
+      STYPE_FN_FORMAT.filter { _ ==* MStorages.SeaWeedFs } and
       FID_FORMAT
     ) { (_, fid) =>
       SwfsStorage(fid)

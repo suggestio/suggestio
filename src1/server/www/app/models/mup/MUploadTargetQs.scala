@@ -1,11 +1,11 @@
 package models.mup
 
 import io.suggest.file.up.MFile4UpProps
+import io.suggest.model.n2.media.storage.MAssignedStorage
 import io.suggest.model.play.qsb.QueryStringBindableImpl
 import io.suggest.sec.QsbSigner
 import io.suggest.sec.m.SecretGetter
 import io.suggest.util.logs.MacroLogsImplLazy
-import models.mcdn.MAssignedStorage
 import play.api.mvc.QueryStringBindable
 
 /**

@@ -9,7 +9,7 @@ import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.util.logs.MacroLogsImpl
 import io.suggest.es.util.SioEsUtil.laFuture2sFuture
-import io.suggest.vid.ext.VideoExtUrlParsers
+import io.suggest.vid.ext.{MVideoExtInfo, VideoExtUrlParsers}
 import models.mproj.ICommonDi
 
 import scala.concurrent.Future
@@ -192,6 +192,17 @@ class VideoUtil @Inject() (
 
       resMap
     }
+  }
+
+
+  /** Скомпилить данные внешнего видео в ссылку.
+    *
+    * @param videoExt Координаты видео на внешнем видео-сервисе.
+    * @return Строка URL.
+    */
+  def toIframeUrl(videoExt: MVideoExtInfo): String = {
+    videoExt.videoService
+      .iframeSrc( videoExt.remoteId )
   }
 
 }
