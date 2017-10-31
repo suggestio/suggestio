@@ -60,14 +60,12 @@ object MLkTagsSearchQs {
 
       /** Разбиндивание значения [[MLkTagsSearchQs]] в URL qs. */
       override def unbind(key: String, value: MLkTagsSearchQs): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            strB.unbind     (k(FACE_FTS_QUERY_FN),  value.tagsQuery ),
-            intOptB.unbind  (k(LIMIT_FN),           value.limitOpt  ),
-            intOptB.unbind  (k(OFFSET_FN),          value.offsetOpt )
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strB.unbind     (k(FACE_FTS_QUERY_FN),  value.tagsQuery ),
+          intOptB.unbind  (k(LIMIT_FN),           value.limitOpt  ),
+          intOptB.unbind  (k(OFFSET_FN),          value.offsetOpt )
+        )
       }
     }
   }

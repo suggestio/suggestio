@@ -43,7 +43,8 @@ class AdvUtil @Inject() (
 
   /** Дни недели, относящиеся к выходным. Задаются списком чисел от 1 (пн) до 7 (вс), согласно DateTimeConstants. */
   private val WEEKEND_DAYS: Set[Int] = {
-    Iterator(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY)
+    (DayOfWeek.SATURDAY :: DayOfWeek.SUNDAY :: Nil)
+      .iterator
       .map(_.getValue)
       .toSet
   }

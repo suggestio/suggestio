@@ -97,19 +97,17 @@ object MScNodeSearchArgs {
 
       /** Разбиндить экземплря [[MScNodeSearchArgs]]. */
       override def unbind(key: String, value: MScNodeSearchArgs): String = {
-        _mergeUnbinded {
-          val k1 = key1F(key)
-          Iterator(
-            strOptB.unbind  (k1(FTS_QUERY_FN),      value.qStr),
-            geoModeB.unbind (k1(GEO_FN),            value.geoMode),
-            intOptB.unbind  (k1(OFFSET_FN),         value.offset),
-            intOptB.unbind  (k1(LIMIT_FN),          value.maxResults),
-            strOptB.unbind  (k1(CURR_ADN_ID_FN),    value.currAdnId),
-            boolOptB.unbind (k1(NODE_SWITCH_FN),    Some(value.isNodeSwitch)),
-            boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors)),
-            apiVsnB.unbind  (k1(VSN_FN),               value.apiVsn)
-          )
-        }
+        val k1 = key1F(key)
+        _mergeUnbinded1(
+          strOptB.unbind  (k1(FTS_QUERY_FN),      value.qStr),
+          geoModeB.unbind (k1(GEO_FN),            value.geoMode),
+          intOptB.unbind  (k1(OFFSET_FN),         value.offset),
+          intOptB.unbind  (k1(LIMIT_FN),          value.maxResults),
+          strOptB.unbind  (k1(CURR_ADN_ID_FN),    value.currAdnId),
+          boolOptB.unbind (k1(NODE_SWITCH_FN),    Some(value.isNodeSwitch)),
+          boolOptB.unbind (k1(WITH_NEIGHBORS_FN), Some(value.withNeighbors)),
+          apiVsnB.unbind  (k1(VSN_FN),            value.apiVsn)
+        )
       }
 
     }

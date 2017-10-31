@@ -40,13 +40,11 @@ object MBeaconDataJvm {
       }
 
       override def unbind(key: String, value: MUidBeacon): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            strB.unbind (k(UID_FN),          value.uid),
-            intB.unbind (k(DISTANCE_CM_FN),  value.distanceCm)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strB.unbind (k(UID_FN),          value.uid),
+          intB.unbind (k(DISTANCE_CM_FN),  value.distanceCm)
+        )
       }
     }
   }

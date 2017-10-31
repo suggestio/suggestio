@@ -40,13 +40,11 @@ object MGeoLocJvm {
       }
 
       override def unbind(key: String, value: MGeoLoc): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            geoPointB .unbind (k(CENTER_FN),      value.point),
-            doubleOptB.unbind (k(ACCURACY_M_FN),  value.accuracyOptM)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          geoPointB .unbind (k(CENTER_FN),      value.point),
+          doubleOptB.unbind (k(ACCURACY_M_FN),  value.accuracyOptM)
+        )
       }
     }
   }

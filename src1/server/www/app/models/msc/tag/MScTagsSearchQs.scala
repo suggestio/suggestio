@@ -65,15 +65,13 @@ object MScTagsSearchQs {
 
       /** Разбиндивание значения [[MScTagsSearchQs]] в URL qs. */
       override def unbind(key: String, value: MScTagsSearchQs): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            strOptB.unbind( k(FACE_FTS_QUERY_FN),  value.tagsQuery  ),
-            intOptB.unbind( k(LIMIT_FN),           value.limitOpt   ),
-            intOptB.unbind( k(OFFSET_FN),          value.offsetOpt  ),
-            locEnvB.unbind( k(LOC_ENV_FN),         value.locEnv     )
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strOptB.unbind( k(FACE_FTS_QUERY_FN),  value.tagsQuery  ),
+          intOptB.unbind( k(LIMIT_FN),           value.limitOpt   ),
+          intOptB.unbind( k(OFFSET_FN),          value.offsetOpt  ),
+          locEnvB.unbind( k(LOC_ENV_FN),         value.locEnv     )
+        )
       }
 
     }

@@ -80,14 +80,12 @@ object BlockMetaJvm extends IGenEsMappingProps {
       }
 
       override def unbind(key: String, value: BlockMeta): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            blockWidthB.unbind  ( k(WIDTH_FN),     value.w),
-            blockHeightB.unbind ( k(HEIGHT_FN),    value.h),
-            boolB.unbind        ( k(IS_WIDE_FN),   value.wide)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          blockWidthB.unbind  ( k(WIDTH_FN),     value.w),
+          blockHeightB.unbind ( k(HEIGHT_FN),    value.h),
+          boolB.unbind        ( k(IS_WIDE_FN),   value.wide)
+        )
       }
     }
   }

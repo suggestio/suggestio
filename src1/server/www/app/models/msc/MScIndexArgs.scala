@@ -57,17 +57,15 @@ object MScIndexArgs {
       }
 
       override def unbind(key: String, value: MScIndexArgs): String = {
-        _mergeUnbinded {
-          val f = key1F(key)
-          Iterator(
-            locEnvB.unbind(f(LOC_ENV_FN),           value.locEnv),
-            devScrB.unbind(f(SCREEN_FN),            value.screen),
-            boolB.unbind  (f(WITH_WELCOME_FN),      value.withWelcome),
-            strOptB.unbind(f(PREV_ADN_ID_FN),       value.prevAdnId),
-            strOptB.unbind(f(NODE_ID_FN),            value.adnIdOpt),
-            apiVsnB.unbind(f(VSN_FN),               value.apiVsn)
-          )
-        }
+        val f = key1F(key)
+        _mergeUnbinded1(
+          locEnvB.unbind(f(LOC_ENV_FN),           value.locEnv),
+          devScrB.unbind(f(SCREEN_FN),            value.screen),
+          boolB.unbind  (f(WITH_WELCOME_FN),      value.withWelcome),
+          strOptB.unbind(f(PREV_ADN_ID_FN),       value.prevAdnId),
+          strOptB.unbind(f(NODE_ID_FN),           value.adnIdOpt),
+          apiVsnB.unbind(f(VSN_FN),               value.apiVsn)
+        )
       }
 
     }

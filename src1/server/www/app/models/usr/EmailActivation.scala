@@ -167,13 +167,11 @@ object IEaEmailId {
       }
 
       override def unbind(key: String, value: IEaEmailId): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            strB.unbind(k(EMAIL_FN),  value.email),
-            strB.unbind(k(ID_FN),     value.id.get)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strB.unbind(k(EMAIL_FN),  value.email),
+          strB.unbind(k(ID_FN),     value.id.get)
+        )
       }
     }
   }

@@ -79,16 +79,14 @@ object OneAdQsArgs {
       }
 
       override def unbind(key: String, value: OneAdQsArgs): String = {
-        val qs = _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            strB.unbind     (k(AD_ID_FN),   value.adId),
-            floatB.unbind   (k(SZ_MULT_FN), value.szMult),
-            longOptB.unbind (k(VSN_FN),     value.vsnOpt),
-            imgFmtB.unbind  (k(IMG_FMT_FN), Some(value.imgFmt)),
-            wideOptB.unbind (k(WIDE_FN),    value.wideOpt)
-          )
-        }
+        val k = key1F(key)
+        val qs = _mergeUnbinded1(
+          strB.unbind     (k(AD_ID_FN),   value.adId),
+          floatB.unbind   (k(SZ_MULT_FN), value.szMult),
+          longOptB.unbind (k(VSN_FN),     value.vsnOpt),
+          imgFmtB.unbind  (k(IMG_FMT_FN), Some(value.imgFmt)),
+          wideOptB.unbind (k(WIDE_FN),    value.wideOpt)
+        )
         getQsbSigner(key)
           .mkSigned(key, qs)
       }

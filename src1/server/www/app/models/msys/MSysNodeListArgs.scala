@@ -52,15 +52,13 @@ object MSysNodeListArgs {
       }
 
       override def unbind(key: String, value: MSysNodeListArgs): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            ntypeOptB .unbind(k(NTYPE_FN),      value.ntypeOpt),
-            stiOptB   .unbind(k(SHOWN_TYPE_FN), value.stiOpt),
-            intOptB   .unbind(k(LIMIT_FN),      if (value.limit != LIMIT_DFLT) Some(value.limit) else None),
-            intOptB   .unbind(k(OFFSET_FN),     if (value.offset > OFFSET_DFLT) Some(value.offset) else None)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          ntypeOptB .unbind(k(NTYPE_FN),      value.ntypeOpt),
+          stiOptB   .unbind(k(SHOWN_TYPE_FN), value.stiOpt),
+          intOptB   .unbind(k(LIMIT_FN),      if (value.limit != LIMIT_DFLT) Some(value.limit) else None),
+          intOptB   .unbind(k(OFFSET_FN),     if (value.offset > OFFSET_DFLT) Some(value.offset) else None)
+        )
       }
     }
   }

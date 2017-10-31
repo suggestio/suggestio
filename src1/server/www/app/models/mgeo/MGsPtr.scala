@@ -35,13 +35,11 @@ object MGsPtr {
       }
 
       override def unbind(key: String, value: MGsPtr): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            strB.unbind(k(NODE_ID_FN),  value.nodeId),
-            intB.unbind(k(GS_ID_FN),    value.gsId)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strB.unbind(k(NODE_ID_FN),  value.nodeId),
+          intB.unbind(k(GS_ID_FN),    value.gsId)
+        )
       }
     }
   }

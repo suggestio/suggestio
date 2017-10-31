@@ -59,15 +59,13 @@ object MdrSearchArgs {
       }
 
       override def unbind(key: String, value: MdrSearchArgs): String = {
-        _mergeUnbinded {
-          val k1 = key1F(key)
-          Iterator(
-            strOptB.unbind (k1(PRODUCER_ID_FN),          value.producerId),
-            intOptB.unbind (k1(OFFSET_FN),               value.offsetOpt),
-            boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
-            strOptB.unbind (k1(HIDE_AD_ID_FN),           value.hideAdIdOpt)
-          )
-        }
+        val k1 = key1F(key)
+        _mergeUnbinded1(
+          strOptB.unbind (k1(PRODUCER_ID_FN),          value.producerId),
+          intOptB.unbind (k1(OFFSET_FN),               value.offsetOpt),
+          boolOptB.unbind(k1(FREE_ADV_IS_ALLOWED_FN),  value.isAllowed),
+          strOptB.unbind (k1(HIDE_AD_ID_FN),           value.hideAdIdOpt)
+        )
       }
     }
   }

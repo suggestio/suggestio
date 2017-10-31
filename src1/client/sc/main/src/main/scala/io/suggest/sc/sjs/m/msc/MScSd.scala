@@ -123,7 +123,7 @@ object MScSd extends Log {
                 .map(URIUtils.decodeURIComponent)
               val k2 = arr2.next()
               val v2 = arr2.next()
-              List(k2 -> v2)
+              (k2 -> v2) :: Nil
 
             case other =>
               LOG.warn( WarnMsgs.MSC_STATE_URL_HASH_UNKNOWN_TOKEN, msg = other )

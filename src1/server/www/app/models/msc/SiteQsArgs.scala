@@ -51,14 +51,12 @@ object SiteQsArgs {
 
       /** Сериализатор. */
       override def unbind(key: String, value: SiteQsArgs): String = {
-        _mergeUnbinded {
-          val f = key1F(key)
-          Iterator(
-            strOptB.unbind(f(ADN_ID_FN),     value.adnId),
-            strOptB.unbind(f(POV_AD_ID_FN),  value.povAdId),
-            apiVsnB.unbind(f(VSN_FN),        value.apiVsn)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          strOptB.unbind(k(ADN_ID_FN),     value.adnId),
+          strOptB.unbind(k(POV_AD_ID_FN),  value.povAdId),
+          apiVsnB.unbind(k(VSN_FN),        value.apiVsn)
+        )
       }
     }
   }

@@ -1,7 +1,6 @@
 package models.im
 
 import java.io.FileNotFoundException
-import java.util.UUID
 
 import io.suggest.async.StreamsUtil
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
@@ -114,13 +113,11 @@ object MImgT extends MacroLogsImpl { model =>
       }
 
       override def unbind(key: String, value: MImgT): String = {
-        val unsignedRes = _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            rowKeyB.unbind  (k(IMG_ID_FN),  value.rowKeyStr),
-            imOpsOptB.unbind(s"$key.",      if (value.hasImgOps) Some(value.dynImgOps) else None)
-          )
-        }
+        val k = key1F(key)
+        val unsignedRes = _mergeUnbinded1(
+          rowKeyB.unbind  (k(IMG_ID_FN),  value.rowKeyStr),
+          imOpsOptB.unbind(s"$key.",      if (value.hasImgOps) Some(value.dynImgOps) else None)
+        )
         getQsbSigner(key)
           .mkSigned(key, unsignedRes)
       }

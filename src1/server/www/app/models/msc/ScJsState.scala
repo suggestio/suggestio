@@ -79,20 +79,18 @@ object ScJsState extends MacroLogsImpl {
       }
 
       override def unbind(key: String, value: ScJsState): String = {
-        _mergeUnbinded {
-          Iterator(
-            strOptB.unbind  (ADN_ID_FN,             value.adnId),
-            boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
-            boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
-            longOptB.unbind (GENERATION_FN,         value.generationOpt),
-            strOptB.unbind  (FADS_CURRENT_AD_ID_FN, value.fadOpenedIdOpt),
-            intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
-            boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
-            strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
-            nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
-            geoPointOptB.unbind(LOC_ENV_FN,         value.geoPoint)
-          )
-        }
+        _mergeUnbinded1(
+          strOptB.unbind  (ADN_ID_FN,             value.adnId),
+          boolOptB.unbind (CAT_SCR_OPENED_FN,     value.searchScrOpenedOpt),
+          boolOptB.unbind (GEO_SCR_OPENED_FN,     value.navScrOpenedOpt),
+          longOptB.unbind (GENERATION_FN,         value.generationOpt),
+          strOptB.unbind  (FADS_CURRENT_AD_ID_FN, value.fadOpenedIdOpt),
+          intOptB.unbind  (FADS_OFFSET_FN,        value.fadsOffsetOpt),
+          boolOptB.unbind (SEARCH_TAB_FN,         value.searchTabListOpt),
+          strOptB.unbind  (PRODUCER_ADN_ID_FN,    value.fadsProdIdOpt),
+          nglsMapB.unbind (NAV_NGLS_STATE_MAP_FN, if (value.navNglsMap.isEmpty) None else Some(value.navNglsMap) ),
+          geoPointOptB.unbind(LOC_ENV_FN,         value.geoPoint)
+        )
       }
     } // new QSB {}
   }   // def qsb()

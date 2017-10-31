@@ -149,7 +149,7 @@ trait Watching extends GeoLocFsmStub {
         }
 
         // Полученный хардкорный итератор гео-вотчеров дополняется ещё и обновлёнными данными текущей геолокации.
-        val wathersIter3 = supprOpt.fold(watchers1Iter)(_._2)  ++  Iterator(loc.wtype -> mgl1)
+        val wathersIter3 = supprOpt.fold(watchers1Iter)(_._2)  ++  Iterator.single(loc.wtype -> mgl1)
 
         // Сохранить новые данные в состояние.
         _stateData = sd0.copy(

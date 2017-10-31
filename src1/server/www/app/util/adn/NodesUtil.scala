@@ -242,7 +242,7 @@ class NodesUtil @Inject() (
                 MNodeEdges.edgesToMap1 {
                   mad0.edges
                     .withoutPredicateIter(pp, rp)
-                    .++( Iterator(prodE, selfRcvrE) )
+                    .++( prodE :: selfRcvrE :: Nil )
                 }
               }
             ),

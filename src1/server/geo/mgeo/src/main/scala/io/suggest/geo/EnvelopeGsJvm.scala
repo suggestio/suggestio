@@ -64,13 +64,11 @@ object EnvelopeGsJvm extends GsStaticJvmQuerable {
       }
 
       override def unbind(key: String, value: EnvelopeGs): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            geoPointB.unbind( k(Qs.TOP_LEFT_FN),      value.topLeft ),
-            geoPointB.unbind( k(Qs.BOTTOM_RIGHT_FN),  value.bottomRight )
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          geoPointB.unbind( k(Qs.TOP_LEFT_FN),      value.topLeft ),
+          geoPointB.unbind( k(Qs.BOTTOM_RIGHT_FN),  value.bottomRight )
+        )
       }
     }
   }

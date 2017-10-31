@@ -42,14 +42,12 @@ object PrepareBlkImgArgs {
       }
 
       override def unbind(key: String, value: PrepareBlkImgArgs): String = {
-        _mergeUnbinded {
-          val k = key1F(key)
-          Iterator(
-            bcB.unbind        (k(BC_FN),      value.bc),
-            bimKeyB.unbind    (k(BIM_KEY_FN), value.bimKey),
-            strOptB.unbind    (k(WS_ID_FN),   value.wsId)
-          )
-        }
+        val k = key1F(key)
+        _mergeUnbinded1(
+          bcB.unbind        (k(BC_FN),      value.bc),
+          bimKeyB.unbind    (k(BIM_KEY_FN), value.bimKey),
+          strOptB.unbind    (k(WS_ID_FN),   value.wsId)
+        )
       }
     }
   }
