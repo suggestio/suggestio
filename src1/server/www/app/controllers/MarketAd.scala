@@ -1,9 +1,8 @@
 package controllers
 
 import java.time.OffsetDateTime
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton, Named}
 
-import com.google.inject.name.Named
 import io.suggest.ad.blk.ent.{EntFont, MEntity, TextEnt}
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.common.geom.coord.MCoords2di

@@ -1,9 +1,8 @@
 package controllers
 
 import akka.util.ByteString
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton, Named}
 
-import com.google.inject.name.Named
 import controllers.cbill._
 import io.suggest.adv.info.{MNodeAdvInfo, MNodeAdvInfo4Ad}
 import io.suggest.common.fut.FutureUtil

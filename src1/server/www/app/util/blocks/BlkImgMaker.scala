@@ -3,14 +3,12 @@ package util.blocks
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.util.logs.MacroLogsImpl
 import models.blk.{SzMult_t, szMulted}
 import models.im._
-
-import scala.annotation.tailrec
 import models.im.make.{IMakeArgs, IMaker, MakeResult}
-import models.mproj.ICommonDi
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Suggest.io
@@ -18,28 +16,26 @@ import scala.concurrent.Future
  * Created: 17.04.15 17:46
  * Description: Движок генерации картинок строго под фон и размер блока.
  * Обычно за основу картинки берется кроп фона, заданный в редакторе.
+ *
+ * 2017-11-01 (после f328488a592a): Убрана любая корректировка szMult, упрощён и почищен код.
  */
 @Singleton
 class BlkImgMaker @Inject() (
-  mCommonDi: ICommonDi
-)
+                              implicit private val ec: ExecutionContext
+                            )
   extends IMaker
+  with MacroLogsImpl
 {
 
-  import mCommonDi._
 
   /**
    * Вычислить размер картинки для рендера на основе размера блока и параметрах экрана.
    * @param szMult Желаемый контроллером множитель размера картинки.
    * @param blockMeta Целевой размер. В частности - метаданные блока.
-   * @param devScreen Данные по экрану устройства.
    * @return Параметры для картинки.
    */
-  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, devScreen: DevScreen): MSize2di = {
-    getRenderSz(szMult, blockMeta, devScreen, devScreen.pixelRatio)
-  }
-  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, devScreenSz: ISize2di, pxRatio: DevPixelRatio): MSize2di = {
-    val imgResMult = getImgResMult(szMult, blockMeta, devScreenSz, pxRatio)
+  private def getRenderSz(szMult: SzMult_t, blockMeta: ISize2di, pxRatio: DevPixelRatio): MSize2di = {
+    val imgResMult = pxRatio.pixelRatio * szMult
     MSize2di(
       height = szMulted(blockMeta.height, imgResMult),
       width  = szMulted(blockMeta.width, imgResMult)
@@ -47,58 +43,16 @@ class BlkImgMaker @Inject() (
   }
 
 
-  /**
-   * Определить мультипликатор размеров сторон картинки. по сути - комбинация pxRatioDefaulted() и detectMaxSzMult().
-   * @param szMult Мультипликатор размера, желаемый контроллером.
-   * @param blockMeta Целевой размер картинки.
-   * @param devScreenSz Экран устройства.
-   * @param pxRatio Плотность пикселей устройства.
-   * @return Мультипликатор, на который надо домножать пиксельный размер стороны картинки.
-   */
-  private def getImgResMult(szMult: SzMult_t, blockMeta: ISize2di, devScreenSz: ISize2di, pxRatio: DevPixelRatio): SzMult_t = {
-    // Реальный мультипликатор размера (разрешения) картинки на основе размеров экрана, блока и пожеланий в настройках рендера.
-    val sizeMult = detectMaxSzMult(szMult, blockMeta, screenSz = devScreenSz)
-    // Финальный мультипликатор размера картинки. Учитывает плотность пикселей устройства и допуск рендера в 2х разрешении.
-    // TODO Надо наверное как-то ограничивать это чудо природы? Для развернутой картинки на 3.0-экране будет
-    //      6-кратное разрешение блока /O_o/ Памяти на девайсе может не хватить.
-    pxRatio.pixelRatio * sizeMult
-  }
-
-
-
-  /**
-   * Определить максимальный разумный множитель размера картинки для указанного экрана.
-   * Если рендер с указанным множителем не оправдан, то будет попытка с множитель в 2 раза меньшим.
-   * @param szMult Текущий (исходный) желаемый множитель размера. Т.е. максимальный допустимый (запрошенный).
-   * @param blockSz Размер блока.
-   * @param screenSz Размер экрана.
-   * @return Множитель.
-   */
-  // TODO Вероятно, этот метод не нужен. Мнение контроллера по вопросам рендера не должно "корректироваться" на нижнем уровне.
-  @tailrec private def detectMaxSzMult(szMult: SzMult_t, blockSz: ISize2di, screenSz: ISize2di): SzMult_t = {
-    if (szMult <= 1F) {
-      1F
-    } else if (blockSz.width * szMult <= screenSz.width) {
-      szMult
-    } else {
-      detectMaxSzMult(szMult / 2F, blockSz, screenSz)
-    }
-  }
-
   /** Этот движок внутри работает синхронно. Его синхронный код вынесен сюда. */
   private def icompileSync(args: IMakeArgs): MakeResult = {
     import args._
-    val devScreen = devScreenOpt getOrElse {
-      DevScreen(
-        width = 1024,
-        height = 768,
-        pixelRatioOpt = None
-      )
-    }
+
+    val pxRatio = DevPixelRatios.pxRatioDefaulted( devScreenOpt.flatMap(_.pixelRatioOpt) )
+
     // Компрессия выходной картинки, желательно как fg её сжимать.
     val fgc = args.compressMode
       .getOrElse(CompressModes.Fg)
-      .fromDpr(devScreen.pixelRatio)
+      .fromDpr(pxRatio)
 
     // Настройки сохранения результирующей картинки (аккамулятор).
     var imOpsAcc: List[ImOp] = List(
@@ -109,7 +63,7 @@ class BlkImgMaker @Inject() (
     )
 
     // Втыкаем resize. Он должен идти после возможного кропа, но перед другими операциями.
-    val szReal = getRenderSz(szMult, blockMeta, devScreen)
+    val szReal = getRenderSz(szMult, blockMeta, pxRatio)
     imOpsAcc ::= {
       // IgnoreAspectRatio полезен, иначе браузер сам начнёт пытаться растягивать картинку, отображая мазню на экране.
       AbsResizeOp(szReal, ImResizeFlags.IgnoreAspectRatio)
@@ -119,10 +73,10 @@ class BlkImgMaker @Inject() (
     // Генерим финальную ссыль на картинку с учетом возможного кропа или иных исходных трансформаций:
     val dargs = img.withDynOps(img.dynImgOps ++ imOpsAcc)
     MakeResult(
-      szCss = args.blockMeta,
-      szReal = szReal,
+      szCss       = args.blockMeta,
+      szReal      = szReal,
       dynCallArgs = dargs,
-      isWide = false
+      isWide      = false
     )
   }
 

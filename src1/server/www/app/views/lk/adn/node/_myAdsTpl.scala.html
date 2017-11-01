@@ -32,7 +32,7 @@
         }
 
         @* Карточку можно редактировать всегда. Раньше нельзя было редактировать размещенную. *@
-        <a class="adv-item_edit-btn" href="@routes.MarketAd.editAd(mnai.mad.id.get)">
+        <a class="adv-item_edit-btn" href="@(if(mnai.mad.extras.doc.nonEmpty) routes.LkAdEdit.editAd(mnai.mad.id.get) else routes.MarketAd.editAd(mnai.mad.id.get))">
           <span></span>
         </a>
 

@@ -4,8 +4,11 @@ import javax.inject.{Inject, Singleton}
 
 import controllers.routes
 import io.suggest.playx.ExternalCall
+import io.suggest.proto.HttpConst
+import io.suggest.url.MHostInfo
 import io.suggest.util.logs.MacroLogsImpl
 import models.mctx.Context
+import models.req.IReqHdr
 import play.api.Configuration
 import play.api.mvc.Call
 
@@ -32,7 +35,7 @@ class CdnUtil @Inject() (
   /** Карта протоколов и списков CDN-хостов, которые готовые обслуживать запросы. */
   val CDN_PROTO_HOSTS: Map[String, List[String]] = {
     configuration.getOptional[Seq[String]]("cdn.protocols")
-      .fold [Iterator[String]] (Iterator("http", "https")) { protosRaw =>
+      .fold [Iterator[String]] (Iterator(HttpConst.Proto.HTTP, HttpConst.Proto.HTTPS)) { protosRaw =>
         protosRaw
           .iterator
           .map(_.trim.toLowerCase)
@@ -109,7 +112,7 @@ class CdnUtil @Inject() (
           }
         } yield {
           // Не указываем протокол. Это хорошо, когда CDN работает по HTTP, а раздаёт по HTTPS.
-          "//" + cdnHost
+          HttpConst.Proto.CURR_PROTO + cdnHost
         }
       }
       urlPrefixOpt.fold(c) { urlPrefix =>
@@ -135,15 +138,41 @@ class CdnUtil @Inject() (
     if (forceAbsoluteUrl) {
       import ctx.request
       val absUrl = call.absoluteURL()
-      if (absUrl startsWith "//") {
+      if (absUrl startsWith HttpConst.Proto.CURR_PROTO) {
         // Вот так бывает: протокол не указан, потому что forCall() больше не пишет протокол.
         // Значит, уже отсылка к CDN, и значит дописываем https:
-        "https:" + absUrl
+        HttpConst.Proto.HTTPS_ + absUrl
       } else {
         absUrl
       }
     } else {
       call.url
+    }
+  }
+
+
+  /** Отмаппить внутренний хост sio на CDN-хост.
+    * Синхронный и быстрый метод (как и все остальные здесь), для возможности эффективного использования в шаблонах.
+    *
+    * @param host Данные хоста-ноды sio-кластера (см. medias2hosts()).
+    * @return Хостнейм CDN-хоста.
+    *         Если CDN недоступна, то вернуть обычный public-адрес.
+    */
+  def distHost2cdnUrlPrefix(host: MHostInfo)(implicit request: IReqHdr): String = {
+    // TODO Дергать карту хостов и CDN.
+    LOGGER.trace(s"distHost2cdnHost(${host.nameInt}): CDN+NODES SUPPORT NOT IMPLEMENTED HERE, returning ${host.namePublic}")
+    HttpConst.Proto.CURR_PROTO + host.namePublic
+  }
+
+
+  /** Сборка URL, которая   */
+  def distNodeCdnUrl(host: MHostInfo, call: Call)(implicit request: IReqHdr): String = {
+    call match {
+      // В теории возможно, что метод будет вызван с инстансом ExternalCall.
+      case extCall: ExternalCall =>
+        throw new IllegalArgumentException(s"ExternalCall is unsupported: $extCall ; host=$host")
+      case _ =>
+        distHost2cdnUrlPrefix(host) + call.url
     }
   }
 

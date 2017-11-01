@@ -1,8 +1,7 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Singleton, Named}
 
-import com.google.inject.name.Named
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
