@@ -78,15 +78,23 @@ object MSzMults {
   def `3.0`   = MSzMult(PERCENTS_COUNT * 3)
 
 
-  def all: List[MSzMult] = {
+  /** Добавить в аккамуляторы все элементы кроме 3.0. */
+  private def _allBut3Acc(acc0: List[MSzMult]): List[MSzMult] = {
     `0.5` ::
       `1.0` ::
       `1.5` ::
       `2.0` ::
-      `3.0` ::
-      Nil
+      acc0
   }
 
-  def forAdEditor: List[MSzMult] = all
+  /** Все элементы модели. */
+  def all: List[MSzMult] = {
+    _allBut3Acc( `3.0` :: Nil )
+  }
+
+  /** Набор масштабов для редактора карточек. */
+  def forAdEditor: List[MSzMult] = {
+    _allBut3Acc(Nil)
+  }
 
 }

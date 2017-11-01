@@ -8,6 +8,7 @@ import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.render.m.{MEmuCropCssArgs, MJdCssArgs}
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
+import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
@@ -248,7 +249,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF( embedAttrsDomain ) { embedAttrs =>
       var acc = List.empty[ToStyle]
 
-      for (heightSU <- embedAttrs.height; heightPx <- heightSU )
+      for (heightSU <- embedAttrs.height; heightPx <- heightSU)
         acc ::= height( (heightPx * szMultD).px )
       for (widthSU <- embedAttrs.width; widthPx <- widthSU)
         acc ::= width( (widthPx * szMultD).px )
@@ -259,6 +260,29 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     }
   }
 
+
+  /** Стили для видео-фреймов. */
+  val videoStyleF = {
+    val videoPred = MPredicates.JdContent.Video
+    val videosIter = for {
+      qdOp        <- _qdOpsIter
+      eid         <- qdOp.edgeInfo
+      dataEdge    <- jdCssArgs.edges.get(eid.edgeUid)
+      if dataEdge.jdEdge.predicate ==>> videoPred
+    } yield {
+      (qdOp, dataEdge)
+    }
+    val videosSeq = videosIter.toIndexedSeq
+
+    val videosDomain = new Domain.OverSeq( videosSeq )
+    styleF( videosDomain ) { _ =>
+      // Пока используем дефолтовые размеры видео-фрейма -- 300x150: https://stackoverflow.com/a/22844117
+      styleS(
+        width ( (300 * szMultD).px ),
+        height( (150 * szMultD).px )
+      )
+    }
+  }
 
   // -------------------------------------------------------------------------------
   // images + crop.

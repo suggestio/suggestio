@@ -29,7 +29,7 @@ import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
-import util.ad.{AdUtil, LkAdEdFormUtil}
+import util.ad.LkAdEdFormUtil
 import util.cdn.{CdnUtil, DistUtil}
 import util.img.DynImgUtil
 import util.mdr.SysMdrUtil
@@ -57,7 +57,6 @@ class LkAdEdit @Inject() (
                            mMedias                                : MMedias,
                            uploadCtl                              : Upload,
                            bruteForceProtect                      : BruteForceProtect,
-                           //adUtil                               : AdUtil,
                            distUtil                               : DistUtil,
                            mMediasCache                           : MMediasCache,
                            mNodes                                 : MNodes,
@@ -441,24 +440,11 @@ class LkAdEdit @Inject() (
         distUtil.medias2hosts( imgOrigsMediasMap.values )
       }
 
-      // TODO Картинки надо бы сжать, подогнать под экран и размер блока с помощью IMaker'а.
-      // Использовать модель hi-res дисплея для рендера картинок. Это так же поможет при масштабировании карточки.
-      /*
-      val devScreen4imgsOpt = Some(
-        DevScreen.default
-          // Выставляем pixel ratio = 3.0, чтобы было наилучшее качество.
-          .withPixelRatioOpt( Some(DevPixelRatios.DPR3) )
-      )
-      */
-      // Отрендерить в фоне картинки, связанные с карточкой.
-      //val edgeImgsRenderedFut = adUtil.renderAdDocImgs( request.mad.extras.doc.get.template, imgsEdges, devScreen4imgsOpt )
-
       // Скомпилить jd-эджи картинок.
       val imgJdEdgesFut = for {
         mediasMap           <- imgOrigsMediasMapFut
         mediaNodesMap       <- mediaNodesMapFut
         imgMedia2hostsMap   <- imgMedia2hostsMapFut
-        //edgeImgsRendered    <- edgeImgsRenderedFut
       } yield {
         // Получены медиа-файлы на руки.
         val iter = for {
@@ -489,11 +475,7 @@ class LkAdEdit @Inject() (
           val jdEdge = MJdEditEdge(
             predicate = imgPredicate,
             id        = edgeUid,
-            /*url       = for {
-              makeRes <- edgeImgsRendered.get(edgeUid)
-            } yield {
-              __imgUrl( makeRes.dynCallArgs )
-            },*/
+            // url не ставим, потому что очень нужен около-оригинальная картинка, для кропа например.
             fileSrv   = Some(MSrvFileInfo(
               nodeId    = nodeId,
               url       = Some {

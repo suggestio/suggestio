@@ -96,7 +96,7 @@ class DistUtil @Inject()(
         val myVolOpt = volLocs
           .find { volLoc =>
             volLoc.publicUrl ==* myExtHost
-            /*&& (storage.host.nameInt ==* volLoc.url) */
+            // Не проверяем nameInt/url, потому что там полу-рандомный порт swfs
           }
 
         if (myVolOpt.isEmpty)

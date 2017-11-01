@@ -130,7 +130,7 @@ class QdRrrHtml(
 
             // Рендер видео.
             case MPredicates.JdContent.Video =>
-              _insertVideo( e, videosCnt )
+              _insertVideo( e, qdOp, videosCnt )
               videosCnt += 1
 
             case other =>
@@ -218,14 +218,15 @@ class QdRrrHtml(
 
 
   /** Рендер video. */
-  private def _insertVideo(e: MEdgeDataJs, i: Int): Unit = {
+  private def _insertVideo(e: MEdgeDataJs, qdOp: MQdOp, i: Int): Unit = {
     val resOpt = for {
       src <- e.jdEdge.url
     } yield {
       _currLineAccRev ::= <.iframe(
         ^.src := src,
         ^.key := s"V$i",
-        ^.allowFullScreen := true
+        ^.allowFullScreen := true,
+        jdArgs.jdCss.videoStyleF( (qdOp, e) )
       )
     }
 
