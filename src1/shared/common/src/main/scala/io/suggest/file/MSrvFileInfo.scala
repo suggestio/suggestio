@@ -2,6 +2,7 @@ package io.suggest.file
 
 import io.suggest.color.MHistogram
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.crypto.hash.MHash
 import japgolly.univeq.UnivEq
 import play.api.libs.json._
@@ -42,7 +43,8 @@ object MSrvFileInfo {
         EmptyUtil.opt2ImplEmpty1F(Map.empty),
         { mapa => if (mapa.isEmpty) None else Some(mapa) }
       ) and
-    (__ \ "c").formatNullable[MHistogram]
+    (__ \ "c").formatNullable[MHistogram] and
+    (__ \ "w").formatNullable[MSize2di]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
@@ -82,7 +84,8 @@ case class MSrvFileInfo(
                          name       : Option[String]      = None,
                          mimeType   : Option[String]      = None,
                          hashesHex  : Map[MHash, String]  = Map.empty,
-                         colors     : Option[MHistogram]  = None
+                         colors     : Option[MHistogram]  = None,
+                         whPx       : Option[MSize2di]    = None
                        ) {
 
   /** Объединить данные данного инстанса и данные из более свежего инстанса.
@@ -116,7 +119,9 @@ case class MSrvFileInfo(
         hashesHex = Seq(newInfo.hashesHex, hashesHex)
           .find(_.nonEmpty)
           .getOrElse(hashesHex),
-        colors = newInfo.colors.orElse( colors )
+        colors = newInfo.colors.orElse( colors ),
+        whPx = newInfo.whPx
+          .orElse(whPx)
       )
     }
   }

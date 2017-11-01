@@ -45,12 +45,9 @@ trait OneMasterRequest
             mkOp(restMasters2)
           }
         }
-        fut1.onFailure { case ex: Throwable =>
+        for (ex <- fut1.failed) {
           val msg = s"mkOp($master) failed, args was = ${_args}"
-          if (ex.isInstanceOf[NoSuchElementException])
-            LOGGER.warn(msg)
-          else
-            LOGGER.warn(msg, ex)
+          LOGGER.warn(msg, ex)
         }
 
         fut1

@@ -300,8 +300,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         bgImg     <- jdt.props1.bgImg
         mcrop     <- bgImg.crop
         e         <- jdCssArgs.edges.get( bgImg.imgEdge.edgeUid )
-        fileJs    <- e.fileJs
-        origWh    <- fileJs.whPx
+        origWh    <- e.origWh
       } yield {
         MEmuCropCssArgs(mcrop, origWh, bm)
       }

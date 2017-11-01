@@ -2,7 +2,7 @@ package controllers
 
 import javax.inject.Inject
 
-import io.suggest.ad.blk.{BlockMeta, BlockMetaJvm}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockMetaJvm, BlockWidths}
 import io.suggest.util.logs.IMacroLogs
 import models.im.{CompressModes, DevScreen, MImgT}
 import models.im.make.{IMakeArgs, MakeArgs, Makers, SysForm_t}
@@ -35,7 +35,13 @@ class SysImgMakeUtil @Inject() () {
     )
     { MakeArgs(img, _, _, _, _) : IMakeArgs }
     {ima =>
-      Some((ima.blockMeta, ima.szMult, ima.devScreenOpt, ima.compressMode))
+      // После отвязки MakeArgs от BlockMeta возникла необходимость этого костыля:
+      val bmsz = ima.blockMeta
+      val bm = BlockMeta(
+        w = BlockWidths.withValue( bmsz.width ),
+        h = BlockHeights.withValue( bmsz.height )
+      )
+      Some((bm, ima.szMult, ima.devScreenOpt, ima.compressMode))
     }
   }
 

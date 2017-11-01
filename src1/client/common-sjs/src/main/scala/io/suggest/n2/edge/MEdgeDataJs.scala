@@ -1,6 +1,7 @@
 package io.suggest.n2.edge
 
 import diode.FastEq
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
 import io.suggest.jd.MJdEditEdge
 import io.suggest.model.n2.edge.EdgeUid_t
@@ -52,8 +53,8 @@ object MEdgeDataJs {
   * @param fileJs JS-only инфа по файлу, если есть. Обычно только в редакторе, например upload progress.
   */
 case class MEdgeDataJs(
-                        jdEdge              : MJdEditEdge,
-                        fileJs              : Option[MJsFileInfo]   = None
+                        jdEdge    : MJdEditEdge,
+                        fileJs    : Option[MJsFileInfo]   = None
                       )
   extends IId[Int]
 {
@@ -64,10 +65,28 @@ case class MEdgeDataJs(
   def withFileJs(fileJs       : Option[MJsFileInfo])  = copy(fileJs = fileJs)
 
 
-  def imgSrcOpt: Option[String] = {
+  private def _imgSrcOrDflt(dflt: => Option[String]) = {
     fileJs
       .flatMap(_.blobUrl)
-      .orElse( jdEdge.imgSrcOpt )
+      .orElse(dflt)
+  }
+
+  def imgSrcOpt: Option[String] = {
+    _imgSrcOrDflt {
+      jdEdge.imgSrcOpt
+    }
+  }
+
+  def origImgSrcOpt: Option[String] = {
+    _imgSrcOrDflt {
+      jdEdge.origImgSrcOpt
+    }
+  }
+
+  def origWh: Option[MSize2di] = {
+    fileJs
+      .flatMap(_.whPx)
+      .orElse( jdEdge.fileSrv.flatMap(_.whPx) )
   }
 
 }

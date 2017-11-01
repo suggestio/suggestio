@@ -1,16 +1,18 @@
 package util.adr
 
 import java.io.File
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 
 import controllers.routes
 import io.suggest.common.fut.FutureUtil
-import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
+import io.suggest.jd.tags.JdTag
+import io.suggest.model.n2.edge.{EdgeUid_t, MEdge}
 import io.suggest.model.n2.node.MNode
 import models.adr.MAdRenderArgs
 import models.blk.{OneAdQsArgs, szMulted}
 import models.im._
-import models.im.make.{MakeArgs, MakeResult, Makers}
+import models.im.make.{IMaker, MakeArgs, MakeResult, Makers}
 import models.mproj.ICommonDi
 import util.adr.phantomjs.{PhantomJsRrrDiFactory, PhantomJsRrrUtil}
 import util.adr.wkhtml.{WkHtmlRrrDiFactory, WkHtmlRrrUtil}
@@ -18,6 +20,8 @@ import util.blocks.BgImg
 import util.xplay.PlayUtil
 
 import scala.concurrent.Future
+import scalaz.Tree
+import japgolly.univeq._
 
 /**
  * Suggest.io
@@ -27,9 +31,10 @@ import scala.concurrent.Future
  */
 @Singleton
 class AdRenderUtil @Inject() (
-  playUtil                  : PlayUtil,
-  mCommonDi                 : ICommonDi
-) {
+                               @Named("blk") blkImgMaker : IMaker,
+                               playUtil                  : PlayUtil,
+                               mCommonDi                 : ICommonDi
+                             ) {
 
   import mCommonDi._
   import current.injector

@@ -73,3 +73,17 @@ case class MQdAttrsEmbed(
   // Для ScalaCSS-рендера: Максимальная скорость работы `==` и hashCode()
   with IHashCodeLazyVal
   with IEqualsEq
+{
+
+  def size2dOpt: Option[MSize2di] = {
+    for {
+      widthSU   <- width
+      w         <- widthSU.toOption
+      heightSU  <- height
+      h         <- heightSU.toOption
+    } yield {
+      MSize2di( width = w, height = h )
+    }
+  }
+
+}

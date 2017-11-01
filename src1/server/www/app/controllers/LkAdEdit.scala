@@ -1,6 +1,6 @@
 package controllers
 
-import javax.inject.{Inject, Named, Singleton}
+import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
@@ -16,14 +16,12 @@ import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
 import io.suggest.model.n2.media.{MFileMetaHash, MMedias, MMediasCache}
-import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
-import io.suggest.proto.HttpConst
-import io.suggest.util.logs.MacroLogsImpl
+import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
-import models.im.MImg3
-import models.im.make.IMaker
+import io.suggest.util.logs.MacroLogsImpl
+import models.im._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers}
@@ -31,7 +29,7 @@ import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
-import util.ad.LkAdEdFormUtil
+import util.ad.{AdUtil, LkAdEdFormUtil}
 import util.cdn.{CdnUtil, DistUtil}
 import util.img.DynImgUtil
 import util.mdr.SysMdrUtil
@@ -59,7 +57,7 @@ class LkAdEdit @Inject() (
                            mMedias                                : MMedias,
                            uploadCtl                              : Upload,
                            bruteForceProtect                      : BruteForceProtect,
-                           @Named("blk") blkImgMaker              : IMaker,
+                           //adUtil                               : AdUtil,
                            distUtil                               : DistUtil,
                            mMediasCache                           : MMediasCache,
                            mNodes                                 : MNodes,
@@ -302,7 +300,6 @@ class LkAdEdit @Inject() (
                               nodeIds   = request.user.personIdOpt.toSet
                             )
 
-
                             edgesAcc
                           }
                         ),
@@ -400,17 +397,17 @@ class LkAdEdit @Inject() (
       val imgPredicate = MPredicates.JdContent.Image
 
       // Собираем картинки, используемые в карточке:
-      val edgesImgs = request.mad.edges
+      val imgsEdges = request.mad.edges
         .withPredicateIter( imgPredicate, MPredicates.Bg )  // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
         .map { medge =>
           medge -> MImg3(medge)
         }
         .toSeq
-      LOGGER.trace(s"$logPrefix Found ${edgesImgs.size} img.edges: ${edgesImgs.iterator.map(_._2.fileName).mkString(", ")}")
+      LOGGER.trace(s"$logPrefix Found ${imgsEdges.size} img.edges: ${imgsEdges.iterator.map(_._2.fileName).mkString(", ")}")
 
       // Собрать связанные инстансы MMedia
       val imgOrigsMediasMapFut = mMediasCache.multiGetMap {
-        edgesImgs
+        imgsEdges
           .iterator
           .map(_._2.mediaId)
           .toSet
@@ -426,7 +423,7 @@ class LkAdEdit @Inject() (
       // Для имён файлов нужно собрать сами узлы.
       val mediaNodesMapFut = mNodesCache.multiGetMap {
         // Перечисляем все интересующие img-ноды:
-        val imgNodeIdsIter = edgesImgs
+        val imgNodeIdsIter = imgsEdges
           .iterator
           .map(_._1)
         // Присунуть сюда же video-ноды:
@@ -444,46 +441,64 @@ class LkAdEdit @Inject() (
         distUtil.medias2hosts( imgOrigsMediasMap.values )
       }
 
-      // TODO Картинки надо бы подогнать под экран и размер блока с помощью IMaker'а.
+      // TODO Картинки надо бы сжать, подогнать под экран и размер блока с помощью IMaker'а.
+      // Использовать модель hi-res дисплея для рендера картинок. Это так же поможет при масштабировании карточки.
+      /*
+      val devScreen4imgsOpt = Some(
+        DevScreen.default
+          // Выставляем pixel ratio = 3.0, чтобы было наилучшее качество.
+          .withPixelRatioOpt( Some(DevPixelRatios.DPR3) )
+      )
+      */
+      // Отрендерить в фоне картинки, связанные с карточкой.
+      //val edgeImgsRenderedFut = adUtil.renderAdDocImgs( request.mad.extras.doc.get.template, imgsEdges, devScreen4imgsOpt )
 
       // Скомпилить jd-эджи картинок.
       val imgJdEdgesFut = for {
         mediasMap           <- imgOrigsMediasMapFut
         mediaNodesMap       <- mediaNodesMapFut
         imgMedia2hostsMap   <- imgMedia2hostsMapFut
+        //edgeImgsRendered    <- edgeImgsRenderedFut
       } yield {
         // Получены медиа-файлы на руки.
         val iter = for {
           // Пройти по BgImg-эджам карточки:
-          (medge, mimg)   <- edgesImgs.iterator
+          (medge, mimg)   <- imgsEdges.iterator
           // id узла эджа -- это идентификатор картинки.
           edgeUid         <- medge.doc.uid.iterator
           nodeId          <- medge.nodeIds.iterator
           mmedia          <- mediasMap.get(mimg.mediaId).iterator
         } yield {
-          MJdEditEdge(
+          // Получить инфу по хосту, на котором хранится данная картинка.
+          lazy val hostInfoOpt = imgMedia2hostsMap
+            .get( nodeId )
+            .flatMap(_.headOption)
+          def __imgUrl(mimg9: MImgT): String = {
+            val call = dynImgUtil.imgCall(mimg9)
+            hostInfoOpt
+              .fold[String] {
+                // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
+                LOGGER.warn(s"$logPrefix Media host-name missing for $nodeId")
+                call.url
+              } { hostInfo =>
+                LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-node#$nodeId")
+                cdnUtil.distNodeCdnUrl( hostInfo, call)
+              }
+          }
+
+          val jdEdge = MJdEditEdge(
             predicate = imgPredicate,
             id        = edgeUid,
-            // TODO поле url могло бы содержать здесь откропанную картинку
+            /*url       = for {
+              makeRes <- edgeImgsRendered.get(edgeUid)
+            } yield {
+              __imgUrl( makeRes.dynCallArgs )
+            },*/
             fileSrv   = Some(MSrvFileInfo(
               nodeId    = nodeId,
               url       = Some {
-                // Генерим тут крутую ссылку на картинку для редактора
                 // TODO Вместо сырого оригинала вернуть нечто пересжатое с тем же w/h.
-                val relUrlCall = dynImgUtil.imgCall(mimg)
-
-                imgMedia2hostsMap
-                  .get( nodeId )
-                  .flatMap(_.headOption)
-                  .fold[String] {
-                    // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
-                    LOGGER.warn(s"$logPrefix Media host-name missing for $nodeId")
-                    relUrlCall.url
-                  } { hostInfo =>
-                    LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-node#$nodeId")
-                    // Надо ли тут юзать CDN?
-                    cdnUtil.distNodeCdnUrl( hostInfo, relUrlCall )
-                  }
+                __imgUrl( mimg )
               },
               // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
               sizeB     = Some( mmedia.file.sizeB ),
@@ -493,9 +508,13 @@ class LkAdEdit @Inject() (
                 MHistogram( mmedia.picture.colors )
               },
               name = mediaNodesMap.get( nodeId )
-                .flatMap(_.guessDisplayName)
+                .flatMap(_.guessDisplayName),
+              whPx = mmedia.picture.whPx
             ))
           )
+
+          LOGGER.trace(s"$logPrefix Img edge compiled: $jdEdge")
+          jdEdge
         }
         iter.toSeq
       }

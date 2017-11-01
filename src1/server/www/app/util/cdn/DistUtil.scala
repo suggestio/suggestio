@@ -83,7 +83,10 @@ class DistUtil @Inject()(
     lazy val logPrefix = s"checkForUpload[${System.currentTimeMillis()}]:"
     LOGGER.trace(s"$logPrefix Checking fid=${fidOpt.orNull}")
 
-    fidOpt.fold [Future[Option[MSwfsUploadReqInfo]]] (None) { fid =>
+    fidOpt.fold [Future[Option[MSwfsUploadReqInfo]]] {
+      LOGGER.warn(s"$logPrefix fid is empty, but storage = ${storage.storageType}")
+      None
+    } { fid =>
       for {
         volLocs <- swfsVolumeCache.getLocations( fid.volumeId )
       } yield {
@@ -92,8 +95,8 @@ class DistUtil @Inject()(
         val myExtHost = uploadUtil.MY_NODE_PUBLIC_URL
         val myVolOpt = volLocs
           .find { volLoc =>
-            (volLoc.publicUrl ==* myExtHost) &&
-              (storage.host.nameInt ==* volLoc.url)
+            volLoc.publicUrl ==* myExtHost
+            /*&& (storage.host.nameInt ==* volLoc.url) */
           }
 
         if (myVolOpt.isEmpty)

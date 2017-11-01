@@ -106,4 +106,7 @@ case class DevScreen(
     sb.toString()
   }
 
+
+  def withPixelRatioOpt(pixelRatioOpt: Option[DevPixelRatio]) = copy(pixelRatioOpt = pixelRatioOpt)
+
 }

@@ -130,13 +130,22 @@ case class MJdEditEdge(
   def withUrl(url: Option[String] = None)         = copy(url = url)
   def withFileSrv(fileSrv: Option[MSrvFileInfo])  = copy(fileSrv = fileSrv)
 
+  def fileSrvUrl = fileSrv.flatMap(_.url)
+
+
   /** Подобрать значение для imgSrc. */
   def imgSrcOpt: Option[String] = {
     // Стараемся использовать собственную ссылку в первую очередь.
     // Например, это полезно, когда есть base64-ссылка для нового файла, а сервер присылает ещё одну,
     // которую надо будет ждать... а зачем ждать, когда всё уже есть?
     url
-      .orElse { fileSrv.flatMap(_.url) }
+      .orElse { fileSrvUrl }
+  }
+
+  /** Оригинал изображения -- он или на сервере (edit) или в url data:base64. */
+  def origImgSrcOpt: Option[String] = {
+    fileSrvUrl
+      .orElse( url )
   }
 
 }

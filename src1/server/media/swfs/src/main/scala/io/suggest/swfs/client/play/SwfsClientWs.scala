@@ -72,7 +72,7 @@ class SwfsClientWs @Inject() (
    * @return ["localhost:9333", "127.5.5.5:9334"]
    */
   val MASTERS: List[String] = {
-    conf.getStringSeq(MASTERS_CK)
+    conf.getOptional[Seq[String]](MASTERS_CK)
       .filter(_.nonEmpty)
       .map { _.toList }
       .getOrElse {

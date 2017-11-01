@@ -318,15 +318,14 @@ class JdR extends Log {
             bgImgData <- s.props1.bgImg
             edgeUid   = bgImgData.imgEdge.edgeUid
             edge      <- jdArgs.renderArgs.edges.get( edgeUid )
-            if edge.jdEdge.predicate ==* MPredicates.JdBgPred
-            bgImgSrc  <- edge.imgSrcOpt
+            if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
+            bgImgSrc  <- edge.origImgSrcOpt //imgSrcOpt
           } yield {
             // Поддержка имитации кропа: рассчитываем аргументы кропа, если есть.
             val cropEmuOpt = for {
               crop    <- bgImgData.crop
               bm      <- s.props1.bm
-              fileJs  <- edge.fileJs
-              origWh  <- fileJs.whPx
+              origWh  <- edge.origWh
             } yield {
               MEmuCropCssArgs(crop, origWh, bm)
             }

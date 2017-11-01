@@ -65,7 +65,7 @@ class LaePopupsR(
           for {
             mcrop       <- root.popups.pictureCrop
             edge        <- root.doc.jdArgs.renderArgs.edges.get( mcrop.imgEdgeUid )
-            imgSrc      <- edge.imgSrcOpt
+            imgSrc      <- edge.origImgSrcOpt
           } yield {
             pictureCropPopupR.PropsVal(
               imgSrc = imgSrc,

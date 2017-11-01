@@ -682,7 +682,7 @@ class PictureAh[M](
       val iEdgeUid = cropPopup0.imgEdgeUid
       val iEdge = v0.edges( iEdgeUid )
 
-      val origWh = iEdge.fileJs.flatMap(_.whPx).get
+      val origWh = iEdge.origWh.get
 
       // Вычисляем MCrop в пикселях.
       val pixelCrop = _cropPopupS2mcrop(cropPopup0, origWh)
@@ -773,9 +773,10 @@ class PictureAh[M](
     val selJdt2 = for {
       cropPopup <- v0.cropPopup
       e       <- v0.edges.get( cropPopup.imgEdgeUid )
-      fileJs  <- e.fileJs
-      origWh  <- fileJs.whPx
-      mcrop2  = _cropPopupS2mcrop(cropPopup, origWh)
+      origWh  <- e.origWh
+      mcrop2  = {
+        _cropPopupS2mcrop(cropPopup, origWh)
+      }
       selJdt0 <- v0.selectedTag
       bgImg   <- selJdt0.props1.bgImg
       // Не обновлять ничего, если ничего не изменилось.
