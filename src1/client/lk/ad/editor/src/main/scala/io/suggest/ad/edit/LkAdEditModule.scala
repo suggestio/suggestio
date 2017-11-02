@@ -6,7 +6,7 @@ import io.suggest.ad.edit.c.{ColorPickAh, DocEditAh}
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.{MAeRoot, MDocS}
 import io.suggest.ad.edit.v.edit._
-import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, StripEditR}
+import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR, StripEditR}
 import io.suggest.ad.edit.v.pop.{LaePopupsR, PictureCropPopupR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
@@ -59,6 +59,8 @@ class LkAdEditModule {
   lazy val scaleR = wire[ScaleR]
 
   lazy val saveR = wire[SaveR]
+
+  lazy val showWideR = wire[ShowWideR]
 
 
   lazy val pictureCropPopupR = wire[PictureCropPopupR]

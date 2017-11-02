@@ -287,34 +287,6 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // images + crop.
 
-  // Делаем имитацию кропа прямо на экране, без участия сервера, с помощью css
-  // https://stackoverflow.com/a/493329
-
-  // Закомменчено пока: стили для контейнера не требуются, поэтому пропускаем из мимо ушей.
-  /*
-  val imgCropContainerF = {
-    // Сборка области допустимых значений кропов.
-    val imgCropsDomain = {
-      val crops = _allJdTagsIter
-        .flatMap { s =>
-          s.props1
-            .bgImg
-            .flatMap(_.crop)
-        }
-        .toIndexedSeq
-      new Domain.OverSeq( crops )
-    }
-    // Функция стиля.
-    styleF( imgCropsDomain ) { mcrop =>
-      styleS(
-        width( mcrop.width.px ),
-        height( mcrop.height.px ),
-        overflow.hidden
-      )
-    }
-  }
-  */
-
   /** Стили для эмуляции кропа на фоновом изображении блока. */
   val blkBgImgCropEmuF = {
     val emuCrops = {

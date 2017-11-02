@@ -769,6 +769,32 @@ class DocEditAh[M](
       }
 
 
+    // Замена состояния галочки широкого рендера текущего стрипа новым значением
+    case m: StripStretchAcross =>
+      val v0 = value
+      val tpl2 = v0.jdArgs
+        .selectedTagLoc
+        .get
+        .modifyLabel { strip0 =>
+          assert(strip0.name ==* MJdTagNames.STRIP)
+          val bm0 = strip0.props1.bm.get
+          strip0.withProps1(
+            strip0.props1.withBm(
+              Some( bm0.withWide( m.isWide ) )
+            )
+          )
+        }
+        .toTree
+      val v2 = v0.withJdArgs(
+        v0.jdArgs
+          .withTemplate( tpl2 )
+          .withJdCss(
+            jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges) )
+          )
+      )
+      updated( v2 )
+
+
     // Реакция на клик по кнопке создания нового элемента.
     case AddBtnClick =>
       val v0 = value

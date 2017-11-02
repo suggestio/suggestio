@@ -162,17 +162,7 @@ class QdRrrHtml(
       // Аккамулируем аттрибуты для рендера img-тега.
       var imgArgsAcc = List.empty[TagMod]
 
-      // Отработать ширину/длину файла изображения.
-      /*
-      for (wh <- e.whOpt) {
-        imgArgsAcc =
-          (^.width := wh.width.px) ::
-          (^.height := wh.height.px) ::
-          imgArgsAcc
-      }
-      */
-
-      // wh экранного представления картинки задаётся в CSS согласно рекомендациям ведущих собаководов:
+      // width/height экранного представления картинки задаётся в CSS:
       val embedStyleOpt = for (embedAttrs <- qdOp.attrsEmbed) yield {
         val embStyl = jdArgs.jdCss.embedAttrStyleF( embedAttrs )
         imgArgsAcc ::= embStyl

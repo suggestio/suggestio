@@ -28,6 +28,7 @@ import io.suggest.ueq.UnivEqUtil._
 class StripEditR(
                   val plusMinusControlsR    : PlusMinusControlsR,
                   colorPickR                : ColorPickR,
+                  val showWideR             : ShowWideR,
                   css                       : LkAdEditCss,
                   deleteStripBtnR           : DeleteStripBtnR
                 ) {
@@ -35,6 +36,7 @@ class StripEditR(
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
   import MStripEdS.MStripEdSFastEq
   import MColorPick.MColorPickFastEq
+  import showWideR.ShowWideRPropsValFastEq
 
   case class PropsVal(
                        strip        : JdTag,
@@ -57,7 +59,8 @@ class StripEditR(
                               heightPropsOptC   : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               widthPropsOptC    : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               stripEdSOptC      : ReactConnectProxy[Option[MStripEdS]],
-                              bgColorPropsOptC  : ReactConnectProxy[Option[MColorPick]]
+                              bgColorPropsOptC  : ReactConnectProxy[Option[MColorPick]],
+                              showWidePropsOptC : ReactConnectProxy[Option[showWideR.PropsVal]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -81,13 +84,16 @@ class StripEditR(
             )
           },
 
+          s.showWidePropsOptC { showWideR.apply },
+
+          <.br,
           chs,
 
           <.br,
           <.br,
 
           // Кнопка удаления текущего блока.
-          s.stripEdSOptC { deleteStripBtnR.apply }
+          s.stripEdSOptC { deleteStripBtnR.apply },
 
         )
       }
@@ -137,6 +143,14 @@ class StripEditR(
               colorOpt    = props.strip.props1.bgColor,
               colorsState = props.colorsState,
               pickS       = props.edS.bgColorPick
+            )
+          }
+        },
+
+        showWidePropsOptC = propsOptProxy.connect { propsOpt =>
+          for (props <- propsOpt; bm <- props.strip.props1.bm) yield {
+            showWideR.PropsVal(
+              checked = bm.wide
             )
           }
         }

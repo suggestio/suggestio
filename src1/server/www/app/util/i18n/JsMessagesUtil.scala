@@ -259,6 +259,7 @@ class JsMessagesUtil @Inject() (
       MC.`Uploading.file` ::
       MC.`Saving` ::
       MC.`Saved` ::
+      MC.`Stretch.across` ::
       Nil
   }
 

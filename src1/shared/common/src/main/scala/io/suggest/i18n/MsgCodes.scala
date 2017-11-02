@@ -212,4 +212,6 @@ object MsgCodes {
   val `Preparing`                   = "Preparing"
   val `Uploading.file`              = "Uploading.file"
 
+  val `Stretch.across`              = "Stretch.across"
+
 }

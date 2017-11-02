@@ -2,7 +2,7 @@ package io.suggest.ad.edit.m
 
 import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
-import io.suggest.color.{MColorData, MHistogram}
+import io.suggest.color.MColorData
 import io.suggest.common.MHand
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
@@ -147,4 +147,8 @@ case object SaveAd extends ILkEditAction
 
 /** Результат запроса сохранения карточки на сервер. */
 case class SaveAdResp(timestamp: Long, tryResp: Try[MAdEditFormInit]) extends ILkEditAction
+
+
+/** Выставление галочки широкоформатного рендера блока. */
+case class StripStretchAcross(isWide: Boolean) extends ILkEditAction
 

@@ -332,8 +332,7 @@ class LkAdEdFormUtil
           root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
-              h = h1,
-              wide = true
+              h = h1
             ),
             bgColor = Some(MColorData(
               code = "060d45"
@@ -353,8 +352,7 @@ class LkAdEdFormUtil
           root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
-              h = BlockHeights.H140,
-              wide = true
+              h = BlockHeights.H140
             ),
             bgColor = Some(MColorData(
               code = "bcf014"
@@ -371,8 +369,7 @@ class LkAdEdFormUtil
           root = JdTag.strip(
             bm = BlockMeta(
               w = w1,
-              h = BlockHeights.H460,
-              wide = true
+              h = BlockHeights.H460
             ),
             bgColor = Some(MColorData(
               code = "111111"
