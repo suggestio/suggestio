@@ -2,8 +2,10 @@ package io.suggest.lk.nodes.form.r.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.css.Css
-import io.suggest.lk.nodes.form.m.{MCreateNodeS, MDeleteNodeS, MEditTfDailyS, MLknPopups}
+import io.suggest.lk.m.MDeleteConfirmPopupS
+import io.suggest.lk.nodes.form.m.{MCreateNodeS, MEditTfDailyS, MLknPopups}
 import io.suggest.lk.pop.PopupsContR
+import io.suggest.lk.r.DeleteConfirmPopupR
 import io.suggest.spa.OptFastEq.Wrapped
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -18,7 +20,7 @@ import japgolly.scalajs.react.vdom.Implicits._
 object LknPopupsR {
 
   import MCreateNodeS.MCreateNodeSFastEq
-  import MDeleteNodeS.MDeleteNodeSFastEq
+  import MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
   import MEditTfDailyS.MTfDailyEditSFastEq
   import PopupsContR.PopContPropsValFastEq
 
@@ -29,7 +31,7 @@ object LknPopupsR {
   case class State(
                     popContPropsConn    : ReactConnectProxy[PopupsContR.PropsVal],
                     createNodeOptConn   : ReactConnectProxy[Option[MCreateNodeS]],
-                    deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteNodeS]],
+                    deleteNodeOptConn   : ReactConnectProxy[Option[MDeleteConfirmPopupS]],
                     editTfDailyOptConn  : ReactConnectProxy[Option[MEditTfDailyS]]
                   )
 
@@ -45,7 +47,7 @@ object LknPopupsR {
           state.createNodeOptConn { CreateNodeR.apply },
 
           // Рендер попапа удаления существующего узла:
-          state.deleteNodeOptConn { DeleteNodeR.apply },
+          state.deleteNodeOptConn { DeleteConfirmPopupR.apply },
 
           // Рендер попапа редактирования тарифа текущего узла.
           state.editTfDailyOptConn { EditTfDailyR.apply }

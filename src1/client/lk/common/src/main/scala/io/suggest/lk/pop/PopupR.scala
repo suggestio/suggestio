@@ -6,8 +6,11 @@ import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
 import io.suggest.react.ReactCommonUtil
 import io.suggest.sjs.common.i18n.Messages
+import io.suggest.ueq.UnivEqUtil._
+import io.suggest.ueq.ReactUnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -30,10 +33,10 @@ object PopupR {
   implicit object PopupPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.closeable eq b.closeable) &&
-        (a.hSize eq b.hSize) &&
-        (a.css eq b.css) &&
-        (a.topPc == b.topPc) &&
-        (a.tagMod eq b.tagMod)
+        (a.hSize ===* b.hSize) &&
+        (a.css ===* b.css) &&
+        (a.topPc ==* b.topPc) &&
+        (a.tagMod ===* b.tagMod)
     }
   }
 

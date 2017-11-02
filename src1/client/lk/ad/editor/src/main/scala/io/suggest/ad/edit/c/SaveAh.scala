@@ -2,8 +2,9 @@ package io.suggest.ad.edit.c
 
 import diode._
 import diode.data.PendingBase
-import io.suggest.ad.edit.m.{MAdEditFormConf, MAeRoot, SaveAd, SaveAdResp}
+import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.srv.ILkAdEditApi
+import io.suggest.lk.m.MDeleteConfirmPopupS
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

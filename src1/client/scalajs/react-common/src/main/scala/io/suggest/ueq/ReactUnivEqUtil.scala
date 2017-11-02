@@ -1,5 +1,6 @@
 package io.suggest.ueq
 
+import japgolly.scalajs.react.Callback
 import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq.UnivEq
 
@@ -12,5 +13,7 @@ import japgolly.univeq.UnivEq
 object ReactUnivEqUtil {
 
   implicit def tagModUnivEq: UnivEq[TagMod] = UnivEq.force
+
+  implicit def callbackUnivEq: UnivEq[Callback] = UnivEq.force
 
 }

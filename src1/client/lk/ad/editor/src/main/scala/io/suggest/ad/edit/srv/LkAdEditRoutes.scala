@@ -41,6 +41,8 @@ sealed trait LkAdEditRoutes extends js.Object {
 
   def saveAdSubmit(adId: String = null, producerId: String = null): Route = js.native
 
+  def deleteSubmit(adId: String): Route = js.native
+
 }
 
 

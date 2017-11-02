@@ -119,8 +119,13 @@ class LkAdEditCircuit(
 
   private val layoutRW = zoomRW(_.layout) { _.withLayout(_) }
 
-  //private val delayerRW = zoomRW( _.delayer ) { _.withDelayer(_) }
+  private val popupsRW = zoomRW(_.popups) { _.withPopups(_) }
 
+  private val deleteConfirmPopupRW = popupsRW.zoomRW(_.deleteConfirm) { _.withDeleteConfirm(_) }
+
+
+
+  // ---- Контроллеры
 
   private val layoutAh = new LayoutAh( layoutRW, mDocSRw )
 
@@ -301,10 +306,18 @@ class LkAdEditCircuit(
   )
 
   /** Контроллер сохранения. */
-  private lazy val saveAh = new SaveAh(
+  private val saveAh = new SaveAh(
     lkAdEditApi = adEditApi,
     confRO      = confRO,
     modelRW     = rootRW
+  )
+
+
+  /** Контроллер удаления. */
+  private val deleteAh = new DeleteAh(
+    lkAdEditApi = adEditApi,
+    confRO      = confRO,
+    modelRW     = deleteConfirmPopupRW
   )
 
 
@@ -314,6 +327,7 @@ class LkAdEditCircuit(
     var acc = List[HandlerFunction](
       wsPoolAh,
       saveAh,
+      deleteAh,
       tailAh
     )
 

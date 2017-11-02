@@ -6,6 +6,7 @@ import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -23,9 +24,9 @@ object ImgGalR {
 
   implicit object ImgGalPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
-      (a.imgUrls eq b.imgUrls) &&
-        (a.imgClass eq b.imgClass) &&
-        (a.outerClass eq b.outerClass)
+      (a.imgUrls ===* b.imgUrls) &&
+        (a.imgClass ===* b.imgClass) &&
+        (a.outerClass ===* b.outerClass)
     }
   }
 

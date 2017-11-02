@@ -2,7 +2,7 @@ package io.suggest.ad.edit.m.pop
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
-import io.suggest.lk.m.MErrorPopupS
+import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 
@@ -20,7 +20,8 @@ object MAePopupsS {
   implicit object MAePopupsSFastEq extends FastEq[MAePopupsS] {
     override def eqv(a: MAePopupsS, b: MAePopupsS): Boolean = {
       (a.error ===* b.error) &&
-        (a.pictureCrop ===* b.pictureCrop)
+        (a.pictureCrop ===* b.pictureCrop) &&
+        (a.deleteConfirm ===* b.deleteConfirm)
     }
   }
 
@@ -37,12 +38,14 @@ object MAePopupsS {
   */
 case class MAePopupsS(
                        error          : Option[MErrorPopupS]          = None,
-                       pictureCrop    : Option[MPictureCropPopup]     = None
+                       pictureCrop    : Option[MPictureCropPopup]     = None,
+                       deleteConfirm  : Option[MDeleteConfirmPopupS]  = None
                      )
   extends EmptyProduct
 {
 
   def withErrors(errors: Option[MErrorPopupS]) = copy(error = error)
   def withPictureCrop(pictureCrop: Option[MPictureCropPopup]) = copy(pictureCrop = pictureCrop)
+  def withDeleteConfirm(deleteConfirm: Option[MDeleteConfirmPopupS]) = copy(deleteConfirm = deleteConfirm)
 
 }

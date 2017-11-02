@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.a.pop
 
 import diode._
 import io.suggest.adv.rcvr.RcvrKey
+import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
 import io.suggest.lk.nodes.form.a.ILkNodesApi
 import io.suggest.lk.nodes.form.m._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -16,7 +17,7 @@ import scala.util.Success
   */
 class DeleteNodeAh[M](
                        api        : ILkNodesApi,
-                       modelRW    : ModelRW[M, Option[MDeleteNodeS]],
+                       modelRW    : ModelRW[M, Option[MDeleteConfirmPopupS]],
                        currNodeRO : ModelRO[Option[RcvrKey]]
                   )
   extends ActionHandler(modelRW)
@@ -26,11 +27,11 @@ class DeleteNodeAh[M](
 
     // Сигнал нажатия на кнопку "удалить" возле какого-то узла. Выставить флаг отображения формы удаления узла.
     case NodeDeleteClick =>
-      updated( Some(MDeleteNodeS()) )
+      updated( Some(MDeleteConfirmPopupS()) )
 
 
     // Сигнал подтверждения удаления узла.
-    case NodeDeleteOkClick =>
+    case DeleteConfirmPopupOk =>
       val v0 = value.get
       val v2 = v0.withRequest(
         v0.request.pending()
@@ -55,7 +56,7 @@ class DeleteNodeAh[M](
 
 
     // Сигнал отмены удаления узла. Скрыть диалог удаления.
-    case NodeDeleteCancelClick =>
+    case DeleteConfirmPopupCancel =>
       updated( None )
 
   }

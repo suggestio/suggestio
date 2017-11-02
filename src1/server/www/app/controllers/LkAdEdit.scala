@@ -598,6 +598,31 @@ class LkAdEdit @Inject() (
   }
 
 
+  /**
+    * POST для удаления рекламной карточки.
+    *
+    * @param adId id рекламы.
+    * @return Редирект в магазин или ТЦ.
+    */
+  def deleteSubmit(adId: String) = csrf.Check {
+    canEditAd(adId).async { implicit request =>
+      lazy val logPrefix = s"deleteSubmit($adId):"
+      LOGGER.trace(s"$logPrefix Starting by user#${request.user.personIdOpt.orNull}...")
+      for {
+        isDeleted <- mNodes.deleteById(adId)
+      } yield {
+        LOGGER.info(s"$logPrefix Done, isDeleted = $isDeleted")
+
+        // Удаление выполнено. Т.к. у нас pure-js-форма, то надо редирект на клиенте сделать.
+        val call = routes.MarketLkAdn.showNodeAds(
+          adnId   = request.producer.id.get
+        )
+        Ok( call.url )
+      }
+    }
+  }
+
+
   /** Собрать инстанс ctxData. */
   private def _ctxDataFut(implicit request: IReq[_]): Future[CtxData] = {
     for (ctxData0 <- request.user.lkCtxDataFut) yield {

@@ -2,6 +2,7 @@ package io.suggest.lk.nodes.form.m
 
 import diode.FastEq
 import io.suggest.common.empty.EmptyProduct
+import io.suggest.lk.m.MDeleteConfirmPopupS
 
 /**
   * Suggest.io
@@ -31,15 +32,15 @@ object MLknPopups {
   * @param deleteNodeS Состояние попапа удаления узла, если есть.
   */
 case class MLknPopups(
-                       createNodeS   : Option[MCreateNodeS]    = None,
-                       deleteNodeS   : Option[MDeleteNodeS]    = None,
-                       editTfDailyS  : Option[MEditTfDailyS]   = None
+                       createNodeS   : Option[MCreateNodeS]             = None,
+                       deleteNodeS   : Option[MDeleteConfirmPopupS]     = None,
+                       editTfDailyS  : Option[MEditTfDailyS]            = None
                      )
   extends EmptyProduct
 {
 
   def withCreateNodeState(cns2: Option[MCreateNodeS]) = copy(createNodeS = cns2)
-  def withDeleteNodeState(dns2: Option[MDeleteNodeS]) = copy(deleteNodeS = dns2)
+  def withDeleteNodeState(dns2: Option[MDeleteConfirmPopupS]) = copy(deleteNodeS = dns2)
   def withEditTfDailyState(tds: Option[MEditTfDailyS]) = copy(editTfDailyS = tds)
 
 }

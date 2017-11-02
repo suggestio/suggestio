@@ -36,6 +36,13 @@ trait ILkAdEditApi {
     */
   def saveAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit]
 
+  /** Удалить карточку.
+    *
+    * @param adId id удалённой карточки.
+    * @return Фьючерс с URL для редиректа пользователя.
+    */
+  def deleteSubmit(adId: String): Future[String]
+
 }
 
 
@@ -49,6 +56,8 @@ class LkAdEditApiHttp(
 
   import JsRoutes_Controllers_LkAdEdit._
 
+  private def XHR_REQ_TIMEOUT_MS_OPT = Some(1500)
+
   private def _adProdArgs(): (String, String) = {
     val conf = confRO.value
     val adIdOpt = conf.adId.orNull
@@ -57,8 +66,7 @@ class LkAdEditApiHttp(
   }
 
   override def prepareUpload(file4UpProps: MFile4UpProps): Future[MUploadResp] = {
-    val conf = confRO.value
-    val (adIdNull, producerIdNull) = _adProdArgs
+    val (adIdNull, producerIdNull) = _adProdArgs()
     val route = routes.controllers.LkAdEdit.prepareImgUpload(
       adId   = adIdNull,
       nodeId = producerIdNull
@@ -68,8 +76,7 @@ class LkAdEditApiHttp(
 
 
   override def saveAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit] = {
-    val conf = confRO.value
-    val (adIdNull, producerIdNull) = _adProdArgs
+    val (adIdNull, producerIdNull) = _adProdArgs()
     val route = routes.controllers.LkAdEdit.saveAdSubmit(
       adId       = adIdNull,
       producerId = producerIdNull
@@ -80,7 +87,7 @@ class LkAdEditApiHttp(
       Xhr.successIf200 {
         Xhr.send(
           route = route,
-          timeoutMsOpt = Some(13000),
+          timeoutMsOpt = XHR_REQ_TIMEOUT_MS_OPT,
           headers = Seq(
             HttpConst.Headers.CONTENT_TYPE -> jsonMime,
             HttpConst.Headers.ACCEPT -> jsonMime
@@ -93,6 +100,17 @@ class LkAdEditApiHttp(
       Json
         .parse( xhr.responseText )
         .as[MAdEditFormInit]
+    }
+  }
+
+
+  override def deleteSubmit(adId: String): Future[String] = {
+    val adId = confRO.value.adId.get
+    val route = routes.controllers.LkAdEdit.deleteSubmit( adId )
+    for {
+      xhr <- Xhr.send(route, timeoutMsOpt = XHR_REQ_TIMEOUT_MS_OPT)
+    } yield {
+      xhr.responseText
     }
   }
 

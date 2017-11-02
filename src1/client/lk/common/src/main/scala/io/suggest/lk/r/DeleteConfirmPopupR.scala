@@ -1,19 +1,18 @@
-package io.suggest.lk.nodes.form.r.pop
+package io.suggest.lk.r
 
 import diode.react.ModelProxy
 import diode.react.ReactPot.potWithReact
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.i18n.MsgCodes
-import io.suggest.lk.nodes.form.m.{MDeleteNodeS, NodeDeleteCancelClick, NodeDeleteOkClick}
+import io.suggest.lk.m.{DeleteConfirmPopupCancel, DeleteConfirmPopupOk, MDeleteConfirmPopupS}
 import io.suggest.lk.pop.PopupR
-import io.suggest.lk.r.LkPreLoaderR
+import io.suggest.lk.pop.PopupR.PopupPropsValFastEq
+import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
-import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
-import io.suggest.react.ReactCommonUtil.Implicits._
-import PopupR.PopupPropsValFastEq
 
 /**
   * Suggest.io
@@ -21,21 +20,22 @@ import PopupR.PopupPropsValFastEq
   * Created: 20.03.17 18:01
   * Description: Компонент формы удаления узла, рендерится в попапе.
   */
-object DeleteNodeR {
+object DeleteConfirmPopupR {
 
-  type Props = ModelProxy[Option[MDeleteNodeS]]
+  type Props = ModelProxy[Option[MDeleteConfirmPopupS]]
+
 
 
   class Backend($: BackendScope[Props, Unit]) {
 
     /** Callback клика по кнопке ПОДТВЕРЖДЕНИЯ удаления узла. */
     private def onOkClick: Callback = {
-      dispatchOnProxyScopeCB($, NodeDeleteOkClick )
+      dispatchOnProxyScopeCB($, DeleteConfirmPopupOk)
     }
 
     /** Callback нажатия кнопки ОТМЕНЫ удаления узла. */
     private def onCancelClick: Callback = {
-      dispatchOnProxyScopeCB($, NodeDeleteCancelClick )
+      dispatchOnProxyScopeCB($, DeleteConfirmPopupCancel)
     }
 
 
@@ -48,9 +48,7 @@ object DeleteNodeR {
           )
         } { popPropsProxy =>
           PopupR(popPropsProxy) {
-
             val delPot = props.request
-
             // Происходит удаление узла или подготовка к этому.
             <.div(
               // Рендерить форму, когда Pot пуст.
@@ -121,7 +119,7 @@ object DeleteNodeR {
   }
 
 
-  val component = ScalaComponent.builder[Props]("DeleteNode")
+  val component = ScalaComponent.builder[Props]("DelConfPop")
     .stateless
     .renderBackend[Backend]
     .build

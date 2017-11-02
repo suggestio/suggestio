@@ -101,20 +101,12 @@ case object NodeMenuBtnClick
   extends LkNodesAction
 
 
-/** Клик по кнопке подтверждения удаления узла. */
-case object NodeDeleteOkClick
-  extends LkNodesAction
-
 /** Результат запроса к серверу по поводу удаления узла. */
 case class NodeDeleteResp(
                            override val rcvrKey: RcvrKey,
                            resp: Try[Boolean]
                          )
   extends LkNodesTreeAction
-
-/** Клик по кнопке отмены удаления узла. */
-case object NodeDeleteCancelClick
-  extends LkNodesAction
 
 
 // Редактирование узла (переименование).

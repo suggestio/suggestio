@@ -144,7 +144,6 @@ case class JdVldResult( vldRes: StringValidationNel[Tree[JdTag]] ) extends ILkEd
 
 /** Экшен сохранения документа. */
 case object SaveAd extends ILkEditAction
-
 /** Результат запроса сохранения карточки на сервер. */
 case class SaveAdResp(timestamp: Long, tryResp: Try[MAdEditFormInit]) extends ILkEditAction
 
@@ -157,3 +156,9 @@ case class StripStretchAcross(isWide: Boolean) extends ILkEditAction
 case class MainStripChange(isMain: Boolean) extends ILkEditAction
 /** Сигнал к сокрытию/отображению главных стрипов. */
 case class ShowMainStrips(showing: Boolean) extends ILkEditAction
+
+
+/** Клик по кнопке удаления рекламной карточки. Приводит к рендеру попапа подтверждения. */
+case object DeleteAdClick extends ILkEditAction
+/** Ответ сервера на запрос удаления рекламной карточки. */
+case class DeleteAdResp( tryResp: Try[String] ) extends ILkEditAction

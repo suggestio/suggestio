@@ -25,3 +25,10 @@ case object ErrorPopupCloseClick extends ILkCommonUselessPopupCloseAction
 
 /** Экшен закрытия вообще всех попапов. */
 case object CloseAllPopups extends ILkCommonPopupCloseAction
+
+
+/** Клик по кнопке ОК в попапе подтверждения удаления чего-то. */
+case object DeleteConfirmPopupOk extends ILkCommonAction
+
+/** Клик по кнопке отмены в попапе подтверждения удаления чего-либо. */
+case object DeleteConfirmPopupCancel extends ILkCommonPopupCloseAction

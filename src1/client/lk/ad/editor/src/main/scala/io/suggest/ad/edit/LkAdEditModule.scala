@@ -64,6 +64,8 @@ class LkAdEditModule {
 
   lazy val useAsMainR = wire[UseAsMainR]
 
+  lazy val deleteBtnR = wire[DeleteBtnR]
+
 
   lazy val pictureCropPopupR = wire[PictureCropPopupR]
 

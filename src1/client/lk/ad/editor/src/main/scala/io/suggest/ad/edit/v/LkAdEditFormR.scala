@@ -38,7 +38,8 @@ class LkAdEditFormR(
                      val scaleR         : ScaleR,
                      val pictureR       : PictureR,
                      val saveR          : SaveR,
-                     val useAsMainR     : UseAsMainR
+                     val useAsMainR     : UseAsMainR,
+                     val deleteBtnR     : DeleteBtnR
                    ) {
 
   import MAddS.MAddSFastEq
@@ -49,6 +50,7 @@ class LkAdEditFormR(
   import pictureR.PictureRPropsValFastEq
   import saveR.SaveRPropsValFastEq
   import useAsMainR.UseAdMainPropsValFastEq
+  import deleteBtnR.DeleteBtnRPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -63,7 +65,8 @@ class LkAdEditFormR(
                               scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]],
                               rightYOptC        : ReactConnectProxy[Option[Int]],
                               savePropsC        : ReactConnectProxy[saveR.PropsVal],
-                              useAsMainStripPropsOptC : ReactConnectProxy[Option[useAsMainR.PropsVal]]
+                              useAsMainStripPropsOptC : ReactConnectProxy[Option[useAsMainR.PropsVal]],
+                              deletePropsOptC   : ReactConnectProxy[Option[deleteBtnR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -148,7 +151,10 @@ class LkAdEditFormR(
 
               <.br,
               // Кнопка сохранения карточки.
-              s.savePropsC { saveR.apply }
+              s.savePropsC { saveR.apply },
+
+              // Кнопка удаления карточки.
+              s.deletePropsOptC { deleteBtnR.apply }
 
             )
           }
@@ -262,7 +268,17 @@ class LkAdEditFormR(
                 .count( _.rootLabel.props1.isMain.getOrElseFalse )
             )
           }
-        }
+        }( OptFastEq.Wrapped ),
+
+        deletePropsOptC = p.connect { mroot =>
+          for {
+            _ <- mroot.conf.adId
+          } yield {
+            deleteBtnR.PropsVal(
+              deleteConfirm = mroot.popups.deleteConfirm
+            )
+          }
+        }( OptFastEq.Wrapped )
 
       )
     }

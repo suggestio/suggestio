@@ -2,9 +2,9 @@ package io.suggest.ad.edit.v.pop
 
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.MAeRoot
-import io.suggest.lk.m.MErrorPopupS
+import io.suggest.lk.m.{MDeleteConfirmPopupS, MErrorPopupS}
 import io.suggest.lk.pop.PopupsContR
-import io.suggest.lk.r.ErrorPopupR
+import io.suggest.lk.r.{DeleteConfirmPopupR, ErrorPopupR}
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -23,13 +23,15 @@ class LaePopupsR(
   import pictureCropPopupR.PictureCropPopupPropsFastEq
   import MErrorPopupS.MErrorPopupSFastEq
   import PopupsContR.PopContPropsValFastEq
+  import MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
 
   type Props = ModelProxy[MAeRoot]
 
   protected case class State(
                               popupsContPropsC    : ReactConnectProxy[PopupsContR.PropsVal],
                               errorMsgsC          : ReactConnectProxy[Option[MErrorPopupS]],
-                              cropPopPropsOptC    : ReactConnectProxy[Option[pictureCropPopupR.PropsVal]]
+                              cropPopPropsOptC    : ReactConnectProxy[Option[pictureCropPopupR.PropsVal]],
+                              deleteConfirmOptC   : ReactConnectProxy[Option[MDeleteConfirmPopupS]]
                             )
 
   class Backend($: BackendScope[Props, State]) {
@@ -41,7 +43,10 @@ class LaePopupsR(
           s.errorMsgsC { ErrorPopupR.apply },
 
           // Попап кропа картинки:
-          s.cropPopPropsOptC { pictureCropPopupR.apply }
+          s.cropPopPropsOptC { pictureCropPopupR.apply },
+
+          // Попап подтверждения удаления рекламной карточки.
+          s.deleteConfirmOptC { DeleteConfirmPopupR.apply }
 
         )
       }
@@ -72,6 +77,10 @@ class LaePopupsR(
               percentCrop = mcrop.percentCrop
             )
           }
+        },
+
+        deleteConfirmOptC = rootProxy.connect { mroot =>
+          mroot.popups.deleteConfirm
         }
 
       )

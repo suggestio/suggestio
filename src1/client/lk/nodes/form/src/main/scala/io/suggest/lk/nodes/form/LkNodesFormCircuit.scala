@@ -15,10 +15,10 @@ import io.suggest.pick.Base64JsUtil.SjsBase64JsDecoder
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.spa.OptFastEq.Wrapped
 import io.suggest.lk.nodes.form.m.MCreateNodeS.MCreateNodeSFastEq
-import io.suggest.lk.nodes.form.m.MDeleteNodeS.MDeleteNodeSFastEq
 import io.suggest.lk.nodes.form.m.MEditTfDailyS.MTfDailyEditSFastEq
 import io.suggest.lk.nodes.form.m.MTree.MTreeFastEq
 import io.suggest.lk.nodes.form.m.MLknPopups.MLknPopupsFastEq
+import io.suggest.lk.m.MDeleteConfirmPopupS.MDeleteConfirmPopupSFastEq
 import io.suggest.spa.StateInp
 
 import scala.concurrent.Future
