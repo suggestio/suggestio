@@ -27,8 +27,8 @@ object MJdConf {
   *               Его можно переопределить на уровне каждого конкретного блока.
   */
 case class MJdConf(
-                    isEdit    : Boolean,
-                    szMult    : MSzMult
+                    isEdit              : Boolean,
+                    szMult              : MSzMult
                   ) {
 
   def withIsEdit(isEdit: Boolean)           = copy(isEdit = isEdit)

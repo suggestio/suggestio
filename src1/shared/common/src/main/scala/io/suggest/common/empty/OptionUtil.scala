@@ -25,6 +25,10 @@ object OptionUtil {
       None
   }
 
+  /** Вернуть Some(true) или None. */
+  def maybeTrue(isSome: Boolean) = maybe(isSome)(isSome)
+
+
   @inline
   def maybeOpt[T](isSome: Boolean)(optF: => Option[T]): Option[T] = {
     if (isSome)

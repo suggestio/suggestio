@@ -41,6 +41,7 @@ class JdDocValidation(
   private def OP      = "op"
   private def OPS     = OP + S
   private def QD_OP   = QD + `.` + OP
+  private def MAIN    = "main"
 
   import ErrorConstants.Words._
 
@@ -118,10 +119,12 @@ class JdDocValidation(
       ScalazUtil.liftNelOpt(props1.bgColor)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelOpt(props1.bgImg)( MImgEdgeWithOps.validate(_, edges, props1.bm) ) |@|
       ScalazUtil.liftNelSome(props1.bm, errMsgF(BM))( BlockMeta.validate ) |@|
-      ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED))
+      ScalazUtil.liftNelNone(props1.topLeft, errMsgF( XY + `.` + UNEXPECTED)) |@|
+      ScalazUtil.liftNelOpt( props1.isMain ) {
+        Validation.liftNel(_)(identity, errMsgF(`MAIN` + `.` + INVALID))
+      }
     )( MJdtProps1.apply )
   }
-
 
   /** Провалидировать содержимое одного стрипа.
     * В содержимом могут быть qd-теги.
@@ -196,7 +199,8 @@ class JdDocValidation(
       ScalazUtil.liftNelOpt (qdProps1.bgColor)( MColorData.validateHexCodeOnly ) |@|
       ScalazUtil.liftNelNone(qdProps1.bgImg, errMsgF("bgImg") ) |@|
       ScalazUtil.liftNelNone(qdProps1.bm, errMsgF(BM)) |@|
-      ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))( validateQdTagXY(_, contSz) )
+      ScalazUtil.liftNelSome(qdProps1.topLeft, errMsgF(XY + `.` + MISSING))( validateQdTagXY(_, contSz) ) |@|
+      ScalazUtil.liftNelNone(qdProps1.isMain, errMsgF(MAIN + `.` + UNEXPECTED))
     )( MJdtProps1.apply )
   }
 

@@ -17,7 +17,7 @@ import io.suggest.url.MHostUrl
 import org.scalajs.dom.{Blob, File}
 
 import scala.util.Try
-import scalaz.{Tree, ValidationNel}
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -152,3 +152,8 @@ case class SaveAdResp(timestamp: Long, tryResp: Try[MAdEditFormInit]) extends IL
 /** Выставление галочки широкоформатного рендера блока. */
 case class StripStretchAcross(isWide: Boolean) extends ILkEditAction
 
+
+/** Сигнал изменения флага текущего стрипа. */
+case class MainStripChange(isMain: Boolean) extends ILkEditAction
+/** Сигнал к сокрытию/отображению главных стрипов. */
+case class ShowMainStrips(showing: Boolean) extends ILkEditAction

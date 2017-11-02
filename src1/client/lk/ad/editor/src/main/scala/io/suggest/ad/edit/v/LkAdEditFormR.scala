@@ -37,7 +37,8 @@ class LkAdEditFormR(
                      val qdEditR        : QdEditR,
                      val scaleR         : ScaleR,
                      val pictureR       : PictureR,
-                     val saveR          : SaveR
+                     val saveR          : SaveR,
+                     val useAsMainR     : UseAsMainR
                    ) {
 
   import MAddS.MAddSFastEq
@@ -47,6 +48,7 @@ class LkAdEditFormR(
   import scaleR.ScaleRPropsValFastEq
   import pictureR.PictureRPropsValFastEq
   import saveR.SaveRPropsValFastEq
+  import useAsMainR.UseAdMainPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -60,7 +62,8 @@ class LkAdEditFormR(
                               qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
                               scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]],
                               rightYOptC        : ReactConnectProxy[Option[Int]],
-                              savePropsC        : ReactConnectProxy[saveR.PropsVal]
+                              savePropsC        : ReactConnectProxy[saveR.PropsVal],
+                              useAsMainStripPropsOptC : ReactConnectProxy[Option[useAsMainR.PropsVal]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -122,8 +125,13 @@ class LkAdEditFormR(
               // Редактор strip'а
               s.stripEdOptC { stripPropsOptProxy =>
                 stripEditR(stripPropsOptProxy)(
-                  // Управление картинкой, если доступно:
-                  s.picPropsOptC { pictureR.apply }
+                  <.div(
+                    // Управление картинкой, если доступно:
+                    s.picPropsOptC { pictureR.apply },
+
+                    // Управление main-блоками.
+                    s.useAsMainStripPropsOptC { useAsMainR.apply }
+                  )
                 )
               },
 
@@ -238,6 +246,22 @@ class LkAdEditFormR(
           saveR.PropsVal(
             currentReq = mroot.save.saveReq
           )
+        },
+
+        useAsMainStripPropsOptC = p.connect { mroot =>
+          for {
+            // Доступно только при редактировании стрипа.
+            _       <- mroot.doc.stripEd
+            selJdt  <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
+          } yield {
+            import io.suggest.common.empty.OptionUtil.BoolOptOps
+            useAsMainR.PropsVal(
+              checked = selJdt.props1.isMain.getOrElseFalse,
+              mainCount = mroot.doc.jdArgs.template
+                .subForest
+                .count( _.rootLabel.props1.isMain.getOrElseFalse )
+            )
+          }
         }
 
       )

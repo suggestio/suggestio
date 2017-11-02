@@ -33,7 +33,7 @@ object MStripEdS {
 case class MStripEdS(
                       isLastStrip                 : Boolean,
                       override val bgColorPick    : MColorPickerS     = MColorPickerS.empty,
-                      confirmingDelete            : Boolean           = false,
+                      confirmingDelete            : Boolean           = false
                     )
   extends IBgColorPickerS
 {

@@ -2,6 +2,7 @@ package io.suggest.jd.render.v
 
 import diode.react.ModelProxy
 import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.Css
@@ -297,6 +298,17 @@ class JdR extends Log {
         C.smBlock,
         C.bmStyleF( s ),
         _bgColorOpt(s, jdArgs),
+
+        // Скрыть не-main-стрипы, если этого требует рендер.
+        jdArgs.renderArgs.nonMainStripsCss
+          .filter { _ =>
+            // Это касается только стрипов, у которых нет isMain = Some(true)
+            !s.props1.isMain.getOrElseFalse
+          }
+          .whenDefined {
+            // Данный стип надо приглушить с помощью указанных css-стилей.
+            ^.`class` := _
+          },
 
         _maybeSelected( s, jdArgs ),
         _clickableOnEdit( s, jdArgs ),

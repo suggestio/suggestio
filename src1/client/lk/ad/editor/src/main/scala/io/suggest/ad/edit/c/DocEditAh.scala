@@ -5,8 +5,11 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
+import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.MHands
+import io.suggest.common.empty.OptionUtil
+import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
@@ -32,6 +35,7 @@ import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
+import japgolly.scalajs.react.vdom.TagMod
 
 import scala.util.Random
 import scalaz.Tree
@@ -45,6 +49,7 @@ import scalaz.Tree
 class DocEditAh[M](
                     modelRW           : ModelRW[M, MDocS],
                     jdCssFactory      : JdCssFactory,
+                    lkAdEditCss       : LkAdEditCss,
                     quillDeltaJsUtil  : QuillDeltaJsUtil
                   )
   extends ActionHandler( modelRW )
@@ -793,6 +798,51 @@ class DocEditAh[M](
           )
       )
       updated( v2 )
+
+
+    // Изменение галочки управления main-флагом текущего блока.
+    case m: MainStripChange =>
+      val v0 = value
+      v0.jdArgs.selectedTagLoc
+        .filter(_.getLabel.name ==* MJdTagNames.STRIP)
+        .fold(noChange) { currStripLoc =>
+          val tpl2 = currStripLoc
+            .modifyLabel { currStrip =>
+              currStrip.withProps1(
+                currStrip.props1.withIsMain(
+                  isMain = OptionUtil.maybeTrue( m.isMain )
+                )
+              )
+            }
+            .toTree
+          val v2 = v0.withJdArgs(
+            v0.jdArgs
+              .withTemplate(tpl2)
+              .withJdCss(
+                jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges) )
+              )
+          )
+          updated(v2)
+        }
+
+
+    // Сигнал переключения
+    case m: ShowMainStrips =>
+      val v0 = value
+      val nonMainStripsCss2 = OptionUtil.maybe(m.showing) {
+        lkAdEditCss.JdAddons.muffledStrip.htmlClass
+      }
+      if (v0.jdArgs.renderArgs.nonMainStripsCss ==* nonMainStripsCss2) {
+        noChange
+      } else {
+        val v2 = v0.withJdArgs(
+          v0.jdArgs.withRenderArgs(
+            v0.jdArgs.renderArgs
+              .withNonMainStripsCss( nonMainStripsCss2 )
+          )
+        )
+        updated(v2)
+      }
 
 
     // Реакция на клик по кнопке создания нового элемента.

@@ -119,12 +119,31 @@ class LkAdEditCss extends StyleSheet.Inline {
   /** Стили для кропа. */
   object Crop {
 
-    val popup = {
-      style(
-        maxWidth( 600.px ),
-        overflow.visible
-      )
-    }
+    val popup = style(
+      maxWidth( 600.px ),
+      overflow.visible
+    )
+
+  }
+
+
+  object JdAddons {
+
+    /** Приглушённый стрип описывается этим стилем. */
+    val muffledStrip = style(
+      opacity(0.1)
+    )
+
+  }
+
+  /** Стили для элементов управления главным/заглавным блоком. */
+  object StripMain {
+
+    /** Стиль неактивной ссылки "показать все". */
+    val showAll = style(
+      textDecorationLine.underline,
+      textDecorationStyle.dashed
+    )
 
   }
 
@@ -133,7 +152,9 @@ class LkAdEditCss extends StyleSheet.Inline {
     WhControls.contWidth,
     Layout.editorsCont,
     BgColorOptPicker.colorRound,
-    Crop.popup
+    Crop.popup,
+    StripMain.showAll,
+    JdAddons.muffledStrip
   )
 
 }

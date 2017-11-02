@@ -13,7 +13,7 @@ import play.api.libs.json._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 19.09.17 13:03
-  * Description: Кросс-платформенная унифицированна яJSON-модель пропертисов унифицированных jd-тегов.
+  * Description: Кросс-платформенная унифицированная JSON-модель пропертисов унифицированных jd-тегов.
   * 1 - потому что в будущем пропертисов будет больше, и наверное моделей тоже будет больше.
   *
   * Неявно-пустая модель.
@@ -29,7 +29,8 @@ object MJdtProps1 extends IEmpty {
     (__ \ "a").formatNullable[MColorData] and
     (__ \ "b").formatNullable[MImgEdgeWithOps] and
     (__ \ "c").formatNullable[BlockMeta] and
-    (__ \ "d").formatNullable[MCoords2di]
+    (__ \ "d").formatNullable[MCoords2di] and
+    (__ \ "e").formatNullable[Boolean]
   )(apply, unlift(unapply))
 
   implicit def univEq: UnivEq[MJdtProps1] = {
@@ -45,12 +46,16 @@ object MJdtProps1 extends IEmpty {
   * @param bgImg Фоновая картинка элемента.
   * @param topLeft css-px-координаты левого верхнего угла элемента для абсолютного позиционирования.
   * @param bm BlockMeta для блоков (стрипов).
+  * @param isMain Абстрактный флаг высшей приоритетности среди равных.
+  *               В контексте стрипа обозначает, что данный стрип главный/заглавный, и именно он должен быть
+  *               использован для рендера в плитке среди других карточек.
   */
 case class MJdtProps1(
-                       bgColor  : Option[MColorData]        = None,
-                       bgImg    : Option[MImgEdgeWithOps]   = None,
-                       bm       : Option[BlockMeta]         = None,
-                       topLeft  : Option[MCoords2di]        = None
+                       bgColor    : Option[MColorData]        = None,
+                       bgImg      : Option[MImgEdgeWithOps]   = None,
+                       bm         : Option[BlockMeta]         = None,
+                       topLeft    : Option[MCoords2di]        = None,
+                       isMain     : Option[Boolean]           = None
                      )
   extends EmptyProduct
 {
@@ -59,5 +64,6 @@ case class MJdtProps1(
   def withBgImg(bgImg: Option[MImgEdgeWithOps])       = copy(bgImg = bgImg)
   def withBm(bm: Option[BlockMeta])                   = copy(bm = bm)
   def withTopLeft(topLeft: Option[MCoords2di])        = copy(topLeft = topLeft)
+  def withIsMain(isMain: Option[Boolean])             = copy(isMain = isMain)
 
 }
