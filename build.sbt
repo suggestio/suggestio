@@ -209,6 +209,13 @@ lazy val reactImageGallerySjs = {
     .dependsOn(commonReactSjs)
 }
 
+/** Sjs-фасады для react-grid-layout. */
+lazy val reactGridLayoutSjs = {
+  val name = "react-grid-layout"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+}
+
 /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
 lazy val lkDtPeriodSjs = {
   val name = "lk-dt-period-sjs"
@@ -387,7 +394,7 @@ lazy val sc3Sjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( lkCommonSjs )
+    .dependsOn( lkCommonSjs/*, reactGridLayoutSjs*/ )
 }
 
 /** Внутренний форк securesocial. */
@@ -506,7 +513,7 @@ lazy val sio2 = {
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
-      reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
+      reactImageGallerySjs, reactColorSjs, reactImageCropSjs, reactGridLayoutSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       asmCryptoJsSjs, asmCryptoSioSjs,

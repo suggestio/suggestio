@@ -174,6 +174,11 @@ object Common {
     val SCALA_PARSER_COMBINATORS = "1.0.5"
     // TODO Когда выйдет 1.0.7, выставить динамическую версию. sjs-релиз 1.0.6 неисправен. https://github.com/scala/scala-parser-combinators/issues/119
 
+    /** Версия react-grid-layout.
+      * @see [[https://github.com/strml/react-grid-layout]]
+      */
+    val REACT_GRID_LAYOUT = "0.16.0"
+
   }
 
 
