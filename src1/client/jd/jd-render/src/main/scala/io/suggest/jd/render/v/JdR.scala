@@ -139,6 +139,7 @@ class JdR extends Log {
     private def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
       val mimes = MimeConst.Sio
 
+      e.preventDefault()
       val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
       val clientY = e.clientY
 
@@ -293,11 +294,76 @@ class JdR extends Log {
       val C = jdArgs.jdCss
       val isSelected = jdArgs.selectedTag.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
-      <.div(
-        ^.key := i.toString,
+
+      val isWide = !jdArgs.conf.isEdit && s.props1.bm.map(_.wide).getOrElseFalse
+      val bgColor = _bgColorOpt(s, jdArgs)
+
+      val bgImgOpt = for {
+        bgImgData <- s.props1.bgImg
+        edgeUid   = bgImgData.imgEdge.edgeUid
+        edge      <- jdArgs.renderArgs.edges.get( edgeUid )
+        if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
+        bgImgSrc  <- edge.origImgSrcOpt
+      } yield {
+        // Поддержка имитации кропа: рассчитываем аргументы кропа, если есть.
+        val cropEmuOpt = for {
+          crop    <- bgImgData.crop
+          bm      <- s.props1.bm
+          origWh  <- edge.origWh
+        } yield {
+          MEmuCropCssArgs(crop, origWh, bm)
+        }
+
+        <.img(
+          ^.`class` := Css.Block.BG,
+          ^.src := bgImgSrc,
+
+          // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
+          if (jdArgs.conf.isEdit) {
+            ^.draggable := false
+          } else {
+            EmptyVdom
+          },
+
+          // Если запрошена эмуляция кропа, то выполнить это:
+          cropEmuOpt.fold[TagMod] {
+            // Просто заполнение всего блока картинкой. TODO Унести в jdCss.
+            s.props1.bm.whenDefined { bm =>
+              // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
+              TagMod(
+                ^.width  := (bm.width * jdArgs.conf.szMult.toDouble).px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
+                //^.height := bm.height.px
+              )
+            }
+          } { cropEmu =>
+            C.blkBgImgCropEmuF( cropEmu )
+          },
+
+          // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
+          _notifyImgWhOnEdit(edge, jdArgs),
+
+          // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
+          jdArgs.renderArgs.selJdtBgImgMod
+            .filter(_ => isSelected)
+            .whenDefined
+        )
+      }
+      val bgImgTm = bgImgOpt.whenDefined
+
+      val keyAV = {
+        ^.key := i.toString
+      }
+
+      val smBlock = <.div(
+        keyAV,
         C.smBlock,
         C.bmStyleF( s ),
-        _bgColorOpt(s, jdArgs),
+
+        if (isWide) {
+          jdArgs.jdCss.wideBlockStyle
+        } else {
+          bgColor
+        },
 
         // Скрыть не-main-стрипы, если этого требует рендер.
         jdArgs.renderArgs.nonMainStripsCss
@@ -311,8 +377,6 @@ class JdR extends Log {
           },
 
         _maybeSelected( s, jdArgs ),
-        _clickableOnEdit( s, jdArgs ),
-        _droppableOnEdit( s, jdArgs ),
 
         // Если текущий стрип выделен, то его можно таскать.
         if (isEditSelected) {
@@ -325,61 +389,29 @@ class JdR extends Log {
         },
 
         // Если задана фоновая картинка, от отрендерить её.
-        {
-          val bgImgOpt = for {
-            bgImgData <- s.props1.bgImg
-            edgeUid   = bgImgData.imgEdge.edgeUid
-            edge      <- jdArgs.renderArgs.edges.get( edgeUid )
-            if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
-            bgImgSrc  <- edge.origImgSrcOpt //imgSrcOpt
-          } yield {
-            // Поддержка имитации кропа: рассчитываем аргументы кропа, если есть.
-            val cropEmuOpt = for {
-              crop    <- bgImgData.crop
-              bm      <- s.props1.bm
-              origWh  <- edge.origWh
-            } yield {
-              MEmuCropCssArgs(crop, origWh, bm)
-            }
-
-            <.img(
-              ^.`class` := Css.Block.BG,
-              ^.src := bgImgSrc,
-
-              // Запретить таскать изображение, чтобы не мешать перетаскиванию strip'ов
-              if (jdArgs.conf.isEdit) {
-                ^.draggable := false
-              } else {
-                EmptyVdom
-              },
-
-              // Если запрошена эмуляция кропа, то выполнить это:
-              cropEmuOpt.fold[TagMod] {
-                // Просто заполнение всего блока картинкой. TODO Унести в jdCss.
-                s.props1.bm.whenDefined { bm =>
-                  // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
-                  TagMod(
-                    ^.width  := (bm.width * jdArgs.conf.szMult.toDouble).px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
-                    //^.height := bm.height.px
-                  )
-                }
-              } { cropEmu =>
-                C.blkBgImgCropEmuF( cropEmu )
-              },
-
-              // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
-              _notifyImgWhOnEdit(edge, jdArgs),
-
-              // В jdArgs может быть задан дополнительные модификации изображения, если selected tag.
-              jdArgs.renderArgs.selJdtBgImgMod
-                .filter(_ => isSelected)
-                .whenDefined
-            )
-          }
-          bgImgOpt.whenDefined
-        },
+        bgImgTm.unless(isWide),
 
         renderChildren( stripTree, jdArgs )
+      )
+
+      val tmOuter = if (isWide) {
+        // Широкоформатное отображение, рендерим фон без ограничений блока:
+        <.div(
+          keyAV,
+          bgColor.when(isWide),
+          C.bmWideStyleF(s),
+          ^.`class` := Css.flat( Css.Overflow.HIDDEN, Css.Position.RELATIVE ),
+          bgImgTm.when(isWide),
+          smBlock
+        )
+      } else {
+        // Обычное отображение, просто вернуть блок.
+        smBlock
+      }
+
+      tmOuter(
+        _clickableOnEdit( s, jdArgs ),
+        _droppableOnEdit( s, jdArgs )
       )
     }
 

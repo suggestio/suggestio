@@ -70,7 +70,10 @@ class DeleteBtnR {
                   LkPreLoaderR.AnimSmall
                 )
               } else {
-                Messages( MsgCodes.`Delete` )
+                <.span(
+                  Messages( MsgCodes.`Delete` ),
+                  HtmlConstants.ELLIPSIS
+                )
               }
             ),
 

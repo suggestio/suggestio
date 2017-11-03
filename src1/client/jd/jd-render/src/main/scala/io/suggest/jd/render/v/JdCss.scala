@@ -60,6 +60,15 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
 
+  val wideBlockStyle = {
+    val zeroPx = 0.px
+    style(
+      position.absolute,
+      top(zeroPx),
+      left(zeroPx)
+    )
+  }
+
   // -------------------------------------------------------------------------------
   // Strip
 
@@ -70,13 +79,28 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       .toIndexedSeq
 
     val stripsDomain = new Domain.OverSeq( strips )
-    //println( _allJdTagsIter.mkString(", ") )
 
     styleF(stripsDomain) { strip =>
       // Стиль размеров блока-полосы.
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
           width( (bm.width * szMultD).px ),
+          height( (bm.height * szMultD).px )
+        )
+      }
+    }
+  }
+
+  /** Стили контейнера блока с широким фоном. */
+  val bmWideStyleF = {
+    // TODO Не используется в редакторе из-за проблем с вёрсткой. Но стили всё равно генерятся.
+    val wideStrips = _allJdTagsIter
+      .filter(_.props1.bm.exists(_.wide))
+      .toIndexedSeq
+    val wideStripsDomain = new Domain.OverSeq( wideStrips )
+    styleF( wideStripsDomain ) { strip =>
+      strip.props1.bm.whenDefinedStyleS { bm =>
+        styleS(
           height( (bm.height * szMultD).px )
         )
       }
