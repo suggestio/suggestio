@@ -18,6 +18,15 @@
   @* Стили для react-image-crop. *@
   <link rel="stylesheet" type="text/css"
         href="@routes.Assets.versioned("react-image-crop/dist/ReactCrop.css")" />
+
+  @* Стили для грида. *@
+  @if(USE_GRID_IN_EDITOR) {
+    <link rel="stylesheet" type="text/css"
+          href="@routes.Assets.versioned("react-grid-layout/css/styles.css")" />
+    <link rel="stylesheet" type="text/css"
+          href="@routes.Assets.versioned("react-resizable/css/styles.css")" />
+  }
+
 }
 
 @lk.lkBase(

@@ -394,7 +394,7 @@ lazy val sc3Sjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( lkCommonSjs/*, reactGridLayoutSjs*/ )
+    .dependsOn( lkCommonSjs, reactGridLayoutSjs )
 }
 
 /** Внутренний форк securesocial. */
@@ -498,7 +498,15 @@ lazy val www = project
     // react-image-crop
     npmAssets ++= NpmAssets.ofProject( reactImageCropSjs ) { nodeModules =>
       (nodeModules / "react-image-crop" / "dist") * "*.css"
+    }.value,
+    // react-grid-layout
+    npmAssets ++= NpmAssets.ofProject( reactGridLayoutSjs ) { nodeModules =>
+      def __stylesCss(dirSuffix: String) = (nodeModules / ("react-" + dirSuffix) / "css" ) * "styles.css"
+      val grid = __stylesCss("grid-layout")
+      val rszbl = __stylesCss("resizable")
+      grid +++ rszbl
     }.value
+
   )
 
 

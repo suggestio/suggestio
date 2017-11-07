@@ -1,6 +1,8 @@
 package io.suggest.jd.render.v
 
+import com.github.strml.react.grid.layout._
 import diode.react.ModelProxy
+import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
@@ -28,6 +30,7 @@ import org.scalajs.dom.Element
 import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
+import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import scalaz.Tree
 
@@ -211,8 +214,9 @@ class JdR extends Log {
           width  = img.naturalWidth,
           height = img.naturalHeight
         )
-        ErrorConstants.assertArg( sz.width > 0 )
-        ErrorConstants.assertArg( sz.height > 0 )
+        val minWh = 0
+        ErrorConstants.assertArg( sz.width > minWh )
+        ErrorConstants.assertArg( sz.height > minWh )
         dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
       } catch {
         case ex: Throwable =>
@@ -224,14 +228,31 @@ class JdR extends Log {
 
     // Internal API
 
+    /** Отрендерить дочерние элементы тега обычным методом.
+      *
+      * @param dt Jd-тег
+      * @param jdArgs Аргументы рендера.
+      * @return VdomArray.
+      */
     def renderChildren(dt: Tree[JdTag], jdArgs: MJdArgs): VdomArray = {
+      renderChildrenUsing(dt) { (childJdTree, i) =>
+        renderDocTag(childJdTree, i, jdArgs, dt.rootLabel)
+      }
+    }
+
+    /** Рендер дочерних элементов указанного тега, используя произвольную фунцию.
+      *
+      * @param dt Текущий jd-тег с деревом.
+      * @param f Функция рендера.
+      * @return VdomArray.
+      */
+    def renderChildrenUsing(dt: Tree[JdTag])(f: (Tree[JdTag], Int) => VdomNode): VdomArray = {
       dt.subForest
         .iterator
         .zipWithIndex
-        .toVdomArray { case (jd, i) =>
-          renderDocTag(jd, i, jdArgs, dt.rootLabel)
-        }
+        .toVdomArray( f.tupled )
     }
+
 
     /**
       * Является ли указанный тег текущим выделенным?
@@ -365,6 +386,20 @@ class JdR extends Log {
           bgColor
         },
 
+        if (jdArgs.conf.oneJdGrid) {
+          s.props1.bm.whenDefined { bm =>
+            val ii = i
+            ^.dataGrid := new Layout {
+              override val w = bm.w.relSz
+              override val h = bm.h.relSz
+              override val x = 0
+              override val y = ii
+            }
+          }
+        } else {
+          EmptyVdom
+        },
+
         // Скрыть не-main-стрипы, если этого требует рендер.
         jdArgs.renderArgs.nonMainStripsCss
           .filter { _ =>
@@ -423,9 +458,42 @@ class JdR extends Log {
 
     /** Рендер указанного документа. */
     def renderDocument(jd: Tree[JdTag], i: Int, jdArgs: MJdArgs): VdomElement = {
+      val docJdt = jd.rootLabel
       <.div(
         ^.key := i.toString,
-        renderChildren( jd, jdArgs )
+        if (jdArgs.conf.oneJdGrid) {
+          val _zeroZero = js.Array(0, 0)
+          val szMultD = jdArgs.conf.szMult.toDouble
+
+          val chsRendered = jd.subForest
+            .iterator
+            .zipWithIndex
+            .map { case (chJdTree, i) =>
+              val bm = chJdTree.rootLabel.props1.bm.get
+              renderDocTag(chJdTree, i, jdArgs, docJdt)
+              // Добавить layout-инфу прямо в тег
+            }
+            .toSeq
+
+          ReactGridLayout {
+            new ReactGridLayoutProps {
+              override val width            = BlockWidths.NORMAL.value
+              override val isDraggable      = false
+              override val isResizable      = false
+              override val margin           = _zeroZero
+              override val containerPadding = _zeroZero
+              override val rowHeight        = (szMultD * BlockHeights.min.value).toInt
+              override val verticalCompact  = true
+              override val compactType      = CompactTypes.VERTICAL
+              override val cols             = 2
+            }
+          }(
+            chsRendered: _*
+          )
+
+        } else {
+          renderChildren(jd, jdArgs)
+        }
       )
     }
 

@@ -18,6 +18,7 @@ import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
+import io.suggest.ad.form.AdFormConstants
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
@@ -71,7 +72,8 @@ class LkAdEditCircuit(
       doc  = {
         val jdConf = MJdConf(
           isEdit  = true,
-          szMult    = MSzMults.`1.0`
+          szMult    = MSzMults.`1.0`,
+          oneJdGrid = AdFormConstants.USE_GRID_IN_EDITOR
         )
         val tpl = mFormInit.form.template
         val edges = mFormInit.form.edgesMap
