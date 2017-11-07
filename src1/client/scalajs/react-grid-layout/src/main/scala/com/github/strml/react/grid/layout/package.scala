@@ -27,7 +27,7 @@ package object layout {
   type ItemCallback = js.Function6[Layout, LayoutItem, LayoutItem, LayoutItem, MouseEvent, HTMLElement, _]
 
 
-  implicit val vdomAttrVtJsObject: Simple[Layout] = ValueType.direct
+  implicit val vdomAttrLayoutVT: Simple[Layout] = ValueType.direct
 
   val dataGridAttr = VdomAttr[Layout](HtmlConstants.ATTR_PREFIX + "grid")
 

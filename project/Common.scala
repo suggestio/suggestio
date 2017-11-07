@@ -179,6 +179,11 @@ object Common {
       */
     val REACT_GRID_LAYOUT = "0.16.0"
 
+    /** Версия react-stonecutter для организации плитки.
+      * @see [[https://github.com/dantrain/react-stonecutter]]
+      */
+    val REACT_STONECUTTER = "0.3.7"
+
   }
 
 

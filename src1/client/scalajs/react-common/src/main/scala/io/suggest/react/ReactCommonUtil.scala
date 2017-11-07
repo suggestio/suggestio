@@ -101,4 +101,18 @@ object ReactCommonUtil {
 
   }
 
+
+  /** Применить HOC-функции (high-order component) к компоненту, вернув обновлённый абстрактный root-компонент.
+    *
+    * @param component root-компонент.
+    * @param hocs HOC-функции, привидённые к scala-функциям (для удобства отработки нестандартных ситуаций).
+    * @return Новый root-компонент.
+    */
+  def applyHocs(component: js.Object)(hocs: (js.Object) => js.Object*): js.Object = {
+    hocs
+      .foldLeft(component) { (comp0, hocF) =>
+        hocF(comp0)
+      }
+  }
+
 }

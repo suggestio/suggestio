@@ -216,6 +216,13 @@ lazy val reactGridLayoutSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Scala.js-фасад для компонентов react-stonecutter (реализация grid layout). */
+lazy val reactStoneCutterSjs = {
+  val name = "react-stonecutter"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+}
+
 /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
 lazy val lkDtPeriodSjs = {
   val name = "lk-dt-period-sjs"
