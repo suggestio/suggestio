@@ -11,7 +11,7 @@ import scala.scalajs.js.annotation.JSImport
   */
 
 @js.native
-@JSImport("react-stonecutter", "enterExitStyle")
+@JSImport(REACT_STONECUTTER, "enterExitStyle")
 object EnterExitStyle extends js.Object {
 
   val foldUp: EnterExitStyle = js.native

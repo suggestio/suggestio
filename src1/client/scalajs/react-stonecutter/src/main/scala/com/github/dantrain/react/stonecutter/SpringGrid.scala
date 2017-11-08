@@ -13,7 +13,7 @@ import japgolly.scalajs.react.vdom.VdomNode
   */
 object SpringGrid {
 
-  def mkSjsComponent(from: js.Object) = JsComponent[SpringGridProps, Children.Varargs, js.Object]( from )
+  def mkSjsComponent(jsComponent: JsComponentRoot) = JsComponent[SpringGridProps, Children.Varargs, js.Object]( jsComponent )
   val component = mkSjsComponent( SpringGridJs )
 
   /** Собрать несмонтированный компонент на базе стандартного (без доп.hoc'ов).
@@ -22,27 +22,15 @@ object SpringGrid {
     * @param children Дочерние элементы.
     * @return unmounted component.
     */
-  def apply(props: SpringGridProps)(children: VdomNode*) = applyCustom(component)(props)(children: _*)
-
-  /** Собрать кастомный компонент на базе переданного js-компонента.
-    * Использовать, когда необходимо накатить hoc'и на компонент перед использованием.
-    *
-    * @param comp Кастомный компонент на базе [[SpringGridJs]] и каких-либо hoc'ов.
-    * @param props Пропертисы [[SpringGridProps]].
-    * @param children Дочерние элементы.
-    * @return unmounted component.
-    */
-  def applyCustom(comp: component.type)(props: SpringGridProps)(children: VdomNode*) = {
-    comp(props)(children: _*)
-  }
+  def apply(props: SpringGridProps)(children: VdomNode*) = component(props)(children: _*)
 
 }
 
 
 /** JS component. */
 @js.native
-@JSImport("react-stonecutter", "SpringGrid")
-object SpringGridJs extends js.Object
+@JSImport(REACT_STONECUTTER, "SpringGrid")
+object SpringGridJs extends JsComponentRoot
 
 
 /** Properties for [[SpringGrid]] component. */

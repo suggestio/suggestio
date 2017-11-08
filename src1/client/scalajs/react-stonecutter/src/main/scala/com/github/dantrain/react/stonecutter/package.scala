@@ -12,6 +12,10 @@ import scala.scalajs.js
   */
 package object stonecutter {
 
+  /** Original js-project name (same as in npmDependencies). */
+  final val REACT_STONECUTTER = "react-stonecutter"
+
+
   type GridComponent_t = String
 
   type LayoutF_t = js.Function2[js.Array[ItemProps], PropsCommon, LayoutFunRes]

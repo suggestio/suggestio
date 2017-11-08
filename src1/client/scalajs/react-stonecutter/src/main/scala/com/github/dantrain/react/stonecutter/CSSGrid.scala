@@ -13,7 +13,8 @@ import japgolly.scalajs.react.vdom.VdomNode
   */
 object CSSGrid {
 
-  val component = JsComponent[CssGridProps, Children.Varargs, js.Object]( CSSGridJs )
+  def mkSjsComponent(jsComponentRoot: JsComponentRoot) = JsComponent[CssGridProps, Children.Varargs, js.Object]( jsComponentRoot )
+  val component = mkSjsComponent( CSSGridJs )
 
   def apply(props: CssGridProps)(children: VdomNode*) = component(props)(children: _*)
 
@@ -22,8 +23,8 @@ object CSSGrid {
 
 /** JS component of CSSGrid. */
 @js.native
-@JSImport("react-stonecutter", "CSSGrid")
-object CSSGridJs extends js.Object
+@JSImport(REACT_STONECUTTER, "CSSGrid")
+object CSSGridJs extends JsComponentRoot
 
 
 /** Component props for using [[CSSGrid]]. */

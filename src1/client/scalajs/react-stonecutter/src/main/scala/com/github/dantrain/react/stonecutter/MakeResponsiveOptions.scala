@@ -1,12 +1,26 @@
 package com.github.dantrain.react.stonecutter
 
 import scala.scalajs.js
+import scala.scalajs.js.annotation.JSImport
 
 /**
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 07.11.17 21:29
-  * Description:
+  * Description: makeResponsive() APIs.
+  */
+
+@js.native
+@JSImport(REACT_STONECUTTER, "makeResponsive")
+object makeResponsive extends js.Function2[JsComponentRoot, MakeResponsiveOptions, JsComponentRoot] {
+
+  override def apply(jsComponentRoot: JsComponentRoot, options: MakeResponsiveOptions = js.native): JsComponentRoot = js.native
+
+}
+
+
+/** Options for calling [[makeResponsive]]().
+  *
   * {{{
   *   const Grid = makeResponsive(SpringGrid, { maxWidth: 1920 })
   * }}}
