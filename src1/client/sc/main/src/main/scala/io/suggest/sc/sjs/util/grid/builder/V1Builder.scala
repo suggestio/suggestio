@@ -3,6 +3,7 @@ package io.suggest.sc.sjs.util.grid.builder
 import io.suggest.sc.sjs.m.mgrid._
 import io.suggest.sjs.common.log.ILog
 import io.suggest.sjs.common.msg.ErrorMsgs
+import japgolly.univeq._
 
 import scala.annotation.tailrec
 
@@ -44,7 +45,7 @@ trait V1Builder extends ILog with MutableState {
   def _getMaxBlockWidth(): Int = {
     var mw = 1
     @tailrec def __detect(i: Int): Int = {
-      if (i < colsCount && colsInfo(i).heightUsed == cLine ) {
+      if (i < colsCount && colsInfo(i).heightUsed ==* cLine ) {
         mw += 1
         __detect(i + 1)
       } else {
@@ -125,7 +126,7 @@ trait V1Builder extends ILog with MutableState {
       step(i + 1)
 
       // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
-    } else if ( colsInfo(currColumn).heightUsed == cLine ) {
+    } else if ( colsInfo(currColumn).heightUsed ==* cLine ) {
       // Высота текущей колонки равна cLine.
       // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
       val bMaxW = _getMaxBlockWidth()

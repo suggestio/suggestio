@@ -1,6 +1,7 @@
 package io.suggest.jd.render
 
 import com.softwaremill.macwire._
+import io.suggest.grid.react.GridReactModule
 import io.suggest.jd.render.v._
 
 /**
@@ -10,6 +11,13 @@ import io.suggest.jd.render.v._
   * Description: Compile-time DI для модуля jd-render.
   */
 class JdRenderModule {
+
+  // deps
+  val gridSjsModule = wire[GridReactModule]
+  import gridSjsModule._
+
+
+  // impl
 
   lazy val jdCssFactory = wire[JdCssFactory]
 

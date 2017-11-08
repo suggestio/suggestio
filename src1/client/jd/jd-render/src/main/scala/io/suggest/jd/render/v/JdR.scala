@@ -1,8 +1,10 @@
 package io.suggest.jd.render.v
 
-import com.github.strml.react.grid.layout._
+import com.github.dantrain.react.stonecutter
+import io.suggest.grid.react._
+import com.github.dantrain.react.stonecutter._
 import diode.react.ModelProxy
-import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
@@ -14,6 +16,7 @@ import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
+import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
@@ -41,7 +44,9 @@ import scalaz.Tree
   * Description: Ядро react-рендерера JSON-документов.
   */
 
-class JdR extends Log {
+class JdR(
+           gridBuilder: GridBuilder
+         ) extends Log {
 
   type Props = ModelProxy[MJdArgs]
 
@@ -64,6 +69,10 @@ class JdR extends Log {
 
   /** Рендерер дерева jd-тегов. */
   protected class Backend($: BackendScope[Props, Unit]) {
+
+    // Функция-генератор layout'а для плитки.
+    private val _gridLayoutF: LayoutF_t = gridBuilder.stoneCutterLayout
+
 
     /** Рендер компонента. */
     def render(jdArgsProxy: Props): VdomElement = {
@@ -388,6 +397,10 @@ class JdR extends Log {
 
         if (jdArgs.conf.oneJdGrid) {
           s.props1.bm.whenDefined { bm =>
+            ^.itemAttrsExt := new MItemPropsExtData {
+              override val blockMeta = bm
+            }
+            /*
             val ii = i
             ^.dataGrid := new Layout {
               override val w = bm.w.relSz
@@ -395,6 +408,7 @@ class JdR extends Log {
               override val x = 0
               override val y = ii
             }
+            */
           }
         } else {
           EmptyVdom
@@ -475,17 +489,18 @@ class JdR extends Log {
             }
             .toSeq
 
-          ReactGridLayout {
-            new ReactGridLayoutProps {
-              override val width            = BlockWidths.NORMAL.value
-              override val isDraggable      = false
-              override val isResizable      = false
-              override val margin           = _zeroZero
-              override val containerPadding = _zeroZero
-              override val rowHeight        = (szMultD * BlockHeights.min.value).toInt
-              override val verticalCompact  = true
-              override val compactType      = CompactTypes.VERTICAL
-              override val cols             = 2
+          CSSGrid {
+            val cellPaddingPx = (20 * szMultD).toInt
+            new CssGridProps with GridPropsExt {
+              override val duration     = 600
+              override val columns      = 2
+              override val columnWidth  = (BlockWidths.min.value * szMultD).toInt
+              override val gutterWidth  = cellPaddingPx
+              override val gutterHeight = cellPaddingPx
+              override val layout       = js.defined {
+                _gridLayoutF
+              }
+              override val szMult       = jdArgs.conf.szMult
             }
           }(
             chsRendered: _*

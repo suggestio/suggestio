@@ -223,6 +223,12 @@ lazy val reactStoneCutterSjs = {
     .dependsOn( commonReactSjs )
 }
 
+lazy val gridSjs = {
+  val name = "grid"
+  Project(id = name + "-sjs", base = file(s"${DIR0}client/jd/grid"))
+    .dependsOn(lkCommonSjs, reactStoneCutterSjs)
+}
+
 /** Утиль поддержки виджета задания периода дат. Расшарена между несколькими lk-модулями. */
 lazy val lkDtPeriodSjs = {
   val name = "lk-dt-period-sjs"
@@ -401,7 +407,7 @@ lazy val sc3Sjs = {
 /** json document react renderer */
 lazy val jdRenderSjs = {
   Project(id = "jd-render-sjs", base = file(DIR0 + "client/jd/jd-render"))
-    .dependsOn( lkCommonSjs, reactGridLayoutSjs )
+    .dependsOn( lkCommonSjs, reactStoneCutterSjs, gridSjs )
 }
 
 /** Внутренний форк securesocial. */
@@ -505,15 +511,7 @@ lazy val www = project
     // react-image-crop
     npmAssets ++= NpmAssets.ofProject( reactImageCropSjs ) { nodeModules =>
       (nodeModules / "react-image-crop" / "dist") * "*.css"
-    }.value,
-    // react-grid-layout
-    npmAssets ++= NpmAssets.ofProject( reactGridLayoutSjs ) { nodeModules =>
-      def __stylesCss(dirSuffix: String) = (nodeModules / ("react-" + dirSuffix) / "css" ) * "styles.css"
-      val grid = __stylesCss("grid-layout")
-      val rszbl = __stylesCss("resizable")
-      grid +++ rszbl
     }.value
-
   )
 
 
@@ -528,7 +526,8 @@ lazy val sio2 = {
       lkSjs, scSjs, sc3Sjs, jqDateTimePickerSjs, momentSjs, reactDatePickerSjs, lkDtPeriodSjs,
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
-      reactImageGallerySjs, reactColorSjs, reactImageCropSjs, reactGridLayoutSjs,
+      reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
+      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       asmCryptoJsSjs, asmCryptoSioSjs,
