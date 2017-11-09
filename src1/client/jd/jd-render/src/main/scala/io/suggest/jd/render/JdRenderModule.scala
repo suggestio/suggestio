@@ -1,7 +1,7 @@
 package io.suggest.jd.render
 
 import com.softwaremill.macwire._
-import io.suggest.grid.react.GridReactModule
+import io.suggest.grid.GridModule
 import io.suggest.jd.render.v._
 
 /**
@@ -13,7 +13,7 @@ import io.suggest.jd.render.v._
 class JdRenderModule {
 
   // deps
-  val gridSjsModule = wire[GridReactModule]
+  val gridSjsModule = wire[GridModule]
   import gridSjsModule._
 
 

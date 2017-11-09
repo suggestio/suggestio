@@ -1,4 +1,4 @@
-package io.suggest.grid.react
+package io.suggest.grid.build
 
 /**
   * Suggest.io

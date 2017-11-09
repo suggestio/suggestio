@@ -1,4 +1,4 @@
-package io.suggest.grid.react
+package io.suggest.grid.build
 
 import com.github.dantrain.react.stonecutter.{ItemProps, LayoutFunRes, PropsCommon}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}

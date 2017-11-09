@@ -1,6 +1,7 @@
-package io.suggest.grid.react
+package io.suggest.grid
 
 import com.softwaremill.macwire._
+import io.suggest.grid.build.GridBuilder
 
 /**
   * Suggest.io
@@ -8,7 +9,7 @@ import com.softwaremill.macwire._
   * Created: 08.11.17 18:27
   * Description: Compile-time DI support.
   */
-class GridReactModule {
+class GridModule {
 
   lazy val gridBuilder = wire[GridBuilder]
 
