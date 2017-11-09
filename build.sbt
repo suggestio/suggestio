@@ -132,7 +132,7 @@ lazy val lkAdvExtSjs = {
 lazy val lkAdEditorSjs = {
   val name = "lk-ad-editor-sjs"
   Project(id = name, base = file(DIR0 + "client/lk/ad/editor"))
-    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs )
+    .dependsOn( lkCommonSjs, quillSioSjs, jdRenderSjs, reactColorSjs, reactImageCropSjs, asmCryptoSioSjs, reactSanfonaSjs )
 }
 
 /** Трейты для поддержки простых логов. */
@@ -223,6 +223,14 @@ lazy val reactStoneCutterSjs = {
     .dependsOn( commonReactSjs )
 }
 
+/** Scala.js-фасад для компонентов в react-sanfona. */
+lazy val reactSanfonaSjs = {
+  val name = "react-sanfona"
+  Project(id = "scalajs-" + name, base = file(s"${DIR0}client/scalajs/$name"))
+    .dependsOn( commonReactSjs )
+}
+
+/** Утиль для плитки на базе react. */
 lazy val gridSjs = {
   val name = "grid"
   Project(id = name + "-sjs", base = file(s"${DIR0}client/jd/grid"))
@@ -527,7 +535,7 @@ lazy val sio2 = {
       cordovaSjs, cordovaBleSjs, bleBeaconerSjs,
       tinyMceSjs, reactTinyMceSjs,
       reactImageGallerySjs, reactColorSjs, reactImageCropSjs,
-      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs,
+      reactGridLayoutSjs, reactStoneCutterSjs, gridSjs, reactSanfonaSjs,
       quillDeltaSjs, quillSjs, reactQuillSjs, quillSioSjs,
       lkAdEditorSjs,
       asmCryptoJsSjs, asmCryptoSioSjs,

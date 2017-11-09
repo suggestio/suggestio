@@ -184,6 +184,11 @@ object Common {
       */
     val REACT_STONECUTTER = "0.3.7"
 
+    /** Версия аккордеона react-sanfona.
+      * @see [[https://github.com/daviferreira/react-sanfona]]
+      */
+    val REACT_SANFONA = "1.0.4"
+
   }
 
 
