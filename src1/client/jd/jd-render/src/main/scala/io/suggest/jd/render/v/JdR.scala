@@ -1,10 +1,9 @@
 package io.suggest.jd.render.v
 
-import com.github.dantrain.react.stonecutter
 import io.suggest.grid.react._
 import com.github.dantrain.react.stonecutter._
 import diode.react.ModelProxy
-import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
@@ -16,7 +15,6 @@ import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
-import io.suggest.react.ReactCommonUtil
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
@@ -69,10 +67,6 @@ class JdR(
 
   /** Рендерер дерева jd-тегов. */
   protected class Backend($: BackendScope[Props, Unit]) {
-
-    // Функция-генератор layout'а для плитки.
-    private val _gridLayoutF: LayoutF_t = gridBuilder.stoneCutterLayout
-
 
     /** Рендер компонента. */
     def render(jdArgsProxy: Props): VdomElement = {
@@ -335,14 +329,6 @@ class JdR(
         if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
         bgImgSrc  <- edge.origImgSrcOpt
       } yield {
-        // Поддержка имитации кропа: рассчитываем аргументы кропа, если есть.
-        val cropEmuOpt = for {
-          crop    <- bgImgData.crop
-          bm      <- s.props1.bm
-          origWh  <- edge.origWh
-        } yield {
-          MEmuCropCssArgs(crop, origWh, bm)
-        }
 
         <.img(
           ^.`class` := Css.Block.BG,
@@ -355,18 +341,30 @@ class JdR(
             EmptyVdom
           },
 
-          // Если запрошена эмуляция кропа, то выполнить это:
-          cropEmuOpt.fold[TagMod] {
-            // Просто заполнение всего блока картинкой. TODO Унести в jdCss.
-            s.props1.bm.whenDefined { bm =>
-              // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
-              TagMod(
-                ^.width  := (bm.width * jdArgs.conf.szMult.toDouble).px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
-                //^.height := bm.height.px
-              )
+          // Поддержка эмуляции кропа.
+          {
+            // Рассчитываем аргументы кропа, если есть.
+            val cropEmuOpt = for {
+              crop    <- bgImgData.crop
+              bm      <- s.props1.bm
+              origWh  <- edge.origWh
+            } yield {
+              //val outerWh = bm.rePadded( jdArgs.conf.blockPadding )
+              MEmuCropCssArgs(crop, origWh, bm)
             }
-          } { cropEmu =>
-            C.blkBgImgCropEmuF( cropEmu )
+
+            cropEmuOpt.fold[TagMod] {
+              // Просто заполнение всего блока картинкой. TODO Унести в jdCss.
+              s.props1.bm.whenDefined { bm =>
+                // Заполняем блок по ширине, т.к. дырки сбоку режут глаз сильнее, чем снизу.
+                TagMod(
+                  ^.width  := (bm.width * jdArgs.conf.szMult.toDouble).px    // Избегаем расплющивания картинок, пусть лучше обрезка будет.
+                  //^.height := bm.height.px
+                )
+              }
+            } { cropEmu =>
+              C.blkBgImgCropEmuF( cropEmu )
+            }
           },
 
           // Если js-file загружен, но wh неизвестна, то сообщить наверх ширину и длину загруженной картинки.
@@ -393,25 +391,6 @@ class JdR(
           jdArgs.jdCss.wideBlockStyle
         } else {
           bgColor
-        },
-
-        if (jdArgs.conf.oneJdGrid) {
-          s.props1.bm.whenDefined { bm =>
-            ^.itemAttrsExt := new MItemPropsExtData {
-              override val blockMeta = bm
-            }
-            /*
-            val ii = i
-            ^.dataGrid := new Layout {
-              override val w = bm.w.relSz
-              override val h = bm.h.relSz
-              override val x = 0
-              override val y = ii
-            }
-            */
-          }
-        } else {
-          EmptyVdom
         },
 
         // Скрыть не-main-стрипы, если этого требует рендер.
@@ -475,35 +454,53 @@ class JdR(
       val docJdt = jd.rootLabel
       <.div(
         ^.key := i.toString,
+
         if (jdArgs.conf.oneJdGrid) {
-          val _zeroZero = js.Array(0, 0)
+          // Собрать аргументы для вызова layout-функции grid-builder'а.
+          val gridBuildArgs = GridBuildArgs(
+            itemsExtDatas = jd.subForest
+              .iterator
+              .map { childTree =>
+                ItemPropsExt(
+                  blockMeta = childTree.rootLabel.props1.bm.get
+                )
+              },
+            jdConf = jdArgs.conf
+          )
+
+          // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
+          // https://github.com/scala-js/scala-js/issues/2748
+          // Это снизит риск ругани react'а на неведомый хлам внутри props.
+          val gridLayoutF = gridBuilder.stoneCutterLayout( gridBuildArgs ) _
+
           val szMultD = jdArgs.conf.szMult.toDouble
 
-          val chsRendered = jd.subForest
-            .iterator
-            .zipWithIndex
-            .map { case (chJdTree, i) =>
-              val bm = chJdTree.rootLabel.props1.bm.get
-              renderDocTag(chJdTree, i, jdArgs, docJdt)
-              // Добавить layout-инфу прямо в тег
-            }
-            .toSeq
+          // Рассчёт расстояния между разными блоками.
+          val cellPaddingPx = Math.round(jdArgs.conf.blockPadding.value * szMultD).toInt
+
+          val blkSzMultD = jdArgs.conf.blkSzMult.toDouble
 
           CSSGrid {
-            val cellPaddingPx = (20 * szMultD).toInt
-            new CssGridProps with GridPropsExt {
+            new CssGridProps {
               override val duration     = 600
-              override val columns      = 2
-              override val columnWidth  = (BlockWidths.min.value * szMultD).toInt
+              override val columns      = jdArgs.conf.gridColumnsCount
+              override val columnWidth  = Math.round(BlockWidths.min.value * blkSzMultD).toInt
+              // Плитка и без этого gutter'а работает. Просто выставлено на всякий случай, т.к. в коде модулей grid'а это дело используется.
               override val gutterWidth  = cellPaddingPx
               override val gutterHeight = cellPaddingPx
               override val layout       = js.defined {
-                _gridLayoutF
+                gridLayoutF
               }
-              override val szMult       = jdArgs.conf.szMult
             }
           }(
-            chsRendered: _*
+            jd.subForest
+              .iterator
+              .zipWithIndex
+              .map { case (chJdTree, j) =>
+                renderDocTag(chJdTree, j, jdArgs, docJdt)
+                // Добавить layout-инфу прямо в тег
+              }
+              .toSeq: _*
           )
 
         } else {

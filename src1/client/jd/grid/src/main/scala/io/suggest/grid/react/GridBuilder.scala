@@ -1,15 +1,15 @@
 package io.suggest.grid.react
 
 import com.github.dantrain.react.stonecutter.{ItemProps, LayoutFunRes, PropsCommon}
-import io.suggest.ad.blk.BlockHeights
-import GridPropsExt._
-import ItemPropsExt._
+import io.suggest.ad.blk.{BlockHeights, BlockWidths}
 import io.suggest.common.html.HtmlConstants
+import io.suggest.jd.MJdConf
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.univeq._
 
 import scala.annotation.tailrec
 import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -24,19 +24,6 @@ import scala.scalajs.js
   */
 class GridBuilder {
 
-  /** Вернуть cell-ширину элемента. */
-  private def _getCellWidth(item: ItemProps): Int = {
-    item.ext.blockMeta.w.relSz
-  }
-
-  /** Вернуть cell-высоту элемента. */
-  private def _getCellHeight(item: ItemProps): Int = {
-    item.ext.blockMeta.h.relSz
-  }
-
-  private def _orZero(und: js.UndefOr[Int]) = und getOrElse 0
-
-
   /** stateless вычисления координат для плитки для указанных основе исходных item'ов.
     * Создан, чтобы использовать как статическую layout-функцию, т.е. состояние билда живёт только внутри.
     *
@@ -44,7 +31,7 @@ class GridBuilder {
     * @param props Пропертисы компонента плитки.
     * @return Контейнер данных по расположению заданных элементов в плитке.
     */
-  def stoneCutterLayout(items: js.Array[ItemProps], props: PropsCommon): LayoutFunRes = {
+  def stoneCutterLayout(args: GridBuildArgs)(items: js.Array[ItemProps], props: PropsCommon): LayoutFunRes = {
     // На основе массива items надо получить массив px-координат.
     // Это можно сделать через отображение с аккамуляторами.
     // Для упрощения и ускорения, аккамуляторы снаружи от map().
@@ -57,18 +44,17 @@ class GridBuilder {
     }
 
     // leftPtrPx -- пиксельная координата левого угла. Возможно, она и не нужна.
-    var leftPtrPx = 0
-    // line и column -- это ячейки.
-    var currLine = 0
-    var currColumn = 0
+    // line и column -- это координата текущей ячейки
+    var leftPtrPx, currLine, currColumn = 0
 
-    val szMultD = props.szMult.toDouble
+    val blkSzMultD   = args.jdConf.blkSzMult.toDouble
+    val cellWidthPx  = Math.round(BlockWidths.min.value * blkSzMultD).toInt // props.columnWidth
+    val cellHeightPx = BlockHeights.min.value * blkSzMultD
 
-    val cellWidthPx  = props.columnWidth
-    val cellHeightPx = BlockHeights.min.value * szMultD
-
-    val cellPaddingWidthPx  = _orZero( props.gutterWidth )
-    val cellPaddingHeightPx = _orZero( props.gutterHeight )
+    val szMultD = args.jdConf.szMult.toDouble
+    val paddingMultedPx = Math.round(2 * args.jdConf.blockPadding.value * szMultD).toInt
+    val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
+    val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
 
     val paddedCellHeightPx = cellHeightPx + cellPaddingHeightPx
     val paddedCellWidthPx  = cellWidthPx  + cellPaddingWidthPx
@@ -86,10 +72,6 @@ class GridBuilder {
       }
       __detect(currColumn)
     }
-
-    // Посчитать cell-размер (в ячейках) на основе размера в пикселях.
-    //def getCellSizeWidth(widthPx: Int)   = (widthPx + cellPaddingWidthPx) / paddedCellWidthPx
-    //def getCellSizeHeight(heightPx: Int) = (heightPx + cellPaddingHeightPx) / paddedCellHeightPx
 
     /**
       * step() не может подобрать подходящий блок в текущей строке и хочет просто шагнуть в следующую ячейку,
@@ -113,77 +95,83 @@ class GridBuilder {
     }
 
     // Наконец, пройтись по блокам.
-    val coords = for (item <- items) yield {
-      val itemCellWidth  = _getCellWidth( item )
-      val itemCellHeight = _getCellHeight( item )
+    val coords = items.iterator
+      // zip() тут скорее для самоконтроля: чтобы при проблемах было лучше видно сами проблемы.
+      .zip( args.itemsExtDatas.toIterator )
+      .map { case (_, itemExt) =>
+        val bm = itemExt.blockMeta
+        val itemCellWidth  = bm.w.relSz
+        val itemCellHeight = bm.h.relSz
 
-      // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
-      @tailrec
-      def step(i: Int): js.Array[Int] = {
-        // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут 10 -- на один item.
-        if (i >= 20) {
-          // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
-          throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
+        // Собрать функцию поиска места для одного элемента, модифицирующую текущее состояние.
+        @tailrec
+        def step(i: Int): js.Array[Int] = {
+          // В оригинале был for-цикл с ограничением на 1000 итераций на всю плитку. Тут 10 -- на один item.
+          if (i >= 20) {
+            // return -- слишком много итераций. Обычно это симптом зависона из-за ЛОГИЧЕСКОЙ ошибки в быдлокоде.
+            throw new IllegalStateException(ErrorMsgs.ENDLESS_LOOP_MAYBE + HtmlConstants.SPACE + i)
 
-        } else if (currColumn >= colsCount) {
-          // Конец текущей строки -- перейти на следующую строку.
-          beforeStepNextLine()
-          step(i + 1)
+          } else if (currColumn >= colsCount) {
+            // Конец текущей строки -- перейти на следующую строку.
+            beforeStepNextLine()
+            step(i + 1)
 
-          // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
-        } else if ( colsInfo(currColumn).heightUsed ==* currLine ) {
-          // Высота текущей колонки равна currLine.
-          // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
-          val cellWidthMax = _getMaxCellWidthCurrLine()
+            // В оригинале была ещё ветка: if this.is_only_spacers() == true ; break
+          } else if ( colsInfo(currColumn).heightUsed ==* currLine ) {
+            // Высота текущей колонки равна currLine.
+            // есть место хотя бы для одного блока с минимальной шириной, выясним блок с какой шириной может влезть.
+            val cellWidthMax = _getMaxCellWidthCurrLine()
 
-          if (itemCellWidth <= cellWidthMax) {
-            for {
-              ci <- (currColumn until (currColumn + itemCellWidth)).iterator
-              if ci < colsCount
-            } {
-              // TODO Тут было colsInfo(currColumn).heightUsed += itemCellHeight и ПОЧЕМУ-то это нормально работало. Удалить этот TODO, если всё будет работать после фикса.
-              incrHeightUsed(ci, itemCellHeight)
-              currColumn += 1
+            if (itemCellWidth <= cellWidthMax) {
+              for {
+                ci <- (currColumn until (currColumn + itemCellWidth)).iterator
+                if ci < colsCount
+              } {
+                // TODO Тут было colsInfo(currColumn).heightUsed += itemCellHeight и ПОЧЕМУ-то это нормально работало. Удалить этот TODO, если всё будет работать после фикса.
+                incrHeightUsed(ci, itemCellHeight)
+                currColumn += 1
+              }
+
+              // Сообрать новые координаты для блока:
+              val xy = js.Array(
+                leftPtrPx,
+                Math.round(currLine * paddedCellHeightPx).toInt
+              )
+
+              // Сдвинуть текущий left на ширину блока и padding
+              leftPtrPx += itemCellWidth * cellWidthPx + cellPaddingWidthPx
+
+              // Вернуть полученные px-координаты блока.
+              xy
+
+            } else {
+              // Требуется переход в след.ячейку, оставив пустоту в этой ячейке.
+              // TODO Opt может быть, тут требуется сразу переход на след.строку?
+              incrHeightUsed(currColumn, 1)
+              beforeStepToNextCell()
+              step(i + 1)
             }
-
-            // Сообрать новые координаты для блока:
-            val xy = js.Array(
-              leftPtrPx,
-              (currLine * paddedCellHeightPx).toInt
-            )
-
-            // Сдвинуть текущий left на ширину блока и padding
-            leftPtrPx += itemCellWidth * cellWidthPx + cellPaddingWidthPx
-
-            // Вернуть полученные px-координаты блока.
-            xy
+            // Если нет следующего блока - обход закончен.
 
           } else {
-            // Требуется переход в след.ячейку, оставив пустоту в этой ячейке.
-            // TODO Opt может быть, тут требуется сразу переход на след.строку?
-            incrHeightUsed(currColumn, 1)
+            // Требуется переход на следующую ячейку.
             beforeStepToNextCell()
             step(i + 1)
           }
-          // Если нет следующего блока - обход закончен.
-
-        } else {
-          // Требуется переход на следующую ячейку.
-          beforeStepToNextCell()
-          step(i + 1)
         }
-      }
 
-      // Запустить рассчёт координат для текущего блока:
-      step(0)
-    }
+        // Запустить рассчёт координат для текущего блока:
+        step(0)
+      }
+      .toJSArray
 
     val maxCellHeight = colsInfo
-      .maxBy(_.heightUsed)
-      .heightUsed
-    val gridHeightPx = (maxCellHeight * paddedCellHeightPx).toInt
+      .iterator
+      .map(_.heightUsed)
+      .max
+    val gridHeightPx = Math.round(maxCellHeight * paddedCellHeightPx).toInt
 
-    val gridWidthPx = (colsInfo.count(_.heightUsed > 0) * paddedCellWidthPx).toInt
+    val gridWidthPx = colsInfo.count(_.heightUsed > 0) * paddedCellWidthPx
 
     // Помимо координат, надо вычислить итоговые размеры плитки.
     new LayoutFunRes {
@@ -193,4 +181,20 @@ class GridBuilder {
     }
   }
 
+  //private def _orZero(und: js.UndefOr[Int]) = und getOrElse 0
+
 }
+
+
+/** Модель доп.аргументов вызова функции, которые мы передаём вне react.
+  *
+  * В изначальной реализации была пародия на monkey-patching, что вызывало негодование
+  * со стороны react, и добавляло неопределённости относительно надёжности и долговечности такого решения.
+  *
+  * @param itemsExtDatas Итератор или коллекция доп.данных для исходного массива ItemProps, длина должна совпадать.
+  */
+case class GridBuildArgs(
+                          itemsExtDatas : TraversableOnce[ItemPropsExt],
+                          jdConf        : MJdConf
+                        )
+

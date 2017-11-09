@@ -16,9 +16,6 @@ import play.api.libs.json.Format
 /** Класс одного элемента модели. */
 sealed abstract class BlockWidth(override val value: Int) extends IBlockSize {
 
-  /** Нормированный размер в единицах размера. Для ширины по сути - 1 или 2. */
-  def relSz: Int
-
   /** Узкий размер? */
   def isNarrow: Boolean
 
@@ -29,6 +26,8 @@ sealed abstract class BlockWidth(override val value: Int) extends IBlockSize {
 
 /** Модель допустимых ширин блока. */
 case object BlockWidths extends IntEnum[BlockWidth] with IBlockSizes[BlockWidth] {
+
+  // TODO Взять значения из IBlockSize.S*. Сейчас оно не компилится даже с final.
 
   /** Самый узкий блок. */
   case object NARROW extends BlockWidth( 140 ) {

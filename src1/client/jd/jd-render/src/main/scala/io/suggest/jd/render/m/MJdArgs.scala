@@ -1,6 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.jd.MJdConf
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.scalaz.NodePath_t

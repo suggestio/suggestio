@@ -1,5 +1,6 @@
 package io.suggest.jd.render.v
 
+import io.suggest.ad.blk.IBlockSize
 import io.suggest.color.MColorData
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -34,7 +35,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
   import dsl._
 
-  val szMultD = jdCssArgs.conf.szMult.toDouble
+  //val szMultD = jdCssArgs.conf.szMult.toDouble
+
+  val blkSzMultD = jdCssArgs.conf.blkSzMult.toDouble
+
 
   // TODO Вынести статические стили в object ScCss?
   /** Все блоки помечаются этим классом. */
@@ -42,7 +46,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     addClassName("sm-block"),
     // Дефолтовые настройки шрифтов.
     fontFamily.attr := Css.quoted( MFonts.default.cssFontFamily ),
-    fontSize( (MFontSizes.default.value * szMultD).px )
+    fontSize( (MFontSizes.default.value * blkSzMultD).px )
   )
 
 
@@ -84,12 +88,16 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Стиль размеров блока-полосы.
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
-          width( (bm.width * szMultD).px ),
-          height( (bm.height * szMultD).px )
+          width ( Math.round(_repadBlockSide(bm.w) * blkSzMultD).px ),
+          height( Math.round(_repadBlockSide(bm.h) * blkSzMultD).px )
         )
       }
     }
   }
+
+  /** Короткий пересчёт стороны блока. */
+  //private def _repadBlockSide(side: IBlockSize) = IBlockSize.rePadSizePx(side, jdCssArgs.conf.blockPadding)
+  private def _repadBlockSide(side: IBlockSize) = side.value
 
   /** Стили контейнера блока с широким фоном. */
   val bmWideStyleF = {
@@ -101,7 +109,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF( wideStripsDomain ) { strip =>
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
-          height( (bm.height * szMultD).px )
+          height( Math.round(_repadBlockSide(bm.h) * blkSzMultD).px )
         )
       }
     }
@@ -145,8 +153,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(absPosDomain) { jdt =>
       jdt.props1.topLeft.whenDefinedStyleS { topLeft =>
         styleS(
-          top( (topLeft.y * szMultD).px ),
-          left( (topLeft.x * szMultD).px )
+          top( (topLeft.y * blkSzMultD).px ),
+          left( (topLeft.x * blkSzMultD).px )
         )
       }
     }
@@ -202,9 +210,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       // Если задан font-size, то нужно отрендерить его вместе с сопуствующими аттрибутами.
       for (fontSizeSU <- attrsText.size; fontSize <- fontSizeSU) {
         // Рендер размера шрифта
-        acc ::= _lineHeightAttr( (fontSize.lineHeight * szMultD).px )
+        acc ::= _lineHeightAttr( (fontSize.lineHeight * blkSzMultD).px )
         // Отрендерить размер шрифта
-        acc ::= _fontSizeAttr( (fontSize.value * szMultD).px )
+        acc ::= _fontSizeAttr( (fontSize.value * blkSzMultD).px )
       }
 
       // Вернуть скомпонованный стиль.
@@ -274,9 +282,9 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       var acc = List.empty[ToStyle]
 
       for (heightSU <- embedAttrs.height; heightPx <- heightSU)
-        acc ::= height( (heightPx * szMultD).px )
+        acc ::= height( Math.round(heightPx * blkSzMultD).px )
       for (widthSU <- embedAttrs.width; widthPx <- widthSU)
-        acc ::= width( (widthPx * szMultD).px )
+        acc ::= width( Math.round(widthPx * blkSzMultD).px )
 
       styleS(
         acc: _*
@@ -302,8 +310,8 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF( videosDomain ) { _ =>
       // Пока используем дефолтовые размеры видео-фрейма -- 300x150: https://stackoverflow.com/a/22844117
       styleS(
-        width ( (300 * szMultD).px ),
-        height( (150 * szMultD).px )
+        width ( Math.round(300 * blkSzMultD).px ),
+        height( Math.round(150 * blkSzMultD).px )
       )
     }
   }
@@ -322,6 +330,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
         e         <- jdCssArgs.edges.get( bgImg.imgEdge.edgeUid )
         origWh    <- e.origWh
       } yield {
+        //val outerWh = bm.rePadded( jdCssArgs.conf.blockPadding )
         MEmuCropCssArgs(mcrop, origWh, bm)
       }
       cropsIter.toIndexedSeq
@@ -330,6 +339,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     val cropsDomain = new Domain.OverSeq( emuCrops )
 
     styleF(cropsDomain) { ecArgs =>
+
       // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
       // margin: -20px 0px 0px -16px; -- сдвиг вверх и влево.
       // Для этого надо вписать размеры кропа в размеры блока
@@ -339,10 +349,10 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
 
       // Проецируем это отношение на натуральные размеры картинки, top и left:
       styleS(
-        width     ( (ecArgs.origWh.width  * outer2cropRatio * szMultD).px ),
-        height    ( (ecArgs.origWh.height * outer2cropRatio * szMultD).px ),
-        marginLeft( -(ecArgs.crop.offX * outer2cropRatio * szMultD).px ),
-        marginTop ( -(ecArgs.crop.offY * outer2cropRatio * szMultD).px )
+        width     ( (ecArgs.origWh.width  * outer2cropRatio * blkSzMultD).px ),
+        height    ( (ecArgs.origWh.height * outer2cropRatio * blkSzMultD).px ),
+        marginLeft( -(ecArgs.crop.offX * outer2cropRatio * blkSzMultD).px ),
+        marginTop ( -(ecArgs.crop.offY * outer2cropRatio * blkSzMultD).px )
       )
     }
   }

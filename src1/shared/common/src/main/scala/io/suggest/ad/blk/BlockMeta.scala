@@ -1,6 +1,6 @@
 package io.suggest.ad.blk
 
-import io.suggest.common.geom.d2.ISize2di
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -48,11 +48,20 @@ case class BlockMeta(
   extends ISize2di
 {
 
-  def withWidth(w: BlockWidth) = copy(w = w)
+  def withWidth(w: BlockWidth)   = copy(w = w)
   def withHeight(h: BlockHeight) = copy(h = h)
-  def withWide(wide: Boolean) = copy(wide = wide)
+  def withWide(wide: Boolean)    = copy(wide = wide)
 
   override def width = w.value
   override def height = h.value
+
+  /*
+  def rePadded(blockPadding: BlockPadding): MSize2di = {
+    MSize2di(
+      width  = IBlockSize.rePadSizePx(w, blockPadding),
+      height = IBlockSize.rePadSizePx(h, blockPadding)
+    )
+  }
+  */
 
 }

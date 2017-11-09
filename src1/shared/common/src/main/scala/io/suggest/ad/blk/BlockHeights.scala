@@ -18,9 +18,6 @@ sealed abstract class BlockHeight(override val value: Int)
   extends IBlockSize
 {
 
-  /** Относительный размер в условных "шагах". */
-  def relSz: Int
-
   override final def toString = value.toString
 
 }
@@ -29,19 +26,21 @@ sealed abstract class BlockHeight(override val value: Int)
 /** Модель высот блока. */
 case object BlockHeights extends IntEnum[BlockHeight] with IBlockSizes[BlockHeight] {
 
-  case object H140 extends BlockHeight(140) {
+  // TODO Взять значения из IBlockSize.S*. Сейчас оно не компилится даже с final.
+
+  case object H140 extends BlockHeight( 140 ) {
     override def relSz    = 1
   }
 
-  case object H300 extends BlockHeight(300) {
+  case object H300 extends BlockHeight( 300 ) {
     override def relSz    = 2
   }
 
-  case object H460 extends BlockHeight(460) {
+  case object H460 extends BlockHeight( 460 ) {
     override def relSz    = 3
   }
 
-  case object H620 extends BlockHeight(620) {
+  case object H620 extends BlockHeight( 620 ) {
     override def relSz    = 4
   }
 

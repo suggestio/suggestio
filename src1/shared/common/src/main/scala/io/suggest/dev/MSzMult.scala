@@ -20,39 +20,49 @@ object MSzMult {
   /** Поддержка play-json. */
   implicit val MSZ_MULT_FORMAT: OFormat[MSzMult] = {
     (__ \ "m").format[Int]
-      .inmap(apply, _.multPct)
+      .inmap(apply, _.multBody)
   }
 
   implicit def univEq: UnivEq[MSzMult] = UnivEq.derive
+
+  protected[dev] final val SZ_MULT_MOD = PERCENTS_COUNT * PERCENTS_COUNT
+
+  /** Приведение натуального соотношения типа 1.0 к MSzMult(100).  */
+  def fromDouble(szMultD: Double): MSzMult = {
+    val pct = (szMultD * SZ_MULT_MOD).toInt
+    apply( pct )
+  }
 
 }
 
 
 /** Класс модели коэффициента изменения размера.
   *
-  * @param multPct Размер в процентах от исходного.
-  *                Например 100 означает масштаб 100%.
+  * @param multBody Размер в целочисленных долях от исходного.
+  *                 Изначально, тут были проценты.
   */
-case class MSzMult(multPct: Int)
+case class MSzMult(multBody: Int)
   extends IntMathModifiers[MSzMult]
 {
 
+  def toIntPct = Math.round(toDouble * PERCENTS_COUNT)
+
   /** Вернуть float-значение. Таков был исходный SzMult_t. */
-  def toFloat: Float = multPct.toFloat / PERCENTS_COUNT
+  def toFloat: Float = multBody.toFloat / MSzMult.SZ_MULT_MOD
 
   /** double-значение коэффициента изменения размера.
     * Именно это и надо юзать. */
-  def toDouble: Double = multPct.toDouble / PERCENTS_COUNT
+  def toDouble: Double = multBody.toDouble / MSzMult.SZ_MULT_MOD
 
   // Пока только один int-аргумент, допускаем использование его как hash-код.
-  override def hashCode = multPct
-  override def toString = multPct + HtmlConstants.SLASH + PERCENTS_COUNT
+  override def hashCode = multBody
+  override def toString = multBody + HtmlConstants.SLASH + MSzMult.SZ_MULT_MOD
 
-  def withMultPc(multPc: Int) = copy(multPct = multPc)
+  def withMultPc(multPc: Int) = copy(multBody = multPc)
 
   override protected[this] def applyMathOp(op: IBinaryMathOp[Int], arg2: Int): MSzMult = {
     withMultPc(
-      op(multPct, arg2)
+      op(multBody, arg2)
     )
   }
 
@@ -63,19 +73,19 @@ case class MSzMult(multPct: Int)
 object MSzMults {
 
   /** Половинный размер. */
-  def `0.5`   = MSzMult(PERCENTS_COUNT / 2)
+  def `0.5`   = MSzMult(MSzMult.SZ_MULT_MOD / 2)
 
   /** Нормальный размер. */
-  def `1.0`   = MSzMult(PERCENTS_COUNT)
+  def `1.0`   = MSzMult(MSzMult.SZ_MULT_MOD)
 
   /** Полуторный размер. */
-  def `1.5`   = MSzMult(PERCENTS_COUNT + PERCENTS_COUNT/2)
+  def `1.5`   = MSzMult(MSzMult.SZ_MULT_MOD + MSzMult.SZ_MULT_MOD/2)
 
   /** Удвоенный размер. */
-  def `2.0`   = MSzMult(PERCENTS_COUNT * 2)
+  def `2.0`   = MSzMult(MSzMult.SZ_MULT_MOD * 2)
 
   /** Утроенный размер. */
-  def `3.0`   = MSzMult(PERCENTS_COUNT * 3)
+  def `3.0`   = MSzMult(MSzMult.SZ_MULT_MOD * 3)
 
 
   /** Добавить в аккамуляторы все элементы кроме 3.0. */

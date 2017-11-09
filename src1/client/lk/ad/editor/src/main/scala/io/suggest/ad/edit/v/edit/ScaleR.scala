@@ -61,7 +61,7 @@ class ScaleR(
           .value
           .iterator
           .flatMap(_.variants)
-          .find(_.multPct ==* szMultPct)
+          .find(_.multBody ==* szMultPct)
           .fold(Callback.empty) { szMult =>
             propsOptProxy.dispatchCB( SetScale(szMult) )
           }
@@ -79,15 +79,15 @@ class ScaleR(
 
           <.select(
             ^.`type`   := HtmlConstants.Input.select,
-            ^.value    := props.current.multPct.toString,
+            ^.value    := props.current.multBody.toString,
             ^.onChange ==> onScaleChange,
 
             props.variants.toVdomArray { szMult =>
-              val code = szMult.multPct.toString
+              val code = szMult.multBody.toString
               <.option(
                 ^.key   := code,
                 ^.value := code,
-                szMult.multPct.pct
+                szMult.toIntPct.pct
               )
             }
           )

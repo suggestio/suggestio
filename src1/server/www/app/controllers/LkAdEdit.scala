@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import io.suggest.ad.blk.{BlockPadding, BlockPaddings}
 import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
 import io.suggest.color.MHistogram
@@ -110,7 +111,8 @@ class LkAdEdit @Inject() (
       } yield {
         val formInit = MAdEditFormInit(
           conf = formConf,
-          form = docForm
+          form = docForm,
+          blockPadding = prodBlockPadding(request.mnode)
         )
         _formInit2str( formInit )
       }
@@ -367,7 +369,8 @@ class LkAdEdit @Inject() (
                       form = MAdEditForm(
                         template  = tpl2,
                         edges     = edges2
-                      )
+                      ),
+                      blockPadding = prodBlockPadding(request.producer)
                     )
 
                     Ok( Json.toJson(formReInit2) )
@@ -573,7 +576,8 @@ class LkAdEdit @Inject() (
           form = MAdEditForm(
             template  = nodeDoc.template,
             edges     = edEdges
-          )
+          ),
+          blockPadding = prodBlockPadding(request.producer)
         )
         _formInit2str( formInit )
       }
@@ -641,6 +645,11 @@ class LkAdEdit @Inject() (
     Json.toJson(formInit).toString()
   }
 
+
+  private def prodBlockPadding(producer: MNode): BlockPadding = {
+    // Реализация подсистемы управления интервалом плитки отложена на потом: быстро сделать не удалось.
+    BlockPaddings.default
+  }
 
 
   /** Экшен подготовки к загрузке файла на сервер.

@@ -1,6 +1,7 @@
 package io.suggest.jd.render.m
 
 import diode.FastEq
+import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs

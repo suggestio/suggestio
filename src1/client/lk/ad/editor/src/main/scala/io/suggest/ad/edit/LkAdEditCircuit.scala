@@ -4,7 +4,8 @@ import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
 import MDocS.MDocSFastEq
-import io.suggest.jd.render.m.{MJdArgs, MJdConf, MJdCssArgs, MJdRenderArgs}
+import io.suggest.ad.blk.BlockPaddings
+import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import play.api.libs.json.Json
@@ -22,6 +23,7 @@ import io.suggest.ad.form.AdFormConstants
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
+import io.suggest.jd.MJdConf
 import io.suggest.spa.{OptFastEq, StateInp}
 import io.suggest.ws.pool.{WsChannelApiHttp, WsPoolAh}
 import io.suggest.ueq.UnivEqUtil._
@@ -71,9 +73,11 @@ class LkAdEditCircuit(
 
       doc  = {
         val jdConf = MJdConf(
-          isEdit  = true,
-          szMult    = MSzMults.`1.0`,
-          oneJdGrid = AdFormConstants.USE_GRID_IN_EDITOR
+          isEdit            = true,
+          szMult            = MSzMults.`1.0`,
+          oneJdGrid         = AdFormConstants.USE_GRID_IN_EDITOR,
+          blockPadding      = mFormInit.blockPadding,
+          gridColumnsCount  = 2
         )
         val tpl = mFormInit.form.template
         val edges = mFormInit.form.edgesMap
