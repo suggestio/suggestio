@@ -238,6 +238,11 @@ object Css {
 
     }
 
+    object Submit {
+      def SUBMIT = "submit"
+      def SUBMIT_W = SUBMIT + "-w"
+    }
+
   }
 
 

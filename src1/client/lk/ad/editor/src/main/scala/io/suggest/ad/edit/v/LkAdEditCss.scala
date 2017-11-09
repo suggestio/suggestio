@@ -56,7 +56,10 @@ class LkAdEditCss extends StyleSheet.Inline {
 
     private def _PREFIX = "lk-ad-block-edit-form"
 
-    val outerCont = _classNameStyle( _PREFIX )
+    val outerCont = style(
+      addClassName( _PREFIX ),
+      display.tableRow
+    )
 
     private def _PREVIEW_OUTER_CONT_PREFIX = _PREFIX + "__preview"
     val previewOuterCont = {
@@ -83,8 +86,8 @@ class LkAdEditCss extends StyleSheet.Inline {
 
 
     val scaleInputCont = style(
-      addClassName( Css.Input.INPUT ),
-      maxWidth( 100.px )
+      addClassNames( Css.Input.INPUT, "ad-ed_scale-cont" ),
+      maxWidth( 300.px )
     )
 
   }

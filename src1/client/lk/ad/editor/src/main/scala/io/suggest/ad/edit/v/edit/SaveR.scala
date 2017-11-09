@@ -51,6 +51,7 @@ class SaveR {
       val isPending = p.currentReq.isPending
 
       <.div(
+        ^.`class` := Css.Floatt.RIGHT,
 
         <.a(
           ^.classSet1(

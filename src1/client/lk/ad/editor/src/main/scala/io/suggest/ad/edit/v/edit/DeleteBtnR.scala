@@ -49,6 +49,7 @@ class DeleteBtnR {
         val isPending = props.deleteConfirm.exists(_.request.isPending)
 
           <.div(
+            ^.`class` := Css.Floatt.LEFT,
 
             <.a(
               ^.classSet1(

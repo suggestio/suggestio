@@ -1,5 +1,6 @@
 package io.suggest.ad.edit.v
 
+import com.github.daviferreira.react.sanfona.{Accordion, AccordionItem, AccordionItemProps, AccordionProps}
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
@@ -13,12 +14,16 @@ import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
+import io.suggest.i18n.MsgCodes
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.sjs.common.i18n.Messages
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 
+import scala.scalajs.js
+import scala.scalajs.js.UndefOr
 import scalacss.ScalaCssReact._
 
 /**
@@ -103,6 +108,9 @@ class LkAdEditFormR(
           <.div(
             LCSS.previewOuterCont,
 
+            // Селектор масштаба карточки.
+            s.scalePropsOptC { scaleR.apply },
+
             <.div(
               LCSS.previewInnerCont,
 
@@ -119,45 +127,78 @@ class LkAdEditFormR(
           s.rightYOptC { rightYOptProxy =>
             <.div(
               LCSS.editorsCont,
-
               rightYOptProxy.value.whenDefined { rightY =>
                 //^.paddingTop := rightY.px
                 ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
               },
 
-              // Редактор strip'а
-              s.stripEdOptC { stripPropsOptProxy =>
-                stripEditR(stripPropsOptProxy)(
-                  <.div(
-                    // Управление картинкой, если доступно:
-                    s.picPropsOptC { pictureR.apply },
 
-                    // Управление main-блоками.
-                    s.useAsMainStripPropsOptC { useAsMainR.apply }
-                  )
+              Accordion(
+                new AccordionProps {
+                  override val allowMultiple = false
+                }
+              )(
+
+                AccordionItem.component.withKey( MsgCodes.`Block` )(
+                  new AccordionItemProps {
+                    override val title = js.defined {
+                      Messages( MsgCodes.`Block` )
+                    }
+                  }
+                )(
+                  // Редактор strip'а
+                  s.stripEdOptC { stripPropsOptProxy =>
+                    stripEditR(stripPropsOptProxy)(
+                      <.div(
+                        // Управление картинкой, если доступно:
+                        s.picPropsOptC { pictureR.apply },
+
+                        // Управление main-блоками.
+                        s.useAsMainStripPropsOptC { useAsMainR.apply }
+                      )
+                    )
+                  }
+                ),
+
+                // Редактор текста
+                AccordionItem.component.withKey( MsgCodes.`Content` )(
+                  new AccordionItemProps {
+                    override val title = js.defined {
+                      Messages( MsgCodes.`Content` )
+                    }
+                  }
+                )(
+                  s.qdEditOptC { qdEditR.apply }
+                ),
+
+                // Форма добавления новых элементов.
+                AccordionItem.component.withKey( MsgCodes.`Create` )(
+                  new AccordionItemProps {
+                    override val title = js.defined {
+                      Messages( MsgCodes.`Create` )
+                    }
+                  }
+                )(
+                  s.addC { addR.apply }
                 )
-              },
 
-              // Редактор текста
-              s.qdEditOptC { qdEditR.apply },
-
-              <.br,
-
-              // Форма добавления новых элементов.
-              s.addC { addR.apply },
-
-              // Селектор масштаба карточки.
-              s.scalePropsOptC { scaleR.apply },
-
-              <.br,
-              // Кнопка сохранения карточки.
-              s.savePropsC { saveR.apply },
-
-              // Кнопка удаления карточки.
-              s.deletePropsOptC { deleteBtnR.apply }
+              )
 
             )
           }
+
+        ),
+
+        <.br,
+
+        <.div(
+          ^.`class` := Css.flat( Css.Lk.Submit.SUBMIT_W, Css.Size.M ),
+
+          // Кнопка удаления карточки.
+          s.deletePropsOptC { deleteBtnR.apply },
+
+          // Кнопка сохранения карточки.
+          s.savePropsC { saveR.apply }
 
         )
       )
