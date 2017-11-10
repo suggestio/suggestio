@@ -1,10 +1,14 @@
 package io.suggest.ad.edit.v
 
 import com.github.daviferreira.react.sanfona.{Accordion, AccordionItem, AccordionItemProps, AccordionProps}
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.MAddS
+import io.suggest.ad.edit.m.edit.color.MColorPick
+import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
-import io.suggest.ad.edit.v.edit.strip.StripEditR
+import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
@@ -15,15 +19,16 @@ import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
 import io.suggest.quill.v.QuillCss
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
+import io.suggest.jd.tags.MJdTagNames
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
+import japgolly.univeq._
 
 import scala.scalajs.js
-import scala.scalajs.js.UndefOr
 import scalacss.ScalaCssReact._
 
 /**
@@ -33,45 +38,55 @@ import scalacss.ScalaCssReact._
   * Description: React-компонент всей формы react-редактора карточек.
   */
 class LkAdEditFormR(
-                     jdCssR             : JdCssR,
-                     jdR                : JdR,
-                     addR               : AddR,
-                     val stripEditR     : StripEditR,
-                     lkAdEditCss        : LkAdEditCss,
-                     quillCssFactory    : => QuillCss,
-                     val qdEditR        : QdEditR,
-                     val scaleR         : ScaleR,
-                     val pictureR       : PictureR,
-                     val saveR          : SaveR,
-                     val useAsMainR     : UseAsMainR,
-                     val deleteBtnR     : DeleteBtnR
+                     jdCssR                     : JdCssR,
+                     jdR                        : JdR,
+                     addR                       : AddR,
+                     lkAdEditCss                : LkAdEditCss,
+                     quillCssFactory            : => QuillCss,
+                     val qdEditR                : QdEditR,
+                     val scaleR                 : ScaleR,
+                     val pictureR               : PictureR,
+                     val saveR                  : SaveR,
+                     val useAsMainR             : UseAsMainR,
+                     val deleteBtnR             : DeleteBtnR,
+                     val plusMinusControlsR     : PlusMinusControlsR,
+                     deleteStripBtnR            : DeleteStripBtnR,
+                     val showWideR              : ShowWideR,
+                     colorPickR                 : ColorPickR
                    ) {
 
   import MAddS.MAddSFastEq
   import MJdArgs.MJdWithArgsFastEq
   import qdEditR.QdEditRPropsValFastEq
-  import stripEditR.StripEditRPropsValFastEq
   import scaleR.ScaleRPropsValFastEq
   import pictureR.PictureRPropsValFastEq
   import saveR.SaveRPropsValFastEq
   import useAsMainR.UseAdMainPropsValFastEq
   import deleteBtnR.DeleteBtnRPropsValFastEq
+  import plusMinusControlsR.PlusMinusControlsPropsValFastEq
+  import MStripEdS.MStripEdSFastEq
+  import showWideR.ShowWideRPropsValFastEq
+  import MColorPick.MColorPickFastEq
 
   type Props = ModelProxy[MAeRoot]
 
   /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
   protected case class State(
-                              jdPreviewArgsC    : ReactConnectProxy[MJdArgs],
-                              jdCssArgsC        : ReactConnectProxy[JdCss],
-                              addC              : ReactConnectProxy[Option[MAddS]],
-                              stripEdOptC       : ReactConnectProxy[Option[stripEditR.PropsVal]],
-                              picPropsOptC      : ReactConnectProxy[Option[pictureR.PropsVal]],
-                              qdEditOptC        : ReactConnectProxy[Option[qdEditR.PropsVal]],
-                              scalePropsOptC    : ReactConnectProxy[Option[scaleR.PropsVal]],
-                              rightYOptC        : ReactConnectProxy[Option[Int]],
-                              savePropsC        : ReactConnectProxy[saveR.PropsVal],
-                              useAsMainStripPropsOptC : ReactConnectProxy[Option[useAsMainR.PropsVal]],
-                              deletePropsOptC   : ReactConnectProxy[Option[deleteBtnR.PropsVal]]
+                              jdPreviewArgsC              : ReactConnectProxy[MJdArgs],
+                              jdCssArgsC                  : ReactConnectProxy[JdCss],
+                              addC                        : ReactConnectProxy[Option[MAddS]],
+                              picPropsOptC                : ReactConnectProxy[Option[pictureR.PropsVal]],
+                              qdEditOptC                  : ReactConnectProxy[Option[qdEditR.PropsVal]],
+                              scalePropsOptC              : ReactConnectProxy[Option[scaleR.PropsVal]],
+                              rightYOptC                  : ReactConnectProxy[Option[Int]],
+                              savePropsC                  : ReactConnectProxy[saveR.PropsVal],
+                              useAsMainStripPropsOptC     : ReactConnectProxy[Option[useAsMainR.PropsVal]],
+                              deletePropsOptC             : ReactConnectProxy[Option[deleteBtnR.PropsVal]],
+                              heightPropsOptC             : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
+                              widthPropsOptC              : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
+                              stripEdSOptC                : ReactConnectProxy[Option[MStripEdS]],
+                              showWidePropsOptC           : ReactConnectProxy[Option[showWideR.PropsVal]],
+                              stripBgColorPropsOptC       : ReactConnectProxy[Option[MColorPick]]
                             )
 
   protected class Backend($: BackendScope[Props, State]) {
@@ -147,15 +162,36 @@ class LkAdEditFormR(
                   }
                 )(
                   // Редактор strip'а
-                  s.stripEdOptC { stripPropsOptProxy =>
-                    stripEditR(stripPropsOptProxy)(
-                      <.div(
-                        // Управление картинкой, если доступно:
-                        s.picPropsOptC { pictureR.apply },
+                  s.stripEdSOptC { _ =>
+                    <.div(
 
-                        // Управление main-блоками.
-                        s.useAsMainStripPropsOptC { useAsMainR.apply }
-                      )
+                      // Кнопки управление шириной и высотой блока.
+                      <.div(
+                        lkAdEditCss.WhControls.outer,
+                        s.heightPropsOptC { plusMinusControlsR.apply },
+                        s.widthPropsOptC { plusMinusControlsR.apply }
+                      ),
+
+                      // Управление картинкой, если доступно:
+                      s.picPropsOptC { pictureR.apply },
+
+                      // Выбор цвета фона блока.
+                      s.stripBgColorPropsOptC { colorOptProxy =>
+                        colorPickR(colorOptProxy)(
+                          // TODO Opt Рендер необязателен из-за Option, но список children не ленив. Можно ли это исправить, кроме как передавая суть children внутри props?
+                          Messages( MsgCodes.`Bg.color` )
+                        )
+                      },
+
+                      // Галочка широкого рендера фона.
+                      s.showWidePropsOptC { showWideR.apply },
+
+                      // Управление main-блоками.
+                      s.useAsMainStripPropsOptC { useAsMainR.apply },
+
+                      // Кнопка удаления текущего блока.
+                      s.stripEdSOptC { deleteStripBtnR.apply },
+
                     )
                   }
                 ),
@@ -209,6 +245,21 @@ class LkAdEditFormR(
 
   val component = ScalaComponent.builder[Props]("AdEd")
     .initialStateFromProps { p =>
+
+      // Фунция с дедублицированным кодом сборки коннекшена до пропертисов plus-minus control'ов (для стрипов).
+      def __mkStripBmC[T: FastEq](f: BlockMeta => T) = {
+        p.connect { mroot =>
+          for {
+            selJdtTree <- mroot.doc.jdArgs.selectedTag
+            selJdt = selJdtTree.rootLabel
+            if selJdt.name ==* MJdTagNames.STRIP
+            bm     <- selJdt.props1.bm
+          } yield {
+            f(bm)
+          }
+        }( OptFastEq.Wrapped )
+      }
+
       State(
         jdPreviewArgsC = p.connect { mroot =>
           mroot.doc.jdArgs
@@ -221,19 +272,6 @@ class LkAdEditFormR(
         addC = p.connect { mroot =>
           mroot.doc.addS
         }(OptFastEq.Wrapped),
-
-        stripEdOptC = p.connect { mroot =>
-          for {
-            stripEd <- mroot.doc.stripEd
-            selJdt  <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
-          } yield {
-            stripEditR.PropsVal(
-              strip         = selJdt,
-              edS           = stripEd,
-              colorsState   = mroot.doc.colorsState
-            )
-          }
-        }( OptFastEq.Wrapped ),
 
         picPropsOptC = p.connect { mroot =>
           for {
@@ -317,6 +355,48 @@ class LkAdEditFormR(
           } yield {
             deleteBtnR.PropsVal(
               deleteConfirm = mroot.popups.deleteConfirm
+            )
+          }
+        }( OptFastEq.Wrapped ),
+
+        heightPropsOptC = __mkStripBmC { bm =>
+          plusMinusControlsR.PropsVal(
+            labelMsgCode  = MsgCodes.`Height`,
+            contCss       = lkAdEditCss.WhControls.contHeight,
+            model         = BlockHeights,
+            current       = bm.h
+          )
+        },
+        widthPropsOptC = __mkStripBmC { bm =>
+          plusMinusControlsR.PropsVal(
+            labelMsgCode  = MsgCodes.`Width`,
+            contCss       = lkAdEditCss.WhControls.contWidth,
+            model         = BlockWidths,
+            current       = bm.w
+          )
+        },
+
+        stripEdSOptC = p.connect { mroot =>
+          mroot.doc.stripEd
+        }( OptFastEq.Wrapped ),
+
+        showWidePropsOptC = __mkStripBmC { bm =>
+          showWideR.PropsVal(
+            checked = bm.wide
+          )
+        },
+
+        stripBgColorPropsOptC = p.connect { mroot =>
+          for {
+            stripEd <- mroot.doc.stripEd
+            selJdtTree <- mroot.doc.jdArgs.selectedTag
+            selJdt = selJdtTree.rootLabel
+            if selJdt.name ==* MJdTagNames.STRIP
+          } yield {
+            MColorPick(
+              colorOpt    = selJdt.props1.bgColor,
+              colorsState = mroot.doc.colorsState,
+              pickS       = stripEd.bgColorPick
             )
           }
         }( OptFastEq.Wrapped )
