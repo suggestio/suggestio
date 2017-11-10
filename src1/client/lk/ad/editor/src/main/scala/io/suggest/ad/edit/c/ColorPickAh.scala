@@ -4,6 +4,7 @@ import diode.{ActionHandler, ActionResult, ModelRW}
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange, DocBodyClick}
 import io.suggest.color.MColorData
+import io.suggest.common.empty.OptionUtil
 
 /**
   * Suggest.io
@@ -35,7 +36,8 @@ class ColorPickAh[M](
     case DocBodyClick if value.exists(_.pickS.isShown) =>
       val v0 = value.get
       val v2 = v0.withPickS(
-        v0.pickS.withIsShown( false )
+        v0.pickS
+          .withShownAt( None )
       )
       updated( Some(v2) )
 
@@ -82,10 +84,14 @@ class ColorPickAh[M](
 
 
     // Сигнал клика по селектору цвета.
-    case ColorBtnClick =>
+    case m: ColorBtnClick =>
       val v0 = value.get
+      val shownAt2 = OptionUtil.maybe( !v0.pickS.isShown ) {
+        m.vpXy
+      }
       val v2 = v0.withPickS(
-        v0.pickS.withIsShownInverted
+        v0.pickS
+          .withShownAt( shownAt2 )
       )
       updated( Some(v2) )
 

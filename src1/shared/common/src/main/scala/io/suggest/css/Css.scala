@@ -252,7 +252,7 @@ object Css {
       final def TITLE     = _PREFIX + "_title"
       final def TITLE_BTN = _PREFIX + "_btn"
       final def BODY      = _PREFIX + "_cnt"
-      final def TITLE_OPENED = __ + "js-open"
+      final def OPENED    = __ + "js-open"
     }
 
   } // Lk

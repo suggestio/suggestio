@@ -3,11 +3,12 @@ package io.suggest.ad.edit.v
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
-import io.suggest.ad.edit.m.edit.color.MColorPick
+import io.suggest.ad.edit.m.edit.color.MColorPickerS
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
+import io.suggest.ad.edit.v.edit.color.{ColorCheckboxR, ColorPickerR}
 import io.suggest.scalaz.ZTreeUtil._
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
@@ -50,8 +51,9 @@ class LkAdEditFormR(
                      val plusMinusControlsR     : PlusMinusControlsR,
                      deleteStripBtnR            : DeleteStripBtnR,
                      val showWideR              : ShowWideR,
-                     colorPickR                 : ColorPickR,
-                     val slideBlockR            : SlideBlockR
+                     val colorCheckboxR         : ColorCheckboxR,
+                     val slideBlockR            : SlideBlockR,
+                     val colorPickerR           : ColorPickerR
                    ) {
 
   import MJdArgs.MJdWithArgsFastEq
@@ -64,28 +66,29 @@ class LkAdEditFormR(
   import plusMinusControlsR.PlusMinusControlsPropsValFastEq
   import MStripEdS.MStripEdSFastEq
   import showWideR.ShowWideRPropsValFastEq
-  import MColorPick.MColorPickFastEq
+  import colorCheckboxR.ColorCheckboxPropsValFastEq
   import slideBlockR.SlideBlockPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
   /** Состояние компонента содержит model-коннекшены для подчинённых компонентов. */
   protected case class State(
-                              jdPreviewArgsC              : ReactConnectProxy[MJdArgs],
-                              jdCssArgsC                  : ReactConnectProxy[JdCss],
-                              picPropsOptC                : ReactConnectProxy[Option[pictureR.PropsVal]],
-                              qdEditOptC                  : ReactConnectProxy[Option[qdEditR.PropsVal]],
-                              scalePropsOptC              : ReactConnectProxy[Option[scaleR.PropsVal]],
-                              rightYOptC                  : ReactConnectProxy[Option[Int]],
-                              savePropsC                  : ReactConnectProxy[saveR.PropsVal],
-                              useAsMainStripPropsOptC     : ReactConnectProxy[Option[useAsMainR.PropsVal]],
-                              deletePropsOptC             : ReactConnectProxy[Option[deleteBtnR.PropsVal]],
-                              heightPropsOptC             : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
-                              widthPropsOptC              : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
-                              stripEdSOptC                : ReactConnectProxy[Option[MStripEdS]],
-                              showWidePropsOptC           : ReactConnectProxy[Option[showWideR.PropsVal]],
-                              stripBgColorPropsOptC       : ReactConnectProxy[Option[MColorPick]],
-                              slideBlocks                 : SlideBlocksState
+                              jdPreviewArgsC                  : ReactConnectProxy[MJdArgs],
+                              jdCssArgsC                      : ReactConnectProxy[JdCss],
+                              picPropsOptC                    : ReactConnectProxy[Option[pictureR.PropsVal]],
+                              qdEditOptC                      : ReactConnectProxy[Option[qdEditR.PropsVal]],
+                              scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
+                              rightYOptC                      : ReactConnectProxy[Option[Int]],
+                              savePropsC                      : ReactConnectProxy[saveR.PropsVal],
+                              useAsMainStripPropsOptC         : ReactConnectProxy[Option[useAsMainR.PropsVal]],
+                              deletePropsOptC                 : ReactConnectProxy[Option[deleteBtnR.PropsVal]],
+                              heightPropsOptC                 : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
+                              widthPropsOptC                  : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
+                              stripEdSOptC                    : ReactConnectProxy[Option[MStripEdS]],
+                              showWidePropsOptC               : ReactConnectProxy[Option[showWideR.PropsVal]],
+                              stripBgColorCheckBoxPropsOptC   : ReactConnectProxy[Option[colorCheckboxR.PropsVal]],
+                              slideBlocks                     : SlideBlocksState,
+                              colors                          : ColorsState
                             )
 
   case class SlideBlocksState(
@@ -94,6 +97,11 @@ class LkAdEditFormR(
                                content  : ReactConnectProxy[Option[slideBlockR.PropsVal]],
                                create   : ReactConnectProxy[Option[slideBlockR.PropsVal]]
                              )
+
+  case class ColorsState(
+                          picker        : ReactConnectProxy[Option[colorPickerR.PropsVal]]
+                        )
+
 
   protected class Backend($: BackendScope[Props, State]) {
 
@@ -183,8 +191,8 @@ class LkAdEditFormR(
                 slideBlockR(propsOpt)(
                   <.div(
                     // Выбор цвета фона блока.
-                    s.stripBgColorPropsOptC { colorOptProxy =>
-                      colorPickR(colorOptProxy)(
+                    s.stripBgColorCheckBoxPropsOptC { colorOptProxy =>
+                      colorCheckboxR(colorOptProxy)(
                         // TODO Opt Рендер необязателен из-за Option, но список children не ленив. Можно ли это исправить, кроме как передавая суть children внутри props?
                         Messages( MsgCodes.`Bg.color` )
                       )
@@ -214,7 +222,10 @@ class LkAdEditFormR(
               }
 
             )
-          }
+          },
+
+          // ПослеБаяние: впихнуть сюда абсолютно-плавающие color-picker'ы.
+          s.colors.picker { colorPickerR.apply }
 
         ),
 
@@ -251,6 +262,11 @@ class LkAdEditFormR(
             f(bm)
           }
         }( OptFastEq.Wrapped )
+      }
+
+      // Функция сборки
+      def __colorPickerState(f: MAeRoot => Option[MColorPickerS]) = {
+
       }
 
       State(
@@ -295,8 +311,7 @@ class LkAdEditFormR(
           } yield {
             qdEditR.PropsVal(
               qdEdit      = qdEdit,
-              bgColor     = selJd.props1.bgColor,
-              colorsState = mroot.doc.colorsState
+              bgColor     = selJd.props1.bgColor
             )
           }
         }( OptFastEq.Wrapped ),
@@ -375,17 +390,15 @@ class LkAdEditFormR(
           )
         },
 
-        stripBgColorPropsOptC = p.connect { mroot =>
+        stripBgColorCheckBoxPropsOptC = p.connect { mroot =>
           for {
-            stripEd <- mroot.doc.stripEd
+            _ <- mroot.doc.stripEd
             selJdtTree <- mroot.doc.jdArgs.selectedTag
             selJdt = selJdtTree.rootLabel
             if selJdt.name ==* MJdTagNames.STRIP
           } yield {
-            MColorPick(
-              colorOpt    = selJdt.props1.bgColor,
-              colorsState = mroot.doc.colorsState,
-              pickS       = stripEd.bgColorPick
+            colorCheckboxR.PropsVal(
+              color         = selJdt.props1.bgColor
             )
           }
         }( OptFastEq.Wrapped ),
@@ -446,6 +459,29 @@ class LkAdEditFormR(
                   expanded  = mroot.doc.slideBlocks.expanded.contains(k),
                   key       = Some(k)
                 )
+              )
+            }
+          }
+        ),
+
+        colors = ColorsState(
+          picker = p.connect { mroot =>
+            for {
+              pickerS <- {
+                mroot.doc.stripEd
+                  .orElse {
+                    mroot.doc.qdEdit
+                  }
+                  .map(_.bgColorPick)
+              }
+              shownAt     <- pickerS.shownAt
+              selJdtTree  <- mroot.doc.jdArgs.selectedTag
+              bgColor     <- selJdtTree.rootLabel.props1.bgColor
+            } yield {
+              colorPickerR.PropsVal(
+                color       = bgColor,
+                colorsState = mroot.doc.colorsState,
+                fixedXy     = shownAt
               )
             }
           }

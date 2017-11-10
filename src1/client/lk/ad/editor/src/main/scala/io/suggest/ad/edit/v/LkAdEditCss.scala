@@ -120,6 +120,10 @@ class LkAdEditCss
       )
     }
 
+    val pickerCont = style(
+      position.fixed
+    )
+
   }
 
 

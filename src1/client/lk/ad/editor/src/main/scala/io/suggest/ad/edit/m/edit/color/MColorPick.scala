@@ -35,10 +35,10 @@ object MColorPick {
   * @param pickS Состояние конкретного color picker'а.
   */
 case class MColorPick(
-                         colorOpt     : Option[MColorData],
-                         colorsState  : MColorsState,
-                         pickS        : MColorPickerS
-                       ) {
+                       colorOpt     : Option[MColorData],
+                       colorsState  : MColorsState,
+                       pickS        : MColorPickerS
+                     ) {
 
   def withColorOpt(colorOpt: Option[MColorData]) = copy(colorOpt = colorOpt)
   def withColorsState(colorsState: MColorsState) = copy(colorsState = colorsState)

@@ -2,6 +2,7 @@ package io.suggest.ad.edit.m.edit.color
 
 import diode.FastEq
 import io.suggest.color.MColorData
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.primo.TypeT
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -21,7 +22,7 @@ object MColorPickerS {
   implicit object MColorPickerSFastEq extends FastEq[MColorPickerS] {
     override def eqv(a: MColorPickerS, b: MColorPickerS): Boolean = {
       (a.oldColor ===* b.oldColor) &&
-        (a.isShown ==* b.isShown)
+        (a.shownAt ===* b.shownAt)
     }
   }
 
@@ -33,17 +34,17 @@ object MColorPickerS {
 /** Класс модели color picker'а.
   *
   * @param oldColor Старый цвет. Удобно, когда юзер цвет отключил, а потом включил.
-  * @param isShown Открыт ли picker сейчас?
+  * @param shownAt Если открыт пикер, то тут координата относительно viewport.
   */
 case class MColorPickerS(
                           oldColor      : Option[MColorData]    = None,
-                          isShown       : Boolean               = false
+                          shownAt       : Option[MCoords2di]    = None
                         ) {
 
   def withOldColor(oldColor: Option[MColorData]) = copy(oldColor = oldColor)
-  def withIsShown(isShown: Boolean) = copy(isShown = isShown)
+  def withShownAt(shownAt: Option[MCoords2di])   = copy(shownAt = shownAt)
 
-  def withIsShownInverted = withIsShown( !isShown )
+  def isShown = shownAt.nonEmpty
 
 }
 

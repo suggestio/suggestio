@@ -4,6 +4,7 @@ import com.github.dominictobias.react.image.crop.{PercentCrop, PixelCrop}
 import io.suggest.ad.blk.{IBlockSize, IBlockSizes}
 import io.suggest.color.MColorData
 import io.suggest.common.MHand
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.crypto.hash.MHash
 import io.suggest.dev.MSzMult
@@ -67,7 +68,7 @@ case class ColorCheckboxChange(isEnabled: Boolean) extends ILkEditAction
 case class ColorChanged(mcd: MColorData, isCompleted: Boolean, forceTransform: Boolean = false) extends ILkEditAction
 
 /** Клик на "цвете" для выбора цвета. */
-case object ColorBtnClick extends ILkEditAction
+case class ColorBtnClick(vpXy: MCoords2di) extends ILkEditAction
 
 /** Клик просто где-то в body. */
 case object DocBodyClick extends ILkEditAction

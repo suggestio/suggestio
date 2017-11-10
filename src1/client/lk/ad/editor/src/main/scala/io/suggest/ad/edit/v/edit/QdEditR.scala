@@ -4,6 +4,8 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.edit.m.edit.color.{MColorPick, MColorsState}
 import io.suggest.ad.edit.m.edit.MQdEditS
+import io.suggest.ad.edit.v.LkAdEditCss
+import io.suggest.ad.edit.v.edit.color.ColorCheckboxR
 import io.suggest.color.MColorData
 import io.suggest.i18n.MsgCodes
 import io.suggest.quill.v.QuillEditorR
@@ -21,21 +23,20 @@ import japgolly.scalajs.react.vdom.html_<^._
   */
 class QdEditR(
                val quillEditorR   : QuillEditorR,
-               colorPickR         : ColorPickR,
+               val colorCheckboxR : ColorCheckboxR,
              ) {
 
   import quillEditorR.PropsValFastEq
+  import colorCheckboxR.ColorCheckboxPropsValFastEq
 
   case class PropsVal(
                        qdEdit       : MQdEditS,
-                       bgColor      : Option[MColorData],
-                       colorsState  : MColorsState
+                       bgColor      : Option[MColorData]
                      )
   implicit object QdEditRPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.qdEdit eq b.qdEdit) &&
-        (a.bgColor eq b.bgColor) &&
-        (a.colorsState eq b.colorsState)
+        (a.bgColor eq b.bgColor)
     }
   }
 
@@ -43,8 +44,8 @@ class QdEditR(
 
   /** Класс модели внутреннего состояния компонента. */
   protected case class State(
-                              quillEdOptC       : ReactConnectProxy[Option[quillEditorR.PropsVal]],
-                              colorPickOptS     : ReactConnectProxy[Option[MColorPick]]
+                              quillEdOptC                   : ReactConnectProxy[Option[quillEditorR.PropsVal]],
+                              bgColorCheckBoxPropsOptC      : ReactConnectProxy[Option[colorCheckboxR.PropsVal]]
                             )
 
 
@@ -60,8 +61,8 @@ class QdEditR(
         <.br,
 
         // Цвет фона контента.
-        s.colorPickOptS {
-          colorPickR(_)(
+        s.bgColorCheckBoxPropsOptC {
+          colorCheckboxR(_)(
             Messages( MsgCodes.`Bg.color` )
           )
         }
@@ -87,6 +88,7 @@ class QdEditR(
           }
         }( OptFastEq.Wrapped ),
 
+        /*
         colorPickOptS = propsOptProxy.connect { propsOpt =>
           for (props <- propsOpt) yield {
             MColorPick(
@@ -96,6 +98,16 @@ class QdEditR(
             )
           }
         }( OptFastEq.Wrapped )
+        */
+
+        bgColorCheckBoxPropsOptC = propsOptProxy.connect { propsOpt =>
+          for (props <- propsOpt) yield {
+            colorCheckboxR.PropsVal(
+              color = props.bgColor
+            )
+          }
+        }( OptFastEq.Wrapped )
+
       )
     }
     .renderBackend[Backend]

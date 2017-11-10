@@ -1,22 +1,23 @@
-package io.suggest.ad.edit.v.edit
+package io.suggest.ad.edit.v.edit.color
 
-import com.github.casesandberg.react.color._
+import diode.FastEq
 import diode.react.ModelProxy
-import io.suggest.ad.edit.m.{ColorBtnClick, ColorChanged, ColorCheckboxChange}
+import io.suggest.ad.edit.m.{ColorBtnClick, ColorCheckboxChange}
 import io.suggest.ad.edit.v.LkAdEditCss
+import io.suggest.color.MColorData
+import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.react.ReactCommonUtil
-import ReactCommonUtil.Implicits._
-import io.suggest.ad.edit.m.edit.color.MColorPick
-import io.suggest.color.MColorData
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.ueq.UnivEqUtil._
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
+import org.scalajs.dom.Element
 
 import scalacss.ScalaCssReact._
-import scala.scalajs.js.JSConverters._
 
 /**
   * Suggest.io
@@ -24,11 +25,25 @@ import scala.scalajs.js.JSConverters._
   * Created: 14.09.17 11:38
   * Description: React-компонент с галочкой выбора цвета.
   */
-class ColorPickR(
-                  lkAdEditCss     : LkAdEditCss,
-                ) {
+class ColorCheckboxR(
+                      lkAdEditCss     : LkAdEditCss,
+                    ) {
 
-  type Props = ModelProxy[Option[MColorPick]]
+  /** Модель пропертисов этого компонента.
+    *
+    * @param color Цвет.
+    *              None значит прозрачный.
+    */
+  case class PropsVal(
+                       color          : Option[MColorData]
+                     )
+  implicit object ColorCheckboxPropsValFastEq extends FastEq[PropsVal] {
+    override def eqv(a: PropsVal, b: PropsVal): Boolean = {
+      a.color ===* b.color
+    }
+  }
+
+  type Props = ModelProxy[Option[PropsVal]]
 
 
   class Backend($: BackendScope[Props, _]) {
@@ -39,31 +54,18 @@ class ColorPickR(
       dispatchOnProxyScopeCB($, ColorCheckboxChange(isChecked))
     }
 
-
-    /** Реакция на настройку цвета. */
-    private def _onColorChanged(color: Color, e: ReactEvent): Callback = {
-      _onColorChangedBody(color, isComplete = false)
-    }
-    lazy val _onColorChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onColorChanged )
-
-
-    /** Реакция на завершение выбора цвета. */
-    private def _onColorCompletelyChanged(color: Color, e: ReactEvent): Callback = {
-      _onColorChangedBody(color, isComplete = true)
-    }
-    lazy val _onColorCompletelyChangedCbF = ReactCommonUtil.cbFun2ToJsCb( _onColorCompletelyChanged )
-
-    private def _onColorChangedBody(color: Color, isComplete: Boolean): Callback = {
-      val mcd = MColorData(
-        code = MColorData.stripDiez(color.hex)
-      )
-      dispatchOnProxyScopeCB($, ColorChanged(mcd, isCompleted = false))
-    }
-
-
     /** Реакция на клик по кружочку цвета. */
     private def _onColorRoundClick(e: ReactMouseEvent): Callback = {
-      dispatchOnProxyScopeCB($, ColorBtnClick)
+      // Нужно вычислить координаты для позиционирования picker'а относительно заданного контейнера.
+      // Для этого надо найти контейнер в parent и вычислить его page top-left.
+      val srcEl = e.target.asInstanceOf[Element]
+
+      val fixedCoord = MCoords2di(
+        x = e.clientX.toInt,
+        y = e.clientY.toInt
+      )
+
+      dispatchOnProxyScopeCB($, ColorBtnClick(fixedCoord))
     }
 
 
@@ -80,7 +82,7 @@ class ColorPickR(
 
             <.input(
               ^.`type` := HtmlConstants.Input.checkbox,
-              ^.checked := props.colorOpt.nonEmpty,
+              ^.checked := props.color.nonEmpty,
               ^.onChange ==> _onCheckBoxChanged
             ),
 
@@ -93,9 +95,7 @@ class ColorPickR(
             )
           ),
 
-          props.colorOpt.whenDefined { mColorData =>
-            val colorHex = mColorData.hexCode
-
+          props.color.whenDefined { mColorData =>
             <.span(
               ^.`class` := Css.flat(Css.CLICKABLE, Css.Display.INLINE_BLOCK),
               ^.onClick ==> ReactCommonUtil.stopPropagationCB,
@@ -106,35 +106,11 @@ class ColorPickR(
               // Текущий цвет.
               <.div(
                 C.colorRound,
-                ^.backgroundColor := colorHex,
+                ^.backgroundColor := mColorData.hexCode,
                 ^.onClick ==> _onColorRoundClick
-              ),
-
-              if (props.pickS.isShown) {
-                <.span(
-                  Sketch(
-                    new SketchProps {
-                      override val color = colorHex
-                      override val disableAlpha = true
-                      override val onChange = _onColorChangedCbF
-                      override val onChangeComplete = _onColorCompletelyChangedCbF
-                      override val presetColors = {
-                        props.colorsState.colorPresets
-                          .iterator
-                          .map { mcd =>
-                            mcd.hexCode: PresetColor_t
-                          }
-                          .toJSArray
-                      }
-                    }
-                  )
-                )
-              } else {
-                EmptyVdom
-              }
+              )
 
             )
-
           }
 
         )

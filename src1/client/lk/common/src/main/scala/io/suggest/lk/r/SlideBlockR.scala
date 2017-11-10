@@ -41,8 +41,8 @@ trait SlideBlockCss extends StyleSheet.Inline {
       addClassName( TITLE )
     )
 
-    val titleExpanded = style(
-      addClassName( TITLE_OPENED )
+    val opened = style(
+      addClassName( OPENED )
     )
 
     val titleBtn = style(
@@ -106,6 +106,12 @@ class SlideBlockR(
     def render(propsOptProxy: Props, children: PropsChildren): VdomElement = {
       propsOptProxy.value.whenDefinedEl { props =>
         val CSS = slideBlockCss.SlideBlock
+        val openedCssTm: TagMod = if (props.expanded) {
+          CSS.opened
+        } else {
+          EmptyVdom
+        }
+
         <.div(
           CSS.outer,
 
@@ -115,17 +121,14 @@ class SlideBlockR(
           // Кликабельный заголовок.
           <.div(
             CSS.title,
-            if (props.expanded ) {
-              CSS.titleExpanded
-            } else {
-              EmptyVdom
-            },
+            openedCssTm,
 
             props.title,
             ^.onClick --> onTitleClick,
 
             <.a(
-              CSS.titleBtn
+              CSS.titleBtn,
+              openedCssTm
             )
           ),
 
