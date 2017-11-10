@@ -219,7 +219,10 @@ class LkAdEditFormR(
                 slideBlockR(propsOpt)(
                   addR(p)
                 )
-              }
+              },
+
+              // Кнопка сохранения карточки.
+              s.savePropsC { saveR.apply },
 
             )
           },
@@ -235,10 +238,7 @@ class LkAdEditFormR(
           ^.`class` := Css.flat( Css.Lk.Submit.SUBMIT_W, Css.Size.M ),
 
           // Кнопка удаления карточки.
-          s.deletePropsOptC { deleteBtnR.apply },
-
-          // Кнопка сохранения карточки.
-          s.savePropsC { saveR.apply }
+          s.deletePropsOptC { deleteBtnR.apply }
 
         )
       )
