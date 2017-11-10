@@ -6,7 +6,7 @@ import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot}
+import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
 import io.suggest.ad.edit.v.edit._
 import io.suggest.scalaz.ZTreeUtil._
@@ -404,10 +404,10 @@ class LkAdEditFormR(
               for {
                 _ <- mroot.doc.stripEd
               } yield {
-                val k = "blk"
+                val k = SlideBlockKeys.BLOCK
                 slideBlockR.PropsVal(
                   title = title,
-                  expanded = mroot.layout.slideBlocks.expanded.contains(k),
+                  expanded = mroot.doc.slideBlocks.expanded.contains(k),
                   key = Some(k)
                 )
               }
@@ -419,10 +419,10 @@ class LkAdEditFormR(
               for {
                 _ <- mroot.doc.stripEd
               } yield {
-                val k = "bbg"
+                val k = SlideBlockKeys.BLOCK_BG
                 slideBlockR.PropsVal(
                   title     = title,
-                  expanded  = mroot.layout.slideBlocks.expanded.contains(k),
+                  expanded  = mroot.doc.slideBlocks.expanded.contains(k),
                   key       = Some(k)
                 )
               }
@@ -434,23 +434,23 @@ class LkAdEditFormR(
               for {
                 _ <- mroot.doc.qdEdit
               } yield {
-                val k = "cnt"
+                val k = SlideBlockKeys.CONTENT
                 slideBlockR.PropsVal(
                   title = title,
-                  expanded = mroot.layout.slideBlocks.expanded.contains(k),
+                  expanded = mroot.doc.slideBlocks.expanded.contains(k),
                   key      = Some(k)
                 )
               }
             }( OptFastEq.Wrapped )
           },
           create = {
-            val k = "create"
+            val k = SlideBlockKeys.ADD
             val title = Messages( MsgCodes.`Create` )
             p.connect { mroot =>
               Some(
                 slideBlockR.PropsVal(
                   title     = title,
-                  expanded  = mroot.layout.slideBlocks.expanded.contains(k),
+                  expanded  = mroot.doc.slideBlocks.expanded.contains(k),
                   key       = Some(k)
                 )
               )

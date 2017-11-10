@@ -202,15 +202,20 @@ class DocEditAh[M](
             // Нужно получить текущее qd-под-дерево (для сборки дельты)
             val delta2 = quillDeltaJsUtil.qdTag2delta(
               qd    = newSelJdtTreeLoc.tree,
-              edges = v0.jdArgs.renderArgs.edges
+              edges = v1.jdArgs.renderArgs.edges
             )
-            v1.withQdEdit(
-              Some(
-                MQdEditS(
-                  initDelta  = delta2
+            v1
+              .withQdEdit(
+                Some(
+                  MQdEditS(
+                    initDelta  = delta2
+                  )
                 )
               )
-            )
+              .withSlideBlocks(
+                v1.slideBlocks
+                  .withExpanded( Some(SlideBlockKeys.CONTENT) )
+              )
           // Очистить состояние от дельты.
           case _ =>
             v1.withOutQdEdit
@@ -221,17 +226,21 @@ class DocEditAh[M](
           // Переключение на новый стрип. Инициализировать состояние stripEd:
           case MJdTagNames.STRIP =>
             v2.withStripEd(
-              Some(MStripEdS(
-                isLastStrip = {
-                  val hasManyStrips = v0.jdArgs.template
-                    .deepOfTypeIter( MJdTagNames.STRIP )
-                    // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
-                    .slice(0, 2)
-                    .size > 1
-                  !hasManyStrips
-                }
-              ))
-            )
+                Some(MStripEdS(
+                  isLastStrip = {
+                    val hasManyStrips = v2.jdArgs.template
+                      .deepOfTypeIter( MJdTagNames.STRIP )
+                      // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
+                      .slice(0, 2)
+                      .size > 1
+                    !hasManyStrips
+                  }
+                ))
+              )
+              .withSlideBlocks(
+                v2.slideBlocks
+                  .withExpanded( Some(SlideBlockKeys.BLOCK_BG) )
+              )
           // Это не strip, обнулить состояние stripEd, если оно существует:
           case _ =>
             v2.withOutStripEd
@@ -258,16 +267,17 @@ class DocEditAh[M](
               }
             // Очистить эджи от лишнего контента
             val dataEdges2 = JdTag.purgeUnusedEdges(tpl2, dataEdges0)
-            v3.withJdArgs(
-              v3.jdArgs.copy(
-                template    = tpl2,
-                renderArgs  = v3.jdArgs.renderArgs
-                  .withEdges( dataEdges2 ),
-                jdCss       = jdCssFactory.mkJdCss(
-                  MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf, dataEdges2)
+            v3
+              .withJdArgs(
+                v3.jdArgs.copy(
+                  template    = tpl2,
+                  renderArgs  = v3.jdArgs.renderArgs
+                    .withEdges( dataEdges2 ),
+                  jdCss       = jdCssFactory.mkJdCss(
+                    MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf, dataEdges2)
+                  ),
                 )
               )
-            )
           } else {
             v3
           }
@@ -916,7 +926,7 @@ class DocEditAh[M](
         )
       )
 
-      val qdtLoc = intoStripLoc.insertRight( qdtTree )
+      val qdtLoc = intoStripLoc.insertDownLast( qdtTree )
 
       val tpl2 = qdtLoc.toTree
 
@@ -940,7 +950,9 @@ class DocEditAh[M](
           )
         },
         stripEd = None,
-        addS = None
+        addS = None,
+        slideBlocks = v0.slideBlocks
+          .withExpanded( Some(SlideBlockKeys.CONTENT) )
       )
       updated(v2)
 
@@ -982,6 +994,10 @@ class DocEditAh[M](
               MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf, v0.jdArgs.renderArgs.edges)
             )
           )
+        )
+        .withSlideBlocks(
+          v0.slideBlocks
+            .withExpanded( Some(SlideBlockKeys.BLOCK) )
         )
       updated(v2)
 

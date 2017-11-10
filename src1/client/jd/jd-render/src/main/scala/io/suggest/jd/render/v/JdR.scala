@@ -460,9 +460,10 @@ class JdR(
           val gridBuildArgs = GridBuildArgs(
             itemsExtDatas = jd.subForest
               .iterator
-              .map { childTree =>
+              .flatMap(_.rootLabel.props1.bm)
+              .map { bm =>
                 ItemPropsExt(
-                  blockMeta = childTree.rootLabel.props1.bm.get
+                  blockMeta = bm
                 )
               },
             jdConf = jdArgs.conf

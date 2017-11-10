@@ -33,11 +33,9 @@ object MLayoutS {
   */
 case class MLayoutS(
                      rightPanelTop  : Int              = 90,
-                     rightPanelY    : Option[Int]      = None,
-                     slideBlocks    : MSlideBlocks     = MSlideBlocks.empty
+                     rightPanelY    : Option[Int]      = None
                    ) {
 
   def withRightPanelY(rightPanelY: Option[Int]) = copy(rightPanelY = rightPanelY)
-  def withSlideBlocks(slideBlocks: MSlideBlocks) = copy(slideBlocks = slideBlocks)
 
 }

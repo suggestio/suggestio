@@ -130,7 +130,7 @@ class LkAdEditCircuit(
 
   private val deleteConfirmPopupRW = popupsRW.zoomRW(_.deleteConfirm) { _.withDeleteConfirm(_) }
 
-  private val slideBlocksRW = layoutRW.zoomRW(_.slideBlocks) { _.withSlideBlocks(_) }
+  private val slideBlocksRW = mDocSRw.zoomRW(_.slideBlocks) { _.withSlideBlocks(_) }
 
 
   // ---- Контроллеры

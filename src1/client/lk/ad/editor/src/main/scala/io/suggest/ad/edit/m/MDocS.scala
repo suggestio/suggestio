@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.ad.edit.m.edit.color.MColorsState
 import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
+import io.suggest.ad.edit.m.layout.MSlideBlocks
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
@@ -23,7 +24,8 @@ object MDocS {
         (a.qdEdit ===* b.qdEdit) &&
         (a.stripEd ===* b.stripEd) &&
         (a.addS ===* b.addS) &&
-        (a.colorsState ===* b.colorsState)
+        (a.colorsState ===* b.colorsState) &&
+        (a.slideBlocks ===* b.slideBlocks)
     }
   }
 
@@ -40,12 +42,15 @@ object MDocS {
   * @param addS Состояние формочки добавления нового элемента.
   * @param colorsState Общее состояние редактирования цветов:
   *                    разные часто-используемые или подходящие цвета, например.
+  * @param slideBlocks Состояние slide-блоков редактора.
+  *                    Изначально было в layout, но оно очень активно управляется из DocEditAh.
   */
 case class MDocS(
                   jdArgs        : MJdArgs,
                   qdEdit        : Option[MQdEditS]              = None,
                   stripEd       : Option[MStripEdS]             = None,
                   addS          : Option[MAddS]                 = Some(MAddS.default),
+                  slideBlocks   : MSlideBlocks                  = MSlideBlocks.empty,
                   colorsState   : MColorsState                  = MColorsState.empty
                 ) {
 
@@ -59,6 +64,8 @@ case class MDocS(
 
   def withAddS(addS: Option[MAddS]) = copy(addS = addS)
 
-  def withColorsState(colorsState : MColorsState) = copy(colorsState = colorsState)
+  def withColorsState(colorsState: MColorsState) = copy(colorsState = colorsState)
+
+  def withSlideBlocks(slideBlocks: MSlideBlocks) = copy(slideBlocks = slideBlocks)
 
 }
