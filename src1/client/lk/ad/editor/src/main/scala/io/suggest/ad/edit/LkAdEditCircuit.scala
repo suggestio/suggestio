@@ -4,7 +4,6 @@ import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
 import MDocS.MDocSFastEq
-import io.suggest.ad.blk.BlockPaddings
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
@@ -17,6 +16,7 @@ import io.suggest.jd.tags._
 import io.suggest.ad.edit.m.edit.pic.MPictureAh
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
+import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
 import io.suggest.ad.form.AdFormConstants
@@ -30,6 +30,7 @@ import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.univeq._
 import org.scalajs.dom
+import io.suggest.ad.edit.m.layout.MSlideBlocks.MSlideBlocksFastEq
 
 /**
   * Suggest.io
@@ -129,6 +130,7 @@ class LkAdEditCircuit(
 
   private val deleteConfirmPopupRW = popupsRW.zoomRW(_.deleteConfirm) { _.withDeleteConfirm(_) }
 
+  private val slideBlocksRW = layoutRW.zoomRW(_.slideBlocks) { _.withSlideBlocks(_) }
 
 
   // ---- Контроллеры
@@ -326,12 +328,16 @@ class LkAdEditCircuit(
     modelRW     = deleteConfirmPopupRW
   )
 
+  private val slideBlocksAh = new SlideBlocksAh(
+    modelRW     = slideBlocksRW
+  )
 
   /** Сборка action-handler'а в зависимости от текущего состояния. */
   override protected def actionHandler: HandlerFunction = {
     // В хвосте -- перехватчик необязательных событий.
     var acc = List[HandlerFunction](
       wsPoolAh,
+      slideBlocksAh,
       saveAh,
       deleteAh,
       tailAh

@@ -268,6 +268,7 @@ class JsMessagesUtil @Inject() (
       MC.`Current.block.and.0.another.may.be.used.as.main` ::
       MC.`There.are.0.main.blocks.exluding.current` ::
       MC.`No.main.blocks.Any.block.may.be.used.as.main` ::
+      MC.`Background` ::
       Nil
   }
 

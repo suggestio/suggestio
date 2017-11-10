@@ -1,7 +1,8 @@
 package io.suggest.ad.edit.c
 
 import diode.{ActionHandler, ActionResult, ModelRO, ModelRW}
-import io.suggest.ad.edit.m.{HandleVScroll, MDocS, MLayoutS}
+import io.suggest.ad.edit.m.layout.MLayoutS
+import io.suggest.ad.edit.m.{HandleVScroll, MDocS}
 import io.suggest.common.event.DomEvents
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import org.scalajs.dom._

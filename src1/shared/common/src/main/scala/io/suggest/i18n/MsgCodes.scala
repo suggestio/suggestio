@@ -222,5 +222,6 @@ object MsgCodes {
   val `This.block.is.not.main`      = "This.block.is.not.main"
   val `Show.all`                    = "Show.all"
   val `No.main.blocks.Any.block.may.be.used.as.main` = "No.main.blocks.Any.block.may.be.used.as.main"
+  val `Background` = "Background"
 
 }

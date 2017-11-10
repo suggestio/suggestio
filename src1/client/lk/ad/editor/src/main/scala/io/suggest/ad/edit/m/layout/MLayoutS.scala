@@ -1,8 +1,8 @@
-package io.suggest.ad.edit.m
+package io.suggest.ad.edit.m.layout
 
 import diode.FastEq
-import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -33,9 +33,11 @@ object MLayoutS {
   */
 case class MLayoutS(
                      rightPanelTop  : Int              = 90,
-                     rightPanelY    : Option[Int]      = None
+                     rightPanelY    : Option[Int]      = None,
+                     slideBlocks    : MSlideBlocks     = MSlideBlocks.empty
                    ) {
 
   def withRightPanelY(rightPanelY: Option[Int]) = copy(rightPanelY = rightPanelY)
+  def withSlideBlocks(slideBlocks: MSlideBlocks) = copy(slideBlocks = slideBlocks)
 
 }

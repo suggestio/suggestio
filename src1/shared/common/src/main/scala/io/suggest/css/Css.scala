@@ -25,12 +25,14 @@ object Css {
     q + s + q
   }
 
+  final def _BLOCK          = "block"
+
   object Display {
     final def HIDDEN        = "hidden"
-    final def BLOCK         = "block"
+    final def BLOCK         = _BLOCK
     final def VISIBLE       = "visible"
     final def INVISIBLE     = "visibility-hidden"
-    final def INLINE_BLOCK  = "inline-block"
+    final def INLINE_BLOCK  = "inline-" + _BLOCK
   }
 
   object Position {
@@ -53,6 +55,7 @@ object Css {
   final def _WIDGET     = "widget"
   final def _PREFIX     = "prefix"
   final def _CONTAINER  = "container"
+  final def _SLIDE      = "slide"
   final def NAME      = "name"
   final def VALUE     = "value"
   private final def _NODENAME_ = "nodename"
@@ -243,7 +246,16 @@ object Css {
       def SUBMIT_W = SUBMIT + "-w"
     }
 
-  }
+    object SlideBlocks {
+      private def _PREFIX = _SLIDE + "-" + _BLOCK
+      final def OUTER     = _PREFIX
+      final def TITLE     = _PREFIX + "_title"
+      final def TITLE_BTN = _PREFIX + "_btn"
+      final def BODY      = _PREFIX + "_cnt"
+      final def TITLE_OPENED = __ + "js-open"
+    }
+
+  } // Lk
 
 
   object Colors {
@@ -265,7 +277,7 @@ object Css {
 
 
   object Block {
-    def BLOCK = "block"
+    def BLOCK = _BLOCK
     /** bg image блока */
     def BG = "bg"
   }
@@ -273,7 +285,7 @@ object Css {
   /** Стили для пачки цветов. Например,  */
   object ColorsBlock {
     /** Квадратик одного цвета. */
-    def COLOR_BLOCK       = "color-block"
+    def COLOR_BLOCK       = "color-" + _BLOCK
     private def PREFIX_   = COLOR_BLOCK + "_"
     /** Контейнер списка цветов. */
     def LIST              = PREFIX_ + "lst"
@@ -433,6 +445,7 @@ object Css {
           val d = HtmlConstants.MINUS
           EASE + d + IN + d + OUT
         }
+        final def EASE_IN: String = EASE + HtmlConstants.MINUS + IN
 
       }
 

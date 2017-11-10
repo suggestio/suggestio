@@ -2,6 +2,7 @@ package io.suggest.ad.edit.v
 
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
+import io.suggest.lk.r.SlideBlockCss
 
 import scalacss.internal.mutable.StyleSheet
 
@@ -11,7 +12,10 @@ import scalacss.internal.mutable.StyleSheet
   * Created: 28.08.17 19:08
   * Description: CSS-стили для редактора карточек.
   */
-class LkAdEditCss extends StyleSheet.Inline {
+class LkAdEditCss
+  extends StyleSheet.Inline
+  with SlideBlockCss
+{
 
   import dsl._
 

@@ -32,3 +32,6 @@ case object DeleteConfirmPopupOk extends ILkCommonAction
 
 /** Клик по кнопке отмены в попапе подтверждения удаления чего-либо. */
 case object DeleteConfirmPopupCancel extends ILkCommonPopupCloseAction
+
+/** Клик по заголовку slide-блока. */
+case class SlideBlockClick(key: String) extends ILkCommonAction

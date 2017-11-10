@@ -1,6 +1,5 @@
 package io.suggest.ad.edit.v
 
-import com.github.daviferreira.react.sanfona.{Accordion, AccordionItem, AccordionItemProps, AccordionProps}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
@@ -20,6 +19,7 @@ import io.suggest.quill.v.QuillCss
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.tags.MJdTagNames
+import io.suggest.lk.r.SlideBlockR
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
 import io.suggest.spa.OptFastEq
@@ -28,7 +28,6 @@ import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{BackendScope, Callback, ScalaComponent}
 import japgolly.univeq._
 
-import scala.scalajs.js
 import scalacss.ScalaCssReact._
 
 /**
@@ -52,7 +51,8 @@ class LkAdEditFormR(
                      val plusMinusControlsR     : PlusMinusControlsR,
                      deleteStripBtnR            : DeleteStripBtnR,
                      val showWideR              : ShowWideR,
-                     colorPickR                 : ColorPickR
+                     colorPickR                 : ColorPickR,
+                     val slideBlockR            : SlideBlockR
                    ) {
 
   import MAddS.MAddSFastEq
@@ -67,6 +67,7 @@ class LkAdEditFormR(
   import MStripEdS.MStripEdSFastEq
   import showWideR.ShowWideRPropsValFastEq
   import MColorPick.MColorPickFastEq
+  import slideBlockR.SlideBlockPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -86,8 +87,16 @@ class LkAdEditFormR(
                               widthPropsOptC              : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               stripEdSOptC                : ReactConnectProxy[Option[MStripEdS]],
                               showWidePropsOptC           : ReactConnectProxy[Option[showWideR.PropsVal]],
-                              stripBgColorPropsOptC       : ReactConnectProxy[Option[MColorPick]]
+                              stripBgColorPropsOptC       : ReactConnectProxy[Option[MColorPick]],
+                              slideBlocks                 : SlideBlocksState
                             )
+
+  case class SlideBlocksState(
+                               block    : ReactConnectProxy[Option[slideBlockR.PropsVal]],
+                               blockBg  : ReactConnectProxy[Option[slideBlockR.PropsVal]],
+                               content  : ReactConnectProxy[Option[slideBlockR.PropsVal]],
+                               create   : ReactConnectProxy[Option[slideBlockR.PropsVal]]
+                             )
 
   protected class Backend($: BackendScope[Props, State]) {
 
@@ -147,20 +156,9 @@ class LkAdEditFormR(
                 ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
               },
 
-
-              Accordion(
-                new AccordionProps {
-                  override val allowMultiple = false
-                }
-              )(
-
-                AccordionItem.component.withKey( MsgCodes.`Block` )(
-                  new AccordionItemProps {
-                    override val title = js.defined {
-                      Messages( MsgCodes.`Block` )
-                    }
-                  }
-                )(
+              // Редактор блока.
+              s.slideBlocks.block { propsOpt =>
+                slideBlockR(propsOpt)(
                   // Редактор strip'а
                   s.stripEdSOptC { _ =>
                     <.div(
@@ -172,20 +170,6 @@ class LkAdEditFormR(
                         s.widthPropsOptC { plusMinusControlsR.apply }
                       ),
 
-                      // Управление картинкой, если доступно:
-                      s.picPropsOptC { pictureR.apply },
-
-                      // Выбор цвета фона блока.
-                      s.stripBgColorPropsOptC { colorOptProxy =>
-                        colorPickR(colorOptProxy)(
-                          // TODO Opt Рендер необязателен из-за Option, но список children не ленив. Можно ли это исправить, кроме как передавая суть children внутри props?
-                          Messages( MsgCodes.`Bg.color` )
-                        )
-                      },
-
-                      // Галочка широкого рендера фона.
-                      s.showWidePropsOptC { showWideR.apply },
-
                       // Управление main-блоками.
                       s.useAsMainStripPropsOptC { useAsMainR.apply },
 
@@ -194,31 +178,43 @@ class LkAdEditFormR(
 
                     )
                   }
-                ),
+                )
+              },
 
-                // Редактор текста
-                AccordionItem.component.withKey( MsgCodes.`Content` )(
-                  new AccordionItemProps {
-                    override val title = js.defined {
-                      Messages( MsgCodes.`Content` )
-                    }
-                  }
-                )(
+              // Настройка фона блока.
+              s.slideBlocks.blockBg { propsOpt =>
+                slideBlockR(propsOpt)(
+                  <.div(
+                    // Управление картинкой, если доступно:
+                    s.picPropsOptC { pictureR.apply },
+
+                    // Выбор цвета фона блока.
+                    s.stripBgColorPropsOptC { colorOptProxy =>
+                      colorPickR(colorOptProxy)(
+                        // TODO Opt Рендер необязателен из-за Option, но список children не ленив. Можно ли это исправить, кроме как передавая суть children внутри props?
+                        Messages( MsgCodes.`Bg.color` )
+                      )
+                    },
+
+                    // Галочка широкого рендера фона.
+                    s.showWidePropsOptC { showWideR.apply },
+                  )
+                )
+              },
+
+              // Редактор контента (текста)
+              s.slideBlocks.content { propsOpt =>
+                slideBlockR(propsOpt)(
                   s.qdEditOptC { qdEditR.apply }
-                ),
+                )
+              },
 
-                // Форма добавления новых элементов.
-                AccordionItem.component.withKey( MsgCodes.`Create` )(
-                  new AccordionItemProps {
-                    override val title = js.defined {
-                      Messages( MsgCodes.`Create` )
-                    }
-                  }
-                )(
+              // Форма создания новых объектов.
+              s.slideBlocks.create { propsOpt =>
+                slideBlockR(propsOpt)(
                   s.addC { addR.apply }
                 )
-
-              )
+              }
 
             )
           }
@@ -399,7 +395,68 @@ class LkAdEditFormR(
               pickS       = stripEd.bgColorPick
             )
           }
-        }( OptFastEq.Wrapped )
+        }( OptFastEq.Wrapped ),
+
+        slideBlocks = SlideBlocksState(
+          block = {
+            val title = Messages( MsgCodes.`Block` )
+            p.connect { mroot =>
+              for {
+                _ <- mroot.doc.stripEd
+              } yield {
+                val k = "blk"
+                slideBlockR.PropsVal(
+                  title = title,
+                  expanded = mroot.layout.slideBlocks.expanded.contains(k),
+                  key = Some(k)
+                )
+              }
+            }( OptFastEq.Wrapped )
+          },
+          blockBg = {
+            val title = Messages( MsgCodes.`Background` )
+            p.connect { mroot =>
+              for {
+                _ <- mroot.doc.stripEd
+              } yield {
+                val k = "bbg"
+                slideBlockR.PropsVal(
+                  title     = title,
+                  expanded  = mroot.layout.slideBlocks.expanded.contains(k),
+                  key       = Some(k)
+                )
+              }
+            }( OptFastEq.Wrapped )
+          },
+          content = {
+            val title = Messages( MsgCodes.`Content` )
+            p.connect { mroot =>
+              for {
+                _ <- mroot.doc.qdEdit
+              } yield {
+                val k = "cnt"
+                slideBlockR.PropsVal(
+                  title = title,
+                  expanded = mroot.layout.slideBlocks.expanded.contains(k),
+                  key      = Some(k)
+                )
+              }
+            }( OptFastEq.Wrapped )
+          },
+          create = {
+            val k = "create"
+            val title = Messages( MsgCodes.`Create` )
+            p.connect { mroot =>
+              Some(
+                slideBlockR.PropsVal(
+                  title     = title,
+                  expanded  = mroot.layout.slideBlocks.expanded.contains(k),
+                  key       = Some(k)
+                )
+              )
+            }
+          }
+        )
 
       )
     }

@@ -45,7 +45,7 @@ case class MDocS(
                   jdArgs        : MJdArgs,
                   qdEdit        : Option[MQdEditS]              = None,
                   stripEd       : Option[MStripEdS]             = None,
-                  addS          : Option[MAddS]                 = None,
+                  addS          : Option[MAddS]                 = Some(MAddS.default),
                   colorsState   : MColorsState                  = MColorsState.empty
                 ) {
 

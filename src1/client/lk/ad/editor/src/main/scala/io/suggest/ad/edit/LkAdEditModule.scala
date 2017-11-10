@@ -10,6 +10,7 @@ import io.suggest.ad.edit.v.edit.strip._
 import io.suggest.ad.edit.v.pop.{LaePopupsR, PictureCropPopupR}
 import io.suggest.ad.edit.v.{LkAdEditCss, LkAdEditFormR}
 import io.suggest.jd.render.JdRenderModule
+import io.suggest.lk.r.SlideBlockR
 import io.suggest.quill.QuillSioModule
 
 /**
@@ -68,6 +69,8 @@ class LkAdEditModule {
   lazy val pictureCropPopupR = wire[PictureCropPopupR]
 
   lazy val laePopupsR = wire[LaePopupsR]
+
+  lazy val slideBlockR = wire[SlideBlockR]
 
 
   // circuit deps

@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
     Common.ORG      %%% "common-sjs"                  % "0.0.0-SNAPSHOT",
     "org.scala-js"  %%% "scalajs-dom"                 % Common.sjsDomVsn,
     "io.suzaku"     %%% "diode-react"                 % Common.diodeVsn,
+    "com.github.japgolly.scalacss" %%% "ext-react"    % Common.Vsn.SCALACSS,
     Common.ORG      %%% "scalajs-react-common"        % "0.0.0-SNAPSHOT"
 )
 
