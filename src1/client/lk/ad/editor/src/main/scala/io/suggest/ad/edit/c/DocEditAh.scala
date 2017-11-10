@@ -4,12 +4,11 @@ import diode._
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.edit.m._
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
-import io.suggest.ad.edit.m.edit.{MAddS, MQdEditS}
+import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.ad.edit.v.LkAdEditCss
 import io.suggest.color.MColorData
 import io.suggest.common.MHands
 import io.suggest.common.empty.OptionUtil
-import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.file.MJsFileInfo
@@ -35,7 +34,6 @@ import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
-import japgolly.scalajs.react.vdom.TagMod
 
 import scala.util.Random
 import scalaz.Tree
@@ -855,19 +853,6 @@ class DocEditAh[M](
       }
 
 
-    // Реакция на клик по кнопке создания нового элемента.
-    case AddBtnClick =>
-      val v0 = value
-      if (v0.addS.nonEmpty) {
-        noChange
-      } else {
-        val v2 = v0.withAddS(
-          Some( MAddS.default )
-        )
-        updated(v2)
-      }
-
-
     // Реакция на клик по кнопке создания "контента", который у нас является синонимом QdTag.
     case AddContentClick =>
       val v0 = value
@@ -950,7 +935,6 @@ class DocEditAh[M](
           )
         },
         stripEd = None,
-        addS = None,
         slideBlocks = v0.slideBlocks
           .withExpanded( Some(SlideBlockKeys.CONTENT) )
       )
@@ -985,7 +969,6 @@ class DocEditAh[M](
       val tpl2 = newStripLoc.toTree
 
       val v2 = v0
-        .withAddS(None)
         .withJdArgs(
           v0.jdArgs.copy(
             template    = tpl2,
@@ -1001,16 +984,6 @@ class DocEditAh[M](
         )
       updated(v2)
 
-
-    // Отмена добавления чего-либо.
-    case AddCancelClick =>
-      val v0 = value
-      if (v0.addS.isEmpty) {
-        noChange
-      } else {
-        val v2 = v0.withAddS( None )
-        updated( v2 )
-      }
 
 
     // Выставить новый масштаб для рендера карточи.

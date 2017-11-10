@@ -51,14 +51,10 @@ case object StripDeleteCancel extends IStripDeleteAction
 
 
 sealed trait IAddAction extends ILkEditAction
-/** Клик по кнопке добавления (открытия формы добавления). */
-case object AddBtnClick extends IAddAction
 /** Клик по кнопке добавления контента. */
 case object AddContentClick extends IAddAction
 /** Клик по кнопке добавления стрипа. */
 case object AddStripClick extends IAddAction
-/** Клик по кнопке отмены добавления чего-либо. */
-case object AddCancelClick extends IAddAction
 
 
 /** Изменилось состояние галочки напротив color picker'а для выставления bgColor тега. */

@@ -3,7 +3,6 @@ package io.suggest.ad.edit.v
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
-import io.suggest.ad.edit.m.edit.MAddS
 import io.suggest.ad.edit.m.edit.color.MColorPick
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot, SlideBlockKeys}
@@ -55,7 +54,6 @@ class LkAdEditFormR(
                      val slideBlockR            : SlideBlockR
                    ) {
 
-  import MAddS.MAddSFastEq
   import MJdArgs.MJdWithArgsFastEq
   import qdEditR.QdEditRPropsValFastEq
   import scaleR.ScaleRPropsValFastEq
@@ -75,7 +73,6 @@ class LkAdEditFormR(
   protected case class State(
                               jdPreviewArgsC              : ReactConnectProxy[MJdArgs],
                               jdCssArgsC                  : ReactConnectProxy[JdCss],
-                              addC                        : ReactConnectProxy[Option[MAddS]],
                               picPropsOptC                : ReactConnectProxy[Option[pictureR.PropsVal]],
                               qdEditOptC                  : ReactConnectProxy[Option[qdEditR.PropsVal]],
                               scalePropsOptC              : ReactConnectProxy[Option[scaleR.PropsVal]],
@@ -185,9 +182,6 @@ class LkAdEditFormR(
               s.slideBlocks.blockBg { propsOpt =>
                 slideBlockR(propsOpt)(
                   <.div(
-                    // Управление картинкой, если доступно:
-                    s.picPropsOptC { pictureR.apply },
-
                     // Выбор цвета фона блока.
                     s.stripBgColorPropsOptC { colorOptProxy =>
                       colorPickR(colorOptProxy)(
@@ -195,6 +189,9 @@ class LkAdEditFormR(
                         Messages( MsgCodes.`Bg.color` )
                       )
                     },
+
+                    // Управление картинкой, если доступно:
+                    s.picPropsOptC { pictureR.apply },
 
                     // Галочка широкого рендера фона.
                     s.showWidePropsOptC { showWideR.apply },
@@ -212,7 +209,7 @@ class LkAdEditFormR(
               // Форма создания новых объектов.
               s.slideBlocks.create { propsOpt =>
                 slideBlockR(propsOpt)(
-                  s.addC { addR.apply }
+                  addR(p)
                 )
               }
 
@@ -264,10 +261,6 @@ class LkAdEditFormR(
         jdCssArgsC = p.connect { mroot =>
           mroot.doc.jdArgs.jdCss
         },
-
-        addC = p.connect { mroot =>
-          mroot.doc.addS
-        }(OptFastEq.Wrapped),
 
         picPropsOptC = p.connect { mroot =>
           for {
