@@ -137,16 +137,6 @@ class LkAdEditCss
 
   }
 
-
-  object JdAddons {
-
-    /** Приглушённый стрип описывается этим стилем. */
-    val muffledStrip = style(
-      opacity(0.1)
-    )
-
-  }
-
   /** Стили для элементов управления главным/заглавным блоком. */
   object StripMain {
 
@@ -164,8 +154,7 @@ class LkAdEditCss
     Layout.editorsCont,
     BgColorOptPicker.colorRound,
     Crop.popup,
-    StripMain.showAll,
-    JdAddons.muffledStrip
+    StripMain.showAll
   )
 
 }

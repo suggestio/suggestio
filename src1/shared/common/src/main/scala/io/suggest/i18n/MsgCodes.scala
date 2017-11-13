@@ -216,12 +216,10 @@ object MsgCodes {
 
   val `Main.block`                  = "Main.block"
   val `Main.blocks.are.used.to.display.ad.inside.the.grid` = "Main.blocks.are.used.to.display.ad.inside.the.grid"
-  val `Current.block.and.0.another.may.be.used.as.main` = "Current.block.and.0.another.may.be.used.as.main"
-  val `There.are.0.main.blocks.exluding.current` = "There.are.0.main.blocks.excluding.current"
   val `This.block.is.the.only.main` = "This.block.is.the.only.main"
   val `This.block.is.not.main`      = "This.block.is.not.main"
-  val `Show.all`                    = "Show.all"
-  val `No.main.blocks.Any.block.may.be.used.as.main` = "No.main.blocks.Any.block.may.be.used.as.main"
+  val `Show`                        = "Show"
+  val `No.main.blocks.First.block.is.main` = "No.main.blocks.First.block.is.main"
   val `Background` = "Background"
 
 }

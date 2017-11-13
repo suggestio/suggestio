@@ -11,6 +11,7 @@ import io.suggest.common.MHands
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.common.html.HtmlConstants
+import io.suggest.err.ErrorConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
 import io.suggest.jd.MJdEditEdge
@@ -34,6 +35,7 @@ import io.suggest.ueq.QuillUnivEqUtil._
 import japgolly.univeq._
 import org.scalajs.dom.raw.URL
 import io.suggest.scalaz.ZTreeUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 import scala.util.Random
 import scalaz.Tree
@@ -811,18 +813,50 @@ class DocEditAh[M](
     // Изменение галочки управления main-флагом текущего блока.
     case m: MainStripChange =>
       val v0 = value
+
+      // Фунция для ленивого обновления стрипа новым значением.
+      def __updateLocLabel(label: JdTag, newValue: Option[Boolean]): JdTag = {
+        if (label.props1.isMain !=* newValue) {
+          label.withProps1(
+            label.props1.withIsMain(
+              isMain = newValue
+            )
+          )
+        } else {
+          label
+        }
+      }
+
       v0.jdArgs.selectedTagLoc
         .filter(_.getLabel.name ==* MJdTagNames.STRIP)
         .fold(noChange) { currStripLoc =>
-          val tpl2 = currStripLoc
-            .modifyLabel { currStrip =>
-              currStrip.withProps1(
-                currStrip.props1.withIsMain(
-                  isMain = OptionUtil.maybeTrue( m.isMain )
-                )
+          // Вычислить новые значения для этого и всех соседних элементов.
+          val currTagNewMainValue = OptionUtil.maybeTrue( m.isMain )
+          // Надо обновить все соседние инстансы новым анти-значением:
+          val otherStripsNewMainValue = Option.empty[Boolean]
+
+          val currStrip = currStripLoc.getLabel
+
+          val tpl0 = v0.jdArgs.template
+
+          // Собрать корневой элемент с обновлённым стрипами:
+          val tpl2 = Tree.Node(
+            root = tpl0.rootLabel,
+            forest = for (stripTree <- v0.jdArgs.template.subForest) yield {
+              val lbl = stripTree.rootLabel
+              ErrorConstants.assertArg( lbl.name ==* MJdTagNames.STRIP )
+              val label2 = __updateLocLabel(
+                label     = lbl,
+                newValue  = if (lbl ===* currStrip) currTagNewMainValue else otherStripsNewMainValue
+              )
+              // Собрать узел стрипа:
+              Tree.Node(
+                root    = label2,
+                forest  = stripTree.subForest
               )
             }
-            .toTree
+          )
+
           val v2 = v0.withJdArgs(
             v0.jdArgs
               .withTemplate(tpl2)
@@ -837,16 +871,14 @@ class DocEditAh[M](
     // Сигнал переключения
     case m: ShowMainStrips =>
       val v0 = value
-      val nonMainStripsCss2 = OptionUtil.maybe(m.showing) {
-        lkAdEditCss.JdAddons.muffledStrip.htmlClass
-      }
-      if (v0.jdArgs.renderArgs.nonMainStripsCss ==* nonMainStripsCss2) {
+      val hideNonMainStrips2 = m.showing
+      if (v0.jdArgs.renderArgs.hideNonMainStrips ==* hideNonMainStrips2) {
         noChange
       } else {
         val v2 = v0.withJdArgs(
           v0.jdArgs.withRenderArgs(
             v0.jdArgs.renderArgs
-              .withNonMainStripsCss( nonMainStripsCss2 )
+              .withHideNonMainStrips( hideNonMainStrips2 )
           )
         )
         updated(v2)

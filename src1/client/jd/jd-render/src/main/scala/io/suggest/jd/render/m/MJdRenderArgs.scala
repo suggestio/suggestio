@@ -22,7 +22,7 @@ object MJdRenderArgs {
     override def eqv(a: MJdRenderArgs, b: MJdRenderArgs): Boolean = {
       (a.edges ===* b.edges) &&
         (a.selJdtBgImgMod ===* b.selJdtBgImgMod) &&
-        (a.nonMainStripsCss ==* b.nonMainStripsCss)
+        (a.hideNonMainStrips ==* b.hideNonMainStrips)
     }
   }
 
@@ -36,16 +36,16 @@ object MJdRenderArgs {
   * @param edges Карта данных по эджам, с сервера.
   * @param selJdtBgImgMod Трансформировать bgImg у выбранного тега с помощью этого TagMod.
   *                       Появилась для возможности заглядывать "под" изображение в редакторе, чтобы увидеть фон.
-  * @param nonMainStripsCss Флаг подсвечивания main-стрипов.
+  * @param hideNonMainStrips Скрыть все неглавные стрипы? Раньше была прозрачность, но она конфликтует с grid'ом.
   */
 case class MJdRenderArgs(
                           edges               : Map[EdgeUid_t, MEdgeDataJs],
                           selJdtBgImgMod      : Option[TagMod]              = None,
-                          nonMainStripsCss    : Option[String]              = None
+                          hideNonMainStrips   : Boolean                     = false
                         ) {
 
   def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])             = copy(edges = edges)
   def withSelJdtBgImgMod(selJdtBgImgMod: Option[TagMod])        = copy(selJdtBgImgMod = selJdtBgImgMod)
-  def withNonMainStripsCss(nonMainStripsCss: Option[String])    = copy(nonMainStripsCss = nonMainStripsCss)
+  def withHideNonMainStrips(hideNonMainStrips: Boolean)         = copy(hideNonMainStrips = hideNonMainStrips)
 
 }

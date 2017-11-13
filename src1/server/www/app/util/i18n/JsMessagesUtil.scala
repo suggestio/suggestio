@@ -260,14 +260,12 @@ class JsMessagesUtil @Inject() (
       MC.`Saving` ::
       MC.`Saved` ::
       MC.`Stretch.across` ::
-      MC.`Show.all` ::
+      MC.`Show` ::
       MC.`Main.block` ::
       MC.`Main.blocks.are.used.to.display.ad.inside.the.grid` ::
       MC.`This.block.is.the.only.main` ::
       MC.`This.block.is.not.main` ::
-      MC.`Current.block.and.0.another.may.be.used.as.main` ::
-      MC.`There.are.0.main.blocks.exluding.current` ::
-      MC.`No.main.blocks.Any.block.may.be.used.as.main` ::
+      MC.`No.main.blocks.First.block.is.main` ::
       MC.`Background` ::
       Nil
   }

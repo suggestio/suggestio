@@ -68,6 +68,7 @@ Bill.details=Основание
 Show.more=Показать ещё
 Show.all=Показать всё
 Show.details=Показать подробности
+Show=Показать
 No.records=Нет записей
 Nothing.found=Ничего не найдено
 Quick.search.for.offers=Быстрый поиск по предложениям
@@ -966,7 +967,5 @@ Main.block=Главный блок
 Main.blocks.are.used.to.display.ad.inside.the.grid=Главные блоки используются для отображения данной карточки в плитке среди других карточек.
 This.block.is.the.only.main=Текущий блок -- главный.
 This.block.is.not.main=Текущий блок не является главным.
-Current.block.and.0.another.may.be.used.as.main=Текущий блок и {0} других блоков помечены как главные.
-There.are.0.main.blocks.excluding.current=В карточке задано {0} главных блоков. Текущий блок не является главным.
-No.main.blocks.Any.block.may.be.used.as.main=В карточке нет главных блоков. Любой блок может быть использован в качестве основного.
+No.main.blocks.First.block.is.main=В карточке нет главных блоков. Верхний блок считается основным.
 

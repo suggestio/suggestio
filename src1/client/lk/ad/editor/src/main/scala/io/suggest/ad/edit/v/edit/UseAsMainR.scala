@@ -22,7 +22,7 @@ import scalacss.ScalaCssReact._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 02.11.17 12:57
-  * Description: React-компонент чекбокса с управлением главными/заглавными элементами.
+  * Description: React-компонент чекбокса с управлением главными блоками.
   */
 class UseAsMainR(
                   lkAdEditCss: LkAdEditCss
@@ -31,17 +31,17 @@ class UseAsMainR(
   /** Модель пропертисов компонента.
     *
     * @param checked Текущее состояние чек-бокса.
-    * @param mainCount Кол-во блоков в карточке, которые могут быть использованы как заглавные.
+    * @param mainDefined Кол-во блоков в карточке, которые могут быть использованы как заглавные.
     */
   case class PropsVal(
-                       checked    : Boolean,
-                       mainCount  : Int
+                       checked      : Boolean,
+                       mainDefined  : Boolean
                      )
   /** Поддержка FastEq для инстансов PropsVal. */
   implicit object UseAdMainPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.checked ==* b.checked) &&
-        (a.mainCount ==* b.mainCount)
+        (a.mainDefined ==* b.mainDefined)
     }
   }
 
@@ -90,28 +90,16 @@ class UseAsMainR(
           <.div(
             ^.`class` := Css.Lk.SM_NOTE,
 
-            if (props.mainCount ==* 0) {
-              Messages( MsgCodes.`No.main.blocks.Any.block.may.be.used.as.main` )
-
-            } else if (props.mainCount ==* 1) {
+            Messages {
               // Карточка содержит максимум один главный блок.
-              val msg = if (props.checked) {
+              if (!props.mainDefined) {
+                MsgCodes.`No.main.blocks.First.block.is.main`
+              } else if (props.checked) {
                 // Этот блок -- едиственный главный
                 MsgCodes.`This.block.is.the.only.main`
               } else {
                 // Какой-то другой блок является главным.
                 MsgCodes.`This.block.is.not.main`
-              }
-              Messages(msg)
-
-            } else {
-              // В карточке более одного главного блока.
-              if (props.checked) {
-                // Этот блок и n-1 других блоков могут быть использованы как заглавные.
-                Messages( MsgCodes.`Current.block.and.0.another.may.be.used.as.main`, props.mainCount - 1 )
-              } else {
-                // В карточке есть n заглавных блоков.
-                Messages( MsgCodes.`There.are.0.main.blocks.exluding.current`, props.mainCount )
               }
             },
 
@@ -122,7 +110,7 @@ class UseAsMainR(
               lkAdEditCss.StripMain.showAll,
               ^.onMouseEnter --> _onShowAllMouseEnterLeave(true),
               ^.onMouseLeave --> _onShowAllMouseEnterLeave(false),
-              `(`, Messages( MsgCodes.`Show.all` ), `)`
+              `(`, Messages( MsgCodes.`Show` ), `)`
             )
 
           )

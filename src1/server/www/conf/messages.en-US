@@ -68,6 +68,7 @@ Bill.details=Details
 Show.more=Show more
 Show.all=Show all
 Show.details=Show details
+Show=Show
 No.records=No records
 Nothing.found=Nothing found
 Quick.search.for.offers=Quick search for offers
@@ -958,7 +959,5 @@ Main.block=Main block
 Main.blocks.are.used.to.display.ad.inside.the.grid=Main blocks are used to display current card inside grid among other cards.
 This.block.is.the.only.main=Current block is the only main.
 This.block.is.not.main=Another block is main, but not current.
-Current.block.and.0.another.may.be.used.as.main=Current block and {0} other blocks will be used as main.
-There.are.0.main.blocks.excluding.current=There are {0} main blocks defined. But current block is not marked as main.
-No.main.blocks.Any.block.may.be.used.as.main=No main blocks defined. Any of blocks may be used as main.
+No.main.blocks.First.block.is.main=No main blocks defined. Topmost block is main.
 

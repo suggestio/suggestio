@@ -355,9 +355,9 @@ class LkAdEditFormR(
             import io.suggest.common.empty.OptionUtil.BoolOptOps
             useAsMainR.PropsVal(
               checked = selJdt.props1.isMain.getOrElseFalse,
-              mainCount = mroot.doc.jdArgs.template
+              mainDefined = mroot.doc.jdArgs.template
                 .subForest
-                .count( _.rootLabel.props1.isMain.getOrElseFalse )
+                .exists( _.rootLabel.props1.isMain.getOrElseFalse )
             )
           }
         }( OptFastEq.Wrapped ),

@@ -394,15 +394,13 @@ class JdR(
         },
 
         // Скрыть не-main-стрипы, если этого требует рендер.
-        jdArgs.renderArgs.nonMainStripsCss
-          .filter { _ =>
-            // Это касается только стрипов, у которых нет isMain = Some(true)
-            !s.props1.isMain.getOrElseFalse
-          }
-          .whenDefined {
-            // Данный стип надо приглушить с помощью указанных css-стилей.
-            ^.`class` := _
-          },
+        // Это касается только стрипов, у которых нет isMain = Some(true)
+        if (jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
+          // Данный стип надо приглушить с помощью указанных css-стилей.
+          ^.visibility.hidden
+        } else {
+          EmptyVdom
+        },
 
         _maybeSelected( s, jdArgs ),
 
