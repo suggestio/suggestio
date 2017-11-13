@@ -21,7 +21,7 @@ class ColorPickAfterStripAh[M](modelRW: ModelRW[M, MDocS]) extends ActionHandler
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
-    case ColorBtnClick =>
+    case _: ColorBtnClick =>
       val v0 = value
 
       val needTransformOpt = for {

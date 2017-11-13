@@ -159,7 +159,6 @@ class LkAdEditFormR(
             <.div(
               LCSS.editorsCont,
               rightYOptProxy.value.whenDefined { rightY =>
-                //^.paddingTop := rightY.px
                 ^.transform := (Css.Anim.Transform.TRANSLATE + `(` + 0.px + COMMA + rightY.px + `)`)
               },
 
