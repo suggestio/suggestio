@@ -267,6 +267,7 @@ class JsMessagesUtil @Inject() (
       MC.`This.block.is.not.main` ::
       MC.`No.main.blocks.First.block.is.main` ::
       MC.`Background` ::
+      MC.`Upload.file` ::
       Nil
   }
 

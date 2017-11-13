@@ -200,6 +200,7 @@ class LkAdEditFormR(
 
                     // Управление картинкой, если доступно:
                     s.picPropsOptC { pictureR.apply },
+                    <.br,
 
                     // Галочка широкого рендера фона.
                     s.showWidePropsOptC { showWideR.apply },

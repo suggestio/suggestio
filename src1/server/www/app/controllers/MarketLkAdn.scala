@@ -6,6 +6,7 @@ import controllers.ident._
 import io.suggest.color.MColorData
 import io.suggest.common.fut.FutureUtil
 import io.suggest.mbill2.m.item.MItems
+import io.suggest.mbill2.m.item.status.MItemStatus
 import io.suggest.model.n2.edge.{MEdge, MPredicates}
 import io.suggest.model.n2.edge.search.Criteria
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
@@ -146,13 +147,13 @@ class MarketLkAdn @Inject() (
       val madsFut: Future[Seq[MNode]] = {
         val producedByCrs = {
           val cr = Criteria(
-            nodeIds     = Seq( adnId ),
-            predicates  = Seq( MPredicates.OwnedBy )
+            nodeIds     = adnId :: Nil,
+            predicates  = MPredicates.OwnedBy :: Nil
           )
-          Seq(cr)
+          cr :: Nil
         }
         val adsSearch0 = new MNodeSearchDfltImpl {
-          override def nodeTypes = Seq( MNodeTypes.Ad )
+          override def nodeTypes = MNodeTypes.Ad :: Nil
           override def outEdges  = producedByCrs
           override def limit     = 200
           // TODO Почему-то сортировка работает задом наперёд, должно быть DESC тут:
@@ -238,8 +239,7 @@ class MarketLkAdn @Inject() (
           val iiOpt = brArgs.mad.id
             .flatMap(itemsInfos.get)
           val iStatuses = iiOpt
-            .map(_.statuses)
-            .getOrElse(Set.empty)
+            .fold(Set.empty[MItemStatus])(_.statuses)
           MNodeAdInfo(brArgs, iStatuses)
         }
       }

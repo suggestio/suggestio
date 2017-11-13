@@ -56,10 +56,6 @@ class ColorCheckboxR(
 
     /** Реакция на клик по кружочку цвета. */
     private def _onColorRoundClick(e: ReactMouseEvent): Callback = {
-      // Нужно вычислить координаты для позиционирования picker'а относительно заданного контейнера.
-      // Для этого надо найти контейнер в parent и вычислить его page top-left.
-      val srcEl = e.target.asInstanceOf[Element]
-
       val fixedCoord = MCoords2di(
         x = e.clientX.toInt,
         y = e.clientY.toInt

@@ -179,11 +179,14 @@ class DocEditAh[M](
     // Клик по элементу карточки.
     case m: JdTagSelect =>
       val v0 = value
-      if ( v0.jdArgs.selectedTag.containsLabel(m.jdTag) ) {
+      val oldSelectedTag = v0.jdArgs.selectedTag.map(_.rootLabel)
+      if ( oldSelectedTag contains m.jdTag ) {
         // Бывают повторные щелчки по уже выбранным элементам, это нормально.
         noChange
 
       } else {
+        val oldTagName = oldSelectedTag.map(_.name)
+
         // Юзер выбрал какой-то новый элемент. Залить новый тег в seleted:
         val newSelJdtTreeLoc = v0.jdArgs.template
           .loc
@@ -224,23 +227,28 @@ class DocEditAh[M](
         // Если это strip, то активировать состояние strip-редактора.
         val v3 = m.jdTag.name match {
           // Переключение на новый стрип. Инициализировать состояние stripEd:
-          case MJdTagNames.STRIP =>
-            v2.withStripEd(
-                Some(MStripEdS(
-                  isLastStrip = {
-                    val hasManyStrips = v2.jdArgs.template
-                      .deepOfTypeIter( MJdTagNames.STRIP )
-                      // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
-                      .slice(0, 2)
-                      .size > 1
-                    !hasManyStrips
-                  }
-                ))
-              )
-              .withSlideBlocks(
+          case n @ MJdTagNames.STRIP =>
+            val v33 = v2.withStripEd(
+              Some(MStripEdS(
+                isLastStrip = {
+                  val hasManyStrips = v2.jdArgs.template
+                    .deepOfTypeIter( MJdTagNames.STRIP )
+                    // Оптимизация: НЕ проходим весь strip-итератор, а считаем только первые два стрипа.
+                    .slice(0, 2)
+                    .size > 1
+                  !hasManyStrips
+                }
+              ))
+            )
+            // Если тип текущего тега изменился, то сбросить текущий slide-блок.
+            if (oldTagName contains n) {
+              v33
+            } else {
+              v33.withSlideBlocks(
                 v2.slideBlocks
                   .withExpanded( Some(SlideBlockKeys.BLOCK_BG) )
               )
+            }
           // Это не strip, обнулить состояние stripEd, если оно существует:
           case _ =>
             v2.withOutStripEd

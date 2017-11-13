@@ -95,10 +95,21 @@ class PictureR(
                 ^.`class` := Css.flat( C.IMAGE, Css.Size.M ),
 
                 imgSrcOpt.fold[VdomElement] {
+                  val upCss = Css.Lk.Uploads
                   // Картинки нет. Можно загрузить файл.
-                  <.input(
-                    ^.`type`    := HtmlConstants.Input.file,
-                    ^.onChange ==> _onFileChange
+                  <.div(
+                    <.input(
+                      ^.`type`    := HtmlConstants.Input.file,
+                      ^.`class`   := upCss.ADD_FILE_INPUT,
+                      ^.onChange ==> _onFileChange
+                    ),
+
+                    <.a(
+                      ^.`class` := upCss.IMAGE_ADD_BTN,
+                      <.span(
+                        Messages( MsgCodes.`Upload.file`, HtmlConstants.SPACE )
+                      )
+                    )
                   )
 
                 } { blobUrl =>
@@ -124,10 +135,13 @@ class PictureR(
               // Кнопка для кропа изображения.
               imgSrcOpt.whenDefined { _ =>
                 val B = Css.Buttons
-                <.a(
-                  ^.`class` := Css.flat( B.BTN, B.BTN_W, B.MINOR, Css.Size.M ),
-                  ^.onClick --> _onCropClick,
-                  Messages( MsgCodes.`Crop` ), HtmlConstants.ELLIPSIS
+                <.div(
+                  <.br,
+                  <.a(
+                    ^.`class` := Css.flat( B.BTN, B.BTN_W, B.MINOR, Css.Size.M ),
+                    ^.onClick --> _onCropClick,
+                    Messages( MsgCodes.`Crop` ), HtmlConstants.ELLIPSIS
+                  )
                 )
               }
 

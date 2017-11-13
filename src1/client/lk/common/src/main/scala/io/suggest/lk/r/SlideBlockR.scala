@@ -61,7 +61,8 @@ trait SlideBlockCss extends StyleSheet.Inline {
     }
 
     val bodyWrapExpanded = style(
-      height.auto
+      height.auto,
+      paddingBottom( 5.px )
     )
 
   }

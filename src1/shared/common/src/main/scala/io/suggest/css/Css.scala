@@ -255,6 +255,11 @@ object Css {
       final def OPENED    = __ + "js-open"
     }
 
+    object Uploads {
+      final def ADD_FILE_INPUT = "add-file-" + Input.INPUT
+      final def IMAGE_ADD_BTN  = "image_add-btn"
+    }
+
   } // Lk
 
 

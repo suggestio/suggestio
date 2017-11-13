@@ -27,6 +27,11 @@ object MColorsState {
 }
 
 
+/** Модель состояния цветов.
+  *
+  * @param colorPresets Избранные цвета.
+  * @param histograms nodeId картинки -> MHistogram
+  */
 case class MColorsState(
                          // TODO Надо бы карту презетов для разных картинок.
                          colorPresets    : List[MColorData]           = Nil,

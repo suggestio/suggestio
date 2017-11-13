@@ -221,5 +221,6 @@ object MsgCodes {
   val `Show`                        = "Show"
   val `No.main.blocks.First.block.is.main` = "No.main.blocks.First.block.is.main"
   val `Background` = "Background"
+  val `Upload.file` = "Upload.file"
 
 }

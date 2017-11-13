@@ -9,7 +9,7 @@ import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import play.api.libs.json.Json
 import io.suggest.ad.edit.c._
-import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick}
+import io.suggest.ad.edit.m.edit.color.{IBgColorPickerS, MColorPick, MColorsState}
 import io.suggest.ad.edit.m.edit.MQdEditS
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags._
@@ -93,6 +93,19 @@ class LkAdEditCircuit(
             ),
             jdCss      = jdCss,
             conf       = jdConf
+          ),
+          // Залить гистограммы в общий словарь гистограмм, т.к. именно оттуда идёт рендер.
+          colorsState = MColorsState(
+            histograms = {
+              val iter = for {
+                jdEdge <- mFormInit.form.edgesMap.valuesIterator
+                srvFile <- jdEdge.fileSrv
+                colorHist <- srvFile.colors
+              } yield {
+                srvFile.nodeId -> colorHist
+              }
+              iter.toMap
+            }
           )
         )
       },
