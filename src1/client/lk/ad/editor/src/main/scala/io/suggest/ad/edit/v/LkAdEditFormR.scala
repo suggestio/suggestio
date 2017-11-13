@@ -3,7 +3,6 @@ package io.suggest.ad.edit.v
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
-import io.suggest.ad.edit.m.edit.color.MColorPickerS
 import io.suggest.ad.edit.m.edit.strip.MStripEdS
 import io.suggest.ad.edit.m.{DocBodyClick, MAeRoot, SlideBlockKeys}
 import io.suggest.ad.edit.v.edit.strip.{DeleteStripBtnR, PlusMinusControlsR, ShowWideR}
@@ -15,10 +14,10 @@ import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
-import io.suggest.quill.v.QuillCss
+import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.tags.MJdTagNames
+import io.suggest.jd.tags.{MJdTagName, MJdTagNames}
 import io.suggest.lk.r.SlideBlockR
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
@@ -42,7 +41,6 @@ class LkAdEditFormR(
                      addR                       : AddR,
                      lkAdEditCss                : LkAdEditCss,
                      quillCssFactory            : => QuillCss,
-                     val qdEditR                : QdEditR,
                      val scaleR                 : ScaleR,
                      val pictureR               : PictureR,
                      val saveR                  : SaveR,
@@ -53,11 +51,11 @@ class LkAdEditFormR(
                      val showWideR              : ShowWideR,
                      val colorCheckboxR         : ColorCheckboxR,
                      val slideBlockR            : SlideBlockR,
-                     val colorPickerR           : ColorPickerR
+                     val colorPickerR           : ColorPickerR,
+                     val quillEditorR           : QuillEditorR
                    ) {
 
   import MJdArgs.MJdWithArgsFastEq
-  import qdEditR.QdEditRPropsValFastEq
   import scaleR.ScaleRPropsValFastEq
   import pictureR.PictureRPropsValFastEq
   import saveR.SaveRPropsValFastEq
@@ -68,6 +66,7 @@ class LkAdEditFormR(
   import showWideR.ShowWideRPropsValFastEq
   import colorCheckboxR.ColorCheckboxPropsValFastEq
   import slideBlockR.SlideBlockPropsValFastEq
+  import quillEditorR.QuillEditorPropsValFastEq
 
   type Props = ModelProxy[MAeRoot]
 
@@ -76,7 +75,6 @@ class LkAdEditFormR(
                               jdPreviewArgsC                  : ReactConnectProxy[MJdArgs],
                               jdCssArgsC                      : ReactConnectProxy[JdCss],
                               picPropsOptC                    : ReactConnectProxy[Option[pictureR.PropsVal]],
-                              qdEditOptC                      : ReactConnectProxy[Option[qdEditR.PropsVal]],
                               scalePropsOptC                  : ReactConnectProxy[Option[scaleR.PropsVal]],
                               rightYOptC                      : ReactConnectProxy[Option[Int]],
                               savePropsC                      : ReactConnectProxy[saveR.PropsVal],
@@ -86,9 +84,9 @@ class LkAdEditFormR(
                               widthPropsOptC                  : ReactConnectProxy[Option[plusMinusControlsR.PropsVal]],
                               stripEdSOptC                    : ReactConnectProxy[Option[MStripEdS]],
                               showWidePropsOptC               : ReactConnectProxy[Option[showWideR.PropsVal]],
-                              stripBgColorCheckBoxPropsOptC   : ReactConnectProxy[Option[colorCheckboxR.PropsVal]],
                               slideBlocks                     : SlideBlocksState,
-                              colors                          : ColorsState
+                              colors                          : ColorsState,
+                              quillEdOptC                     : ReactConnectProxy[Option[quillEditorR.PropsVal]]
                             )
 
   case class SlideBlocksState(
@@ -99,7 +97,9 @@ class LkAdEditFormR(
                              )
 
   case class ColorsState(
-                          picker        : ReactConnectProxy[Option[colorPickerR.PropsVal]]
+                          picker            : ReactConnectProxy[Option[colorPickerR.PropsVal]],
+                          stripBgCbOptC     : ReactConnectProxy[Option[colorCheckboxR.PropsVal]],
+                          contentBgCbOptC   : ReactConnectProxy[Option[colorCheckboxR.PropsVal]]
                         )
 
 
@@ -111,6 +111,8 @@ class LkAdEditFormR(
 
     def render(p: Props, s: State): VdomElement = {
       val LCSS = lkAdEditCss.Layout
+      val MSG_BG_COLOR = Messages( MsgCodes.`Bg.color` )
+
       <.div(
         ^.`class` := Css.Overflow.HIDDEN,
 
@@ -191,10 +193,9 @@ class LkAdEditFormR(
                 slideBlockR(propsOpt)(
                   <.div(
                     // Выбор цвета фона блока.
-                    s.stripBgColorCheckBoxPropsOptC { colorOptProxy =>
+                    s.colors.stripBgCbOptC { colorOptProxy =>
                       colorCheckboxR(colorOptProxy)(
-                        // TODO Opt Рендер необязателен из-за Option, но список children не ленив. Можно ли это исправить, кроме как передавая суть children внутри props?
-                        Messages( MsgCodes.`Bg.color` )
+                        MSG_BG_COLOR
                       )
                     },
 
@@ -210,7 +211,18 @@ class LkAdEditFormR(
               // Редактор контента (текста)
               s.slideBlocks.content { propsOpt =>
                 slideBlockR(propsOpt)(
-                  s.qdEditOptC { qdEditR.apply }
+                  <.div(
+                    // Редактор текста
+                    s.quillEdOptC { quillEditorR.apply },
+                    <.br,
+
+                    // Цвет фона контента.
+                    s.colors.contentBgCbOptC {
+                      colorCheckboxR(_)(
+                        MSG_BG_COLOR
+                      )
+                    }
+                  )
                 )
               },
 
@@ -264,9 +276,19 @@ class LkAdEditFormR(
         }( OptFastEq.Wrapped )
       }
 
-      // Функция сборки
-      def __colorPickerState(f: MAeRoot => Option[MColorPickerS]) = {
-
+      // Фунция сборки коннекшена до состояния чекбокса выбора цвета.
+      def __mkBgColorCbC(jdtName: MJdTagName) = {
+        p.connect { mroot =>
+          for {
+            selJdtTree <- mroot.doc.jdArgs.selectedTag
+            selJdt = selJdtTree.rootLabel
+            if selJdt.name ==* jdtName
+          } yield {
+            colorCheckboxR.PropsVal(
+              color         = selJdt.props1.bgColor
+            )
+          }
+        }( OptFastEq.Wrapped )
       }
 
       State(
@@ -300,18 +322,6 @@ class LkAdEditFormR(
                 .flatMap { fileSrv =>
                   mroot.doc.colorsState.histograms.get(fileSrv.nodeId)
                 }
-            )
-          }
-        }( OptFastEq.Wrapped ),
-
-        qdEditOptC = p.connect { mroot =>
-          for {
-            qdEdit <- mroot.doc.qdEdit
-            selJd  <- mroot.doc.jdArgs.selectedTagLoc.toLabelOpt
-          } yield {
-            qdEditR.PropsVal(
-              qdEdit      = qdEdit,
-              bgColor     = selJd.props1.bgColor
             )
           }
         }( OptFastEq.Wrapped ),
@@ -389,19 +399,6 @@ class LkAdEditFormR(
             checked = bm.wide
           )
         },
-
-        stripBgColorCheckBoxPropsOptC = p.connect { mroot =>
-          for {
-            _ <- mroot.doc.stripEd
-            selJdtTree <- mroot.doc.jdArgs.selectedTag
-            selJdt = selJdtTree.rootLabel
-            if selJdt.name ==* MJdTagNames.STRIP
-          } yield {
-            colorCheckboxR.PropsVal(
-              color         = selJdt.props1.bgColor
-            )
-          }
-        }( OptFastEq.Wrapped ),
 
         slideBlocks = SlideBlocksState(
           block = {
@@ -484,8 +481,23 @@ class LkAdEditFormR(
                 fixedXy     = shownAt
               )
             }
+          },
+
+          stripBgCbOptC   = __mkBgColorCbC( MJdTagNames.STRIP ),
+          contentBgCbOptC = __mkBgColorCbC( MJdTagNames.QD_CONTENT )
+        ),
+
+        // Коннекшен до пропертисов для QuillEditor-компонента.
+        quillEdOptC = p.connect { mroot =>
+          for {
+            qdS   <- mroot.doc.qdEdit
+          } yield {
+            quillEditorR.PropsVal(
+              initDelta = qdS.initDelta,
+              realDelta = qdS.realDelta
+            )
           }
-        )
+        }( OptFastEq.Wrapped )
 
       )
     }

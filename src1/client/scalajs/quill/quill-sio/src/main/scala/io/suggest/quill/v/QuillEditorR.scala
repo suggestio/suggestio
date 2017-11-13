@@ -50,7 +50,7 @@ class QuillEditorR(
 
   }
 
-  implicit object PropsValFastEq extends FastEq[PropsVal] {
+  implicit object QuillEditorPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       a.initDelta ===* b.initDelta
       // Не учитываем realDelta в сравнении, см.коммент выше.

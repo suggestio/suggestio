@@ -42,8 +42,6 @@ class LkAdEditModule {
   // views deps
   lazy val plusMinusControlsR = wire[PlusMinusControlsR]
 
-  lazy val qdEditR = wire[QdEditR]
-
   lazy val lkAdEditFormR = wire[LkAdEditFormR]
 
   lazy val deleteStripBtnR = wire[DeleteStripBtnR]
