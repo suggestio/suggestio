@@ -3,7 +3,8 @@ package io.suggest.sc.inx.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.media.IMediaInfo
-import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
+import io.suggest.sc.index.MWelcomeInfo
+import io.suggest.sc.sc3.MSc3IndexResp
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sc.styl.MScCssArgs
 

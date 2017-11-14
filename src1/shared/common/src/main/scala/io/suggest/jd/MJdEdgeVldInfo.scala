@@ -10,7 +10,7 @@ import io.suggest.common.geom.d2.ISize2di
   * Появилась для возможности валидации на клиенте и на сервере, без привязки к конкретным сложным моделям эджей.
   */
 case class MJdEdgeVldInfo(
-                           jdEdge : MJdEditEdge,
+                           jdEdge : MJdEdge,
                            img    : Option[MEdgePicInfo]
                          )
 

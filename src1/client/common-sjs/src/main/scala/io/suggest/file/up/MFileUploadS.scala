@@ -3,7 +3,7 @@ package io.suggest.file.up
 import diode.FastEq
 import diode.data.Pot
 import org.scalajs.dom.raw.XMLHttpRequest
-import io.suggest.ueq.UnivEqJsUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 

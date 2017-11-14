@@ -3,26 +3,23 @@ package controllers
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.blk.{BlockPadding, BlockPaddings}
-import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
+import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.ad.form.AdFormConstants
-import io.suggest.color.MHistogram
 import io.suggest.common.empty.OptionUtil
 import io.suggest.ctx.CtxData
 import io.suggest.es.model.MEsUuId
-import io.suggest.file.MSrvFileInfo
 import io.suggest.init.routed.MJsiTgs
-import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.ad.MNodeAd
 import io.suggest.model.n2.edge._
 import io.suggest.model.n2.extra.MNodeExtras
 import io.suggest.model.n2.extra.doc.MNodeDoc
-import io.suggest.model.n2.media.{MFileMetaHash, MMedias, MMediasCache}
+import io.suggest.model.n2.media.MMedias
 import io.suggest.model.n2.node.common.MNodeCommon
 import io.suggest.model.n2.node.meta.{MBasicMeta, MMeta}
 import io.suggest.model.n2.node.{MNode, MNodeTypes, MNodes}
 import io.suggest.scalaz.ScalazUtil.Implicits._
 import io.suggest.util.logs.MacroLogsImpl
-import models.im._
 import models.mctx.Context
 import models.mproj.ICommonDi
 import models.mup.{MColorDetectArgs, MUploadFileHandlers}
@@ -30,9 +27,7 @@ import models.req.IReq
 import play.api.libs.json.Json
 import play.api.mvc._
 import util.acl.{BruteForceProtect, CanCreateOrEditAd, CanEditAd, IsNodeAdmin}
-import util.ad.LkAdEdFormUtil
-import util.cdn.{CdnUtil, DistUtil}
-import util.img.DynImgUtil
+import util.ad.{JdAdUtil, LkAdEdFormUtil}
 import util.mdr.SysMdrUtil
 import util.sec.CspUtil
 import util.vid.VideoUtil
@@ -51,17 +46,14 @@ import scala.concurrent.Future
 class LkAdEdit @Inject() (
                            canEditAd                              : CanEditAd,
                            canCreateOrEditAd                      : CanCreateOrEditAd,
-                           dynImgUtil                             : DynImgUtil,
                            isNodeAdmin                            : IsNodeAdmin,
                            cspUtil                                : CspUtil,
                            lkAdEdFormUtil                         : LkAdEdFormUtil,
                            mMedias                                : MMedias,
                            uploadCtl                              : Upload,
                            bruteForceProtect                      : BruteForceProtect,
-                           distUtil                               : DistUtil,
-                           mMediasCache                           : MMediasCache,
+                           jdAdUtil                               : JdAdUtil,
                            mNodes                                 : MNodes,
-                           cdnUtil                                : CdnUtil,
                            sysMdrUtil                             : SysMdrUtil,
                            videoUtil                              : VideoUtil,
                            override val mCommonDi                 : ICommonDi
@@ -93,7 +85,7 @@ class LkAdEdit @Inject() (
         implicitly[Context]
       }
 
-      val docFormFut = ctxFut.flatMap(lkAdEdFormUtil.defaultEmptyDocument(_))
+      val adDataFut = ctxFut.flatMap(lkAdEdFormUtil.defaultEmptyDocument(_))
 
       // Конфиг формы содержит только данные о родительском узле-продьюсере.
       val formConfFut = for (ctx <- ctxFut) yield {
@@ -106,13 +98,13 @@ class LkAdEdit @Inject() (
 
       // Собрать модель инициализации формы редактора
       val formInitJsonStrFut0 = for {
-        docForm  <- docFormFut
-        formConf <- formConfFut
+        adData    <- adDataFut
+        formConf  <- formConfFut
       } yield {
         val formInit = MAdEditFormInit(
-          conf = formConf,
-          form = docForm,
-          blockPadding = prodBlockPadding(request.mnode)
+          conf          = formConf,
+          adData            = adData,
+          blockPadding  = prodBlockPadding(request.mnode)
         )
         _formInit2str( formInit )
       }
@@ -145,7 +137,7 @@ class LkAdEdit @Inject() (
     */
   def saveAdSubmit(adIdOptU: Option[MEsUuId], producerIdU: Option[MEsUuId]) = bruteForceProtect(_BFP_ARGS) {
     csrf.Check {
-      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MAdEditForm] ) { implicit request =>
+      canCreateOrEditAd(adIdOptU, producerIdOpt = producerIdU).async( parse.json[MJdAdData] ) { implicit request =>
         // Взять форму из реквеста, провалидировать
         lazy val logPrefix = s"saveAdSubmit(${request.madOpt.fold("pro")(_ => "a")}d#${adIdOptU.orElse(producerIdU).orNull}):"
 
@@ -366,7 +358,7 @@ class LkAdEdit @Inject() (
                         adId        = mad2.id,
                         ctxId       = ctx.ctxIdStr
                       ),
-                      form = MAdEditForm(
+                      adData = MJdAdData(
                         template  = tpl2,
                         edges     = edges2
                       ),
@@ -393,168 +385,9 @@ class LkAdEdit @Inject() (
   def editAd(adIdU: MEsUuId) = csrf.AddToken {
     val adId = adIdU.id
     canEditAd(adId, U.Lk).async { implicit request =>
-      lazy val logPrefix = s"editAd($adId):"
-
-      // Нужно собрать начальное состояние формы. Для этого нужно собрать ресурсы текущей карточки.
-      val imgPredicate = MPredicates.JdContent.Image
-
-      // Собираем картинки, используемые в карточке:
-      val imgsEdges = request.mad.edges
-        .withPredicateIter( imgPredicate, MPredicates.Bg )  // TODO Надо ли тут Bg-предикат? по идее, он устарел ещё до ввода jd-редактора.
-        .map { medge =>
-          medge -> MImg3(medge)
-        }
-        .toSeq
-      LOGGER.trace(s"$logPrefix Found ${imgsEdges.size} img.edges: ${imgsEdges.iterator.map(_._2.fileName).mkString(", ")}")
-
-      // Собрать связанные инстансы MMedia
-      val imgOrigsMediasMapFut = mMediasCache.multiGetMap {
-        imgsEdges
-          .iterator
-          .map(_._2.mediaId)
-          .toSet
-      }
-
-      val videoPredicate = MPredicates.JdContent.Video
-      // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
-      val videoEdges = request.mad.edges
-        .withPredicateIter( videoPredicate )
-        .toSeq
-      LOGGER.trace(s"$logPrefix Found ${videoEdges.size} video edges: ${videoEdges.mkString(", ")}")
-
-      // Для имён файлов нужно собрать сами узлы.
-      val mediaNodesMapFut = mNodesCache.multiGetMap {
-        // Перечисляем все интересующие img-ноды:
-        val imgNodeIdsIter = imgsEdges
-          .iterator
-          .map(_._1)
-        // Присунуть сюда же video-ноды:
-        val videoNodeIdsIter = videoEdges
-          .iterator
-        // Всё объеденить и дедублицировать.
-        (imgNodeIdsIter ++ videoNodeIdsIter)
-          .flatMap(_.nodeIds)
-          .toSet
-      }
-
-      // Собрать инфу по хостам, хранящим интересующие media-файлы.
-      val imgMedia2hostsMapFut = imgOrigsMediasMapFut.flatMap { imgOrigsMediasMap =>
-        LOGGER.trace(s"$logPrefix Found ${imgOrigsMediasMap.size} linked img medias.")
-        distUtil.medias2hosts( imgOrigsMediasMap.values )
-      }
-
-      // Скомпилить jd-эджи картинок.
-      val imgJdEdgesFut = for {
-        mediasMap           <- imgOrigsMediasMapFut
-        mediaNodesMap       <- mediaNodesMapFut
-        imgMedia2hostsMap   <- imgMedia2hostsMapFut
-      } yield {
-        // Получены медиа-файлы на руки.
-        val iter = for {
-          // Пройти по BgImg-эджам карточки:
-          (medge, mimg)   <- imgsEdges.iterator
-          // id узла эджа -- это идентификатор картинки.
-          edgeUid         <- medge.doc.uid.iterator
-          nodeId          <- medge.nodeIds.iterator
-          mmedia          <- mediasMap.get(mimg.mediaId).iterator
-        } yield {
-          // Получить инфу по хосту, на котором хранится данная картинка.
-          lazy val hostInfoOpt = imgMedia2hostsMap
-            .get( nodeId )
-            .flatMap(_.headOption)
-          def __imgUrl(mimg9: MImgT): String = {
-            val call = dynImgUtil.imgCall(mimg9)
-            hostInfoOpt
-              .fold[String] {
-                // Вообще, это плохо, если нет хостнейма для media. Это значит, что-то не так.
-                LOGGER.warn(s"$logPrefix Media host-name missing for $nodeId")
-                call.url
-              } { hostInfo =>
-                LOGGER.trace(s"$logPrefix Using host=$hostInfo for media-node#$nodeId")
-                cdnUtil.distNodeCdnUrl( hostInfo, call)
-              }
-          }
-
-          val jdEdge = MJdEditEdge(
-            predicate = imgPredicate,
-            id        = edgeUid,
-            // url не ставим, потому что очень нужен около-оригинальная картинка, для кропа например.
-            fileSrv   = Some(MSrvFileInfo(
-              nodeId    = nodeId,
-              url       = Some {
-                // TODO Вместо сырого оригинала вернуть нечто пересжатое с тем же w/h.
-                __imgUrl( mimg )
-              },
-              // TODO Дальше модель сильно дублирует модель в MMedia.file (без учёта date_created).
-              sizeB     = Some( mmedia.file.sizeB ),
-              mimeType  = Some( mmedia.file.mime ),
-              hashesHex = MFileMetaHash.toHashesHex( mmedia.file.hashesHex ),
-              colors    = for (_ <- mmedia.picture.colors.headOption) yield {
-                MHistogram( mmedia.picture.colors )
-              },
-              name = mediaNodesMap.get( nodeId )
-                .flatMap(_.guessDisplayName),
-              whPx = mmedia.picture.whPx
-            ))
-          )
-
-          LOGGER.trace(s"$logPrefix Img edge compiled: $jdEdge")
-          jdEdge
-        }
-        iter.toSeq
-      }
-
-      // Скомпилить jd-эджи для видосов:
-      val videoJdEdgesFut = for {
-        mediaNodesMap   <- mediaNodesMapFut
-      } yield {
-        val iter = for {
-          medge         <- videoEdges.iterator
-          edgeUid       <- medge.doc.uid.iterator
-          nodeId        <- medge.nodeIds.iterator
-          mnode         <- mediaNodesMap.get( nodeId )
-          videoExt      <- mnode.extras.videoExt
-        } yield {
-          MJdEditEdge(
-            predicate = videoPredicate,
-            id        = edgeUid,
-            url       = Some( videoUtil.toIframeUrl(videoExt) )
-          )
-        }
-        iter.toSeq
-      }
-
-      // Собрать тексты из эджей
-      val textJdEdges = {
-        val textPred = MPredicates.JdContent.Text
-        val textJdEdgesIter = for {
-          textEdge <- request.mad.edges
-            .withPredicateIter( textPred )
-          edgeUid  <- textEdge.doc.uid.iterator
-          text     <- textEdge.doc.text
-        } yield {
-          MJdEditEdge(
-            predicate = textPred,
-            id        = edgeUid,
-            text      = Some(text)
-          )
-        }
-        textJdEdgesIter.toSeq
-      }
-
-      // Объеденить все эджи.
-      val edEdgesFut = for {
-        imgJdEdges    <- imgJdEdgesFut
-        videoJdEdges  <- videoJdEdgesFut
-      } yield {
-        val r = Iterator(textJdEdges, imgJdEdges, videoJdEdges)
-          .flatten
-          .toSeq
-        LOGGER.trace(s"$logPrefix Compiled ${r.size} jd edges: text=${textJdEdges.size} img=${imgJdEdges.size} video=${videoJdEdges.size}")
-        r
-      }
-
-      val nodeDoc = request.mad.extras.doc.get    // TODO .getOrElse(defaultDoc)
+      //lazy val logPrefix = s"editAd($adId):"
+      // Запустить сбоку карточки.
+      val jdAdDataFut = jdAdUtil.mkJdAdDataFor.edit( request.mad ).execute()
 
       // Подготовить ctxData:
       val ctxData1Fut = _ctxDataFut
@@ -564,8 +397,8 @@ class LkAdEdit @Inject() (
 
       // Собрать модель и отрендерить:
       val formInitStrFut = for {
-        ctx     <- ctxFut
-        edEdges <- edEdgesFut
+        ctx         <- ctxFut
+        jdAdData    <- jdAdDataFut
       } yield {
         val formInit = MAdEditFormInit(
           conf = MAdEditFormConf(
@@ -573,10 +406,7 @@ class LkAdEdit @Inject() (
             adId        = request.mad.id,
             ctxId       = ctx.ctxIdStr
           ),
-          form = MAdEditForm(
-            template  = nodeDoc.template,
-            edges     = edEdges
-          ),
+          adData = jdAdData,
           blockPadding = prodBlockPadding(request.producer)
         )
         _formInit2str( formInit )

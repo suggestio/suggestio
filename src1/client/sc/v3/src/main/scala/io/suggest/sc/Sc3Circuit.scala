@@ -104,7 +104,7 @@ class Sc3Circuit(
     mmapRW = mmapRW
   )
 
-  private val advRcvrsMapApi = new AdvRcvrsMapApiHttp
+  private def advRcvrsMapApi = new AdvRcvrsMapApiHttp
 
   override protected def actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]

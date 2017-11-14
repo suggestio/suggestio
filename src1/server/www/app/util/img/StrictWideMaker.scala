@@ -89,7 +89,7 @@ class StrictWideMaker @Inject() (
   /**
    * Собрать ссылку на изображение и сопутствующие метаданные.
    * @param args Контейнер с аргументами вызова.
-   * @return Фьючерс с экземпляром [[models.im.make.IMakeResult]].
+   * @return Фьючерс с экземпляром [[models.im.make.MakeResult]].
    */
   override def icompile(args: IMakeArgs): Future[MakeResult] = {
     // TODO Возможно, следует использовать Future.successful()? Вычисление в целом легковесное.

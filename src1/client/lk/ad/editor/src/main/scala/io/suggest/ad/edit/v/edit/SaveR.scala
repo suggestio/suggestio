@@ -14,7 +14,7 @@ import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
 import io.suggest.sjs.common.i18n.Messages
-import io.suggest.ueq.UnivEqJsUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 
 /**
   * Suggest.io

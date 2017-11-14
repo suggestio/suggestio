@@ -2,11 +2,11 @@
 
 @* Рендер тела открытой карточки: картинка, поля. *@
 
-@import ctx.api.cdn
+@import ctx.api.{cdn, dynImgUtil}
 
 @* Может быть включено отображение в wide-bg. Тогда нужно отрендерить широкий bg здесь. *@
 @for(wideBg <- args.wideBg) {
-  <img src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall(wideBg.dynImgCall) )"
+  <img src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall( dynImgUtil.imgCall(wideBg.dynCallArgs) ) )"
        class="bg __id-@{args.mad.id}"
        alt=""
        height="@wideBg.szCss.height" data-height="@wideBg.szCss.height"

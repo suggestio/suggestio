@@ -1,12 +1,13 @@
-package io.suggest.ad.edit.m
+package io.suggest.jd
 
-import io.suggest.jd.MJdEditEdge
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
+import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
-import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 
 import scalaz.Tree
 
@@ -14,10 +15,10 @@ import scalaz.Tree
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 23.08.17 17:40
-  * Description: Модель состояние формы редактирования рекламной карточки.
-  * Основной протокол общения клиента и сервера в вопросе редактирования рекламных карточек.
+  * Description: Модель данных рекламной карточки для рендера её на клиенте.
+  * Также используется редактором карточек в обратном направлении для сабмита карточки.
   */
-object MAdEditForm {
+object MJdAdData {
 
   object Fields {
     val TEMPATE_FN = "t"
@@ -25,11 +26,17 @@ object MAdEditForm {
   }
 
   /** Поддержка play-json. */
-  implicit val MAD_EDIT_FORM_FORMAT: OFormat[MAdEditForm] = (
+  implicit def MAD_EDIT_FORM_FORMAT: OFormat[MJdAdData] = (
     (__ \ Fields.TEMPATE_FN).format[Tree[JdTag]] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
-    (__ \ Fields.EDGES_FN).format[Iterable[MJdEditEdge]]
+    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]]
   )(apply, unlift(unapply))
+
+
+  implicit def univEq: UnivEq[MJdAdData] = {
+    import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
+    UnivEq.derive
+  }
 
 }
 
@@ -40,12 +47,12 @@ object MAdEditForm {
   * @param template Шаблон документа.
   * @param edges Эджи с данными для рендера документа.
   */
-case class MAdEditForm(
-                        template    : Tree[JdTag],
-                        edges       : Iterable[MJdEditEdge]
-                      ) {
+case class MJdAdData(
+                      template    : Tree[JdTag],
+                      edges       : Iterable[MJdEdge]
+                    ) {
 
   /** Кэшируемая карта эджей. */
-  lazy val edgesMap = IId.els2idMap[EdgeUid_t, MJdEditEdge]( edges )
+  lazy val edgesMap = IId.els2idMap[EdgeUid_t, MJdEdge]( edges )
 
 }

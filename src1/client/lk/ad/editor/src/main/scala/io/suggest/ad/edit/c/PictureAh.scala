@@ -15,7 +15,7 @@ import io.suggest.file.up.{MFile4UpProps, MFileUploadS}
 import io.suggest.i18n.{MMessage, MsgCodes}
 import io.suggest.img.MImgEdgeWithOps
 import io.suggest.img.crop.MCrop
-import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
+import io.suggest.jd.{MJdEdgeId, MJdEdge}
 import io.suggest.jd.render.m.SetImgWh
 import io.suggest.js.UploadConstants
 import io.suggest.lk.m.MErrorPopupS
@@ -131,7 +131,7 @@ class PictureAh[M](
 
                 // Записать текущий файл в состояние.
                 val dataEdge2 = MEdgeDataJs(
-                  jdEdge = MJdEditEdge(
+                  jdEdge = MJdEdge(
                     predicate   = MPredicates.JdBgPred,
                     id          = edgeUid2,
                     url         = Some( blobUrlNew )
@@ -833,7 +833,7 @@ class PictureAh[M](
 
 
   // Объединяем старый и новый набор данных по файлу на сервере.
-  private def _srvFileIntoJdEdge(fileInfo: MSrvFileInfo, jdEdge0: MJdEditEdge): MJdEditEdge = {
+  private def _srvFileIntoJdEdge(fileInfo: MSrvFileInfo, jdEdge0: MJdEdge): MJdEdge = {
     val srvFileInfo0 = jdEdge0
       .fileSrv
       .getOrElse(MSrvFileInfo.empty)

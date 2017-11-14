@@ -130,7 +130,7 @@ class VideoUtil @Inject() (
             val mnode0 = MNode(
               common = nodeCommon,
               extras = MNodeExtras(
-                videoExt = Some(veData)
+                extVideo = Some(veData)
               ),
               // Без ссылки в meta, чтобы ссылка явно генерилась самостоятельно.
               edges = MNodeEdges(

@@ -18,12 +18,13 @@ import scalaz.syntax.apply._
   * Suggest.io
   * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
   * Created: 23.08.17 17:41
-  * Description: Модель инфа по эджу для редактора карточек.
-  * Модель является кросс-платформенной, но на сервере существует лишь на входе и выходе из jdoc-редакторов.
+  * Description: Модель инфа по эджу для jd-карточек.
+  * Модель является кросс-платформенной.
+  * Изначально, модель называлась MJdEditEdge, но очень плотно интегрировалась с рендером, и edit-назначение отпало.
   *
   * Модель повторяет своей структурой MEdge, но не содержит нерелевантных для jd-редактора полей.
   */
-object MJdEditEdge {
+object MJdEdge {
 
   /** Названия полей модели для сериализации в JSON. */
   object Fields {
@@ -35,7 +36,7 @@ object MJdEditEdge {
   }
 
   /** Поддержка play-json между клиентом и сервером. */
-  implicit val MAD_EDIT_EDGE_FORMAT: OFormat[MJdEditEdge] = {
+  implicit val MAD_EDIT_EDGE_FORMAT: OFormat[MJdEdge] = {
     val F = Fields
     (
       (__ \ F.PREDICATE_FN).format[MPredicate] and
@@ -46,12 +47,12 @@ object MJdEditEdge {
     )(apply, unlift(unapply))
   }
 
-  implicit def univEq: UnivEq[MJdEditEdge] = UnivEq.derive
+  implicit def univEq: UnivEq[MJdEdge] = UnivEq.derive
 
 
   /** Валидация данных эджа для его сохранения в БД. */
-  def validateForStore(e: MJdEditEdge,
-                       videoExtUrlParsers: VideoExtUrlParsersT = new VideoExtUrlParsers): StringValidationNel[MJdEditEdge] = {
+  def validateForStore(e: MJdEdge,
+                       videoExtUrlParsers: VideoExtUrlParsersT = new VideoExtUrlParsers): StringValidationNel[MJdEdge] = {
     // Тут несколько вариантов: текст, картинка, видео. Поэтому разветвляем валидацию.
     val P = MPredicates.JdContent
     val `PRED` = "pred"
@@ -116,13 +117,13 @@ object MJdEditEdge {
   * @param url Ссылка на ресурс, на картинку, например.
   * @param fileSrv КроссПлатформенная инфа по файлу-узлу на стороне сервера.
   */
-case class MJdEditEdge(
-                        predicate           : MPredicate,   // TODO MPredicate заменить на MPredicates.JdContent.Child или что-то типа него.
-                        override val id     : EdgeUid_t,
-                        text                : Option[String] = None,
-                        url                 : Option[String] = None,
-                        fileSrv             : Option[MSrvFileInfo]  = None
-                      )
+case class MJdEdge(
+                    predicate           : MPredicate,   // TODO MPredicate заменить на MPredicates.JdContent.Child или что-то типа него.
+                    override val id     : EdgeUid_t,
+                    text                : Option[String] = None,
+                    url                 : Option[String] = None,
+                    fileSrv             : Option[MSrvFileInfo]  = None
+                  )
   extends IId[EdgeUid_t]
 {
 

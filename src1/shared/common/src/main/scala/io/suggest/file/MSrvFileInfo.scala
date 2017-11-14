@@ -47,8 +47,6 @@ object MSrvFileInfo {
     (__ \ "w").formatNullable[MSize2di]
   )(apply, unlift(unapply))
 
-  implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
-
 
   /** Провалидировать инстанс [[MSrvFileInfo]] перед сохранением на сервер.
     * По факту, все поля кроме nodeId не нужны.
@@ -63,6 +61,8 @@ object MSrvFileInfo {
         MSrvFileInfo( nodeId = nodeId )
       }
   }
+
+  implicit def univEq: UnivEq[MSrvFileInfo] = UnivEq.derive
 
 }
 

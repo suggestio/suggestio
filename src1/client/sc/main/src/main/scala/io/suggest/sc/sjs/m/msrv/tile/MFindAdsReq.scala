@@ -64,21 +64,6 @@ trait MFindAdsReqDflt extends MFindAdsReq {
   override def receiverId  : Option[String]    = None
   override def generation  : Option[Long]      = None
   override def locEnv      : MLocEnv           = MLocEnv.empty
-  override def screenInfo  : Option[MScreen]  = None
-  override def tagNodeId   : Option[String] = None
-}
-
-
-/** Враппер для заворачивания другой реализации [[MFindAdsReq]]. */
-trait MFindAdsReqWrapper extends MFindAdsReq {
-  def _underlying: MFindAdsReq
-
-  override def producerId   = _underlying.producerId
-  override def limit        = _underlying.limit
-  override def offset       = _underlying.offset
-  override def receiverId   = _underlying.receiverId
-  override def generation   = _underlying.generation
-  override def locEnv       = _underlying.locEnv
-  override def screenInfo   = _underlying.screenInfo
-  override def tagNodeId    = _underlying.tagNodeId
+  override def screenInfo  : Option[MScreen]   = None
+  override def tagNodeId   : Option[String]    = None
 }

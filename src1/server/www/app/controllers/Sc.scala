@@ -1,6 +1,6 @@
 package controllers
 
-import javax.inject.{Inject, Singleton, Named}
+import javax.inject.{Inject, Named, Singleton}
 
 import controllers.sc._
 import io.suggest.model.n2.node.MNodes
@@ -9,6 +9,7 @@ import models.im.make.IMaker
 import models.mctx.ContextUtil
 import models.mproj.ICommonDi
 import util.acl.{BruteForceProtect, GetAnyAd, MaybeAuth}
+import util.ad.JdAdUtil
 import util.adn.NodesUtil
 import util.adr.AdRenderUtil
 import util.adv.geo.AdvGeoLocUtil
@@ -51,6 +52,7 @@ class Sc @Inject() (
                      override val dynImgUtil         : DynImgUtil,
                      override val scMapUtil          : ScMapUtil,
                      override val advGeoLocUtil      : AdvGeoLocUtil,
+                     override val jdAdUtil           : JdAdUtil,
                      override val jsMessagesUtil     : JsMessagesUtil,
                      override val ctxUtil            : ContextUtil,
                      override val bruteForceProtect  : BruteForceProtect,

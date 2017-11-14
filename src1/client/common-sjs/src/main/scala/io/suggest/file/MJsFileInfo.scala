@@ -5,7 +5,7 @@ import io.suggest.common.empty.EmptyProduct
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.crypto.hash.HashesHex
 import io.suggest.file.up.MFileUploadS
-import io.suggest.ueq.UnivEqJsUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq.UnivEq
 import org.scalajs.dom.Blob

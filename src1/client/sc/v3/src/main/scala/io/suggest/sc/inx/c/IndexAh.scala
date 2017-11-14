@@ -4,10 +4,11 @@ import diode._
 import diode.data.Pot
 import io.suggest.react.ReactDiodeUtil
 import io.suggest.sc.{Sc3Api, ScConstants}
-import io.suggest.sc.index.{MSc3IndexResp, MScIndexArgs}
+import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MWelcomeState}
 import io.suggest.sc.resp.MScRespActionTypes
 import io.suggest.sc.root.m.{HandleScResp, MScRoot}
+import io.suggest.sc.sc3.MSc3IndexResp
 
 import scala.util.Success
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx

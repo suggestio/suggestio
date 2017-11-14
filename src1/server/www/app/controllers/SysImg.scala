@@ -1,8 +1,8 @@
 package controllers
 
 import java.net.{MalformedURLException, URL}
-
 import javax.inject.Inject
+
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
 import models.im.{MAnyImgs, MImg3, MImgT, MImgs3}
@@ -10,6 +10,7 @@ import play.api.data.Forms._
 import play.api.data._
 import util.acl.IsSu
 import util.FormUtil
+import util.img.DynImgUtil
 import views.html.sys1.img._
 
 /**
@@ -25,6 +26,7 @@ class SysImg @Inject() (
   override val sysImgMakeUtil     : SysImgMakeUtil,
   mImgs                           : MAnyImgs,
   override val isSu               : IsSu,
+  override val dynImgUtil         : DynImgUtil,
   override val mCommonDi          : ICommonDi
 )
   extends SioControllerImpl

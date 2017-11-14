@@ -1,5 +1,6 @@
 package io.suggest.sc
 
+import io.suggest.sc.grid.c.{FindAdsXhrImpl, IFindAdsApi}
 import io.suggest.sc.inx.c.{IIndexApi, IndexApiXhrImpl}
 
 /**
@@ -19,10 +20,12 @@ object Sc3Api {
 /** Интерфейс полного API. Не ясно, нужен ли. */
 trait ISc3Api
   extends IIndexApi
+  with IFindAdsApi
 
 
 /** XHR-реализация API. */
 class Sc3ApiXhrImpl
   extends ISc3Api
   with IndexApiXhrImpl
+  with FindAdsXhrImpl
 

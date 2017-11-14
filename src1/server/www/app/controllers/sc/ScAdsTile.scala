@@ -5,9 +5,12 @@ import _root_.util.di.{IScNlUtil, IScUtil}
 import _root_.util.showcase.IScAdSearchUtilDi
 import _root_.util.stat.IStatUtil
 import io.suggest.ad.blk.BlockWidths
+import io.suggest.dev.MSzMult
+import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.resp.MScRespActionTypes
+import io.suggest.sc.sc3.{MSc3FindAdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
@@ -23,6 +26,7 @@ import scala.collection.immutable
 import scala.concurrent.Future
 import models.blk
 import models.msc.resp.{MScResp, MScRespAction, MScRespAdsTile}
+import util.ad.IJdAdUtilDi
 
 /**
  * Suggest.io
@@ -252,6 +256,7 @@ trait ScAdsTile
   extends ScAdsTileBase
   with IStatUtil
   with IMaybeAuth
+  with IJdAdUtilDi
 {
 
   import mCommonDi._
@@ -348,6 +353,52 @@ trait ScAdsTile
     }
   }
 
+
+  protected class TileAdsLogicV3(override val _qs: MScAdsTileQs)
+                                (implicit val _request: IReq[_]) extends TileAdsLogicV {
+
+    override type T = MJdAdData
+
+    // TODO brArgs содержит кучу неактуального мусора, потому что рендер уехал на клиент. Следует удалить лишние поля следом за v2-выдачей.
+    override def renderMadAsync(brArgs: RenderArgs): Future[MJdAdData] = {
+      // Требуется рендер только main-блока карточки.
+      Future {
+        val mainBlkTpl = jdAdUtil.getMainBlockTpl( brArgs.mad )
+        val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl, brArgs.mad.edges)
+        jdAdUtil.mkJdAdDataFor
+          .show(edges2, mainBlkTpl, tileArgs.szMult)(ctx)
+          .execute()
+      }
+        .flatten
+    }
+
+    /** Рендер HTTP-результата. */
+    override def resultFut: Future[Result] = {
+      val _madsRenderFut = madsRenderedFut
+      val szMult = MSzMult.fromDouble( tileArgs.szMult )
+
+      // Завернуть index-экшен в стандартный scv3-контейнер:
+      for {
+        madsRendered <- _madsRenderFut
+      } yield {
+        val scResp = MSc3Resp(
+          respActions = MSc3RespAction(
+            acType = MScRespActionTypes.AdsTile,
+            ads = Some(MSc3FindAdsResp(
+              ads     = madsRendered,
+              szMult  = szMult
+            ))
+          ) :: Nil
+        )
+
+        // Вернуть HTTP-ответ.
+        cacheControlShort {
+          Ok( Json.toJson(scResp) )
+        }
+      }
+    }
+
+  }
 
 
 }

@@ -1,7 +1,7 @@
 package io.suggest.sc.root.m
 
 import io.suggest.routes.scRoutes
-import io.suggest.sc.resp.MSc3Resp
+import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.spa.DAction
 
 import scala.util.Try

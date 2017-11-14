@@ -1,6 +1,7 @@
 package io.suggest.ad.edit.m
 
 import io.suggest.ad.blk.BlockPadding
+import io.suggest.jd.MJdAdData
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -13,14 +14,14 @@ import play.api.libs.json._
 object MAdEditFormInit {
 
   object Fields {
-    val CONF_FN   = "c"
-    val FORM_FN   = "f"
-    val BLOCK_PADDING = "p"
+    val CONF_FN         = "c"
+    val AD_DATA_FN      = "a"
+    val BLOCK_PADDING   = "p"
   }
 
   implicit val MAD_EDIT_FORM_INIT_FORMAT: OFormat[MAdEditFormInit] = (
     (__ \ Fields.CONF_FN).format[MAdEditFormConf] and
-    (__ \ Fields.FORM_FN).format[MAdEditForm] and
+    (__ \ Fields.AD_DATA_FN).format[MJdAdData] and
     (__ \ Fields.BLOCK_PADDING).format[BlockPadding]
   )(apply, unlift(unapply))
 
@@ -30,11 +31,11 @@ object MAdEditFormInit {
 /** Модель данных инициализация формы редактирора рекламной карточки.
   *
   * @param conf Конфиг формы.
-  * @param form Начальные данные формы.
+  * @param adData Начальные данные формы.
   * @param blockPadding Расстояние между блоками.
   */
 case class MAdEditFormInit(
                             conf          : MAdEditFormConf,
-                            form          : MAdEditForm,
+                            adData        : MJdAdData,
                             blockPadding  : BlockPadding
                           )

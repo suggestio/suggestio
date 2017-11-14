@@ -3,14 +3,14 @@
 
 @* Код для рендера тега/тегов, относящихся к фоновой (основной) картинке блока. *@
 
-@import ctx.api.cdn
+@import ctx.api.{cdn, dynImgUtil}
 
 @for(bg <- args.bgImg if !bg.isWide) {
 
   @* Есть картинка в карточке. Рендерим img-тег: *@
   <img alt="@alt"
        @for(_cssClass <- cssClass) { class="@_cssClass" }
-       src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall( bg.dynImgCall ) )"
+       src="@cdn.maybeAbsUrl(args.apiVsn.forceAbsUrls)( cdn.forCall( dynImgUtil.imgCall(bg.dynCallArgs) ) )"
        @defining( args.mad.meta.colors.bg ) { iBgColorOpt =>
          @if(iBgColorOpt || style) {
            style="@for(ibgColor <- iBgColorOpt) {background-color:#@ibgColor.code;}@style"

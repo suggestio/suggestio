@@ -100,36 +100,36 @@ object JdDocValidationSpec extends SimpleTestSuite {
 
     val edges0 = Seq(
       // strip1
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = upperBlockEdgeId,
         text      = Some( MsgCodes.`Upper.block` + "\n" ),
       ),
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = alsoDisplayedInGridEdgeId,
         text      = Some( MsgCodes.`also.displayed.in.grid` + "\n" )
       ),
 
       // strip2
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = descriptionEdgeId,
         text      = Some( MsgCodes.`Description` + "\n" )
       ),
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = descrContentEdgeId,
         text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
       ),
 
       // strip3
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = fr3text1EdgeId,
         text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
       ),
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = fr3text2EdgeId,
         text      = Some( "webkit-transition: transform 0.2s linear\n" )

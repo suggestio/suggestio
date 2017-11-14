@@ -5,7 +5,7 @@ import io.suggest.common.css.ITopLeft
 import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.model.n2.node.MNode
 import models.{BfText, BlockConf, blk}
-import models.im.make.{IMakeResult, MakeResult}
+import models.im.make.MakeResult
 import models.msc.{IScApiVsn, MScApiVsn, MScApiVsns}
 
 /**
@@ -27,7 +27,7 @@ trait IRenderArgs extends IScApiVsn {
   def szMult          : SzMult_t
 
   /** Данные о фоновой картинке, если есть. */
-  def bgImg           : Option[IMakeResult]
+  def bgImg           : Option[MakeResult]
 
   /** Рендерим в редакторе. */
   def withEdit        : Boolean
@@ -57,7 +57,7 @@ trait IRenderArgs extends IScApiVsn {
    * Рендерим бэкграунд на широкую. Если у карточки разрешен просмотр на широкую, то фон будет отрендерен
    * вне блока, широким, а тело блока сдвинуто согласно кропу.
    */
-  final lazy val wideBg: Option[IMakeResult] = {
+  final lazy val wideBg: Option[MakeResult] = {
     bgImg.filter(_.isWide)
   }
 

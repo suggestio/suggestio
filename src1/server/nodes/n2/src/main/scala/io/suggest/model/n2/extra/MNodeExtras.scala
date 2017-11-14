@@ -128,7 +128,7 @@ case class MNodeExtras(
                         beacon    : Option[MBeaconExtra]      = None,
                         domains   : Seq[MDomainExtra]         = Nil,
                         doc       : Option[MNodeDoc]          = None,
-                        videoExt  : Option[MVideoExtInfo]     = None
+                        extVideo  : Option[MVideoExtInfo]     = None
                       )
   extends EmptyProduct
 {

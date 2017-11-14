@@ -11,6 +11,7 @@ import play.api.data.{Form, Mapping}
 import play.api.mvc.Result
 import util.FormUtil
 import util.acl.IIsSu
+import util.di.IDynImgUtil
 import views.html.sys1.img.make._
 
 import scala.concurrent.Future
@@ -61,6 +62,7 @@ trait SysImgMake
   extends SioController
   with IMacroLogs
   with IIsSu
+  with IDynImgUtil
 {
 
   import mCommonDi._
@@ -116,7 +118,8 @@ trait SysImgMake
         {case (maker, makeArgs) =>
           val imaker = current.injector.instanceOf(maker.makerClass)
           for (makeRes <- imaker.icompile(makeArgs)) yield {
-            Redirect(makeRes.dynImgCall)
+            val call = dynImgUtil.imgCall( makeRes.dynCallArgs )
+            Redirect( call )
           }
         }
       )

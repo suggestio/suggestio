@@ -1,7 +1,8 @@
-package io.suggest.sc.index
+package io.suggest.sc.sc3
 
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
+import io.suggest.sc.index.MWelcomeInfo
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -15,7 +16,7 @@ import play.api.libs.json._
 object MSc3IndexResp {
 
   /** Поддержка play-json сериализации. */
-  implicit val MSC_NODE_INFO_FORMAT: OFormat[MSc3IndexResp] = (
+  implicit def MSC_NODE_INFO_FORMAT: OFormat[MSc3IndexResp] = (
     (__ \ "a").formatNullable[String] and
     (__ \ "n").formatNullable[String] and
     (__ \ "c").format[MColors] and

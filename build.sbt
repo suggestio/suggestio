@@ -408,10 +408,11 @@ lazy val scSjs = {
     .dependsOn(scCommonSjs, mapBoxGlSjs, bleBeaconerSjs, cordovaSjs)
 }
 
+/** Выдача на scala.js+react. */
 lazy val sc3Sjs = {
   Project(id = "sc3-sjs", base = file(DIR0 + "client/sc/v3"))
     .enablePlugins(WebScalaJS)
-    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs)
+    .dependsOn(scCommonSjs, commonReactSjs, bleBeaconerSjs, cordovaSjs, mapsSjs, jdRenderSjs)
 }
 
 /** json document react renderer */

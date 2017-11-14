@@ -4,7 +4,7 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.ad.edit.m.MAdEditFormInit
 import io.suggest.ueq.UnivEqUtil._
-import io.suggest.ueq.UnivEqJsUtil._
+import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
 
 /**

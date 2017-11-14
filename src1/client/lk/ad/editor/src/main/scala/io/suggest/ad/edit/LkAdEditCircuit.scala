@@ -80,8 +80,8 @@ class LkAdEditCircuit(
           blockPadding      = mFormInit.blockPadding,
           gridColumnsCount  = 2
         )
-        val tpl = mFormInit.form.template
-        val edges = mFormInit.form.edgesMap
+        val tpl = mFormInit.adData.template
+        val edges = mFormInit.adData.edgesMap
           .mapValues( MEdgeDataJs(_) )
         val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf, edges )
         val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
@@ -98,8 +98,8 @@ class LkAdEditCircuit(
           colorsState = MColorsState(
             histograms = {
               val iter = for {
-                jdEdge <- mFormInit.form.edgesMap.valuesIterator
-                srvFile <- jdEdge.fileSrv
+                jdEdge    <- mFormInit.adData.edgesMap.valuesIterator
+                srvFile   <- jdEdge.fileSrv
                 colorHist <- srvFile.colors
               } yield {
                 srvFile.nodeId -> colorHist

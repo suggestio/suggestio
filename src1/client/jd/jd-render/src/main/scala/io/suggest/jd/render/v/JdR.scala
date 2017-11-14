@@ -44,7 +44,9 @@ import scalaz.Tree
 
 class JdR(
            gridBuilder: GridBuilder
-         ) extends Log {
+         )
+  extends Log
+{
 
   type Props = ModelProxy[MJdArgs]
 
@@ -319,7 +321,7 @@ class JdR(
       val isSelected = jdArgs.selectedTag.containsLabel(s)
       val isEditSelected = isSelected && jdArgs.conf.isEdit
 
-      val isWide = !jdArgs.conf.isEdit && s.props1.bm.map(_.wide).getOrElseFalse
+      val isWide = /*!jdArgs.conf.isEdit &&*/ s.props1.bm.map(_.wide).getOrElseFalse
       val bgColor = _bgColorOpt(s, jdArgs)
 
       val bgImgOpt = for {

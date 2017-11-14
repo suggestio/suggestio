@@ -3,7 +3,7 @@ package io.suggest.n2.edge
 import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.file.MJsFileInfo
-import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.MJdEdge
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.ueq.UnivEqUtil._
@@ -24,11 +24,11 @@ import japgolly.univeq.UnivEq
   */
 object MEdgeDataJs {
 
-  def edgesDataMap2jdEdgesMap(deMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MJdEditEdge] = {
+  def edgesDataMap2jdEdgesMap(deMap: Map[EdgeUid_t, MEdgeDataJs]): Map[EdgeUid_t, MJdEdge] = {
     deMap.mapValues { _.jdEdge }
   }
 
-  def jdEdgesMap2EdgesDataMap(jdesMap: Map[EdgeUid_t, MJdEditEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
+  def jdEdgesMap2EdgesDataMap(jdesMap: Map[EdgeUid_t, MJdEdge]): Map[EdgeUid_t, MEdgeDataJs] = {
     jdesMap.mapValues { MEdgeDataJs(_) }
   }
 
@@ -53,7 +53,7 @@ object MEdgeDataJs {
   * @param fileJs JS-only инфа по файлу, если есть. Обычно только в редакторе, например upload progress.
   */
 case class MEdgeDataJs(
-                        jdEdge    : MJdEditEdge,
+                        jdEdge    : MJdEdge,
                         fileJs    : Option[MJsFileInfo]   = None
                       )
   extends IId[Int]
@@ -61,7 +61,7 @@ case class MEdgeDataJs(
 
   override final def id = jdEdge.id
 
-  def withJdEdge(mJdEditEdge  : MJdEditEdge)          = copy(jdEdge = jdEdge)
+  def withJdEdge(mJdEditEdge  : MJdEdge)          = copy(jdEdge = jdEdge)
   def withFileJs(fileJs       : Option[MJsFileInfo])  = copy(fileJs = fileJs)
 
 

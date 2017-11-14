@@ -22,7 +22,7 @@ object MScIndexArgs {
 
   /** Поддержка JSON-сериализации */
   // TODO Writes вместо Format, потому что MScreen пока не поддерживает Reads.
-  implicit val MSC_INDEX_ARGS_WRITES: OWrites[MScIndexArgs] = (
+  implicit def MSC_INDEX_ARGS_WRITES: OWrites[MScIndexArgs] = (
     (__ \ NODE_ID_FN).writeNullable[String] and
     (__ \ LOC_ENV_FN).writeNullable[MLocEnv]
       .contramap[MLocEnv]( EmptyUtil.implEmpty2OptF ) and

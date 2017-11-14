@@ -1,8 +1,9 @@
 package io.suggest.ad.edit.srv
 
 import diode.ModelRO
-import io.suggest.ad.edit.m.{MAdEditForm, MAdEditFormConf, MAdEditFormInit}
+import io.suggest.ad.edit.m.{MAdEditFormConf, MAdEditFormInit}
 import io.suggest.file.up.{MFile4UpProps, MUploadResp}
+import io.suggest.jd.MJdAdData
 import io.suggest.pick.MimeConst
 import io.suggest.proto.HttpConst
 import io.suggest.routes.routes
@@ -34,7 +35,7 @@ trait ILkAdEditApi {
     * @param producerId id узла-продьюсера.
     * @return
     */
-  def saveAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit]
+  def saveAdSubmit(producerId: String, adData: MJdAdData): Future[MAdEditFormInit]
 
   /** Удалить карточку.
     *
@@ -75,7 +76,7 @@ class LkAdEditApiHttp(
   }
 
 
-  override def saveAdSubmit(producerId: String, form: MAdEditForm): Future[MAdEditFormInit] = {
+  override def saveAdSubmit(producerId: String, form: MJdAdData): Future[MAdEditFormInit] = {
     val (adIdNull, producerIdNull) = _adProdArgs()
     val route = routes.controllers.LkAdEdit.saveAdSubmit(
       adId       = adIdNull,

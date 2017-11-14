@@ -4,6 +4,7 @@ import diode.FastEq
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.pop.MAePopupsS
 import io.suggest.ad.edit.m.save.MSaveS
+import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.edge.MPredicates
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ws.pool.m.MWsPoolS
@@ -51,9 +52,9 @@ case class MAeRoot(
                   ) {
 
   /** Экспорт данных формы для отправки на сервер. */
-  def toForm: MAdEditForm = {
+  def toForm: MJdAdData = {
     val jdArgs = doc.jdArgs
-    MAdEditForm(
+    MJdAdData(
       template = jdArgs.template,
       edges    = {
         val videoPred = MPredicates.JdContent.Video

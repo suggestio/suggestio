@@ -14,7 +14,7 @@ import io.suggest.common.html.HtmlConstants
 import io.suggest.err.ErrorConstants
 import io.suggest.file.MJsFileInfo
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.MJdEdge
 import io.suggest.jd.render.m._
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.jd.tags.JdTag.Implicits._
@@ -930,7 +930,7 @@ class DocEditAh[M](
           // Нет примера текста в эджах: добавить его туда.
           val nextEdgeUid = EdgesUtil.nextEdgeUidFromMap( edgesMap0 )
           val e = MEdgeDataJs(
-            jdEdge = MJdEditEdge(
+            jdEdge = MJdEdge(
               predicate = textPred,
               id        = nextEdgeUid,
               text      = Some(textL10ed)

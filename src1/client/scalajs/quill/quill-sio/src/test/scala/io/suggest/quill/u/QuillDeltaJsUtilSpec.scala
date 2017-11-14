@@ -3,7 +3,7 @@ package io.suggest.quill.u
 import com.quilljs.delta.{Delta, DeltaOpAttrs}
 import com.softwaremill.macwire._
 import io.suggest.common.geom.coord.MCoords2di
-import io.suggest.jd.MJdEditEdge
+import io.suggest.jd.MJdEdge
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
@@ -40,7 +40,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     val edges0 = Map(
       hwEdgeId -> MEdgeDataJs(
-        jdEdge = MJdEditEdge(
+        jdEdge = MJdEdge(
           predicate = MPredicates.JdContent.Text,
           id        = hwEdgeId,
           text      = Some( theString )
@@ -70,7 +70,7 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
     val jdTag0 = JdTag.edgeQdTree(hwEdgeId, coords)
     val edges0 = Map(
       hwEdgeId -> MEdgeDataJs(
-        jdEdge = MJdEditEdge(
+        jdEdge = MJdEdge(
           predicate = MPredicates.JdContent.Text,
           id        = hwEdgeId,
           text      = Some( "Please write the text here" )
@@ -152,9 +152,9 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // В эджах какой-то мусор. Но он не должен потеряться.
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) )
     )
 
     val jdTag0 = Tree.Leaf(
@@ -197,10 +197,10 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходные эджи содержат только мусор:
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
-      0 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
+      0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) )
     )
 
     val jdTag0 = JdTag.edgeQdTree(0, coords)
@@ -242,11 +242,11 @@ object QuillDeltaJsUtilSpec extends SimpleTestSuite {
 
     // Пусть исходные эджи содержат только что-то, отсосящиеся к другим частям документа:
     val edges0 = Map[EdgeUid_t, MEdgeDataJs](
-      1 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
-      3 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
-      4 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
-      0 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) ),
-      5 -> MEdgeDataJs( MJdEditEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
+      1 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 1, url = Some("blob:asdasdasdsda")) ),
+      3 -> MEdgeDataJs( MJdEdge(MPredicates.JdBgPred, 3, url = Some("blob:645v-56h65y5665h56")) ),
+      4 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Video, 4, url = Some("https://youtu.be/art42364")) ),
+      0 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 0, text = Some("asdasd")) ),
+      5 -> MEdgeDataJs( MJdEdge(MPredicates.JdContent.Text, 5, text = Some(strBefore)) )
     )
 
     val jdTag0 = JdTag.edgeQdTree(0, coords)

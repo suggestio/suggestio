@@ -12,7 +12,7 @@ import org.scalajs.dom.raw.XMLHttpRequest
   * Description: Утиль для UnivEq в контексте использования на стороне JS.
   * Изначально, тут жили implicit-костыли для DOM.
   */
-object UnivEqJsUtil {
+object JsUnivEqUtil {
 
   @inline implicit def fileUe           : UnivEq[File]              = UnivEq.force
 

@@ -4,7 +4,7 @@ import com.quilljs.delta.{DeltaInsertData_t, _}
 import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.{MJdEdgeId, MJdEditEdge}
+import io.suggest.jd.{MJdEdgeId, MJdEdge}
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
 import io.suggest.jd.tags.qd._
 import io.suggest.js.JsTypes
@@ -350,7 +350,7 @@ class QuillDeltaJsUtil extends Log {
               val text = raw.asInstanceOf[String]
               str2EdgeMap.getOrElseUpdate(text, {
                 MEdgeDataJs(
-                  jdEdge = MJdEditEdge(
+                  jdEdge = MJdEdge(
                     predicate = jdContPred.Text,
                     id        = nextEdgeUid(),
                     text      = Some(text)
@@ -378,7 +378,7 @@ class QuillDeltaJsUtil extends Log {
               str2EdgeMap.getOrElseUpdate(anyStrContent, {
                 // Собрать embed edge
                 MEdgeDataJs(
-                  jdEdge = MJdEditEdge(
+                  jdEdge = MJdEdge(
                     predicate = pred,
                     id        = nextEdgeUid(),
                     url       = Some( anyStrContent )

@@ -4,7 +4,6 @@ import javax.inject.Singleton
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidths}
 import io.suggest.ad.blk.ent.{EntFont, TextEnt}
-import io.suggest.ad.edit.m.MAdEditForm
 import io.suggest.ad.form.AdFormConstants._
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
@@ -12,7 +11,7 @@ import io.suggest.common.geom.coord.MCoords2di
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
-import io.suggest.jd.{JdDocValidation, MEdgePicInfo, MJdEdgeVldInfo, MJdEditEdge}
+import io.suggest.jd._
 import io.suggest.jd.tags._
 import io.suggest.jd.tags.JdTag.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
@@ -302,7 +301,7 @@ class LkAdEdFormUtil
   // v2 react form
 
   /** Срендерить и вернуть дефолтовый документ пустой карточки для текущего языка. */
-  def defaultEmptyDocument(implicit ctx: Context): Future[MAdEditForm] = {
+  def defaultEmptyDocument(implicit ctx: Context): Future[MJdAdData] = {
     // TODO Брать готовую карточку из какого-то узла и пробегаться по эджам с использованием messages.
 
     // Тут просто очень временный документ.
@@ -386,43 +385,43 @@ class LkAdEdFormUtil
 
     val edges = Seq(
       // strip1
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = upperBlockEdgeId,
         text      = Some( ctx.messages( MsgCodes.`Upper.block` ) + "\n" ),
       ),
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = alsoDisplayedInGridEdgeId,
         text      = Some( ctx.messages( MsgCodes.`also.displayed.in.grid` ) + "\n" )
       ),
 
       // strip2
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = descriptionEdgeId,
         text      = Some( ctx.messages( MsgCodes.`Description` ) + "\n" )
       ),
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = descrContentEdgeId,
         text      = Some( "aw efawfwae fewafewa feawf aew rtg rs5y 4ytsg ga\n" )
       ),
 
       // strip3
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = fr3text1EdgeId,
         text      = Some( "lorem ipsum und uber blochHeight wr2 34t\n" )
       ),
-      MJdEditEdge(
+      MJdEdge(
         predicate = textPred,
         id        = fr3text2EdgeId,
         text      = Some( "webkit-transition: transform 0.2s linear\n" )
       )
     )
 
-    val r = MAdEditForm(
+    val r = MJdAdData(
       template = tplTree,
       edges    = edges
     )
@@ -461,14 +460,14 @@ class LkAdEdFormUtil
     * @return Фьючерс с результатом валидации.
     *         exception обозначает ошибку валидации.
     */
-  def earlyValidateEdges(form: MAdEditForm): StringValidationNel[List[MJdEditEdge]] = {
+  def earlyValidateEdges(form: MJdAdData): StringValidationNel[List[MJdEdge]] = {
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
     val edges1 = JdTag.purgeUnusedEdges( form.template, form.edgesMap )
 
     // Ранняя валидация корректности присланных эджей:
     val videoExtUrlParsers = new VideoExtUrlParsers
     val edgesVlds = ScalazUtil.validateAll(edges1.values) {
-      MJdEditEdge
+      MJdEdge
         .validateForStore(_, videoExtUrlParsers)
         .map(List(_))
     }
@@ -483,7 +482,7 @@ class LkAdEdFormUtil
   }
 
   /** Извлечь данные по картинкам из карты эджей. */
-  def collectNeededImgs(edges: TraversableOnce[MJdEditEdge]): Map[EdgeUid_t, MImg3] = {
+  def collectNeededImgs(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, MImg3] = {
     val needImgsIter = for {
       e <- edges.toIterator
       if e.predicate ==>> MPredicates.JdContent.Image
@@ -496,7 +495,7 @@ class LkAdEdFormUtil
 
   /** Произвести валидацию шаблона на стороне сервера. */
   def validateTpl(template       : Tree[JdTag],
-                  jdEdges        : Iterable[MJdEditEdge],
+                  jdEdges        : Iterable[MJdEdge],
                   imgsNeededMap  : Map[EdgeUid_t, MImg3],
                   nodesMap       : Map[String, MNode],
                   mediasMap      : Map[String, MMedia]): StringValidationNel[Tree[JdTag]] = {
@@ -541,7 +540,7 @@ class LkAdEdFormUtil
   }
 
 
-  def mkEdgeTextsMap(edges: TraversableOnce[MJdEditEdge]): Map[EdgeUid_t, String] = {
+  def mkEdgeTextsMap(edges: TraversableOnce[MJdEdge]): Map[EdgeUid_t, String] = {
     val iter = for {
       e <- edges.toIterator
       text <- e.text

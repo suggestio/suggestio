@@ -1,7 +1,6 @@
 package controllers.sc
 
 import _root_.util.di._
-import io.suggest.adn.MAdnRights
 import io.suggest.color.MColorData
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.es.model.IMust
@@ -13,8 +12,9 @@ import io.suggest.model.n2.edge.MPredicates
 import io.suggest.model.n2.edge.search.{Criteria, GsCriteria, ICriteria}
 import io.suggest.model.n2.node.search.MNodeSearchDfltImpl
 import io.suggest.model.n2.node.{IMNodes, MNodeTypes, NodeNotFoundException}
-import io.suggest.sc.index.{MSc3IndexResp, MWelcomeInfo}
-import io.suggest.sc.resp.{MSc3Resp, MSc3RespAction, MScRespActionTypes}
+import io.suggest.sc.index.MWelcomeInfo
+import io.suggest.sc.resp.MScRespActionTypes
+import io.suggest.sc.sc3.{MSc3IndexResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.AdnShownTypes
