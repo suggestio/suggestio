@@ -3,8 +3,6 @@ package io.suggest.jd.render.m
 import diode.FastEq
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
-import io.suggest.model.n2.edge.EdgeUid_t
-import io.suggest.n2.edge.MEdgeDataJs
 import japgolly.univeq.UnivEq
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.scalaz.ZTreeUtil._
@@ -23,16 +21,14 @@ object MJdCssArgs {
   implicit object MJdCssArgsFastEq extends FastEq[MJdCssArgs] {
     override def eqv(a: MJdCssArgs, b: MJdCssArgs): Boolean = {
       (a.templates ===* b.templates) &&
-        (a.conf ===* b.conf) &&
-        (a.edges ===* b.edges)
+        (a.conf ===* b.conf)
     }
   }
 
-  def singleCssArgs(template: Tree[JdTag], conf: MJdConf, edges: Map[EdgeUid_t, MEdgeDataJs]): MJdCssArgs = {
+  def singleCssArgs(template: Tree[JdTag], conf: MJdConf): MJdCssArgs = {
     MJdCssArgs(
       templates = template :: Nil,
-      conf      = conf,
-      edges     = edges
+      conf      = conf
     )
   }
 
@@ -45,11 +41,8 @@ object MJdCssArgs {
   *
   * @param templates Все документы.
   * @param conf Конфигурация рендеринга.
-  * @param edges Текущая карта эджей.
   */
 case class MJdCssArgs(
                        templates  : Seq[Tree[JdTag]],
-                       conf       : MJdConf,
-                       // TODO От эджей требуются лишь минимальная инфа. А тут этой инфы с избытком.
-                       edges      : Map[EdgeUid_t, MEdgeDataJs]
+                       conf       : MJdConf
                      )

@@ -3,9 +3,11 @@ package io.suggest.geo
 import boopickle.Default._
 import io.suggest.common.maps.rad.IMinMaxM
 import io.suggest.primo.IApply1
+import japgolly.univeq.UnivEq
 
 import scalaz.{Validation, ValidationNel}
 import scalaz.syntax.apply._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -38,6 +40,8 @@ object IGeoShape {
       .addConcreteType[GeometryCollectionGs]  // OsmUtil, но в реале оно наверное не нужно.
       // TODO Добавить поддержку остальных моделей при необходимости.
   }
+
+  implicit def univEq: UnivEq[IGeoShape] = UnivEq.derive
 
 }
 
@@ -93,6 +97,7 @@ object PointGs {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[PointGs]
   }
+  implicit def univEq: UnivEq[PointGs] = UnivEq.derive
 }
 /** Гео-шейп точки. */
 case class PointGs(coord: MGeoPoint) extends IGeoShapeQuerable {
@@ -120,6 +125,8 @@ object CircleGs {
       Validation.liftNel(gc.radiusM)( _ > radiusConstrains.MAX_M.toDouble, s"$ePrefix.big")
     )( (_,_,_) => gc )
   }
+
+  implicit def univEq: UnivEq[CircleGs] = UnivEq.derive
 
 }
 case class CircleGs(
@@ -177,6 +184,7 @@ case class GeometryCollectionGs(geoms: Seq[IGeoShape]) extends IGeoShape {
   override def isArea: Boolean = {
     geoms.exists(_.isArea)
   }
+  implicit def univEq: UnivEq[GeometryCollectionGs] = UnivEq.derive
 }
 // TODO В целях безопасности, boopickle для GeometryCollectionGs генерится внутри IGeoShape с учётом рекурсии.
 
@@ -212,6 +220,7 @@ object LineStringGs extends IApply1 {
     implicit val mGeoPointP = MGeoPoint.MGEO_POINT_PICKLER
     generatePickler[LineStringGs]
   }
+  implicit def univEq: UnivEq[LineStringGs] = UnivEq.derive
 }
 
 
@@ -246,6 +255,7 @@ object PolygonGs {
     implicit val lineStringGsP = LineStringGs.LINE_STRING_PICKLER
     generatePickler[PolygonGs]
   }
+  implicit def univEq: UnivEq[PolygonGs] = UnivEq.derive
 }
 
 
@@ -262,4 +272,6 @@ object MultiPolygonGs {
     implicit val polygonGsP = PolygonGs.POLYGON_GS_PICKLER
     generatePickler[MultiPolygonGs]
   }
+
+  implicit def univEq: UnivEq[MultiPolygonGs] = UnivEq.derive
 }

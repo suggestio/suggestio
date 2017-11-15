@@ -2,8 +2,9 @@ package io.suggest.sc.inx.c
 
 import diode._
 import diode.data.Pot
-import io.suggest.react.ReactDiodeUtil
-import io.suggest.sc.{Sc3Api, ScConstants}
+import io.suggest.react.ReactDiodeUtil.PotOpsExt
+import io.suggest.sc.grid.m.GridLoadAds
+import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MWelcomeState}
 import io.suggest.sc.resp.MScRespActionTypes
@@ -33,17 +34,16 @@ class IndexAh[M](
     case m: GetIndex =>
       val root = stateRO()
 
-      val args = MScIndexArgs(
-        nodeId      = m.rcvrId,
-        locEnv      = root.locEnv,
-        screen      = Some( root.index.state.screen ),
-        withWelcome = true,
-        apiVsn      = Sc3Api.API_VSN
-      )
-
       val ts = System.currentTimeMillis()
 
       val fx = Effect {
+        val args = MScIndexArgs(
+          nodeId      = m.rcvrId,
+          locEnv      = root.locEnv,
+          screen      = Some( root.index.state.screen ),
+          withWelcome = true
+        )
+
         api
           .getIndex(args)
           .transform { tryRes =>
@@ -59,7 +59,7 @@ class IndexAh[M](
 
 
     // Поступление ответа сервера, который ожидается
-    case m: HandleScResp if ReactDiodeUtil.isPendingWithStartTime(value.resp, m.reqTimestamp) =>
+    case m: HandleScResp if value.resp.isPendingWithStartTime(m.reqTimestamp) =>
       val v0 = value
 
       // Запихать ответ в состояние.
@@ -78,6 +78,9 @@ class IndexAh[M](
       )
       val v1 = v0.withResp( resp2 )
 
+      // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
+      val gridInitFx = Effect.action( GridLoadAds(clean = true) )
+
       // Инициализация приветствия. Подготовить состояние welcome.
       val mWcSFutOpt = for {
         resp <- v1.resp.toOption
@@ -88,7 +91,9 @@ class IndexAh[M](
 
         // Собрать функцию для запуска неотменяемого таймера.
         // Функция возвращает фьючерс, который исполнится через ~секунду.
-        val tpF = WelcomeUtil.timeoutF( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+        val tpFx = Effect {
+          WelcomeUtil.timeout( ScConstants.Welcome.HIDE_TIMEOUT_MS, tstamp )
+        }
 
         // Собрать начальное состояние приветствия:
         val mWcS = MWelcomeState(
@@ -96,18 +101,14 @@ class IndexAh[M](
           timerTstamp = tstamp
         )
 
-        (tpF, mWcS)
+        (tpFx, mWcS)
       }
       val v2 = v1.withWelcome( mWcSFutOpt.map(_._2) )
 
-      mWcSFutOpt.fold {
-        // Нет запущенного таймера, в виду отсутствия welcome видимо.
-        updated( v2 )
+      // Объединить эффекты плитки и приветствия воедино:
+      val allFxs = mWcSFutOpt.fold[Effect](gridInitFx) { gridInitFx + _._1 }
 
-      } { case (tpF, _) =>
-        // Есть запущенный таймер, организовать возврат с эффектом.
-        updated(v2, tpF)
-      }
+      updated(v2, allFxs)
 
   }
 

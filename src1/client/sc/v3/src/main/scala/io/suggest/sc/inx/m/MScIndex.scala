@@ -2,11 +2,11 @@ package io.suggest.sc.inx.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.media.IMediaInfo
-import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.sc3.MSc3IndexResp
 import io.suggest.sc.search.m.MScSearch
-import io.suggest.sc.styl.MScCssArgs
+import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -18,12 +18,14 @@ object MScIndex {
 
   implicit object MScIndexFastEq extends FastEq[MScIndex] {
     override def eqv(a: MScIndex, b: MScIndex): Boolean = {
-      (a.state eq b.state) &&
-        (a.resp eq b.resp) &&
-        (a.welcome eq b.welcome) &&
-        (a.search eq b.search)
+      (a.state ===* b.state) &&
+        (a.resp ===* b.resp) &&
+        (a.welcome ===* b.welcome) &&
+        (a.search ===* b.search)
     }
   }
+
+  implicit def univEq: UnivEq[MScIndex] = UnivEq.derive
 
 }
 
@@ -38,19 +40,5 @@ case class MScIndex(
   def withResp(resp: Pot[MSc3IndexResp])          = copy(resp = resp)
   def withWelcome(welcome: Option[MWelcomeState]) = copy(welcome = welcome)
   def withSearch(search: MScSearch)               = copy(search = search)
-
-
-  /** Инстанс модели аргументов рендера ScCss. */
-  lazy val scCssArgs: MScCssArgs = {
-    val wcOpt = resp.toOption.flatMap(_.welcome)
-    def __whOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
-
-    MScCssArgs(
-      customColorsOpt = resp.toOption.map(_.colors),
-      screen          = state.screen,
-      wcBgWh          = __whOpt( _.bgImage ),
-      wcFgWh          = __whOpt( _.fgImage )
-    )
-  }
 
 }

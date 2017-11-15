@@ -3,6 +3,8 @@ package io.suggest.sc.inx.m
 import diode.FastEq
 import io.suggest.dev.MScreen
 import io.suggest.geo.MGeoPoint
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -15,11 +17,14 @@ object MScIndexState {
   /** Поддержка FastEq для классов [[MScIndexState]]. */
   implicit object MScIndexStateFastEq extends FastEq[MScIndexState] {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
-      (a.screen eq b.screen) &&
-        (a.rcvrIds eq b.rcvrIds) &&
-        (a.geoPoint eq b.geoPoint)
+      (a.screen ===* b.screen) &&
+        (a.generation ==* b.generation) &&
+        (a.rcvrIds ===* b.rcvrIds) &&
+        (a.geoPoint ===* b.geoPoint)
     }
   }
+
+  implicit def univEq: UnivEq[MScIndexState] = UnivEq.derive
 
 }
 
@@ -27,12 +32,14 @@ object MScIndexState {
 /** Класс модели состояния индекса выдачи.
   *
   * @param screen Данные по текущему экрану устройства, под которое отрендерена выдача.
+  * @param generation Random seed выдачи.
   * @param rcvrIds id текущего отображаемого узла в начале списка.
   *                Затем "предыдущие" узлы, если есть.
   * @param geoPoint Текущая гео-точка выдачи.
   */
 case class MScIndexState(
                           screen          : MScreen,
+                          generation      : Long                = System.currentTimeMillis(),
                           rcvrIds         : List[String]        = Nil,
                           geoPoint        : Option[MGeoPoint]   = None
                         ) {
@@ -41,8 +48,9 @@ case class MScIndexState(
   // А т.к. это "часто" завязано на посторонние FastEq[?], то следует юзать тут val вместо def.
   lazy val currRcvrId = rcvrIds.headOption
 
-  def withScreen(screen: MScreen ) = copy( screen = screen )
-  def withRcvrNodeId( rcvrNodeId: List[String] ) = copy( rcvrIds = rcvrNodeId )
+  def withScreen(screen: MScreen)                 = copy( screen = screen )
+  def withGeneration(generation: Long)            = copy( generation = generation )
+  def withRcvrNodeId( rcvrNodeId: List[String] )  = copy( rcvrIds = rcvrNodeId )
   def withGeoPoint( geoPoint: Option[MGeoPoint] ) = copy( geoPoint = geoPoint )
 
 }

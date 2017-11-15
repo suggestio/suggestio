@@ -2,6 +2,8 @@ package io.suggest.maps.nodes
 
 import io.suggest.geo.IGeoShape
 import boopickle.Default._
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -16,6 +18,8 @@ object MGeoNodesResp {
     implicit val mGeoNodePropsShapesP = MGeoNodePropsShapes.MGEO_NODE_PROPS_SHAPES_PICKLER
     generatePickler[MGeoNodesResp]
   }
+
+  implicit def univEq: UnivEq[MGeoNodesResp] = UnivEq.derive
 
 }
 
@@ -45,6 +49,8 @@ object MGeoNodePropsShapes {
     implicit val iGeoShapeP = IGeoShape.GEO_SHAPE_PICKLER
     generatePickler[MGeoNodePropsShapes]
   }
+
+  implicit def univEq: UnivEq[MGeoNodePropsShapes] = UnivEq.derive
 
 }
 

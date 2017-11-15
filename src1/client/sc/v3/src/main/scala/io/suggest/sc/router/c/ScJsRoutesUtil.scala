@@ -1,11 +1,10 @@
 package io.suggest.sc.router.c
 
-import io.suggest.routes.scRoutes
+import io.suggest.sc.{Sc3Api, ScConstants}
 import io.suggest.sc.sc3.MSc3Resp
 import io.suggest.sjs.common.model.Route
 import io.suggest.xplay.json.PlayJsonSjsUtil
 import play.api.libs.json.{Json, OWrites}
-import io.suggest.routes.JsRoutes_ScControllers._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.xhr.Xhr
 
@@ -20,6 +19,10 @@ import scala.scalajs.js
   */
 object ScJsRoutesUtil {
 
+  /** Через сколько секунд запрос можно закрывать по таймауту? */
+  def REQ_TIMEOUT_MS = Some(10000)
+
+
   /** Все реквесты выдачи очень похожи: они отличаются только ссылкой для запроса,
     * но и ссылка по факту в генерится похожими путями.
     *
@@ -31,9 +34,9 @@ object ScJsRoutesUtil {
   def mkSc3Request[ArgsT: OWrites](args: ArgsT, route: js.Dictionary[js.Any] => Route): Future[MSc3Resp] = {
     val argsPj = Json.toJsObject( args )
     val argsJsDict = PlayJsonSjsUtil.toNativeJsonObj( argsPj )
-    val route = scRoutes.controllers.Sc.index( argsJsDict )
+    argsJsDict.update( ScConstants.ReqArgs.VSN_FN, Sc3Api.API_VSN )
     for {
-      respJsonText <- Xhr.requestJsonText( route )
+      respJsonText <- Xhr.requestJsonText( route(argsJsDict), REQ_TIMEOUT_MS )
     } yield {
       Json
         .parse( respJsonText )

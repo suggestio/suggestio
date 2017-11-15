@@ -25,4 +25,6 @@ class JdRenderModule {
 
   lazy val jdR = wire[JdR]
 
+  lazy val jdGridUtil = wire[JdGridUtil]
+
 }

@@ -27,8 +27,7 @@ object MScIndexArgs {
     (__ \ LOC_ENV_FN).writeNullable[MLocEnv]
       .contramap[MLocEnv]( EmptyUtil.implEmpty2OptF ) and
     (__ \ SCREEN_FN).writeNullable[MScreen] and
-    (__ \ WITH_WELCOME_FN).write[Boolean] and
-    (__ \ VSN_FN).write[Int]
+    (__ \ WITH_WELCOME_FN).write[Boolean]
   )( unlift(unapply) )
 
 }
@@ -45,6 +44,5 @@ case class MScIndexArgs(
                          nodeId       : Option[String],
                          locEnv       : MLocEnv,
                          screen       : Option[MScreen],
-                         withWelcome  : Boolean,
-                         apiVsn       : Int
+                         withWelcome  : Boolean
                        )

@@ -1,6 +1,8 @@
 package io.suggest.sc
 
 import com.softwaremill.macwire._
+import io.suggest.jd.render.JdRenderModule
+import io.suggest.sc.grid.GridModule
 import io.suggest.sc.hdr.HeaderModule
 import io.suggest.sc.inx.IndexModule
 import io.suggest.sc.root.v.{ScCssR, ScRootR}
@@ -39,6 +41,8 @@ class Sc3Modules {
 
   lazy val scCssModule = wire[ScCssModule]
 
+  lazy val jdRenderModule = wire[JdRenderModule]
+
 
   // Deps: не используем конструктор класса, чтобы скрыть всё DI позади new/extends.
 
@@ -48,6 +52,8 @@ class Sc3Modules {
 
   lazy val indexModule = wire[IndexModule]
 
+  lazy val gridModule = wire[GridModule]
+
   lazy val sc3Module = wire[Sc3Module]
 
 }
@@ -55,11 +61,13 @@ class Sc3Modules {
 
 class Sc3Module(
                  scCssModule  : ScCssModule,
-                 indexModule  : IndexModule
+                 indexModule  : IndexModule,
+                 gridModule   : GridModule
                ) {
 
   import scCssModule._
   import indexModule._
+  import gridModule._
 
   lazy val scCssR  = wire[ScCssR]
 

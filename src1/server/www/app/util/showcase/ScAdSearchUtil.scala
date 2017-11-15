@@ -12,7 +12,7 @@ import io.suggest.model.n2.node.{MNodeTypes, MNodes}
 import io.suggest.model.n2.node.search.{MNodeSearch, MNodeSearchDfltImpl}
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.msc.IScAdSearchQs
+import models.msc.{MScAdsSearchQs, MScApiVsn}
 import util.ble.BleUtil
 
 import scala.concurrent.Future
@@ -54,8 +54,10 @@ class ScAdSearchUtil @Inject() (
     * Компиляция параметров поиска в MNodeSearch.
     * Код эвакуирован из models.AdSearch.qsb.bind().
     * @param args Данные по выборке карточек, пришедшие из qs.
+    * @param apiVsnOpt Версия API выдачи, если есть.
+    *                  Например, нельзя выдавать jd-карточки в v2-выдачу, и наоборот.
     */
-  def qsArgs2nodeSearch(args: IScAdSearchQs): Future[MNodeSearch] = {
+  def qsArgs2nodeSearch(args: MScAdsSearchQs, apiVsnOpt: Option[MScApiVsn] = None): Future[MNodeSearch] = {
 
     val _outEdges: Seq[ICriteria] = {
       val must = IMust.MUST
@@ -107,6 +109,14 @@ class ScAdSearchUtil @Inject() (
               shapes = PointGsJvm.toEsQueryMaker( PointGs(geoLoc.point) ) :: Nil
             )
           }
+        )
+      }
+
+      // Фильтровать карточки под возможности текущего API: разруливать поддержку jd-формата по наличию jd-предиката:
+      for (apiVsn <- apiVsnOpt) {
+        eacc ::= Criteria(
+          predicates  = MPredicates.JdContent :: Nil,
+          must        = IMust.mustOrNot( apiVsn.useJdAds )
         )
       }
 

@@ -3,6 +3,7 @@ package io.suggest.maps
 import boopickle.Default._
 import io.suggest.geo.MGeoPoint
 import io.suggest.geo.MGeoPoint.Implicits.MGEO_POINT_FORMAT_QS_OBJECT
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -33,7 +34,7 @@ object MMapProps {
   }
 
   /** Поддержка play-json. */
-  implicit val MMAP_PROPS_FORMAT: OFormat[MMapProps] = (
+  implicit def MMAP_PROPS_FORMAT: OFormat[MMapProps] = (
     (__ \ "c").format[MGeoPoint] and
     (__ \ "z").format[Int]
   )(apply, unlift(unapply))
@@ -53,5 +54,7 @@ object MMapProps {
   def zoomValidator(zoom: Int): ValidationNel[String, Int] = {
     Validation.liftNel(zoom)( !isZoomValid(_), "e.zoom.invalid" )
   }
+
+  implicit def univEq: UnivEq[MMapProps] = UnivEq.derive
 
 }

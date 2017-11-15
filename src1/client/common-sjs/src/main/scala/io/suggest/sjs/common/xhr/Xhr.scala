@@ -176,11 +176,12 @@ object Xhr extends Log {
     * Запрос JSON сервера без парсинга JSON на клиенте.
     * Метод появился как временный костыль к play-json, который через API парсит только строки.
     */
-  def requestJsonText(route: Route): Future[String] = {
+  def requestJsonText(route: Route, timeoutMsOpt: Option[Int] = None): Future[String] = {
     val xhrFut = successIf200 {
       send(
-        route   = route,
-        headers = Seq(HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON)
+        route         = route,
+        headers       = Seq(HttpConst.Headers.ACCEPT -> MimeConst.APPLICATION_JSON),
+        timeoutMsOpt  = timeoutMsOpt
       )
     }
     for (xhr <- xhrFut) yield {

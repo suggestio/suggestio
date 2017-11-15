@@ -43,10 +43,9 @@ import scalaz.Tree
   */
 
 class JdR(
-           gridBuilder: GridBuilder
+           jdGridUtil: JdGridUtil
          )
-  extends Log
-{
+  extends Log { jdR =>
 
   type Props = ModelProxy[MJdArgs]
 
@@ -73,7 +72,13 @@ class JdR(
     /** Рендер компонента. */
     def render(jdArgsProxy: Props): VdomElement = {
       val jdArgs = jdArgsProxy.value
-      renderDocument( jdArgs = jdArgs )
+      renderTag(
+        idt = jdArgs.template,
+        i = 0,
+        jdArgs = jdArgs,
+        parent = jdArgs.template.rootLabel
+      )
+      //renderDocument( jdArgs = jdArgs )
     }
 
 
@@ -87,8 +92,10 @@ class JdR(
     }
 
 
-    /** Начало таскания jd-тега. */
-    private def jdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
+    /** Начало таскания qd-тега.
+      * Бывают сложности с рассчётом координат. Особенно, если используется плитка.
+      */
+    private def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
       // Обязательно надо в setData() что-то передать.
       val mimes = MimeConst.Sio
 
@@ -237,11 +244,11 @@ class JdR(
       *
       * @param dt Jd-тег
       * @param jdArgs Аргументы рендера.
-      * @return VdomArray.
+      * @return Итератор отрендеренных vdom-узлов.
       */
-    def renderChildren(dt: Tree[JdTag], jdArgs: MJdArgs): VdomArray = {
+    def renderChildren(dt: Tree[JdTag], jdArgs: MJdArgs): Iterator[VdomNode] = {
       renderChildrenUsing(dt) { (childJdTree, i) =>
-        renderDocTag(childJdTree, i, jdArgs, dt.rootLabel)
+        renderTag(childJdTree, i, jdArgs, dt.rootLabel)
       }
     }
 
@@ -249,13 +256,13 @@ class JdR(
       *
       * @param dt Текущий jd-тег с деревом.
       * @param f Функция рендера.
-      * @return VdomArray.
+      * @return Итератор отрендеренных vdom-узлов.
       */
-    def renderChildrenUsing(dt: Tree[JdTag])(f: (Tree[JdTag], Int) => VdomNode): VdomArray = {
+    def renderChildrenUsing(dt: Tree[JdTag])(f: (Tree[JdTag], Int) => VdomNode): Iterator[VdomNode] = {
       dt.subForest
         .iterator
         .zipWithIndex
-        .toVdomArray( f.tupled )
+        .map( f.tupled )
     }
 
 
@@ -364,8 +371,23 @@ class JdR(
                   //^.height := bm.height.px
                 )
               }
-            } { cropEmu =>
-              C.blkBgImgCropEmuF( cropEmu )
+            } { ecArgs =>
+              // Нужно рассчитать параметры margin, w, h изображения, чтобы оно имитировало заданный кроп.
+              // margin: -20px 0px 0px -16px; -- сдвиг вверх и влево.
+              // Для этого надо вписать размеры кропа в размеры блока
+
+              // Вычисляем отношение стороны кропа к стороне блока. Считаем, что обе стороны соотносятся одинаково.
+              val outer2cropRatio = ecArgs.outerWh.height.toDouble / ecArgs.crop.height.toDouble
+              val blkSzMultD = jdArgs.conf.szMult.toDouble
+
+              // Проецируем это отношение на натуральные размеры картинки, top и left:
+              TagMod(
+                ^.width := (ecArgs.origWh.width  * outer2cropRatio * blkSzMultD).px,
+                ^.height := (ecArgs.origWh.height * outer2cropRatio * blkSzMultD).px,
+                ^.marginLeft := (-ecArgs.crop.offX * outer2cropRatio * blkSzMultD).px,
+                ^.marginTop := (-ecArgs.crop.offY * outer2cropRatio * blkSzMultD).px
+              )
+              //C.blkBgImgCropEmuF( cropEmu )
             }
           },
 
@@ -420,6 +442,7 @@ class JdR(
         bgImgTm.unless(isWide),
 
         renderChildren( stripTree, jdArgs )
+          .toVdomArray
       )
 
       val tmOuter = if (isWide) {
@@ -451,62 +474,19 @@ class JdR(
 
     /** Рендер указанного документа. */
     def renderDocument(jd: Tree[JdTag], i: Int, jdArgs: MJdArgs): VdomElement = {
-      val docJdt = jd.rootLabel
       <.div(
         ^.key := i.toString,
 
-        if (jdArgs.conf.oneJdGrid) {
-          // Собрать аргументы для вызова layout-функции grid-builder'а.
-          val gridBuildArgs = GridBuildArgs(
-            itemsExtDatas = jd.subForest
-              .iterator
-              .flatMap(_.rootLabel.props1.bm)
-              .map { bm =>
-                ItemPropsExt(
-                  blockMeta = bm
-                )
-              },
-            jdConf = jdArgs.conf
+        // Плитку отсюда полностью вынести не удалось.
+        CSSGrid {
+          jdGridUtil.mkCssGridArgs(
+            jds  = jd.subForest,
+            conf = jdArgs.conf
           )
-
-          // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
-          // https://github.com/scala-js/scala-js/issues/2748
-          // Это снизит риск ругани react'а на неведомый хлам внутри props.
-          val gridLayoutF = gridBuilder.stoneCutterLayout( gridBuildArgs ) _
-
-          val szMultD = jdArgs.conf.szMult.toDouble
-
-          // Рассчёт расстояния между разными блоками.
-          val cellPaddingPx = Math.round(jdArgs.conf.blockPadding.value * szMultD).toInt
-
-          val blkSzMultD = jdArgs.conf.blkSzMult.toDouble
-
-          CSSGrid {
-            new CssGridProps {
-              override val duration     = 600
-              override val columns      = jdArgs.conf.gridColumnsCount
-              override val columnWidth  = Math.round(BlockWidths.min.value * blkSzMultD).toInt
-              // Плитка и без этого gutter'а работает. Просто выставлено на всякий случай, т.к. в коде модулей grid'а это дело используется.
-              override val gutterWidth  = cellPaddingPx
-              override val gutterHeight = cellPaddingPx
-              override val layout       = js.defined {
-                gridLayoutF
-              }
-            }
-          }(
-            jd.subForest
-              .iterator
-              .zipWithIndex
-              .map { case (chJdTree, j) =>
-                renderDocTag(chJdTree, j, jdArgs, docJdt)
-                // Добавить layout-инфу прямо в тег
-              }
-              .toSeq: _*
-          )
-
-        } else {
+        } (
           renderChildren(jd, jdArgs)
-        }
+            .toSeq: _*
+        )
       )
     }
 
@@ -546,7 +526,7 @@ class JdR(
         // Поддержка перетаскивания
         jdArgs.jdCss.absPosStyleAll,
         if (jdArgs.conf.isEdit && !jdArgs.selectedTag.containsLabel(parent)) {
-          _draggableUsing(qdTag, jdArgs) { jdTagDragStart(qdTag) }
+          _draggableUsing(qdTag, jdArgs) { qdTagDragStart(qdTag) }
         } else {
           EmptyVdom
         },
@@ -575,7 +555,7 @@ class JdR(
       * Запуск рендеринга произвольных тегов.
       */
     // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
-    def renderDocTag(idt: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomNode = {
+    def renderTag(idt: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomElement = {
       import MJdTagNames._
       idt.rootLabel.name match {
         case QD_CONTENT                => renderQd( idt, i, jdArgs, parent )
@@ -585,18 +565,46 @@ class JdR(
         case QD_OP =>
           val l = idt.rootLabel
           LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (l.name, l) )
-          VdomArray.empty()
+          VdomNullElement
       }
     }
 
   }
 
 
-  val component = ScalaComponent.builder[Props]("JdR")
+  val component = ScalaComponent.builder[Props]("Jd")
     .stateless
     .renderBackend[Backend]
     .build
 
   def apply(jdArgsProxy: Props) = component( jdArgsProxy )
+
+
+  def renderSeparated(jdArgsProxy: Props): Iterator[VdomElement] = {
+    jdArgsProxy.value.template
+      .subForest
+      .iterator
+      .zipWithIndex
+      .map { case (jdStripTree, i) =>
+        jdArgsProxy.wrap { jdArgs0 =>
+          jdArgs0
+            .withTemplate(jdStripTree)
+            .withSelPath {
+              jdArgs0.selPath.flatMap {
+                case h :: t =>
+                  OptionUtil.maybe(h ==* i)(t)
+                case Nil =>
+                  // should never happen
+                  None
+              }
+            }
+        } { jdArgs2Proxy =>
+          <.div(
+            ^.key := i.toString,
+            jdR(jdArgs2Proxy)
+          )
+        }
+      }
+  }
 
 }

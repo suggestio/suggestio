@@ -76,30 +76,27 @@ object MScAdsSearchQs {
 }
 
 
-/** Интерфейс инстансов модели. */
-trait IScAdSearchQs {
-
-  /** Опциональный id продьюсера. */
-  def prodIdOpt     : Option[MEsUuId]
-
-  /** Опциональный id ресивера. */
-  def rcvrIdOpt     : Option[MEsUuId]
-
-  /** Опциональный id текущего тега. */
-  def tagNodeIdOpt  : Option[MEsUuId]
-
-  /** Возможные данные по геолокации, маячкам и прочему окружению. */
-  def locEnv        : MLocEnv
-
-  /** seed для псевдо-рандомной сортировки. */
-  def genOpt        : Option[Long]
-
-  /** Лимит выдачи карточек. */
-  def limitOpt      : Option[Int]
-
-  /** Сдвиг выдачи карточек. */
-  def offsetOpt     : Option[Int]
-
+/** Контейнер qs-аргументов для поиска карточек.
+  *
+  * @param prodIdOpt Опциональный id продьюсера.
+  * @param rcvrIdOpt Опциональный id ресивера.
+  * @param tagNodeIdOpt Опциональный id текущего тега.
+  * @param locEnv Возможные данные по геолокации, маячкам и прочему окружению.
+  * @param genOpt seed для псевдо-рандомной сортировки.
+  * @param limitOpt Лимит выдачи карточек.
+  * @param offsetOpt Сдвиг выдачи карточек.
+  */
+case class MScAdsSearchQs(
+                           prodIdOpt     : Option[MEsUuId]     = None,
+                           rcvrIdOpt     : Option[MEsUuId]     = None,
+                           tagNodeIdOpt  : Option[MEsUuId]     = None,
+                           locEnv        : MLocEnv             = MLocEnv.empty,
+                           genOpt        : Option[Long]        = None,
+                           limitOpt      : Option[Int]         = None,
+                           offsetOpt     : Option[Int]         = None
+)
+  extends EmptyProduct
+{
 
   /** Есть ли какие-то полезные данные для поиска карточек?
     * Если false, значит поисковый запрос на базе данных из этого инстанса вернёт вообще все карточки. */
@@ -111,17 +108,3 @@ trait IScAdSearchQs {
   }
 
 }
-
-
-/** Контейнер qs-аргументов для поиска карточек. */
-case class MScAdsSearchQs(
-                           override val prodIdOpt     : Option[MEsUuId]     = None,
-                           override val rcvrIdOpt     : Option[MEsUuId]     = None,
-                           override val tagNodeIdOpt  : Option[MEsUuId]     = None,
-                           override val locEnv        : MLocEnv             = MLocEnv.empty,
-                           override val genOpt        : Option[Long]        = None,
-                           override val limitOpt      : Option[Int]         = None,
-                           override val offsetOpt     : Option[Int]         = None
-)
-  extends IScAdSearchQs
-  with EmptyProduct

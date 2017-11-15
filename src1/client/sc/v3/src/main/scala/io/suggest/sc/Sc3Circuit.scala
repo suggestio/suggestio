@@ -1,11 +1,15 @@
 package io.suggest.sc
 
+import diode.ModelRO
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
+import io.suggest.geo.MGeoPoint
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
-import io.suggest.routes.AdvRcvrsMapApiHttp
+import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
+import io.suggest.sc.ads.MFindAdsReq
+import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
@@ -60,7 +64,8 @@ class Sc3Circuit(
     MScRoot(
       index = MScIndex(
         state = MScIndexState(
-          screen = JsScreenUtil.getScreen
+          screen   = JsScreenUtil.getScreen,
+          geoPoint = Some( MGeoPoint(59.92,30.31) )
         ),
         search = MScSearch(
           mapState = MMapS( state0.mapProps )
@@ -81,7 +86,21 @@ class Sc3Circuit(
   private val searchMapRcvrsPotRW = searchRW.zoomRW(_.rcvrsGeo) { _.withRcvrsGeo(_) }
   private val mmapRW = searchRW.zoomRW(_.mapState) { _.withMapState(_) }
 
+  private val gridRW = zoomRW(_.grid) { _.withGrid(_) }
+
   private val rootRO = zoom(m => m)
+
+  private val searchAdsArgsRO: ModelRO[MFindAdsReq] = zoom { mroot =>
+    val inxState = mroot.index.state
+    MFindAdsReq(
+      receiverId  = inxState.currRcvrId,
+      locEnv      = mroot.locEnv,
+      screenInfo  = Some( inxState.screen ),
+      generation  = Some( inxState.generation )
+      // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.
+      // TODO Добавить здесь tagNodeId.
+    )
+  }
 
 
   // Кэш action-handler'ов
@@ -104,7 +123,13 @@ class Sc3Circuit(
     mmapRW = mmapRW
   )
 
-  private def advRcvrsMapApi = new AdvRcvrsMapApiHttp
+  private val gridAdsAh = new GridAdsAh(
+    api           = api,
+    searchArgsRO  = searchAdsArgsRO,
+    modelRW       = gridRW
+  )
+
+  private def advRcvrsMapApi = new AdvRcvrsMapApiHttp( scRoutes )
 
   override protected def actionHandler: HandlerFunction = {
     var acc = List.empty[HandlerFunction]
@@ -134,6 +159,9 @@ class Sc3Circuit(
 
     if ( searchRW.value.isMapInitialized )
       acc ::= mapCommonAh
+
+    // Контроллер плитки -- тоже где-то в начале.
+    acc ::= gridAdsAh
 
     // Базовые экшены всей выдачи перехватываем всегда и в самую первую очередь.
     // Сюда приходят оптовые или частые сообщения от геолокации, маячков, листенеров размеров экрана.
@@ -195,7 +223,7 @@ class Sc3Circuit(
 
 
   /** Зуммер для получения инстанса динамических аргументов рендера ScCss. */
-  private val scCssArgsRO = indexRW.zoom(_.scCssArgs)
+  private val scCssArgsRO = zoom(_.scCssArgs)
 
   private var _scCssCacheOpt: Option[ScCss] = None
 

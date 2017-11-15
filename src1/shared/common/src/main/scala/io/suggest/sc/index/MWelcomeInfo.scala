@@ -4,6 +4,7 @@ import io.suggest.color.MColorData
 import io.suggest.common.empty.EmptyProduct
 import io.suggest.media.IMediaInfo
 import io.suggest.sc.ScConstants.Welcome.Args._
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -19,11 +20,13 @@ import play.api.libs.json._
   */
 object MWelcomeInfo {
 
-  implicit val MWELCOME_INFO_FORMAT: OFormat[MWelcomeInfo] = (
+  implicit def MWELCOME_INFO_FORMAT: OFormat[MWelcomeInfo] = (
     (__ \ BG_COLOR_FN).formatNullable[MColorData] and
     (__ \ BG_IMAGE_FN).formatNullable[IMediaInfo] and
     (__ \ FG_IMAGE_FN).formatNullable[IMediaInfo]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MWelcomeInfo] = UnivEq.derive
 
 }
 

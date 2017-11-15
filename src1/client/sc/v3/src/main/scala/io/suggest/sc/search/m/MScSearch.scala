@@ -4,6 +4,9 @@ import diode.FastEq
 import diode.data.Pot
 import io.suggest.maps.m.MMapS
 import io.suggest.maps.nodes.MGeoNodesResp
+import japgolly.univeq._
+import io.suggest.ueq.JsUnivEqUtil._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -16,12 +19,17 @@ object MScSearch {
   /** Поддержка FastEq для инстансов [[MScSearch]]. */
   implicit object MScSearchFastEq extends FastEq[MScSearch] {
     override def eqv(a: MScSearch, b: MScSearch): Boolean = {
-      (a.mapState eq b.mapState) &&
-        (a.text eq b.text) &&
-        (a.rcvrsGeo eq b.rcvrsGeo) &&
-        (a.currTab eq b.currTab) &&
-        (a.isShown == b.isShown)
+      (a.mapState ===* b.mapState) &&
+        (a.text ===* b.text) &&
+        (a.rcvrsGeo ===* b.rcvrsGeo) &&
+        (a.currTab ===* b.currTab) &&
+        (a.isShown ==* b.isShown)
+        // TODO isMapInitialized просто тут забыта или специально тут отсутствует?
     }
+  }
+
+  implicit def univEq: UnivEq[MScSearch] = {
+    UnivEq.derive
   }
 
 }

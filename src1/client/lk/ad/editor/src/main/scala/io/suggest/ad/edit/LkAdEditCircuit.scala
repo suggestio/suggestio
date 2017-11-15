@@ -19,7 +19,6 @@ import io.suggest.ad.edit.m.MAeRoot.MAeRootFastEq
 import io.suggest.ad.edit.m.layout.MLayoutS
 import io.suggest.ad.edit.m.vld.MJdVldAh
 import io.suggest.ad.edit.srv.LkAdEditApiHttp
-import io.suggest.ad.form.AdFormConstants
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.up.UploadApiHttp
 import io.suggest.dev.MSzMults
@@ -76,14 +75,13 @@ class LkAdEditCircuit(
         val jdConf = MJdConf(
           isEdit            = true,
           szMult            = MSzMults.`1.0`,
-          oneJdGrid         = AdFormConstants.USE_GRID_IN_EDITOR,
           blockPadding      = mFormInit.blockPadding,
           gridColumnsCount  = 2
         )
         val tpl = mFormInit.adData.template
         val edges = mFormInit.adData.edgesMap
           .mapValues( MEdgeDataJs(_) )
-        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf, edges )
+        val jdCssArgs = MJdCssArgs.singleCssArgs( tpl, jdConf )
         val jdCss = jdCssFactory.mkJdCss( jdCssArgs )
         MDocS(
           jdArgs = MJdArgs(
@@ -193,7 +191,7 @@ class LkAdEditCircuit(
           )
         }
         val tpl2 = strip2.toTree
-        val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mdoc0.jdArgs.renderArgs.edges) )
+        val css2 = jdCssFactory.mkJdCss( MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf) )
 
         val stateOuter2 = for (state <- doc2bgColorContF(mdoc0)) yield {
           state.withBgColorPick( mColorAh.pickS )
@@ -254,14 +252,14 @@ class LkAdEditCircuit(
         // css обновляем только после FastEq, чтобы избежать жирного перерендера без необходимости.
         // TODO Вынести этот код куда-нибудь.
         val css2 = {
-          val oldCssArgs = MJdCssArgs.singleCssArgs(mdoc0.jdArgs.template, mdoc0.jdArgs.conf, mdoc0.jdArgs.renderArgs.edges)
-          val newCssArgs = MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mPictureAh.edges)
+          val oldCssArgs = MJdCssArgs.singleCssArgs(mdoc0.jdArgs.template, mdoc0.jdArgs.conf )
+          val newCssArgs = MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf )
           if (MJdCssArgs.MJdCssArgsFastEq.eqv(oldCssArgs, newCssArgs)) {
             mdoc0.jdArgs.jdCss
           } else {
             // Что-то важное изменилось, отправляем CSS на пересборку.
             jdCssFactory.mkJdCss(
-              MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf, mPictureAh.edges )
+              MJdCssArgs.singleCssArgs(tpl2, mdoc0.jdArgs.conf )
             )
           }
         }

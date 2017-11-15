@@ -34,7 +34,7 @@ object MScIndexArgs {
           withWelcomeE        <- boolB.bind  (f(WITH_WELCOME_FN),     params)
           prevAdnIdOptE       <- strOptB.bind(f(PREV_ADN_ID_FN),      params)
           apiVsnE             <- apiVsnB.bind(f(VSN_FN),              params)
-          adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),           params)
+          adnIdOptE           <- strOptB.bind(f(NODE_ID_FN),          params)
         } yield {
           for {
             _apiVsn           <- apiVsnE.right

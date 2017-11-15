@@ -17,6 +17,17 @@ object IMust {
   def MUST_NOT  : Must_t  = Some(false)
 
 
+  /** Вернуть MUST или MUST_NOT в зависимости от значения флага.
+    *
+    * @param flag true обязательно должен быть.
+    *             false обязательно быть не должно.
+    * @return Must_t.
+    */
+  def mustOrNot(flag: Boolean): Must_t = {
+    // Оптимизация: вместо if-else используем упрощённый вариант:
+    Some(flag)
+  }
+
   /**
     * Сборка списка скомпиленных запросов в один запрос.
     * Обычно происходит заворачивание в bool query.

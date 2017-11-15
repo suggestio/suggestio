@@ -5,6 +5,7 @@ import diode.data.{PendingBase, Pot}
 import diode.react.ModelProxy
 import japgolly.scalajs.react.{BackendScope, Callback}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -35,14 +36,6 @@ object ReactDiodeUtil {
   }
 
 
-  def isPendingWithStartTime[U](pot: Pot[U], validStartTime: Long): Boolean = {
-    pot match {
-      case pb: PendingBase => pb.startTime == validStartTime
-      case _ => false
-    }
-  }
-
-
   /** Объединение списка эффектов воедино для параллельного запуска всех сразу.
     *
     * @param effects Эффекты.
@@ -62,6 +55,23 @@ object ReactDiodeUtil {
       }
       Some(allFx)
     }
+  }
+
+
+  /** Расширенная утиль для Pot'ов. */
+  implicit class PotOpsExt[T](val pot: Pot[T]) extends AnyVal {
+
+    def pendingOpt: Option[PendingBase] = {
+      pot match {
+        case pb: PendingBase => Some(pb)
+        case _ => None
+      }
+    }
+
+    def isPendingWithStartTime(startTime: Long): Boolean = {
+      pendingOpt.exists(_.startTime ==* startTime)
+    }
+
   }
 
 }

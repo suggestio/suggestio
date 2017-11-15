@@ -5,7 +5,6 @@ import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.primo.id.IId
 import io.suggest.scalaz.ZTreeUtil.ZTREE_FORMAT
 import japgolly.univeq.UnivEq
-import io.suggest.ueq.UnivEqUtil._
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -35,6 +34,7 @@ object MJdAdData {
 
   implicit def univEq: UnivEq[MJdAdData] = {
     import io.suggest.scalaz.ZTreeUtil.zTreeUnivEq
+    import io.suggest.ueq.UnivEqUtil._
     UnivEq.derive
   }
 

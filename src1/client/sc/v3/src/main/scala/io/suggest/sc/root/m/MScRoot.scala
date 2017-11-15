@@ -2,9 +2,14 @@ package io.suggest.sc.root.m
 
 import diode.FastEq
 import diode.data.Pot
-import io.suggest.geo.MLocEnv
+import io.suggest.geo.{MGeoLoc, MLocEnv}
+import io.suggest.media.IMediaInfo
 import io.suggest.routes.scRoutes
+import io.suggest.sc.grid.m.MGridS
+import io.suggest.sc.index.MWelcomeInfo
 import io.suggest.sc.inx.m.MScIndex
+import io.suggest.sc.styl.MScCssArgs
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -17,7 +22,8 @@ object MScRoot {
 
   implicit case object MScRootFastEq extends FastEq[MScRoot] {
     override def eqv(a: MScRoot, b: MScRoot): Boolean = {
-      (a.index eq b.index) &&
+      (a.index ===* b.index) &&
+        (a.grid ===* b.grid) &&
         (a.jsRouter eq b.jsRouter)
     }
   }
@@ -27,15 +33,39 @@ object MScRoot {
 
 case class MScRoot(
                     index         : MScIndex,
+                    grid          : MGridS                  = MGridS.empty,
                     jsRouter      : Pot[scRoutes.type]      = Pot.empty
                   ) {
 
-  def withIndex( index: MScIndex ) = copy(index = index)
-  def withJsRouter( jsRouter: Pot[scRoutes.type] ) = copy(jsRouter = jsRouter)
+  def withIndex( index: MScIndex )                  = copy(index = index)
+  def withJsRouter( jsRouter: Pot[scRoutes.type] )  = copy(jsRouter = jsRouter)
+  def withGrid( grid: MGridS )                      = copy(grid = grid)
 
   def locEnv: MLocEnv = {
     // TODO собрать данные по маячкам и текущей локации
-    MLocEnv.empty
+    MLocEnv(
+      geoLocOpt = for (gp <- index.state.geoPoint) yield {
+        MGeoLoc(
+          point = gp
+        )
+      }
+    )
+  }
+
+
+  /** Инстанс модели аргументов рендера ScCss. */
+  lazy val scCssArgs: MScCssArgs = {
+    val indexRespOpt = index.resp.toOption
+    val wcOpt = indexRespOpt.flatMap(_.welcome)
+    def __whOpt(f: MWelcomeInfo => Option[IMediaInfo]) = wcOpt.flatMap(f).flatMap(_.whPx)
+
+    MScCssArgs(
+      customColorsOpt = indexRespOpt.map(_.colors),
+      screen          = index.state.screen,
+      wcBgWh          = __whOpt( _.bgImage ),
+      wcFgWh          = __whOpt( _.fgImage )
+      //gridSzMult      = grid.szMult
+    )
   }
 
 }

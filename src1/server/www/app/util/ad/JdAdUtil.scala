@@ -297,31 +297,31 @@ class JdAdUtil @Inject()(
 
 
   /** Настраиваемая логика рендера карточки. */
-  abstract class JdAdDataMakerBase {
+  trait JdAdDataMakerBase {
 
-    lazy val logPrefix = s"${getClass.getSimpleName}${System.currentTimeMillis}:"
+    lazy val logPrefix = s"${getClass.getSimpleName}[${System.currentTimeMillis}]:"
 
     // Сразу получаем шаблон, чтобы при вызове поверх левых узлов сразу была ошибка.
-    val tpl: Tree[JdTag]
+    def tpl: Tree[JdTag]
 
-    val nodeEdges: MNodeEdges
+    def nodeEdges: MNodeEdges
 
     // Собираем картинки, используемые в карточке:
-    val imgsEdges = prepareImgEdges( nodeEdges )
+    lazy val imgsEdges = prepareImgEdges( nodeEdges )
     LOGGER.trace(s"$logPrefix Found ${imgsEdges.size} img.edges: ${imgsEdges.iterator.map(_._2.fileName).mkString(", ")}")
 
     // Собрать связанные инстансы MMedia
-    val imgOrigsMediasMapFut = prepareImgMedias( imgsEdges )
+    lazy val imgOrigsMediasMapFut = prepareImgMedias( imgsEdges )
 
     // Собрать video-эджи. Для них надо получить инстансы MNode, чтобы достучаться до ссылок.
-    val videoEdges = prepareVideoEdges( nodeEdges )
+    lazy val videoEdges = prepareVideoEdges( nodeEdges )
     LOGGER.trace(s"$logPrefix Found ${videoEdges.size} video edges: ${videoEdges.mkString(", ")}")
 
     /** Для каких img-узлов требуется прочитать ноды? */
     def imgEdgesNeedNodes: Seq[(MEdge, MImg3)]
 
     // Для имён файлов нужно собрать сами узлы.
-    val mediaNodesMapFut = prepareMediaNodes( imgEdgesNeedNodes, videoEdges )
+    lazy val mediaNodesMapFut = prepareMediaNodes( imgEdgesNeedNodes, videoEdges )
 
     // Собрать инфу по хостам, хранящим интересующие media-файлы.
     def mediaHostsMapFut = imgOrigsMediasMapFut

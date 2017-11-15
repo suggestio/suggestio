@@ -3,6 +3,7 @@ package io.suggest.model.n2.node.meta.colors
 import boopickle.Default._
 import io.suggest.color.MColorData
 import io.suggest.common.empty.{EmptyProduct, IEmpty}
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -37,6 +38,8 @@ object MColors extends IEmpty {
     (__ \ MColorKeys.Fg.strId).formatNullable[MColorData] and
     (__ \ MColorKeys.Pattern.strId).formatNullable[MColorData]
   )(MColors.apply, unlift(MColors.unapply))
+
+  implicit def univEq: UnivEq[MColors] = UnivEq.derive
 
 }
 

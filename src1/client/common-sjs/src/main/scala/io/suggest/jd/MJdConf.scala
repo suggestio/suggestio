@@ -1,8 +1,10 @@
 package io.suggest.jd
 
-import io.suggest.ad.blk.{BlockPadding, IBlockSize}
+import diode.FastEq
+import io.suggest.ad.blk.{BlockPadding, BlockPaddings, IBlockSize}
 import io.suggest.dev.MSzMult
-import japgolly.univeq.UnivEq
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -12,6 +14,16 @@ import japgolly.univeq.UnivEq
   */
 
 object MJdConf {
+
+  /** Поддержка FastEq для инстансов [[MJdConf]]. */
+  implicit object MJdConfFastEq extends FastEq[MJdConf] {
+    override def eqv(a: MJdConf, b: MJdConf): Boolean = {
+      (a.isEdit ==* b.isEdit) &&
+        (a.szMult ===* b.szMult) &&
+        (a.blockPadding ===* b.blockPadding) &&
+        (a.gridColumnsCount ==* b.gridColumnsCount)
+    }
+  }
 
   implicit def univEq: UnivEq[MJdConf] = UnivEq.force
 
@@ -25,21 +37,18 @@ object MJdConf {
   *                 и генерят соотв.события.
   * @param szMult Мультипликатор размера карточки.
   *               Его можно переопределить на уровне каждого конкретного блока.
-  * @param oneJdGrid Использовать grid-механизмы для рендера блоков одного jd-документа?
   * @param blockPadding Настройка интервала между блоками плитки. Пока не реализована нормально.
   * @param gridColumnsCount Кол-во колонок в плитке.
   */
 case class MJdConf(
                     isEdit              : Boolean,
                     szMult              : MSzMult,
-                    oneJdGrid           : Boolean,
-                    blockPadding        : BlockPadding,
+                    blockPadding        : BlockPadding = BlockPaddings.default,
                     gridColumnsCount    : Int
                   ) {
 
   def withIsEdit(isEdit: Boolean)           = copy(isEdit = isEdit)
   def withSzMult(szMult: MSzMult)           = copy(szMult = szMult)
-  def withOneJdGrid(oneJdGrid: Boolean)     = copy(oneJdGrid = oneJdGrid)
   def withBlockPadding(blockPadding: BlockPadding) = copy(blockPadding = blockPadding)
   def withGridColumnsCount(gridColumnsCount: Int)  = copy(gridColumnsCount = gridColumnsCount)
 

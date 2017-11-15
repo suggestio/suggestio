@@ -69,7 +69,7 @@ trait ScFocusedAdsBase
     }
 
     lazy val mAdsSearchFut: Future[MNodeSearch] = {
-      scAdSearchUtil.qsArgs2nodeSearch(_qs.search)
+      scAdSearchUtil.qsArgs2nodeSearch(_qs.search, Some(_qs.apiVsn))
     }
 
     /** Поисковые критерии для подсчёта общего кол-ва результатов. */

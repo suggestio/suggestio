@@ -216,7 +216,7 @@ class QdRrrHtml(
         ^.src := src,
         ^.key := s"V$i",
         ^.allowFullScreen := true,
-        jdArgs.jdCss.videoStyleF( (qdOp, e) )
+        jdArgs.jdCss.videoStyle  //videoStyleF( (qdOp, e) )
       )
     }
 

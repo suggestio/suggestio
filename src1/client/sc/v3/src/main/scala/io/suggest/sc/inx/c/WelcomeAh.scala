@@ -28,7 +28,9 @@ class WelcomeAh[M](
       } else {
         // Сокрытие приветствия ещё не началось. Запустить таймер сокрытия приветствия.
         val fadeOutTstamp = System.currentTimeMillis()
-        val tpF = WelcomeUtil.timeoutF(ScConstants.Welcome.FADEOUT_TRANSITION_MS * 0.5, fadeOutTstamp)
+        val tpF = { () =>
+          WelcomeUtil.timeout(ScConstants.Welcome.FADEOUT_TRANSITION_MS * 0.5, fadeOutTstamp)
+        }
 
         val v2 = Some(
           v0.copy(

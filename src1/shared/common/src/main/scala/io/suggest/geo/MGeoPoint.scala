@@ -3,6 +3,7 @@ package io.suggest.geo
 import boopickle.Default._
 import io.suggest.common.html.HtmlConstants
 import io.suggest.geo.GeoConstants.Qs
+import japgolly.univeq.UnivEq
 
 import scalaz.ValidationNel
 import scalaz.syntax.apply._
@@ -125,6 +126,11 @@ object MGeoPoint {
       latName = Lat.QS_FN,
       lonName = Lon.QS_FN
     )
+  }
+
+  implicit def univEq: UnivEq[MGeoPoint] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
   }
 
 }

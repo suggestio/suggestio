@@ -13,7 +13,7 @@ import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.dev.MSzMults
 import io.suggest.jd.render.m.MJdArgs
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdR}
+import io.suggest.jd.render.v.{JdCss, JdCssR, JdGridUtil, JdR}
 import io.suggest.quill.v.{QuillCss, QuillEditorR}
 import io.suggest.common.html.HtmlConstants.{COMMA, `(`, `)`}
 import io.suggest.i18n.MsgCodes
@@ -145,8 +145,24 @@ class LkAdEditFormR(
             <.div(
               LCSS.previewInnerCont,
 
-              // Тело превьюшки
-              s.jdPreviewArgsC { jdR.apply },
+              // Тело превьюшки в виде плитки.
+              s.jdPreviewArgsC {
+                jdR.apply
+                /* jdArgsProxy =>
+                  val jdArgs = jdArgsProxy.value
+                  val jds = jdArgs.template.subForest
+                  CSSGrid {
+                    jdGridUtil.mkCssGridArgs(
+                      jds  = jds,
+                      conf = jdArgs.conf
+                    )
+                  } (
+                    jdR
+                      .renderSeparated( jdArgsProxy )
+                      .toVdomArray
+                  )
+                */
+              },
 
               <.div(
                 ^.`class` := Css.CLEAR

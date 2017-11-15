@@ -9,7 +9,6 @@ import io.suggest.font.{MFontSizes, MFonts}
 import io.suggest.jd.render.m.{MEmuCropCssArgs, MJdCssArgs}
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
-import io.suggest.model.n2.edge.MPredicates
 import io.suggest.primo.ISetUnset
 import io.suggest.text.MTextAligns
 import japgolly.univeq._
@@ -293,7 +292,13 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   }
 
 
+  val videoStyle = style(
+    width ( Math.round(300 * blkSzMultD).px ),
+    height( Math.round(150 * blkSzMultD).px )
+  )
+
   /** Стили для видео-фреймов. */
+  /*
   val videoStyleF = {
     val videoPred = MPredicates.JdContent.Video
     val videosIter = for {
@@ -315,11 +320,13 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     }
   }
+  */
 
   // -------------------------------------------------------------------------------
   // images + crop.
 
   /** Стили для эмуляции кропа на фоновом изображении блока. */
+  /*
   val blkBgImgCropEmuF = {
     val emuCrops = {
       val cropsIter = for {
@@ -356,6 +363,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
       )
     }
   }
+  */
 
 }
 

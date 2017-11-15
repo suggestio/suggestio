@@ -1,13 +1,15 @@
 package io.suggest.sc.styl
 
+import io.suggest.ad.blk.BlockWidths
 import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
-import io.suggest.dev.MScreen
+import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.ScConstants
+import io.suggest.sc.tile.{ColumnsCountT, TileConstants}
 
 /**
   * Suggest.io
@@ -60,6 +62,7 @@ trait IScCssArgs {
   def screen            : MScreen
   def wcBgWh            : Option[MSize2di]
   def wcFgWh            : Option[MSize2di]
+  //def gridSzMult        : MSzMult
 }
 
 
@@ -418,14 +421,65 @@ case class ScCss( args: IScCssArgs )
         )
 
         /** Стиль контейнера карты. Контейнер порождается js'кой гео-карты, а не нами. */
-        val geomap = style(
-          width( 100.%% ),
-          height( 100.%% )
-        )
+        val geomap = {
+          val pc100 = 100.%%
+          style(
+            width( pc100 ),
+            height( pc100 )
+          )
+        }
 
       }
 
     }
+
+  }
+
+
+  /** Стили для плитки карточек, точнее для контейнеров этой плитки. */
+  object Grid {
+
+    /*
+    val szMultD = args.gridSzMult.toDouble
+
+    val _CELL_WIDTH_CSSPX = (BlockWidths.NARROW.value * szMultD).toInt
+    val _TILE_PADDING_CSSPX = (TileConstants.PADDING_CSSPX * szMultD).toInt
+
+    // Кол-во колонок в плитке в условиях текущего экрана.
+    val gridColumnsCount = {
+      val cct = new ColumnsCountT {
+        override def CELL_WIDTH_CSSPX   = _CELL_WIDTH_CSSPX
+        override def TILE_PADDING_CSSPX = _TILE_PADDING_CSSPX
+      }
+      cct.getTileColsCountScr( args.screen )
+    }
+    */
+
+    private val _SM_GRID_ADS = _SM_ + "grid-ads"
+
+    private val _screenHeightPx = args.screen.height.px
+    private val _screenHeight = height( _screenHeightPx )
+
+    val outer = style(
+      addClassName( _SM_GRID_ADS ),
+      _screenHeight
+    )
+
+    val wrapper = style(
+      overflowScrollingMx,
+      _screenHeight
+    )
+
+    val content = style(
+      addClassName( _SM_GRID_ADS + "_content" )
+    )
+
+    val container = style(
+      addClassName( _SM_GRID_ADS + "_container" ),
+      minHeight( _screenHeightPx ),
+      left(0.px),
+      opacity(1),
+    )
 
   }
 

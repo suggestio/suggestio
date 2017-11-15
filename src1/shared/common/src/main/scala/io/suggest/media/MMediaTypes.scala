@@ -2,6 +2,7 @@ package io.suggest.media
 
 import enumeratum._
 import io.suggest.primo.IStrId
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -23,10 +24,12 @@ object MMediaType {
   }
 
   /** Поддержка play-json. */
-  implicit val MMEDIA_TYPE_FORMAT: Format[MMediaType] = {
+  implicit def MMEDIA_TYPE_FORMAT: Format[MMediaType] = {
     implicitly[Format[String]]
       .inmap[MMediaType]( MMediaTypes.withName, _.strId )
   }
+
+  implicit def univEq: UnivEq[MMediaType] = UnivEq.derive
 
 }
 

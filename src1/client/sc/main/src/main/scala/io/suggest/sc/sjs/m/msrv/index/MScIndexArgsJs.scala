@@ -1,7 +1,7 @@
 package io.suggest.sc.sjs.m.msrv.index
 
 import io.suggest.geo.MLocEnvJs
-import io.suggest.sc.sjs.m.msrv.ToJsonWithApiVsnT
+import io.suggest.sc.sjs.m.msrv.{MSrv, ToJsonWithApiVsnT}
 import io.suggest.sc.ScConstants.ReqArgs._
 import io.suggest.sc.index.MScIndexArgs
 
@@ -31,6 +31,8 @@ object MScIndexArgsJs {
       d(SCREEN_FN) = scr.toQsValue
 
     d(WITH_WELCOME_FN) = o.withWelcome
+
+    d(VSN_FN) = MSrv.API_VSN
 
     d
   }

@@ -99,7 +99,7 @@ trait ScFocusedAdsV2
       )
 
       // TODO Далее какой-то быдлокод с реализацией нетривиальной выборки сегмента последовательности foc-карточек.
-      scAdSearchUtil.qsArgs2nodeSearch(fadsIdsSearchQs).flatMap { msearch =>
+      scAdSearchUtil.qsArgs2nodeSearch(fadsIdsSearchQs, Some(_qs.apiVsn)).flatMap { msearch =>
 
         val fadIdsFut = mNodes.dynSearchIds(msearch)
         val __limit = msearch.limit

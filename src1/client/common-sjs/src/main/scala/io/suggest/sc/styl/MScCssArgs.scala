@@ -2,9 +2,11 @@ package io.suggest.sc.styl
 
 import diode.FastEq
 import io.suggest.common.geom.d2.MSize2di
-import io.suggest.dev.MScreen
+import io.suggest.dev.{MScreen, MSzMult}
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.spa.OptFastEq
+import japgolly.univeq._
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -23,18 +25,21 @@ object MScCssArgs {
       // customColors -- референсно внутри Option, т.к. внешний Option пересобирается каждый раз.
       // Остальное -- чисто референсно.
       OptFastEq.Plain.eqv(a.customColorsOpt, b.customColorsOpt) &&
-        ((a.screen eq b.screen) || (a.screen == b.screen)) &&
-        (a.wcBgWh eq b.wcBgWh) &&
-        (a.wcFgWh eq b.wcFgWh)
+        ((a.screen ===* b.screen) || (a.screen ==* b.screen)) &&
+        (a.wcBgWh ===* b.wcBgWh) &&
+        (a.wcFgWh ===* b.wcFgWh) /*&&
+        (a.gridSzMult ===* b.gridSzMult)*/
     }
   }
 
 }
+
 
 case class MScCssArgs(
                        override val customColorsOpt   : Option[MColors],
                        override val screen            : MScreen,
                        override val wcBgWh            : Option[MSize2di],
                        override val wcFgWh            : Option[MSize2di]
+                       //override val gridSzMult        : MSzMult
                      )
   extends IScCssArgs

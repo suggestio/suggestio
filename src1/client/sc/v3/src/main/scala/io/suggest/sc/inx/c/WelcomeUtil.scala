@@ -13,20 +13,17 @@ import scala.concurrent.Future
   */
 object WelcomeUtil {
 
-  /** Сборка функции отложенного (по таймеру) переключения фазы приветствия.
+  /** Запуск таймера переключения фазы приветствия.
     *
     * @param afterMs Через сколько мс переключение?
     * @param tstamp Timestamp-маркер.
-    * @return Функция с сайд-эффектом.
-    *         Возвращает фьючерс, исполняющийся через afterMs миллисекунд.
+    * @return Возвращает фьючерс, исполняющийся через afterMs миллисекунд.
     */
-  def timeoutF(afterMs: Double, tstamp: Long): () => Future[WcTimeOut] = {
-    { () =>
-      val tp = DomQuick.timeoutPromiseT( afterMs ) {
-        WcTimeOut( tstamp )
-      }
-      tp.fut
+  def timeout(afterMs: Double, tstamp: Long): Future[WcTimeOut] = {
+    val tp = DomQuick.timeoutPromiseT( afterMs ) {
+      WcTimeOut( tstamp )
     }
+    tp.fut
   }
 
 }

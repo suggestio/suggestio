@@ -6,7 +6,6 @@ import io.suggest.sc.sjs.c.scfsm.FindAdsArgsT
 import io.suggest.sc.sjs.m.mgrid.MGridState
 import io.suggest.sc.sjs.m.mmap.{EnsureMap, SetGeoLoc}
 import io.suggest.sc.sjs.m.msc.MScSd
-import io.suggest.sc.sjs.m.msrv.MSrv
 import io.suggest.sc.sjs.m.msrv.index.MScRespIndex
 import io.suggest.sc.sjs.m.msrv.tile.MFindAdsTile
 import io.suggest.sc.sjs.vm.layout.LayRootVm
@@ -37,8 +36,7 @@ trait Index extends FindAdsArgsT {
         nodeId        = sd0.common.adnIdOpt,
         locEnv        = sd0.locEnv,
         screen        = Some( sd0.common.screen ),
-        withWelcome   = true,
-        apiVsn        = MSrv.API_VSN
+        withWelcome   = true
       )
       MScRespIndex.getIndex(inxArgs)
     }

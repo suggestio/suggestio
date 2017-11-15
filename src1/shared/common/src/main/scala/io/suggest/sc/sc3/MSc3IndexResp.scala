@@ -3,6 +3,7 @@ package io.suggest.sc.sc3
 import io.suggest.media.IMediaInfo
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.index.MWelcomeInfo
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
 
@@ -23,6 +24,8 @@ object MSc3IndexResp {
     (__ \ "l").formatNullable[IMediaInfo] and
     (__ \ "w").formatNullable[MWelcomeInfo]
   )(apply, unlift(unapply))
+
+  implicit def univEq: UnivEq[MSc3IndexResp] = UnivEq.derive
 
 }
 

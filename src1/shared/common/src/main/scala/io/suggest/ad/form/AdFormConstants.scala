@@ -63,6 +63,4 @@ object AdFormConstants {
   /** id контейнера react-формы создания/редактирования рекламной карточки. */
   def AD_EDIT_FORM_CONT_ID = "aef"
 
-  def USE_GRID_IN_EDITOR = true
-
 }

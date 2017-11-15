@@ -2,6 +2,7 @@ package io.suggest.sc.search.m
 
 import enumeratum._
 import io.suggest.i18n.MsgCodes
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -9,21 +10,6 @@ import io.suggest.i18n.MsgCodes
   * Created: 21.07.17 13:56
   * Description: Статическая enum-модель тегов.
   */
-sealed abstract class MSearchTab extends EnumEntry {
-
-  /** Самая первая (левая) вкладка. */
-  def isFirst : Boolean
-
-  /** Самая последняя (правая) вкладка. */
-  def isLast  : Boolean
-
-  /** i18n-код названия вкладки. */
-  def name: String
-
-  override final def toString = name
-
-}
-
 
 /** Модель табов панели поиска. */
 object MSearchTabs extends Enum[MSearchTab] {
@@ -49,3 +35,23 @@ object MSearchTabs extends Enum[MSearchTab] {
   def default: MSearchTab = GeoMap
 
 }
+
+sealed abstract class MSearchTab extends EnumEntry {
+
+  /** Самая первая (левая) вкладка. */
+  def isFirst : Boolean
+
+  /** Самая последняя (правая) вкладка. */
+  def isLast  : Boolean
+
+  /** i18n-код названия вкладки. */
+  def name: String
+
+  override final def toString = name
+
+}
+
+object MSearchTab {
+  implicit def univEq: UnivEq[MSearchTab] = UnivEq.derive
+}
+

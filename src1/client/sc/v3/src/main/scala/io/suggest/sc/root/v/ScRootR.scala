@@ -1,10 +1,13 @@
 package io.suggest.sc.root.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
+import io.suggest.sc.grid.m.MGridS
+import io.suggest.sc.grid.v.GridR
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.IndexR
 import io.suggest.sc.root.m.MScRoot
 import io.suggest.sc.styl.{GetScCssF, MScCssArgs}
+import io.suggest.spa.OptFastEq
 import japgolly.scalajs.react.{BackendScope, ScalaComponent}
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
@@ -20,16 +23,20 @@ import scalacss.ScalaCssReact._
 class ScRootR (
                 indexR                      : IndexR,
                 protected[this] val scCssR  : ScCssR,
+                gridR                       : GridR,
                 getScCssF                   : GetScCssF
               ) {
 
+  import MScCssArgs.MScCssArgsFastEq
   import MScIndex.MScIndexFastEq
+  import MGridS.MGridSFastEq
 
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
-                                    colorsOptC     : ReactConnectProxy[MScCssArgs],
-                                    indexPropsC    : ReactConnectProxy[MScIndex]
+                                    scCssArgsC     : ReactConnectProxy[MScCssArgs],
+                                    indexPropsC    : ReactConnectProxy[MScIndex],
+                                    gridOptC       : ReactConnectProxy[Option[MGridS]]
                                   )
 
 
@@ -39,17 +46,19 @@ class ScRootR (
       val scCss = getScCssF()
       <.div(
         // Рендер стилей перед снаружи и перед остальной выдачей.
-        s.colorsOptC { scCssR.apply },
+        s.scCssArgsC { scCssR.apply },
 
         <.div(
           // Ссылаемся на стиль.
           scCss.Root.root,
 
           // Компонент index'а выдачи:
-          s.indexPropsC { indexR.apply }
+          s.indexPropsC { indexR.apply },
+
+          // Рендер плитки карточек узла:
+          s.gridOptC { gridR.apply }
 
           // TODO Focused
-          // TODO Grid
         )
       )
     }
@@ -60,8 +69,11 @@ class ScRootR (
   val component = ScalaComponent.builder[Props]("Root")
     .initialStateFromProps { propsProxy =>
       State(
-        colorsOptC  = propsProxy.connect(_.index.scCssArgs),
-        indexPropsC = propsProxy.connect(_.index)
+        scCssArgsC  = propsProxy.connect(_.scCssArgs),
+        indexPropsC = propsProxy.connect(_.index),
+        gridOptC = propsProxy.connect { mroot =>
+          Some( mroot.grid ): Option[MGridS]
+        }( OptFastEq.Wrapped )
       )
     }
     .renderBackend[Backend]

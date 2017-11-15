@@ -1,6 +1,7 @@
 package io.suggest.media
 
 import io.suggest.common.geom.d2.MSize2di
+import japgolly.univeq.UnivEq
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
@@ -23,12 +24,14 @@ object IMediaInfo {
   }
 
 
-  implicit val IMEDIA_INFO_FORMAT: OFormat[IMediaInfo] = (
+  implicit def IMEDIA_INFO_FORMAT: OFormat[IMediaInfo] = (
     (__ \ "y").format[MMediaType] and
     (__ \ "u").format[String] and
     (__ \ "i").lazyFormatNullable( IMEDIA_INFO_FORMAT ) and
     (__ \ "w").formatNullable[MSize2di]
   ).apply( MMediaInfo.apply, { imi: IMediaInfo => (imi.giType, imi.url, imi.thumb, imi.whPx) } )
+
+  implicit def univEq: UnivEq[IMediaInfo] = UnivEq.derive
 
 }
 

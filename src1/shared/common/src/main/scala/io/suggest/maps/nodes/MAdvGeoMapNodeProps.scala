@@ -3,6 +3,7 @@ package io.suggest.maps.nodes
 import boopickle.Default._
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.model.n2.node.meta.colors.MColors
+import japgolly.univeq.UnivEq
 
 /**
   * Suggest.io
@@ -19,6 +20,8 @@ object MAdvGeoMapNodeProps {
     implicit val mColorsP = MColors.mColorsPickler
     generatePickler[MAdvGeoMapNodeProps]
   }
+
+  implicit def univEq: UnivEq[MAdvGeoMapNodeProps] = UnivEq.derive
 
 }
 
@@ -44,6 +47,8 @@ object MMapNodeIconInfo {
     implicit val size2diP = MSize2di.size2diPickler
     generatePickler[MMapNodeIconInfo]
   }
+
+  implicit def univEq: UnivEq[MMapNodeIconInfo] = UnivEq.derive
 
 }
 

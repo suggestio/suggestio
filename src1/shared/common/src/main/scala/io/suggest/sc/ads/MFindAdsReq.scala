@@ -42,4 +42,11 @@ case class MFindAdsReq(
                         locEnv      : MLocEnv           = MLocEnv.empty,
                         screenInfo  : Option[MScreen]   = None,
                         tagNodeId   : Option[String]    = None
-                      )
+                      ) {
+
+  def withOffset(offset: Option[Int] = None) = copy(offset = offset)
+  def withLimit(limit: Option[Int] = None)   = copy(limit = limit)
+
+  def withLimitOffset(limit: Option[Int], offset: Option[Int]) = copy(limit = limit, offset = offset)
+
+}

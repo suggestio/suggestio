@@ -21,6 +21,7 @@ import models.blk._
 import play.twirl.api.Html
 import util.acl._
 import play.api.libs.json.Json
+import japgolly.univeq._
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -87,7 +88,7 @@ trait ScAdsTileBase
 
     lazy val logPrefix = s"findAds(${ctx.timestamp}):"
 
-    lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch(_qs.search)
+    lazy val adSearch2Fut = scAdSearchUtil.qsArgs2nodeSearch(_qs.search, Some(_qs.apiVsn))
 
     LOGGER.trace(s"$logPrefix ${_request.uri}")
 
@@ -285,8 +286,10 @@ trait ScAdsTile
     /** Собрать необходимую логику обработки запроса в зависимости от версии API. */
     def apply(adSearch: MScAdsTileQs)(implicit request: IReq[_]): TileAdsLogicV = {
       val v = adSearch.apiVsn
-      if (v.majorVsn == MScApiVsns.Sjs1.majorVsn) {
-        new TileAdsLogicV2(adSearch)
+      if (v.majorVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+        new TileAdsLogicV3( adSearch )
+      } else if (v.majorVsn ==* MScApiVsns.Sjs1.majorVsn) {
+        new TileAdsLogicV2( adSearch )
       } else {
         throw new UnsupportedOperationException("Unsupported API version: " + v)
       }

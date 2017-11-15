@@ -2,6 +2,8 @@ package io.suggest.maps.m
 
 import diode.FastEq
 import io.suggest.maps.MMapProps
+import japgolly.univeq.UnivEq
+import io.suggest.ueq.UnivEqUtil._
 
 /**
   * Suggest.io
@@ -15,10 +17,12 @@ object MMapS {
 
   implicit object MMapSFastEq extends FastEq[MMapS] {
     override def eqv(a: MMapS, b: MMapS): Boolean = {
-      (a.props eq b.props) &&
-        (a.locationFound eq b.locationFound)
+      (a.props ===* b.props) &&
+        (a.locationFound ===* b.locationFound)
     }
   }
+
+  implicit def univEq: UnivEq[MMapS] = UnivEq.derive
 
 }
 

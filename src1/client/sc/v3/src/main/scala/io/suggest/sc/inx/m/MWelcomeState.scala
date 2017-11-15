@@ -1,6 +1,7 @@
 package io.suggest.sc.inx.m
 
 import diode.FastEq
+import japgolly.univeq._
 
 /**
   * Suggest.io
@@ -13,10 +14,12 @@ object MWelcomeState {
 
   implicit object MWelcomeStateFastEq extends FastEq[MWelcomeState] {
     override def eqv(a: MWelcomeState, b: MWelcomeState): Boolean = {
-      (a.isHiding == b.isHiding) &&
-        (a.timerTstamp == b.timerTstamp)
+      (a.isHiding ==* b.isHiding) &&
+        (a.timerTstamp ==* b.timerTstamp)
     }
   }
+
+  implicit def univEq: UnivEq[MWelcomeState] = UnivEq.derive
 
 }
 

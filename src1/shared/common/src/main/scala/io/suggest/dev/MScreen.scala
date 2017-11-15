@@ -1,6 +1,7 @@
 package io.suggest.dev
 
 import io.suggest.common.geom.d2.ISize2di
+import japgolly.univeq.UnivEq
 import play.api.libs.functional.syntax._
 import play.api.libs.json.Writes
 
@@ -14,7 +15,7 @@ import play.api.libs.json.Writes
 object MScreen {
 
   /** Поддержка Play-json сериализации у нас очень простая. */
-  implicit val MSCREEN_WRITES: Writes[MScreen] = {
+  implicit def MSCREEN_WRITES: Writes[MScreen] = {
     implicitly[Writes[String]]
       .contramap[MScreen]( _.toQsValue )
   }
@@ -24,6 +25,11 @@ object MScreen {
     // Коэффициент недоскругления, точность до 0.1 - достаточная.
     val r = 10
     Math.round(pxRatioRaw * r).toDouble / r
+  }
+
+  implicit def univEq: UnivEq[MScreen] = {
+    import io.suggest.ueq.UnivEqUtil._
+    UnivEq.derive
   }
 
 }

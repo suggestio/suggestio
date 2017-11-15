@@ -41,6 +41,12 @@ object MScApiVsns extends Enumeration with EnumMaybeWithId with MacroLogsImpl {
       */
     def forceAbsUrls: Boolean = false
 
+    /** Разрешены ли jd-карточки в данном API?
+      * @return true -- разрешены только jd-карточки.
+      *         false -- запрещены все jd-карточки.
+      */
+    def useJdAds: Boolean = majorVsn >= Vsns.REACT_SJS
+
   }
 
   override type T = Val

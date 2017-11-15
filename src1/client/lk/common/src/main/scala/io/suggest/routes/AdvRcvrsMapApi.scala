@@ -22,11 +22,11 @@ trait IAdvRcvrsMapApi {
 
 
 /** Реализация [[IAdvRcvrsMapApi]] поверх HTTP через js-роутер. */
-class AdvRcvrsMapApiHttp extends IAdvRcvrsMapApi {
+class AdvRcvrsMapApiHttp(jsRouter: => IJsRouter) extends IAdvRcvrsMapApi {
 
   /** Запрос карты rcvr-маркеров с сервера в виде GeoJSON. */
   override def advRcvrsMap(): Future[MGeoNodesResp] = {
-    val route = routes.controllers.Static.advRcvrsMap()
+    val route = jsRouter.controllers.Static.advRcvrsMap()
     // Надо запустить запрос на сервер для получения списка узлов.
     Xhr.unBooPickleResp[MGeoNodesResp] {
       Xhr.requestBinary( route )
