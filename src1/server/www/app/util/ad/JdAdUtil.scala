@@ -357,16 +357,20 @@ class JdAdUtil @Inject()(
       }
     }
 
+    def finalTpl: Tree[JdTag] = tpl
+
     /** Запуск сборки данных jd-карточки на исполнение.
       *
       * @return Фьючерс с отрендеренными данными карточки.
       */
     def execute(): Future[MJdAdData] = {
+      val _edEdgesFut = edEdgesFut
+      val _finalTpl = finalTpl
       for {
-        edEdges <- edEdgesFut
+        edEdges <- _edEdgesFut
       } yield {
         MJdAdData(
-          template  = tpl,
+          template  = _finalTpl,
           edges     = edEdges
         )
       }
@@ -452,6 +456,20 @@ class JdAdUtil @Inject()(
             )
           }
           iter.toSeq
+        }
+      }
+
+      override def finalTpl: Tree[JdTag] = {
+        val tpl0 = super.finalTpl
+        // Удалить все crop'ы из содержимого, т.к. все картинки уже подогнаны под карточку.
+        for (jdTag <- tpl0) yield {
+          jdTag.withProps1(
+            jdTag.props1.withBgImg(
+              for (bgImg <- jdTag.props1.bgImg) yield {
+                bgImg.withCrop(None)
+              }
+            )
+          )
         }
       }
 

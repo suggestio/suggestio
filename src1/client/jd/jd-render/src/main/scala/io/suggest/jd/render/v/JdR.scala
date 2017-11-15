@@ -387,7 +387,6 @@ class JdR(
                 ^.marginLeft := (-ecArgs.crop.offX * outer2cropRatio * blkSzMultD).px,
                 ^.marginTop := (-ecArgs.crop.offY * outer2cropRatio * blkSzMultD).px
               )
-              //C.blkBgImgCropEmuF( cropEmu )
             }
           },
 
