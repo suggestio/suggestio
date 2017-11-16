@@ -2,14 +2,12 @@ package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
 import diode.react.ModelProxy
-import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.Css
 import io.suggest.err.ErrorConstants
-import io.suggest.grid.build.{GridBuildArgs, GridBuilder, ItemPropsExt}
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
@@ -31,7 +29,6 @@ import org.scalajs.dom.Element
 import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
-import scala.scalajs.js
 import scalacss.ScalaCssReact._
 import scalaz.Tree
 

@@ -2,12 +2,15 @@ package io.suggest.grid.build
 
 import com.github.dantrain.react.stonecutter.{ItemProps, LayoutFunRes, PropsCommon}
 import io.suggest.ad.blk.{BlockHeights, BlockWidths}
+import io.suggest.common.geom.d2.MSize2di
 import io.suggest.common.html.HtmlConstants
 import io.suggest.jd.MJdConf
 import io.suggest.sjs.common.msg.ErrorMsgs
 import japgolly.univeq._
+import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 
 import scala.annotation.tailrec
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSConverters._
 
@@ -174,11 +177,23 @@ class GridBuilder {
     val gridWidthPx = colsInfo.count(_.heightUsed > 0) * paddedCellWidthPx
 
     // Помимо координат, надо вычислить итоговые размеры плитки.
-    new LayoutFunRes {
+    val res = new LayoutFunRes {
       override val positions  = coords
       override val gridHeight = gridHeightPx
       override val gridWidth  = gridWidthPx
     }
+
+    // Передать результат сборки плитки в side-effect-функцию, если она задана.
+    for (notifyF <- args.onLayout) {
+      Future {
+        // На раннем этапе нужны были только фактические размеры плитки.
+        // Поэтому собираем отдельный безопасный инстанс с этими размерами и отправляем в функцию.
+        val gridSz2d = MSize2di(width = gridWidthPx, height = gridHeightPx)
+        notifyF( gridSz2d )
+      }
+    }
+
+    res
   }
 
   //private def _orZero(und: js.UndefOr[Int]) = und getOrElse 0
@@ -195,6 +210,7 @@ class GridBuilder {
   */
 case class GridBuildArgs(
                           itemsExtDatas : TraversableOnce[ItemPropsExt],
-                          jdConf        : MJdConf
+                          jdConf        : MJdConf,
+                          onLayout      : Option[MSize2di => _] = None
                         )
 

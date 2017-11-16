@@ -125,8 +125,8 @@ class Bill2Util @Inject() (
       // Это пополнение собственного баланса. Проходит без промежуточных шагов и сразу же закрывается.
       MItemStatuses.Finished
 
-    } else if (iType.isAdv) {
-      // Пока все item'ы -- это adv-itemы. Поэтому они отправляются на модерацию.
+    } else if (iType.sendToMdrOnOrderClose) {
+      // Услуга, отправляемая на модерацию.
       MItemStatuses.AwaitingMdr
 
     } else {

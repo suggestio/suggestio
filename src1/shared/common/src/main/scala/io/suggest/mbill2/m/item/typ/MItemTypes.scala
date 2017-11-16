@@ -42,8 +42,8 @@ sealed abstract class MItemType extends EnumEntry with IStrId {
     */
   def moneyRcvrIsCbca: Boolean = true
 
-  /** Тип item'а относится к рекламным размещениям карточек и тегам к ним? */
-  def isAdv: Boolean = true
+  /** Тип item'а относится к рекламным размещениям или иным услугам, отправляемым на модерацию? */
+  def sendToMdrOnOrderClose: Boolean = true
 
   /** @return true когда требуется/подразумевается стадия аппрува s.io в ЖЦ item'а. */
   def isApprovable: Boolean = true
@@ -100,7 +100,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
   case object AdnNodeMap extends MItemType {
     override def strId = "m"
     /** Это размещение узлов ЛК на карте. К карточкам это не относится никак. */
-    override def isAdv = false
+    override def sendToMdrOnOrderClose = false
     override def isInterruptable = true
   }
 
@@ -116,7 +116,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
     /** Это кредитование баланса. Поэтому false. */
     override def isDebt = false
     /** Никакой рекламной составляющей это действо не несёт. */
-    override def isAdv = false
+    override def sendToMdrOnOrderClose = false
     /** Юзер просто закидывает деньги себе на счёт, аппрува для этого не требуется. */
     override def isApprovable = false
     override def isInterruptable = false
@@ -124,7 +124,7 @@ object MItemTypes extends EnumeratumApply[MItemType] {
 
   case object GeoLocCaptureArea extends MItemType {
     override def strId = "l"
-    override def isAdv = false
+    override def sendToMdrOnOrderClose = true
     override def isInterruptable = true
   }
 
