@@ -8,6 +8,8 @@
 @import args.adId
 @import mdr.MdrSearchArgs
 @import datetime._
+@import japgolly.univeq._
+@import sys1.market.adn._nodeMetaTpl
 
 @* Верста кнопки подтверждения размещения. *@
 @__approveBtn(call: Call) = {
@@ -152,6 +154,11 @@
                   @if(mitem.rcvrIdOpt) {
                     </a>
                   }
+
+                  @for(gs <- mitem.geoShape) {
+                    geo=[[@gs]]
+                  }
+
                   @__refuseBtn( routes.SysMdr.refuseItemPopup(itemId) )
                 } @* mdrItemCont *@
               }   @* for mitem *@
@@ -188,6 +195,13 @@
       <div class="sio-mart-showcase __relative">
         @_adFullTpl( args )
       </div>
+    </div>
+
+    <br/>
+    <br/>
+
+    <div>
+      @_nodeMetaTpl(args.mnode.meta)
     </div>
 
   </div>

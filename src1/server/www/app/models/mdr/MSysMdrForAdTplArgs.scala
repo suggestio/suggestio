@@ -41,6 +41,8 @@ trait ISysMdrForAdTplArgs extends IAdBodyTplArgs {
   /** Данные об уже произведенных модерациях в отношении текущей версии карточки. */
   def freeMdrs: Seq[MEdge]
 
+  /** Исходная модерация была только для карточек, а тут -- расширение для узлов. */
+  def mnode = brArgs.mad
 
   /** Есть ли хоть один положительный отзыв модератора? */
   def hasPositiveMdr: Boolean = {
