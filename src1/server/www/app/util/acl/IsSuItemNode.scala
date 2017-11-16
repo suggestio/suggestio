@@ -7,7 +7,7 @@ import io.suggest.mbill2.m.item.{MItem, MItems}
 import io.suggest.req.ReqUtil
 import io.suggest.util.logs.MacroLogsImpl
 import models.mproj.ICommonDi
-import models.req.{IReqHdr, MItemAdReq, MReq}
+import models.req.{IReqHdr, MItemNodeReq, MReq}
 import play.api.mvc.{ActionBuilder, AnyContent, Request, Result}
 
 import scala.concurrent.Future
@@ -18,13 +18,13 @@ import scala.concurrent.Future
   * Created: 01.03.16 11:15
   * Description: Аддон для контроллеров для поддержки получения MItem вместе со связанной mad.
   */
-class IsSuItemAd @Inject() (
-                             aclUtil                : AclUtil,
-                             isSu                   : IsSu,
-                             mItems                 : MItems,
-                             reqUtil                : ReqUtil,
-                             mCommonDi              : ICommonDi
-                           )
+class IsSuItemNode @Inject()(
+                              aclUtil                : AclUtil,
+                              isSu                   : IsSu,
+                              mItems                 : MItems,
+                              reqUtil                : ReqUtil,
+                              mCommonDi              : ICommonDi
+                            )
   extends MacroLogsImpl
 {
 
@@ -34,10 +34,10 @@ class IsSuItemAd @Inject() (
   /**
     * @param itemId Ключ item'а в таблице MItems.
     */
-  def apply(itemId: Gid_t): ActionBuilder[MItemAdReq, AnyContent] = {
-    new reqUtil.SioActionBuilderImpl[MItemAdReq] {
+  def apply(itemId: Gid_t): ActionBuilder[MItemNodeReq, AnyContent] = {
+    new reqUtil.SioActionBuilderImpl[MItemNodeReq] {
 
-      override def invokeBlock[A](request: Request[A], block: (MItemAdReq[A]) => Future[Result]): Future[Result] = {
+      override def invokeBlock[A](request: Request[A], block: (MItemNodeReq[A]) => Future[Result]): Future[Result] = {
         val user = aclUtil.userFromRequest(request)
 
         def req1 = MReq(request, user)
@@ -48,10 +48,10 @@ class IsSuItemAd @Inject() (
           }
           mitemOptFut.flatMap {
             case Some(mitem) =>
-              val madOptFut = mNodesCache.getById(mitem.nodeId)
-              madOptFut.flatMap {
+              val mnodeOptFut = mNodesCache.getById(mitem.nodeId)
+              mnodeOptFut.flatMap {
                 case Some(mad) =>
-                  val req1 = MItemAdReq(mitem, mad, user, request)
+                  val req1 = MItemNodeReq(mitem, mad, user, request)
                   block(req1)
 
                 case None =>

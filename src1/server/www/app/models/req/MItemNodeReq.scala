@@ -12,15 +12,15 @@ import play.api.mvc.Request
   */
 trait IItemAdReq[A]
   extends IItemReq[A]
-  with IAdReq[A]
+  with INodeReq[A]
 
 
 /** Дефолтовая реализация [[IItemAdReq]]. */
-case class MItemAdReq[A](
-  override val mitem    : MItem,
-  override val mad      : MNode,
-  override val user     : ISioUser,
-  override val request  : Request[A]
-)
+case class MItemNodeReq[A](
+                            override val mitem    : MItem,
+                            override val mnode    : MNode,
+                            override val user     : ISioUser,
+                            override val request  : Request[A]
+                          )
   extends MReqWrap[A]
   with IItemAdReq[A]

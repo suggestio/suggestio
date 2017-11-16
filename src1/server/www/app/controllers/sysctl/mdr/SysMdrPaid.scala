@@ -27,15 +27,15 @@ import scala.concurrent.Future
 trait SysMdrPaid
   extends SysMdrBase
   with IIsSu
-  with IIsSuMad
   with IBill2UtilDi
   with IScUtil
+  with IIsSuNodeDi
 {
 
   override val bill2Util  : Bill2Util
   override val sysMdrUtil : SysMdrUtil
   val isSuItem: IsSuItem
-  val isSuItemAd: IsSuItemAd
+  val isSuItemNode: IsSuItemNode
 
 
   import mCommonDi._
@@ -74,7 +74,7 @@ trait SysMdrPaid
     * @return Страница
     */
   def forAd(nodeId: String) = csrf.AddToken {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       // Константа лимита отображаемых модератору mitems
       val ITEMS_LIMIT = 20
 
@@ -100,9 +100,9 @@ trait SysMdrPaid
       implicit val ctx = implicitly[Context]
 
       // Для рендера карточки необходим подготовить brArgs
-      val brArgsFut = scUtil.focusedBrArgsFor(request.mad)(ctx)
+      val brArgsFut = scUtil.focusedBrArgsFor(request.mnode)(ctx)
 
-      val edges = request.mad.edges
+      val edges = request.mnode.edges
 
       // Узнать, кто модерировал карточку ранее.
       val freeMdrs = {
@@ -119,7 +119,7 @@ trait SysMdrPaid
       }
 
       // Узнать id продьюсера текущей, чтобы шаблон мог им воспользоваться.
-      val producerIdOpt = n2NodesUtil.madProducerId( request.mad )
+      val producerIdOpt = n2NodesUtil.madProducerId( request.mnode )
 
       for {
       // Дождаться получения необходимых для модерации item'ов
@@ -180,7 +180,7 @@ trait SysMdrPaid
             .flatMap(mnodesMap.get)
             .getOrElse {
               LOGGER.warn(s"forAd($nodeId): Producer not found/not exists, using self as producer node.")
-              request.mad
+              request.mnode
             },
           tooManyItems  = tooManyItems,
           itemsCount    = itemsCount,
@@ -202,7 +202,7 @@ trait SysMdrPaid
     * @return Редирект на модерацию следующей карточки.
     */
   def approveAllItemsSubmit(nodeId: String) = csrf.Check {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       _processItemsForAd(
         nodeId  = nodeId,
         q       = sysMdrUtil.itemsQueryAwaiting(nodeId)
@@ -263,7 +263,7 @@ trait SysMdrPaid
 
   /** Запрос попапам с формой отказа в размещение item'а. */
   def refuseItemPopup(itemId: Gid_t) = csrf.AddToken {
-    isSuItemAd(itemId).async { implicit request =>
+    isSuItemNode(itemId).async { implicit request =>
       _refusePopup(routes.SysMdr.refuseItemSubmit(itemId))
     }
   }
@@ -286,7 +286,7 @@ trait SysMdrPaid
 
           // Когда всё будет выполнено, надо отредиректить юзера на карточку.
           for {
-            res <- sysMdrUtil._processOneItem(dbAction)
+            _ <- sysMdrUtil._processOneItem(dbAction)
           } yield {
             // Отредиректить клиента на модерацию карточки.
             Redirect( routes.SysMdr.forAd(request.mitem.nodeId) )
@@ -304,7 +304,7 @@ trait SysMdrPaid
     * @return HTML попапа с формой отказа в размещении.
     */
   def refuseAllItems(nodeId: String) = csrf.AddToken {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       _refusePopup( routes.SysMdr.refuseAllItemsSubmit(nodeId) )
     }
   }
@@ -317,7 +317,7 @@ trait SysMdrPaid
     * @return
     */
   def refuseAllItemsSubmit(nodeId: String) = csrf.Check {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       lazy val logPrefix = s"refuseAllItemsSubmit($nodeId):"
       sysMdrUtil.refuseFormM.bindFromRequest().fold(
         {formWithErrors =>
@@ -347,7 +347,7 @@ trait SysMdrPaid
     * @return Редирект на текущую карточку.
     */
   def approveAllItemsTypeSubmit(nodeId: String, itype: MItemType) = csrf.Check {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       _processItemsForAd(
         nodeId = nodeId,
         q = sysMdrUtil.onlyItype( sysMdrUtil.itemsQueryAwaiting(nodeId), itype )
@@ -357,14 +357,14 @@ trait SysMdrPaid
 
 
   def refuseAllItemsType(nodeId: String, itype: MItemType) = csrf.AddToken {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       _refusePopup( routes.SysMdr.refuseAllItemsTypeSubmit(nodeId, itype) )
     }
   }
 
 
   def refuseAllItemsTypeSubmit(nodeId: String, itype: MItemType) = csrf.Check {
-    isSuMad(nodeId).async { implicit request =>
+    isSuNode(nodeId).async { implicit request =>
       lazy val logPrefix = s"refuseAllItemsTypeSubmit($nodeId, $itype):"
       sysMdrUtil.refuseFormM.bindFromRequest().fold(
         {formWithErrors =>

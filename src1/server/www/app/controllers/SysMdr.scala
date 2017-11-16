@@ -1,12 +1,13 @@
 package controllers
 
 import javax.inject.{Inject, Singleton}
+
 import controllers.sysctl.mdr.{SysMdrFree, SysMdrPaid}
 import io.suggest.model.n2.node.MNodes
 import io.suggest.util.logs.MacroLogsImpl
 import models.mdr.MdrSearchArgs
 import models.mproj.ICommonDi
-import util.acl.{IsSuItem, IsSuItemAd, IsSuMad, IsSu}
+import util.acl._
 import util.billing.Bill2Util
 import util.lk.LkAdUtil
 import util.mdr.SysMdrUtil
@@ -23,17 +24,18 @@ import views.html.sys1.mdr._
  */
 @Singleton
 class SysMdr @Inject() (
-  override val lkAdUtil             : LkAdUtil,
-  override val mNodes               : MNodes,
-  override val scUtil               : ShowcaseUtil,
-  override val n2NodesUtil          : N2NodesUtil,
-  override val isSuItem             : IsSuItem,
-  override val isSuItemAd           : IsSuItemAd,
-  override val isSuMad              : IsSuMad,
-  override val isSu                 : IsSu,
-  override val bill2Util            : Bill2Util,
-  override val sysMdrUtil           : SysMdrUtil,
-  override val mCommonDi            : ICommonDi
+                         override val lkAdUtil             : LkAdUtil,
+                         override val mNodes               : MNodes,
+                         override val scUtil               : ShowcaseUtil,
+                         override val n2NodesUtil          : N2NodesUtil,
+                         override val isSuItem             : IsSuItem,
+                         override val isSuItemNode           : IsSuItemNode,
+                         override val isSuMad              : IsSuMad,
+                         override val isSuNode             : IsSuNode,
+                         override val isSu                 : IsSu,
+                         override val bill2Util            : Bill2Util,
+                         override val sysMdrUtil           : SysMdrUtil,
+                         override val mCommonDi            : ICommonDi
 )
   extends SioControllerImpl
   with MacroLogsImpl
