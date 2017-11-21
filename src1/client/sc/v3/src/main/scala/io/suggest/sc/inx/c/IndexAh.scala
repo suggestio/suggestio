@@ -79,7 +79,9 @@ class IndexAh[M](
       val v1 = v0.withResp( resp2 )
 
       // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
-      val gridInitFx = Effect.action( GridLoadAds(clean = true) )
+      val gridInitFx = Effect.action {
+        GridLoadAds(clean = true, ignorePending = true)
+      }
 
       // Инициализация приветствия. Подготовить состояние welcome.
       val mWcSFutOpt = for {

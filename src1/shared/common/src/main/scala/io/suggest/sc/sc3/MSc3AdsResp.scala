@@ -12,10 +12,10 @@ import play.api.libs.functional.syntax._
   * Created: 14.11.17 17:51
   * Description: Модель ответа сервера на запрос плитки из карточек.
   */
-object MSc3FindAdsResp {
+object MSc3AdsResp {
 
   /** Поддержка play-json. */
-  implicit def MSC3_ADS_TILE_RESP: OFormat[MSc3FindAdsResp] = (
+  implicit def MSC3_ADS_TILE_RESP: OFormat[MSc3AdsResp] = (
     (__ \ "a").formatNullable[Seq[MJdAdData]]
       .inmap[Seq[MJdAdData]](
         EmptyUtil.opt2ImplEmpty1F(Nil),
@@ -32,7 +32,7 @@ object MSc3FindAdsResp {
   * @param ads Данные для рендера плитки из jd-карточек.
   * @param szMult Мультипликатор размера, применённый ко всем карточкам.
   */
-case class MSc3FindAdsResp(
-                            ads     : Seq[MJdAdData],
-                            szMult  : MSzMult
-                          )
+case class MSc3AdsResp(
+                        ads     : Seq[MJdAdData],
+                        szMult  : MSzMult
+                      )

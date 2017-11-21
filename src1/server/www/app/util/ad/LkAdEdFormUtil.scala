@@ -8,6 +8,7 @@ import io.suggest.ad.form.AdFormConstants._
 import io.suggest.color.MColorData
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.geom.coord.MCoords2di
+import io.suggest.err.ErrorConstants
 import io.suggest.file.up.MFile4UpProps
 import io.suggest.font.{MFont, MFontSize, MFontSizes, MFonts}
 import io.suggest.i18n.MsgCodes
@@ -42,7 +43,7 @@ import util.TplDataFormatUtil
 import util.blocks.BlocksConf
 
 import scala.concurrent.Future
-import scalaz.{Tree, ValidationNel}
+import scalaz.{Tree, Validation, ValidationNel}
 
 /**
  * Suggest.io
@@ -423,7 +424,8 @@ class LkAdEdFormUtil
 
     val r = MJdAdData(
       template = tplTree,
-      edges    = edges
+      edges    = edges,
+      nodeId   = None
     )
 
     Future.successful(r)
@@ -452,6 +454,7 @@ class LkAdEdFormUtil
 
   import scalaz.std.iterable._
   import scalaz.std.list._
+  import scalaz.syntax.apply._
 
   /** Запуск ранней синхронной валидации эджей, из присланной юзером JSON-формы.
     * Происходит базовая проверка данных.
@@ -461,6 +464,8 @@ class LkAdEdFormUtil
     *         exception обозначает ошибку валидации.
     */
   def earlyValidateEdges(form: MJdAdData): StringValidationNel[List[MJdEdge]] = {
+    val nodeIdVld = Validation.liftNel(form.nodeId)(_.nonEmpty, "e.nodeid." + ErrorConstants.Words.UNEXPECTED)
+
     // Прочистить начальную карту эджей от возможного мусора (которого там быть и не должно, по идее).
     val edges1 = JdTag.purgeUnusedEdges( form.template, form.edgesMap )
 
@@ -478,7 +483,7 @@ class LkAdEdFormUtil
       LOGGER.warn(s"$logPrefix Failed to validate edges: $edgesVlds\n edges = $edges1")
     }
 
-    edgesVlds
+    nodeIdVld *> edgesVlds
   }
 
   /** Извлечь данные по картинкам из карты эджей. */

@@ -32,6 +32,7 @@ object MScAdData {
 
   /** Сборка инстанса [[MScAdData]] из инстанса MJdAdData. */
   def apply( jdAdData: MJdAdData ): MScAdData = apply(
+    nodeId    = jdAdData.nodeId,
     template  = jdAdData.template,
     edges     = jdAdData.edgesMap.mapValues(MEdgeDataJs(_))
   )
@@ -39,6 +40,7 @@ object MScAdData {
 }
 
 case class MScAdData(
+                      nodeId      : Option[String],
                       template    : Tree[JdTag],
                       edges       : Map[EdgeUid_t, MEdgeDataJs]
                     )

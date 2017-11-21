@@ -22,13 +22,15 @@ object MJdAdData {
   object Fields {
     val TEMPATE_FN = "t"
     val EDGES_FN   = "e"
+    val NODE_ID_FN = "i"
   }
 
   /** Поддержка play-json. */
   implicit def MAD_EDIT_FORM_FORMAT: OFormat[MJdAdData] = (
     (__ \ Fields.TEMPATE_FN).format[Tree[JdTag]] and
     // Массив эджей без Nullable, т.к. это очень маловероятная ситуация слишком пустой карточки.
-    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]]
+    (__ \ Fields.EDGES_FN).format[Iterable[MJdEdge]] and
+    (__ \ Fields.NODE_ID_FN).formatNullable[String]
   )(apply, unlift(unapply))
 
 
@@ -44,12 +46,14 @@ object MJdAdData {
 /** Класс контейнера данных формы редактирования карточки.
   * Именно этот класс является основным языком связи js-клиента и jvm-сервера.
   *
+  * @param nodeId id узла этой карточки. Может и отсутствовать.
   * @param template Шаблон документа.
   * @param edges Эджи с данными для рендера документа.
   */
 case class MJdAdData(
                       template    : Tree[JdTag],
-                      edges       : Iterable[MJdEdge]
+                      edges       : Iterable[MJdEdge],
+                      nodeId      : Option[String]
                     ) {
 
   /** Кэшируемая карта эджей. */

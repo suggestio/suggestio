@@ -67,7 +67,9 @@ case class MAeRoot(
             jde
           }
           .values
-      }
+      },
+      // id карточки здесь не имеет никакого значения, т.к. он передаётся в URL.
+      nodeId = None
     )
   }
 

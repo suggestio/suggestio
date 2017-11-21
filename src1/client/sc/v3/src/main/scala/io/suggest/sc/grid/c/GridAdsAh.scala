@@ -1,7 +1,8 @@
 package io.suggest.sc.grid.c
 
 import diode._
-import diode.data.PendingBase
+import diode.data.{PendingBase, Pot}
+import io.suggest.dev.MScreen
 import io.suggest.err.ErrorConstants
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -10,6 +11,7 @@ import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.resp.MScRespActionTypes
+import io.suggest.sc.tile.TileConstants
 import japgolly.univeq._
 
 import scala.util.Success
@@ -25,6 +27,7 @@ import scala.util.Success
 class GridAdsAh[M](
                     api             : IFindAdsApi,
                     searchArgsRO    : ModelRO[MFindAdsReq],
+                    screenRO        : ModelRO[MScreen],
                     modelRW         : ModelRW[M, MGridS]
                   )
   extends ActionHandler(modelRW)
@@ -32,6 +35,34 @@ class GridAdsAh[M](
 {
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Реакция на событие скроллинга плитки: разобраться, стоит ли подгружать ещё карточки с сервера.
+    case m: GridScroll =>
+      val v0 = value
+      if (
+        !v0.nextReq.isPending &&
+        v0.hasMoreAds &&
+        v0.gridSz.exists { gridSz =>
+          // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
+          val contentHeight = gridSz.height + TileConstants.CONTAINER_OFFSET_TOP
+          val screenHeight = screenRO.value.height
+          val scrollPxToGo = contentHeight - screenHeight - m.scrollTop
+          scrollPxToGo < TileConstants.LOAD_MORE_SCROLL_DELTA_PX
+        }
+      ) {
+        // В фоне надо будет запустить подгрузку новых карточек.
+        val fx = Effect.action {
+          GridLoadAds(clean = false, ignorePending = true)
+        }
+        // Выставить pending в состояние, чтобы повторные события скролла игнорились.
+        val v2 = v0.withNextReq( v0.nextReq.pending() )
+        updated(v2, fx)
+
+      } else {
+        // Больше нет карточек, или запрос карточек уже в процессе, или скроллинг не требует подгрузки карточек.
+        noChange
+      }
+
 
     // Команда к обновлению фактических данных по плитке.
     case m: HandleGridBuildRes =>
@@ -48,7 +79,7 @@ class GridAdsAh[M](
     // Сигнал к загрузке карточек с сервера согласно текущему состоянию выдачи.
     case m: GridLoadAds =>
       val v0 = value
-      if (v0.nextReq.isPending) {
+      if (v0.nextReq.isPending && !m.ignorePending) {
         LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.nextReq) )
         noChange
 
@@ -75,7 +106,7 @@ class GridAdsAh[M](
           // Завернуть ответ сервера в экшен:
           val startTime = nextReqPot2.asInstanceOf[PendingBase].startTime
           fut.transform { tryRes =>
-            Success( GridLoadAdsResp(m, startTime, tryRes) )
+            Success( GridLoadAdsResp(m, startTime, tryRes, limit) )
           }
         }
 
@@ -102,7 +133,7 @@ class GridAdsAh[M](
             ErrorConstants.assertArg( scAction.acType ==* MScRespActionTypes.AdsTile )
             val findAdsResp = scAction.ads.get
             val newScAds = findAdsResp.ads.map(MScAdData.apply)
-            if (m.evidence.clean) {
+            val v1 = if (m.evidence.clean) {
               v0
                 .withAds( newScAds )
                 .withSzMult( findAdsResp.szMult )
@@ -113,6 +144,11 @@ class GridAdsAh[M](
                 v0.ads ++ newScAds
               )
             }
+            v1
+              .withHasMoreAds(
+                findAdsResp.ads.size >= m.limit
+              )
+              .withNextReq( Pot.empty )
           }
         )
         updated(v2)
@@ -123,6 +159,14 @@ class GridAdsAh[M](
         noChange
       }
 
+
+    // Реакция на клик по карточке в плитке.
+    case m: GridBlockClick =>
+      // Нужно отправить запрос на сервер, чтобы понять, что делать дальше.
+      // Возможны разные варианты: фокусировка в карточку, переход в выдачу другого узла, и т.д. Всё это расскажет сервер.
+      // TODO stub.
+      println( "TODO block clicked: " + m.nodeId )
+      noChange
 
   }
 

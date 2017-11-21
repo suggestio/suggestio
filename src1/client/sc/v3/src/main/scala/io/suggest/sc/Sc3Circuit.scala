@@ -102,6 +102,8 @@ class Sc3Circuit(
     )
   }
 
+  private val screenRO = indexStateRW.zoom(_.screen)
+
 
   // Кэш action-handler'ов
 
@@ -126,6 +128,7 @@ class Sc3Circuit(
   private val gridAdsAh = new GridAdsAh(
     api           = api,
     searchArgsRO  = searchAdsArgsRO,
+    screenRO      = screenRO,
     modelRW       = gridRW
   )
 

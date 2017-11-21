@@ -9,7 +9,7 @@ import io.suggest.es.model.MEsUuId
 import io.suggest.model.n2.node.MNode
 import io.suggest.util.logs.IMacroLogs
 import models.blk
-import models.mlu.MLookupModes
+import io.suggest.sc.focus.MLookupModes
 import models.msc._
 import models.req.IReq
 import play.api.mvc.Result
@@ -32,7 +32,7 @@ trait ScSyncSite
   with ScSite
   with ScIndex
   with ScAdsTileBase
-  with ScFocusedAdsV2
+  with ScFocusedAdsBase
   with ScNodesListBase
   with IMaybeAuth
 {
@@ -148,7 +148,7 @@ trait ScSyncSite
     }
 
     /** Логика поддержки отображения focused ads, т.е. просматриваемой карточки. */
-    def focusedLogic = new FocusedLogicV2 {
+    def focusedLogic = new FocusedAdsLogic {
 
       override type OBT = Html
       override implicit val _request = syncLogic._request

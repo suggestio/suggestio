@@ -360,7 +360,8 @@ class LkAdEdit @Inject() (
                       ),
                       adData = MJdAdData(
                         template  = tpl2,
-                        edges     = edges2
+                        edges     = edges2,
+                        nodeId    = None
                       ),
                       blockPadding = prodBlockPadding(request.producer)
                     )

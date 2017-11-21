@@ -14,7 +14,7 @@ import scala.util.Failure
 import io.suggest.sc.ScConstants.Focused
 import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearchDflt, MScAdsFoc, MScRespAdsFoc}
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.model.mlu.MLookupModes
+import io.suggest.sc.focus.MLookupModes
 
 /**
   * Suggest.io

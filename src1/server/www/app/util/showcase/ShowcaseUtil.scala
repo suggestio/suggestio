@@ -13,7 +13,6 @@ import models.blk
 import models.blk._
 import models.im._
 import models.im.make.{MakeArgs, MakeResult, Makers}
-import models.mctx.Context
 import models.mproj.ICommonDi
 import models.msc.{IScSiteColors, ScSiteColors, TileArgs}
 import util.blocks.{BgImg, BlocksConf}
@@ -88,9 +87,6 @@ class ShowcaseUtil @Inject() (
    * @param mad Рекламная карточка.
    * @return Аргументы для рендера.
    */
-  def focusedBrArgsFor(mad: MNode)(implicit ctx: Context): Future[blk.RenderArgs] = {
-    focusedBrArgsFor(mad, ctx.deviceScreenOpt)
-  }
   def focusedBrArgsFor(mad: MNode, deviceScreenOpt: Option[DevScreen] = None): Future[blk.RenderArgs] = {
     val szMult: SzMult_t = {
       val dscrSz = for {

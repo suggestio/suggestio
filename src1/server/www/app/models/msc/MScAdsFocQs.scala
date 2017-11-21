@@ -3,8 +3,8 @@ package models.msc
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.sc.ScConstants.ReqArgs.VSN_FN
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import io.suggest.sc.focus.MLookupMode
 import models.im.DevScreen
-import models.mlu.MLookupMode
 import play.api.mvc.QueryStringBindable
 
 /**

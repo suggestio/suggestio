@@ -1,9 +1,11 @@
 package io.suggest.sc.sjs.vm.grid
 
+import io.suggest.common.event.DomEvents
 import io.suggest.sc.ScConstants.Grid
 import io.suggest.sc.sjs.c.scfsm.ScFsm
-import io.suggest.sc.sjs.m.mgrid.{GridScroll, MGridParams}
+import io.suggest.sc.sjs.m.mgrid.GridScroll
 import io.suggest.sc.sjs.m.msc.IScSd
+import io.suggest.sc.tile.TileConstants
 import io.suggest.sjs.common.vm.VmT
 import io.suggest.sjs.common.vm.child.{SubTagFind, WrapperChildContent}
 import io.suggest.sjs.common.vm.find.FindDiv
@@ -41,12 +43,12 @@ trait GWrapperT extends VmT with SubTagFind with WrapperChildContent {
       c <- content
     } {
       // Передаем найденные элементы внутрь функции, т.к. при пересоздании layout событие будет повешено повторно.
-      addEventListener("scroll") { (e: Event) =>
+      addEventListener( DomEvents.SCROLL ) { (e: Event) =>
         val wrappedScrollTop = _underlying.scrollTop
         val contentHeight    = c._underlying.offsetHeight
         // Пнуть контроллер, чтобы подгрузил ещё карточек, когда пора.
         val scrollPxToGo = contentHeight - sd0.common.screen.height - wrappedScrollTop
-        if (scrollPxToGo < MGridParams.LOAD_MORE_SCROLL_DELTA_PX) {
+        if (scrollPxToGo < TileConstants.LOAD_MORE_SCROLL_DELTA_PX) {
           ScFsm !! GridScroll(e)
         }
       }

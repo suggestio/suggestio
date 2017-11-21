@@ -2,6 +2,7 @@ package io.suggest.es.model
 
 import io.suggest.model.play.psb.PathBindableImpl
 import io.suggest.model.play.qsb.QueryStringBindableImpl
+import japgolly.univeq.UnivEq
 import play.api.mvc.{PathBindable, QueryStringBindable}
 
 /**
@@ -73,6 +74,8 @@ object MEsUuId {
   implicit def string2esId(id: String): MEsUuId   = MEsUuId(id)
 
   implicit def esIdOpt2strOpt(esIdOpt: Option[MEsUuId]): Option[String] = esIdOpt.map(esId2string)
+
+  implicit def univEq: UnivEq[MEsUuId] = UnivEq.derive
 
 }
 

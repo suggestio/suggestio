@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.m.msrv.foc
 
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.sc.sjs.m.msrv.tile.{MFindAdsReq, MFindAdsReqDflt}
-import io.suggest.sjs.common.model.mlu.MLookupMode
+import io.suggest.sc.focus._
 
 import scala.scalajs.js.{Any, Dictionary}
 
@@ -30,7 +30,7 @@ trait MFocAdSearch extends MFindAdsReq {
     val acc = super.toJson
 
     acc(FOC_JUMP_ALLOWED_FN)  = allowReturnJump
-    acc(AD_LOOKUP_MODE_FN)    = adsLookupMode.strId
+    acc(AD_LOOKUP_MODE_FN)    = adsLookupMode.value
     acc(AD_ID_LOOKUP_FN)      = adIdLookup
 
     acc

@@ -14,14 +14,6 @@ import scala.scalajs.js
  * Description: Модель настроек построения сетки. Здесь константы, которые должны выставлятьяс все одновременно.
  */
 
-object MGridParams {
-
-  // Этот параметр используется при инициализации при вешаньи события, поэтому он неизменяемый.
-  def LOAD_MORE_SCROLL_DELTA_PX = 100
-
-}
-
-
 case class MGridParams(
   cellSize      : Int = BlockWidths.NARROW.value,
   cellPadding   : Int = PADDING_CSSPX,

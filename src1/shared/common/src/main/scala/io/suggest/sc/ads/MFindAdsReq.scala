@@ -6,6 +6,7 @@ import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import io.suggest.ad.search.AdSearchConstants._
 import io.suggest.common.empty.EmptyUtil
+import io.suggest.sc.focus.MLookupMode
 
 /**
   * Suggest.io
@@ -27,13 +28,20 @@ object MFindAdsReq {
     (__ \ LOC_ENV_FN).writeNullable[MLocEnv]
       .contramap[MLocEnv]( EmptyUtil.implEmpty2OptF ) and
     (__ \ SCREEN_INFO_FN).writeNullable[MScreen] and
-    (__ \ TAG_NODE_ID_FN).writeNullable[String]
+    (__ \ TAG_NODE_ID_FN).writeNullable[String] and
+    (__ \ FOC_JUMP_ALLOWED_FN).writeNullable[Boolean] and
+    (__ \ AD_LOOKUP_MODE_FN).writeNullable[MLookupMode] and
+    (__ \ AD_ID_LOOKUP_FN).writeNullable[String]
   )( unlift(unapply) )
 
 }
 
 
+// TODO После выпиливания старых выдачи, надо отрефакторить модель, распихав поля по под-моделями
+
+
 case class MFindAdsReq(
+                        // search API
                         producerId  : Option[String]    = None,
                         limit       : Option[Int]       = None,
                         offset      : Option[Int]       = None,
@@ -41,7 +49,17 @@ case class MFindAdsReq(
                         generation  : Option[Long]      = None,
                         locEnv      : MLocEnv           = MLocEnv.empty,
                         screenInfo  : Option[MScreen]   = None,
-                        tagNodeId   : Option[String]    = None
+                        tagNodeId   : Option[String]    = None,
+                        // focused API
+                        /**
+                          * Флаг, сообщающий серверу о допустимости возврата index-ответа или
+                          * иного переходного ответа вместо focused json.
+                          */
+                        allowReturnJump   : Option[Boolean]       = None,
+                        /** Задание режима lookup'а карточек. */
+                        adsLookupMode     : Option[MLookupMode]   = None,
+                        /** id базовой рекламной карточки, относительно которой необходимо искать сегмент. */
+                        adIdLookup        : Option[String]        = None,
                       ) {
 
   def withOffset(offset: Option[Int] = None) = copy(offset = offset)

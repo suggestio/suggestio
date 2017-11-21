@@ -69,7 +69,7 @@ class Sc @Inject() (
   with ScIndex
   with ScSyncSite
   with ScAdsTile
-  with ScFocusedAdsV2
+  with ScFocusedAds
   with ScNodesList
   with ScBlockCss
   with ScOnlyOneAd

@@ -10,7 +10,7 @@ import io.suggest.jd.MJdAdData
 import io.suggest.model.n2.node.{IMNodes, MNode}
 import io.suggest.primo.TypeT
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.sc3.{MSc3FindAdsResp, MSc3Resp, MSc3RespAction}
+import io.suggest.sc.sc3.{MSc3AdsResp, MSc3Resp, MSc3RespAction}
 import io.suggest.stat.m.{MAction, MActionTypes, MComponents}
 import io.suggest.util.logs.IMacroLogs
 import models.im.make.MakeResult
@@ -369,7 +369,7 @@ trait ScAdsTile
         val mainBlkTpl = jdAdUtil.getMainBlockTpl( brArgs.mad )
         val edges2 = jdAdUtil.filterEdgesForTpl(mainBlkTpl, brArgs.mad.edges)
         jdAdUtil.mkJdAdDataFor
-          .show(edges2, mainBlkTpl, tileArgs.szMult)(ctx)
+          .show(brArgs.mad.id, edges2, mainBlkTpl, tileArgs.szMult)(ctx)
           .execute()
       }
         .flatten
@@ -387,7 +387,7 @@ trait ScAdsTile
         val scResp = MSc3Resp(
           respActions = MSc3RespAction(
             acType = MScRespActionTypes.AdsTile,
-            ads = Some(MSc3FindAdsResp(
+            ads = Some(MSc3AdsResp(
               ads     = madsRendered,
               szMult  = szMult
             ))

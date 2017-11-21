@@ -301,6 +301,8 @@ class JdAdUtil @Inject()(
 
     lazy val logPrefix = s"${getClass.getSimpleName}[${System.currentTimeMillis}]:"
 
+    def nodeId: Option[String]
+
     // Сразу получаем шаблон, чтобы при вызове поверх левых узлов сразу была ошибка.
     def tpl: Tree[JdTag]
 
@@ -371,7 +373,8 @@ class JdAdUtil @Inject()(
       } yield {
         MJdAdData(
           template  = _finalTpl,
-          edges     = edEdges
+          edges     = edEdges,
+          nodeId    = nodeId
         )
       }
     }
@@ -393,6 +396,8 @@ class JdAdUtil @Inject()(
       override val tpl = getNodeTpl(mad)
 
       override val nodeEdges = mad.edges
+
+      override def nodeId = None
 
       override def imgEdgesNeedNodes = imgsEdges
 
@@ -423,8 +428,11 @@ class JdAdUtil @Inject()(
       *                  Обычно тут отфильтрованные по переданному шаблону эджи.
       * @param ctx Контекст рендера.
       */
-    case class show(override val nodeEdges: MNodeEdges, override val tpl: Tree[JdTag], szMult: SzMult_t)
-                   (implicit ctx: Context) extends JdAdDataMakerBase {
+    case class show(override val nodeId     : Option[String],
+                    override val nodeEdges  : MNodeEdges,
+                    override val tpl        : Tree[JdTag],
+                    szMult                  : SzMult_t
+                   )(implicit ctx: Context) extends JdAdDataMakerBase {
       import ctx.request
 
       /** Для выдачи не требуется  */

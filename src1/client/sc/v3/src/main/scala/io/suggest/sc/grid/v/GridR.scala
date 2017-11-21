@@ -8,12 +8,13 @@ import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdGridUtil, JdR}
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.grid.m.{HandleGridBuildRes, MGridS}
+import io.suggest.sc.grid.m.{GridBlockClick, GridScroll, HandleGridBuildRes, MGridS}
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
 import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
+import io.suggest.sc.tile.TileConstants
 import io.suggest.spa.OptFastEq
 
 import scalacss.ScalaCssReact._
@@ -63,11 +64,24 @@ class GridR(
 
   class Backend($: BackendScope[Props, State]) {
 
-    //ReactCommonUtil.cbFun1ToF
+    /** Завершение обсчёта плитки. */
     private def onGridLayout(layoutRes: GridBuildRes_t): Callback = {
       ReactDiodeUtil.dispatchOnProxyScopeCB($, HandleGridBuildRes(layoutRes))
     }
     private val _onGridLayoutF = ReactCommonUtil.cbFun1ToF( onGridLayout )
+
+
+    /** Клик по карточке в плитке. */
+    private def onBlockClick(nodeId: String): Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, GridBlockClick(nodeId))
+    }
+
+
+    /** Скроллинг плитки. */
+    private def onGridScroll(e: ReactEventFromHtml): Callback = {
+      val scrollTop = e.target.scrollTop
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, GridScroll(scrollTop))
+    }
 
 
     def render(gridStateOptProxy: Props, s: State): VdomElement = {
@@ -80,6 +94,7 @@ class GridR(
 
           <.div(
             ScCss.smFlex, GridCss.wrapper,
+            ^.onScroll ==> onGridScroll,
 
             <.div(
               GridCss.content,
@@ -105,7 +120,7 @@ class GridR(
                     gridState.gridSz.whenDefined { gridSz =>
                       TagMod(
                         ^.width  := gridSz.width.px,
-                        ^.height := (gridSz.height + GridCss.CONTAINER_OFFSET_BOTTOM).px
+                        ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM).px
                       )
                     },
 
@@ -119,7 +134,7 @@ class GridR(
                             itemsExtDatas   = items,
                             jdConf          = jdConf,
                             onLayout        = Some(_onGridLayoutF),
-                            offY            = GridCss.CONTAINER_OFFSET_TOP
+                            offY            = TileConstants.CONTAINER_OFFSET_TOP
                           )
                         }
                       )
@@ -138,10 +153,16 @@ class GridR(
                               conf        = jdConf
                             )
                           } { jdArgsProxy =>
-                            <.div(
-                              ^.key := i.toString,
-                              jdR( jdArgsProxy)
-                            )
+                            scAdData.nodeId.fold[VdomElement] {
+                              jdR.component
+                                .withKey(i.toString)( jdArgsProxy )
+                            } { nodeId =>
+                              <.a(
+                                ^.key := i.toString,
+                                ^.onClick --> onBlockClick(nodeId),
+                                jdR( jdArgsProxy )
+                              )
+                            }
                           }
                         }
                         .toVdomArray

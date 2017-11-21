@@ -1,5 +1,6 @@
 package io.suggest.sc.sjs.c.scfsm.foc
 
+import io.suggest.common.html.HtmlConstants
 import io.suggest.common.{MHand, MHands}
 import io.suggest.common.m.mad.IMadId
 import io.suggest.sc.ScConstants
@@ -13,7 +14,7 @@ import io.suggest.sc.sjs.c.scfsm.ust.State2UrlT
 import io.suggest.sc.sjs.c.scfsm.{ResizeDelayed, ScFsmStub}
 import io.suggest.sc.sjs.m.msrv.foc.{MFocAdSearchDflt, MFocAdSearchNoOpenIndex, MScAdsFoc}
 import io.suggest.sjs.common.controller.DomQuick
-import io.suggest.sjs.common.model.mlu.{MLookupMode, MLookupModes}
+import io.suggest.sc.focus._
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sjs.common.util.TouchUtil
@@ -280,9 +281,9 @@ trait OnFocusBase
           case MLookupModes.Before =>
             BeforeFocUpdater
           // Других направлений запроса карточек быть не может, выдаём ошибку.
-          case otherMlm =>
+          case other =>
             // Тут было более подробное сообщение об ошибке, но т.к. вызов этого кода в реальности невероятен, всё очень упрощено:
-            throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID )
+            throw new IllegalArgumentException( ErrorMsgs.FOC_ANSWER_ACTION_INVALID + HtmlConstants.SPACE + other )
         }
 
         // Залить новые стили в DOM.

@@ -18,7 +18,7 @@ object MSc3RespAction {
   implicit def MSC3_RESP_ACTION_FORMAT: OFormat[MSc3RespAction] = (
     (__ \ ACTION_FN).format[MScRespActionType] and
     (__ \ INDEX_RESP_ACTION).formatNullable[MSc3IndexResp] and
-    (__ \ ADS_TILE_RESP_ACTION).formatNullable[MSc3FindAdsResp]
+    (__ \ ADS_TILE_RESP_ACTION).formatNullable[MSc3AdsResp]
   )(apply, unlift(unapply))
 
 }
@@ -35,5 +35,5 @@ object MSc3RespAction {
 case class MSc3RespAction(
                            acType    : MScRespActionType,
                            index     : Option[MSc3IndexResp]      = None,
-                           ads       : Option[MSc3FindAdsResp]    = None
+                           ads       : Option[MSc3AdsResp]    = None
                          )

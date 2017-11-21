@@ -100,7 +100,7 @@ trait SysMdrPaid
       implicit val ctx = implicitly[Context]
 
       // Для рендера карточки необходим подготовить brArgs
-      val brArgsFut = scUtil.focusedBrArgsFor(request.mnode)(ctx)
+      val brArgsFut = scUtil.focusedBrArgsFor(request.mnode, ctx.deviceScreenOpt)
 
       val edges = request.mnode.edges
 

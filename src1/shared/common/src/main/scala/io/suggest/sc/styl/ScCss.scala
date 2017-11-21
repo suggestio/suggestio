@@ -480,13 +480,6 @@ case class ScCss( args: IScCssArgs )
       opacity(1)
     )
 
-    /** Сдвиг контейнера плитки по вертикали.
-      * Состоит из высоты заголовка + 20 px. szMult не влияет. */
-    def CONTAINER_OFFSET_TOP = 70
-
-    /** Сколько места запасти под карточками. */
-    def CONTAINER_OFFSET_BOTTOM = 20
-
   }
 
 

@@ -20,10 +20,13 @@ object AdSearchConstants {
   /** Модель данных физического окружения клиентского устройства. */
   def LOC_ENV_FN          = ScConstants.ReqArgs.LOC_ENV_FN
 
+  /** id узла тега. */
+  def TAG_NODE_ID_FN       = "t"
+
+
   /** 2015.aug.26: Название опционального поля с флагом того, разрешено ли серверу возвращать
     * index answer вместо focused ads. */
   def FOC_JUMP_ALLOWED_FN   = "n"
-
 
   /** @return Имя поля с кодом используемого режима lookup'а карточки. */
   def AD_LOOKUP_MODE_FN    = "k"
@@ -34,8 +37,5 @@ object AdSearchConstants {
     * Выставляется при переходе на карточку по id карточки, например при десериализации js-состояния из URL.
     */
   def AD_ID_LOOKUP_FN      = "j"
-
-  /** id узла тега. */
-  def TAG_NODE_ID_FN       = "t"
 
 }

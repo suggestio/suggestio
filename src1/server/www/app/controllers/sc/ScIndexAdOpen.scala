@@ -9,6 +9,7 @@ import models.im.DevScreen
 import models.msc._
 import play.api.mvc.Result
 import util.n2u.IN2NodesUtilDi
+import japgolly.univeq._
 
 import scala.concurrent.Future
 
@@ -116,30 +117,65 @@ trait ScIndexAdOpen
   private def _goToProducerIndex(producer: MNode, focLogic: FocusedAdsLogicHttp)
                                 (implicit request: IReq[_]): Future[Result] = {
     // Извлекаем MAdnNode втупую. exception будет перехвачен в recoverWith.
-    val idxLogic = new ScIndexLogicV2 {
-      override def _syncArgs          = MScIndexSyncArgs.empty
-      override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
-        Future.successful(
-          MIndexNodeInfo(
-            mnode   = producer,
-            isRcvr  = true
+    val majorApiVsn = focLogic._qs.apiVsn.majorVsn
+
+    // TODO Надо дедублицировать тут код как-то... Нужно изобретать wrapper-trait?
+    val idxLogic: ScIndexLogic = if (majorApiVsn ==* MScApiVsns.ReactSjs3.majorVsn) {
+      new ScIndexLogicV3 {
+        override def _syncArgs          = MScIndexSyncArgs.empty
+        override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
+          Future.successful(
+            MIndexNodeInfo(
+              mnode   = producer,
+              isRcvr  = true
+            )
           )
-        )
-      }
-      override def _request  = request
-      override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
-        private val s = focLogic._qs
-        override def prevAdnId: Option[String]  = {
-          s.search
-            .rcvrIdOpt
-            .map(_.id)
         }
-        override def screen: Option[DevScreen]  = s.screen
-        override def apiVsn: MScApiVsn          = s.apiVsn
-        override def withWelcome                = true
-        override def locEnv                     = s.search.locEnv
+        override def _request  = request
+        override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
+          private val s = focLogic._qs
+          override def prevAdnId: Option[String]  = {
+            s.search
+              .rcvrIdOpt
+              .map(_.id)
+          }
+          override def screen: Option[DevScreen]  = s.screen
+          override def apiVsn: MScApiVsn          = s.apiVsn
+          override def withWelcome                = true
+          override def locEnv                     = s.search.locEnv
+        }
       }
+
+    } else if (majorApiVsn ==* MScApiVsns.Sjs1.majorVsn) {
+      new ScIndexLogicV2 {
+        override def _syncArgs          = MScIndexSyncArgs.empty
+        override lazy val indexNodeFut: Future[MIndexNodeInfo] = {
+          Future.successful(
+            MIndexNodeInfo(
+              mnode   = producer,
+              isRcvr  = true
+            )
+          )
+        }
+        override def _request  = request
+        override def _reqArgs: MScIndexArgs = new MScIndexArgsDfltImpl {
+          private val s = focLogic._qs
+          override def prevAdnId: Option[String]  = {
+            s.search
+              .rcvrIdOpt
+              .map(_.id)
+          }
+          override def screen: Option[DevScreen]  = s.screen
+          override def apiVsn: MScApiVsn          = s.apiVsn
+          override def withWelcome                = true
+          override def locEnv                     = s.search.locEnv
+        }
+      }
+
+    } else {
+      throw new IllegalArgumentException("Unknown API: " + majorApiVsn)
     }
+
     // Логика обработки запроса собрана, запустить исполнение запроса.
     idxLogic.result
   }

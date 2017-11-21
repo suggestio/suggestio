@@ -20,7 +20,7 @@ sealed trait IGridAction extends ISc3Action
   * @param clean true - Очистить плитку перед добавлением полученных карточек.
   *              false - Дописать полученные карточки в конец текущей плитки.
   */
-case class GridLoadAds(clean: Boolean) extends IGridAction
+case class GridLoadAds(clean: Boolean, ignorePending: Boolean) extends IGridAction
 
 
 /** Ответ сервера по поводу запрошенных ранее карточек.
@@ -28,11 +28,13 @@ case class GridLoadAds(clean: Boolean) extends IGridAction
   * @param evidence Исходный экшен [[GridLoadAds]].
   * @param startTime Значение Pot Pending.startTime
   * @param resp Результат исполнения запроса.
+  * @param limit Значение limit в исходном реквесте.
   */
 case class GridLoadAdsResp(
                             evidence  : GridLoadAds,
                             startTime : Long,
-                            resp      : Try[MSc3Resp]
+                            resp      : Try[MSc3Resp],
+                            limit     : Int
                           )
   extends IGridAction
 
@@ -42,3 +44,10 @@ case class GridLoadAdsResp(
   * @param res Результат работы GridBuilder'а.
   */
 case class HandleGridBuildRes(res: GridBuildRes_t) extends IGridAction
+
+/** Клик по карточке в плитке. */
+case class GridBlockClick(nodeId: String) extends IGridAction
+
+
+/** Экшен скроллинга плитки. */
+case class GridScroll(scrollTop: Double) extends IGridAction
