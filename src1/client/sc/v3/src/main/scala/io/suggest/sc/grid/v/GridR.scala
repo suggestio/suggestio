@@ -3,10 +3,12 @@ package io.suggest.sc.grid.v
 import com.github.dantrain.react.stonecutter.CSSGrid
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.BlockPaddings
+import io.suggest.grid.build.{GridBuildArgs, GridBuildRes_t}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdGridUtil, JdR}
-import io.suggest.sc.grid.m.MGridS
+import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
+import io.suggest.sc.grid.m.{HandleGridBuildRes, MGridS}
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -61,6 +63,13 @@ class GridR(
 
   class Backend($: BackendScope[Props, State]) {
 
+    //ReactCommonUtil.cbFun1ToF
+    private def onGridLayout(layoutRes: GridBuildRes_t): Callback = {
+      ReactDiodeUtil.dispatchOnProxyScopeCB($, HandleGridBuildRes(layoutRes))
+    }
+    private val _onGridLayoutF = ReactCommonUtil.cbFun1ToF( onGridLayout )
+
+
     def render(gridStateOptProxy: Props, s: State): VdomElement = {
       val ScCss = getScCssF()
       val GridCss = ScCss.Grid
@@ -82,7 +91,7 @@ class GridR(
                   val jdCss = JdCss(
                     MJdCssArgs(
                       templates = templates,
-                      conf = jdConf
+                      conf      = jdConf
                     )
                   )
 
@@ -93,11 +102,26 @@ class GridR(
                     // Рендер style-тега.
                     jdConfOptProxy.wrap(_ => jdCss)(jdCssR.apply),
 
+                    gridState.gridSz.whenDefined { gridSz =>
+                      TagMod(
+                        ^.width  := gridSz.width.px,
+                        ^.height := (gridSz.height + GridCss.CONTAINER_OFFSET_BOTTOM).px
+                      )
+                    },
+
                     // Наконец сама плитка карточек:
                     CSSGrid {
                       jdGridUtil.mkCssGridArgs(
-                        jds  = templates,
-                        conf = jdConf
+                        jds       = templates,
+                        conf      = jdConf,
+                        gridBuildArgsF = { items =>
+                          GridBuildArgs(
+                            itemsExtDatas   = items,
+                            jdConf          = jdConf,
+                            onLayout        = Some(_onGridLayoutF),
+                            offY            = GridCss.CONTAINER_OFFSET_TOP
+                          )
+                        }
                       )
                     } (
                       gridState.ads
@@ -105,7 +129,6 @@ class GridR(
                         .zipWithIndex
                         .map { case (scAdData, i) =>
                           jdConfOptProxy.wrap { _ =>
-
                             MJdArgs(
                               template    = scAdData.template,
                               renderArgs  = MJdRenderArgs(
@@ -144,7 +167,7 @@ class GridR(
               isEdit            = false,
               szMult            = gridState.szMult,
               blockPadding      = BlockPaddings.default,
-              gridColumnsCount  = gridState.columnCount
+              gridColumnsCount  = gridState.columnsCount
             )
           }
         }( OptFastEq.Wrapped )

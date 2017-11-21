@@ -3,10 +3,12 @@ package util.showcase
 import javax.inject.{Inject, Singleton}
 
 import io.suggest.ad.blk.{BlockHeights, BlockMeta, BlockWidth, BlockWidths}
+import io.suggest.common.empty.EmptyUtil
 import io.suggest.common.fut.FutureUtil
+import io.suggest.dev.MSzMults
 import io.suggest.model.n2.node.MNode
 import io.suggest.sc.ScConstants
-import io.suggest.sc.tile.ColumnsCountT
+import io.suggest.sc.tile.{GridColumnCalc, MGridColumnsCalcConf}
 import models.blk
 import models.blk._
 import models.im._
@@ -28,9 +30,7 @@ import scala.concurrent.Future
 @Singleton
 class ShowcaseUtil @Inject() (
   mCommonDi : ICommonDi
-)
-  extends ColumnsCountT
-{
+) {
 
   import mCommonDi._
 
@@ -142,53 +142,46 @@ class ShowcaseUtil @Inject() (
       current.injector
         .instanceOf( maker.makerClass )
         .icompile(wArgs)
-        .map(Some.apply)
+        .map( EmptyUtil.someF )
     }
     FutureUtil.optFut2futOpt(optFut)(identity)
   }
 
-  override val MIN_SZ_MULT = super.MIN_SZ_MULT
 
   /** Размеры для расширения плиток выдачи. Используются для подавления пустот по бокам экрана. */
-  private val TILES_SZ_MULTS: List[SzMult_t] = configuration.getOptional[Seq[Double]]("sc.tiles.szmults")
-    .map { _.map(_.toFloat).toList }
-    .getOrElse {
-      List(
-        1.4F, 1.3F, 1.2F, 1.1F, 1.06F, 1.0F,
-        MIN_SZ_MULT   // Экраны с шириной 640csspx требуют немного уменьшить карточку.
-      )
-    }
-
-
-  /** Расстояние между блоками и до краёв экрана.
-    * Размер этот должен быть жестко связан с остальными размерами карточек, поэтому не настраивается. */
-  override def TILE_PADDING_CSSPX = super.TILE_PADDING_CSSPX
+  private val TILES_SZ_MULTS: List[SzMult_t] = {
+    List(
+      1.4F, 1.3F, 1.2F, 1.1F, 1.06F, 1.0F,
+      MIN_SZ_MULT   // Экраны с шириной 640csspx требуют немного уменьшить карточку.
+    )
+  }
 
   /** Сколько пикселей минимум оставлять по краям раскрытых карточек. */
-  private val FOCUSED_PADDING_CSSPX = configuration.getOptional[Int]("sc.focused.padding.hsides.csspx").getOrElse(10)
-
-  /** Макс. кол-во вертикальных колонок. */
-  override val TILE_MAX_COLUMNS = configuration.getOptional[Int]("sc.tiles.columns.max").getOrElse(4)
-  override val TILE_MIN_COLUMNS = configuration.getOptional[Int]("sc.tiles.columns.min").getOrElse( super.TILE_MIN_COLUMNS )
+  private def FOCUSED_PADDING_CSSPX = 10
 
   def MIN_W1 = -1F
 
+  /** float mult, аналогичный исходному. */
+  private def MIN_SZ_MULT = MSzMults.GRID_MIN_SZMULT_D.toFloat
 
-  /** Размер одной ячейки в плитке. */
-  override protected def CELL_WIDTH_CSSPX = getBlockWidthPx
-  private def getBlockWidthPx = BlockWidths.NORMAL.value
+
+  /** Конфиг для рассчёта кол-ва колонок плитки. */
+  val GRID_COLS_CONF = MGridColumnsCalcConf(
+    cellWidth  = BlockWidths.NORMAL.value,
+    maxColumns = 4
+  )
 
 
   def getTileArgs(dscrOpt: Option[DevScreen]): TileArgs = {
     dscrOpt.fold {
       TileArgs(
-        szMult = MIN_SZ_MULT,
-        colsCount = TILE_MAX_COLUMNS
+        szMult    = MIN_SZ_MULT,
+        colsCount = GRID_COLS_CONF.maxColumns
       )
     } { getTileArgs }
   }
   def getTileArgs(dscr: DevScreen): TileArgs = {
-    val colsCount = getTileColsCountScr(dscr)
+    val colsCount = GridColumnCalc.getColumnsCount(dscr, GRID_COLS_CONF)
     TileArgs(
       szMult      = getSzMult4tilesScr(colsCount, dscr),
       colsCount   = colsCount
@@ -202,7 +195,7 @@ class ShowcaseUtil @Inject() (
    * @return Оптимальное значение SzMult_t выбранный для рендера.
    */
   def getSzMult4tilesScr(colsCount: Int, dscr: DevScreen): SzMult_t = {
-    val blockWidthPx = getBlockWidthPx
+    val blockWidthPx = GRID_COLS_CONF.cellWidth
     // Считаем целевое кол-во колонок на экране.
     @tailrec def detectSzMult(restSzMults: List[SzMult_t]): SzMult_t = {
       val nextSzMult = restSzMults.head
@@ -210,7 +203,7 @@ class ShowcaseUtil @Inject() (
         nextSzMult
       } else {
         // Вычислить остаток ширины за вычетом всех отмасштабированных блоков, с запасом на боковые поля.
-        val w1 = getW1(nextSzMult, colsCount, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = TILE_PADDING_CSSPX)
+        val w1 = getW1(nextSzMult, colsCount, blockWidth = blockWidthPx, scrWidth = dscr.width, paddingPx = GRID_COLS_CONF.cellPadding)
         if (w1 >= MIN_W1)
           nextSzMult
         else
@@ -230,7 +223,7 @@ class ShowcaseUtil @Inject() (
    * @return Остаток ширины.
    */
   private def getW1(szMult: SzMult_t, colCnt: Int, blockWidth: Int, scrWidth: Int, paddingPx: Int): Float = {
-    scrWidth - (colCnt * blockWidth + TILE_PADDING_CSSPX * (colCnt + 1)) * szMult
+    scrWidth - (colCnt * blockWidth + GRID_COLS_CONF.cellPadding * (colCnt + 1)) * szMult
   }
 
   /**

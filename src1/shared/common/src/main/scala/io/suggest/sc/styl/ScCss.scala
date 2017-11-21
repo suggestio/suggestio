@@ -1,15 +1,13 @@
 package io.suggest.sc.styl
 
-import io.suggest.ad.blk.BlockWidths
 import io.suggest.color.MColorData
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
-import io.suggest.dev.{MScreen, MSzMult}
+import io.suggest.dev.MScreen
 import io.suggest.i18n.MsgCodes
 import io.suggest.model.n2.node.meta.colors.MColors
 import io.suggest.sc.ScConstants
-import io.suggest.sc.tile.{ColumnsCountT, TileConstants}
 
 /**
   * Suggest.io
@@ -462,7 +460,8 @@ case class ScCss( args: IScCssArgs )
 
     val outer = style(
       addClassName( _SM_GRID_ADS ),
-      _screenHeight
+      _screenHeight,
+      backgroundColor( _bgColorCss )
     )
 
     val wrapper = style(
@@ -478,8 +477,15 @@ case class ScCss( args: IScCssArgs )
       addClassName( _SM_GRID_ADS + "_container" ),
       minHeight( _screenHeightPx ),
       left(0.px),
-      opacity(1),
+      opacity(1)
     )
+
+    /** Сдвиг контейнера плитки по вертикали.
+      * Состоит из высоты заголовка + 20 px. szMult не влияет. */
+    def CONTAINER_OFFSET_TOP = 70
+
+    /** Сколько места запасти под карточками. */
+    def CONTAINER_OFFSET_BOTTOM = 20
 
   }
 
@@ -501,7 +507,9 @@ case class ScCss( args: IScCssArgs )
 
     Search.SearchBar.Field.active,
     Search.Tabs.Single.Rounded.right,
-    Search.Tabs.MapTab.inner
+    Search.Tabs.MapTab.inner,
+
+    Grid.container
   )
 
 }

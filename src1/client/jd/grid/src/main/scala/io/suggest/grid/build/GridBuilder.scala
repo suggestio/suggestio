@@ -138,7 +138,7 @@ class GridBuilder {
               // Сообрать новые координаты для блока:
               val xy = js.Array(
                 leftPtrPx,
-                Math.round(currLine * paddedCellHeightPx).toInt
+                Math.round(currLine * paddedCellHeightPx).toInt + args.offY
               )
 
               // Сдвинуть текущий left на ширину блока и padding
@@ -207,10 +207,13 @@ class GridBuilder {
   * со стороны react, и добавляло неопределённости относительно надёжности и долговечности такого решения.
   *
   * @param itemsExtDatas Итератор или коллекция доп.данных для исходного массива ItemProps, длина должна совпадать.
+  * @param onLayout Callback для сайд-эффектов по итогам рассчёта плитки.
+  * @param offY Сдвиг сетки по вертикали, если требуется.
   */
 case class GridBuildArgs(
                           itemsExtDatas : TraversableOnce[ItemPropsExt],
                           jdConf        : MJdConf,
-                          onLayout      : Option[MSize2di => _] = None
+                          onLayout      : Option[MSize2di => _] = None,
+                          offY          : Int = 0
                         )
 

@@ -5,7 +5,7 @@ import diode.data.PendingBase
 import io.suggest.err.ErrorConstants
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
-import io.suggest.sc.grid.m.{GridLoadAds, GridLoadAdsResp, MGridS, MScAdData}
+import io.suggest.sc.grid.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.WarnMsgs
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
@@ -32,6 +32,18 @@ class GridAdsAh[M](
 {
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
+
+    // Команда к обновлению фактических данных по плитке.
+    case m: HandleGridBuildRes =>
+      val v0 = value
+      if (m.res.width <= 0 || m.res.height <= 0 || v0.gridSz.contains(m.res)) {
+        // Размер плитки не изменился или невалиден. Такое надо игнорить.
+        noChange
+      } else {
+        val v2 = v0.withGridSz( Some(m.res) )
+        updated(v2)
+      }
+
 
     // Сигнал к загрузке карточек с сервера согласно текущему состоянию выдачи.
     case m: GridLoadAds =>

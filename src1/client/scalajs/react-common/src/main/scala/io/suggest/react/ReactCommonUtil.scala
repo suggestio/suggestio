@@ -20,6 +20,11 @@ object ReactCommonUtil {
     e.stopPropagationCB
   }
 
+  def cbFun1ToF[Arg, Res](fun: Arg => CallbackTo[Res]): (Arg) => Res = {
+    fun
+      .andThen( _.runNow() )
+  }
+
   /**
     * Приведение функции, возвращающей js Callback к js-функции-листенеру.
     * Это некая замена "==>" для pure-js-компонентов.
@@ -33,8 +38,7 @@ object ReactCommonUtil {
     * @see [[https://github.com/japgolly/scalajs-react/issues/210#issuecomment-149991727]]
     */
   def cbFun1ToJsCb[Arg, Res](fun: Arg => CallbackTo[Res]): js.Function1[Arg, Res] = {
-    fun
-      .andThen( _.runNow() )
+    cbFun1ToF(fun)
   }
 
   def cbFun2ToJsCb[Arg1, Arg2, Res](fun: (Arg1, Arg2) => CallbackTo[Res]): js.Function2[Arg1, Arg2, Res] = {

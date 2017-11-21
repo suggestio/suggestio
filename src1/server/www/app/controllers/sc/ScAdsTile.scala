@@ -304,7 +304,7 @@ trait ScAdsTile
     def resultFut: Future[Result]
 
     def cellSizeCssPx: Int    = szMulted(BlockWidths.NARROW.value, tileArgs.szMult)
-    def cellPaddingCssPx: Int = szMulted(scUtil.TILE_PADDING_CSSPX, tileArgs.szMult)
+    def cellPaddingCssPx: Int = szMulted(scUtil.GRID_COLS_CONF.cellPadding, tileArgs.szMult)
   }
 
 

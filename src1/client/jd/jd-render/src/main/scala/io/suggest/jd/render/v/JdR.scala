@@ -8,6 +8,7 @@ import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.css.Css
 import io.suggest.err.ErrorConstants
+import io.suggest.grid.build.GridBuildArgs
 import io.suggest.jd.render.m._
 import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
@@ -477,7 +478,13 @@ class JdR(
         CSSGrid {
           jdGridUtil.mkCssGridArgs(
             jds  = jd.subForest,
-            conf = jdArgs.conf
+            conf = jdArgs.conf,
+            gridBuildArgsF = { items =>
+              GridBuildArgs(
+                itemsExtDatas = items,
+                jdConf = jdArgs.conf
+              )
+            }
           )
         } (
           renderChildren(jd, jdArgs)

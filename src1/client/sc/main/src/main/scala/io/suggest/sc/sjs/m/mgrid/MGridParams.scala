@@ -2,7 +2,7 @@ package io.suggest.sc.sjs.m.mgrid
 
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.common.geom.d2.ISize2di
-import io.suggest.sc.tile.ColumnsCountT
+import io.suggest.sc.tile.{GridColumnCalc, MGridColumnsCalcConf}
 import io.suggest.sc.tile.TileConstants._
 
 import scala.scalajs.js
@@ -55,16 +55,18 @@ case class MGridParams(
     (colCnt1 - 1) * (cs + cellPadding) + cs
   }
 
+  /** Конфиг для выполнения рассчёта оптимального кол-ва колонок плитки. */
+  private def GRID_COLUMNS_CONF = MGridColumnsCalcConf(
+    cellPadding = cellPadding,
+    cellWidth   = cellSize
+  )
+
   /**
    * Посчитать кол-во колонок сетки с помощью калькулятора колонок.
    * @return Кол-во колонок сетки на экране.
    */
   def countColumns(screen: ISize2di): Int = {
-    val calc = new ColumnsCountT {
-      override def CELL_WIDTH_CSSPX   = cellSize
-      override def TILE_PADDING_CSSPX = cellPadding
-    }
-    calc.getTileColsCountScr(screen)
+    GridColumnCalc.getColumnsCount(screen, GRID_COLUMNS_CONF)
   }
 
 }

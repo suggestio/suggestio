@@ -23,20 +23,25 @@ class JdGridUtil(
     *
     * @param jds Jd-теги в исходном порядке.
     * @param conf jd-конфиг рендера.
+    * @param gridBuildArgsF Функция сборки инстанса GridBuildArgs.
+    *                       Создана для возможности проброса каких-либо аргументов напрямую в билдер.
     * @return Инстанс CssGridProps, пригодный для передачи в CSSGrid(_)(...).
     */
-  def mkCssGridArgs(jds: Seq[Tree[JdTag]], conf: MJdConf): CssGridProps = {
+  def mkCssGridArgs(
+                     jds: Seq[Tree[JdTag]],
+                     conf: MJdConf,
+                     gridBuildArgsF: TraversableOnce[ItemPropsExt] => GridBuildArgs
+                   ): CssGridProps = {
     // Собрать аргументы для вызова layout-функции grid-builder'а.
-    val gridBuildArgs = GridBuildArgs(
-      itemsExtDatas = jds
+    val gridBuildArgs = gridBuildArgsF(
+      jds
         .iterator
         .flatMap(_.rootLabel.props1.bm)
         .map { bm =>
           ItemPropsExt(
             blockMeta = bm
           )
-        },
-      jdConf = conf
+        }
     )
 
     // Каррируем функцию вне тела new CssGridProps{}, чтобы sjs-компилятор меньше мусорил левыми полями.
