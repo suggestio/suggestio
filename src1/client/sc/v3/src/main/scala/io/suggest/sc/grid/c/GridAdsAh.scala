@@ -1,7 +1,7 @@
 package io.suggest.sc.grid.c
 
 import diode._
-import diode.data.{PendingBase, Pot}
+import diode.data.PendingBase
 import io.suggest.dev.MScreen
 import io.suggest.err.ErrorConstants
 import io.suggest.sc.ads.MFindAdsReq
@@ -40,7 +40,7 @@ class GridAdsAh[M](
     case m: GridScroll =>
       val v0 = value
       if (
-        !v0.nextReq.isPending &&
+        !v0.ads.isPending &&
         v0.hasMoreAds &&
         v0.gridSz.exists { gridSz =>
           // Оценить уровень скролла. Возможно, уровень не требует подгрузки ещё карточек
@@ -55,7 +55,7 @@ class GridAdsAh[M](
           GridLoadAds(clean = false, ignorePending = true)
         }
         // Выставить pending в состояние, чтобы повторные события скролла игнорились.
-        val v2 = v0.withNextReq( v0.nextReq.pending() )
+        val v2 = v0.withAds( v0.ads.pending() )
         updated(v2, fx)
 
       } else {
@@ -79,13 +79,13 @@ class GridAdsAh[M](
     // Сигнал к загрузке карточек с сервера согласно текущему состоянию выдачи.
     case m: GridLoadAds =>
       val v0 = value
-      if (v0.nextReq.isPending && !m.ignorePending) {
-        LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.nextReq) )
+      if (v0.ads.isPending && !m.ignorePending) {
+        LOG.warn( WarnMsgs.REQUEST_STILL_IN_PROGRESS, msg = (m, v0.ads) )
         noChange
 
       } else {
         val searchArgs = searchArgsRO.value
-        val nextReqPot2 = v0.nextReq.pending()
+        val nextReqPot2 = v0.ads.pending()
         val fx = Effect {
           // Если clean, то нужно обнулять offset.
           val offset = if (m.clean) {
@@ -110,7 +110,7 @@ class GridAdsAh[M](
           }
         }
 
-        val v2 = v0.withNextReq( nextReqPot2 )
+        val v2 = v0.withAds( nextReqPot2 )
         updated(v2, fx)
       }
 
@@ -119,12 +119,12 @@ class GridAdsAh[M](
     case m: GridLoadAdsResp =>
       // Сверить timestamp с тем, что внутри Pot'а.
       val v0 = value
-      if ( v0.nextReq.isPendingWithStartTime(m.startTime) ) {
+      if ( v0.ads.isPendingWithStartTime(m.startTime) ) {
         // Это и есть ожидаемый ответ сервера. Разобраться, что там внутри...
         val v2 = m.resp.fold(
           {ex =>
             // Записать ошибку в состояние.
-            v0.withNextReq( v0.nextReq.fail(ex) )
+            v0.withAds( v0.ads.fail(ex) )
           },
           {scResp =>
             // Сервер ответил что-то вразумительное.
@@ -132,23 +132,21 @@ class GridAdsAh[M](
             val scAction = scResp.respActions.head
             ErrorConstants.assertArg( scAction.acType ==* MScRespActionTypes.AdsTile )
             val findAdsResp = scAction.ads.get
-            val newScAds = findAdsResp.ads.map(MScAdData.apply)
+            val newScAds = findAdsResp.ads.map(MGridBlkData.apply)
             val v1 = if (m.evidence.clean) {
               v0
-                .withAds( newScAds )
+                .withAds( v0.ads.ready(newScAds) )
                 .withSzMult( findAdsResp.szMult )
             } else {
               // Проверить, совпадает ли SzMult?
               ErrorConstants.assertArg( findAdsResp.szMult ==* v0.szMult )
               v0.withAds(
-                v0.ads ++ newScAds
+                v0.ads.map { _ ++ newScAds }
               )
             }
-            v1
-              .withHasMoreAds(
-                findAdsResp.ads.size >= m.limit
-              )
-              .withNextReq( Pot.empty )
+            v1.withHasMoreAds(
+              findAdsResp.ads.size >= m.limit
+            )
           }
         )
         updated(v2)
@@ -164,6 +162,8 @@ class GridAdsAh[M](
     case m: GridBlockClick =>
       // Нужно отправить запрос на сервер, чтобы понять, что делать дальше.
       // Возможны разные варианты: фокусировка в карточку, переход в выдачу другого узла, и т.д. Всё это расскажет сервер.
+
+      // Считаем, что возможность клика исчезнет на время реквеста.
       // TODO stub.
       println( "TODO block clicked: " + m.nodeId )
       noChange

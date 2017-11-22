@@ -65,7 +65,7 @@ class Sc3Circuit(
       index = MScIndex(
         state = MScIndexState(
           screen   = JsScreenUtil.getScreen,
-          geoPoint = Some( MGeoPoint(59.92,30.31) )
+          geoPoint = Some( MGeoPoint(59.92, 30.31) )
         ),
         search = MScSearch(
           mapState = MMapS( state0.mapProps )

@@ -27,8 +27,7 @@ object MScCssArgs {
       OptFastEq.Plain.eqv(a.customColorsOpt, b.customColorsOpt) &&
         ((a.screen ===* b.screen) || (a.screen ==* b.screen)) &&
         (a.wcBgWh ===* b.wcBgWh) &&
-        (a.wcFgWh ===* b.wcFgWh) /*&&
-        (a.gridSzMult ===* b.gridSzMult)*/
+        (a.wcFgWh ===* b.wcFgWh)
     }
   }
 
@@ -40,6 +39,5 @@ case class MScCssArgs(
                        override val screen            : MScreen,
                        override val wcBgWh            : Option[MSize2di],
                        override val wcFgWh            : Option[MSize2di]
-                       //override val gridSzMult        : MSzMult
                      )
   extends IScCssArgs

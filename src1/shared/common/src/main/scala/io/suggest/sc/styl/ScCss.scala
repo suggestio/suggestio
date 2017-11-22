@@ -60,7 +60,6 @@ trait IScCssArgs {
   def screen            : MScreen
   def wcBgWh            : Option[MSize2di]
   def wcFgWh            : Option[MSize2di]
-  //def gridSzMult        : MSzMult
 }
 
 
@@ -92,6 +91,7 @@ case class ScCss( args: IScCssArgs )
   }
 
   private def _styleAddClasses(cssClasses: String*) = style( addClassNames(cssClasses: _*) )
+  private def _styleAddClass(cssClass: String) = style( addClassName(cssClass) )
 
   private def `BUTTON` = "button"
   private def _SM_BUTTON = _SM_ + `BUTTON`
@@ -102,9 +102,9 @@ case class ScCss( args: IScCssArgs )
 
   //val button = _styleAddClasses( _SM_BUTTON )
 
-  val clear = _styleAddClasses( Css.CLEAR )
+  val clear = _styleAddClass( Css.CLEAR )
 
-  val smFlex = _styleAddClasses( _SM_ + "flex" )
+  val smFlex = _styleAddClass( _SM_ + "flex" )
 
   /** Стили для html.body . */
   // TODO Этот код наверное не нужен. Т.к. оно вне react-компонента.
@@ -118,8 +118,8 @@ case class ScCss( args: IScCssArgs )
 
     /** Фоновый SVG-логотип ЯПРЕДЛАГАЮ. Его в теории может и не быть, поэтому оно отдельно от класса body. */
     object BgLogo {
-      lazy val ru = _styleAddClasses( __ + "ru" )
-      lazy val en = _styleAddClasses( __ + "en" )
+      lazy val ru = _styleAddClass( __ + "ru" )
+      lazy val en = _styleAddClass( __ + "en" )
     }
 
     /** Исторически как-то сложилось, что активация body происходит через style-аттрибут. Но это плевать наверое. */
@@ -134,7 +134,7 @@ case class ScCss( args: IScCssArgs )
   object Root {
 
     /** корневой div-контейнер. */
-    val root = _styleAddClasses( _SM_ + "showcase" )
+    val root = _styleAddClass( _SM_ + "showcase" )
 
   }
 
@@ -209,9 +209,9 @@ case class ScCss( args: IScCssArgs )
         )
       }
 
-      val fgText = _styleAddClasses( _SM_WELCOME_AD + "_fg-text" )
+      val fgText = _styleAddClass( _SM_WELCOME_AD + "_fg-text" )
 
-      val helper = _styleAddClasses( _SM_WELCOME_AD + "_helper" )
+      val helper = _styleAddClass( _SM_WELCOME_AD + "_helper" )
     }
 
   }
@@ -304,8 +304,8 @@ case class ScCss( args: IScCssArgs )
             backgroundColor( _fgColorCss )
           )
 
-          val left = _styleAddClasses( __ + MsgCodes.`left` )
-          val right = _styleAddClasses( __ + MsgCodes.`right` )
+          val left = _styleAddClass( __ + MsgCodes.`left` )
+          val right = _styleAddClass( __ + MsgCodes.`right` )
           def allSides = left :: right :: Nil
         }
 
@@ -315,7 +315,7 @@ case class ScCss( args: IScCssArgs )
       /** CSS для картинки-логотипа. */
       object Img {
         /** Алиас основного стиля логотипа. */
-        val logo = _styleAddClasses( HEADER + `-logo` )
+        val logo = _styleAddClass( HEADER + `-logo` )
         def IMG_HEIGHT_CSSPX = 30
       }
 
@@ -330,7 +330,7 @@ case class ScCss( args: IScCssArgs )
     private val _PANEL = _SM_ + "categories-screen"
 
     /** CSS-класс div-контейнера правой панели. */
-    val panel = _styleAddClasses( _PANEL )
+    val panel = _styleAddClass( _PANEL )
 
     /** CSS-класс заголовка внутри панели поиска. */
     //val panelHeader = _styleAddClasses( _PANEL + "_header" )
@@ -341,17 +341,17 @@ case class ScCss( args: IScCssArgs )
 
       private val _BAR = _SM_ + "search-bar"
 
-      val bar       = _styleAddClasses( _BAR )
+      val bar       = _styleAddClass( _BAR )
 
       /** Сообщение, например "ничего не найдено". */
-      val message   = _styleAddClasses( _BAR + "_message" )
+      val message   = _styleAddClass( _BAR + "_message" )
 
       /** CSS для текстовых полей поиска. */
       object Field {
-        val field         = _styleAddClasses( _BAR + "_field" )
-        val active        = _styleAddClasses( __ + "active" )
-        val fieldWrapper  = _styleAddClasses( _BAR + "_wrapper" )
-        val input         = _styleAddClasses( _BAR + "_input" )
+        val field         = _styleAddClass( _BAR + "_field" )
+        val active        = _styleAddClass( __ + "active" )
+        val fieldWrapper  = _styleAddClass( _BAR + "_wrapper" )
+        val input         = _styleAddClass( _BAR + "_input" )
       }
 
     }
@@ -363,9 +363,9 @@ case class ScCss( args: IScCssArgs )
       private val _TABS = _PANEL + "_tabs"
 
       /** div-контейнер заголовков табов. */
-      val tabs = _styleAddClasses( _TABS )
+      val tabs = _styleAddClass( _TABS )
 
-      val tabsWrapper = _styleAddClasses( _TABS + "-wrapper" )
+      val tabsWrapper = _styleAddClass( _TABS + "-wrapper" )
 
       private val TAB_BODY_HEIGHT_PX = args.screen.height - ScCss.TABS_OFFSET_PX
 
@@ -382,14 +382,14 @@ case class ScCss( args: IScCssArgs )
       /** Стили для одного таба. */
       object Single {
 
-        val tabOuter = _styleAddClasses( _PANEL + "_single-tab" )
-        val tabInner = _styleAddClasses( _SM_ + "tab" )
-        val inactive = _styleAddClasses( __ + "inactive" )
+        val tabOuter = _styleAddClass( _PANEL + "_single-tab" )
+        val tabInner = _styleAddClass( _SM_ + "tab" )
+        val inactive = _styleAddClass( __ + "inactive" )
 
         object Rounded {
           private val _ROUNDED_ = __ + "rounded-"
-          val left  = _styleAddClasses( _ROUNDED_ + "left" )
-          val right = _styleAddClasses( _ROUNDED_ + "right" )
+          val left  = _styleAddClass( _ROUNDED_ + "left" )
+          val right = _styleAddClass( _ROUNDED_ + "right" )
         }
 
       }
@@ -437,22 +437,6 @@ case class ScCss( args: IScCssArgs )
   /** Стили для плитки карточек, точнее для контейнеров этой плитки. */
   object Grid {
 
-    /*
-    val szMultD = args.gridSzMult.toDouble
-
-    val _CELL_WIDTH_CSSPX = (BlockWidths.NARROW.value * szMultD).toInt
-    val _TILE_PADDING_CSSPX = (TileConstants.PADDING_CSSPX * szMultD).toInt
-
-    // Кол-во колонок в плитке в условиях текущего экрана.
-    val gridColumnsCount = {
-      val cct = new ColumnsCountT {
-        override def CELL_WIDTH_CSSPX   = _CELL_WIDTH_CSSPX
-        override def TILE_PADDING_CSSPX = _TILE_PADDING_CSSPX
-      }
-      cct.getTileColsCountScr( args.screen )
-    }
-    */
-
     private val _SM_GRID_ADS = _SM_ + "grid-ads"
 
     private val _screenHeightPx = args.screen.height.px
@@ -480,6 +464,56 @@ case class ScCss( args: IScCssArgs )
       opacity(1)
     )
 
+
+    /** Стили для анимации подгрузки. */
+    object Loaders {
+
+      private val _SM_GRID_ADS_LOADER = _SM_GRID_ADS + "_loader"
+
+      /* Это svg-изображение, с помощью которого рисовалась zip-линия отрыва внизу для ещё неподгруженной плитки.
+      // TODO Это должно быть значением background-image для корневого div'а.
+      private val enableBackgroundAttr = VdomAttr("enable-background")
+      private def _renderBottomZipSvg(fillColor: String) = {
+        val zero = 0
+        val w = 10
+        val h = 5
+        val viewBox = zero + SPACE + zero + SPACE + w + SPACE + h
+        <.svg(
+          ^.x := 0.px,
+          ^.y := 0.px,
+          ^.width := w.px,
+          ^.height := h.px,
+          ^.viewBox := viewBox,
+          // TODO Тут исторический костыль, и не ясно, нужен он или нет. Вроде бы этот аттрибут сдох (depreacted) и не особо реализован в браузерах.
+          enableBackgroundAttr := ("new" + SPACE + viewBox),
+          ^.xmlSpace := "preserve",
+          <.polygon(
+            ^.fill := Color(fillColor),
+            ^.points := "10,3.16 5,0 0,3.16 0,5 5,1.84 10,5"
+          )
+        )
+      }
+      */
+
+      /** Внешний контейнер спиннера. */
+      val outer = style(
+        addClassName( _SM_GRID_ADS_LOADER ),
+        // TODO Надо собрать содержимое svg вручную через Vdom и загонять в строку.
+        backgroundImage := ("""url('data:image/svg+xml;utf8,<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="10px" height="5px" viewBox="0 0 10 5" enable-background="new 0 0 10 5" xml:space="preserve"><polygon fill="#""" + _fgColorCss.value + """" points="10,3.16 5,0 0,3.16 0,5 5,1.84 10,5 "/></svg>"""),
+        backgroundRepeat := "repeat-x"
+        // Ещё есть width(max grid outer width), но оно в шаблоне живёт.
+      )
+
+      val _SM_GRID_ADS_LOADER_SPINNER = _SM_GRID_ADS_LOADER + "-spinner"
+
+      /** Внешний контейнер для спиннера. */
+      val spinnerOuter = _styleAddClass( _SM_GRID_ADS_LOADER_SPINNER )
+
+      /** Наконец, контейнер для анимированной SVG'шки. */
+      val spinnerInner = _styleAddClass( _SM_GRID_ADS_LOADER_SPINNER + "-inner" )
+
+    }
+
   }
 
 
@@ -502,7 +536,8 @@ case class ScCss( args: IScCssArgs )
     Search.Tabs.Single.Rounded.right,
     Search.Tabs.MapTab.inner,
 
-    Grid.container
+    Grid.container,
+    Grid.Loaders.spinnerInner
   )
 
 }

@@ -11,6 +11,7 @@ import scalacss.ScalaCssReact._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.hdr.m.IScHdrAction
 import io.suggest.react.ReactDiodeUtil.dispatchOnProxyScopeCB
+import io.suggest.svg.SvgConst
 
 import scalacss.internal.StyleA
 
@@ -69,6 +70,7 @@ trait HdrBtn {
             htmlAttrs.onClick --> _onClick,
 
             <.svg(
+              ^.xmlns := SvgConst.SVG_NAMESPACE_URI,
               HdrBtn.WIDTH,
               HdrBtn.HEIGHT,
               HdrBtn.VIEWPORT,

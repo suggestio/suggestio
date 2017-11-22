@@ -2,7 +2,7 @@ package io.suggest.sc.grid
 
 import com.softwaremill.macwire._
 import io.suggest.jd.render.JdRenderModule
-import io.suggest.sc.grid.v.GridR
+import io.suggest.sc.grid.v.{GridLoaderR, GridR}
 import io.suggest.sc.styl.ScCssModule
 
 /**
@@ -18,6 +18,8 @@ class GridModule(
 
   import jdRenderModule._
   import scCssModule._
+
+  lazy val gridLoaderR = wire[GridLoaderR]
 
   lazy val gridR   = wire[GridR]
 

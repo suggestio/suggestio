@@ -1,5 +1,6 @@
 package io.suggest.jd.render.v
 
+import diode.FastEq
 import io.suggest.ad.blk.IBlockSize
 import io.suggest.color.MColorData
 import io.suggest.css.Css
@@ -27,7 +28,15 @@ import scalacss.internal.mutable.StyleSheet
   */
 
 object JdCss {
+
+  implicit object JdCssFastEq extends FastEq[JdCss] {
+    override def eqv(a: JdCss, b: JdCss): Boolean = {
+      MJdCssArgs.MJdCssArgsFastEq.eqv(a.jdCssArgs, b.jdCssArgs)
+    }
+  }
+
   implicit def univEq: UnivEq[JdCss] = UnivEq.derive
+
 }
 
 case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {

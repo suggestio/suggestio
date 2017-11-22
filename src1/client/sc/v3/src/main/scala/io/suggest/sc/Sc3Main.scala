@@ -7,6 +7,7 @@ import io.suggest.sjs.common.view.VUtil
 import io.suggest.sjs.common.vm.doc.DocumentVm
 import japgolly.scalajs.react.vdom.Implicits._
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
+import io.suggest.sjs.common.vm.spa.LkPreLoader
 import io.suggest.sjs.leaflet.Leaflet
 
 /**
@@ -27,11 +28,25 @@ object Sc3Main {
     // Сразу поискать js-роутер на странице.
     val jsRouterFut = SrvRouter.ensureJsRouter()
 
-    val body = DocumentVm().body
+    val doc  = DocumentVm()
+    val body = doc.body
+
+    // Инициализировать анимированную крутилку для выдачи.
+    LkPreLoader.PRELOADER_IMG_URL
 
     // Самый корневой рендер -- отрабатывается первым.
-    val rootDiv = VUtil.newDiv()
-    body.appendChild( rootDiv )
+    val rootDiv = {
+      Option {
+        doc._underlying
+          .getElementById(ScConstants.Layout.ROOT_ID)
+      }
+        .getOrElse {
+          // TODO Удалить анимированную крутилку со страницы
+          val div = VUtil.newDiv()
+          body.appendChild( div )
+          div
+        }
+    }
 
     val modules = new Sc3Modules
 

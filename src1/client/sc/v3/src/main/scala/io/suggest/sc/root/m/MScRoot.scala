@@ -64,7 +64,6 @@ case class MScRoot(
       screen          = index.state.screen,
       wcBgWh          = __whOpt( _.bgImage ),
       wcFgWh          = __whOpt( _.fgImage )
-      //gridSzMult      = grid.szMult
     )
   }
 

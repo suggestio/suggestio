@@ -1,6 +1,6 @@
 package io.suggest.sc
 
-import io.suggest.sc.grid.c.{FindAdsXhrImpl, IFindAdsApi}
+import io.suggest.sc.grid.c.{FindAdsApiXhrImpl, IFindAdsApi}
 import io.suggest.sc.inx.c.{IIndexApi, IndexApiXhrImpl}
 
 /**
@@ -27,5 +27,5 @@ trait ISc3Api
 class Sc3ApiXhrImpl
   extends ISc3Api
   with IndexApiXhrImpl
-  with FindAdsXhrImpl
+  with FindAdsApiXhrImpl
 

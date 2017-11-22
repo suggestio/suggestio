@@ -1,12 +1,15 @@
 package io.suggest.sc.grid.v
 
 import com.github.dantrain.react.stonecutter.CSSGrid
+import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.BlockPaddings
+import io.suggest.color.MColorData
 import io.suggest.grid.build.{GridBuildArgs, GridBuildRes_t}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
 import io.suggest.jd.render.v.{JdCss, JdCssR, JdGridUtil, JdR}
+import io.suggest.jd.tags.JdTag
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
 import io.suggest.sc.grid.m.{GridBlockClick, GridScroll, HandleGridBuildRes, MGridS}
 import io.suggest.sc.styl.GetScCssF
@@ -16,8 +19,10 @@ import japgolly.scalajs.react.vdom.html_<^._
 import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.sc.tile.TileConstants
 import io.suggest.spa.OptFastEq
+import io.suggest.ueq.UnivEqUtil._
 
 import scalacss.ScalaCssReact._
+import scalaz.Tree
 
 /**
   * Suggest.io
@@ -29,38 +34,44 @@ class GridR(
              jdGridUtil                 : JdGridUtil,
              jdR                        : JdR,
              jdCssR                     : JdCssR,
+             val gridLoaderR            : GridLoaderR,
              getScCssF                  : GetScCssF
            ) {
 
   import MJdConf.MJdConfFastEq
+  import MJdArgs.MJdWithArgsFastEq
+  import JdCss.JdCssFastEq
+  import gridLoaderR.GridLoaderPropsValFastEq
+  import MGridS.MGridSFastEq
+
 
   /** Модель пропертисов компонента плитки.
     *
     * param grid Состояние плитки.
     * param screen Состояние экрана.
     */
-  /*
   case class PropsVal(
-                       grid   : MGridS,
-                       screen : MScreen
+                       grid       : MGridS,
+                       fgColor    : Option[MColorData]
                      )
   implicit object GridPropsValFastEq extends FastEq[PropsVal] {
     override def eqv(a: PropsVal, b: PropsVal): Boolean = {
       (a.grid ===* b.grid) &&
-        (a.screen ===* b.screen)
+        (a.fgColor ===* b.fgColor)
     }
   }
-  */
 
   /** Модель состояния компонента.
     *
     * @param jdConfOptC Полуготовый инстанс MJdArgs без конкретных эджей и шаблона внутри.
     */
   protected[this] case class State(
-                                    jdConfOptC    : ReactConnectProxy[Option[MJdConf]]
+                                    jdConfOptC          : ReactConnectProxy[Option[MJdConf]],
+                                    gridOptC            : ReactConnectProxy[Option[MGridS]],
+                                    loaderPropsOptC     : ReactConnectProxy[Option[gridLoaderR.PropsVal]]
                                   )
 
-  type Props = ModelProxy[Option[MGridS]]
+  type Props = ModelProxy[Option[PropsVal]]
 
   class Backend($: BackendScope[Props, State]) {
 
@@ -84,111 +95,150 @@ class GridR(
     }
 
 
-    def render(gridStateOptProxy: Props, s: State): VdomElement = {
-      val ScCss = getScCssF()
-      val GridCss = ScCss.Grid
-
-      gridStateOptProxy.value.whenDefinedEl { gridState =>
-        <.div(
-          ScCss.smFlex, GridCss.outer,
+    def render(s: State): VdomElement = {
+      s.gridOptC { gridOptProxy =>
+        gridOptProxy.value.whenDefinedEl { gridS =>
+          val ScCss = getScCssF()
+          val GridCss = ScCss.Grid
 
           <.div(
-            ScCss.smFlex, GridCss.wrapper,
-            ^.onScroll ==> onGridScroll,
+            ScCss.smFlex, GridCss.outer,
 
             <.div(
-              GridCss.content,
+              ScCss.smFlex, GridCss.wrapper,
+              ^.onScroll ==> onGridScroll,
 
-              s.jdConfOptC { jdConfOptProxy =>
-                jdConfOptProxy.value.whenDefinedEl { jdConf =>
-                  val templates = gridState.ads.map(_.template)
+              <.div(
+                GridCss.content,
 
-                  val jdCss = JdCss(
-                    MJdCssArgs(
-                      templates = templates,
-                      conf      = jdConf
-                    )
-                  )
-
-                  // Начинается [пере]сборка всей плитки
-                  <.div(
-                    GridCss.container,
-
-                    // Рендер style-тега.
-                    jdConfOptProxy.wrap(_ => jdCss)(jdCssR.apply),
-
-                    gridState.gridSz.whenDefined { gridSz =>
-                      TagMod(
-                        ^.width  := gridSz.width.px,
-                        ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM).px
-                      )
-                    },
-
-                    // Наконец сама плитка карточек:
-                    CSSGrid {
-                      jdGridUtil.mkCssGridArgs(
-                        jds       = templates,
-                        conf      = jdConf,
-                        gridBuildArgsF = { items =>
-                          GridBuildArgs(
-                            itemsExtDatas   = items,
-                            jdConf          = jdConf,
-                            onLayout        = Some(_onGridLayoutF),
-                            offY            = TileConstants.CONTAINER_OFFSET_TOP
-                          )
+                s.jdConfOptC { jdConfOptProxy =>
+                  jdConfOptProxy.value.whenDefinedEl { jdConf =>
+                    val templates = gridS.ads
+                      .getOrElse(Nil)   // TODO Правильно ли тут это?
+                      .flatMap { ad =>
+                        ad.focused.fold [Seq[Tree[JdTag]]] {
+                          ad.main.template :: Nil
+                        } { focBlk =>
+                          focBlk.template.subForest
                         }
+                      }
+
+                    val jdCss = JdCss(
+                      MJdCssArgs(
+                        templates = templates,
+                        conf      = jdConf
                       )
-                    } (
-                      gridState.ads
-                        .iterator
-                        .zipWithIndex
-                        .map { case (scAdData, i) =>
+                    )
+
+                    // Начинается [пере]сборка всей плитки
+                    <.div(
+                      GridCss.container,
+
+                      // Рендер style-тега.
+                      jdConfOptProxy.wrap(_ => jdCss)(jdCssR.apply),
+
+                      gridS.gridSz.whenDefined { gridSz =>
+                        TagMod(
+                          ^.width  := gridSz.width.px,
+                          ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM).px
+                        )
+                      },
+
+                      // Наконец сама плитка карточек:
+                      CSSGrid {
+                        jdGridUtil.mkCssGridArgs(
+                          jds       = templates,
+                          conf      = jdConf,
+                          gridBuildArgsF = { items =>
+                            GridBuildArgs(
+                              itemsExtDatas   = items,
+                              jdConf          = jdConf,
+                              onLayout        = Some(_onGridLayoutF),
+                              offY            = TileConstants.CONTAINER_OFFSET_TOP
+                            )
+                          }
+                        )
+                      } {
+                        val iter = for {
+                          (scAdData, rootCounter) <- gridS.ads.iterator.flatten.zipWithIndex
+                          keyStr = scAdData.nodeId
+                            .getOrElse( rootCounter.toString )
+                          edges = scAdData.focused
+                            .fold(scAdData.main.edges)(_.edges)
+                          template <- scAdData.focused
+                            .fold [Seq[Tree[JdTag]]] (scAdData.main.template :: Nil) { foc =>
+                              foc.template.subForest
+                            }
+                        } yield {
                           jdConfOptProxy.wrap { _ =>
                             MJdArgs(
-                              template    = scAdData.template,
+                              template    = template,
                               renderArgs  = MJdRenderArgs(
-                                edges     = scAdData.edges
+                                edges     = edges
                               ),
-                              jdCss       = jdCss,
-                              conf        = jdConf
+                              jdCss = jdCss,
+                              conf = jdConf
                             )
                           } { jdArgsProxy =>
                             scAdData.nodeId.fold[VdomElement] {
                               jdR.component
-                                .withKey(i.toString)( jdArgsProxy )
+                                .withKey(keyStr)(jdArgsProxy)
                             } { nodeId =>
                               <.a(
-                                ^.key := i.toString,
+                                ^.key := keyStr,
                                 ^.onClick --> onBlockClick(nodeId),
-                                jdR( jdArgsProxy )
+                                jdR(jdArgsProxy)
                               )
                             }
                           }
                         }
-                        .toVdomArray
+                        iter.toVdomArray
+                      }
                     )
-                  )
-                }
-              }
+                  }
+                },
 
+                // Крутилка подгрузки карточек.
+                s.loaderPropsOptC { gridLoaderR.apply }
+              )
             )
           )
-        )
+        }
       }
     }
 
   }
 
   val component = ScalaComponent.builder[Props]("Grid")
-    .initialStateFromProps { gridStateOptProxy =>
+    .initialStateFromProps { propsOptProxy =>
       State(
-        jdConfOptC = gridStateOptProxy.connect { gridStateOpt =>
-          for (gridState <- gridStateOpt) yield {
+        jdConfOptC = propsOptProxy.connect { propsOpt =>
+          for (props <- propsOpt) yield {
             MJdConf(
               isEdit            = false,
-              szMult            = gridState.szMult,
+              szMult            = props.grid.szMult,
               blockPadding      = BlockPaddings.default,
-              gridColumnsCount  = gridState.columnsCount
+              gridColumnsCount  = props.grid.columnsCount
+            )
+          }
+        }( OptFastEq.Wrapped ),
+
+        gridOptC = propsOptProxy.connect { propsOpt =>
+          for (props <- propsOpt) yield {
+            props.grid
+          }
+        }( OptFastEq.Wrapped ),
+
+        loaderPropsOptC = propsOptProxy.connect { propsOpt =>
+          for {
+            props     <- propsOpt
+            if props.grid.ads.isPending
+            fgColor   <- props.fgColor
+          } yield {
+            gridLoaderR.PropsVal(
+              fgColor = fgColor,
+              // В оригинальной выдачи, линия отрыва шла через весь экран. Тут для простоты -- только под внутренним контейнером.
+              widthPx = props.grid.gridSz.map(_.width)
             )
           }
         }( OptFastEq.Wrapped )

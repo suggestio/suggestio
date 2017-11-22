@@ -1,7 +1,6 @@
 package io.suggest.sc.root.v
 
 import diode.react.{ModelProxy, ReactConnectProxy}
-import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.grid.v.GridR
 import io.suggest.sc.inx.m.MScIndex
 import io.suggest.sc.inx.v.IndexR
@@ -23,20 +22,20 @@ import scalacss.ScalaCssReact._
 class ScRootR (
                 indexR                      : IndexR,
                 protected[this] val scCssR  : ScCssR,
-                gridR                       : GridR,
+                val gridR                   : GridR,
                 getScCssF                   : GetScCssF
               ) {
 
   import MScCssArgs.MScCssArgsFastEq
   import MScIndex.MScIndexFastEq
-  import MGridS.MGridSFastEq
+  import gridR.GridPropsValFastEq
 
   type Props = ModelProxy[MScRoot]
 
   protected[this] case class State(
                                     scCssArgsC     : ReactConnectProxy[MScCssArgs],
                                     indexPropsC    : ReactConnectProxy[MScIndex],
-                                    gridOptC       : ReactConnectProxy[Option[MGridS]]
+                                    gridPropsOptC  : ReactConnectProxy[Option[gridR.PropsVal]]
                                   )
 
 
@@ -56,9 +55,8 @@ class ScRootR (
           s.indexPropsC { indexR.apply },
 
           // Рендер плитки карточек узла:
-          s.gridOptC { gridR.apply }
+          s.gridPropsOptC { gridR.apply }
 
-          // TODO Focused
         )
       )
     }
@@ -71,8 +69,12 @@ class ScRootR (
       State(
         scCssArgsC  = propsProxy.connect(_.scCssArgs),
         indexPropsC = propsProxy.connect(_.index),
-        gridOptC = propsProxy.connect { mroot =>
-          Some( mroot.grid ): Option[MGridS]
+        gridPropsOptC = propsProxy.connect { mroot =>
+          val gridRProps = gridR.PropsVal(
+            grid    = mroot.grid,
+            fgColor = mroot.index.resp.toOption.flatMap(_.colors.fg)
+          )
+          Some( gridRProps ): Option[gridR.PropsVal]
         }( OptFastEq.Wrapped )
       )
     }

@@ -32,6 +32,7 @@ object LayRootVm extends FindDiv with CreateLayRootDiv {
       override def content: Option[LayContentVm] = Some(contentVm)
     }
   }
+
 }
 
 sealed trait CreateLayRootDiv extends CreateDivWithId {
