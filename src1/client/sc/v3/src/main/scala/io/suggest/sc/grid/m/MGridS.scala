@@ -5,7 +5,6 @@ import diode.data.Pot
 import io.suggest.common.empty.EmptyProductPot
 import io.suggest.common.geom.d2.MSize2di
 import io.suggest.dev.{MSzMult, MSzMults}
-import io.suggest.sc.sc3.MSc3AdsResp
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq._
@@ -47,8 +46,8 @@ object MGridS {
   * @param gridSz Реально-занимаемый размер плитки. Вычисляется во время раскладывания карточек.
   */
 case class MGridS(
-                   columnsCount   : Int                     = 8, // TODO Явно убрать дефолтовое значение, вместо с empty/ProductEmpty
-                   ads            : Pot[Seq[MScAdData]]  = Pot.empty,
+                   columnsCount   : Int                     = 4, // TODO Явно убрать дефолтовое значение, вместо с empty/ProductEmpty
+                   ads            : Pot[Seq[MScAdData]]     = Pot.empty,
                    hasMoreAds     : Boolean                 = true,
                    gridSz         : Option[MSize2di]        = None,
                    szMult         : MSzMult                 = MSzMults.`1.0`

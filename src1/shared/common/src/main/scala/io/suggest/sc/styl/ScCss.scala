@@ -39,9 +39,11 @@ object ScCss {
      * Нужно форсировать появление скроллбара у внутреннего контейнера.
      * TODO Проверить, нуждается ли ipad в таком костыле.
      * TODO Актуально ли это всё в 2017 году?
+     * Кажется без этого вообще скроллинг в плитке не работает нигде. Как вариант, сделать overflow-y: auto.
      */
     isSafari &&
       cssEnv.platform.userAgent.exists( _.contains("Mobile/") )
+    //true
   }
 
   /**
@@ -77,7 +79,6 @@ case class ScCss( args: IScCssArgs )
 
   /** Строковые обозначения стилей наподобии i.s.css.Css. */
   private def __ = Css.__
-  private def _NAME_TOKENS_DELIM = "-"
   private def _SM_ = Css.Lk._SM_PREFIX_
 
   val overflowScrollingMx: StyleS = {
@@ -86,7 +87,10 @@ case class ScCss( args: IScCssArgs )
         addClassName( _SM_ + "overflow-scrolling"  )
       )
     } else {
-      StyleS.empty
+      mixin(
+        overflowY.auto
+      )
+      //StyleS.empty
     }
   }
 
@@ -531,6 +535,7 @@ case class ScCss( args: IScCssArgs )
 
     Header.Buttons.search,
     Header.Logo.Txt.Dots.dot,
+    Header.Logo.Img.logo,
 
     Search.SearchBar.Field.active,
     Search.Tabs.Single.Rounded.right,

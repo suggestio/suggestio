@@ -4,7 +4,7 @@ import diode.ModelRO
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
-import io.suggest.geo.MGeoPoint
+import io.suggest.geo.{MGeoPoint, MLocEnv}
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
@@ -94,7 +94,7 @@ class Sc3Circuit(
     val inxState = mroot.index.state
     MFindAdsReq(
       receiverId  = inxState.currRcvrId,
-      locEnv      = mroot.locEnv,
+      locEnv      = if (inxState.currRcvrId.isEmpty) mroot.locEnv else MLocEnv.empty,
       screenInfo  = Some( inxState.screen ),
       generation  = Some( inxState.generation )
       // limit и offset очень специфичны и выставляются в конкретных контроллерах карточек.

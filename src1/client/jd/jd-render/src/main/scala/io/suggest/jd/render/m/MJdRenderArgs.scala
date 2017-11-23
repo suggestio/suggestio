@@ -7,6 +7,7 @@ import japgolly.scalajs.react.vdom.TagMod
 import japgolly.univeq._
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.ReactUnivEqUtil._
+import japgolly.scalajs.react.{Callback, ReactMouseEvent}
 
 /**
   * Suggest.io
@@ -41,7 +42,8 @@ object MJdRenderArgs {
 case class MJdRenderArgs(
                           edges               : Map[EdgeUid_t, MEdgeDataJs],
                           selJdtBgImgMod      : Option[TagMod]              = None,
-                          hideNonMainStrips   : Boolean                     = false
+                          hideNonMainStrips   : Boolean                     = false,
+                          blockClick          : Option[ReactMouseEvent => Callback] = None
                         ) {
 
   def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs])             = copy(edges = edges)

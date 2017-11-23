@@ -21,7 +21,7 @@ object BlockPaddings extends IntEnum[BlockPadding] {
   //case object Bp0 extends BlockPadding(0)
 
   /** Исторический интервал между блоками. */
-  case object Bp10 extends BlockPadding(10)
+  case object Bp20 extends BlockPadding(20)
 
 
   override val values = findValues
@@ -33,7 +33,7 @@ object BlockPaddings extends IntEnum[BlockPadding] {
     * Через это значение выражены все [[BlockWidths]] и [[BlockHeights]].
     * Должен ВСЕГДА указывать на 20 пикселей.
     */
-  final def base = Bp10
+  final def base = Bp20
 
   /** Дефолтовое значение, когда padding не задан. */
   def default = base

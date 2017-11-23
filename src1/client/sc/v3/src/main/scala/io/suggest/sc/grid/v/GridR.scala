@@ -1,6 +1,6 @@
 package io.suggest.sc.grid.v
 
-import com.github.dantrain.react.stonecutter.CSSGrid
+import com.github.dantrain.react.stonecutter.{CSSGrid, GridComponents}
 import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.BlockPaddings
@@ -141,7 +141,7 @@ class GridR(
                       gridS.gridSz.whenDefined { gridSz =>
                         TagMod(
                           ^.width  := gridSz.width.px,
-                          ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM).px
+                          ^.height := (gridSz.height + TileConstants.CONTAINER_OFFSET_BOTTOM + TileConstants.CONTAINER_OFFSET_TOP).px
                         )
                       },
 
@@ -150,6 +150,7 @@ class GridR(
                         jdGridUtil.mkCssGridArgs(
                           jds       = templates,
                           conf      = jdConf,
+                          tagName   = GridComponents.DIV,
                           gridBuildArgsF = { items =>
                             GridBuildArgs(
                               itemsExtDatas   = items,
@@ -173,29 +174,52 @@ class GridR(
                             .iterator
                             .zipWithIndex
                         } yield {
+                          val keyStr = keyPrefix + `.` + j
+                          /*
+                          val jdArgs = MJdArgs(
+                            template    = template,
+                            renderArgs  = MJdRenderArgs(
+                              edges     = edges
+                              //blockClick = for (nodeId <- scAdData.nodeId) yield { _: ReactMouseEvent =>
+                              //  onBlockClick(nodeId)
+                              //}
+                            ),
+                            jdCss = jdCss,
+                            conf = jdConf
+                          )
+                          // TODO В Children допускаются только теги. Компонент тут отрендерить нельзя.
+                          jdR.InlineRender.renderJdArgs(jdArgs).apply(
+                            scAdData.nodeId.whenDefined { nodeId =>
+                              ^.key := keyStr,
+                              ^.onClick --> onBlockClick(nodeId)
+                            }
+                          )
+                          */
                           jdConfOptProxy.wrap { _ =>
                             MJdArgs(
                               template    = template,
                               renderArgs  = MJdRenderArgs(
-                                edges     = edges
+                                edges     = edges,
+                                blockClick = for (nodeId <- scAdData.nodeId) yield { _: ReactMouseEvent =>
+                                  onBlockClick(nodeId)
+                                }
                               ),
                               jdCss = jdCss,
                               conf = jdConf
                             )
                           } { jdArgsProxy =>
-                            val keyStr = keyPrefix + `.` + j
-                            scAdData.nodeId.fold[VdomElement] {
-                              jdR.component
-                                .withKey(keyStr)(jdArgsProxy)
-                            } { nodeId =>
-                              <.div(
-                                ^.key := keyStr,
-                                <.a(
-                                  ^.onClick --> onBlockClick(nodeId),
-                                  jdR(jdArgsProxy)
+                            <.div(
+                              ^.key := keyStr,
+                              template.rootLabel.props1.bm.whenDefined { bm =>
+                                val wh = jdCss.bmStyleWh(bm)
+                                TagMod(
+                                  ^.width  := wh.width.px,
+                                  ^.height := wh.height.px
                                 )
-                              )
-                            }
+                                jdR.component
+                                  .withKey(keyStr)(jdArgsProxy)
+                              },
+                            )
                           }
                         }
                         iter.toVdomArray

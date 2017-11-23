@@ -55,7 +55,7 @@ class GridBuilder {
     val cellHeightPx = BlockHeights.min.value * blkSzMultD
 
     val szMultD = args.jdConf.szMult.toDouble
-    val paddingMultedPx = Math.round(2 * args.jdConf.blockPadding.value * szMultD).toInt
+    val paddingMultedPx = Math.round(args.jdConf.blockPadding.value * szMultD).toInt
     val cellPaddingWidthPx  = paddingMultedPx // _orZero( props.gutterWidth )
     val cellPaddingHeightPx = paddingMultedPx // _orZero( props.gutterHeight )
 
@@ -142,7 +142,7 @@ class GridBuilder {
               )
 
               // Сдвинуть текущий left на ширину блока и padding
-              leftPtrPx += itemCellWidth * cellWidthPx + cellPaddingWidthPx
+              leftPtrPx += itemCellWidth * paddedCellWidthPx //cellWidthPx + cellPaddingWidthPx
 
               // Вернуть полученные px-координаты блока.
               xy
@@ -174,7 +174,10 @@ class GridBuilder {
       .max
     val gridHeightPx = Math.round(maxCellHeight * paddedCellHeightPx).toInt
 
-    val gridWidthPx = colsInfo.count(_.heightUsed > 0) * paddedCellWidthPx
+    val gridWidthPx = {
+      val width0 = colsInfo.count(_.heightUsed > 0) * paddedCellWidthPx - cellPaddingWidthPx
+      Math.max(0, width0)
+    }
 
     // Помимо координат, надо вычислить итоговые размеры плитки.
     val res = new LayoutFunRes {

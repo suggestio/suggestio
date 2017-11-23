@@ -6,6 +6,7 @@ import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
 import io.suggest.common.geom.d2.MSize2di
+import io.suggest.common.html.HtmlConstants
 import io.suggest.css.Css
 import io.suggest.err.ErrorConstants
 import io.suggest.grid.build.GridBuildArgs
@@ -14,7 +15,6 @@ import io.suggest.jd.tags._
 import io.suggest.model.n2.edge.{EdgeUid_t, MPredicates}
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.pick.MimeConst
-import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.react.ReactCommonUtil.VdomNullElement
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
@@ -23,10 +23,10 @@ import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomElement
+import japgolly.scalajs.react.vdom.{VdomElement, TagOf}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
-import org.scalajs.dom.Element
+import org.scalajs.dom.{Element, html}
 import org.scalajs.dom.html.Image
 import play.api.libs.json.Json
 
@@ -43,7 +43,8 @@ import scalaz.Tree
 class JdR(
            jdGridUtil: JdGridUtil
          )
-  extends Log { jdR =>
+  extends Log
+{ jdR =>
 
   type Props = ModelProxy[MJdArgs]
 
@@ -64,179 +65,23 @@ class JdR(
   }
 
 
-  /** Рендерер дерева jd-тегов. */
-  protected class Backend($: BackendScope[Props, Unit]) {
+  /** Движок рендера для сборки под разные ситуации. Можно вынести за пределы компонента. */
+  trait JdRenderer {
 
-    /** Рендер компонента. */
-    def render(jdArgsProxy: Props): VdomElement = {
-      val jdArgs = jdArgsProxy.value
-      renderTag(
-        idt = jdArgs.template,
-        i = 0,
-        jdArgs = jdArgs,
-        parent = jdArgs.template.rootLabel
-      )
-      //renderDocument( jdArgs = jdArgs )
-    }
+    protected def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback
 
+    protected def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback
 
-    // Callbacks
+    protected def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback
 
-    /** Реакция на клик по отрендеренному тегу. */
-    private def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback = {
-      // Если не сделать stopPropagation, то наружный strip перехватит клик
-      e.stopPropagationCB >>
-        dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
-    }
+    protected def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback
 
+    protected def jdStripDragOver(e: ReactDragEvent): Callback
 
-    /** Начало таскания qd-тега.
-      * Бывают сложности с рассчётом координат. Особенно, если используется плитка.
-      */
-    private def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
-      // Обязательно надо в setData() что-то передать.
-      val mimes = MimeConst.Sio
+    protected def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback
 
-      // Засунуть в состояние сериализованный инстанс таскаемого тега TODO с эджами, чтобы можно было перетаскивать за пределы этой страницы
-      //e.dataTransfer.setData( mimes.JDTAG_JSON, Json.toJson(jdt).toString() )
+    protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback
 
-      // Используем методику вычисления начального offset отсюда, т.е. через getComputedStyle(e.target)
-      // http://jsfiddle.net/robertc/kKuqH/30/
-      val srcEl = e.target.asInstanceOf[Element]
-      val srcTgStyle = WindowVm().getComputedStyle( srcEl ).get
-
-      // Функция-экстрактор целочисленных значений стилей по их названию.
-      def __extractIntStyleProp(name: String): Int = {
-        val valueStr = srcTgStyle.getPropertyValue(name)
-        DataUtil
-          .extractInt( valueStr )
-          .get
-      }
-
-      val C = Css.Coord
-      val srcLeft = __extractIntStyleProp( C.LEFT )
-      val srcTop  = __extractIntStyleProp( C.TOP )
-
-      val offsetXy = MCoords2dD(
-        x = srcLeft - e.clientX,
-        y = srcTop  - e.clientY
-      )
-
-      //println( s"srcStyl($srcLeft $srcTop) - eCl(${e.clientX} ${e.clientY}) => $offsetXy" )
-      e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.CONTENT_ELEMENT )
-      e.dataTransfer.setData( mimes.COORD_2D_JSON, Json.toJson(offsetXy).toString() )
-
-      dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
-    }
-
-    /** Начинается перетаскивание целого стрипа. */
-    private def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
-      // Надо выставить в событие, что на руках у нас целый стрип.
-      val mimes = MimeConst.Sio
-      e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.STRIP )
-      dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
-    }
-
-    private def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback = {
-      dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
-    }
-
-
-    private def jdStripDragOver(e: ReactDragEvent): Callback = {
-      // В b9710f2 здесь была проверка cookie через getData, но webkit/chrome не поддерживают доступ в getData во время dragOver. Ппппппц.
-      e.preventDefaultCB
-    }
-
-
-    /** Что-то было сброшено на указанный стрип. */
-    private def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
-      val mimes = MimeConst.Sio
-
-      e.preventDefault()
-      val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
-      val clientY = e.clientY
-
-      if ( dataType ==* mimes.DataContentTypes.CONTENT_ELEMENT ) {
-        // Перенос контента.
-        val coordsJsonStr = e.dataTransfer.getData( mimes.COORD_2D_JSON )
-        val clientX = e.clientX
-
-        // Всё остальное (вне event) заносим в callback-функцию, чтобы максимально обленивить вычисления и дальнейшие действия.
-        dispatchOnProxyScopeCBf($) { jdArgsProxy =>
-          // Узнать разницу между коодинатами мыши и левым верхним углом. Десериализовать из dataTransfer.
-          val offsetXy = try {
-            Json
-              .parse( coordsJsonStr )
-              .as[MCoords2dD]
-          } catch {
-            case ex: Throwable =>
-              LOG.log(ErrorMsgs.DND_DROP_ERROR, ex)
-              MCoords2dD(0, 0)
-          }
-
-          val szMultD = jdArgsProxy.value.conf.szMult.toDouble
-
-          // Вычислить относительную координату в css-пикселях между точкой дропа и левой верхней точкой strip'а.
-          // Считаем в client-координатах, т.к. рассчёты мгновенны, и client viewport не сдвинется за это время.
-          // Если понадобятся page-координаты, то https://stackoverflow.com/a/37200339
-          val topLeftXy = MCoords2di(
-            x = ((clientX + offsetXy.x) / szMultD).toInt,
-            y = ((clientY + offsetXy.y) / szMultD).toInt
-          )
-          //println(s"e.client(${e.clientX} ${e.clientY}) +diff=$offsetXy => $topLeftXy")
-
-          JdDropContent(
-            strip       = s,
-            clXy        = topLeftXy,
-            foreignTag  = None   // TODO Десериализовать из event, если элемент не принадлежит текущему документу.
-          )
-        }
-
-      } else if (dataType ==* mimes.DataContentTypes.STRIP) {
-        // Перетаскивание целого стрипа. Нужно вычислить, стрип дропнут выше или ниже он середины текущего стрипа.
-        val tgEl = e.target.asInstanceOf[Element]
-        dispatchOnProxyScopeCBf($) { _ =>
-          // szMult тут учитывать не требуется, т.к. вся работа идёт в client-координатах.
-          val clRect = tgEl.getBoundingClientRect()
-          val pointerY = clientY - clRect.top
-          val isUpper = pointerY < clRect.height / 2
-          //println(s"e.Y=$clientY clRect.top=${clRect.top} clRect.height=${clRect.height}")
-          JdDropStrip(
-            targetStrip = s,
-            isUpper     = isUpper
-          )
-        }
-
-      } else {
-        LOG.log( WarnMsgs.DND_DROP_UNSUPPORTED, msg = e.dataTransfer.types.mkString(",") )
-        Callback.empty
-      }
-    }
-
-
-    /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
-    private def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
-      // Прочитать natural w/h из экшена.
-      try {
-        val img = e.target.asInstanceOf[Image]
-        val sz = MSize2di(
-          // IDEA почему-то ругается на deprecated, это ошибка в scala-плагине.
-          width  = img.naturalWidth,
-          height = img.naturalHeight
-        )
-        val minWh = 0
-        ErrorConstants.assertArg( sz.width > minWh )
-        ErrorConstants.assertArg( sz.height > minWh )
-        dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
-      } catch {
-        case ex: Throwable =>
-          LOG.error( ErrorMsgs.IMG_EXPECTED, ex = ex, msg = (edgeUid, e.target.toString) )
-          Callback.empty
-      }
-    }
-
-
-    // Internal API
 
     /** Отрендерить дочерние элементы тега обычным методом.
       *
@@ -246,7 +91,7 @@ class JdR(
       */
     def renderChildren(dt: Tree[JdTag], jdArgs: MJdArgs): Iterator[VdomNode] = {
       renderChildrenUsing(dt) { (childJdTree, i) =>
-        renderTag(childJdTree, i, jdArgs, dt.rootLabel)
+        renderTag(childJdTree, jdArgs, i, dt.rootLabel)
       }
     }
 
@@ -320,7 +165,7 @@ class JdR(
 
 
     /** Рендер strip, т.е. одной "полосы" контента. */
-    def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderStrip(stripTree: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div]  = {
       val s = stripTree.rootLabel
       val C = jdArgs.jdCss
       val isSelected = jdArgs.selectedTag.containsLabel(s)
@@ -414,6 +259,10 @@ class JdR(
           bgColor
         },
 
+        jdArgs.renderArgs.blockClick.whenDefined {
+          ^.onClick ==> _
+        },
+
         // Скрыть не-main-стрипы, если этого требует рендер.
         // Это касается только стрипов, у которых нет isMain = Some(true)
         if (jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
@@ -465,12 +314,12 @@ class JdR(
 
 
     /** Выполнить рендер текущего документа, переданного в jdArgs. */
-    def renderDocument(i: Int = 0, jdArgs: MJdArgs): VdomElement = {
+    def renderDocument(i: Int = 0, jdArgs: MJdArgs): TagOf[html.Div] = {
       renderDocument( jdArgs.template, i, jdArgs )
     }
 
     /** Рендер указанного документа. */
-    def renderDocument(jd: Tree[JdTag], i: Int, jdArgs: MJdArgs): VdomElement = {
+    def renderDocument(jd: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div]  = {
       <.div(
         ^.key := i.toString,
 
@@ -479,6 +328,7 @@ class JdR(
           jdGridUtil.mkCssGridArgs(
             jds  = jd.subForest,
             conf = jdArgs.conf,
+            tagName = GridComponents.DIV,
             gridBuildArgsF = { items =>
               GridBuildArgs(
                 itemsExtDatas = items,
@@ -504,7 +354,7 @@ class JdR(
       * @param qdTagTree Тег с кодированными данными Quill delta.
       * @return Элемент vdom.
       */
-    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomElement = {
+    def renderQd(qdTagTree: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): TagOf[html.Div]  = {
       val tagMods = {
         val qdRrr = new QdRrrHtml(
           jdArgs      = jdArgs,
@@ -554,25 +404,204 @@ class JdR(
     }
 
 
+    /** QD_OP: Должен быть отрабатон внутри QD_CONTENT: */
+    def renderQdOp(qdOp: Tree[JdTag], i: Int, jdArgs: MJdArgs): TagOf[html.Div] = {
+      //LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (l.name, l) )
+      // VdomNullElement
+      throw new IllegalStateException( ErrorMsgs.SHOULD_NEVER_HAPPEN + HtmlConstants.SPACE + qdOp.rootLabel )
+    }
+
+
     /**
       * Запуск рендеринга произвольных тегов.
       */
     // TODO parent может быть необязательным. Но это сейчас не востребовано, поэтому он обязательный
-    def renderTag(idt: Tree[JdTag], i: Int, jdArgs: MJdArgs, parent: JdTag): VdomElement = {
+    def renderTag(idt: Tree[JdTag], jdArgs: MJdArgs, i: Int = 0, parent: JdTag = null): TagOf[html.Div] = {
       import MJdTagNames._
       idt.rootLabel.name match {
         case QD_CONTENT                => renderQd( idt, i, jdArgs, parent )
         case STRIP                     => renderStrip( idt, i, jdArgs )
         case DOCUMENT                  => renderDocument( idt, i, jdArgs )
-        // QD_OP: Должен быть отрабатон внутри QD_CONTENT:
-        case QD_OP =>
-          val l = idt.rootLabel
-          LOG.error( ErrorMsgs.SHOULD_NEVER_HAPPEN, msg = (l.name, l) )
-          VdomNullElement
+        case QD_OP                     => renderQdOp( idt, i, jdArgs )
       }
     }
 
+    def renderJdArgs(jdArgs: MJdArgs): TagOf[html.Div] = {
+      renderTag(
+        idt     = jdArgs.template,
+        jdArgs  = jdArgs,
+        parent  = jdArgs.template.rootLabel
+      )
+    }
+
   }
+
+
+  /** Рендерер дерева jd-тегов. */
+  protected class Backend($: BackendScope[Props, Unit]) extends JdRenderer {
+
+    /** Рендер компонента. */
+    def render(jdArgsProxy: Props): VdomElement = {
+      renderJdArgs( jdArgsProxy.value )
+    }
+
+
+    // Callbacks
+
+    /** Реакция на клик по отрендеренному тегу. */
+    override protected def jdTagClick(jdt: JdTag)(e: ReactMouseEvent): Callback = {
+      // Если не сделать stopPropagation, то наружный strip перехватит клик
+      e.stopPropagationCB >>
+        dispatchOnProxyScopeCB($, JdTagSelect(jdt) )
+    }
+
+
+    /** Начало таскания qd-тега.
+      * Бывают сложности с рассчётом координат. Особенно, если используется плитка.
+      */
+    override protected def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
+      // Обязательно надо в setData() что-то передать.
+      val mimes = MimeConst.Sio
+
+      // Засунуть в состояние сериализованный инстанс таскаемого тега TODO с эджами, чтобы можно было перетаскивать за пределы этой страницы
+      //e.dataTransfer.setData( mimes.JDTAG_JSON, Json.toJson(jdt).toString() )
+
+      // Используем методику вычисления начального offset отсюда, т.е. через getComputedStyle(e.target)
+      // http://jsfiddle.net/robertc/kKuqH/30/
+      val srcEl = e.target.asInstanceOf[Element]
+      val srcTgStyle = WindowVm().getComputedStyle( srcEl ).get
+
+      // Функция-экстрактор целочисленных значений стилей по их названию.
+      def __extractIntStyleProp(name: String): Int = {
+        val valueStr = srcTgStyle.getPropertyValue(name)
+        DataUtil
+          .extractInt( valueStr )
+          .get
+      }
+
+      val C = Css.Coord
+      val srcLeft = __extractIntStyleProp( C.LEFT )
+      val srcTop  = __extractIntStyleProp( C.TOP )
+
+      val offsetXy = MCoords2dD(
+        x = srcLeft - e.clientX,
+        y = srcTop  - e.clientY
+      )
+
+      //println( s"srcStyl($srcLeft $srcTop) - eCl(${e.clientX} ${e.clientY}) => $offsetXy" )
+      e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.CONTENT_ELEMENT )
+      e.dataTransfer.setData( mimes.COORD_2D_JSON, Json.toJson(offsetXy).toString() )
+
+      dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
+    }
+
+    /** Начинается перетаскивание целого стрипа. */
+    override protected def stripDragStart(jdt: JdTag)(e: ReactDragEvent): Callback = {
+      // Надо выставить в событие, что на руках у нас целый стрип.
+      val mimes = MimeConst.Sio
+      e.dataTransfer.setData( mimes.DATA_CONTENT_TYPE, mimes.DataContentTypes.STRIP )
+      dispatchOnProxyScopeCB($, JdTagDragStart(jdt) )
+    }
+
+    override protected def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent): Callback = {
+      dispatchOnProxyScopeCB($, JdTagDragEnd(jdt) )
+    }
+
+
+    override protected def jdStripDragOver(e: ReactDragEvent): Callback = {
+      // В b9710f2 здесь была проверка cookie через getData, но webkit/chrome не поддерживают доступ в getData во время dragOver. Ппппппц.
+      e.preventDefaultCB
+    }
+
+
+    /** Что-то было сброшено на указанный стрип. */
+    override protected def onDropToStrip(s: JdTag)(e: ReactDragEvent): Callback = {
+      val mimes = MimeConst.Sio
+
+      e.preventDefault()
+      val dataType = e.dataTransfer.getData( mimes.DATA_CONTENT_TYPE )
+      val clientY = e.clientY
+
+      if ( dataType ==* mimes.DataContentTypes.CONTENT_ELEMENT ) {
+        // Перенос контента.
+        val coordsJsonStr = e.dataTransfer.getData( mimes.COORD_2D_JSON )
+        val clientX = e.clientX
+
+        // Всё остальное (вне event) заносим в callback-функцию, чтобы максимально обленивить вычисления и дальнейшие действия.
+        dispatchOnProxyScopeCBf($) { jdArgsProxy =>
+          // Узнать разницу между коодинатами мыши и левым верхним углом. Десериализовать из dataTransfer.
+          val offsetXy = try {
+            Json
+              .parse( coordsJsonStr )
+              .as[MCoords2dD]
+          } catch {
+            case ex: Throwable =>
+              LOG.log(ErrorMsgs.DND_DROP_ERROR, ex)
+              MCoords2dD(0, 0)
+          }
+
+          val szMultD = jdArgsProxy.value.conf.szMult.toDouble
+
+          // Вычислить относительную координату в css-пикселях между точкой дропа и левой верхней точкой strip'а.
+          // Считаем в client-координатах, т.к. рассчёты мгновенны, и client viewport не сдвинется за это время.
+          // Если понадобятся page-координаты, то https://stackoverflow.com/a/37200339
+          val topLeftXy = MCoords2di(
+            x = ((clientX + offsetXy.x) / szMultD).toInt,
+            y = ((clientY + offsetXy.y) / szMultD).toInt
+          )
+          //println(s"e.client(${e.clientX} ${e.clientY}) +diff=$offsetXy => $topLeftXy")
+
+          JdDropContent(
+            strip       = s,
+            clXy        = topLeftXy,
+            foreignTag  = None   // TODO Десериализовать из event, если элемент не принадлежит текущему документу.
+          )
+        }
+
+      } else if (dataType ==* mimes.DataContentTypes.STRIP) {
+        // Перетаскивание целого стрипа. Нужно вычислить, стрип дропнут выше или ниже он середины текущего стрипа.
+        val tgEl = e.target.asInstanceOf[Element]
+        dispatchOnProxyScopeCBf($) { _ =>
+          // szMult тут учитывать не требуется, т.к. вся работа идёт в client-координатах.
+          val clRect = tgEl.getBoundingClientRect()
+          val pointerY = clientY - clRect.top
+          val isUpper = pointerY < clRect.height / 2
+          //println(s"e.Y=$clientY clRect.top=${clRect.top} clRect.height=${clRect.height}")
+          JdDropStrip(
+            targetStrip = s,
+            isUpper     = isUpper
+          )
+        }
+
+      } else {
+        LOG.log( WarnMsgs.DND_DROP_UNSUPPORTED, msg = e.dataTransfer.types.mkString(",") )
+        Callback.empty
+      }
+    }
+
+
+    /** Callback о завершении загрузки в память картинки, у которой неизвестны какие-то рантаймовые параметры. */
+    override protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent): Callback = {
+      // Прочитать natural w/h из экшена.
+      try {
+        val img = e.target.asInstanceOf[Image]
+        val sz = MSize2di(
+          // IDEA почему-то ругается на deprecated, это ошибка в scala-плагине.
+          width  = img.naturalWidth,
+          height = img.naturalHeight
+        )
+        val minWh = 0
+        ErrorConstants.assertArg( sz.width > minWh )
+        ErrorConstants.assertArg( sz.height > minWh )
+        dispatchOnProxyScopeCB( $, SetImgWh(edgeUid, sz) )
+      } catch {
+        case ex: Throwable =>
+          LOG.error( ErrorMsgs.IMG_EXPECTED, ex = ex, msg = (edgeUid, e.target.toString) )
+          Callback.empty
+      }
+    }
+
+  } // Backend
 
 
   val component = ScalaComponent.builder[Props]("Jd")
@@ -608,6 +637,29 @@ class JdR(
           )
         }
       }
+  }
+
+
+  /** Рендерер HTML всырую.
+    * При использовании плитки react-stonecutter возникла проблема с child-монтированием:
+    * нет анимации внутри child-компонетов.
+    */
+  object InlineRender extends JdRenderer {
+
+    override protected def jdTagClick(jdt: JdTag)(e: ReactMouseEvent) = Callback.empty
+
+    override protected def qdTagDragStart(jdt: JdTag)(e: ReactDragEvent) = Callback.empty
+
+    override protected def stripDragStart(jdt: JdTag)(e: ReactDragEvent) = Callback.empty
+
+    override protected def jdTagDragEnd(jdt: JdTag)(e: ReactDragEvent) = Callback.empty
+
+    override protected def jdStripDragOver(e: ReactDragEvent) = Callback.empty
+
+    override protected def onDropToStrip(s: JdTag)(e: ReactDragEvent) = Callback.empty
+
+    override protected def onNewImageLoaded(edgeUid: EdgeUid_t)(e: ReactEvent) = Callback.empty
+
   }
 
 }

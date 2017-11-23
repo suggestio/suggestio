@@ -1,6 +1,6 @@
 package io.suggest.jd.render.v
 
-import com.github.dantrain.react.stonecutter.CssGridProps
+import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
 import io.suggest.ad.blk.BlockWidths
 import io.suggest.grid.build.{GridBuildArgs, GridBuilder, ItemPropsExt}
 import io.suggest.jd.MJdConf
@@ -28,9 +28,10 @@ class JdGridUtil(
     * @return Инстанс CssGridProps, пригодный для передачи в CSSGrid(_)(...).
     */
   def mkCssGridArgs(
-                     jds: Seq[Tree[JdTag]],
-                     conf: MJdConf,
-                     gridBuildArgsF: TraversableOnce[ItemPropsExt] => GridBuildArgs
+                     jds              : Seq[Tree[JdTag]],
+                     conf             : MJdConf,
+                     tagName          : GridComponent_t,
+                     gridBuildArgsF   : TraversableOnce[ItemPropsExt] => GridBuildArgs
                    ): CssGridProps = {
     // Собрать аргументы для вызова layout-функции grid-builder'а.
     val gridBuildArgs = gridBuildArgsF(
@@ -56,8 +57,11 @@ class JdGridUtil(
 
     val blkSzMultD = conf.blkSzMult.toDouble
 
+    val ees = EnterExitStyle.fromTop
+
     new CssGridProps {
       override val duration     = 600
+      override val component    = tagName
       override val columns      = conf.gridColumnsCount
       override val columnWidth  = Math.round(BlockWidths.min.value * blkSzMultD).toInt
       // Плитка и без этого gutter'а работает. Просто выставлено на всякий случай, т.к. в коде модулей grid'а это дело используется.
@@ -66,6 +70,10 @@ class JdGridUtil(
       override val layout       = js.defined {
         gridLayoutF
       }
+
+      override val enter = ees.enter
+      override val entered = ees.entered
+      override val exit = ees.exit
     }
   }
 

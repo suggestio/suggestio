@@ -52,7 +52,9 @@ trait PropsCommon extends js.Object {
     *
     * @see [[EnterExitStyle]]
     */
-  val enter, entered, exit: js.UndefOr[EnterExitF_t] = js.undefined
+  val enter: js.UndefOr[EnterExitF_t] = js.undefined
+  val entered: js.UndefOr[EnterExitF_t] = js.undefined
+  val exit: js.UndefOr[EnterExitF_t] = js.undefined
 
 
   /**

@@ -1,13 +1,13 @@
 package io.suggest.jd.render.v
 
 import diode.FastEq
-import io.suggest.ad.blk.IBlockSize
 import io.suggest.color.MColorData
+import io.suggest.common.geom.d2.{ISize2di, MSize2di}
 import io.suggest.css.Css
 import io.suggest.css.ScalaCssDefaults._
 import io.suggest.css.ScalaCssUtil.Implicits._
 import io.suggest.font.{MFontSizes, MFonts}
-import io.suggest.jd.render.m.{MEmuCropCssArgs, MJdCssArgs}
+import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.tags.JdTag
 import io.suggest.jd.tags.qd.MQdOp
 import io.suggest.primo.ISetUnset
@@ -84,6 +84,14 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
   // -------------------------------------------------------------------------------
   // Strip
 
+  private def _bmStyleSide(sizePx: Int) = Math.round(sizePx * blkSzMultD).toInt
+
+  def bmStyleWh(bm: ISize2di): MSize2di = {
+    val w = _bmStyleSide(bm.width)
+    val h = _bmStyleSide(bm.height)
+    MSize2di(width = w, height = h)
+  }
+
   /** Стили контейнеров полосок, описываемых через props1.BlockMeta. */
   val bmStyleF = {
     val strips = _allJdTagsIter
@@ -95,17 +103,15 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF(stripsDomain) { strip =>
       // Стиль размеров блока-полосы.
       strip.props1.bm.whenDefinedStyleS { bm =>
+        val szMulted = bmStyleWh(bm)
         styleS(
-          width ( Math.round(_repadBlockSide(bm.w) * blkSzMultD).px ),
-          height( Math.round(_repadBlockSide(bm.h) * blkSzMultD).px )
+          width ( szMulted.width.px ),
+          height( szMulted.height.px )
         )
       }
     }
   }
 
-  /** Короткий пересчёт стороны блока. */
-  //private def _repadBlockSide(side: IBlockSize) = IBlockSize.rePadSizePx(side, jdCssArgs.conf.blockPadding)
-  private def _repadBlockSide(side: IBlockSize) = side.value
 
   /** Стили контейнера блока с широким фоном. */
   val bmWideStyleF = {
@@ -117,7 +123,7 @@ case class JdCss( jdCssArgs: MJdCssArgs ) extends StyleSheet.Inline {
     styleF( wideStripsDomain ) { strip =>
       strip.props1.bm.whenDefinedStyleS { bm =>
         styleS(
-          height( Math.round(_repadBlockSide(bm.h) * blkSzMultD).px )
+          height( Math.round(bm.height * blkSzMultD).px )
         )
       }
     }

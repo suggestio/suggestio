@@ -16,6 +16,20 @@ object EnterExitStyle extends js.Object {
 
   val foldUp: EnterExitStyle = js.native
 
+  val fromBottom: EnterExitStyle = js.native
+
+  val fromCenter: EnterExitStyle = js.native
+
+  val fromLeftToRight: EnterExitStyle = js.native
+
+  val fromTop: EnterExitStyle = js.native
+
+  val newspaper: EnterExitStyle = js.native
+
+  val simple: EnterExitStyle = js.native
+
+  val skew: EnterExitStyle = js.native
+
 }
 
 
