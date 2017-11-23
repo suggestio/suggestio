@@ -1,16 +1,17 @@
 package io.suggest.sc.grid.c
 
 import diode._
-import diode.data.PendingBase
+import diode.data.{PendingBase, Pot}
 import io.suggest.dev.MScreen
 import io.suggest.err.ErrorConstants
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.grid.m._
 import io.suggest.sjs.common.log.Log
-import io.suggest.sjs.common.msg.WarnMsgs
+import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.resp.MScRespActionTypes
+import io.suggest.sc.root.m.HandleIndexResp
 import io.suggest.sc.tile.TileConstants
 import japgolly.univeq._
 
@@ -132,7 +133,7 @@ class GridAdsAh[M](
             val scAction = scResp.respActions.head
             ErrorConstants.assertArg( scAction.acType ==* MScRespActionTypes.AdsTile )
             val findAdsResp = scAction.ads.get
-            val newScAds = findAdsResp.ads.map(MGridBlkData.apply)
+            val newScAds = findAdsResp.ads.map(MScAdData.apply)
             val v1 = if (m.evidence.clean) {
               v0
                 .withAds( v0.ads.ready(newScAds) )
@@ -159,15 +160,131 @@ class GridAdsAh[M](
 
 
     // Реакция на клик по карточке в плитке.
+    // Нужно отправить запрос на сервер, чтобы понять, что делать дальше.
+    // Возможны разные варианты: фокусировка в карточку, переход в выдачу другого узла, и т.д. Всё это расскажет сервер.
     case m: GridBlockClick =>
-      // Нужно отправить запрос на сервер, чтобы понять, что делать дальше.
-      // Возможны разные варианты: фокусировка в карточку, переход в выдачу другого узла, и т.д. Всё это расскажет сервер.
+      val v0 = value
 
-      // Считаем, что возможность клика исчезнет на время реквеста.
-      // TODO stub.
-      println( "TODO block clicked: " + m.nodeId )
-      noChange
+      // Поискать запрошенную карточку в состоянии.
+      _findAd(m.nodeId, v0)
+        .fold {
+          LOG.error( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          noChange
 
+        } { case (ad0, index) =>
+          // Есть карточка в плитке. Посмотреть, сфокусирована она или нет?
+          def __saveAdIntoValue(newAd: MScAdData) = _saveAdIntoValue(index, newAd, v0)
+
+          ad0.focused.fold {
+            // Карточка сейчас скрыта, её нужно раскрыть.
+            // Собрать запрос фокусировки на ровно одной рекламной карточке.
+            val fx = Effect {
+              val args0 = searchArgsRO.value
+              val args = MFindAdsReq(
+                allowReturnJump = Some( true ),
+                adIdLookup      = Some( m.nodeId ),
+                adsLookupMode   = None,
+                screenInfo      = args0.screenInfo,
+                receiverId      = args0.receiverId
+              )
+              api.focusedAds(args)
+                .transform { tryResp =>
+                  Success( FocusedResp(m.nodeId, tryResp) )
+                }
+            }
+
+            // выставить текущей карточке, что она pending
+            val ad1 = ad0.withFocused( ad0.focused.pending() )
+
+            val v2 = __saveAdIntoValue(ad1)
+            updated(v2, fx)
+
+          } { _ =>
+            // Карточка уже открыта, её надо свернуть назад в main-блок.
+            val ad1 = ad0.withFocused( Pot.empty )
+            val v2 = __saveAdIntoValue(ad1)
+            updated(v2)
+          }
+        }
+
+
+    // Сигнал завершения запроса фокусировки на какой-либо карточке
+    case m: FocusedResp =>
+      val v0 = value
+
+      // Найти фокусируемую рекламную карточку
+      _findAd(m.nodeId)
+        .fold {
+          // Не найдена искомая карточка.
+          LOG.warn( ErrorMsgs.NODE_NOT_FOUND, msg = m )
+          noChange
+
+        } { case (ad0, index) =>
+          def __saveAdIntoValue(newAd: MScAdData) = _saveAdIntoValue(index, newAd, v0)
+
+          // Есть искомая карточка. Перейти к обработке результата запроса.
+          m.tryResp.fold(
+            // Какая-то ошибка запроса этой рекламной карточки.
+            {ex =>
+              LOG.error(ErrorMsgs.XHR_UNEXPECTED_RESP, ex, msg = m)
+              val v2 = __saveAdIntoValue(
+                ad0.withFocused(
+                  ad0.focused.fail(ex)
+                )
+              )
+              updated(v2)
+            },
+            {sc3Resp =>
+              // Может прийти редирект в другую выдачу, а может -- раскрытие карточки.
+              val ra = sc3Resp.respActions.head
+              ra.acType match {
+                // Редирект в другую выдачу. Форсируем переключение в новую плитку.
+                case MScRespActionTypes.Index =>
+                  val fx = Effect.action( HandleIndexResp(m.tryResp, reqTimestamp = None) )
+                  effectOnly( fx )
+
+                // Фокусировка: раскрыть текущую карточку с помощью принятого контента.
+                case MScRespActionTypes.AdsFoc =>
+                  val adsResp = ra.ads.get
+                  val v2 = __saveAdIntoValue(
+                    ad0.withFocused(
+                      ad0.focused.ready(
+                        MBlkRenderData( adsResp.ads.head )
+                      )
+                    )
+                  )
+                  updated(v2)
+
+                case other =>
+                  LOG.error( ErrorMsgs.UNSUPPORTED_VALUE_OF_ARGUMENT, msg = (m, other) )
+                  throw new UnsupportedOperationException(other.toString)
+              }
+            }
+          )
+        }
+
+  }
+
+
+  /** Найти карточку с указанным id в состоянии, вернув её и её индекс. */
+  private def _findAd(nodeId: String, v0: MGridS = value): Option[(MScAdData, Int)] = {
+    v0.ads
+      .toOption
+      .flatMap { ads =>
+        ads
+          .iterator
+          .zipWithIndex
+          .find { _._1.nodeId contains nodeId }
+      }
+  }
+
+  /** Залить в состояние обновлённый инстанс карточки. */
+  def _saveAdIntoValue(index: Int, newAd: MScAdData, v0: MGridS = value): MGridS = {
+    v0.withAds(
+      for (ads0 <- v0.ads) yield {
+        ads0.updated(index, newAd)
+      }
+    )
   }
 
 }

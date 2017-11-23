@@ -1,6 +1,7 @@
 package io.suggest.sc.grid.m
 
 import diode.FastEq
+import io.suggest.jd.MJdAdData
 import io.suggest.jd.tags.JdTag
 import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
@@ -27,6 +28,12 @@ object MBlkRenderData {
   }
 
   implicit def univEq: UnivEq[MBlkRenderData] = UnivEq.derive
+
+  /** Сборка инстанса [[MScAdData]] из инстанса MJdAdData. */
+  def apply( jdAdData: MJdAdData ): MBlkRenderData = apply(
+    template  = jdAdData.template,
+    edges     = jdAdData.edgesMap.mapValues(MEdgeDataJs(_))
+  )
 
 }
 

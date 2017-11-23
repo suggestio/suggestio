@@ -4,6 +4,7 @@ import _root_.util.di.IScUtil
 import _root_.util.n2u.IN2NodesUtilDi
 import io.suggest.common.coll.Lists
 import io.suggest.common.css.FocusedTopLeft
+import io.suggest.common.empty.OptionUtil
 import io.suggest.common.fut.FutureUtil
 import io.suggest.dev.MSzMult
 import io.suggest.jd.MJdAdData
@@ -69,7 +70,8 @@ trait ScFocusedAdsBase
 
     /** Является ли указанный продьюсер очень внешним в качестве ресивера? */
     def is3rdPartyProducer(producerId: String): Boolean = {
-      val hasProdAsRcvr = _qs.search.prodIdOpt.nonEmpty && _qs.search.prodIdOpt ==* _qs.search.rcvrIdOpt
+      val hasProdAsRcvr = _qs.search.rcvrIdOpt.exists(_.id ==* producerId)
+      // TODO Тут был какой-то говнокод: _qs.search.prodIdOpt.nonEmpty && _qs.search.prodIdOpt ==* _qs.search.rcvrIdOpt
       !hasProdAsRcvr
     }
 
@@ -420,7 +422,7 @@ trait ScFocusedAdsBase
       focAdHtmlFut
         .map(Some.apply)
         .recover {
-          case ex: NoSuchElementException =>
+          case _: NoSuchElementException =>
             None
           case ex: Throwable =>
             LOGGER.error("Failed to find focused ad", ex)
@@ -462,7 +464,7 @@ trait ScFocusedAdsBase
         )
 
         // Если идёт начальная фокусировка, то сохранить данные по окликнутой карточке.
-        if (_qs.lookupMode == MLookupModes.Around) {
+        if (_qs.lookupMode contains MLookupModes.Around) {
           for (mad0 <- _mads.find(_.id.contains( _qs.lookupAdId) )) {
             saAcc ::= MAction(
               actions   = Seq(MActionTypes.ScAdsFocusingOnAd),
@@ -547,18 +549,38 @@ trait ScFocusedAdsBase
 
     /** Асинхронный результат поиска сегмента карточек. */
     lazy val adIdsLookupResFut: Future[AdsLookupRes] = {
-      if (_qs.search.hasAnySearchCriterias) {
-        mAdsSearchFut.flatMap { mNodeSearch =>
-          _doAdIdsLookup(neededCount = mNodeSearch.limit)
+      _qs.lookupMode
+        .filter { _ =>
+          _qs.search.hasAnySearchCriterias
         }
-      } else {
-        LOGGER.info(s"$logPrefix v2: not ad-search criterias found, skipping ids lookup.")
-        Future.successful( AdsLookupRes(Nil, total = 0) )
-      }
+        .map { lm =>
+          // v2-выдача ищет focused-карточки в выдаче.
+          LOGGER.trace(s"$logPrefix v2 focusing: ${_qs.lookupAdId} ${lm.toVisualString}")
+          mAdsSearchFut.flatMap { mNodeSearch =>
+            _doAdIdsLookup(neededCount = mNodeSearch.limit, lm = lm)
+          }
+        }
+        .orElse {
+          OptionUtil.maybe( _qs.lookupMode.isEmpty ) {
+            // v3-выдача пытается прочитать ровно одну карточку.
+            LOGGER.trace(s"$logPrefix v3: single ad GET: ${_qs.lookupAdId} without lookup.")
+            Future.successful(
+              AdsLookupRes(
+                ids   = NodeIdIndexed(_qs.lookupAdId, 1) :: Nil,
+                total = 1
+              )
+            )
+          }
+        }
+        .getOrElse {
+          // Хз, что запрашивается.
+          LOGGER.warn(s"$logPrefix v2: not ad-search criterias found, skipping ids lookup.")
+          Future.successful( AdsLookupRes(Nil, total = 0) )
+        }
     }
 
     /** Метод рекурсивного поиска сегмента последовательности id карточек в пакетных выхлопах elasticsearch. */
-    def _doAdIdsLookup(adId: String = _qs.lookupAdId, lm: MLookupMode = _qs.lookupMode,
+    def _doAdIdsLookup(adId: String = _qs.lookupAdId, lm: MLookupMode,
                        neededCount: Int, limit1: Int = 50, offset1: Int = 0, tryN: Int = 1): Future[AdsLookupRes] = {
 
       assert(tryN <= 20)

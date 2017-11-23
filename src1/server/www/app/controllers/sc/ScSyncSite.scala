@@ -169,7 +169,7 @@ trait ScSyncSite
             prodIdOpt = _scState.fadsProdIdOpt.map(MEsUuId.apply),
             genOpt    = _scState.generationOpt
           ),
-          lookupMode  = MLookupModes.Around,
+          lookupMode  = Some( MLookupModes.Around ),
           lookupAdId  = _scState.fadOpenedIdOpt.get,
           focJumpAllowed = false,
           screen      = None

@@ -1,15 +1,14 @@
 package io.suggest.sc.inx.c
 
 import diode._
-import diode.data.Pot
+import io.suggest.common.coll.Lists
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MWelcomeState}
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.root.m.{HandleScResp, MScRoot}
-import io.suggest.sc.sc3.MSc3IndexResp
+import io.suggest.sc.root.m.{HandleIndexResp, MScRoot}
 
 import scala.util.Success
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -47,7 +46,7 @@ class IndexAh[M](
         api
           .getIndex(args)
           .transform { tryRes =>
-            Success(HandleScResp(ts, tryRes))
+            Success(HandleIndexResp(tryRes, Some(ts)))
           }
       }
 
@@ -59,24 +58,38 @@ class IndexAh[M](
 
 
     // Поступление ответа сервера, который ожидается
-    case m: HandleScResp if value.resp.isPendingWithStartTime(m.reqTimestamp) =>
+    case m: HandleIndexResp if m.reqTimestamp.fold(true)(value.resp.isPendingWithStartTime) =>
       val v0 = value
 
       // Запихать ответ в состояние.
-      val resp2: Pot[MSc3IndexResp] = m.tryResp.fold(
-        v0.resp.fail,
+      val v1 = m.tryResp.fold(
+        { ex =>
+          v0.withResp( v0.resp.fail(ex) )
+
+        },
         {scResp =>
           scResp.respActions
             .find(_.acType == MScRespActionTypes.Index)
             .flatMap( _.index )
             .fold {
-              v0.resp.fail( new NoSuchElementException("index") )
-            } {
-              v0.resp.ready
+              v0.withResp(
+                v0.resp.fail( new NoSuchElementException("index") )
+              )
+            } { inx =>
+              v0
+                .withResp(
+                  v0.resp.ready(inx)
+                )
+                .withState(
+                  v0.state.withRcvrNodeId(
+                    // TODO Тут хрень. Текущего ресивера может и не быть, а он всегда есть, получается.
+                    Lists.prependOpt(inx.nodeId)( v0.state.rcvrIds )
+                  )
+                )
             }
         }
       )
-      val v1 = v0.withResp( resp2 )
+      //val v1 = v0.withResp( resp2 )
 
       // Нужно огранизовать инициализацию плитки карточек. Для этого нужен эффект:
       val gridInitFx = Effect.action {

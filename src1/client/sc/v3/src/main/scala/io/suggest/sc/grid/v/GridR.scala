@@ -5,6 +5,7 @@ import diode.FastEq
 import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.ad.blk.BlockPaddings
 import io.suggest.color.MColorData
+import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.build.{GridBuildArgs, GridBuildRes_t}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
@@ -161,14 +162,16 @@ class GridR(
                       } {
                         val iter = for {
                           (scAdData, rootCounter) <- gridS.ads.iterator.flatten.zipWithIndex
-                          keyStr = scAdData.nodeId
+                          keyPrefix = scAdData.nodeId
                             .getOrElse( rootCounter.toString )
                           edges = scAdData.focused
                             .fold(scAdData.main.edges)(_.edges)
-                          template <- scAdData.focused
+                          (template, j) <- scAdData.focused
                             .fold [Seq[Tree[JdTag]]] (scAdData.main.template :: Nil) { foc =>
                               foc.template.subForest
                             }
+                            .iterator
+                            .zipWithIndex
                         } yield {
                           jdConfOptProxy.wrap { _ =>
                             MJdArgs(
@@ -180,14 +183,17 @@ class GridR(
                               conf = jdConf
                             )
                           } { jdArgsProxy =>
+                            val keyStr = keyPrefix + `.` + j
                             scAdData.nodeId.fold[VdomElement] {
                               jdR.component
                                 .withKey(keyStr)(jdArgsProxy)
                             } { nodeId =>
-                              <.a(
+                              <.div(
                                 ^.key := keyStr,
-                                ^.onClick --> onBlockClick(nodeId),
-                                jdR(jdArgsProxy)
+                                <.a(
+                                  ^.onClick --> onBlockClick(nodeId),
+                                  jdR(jdArgsProxy)
+                                )
                               )
                             }
                           }

@@ -48,6 +48,8 @@ case class HandleGridBuildRes(res: GridBuildRes_t) extends IGridAction
 /** Клик по карточке в плитке. */
 case class GridBlockClick(nodeId: String) extends IGridAction
 
+/** Результат запроса фокусировки на рекламной карточке. */
+case class FocusedResp(nodeId: String, tryResp: Try[MSc3Resp]) extends IGridAction
 
 /** Экшен скроллинга плитки. */
 case class GridScroll(scrollTop: Double) extends IGridAction

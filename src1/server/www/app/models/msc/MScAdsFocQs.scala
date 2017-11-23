@@ -23,20 +23,19 @@ object MScAdsFocQs {
                               apiVsnB          : QueryStringBindable[MScApiVsn],
                               boolB            : QueryStringBindable[Boolean],
                               strB             : QueryStringBindable[String],
-                              lookupModeB      : QueryStringBindable[MLookupMode]
+                              lookupModeOptB   : QueryStringBindable[Option[MLookupMode]]
                              ): QueryStringBindable[MScAdsFocQs] = {
     new QueryStringBindableImpl[MScAdsFocQs] {
 
       override def bind(key: String, params: Map[String, Seq[String]]): Option[Either[String, MScAdsFocQs]] = {
         for {
           searchE             <- scAdsSearchArgsB.bind(key, params)
-          if searchE.right.exists(_.nonEmpty)
           k = key1F(key)
+          apiVsnE             <- apiVsnB.bind       (k(VSN_FN),               params)
           focJumpAllowedE     <- boolB.bind         (k(FOC_JUMP_ALLOWED_FN),  params)
-          lookupModeE         <- lookupModeB.bind   (k(AD_LOOKUP_MODE_FN),    params)
+          lookupModeE         <- lookupModeOptB.bind(k(AD_LOOKUP_MODE_FN),    params)
           lookupAdIdE         <- strB.bind          (k(AD_ID_LOOKUP_FN),      params)
           screenE             <- devScreenOptB.bind (k(SCREEN_INFO_FN),       params)
-          apiVsnE             <- apiVsnB.bind       (k(VSN_FN),               params)
         } yield {
           for {
             search            <- searchE.right
@@ -64,7 +63,7 @@ object MScAdsFocQs {
           Seq(
             scAdsSearchArgsB.unbind (key,                     value.search),
             boolB.unbind            (k(FOC_JUMP_ALLOWED_FN),  value.focJumpAllowed),
-            lookupModeB.unbind      (k(AD_LOOKUP_MODE_FN),    value.lookupMode),
+            lookupModeOptB.unbind   (k(AD_LOOKUP_MODE_FN),    value.lookupMode),
             strB.unbind             (k(AD_ID_LOOKUP_FN),      value.lookupAdId),
             devScreenOptB.unbind    (k(SCREEN_INFO_FN),       value.screen),
             apiVsnB.unbind          (k(VSN_FN),               value.apiVsn)
@@ -91,7 +90,7 @@ object MScAdsFocQs {
 case class MScAdsFocQs(
                         search          : MScAdsSearchQs,
                         focJumpAllowed  : Boolean,
-                        lookupMode      : MLookupMode,
+                        lookupMode      : Option[MLookupMode],
                         lookupAdId      : String,
                         screen          : Option[DevScreen],
                         apiVsn          : MScApiVsn         = MScApiVsns.unknownVsn

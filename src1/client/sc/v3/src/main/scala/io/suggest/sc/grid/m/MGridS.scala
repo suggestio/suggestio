@@ -48,7 +48,7 @@ object MGridS {
   */
 case class MGridS(
                    columnsCount   : Int                     = 8, // TODO Явно убрать дефолтовое значение, вместо с empty/ProductEmpty
-                   ads            : Pot[Seq[MGridBlkData]]  = Pot.empty,
+                   ads            : Pot[Seq[MScAdData]]  = Pot.empty,
                    hasMoreAds     : Boolean                 = true,
                    gridSz         : Option[MSize2di]        = None,
                    szMult         : MSzMult                 = MSzMults.`1.0`
@@ -57,7 +57,7 @@ case class MGridS(
 {
 
   def withColumnsCount(columnsCount: Int)                 = copy(columnsCount = columnsCount)
-  def withAds(ads: Pot[Seq[MGridBlkData]])                = copy(ads = ads)
+  def withAds(ads: Pot[Seq[MScAdData]])                = copy(ads = ads)
   def withHasMoreAds(hasMoreAds: Boolean)                 = copy(hasMoreAds = hasMoreAds)
   def withGridSz(realContentSz: Option[MSize2di])         = copy(gridSz = realContentSz)
   def withSzMult(szMult: MSzMult)                         = copy(szMult = szMult)
