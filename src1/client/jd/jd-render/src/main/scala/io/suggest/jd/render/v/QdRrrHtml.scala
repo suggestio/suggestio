@@ -113,7 +113,7 @@ class QdRrrHtml(
       case MQdOpTypes.Insert =>
         for {
           qdEi <- qdOp.edgeInfo
-          e <- jdArgs.renderArgs.edges.get( qdEi.edgeUid )
+          e <- jdArgs.edges.get( qdEi.edgeUid )
         } yield {
           var videosCnt = counters.video
           var imagesCnt = counters.image

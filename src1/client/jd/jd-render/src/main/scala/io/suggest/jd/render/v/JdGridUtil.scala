@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter.{CssGridProps, EnterExitStyle, GridComponent_t}
-import io.suggest.ad.blk.BlockWidths
+import io.suggest.ad.blk.{BlockMeta, BlockWidths}
 import io.suggest.grid.build.{GridBuildArgs, GridBuilder, ItemPropsExt}
 import io.suggest.jd.MJdConf
 import io.suggest.jd.tags.JdTag
@@ -19,6 +19,14 @@ class JdGridUtil(
                   gridBuilder: GridBuilder
                 ) {
 
+  def jdTrees2bms(jdTrees: TraversableOnce[Tree[JdTag]]): Iterator[BlockMeta] = {
+    jds2bms( jdTrees.toIterator.map(_.rootLabel) )
+  }
+  def jds2bms(jdTrees: TraversableOnce[JdTag]): Iterator[BlockMeta] = {
+    jdTrees.toIterator
+      .flatMap(_.props1.bm)
+  }
+
   /** Сборка пропертисов для запуска рендера CSSGrid.
     *
     * @param jds Jd-теги в исходном порядке.
@@ -28,7 +36,7 @@ class JdGridUtil(
     * @return Инстанс CssGridProps, пригодный для передачи в CSSGrid(_)(...).
     */
   def mkCssGridArgs(
-                     jds              : Seq[Tree[JdTag]],
+                     jds              : TraversableOnce[BlockMeta],
                      conf             : MJdConf,
                      tagName          : GridComponent_t,
                      gridBuildArgsF   : TraversableOnce[ItemPropsExt] => GridBuildArgs
@@ -36,8 +44,7 @@ class JdGridUtil(
     // Собрать аргументы для вызова layout-функции grid-builder'а.
     val gridBuildArgs = gridBuildArgsF(
       jds
-        .iterator
-        .flatMap(_.rootLabel.props1.bm)
+        .toIterator
         .map { bm =>
           ItemPropsExt(
             blockMeta = bm

@@ -8,11 +8,10 @@ import io.suggest.color.MColorData
 import io.suggest.common.html.HtmlConstants.`.`
 import io.suggest.grid.build.{GridBuildArgs, GridBuildRes_t}
 import io.suggest.jd.MJdConf
-import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
-import io.suggest.jd.render.v.{JdCss, JdCssR, JdGridUtil, JdR}
-import io.suggest.jd.tags.JdTag
+import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
+import io.suggest.jd.render.v._
 import io.suggest.react.{ReactCommonUtil, ReactDiodeUtil}
-import io.suggest.sc.grid.m.{GridBlockClick, GridScroll, HandleGridBuildRes, MGridS}
+import io.suggest.sc.grid.m._
 import io.suggest.sc.styl.GetScCssF
 import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.VdomElement
@@ -23,7 +22,6 @@ import io.suggest.spa.OptFastEq
 import io.suggest.ueq.UnivEqUtil._
 
 import scalacss.ScalaCssReact._
-import scalaz.Tree
 
 /**
   * Suggest.io
@@ -35,6 +33,7 @@ class GridR(
              jdGridUtil                 : JdGridUtil,
              jdR                        : JdR,
              jdCssR                     : JdCssR,
+             jdCssFactory               : JdCssFactory,
              val gridLoaderR            : GridLoaderR,
              getScCssF                  : GetScCssF
            ) {
@@ -114,17 +113,12 @@ class GridR(
 
                 s.jdConfOptC { jdConfOptProxy =>
                   jdConfOptProxy.value.whenDefinedEl { jdConf =>
+
                     val templates = gridS.ads
                       .getOrElse(Nil)   // TODO Правильно ли тут это?
-                      .flatMap { ad =>
-                        ad.focused.fold [Seq[Tree[JdTag]]] {
-                          ad.main.template :: Nil
-                        } { focBlk =>
-                          focBlk.template.subForest
-                        }
-                      }
+                      .flatMap( _.flatGridTemplates )
 
-                    val jdCss = JdCss(
+                    val jdCss = jdCssFactory.mkJdCss(
                       MJdCssArgs(
                         templates = templates,
                         conf      = jdConf
@@ -148,7 +142,7 @@ class GridR(
                       // Наконец сама плитка карточек:
                       CSSGrid {
                         jdGridUtil.mkCssGridArgs(
-                          jds       = templates,
+                          jds       = jdGridUtil.jdTrees2bms(templates),
                           conf      = jdConf,
                           tagName   = GridComponents.DIV,
                           gridBuildArgsF = { items =>
@@ -161,16 +155,13 @@ class GridR(
                           }
                         )
                       } {
+                        // TODO Opt Надо этот код завернуть в коннекшены, надо бы динамический пул/карту data-коннекшенов до каждого блока.
                         val iter = for {
                           (scAdData, rootCounter) <- gridS.ads.iterator.flatten.zipWithIndex
                           keyPrefix = scAdData.nodeId
                             .getOrElse( rootCounter.toString )
-                          edges = scAdData.focused
-                            .fold(scAdData.main.edges)(_.edges)
-                          (template, j) <- scAdData.focused
-                            .fold [Seq[Tree[JdTag]]] (scAdData.main.template :: Nil) { foc =>
-                              foc.template.subForest
-                            }
+                          edges = scAdData.flatGridEdges
+                          (template, j) <- scAdData.flatGridTemplates
                             .iterator
                             .zipWithIndex
                         } yield {
@@ -197,28 +188,28 @@ class GridR(
                           */
                           jdConfOptProxy.wrap { _ =>
                             MJdArgs(
-                              template    = template,
-                              renderArgs  = MJdRenderArgs(
-                                edges     = edges,
-                                blockClick = for (nodeId <- scAdData.nodeId) yield { _: ReactMouseEvent =>
-                                  onBlockClick(nodeId)
-                                }
-                              ),
-                              jdCss = jdCss,
-                              conf = jdConf
+                              template  = template,
+                              edges     = edges,
+                              jdCss     = jdCss,
+                              conf      = jdConf
                             )
                           } { jdArgsProxy =>
                             <.div(
                               ^.key := keyStr,
+                              scAdData.nodeId.whenDefined { nodeId =>
+                                ^.onClick --> onBlockClick(nodeId)
+                              },
+                              /*
                               template.rootLabel.props1.bm.whenDefined { bm =>
                                 val wh = jdCss.bmStyleWh(bm)
                                 TagMod(
                                   ^.width  := wh.width.px,
                                   ^.height := wh.height.px
                                 )
-                                jdR.component
-                                  .withKey(keyStr)(jdArgsProxy)
                               },
+                              */
+                              jdR.component
+                                .withKey(keyStr)(jdArgsProxy)
                             )
                           }
                         }

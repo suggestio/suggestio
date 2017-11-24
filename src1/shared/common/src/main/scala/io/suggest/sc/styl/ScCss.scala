@@ -283,12 +283,12 @@ case class ScCss( args: IScCssArgs )
     object Logo {
 
       /** Суффикс названия css-классов разных логотипов. */
-      private def `-logo` = "-logo"
+      private def `logo_` = "logo"
 
       /** Стили текстового логотипа узла.*/
       object Txt {
 
-        private val TXT_LOGO = HEADER + "_txt" + `-logo`
+        private val TXT_LOGO = HEADER + "_txt-" + `logo_`
 
         val txtLogo = {
           style(
@@ -319,7 +319,7 @@ case class ScCss( args: IScCssArgs )
       /** CSS для картинки-логотипа. */
       object Img {
         /** Алиас основного стиля логотипа. */
-        val logo = _styleAddClass( HEADER + `-logo` )
+        val logo = _styleAddClass( HEADER + "_" + `logo_` )
         def IMG_HEIGHT_CSSPX = 30
       }
 

@@ -58,7 +58,7 @@ case class MAeRoot(
       template = jdArgs.template,
       edges    = {
         val videoPred = MPredicates.JdContent.Video
-        jdArgs.renderArgs
+        jdArgs
           .edges
           .mapValues { e =>
             var jde = e.jdEdge

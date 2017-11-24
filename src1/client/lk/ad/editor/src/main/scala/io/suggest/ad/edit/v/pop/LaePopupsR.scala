@@ -69,7 +69,7 @@ class LaePopupsR(
         cropPopPropsOptC = rootProxy.connect { root =>
           for {
             mcrop       <- root.popups.pictureCrop
-            edge        <- root.doc.jdArgs.renderArgs.edges.get( mcrop.imgEdgeUid )
+            edge        <- root.doc.jdArgs.edges.get( mcrop.imgEdgeUid )
             imgSrc      <- edge.origImgSrcOpt
           } yield {
             pictureCropPopupR.PropsVal(

@@ -3,10 +3,14 @@ package io.suggest.sc.grid.m
 import diode.FastEq
 import diode.data.Pot
 import io.suggest.jd.MJdAdData
+import io.suggest.jd.tags.JdTag
+import io.suggest.model.n2.edge.EdgeUid_t
 import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.ueq.UnivEqUtil._
 import io.suggest.ueq.JsUnivEqUtil._
 import japgolly.univeq.UnivEq
+
+import scalaz.Tree
 
 
 /**
@@ -56,5 +60,27 @@ case class MScAdData(
                     ) {
 
   def withFocused(focused: Pot[MBlkRenderData]) = copy(focused = focused)
+
+
+  /** Вернуть последовательность шаблонов для "плоской" плитки, т.е. где и focused и не-focused одновременно.
+    *
+    * @return Список шаблонов на рендер.
+    */
+  def flatGridTemplates: Seq[Tree[JdTag]] = {
+    focused.fold [Seq[Tree[JdTag]]] {
+      main.template :: Nil
+    } { focBlk =>
+      focBlk.template.subForest
+    }
+  }
+
+  /** Вернтуь карту эджей для плоской плитки.
+    *
+    * @return Карта эджей.
+    */
+  def flatGridEdges: Map[EdgeUid_t, MEdgeDataJs] = {
+    focused
+      .fold(main.edges)(_.edges)
+  }
 
 }

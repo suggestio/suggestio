@@ -4,7 +4,7 @@ import diode.{ModelRO, ModelRW}
 import diode.react.ReactConnector
 import io.suggest.ad.edit.m._
 import MDocS.MDocSFastEq
-import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs, MJdRenderArgs}
+import io.suggest.jd.render.m.{MJdArgs, MJdCssArgs}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.ErrorMsgs
 import play.api.libs.json.Json
@@ -86,9 +86,7 @@ class LkAdEditCircuit(
         MDocS(
           jdArgs = MJdArgs(
             template   = tpl,
-            renderArgs = MJdRenderArgs(
-              edges = edges
-            ),
+            edges      = edges,
             jdCss      = jdCss,
             conf       = jdConf
           ),
@@ -227,7 +225,7 @@ class LkAdEditCircuit(
   private val mPictureAhRW = zoomRW[MPictureAh] { mroot =>
     val mdoc = mroot.doc
     MPictureAh(
-      edges       = mdoc.jdArgs.renderArgs.edges,
+      edges       = mdoc.jdArgs.edges,
       selectedTag = mdoc.jdArgs.selectedTagLoc.toLabelOpt,
       errorPopup  = mroot.popups.error,
       cropPopup   = mroot.popups.pictureCrop,
@@ -267,9 +265,7 @@ class LkAdEditCircuit(
         // Залить всё в итоговое состояние пачкой:
         mdoc0.jdArgs.copy(
           template    = tpl2,
-          renderArgs  = mdoc0.jdArgs.renderArgs.withEdges(
-            mPictureAh.edges
-          ),
+          edges       = mPictureAh.edges,
           jdCss       = css2
         )
       }
@@ -315,7 +311,7 @@ class LkAdEditCircuit(
       val jdArgs = mroot.doc.jdArgs
       MJdVldAh(
         template = jdArgs.template,
-        edges    = jdArgs.renderArgs.edges,
+        edges    = jdArgs.edges,
         popups   = mroot.popups
       )
     } { (mroot, _) =>

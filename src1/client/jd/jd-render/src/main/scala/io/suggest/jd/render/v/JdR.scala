@@ -177,7 +177,7 @@ class JdR(
       val bgImgOpt = for {
         bgImgData <- s.props1.bgImg
         edgeUid   = bgImgData.imgEdge.edgeUid
-        edge      <- jdArgs.renderArgs.edges.get( edgeUid )
+        edge      <- jdArgs.edges.get( edgeUid )
         if edge.jdEdge.predicate ==>> MPredicates.JdBgPred
         bgImgSrc  <- edge.origImgSrcOpt
       } yield {
@@ -259,10 +259,6 @@ class JdR(
           bgColor
         },
 
-        jdArgs.renderArgs.blockClick.whenDefined {
-          ^.onClick ==> _
-        },
-
         // Скрыть не-main-стрипы, если этого требует рендер.
         // Это касается только стрипов, у которых нет isMain = Some(true)
         if (jdArgs.renderArgs.hideNonMainStrips && !s.props1.isMain.getOrElseFalse) {
@@ -326,7 +322,7 @@ class JdR(
         // Плитку отсюда полностью вынести не удалось.
         CSSGrid {
           jdGridUtil.mkCssGridArgs(
-            jds  = jd.subForest,
+            jds  = jdGridUtil.jdTrees2bms(jd.subForest),
             conf = jdArgs.conf,
             tagName = GridComponents.DIV,
             gridBuildArgsF = { items =>

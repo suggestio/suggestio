@@ -136,7 +136,7 @@ class DocEditAh[M](
         val currTag0 = v0.jdArgs.selectedTag.get
         val selJdtPath = v0.jdArgs.selPath.get
         // Спроецировать карту сборных эджей в jd-эджи
-        val edgesData0 = v0.jdArgs.renderArgs.edges
+        val edgesData0 = v0.jdArgs.edges
         val (qdTag2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, edgesData0)
 
         // Собрать новый json-document
@@ -152,8 +152,7 @@ class DocEditAh[M](
 
         val jdArgs2 = v0.jdArgs.copy(
           template    = tpl2,
-          renderArgs  = v0.jdArgs.renderArgs
-            .withEdges( edgesData3 ),
+          edges       = edgesData3,
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           )
@@ -205,7 +204,7 @@ class DocEditAh[M](
             // Нужно получить текущее qd-под-дерево (для сборки дельты)
             val delta2 = quillDeltaJsUtil.qdTag2delta(
               qd    = newSelJdtTreeLoc.tree,
-              edges = v1.jdArgs.renderArgs.edges
+              edges = v1.jdArgs.edges
             )
             v1
               .withQdEdit(
@@ -257,7 +256,7 @@ class DocEditAh[M](
         // Может быть, был какой-то qd-tag и весь текст теперь в нём удалён? Удалить, если старый тег, если осталась дельта
         val v4 = v0.jdArgs.selectedTag.fold(v3) { jdtTree =>
           val jdt = jdtTree.rootLabel
-          val dataEdges0 = v0.jdArgs.renderArgs.edges
+          val dataEdges0 = v0.jdArgs.edges
           if (
             jdt.name ==* MJdTagNames.QD_CONTENT &&
             QdJsUtil.isEmpty(jdtTree, dataEdges0) &&
@@ -279,11 +278,10 @@ class DocEditAh[M](
               .withJdArgs(
                 v3.jdArgs.copy(
                   template    = tpl2,
-                  renderArgs  = v3.jdArgs.renderArgs
-                    .withEdges( dataEdges2 ),
+                  edges       = dataEdges2,
                   jdCss       = jdCssFactory.mkJdCss(
                     MJdCssArgs.singleCssArgs(tpl2, v3.jdArgs.conf)
-                  ),
+                  )
                 )
               )
           } else {
@@ -298,7 +296,7 @@ class DocEditAh[M](
     // Завершена фоновая конвертация base64-URL в Blob.
     case m: B64toBlobDone =>
       val v0 = value
-      val dataEdgesMap0 = v0.jdArgs.renderArgs.edges
+      val dataEdgesMap0 = v0.jdArgs.edges
 
       // Вычислить обновлённый эдж, если есть старый эдж для данной картинки.
       val dataEdgeOpt2 = for {
@@ -337,11 +335,7 @@ class DocEditAh[M](
         val dataEdgesMap2 = JdTag.purgeUnusedEdges(v0.jdArgs.template, dataEdgesMap1)
         val v2 = v0
           .withJdArgs(
-            v0.jdArgs.withRenderArgs(
-              v0.jdArgs.renderArgs.withEdges(
-                dataEdgesMap2
-              )
-            )
+            v0.jdArgs.withEdges(dataEdgesMap2)
           )
 
         // Запустить эффект хэширования и дальнейшей закачки файла на сервер.
@@ -353,17 +347,14 @@ class DocEditAh[M](
     // Поступила команда на проведение чистки карты эджей.
     case PurgeUnusedEdges =>
       val v0 = value
-      val edges0 = v0.jdArgs.renderArgs.edges
+      val edges0 = v0.jdArgs.edges
       val edges2 = JdTag.purgeUnusedEdges( v0.jdArgs.template, edges0 )
       if ( edges0.size ==* edges2.size ) {
         noChange
       } else {
-        //println(s"edges count changed: ${edges0.size} => ${edges2.size}")
         val v2 = v0.withJdArgs(
-          v0.jdArgs.withRenderArgs(
-            v0.jdArgs.renderArgs.withEdges(
-              edges2
-            )
+          v0.jdArgs.withEdges(
+            edges2
           )
         )
         updated(v2)
@@ -696,7 +687,7 @@ class DocEditAh[M](
     // Появилась новая гистограмма в карте гисторамм. Нужно поправить эджи, у которых фон соответствует связанной картинке.
     case m: HandleNewHistogramInstalled =>
       val v0 = value
-      val edgeUids4mod = v0.jdArgs.renderArgs
+      val edgeUids4mod = v0.jdArgs
         .edges
         .valuesIterator
         .flatMap { e =>
@@ -781,7 +772,7 @@ class DocEditAh[M](
             } {
               v2 = v0.withQdEdit(
                 Some(qdEdit0.copy(
-                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdArgs.renderArgs.edges ),
+                  initDelta = quillDeltaJsUtil.qdTag2delta( qdTag2, v2.jdArgs.edges ),
                   realDelta = None
                 ))
               )
@@ -919,7 +910,7 @@ class DocEditAh[M](
       val textL10ed = Messages( MsgCodes.`Example.text` )
 
       val textPred = MPredicates.JdContent.Text
-      val edgesMap0 = v0.jdArgs.renderArgs.edges
+      val edgesMap0 = v0.jdArgs.edges
       val (edgesMap2, edgeUid) = edgesMap0
         .valuesIterator
         .find { e =>
@@ -958,8 +949,7 @@ class DocEditAh[M](
       val v2 = v0.copy(
         jdArgs = v0.jdArgs.copy(
           template    = tpl2,
-          renderArgs  = v0.jdArgs.renderArgs
-            .withEdges( edgesMap2 ),
+          edges       = edgesMap2,
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           ),

@@ -324,7 +324,7 @@ class LkAdEditFormR(
             val bgEdgeOpt = selJdt.props1
               .bgImg
               .flatMap { ei =>
-                mroot.doc.jdArgs.renderArgs.edges
+                mroot.doc.jdArgs.edges
                   .get(ei.imgEdge.edgeUid)
               }
             pictureR.PropsVal(

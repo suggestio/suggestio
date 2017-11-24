@@ -4,6 +4,8 @@ import diode.FastEq
 import io.suggest.jd.MJdConf
 import io.suggest.jd.render.v.JdCss
 import io.suggest.jd.tags.{JdTag, MJdTagNames}
+import io.suggest.model.n2.edge.EdgeUid_t
+import io.suggest.n2.edge.MEdgeDataJs
 import io.suggest.scalaz.NodePath_t
 import io.suggest.ueq.UnivEqUtil._
 import japgolly.univeq._
@@ -23,6 +25,7 @@ object MJdArgs {
   implicit object MJdWithArgsFastEq extends FastEq[MJdArgs] {
     override def eqv(a: MJdArgs, b: MJdArgs): Boolean = {
       (a.template       ===* b.template) &&
+        (a.edges        ===* b.edges) &&
         (a.renderArgs   ===* b.renderArgs) &&
         (a.jdCss        ===* b.jdCss) &&
         (a.conf         ===* b.conf) &&
@@ -39,6 +42,7 @@ object MJdArgs {
 /** Класс-контейнер данных для рендера html.
   *
   * @param template Шаблон для рендера.
+  * @param edges Карта данных по эджам, с сервера.
   * @param renderArgs Контейнер параметров для рендера конкретно этого шаблона.
   * @param jdCss css для рендера.
   * @param conf Общий конфиг рендеринга.
@@ -47,16 +51,19 @@ object MJdArgs {
   */
 case class MJdArgs(
                     template     : Tree[JdTag],
-                    renderArgs   : MJdRenderArgs,
+                    edges        : Map[EdgeUid_t, MEdgeDataJs],
                     jdCss        : JdCss,
                     conf         : MJdConf,
+                    renderArgs   : MJdRenderArgs        = MJdRenderArgs.empty,
+                    // TODO поля ниже довольно специфичны, надо унести их в renderArgs.
                     selPath      : Option[NodePath_t]   = None,
                     dnd          : MJdDndS              = MJdDndS.empty
                   ) {
 
-  def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
   def withTemplate(template: Tree[JdTag])           = copy(template = template)
+  def withEdges(edges: Map[EdgeUid_t, MEdgeDataJs]) = copy(edges = edges)
   def withRenderArgs(renderArgs: MJdRenderArgs)     = copy(renderArgs = renderArgs)
+  def withJdCss(jdCss: JdCss)                       = copy(jdCss = jdCss)
   def withConf(conf: MJdConf)                       = copy(conf = conf)
   def withSelPath(selPath: Option[NodePath_t])      = copy(selPath = selPath)
   def withDnd(dnd: MJdDndS = MJdDndS.empty)         = copy(dnd = dnd)
