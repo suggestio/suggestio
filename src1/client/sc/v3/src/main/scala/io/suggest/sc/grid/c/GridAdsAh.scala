@@ -4,6 +4,9 @@ import diode._
 import diode.data.{PendingBase, Pot}
 import io.suggest.dev.MScreen
 import io.suggest.err.ErrorConstants
+import io.suggest.jd.MJdConf
+import io.suggest.jd.render.m.MJdCssArgs
+import io.suggest.jd.render.v.{JdCss, JdCssFactory}
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
 import io.suggest.sc.grid.m._
@@ -29,11 +32,27 @@ class GridAdsAh[M](
                     api             : IFindAdsApi,
                     searchArgsRO    : ModelRO[MFindAdsReq],
                     screenRO        : ModelRO[MScreen],
+                    jdCssFactory    : JdCssFactory,
                     modelRW         : ModelRW[M, MGridS]
                   )
   extends ActionHandler(modelRW)
   with Log
 {
+
+  /** Простая и ресурсоёмкая пересборка CSS карточек. */
+  private def _mkJdCss(ads: Pot[Seq[MScAdData]], jdConf: MJdConf): JdCss = {
+    jdCssFactory.mkJdCss(
+      MJdCssArgs(
+        templates = ads
+          .iterator
+          .flatten
+          .flatMap(_.flatGridTemplates)
+          .toSeq,
+        conf = jdConf
+      )
+    )
+  }
+
 
   override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
@@ -133,21 +152,35 @@ class GridAdsAh[M](
             val scAction = scResp.respActions.head
             ErrorConstants.assertArg( scAction.acType ==* MScRespActionTypes.AdsTile )
             val findAdsResp = scAction.ads.get
-            val newScAds = findAdsResp.ads.map(MScAdData.apply)
-            val v1 = if (m.evidence.clean) {
-              v0
-                .withAds( v0.ads.ready(newScAds) )
-                .withSzMult( findAdsResp.szMult )
+            if (findAdsResp.ads.isEmpty) {
+              // Пустой ответ - короткая реакция:
+              v0.withHasMoreAds(false)
             } else {
-              // Проверить, совпадает ли SzMult?
-              ErrorConstants.assertArg( findAdsResp.szMult ==* v0.szMult )
-              v0.withAds(
-                v0.ads.map { _ ++ newScAds }
+              // Есть хотя бы одна карточка в ответе сервера.
+              val newScAds = findAdsResp.ads
+                .iterator
+                .map(MScAdData.apply)
+                .toVector
+              val (ads2, jdConf2) = if (m.evidence.clean) {
+                val jdConf1 = v0.jdConf.withSzMult(
+                  findAdsResp.szMult
+                )
+                val ads1 = v0.ads.ready(newScAds)
+                (ads1, jdConf1)
+
+              } else {
+                // Проверить, совпадает ли SzMult:
+                ErrorConstants.assertArg( findAdsResp.szMult ==* v0.jdConf.szMult )
+                val ads1 = v0.ads.map { _ ++ newScAds }
+                (ads1, v0.jdConf)
+              }
+              v0.copy(
+                jdConf      = jdConf2,
+                jdCss       = _mkJdCss(ads2, jdConf2),
+                ads         = ads2,
+                hasMoreAds  = findAdsResp.ads.size >= m.limit
               )
             }
-            v1.withHasMoreAds(
-              findAdsResp.ads.size >= m.limit
-            )
           }
         )
         updated(v2)
@@ -172,9 +205,6 @@ class GridAdsAh[M](
           noChange
 
         } { case (ad0, index) =>
-          // Есть карточка в плитке. Посмотреть, сфокусирована она или нет?
-          def __saveAdIntoValue(newAd: MScAdData) = _saveAdIntoValue(index, newAd, v0)
-
           ad0.focused.fold {
             // Карточка сейчас скрыта, её нужно раскрыть.
             // Собрать запрос фокусировки на ровно одной рекламной карточке.
@@ -196,13 +226,17 @@ class GridAdsAh[M](
             // выставить текущей карточке, что она pending
             val ad1 = ad0.withFocused( ad0.focused.pending() )
 
-            val v2 = __saveAdIntoValue(ad1)
+            val v2 = _saveAdIntoValue(index, ad1, v0)
             updated(v2, fx)
 
           } { _ =>
             // Карточка уже открыта, её надо свернуть назад в main-блок.
             val ad1 = ad0.withFocused( Pot.empty )
-            val v2 = __saveAdIntoValue(ad1)
+            val ads2 = _saveAdIntoAds(index, ad1, v0)
+            val v2 = v0.copy(
+              ads   = ads2,
+              jdCss = _mkJdCss(ads2, v0.jdConf)
+            )
             updated(v2)
           }
         }
@@ -246,12 +280,15 @@ class GridAdsAh[M](
                 // Фокусировка: раскрыть текущую карточку с помощью принятого контента.
                 case MScRespActionTypes.AdsFoc =>
                   val adsResp = ra.ads.get
-                  val v2 = __saveAdIntoValue(
+                  val v1 = __saveAdIntoValue(
                     ad0.withFocused(
                       ad0.focused.ready(
                         MBlkRenderData( adsResp.ads.head )
                       )
                     )
+                  )
+                  val v2 = v1.withJdCss(
+                    _mkJdCss(v1.ads, v1.jdConf),
                   )
                   updated(v2)
 
@@ -279,11 +316,14 @@ class GridAdsAh[M](
   }
 
   /** Залить в состояние обновлённый инстанс карточки. */
+  def _saveAdIntoAds(index: Int, newAd: MScAdData, v0: MGridS = value) = {
+    for (ads0 <- v0.ads) yield {
+      ads0.updated(index, newAd)
+    }
+  }
   def _saveAdIntoValue(index: Int, newAd: MScAdData, v0: MGridS = value): MGridS = {
     v0.withAds(
-      for (ads0 <- v0.ads) yield {
-        ads0.updated(index, newAd)
-      }
+      _saveAdIntoAds(index, newAd, v0)
     )
   }
 

@@ -26,7 +26,7 @@ object MJdCssArgs {
   }
 
   def singleCssArgs(template: Tree[JdTag], conf: MJdConf): MJdCssArgs = {
-    MJdCssArgs(
+    apply(
       templates = template :: Nil,
       conf      = conf
     )
@@ -43,6 +43,6 @@ object MJdCssArgs {
   * @param conf Конфигурация рендеринга.
   */
 case class MJdCssArgs(
-                       templates  : Seq[Tree[JdTag]],
+                       templates  : Seq[Tree[JdTag]] = Nil,
                        conf       : MJdConf
                      )

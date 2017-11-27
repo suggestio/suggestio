@@ -55,7 +55,7 @@ class LkAdEditFormR(
                      val quillEditorR           : QuillEditorR
                    ) {
 
-  import MJdArgs.MJdWithArgsFastEq
+  import MJdArgs.MJdArgsFastEq
   import scaleR.ScaleRPropsValFastEq
   import pictureR.PictureRPropsValFastEq
   import saveR.SaveRPropsValFastEq
@@ -355,7 +355,7 @@ class LkAdEditFormR(
 
         rightYOptC = p.connect { mroot =>
           mroot.layout.rightPanelY
-        }( OptFastEq.PlainVal ),
+        }( OptFastEq.OptValueEq ),
 
         savePropsC = p.connect { mroot =>
           saveR.PropsVal(

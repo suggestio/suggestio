@@ -37,8 +37,9 @@ object UnivEqUtil {
   @inline implicit def doubleUe           : UnivEq[Double]          = UnivEq.force
   @inline implicit def floadUe            : UnivEq[Float]           = UnivEq.force
 
-  @inline implicit def seqUe[T: UnivEq]   : UnivEq[Seq[T]]          = UnivEq.force
-  @inline implicit def iterableUe[T: UnivEq]: UnivEq[Iterable[T]]   = UnivEq.force
+  @inline implicit def seqUe[T: UnivEq]         : UnivEq[Seq[T]]          = UnivEq.force
+  @inline implicit def indexedSeqUe[T: UnivEq]  : UnivEq[IndexedSeq[T]]   = UnivEq.force
+  @inline implicit def iterableUe[T: UnivEq]    : UnivEq[Iterable[T]]     = UnivEq.force
 
   @inline implicit def throwableUe        : UnivEq[Throwable]       = UnivEq.force
 

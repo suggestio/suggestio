@@ -47,4 +47,8 @@ object MBlkRenderData {
 case class MBlkRenderData(
                            template    : Tree[JdTag],
                            edges       : Map[EdgeUid_t, MEdgeDataJs]
-                         )
+                         ) {
+
+  lazy val tplSubForestIndexed = template.subForest.toIndexedSeq
+
+}

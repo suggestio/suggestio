@@ -21,18 +21,25 @@ object FastEqUtil {
     *           Используется Seq[T] вместо Seq[_], потому что компилятор плохо понимает типы внутри forall().
     * @return
     */
-  def DeepCollFastEq[T, M[_] <: Seq[T]](implicit feq: FastEq[T]): FastEq[M[T]] = {
+  def DeepCollFastEq[T, M[_] <: Seq[_]](implicit feq: FastEq[T]): FastEq[M[T]] = {
     new FastEq[M[T]] {
       override def eqv(a: M[T], b: M[T]): Boolean = {
         // Сравнить длины коллекций, т.к. поштучное сравнивание может не учитывать разность длин.
         a.length ==* b.length && {
           a.iterator
             .zip(b.iterator)
-            .forall {
-              (feq.eqv _).tupled
+            .forall { case (x: T, y: T) =>
+              feq.eqv(x, y)
             }
         }
       }
+    }
+  }
+
+
+  implicit def AnyValueEq[T] = {
+    new FastEq[T] {
+      override def eqv(a: T, b: T) = a == b
     }
   }
 

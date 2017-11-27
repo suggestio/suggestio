@@ -35,7 +35,7 @@ class ScRootR (
   protected[this] case class State(
                                     scCssArgsC     : ReactConnectProxy[MScCssArgs],
                                     indexPropsC    : ReactConnectProxy[MScIndex],
-                                    gridPropsOptC  : ReactConnectProxy[Option[gridR.PropsVal]]
+                                    gridPropsOptC  : ReactConnectProxy[gridR.PropsVal]
                                   )
 
 
@@ -70,12 +70,11 @@ class ScRootR (
         scCssArgsC  = propsProxy.connect(_.scCssArgs),
         indexPropsC = propsProxy.connect(_.index),
         gridPropsOptC = propsProxy.connect { mroot =>
-          val gridRProps = gridR.PropsVal(
+          gridR.PropsVal(
             grid    = mroot.grid,
             fgColor = mroot.index.resp.toOption.flatMap(_.colors.fg)
           )
-          Some( gridRProps ): Option[gridR.PropsVal]
-        }( OptFastEq.Wrapped )
+        }
       )
     }
     .renderBackend[Backend]

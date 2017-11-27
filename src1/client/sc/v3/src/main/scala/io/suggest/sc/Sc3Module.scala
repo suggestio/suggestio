@@ -24,6 +24,10 @@ class Sc3CircuitModule {
 
   lazy val scCssFactoryModule = wire[ScCssFactoryModule]
 
+  lazy val jdRenderModule = wire[JdRenderModule]
+
+  import jdRenderModule.jdCssFactory
+
   lazy val sc3Circuit = wire[Sc3Circuit]
 
 }

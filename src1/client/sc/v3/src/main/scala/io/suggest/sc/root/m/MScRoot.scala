@@ -33,7 +33,7 @@ object MScRoot {
 
 case class MScRoot(
                     index         : MScIndex,
-                    grid          : MGridS                  = MGridS.empty,
+                    grid          : MGridS,
                     jsRouter      : Pot[scRoutes.type]      = Pot.empty
                   ) {
 

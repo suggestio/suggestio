@@ -3,13 +3,17 @@ package io.suggest.sc
 import diode.ModelRO
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
-import io.suggest.dev.JsScreenUtil
+import io.suggest.dev.{JsScreenUtil, MSzMults}
 import io.suggest.geo.{MGeoPoint, MLocEnv}
+import io.suggest.jd.MJdConf
+import io.suggest.jd.render.m.MJdCssArgs
+import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
 import io.suggest.maps.m.{MMapS, RcvrMarkersInit}
 import io.suggest.routes.{AdvRcvrsMapApiHttp, scRoutes}
 import io.suggest.sc.ads.MFindAdsReq
 import io.suggest.sc.grid.c.GridAdsAh
+import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, IndexStateAh, WelcomeAh}
 import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
@@ -40,6 +44,7 @@ import scala.concurrent.Promise
   */
 class Sc3Circuit(
                   scCssFactoryModule    : ScCssFactoryModule,
+                  jdCssFactory          : JdCssFactory,
                   api                   : ISc3Api
                 )
   extends CircuitLog[MScRoot]
@@ -70,7 +75,19 @@ class Sc3Circuit(
         search = MScSearch(
           mapState = MMapS( state0.mapProps )
         )
-      )
+      ),
+      grid = {
+        val jdConf = MJdConf(
+          isEdit = false,
+          // TODO Определить эти параметры автоматом
+          szMult = MSzMults.`1.0`,
+          gridColumnsCount = 4
+        )
+        MGridS(
+          jdConf = jdConf,
+          jdCss  = jdCssFactory.mkJdCss( MJdCssArgs(conf = jdConf) )
+        )
+      }
     )
   }
 
@@ -129,6 +146,7 @@ class Sc3Circuit(
     api           = api,
     searchArgsRO  = searchAdsArgsRO,
     screenRO      = screenRO,
+    jdCssFactory  = jdCssFactory,
     modelRW       = gridRW
   )
 

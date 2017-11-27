@@ -134,7 +134,7 @@ class DocEditAh[M](
         // Текст действительно изменился. Пересобрать json-document.
         //println( JSON.stringify(m.fullDelta) )
         val currTag0 = v0.jdArgs.selectedTag.get
-        val selJdtPath = v0.jdArgs.selPath.get
+        val selJdtPath = v0.jdArgs.renderArgs.selPath.get
         // Спроецировать карту сборных эджей в jd-эджи
         val edgesData0 = v0.jdArgs.edges
         val (qdTag2, edgesData2) = quillDeltaJsUtil.delta2qdTag(m.fullDelta, currTag0, edgesData0)
@@ -194,7 +194,10 @@ class DocEditAh[M](
         val newSelJdt = newSelJdtTreeLoc.toNodePath
         val v1 = v0.withJdArgs(
           v0.jdArgs
-            .withSelPath( Some(newSelJdt) )
+            .withRenderArgs(
+              v0.jdArgs.renderArgs
+                .withSelPath( Some(newSelJdt) )
+            )
         )
 
         // Если это QdTag, то отработать состояние quill-delta:
@@ -450,7 +453,9 @@ class DocEditAh[M](
             jdArgs = v0.jdArgs.copy(
               template    = tpl2,
               jdCss       = jdCss2,
-              selPath     = None
+              renderArgs  = v0.jdArgs.renderArgs.withSelPath(
+                selPath   = None
+              )
             ),
             stripEd = None,
             // qdEdit: Вроде бы это сюда не относится вообще. Сбросим заодно и текстовый редактор:
@@ -485,15 +490,17 @@ class DocEditAh[M](
     // Началось перетаскивание какого-то jd-тега из текущего документа.
     case m: JdTagDragStart =>
       val v0 = value
-      val dnd0 = v0.jdArgs.dnd
+      val dnd0 = v0.jdArgs.renderArgs.dnd
       val dnd0Jdt = v0.jdArgs.draggingTagLoc
       if (dnd0Jdt.toLabelOpt contains m.jdTag) {
         noChange
       } else {
         val v2 = v0.withJdArgs(
-          v0.jdArgs.withDnd(
-            dnd0.withJdt(
-              jdt = v0.jdArgs.template.nodeToPath(m.jdTag)
+          v0.jdArgs.withRenderArgs(
+            v0.jdArgs.renderArgs.withDnd(
+              dnd0.withJdt(
+                jdt = v0.jdArgs.template.nodeToPath(m.jdTag)
+              )
             )
           )
         )
@@ -513,12 +520,14 @@ class DocEditAh[M](
     // dragend. Нередко, он не наступает вообще. Т.е. код тут ненадёжен и срабатывает редко, почему-то.
     case _: JdTagDragEnd =>
       val v0 = value
-      val dnd0 = v0.jdArgs.dnd
+      val dnd0 = v0.jdArgs.renderArgs.dnd
       dnd0.jdt.fold(noChange) { _ =>
         val v2 = v0.withJdArgs(
-          v0.jdArgs.withDnd(
-            dnd0.withJdt(
-              jdt = None
+          v0.jdArgs.withRenderArgs(
+            v0.jdArgs.renderArgs.withDnd(
+              dnd0.withJdt(
+                jdt = None
+              )
             )
           )
         )
@@ -635,8 +644,11 @@ class DocEditAh[M](
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           ),
-          dnd         = MJdDndS.empty,
-          selPath     = tpl2.nodeToPath( dndJdtTree2.rootLabel )
+          renderArgs  = v0.jdArgs.renderArgs
+            .withSelPath(
+              tpl2.nodeToPath( dndJdtTree2.rootLabel )
+            )
+            .withDnd( MJdDndS.empty )
         )
       )
 
@@ -674,11 +686,14 @@ class DocEditAh[M](
         val tpl2 = droppedStripLoc2.toTree
         // Залить обновлённый список стрипов в исходный документ
         val v2 = v0.withJdArgs(
-          v0.jdArgs.copy(
-            template  = tpl2,
-            dnd       = MJdDndS.empty,
-            selPath   = tpl2.nodeToPath( droppedStripLabel )
-          )
+          v0.jdArgs
+            .withTemplate( tpl2 )
+            .withRenderArgs(
+              v0.jdArgs.renderArgs.copy(
+                selPath = tpl2.nodeToPath( droppedStripLabel ),
+                dnd     = MJdDndS.empty
+              )
+            )
         )
         updated(v2)
       }
@@ -953,7 +968,9 @@ class DocEditAh[M](
           jdCss       = jdCssFactory.mkJdCss(
             MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
           ),
-          selPath     = tpl2.nodeToPath( qdtTree.rootLabel )
+          renderArgs  = v0.jdArgs.renderArgs.withSelPath(
+            selPath   = tpl2.nodeToPath( qdtTree.rootLabel )
+          )
         ),
         qdEdit = Some {
           val qdelta = quillDeltaJsUtil.qdTag2delta(
@@ -1002,7 +1019,9 @@ class DocEditAh[M](
         .withJdArgs(
           v0.jdArgs.copy(
             template    = tpl2,
-            selPath     = tpl2.nodeToPath( newStripTree.rootLabel ),
+            renderArgs  = v0.jdArgs.renderArgs.withSelPath(
+              selPath   = tpl2.nodeToPath( newStripTree.rootLabel )
+            ),
             jdCss       = jdCssFactory.mkJdCss(
               MJdCssArgs.singleCssArgs(tpl2, v0.jdArgs.conf)
             )

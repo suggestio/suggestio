@@ -61,18 +61,28 @@ case class MScAdData(
 
   def withFocused(focused: Pot[MBlkRenderData]) = copy(focused = focused)
 
+  private def _flatGridTemplatesUsing(f: MBlkRenderData => Seq[Tree[JdTag]]) = {
+    focused.fold [Seq[Tree[JdTag]]] {
+      main.template :: Nil
+    }(f)
+  }
 
   /** Вернуть последовательность шаблонов для "плоской" плитки, т.е. где и focused и не-focused одновременно.
     *
     * @return Список шаблонов на рендер.
     */
   def flatGridTemplates: Seq[Tree[JdTag]] = {
-    focused.fold [Seq[Tree[JdTag]]] {
-      main.template :: Nil
-    } { focBlk =>
-      focBlk.template.subForest
-    }
+    _flatGridTemplatesUsing(_.template.subForest)
   }
+
+  /** Вернуть последовательность шаблонов с приоритетом на indexed seq.
+    *
+    * @return List с одним элементом, либо IndexedSeq со списком item'ов.
+    */
+  def flatGridTemplatesIndexed: Seq[Tree[JdTag]] = {
+    _flatGridTemplatesUsing(_.tplSubForestIndexed)
+  }
+
 
   /** Вернтуь карту эджей для плоской плитки.
     *

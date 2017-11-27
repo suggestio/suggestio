@@ -136,8 +136,8 @@ class SearchR(
         rcvrsGeoC = propsProxy.connect( _.rcvrsGeo ),
         textOptC  = propsProxy.connect( _.text ),
         tabC      = propsProxy.connect( _.currTab ),
-        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.PlainVal ),
-        isMapInitializedC = propsProxy.connect(p => Some(p.isMapInitialized))( OptFastEq.PlainVal )
+        isShownC  = propsProxy.connect( p => Some(p.isShown) )( OptFastEq.OptValueEq ),
+        isMapInitializedC = propsProxy.connect(p => Some(p.isMapInitialized))( OptFastEq.OptValueEq )
       )
     }
     .renderBackend[Backend]

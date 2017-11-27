@@ -1,7 +1,7 @@
 package io.suggest.jd.render.v
 
 import com.github.dantrain.react.stonecutter._
-import diode.react.ModelProxy
+import diode.react.{ModelProxy, ReactConnectProxy}
 import io.suggest.common.empty.OptionUtil
 import io.suggest.common.empty.OptionUtil.BoolOptOps
 import io.suggest.common.geom.coord.{MCoords2dD, MCoords2di}
@@ -21,9 +21,10 @@ import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil._
 import io.suggest.sjs.common.util.DataUtil
 import io.suggest.sjs.common.vm.wnd.WindowVm
+import io.suggest.react.ReactCommonUtil.Implicits._
 import io.suggest.scalaz.ZTreeUtil._
 import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.{VdomElement, TagOf}
+import japgolly.scalajs.react.vdom.{TagOf, VdomElement}
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.univeq._
 import org.scalajs.dom.{Element, html}
@@ -45,6 +46,8 @@ class JdR(
          )
   extends Log
 { jdR =>
+
+  import MJdArgs.MJdArgsFastEq
 
   type Props = ModelProxy[MJdArgs]
 
@@ -115,7 +118,7 @@ class JdR(
       */
     private def _maybeSelected(dt: JdTag, jdArgs: MJdArgs): TagMod = {
       // Если происходит перетаскивание, то нужно избавляться от рамок: так удобнее.
-      if (jdArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
+      if (jdArgs.renderArgs.dnd.jdt.isEmpty && jdArgs.selectedTag.containsLabel(dt)) {
         jdArgs.jdCss.selectedTag
       } else {
         EmptyVdom
@@ -436,12 +439,6 @@ class JdR(
   /** Рендерер дерева jd-тегов. */
   protected class Backend($: BackendScope[Props, Unit]) extends JdRenderer {
 
-    /** Рендер компонента. */
-    def render(jdArgsProxy: Props): VdomElement = {
-      renderJdArgs( jdArgsProxy.value )
-    }
-
-
     // Callbacks
 
     /** Реакция на клик по отрендеренному тегу. */
@@ -597,6 +594,13 @@ class JdR(
       }
     }
 
+    /** Рендер компонента. */
+    def render(jdArgsProxy: Props): VdomElement = {
+      // Тут была попытка завернуть всё в коннекшен для явной защиты от перерендеров при неизменных MJdArgs.
+      // Итог: фейл. Нарушается актуальность JdCss, перерендеры остаются.
+      renderJdArgs( jdArgsProxy.value )
+    }
+
   } // Backend
 
 
@@ -617,15 +621,17 @@ class JdR(
         jdArgsProxy.wrap { jdArgs0 =>
           jdArgs0
             .withTemplate(jdStripTree)
-            .withSelPath {
-              jdArgs0.selPath.flatMap {
-                case h :: t =>
-                  OptionUtil.maybe(h ==* i)(t)
-                case Nil =>
-                  // should never happen
-                  None
+            .withRenderArgs(
+              jdArgs0.renderArgs.withSelPath {
+                jdArgs0.renderArgs.selPath.flatMap {
+                  case h :: t =>
+                    OptionUtil.maybe(h ==* i)(t)
+                  case Nil =>
+                    // should never happen
+                    None
+                }
               }
-            }
+            )
         } { jdArgs2Proxy =>
           <.div(
             ^.key := i.toString,
@@ -634,6 +640,19 @@ class JdR(
         }
       }
   }
+
+
+
+  /** Опциональный компонент, который просто является костылём-надстройкой на JdR.component. */
+  // TODO Нужен ли? По факту -- не используется.
+  val optional = ScalaComponent.builder[ModelProxy[Option[MJdArgs]]]("JdOpt")
+    .stateless
+    .render_P { jdArgsOptProxy =>
+      jdArgsOptProxy.value.whenDefinedEl { jdArgs =>
+        jdArgsOptProxy.wrap(_ => jdArgs) { component.apply }
+      }
+    }
+    .build
 
 
   /** Рендерер HTML всырую.

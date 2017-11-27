@@ -33,8 +33,8 @@ object OptFastEq {
   }
 
   /** Сравнивание нереференсных типов внутри Option по значениям. */
-  object PlainVal extends OptFastEqHelper[AnyVal] {
-    override def _eqv(a: AnyVal, b: AnyVal): Boolean = {
+  object OptValueEq extends OptFastEqHelper[Any] {
+    override def _eqv(a: Any, b: Any): Boolean = {
       a == b
     }
   }

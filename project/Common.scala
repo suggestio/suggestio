@@ -272,7 +272,7 @@ object Common {
   /** Версия diode.
     * @see [[https://github.com/ochrons/diode/]]
     */
-  val diodeVsn = "1.1.2"
+  val diodeVsn = "1.1.3"
 
   /** Версия сериализатора boopickle. 
     * @see [[https://github.com/ochrons/boopickle]]

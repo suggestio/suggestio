@@ -29,6 +29,11 @@ object MColorData {
     val COUNT_FN      = "o"
   }
 
+  object Examples {
+    def WHITE = apply("FFFFFF")
+    def BLACK = apply("000000")
+  }
+
   /** Поддержка boopickle. */
   implicit val mColorDataPickler: Pickler[MColorData] = {
     generatePickler[MColorData]

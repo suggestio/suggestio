@@ -14,7 +14,7 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MJdDndS {
 
-  def empty = MJdDndS()
+  val empty = apply()
 
   /** Поддержка FastEq для интсансов [[MJdDndS]]. */
   implicit object MJdDndSFastEq extends FastEq[MJdDndS] {
