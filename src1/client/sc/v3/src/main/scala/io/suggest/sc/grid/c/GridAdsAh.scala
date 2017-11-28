@@ -341,6 +341,7 @@ class GridAdsAh[M](
       val v0 = value
       val gridColsCount2 = GridAdsAh.reconfGridColumnsCount(
         mscreen   = screenRO.value,
+        gridConf  = MGridCalcConf.PLAIN_GRID,
         minSzMult = v0.jdConf.szMult.toDouble
       )
       if (v0.jdConf.gridColumnsCount ==* gridColsCount2) {
