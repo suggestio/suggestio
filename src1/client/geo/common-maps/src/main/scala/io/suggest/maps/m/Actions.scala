@@ -4,7 +4,7 @@ import io.suggest.adv.info.MNodeAdvInfo
 import io.suggest.adv.rcvr.MRcvrPopupResp
 import io.suggest.geo.{IGeoPointField, MGeoPoint}
 import io.suggest.maps.nodes.MGeoNodesResp
-import io.suggest.sjs.leaflet.map.Zoom_t
+import io.suggest.sjs.leaflet.map.{LatLng, Zoom_t}
 import io.suggest.spa.DAction
 
 import scala.util.Try
@@ -93,5 +93,8 @@ trait IMapZoomEnd extends IMapsAction {
 case class MapZoomEnd( override val newZoom: Zoom_t ) extends IMapZoomEnd
 
 
-
-//case class MapMoveEnd( newCenterLL: LatLng ) extends IMapsAction
+/** Сигнал перемещения центра карты в новую гео-точку.
+  *
+  * @param newCenterLL Гео.координата нового центра карты.
+  */
+case class MapMoveEnd( newCenterLL: LatLng ) extends IMapsAction

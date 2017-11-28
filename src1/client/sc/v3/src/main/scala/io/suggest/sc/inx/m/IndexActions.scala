@@ -12,8 +12,11 @@ import io.suggest.sc.m.ISc3Action
 /** Интерфейс-маркер для index-экшенов. */
 sealed trait IIndexAction extends ISc3Action
 
-/** Дёрнуть индекс с сервера и накатить. */
-case class GetIndex(rcvrId: Option[String]) extends IIndexAction
+/** Дёрнуть индекс с сервера и накатить.
+  *
+  * @param withWelcome Требуется ли картинка приветствия?
+  */
+case class GetIndex(withWelcome: Boolean) extends IIndexAction
 
 
 /** Нажатие на экран приветствия. */

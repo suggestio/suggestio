@@ -77,7 +77,10 @@ class GridCoreR(
           edges  = ad.flatGridEdges
           (tpl, j) <- ad.flatGridTemplates.iterator.zipWithIndex
         } yield {
-          <.div(
+          // На телевизорах и прочих около-умных устройствах без нормальных устройств ввода,
+          // для кликов подсвечиваются только ссылки.
+          // Поэтому тут используется <A>-тег, хотя div был бы уместнее.
+          <.a(
             ^.key := (rootId + `.` + j),
 
             // Реакция на клики, когда nodeId задан.

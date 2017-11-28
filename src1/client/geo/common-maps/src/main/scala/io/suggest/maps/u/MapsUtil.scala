@@ -116,9 +116,7 @@ object MapsUtil {
     * @return Инстанс MMapS, готовый к сохранению в состояние.
     */
   def initialMapStateFrom( mapProps: MMapProps ): MMapS = {
-    MMapS(
-      props    = mapProps
-    )
+    MMapS( mapProps )
   }
 
 }

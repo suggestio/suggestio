@@ -31,16 +31,16 @@ class IndexAh[M](
 
     // Команда запроса и получения индекса выдачи с сервера для текущего состояния.
     case m: GetIndex =>
-      val root = stateRO()
-
+      val v0 = value
       val ts = System.currentTimeMillis()
 
       val fx = Effect {
+        val root = stateRO()
         val args = MScIndexArgs(
-          nodeId      = m.rcvrId,
+          nodeId      = v0.state.currRcvrId,
           locEnv      = root.locEnv,
           screen      = Some( root.dev.screen.screen ),
-          withWelcome = true
+          withWelcome = m.withWelcome
         )
 
         api
@@ -50,7 +50,6 @@ class IndexAh[M](
           }
       }
 
-      val v0 = value
       val v2 = v0.withResp(
         v0.resp.pending(ts)
       )

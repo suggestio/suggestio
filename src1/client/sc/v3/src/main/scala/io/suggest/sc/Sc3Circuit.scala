@@ -4,8 +4,7 @@ import diode.ModelRO
 import diode.react.ReactConnector
 import io.suggest.common.event.WndEvents
 import io.suggest.dev.JsScreenUtil
-import io.suggest.geo.{MGeoPoint, MLocEnv}
-import io.suggest.jd.MJdConf
+import io.suggest.geo.MLocEnv
 import io.suggest.jd.render.m.MJdCssArgs
 import io.suggest.jd.render.v.JdCssFactory
 import io.suggest.maps.c.{MapCommonAh, RcvrMarkersInitAh}
@@ -16,7 +15,7 @@ import io.suggest.sc.grid.c.GridAdsAh
 import io.suggest.sc.grid.m.MGridS
 import io.suggest.sc.init.MSc3Init
 import io.suggest.sc.inx.c.{IndexAh, WelcomeAh}
-import io.suggest.sc.inx.m.{GetIndex, MScIndex, MScIndexState}
+import io.suggest.sc.inx.m.{GetIndex, MScIndex}
 import io.suggest.sc.root.c.{NoOpAh, ScreenAh}
 import io.suggest.sc.root.m._
 import io.suggest.sc.router.SrvRouter
@@ -24,7 +23,6 @@ import io.suggest.sc.router.c.JsRouterInitAh
 import io.suggest.sc.search.c.SearchAh
 import io.suggest.sc.search.m.MScSearch
 import io.suggest.sc.styl.{ScCss, ScCssFactoryModule}
-import io.suggest.sc.tile.{GridCalc, MGridCalcConf}
 import io.suggest.sjs.common.log.CircuitLog
 import io.suggest.sjs.common.msg.{ErrorMsg_t, ErrorMsgs}
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -75,9 +73,6 @@ class Sc3Circuit(
         )
       ),
       index = MScIndex(
-        state = MScIndexState(
-          geoPoint = Some( MGeoPoint(59.92, 30.31) )
-        ),
         search = MScSearch(
           mapState = MMapS( state0.mapProps )
         )
@@ -209,7 +204,7 @@ class Sc3Circuit(
         // Запустить инициализацию начального индекса выдачи.
         try {
           if (indexRW.value.resp.isEmpty) {
-            dispatch( GetIndex( None ) )
+            dispatch( GetIndex(withWelcome = true) )
           }
           // Запустить получения гео-маркеров с сервера.
           if (searchMapRcvrsPotRW.value.isEmpty) {

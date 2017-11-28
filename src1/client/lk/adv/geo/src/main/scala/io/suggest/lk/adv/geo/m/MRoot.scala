@@ -50,7 +50,7 @@ case class MRoot(
     */
   def toFormData: MFormS = {
     MFormS(
-      mapProps        = mmap.props,
+      mapProps        = mmap.toMapProps,
       onMainScreen    = other.onMainScreen,
       adv4freeChecked = adv4free.map(_.checked),
       rcvrsMap        = rcvr.rcvrsMap,

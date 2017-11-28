@@ -30,7 +30,7 @@ object MScIndex {
 }
 
 case class MScIndex(
-                     state      : MScIndexState,
+                     state      : MScIndexState           = MScIndexState.empty,
                      resp       : Pot[MSc3IndexResp]      = Pot.empty,
                      welcome    : Option[MWelcomeState]   = None,
                      search     : MScSearch

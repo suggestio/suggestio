@@ -47,11 +47,11 @@ case class MScRoot(
   def locEnv: MLocEnv = {
     // TODO собрать данные по маячкам и текущей локации
     MLocEnv(
-      geoLocOpt = for (gp <- index.state.geoPoint) yield {
+      geoLocOpt = Some(
         MGeoLoc(
-          point = gp
+          point = index.search.mapState.center
         )
-      }
+      )
     )
   }
 

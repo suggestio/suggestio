@@ -46,11 +46,11 @@ object MScSearch {
   *                 в первый раз -- нет инициализации карты. В т.ч. из-за проблемы [[https://stackoverflow.com/a/36257493]]
   */
 case class MScSearch(
-                      mapState    : MMapS,
-                      text        : Option[MScSearchText] = None,
-                      rcvrsGeo    : Pot[MGeoNodesResp]    = Pot.empty,
-                      currTab     : MSearchTab            = MSearchTabs.default,
-                      isShown     : Boolean               = false,
+                      mapState            : MMapS,
+                      text                : Option[MScSearchText] = None,
+                      rcvrsGeo            : Pot[MGeoNodesResp]    = Pot.empty,
+                      currTab             : MSearchTab            = MSearchTabs.default,
+                      isShown             : Boolean               = false,
                       isMapInitialized    : Boolean               = false
                     ) {
 

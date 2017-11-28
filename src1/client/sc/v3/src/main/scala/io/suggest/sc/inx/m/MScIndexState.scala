@@ -13,12 +13,13 @@ import io.suggest.ueq.UnivEqUtil._
   */
 object MScIndexState {
 
+  def empty = apply()
+
   /** Поддержка FastEq для классов [[MScIndexState]]. */
   implicit object MScIndexStateFastEq extends FastEq[MScIndexState] {
     override def eqv(a: MScIndexState, b: MScIndexState): Boolean = {
         (a.generation ==* b.generation) &&
-        (a.rcvrIds ===* b.rcvrIds) &&
-        (a.geoPoint ===* b.geoPoint)
+        (a.rcvrIds ===* b.rcvrIds)
     }
   }
 
@@ -36,8 +37,7 @@ object MScIndexState {
   */
 case class MScIndexState(
                           generation      : Long                = System.currentTimeMillis(),
-                          rcvrIds         : List[String]        = Nil,
-                          geoPoint        : Option[MGeoPoint]   = None
+                          rcvrIds         : List[String]        = Nil
                         ) {
 
   // val или lazy val, т.к. часто нужен инстанс именно текущего узла.
@@ -46,6 +46,5 @@ case class MScIndexState(
 
   def withGeneration(generation: Long)            = copy( generation = generation )
   def withRcvrNodeId( rcvrNodeId: List[String] )  = copy( rcvrIds = rcvrNodeId )
-  def withGeoPoint( geoPoint: Option[MGeoPoint] ) = copy( geoPoint = geoPoint )
 
 }

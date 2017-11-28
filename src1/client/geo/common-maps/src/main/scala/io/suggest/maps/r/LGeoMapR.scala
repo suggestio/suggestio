@@ -20,9 +20,6 @@ import scala.scalajs.js
   */
 object LGeoMapR {
 
-  type Props = ModelProxy[MMapS]
-
-
   /** Сгенерить пропертисы для LGeoMapR для типичной ситуации отображения карты в ЛК.
     *
     * @param dispatcher Прокси MMapS.
@@ -40,27 +37,37 @@ object LGeoMapR {
     */
   def lmMapSProxy2lMapProps( v: MMapS, dispatcher: ModelProxy[_], cssClass: String ): LMapPropsR = {
 
+    // Реакция на location found.
     def _onLocationFound(locEvent: LocationEvent): Callback = {
       val gp = MapsUtil.latLng2geoPoint( locEvent.latLng )
       dispatcher.dispatchCB( HandleLocationFound(gp) )
     }
     lazy val _onLocationFoundF = cbFun1ToJsCb( _onLocationFound )
 
+    // Реакция на закрытие попапа
     def _onPopupClose(popEvent: PopupEvent): Callback = {
       dispatcher.dispatchCB( HandleMapPopupClose )
     }
     val _onPopupCloseF = cbFun1ToJsCb( _onPopupClose )
 
+    // Реакция на зуммирование карты.
     def _onZoomEnd(event: Event): Callback = {
       val newZoom = event.target.asInstanceOf[LMap].getZoom()
       dispatcher.dispatchCB( MapZoomEnd(newZoom) )
     }
     val _onZoomEndF = cbFun1ToJsCb( _onZoomEnd )
 
+    // Реакция на перемещение карты.
+    def _onMoveEnd(event: Event): Callback = {
+      val newZoom = event.target.asInstanceOf[LMap].getCenter()
+      dispatcher.dispatchCB( MapMoveEnd(newZoom) )
+    }
+    val _onMoveEndF = cbFun1ToJsCb( _onMoveEnd )
+
     // Карта должна рендерится с такими параметрами:
     new LMapPropsR {
-      override val center    = MapsUtil.geoPoint2LatLng( v.props.center )
-      override val zoom      = v.props.zoom
+      override val center    = MapsUtil.geoPoint2LatLng( v.centerInit )
+      override val zoom      = v.zoom
       // Значение требует markercluster, цифра взята с http://wiki.openstreetmap.org/wiki/Zoom_levels
       override val maxZoom   = 18
       override val className = cssClass
@@ -74,7 +81,7 @@ object LGeoMapR {
       }
       override val onPopupClose = js.defined( _onPopupCloseF )
       override val onZoomEnd = js.defined( _onZoomEndF )
-      //override val onMoveEnd = js.defined( _onMoveEndF )    // TODO Бесконечное зацикливание.
+      override val onMoveEnd = js.defined( _onMoveEndF )
     }
   }
 

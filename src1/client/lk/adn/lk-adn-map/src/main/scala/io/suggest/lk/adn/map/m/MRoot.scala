@@ -64,7 +64,7 @@ case class MRoot(
   /** Создать снимок основных данных, пригодный для отправки на сервер. */
   def toForm: MLamForm = {
     MLamForm(
-      mapProps          = mmap.props,
+      mapProps          = mmap.toMapProps,
       mapCursor         = rad.circle,
       datePeriod        = datePeriod,
       adv4freeChecked   = adv4free.map(_.checked),
