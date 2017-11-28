@@ -133,9 +133,12 @@ class Sc3Circuit(
     stateRO = rootRO
   )
 
-  private lazy val mapCommonAh = new MapCommonAh(
-    mmapRW = mmapRW
-  )
+  private lazy val mapAndIndexAh = {
+    val mapCommonAh = new MapCommonAh(
+      mmapRW = mmapRW
+    )
+    foldHandlers( mapCommonAh, indexAh )
+  }
 
   private val gridAdsAh = new GridAdsAh(
     api           = api,
@@ -171,14 +174,13 @@ class Sc3Circuit(
     // top-level search AH всегда ожидает команд, когда TODO нет открытого левого меню закрыто или focused-выдачи
     acc ::= searchAh
 
-    // index всегда доступен для приёма управляющих сигналов.
-    acc ::= indexAh
-
     if ( indexWelcomeRW().nonEmpty )
       acc ::= new WelcomeAh( indexWelcomeRW )
 
     if ( searchRW.value.isMapInitialized )
-      acc ::= mapCommonAh
+      acc ::= mapAndIndexAh
+    else
+      acc ::= indexAh
 
     // Контроллеры СНАЧАЛА экрана, а ПОТОМ плитки. Нужно соблюдать порядок.
     acc ::= gridAdsAh

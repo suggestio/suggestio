@@ -1,14 +1,14 @@
 package io.suggest.sc.inx.c
 
 import diode._
-import io.suggest.common.coll.Lists
+import io.suggest.maps.m.ReqRcvrPopup
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
 import io.suggest.sc.grid.m.GridLoadAds
 import io.suggest.sc.ScConstants
 import io.suggest.sc.index.MScIndexArgs
-import io.suggest.sc.inx.m.{GetIndex, MScIndex, MWelcomeState}
+import io.suggest.sc.inx.m.{GetIndex, HandleIndexResp, MScIndex, MWelcomeState}
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.root.m.{HandleIndexResp, MScRoot}
+import io.suggest.sc.root.m.MScRoot
 
 import scala.util.Success
 import io.suggest.sjs.common.async.AsyncUtil.defaultExecCtx
@@ -27,7 +27,7 @@ class IndexAh[M](
   extends ActionHandler( modelRW )
 {
 
-  override protected def handle: PartialFunction[Any, ActionResult[M]] = {
+  override protected val handle: PartialFunction[Any, ActionResult[M]] = {
 
     // Команда запроса и получения индекса выдачи с сервера для текущего состояния.
     case m: GetIndex =>
@@ -46,7 +46,7 @@ class IndexAh[M](
         api
           .getIndex(args)
           .transform { tryRes =>
-            Success(HandleIndexResp(tryRes, Some(ts)))
+            Success(HandleIndexResp(tryRes, Some(ts), reason = None))
           }
       }
 
@@ -64,7 +64,6 @@ class IndexAh[M](
       val v1 = m.tryResp.fold(
         { ex =>
           v0.withResp( v0.resp.fail(ex) )
-
         },
         {scResp =>
           scResp.respActions
@@ -75,15 +74,14 @@ class IndexAh[M](
                 v0.resp.fail( new NoSuchElementException("index") )
               )
             } { inx =>
+              // TODO Сравнивать полученный index с текущим состоянием. Может быть ничего сохранять не надо?
               v0
                 .withResp(
                   v0.resp.ready(inx)
                 )
                 .withState(
-                  v0.state.withRcvrNodeId(
-                    // TODO Тут хрень. Текущего ресивера может и не быть, а он всегда есть, получается.
-                    Lists.prependOpt(inx.nodeId)( v0.state.rcvrIds )
-                  )
+                  v0.state
+                    .withRcvrNodeId( inx.nodeId.toList )
                 )
             }
         }
@@ -123,6 +121,23 @@ class IndexAh[M](
       val allFxs = mWcSFutOpt.fold[Effect](gridInitFx) { gridInitFx + _._1 }
 
       updated(v2, allFxs)
+
+
+    // Клик по ресиверу на карте. Перейти в выдачу выбранного узла, если он отличается от текущего.
+    case m: ReqRcvrPopup =>
+      val v0 = value
+      if (v0.state.currRcvrId contains m.nodeId) {
+        // Это текущий узел, ничего менять не требуется
+        // TODO Показать попап на карте, чтобы человек понимал, что это текущий узел.
+        noChange
+      } else {
+        // Переключаемся в новый узел.
+        val v2 = v0.withState(
+          v0.state.withRcvrNodeId( m.nodeId :: Nil )
+        )
+        val indexFx = Effect.action( GetIndex(withWelcome = false) )
+        updated(v2, indexFx)
+      }
 
   }
 

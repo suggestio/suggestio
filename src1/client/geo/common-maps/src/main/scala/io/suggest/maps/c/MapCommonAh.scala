@@ -20,11 +20,14 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
     _setMapCenterTo( mgp, v0 )
   }
   private def _setMapCenterTo(mgp: MGeoPoint, v0: MMapS = value) = {
-    if (v0.centerReal contains mgp) {
+    if ((v0.centerInit ~= mgp) || v0.centerReal.exists(_ ~= mgp)) {
       noChange
     } else {
-      val v2 = v0
-        .withCenterReal( Some(mgp) )
+      //println( "set new loc: " + mgp)
+      val v2 = v0.copy(
+        centerInit = mgp,
+        centerReal = None
+      )
       updated( v2 )
     }
   }
@@ -33,6 +36,7 @@ class MapCommonAh[M](mmapRW: ModelRW[M, MMapS]) extends ActionHandler(mmapRW) {
 
     // Карта была перемещена, у неё теперь новый центр.
     case m: MapMoveEnd =>
+      //println( m )
       val mgp = MapsUtil.latLng2geoPoint( m.newCenterLL )
       _setMapCenterTo( mgp )
 

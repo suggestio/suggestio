@@ -13,8 +13,8 @@ import io.suggest.sc.grid.m._
 import io.suggest.sjs.common.log.Log
 import io.suggest.sjs.common.msg.{ErrorMsgs, WarnMsgs}
 import io.suggest.react.ReactDiodeUtil.PotOpsExt
+import io.suggest.sc.inx.m.HandleIndexResp
 import io.suggest.sc.resp.MScRespActionTypes
-import io.suggest.sc.root.m.HandleIndexResp
 import io.suggest.sc.tile.{GridCalc, MGridCalcConf, TileConstants}
 import japgolly.univeq._
 
@@ -187,35 +187,33 @@ class GridAdsAh[M](
             val scAction = scResp.respActions.head
             ErrorConstants.assertArg( scAction.acType ==* MScRespActionTypes.AdsTile )
             val findAdsResp = scAction.ads.get
-            if (findAdsResp.ads.isEmpty) {
-              // Пустой ответ - короткая реакция:
-              v0.withHasMoreAds(false)
-            } else {
-              // Есть хотя бы одна карточка в ответе сервера.
-              val newScAds = findAdsResp.ads
-                .iterator
-                .map(MScAdData.apply)
-                .toVector
-              val (ads2, jdConf2) = if (m.evidence.clean) {
-                val jdConf1 = v0.jdConf.withSzMult(
-                  findAdsResp.szMult
-                )
-                val ads1 = v0.ads.ready(newScAds)
-                (ads1, jdConf1)
 
-              } else {
-                // Проверить, совпадает ли SzMult:
-                ErrorConstants.assertArg( findAdsResp.szMult ==* v0.jdConf.szMult )
-                val ads1 = v0.ads.map { _ ++ newScAds }
-                (ads1, v0.jdConf)
-              }
-              v0.copy(
-                jdConf      = jdConf2,
-                jdCss       = _mkJdCss(ads2, jdConf2),
-                ads         = ads2,
-                hasMoreAds  = findAdsResp.ads.size >= m.limit
+            val newScAds = findAdsResp.ads
+              .iterator
+              .map(MScAdData.apply)
+              .toVector
+            val (ads2, jdConf2) = if (m.evidence.clean) {
+              val jdConf1 = v0.jdConf.withSzMult(
+                findAdsResp.szMult
               )
+              val ads1 = v0.ads.ready(newScAds)
+              (ads1, jdConf1)
+
+            } else {
+              // Проверить, совпадает ли SzMult:
+              ErrorConstants.assertArg( findAdsResp.szMult ==* v0.jdConf.szMult )
+              val ads1 = if (newScAds.nonEmpty)
+                v0.ads.map { _ ++ newScAds }
+              else
+                v0.ads
+              (ads1, v0.jdConf)
             }
+            v0.copy(
+              jdConf      = jdConf2,
+              jdCss       = _mkJdCss(ads2, jdConf2),
+              ads         = ads2,
+              hasMoreAds  = findAdsResp.ads.size >= m.limit
+            )
           }
         )
         updated(v2)
@@ -309,7 +307,7 @@ class GridAdsAh[M](
               ra.acType match {
                 // Редирект в другую выдачу. Форсируем переключение в новую плитку.
                 case MScRespActionTypes.Index =>
-                  val fx = Effect.action( HandleIndexResp(m.tryResp, reqTimestamp = None) )
+                  val fx = Effect.action( HandleIndexResp(m.tryResp, reqTimestamp = None, reason = None) )
                   effectOnly( fx )
 
                 // Фокусировка: раскрыть текущую карточку с помощью принятого контента.

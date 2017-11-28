@@ -154,19 +154,19 @@ object GeoPoint extends MacroLogsImpl {
    * Конвертация в GeoJson-представление координат, т.е. в JSON-массив.
    * @see [[http://www.elasticsearch.org/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html#_lat_lon_as_array_5]]
    */
-  def toPlayGeoJson(gp: IGeoPoint) = {
+  def toPlayGeoJson(gp: MGeoPoint) = {
     JsArray(Seq(
       JsNumber(gp.lon), JsNumber(gp.lat)
     ))
   }
 
-  def toEsStr(gp: IGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
+  def toEsStr(gp: MGeoPoint): String = gp.lat.toString + "," + gp.lon.toString
 
   /** Пространственная координата в терминах JTS. */
-  def toJtsCoordinate(gp: IGeoPoint) = new Coordinate(gp.lon, gp.lat)
+  def toJtsCoordinate(gp: MGeoPoint) = new Coordinate(gp.lon, gp.lat)
 
   /** (Lon,lat,alt) является основным порядком гео.координат в sio2. */
-  def toLngLat(gp: IGeoPoint): LngLat = {
+  def toLngLat(gp: MGeoPoint): LngLat = {
     LngLat(lng = gp.lon, lat = gp.lat)
   }
 

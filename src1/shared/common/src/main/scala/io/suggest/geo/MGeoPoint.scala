@@ -12,34 +12,8 @@ import scalaz.syntax.apply._
  * Suggest.io
  * User: Konstantin Nikiforov <konstantin.nikiforov@cbca.ru>
  * Created: 20.05.15 15:44
- * Description: Интерфейс для гео-точки.
+ * Description: Модель гео-точки.
  */
-trait IGeoPoint {
-
-  /** Долгота (X). */
-  def lon: Double
-
-  /** Широта (Y). */
-  def lat: Double
-
-  // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.
-  override def toString: String = {
-    lat.toString + Qs.LAT_LON_DELIM_FN + lon.toString
-  }
-
-  /** Сериализованное представление координат точки. */
-  // TODO Оно используется только в устаревшем GeoMode.
-  def toQsStr = lat.toString + "," + lon.toString
-
-
-  /** (12.1234 65.5633) */
-  def toHumanFriendlyString: String = {
-    def _fmt(coord: Double) = "%1.4f".format(coord)
-    "(" + _fmt(lat) + HtmlConstants.SPACE + _fmt(lon) + ")"
-  }
-
-}
-
 
 object MGeoPoint {
 
@@ -133,21 +107,47 @@ object MGeoPoint {
     UnivEq.derive
   }
 
+
+  implicit class MGeoPointOps(val that: MGeoPoint) extends AnyVal {
+
+    /** Примерно равная точка -- это находящаяся ну очень близко. */
+    def ~=(other: MGeoPoint): Boolean = {
+      val maxDiff = 0.000005
+      Math.abs(that.lat - other.lat) < maxDiff &&
+        Math.abs(that.lon - other.lon) < maxDiff
+    }
+
+  }
+
 }
 
 
-/** Дефолтовая, пошаренная между клиентом и сервером, реализация [[IGeoPoint]]. */
+/** Дефолтовая, пошаренная между клиентом и сервером. */
 case class MGeoPoint(
                       // TODO Надо обменять порядок аргументов на (lon,lat).
                       // TODO Надо это учесть в FormUtil.geoPointM, GeoPoint.FORMAT_ES_OBJECT, Implicits.MGEO_POINT_FORMAT_QS_OBJECT.
-                      override val lat: Double,
-                      override val lon: Double
-                    )
-  extends IGeoPoint
-{
+                      lat: Double,
+                      lon: Double
+                    ) {
 
   def withLat(lat2: Double) = copy(lat = lat2)
   def withLon(lon2: Double) = copy(lon = lon2)
+
+  // TODO заменить на "lon|lat" ? Пользователю в браузере конечно удобенее "lat|lon", надо поразмыслить над этим.
+  override def toString: String = {
+    lat.toString + Qs.LAT_LON_DELIM_FN + lon.toString
+  }
+
+  /** Сериализованное представление координат точки. */
+  // TODO Оно используется только в устаревшем GeoMode.
+  def toQsStr = lat.toString + "," + lon.toString
+
+
+  /** (12.1234 65.5633) */
+  def toHumanFriendlyString: String = {
+    def _fmt(coord: Double) = "%1.4f".format(coord)
+    "(" + _fmt(lat) + HtmlConstants.SPACE + _fmt(lon) + ")"
+  }
 
 }
 
