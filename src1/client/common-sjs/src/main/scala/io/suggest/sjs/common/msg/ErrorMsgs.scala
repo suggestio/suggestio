@@ -165,4 +165,6 @@ object ErrorMsgs extends MsgsStaticT {
 
   def UNSUPPORTED_VALUE_OF_ARGUMENT    = E(75)
 
+  def GRID_CONFIGURATION_INVALID       = E(76)
+
 }

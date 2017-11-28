@@ -40,7 +40,7 @@ object GridAdsAh {
       conf      = gridConf,
       minSzMult = minSzMult
     )
-    evenGridColsCount * gridConf.cellWidth.relSz
+    Math.max(2, evenGridColsCount * gridConf.cellWidth.relSz)
   }
 
 

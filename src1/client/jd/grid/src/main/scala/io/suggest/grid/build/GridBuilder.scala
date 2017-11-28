@@ -35,6 +35,10 @@ class GridBuilder {
     * @return Контейнер данных по расположению заданных элементов в плитке.
     */
   def stoneCutterLayout(args: GridBuildArgs)(items: js.Array[ItemProps], props: PropsCommon): LayoutFunRes = {
+    if (args.jdConf.gridColumnsCount < BlockWidths.max.relSz)
+      throw new IllegalArgumentException( ErrorMsgs.GRID_CONFIGURATION_INVALID + HtmlConstants.SPACE + args.jdConf +
+        HtmlConstants.SPACE + args.jdConf.gridColumnsCount )
+
     // На основе массива items надо получить массив px-координат.
     // Это можно сделать через отображение с аккамуляторами.
     // Для упрощения и ускорения, аккамуляторы снаружи от map().
